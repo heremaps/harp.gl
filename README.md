@@ -1,0 +1,1 @@
+Decoder worker for mapview
