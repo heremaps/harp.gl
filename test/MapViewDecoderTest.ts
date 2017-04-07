@@ -24,11 +24,8 @@ describe("MapViewDecoder", function() {
             assert.strictEqual(message.data.value, 43);
             done();
         });
-        pool.registerWorkerFunction('test', url, 'testFunction');
-
-        // ### TODO - we need a way to figure out when the pool is initialized!!!
-        setTimeout(() => {
+        pool.registerWorkerFunction('test', url, 'testFunction').then(() => {
             pool.postMessage({ type: 'test', value: 42 });
-        }, 500);
+        }).catch((err) => done(err));
     });
 });

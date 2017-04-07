@@ -27,8 +27,10 @@ self.addEventListener("message", message => {
         self.requirejs(modules,
             (module: any) => {
                 decoderFunctions.set(message.data.id, function(event: MessageEvent) { module[message.data.decoderFunction](event); });
+                self.postMessage({ type: 'initialize', id: message.data.id });
             },
             (err: any) => {
+                self.postMessage({ type: 'initialize', id: message.data.id, error: err });
                 console.log("requirejs failed:", err)
             });
         return;
