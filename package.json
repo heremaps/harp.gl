@@ -23,7 +23,7 @@
   },
   "dependencies": {
     "@here/geoutils": "^0.2.8",
-    "@here/mapview": "^0.4.7"
+    "@here/mapview": "^0.5.0"
   },
   "devDependencies": {
     "@here/deploy": "~0.2.0",
