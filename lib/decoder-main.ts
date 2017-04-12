@@ -1,3 +1,5 @@
+/** @module @here/mapview-decoder **//** */
+
 import { isInitializeWorkerRequest } from './WorkerPoolRequests';
 
 declare let self: Worker & {

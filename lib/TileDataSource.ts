@@ -1,3 +1,5 @@
+/** @module @here/mapview-decoder **//** */
+
 import { DataSource as MapViewDataSource, DecodedTile } from '@here/mapview';
 import { Decoder } from './Decoder';
 import { TileKey } from "@here/geoutils";
