@@ -5,13 +5,16 @@ import { Decoder } from './Decoder';
 import { TileKey } from "@here/geoutils";
 
 export abstract class TileDataSource extends DataSource {
-    constructor(public readonly decoder: Decoder, public readonly id: string) {
+    constructor(public readonly id: string, public readonly decoder?: Decoder) {
         super();
+
+        if (this.decoder === undefined)
+            return;
 
         this.decoder.addEventListener(id, (message: any) => {
             const decodedTile = message.data.decodedTile;
             const tileKey = message.data.tileKey;
-            this.createGeometries(tileKey, decodedTile);
+            this.createGeometries(TileKey.fromMortonCode(tileKey), decodedTile);
         });
     }
 

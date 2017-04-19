@@ -18,7 +18,7 @@ declare function require(param: any): any;
 
 const decoderFunctions = new Map<string, (event: MessageEvent) => void>();
 
-self.addEventListener("message", message => {
+self.addEventListener("message", (message: MessageEvent) => {
     if (typeof message.data.type !== "string") {
         console.log("cannot decode message " + JSON.stringify(message.data));
         return;
@@ -32,8 +32,8 @@ self.addEventListener("message", message => {
                 self.postMessage({ type: 'initialize', id: message.data.id });
             },
             (err: any) => {
-                self.postMessage({ type: 'initialize', id: message.data.id, error: err });
-                console.log("requirejs failed:", err)
+                console.log("requirejs failed:", err.originalError);
+                self.postMessage({ type: 'initialize', id: message.data.id, error: err.toString() });
             });
         return;
     }
