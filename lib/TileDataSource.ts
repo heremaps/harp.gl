@@ -1,10 +1,10 @@
 /** @module @here/mapview-decoder **//** */
 
-import { DataSource as MapViewDataSource, DecodedTile } from '@here/mapview';
+import { DataSource, DecodedTile } from '@here/mapview';
 import { Decoder } from './Decoder';
 import { TileKey } from "@here/geoutils";
 
-export abstract class TileDataSource extends MapViewDataSource {
+export abstract class TileDataSource extends DataSource {
     constructor(public readonly decoder: Decoder, public readonly id: string) {
         super();
 

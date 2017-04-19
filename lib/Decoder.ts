@@ -10,6 +10,11 @@ export class Decoder {
     private readonly eventListeners = new Map<string, (message: any) => void>();
     private readonly pendingRegistrations = new Map<string, { resolve: any, reject: any, count: number, error?: any }>();
 
+    /**
+     * Creates a new Decoder
+     *
+     * @param workerCount the amount of Web Workers to create
+     */
     constructor(workerCount: number) {
         workerCount = Math.max(workerCount, 1);
 
@@ -19,36 +24,54 @@ export class Decoder {
 
             const worker = new DecoderWorker() as Worker;
             this.workers.push(worker);
-            worker.addEventListener("message", event => {
-                if (typeof event.data.type === "string") {
-                    if (event.data.type === "initialize") {
-                        this.onWorkerFunctionRegistered(event.data);
-                    } else {
-                        this.dispatchEvent(event.data.type, event);
-                    }
-                } else {
+            worker.addEventListener("message", (event: any) => {
+                if (typeof event.data.type !== "string")
                     throw new Error("cannot dispatch event " + JSON.stringify(event.data));
+
+                if (event.data.type === "initialize") {
+                    this.onWorkerFunctionRegistered(event.data);
+                } else {
+                    this.dispatchEvent(event.data.type, event);
                 }
             });
         }
     }
 
+    /**
+     * Registers an event listener for events that originated in a
+     * web worker for a given id. Only one event listener can be set
+     * per id.
+     *
+     * @param id the id to listen to
+     * @param callback the callback to invoke for matching events
+     */
     public addEventListener(id: string, callback: (message: any) => void) {
         this.eventListeners.set(id, callback);
     }
 
+    /**
+     * Removes a previously set event listener for the given id.
+     *
+     * @param id the id for which to remove the event listeners
+     */
     public removeEventListener(id: string) {
         this.eventListeners.delete(id);
     }
 
-    public dispatchEvent(id: string, message: any) {
+    private dispatchEvent(id: string, message: any) {
         const callback = this.eventListeners.get(id);
         if (callback === undefined)
             throw new Error("cannot dispatch event " + JSON.stringify(message));
         callback(message);
     }
 
-    postMessage(message: object, buffers?: ArrayBuffer[]): void | never {
+    /**
+     * Posts a message to a random worker.
+     *
+     * @param message the message to send
+     * @param buffers optional buffers to transfer to the worker
+     */
+    public postMessage(message: object, buffers?: ArrayBuffer[]): void | never {
         const index = Math.floor(Math.random() * this.workers.length);
         this.workers[index].postMessage(message, buffers);
     }
