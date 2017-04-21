@@ -23,6 +23,7 @@
   },
   "dependencies": {
     "@here/geoutils": "~0.2.0",
+    "@here/hype": "~0.2.0",
     "@here/mapview": "~0.6.0"
   },
   "devDependencies": {
