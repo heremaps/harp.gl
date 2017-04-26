@@ -2,7 +2,11 @@
 
 import { InitializeWorkerRequest } from './WorkerPoolRequests';
 
-declare function require(param: any): any;
+//
+// ### to enable AMD, uncomment the following and pass it to the constructor of Decoder
+// declare function require(param: any): any;
+// export const AmdWorker = require("worker-loader?inline&fallback=false!./decoder-main.ts");
+//
 
 export class Decoder {
 
@@ -15,14 +19,12 @@ export class Decoder {
      *
      * @param workerCount the amount of Web Workers to create
      */
-    constructor(workerCount: number) {
+    constructor(workerCount: number, DecoderWorker: { new(): Worker }) {
         workerCount = Math.max(workerCount, 1);
-
-        const DecoderWorker = require("worker-loader?inline&fallback=false!./decoder-main.ts");
 
         for (let i = 0; i < workerCount; ++i) {
 
-            const worker = new DecoderWorker() as Worker;
+            const worker = new DecoderWorker();
             this.workers.push(worker);
             worker.addEventListener("message", (event: any) => {
                 if (typeof event.data.type !== "string")

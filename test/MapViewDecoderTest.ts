@@ -9,6 +9,10 @@ describe("MapViewDecoder", function() {
             return; // requires Blob support doesn't work in nodejs
         }
 
+        assert.isDefined(decoder);
+
+        /** ### AMD
+
         const script = `define({
             testFunction: (message) => {
                 const result = message.data.value + 1;
@@ -27,5 +31,7 @@ describe("MapViewDecoder", function() {
         pool.registerWorkerFunction('test', url, 'testFunction').then(() => {
             pool.postMessage({ type: 'test', value: 42 });
         }).catch((err) => done(err));
+
+         */
     });
 });
