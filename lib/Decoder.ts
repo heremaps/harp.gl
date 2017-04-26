@@ -19,12 +19,12 @@ export class Decoder {
      *
      * @param workerCount the amount of Web Workers to create
      */
-    constructor(workerCount: number, DecoderWorker: { new(): Worker }) {
+    constructor(workerCount: number, decoderCreator: () => Worker) {
         workerCount = Math.max(workerCount, 1);
 
         for (let i = 0; i < workerCount; ++i) {
 
-            const worker = new DecoderWorker();
+            const worker = decoderCreator();
             this.workers.push(worker);
             worker.addEventListener("message", (event: any) => {
                 if (typeof event.data.type !== "string")
