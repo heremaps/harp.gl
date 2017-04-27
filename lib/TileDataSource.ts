@@ -1,14 +1,16 @@
 /** @module @here/mapview-decoder **//** */
 
-import { Tile } from '@here/mapview';
+import { Tile, DataSource } from '@here/mapview';
 import { DecodedTile, getProjectionName } from '@here/datasource-protocol';
-import { AbstractTileDataSource, AbstractTileDataSourceOptions } from './AbstractTileDataSource';
 import { TileKey, TilingScheme, Projection, GeoBox } from "@here/geoutils";
 import { LRUCache } from "@here/lrucache";
 import { DataProvider } from "./DataProvider";
+import { Decoder } from "./Decoder";
 import * as THREE from 'three';
 
-export interface TileDataSourceOptions extends AbstractTileDataSourceOptions {
+export interface TileDataSourceOptions {
+    id: string;
+    decoder?: Decoder;
     projection: Projection;
     tilingScheme: TilingScheme;
     cacheSize: number;
@@ -24,16 +26,25 @@ export abstract class CachedTile extends Tile {
     abstract dispose(): void;
 }
 
-export class TileDataSource<TileType extends CachedTile> extends AbstractTileDataSource {
+export class TileDataSource<TileType extends CachedTile> extends DataSource {
     private readonly m_tileCache: LRUCache<number, TileType>;
 
     constructor(private readonly tileType: { new(tileKey: TileKey, geoBox: GeoBox, center: THREE.Box3): TileType; }, private readonly m_options: TileDataSourceOptions) {
-        super(m_options);
 
-         this.m_tileCache = new LRUCache<number, TileType>(m_options.cacheSize);
-         this.m_tileCache.evictionCallback = (_, tile) => {
-             tile.dispose();
-         }
+        super();
+
+        if (m_options.decoder !== undefined) {
+            m_options.decoder.addEventListener(m_options.id, (message: any) => {
+                const decodedTile = message.data.decodedTile;
+                const tileKey = message.data.tileKey;
+                this.createGeometries(TileKey.fromMortonCode(tileKey), decodedTile);
+            });
+        }
+
+        this.m_tileCache = new LRUCache<number, TileType>(m_options.cacheSize);
+        this.m_tileCache.evictionCallback = (_, tile) => {
+            tile.dispose();
+        }
     }
 
     ready(): boolean {
