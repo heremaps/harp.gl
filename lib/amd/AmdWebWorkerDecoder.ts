@@ -1,4 +1,6 @@
-import { Decoder } from './Decoder';
+/** @module @here/mapview-decoder **//** */
+
+import { Decoder } from '../Decoder';
 import { InitializeWorkerRequest } from './WorkerPoolRequests';
 
 declare function require(param: any): any;
