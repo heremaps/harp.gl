@@ -1,6 +1,7 @@
 /** @module @here/mapview-decoder **//** */
 
-import { DecodedTile, Tile, getProjectionName } from '@here/mapview';
+import { Tile } from '@here/mapview';
+import { DecodedTile, getProjectionName } from '@here/datasource-protocol';
 import { AbstractTileDataSource, AbstractTileDataSourceOptions } from './AbstractTileDataSource';
 import { TileKey, TilingScheme, Projection, GeoBox } from "@here/geoutils";
 import { LRUCache } from "@here/lrucache";
