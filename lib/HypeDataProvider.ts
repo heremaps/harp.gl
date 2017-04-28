@@ -10,6 +10,7 @@ export interface HypeDataProviderOptions {
     appCode: string;
     layer: string;
     proxyDataUrl?: string;
+    catalogVersion?: number;
 }
 
 export class HypeDataProvider extends DataProvider {
@@ -19,7 +20,7 @@ export class HypeDataProvider extends DataProvider {
 
     constructor(private readonly m_options: HypeDataProviderOptions) {
         super();
-         this.m_dataStoreClient = new DataStoreClient(m_options.appId, m_options.appCode, m_options.hrn);
+        this.m_dataStoreClient = new DataStoreClient(m_options.appId, m_options.appCode, m_options.hrn);
     }
 
     ready(): boolean {
@@ -27,7 +28,7 @@ export class HypeDataProvider extends DataProvider {
     }
 
     async connect(): Promise<void> {
-        this.m_catalogClient = await this.m_dataStoreClient.getCatalogClient();
+        this.m_catalogClient = await this.m_dataStoreClient.getCatalogClient(this.m_options.catalogVersion);
         const layer = this.m_catalogClient.layers.get(this.m_options.layer);
         if (layer === undefined)
             throw new Error(`layer ${this.m_options.layer} not found in catalog`);
