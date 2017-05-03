@@ -15,7 +15,6 @@ export interface TileDataSourceOptions {
     tilingScheme: TilingScheme;
     cacheSize: number;
     dataProvider: DataProvider;
-    onUpdateRequested?: () => void;
 }
 
 export abstract class CachedTile extends Tile {
@@ -94,7 +93,6 @@ export class TileDataSource<TileType extends CachedTile> extends DataSource {
             return;
 
         tile.createGeometries(decodedTile);
-        if (this.m_options.onUpdateRequested)
-            this.m_options.onUpdateRequested();
+        this.requestUpdate();
     }
 }
