@@ -11,7 +11,6 @@ import * as THREE from 'three';
 export interface TileDataSourceOptions {
     id: string;
     decoder?: Decoder;
-    projection: Projection;
     tilingScheme: TilingScheme;
     cacheSize: number;
     dataProvider: DataProvider;
@@ -58,29 +57,29 @@ export class TileDataSource<TileType extends CachedTile> extends DataSource {
         return this.m_options.tilingScheme;
     }
 
-    getTile(tileKey: TileKey): Tile | undefined {
+    getTile(tileKey: TileKey, projection: Projection): Tile | undefined {
         let tile = this.m_tileCache.get(tileKey.mortonCode());
         if (tile !== undefined)
             return tile;
         const geoBox = this.getTilingScheme().getGeoBox(tileKey);
         const bounds = new THREE.Box3();
-        this.m_options.projection.projectBox(geoBox, bounds);
+        projection.projectBox(geoBox, bounds);
 
         tile = new this.tileType(tileKey, geoBox, bounds);
 
         this.m_tileCache.set(tileKey.mortonCode(), tile);
-        this.decodeTile(tile, tileKey);
+        this.decodeTile(tile, tileKey, projection);
         return tile;
     }
 
-    private async decodeTile(tile: Tile, tileKey: TileKey) {
+    private async decodeTile(tile: Tile, tileKey: TileKey, projection: Projection) {
         const data = await this.m_options.dataProvider.getTile(tileKey);
 
         const message = {
             type: this.m_options.id,
             tileKey: tileKey.mortonCode(),
             data: data,
-            projection: getProjectionName(this.m_options.projection),
+            projection: getProjectionName(projection),
         };
 
         if (this.m_options.decoder) // ### not optional?
