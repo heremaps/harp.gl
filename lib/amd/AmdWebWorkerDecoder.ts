@@ -31,19 +31,17 @@ export class AmdWebWorkerDecoder extends Decoder {
     }
 
     /**
-     * Initializes the worker with a function from an AMD module on a given id.
-     * This function will receive all messages whose type are of the given type.
+     * Loads an AMD module in all web workers. Returns a promise that resolves
+     * when all the loaders are ready, otherwise throws if an error occured.
      *
-     * @param type the message.type to listen to
      * @param moduleName the name of an AMD module to load. Must be fully qualified
-     * @param decoderFunction the name of a function in the given module
      * @param additionalModules a list of additional module names to require
      */
-    registerWorkerFunction(type: string, moduleName: string, decoderFunction: string, additionalModules?: string[]): Promise<void> {
+    loadModule(moduleName: string, additionalModules?: string[]): Promise<void> {
         return new Promise<void>((resolve, reject) => {
-            this.pendingRegistrations.set(type, { resolve, reject, count: 0 });
+            this.pendingRegistrations.set(moduleName, { resolve, reject, count: 0 });
             for (let worker of this.workers)
-                worker.postMessage(new InitializeWorkerRequest(type, moduleName, decoderFunction, additionalModules));
+                worker.postMessage(new InitializeWorkerRequest(moduleName, additionalModules));
         });
     }
 
