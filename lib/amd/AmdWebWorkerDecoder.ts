@@ -12,7 +12,7 @@ export class AmdWebWorkerDecoder extends Decoder {
     constructor(workerCount: number) {
         super();
 
-        const AmdWorker = require("worker-loader?inline&fallback=false!./decoder-main.ts");
+        const AmdWorker = require("worker-loader?inline&fallback=false!./decoder-main");
         for (let i = 0; i < workerCount; ++i) {
             const worker = new AmdWorker() as Worker;
             worker.addEventListener("message", (event: any) => {
