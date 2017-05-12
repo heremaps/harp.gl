@@ -1,6 +1,6 @@
 /** @module @here/mapview-decoder **//** */
 
-import { isInitializeWorkerRequest } from './WorkerPoolRequests';
+import { isInitializeWorkerRequest, InitializeWorkerRequest } from './WorkerPoolRequests';
 
 declare let self: Worker & {
     importScripts(..._scripts: string[]): void;
@@ -16,30 +16,17 @@ declare function require(param: any): any;
     self.define = exports.define;
 })();
 
-const decoderFunctions = new Map<string, (event: MessageEvent) => void>();
-
 self.addEventListener("message", (message: MessageEvent) => {
-    if (typeof message.data.type !== "string") {
-        console.log("cannot decode message " + JSON.stringify(message.data));
-        return;
-    }
+    const request : any | InitializeWorkerRequest = message.data;
 
-    if (isInitializeWorkerRequest(message.data)) {
-        const modules = [ message.data.moduleName ].concat(message.data.additionalModules === undefined ? [] : message.data.additionalModules);
-        self.requirejs(modules,
-            (module: any) => {
-                decoderFunctions.set(message.data.id, function(event: MessageEvent) { module[message.data.decoderFunction](event); });
-                self.postMessage({ type: 'initialize', id: message.data.id });
-            },
-            (err: any) => {
-                console.log("requirejs failed:", err.originalError);
-                self.postMessage({ type: 'initialize', id: message.data.id, error: err.toString() });
-            });
-        return;
-    }
+    if (!isInitializeWorkerRequest(request))
+        return; // message not for us
 
-    const decoderFunction = decoderFunctions.get(message.data.type);
-    if (decoderFunction === undefined)
-        return console.log("Worker received unknown message:", message);
-    decoderFunction(message);
+    const modules = [ request.moduleName ].concat(request.additionalModules === undefined ? [] : request.additionalModules);
+    self.requirejs(modules,
+        () => { self.postMessage({ type: 'initialize', id: request.moduleName }); },
+        (err: any) => {
+            console.log("requirejs failed:", err.originalError);
+            self.postMessage({ type: 'initialize', id: request.moduleName, error: err.toString() });
+        });
 });
