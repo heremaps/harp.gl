@@ -25,7 +25,7 @@ self.addEventListener("message", (message: MessageEvent) => {
     if (request.config !== undefined)
         self.requirejs.config(request.config);
 
-    self.requirejs(request.moduleName,
+    self.requirejs([request.moduleName],
         () => { self.postMessage({ type: 'initialize', id: request.moduleName }); },
         (err: any) => {
             console.log("requirejs failed:", err.originalError);
