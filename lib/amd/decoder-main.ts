@@ -22,8 +22,10 @@ self.addEventListener("message", (message: MessageEvent) => {
     if (!isInitializeWorkerRequest(request))
         return; // message not for us
 
-    const modules = [ request.moduleName ].concat(request.additionalModules === undefined ? [] : request.additionalModules);
-    self.requirejs(modules,
+    if (request.config !== undefined)
+        self.requirejs.config(request.config);
+
+    self.requirejs(request.moduleName,
         () => { self.postMessage({ type: 'initialize', id: request.moduleName }); },
         (err: any) => {
             console.log("requirejs failed:", err.originalError);

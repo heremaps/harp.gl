@@ -34,14 +34,14 @@ export class AmdWebWorkerDecoder extends Decoder {
      * Loads an AMD module in all web workers. Returns a promise that resolves
      * when all the loaders are ready, otherwise throws if an error occured.
      *
-     * @param moduleName the name of an AMD module to load. Must be fully qualified
-     * @param additionalModules a list of additional module names to require
+     * @param moduleName the name of an AMD module to load.
+     * @param config optional additional configuration to pass to requirejs.config
      */
-    loadModule(moduleName: string, additionalModules?: string[]): Promise<void> {
+    loadModule(moduleName: string, config?: object): Promise<void> {
         return new Promise<void>((resolve, reject) => {
             this.pendingRegistrations.set(moduleName, { resolve, reject, count: 0 });
             for (let worker of this.workers)
-                worker.postMessage(new InitializeWorkerRequest(moduleName, additionalModules));
+                worker.postMessage(new InitializeWorkerRequest(moduleName, config));
         });
     }
 

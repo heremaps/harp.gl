@@ -3,7 +3,7 @@
 export class InitializeWorkerRequest {
     public readonly type = "initialize";
 
-    constructor(public readonly moduleName: string, public readonly additionalModules?: string[]) {
+    constructor(public readonly moduleName: string, public readonly config?: object) {
     }
 };
 
