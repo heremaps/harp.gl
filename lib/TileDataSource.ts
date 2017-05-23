@@ -2,11 +2,10 @@
 
 import { Tile, DataSource } from '@here/mapview';
 import { DecodedTile, getProjectionName } from '@here/datasource-protocol';
-import { TileKey, TilingScheme, Projection, GeoBox } from "@here/geoutils";
+import { TileKey, TilingScheme, Projection } from "@here/geoutils";
 import { LRUCache } from "@here/lrucache";
 import { DataProvider } from "./DataProvider";
 import { Decoder } from "./Decoder";
-import * as THREE from 'three';
 
 export interface TileDataSourceOptions {
     id: string;
