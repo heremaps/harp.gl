@@ -17,8 +17,8 @@ export interface TileDataSourceOptions {
 }
 
 export abstract class CachedTile extends Tile {
-    constructor(center: THREE.Vector3) {
-        super(center);
+    constructor(dataSource: DataSource, tileKey: TileKey, projection: Projection) {
+        super(dataSource, tileKey, projection);
     }
     abstract createGeometries(decodedTile: DecodedTile): void;
     abstract dispose(): void;
@@ -27,7 +27,7 @@ export abstract class CachedTile extends Tile {
 export class TileDataSource<TileType extends CachedTile> extends DataSource {
     private readonly m_tileCache: LRUCache<number, TileType>;
 
-    constructor(private readonly tileType: { new(tileKey: TileKey, geoBox: GeoBox, center: THREE.Box3): TileType; }, private readonly m_options: TileDataSourceOptions) {
+    constructor(private readonly tileType: { new(dataSource: DataSource, tileKey: TileKey, projection: Projection): TileType; }, private readonly m_options: TileDataSourceOptions) {
 
         super();
 
@@ -61,11 +61,8 @@ export class TileDataSource<TileType extends CachedTile> extends DataSource {
         let tile = this.m_tileCache.get(tileKey.mortonCode());
         if (tile !== undefined)
             return tile;
-        const geoBox = this.getTilingScheme().getGeoBox(tileKey);
-        const bounds = new THREE.Box3();
-        projection.projectBox(geoBox, bounds);
 
-        tile = new this.tileType(tileKey, geoBox, bounds);
+        tile = new this.tileType(this, tileKey, projection);
 
         this.m_tileCache.set(tileKey.mortonCode(), tile);
         this.decodeTile(tile, tileKey, projection);
