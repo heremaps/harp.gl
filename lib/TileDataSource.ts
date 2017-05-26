@@ -9,10 +9,14 @@ import { Decoder } from "./Decoder";
 
 export interface TileDataSourceOptions {
     id: string;
-    decoder?: Decoder;
+    decoder: Decoder;
     tilingScheme: TilingScheme;
-    cacheSize: number;
     dataProvider: DataProvider;
+
+    /**
+     * Deprecated, the value of this property will be ignored.
+     */
+    cacheSize?: number;
 }
 
 export abstract class CachedTile extends Tile {
@@ -24,9 +28,9 @@ export abstract class CachedTile extends Tile {
 }
 
 export class TileDataSource<TileType extends CachedTile> extends DataSource {
-    private readonly m_tileCache: LRUCache<number, TileType>;
+    private readonly m_pendingTileCache: LRUCache<number, TileType>;
 
-    constructor(private readonly tileType: { new(dataSource: DataSource, tileKey: TileKey, projection: Projection): TileType; }, private readonly m_options: TileDataSourceOptions) {
+    constructor(private readonly tileType: { new (dataSource: DataSource, tileKey: TileKey, projection: Projection): TileType; }, private readonly m_options: TileDataSourceOptions) {
 
         super();
 
@@ -38,10 +42,7 @@ export class TileDataSource<TileType extends CachedTile> extends DataSource {
             });
         }
 
-        this.m_tileCache = new LRUCache<number, TileType>(m_options.cacheSize);
-        this.m_tileCache.evictionCallback = (_, tile) => {
-            tile.dispose();
-        }
+        this.m_pendingTileCache = new LRUCache<number, TileType>(32);
     }
 
     ready(): boolean {
@@ -57,13 +58,12 @@ export class TileDataSource<TileType extends CachedTile> extends DataSource {
     }
 
     getTile(tileKey: TileKey, projection: Projection): Tile | undefined {
-        let tile = this.m_tileCache.get(tileKey.mortonCode());
+        let tile = this.m_pendingTileCache.get(tileKey.mortonCode());
         if (tile !== undefined)
             return tile;
 
         tile = new this.tileType(this, tileKey, projection);
-
-        this.m_tileCache.set(tileKey.mortonCode(), tile);
+        this.m_pendingTileCache.set(tileKey.mortonCode(), tile);
         this.decodeTile(tile, tileKey, projection);
         return tile;
     }
@@ -83,11 +83,14 @@ export class TileDataSource<TileType extends CachedTile> extends DataSource {
     }
 
     createGeometries(tileKey: TileKey, decodedTile: DecodedTile): void {
-        const tile = this.m_tileCache.get(tileKey.mortonCode());
+        const tile = this.m_pendingTileCache.get(tileKey.mortonCode());
         if (tile === undefined)
             return;
 
         tile.createGeometries(decodedTile);
+
+        this.m_pendingTileCache.delete(tileKey.mortonCode());
+
         this.requestUpdate();
     }
 }
