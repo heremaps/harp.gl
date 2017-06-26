@@ -16,7 +16,7 @@
     "type": "git",
     "url": "ssh://gerrit.it.here.com:29418/cto/verity/mapview-decoder"
   },
-  "author": "Harald Fernengel",
+  "author": "HERE Global B.V. and its affiliate(s)",
   "license": "SEE LICENSE IN LICENSE",
   "publishConfig": {
     "registry": "https://artifactory.in.here.com/artifactory/api/npm/verity-npm-local"
