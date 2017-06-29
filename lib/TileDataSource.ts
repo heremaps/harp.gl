@@ -18,10 +18,11 @@ import { DecodedTile, getProjectionName } from '@here/datasource-protocol';
 import { TileKey, TilingScheme, Projection } from "@here/geoutils";
 import { LRUCache } from "@here/lrucache";
 import { DataProvider } from "./DataProvider";
+import { DecodeTileRequest } from "@here/mapview-decoder/lib/WorkerClient";
 
 export interface TileDataSourceOptions {
     id: string;
-    decoder?: Decoder;
+    decoder: Decoder;
     tilingScheme: TilingScheme;
     cacheSize: number;
     dataProvider: DataProvider;
@@ -38,22 +39,21 @@ export abstract class CachedTile extends Tile {
 export class TileDataSource<TileType extends CachedTile> extends DataSource {
     private readonly m_tileCache: LRUCache<number, TileType>;
 
-    constructor(private readonly tileType: { new(dataSource: DataSource, tileKey: TileKey, projection: Projection): TileType; }, private readonly m_options: TileDataSourceOptions) {
+    constructor(private readonly tileType: { new (dataSource: DataSource, tileKey: TileKey, projection: Projection): TileType; }, private readonly m_options: TileDataSourceOptions) {
 
         super();
 
-        if (m_options.decoder !== undefined) {
-            m_options.decoder.addEventListener(m_options.id, (message: any) => {
-                const decodedTile = message.data.decodedTile;
-                const tileKey = message.data.tileKey;
-                this.createGeometries(TileKey.fromMortonCode(tileKey), decodedTile);
-            });
-        }
-
         this.m_tileCache = new LRUCache<number, TileType>(m_options.cacheSize);
+
         this.m_tileCache.evictionCallback = (_, tile) => {
             tile.dispose();
         }
+
+        m_options.decoder.addEventListener(m_options.id, (message: any) => {
+            const decodedTile = message.data.decodedTile;
+            const tileKey = TileKey.fromMortonCode(message.data.tileKey);
+            this.createGeometries(tileKey, decodedTile);
+        });
     }
 
     ready(): boolean {
@@ -68,7 +68,7 @@ export class TileDataSource<TileType extends CachedTile> extends DataSource {
         return this.m_options.tilingScheme;
     }
 
-    getTile(tileKey: TileKey, projection: Projection): Tile | undefined {
+    getTile(tileKey: TileKey, projection: Projection): TileType | undefined {
         let tile = this.m_tileCache.get(tileKey.mortonCode());
         if (tile !== undefined)
             return tile;
@@ -83,15 +83,14 @@ export class TileDataSource<TileType extends CachedTile> extends DataSource {
     private async decodeTile(tile: Tile, tileKey: TileKey, projection: Projection) {
         const data = await this.m_options.dataProvider.getTile(tileKey);
 
-        const message = {
+        const message: DecodeTileRequest = {
             type: this.m_options.id,
             tileKey: tileKey.mortonCode(),
             data: data,
             projection: getProjectionName(projection),
         };
 
-        if (this.m_options.decoder) // ### not optional?
-            this.m_options.decoder.postMessage(message, [data]);
+        this.m_options.decoder.postMessage(message, [data]);
     }
 
     createGeometries(tileKey: TileKey, decodedTile: DecodedTile): void {

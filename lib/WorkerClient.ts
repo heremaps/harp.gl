@@ -14,6 +14,9 @@
 /** @module @here/mapview-decoder **//** */
 
 import { DecodedTile } from "@here/datasource-protocol/lib/DecodedTile";
+import { TileKey, Projection } from "@here/geoutils";
+import { getProjection } from "@here/datasource-protocol";
+import { Theme } from "@here/mapview";
 
 declare let self: Worker;
 
@@ -36,7 +39,7 @@ export interface DecodeTileResponse {
 }
 
 export abstract class WorkerClient {
-    constructor(public readonly id: string) {
+    constructor(public readonly id: string, public readonly theme: Theme) {
          self.addEventListener("message", message => {
             if (typeof message.data.type !== "string" || message.data.type !== id)
                 return;
@@ -45,5 +48,36 @@ export abstract class WorkerClient {
         });
     }
 
-    abstract handleEvent(message: MessageEvent): WorkerResponse;
+    /**
+     * Decodes the given payload.
+     *
+     * @param tileKey The TileKey
+     * @param projection The Projection used to convert geo coordinates to world coordinates.
+     * @param data The payload to decode.
+     */
+    abstract decodeTile(tileKey: TileKey, projection: Projection, data: ArrayBuffer): DecodedTile;
+
+    handleEvent(message: MessageEvent): WorkerResponse {
+        const request = message.data as DecodeTileRequest;
+        const tileKey = TileKey.fromMortonCode(request.tileKey);
+        const projection = getProjection(request.projection);
+        const decodedTile = this.decodeTile(tileKey, projection, request.data);
+
+        const buffers: ArrayBuffer[] = [];
+
+        decodedTile.geometries.forEach(geom => {
+            geom.vertexAttributes.forEach(attr => buffers.push(attr.buffer));
+
+            if (geom.index)
+                buffers.push(geom.index.buffer);
+        });
+
+        const response: DecodeTileResponse = {
+            type: request.type,
+            tileKey: request.tileKey,
+            decodedTile
+        };
+
+        return { response, buffers };
+    }
 }
