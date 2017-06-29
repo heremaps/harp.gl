@@ -13,11 +13,26 @@
 
 /** @module @here/mapview-decoder **//** */
 
+import { DecodedTile } from "@here/datasource-protocol/lib/DecodedTile";
+
 declare let self: Worker;
 
 export interface WorkerResponse {
     response: any;
-    buffers?: any[];
+    buffers?: ArrayBuffer[];
+}
+
+export interface DecodeTileRequest {
+    type: string;
+    tileKey: number;
+    data: ArrayBuffer;
+    projection: string;
+}
+
+export interface DecodeTileResponse {
+    type: string;
+    tileKey: number;
+    decodedTile: DecodedTile;
 }
 
 export abstract class WorkerClient {
