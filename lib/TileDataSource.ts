@@ -18,7 +18,6 @@ import { DecodedTile, getProjectionName } from '@here/datasource-protocol';
 import { TileKey, TilingScheme, Projection } from "@here/geoutils";
 import { LRUCache } from "@here/lrucache";
 import { DataProvider } from "./DataProvider";
-import { DecodeTileRequest } from "@here/mapview-decoder/lib/WorkerClient";
 
 export interface TileDataSourceOptions {
     id: string;

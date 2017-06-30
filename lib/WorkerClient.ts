@@ -15,7 +15,7 @@
 
 import { DecodedTile } from "@here/datasource-protocol/lib/DecodedTile";
 import { TileKey, Projection } from "@here/geoutils";
-import { getProjection } from "@here/datasource-protocol";
+import { getProjection, DecodeTileRequest, DecodeTileResponse } from "@here/datasource-protocol";
 import { Theme } from "@here/mapview";
 
 declare let self: Worker;
@@ -23,19 +23,6 @@ declare let self: Worker;
 export interface WorkerResponse {
     response: any;
     buffers?: ArrayBuffer[];
-}
-
-export interface DecodeTileRequest {
-    type: string;
-    tileKey: number;
-    data: ArrayBuffer;
-    projection: string;
-}
-
-export interface DecodeTileResponse {
-    type: string;
-    tileKey: number;
-    decodedTile: DecodedTile;
 }
 
 export abstract class WorkerClient {
