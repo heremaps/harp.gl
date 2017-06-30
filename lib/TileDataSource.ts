@@ -41,7 +41,7 @@ export class TileDataSource<TileType extends CachedTile> extends DataSource {
 
     constructor(private readonly tileType: { new (dataSource: DataSource, tileKey: TileKey, projection: Projection): TileType; }, private readonly m_options: TileDataSourceOptions) {
 
-        super();
+        super(m_options.id);
 
         this.m_tileCache = new LRUCache<number, TileType>(m_options.cacheSize);
 
