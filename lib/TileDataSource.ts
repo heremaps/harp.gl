@@ -22,7 +22,6 @@ import { DecodeTileRequest } from "@here/mapview-decoder/lib/WorkerClient";
 
 export interface TileDataSourceOptions {
     id: string;
-    decoder: Decoder;
     tilingScheme: TilingScheme;
     cacheSize: number;
     dataProvider: DataProvider;
@@ -48,12 +47,6 @@ export class TileDataSource<TileType extends CachedTile> extends DataSource {
         this.m_tileCache.evictionCallback = (_, tile) => {
             tile.dispose();
         }
-
-        m_options.decoder.addEventListener(m_options.id, (message: any) => {
-            const decodedTile = message.data.decodedTile;
-            const tileKey = TileKey.fromMortonCode(message.data.tileKey);
-            this.createGeometries(tileKey, decodedTile);
-        });
     }
 
     ready(): boolean {
@@ -68,7 +61,7 @@ export class TileDataSource<TileType extends CachedTile> extends DataSource {
         return this.m_options.tilingScheme;
     }
 
-    getTile(tileKey: TileKey, projection: Projection): TileType | undefined {
+    getTile(tileKey: TileKey, projection: Projection, decoder: Decoder): TileType | undefined {
         let tile = this.m_tileCache.get(tileKey.mortonCode());
         if (tile !== undefined)
             return tile;
@@ -76,25 +69,21 @@ export class TileDataSource<TileType extends CachedTile> extends DataSource {
         tile = new this.tileType(this, tileKey, projection);
 
         this.m_tileCache.set(tileKey.mortonCode(), tile);
-        this.decodeTile(tile, tileKey, projection);
+
+        this.m_options.dataProvider.getTile(tileKey).then(data => {
+            this.decodeTile(data, tileKey, projection, decoder);
+        });
+
         return tile;
     }
 
-    private async decodeTile(tile: Tile, tileKey: TileKey, projection: Projection) {
-        const data = await this.m_options.dataProvider.getTile(tileKey);
-
-        const message: DecodeTileRequest = {
-            type: this.m_options.id,
-            tileKey: tileKey.mortonCode(),
-            data: data,
-            projection: getProjectionName(projection),
-        };
-
-        this.m_options.decoder.postMessage(message, [data]);
+    tileDecoded(tileKey: TileKey, decodedTile: DecodedTile) {
+        this.createGeometries(tileKey, decodedTile);
     }
 
     createGeometries(tileKey: TileKey, decodedTile: DecodedTile): void {
         const tile = this.m_tileCache.get(tileKey.mortonCode());
+
         if (tile === undefined)
             return;
 
