@@ -22,13 +22,13 @@
     "registry": "https://artifactory.in.here.com/artifactory/api/npm/verity-npm-local"
   },
   "dependencies": {
-    "@here/datasource-protocol": "~0.1.0",
-    "@here/geoutils": "~0.2.0",
-    "@here/hype": "~0.2.0",
-    "@here/mapview": "~0.6.0"
+    "@here/datasource-protocol": "^0.1.0",
+    "@here/geoutils": "^0.2.0",
+    "@here/hype": "^0.2.0",
+    "@here/mapview": "^0.6.0"
   },
   "devDependencies": {
-    "@here/deploy": "~0.2.0",
+    "@here/deploy": "^0.2.0",
     "@here/tsconfig-generator": "^2.0.0",
     "@types/chai": "^3.4.35",
     "@types/mocha": "^2.2.32",
