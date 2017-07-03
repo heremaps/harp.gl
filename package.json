@@ -1,6 +1,6 @@
 {
   "name": "@here/mapview-decoder",
-  "version": "0.1.28",
+  "version": "0.2.0",
   "description": "Decoder worker for mapview",
   "main": "index.js",
   "typings": "index",
@@ -22,10 +22,10 @@
     "registry": "https://artifactory.in.here.com/artifactory/api/npm/verity-npm-local"
   },
   "dependencies": {
-    "@here/datasource-protocol": "^0.1.0",
+    "@here/datasource-protocol": "^0.2.0",
     "@here/geoutils": "^0.2.0",
     "@here/hype": "^0.2.0",
-    "@here/mapview": "^0.6.0"
+    "@here/mapview": "^0.7.0"
   },
   "devDependencies": {
     "@here/deploy": "^0.2.0",
