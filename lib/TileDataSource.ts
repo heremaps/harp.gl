@@ -24,6 +24,7 @@ export interface TileDataSourceOptions {
     tilingScheme: TilingScheme;
     cacheSize: number;
     dataProvider: DataProvider;
+    usesWorker?: boolean;
 }
 
 export abstract class CachedTile extends Tile {
@@ -36,6 +37,7 @@ export abstract class CachedTile extends Tile {
 
 export class TileDataSource<TileType extends CachedTile> extends DataSource {
     private readonly m_tileCache: LRUCache<number, TileType>;
+    private m_isReady: boolean = false;
 
     constructor(private readonly tileType: { new (dataSource: DataSource, tileKey: TileKey, projection: Projection): TileType; }, private readonly m_options: TileDataSourceOptions) {
 
@@ -49,11 +51,20 @@ export class TileDataSource<TileType extends CachedTile> extends DataSource {
     }
 
     ready(): boolean {
-        return this.m_options.dataProvider.ready();
+        return this.m_isReady;
     }
 
-    async connect() {
-        await this.m_options.dataProvider.connect();
+    async connect(decoder: Decoder | undefined) {
+        if (this.m_options.usesWorker) {
+            if (decoder === undefined)
+                throw new Error("Data source requires a decoder");
+
+            await Promise.all([ this.m_options.dataProvider.connect(), decoder.connect(this.m_options.id) ]);
+        } else {
+            await this.m_options.dataProvider.connect();
+        }
+
+        this.m_isReady = true;
     }
 
     getTilingScheme(): TilingScheme {

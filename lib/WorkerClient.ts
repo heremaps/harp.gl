@@ -16,7 +16,8 @@
 import { DecodedTile } from "@here/datasource-protocol/lib/DecodedTile";
 import { TileKey, Projection } from "@here/geoutils";
 import { getProjection, DecodeTileRequest, DecodeTileResponse } from "@here/datasource-protocol";
-import { Theme } from "@here/mapview";
+import { Theme, ConfigurationMessage, isConfigurationMessage, InitializedMessage } from "@here/datasource-protocol";
+import { defaultTheme } from "@here/map-theme";
 
 declare let self: Worker;
 
@@ -26,13 +27,27 @@ export interface WorkerResponse {
 }
 
 export abstract class WorkerClient {
-    constructor(public readonly id: string, public readonly theme: Theme) {
+
+    public theme: Theme = defaultTheme;
+
+    constructor(public readonly id: string) {
          self.addEventListener("message", message => {
             if (typeof message.data.type !== "string" || message.data.type !== id)
                 return;
-            const workerResponse = this.handleEvent(message);
-            self.postMessage(workerResponse.response, workerResponse.buffers);
+
+            if (isConfigurationMessage(message.data)) {
+                this.handleConfigurationEvent(message.data)
+            } else {
+                const workerResponse = this.handleEvent(message);
+                self.postMessage(workerResponse.response, workerResponse.buffers);
+            }
         });
+
+        const isInitializedMessage: InitializedMessage = {
+            type: id,
+            subtype: "isInitialized"
+        }
+        self.postMessage(isInitializedMessage);
     }
 
     /**
@@ -66,5 +81,9 @@ export abstract class WorkerClient {
         };
 
         return { response, buffers };
+    }
+
+    handleConfigurationEvent(message: ConfigurationMessage) {
+        this.theme = message.theme;
     }
 }
