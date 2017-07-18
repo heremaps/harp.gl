@@ -67,6 +67,10 @@ export class TileDataSource<TileType extends CachedTile> extends DataSource {
         this.m_isReady = true;
     }
 
+    dataProvider(): DataProvider {
+        return this.m_options.dataProvider;
+    }
+
     getTilingScheme(): TilingScheme {
         return this.m_options.tilingScheme;
     }

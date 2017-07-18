@@ -40,6 +40,19 @@ export class HypeDataProvider extends DataProvider {
         return this.m_Layer !== undefined;
     }
 
+    /**
+     * Returns the underlying catalog client.
+     *
+     * Note: The data provider must be connected before this method can be called.
+     *
+     * @returns the catalog client this data provider uses
+     */
+    catalogClient(): CatalogClient {
+        if (this.m_catalogClient === undefined)
+            throw new Error("Data provider not connected");
+        return this.m_catalogClient;
+    }
+
     async connect(): Promise<void> {
         this.m_catalogClient = await this.m_dataStoreClient.getCatalogClient(this.m_options.catalogVersion);
         const layer = this.m_catalogClient.layers.get(this.m_options.layer);
