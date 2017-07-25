@@ -16,7 +16,7 @@
 import { DecodedTile } from "@here/datasource-protocol/lib/DecodedTile";
 import { TileKey, Projection } from "@here/geoutils";
 import { getProjection, DecodeTileRequest, DecodeTileResponse } from "@here/datasource-protocol";
-import { Theme, ConfigurationMessage, isConfigurationMessage, InitializedMessage } from "@here/datasource-protocol";
+import { Theme, ConfigurationMessage, isConfigurationMessage, InitializedMessage, ThemeEvaluator } from "@here/datasource-protocol";
 import { defaultTheme } from "@here/map-theme";
 
 declare let self: Worker;
@@ -27,11 +27,11 @@ export interface WorkerResponse {
 }
 
 export abstract class WorkerClient {
-
     public theme: Theme = defaultTheme;
+    public themeEvaluator: ThemeEvaluator;
 
     constructor(public readonly id: string) {
-         self.addEventListener("message", message => {
+        self.addEventListener("message", message => {
             if (typeof message.data.type !== "string" || message.data.type !== id)
                 return;
 
@@ -85,5 +85,6 @@ export abstract class WorkerClient {
 
     handleConfigurationEvent(message: ConfigurationMessage) {
         this.theme = message.theme;
+        this.themeEvaluator = new ThemeEvaluator(this.theme, this.id);
     }
 }
