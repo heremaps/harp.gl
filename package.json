@@ -16,7 +16,10 @@
     "type": "git",
     "url": "ssh://gerrit.it.here.com:29418/cto/verity/mapview-decoder"
   },
-  "author": "HERE Global B.V. and its affiliate(s)",
+  "author": {
+    "name": "HERE Global B.V. and its affiliate(s)",
+    "url": "https://here.com"
+  },
   "license": "SEE LICENSE IN LICENSE",
   "publishConfig": {
     "registry": "https://artifactory.in.here.com/artifactory/api/npm/verity-npm-local"
