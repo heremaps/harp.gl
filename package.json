@@ -4,6 +4,7 @@
   "description": "Decoder worker for mapview",
   "main": "index.js",
   "typings": "index",
+  "module": "@here/mapview-decoder.js",
   "directories": {
     "test": "test"
   },
