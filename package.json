@@ -29,6 +29,7 @@
     "@here/datasource-protocol": "^0.2.0",
     "@here/geoutils": "^0.2.0",
     "@here/hype": "^0.2.0",
+    "@here/map-theme": "^0.1.22",
     "@here/mapview": "^0.7.0"
   },
   "devDependencies": {
