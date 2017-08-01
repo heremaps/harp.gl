@@ -5,6 +5,11 @@
   "main": "index.js",
   "typings": "index",
   "module": "@here/mapview-decoder.js",
+  "decoder": {
+    "name": "@here/mapview-decoder-worker",
+    "main": "index-worker.js",
+    "module": "@here/mapview-decoder-worker.js"
+  },
   "directories": {
     "test": "test"
   },
