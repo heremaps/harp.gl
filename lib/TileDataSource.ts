@@ -32,7 +32,6 @@ export abstract class CachedTile extends Tile {
         super(dataSource, tileKey, projection);
     }
     abstract createGeometries(decodedTile: DecodedTile): void;
-    abstract dispose(): void;
 }
 
 export class TileDataSource<TileType extends CachedTile> extends DataSource {
