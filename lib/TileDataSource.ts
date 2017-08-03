@@ -84,6 +84,9 @@ export class TileDataSource<TileType extends CachedTile> extends DataSource {
         this.m_tileCache.set(tileKey.mortonCode(), tile);
 
         this.m_options.dataProvider.getTile(tileKey).then(data => {
+            if (!this.m_tileCache.has(tileKey.mortonCode()))
+                return; // the response arrived to late.
+
             this.decodeTile(data, tileKey, projection, decoder);
         });
 
