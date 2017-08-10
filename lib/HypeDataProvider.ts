@@ -11,8 +11,6 @@
  * allowed.
  */
 
-/** @module @here/mapview-decoder **//** */
-
 import { DataStoreClient, HRN, CatalogClient, CatalogLayer } from "@here/hype";
 import { DataProvider } from "./DataProvider";
 import { TileKey } from "@here/geoutils";
