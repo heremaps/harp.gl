@@ -11,8 +11,6 @@
  * allowed.
  */
 
-/** @module @here/mapview-decoder **//** */
-
 import { TileKey } from "@here/geoutils";
 
 export abstract class DataProvider {

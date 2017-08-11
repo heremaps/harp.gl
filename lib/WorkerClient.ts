@@ -11,8 +11,6 @@
  * allowed.
  */
 
-/** @module @here/mapview-decoder **//** */
-
 import { DecodedTile } from "@here/datasource-protocol/lib/DecodedTile";
 import { TileKey, Projection } from "@here/geoutils";
 import { getProjection, DecodeTileRequest, DecodeTileResponse } from "@here/datasource-protocol";
