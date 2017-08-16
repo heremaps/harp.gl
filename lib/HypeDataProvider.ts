@@ -11,14 +11,11 @@
  * allowed.
  */
 
-import { DataStoreClient, HRN, CatalogClient, CatalogLayer } from "@here/hype";
+import { DataStoreClient, HRN, CatalogClient, CatalogLayer, DataStoreClientParameters } from "@here/hype";
 import { DataProvider } from "./DataProvider";
 import { TileKey } from "@here/geoutils";
 
 export interface HypeDataProviderOptions {
-    hrn: HRN;
-    appId: string;
-    appCode: string;
     layer: string;
     proxyDataUrl?: string;
     catalogVersion?: number;
@@ -29,9 +26,9 @@ export class HypeDataProvider extends DataProvider {
     private m_Layer: CatalogLayer;
     private m_catalogClient: CatalogClient;
 
-    constructor(private readonly m_options: HypeDataProviderOptions) {
+    constructor(private readonly m_options: HypeDataProviderOptions & DataStoreClientParameters) {
         super();
-        this.m_dataStoreClient = new DataStoreClient(m_options.appId, m_options.appCode, m_options.hrn);
+        this.m_dataStoreClient = new DataStoreClient(m_options);
     }
 
     ready(): boolean {
