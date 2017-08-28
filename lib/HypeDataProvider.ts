@@ -50,12 +50,13 @@ export class HypeDataProvider extends DataProvider {
 
     async connect(): Promise<void> {
         this.m_catalogClient = await this.m_dataStoreClient.getCatalogClient(this.m_options.catalogVersion);
-        const layer = this.m_catalogClient.layers.get(this.m_options.layer);
+        const layer = this.m_catalogClient.findLayer(this.m_options.layer);
         if (layer === undefined)
             throw new Error(`layer ${this.m_options.layer} not found in catalog`);
         this.m_Layer = layer;
+
         if (this.m_options.proxyDataUrl !== undefined && this.m_options.proxyDataUrl.length > 0)
-            this.m_Layer.dataUrl = this.m_options.proxyDataUrl;
+            this.m_catalogClient.setDataProxy(this.m_Layer, this.m_options.proxyDataUrl);
     }
 
     async getTile(tileKey: TileKey): Promise<ArrayBuffer> {
