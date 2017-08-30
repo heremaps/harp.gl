@@ -7,8 +7,7 @@
   "module": "@here/mapview-decoder.js",
   "worker": {
     "name": "@here/mapview-decoder-worker",
-    "main": "index-worker.js",
-    "module": "@here/mapview-decoder-worker.js"
+    "main": "index-worker.js"
   },
   "directories": {
     "test": "test"
