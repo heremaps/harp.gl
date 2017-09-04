@@ -20,31 +20,19 @@ import { DataProvider } from "./DataProvider";
 export interface TileDataSourceOptions {
     id: string;
     tilingScheme: TilingScheme;
-    cacheSize: number;
     dataProvider: DataProvider;
     usesWorker?: boolean;
+    cacheSize?: number; // deprecated
 }
 
-export abstract class CachedTile extends Tile {
-    constructor(dataSource: DataSource, tileKey: TileKey, projection: Projection) {
-        super(dataSource, tileKey, projection);
-    }
-    abstract createGeometries(decodedTile: DecodedTile): void;
-}
-
-export class TileDataSource<TileType extends CachedTile> extends DataSource {
-    private readonly m_tileCache: LRUCache<number, TileType>;
+export class TileDataSource<TileType extends Tile> extends DataSource {
     private m_isReady: boolean = false;
 
-    constructor(private readonly tileType: { new (dataSource: DataSource, tileKey: TileKey, projection: Projection): TileType; }, private readonly m_options: TileDataSourceOptions) {
+    constructor(private readonly tileType: { new(dataSource: DataSource, tileKey: TileKey, projection: Projection): TileType; }, private readonly m_options: TileDataSourceOptions) {
 
         super(m_options.id);
 
-        this.m_tileCache = new LRUCache<number, TileType>(m_options.cacheSize);
-
-        this.m_tileCache.evictionCallback = (_, tile) => {
-            tile.dispose();
-        }
+        this.cacheable = true;
     }
 
     ready(): boolean {
@@ -56,7 +44,7 @@ export class TileDataSource<TileType extends CachedTile> extends DataSource {
             if (decoder === undefined)
                 throw new Error("Data source requires a decoder");
 
-            await Promise.all([ this.m_options.dataProvider.connect(), decoder.connect(this.m_options.id) ]);
+            await Promise.all([this.m_options.dataProvider.connect(), decoder.connect(this.m_options.id)]);
         } else {
             await this.m_options.dataProvider.connect();
         }
@@ -73,35 +61,15 @@ export class TileDataSource<TileType extends CachedTile> extends DataSource {
     }
 
     getTile(tileKey: TileKey, projection: Projection, decoder: Decoder): TileType | undefined {
-        let tile = this.m_tileCache.get(tileKey.mortonCode());
-        if (tile !== undefined)
-            return tile;
-
-        tile = new this.tileType(this, tileKey, projection);
-
-        this.m_tileCache.set(tileKey.mortonCode(), tile);
+        const tile = new this.tileType(this, tileKey, projection);
 
         this.m_options.dataProvider.getTile(tileKey).then(data => {
-            if (!this.m_tileCache.has(tileKey.mortonCode()))
-                return; // the response arrived to late.
+            if (tile.disposed)
+                return; // the response arrived too late.
 
             this.decodeTile(data, tileKey, projection, decoder);
         });
 
         return tile;
-    }
-
-    tileDecoded(tileKey: TileKey, decodedTile: DecodedTile) {
-        this.createGeometries(tileKey, decodedTile);
-    }
-
-    createGeometries(tileKey: TileKey, decodedTile: DecodedTile): void {
-        const tile = this.m_tileCache.get(tileKey.mortonCode());
-
-        if (tile === undefined)
-            return;
-
-        tile.createGeometries(decodedTile);
-        this.requestUpdate();
     }
 }
