@@ -36,8 +36,12 @@ export abstract class WorkerClient {
             if (isConfigurationMessage(message.data)) {
                 this.handleConfigurationEvent(message.data)
             } else {
-                const workerResponse = this.handleEvent(message);
-                self.postMessage(workerResponse.response, workerResponse.buffers);
+                try {
+                    const workerResponse = this.handleEvent(message);
+                    self.postMessage(workerResponse.response, workerResponse.buffers);
+                } catch (e) {
+                    console.log("failed to process worker response", e);
+                }
             }
         });
 
