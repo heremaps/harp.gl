@@ -15,7 +15,7 @@
     "test": "mocha --require source-map-support/register $EXTRA_MOCHA_ARGS ./test/*.js",
     "build": "tsc",
     "deploy": "deploy --umd",
-    "postinstall": "tsconfig-generator"
+    "prebuild": "tsconfig-generator"
   },
   "repository": {
     "type": "git",
