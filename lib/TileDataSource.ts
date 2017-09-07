@@ -66,8 +66,8 @@ export class TileDataSource<TileType extends Tile> extends DataSource {
         this.m_options.dataProvider.getTile(tileKey).then(data => {
             if (tile.disposed)
                 return; // the response arrived too late.
-
-            this.decodeTile(data, tileKey, projection, decoder);
+            if (data.byteLength > 0)
+                this.decodeTile(data, tileKey, projection, decoder);
         });
 
         return tile;
