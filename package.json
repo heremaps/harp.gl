@@ -1,6 +1,6 @@
 {
   "name": "@here/mapview-decoder",
-  "version": "0.2.20",
+  "version": "0.2.21",
   "description": "Decoder worker for mapview",
   "main": "index.js",
   "typings": "index",
