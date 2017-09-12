@@ -15,7 +15,6 @@ import { DecodedTile } from "@here/datasource-protocol/lib/DecodedTile";
 import { TileKey, Projection } from "@here/geoutils";
 import { getProjection, DecodeTileRequest, DecodeTileResponse } from "@here/datasource-protocol";
 import { Theme, ConfigurationMessage, isConfigurationMessage, InitializedMessage, ThemeEvaluator } from "@here/datasource-protocol";
-import { defaultTheme } from "@here/map-theme";
 
 declare let self: Worker;
 
@@ -25,7 +24,7 @@ export interface WorkerResponse {
 }
 
 export abstract class WorkerClient {
-    public theme: Theme = defaultTheme;
+    public theme: Theme;
     public themeEvaluator: ThemeEvaluator;
 
     constructor(public readonly id: string) {
