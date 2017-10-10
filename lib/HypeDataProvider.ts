@@ -11,9 +11,13 @@
  * allowed.
  */
 
-import { DataStoreClient, HRN, CatalogClient, CatalogLayer, DataStoreClientParameters } from "@here/hype";
+import { HRN, DataStoreClientParameters } from "@here/hype";
 import { DataProvider } from "./DataProvider";
 import { TileKey } from "@here/geoutils";
+import { DataStore1Client } from "@here/hype/lib/v1/DataStore1Client";
+import { DataStore2Client } from "@here/hype/lib/v2/DataStore2Client";
+import { Catalog1Client, Catalog1Layer } from "@here/hype/lib/v1/Catalog1Client";
+import { Catalog2Client, Catalog2Layer } from "@here/hype/lib/v2/Catalog2Client";
 
 export interface HypeDataProviderOptions {
     layer: string;
@@ -22,13 +26,11 @@ export interface HypeDataProviderOptions {
 }
 
 export class HypeDataProvider extends DataProvider {
-    private readonly m_dataStoreClient: DataStoreClient;
-    private m_Layer: CatalogLayer;
-    private m_catalogClient: CatalogClient;
+    private m_Layer: Catalog1Layer | Catalog2Layer;
+    private m_catalogClient: Catalog1Client | Catalog2Client;
 
     constructor(private readonly m_options: HypeDataProviderOptions & DataStoreClientParameters) {
         super();
-        this.m_dataStoreClient = new DataStoreClient(m_options);
     }
 
     ready(): boolean {
@@ -42,27 +44,36 @@ export class HypeDataProvider extends DataProvider {
      *
      * @returns the catalog client this data provider uses
      */
-    catalogClient(): CatalogClient {
+    catalogClient(): Catalog1Client | Catalog2Client {
         if (this.m_catalogClient === undefined)
             throw new Error("Data provider not connected");
         return this.m_catalogClient;
     }
 
     async connect(): Promise<void> {
-        this.m_catalogClient = await this.m_dataStoreClient.getCatalogClient(this.m_options.catalogVersion);
-        const layer = this.m_catalogClient.findLayer(this.m_options.layer);
-        if (layer === undefined)
-            throw new Error(`layer ${this.m_options.layer} not found in catalog`);
-        this.m_Layer = layer;
+        let dataStoreClient : DataStore1Client | DataStore2Client;
+        if (this.m_options.hrn.data.service === "data")
+            dataStoreClient = new DataStore2Client(this.m_options);
+        else if (this.m_options.hrn.data.service === "datastore")
+            dataStoreClient = new DataStore1Client(this.m_options);
+        else
+            throw new Error(`Unknown service ${this.m_options.hrn.data.service}, cannot connect`);
+
+        this.m_catalogClient = await dataStoreClient.getCatalogClient(this.m_options.catalogVersion);
+
+        const layer = this.m_catalogClient.getLayer(this.m_options.layer);
 
         if (this.m_options.proxyDataUrl !== undefined && this.m_options.proxyDataUrl.length > 0)
-            this.m_catalogClient.setDataProxy(this.m_Layer, this.m_options.proxyDataUrl);
+            layer.setDataProxy(this.m_options.proxyDataUrl);
+
+        this.m_Layer = layer;
+
     }
 
     async getTile(tileKey: TileKey): Promise<ArrayBuffer> {
-        const response = await this.m_catalogClient.getTile(this.m_Layer, tileKey);
+        const response = await this.m_Layer.getTile(tileKey);
         if (!response.ok)
-            throw new Error(`Error downloading tile ${tileKey.toHereTile()} from catalog ${this.m_dataStoreClient.hrn.toString()}, layer ${this.m_Layer.name}: ${response.status} ${response.statusText}`);
+            throw new Error(`Error downloading tile ${tileKey.toHereTile()} from catalog ${this.m_options.hrn.toString()}: ${response.status} ${response.statusText}`);
         return response.arrayBuffer();
     }
 }
