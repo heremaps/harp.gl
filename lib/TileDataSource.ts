@@ -28,7 +28,7 @@ export interface TileDataSourceOptions {
 export class TileDataSource<TileType extends Tile> extends DataSource {
     private m_isReady: boolean = false;
 
-    constructor(private readonly tileType: { new(dataSource: DataSource, tileKey: TileKey, projection: Projection): TileType; }, private readonly m_options: TileDataSourceOptions) {
+    constructor(private readonly tileType: { new(dataSource: DataSource, tileKey: TileKey): TileType; }, private readonly m_options: TileDataSourceOptions) {
 
         super(m_options.id);
 
@@ -39,12 +39,12 @@ export class TileDataSource<TileType extends Tile> extends DataSource {
         return this.m_isReady;
     }
 
-    async connect(decoder: Decoder | undefined) {
+    async connect() {
         if (this.m_options.usesWorker) {
-            if (decoder === undefined)
+            if (this.decoder === undefined)
                 throw new Error("Data source requires a decoder");
 
-            await Promise.all([this.m_options.dataProvider.connect(), decoder.connect(this.m_options.id)]);
+            await Promise.all([this.m_options.dataProvider.connect(), this.decoder.connect(this.m_options.id)]);
         } else {
             await this.m_options.dataProvider.connect();
         }
@@ -60,14 +60,14 @@ export class TileDataSource<TileType extends Tile> extends DataSource {
         return this.m_options.tilingScheme;
     }
 
-    getTile(tileKey: TileKey, projection: Projection, decoder: Decoder): TileType | undefined {
-        const tile = new this.tileType(this, tileKey, projection);
+    getTile(tileKey: TileKey): TileType | undefined {
+        const tile = new this.tileType(this, tileKey);
 
         this.m_options.dataProvider.getTile(tileKey).then(data => {
             if (tile.disposed)
                 return; // the response arrived too late.
             if (data.byteLength > 0)
-                this.decodeTile(data, tileKey, projection, decoder);
+                this.decodeTile(data, tileKey);
         });
 
         return tile;
