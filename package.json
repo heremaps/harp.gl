@@ -19,7 +19,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "ssh://gerrit.it.here.com:29418/cto/verity/mapview-decoder"
+    "url": "ssh://gerrit.it.here.com:29418/harp4web/verity-core-sdk/mapview-decoder"
   },
   "author": {
     "name": "HERE Global B.V. and its affiliate(s)",
