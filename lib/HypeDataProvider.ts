@@ -70,7 +70,7 @@ export class HypeDataProvider extends DataProvider {
 
     }
 
-    async getTile(tileKey: TileKey): Promise<ArrayBuffer> {
+    async getTile(tileKey: TileKey): Promise<ArrayBufferLike> {
         const response = await this.m_Layer.getTile(tileKey);
         if (!response.ok)
             throw new Error(`Error downloading tile ${tileKey.toHereTile()} from catalog ${this.m_options.hrn.toString()}: ${response.status} ${response.statusText}`);

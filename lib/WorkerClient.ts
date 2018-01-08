@@ -20,7 +20,7 @@ declare let self: Worker;
 
 export interface WorkerResponse {
     response: any;
-    buffers?: ArrayBuffer[];
+    buffers?: ArrayBufferLike[];
 }
 
 export abstract class WorkerClient {
@@ -58,7 +58,7 @@ export abstract class WorkerClient {
      * @param projection The Projection used to convert geo coordinates to world coordinates.
      * @param data The payload to decode.
      */
-    abstract decodeTile(tileKey: TileKey, projection: Projection, data: ArrayBuffer): DecodedTile;
+    abstract decodeTile(tileKey: TileKey, projection: Projection, data: ArrayBufferLike): DecodedTile;
 
     handleEvent(message: MessageEvent): WorkerResponse {
         const request = message.data as DecodeTileRequest;
@@ -66,7 +66,7 @@ export abstract class WorkerClient {
         const projection = getProjection(request.projection);
         const decodedTile = this.decodeTile(tileKey, projection, request.data);
 
-        const buffers: ArrayBuffer[] = [];
+        const buffers: ArrayBufferLike[] = [];
 
         decodedTile.geometries.forEach(geom => {
             geom.vertexAttributes.forEach(attr => buffers.push(attr.buffer));
