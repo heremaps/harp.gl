@@ -11,11 +11,11 @@
  * allowed.
  */
 
-import { Tile, DataSource, Decoder } from '@here/mapview';
-import { DecodedTile, getProjectionName } from '@here/datasource-protocol';
-import { TileKey, TilingScheme, Projection } from "@here/geoutils";
-import { LRUCache } from "@here/lrucache";
+import { Tile, DataSource, ConcurrentDecoderFacade } from '@here/mapview';
+import { TileKey, TilingScheme } from "@here/geoutils";
 import { DataProvider } from "./DataProvider";
+import { TileDecoder, Theme } from '@here/datasource-protocol';
+import { CancellationException } from '@here/fetch';
 
 export interface TileDataSourceOptions {
     id: string;
@@ -23,15 +23,18 @@ export interface TileDataSourceOptions {
     dataProvider: DataProvider;
     usesWorker?: boolean;
     cacheSize?: number; // deprecated
+    decoder?: TileDecoder;
+    concurrentDecoderScriptUrl?: string;
 }
 
 export class TileDataSource<TileType extends Tile> extends DataSource {
     private m_isReady: boolean = false;
+    private readonly m_decoder: TileDecoder;
 
     constructor(private readonly tileType: { new(dataSource: DataSource, tileKey: TileKey): TileType; }, private readonly m_options: TileDataSourceOptions) {
 
         super(m_options.id);
-
+        this.m_decoder = m_options.decoder || ConcurrentDecoderFacade.getTileDecoder(m_options.id, m_options.concurrentDecoderScriptUrl);
         this.cacheable = true;
     }
 
@@ -41,15 +44,21 @@ export class TileDataSource<TileType extends Tile> extends DataSource {
 
     async connect() {
         if (this.m_options.usesWorker) {
-            if (this.decoder === undefined)
-                throw new Error("Data source requires a decoder");
-
-            await Promise.all([this.m_options.dataProvider.connect(), this.decoder.connect(this.m_options.id)]);
+            await Promise.all([
+                this.m_options.dataProvider.connect(),
+                this.m_decoder.connect()
+            ]);
         } else {
             await this.m_options.dataProvider.connect();
         }
 
         this.m_isReady = true;
+    }
+
+    setTheme(theme: Theme | undefined): void {
+        if (theme === undefined)
+            return;
+        this.m_decoder.configure(theme);
     }
 
     dataProvider(): DataProvider {
@@ -63,13 +72,28 @@ export class TileDataSource<TileType extends Tile> extends DataSource {
     getTile(tileKey: TileKey): TileType | undefined {
         const tile = new this.tileType(this, tileKey);
 
-        this.m_options.dataProvider.getTile(tileKey).then(data => {
-            if (tile.disposed)
-                return; // the response arrived too late.
-            if (data.byteLength > 0)
-                this.decodeTile(data, tileKey);
-        });
+        this.loadTileGeometry(tile)
+            .catch(err => {
+                if (!(err instanceof CancellationException))
+                    console.log("TileDataSource: failed to fetch tile", err);
+            });
 
         return tile;
+    }
+
+    private async loadTileGeometry(tile: Tile) {
+        const payload = await this.m_options.dataProvider.getTile(tile.tileKey)
+
+        if (payload.byteLength === 0)
+            return;
+
+        const decodedTile = await this.m_decoder.decodeTile(payload, tile.tileKey, this.projection);
+        tile.createGeometries(decodedTile);
+        this.requestUpdate();
+
+        const stats = this.mapView.statistics;
+        if (stats.enabled) {
+            stats.getTimer("decoding").setValue(decodedTile.decodeTime);
+        }
     }
 }
