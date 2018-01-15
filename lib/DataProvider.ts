@@ -12,9 +12,11 @@
  */
 
 import { TileKey } from "@here/geoutils";
+import { CancellationToken } from "@here/fetch";
 
 export abstract class DataProvider {
     abstract async connect(): Promise<void>;
     abstract ready(): boolean;
-    abstract async getTile(tileKey: TileKey): Promise<ArrayBufferLike>;
+    abstract async getTile(tileKey: TileKey, cancellationToken?: CancellationToken):
+        Promise<ArrayBufferLike>;
 }

@@ -11,39 +11,53 @@
  * allowed.
  */
 
-import { Tile, DataSource, ConcurrentDecoderFacade } from '@here/mapview';
+import { Tile, DataSource, ConcurrentDecoderFacade, TileLoaderState } from '@here/mapview';
 import { TileKey, TilingScheme } from "@here/geoutils";
 import { DataProvider } from "./DataProvider";
+import { TileLoader } from './TileLoader';
 import { TileDecoder, Theme } from '@here/datasource-protocol';
-import { CancellationException } from '@here/fetch';
-import { LoggerManager } from "@here/utils";
-
-const logger = LoggerManager.instance.create('TileDataSource');
 
 export interface TileDataSourceOptions {
     id: string;
     tilingScheme: TilingScheme;
     dataProvider: DataProvider;
-    usesWorker?: boolean;
+    useWorker?: boolean;
     cacheSize?: number; // deprecated
     decoder?: TileDecoder;
     concurrentDecoderServiceName?: string;
     concurrentDecoderScriptUrl?: string;
 }
 
+export class TileFactory<TileType extends Tile> {
+    constructor(
+        private modelConstructor: new (dataSource: DataSource, tileKey: TileKey) => TileType
+    ) {
+    }
+
+    create(dataSource: DataSource, tileKey: TileKey): TileType {
+        return new (this.modelConstructor)(dataSource, tileKey);
+    }
+}
+
 export class TileDataSource<TileType extends Tile> extends DataSource {
     private m_isReady: boolean = false;
     private readonly m_decoder: TileDecoder;
 
-    constructor(private readonly tileType: { new(dataSource: DataSource, tileKey: TileKey): TileType; }, private readonly m_options: TileDataSourceOptions) {
+    constructor(
+        private readonly tileFactory: TileFactory<TileType>,
+        private readonly m_options: TileDataSourceOptions
+    ) {
 
         super(m_options.id);
         if (m_options.decoder) {
             this.m_decoder = m_options.decoder;
         } else if (m_options.concurrentDecoderServiceName) {
-            this.m_decoder = ConcurrentDecoderFacade.getTileDecoder(m_options.concurrentDecoderServiceName, m_options.concurrentDecoderScriptUrl);
+            this.m_decoder = ConcurrentDecoderFacade.getTileDecoder(
+                m_options.concurrentDecoderServiceName,
+                m_options.concurrentDecoderScriptUrl);
         } else {
-            throw new Error(`TileDataSource[${this.name}]: unable to create, missing decoder or concurrentDecoderServiceName`)
+            throw new Error(`TileDataSource[${this.name}]: unable to create, missing decoder or ` +
+                `concurrentDecoderServiceName`);
         }
 
         this.cacheable = true;
@@ -53,8 +67,12 @@ export class TileDataSource<TileType extends Tile> extends DataSource {
         return this.m_isReady;
     }
 
+    get decoder(): TileDecoder {
+        return this.m_decoder;
+    }
+
     async connect() {
-        if (this.m_options.usesWorker) {
+        if (this.m_options.useWorker) {
             await Promise.all([
                 this.m_options.dataProvider.connect(),
                 this.m_decoder.connect()
@@ -81,34 +99,18 @@ export class TileDataSource<TileType extends Tile> extends DataSource {
     }
 
     getTile(tileKey: TileKey): TileType | undefined {
-        const tile = new this.tileType(this, tileKey);
-
-        this.loadTileGeometry(tile)
-            .catch(err => {
-                if (!(err instanceof CancellationException))
-                    logger.error("TileDataSource: failed to fetch tile", err);
-            });
-
+        const tile = this.tileFactory.create(this, tileKey);
+        tile.tileLoader = new TileLoader(
+            tile,
+            this.m_options.dataProvider,
+            this.decoder);
+        tile.tileLoader.loadAndDecode();
         return tile;
     }
 
-    private async loadTileGeometry(tile: Tile) {
-        const payload = await this.m_options.dataProvider.getTile(tile.tileKey)
-
-        if (payload.byteLength === 0) {
-            // skip empty tiles but mark them as renderable
-            tile.forceHasGeometry(true);
-            return;
-        }
-
-        const decodedTile = await this.m_decoder.decodeTile(payload, tile.tileKey, this.name, this.projection);
-
-        tile.createGeometries(decodedTile);
-        this.requestUpdate();
-
-        const stats = this.mapView.statistics;
-        if (stats.enabled) {
-            stats.getTimer("decoding").setValue(decodedTile.decodeTime);
+    updateTile(tile: Tile) {
+        if (tile.tileLoader) {
+            tile.tileLoader.loadAndDecode();
         }
     }
 }

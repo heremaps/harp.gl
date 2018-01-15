@@ -18,6 +18,7 @@ import { DataStore1Client } from "@here/hype/lib/v1/DataStore1Client";
 import { DataStore2Client } from "@here/hype/lib/v2/DataStore2Client";
 import { Catalog1Client, Catalog1Layer } from "@here/hype/lib/v1/Catalog1Client";
 import { Catalog2Client, Catalog2Layer } from "@here/hype/lib/v2/Catalog2Client";
+import { CancellationToken } from "@here/fetch";
 
 export interface HypeDataProviderOptions {
     layer: string;
@@ -51,7 +52,8 @@ export class HypeDataProvider extends DataProvider {
     }
 
     async connect(): Promise<void> {
-        let dataStoreClient : DataStore1Client | DataStore2Client;
+        const options = this.m_options;
+        let dataStoreClient: DataStore1Client | DataStore2Client;
         if (this.m_options.hrn.data.service === "data")
             dataStoreClient = new DataStore2Client(this.m_options);
         else if (this.m_options.hrn.data.service === "datastore")
@@ -59,21 +61,28 @@ export class HypeDataProvider extends DataProvider {
         else
             throw new Error(`Unknown service ${this.m_options.hrn.data.service}, cannot connect`);
 
-        this.m_catalogClient = await dataStoreClient.getCatalogClient(this.m_options.catalogVersion);
+        this.m_catalogClient = await dataStoreClient.getCatalogClient(options.catalogVersion);
 
-        const layer = this.m_catalogClient.getLayer(this.m_options.layer);
+        const layer = this.m_catalogClient.getLayer(options.layer);
 
-        if (this.m_options.proxyDataUrl !== undefined && this.m_options.proxyDataUrl.length > 0)
-            layer.setDataProxy(this.m_options.proxyDataUrl);
+        if (options.proxyDataUrl !== undefined && options.proxyDataUrl.length > 0)
+            layer.setDataProxy(options.proxyDataUrl);
 
         this.m_Layer = layer;
 
     }
 
-    async getTile(tileKey: TileKey): Promise<ArrayBufferLike> {
-        const response = await this.m_Layer.getTile(tileKey);
-        if (!response.ok)
-            throw new Error(`Error downloading tile ${tileKey.toHereTile()} from catalog ${this.m_options.hrn.toString()}: ${response.status} ${response.statusText}`);
+    async getTile(
+        tileKey: TileKey,
+        cancellationToken?: CancellationToken
+    ): Promise<ArrayBufferLike> {
+        const response = await this.m_Layer.getTile(tileKey, {
+            cancellationToken: cancellationToken
+        });
+        if (!response.ok) {
+            throw new Error(`Error downloading tile ${tileKey.toHereTile()} from catalog ` +
+                `${this.m_options.hrn.toString()}: ${response.status} ${response.statusText}`);
+        }
         return response.arrayBuffer();
     }
 }
