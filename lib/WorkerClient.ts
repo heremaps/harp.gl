@@ -26,7 +26,6 @@ export interface WorkerResponse {
 export abstract class WorkerClient {
     public theme: Theme;
     public themeEvaluator: ThemeEvaluator;
-    protected showMissingTechniques: boolean;
 
     constructor(public readonly id: string) {
 
@@ -89,7 +88,6 @@ export abstract class WorkerClient {
     handleConfigurationEvent(message: ConfigurationMessage) {
         this.theme = message.theme;
         this.themeEvaluator = new ThemeEvaluator(this.theme, this.id);
-        this.showMissingTechniques = message.showMissingTechniques || false;
     }
 
 }
