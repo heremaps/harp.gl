@@ -11,4 +11,4 @@
  * allowed.
  */
 
-export * from './lib/WorkerClient';
+export * from './lib/WorkerService';

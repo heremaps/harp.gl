@@ -13,7 +13,7 @@
 
 import { CancellationToken, CancellationException } from "@here/fetch";
 import { TileLoaderState, Tile } from "@here/mapview";
-import { TileDecoder, DecodedTile } from "@here/datasource-protocol";
+import { ITileDecoder, DecodedTile } from "@here/datasource-protocol";
 import { LoggerManager } from "@here/utils";
 
 const logger = LoggerManager.instance.create('TileLoader');
@@ -34,7 +34,7 @@ export class TileLoader {
     constructor(
         private tile: Tile,
         private dataProvider: DataProvider,
-        private tileDecoder: TileDecoder
+        private tileDecoder: ITileDecoder
     ) {
     }
 

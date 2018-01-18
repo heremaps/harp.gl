@@ -15,7 +15,7 @@ import { assert } from "chai";
 import * as sinon from 'sinon';
 import { MapView, DataSource, Tile, Statistics, TileLoaderState } from "@here/mapview";
 import { TileDataSource, DataProvider, TileFactory } from '../index';
-import { DecodedTile, TileDecoder, Theme, ValueMap } from "@here/datasource-protocol";
+import { DecodedTile, ITileDecoder, Theme, ValueMap } from "@here/datasource-protocol";
 import { webMercatorTilingScheme, TileKey, webMercatorProjection } from "@here/geoutils";
 import { CancellationToken } from "@here/fetch";
 
@@ -41,7 +41,7 @@ const fakeEmptyGeometry = {
 }
 
 function createMockTileDecoder() {
-    const mock =  sinon.stub(<TileDecoder>{
+    const mock =  sinon.stub(<ITileDecoder>{
         async connect() {},
         async decodeTile(): Promise<DecodedTile> {
             return Promise.resolve(fakeEmptyGeometry);

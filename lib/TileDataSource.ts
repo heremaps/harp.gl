@@ -15,7 +15,7 @@ import { Tile, DataSource, ConcurrentDecoderFacade, TileLoaderState } from '@her
 import { TileKey, TilingScheme } from "@here/geoutils";
 import { DataProvider } from "./DataProvider";
 import { TileLoader } from './TileLoader';
-import { TileDecoder, Theme } from '@here/datasource-protocol';
+import { ITileDecoder, Theme } from '@here/datasource-protocol';
 
 export interface TileDataSourceOptions {
     id: string;
@@ -23,7 +23,7 @@ export interface TileDataSourceOptions {
     dataProvider: DataProvider;
     useWorker?: boolean;
     cacheSize?: number; // deprecated
-    decoder?: TileDecoder;
+    decoder?: ITileDecoder;
     concurrentDecoderServiceName?: string;
     concurrentDecoderScriptUrl?: string;
 }
@@ -41,7 +41,7 @@ export class TileFactory<TileType extends Tile> {
 
 export class TileDataSource<TileType extends Tile> extends DataSource {
     private m_isReady: boolean = false;
-    private readonly m_decoder: TileDecoder;
+    private readonly m_decoder: ITileDecoder;
 
     constructor(
         private readonly tileFactory: TileFactory<TileType>,
@@ -67,7 +67,7 @@ export class TileDataSource<TileType extends Tile> extends DataSource {
         return this.m_isReady;
     }
 
-    get decoder(): TileDecoder {
+    get decoder(): ITileDecoder {
         return this.m_decoder;
     }
 
