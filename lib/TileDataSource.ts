@@ -92,10 +92,14 @@ export class TileDataSource<TileType extends Tile> extends DataSource {
     private async loadTileGeometry(tile: Tile) {
         const payload = await this.m_options.dataProvider.getTile(tile.tileKey)
 
-        if (payload.byteLength === 0)
+        if (payload.byteLength === 0) {
+            // skip empty tiles but mark them as renderable
+            tile.forceHasGeometry(true);
             return;
+        }
 
         const decodedTile = await this.m_decoder.decodeTile(payload, tile.tileKey, this.name, this.projection);
+
         tile.createGeometries(decodedTile);
         this.requestUpdate();
 
