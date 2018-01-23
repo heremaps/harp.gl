@@ -11,10 +11,15 @@
  * allowed.
  */
 
-import { DecodedTile } from "@here/datasource-protocol/lib/DecodedTile";
 import { TileKey, Projection } from "@here/geoutils";
-import { getProjection, DecodeTileRequest, DecodeTileResponse } from "@here/datasource-protocol";
-import { Theme, ConfigurationMessage, isConfigurationMessage, InitializedMessage, ThemeEvaluator } from "@here/datasource-protocol";
+import {
+    DecodedTileMessageName,
+    DecodedTile, isDecodeTileRequest, DecodeTileRequest,
+    isRequestMessage, ResponseMessage,
+    isConfigurationMessage, ConfigurationMessage,
+    InitializedMessage,
+    Theme, ThemeEvaluator, getProjection
+} from "@here/datasource-protocol";
 
 declare let self: Worker;
 
@@ -27,29 +32,64 @@ export abstract class WorkerClient {
     private themeEvaluators: Map<string, ThemeEvaluator> = new Map();
     public theme: Theme;
 
-    constructor(public readonly id: string) {
+    constructor(public readonly serviceId: string) {
 
-        self.addEventListener("message", message => {
-            if (typeof message.data.type !== "string" || message.data.type !== id)
-                return;
-
-            if (isConfigurationMessage(message.data)) {
-                this.handleConfigurationEvent(message.data)
-            } else {
-                try {
-                    const workerResponse = this.handleEvent(message);
-                    self.postMessage(workerResponse.response, workerResponse.buffers);
-                } catch (e) {
-                    console.log("failed to process worker response", e);
-                }
-            }
-        });
+        self.addEventListener("message", this.onMessage.bind(this));
 
         const isInitializedMessage: InitializedMessage = {
-            type: id,
-            subtype: "isInitialized"
+            type: DecodedTileMessageName.Initialized,
+            service: serviceId,
         }
         self.postMessage(isInitializedMessage);
+    }
+
+    onMessage(message: any) {
+        if (typeof message.data.service !== "string" || message.data.service !== this.serviceId)
+            return;
+
+        try {
+            if (isRequestMessage(message.data)) {
+                const request = message.data;
+                this.handleRequest(request.request)
+                    .then((response) => {
+                        const message: ResponseMessage = {
+                            service: this.serviceId,
+                            type: DecodedTileMessageName.Response,
+                            messageId: request.messageId,
+                            response: response.response
+                        };
+                        self.postMessage(message, response.buffers);
+                    })
+                    .catch((error) => {
+                        const message: ResponseMessage = {
+                            service: this.serviceId,
+                            type: DecodedTileMessageName.Response,
+                            messageId: request.messageId,
+                            error: error.toString()
+                        };
+                        self.postMessage(message);
+                    });
+            } else if (isConfigurationMessage(message.data)) {
+                this.handleConfigurationEvent(message.data)
+            } else {
+                console.log(`WorkerClient[${this.serviceId}]: invalid message ${message.type}`);
+            }
+        } catch (err) {
+            console.log(`WorkerClient[${this.serviceId}]: unhandled exception when ` +
+                        `handling ${message.type}`);
+        }
+    }
+
+    handleRequest(request: any): Promise<WorkerResponse> {
+        if (isDecodeTileRequest(request)) {
+            return new Promise<WorkerResponse>((resolve) => {
+                resolve(this.handleDecodeTileRequest(request))
+            });
+        } else {
+            const errorMsg = `WorkerClient[${this.serviceId}]: invalid request '${request.type}'`;
+            console.log(errorMsg);
+            return Promise.reject(new Error(errorMsg));
+        }
     }
 
     /**
@@ -61,8 +101,7 @@ export abstract class WorkerClient {
      */
     abstract decodeTile(data: ArrayBufferLike, tileKey: TileKey, dataSourceName: string, projection: Projection): DecodedTile;
 
-    handleEvent(message: MessageEvent): WorkerResponse {
-        const request = message.data as DecodeTileRequest;
+    handleDecodeTileRequest(request: DecodeTileRequest): WorkerResponse {
         const tileKey = TileKey.fromMortonCode(request.tileKey);
         const projection = getProjection(request.projection);
         const decodedTile = this.decodeTile(request.data, tileKey, request.dataSourceName, projection);
@@ -75,14 +114,7 @@ export abstract class WorkerClient {
             if (geom.index)
                 buffers.push(geom.index.buffer);
         });
-
-        const response: DecodeTileResponse = {
-            type: request.type,
-            tileKey: request.tileKey,
-            decodedTile
-        };
-
-        return { response, buffers };
+        return { response: decodedTile, buffers };
     }
 
     handleConfigurationEvent(message: ConfigurationMessage) {
@@ -93,7 +125,7 @@ export abstract class WorkerClient {
     getThemeEvalator(dataSourceName: string): ThemeEvaluator {
         let te = this.themeEvaluators.get(dataSourceName);
         if (te === undefined) {
-            te = new ThemeEvaluator(this.theme);
+            te = new ThemeEvaluator(this.theme, dataSourceName);
             this.themeEvaluators.set(dataSourceName, te);
         }
         return te;
