@@ -24,6 +24,7 @@ export interface TileDataSourceOptions {
     usesWorker?: boolean;
     cacheSize?: number; // deprecated
     decoder?: TileDecoder;
+    concurrentDecoderServiceName?: string;
     concurrentDecoderScriptUrl?: string;
 }
 
@@ -34,7 +35,14 @@ export class TileDataSource<TileType extends Tile> extends DataSource {
     constructor(private readonly tileType: { new(dataSource: DataSource, tileKey: TileKey): TileType; }, private readonly m_options: TileDataSourceOptions) {
 
         super(m_options.id);
-        this.m_decoder = m_options.decoder || ConcurrentDecoderFacade.getTileDecoder(m_options.id, m_options.concurrentDecoderScriptUrl);
+        if (m_options.decoder) {
+            this.m_decoder = m_options.decoder;
+        } else if (m_options.concurrentDecoderServiceName) {
+            this.m_decoder = ConcurrentDecoderFacade.getTileDecoder(m_options.concurrentDecoderServiceName, m_options.concurrentDecoderScriptUrl);
+        } else {
+            throw new Error(`TileDataSource[${this.name}]: unable to create, missing decoder or concurrentDecoderServiceName`)
+        }
+
         this.cacheable = true;
     }
 
@@ -87,7 +95,7 @@ export class TileDataSource<TileType extends Tile> extends DataSource {
         if (payload.byteLength === 0)
             return;
 
-        const decodedTile = await this.m_decoder.decodeTile(payload, tile.tileKey, this.projection);
+        const decodedTile = await this.m_decoder.decodeTile(payload, tile.tileKey, this.name, this.projection);
         tile.createGeometries(decodedTile);
         this.requestUpdate();
 

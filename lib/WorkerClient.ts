@@ -24,8 +24,8 @@ export interface WorkerResponse {
 }
 
 export abstract class WorkerClient {
+    private themeEvaluators: Map<string, ThemeEvaluator> = new Map();
     public theme: Theme;
-    public themeEvaluator: ThemeEvaluator;
 
     constructor(public readonly id: string) {
 
@@ -59,13 +59,13 @@ export abstract class WorkerClient {
      * @param projection The Projection used to convert geo coordinates to world coordinates.
      * @param data The payload to decode.
      */
-    abstract decodeTile(tileKey: TileKey, projection: Projection, data: ArrayBufferLike): DecodedTile;
+    abstract decodeTile(data: ArrayBufferLike, tileKey: TileKey, dataSourceName: string, projection: Projection): DecodedTile;
 
     handleEvent(message: MessageEvent): WorkerResponse {
         const request = message.data as DecodeTileRequest;
         const tileKey = TileKey.fromMortonCode(request.tileKey);
         const projection = getProjection(request.projection);
-        const decodedTile = this.decodeTile(tileKey, projection, request.data);
+        const decodedTile = this.decodeTile(request.data, tileKey, request.dataSourceName, projection);
 
         const buffers: ArrayBufferLike[] = [];
 
@@ -87,7 +87,15 @@ export abstract class WorkerClient {
 
     handleConfigurationEvent(message: ConfigurationMessage) {
         this.theme = message.theme;
-        this.themeEvaluator = new ThemeEvaluator(this.theme, this.id);
+        this.themeEvaluators.clear();
     }
 
+    getThemeEvalator(dataSourceName: string): ThemeEvaluator {
+        let te = this.themeEvaluators.get(dataSourceName);
+        if (te === undefined) {
+            te = new ThemeEvaluator(this.theme);
+            this.themeEvaluators.set(dataSourceName, te);
+        }
+        return te;
+    }
 }
