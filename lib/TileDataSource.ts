@@ -16,6 +16,9 @@ import { TileKey, TilingScheme } from "@here/geoutils";
 import { DataProvider } from "./DataProvider";
 import { TileDecoder, Theme } from '@here/datasource-protocol';
 import { CancellationException } from '@here/fetch';
+import { LoggerManager } from "@here/utils";
+
+const logger = LoggerManager.instance.create('TileDataSource');
 
 export interface TileDataSourceOptions {
     id: string;
@@ -83,7 +86,7 @@ export class TileDataSource<TileType extends Tile> extends DataSource {
         this.loadTileGeometry(tile)
             .catch(err => {
                 if (!(err instanceof CancellationException))
-                    console.log("TileDataSource: failed to fetch tile", err);
+                    logger.error("TileDataSource: failed to fetch tile", err);
             });
 
         return tile;
