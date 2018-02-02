@@ -44,7 +44,7 @@
     "mocha": "^4.1.0",
     "mocha-loader": "^1.1.2",
     "source-map-support": "^0.5.2",
-    "typescript": "^2.6.2",
+    "typescript": "^2.7.1",
     "webpack": "^2.3.3"
   }
 }
