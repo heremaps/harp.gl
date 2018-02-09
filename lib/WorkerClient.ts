@@ -76,7 +76,7 @@ export abstract class WorkerClient {
             }
         } catch (err) {
             console.log(`WorkerClient[${this.serviceId}]: unhandled exception when ` +
-                        `handling ${message.type}`);
+                `handling ${message.type}`);
         }
     }
 
@@ -99,12 +99,14 @@ export abstract class WorkerClient {
      * @param projection The Projection used to convert geo coordinates to world coordinates.
      * @param data The payload to decode.
      */
-    abstract decodeTile(data: ArrayBufferLike, tileKey: TileKey, dataSourceName: string, projection: Projection): DecodedTile;
+    abstract decodeTile(data: ArrayBufferLike, tileKey: TileKey, dataSourceName: string,
+        projection: Projection): DecodedTile;
 
     handleDecodeTileRequest(request: DecodeTileRequest): WorkerResponse {
         const tileKey = TileKey.fromMortonCode(request.tileKey);
         const projection = getProjection(request.projection);
-        const decodedTile = this.decodeTile(request.data, tileKey, request.dataSourceName, projection);
+        const decodedTile = this.decodeTile(request.data, tileKey, request.dataSourceName,
+            projection);
 
         const buffers: ArrayBufferLike[] = [];
 
@@ -118,7 +120,12 @@ export abstract class WorkerClient {
     }
 
     handleConfigurationEvent(message: ConfigurationMessage) {
-        this.theme = message.theme;
+
+        // if the message does not specify a theme, ignore it and keep the current one.
+        if (message.theme !== undefined) {
+            this.theme = message.theme;
+        }
+
         this.themeEvaluators.clear();
     }
 
