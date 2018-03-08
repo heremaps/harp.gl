@@ -14,8 +14,8 @@
 import { Tile, DataSource, ConcurrentDecoderFacade, TileLoaderState } from '@here/mapview';
 import { TileKey, TilingScheme } from "@here/geoutils";
 import { DataProvider } from "./DataProvider";
-import { TileLoader } from './TileLoader';
-import { ITileDecoder, Theme } from '@here/datasource-protocol';
+import { TileLoader, TileInfoLoader } from './TileLoader';
+import { ITileDecoder, Theme, TileInfo } from '@here/datasource-protocol';
 
 export interface TileDataSourceOptions {
     id: string;
@@ -100,12 +100,47 @@ export class TileDataSource<TileType extends Tile> extends DataSource {
 
     getTile(tileKey: TileKey): TileType | undefined {
         const tile = this.tileFactory.create(this, tileKey);
-        tile.tileLoader = new TileLoader(
-            tile,
+        const tileLoader = tile.tileLoader = new TileLoader(
+            this,
+            tileKey,
             this.m_options.dataProvider,
             this.decoder);
-        tile.tileLoader.loadAndDecode();
+
+        tileLoader.loadAndDecode().then(loaderState => {
+            if (tileLoader.decodedTile) {
+
+                tile.setDecodedTile(tileLoader.decodedTile);
+
+                this.requestUpdate();
+            } else {
+                // empty tiles are traditionally ignored and don't need decode
+                tile.forceHasGeometry(true);
+            }
+        });
         return tile;
+    }
+
+    getTileInfo(tileKey: TileKey): Promise<TileInfo|undefined> {
+
+        const promise = new Promise<TileInfo|undefined>((resolve, reject) => {
+            const tileLoader = new TileInfoLoader(
+                this,
+                tileKey,
+                this.m_options.dataProvider,
+                this.decoder);
+
+            tileLoader.loadAndDecode().then(loaderState => {
+
+                if (loaderState === TileLoaderState.Ready) {
+                    resolve(tileLoader.tileInfo);
+                } else {
+                    reject(new Error(`TileDataSource#getInfoTile wrong final state: ${
+                        loaderState}`));
+                }
+            })
+        });
+
+        return promise;
     }
 
     updateTile(tile: Tile) {
