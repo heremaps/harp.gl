@@ -27,8 +27,8 @@ export interface HypeDataProviderOptions {
 }
 
 export class HypeDataProvider extends DataProvider {
-    private m_Layer: Catalog1Layer | Catalog2Layer;
-    private m_catalogClient: Catalog1Client | Catalog2Client;
+    private m_Layer?: Catalog1Layer | Catalog2Layer;
+    private m_catalogClient?: Catalog1Client | Catalog2Client;
 
     constructor(private readonly m_options: HypeDataProviderOptions & DataStoreClientParameters) {
         super();
@@ -76,6 +76,9 @@ export class HypeDataProvider extends DataProvider {
         tileKey: TileKey,
         cancellationToken?: CancellationToken
     ): Promise<ArrayBufferLike> {
+        if (this.m_Layer === undefined) {
+            throw new Error(`Hype data provider not connected`);
+        }
         const response = await this.m_Layer.getTile(tileKey, {
             cancellationToken: cancellationToken
         });
