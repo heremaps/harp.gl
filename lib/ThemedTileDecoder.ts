@@ -12,13 +12,14 @@
  */
 
 import {
-    ITileDecoder,
-    Theme,
-    OptionsMap,
     DecodedTile,
-    ThemeEvaluator
+    ITileDecoder,
+    OptionsMap,
+    Theme,
+    ThemeEvaluator,
+    TileInfo
 } from "@here/datasource-protocol";
-import { TileKey, Projection } from "@here/geoutils";
+import { Projection, TileKey } from "@here/geoutils";
 
 export abstract class ThemedTileDecoder implements ITileDecoder {
     private theme?: Theme;
@@ -40,6 +41,15 @@ export abstract class ThemedTileDecoder implements ITileDecoder {
         return this.decodeThemedTile(data, tileKey, themeEvaluator, projection);
     }
 
+    getTileInfo(
+        data: ArrayBufferLike,
+        tileKey: TileKey,
+        dataSourceName: string,
+        projection: Projection
+    ): Promise<TileInfo|undefined> {
+        return Promise.resolve(undefined);
+    }
+
     configure(theme?: Theme | undefined, options?: OptionsMap | undefined): void {
         this.theme = theme;
         this.themeEvaluators.clear();
@@ -52,7 +62,7 @@ export abstract class ThemedTileDecoder implements ITileDecoder {
         projection: Projection
     ): Promise<DecodedTile>;
 
-    private getThemeEvalator(dataSourceName: string): ThemeEvaluator | undefined {
+    protected getThemeEvalator(dataSourceName: string): ThemeEvaluator | undefined {
         if (this.theme === undefined) {
             return undefined;
         }

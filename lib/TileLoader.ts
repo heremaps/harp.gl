@@ -12,29 +12,32 @@
  */
 
 import { CancellationToken, CancellationException } from "@here/fetch";
-import { TileLoaderState, Tile } from "@here/mapview";
-import { ITileDecoder, DecodedTile } from "@here/datasource-protocol";
+import { TileLoaderState, Tile, DataSource } from "@here/mapview";
+import { ITileDecoder, DecodedTile, TileInfo } from "@here/datasource-protocol";
 import { LoggerManager } from "@here/utils";
 
 const logger = LoggerManager.instance.create('TileLoader');
 
 import { DataProvider } from "./DataProvider";
+import { TileKey } from "@here/geoutils";
 
 export class TileLoader {
-    private loadCancellationToken = new CancellationToken();
-    private decodeCancellationToken?: CancellationToken;
+    protected loadCancellationToken = new CancellationToken();
+    protected decodeCancellationToken?: CancellationToken;
 
     public state: TileLoaderState = TileLoaderState.Initialized;
     public error?: Error;
-    private payload?: ArrayBufferLike;
+    payload?: ArrayBufferLike;
+    decodedTile?: DecodedTile;
 
-    private donePromise?: Promise<TileLoaderState>
-    private resolveDonePromise?: (state: TileLoaderState) => void;
+    protected donePromise?: Promise<TileLoaderState>
+    protected resolveDonePromise?: (state: TileLoaderState) => void;
 
     constructor(
-        private tile: Tile,
-        private dataProvider: DataProvider,
-        private tileDecoder: ITileDecoder
+        protected dataSource: DataSource,
+        protected tileKey: TileKey,
+        protected dataProvider: DataProvider,
+        protected tileDecoder: ITileDecoder
     ) {
     }
 
@@ -102,7 +105,7 @@ export class TileLoader {
         }
     }
 
-    private ensureLoadingStarted() {
+    protected ensureLoadingStarted() {
 
         switch (this.state) {
             case TileLoaderState.Ready:
@@ -128,9 +131,9 @@ export class TileLoader {
         }
     }
 
-    private doStartLoad() {
+    protected doStartLoad() {
         const myLoadCancellationToken = this.loadCancellationToken;
-        this.dataProvider.getTile(this.tile.tileKey, this.loadCancellationToken)
+        this.dataProvider.getTile(this.tileKey, this.loadCancellationToken)
             .then((payload) => {
                 if (myLoadCancellationToken.isCancelled) {
                     // safety belt if getTile doesn't really support cancellation tokens
@@ -153,13 +156,11 @@ export class TileLoader {
         this.state = TileLoaderState.Loading;
     }
 
-    private onLoaded(payload: ArrayBufferLike) {
+    protected onLoaded(payload: ArrayBufferLike) {
         this.state = TileLoaderState.Loaded;
         this.payload = payload;
 
         if (payload.byteLength === 0) {
-            // empty tiles are traditionally ignored and don't need decode
-            this.tile.forceHasGeometry(true);
             this.onDone(TileLoaderState.Ready);
             return;
         }
@@ -168,31 +169,31 @@ export class TileLoader {
         this.startDecodeTile();
     }
 
-    private startDecodeTile() {
+    protected startDecodeTile() {
         const payload = this.payload;
         if (payload === undefined) {
-            console.error('invalid state, cannot start decode without loaded tile');
+            logger.error('TileLoader#startDecodeTile: Cannot decode without payload');
             return;
         }
 
         this.state = TileLoaderState.Decoding;
         this.payload = undefined;
 
-        // Save our cancallation point, so we can be reliably cancelled by any subsequent decode
+        // Save our cancellation point, so we can be reliably cancelled by any subsequent decode
         // attempts
         const myCancellationPoint = new CancellationToken();
         this.decodeCancellationToken = myCancellationPoint;
 
-        const dataSource = this.tile.dataSource;
+        const dataSource = this.dataSource;
         this.tileDecoder.decodeTile(
             payload,
-            this.tile.tileKey,
+            this.tileKey,
             dataSource.name,
             dataSource.projection
         )
             .then(decodedTile => {
                 if (myCancellationPoint.isCancelled) {
-                    // next our flow is canceled, silently return
+                    // our flow is cancelled, silently return
                     return;
                 }
 
@@ -200,24 +201,20 @@ export class TileLoader {
             })
             .catch(error => {
                 if (error instanceof CancellationException) {
-                    // next our flow is canceled, silently return
+                    // our flow is cancelled, silently return
                     return;
                 }
                 this.onError(error);
             });
-
     }
 
-    private onDecoded(decodedTile: DecodedTile) {
+    protected onDecoded(decodedTile: DecodedTile) {
 
-        this.tile.setDecodedTile(decodedTile);
-
-        this.tile.dataSource.requestUpdate();
-
+        this.decodedTile = decodedTile;
         this.onDone(TileLoaderState.Ready);
     }
 
-    private cancelDecoding() {
+    protected cancelDecoding() {
 
         if (this.decodeCancellationToken !== undefined) {
             // we should cancel any decodes already in progress!
@@ -226,7 +223,7 @@ export class TileLoader {
         }
     }
 
-    private onDone(doneState: TileLoaderState) {
+    protected onDone(doneState: TileLoaderState) {
         if (this.resolveDonePromise) {
             this.resolveDonePromise(doneState);
             this.resolveDonePromise = undefined;
@@ -235,15 +232,60 @@ export class TileLoader {
         this.state = doneState;
     }
 
-    private onError(error: Error) {
-        const dataSource = this.tile.dataSource;
+    protected onError(error: Error) {
+        const dataSource = this.dataSource;
         logger.error(
-            `[${dataSource.name}]: failed to load tile ${this.tile.tileKey.toHereTile()}`,
+            `[${dataSource.name}]: failed to load tile ${this.tileKey.toHereTile()}`,
             error
         );
 
         this.error = error;
 
         this.onDone(TileLoaderState.Failed);
+    }
+}
+
+export class TileInfoLoader extends TileLoader {
+
+    tileInfo?: TileInfo;
+
+    protected startDecodeTile() {
+        const payload = this.payload;
+        if (payload === undefined) {
+            logger.error('TileInfoLoader#startDecodeTile: Cannot decode without payload');
+            return;
+        }
+
+        this.state = TileLoaderState.Decoding;
+        this.payload = undefined;
+
+        // Save our cancellation point, so we can be reliably cancelled by any subsequent decode
+        // attempts
+        const myCancellationPoint = new CancellationToken();
+        this.decodeCancellationToken = myCancellationPoint;
+
+        const dataSource = this.dataSource;
+        this.tileDecoder.getTileInfo(
+            payload,
+            this.tileKey,
+            dataSource.name,
+            dataSource.projection
+        )
+            .then(tileInfo => {
+                if (myCancellationPoint.isCancelled) {
+                    // our flow is cancelled, silently return
+                    return;
+                }
+                this.tileInfo = tileInfo;
+
+                this.onDone(TileLoaderState.Ready);
+            })
+            .catch(error => {
+                if (error instanceof CancellationException) {
+                    // our flow is cancelled, silently return
+                    return;
+                }
+                this.onError(error);
+            });
     }
 }

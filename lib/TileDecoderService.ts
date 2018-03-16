@@ -11,11 +11,20 @@
  * allowed.
  */
 
-import { WorkerService, WorkerServiceResponse } from "./WorkerService";
-import { ITileDecoder, ConfigurationMessage, DecodedTile, isDecodeTileRequest } from "@here/datasource-protocol";
-import { TileKey, Projection } from "@here/geoutils";
-import { getProjection, DecodeTileRequest, isConfigurationMessage } from "@here/datasource-protocol";
-import { LoggerManager } from "@here/utils";
+import {
+    ConfigurationMessage,
+    DecodeTileRequest,
+    getProjection,
+    isConfigurationMessage,
+    isDecodeTileRequest,
+    isTileInfoRequest,
+    ITileDecoder,
+    TileInfoRequest,
+} from '@here/datasource-protocol';
+import { TileKey } from '@here/geoutils';
+import { LoggerManager } from '@here/utils';
+
+import { WorkerService, WorkerServiceResponse } from './WorkerService';
 
 const logger = LoggerManager.instance.create('TileDecoderService');
 
@@ -42,6 +51,10 @@ export class TileDecoderService extends WorkerService {
         if (isDecodeTileRequest(request)) {
             return new Promise<WorkerServiceResponse>((resolve) => {
                 resolve(this.handleDecodeTileRequest(request))
+            });
+        } else if (isTileInfoRequest(request)) {
+            return new Promise<WorkerServiceResponse>((resolve) => {
+                resolve(this.handleTileInfoRequest(request))
             });
         } else {
             return super.handleRequest(request)
@@ -77,6 +90,24 @@ export class TileDecoderService extends WorkerService {
 
                 return {
                     response: decodedTile,
+                    transferList
+                };
+            });
+    }
+
+    handleTileInfoRequest(request: TileInfoRequest): Promise<WorkerServiceResponse> {
+        const tileKey = TileKey.fromMortonCode(request.tileKey);
+        const projection = getProjection(request.projection);
+
+        return this.decoder
+            .getTileInfo(request.data, tileKey, request.dataSourceName, projection)
+            .then(tileInfo => {
+                const transferList: ArrayBuffer[] =
+                    tileInfo !== undefined && tileInfo.transferList != undefined
+                        ? tileInfo.transferList
+                        : [];
+                return {
+                    response: tileInfo,
                     transferList
                 };
             });

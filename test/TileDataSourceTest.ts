@@ -11,13 +11,24 @@
  * allowed.
  */
 
-import { assert } from "chai";
-import * as sinon from 'sinon';
-import { MapView, DataSource, Tile, Statistics, TileLoaderState } from "@here/mapview";
-import { TileDataSource, DataProvider, TileFactory } from '../index';
-import { DecodedTile, ITileDecoder, Theme, ValueMap } from "@here/datasource-protocol";
-import { webMercatorTilingScheme, TileKey, webMercatorProjection } from "@here/geoutils";
+import {
+    DecodedTile,
+    ITileDecoder,
+    Theme,
+    TileInfo,
+    ValueMap
+} from "@here/datasource-protocol";
 import { CancellationToken } from "@here/fetch";
+import {
+    Projection,
+    TileKey,
+    webMercatorProjection,
+    webMercatorTilingScheme
+} from "@here/geoutils";
+import { DataSource, MapView, Statistics, Tile, TileLoaderState } from "@here/mapview";
+import { assert } from "chai";
+import * as sinon from "sinon";
+import { DataProvider, TileDataSource, TileFactory } from "../index";
 
 
 function createMockDataProvider() {
@@ -41,13 +52,21 @@ const fakeEmptyGeometry = {
 }
 
 function createMockTileDecoder() {
-    const mock =  sinon.stub(<ITileDecoder>{
+    const mock = sinon.stub(<ITileDecoder>{
         async connect() {},
         async decodeTile(): Promise<DecodedTile> {
             return Promise.resolve(fakeEmptyGeometry);
         },
+        async getTileInfo(
+            data: ArrayBufferLike,
+            tileKey: TileKey,
+            dataSourceName: string,
+            projection: Projection
+        ): Promise<TileInfo|undefined> {
+            return Promise.resolve(undefined);
+        },
         configure() {}
-    })
+    });
     mock.decodeTile.resolves(fakeEmptyGeometry);
     return mock;
 }
