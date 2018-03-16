@@ -29,10 +29,10 @@ export class TileDecoderService extends WorkerService {
     }
 
     /**
-     * Start a [[TileDecoderService]] with given decoder.
+     * Start a [[TileDecoderService]] with a given decoder.
      *
-     * @param serviceId service id
-     * @param decoder   [[TileDecoder]] instance
+     * @param serviceId Service id.
+     * @param decoder   [[TileDecoder]] instance.
      */
     public static start(serviceId: string, decoder: ITileDecoder) {
         return new TileDecoderService(serviceId, decoder);

@@ -40,14 +40,14 @@ interface RequestEntry {
 /**
  * Worker Service communication helper.
  *
- * Listens to Web Worker messages from [[ConcurrentWorkerSet]] and implements
+ * Listens to Web Worker messages from [[ConcurrentWorkerSet]] and implements:
  *  - worker service initialization
  *  - request/respone scheme
- *  - error handling
+ *  - error handling.
  *
  * This class should be subclassed to provide concrete like [[TileDecoderService]].
  *
- * Communication Peer for [[ConcurrentWorkerSet]].
+ * Communication peer for [[ConcurrentWorkerSet]].
  */
 export abstract class WorkerService {
     private pendingRequests: Map<number, RequestEntry> = new Map();
@@ -70,18 +70,18 @@ export abstract class WorkerService {
     }
 
     /**
-     * Message handler to be overriden by implementation.
+     * Message handler to be overridden by implementation.
      *
-     * @param message `MessageEvent.data` as received by Service
+     * @param message `MessageEvent.data` as received by `WorkerService`.
      */
     protected handleMessage(message: any): void {
         logger.error(`[${this.serviceId}]: Invalid message ${message.type}`);
     }
 
     /**
-     * Call Request handler to be overriden by implementation.
+     * Call request handler to be overridden by implementation.
      *
-     * @param request [[RequestMessage.request]] as received by Service
+     * @param request [[RequestMessage.request]] as received by `WorkerService`.
      */
     protected handleRequest(request: any): Promise<WorkerServiceResponse> {
         throw new Error(`ServiceAdapter[${this.serviceId}]: Invalid request '${request.type}'`);
@@ -92,7 +92,7 @@ export abstract class WorkerService {
      *
      * Responsible for filtering message target and managing request/response sequence.
      *
-     * @param message message to be dispatched
+     * @param message Message to be dispatched.
      */
     private onMessage = (message: MessageEvent) => {
         if (typeof message.data.service !== "string" || message.data.service !== this.serviceId) {

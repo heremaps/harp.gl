@@ -41,9 +41,9 @@ export class HypeDataProvider extends DataProvider {
     /**
      * Returns the underlying catalog client.
      *
-     * Note: The data provider must be connected before this method can be called.
+     * **Note**: The data provider must be connected before this method can be called.
      *
-     * @returns the catalog client this data provider uses
+     * @returns The catalog client this data provider uses.
      */
     catalogClient(): Catalog1Client | Catalog2Client {
         if (this.m_catalogClient === undefined)
