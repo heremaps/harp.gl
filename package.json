@@ -25,7 +25,7 @@
     "name": "HERE Global B.V. and its affiliate(s)",
     "url": "https://here.com"
   },
-  "license": "SEE LICENSE IN LICENSE",
+  "license": "SEE LICENSE IN HERE_NOTICE",
   "publishConfig": {
     "registry": "https://artifactory.in.here.com/artifactory/api/npm/verity-npm-local/"
   },
