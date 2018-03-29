@@ -51,8 +51,10 @@ export abstract class ThemedTileDecoder implements ITileDecoder {
     }
 
     configure(theme?: Theme | undefined, options?: OptionsMap | undefined): void {
-        this.theme = theme;
-        this.themeEvaluators.clear();
+        if (theme !== undefined) {
+            this.theme = theme;
+            this.themeEvaluators.clear();
+        }
     }
 
     abstract decodeThemedTile(

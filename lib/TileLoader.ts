@@ -105,6 +105,14 @@ export class TileLoader {
         }
     }
 
+    isFinished() {
+        return (
+            this.state === TileLoaderState.Ready ||
+            this.state === TileLoaderState.Canceled ||
+            this.state === TileLoaderState.Failed
+        );
+    }
+
     protected ensureLoadingStarted() {
 
         switch (this.state) {

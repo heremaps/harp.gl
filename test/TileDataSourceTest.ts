@@ -170,7 +170,7 @@ describe("TileDataSource", function () {
         });
         testedDataSource.attached(createMockMapView());
 
-        const tile = testedDataSource.getTile(TileKey.fromRowColumnLevel(0, 0, 0))!
+        const tile = testedDataSource.getTile(TileKey.fromRowColumnLevel(0, 0, 0))!;
         assert(tile);
 
         const spyTileSetDecodedTile = sinon.spy(tile, 'setDecodedTile');
@@ -184,8 +184,7 @@ describe("TileDataSource", function () {
 
         // assert
         assert.equal(mockDataProvider.getTile.callCount, 1);
-        assert.equal(mockDecoder.decodeTile.callCount, 1)
-        assert.equal(spyTileSetDecodedTile.callCount, 1);
+        assert.equal(mockDecoder.decodeTile.callCount, 1);
         assert(spyTileSetDecodedTile.calledWith(fakeEmptyGeometry));
     });
 });

@@ -88,6 +88,7 @@ export class TileDataSource<TileType extends Tile> extends DataSource {
         if (theme === undefined)
             return;
         this.m_decoder.configure(theme);
+        this.mapView.markTilesDirty(this);
     }
 
     dataProvider(): DataProvider {
@@ -100,23 +101,13 @@ export class TileDataSource<TileType extends Tile> extends DataSource {
 
     getTile(tileKey: TileKey): TileType | undefined {
         const tile = this.tileFactory.create(this, tileKey);
-        const tileLoader = tile.tileLoader = new TileLoader(
+        tile.tileLoader = new TileLoader(
             this,
             tileKey,
             this.m_options.dataProvider,
             this.decoder);
 
-        tileLoader.loadAndDecode().then(loaderState => {
-            if (tileLoader.decodedTile) {
-
-                tile.setDecodedTile(tileLoader.decodedTile);
-
-                this.requestUpdate();
-            } else {
-                // empty tiles are traditionally ignored and don't need decode
-                tile.forceHasGeometry(true);
-            }
-        });
+        this.updateTile(tile);
         return tile;
     }
 
@@ -144,8 +135,21 @@ export class TileDataSource<TileType extends Tile> extends DataSource {
     }
 
     updateTile(tile: Tile) {
-        if (tile.tileLoader) {
-            tile.tileLoader.loadAndDecode();
+        const tileLoader = tile.tileLoader;
+        if (tileLoader === undefined) {
+            return;
         }
+
+        tileLoader.loadAndDecode().then(loaderState => {
+            if (tileLoader.decodedTile) {
+
+                tile.setDecodedTile(tileLoader.decodedTile);
+
+                this.requestUpdate();
+            } else {
+                // empty tiles are traditionally ignored and don't need decode
+                tile.forceHasGeometry(true);
+            }
+        });
     }
 }
