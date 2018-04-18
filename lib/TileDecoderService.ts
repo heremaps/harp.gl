@@ -17,12 +17,14 @@ import {
     getProjection,
     isConfigurationMessage,
     isDecodeTileRequest,
+    isLandmarkTechnique,
+    isTextureBuffer,
     isTileInfoRequest,
     ITileDecoder,
-    TileInfoRequest
-} from "@here/datasource-protocol";
-import { TileKey } from "@here/geoutils";
-import { LoggerManager } from "@here/utils";
+    TileInfoRequest,
+} from '@here/datasource-protocol';
+import { TileKey } from '@here/geoutils';
+import { LoggerManager } from '@here/utils';
 
 import { WorkerService, WorkerServiceResponse } from "./WorkerService";
 
@@ -61,6 +63,16 @@ export class TileDecoderService extends WorkerService {
 
                     if (geom.index && geom.index.buffer instanceof ArrayBuffer) {
                         transferList.push(geom.index.buffer);
+                    }
+                });
+
+                decodedTile.techniques.forEach(technique => {
+                    if (isLandmarkTechnique(technique)) {
+                        if (isTextureBuffer(technique.texture)) {
+                            if (technique.texture.buffer instanceof ArrayBuffer) {
+                                transferList.push(technique.texture.buffer);
+                            }
+                        }
                     }
                 });
 
