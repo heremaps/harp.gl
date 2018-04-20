@@ -40,6 +40,7 @@
     "@here/tsconfig-generator": "^2.0.0",
     "@types/chai": "^4.1.2",
     "@types/mocha": "^2.2.47",
+    "@here/test-utils": "^0.1.0",
     "chai": "^4.0.2",
     "mocha": "^4.1.0",
     "mocha-loader": "^1.1.2",

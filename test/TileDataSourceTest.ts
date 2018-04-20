@@ -11,7 +11,7 @@
  * allowed.
  */
 
-import { DecodedTile, ITileDecoder, Theme, TileInfo, ValueMap } from "@here/datasource-protocol";
+import { DecodedTile, ITileDecoder, TileInfo } from "@here/datasource-protocol";
 import { CancellationToken } from "@here/fetch";
 import {
     Projection,
@@ -26,6 +26,7 @@ import { DataProvider, TileDataSource, TileFactory } from "../index";
 
 function createMockDataProvider() {
     const mockTemplate: DataProvider = {
+        // tslint:disable-next-line:no-empty
         async connect() {},
         ready(): boolean {
             return true;
@@ -48,6 +49,7 @@ const fakeEmptyGeometry = {
 };
 
 function createMockTileDecoder() {
+    // tslint:disable:no-empty
     const mockTemplate: ITileDecoder = {
         async connect() {},
         dispose() {},
@@ -55,15 +57,16 @@ function createMockTileDecoder() {
             return Promise.resolve(fakeEmptyGeometry);
         },
         async getTileInfo(
-            data: ArrayBufferLike,
-            tileKey: TileKey,
-            dataSourceName: string,
-            projection: Projection
+            _data: ArrayBufferLike,
+            _tileKey: TileKey,
+            _dataSourceName: string,
+            _projection: Projection
         ): Promise<TileInfo | undefined> {
             return Promise.resolve(undefined);
         },
         configure() {}
     };
+    // tslint:enable:no-empty
     const mock = sinon.stub(mockTemplate);
     mock.decodeTile.resolves(fakeEmptyGeometry);
     return mock;
@@ -77,11 +80,11 @@ function genericTileFactory(dataSource: DataSource, tileKey: TileKey) {
     return new Tile(dataSource, tileKey);
 }
 
-describe("TileDataSource", () =>{
+describe("TileDataSource", () => {
     it("#dispose cascades to decoder", () => {
         const decoder = createMockTileDecoder();
         const testedDataSource = new TileDataSource(new TileFactory(Tile), {
-            id: 'tds',
+            id: "tds",
             tilingScheme: webMercatorTilingScheme,
             dataProvider: createMockDataProvider(),
             useWorker: true,

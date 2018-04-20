@@ -11,10 +11,7 @@
  * allowed.
  */
 
-import { assert } from "chai";
-import * as decoder from "../index";
-
 describe("MapViewDecoder", () => {
-    it("isOk", () => {
-    });
+    // tslint:disable-next-line:no-empty
+    it("isOk", () => {});
 });
