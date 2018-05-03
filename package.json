@@ -36,7 +36,7 @@
     "@here/mapview": "^0.7.55"
   },
   "devDependencies": {
-    "@here/deploy": "^0.2.0",
+    "@here/deploy": "^0.2.23",
     "@here/tsconfig-generator": "^2.0.0",
     "@types/chai": "^4.1.2",
     "@types/mocha": "^2.2.47",
