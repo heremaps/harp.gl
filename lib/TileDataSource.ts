@@ -63,6 +63,10 @@ export class TileDataSource<TileType extends Tile> extends DataSource {
         this.cacheable = true;
     }
 
+    dispose() {
+        this.decoder.dispose();
+    }
+
     ready(): boolean {
         return this.m_isReady;
     }
