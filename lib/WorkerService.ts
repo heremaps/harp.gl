@@ -22,7 +22,7 @@ import {
 
 import { LoggerManager } from "@here/utils";
 
-const logger = LoggerManager.instance.create('WorkerService');
+const logger = LoggerManager.instance.create('WorkerService', {enabled: false});
 
 declare let self: Worker;
 
