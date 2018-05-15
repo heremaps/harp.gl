@@ -22,8 +22,8 @@ import {
 import { Projection, TileKey } from "@here/geoutils";
 
 export abstract class ThemedTileDecoder implements ITileDecoder {
-    private theme?: Theme;
-    private themeEvaluators: Map<string, ThemeEvaluator> = new Map();
+    private m_theme?: Theme;
+    private m_themeEvaluators: Map<string, ThemeEvaluator> = new Map();
 
     abstract connect(): Promise<void>;
 
@@ -39,7 +39,7 @@ export abstract class ThemedTileDecoder implements ITileDecoder {
     ): Promise<DecodedTile> {
         const themeEvaluator = this.getThemeEvalator(dataSourceName);
         if (themeEvaluator === undefined) {
-            return Promise.reject(new Error('no theme loaded'));
+            return Promise.reject(new Error("no theme loaded"));
         }
 
         return this.decodeThemedTile(data, tileKey, themeEvaluator, projection);
@@ -50,14 +50,14 @@ export abstract class ThemedTileDecoder implements ITileDecoder {
         tileKey: TileKey,
         dataSourceName: string,
         projection: Projection
-    ): Promise<TileInfo|undefined> {
+    ): Promise<TileInfo | undefined> {
         return Promise.resolve(undefined);
     }
 
     configure(theme?: Theme | undefined, options?: OptionsMap | undefined): void {
         if (theme !== undefined) {
-            this.theme = theme;
-            this.themeEvaluators.clear();
+            this.m_theme = theme;
+            this.m_themeEvaluators.clear();
         }
     }
 
@@ -69,13 +69,13 @@ export abstract class ThemedTileDecoder implements ITileDecoder {
     ): Promise<DecodedTile>;
 
     protected getThemeEvalator(dataSourceName: string): ThemeEvaluator | undefined {
-        if (this.theme === undefined) {
+        if (this.m_theme === undefined) {
             return undefined;
         }
-        let themeEvaluator = this.themeEvaluators.get(dataSourceName);
+        let themeEvaluator = this.m_themeEvaluators.get(dataSourceName);
         if (themeEvaluator === undefined) {
-            themeEvaluator = new ThemeEvaluator(this.theme, dataSourceName);
-            this.themeEvaluators.set(dataSourceName, themeEvaluator);
+            themeEvaluator = new ThemeEvaluator(this.m_theme, dataSourceName);
+            this.m_themeEvaluators.set(dataSourceName, themeEvaluator);
         }
         return themeEvaluator;
     }

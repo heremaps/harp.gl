@@ -11,8 +11,8 @@
  * allowed.
  */
 
-import { TileKey } from "@here/geoutils";
 import { CancellationToken } from "@here/fetch";
+import { TileKey } from "@here/geoutils";
 
 export abstract class DataProvider {
     abstract async connect(): Promise<void>;

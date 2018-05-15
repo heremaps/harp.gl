@@ -11,26 +11,26 @@
  * allowed.
  */
 
-import { CancellationToken, CancellationException } from "@here/fetch";
-import { TileLoaderState, Tile, DataSource } from "@here/mapview";
-import { ITileDecoder, DecodedTile, TileInfo } from "@here/datasource-protocol";
+import { DecodedTile, ITileDecoder, TileInfo } from "@here/datasource-protocol";
+import { CancellationException, CancellationToken } from "@here/fetch";
+import { TileKey } from "@here/geoutils";
+import { DataSource, Tile, TileLoaderState } from "@here/mapview";
 import { LoggerManager } from "@here/utils";
+
+import { DataProvider } from "./DataProvider";
 
 const logger = LoggerManager.instance.create('TileLoader');
 
-import { DataProvider } from "./DataProvider";
-import { TileKey } from "@here/geoutils";
-
 export class TileLoader {
-    protected loadCancellationToken = new CancellationToken();
-    protected decodeCancellationToken?: CancellationToken;
 
-    public state: TileLoaderState = TileLoaderState.Initialized;
-    public error?: Error;
+    state: TileLoaderState = TileLoaderState.Initialized;
+    error?: Error;
     payload?: ArrayBufferLike;
     decodedTile?: DecodedTile;
 
-    protected donePromise?: Promise<TileLoaderState>
+    protected loadCancellationToken = new CancellationToken();
+    protected decodeCancellationToken?: CancellationToken;
+    protected donePromise?: Promise<TileLoaderState>;
     protected resolveDonePromise?: (state: TileLoaderState) => void;
 
     constructor(
@@ -70,7 +70,7 @@ export class TileLoader {
 
     waitSettled() {
         if (!this.donePromise) {
-            return Promise.resolve(this.state)
+            return Promise.resolve(this.state);
         }
         return this.donePromise;
     }
@@ -154,12 +154,12 @@ export class TileLoader {
                     return;
                 }
                 this.onError(error);
-            })
+            });
 
         if (!this.donePromise) {
             this.donePromise = new Promise<TileLoaderState>((resolve, reject) => {
                 this.resolveDonePromise = resolve;
-            })
+            });
         }
         this.state = TileLoaderState.Loading;
     }

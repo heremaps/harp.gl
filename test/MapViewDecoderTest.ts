@@ -12,9 +12,9 @@
  */
 
 import { assert } from "chai";
-import * as decoder from '../index';
+import * as decoder from "../index";
 
-describe("MapViewDecoder", function() {
-    it("isOk", function() {
+describe("MapViewDecoder", () => {
+    it("isOk", () => {
     });
 });

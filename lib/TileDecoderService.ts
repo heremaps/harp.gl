@@ -19,67 +19,43 @@ import {
     isDecodeTileRequest,
     isTileInfoRequest,
     ITileDecoder,
-    TileInfoRequest,
-} from '@here/datasource-protocol';
-import { TileKey } from '@here/geoutils';
-import { LoggerManager } from '@here/utils';
+    TileInfoRequest
+} from "@here/datasource-protocol";
+import { TileKey } from "@here/geoutils";
+import { LoggerManager } from "@here/utils";
 
-import { WorkerService, WorkerServiceResponse } from './WorkerService';
+import { WorkerService, WorkerServiceResponse } from "./WorkerService";
 
-const logger = LoggerManager.instance.create('TileDecoderService');
+const logger = LoggerManager.instance.create("TileDecoderService");
 
 export class TileDecoderService extends WorkerService {
-    constructor(
-        public readonly serviceId: string,
-        private readonly decoder: ITileDecoder
-    ) {
-        super(serviceId);
-        this.decoder.connect();
-    }
-
     /**
      * Start a [[TileDecoderService]] with a given decoder.
      *
      * @param serviceId Service id.
      * @param decoder   [[TileDecoder]] instance.
      */
-    public static start(serviceId: string, decoder: ITileDecoder) {
+    static start(serviceId: string, decoder: ITileDecoder) {
         return new TileDecoderService(serviceId, decoder);
     }
 
-    protected handleRequest(request: any): Promise<WorkerServiceResponse> {
-        if (isDecodeTileRequest(request)) {
-            return new Promise<WorkerServiceResponse>((resolve) => {
-                resolve(this.handleDecodeTileRequest(request))
-            });
-        } else if (isTileInfoRequest(request)) {
-            return new Promise<WorkerServiceResponse>((resolve) => {
-                resolve(this.handleTileInfoRequest(request))
-            });
-        } else {
-            return super.handleRequest(request)
-        }
-    }
-
-    protected handleMessage(message: any) {
-        if (isConfigurationMessage(message)) {
-            this.handleConfigurationMessage(message);
-        } else {
-            console.error(`[${this.serviceId}]: invalid message ${message.type}`)
-        }
+    constructor(readonly serviceId: string, private readonly m_decoder: ITileDecoder) {
+        super(serviceId);
+        this.m_decoder.connect();
     }
 
     handleDecodeTileRequest(request: DecodeTileRequest): Promise<WorkerServiceResponse> {
         const tileKey = TileKey.fromMortonCode(request.tileKey);
         const projection = getProjection(request.projection);
 
-        return this.decoder.decodeTile(request.data, tileKey, request.dataSourceName, projection)
-            .then((decodedTile) => {
+        return this.m_decoder
+            .decodeTile(request.data, tileKey, request.dataSourceName, projection)
+            .then(decodedTile => {
                 const transferList: ArrayBuffer[] = [];
                 decodedTile.geometries.forEach(geom => {
                     geom.vertexAttributes.forEach(attr => {
                         if (attr.buffer instanceof ArrayBuffer) {
-                            transferList.push(attr.buffer)
+                            transferList.push(attr.buffer);
                         }
                     });
 
@@ -99,11 +75,11 @@ export class TileDecoderService extends WorkerService {
         const tileKey = TileKey.fromMortonCode(request.tileKey);
         const projection = getProjection(request.projection);
 
-        return this.decoder
+        return this.m_decoder
             .getTileInfo(request.data, tileKey, request.dataSourceName, projection)
             .then(tileInfo => {
                 const transferList: ArrayBuffer[] =
-                    tileInfo !== undefined && tileInfo.transferList != undefined
+                    tileInfo !== undefined && tileInfo.transferList !== undefined
                         ? tileInfo.transferList
                         : [];
                 return {
@@ -114,6 +90,28 @@ export class TileDecoderService extends WorkerService {
     }
 
     handleConfigurationMessage(message: ConfigurationMessage) {
-        this.decoder.configure(message.theme, message.options);
+        this.m_decoder.configure(message.theme, message.options);
+    }
+
+    protected handleRequest(request: any): Promise<WorkerServiceResponse> {
+        if (isDecodeTileRequest(request)) {
+            return new Promise<WorkerServiceResponse>(resolve => {
+                resolve(this.handleDecodeTileRequest(request));
+            });
+        } else if (isTileInfoRequest(request)) {
+            return new Promise<WorkerServiceResponse>(resolve => {
+                resolve(this.handleTileInfoRequest(request));
+            });
+        } else {
+            return super.handleRequest(request);
+        }
+    }
+
+    protected handleMessage(message: any) {
+        if (isConfigurationMessage(message)) {
+            this.handleConfigurationMessage(message);
+        } else {
+            logger.error(`[${this.serviceId}]: invalid message ${message.type}`);
+        }
     }
 }

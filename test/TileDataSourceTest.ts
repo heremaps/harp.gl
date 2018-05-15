@@ -11,13 +11,7 @@
  * allowed.
  */
 
-import {
-    DecodedTile,
-    ITileDecoder,
-    Theme,
-    TileInfo,
-    ValueMap
-} from "@here/datasource-protocol";
+import { DecodedTile, ITileDecoder, Theme, TileInfo, ValueMap } from "@here/datasource-protocol";
 import { CancellationToken } from "@here/fetch";
 import {
     Projection,
@@ -30,15 +24,17 @@ import { assert } from "chai";
 import * as sinon from "sinon";
 import { DataProvider, TileDataSource, TileFactory } from "../index";
 
-
 function createMockDataProvider() {
-    const mock = sinon.stub(<DataProvider> {
-        async connect() { },
-        ready(): boolean { return true; },
+    const mockTemplate: DataProvider = {
+        async connect() {},
+        ready(): boolean {
+            return true;
+        },
         async getTile(): Promise<ArrayBuffer> {
             return Promise.resolve(new ArrayBuffer(5));
         }
-    })
+    };
+    const mock = sinon.stub(mockTemplate);
     mock.getTile.callsFake(() => {
         return Promise.resolve(new ArrayBuffer(5));
     });
@@ -46,10 +42,10 @@ function createMockDataProvider() {
 }
 
 const fakeEmptyGeometry = {
-    foo: 'bar',
+    foo: "bar",
     geometries: [],
-    techniques: [],
-}
+    techniques: []
+};
 
 function createMockTileDecoder() {
     const mockTemplate: ITileDecoder = {
@@ -63,26 +59,26 @@ function createMockTileDecoder() {
             tileKey: TileKey,
             dataSourceName: string,
             projection: Projection
-        ): Promise<TileInfo|undefined> {
+        ): Promise<TileInfo | undefined> {
             return Promise.resolve(undefined);
         },
         configure() {}
-    }
+    };
     const mock = sinon.stub(mockTemplate);
     mock.decodeTile.resolves(fakeEmptyGeometry);
     return mock;
 }
 
 function createMockMapView() {
-    return { projection: webMercatorProjection, statistics: new Statistics() } as MapView
+    return ({ projection: webMercatorProjection, statistics: new Statistics() } as any) as MapView;
 }
 
 function genericTileFactory(dataSource: DataSource, tileKey: TileKey) {
     return new Tile(dataSource, tileKey);
 }
 
-describe("TileDataSource", function () {
-    it('#dispose cascades to decoder', () => {
+describe("TileDataSource", () =>{
+    it("#dispose cascades to decoder", () => {
         const decoder = createMockTileDecoder();
         const testedDataSource = new TileDataSource(new TileFactory(Tile), {
             id: 'tds',
@@ -96,15 +92,15 @@ describe("TileDataSource", function () {
         testedDataSource.dispose();
         assert.equal(decoder.dispose.callCount, 1);
     });
-    it('uses tileFactory to construct tiles with custom type', function () {
+    it("uses tileFactory to construct tiles with custom type", () => {
         class CustomTile extends Tile {
             constructor(dataSource: DataSource, tileKey: TileKey) {
-                super(dataSource, tileKey)
+                super(dataSource, tileKey);
             }
-        };
+        }
 
         const testedDataSource = new TileDataSource(new TileFactory(CustomTile), {
-            id: 'tds',
+            id: "tds",
             tilingScheme: webMercatorTilingScheme,
             dataProvider: createMockDataProvider(),
             useWorker: true,
@@ -114,26 +110,25 @@ describe("TileDataSource", function () {
 
         const mockTile = testedDataSource.getTile(TileKey.fromRowColumnLevel(0, 0, 0));
 
-        assert(mockTile instanceof CustomTile)
+        assert(mockTile instanceof CustomTile);
     });
 
-    it("#updateTile: tile disposing cancels load, skips decode and tile update", async function () {
-
+    it("#updateTile: tile disposing cancels load, skips decode and tile update", async () => {
         const mockDataProvider = createMockDataProvider();
 
         let getTileToken = new CancellationToken();
         mockDataProvider.getTile.callsFake((tileKey: any, cancellationToken: any) => {
-            assert(cancellationToken !== undefined)
-            assert(cancellationToken instanceof CancellationToken)
+            assert(cancellationToken !== undefined);
+            assert(cancellationToken instanceof CancellationToken);
             getTileToken = cancellationToken as CancellationToken;
             return Promise.resolve(new ArrayBuffer(5));
-        })
+        });
 
         const mockDecoder = createMockTileDecoder();
         mockDecoder.decodeTile.resolves(fakeEmptyGeometry);
 
         const testedDataSource = new TileDataSource(new TileFactory(Tile), {
-            id: 'tds',
+            id: "tds",
             tilingScheme: webMercatorTilingScheme,
             dataProvider: mockDataProvider,
             useWorker: true,
@@ -145,7 +140,7 @@ describe("TileDataSource", function () {
         const tile = testedDataSource.getTile(TileKey.fromRowColumnLevel(0, 0, 0))!;
         assert(tile);
 
-        const spyTileSetDecodedTile = sinon.spy(tile, 'setDecodedTile');
+        const spyTileSetDecodedTile = sinon.spy(tile, "setDecodedTile");
 
         // act
         testedDataSource.updateTile(tile);
@@ -169,16 +164,14 @@ describe("TileDataSource", function () {
         assert.equal(spyTileSetDecodedTile.callCount, 0);
     });
 
-
-    it("subsequent, overlapping #updateTile calls load & decode tile once", async function () {
-
+    it("subsequent, overlapping #updateTile calls load & decode tile once", async () => {
         const mockDataProvider = createMockDataProvider();
         const mockDecoder = createMockTileDecoder();
 
         mockDecoder.decodeTile.resolves(fakeEmptyGeometry);
 
         const testedDataSource = new TileDataSource(new TileFactory(Tile), {
-            id: 'tds',
+            id: "tds",
             tilingScheme: webMercatorTilingScheme,
             dataProvider: mockDataProvider,
             useWorker: true,
@@ -189,7 +182,7 @@ describe("TileDataSource", function () {
         const tile = testedDataSource.getTile(TileKey.fromRowColumnLevel(0, 0, 0))!;
         assert(tile);
 
-        const spyTileSetDecodedTile = sinon.spy(tile, 'setDecodedTile');
+        const spyTileSetDecodedTile = sinon.spy(tile, "setDecodedTile");
 
         // act
         testedDataSource.updateTile(tile);

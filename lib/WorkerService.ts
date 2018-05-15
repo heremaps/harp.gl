@@ -50,16 +50,15 @@ interface RequestEntry {
  * Communication peer for [[ConcurrentWorkerSet]].
  */
 export abstract class WorkerService {
-    private pendingRequests: Map<number, RequestEntry> = new Map();
+    private m_pendingRequests: Map<number, RequestEntry> = new Map();
 
     constructor(readonly serviceId: string) {
-
         self.addEventListener("message", this.onMessage);
 
         const isInitializedMessage: InitializedMessage = {
             service: serviceId,
-            type: DecodedTileMessageName.Initialized,
-        }
+            type: DecodedTileMessageName.Initialized
+        };
         self.postMessage(isInitializedMessage);
     }
 
@@ -106,10 +105,10 @@ export abstract class WorkerService {
                     service: request.service,
                     messageId: request.messageId,
                     responseSent: false
-                }
-                this.pendingRequests.set(request.messageId, requestEntry);
+                };
+                this.m_pendingRequests.set(request.messageId, requestEntry);
                 this.tryHandleRequest(request.request)
-                    .then((response) => {
+                    .then(response => {
                         this.doSendResponse(
                             requestEntry,
                             {
@@ -121,21 +120,21 @@ export abstract class WorkerService {
                             response.transferList
                         );
                     })
-                    .catch((error) => {
+                    .catch(error => {
                         this.doSendResponse(requestEntry, {
                             service: this.serviceId,
                             type: DecodedTileMessageName.Response,
                             messageId: request.messageId,
                             error: error.toString()
-                        })
+                        });
                     });
             } else if (isConfigurationMessage(message.data)) {
-                this.tryHandleMessage(message.data)
+                this.tryHandleMessage(message.data);
             }
         } catch (err) {
             logger.error(`[${this.serviceId}]: Unhandled exception when handling ${message.type}`);
         }
-    }
+    };
 
     /**
      * Safety belt over [[handleMessage]] for correct exception handling & logging.
@@ -173,17 +172,17 @@ export abstract class WorkerService {
         self.postMessage(response, transferList);
 
         requestEntry.responseSent = true;
-        this.pendingRequests.delete(requestEntry.messageId);
+        this.m_pendingRequests.delete(requestEntry.messageId);
     }
 
     private cancelAllPendingRequests() {
-        this.pendingRequests.forEach((requestEntry) => {
+        this.m_pendingRequests.forEach(requestEntry => {
             this.doSendResponse(requestEntry, {
                 service: this.serviceId,
                 type: DecodedTileMessageName.Response,
                 messageId: requestEntry.messageId,
                 error: "cancelled" as any
-            })
-        })
+            });
+        });
     }
 }

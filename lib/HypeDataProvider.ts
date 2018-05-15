@@ -11,14 +11,14 @@
  * allowed.
  */
 
-import { HRN, DataStoreClientParameters } from "@here/hype";
-import { DataProvider } from "./DataProvider";
-import { TileKey } from "@here/geoutils";
-import { DataStore1Client } from "@here/hype/lib/v1/DataStore1Client";
-import { DataStore2Client } from "@here/hype/lib/v2/DataStore2Client";
-import { Catalog1Client, Catalog1Layer } from "@here/hype/lib/v1/Catalog1Client";
-import { Catalog2Client, Catalog2Layer } from "@here/hype/lib/v2/Catalog2Client";
 import { CancellationToken } from "@here/fetch";
+import { TileKey } from "@here/geoutils";
+import { DataStoreClientParameters, HRN } from "@here/hype";
+import { Catalog1Client, Catalog1Layer } from "@here/hype/lib/v1/Catalog1Client";
+import { DataStore1Client } from "@here/hype/lib/v1/DataStore1Client";
+import { Catalog2Client, Catalog2Layer } from "@here/hype/lib/v2/Catalog2Client";
+import { DataStore2Client } from "@here/hype/lib/v2/DataStore2Client";
+import { DataProvider } from "./DataProvider";
 
 export interface HypeDataProviderOptions {
     layer: string;
@@ -27,7 +27,7 @@ export interface HypeDataProviderOptions {
 }
 
 export class HypeDataProvider extends DataProvider {
-    private m_Layer?: Catalog1Layer | Catalog2Layer;
+    private m_layer?: Catalog1Layer | Catalog2Layer;
     private m_catalogClient?: Catalog1Client | Catalog2Client;
 
     constructor(private readonly m_options: HypeDataProviderOptions & DataStoreClientParameters) {
@@ -35,7 +35,7 @@ export class HypeDataProvider extends DataProvider {
     }
 
     ready(): boolean {
-        return this.m_Layer !== undefined;
+        return this.m_layer !== undefined;
     }
 
     /**
@@ -46,45 +46,47 @@ export class HypeDataProvider extends DataProvider {
      * @returns The catalog client this data provider uses.
      */
     catalogClient(): Catalog1Client | Catalog2Client {
-        if (this.m_catalogClient === undefined)
+        if (this.m_catalogClient === undefined) {
             throw new Error("Data provider not connected");
+        }
         return this.m_catalogClient;
     }
 
     async connect(): Promise<void> {
         const options = this.m_options;
         let dataStoreClient: DataStore1Client | DataStore2Client;
-        if (this.m_options.hrn.data.service === "data")
+        if (this.m_options.hrn.data.service === "data") {
             dataStoreClient = new DataStore2Client(this.m_options);
-        else if (this.m_options.hrn.data.service === "datastore")
+        } else if (this.m_options.hrn.data.service === "datastore") {
             dataStoreClient = new DataStore1Client(this.m_options);
-        else
+        } else {
             throw new Error(`Unknown service ${this.m_options.hrn.data.service}, cannot connect`);
+        }
 
         this.m_catalogClient = await dataStoreClient.getCatalogClient(options.catalogVersion);
 
         const layer = this.m_catalogClient.getLayer(options.layer);
 
-        if (options.proxyDataUrl !== undefined && options.proxyDataUrl.length > 0)
+        if (options.proxyDataUrl !== undefined && options.proxyDataUrl.length > 0) {
             layer.setDataProxy(options.proxyDataUrl);
+        }
 
-        this.m_Layer = layer;
-
+        this.m_layer = layer;
     }
 
     async getTile(
         tileKey: TileKey,
         cancellationToken?: CancellationToken
     ): Promise<ArrayBufferLike> {
-        if (this.m_Layer === undefined) {
+        if (this.m_layer === undefined) {
             throw new Error(`Hype data provider not connected`);
         }
-        const response = await this.m_Layer.getTile(tileKey, {
-            cancellationToken: cancellationToken
-        });
+        const response = await this.m_layer.getTile(tileKey, { cancellationToken });
         if (!response.ok) {
-            throw new Error(`Error downloading tile ${tileKey.toHereTile()} from catalog ` +
-                `${this.m_options.hrn.toString()}: ${response.status} ${response.statusText}`);
+            throw new Error(
+                `Error downloading tile ${tileKey.toHereTile()} from catalog ` +
+                    `${this.m_options.hrn.toString()}: ${response.status} ${response.statusText}`
+            );
         }
         return response.arrayBuffer();
     }
