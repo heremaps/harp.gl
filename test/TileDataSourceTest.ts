@@ -52,8 +52,9 @@ const fakeEmptyGeometry = {
 }
 
 function createMockTileDecoder() {
-    const mock = sinon.stub(<ITileDecoder>{
+    const mockTemplate: ITileDecoder = {
         async connect() {},
+        dispose() {},
         async decodeTile(): Promise<DecodedTile> {
             return Promise.resolve(fakeEmptyGeometry);
         },
@@ -66,7 +67,8 @@ function createMockTileDecoder() {
             return Promise.resolve(undefined);
         },
         configure() {}
-    });
+    }
+    const mock = sinon.stub(mockTemplate);
     mock.decodeTile.resolves(fakeEmptyGeometry);
     return mock;
 }
@@ -80,6 +82,20 @@ function genericTileFactory(dataSource: DataSource, tileKey: TileKey) {
 }
 
 describe("TileDataSource", function () {
+    it('#dispose cascades to decoder', () => {
+        const decoder = createMockTileDecoder();
+        const testedDataSource = new TileDataSource(new TileFactory(Tile), {
+            id: 'tds',
+            tilingScheme: webMercatorTilingScheme,
+            dataProvider: createMockDataProvider(),
+            useWorker: true,
+            decoder
+        });
+
+        assert.equal(decoder.dispose.callCount, 0);
+        testedDataSource.dispose();
+        assert.equal(decoder.dispose.callCount, 1);
+    });
     it('uses tileFactory to construct tiles with custom type', function () {
         class CustomTile extends Tile {
             constructor(dataSource: DataSource, tileKey: TileKey) {

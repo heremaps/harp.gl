@@ -27,6 +27,10 @@ export abstract class ThemedTileDecoder implements ITileDecoder {
 
     abstract connect(): Promise<void>;
 
+    // tslint:disable-next-line:no-empty
+    dispose() {
+    }
+
     decodeTile(
         data: ArrayBufferLike,
         tileKey: TileKey,
