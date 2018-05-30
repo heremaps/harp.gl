@@ -17,7 +17,7 @@ import {
     getProjection,
     isConfigurationMessage,
     isDecodeTileRequest,
-    isLandmarkTechnique,
+    isStandardTexturedTechnique,
     isTextureBuffer,
     isTileInfoRequest,
     ITileDecoder,
@@ -67,7 +67,7 @@ export class TileDecoderService extends WorkerService {
                 });
 
                 decodedTile.techniques.forEach(technique => {
-                    if (isLandmarkTechnique(technique)) {
+                    if (isStandardTexturedTechnique(technique)) {
                         if (isTextureBuffer(technique.texture)) {
                             if (technique.texture.buffer instanceof ArrayBuffer) {
                                 transferList.push(technique.texture.buffer);
