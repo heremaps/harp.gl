@@ -213,7 +213,7 @@ export class TileDataSource<TileType extends Tile> extends DataSource {
             return;
         }
 
-        tileLoader.loadAndDecode().then(loaderState => {
+        tileLoader.loadAndDecode().then(() => {
             if (tileLoader.decodedTile) {
                 tile.setDecodedTile(tileLoader.decodedTile);
 

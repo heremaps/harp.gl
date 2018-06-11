@@ -220,7 +220,7 @@ export class TileLoader {
             });
 
         if (this.donePromise === undefined) {
-            this.donePromise = new Promise<TileLoaderState>((resolve, reject) => {
+            this.donePromise = new Promise<TileLoaderState>(resolve => {
                 this.resolveDonePromise = resolve;
             });
         }

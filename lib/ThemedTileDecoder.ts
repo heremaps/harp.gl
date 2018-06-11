@@ -49,15 +49,15 @@ export abstract class ThemedTileDecoder implements ITileDecoder {
     }
 
     getTileInfo(
-        data: ArrayBufferLike,
-        tileKey: TileKey,
-        dataSourceName: string,
-        projection: Projection
+        _data: ArrayBufferLike,
+        _tileKey: TileKey,
+        _dataSourceName: string,
+        _projection: Projection
     ): Promise<TileInfo | undefined> {
         return Promise.resolve(undefined);
     }
 
-    configure(theme?: Theme | undefined, options?: OptionsMap | undefined): void {
+    configure(theme?: Theme | undefined, _options?: OptionsMap | undefined): void {
         if (theme !== undefined) {
             this.m_theme = theme;
             this.m_themeEvaluators.clear();

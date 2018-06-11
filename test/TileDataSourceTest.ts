@@ -26,8 +26,9 @@ import { DataProvider, TileDataSource, TileFactory } from "../index";
 
 function createMockDataProvider() {
     const mockTemplate: DataProvider = {
-        // tslint:disable-next-line:no-empty
-        async connect() {},
+        async connect() {
+            // empty implementation
+        },
         ready(): boolean {
             return true;
         },
@@ -49,10 +50,13 @@ const fakeEmptyGeometry = {
 };
 
 function createMockTileDecoder() {
-    // tslint:disable:no-empty
     const mockTemplate: ITileDecoder = {
-        async connect() {},
-        dispose() {},
+        async connect() {
+            // connect is not used
+        },
+        dispose() {
+            // dispose is not used
+        },
         async decodeTile(): Promise<DecodedTile> {
             return Promise.resolve(fakeEmptyGeometry);
         },
@@ -64,9 +68,10 @@ function createMockTileDecoder() {
         ): Promise<TileInfo | undefined> {
             return Promise.resolve(undefined);
         },
-        configure() {}
+        configure() {
+            // no configuration needed for mock
+        }
     };
-    // tslint:enable:no-empty
     const mock = sinon.stub(mockTemplate);
     mock.decodeTile.resolves(fakeEmptyGeometry);
     return mock;
@@ -74,10 +79,6 @@ function createMockTileDecoder() {
 
 function createMockMapView() {
     return ({ projection: webMercatorProjection, statistics: new Statistics() } as any) as MapView;
-}
-
-function genericTileFactory(dataSource: DataSource, tileKey: TileKey) {
-    return new Tile(dataSource, tileKey);
 }
 
 describe("TileDataSource", () => {
@@ -120,7 +121,7 @@ describe("TileDataSource", () => {
         const mockDataProvider = createMockDataProvider();
 
         let getTileToken = new CancellationToken();
-        mockDataProvider.getTile.callsFake((tileKey: any, cancellationToken: any) => {
+        mockDataProvider.getTile.callsFake((_tileKey: any, cancellationToken: any) => {
             assert(cancellationToken !== undefined);
             assert(cancellationToken instanceof CancellationToken);
             getTileToken = cancellationToken as CancellationToken;
@@ -192,7 +193,7 @@ describe("TileDataSource", () => {
         testedDataSource.updateTile(tile);
         testedDataSource.updateTile(tile);
 
-        const settledState = await tile.tileLoader!.waitSettled();
+        await tile.tileLoader!.waitSettled();
 
         // assert
         assert.equal(mockDataProvider.getTile.callCount, 1);
