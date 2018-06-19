@@ -1,39 +1,58 @@
 /*
- * Copyright (C) 2018 HERE Global B.V. and its affiliate(s).
- * All rights reserved.
+ * Copyright (C) 2018 HERE Global B.V. and its affiliate(s). All rights reserved.
  *
- * This software and other materials contain proprietary information
- * controlled by HERE and are protected by applicable copyright legislation.
- * Any use and utilization of this software and other materials and
- * disclosure to any third parties is conditional upon having a separate
- * agreement with HERE for the access, use, utilization or disclosure of this
- * software. In the absence of such agreement, the use of the software is not
- * allowed.
+ * This software and other materials contain proprietary information controlled by HERE and are
+ * protected by applicable copyright legislation. Any use and utilization of this software and other
+ * materials and disclosure to any third parties is conditional upon having a separate agreement
+ * with HERE for the access, use, utilization or disclosure of this software. In the absence of such
+ * agreement, the use of the software is not allowed.
  */
-
 import {
     DecodedTileMessageName,
     InitializedMessage,
     isConfigurationMessage,
     isRequestMessage,
-    RequestMessage,
     ResponseMessage
 } from "@here/datasource-protocol";
-
 import { LoggerManager } from "@here/utils";
 
-const logger = LoggerManager.instance.create('WorkerService', {enabled: false});
+const logger = LoggerManager.instance.create("WorkerService", { enabled: false });
 
 declare let self: Worker;
 
+/**
+ * Response for [[WorkerService]] procession results.
+ */
 export interface WorkerServiceResponse {
+    /**
+     * Response object.
+     */
     response: any;
+
+    /**
+     * Transfer list containing a list of [[ArrayBuffer]] which transfer ownership from web worker
+     * to UI thread.
+     */
     transferList?: ArrayBuffer[];
 }
 
+/**
+ * Header information for a [[RequestMessage]].
+ */
 interface RequestEntry {
+    /**
+     * ID of service.
+     */
     service: string;
+
+    /**
+     * Unique ID of message.
+     */
     messageId: number;
+
+    /**
+     * Contains `true` if message has been processed, and response has been sent.
+     */
     responseSent: boolean;
 }
 
@@ -52,6 +71,11 @@ interface RequestEntry {
 export abstract class WorkerService {
     private m_pendingRequests: Map<number, RequestEntry> = new Map();
 
+    /**
+     * Sets up the `WorkerService` with the specified name, and starts processing messages.
+     *
+     * @param serviceId The service id.
+     */
     constructor(readonly serviceId: string) {
         self.addEventListener("message", this.onMessage);
 
@@ -62,6 +86,10 @@ export abstract class WorkerService {
         self.postMessage(isInitializedMessage);
     }
 
+    /**
+     * Destroy the `WorkerService`. Cancels all pending requests ad removes itself from the message
+     * queue.
+     */
     destroy() {
         this.cancelAllPendingRequests();
 
