@@ -33,7 +33,8 @@
     "@here/datasource-protocol": "^0.2.39",
     "@here/geoutils": "^0.2.40",
     "@here/hype": "^0.2.54",
-    "@here/mapview": "^0.7.55"
+    "@here/mapview": "^0.7.55",
+    "@here/test-utils": "^0.1.0"
   },
   "devDependencies": {
     "@here/deploy": "^0.2.23",
