@@ -33,10 +33,10 @@ export abstract class DataProvider {
      *
      * @param tileKey Address of a tile.
      * @param cancellationToken Optional token to cancel the request.
-     * @returns A promise delivering the data as an [[ArrayBufferLike]].
+     * @returns A promise delivering the data as an [[ArrayBufferLike]], or any object.
      */
     abstract async getTile(
         tileKey: TileKey,
         cancellationToken?: CancellationToken
-    ): Promise<ArrayBufferLike>;
+    ): Promise<ArrayBufferLike | {}>;
 }

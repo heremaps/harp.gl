@@ -33,9 +33,9 @@ export class TileLoader {
     error?: Error;
 
     /**
-     * The binary tile data.
+     * The binary data in form of [[ArrayBufferLike]], or any object.
      */
-    payload?: ArrayBufferLike;
+    payload?: ArrayBufferLike | {};
 
     /**
      * The result of decoding the `payload`: The [[DecodedTile]].
@@ -230,17 +230,19 @@ export class TileLoader {
     /**
      * Called when binary data has been loaded. The loading state is now progressing to decoding.
      *
-     * @param payload Binary data in form of[[ArrayBufferLike]].
+     * @param payload Binary data in form of [[ArrayBufferLike]], or any object.
      */
-    protected onLoaded(payload: ArrayBufferLike) {
+    protected onLoaded(payload: ArrayBufferLike | {}) {
         this.state = TileLoaderState.Loaded;
         this.payload = payload;
 
-        if (payload.byteLength === 0) {
-            this.onDone(TileLoaderState.Ready);
-            return;
+        if ((payload as ArrayBufferLike).byteLength !== undefined) {
+            if ((payload as ArrayBufferLike).byteLength === 0) {
+                this.onDone(TileLoaderState.Ready);
+                return;
+            }
         }
-
+        // TODO: check for the object to not be empty
         // TBD: we might susspend decode if tile is not visible ... ?
         this.startDecodeTile();
     }
