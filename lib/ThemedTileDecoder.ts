@@ -25,9 +25,9 @@ import { Projection, TileKey } from "@here/geoutils";
  * reasons.
  */
 export abstract class ThemedTileDecoder implements ITileDecoder {
+    languages?: string[];
     private m_theme?: Theme;
     private m_themeEvaluators: Map<string, ThemeEvaluator> = new Map();
-
     abstract connect(): Promise<void>;
 
     dispose() {
@@ -48,19 +48,25 @@ export abstract class ThemedTileDecoder implements ITileDecoder {
         return this.decodeThemedTile(data, tileKey, themeEvaluator, projection);
     }
 
+    // tslint:disable:no-unused-variable
     getTileInfo(
-        _data: ArrayBufferLike,
-        _tileKey: TileKey,
-        _dataSourceName: string,
-        _projection: Projection
+        data: ArrayBufferLike,
+        tileKey: TileKey,
+        dataSourceName: string,
+        projection: Projection
     ): Promise<TileInfo | undefined> {
         return Promise.resolve(undefined);
     }
 
-    configure(theme?: Theme | undefined, _options?: OptionsMap | undefined): void {
+    // tslint:disable:no-unused-variable
+    configure(theme?: Theme | undefined, languages?: string[],
+        options?: OptionsMap | undefined): void {
         if (theme !== undefined) {
             this.m_theme = theme;
             this.m_themeEvaluators.clear();
+        }
+        if (languages !== undefined) {
+            this.languages = languages;
         }
     }
 
