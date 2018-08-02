@@ -11,7 +11,7 @@
  * allowed.
  */
 
-import { DecodedTile, ITileDecoder, TileInfo } from "@here/datasource-protocol";
+import { DecodedTile, Geometry, ITileDecoder, TileInfo } from "@here/datasource-protocol";
 import { CancellationToken } from "@here/fetch";
 import {
     Projection,
@@ -43,9 +43,11 @@ function createMockDataProvider() {
     return mock;
 }
 
+const fakeGeometry = {};
+
 const fakeEmptyGeometry = {
     foo: "bar",
-    geometries: [],
+    geometries: [fakeGeometry as Geometry],
     techniques: []
 };
 
@@ -199,5 +201,34 @@ describe("TileDataSource", () => {
         assert.equal(mockDataProvider.getTile.callCount, 1);
         assert.equal(mockDecoder.decodeTile.callCount, 1);
         assert(spyTileSetDecodedTile.calledWith(fakeEmptyGeometry));
+    });
+
+    it("Empty decoded tiles are ignored", async () => {
+        const mockDataProvider = createMockDataProvider();
+        const mockDecoder = createMockTileDecoder();
+
+        fakeEmptyGeometry.geometries = [];
+
+        mockDecoder.decodeTile.resolves(fakeEmptyGeometry);
+
+        const testedDataSource = new TileDataSource(new TileFactory(Tile), {
+            id: "tds",
+            tilingScheme: webMercatorTilingScheme,
+            dataProvider: mockDataProvider,
+            useWorker: true,
+            decoder: mockDecoder
+        });
+        testedDataSource.attached(createMockMapView());
+
+        const tile = testedDataSource.getTile(TileKey.fromRowColumnLevel(0, 0, 0))!;
+        assert(tile);
+
+        // act
+        testedDataSource.updateTile(tile);
+
+        await tile.tileLoader!.waitSettled();
+
+        // assert
+        assert.equal(tile.hasGeometry, true);
     });
 });

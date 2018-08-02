@@ -7,7 +7,7 @@
  * with HERE for the access, use, utilization or disclosure of this software. In the absence of such
  * agreement, the use of the software is not allowed.
  */
-import { ITileDecoder, Theme, TileInfo } from "@here/datasource-protocol";
+import { DecodedTile, ITileDecoder, Theme, TileInfo } from "@here/datasource-protocol";
 import { TileKey, TilingScheme } from "@here/geoutils";
 import { ConcurrentDecoderFacade, DataSource, Tile, TileLoaderState } from "@here/mapview";
 
@@ -214,7 +214,7 @@ export class TileDataSource<TileType extends Tile> extends DataSource {
         }
 
         tileLoader.loadAndDecode().then(() => {
-            if (tileLoader.decodedTile) {
+            if (tileLoader.decodedTile && this.decodedTileHasGeometry(tileLoader.decodedTile)) {
                 tile.setDecodedTile(tileLoader.decodedTile);
 
                 this.requestUpdate();
@@ -223,5 +223,14 @@ export class TileDataSource<TileType extends Tile> extends DataSource {
                 tile.forceHasGeometry(true);
             }
         });
+    }
+
+    decodedTileHasGeometry(decodedTile: DecodedTile) {
+        return (
+            decodedTile.geometries.length ||
+            (decodedTile.poiGeometries !== undefined && decodedTile.poiGeometries.length) ||
+            (decodedTile.textGeometries !== undefined && decodedTile.textGeometries.length) ||
+            (decodedTile.textPathGeometries !== undefined && decodedTile.textPathGeometries.length)
+        );
     }
 }
