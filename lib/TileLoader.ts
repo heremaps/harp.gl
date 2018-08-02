@@ -242,7 +242,12 @@ export class TileLoader {
                 return;
             }
         }
-        // TODO: check for the object to not be empty
+        // Object is empty
+        if ((payload as {}) === {}) {
+            this.onDone(TileLoaderState.Ready);
+            return;
+        }
+
         // TBD: we might susspend decode if tile is not visible ... ?
         this.startDecodeTile();
     }
