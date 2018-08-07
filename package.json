@@ -31,6 +31,7 @@
   },
   "dependencies": {
     "@here/datasource-protocol": "^0.2.39",
+    "@here/fetch": "^0.1.42",
     "@here/geoutils": "^0.2.40",
     "@here/hype": "^0.2.54",
     "@here/mapview": "^0.7.55",
@@ -38,10 +39,12 @@
   },
   "devDependencies": {
     "@here/deploy": "^0.2.23",
+    "@here/test-utils": "^0.1.0",
     "@here/tsconfig-generator": "^2.0.0",
     "@types/chai": "^4.1.2",
     "@types/mocha": "^2.2.47",
-    "@here/test-utils": "^0.1.0",
+    "@types/node": "^10.5.7",
+    "@types/sinon": "^5.0.1",
     "chai": "^4.0.2",
     "mocha": "^4.1.0",
     "mocha-loader": "^1.1.2",
