@@ -18,7 +18,6 @@
         "types": [
             "chai",
             "mocha",
-            "node",
             "sinon",
             "three",
             "tween.js"

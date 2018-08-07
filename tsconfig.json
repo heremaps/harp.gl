@@ -1,0 +1,28 @@
+{
+    "compilerOptions": {
+        "module": "commonjs",
+        "target": "es2017",
+        "lib": [
+            "es2017",
+            "dom"
+        ],
+        "sourceMap": true,
+        "baseUrl": ".",
+        "rootDir": ".",
+        "outDir": "./dist/node_modules/",
+        "jsx": "react",
+        "jsxFactory": "React.createElement",
+        "strict": true,
+        "downlevelIteration": true,
+        "newLine": "LF",
+        "noImplicitReturns": true,
+        "paths": {
+            "@here/fetch": ["@here/fetch/index_node"]
+        }
+    },
+    "exclude": [
+        "node_modules",
+        "@here/*/node_modules",
+        "dist"
+    ]
+}

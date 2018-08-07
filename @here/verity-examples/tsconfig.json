@@ -20,9 +20,6 @@
         "types": [
             "highlight.js",
             "long",
-            "node",
-            "react",
-            "react-native",
             "three",
             "tween.js"
         ]

@@ -19,7 +19,6 @@
             "chai",
             "earcut",
             "mocha",
-            "node",
             "three"
         ]
     }

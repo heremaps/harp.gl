@@ -11,16 +11,13 @@
   },
   "repository": {
     "type": "git",
-    "url": "ssh://gerrit.it.here.com:29418/harp4web/verity-core-sdk/map"
+    "url": "git://github.com:heremaps/harp.js.git"
   },
   "author": {
     "name": "HERE Global B.V. and its affiliate(s)",
     "url": "https://here.com"
   },
   "license": "SEE LICENSE IN LICENSE",
-  "publishConfig": {
-    "registry": "https://artifactory.in.here.com/artifactory/api/npm/verity-npm-local/"
-  },
   "dependencies": {
     "@here/datasource-protocol": "^0.2.50",
     "@here/geoutils": "^0.2.47",
@@ -31,7 +28,7 @@
   },
   "devDependencies": {
     "@types/chai": "^4.1.2",
-    "@types/long": "^3.0.32",
+    "@types/long": "^4.0.0",
     "@types/mocha": "^5.2.5",
     "@types/three": "0.92.7",
     "@types/tween.js": "^16.9.0",

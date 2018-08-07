@@ -6,9 +6,12 @@ const glob = require("glob");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 
+// ### figure out a way to disable source-maps on deploy
+const isDevelopment = true;
+
 const commonConfig = {
     context: __dirname,
-    devtool: "source-map",
+    devtool: isDevelopment ? "source-map" : undefined,
     externals: {
         three: "THREE",
         fs: "undefined"
@@ -23,12 +26,18 @@ const commonConfig = {
         rules: [{
             test: /\.tsx?$/,
             loader: "ts-loader",
+            exclude: /node_modules/,
             options: {
-                onlyCompileBundledFiles: true
+                onlyCompileBundledFiles: true,
+                transpileOnly: true,
+                configFile: path.join(__dirname, "tsconfig.json"),
+                compilerOptions: {
+                    sourceMap: isDevelopment
+                }
             }
         }]
     },
-    output:  {
+    output: {
         path: __dirname
     }
 };
@@ -108,7 +117,7 @@ const allEntries = Object.assign({}, webpackEntries, htmlEntries);
  */
 const files = {
     verity: Object.keys(allEntries).reduce(function(r, entry) {
-        r["dist/" + entry + ".html"] = allEntries[entry];
+        r["dist/" + entry + ".html"] = path.relative(__dirname, allEntries[entry]);
         return r;
     },{})
 };
