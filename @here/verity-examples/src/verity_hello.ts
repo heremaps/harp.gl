@@ -109,5 +109,7 @@ export namespace HelloWorldExample {
         authenticationCode: bearerTokenProvider
     });
 
+    // snippet:vislib_hello_world_example_5.ts
     mapView.addDataSource(omvDataSource);
+    // end:vislib_hello_world_example_5.ts
 }

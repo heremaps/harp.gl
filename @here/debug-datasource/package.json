@@ -15,16 +15,13 @@
   },
   "repository": {
     "type": "git",
-    "url": "ssh://gerrit.it.here.com:29418/harp4web/verity-core-sdk/debug-datasource"
+    "url": "git://github.com:heremaps/harp.js.git"
   },
   "author": {
     "name": "HERE Global B.V. and its affiliate(s)",
     "url": "https://here.com"
   },
   "license": "SEE LICENSE IN LICENSE",
-  "publishConfig": {
-    "registry": "https://artifactory.in.here.com/artifactory/api/npm/verity-npm-local/"
-  },
   "dependencies": {
     "@here/geoutils": "^0.2.40",
     "@here/lrucache": "^0.1.26",
@@ -33,7 +30,7 @@
   "devDependencies": {
     "@types/chai": "^4.1.2",
     "@types/mocha": "^5.2.5",
-    "@types/node": "^10.1.4",
+    "@types/node": "^10.9.0",
     "@types/three": "0.92.7",
     "chai": "^4.0.2",
     "cross-env": "^5.2.0",

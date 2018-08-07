@@ -15,16 +15,12 @@
     "name": "HERE Global B.V. and its affiliate(s)",
     "url": "https://here.com"
   },
-  "publishConfig": {
-    "registry": "https://artifactory.in.here.com/artifactory/api/npm/verity-npm-local/"
-  },
   "license": "SEE LICENSE IN LICENSE",
   "dependencies": {
     "serve-handler": "^5.0.0"
   },
   "devDependencies": {
     "@here/debug-datasource": "^0.1.22",
-    "@here/earthcore-datasource": "^0.2.25",
     "@here/fetch": "^0.1.31",
     "@here/geojson-datasource": "^0.2.0",
     "@here/lrucache": "^0.1.26",
@@ -32,36 +28,25 @@
     "@here/map-theme": "^0.1.50",
     "@here/mapview": "^0.7.55",
     "@here/mapview-decoder": "^0.2.29",
-    "@here/mapview-react-native-web": "^0.1.0",
     "@here/materials": "^0.1.0",
-    "@here/oauth-requester": "^0.1.30",
     "@here/omv-datasource": "^0.2.38",
-    "@here/places": "^0.1.25",
-    "@here/routing": "^0.1.31",
     "@here/text-renderer": "^0.2.38",
     "@here/webtile-datasource": "^0.2.9",
     "@tweenjs/tween.js": "^17.2.0",
     "@types/dat.gui": "^0.7.1",
     "@types/highlight.js": "^9.12.2",
-    "@types/long": "^3.0.32",
-    "@types/react": "^16.4.6",
-    "@types/react-dom": "^16.0.7",
-    "@types/react-native": "^0.55.26",
+    "@types/long": "^4.0.0",
     "@types/three": "0.92.7",
     "@types/tween.js": "^16.9.0",
     "copy-webpack-plugin": "^4.5.2",
     "cross-env": "^5.2.0",
-    "css-loader": "^0.28.9",
+    "css-loader": "^1.0.0",
     "dat.gui": "^0.7.2",
     "highlight.js": "^9.12.0",
     "html-webpack-plugin": "^3.2.0",
     "ncp": "^2.0.0",
-    "react": "^16.4.0",
-    "react-art": "^16.4.2",
-    "react-dom": "^16.4.2",
-    "react-native-web": "^0.8.6",
     "stats.js": "^0.17.0",
-    "style-loader": "^0.19.1",
+    "style-loader": "^0.22.1",
     "three": "^0.92.0",
     "ts-loader": "^4.5.0",
     "typescript": "2.8.4",
@@ -72,6 +57,6 @@
   },
   "repository": {
     "type": "git",
-    "url": "ssh://gerrit.it.here.com:29418/harp4web/verity-core-sdk/verity-examples"
+    "url": "git://github.com:heremaps/harp.js.git"
   }
 }

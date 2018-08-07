@@ -11,11 +11,6 @@
  * allowed.
  */
 
-import { HRN } from "@here/hype/lib/HRN";
-
-/** @hidden */
-export const hrn = HRN.fromString("hrn:here-dev:datastore:::verity-mvt-1");
-
 /** @hidden */
 export const appId = "inzUjEph5FuS6Uxefasa";
 
