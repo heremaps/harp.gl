@@ -13,7 +13,6 @@
 
 import { DebugTileDataSource } from "@here/debug-datasource";
 import { GeoCoordinates, webMercatorTilingScheme } from "@here/geoutils";
-import { LandmarkTileDataSource } from "@here/landmark-datasource";
 import { MapControls } from "@here/map-controls";
 import { MapView, MapViewEventNames, MapViewOptions } from "@here/mapview";
 import { OmvDataSource } from "@here/omv-datasource";
@@ -88,7 +87,7 @@ export namespace FreeCameraApp_DebugingToolExample {
         }
 
         /**
-         * Attaches the [[OmvDataSource]], [[LandmarkTileDataSource]] and [[DebugTileDataSource]]
+         * Attaches the [[OmvDataSource]] and [[DebugTileDataSource]]
          * to the map as well as initializes the debug view (making the: `R`, `T` and `V` keys
          * modify the camera's current rotation (`R`), translation/postion (`T`) and changing the
          * camera view to the one the user is seeing (`V`).
@@ -101,17 +100,9 @@ export namespace FreeCameraApp_DebugingToolExample {
                 concurrentDecoderScriptUrl: this.options.decoderUrl
             });
 
-            const landmarkTileDataSource = new LandmarkTileDataSource({
-                hrn,
-                appId,
-                appCode,
-                concurrentDecoderScriptUrl: this.options.decoderUrl
-            });
-
             const debugTileDataSource = new DebugTileDataSource(webMercatorTilingScheme);
 
             this.mapView.addDataSource(omvDataSource);
-            this.mapView.addDataSource(landmarkTileDataSource);
             this.mapView.addDataSource(debugTileDataSource);
 
             this.initializeDebugView();

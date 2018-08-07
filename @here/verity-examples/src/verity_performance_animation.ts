@@ -11,7 +11,6 @@
  * allowed.
  */
 import { GeoCoordinates, MathUtils } from "@here/geoutils";
-import { LandmarkTileDataSource } from "@here/landmark-datasource";
 import { CameraRotationAnimation, MapControls } from "@here/map-controls";
 import { MapView, MapViewEventNames } from "@here/mapview";
 import { OmvDataSource } from "@here/omv-datasource";
@@ -174,13 +173,7 @@ export namespace AnimationExample {
     });
     // end:vislib_hello_animation_example_4.ts
 
-    const landmarkTileDataSource = new LandmarkTileDataSource({
-        hrn,
-        appId,
-        appCode
-    });
     // snippet:vislib_hello_animation_example_5.ts
     mapView.addDataSource(omvDataSource);
     // end:vislib_hello_animation_example_5.ts
-    mapView.addDataSource(landmarkTileDataSource);
 }

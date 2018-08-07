@@ -9,7 +9,6 @@
  */
 
 import { GeoCoordinates } from "@here/geoutils";
-import { LandmarkTileDataSource } from "@here/landmark-datasource";
 import { MapControls } from "@here/map-controls";
 import { MapView, MapViewEventNames, MSAASampling } from "@here/mapview";
 import { OmvDataSource } from "@here/omv-datasource";
@@ -82,26 +81,19 @@ export namespace AntialiasExample {
         appId,
         appCode
     });
-    const landmarksSource = new LandmarkTileDataSource({
-        hrn,
-        appId,
-        appCode
-    });
     const defaultTheme = "./resources/day.json";
     // snippet:vislib_performance_antialias_1.ts
     const viewWithNativeAntialiasing = initializeMapView(
         "mapCanvas-antialiased",
         defaultTheme,
         "./decoder.bundle.js",
-        omvSource,
-        landmarksSource
+        omvSource
     );
     const viewWithoutNativeAntialising = initializeMapView(
         "mapCanvas",
         defaultTheme,
         "./decoder.bundle.js",
-        omvSource,
-        landmarksSource
+        omvSource
     );
     viewWithNativeAntialiasing.mapView.canvas.style.display = "none";
     viewWithNativeAntialiasing.mapView.endAnimation();
@@ -155,8 +147,7 @@ export namespace AntialiasExample {
         id: string,
         theme: string,
         decoderUrl: string,
-        omvDataSource: OmvDataSource,
-        landmarkTileDataSource: LandmarkTileDataSource
+        omvDataSource: OmvDataSource
     ): ViewControlPair {
         const canvas = document.getElementById(id) as HTMLCanvasElement;
 
@@ -168,9 +159,8 @@ export namespace AntialiasExample {
             decoderUrl
         });
 
-        // Add Omv and Landmark data source.
+        // Add Omv data source.
         mapView.addDataSource(omvDataSource);
-        mapView.addDataSource(landmarkTileDataSource);
 
         // Position the camera over the map.
         mapView.camera.position.set(0, 0, 800);

@@ -12,8 +12,6 @@
  */
 
 import { GeoCoordinates } from "@here/geoutils";
-import { LandmarkTileDataSource } from "@here/landmark-datasource";
-import { LandmarkTileDecoder } from "@here/landmark-datasource/index-worker";
 import { MapControls } from "@here/map-controls";
 import { MapView } from "@here/mapview";
 import { OmvDataSource } from "@here/omv-datasource";
@@ -116,14 +114,7 @@ export namespace HelloWorldOneThreadExample {
     });
     // end:vislib_hello_onethread_example_4.ts
 
-    const landmarkTileDataSource = new LandmarkTileDataSource({
-        hrn,
-        appId,
-        appCode,
-        decoder: new LandmarkTileDecoder()
-    });
     // snippet:vislib_hello_onethread_example_5.ts
     mapView.addDataSource(omvDataSource);
     // end:vislib_hello_onethread_example_5.ts
-    mapView.addDataSource(landmarkTileDataSource);
 }

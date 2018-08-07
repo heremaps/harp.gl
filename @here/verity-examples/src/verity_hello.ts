@@ -12,7 +12,6 @@
  */
 
 import { GeoCoordinates } from "@here/geoutils";
-import { LandmarkTileDataSource } from "@here/landmark-datasource";
 import { MapControls } from "@here/map-controls";
 import { MapView } from "@here/mapview";
 import { OmvDataSource } from "@here/omv-datasource";
@@ -112,13 +111,7 @@ export namespace HelloWorldExample {
     });
     // end:vislib_hello_world_example_4.ts
 
-    const landmarkTileDataSource = new LandmarkTileDataSource({
-        hrn,
-        appId,
-        appCode
-    });
     // snippet:vislib_hello_world_example_5.ts
     mapView.addDataSource(omvDataSource);
     // end:vislib_hello_world_example_5.ts
-    mapView.addDataSource(landmarkTileDataSource);
 }

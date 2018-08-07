@@ -16,7 +16,7 @@ const commonConfig = {
         fs: "undefined"
     },
     resolve: {
-        extensions: [".webpack.js", ".web.js", ".ts", ".tsx", ".js"],
+        extensions: [".webpack.js", ".web.ts", ".ts", ".tsx", ".web.js", ".js"],
         alias: {
             'react-native': 'react-native-web'
         }
@@ -25,6 +25,7 @@ const commonConfig = {
         rules: [{
             test: /\.tsx?$/,
             loader: "ts-loader",
+            exclude: /node_modules/,
             options: {
                 configFile: path.join(__dirname, "tsconfig.json"),
                 onlyCompileBundledFiles: true,
@@ -35,7 +36,7 @@ const commonConfig = {
             }
         }]
     },
-    output:  {
+    output: {
         path: __dirname
     }
 };
@@ -115,7 +116,7 @@ const allEntries = Object.assign({}, webpackEntries, htmlEntries);
  */
 const files = {
     verity: Object.keys(allEntries).reduce(function(r, entry) {
-        r["dist/" + entry + ".html"] = allEntries[entry];
+        r["dist/" + entry + ".html"] = path.relative(__dirname, allEntries[entry]);
         return r;
     },{})
 };
