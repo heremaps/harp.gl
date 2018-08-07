@@ -16,16 +16,13 @@
   },
   "repository": {
     "type": "git",
-    "url": "ssh://gerrit.it.here.com:29418/harp4web/verity-core-sdk/map-theme"
+    "url": "git://github.com:heremaps/harp.js.git"
   },
   "author": {
     "name": "HERE Global B.V. and its affiliate(s)",
     "url": "https://here.com"
   },
   "license": "SEE LICENSE IN LICENSE",
-  "publishConfig": {
-    "registry": "https://artifactory.in.here.com/artifactory/api/npm/verity-npm-local/"
-  },
   "dependencies": {
     "@here/datasource-protocol": "^0.2.39"
   },
@@ -34,7 +31,7 @@
     "@types/chai": "^4.1.2",
     "@types/mocha": "^5.2.5",
     "chai": "^4.0.2",
-    "copyfiles": "^1.2.0",
+    "copyfiles": "^2.0.0",
     "cross-env": "^5.2.0",
     "fontkit": "^1.7.7",
     "jimp": "^0.2.28",
