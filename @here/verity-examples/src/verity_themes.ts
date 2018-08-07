@@ -13,7 +13,6 @@
 
 import { Theme, ThemeVisitor } from "@here/datasource-protocol";
 import { GeoCoordinates } from "@here/geoutils";
-import { LandmarkTileDataSource } from "@here/landmark-datasource";
 import { MapControls } from "@here/map-controls";
 import { MapView } from "@here/mapview";
 import { ThemeLoader } from "@here/mapview/lib/ThemeLoader";
@@ -117,14 +116,7 @@ export namespace ThemesExample {
         appCode
     });
 
-    const landmarkTileDataSource = new LandmarkTileDataSource({
-        hrn,
-        appId,
-        appCode
-    });
-
     mapView.addDataSource(omvDataSource);
-    mapView.addDataSource(landmarkTileDataSource);
 
     function initSwitchThemeButton() {
         const el = document.getElementById("switch-theme-btn");

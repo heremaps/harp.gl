@@ -18,7 +18,6 @@ declare let self: Worker & {
 self.importScripts("three.min.js");
 
 import GeoJsonWorkerClient from "@here/geojson-datasource/lib/GeoJsonDecoder";
-import LandmarkWorkerClient from "@here/landmark-datasource/lib/LandmarkDecoder";
 import OmvWorkerClient from "@here/omv-datasource/lib/OmvDecoder";
 
 /* tslint:disable:no-unused-expression */
@@ -26,8 +25,4 @@ new OmvWorkerClient();
 new OmvWorkerClient("omv-tile-decoder-1");
 new OmvWorkerClient("omv-tile-decoder-2");
 new OmvWorkerClient("omv-tile-decoder-3");
-new LandmarkWorkerClient("landmark-tile-decoder-1");
-new LandmarkWorkerClient("landmark-tile-decoder-2");
-new LandmarkWorkerClient("landmark-tile-decoder-3");
-new LandmarkWorkerClient();
 new GeoJsonWorkerClient();

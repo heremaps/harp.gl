@@ -19,7 +19,6 @@
             "chai",
             "long",
             "mocha",
-            "node",
             "three",
             "tween.js"
         ]

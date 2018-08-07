@@ -12,7 +12,6 @@
  */
 
 import { GeoCoordinates } from "@here/geoutils";
-import { LandmarkTileDataSource } from "@here/landmark-datasource";
 import { MapControls } from "@here/map-controls";
 import { ConcurrentDecoderFacade, MapView, MapViewUtils, WorkerBasedDecoder } from "@here/mapview";
 import { OmvDataSource } from "@here/omv-datasource";
@@ -116,13 +115,13 @@ export namespace TripleViewExample {
 <canvas id="mapCanvas3"></canvas>
 <div class="titleRow">
     <div class="themeName" id="mapTheme1">
-        Data:<em> Omv, Landmark</em><br/> Theme: <em>Day</em>
+        Data:<em> Omv</em><br/> Theme: <em>Day</em>
     </div>
     <div class="themeName" id="mapTheme2">
-        Data:<em> Omv, Landmark</em><br/> Theme: <em>Theme</em>
+        Data:<em> Omv</em><br/> Theme: <em>Theme</em>
     </div>
     <div class="themeName" id="mapTheme3">
-        Data:<em> Omv, Landmark</em><br/> Theme: <em>Reduced Day</em>
+        Data:<em> Omv</em><br/> Theme: <em>Reduced Day</em>
     </div>
 </div>
 `;
@@ -226,15 +225,6 @@ export namespace TripleViewExample {
             )
         }),
 
-        landmarkTileDataSource1: new LandmarkTileDataSource({
-            hrn,
-            appId,
-            appCode,
-            decoder: new WorkerBasedDecoder(
-                ConcurrentDecoderFacade.getWorkerSet(),
-                "landmark-tile-decoder-1"
-            )
-        }),
         omvDataSource2: new OmvDataSource({
             hrn,
             appId,
@@ -242,15 +232,6 @@ export namespace TripleViewExample {
             decoder: new WorkerBasedDecoder(
                 ConcurrentDecoderFacade.getWorkerSet(),
                 "omv-tile-decoder-2"
-            )
-        }),
-        landmarkTileDataSource2: new LandmarkTileDataSource({
-            hrn,
-            appId,
-            appCode,
-            decoder: new WorkerBasedDecoder(
-                ConcurrentDecoderFacade.getWorkerSet(),
-                "landmark-tile-decoder-2"
             )
         }),
         omvDataSource3: new OmvDataSource({
@@ -262,25 +243,13 @@ export namespace TripleViewExample {
                 "omv-tile-decoder-3"
             )
         }),
-        landmarkTileDataSource3: new LandmarkTileDataSource({
-            hrn,
-            appId,
-            appCode,
-            decoder: new WorkerBasedDecoder(
-                ConcurrentDecoderFacade.getWorkerSet(),
-                "landmark-tile-decoder-3"
-            )
-        })
     };
 
     mapViews.view1.mapView.addDataSource(dataSources.omvDataSource1);
-    mapViews.view1.mapView.addDataSource(dataSources.landmarkTileDataSource1);
 
     mapViews.view2.mapView.addDataSource(dataSources.omvDataSource2);
-    mapViews.view2.mapView.addDataSource(dataSources.landmarkTileDataSource2);
 
     mapViews.view3.mapView.addDataSource(dataSources.omvDataSource3);
-    mapViews.view3.mapView.addDataSource(dataSources.landmarkTileDataSource3);
     // end:vislib_multiview_tripleView_2.ts
     /**
      * A function that copies the position and orientation of one MapView/MapControl to the others

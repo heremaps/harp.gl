@@ -12,7 +12,6 @@
  */
 
 import { GeoCoordinates } from "@here/geoutils";
-import { LandmarkTileDataSource } from "@here/landmark-datasource";
 import { MapControls } from "@here/map-controls";
 import { MapView } from "@here/mapview";
 import { OmvDataSource } from "@here/omv-datasource";
@@ -89,12 +88,5 @@ export namespace FontsExample {
         appCode
     });
 
-    const landmarkTileDataSource = new LandmarkTileDataSource({
-        hrn,
-        appId,
-        appCode
-    });
-
     mapView.addDataSource(omvDataSource);
-    mapView.addDataSource(landmarkTileDataSource);
 }

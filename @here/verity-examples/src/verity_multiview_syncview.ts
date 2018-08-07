@@ -12,7 +12,6 @@
  */
 
 import { GeoCoordinates } from "@here/geoutils";
-import { LandmarkTileDataSource } from "@here/landmark-datasource";
 import { MapControls } from "@here/map-controls";
 import { MapView } from "@here/mapview";
 import { OmvDataSource } from "@here/omv-datasource";
@@ -136,14 +135,7 @@ export namespace SyncViewExample {
         appCode
     });
 
-    const landmarkTileDataSource = new LandmarkTileDataSource({
-        hrn,
-        appId,
-        appCode
-    });
-
     view1.mapView.addDataSource(omvDataSource);
-    view1.mapView.addDataSource(landmarkTileDataSource);
 
     if (SHOW_WEBTILES) {
         const webTileDataSource = new WebTileDataSource({
@@ -159,14 +151,7 @@ export namespace SyncViewExample {
             appCode
         });
 
-        const landmarkTileDataSource2 = new LandmarkTileDataSource({
-            hrn,
-            appId,
-            appCode
-        });
-
         view2.mapView.addDataSource(omvDataSource2);
-        view2.mapView.addDataSource(landmarkTileDataSource2);
     }
 
     /**

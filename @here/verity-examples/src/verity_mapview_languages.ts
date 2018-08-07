@@ -9,7 +9,6 @@
  */
 
 import { GeoCoordinates } from "@here/geoutils";
-import { LandmarkTileDataSource } from "@here/landmark-datasource";
 import { MapControls } from "@here/map-controls";
 import { MapView, MapViewUtils } from "@here/mapview";
 import { OmvDataSource } from "@here/omv-datasource";
@@ -82,14 +81,7 @@ export namespace LanguagesExample {
         appCode
     });
 
-    const landmarkTileDataSource = new LandmarkTileDataSource({
-        hrn,
-        appId,
-        appCode
-    });
-
     mapView.addDataSource(omvDataSource);
-    mapView.addDataSource(landmarkTileDataSource);
     mapView.setCameraGeolocationAndZoom(new GeoCoordinates(52.5145, 13.3501), 8);
 
     function initLanguages() {
