@@ -1,0 +1,21 @@
+{
+    "name": "Visualisation Library SDK",
+    "mode": "modules",
+    "module": "commonjs",
+    "out": "doc",
+    "exclude": [
+        "**/node_modules/**",
+        "**/map-component/*.ts",
+        "**/test/**/*.ts",
+        "**/scripts/*.ts",
+        "**/+(*Test.ts|index_node.ts|index-worker.ts|*_generated.ts|publish-npm.ts|changelog.ts|doc-snippets.ts)"
+    ],
+    "includes": "dist/doc",
+    "readme": "README.md",
+    "target": "ES6",
+    "ignoreCompilerErrors": true,
+    "excludePrivate": "true",
+    "excludeExternals": "true",
+    "excludeNotExported": "true",
+    "external-modulemap": ".*\/(@here\/[\\w\\-_]+)\/"
+}

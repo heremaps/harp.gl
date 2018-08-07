@@ -1,0 +1,71 @@
+{
+  "name": "vsdk-mono",
+  "version": "1.0.0",
+  "description": "Mono Repo for core render components",
+  "workspaces": [
+    "@here/*"
+  ],
+  "devDependencies": {
+    "@tweenjs/tween.js": "^17.2.0",
+    "@types/chai": "^4.0.4",
+    "@types/dat.gui": "^0.7.1",
+    "@types/earcut": "^2.1.0",
+    "@types/glob": "^5.0.35",
+    "@types/highlight.js": "^9.12.3",
+    "@types/long": "^4.0.0",
+    "@types/mkpath": "^0.1.29",
+    "@types/mocha": "^5.2.5",
+    "@types/node": "^10.9.0",
+    "@types/sinon": "^5.0.1",
+    "@types/three": "0.92.7",
+    "@types/tween.js": "^16.9.0",
+    "chai": "^4.1.2",
+    "copy-webpack-plugin": "^4.5.2",
+    "css-loader": "^1.0.0",
+    "dat.gui": "^0.7.2",
+    "earcut": "^2.1.3",
+    "glob": "^7.1.2",
+    "highlight.js": "^9.12.0",
+    "html-webpack-plugin": "^3.2.0",
+    "load-bmfont": "^1.3.1",
+    "long": "^4.0.0",
+    "mkpath": "^1.0.0",
+    "mocha": "^5.2.0",
+    "protobufjs": "^6.8.8",
+    "rtree": "^1.4.2",
+    "sinon": "^6.1.5",
+    "stats.js": "^0.17.0",
+    "style-loader": "^0.22.1",
+    "three": "^0.92.0",
+    "ts-loader": "^4.5.0",
+    "ts-mocha": "^2.0.0",
+    "ts-node": "^7.0.1",
+    "tsconfig-paths": "^3.5.0",
+    "typescript": "^3.0.3",
+    "webpack": "^4.16.5",
+    "webpack-cli": "^3.1.0",
+    "webpack-dev-server": "^3.1.5",
+    "webpack-merge": "^4.1.4"
+  },
+  "scripts": {
+    "test": "ts-mocha -r tsconfig-paths/register ./@here/*/test/*.ts",
+    "postinstall": "ts-node ./scripts/postinstall.ts",
+    "start": "webpack-dev-server -d --config webpack.examples.config.js --content-base \"$PWD/dist/verity-examples\"",
+    "build": "webpack -d --config webpack.examples.config.js",
+    "typedoc": "ts-node ./scripts/doc-snippets.ts && typedoc --options typedoc.json"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com:heremaps/harp.js.git"
+  },
+  "private": true,
+  "author": {
+    "name": "HERE Global B.V. and its affiliate(s)",
+    "url": "https://here.com"
+  },
+  "license": "SEE LICENSE IN LICENSE",
+  "dependencies": {
+    "typedoc": "^0.12.0",
+    "typedoc-plugin-external-module-map": "^0.1.0"
+  }
+}

@@ -11,16 +11,13 @@
   },
   "repository": {
     "type": "git",
-    "url": "ssh://gerrit.it.here.com:29418/harp4web/geojson-datasource"
+    "url": "git://github.com:heremaps/harp.js.git"
   },
   "author": {
     "name": "HERE Global B.V. and its affiliate(s)",
     "url": "https://here.com"
   },
   "license": "SEE LICENSE IN LICENSE",
-  "publishConfig": {
-    "registry": "https://artifactory.in.here.com/artifactory/api/npm/verity-npm-local/"
-  },
   "dependencies": {
     "@here/datasource-protocol": "^0.2.51",
     "@here/download-manager": "^0.1.43",
@@ -41,6 +38,6 @@
     "cross-env": "^5.2.0",
     "mocha": "^5.2.0",
     "source-map-support": "^0.5.2",
-    "typescript": "2.8.4"
+    "typescript": "^3.0.3"
   }
 }
