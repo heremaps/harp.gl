@@ -13,9 +13,7 @@
   },
   "scripts": {
     "test": "mocha --require source-map-support/register $EXTRA_MOCHA_ARGS ./test/*.js",
-    "build": "tsc",
-    "deploy": "deploy --umd",
-    "prebuild": "tsconfig-generator"
+    "build": "tsc"
   },
   "repository": {
     "type": "git",
@@ -38,12 +36,10 @@
     "@here/test-utils": "^0.1.0"
   },
   "devDependencies": {
-    "@here/deploy": "^0.2.23",
     "@here/test-utils": "^0.1.0",
-    "@here/tsconfig-generator": "^2.0.0",
     "@types/chai": "^4.1.2",
     "@types/mocha": "^2.2.47",
-    "@types/node": "^10.5.7",
+    "@types/node": "^10.1.4",
     "@types/sinon": "^5.0.1",
     "chai": "^4.0.2",
     "mocha": "^4.1.0",

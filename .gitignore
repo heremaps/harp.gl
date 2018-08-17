@@ -2,7 +2,6 @@
 node_modules
 dist
 doc
-/tsconfig.json
 *.d.ts
 *.js
 *.js.map
