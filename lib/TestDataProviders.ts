@@ -16,15 +16,13 @@ import { DataProvider } from "../lib/DataProvider";
 /**
  * Data provider that loads test tile using [[loadTestResource]].
  */
-export class TestSingleFileDataProvider extends DataProvider {
+export class TestSingleFileDataProvider implements DataProvider {
     /**
      * TestDataProvider constructor
      * @param moduleName - name of the module's directory
      * @param basePath - base path to the test resources
      */
-    constructor(private readonly moduleName: string, private readonly basePath: string) {
-        super();
-    }
+    constructor(private readonly moduleName: string, private readonly basePath: string) {}
 
     ready(): boolean {
         return true;
@@ -49,15 +47,13 @@ export class TestSingleFileDataProvider extends DataProvider {
  * The URL is construced using the following formula:
  * `${this.basePath}/${tileKey.mortonCode()}.bin`
  */
-export class TestTilesDataProvider extends DataProvider {
+export class TestTilesDataProvider implements DataProvider {
     /**
      * Constructs `TestFilesDataProvider` using the provided base path.
      *
      * @param basePath - base path to be used to construct the url to the resource.
      */
-    constructor(private readonly basePath: string) {
-        super();
-    }
+    constructor(private readonly basePath: string) {}
 
     ready(): boolean {
         return true;

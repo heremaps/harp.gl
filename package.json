@@ -32,7 +32,6 @@
     "@here/datasource-protocol": "^0.2.39",
     "@here/fetch": "^0.1.42",
     "@here/geoutils": "^0.2.40",
-    "@here/hype": "^0.2.54",
     "@here/mapview": "^0.7.55"
   },
   "devDependencies": {
