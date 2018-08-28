@@ -88,8 +88,8 @@ export class TileFactory<TileType extends Tile> {
  * asynchronous one is generated.
  */
 export class TileDataSource<TileType extends Tile> extends DataSource {
+    protected readonly m_decoder: ITileDecoder;
     private m_isReady: boolean = false;
-    private readonly m_decoder: ITileDecoder;
 
     /**
      * Set up the `TileDataSource`.
@@ -145,11 +145,11 @@ export class TileDataSource<TileType extends Tile> extends DataSource {
         this.m_isReady = true;
     }
 
-    setTheme(theme: Theme | undefined): void {
+    setTheme(theme?: Theme, languages?: string[]): void {
         if (theme === undefined) {
             return;
         }
-        this.m_decoder.configure(theme);
+        this.m_decoder.configure(theme, languages);
         this.mapView.markTilesDirty(this);
     }
 
