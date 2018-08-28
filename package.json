@@ -32,8 +32,7 @@
     "@here/fetch": "^0.1.42",
     "@here/geoutils": "^0.2.40",
     "@here/hype": "^0.2.54",
-    "@here/mapview": "^0.7.55",
-    "@here/test-utils": "^0.1.0"
+    "@here/mapview": "^0.7.55"
   },
   "devDependencies": {
     "@here/test-utils": "^0.1.0",
