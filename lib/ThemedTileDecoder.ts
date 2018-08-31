@@ -11,8 +11,8 @@ import {
     DecodedTile,
     ITileDecoder,
     OptionsMap,
-    Theme,
-    ThemeEvaluator,
+    StyleSet,
+    StyleSetEvaluator,
     TileInfo
 } from "@here/datasource-protocol";
 import { Projection, TileKey } from "@here/geoutils";
@@ -26,8 +26,7 @@ import { Projection, TileKey } from "@here/geoutils";
  */
 export abstract class ThemedTileDecoder implements ITileDecoder {
     languages?: string[];
-    private m_theme?: Theme;
-    private m_themeEvaluators: Map<string, ThemeEvaluator> = new Map();
+    protected m_styleSetEvaluator?: StyleSetEvaluator;
     abstract connect(): Promise<void>;
 
     dispose() {
@@ -37,33 +36,28 @@ export abstract class ThemedTileDecoder implements ITileDecoder {
     decodeTile(
         data: ArrayBufferLike,
         tileKey: TileKey,
-        dataSourceName: string,
         projection: Projection
     ): Promise<DecodedTile> {
-        const themeEvaluator = this.getThemeEvalator(dataSourceName);
-        if (themeEvaluator === undefined) {
-            return Promise.reject(new Error("no theme loaded"));
+        if (this.m_styleSetEvaluator === undefined) {
+            return Promise.reject(new Error("No style is defined"));
         }
 
-        return this.decodeThemedTile(data, tileKey, themeEvaluator, projection);
+        return this.decodeThemedTile(data, tileKey, this.m_styleSetEvaluator, projection);
     }
 
     // tslint:disable:no-unused-variable
     getTileInfo(
         data: ArrayBufferLike,
         tileKey: TileKey,
-        dataSourceName: string,
         projection: Projection
     ): Promise<TileInfo | undefined> {
         return Promise.resolve(undefined);
     }
 
     // tslint:disable:no-unused-variable
-    configure(theme?: Theme | undefined, languages?: string[],
-        options?: OptionsMap | undefined): void {
-        if (theme !== undefined) {
-            this.m_theme = theme;
-            this.m_themeEvaluators.clear();
+    configure(styleSet?: StyleSet, languages?: string[], options?: OptionsMap): void {
+        if (styleSet !== undefined) {
+            this.m_styleSetEvaluator = new StyleSetEvaluator(styleSet);
         }
         if (languages !== undefined) {
             this.languages = languages;
@@ -72,36 +66,18 @@ export abstract class ThemedTileDecoder implements ITileDecoder {
 
     /**
      * Create a [[DecodedTile]] from binary tile data and a theme description in form of a
-     * [[ThemeEvaluator]].
+     * [[StyleSetEvaluator]].
      *
      * @param data Binary data in form of [[ArrayBufferLike]], or any object.
      * @param tileKey Quadtree address of tile.
-     * @param themeEvaluator Processor of [[Theme]], identifies styling techniques applicable to
+     * @param styleSetEvaluator Processor of [[Theme]], identifies styling techniques applicable to
      *      individual objects.
      * @param projection Projection used by the individual data sources.
      */
     abstract decodeThemedTile(
         data: ArrayBufferLike | {},
         tileKey: TileKey,
-        themeEvaluator: ThemeEvaluator,
+        styleSetEvaluator: StyleSetEvaluator,
         projection: Projection
     ): Promise<DecodedTile>;
-
-    /**
-     * Create and deliver an individual [[ThemeEvaluator]] for every [[DataSource]] this
-     * `ThemedTileDecoder` is connected to.
-     *
-     * @param dataSourceName Name of [[DataSource]]
-     */
-    protected getThemeEvalator(dataSourceName: string): ThemeEvaluator | undefined {
-        if (this.m_theme === undefined) {
-            return undefined;
-        }
-        let themeEvaluator = this.m_themeEvaluators.get(dataSourceName);
-        if (themeEvaluator === undefined) {
-            themeEvaluator = new ThemeEvaluator(this.m_theme, dataSourceName);
-            this.m_themeEvaluators.set(dataSourceName, themeEvaluator);
-        }
-        return themeEvaluator;
-    }
 }

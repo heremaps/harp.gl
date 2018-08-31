@@ -95,58 +95,54 @@ export class TileDecoderService extends WorkerService {
         const tileKey = TileKey.fromMortonCode(request.tileKey);
         const projection = getProjection(request.projection);
 
-        return this.m_decoder
-            .decodeTile(request.data, tileKey, request.dataSourceName, projection)
-            .then(decodedTile => {
-                const transferList: ArrayBuffer[] = [];
-                decodedTile.geometries.forEach(geom => {
-                    geom.vertexAttributes.forEach(attr => {
-                        if (attr.buffer instanceof ArrayBuffer) {
-                            transferList.push(attr.buffer);
-                        }
-                    });
-
-                    if (geom.index && geom.index.buffer instanceof ArrayBuffer) {
-                        transferList.push(geom.index.buffer);
+        return this.m_decoder.decodeTile(request.data, tileKey, projection).then(decodedTile => {
+            const transferList: ArrayBuffer[] = [];
+            decodedTile.geometries.forEach(geom => {
+                geom.vertexAttributes.forEach(attr => {
+                    if (attr.buffer instanceof ArrayBuffer) {
+                        transferList.push(attr.buffer);
                     }
                 });
 
-                decodedTile.techniques.forEach(technique => {
-                    if (isStandardTexturedTechnique(technique)) {
-                        if (isTextureBuffer(technique.texture)) {
-                            if (technique.texture.buffer instanceof ArrayBuffer) {
-                                transferList.push(technique.texture.buffer);
-                            }
-                        }
-                    }
-                });
-
-                return {
-                    response: decodedTile,
-                    transferList
-                };
+                if (geom.index && geom.index.buffer instanceof ArrayBuffer) {
+                    transferList.push(geom.index.buffer);
+                }
             });
+
+            decodedTile.techniques.forEach(technique => {
+                if (isStandardTexturedTechnique(technique)) {
+                    if (isTextureBuffer(technique.texture)) {
+                        if (technique.texture.buffer instanceof ArrayBuffer) {
+                            transferList.push(technique.texture.buffer);
+                        }
+                    }
+                }
+            });
+
+            return {
+                response: decodedTile,
+                transferList
+            };
+        });
     }
 
     private handleTileInfoRequest(request: TileInfoRequest): Promise<WorkerServiceResponse> {
         const tileKey = TileKey.fromMortonCode(request.tileKey);
         const projection = getProjection(request.projection);
 
-        return this.m_decoder
-            .getTileInfo(request.data, tileKey, request.dataSourceName, projection)
-            .then(tileInfo => {
-                const transferList: ArrayBuffer[] =
-                    tileInfo !== undefined && tileInfo.transferList !== undefined
-                        ? tileInfo.transferList
-                        : [];
-                return {
-                    response: tileInfo,
-                    transferList
-                };
-            });
+        return this.m_decoder.getTileInfo(request.data, tileKey, projection).then(tileInfo => {
+            const transferList: ArrayBuffer[] =
+                tileInfo !== undefined && tileInfo.transferList !== undefined
+                    ? tileInfo.transferList
+                    : [];
+            return {
+                response: tileInfo,
+                transferList
+            };
+        });
     }
 
     private handleConfigurationMessage(message: ConfigurationMessage) {
-        this.m_decoder.configure(message.theme, message.languages, message.options);
+        this.m_decoder.configure(message.styleSet, message.languages, message.options);
     }
 }

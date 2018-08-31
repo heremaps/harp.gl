@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 HERE Global B.V. and its affiliate(s). All rights reserved.
+ * Copyright (C) 2017-2018 HERE Global B.V. and its affiliate(s). All rights reserved.
  *
  * This software and other materials contain proprietary information controlled by HERE and are
  * protected by applicable copyright legislation. Any use and utilization of this software and other
@@ -7,7 +7,8 @@
  * with HERE for the access, use, utilization or disclosure of this software. In the absence of such
  * agreement, the use of the software is not allowed.
  */
-import { DecodedTile, ITileDecoder, Theme, TileInfo } from "@here/datasource-protocol";
+
+import { DecodedTile, ITileDecoder, StyleSet, TileInfo } from "@here/datasource-protocol";
 import { TileKey, TilingScheme } from "@here/geoutils";
 import { ConcurrentDecoderFacade, DataSource, Tile, TileLoaderState } from "@here/mapview";
 
@@ -21,7 +22,12 @@ export interface TileDataSourceOptions {
     /**
      * Name of [[TileDataSource]], must be unique.
      */
-    id: string;
+    name?: string;
+
+    /**
+     * The name of the [[StyleSet]] to evaluate for the decoding.
+     */
+    styleSetName: string;
 
     /**
      * The [[TilingScheme]] the data source is using.
@@ -101,7 +107,7 @@ export class TileDataSource<TileType extends Tile> extends DataSource {
         private readonly m_tileFactory: TileFactory<TileType>,
         private readonly m_options: TileDataSourceOptions
     ) {
-        super(m_options.id);
+        super(m_options.name, m_options.styleSetName);
         if (m_options.decoder) {
             this.m_decoder = m_options.decoder;
         } else if (m_options.concurrentDecoderServiceName) {
@@ -145,11 +151,8 @@ export class TileDataSource<TileType extends Tile> extends DataSource {
         this.m_isReady = true;
     }
 
-    setTheme(theme?: Theme, languages?: string[]): void {
-        if (theme === undefined) {
-            return;
-        }
-        this.m_decoder.configure(theme, languages);
+    setStyleSet(styleSet?: StyleSet, languages?: string[]): void {
+        this.m_decoder.configure(styleSet, languages);
         this.mapView.markTilesDirty(this);
     }
 

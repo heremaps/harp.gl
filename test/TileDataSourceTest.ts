@@ -1,14 +1,11 @@
 /*
- * Copyright (C) 2017-2018 HERE Global B.V. and its affiliate(s).
- * All rights reserved.
+ * Copyright (C) 2017-2018 HERE Global B.V. and its affiliate(s). All rights reserved.
  *
- * This software and other materials contain proprietary information
- * controlled by HERE and are protected by applicable copyright legislation.
- * Any use and utilization of this software and other materials and
- * disclosure to any third parties is conditional upon having a separate
- * agreement with HERE for the access, use, utilization or disclosure of this
- * software. In the absence of such agreement, the use of the software is not
- * allowed.
+ * This software and other materials contain proprietary information controlled by HERE and are
+ * protected by applicable copyright legislation. Any use and utilization of this software and other
+ * materials and disclosure to any third parties is conditional upon having a separate agreement
+ * with HERE for the access, use, utilization or disclosure of this software. In the absence of such
+ * agreement, the use of the software is not allowed.
  */
 
 import { DecodedTile, Geometry, ITileDecoder, TileInfo } from "@here/datasource-protocol";
@@ -65,7 +62,6 @@ function createMockTileDecoder() {
         async getTileInfo(
             _data: ArrayBufferLike,
             _tileKey: TileKey,
-            _dataSourceName: string,
             _projection: Projection
         ): Promise<TileInfo | undefined> {
             return Promise.resolve(undefined);
@@ -80,14 +76,19 @@ function createMockTileDecoder() {
 }
 
 function createMockMapView() {
-    return ({ projection: webMercatorProjection, statistics: new Statistics() } as any) as MapView;
+    return ({
+        projection: webMercatorProjection,
+        // tslint:disable-next-line:no-empty
+        getDataSourceByName() {},
+        statistics: new Statistics()
+    } as any) as MapView;
 }
 
 describe("TileDataSource", () => {
     it("#dispose cascades to decoder", () => {
         const decoder = createMockTileDecoder();
         const testedDataSource = new TileDataSource(new TileFactory(Tile), {
-            id: "tds",
+            styleSetName: "",
             tilingScheme: webMercatorTilingScheme,
             dataProvider: createMockDataProvider(),
             useWorker: true,
@@ -106,13 +107,13 @@ describe("TileDataSource", () => {
         }
 
         const testedDataSource = new TileDataSource(new TileFactory(CustomTile), {
-            id: "tds",
+            styleSetName: "",
             tilingScheme: webMercatorTilingScheme,
             dataProvider: createMockDataProvider(),
             useWorker: true,
             decoder: createMockTileDecoder()
         });
-        testedDataSource.attached(createMockMapView());
+        testedDataSource.attach(createMockMapView());
 
         const mockTile = testedDataSource.getTile(TileKey.fromRowColumnLevel(0, 0, 0));
 
@@ -134,14 +135,14 @@ describe("TileDataSource", () => {
         mockDecoder.decodeTile.resolves(fakeEmptyGeometry);
 
         const testedDataSource = new TileDataSource(new TileFactory(Tile), {
-            id: "tds",
+            styleSetName: "",
             tilingScheme: webMercatorTilingScheme,
             dataProvider: mockDataProvider,
             useWorker: true,
             decoder: mockDecoder
         });
 
-        testedDataSource.attached(createMockMapView());
+        testedDataSource.attach(createMockMapView());
 
         const tile = testedDataSource.getTile(TileKey.fromRowColumnLevel(0, 0, 0))!;
         assert(tile);
@@ -177,13 +178,14 @@ describe("TileDataSource", () => {
         mockDecoder.decodeTile.resolves(fakeEmptyGeometry);
 
         const testedDataSource = new TileDataSource(new TileFactory(Tile), {
-            id: "tds",
+            name: "tds",
+            styleSetName: "",
             tilingScheme: webMercatorTilingScheme,
             dataProvider: mockDataProvider,
             useWorker: true,
             decoder: mockDecoder
         });
-        testedDataSource.attached(createMockMapView());
+        testedDataSource.attach(createMockMapView());
 
         const tile = testedDataSource.getTile(TileKey.fromRowColumnLevel(0, 0, 0))!;
         assert(tile);
@@ -212,13 +214,14 @@ describe("TileDataSource", () => {
         mockDecoder.decodeTile.resolves(fakeEmptyGeometry);
 
         const testedDataSource = new TileDataSource(new TileFactory(Tile), {
-            id: "tds",
+            name: "tds",
+            styleSetName: "",
             tilingScheme: webMercatorTilingScheme,
             dataProvider: mockDataProvider,
             useWorker: true,
             decoder: mockDecoder
         });
-        testedDataSource.attached(createMockMapView());
+        testedDataSource.attach(createMockMapView());
 
         const tile = testedDataSource.getTile(TileKey.fromRowColumnLevel(0, 0, 0))!;
         assert(tile);
