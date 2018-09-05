@@ -38,14 +38,14 @@
   "devDependencies": {
     "@here/test-utils": "^0.1.0",
     "@types/chai": "^4.1.2",
-    "@types/mocha": "^2.2.47",
+    "@types/mocha": "^5.2.5",
     "@types/node": "^10.1.4",
     "@types/sinon": "^5.0.1",
     "chai": "^4.0.2",
     "cross-env": "^5.2.0",
-    "mocha": "^4.1.0",
+    "mocha": "^5.2.0",
     "mocha-loader": "^1.1.2",
-    "sinon": "^4.2.0",
+    "sinon": "^6.1.5",
     "source-map-support": "^0.5.2",
     "typescript": "2.8.4",
     "webpack": "^2.3.3"
