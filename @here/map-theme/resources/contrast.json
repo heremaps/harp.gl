@@ -1,0 +1,991 @@
+{
+  "clearColor": "#efe9e1",
+  "defaultTextStyle": {
+    "color": "#000000",
+    "bgMode": "Outline",
+    "bgColor": "#ffffff",
+    "bgFactor": 10,
+    "bgAlpha" : 0.75
+},
+  "lights": [
+    {
+      "type": "ambient",
+      "name": "ambientLight",
+      "color": "#606060"
+    },
+    {
+      "type": "directional",
+      "name": "light1",
+      "color": "#ffffff",
+      "intensity": 1,
+      "direction": {
+        "x": 1,
+        "y": 0,
+        "z": 1
+      }
+    },
+    {
+      "type": "directional",
+      "name": "light2",
+      "color": "#ffffff",
+      "intensity": 0.35,
+      "direction": {
+        "x": -1,
+        "y": 0,
+        "z": 1
+      }
+    }
+  ],
+  "styles": [
+    {
+      "dataSource": "omv",
+      "when": "$layer == 'landuse' && class == 'builtup'",
+      "technique": {
+        "name": "fill",
+        "color": "#e1e9ed"
+      }
+    },
+    {
+      "dataSource": "omv",
+      "when": "$layer == 'landuse' && class == 'park'",
+      "technique": {
+        "name": "fill",
+        "color": "#b3e79d"
+      }
+    },
+    {
+      "dataSource": "omv",
+      "when": "$layer == 'landuse' && class == 'wood'",
+      "technique": {
+        "name": "fill",
+        "color": "#cbf1b6"
+      }
+    },
+    {
+      "dataSource": "omv",
+      "when": "$layer == 'water'",
+      "technique": {
+        "name": "fill",
+        "color": "#99ceff"
+      }
+    },
+    {
+      "dataSource": "omv",
+      "when": "$layer == 'waterway' && (class == 'canal' || type == 'river') && $level > 9",
+      "continue": false,
+      "technique": {
+        "name": "solid-line",
+        "color": "#99ceff",
+        "lineWidth": [
+          {
+            "maxLevel": 10,
+            "value": 28
+          },
+          {
+            "maxLevel": 11,
+            "value": 20
+          },
+          {
+            "maxLevel": 12,
+            "value": 12
+          },
+          {
+            "maxLevel": 13,
+            "value": 8
+          },
+          {
+            "value": 4
+          }
+        ]
+      }
+    },
+    {
+      "dataSource": "omv",
+      "when": "$layer == 'waterway' && ((type == 'stream' || class == 'stream') || (type == 'drain' || class == 'drain') || (type == 'ditch' || class == 'ditch')) && $level > 9",
+      "continue": false,
+      "technique": {
+        "name": "solid-line",
+        "color": "#99ceff",
+        "lineWidth": [
+          {
+            "maxLevel": 10,
+            "value": 22
+          },
+          {
+            "maxLevel": 11,
+            "value": 16
+          },
+          {
+            "maxLevel": 12,
+            "value": 10
+          },
+          {
+            "maxLevel": 13,
+            "value": 6
+          },
+          {
+            "value": 3
+          }
+        ]
+      }
+    },
+    {
+      "dataSource": "omv",
+      "when": "$layer == 'waterway' && type == 'river' && $level > 8",
+      "continue": false,
+      "technique": {
+        "name": "solid-line",
+        "color": "#99ceff",
+        "lineWidth": [
+          {
+            "maxLevel": 9,
+            "value": 70
+          }
+        ]
+      }
+    },
+    {
+      "dataSource": "omv",
+      "when": "$layer == 'landuse' && class == 'hospital'",
+      "technique": {
+        "name": "fill",
+        "color": "#f3dae4"
+      }
+    },
+    {
+      "dataSource": "omv",
+      "when": "$layer == 'landuse' && class == 'pitch'",
+      "technique": {
+        "name": "fill",
+        "color": "#aae08f"
+      }
+    },
+    {
+      "dataSource": "omv",
+      "when": "$layer == 'landuse' && class == 'cemetery'",
+      "technique": {
+        "name": "fill",
+        "color": "#d3e9d8"
+      }
+    },
+    {
+      "dataSource": "omv",
+      "when": "$layer == 'road' && (class ^= 'major_rail' || class ^= 'minor_rail')",
+      "continue": true,
+      "technique": {
+        "name": "solid-line",
+        "color": "#b2b2b2",
+        "lineWidth": [
+          {
+            "maxLevel": 13,
+            "value": 2
+          },
+          {
+            "value": 1
+          }
+        ]
+      }
+    },
+    {
+      "dataSource": "omv",
+      "when": "$layer == 'road' && $level >= 13 && class ^= 'service'",
+      "continue": true,
+      "technique": {
+        "name": "solid-line",
+        "color": "#ddd",
+        "lineWidth": [
+          {
+            "value": 5
+          }
+        ]
+      }
+    },
+    {
+      "dataSource": "omv",
+      "when": "$layer == 'road' && $level >= 13 && class ^= 'street'",
+      "continue": true,
+      "technique": {
+        "name": "solid-line",
+        "color": "#ddd",
+        "lineWidth": [
+          {
+            "maxLevel": 10,
+            "value": 40
+          },
+          {
+            "maxLevel": 11,
+            "value": 24
+          },
+          {
+            "maxLevel": 12,
+            "value": 16
+          },
+          {
+            "maxLevel": 13,
+            "value": 10
+          },
+          {
+            "value": 6
+          }
+        ]
+      }
+    },
+    {
+      "dataSource": "omv",
+      "when": "$layer == 'road' && $level >= 13 && class ^= 'tertiary'",
+      "continue": true,
+      "technique": {
+        "name": "solid-line",
+        "color": "#bf9d86",
+        "lineWidth": [
+          {
+            "maxLevel": 9,
+            "value": 70
+          },
+          {
+            "maxLevel": 10,
+            "value": 38
+          },
+          {
+            "maxLevel": 11,
+            "value": 24
+          },
+          {
+            "maxLevel": 12,
+            "value": 16
+          },
+          {
+            "maxLevel": 13,
+            "value": 10
+          },
+          {
+            "value": 5
+          }
+        ]
+      }
+    },
+    {
+      "dataSource": "omv",
+      "when": "$layer == 'road' && $level >= 13 && class ^= 'secondary'",
+      "continue": true,
+      "technique": {
+        "name": "solid-line",
+        "color": "#c98a6f",
+        "lineWidth": [
+          {
+            "maxLevel": 8,
+            "value": 100
+          },
+          {
+            "maxLevel": 9,
+            "value": 70
+          },
+          {
+            "maxLevel": 10,
+            "value": 38
+          },
+          {
+            "maxLevel": 11,
+            "value": 24
+          },
+          {
+            "maxLevel": 12,
+            "value": 16
+          },
+          {
+            "maxLevel": 13,
+            "value": 10
+          },
+          {
+            "value": 5
+          }
+        ]
+      }
+    },
+    {
+      "dataSource": "omv",
+      "when": "$layer == 'road' && $level >= 13 && (class ^= 'primary' || class ^= 'motorway')",
+      "continue": true,
+      "technique": {
+        "name": "solid-line",
+        "color": "#bd5e80",
+        "lineWidth": [
+          {
+            "maxLevel": 6,
+            "value": 550
+          },
+          {
+            "maxLevel": 7,
+            "value": 300
+          },
+          {
+            "maxLevel": 8,
+            "value": 100
+          },
+          {
+            "maxLevel": 9,
+            "value": 70
+          },
+          {
+            "maxLevel": 10,
+            "value": 38
+          },
+          {
+            "maxLevel": 11,
+            "value": 24
+          },
+          {
+            "maxLevel": 12,
+            "value": 16
+          },
+          {
+            "maxLevel": 13,
+            "value": 10
+          },
+          {
+            "value": 5
+          }
+        ]
+      }
+    },
+    {
+      "dataSource": "omv",
+      "when": "$layer == 'road' && class ^= 'path'",
+      "continue": true,
+      "technique": {
+        "name": "solid-line",
+        "color": "#b2ccae",
+        "lineWidth": [
+          {
+            "maxLevel": 13,
+            "value": 1
+          },
+          {
+            "value": 0.5
+          }
+        ]
+      }
+    },
+    {
+      "dataSource": "omv",
+      "when": "$layer == 'road' && class ^= 'service'",
+      "continue": false,
+      "technique": {
+        "name": "solid-line",
+        "color": "#f8f8f8",
+        "lineWidth": [
+          {
+            "value": 4
+          }
+        ]
+      }
+    },
+    {
+      "dataSource": "omv",
+      "when": "$layer == 'road' && class ^= 'street'",
+      "continue": false,
+      "technique": {
+        "name": "solid-line",
+        "color": "#ffffe3",
+        "lineWidth": [
+          {
+            "maxLevel": 10,
+            "value": 32
+          },
+          {
+            "maxLevel": 11,
+            "value": 20
+          },
+          {
+            "maxLevel": 12,
+            "value": 12
+          },
+          {
+            "maxLevel": 13,
+            "value": 8
+          },
+          {
+            "value": 4
+          }
+        ]
+      }
+    },
+    {
+      "dataSource": "omv",
+      "when": "$layer == 'road' && class ^= 'construction'",
+      "continue": false,
+      "technique": {
+        "name": "dashed-line",
+        "dashSize": [
+          {
+            "maxLevel": 10,
+            "value": 64
+          },
+          {
+            "maxLevel": 11,
+            "value": 40
+          },
+          {
+            "maxLevel": 12,
+            "value": 24
+          },
+          {
+            "maxLevel": 13,
+            "value": 16
+          },
+          {
+            "value": 8
+          }
+        ],
+        "gapSize": [
+          {
+            "maxLevel": 10,
+            "value": 64
+          },
+          {
+            "maxLevel": 11,
+            "value": 40
+          },
+          {
+            "maxLevel": 12,
+            "value": 24
+          },
+          {
+            "maxLevel": 13,
+            "value": 16
+          },
+          {
+            "value": 8
+          }
+        ],
+        "color": "#fffc96",
+        "lineWidth": [
+          {
+            "maxLevel": 10,
+            "value": 32
+          },
+          {
+            "maxLevel": 11,
+            "value": 20
+          },
+          {
+            "maxLevel": 12,
+            "value": 12
+          },
+          {
+            "maxLevel": 13,
+            "value": 8
+          },
+          {
+            "value": 4
+          }
+        ]
+      }
+    },
+    {
+      "dataSource": "omv",
+      "when": "$layer == 'road' && class ^= 'tertiary'",
+      "continue": false,
+      "technique": {
+        "name": "solid-line",
+        "color": "#fffc96",
+        "lineWidth": [
+          {
+            "maxLevel": 9,
+            "value": 40
+          },
+          {
+            "maxLevel": 10,
+            "value": 30
+          },
+          {
+            "maxLevel": 11,
+            "value": 20
+          },
+          {
+            "maxLevel": 12,
+            "value": 12
+          },
+          {
+            "maxLevel": 13,
+            "value": 8
+          },
+          {
+            "value": 4
+          }
+        ]
+      }
+    },
+    {
+      "dataSource": "omv",
+      "when": "$layer == 'road' && class ^= 'secondary'",
+      "continue": false,
+      "technique": {
+        "name": "solid-line",
+        "color": "#ffbaa0",
+        "lineWidth": [
+          {
+            "maxLevel": 3,
+            "value": 5000
+          },
+          {
+            "maxLevel": 5,
+            "value": 2000
+          },
+          {
+            "maxLevel": 6,
+            "value": 1000
+          },
+          {
+            "maxLevel": 7,
+            "value": 300
+          },
+          {
+            "maxLevel": 8,
+            "value": 150
+          },
+          {
+            "maxLevel": 9,
+            "value": 100
+          },
+          {
+            "maxLevel": 10,
+            "value": 40
+          },
+          {
+            "maxLevel": 11,
+            "value": 20
+          },
+          {
+            "maxLevel": 12,
+            "value": 16
+          },
+          {
+            "maxLevel": 13,
+            "value": 8
+          },
+          {
+            "value": 4
+          }
+        ]
+      }
+    },
+    {
+      "dataSource": "omv",
+      "when": "$layer == 'road' && (class ^= 'primary' || class ^= 'motorway')",
+      "continue": false,
+      "technique": {
+        "name": "solid-line",
+        "color": "#f3a6c2",
+        "lineWidth": [
+          {
+            "maxLevel": 5,
+            "value": 830
+          },
+          {
+            "maxLevel": 6,
+            "value": 410
+          },
+          {
+            "maxLevel": 7,
+            "value": 220
+          },
+          {
+            "maxLevel": 8,
+            "value": 100
+          },
+          {
+            "maxLevel": 9,
+            "value": 50
+          },
+          {
+            "maxLevel": 10,
+            "value": 30
+          },
+          {
+            "maxLevel": 11,
+            "value": 20
+          },
+          {
+            "maxLevel": 12,
+            "value": 12
+          },
+          {
+            "maxLevel": 13,
+            "value": 8
+          },
+          {
+            "value": 4
+          }
+        ]
+      }
+    },
+    {
+      "dataSource": "omv",
+      "when": "$layer == 'road' && structure ^= 'bridge'",
+      "continue": false,
+      "technique": {
+        "name": "solid-line",
+        "color": "#fffc96",
+        "lineWidth": [
+          {
+            "maxLevel": 8,
+            "value": 80
+          },
+          {
+            "maxLevel": 9,
+            "value": 40
+          },
+          {
+            "maxLevel": 10,
+            "value": 30
+          },
+          {
+            "maxLevel": 11,
+            "value": 20
+          },
+          {
+            "maxLevel": 12,
+            "value": 12
+          },
+          {
+            "maxLevel": 13,
+            "value": 8
+          },
+          {
+            "value": 4
+          }
+        ]
+      }
+    },
+    {
+      "dataSource": "omv",
+      "when": "$layer == 'road' && structure ^= 'tunnel'",
+      "continue": false,
+      "technique": {
+        "name": "solid-line",
+        "color": "#fffc96",
+        "lineWidth": [
+          {
+            "maxLevel": 8,
+            "value": 80
+          },
+          {
+            "maxLevel": 9,
+            "value": 40
+          },
+          {
+            "maxLevel": 10,
+            "value": 30
+          },
+          {
+            "maxLevel": 11,
+            "value": 20
+          },
+          {
+            "maxLevel": 12,
+            "value": 12
+          },
+          {
+            "maxLevel": 13,
+            "value": 8
+          },
+          {
+            "value": 4
+          }
+        ]
+      }
+    },
+    {
+      "dataSource": "omv",
+      "when": "$layer == 'admin'",
+      "technique": {
+        "name": "solid-line",
+        "color": "#c9ccd9",
+        "lineWidth": [
+          {
+            "maxLevel": 3,
+            "value": 2300
+          },
+          {
+            "maxLevel": 4,
+            "value": 1500
+          },
+          {
+            "maxLevel": 5,
+            "value": 800
+          },
+          {
+            "maxLevel": 6,
+            "value": 280
+          },
+          {
+            "maxLevel": 7,
+            "value": 150
+          },
+          {
+            "maxLevel": 8,
+            "value": 90
+          },
+          {
+            "maxLevel": 9,
+            "value": 50
+          },
+          {
+            "maxLevel": 10,
+            "value": 20
+          },
+          {
+            "maxLevel": 11,
+            "value": 15
+          },
+          {
+            "maxLevel": 12,
+            "value": 10
+          },
+          {
+            "maxLevel": 13,
+            "value": 5
+          },
+          {
+            "value": 2
+          }
+        ]
+      }
+    },
+    {
+      "dataSource": "omv",
+      "when": "$layer == 'road' && class ^= 'ferry'",
+      "continue": true,
+      "technique": {
+        "name": "dashed-line",
+        "color": "#fffc96",
+        "dashSize": [
+          { "maxLevel": 6, "value": 10000 },
+          { "maxLevel": 7, "value": 6000 },
+          { "maxLevel": 8, "value": 2000 },
+          { "maxLevel": 9, "value": 1400 },
+          { "maxLevel": 10, "value": 760 },
+          { "maxLevel": 11, "value": 280 },
+          { "maxLevel": 12, "value": 320 },
+          { "maxLevel": 13, "value": 200 },
+          { "value": 120 }
+        ],
+        "gapSize": [
+          { "maxLevel": 6, "value": 10000 },
+          { "maxLevel": 7, "value": 6000 },
+          { "maxLevel": 8, "value": 2000 },
+          { "maxLevel": 9, "value": 1400 },
+          { "maxLevel": 10, "value": 760 },
+          { "maxLevel": 11, "value": 280 },
+          { "maxLevel": 12, "value": 320 },
+          { "maxLevel": 13, "value": 200 },
+          { "value": 120 }
+        ],
+        "lineWidth": [
+          { "maxLevel": 6, "value": 500 },
+          { "maxLevel": 7, "value": 300 },
+          { "maxLevel": 8, "value": 100 },
+          { "maxLevel": 9, "value": 70 },
+          { "maxLevel": 10, "value": 38 },
+          { "maxLevel": 11, "value": 24 },
+          { "maxLevel": 12, "value": 16 },
+          { "maxLevel": 13, "value": 10 },
+          { "value": 5 }
+        ]
+      }
+    },
+    {
+      "dataSource": "omv",
+      "when": "$layer == 'building' && !has_landmark && $level >= 14",
+      "technique": {
+        "name": "extruded-polygon",
+        "color": "#e4e1dd",
+        "roughness": 1.95,
+        "metalness": 0.85,
+        "emissive": "#e8edf2",
+        "emissiveIntensity": 0.7,
+        "vertexColors": false
+      }
+    },
+    {
+      "dataSource": "landmark",
+      "when": "$layer == 'landmark'",
+      "technique": {
+        "name": "landmark",
+        "color": "#e4e1dd",
+        "roughness": 1.95,
+        "metalness": 0.85,
+        "emissive": "#e8edf2",
+        "emissiveIntensity": 0.65,
+        "vertexColors": false
+      }
+    },
+    {
+      "dataSource": "omv",
+      "when": "$layer == 'country_label'",
+      "technique": {
+        "name": "text",
+        "scale": 0.75
+      }
+    },
+    {
+      "dataSource": "omv",
+      "when": "$layer == 'poi_label'",
+      "technique": {
+        "name": "text",
+        "scale": 0.5
+      }
+    },
+    {
+      "dataSource": "omv",
+      "when": "$layer == 'state_label' && $level >= 5",
+      "technique": {
+        "name": "text",
+        "scale": 0.75
+      }
+    },
+    {
+      "dataSource": "omv",
+      "when": "$layer == 'state_label' && $level < 5",
+      "technique": {
+        "useAbbreviation": true,
+        "name": "text",
+        "scale": 0.75
+      }
+    },
+    {
+      "dataSource": "omv",
+      "when": "$layer == 'region_label'",
+      "technique": {
+        "name": "text",
+        "scale": 0.70
+      }
+    },
+    {
+      "dataSource": "omv",
+      "when": "$layer == 'county_label'",
+      "technique": {
+        "name": "text",
+        "scale": 0.70
+      }
+    },
+    {
+      "dataSource": "omv",
+      "when": "$layer == 'place_label'",
+      "technique": {
+        "name": "text",
+        "scale": 0.7
+      }
+    },
+    {
+      "dataSource": "omv",
+      "when": "$layer == 'road_label' && $level < 14 && !(class in ['service', 'path', 'pedestrian', 'street_limited', 'street'])",
+      "technique": {
+        "name": "text",
+        "scale": 0.5
+      }
+    },
+    {
+      "dataSource": "omv",
+      "when": "$layer == 'road_label' && $level >= 14",
+      "technique": {
+        "name": "text",
+        "scale": 0.5
+      }
+    },
+    {
+      "dataSource": "omv",
+      "when": "$layer == 'water_label'",
+      "technique": {
+        "name": "text",
+        "scale": 0.5
+      }
+    },
+    {
+      "dataSource": "omv",
+      "when": "$layer == 'waterway_label'",
+      "technique": {
+        "name": "text",
+        "scale": 0.5
+      }
+    },
+    {
+      "dataSource": "omv",
+      "when": "$layer == 'housenum_label' && $level >= 14",
+      "technique": {
+        "name": "text",
+        "label": "house_num",
+        "scale": 0.4,
+        "minZoomLevel": 16
+      }
+    },
+    {
+      "dataSource": "omv",
+      "when": "$layer == 'marine_label' && labelrank == 1",
+      "technique": {
+        "name": "text",
+        "scale": 0.35
+      }
+    },
+    {
+      "dataSource": "omv",
+      "when": "$layer == 'marine_label' && labelrank == 2",
+      "technique": {
+        "name": "text",
+        "scale": 0.4
+      }
+    },
+    {
+      "dataSource": "omv",
+      "when": "$layer == 'marine_label' && labelrank == 3",
+      "technique": {
+        "name": "text",
+        "scale": 0.45
+      }
+    },
+    {
+      "dataSource": "omv",
+      "when": "$layer == 'marine_label' && labelrank == 4",
+      "technique": {
+        "name": "text",
+        "scale": 0.5
+      }
+    },
+    {
+      "dataSource": "omv",
+      "when": "$layer == 'marine_label' && labelrank == 5",
+      "technique": {
+        "name": "text",
+        "scale": 0.55
+      }
+    },
+    {
+      "dataSource": "omv",
+      "when": "$layer == 'marine_label' && labelrank == 6",
+      "technique": {
+        "name": "text",
+        "scale": 0.6
+      }
+    },
+    {
+      "dataSource": "omv",
+      "when": "$layer == 'aeroway'",
+      "continue": false,
+      "technique": {
+        "name": "fill",
+        "color": "#b6babd",
+        "renderOrder": 2
+      }
+    },
+    {
+      "dataSource": "omv",
+      "when": "$layer == 'landuse' && class == 'industrial'",
+      "technique": {
+        "name": "fill",
+        "color": "#d6dbde",
+        "renderOrder": 1
+      }
+    }
+  ]
+}
