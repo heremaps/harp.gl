@@ -1,0 +1,5 @@
+[gerrit]
+host=gerrit.it.here.com
+port=29418
+project=harp4web/verity-core-sdk/fetch
+defaultbranch=master
