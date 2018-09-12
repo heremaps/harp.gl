@@ -1,0 +1,43 @@
+{
+  "name": "@here/download-manager",
+  "version": "0.1.48",
+  "description": "Typescript version of a download manager",
+  "main": "index.js",
+  "typings": "index",
+  "directories": {
+    "test": "test",
+    "lib": "src"
+  },
+  "scripts": {
+    "test": "cross-env mocha  --require source-map-support/register $EXTRA_MOCHA_ARGS ./test/*.js",
+    "build": "tsc",
+    "prepare": "cross-env tsc --sourceMap false $EXTRA_TSC_ARGS"
+  },
+  "repository": {
+    "type": "git",
+    "url": "ssh://gerrit.it.here.com:29418/harp4web/verity-core-sdk/downloadManager"
+  },
+  "author": {
+    "name": "HERE Global B.V. and its affiliate(s)",
+    "url": "https://here.com"
+  },
+  "license": "SEE LICENSE IN LICENSE",
+  "publishConfig": {
+    "registry": "https://artifactory.in.here.com/artifactory/api/npm/verity-npm-local/"
+  },
+  "dependencies": {
+    "@here/fetch": "^0.1.42"
+  },
+  "devDependencies": {
+    "@types/chai": "^4.1.2",
+    "@types/mocha": "^5.2.5",
+    "@types/sinon": "^5.0.1",
+    "chai": "^4.0.2",
+    "cross-env": "^5.2.0",
+    "glob": "^7.1.1",
+    "mocha": "^5.2.0",
+    "sinon": "^6.1.5",
+    "source-map-support": "^0.5.2",
+    "typescript": "2.8.4"
+  }
+}
