@@ -1,0 +1,51 @@
+{
+  "name": "@here/mapview-decoder",
+  "version": "0.2.45",
+  "description": "Decoder worker for mapview",
+  "main": "index.js",
+  "typings": "index",
+  "worker": {
+    "name": "@here/mapview-decoder-worker",
+    "main": "index-worker.js"
+  },
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "cross-env mocha --require source-map-support/register $EXTRA_MOCHA_ARGS ./test/*.js",
+    "build": "tsc",
+    "prepare": "cross-env tsc --sourceMap false $EXTRA_TSC_ARGS"
+  },
+  "repository": {
+    "type": "git",
+    "url": "ssh://gerrit.it.here.com:29418/harp4web/verity-core-sdk/mapview-decoder"
+  },
+  "author": {
+    "name": "HERE Global B.V. and its affiliate(s)",
+    "url": "https://here.com"
+  },
+  "license": "SEE LICENSE IN LICENSE",
+  "publishConfig": {
+    "registry": "https://artifactory.in.here.com/artifactory/api/npm/verity-npm-local/"
+  },
+  "dependencies": {
+    "@here/datasource-protocol": "^0.2.39",
+    "@here/fetch": "^0.1.42",
+    "@here/geoutils": "^0.2.40",
+    "@here/mapview": "^0.7.55"
+  },
+  "devDependencies": {
+    "@here/test-utils": "^0.1.0",
+    "@types/chai": "^4.1.2",
+    "@types/mocha": "^5.2.5",
+    "@types/node": "^10.1.4",
+    "@types/sinon": "^5.0.1",
+    "chai": "^4.0.2",
+    "cross-env": "^5.2.0",
+    "mocha": "^5.2.0",
+    "mocha-loader": "^1.1.2",
+    "sinon": "^6.1.5",
+    "source-map-support": "^0.5.2",
+    "typescript": "2.8.4"
+  }
+}
