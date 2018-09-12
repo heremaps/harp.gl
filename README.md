@@ -1,5 +1,6 @@
 # harp.js
 
+This is a dummy change that should not be submitted
 This is the monorepo for `harp.js`, the JavaScript version of the HERE Advanced Rendering Platform.
 
 ## Development
