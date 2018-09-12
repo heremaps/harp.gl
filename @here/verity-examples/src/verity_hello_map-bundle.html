@@ -1,0 +1,87 @@
+<html>
+    <head>
+        <!--
+            These paths are to be used by clients, when using map bundle from CDN.
+        -->
+
+        <!--
+        <script src="https://unpkg.com/three@0.92.0/build/three.min.js"></script>
+        <script src="https://artifactory.in.here.com/artifactory/harp4web-release/map.bundle.js"></script>
+        -->
+
+        <!--
+            These paths work CI folder layout created by mapsdk's publish-html.js
+        -->
+        <script src="three.min.js"></script>
+        <script src="../../dist/map.bundle.js"></script>
+
+        <!--
+            These paths work in local development env with following steps:
+              1) serve files from mapsdk folder
+              2) build loop:
+                  npm build-examples && npm build-map-component
+        -->
+
+        <!--
+            <script src="three.min.js"></script>
+            <script src="../../../dist/map.bundle.js"></script>
+        -->
+
+        <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+        <meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+        <style>
+            body {
+                margin: 0em;
+            }
+            #mapCanvas {
+                position: absolute;
+                border: 0px;
+                left: 0px;
+                width: 100%;
+                height: 100%;
+                overflow: hidden;
+                z-index: -1
+            }
+        </style>
+    </head>
+    <body>
+        <canvas id="canvas"></canvas>
+
+        <script>
+            // create the map component
+            var mapView = new harp4web.MapView({
+                // that will render to 'canvas' DOM element
+                canvas: document.getElementById("canvas"),
+
+                // with theme bundled together with map.bundle.js
+                theme: 'harp4web:map-theme/day.json'
+            });
+
+            // create and attach OMV / WARP data source
+            var omvDataSource = new harp4web.OmvDataSource({
+                baseUrl: "https://vector.cit.data.here.com/1.0/base/mc",
+                apiFormat: harp4web.APIFormat.HereV1,
+                maxZoomLevel: 17
+            });
+            mapView.addDataSource(omvDataSource);
+
+            // enable mouse and gestures support
+            harp4web.MapControls.create(mapView);
+
+            // setup initial camera height
+            mapView.camera.position.set(0, 0, 800);
+
+            // and position
+            mapView.geoCenter = new harp4web.GeoCoordinates(52.518611, 13.376111, 0);
+
+            // setup initial map view size
+            mapView.resize(window.innerWidth, window.innerHeight);
+
+            // react on resize events
+            window.addEventListener("resize", () => {
+                mapView.resize(window.innerWidth, window.innerHeight);
+            });
+        </script>
+    </body>
+</html>
