@@ -1,0 +1,29 @@
+{
+    "compileOnSave": true,
+    "compilerOptions": {
+        "target": "es5",
+        "lib": [
+            "es2017",
+            "dom"
+        ],
+        "module": "commonjs",
+        "sourceMap": true,
+        "declaration": false,
+        "strictNullChecks": true,
+        "noImplicitAny": true,
+        "noImplicitReturns": true,
+        "noImplicitThis": true,
+        "noUnusedLocals": false,
+        "downlevelIteration": true,
+        "jsx": "react",
+        "skipLibCheck": true,
+        "types": [
+            "highlight.js",
+            "long",
+            "react",
+            "react-native",
+            "three",
+            "tween.js"
+        ]
+    }
+}
