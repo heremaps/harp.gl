@@ -1,0 +1,1188 @@
+{
+    "clearColor": "#e4e9ec",
+    "fontCatalogs": [
+        {
+            "name": "fira",
+            "url": "fonts/Default_FontCatalog.json"
+        }
+    ],
+    "defaultTextStyle": {
+        "color": "#6d7477",
+        "bgMode": "Outline",
+        "bgColor": "#ffffff",
+        "bgFactor": 10,
+        "bgAlpha": 0.75,
+        "fontCatalogName": "fira"
+    },
+    "textStyles": [],
+    "lights": [
+        {
+            "type": "ambient",
+            "name": "ambientLight",
+            "color": "#606060"
+        },
+        {
+            "type": "directional",
+            "name": "light1",
+            "color": "#ffffff",
+            "intensity": 0.65,
+            "direction": {
+                "x": 1,
+                "y": 0,
+                "z": 1
+            }
+        },
+        {
+            "type": "directional",
+            "name": "light2",
+            "color": "#ffffff",
+            "intensity": 0.35,
+            "direction": {
+                "x": -1,
+                "y": 0,
+                "z": 1
+            }
+        }
+    ],
+    "styles": {
+        "omv": [
+            {
+                "description": "grouped theme for landuse",
+                "when": "$layer == 'landuse'",
+                "renderOrder": 0,
+                "styles": [
+                    {
+                        "when": "class == 'builtup'",
+                        "technique": "fill",
+                        "attr": {
+                            "color": "#dce1e4"
+                        }
+                    },
+                    {
+                        "when": "class == 'park'",
+                        "technique": "fill",
+                        "renderOrder": 1,
+                        "attr": {
+                            "color": "#d3e3df"
+                        }
+                    },
+                    {
+                        "when": "class == 'wood'",
+                        "technique": "fill",
+                        "renderOrder": 2,
+                        "attr": {
+                            "color": "#e4e9ec"
+                        }
+                    },
+                    {
+                        "when": "class == 'hospital'",
+                        "technique": "fill",
+                        "attr": {
+                            "color": "#dce1e4"
+                        }
+                    },
+                    {
+                        "when": "class == 'pitch'",
+                        "technique": "fill",
+                        "attr": {
+                            "color": "#d3e3df"
+                        }
+                    },
+                    {
+                        "when": "class == 'cemetery'",
+                        "technique": "fill",
+                        "renderOrder": 1,
+                        "attr": {
+                            "color": "#d3e3df"
+                        }
+                    },
+                    {
+                        "when": "class == 'industrial'",
+                        "technique": "fill",
+                        "attr": {
+                            "color": "#d6dbde"
+                        }
+                    }
+                ]
+            },
+            {
+                "when": "$layer == 'water'",
+                "technique": "fill",
+                "renderOrder": 5,
+                "attr": {
+                    "color": "#c3cdd4"
+                }
+            },
+            {
+                "when": "$layer == 'waterway' && (class == 'canal' || type == 'river') && $level > 9",
+                "technique": "solid-line",
+                "attr": {
+                    "color": "#c3cdd4",
+                    "lineWidth": [
+                        {
+                            "maxLevel": 10,
+                            "value": 28
+                        },
+                        {
+                            "maxLevel": 11,
+                            "value": 20
+                        },
+                        {
+                            "maxLevel": 12,
+                            "value": 12
+                        },
+                        {
+                            "maxLevel": 13,
+                            "value": 8
+                        },
+                        {
+                            "value": 4
+                        }
+                    ]
+                }
+            },
+            {
+                "when": "$layer == 'waterway' && ((type == 'stream' || class == 'stream') || (type == 'drain' || class == 'drain') || (type == 'ditch' || class == 'ditch')) && $level > 9",
+                "technique": "solid-line",
+                "attr": {
+                    "color": "#c3cdd4",
+                    "lineWidth": [
+                        {
+                            "maxLevel": 10,
+                            "value": 22
+                        },
+                        {
+                            "maxLevel": 11,
+                            "value": 16
+                        },
+                        {
+                            "maxLevel": 12,
+                            "value": 10
+                        },
+                        {
+                            "maxLevel": 13,
+                            "value": 6
+                        },
+                        {
+                            "value": 3
+                        }
+                    ]
+                }
+            },
+            {
+                "when": "$layer == 'waterway' && type == 'river' && $level > 8",
+                "technique": "solid-line",
+                "attr": {
+                    "color": "#c3cdd4",
+                    "lineWidth": [
+                        {
+                            "maxLevel": 9,
+                            "value": 70
+                        }
+                    ]
+                }
+            },
+            {
+                "description": "Style group for road outlines/background",
+                "when": "$layer == 'road' && $level >= 13 && !(class ^= 'major_rail' || class ^= 'minor_rail')",
+                "renderOrder": 10,
+                "attr": {
+                    "color": "#CACBCC"
+                },
+                "styles": [
+                    {
+                        "when": "class ^= 'path'",
+                        "technique": "solid-line",
+                        "attr": {
+                            "color": "#fcfeff",
+                            "lineWidth": [
+                                {
+                                    "maxLevel": 13,
+                                    "value": 1
+                                },
+                                {
+                                    "value": 0.5
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "when": "class ^= 'pedestrian'",
+                        "renderOrder": 9,
+                        "technique": "solid-line",
+                        "attr": {
+                            "color": "#fcfeff",
+                            "lineWidth": [
+                                {
+                                    "value": 1.5
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "when": "class ^= 'service'",
+                        "technique": "solid-line",
+                        "attr": {
+                            "lineWidth": [
+                                {
+                                    "value": 5
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "when": "class ^= 'street'",
+                        "technique": "solid-line",
+                        "attr": {
+                            "lineWidth": [
+                                {
+                                    "maxLevel": 10,
+                                    "value": 38
+                                },
+                                {
+                                    "maxLevel": 11,
+                                    "value": 24
+                                },
+                                {
+                                    "maxLevel": 12,
+                                    "value": 16
+                                },
+                                {
+                                    "maxLevel": 13,
+                                    "value": 10
+                                },
+                                {
+                                    "value": 6
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "when": "class ^= 'tertiary'",
+                        "technique": "solid-line",
+                        "attr": {
+                            "lineWidth": [
+                                {
+                                    "maxLevel": 9,
+                                    "value": 70
+                                },
+                                {
+                                    "maxLevel": 10,
+                                    "value": 38
+                                },
+                                {
+                                    "maxLevel": 11,
+                                    "value": 24
+                                },
+                                {
+                                    "maxLevel": 12,
+                                    "value": 16
+                                },
+                                {
+                                    "maxLevel": 13,
+                                    "value": 10
+                                },
+                                {
+                                    "value": 5
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "when": "class ^= 'secondary'",
+                        "technique": "solid-line",
+                        "attr": {
+                            "lineWidth": [
+                                {
+                                    "maxLevel": 8,
+                                    "value": 100
+                                },
+                                {
+                                    "maxLevel": 9,
+                                    "value": 70
+                                },
+                                {
+                                    "maxLevel": 10,
+                                    "value": 38
+                                },
+                                {
+                                    "maxLevel": 11,
+                                    "value": 24
+                                },
+                                {
+                                    "maxLevel": 12,
+                                    "value": 16
+                                },
+                                {
+                                    "maxLevel": 13,
+                                    "value": 10
+                                },
+                                {
+                                    "value": 5
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "when": "(class ^= 'primary' || class ^= 'motorway')",
+                        "technique": "solid-line",
+                        "attr": {
+                            "lineWidth": [
+                                {
+                                    "maxLevel": 6,
+                                    "value": 550
+                                },
+                                {
+                                    "maxLevel": 7,
+                                    "value": 300
+                                },
+                                {
+                                    "maxLevel": 8,
+                                    "value": 100
+                                },
+                                {
+                                    "maxLevel": 9,
+                                    "value": 70
+                                },
+                                {
+                                    "maxLevel": 10,
+                                    "value": 38
+                                },
+                                {
+                                    "maxLevel": 11,
+                                    "value": 24
+                                },
+                                {
+                                    "maxLevel": 12,
+                                    "value": 16
+                                },
+                                {
+                                    "maxLevel": 13,
+                                    "value": 10
+                                },
+                                {
+                                    "value": 5
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "when": "class ^= 'pedestrian'",
+                        "technique": "solid-line",
+                        "attr": {
+                            "color": "#E8EAEB",
+                            "lineWidth": [
+                                {
+                                    "value": 1
+                                }
+                            ]
+                        }
+                    }
+                ]
+            },
+            {
+                "description": "Style group for roads (foreground)",
+                "when": "$layer == 'road'",
+                "renderOrder": 11,
+                "styles": [
+                    {
+                        "description": "Railway+S-Bahn",
+                        "when": "(class ^= 'major_rail' || class ^= 'minor_rail')",
+                        "attr": {
+                            "color": "#d2d7d9"
+                        },
+                        "styles": [
+                            {
+                                "description": "Railway+S-Bahn in tunnels",
+                                "when": "structure == 'tunnel'",
+                                "technique": "solid-line",
+                                "renderOrder": 8,
+                                "attr": {
+                                    "lineWidth": [
+                                        {
+                                            "maxLevel": 13,
+                                            "value": 6
+                                        },
+                                        {
+                                            "value": 3
+                                        }
+                                    ]
+                                }
+                            },
+                            {
+                                "description": "Railway+S-Bahn (no tunnels)",
+                                "when": "structure != 'tunnel'",
+                                "technique": "solid-line",
+                                "attr": {
+                                    "lineWidth": [
+                                        {
+                                            "maxLevel": 13,
+                                            "value": 2
+                                        },
+                                        {
+                                            "value": 1
+                                        }
+                                    ]
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "when": "class ^= 'service'",
+                        "technique": "solid-line",
+                        "renderOrder": 12,
+                        "attr": {
+                            "color": "#fcfeff",
+                            "lineWidth": [
+                                {
+                                    "value": 4
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "when": "class ^= 'street'",
+                        "renderOrder": 13,
+                        "technique": "solid-line",
+                        "attr": {
+                            "color": "#fcfeff",
+                            "lineWidth": [
+                                {
+                                    "maxLevel": 10,
+                                    "value": 28
+                                },
+                                {
+                                    "maxLevel": 11,
+                                    "value": 20
+                                },
+                                {
+                                    "maxLevel": 12,
+                                    "value": 12
+                                },
+                                {
+                                    "maxLevel": 13,
+                                    "value": 8
+                                },
+                                {
+                                    "value": 4
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "when": "class ^= 'construction'",
+                        "renderOrder": 14,
+                        "technique": "dashed-line",
+                        "attr": {
+                            "color": "#fcfeff",
+                            "dashSize": [
+                                {
+                                    "maxLevel": 10,
+                                    "value": 64
+                                },
+                                {
+                                    "maxLevel": 11,
+                                    "value": 40
+                                },
+                                {
+                                    "maxLevel": 12,
+                                    "value": 24
+                                },
+                                {
+                                    "maxLevel": 13,
+                                    "value": 16
+                                },
+                                {
+                                    "value": 8
+                                }
+                            ],
+                            "gapSize": [
+                                {
+                                    "maxLevel": 10,
+                                    "value": 64
+                                },
+                                {
+                                    "maxLevel": 11,
+                                    "value": 40
+                                },
+                                {
+                                    "maxLevel": 12,
+                                    "value": 24
+                                },
+                                {
+                                    "maxLevel": 13,
+                                    "value": 16
+                                },
+                                {
+                                    "value": 8
+                                }
+                            ],
+                            "lineWidth": [
+                                {
+                                    "maxLevel": 10,
+                                    "value": 32
+                                },
+                                {
+                                    "maxLevel": 11,
+                                    "value": 20
+                                },
+                                {
+                                    "maxLevel": 12,
+                                    "value": 12
+                                },
+                                {
+                                    "maxLevel": 13,
+                                    "value": 8
+                                },
+                                {
+                                    "value": 4
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "when": "class ^= 'tertiary'",
+                        "renderOrder": 15,
+                        "technique": "solid-line",
+                        "attr": {
+                            "color": "#fcfeff",
+                            "lineWidth": [
+                                {
+                                    "maxLevel": 9,
+                                    "value": 40
+                                },
+                                {
+                                    "maxLevel": 10,
+                                    "value": 30
+                                },
+                                {
+                                    "maxLevel": 11,
+                                    "value": 20
+                                },
+                                {
+                                    "maxLevel": 12,
+                                    "value": 12
+                                },
+                                {
+                                    "maxLevel": 13,
+                                    "value": 8
+                                },
+                                {
+                                    "value": 4
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "when": "class ^= 'secondary'",
+                        "renderOrder": 16,
+                        "technique": "solid-line",
+                        "attr": {
+                            "color": "#fcfeff",
+                            "lineWidth": [
+                                {
+                                    "maxLevel": 3,
+                                    "value": 5000
+                                },
+                                {
+                                    "maxLevel": 5,
+                                    "value": 2000
+                                },
+                                {
+                                    "maxLevel": 6,
+                                    "value": 1000
+                                },
+                                {
+                                    "maxLevel": 7,
+                                    "value": 300
+                                },
+                                {
+                                    "maxLevel": 8,
+                                    "value": 150
+                                },
+                                {
+                                    "maxLevel": 9,
+                                    "value": 100
+                                },
+                                {
+                                    "maxLevel": 10,
+                                    "value": 40
+                                },
+                                {
+                                    "maxLevel": 11,
+                                    "value": 20
+                                },
+                                {
+                                    "maxLevel": 12,
+                                    "value": 16
+                                },
+                                {
+                                    "maxLevel": 13,
+                                    "value": 8
+                                },
+                                {
+                                    "value": 4
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "when": "(class ^= 'primary' || class ^= 'motorway')",
+                        "renderOrder": 17,
+                        "technique": "solid-line",
+                        "attr": {
+                            "color": "#fcfeff",
+                            "lineWidth": [
+                                {
+                                    "maxLevel": 5,
+                                    "value": 830
+                                },
+                                {
+                                    "maxLevel": 6,
+                                    "value": 410
+                                },
+                                {
+                                    "maxLevel": 7,
+                                    "value": 220
+                                },
+                                {
+                                    "maxLevel": 8,
+                                    "value": 100
+                                },
+                                {
+                                    "maxLevel": 9,
+                                    "value": 50
+                                },
+                                {
+                                    "maxLevel": 10,
+                                    "value": 30
+                                },
+                                {
+                                    "maxLevel": 11,
+                                    "value": 20
+                                },
+                                {
+                                    "maxLevel": 12,
+                                    "value": 12
+                                },
+                                {
+                                    "maxLevel": 13,
+                                    "value": 8
+                                },
+                                {
+                                    "value": 4
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "when": "structure ^= 'bridge' && $level < 14",
+                        "renderOrder": 8,
+                        "technique": "solid-line",
+                        "attr": {
+                            "color": "#E8EAEB",
+                            "lineWidth": [
+                                {
+                                    "maxLevel": 8,
+                                    "value": 100
+                                },
+                                {
+                                    "maxLevel": 9,
+                                    "value": 50
+                                },
+                                {
+                                    "maxLevel": 10,
+                                    "value": 40
+                                },
+                                {
+                                    "maxLevel": 11,
+                                    "value": 24
+                                },
+                                {
+                                    "maxLevel": 12,
+                                    "value": 16
+                                },
+                                {
+                                    "maxLevel": 13,
+                                    "value": 10
+                                },
+                                {
+                                    "value": 6
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "when": "structure ^= 'bridge' && $level >= 14",
+                        "renderOrder": 8,
+                        "technique": "extruded-line",
+                        "attr": {
+                            "color": "#E8EAEB",
+                            "caps": "None",
+                            "lineWidth": 6
+                        }
+                    },
+                    {
+                        "when": "structure ^= 'tunnel'",
+                        "renderOrder": 7,
+                        "technique": "solid-line",
+                        "attr": {
+                            "color": "#9DA0A2",
+                            "lineWidth": [
+                                {
+                                    "maxLevel": 8,
+                                    "value": 80
+                                },
+                                {
+                                    "maxLevel": 9,
+                                    "value": 40
+                                },
+                                {
+                                    "maxLevel": 10,
+                                    "value": 30
+                                },
+                                {
+                                    "maxLevel": 11,
+                                    "value": 20
+                                },
+                                {
+                                    "maxLevel": 12,
+                                    "value": 12
+                                },
+                                {
+                                    "maxLevel": 13,
+                                    "value": 8
+                                },
+                                {
+                                    "value": 4
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "when": "class ^= 'ferry'",
+                        "technique": "dashed-line",
+                        "attr": {
+                            "color": "#fcfeff",
+                            "dashSize": [
+                                {
+                                    "maxLevel": 6,
+                                    "value": 10000
+                                },
+                                {
+                                    "maxLevel": 7,
+                                    "value": 6000
+                                },
+                                {
+                                    "maxLevel": 8,
+                                    "value": 2000
+                                },
+                                {
+                                    "maxLevel": 9,
+                                    "value": 1400
+                                },
+                                {
+                                    "maxLevel": 10,
+                                    "value": 760
+                                },
+                                {
+                                    "maxLevel": 11,
+                                    "value": 280
+                                },
+                                {
+                                    "maxLevel": 12,
+                                    "value": 320
+                                },
+                                {
+                                    "maxLevel": 13,
+                                    "value": 200
+                                },
+                                {
+                                    "value": 120
+                                }
+                            ],
+                            "gapSize": [
+                                {
+                                    "maxLevel": 6,
+                                    "value": 10000
+                                },
+                                {
+                                    "maxLevel": 7,
+                                    "value": 6000
+                                },
+                                {
+                                    "maxLevel": 8,
+                                    "value": 2000
+                                },
+                                {
+                                    "maxLevel": 9,
+                                    "value": 1400
+                                },
+                                {
+                                    "maxLevel": 10,
+                                    "value": 760
+                                },
+                                {
+                                    "maxLevel": 11,
+                                    "value": 280
+                                },
+                                {
+                                    "maxLevel": 12,
+                                    "value": 320
+                                },
+                                {
+                                    "maxLevel": 13,
+                                    "value": 200
+                                },
+                                {
+                                    "value": 120
+                                }
+                            ],
+                            "lineWidth": [
+                                {
+                                    "maxLevel": 6,
+                                    "value": 500
+                                },
+                                {
+                                    "maxLevel": 7,
+                                    "value": 300
+                                },
+                                {
+                                    "maxLevel": 8,
+                                    "value": 100
+                                },
+                                {
+                                    "maxLevel": 9,
+                                    "value": 70
+                                },
+                                {
+                                    "maxLevel": 10,
+                                    "value": 38
+                                },
+                                {
+                                    "maxLevel": 11,
+                                    "value": 24
+                                },
+                                {
+                                    "maxLevel": 12,
+                                    "value": 16
+                                },
+                                {
+                                    "maxLevel": 13,
+                                    "value": 10
+                                },
+                                {
+                                    "value": 5
+                                }
+                            ]
+                        }
+                    }
+                ]
+            },
+            {
+                "when": "$layer == 'admin'",
+                "technique": "solid-line",
+                "attr": {
+                    "color": "#b4b4b5",
+                    "lineWidth": [
+                        {
+                            "maxLevel": 3,
+                            "value": 2300
+                        },
+                        {
+                            "maxLevel": 4,
+                            "value": 1500
+                        },
+                        {
+                            "maxLevel": 5,
+                            "value": 800
+                        },
+                        {
+                            "maxLevel": 6,
+                            "value": 280
+                        },
+                        {
+                            "maxLevel": 7,
+                            "value": 150
+                        },
+                        {
+                            "maxLevel": 8,
+                            "value": 90
+                        },
+                        {
+                            "maxLevel": 9,
+                            "value": 50
+                        },
+                        {
+                            "maxLevel": 10,
+                            "value": 20
+                        },
+                        {
+                            "maxLevel": 11,
+                            "value": 15
+                        },
+                        {
+                            "maxLevel": 12,
+                            "value": 10
+                        },
+                        {
+                            "maxLevel": 13,
+                            "value": 5
+                        },
+                        {
+                            "value": 2
+                        }
+                    ]
+                }
+            },
+            {
+                "when": "$layer == 'building'",
+                "styles": [
+                    {
+                        "when": "$level == 14 || $level >= 16",
+                        "description": "Old OMV tiles have extruded buildings at level 14, new ones at level 16 and 17",
+                        "styles": [
+                            {
+                                "when": "!has_landmark",
+                                "technique": "extruded-polygon",
+                                "attr": {
+                                    "color": "#f7f9f9",
+                                    "roughness": 1.95,
+                                    "metalness": 0.85,
+                                    "emissive": "#f7f9f9",
+                                    "emissiveIntensity": 0.625,
+                                    "vertexColors": false,
+                                    "footprint": true,
+                                    "maxSlope": 0.9,
+                                    "lineWidth": 1.0,
+                                    "lineColor": "#a0a0a0",
+                                    "lineColorMix": 0.0,
+                                    "lineFadeDistance": 0.25,
+                                    "opacity": 0.75
+                                }
+                            },
+                            {
+                                "description": "Building with has_landmark",
+                                "when": "has_landmark",
+                                "technique_": "extruded-polygon",
+                                "technique": "none",
+                                "attr": {
+                                    "color": "#3a4857",
+                                    "roughness": 1.95,
+                                    "metalness": 0.85,
+                                    "emissive": "#3a4857",
+                                    "emissiveIntensity": 0.625,
+                                    "vertexColors": false,
+                                    "footprint": true,
+                                    "maxSlope": 0.9,
+                                    "lineWidth": 1.0,
+                                    "lineColor": "#a0a0a0",
+                                    "lineColorMix": 0.0,
+                                    "lineFadeDistance": 0.25
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "when": "$level == 15",
+                        "description": "Works for tiles loaded with REST API, who have footprints at level 15",
+                        "styles": [
+                            {
+                                "when": "!has_landmark",
+                                "technique": "fill",
+                                "attr": {
+                                    "color": "#f7f9f9"
+                                }
+                            },
+                            {
+                                "description": "Building with has_landmark",
+                                "when": "has_landmark",
+                                "technique_": "fill",
+                                "technique": "none",
+                                "attr": {
+                                    "color": "#3a4857"
+                                }
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "when": "$layer == 'country_label'",
+                "technique": "text",
+                "attr": {
+                    "scale": 0.75
+                }
+            },
+            {
+                "when": "$layer $= '_label'",
+                "renderOrder": 30,
+                "styles": [
+                    {
+                        "when": "$layer == 'poi_label'",
+                        "technique": "text",
+                        "attr": {
+                            "scale": 0.5
+                        }
+                    },
+                    {
+                        "when": "$layer == 'state_label' && $level >= 5",
+                        "technique": "text",
+                        "attr": {
+                            "scale": 0.75
+                        }
+                    },
+                    {
+                        "when": "$layer == 'state_label' && $level < 5",
+                        "technique": "text",
+                        "attr": {
+                            "useAbbreviation": true,
+                            "scale": 0.75
+                        }
+                    },
+                    {
+                        "when": "$layer == 'region_label'",
+                        "technique": "text",
+                        "attr": {
+                            "scale": 0.7
+                        }
+                    },
+                    {
+                        "when": "$layer == 'county_label'",
+                        "technique": "text",
+                        "attr": {
+                            "scale": 0.7
+                        }
+                    },
+                    {
+                        "when": "$layer == 'place_label'",
+                        "technique": "text",
+                        "attr": {
+                            "scale": 0.7
+                        }
+                    },
+                    {
+                        "when": "$layer == 'road_label' && $level < 14 && !(class in ['service', 'path', 'pedestrian', 'street_limited', 'street'])",
+                        "technique": "text",
+                        "attr": {
+                            "scale": 0.5
+                        }
+                    },
+                    {
+                        "when": "$layer == 'road_label' && $level >= 14",
+                        "technique": "text",
+                        "attr": {
+                            "scale": 0.5
+                        }
+                    },
+                    {
+                        "when": "$layer == 'water_label'",
+                        "technique": "text",
+                        "attr": {
+                            "scale": 0.5
+                        }
+                    },
+                    {
+                        "when": "$layer == 'waterway_label' && $level > 7",
+                        "technique": "text",
+                        "attr": {
+                            "scale": 0.5
+                        }
+                    },
+                    {
+                        "when": "$layer == 'housenum_label' && $level >= 14",
+                        "technique": "text",
+                        "attr": {
+                            "label": "house_num",
+                            "scale": 0.4,
+                            "minZoomLevel": 16
+                        }
+                    },
+                    {
+                        "when": "$layer == 'marine_label' && labelrank == 1",
+                        "technique": "text",
+                        "attr": {
+                            "scale": 0.35
+                        }
+                    },
+                    {
+                        "when": "$layer == 'marine_label' && labelrank == 2",
+                        "technique": "text",
+                        "attr": {
+                            "scale": 0.4
+                        }
+                    },
+                    {
+                        "when": "$layer == 'marine_label' && labelrank == 3",
+                        "technique": "text",
+                        "attr": {
+                            "scale": 0.45
+                        }
+                    },
+                    {
+                        "when": "$layer == 'marine_label' && labelrank == 4",
+                        "technique": "text",
+                        "attr": {
+                            "scale": 0.5
+                        }
+                    },
+                    {
+                        "when": "$layer == 'marine_label' && labelrank == 5",
+                        "technique": "text",
+                        "attr": {
+                            "scale": 0.55
+                        }
+                    },
+                    {
+                        "when": "$layer == 'marine_label' && labelrank == 6",
+                        "technique": "text",
+                        "attr": {
+                            "scale": 0.6
+                        }
+                    },
+                    {
+                        "when": "$layer == 'aeroway'",
+                        "technique": "fill",
+                        "renderOrder": 2,
+                        "attr": {
+                            "color": "#b6babd"
+                        }
+                    }
+                ]
+            }
+        ],
+        "landmark": [
+            {
+                "when": "$layer == 'landmark'",
+                "technique": "landmark",
+                "renderOrder": 110,
+                "styles": [
+                    {
+                        "when": "$enableLandmarkTextures and $hasTexture",
+                        "final": true,
+                        "technique": "standard-textured",
+                        "attr": {
+                            "color": "#f7f9f9",
+                            "roughness": 1.5,
+                            "metalness": 0.6,
+                            "emissive": "#f7f9f9",
+                            "emissiveIntensity": 0.5,
+                            "transparent": true
+                        }
+                    },
+                    {
+                        "technique": "standard",
+                        "attr": {
+                            "color": "#f7f9f9",
+                            "roughness": 1.95,
+                            "metalness": 0.85,
+                            "emissive": "#f7f9f9",
+                            "emissiveIntensity": 0.6,
+                            "vertexColors": false
+                        }
+                    }
+                ]
+            }
+        ]
+    }
+}
