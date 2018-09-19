@@ -1,11 +1,15 @@
 import * as fs from "fs";
-import * as path from "path";
 import * as mkpath from "mkpath";
+import * as path from "path";
+
+// tslint:disable:no-console
+// tslint:disable:no-empty
 
 function syncIfNeeded(source: fs.PathLike, target: fs.PathLike) {
 
-    if (!fs.existsSync(source))
+    if (!fs.existsSync(source)) {
         console.warn(source, "does not exist, creating dangling link");
+    }
 
     try {
         fs.lstatSync(target);
@@ -17,9 +21,9 @@ function syncIfNeeded(source: fs.PathLike, target: fs.PathLike) {
 }
 
 interface SyncFilesOptions {
-    sourceDir: string,
-    destDir: string,
-    files: Array<string>
+    sourceDir: string;
+    destDir: string;
+    files: string[];
 }
 
 function syncFiles({ sourceDir, destDir, files }: SyncFilesOptions) {
@@ -32,8 +36,8 @@ function syncFiles({ sourceDir, destDir, files }: SyncFilesOptions) {
 }
 
 interface SyncDirsOptions {
-    sourceDir: string,
-    destDir: string
+    sourceDir: string;
+    destDir: string;
 }
 
 function syncDirsIfNeeded({ sourceDir, destDir }: SyncDirsOptions) {

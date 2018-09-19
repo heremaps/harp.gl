@@ -1,7 +1,8 @@
-const glob = require("glob");
-const fs = require("fs");
-const path = require("path");
-const semver = require("semver");
+import fs = require("fs");
+import glob = require("glob");
+import path = require("path");
+
+// tslint:disable:no-console
 
 function writePackageJson(fileName: string, contents: any) {
     fs.writeFileSync(fileName, JSON.stringify(contents, null, 2) + "\n");
@@ -31,8 +32,8 @@ packageFiles.push(__dirname + "/../package.json");
 
 /* Bump all dependencies */
 
-function bump(dependencies: Array<any>, packageFile: string) {
-    for (let dep in dependencies) {
+function bump(dependencies: any[], packageFile: string) {
+    for (const dep in dependencies) {
         if (dep !== newPackage) {
             continue;
         }
@@ -46,7 +47,8 @@ function bump(dependencies: Array<any>, packageFile: string) {
     }
 }
 
-for (let packageFile of packageFiles) {
+for (const packageFile of packageFiles) {
+    // tslint:disable-next-line:no-var-requires
     const pkg = require(packageFile);
 
     bump(pkg.dependencies, packageFile);
