@@ -18,6 +18,7 @@
         "types": [
             "chai",
             "mocha",
+            "node",
             "sinon"
         ]
     }

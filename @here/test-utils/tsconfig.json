@@ -17,6 +17,7 @@
         "downlevelIteration": true,
         "types": [
             "chai",
+            "node",
             "mocha"
         ]
     }
