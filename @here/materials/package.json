@@ -1,0 +1,39 @@
+{
+  "name": "@here/materials",
+  "version": "0.1.11",
+  "description": "Harp4Web Materials",
+  "main": "index.js",
+  "typings": "index",
+  "scripts": {
+    "build": "tsc",
+    "test": "cross-env mocha --require source-map-support/register $EXTRA_MOCHA_ARGS ./test/*.js",
+    "prepare": "cross-env tsc --sourceMap false $EXTRA_TSC_ARGS"
+  },
+  "repository": {
+    "type": "git",
+    "url": "ssh://gerrit.it.here.com:29418/harp4web/verity-core-sdk/materials"
+  },
+  "author": {
+    "name": "HERE Global B.V. and its affiliate(s)",
+    "url": "https://here.com"
+  },
+  "license": "SEE LICENSE IN HERE_NOTICE",
+  "publishConfig": {
+    "registry": "https://artifactory.in.here.com/artifactory/api/npm/verity-npm-local/"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@types/chai": "^4.1.2",
+    "@types/mocha": "^5.2.5",
+    "@types/three": "0.92.7",
+    "chai": "^4.0.2",
+    "cross-env": "^5.2.0",
+    "mocha": "^5.2.0",
+    "source-map-support": "^0.5.2",
+    "three": "^0.92.0",
+    "typescript": "2.8.4"
+  },
+  "peerDependencies": {
+    "three": "^0.92.0"
+  }
+}
