@@ -1,0 +1,109 @@
+/*
+ * Copyright (C) 2018 HERE Global B.V. and its affiliate(s). All rights reserved.
+ *
+ * This software and other materials contain proprietary information controlled by HERE and are
+ * protected by applicable copyright legislation. Any use and utilization of this software and other
+ * materials and disclosure to any third parties is conditional upon having a separate agreement
+ * with HERE for the access, use, utilization or disclosure of this software. In the absence of such
+ * agreement, the use of the software is not allowed.
+ */
+
+import * as THREE from "three";
+
+import { HighPrecisionPointMaterial } from "@here/materials";
+
+import { HighPrecisionObject } from "./HighPrecisionLines";
+import { HighPrecisionUtils } from "./HighPrecisionUtils";
+
+/**
+ * Class used to render high-precision points.
+ */
+export class HighPrecisionPoints extends THREE.Points implements HighPrecisionObject {
+    matrixWorldInverse: THREE.Matrix4;
+
+    /**
+     * Number of dimensions this `HighPrecisionObject` is specified in (2D/3D).
+     */
+    dimensionality?: number;
+
+    /**
+     * Creates a `HighPrecisionPoints` object.
+     *
+     * @param geometry [[BufferGeometry]] used to render this object.
+     * @param material [[HighPrecisionLineMaterial]] used to render this object.
+     *     instances.
+     * @param positions Array of 2D/3D positions.
+     * @param color Color of the rendered point.
+     * @param opacity Opacity of the rendered point.
+     */
+    constructor(
+        geometry?: THREE.BufferGeometry,
+        material?: HighPrecisionPointMaterial,
+        positions?: number[] | THREE.Vector2[] | THREE.Vector3[],
+        color?: THREE.Color,
+        opacity?: number
+    ) {
+        if (material === undefined) {
+            material = new HighPrecisionPointMaterial({
+                color: color ? color : HighPrecisionPointMaterial.DEFAULT_COLOR,
+                opacity: opacity !== undefined ? opacity : 1
+            });
+        }
+
+        super(geometry === undefined ? new THREE.BufferGeometry() : geometry, material);
+
+        this.matrixWorldInverse = new THREE.Matrix4();
+
+        if (positions) {
+            this.setPositions(positions);
+        }
+    }
+
+    get bufferGeometry(): THREE.BufferGeometry {
+        return this.geometry as THREE.BufferGeometry;
+    }
+
+    /**
+     * Clears the [[BufferGeometry]] used to render this point.
+     */
+    clearGeometry(): THREE.BufferGeometry {
+        return (this.geometry = new THREE.BufferGeometry());
+    }
+
+    get shaderMaterial(): THREE.ShaderMaterial {
+        return this.material as THREE.ShaderMaterial;
+    }
+
+    setPositions(positions: number[] | THREE.Vector2[] | THREE.Vector3[]): void {
+        this.dimensionality = HighPrecisionUtils.setPositions(this, positions);
+    }
+
+    setupForRendering(): void {
+        if (
+            (this.material as any).isHighPrecisionPointsMaterial &&
+            this.dimensionality !== undefined
+        ) {
+            (this.material as any).setDimensionality(this.dimensionality);
+        }
+        this.onBeforeRender = (
+            _renderer: THREE.WebGLRenderer,
+            _scene: THREE.Scene,
+            camera: THREE.Camera,
+            _geometry: THREE.Geometry | THREE.BufferGeometry,
+            _material: THREE.Material,
+            _group: THREE.Group
+        ) => {
+            HighPrecisionUtils.updateHpUniforms(this, camera, this.shaderMaterial);
+        };
+    }
+
+    updateMatrixWorld(force: boolean) {
+        const doUpdateMatrixWorldInverse = this.matrixWorldNeedsUpdate || force;
+
+        super.updateMatrixWorld(force);
+
+        if (doUpdateMatrixWorldInverse) {
+            this.matrixWorldInverse.getInverse(this.matrixWorld);
+        }
+    }
+}
