@@ -1,0 +1,31 @@
+/*
+ * Copyright (C) 2018 HERE Global B.V. and its affiliate(s). All rights reserved.
+ *
+ * This software and other materials contain proprietary information controlled by HERE and are
+ * protected by applicable copyright legislation. Any use and utilization of this software and other
+ * materials and disclosure to any third parties is conditional upon having a separate agreement
+ * with HERE for the access, use, utilization or disclosure of this software. In the absence of such
+ * agreement, the use of the software is not allowed.
+ */
+
+import { assert } from "chai";
+import * as sinon from "sinon";
+
+import { ConcurrentWorkerSet } from "../lib/ConcurrentWorkerSet";
+import { WorkerBasedDecoder } from "../lib/WorkerBasedDecoder";
+
+describe("WorkerBasedDecoder", () => {
+    it("#dispose releases associates workerSet", () => {
+        const workerSetStub = sinon.createStubInstance<ConcurrentWorkerSet>(ConcurrentWorkerSet);
+
+        const target = new WorkerBasedDecoder((workerSetStub as any) as ConcurrentWorkerSet, "foo");
+
+        assert.equal(workerSetStub.addReference.callCount, 1);
+        assert.equal(workerSetStub.removeReference.callCount, 0);
+
+        target.dispose();
+
+        assert.equal(workerSetStub.addReference.callCount, 1);
+        assert.equal(workerSetStub.removeReference.callCount, 1);
+    });
+});
