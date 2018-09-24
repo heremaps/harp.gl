@@ -44,7 +44,7 @@ const sdkDir = path.resolve(__dirname, "..");
 const outDir = path.resolve(sdkDir, "dist/doc");
 mkpath.sync(outDir);
 
-const sourceFiles = glob.sync(sdkDir + "/@here/verity-examples/**/*.{ts,tsx,html}");
+const sourceFiles = glob.sync(sdkDir + "/@here/harp-examples/**/*.{ts,tsx,html}");
 
 const snippetRegex = /snippet:(\S+).*$([\s\S]*)^.*end:\1/gm;
 

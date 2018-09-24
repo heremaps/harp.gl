@@ -1,8 +1,8 @@
 {
-  "name": "@here/verity-examples",
-  "version": "0.1.36",
+  "name": "@here/harp-examples",
+  "version": "0.1.0",
   "description": "Visualisation Library Examples",
-  "bin": "verity-examples",
+  "bin": "harp-examples",
   "scripts": {
     "test": "exit 0",
     "prebuild": "node scripts/postinstall.js",

@@ -14,16 +14,6 @@ npm start
 
 Open `http://localhost:8080` in a web browser to try the examples.
 
-## Running without installing
-
-With most recent `node.js`, run the examples without installing via:
-
-```shell
-npx @here/verity-examples
-```
-
-Open `http://localhost:5000` in a web browser.
-
 ## Authentication
 
 Some of the examples need an authentication token to access the data.

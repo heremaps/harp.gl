@@ -1,8 +1,8 @@
-const exampleConfig = require("./@here/verity-examples/webpack.config");
+const exampleConfig = require("./@here/harp-examples/webpack.config");
 const path = require("path");
 const fs = require("fs");
 
-const outputPath = path.join(__dirname, "dist/verity-examples");
+const outputPath = path.join(__dirname, "dist/harp-examples");
 
 function patchConfig(config) {
     config.resolve.modules = [__dirname, "node_modules"];

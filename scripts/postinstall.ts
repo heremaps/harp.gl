@@ -56,33 +56,33 @@ function syncDirsIfNeeded({ sourceDir, destDir }: SyncDirsOptions) {
 }
 
 //
-// verity-examples
+// harp-examples
 //
-mkpath.sync("dist/verity-examples/dist/resources");
+mkpath.sync("dist/harp-examples/dist/resources");
 
 syncIfNeeded(
     path.resolve(__dirname, "../node_modules/three/build/three.min.js"),
-    path.resolve(__dirname, "../dist/verity-examples/dist/three.min.js")
+    path.resolve(__dirname, "../dist/harp-examples/dist/three.min.js")
 );
 
 syncIfNeeded(
     path.resolve(__dirname, "../@here/map-theme/resources/reducedNight.json"),
-    path.resolve(__dirname, "../dist/verity-examples/dist/resources/theme.json")
+    path.resolve(__dirname, "../dist/harp-examples/dist/resources/theme.json")
 );
 
 syncDirsIfNeeded({
     sourceDir: `../@here/map-theme/resources`,
-    destDir: `../dist/verity-examples/dist/resources`
+    destDir: `../dist/harp-examples/dist/resources`
 });
 
 syncDirsIfNeeded({
-    sourceDir: `../@here/verity-examples/resources`,
-    destDir: `../dist/verity-examples/dist/resources`
+    sourceDir: `../@here/harp-examples/resources`,
+    destDir: `../dist/harp-examples/dist/resources`
 });
 
 syncFiles({
-    sourceDir: "../@here/verity-examples",
-    destDir: "../dist/verity-examples",
+    sourceDir: "../@here/harp-examples",
+    destDir: "../dist/harp-examples",
     files: ["index.html", "codebrowser.html", "src", "config.ts"]
 });
 

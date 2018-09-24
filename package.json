@@ -50,7 +50,7 @@
   "scripts": {
     "test": "ts-mocha -r tsconfig-paths/register ./@here/*/test/*.ts",
     "postinstall": "ts-node ./scripts/postinstall.ts",
-    "start": "webpack-dev-server -d --config webpack.examples.config.js --content-base \"$PWD/dist/verity-examples\"",
+    "start": "webpack-dev-server -d --config webpack.examples.config.js --content-base \"$PWD/dist/harp-examples\"",
     "build": "webpack -d --config webpack.examples.config.js",
     "typedoc": "ts-node ./scripts/doc-snippets.ts && typedoc --options typedoc.json"
   },
