@@ -10,6 +10,10 @@ You can use this engine to:
   * Create a smooth map experience with highly performant map rendering and decoding. Web workers parallelize the CPU intensive tasks, for optimal responsiveness.
   * Design your maps modularly, where you can swap out modules and data providers as required.
 
+## Documentation
+
+**TODO** - add link to generated documentation
+
 ## Installation
 
 ### In Node.js
