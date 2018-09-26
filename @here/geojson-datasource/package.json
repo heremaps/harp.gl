@@ -1,0 +1,43 @@
+{
+  "name": "@here/geojson-datasource",
+  "version": "0.2.4",
+  "description": "Typescript version of geojson-datasource",
+  "main": "index.js",
+  "typings": "index",
+  "scripts": {
+    "build": "tsc",
+    "test": "cross-env mocha --require source-map-support/register $EXTRA_MOCHA_ARGS ./test/*.js",
+    "prepare": "cross-env tsc --sourceMap false $EXTRA_TSC_ARGS"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com:heremaps/harp.js.git"
+  },
+  "author": {
+    "name": "HERE Global B.V. and its affiliate(s)",
+    "url": "https://here.com"
+  },
+  "license": "SEE LICENSE IN LICENSE",
+  "dependencies": {
+    "@here/datasource-protocol": "^0.2.51",
+    "@here/download-manager": "^0.1.43",
+    "@here/fetch": "^0.2.0",
+    "@here/geoutils": "^0.2.47",
+    "@here/lines": "^0.1.30",
+    "@here/mapview": "^0.7.67",
+    "@here/mapview-decoder": "^0.2.40",
+    "@here/utils": "^0.1.8",
+    "earcut": "^2.1.3"
+  },
+  "devDependencies": {
+    "@types/chai": "^4.1.2",
+    "@types/earcut": "^2.1.0",
+    "@types/mocha": "^5.2.5",
+    "@types/three": "0.92.7",
+    "chai": "^4.0.2",
+    "cross-env": "^5.2.0",
+    "mocha": "^5.2.0",
+    "source-map-support": "^0.5.2",
+    "typescript": "2.8.4"
+  }
+}
