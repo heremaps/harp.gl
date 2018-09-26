@@ -1,0 +1,33 @@
+{
+  "name": "@here/test-utils",
+  "version": "0.1.7",
+  "description": "Provides utilities for tests",
+  "main": "index.js",
+  "browser": "index.web.js",
+  "typings": "index.web",
+  "scripts": {
+    "build": "tsc",
+    "test": "cross-env mocha --require source-map-support/register $EXTRA_MOCHA_ARGS ./test/*.js",
+    "prepare": "cross-env tsc --sourceMap false $EXTRA_TSC_ARGS"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com:heremaps/harp.js.git"
+  },
+  "author": {
+    "name": "HERE Global B.V. and its affiliate(s)",
+    "url": "https://here.com"
+  },
+  "license": "SEE LICENSE IN LICENSE",
+  "devDependencies": {
+    "@here/fetch": "^0.2.0",
+    "@here/utils": "^0.1.4",
+    "@types/chai": "^4.0.4",
+    "@types/mocha": "^5.2.5",
+    "@types/node": "^10.9.0",
+    "chai": "^4.1.2",
+    "cross-env": "^5.2.0",
+    "source-map-support": "^0.5.3",
+    "typescript": "2.8.4"
+  }
+}
