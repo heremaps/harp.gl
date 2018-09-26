@@ -1,0 +1,47 @@
+{
+  "name": "@here/map-controls",
+  "version": "0.1.47",
+  "description": "Camera controller which implements a common default set of camera functionality in a map context.",
+  "main": "index.js",
+  "typings": "index",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "cross-env mocha --require source-map-support/register $EXTRA_MOCHA_ARGS ./test/*.js",
+    "build": "tsc",
+    "prepare": "cross-env tsc --sourceMap false $EXTRA_TSC_ARGS"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com:heremaps/harp.js.git"
+  },
+  "author": {
+    "name": "HERE Global B.V. and its affiliate(s)",
+    "url": "https://here.com"
+  },
+  "license": "SEE LICENSE IN LICENSE",
+  "dependencies": {
+    "@here/geoutils": "^0.2.40",
+    "@here/mapview": "^0.7.55",
+    "@tweenjs/tween.js": "^17.1.1"
+  },
+  "devDependencies": {
+    "@types/chai": "^4.1.2",
+    "@types/mocha": "^5.2.5",
+    "@types/node": "^10.9.0",
+    "@types/sinon": "^5.0.1",
+    "@types/three": "0.92.7",
+    "@types/tween.js": "^16.9.0",
+    "chai": "^4.0.2",
+    "cross-env": "^5.2.0",
+    "mocha": "^5.2.0",
+    "sinon": "^6.1.5",
+    "source-map-support": "^0.5.2",
+    "three": "^0.92.0",
+    "typescript": "2.8.4"
+  },
+  "peerDependencies": {
+    "three": "^0.92.0"
+  }
+}
