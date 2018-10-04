@@ -1,0 +1,170 @@
+/*
+ * Copyright (C) 2018 HERE Global B.V. and its affiliate(s). All rights reserved.
+ *
+ * This software and other materials contain proprietary information controlled by HERE and are
+ * protected by applicable copyright legislation. Any use and utilization of this software and other
+ * materials and disclosure to any third parties is conditional upon having a separate agreement
+ * with HERE for the access, use, utilization or disclosure of this software. In the absence of such
+ * agreement, the use of the software is not allowed.
+ */
+import * as THREE from "three";
+
+import { FadingFeature, FadingFeatureParameters } from "./MapMeshMaterials";
+
+const vertexSource: string = `
+attribute vec3 position;
+attribute vec4 color;
+
+uniform mat4 modelViewMatrix;
+uniform mat4 projectionMatrix;
+uniform vec3 edgeColor;
+uniform float edgeColorMix;
+
+varying vec3 vColor;
+
+#ifdef USE_FADING
+#include <fading_pars_vertex>
+#endif
+
+void main() {
+    #if USE_COLOR
+    vColor = mix(edgeColor.rgb, color.rgb, edgeColorMix);
+    #else
+    vColor = edgeColor.rgb;
+    #endif
+
+    vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );
+    gl_Position = projectionMatrix * mvPosition;
+
+    #ifdef USE_FADING
+    #include <fading_vertex>
+    #endif
+}`;
+
+const fragmentSource: string = `
+precision highp float;
+precision highp int;
+
+varying vec3 vColor;
+
+#ifdef USE_FADING
+#include <fading_pars_fragment>
+#endif
+
+void main() {
+    float alphaValue = 1.0;
+    gl_FragColor = vec4(vColor, alphaValue);
+
+    #ifdef USE_FADING
+    #include <fading_fragment>
+    #endif
+}`;
+
+/**
+ * Parameters used when constructing a new [[EdgeMaterial]].
+ */
+export interface EdgeMaterialParameters extends FadingFeatureParameters {
+    /**
+     * Edge color.
+     */
+    color?: number | string;
+    /**
+     * Color mix value. Mixes between vertexColors and edgeColor.
+     */
+    colorMix?: number;
+}
+
+/**
+ * Material designed to render the edges of extruded buildings using GL_LINES. It supports solid
+ * colors, vertex colors, color mixing and distance fading.
+ */
+export class EdgeMaterial extends THREE.RawShaderMaterial implements FadingFeature {
+    static DEFAULT_COLOR: number = 0x000000;
+    static DEFAULT_COLOR_MIX: number = 0.0;
+
+    /**
+     * Constructs a new `EdgeMaterial`.
+     *
+     * @param params `EdgeMaterial` parameters.
+     */
+    constructor(params?: EdgeMaterialParameters) {
+        const shaderParams = {
+            name: "EdgeMaterial",
+            vertexShader: vertexSource,
+            fragmentShader: fragmentSource,
+            uniforms: {
+                edgeColor: new THREE.Uniform(new THREE.Color(EdgeMaterial.DEFAULT_COLOR)),
+                edgeColorMix: new THREE.Uniform(EdgeMaterial.DEFAULT_COLOR_MIX),
+                fadeNear: new THREE.Uniform(FadingFeature.DEFAULT_FADE_NEAR),
+                fadeFar: new THREE.Uniform(FadingFeature.DEFAULT_FADE_FAR)
+            },
+            depthWrite: false
+        };
+        super(shaderParams);
+
+        FadingFeature.patchGlobalShaderChunks();
+
+        // Apply initial parameter values.
+        if (params !== undefined) {
+            if (params.color !== undefined) {
+                this.color.set(params.color as any);
+            }
+            if (params.colorMix !== undefined) {
+                this.colorMix = params.colorMix;
+            }
+            if (params.fadeNear !== undefined) {
+                this.fadeNear = params.fadeNear;
+            }
+            if (params.fadeFar !== undefined) {
+                this.fadeFar = params.fadeFar;
+            }
+        }
+    }
+
+    /**
+     * Edge color.
+     */
+    get color(): THREE.Color {
+        return this.uniforms.edgeColor.value as THREE.Color;
+    }
+    set color(value: THREE.Color) {
+        this.uniforms.edgeColor.value = value;
+    }
+
+    /**
+     * Color mix value. Mixes between vertexColors and edgeColor.
+     */
+    get colorMix(): number {
+        return this.uniforms.edgeColorMix.value as number;
+    }
+    set colorMix(value: number) {
+        this.uniforms.edgeColorMix.value = value;
+        this.updateColorMixFeature();
+    }
+
+    private updateColorMixFeature(): void {
+        this.defines.USE_COLOR = this.colorMix > 0.0 ? 1 : 0;
+    }
+
+    get fadeNear(): number {
+        return this.uniforms.fadeNear.value as number;
+    }
+    set fadeNear(value: number) {
+        this.uniforms.fadeNear.value = value;
+    }
+
+    get fadeFar(): number {
+        return this.uniforms.fadeFar.value as number;
+    }
+    set fadeFar(value: number) {
+        this.uniforms.fadeFar.value = value;
+        const doFade = value !== undefined && value > 0.0;
+        if (doFade) {
+            this.needsUpdate = this.needsUpdate || this.defines.USE_FADING === undefined;
+            this.defines.USE_FADING = "";
+        } else {
+            this.needsUpdate = this.needsUpdate || this.defines.USE_FADING !== undefined;
+            delete this.defines.USE_FADING;
+        }
+    }
+}
