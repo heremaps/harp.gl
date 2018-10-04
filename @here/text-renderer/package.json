@@ -1,0 +1,42 @@
+{
+  "name": "@here/text-renderer",
+  "version": "0.2.56",
+  "description": "SDF based text rendering for TypeScript",
+  "main": "index.js",
+  "typings": "index",
+  "scripts": {
+    "build": "tsc",
+    "test": "cross-env mocha --require source-map-support/register $EXTRA_MOCHA_ARGS ./test/*.js",
+    "prepare": "cross-env tsc --sourceMap false $EXTRA_TSC_ARGS"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com:heremaps/harp.js.git"
+  },
+  "author": {
+    "name": "HERE Global B.V. and its affiliate(s)",
+    "url": "https://here.com"
+  },
+  "license": "SEE LICENSE IN LICENSE",
+  "dependencies": {
+    "@here/fetch": "^0.2.0",
+    "@here/lrucache": "^0.1.26",
+    "@here/materials": "^0.1.0",
+    "@here/utils": "^0.1.0"
+  },
+  "devDependencies": {
+    "@types/chai": "^4.1.2",
+    "@types/mocha": "^5.2.5",
+    "@types/node": "^10.9.0",
+    "@types/three": "0.92.7",
+    "chai": "^4.0.2",
+    "cross-env": "^5.2.0",
+    "mocha": "^5.2.0",
+    "source-map-support": "^0.5.2",
+    "three": "^0.92.0",
+    "typescript": "3.1.1"
+  },
+  "peerDependencies": {
+    "three": "^0.92.0"
+  }
+}
