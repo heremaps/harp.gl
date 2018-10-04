@@ -1,0 +1,54 @@
+{
+  "name": "@here/mapview",
+  "version": "0.7.76",
+  "description": "MapView renderer",
+  "main": "index.js",
+  "typings": "index",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "cross-env mocha --require source-map-support/register $EXTRA_MOCHA_ARGS ./test/*.js",
+    "prepare": "cross-env tsc --sourceMap false $EXTRA_TSC_ARGS"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com:heremaps/harp.js.git"
+  },
+  "author": {
+    "name": "HERE Global B.V. and its affiliate(s)",
+    "url": "https://here.com"
+  },
+  "license": "SEE LICENSE IN LICENSE",
+  "dependencies": {
+    "@here/datasource-protocol": "^0.2.39",
+    "@here/geoutils": "^0.2.40",
+    "@here/lines": "^0.1.31",
+    "@here/lrucache": "^0.1.26",
+    "@here/materials": "^0.1.0",
+    "@here/text-renderer": "^0.2.38",
+    "@here/utils": "^0.1.0",
+    "rtree": "^1.4.2"
+  },
+  "devDependencies": {
+    "@here/test-utils": "^0.1.0",
+    "@types/chai": "^4.1.2",
+    "@types/mocha": "^5.2.5",
+    "@types/node": "^10.9.0",
+    "@types/sinon": "^5.0.1",
+    "@types/three": "0.92.7",
+    "@types/tween.js": "^16.9.0",
+    "chai": "^4.0.2",
+    "copyfiles": "^2.0.0",
+    "cross-env": "^5.2.0",
+    "mocha": "^5.2.0",
+    "sinon": "^6.1.5",
+    "source-map-support": "^0.5.2",
+    "three": "^0.92.0",
+    "typescript": "3.1.1"
+  },
+  "peerDependencies": {
+    "three": "^0.92.0"
+  }
+}
