@@ -24,14 +24,15 @@ export class MapTileCuller {
     ];
 
     /**
-     * Constructs the `MapTileCuller`.
+     * Constructs a `MapTileCuller`.
      *
      * @param m_camera A `THREE.Camera`.
      */
     constructor(private m_camera: THREE.Camera) {}
 
     /**
-     * Sets up culling. Computes frustum corners. Has to be called before the culling starts.
+     * Sets up culling and computes frustum corners. You mus call this function before the culling
+     * starts.
      */
     setup() {
         const frustumCorners = this.getFrustumCorners();
@@ -55,9 +56,9 @@ export class MapTileCuller {
     }
 
     /**
-     * Check if the tile's bounding box intersects the current view's frustum.
+     * Checks if the tile's bounding box intersects with the current view's frustum.
      *
-     * @param tileBounds Bounding box of tile.
+     * @param tileBounds The bounding box for the tile.
      */
     frustumIntersectsTileBox(tileBounds: THREE.Box3): boolean {
         const globalFrustumMin = this.m_globalFrustumMin;
