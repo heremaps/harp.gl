@@ -37,7 +37,7 @@ declare const process: any;
 const isProduction = process.env.NODE_ENV === "production";
 
 export enum MapViewEventNames {
-    /** Called before this `MapView` will start rendering a new frame. */
+    /** Called before this `MapView` starts to render a new frame. */
     Update = "update",
     /** Called when the frame is about to be rendered. */
     Render = "render",
@@ -45,7 +45,7 @@ export enum MapViewEventNames {
     AfterRender = "didrender",
     /** Called after the first frame has been rendered. */
     FirstFrame = "first-render",
-    /** Called when the first view has all necessary tiles loaded and rendered. */
+    /** Called when the first view has all the necessary tiles loaded and rendered. */
     FrameComplete = "frame-complete",
     /** Called when the theme has been loaded with the internal [[ThemeLoader]]. */
     ThemeLoaded = "theme-loaded",
@@ -55,13 +55,13 @@ export enum MapViewEventNames {
     AnimationFinished = "animation-finished",
     /** Called when a camera interaction has been detected. */
     MovementStarted = "movement-started",
-    /** Called when camera interaction has been stopped. */
+    /** Called when a camera interaction has been stopped. */
     MovementFinished = "movement-finished",
     /** Called when a data source has been connected or failed to connect. */
     DataSourceConnect = "datasource-connect",
-    /** Called when WebGl context is lost. */
+    /** Called when the WebGL context is lost. */
     ContextLost = "webglcontext-lost",
-    /** Called when WebGl context is restored. */
+    /** Called when the WebGL context is restored. */
     ContextRestored = "webglcontext-restored"
 }
 
@@ -86,7 +86,7 @@ const DEFAULT_MAX_ZOOM_LEVEL = 20;
 const DEFAULT_MIN_CAMERA_HEIGHT = 20;
 
 /**
- * The type for `RenderEvent`.
+ * The type of `RenderEvent`.
  */
 export interface RenderEvent extends THREE.Event {
     type:
@@ -189,43 +189,44 @@ export interface MapViewOptions {
     projection?: Projection;
 
     /**
-     * The URL of the script the decoder worker will execute. Default is `./decoder.bundle.js`.
+     * The URL of the script that the decoder worker runs. The default URL is
+     * `./decoder.bundle.js`.
      *
-     * Note, relative URLs are resolved to full URL using document base URL
+     * Relative URLs are resolved to full URL using the document's base URL
      * (see: https://www.w3.org/TR/WD-html40-970917/htmlweb.html#h-5.1.2).
      */
     decoderUrl?: string;
 
     /**
-     * The number of Web Workers used to decode data. Default is `navigator.hardwareConcurrency`.
+     * The number of Web Workers used to decode data. The default is
+     * `navigator.hardwareConcurrency`.
      */
     decoderCount?: number;
 
     /**
-     * The [[Theme]] used by map view.
+     * The [[Theme]] used by Mapview.
      *
-     * May be one of the following:
-     *  - `string` - The URL of the theme file used to style this map
-     *  - `Theme` - an already loaded `Theme` object
-     *  - `Promise<Theme>` - future `Theme` object
-     *  - `undefined` - theme will be not be set up. Can be set later. Rendering waits until theme
-     *     is set.
+     * This Theme can be one of the following:
+     *  - `string` : the URL of the theme file used to style this map
+     *  - `Theme` : the `Theme` object already loaded
+     *  - `Promise<Theme>` : the future `Theme` object
+     *  - `undefined` : the theme is not yet set up, but can be set later. Rendering waits until
+     *     the theme is set.
      *
-     * **Note:** Layers that use theme may not render without theme (before async theme is resolved
-     * or it is set to `undefined`).
+     * **Note:** Layers that use a theme do not render any content until that theme is available.
      *
-     * Note, relative URLs are resolved to full URL using document base URL
+     * Relative URLs are resolved to full URL using the document's base URL
      * (see: https://www.w3.org/TR/WD-html40-970917/htmlweb.html#h-5.1.2).
      */
     theme?: string | Theme | Promise<Theme>;
 
     /**
-     * The minimum zoom level. The default is `1`.
+     * The minimum zoom level; default is `1`.
      */
     minZoomLevel?: number;
 
     /**
-     * Determines the minimum camera height in meters.
+     * Determines the minimum camera height, in meters.
      */
     minCameraHeight?: number;
 
@@ -250,15 +251,15 @@ export interface MapViewOptions {
     farPlaneEvaluator?: FarPlaneEvaluator;
 
     /**
-     * Extended frustum culling improves the rejection of some tiles, which normal frustum culling
-     * cannot detect. May be disabled to measure the performance.
+     * Set to true to extend the frustum culling. This improves the rejection of some tiles, which
+     * normal frustum culling cannot detect. You can disable this property to measure performance.
      *
      * @default true
      */
     extendedFrustumCulling?: boolean;
 
     /**
-     * Maximum number of tiles rendered from one data source at a time.
+     * The maximum number of tiles rendered from one data source at a time.
      *
      * @default See [[MapViewDefaults.maxVisibleDataSourceTiles]].
      */
@@ -279,24 +280,26 @@ export interface MapViewOptions {
     tileCacheMemorySize?: number;
 
     /**
-     * Limits number of reduced zoom levels (lower detail) to be searched for fallback tiles.
+     * Limits the number of reduced zoom levels (lower detail) to be searched for fallback tiles.
      *
-     * When zooming in, newly elected tiles may not be loaded yet. [[MapView]] searches through the
-     * tile cache for tiles ready to be displayed in lower zoom levels (shallower in quadtree).
+     * When zooming in, newly elected tiles may have not yet loaded. [[MapView]] searches through
+     * the tile cache for tiles ready to be displayed in lower zoom levels. The tiles may be
+     * located shallower in the quadtree.
      *
-     * To disable a cache search, set value to `0`.
+     * To disable a cache search, set the value to `0`.
      *
      * @default [[MapViewDefaults.tileLowLevelDetailFallback]]
      */
     quadTreeSearchDistanceUp?: number;
 
     /**
-     * Limits number of higher zoom levels (more detailed) to be searched for fallback tiles.
+     * Limits the number of higher zoom levels (more detailed) to be searched for fallback tiles.
      *
-     * When zooming out, newly elected tiles may not be loaded yet. [[MapView]] searches through the
-     * tile cache for tiles ready to be displayed in higher zoom levels (deeper in quadtree).
+     * When zooming out, newly elected tiles may have not yet loaded. [[MapView]] searches through
+     * the tile cache for tiles ready to be displayed in higher zoom levels. These tiles may be
+     * located deeper in the quadtree.
      *
-     * To disable a cache search, set value to `0`.
+     * To disable a cache search, set the value to `0`.
      *
      * @default [[MapViewDefaults.tileHighLevelDetailFallback]]
      */
@@ -308,9 +311,9 @@ export interface MapViewOptions {
     enableStatistics?: boolean;
 
     /**
-     * Preserve the buffers until manually cleared or overwritten.
+     * Preserve the buffers until they are cleared manually or overwritten.
      *
-     * Set to `true` in order to copy [[MapView]] canvas contents to image or other canvas.
+     * Set to `true` in order to copy [[MapView]] canvas contents to an image or another canvas.
      *
      * @default `false`.
      * @see https://threejs.org/docs/#api/renderers/WebGLRenderer.preserveDrawingBuffer
@@ -318,58 +321,58 @@ export interface MapViewOptions {
     preserveDrawingBuffer?: boolean;
 
     /**
-     * Set to `true` to allow picking of roads. If set to `true`, additional memory is used to store
-     * road data.
+     * Set to `true` to allow picking of roads. If set to `true`, additional memory is used to
+     * store road data.
      */
     enableRoadPicking?: boolean;
 
     /**
-     * Optional canvas element that renders the 2d collision debug info.
+     * An optional canvas element that renders 2D collision debug information.
      */
     collisionDebugCanvas?: HTMLCanvasElement;
 
     /**
-     * Limit of visible labels of a [[DataSource]]. Labels are road names and POIs. Could/should be
-     * reduced on small devices to increase performance.
+     * Limits the number of [[DataSource]] labels visible, such as road names and POIs.
+     * On small devices, you can reduce this number to to increase performance.
      * @default `500`.
      */
     maxNumVisibleLabels?: number;
 
     /**
-     * Number of [[TextElement]]s that the [[TextElementsRenderer]] will try to render although they
-     * were not visible during placement. Only applies to [[TextElemen]]s that were culled by the
-     * frustum. Useful during map movements and animations.
+     * The number of [[TextElement]]s that the [[TextElementsRenderer]] tries to render even
+     * if they were not visible during placement. This property only applies to [[TextElemen]]s
+     * that were culled by the frustum; useful for map movements and animations.
      * @default `300`.
      */
     numSecondChanceLabels?: number;
 
     /**
-     * Maximum distance for [[TextElement]] and icons, expressed as a fraction of the distance
+     * The maximum distance for [[TextElement]] and icons, expressed as a fraction of the distance
      * between the near and far plane [0, 1.0].
      * @default `0.99`.
      */
     maxDistanceRatioForLabels?: number;
 
     /**
-     * Distance at which the [[TextElement]]s start to apply their `distanceScale` value, expressed
+     * The distance at which [[TextElement]]s start to apply their `distanceScale` value, expressed
      * as a fraction of the distance between the near and far plane [0, 1.0].
      * @default `0.4`.
      */
     labelStartScaleDistance?: number;
 
     /**
-     * Maximum timeout (in ms) before a [[MOVEMENT_FINISHED_EVENT]] is sent after the latest frame
-     * with a camera movement. Defaults to 300ms.
+     * Maximum timeout, in milliseconds, before a [[MOVEMENT_FINISHED_EVENT]] is sent after the
+     * latest frame with a camera movement. The default is 300ms.
      */
     movementThrottleTimeout?: number;
 
     /*
-     * Vertical field of view in degrees.
+     * The vertical field of view, in degrees.
      */
     fov?: number;
 
     /*
-     * Language codes for data sources.
+     * An array of ISO 639-1 language codes for data sources.
      */
     languages?: string[];
 }
@@ -657,10 +660,12 @@ export class MapView extends THREE.EventDispatcher {
     /**
      * Disposes this `MapView`.
      *
-     * It cleans the resources that are managed manually and that exist in shared caches.
+     * This function cleans the resources that are managed manually including those that exist in
+     * shared caches.
      *
-     * Note: It does not try to clean objects that are easily "garbage collectable". So, to perform
-     * a full cleanup, one must ensure that all references to this `MapView` are removed.
+     * Note: This function does not try to clean objects that can be disposed off easily by
+     * TypeScript's garbage collecting mechanism. Consequently, if you need to perform a full
+     * cleanup, you must ensure that all references to this `MapView` are removed.
      */
     dispose() {
         if (this.m_animationFrameHandle !== undefined) {
@@ -682,17 +687,17 @@ export class MapView extends THREE.EventDispatcher {
     }
 
     /**
-     * Returns cache size.
+     * Returns the cache size.
      */
     getCacheSize(): number {
         return this.m_visibleTiles.getDataSourceCacheSize();
     }
 
     /**
-     * Sets cache size in number of tiles.
+     * Sets the cache size in number of tiles.
      *
-     * @param size cache size in tiles
-     * @param numVisibleTiles number of visible tiles, defaults to size/2
+     * @param size The cache size in tiles.
+     * @param numVisibleTiles The number of tiles visible, which is size/2 by default.
      */
     setCacheSize(size: number, numVisibleTiles?: number): void {
         this.m_visibleTiles.setDataSourceCacheSize(size);
@@ -706,7 +711,7 @@ export class MapView extends THREE.EventDispatcher {
     }
 
     /**
-     * Returns status of extended frustum culling.
+     * Specfies whether extended frustum culling is enabled or disabled.
      */
     get extendedFrustumCulling(): boolean {
         return this.m_options.extendedFrustumCulling !== undefined
@@ -722,7 +727,7 @@ export class MapView extends THREE.EventDispatcher {
     }
 
     /**
-     * The status of frustum culling after each update.
+     * Returns the status of frustum culling after each update.
      */
     get lockVisibleTileSet(): boolean {
         return this.m_visibleTileSetLock;
@@ -736,14 +741,14 @@ export class MapView extends THREE.EventDispatcher {
     }
 
     /**
-     * The optional camera used to render the scene.
+     * Gets the optional camera used to render the scene.
      */
     get pointOfView(): THREE.PerspectiveCamera | undefined {
         return this.m_pointOfView;
     }
 
     /**
-     * The optional camera used to render the scene.
+     * Sets the optional camera used to render the scene.
      */
     set pointOfView(pointOfView: THREE.PerspectiveCamera | undefined) {
         this.m_pointOfView = pointOfView;
@@ -751,14 +756,14 @@ export class MapView extends THREE.EventDispatcher {
     }
 
     /**
-     * Get current `Theme` used by this `MapView` to style map elements.
+     * Gets the current `Theme` used by this `MapView` to style map elements.
      */
     get theme(): Theme {
         return this.m_theme;
     }
 
     /**
-     * Change `Theme` used by this `MapView` to style map elements.
+     * Changes the `Theme` used by this `MapView` to style map elements.
      */
     set theme(theme: Theme) {
         // Fog and sky.
@@ -805,31 +810,31 @@ export class MapView extends THREE.EventDispatcher {
     }
 
     /**
-     * `MapView` sets the camera aspect with every render call.
+     * Gets the value of the forced custom camera aspect.
+     * Every time a frame is rendered, `MapView` resets the camera aspect.
      *
-     * By default, gets the value of forced custom camera aspect. Can be turned off by assigning
-     * `undefined` value.
+     * You can disable this behavior by setting the value to `undefined`.
      */
     get forceCameraAspect(): number | undefined {
         return this.m_forceCameraAspect;
     }
 
     /**
-     * Set the custom forced camera aspect ratio to use while rendering.
+     * Sets the custom forced camera aspect ratio to use while rendering.
      */
     set forceCameraAspect(aspect: number | undefined) {
         this.m_forceCameraAspect = aspect;
     }
 
     /**
-     * List of language codes used by added data sources.
+     * Lists the ISO 639-1 language codes for DataSources to use.
      */
     get languages(): string[] | undefined {
         return this.m_languages;
     }
 
     /**
-     * Sets list of language codes used by data sources.
+     * Sets the list of ISO 639-1 language codes for DataSources to use.
      */
     set languages(languages: string[] | undefined) {
         this.m_languages = languages;

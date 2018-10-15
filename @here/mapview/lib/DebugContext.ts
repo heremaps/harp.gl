@@ -11,10 +11,10 @@ import * as THREE from "three";
  *
  * import { DebugContext, debugContext } from "../lib/DebugContext";
  *
- * Declaring a debug option:
+ * Declare a debug option:
  * debugContext.settings.setOption("MY_DBG_OPT", "default");
  *
- * Access a option:
+ * Access an option:
  * if (debugContext.settings.option("MY_DBG_OPT")) {
  *     ...
  * }
@@ -28,7 +28,7 @@ import * as THREE from "three";
  */
 
 /**
- * Allow access to the global `window` object here. Constructor of [[DebugContext]] will add the
+ * Allows access to the global `window` object here. The constructor of [[DebugContext]] adds the
  * instance to `window`, so it is available from the browser console.
  */
 
@@ -39,8 +39,8 @@ interface DebugInfo {
 const isNode = new Function("return typeof window === 'undefined' || this !== window")();
 
 /**
- * A `DebugOption` is a pair of option value and an array of change listeners. Listeners are called
- * up when setting the option's value.
+ * A `DebugOption` is a pair that consists of an option value and an array of change listeners.
+ * Listeners are called up when setting the option's value.
  */
 class DebugOption extends THREE.EventDispatcher {
     static SET_EVENT_TYPE: string = "set";
@@ -57,7 +57,7 @@ class DebugOption extends THREE.EventDispatcher {
     /**
      * Updates the value of a given option.
      *
-     * @param value The new value to set the option to.
+     * @param value The new value for the option.
      * @param name The name of the option to set.
      */
     set(value: any, name: string) {
@@ -67,8 +67,8 @@ class DebugOption extends THREE.EventDispatcher {
 }
 
 /**
- * Maintains a map of [[DebugOption]]s. Allows adding listeners to debug options by passing their
- * name.
+ * Maintains a map of [[DebugOption]]s. You can add listeners to debug options by passing their
+ * names.
  */
 export class DebugContext {
     private m_optionsMap: Map<string, DebugOption>;
@@ -88,11 +88,12 @@ export class DebugContext {
     }
 
     /**
-     * Set the value of an option. Will call change listeners of that option, even if the value has
-     * not been changed. Change listeners provided here is not called during this set operation.
+     * Sets the value of an option. Calls change listeners of that option, even if the value has
+     * not been changed. The change listeners provided here are not called during this set
+     * operation.
      *
-     * @param name Name of option.
-     * @param value Value of option.
+     * @param name Name of the option.
+     * @param value Value of the option.
      */
     setValue(name: string, value: any): void {
         let opt = this.m_optionsMap.get(name);
@@ -105,7 +106,7 @@ export class DebugContext {
     }
 
     /**
-     * Get option value.
+     * Gets the option value.
      *
      * @param name Name of option.
      */
@@ -115,7 +116,7 @@ export class DebugContext {
     }
 
     /**
-     * Determine if the option is registered.
+     * Determines if the option is registered.
      *
      * @param name Name of option.
      */
@@ -126,8 +127,8 @@ export class DebugContext {
     /**
      * Adds a listener to a debug option.
      *
-     * @param name Name of option that has a listener added.
-     * @param listener The listener function that gets added.
+     * @param name Name of the option that requires a listener.
+     * @param listener The listener function to add.
      */
     addEventListener(name: string, listener: (event: THREE.Event) => void) {
         const opt = this.m_optionsMap.get(name);
@@ -139,10 +140,10 @@ export class DebugContext {
     }
 
     /**
-     * Checks for a listener of a debug option.
+     * Checks for a listener in a debug option.
      *
-     * @param name Name of option that has a listener tested.
-     * @param listener The listener function that gets tested.
+     * @param name Name of the option to check for.
+     * @param listener The listener function to check for.
      */
     hasEventListener(name: string, listener: (event: THREE.Event) => void) {
         const opt = this.m_optionsMap.get(name);
@@ -156,8 +157,8 @@ export class DebugContext {
     /**
      * Removes a listener from a debug option.
      *
-     * @param name Name of option that has a listener removed.
-     * @param listener The listener function that gets removed.
+     * @param name Name of the option from which to remove a listener.
+     * @param listener The listener function to remove.
      */
     removeEventListener(name: string, listener: (event: THREE.Event) => void) {
         const opt = this.m_optionsMap.get(name);
@@ -169,15 +170,16 @@ export class DebugContext {
     }
 
     /**
-     * Access to the options map, useful for creating an automatic browser GUI.
+     * Provides access to the options map. This method is useful for creating an automatic
+     * browser GUI.
      */
     get options(): Map<string, any> {
         return this.m_optionsMap;
     }
 
     /**
-     * Clear away all debug options. Unfortunately `THREE.EventDispatcher` cannot remove all event
-     * listeners.
+     * Clears away all debug options. Currently, `THREE.EventDispatcher` does not provide an API
+     * to remove all event listeners.
      */
     clear() {
         this.m_optionsMap.forEach(option => {

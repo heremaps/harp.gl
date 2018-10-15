@@ -66,28 +66,29 @@ interface DisposableObject {
 }
 
 /**
- * Interface for optional feature data that is saved in the `userData` property of `THREE.Object3D`.
+ * An interface for optional feature data that is saved in a `THREE.Object3D`'s `userData`
+ * property.
  */
 export interface TileFeatureData {
     /**
-     * Original type of geometry.
+     * The original type of geometry.
      */
     geometryType?: GeometryType;
 
     /**
-     * Optional array of feature IDs.
+     * An optional array of feature IDs.
      */
     ids?: Array<number | undefined>;
 
     /**
-     * Optional array of the indices into geometry where the feature starts. The lists of ids and
-     * starts have to have the same size.
+     * An optional array of the indices into geometry where the feature starts. The lists of IDs
+     * and starting indices (starts) must have the same size.
      */
     starts?: number[];
 
     /**
-     * Optional object containing properties defined by the end-user. It has the same size as the
-     * list of ids and the starts.
+     * An optional object containing properties defined by the developer. It has the same size as
+     * the list of IDs and the starting indices (starts).
      */
     objInfos?: Array<{} | undefined>;
 }
@@ -105,35 +106,35 @@ export interface RoadIntersectionData {
     ids: Array<number | undefined>;
 
     /**
-     * Array of the indices into the technique catalog. The lists of `techniqueIndex` and `starts`
+     * An array of indices into the technique catalog. The lists of `techniqueIndex` and `starts`
      * have the same size.
      */
     techniqueIndex: number[];
 
     /**
-     * Array of the indices into geometry where the feature starts. The lists of ids and starts have
-     * the same size.
+     * An array of the indices into geometry where the feature starts. The lists of IDs and
+     * starting indices (starts) have the same size.
      */
     starts: number[];
 
     /**
-     * Array of the widths of the roads. The lists of ids and widths have the same size.
+     * An array of widths of the roads. The lists of IDs and widths have the same size.
      */
     widths: number[];
 
     /**
-     * Array of 2D numbers making up the road geometry.
+     * An array of 2D numbers that make up the road geometry.
      */
     positions: number[];
 
     /**
-     * Catalog of [[Technique]]s for the road lines. Allows to reconstruct the visual appearance of
+     * A catalog of [[Technique]]s for road lines. Allows to reconstruct the visual appearance of
      * the identified line.
      */
     techniques: Technique[];
     /**
-     * Optional object containing properties defined by the end-user. It has the same size as the
-     * list of ids and the starts.
+     * An optional object that contains properties defined by the developer. This object has the
+     * same size as the list of IDs and the starts.
      */
     objInfos?: Array<{} | undefined>;
 }
@@ -167,55 +168,58 @@ export interface ITileLoader {
 }
 
 /**
- * Object containing information about resources used by tile.
+ * An object that contains information about resources used by a tile.
  */
 export interface TileResourceUsageInfo {
     /**
-     * Estimated memory usage, in bytes.
+     * The estimated memory usage, in bytes.
      */
     estimatedMemoryUsage: number;
     /**
-     * Amount of vertices used by tile.
+     * The amount of vertices used by a tile.
      */
     numVertices: number;
     /**
-     * Amount of colors used by tile.
+     * The amount of colors used by a tile.
      */
     numColors: number;
     /**
-     * Amount of objects used by tile.
+     * The amount of objects used by a tile.
      */
     numObjects: number;
     /**
-     * Amount of geometries used by tile.
+     * The amount of geometries used by a tile.
      */
     numGeometries: number;
     /**
-     * Amount of materials used by tile.
+     * The amount of materials used by a tile.
      */
     numMaterials: number;
 }
 
 /**
- * While generating [[TextElement]]s from the [[DecodedTile]], their priority is modified a bit to
- * get a meaningful priority and stable results.
+ * The SORT_WEIGHT_SEQUENCE and SORT_WEIGHT_PATH_LENGTH constants control how the priority
+ * of the labels are computed based on two factors:
+ * - The occurrence in the set of labels, from first to last
+ * - The length of the label strings
+ * Consequently, this priority is slightly modified while generating [[TextElement]]s from the
+ * [[DecodedTile]], to get a meaningful priority and stable results.
  */
 
 /**
- * Amount of influence the original position has on rendering the [[TextElement]]. Sorts point
- * labels (who have no path length) as well as those with a path, like roads.
+ * The amount of influence the original position has on rendering the [[TextElement]]. Sorts
+ * both point labels with path lengths (such as roads) and those without path lengths.
  */
 const SORT_WEIGHT_SEQUENCE = 0.1;
 
 /**
- * Give [[TextElement]]s with a longer paths a higher priority since they will be easier to place,
- * so they will actually more often be placed than not. In case of a resource limit, less labels
- * will be checked.
+ * Gives [[TextElement]]s with longer paths a higher priority since they are easier to place,
+ * so they are more likely to be placed. If resource is limited, less labels are checked.
  */
 const SORT_WEIGHT_PATH_LENGTH = 1.0 - SORT_WEIGHT_SEQUENCE;
 
 /**
- * Factor used for memory estimation.
+ * A factor used for memory estimation.
  */
 const MEMORY_UNDERESTIMATION_FACTOR = 2;
 
@@ -238,22 +242,22 @@ interface PolygonFadingParameters extends FadingParameters {
 }
 
 /**
- * The class `Tile` holds the tiled data of a [[DataSource]].
+ * The class that holds the tiled data for a [[DataSource]].
  */
 export class Tile implements CachedResource {
     /**
-     * List of the THREE.js objects stored in this `Tile`.
+     * A list of the THREE.js objects stored in this `Tile`.
      */
     readonly objects: TileObject[] = [];
 
     /**
-     * The optional list of HERE tile keys of tiles with geometries crossing
+     * The optional list of HERE TileKeys of tiles with geometries that cross
      * the boundaries of this `Tile`.
      */
     readonly dependencies: string[] = new Array<string>();
 
     /**
-     * The bounding box of this `Tile` in geo coordinates.
+     * The bounding box of this `Tile` in geocoordinates.
      */
     readonly geoBox: GeoBox;
 
@@ -268,7 +272,7 @@ export class Tile implements CachedResource {
     readonly center: THREE.Vector3 = new THREE.Vector3();
 
     /**
-     * Record of road data that cannot be intersected with THREE.JS, because the geometry is
+     * A record of road data that cannot be intersected with THREE.JS, because the geometry is
      * created in the vertex shader.
      */
     roadIntersectionData?: RoadIntersectionData;
@@ -285,10 +289,10 @@ export class Tile implements CachedResource {
      */
     private m_preparedTextPaths: TextPathGeometry[] = new Array();
 
-    // Used for user defined [[TextElement]]s.
+    // Used for [[TextElement]]s which the developer defines.
     private readonly m_userTextElements: TextElement[] = [];
 
-    // Used for [[TextElement]]s that are stored in the data, and that are placed explicitely,
+    // Used for [[TextElement]]s that are stored in the data, and that are placed explicitly,
     // fading in and out.
     private readonly m_textElementGroups: GroupedPriorityList<
         TextElement
@@ -309,7 +313,7 @@ export class Tile implements CachedResource {
      * Creates a new `Tile`.
      *
      * @param dataSource The [[DataSource]] that created this `Tile`.
-     * @param tileKey The [[TileKey]] of this `Tile`.
+     * @param tileKey The unique identifier for this `Tile`.
      */
     constructor(readonly dataSource: DataSource, readonly tileKey: TileKey) {
         this.geoBox = this.dataSource.getTilingScheme().getGeoBox(this.tileKey);
@@ -332,15 +336,15 @@ export class Tile implements CachedResource {
     }
 
     /**
-     * Get the currently visible [[TextElement]]s of this `Tile`. This list will be modified
-     * continuously, and it is not designed to be used to store user defined [[TextElements]].
+     * Get the currently visible [[TextElement]]s of this `Tile`. This list is continuously
+     * modified, and is not designed to be used to store developer-defined [[TextElements]].
      */
     get placedTextElements(): GroupedPriorityList<TextElement> {
         return this.m_placedTextElements;
     }
 
     /*
-     * The size of Tile in system memory.
+     * The size of this Tile in system memory.
      */
     get memoryUsage(): number {
         if (this.m_memoryUsage !== undefined) {
@@ -361,7 +365,7 @@ export class Tile implements CachedResource {
     }
 
     /**
-     * Detailed information about objects used by Tile.
+     * Detailed information about objects used by this Tile.
      */
     getUsageStatistics(): TileResourceUsageInfo {
         const renderInfo: TileResourceUsageInfo = {
@@ -377,18 +381,18 @@ export class Tile implements CachedResource {
     }
 
     /**
-     * Get the list of user [[TextElement]] of this `Tile`. This list of [[TextElement]]s will
-     * always be rendered first.
+     * Gets the list of developer-defined [[TextElement]] in this `Tile`. This list is always
+     * rendered first.
      */
     get userTextElements(): TextElement[] {
         return this.m_userTextElements;
     }
 
     /**
-     * Add a user [[TextElement]] to this `Tile`. It will always be visible (if its location is in
-     * the currently visible area of the map).
+     * Adds a developer-defined [[TextElement]] to this `Tile`. The [[TextElement]] is always
+     * visible, if it's in the map's currently visible area.
      *
-     * @param textElement Text element to add.
+     * @param textElement The Text element to add.
      */
     addUserTextElement(textElement: TextElement) {
         this.m_userTextElements.push(textElement);
@@ -396,10 +400,10 @@ export class Tile implements CachedResource {
     }
 
     /**
-     * Remove a user [[TextElement]] from this `Tile`.
+     * Removes a developer-defined [[TextElement]] from this `Tile`.
      *
-     * @param textElement User text element to remove.
-     * @returns `True` if the element has been succesfully removed, `false` otherwise.
+     * @param textElement A developer-defined TextElement to remove.
+     * @returns `true` if the element has been removed successfully; `false` otherwise.
      */
     removeUserTextElement(textElement: TextElement): boolean {
         const foundIndex = this.m_userTextElements.indexOf(textElement);
@@ -412,15 +416,15 @@ export class Tile implements CachedResource {
     }
 
     /**
-     * Add a [[TextElement]] to this `Tile`. It will be added to the visible set of [[TextElement]]s
-     * based on capacity and visibilities. The priority of the [[TextElement]] will control when
-     * (or if) the `textElement` will become visible.
+     * Adds a [[TextElement]] to this `Tile`, which is added to the visible set of
+     * [[TextElement]]s based on the capacity and visibility. The [[TextElement]]'s priority
+     * controls if or when it becomes visible.
      *
-     * To ensure that an element is visible, apply a high value to its priority, for example
-     * `Number.MAX_SAFE_INTEGER`. Since there is a limit for visible text elements, not all text
-     * elements may be visible at all times.
+     * To ensure that a TextElement is visible, use a high value for its priority, such as
+     * `Number.MAX_SAFE_INTEGER`. Since the number of visible TextElements is limited by the
+     * screen space, not all TextElements are visible at all times.
      *
-     * @param textElement Text element to add.
+     * @param textElement The TextElement to add.
      */
     addTextElement(textElement: TextElement) {
         this.textElementGroups.add(textElement);
@@ -428,11 +432,11 @@ export class Tile implements CachedResource {
     }
 
     /**
-     * Remove a [[TextElement]] from this `Tile`. For the element to be removed successfully, the
-     * priority of the [[TextElement]] has to be equal to its priority when it had been added.
+     * Removes a [[TextElement]] from this `Tile`. For the element to be removed successfully, the
+     * priority of the [[TextElement]] has to be equal to its priority when it was added.
      *
-     * @param textElement Text element to remove.
-     * @returns `True` if the element has been succesfully removed, `false` otherwise.
+     * @param textElement The TextElement to remove.
+     * @returns `true` if the TextElement has been removed successfully; `false` otherwise.
      */
     removeTextElement(textElement: TextElement): boolean {
         if (this.textElementGroups.remove(textElement)) {
@@ -443,16 +447,16 @@ export class Tile implements CachedResource {
     }
 
     /**
-     * Get the current [[GroupedPriorityList]], the list of all [[TextElement]]s to be selected and
-     * placed for rendering.
+     * Gets the current [[GroupedPriorityList]] which contains a list of all [[TextElement]]s to be
+     * selected and placed for rendering.
      */
     get textElementGroups(): GroupedPriorityList<TextElement> {
         return this.m_textElementGroups;
     }
 
     /**
-     * The current modification state of the list of [[TextElement]]s of the `Tile`. If the value
-     * is `true` the text elements will be placed for rendering during the next frame.
+     * Gets the current modification state for the list of [[TextElement]]s in the `Tile`. If the
+     * value is `true` the TextElement is placed for rendering during the next frame.
      */
     get textElementsChanged(): boolean {
         return this.m_textElementsChanged;
@@ -495,7 +499,7 @@ export class Tile implements CachedResource {
     }
 
     /**
-     * Called before [[MapView]] will start rendering this `Tile`.
+     * Called before [[MapView]] starts rendering this `Tile`.
      *
      * @param zoomLevel The current zoom level.
      * @returns Returns `true` if this `Tile` should be rendered.
@@ -505,7 +509,7 @@ export class Tile implements CachedResource {
     }
 
     /**
-     * Called after [[MapView]] did render this `Tile`.
+     * Called after [[MapView]] has rendered this `Tile`.
      */
     didRender(): void {
         // to be overriden by subclasses
@@ -525,7 +529,7 @@ export class Tile implements CachedResource {
     }
 
     /**
-     * The decoded tile, will be removed after geometry handling.
+     * Gets the decoded tile; it is removed after geometry handling.
      */
     get decodedTile(): DecodedTile | undefined {
         return this.m_decodedTile;
@@ -551,7 +555,7 @@ export class Tile implements CachedResource {
      * Called when the default implementation of `dispose()` needs
      * to free the geometry of a `Tile` object.
      *
-     * @param object The object referencing the geometry.
+     * @param object The object that references the geometry.
      * @returns `true` if the geometry can be disposed.
      */
     // tslint:disable-next-line:no-unused-variable
@@ -561,7 +565,7 @@ export class Tile implements CachedResource {
 
     /**
      * Called when the default implementation of `dispose()` needs
-     * to free the material of a `Tile` object.
+     * to free a `Tile` object's material.
      *
      * @param object The object referencing the geometry.
      * @returns `true` if the material can be disposed.
@@ -572,7 +576,7 @@ export class Tile implements CachedResource {
     }
 
     /**
-     * `true` if this `Tile` has been disposed.
+     * Returns `true` if this `Tile` has been disposed.
      */
     get disposed(): boolean {
         return this.m_disposed;
@@ -581,8 +585,8 @@ export class Tile implements CachedResource {
     /**
      * MapView checks if this `Tile` is ready to be rendered while culling.
      *
-     * By default, just checks if the [[objects]] list is not empty but can be overridden by
-     * manually setting this property.
+     * By default, MapView checks if the [[objects]] list is not empty. However, you can override
+     * this check by manually setting this property.
      */
     get hasGeometry(): boolean {
         if (this.m_forceHasGeometry === undefined) {
@@ -593,42 +597,42 @@ export class Tile implements CachedResource {
     }
 
     /**
-     * Overrides default [[hasGeometry]] value.
+     * Overrides the default value for [[hasGeometry]].
      *
-     * @param value New value of the [[hasGeometry]] flag.
+     * @param value A new value for the [[hasGeometry]] flag.
      */
     forceHasGeometry(value: boolean) {
         this.m_forceHasGeometry = value;
     }
 
     /**
-     * Get the [[ITileLoader]] that manages this tile.
+     * Gets the [[ITileLoader]] that manages this tile.
      */
     get tileLoader(): ITileLoader | undefined {
         return this.m_tileLoader;
     }
 
     /**
-     * Set the [[ITileLoader]] that manages this tile.
+     * Sets the [[ITileLoader]] to manage this tile.
      *
-     * @param tileLoader [[ITileLoader]] instance will manage loading process for this tile.
+     * @param tileLoader A [[ITileLoader]] instance to manage the loading process for this tile.
      */
     set tileLoader(tileLoader: ITileLoader | undefined) {
         this.m_tileLoader = tileLoader;
     }
 
     /**
-     * Force update of this `Tile` geometry.
+     * Forces the update of this `Tile` geometry.
      */
     reload() {
         this.dataSource.updateTile(this);
     }
 
     /**
-     * Free the rendering resources allocated by this `Tile`.
+     * Frees the rendering resources allocated by this `Tile`.
      *
      * The default implementation of this method frees the geometries and
-     * the materials of all the reachable objects.
+     * the materials for all the reachable objects.
      */
     clear() {
         const disposeObject = (object: TileObject & DisposableObject) => {
@@ -681,16 +685,16 @@ export class Tile implements CachedResource {
     }
 
     /**
-     * Prepared text geometries optimized for display.
+     * Gets the prepared text geometries that are optimized for display.
      */
     get preparedTextPaths(): TextPathGeometry[] {
         return this.m_preparedTextPaths;
     }
 
     /**
-     * Split text paths that contain sharp corners.
+     * Splits the text paths that contain sharp corners.
      *
-     * @param textPathGeometries Original path geometries that may have defects.
+     * @param textPathGeometries The original path geometries that may have defects.
      */
     prepareTextPaths(textPathGeometries: TextPathGeometry[]): TextPathGeometry[] {
         const processedPaths = new Array<TextPathGeometry>();
@@ -766,7 +770,7 @@ export class Tile implements CachedResource {
     }
 
     /**
-     * Create [[TextElement]] objects from the given decoded tile and list of materials. The
+     * Creates [[TextElement]] objects from the decoded tile and list of materials specified. The
      * priorities of the [[TextElement]]s are updated to simplify label placement.
      *
      * @param decodedTile The [[DecodedTile]].
@@ -943,11 +947,11 @@ export class Tile implements CachedResource {
     }
 
     /**
-     * Add a THREE object  to the root of the tile. Sets the owning tiles datasource.name and the
-     * tileKey in the property `userData` of the object, such that the tile it belongs to can be
+     * Adds a THREE object to the root of the tile. Sets the owning tiles datasource.name and the
+     * tileKey in the `userData` property of the object, such that the tile it belongs to can be
      * identified during picking.
      *
-     * @param object Object to add to root of tile.
+     * @param object The object to add to the root of the tile.
      */
     registerTileObject(object: THREE.Object3D) {
         const userData = object.userData || {};
@@ -956,7 +960,7 @@ export class Tile implements CachedResource {
     }
 
     /**
-     * Create `Tile` objects from the given decoded tile and list of materials.
+     * Creates `Tile` objects from the decoded tile and list of materials specified.
      *
      * @param decodedTile The [[DecodedTile]].
      * @param objects The current list of tile objects.
@@ -1298,7 +1302,7 @@ export class Tile implements CachedResource {
     }
 
     /**
-     * Counts vertices in the tile.
+     * Counts the number of vertices in a tile.
      */
     countVertices(): void {
         this.objects.filter(object => object instanceof THREE.Mesh).forEach(object => {
@@ -1364,7 +1368,7 @@ export class Tile implements CachedResource {
     }
 
     /**
-     * Get the fading parameters for several kinds of objects.
+     * Gets the fading parameters for several kinds of objects.
      */
     private getFadingParams(
         technique: FillTechnique | SolidLineTechnique | StandardExtrudedLineTechnique
@@ -1384,7 +1388,7 @@ export class Tile implements CachedResource {
     }
 
     /**
-     * Get the fading parameters for several kinds of objects.
+     * Gets the fading parameters for several kinds of objects.
      */
     private getPolygonFadingParams(
         technique: FillTechnique | ExtrudedPolygonTechnique
