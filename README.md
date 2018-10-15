@@ -17,7 +17,7 @@ You can use this engine to:
 All `harp.gl` modules are installable via npm (or yarn):
 
 ```sh
-npm install @here/map
+npm install @here/mapview
 ```
 
 ### In Browser
