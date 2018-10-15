@@ -1,0 +1,43 @@
+{
+  "name": "@here/fetch",
+  "version": "0.2.0",
+  "description": "Typescript version of a fetch function",
+  "main": "index.js",
+  "browser": "index.web.js",
+  "typings": "index.web",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "cross-env mocha --require source-map-support/register $EXTRA_MOCHA_ARGS ./test/*.js",
+    "build": "tsc",
+    "prepare": "cross-env tsc --sourceMap false $EXTRA_TSC_ARGS"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com:heremaps/harp.js.git"
+  },
+  "author": {
+    "name": "HERE Global B.V. and its affiliate(s)",
+    "url": "https://here.com"
+  },
+  "license": "SEE LICENSE IN LICENSE",
+  "dependencies": {
+    "node-fetch": "^2.2.0"
+  },
+  "devDependencies": {
+    "@types/chai": "^4.1.2",
+    "@types/mocha": "^5.2.5",
+    "@types/node": "^10.9.0",
+    "@types/sinon": "^5.0.1",
+    "chai": "^4.0.2",
+    "cross-env": "^5.2.0",
+    "glob": "^7.1.1",
+    "mocha": "^5.2.0",
+    "sinon": "^6.1.5",
+    "source-map-support": "^0.5.2",
+    "stream": "0.0.2",
+    "typescript": "3.1.1",
+    "zlib": "^1.0.5"
+  }
+}
