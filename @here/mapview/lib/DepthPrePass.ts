@@ -33,14 +33,14 @@ export function isRenderDepthPrePassEnabled(technique: BaseStandardTechnique) {
 }
 
 /**
- * Create material for depth prepass.
+ * Creates material for depth prepass.
  *
- * Creates material that writes only to z-buffer. Updates original material instance, to support
- * depth prepass.
+ * Creates material that writes only to the z-buffer. Updates the original material instance, to
+ * support depth prepass.
  *
- * @param baseMaterial base material of mesh, will be updated in order to work with depth prepass
- *     and used; template for returned depth prepass material
- * @returns depth prepass material - clone of `baseMaterial` with adapted settings
+ * @param baseMaterial The base material of mesh that is updated to work with depth prepass
+ *     and then used. This parameter is a template for depth prepass material that is returned.
+ * @returns depth prepass material, which is a clone of `baseMaterial` with the adapted settings.
  */
 export function createDepthPrePassMaterial(
     baseMaterial: THREE.MeshMaterialType
@@ -65,16 +65,17 @@ export function createDepthPrePassMaterial(
 // tslint:disable:max-line-length
 /**
  * Clones a given mesh to render it in the depth prepass with another material. Both the original
- * and "depth prepass" meshes, when rendered in the correct order, create the proper depth prepass
+ * and depth prepass meshes, when rendered in the correct order, create the proper depth prepass
  * effect. The original mesh material is slightly modified by [[createDepthPrePassMaterial]] to
- * support the depth prepass. Usable only if the material of this mesh has an opacity value in the
- * range `(0,1)`.
+ * support the depth prepass. This method is usable only if the material of this mesh has an
+ * opacity value in the range `(0,1)`.
  *
- * Note about render order: the created "depth prepass" object has the same `renderOrder` as the
- * original mesh. The proper sort orders of both the depth and color pass objects are guaranteed by
- * the handling of transparent objects in ThreeJS, that renders them after opaque objects:
- *   - depth prepass object is never transparent - rendered first
- *   - color pass object is transparent - rendered second
+ * About render order: the DepthPrePass object that is created has the same `renderOrder` as
+ * the original mesh. The proper sort orders of both the depth and the color pass objects are
+ * guaranteed by ThreeJS's handling of transparent objects, which renders them after opaque
+ * objects:
+ *   - since the depth prepass object is never transparent, it is rendered first
+ *   - since the color pass object is transparent, it is rendered second
  *
  * @see [Material.transparent in ThreeJS's doc](https://threejs.org/docs/#api/materials/Material.transparent).
  *
@@ -121,39 +122,39 @@ export function createDepthPrePassMesh(mesh: THREE.Mesh): THREE.Mesh {
 }
 
 /**
- * Apply depth increasing polygon offset units to mesh group.
+ * Applies depth increasing polygon offset units to the mesh group specified.
  *
- * Based on the assumption, that `meshes[0]` is rendered in `front-to-back` order, apply
- * z-increasing `polygonOffsetUnits` to mesh groups (mesh refers to `THREE.Mesh`) rendered in one
- * frame:
+ * Based on the assumption that `meshes[0]` is rendered in `front-to-back` order, this method
+ * applies z-increasing `polygonOffsetUnits` to mesh groups (mesh refers to `THREE.Mesh`) rendered
+ * in one frame, where:
  *
- * * each mesh group will have non-overlapping `polygonOffsetUnits` increasing with distance from
- *   camera;
- * * first mesh in group - which should be depth pass mesh - will have a slightly higher offset, see
- *   [[DEPTH_PASS_POLYGON_OFFSET_UNITS]];
- * * all mesh groups rendered later, will have higher `polygonOffsetUnits`.
+ * * each mesh group has non-overlapping `polygonOffsetUnits` increasing with distance from
+ *   camera
+ * * the first mesh in the group, typically depth pass mesh, has a slightly higher offset, see
+ *   [[DEPTH_PASS_POLYGON_OFFSET_UNITS]]
+ * * all mesh groups rendered later have higher `polygonOffsetUnits`
  *
- * Values of `polygonOffsetUnits` applied to each mesh group are separated by `multiplier` "units",
- * so minimal correct value is `[[DEPTH_PASS_POLYGON_OFFSET_UNITS]] + 1`.
+ * The values of `polygonOffsetUnits` applied to each mesh group are separated by `multiplier`
+ * "units", so that the minimal correct value is `[[DEPTH_PASS_POLYGON_OFFSET_UNITS]] + 1`.
  *
- * Ideally, a value of `2` for `multiplier` should be enough, as WebGL specifies that the internal
- * coefficient used for `polygonOffsetUnits` guarantees separation in z-buffer
+ * Ideally, a value of `2` for the `multiplier` should suffice, as WebGL specifies that the
+ * internal coefficient used for `polygonOffsetUnits` guarantees separation in the z-buffer
  * (https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glPolygonOffset.xhtml).
- * However, some WebGL stacks show higher fragility to z-fighting, so it may be increased if
- * z-fighting artifacts are visible on extruded-building (note, they are especially visible on
- * overlapping areas of tiles, when building is very near to camera).
+ * However, some WebGL stacks show higher fragility to z-fighting, so you can increase this value
+ * if z-fighting artifacts are visible on an extruded-building. Note that these artifacts are
+ * especially visible on overlapping areas of tiles, when the building is very near the camera.
  *
- * The function [[resetDepthBasedPolygonOffsetIndex]] should be called after a frame has been
- * rendered to reset the counters
+ * Call the [[resetDepthBasedPolygonOffsetIndex]] function after a frame has been rendered, to
+ * reset the counters.
  *
- * This is useful, for transparent extruded buildings on tiles, to prevent z-fighting of same
- * buildings coming from two or more tiles. Thanks to this mechanism, building from a tile that is
- * nearest to camera will have a smallest `polygonOffsetUnits` and will prevent z-fighting with
+ * This mechanism is useful, for transparent extruded buildings on tiles, to prevent z-fighting of
+ * same buildings that come from two or more tiles. Consequently, building from a tile that is
+ * nearest the to camera has the smallest `polygonOffsetUnits` and prevents z-fighting with
  * other copies of this building from farther tiles.
  *
- * @param multiplier `polygonOffsetUnits` multiplier, if unsure, use
- *  [[DEFAULT_DEPTH_BASED_POLYGON_OFFSET_MULTIPLIER]]
- * @param meshes `Mesh` group that will have same `polygonOffsetUnits` applied
+ * @param multiplier The `polygonOffsetUnits` multiplier. If unsure, use
+ *  [[DEFAULT_DEPTH_BASED_POLYGON_OFFSET_MULTIPLIER]].
+ * @param meshes A `mesh` group that has the same `polygonOffsetUnits` applied.
  */
 export function applyDepthBasedPolygonOffset(multiplier: number, ...meshes: THREE.Mesh[]) {
     for (const mesh of meshes) {
@@ -179,11 +180,11 @@ export function applyDepthBasedPolygonOffset(multiplier: number, ...meshes: THRE
 let depthBasedPolygonOffsetMeshIndex = 0;
 
 /**
- * Reset depth based mesh index.
+ * Resets the depth-based mesh index.
  *
- * Resets index used for maintaining increasing `polygonOffsetUnits` used by
- * [[applyDepthBasedPolygonOffset]]. Should be called after a frame has been rendered to reset the
- * counters.
+ * Resets the index used to maintain the increasing `polygonOffsetUnits` used by
+ * [[applyDepthBasedPolygonOffset]]. Call this function after a frame has been rendered, to reset
+ * the counters.
  */
 export function resetDepthBasedPolygonOffsetIndex() {
     depthBasedPolygonOffsetMeshIndex = 0;
