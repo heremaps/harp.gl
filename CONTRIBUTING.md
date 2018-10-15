@@ -1,6 +1,6 @@
-The team behind the [harp.js](https://github.com/heremaps/harp.js) gratefully accepts contributions via
+The team behind the [harp.gl](https://github.com/heremaps/harp.gl) gratefully accepts contributions via
 [pull requests](https://help.github.com/articles/about-pull-requests/) filed against the
-[GitHub project](https://github.com/heremaps/harp.js/pulls). As part of filing a pull request we ask you to
+[GitHub project](https://github.com/heremaps/harp.gl/pulls). As part of filing a pull request we ask you to
 accept our [Contributor License Agreement](https://gist.github.com/heremaps-bot/dcb932a07b424f8ed68341054e7e3a53) (CLA)
 to grant us rights to your contribution.
 
@@ -46,7 +46,7 @@ In order to maintain a high software quality standard, we strongly prefer contri
 As GitHub is not particularly good at reviewing pull requests commit by commit, it does not support adding review
 comments to commit messages at all, and it cannot show the diff between two iterations of force-pushed pull request
 branches, we encourage you to give [Reviewable](https://reviewable.io/) a try which addresses these GitHub limitations.
-Reviewable is integrated with pull requests to harp.js and you can find a button to initiate reviews at
+Reviewable is integrated with pull requests to harp.gl and you can find a button to initiate reviews at
 the bottom of the first post in a pull request's conversation.
 -->
 

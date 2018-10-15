@@ -1,6 +1,6 @@
-# harp.js
+# harp.gl
 
-`harp.js` is an open-source 3D map rendering engine.
+`harp.gl` is an open-source 3D map rendering engine.
 
 You can use this engine to:
 
@@ -14,7 +14,7 @@ You can use this engine to:
 
 ### In Node.js
 
-All `harp.js` modules are installable via npm (or yarn):
+All `harp.gl` modules are installable via npm (or yarn):
 
 ```sh
 npm install @here/map
@@ -22,11 +22,11 @@ npm install @here/map
 
 ### In Browser
 
-Since `harp.js` consists of a set of modules, there are no ready-made bundles available. Take a look at the examples on information on how to use tools like `webpack` to create a bundle for the browser.
+Since `harp.gl` consists of a set of modules, there are no ready-made bundles available. Take a look at the examples on information on how to use tools like `webpack` to create a bundle for the browser.
 
 ## About This Repository
 
-This repository is a monorepo containing the core components of `harp.js`,
+This repository is a monorepo containing the core components of `harp.gl`,
 organized in a `yarn workspace`.
 
 All components can be used stand-alone and are in the [@here](@here) subdirectory.
