@@ -148,7 +148,7 @@
                         }
                     },
                     {
-                        "when": "kind_detail in ['primary', 'motorway']",
+                        "when": "kind in ['major_road', 'minor_road', 'motorway']",
                         "technique": "solid-line",
                         "renderOrder": 8,
                         "attr": {
@@ -176,7 +176,6 @@
                             ]
                         }
                     },
-
                     {
                         "when": "kind_detail ^= 'secondary'",
                         "technique": "solid-line",
@@ -215,7 +214,7 @@
                         }
                     },
                     {
-                        "when": "(kind_detail in ['primary'])",
+                        "when": "kind_detail in ['primary']",
                         "technique": "solid-line",
                         "renderOrder": 10,
                         "attr": {
@@ -279,113 +278,156 @@
                 "when": "$layer == 'roads'",
                 "styles": [
                     {
-                        "when": "kind in ['highway', 'major_road'] && has(is_bridge)",
-                        "technique": "line",
-                        "attr": {
-                            "isBridge": true,
-                            "color": "#2D3A44"
-                        }
-                    },
-                    {
-                        "when": "kind in ['highway', 'major_road'] && has(is_link)",
+                        "when": "kind in ['highway'] && has(is_link)",
                         "technique": "solid-line",
                         "attr": {
                             "isLink": true,
+                            "clipping": false,
                             "color": "#D16B62",
-                                "lineWidth": [
-                                    {
-                                        "maxLevel": 6,
-                                        "value": 550
-                                    },
-                                    {
-                                        "maxLevel": 7,
-                                        "value": 300
-                                    },
-                                    {
-                                        "maxLevel": 8,
-                                        "value": 100
-                                    },
-                                    {
-                                        "maxLevel": 9,
-                                        "value": 70
-                                    },
-                                    {
-                                        "maxLevel": 10,
-                                        "value": 38
-                                    },
-                                    {
-                                        "maxLevel": 11,
-                                        "value": 24
-                                    },
-                                    {
-                                        "maxLevel": 12,
-                                        "value": 16
-                                    },
-                                    {
-                                        "maxLevel": 13,
-                                        "value": 10
-                                    },
-                                    {
-                                        "value": 5
-                                    }
-                                ]
+                            "lineWidth": [
+                                {
+                                    "maxLevel": 6,
+                                    "value": 550
+                                },
+                                {
+                                    "maxLevel": 7,
+                                    "value": 300
+                                },
+                                {
+                                    "maxLevel": 8,
+                                    "value": 100
+                                },
+                                {
+                                    "maxLevel": 9,
+                                    "value": 70
+                                },
+                                {
+                                    "maxLevel": 10,
+                                    "value": 38
+                                },
+                                {
+                                    "maxLevel": 11,
+                                    "value": 24
+                                },
+                                {
+                                    "maxLevel": 12,
+                                    "value": 16
+                                },
+                                {
+                                    "maxLevel": 13,
+                                    "value": 10
+                                },
+                                {
+                                    "value": 5
+                                }
+                            ]
                         }
                     },
                     {
-                        "when": "kind in ['highway', 'major_road']",
+                        "when": "kind in ['highway']",
                         "technique": "solid-line",
                         "attr": {
-                             "color": "#B84E7A",
-                                "lineWidth": [
-                                    {
-                                        "maxLevel": 6,
-                                        "value": 550
-                                    },
-                                    {
-                                        "maxLevel": 7,
-                                        "value": 300
-                                    },
-                                    {
-                                        "maxLevel": 8,
-                                        "value": 100
-                                    },
-                                    {
-                                        "maxLevel": 9,
-                                        "value": 70
-                                    },
-                                    {
-                                        "maxLevel": 10,
-                                        "value": 38
-                                    },
-                                    {
-                                        "maxLevel": 11,
-                                        "value": 24
-                                    },
-                                    {
-                                        "maxLevel": 12,
-                                        "value": 16
-                                    },
-                                    {
-                                        "maxLevel": 13,
-                                        "value": 10
-                                    },
-                                    {
-                                        "value": 5
-                                    }
-                                ]
+                            "clipping": false,
+                            "color": "#B84E7A",
+                            "lineWidth": [
+                                {
+                                    "maxLevel": 6,
+                                    "value": 550
+                                },
+                                {
+                                    "maxLevel": 7,
+                                    "value": 300
+                                },
+                                {
+                                    "maxLevel": 8,
+                                    "value": 100
+                                },
+                                {
+                                    "maxLevel": 9,
+                                    "value": 70
+                                },
+                                {
+                                    "maxLevel": 10,
+                                    "value": 38
+                                },
+                                {
+                                    "maxLevel": 11,
+                                    "value": 24
+                                },
+                                {
+                                    "maxLevel": 12,
+                                    "value": 16
+                                },
+                                {
+                                    "maxLevel": 13,
+                                    "value": 10
+                                },
+                                {
+                                    "value": 5
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "when": "kind in ['minor_road']",
+                        "technique": "solid-line",
+                        "renderOrder": 9,
+                        "attr": {
+                            "color": "#FFFFFF",
+                            "clipping": false,
+                            "lineWidth": [
+                                {
+                                    "maxLevel": 6,
+                                    "value": 550
+                                },
+                                {
+                                    "maxLevel": 7,
+                                    "value": 300
+                                },
+                                {
+                                    "maxLevel": 8,
+                                    "value": 100
+                                },
+                                {
+                                    "maxLevel": 9,
+                                    "value": 70
+                                },
+                                {
+                                    "maxLevel": 10,
+                                    "value": 38
+                                },
+                                {
+                                    "maxLevel": 11,
+                                    "value": 24
+                                },
+                                {
+                                    "maxLevel": 12,
+                                    "value": 16
+                                },
+                                {
+                                    "maxLevel": 13,
+                                    "value": 10
+                                },
+                                {
+                                    "value": 5
+                                }
+                            ]
                         }
                     },
                     {
                         "when": "kind in ['aerialway', 'aeroway', 'racetrack']",
                         "technique": "line",
                         "attr": {
-                            "color": "#B5BEC6"
+                            "color": "#B5BEC6",
+                            "clipping": false
                         }
                     },
                     {
                         "when": "kind in ['ferry']",
                         "technique": "dashed-line",
                         "attr": {
+                            "clipping": false,
+
                             "color": "#2c70c3",
                             "dashSize": [
                                 {
@@ -525,6 +567,7 @@
                         "technique": "solid-line",
                         "renderOrder": 13,
                         "attr": {
+                            "clipping": false,
                             "color": "#FFFFFF",
                             "lineWidth": [
                                 {
@@ -555,6 +598,7 @@
                         "renderOrder": 12,
                         "attr": {
                             "color": "#FFFFDC",
+                            "clipping": false,
                             "lineWidth": [
                                 {
                                     "maxLevel": 10,
@@ -591,6 +635,8 @@
                         "attr": {
                             "minZoomLevel": "min_zoom",
                             "color": "#FFFFDC",
+                            "clipping": false,
+
                             "lineWidth": [
                                 {
                                     "maxLevel": 10,
@@ -618,6 +664,8 @@
                         "when": "kind ^= 'highway'",
                         "attr": {
                             "color": "#FFFFDC",
+                            "clipping": false,
+
                             "minZoomLevel": "min_zoom",
                             "lineWidth": [
                                 {
@@ -646,6 +694,8 @@
                         "when": "kind_detail ^= 'secondary'",
                         "attr": {
                             "color": "#FFFFDC",
+                            "clipping": false,
+
                             "minZoomLevel": "min_zoom",
                             "lineWidth": [
                                 {
@@ -698,6 +748,8 @@
                         "when": "(kind_detail ^= 'primary' || kind_detail ^= 'motorway')",
                         "attr": {
                             "color": "#EB91B4",
+                            "clipping": false,
+
                             "minZoomLevel": "min_zoom",
                             "lineWidth": [
                                 {
@@ -746,6 +798,8 @@
                         "when": "kind_detail ^= 'tertiary'",
                         "attr": {
                             "color": "#FFFC8C",
+                            "clipping": false,
+
                             "minZoomLevel": "min_zoom",
                             "lineWidth": [
                                 {
@@ -775,59 +829,12 @@
                         }
                     },
                     {
-                        "when": "$layer ^= roads && $level < 14",
-                        "attr": {
-                            "color": "#FFFFDC",
-                            "minZoomLevel": "min_zoom",
-                            "isBridge": true,
-                            "lineWidth": [
-                                {
-                                    "maxLevel": 8,
-                                    "value": 100
-                                },
-                                {
-                                    "maxLevel": 9,
-                                    "value": 50
-                                },
-                                {
-                                    "maxLevel": 10,
-                                    "value": 40
-                                },
-                                {
-                                    "maxLevel": 11,
-                                    "value": 24
-                                },
-                                {
-                                    "maxLevel": 12,
-                                    "value": 16
-                                },
-                                {
-                                    "maxLevel": 13,
-                                    "value": 10
-                                },
-                                {
-                                    "value": 6
-                                }
-                            ]
-                        }
-                    },
-                    {
-                        "when": "$layer ^= roads && $level >= 14",
-                        "renderOrder": 10,
-                        "technique": "extruded-line",
-                        "attr": {
-                            "color": "#E8EAEB",
-                            "minZoomLevel": "min_zoom",
-                            "caps": "None",
-                            "lineWidth": 4,
-                            "isBridge": true
-                        }
-                    },
-                    {
                         "when": "$layer ^= roads",
                         "renderOrder": 10,
                         "attr": {
                             "color": "#FFFFFF",
+                            "clipping": false,
+
                             "isTunnel": true,
                             "lineWidth": [
                                 {
@@ -934,67 +941,24 @@
             },
             {
                 "when": "$layer ^= 'water' && $geometryType ^= 'point'",
-                "renderOrder": 3,
+                "renderOrder": 120,
                 "technique": "text",
+                "clipping": false,
                 "styles": [
                     {
                         "when": "$level <= 7",
                         "attr": {
-                            "priority": 160.0,
-                            "color": "#2c70c3",
-                            "scale": 0.45
+                            "color": "#FF0000",
+                            "scale": 0.45,
+                            "priority": 80
                         }
                     },
                     {
                         "when": "$level > 7",
                         "attr": {
-                            "priority": 160.0,
-                            "color": "#2c70c3",
-                            "scale": 0.5
-                        }
-                    },
-                    {
-                        "when": "sort_rank == 1",
-                        "attr": {
-                            "priority": 160.0,
-                            "scale": 0.35
-                        }
-                    },
-                    {
-                        "when": "sort_rank == 2",
-                        "attr": {
-                            "priority": 159.0,
-                            "scale": 0.4
-                        }
-                    },
-                    {
-                        "when": "sort_rank == 3",
-                        "attr": {
-                            "priority": 158.0,
-                            "scale": 0.45
-                        }
-                    },
-                    {
-                        "when": "sort_rank == 4",
-                        "attr": {
-                            "priority": 157.0,
-                            "color": "#2c70c3",
-                            "scale": 0.5
-                        }
-                    },
-                    {
-                        "when": "sort_rank == 5",
-                        "attr": {
-                            "priority": 156.0,
-                            "scale": 0.55
-                        }
-                    },
-                    {
-                        "when": "sort_rank == 6",
-                        "attr": {
-                            "priority": 155.0,
-                            "color": "#2c70c3",
-                            "scale": 0.6
+                            "color": "#FF0",
+                            "scale": 0.5,
+                            "priority": 80
                         }
                     }
                 ]
@@ -1005,24 +969,115 @@
                 "renderOrder": 5,
                 "styles": [
                     {
-                        "when": "kind in ['rail', 'platform', 'subway', 'train'] && $geometryType ^= 'line'",
-                        "technique": "line",
+                        "description": "Railway+S-Bahn (no tunnels) background",
+                        "when": "kind in ['train', 'platform', 'subway', 'train'] && $geometryType ^= 'line'",
+                        "technique": "solid-line",
                         "attr": {
-                            "color": "#C1BDB3"
+                            "clipping": false,
+                            "color": "#8c8c8c",
+                            "lineWidth": [
+                                {
+                                    "maxLevel": 13,
+                                    "value": 3.5
+                                },
+                                {
+                                    "value": 2.5
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "description": "Railway (no tunnels)",
+                        "when": "kind in ['train', 'platform', 'subway', 'train'] && $geometryType ^= 'line'",
+                        "technique": "dashed-line",
+                        "attr": {
+                            "clipping": false,
+                            "color": "#ffffff",
+                            "dashSize": [
+                                {
+                                    "maxLevel": 10,
+                                    "value": 100
+                                },
+                                {
+                                    "maxLevel": 11,
+                                    "value": 40
+                                },
+                                {
+                                    "maxLevel": 12,
+                                    "value": 24
+                                },
+                                {
+                                    "maxLevel": 13,
+                                    "value": 30
+                                },
+                                {
+                                    "maxLevel": 14,
+                                    "value": 25
+                                },
+                                {
+                                    "maxLevel": 15,
+                                    "value": 15
+                                },
+                                {
+                                    "value": 8
+                                }
+                            ],
+                            "gapSize": [
+                                {
+                                    "maxLevel": 10,
+                                    "value": 100
+                                },
+                                {
+                                    "maxLevel": 11,
+                                    "value": 40
+                                },
+                                {
+                                    "maxLevel": 12,
+                                    "value": 24
+                                },
+                                {
+                                    "maxLevel": 13,
+                                    "value": 30
+                                },
+                                {
+                                    "maxLevel": 14,
+                                    "value": 25
+                                },
+                                {
+                                    "maxLevel": 15,
+                                    "value": 15
+                                },
+                                {
+                                    "value": 8
+                                }
+                            ],
+                            "lineWidth": [
+                                {
+                                    "maxLevel": 13,
+                                    "value": 2.75
+                                },
+                                {
+                                    "value": 1.75
+                                }
+                            ]
                         }
                     },
                     {
                         "when": "kind in ['railway'] && $geometryType ^= 'polygon'",
                         "technique": "fill",
+                        "renderOrder": 20,
                         "attr": {
-                            "color": "#FFF4EC"
+                            "color": "##A4A8A2",
+                            "clipping": false
                         }
                     },
                     {
                         "when": "kind in ['tram'] && $geometryType ^= 'polygon'",
                         "technique": "fill",
+                        "renderOrder": 20,
                         "attr": {
-                            "color": "#A4A8A2"
+                            "color": "#A4A8A2",
+                            "clipping": false
                         }
                     },
                     {
@@ -1030,7 +1085,8 @@
                         "technique": "text",
                         "attr": {
                             "color": "#3D3B3C",
-                            "scale": 0.5
+                            "scale": 0.5,
+                            "priority": 100
                         }
                     }
                 ]
@@ -1038,250 +1094,233 @@
             {
                 "description": "borders background",
                 "when": "$layer ^= 'boundaries' && $geometryType ^= 'line'",
-                "technique": "solid-line",
-                "renderOrder": 2,
-                "attr": {
-                    "color": "#ccc",
-                    "lineWidth": [
-                        {
-                            "maxLevel": 3,
-                            "value": 0
-                        },
-                        {
-                            "maxLevel": 4,
-                            "value": 1700
-                        },
-                        {
-                            "maxLevel": 5,
-                            "value": 1700
-                        },
-                        {
-                            "maxLevel": 6,
-                            "value": 700
-                        },
-                        {
-                            "maxLevel": 7,
-                            "value": 350
-                        },
-                        {
-                            "maxLevel": 8,
-                            "value": 190
-                        },
-                        {
-                            "maxLevel": 9,
-                            "value": 150
-                        },
-                        {
-                            "maxLevel": 10,
-                            "value": 120
-                        },
-                        {
-                            "maxLevel": 11,
-                            "value": 80
-                        },
-                        {
-                            "maxLevel": 12,
-                            "value": 40
-                        },
-                        {
-                            "maxLevel": 13,
-                            "value": 25
-                        },
-                        {
-                            "value": 10
+                "renderOrder": 6,
+                "styles": [
+                    {
+                        "when": "kind in ['aboriginal_lands', 'country', 'county', 'disputed', 'indefinite', 'indeterminate', 'lease_limit', 'line_of_control', 'locality', 'macroregion', 'map_unit', 'overlay_limit', 'region']",
+                        "technique": "none"
+                    },
+                    {
+                        "when": "kind in ['country']",
+                        "technique": "solid-line",
+                        "attr": {
+                            "clipping": false,
+                            "color": "#5b5b5b",
+                            "lineWidth": [
+                                {
+                                    "maxLevel": 2,
+                                    "value": 1700
+                                },
+                                {
+                                    "maxLevel": 3,
+                                    "value": 1700
+                                },
+                                {
+                                    "maxLevel": 4,
+                                    "value": 1300
+                                },
+                                {
+                                    "maxLevel": 5,
+                                    "value": 500
+                                },
+                                {
+                                    "maxLevel": 6,
+                                    "value": 220
+                                },
+                                {
+                                    "maxLevel": 7,
+                                    "value": 90
+                                },
+                                {
+                                    "maxLevel": 8,
+                                    "value": 50
+                                },
+                                {
+                                    "maxLevel": 9,
+                                    "value": 30
+                                },
+                                {
+                                    "maxLevel": 10,
+                                    "value": 20
+                                },
+                                {
+                                    "maxLevel": 11,
+                                    "value": 15
+                                },
+                                {
+                                    "maxLevel": 12,
+                                    "value": 10
+                                },
+                                {
+                                    "maxLevel": 13,
+                                    "value": 5
+                                },
+                                {
+                                    "value": 2
+                                }
+                            ]
                         }
-                    ]
-                }
+                    }
+                ]
             },
             {
                 "description": "borders foreground",
                 "when": "$layer ^= 'boundaries' && $geometryType ^= 'line'",
-                "technique": "solid-line",
-                "renderOrder": 2,
-                "attr": {
-                    "color": "#5c5c5c",
-                    "lineWidth": [
-                        {
-                            "maxLevel": 2,
-                            "value": 1700
-                        },
-                        {
-                            "maxLevel": 3,
-                            "value": 1700
-                        },
-                        {
-                            "maxLevel": 4,
-                            "value": 1300
-                        },
-                        {
-                            "maxLevel": 5,
-                            "value": 500
-                        },
-                        {
-                            "maxLevel": 6,
-                            "value": 220
-                        },
-                        {
-                            "maxLevel": 7,
-                            "value": 90
-                        },
-                        {
-                            "maxLevel": 8,
-                            "value": 50
-                        },
-                        {
-                            "maxLevel": 9,
-                            "value": 30
-                        },
-                        {
-                            "maxLevel": 10,
-                            "value": 20
-                        },
-                        {
-                            "maxLevel": 11,
-                            "value": 15
-                        },
-                        {
-                            "maxLevel": 12,
-                            "value": 10
-                        },
-                        {
-                            "maxLevel": 13,
-                            "value": 5
-                        },
-                        {
-                            "value": 2
-                        }
-                    ]
-                }
-            },
-            {
-                "when": "$layer ^= 'boundaries'",
-                "technique": "text",
-                "renderOrder": 3,
-                "attr": {
-                    "color": "#6dA477",
-                    "scale": 0.45
-                }
-            },
-            {
-                "description": "grouped theme for landuse points",
-                "when": "$layer ^= 'landuse' && $geometryType ^= 'point'",
-                "technique": "text",
-                "attr": {
-                    "color": "#E3E2E0",
-                    "minZoomLevel": "min_zoom"
-                }
-            },
-            {
-                "description": "grouped theme for landuse polygons",
-                "when": "$layer ^= 'landuse' && $geometryType ^= 'polygon'",
+                "renderOrder": 6,
                 "styles": [
                     {
-                        "when": "kind ^= 'pedestrian'",
-                        "technique": "fill",
-                        "attr": {
-                            "color": "#E3E2E0",
-                            "minZoomLevel": "min_zoom",
-                            "renderOrder": 2,
-                            "lineWidth": [
-                                {
-                                    "value": 1.5
-                                }
-                            ]
-                        }
+                        "when": "kind in ['aboriginal_lands', 'country', 'county', 'disputed', 'indefinite', 'indeterminate', 'lease_limit', 'line_of_control', 'locality', 'macroregion', 'map_unit', 'overlay_limit', 'region']",
+                        "technique": "none"
                     },
                     {
-                        "when": "kind ^= 'urban'",
-                        "technique": "fill",
+                        "when": "kind in ['country']",
+                        "technique": "solid-line",
                         "attr": {
-                            "renderOrder": 1,
-                            "opacity": 0.8,
-                            "color": [
+                            "clipping": false,
+                            "color": "#bab1b1",
+                            "lineWidth": [
+                                {
+                                    "maxLevel": 2,
+                                    "value": 1700
+                                },
+                                {
+                                    "maxLevel": 3,
+                                    "value": 1700
+                                },
+                                {
+                                    "maxLevel": 4,
+                                    "value": 1300
+                                },
+                                {
+                                    "maxLevel": 5,
+                                    "value": 500
+                                },
+                                {
+                                    "maxLevel": 6,
+                                    "value": 220
+                                },
+                                {
+                                    "maxLevel": 7,
+                                    "value": 90
+                                },
                                 {
                                     "maxLevel": 8,
-                                    "value": "#E1E6EA"
+                                    "value": 50
                                 },
                                 {
                                     "maxLevel": 9,
-                                    "value": "#E1E6EA"
+                                    "value": 30
                                 },
                                 {
                                     "maxLevel": 10,
-                                    "value": "#E1E6EA"
+                                    "value": 20
                                 },
                                 {
                                     "maxLevel": 11,
-
-                                    "value": "#E1E6EA"
+                                    "value": 15
                                 },
                                 {
                                     "maxLevel": 12,
-
-                                    "value": "#E1E6EA"
+                                    "value": 10
                                 },
                                 {
                                     "maxLevel": 13,
-
-                                    "value": "#E1E6EA"
+                                    "value": 5
                                 },
                                 {
-                                    "value": "#BABABA",
-                                    "opacity": 0.6
+                                    "value": 2
                                 }
                             ]
+                        }
+                    }
+                ]
+            },
+            {
+                "when": "$layer ^= 'boundaries' && $geometryType ^= 'point'",
+                "technique": "text",
+                "renderOrder": 7,
+                "attr": {
+                    "minZoomLevel": "min_zoom",
+                    "color": "#6d7477",
+                    "scale": 0.85,
+                    "priority": 200
+                }
+            },
+
+            {
+                "description": "Do not show labels for landuse",
+                "when": "$layer ^= 'landuse' && $geometryType ^= 'point'",
+                "renderOrder": 6,
+                "attr": {
+                    "color": "#b620dc",
+                    "minZoomLevel": "min_zoom",
+                    "priority": 80
+                },
+                "styles": [
+                    {
+                        "when": "kind in ['aerodrome', 'allotments', 'amusement_ride', 'animal', 'apron', 'aquarium', 'artwork', 'attraction', 'aviary', 'battlefield', 'beach', 'breakwater', 'bridge', 'camp_site', 'caravan_site', 'carousel', 'cemetery', 'cinema', 'city_wall', 'college', 'commercial', 'common', 'cutline', 'dike', 'dog_park', 'enclosure', 'farm', 'farmland', 'farmyard', 'fence', 'footway', 'forest', 'fort', 'fuel', 'garden', 'gate', 'generator', 'glacier', 'golf_course', 'grass', 'grave_yard', 'groyne', 'hanami', 'hospital', 'industrial', 'land', 'library', 'maze', 'meadow', 'military', 'national_park', 'nature_reserve', 'natural_forest', 'natural_park', 'natural_wood', 'park', 'parking', 'pedestrian', 'petting_zoo', 'picnic_site', 'pier', 'pitch', 'place_of_worship', 'plant', 'playground', 'prison', 'protected_area', 'quarry', 'railway', 'recreation_ground', 'recreation_track', 'residential', 'resort', 'rest_area', 'retail', 'retaining_wall', 'rock', 'roller_coaster', 'runway', 'rural', 'school', 'scree', 'scrub', 'service_area', 'snow_fence', 'sports_centre', 'stadium', 'stone', 'substation', 'summer_toboggan', 'taxiway', 'theatre', 'theme_park', 'tower', 'trail_riding_station', 'university', 'urban_area', 'urban', 'village_green', 'wastewater_plant', 'water_park', 'water_slide', 'water_works', 'wetland', 'wilderness_hut', 'wildlife_park', 'winery', 'winter_sports', 'wood', 'works', 'zoo']",
+                        "technique": "none"
+                    },
+                    {
+                        "when": "kind in ['landuse', 'leisure', 'natural', 'highway', 'aeroway', 'amenity', 'tourism', 'zoo', 'attraction', 'man_made ', 'power ', 'urban_area', 'city_wall', 'dam', 'retaining_wall', 'snow_fence', 'fence', 'gate']",
+                        "technique": "none"
+                    }
+                ]
+            },
+            {
+                "description": "Grouped theme for landuse polygons",
+                "when": "$layer ^= 'landuse' && $geometryType ^= 'polygon'",
+                "attr": {
+                    "minZoomLevel": "min_zoom"
+                },
+                "styles": [
+                    {
+                        "when": "kind ^= 'urban'",
+                        "technique": "none",
+                        "attr": {
+                            "renderOrder": 1,
+                            "opacity": 0.8,
+                            "color": "clearColor"
                         }
                     },
                     {
                         "when": "kind ^= 'urban_area'",
-                        "technique": "fill",
+                        "technique": "none",
                         "attr": {
                             "renderOrder": 1,
                             "color": [
                                 {
+                                    "maxLevel": 7,
+                                    "value": "clearColor"
+                                },
+                                {
                                     "maxLevel": 8,
-
-                                    "value": "#E1E6EA"
+                                    "value": "clearColor"
                                 },
                                 {
                                     "maxLevel": 9,
-
-                                    "value": "#E1E6EA"
+                                    "value": "#e7ecef"
                                 },
                                 {
                                     "maxLevel": 10,
-
-                                    "value": "#E1E6EA"
+                                    "value": "#e6ebee"
                                 },
                                 {
                                     "maxLevel": 11,
-
-                                    "value": "#E1E6EA"
+                                    "value": "#e5e9ec"
                                 },
                                 {
-                                    "maxLevel": 12,
-
-                                    "value": "#E1E6EA"
-                                },
-                                {
-                                    "maxLevel": 13,
-
-                                    "value": "#E1E6EA"
-                                },
-                                {
-                                    "value": "#BABABA",
-                                    "opacity": 0.6
+                                    "value": "clearColor"
                                 }
                             ]
                         }
                     },
                     {
-                        "when": "kind in ['park','dog_park', 'garden', 'nature_reserve', 'protected_area']",
+                        "when": "kind in ['nature', 'forest','park','wood','natural_wood', 'grass', 'dog_park', 'garden', 'nature_reserve', 'protected_area']",
                         "technique": "fill",
                         "renderOrder": 1,
                         "attr": {
-                            "minZoomLevel": "min_zoom",
-                            "color": "#C9EBB7"
+                            "color": "#c6ebb9"
                         }
                     },
                     {
@@ -1289,36 +1328,23 @@
                         "technique": "fill",
                         "renderOrder": 1,
                         "attr": {
-                            "minZoomLevel": "min_zoom",
                             "color": "#e5e9ec"
                         }
                     },
                     {
-                        "when": "kind ^= 'footway'",
+                        "when": "kind ^= 'national_park'",
                         "technique": "fill",
                         "renderOrder": 1,
                         "attr": {
-                            "minZoomLevel": "min_zoom",
-                            "color": "#f5f7f4",
-                            "label_placement": false
+                            "color": "#c6ebb9"
                         }
                     },
                     {
-                        "when": "kind ^= 'allotments'",
+                        "when": "kind in ['pitch']",
                         "technique": "fill",
                         "renderOrder": 1,
                         "attr": {
-                            "minZoomLevel": "min_zoom",
-                            "color": "#e5e9ec"
-                        }
-                    },
-                    {
-                        "when": "kind in ['forest', 'wood', 'natural_wood'] || kind ^= 'nature' || kind ^= 'national_park'",
-                        "technique": "fill",
-                        "renderOrder": 1,
-                        "attr": {
-                            "minZoomLevel": "min_zoom",
-                            "color": "#d6f7cc"
+                            "color": "#D7E9DA"
                         }
                     },
                     {
@@ -1326,17 +1352,7 @@
                         "technique": "fill",
                         "renderOrder": 1,
                         "attr": {
-                            "minZoomLevel": "min_zoom",
                             "color": "#eee2e8"
-                        }
-                    },
-                    {
-                        "when": "kind in ['pitch', 'grass']",
-                        "technique": "fill",
-                        "renderOrder": 1,
-                        "attr": {
-                            "minZoomLevel": "min_zoom",
-                            "color": "#c9ebb7"
                         }
                     },
                     {
@@ -1344,26 +1360,23 @@
                         "technique": "fill",
                         "renderOrder": 1,
                         "attr": {
-                            "minZoomLevel": "min_zoom",
-                            "color": "#D7E9DA"
+                            "color": "#c9ebb7"
                         }
                     },
                     {
-                        "when": "kind in ['sports_centre', 'bridge']",
+                        "when": "kind in ['bridge']",
                         "technique": "fill",
                         "renderOrder": 1,
                         "attr": {
-                            "minZoomLevel": "min_zoom",
-                            "color": "#e8eaeb"
+                            "color": "#c6ebb9"
                         }
                     },
                     {
-                        "when": "kind in ['sport', 'attraction', 'zoo']",
+                        "when": "kind in ['sport','sports_centre', 'attraction', 'zoo']",
                         "technique": "fill",
                         "renderOrder": 1,
                         "attr": {
-                            "minZoomLevel": "min_zoom",
-                            "color": "#D7C9EF"
+                            "color": "#c6ebb9"
                         }
                     },
                     {
@@ -1371,35 +1384,15 @@
                         "technique": "fill",
                         "renderOrder": 1,
                         "attr": {
-                            "minZoomLevel": "min_zoom",
-                            "color": "#C7C9EF"
+                            "color": "#D7E9DA"
                         }
                     },
                     {
-                        "when": "kind in ['common', 'surface']",
+                        "when": "kind in ['common', 'surface', 'commercial', 'military', 'industrial']",
                         "technique": "fill",
                         "renderOrder": 1,
                         "attr": {
-                            "minZoomLevel": "min_zoom",
-                            "color": "#D9E1E4"
-                        }
-                    },
-                    {
-                        "when": "kind in ['commercial']",
-                        "technique": "fill",
-                        "renderOrder": 1,
-                        "attr": {
-                            "minZoomLevel": "min_zoom",
-                            "color": "#fce3cf"
-                        }
-                    },
-                    {
-                        "when": "kind in ['military', 'industrial']",
-                        "technique": "fill",
-                        "renderOrder": 1,
-                        "attr": {
-                            "minZoomLevel": "min_zoom",
-                            "color": "#90b5a2"
+                            "color": "clearColor"
                         }
                     },
                     {
@@ -1407,8 +1400,27 @@
                         "technique": "fill",
                         "renderOrder": 1,
                         "attr": {
-                            "minZoomLevel": "min_zoom",
-                            "color": "#F4F4F4"
+                            "color": [
+                                {
+                                    "maxLevel": 10,
+                                    "value": "#D9E1E4"
+                                },
+                                {
+                                    "maxLevel": 11,
+                                    "value": "#D9E1E4"
+                                },
+                                {
+                                    "maxLevel": 12,
+                                    "value": "#D9E1E4"
+                                },
+                                {
+                                    "maxLevel": 13,
+                                    "value": "#D9E1E4"
+                                },
+                                {
+                                    "value": "clearColor"
+                                }
+                            ]
                         }
                     },
                     {
@@ -1416,7 +1428,6 @@
                         "technique": "fill",
                         "renderOrder": 1,
                         "attr": {
-                            "minZoomLevel": "min_zoom",
                             "color": "#ffffce"
                         }
                     }
@@ -1425,19 +1436,19 @@
             {
                 "description": "Earth layer",
                 "when": "$layer ^= 'earth'",
-                "renderOrder": 0,
+                "renderOrder": 1,
                 "styles": [
                     {
-                        "when": "kind in ['archipelago', 'continent',  'island', 'islet']",
+                        "when": "kind in ['continent']",
                         "technique": "text",
                         "attr": {
-                            "color": "#515151",
-                            "label_placement": true,
+                            "color": "#965C32",
+                            "opacity": 0.8,
                             "minZoomLevel": "min_zoom"
                         }
                     },
                     {
-                        "when": "kind in ['arete', 'cliff', 'ridge', 'valley']",
+                        "when": "kind in ['archipelago', 'cliff', 'ridge', 'island', 'islet']",
                         "technique": "line",
                         "attr": {
                             "color": "#C1BDB3",
@@ -1447,68 +1458,72 @@
                 ]
             },
             {
+                "description": "Places",
                 "when": "$layer ^= 'places'",
                 "technique": "text",
                 "attr": {
                     "color": "#6d7477",
                     "scale": 0.75
-                }
-            },
-            {
-                "when": "$layer in ['places']",
-                "renderOrder": 7,
-                "attr": {
-                    "priority": 10.0,
-                    "renderTextDuringMovements": true,
-                    "textFadeTime": 0.75,
-                    "iconFadeTime": 0.5
+
                 },
                 "styles": [
                     {
-                        "when": "$layer ^= 'places' && kind ^= 'country' && $level >= 5",
+                        "when": "kind in ['country']",
                         "technique": "text",
                         "attr": {
-                            "priority": 200.0,
-                            "scale": 0.75
+                            "color": "#696969",
+                            "opacity": 0.8
                         }
                     },
                     {
-                        "when": "$layer ^= 'places' && kind ^= 'country' && $level < 5",
-                        "technique": "text",
-                        "attr": {
-                            "priority": 190.0,
-                            "useAbbreviation": true,
-                            "scale": 0.75,
-                            "color": "#737A7F"
-                        }
+                        "when": "kind in ['locality', 'region']",
+                        "styles": [
+                            {
+                                "when": "kind_detail in ['farm', 'hamlet', 'isolated_dwelling', 'locality', 'province', 'scientific_station', 'state', 'village']",
+                                "technique": "none"
+                            },
+                            {
+                                "when": "kind_detail in ['town', 'city']",
+                                "technique": "text",
+                                "attr": {
+                                    "color": "#965C32",
+                                    "opacity": 0.8
+                                }
+                            }
+                        ]
                     },
                     {
-                        "when": "$layer ^= 'places' && kind ^= 'region'",
-                        "technique": "text",
-                        "attr": {
-                            "priority": 180.0,
-                            "scale": 0.7
-                        }
-                    },
-                    {
-                        "when": "$layer ^= 'places' && kind ^= 'locality'",
-                        "technique": "text",
-                        "attr": {
-                            "priority": 170.0,
-                            "scale": 0.7,
-                            "label": "name"
-                        }
+                        "when": "kind in ['borough', 'macrohood', 'microhood', 'neighbourhood']",
+                        "technique": "none"
                     }
                 ]
             },
             {
                 "when": "$layer ^= 'pois'",
-                "technique": "text",
                 "attr": {
-                    "priority": 150.0,
-                    "color": "#505050",
-                    "scale": 0.7
-                }
+                    "priority": 100.0,
+                    "color": "#A1826C",
+                    "scale": 0.5,
+                    "textIsOptional": true,
+                    "renderTextDuringMovements": true,
+                    "textMayOverlap": false,
+                    "textReserveSpace": false,
+                    "imageTexturePostfix": "-25",
+                    "iconScale": 2,
+                    "yOffset": -20,
+                    "minZoomLevel": "min_zoom"
+                },
+                "styles": [
+                    {
+                        "when": "kind in ['aerialway', 'aeroway', 'amenity', 'barrier', 'craft', 'highway', 'historic', 'leisure', 'lock', 'man_made', 'natural', 'office', 'power', 'rental', 'shop', 'waterway']",
+                        "technique": "none"
+                    },
+                    {
+                        "when": "kind in ['attraction', 'highway', 'railway', 'tourism', 'zoo']",
+                        "technique": "text",
+                        "final": true
+                    }
+                ]
             },
             {
                 "when": "$layer ^= 'buildings'",
@@ -1545,8 +1560,13 @@
                             {
                                 "when": "kind ^= 'address' && $geometryType ^= 'point' && label_placement",
                                 "technique": "text",
+                                "renderOrder": 100,
                                 "attr": {
-                                    "color": "#595959"
+                                    "color": "#A9A9A9",
+                                    "label": "addr_housenumber",
+                                    "scale": 0.45,
+                                    "opacity": 0.6,
+                                    "minZoomLevel": 17
                                 }
                             }
                         ]
@@ -1557,18 +1577,19 @@
                 "description": "Icons for tilezen pois + mappings to maki icons",
                 "when": "$layer ^= 'pois' && $geometryType ^= 'point'",
                 "attr": {
-                    "color": "#929292",
-                    "imageTexturePostfix": "-15",
+                    "color": "#707070",
+                    "imageTexturePostfix": "-25",
                     "iconScale": 1,
                     "scale": 0.5,
-                    "yOffset": -22,
-                    "textIsOptional": true,
+                    "yOffset": -20,
+                    "textIsOptional": false,
                     "iconIsOptional": false,
-                    "renderTextDuringMovements": false,
+                    "renderTextDuringMovements": true,
                     "textMayOverlap": false,
                     "textReserveSpace": true,
-                    "iconMayOverlap": true,
-                    "iconReserveSpace": false
+                    "iconMayOverlap": false,
+                    "iconReserveSpace": true,
+                    "minZoomLevel": "min_zoom"
                 },
                 "styles": [
                     {
@@ -1716,7 +1737,7 @@
                         }
                     },
                     {
-                        "when": "kind in ['grave_yard', '', '']",
+                        "when": "kind in ['grave_yard']",
                         "final": true,
                         "technique": "labeled-icon",
                         "attr": {
@@ -1724,7 +1745,7 @@
                         }
                     },
                     {
-                        "when": "kind in ['gallery', '', '']",
+                        "when": "kind in ['gallery']",
                         "final": true,
                         "technique": "labeled-icon",
                         "attr": {
@@ -1732,7 +1753,7 @@
                         }
                     },
                     {
-                        "when": "kind in ['place_of_worship', '', '']",
+                        "when": "kind in ['place_of_worship']",
                         "final": true,
                         "technique": "labeled-icon",
                         "attr": {
@@ -1740,7 +1761,7 @@
                         }
                     },
                     {
-                        "when": "kind in ['peak', '', '']",
+                        "when": "kind in ['peak']",
                         "final": true,
                         "technique": "labeled-icon",
                         "attr": {
@@ -1748,7 +1769,7 @@
                         }
                     },
                     {
-                        "when": "kind in ['ferry_terminal', 'platform', '']",
+                        "when": "kind in ['ferry_terminal', 'platform']",
                         "final": true,
                         "technique": "labeled-icon",
                         "attr": {
@@ -1779,11 +1800,15 @@
                             "textMayOverlap": false,
                             "textReserveSpace": true,
                             "iconMayOverlap": true,
-                            "iconReserveSpace": false
+                            "iconReserveSpace": false,
+                            "minZoomLevel": "min_zoom"
                         }
                     },
                     {
-                        "technique": "text"
+                        "technique": "text",
+                        "attr": {
+                            "minZoomLevel": "min_zoom"
+                        }
                     }
                 ]
             },
@@ -1834,25 +1859,28 @@
                         ]
                     },
                     {
-                        "when": "kind in ['service', 'path', 'pedestrian', 'street_limited', 'street']",
-                        "technique": "text",
+                        "when": "is_bridge",
+                        "technique": "none",
                         "final": true,
                         "renderOrder": 9,
                         "attr": {
-                            "color": "#565660",
+                            "color": "#F00",
                             "scale": 0.5,
-                            "priority": 10.0
+                            "priority": 10.0,
+                            "minZoomLevel": "min_zoom"
                         }
                     },
+
                     {
                         "when": "kind in ['rail', 'minor_road']",
                         "technique": "text",
                         "final": true,
                         "renderOrder": 9,
                         "attr": {
-                            "color": "#565660",
+                            "color": "#CD853F",
                             "scale": 0.5,
-                            "priority": 10.0
+                            "priority": 10.0,
+                            "minZoomLevel": "min_zoom"
                         }
                     },
                     {
@@ -1860,10 +1888,11 @@
                         "technique": "text",
                         "final": true,
                         "attr": {
-                            "color": "#565660",
+                            "color": "#006400",
                             "textLabel": "kind_detail",
                             "scale": 0.5,
-                            "priority": 15.0
+                            "priority": 15.0,
+                            "minZoomLevel": "min_zoom"
                         }
                     },
                     {
@@ -1871,30 +1900,62 @@
                         "technique": "text",
                         "final": true,
                         "attr": {
-                            "color": "#565660",
+                            "color": "#6F46BA",
                             "scale": 0.5,
-                            "priority": 30.0
+                            "priority": 20.0,
+                            "minZoomLevel": "min_zoom"
                         }
                     },
                     {
-                        "when": "(kind_detail ^= 'primary' || kind_detail in ['motorway', 'trunk'])",
+                        "when": "is_tunnel",
+                        "technique": "text",
+                        "final": true,
+                        "attr": {
+                            "color": "#B34E19",
+                            "scale": 0.5,
+                            "priority": 25.0,
+                            "minZoomLevel": "min_zoom"
+                        }
+                    },
+                    {
+                        "when": "kind_detail ^= 'primary'",
                         "technique": "text",
                         "final": true,
                         "attr": {
                             "color": "#565660",
                             "scale": 0.5,
-                            "priority": 25.0
+                            "priority": 25.0,
+                            "minZoomLevel": "min_zoom"
                         }
                     },
                     {
-                        "when": "(kind ^= 'ferry')",
+                        "when": "kind_detail in ['motorway']",
+                        "technique": "text",
+                        "final": true,
+                        "attr": {
+                            "color": "#8B0000",
+                            "scale": 0.5,
+                            "priority": 25.0,
+                            "minZoomLevel": "min_zoom"
+                        }
+                    },
+
+                    {
+                        "when": "kind ^= 'ferry'",
                         "technique": "text",
                         "final": true,
                         "attr": {
                             "color": "#565660",
                             "scale": 0.5,
-                            "priority": 25.0
+                            "priority": 25.0,
+                            "minZoomLevel": "min_zoom"
                         }
+                    },
+                    {
+                        "description": "Dont show names of these roads",
+                        "when": "kind in ['trunk', 'service', 'path', 'pedestrian', 'street_limited', 'street']",
+                        "technique": "none",
+                        "final": true
                     },
                     {
                         "description": "For debugging purposes show kind param for roads not matched",
