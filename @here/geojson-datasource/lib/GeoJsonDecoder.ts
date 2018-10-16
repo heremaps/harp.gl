@@ -258,60 +258,76 @@ class GeoJsonDecoder {
             return;
         }
 
-        let techniqueIndex: number;
+        let techniqueIndices: number[] = [];
         switch (feature.geometry.type) {
             case "Point":
-                techniqueIndex = this.findOrCreateTechniqueIndex(feature, "point");
-                this.processPoint(
-                    [feature.geometry.coordinates],
-                    techniqueIndex,
-                    feature.properties
-                );
+                techniqueIndices = this.findOrCreateTechniqueIndices(feature, "point");
+                for (const techniqueIndex of techniqueIndices) {
+                    this.processPoint(
+                        [feature.geometry.coordinates],
+                        techniqueIndex,
+                        feature.properties
+                    );
+                }
                 break;
 
             case "MultiPoint":
-                techniqueIndex = this.findOrCreateTechniqueIndex(feature, "point");
-                this.processPoint(feature.geometry.coordinates, techniqueIndex, feature.properties);
+                techniqueIndices = this.findOrCreateTechniqueIndices(feature, "point");
+                for (const techniqueIndex of techniqueIndices) {
+                    this.processPoint(
+                        feature.geometry.coordinates,
+                        techniqueIndex,
+                        feature.properties
+                    );
+                }
                 break;
 
             case "LineString":
-                techniqueIndex = this.findOrCreateTechniqueIndex(feature, "line");
-                this.processLineString(
-                    extendedTile,
-                    [feature.geometry.coordinates],
-                    techniqueIndex,
-                    feature.id,
-                    feature.properties
-                );
+                techniqueIndices = this.findOrCreateTechniqueIndices(feature, "line");
+                for (const techniqueIndex of techniqueIndices) {
+                    this.processLineString(
+                        extendedTile,
+                        [feature.geometry.coordinates],
+                        techniqueIndex,
+                        feature.id,
+                        feature.properties
+                    );
+                }
                 break;
 
             case "MultiLineString":
-                techniqueIndex = this.findOrCreateTechniqueIndex(feature, "line");
-                this.processLineString(
-                    extendedTile,
-                    feature.geometry.coordinates,
-                    techniqueIndex,
-                    feature.id,
-                    feature.properties
-                );
+                techniqueIndices = this.findOrCreateTechniqueIndices(feature, "line");
+                for (const techniqueIndex of techniqueIndices) {
+                    this.processLineString(
+                        extendedTile,
+                        feature.geometry.coordinates,
+                        techniqueIndex,
+                        feature.id,
+                        feature.properties
+                    );
+                }
                 break;
 
             case "Polygon":
-                techniqueIndex = this.findOrCreateTechniqueIndex(feature, "polygon");
-                this.processPolygon(
-                    [feature.geometry.coordinates],
-                    techniqueIndex,
-                    feature.properties
-                );
+                techniqueIndices = this.findOrCreateTechniqueIndices(feature, "polygon");
+                for (const techniqueIndex of techniqueIndices) {
+                    this.processPolygon(
+                        [feature.geometry.coordinates],
+                        techniqueIndex,
+                        feature.properties
+                    );
+                }
                 break;
 
             case "MultiPolygon":
-                techniqueIndex = this.findOrCreateTechniqueIndex(feature, "polygon");
-                this.processPolygon(
-                    feature.geometry.coordinates,
-                    techniqueIndex,
-                    feature.properties
-                );
+                techniqueIndices = this.findOrCreateTechniqueIndices(feature, "polygon");
+                for (const techniqueIndex of techniqueIndices) {
+                    this.processPolygon(
+                        feature.geometry.coordinates,
+                        techniqueIndex,
+                        feature.properties
+                    );
+                }
                 break;
 
             case "GeometryCollection":
@@ -753,7 +769,9 @@ class GeoJsonDecoder {
      * @param feature GeoJSON feature.
      * @param envType Technique type name.
      */
-    private findOrCreateTechniqueIndex(feature: Feature, envType: Value): number {
+    private findOrCreateTechniqueIndices(feature: Feature, envType: Value): number[] {
+        const techniqueIndices: Array<number | undefined> = [];
+
         const featureDetails: FeatureDetails = Flattener.flatten(feature.properties, "properties");
 
         if (feature.id !== undefined) {
@@ -762,7 +780,6 @@ class GeoJsonDecoder {
 
         const env = new MapEnv({ type: envType, ...featureDetails });
         const techniques = this.m_styleSetEvaluator.getMatchingTechniques(env);
-        let techniqueIndex;
 
         let featureColor: THREE.Color | undefined;
         if (feature.properties !== undefined && feature.properties.style !== undefined) {
@@ -788,7 +805,7 @@ class GeoJsonDecoder {
             featureWidth !== undefined
         ) {
             // check if we have technique with required styling in already exist
-            techniques.forEach(technique => {
+            for (const technique of techniques) {
                 let match = true;
                 // color, fill
                 if (
@@ -806,10 +823,9 @@ class GeoJsonDecoder {
                         themeColor.g === featureColor.g &&
                         themeColor.b === featureColor.b
                     ) {
-                        techniqueIndex = technique._index;
+                        techniqueIndices.push(technique._index);
                     } else {
                         match = false;
-                        techniqueIndex = undefined;
                     }
                 }
 
@@ -820,10 +836,9 @@ class GeoJsonDecoder {
                     match === true
                 ) {
                     if (featureRadius * radiusFactor === technique.size) {
-                        techniqueIndex = technique._index;
+                        techniqueIndices.push(technique._index);
                     } else {
                         match = false;
-                        techniqueIndex = undefined;
                     }
                 }
 
@@ -837,76 +852,29 @@ class GeoJsonDecoder {
                         typeof (technique as SolidLineTechnique).lineWidth === "number" &&
                         (technique as SolidLineTechnique).lineWidth === featureWidth
                     ) {
-                        techniqueIndex = technique._index;
+                        techniqueIndices.push(technique._index);
                     } else {
                         match = false;
-                        techniqueIndex = undefined;
                     }
-                }
-            });
-
-            // if needed technique not found, create new one and upthemedate theme
-            if (techniqueIndex === undefined) {
-                let newStyle = this.m_styleSetEvaluator.styleSet.find(
-                    style => style._index === techniques[0]._index
-                );
-                newStyle = JSON.parse(JSON.stringify(newStyle));
-                if (newStyle !== undefined) {
-                    delete newStyle._index;
-                    delete newStyle._whenExpr;
-                    if (newStyle.attr !== undefined) {
-                        delete newStyle.attr._renderOrderAuto;
-                        // tslint:disable-next-line:prefer-object-spread
-                        const technique = Object.assign(
-                            {},
-                            // tslint:disable-next-line:no-object-literal-type-assertion
-                            { name: newStyle.technique } as Technique,
-                            newStyle.attr
-                        );
-
-                        if (
-                            featureColor !== undefined &&
-                            (isSegmentsTechnique(technique) ||
-                                isCirclesTechnique(technique) ||
-                                isSquaresTechnique(technique) ||
-                                isFillTechnique(technique) ||
-                                technique.name === "solid-line")
-                        ) {
-                            newStyle.attr.color = featureColor.getStyle();
-                        }
-
-                        if (
-                            featureRadius !== undefined &&
-                            (isCirclesTechnique(technique) || isSquaresTechnique(technique))
-                        ) {
-                            newStyle.attr.size = featureRadius * radiusFactor;
-                        }
-
-                        if (featureWidth !== undefined && technique.name === "solid-line") {
-                            newStyle.attr.lineWidth = featureWidth;
-                        }
-                    }
-
-                    this.m_styleSetEvaluator.styleSet.push(newStyle);
-
-                    // set _index for new style
-                    this.m_styleSetEvaluator.getMatchingTechniques(env);
-                    techniqueIndex = newStyle._index;
                 }
             }
         } else {
-            // Use already exist technique in case feature properties doesn't contain specific
-            // styling.
-            techniqueIndex = techniques[0]._index;
+            // Use already existing techniques in case the feature's properties don't contain
+            // styling information.
+            for (const technique of techniques) {
+                techniqueIndices.push(technique._index);
+            }
         }
 
-        if (techniqueIndex === undefined) {
-            throw new Error(
-                "GeoJsonDecoder#findOrCreateTechniqueIndex: Internal error - No technique index"
-            );
+        for (const techniqueIndex of techniqueIndices) {
+            if (techniqueIndex === undefined) {
+                throw new Error(
+                    "GeoJsonDecoder#findOrCreateTechniqueIndex: Internal error - No technique index"
+                );
+            }
         }
 
-        return techniqueIndex;
+        return techniqueIndices as number[];
     }
 
     /**
