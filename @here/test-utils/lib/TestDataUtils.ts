@@ -14,7 +14,7 @@ import * as path from "path";
 
  * @hidden
  */
-export const testResourcesRoot = "../dist/test/";
+export const testResourcesRoot = "dist/test/";
 
 /**
  * Get URL of test resource.
@@ -109,3 +109,4 @@ export function loadTestResourceNode(
         });
     });
 }
+
