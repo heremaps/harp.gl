@@ -6,7 +6,7 @@
 
 import * as geoUtils from "@here/harp-geoutils";
 import { EarthConstants } from "@here/harp-geoutils/lib/projection/EarthConstants";
-import { Math as MATH, Matrix4, Plane, Quaternion, Raycaster, Vector3 } from "three";
+import { Math as MATH, Matrix4, Plane, Quaternion, Ray, Raycaster, Vector3 } from "three";
 import { MapView } from "./MapView";
 
 export namespace MapViewUtils {
@@ -59,6 +59,67 @@ export namespace MapViewUtils {
          * Missing Typedoc
          */
         roll: number;
+    }
+
+    /**
+     * Compute camera position to keep given points within crop rectangle and maintain fixed point.
+     * Orientation and other parameters of the camera remain unchanged.
+     *
+     * @param mapView Instance of MapView.
+     * @param points an array of points.
+     * @param cropRectNdc Crop rectangle in normalized device coordinates (NDC).
+     * @param zoomPoint Zoom point in normalized device coordinates (NDC).
+     * @param eps Maximum bounding distance tolerance.
+     *
+     * @returns Camera position or undefined if camera position is not possible to define.
+     */
+    export function computeCameraPositionToCrop(
+        mapView: MapView,
+        points: THREE.Vector3[],
+        cropRectNdc: THREE.Box2,
+        zoomPointNdc: THREE.Vector2,
+        eps: number = 1e-4
+    ): THREE.Vector3 | undefined {
+        if (
+            points.length === 0 ||
+            cropRectNdc.isEmpty() ||
+            cropRectNdc.containsPoint(zoomPointNdc) === false
+        ) {
+            return undefined;
+        }
+
+        const planes = computeFrustumPlanes(mapView, cropRectNdc);
+
+        // Compute ray -R, where R is a ray from eye to zoom point
+        rayCaster.setFromCamera(zoomPointNdc, mapView.camera);
+        const ray = new Ray(rayCaster.ray.origin, rayCaster.ray.direction.negate());
+
+        // Initialize eye distance along the ray to minimum
+        let distance = -Infinity;
+
+        // For each frustum plane, offset to bound all points, compute the eye distance along ray -R
+        for (const plane of planes) {
+            // Compute bounding frustum plane; notice that the normal points inwards
+            const newPlane = computeBoundingPlane(plane.normal.negate(), points).negate();
+
+            // Compute signed intersection distance of ray R and bounding frustum plane
+            const intPoint = ray.intersectPlane(newPlane, new Vector3());
+            if (intPoint === null) {
+                continue;
+            }
+            const intDistance = mapView.camera.position.distanceTo(intPoint);
+
+            // Update maximum eye distance so far
+            distance = Math.max(distance, intDistance);
+        }
+
+        if (isFinite(distance) === false) {
+            return undefined;
+        }
+
+        // Compute eye position as R(d + eps) to account for numerical imprecision
+        const result = ray.origin.add(ray.direction.multiplyScalar(distance + eps));
+        return result;
     }
 
     /**
@@ -473,4 +534,51 @@ export namespace MapViewUtils {
     function getIsoLanguageCode(language: string) {
         return language.substring(0, 2);
     }
+}
+
+/**
+ * Computes frustum planes. This is an internal function needed by computeCameraPositionToCrop.
+ *
+ * @param mapView mapView needed to obtain camera.
+ * @param cropRect crop rectangle.
+ *
+ * @returns an array of frustum planes.
+ */
+function computeFrustumPlanes(mapView: MapView, cropRect: THREE.Box2): THREE.Plane[] {
+    const camera = mapView.camera;
+    const cropRectWidth = cropRect.max.x - cropRect.min.x;
+    const cropRectHeight = cropRect.max.y - cropRect.min.y;
+    const x0 = 2 * cropRect.min.x - 1;
+    const x1 = 2 * (cropRect.min.x + cropRectWidth) - 1;
+    const y0 = 2 * cropRect.min.y - 1;
+    const y1 = 2 * (cropRect.min.y + cropRectHeight) - 1;
+    const near = camera.near;
+    const eye = camera.getWorldPosition(new Vector3());
+
+    const p00 = new Vector3(x0, y0, near).unproject(camera);
+    const p10 = new Vector3(x1, y0, near).unproject(camera);
+    const p01 = new Vector3(x0, y1, near).unproject(camera);
+    const p11 = new Vector3(x1, y1, near).unproject(camera);
+
+    const leftPlane = new Plane().setFromCoplanarPoints(eye, p00, p01);
+    const rightPlane = new Plane().setFromCoplanarPoints(eye, p11, p10);
+    const bottomPlane = new Plane().setFromCoplanarPoints(eye, p10, p00);
+    const topPlane = new Plane().setFromCoplanarPoints(eye, p01, p11);
+    const nearPlane = new Plane().setFromCoplanarPoints(p00, p01, p11);
+    // Far plane calculation is missing. For now let's use nearPlane as a farPlane.
+    const farPlane = new Plane().setFromCoplanarPoints(p00, p01, p11);
+    return [leftPlane, rightPlane, bottomPlane, topPlane, nearPlane, farPlane];
+}
+
+/**
+ * Computes bounding plane. This is an internal function needed by computeCameraPositionToCrop.
+ *
+ * @param normal normal vector.
+ * @param points an array of points.
+ *
+ * @returns Bounding plane.
+ */
+function computeBoundingPlane(normal: THREE.Vector3, points: THREE.Vector3[]): THREE.Plane {
+    const distance = points.reduce((dst, point) => Math.max(dst, normal.dot(point)), -Infinity);
+    return new Plane(normal, distance);
 }
