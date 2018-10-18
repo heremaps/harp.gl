@@ -848,6 +848,7 @@ export class Tile implements CachedResource {
                 );
                 textElement.color = colorMap.get(textPath.technique);
                 textElement.minZoomLevel = technique.minZoomLevel;
+                textElement.maxZoomLevel = technique.maxZoomLevel;
                 textElement.distanceScale =
                     technique.distanceScale !== undefined
                         ? technique.distanceScale
@@ -935,6 +936,7 @@ export class Tile implements CachedResource {
                     );
                     textElement.color = colorMap.get(text.technique);
                     textElement.minZoomLevel = technique.minZoomLevel;
+                    textElement.maxZoomLevel = technique.maxZoomLevel;
                     textElement.mayOverlap = technique.mayOverlap === true;
                     textElement.reserveSpace = technique.reserveSpace !== false;
                     this.addTextElement(textElement);

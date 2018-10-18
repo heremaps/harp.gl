@@ -71,4 +71,70 @@ export namespace MathUtils {
     ) {
         return ((val - inMin) * (outMax - outMin)) / (inMax - inMin) + outMin;
     }
+
+    /**
+     * Returns the smaller of the two given numbers. Both numbers may be undefined, in which case
+     * the result is undefined. If only one of the numbers is undefined, the other number is
+     * returned.
+     *
+     * @param a First number.
+     * @param b Second number.
+     */
+    export function min2(a: number | undefined, b: number | undefined): number | undefined {
+        let result: number | undefined;
+
+        if (a !== undefined) {
+            result = a;
+        }
+        if (b !== undefined) {
+            result = result === undefined ? b : Math.min(result, b);
+        }
+
+        return result;
+    }
+
+    /**
+     * Returns the larger of the two given numbers. Both numbers may be undefined, in which case
+     * the result is undefined. If only one of the numbers is undefined, the other number is
+     * returned.
+     *
+     * @param a First number.
+     * @param b Second number.
+     */
+    export function max2(a: number | undefined, b: number | undefined): number | undefined {
+        let result: number | undefined;
+
+        if (a !== undefined) {
+            result = a;
+        }
+        if (b !== undefined) {
+            result = result === undefined ? b : Math.max(result, b);
+        }
+
+        return result;
+    }
+
+    /**
+     * Checks if a the value of a given number is ouside of an upper and lower bound. The bounds
+     * may be undefined, in which case their value is ignored.
+     *
+     * @returns `true` if value is outside of the bounds.
+     *
+     * @param value Value to check.
+     * @param lowerBound Lower bound.
+     * @param upperBound Upper bound.
+     */
+    export function isClamped(
+        value: number,
+        lowerBound: number | undefined,
+        upperBound: number | undefined
+    ): boolean {
+        if (lowerBound !== undefined && value < lowerBound) {
+            return true;
+        }
+        if (upperBound !== undefined && value > upperBound) {
+            return true;
+        }
+        return false;
+    }
 }

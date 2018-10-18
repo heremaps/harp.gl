@@ -225,6 +225,28 @@ export interface CirclesTechnique extends BaseTechnique {
     size?: number;
 }
 
+/**
+ * Define the stacking option. Enum values for theme file are in "kebap-case".
+ */
+export enum PoiStackMode {
+    /**
+     * Show in a stack.
+     */
+    ShowInStack = "show-in-stack",
+    /**
+     * Do not show in a stack.
+     */
+    HideInStack = "hide-in-stack",
+    /**
+     * Show category parent in the stack.
+     */
+    ShowParent = "show-parent"
+}
+
+/**
+ * Technique that describes icons with labels. Baseclas to PoiTechnique and LineMarkerTechnique (for
+ * road shields).
+ */
 export interface MarkerTechnique extends BaseTechnique {
     /**
      * Priority of marker, defaults to `0`. Markers with highest priority get placed first.
@@ -357,10 +379,6 @@ export interface MarkerTechnique extends BaseTechnique {
      */
     scale?: number;
     /**
-     * Minimal zoom level. If the current zoom level is smaller, the technique will not be used.
-     */
-    minZoomLevel?: number;
-    /**
      * Horizontal offset (to the right) in screen pixels.
      */
     xOffset?: number;
@@ -398,6 +416,30 @@ export interface MarkerTechnique extends BaseTechnique {
      * transparent. A value of <= 0.0 disables fading.
      */
     fadeFar?: CaseProperty<number>;
+    /**
+     * Should be displayed on map or not. Deafults to `true`.
+     */
+    showOnMap?: boolean;
+    /**
+     * Specify stack mode. Defaults to `ShowInStack`.
+     */
+    stackMode?: PoiStackMode;
+    /**
+     * Minimum zoomLevel at which to display the label icon. No default.
+     */
+    iconMinZoomLevel?: number;
+    /**
+     * Maximum zoomLevel at which to display the label icon. No default.
+     */
+    iconMaxZoomLevel?: number;
+    /**
+     * Minimum zoomLevel at which to display the label text. No default.
+     */
+    textMinZoomLevel?: number;
+    /**
+     * Maximum zoomLevel at which to display the label text. No default.
+     */
+    textMaxZoomLevel?: number;
 }
 
 export interface PoiTechnique extends MarkerTechnique {
@@ -834,6 +876,10 @@ export interface TextTechnique extends BaseTechnique {
      * Minimal zoom level. If the current zoom level is smaller, the technique will not be used.
      */
     minZoomLevel?: number;
+    /**
+     * Maximum zoom level. If the current zoom level is larger, the technique will not be used.
+     */
+    maxZoomLevel?: number;
     /**
      * Horizontal offset (to the right) in screen pixels.
      */
