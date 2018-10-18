@@ -785,6 +785,7 @@ export interface Style {
      * Human readable description.
      */
     description?: string;
+
     /**
      * Compile-time condition.
      */
@@ -859,6 +860,11 @@ export interface Style {
      * Units in which different size properties are specified. Either `Meter` (default) or `Pixel`.
      */
     metricUnit?: string;
+
+    /**
+     * XYZ defines the property to display as text label of a feature in the styles.
+     */
+    labelProperty?: string;
 }
 
 export interface Vector3Like {
@@ -1256,6 +1262,10 @@ export class StyleSetEvaluator {
 
                         if (currStyle.renderOrderBiasProperty !== undefined) {
                             technique.renderOrderBiasProperty = currStyle.renderOrderBiasProperty;
+                        }
+
+                        if (currStyle.labelProperty !== undefined) {
+                            technique.label = currStyle.labelProperty;
                         }
 
                         if (currStyle.renderOrderBiasRange !== undefined) {

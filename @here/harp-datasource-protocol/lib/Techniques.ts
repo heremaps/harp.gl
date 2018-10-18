@@ -957,6 +957,10 @@ export function isLineTechnique(technique: Technique): technique is LineTechniqu
     return technique.name === "line";
 }
 
+export function isSolidLineTechnique(technique: Technique): technique is LineTechnique {
+    return technique.name === "solid-line";
+}
+
 export function isSegmentsTechnique(technique: Technique): technique is SegmentsTechnique {
     return technique.name === "segments";
 }

@@ -14,12 +14,18 @@ import {
     InterleavedBufferAttribute,
     isCirclesTechnique,
     isFillTechnique,
+    isPoiTechnique,
     isSegmentsTechnique,
+    isSolidLineTechnique,
     isSquaresTechnique,
+    isTextTechnique,
     LineFeatureGroup,
+    PoiGeometry,
     SolidLineTechnique,
     StyleSetEvaluator,
-    Technique
+    Technique,
+    TextGeometry,
+    TextPathGeometry
 } from "@here/harp-datasource-protocol";
 import { MapEnv, Value } from "@here/harp-datasource-protocol/lib/Theme";
 import { GeoCoordinates, Projection, TileKey, webMercatorTilingScheme } from "@here/harp-geoutils";
@@ -27,7 +33,7 @@ import { LINE_VERTEX_ATTRIBUTE_DESCRIPTORS, Lines } from "@here/harp-lines";
 import { ThemedTileDecoder } from "@here/harp-mapview-decoder";
 import { WorkerServiceManager } from "@here/harp-mapview-decoder/index-worker";
 import { TileDecoderService } from "@here/harp-mapview-decoder/lib/TileDecoderService";
-import { LoggerManager } from "@here/harp-utils";
+import { LoggerManager, Math2D } from "@here/harp-utils";
 import earcut from "earcut";
 import * as THREE from "three";
 import { Feature, FeatureDetails, GeoJsonDataType } from "./GeoJsonDataType";
@@ -61,6 +67,12 @@ class MeshBuffer {
  * Store temporary variables needed for the creation of a geometry.
  */
 class GeometryData {
+    /**
+     * XYZ defines the property to label in the style, which we cannot do. Since all the features
+     * of a same type will show the same property in a given datasource, this workaround is to
+     * hand the name property to pick to the buffer.
+     */
+    labelProperty?: string;
     type: string | undefined;
     points: PointsData = { vertices: [], geojsonProperties: [undefined] };
     lines: LinesData = { vertices: [], geojsonProperties: [] };
@@ -113,6 +125,27 @@ export interface GeoJsonDecodedTile extends DecodedTile {
  */
 export interface GeoJsonGeometry extends Geometry {
     type: GeometryType;
+    objInfos?: Array<{} | undefined>;
+}
+
+/**
+ * Geometry interface that stores the geometry type and the user data for a POI.
+ */
+export interface GeoJsonPoiGeometry extends PoiGeometry {
+    objInfos?: Array<{} | undefined>;
+}
+
+/**
+ * Geometry interface that stores the geometry type and the user data for a Text.
+ */
+export interface GeoJsonTextGeometry extends TextGeometry {
+    objInfos?: Array<{} | undefined>;
+}
+
+/**
+ * Geometry interface that stores the geometry type and the user data for a TextPath.
+ */
+export interface GeoJsonTextPathGeometry extends TextPathGeometry {
     objInfos?: Array<{} | undefined>;
 }
 
@@ -180,7 +213,15 @@ export class GeoJsonTileDecoder extends ThemedTileDecoder {
 class GeoJsonDecoder {
     private m_center: THREE.Vector3 = new THREE.Vector3();
     private readonly m_geometries: GeoJsonGeometry[] = [];
+    private m_textGeometries?: GeoJsonTextGeometry[];
+    private m_textPathGeometries?: TextPathGeometry[];
+    private m_poiGeometries?: PoiGeometry[];
+
     private readonly m_geometryBuffer = new Map<number, GeometryData>();
+    private readonly m_textGeometryBuffer = new Map<number, GeometryData>();
+    private readonly m_textPathGeometryBuffer = new Map<number, GeometryData>();
+    private readonly m_poiGeometryBuffer = new Map<number, GeometryData>();
+
     private readonly m_storeExtendedTags = true;
     private readonly m_gatherRoadSegments = true;
     private m_cached_worldCoord: THREE.Vector3 = new THREE.Vector3();
@@ -213,11 +254,25 @@ class GeoJsonDecoder {
         };
         this.processGeoJson(data, extendedTile);
 
-        return {
+        const tile: DecodedTile = {
             geometries: this.m_geometries,
             techniques: this.m_styleSetEvaluator.techniques,
             tileInfo: this.getTileInfo(extendedTile)
         };
+
+        if (this.m_poiGeometries !== undefined) {
+            tile.poiGeometries = this.m_poiGeometries;
+        }
+
+        if (this.m_textGeometries !== undefined) {
+            tile.textGeometries = this.m_textGeometries;
+        }
+
+        if (this.m_textPathGeometries !== undefined) {
+            tile.textPathGeometries = this.m_textPathGeometries;
+        }
+
+        return tile;
     }
 
     /**
@@ -242,7 +297,7 @@ class GeoJsonDecoder {
                 break;
         }
 
-        this.createGeometry();
+        this.createGeometries();
     }
 
     /**
@@ -261,70 +316,150 @@ class GeoJsonDecoder {
             case "Point":
                 techniqueIndices = this.findOrCreateTechniqueIndices(feature, "point");
                 for (const techniqueIndex of techniqueIndices) {
-                    this.processPoint(
-                        [feature.geometry.coordinates],
-                        techniqueIndex,
-                        feature.properties
-                    );
+                    const technique = this.m_styleSetEvaluator.techniques[techniqueIndex];
+                    if (isPoiTechnique(technique)) {
+                        this.processPoi(
+                            [feature.geometry.coordinates],
+                            techniqueIndex,
+                            feature.properties
+                        );
+                    } else if (isTextTechnique(technique)) {
+                        this.processText(
+                            [feature.geometry.coordinates],
+                            techniqueIndex,
+                            technique.label!,
+                            feature.properties
+                        );
+                    } else if (isCirclesTechnique(technique) || isSquaresTechnique(technique)) {
+                        this.processPoint(
+                            [feature.geometry.coordinates],
+                            techniqueIndex,
+                            feature.properties
+                        );
+                    }
                 }
                 break;
 
             case "MultiPoint":
                 techniqueIndices = this.findOrCreateTechniqueIndices(feature, "point");
                 for (const techniqueIndex of techniqueIndices) {
-                    this.processPoint(
-                        feature.geometry.coordinates,
-                        techniqueIndex,
-                        feature.properties
-                    );
+                    const technique = this.m_styleSetEvaluator.techniques[techniqueIndex];
+                    if (isPoiTechnique(technique)) {
+                        this.processPoi(
+                            feature.geometry.coordinates,
+                            techniqueIndex,
+                            feature.properties
+                        );
+                    } else if (isTextTechnique(technique)) {
+                        this.processText(
+                            feature.geometry.coordinates,
+                            techniqueIndex,
+                            technique.label!,
+                            feature.properties
+                        );
+                    } else if (isCirclesTechnique(technique) || isSquaresTechnique(technique)) {
+                        this.processPoint(
+                            feature.geometry.coordinates,
+                            techniqueIndex,
+                            feature.properties
+                        );
+                    }
                 }
                 break;
 
             case "LineString":
                 techniqueIndices = this.findOrCreateTechniqueIndices(feature, "line");
                 for (const techniqueIndex of techniqueIndices) {
-                    this.processLineString(
-                        extendedTile,
-                        [feature.geometry.coordinates],
-                        techniqueIndex,
-                        feature.id,
-                        feature.properties
-                    );
+                    const technique = this.m_styleSetEvaluator.techniques[techniqueIndex];
+                    if (isSolidLineTechnique(technique)) {
+                        this.processLineString(
+                            extendedTile,
+                            [feature.geometry.coordinates],
+                            techniqueIndex,
+                            feature.id,
+                            feature.properties
+                        );
+                    } else if (isTextTechnique(technique)) {
+                        this.processLineText(
+                            feature.geometry.coordinates,
+                            techniqueIndex,
+                            technique.label!,
+                            feature.properties
+                        );
+                    }
                 }
                 break;
 
             case "MultiLineString":
                 techniqueIndices = this.findOrCreateTechniqueIndices(feature, "line");
                 for (const techniqueIndex of techniqueIndices) {
-                    this.processLineString(
-                        extendedTile,
-                        feature.geometry.coordinates,
-                        techniqueIndex,
-                        feature.id,
-                        feature.properties
-                    );
+                    const technique = this.m_styleSetEvaluator.techniques[techniqueIndex];
+                    if (isSolidLineTechnique(technique)) {
+                        this.processLineString(
+                            extendedTile,
+                            feature.geometry.coordinates,
+                            techniqueIndex,
+                            feature.id,
+                            feature.properties
+                        );
+                    } else if (isTextTechnique(technique)) {
+                        for (const coordinate of feature.geometry.coordinates) {
+                            this.processLineText(
+                                coordinate,
+                                techniqueIndex,
+                                technique.label!,
+                                feature.properties
+                            );
+                        }
+                    }
                 }
                 break;
 
             case "Polygon":
                 techniqueIndices = this.findOrCreateTechniqueIndices(feature, "polygon");
                 for (const techniqueIndex of techniqueIndices) {
-                    this.processPolygon(
-                        [feature.geometry.coordinates],
-                        techniqueIndex,
-                        feature.properties
-                    );
+                    const technique = this.m_styleSetEvaluator.techniques[techniqueIndex];
+                    if (isFillTechnique(technique)) {
+                        this.processPolygon(
+                            [feature.geometry.coordinates],
+                            techniqueIndex,
+                            feature.properties
+                        );
+                    } else if (isTextTechnique(technique)) {
+                        for (const coordinate of feature.geometry.coordinates) {
+                            this.processPolygonLabel(
+                                coordinate,
+                                techniqueIndex,
+                                technique.label!,
+                                feature.properties
+                            );
+                        }
+                    }
                 }
                 break;
 
             case "MultiPolygon":
                 techniqueIndices = this.findOrCreateTechniqueIndices(feature, "polygon");
                 for (const techniqueIndex of techniqueIndices) {
-                    this.processPolygon(
-                        feature.geometry.coordinates,
-                        techniqueIndex,
-                        feature.properties
-                    );
+                    const technique = this.m_styleSetEvaluator.techniques[techniqueIndex];
+                    if (isFillTechnique(technique)) {
+                        this.processPolygon(
+                            feature.geometry.coordinates,
+                            techniqueIndex,
+                            feature.properties
+                        );
+                    } else if (isTextTechnique(technique)) {
+                        for (const polygons of feature.geometry.coordinates) {
+                            for (const polygon of polygons) {
+                                this.processPolygonLabel(
+                                    polygon,
+                                    techniqueIndex,
+                                    technique.label!,
+                                    feature.properties
+                                );
+                            }
+                        }
+                    }
                 }
                 break;
 
@@ -342,6 +477,149 @@ class GeoJsonDecoder {
             default:
                 logger.warn("Invalid GeoJSON data. Unknown geometry type.");
         }
+    }
+
+    /**
+     * Creates a point at the center of each line segment for lines that have a text technique.
+     *
+     * @param coordinates Array containing coordinates.
+     * @param techniqueIndex Technique index to render geometry.
+     * @param geojsonProperties Object containing the properties defined by the user.
+     */
+    private processLineText(
+        coordinates: number[][],
+        techniqueIndex: number,
+        labelProperty: string,
+        geojsonProperties?: {}
+    ): void {
+        const buffer = this.findOrCreateTextPathGeometryBuffer(techniqueIndex);
+        buffer.type = "text-path";
+        buffer.labelProperty = labelProperty;
+
+        const vertices: number[] = [];
+
+        for (const point of coordinates) {
+            this.m_cached_geoCoord.latitude = point[1];
+            this.m_cached_geoCoord.longitude = point[0];
+            this.m_projection
+                .projectPoint(this.m_cached_geoCoord, this.m_cached_worldCoord)
+                .sub(this.m_center);
+
+            vertices.push(this.m_cached_worldCoord.x, this.m_cached_worldCoord.y);
+        }
+        buffer.lines.vertices.push(vertices);
+        buffer.lines.geojsonProperties.push(geojsonProperties);
+    }
+
+    /**
+     * Creates a point at the center of a polygon feature that matches a text technique.
+     *
+     * @param coordinates Array containing coordinates.
+     * @param techniqueIndex Technique index to render geometry.
+     * @param geojsonProperties Object containing the properties defined by the user.
+     */
+    private processPolygonLabel(
+        coordinates: number[][],
+        techniqueIndex: number,
+        labelProperty: string,
+        geojsonProperties?: {}
+    ): void {
+        const buffer = this.findOrCreateTextGeometryBuffer(techniqueIndex);
+        buffer.type = "point";
+        buffer.labelProperty = labelProperty;
+
+        const points = { x: [] as number[], y: [] as number[], z: [] as number[] };
+
+        coordinates.forEach(point => {
+            this.m_cached_geoCoord.latitude = point[1];
+            this.m_cached_geoCoord.longitude = point[0];
+
+            this.m_projection
+                .projectPoint(this.m_cached_geoCoord, this.m_cached_worldCoord)
+                .sub(this.m_center);
+
+            points.x.push(this.m_cached_worldCoord.x);
+            points.y.push(this.m_cached_worldCoord.y);
+            points.z.push(this.m_cached_worldCoord.z);
+        });
+
+        this.m_cached_worldCoord.setX(points.x.reduce((a, b) => a + b) / coordinates.length);
+        this.m_cached_worldCoord.setY(points.y.reduce((a, b) => a + b) / coordinates.length);
+        this.m_cached_worldCoord.setZ(points.z.reduce((a, b) => a + b) / coordinates.length);
+
+        buffer.points.vertices.push(
+            this.m_cached_worldCoord.x,
+            this.m_cached_worldCoord.y,
+            this.m_cached_worldCoord.z
+        );
+        const pointIndex = buffer.points.vertices.length / 3 - 1;
+        buffer.points.geojsonProperties[pointIndex] = geojsonProperties;
+    }
+
+    /**
+     * Processes the GeoJSON's "Point" and "MultiPoint" objects when a POI technique is provided.
+     *
+     * @param coordinates Array containing coordinates.
+     * @param techniqueIndex Technique index to render geometry.
+     * @param geojsonProperties Object containing the properties defined by the user.
+     */
+    private processPoi(
+        coordinates: number[][],
+        techniqueIndex: number,
+        geojsonProperties?: {}
+    ): void {
+        const buffer = this.findOrCreatePoiGeometryBuffer(techniqueIndex);
+        buffer.type = "poi";
+
+        coordinates.forEach(point => {
+            this.m_cached_geoCoord.latitude = point[1];
+            this.m_cached_geoCoord.longitude = point[0];
+
+            this.m_projection
+                .projectPoint(this.m_cached_geoCoord, this.m_cached_worldCoord)
+                .sub(this.m_center);
+            buffer.points.vertices.push(
+                this.m_cached_worldCoord.x,
+                this.m_cached_worldCoord.y,
+                this.m_cached_worldCoord.z
+            );
+            const pointIndex = buffer.points.vertices.length / 3 - 1;
+            buffer.points.geojsonProperties[pointIndex] = geojsonProperties;
+        });
+    }
+
+    /**
+     * Processes the GeoJSON objects when a Text technique is provided.
+     *
+     * @param coordinates Array containing coordinates.
+     * @param techniqueIndex Technique index to render geometry.
+     * @param geojsonProperties Object containing the properties defined by the user.
+     */
+    private processText(
+        coordinates: number[][],
+        techniqueIndex: number,
+        labelProperty: string,
+        geojsonProperties?: {}
+    ): void {
+        const buffer = this.findOrCreateTextGeometryBuffer(techniqueIndex);
+        buffer.type = "text";
+        buffer.labelProperty = labelProperty;
+
+        coordinates.forEach(point => {
+            this.m_cached_geoCoord.latitude = point[1];
+            this.m_cached_geoCoord.longitude = point[0];
+
+            this.m_projection
+                .projectPoint(this.m_cached_geoCoord, this.m_cached_worldCoord)
+                .sub(this.m_center);
+            buffer.points.vertices.push(
+                this.m_cached_worldCoord.x,
+                this.m_cached_worldCoord.y,
+                this.m_cached_worldCoord.z
+            );
+            const pointIndex = buffer.points.vertices.length / 3 - 1;
+            buffer.points.geojsonProperties[pointIndex] = geojsonProperties;
+        });
     }
 
     /**
@@ -548,7 +826,7 @@ class GeoJsonDecoder {
     /**
      * Creates a geometry from the previously filled in buffers.
      */
-    private createGeometry(): void {
+    private createGeometries(): void {
         this.m_geometryBuffer.forEach((geometryData, technique) => {
             switch (geometryData.type) {
                 case "point":
@@ -565,6 +843,78 @@ class GeoJsonDecoder {
                     break;
             }
         });
+        this.m_poiGeometryBuffer.forEach((geometryData, technique) => {
+            this.createPoiGeometry(technique, geometryData);
+        });
+        this.m_textGeometryBuffer.forEach((geometryData, technique) => {
+            this.createTextGeometry(technique, geometryData);
+        });
+        this.m_textPathGeometryBuffer.forEach((geometryData, technique) => {
+            this.createTextPathGeometry(technique, geometryData);
+        });
+    }
+
+    private createPoiGeometry(technique: number, geometryData: GeometryData): void {
+        const geometry: GeoJsonPoiGeometry = {
+            positions: {
+                name: "position",
+                type: "float",
+                itemCount: 3,
+                buffer: new Float32Array(geometryData.points.vertices).buffer
+            },
+            technique,
+            texts: [0],
+            objInfos: geometryData.points.geojsonProperties
+        };
+        if (this.m_poiGeometries === undefined) {
+            this.m_poiGeometries = [];
+        }
+        this.m_poiGeometries.push(geometry);
+    }
+
+    private createTextGeometry(technique: number, geometryData: GeometryData): void {
+        const labelProperty = geometryData.labelProperty! as string;
+        const properties = geometryData.points.geojsonProperties[0];
+        const text = (properties as any)[labelProperty].toString();
+        const geometry: GeoJsonTextGeometry = {
+            positions: {
+                name: "position",
+                type: "float",
+                itemCount: 3,
+                buffer: new Float32Array(geometryData.points.vertices).buffer
+            },
+            technique,
+            texts: [0],
+            stringCatalog: [text],
+            objInfos: geometryData.points.geojsonProperties
+        };
+        if (this.m_textGeometries === undefined) {
+            this.m_textGeometries = [];
+        }
+        this.m_textGeometries.push(geometry);
+    }
+
+    private createTextPathGeometry(technique: number, geometryData: GeometryData): void {
+        const lines = geometryData.lines;
+        for (let i = 0; i < geometryData.lines.vertices.length; i++) {
+            const pathVertex = lines.vertices[i];
+            const path: number[] = [];
+            path.push(...pathVertex);
+            const pathLengthSqr = Math2D.computeSquaredLineLength(path);
+            const properties = geometryData.lines.geojsonProperties[i];
+            const text = (properties as any)[geometryData.labelProperty!].toString();
+            const geometry: GeoJsonTextPathGeometry = {
+                technique,
+                path,
+                pathLengthSqr,
+                text,
+                objInfos: geometryData.lines.geojsonProperties
+            };
+            if (this.m_textPathGeometries === undefined) {
+                this.m_textPathGeometries = [];
+            }
+            this.m_textPathGeometries.push(geometry);
+        }
     }
 
     /**
@@ -887,6 +1237,51 @@ class GeoJsonDecoder {
         }
         buffer = new GeometryData();
         this.m_geometryBuffer.set(index, buffer);
+        return buffer;
+    }
+
+    /**
+     * Creates a POI geometry buffer for the specified technique, or returns the existing one.
+     *
+     * @param index technique index
+     */
+    private findOrCreatePoiGeometryBuffer(index: number): GeometryData {
+        let buffer = this.m_poiGeometryBuffer.get(index);
+        if (buffer !== undefined) {
+            return buffer;
+        }
+        buffer = new GeometryData();
+        this.m_poiGeometryBuffer.set(index, buffer);
+        return buffer;
+    }
+
+    /**
+     * Creates a Text geometry buffer for the specified technique, or returns the existing one.
+     *
+     * @param index technique index
+     */
+    private findOrCreateTextGeometryBuffer(index: number): GeometryData {
+        let buffer = this.m_textGeometryBuffer.get(index);
+        if (buffer !== undefined) {
+            return buffer;
+        }
+        buffer = new GeometryData();
+        this.m_textGeometryBuffer.set(index, buffer);
+        return buffer;
+    }
+
+    /**
+     * Creates a TextPath geometry buffer for the specified technique, or returns the existing one.
+     *
+     * @param index technique index
+     */
+    private findOrCreateTextPathGeometryBuffer(index: number): GeometryData {
+        let buffer = this.m_textPathGeometryBuffer.get(index);
+        if (buffer !== undefined) {
+            return buffer;
+        }
+        buffer = new GeometryData();
+        this.m_textPathGeometryBuffer.set(index, buffer);
         return buffer;
     }
 
