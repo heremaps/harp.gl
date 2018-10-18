@@ -1,0 +1,9 @@
+*.ts
+!*.d.ts
+test/
+tsconfig.json
+.gitignore
+.gitreview
+resources/fonts/WHERE_ARE_THE_FONTS.txt
+resources-dev/
+scripts/
