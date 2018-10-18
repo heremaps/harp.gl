@@ -27,7 +27,7 @@ import {
 } from "@here/harp-datasource-protocol";
 import { MapEnv } from "@here/harp-datasource-protocol/lib/Theme";
 import { LINE_VERTEX_ATTRIBUTE_DESCRIPTORS, Lines, triangulateLine } from "@here/harp-lines";
-import { LoggerManager } from "@here/harp-utils";
+import { LoggerManager, Math2D } from "@here/harp-utils";
 import earcut from "earcut";
 import * as THREE from "three";
 
@@ -86,18 +86,6 @@ export enum LineType {
 }
 
 export class OmvDecodedTileEmitter implements IOmvEmitter {
-    private static computeLineLengthSqr(line: number[]) {
-        let lineLengthSqr: number = 0;
-
-        const len = line.length - 3;
-        for (let i = 0; i < len; i += 2) {
-            const xDiff = line[i + 2] - line[i];
-            const yDiff = line[i + 3] - line[i + 1];
-            lineLengthSqr += xDiff * xDiff + yDiff * yDiff;
-        }
-        return lineLengthSqr;
-    }
-
     // mapping from style index to mesh buffers
     private readonly m_meshBuffers = new Map<number, MeshBuffers>();
 
@@ -410,7 +398,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                         continue;
                     }
                     for (const aLine of lines) {
-                        const pathLengthSqr = OmvDecodedTileEmitter.computeLineLengthSqr(aLine);
+                        const pathLengthSqr = Math2D.computeSquaredLineLength(aLine);
                         this.m_textPathGeometries.push({
                             technique: techniqueIndex,
                             path: aLine,

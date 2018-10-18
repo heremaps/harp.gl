@@ -85,6 +85,23 @@ export namespace Math2D {
     }
 
     /**
+     * Computes the squared length of a line.
+     *
+     * @param line An array of even length, which form a line via [x,y,x,y,...] pairs.
+     */
+    export function computeSquaredLineLength(line: number[]): number {
+        let squaredLineLength: number = 0;
+
+        const length = line.length - 3;
+        for (let i = 0; i < length; i += 2) {
+            const xDiff = line[i + 2] - line[i];
+            const yDiff = line[i + 3] - line[i + 1];
+            squaredLineLength += xDiff * xDiff + yDiff * yDiff;
+        }
+        return squaredLineLength;
+    }
+
+    /**
      * Compute squared distance between a 2D point and a 2D line segment.
      *
      * @param px Test point X
