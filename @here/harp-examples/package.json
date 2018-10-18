@@ -1,0 +1,61 @@
+{
+  "name": "@here/harp-examples",
+  "version": "0.1.0",
+  "description": "Visualisation Library Examples",
+  "bin": "harp-examples",
+  "scripts": {
+    "test": "exit 0",
+    "prebuild": "node scripts/postinstall.js",
+    "build": "webpack",
+    "start": "webpack-dev-server",
+    "publish-html": "node scripts/publish-html.js",
+    "prepare": "node scripts/postinstall.js && cross-env PREPARE_ONLY=true webpack -p"
+  },
+  "author": {
+    "name": "HERE Global B.V. and its affiliate(s)",
+    "url": "https://here.com"
+  },
+  "license": "SEE LICENSE IN LICENSE",
+  "dependencies": {
+    "serve-handler": "^5.0.0"
+  },
+  "devDependencies": {
+    "@here/debug-datasource": "^0.1.22",
+    "@here/geojson-datasource": "^0.2.0",
+    "@here/lrucache": "^0.1.26",
+    "@here/map-controls": "^0.1.30",
+    "@here/map-theme": "^0.1.50",
+    "@here/mapview": "^0.7.55",
+    "@here/mapview-decoder": "^0.2.29",
+    "@here/materials": "^0.1.0",
+    "@here/omv-datasource": "^0.2.38",
+    "@here/text-renderer": "^0.2.38",
+    "@here/webtile-datasource": "^0.2.9",
+    "@tweenjs/tween.js": "^17.2.0",
+    "@types/dat.gui": "^0.7.1",
+    "@types/highlight.js": "^9.12.2",
+    "@types/long": "^4.0.0",
+    "@types/three": "0.92.24",
+    "@types/tween.js": "^16.9.0",
+    "copy-webpack-plugin": "^4.5.2",
+    "cross-env": "^5.2.0",
+    "css-loader": "^1.0.0",
+    "dat.gui": "^0.7.2",
+    "highlight.js": "^9.12.0",
+    "html-webpack-plugin": "^3.2.0",
+    "ncp": "^2.0.0",
+    "stats.js": "^0.17.0",
+    "style-loader": "^0.23.0",
+    "three": "^0.96.0",
+    "ts-loader": "^5.2.1",
+    "typescript": "3.1.1",
+    "webpack": "^4.16.5",
+    "webpack-cli": "^3.1.0",
+    "webpack-dev-server": "^3.1.5",
+    "webpack-merge": "^4.1.1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com:heremaps/harp.gl.git"
+  }
+}

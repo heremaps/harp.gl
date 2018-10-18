@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Visualisation Library / examples</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        html {
+            height: 100%;
+        }
+
+        body {
+            background-color: #ffffff;
+            margin: 0px;
+            height: 100%;
+            font-size: 15px;
+            line-height: 18px;
+            overflow: hidden;
+            font-family: sans-serif;
+            color: #82dbbd;
+        }
+        #navPanel {
+            background: #0f1621;
+        }
+
+        a {
+            text-decoration: none;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="navPanel" class="collapsed">
+        <div id="titleBar">
+            <h1 id="title">harp.gl examples</h1>
+            <h1 id="subtitle"></h1>
+            <div style="clear:both"></div>
+            <a id="hamburgerMenu" href="#">
+                <span></span>
+                <span></span>
+                <span></span>
+            </a>
+        </div>
+
+        <div class="filterBlock">
+            <input type="text" id="filterInput" placeholder="Type to filter" />
+            <a href="#" id="clearFilterButton">x</a>
+        </div>
+        <div id="exampleList"></div>
+    </div>
+
+    <iframe id="exampleFrame" allowfullscreen allowvr onmousewheel=""></iframe>
+    <div id="viewSource">View Source</div>
+
+    <script src="example-definitions.js"></script>
+    <script src="dist/example-browser.bundle.js"></script>
+</body>
+
+</html>
