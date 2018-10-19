@@ -20,7 +20,7 @@ import {
     TextVerticalAlignment,
     TextVerticalAlignmentStrings
 } from "@here/text-renderer";
-import { assert, assertExists, LoggerManager } from "@here/utils";
+import { assert, assertExists, LoggerManager, MathUtils } from "@here/utils";
 import * as THREE from "three";
 
 import { MapView } from "../MapView";
@@ -79,6 +79,12 @@ export class PoiManager {
             const techniqueIndex = assertExists(poiGeometry.technique);
             const technique = decodedTile.techniques[techniqueIndex];
             if (technique.name !== "line-marker" && technique.name !== "labeled-icon") {
+                continue;
+            }
+
+            // The POI may be in the data, and there may be a Technique, but the technique may
+            // specify to not show it.
+            if (technique.showOnMap === false) {
                 continue;
             }
 
@@ -301,7 +307,7 @@ export class PoiManager {
         featureId: number | undefined,
         x: number | THREE.Vector2[],
         y: number | undefined,
-        level: number
+        storageLevel: number
     ): TextElement | undefined {
         let textElement: TextElement | undefined;
 
@@ -330,8 +336,8 @@ export class PoiManager {
                 technique.bold,
                 technique.oblique,
                 technique.tracking,
-                getPropertyValue(technique.fadeNear, level),
-                getPropertyValue(technique.fadeFar, level)
+                getPropertyValue(technique.fadeNear, storageLevel),
+                getPropertyValue(technique.fadeFar, storageLevel)
             );
 
             textElement.mayOverlap = technique.textMayOverlap === true;
@@ -365,13 +371,33 @@ export class PoiManager {
                     renderTextDuringMovements,
                     mayOverlap: iconMayOverlap,
                     reserveSpace: iconReserveSpace,
-                    featureId
+                    featureId,
+                    iconMinZoomLevel: technique.iconMinZoomLevel,
+                    iconMaxZoomLevel: technique.iconMaxZoomLevel,
+                    textMinZoomLevel: technique.textMinZoomLevel,
+                    textMaxZoomLevel: technique.textMaxZoomLevel
                 };
             }
             if (technique.color !== undefined) {
                 textElement.color = new THREE.Color(technique.color);
             }
-            textElement.minZoomLevel = technique.minZoomLevel;
+
+            // Select the smaller/larger one of the two min/max values, because the TextElement is
+            // a container for both.
+            if (textElement.minZoomLevel === undefined) {
+                textElement.minZoomLevel = MathUtils.min2(
+                    technique.iconMinZoomLevel,
+                    technique.textMinZoomLevel
+                );
+            }
+
+            if (textElement.maxZoomLevel === undefined) {
+                textElement.maxZoomLevel = MathUtils.max2(
+                    technique.iconMaxZoomLevel,
+                    technique.textMaxZoomLevel
+                );
+            }
+
             textElement.distanceScale = distanceScale;
 
             if (

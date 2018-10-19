@@ -4,7 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { ImageTexture, LineMarkerTechnique, PoiTechnique } from "@here/datasource-protocol";
+import {
+    ImageTexture,
+    LineMarkerTechnique,
+    PoiStackMode,
+    PoiTechnique
+} from "@here/datasource-protocol";
 import {
     BG_TEXT_RENDER_ORDER,
     ContextualArabicConverter,
@@ -32,6 +37,31 @@ export interface PoiInfo {
      * Name of the [[ImageTexture]].
      */
     imageTextureName: string;
+
+    /**
+     * Specify stack mode. Defaults to `ShowInStack`.
+     */
+    stackMode?: PoiStackMode;
+
+    /**
+     * Minimum zoomLevel at which to display the label icon. No default.
+     */
+    iconMinZoomLevel?: number;
+
+    /**
+     * Maximum zoomLevel at which to display the label icon. No default.
+     */
+    iconMaxZoomLevel?: number;
+
+    /**
+     * Minimum zoomLevel at which to display the label text. No default.
+     */
+    textMinZoomLevel?: number;
+
+    /**
+     * Maximum zoomLevel at which to display the label text. No default.
+     */
+    textMaxZoomLevel?: number;
 
     /**
      * If true, the text icon will appear even if the text part is blocked by other labels. Defaults
@@ -243,6 +273,11 @@ export class TextElement {
      * `TextElement`s based on zoom level.
      */
     minZoomLevel?: number;
+    /**
+     * Determines maximum zoom level for visibility. Can be used to reduce the number of visible
+     * `TextElement`s based on zoom level.
+     */
+    maxZoomLevel?: number;
 
     /**
      * Optional color of text. Overrides color in `style`.

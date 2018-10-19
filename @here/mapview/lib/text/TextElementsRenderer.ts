@@ -424,6 +424,8 @@ export class TextElementsRenderer {
         // text elements.
         const worldCenter = this.m_mapView.worldCenter.clone().add(this.m_mapView.camera.position);
 
+        const zoomLevel = this.m_mapView.zoomLevel;
+
         // Render the user POIs first
         renderList.forEach(renderListEntry => {
             for (const tile of renderListEntry.visibleTiles) {
@@ -434,7 +436,13 @@ export class TextElementsRenderer {
                     this.updateViewDistance(worldCenter, textElement);
                 }
 
-                this.renderTextElements(tile.userTextElements, time, frameNumber, textCache);
+                this.renderTextElements(
+                    tile.userTextElements,
+                    time,
+                    frameNumber,
+                    zoomLevel,
+                    textCache
+                );
             }
         });
     }
@@ -448,6 +456,7 @@ export class TextElementsRenderer {
     renderAllTileText(time: number, frameNumber: number) {
         const textCache = new Map<string, THREE.Vector2[]>();
         const renderList = this.m_mapView.visibleTileSet.dataSourceTileList;
+        const zoomLevel = this.m_mapView.zoomLevel;
 
         if (this.m_lastRenderedTextElements.length === 0) {
             // Nothing has been rendered before, process the list of placed labels in all tiles.
@@ -456,6 +465,7 @@ export class TextElementsRenderer {
                     renderListEntry.renderedTiles,
                     time,
                     frameNumber,
+                    zoomLevel,
                     textCache,
                     this.m_lastRenderedTextElements,
                     this.m_secondChanceTextElements
@@ -466,7 +476,13 @@ export class TextElementsRenderer {
             const allRenderableTextElements = this.m_lastRenderedTextElements.concat(
                 this.m_secondChanceTextElements
             );
-            this.renderTextElements(allRenderableTextElements, time, frameNumber, textCache);
+            this.renderTextElements(
+                allRenderableTextElements,
+                time,
+                frameNumber,
+                zoomLevel,
+                textCache
+            );
         }
     }
 
@@ -788,12 +804,13 @@ export class TextElementsRenderer {
 
     private placeAllLabels() {
         const renderList = this.m_mapView.visibleTileSet.dataSourceTileList;
+        const zoomLevel = this.m_mapView.zoomLevel;
 
         renderList.forEach(tileList => {
             this.placeTextElements(
                 tileList.dataSource,
                 tileList.storageLevel,
-                tileList.zoomLevel,
+                zoomLevel,
                 tileList.visibleTiles
             );
         });
@@ -924,8 +941,11 @@ export class TextElementsRenderer {
                 const tile = tileTextElements.tile;
                 for (const textElement of tileTextElements.textElements) {
                     if (
-                        textElement.minZoomLevel !== undefined &&
-                        zoomLevel < textElement.minZoomLevel
+                        MathUtils.isClamped(
+                            zoomLevel,
+                            textElement.minZoomLevel,
+                            textElement.maxZoomLevel
+                        )
                     ) {
                         continue;
                     }
@@ -1158,6 +1178,7 @@ export class TextElementsRenderer {
         textElements: TextElement[],
         time: number,
         frameNumber: number,
+        zoomLevel: number,
         textCache: Map<string, THREE.Vector2[]>,
         renderedTextElements?: TextElement[],
         secondChanceTextElements?: TextElement[]
@@ -1306,7 +1327,17 @@ export class TextElementsRenderer {
                 // Check if there is need to check for screen space for the label's icon.
                 const poiInfo = pointLabel.poiInfo;
                 let iconSpaceAvailable = true;
-                if (poiInfo !== undefined && poiRenderer.prepareRender(poiInfo)) {
+
+                // Check if icon should be rendered at this zoomLevel
+                const renderIcon =
+                    poiInfo === undefined ||
+                    !MathUtils.isClamped(
+                        zoomLevel,
+                        poiInfo.iconMinZoomLevel,
+                        poiInfo.iconMaxZoomLevel
+                    );
+
+                if (renderIcon && poiInfo !== undefined && poiRenderer.prepareRender(poiInfo)) {
                     if (poiInfo.isValid === false) {
                         return false;
                     }
@@ -1370,8 +1401,20 @@ export class TextElementsRenderer {
                     }
                 }
 
+                // Check if label should be renderd at this zoomLevel
+                const renderText =
+                    poiInfo === undefined ||
+                    zoomLevel === undefined ||
+                    !MathUtils.isClamped(
+                        zoomLevel,
+                        poiInfo.iconMinZoomLevel,
+                        poiInfo.iconMaxZoomLevel
+                    );
+
                 // Check if we should render the label's text.
                 const doRenderText =
+                    // Render if between min/max zoom level
+                    renderText &&
                     // Do not render if the distance is too great and distance shouldn't be ignored.
                     (pointLabel.ignoreDistance === true ||
                         (pointLabel.currentViewDistance === undefined ||
@@ -1551,7 +1594,7 @@ export class TextElementsRenderer {
                     }
 
                     // If the text is not visible nor optional, we won't render the icon neither.
-                    else if (!textIsOptional) {
+                    else if (!renderIcon || !textIsOptional) {
                         if (pointLabel.poiInfo === undefined || iconRenderState.isVisible()) {
                             if (pointLabel.poiInfo !== undefined) {
                                 this.startFadeOut(iconRenderState, frameNumber, time);
@@ -1587,7 +1630,7 @@ export class TextElementsRenderer {
                     }
                 }
                 // ... and render the icon (if any).
-                if (poiInfo !== undefined && poiRenderer.poiIsRenderable(poiInfo)) {
+                if (renderIcon && poiInfo !== undefined && poiRenderer.poiIsRenderable(poiInfo)) {
                     const iconStartedFadeIn = this.checkStartFadeIn(
                         iconRenderState,
                         frameNumber,
@@ -2071,6 +2114,7 @@ export class TextElementsRenderer {
         visibleTiles: Tile[],
         time: number,
         frameNumber: number,
+        zoomLevel: number,
         textCache: Map<string, THREE.Vector2[]>,
         renderedTextElements?: TextElement[],
         secondChanceTextElements?: TextElement[]
@@ -2099,6 +2143,7 @@ export class TextElementsRenderer {
                 textElementsInGroup,
                 time,
                 frameNumber,
+                zoomLevel,
                 textCache,
                 renderedTextElements,
                 secondChanceTextElements
