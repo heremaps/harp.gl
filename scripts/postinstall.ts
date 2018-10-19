@@ -83,7 +83,7 @@ syncDirsIfNeeded({
 syncFiles({
     sourceDir: "../@here/harp-examples",
     destDir: "../dist/harp-examples",
-    files: ["index.html", "codebrowser.html", "src", "config.ts"]
+    files: ["index.html", "codebrowser.html", "src"]
 });
 
 //
