@@ -3,24 +3,11 @@
     "clearColor": "#b2b2b2",
     "fonts": [
         {
-            "name": "firaMono",
-            "url": "FiraMono.fnt"
-        },
-        {
             "name": "fira",
             "url": "fonts/FiraGO_Map.json"
         }
     ],
     "textStyles": [
-        {
-            "name": "firaMonoStyle",
-            "color": "#6d7477",
-            "bgMode": "Outline",
-            "bgColor": "#F7FBFD",
-            "bgFactor": 5.0,
-            "bgAlpha": 0.75,
-            "fontName": "firaMono"
-        },
         {
             "name": "firaStyle",
             "color": "#6d7477",
@@ -1316,7 +1303,7 @@
                 "attr": {
                     "color": "#6d7477",
                     "scale": 0.75,
-                    "style": "firaMonoStyle"
+                    "style": "firaStyle"
                 }
             },
             {
@@ -1329,7 +1316,7 @@
                         "attr": {
                             "color": "#929292",
                             "scale": 0.45,
-                            "style": "firaMonoStyle"
+                            "style": "firaStyle"
                         }
                     },
                     {
@@ -1346,7 +1333,7 @@
                         "attr": {
                             "useAbbreviation": true,
                             "scale": 0.75,
-                            "style": "firaMonoStyle"
+                            "style": "firaStyle"
                         }
                     },
                     {
@@ -1362,7 +1349,7 @@
                         "technique": "text",
                         "attr": {
                             "scale": 0.7,
-                            "style": "firaMonoStyle"
+                            "style": "firaStyle"
                         }
                     },
                     {
@@ -1380,7 +1367,7 @@
                         "attr": {
                             "color": "#565660",
                             "scale": 0.5,
-                            "style": "firaMonoStyle"
+                            "style": "firaStyle"
                         }
                     },
                     {
@@ -1398,7 +1385,7 @@
                         "attr": {
                             "color": "#2c70c3",
                             "scale": 0.45,
-                            "style": "firaMonoStyle"
+                            "style": "firaStyle"
                         }
                     },
                     {
@@ -1418,7 +1405,7 @@
                             "color": "#7c969c",
                             "scale": 0.4,
                             "minZoomLevel": 16,
-                            "style": "firaMonoStyle"
+                            "style": "firaStyle"
                         }
                     },
                     {
@@ -1434,7 +1421,7 @@
                         "technique": "text",
                         "attr": {
                             "scale": 0.4,
-                            "style": "firaMonoStyle"
+                            "style": "firaStyle"
                         }
                     },
                     {
@@ -1451,7 +1438,7 @@
                         "attr": {
                             "color": "#2c70c3",
                             "scale": 0.5,
-                            "style": "firaMonoStyle"
+                            "style": "firaStyle"
                         }
                     },
                     {
@@ -1468,7 +1455,7 @@
                         "attr": {
                             "color": "#2c70c3",
                             "scale": 0.6,
-                            "style": "firaMonoStyle"
+                            "style": "firaStyle"
                         }
                     },
                     {
