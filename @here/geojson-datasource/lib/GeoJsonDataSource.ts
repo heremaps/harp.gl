@@ -4,8 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/** @module @here/geojson-datasource **/ /***/
-
 import { webMercatorTilingScheme } from "@here/geoutils";
 import { DataProvider, TileDataSource, TileFactory } from "@here/mapview-decoder";
 import { GeoJsonTile } from "./GeoJsonTile";

@@ -4,8 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/** @module @here/geojson-datasource **/ /***/
-
 /**
  * Contains a base-64 encoded PNG image of a pin texture.
  */

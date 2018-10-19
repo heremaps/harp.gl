@@ -4,8 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/** @module @here/geojson-datasource **/ /***/
-
 /**
  * Feature details contains `feature.id`, `feature.properties.featureClass` which provides
  * possibility to define style in theme for particular feature.

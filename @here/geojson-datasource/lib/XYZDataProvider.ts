@@ -4,8 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/** @module @here/geojson-datasource **/ /***/
-
 import { DownloadManager } from "@here/download-manager";
 import "@here/fetch";
 import { TileKey } from "@here/geoutils";
