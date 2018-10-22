@@ -301,7 +301,7 @@ export class OmvDecoder implements OmvVisitor {
             return;
         }
 
-        const featureId = this.getFeatureId(feature);
+        const featureId = env.lookup("$id") as number | undefined;
 
         if (this.m_decodedTileEmitter) {
             this.m_decodedTileEmitter.processPointFeature(
@@ -349,7 +349,7 @@ export class OmvDecoder implements OmvVisitor {
             return;
         }
 
-        const featureId = this.getFeatureId(feature);
+        const featureId = env.lookup("$id") as number | undefined;
 
         if (this.m_decodedTileEmitter) {
             this.m_decodedTileEmitter.processLineFeature(
@@ -397,7 +397,7 @@ export class OmvDecoder implements OmvVisitor {
             return;
         }
 
-        const featureId = this.getFeatureId(feature);
+        const featureId = env.lookup("$id") as number | undefined;
 
         if (this.m_decodedTileEmitter) {
             this.m_decodedTileEmitter.processPolygonFeature(
@@ -419,7 +419,7 @@ export class OmvDecoder implements OmvVisitor {
         }
     }
 
-    private getFeatureId(feature: com.mapbox.pb.Tile.IFeature): number | undefined {
+    private decodeFeatureId(feature: com.mapbox.pb.Tile.IFeature): number | undefined {
         if (feature.id !== undefined) {
             if (typeof feature.id === "number") {
                 return feature.id;
@@ -444,9 +444,13 @@ export class OmvDecoder implements OmvVisitor {
     ): MapEnv {
         const attributes: ValueMap = {
             $layer: layer.name,
-            $level: storageLevel,
-            $id: this.getFeatureId(feature)
+            $level: storageLevel
         };
+
+        // Some sources serve `id` directly as `IFeature` property ...
+        if (feature.id !== undefined) {
+            attributes.$id = this.decodeFeatureId(feature);
+        }
 
         this.m_featureAttributes.accept(layer, feature, {
             visitAttribute(key, value) {
@@ -474,6 +478,11 @@ export class OmvDecoder implements OmvVisitor {
                         typeof value.sintValue === "number"
                             ? value.sintValue
                             : (value.sintValue as any).toNumber(); // long
+                }
+
+                // ... while some sources serve `id` in attributes.
+                if (key === "id") {
+                    attributes.$id = attributes[key];
                 }
                 return true;
             }
