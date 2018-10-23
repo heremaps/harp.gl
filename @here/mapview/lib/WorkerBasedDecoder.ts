@@ -38,6 +38,7 @@ let nextUniqueServiceId = 0;
  */
 export class WorkerBasedDecoder implements ITileDecoder {
     private serviceId: string;
+    private m_serviceCreated: boolean = false;
 
     /**
      * Missing Typedoc
@@ -55,10 +56,12 @@ export class WorkerBasedDecoder implements ITileDecoder {
      * [[ConcurrentWorkerSet]].
      */
     dispose() {
-        this.workerSet.broadcastMessage({
-            type: DecodedTileMessageName.DestroyService,
-            service: WORKER_SERVICE_MANAGER_SERVICE_ID
-        });
+        if (this.m_serviceCreated) {
+            this.workerSet.broadcastMessage({
+                type: DecodedTileMessageName.DestroyService,
+                service: WORKER_SERVICE_MANAGER_SERVICE_ID
+            });
+        }
 
         this.workerSet.removeReference();
     }
@@ -69,14 +72,16 @@ export class WorkerBasedDecoder implements ITileDecoder {
      */
     async connect(): Promise<void> {
         await this.workerSet.connect(WORKER_SERVICE_MANAGER_SERVICE_ID);
-
-        const msg: CreateServiceMessage = {
-            service: WORKER_SERVICE_MANAGER_SERVICE_ID,
-            type: DecodedTileMessageName.CreateService,
-            targetServiceType: this.decoderServiceType,
-            targetServiceId: this.serviceId
-        };
-        this.workerSet.broadcastMessage(msg);
+        if (!this.m_serviceCreated) {
+            const msg: CreateServiceMessage = {
+                service: WORKER_SERVICE_MANAGER_SERVICE_ID,
+                type: DecodedTileMessageName.CreateService,
+                targetServiceType: this.decoderServiceType,
+                targetServiceId: this.serviceId
+            };
+            this.workerSet.broadcastMessage(msg);
+            this.m_serviceCreated = true;
+        }
     }
 
     /**
