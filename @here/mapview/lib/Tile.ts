@@ -840,8 +840,8 @@ export class Tile implements CachedResource {
                     technique.style,
                     technique.allCaps,
                     technique.smallCaps,
-                    technique.bold,
                     technique.oblique,
+                    technique.bold,
                     technique.tracking,
                     getPropertyValue(technique.fadeNear, this.tileKey.level),
                     getPropertyValue(technique.fadeFar, this.tileKey.level)
@@ -932,8 +932,14 @@ export class Tile implements CachedResource {
                         technique.xOffset || 0.0,
                         technique.yOffset || 0.0,
                         text.featureId,
-                        technique.style
+                        technique.style,
+                        technique.allCaps,
+                        technique.smallCaps,
+                        technique.oblique,
+                        technique.bold,
+                        technique.tracking
                     );
+
                     textElement.color = colorMap.get(text.technique);
                     textElement.minZoomLevel = technique.minZoomLevel;
                     textElement.maxZoomLevel = technique.maxZoomLevel;
