@@ -4,6 +4,6 @@ test/
 tsconfig.json
 .gitignore
 .gitreview
-resources/fonts/WHERE_ARE_THE_FONTS.txt
+resources/fonts
 resources-dev/
 scripts/
