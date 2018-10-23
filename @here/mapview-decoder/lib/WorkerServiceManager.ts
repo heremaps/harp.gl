@@ -74,7 +74,18 @@ export class WorkerServiceManager extends WorkerService {
 
     protected handleMessage(message: WorkerServiceManagerMessage): void {
         if (message.type === DecodedTileMessageName.CreateService) {
+            const existingService = this.m_services.get(message.targetServiceId);
+            if (existingService !== undefined) {
+                logger.error(
+                    `error - service with targetServiceId='${
+                        message.targetServiceId
+                    }' already running, ignoring CreateService request`
+                );
+                return;
+            }
+
             const factory = this.m_factories.get(message.targetServiceType);
+
             if (factory === undefined) {
                 logger.error(`unkown targetServiceType requested: '${message.targetServiceType}'`);
                 return;
