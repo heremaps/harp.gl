@@ -9,7 +9,7 @@ import { HighPrecisionLineMaterial, SolidLineMaterial } from "@here/materials";
 import { Fog, Material, Mesh } from "three";
 
 /**
- * `MapViewFog` manages the fog display in [[MapView]].
+ * Manages the fog display in [[MapView]].
  */
 export class MapViewFog {
     private m_enabled: boolean = true;
@@ -25,11 +25,11 @@ export class MapViewFog {
     constructor(private m_scene: THREE.Scene) {}
 
     /**
-     * Allow disabling the fog, even if defined in the theme. Use for custom views like the debug
-     * camera of the demo app. If the theme does not define a fog however, enabling it here would
-     * have no effect.
+     * Allows for disabling the fog, even if it is defined in the theme. Use this property for
+     * custom views like the demo app's debug camera. However, if the theme does not define a
+     * fog, enabling this property here has no effect.
      *
-     * @param value The boolean telling whether the fog should be enabled or disabled.
+     * @param value A boolean that specifies whether the fog should be enabled or disabled.
      */
     set enabled(enableFog: boolean) {
         this.m_enabled = enableFog;
@@ -48,10 +48,11 @@ export class MapViewFog {
     }
 
     /**
-     * Set the fog depending on the provided [[Theme]] instance. Called when a theme is loaded. Fog
-     * will be added only if the theme contains a sky definition with a `colorBottom` property, used
-     * to set the fog color, and a fog definition with a `startRatio` property, used to set the
-     * start distance of the fog as a ratio of the far culling plane distance.
+     * Sets the fog depending on the [[Theme]] instance provided. This function is called when a
+     * theme is loaded. Fog is added only if the theme contains:
+     * - a sky definition with a `colorBottom` property, used to set the fog color
+     * - a fog definition with a `startRatio` property, used to set the start distance of the fog
+     *   as a ratio of the far culling plane distance.
      *
      * @param theme A [[Theme]] instance.
      */
@@ -78,9 +79,9 @@ export class MapViewFog {
     }
 
     /**
-     * Update the fog at runtime, depending on the camera.
+     * Updates the fog at runtime, depending on the camera.
      *
-     * @param camera an instance of a `THREE.Camera` with a `far` property.
+     * @param camera An instance of a `THREE.Camera` with a `far` property.
      */
     update(camera: THREE.PerspectiveCamera | THREE.OrthographicCamera) {
         if (
@@ -96,7 +97,7 @@ export class MapViewFog {
     }
 
     /**
-     * Handle fog addition.
+     * Handles fog addition.
      */
     add() {
         // When the fog is changed, ThreeJS takes care of recompiling its built-in materials...
@@ -106,7 +107,7 @@ export class MapViewFog {
     }
 
     /**
-     * Handle fog removal.
+     * Handles fog removal.
      */
     remove() {
         // When the fog is changed, ThreeJS takes care of recompiling its built-in materials...
@@ -116,8 +117,8 @@ export class MapViewFog {
     }
 
     /**
-     * ThreeJS lets its users manage the `RawShaderMaterial` themselves, so they need to be modified
-     * explicitely.
+     * ThreeJS lets users manage the `RawShaderMaterial` themselves, so they need to be modified
+     * explicitly.
      *
      * @see https://github.com/mrdoob/three.js/blob/dev/src/renderers/webgl/WebGLProgram.js#L298
      */

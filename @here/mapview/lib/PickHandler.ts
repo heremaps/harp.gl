@@ -46,14 +46,14 @@ export enum PickObjectType {
     Icon,
 
     /**
-     * Any general 3D object, for example a landmark.
+     * Any general 3D object, for example, a landmark.
      */
     Object3D
 }
 
 /**
- * General pick result. Details about picked geometry can be accessed from `intersection`, which
- * is available if actual 3D geometry has been hit. If a road was hit, a [[RoadPickResult]] is
+ * A general pick result. You can access details about picked geometry from `intersection`, which
+ * is available if actual 3D geometry was hit. If a road was hit, a [[RoadPickResult]] is
  * returned, which has additional information, but no `intersection`.
  */
 export interface PickResult {
@@ -63,27 +63,27 @@ export interface PickResult {
     type: PickObjectType;
 
     /**
-     * 2D point in screen coordinates, or 3D point in world coordinates.
+     * A 2D point in screen coordinates, or a 3D point in world coordinates.
      */
     point: THREE.Vector2 | THREE.Vector3;
 
     /**
-     * Distance from camera to picking point. Used to determine closest object.
+     * Distance from the camera to the picking point; used to determine the closest object.
      */
     distance: number;
 
     /**
-     * Optional: feature ID (from OMV) of picked object.
+     * An optional feature ID (from OMV) of picked object.
      */
     featureId?: number;
 
     /**
-     * Only defined for geometry.
+     * Defined for geometry only.
      */
     intersection?: THREE.Intersection;
 
     /**
-     * Only defined for roads.
+     * Defined for roads only.
      */
     technique?: Technique;
 
@@ -108,22 +108,22 @@ export class PickHandler {
     }
 
     /**
-     * The `RoadPicker` class manages picking of roads, which may not be pickable in THREE.js, since
-     * their geometry is generated in the vertex shader. The `RoadPicker` requires to register all
-     * [[Tile]]s before they can be successfully picked.
+     * The `RoadPicker` class manages picking of roads, which may not be pickable in THREE.js,
+     * since their geometry is generated in the vertex shader. The `RoadPicker` requires that
+     * all [[Tile]]s are registered before they can be picked successfully.
      */
     registerTile(tile: Tile): RoadIntersectionData | undefined {
         return this.m_roadPicker !== undefined ? this.m_roadPicker.registerTile(tile) : undefined;
     }
 
     /**
-     * Do a raycast on all objects in the scene. Useful for picking. Limited to objects that
-     * THREE.js can raycast, the solid lines that get their geometry in the shader cannot be tested
-     * for intersection.
+     * Does a raycast on all objects in the scene; useful for picking. This function is Limited to
+     * objects that THREE.js can raycast. However, any solid lines that have their geometry in the
+     * shader cannot be tested for intersection.
      *
-     * @param x The X position in css/client coordinates (without applied display ratio).
-     * @param y The Y position in css/client coordinates (without applied display ratio).
-     * @returns The list of intersection results.
+     * @param x The X position in CSS/client coordinates, without the applied display ratio.
+     * @param y The Y position in CSS/client coordinates, without the applied display ratio.
+     * @returns the list of intersection results.
      */
     intersectMapObjects(x: number, y: number): PickResult[] {
         const worldPos = this.mapView.getNormalizedScreenCoordinates(x, y);

@@ -8,12 +8,12 @@ import * as THREE from "three";
 import { DEFAULT_MONOMIAL_POWER, SkyGradientTexture } from "./SkyGradientTexture";
 
 /**
- * The SkyBackground class generates a texture gradient and allows to updates its y-offset.
+ * Generates a texture gradient and allows updates to its y-offset.
  *
  * To position the texture correctly, this class reads the value of the four corners of the far
  * clipping plane and calculates the intersection between the line that divides the far clipping
- * plane in two equal parts, and the ground plane. This intersection point is called
- * `horizonPosition`, and it determines the texture y-offset.
+ * plane in to two equal parts, and the ground plane. This intersection point is called
+ * `horizonPosition`, and it determines the texture's y-offset.
  *
  * See also [[SkyGradientTexture]].
  */
@@ -27,17 +27,18 @@ export class SkyBackground {
     private m_farClipPlaneCorners: THREE.Vector3[];
 
     /**
-     * Constructs the `SkyBackground`.
+     * Constructs a `SkyBackground` instance.
      *
      * @param m_topColor Defines the color of the upper part of the gradient.
-     * @param m_bottomColor Defines the color of bottom part of the gradient that touches the ground
-     * @param m_groundColor Defines the color of the first pixel of the gradient from the bottom.
-     * @param camera It is needed to calculate the texture offset.
+     * @param m_bottomColor Defines the color of bottom part of the gradient, that touches the
+     * ground.
+     * @param m_groundColor Defines the color of the first pixel of the gradient, from the bottom.
+     * @param camera Required to calculate the texture's offset.
      * @param m_monomialPower Defines the texture's gradient power.
      *
      * @example
      * ```TypeScript
-     * // This creates a texture gradient and use it as background of the scene.
+     * // This creates a texture gradient and uses it as background of the scene.
      * this.m_skyBackground = new SkyBackground(
      *     new THREE.Color("#FF000"),
      *     new THREE.Color("#0000FF"),
@@ -46,7 +47,7 @@ export class SkyBackground {
      * );
      * this.m_scene.background = this.m_skyBackground.texture;
      *
-     * // Then at runtime when the camera moves, the skyBackground needs to be updated.
+     * // Then, when the camera moves at runtime, the skyBackground needs to be updated.
      * this.m_skyBackground.update(this.m_camera);
      * ```
      */
@@ -131,7 +132,7 @@ export class SkyBackground {
     }
 
     /**
-     * Update the sky texture with new colors.
+     * Updates the sky texture with new colors.
      *
      * @param topColor Color at the zenith.
      * @param bottomColor Color at the horizon.
