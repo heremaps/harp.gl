@@ -41,10 +41,11 @@ interface CustomLineTechnique extends LineTechnique {
 export class RoadPicker {
     constructor(private m_mapView: MapView) {}
     /**
-     * Register a tile with the `RoadPicker`. Extracts line data from the [[Tile]], but only if it
-     * is has the necessary [[ExtendedTileInfo]] that allows the reconstruction of road features.
+     * Registers a tile with the `RoadPicker`. This function extracts line data from the [[Tile]],
+     * but only if the tile has the necessary [[ExtendedTileInfo]] that allows for road features to
+     * be reconstructed.
      *
-     * @param tile Loaded tile
+     * @param tile The tile to register.
      */
     registerTile(tile: Tile): RoadIntersectionData | undefined {
         assert(tile.decodedTile !== undefined);
@@ -84,12 +85,12 @@ export class RoadPicker {
     }
 
     /**
-     * Test for intersection of point `pickPos` with all roads on a tile.
+     * Tests the `pickPos` point for intersection with all roads on a tile.
      *
-     * @param tile Tile to be picked.
-     * @param eyePos WorldPosition of eye (camera) to compute distances.
-     * @param pickPos WorldPosition of picked point (on plane).
-     * @param results Existing array of [[PickResult]]. New results should be appended.
+     * @param tile The tile to pick.
+     * @param eyePos The WorldPosition of eye or camera to compute distances.
+     * @param pickPos The WorldPosition of the picked point, on the plane.
+     * @param results The existing array of [[PickResult]]; new results should be appended.
      */
     intersectRoads(
         tile: Tile,

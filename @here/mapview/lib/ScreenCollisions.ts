@@ -19,10 +19,10 @@ const logger = LoggerManager.instance.create("ScreenCollissions");
  */
 export class ScreenCollisions {
     /**
-     * Convert a [[THREE.Box2]] to an internal [[Math2D.Box]].
+     * Converts a [[THREE.Box2]] to an internal [[Math2D.Box]].
      *
-     * @param threeBox [[THREE.Box2]] to convert.
-     * @param box2 Conversion target.
+     * @param threeBox The [[THREE.Box2]] to convert.
+     * @param box2 The conversion target.
      */
     static toBox2D(threeBox: THREE.Box2, box2: Math2D.Box) {
         box2.x = threeBox.min.x;
@@ -38,7 +38,7 @@ export class ScreenCollisions {
     protected rtree = new RTree();
 
     /**
-     * Temporary variables used during conversions of boxes. They reduce allocations.
+     * An array of temporary variables used when converting boxes to reduce allocations.
      */
     private m_returnArray: Math2D.Box[] = [];
     /**
@@ -49,14 +49,14 @@ export class ScreenCollisions {
     }
 
     /**
-     * Resets the list of the allocated bounds.
+     * Resets the list of allocated screen bounds.
      */
     reset() {
         this.rtree = new RTree();
     }
 
     /**
-     * Updates the screen bounds used to check if bounding boxes are visible.
+     * Updates the screen bounds that are used to check if bounding boxes are visible.
      *
      * @param width The width of the container.
      * @param height The height of the container.
@@ -69,7 +69,7 @@ export class ScreenCollisions {
     /**
      * Marks the region of the screen intersecting with the given bounding box as allocated.
      *
-     * @param bounds the bounding box in world coordinates.
+     * @param bounds The bounding box in world coordinates.
      */
     allocate(bounds: Math2D.Box): void {
         this.rtree.insert(bounds, null);
@@ -88,7 +88,7 @@ export class ScreenCollisions {
     }
 
     /**
-     * Checks if the given bounds intersects with the frustum of the active camera.
+     * Checks if the given screen bounds intersects with the frustum of the active camera.
      *
      * @param bounds The bounding box in world coordinates.
      */
@@ -101,7 +101,7 @@ export class ScreenCollisions {
  * @hidden
  *
  * Shows requests for screen space during labelling in an HTML canvas, which should be sized like
- * the actual map canvas. It can be placed on top of the map canvas to show exactly what requests
+ * the actual map canvas. It can be placed on top of the map canvas to show exactly which requests
  * for screen space were done.
  *
  * Also logs statistics.
@@ -128,7 +128,7 @@ export class ScreenCollisionsDebug extends ScreenCollisions {
     }
 
     /**
-     * Resets the list of the allocated bounds and clears the debug canvas.
+     * Resets the list of allocated bounds and clears the debug canvas.
      */
     reset() {
         super.reset();
@@ -219,7 +219,7 @@ export class ScreenCollisionsDebug extends ScreenCollisions {
     }
 
     /**
-     * Checks if the given bounds intersects with the frustum of the active camera.
+     * Checks if the given screen bounds intersects with the frustum of the active camera.
      *
      * @param bounds The bounding box in world coordinates.
      */
