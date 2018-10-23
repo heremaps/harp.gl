@@ -1541,8 +1541,8 @@ export class MapView extends THREE.EventDispatcher {
         this.m_screenProjector.update(this.m_camera, this.m_worldCenter, width, height);
         this.m_screenCollisions.update(width, height);
 
-        const center = this.getWorldPositionAt(width * 0.5, height * 0.5);
-        const unitOffset = this.getWorldPositionAt(width * 0.5 + 1.0, height * 0.5);
+        const center = this.getWorldPositionAt(width * 0.5, height);
+        const unitOffset = this.getWorldPositionAt(width * 0.5 + 1.0, height);
         if (center !== null && unitOffset !== null) {
             this.m_pixelToWorld = unitOffset.sub(center).length();
         }
