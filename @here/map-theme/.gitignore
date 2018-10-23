@@ -8,5 +8,4 @@ doc
 *.js.map
 resources/temp
 resources/fonts
-resources-dev/.pull-fonts
 resources-dev/Fonts/Assets/*

@@ -1,2 +1,0 @@
-Fonts are now prebuilt and stored in artifactory.
-Run node scripts/pull-fonts.js or npm install on mapsdk level to download them.
