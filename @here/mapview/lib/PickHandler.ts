@@ -73,7 +73,8 @@ export interface PickResult {
     distance: number;
 
     /**
-     * An optional feature ID (from OMV) of picked object.
+     * An optional feature ID of the picked object; typically applies to the Optimized Map
+     * Vector (OMV) format.
      */
     featureId?: number;
 
