@@ -29,7 +29,7 @@ Since `harp.gl` consists of a set of modules, there are no ready-made bundles av
 This repository is a monorepo containing the core components of `harp.gl`,
 organized in a `yarn workspace`.
 
-All components can be used stand-alone and are in the [@here](@here) subdirectory.
+All components can be used stand-alone and are in the `@here` subdirectory.
 
 ## Development
 
