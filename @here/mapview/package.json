@@ -1,6 +1,6 @@
 {
   "name": "@here/mapview",
-  "version": "0.7.76",
+  "version": "0.7.77",
   "description": "MapView renderer",
   "main": "index.js",
   "typings": "index",

@@ -1,6 +1,6 @@
 {
   "name": "@here/text-renderer",
-  "version": "0.2.56",
+  "version": "0.2.57",
   "description": "SDF based text rendering for TypeScript",
   "main": "index.js",
   "typings": "index",

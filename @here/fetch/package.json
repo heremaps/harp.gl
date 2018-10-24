@@ -1,6 +1,6 @@
 {
   "name": "@here/fetch",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Typescript version of a fetch function",
   "main": "index.js",
   "browser": "index.web.js",
