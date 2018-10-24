@@ -1,6 +1,6 @@
 {
   "name": "@here/download-manager",
-  "version": "0.1.49",
+  "version": "0.1.50",
   "description": "Typescript version of a download manager",
   "main": "index.js",
   "typings": "index",

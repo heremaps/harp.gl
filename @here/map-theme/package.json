@@ -1,6 +1,6 @@
 {
   "name": "@here/map-theme",
-  "version": "0.1.68",
+  "version": "0.1.69",
   "description": "Map themes",
   "main": "index.js",
   "typings": "index",

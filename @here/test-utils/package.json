@@ -1,6 +1,6 @@
 {
   "name": "@here/test-utils",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "description": "Provides utilities for tests",
   "main": "index.js",
   "browser": "index.web.js",

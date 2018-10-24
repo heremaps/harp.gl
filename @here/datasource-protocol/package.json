@@ -1,6 +1,6 @@
 {
   "name": "@here/datasource-protocol",
-  "version": "0.2.59",
+  "version": "0.2.60",
   "description": "Datasource protocol",
   "main": "index.js",
   "typings": "index",

@@ -1,6 +1,6 @@
 {
   "name": "@here/debug-datasource",
-  "version": "0.1.38",
+  "version": "0.1.39",
   "description": "Overlay useful for debugging map data",
   "main": "index.js",
   "typings": "index",

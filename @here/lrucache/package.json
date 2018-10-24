@@ -1,6 +1,6 @@
 {
   "name": "@here/lrucache",
-  "version": "0.1.42",
+  "version": "0.1.43",
   "description": "LRU cache",
   "main": "index.js",
   "typings": "index",

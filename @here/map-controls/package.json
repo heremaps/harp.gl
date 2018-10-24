@@ -1,6 +1,6 @@
 {
   "name": "@here/map-controls",
-  "version": "0.1.47",
+  "version": "0.1.48",
   "description": "Camera controller which implements a common default set of camera functionality in a map context.",
   "main": "index.js",
   "typings": "index",

@@ -1,6 +1,6 @@
 {
   "name": "@here/geojson-datasource",
-  "version": "0.2.4",
+  "version": "0.2.5",
   "description": "Typescript version of geojson-datasource",
   "main": "index.js",
   "typings": "index",
