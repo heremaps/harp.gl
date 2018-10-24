@@ -54,6 +54,14 @@ function syncDirsIfNeeded({ sourceDir, destDir }: SyncDirsOptions) {
 }
 
 //
+// Install fonts
+//
+syncDirsIfNeeded({
+    sourceDir: "../node_modules/@here/harp-font-resources/resources/fonts",
+    destDir: "../@here/harp-map-theme/resources/fonts"
+});
+
+//
 // harp-examples
 //
 mkpath.sync("dist/harp-examples/dist/resources");
