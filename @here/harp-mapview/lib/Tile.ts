@@ -37,7 +37,12 @@ import {
     TextVerticalAlignment,
     TextVerticalAlignmentStrings
 } from "@here/harp-text-renderer";
-import { CachedResource, GroupedPriorityList, PerformanceTimer } from "@here/harp-utils";
+import {
+    CachedResource,
+    getOptionValue,
+    GroupedPriorityList,
+    PerformanceTimer
+} from "@here/harp-utils";
 import * as THREE from "three";
 
 import { ColorCache } from "./ColorCache";
@@ -790,6 +795,7 @@ export class Tile implements CachedResource {
             numTextElements += decodedTile.textGeometries.length;
         }
 
+        const displayZoomLevel = this.mapView.zoomLevel;
         if (decodedTile.textPathGeometries !== undefined) {
             this.m_preparedTextPaths = this.prepareTextPaths(decodedTile.textPathGeometries);
 
@@ -812,8 +818,9 @@ export class Tile implements CachedResource {
                 if (technique.name !== "text") {
                     continue;
                 }
-                if (technique.color !== undefined) {
-                    colorMap.set(textPath.technique, ColorCache.instance.getColor(technique.color));
+                const color = getPropertyValue(technique.color, displayZoomLevel);
+                if (color !== undefined) {
+                    colorMap.set(textPath.technique, ColorCache.instance.getColor(color));
                 }
                 const path: THREE.Vector2[] = [];
                 for (let i = 0; i < textPath.path.length; i += 2) {
@@ -822,7 +829,7 @@ export class Tile implements CachedResource {
 
                 // Make sorting stable and make pathLengthSqr a differentiator for placement.
                 const priority =
-                    (technique.priority !== undefined ? technique.priority : 0) +
+                    getOptionValue(getPropertyValue(technique.priority, displayZoomLevel), 0) +
                     (SORT_WEIGHT_SEQUENCE * (numTextElements - numTextElementsCreated)) /
                         numTextElements +
                     (maxPathLengthSqr > 0
@@ -833,7 +840,7 @@ export class Tile implements CachedResource {
                     textPath.text,
                     path,
                     priority,
-                    technique.scale !== undefined ? technique.scale : 1.0,
+                    getOptionValue(getPropertyValue(technique.scale, displayZoomLevel), 1.0),
                     technique.xOffset !== undefined ? technique.xOffset : 0.0,
                     technique.yOffset !== undefined ? technique.yOffset : 0.0,
                     textPath.featureId,
@@ -843,8 +850,8 @@ export class Tile implements CachedResource {
                     technique.oblique,
                     technique.bold,
                     technique.tracking,
-                    getPropertyValue(technique.fadeNear, this.tileKey.level),
-                    getPropertyValue(technique.fadeFar, this.tileKey.level)
+                    getPropertyValue(technique.fadeNear, displayZoomLevel),
+                    getPropertyValue(technique.fadeFar, displayZoomLevel)
                 );
                 textElement.color = colorMap.get(textPath.technique);
                 textElement.minZoomLevel = technique.minZoomLevel;
@@ -890,8 +897,9 @@ export class Tile implements CachedResource {
                     continue;
                 }
 
-                if (technique.color !== undefined) {
-                    colorMap.set(text.technique, ColorCache.instance.getColor(technique.color));
+                const color = getPropertyValue(technique.color, displayZoomLevel);
+                if (color !== undefined) {
+                    colorMap.set(text.technique, ColorCache.instance.getColor(color));
                 }
                 const positions = new THREE.BufferAttribute(
                     new Float32Array(text.positions.buffer),
@@ -906,7 +914,7 @@ export class Tile implements CachedResource {
                 // Keep TextElements sorted. The builtin sorting method is not stable, and a stable
                 // sorting should reduce flicker of labels.
                 const priority =
-                    (technique.priority !== undefined ? technique.priority : 0) +
+                    getOptionValue(getPropertyValue(technique.priority, displayZoomLevel), 0) +
                     (SORT_WEIGHT_SEQUENCE * (numTextElements - numTextElementsCreated)) /
                         numTextElements;
                 const singleElementPriorityFactor = SORT_WEIGHT_SEQUENCE / numPositions;
@@ -928,7 +936,7 @@ export class Tile implements CachedResource {
                         label!,
                         new THREE.Vector2(x, y),
                         singleElementPriority,
-                        technique.scale || 1.0,
+                        getOptionValue(getPropertyValue(technique.scale, displayZoomLevel), 1.0),
                         technique.xOffset || 0.0,
                         technique.yOffset || 0.0,
                         text.featureId,
@@ -947,8 +955,26 @@ export class Tile implements CachedResource {
                     textElement.reserveSpace = technique.reserveSpace !== false;
                     this.addTextElement(textElement);
                     numTextElementsCreated++;
-                    textElement.fadeNear = getPropertyValue(technique.fadeNear, this.tileKey.level);
-                    textElement.fadeFar = getPropertyValue(technique.fadeFar, this.tileKey.level);
+                    textElement.fadeNear = getPropertyValue(technique.fadeNear, displayZoomLevel);
+                    textElement.fadeFar = getPropertyValue(technique.fadeFar, displayZoomLevel);
+
+                    if (
+                        technique.hAlignment !== undefined &&
+                        (technique.hAlignment === TextHorizontalAlignmentStrings.Left ||
+                            technique.hAlignment === TextHorizontalAlignmentStrings.Center ||
+                            technique.hAlignment === TextHorizontalAlignmentStrings.Right)
+                    ) {
+                        textElement.horizontalAlignment =
+                            TextHorizontalAlignment[technique.hAlignment];
+                    }
+                    if (
+                        technique.vAlignment !== undefined &&
+                        (technique.vAlignment === TextVerticalAlignmentStrings.Above ||
+                            technique.vAlignment === TextVerticalAlignmentStrings.Center ||
+                            technique.vAlignment === TextVerticalAlignmentStrings.Below)
+                    ) {
+                        textElement.verticalAlignment = TextVerticalAlignment[technique.vAlignment];
+                    }
                 }
             }
         }
@@ -975,6 +1001,7 @@ export class Tile implements CachedResource {
      */
     createObjects(decodedTile: DecodedTile, objects: TileObject[]) {
         const materials: THREE.Material[] = [];
+        const displayZoomLevel = this.mapView.zoomLevel;
         for (const srcGeometry of decodedTile.geometries) {
             const groups = srcGeometry.groups;
             const groupCount = groups.length;
@@ -1011,7 +1038,7 @@ export class Tile implements CachedResource {
                 if (material === undefined) {
                     material = createMaterial({
                         technique: decodedTile.techniques[techniqueIndex],
-                        level: this.tileKey.level,
+                        level: displayZoomLevel,
                         fog: this.mapView.scene.fog !== null
                     });
                     if (material === undefined) {
@@ -1127,7 +1154,7 @@ export class Tile implements CachedResource {
                                     renderer.getPixelRatio() * this.mapView.pixelToWorld * 0.5;
                                 const lineWidth = getAttributeValue(
                                     technique.lineWidth,
-                                    this.tileKey.level
+                                    displayZoomLevel
                                 );
                                 lineMaterial.lineWidth =
                                     (lineWidth !== undefined
@@ -1140,7 +1167,7 @@ export class Tile implements CachedResource {
 
                                     const dashSize = getAttributeValue(
                                         technique.dashSize,
-                                        this.tileKey.level
+                                        displayZoomLevel
                                     );
                                     dashedLineMaterial.dashSize =
                                         (dashSize !== undefined
@@ -1149,7 +1176,7 @@ export class Tile implements CachedResource {
 
                                     const gapSize = getAttributeValue(
                                         technique.gapSize,
-                                        this.tileKey.level
+                                        displayZoomLevel
                                     );
                                     dashedLineMaterial.gapSize =
                                         (gapSize !== undefined
@@ -1381,13 +1408,14 @@ export class Tile implements CachedResource {
     private getFadingParams(
         technique: FillTechnique | SolidLineTechnique | StandardExtrudedLineTechnique
     ): FadingParameters {
+        const displayZoomLevel = this.mapView.zoomLevel;
         const fadeNear =
             technique.fadeNear !== undefined
-                ? getPropertyValue(technique.fadeNear, this.tileKey.level)
+                ? getPropertyValue(technique.fadeNear, displayZoomLevel)
                 : FadingFeature.DEFAULT_FADE_NEAR;
         const fadeFar =
             technique.fadeFar !== undefined
-                ? getPropertyValue(technique.fadeFar, this.tileKey.level)
+                ? getPropertyValue(technique.fadeFar, displayZoomLevel)
                 : FadingFeature.DEFAULT_FADE_FAR;
         return {
             fadeNear,
@@ -1414,23 +1442,24 @@ export class Tile implements CachedResource {
                         : EdgeMaterial.DEFAULT_COLOR_MIX;
             }
         }
+        const displayZoomLevel = this.mapView.zoomLevel;
 
         const fadeNear =
             technique.fadeNear !== undefined
-                ? getPropertyValue(technique.fadeNear, this.tileKey.level)
+                ? getPropertyValue(technique.fadeNear, displayZoomLevel)
                 : FadingFeature.DEFAULT_FADE_NEAR;
         const fadeFar =
             technique.fadeFar !== undefined
-                ? getPropertyValue(technique.fadeFar, this.tileKey.level)
+                ? getPropertyValue(technique.fadeFar, displayZoomLevel)
                 : FadingFeature.DEFAULT_FADE_FAR;
 
         const lineFadeNear =
             technique.lineFadeNear !== undefined
-                ? getPropertyValue(technique.lineFadeNear, this.tileKey.level)
+                ? getPropertyValue(technique.lineFadeNear, displayZoomLevel)
                 : fadeNear;
         const lineFadeFar =
             technique.lineFadeFar !== undefined
-                ? getPropertyValue(technique.lineFadeFar, this.tileKey.level)
+                ? getPropertyValue(technique.lineFadeFar, displayZoomLevel)
                 : fadeFar;
 
         return {

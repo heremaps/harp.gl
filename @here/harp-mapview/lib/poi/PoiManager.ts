@@ -20,7 +20,7 @@ import {
     TextVerticalAlignment,
     TextVerticalAlignmentStrings
 } from "@here/harp-text-renderer";
-import { assert, assertExists, LoggerManager, MathUtils } from "@here/harp-utils";
+import { assert, assertExists, getOptionValue, LoggerManager, MathUtils } from "@here/harp-utils";
 import * as THREE from "three";
 
 import { MapView } from "../MapView";
@@ -322,11 +322,12 @@ export class PoiManager {
             priority += RANDOM_SORT_WEIGHT_SEQUENCE * Math.random();
 
             const positions = Array.isArray(x) ? (x as THREE.Vector2[]) : new THREE.Vector2(x, y);
+            const displayZoomLevel = this.mapView.zoomLevel;
             textElement = new TextElement(
                 text,
                 positions,
                 priority,
-                technique.scale !== undefined ? technique.scale : 1.0,
+                getOptionValue(getPropertyValue(technique.scale, displayZoomLevel), 1.0),
                 technique.xOffset !== undefined ? technique.xOffset : 0.0,
                 technique.yOffset !== undefined ? technique.yOffset : 0.0,
                 featureId,
@@ -336,8 +337,8 @@ export class PoiManager {
                 technique.bold,
                 technique.oblique,
                 technique.tracking,
-                getPropertyValue(technique.fadeNear, storageLevel),
-                getPropertyValue(technique.fadeFar, storageLevel)
+                getPropertyValue(technique.fadeNear, displayZoomLevel),
+                getPropertyValue(technique.fadeFar, displayZoomLevel)
             );
 
             textElement.mayOverlap = technique.textMayOverlap === true;

@@ -30,7 +30,8 @@ export interface ITileDecoder {
     decodeTile(
         data: ArrayBufferLike | {},
         tileKey: TileKey,
-        projection: Projection
+        projection: Projection,
+        displayZoomLevel?: number
     ): Promise<DecodedTile>;
 
     /**
@@ -41,7 +42,8 @@ export interface ITileDecoder {
     getTileInfo(
         data: ArrayBufferLike | {},
         tileKey: TileKey,
-        projection: Projection
+        projection: Projection,
+        displayZoomLevel?: number
     ): Promise<TileInfo | undefined>;
 
     /**
