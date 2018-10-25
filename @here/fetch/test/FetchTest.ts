@@ -10,7 +10,8 @@ import "../index";
 
 // tslint:disable:only-arrow-functions
 
-const describeOnlyNode = typeof process !== "undefined" ? describe : xdescribe;
+const isNode = new Function("return typeof window === 'undefined' || this !== window")();
+const describeOnlyNode = isNode ? describe : xdescribe;
 
 describe("@here/fetch", function() {
     it("fetch", function() {
