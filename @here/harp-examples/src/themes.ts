@@ -4,13 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Theme, ThemeVisitor } from "@here/datasource-protocol";
-import { GeoCoordinates } from "@here/geoutils";
-import { MapControls } from "@here/map-controls";
-import { MapView } from "@here/mapview";
-import { ThemeLoader } from "@here/mapview/lib/ThemeLoader";
-import { APIFormat, OmvDataSource } from "@here/omv-datasource";
-import { LoggerManager } from "@here/utils";
+import { Theme, ThemeVisitor } from "@here/harp-datasource-protocol";
+import { GeoCoordinates } from "@here/harp-geoutils";
+import { MapControls } from "@here/harp-map-controls";
+import { MapView } from "@here/harp-mapview";
+import { ThemeLoader } from "@here/harp-mapview/lib/ThemeLoader";
+import { APIFormat, OmvDataSource } from "@here/harp-omv-datasource";
+import { LoggerManager } from "@here/harp-utils";
 
 const logger = LoggerManager.instance.create("themes");
 

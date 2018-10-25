@@ -4,10 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GeoCoordinates } from "@here/geoutils";
-import { MapControls } from "@here/map-controls";
-import { MapView, MapViewUtils } from "@here/mapview";
-import { APIFormat, OmvDataSource } from "@here/omv-datasource";
+import { GeoCoordinates } from "@here/harp-geoutils";
+import { MapControls } from "@here/harp-map-controls";
+import { MapView, MapViewUtils } from "@here/harp-mapview";
+import { APIFormat, OmvDataSource } from "@here/harp-omv-datasource";
 
 /**
  * This example shows a way to change a map's language by direc use of mapview's language property.

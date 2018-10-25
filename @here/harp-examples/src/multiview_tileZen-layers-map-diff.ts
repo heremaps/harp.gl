@@ -4,17 +4,17 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GeoCoordinates } from "@here/geoutils";
-import { MapControls } from "@here/map-controls";
-import { MapView, MapViewUtils } from "@here/mapview";
-import { TileFactory } from "@here/mapview-decoder";
+import { GeoCoordinates } from "@here/harp-geoutils";
+import { MapControls } from "@here/harp-map-controls";
+import { MapView, MapViewUtils } from "@here/harp-mapview";
+import { TileFactory } from "@here/harp-mapview-decoder";
 import {
     APIFormat,
     OmvDataSource,
     OmvDebugLabelsTile,
     OmvFeatureFilterDescriptionBuilder,
     OmvFilterString
-} from "@here/omv-datasource";
+} from "@here/harp-omv-datasource";
 
 /**
  * An example showing side by side mapview with two different datasources and/or themes

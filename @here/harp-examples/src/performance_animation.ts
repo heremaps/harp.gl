@@ -4,10 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GeoCoordinates, MathUtils } from "@here/geoutils";
-import { CameraRotationAnimation, MapControls } from "@here/map-controls";
-import { MapView, MapViewEventNames } from "@here/mapview";
-import { APIFormat, OmvDataSource } from "@here/omv-datasource";
+import { GeoCoordinates, MathUtils } from "@here/harp-geoutils";
+import { CameraRotationAnimation, MapControls } from "@here/harp-map-controls";
+import { MapView, MapViewEventNames } from "@here/harp-mapview";
+import { APIFormat, OmvDataSource } from "@here/harp-omv-datasource";
 
 // tslint:disable-next-line:no-var-requires
 const Stats = require("stats.js");
