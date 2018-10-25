@@ -4,11 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { DebugTileDataSource } from "@here/debug-datasource";
-import { GeoCoordinates, webMercatorTilingScheme } from "@here/geoutils";
-import { MapControls } from "@here/map-controls";
-import { MapView, MapViewEventNames, MapViewOptions } from "@here/mapview";
-import { APIFormat, OmvDataSource } from "@here/omv-datasource";
+import { DebugTileDataSource } from "@here/harp-debug-datasource";
+import { GeoCoordinates, webMercatorTilingScheme } from "@here/harp-geoutils";
+import { MapControls } from "@here/harp-map-controls";
+import { MapView, MapViewEventNames, MapViewOptions } from "@here/harp-mapview";
+import { APIFormat, OmvDataSource } from "@here/harp-omv-datasource";
 import * as THREE from "three";
 
 // Import the gesture handlers from the three.js additional libraries.

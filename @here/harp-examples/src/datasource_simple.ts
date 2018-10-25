@@ -4,10 +4,15 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { DebugTileDataSource } from "@here/debug-datasource";
-import { GeoCoordinates, TileKey, TilingScheme, webMercatorTilingScheme } from "@here/geoutils";
-import { MapControls } from "@here/map-controls";
-import { DataSource, MapView, Tile } from "@here/mapview";
+import { DebugTileDataSource } from "@here/harp-debug-datasource";
+import {
+    GeoCoordinates,
+    TileKey,
+    TilingScheme,
+    webMercatorTilingScheme
+} from "@here/harp-geoutils";
+import { MapControls } from "@here/harp-map-controls";
+import { DataSource, MapView, Tile } from "@here/harp-mapview";
 import * as THREE from "three";
 
 // creates a new MapView for the HTMLCanvasElement of the given id

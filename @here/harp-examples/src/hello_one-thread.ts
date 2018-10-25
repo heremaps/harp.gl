@@ -4,11 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GeoCoordinates } from "@here/geoutils";
-import { MapControls } from "@here/map-controls";
-import { MapView } from "@here/mapview";
-import { APIFormat, OmvDataSource } from "@here/omv-datasource";
-import { OmvTileDecoder } from "@here/omv-datasource/index-worker";
+import { GeoCoordinates } from "@here/harp-geoutils";
+import { MapControls } from "@here/harp-map-controls";
+import { MapView } from "@here/harp-mapview";
+import { APIFormat, OmvDataSource } from "@here/harp-omv-datasource";
+import { OmvTileDecoder } from "@here/harp-omv-datasource/index-worker";
 
 /**
  * MapView initialization sequence enables setting all the necessary elements on a map  and returns

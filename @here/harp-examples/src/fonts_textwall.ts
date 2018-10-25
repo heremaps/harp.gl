@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { MapView, TextElement } from "@here/mapview";
-import { TextVerticalAlignment } from "@here/text-renderer";
+import { MapView, TextElement } from "@here/harp-mapview";
+import { TextVerticalAlignment } from "@here/harp-text-renderer";
 
 import * as THREE from "three";
 

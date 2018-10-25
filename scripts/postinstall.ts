@@ -6,7 +6,6 @@ import * as path from "path";
 // tslint:disable:no-empty
 
 function syncIfNeeded(source: fs.PathLike, target: fs.PathLike) {
-
     if (!fs.existsSync(source)) {
         console.warn(source, "does not exist, creating dangling link");
     }
@@ -14,8 +13,7 @@ function syncIfNeeded(source: fs.PathLike, target: fs.PathLike) {
     try {
         fs.lstatSync(target);
         return; // no exception means that the symlink exists.
-    } catch {
-    }
+    } catch {}
 
     fs.symlinkSync(source, target);
 }
@@ -66,12 +64,12 @@ syncIfNeeded(
 );
 
 syncIfNeeded(
-    path.resolve(__dirname, "../@here/map-theme/resources/reducedNight.json"),
+    path.resolve(__dirname, "../@here/harp-map-theme/resources/reducedNight.json"),
     path.resolve(__dirname, "../dist/harp-examples/dist/resources/theme.json")
 );
 
 syncDirsIfNeeded({
-    sourceDir: `../@here/map-theme/resources`,
+    sourceDir: `../@here/harp-map-theme/resources`,
     destDir: `../dist/harp-examples/dist/resources`
 });
 
@@ -89,7 +87,7 @@ syncFiles({
 //
 // install test data
 //
-["mapview", "test-utils", "omv-datasource", "map-theme"].forEach(module => {
+["harp-mapview", "harp-test-utils", "harp-omv-datasource", "harp-map-theme"].forEach(module => {
     mkpath.sync(`dist/test/${module}/resources`);
     mkpath.sync(`dist/test/${module}/test/resources`);
 

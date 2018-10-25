@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { MapView, TextElement } from "@here/mapview";
+import { MapView, TextElement } from "@here/harp-mapview";
 
 import * as THREE from "three";
 
