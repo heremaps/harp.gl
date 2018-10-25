@@ -5,7 +5,7 @@
  */
 
 import { GeometryType, ITileDecoder, StyleSet } from "@here/harp-datasource-protocol";
-import { TileKey, webMercatorTilingScheme } from "@here/harp-geoutils";
+import { MathUtils, TileKey, webMercatorTilingScheme } from "@here/harp-geoutils";
 import { Lines } from "@here/harp-lines";
 import { DataProvider, TileDataSource, TileFactory } from "@here/harp-mapview-decoder";
 import {
@@ -52,6 +52,8 @@ export interface OmvDataSourceParameters {
      *  @default "omv"
      */
     styleSetName?: string;
+
+    zoomStorageLevelOffset?: number;
 
     /**
      * Custom layer name to be rendered.
@@ -264,5 +266,12 @@ export class OmvDataSource extends TileDataSource<OmvTile> {
 
     get maxZoomLevel(): number {
         return this.m_maxZoomLevelOption;
+    }
+
+    getDisplayZoomLevel(zoomLevel: number): number {
+        if (this.m_params.zoomStorageLevelOffset !== undefined) {
+            zoomLevel += this.m_params.zoomStorageLevelOffset;
+        }
+        return MathUtils.clamp(zoomLevel, this.minZoomLevel, this.maxZoomLevel);
     }
 }

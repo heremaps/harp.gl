@@ -127,7 +127,7 @@ export class OmvDecoder implements OmvVisitor {
      * @param data The protobuffer to decode from.
      * @returns A [[DecodedTile]]
      */
-    getDecodedTile(tileKey: TileKey, data: ArrayBufferLike): DecodedTile {
+    getDecodedTile(tileKey: TileKey, displayZoomLevel: number, data: ArrayBufferLike): DecodedTile {
         const proto = com.mapbox.pb.Tile.decode(new Uint8Array(data));
         const geoBox = webMercatorTilingScheme.getGeoBox(tileKey);
         const tileBounds = this.m_projection.projectBox(geoBox, new THREE.Box3());
@@ -136,6 +136,7 @@ export class OmvDecoder implements OmvVisitor {
 
         const decodeInfo = {
             tileKey,
+            displayZoomLevel,
             projection: this.m_projection,
             geoBox,
             tileBounds,
@@ -172,7 +173,12 @@ export class OmvDecoder implements OmvVisitor {
                                 dataFilter === undefined ||
                                 dataFilter.wantsPolygonFeature(layer, feature, storageLevel)
                             ) {
-                                this.processPolygonFeature(layer, feature, storageLevel);
+                                this.processPolygonFeature(
+                                    layer,
+                                    feature,
+                                    storageLevel,
+                                    displayZoomLevel
+                                );
                             }
                         },
                         visitLineFeature: feature => {
@@ -180,7 +186,12 @@ export class OmvDecoder implements OmvVisitor {
                                 dataFilter === undefined ||
                                 dataFilter.wantsLineFeature(layer, feature, storageLevel)
                             ) {
-                                this.processLineFeature(layer, feature, storageLevel);
+                                this.processLineFeature(
+                                    layer,
+                                    feature,
+                                    storageLevel,
+                                    displayZoomLevel
+                                );
                             }
                         },
                         visitPointFeature: feature => {
@@ -188,7 +199,12 @@ export class OmvDecoder implements OmvVisitor {
                                 dataFilter === undefined ||
                                 dataFilter.wantsPointFeature(layer, feature, storageLevel)
                             ) {
-                                this.processPointFeature(layer, feature, storageLevel);
+                                this.processPointFeature(
+                                    layer,
+                                    feature,
+                                    storageLevel,
+                                    displayZoomLevel
+                                );
                             }
                         }
                     });
@@ -205,7 +221,11 @@ export class OmvDecoder implements OmvVisitor {
         return decodedTile;
     }
 
-    getTileInfo(tileKey: TileKey, data: ArrayBufferLike): ExtendedTileInfo {
+    getTileInfo(
+        tileKey: TileKey,
+        displayZoomLevel: number,
+        data: ArrayBufferLike
+    ): ExtendedTileInfo {
         const proto = com.mapbox.pb.Tile.decode(new Uint8Array(data));
         const geoBox = webMercatorTilingScheme.getGeoBox(tileKey);
         const tileBounds = this.m_projection.projectBox(geoBox, new THREE.Box3());
@@ -214,6 +234,7 @@ export class OmvDecoder implements OmvVisitor {
 
         const decodeInfo = {
             tileKey,
+            displayZoomLevel,
             projection: this.m_projection,
             geoBox,
             tileBounds,
@@ -241,7 +262,12 @@ export class OmvDecoder implements OmvVisitor {
                                 dataFilter === undefined ||
                                 dataFilter.wantsPolygonFeature(layer, feature, storageLevel)
                             ) {
-                                this.processPolygonFeature(layer, feature, storageLevel);
+                                this.processPolygonFeature(
+                                    layer,
+                                    feature,
+                                    storageLevel,
+                                    displayZoomLevel
+                                );
                             }
                         },
                         visitLineFeature: feature => {
@@ -249,7 +275,12 @@ export class OmvDecoder implements OmvVisitor {
                                 dataFilter === undefined ||
                                 dataFilter.wantsLineFeature(layer, feature, storageLevel)
                             ) {
-                                this.processLineFeature(layer, feature, storageLevel);
+                                this.processLineFeature(
+                                    layer,
+                                    feature,
+                                    storageLevel,
+                                    displayZoomLevel
+                                );
                             }
                         },
                         visitPointFeature: feature => {
@@ -257,7 +288,12 @@ export class OmvDecoder implements OmvVisitor {
                                 dataFilter === undefined ||
                                 dataFilter.wantsPointFeature(layer, feature, storageLevel)
                             ) {
-                                this.processPointFeature(layer, feature, storageLevel);
+                                this.processPointFeature(
+                                    layer,
+                                    feature,
+                                    storageLevel,
+                                    displayZoomLevel
+                                );
                             }
                         }
                     });
@@ -272,15 +308,14 @@ export class OmvDecoder implements OmvVisitor {
     private processPointFeature(
         layer: com.mapbox.pb.Tile.ILayer,
         feature: com.mapbox.pb.Tile.IFeature,
-        storageLevel: number
+        storageLevel: number,
+        displayLevel: number
     ): void {
         if (!feature.geometry) {
             return;
         }
 
-        const env = this.createEnv(layer, feature, storageLevel);
-        //To enable checking for certain geometry type in map theme add geometry type to environment
-        env.entries.$geometryType = "point";
+        const env = this.createEnv(layer, feature, "point", storageLevel, displayLevel);
 
         if (
             this.m_featureModifier !== undefined &&
@@ -320,15 +355,14 @@ export class OmvDecoder implements OmvVisitor {
     private processLineFeature(
         layer: com.mapbox.pb.Tile.ILayer,
         feature: com.mapbox.pb.Tile.IFeature,
-        storageLevel: number
+        storageLevel: number,
+        displayLevel: number
     ): void {
         if (!feature.geometry) {
             return;
         }
 
-        const env = this.createEnv(layer, feature, storageLevel);
-        //To enable checking for certain geometry type in map theme add geometry type to environment
-        env.entries.$geometryType = "line";
+        const env = this.createEnv(layer, feature, "line", storageLevel, displayLevel);
 
         if (
             this.m_featureModifier !== undefined &&
@@ -368,15 +402,14 @@ export class OmvDecoder implements OmvVisitor {
     private processPolygonFeature(
         layer: com.mapbox.pb.Tile.ILayer,
         feature: com.mapbox.pb.Tile.IFeature,
-        storageLevel: number
+        storageLevel: number,
+        displayLevel: number
     ): void {
         if (!feature.geometry) {
             return;
         }
 
-        const env = this.createEnv(layer, feature, storageLevel);
-        //To enable checking for certain geometry type in map theme add geometry type to environment
-        env.entries.$geometryType = "polygon";
+        const env = this.createEnv(layer, feature, "polygon", storageLevel, displayLevel);
 
         if (
             this.m_featureModifier !== undefined &&
@@ -439,12 +472,16 @@ export class OmvDecoder implements OmvVisitor {
     private createEnv(
         layer: com.mapbox.pb.Tile.ILayer,
         feature: com.mapbox.pb.Tile.IFeature,
+        geometryType: string,
         storageLevel: number,
+        displayLevel: number,
         parent?: Env
     ): MapEnv {
         const attributes: ValueMap = {
             $layer: layer.name,
-            $level: storageLevel
+            $level: storageLevel,
+            $displayLevel: displayLevel,
+            $geometryType: geometryType
         };
 
         // Some sources serve `id` directly as `IFeature` property ...
@@ -495,6 +532,7 @@ export class OmvDecoder implements OmvVisitor {
 export namespace OmvDecoder {
     export interface DecodeInfo {
         readonly tileKey: TileKey;
+        readonly displayZoomLevel: number;
         readonly projection: Projection;
         readonly geoBox: GeoBox;
         readonly tileBounds: THREE.Box3;
@@ -552,7 +590,8 @@ export class OmvTileDecoder extends ThemedTileDecoder {
         data: ArrayBufferLike,
         tileKey: TileKey,
         styleSetEvaluator: StyleSetEvaluator,
-        projection: Projection
+        projection: Projection,
+        displayZoomLevel?: number
     ): Promise<DecodedTile> {
         const startTime = PerformanceTimer.now();
 
@@ -567,7 +606,11 @@ export class OmvTileDecoder extends ThemedTileDecoder {
             this.m_gatherRoadSegments,
             this.languages
         );
-        const decodedTile = decoder.getDecodedTile(tileKey, data);
+
+        if (displayZoomLevel === undefined) {
+            displayZoomLevel = tileKey.level;
+        }
+        const decodedTile = decoder.getDecodedTile(tileKey, displayZoomLevel, data);
 
         decodedTile.decodeTime = PerformanceTimer.now() - startTime;
 
@@ -577,7 +620,8 @@ export class OmvTileDecoder extends ThemedTileDecoder {
     getTileInfo(
         data: ArrayBufferLike,
         tileKey: TileKey,
-        projection: Projection
+        projection: Projection,
+        displayZoomLevel: number
     ): Promise<TileInfo | undefined> {
         const startTime = PerformanceTimer.now();
 
@@ -597,7 +641,12 @@ export class OmvTileDecoder extends ThemedTileDecoder {
             this.m_gatherRoadSegments,
             this.languages
         );
-        const tileInfo = decoder.getTileInfo(tileKey, data);
+
+        if (displayZoomLevel === undefined) {
+            displayZoomLevel = tileKey.level;
+        }
+
+        const tileInfo = decoder.getTileInfo(tileKey, displayZoomLevel, data);
 
         tileInfo.setupTime = PerformanceTimer.now() - startTime;
 

@@ -137,6 +137,7 @@ export interface DecodeTileRequest extends Request {
     tileKey: number;
     data: ArrayBufferLike;
     projection: string;
+    displayZoomLevel?: number;
 }
 
 export function isDecodeTileRequest(message: any): message is DecodeTileRequest {
@@ -150,6 +151,7 @@ export interface TileInfoRequest extends Request {
     tileKey: number;
     data: ArrayBufferLike;
     projection: string;
+    displayZoomLevel?: number;
 }
 
 export function isTileInfoRequest(message: any): message is TileInfoRequest {

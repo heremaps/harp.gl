@@ -453,7 +453,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
 
                 const lineWidth = getPropertyValue(
                     extrudedLineTechnique.lineWidth,
-                    this.m_decodeInfo.tileKey.level
+                    this.m_decodeInfo.displayZoomLevel
                 );
 
                 if (lineWidth === undefined) {
@@ -600,7 +600,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                 : 0.0;
         const outlineWidth = getPropertyValue(
             fillTechnique.lineWidth,
-            this.m_decodeInfo.tileKey.level
+            this.m_decodeInfo.displayZoomLevel
         );
 
         let contour: number[];
