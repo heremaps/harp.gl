@@ -33,7 +33,7 @@ if (global.fetch === undefined) {
 
 export type FetchFunction = typeof fetch;
 
-/**
+/*
  * `fetch` with local file system support.
  *
  * WHATWG `fetch` compliant decorator over `node-fetch` that
@@ -57,10 +57,8 @@ export type FetchFunction = typeof fetch;
  * ```
  *
  * @see [fetch documentation](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API)
- *
- * @hidden
  */
-export function fetchWithFileSupport(input: RequestInfo, init?: RequestInit): Promise<Response> {
+function fetchWithFileSupport(input: RequestInfo, init?: RequestInit): Promise<Response> {
     const url = typeof input === "object" ? input.url : input;
     const parentUrl = `file://${process.cwd()}/`;
     const actualUrl = new URL(url, parentUrl);
