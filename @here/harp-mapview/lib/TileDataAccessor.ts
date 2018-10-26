@@ -23,66 +23,73 @@ import {
 const logger = LoggerManager.instance.create("TileDataAccessor");
 
 /**
- * Interface for a client visitor that is being used to visit all `THREE.Object`s in a tile.
+ * Interface for a client visitor that is used to visit all `THREE.Object`s in a tile.
  */
 export interface ITileDataVisitor {
     tile: Tile;
 
     /**
-     * Should return `true` if visitor wants to visit the object with the given `featureId`. Is
-     * called before even the type of the object is known. Use for an early rejection.
+     * Should return `true` if the visitor wants to visit the object with the specified
+     * `featureId`. This function is called before the type of the object is even known.
      */
     wantsFeature(featureId: number | undefined): boolean;
 
     /**
-     * Should return `true` if visitor wants to visit the point with the given `featureId`.
+     * Should return `true` if the visitor wants to visit the point with the specified
+     * `featureId`.
      */
     wantsPoint(featureId: number | undefined): boolean;
 
     /**
-     * Should return `true` if visitor wants to visit the line with the given `featureId`.
+     * Should return `true` if the visitor wants to visit the line with the specified
+     * `featureId`.
      */
     wantsLine(featureId: number | undefined): boolean;
 
     /**
-     * Should return `true` if visitor wants to visit the area object with the given `featureId`.
+     * Should return `true` if the visitor wants to visit the area object with the specified
+     * `featureId`.
      */
     wantsArea(featureId: number | undefined): boolean;
 
     /**
-     * Should return `true` if visitor wants to visit the unspecified object with the given
+     * Should return `true` if the visitor wants to visit the object with the specified
      * `featureId`.
      */
     wantsObject3D(featureId: number | undefined): boolean;
 
     /**
-     * Visit point object with the given `featureId`. Use `pointAccessor` to get properties.
+     * Visits a point object with the specified `featureId`; use `pointAccessor` to get the
+     * object's properties.
      */
     visitPoint(featureId: number | undefined): void;
 
     /**
-     * Visit line object with the given `featureId`. Use `pointAccessor` to get properties.
+     * Visits a line object with the specified `featureId`; use `pointAccessor` to get the
+     * object's properties.
      */
     visitLine(featureId: number | undefined, lineAccessor: ILineAccessor): void;
 
     /**
-     * Visit area object with the given `featureId`. Use `pointAccessor` to get properties.
+     * Visit an area object with the specified `featureId`; use `pointAccessor` to get the
+     * object's properties.
      */
     visitArea(featureId: number | undefined): void;
 
     /**
-     * Visit a 3D object with the given `featureId`. Use `pointAccessor` to get properties.
+     * Visits a 3D object with the specified `featureId`; use `pointAccessor` to get the
+     * object's properties.
      */
     visitObject3D(featureId: number | undefined, object3dAccessor: IObject3dAccessor): void;
 }
 
 /**
- * Options for [[TileDataAccessor]].
+ * An interface that provides options for [[TileDataAccessor]].
  */
 export interface TileDataAccessorOptions {
     /** Limit to objects that have `featureID`s. */
     onlyWithFeatureIds?: boolean;
-    /** Set (and override) `wantPoints`, `wantLines`, `wantAreas`, `wantObject3D`. */
+    /** Sets and overrides `wantPoints`, `wantLines`, `wantAreas`, `wantObject3D`. */
     wantsAll?: boolean;
     /** `true` to visit points. */
     wantsPoints?: boolean;
@@ -95,9 +102,9 @@ export interface TileDataAccessorOptions {
 }
 
 /**
- * Accessor for all geometries in a tile. Uses a client-provided visitor [[ITileDataVisitor]] to
- * visit all objects based on filtering options by both the `TileDataAccessor` as well as the
- * visitor itself.
+ * An accessor for all geometries in a tile. This class uses a client-provided [[ITileDataVisitor]]
+ * to visit all objects, based on filtering options specified by both, the `TileDataAccessor` and
+ * the visitor itself.
  */
 export class TileDataAccessor {
     private m_wantsPoints = true;
@@ -106,11 +113,11 @@ export class TileDataAccessor {
     private m_wantsObject3D = true;
 
     /**
-     * Constructs a `TileDataAccessor`.
+     * Constructs a `TileDataAccessor` instance.
      *
-     * @param tile Missing Typedoc
-     * @param visitor Missing Typedoc
-     * @param options Missing Typedoc
+     * @param tile The tile to access.
+     * @param visitor The visitor.
+     * @param options Options for the tile.
      */
     constructor(
         public tile: Tile,
@@ -125,7 +132,7 @@ export class TileDataAccessor {
     }
 
     /**
-     * Call visitor on all objects in the tile.
+     * Calls the visitor on all objects in the tile.
      */
     visitAll(): void {
         const objects = this.tile.objects;
@@ -136,9 +143,9 @@ export class TileDataAccessor {
     }
 
     /**
-     * Visit a single object. Should normally be called during visiting.
+     * Visits a single object. This function should normally be called during visiting.
      *
-     * @param object Object to visit.
+     * @param object The object to visit.
      */
     protected visitObject(object: THREE.Object3D): void {
         const featureData: TileFeatureData | undefined =
@@ -214,11 +221,11 @@ export class TileDataAccessor {
     }
 
     /**
-     * Gets `BufferGeometry` from object. Requires attribute `position` in `BufferGeometry` to be
-     * set.
+     * Gets the `BufferGeometry` from the specified object. This function requires the
+     * attribute `position` in `BufferGeometry` to be set.
      *
-     * @param object Object to get geometry from.
-     * @returns Geometry of object, or `undefined`.
+     * @param object The object from which to get the geometry.
+     * @returns the geometry of the object, or `undefined`.
      */
     protected getBufferGeometry(object: THREE.Mesh): THREE.BufferGeometry | undefined {
         const geometry = object.geometry;
@@ -244,13 +251,13 @@ export class TileDataAccessor {
     }
 
     /**
-     * Obtain an accessor for the nonindexed geometry. May be `undefined` if accessor not
-     * implemented.
+     * Obtains an accessor for the nonindexed geometry. This function may return `undefined`
+     * if the accessor is not implemented.
      *
-     * @param geometryType Type of geometry.
-     * @param object Object to access the attributes and geometry of.
-     * @param bufferGeometry The `BufferGeometry` of the object.
-     * @returns Accessor for a specified object if available.
+     * @param geometryType The type of geometry.
+     * @param object The object for which to access the attributes and geometry.
+     * @param bufferGeometry The object's `BufferGeometry`.
+     * @returns an accessor for a specified object, if available.
      */
     protected getGeometryAccessor(
         geometryType: GeometryType,
@@ -279,12 +286,13 @@ export class TileDataAccessor {
     }
 
     /**
-     * Obtain an accessor for the indexed geometry. May be `undefined` if accessor not implemented.
+     * Obtains an accessor for the indexed geometry. This function may return `undefined`
+     * if the accessor is not implemented.
      *
-     * @param geometryType Type of geometry.
-     * @param object Object to access the attributes and geometry of.
-     * @param bufferGeometry The `BufferGeometry` of the object.
-     * @returns Accessor for a specified object if available.
+     * @param geometryType The type of geometry.
+     * @param object The object for which to access the attributes and geometry.
+     * @param bufferGeometry The object's `BufferGeometry`.
+     * @returns an accessor for a specified object, if available.
      */
     protected getIndexedGeometryAccessor(
         geometryType: GeometryType,
