@@ -44,6 +44,9 @@ const logger = LoggerManager.instance.create("OmvDecodedTileEmitter");
  */
 const INVALID_ARRAY_INDEX = -1;
 
+// for tilezen by default extrude all buildings even those without height data
+const DEFAULT_EXTRUDED_BUILDING_HEIGHT = 20;
+
 class MeshBuffers {
     readonly positions: number[] = [];
     readonly colors: number[] = [];
@@ -121,7 +124,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
      *
      * @param layer Tile's layer to be processed.
      * @param feature The current feature containing the main geometry.
-     * @param env The [[MapEnv]] containing the enviroment information for the map.
+     * @param env The [[MapEnv]] containing the environment information for the map.
      * @param techniques The array of [[Technique]] that will be applied to the geometry.
      * @param featureId The id of the feature.
      */
@@ -241,7 +244,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
      *
      * @param layer Tile's layer to be processed.
      * @param feature The current feature containing the main geometry.
-     * @param env The [[MapEnv]] containing the enviroment information for the map.
+     * @param env The [[MapEnv]] containing the environment information for the map.
      * @param techniques The array of [[Technique]] that will be applied to the geometry.
      * @param featureId The id of the feature.
      */
@@ -490,7 +493,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
      *
      * @param layer Tile's layer to be processed.
      * @param feature The current feature containing the main geometry.
-     * @param env The [[MapEnv]] containing the enviroment information for the map.
+     * @param env The [[MapEnv]] containing the environment information for the map.
      * @param techniques The array of [[Technique]] that will be applied to the geometry.
      * @param featureId The id of the feature.
      */
@@ -555,15 +558,11 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
         );
 
         let minHeight = 0;
-        let height = 0;
+        let height = DEFAULT_EXTRUDED_BUILDING_HEIGHT;
+
         const currentHeight = env.lookup("height") as number;
-
-        const isExtruded =
-            technique.name === "extruded-polygon" &&
-            (env.lookup("extrude") === "true" || currentHeight !== undefined);
-
+        const isExtruded = technique.name === "extruded-polygon";
         const isFilled = technique.name === "fill";
-
         const defaultBuildingColor = new THREE.Color(0xff0000);
 
         if (isExtruded) {
@@ -740,6 +739,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
      *
      * @returns The [[DecodedTile]]
      */
+
     getDecodedTile(): DecodedTile {
         this.createGeometries();
         this.processSimpleLines(this.m_simpleLines);
@@ -773,7 +773,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
         enableFootprints: boolean,
         edgeSlope: number
     ): void {
-        // Infere the index buffer's position of the vertices that form the extruded-polygons' walls
+        // Infer the index buffer's position of the vertices that form the extruded-polygons' walls
         // by stepping through the contour segment by segment.
         for (let i = 0; i < contour.length; i += 2) {
             const vFootprint0 = vertexOffset + i;

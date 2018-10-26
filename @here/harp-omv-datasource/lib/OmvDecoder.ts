@@ -524,7 +524,6 @@ export class OmvDecoder implements OmvVisitor {
                 return true;
             }
         });
-
         return new MapEnv(attributes, parent);
     }
 }
