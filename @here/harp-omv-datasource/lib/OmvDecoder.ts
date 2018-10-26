@@ -560,7 +560,7 @@ export namespace OmvDecoder {
         }
         if (languages !== undefined) {
             for (const language of languages) {
-                name = env.lookup(`name_${language}`);
+                name = env.lookup(`name:${language}`) || env.lookup(`name_${language}`);
                 if (typeof name === "string" && name.length > 0) {
                     return name;
                 }
