@@ -326,7 +326,7 @@ export namespace ExtendedTileInfo {
         }
         if (languages !== undefined) {
             for (const lang of languages) {
-                name = env.lookup(`name_${lang}`);
+                name = env.lookup(`name:${lang}`) || env.lookup(`name_${lang}`);
                 if (typeof name === "string" && name.length > 0) {
                     return name;
                 }
