@@ -85,15 +85,6 @@
     "fog": {
         "startRatio": 0.8
     },
-    "images": [
-        {
-            "description": "Additional mapping for road shields used in XYZ-tilezen theme",
-            "name": "road_shields_tilezen",
-            "url": "road_shields.png",
-            "atlas": "road_shields_tilezen.json",
-            "preload": true
-        }
-    ],
     "styles": {
         "tilezen": [
             {
