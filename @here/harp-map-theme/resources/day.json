@@ -92,12 +92,6 @@
             "url": "road_shields.png",
             "atlas": "road_shields_tilezen.json",
             "preload": true
-        },
-        {
-            "name": "maki_icons",
-            "url": "maki_icons.png",
-            "atlas": "maki_icons.json",
-            "preload": true
         }
     ],
     "styles": {
