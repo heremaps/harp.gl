@@ -1,6 +1,6 @@
 {
   "name": "@here/harp-download-manager",
-  "version": "0.1.50",
+  "version": "0.1.51",
   "description": "Typescript version of a download manager",
   "main": "index.js",
   "typings": "index",
