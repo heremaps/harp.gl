@@ -1,6 +1,6 @@
 {
   "name": "@here/harp-lrucache",
-  "version": "0.1.43",
+  "version": "0.1.44",
   "description": "LRU cache",
   "main": "index.js",
   "typings": "index",

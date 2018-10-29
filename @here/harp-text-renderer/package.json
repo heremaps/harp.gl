@@ -1,6 +1,6 @@
 {
   "name": "@here/harp-text-renderer",
-  "version": "0.2.57",
+  "version": "0.2.58",
   "description": "SDF based text rendering for TypeScript",
   "main": "index.js",
   "typings": "index",
