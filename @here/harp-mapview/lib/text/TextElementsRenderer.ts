@@ -941,7 +941,7 @@ export class TextElementsRenderer {
                 const tile = tileTextElements.tile;
                 for (const textElement of tileTextElements.textElements) {
                     if (
-                        MathUtils.isClamped(
+                        !MathUtils.isClamped(
                             zoomLevel,
                             textElement.minZoomLevel,
                             textElement.maxZoomLevel
@@ -1331,7 +1331,7 @@ export class TextElementsRenderer {
                 // Check if icon should be rendered at this zoomLevel
                 const renderIcon =
                     poiInfo === undefined ||
-                    !MathUtils.isClamped(
+                    MathUtils.isClamped(
                         zoomLevel,
                         poiInfo.iconMinZoomLevel,
                         poiInfo.iconMaxZoomLevel
@@ -1405,7 +1405,7 @@ export class TextElementsRenderer {
                 const renderText =
                     poiInfo === undefined ||
                     zoomLevel === undefined ||
-                    !MathUtils.isClamped(
+                    MathUtils.isClamped(
                         zoomLevel,
                         poiInfo.iconMinZoomLevel,
                         poiInfo.iconMaxZoomLevel
