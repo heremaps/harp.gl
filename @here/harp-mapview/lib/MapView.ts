@@ -1144,6 +1144,21 @@ export class MapView extends THREE.EventDispatcher {
         return dataSource
             .connect()
             .then(() => {
+                return new Promise((resolve) => {
+                    if (this.theme !== undefined) {
+                        resolve();
+                        return;
+                    }
+
+                    const resolveOnce = () => {
+                        this.removeEventListener(MapViewEventNames.ThemeLoaded, resolveOnce);
+                        resolve();
+                    };
+
+                    this.addEventListener(MapViewEventNames.ThemeLoaded, resolveOnce);
+                });
+            })
+            .then(() => {
                 const alreadyRemoved = this.m_tileDataSources.indexOf(dataSource) === -1;
                 if (alreadyRemoved) {
                     return;
