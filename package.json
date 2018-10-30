@@ -48,7 +48,7 @@
     "webpack-merge": "^4.1.4"
   },
   "scripts": {
-    "test": "ts-mocha -r tsconfig-paths/register ./@here/*/test/*.ts",
+    "test": "ts-mocha -r tsconfig-paths/register ./test/*.ts ./@here/*/test/*.ts",
     "postinstall": "ts-node ./scripts/postinstall.ts",
     "start": "webpack-dev-server -d --config webpack.examples.config.js --content-base \"./dist/harp-examples\"",
     "build": "webpack -d --config webpack.examples.config.js",
