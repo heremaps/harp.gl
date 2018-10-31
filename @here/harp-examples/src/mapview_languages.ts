@@ -6,7 +6,7 @@
 
 import { GeoCoordinates } from "@here/harp-geoutils";
 import { MapControls } from "@here/harp-map-controls";
-import { MapView, MapViewUtils } from "@here/harp-mapview";
+import { CopyrightElementHandler, MapView, MapViewUtils } from "@here/harp-mapview";
 import { APIFormat, OmvDataSource } from "@here/harp-omv-datasource";
 
 /**
@@ -43,6 +43,16 @@ export namespace LanguagesExample {
             canvas,
             theme: "./resources/day.json"
         });
+
+        CopyrightElementHandler.install("copyrightNotice")
+            .attach(sampleMapView)
+            .setDefaults([
+                {
+                    id: "openstreetmap.org",
+                    label: "OpenStreetMap contributors",
+                    link: "https://www.openstreetmap.org/copyright"
+                }
+            ]);
 
         // let the camera float over the map, looking straight down
         sampleMapView.camera.position.set(0, 0, 800);

@@ -7,7 +7,7 @@
 import { Theme, ThemeVisitor } from "@here/harp-datasource-protocol";
 import { GeoCoordinates } from "@here/harp-geoutils";
 import { MapControls } from "@here/harp-map-controls";
-import { MapView } from "@here/harp-mapview";
+import { CopyrightElementHandler, MapView } from "@here/harp-mapview";
 import { ThemeLoader } from "@here/harp-mapview/lib/ThemeLoader";
 import { APIFormat, OmvDataSource } from "@here/harp-omv-datasource";
 import { LoggerManager } from "@here/harp-utils";
@@ -80,6 +80,8 @@ export namespace ThemesExample {
             theme: defaultThemeUrl
         });
 
+        CopyrightElementHandler.install("copyrightNotice", sampleMapView);
+
         // let the camera float over the map, looking straight down
         sampleMapView.camera.position.set(0, 0, 800);
         // center the camera somewhere around Berlin geo locations
@@ -106,7 +108,14 @@ export namespace ThemesExample {
         baseUrl: "https://xyz.api.here.com/tiles/osmbase/256/all",
         apiFormat: APIFormat.MapzenV2,
         styleSetName: "tilezen",
-        maxZoomLevel: 17
+        maxZoomLevel: 17,
+        copyrightInfo: [
+            {
+                id: "openstreetmap.org",
+                label: "OpenStreetMap contributors",
+                link: "https://www.openstreetmap.org/copyright"
+            }
+        ]
     });
 
     mapView.addDataSource(omvDataSource);

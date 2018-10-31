@@ -6,7 +6,12 @@
 
 import { GeoCoordinates } from "@here/harp-geoutils";
 import { MapControls } from "@here/harp-map-controls";
-import { MapView, MapViewEventNames, MSAASampling } from "@here/harp-mapview";
+import {
+    CopyrightElementHandler,
+    MapView,
+    MapViewEventNames,
+    MSAASampling
+} from "@here/harp-mapview";
 import { APIFormat, OmvDataSource } from "@here/harp-omv-datasource";
 // tslint:disable-next-line:no-var-requires
 const Stats = require("stats.js");
@@ -154,6 +159,15 @@ export namespace AntialiasExample {
             decoderUrl
         });
 
+        CopyrightElementHandler.install("copyrightNotice")
+            .attach(mapView)
+            .setDefaults([
+                {
+                    id: "openstreetmap.org",
+                    label: "OpenStreetMap contributors",
+                    link: "https://www.openstreetmap.org/copyright"
+                }
+            ]);
         // Add Omv data source.
         mapView.addDataSource(omvDataSource);
 

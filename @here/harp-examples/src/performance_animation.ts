@@ -6,7 +6,7 @@
 
 import { GeoCoordinates, MathUtils } from "@here/harp-geoutils";
 import { CameraRotationAnimation, MapControls } from "@here/harp-map-controls";
-import { MapView, MapViewEventNames } from "@here/harp-mapview";
+import { CopyrightElementHandler, MapView, MapViewEventNames } from "@here/harp-mapview";
 import { APIFormat, OmvDataSource } from "@here/harp-omv-datasource";
 
 // tslint:disable-next-line:no-var-requires
@@ -78,6 +78,16 @@ export namespace AnimationExample {
             theme: "resources/day.json"
         });
         // end:vislib_hello_animation_example_1.ts
+
+        CopyrightElementHandler.install("copyrightNotice")
+            .attach(sampleMapView)
+            .setDefaults([
+                {
+                    id: "openstreetmap.org",
+                    label: "OpenStreetMap contributors",
+                    link: "https://www.openstreetmap.org/copyright"
+                }
+            ]);
 
         // snippet:vislib_hello_animation_example_2.ts
         // let the camera float over the map, looking straight down
