@@ -851,6 +851,58 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                 });
             }
 
+            if (technique.name === "water") {
+                const vertices = positionElements.length / 3;
+                logger.log(`Processing technique ${technique.name} -
+                    total vertices is ${vertices}`);
+
+                const bounds = this.m_decodeInfo.tileBounds;
+                logger.log(`bounds are - ${bounds.min.x} : ${bounds.min.y} to ${bounds.max.x} : ${bounds.max.y}`);
+
+                const boundsW = this.m_decodeInfo.tileBounds.max.x - this.m_decodeInfo.tileBounds.min.x;
+                const boundsH = this.m_decodeInfo.tileBounds.max.y - this.m_decodeInfo.tileBounds.min.y;
+
+                const uvs = new Float32Array(vertices * 2);
+                for (let i = 0;  i < vertices;  ++i) {
+                    const x = meshBuffers.positions[3*i];
+                    const y = meshBuffers.positions[3*i + 1];
+                    //uvs[2 * i]     = Math.abs(x) * 2.0 / boundsW;
+                    //uvs[2 * i + 1] = Math.abs(y) * 2.0 / boundsH;
+                    //uvs[2 * i]     = (x - this.m_decodeInfo.tileBounds.min.x) / boundsW;
+                    //uvs[2 * i + 1] = (y - this.m_decodeInfo.tileBounds.min.y) / boundsH;
+                    //uvs[2 * i]     = ((x / boundsW) + 1.0) / 2.0;
+                    //uvs[2 * i + 1] = ((y / boundsH) + 1.0) / 2.0;
+                    //uvs[2 * i]     = Math.abs((x / boundsW) + 1.0);
+                    //uvs[2 * i + 1] = Math.abs((y / boundsH) + 1.0);
+                    uvs[2 * i]     = Math.abs(x / boundsW / 2.0);
+                    uvs[2 * i + 1] = Math.abs(y / boundsH / 2.0);
+                    logger.log(`Vertex #${i} pos = ${x} [${bounds.min.x} - ${bounds.min.y}, ${boundsW}], ${y} [${bounds.max.x} - ${bounds.max.y}, ${boundsH}] -> ${uvs[2 * i]}, ${uvs[2 * i + 1]}`);
+                }
+
+                geometry.vertexAttributes.push({
+                    name: "uv",
+                    buffer: uvs.buffer as ArrayBuffer,
+                    itemCount: 2,
+                    type: "float"
+                });
+/*
+                const geos = new Float32Array(vertices * 2);
+                for (let i = 0;  i < vertices;  ++i) {
+                    const x = meshBuffers.positions[3*i];
+                    const y = meshBuffers.positions[3*i + 1];
+                    geos[2 * i]     = x;
+                    geos[2 * i + 1] = y;
+                }
+
+                geometry.vertexAttributes.push({
+                    name: "geos",
+                    buffer: geos.buffer as ArrayBuffer,
+                    itemCount: 2,
+                    type: "float"
+                });
+*/
+            }
+
             if (meshBuffers.indices.length > 0) {
                 // create the index buffer
 

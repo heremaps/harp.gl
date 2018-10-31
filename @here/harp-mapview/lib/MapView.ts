@@ -6,7 +6,7 @@
 
 import { createLight, ImageTexture, Light, Sky, Theme } from "@here/harp-datasource-protocol";
 import { GeoCoordinates, MathUtils, mercatorProjection, Projection } from "@here/harp-geoutils";
-import { TextMaterial } from "@here/harp-materials";
+import { TextMaterial, UpdateWaterMaterial } from "@here/harp-materials";
 import { TextMaterialConstructor } from "@here/harp-text-renderer";
 import { LoggerManager, PerformanceTimer } from "@here/harp-utils";
 import * as THREE from "three";
@@ -1290,6 +1290,7 @@ export class MapView extends THREE.EventDispatcher {
             if (!this.m_updatePending) {
                 this.m_updatePending = true;
                 this.drawFrame();
+                UpdateWaterMaterial();
             }
             ANIMATION_STARTED_EVENT.time = Date.now();
             this.dispatchEvent(ANIMATION_STARTED_EVENT);

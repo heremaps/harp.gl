@@ -9,7 +9,9 @@ import {
     DashedLineMaterial,
     MapMeshBasicMaterial,
     MapMeshStandardMaterial,
-    SolidLineMaterial
+    SolidLineMaterial,
+    WaterMaterialParameters,
+    WaterMaterial
 } from "@here/harp-materials";
 import * as THREE from "three";
 
@@ -29,6 +31,7 @@ export type Technique =
     | StandardExtrudedLineTechnique
     | ExtrudedPolygonTechnique
     | ShaderTechnique
+    | WaterTechnique
     | LandmarkTechnique
     | TextTechnique;
 
@@ -810,6 +813,20 @@ export interface ShaderTechnique extends BaseTechnique {
     primitive: "point" | "line" | "segments" | "mesh";
 }
 
+/**
+ * Special technique for water displaying.
+ */
+export interface WaterTechnique extends BaseTechnique {
+    /**
+     * Name of technique. Is used in the theme file.
+     */
+    name: "water";
+    /**
+     * Parameters for shader. See `WaterMaterialParameters`.
+     */
+    params: WaterMaterialParameters;
+}
+
 // deprecated, same as StandardTechnique left for backwards compatibility
 export interface LandmarkTechnique extends BaseStandardTechnique {
     name: "landmark";
@@ -1046,6 +1063,9 @@ export function getMaterialConstructor(technique: Technique): MaterialConstructo
         case "shader":
             return THREE.ShaderMaterial;
 
+        case "water":
+            return WaterMaterial;
+
         case "text":
         case "labeled-icon":
         case "line-marker":
@@ -1101,6 +1121,9 @@ export function getObjectConstructor(technique: Technique): ObjectConstructor | 
                     return undefined;
             }
         }
+
+        case "water":
+            return THREE.Mesh as ObjectConstructor;
 
         case "text":
         case "labeled-icon":

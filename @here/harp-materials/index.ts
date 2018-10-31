@@ -12,6 +12,7 @@ export * from "./lib/GlyphCopyMaterial";
 export * from "./lib/HighPrecisionLineMaterial";
 export * from "./lib/HighPrecisionPointMaterial";
 export * from "./lib/IconMaterial";
+export * from "./lib/WaterMaterial";
 export * from "./lib/SolidLineMaterial";
 export * from "./lib/CirclePointsMaterial";
 export * from "./lib/MSAAMaterial";
