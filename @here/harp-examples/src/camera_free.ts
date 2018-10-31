@@ -7,7 +7,12 @@
 import { DebugTileDataSource } from "@here/harp-debug-datasource";
 import { GeoCoordinates, webMercatorTilingScheme } from "@here/harp-geoutils";
 import { MapControls } from "@here/harp-map-controls";
-import { MapView, MapViewEventNames, MapViewOptions } from "@here/harp-mapview";
+import {
+    CopyrightElementHandler,
+    MapView,
+    MapViewEventNames,
+    MapViewOptions
+} from "@here/harp-mapview";
 import { APIFormat, OmvDataSource } from "@here/harp-omv-datasource";
 import * as THREE from "three";
 
@@ -60,6 +65,16 @@ export namespace FreeCameraApp_DebugingToolExample {
 
             this.mapControls = new MapControls(this.mapView);
             this.mapControls.enabled = false;
+
+            CopyrightElementHandler.install("copyrightNotice")
+                .attach(this.mapView)
+                .setDefaults([
+                    {
+                        id: "openstreetmap.org",
+                        label: "OpenStreetMap contributors",
+                        link: "https://www.openstreetmap.org/copyright"
+                    }
+                ]);
 
             // let the camera float over the map, looking straight down
             this.mapView.camera.position.set(0, 0, 800);

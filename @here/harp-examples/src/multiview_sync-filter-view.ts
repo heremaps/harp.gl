@@ -6,7 +6,7 @@
 
 import { GeoCoordinates } from "@here/harp-geoutils";
 import { MapControls } from "@here/harp-map-controls";
-import { MapView, MapViewUtils } from "@here/harp-mapview";
+import { CopyrightElementHandler, MapView, MapViewUtils } from "@here/harp-mapview";
 import { TileFactory } from "@here/harp-mapview-decoder";
 import {
     APIFormat,
@@ -216,6 +216,17 @@ export namespace LayersFilteringExample {
 
     mapViews.view1.mapView.addDataSource(dataSources.omvDataSource1);
     mapViews.view2.mapView.addDataSource(dataSources.omvDataSource2);
+
+    CopyrightElementHandler.install("copyrightNotice")
+        .attach(mapViews.view1.mapView)
+        .attach(mapViews.view2.mapView)
+        .setDefaults([
+            {
+                id: "openstreetmap.org",
+                label: "OpenStreetMap contributors",
+                link: "https://www.openstreetmap.org/copyright"
+            }
+        ]);
 
     //filter all but one layer on one of the mapviews
     const filterBuilder = new OmvFeatureFilterDescriptionBuilder({
