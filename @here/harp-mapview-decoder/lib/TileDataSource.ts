@@ -6,7 +6,13 @@
 
 import { DecodedTile, ITileDecoder, StyleSet, TileInfo } from "@here/harp-datasource-protocol";
 import { TileKey, TilingScheme } from "@here/harp-geoutils";
-import { ConcurrentDecoderFacade, DataSource, Tile, TileLoaderState } from "@here/harp-mapview";
+import {
+    ConcurrentDecoderFacade,
+    CopyrightInfo,
+    DataSource,
+    Tile,
+    TileLoaderState
+} from "@here/harp-mapview";
 
 import { DataProvider } from "./DataProvider";
 import { TileInfoLoader, TileLoader } from "./TileLoader";
@@ -51,6 +57,13 @@ export interface TileDataSourceOptions {
      * Optional URL for decoder bundle to be loaded into web worker.
      */
     concurrentDecoderScriptUrl?: string;
+
+    /**
+     * Optional, default copyright information of tiles provided by this data source.
+     *
+     * Implementation should provide this information from the source data if possible.
+     */
+    copyrightInfo?: CopyrightInfo[];
 }
 
 /**
@@ -162,6 +175,7 @@ export class TileDataSource<TileType extends Tile> extends DataSource {
      */
     getTile(tileKey: TileKey): TileType | undefined {
         const tile = this.m_tileFactory.create(this, tileKey);
+
         tile.tileLoader = new TileLoader(this, tileKey, this.m_options.dataProvider, this.decoder);
 
         this.updateTile(tile);
@@ -205,8 +219,13 @@ export class TileDataSource<TileType extends Tile> extends DataSource {
 
         tileLoader.loadAndDecode().then(() => {
             if (tileLoader.decodedTile && this.decodedTileHasGeometry(tileLoader.decodedTile)) {
-                tile.setDecodedTile(tileLoader.decodedTile);
+                const decodedTile = tileLoader.decodedTile;
+                tile.copyrightInfo =
+                    decodedTile.copyrightHolderIds !== undefined
+                        ? decodedTile.copyrightHolderIds.map(id => ({ id }))
+                        : this.m_options.copyrightInfo;
 
+                tile.setDecodedTile(tileLoader.decodedTile);
                 this.requestUpdate();
             } else {
                 // empty tiles are traditionally ignored and don't need decode

@@ -14,6 +14,7 @@ import * as THREE from "three";
 import { CameraMovementDetector } from "./CameraMovementDetector";
 import { IMapAntialiasSettings, IMapRenderingManager, MapRenderingManager } from "./composing";
 import { ConcurrentDecoderFacade } from "./ConcurrentDecoderFacade";
+import { CopyrightInfo } from "./CopyrightInfo";
 import { DataSource } from "./DataSource";
 import { resetDepthBasedPolygonOffsetIndex } from "./DepthPrePass";
 import { MapViewImageCache } from "./image/MapViewImageCache";
@@ -59,6 +60,8 @@ export enum MapViewEventNames {
     MovementFinished = "movement-finished",
     /** Called when a data source has been connected or failed to connect. */
     DataSourceConnect = "datasource-connect",
+    /** Emitted when copyright info of rendered map has been changed. */
+    CopyrightChanged = "copyright-changed",
     /** Called when the WebGL context is lost. */
     ContextLost = "webglcontext-lost",
     /** Called when the WebGL context is restored. */
@@ -99,7 +102,8 @@ export interface RenderEvent extends THREE.Event {
         | MapViewEventNames.MovementStarted
         | MapViewEventNames.MovementFinished
         | MapViewEventNames.ContextLost
-        | MapViewEventNames.ContextRestored;
+        | MapViewEventNames.ContextRestored
+        | MapViewEventNames.CopyrightChanged;
     time?: number;
 }
 
@@ -115,6 +119,7 @@ const MOVEMENT_STARTED_EVENT: RenderEvent = { type: MapViewEventNames.MovementSt
 const MOVEMENT_FINISHED_EVENT: RenderEvent = { type: MapViewEventNames.MovementFinished } as any;
 const CONTEXT_LOST_EVENT: RenderEvent = { type: MapViewEventNames.ContextLost } as any;
 const CONTEXT_RESTORED_EVENT: RenderEvent = { type: MapViewEventNames.ContextRestored } as any;
+const COPYRIGHT_CHANGED_EVENT: RenderEvent = { type: MapViewEventNames.CopyrightChanged } as any;
 
 /**
  * Compute visibility for the text elements. Called every frame.
@@ -491,8 +496,11 @@ export class MapView extends THREE.EventDispatcher {
 
     // Detection of camera movement and scene change:
     private m_movementDetector: CameraMovementDetector;
+
+    private m_thisFrameTilesChanged: boolean | undefined;
     private m_lastTileIds: string = "";
     private m_languages: string[] | undefined;
+    private m_copyrightInfo: CopyrightInfo[] = [];
 
     private m_debugGlyphTextureCache = false;
 
@@ -844,6 +852,10 @@ export class MapView extends THREE.EventDispatcher {
         this.update();
     }
 
+    get copyrightInfo(): CopyrightInfo[] {
+        return this.m_copyrightInfo;
+    }
+
     /**
      * Adds an event listener. There are various events that are sent before or after a new frame
      * is rendered.
@@ -1144,7 +1156,7 @@ export class MapView extends THREE.EventDispatcher {
         return dataSource
             .connect()
             .then(() => {
-                return new Promise((resolve) => {
+                return new Promise(resolve => {
                     if (this.theme !== undefined) {
                         resolve();
                         return;
@@ -1622,6 +1634,7 @@ export class MapView extends THREE.EventDispatcher {
         this.m_stagedRenderTimer.start();
 
         this.m_updatePending = false;
+        this.m_thisFrameTilesChanged = undefined;
 
         ++this.m_snapshot;
 
@@ -1737,6 +1750,8 @@ export class MapView extends THREE.EventDispatcher {
         if (this.animating || this.m_updatePending) {
             this.drawFrame();
         }
+
+        this.checkCopyrightUpdates();
     }
 
     private renderTileObjects(tile: Tile, zoomLevel: number) {
@@ -1978,10 +1993,16 @@ export class MapView extends THREE.EventDispatcher {
     }
 
     /**
-     * Check if the set of visible tiles changed after the last call to `checkIfTilesChanged`.
+     * Check if the set of visible tiles changed since the last frame.
+     *
+     * May be called multiple times per frame.
+     *
      * Equality is computed by creating a string containing the IDs of the tiles.
      */
     private checkIfTilesChanged() {
+        if (this.m_thisFrameTilesChanged !== undefined) {
+            return this.m_thisFrameTilesChanged;
+        }
         const renderList = this.m_visibleTiles.dataSourceTileList;
 
         const tileIdList: string[] = [];
@@ -2000,9 +2021,53 @@ export class MapView extends THREE.EventDispatcher {
 
         if (newTileIds !== this.m_lastTileIds) {
             this.m_lastTileIds = newTileIds;
-            return true;
+            this.m_thisFrameTilesChanged = true;
+        } else {
+            this.m_thisFrameTilesChanged = false;
         }
-        return false;
+
+        return this.m_thisFrameTilesChanged;
+    }
+
+    private checkCopyrightUpdates() {
+        if (!this.checkIfTilesChanged()) {
+            return;
+        }
+
+        const newCopyrightInfo = this.getRenderedTilesCopyrightInfo();
+        if (newCopyrightInfo === this.m_copyrightInfo) {
+            return;
+        }
+        if (newCopyrightInfo.length === this.m_copyrightInfo.length) {
+            let allEqual = true;
+            for (let i = 0; i < newCopyrightInfo.length; i++) {
+                const a = newCopyrightInfo[i];
+                const b = this.m_copyrightInfo[i];
+                if (a.label !== b.label) {
+                    allEqual = false;
+                    break;
+                }
+            }
+            if (allEqual) {
+                return;
+            }
+        }
+        this.m_copyrightInfo = newCopyrightInfo;
+        this.dispatchEvent(COPYRIGHT_CHANGED_EVENT);
+    }
+
+    private getRenderedTilesCopyrightInfo(): CopyrightInfo[] {
+        let result: CopyrightInfo[] = [];
+        for (const tileList of this.m_visibleTiles.dataSourceTileList) {
+            for (const tile of tileList.renderedTiles) {
+                const tileCopyrightInfo = tile.copyrightInfo;
+                if (tileCopyrightInfo === undefined || tileCopyrightInfo.length === 0) {
+                    continue;
+                }
+                result = CopyrightInfo.mergeArrays(result, tileCopyrightInfo);
+            }
+        }
+        return result;
     }
 
     private updateImages() {

@@ -19,6 +19,16 @@ export interface DecodedTile {
     poiGeometries?: PoiGeometry[];
     tileInfo?: TileInfo;
     decodeTime?: number; // time used to decode (in ms)
+
+    /**
+     * Tile data Copyright holder identifiers.
+     *
+     * `id`s should be unique. It is recommended to build them from unique identifiers like
+     * registered domain names.
+     *
+     * @see [[CopyrightInfo]]
+     */
+    copyrightHolderIds?: string[];
 }
 
 export interface TextPathGeometry {
@@ -259,4 +269,34 @@ export function getBufferAttribute(attribute: BufferAttribute): THREE.BufferAttr
         default:
             throw new Error(`unsupported buffer of type ${attribute.type}`);
     } // switch
+}
+
+/**
+ * This interface defines the copyright information typically used in map data.
+ */
+export interface CopyrightInfo {
+    /**
+     * Unique id of the copyright holder.
+     *
+     * `id`s should be unique. It is recommended to build them from unique identifiers like
+     * registered domain names.
+     *
+     * Data sources that support copyright information may return only `id` in form: `{id: "text"}`.
+     */
+    id: string;
+
+    /**
+     * Copyright text to display after the copyright symbol on the map.
+     */
+    label?: string;
+
+    /**
+     * Optional URL pointing to further copyright information.
+     */
+    link?: string;
+
+    /**
+     * Optional, copyright notice year.
+     */
+    year?: number;
 }
