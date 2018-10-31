@@ -7,5 +7,4 @@ doc
 *.js
 *.js.map
 resources/temp
-resources/fonts
 resources-dev/Fonts/Assets/*
