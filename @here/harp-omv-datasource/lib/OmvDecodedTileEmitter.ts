@@ -104,6 +104,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
 
     private m_outliner: Outliner = new Outliner();
     private m_extruder: Extruder = new Extruder();
+    private readonly m_sources: string[] = [];
 
     constructor(
         private readonly m_decodeInfo: OmvDecoder.DecodeInfo,
@@ -131,6 +132,8 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
         if (!feature.geometry) {
             return;
         }
+
+        this.processFeatureCommon(env);
 
         const geometry = feature.geometry;
 
@@ -251,6 +254,8 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
         if (!feature.geometry) {
             return;
         }
+
+        this.processFeatureCommon(env);
 
         const lines: number[][] = [];
         let line: number[];
@@ -501,6 +506,8 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
             return;
         }
 
+        this.processFeatureCommon(env);
+
         const techniqueIndex = techniques[0]._index;
         if (techniqueIndex === undefined) {
             throw new Error(
@@ -738,6 +745,9 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
         if (this.m_textPathGeometries.length > 0) {
             decodedTile.textPathGeometries = this.m_textPathGeometries;
         }
+        if (this.m_sources.length !== 0) {
+            decodedTile.copyrightHolderIds = this.m_sources;
+        }
         return decodedTile;
     }
 
@@ -940,5 +950,14 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
         buffers = new MeshBuffers(type);
         this.m_meshBuffers.set(index, buffers);
         return buffers;
+    }
+
+    private processFeatureCommon(env: MapEnv) {
+        const source = env.lookup("source");
+        if (typeof source === "string" && source !== "") {
+            if (!this.m_sources.includes(source)) {
+                this.m_sources.push(source);
+            }
+        }
     }
 }

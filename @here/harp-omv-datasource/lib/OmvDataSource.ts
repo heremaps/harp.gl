@@ -7,6 +7,7 @@
 import { GeometryType, ITileDecoder, StyleSet } from "@here/harp-datasource-protocol";
 import { MathUtils, TileKey, webMercatorTilingScheme } from "@here/harp-geoutils";
 import { Lines } from "@here/harp-lines";
+import { CopyrightInfo } from "@here/harp-mapview";
 import { DataProvider, TileDataSource, TileFactory } from "@here/harp-mapview-decoder";
 import {
     FeatureModifierId,
@@ -139,6 +140,13 @@ export interface OmvDataSourceParameters {
      * be shared between various [[OmvDataSource]]s.
      */
     featureModifierId?: FeatureModifierId;
+
+    /**
+     * Optional, default copyright information of tiles provided by this data source.
+     *
+     * Implementation should provide this information from the source data if possible.
+     */
+    copyrightInfo?: CopyrightInfo[];
 }
 
 /**
@@ -172,7 +180,8 @@ export class OmvDataSource extends TileDataSource<OmvTile> {
             dataProvider: getDataProvider(m_params),
             concurrentDecoderServiceName: OMV_TILE_DECODER_SERVICE_TYPE,
             decoder: m_params.decoder,
-            concurrentDecoderScriptUrl: m_params.concurrentDecoderScriptUrl
+            concurrentDecoderScriptUrl: m_params.concurrentDecoderScriptUrl,
+            copyrightInfo: m_params.copyrightInfo
         });
 
         this.cacheable = true;
