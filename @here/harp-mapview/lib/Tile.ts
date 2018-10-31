@@ -46,6 +46,7 @@ import {
 import * as THREE from "three";
 
 import { ColorCache } from "./ColorCache";
+import { CopyrightInfo } from "./CopyrightInfo";
 import { DataSource } from "./DataSource";
 import {
     applyDepthBasedPolygonOffset,
@@ -281,6 +282,11 @@ export class Tile implements CachedResource {
      * created in the vertex shader.
      */
     roadIntersectionData?: RoadIntersectionData;
+
+    /**
+     * Copyright information of this `Tile`'s data.
+     */
+    copyrightInfo?: CopyrightInfo[];
 
     private m_disposed: boolean = false;
 

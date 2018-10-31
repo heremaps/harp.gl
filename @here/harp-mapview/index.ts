@@ -28,3 +28,5 @@ export * from "./lib/ThemeLoader";
 export * from "./lib/RoadPicker";
 export * from "./lib/Statistics";
 export * from "./lib/DepthPrePass";
+export * from "./lib/CopyrightInfo";
+export * from "./lib/CopyrightElementHandler";
