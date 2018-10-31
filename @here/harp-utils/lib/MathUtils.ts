@@ -115,8 +115,8 @@ export namespace MathUtils {
     }
 
     /**
-     * Checks if a the value of a given number is inside an upper or lower bound. The bounds
-     * may be undefined, in which case their value is ignored.
+     * Checks if the value of a given number is inside an upper or lower bound. The bounds may be
+     * undefined, in which case their value is ignored.
      *
      * @returns `true` if value is inside the bounds, `false` otherwise.
      *
