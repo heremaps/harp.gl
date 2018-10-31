@@ -20,7 +20,7 @@
     "name": "HERE Global B.V. and its affiliate(s)",
     "url": "https://here.com"
   },
-  "license": "SEE LICENSE IN LICENSE",
+  "license": "Apache-2.0",
   "dependencies": {
     "@here/harp-geoutils": "^0.2.40",
     "@here/harp-lines": "^0.1.20",
