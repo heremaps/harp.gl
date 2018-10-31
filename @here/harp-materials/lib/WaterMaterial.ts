@@ -37,7 +37,7 @@ precision highp float;
 precision highp int;
 
 uniform sampler2D tex;
-uniform float t;
+uniform highp float t;
 
 varying vec2 vUv;
 //varying vec2 vGeos;
@@ -58,7 +58,10 @@ void main() {
 
     //gl_FragColor = mix(color1, color2, (sin(t + noiseColor.r * 5.0) + 1.0) / 2.0);
 
-    gl_FragColor = mix(color1, color2, (sin(noiseColor.r + noiseColor.r * noiseColor.r * t * 5.0) + 1.0) / 2.0);
+    //gl_FragColor = mix(color1, color2, (sin(noiseColor.r + noiseColor.r * noiseColor.r * t * 5.0) + 1.0) / 2.0);
+    //gl_FragColor = mix(color1, color2, (sin(noiseColor.r * t * 5.0) + 1.0) / 2.0);
+    //gl_FragColor = mix(color1, color2, (sin(noiseColor.r * t) + 1.0) / 2.0);
+    gl_FragColor = mix(color1, color2, (sin((noiseColor.r - t) * 5.0) + 1.0) / 2.0);
 }`;
 
 /**
@@ -84,7 +87,7 @@ const shaderParams = {
     depthWrite: false
 };
 
-function LoadSharedTextureIfNeeded()
+function loadSharedTextureIfNeeded()
 {
     if (! waterTextureIsLoaded)
     {
@@ -103,19 +106,20 @@ function LoadSharedTextureIfNeeded()
     }
 }
 
-export function UpdateWaterMaterial()
+let shaderClock = new THREE.Clock();
+
+export function updateWaterMaterial()
 {
-    t += 0.1;
-    //if (t > 1.0) {
-    //    t -= 1.0;
-    //}
-    shaderParams.uniforms.t = new THREE.Uniform(t);
+    t += shaderClock.getDelta();
+    //t = Math.asin(Math.sin(t));  // DDD
+    logger.log("t = ", t);
+    shaderParams.uniforms.t = new THREE.Uniform(Math.sin(t));
+    //shaderParams.uniforms.t = new THREE.Uniform(t);
 }
 
 
 /**
- * Material designed to render the edges of extruded buildings using GL_LINES. It supports solid
- * colors, vertex colors, color mixing and distance fading.
+ * Material designed to render the animated water.
  */
 export class WaterMaterial extends THREE.RawShaderMaterial {
     /**
@@ -124,7 +128,7 @@ export class WaterMaterial extends THREE.RawShaderMaterial {
      * @param params `WaterMaterial` parameters.
      */
     constructor(params?: WaterMaterialParameters) {
-        LoadSharedTextureIfNeeded();
+        loadSharedTextureIfNeeded();
         super(shaderParams);
     }
 }

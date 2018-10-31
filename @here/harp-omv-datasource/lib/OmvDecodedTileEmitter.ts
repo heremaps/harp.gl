@@ -17,6 +17,7 @@ import {
     Group,
     IMeshBuffers,
     InterleavedBufferAttribute,
+    isWaterTechnique,
     LineMarkerTechnique,
     Outliner,
     PoiGeometry,
@@ -851,7 +852,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                 });
             }
 
-            if (technique.name === "water") {
+            if (isWaterTechnique(technique)) {
                 const vertices = positionElements.length / 3;
                 logger.log(`Processing technique ${technique.name} -
                     total vertices is ${vertices}`);

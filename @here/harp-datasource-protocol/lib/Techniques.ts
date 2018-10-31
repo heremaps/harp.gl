@@ -1123,6 +1123,10 @@ export function isShaderTechnique(technique: Technique): technique is ShaderTech
     return technique.name === "shader";
 }
 
+export function isWaterTechnique(technique: Technique): technique is WaterTechnique {
+    return technique.name === "water";
+}
+
 /**
  * Generic material type constructor.
  */
