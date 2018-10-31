@@ -16,7 +16,7 @@
     "name": "HERE Global B.V. and its affiliate(s)",
     "url": "https://here.com"
   },
-  "license": "SEE LICENSE IN LICENSE",
+  "license": "Apache-2.0",
   "devDependencies": {
     "@types/chai": "^4.1.2",
     "@types/mocha": "^5.2.5",
