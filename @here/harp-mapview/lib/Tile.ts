@@ -854,8 +854,14 @@ export class Tile implements CachedResource {
                     getPropertyValue(technique.fadeFar, displayZoomLevel)
                 );
                 textElement.color = colorMap.get(textPath.technique);
-                textElement.minZoomLevel = technique.minZoomLevel;
-                textElement.maxZoomLevel = technique.maxZoomLevel;
+                textElement.minZoomLevel =
+                    technique.minZoomLevel !== undefined
+                        ? technique.minZoomLevel
+                        : this.mapView.minZoomLevel;
+                textElement.maxZoomLevel =
+                    technique.maxZoomLevel !== undefined
+                        ? technique.maxZoomLevel
+                        : this.mapView.maxZoomLevel;
                 textElement.distanceScale =
                     technique.distanceScale !== undefined
                         ? technique.distanceScale
@@ -949,12 +955,17 @@ export class Tile implements CachedResource {
                     );
 
                     textElement.color = colorMap.get(text.technique);
-                    textElement.minZoomLevel = technique.minZoomLevel;
-                    textElement.maxZoomLevel = technique.maxZoomLevel;
+                    textElement.minZoomLevel =
+                        technique.minZoomLevel !== undefined
+                            ? technique.minZoomLevel
+                            : this.mapView.minZoomLevel;
+                    textElement.maxZoomLevel =
+                        technique.maxZoomLevel !== undefined
+                            ? technique.maxZoomLevel
+                            : this.mapView.maxZoomLevel;
                     textElement.mayOverlap = technique.mayOverlap === true;
                     textElement.reserveSpace = technique.reserveSpace !== false;
-                    this.addTextElement(textElement);
-                    numTextElementsCreated++;
+
                     textElement.fadeNear = getPropertyValue(technique.fadeNear, displayZoomLevel);
                     textElement.fadeFar = getPropertyValue(technique.fadeFar, displayZoomLevel);
 
@@ -975,6 +986,9 @@ export class Tile implements CachedResource {
                     ) {
                         textElement.verticalAlignment = TextVerticalAlignment[technique.vAlignment];
                     }
+
+                    this.addTextElement(textElement);
+                    numTextElementsCreated++;
                 }
             }
         }

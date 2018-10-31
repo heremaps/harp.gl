@@ -81,7 +81,6 @@
                 "when": "$layer ^= 'roads'",
                 "attr": {
                     "color": "#CACBCC",
-                    "minZoomLevel": "min_zoom",
                     "clipping": false,
                     "isBackground": true
                 },
@@ -556,7 +555,6 @@
                     {
                         "when": "kind ^= 'major_road'",
                         "attr": {
-                            "minZoomLevel": "min_zoom",
                             "color": "#FFFFDC",
                             "lineWidth": [
                                 {
@@ -585,7 +583,6 @@
                         "when": "kind ^= 'highway'",
                         "attr": {
                             "color": "#FFFFDC",
-                            "minZoomLevel": "min_zoom",
                             "lineWidth": [
                                 {
                                     "maxLevel": 10,
@@ -613,7 +610,6 @@
                         "when": "kind_detail ^= 'secondary'",
                         "attr": {
                             "color": "#FFFFDC",
-                            "minZoomLevel": "min_zoom",
                             "lineWidth": [
                                 {
                                     "maxLevel": 3,
@@ -665,7 +661,6 @@
                         "when": "(kind_detail ^= 'primary' || kind_detail ^= 'motorway')",
                         "attr": {
                             "color": "#EB91B4",
-                            "minZoomLevel": "min_zoom",
                             "lineWidth": [
                                 {
                                     "maxLevel": 5,
@@ -713,7 +708,6 @@
                         "when": "kind_detail ^= 'tertiary'",
                         "attr": {
                             "color": "#FFFC8C",
-                            "minZoomLevel": "min_zoom",
                             "lineWidth": [
                                 {
                                     "maxLevel": 9,
@@ -745,7 +739,6 @@
                         "when": "$layer ^= roads && $level < 14",
                         "attr": {
                             "color": "#FFFFDC",
-                            "minZoomLevel": "min_zoom",
                             "isBridge": true,
                             "lineWidth": [
                                 {
@@ -784,7 +777,6 @@
                         "technique": "extruded-line",
                         "attr": {
                             "color": "#E8EAEB",
-                            "minZoomLevel": "min_zoom",
                             "caps": "None",
                             "lineWidth": 4,
                             "isBridge": true
@@ -1136,8 +1128,7 @@
                 "when": "$layer ^= 'landuse' && $geometryType ^= 'point'",
                 "technique": "text",
                 "attr": {
-                    "color": "#E3E2E0",
-                    "minZoomLevel": "min_zoom"
+                    "color": "#E3E2E0"
                 }
             },
             {
@@ -1149,7 +1140,6 @@
                         "technique": "fill",
                         "attr": {
                             "color": "#E3E2E0",
-                            "minZoomLevel": "min_zoom",
                             "renderOrder": 2,
                             "lineWidth": [
                                 {
@@ -1247,7 +1237,6 @@
                         "technique": "fill",
                         "renderOrder": 1,
                         "attr": {
-                            "minZoomLevel": "min_zoom",
                             "color": "#C9EBB7"
                         }
                     },
@@ -1256,7 +1245,6 @@
                         "technique": "fill",
                         "renderOrder": 1,
                         "attr": {
-                            "minZoomLevel": "min_zoom",
                             "color": "#e5e9ec"
                         }
                     },
@@ -1265,7 +1253,6 @@
                         "technique": "fill",
                         "renderOrder": 1,
                         "attr": {
-                            "minZoomLevel": "min_zoom",
                             "color": "#f5f7f4",
                             "label_placement": false
                         }
@@ -1275,7 +1262,6 @@
                         "technique": "fill",
                         "renderOrder": 1,
                         "attr": {
-                            "minZoomLevel": "min_zoom",
                             "color": "#e5e9ec"
                         }
                     },
@@ -1284,7 +1270,6 @@
                         "technique": "fill",
                         "renderOrder": 1,
                         "attr": {
-                            "minZoomLevel": "min_zoom",
                             "color": "#d6f7cc"
                         }
                     },
@@ -1293,7 +1278,6 @@
                         "technique": "fill",
                         "renderOrder": 1,
                         "attr": {
-                            "minZoomLevel": "min_zoom",
                             "color": "#eee2e8"
                         }
                     },
@@ -1302,7 +1286,6 @@
                         "technique": "fill",
                         "renderOrder": 1,
                         "attr": {
-                            "minZoomLevel": "min_zoom",
                             "color": "#c9ebb7"
                         }
                     },
@@ -1311,7 +1294,6 @@
                         "technique": "fill",
                         "renderOrder": 1,
                         "attr": {
-                            "minZoomLevel": "min_zoom",
                             "color": "#D7E9DA"
                         }
                     },
@@ -1320,7 +1302,6 @@
                         "technique": "fill",
                         "renderOrder": 1,
                         "attr": {
-                            "minZoomLevel": "min_zoom",
                             "color": "#e8eaeb"
                         }
                     },
@@ -1329,7 +1310,6 @@
                         "technique": "fill",
                         "renderOrder": 1,
                         "attr": {
-                            "minZoomLevel": "min_zoom",
                             "color": "#D7C9EF"
                         }
                     },
@@ -1338,7 +1318,6 @@
                         "technique": "fill",
                         "renderOrder": 1,
                         "attr": {
-                            "minZoomLevel": "min_zoom",
                             "color": "#C7C9EF"
                         }
                     },
@@ -1347,7 +1326,6 @@
                         "technique": "fill",
                         "renderOrder": 1,
                         "attr": {
-                            "minZoomLevel": "min_zoom",
                             "color": "#D9E1E4"
                         }
                     },
@@ -1356,7 +1334,6 @@
                         "technique": "fill",
                         "renderOrder": 1,
                         "attr": {
-                            "minZoomLevel": "min_zoom",
                             "color": "#fce3cf"
                         }
                     },
@@ -1365,7 +1342,6 @@
                         "technique": "fill",
                         "renderOrder": 1,
                         "attr": {
-                            "minZoomLevel": "min_zoom",
                             "color": "#90b5a2"
                         }
                     },
@@ -1374,7 +1350,6 @@
                         "technique": "fill",
                         "renderOrder": 1,
                         "attr": {
-                            "minZoomLevel": "min_zoom",
                             "color": "#F4F4F4"
                         }
                     },
@@ -1383,7 +1358,6 @@
                         "technique": "fill",
                         "renderOrder": 1,
                         "attr": {
-                            "minZoomLevel": "min_zoom",
                             "color": "#ffffce"
                         }
                     }
@@ -1399,16 +1373,14 @@
                         "technique": "text",
                         "attr": {
                             "color": "#515151",
-                            "label_placement": true,
-                            "minZoomLevel": "min_zoom"
+                            "label_placement": true
                         }
                     },
                     {
                         "when": "kind in ['arete', 'cliff', 'ridge', 'valley']",
                         "technique": "line",
                         "attr": {
-                            "color": "#C1BDB3",
-                            "minZoomLevel": "min_zoom"
+                            "color": "#C1BDB3"
                         }
                     }
                 ]
