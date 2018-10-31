@@ -54,6 +54,11 @@
     "build": "webpack -d --config webpack.examples.config.js",
     "typedoc": "ts-node ./scripts/doc-snippets.ts && typedoc --options typedoc.json"
   },
+  "engines": {
+    "node": ">=9.11.1",
+    "npm": ">=5.8.0",
+    "yarn": ">=1.11.1"
+  },
   "repository": {
     "type": "git",
     "url": "git://github.com:heremaps/harp.gl.git"

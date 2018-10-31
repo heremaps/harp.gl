@@ -72,7 +72,7 @@ const DEFAULT_LABEL_SCALE_START_DISTANCE = 0.4;
 const PRINT_LABEL_DEBUG_INFO: boolean = false;
 
 // Some punctuation characters (like: (, ), <, >, [,], {, }) need to be mirrored when rendering an
-// RTL strign to preserve their instrinsic meaning.
+// RTL string to preserve their intrinsic meaning.
 // https://en.wikipedia.org/wiki/Basic_Latin_(Unicode_block)#Table_of_characters
 const rtlMirroredCodepoints = [40, 41, 60, 62, 91, 93, 123, 125];
 
@@ -1401,7 +1401,7 @@ export class TextElementsRenderer {
                     }
                 }
 
-                // Check if label should be renderd at this zoomLevel
+                // Check if label should be rendered at this zoomLevel
                 const renderText =
                     poiInfo === undefined ||
                     zoomLevel === undefined ||

@@ -9,18 +9,17 @@ import "@here/harp-fetch";
 import { composeUrlResolvers, defaultUrlResolver, resolveReferenceUrl } from "@here/harp-utils";
 
 /**
- * `ThemeLoader` loads and validates a theme from URL objects.
+ * Loads and validates a theme from URL objects.
  */
 export class ThemeLoader {
     /**
-     * Loads [[Theme]] from a remote resource provided as a URL.
+     * Loads a [[Theme]] from a remote resource, provided as a URL that points to a
+     * JSON-encoded theme.
      *
-     * By default, relative URLs are resolved to full URL using document base URL.
+     * Relative URLs are resolved to full URL using the document's base URL
      * (see: https://www.w3.org/TR/WD-html40-970917/htmlweb.html#h-5.1.2).
      *
-     * Expects a URL pointing to a theme encoded as JSON.
-     *
-     * @param themeUrl Theme URL.
+     * @param themeUrl The URL to the theme.
      */
     static async loadAsync(themeUrl: string): Promise<Theme> {
         themeUrl = defaultUrlResolver(themeUrl);

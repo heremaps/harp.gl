@@ -233,8 +233,7 @@
                                     "color": "#565660",
                                     "textLabel": "kind_detail",
                                     "scale": 0.5,
-                                    "priority": 15.0,
-                                    "minZoomLevel": "min_zoom"
+                                    "priority": 15.0
                                 }
                             },
                             {
@@ -286,8 +285,7 @@
                                 "attr": {
                                     "color": "#565660",
                                     "scale": 0.5,
-                                    "priority": 20.0,
-                                    "minZoomLevel": "min_zoom"
+                                    "priority": 20.0
                                 }
                             },
                             {
@@ -341,8 +339,7 @@
                                 "attr": {
                                     "color": "#565660",
                                     "scale": 0.5,
-                                    "priority": 25.0,
-                                    "minZoomLevel": "min_zoom"
+                                    "priority": 25.0
                                 }
                             },
                             {
@@ -624,8 +621,7 @@
                                 "attr": {
                                     "color": "#565660",
                                     "scale": 0.5,
-                                    "priority": 25.0,
-                                    "minZoomLevel": "min_zoom"
+                                    "priority": 25.0
                                 }
                             },
                             {
@@ -1272,7 +1268,6 @@
                 "technique": "text",
                 "renderOrder": 7,
                 "attr": {
-                    "minZoomLevel": "min_zoom",
                     "color": "#6d7477",
                     "scale": 0.85,
                     "priority": 200
@@ -1281,9 +1276,6 @@
             {
                 "description": "Grouped theme for landuse polygons",
                 "when": "$layer ^= 'landuse' && $geometryType ^= 'polygon'",
-                "attr": {
-                    "xminZoomLevel": "min_zoom"
-                },
                 "styles": [
                     {
                         "when": "kind ^= 'urban'",
@@ -1459,16 +1451,14 @@
                             ],
                             "color": "#E48892",
                             "allCaps": true,
-                            "opacity": 0.6,
-                            "minZoomLevel": "min_zoom"
+                            "opacity": 0.6
                         }
                     },
                     {
                         "when": "kind in ['archipelago', 'cliff', 'ridge', 'island', 'islet']",
                         "technique": "line",
                         "attr": {
-                            "color": "#C1BDB3",
-                            "minZoomLevel": "min_zoom"
+                            "color": "#C1BDB3"
                         }
                     }
                 ]
