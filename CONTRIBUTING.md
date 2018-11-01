@@ -42,6 +42,8 @@ In order to maintain a high software quality standard, we strongly prefer contri
 - To resolve conflicts, rebase pull request branches onto their target branch instead of merging the target branch into
   the pull request branch. This again results in a cleaner history without "criss-cross" merges.
 
+- Please see [CODINGSTYLE.md](CODINGSTYLE.md) for more information about the coding style.
+
 <!---
 As GitHub is not particularly good at reviewing pull requests commit by commit, it does not support adding review
 comments to commit messages at all, and it cannot show the diff between two iterations of force-pushed pull request
