@@ -75,3 +75,5 @@ for (const sourceFile of sourceFiles) {
         console.log("generated", fileName, path.resolve(outDir, fileName));
     }
 }
+
+fs.copyFileSync(path.join(sdkDir, "LICENSE"), path.join(outDir, "LICENSE"));
