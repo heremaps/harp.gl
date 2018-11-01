@@ -10,7 +10,6 @@
   "scripts": {
     "test": "cross-env mocha --require source-map-support/register $EXTRA_MOCHA_ARGS ./test/*.js",
     "build": "tsc",
-    "create-font-catalog": "node ./scripts/create-font-catalog.js",
     "prepare": "cross-env tsc --sourceMap false $EXTRA_TSC_ARGS"
   },
   "repository": {
@@ -32,12 +31,9 @@
     "chai": "^4.0.2",
     "copyfiles": "^2.0.0",
     "cross-env": "^5.2.0",
-    "fontkit": "^1.7.7",
     "mkpath": "^1.0.0",
     "mocha": "^5.2.0",
-    "msdf-bmfont-xml": "^2.3.5",
     "source-map-support": "^0.5.2",
-    "typescript": "3.1.1",
-    "unicode-range-json": "^1.0.1"
+    "typescript": "3.1.1"
   }
 }
