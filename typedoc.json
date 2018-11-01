@@ -13,7 +13,6 @@
     "includes": "dist/doc",
     "readme": "README.md",
     "target": "ES6",
-    "ignoreCompilerErrors": true,
     "excludePrivate": "true",
     "excludeExternals": "true",
     "excludeNotExported": "true",
