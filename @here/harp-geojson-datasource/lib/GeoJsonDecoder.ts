@@ -15,13 +15,11 @@ import {
     isCirclesTechnique,
     isFillTechnique,
     isPoiTechnique,
-    isSegmentsTechnique,
     isSolidLineTechnique,
     isSquaresTechnique,
     isTextTechnique,
     LineFeatureGroup,
     PoiGeometry,
-    SolidLineTechnique,
     StyleSetEvaluator,
     Technique,
     TextGeometry,
@@ -314,7 +312,7 @@ class GeoJsonDecoder {
         let techniqueIndices: number[] = [];
         switch (feature.geometry.type) {
             case "Point":
-                techniqueIndices = this.findOrCreateTechniqueIndices(feature, "point");
+                techniqueIndices = this.findTechniqueIndices(feature, "point");
                 for (const techniqueIndex of techniqueIndices) {
                     const technique = this.m_styleSetEvaluator.techniques[techniqueIndex];
                     if (isPoiTechnique(technique)) {
@@ -341,7 +339,7 @@ class GeoJsonDecoder {
                 break;
 
             case "MultiPoint":
-                techniqueIndices = this.findOrCreateTechniqueIndices(feature, "point");
+                techniqueIndices = this.findTechniqueIndices(feature, "point");
                 for (const techniqueIndex of techniqueIndices) {
                     const technique = this.m_styleSetEvaluator.techniques[techniqueIndex];
                     if (isPoiTechnique(technique)) {
@@ -368,7 +366,7 @@ class GeoJsonDecoder {
                 break;
 
             case "LineString":
-                techniqueIndices = this.findOrCreateTechniqueIndices(feature, "line");
+                techniqueIndices = this.findTechniqueIndices(feature, "line");
                 for (const techniqueIndex of techniqueIndices) {
                     const technique = this.m_styleSetEvaluator.techniques[techniqueIndex];
                     if (isSolidLineTechnique(technique)) {
@@ -391,7 +389,7 @@ class GeoJsonDecoder {
                 break;
 
             case "MultiLineString":
-                techniqueIndices = this.findOrCreateTechniqueIndices(feature, "line");
+                techniqueIndices = this.findTechniqueIndices(feature, "line");
                 for (const techniqueIndex of techniqueIndices) {
                     const technique = this.m_styleSetEvaluator.techniques[techniqueIndex];
                     if (isSolidLineTechnique(technique)) {
@@ -416,7 +414,7 @@ class GeoJsonDecoder {
                 break;
 
             case "Polygon":
-                techniqueIndices = this.findOrCreateTechniqueIndices(feature, "polygon");
+                techniqueIndices = this.findTechniqueIndices(feature, "polygon");
                 for (const techniqueIndex of techniqueIndices) {
                     const technique = this.m_styleSetEvaluator.techniques[techniqueIndex];
                     if (isFillTechnique(technique)) {
@@ -439,7 +437,7 @@ class GeoJsonDecoder {
                 break;
 
             case "MultiPolygon":
-                techniqueIndices = this.findOrCreateTechniqueIndices(feature, "polygon");
+                techniqueIndices = this.findTechniqueIndices(feature, "polygon");
                 for (const techniqueIndex of techniqueIndices) {
                     const technique = this.m_styleSetEvaluator.techniques[techniqueIndex];
                     if (isFillTechnique(technique)) {
@@ -1109,120 +1107,24 @@ class GeoJsonDecoder {
     }
 
     /**
-     * Returns a tecnhique index based on a technique name, or creates a new technique if another
-     * styling is provided in the feature's properties.
-     *
-     * Supported properties are `radius`, `width`, `style.fill`, `style.color`.
+     * Returns the indices of the techniques matching the feature type and feature properties.
      *
      * @param feature GeoJSON feature.
      * @param envType Technique type name.
      */
-    private findOrCreateTechniqueIndices(feature: Feature, envType: Value): number[] {
-        const techniqueIndices: Array<number | undefined> = [];
-
+    private findTechniqueIndices(feature: Feature, envType: Value): number[] {
         const featureDetails: FeatureDetails = Flattener.flatten(feature.properties, "properties");
-
-        if (feature.id !== undefined) {
-            featureDetails.featureId = feature.id;
-        }
-
+        featureDetails.featureId = feature.id;
         const env = new MapEnv({ type: envType, ...featureDetails });
-        const techniques = this.m_styleSetEvaluator.getMatchingTechniques(env);
-
-        let featureColor: THREE.Color | undefined;
-        if (feature.properties !== undefined && feature.properties.style !== undefined) {
-            if (envType === "polygon" && feature.properties.style.fill !== undefined) {
-                featureColor = new THREE.Color(feature.properties.style.fill);
-            } else if (feature.properties.style.color !== undefined) {
-                featureColor = new THREE.Color(feature.properties.style.color);
-            }
-        }
-
-        const featureRadius =
-            envType === "point" && feature.properties && feature.properties.radius
-                ? feature.properties.radius
-                : undefined;
-        const radiusFactor = 5;
-
-        const featureWidth =
-            feature.properties && feature.properties.width ? feature.properties.width : undefined;
-
-        if (
-            featureColor !== undefined ||
-            featureRadius !== undefined ||
-            featureWidth !== undefined
-        ) {
-            // check if we have technique with required styling in already exist
-            for (const technique of techniques) {
-                let match = true;
-                // color, fill
-                if (
-                    featureColor !== undefined &&
-                    (isSegmentsTechnique(technique) ||
-                        isCirclesTechnique(technique) ||
-                        isSquaresTechnique(technique) ||
-                        isFillTechnique(technique) ||
-                        technique.name === "solid-line")
-                ) {
-                    const themeColor = new THREE.Color(technique.color);
-                    if (
-                        featureColor !== undefined &&
-                        themeColor.r === featureColor.r &&
-                        themeColor.g === featureColor.g &&
-                        themeColor.b === featureColor.b
-                    ) {
-                        techniqueIndices.push(technique._index);
-                    } else {
-                        match = false;
-                    }
-                }
-
-                // radius
-                if (
-                    featureRadius !== undefined &&
-                    (isCirclesTechnique(technique) || isSquaresTechnique(technique)) &&
-                    match === true
-                ) {
-                    if (featureRadius * radiusFactor === technique.size) {
-                        techniqueIndices.push(technique._index);
-                    } else {
-                        match = false;
-                    }
-                }
-
-                // width
-                if (
-                    featureWidth !== undefined &&
-                    technique.name === "solid-line" &&
-                    match === true
-                ) {
-                    if (
-                        typeof (technique as SolidLineTechnique).lineWidth === "number" &&
-                        (technique as SolidLineTechnique).lineWidth === featureWidth
-                    ) {
-                        techniqueIndices.push(technique._index);
-                    } else {
-                        match = false;
-                    }
-                }
-            }
-        } else {
-            // Use already existing techniques in case the feature's properties don't contain
-            // styling information.
-            for (const technique of techniques) {
-                techniqueIndices.push(technique._index);
-            }
-        }
-
-        for (const techniqueIndex of techniqueIndices) {
-            if (techniqueIndex === undefined) {
+        return this.m_styleSetEvaluator.getMatchingTechniques(env).map(technique => {
+            const index = technique._index;
+            if (index === undefined) {
                 throw new Error(
                     "GeoJsonDecoder#findOrCreateTechniqueIndex: Internal error - No technique index"
                 );
             }
-        }
-
-        return techniqueIndices as number[];
+            return index;
+        });
     }
 
     /**

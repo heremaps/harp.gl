@@ -10,34 +10,37 @@ const TEXTURE_WIDTH = 1;
 export const DEFAULT_MONOMIAL_POWER = 1;
 
 /**
- * This class generates a texture containing a linear gradient.
+ * Generates a texture containing a linear gradient.
  *
- * The gradient goes from `topColor` in the top part of the image to `bottomColor` at the bottom
- * part of the image. The default dimension of the texture is 1x256 pixels. The first pixel on the
- * bottom is filled with the `groundColor`. This class generates the texture used in
- * [[SkyBackground]] to create the sky background.
+ * The gradient goes from `topColor` in the top part of the image to `bottomColor` in the bottom
+ * part of the image. The default dimension of the texture is 1x256 pixels. The first pixel at the
+ * bottom is filled with `groundColor`. This class generates the texture used in [[SkyBackground]]
+ * to create the sky background.
  *
- * The `topColor` is the color that defines the upper part of the sky, the `bottomColor` is the
- * color that defines the portion of sky above the horizon, and the `groundColor` defines the
- * color of the background below the horizon, visible when there are no visible tiles.
+ * The colors are defined as follows:
+ * - `topColor` is the color that defines the upper part of the sky
+ * - `bottomColor` is the color that defines the part of sky above the horizon
+ * - `groundColor` is the color of the background below the horizon; which can only be seen when
+ *    there are no visible tiles.
  */
 
 export class SkyGradientTexture {
     private m_texture: DataTexture;
 
     /**
-     * Constructs the `SkyGradientTexture`.
+     * Constructs a `SkyGradientTexture` instance.
      *
      * @param m_topColor Defines the top color of the gradient.
      * @param m_bottomColor Defines the bottom color of the gradient.
-     * @param m_groundColor Defines the first pixel of the gradient in the bottom part.
-     * @param m_monomialPower Defines the texture's gradient power. Defaults to 1 (linear gradient).
-     * @param m_height Default is 256, it defines the height of the texture.
+     * @param m_groundColor Defines the first pixel of the gradient, in the bottom part.
+     * @param m_monomialPower Defines the texture's gradient power; the default value is 1
+     * (linear gradient).
+     * @param m_height Defines the texture's height; the default value is 256.
      *
      * @example
      * ```TypeScript
      * // This snippet creates a texture containing a gradient that goes from red in the upper part
-     * // of the image to blue in the bottom part of the image, with a 1 gray pixel at the bottom
+     * // of the image to blue in the bottom part of the image, with 1 gray pixel at the bottom
      * // line.
      * let gradient = new SkyGradientTexture(
      *   new Color("#FF000"),
@@ -74,12 +77,12 @@ export class SkyGradientTexture {
     }
 
     /**
-     * Updates the Texture with new colors.
+     * Updates the Texture with new colors and height.
      *
-     * @param topColor The new top color
-     * @param bottomColor The new bottom color
-     * @param groundColor The new ground color
-     * @param height The texture height
+     * @param topColor The new top color.
+     * @param bottomColor The new bottom color.
+     * @param groundColor The new ground color.
+     * @param height The texture's new height.
      */
     update(
         topColor: Color,
@@ -111,18 +114,18 @@ export class SkyGradientTexture {
         return texture;
     }
 
-    // when creating the texture, an Uint8Array must be given, because the resulting texture passed
+    // When creating the texture, a Uint8Array is required, because the resulting texture passed
     // to the scene as a background, is a texImage2D object, that does not accept UintClampedArray
     // https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/texImage2D
-    // But, when updating the texture, an Uint8ClampedArray is passed as argument, because
-    // this.m_texture.image.data returns a Uint8ClampedArray. That's why this method accept both
+    // But, when updating the texture, a Uint8ClampedArray is passed as argument, because
+    // this.m_texture.image.data returns a Uint8ClampedArray. That's why this method accepts both.
     private fillTextureData(data: Uint8ClampedArray | Uint8Array) {
         const size = TEXTURE_WIDTH * this.m_height;
         const topColor = this.m_topColor;
         const bottomColor = this.m_bottomColor;
         const groundColor = this.m_groundColor;
-        // the first pixel of the texture is occupied by the ground color.
-        // This color is used just for the part of the screen that remains below the horizon
+        // The first pixel of the texture is occupied by the ground color.
+        // This color is used just for the part of the screen that remains below the horizon.
         data[0] = groundColor.r * 255;
         data[1] = groundColor.g * 255;
         data[2] = groundColor.b * 255;

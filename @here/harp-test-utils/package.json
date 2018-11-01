@@ -18,7 +18,7 @@
     "name": "HERE Global B.V. and its affiliate(s)",
     "url": "https://here.com"
   },
-  "license": "SEE LICENSE IN LICENSE",
+  "license": "Apache-2.0",
   "devDependencies": {
     "@here/harp-fetch": "^0.2.0",
     "@here/harp-utils": "^0.1.4",

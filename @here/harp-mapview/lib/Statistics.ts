@@ -9,8 +9,8 @@ import { LoggerManager, PerformanceTimer } from "@here/harp-utils";
 const logger = LoggerManager.instance.create("Statistics");
 
 /**
- * A simple ring buffer to store the last n values of the timer. The buffer works as a
- * Last-In-First-Out (LIFO) buffer.
+ * A simple ring buffer to store the last `n` values of the timer. The buffer works on
+ * a Last-In-First-Out (LIFO) basis.
  */
 export class RingBuffer<T> {
     buffer: T[];
@@ -21,7 +21,7 @@ export class RingBuffer<T> {
     /**
      * Sets up the ring buffer.
      *
-     * @param capacity Capacity of the buffer.
+     * @param capacity The buffer's capacity.
      */
     constructor(readonly capacity: number) {
         this.buffer = new Array(capacity);
@@ -30,14 +30,14 @@ export class RingBuffer<T> {
     }
 
     /**
-     * Clear the contents, make it appear empty.
+     * Clears the contents, removes all elements.
      */
     clear(): void {
         this.head = this.tail = this.size = 0;
     }
 
     /**
-     * Add a single element to the ring buffer.
+     * Adds a single element to the ring buffer.
      *
      * @param data Data element.
      */
@@ -59,9 +59,9 @@ export class RingBuffer<T> {
     }
 
     /**
-     * Adds one or multiple elements.
+     * Adds one or more elements.
      *
-     * @param data One or multiple elements to add.
+     * @param data The elements to add.
      */
     enq(...data: T[]): void {
         for (const v of data) {
@@ -70,8 +70,8 @@ export class RingBuffer<T> {
     }
 
     /**
-     * Obtains latest element (LIFO). May throw an exception if a buffer underrun occurs. Make sure
-     * that `size > 0` before calling this method.
+     * Obtains the latest element (LIFO). May throw an exception if a buffer underrun occurs.
+     * Before calling this method, make sure that `size > 0`.
      */
     deq(): T {
         if (this.size === 0) {
@@ -92,14 +92,14 @@ export class RingBuffer<T> {
     }
 
     /**
-     * Create an iterator for the buffer.
+     * Creates an iterator for the buffer.
      */
     iterator(): RingBuffer.Iterator<T> {
         return new RingBuffer.Iterator<T>(this);
     }
 
     /**
-     * Return a copy of the buffer, where the elements are properly sorted from oldest to newest.
+     * Returns a copy of the buffer, where the elements are properly sorted from oldest to newest.
      */
     asArray(): T[] {
         const array = new Array<T>();
@@ -112,11 +112,11 @@ export class RingBuffer<T> {
 
 export namespace RingBuffer {
     /**
-     * "Local" class for RingBuffer<T>
+     * A local class for RingBuffer<T>
      */
     export class Iterator<T> {
         /**
-         * Create an iterator for the ring buffer.
+         * Creates an iterator for the ring buffer.
          *
          * @param m_buffer `Ringbuffer` to iterate over.
          * @param m_index Start index.
@@ -124,8 +124,8 @@ export namespace RingBuffer {
         constructor(private m_buffer: RingBuffer<T>, private m_index: number = 0) {}
 
         /**
-         * Get current value of the iterator. Will not fail if overrun occurs. Overruns can only be
-         * detected by watching the result of [[next]].
+         * Gets the iterator's current value. This function does not fail even if an overrun occurs.
+         * To detect an overrun, watch the result for [[next]].
          */
         get value(): T {
             return this.m_buffer.buffer[
@@ -134,9 +134,9 @@ export namespace RingBuffer {
         }
 
         /**
-         * Advance iterator to next element.
+         * Advances the iterator to the next element.
          *
-         * @returns `true` if iterator is still valid. `false` if overrun occurred.
+         * @returns `true` if the iterator is still valid; `false` if an overrun occurs.
          */
         next(): boolean {
             this.m_index++;
@@ -146,39 +146,41 @@ export namespace RingBuffer {
 }
 
 /**
- * Missing Typedoc
+ * An interface for a Timer class, that abstracts the basic functions of a Timer. Implemented
+ * by SimpleTimer, SampledTimer, and MultiStageTimer.
  */
 export interface Timer {
     readonly name: string;
     readonly value?: number;
 
     /**
-     * Reset value to be able to start again.
+     * Resets value to be able to start again.
      */
     reset(): void;
 
     /**
-     * Start the timer. Returns current time as returned by `Performance.now()`.
+     * Starts the timer. Returns the current time, based on `Performance.now()`.
      */
     start(): number;
 
     /**
-     * Stop the timer. Requires that timer has been started.
+     * Stops the timer. Requires that the timer has started.
      */
     stop(): number;
 
     /**
-     * Sample timer. Requires that timer has been started. Does not modify the internal state of a
-     * timer.
+     * Samples the timer. Requires that the timer has started. This function does not modify
+     * the timer's internal state.
      *
      * @returns Current timer value. `-1` if statistics are disabled.
      */
     now(): number;
 
     /**
-     * Set the measurement value.
+     * Sets the measurement value for the amount of time that has elapsed from start() to stop().
+     * Use this function to override the timer's duration.
      *
-     * @param val Measurement value.
+     * @param val The timer's duration.
      */
     setValue(val: number | undefined): void;
 }
@@ -195,30 +197,32 @@ export class SimpleTimer implements Timer {
     constructor(public statistics: Statistics, readonly name: string) {}
 
     /**
-     * Get latest measurement. May be `undefiend` if measurement was not done.
+     * Gets the latest measurement. This function may return `undefined` if no measurement
+     * was done.
      */
     get value(): number | undefined {
         return this.m_currentValue;
     }
 
     /**
-     * Set the measurement value.
+     * Sets the measurement value for the amount of time that has elapsed from start() to stop().
+     * Use this function to override the timer's duration.
      *
-     * @param val Measurement value.
+     * @param val The timer's duration.
      */
     setValue(val: number | undefined) {
         this.m_currentValue = val;
     }
 
     /**
-     * Reset the value to be able to start again.
+     * Resets the value to be able to start again.
      */
     reset() {
         this.m_currentValue = undefined;
     }
 
     /**
-     * Start the timer. Returns current time as returned by `Performance.now()`.
+     * Starts the timer. Returns the current time, based on `Performance.now()`.
      */
     start(): number {
         if (!this.statistics.enabled) {
@@ -232,7 +236,7 @@ export class SimpleTimer implements Timer {
     }
 
     /**
-     * Stop the timer. Requires that timer has been started.
+     * Stops the timer. Requires that the timer has started.
      */
     stop(): number {
         if (!this.statistics.enabled) {
@@ -251,9 +255,9 @@ export class SimpleTimer implements Timer {
     }
 
     /**
-     * Sample timer. Requires that timer has been started.
+     * Samples the timer. Requires that the timer has started.
      *
-     * @returns Current timer value. `-1` if statistics are disabled.
+     * @returns the current timer value; `-1` if statistics are disabled.
      */
     now(): number {
         if (!this.statistics.enabled) {
@@ -269,56 +273,59 @@ export class SimpleTimer implements Timer {
 }
 
 /**
- * Timer that stores the latest `n` samples in a ring buffer.
+ * A timer that stores the last `n` samples in a ring buffer.
  */
 export class SampledTimer extends SimpleTimer {
     /**
-     * Missing Typedoc
+     * The lowest timer duration measured, or `undefined` if no timer was run.
      */
     min?: number;
 
     /**
-     * Missing Typedoc
+     * The highest timer duration measured, or `undefined` if no timer was run.
      */
     max?: number;
 
     /**
-     * Missing Typedoc
+     * The average duration of all timers.
      */
     avg?: number;
 
     /**
-     * Missing Typedoc
+     * The median duration of all timers.
      */
     median?: number;
 
     /**
-     * Missing Typedoc
+     * The 95th percentile median duration of all timers.
      */
     median95?: number;
 
     /**
-     * Missing Typedoc
+     * The number of times the timer was started and subsequently stopped; cannot exceed
+     * `maxNumSamples`.
      */
     numSamples = 0;
 
     /**
-     * Missing Typedoc
+     * The number of times the timer has reset.
      */
     numResets = 0;
 
     /**
-     * Maximum samples until the reset and update of stats, which may destroy a median computation.
+     * Maximum samples until the statistics are reset and updated, which may destroy a median
+     * computation.
      */
     maxNumSamples = 1000;
 
     /**
-     * Missing Typedoc
+     * The number of times the timer was started and subsequently stopped; cannot exceed
+     * `maxNumSamples`.
      */
     samples = new RingBuffer<number>(this.maxNumSamples);
 
     /**
-     * Create a `SampledTimer`. Must still be added to statistics if it should be logged!
+     * Creates a `SampledTimer` instance. Must still be added to statistics if it should be logged!
      *
      * @param statistics Statistics to use for management.
      * @param name Name of the timer. Use colons to build a hierarchy.
@@ -328,7 +335,7 @@ export class SampledTimer extends SimpleTimer {
     }
 
     /**
-     * Reset and clear all historical values.
+     * Resets the timer and clears all of its historical values.
      */
     reset() {
         super.reset();
@@ -352,8 +359,8 @@ export class SampledTimer extends SimpleTimer {
     }
 
     /**
-     * Update min/max/avg/median. This currently requires a copy of the sampled values, which is
-     * expensive.
+     * Updates the `min`, `max`, `avg`, and `median` values. Currently, this function is expensive,
+     * as it requires a copy of the sampled values.
      */
     updateStats(): void {
         if (this.samples.size === 0) {
@@ -407,18 +414,18 @@ export class SampledTimer extends SimpleTimer {
 }
 
 /**
- * A `MultiStageTimer` measures a sequence of connected events, for example, multiple stages of
- * processing in a function. Every stage is identified with a name (must be a valid timer in the
- * statistics object and thus be unique within a `MultiStageTimer`).
+ * Measures a sequence of connected events, such as multiple processing stages in a function.
+ * Each stage is identified with a timer name, that must be a valid timer in the statistics
+ * object. Additionally, all timers within a `MultiStageTimer` must be unique.
  *
- * Internally, the `MultiStageTimer` manages a list of timers, where at the end of a stage one timer
- * stops and another timer starts.
+ * Internally, the `MultiStageTimer` manages a list of timers where at the end of each stage,
+ * one timer stops and the next timer starts.
  */
 export class MultiStageTimer {
     private currentStage: string | undefined;
 
     /**
-     * Define the `MultiStageTimer` with a list of timer names that represent its stages.
+     * Defines the `MultiStageTimer` with a list of timer names that represent its stages.
      *
      * @param statistics The statistics object that manages the timers.
      * @param name Name of this `MultiStageTimer`.
@@ -437,15 +444,15 @@ export class MultiStageTimer {
     }
 
     /**
-     * Get timer value of last stage. Is `undefined` if the `MultiStageTimer` did not finish the
-     * last stage.
+     * Gets the timer value for the last stage. If the `MultiStageTimer` did not finish its
+     * last stage, the value is `undefined`.
      */
     get value(): number | undefined {
         return this.statistics.getTimer(this.stages[this.stages.length - 1]).value;
     }
 
     /**
-     * Reset the timers of all stages.
+     * Resets the timers across all stages.
      */
     reset(): void {
         if (!this.statistics.enabled) {
@@ -457,7 +464,7 @@ export class MultiStageTimer {
     }
 
     /**
-     * Start the `MultiStageTimer` with the first stage.
+     * Starts the `MultiStageTimer` at its first stage.
      */
     start(): number {
         this.stage = this.stages[0];
@@ -466,7 +473,7 @@ export class MultiStageTimer {
     }
 
     /**
-     * Stop the `MultiStageTimer`. Returns the measurement of the last stage, which may be
+     * Stops the `MultiStageTimer`. Returns the measurement of the last stage, which may be
      * `undefined` if not all stages started.
      */
     stop(): number {
@@ -475,18 +482,18 @@ export class MultiStageTimer {
     }
 
     /**
-     * Get the current stage.
+     * Gets the current stage.
      */
     get stage(): string | undefined {
         return this.currentStage;
     }
 
     /**
-     * Set the current stage. If a new stage is provided, the current timer (if any) is stopped, and
-     * the next timer (if stage is not `undefined`, which is equivalent to calling `stop` on the
-     * `MultiStageTimer`) is started.
+     * Sets the current stage. If a new stage is provided, the current timer (if available) is
+     * stopped, and the next timer is started. If the timer in the next stage is `undefined`,
+     * this is equivalent to calling `stop` on the `MultiStageTimer`.
      *
-     * @param stage New stage to start.
+     * @param stage The next stage to start.
      */
     set stage(stage: string | undefined) {
         if (this.currentStage === stage) {
@@ -506,8 +513,8 @@ export class MultiStageTimer {
 }
 
 /**
- * The `Statistics` class manages a set of timers. Its main objective is to log the timers. The
- * statistics may be disabled to minimize their performance impact.
+ * Manages a set of timers. The main objective of `Statistics` is to log these timers. You can
+ * disable statistics to minimize their impact on performance.
  */
 export class Statistics {
     private timers: Map<string, Timer>;
@@ -515,10 +522,10 @@ export class Statistics {
     private nullTimer: Timer;
 
     /**
-     * Set up a group of timers.
+     * Sets up a group of timers.
      *
-     * @param name Name of statistics fot logging purposes.
-     * @param enabled If `false`, the timers will not measure the performance.
+     * @param name The statistics name, for logging purposes.
+     * @param enabled If `false`, the timers do not measure the performance.
      */
     constructor(public name?: string, public enabled = false) {
         this.timers = new Map<string, Timer>();
@@ -526,9 +533,9 @@ export class Statistics {
     }
 
     /**
-     * Adds a timer. Name must be unique.
+     * Adds a timer, based on the name specified.
      *
-     * @param name Name of a timer. Must be unique.
+     * @param name The timer's name; must be unique.
      */
     createTimer(name: string, keepSamples = true): Timer {
         const timer = keepSamples ? new SampledTimer(this, name) : new SimpleTimer(this, name);
@@ -537,9 +544,9 @@ export class Statistics {
     }
 
     /**
-     * Adds a timer. Name must be unique within this statistics object.
+     * Adds the timer specified.
      *
-     * @param timer Timer. Must have a unique name.
+     * @param timer The timer's name, which must be unique within this statistics object.
      */
     addTimer(timer: Timer): Timer {
         if (this.timers.get(timer.name) !== undefined) {
@@ -552,9 +559,9 @@ export class Statistics {
     }
 
     /**
-     * Get a timer by name.
+     * Gets a timer by name.
      *
-     * @param name Name of a timer.
+     * @param name The timer's name.
      */
     getTimer(name: string): Timer {
         if (!this.enabled) {
@@ -566,10 +573,10 @@ export class Statistics {
     }
 
     /**
-     * Check if a timer exists.
+     * Checks if a timer with the specified name already exists.
      *
-     * @param name Name of a timer.
-     * @returns `true` if timer with provided `name` exists, `false` otherwise.
+     * @param name The timer's name.
+     * @returns `true` if a timer with `name` already exists; `false` otherwise.
      */
     hasTimer(name: string): boolean {
         const t = this.timers.get(name);
@@ -577,7 +584,7 @@ export class Statistics {
     }
 
     /**
-     * Reset all timers.
+     * Resets all timers.
      */
     reset() {
         this.timers.forEach((timer: Timer) => {
@@ -586,7 +593,7 @@ export class Statistics {
     }
 
     /**
-     * Print all values to the console.
+     * Prints all values to the console.
      *
      * @param header Optional header line.
      * @param footer Optional footer line.

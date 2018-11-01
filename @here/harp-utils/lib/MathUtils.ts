@@ -115,24 +115,24 @@ export namespace MathUtils {
     }
 
     /**
-     * Checks if a the value of a given number is ouside of an upper and lower bound. The bounds
-     * may be undefined, in which case their value is ignored.
+     * Checks if the value of a given number is inside an upper or lower bound. The bounds may be
+     * undefined, in which case their value is ignored.
      *
-     * @returns `true` if value is outside of the bounds.
+     * @returns `true` if value is inside the bounds, `false` otherwise.
      *
      * @param value Value to check.
-     * @param lowerBound Lower bound.
-     * @param upperBound Upper bound.
+     * @param lowerBound The lower bound to check the value against.
+     * @param upperBound The upper bound to check the value against.
      */
     export function isClamped(
         value: number,
         lowerBound: number | undefined,
         upperBound: number | undefined
     ): boolean {
-        if (lowerBound !== undefined && value < lowerBound) {
+        if (lowerBound !== undefined && value >= lowerBound) {
             return true;
         }
-        if (upperBound !== undefined && value > upperBound) {
+        if (upperBound !== undefined && value <= upperBound) {
             return true;
         }
         return false;
