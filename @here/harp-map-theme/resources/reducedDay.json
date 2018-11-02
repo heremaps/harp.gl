@@ -10,8 +10,8 @@
         "color": "#6d7477",
         "bgMode": "Outline",
         "bgColor": "#ffffff",
-        "bgFactor": 5,
-        "bgAlpha": 0.5,
+        "bgFactor": 10,
+        "bgAlpha": 0.75,
         "fontCatalogName": "fira"
     },
     "textStyles": [],
@@ -253,7 +253,7 @@
                     },
                     {
                         "description": "major/secondary",
-                        "when": "kind == 'major_road' && kind_detail in ['secondary']",
+                        "when": "kind == 'major_road' && kind_detail in ['secondary', 'secondary_link']",
                         "renderOrder": 13,
                         "styles": [
                             {
@@ -308,7 +308,7 @@
                     },
                     {
                         "description": "primaries and motorway/highway links",
-                        "when": "(kind == 'highway' && has(is_link)) || kind == 'major_road' || kind_detail in ['primary', 'trunk', 'primary_link']",
+                        "when": "(kind == 'highway' && has(is_link)) || kind == 'major_road' || kind_detail in ['primary', 'primary_link', 'trunk', 'trunk_link', 'motorway_link']",
                         "styles": [
                             {
                                 "technique": "text",
@@ -716,7 +716,6 @@
                                         "when": "!has(is_tunnel)",
                                         "technique": "text",
                                         "attr": {
-                                            "color": "#2c70c3",
                                             "scale": 0.45,
                                             "oblique": true,
                                             "priority": -40
@@ -754,14 +753,14 @@
                                         "when": "has(is_tunnel)",
                                         "technique": "solid-line",
                                         "attr": {
-                                            "color": "#CFE8FE"
+                                            "color": "#c3cdd4"
                                         }
                                     },
                                     {
                                         "when": "!has(is_tunnel)",
                                         "technique": "solid-line",
                                         "attr": {
-                                            "color": "#99ceff"
+                                            "color": "#c3cdd4"
                                         }
                                     }
 
@@ -801,7 +800,6 @@
                         "renderOrder": 120,
                         "clipping": false,
                         "attr": {
-                            "color": "#2c70c3",
                             "scale": 0.45,
                             "priority": -50
                         },
@@ -915,7 +913,7 @@
                         "renderOrder": 50,
                         "final": true,
                         "attr": {
-                            "color": "#b9b9b9",
+                            "color": "#d2d7d9",
                             "lineWidth": [
                                 { "maxLevel": 13, "value": 1.5 },
                                 { "maxLevel": 16, "value": 0.75 },
@@ -935,119 +933,14 @@
                                 "technique": "solid-line",
                                 "final": true,
                                 "attr": {
-                                    "color": "#A4A8A2"
+                                    "color": "#d2d7d9"
                                 }
                             }
                         ]
                     },
-                    {
-                        "description": "Railway+S-Bahn background",
-                        "attr": {
-                            "xclipping": false,
-                            "color": "#8c8c8c",
-                            "lineWidth": [
-                                {
-                                    "maxLevel": 13,
-                                    "value": 3.5
-                                },
-                                {
-                                    "value": 2.5
-                                }
-                            ]
-                        },
-                        "styles": [
-                            {
-                                "when": "!is_tunnel",
-                                "technique": "solid-line",
-                                "renderOrder": 5.20,
-                                "attr": {
-                                    "color": "#8c8c8c"
-                                }
-                            },
-                            {
-                                "when": "is_tunnel",
-                                "technique": "solid-line",
-                                "renderOrder": 5.10,
-                                "attr": {
-                                    "_color": "#bcbcbc",
-                                    "color": "#8c8c8c"
-                                }
-                            }
 
-                        ]
-                    },
                     {
-                        "description": "Railway+S-Bahn dashes",
-                        "attr": {
-                            "xclipping": false,
-                            "dashSize": [
-                                {
-                                    "maxLevel": 10,
-                                    "value": 100
-                                },
-                                {
-                                    "maxLevel": 11,
-                                    "value": 40
-                                },
-                                {
-                                    "maxLevel": 12,
-                                    "value": 24
-                                },
-                                {
-                                    "maxLevel": 13,
-                                    "value": 30
-                                },
-                                {
-                                    "maxLevel": 14,
-                                    "value": 25
-                                },
-                                {
-                                    "maxLevel": 15,
-                                    "value": 15
-                                },
-                                {
-                                    "value": 8
-                                }
-                            ],
-                            "gapSize": [
-                                {
-                                    "maxLevel": 10,
-                                    "value": 100
-                                },
-                                {
-                                    "maxLevel": 11,
-                                    "value": 40
-                                },
-                                {
-                                    "maxLevel": 12,
-                                    "value": 24
-                                },
-                                {
-                                    "maxLevel": 13,
-                                    "value": 30
-                                },
-                                {
-                                    "maxLevel": 14,
-                                    "value": 25
-                                },
-                                {
-                                    "maxLevel": 15,
-                                    "value": 15
-                                },
-                                {
-                                    "value": 8
-                                }
-                            ],
-                            "lineWidth": [
-                                {
-                                    "maxLevel": 13,
-                                    "value": 2.75
-                                },
-                                {
-                                    "value": 1.75
-                                }
-                            ]
-                        },
+                        "description": "Railway+S-Bahn",
                         "styles": [
                             {
                                 "when": "!is_tunnel",
@@ -1055,7 +948,16 @@
                                 "renderOrder": 5.25,
                                 "final": true,
                                 "attr": {
-                                    "color": "#ffffff"
+                                    "color": "#d2d7d9",
+                                    "lineWidth": [
+                                        {
+                                            "maxLevel": 13,
+                                            "value": 2
+                                        },
+                                        {
+                                            "value": 1
+                                        }
+                                    ]
                                 }
                             },
                             {
@@ -1064,7 +966,16 @@
                                 "renderOrder": 5.15,
                                 "final": true,
                                 "attr": {
-                                    "color": "#dddddd"
+                                    "color": "#d2d7d9",
+                                    "lineWidth": [
+                                        {
+                                            "maxLevel": 13,
+                                            "value": 6
+                                        },
+                                        {
+                                            "value": 3
+                                        }
+                                    ]
                                 }
                             }
 
@@ -1077,17 +988,6 @@
                 "when": "$layer == 'transit'",
                 "renderOrder": 5,
                 "styles": [
-                    {
-                        "description": "transit polygons are usually platforms, bus, tram stops)",
-                        "when": "$geometryType ^= 'polygon' && (!has(layer) || layer == 0)",
-                        "technique": "fill",
-                        "renderOrder": 3,
-                        "attr": {
-                            "color": "#eee",
-                            "opacity": 0.5,
-                            "clipping": false
-                        }
-                    },
                     {
                         "when": "$geometryType ^= 'point'",
                         "technique": "text",
@@ -1107,44 +1007,20 @@
                         "when": "kind == 'country'",
                         "styles": [
                             {
-                                "description": "background",
-                                "technique": "solid-line",
-                                "renderOrder": 4,
-                                "attr": {
-                                    "color": "#ddd",
-                                    "lineWidth": [
-                                        { "maxLevel": 1, "value": 10000 },
-                                        { "maxLevel": 2, "value": 8000 },
-                                        { "maxLevel": 3, "value": 7000 },
-                                        { "maxLevel": 4, "value": 5000 },
-                                        { "maxLevel": 5, "value": 3000 },
-                                        { "maxLevel": 6, "value": 2000 },
-                                        { "maxLevel": 7, "value": 1000 },
-                                        { "maxLevel": 8, "value": 500 },
-                                        { "maxLevel": 9, "value": 250 },
-                                        { "maxLevel": 10, "value": 120 },
-                                        { "maxLevel": 11, "value": 80 },
-                                        { "maxLevel": 12, "value": 40 },
-                                        { "maxLevel": 13, "value": 20 },
-                                        { "value": 10 }
-                                    ]
-                                }
-                            },
-                            {
-                                "description": "foreground",
                                 "technique": "solid-line",
                                 "renderOrder": 4.1,
                                 "attr": {
-                                    "color": "#7c7c7c",
+                                    "color": "#b4b4b5",
                                     "lineWidth": [
-                                        { "maxLevel": 2, "value": 2000 },
-                                        { "maxLevel": 3, "value": 1400 },
-                                        { "maxLevel": 4, "value": 1000 },
-                                        { "maxLevel": 5, "value": 500 },
-                                        { "maxLevel": 6, "value": 220 },
-                                        { "maxLevel": 7, "value": 90 },
-                                        { "maxLevel": 8, "value": 50 },
-                                        { "maxLevel": 9, "value": 30 },
+                                        { "maxLevel": 1, "value": 7000 },
+                                        { "maxLevel": 2, "value": 4000 },
+                                        { "maxLevel": 3, "value": 2300 },
+                                        { "maxLevel": 4, "value": 1500 },
+                                        { "maxLevel": 5, "value": 800 },
+                                        { "maxLevel": 6, "value": 200 },
+                                        { "maxLevel": 7, "value": 150 },
+                                        { "maxLevel": 8, "value": 90 },
+                                        { "maxLevel": 9, "value": 50 },
                                         { "maxLevel": 10, "value": 20 },
                                         { "maxLevel": 11, "value": 15 },
                                         { "maxLevel": 12, "value": 10 },
@@ -1167,48 +1043,23 @@
                         "when": "kind == 'region'",
                         "styles": [
                             {
-                                "description": "background",
-                                "technique": "solid-line",
-                                "renderOrder": 4,
-                                "attr": {
-                                    "color": "#ddd",
-                                    "lineWidth": [
-                                        { "maxLevel": 2, "value": 5000 },
-                                        { "maxLevel": 3, "value": 3000 },
-                                        { "maxLevel": 4, "value": 2000 },
-                                        { "maxLevel": 5, "value": 1000 },
-                                        { "maxLevel": 6, "value": 500 },
-                                        { "maxLevel": 7, "value": 250 },
-                                        { "maxLevel": 8, "value": 180 },
-                                        { "maxLevel": 9, "value": 100 },
-                                        { "maxLevel": 10, "value": 60 },
-                                        { "maxLevel": 11, "value": 40 },
-                                        { "maxLevel": 12, "value": 20 },
-                                        { "maxLevel": 13, "value": 10 },
-                                        { "value": 5 }
-                                    ]
-                                }
-                            },
-                            {
-                                "description": "foreground",
                                 "technique": "solid-line",
                                 "renderOrder": 4.1,
                                 "attr": {
-                                    "color": "#7c7c7c",
+                                    "color": "#b4b4b5",
                                     "lineWidth": [
-                                        { "maxLevel": 2, "value": 600 },
-                                        { "maxLevel": 3, "value": 300 },
-                                        { "maxLevel": 4, "value": 150 },
-                                        { "maxLevel": 5, "value": 100 },
-                                        { "maxLevel": 6, "value": 60 },
-                                        { "maxLevel": 7, "value": 30 },
-                                        { "maxLevel": 8, "value": 20 },
-                                        { "maxLevel": 9, "value": 12 },
-                                        { "maxLevel": 10, "value": 8 },
-                                        { "maxLevel": 11, "value": 5 },
-                                        { "maxLevel": 12, "value": 3 },
-                                        { "maxLevel": 13, "value": 2 },
-                                        { "value": 1 }
+                                        { "maxLevel": 2, "value": 5000 },
+                                        { "maxLevel": 3, "value": 1500 },
+                                        { "maxLevel": 4, "value": 800 },
+                                        { "maxLevel": 5, "value": 280 },
+                                        { "maxLevel": 6, "value": 150 },
+                                        { "maxLevel": 7, "value": 90 },
+                                        { "maxLevel": 8, "value": 50 },
+                                        { "maxLevel": 9, "value": 20 },
+                                        { "maxLevel": 10, "value": 15 },
+                                        { "maxLevel": 11, "value": 10 },
+                                        { "maxLevel": 12, "value": 5 },
+                                        { "value": 2 }
                                     ]
                                 }
                             },
@@ -1308,7 +1159,7 @@
                         "technique": "fill",
                         "renderOrder": 1,
                         "attr": {
-                            "color": "#c6ebb9"
+                            "color": "#dce1e4"
                         }
                     },
                     {
@@ -1316,7 +1167,7 @@
                         "technique": "fill",
                         "renderOrder": 1,
                         "attr": {
-                            "color": "#c6ebb9"
+                            "color": "#d3e3df"
                         }
                     },
                     {
@@ -1386,7 +1237,6 @@
                                 { "maxLevel": 3, "value": 100 },
                                 { "value": 60 }
                             ],
-                            "color": "#E48892",
                             "allCaps": true,
                             "opacity": 0.6
                         }
@@ -1517,7 +1367,6 @@
                                         "technique": "text",
                                         "final": true,
                                         "attr": {
-                                            "bold": true
                                         }
                                     },
                                     {
@@ -1643,7 +1492,7 @@
                     "footprint": true,
                     "maxSlope": 0.9,
                     "lineWidth": 1.0,
-                    "lineColor": "#595959",
+                    "lineColor": "#a0a0a0",
                     "lineColorMix": 0.5,
                     "fadeNear": 0.9,
                     "fadeFar": 1.0,
@@ -1659,8 +1508,10 @@
                                 "technique": "extruded-polygon",
                                 "renderOrder": 2000,
                                 "attr": {
-                                    "color": "#f7f9f9",
-                                    "opacity": 0.8
+                                    "color": "#e7e9e9",
+                                    "vertexColors": false,
+                                    "lineColor": "#898989",
+                                    "lineColorMix": 0.0
                                 }
                             },
                             {
