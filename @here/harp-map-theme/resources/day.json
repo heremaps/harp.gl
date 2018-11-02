@@ -277,7 +277,7 @@
                     },
                     {
                         "description": "major/secondary",
-                        "when": "kind == 'major_road' && kind_detail in ['secondary']",
+                        "when": "kind == 'major_road' && kind_detail in ['secondary', 'secondary_link']",
                         "renderOrder": 13,
                         "styles": [
                             {
@@ -332,7 +332,7 @@
                     },
                     {
                         "description": "primaries and motorway/highway links",
-                        "when": "(kind == 'highway' && has(is_link)) || kind == 'major_road' || kind_detail in ['primary', 'trunk', 'primary_link']",
+                        "when": "(kind == 'highway' && has(is_link)) || kind == 'major_road' || kind_detail in ['primary', 'primary_link', 'trunk', 'trunk_link', 'motorway_link']",
                         "styles": [
                             {
                                 "technique": "text",
