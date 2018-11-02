@@ -10,6 +10,13 @@ You can use this engine to:
   * Create a smooth map experience with highly performant map rendering and decoding. Web workers parallelize the CPU intensive tasks, for optimal responsiveness.
   * Design your maps modularly, where you can swap out modules and data providers as required.
 
+## About This Repository
+
+This repository is a monorepo containing the core components of `harp.gl`,
+organized in a `yarn workspace`.
+
+All components can be used stand-alone and are in the `@here` subdirectory.
+
 ## Installation
 
 ### In Node.js
@@ -24,13 +31,6 @@ npm install @here/harp-mapview
 
 Since `harp.gl` consists of a set of modules, there are no ready-made bundles available. Take a look at the examples on information on how to use tools like `webpack` to create a bundle for the browser.
 
-## About This Repository
-
-This repository is a monorepo containing the core components of `harp.gl`,
-organized in a `yarn workspace`.
-
-All components can be used stand-alone and are in the `@here` subdirectory.
-
 ## Development
 
 ### Prerequisites
@@ -43,12 +43,12 @@ All components can be used stand-alone and are in the `@here` subdirectory.
 Run:
 
 ```sh
-yarn
+yarn install
 ```
 
 to download and install all required packages and set up the yarn workspace.
 
-### Launch development server
+### Launch development server for harp.gl examples
 
 Run:
 
@@ -57,6 +57,16 @@ yarn start
 ```
 
 To launch `webpack-dev-server`. Open `http://localhost:8080/` in your favorite browser.
+
+### Launch development server for unit tests
+
+Run:
+
+```
+yarn start-tests
+```
+
+Open `http://localhost:8080/` in your favorite browser to run the tests.
 
 ## License
 
