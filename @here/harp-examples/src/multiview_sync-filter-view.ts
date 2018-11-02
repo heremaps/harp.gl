@@ -17,7 +17,7 @@ import {
 } from "@here/harp-omv-datasource";
 
 /**
- * An example showing side by side mapview with two different datasources and/or themes
+ * An example showing side by side mapview with two different datasources.
  *
  * Creates 2 views with their own MapView and MapControl as WebTileDataSourceOptions:
  * ```typescript
@@ -35,7 +35,7 @@ import {
  * ```
  */
 
-export namespace TripleViewExample {
+export namespace LayersFilteringExample {
     // inject HTML code to page to show additional map canvases and position them side-by-side
     document.body.innerHTML += `
 
