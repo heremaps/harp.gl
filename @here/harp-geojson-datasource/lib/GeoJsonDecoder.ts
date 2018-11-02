@@ -8,9 +8,12 @@ import {
     DecodedTile,
     ExtendedTileInfo,
     ExtendedTileInfoWriter,
+    FillTechnique,
     Geometry,
     GeometryType,
+    getPropertyValue,
     Group,
+    IMeshBuffers,
     InterleavedBufferAttribute,
     isCirclesTechnique,
     isFillTechnique,
@@ -19,6 +22,7 @@ import {
     isSquaresTechnique,
     isTextTechnique,
     LineFeatureGroup,
+    Outliner,
     PoiGeometry,
     StyleSetEvaluator,
     Technique,
@@ -42,10 +46,12 @@ const logger = LoggerManager.instance.create("GeoJsonDecoder");
 /**
  * Store temporary variables needed for the creation of a mesh.
  */
-class MeshBuffer {
+class MeshBuffer implements IMeshBuffers {
     readonly positions: number[] = [];
     readonly indices: number[] = [];
     readonly groups: Group[] = [];
+    readonly outlineIndices: number[][] = [];
+    readonly edgeIndices: number[] = [];
     /**
      * Optional list of feature start indices. The indices point into the index attribute.
      */
@@ -224,6 +230,7 @@ class GeoJsonDecoder {
     private readonly m_gatherRoadSegments = true;
     private m_cached_worldCoord: THREE.Vector3 = new THREE.Vector3();
     private m_cached_geoCoord: GeoCoordinates = new GeoCoordinates(0, 0);
+    private m_outliner: Outliner = new Outliner();
 
     /**
      * Default constructor.
@@ -295,7 +302,7 @@ class GeoJsonDecoder {
                 break;
         }
 
-        this.createGeometries();
+        this.createGeometry(extendedTile.info);
     }
 
     /**
@@ -796,6 +803,8 @@ class GeoJsonDecoder {
                 if (polygon[0] === null || typeof polygon[0][0] !== "number") {
                     return;
                 }
+                // the first polygon in the coordinates array is the main polygon the other ones
+                // are holes.
                 if (vertices.length) {
                     holes.push(vertices.length / 2);
                 }
@@ -803,18 +812,17 @@ class GeoJsonDecoder {
                 polygon.forEach(point => {
                     this.m_cached_geoCoord.latitude = point[1];
                     this.m_cached_geoCoord.longitude = point[0];
-                    const vertex = new THREE.Vector3();
 
                     this.m_projection
-                        .projectPoint(this.m_cached_geoCoord, vertex)
+                        .projectPoint(this.m_cached_geoCoord, this.m_cached_worldCoord)
                         .sub(this.m_center);
 
                     // polygon issue fix
                     if (point[0] >= 180) {
-                        vertex.x = vertex.x * -1;
+                        this.m_cached_worldCoord.x = this.m_cached_worldCoord.x * -1;
                     }
 
-                    vertices.push(vertex.x, vertex.y);
+                    vertices.push(this.m_cached_worldCoord.x, this.m_cached_worldCoord.y);
                 });
             });
             buffer.polygons.push({ vertices, holes, geojsonProperties });
@@ -824,7 +832,7 @@ class GeoJsonDecoder {
     /**
      * Creates a geometry from the previously filled in buffers.
      */
-    private createGeometries(): void {
+    private createGeometry(tileInfo: ExtendedTileInfo): void {
         this.m_geometryBuffer.forEach((geometryData, technique) => {
             switch (geometryData.type) {
                 case "point":
@@ -834,7 +842,7 @@ class GeoJsonDecoder {
                     this.createSolidLineGeometry(technique, geometryData);
                     break;
                 case "polygon":
-                    this.createPolygonGeometry(technique, geometryData);
+                    this.createPolygonGeometry(technique, geometryData, tileInfo);
                     break;
                 case "segments":
                     this.createSegmentsGeometry(technique, geometryData);
@@ -1002,8 +1010,13 @@ class GeoJsonDecoder {
      *
      * @param technique Technique number.
      * @param geometryData Geometry data.
+     * @param tileInfo Information about the tiles
      */
-    private createPolygonGeometry(technique: number, geometryData: GeometryData): void {
+    private createPolygonGeometry(
+        techniqueIndex: number,
+        geometryData: GeometryData,
+        tileInfo: ExtendedTileInfo
+    ): void {
         const meshBuffer = new MeshBuffer();
         const {
             positions,
@@ -1011,16 +1024,62 @@ class GeoJsonDecoder {
             groups,
             featureStarts,
             featureIds,
-            geojsonProperties
+            geojsonProperties,
+            outlineIndices
         } = meshBuffer;
-        geometryData.polygons.forEach(polygon => {
-            const prevPolygonPositionsNum = positions.length / 3;
-            featureStarts.push(indices.length / 3);
 
+        let contour: number[];
+        const holesVertices: number[][] = [];
+        const technique = this.m_styleSetEvaluator.techniques[techniqueIndex];
+        const isFilled = isFillTechnique(technique);
+        const fillTechnique = technique as FillTechnique;
+        const outlineWidth = getPropertyValue(fillTechnique.lineWidth, tileInfo.tileKey.level);
+
+        const tileWorldBounds = new THREE.Box3();
+        const geoBox = webMercatorTilingScheme.getGeoBox(tileInfo.tileKey);
+        const tileBounds = this.m_projection.projectBox(geoBox, tileWorldBounds);
+        const center = new THREE.Vector3();
+        tileBounds.getCenter(center);
+        const tileWorldExtents = tileWorldBounds.max.sub(center).x;
+
+        geometryData.polygons.forEach(polygon => {
+            contour = polygon.holes.length
+                ? polygon.vertices.slice(0, polygon.holes[0] * 2)
+                : polygon.vertices;
+
+            const baseVertex = positions.length / 3;
+            //external ring
+            if (outlineWidth !== undefined && outlineWidth > 0.0 && isFilled) {
+                this.m_outliner.addEdges(baseVertex, contour, tileWorldExtents, outlineIndices);
+            }
+
+            // holes, if any
+            if (polygon.holes.length) {
+                for (let i = 0; i < polygon.holes.length; i++) {
+                    if (i === polygon.holes.length - 1) {
+                        holesVertices[i] = polygon.vertices.slice(polygon.holes[i] * 2);
+                    } else {
+                        holesVertices[i] = polygon.vertices.slice(
+                            polygon.holes[i] * 2,
+                            polygon.holes[i + 1] * 2
+                        );
+                    }
+
+                    if (outlineWidth !== undefined && outlineWidth > 0.0 && isFilled) {
+                        this.m_outliner.addEdges(
+                            polygon.holes[i],
+                            holesVertices[i],
+                            tileWorldExtents,
+                            outlineIndices
+                        );
+                    }
+                }
+            }
+
+            featureStarts.push(indices.length / 3);
             // featureIds should be the id of the feature, but for geoJSON datasource we do not have
-            // it in integers, and we do not use them. Therefore, I put zeroes.
+            // it in integers, and we do not use them. Therefore, zeroes are added.
             featureIds.push(0);
-            //geoJson properties for each polygon
             geojsonProperties.push(polygon.geojsonProperties);
 
             for (let i = 0; i < polygon.vertices.length; i += 2) {
@@ -1033,19 +1092,16 @@ class GeoJsonDecoder {
                 const v1 = triangles[i];
                 const v2 = triangles[i + 1];
                 const v3 = triangles[i + 2];
-                indices.push(
-                    v1 + prevPolygonPositionsNum,
-                    v2 + prevPolygonPositionsNum,
-                    v3 + prevPolygonPositionsNum
-                );
+                indices.push(v1 + baseVertex, v2 + baseVertex, v3 + baseVertex);
             }
         });
+        this.m_outliner.fill(outlineIndices);
 
         if (indices.length > 0) {
             groups.push({
                 start: 0,
                 count: indices.length,
-                technique
+                technique: techniqueIndex
             });
         }
 
@@ -1074,6 +1130,7 @@ class GeoJsonDecoder {
             geometry.objInfos = meshBuffer.geojsonProperties;
         }
 
+        this.m_outliner.addOutlineIndicesArrayToGeometry(meshBuffer, geometry);
         this.m_geometries.push(geometry);
     }
 

@@ -9,13 +9,16 @@ import {
     BufferAttribute,
     DecodedTile,
     ExtrudedPolygonTechnique,
+    Extruder,
     FillTechnique,
     Geometry,
     GeometryType,
     getPropertyValue,
     Group,
+    IMeshBuffers,
     InterleavedBufferAttribute,
     LineMarkerTechnique,
+    Outliner,
     PoiGeometry,
     PoiTechnique,
     StyleSetEvaluator,
@@ -36,18 +39,15 @@ import { LinesGeometry } from "./OmvDataSource";
 import { IOmvEmitter, OmvDecoder, Ring } from "./OmvDecoder";
 import { com } from "./proto/vector_tile";
 
-const INDEX_BUFFER_LIMIT = Math.pow(2, 16);
 const logger = LoggerManager.instance.create("OmvDecodedTileEmitter");
 
 /**
  * Used to identify an invalid (or better: unused) array index.
  */
 const INVALID_ARRAY_INDEX = -1;
-
 // for tilezen by default extrude all buildings even those without height data
 const DEFAULT_EXTRUDED_BUILDING_HEIGHT = 20;
-
-class MeshBuffers {
+class MeshBuffers implements IMeshBuffers {
     readonly positions: number[] = [];
     readonly colors: number[] = [];
     readonly indices: number[] = [];
@@ -102,15 +102,8 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
 
     private readonly m_geometryCommands = new GeometryCommands();
 
-    private readonly m_currEdgeStart = new THREE.Vector2();
-    private readonly m_currEdgeGoal = new THREE.Vector2();
-    private readonly m_prevEdgeStart = new THREE.Vector2();
-    private readonly m_prevEdgeGoal = new THREE.Vector2();
-
-    // tmpOutlineIndices is variable that stores the indices until the limit od 2^16 is reached.
-    // After that limit, the indices are collected in the fillEdgeIndicesArray, and the variable
-    // tmpOutlineIndices is cleaned.
-    private m_tmpOutlineIndices: number[] = [];
+    private m_outliner: Outliner = new Outliner();
+    private m_extruder: Extruder = new Extruder();
 
     constructor(
         private readonly m_decodeInfo: OmvDecoder.DecodeInfo,
@@ -611,7 +604,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
             let vertices: number[] = contour;
             // TODO: Add similar edgeIndex check for filled-polygon edges.
             if (isExtruded) {
-                this.addExtrudedWalls(
+                this.m_extruder.addExtrudedWalls(
                     indices,
                     baseVertex,
                     contour,
@@ -624,13 +617,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
             }
 
             if (outlineWidth !== undefined && outlineWidth > 0.0 && isFilled) {
-                this.addOutlineEdges(
-                    indices,
-                    baseVertex,
-                    contour,
-                    tileWorldExtents,
-                    outlineIndices
-                );
+                this.m_outliner.addEdges(baseVertex, contour, tileWorldExtents, outlineIndices);
             }
 
             // Repeat the process for all the inner rings (holes).
@@ -646,7 +633,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                 vertices = vertices.concat(contour);
 
                 if (isExtruded) {
-                    this.addExtrudedWalls(
+                    this.m_extruder.addExtrudedWalls(
                         indices,
                         vertexOffset + baseVertex,
                         contour,
@@ -660,13 +647,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
 
                 if (outlineWidth !== undefined && outlineWidth > 0.0 && isFilled) {
                     const offset = baseVertex + vertexOffsetFill;
-                    this.addOutlineEdges(
-                        indices,
-                        offset,
-                        contour,
-                        tileWorldExtents,
-                        outlineIndices
-                    );
+                    this.m_outliner.addEdges(offset, contour, tileWorldExtents, outlineIndices);
                 }
             }
 
@@ -702,10 +683,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
             }
         }
 
-        if (this.m_tmpOutlineIndices.length !== 0) {
-            outlineIndices.push(this.m_tmpOutlineIndices);
-            this.m_tmpOutlineIndices = [];
-        }
+        this.m_outliner.fill(outlineIndices);
 
         const positionCount = (positions.length - basePosition) / 3;
 
@@ -761,165 +739,6 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
             decodedTile.textPathGeometries = this.m_textPathGeometries;
         }
         return decodedTile;
-    }
-
-    private addExtrudedWalls(
-        indexBuffer: number[],
-        vertexOffset: number,
-        contour: number[],
-        processEdges: boolean,
-        edgeIndexBuffer: number[],
-        tileExtents: number,
-        enableFootprints: boolean,
-        edgeSlope: number
-    ): void {
-        // Infer the index buffer's position of the vertices that form the extruded-polygons' walls
-        // by stepping through the contour segment by segment.
-        for (let i = 0; i < contour.length; i += 2) {
-            const vFootprint0 = vertexOffset + i;
-            const vRoof0 = vertexOffset + i + 1;
-            const vFootprint1 = vertexOffset + ((i + 2) % contour.length);
-            const vRoof1 = vertexOffset + ((i + 3) % contour.length);
-            indexBuffer.push(vFootprint0, vRoof0, vRoof1, vRoof1, vFootprint1, vFootprint0);
-
-            // Add the indices for the edges the same way if needed (removing unwanted edges in the
-            // tiles' borders).
-            if (processEdges) {
-                const v0x = contour[i];
-                const v0y = contour[i + 1];
-                const v1x = contour[(i + 2) % contour.length];
-                const v1y = contour[(i + 3) % contour.length];
-
-                // When dealing with a starting point inside the tile extents, a horizontal edge
-                // should be added. For vertical edges, this is true only when the slope angle falls
-                // in the allowed range.
-                if (Math.abs(v0x) < tileExtents && Math.abs(v0y) < tileExtents) {
-                    if (enableFootprints) {
-                        edgeIndexBuffer.push(vFootprint0, vFootprint1);
-                    }
-                    edgeIndexBuffer.push(vRoof0, vRoof1);
-
-                    if (i !== 0) {
-                        this.m_currEdgeStart.set(v0x, v0y);
-                        this.m_currEdgeGoal.set(v1x, v1y);
-                        this.m_prevEdgeStart.set(contour[i - 2], contour[i - 1]);
-                        this.m_prevEdgeGoal.set(this.m_currEdgeStart.x, this.m_currEdgeStart.y);
-
-                        if (
-                            this.m_prevEdgeGoal
-                                .sub(this.m_prevEdgeStart)
-                                .normalize()
-                                .dot(this.m_currEdgeGoal.sub(this.m_currEdgeStart).normalize()) <=
-                            edgeSlope
-                        ) {
-                            edgeIndexBuffer.push(vFootprint0, vRoof0);
-                        }
-                    } else if (edgeSlope > 0.0) {
-                        edgeIndexBuffer.push(vFootprint0, vRoof0);
-                    }
-                }
-                // When our end point is inside the tile extents, a horizontal edge should be added.
-                else if (Math.abs(v1x) < tileExtents && Math.abs(v1y) < tileExtents) {
-                    if (enableFootprints) {
-                        edgeIndexBuffer.push(vFootprint0, vFootprint1);
-                    }
-                    edgeIndexBuffer.push(vRoof0, vRoof1);
-                }
-                // When moving from the tile borders closer into the tile center, a horizontal edge
-                // should be added.
-                else if (
-                    Math.abs(v0x) >= tileExtents &&
-                    Math.abs(v0y) < tileExtents &&
-                    (Math.abs(v1y) >= tileExtents && Math.abs(v1x) < tileExtents)
-                ) {
-                    if (enableFootprints) {
-                        edgeIndexBuffer.push(vFootprint0, vFootprint1);
-                    }
-                    edgeIndexBuffer.push(vRoof0, vRoof1);
-                } else if (
-                    Math.abs(v0y) >= tileExtents &&
-                    Math.abs(v0x) < tileExtents &&
-                    (Math.abs(v1x) >= tileExtents && Math.abs(v1y) < tileExtents)
-                ) {
-                    if (enableFootprints) {
-                        edgeIndexBuffer.push(vFootprint0, vFootprint1);
-                    }
-                    edgeIndexBuffer.push(vRoof0, vRoof1);
-                }
-            }
-        }
-    }
-
-    private addOutlineEdges(
-        // tslint:disable-next-line:no-unused-variable
-        indexBuffer: number[],
-        offset: number,
-        contour: number[],
-        tileExtents: number,
-        meshBufferOutlineIndices: number[][]
-    ): void {
-        for (let i = 0; i < contour.length; i += 2) {
-            const vFootprint0 = offset + i / 2;
-            const vFootprint1 = offset + ((i + 2) % contour.length) / 2;
-
-            // tmpOutlineIndices is a variable that stores the indices until the limit od 2^16 is
-            // reached. If the index array grows beyond the specified limit, the indices are
-            // collected in the fillEdgeIndicesArray, and the variable meshBufferOutlineIndices is
-            // cleaned.
-            if (this.m_tmpOutlineIndices.length > INDEX_BUFFER_LIMIT) {
-                meshBufferOutlineIndices.push(this.m_tmpOutlineIndices);
-                this.m_tmpOutlineIndices = [];
-            }
-            this.addOutlineEdge(
-                this.m_tmpOutlineIndices,
-                contour,
-                i,
-                vFootprint0,
-                vFootprint1,
-                tileExtents
-            );
-        }
-    }
-
-    private addOutlineEdge(
-        indexBuffer: number[],
-        contour: number[],
-        contourIdx: number,
-        start: number,
-        end: number,
-        tileExtents: number
-    ): void {
-        const v0x = contour[contourIdx];
-        const v0y = contour[contourIdx + 1];
-        const v1x = contour[(contourIdx + 2) % contour.length];
-        const v1y = contour[(contourIdx + 3) % contour.length];
-
-        // When dealing with a starting point inside the tile extents, a horizontal edge should be
-        // added.
-        if (Math.abs(v0x) < tileExtents && Math.abs(v0y) < tileExtents) {
-            indexBuffer.push(start, end);
-        }
-
-        // When our end point is inside the tile extents, a horizontal edge should be added.
-        else if (Math.abs(v1x) < tileExtents && Math.abs(v1y) < tileExtents) {
-            indexBuffer.push(start, end);
-        }
-
-        // When moving from the tile borders closer into the tile center, a horizontal edge should
-        // be added.
-        else if (
-            Math.abs(v0x) >= tileExtents &&
-            Math.abs(v0y) < tileExtents &&
-            (Math.abs(v1y) >= tileExtents && Math.abs(v1x) < tileExtents)
-        ) {
-            indexBuffer.push(start, end);
-        } else if (
-            Math.abs(v0y) >= tileExtents &&
-            Math.abs(v0x) < tileExtents &&
-            (Math.abs(v1x) >= tileExtents && Math.abs(v1y) < tileExtents)
-        ) {
-            indexBuffer.push(start, end);
-        }
     }
 
     private createGeometries(): any {
@@ -1027,38 +846,13 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                 };
             }
 
-            if (meshBuffers.edgeIndices.length > 0) {
-                // create the edge index buffer
-
-                // TODO: use uint16 for buffers when possible
-                geometry.edgeIndex = {
-                    name: "edgeIndex",
-                    buffer: new Uint32Array(meshBuffers.edgeIndices).buffer as ArrayBuffer,
-                    itemCount: 1,
-                    type: "uint32"
-                };
-            }
-
             if (this.m_gatherFeatureIds) {
                 geometry.featureIds = meshBuffers.featureIds;
                 geometry.featureStarts = meshBuffers.featureStarts;
             }
 
-            // iterate through the outline indices array if there are any
-            if (meshBuffers.outlineIndices.length > 0) {
-                if (geometry.outlineIndicesAttributes === undefined) {
-                    geometry.outlineIndicesAttributes = [];
-                }
-                for (const edgesArray of meshBuffers.outlineIndices) {
-                    // create the edge index buffer 2D array
-                    geometry.outlineIndicesAttributes.push({
-                        name: "edgeIndicesArray",
-                        buffer: new Uint32Array(edgesArray).buffer as ArrayBuffer,
-                        itemCount: 1,
-                        type: "uint32"
-                    });
-                }
-            }
+            this.m_extruder.addEdgeIndicesArrayToGeometry(meshBuffers, geometry);
+            this.m_outliner.addOutlineIndicesArrayToGeometry(meshBuffers, geometry);
 
             this.m_geometries.push(geometry);
         });
