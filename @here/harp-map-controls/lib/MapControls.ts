@@ -535,6 +535,8 @@ export class MapControls extends THREE.EventDispatcher {
             return;
         }
 
+        this.dispatchEvent(MAPCONTROL_EVENT_BEGIN_INTERACTION);
+
         const currentZoomLevel = MapViewUtils.calculateZoomLevelFromHeight(
             this.mapView.camera.position.z,
             this.mapView
@@ -564,6 +566,8 @@ export class MapControls extends THREE.EventDispatcher {
 
         event.preventDefault();
         event.stopPropagation();
+
+        this.dispatchEvent(MAPCONTROL_EVENT_END_INTERACTION);
     }
 
     /**
@@ -678,6 +682,7 @@ export class MapControls extends THREE.EventDispatcher {
             return;
         }
 
+        this.dispatchEvent(MAPCONTROL_EVENT_BEGIN_INTERACTION);
         this.setTouchState(event.touches);
         this.mapView.beginAnimation();
 
@@ -730,6 +735,7 @@ export class MapControls extends THREE.EventDispatcher {
 
         this.setTouchState(event.touches);
 
+        this.dispatchEvent(MAPCONTROL_EVENT_END_INTERACTION);
         this.mapView.endAnimation();
         this.updateMapView();
 
