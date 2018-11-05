@@ -44,9 +44,26 @@ interface SyncDirsOptions {
     destDir: string;
 }
 
+function syncDirs({ sourceDir, destDir }: SyncDirsOptions) {
+    mkpath.sync(destDir);
+    const source = path.resolve(__dirname, sourceDir);
+    const dest = path.resolve(__dirname, destDir);
+    const files = fs.readdirSync(source);
+
+    files.forEach(file => {
+        const srcFile = path.resolve(source, file);
+        const dstFile = path.resolve(dest, file);
+        if (fs.lstatSync(srcFile).isDirectory()) {
+            syncDirs({ sourceDir: srcFile, destDir: dstFile });
+        }
+        syncIfNeeded(srcFile, dstFile);
+    });
+}
+
 function syncDirsIfNeeded({ sourceDir, destDir }: SyncDirsOptions) {
     const source = path.resolve(__dirname, sourceDir);
     const dest = path.resolve(__dirname, destDir);
+    mkpath.sync(dest);
 
     if (!fs.existsSync(source)) {
         return;
@@ -55,7 +72,12 @@ function syncDirsIfNeeded({ sourceDir, destDir }: SyncDirsOptions) {
     const files = fs.readdirSync(source);
 
     files.forEach(file => {
-        syncIfNeeded(path.resolve(source, file), path.resolve(dest, file));
+        const srcFile = path.resolve(source, file);
+        const dstFile = path.resolve(dest, file);
+        if (fs.lstatSync(srcFile).isDirectory()) {
+            syncDirs({ sourceDir: srcFile, destDir: dstFile });
+        }
+        syncIfNeeded(srcFile, dstFile);
     });
 }
 
