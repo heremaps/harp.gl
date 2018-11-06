@@ -11,6 +11,7 @@ export namespace MathUtils {
      * @param value The value to be clamped.
      * @param min Minimum value.
      * @param max Maximum value.
+     *
      * @returns Clamped value.
      */
     export function clamp(value: number, min: number, max: number): number {
@@ -118,23 +119,24 @@ export namespace MathUtils {
      * Checks if the value of a given number is inside an upper or lower bound. The bounds may be
      * undefined, in which case their value is ignored.
      *
-     * @returns `true` if value is inside the bounds, `false` otherwise.
-     *
      * @param value Value to check.
      * @param lowerBound The lower bound to check the value against.
      * @param upperBound The upper bound to check the value against.
+     *
+     * @returns `true` if value is inside the bounds or if the bounds are `undefined`, `false`
+     *          otherwise.
      */
     export function isClamped(
         value: number,
         lowerBound: number | undefined,
         upperBound: number | undefined
     ): boolean {
-        if (lowerBound !== undefined && value >= lowerBound) {
-            return true;
+        if (lowerBound !== undefined && value < lowerBound) {
+            return false;
         }
-        if (upperBound !== undefined && value <= upperBound) {
-            return true;
+        if (upperBound !== undefined && value > upperBound) {
+            return false;
         }
-        return false;
+        return true;
     }
 }
