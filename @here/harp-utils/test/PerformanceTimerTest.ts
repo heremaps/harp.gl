@@ -4,11 +4,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+// tslint:disable:only-arrow-functions
+//    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
+
 import { assert } from "chai";
 import { PerformanceTimer } from "../lib/PerformanceTimer";
 
-describe("PerformanceTimer", () => {
-    it("#now", () => {
+describe("PerformanceTimer", function() {
+    it("#now", function() {
         const t0 = PerformanceTimer.now();
         assert.isNumber(t0);
         assert.isAbove(t0, 0);

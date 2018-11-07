@@ -4,20 +4,23 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+// tslint:disable:only-arrow-functions
+//    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
+
 import { assert } from "chai";
 
 import { getOptionValue, mergeWithOptions } from "../lib/OptionsUtils";
 
-describe("OptionsUtils", () => {
-    describe("#getOptionValue", () => {
-        it("returns first defined", () => {
+describe("OptionsUtils", function() {
+    describe("#getOptionValue", function() {
+        it("returns first defined", function() {
             assert.equal(getOptionValue(), undefined);
             assert.equal(getOptionValue(undefined), undefined);
             assert.equal(getOptionValue(1), 1);
             assert.equal(getOptionValue(undefined, 2, 3), 2);
             assert.equal(getOptionValue(undefined, 2), 2);
         });
-        it("erases 'undefined' from type if last param is defined", () => {
+        it("erases 'undefined' from type if last param is defined", function() {
             const r1: number = getOptionValue(undefined, 2);
             assert.equal(r1, 2);
             const r2: number = getOptionValue(undefined, undefined, 3);
@@ -27,7 +30,7 @@ describe("OptionsUtils", () => {
         });
     });
 
-    describe("#mergeWithOptions", () => {
+    describe("#mergeWithOptions", function() {
         interface FooParams {
             useTextures: boolean;
             someString: string;
@@ -42,21 +45,21 @@ describe("OptionsUtils", () => {
             opacity: 0.8
         };
 
-        it("copy defaults if no options were passed", () => {
+        it("copy defaults if no options were passed", function() {
             assert.deepEqual(mergeWithOptions(FOO_DEFAULTS), FOO_DEFAULTS);
             assert.deepEqual(mergeWithOptions(FOO_DEFAULTS, {}), FOO_DEFAULTS);
             assert.deepEqual(mergeWithOptions(FOO_DEFAULTS, undefined), FOO_DEFAULTS);
             assert.deepEqual(mergeWithOptions(FOO_DEFAULTS, null!), FOO_DEFAULTS);
         });
-        it("doesn't return defaults", () => {
+        it("doesn't return defaults", function() {
             assert(mergeWithOptions(FOO_DEFAULTS) !== FOO_DEFAULTS);
         });
-        it("doesn't copy options not existing in template", () => {
+        it("doesn't copy options not existing in template", function() {
             // tslint:disable-next-line:no-object-literal-type-assertion
             const options: FooOptions = { someOtherOption: "a" } as FooOptions;
             assert.deepEqual(mergeWithOptions(FOO_DEFAULTS, options), FOO_DEFAULTS);
         });
-        it("copies basic options, ignores undefineds", () => {
+        it("copies basic options, ignores undefined", function() {
             assert.deepEqual(
                 mergeWithOptions(FOO_DEFAULTS, { opacity: 0.5, someString: undefined }),
                 {
@@ -66,7 +69,7 @@ describe("OptionsUtils", () => {
                 }
             );
         });
-        it("treats false, empty string and 0 as defined", () => {
+        it("treats false, empty string and 0 as defined", function() {
             assert.deepEqual(
                 mergeWithOptions(FOO_DEFAULTS, {
                     useTextures: false,
@@ -80,7 +83,7 @@ describe("OptionsUtils", () => {
                 }
             );
         });
-        it("doesn't copy undefineds when set, (as Object.assign does)", () => {
+        it("doesn't copy undefined when set, (as Object.assign does)", function() {
             assert.deepEqual(
                 mergeWithOptions(FOO_DEFAULTS, {
                     useTextures: undefined,
@@ -94,7 +97,7 @@ describe("OptionsUtils", () => {
             );
         });
 
-        it.skip("rationale: Object.assign and spread operator copy undefineds and nulls", () => {
+        it.skip("rationale: Object.assign and spread operator copy undefined & null", function() {
             const maskedNull: boolean = (null as any) as boolean;
             const maskedUndefined: boolean = (undefined as any) as boolean;
 

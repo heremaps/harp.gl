@@ -4,6 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+// tslint:disable:only-arrow-functions
+//    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
+
 import "@here/harp-fetch";
 import { TileKey } from "@here/harp-geoutils";
 import { DataProvider } from "@here/harp-mapview-decoder";
@@ -30,8 +33,8 @@ class MockDataProvider implements DataProvider {
     }
 }
 
-describe("DataProviders", () => {
-    it("Creates a OmvDataSource with a custom DataProvider", () => {
+describe("DataProviders", function() {
+    it("Creates a OmvDataSource with a custom DataProvider", function() {
         const mockDataProvider = new MockDataProvider();
         const omvDataSource = new OmvDataSource({
             decoder: new OmvTileDecoder(),
@@ -41,7 +44,7 @@ describe("DataProviders", () => {
         assert.isTrue(omvDataSource.dataProvider() instanceof MockDataProvider);
     });
 
-    it("Creates a OmvDataSource with a REST based DataProvider with proper params", () => {
+    it("Creates a OmvDataSource with a REST based DataProvider with proper params", function() {
         const omvDataSource = new OmvDataSource({
             decoder: new OmvTileDecoder(),
             baseUrl: "https://a.tiles.mapbox.com/v4/mapbox.mapbox-streets-v7",
@@ -62,7 +65,7 @@ describe("DataProviders", () => {
         assert.equal(omvRestClientProvider.params.authenticationMethod, AuthenticationTypeMapboxV4);
     });
 
-    it("Creates OmvDataSource with custom DataProvider, ignoring other provider attributes", () => {
+    it("Creates OmvDataSource with custom DataProvider, ignoring other attributes", function() {
         const mockDataProvider = new MockDataProvider();
         const omvDataSource = new OmvDataSource({
             decoder: new OmvTileDecoder(),

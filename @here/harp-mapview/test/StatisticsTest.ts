@@ -4,11 +4,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+// tslint:disable:only-arrow-functions
+//    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
+
 import { assert } from "chai";
 import { MultiStageTimer, RingBuffer, SampledTimer, Statistics } from "../lib/Statistics";
 
-describe("mapview-statistics", () => {
-    it("Ringbuffer", () => {
+describe("mapview-statistics", function() {
+    it("Ringbuffer", function() {
         const rb = new RingBuffer<number>(10);
 
         assert.equal(rb.size, 0);
@@ -68,7 +71,7 @@ describe("mapview-statistics", () => {
         });
     });
 
-    it("init", () => {
+    it("init", function() {
         const stats = new Statistics();
         assert.isFalse(stats.enabled);
 
@@ -76,7 +79,7 @@ describe("mapview-statistics", () => {
         assert.isTrue(stats.enabled);
     });
 
-    it("createTimer", () => {
+    it("createTimer", function() {
         const stats = new Statistics();
 
         const startTimer = stats.createTimer("run");

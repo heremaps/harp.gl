@@ -4,23 +4,26 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+// tslint:disable:only-arrow-functions
+//    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
+
 import { MapView } from "@here/harp-mapview";
 import { expect } from "chai";
 import * as sinon from "sinon";
 import { MapControls } from "../lib/MapControls";
 
-describe("MapControls", () => {
+describe("MapControls", function() {
     let sandbox: sinon.SinonSandbox;
 
-    beforeEach(() => {
+    beforeEach(function() {
         sandbox = sinon.createSandbox();
     });
 
-    afterEach(() => {
+    afterEach(function() {
         sandbox.restore();
     });
 
-    describe("on object creation", () => {
+    describe("on object creation", function() {
         let addEventListener: () => {};
         let mapView: MapView;
         let mapControls: MapControls;
@@ -30,7 +33,7 @@ describe("MapControls", () => {
         let minZoom: number;
         let minCameraHeight: number;
 
-        beforeEach(() => {
+        beforeEach(function() {
             addEventListener = sandbox.stub();
             camera = {} as any;
             domElement = { addEventListener } as any;
@@ -48,28 +51,28 @@ describe("MapControls", () => {
             mapControls = new MapControls(mapView);
         });
 
-        it("initializes camera property using value from constructor param", () => {
+        it("initializes camera property using value from constructor param", function() {
             expect(mapControls.camera).to.be.equals(camera);
         });
 
-        it("initializes domElement property using value from constructor param", () => {
+        it("initializes domElement property using value from constructor param", function() {
             expect(mapControls.domElement).to.be.equals(domElement);
         });
 
-        it("initializes minZoomLevel property using value from constructor param", () => {
+        it("initializes minZoomLevel property using value from constructor param", function() {
             expect(mapControls.minZoomLevel).to.be.equals(minZoom);
         });
 
-        it("initializes maxZoomLevel property using value from constructor param", () => {
+        it("initializes maxZoomLevel property using value from constructor param", function() {
             expect(mapControls.maxZoomLevel).to.be.equals(maxZoom);
         });
 
-        it("initializes minCameraHeight property using value from constructor param", () => {
+        it("initializes minCameraHeight property using value from constructor param", function() {
             expect(mapControls.minCameraHeight).to.be.equals(minCameraHeight);
         });
     });
 
-    it("correctly updates mapView on mouse move", () => {
+    it("correctly updates mapView on mouse move", function() {
         const updateStub = sandbox.stub();
         //@ts-ignore
         const mapControls = new MapControls({
@@ -83,7 +86,7 @@ describe("MapControls", () => {
         expect(updateStub.callCount).to.be.equal(1);
     });
 
-    it("correctly updates mapView on touch move", () => {
+    it("correctly updates mapView on touch move", function() {
         const updateStub = sandbox.stub();
         //@ts-ignore
         const mapControls = new MapControls({

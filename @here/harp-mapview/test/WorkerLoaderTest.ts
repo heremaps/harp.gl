@@ -4,6 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+// tslint:disable:only-arrow-functions
+//    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
+
 import { assert } from "chai";
 import * as sinon from "sinon";
 
@@ -17,9 +20,9 @@ declare const global: any;
 const workerDefined = typeof Worker !== "undefined" && typeof Blob !== "undefined";
 const describeWithWorker = workerDefined ? describe : xdescribe;
 
-describe("WorkerLoader", () => {
+describe("WorkerLoader", function() {
     let sandbox: sinon.SinonSandbox;
-    beforeEach(() => {
+    beforeEach(function() {
         sandbox = sinon.createSandbox();
         if (typeof window === "undefined") {
             // fake Worker constructor for node environment
@@ -27,7 +30,7 @@ describe("WorkerLoader", () => {
         }
     });
 
-    afterEach(() => {
+    afterEach(function() {
         sandbox.restore();
         if (typeof window === "undefined") {
             delete global.Worker;
@@ -38,7 +41,7 @@ describe("WorkerLoader", () => {
 
     const testWorkerUrl = getTestResourceUrl("harp-mapview", "test/resources/testWorker.js");
 
-    it("WorkerLoader falls back to blob / sync", async () => {
+    it("WorkerLoader falls back to blob / sync", async function() {
         // setup an environment in which any attempt to load worker from from non-blob URL
         // fails, so we check if WorkerLoader does it's job
         //
@@ -66,8 +69,8 @@ describe("WorkerLoader", () => {
         assert.equal(workerConstructorStub.firstCall.args[0], testWorkerUrl);
     });
 
-    describeWithWorker("real Workers integration", () => {
-        it("WorkerLoader falls back to blob / sync", async () => {
+    describeWithWorker("real Workers integration", function() {
+        it("WorkerLoader falls back to blob / sync", async function() {
             // setup an environment in which any attempt to load worker from from non-blob URL
             // fails, so we check if WorkerLoader does it's job
             //
@@ -101,7 +104,7 @@ describe("WorkerLoader", () => {
             assert(workerConstructorStub.secondCall.args[0].startsWith, "blob:");
         });
 
-        it("WorkerLoader falls back to blob / async", async () => {
+        it("WorkerLoader falls back to blob / async", async function() {
             // setup an environment in which any attempt to load worker from from non-blob URL
             // fails, so we check if WorkerLoader does it's job
             //

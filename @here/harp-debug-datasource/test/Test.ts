@@ -6,8 +6,11 @@
 
 import { assert } from "chai";
 
-describe("debug-datasource", () => {
-    it("ok", () => {
+// tslint:disable:only-arrow-functions
+//    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
+
+describe("debug-datasource", function() {
+    it("ok", function() {
         assert.isTrue(true);
     });
 });

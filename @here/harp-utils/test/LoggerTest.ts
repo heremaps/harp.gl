@@ -4,13 +4,16 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+// tslint:disable:only-arrow-functions
+//    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
+
 import { assert } from "chai";
 import * as sinon from "sinon";
 
 import { ILogger, LogLevel } from "../lib/Logger/ILogger";
 import { Logger } from "../lib/Logger/Logger";
 
-describe("Logger", () => {
+describe("Logger", function() {
     const sandbox = sinon.createSandbox();
 
     function printAll(logger: ILogger, msg: string) {
@@ -22,16 +25,16 @@ describe("Logger", () => {
         logger.trace(msg);
     }
 
-    afterEach(() => {
+    afterEach(function() {
         sandbox.restore();
     });
 
-    describe("Apply log level", () => {
-        afterEach(() => {
+    describe("Apply log level", function() {
+        afterEach(function() {
             sandbox.restore();
         });
 
-        it("check defaults", () => {
+        it("check defaults", function() {
             // Arrange
             const logger = new Logger("foo", console);
 
@@ -40,7 +43,7 @@ describe("Logger", () => {
             assert.equal(logger.level, LogLevel.Trace);
         });
 
-        it("error should be written to output", () => {
+        it("error should be written to output", function() {
             // Arrange
             const stubs = sandbox.stub(console);
 
@@ -59,7 +62,7 @@ describe("Logger", () => {
             assert.isFalse(stubs.trace.called);
         });
 
-        it("warning and error should be written to output ", () => {
+        it("warning and error should be written to output ", function() {
             // Arrange
             const stubs = sandbox.stub(console);
 
@@ -78,7 +81,7 @@ describe("Logger", () => {
             assert.isFalse(stubs.trace.called);
         });
 
-        it("info, warning, error should be written to output", () => {
+        it("info, warning, error should be written to output", function() {
             // Arrange
             const stubs = sandbox.stub(console);
 
@@ -97,7 +100,7 @@ describe("Logger", () => {
             assert.isFalse(stubs.trace.called);
         });
 
-        it("log, info, warning and error should be written", () => {
+        it("log, info, warning and error should be written", function() {
             // Arrange
             const stubs = sandbox.stub(console);
 
@@ -116,7 +119,7 @@ describe("Logger", () => {
             assert.isFalse(stubs.trace.called);
         });
 
-        it("debug, log, info, warning and error should be written", () => {
+        it("debug, log, info, warning and error should be written", function() {
             // Arrange
             const stubs = sandbox.stub(console);
 
@@ -135,7 +138,7 @@ describe("Logger", () => {
             assert.isFalse(stubs.trace.called);
         });
 
-        it("trace, debug, log, info, warning and error should be written", () => {
+        it("trace, debug, log, info, warning and error should be written", function() {
             // Arrange
             const stubs = sandbox.stub(console);
 
@@ -155,12 +158,12 @@ describe("Logger", () => {
         });
     });
 
-    describe("Enable / disable", () => {
-        afterEach(() => {
+    describe("Enable / disable", function() {
+        afterEach(function() {
             sandbox.restore();
         });
 
-        it("Enable all outputs", () => {
+        it("Enable all outputs", function() {
             // Arrange
             const stubs = sandbox.stub(console);
 
@@ -179,7 +182,7 @@ describe("Logger", () => {
             assert.isTrue(stubs.trace.calledOnce);
         });
 
-        it("Disable all outputs", () => {
+        it("Disable all outputs", function() {
             // Arrange
             const stubs = sandbox.stub(console);
 
@@ -198,7 +201,7 @@ describe("Logger", () => {
             assert.isFalse(stubs.trace.called);
         });
     });
-    it("Name is written to output", () => {
+    it("Name is written to output", function() {
         // Arrange
         const stubs = sandbox.stub(console);
         const logger = new Logger("foo", console, { enabled: true, level: LogLevel.Trace });

@@ -9,6 +9,7 @@ import { Entry, LRUCache } from "../lib/LRUCache";
 
 // tslint:disable:no-string-literal
 // tslint:disable:only-arrow-functions
+//    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
 // helper class to access protected members of LRUCache
 class TestLRUCache<Key, Value> extends LRUCache<Key, Value> {

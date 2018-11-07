@@ -4,11 +4,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+// tslint:disable:only-arrow-functions
+//    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
+
 import { assert } from "chai";
 
 import { ContextualArabicConverter } from "../lib/ContextualArabicConverter";
 
-describe("ContextualArabicConverter", () => {
+describe("ContextualArabicConverter", function() {
     const textA = ContextualArabicConverter.instance.convert("مصر");
     const codepointsA = [0xfee3, 0xfebc, 0xfeae];
     const textB = ContextualArabicConverter.instance.convert(
@@ -59,7 +62,7 @@ describe("ContextualArabicConverter", () => {
         0x002e
     ];
 
-    it("Arabic", () => {
+    it("Arabic", function() {
         let result = true;
         for (let i = 0; i < textA.length; ++i) {
             result = result && textA.charCodeAt(i) === codepointsA[i];
@@ -67,7 +70,7 @@ describe("ContextualArabicConverter", () => {
         assert(result);
     });
 
-    it("Latin-Arabic", () => {
+    it("Latin-Arabic", function() {
         let result = true;
         for (let i = 0; i < textB.length; ++i) {
             result = result && textB.charCodeAt(i) === codepointsB[i];

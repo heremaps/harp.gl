@@ -4,6 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+// tslint:disable:only-arrow-functions
+//    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
+
 import { assert } from "chai";
 import { GroupedPriorityList } from "../lib/GroupedPriorityList";
 
@@ -11,8 +14,8 @@ interface Item {
     priority: number;
 }
 
-describe("GroupedPriorityList", () => {
-    it("#add", () => {
+describe("GroupedPriorityList", function() {
+    it("#add", function() {
         const priorityList = new GroupedPriorityList<Item>();
 
         for (let i = 0; i < 100; i++) {
@@ -37,7 +40,7 @@ describe("GroupedPriorityList", () => {
         }
     });
 
-    it("#clear", () => {
+    it("#clear", function() {
         const priorityList = new GroupedPriorityList<Item>();
 
         for (let i = 0; i < 100; i++) {
@@ -51,7 +54,7 @@ describe("GroupedPriorityList", () => {
         assert.equal(priorityList.groups.size, 0);
     });
 
-    it("#remove", () => {
+    it("#remove", function() {
         const priorityList = new GroupedPriorityList<Item>();
 
         const element1 = { priority: 1 };
@@ -77,7 +80,7 @@ describe("GroupedPriorityList", () => {
         assert.isFalse(result1b);
     });
 
-    it("#merge", () => {
+    it("#merge", function() {
         const priorityList1 = new GroupedPriorityList<Item>();
         const priorityList2 = new GroupedPriorityList<Item>();
 
@@ -109,7 +112,7 @@ describe("GroupedPriorityList", () => {
         }
     });
 
-    it("#sortedGroups", () => {
+    it("#sortedGroups", function() {
         const priorityList = new GroupedPriorityList<Item>();
 
         for (let i = 99; i >= 0; i--) {

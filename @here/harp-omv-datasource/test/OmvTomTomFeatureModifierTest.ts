@@ -4,6 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+// tslint:disable:only-arrow-functions
+//    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
+
 import { MapEnv } from "@here/harp-datasource-protocol";
 import { assert } from "chai";
 import { OmvFeatureFilterDescriptionBuilder } from "../lib/OmvDataFilter";
@@ -31,12 +34,12 @@ export class OmvTomTomModifierMock extends OmvTomTomFeatureModifier {
 /**
  * Add unit tests for OmvTomTomFeatureModifier
  */
-describe("OmvTomTomFeatureModifier", () => {
+describe("OmvTomTomFeatureModifier", function() {
     const filterBuilder = new OmvFeatureFilterDescriptionBuilder();
     const filterDescription = filterBuilder.createDescription();
     const tomTomFeatureModifier = new OmvTomTomModifierMock(filterDescription);
 
-    it("modify Landuse layers", () => {
+    it("modify Landuse layers", function() {
         assert.isObject(tomTomFeatureModifier);
 
         let env = new MapEnv({});
@@ -65,7 +68,7 @@ describe("OmvTomTomFeatureModifier", () => {
         assert.equal(env.entries.class, "industrial");
     });
 
-    it("modify water layers", () => {
+    it("modify water layers", function() {
         assert.isObject(tomTomFeatureModifier);
 
         let env = new MapEnv({});
@@ -79,7 +82,7 @@ describe("OmvTomTomFeatureModifier", () => {
         assert.equal(env.entries.$layer, "water");
     });
 
-    it("modify road layers", () => {
+    it("modify road layers", function() {
         assert.isObject(tomTomFeatureModifier);
 
         let env = new MapEnv({});

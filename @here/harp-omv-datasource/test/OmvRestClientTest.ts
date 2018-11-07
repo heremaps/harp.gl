@@ -4,6 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+// tslint:disable:only-arrow-functions
+//    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
+
 import { DownloadManager } from "@here/harp-download-manager";
 import "@here/harp-fetch";
 import { TileKey } from "@here/harp-geoutils";
@@ -32,18 +35,18 @@ class MockDownloadManager extends DownloadManager {
 }
 const mockDownloadManager = new MockDownloadManager();
 
-describe("OmvRestClient", () => {
+describe("OmvRestClient", function() {
     let downloadSpy: sinon.SinonSpy;
 
-    beforeEach(() => {
+    beforeEach(function() {
         downloadSpy = sinon.spy(mockDownloadManager, "download");
     });
 
-    afterEach(() => {
+    afterEach(function() {
         downloadSpy.restore();
     });
 
-    it("generates proper Url with HEREV1 Format", async () => {
+    it("generates proper Url with HEREV1 Format", async function() {
         const restClient = new OmvRestClient({
             baseUrl: "https://some.base.url",
             apiFormat: APIFormat.HereV1,
@@ -53,7 +56,7 @@ describe("OmvRestClient", () => {
         assert.equal(downloadSpy.args[0][0], "https://some.base.url/3/2/1/omv");
     });
 
-    it("generates proper Url with MapBox Format", async () => {
+    it("generates proper Url with MapBox Format", async function() {
         const restClient = new OmvRestClient({
             baseUrl: "https://a.tiles.mapbox.com/v4/mapbox.mapbox-streets-v7",
             apiFormat: APIFormat.MapboxV4,
@@ -67,7 +70,7 @@ describe("OmvRestClient", () => {
         );
     });
 
-    it("generates proper Url with TomTom Format", async () => {
+    it("generates proper Url with TomTom Format", async function() {
         const restClient = new OmvRestClient({
             baseUrl: "https://a.tomtom.base.url",
             apiFormat: APIFormat.TomtomV1,
@@ -78,7 +81,7 @@ describe("OmvRestClient", () => {
         assert.equal(downloadSpy.args[0][0], "https://a.tomtom.base.url/3/2/1.pbf?key=123");
     });
 
-    it("generates proper Url with MapZen Format", async () => {
+    it("generates proper Url with MapZen Format", async function() {
         const restClient = new OmvRestClient({
             baseUrl: "https://a.mapzen.base.url",
             apiFormat: APIFormat.MapzenV1,
@@ -89,7 +92,7 @@ describe("OmvRestClient", () => {
         assert.equal(downloadSpy.args[0][0], "https://a.mapzen.base.url/3/2/1.pbf?api_key=123");
     });
 
-    it("supports custom authentication method based on query string key", async () => {
+    it("supports custom authentication method based on query string key", async function() {
         const restClient = new OmvRestClient({
             baseUrl: "https://some.base.url",
             apiFormat: APIFormat.HereV1,
@@ -104,7 +107,7 @@ describe("OmvRestClient", () => {
         assert.equal(downloadSpy.args[0][0], "https://some.base.url/3/2/1/omv?customKey=12345");
     });
 
-    it("generates authentication header with bearer token from a function", async () => {
+    it("generates authentication header with bearer token from a function", async function() {
         const restClient = new OmvRestClient({
             baseUrl: "https://some.base.url",
             apiFormat: APIFormat.HereV1,
