@@ -4,6 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+// tslint:disable:only-arrow-functions
+//    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
+
 import { assert } from "chai";
 
 import { ImageCache } from "../lib/image/ImageCache";
@@ -17,18 +20,18 @@ class ImageData {
     }
 }
 
-describe("MapViewImageCache", () => {
+describe("MapViewImageCache", function() {
     // tslint:disable-next-line:no-object-literal-type-assertion
     const mapView: MapView = {} as MapView;
 
-    it("#empty", () => {
+    it("#empty", function() {
         const cache = new MapViewImageCache(mapView);
         assert.equal(cache.numberOfNames, 0);
         assert.equal(cache.numberOfUrls, 0);
         assert.notExists(cache.findNames("xxx"));
     });
 
-    it("#registerImage", () => {
+    it("#registerImage", function() {
         const cache = new MapViewImageCache(mapView);
 
         const imageData = new ImageData(16, 16);
@@ -88,7 +91,7 @@ describe("MapViewImageCache", () => {
         });
     }
 
-    it("#clear", () => {
+    it("#clear", function() {
         const cache = new MapViewImageCache(mapView);
 
         const imageData = new ImageData(16, 16);
@@ -102,7 +105,7 @@ describe("MapViewImageCache", () => {
         assert.equal(cache.numberOfNames, 0);
     });
 
-    it("#add images", () => {
+    it("#add images", function() {
         const cache = new MapViewImageCache(mapView);
 
         const imageData1 = new ImageData(16, 16);
@@ -132,7 +135,7 @@ describe("MapViewImageCache", () => {
         assert.isTrue(cache.hasUrl("httpx://naxos.de-2"));
     });
 
-    it("#add images with same url but differing names", () => {
+    it("#add images with same url but differing names", function() {
         const cache = new MapViewImageCache(mapView);
 
         const imageData1 = new ImageData(16, 16);
@@ -157,7 +160,7 @@ describe("MapViewImageCache", () => {
         assert.deepEqual(cache.findNames("httpx://naxos.de"), ["testImage1", "testImage2"]);
     });
 
-    it("#add images with same name but differing urls", () => {
+    it("#add images with same name but differing urls", function() {
         const cache = new MapViewImageCache(mapView);
         assert.throws(() => {
             cache.registerImage("testImage", "httpx://naxos.de", undefined);
@@ -166,8 +169,8 @@ describe("MapViewImageCache", () => {
     });
 });
 
-describe("ImageCache", () => {
-    it("#instance", () => {
+describe("ImageCache", function() {
+    it("#instance", function() {
         const instance = ImageCache.instance;
         const instance2 = ImageCache.instance;
         assert.exists(instance);
@@ -175,14 +178,14 @@ describe("ImageCache", () => {
         instance.clearAll();
     });
 
-    it("#empty", () => {
+    it("#empty", function() {
         const instance = ImageCache.instance;
         assert.equal(instance.size, 0);
         const found = instance.findImage("xxx");
         assert.notExists(found);
     });
 
-    it("#registerImage", () => {
+    it("#registerImage", function() {
         // tslint:disable-next-line:no-object-literal-type-assertion
         const mapView: MapView = {} as MapView;
         const instance = ImageCache.instance;
@@ -241,7 +244,7 @@ describe("ImageCache", () => {
         });
     }
 
-    it("#clearAll", () => {
+    it("#clearAll", function() {
         // tslint:disable-next-line:no-object-literal-type-assertion
         const mapView: MapView = {} as MapView;
         const instance = ImageCache.instance;
@@ -254,7 +257,7 @@ describe("ImageCache", () => {
         assert.notExists(instance.findImage("testImage"));
     });
 
-    it("#dispose", () => {
+    it("#dispose", function() {
         // tslint:disable-next-line:no-object-literal-type-assertion
         const mapView: MapView = {} as MapView;
         const instance = ImageCache.instance;
@@ -266,7 +269,7 @@ describe("ImageCache", () => {
         assert.equal(ImageCache.instance.size, 0);
     });
 
-    it("#register same image in multiple MapViews", () => {
+    it("#register same image in multiple MapViews", function() {
         const instance = ImageCache.instance;
         instance.clearAll();
 
@@ -288,7 +291,7 @@ describe("ImageCache", () => {
         assert.equal(imageData1, testImage!.imageData);
     });
 
-    it("#register different images in multiple MapViews", () => {
+    it("#register different images in multiple MapViews", function() {
         const instance = ImageCache.instance;
         instance.clearAll();
 
@@ -314,7 +317,7 @@ describe("ImageCache", () => {
         assert.equal(imageData2, testImage2!.imageData);
     });
 
-    it("#clear images in multiple MapViews", () => {
+    it("#clear images in multiple MapViews", function() {
         const instance = ImageCache.instance;
         instance.clearAll();
 

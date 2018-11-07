@@ -4,10 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+// tslint:disable:only-arrow-functions
+//    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
+
 import { assert } from "chai";
 import { GeoCoordinates } from "../lib/coordinates/GeoCoordinates";
 
-describe("GeoCoordinates", () => {
+describe("GeoCoordinates", function() {
     const tests = [
         { args: [90, 180], expected: [90, 180] },
         { args: [-90, -180], expected: [-90, -180] },
@@ -26,7 +29,7 @@ describe("GeoCoordinates", () => {
         { args: [361, 123, 50], expected: [1, 123, 50] }
     ];
 
-    tests.forEach(test => {
+    tests.forEach(function(test) {
         it(
             "normalized GeoCoordinates { " +
                 test.args[0] +
@@ -35,7 +38,7 @@ describe("GeoCoordinates", () => {
                 ", " +
                 test.args[2] +
                 " }",
-            () => {
+            function() {
                 const normalized = new GeoCoordinates(
                     test.args[0],
                     test.args[1],

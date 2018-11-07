@@ -4,14 +4,17 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+// tslint:disable:only-arrow-functions
+//    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
+
 import { assert } from "chai";
 import { loadTestResource } from "../index";
 
 // tslint:disable:only-arrow-functions
 
-describe("@here/harp-test-utils", () => {
+describe("@here/harp-test-utils", function() {
     describe("#loadTestResource", function() {
-        it(`loads static text file`, async () => {
+        it(`loads static text file`, async function() {
             const textFromFile = await loadTestResource(
                 "harp-test-utils",
                 "./test/resources/test.txt",

@@ -4,18 +4,21 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+// tslint:disable:only-arrow-functions
+//    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
+
 import { createMaterial } from "../lib/DecodedTile";
 import { getObjectConstructor, ShaderTechnique } from "../lib/Techniques";
 
 import { assert } from "chai";
 import * as THREE from "three";
 
-describe("DataSourceProtocol", () => {
-    it("ok", () => {
+describe("DataSourceProtocol", function() {
+    it("ok", function() {
         assert.isTrue(true);
     });
 
-    it("ShaderTechnique", () => {
+    it("ShaderTechnique", function() {
         const technique: ShaderTechnique = {
             name: "shader",
             primitive: "line",
@@ -54,7 +57,7 @@ describe("DataSourceProtocol", () => {
         }
     });
 
-    it("ObjectConstructor", () => {
+    it("ObjectConstructor", function() {
         const ExtrudedLineCtor = getObjectConstructor({
             name: "extruded-line",
             color: "#f00",

@@ -4,6 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+// tslint:disable:only-arrow-functions
+//    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
+
 import { assert } from "chai";
 import { Color, DataTexture } from "three";
 import {
@@ -39,9 +42,9 @@ function getSample(
     return sample;
 }
 
-describe("SkyGradientTexture", () => {
-    describe("SkyGradientTexture()", () => {
-        it("generates a texture and has a topColor and an bottomColor", () => {
+describe("SkyGradientTexture", function() {
+    describe("SkyGradientTexture()", function() {
+        it("generates a texture and has a topColor and an bottomColor", function() {
             const grad = new SkyGradientTexture(
                 new Color("#FF0000"),
                 new Color("#0000FF"),
@@ -63,7 +66,7 @@ describe("SkyGradientTexture", () => {
             assert.instanceOf(grad.texture, DataTexture, "is an instance of DataTexture");
         });
 
-        it("generates an interpolated texture", () => {
+        it("generates an interpolated texture", function() {
             const grad = new SkyGradientTexture(
                 new Color("#FF0000"),
                 new Color("#0000FF"),
@@ -81,7 +84,7 @@ describe("SkyGradientTexture", () => {
             assert.instanceOf(grad.texture, DataTexture, "is an instance of DataTexture");
         });
 
-        it("generates a texture with a given height", () => {
+        it("generates a texture with a given height", function() {
             const grad = new SkyGradientTexture(
                 new Color("#FF0000"),
                 new Color("#0000FF"),
@@ -108,8 +111,8 @@ describe("SkyGradientTexture", () => {
         });
     });
 
-    describe("update()", () => {
-        it("it updates the gradient with the given colors", () => {
+    describe("update()", function() {
+        it("it updates the gradient with the given colors", function() {
             const grad = new SkyGradientTexture(
                 new Color("#FFF000"),
                 new Color("#00F0FF"),
@@ -135,8 +138,8 @@ describe("SkyGradientTexture", () => {
         });
     });
 
-    describe("updateYOffset()", () => {
-        it("it updates the texture y-offset", () => {
+    describe("updateYOffset()", function() {
+        it("it updates the texture y-offset", function() {
             const grad = new SkyGradientTexture(
                 new Color("#FFF000"),
                 new Color("#00F0FF"),

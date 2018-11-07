@@ -4,6 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+// tslint:disable:only-arrow-functions
+//    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
+
 import { TileKey } from "@here/harp-geoutils";
 import { assert } from "chai";
 import * as sinon from "sinon";
@@ -28,8 +31,8 @@ function createBerlinCenterCameraFromSamples() {
     return { camera, worldCenter };
 }
 
-describe("VisibleTileSet", () => {
-    it("#updateRenderList properly culls Berlin center example view", () => {
+describe("VisibleTileSet", function() {
+    it("#updateRenderList properly culls Berlin center example view", function() {
         const { camera, worldCenter } = createBerlinCenterCameraFromSamples();
         const vts = new VisibleTileSet(camera, MapViewDefaults);
         const zoomLevel = 15;
@@ -49,7 +52,7 @@ describe("VisibleTileSet", () => {
         assert.equal(renderedTiles.length, 0);
     });
 
-    it("#updateRenderList properly culls panorama of Berlin center", () => {
+    it("#updateRenderList properly culls panorama of Berlin center", function() {
         const worldCenter = new THREE.Vector3(21526192.124894984, 26932362.99119022, 0);
         const camera = new THREE.PerspectiveCamera();
         camera.aspect = 1.7541528239202657;
@@ -86,7 +89,7 @@ describe("VisibleTileSet", () => {
         assert.equal(renderedTiles.length, 0);
     });
 
-    it("#updateRenderList properly finds parent loaded tiles in Berlin center example view", () => {
+    it("#updateRenderList properly finds parent loaded tiles in Berlin center", function() {
         const { camera, worldCenter } = createBerlinCenterCameraFromSamples();
         const vts = new VisibleTileSet(camera, MapViewDefaults);
 
@@ -118,7 +121,7 @@ describe("VisibleTileSet", () => {
         assert.equal(renderedTiles[0].tileKey.mortonCode(), parentCode);
     });
 
-    it("#markTilesDirty properly handles cached & visible tiles", async () => {
+    it("#markTilesDirty properly handles cached & visible tiles", async function() {
         const { camera, worldCenter } = createBerlinCenterCameraFromSamples();
         const vts = new VisibleTileSet(camera, MapViewDefaults);
         const zoomLevel = 15;

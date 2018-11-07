@@ -4,12 +4,15 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+// tslint:disable:only-arrow-functions
+//    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
+
 import { assert } from "chai";
 import { safeParseDecimalInt } from "../lib/Utils";
 
-describe("MapControls", () => {
-    describe("Utils", () => {
-        it("safeParseDecimalInt", () => {
+describe("MapControls", function() {
+    describe("Utils", function() {
+        it("safeParseDecimalInt", function() {
             assert.equal(safeParseDecimalInt("0", 1), 0);
             assert.equal(safeParseDecimalInt("123456789", 666), 123456789);
 

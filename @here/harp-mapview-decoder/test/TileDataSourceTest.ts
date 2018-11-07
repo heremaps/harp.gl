@@ -4,6 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+// tslint:disable:only-arrow-functions
+//    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
+
 import { DecodedTile, Geometry, ITileDecoder, TileInfo } from "@here/harp-datasource-protocol";
 import "@here/harp-fetch";
 import {
@@ -80,8 +83,8 @@ function createMockMapView() {
     } as any) as MapView;
 }
 
-describe("TileDataSource", () => {
-    it("#dispose cascades to decoder", () => {
+describe("TileDataSource", function() {
+    it("#dispose cascades to decoder", function() {
         const decoder = createMockTileDecoder();
         const testedDataSource = new TileDataSource(new TileFactory(Tile), {
             styleSetName: "",
@@ -94,7 +97,7 @@ describe("TileDataSource", () => {
         testedDataSource.dispose();
         assert.equal(decoder.dispose.callCount, 1);
     });
-    it("uses tileFactory to construct tiles with custom type", () => {
+    it("uses tileFactory to construct tiles with custom type", function() {
         class CustomTile extends Tile {
             constructor(dataSource: DataSource, tileKey: TileKey) {
                 super(dataSource, tileKey);
@@ -114,7 +117,7 @@ describe("TileDataSource", () => {
         assert(mockTile instanceof CustomTile);
     });
 
-    it("#updateTile: tile disposing cancels load, skips decode and tile update", async () => {
+    it("#updateTile: tile disposing cancels load, skips decode and tile update", async function() {
         const mockDataProvider = createMockDataProvider();
 
         const abortController = new AbortController();
@@ -165,7 +168,7 @@ describe("TileDataSource", () => {
         assert.equal(spyTileSetDecodedTile.callCount, 0);
     });
 
-    it("subsequent, overlapping #updateTile calls load & decode tile once", async () => {
+    it("subsequent, overlapping #updateTile calls load & decode tile once", async function() {
         const mockDataProvider = createMockDataProvider();
         const mockDecoder = createMockTileDecoder();
 
@@ -198,7 +201,7 @@ describe("TileDataSource", () => {
         assert(spyTileSetDecodedTile.calledWith(fakeEmptyGeometry));
     });
 
-    it("Empty decoded tiles are ignored", async () => {
+    it("Empty decoded tiles are ignored", async function() {
         const mockDataProvider = createMockDataProvider();
         const mockDecoder = createMockTileDecoder();
 

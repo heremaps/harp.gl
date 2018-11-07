@@ -4,11 +4,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+// tslint:disable:only-arrow-functions
+//    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
+
 import { assert } from "chai";
 import { Flattener } from "./../lib/utils/Flattener";
 
-describe("FlatCopier", () => {
-    it("flattens JSON-like objects", () => {
+describe("FlatCopier", function() {
+    it("flattens JSON-like objects", function() {
         const jsonLike = {
             number: 0,
             boolean: false,

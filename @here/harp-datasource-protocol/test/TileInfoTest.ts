@@ -4,6 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+// tslint:disable:only-arrow-functions
+//    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
+
 import { TileKey } from "@here/harp-geoutils";
 import { FillTechnique, LineTechnique, SquaresTechnique, Technique } from "../lib/Techniques";
 import { MapEnv } from "../lib/Theme";
@@ -18,7 +21,7 @@ import {
 
 import { assert } from "chai";
 
-describe("ExtendedTileInfo", () => {
+describe("ExtendedTileInfo", function() {
     const tileKey = new TileKey(0, 0, 0);
 
     interface RingData {
@@ -319,7 +322,7 @@ describe("ExtendedTileInfo", () => {
         checkPolygonFeatureGroup(tileInfo.polygonGroup);
     }
 
-    it("create ExtendedTileInfoWriter", () => {
+    it("create ExtendedTileInfoWriter", function() {
         const tileInfo = new ExtendedTileInfo(tileKey, true);
         const writer = new ExtendedTileInfoWriter(tileInfo, /*storeExtendedTags*/ true);
 
@@ -332,7 +335,7 @@ describe("ExtendedTileInfo", () => {
         checkFeatureGroups(tileInfo);
     });
 
-    it("ExtendedTileInfoWriter#addPointInfo", () => {
+    it("ExtendedTileInfoWriter#addPointInfo", function() {
         const tileInfo = new ExtendedTileInfo(tileKey, true);
         const writer = new ExtendedTileInfoWriter(tileInfo, /*storeExtendedTags*/ true);
 
@@ -360,7 +363,7 @@ describe("ExtendedTileInfo", () => {
         checkFeatureGroups(tileInfo);
     });
 
-    it("ExtendedTileInfoWriter access pointInfo", () => {
+    it("ExtendedTileInfoWriter access pointInfo", function() {
         // Arrange
         const tileInfo = new ExtendedTileInfo(tileKey, true);
         const writer = new ExtendedTileInfoWriter(tileInfo, /*storeExtendedTags*/ true);
@@ -421,7 +424,7 @@ describe("ExtendedTileInfo", () => {
         checkFeatureGroups(tileInfo);
     });
 
-    it("ExtendedTileInfoWriter access multiple pointInfo", () => {
+    it("ExtendedTileInfoWriter access multiple pointInfo", function() {
         // Arrange
         const tileInfo = new ExtendedTileInfo(tileKey, true);
         const writer = new ExtendedTileInfoWriter(tileInfo, /*storeExtendedTags*/ true);
@@ -519,7 +522,7 @@ describe("ExtendedTileInfo", () => {
         checkFeatureGroups(tileInfo);
     });
 
-    it("ExtendedTileInfoWriter store and access lineInfo", () => {
+    it("ExtendedTileInfoWriter store and access lineInfo", function() {
         // Arrange
         const tileInfo = new ExtendedTileInfo(tileKey, true);
         const writer = new ExtendedTileInfoWriter(tileInfo, /*storeExtendedTags*/ true);
@@ -574,7 +577,7 @@ describe("ExtendedTileInfo", () => {
         checkFeatureGroups(tileInfo);
     });
 
-    it("ExtendedTileInfoWriter store and access multiple lineInfos", () => {
+    it("ExtendedTileInfoWriter store and access multiple lineInfos", function() {
         // Arrange
         const tileInfo = new ExtendedTileInfo(tileKey, true);
         const writer = new ExtendedTileInfoWriter(tileInfo, /*storeExtendedTags*/ true);
@@ -664,7 +667,7 @@ describe("ExtendedTileInfo", () => {
         checkFeatureGroups(tileInfo);
     });
 
-    it("ExtendedTileInfoWriter store and access polygonInfo", () => {
+    it("ExtendedTileInfoWriter store and access polygonInfo", function() {
         // Arrange
         const tileInfo = new ExtendedTileInfo(tileKey, true);
         const writer = new ExtendedTileInfoWriter(tileInfo, /*storeExtendedTags*/ true);
@@ -727,7 +730,7 @@ describe("ExtendedTileInfo", () => {
         checkFeatureGroups(tileInfo);
     });
 
-    it("ExtendedTileInfoWriter store and access multiple polygonInfos-1", () => {
+    it("ExtendedTileInfoWriter store and access multiple polygonInfos-1", function() {
         // Arrange
         const tileInfo = new ExtendedTileInfo(tileKey, true);
         const writer = new ExtendedTileInfoWriter(tileInfo, /*storeExtendedTags*/ true);
@@ -824,7 +827,7 @@ describe("ExtendedTileInfo", () => {
         checkFeatureGroups(tileInfo);
     });
 
-    it("ExtendedTileInfoWriter store and access multiple polygonInfos-2", () => {
+    it("ExtendedTileInfoWriter store and access multiple polygonInfos-2", function() {
         // Arrange
         const tileInfo = new ExtendedTileInfo(tileKey, true);
         const writer = new ExtendedTileInfoWriter(tileInfo, /*storeExtendedTags*/ true);
@@ -924,7 +927,7 @@ describe("ExtendedTileInfo", () => {
         checkFeatureGroups(tileInfo);
     });
 
-    it("ExtendedTileInfoWriter store and access multiple polygonInfos-3", () => {
+    it("ExtendedTileInfoWriter store and access multiple polygonInfos-3", function() {
         // Arrange
         const tileInfo = new ExtendedTileInfo(tileKey, true);
         const writer = new ExtendedTileInfoWriter(tileInfo, /*storeExtendedTags*/ true);
@@ -1114,14 +1117,14 @@ describe("ExtendedTileInfo", () => {
     //     );
     // }
 
-    // it("ExtendedTileInfoWriter measure store polygonInfos - NullTileVisitor", () => {
+    // it("ExtendedTileInfoWriter measure store polygonInfos - NullTileVisitor", function() {
     //     const tileVisitor = new NullTileHandler();
     //     createAndVisitManyPolygonInfos(tileVisitor, 1000, 10, 25);
     //     createAndVisitManyPolygonInfos(tileVisitor, 5000, 2, 200);
     //     createAndVisitManyPolygonInfos(tileVisitor, 5000, 5, 25);
     // }).timeout(0);
 
-    // it("ExtendedTileInfoWriter measure store polygonInfos - Copying TileVisitor", () => {
+    // it("ExtendedTileInfoWriter measure store polygonInfos - Copying TileVisitor", function() {
     //     const tileVisitor = new TileHandler();
     //     createAndVisitManyPolygonInfos(tileVisitor, 1000, 10, 25);
     //     createAndVisitManyPolygonInfos(tileVisitor, 5000, 2, 200);

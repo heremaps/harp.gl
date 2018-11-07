@@ -4,6 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+// tslint:disable:only-arrow-functions
+//    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
+
 import { assert } from "chai";
 import * as sinon from "sinon";
 import { LogLevel } from "../lib/Logger/ILogger";
@@ -16,8 +19,8 @@ import {
 
 declare const global: any;
 
-describe("WorkerChannel", () => {
-    beforeEach(() => {
+describe("WorkerChannel", function() {
+    beforeEach(function() {
         if (typeof self === "undefined") {
             global.self = {
                 postMessage() {
@@ -27,13 +30,13 @@ describe("WorkerChannel", () => {
         }
     });
 
-    afterEach(() => {
+    afterEach(function() {
         if (Object.keys(self).length === 1) {
             delete global.self;
         }
     });
 
-    it("The WorkerChannel post messages with the exact format of IWorkerChannelMessage.", () => {
+    it("The WorkerChannel post messages with the format of IWorkerChannelMessage.", function() {
         const message1 = "My message : ";
         const message2 = "is original.";
         const loggerName = "myLogger";

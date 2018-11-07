@@ -4,14 +4,17 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+// tslint:disable:only-arrow-functions
+//    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
+
 import { GeoCoordinates, MathUtils, mercatorProjection } from "@here/harp-geoutils";
 import { expect } from "chai";
 import * as THREE from "three";
 import { MapView } from "../lib/MapView";
 import { MapViewUtils } from "../lib/Utils";
 
-describe("map-view#Utils", () => {
-    it("calculates zoom level", () => {
+describe("map-view#Utils", function() {
+    it("calculates zoom level", function() {
         const mapViewMock = {
             maxZoomLevel: 20,
             minZoomLevel: 1,
@@ -37,7 +40,7 @@ describe("map-view#Utils", () => {
         expect(result).to.be.closeTo(5.82, 0.05);
     });
 
-    it("converts target coordinates from XYZ to camera coordinates", () => {
+    it("converts target coordinates from XYZ to camera coordinates", function() {
         const xyzView = {
             zoom: 5,
             yaw: 3,
@@ -63,11 +66,11 @@ describe("map-view#Utils", () => {
         expect(cameraCoordinates.longitude).to.equal(-9.783274868705762);
     });
 
-    describe("converts zoom level to height and height to zoom level", () => {
+    describe("converts zoom level to height and height to zoom level", function() {
         const height = 1000;
         let mapViewMock: any;
 
-        beforeEach(() => {
+        beforeEach(function() {
             mapViewMock = {
                 maxZoomLevel: 20,
                 minZoomLevel: 1,
@@ -76,7 +79,7 @@ describe("map-view#Utils", () => {
             };
         });
 
-        it("ensures that both functions are inverse", () => {
+        it("ensures that both functions are inverse", function() {
             const zoomLevel = MapViewUtils.calculateZoomLevelFromHeight(height, { ...mapViewMock });
             const calculatedHeight = MapViewUtils.calculateDistanceToGroundFromZoomLevel(
                 mapViewMock,
@@ -86,7 +89,7 @@ describe("map-view#Utils", () => {
             expect(height).to.be.closeTo(calculatedHeight, Math.pow(10, -11));
         });
 
-        it("respect zoomLevelBias property", () => {
+        it("respect zoomLevelBias property", function() {
             const biasFactor = 4;
             mapViewMock.zoomLevelBias = 1;
             const heightNonBiased = MapViewUtils.calculateDistanceToGroundFromZoomLevel(
@@ -103,7 +106,7 @@ describe("map-view#Utils", () => {
         });
     });
 
-    it("calculates horizontal and vertical fov", () => {
+    it("calculates horizontal and vertical fov", function() {
         const vFov = 60;
         const hFov = MathUtils.radToDeg(
             MapViewUtils.calculateHorizontalFovByVerticalFov(MathUtils.degToRad(vFov), 0.9)
@@ -114,7 +117,7 @@ describe("map-view#Utils", () => {
         expect(vFov).to.be.closeTo(calculatedVFov, 0.00000000001);
     });
 
-    it("calculates memory usage", () => {
+    it("calculates memory usage", function() {
         const testObject1 = { str: "aaa", bool: true, num: 12, test: {} };
         const testObject2 = { num: 1, test: testObject1 };
         testObject1.test = testObject2;
@@ -122,7 +125,7 @@ describe("map-view#Utils", () => {
         expect(result).to.be.equal(26);
     });
 
-    it("calculates memory usage for circular references", () => {
+    it("calculates memory usage for circular references", function() {
         const testObject1 = { str: "aaa", bool: true, num: 12, test: {} };
         const testObject2 = { num: 1, test: {} };
         const testObject3 = { string: "bbb", test: {} };
@@ -133,7 +136,7 @@ describe("map-view#Utils", () => {
         expect(result).to.be.equal(32);
     });
 
-    it("calculates memory usage for arrays of values and arrays of objects", () => {
+    it("calculates memory usage for arrays of values and arrays of objects", function() {
         const testObject = {
             str: "aaa",
             bool: true,
@@ -147,7 +150,7 @@ describe("map-view#Utils", () => {
         expect(result).to.be.equal(228);
     });
 
-    it("estimate size of world with one cube", async () => {
+    it("estimate size of world with one cube", async function() {
         const scene: THREE.Scene = new THREE.Scene();
         const geometry = new THREE.BoxGeometry(1, 1, 1);
         const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
@@ -156,7 +159,7 @@ describe("map-view#Utils", () => {
         expect(MapViewUtils.estimateObjectSize(scene)).to.be.equal(4626);
     });
 
-    it("estimate size of world with 1000 cubes", async () => {
+    it("estimate size of world with 1000 cubes", async function() {
         const scene: THREE.Scene = new THREE.Scene();
         for (let i = 0; i < 1000; i++) {
             const geometry = new THREE.BoxGeometry(1, 1, 1);

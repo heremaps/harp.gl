@@ -4,6 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+// tslint:disable:only-arrow-functions
+//    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
+
 import { assert } from "chai";
 import * as sinon from "sinon";
 
@@ -39,9 +42,9 @@ const sampleRequest: DecodeTileRequest = {
     projection: "bar"
 };
 
-describe("ConcurrentWorkerSet", () => {
+describe("ConcurrentWorkerSet", function() {
     let sandbox: sinon.SinonSandbox;
-    beforeEach(() => {
+    beforeEach(function() {
         sandbox = sinon.createSandbox();
         if (typeof window === "undefined") {
             // fake Worker constructor for node environment
@@ -49,14 +52,14 @@ describe("ConcurrentWorkerSet", () => {
         }
     });
 
-    afterEach(() => {
+    afterEach(function() {
         if (typeof window === "undefined") {
             delete global.Worker;
         }
         sandbox.restore();
     });
 
-    it("The constructor creates a defined set of workers.", async () => {
+    it("The constructor creates a defined set of workers.", async function() {
         // Arrange
         const workerConstructorStub = stubGlobalConstructor(sandbox, "Worker");
 
@@ -78,7 +81,7 @@ describe("ConcurrentWorkerSet", () => {
         assert(workerConstructorStub.alwaysCalledWith("./foo.js"));
     });
 
-    it("#add/removeReference: terminates workers when reference counts reaches 0", async () => {
+    it("#add/removeReference: terminates workers when reference counts == 0", async function() {
         const workerConstructorStub = stubGlobalConstructor(sandbox, "Worker");
 
         willExecuteWorkerScript(workerConstructorStub, self => {
@@ -104,7 +107,7 @@ describe("ConcurrentWorkerSet", () => {
         });
     });
 
-    it("#stop terminates all workers", async () => {
+    it("#stop terminates all workers", async function() {
         // Arrange
         const workerConstructorStub = stubGlobalConstructor(sandbox, "Worker");
         willExecuteWorkerScript(workerConstructorStub, self => {
@@ -143,7 +146,7 @@ describe("ConcurrentWorkerSet", () => {
         assert.equal(workerConstructorStub.prototype.postMessage.callCount, 0);
     });
 
-    it("#destroy immediately terminates all workers", async () => {
+    it("#destroy immediately terminates all workers", async function() {
         // Arrange
         const workerConstructorStub = stubGlobalConstructor(sandbox, "Worker");
         willExecuteWorkerScript(workerConstructorStub, self => {
@@ -181,7 +184,7 @@ describe("ConcurrentWorkerSet", () => {
         assert.equal(workerConstructorStub.prototype.postMessage.callCount, 0);
     });
 
-    it("#postMessage sends message to one random worker", async () => {
+    it("#postMessage sends message to one random worker", async function() {
         // Arrange
         const workerConstructorStub = stubGlobalConstructor(sandbox, "Worker");
         willExecuteWorkerScript(workerConstructorStub, self => {
@@ -204,7 +207,7 @@ describe("ConcurrentWorkerSet", () => {
         });
     });
 
-    it("#broadcastMessage sends message to all workers", async () => {
+    it("#broadcastMessage sends message to all workers", async function() {
         // Arrange
         const workerConstructorStub = stubGlobalConstructor(sandbox, "Worker");
         willExecuteWorkerScript(workerConstructorStub, self => {
@@ -227,7 +230,7 @@ describe("ConcurrentWorkerSet", () => {
         });
     });
 
-    it("#invokeRequest basic scenario", async () => {
+    it("#invokeRequest basic scenario", async function() {
         // Arrange
         const workerConstructorStub = stubGlobalConstructor(sandbox, "Worker");
 
@@ -291,7 +294,7 @@ describe("ConcurrentWorkerSet", () => {
         assert.equal(workerConstructorStub.prototype.postMessage.callCount, 10);
     });
 
-    it("#invokeRequest error scenario", async () => {
+    it("#invokeRequest error scenario", async function() {
         // Arrange
         const workerConstructorStub = stubGlobalConstructor(sandbox, "Worker");
 
@@ -344,8 +347,8 @@ describe("ConcurrentWorkerSet", () => {
         assert.equal(workerConstructorStub.prototype.postMessage.callCount, 10);
     });
 
-    describe("log forwarding", () => {
-        it("The worker set recognizes the logging message.", () => {
+    describe("log forwarding", function() {
+        it("The worker set recognizes the logging message.", function() {
             assert.isTrue(
                 isLoggingMessage({
                     message: [`myLogger:`, "foo", "bar"],
@@ -355,7 +358,7 @@ describe("ConcurrentWorkerSet", () => {
             );
         });
 
-        it("The messages from the workers are logged.", async () => {
+        it("The messages from the workers are logged.", async function() {
             const workerConstructorStub = stubGlobalConstructor(sandbox, "Worker");
 
             willExecuteWorkerScript(workerConstructorStub, self => {

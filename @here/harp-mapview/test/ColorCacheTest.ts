@@ -4,16 +4,19 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+// tslint:disable:only-arrow-functions
+//    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
+
 import { assert } from "chai";
 
 import { ColorCache } from "../lib/ColorCache";
 
-describe("ColorCache", () => {
-    it("empty", () => {
+describe("ColorCache", function() {
+    it("empty", function() {
         assert.equal(ColorCache.instance.size, 0);
     });
 
-    it("get", () => {
+    it("get", function() {
         const white = ColorCache.instance.getColor("#ffffff");
         const black = ColorCache.instance.getColor("#000000");
 
@@ -31,7 +34,7 @@ describe("ColorCache", () => {
         assert.equal(black.b, 0.0);
     });
 
-    it("clear", () => {
+    it("clear", function() {
         const white = ColorCache.instance.getColor("#ffffff");
         const black = ColorCache.instance.getColor("#000000");
 

@@ -4,6 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+// tslint:disable:only-arrow-functions
+//    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
+
 import { MapEnv } from "@here/harp-datasource-protocol";
 import {
     OmvFeatureFilter,
@@ -86,15 +89,15 @@ export class RoadsToRailroads implements OmvFeatureModifier {
 /**
  * FIXME: HARP-1152 Add unit tests for OmvFeatureFilterDescriptionBuilder
  */
-describe("OmvFeatureFilterDescriptionBuilder", () => {
-    it("setup", () => {
+describe("OmvFeatureFilterDescriptionBuilder", function() {
+    it("setup", function() {
         const filterBuilder = new OmvFeatureFilterDescriptionBuilder();
         const filterDescr = filterBuilder.createDescription();
 
         assert.isObject(filterDescr);
     });
 
-    it("addFilters", () => {
+    it("addFilters", function() {
         const filterBuilder = new OmvFeatureFilterDescriptionBuilder();
 
         // load roads only on levels 0-13
@@ -111,7 +114,7 @@ describe("OmvFeatureFilterDescriptionBuilder", () => {
         // * assert that there *is* road data
     });
 
-    it("addFilters2", () => {
+    it("addFilters2", function() {
         const filterBuilder = new OmvFeatureFilterDescriptionBuilder();
 
         filterBuilder.processLayer("road");

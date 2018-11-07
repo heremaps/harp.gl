@@ -6,13 +6,14 @@
 
 // tslint:disable:completed-docs
 // tslint:disable:only-arrow-functions
+//    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
 import "@here/harp-fetch";
 import { assert } from "chai";
 import * as sinon from "sinon";
 import { DownloadManager } from "../index";
 
-describe("DownloadManager", () => {
+describe("DownloadManager", function() {
     const fakeDataUrl = `https://download.example.url`;
 
     function createMockDownloadResponse() {
@@ -29,7 +30,7 @@ describe("DownloadManager", () => {
         return mock;
     }
 
-    it("#downloadJson handles successful download response", async () => {
+    it("#downloadJson handles successful download response", async function() {
         // Arrange
         const mock = createMockDownloadResponse();
         mock.json.resolves({ version: "4" });
@@ -45,7 +46,7 @@ describe("DownloadManager", () => {
         assert.deepEqual(response, { version: "4" });
     });
 
-    it("#downloadJson handles HTTP 404 status response", async () => {
+    it("#downloadJson handles HTTP 404 status response", async function() {
         // Arrange
         const mock = createMockDownloadResponse();
         mock.status = 404;
@@ -72,7 +73,7 @@ describe("DownloadManager", () => {
         assert.deepEqual(data, { version: "4" });
     });
 
-    it("#instance handles returning same single static instance correctly", async () => {
+    it("#instance handles returning same single static instance correctly", async function() {
         const downloadMgr1 = DownloadManager.instance();
         const downloadMgr2 = DownloadManager.instance();
 
@@ -83,7 +84,7 @@ describe("DownloadManager", () => {
      * Note, DownloadManager limits the number of html headers sent to MAX_PARALLEL_DOWNLOADS, but
      * will allow more then MAX_PARALLEL_DOWNLOADS of parallel download under the hood.
      */
-    it("#downloadJson performs download with maxParallelDownloads exceeded", async () => {
+    it("#downloadJson performs download with maxParallelDownloads exceeded", async function() {
         // Arrange
         const MAX_PARALLEL_DOWNLOADS = 16;
         const CALLS_NUMBER = 32;

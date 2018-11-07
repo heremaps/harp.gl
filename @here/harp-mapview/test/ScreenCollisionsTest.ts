@@ -4,6 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+// tslint:disable:only-arrow-functions
+//    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
+
 import { Math2D } from "@here/harp-utils";
 
 import { ScreenCollisions } from "../lib/ScreenCollisions";
@@ -21,8 +24,8 @@ function toBox2D(bounds: THREE.Box2): Math2D.Box {
     return tempGlyphBox2D;
 }
 
-describe("ScreenCollisions", () => {
-    it("properlys handle collision in test space", () => {
+describe("ScreenCollisions", function() {
+    it("properlys handle collision in test space", function() {
         const sc = new ScreenCollisions();
         sc.update(1608, 822);
 

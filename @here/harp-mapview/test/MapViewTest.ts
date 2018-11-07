@@ -10,6 +10,9 @@
 // tslint:disable:no-empty
 //    lots of stubs are needed which are just placeholders and are empty
 
+// tslint:disable:only-arrow-functions
+//    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
+
 import { expect } from "chai";
 import * as sinon from "sinon";
 import * as THREE from "three";
@@ -24,7 +27,7 @@ import { FakeOmvDataSource } from "./FakeOmvDataSource";
 
 declare const global: any;
 
-describe("MapView", () => {
+describe("MapView", function() {
     const inNodeContext = typeof window === "undefined";
     let sandbox: sinon.SinonSandbox;
     let clearColorStub: sinon.SinonStub;
@@ -34,7 +37,7 @@ describe("MapView", () => {
     let fontStub: sinon.SinonStub;
     let mapView: MapView;
 
-    beforeEach(() => {
+    beforeEach(function() {
         sandbox = sinon.createSandbox();
         clearColorStub = sandbox.stub();
         webGlStub = sandbox.stub(THREE, "WebGLRenderer").returns({
@@ -55,7 +58,7 @@ describe("MapView", () => {
         }
     });
 
-    afterEach(() => {
+    afterEach(function() {
         if (mapView !== undefined) {
             mapView.dispose();
         }
@@ -67,7 +70,7 @@ describe("MapView", () => {
         }
     });
 
-    it("Correctly sets geolocation and zoom", () => {
+    it("Correctly sets geolocation and zoom", function() {
         let coords: GeoCoordinates;
         let postionSpy: sinon.SinonSpy;
         let rotationSpy: sinon.SinonSpy;
@@ -104,7 +107,7 @@ describe("MapView", () => {
         expect(mapView.geoCenter.longitude).to.be.closeTo(coords.longitude, 0.000000000001);
     });
 
-    it("Correctly sets event listeners and handlers webgl context restored", () => {
+    it("Correctly sets event listeners and handlers webgl context restored", function() {
         const canvas = {
             width: 0,
             height: 0,
@@ -153,7 +156,7 @@ describe("MapView", () => {
         expect(dispatchEventSpy.getCall(2).args[0].type).to.be.equal(MapViewEventNames.ContextLost);
     });
 
-    it("Correctly sets and removes event listeners by API", () => {
+    it("Correctly sets and removes event listeners by API", function() {
         const restoreStub = sinon.stub();
         const lostStub = sinon.stub();
 
@@ -174,7 +177,7 @@ describe("MapView", () => {
         expect(lostStub.callCount).to.be.equal(1);
     });
 
-    it("supports #dispose", async () => {
+    it("supports #dispose", async function() {
         const canvas = {
             width: 0,
             height: 0,
@@ -195,7 +198,7 @@ describe("MapView", () => {
         mapView = undefined!;
     });
 
-    it("maintains vertical fov limit", () => {
+    it("maintains vertical fov limit", function() {
         const canvas = {
             width: 100,
             height: 1000,
@@ -208,7 +211,7 @@ describe("MapView", () => {
         expect(mapView.fov).to.be.closeTo(82.36449238608574, 0.00000000001);
     });
 
-    it("maintains horizontal fov limit", () => {
+    it("maintains horizontal fov limit", function() {
         const canvas = {
             width: 1000,
             height: 100,
@@ -221,7 +224,7 @@ describe("MapView", () => {
         expect(mapView.fov).to.be.closeTo(30.725626488233594, 0.00000000001);
     });
 
-    it("returns the fog through #fog getter", () => {
+    it("returns the fog through #fog getter", function() {
         const canvas = {
             width: 0,
             height: 0,

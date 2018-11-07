@@ -4,7 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-describe("MapViewDecoder", () => {
+// tslint:disable:only-arrow-functions
+//    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
+
+describe("MapViewDecoder", function() {
     // tslint:disable-next-line:no-empty
-    it("isOk", () => {});
+    it("isOk", function() {});
 });
