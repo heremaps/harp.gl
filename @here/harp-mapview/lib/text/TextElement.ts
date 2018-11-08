@@ -412,6 +412,16 @@ export class TextElement {
     horizontalAlignment: TextHorizontalAlignment = TextHorizontalAlignment.Center;
 
     /**
+     * Vertical alignment of text relative to icon height.
+     */
+    iconVerticalAlignment: TextVerticalAlignment = TextVerticalAlignment.Center;
+
+    /**
+     * Horizontal alignment of text relative to icon height.
+     */
+    iconHorizontalAlignment: TextHorizontalAlignment = TextHorizontalAlignment.Center;
+
+    /**
      * Horizontal separation between the glyphs in this `TextElement`.
      */
     private m_trackingFactor: number = 0;

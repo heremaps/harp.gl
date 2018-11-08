@@ -1476,6 +1476,16 @@ export class TextElementsRenderer {
                     tempTextBounds.w = scaledTextWidth;
                     tempTextBounds.h = scaledTextHeight * 2.0;
 
+                    if (poiInfo !== undefined) {
+                      if (poiInfo.computedWidth !== undefined) {
+                        tempTextBounds.x -= poiInfo.computedWidth * (textElement.iconHorizontalAlignment - 0.5);
+                      }
+
+                      if (poiInfo.computedHeight !== undefined) {
+                        tempTextBounds.y -= poiInfo.computedHeight * (textElement.iconVerticalAlignment - 0.5);
+                      }
+                    }
+
                     // Adjust the label positioning to match its bounding box.
                     tempOffset.x = tempTextBounds.x;
                     tempOffset.y = tempTextBounds.y + scaledTextHeight;
