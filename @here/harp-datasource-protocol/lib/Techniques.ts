@@ -118,7 +118,7 @@ export interface BaseStandardTechnique extends BaseTechnique {
      */
     metalness?: number;
     /**
-     * The material will not be renderered if the opacity is lower than this value.
+     * The material will not be rendered if the opacity is lower than this value.
      */
     alphaTest?: number;
     /**
@@ -126,7 +126,7 @@ export interface BaseStandardTechnique extends BaseTechnique {
      */
     depthTest?: boolean;
     /**
-     * Set to 'true' if line sould appear transparent. Rendering transparent lines may come with a
+     * Set to 'true' if line should appear transparent. Rendering transparent lines may come with a
      * slight performance impact.
      */
     transparent?: boolean;
@@ -226,7 +226,7 @@ export interface CirclesTechnique extends BaseTechnique {
 }
 
 /**
- * Define the stacking option. Enum values for theme file are in "kebap-case".
+ * Define the stacking option. Enum values for theme file are in "kebab-case".
  */
 export enum PoiStackMode {
     /**
@@ -244,8 +244,8 @@ export enum PoiStackMode {
 }
 
 /**
- * Technique that describes icons with labels. Baseclas to PoiTechnique and LineMarkerTechnique (for
- * road shields).
+ * Technique that describes icons with labels. Base class to PoiTechnique and LineMarkerTechnique
+ * (for road shields).
  */
 export interface MarkerTechnique extends BaseTechnique {
     /**
@@ -417,7 +417,7 @@ export interface MarkerTechnique extends BaseTechnique {
      */
     fadeFar?: CaseProperty<number>;
     /**
-     * Should be displayed on map or not. Deafults to `true`.
+     * Should be displayed on map or not. Defaults to `true`.
      */
     showOnMap?: boolean;
     /**
@@ -469,7 +469,7 @@ export interface LineTechnique extends BaseTechnique {
      */
     color: string;
     /**
-     * Set to true if line sould appear transparent. Rendering transparent lines may come with a
+     * Set to true if line should appear transparent. Rendering transparent lines may come with a
      * slight performance impact.
      */
     transparent?: boolean;
@@ -584,7 +584,7 @@ export interface BasicExtrudedLineTechnique extends BaseTechnique, PolygonalTech
      */
     color: string;
     /**
-     * Set to `true` if line sould appear transparent. Rendering transparent lines may come with a
+     * Set to `true` if line should appear transparent. Rendering transparent lines may come with a
      * slight performance impact.
      */
     transparent?: boolean;
@@ -777,7 +777,7 @@ export interface ExtrudedPolygonTechnique extends BaseStandardTechnique {
     lineFadeFar?: CaseProperty<number>;
 
     /**
-     * In Tilezen data there is no way to determine if a building should or should not be extruded.
+     * In some data sources, for example Tilezen, building extrusion information might be missing.
      * This attribute allows to define a default height of an extruded polygon in the theme.
      */
     defaultHeight?: number;
@@ -1128,7 +1128,7 @@ export type CaseProperty<T> =
           minLevel?: number;
 
           /**
-           * Mazimum zoom level.
+           * Maximum zoom level.
            */
           maxLevel?: number;
 
