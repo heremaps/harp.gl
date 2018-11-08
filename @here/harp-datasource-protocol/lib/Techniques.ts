@@ -775,6 +775,12 @@ export interface ExtrudedPolygonTechnique extends BaseStandardTechnique {
      * transparent. A value of <= 0.0 disables fading.
      */
     lineFadeFar?: CaseProperty<number>;
+
+    /**
+     * In Tilezen data there is no way to determine if a building should or should not be extruded.
+     * This attribute allows to define a default height of an extruded polygon in the theme.
+     */
+    defaultHeight?: number;
 }
 
 export interface StandardTechnique extends BaseStandardTechnique {
