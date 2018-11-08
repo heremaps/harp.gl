@@ -68,6 +68,14 @@ yarn start-tests
 
 Open `http://localhost:8080/` in your favorite browser to run the tests.
 
+### Run unit tests in Node.js environment
+
+Run:
+
+```
+npm test
+```
+
 ## License
 
 Copyright (C) 2018 HERE Europe B.V.
