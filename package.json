@@ -34,7 +34,7 @@
     "prettier": "^1.14.3",
     "protobufjs": "^6.8.8",
     "rtree": "^1.4.2",
-    "sinon": "^6.1.5",
+    "sinon": "^7.1.1",
     "stats.js": "^0.17.0",
     "style-loader": "^0.23.0",
     "three": "^0.96.0",
