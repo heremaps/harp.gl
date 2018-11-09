@@ -9,6 +9,16 @@ import * as sinon from "sinon";
 declare const global: any;
 
 /**
+ * Define suite that is executed only in browser environment.
+ */
+export const describeOnlyWeb = typeof window !== "undefined" ? describe : xdescribe;
+
+/**
+ * Define a suite that is executed only in Node.JS environment.
+ */
+export const describeOnlyNode = typeof window === "undefined" ? describe : xdescribe;
+
+/**
  * Create stub of global constructor managed by sandbox.
  *
  * A `prototype` preserving, node/browser environment aware version of
@@ -82,7 +92,7 @@ export function willEventually<T = void>(test: () => T): Promise<T> {
     const currentTest = mochaCurrentTest;
 
     if (!afterHandlerInstalled) {
-        afterEach(reportWillEventuallyBlockingAssertion);
+        afterEach(reportAsyncFailuresAfterTestEnd);
         afterHandlerInstalled = true;
     }
 
@@ -115,24 +125,85 @@ export function willEventually<T = void>(test: () => T): Promise<T> {
 }
 
 /**
- * Rethrows last assertion that blocked [[willEventually]] from progress. Called automatically
- * after each `Mocha` test execution when `willEventually` is in use.
+ * Wait for particular event on `THREE.EventDispatcher` or DOM `EventTarget` compatible objects.
+ *
+ * Automagically unregisters after receiving the event.
+ *
+ * @param source event source/targets, something that talks add/removeEventListener(type, listener)
+ *     protocol
+ * @param eventType type of event
+ * @returns promise that resolves to first event that is received
  */
-export function reportWillEventuallyBlockingAssertion() {
+export function waitForEvent<T>(source: any, eventType: string, message?: string): Promise<T> {
+    const currentTest = mochaCurrentTest;
+
+    waitEventWaitedEvent = eventType;
+    if (!afterHandlerInstalled) {
+        afterEach(reportAsyncFailuresAfterTestEnd);
+        afterHandlerInstalled = true;
+    }
+
+    return new Promise<T>(resolve => {
+        const listener = (event: any) => {
+            if (
+                currentTest !== mochaCurrentTest ||
+                (currentTest !== undefined && currentTest.state !== undefined)
+            ) {
+                return;
+            }
+
+            if (waitEventCleanup !== undefined) {
+                waitEventCleanup();
+                waitEventCleanup = undefined;
+            }
+
+            resolve(event as T);
+        };
+        waitEventCleanup = () => {
+            source.removeEventListener(eventType, listener);
+        };
+        source.addEventListener(eventType, listener);
+    });
+}
+
+let waitEventCleanup: (() => void) | undefined;
+let waitEventWaitedEvent: string | undefined;
+
+/**
+ * Rethrows last assertion that blocked [[willEventually]] or [[waitForEvent]] from progress. Called
+ * automatically after each `Mocha` test execution these helper functions.
+ *
+ *  * Note: Must be called only as `Mocha` `afterEach` hook as it expects `this` to be
+ * `IHookCallbackContext`.
+ */
+function reportAsyncFailuresAfterTestEnd(this: any) {
     mochaCurrentTest = undefined;
+
+    if (waitEventCleanup && waitEventWaitedEvent !== undefined) {
+        waitEventCleanup();
+        waitEventCleanup = undefined;
+
+        // Note, this is actually mocha.IHookCallbackContext but it's not imported to not include
+        // whole mocha dependency only for this very declaration.
+        this.test.error(`waitEvent didn't receive '${waitEventWaitedEvent}' before test timeouted`);
+    }
+
     if (lastWaitedError) {
         mochaCurrentTest = undefined;
         const tmp = lastWaitedError;
         tmp.message = `willEventually couldn't pass through: ${tmp.toString()}`;
         lastWaitedError = undefined;
-        //throw tmp;
+        // Note, this is actually IHookCallbackContext but it's not imported to not include whole
+        // mocha dependency only for this very declaration.
+        this.test.error(tmp);
     }
     return {};
 }
 
 if (typeof beforeEach !== "undefined") {
     beforeEach(function() {
-        // Save current test so willEventually can check that current test is still executing.
+        // Save current test so willEventually && waitForEvent can check that current test is still
+        // executing.
         mochaCurrentTest = this.currentTest;
     });
 }
