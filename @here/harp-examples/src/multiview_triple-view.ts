@@ -1,3 +1,9 @@
+/*
+ * Copyright (C) 2017-2018 HERE Europe B.V.
+ * Licensed under Apache 2.0, see full license in LICENSE
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import { GeoCoordinates } from "@here/harp-geoutils";
 import { MapControls } from "@here/harp-map-controls";
 import { MapView, MapViewUtils } from "@here/harp-mapview";
