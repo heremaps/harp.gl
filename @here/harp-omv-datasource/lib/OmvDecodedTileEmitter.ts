@@ -46,7 +46,6 @@ const logger = LoggerManager.instance.create("OmvDecodedTileEmitter");
  */
 const INVALID_ARRAY_INDEX = -1;
 // for tilezen by default extrude all buildings even those without height data
-const DEFAULT_EXTRUDED_BUILDING_HEIGHT = 20;
 class MeshBuffers implements IMeshBuffers {
     readonly positions: number[] = [];
     readonly colors: number[] = [];
@@ -558,9 +557,11 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
         );
 
         let minHeight = 0;
-        let height = DEFAULT_EXTRUDED_BUILDING_HEIGHT;
-
+        let height = 0;
+        // Use the height data if it is present in the data received
         const currentHeight = env.lookup("height") as number;
+        // A defaultHeight can be defined in the theme
+        const defaultHeight = extrudedPolygonTechnique.defaultHeight;
         const isExtruded = technique.name === "extruded-polygon";
         const isFilled = technique.name === "fill";
         const defaultBuildingColor = new THREE.Color(0xff0000);
@@ -574,7 +575,13 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
             const currentMinHeight = env.lookup("min_height") as number;
 
             minHeight = currentMinHeight !== undefined ? currentMinHeight * scaleFactor : minHeight;
-            height = currentHeight !== undefined ? currentHeight * scaleFactor : height;
+
+            height =
+                currentHeight !== undefined
+                    ? currentHeight * scaleFactor
+                    : defaultHeight !== undefined
+                        ? defaultHeight * scaleFactor
+                        : height;
         }
 
         const start = indices.length;
