@@ -1725,6 +1725,7 @@ export class MapView extends THREE.EventDispatcher {
         if (
             !this.m_firstFrameComplete &&
             this.m_visibleTiles.allVisibleTilesLoaded &&
+            this.m_connectedDataSources.size === this.m_tileDataSources.length &&
             !this.m_updatePending &&
             !this.animating &&
             this.m_textElementsRenderer !== undefined &&

@@ -161,7 +161,6 @@ export class TextElementsRenderer {
     private m_debugGlyphTextureCacheMesh?: THREE.Mesh;
     private m_debugGlyphTextureCacheWireMesh?: THREE.LineSegments;
 
-    private m_firstGlyphLoaded: boolean = false;
 
     /**
      * Create the `TextElementsRenderer` which selects which labels should be placed on screen as
@@ -565,10 +564,6 @@ export class TextElementsRenderer {
      * `true` if any resource used by any `FontCatalog` is still loading.
      */
     get loading(): boolean {
-        if (!this.m_firstGlyphLoaded) {
-            return true;
-        }
-
         let isLoading = false;
         // tslint:disable-next-line:no-unused-variable
         for (const [fontCatalogName, fontCatalog] of this.m_fontCatalogs) {
@@ -2179,7 +2174,6 @@ export class TextElementsRenderer {
                     allGlyphsLoaded = false;
                     break;
                 }
-                this.m_firstGlyphLoaded = true;
                 width += glyph.advanceX + tracking;
 
                 if (direction === undefined) {
