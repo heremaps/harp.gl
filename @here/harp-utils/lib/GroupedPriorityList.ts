@@ -23,6 +23,15 @@ export interface PriorityListElement {
  */
 export class PriorityListGroup<T extends PriorityListElement> {
     constructor(readonly priority: number, public elements: T[] = new Array()) {}
+
+    /**
+     * Create and return a deep copy of the `PriorityListGroup<T>`.
+     *
+     * @returns A clone of the `PriorityListGroup<T>`.
+     */
+    clone(): PriorityListGroup<T> {
+        return new PriorityListGroup<T>(this.priority, this.elements.slice());
+    }
 }
 
 /**
@@ -87,7 +96,7 @@ export class GroupedPriorityList<T extends PriorityListElement> {
         for (const otherGroup of other.groups) {
             const group = this.findGroup(otherGroup[1].priority);
             if (group === undefined) {
-                this.groups.set(Math.floor(otherGroup[1].priority), otherGroup[1]);
+                this.groups.set(Math.floor(otherGroup[1].priority), otherGroup[1].clone());
                 continue;
             }
             group.elements = group.elements.concat(otherGroup[1].elements);
