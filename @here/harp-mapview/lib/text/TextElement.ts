@@ -245,6 +245,14 @@ export class RenderState {
     }
 
     /**
+     * @returns `true` if element is done with fading in.
+     */
+    isFadedIn(): boolean {
+        const fadedIn = this.state === FadingState.FadedIn;
+        return fadedIn;
+    }
+
+    /**
      * @returns `true` if element is done with fading out.
      */
     isFadedOut(): boolean {
@@ -599,7 +607,7 @@ export class TextElement {
     }
 
     /*
-    * Get this `TextElement`'s text as unicode code points. Valid after `computeCodePoints` has
+     * Get this `TextElement`'s text as unicode code points. Valid after `computeCodePoints` has
      * been called once.
      * @default `undefined`
      */
@@ -630,8 +638,8 @@ export class TextElement {
         return this.alwaysOnTop === true
             ? 0
             : this.currentViewDistance !== undefined
-                ? -this.currentViewDistance
-                : 0;
+            ? -this.currentViewDistance
+            : 0;
     }
 
     /**
