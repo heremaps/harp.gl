@@ -1,0 +1,5474 @@
+{
+  "name": "shieldMasterList",
+  "roadShields": [
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "green_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "green_hexagon",
+      "width": 22,
+      "height": 16,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "blue_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "blue_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "red_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "green_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_pentagon",
+      "width": 18,
+      "height": 16,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_square",
+      "width": 14,
+      "height": 14,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": false,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_pentagon",
+      "width": 18,
+      "height": 16,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "australia_2",
+      "width": 18,
+      "height": 18,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "australia_3",
+      "width": 18,
+      "height": 18,
+      "fontColor": "#588BC6"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "australia_b",
+      "width": 16,
+      "height": 16,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "australia_5",
+      "width": 18,
+      "height": 16,
+      "fontColor": "#F7ECB0"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "australia_a",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#F7ECB0"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "green_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "blue_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "blue_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "blue_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_oval",
+      "width": 22,
+      "height": 14,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "red_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "blue_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": false,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_shield",
+      "width": 18,
+      "height": 14,
+      "fontColor": "#588BC6"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "green_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "red_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "red_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "green_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "blue_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": false,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": false,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": false,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "green_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "green_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "blue_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "yellow_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "green_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#F7ECB0"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "green_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#F7ECB0"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "brazil_a",
+      "width": 18,
+      "height": 16,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "brazil_b",
+      "width": 26,
+      "height": 18,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "green_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "green_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "blue_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "blue_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": false,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": false,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "priority": 1,
+      "visible": true,
+      "name": "canada_a",
+      "width": 19,
+      "height": 22,
+      "fontColor": "#559856"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_pentagon_round",
+      "width": 18,
+      "height": 16,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "CAN_british_columbia_1",
+      "width": 14,
+      "height": 24,
+      "fontColor": "#588AC6"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "CAN_manitoba_1",
+      "width": 14,
+      "height": 22,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "green_square_white",
+      "width": 14,
+      "height": 14,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_rectangle_green",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "CAN_northw_territories_1",
+      "width": 16,
+      "height": 26,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "CAN_novia_scotia_1",
+      "width": 14,
+      "height": 30,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "CAN_ontario_1",
+      "width": 14,
+      "height": 24,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "CAN_prince_edward_isl_1_2",
+      "width": 14,
+      "height": 24,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "CAN_quebec_1",
+      "width": 14,
+      "height": 22,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "CAN_saskatchewan_1",
+      "width": 14,
+      "height": 18,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_square_red",
+      "width": 14,
+      "height": 14,
+      "fontColor": "#D66867"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_oval",
+      "width": 22,
+      "height": 14,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "black_oval",
+      "width": 22,
+      "height": 18,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "blue_square_white",
+      "width": 14,
+      "height": 14,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_shield",
+      "width": 18,
+      "height": 14,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "CAN_ontario_2",
+      "width": 14,
+      "height": 22,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "CAN_prince_edward_isl_1_2",
+      "width": 14,
+      "height": 24,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "CAN_quebec_2",
+      "width": 12,
+      "height": 24,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "CAN_saskatchewan_2",
+      "width": 14,
+      "height": 30,
+      "fontColor": "#559856"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "CAN_manitoba_3",
+      "width": 20,
+      "height": 18,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_square",
+      "width": 14,
+      "height": 14,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "CAN_ontario_3",
+      "width": 14,
+      "height": 22,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "red_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "CAN_saskatchewan_3",
+      "width": 14,
+      "height": 20,
+      "fontColor": "#559856"
+    },
+    {
+      "maxLength": 6,
+      "visible": false,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": false,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": false,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "blue_shield",
+      "width": 18,
+      "height": 18,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "green_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "green_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": false,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "green_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "blue_hexagon",
+      "width": 22,
+      "height": 16,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "yellow_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "green_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "green_hexagon",
+      "width": 22,
+      "height": 16,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "blue_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "orange_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": false,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "green_hexagon",
+      "width": 22,
+      "height": 16,
+      "fontColor": "#F7ECB0"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "blue_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#F7ECB0"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "blue_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#F7ECB0"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#F7ECB0"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "green_hexagon",
+      "width": 22,
+      "height": 16,
+      "fontColor": "#F7ECB0"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "blue_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#F7ECB0"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "blue_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#F7ECB0"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "green_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "red_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "blue_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "blue_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "blue_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "green_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "yellow_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": false,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": false,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_shield_m",
+      "width": 20,
+      "height": 24,
+      "fontColor": "#588BC6"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "blue_shield",
+      "width": 18,
+      "height": 18,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": false,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "green_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "red_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "yellow_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": false,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": false,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "green_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "red_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "yellow_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "blue_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": false
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "green_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "red_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "red_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "orange_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": false,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "green_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "blue_hexagon",
+      "width": 22,
+      "height": 16,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "yellow_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": false
+    },
+    {
+      "maxLength": 6,
+      "visible": false
+    },
+    {
+      "maxLength": 6,
+      "visible": false
+    },
+    {
+      "maxLength": 6,
+      "visible": false,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "blue_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "green_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#F7ECB0"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "green_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#F7ECB0"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "blue_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "green_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#F7ECB0"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "green_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#F7ECB0"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "blue_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "green_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#F7ECB0"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "green_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#F7ECB0"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "blue_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "green_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#F7ECB0"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "green_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#F7ECB0"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "blue_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "green_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#F7ECB0"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "green_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#F7ECB0"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "green_hexagon",
+      "width": 22,
+      "height": 16,
+      "fontColor": "#F7ECB0"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "blue_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#F7ECB0"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "blue_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#F7ECB0"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "green_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "blue_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": false,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_shield",
+      "width": 18,
+      "height": 14,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_shield",
+      "width": 18,
+      "height": 14,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": false,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "hongkong_a",
+      "width": 12,
+      "height": 16,
+      "fontColor": "#588AC6"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "green_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "blue_pentagon",
+      "width": 18,
+      "height": 16,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "green_pentagon",
+      "width": 18,
+      "height": 16,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_oval",
+      "width": 22,
+      "height": 14,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "india_a",
+      "width": 14,
+      "height": 24,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "india_b",
+      "width": 14,
+      "height": 24,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "india_b",
+      "width": 14,
+      "height": 24,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "blue_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "blue_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "green_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "green_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "blue_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "green_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "israel_a",
+      "width": 20,
+      "height": 16,
+      "fontColor": "#588BC6"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "israel_b",
+      "width": 20,
+      "height": 16,
+      "fontColor": "#D66767"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "israel_c",
+      "width": 22,
+      "height": 16,
+      "fontColor": "#569956"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "israel_d",
+      "width": 26,
+      "height": 16,
+      "fontColor": "#8B4513"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "green_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "green_octagon",
+      "width": 18,
+      "height": 16,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "blue_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "blue_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_shield_m",
+      "width": 20,
+      "height": 24,
+      "fontColor": "#588BC6"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_shield_m",
+      "width": 20,
+      "height": 24,
+      "fontColor": "#588BC6"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "green_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#F7ECB0"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "blue_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "blue_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "green_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#F7ECB0"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "green_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#F7ECB0"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_shield_m",
+      "width": 20,
+      "height": 24,
+      "fontColor": "#588BC6"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "kuwait_a",
+      "width": 12,
+      "height": 12,
+      "fontColor": "#588BC6"
+    },
+    {
+      "maxLength": 6,
+      "visible": false,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "green_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "red_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "blue_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "blue_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_shield_m",
+      "width": 20,
+      "height": 24,
+      "fontColor": "#588BC6"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": false,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": false,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "blue_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "green_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "red_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "yellow_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "blue_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "green_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "blue_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "blue_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "red_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "luxembourg_c",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "yellow_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": false,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "green_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "green_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": false,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "orange_hexagon",
+      "width": 22,
+      "height": 16,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "orange_hexagon",
+      "width": 22,
+      "height": 16,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "orange_hexagon",
+      "width": 22,
+      "height": 16,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": false,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "green_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "blue_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "blue_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": false,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "mexico_a",
+      "width": 18,
+      "height": 18,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "mexico_b",
+      "width": 12,
+      "height": 14,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "green_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "blue_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "blue_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "yellow_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": false,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "green_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "blue_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "red_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "yellow_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "green_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#F7ECB0"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "namibia_a",
+      "width": 18,
+      "height": 18,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "green_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "southafrica_b",
+      "width": 20,
+      "height": 20,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "green_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "green_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "red_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "yellow_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "netherlands_c",
+      "width": 24,
+      "height": 16,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "newzealand_a",
+      "width": 18,
+      "height": 18,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "newzealand_b",
+      "width": 16,
+      "height": 16,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": false,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "green_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "green_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": false
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_shield_m",
+      "width": 20,
+      "height": 24,
+      "fontColor": "#588BC6"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "blue_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#F7ECB0"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "green_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "blue_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "israel_a",
+      "width": 20,
+      "height": 16,
+      "fontColor": "#588BC6"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "israel_b",
+      "width": 20,
+      "height": 16,
+      "fontColor": "#D66767"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "israel_c",
+      "width": 22,
+      "height": 16,
+      "fontColor": "#569956"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "israel_d",
+      "width": 26,
+      "height": 16,
+      "fontColor": "#8B4513"
+    },
+    {
+      "maxLength": 6,
+      "visible": false,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "peru_1",
+      "width": 18,
+      "height": 18,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": false,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "green_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "red_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "red_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "red_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "yellow_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "yellow_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "green_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "blue_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "red_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "puerto_rico_1",
+      "width": 12,
+      "height": 16,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "puerto_rico_2",
+      "width": 12,
+      "height": 16,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "puerto_rico_3",
+      "width": 20,
+      "height": 18,
+      "fontColor": "#F7ECB0"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_oval",
+      "width": 22,
+      "height": 14,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_shield_m",
+      "width": 20,
+      "height": 24,
+      "fontColor": "#588BC6"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_shield_m",
+      "width": 20,
+      "height": 24,
+      "fontColor": "#588BC6"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "qatar_b",
+      "width": 12,
+      "height": 12,
+      "fontColor": "#569956"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "qatar_b",
+      "width": 12,
+      "height": 12,
+      "fontColor": "#569956"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "qatar_b",
+      "width": 12,
+      "height": 12,
+      "fontColor": "#569956"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "green_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "green_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "romania_b",
+      "width": 18,
+      "height": 14,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "romania_c",
+      "width": 18,
+      "height": 16,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "yellow_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "green_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "green_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "blue_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "blue_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "blue_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": false,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": false,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": false,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": false,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_shield_m",
+      "width": 20,
+      "height": 24,
+      "fontColor": "#588BC6"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_shield_m",
+      "width": 20,
+      "height": 24,
+      "fontColor": "#588BC6"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "saudiarabia_1",
+      "width": 16,
+      "height": 16,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "saudiarabia_2",
+      "width": 20,
+      "height": 22,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "saudiarabia_3",
+      "width": 18,
+      "height": 18,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "saudiarabia_3",
+      "width": 18,
+      "height": 18,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "green_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "green_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "yellow_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "yellow_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "yellow_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "blue_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "green_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "red_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "blue_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "blue_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": false
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "green_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "green_hexagon",
+      "width": 22,
+      "height": 16,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "blue_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "yellow_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "yellow_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "southafrica_a",
+      "width": 18,
+      "height": 18,
+      "fontColor": "#F7ECB0"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "southafrica_b",
+      "width": 20,
+      "height": 20,
+      "fontColor": "#F7ECB0"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "southafrica_d",
+      "width": 18,
+      "height": 16,
+      "fontColor": "#F7ECB0"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "korea_1",
+      "width": 18,
+      "height": 18,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "korea_2",
+      "width": 22,
+      "height": 16,
+      "fontColor": "#588BC6"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "korea_3",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "korea_4",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#588BC6"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "korea_5",
+      "width": 22,
+      "height": 16,
+      "fontColor": "#588BC6"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "green_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "blue_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "orange_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "orange_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "orange_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "orange_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "red_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "red_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "red_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "red_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "red_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "red_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "red_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "red_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "green_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "green_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "red_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "orange_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "orange_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "orange_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "orange_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "orange_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "orange_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "orange_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "orange_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "orange_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "orange_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "orange_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "orange_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "orange_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "orange_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "orange_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "orange_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "orange_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "green_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "green_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "green_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "green_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "green_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "green_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "green_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "green_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "green_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "green_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "green_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "green_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "green_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "green_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "green_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "green_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "green_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "yellow_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "yellow_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "yellow_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "yellow_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "yellow_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "yellow_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "yellow_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "yellow_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "blue_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "yellow_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "yellow_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "yellow_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "yellow_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "blue_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "blue_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": false,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "green_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#F7ECB0"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "green_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#F7ECB0"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "green_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#F7ECB0"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "green_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "blue_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "blue_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "green_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "red_hexagon",
+      "width": 22,
+      "height": 16,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "blue_square",
+      "width": 14,
+      "height": 14,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "taiwan_a",
+      "width": 16,
+      "height": 16,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "taiwan_c",
+      "width": 18,
+      "height": 18,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "taiwan_b",
+      "width": 18,
+      "height": 18,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": false,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "thailand_1",
+      "width": 18,
+      "height": 22,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "thailand_1",
+      "width": 18,
+      "height": 22,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "thailand_1",
+      "width": 18,
+      "height": 22,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "thailand_1",
+      "width": 18,
+      "height": 22,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "thailand_2",
+      "width": 18,
+      "height": 22,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "thailand_2",
+      "width": 18,
+      "height": 22,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "thailand_2",
+      "width": 18,
+      "height": 22,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "thailand_2",
+      "width": 18,
+      "height": 22,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "thailand_2",
+      "width": 18,
+      "height": 22,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "blue_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "blue_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "blue_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "thailand_3",
+      "width": 18,
+      "height": 22,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "thailand_1",
+      "width": 18,
+      "height": 22,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "thailand_1",
+      "width": 18,
+      "height": 22,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "thailand_1",
+      "width": 18,
+      "height": 22,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": false,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "red_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "red_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "green_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "yellow_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "green_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "orange_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "blue_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": false
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": false,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "usa_a",
+      "width": 18,
+      "height": 18,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_shield",
+      "width": 18,
+      "height": 14,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "green_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "blue_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "blue_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "blue_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "blue_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "u_a_emirates_1",
+      "width": 18,
+      "height": 26,
+      "fontColor": "#FECE94"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "u_a_emirates_1",
+      "width": 18,
+      "height": 26,
+      "fontColor": "#FECE94"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_shield_m",
+      "width": 20,
+      "height": 24,
+      "fontColor": "#588BC6"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "u_a_emirates_2b",
+      "width": 26,
+      "height": 30,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "u_a_emirates_2b",
+      "width": 26,
+      "height": 30,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "u_a_emirates_2c",
+      "width": 16,
+      "height": 26,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "u_a_emirates_2c",
+      "width": 16,
+      "height": 26,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "u_a_emirates_2a",
+      "width": 16,
+      "height": 26,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "blue_pentagon",
+      "width": 18,
+      "height": 16,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "us_virgin_islands",
+      "width": 12,
+      "height": 16,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "blue_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "venezuela_1",
+      "width": 20,
+      "height": 20,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "venezuela_2",
+      "width": 17,
+      "height": 16,
+      "fontColor": "#FFFFFF"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "white_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": false,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "green_rectangle",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#F7ECB0"
+    },
+    {
+      "maxLength": 6,
+      "visible": true,
+      "name": "generic",
+      "width": 18,
+      "height": 12,
+      "fontColor": "#323232"
+    }
+  ]
+}
