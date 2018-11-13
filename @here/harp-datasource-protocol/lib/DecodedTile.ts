@@ -11,6 +11,11 @@ import { HighPrecisionLineMaterial } from "@here/harp-materials";
 import { applyTechniqueToMaterial, getMaterialConstructor, Technique } from "./Techniques";
 import { TileInfo } from "./TileInfo";
 
+/**
+ * This object has geometry data in the form of geometries buffers ready to be used by WebGL.
+ * These geometries are not `three.js` objects. They are pure data stored as `ArrayBuffer`s and
+ * metadata describing these buffers.
+ */
 export interface DecodedTile {
     techniques: Technique[];
     geometries: Geometry[];
@@ -31,6 +36,9 @@ export interface DecodedTile {
     copyrightHolderIds?: string[];
 }
 
+/**
+ * This object keeps textual data together with metadata to place it on the map.
+ */
 export interface TextPathGeometry {
     path: number[];
     pathLengthSqr: number;
@@ -39,8 +47,17 @@ export interface TextPathGeometry {
     featureId?: number;
 }
 
+/**
+ * The data stored in Buffers' elements can be of the following elementary types: float, unsigned
+ * integer (either 16-bit or 32-bit long)
+ */
 export type BufferElementType = "float" | "uint16" | "uint32";
 
+/**
+ * Returns an array with the data type specified as parameter.
+ *
+ * @param attr specifies which type of data is being stored in the array
+ */
 export function getArrayConstructor(attr: BufferElementType) {
     switch (attr) {
         case "float":
@@ -52,6 +69,9 @@ export function getArrayConstructor(attr: BufferElementType) {
     }
 }
 
+/**
+ * Structured clone compliant WebGL interleaved buffer with its metadata attached.
+ */
 export interface InterleavedBufferAttribute {
     buffer: ArrayBufferLike;
     stride: number;
@@ -63,6 +83,9 @@ export interface InterleavedBufferAttribute {
     }>;
 }
 
+/**
+ * Geometry types supported by [[Geometry]] objects.
+ */
 export enum GeometryType {
     Unspecified = 0,
     Point,
@@ -77,6 +100,10 @@ export enum GeometryType {
     Other = 1000
 }
 
+/**
+ * Structured clone compliant version of a `three.js` geometry object, consisting of buffers with
+ * metadata for map features and objects for example roads, trees or parks.
+ */
 export interface Geometry {
     type: GeometryType;
     vertexAttributes: BufferAttribute[];
@@ -99,11 +126,15 @@ export interface Geometry {
     featureStarts?: number[];
 
     /**
-     * Optional array of objects. It can be used to pass userd data from the geometry to the mesh.
+     * Optional array of objects. It can be used to pass user data from the geometry to the mesh.
      */
     objInfos?: Array<{} | undefined>;
 }
 
+/**
+ * Structured clone compliant version of a `three.js` geometry object with text to be rendered.
+ * It is composed of buffers with metadata for text objects.
+ */
 export interface TextGeometry {
     positions: BufferAttribute;
     texts: number[];
@@ -112,6 +143,10 @@ export interface TextGeometry {
     stringCatalog?: Array<string | undefined>;
 }
 
+/**
+ * Structured clone compliant version of a `three.js` geometry object with points of interest (POIs)
+ * to be rendered. It is composed of buffers with metadata for POI objects.
+ */
 export interface PoiGeometry {
     positions: BufferAttribute;
     texts: number[];
@@ -121,6 +156,9 @@ export interface PoiGeometry {
     imageTextures?: number[];
 }
 
+/**
+ * Structured clone compliant WebGL buffer and its metadata.
+ */
 export interface BufferAttribute {
     name: string;
     buffer: ArrayBufferLike;
@@ -128,6 +166,10 @@ export interface BufferAttribute {
     itemCount: number;
 }
 
+/**
+ * Structured clone compliant WebGL group object and its metadata.
+ * Its purpose is to make working with groups of objects easier.
+ */
 export interface Group {
     start: number;
     count: number;
@@ -158,7 +200,7 @@ export interface MaterialOptions {
     skipExtraProps?: string[];
 
     /**
-     * `RawShaderMaterial` instances need to know about the fog at instanciation in order to avoid
+     * `RawShaderMaterial` instances need to know about the fog at instantiation in order to avoid
      * recompiling them manually later (ThreeJS does not update fog for `RawShaderMaterial`s).
      */
     fog?: boolean;
@@ -229,6 +271,11 @@ export function createMaterial(options: MaterialOptions): THREE.Material | undef
     return material;
 }
 
+/**
+ * Returns the projection object specified in the parameter.
+ *
+ * @param projectionName string describing projection to be used
+ */
 export function getProjection(projectionName: string): Projection | never {
     switch (projectionName) {
         case "mercator":
@@ -240,6 +287,11 @@ export function getProjection(projectionName: string): Projection | never {
     } // switch
 }
 
+/**
+ * String with the projection's name.
+ *
+ * @param projection `Projection` object containing the name of the projection to retrieve
+ */
 export function getProjectionName(projection: Projection): string | never {
     if (projection === mercatorProjection) {
         return "mercator";
@@ -249,6 +301,11 @@ export function getProjectionName(projection: Projection): string | never {
     throw new Error("Unknown projection");
 }
 
+/**
+ * Returns a [[THREE.BufferAttribute]] created from a provided [[BufferAttribute]] object.
+ *
+ * @param attribute BufferAttribute a WebGL compliant buffer
+ */
 export function getBufferAttribute(attribute: BufferAttribute): THREE.BufferAttribute {
     switch (attribute.type) {
         case "float":

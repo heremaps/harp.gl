@@ -87,7 +87,7 @@ export class WorkerServiceManager extends WorkerService {
             const factory = this.m_factories.get(message.targetServiceType);
 
             if (factory === undefined) {
-                logger.error(`unkown targetServiceType requested: '${message.targetServiceType}'`);
+                logger.error(`unknown targetServiceType requested: '${message.targetServiceType}'`);
                 return;
             }
 
@@ -97,7 +97,7 @@ export class WorkerServiceManager extends WorkerService {
         if (message.type === DecodedTileMessageName.DestroyService) {
             const service = this.m_services.get(message.targetServiceId);
             if (service === undefined) {
-                logger.error(`unkown targetServiceId '${message.targetServiceId}'`);
+                logger.error(`unknown targetServiceId '${message.targetServiceId}'`);
                 return;
             }
             service.destroy();
