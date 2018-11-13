@@ -10,6 +10,9 @@ import { assert } from "@here/harp-utils";
 import { Technique, TextTechnique } from "./Techniques";
 import { Env, MapEnv, Value } from "./Theme";
 
+/**
+ * Defines a map tile metadata.
+ */
 export interface TileInfo {
     readonly tileKey: TileKey;
     readonly setupTime: number;
@@ -17,8 +20,8 @@ export interface TileInfo {
 }
 
 /**
- * Struct of arrays containing data for all features of this group. No methods, since the object is
- * being passed as part of ExtendedTileInfo across "process boundaries" to the web worker.
+ * Structure of arrays containing data for all features of this group. No methods, since the object
+ * is being passed as part of ExtendedTileInfo across "process boundaries" to the web worker.
  *
  * Supporting methods in namespace [[ExtendedTileInfo]].
  */
@@ -41,7 +44,7 @@ export class FeatureGroup {
     /** number of features */
     numFeatures: number = 0;
 
-    /** number of potition elements (2 per point) */
+    /** number of positions of elements (2 per point) */
     numPositions: number = 0;
 
     /**
@@ -92,8 +95,8 @@ export class FeatureGroup {
 }
 
 /**
- * Struct of arrays containing data for roads. No methods, since the object is being passed as part
- * of [[ExtendedTileInfo]] across "process boundaries" to the web worker.
+ * Structure of arrays containing data for roads. No methods, since the object is being passed as
+ * part of [[ExtendedTileInfo]] across "process boundaries" to the web worker.
  */
 export class LineFeatureGroup extends FeatureGroup {
     /**
@@ -122,10 +125,10 @@ export class LineFeatureGroup extends FeatureGroup {
 }
 
 /**
- * Struct of arrays containing data for polygons. No methods, since the object is being passed as
+ * Structure of arrays containing data for polygons. No methods, since the object is being passed as
  * part of ExtendedTileInfo across "process boundaries" to the web worker.
  *
- * Supporting methods in namespase [[ExtendedTileInfo]].
+ * Supporting methods in namespace [[ExtendedTileInfo]].
  *
  * Due to the complexity of the access, there are supporting classes to store and access data in
  * the feature groups. See [[ExtendedTileInfoWriter]] and [[ExtendedTileInfoPolygonAccessor]].
@@ -178,7 +181,7 @@ export class PolygonFeatureGroup extends FeatureGroup {
 }
 
 /**
- * Class to hold infos from [[OmvTile]]s. Optimized for fast serialisation when being passed from
+ * Class to hold infos from [[OmvTile]]s. Optimized for fast serialization when being passed from
  * webworker to main thread. No methods, since the object is being passed across "process
  * boundaries" to the web worker.
  *
@@ -189,11 +192,11 @@ export class PolygonFeatureGroup extends FeatureGroup {
  */
 export class ExtendedTileInfo implements TileInfo {
     /**
-     * Catalog of strings. Adressed by every features stringIndex.
+     * Catalog of strings. Addressed by every features stringIndex.
      */
     readonly textCatalog: string[] = new Array<string>();
     /**
-     * Catalog of techniques. Adressed by every features featureIndex.
+     * Catalog of techniques. Addressed by every features featureIndex.
      */
     readonly techniqueCatalog: Technique[] = new Array<Technique>();
 
@@ -217,9 +220,22 @@ export class ExtendedTileInfo implements TileInfo {
      * been constructed with `storeExtendedTags` == `true`.
      */
     readonly layerCatalog?: string[];
+
+    /**
+     * Optional catalogs for extended feature infos. Only available if the [[ExtendedTileInfo]] has
+     * been constructed with `storeExtendedTags` == `true`.
+     */
     readonly classCatalog?: string[];
+
+    /**
+     * Optional catalogs for extended feature infos. Only available if the [[ExtendedTileInfo]] has
+     * been constructed with `storeExtendedTags` == `true`.
+     */
     readonly typeCatalog?: string[];
 
+    /**
+     * Used for performance diagnostics.
+     */
     setupTime: number = 0;
 
     constructor(readonly tileKey: TileKey, storeExtendedTags: boolean) {
@@ -270,6 +286,9 @@ export namespace ExtendedTileInfo {
         }
     }
 
+    /**
+     * Finalize the tile's features groups.
+     */
     export function finish(tileInfo: ExtendedTileInfo) {
         finishFeatureGroup(tileInfo.pointGroup);
         finishLineFeatureGroup(tileInfo.lineGroup);
@@ -277,16 +296,22 @@ export namespace ExtendedTileInfo {
     }
 
     /**
-     * Number of features in this feature group.
+     * Returns the number of features in this feature group.
      */
     export function featureGroupSize(featureGroup: FeatureGroup): number {
         return featureGroup.numFeatures;
     }
 
+    /**
+     * Check if the feature group is finalized.
+     */
     export function featureGroupFinished(featureGroup: FeatureGroup): boolean {
         return featureGroup.numPositions === featureGroup.positions.length;
     }
 
+    /**
+     * Check if the tileInfo is finalized.
+     */
     export function tileInfoFinished(tileInfo: ExtendedTileInfo): boolean {
         return (
             featureGroupFinished(tileInfo.pointGroup) &&
@@ -297,7 +322,7 @@ export namespace ExtendedTileInfo {
 
     /**
      * Determine the text string of the (OMV) feature. It implements the special handling required
-     * to determine the text content of a feature from its tegas, which are passed in as the `env`.
+     * to determine the text content of a feature from its tags, which are passed in as the `env`.
      *
      * @param env Environment containing the tags from the (OMV) feature.
      * @param useAbbreviation `true` to use the abbreviation if available.
@@ -830,7 +855,7 @@ export class ExtendedTileInfoVisitor {
     }
 
     /**
-     * Call the `handler` on a point feaure.
+     * Call the `handler` on a point feature.
      *
      * @param featureIndex The index of the feature into the feature table.
      * @param handler The `handler` to use.
@@ -858,7 +883,7 @@ export class ExtendedTileInfoVisitor {
     }
 
     /**
-     * Call the `handler` on a line feaure.
+     * Call the `handler` on a line feature.
      *
      * @param featureIndex The index of the feature into the feature table.
      * @param handler The `handler` to use.
@@ -903,7 +928,7 @@ export class ExtendedTileInfoVisitor {
     }
 
     /**
-     * Call the `handler` on a polygon feaure.
+     * Call the `handler` on a polygon feature.
      *
      * @param featureIndex The index of the feature into the feature table.
      * @param handler The `handler` to use.
