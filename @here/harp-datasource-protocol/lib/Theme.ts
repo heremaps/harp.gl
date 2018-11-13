@@ -46,8 +46,14 @@ export type Literal = "boolean" | "number" | "string";
  */
 export type ExprKind = "var" | "in" | Literal | UnaryOp | RelationalOp | EqualityOp | LogicalOp;
 
+/**
+ * @hidden
+ */
 export type Value = undefined | boolean | number | string;
 
+/**
+ * @hidden
+ */
 export class Env {
     /**
      * Returns property in [[Env]] by name.
@@ -66,6 +72,9 @@ export class Env {
     }
 }
 
+/**
+ * Attach a named property to an existing [[Env]] object.
+ */
 export class Bind extends Env {
     constructor(
         private readonly name: string,
@@ -101,10 +110,16 @@ export class Bind extends Env {
     }
 }
 
+/**
+ * @hidden
+ */
 export interface ValueMap {
     [name: string]: Value;
 }
 
+/**
+ * @hidden
+ */
 export const EmptyEnv: Env = {
     /**
      * Returns property in [[Env]] by name.
@@ -121,6 +136,9 @@ export const EmptyEnv: Env = {
     }
 };
 
+/**
+ * Adds access to map specific environment properties.
+ */
 export class MapEnv extends Env {
     constructor(readonly entries: ValueMap, private readonly parent?: Env) {
         super();
@@ -157,7 +175,14 @@ export class MapEnv extends Env {
     }
 }
 
+/**
+ * Abstract class defining a shape of a [[Theme]]'s expression
+ */
 export abstract class Expr {
+    /**
+     * Returns a parsed expression.
+     * @param code String which describes the type of expression to be parsed, for example "var".
+     */
     static parse(code: string): Expr {
         const parser = new Parser(code);
         const expr = parser.parse();
@@ -166,9 +191,15 @@ export abstract class Expr {
 
     constructor(readonly kind: ExprKind) {}
 
+    /**
+     * Evaluate an expression returning a [[Value]] object.
+     */
     abstract evaluate(env: Env): Value | never;
 }
 
+/**
+ * Var expression.
+ */
 class VarExpr extends Expr {
     constructor(readonly name: string) {
         super("var");
@@ -180,6 +211,9 @@ class VarExpr extends Expr {
     }
 }
 
+/**
+ * Number literal expression.
+ */
 class NumberLiteralExpr extends Expr {
     constructor(readonly value: number) {
         super("number");
@@ -190,6 +224,9 @@ class NumberLiteralExpr extends Expr {
     }
 }
 
+/**
+ * String literal expression.
+ */
 class StringLiteralExpr extends Expr {
     constructor(readonly value: string) {
         super("string");
@@ -200,6 +237,9 @@ class StringLiteralExpr extends Expr {
     }
 }
 
+/**
+ * A has expression with an attribute, for example `has(maki)`.
+ */
 class HasAttributeExpr extends Expr {
     constructor(readonly attribute: string) {
         super("has");
@@ -210,6 +250,9 @@ class HasAttributeExpr extends Expr {
     }
 }
 
+/**
+ * A contains expression.
+ */
 class ContainsExpr extends Expr {
     constructor(readonly value: Expr, readonly elements: Expr[]) {
         super("in");
@@ -226,6 +269,10 @@ class ContainsExpr extends Expr {
         return false;
     }
 }
+
+/**
+ * A `not` expression.
+ */
 class NotExpr extends Expr {
     constructor(readonly expr: Expr) {
         super("!");
@@ -236,6 +283,9 @@ class NotExpr extends Expr {
     }
 }
 
+/**
+ * A binary operator expression
+ */
 class BinaryExpr extends Expr {
     constructor(readonly op: BinaryOp, readonly left: Expr, readonly right: Expr) {
         super(op);
@@ -280,6 +330,9 @@ class BinaryExpr extends Expr {
     }
 }
 
+/**
+ * Logical expression.
+ */
 class LogicalExpr extends Expr {
     constructor(readonly op: LogicalOp, readonly left: Expr, readonly right: Expr) {
         super(op);
@@ -297,6 +350,9 @@ class LogicalExpr extends Expr {
     }
 }
 
+/**
+ * Character value
+ */
 enum Character {
     Tab = 9,
     Lf = 10,
@@ -329,6 +385,9 @@ enum Character {
     Amp = 38
 }
 
+/**
+ * Check if a codepoint is a whitespace character.
+ */
 function isSpace(codepoint: number): boolean {
     switch (codepoint) {
         case Character.Tab:
@@ -341,10 +400,16 @@ function isSpace(codepoint: number): boolean {
     } // switch
 }
 
+/**
+ * Check if codepoint is a digit character.
+ */
 function isNumber(codepoint: number): boolean {
     return codepoint >= Character._0 && codepoint <= Character._9;
 }
 
+/**
+ * Check if codepoint is a letter character.
+ */
 function isLetter(codepoint: number): boolean {
     return (
         (codepoint >= Character.a && codepoint <= Character.z) ||
@@ -352,10 +417,16 @@ function isLetter(codepoint: number): boolean {
     );
 }
 
+/**
+ * Check if codepoint is either a digit or a letter character.
+ */
 function isLetterOrNumber(codepoint: number): boolean {
     return isLetter(codepoint) || isNumber(codepoint);
 }
 
+/**
+ * Check if codepoint is an identification character: underscore, dollar sign, dot or bracket.
+ */
 function isIdentChar(codepoint: number): boolean {
     return (
         isLetterOrNumber(codepoint) ||
@@ -367,6 +438,9 @@ function isIdentChar(codepoint: number): boolean {
     );
 }
 
+/**
+ * Tokens used in theme grammar.
+ */
 enum Token {
     Eof = 0,
     Error,
@@ -392,6 +466,9 @@ enum Token {
     AmpAmp
 }
 
+/**
+ * Maps a token to its string name.
+ */
 function tokenSpell(token: Token): string {
     switch (token) {
         case Token.Eof:
@@ -443,6 +520,9 @@ function tokenSpell(token: Token): string {
     }
 }
 
+/**
+ * Lexer class implementation.
+ */
 class Lexer {
     private m_token: Token = Token.Error;
     private m_index = 0;
@@ -451,14 +531,23 @@ class Lexer {
 
     constructor(readonly code: string) {}
 
+    /**
+     * Single lexer token.
+     */
     token(): Token {
         return this.m_token;
     }
 
+    /**
+     * Parsed text.
+     */
     text(): string {
         return this.m_text || "";
     }
 
+    /**
+     * Go to the next token.
+     */
     next(): Token {
         this.m_token = this.yylex();
         if (this.m_token === Token.Error) {
@@ -778,7 +867,8 @@ export type StyleSet = Style[];
 
 /**
  * The object that defines what way an item of a [[DataSource]] should be decoded to assemble a
- * tile.
+ * tile. [[Style]] is describing which features are shown on a map and in what way they are being
+ * shown.
  */
 export interface Style {
     /**
@@ -867,12 +957,18 @@ export interface Style {
     labelProperty?: string;
 }
 
+/**
+ * Interface describing a `Vector3` class.
+ */
 export interface Vector3Like {
     x: number;
     y: number;
     z: number;
 }
 
+/**
+ * Possible lights used for light the map.
+ */
 export type Light = AmbientLight | DirectionalLight;
 
 export interface BaseLight {
@@ -880,12 +976,18 @@ export interface BaseLight {
     name: string;
 }
 
+/**
+ * Light type: ambient.
+ */
 export interface AmbientLight extends BaseLight {
     type: "ambient";
     color: string;
     intensity?: number;
 }
 
+/**
+ * Light type: directional.
+ */
 export interface DirectionalLight extends BaseLight {
     type: "directional";
     color: string;
@@ -894,6 +996,9 @@ export interface DirectionalLight extends BaseLight {
     castShadow?: boolean;
 }
 
+/**
+ * Various text styles used with labels and texts.
+ */
 export interface TextStyle {
     color?: string;
     allCaps?: boolean;
@@ -936,6 +1041,9 @@ export interface Fog {
     startRatio: number;
 }
 
+/**
+ * Define an image (e.g. icon).
+ */
 export interface ImageDefinition {
     /** Name of Image. */
     name: string;
@@ -973,6 +1081,10 @@ export interface ImageTexture {
     opacity?: number;
 }
 
+/**
+ * Map theme is used to define what features are shown and how the map is styled, for example
+ * which lightning is used or whether fog should be displayed.
+ */
 export interface Theme {
     clearColor?: string;
     defaultTextStyle?: TextStyle;
@@ -986,11 +1098,17 @@ export interface Theme {
     imageTextures?: ImageTexture[];
 }
 
+/**
+ * Fonts used for all text related rendering.
+ */
 export interface FontCatalogConfig {
     url: string;
     name: string;
 }
 
+/**
+ * Create a specific light for lightening the map.
+ */
 export function createLight(lightDescription: Light): THREE.Light {
     switch (lightDescription.type) {
         case "ambient": {
@@ -1021,6 +1139,9 @@ export function createLight(lightDescription: Light): THREE.Light {
     }
 }
 
+/**
+ * Combine data from datasource and apply the rules from a specified theme to show it on the map.
+ */
 export class StyleSetEvaluator {
     private readonly m_renderOrderBiasGroups: Map<string, number>;
 
@@ -1044,7 +1165,7 @@ export class StyleSetEvaluator {
                 ) {
                     if (style.renderOrder !== undefined) {
                         logger.warn(
-                            "WARN: style.renderOrder will be overriden if " +
+                            "WARN: style.renderOrder will be overridden if " +
                                 "renderOrderBiasGroup is set:",
                             style
                         );
@@ -1068,7 +1189,7 @@ export class StyleSetEvaluator {
                 } else if (renderOrderBiasGroupOrder) {
                     if (style.renderOrder !== undefined) {
                         logger.warn(
-                            "WARN: style.renderOrder will be overriden if " +
+                            "WARN: style.renderOrder will be overridden if " +
                                 "renderOrderBiasGroup is set:",
                             style
                         );
@@ -1119,7 +1240,7 @@ export class StyleSetEvaluator {
 
         for (const currStyle of this.styleSet) {
             if (this.validate && styleStack.length !== 0) {
-                throw new Error("Internal error: sytle stack cleanup failed");
+                throw new Error("Internal error: style stack cleanup failed");
             }
 
             if (this.processStyle(env, styleStack, currStyle, result)) {

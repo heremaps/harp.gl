@@ -13,6 +13,9 @@ import {
 } from "@here/harp-materials";
 import * as THREE from "three";
 
+/**
+ * Possible techniques that can be used to draw a geometry on the map.
+ */
 export type Technique =
     | SquaresTechnique
     | CirclesTechnique
@@ -32,6 +35,9 @@ export type Technique =
     | LandmarkTechnique
     | TextTechnique;
 
+/**
+ * Techniques are used to specify how a geometry is drawn on the canvas.
+ */
 export interface BaseTechnique {
     /**
      * The name used to identify materials created from this technique.
@@ -90,6 +96,9 @@ export interface BaseTechnique {
     fadeFar?: CaseProperty<number>;
 }
 
+/**
+ * Standard technique to draw a geometry.
+ */
 export interface BaseStandardTechnique extends BaseTechnique {
     /**
      * Color of a line in hexadecimal or CSS-style notation, for example: `"#e4e9ec"`, `"#fff"`,
@@ -442,6 +451,9 @@ export interface MarkerTechnique extends BaseTechnique {
     textMaxZoomLevel?: number;
 }
 
+/**
+ * Declares a geometry as a point of interest (POI).
+ */
 export interface PoiTechnique extends MarkerTechnique {
     /**
      * Name of technique. Is used in the theme file.
@@ -449,6 +461,9 @@ export interface PoiTechnique extends MarkerTechnique {
     name: "labeled-icon";
 }
 
+/**
+ * Declares a geometry as a line marker.
+ */
 export interface LineMarkerTechnique extends MarkerTechnique {
     name: "line-marker";
 
@@ -458,6 +473,9 @@ export interface LineMarkerTechnique extends MarkerTechnique {
     minDistance?: number;
 }
 
+/**
+ * Declares a geometry as a line.
+ */
 export interface LineTechnique extends BaseTechnique {
     /**
      * Name of technique. Is used in the theme file.
@@ -485,6 +503,9 @@ export interface LineTechnique extends BaseTechnique {
     lineWidth: number;
 }
 
+/**
+ * Declares a geometry as a segment.
+ */
 export interface SegmentsTechnique extends BaseTechnique {
     /**
      * Name of technique. Is used in the theme file.
@@ -510,6 +531,9 @@ export interface SegmentsTechnique extends BaseTechnique {
     lineWidth: number;
 }
 
+/**
+ * Declares a a geometry as a polygon.
+ */
 export interface PolygonalTechnique {
     /**
      * Whether to use polygon offset. Default is false. This corresponds to the
@@ -565,6 +589,9 @@ export interface PolygonalTechnique {
     lineFadeFar?: CaseProperty<number>;
 }
 
+/**
+ * Declares a a geometry as a basic extruded line.
+ */
 export interface BasicExtrudedLineTechnique extends BaseTechnique, PolygonalTechnique {
     /**
      * Name of technique. Is used in the theme file.
@@ -608,6 +635,9 @@ export interface BasicExtrudedLineTechnique extends BaseTechnique, PolygonalTech
     caps?: string;
 }
 
+/**
+ * Declares a a geometry as a standard extruded line.
+ */
 export interface StandardExtrudedLineTechnique extends BaseStandardTechnique, PolygonalTechnique {
     /**
      * Name of technique. Is used in the theme file.
@@ -632,6 +662,9 @@ export interface StandardExtrudedLineTechnique extends BaseStandardTechnique, Po
     caps?: string;
 }
 
+/**
+ * Declares a a geometry as a solid line.
+ */
 export interface SolidLineTechnique extends BaseTechnique, PolygonalTechnique {
     /**
      * Name of technique. Is used in the theme file.
@@ -667,6 +700,9 @@ export interface SolidLineTechnique extends BaseTechnique, PolygonalTechnique {
     clipping?: boolean;
 }
 
+/**
+ * Declares a a geometry as a dashed line.
+ */
 export interface DashedLineTechnique extends BaseTechnique, PolygonalTechnique {
     /**
      * Name of technique. Is used in the theme file.
@@ -710,6 +746,9 @@ export interface DashedLineTechnique extends BaseTechnique, PolygonalTechnique {
     clipping?: boolean;
 }
 
+/**
+ * Technique used to draw filled polygons.
+ */
 export interface FillTechnique extends BaseTechnique, PolygonalTechnique {
     /**
      * Name of technique. Is used in the theme file.
@@ -736,6 +775,9 @@ export interface FillTechnique extends BaseTechnique, PolygonalTechnique {
     wireframe?: boolean;
 }
 
+/**
+ * Technique used to draw a geometry as an extruded polygon, for example extruded buildings.
+ */
 export interface ExtrudedPolygonTechnique extends BaseStandardTechnique {
     /**
      * Name of technique. Is used in the theme file.
@@ -783,6 +825,9 @@ export interface ExtrudedPolygonTechnique extends BaseStandardTechnique {
     defaultHeight?: number;
 }
 
+/**
+ * Technique used to render a mesh geometry.
+ */
 export interface StandardTechnique extends BaseStandardTechnique {
     /**
      * Name of technique. Is used in the theme file.
@@ -815,6 +860,9 @@ export interface LandmarkTechnique extends BaseStandardTechnique {
     name: "landmark";
 }
 
+/**
+ * Technique used to render a geometry with a texture.
+ */
 export interface StandardTexturedTechnique extends BaseStandardTechnique {
     name: "standard-textured";
 
@@ -843,6 +891,9 @@ export interface StandardTexturedTechnique extends BaseStandardTechnique {
     wrapT?: WrappingMode;
 }
 
+/**
+ * Render geometry as a text.
+ */
 export interface TextTechnique extends BaseTechnique {
     /**
      * Name of technique. Is used in the theme file.
@@ -943,74 +994,128 @@ export interface TextTechnique extends BaseTechnique {
     textFadeTime?: number;
 }
 
+/**
+ * Type guard to check if an object is an instance of [[CirclesTechnique]].
+ */
 export function isCirclesTechnique(technique: Technique): technique is CirclesTechnique {
     return technique.name === "circles";
 }
 
+/**
+ * Type guard to check if an object is an instance of [[SquaresTechnique]].
+ */
 export function isSquaresTechnique(technique: Technique): technique is SquaresTechnique {
     return technique.name === "squares";
 }
 
+/**
+ * Type guard to check if an object is an instance of [[PoiTechnique]].
+ */
 export function isPoiTechnique(technique: Technique): technique is PoiTechnique {
     return technique.name === "labeled-icon";
 }
 
+/**
+ * Type guard to check if an object is an instance of [[LineMarkerTechnique]].
+ */
 export function isLineMarkerTechnique(technique: Technique): technique is LineMarkerTechnique {
     return technique.name === "line-marker";
 }
 
+/**
+ * Type guard to check if an object is an instance of [[LineTechnique]].
+ */
 export function isLineTechnique(technique: Technique): technique is LineTechnique {
     return technique.name === "line";
 }
 
+/**
+ * Type guard to check if an object is an instance of [[SolidLineTechnique]].
+ */
 export function isSolidLineTechnique(technique: Technique): technique is LineTechnique {
     return technique.name === "solid-line";
 }
 
+/**
+ * Type guard to check if an object is an instance of [[SegmentsTechnique]].
+ */
 export function isSegmentsTechnique(technique: Technique): technique is SegmentsTechnique {
     return technique.name === "segments";
 }
 
+/**
+ * Type guard to check if an object is an instance of [[BasicExtrudedLineTechnique]]
+ * or [[StandardExtrudedLineTechnique]].
+ */
 export function isExtrudedLineTechnique(
     technique: Technique
 ): technique is BasicExtrudedLineTechnique | StandardExtrudedLineTechnique {
     return technique.name === "extruded-line";
 }
 
+/**
+ * Type guard to check if an object is an instance of [[FillTechnique]].
+ */
 export function isFillTechnique(technique: Technique): technique is FillTechnique {
     return technique.name === "fill";
 }
 
+/**
+ * Type guard to check if an object is an instance of [[ExtrudedPolygonTechnique]].
+ */
 export function isExtrudedPolygonTechnique(
     technique: Technique
 ): technique is ExtrudedPolygonTechnique {
     return technique.name === "extruded-polygon";
 }
 
+/**
+ * Type guard to check if an object is an instance of [[StandardTechnique]].
+ */
 export function isStandardTechnique(technique: Technique): technique is StandardTechnique {
     return technique.name === "standard";
 }
 
+/**
+ * Type guard to check if an object is an instance of [[StandardTexturedTechnique]].
+ */
 export function isStandardTexturedTechnique(
     technique: Technique
 ): technique is StandardTexturedTechnique {
     return technique.name === "standard-textured";
 }
 
+/**
+ * Type guard to check if an object is an instance of [[LandmarkTechnique]].
+ */
 export function isLandmarkTechnique(technique: Technique): technique is LandmarkTechnique {
     return technique.name === "landmark";
 }
 
+/**
+ * Type guard to check if an object is an instance of [[TextTechnique]].
+ */
 export function isTextTechnique(technique: Technique): technique is TextTechnique {
     return technique.name === "text";
 }
 
+/**
+ * Type guard to check if an object is an instance of [[ShaderTechnique]].
+ */
 export function isShaderTechnique(technique: Technique): technique is ShaderTechnique {
     return technique.name === "shader";
 }
 
+/**
+ * Generic material type constructor.
+ */
 export type MaterialConstructor = new (params?: {}) => THREE.Material;
 
+/**
+ * Returns a [[MaterialConstructor]] basing on provided technique object.
+ *
+ * @param technique [[Technique]] object which the material will be based on.
+ */
 export function getMaterialConstructor(technique: Technique): MaterialConstructor | undefined {
     switch (technique.name) {
         case "extruded-line":
@@ -1053,6 +1158,9 @@ export function getMaterialConstructor(technique: Technique): MaterialConstructo
     }
 }
 
+/**
+ * The default `three.js` object used with a specific technique.
+ */
 export interface ObjectConstructor {
     new (
         geometry?: THREE.Geometry | THREE.BufferGeometry,
@@ -1109,6 +1217,9 @@ export function getObjectConstructor(technique: Technique): ObjectConstructor | 
     }
 }
 
+/**
+ * Non material properties of [[BaseTechnique]]
+ */
 export const BASE_TECHNIQUE_NON_MATERIAL_PROPS = [
     "name",
     "id",
@@ -1119,6 +1230,11 @@ export const BASE_TECHNIQUE_NON_MATERIAL_PROPS = [
     "transient"
 ];
 
+/**
+ * Property which value is coupled with the value of the zoom level. It enables specifying different
+ * values for certain zoom level ranges which for example enables drawing some object on the map
+ * differently when the map zoom level changes.
+ */
 export type CaseProperty<T> =
     | T
     | Array<{
@@ -1138,6 +1254,9 @@ export type CaseProperty<T> =
           value: T;
       }>;
 
+/**
+ * Type guard to check if an object is an instance of `CaseProperty`.
+ */
 function isCaseProperty<T>(p: any): p is CaseProperty<T> {
     if (p instanceof Array && p.length > 0 && p[0].value !== undefined) {
         return true;
@@ -1145,6 +1264,9 @@ function isCaseProperty<T>(p: any): p is CaseProperty<T> {
     return false;
 }
 
+/**
+ * Returns a value for a given property at the given zoom level.
+ */
 export function getPropertyValue<T>(
     property: CaseProperty<T> | undefined,
     level: number
@@ -1164,11 +1286,17 @@ export function getPropertyValue<T>(
     return property;
 }
 
+/**
+ * Buffer holding a texture.
+ */
 export interface TextureBuffer {
     buffer: ArrayBuffer;
     format: string;
 }
 
+/**
+ * Type guard to check if an object is an instance of `TextureBuffer`.
+ */
 export function isTextureBuffer(object: any): object is TextureBuffer {
     return object && object.buffer && typeof object.format === "string";
 }
@@ -1187,8 +1315,14 @@ export function getAttributeValue<T>(attribute: T, level: number): T | undefined
     return attribute;
 }
 
+/**
+ * Available texture wrapping modes.
+ */
 export type WrappingMode = "clamp" | "repeat" | "mirror";
 
+/**
+ * Returns `three.js` wrapping mode object basing on a [[WrappingMode]] specified.
+ */
 export function toWrappingMode(mode: WrappingMode): THREE.Wrapping {
     if (mode === "clamp") {
         return THREE.ClampToEdgeWrapping;
