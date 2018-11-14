@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Theme, ThemeVisitor } from "@here/harp-datasource-protocol";
+import { Theme } from "@here/harp-datasource-protocol";
 import { GeoCoordinates } from "@here/harp-geoutils";
 import { MapControls } from "@here/harp-map-controls";
 import { CopyrightElementHandler, MapView } from "@here/harp-mapview";
@@ -22,10 +22,6 @@ const logger = LoggerManager.instance.create("themes");
  * ```typescript
  * [[include:vislib_maptheme_0.ts]]
  * ```
- * To change a single theme's property the utility class called [[ThemeVisitor]] can be used:
- *
- * ```typescript
- * [[include:vislib_maptheme_1.ts]]
  * ```
  */
 export namespace ThemesExample {
@@ -48,22 +44,18 @@ export namespace ThemesExample {
         }
     </style>
     <div id="switch-theme-btn">SWITCH THEME</div>
-
-    <div class="red-channel">
-        <input id="red-channel-slider" name="r" type="range" min="0" max="255" value="82"/>
-    </div>
 `;
 
-    const availableThemes: string[] = ["./resources/theme.json", "./resources/reducedDay.json"];
+    const availableThemes: string[] = ["./resources/day.json", "./resources/reducedNight.json"];
 
     const defaultThemeUrl = availableThemes[0];
 
     // snippet:vislib_maptheme_0.ts
     // asynchronously loads Theme and applies it to MapView
-    function loadMapViewTheme(mapViewToLoad: MapView, url: string) {
+    function loadMapViewTheme(mapView: MapView, url: string) {
         ThemeLoader.loadAsync(url)
             .then((theme: Theme) => {
-                mapViewToLoad.theme = theme;
+                mapView.theme = theme;
             })
             .catch(error => {
                 logger.error("#loadMapViewTheme: failed to load map theme", error);
@@ -137,51 +129,7 @@ export namespace ThemesExample {
         };
     }
 
-    function initChangeRedChannelSlider() {
-        const el = document.getElementById("red-channel-slider") as HTMLInputElement;
-
-        if (el === null) {
-            return;
-        }
-
-        // snippet:vislib_maptheme_1.ts
-        el.onchange = () => {
-            const theme = mapView.theme;
-            if (theme === undefined) {
-                return;
-            }
-
-            const value = parseInt(el.value, 10);
-
-            let hexVal = value.toString(16);
-
-            if (hexVal.length === 1) {
-                hexVal = "0" + hexVal;
-            }
-
-            const styleVisitor = new ThemeVisitor(theme);
-
-            styleVisitor.visitStyles(style => {
-                // change only roads red channel - #xx606e in night theme and #xxfeff in day theme
-                if (
-                    style.attr !== undefined &&
-                    style.attr.color &&
-                    ((style.attr.color as string).endsWith("606e") ||
-                        (style.attr.color as string).endsWith("feff"))
-                ) {
-                    style.attr.color = "#" + hexVal + (style.attr.color as string).substr(3);
-                }
-
-                return false;
-            });
-
-            mapView.theme = theme;
-        };
-        // end:vislib_maptheme_1.ts
-    }
-
     window.onload = () => {
         initSwitchThemeButton();
-        initChangeRedChannelSlider();
     };
 }
