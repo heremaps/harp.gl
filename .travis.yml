@@ -5,6 +5,7 @@ node_js:
 cache:
   yarn: true
 
+# upgrade yarn to a more recent version
 before_install:
   - curl -o- -L https://yarnpkg.com/install.sh | bash -s -- --version 1.12.3
   - export PATH="$HOME/.yarn/bin:$PATH"
@@ -20,9 +21,17 @@ jobs:
       name: "Build web bundles"
 
 deploy:
-  provider: script
-  script: echo npx lerna publish -y from-git
-  skip_cleanup: true
-  on:
-    tags: true
-    branch: master
+  - provider: script
+    script: echo npx lerna publish -y from-git
+    skip_cleanup: true
+    on:
+      tags: true
+      branch: master
+  - provider: pages
+    skip_cleanup: true
+    committer-from-gh: true
+    keep-history: false
+    local-dir: doc
+    github-token: $GITHUB_TOKEN
+    on:
+      branch: master
