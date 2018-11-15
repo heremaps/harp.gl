@@ -81,13 +81,8 @@ function syncDirsIfNeeded({ sourceDir, destDir }: SyncDirsOptions) {
     });
 }
 
-//
-// Install fonts
-//
-syncDirsIfNeeded({
-    sourceDir: "../node_modules/@here/harp-font-resources/resources/fonts",
-    destDir: "../@here/harp-map-theme/resources/fonts"
-});
+// tslint:disable-next-line:no-var-requires
+require("../@here/harp-map-theme/scripts/postinstall.js");
 
 //
 // harp-examples

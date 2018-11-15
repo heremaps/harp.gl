@@ -10,7 +10,8 @@
   "scripts": {
     "test": "cross-env mocha --require source-map-support/register $EXTRA_MOCHA_ARGS ./test/*.js",
     "build": "tsc",
-    "prepare": "cross-env tsc --sourceMap false $EXTRA_TSC_ARGS"
+    "prepare": "cross-env tsc --sourceMap false $EXTRA_TSC_ARGS",
+    "postinstall": "node scripts/postinstall.js"
   },
   "repository": {
     "type": "git",
@@ -22,8 +23,8 @@
   },
   "license": "Apache-2.0",
   "dependencies": {
-    "@here/harp-datasource-protocol": "^0.2.39",
-    "@here/harp-font-resources": "^0.1.0"
+    "@here/harp-font-resources": "^0.1.0",
+    "mkpath": "^1.0.0"
   },
   "devDependencies": {
     "@types/chai": "^4.1.2",
