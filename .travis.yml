@@ -17,6 +17,15 @@ jobs:
       script: yarn test
     - script: yarn run typedoc
       name: "Build documentation"
+      deploy:
+        provider: pages
+        skip_cleanup: true
+        committer-from-gh: true
+        keep-history: false
+        local-dir: doc
+        github-token: $GITHUB_TOKEN
+        on:
+          branch: master
     - script: yarn run build
       name: "Build web bundles"
 
@@ -26,12 +35,4 @@ deploy:
     skip_cleanup: true
     on:
       tags: true
-      branch: master
-  - provider: pages
-    skip_cleanup: true
-    committer-from-gh: true
-    keep-history: false
-    local-dir: doc
-    github-token: $GITHUB_TOKEN
-    on:
       branch: master
