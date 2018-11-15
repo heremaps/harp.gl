@@ -85,37 +85,6 @@ function syncDirsIfNeeded({ sourceDir, destDir }: SyncDirsOptions) {
 require("../@here/harp-map-theme/scripts/postinstall.js");
 
 //
-// harp-examples
-//
-mkpath.sync("dist/harp-examples/dist/resources");
-
-syncIfNeeded(
-    path.resolve(__dirname, "../node_modules/three/build/three.min.js"),
-    path.resolve(__dirname, "../dist/harp-examples/dist/three.min.js")
-);
-
-syncIfNeeded(
-    path.resolve(__dirname, "../@here/harp-map-theme/resources/reducedNight.json"),
-    path.resolve(__dirname, "../dist/harp-examples/dist/resources/theme.json")
-);
-
-syncDirsIfNeeded({
-    sourceDir: `../@here/harp-map-theme/resources`,
-    destDir: `../dist/harp-examples/dist/resources`
-});
-
-syncDirsIfNeeded({
-    sourceDir: `../@here/harp-examples/resources`,
-    destDir: `../dist/harp-examples/dist/resources`
-});
-
-syncFiles({
-    sourceDir: "../@here/harp-examples",
-    destDir: "../dist/harp-examples",
-    files: ["index.html", "codebrowser.html", "src"]
-});
-
-//
 // install test data
 //
 ["harp-mapview", "harp-test-utils", "harp-omv-datasource", "harp-map-theme"].forEach(module => {

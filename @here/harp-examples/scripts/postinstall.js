@@ -19,32 +19,23 @@ function asyncCopyfiles(source, destination) {
     });
 }
 
-function getModuleDir() {
-    const tscRealPath = require.resolve("typescript");
-    return path.resolve(path.dirname(tscRealPath), "../..");
+function resolveExternalPackagePath(id, moduleFilePath) {
+    const packaJsonPath = require.resolve(`${id}/package.json`);
+    return path.resolve(path.dirname(packaJsonPath), moduleFilePath);
 }
-
-const moduleDir = getModuleDir();
 
 async function copyResources() {
     if (!fs.existsSync("dist")) fs.mkdirSync("dist");
 
-    await asyncCopyfiles(moduleDir + "/@here/harp-map-theme/resources", "dist/resources");
+    await asyncCopyfiles(resolveExternalPackagePath("@here/harp-map-theme", "resources"), "dist/resources");
     await asyncCopyfiles("resources", "dist/resources");
 
-    fs.copyFileSync(moduleDir + "/three/build/three.min.js", "dist/three.min.js");
+    fs.copyFileSync(resolveExternalPackagePath("three", "build/three.min.js"), "dist/three.min.js");
 
     fs.copyFileSync(
-        moduleDir + "/@here/harp-map-theme/resources/reducedNight.json",
+        resolveExternalPackagePath("@here/harp-map-theme", "resources/reducedNight.json"),
         "dist/resources/theme.json"
     );
-
-    fs.copyFileSync(
-        moduleDir + "/@here/harp-map-theme/resources/reducedDay.json",
-        "dist/resources/reducedDay.json"
-    );
-
-    fs.copyFileSync(moduleDir + "/@here/harp-map-theme/resources/day.json", "dist/resources/day.json");
 }
 
 copyResources().catch(err => {

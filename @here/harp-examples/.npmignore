@@ -1,5 +1,6 @@
 test/
 tsconfig.json
+dist/resources
 .gitignore
 .gitreview
 example-definitions.js.in

@@ -43,7 +43,8 @@ const commonConfig = {
         }]
     },
     output: {
-        path: __dirname
+        path: __dirname,
+        filename: "dist/[name].bundle.js"
     }
 };
 
@@ -51,9 +52,6 @@ const decoderConfig = merge(commonConfig, {
     target: "webworker",
     entry: {
         decoder: "./decoder/decoder.ts"
-    },
-    output: {
-        filename: "dist/[name].bundle.js"
     }
 });
 
@@ -89,12 +87,8 @@ function filterExamples(pattern) {
 
 const browserConfig = merge(commonConfig, {
     entry: webpackEntries,
-    output: {
-        filename: "dist/[name]_bundle.js"
-    },
     devServer: {
-        publicPath: "/dist",
-        contentBase: [path.resolve(__dirname)],
+        contentBase: [path.resolve(__dirname, "dist")],
         host: "0.0.0.0",
         disableHostCheck: true
     }
@@ -103,18 +97,12 @@ const browserConfig = merge(commonConfig, {
 const exampleBrowserConfig = merge(commonConfig, {
     entry: {
         "example-browser": "./example-browser.ts"
-    },
-    output: {
-        filename: "dist/[name].bundle.js"
     }
 });
 
 const codeBrowserConfig = merge(commonConfig, {
     entry: {
         codebrowser: "./codebrowser.ts"
-    },
-    output: {
-        filename: "dist/[name].bundle.js"
     }
 });
 
@@ -139,8 +127,13 @@ if (process.env.NODE_ENV === "production") {
 
 const allEntries = Object.assign({}, webpackEntries, htmlEntries);
 
+function resolveExternalPackagePath(id, moduleFilePath) {
+    const packaJsonPath = require.resolve(`${id}/package.json`);
+    return path.resolve(path.dirname(packaJsonPath), moduleFilePath);
+}
+
 /**
- * Geterate example definitions for 'index.html' in following form:
+ * Generate example definitions for 'index.html' in following form:
  *
  * {
  *     [examplePage: string]: string // maps example page to example source
@@ -151,18 +144,47 @@ const exampleDefs = Object.keys(allEntries).reduce(function (r, entry) {
     return r;
 }, {});
 
-
-browserConfig.plugins.push(
-    new CopyWebpackPlugin([{
+/**
+ * Copy all the assets to dist/ folder.
+ *
+ * `harp-examples` are expected to be served from `dist/`
+ */
+const assets = [{
         from: __dirname + "/example-definitions.js.in",
-        to: "example-definitions.js",
+        to: "dist/example-definitions.js",
         transform: (content) => {
             return content.toString().replace("{{EXAMPLES}}", JSON.stringify(exampleDefs, true, 4));
         }
-    }, {
-        from: "src/*.html",
-        to: "dist/[name].[ext]"
-    }])
-);
+    },
+    {
+        from: "**/*.*",
+        context: resolveExternalPackagePath("@here/harp-map-theme", "resources"),
+        fromArgs: { follow: true },
+        to: "dist/resources",
+        toType: "dir"
+    },
+    {
+        from: resolveExternalPackagePath("three", "build/three.min.js"),
+        to: "dist/three.min.js"
+    },
+
+];
+
+if (process.cwd() !== __dirname) {
+    assets.push({
+        from: path.join(__dirname, "src/*.{ts,tsx,html}"),
+        to: "src/[name].[ext]"
+    });
+    assets.push({
+        from: __dirname + "/resources/*",
+        to: "dist/resources/[name].[ext]"
+    })
+    assets.push({
+        from: __dirname + "/{index,codebrowser}.html",
+        to: "[name].[ext]"
+    })
+}
+
+browserConfig.plugins.push(new CopyWebpackPlugin(assets));
 
 module.exports = [decoderConfig, browserConfig, codeBrowserConfig, exampleBrowserConfig];

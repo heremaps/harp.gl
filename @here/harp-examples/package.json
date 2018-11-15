@@ -5,11 +5,11 @@
   "bin": "harp-examples",
   "scripts": {
     "test": "exit 0",
-    "prebuild": "node scripts/postinstall.js",
     "build": "webpack",
+    "postinstall": "node ./scripts/postinstall.js",
     "start": "webpack-dev-server",
     "publish-html": "node scripts/publish-html.js",
-    "prepare": "node scripts/postinstall.js && cross-env PREPARE_ONLY=true webpack -p"
+    "prepare": "cross-env PREPARE_ONLY=true webpack -p"
   },
   "author": {
     "name": "HERE Global B.V. and its affiliate(s)",
@@ -17,6 +17,9 @@
   },
   "license": "Apache-2.0",
   "dependencies": {
+    "three": "^0.96.0",
+    "@here/harp-map-theme": "^0.1.50",
+    "ncp": "^2.0.0",
     "serve-handler": "^5.0.0"
   },
   "devDependencies": {
@@ -43,7 +46,6 @@
     "dat.gui": "^0.7.2",
     "highlight.js": "^9.12.0",
     "html-webpack-plugin": "^3.2.0",
-    "ncp": "^2.0.0",
     "stats.js": "^0.17.0",
     "style-loader": "^0.23.0",
     "three": "^0.96.0",
