@@ -941,6 +941,7 @@ export class TextElementsRenderer {
                 const tile = tileTextElements.tile;
                 for (const textElement of tileTextElements.textElements) {
                     if (
+                        !textElement.visible ||
                         !MathUtils.isClamped(
                             zoomLevel,
                             textElement.minZoomLevel,
@@ -1337,7 +1338,7 @@ export class TextElementsRenderer {
                         poiInfo.iconMaxZoomLevel
                     );
 
-                if (renderIcon && poiInfo !== undefined && poiRenderer.prepareRender(poiInfo)) {
+                if (renderIcon && poiInfo !== undefined && poiRenderer.prepareRender(pointLabel)) {
                     if (poiInfo.isValid === false) {
                         return false;
                     }
@@ -1693,7 +1694,7 @@ export class TextElementsRenderer {
                 if (
                     lineMarkerLabel.path === undefined ||
                     lineMarkerLabel.path.length === 0 ||
-                    !poiRenderer.prepareRender(poiInfo)
+                    !poiRenderer.prepareRender(lineMarkerLabel)
                 ) {
                     return;
                 }

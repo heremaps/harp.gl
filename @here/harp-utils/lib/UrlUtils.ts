@@ -32,7 +32,7 @@
  * @param childUrl URL of child as referenced from parent resource
  * @return `childUrl` as if anchored in location of `parentUrl`
  */
-export function resolveReferenceUrl(parentUrl: string, childUrl: string): string {
+export function resolveReferenceUrl(parentUrl: string | undefined, childUrl: string): string {
     if (absoluteUrlWithOriginRe.test(childUrl)) {
         return childUrl;
     } else if (childUrl.startsWith("/")) {
@@ -66,7 +66,10 @@ const absoluteUrlWithOriginRe = new RegExp("^(?:[a-z]+:)?//", "i");
  *     themes -> ./
  * ```
  */
-export function baseUrl(url: string) {
+export function baseUrl(url: string | undefined) {
+    if (url === undefined) {
+        return "./";
+    }
     const idx = url.lastIndexOf("/");
     if (idx === -1) {
         return "./";
@@ -86,7 +89,10 @@ export function baseUrl(url: string) {
  * @param url input URL
  * @return origin of given URL
  */
-export function getUrlOrigin(url: string): string {
+export function getUrlOrigin(url: string | undefined): string {
+    if (url === undefined) {
+        return "";
+    }
     const parsed = getUrlHostAndProtocol(url);
     if (parsed.protocol === "file:") {
         return "file://";

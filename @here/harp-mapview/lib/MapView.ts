@@ -3,7 +3,6 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-
 import { createLight, ImageTexture, Light, Sky, Theme } from "@here/harp-datasource-protocol";
 import { GeoCoordinates, MathUtils, mercatorProjection, Projection } from "@here/harp-geoutils";
 import { TextMaterial } from "@here/harp-materials";
@@ -21,6 +20,7 @@ import { MapViewImageCache } from "./image/MapViewImageCache";
 import { MapViewFog } from "./MapViewFog";
 import { PickHandler, PickResult } from "./PickHandler";
 import { PoiManager } from "./poi/PoiManager";
+import { PoiTableManager } from "./poi/PoiTableManager";
 import { ScreenCollisions, ScreenCollisionsDebug } from "./ScreenCollisions";
 import { ScreenProjector } from "./ScreenProjector";
 import { SkyBackground } from "./SkyBackground";
@@ -492,6 +492,8 @@ export class MapView extends THREE.EventDispatcher {
 
     private m_poiManager: PoiManager = new PoiManager(this);
 
+    private m_poiTableManager: PoiTableManager = new PoiTableManager(this);
+
     private m_collisionDebugCanvas: HTMLCanvasElement | undefined;
 
     // Detection of camera movement and scene change:
@@ -792,6 +794,10 @@ export class MapView extends THREE.EventDispatcher {
         this.m_theme.imageTextures = theme.imageTextures;
         this.updateImages();
 
+        // POI tables.
+        this.m_theme.poiTables = theme.poiTables;
+        this.loadPoiTables();
+
         // Text.
         this.m_theme.textStyles = theme.textStyles;
         this.m_theme.defaultTextStyle = theme.defaultTextStyle;
@@ -1026,6 +1032,14 @@ export class MapView extends THREE.EventDispatcher {
      */
     get poiManager(): PoiManager {
         return this.m_poiManager;
+    }
+
+    /**
+     * @hidden
+     * Get the array of [[PoiTableManager]] that belongs to this `MapView`.
+     */
+    get poiTableManager(): PoiTableManager {
+        return this.m_poiTableManager;
     }
 
     /**
@@ -2094,6 +2108,17 @@ export class MapView extends THREE.EventDispatcher {
                 this.poiManager.addImageTexture(imageTexture);
             });
         }
+    }
+
+    private loadPoiTables() {
+        if (this.m_theme === undefined) {
+            return;
+        }
+
+        this.poiTableManager.clear();
+
+        // Add the POI tables defined in the theme.
+        this.poiTableManager.loadPoiTables(this.m_theme as Theme);
     }
 
     get statistics(): Statistics {

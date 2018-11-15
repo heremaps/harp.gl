@@ -150,10 +150,13 @@ export interface TextGeometry {
 export interface PoiGeometry {
     positions: BufferAttribute;
     texts: number[];
+    /**
+     * Names of the image texture or the name of the POI as indices into the array `stringCatalog`.
+     */
+    imageTextures?: number[];
     technique?: number;
     featureId?: number;
     stringCatalog?: Array<string | undefined>;
-    imageTextures?: number[];
 }
 
 /**

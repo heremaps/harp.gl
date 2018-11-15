@@ -17,7 +17,7 @@ import {
     TextHorizontalAlignment,
     TextVerticalAlignment
 } from "@here/harp-text-renderer";
-import { Math2D } from "@here/harp-utils";
+import { Math2D, MathUtils } from "@here/harp-utils";
 
 import * as THREE from "three";
 
@@ -37,6 +37,16 @@ export interface PoiInfo {
      * Name of the [[ImageTexture]].
      */
     imageTextureName: string;
+
+    /**
+     * Name of the POI table [[PoiTable]].
+     */
+    poiTableName?: string;
+
+    /**
+     * Name of the POI description in the [[PoiTable]].
+     */
+    poiName?: string;
 
     /**
      * Specify stack mode. Defaults to `ShowInStack`.
@@ -276,6 +286,11 @@ export class RenderState {
  * `TextElement` is used to create 2D text elements (for example, labels).
  */
 export class TextElement {
+    /**
+     * Determines visibility. If set to `false`, it will not be rendered.
+     */
+    visible: boolean = true;
+
     /**
      * Determines minimum zoom level for visibility. Can be used to reduce the number of visible
      * `TextElement`s based on zoom level.
@@ -655,6 +670,28 @@ export class TextElement {
             const poiRenderOrder =
                 this.renderOrder !== undefined ? BG_TEXT_RENDER_ORDER + this.renderOrder : 0;
             poiInfo.renderOrder = poiRenderOrder;
+        }
+    }
+
+    /**
+     * Update the minZoomLevel and maxZoomLevel from the values set in [[PoiInfo]].
+     * Selects the smaller/larger one of the two min/max values for icon and text, because the
+     * TextElement is a container for both.
+     */
+    updateMinMaxZoomLevelsFromPoiInfo() {
+        if (this.poiInfo !== undefined) {
+            if (this.minZoomLevel === undefined) {
+                this.minZoomLevel = MathUtils.min2(
+                    this.poiInfo.iconMinZoomLevel,
+                    this.poiInfo.textMinZoomLevel
+                );
+            }
+            if (this.maxZoomLevel === undefined) {
+                this.maxZoomLevel = MathUtils.max2(
+                    this.poiInfo.iconMaxZoomLevel,
+                    this.poiInfo.textMaxZoomLevel
+                );
+            }
         }
     }
 }
