@@ -15,7 +15,9 @@ jobs:
     - stage: test
       name: "Execute unit tests (node)"
       script: yarn test
-    - script: yarn run typedoc
+    - script: |
+        yarn run typedoc && \
+        echo -e 'include:\n  - "_*"' > doc/_config.yml
       name: "Build documentation"
       deploy:
         provider: pages
