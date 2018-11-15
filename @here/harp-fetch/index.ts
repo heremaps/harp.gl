@@ -33,18 +33,19 @@ if (global.fetch === undefined) {
 
 export type FetchFunction = typeof fetch;
 
-/*
- * `fetch` with local file system support.
+/**
+ * A `fetch` implementation with local file system support.
  *
- * WHATWG `fetch` compliant decorator over `node-fetch` that
+ * Web Hypertext Application Technology Working Group (WHATWG) `fetch` compliant decorator over
+ * `node-fetch` that:
  *
  * * supports `file:` protocol
  * * treats relative URIs as relative to `process.cwd()`
  *
- * `@here/harp-fetch` exposes this function as `global.fetch` Node.js environment, so it mimics
- * _browser_ `fetch` that supports relative URL's which are resolved against baseUrl. It also
- * allows to APIs whom use `fetch` internally, by passing them `file://` resources without need to
- * stub `global.fetch`.
+ * `@here/harp-fetch` exposes this function as `global.fetch` in the Node.js environment, so it
+ * mimics the _browser_ `fetch` that supports relative URLs which are resolved against baseUrl.
+ *
+ * It also supports fetching local `file://` resources without the need to stub the `global.fetch`.
  *
  * *Use only for testing purposes*.
  *
