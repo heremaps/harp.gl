@@ -33,18 +33,6 @@ async function copyResources() {
     await asyncCopyfiles("resources", "dist/resources");
 
     fs.copyFileSync(moduleDir + "/three/build/three.min.js", "dist/three.min.js");
-
-    fs.copyFileSync(
-        moduleDir + "/@here/harp-map-theme/resources/reducedNight.json",
-        "dist/resources/theme.json"
-    );
-
-    fs.copyFileSync(
-        moduleDir + "/@here/harp-map-theme/resources/reducedDay.json",
-        "dist/resources/reducedDay.json"
-    );
-
-    fs.copyFileSync(moduleDir + "/@here/harp-map-theme/resources/day.json", "dist/resources/day.json");
 }
 
 copyResources().catch(err => {

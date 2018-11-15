@@ -241,11 +241,11 @@ export enum PoiStackMode {
     /**
      * Show in a stack.
      */
-    ShowInStack = "show-in-stack",
+    Show = "show-in-stack",
     /**
      * Do not show in a stack.
      */
-    HideInStack = "hide-in-stack",
+    Hide = "hide-in-stack",
     /**
      * Show category parent in the stack.
      */
@@ -425,6 +425,19 @@ export interface MarkerTechnique extends BaseTechnique {
      * transparent. A value of <= 0.0 disables fading.
      */
     fadeFar?: CaseProperty<number>;
+    /**
+     * Name of the POI table which should be used for this POI.
+     */
+    poiTable?: string;
+    /**
+     * Fixed name to identify POI options in the POI table. If `poiName` has a value, this value
+     * supercedes any value read from the field referenced in `poiNameField`.
+     */
+    poiName?: string;
+    /**
+     * Name of the field to evaluate to get the name of the POI options in the POI table.
+     */
+    poiNameField?: string;
     /**
      * Should be displayed on map or not. Defaults to `true`.
      */

@@ -14,7 +14,7 @@ import { ColorCache } from "../ColorCache";
 import { ImageItem } from "../image/Image";
 import { MapView } from "../MapView";
 import { ScreenCollisions } from "../ScreenCollisions";
-import { PoiInfo } from "../text/TextElement";
+import { PoiInfo, TextElement } from "../text/TextElement";
 import { IconTexture } from "./Poi";
 
 const logger = LoggerManager.instance.create("PoiRenderer");
@@ -93,7 +93,7 @@ class PoiRenderBufferBatch {
     private setup() {
         const bilinear = true;
 
-        // texturer images should be generated with premultiplied alpha
+        // Texture images should be generated with premultiplied alpha
         const premultipliedAlpha = true;
 
         const iconTexture = new IconTexture(this.imageItem);
@@ -127,7 +127,7 @@ class PoiRenderBufferBatch {
 }
 
 /**
- * Contains all [[PoiRenderBufferBatch]]es. Selects (and initalizes) the correct batch for a POI.
+ * Contains all [[PoiRenderBufferBatch]]es. Selects (and initializes) the correct batch for a POI.
  */
 class PoiRenderBuffer {
     readonly batches: PoiRenderBufferBatch[] = [];
@@ -163,7 +163,7 @@ class PoiRenderBuffer {
 
         const renderOrder = poiInfo.renderOrder!;
 
-        // there is a batch for every ImageDefinition, which could be a texture atlas with many
+        // There is a batch for every ImageDefinition, which could be a texture atlas with many
         // ImageTextures in it.
         const batchKey = imageTexture.image;
         let batchSet = this.m_batchMap.get(batchKey);
@@ -308,13 +308,17 @@ export class PoiRenderer {
      * Prepare the POI for rendering, and determine which `poiRenderBatch` should be used. If a
      * `poiRenderBatch` is assigned, the POI is ready to be rendered.
      *
-     * @param poiInfo PoiInfo containing information for rendering the POI icon.
+     * @param pointLabel TextElement with PoiInfo for rendering the POI icon.
      *
      * @returns `True` if the space is not already allocated by another object (text label or POI)
      */
-    prepareRender(poiInfo: PoiInfo): boolean {
+    prepareRender(pointLabel: TextElement): boolean {
+        const poiInfo = pointLabel.poiInfo;
+        if (poiInfo === undefined) {
+            return false;
+        }
         if (poiInfo.poiRenderBatch === undefined) {
-            this.preparePoi(poiInfo);
+            this.preparePoi(pointLabel);
         }
         return poiInfo.poiRenderBatch !== undefined;
     }
@@ -458,22 +462,37 @@ export class PoiRenderer {
      * Register the POI at the [[PoiRenderBuffer]] which may require some setup, for example loading
      * of the actual image.
      */
-    private preparePoi(poiInfo: PoiInfo): void {
-        if (poiInfo.poiRenderBatch !== undefined || poiInfo.isValid === false) {
-            // Already set up, nothing to be done her.
+    private preparePoi(pointLabel: TextElement): void {
+        const poiInfo = pointLabel.poiInfo;
+        if (poiInfo === undefined || !pointLabel.visible) {
             return;
         }
 
-        const imageTexture = this.mapView.poiManager.getImageTexture(poiInfo.imageTextureName);
+        if (poiInfo.poiRenderBatch !== undefined || poiInfo.isValid === false) {
+            // Already set up, nothing to be done here.
+            return;
+        }
+
+        if (
+            poiInfo.poiTableName !== undefined &&
+            this.mapView.poiManager.updatePoiFromPoiTable(pointLabel)
+        ) {
+            // Remove poiTableName to mark this POI as processed.
+            poiInfo.poiTableName = undefined;
+            if (!pointLabel.visible) {
+                // PoiTable set this POI to not visible.
+                return;
+            }
+        }
+
+        const imageTextureName = poiInfo.imageTextureName;
+
+        const imageTexture = this.mapView.poiManager.getImageTexture(imageTextureName);
         if (imageTexture === undefined) {
             // Warn about a missing texture, but only once.
-            if (PoiRenderer.m_missingTextureName.get(poiInfo.imageTextureName) === undefined) {
-                PoiRenderer.m_missingTextureName.set(poiInfo.imageTextureName, true);
-                logger.error(
-                    `PoiRenderer#preparePoi: No imageTexture with name '${
-                        poiInfo.imageTextureName
-                    }' found`
-                );
+            if (PoiRenderer.m_missingTextureName.get(imageTextureName) === undefined) {
+                PoiRenderer.m_missingTextureName.set(imageTextureName, true);
+                logger.error(`preparePoi: No imageTexture with name '${imageTextureName}' found`);
             }
             poiInfo.isValid = false;
             return;
@@ -483,7 +502,7 @@ export class PoiRenderer {
 
         let imageItem = this.mapView.imageCache.findImageByName(imageDefinition);
         if (imageItem === undefined) {
-            logger.error(`PoiRenderer#init: No imageItem found with name '${imageDefinition}'`);
+            logger.error(`init: No imageItem found with name '${imageDefinition}'`);
             poiInfo.isValid = false;
             return;
         }
@@ -499,18 +518,13 @@ export class PoiRenderer {
                 loading
                     .then(loadedImageItem => {
                         if (loadedImageItem === undefined) {
-                            logger.error(
-                                `PoiRenderer#preparePoi: Failed to load imageItem: '${imageUrl}`
-                            );
+                            logger.error(`preparePoi: Failed to load imageItem: '${imageUrl}`);
                             return;
                         }
                         this.setupPoiInfo(poiInfo, imageTexture, loadedImageItem);
                     })
                     .catch(error => {
-                        logger.error(
-                            `PoiRenderer#preparePoi: Failed to load imageItem: '${imageUrl}`,
-                            error
-                        );
+                        logger.error(`preparePoi: Failed to load imageItem: '${imageUrl}`, error);
                         poiInfo.isValid = false;
                     });
                 return;
@@ -533,7 +547,7 @@ export class PoiRenderer {
         assert(poiInfo.uvBox === undefined);
 
         if (imageItem === undefined || imageItem.imageData === undefined) {
-            logger.error("PoiRenderer#setupPoiInfo: No imageItem/imageData found");
+            logger.error("setupPoiInfo: No imageItem/imageData found");
             // invalid render batch number
             poiInfo.poiRenderBatch = INVALID_RENDER_BATCH;
             poiInfo.isValid = false;

@@ -15,6 +15,7 @@ export * from "./lib/text/TextElement";
 export * from "./lib/text/TextElementsRenderer";
 export * from "./lib/poi/Poi";
 export * from "./lib/poi/PoiManager";
+export * from "./lib/poi/PoiTableManager";
 export * from "./lib/MapView";
 export * from "./lib/MapViewFog";
 export * from "./lib/PickHandler";

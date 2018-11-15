@@ -169,7 +169,12 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                 const poiTechnique = technique as PoiTechnique;
                 imageTexture = poiTechnique.imageTexture;
 
-                if (typeof poiTechnique.imageTextureField === "string") {
+                if (typeof poiTechnique.poiName === "string") {
+                    imageTexture = poiTechnique.poiName;
+                } else if (typeof poiTechnique.poiNameField === "string") {
+                    const poiNameFieldValue = env.lookup(poiTechnique.poiNameField);
+                    imageTexture = poiNameFieldValue as string;
+                } else if (typeof poiTechnique.imageTextureField === "string") {
                     const imageTextureValue = env.lookup(poiTechnique.imageTextureField);
                     imageTexture = imageTextureValue as string;
                     if (typeof poiTechnique.imageTexturePrefix === "string") {

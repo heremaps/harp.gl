@@ -1,0 +1,518 @@
+{
+    "accommodation_bednbreakfast": {
+        "x": 33,
+        "y": 0,
+        "width": 32,
+        "height": 32
+    },
+    "accommodation_camping": {
+        "x": 33,
+        "y": 198,
+        "width": 32,
+        "height": 32
+    },
+    "accommodation_hotel": {
+        "x": 0,
+        "y": 33,
+        "width": 32,
+        "height": 32
+    },
+    "accommodation_motel": {
+        "x": 33,
+        "y": 33,
+        "width": 32,
+        "height": 32
+    },
+    "automotive_carrental": {
+        "x": 66,
+        "y": 0,
+        "width": 32,
+        "height": 32
+    },
+    "automotive_charging": {
+        "x": 66,
+        "y": 33,
+        "width": 32,
+        "height": 32
+    },
+    "automotive_petrolstation": {
+        "x": 0,
+        "y": 66,
+        "width": 32,
+        "height": 32
+    },
+    "automotive_repair_car": {
+        "x": 33,
+        "y": 66,
+        "width": 32,
+        "height": 32
+    },
+    "automotive_wash_car": {
+        "x": 66,
+        "y": 66,
+        "width": 32,
+        "height": 32
+    },
+    "business_atm": {
+        "x": 99,
+        "y": 0,
+        "width": 32,
+        "height": 32
+    },
+    "business_laundry": {
+        "x": 99,
+        "y": 33,
+        "width": 32,
+        "height": 32
+    },
+    "business_post": {
+        "x": 99,
+        "y": 66,
+        "width": 32,
+        "height": 32
+    },
+    "business_touristinformation": {
+        "x": 0,
+        "y": 99,
+        "width": 32,
+        "height": 32
+    },
+    "eatdrink_cocktail": {
+        "x": 33,
+        "y": 99,
+        "width": 32,
+        "height": 32
+    },
+    "eatdrink_coffee": {
+        "x": 66,
+        "y": 99,
+        "width": 32,
+        "height": 32
+    },
+    "eatdrink_fastfood": {
+        "x": 99,
+        "y": 99,
+        "width": 32,
+        "height": 32
+    },
+    "eatdrink_main": {
+        "x": 132,
+        "y": 0,
+        "width": 32,
+        "height": 32
+    },
+    "eatdrink_pub": {
+        "x": 132,
+        "y": 33,
+        "width": 32,
+        "height": 32
+    },
+    "emergency_hospital": {
+        "x": 132,
+        "y": 66,
+        "width": 32,
+        "height": 32
+    },
+    "emergency_pharmacy": {
+        "x": 132,
+        "y": 99,
+        "width": 32,
+        "height": 32
+    },
+    "emergency_police": {
+        "x": 0,
+        "y": 132,
+        "width": 32,
+        "height": 32
+    },
+    "facilities_bank": {
+        "x": 33,
+        "y": 132,
+        "width": 32,
+        "height": 32
+    },
+    "facilities_cemetry": {
+        "x": 66,
+        "y": 132,
+        "width": 32,
+        "height": 32
+    },
+    "facilities_education": {
+        "x": 99,
+        "y": 132,
+        "width": 32,
+        "height": 32
+    },
+    "facilities_exhibition_center": {
+        "x": 132,
+        "y": 132,
+        "width": 32,
+        "height": 32
+    },
+    "facilities_frontiercrossing": {
+        "x": 165,
+        "y": 0,
+        "width": 32,
+        "height": 32
+    },
+    "facilities_harbor": {
+        "x": 165,
+        "y": 33,
+        "width": 32,
+        "height": 32
+    },
+    "facilities_kindergarten": {
+        "x": 165,
+        "y": 66,
+        "width": 32,
+        "height": 32
+    },
+    "facilities_main": {
+        "x": 165,
+        "y": 99,
+        "width": 32,
+        "height": 32
+    },
+    "facilities_parking": {
+        "x": 165,
+        "y": 132,
+        "width": 32,
+        "height": 32
+    },
+    "facilities_parking_garage": {
+        "x": 0,
+        "y": 165,
+        "width": 32,
+        "height": 32
+    },
+    "facilities_parknride": {
+        "x": 33,
+        "y": 165,
+        "width": 32,
+        "height": 32
+    },
+    "goingout_arcadegame": {
+        "x": 66,
+        "y": 165,
+        "width": 32,
+        "height": 32
+    },
+    "goingout_casino": {
+        "x": 99,
+        "y": 165,
+        "width": 32,
+        "height": 32
+    },
+    "goingout_cinema": {
+        "x": 132,
+        "y": 165,
+        "width": 32,
+        "height": 32
+    },
+    "goingout_jazzclub": {
+        "x": 165,
+        "y": 165,
+        "width": 32,
+        "height": 32
+    },
+    "goingout_karaoke": {
+        "x": 198,
+        "y": 0,
+        "width": 32,
+        "height": 32
+    },
+    "goingout_livemusic": {
+        "x": 198,
+        "y": 33,
+        "width": 32,
+        "height": 32
+    },
+    "goingout_main": {
+        "x": 198,
+        "y": 66,
+        "width": 32,
+        "height": 32
+    },
+    "goingout_nightclub": {
+        "x": 198,
+        "y": 99,
+        "width": 32,
+        "height": 32
+    },
+    "goingout_pool": {
+        "x": 198,
+        "y": 132,
+        "width": 32,
+        "height": 32
+    },
+    "leisure_amusement": {
+        "x": 198,
+        "y": 165,
+        "width": 32,
+        "height": 32
+    },
+    "leisure_aquarium": {
+        "x": 0,
+        "y": 198,
+        "width": 32,
+        "height": 32
+    },
+    "leisure_main": {
+        "x": 0,
+        "y": 0,
+        "width": 32,
+        "height": 32
+    },
+    "leisure_spa": {
+        "x": 66,
+        "y": 198,
+        "width": 32,
+        "height": 32
+    },
+    "leisure_trailhead_bicycle": {
+        "x": 99,
+        "y": 198,
+        "width": 32,
+        "height": 32
+    },
+    "leisure_trailhead_hiking": {
+        "x": 132,
+        "y": 198,
+        "width": 32,
+        "height": 32
+    },
+    "leisure_trailhead_offroad": {
+        "x": 165,
+        "y": 198,
+        "width": 32,
+        "height": 32
+    },
+    "leisure_waterpark": {
+        "x": 198,
+        "y": 198,
+        "width": 32,
+        "height": 32
+    },
+    "leisure_wildanimalpark": {
+        "x": 231,
+        "y": 0,
+        "width": 32,
+        "height": 32
+    },
+    "leisure_zoo": {
+        "x": 231,
+        "y": 33,
+        "width": 32,
+        "height": 32
+    },
+    "nature_garden": {
+        "x": 231,
+        "y": 66,
+        "width": 32,
+        "height": 32
+    },
+    "nature_lake": {
+        "x": 231,
+        "y": 99,
+        "width": 32,
+        "height": 32
+    },
+    "nature_main": {
+        "x": 231,
+        "y": 132,
+        "width": 32,
+        "height": 32
+    },
+    "nature_mountainpass": {
+        "x": 231,
+        "y": 165,
+        "width": 32,
+        "height": 32
+    },
+    "nature_overlook": {
+        "x": 231,
+        "y": 198,
+        "width": 32,
+        "height": 32
+    },
+    "nature_underwater_feature": {
+        "x": 0,
+        "y": 231,
+        "width": 32,
+        "height": 32
+    },
+    "nature_waterfall": {
+        "x": 33,
+        "y": 231,
+        "width": 32,
+        "height": 32
+    },
+    "religious_main": {
+        "x": 66,
+        "y": 231,
+        "width": 32,
+        "height": 32
+    },
+    "service_ticketing": {
+        "x": 99,
+        "y": 231,
+        "width": 32,
+        "height": 32
+    },
+    "shopping_books": {
+        "x": 132,
+        "y": 231,
+        "width": 32,
+        "height": 32
+    },
+    "shopping_main": {
+        "x": 165,
+        "y": 231,
+        "width": 32,
+        "height": 32
+    },
+    "sights_attraction": {
+        "x": 198,
+        "y": 231,
+        "width": 32,
+        "height": 32
+    },
+    "sights_brewery": {
+        "x": 231,
+        "y": 231,
+        "width": 32,
+        "height": 32
+    },
+    "sights_gallery": {
+        "x": 264,
+        "y": 0,
+        "width": 32,
+        "height": 32
+    },
+    "sights_winery": {
+        "x": 264,
+        "y": 33,
+        "width": 32,
+        "height": 32
+    },
+    "sport_bowling": {
+        "x": 264,
+        "y": 66,
+        "width": 32,
+        "height": 32
+    },
+    "sport_diving": {
+        "x": 264,
+        "y": 99,
+        "width": 32,
+        "height": 32
+    },
+    "sport_fitness": {
+        "x": 264,
+        "y": 132,
+        "width": 32,
+        "height": 32
+    },
+    "sport_golfcourse": {
+        "x": 264,
+        "y": 165,
+        "width": 32,
+        "height": 32
+    },
+    "sport_main": {
+        "x": 264,
+        "y": 198,
+        "width": 32,
+        "height": 32
+    },
+    "sport_racetrack": {
+        "x": 264,
+        "y": 231,
+        "width": 32,
+        "height": 32
+    },
+    "sport_ski_indoor": {
+        "x": 0,
+        "y": 264,
+        "width": 32,
+        "height": 32
+    },
+    "sport_ski_run": {
+        "x": 33,
+        "y": 264,
+        "width": 32,
+        "height": 32
+    },
+    "sport_soccer": {
+        "x": 66,
+        "y": 264,
+        "width": 32,
+        "height": 32
+    },
+    "sport_swimming": {
+        "x": 99,
+        "y": 264,
+        "width": 32,
+        "height": 32
+    },
+    "sport_tennis": {
+        "x": 132,
+        "y": 264,
+        "width": 32,
+        "height": 32
+    },
+    "toll_booth": {
+        "x": 165,
+        "y": 264,
+        "width": 32,
+        "height": 32
+    },
+    "transport_airport": {
+        "x": 198,
+        "y": 264,
+        "width": 32,
+        "height": 32
+    },
+    "transport_airport_access": {
+        "x": 231,
+        "y": 264,
+        "width": 32,
+        "height": 32
+    },
+    "transport_bus": {
+        "x": 264,
+        "y": 264,
+        "width": 32,
+        "height": 32
+    },
+    "transport_ferry": {
+        "x": 297,
+        "y": 0,
+        "width": 32,
+        "height": 32
+    },
+    "transport_ferry_access": {
+        "x": 297,
+        "y": 33,
+        "width": 32,
+        "height": 32
+    },
+    "transport_rail_citymetro": {
+        "x": 297,
+        "y": 66,
+        "width": 32,
+        "height": 32
+    },
+    "transport_taxi": {
+        "x": 297,
+        "y": 99,
+        "width": 32,
+        "height": 32
+    },
+    "transport_train": {
+        "x": 297,
+        "y": 132,
+        "width": 32,
+        "height": 32
+    }
+}

@@ -83,6 +83,21 @@
     "fog": {
         "startRatio": 0.8
     },
+    "images": [
+        {
+            "name": "icons_day",
+            "url": "icons_day.png",
+            "atlas": "icons_day.json",
+            "preload": true
+        }
+    ],
+    "poiTables": [
+        {
+            "name": "tzPoiTable",
+            "url": "resources/poi_masterlist.json",
+            "useAltNamesForKey" : true
+        }
+    ],
     "styles": {
         "tilezen": [
             {
@@ -1691,6 +1706,39 @@
                                 }
                             }
                         ]
+                    }
+                ]
+            },
+            {
+                "description": "POIs in tilezen format",
+                "when": "$layer == 'pois'",
+                "attr": {
+                    "color": "#929292",
+                    "scale": 0.45,
+                    "poiTable": "omvPoiTable"
+                },
+                "styles": [
+                    {
+                        "when": "has(kind)",
+                        "final": true,
+                        "technique": "labeled-icon",
+                        "attr": {
+                            "poiTable": "tzPoiTable",
+                            "poiNameField": "kind",
+                            "iconScale": 1,
+                            "scale": 0.5,
+                            "yOffset": -22,
+                            "textIsOptional": true,
+                            "iconIsOptional": false,
+                            "renderTextDuringMovements": false,
+                            "textMayOverlap": false,
+                            "textReserveSpace": true,
+                            "iconMayOverlap": true,
+                            "iconReserveSpace": false
+                        }
+                    },
+                    {
+                        "technique": "text"
                     }
                 ]
             },

@@ -13,14 +13,13 @@ import {
     PoiGeometry,
     PoiTechnique
 } from "@here/harp-datasource-protocol";
-import "@here/harp-fetch";
 import {
     TextHorizontalAlignment,
     TextHorizontalAlignmentStrings,
     TextVerticalAlignment,
     TextVerticalAlignmentStrings
 } from "@here/harp-text-renderer";
-import { assert, assertExists, getOptionValue, LoggerManager, MathUtils } from "@here/harp-utils";
+import { assert, assertExists, getOptionValue, LoggerManager } from "@here/harp-utils";
 import * as THREE from "three";
 
 import { MapView } from "../MapView";
@@ -52,6 +51,9 @@ const RANDOM_SORT_WEIGHT_SEQUENCE = 0.01;
  * and preparing them for rendering. Also loads and manages the texture atlases for the icons.
  */
 export class PoiManager {
+    // Keep track of the missing POI table names, but only warn once.
+    private static m_missingPoiTableName: Map<string, boolean> = new Map();
+    private static m_missingPoiName: Map<string, boolean> = new Map();
     private m_imageTextures: Map<string, ImageTexture> = new Map();
     private m_poiShieldGroups: Map<string, number> = new Map();
 
@@ -102,6 +104,8 @@ export class PoiManager {
                 if (poiGeometry.stringCatalog === undefined) {
                     continue;
                 }
+                const poiTableName = poiTechnique.poiTable;
+                let poiName = poiTechnique.poiName;
 
                 for (let i = 0; i < positions.count; ++i) {
                     const x = positions.getX(i);
@@ -113,21 +117,39 @@ export class PoiManager {
                         text = "";
                     }
 
-                    if (
-                        poiGeometry.stringCatalog !== undefined &&
-                        poiGeometry.imageTextures !== undefined &&
-                        poiGeometry.imageTextures[i] >= 0
-                    ) {
-                        assert(poiGeometry.imageTextures.length > i);
-                        imageTextureName = poiGeometry.stringCatalog[poiGeometry.imageTextures[i]];
-                    } else {
-                        imageTextureName = poiTechnique.imageTexture;
+                    if (poiGeometry.stringCatalog !== undefined) {
+                        if (
+                            poiGeometry.imageTextures !== undefined &&
+                            poiGeometry.imageTextures[i] >= 0
+                        ) {
+                            assert(poiGeometry.imageTextures.length > i);
+                            imageTextureName =
+                                poiGeometry.stringCatalog[poiGeometry.imageTextures[i]];
+                        } else {
+                            imageTextureName = poiTechnique.imageTexture;
+                        }
+
+                        if (poiTableName !== undefined) {
+                            // The POI name to be used is taken from the data, since it will
+                            // specify the name of the texture to use.
+
+                            // The POI name in the technique may override the POI name from the
+                            // data.
+                            poiName =
+                                poiTechnique.poiName === undefined
+                                    ? imageTextureName
+                                    : poiTechnique.poiName;
+
+                            imageTextureName = undefined;
+                        }
                     }
 
                     const textElement = this.checkCreateTextElement(
                         text,
                         technique,
                         imageTextureName,
+                        poiTableName,
+                        poiName,
                         0,
                         poiGeometry.featureId,
                         x,
@@ -229,6 +251,103 @@ export class PoiManager {
     }
 
     /**
+     * Update the [[TextElement]] with the information taken from the [[PoiTable]] which is
+     * referenced in the [[PoiInfo]] of the pointLabel.
+     *
+     * If the requested [[PoiTable]] is not available yet, the function returns `false`.
+     * If the [[PoiTable]] is not defined, or if the references POI has no entry in
+     * the [[PoiTable]], no action is taken, and the function returns `false`.
+     *
+     * If the [[PoiTable]] has been processed, it returns `true`, indicating that this function
+     * doesn't have to be called again.
+     *
+     * @param pointLabel The [[TextElement]] to update.
+     *
+     * @returns `true` if the [[PoiTable]] has been processed, and the function does not have to be
+     *          called again.
+     */
+    updatePoiFromPoiTable(pointLabel: TextElement): boolean {
+        const poiInfo = pointLabel.poiInfo;
+        if (
+            poiInfo === undefined ||
+            poiInfo.poiTableName === undefined ||
+            poiInfo.poiName === undefined
+        ) {
+            return true;
+        }
+
+        let poiTableName = poiInfo.poiTableName;
+        const poiTable = this.mapView.poiTableManager.getPoiTable(poiTableName);
+
+        if (poiTable !== undefined && poiTable.isLoading) {
+            // The PoiTable is still loading, we have to try again.
+            return false;
+        }
+
+        if (poiTable === undefined || !poiTable.loadedOk) {
+            // Warn about a missing POI table name, but only once.
+            if (poiTableName === undefined) {
+                poiTableName = "undefined";
+            }
+            if (PoiManager.m_missingPoiTableName.get(poiTableName) === undefined) {
+                PoiManager.m_missingPoiTableName.set(poiTableName, true);
+                if (poiTable !== undefined && !poiTable.loadedOk) {
+                    logger.error(`Error loading POI table name ${poiTableName}`);
+                } else {
+                    logger.error(
+                        `updatePoiFromPoiTable: No POI table with name '${poiTableName}' found.`
+                    );
+                }
+            }
+            return true;
+        }
+
+        let poiName = poiInfo.poiName;
+        const poiTableEntry = poiTable.poiDict.get(poiName);
+
+        if (poiTableEntry === undefined) {
+            // Warn about a missing POI name, but only once.
+            if (poiName === undefined) {
+                poiName = "undefined";
+            }
+            if (PoiManager.m_missingPoiName.get(poiName) === undefined) {
+                PoiManager.m_missingPoiName.set(poiName, true);
+                logger.warn(`Cannot find POI info '${poiName}' found in table ${poiTableName}.`);
+            }
+            return true;
+        }
+
+        if (poiTableEntry.iconName !== undefined) {
+            poiInfo.imageTextureName = poiTableEntry.iconName;
+        }
+
+        pointLabel.visible =
+            poiTableEntry.visible !== undefined ? poiTableEntry.visible : pointLabel.visible;
+        pointLabel.priority =
+            poiTableEntry.priority !== undefined ? poiTableEntry.priority : pointLabel.priority;
+        poiInfo.iconMinZoomLevel =
+            poiTableEntry.iconMinLevel !== undefined
+                ? poiTableEntry.iconMinLevel
+                : poiInfo.iconMinZoomLevel;
+        poiInfo.iconMaxZoomLevel =
+            poiTableEntry.iconMaxLevel !== undefined
+                ? poiTableEntry.iconMaxLevel
+                : poiInfo.iconMaxZoomLevel;
+        poiInfo.textMinZoomLevel =
+            poiTableEntry.textMinLevel !== undefined
+                ? poiTableEntry.textMinLevel
+                : poiInfo.textMinZoomLevel;
+        poiInfo.textMaxZoomLevel =
+            poiTableEntry.textMaxLevel !== undefined
+                ? poiTableEntry.textMaxLevel
+                : poiInfo.textMaxZoomLevel;
+
+        pointLabel.updateMinMaxZoomLevelsFromPoiInfo();
+
+        return true;
+    }
+
+    /**
      * Clear internal state. Applicable when switching themes.
      */
     clear() {
@@ -279,6 +398,8 @@ export class PoiManager {
             text,
             technique,
             imageTexture,
+            undefined, // TBD for road shields
+            undefined,
             shieldGroupIndex,
             poiGeometry.featureId,
             positionArray,
@@ -303,6 +424,8 @@ export class PoiManager {
         text: string,
         technique: PoiTechnique | LineMarkerTechnique,
         imageTextureName: string | undefined,
+        poiTableName: string | undefined,
+        poiName: string | undefined,
         shieldGroupIndex: number,
         featureId: number | undefined,
         x: number | THREE.Vector2[],
@@ -361,10 +484,17 @@ export class PoiManager {
                     ? technique.distanceScale
                     : DEFAULT_TEXT_DISTANCE_SCALE;
 
+            // imageTextureName may be undefined if a poiTable is used.
+            if (imageTextureName === undefined && poiTableName !== undefined) {
+                imageTextureName = "";
+            }
+
             if (imageTextureName !== undefined) {
                 textElement.poiInfo = {
                     technique,
                     imageTextureName,
+                    poiTableName,
+                    poiName,
                     shieldGroupIndex,
                     textElement,
                     textIsOptional,
@@ -378,25 +508,21 @@ export class PoiManager {
                     textMinZoomLevel: technique.textMinZoomLevel,
                     textMaxZoomLevel: technique.textMaxZoomLevel
                 };
+                textElement.updateMinMaxZoomLevelsFromPoiInfo();
+            } else {
+                // Select the smaller/larger one of the two min/max values, because the TextElement
+                // is a container for both.
+                if (textElement.minZoomLevel === undefined) {
+                    textElement.minZoomLevel = technique.textMinZoomLevel;
+                }
+
+                if (textElement.maxZoomLevel === undefined) {
+                    textElement.maxZoomLevel = technique.textMaxZoomLevel;
+                }
             }
+
             if (technique.color !== undefined) {
                 textElement.color = new THREE.Color(technique.color);
-            }
-
-            // Select the smaller/larger one of the two min/max values, because the TextElement is
-            // a container for both.
-            if (textElement.minZoomLevel === undefined) {
-                textElement.minZoomLevel = MathUtils.min2(
-                    technique.iconMinZoomLevel,
-                    technique.textMinZoomLevel
-                );
-            }
-
-            if (textElement.maxZoomLevel === undefined) {
-                textElement.maxZoomLevel = MathUtils.max2(
-                    technique.iconMaxZoomLevel,
-                    technique.textMaxZoomLevel
-                );
             }
 
             textElement.distanceScale = distanceScale;

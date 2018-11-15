@@ -33,6 +33,9 @@ export class ThemeLoader {
             throw new Error("ThemeLoader#loadAsync: loaded resource is not valid JSON");
         }
 
+        // Remember the URL where the theme has been loaded from.
+        theme.url = themeUrl;
+
         // Ensure that all resources referenced in theme by relative URLs are in fact relative to
         // theme.
         const childUrlResolver = composeUrlResolvers(

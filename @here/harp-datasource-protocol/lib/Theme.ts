@@ -1082,10 +1082,71 @@ export interface ImageTexture {
 }
 
 /**
+ * Definition for a [[PoiTable]] reference as part of the [[Theme]] object.
+ */
+export interface PoiTableRef {
+    /** Required name of the [[PoiTable]] for later reference. */
+    name: string;
+    /** Required URL from where to load [[PoiTable]]. */
+    url: string;
+    /**
+     * If set to `true`, the list of values in the field "altNames" will be used as names for this
+     * POI.
+     */
+    useAltNamesForKey: boolean;
+}
+
+/**
+ * Interface for the JSON description of the [[PoiTable]]. It is being implemented in [[PoiTable]].
+ */
+export interface PoiTableDef {
+    /** Name of the `PoiTable`. Must be unique. */
+    name?: string;
+    /**
+     * Stores the list of [[PoiTableEntry]]s.
+     */
+    poiList?: PoiTableEntryDef[];
+}
+
+/**
+ * Interface for the JSON description of the [[PoiTableEntry]]. The interface is being implemented
+ * as [[PoiTableEntry]].
+ */
+export interface PoiTableEntryDef {
+    /** Default name of the POI as the key for looking it up. */
+    name?: string;
+    /** Alternative names of the POI. */
+    altNames?: string[];
+    /** Visibility of the POI. If `false`, the POI will not be rendered. */
+    visible?: boolean;
+    /** Name of the icon, defined in the the texture atlases. */
+    iconName?: string;
+    /** Stacking mode of the POI. For future use. */
+    stackMode?: string;
+    /**
+     * Priority of the POI to select the visible set in case there are more POIs than can be
+     * handled.
+     */
+    priority?: number;
+    /** Minimum zoom level to render the icon on. */
+    iconMinLevel?: number;
+    /** Maximum zoom level to render the icon on. */
+    iconMaxLevel?: number;
+    /** Minimum zoom level to render the text label on. */
+    textMinLevel?: number;
+    /** Maximum zoom level to render the text label on. */
+    textMaxLevel?: number;
+}
+
+/**
  * Map theme is used to define what features are shown and how the map is styled, for example
  * which lightning is used or whether fog should be displayed.
  */
 export interface Theme {
+    /**
+     * Actual URL the theme has been loaded from.
+     */
+    url?: string;
     clearColor?: string;
     defaultTextStyle?: TextStyle;
     lights?: Light[];
@@ -1096,6 +1157,10 @@ export interface Theme {
     fontCatalogs?: FontCatalogConfig[];
     images?: ImageDefinition[];
     imageTextures?: ImageTexture[];
+    /**
+     * Optional list of [[ThemePoiTableDef]]s.
+     */
+    poiTables?: PoiTableRef[];
 }
 
 /**
