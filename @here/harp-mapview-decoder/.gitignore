@@ -6,3 +6,4 @@ doc
 *.js
 *.js.map
 !./webpack-test.config.js
+*.tgz

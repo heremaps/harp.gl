@@ -7,3 +7,4 @@ tsconfig.json
 resources/fonts
 resources-dev/
 scripts/
+*.tgz

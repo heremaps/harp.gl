@@ -8,3 +8,4 @@ doc
 *.js.map
 resources/temp
 resources-dev/Fonts/Assets/*
+*.tgz
