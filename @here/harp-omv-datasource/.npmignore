@@ -5,3 +5,4 @@ tsconfig.json
 .gitignore
 .gitreview
 *.proto
+*.tgz

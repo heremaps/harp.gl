@@ -3,3 +3,4 @@ tsconfig.json
 .gitignore
 .gitreview
 example-definitions.js.in
+*.tgz
