@@ -7,16 +7,21 @@
 import { Geometry, IMeshBuffers } from "@here/harp-datasource-protocol";
 import { indexNeeded } from "./OutlineIndicesDetector";
 
-const INDEX_BUFFER_LIMIT = 65536; //Math.pow(2, 16); Maximum size for the index buffer in webGL 1.0.
+/**
+ * The maximum size for the index buffer in webGL 1.0 is 2^16.
+ */
+const INDEX_BUFFER_LIMIT = 65536;
 
 /**
- * The Outliner class read the outlines indices in the [IMeshBuffer] and add them to the [Geometry].
+ * The `Outliner` class reads the outline indices in the [[IMeshBuffers]] and adds them to the
+ * [[Geometry]].
  */
 export class Outliner {
     /**
+     * Instantiate an `Outliner`.
      *
-     * @param m_tmpOutlineIndices Array that stores the cached indices until the INDEX_BUFFER_LIMIT
-     * is reached. Empty by default.
+     * @param m_tmpOutlineIndices Array that stores the cached indices until the
+     * `INDEX_BUFFER_LIMIT` is reached. Empty by default.
      */
     constructor(private m_tmpOutlineIndices: number[] = []) {}
 
@@ -37,7 +42,7 @@ export class Outliner {
             geometry.outlineIndicesAttributes = [];
         }
         for (const edgesArray of meshBuffers.outlineIndices) {
-            // create the edge index buffer 2D array
+            // Create the edge index buffer 2D array.
             geometry.outlineIndicesAttributes.push({
                 name: "edgeIndicesArray",
                 buffer: new Uint32Array(edgesArray).buffer as ArrayBuffer,
@@ -48,7 +53,7 @@ export class Outliner {
     }
 
     /**
-     * Add edges to the [IMeshBuffer] outlineIndices array.
+     * Add edges to the [[IMeshBuffers]] outlineIndices array.
      *
      * @param offset Starting offset of the vertices defining the contour.
      * @param contour Vertices that compose the contour.

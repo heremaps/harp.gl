@@ -511,8 +511,8 @@ export class VisibleTileSet {
                 cacheSearchDown && cacheSearchUp
                     ? SearchDirection.BOTH
                     : cacheSearchDown
-                        ? SearchDirection.DOWN
-                        : SearchDirection.UP;
+                    ? SearchDirection.DOWN
+                    : SearchDirection.UP;
 
             let incompleteTiles: Map<number, SearchDirection> = new Map<number, SearchDirection>();
 

@@ -119,4 +119,4 @@ export interface FeatureCollection {
 /**
  * Represents a GeoJSON object.
  */
-export type GeoJsonDataType = FeatureGeometry | GeometryCollection | Feature | FeatureCollection;
+export type GeoJson = FeatureGeometry | GeometryCollection | Feature | FeatureCollection;

@@ -567,11 +567,6 @@ export interface PolygonalTechnique {
     polygonOffsetUnits?: number;
 
     /**
-     * Sets the polygon outline width.
-     */
-    lineWidth?: CaseProperty<number>;
-
-    /**
      * Sets the polygon outline color.
      */
     lineColor?: string;
