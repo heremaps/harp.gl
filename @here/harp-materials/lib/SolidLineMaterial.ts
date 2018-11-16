@@ -242,6 +242,18 @@ export class SolidLineMaterial extends THREE.RawShaderMaterial implements Fading
     }
 
     /**
+     * Line opacity.
+     */
+    get opacity(): number {
+        return this.uniforms.opacity.value;
+    }
+    set opacity(value: number) {
+        if (this.uniforms !== undefined) {
+            this.uniforms.opacity.value = value;
+        }
+    }
+
+    /**
      * Line color.
      */
     get color(): THREE.Color {

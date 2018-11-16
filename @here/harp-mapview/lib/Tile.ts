@@ -1057,7 +1057,7 @@ export class Tile implements CachedResource {
 
                 if (material === undefined) {
                     material = createMaterial({
-                        technique: decodedTile.techniques[techniqueIndex],
+                        technique,
                         level: displayZoomLevel,
                         fog: this.mapView.scene.fog !== null
                     });
@@ -1324,7 +1324,6 @@ export class Tile implements CachedResource {
                         // Configure the edge material based on the theme values.
                         const materialParams: EdgeMaterialParameters = {
                             color: fadingParams.color,
-                            colorMix: fadingParams.colorMix,
                             fadeNear: fadingParams.lineFadeNear,
                             fadeFar: fadingParams.lineFadeFar
                         };

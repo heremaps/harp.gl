@@ -9,6 +9,7 @@ export * from "./lib/DecodedTile";
 export * from "./lib/Extruder";
 export * from "./lib/IMeshBuffers";
 export * from "./lib/Outliner";
+export * from "./lib/OutlineIndicesDetector";
 export * from "./lib/Techniques";
 export * from "./lib/Theme";
 export * from "./lib/TileInfo";

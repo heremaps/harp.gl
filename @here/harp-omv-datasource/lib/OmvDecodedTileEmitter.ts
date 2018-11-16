@@ -604,8 +604,8 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
             extrudedPolygonTechnique.lineWidth !== undefined
                 ? extrudedPolygonTechnique.lineWidth
                 : 0.0;
-        const outlineWidth = getPropertyValue(
-            fillTechnique.lineWidth,
+        const outlineColor = getPropertyValue(
+            fillTechnique.lineColor,
             this.m_decodeInfo.displayZoomLevel
         );
 
@@ -630,7 +630,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                 );
             }
 
-            if (outlineWidth !== undefined && outlineWidth > 0.0 && isFilled) {
+            if (outlineColor !== undefined && isFilled) {
                 this.m_outliner.addEdges(baseVertex, contour, tileWorldExtents, outlineIndices);
             }
 
@@ -659,7 +659,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                     );
                 }
 
-                if (outlineWidth !== undefined && outlineWidth > 0.0 && isFilled) {
+                if (outlineColor !== undefined && isFilled) {
                     const offset = baseVertex + vertexOffsetFill;
                     this.m_outliner.addEdges(offset, contour, tileWorldExtents, outlineIndices);
                 }

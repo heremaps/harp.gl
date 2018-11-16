@@ -16,7 +16,7 @@ import {
     GeoJsonPoiGeometry,
     GeoJsonTextGeometry,
     GeoJsonTextPathGeometry
-} from "@here/harp-geojson-datasource/lib/GeoJsonDecoder";
+} from "@here/harp-geojson-datasource/lib/GeoJsonGeometryCreator";
 import { DEFAULT_TEXT_DISTANCE_SCALE, TextElement, Tile, TileObject } from "@here/harp-mapview";
 import * as THREE from "three";
 
