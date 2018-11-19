@@ -4,9 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-declare let self: Worker & {
-    importScripts(..._scripts: string[]): void;
-};
+/// <reference types="typescript/lib/lib.webworker" />
 
 self.importScripts("three.min.js");
 
