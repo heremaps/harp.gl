@@ -1,6 +1,6 @@
 {
   "name": "@here/harp-geojson-datasource",
-  "version": "0.2.6",
+  "version": "0.2.7",
   "description": "Typescript version of geojson-datasource",
   "main": "index.js",
   "typings": "index",
