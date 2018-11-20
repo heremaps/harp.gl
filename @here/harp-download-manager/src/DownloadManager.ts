@@ -17,6 +17,9 @@ import "@here/harp-fetch";
  * This class allows wrapping other promises or long running functions for later execution.
  */
 class DeferredPromise<T> {
+    /**
+     * Internal promise to store the deferred executor function.
+     */
     readonly promise: Promise<T>;
     private doExec = false;
     private resolveFunc?: (result?: T) => void;
@@ -33,6 +36,9 @@ class DeferredPromise<T> {
         });
     }
 
+    /**
+     * When `exec` is called the deferred executor function is executed.
+     */
     exec() {
         if (this.resolveFunc === undefined || this.rejectFunc === undefined) {
             // deferred promise not yet initialized - handle it in callback above
