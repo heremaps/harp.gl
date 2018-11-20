@@ -1013,6 +1013,25 @@ export class Tile implements CachedResource {
         userData.dataSource = this.dataSource.name;
     }
 
+    createPlane(
+        width: number,
+        height: number,
+        planeCenter: THREE.Vector3,
+        colorHex: number
+    ): THREE.Mesh {
+        const geometry = new THREE.PlaneGeometry(width, height, 1);
+        // TODO cache the material HARP-4207
+        const material = new THREE.MeshBasicMaterial({
+            color: colorHex,
+            polygonOffset: true,
+            polygonOffsetFactor: 0.0,
+            polygonOffsetUnits: 0.0
+        });
+        const plane = new THREE.Mesh(geometry, material);
+        plane.position.copy(planeCenter);
+        return plane;
+    }
+
     /**
      * Creates `Tile` objects from the decoded tile and list of materials specified.
      *
@@ -1260,8 +1279,18 @@ export class Tile implements CachedResource {
                 }
 
                 this.registerTileObject(object);
-
                 objects.push(object);
+
+                // Add a ground plane to the tile.
+                const planeSize = new THREE.Vector3();
+                this.boundingBox.getSize(planeSize);
+                const groundPlane = this.createPlane(
+                    planeSize.x,
+                    planeSize.y,
+                    this.center,
+                    this.mapView.clearColor
+                );
+                objects.push(groundPlane);
 
                 // Add the extruded building edges as a separate geometry.
                 if (technique.name === "extruded-polygon" && srcGeometry.edgeIndex !== undefined) {

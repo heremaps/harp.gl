@@ -35,10 +35,10 @@
     "cross-env": "^5.2.0",
     "mocha": "^5.2.0",
     "source-map-support": "^0.5.2",
-    "three": "^0.96.0",
+    "three": "^0.98.0",
     "typescript": "~3.1.1"
   },
   "peerDependencies": {
-    "three": "^0.96.0"
+    "three": "^0.98.0"
   }
 }
