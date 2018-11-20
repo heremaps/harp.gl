@@ -167,6 +167,6 @@ describe("map-view#Utils", function() {
             const cube = new THREE.Mesh(geometry, material);
             scene.add(cube);
         }
-        expect(MapViewUtils.estimateObjectSize(scene)).to.be.equal(4082544);
+        expect(MapViewUtils.estimateObjectSize(scene)).to.be.equal(4078548);
     });
 });
