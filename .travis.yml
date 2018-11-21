@@ -20,7 +20,8 @@ jobs:
       name: "Execute tests (node)"
       script: |
         yarn test && \
-        yarn tslint
+        yarn run tslint && \
+        yarn run prettier
     - script: |
         yarn run typedoc && \
         echo -e 'include:\n  - "_*"' > doc/_config.yml
