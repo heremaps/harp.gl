@@ -1360,19 +1360,21 @@ export class Tile implements CachedResource {
      * Counts the number of vertices in a tile.
      */
     countVertices(): void {
-        this.objects.filter(object => object instanceof THREE.Mesh).forEach(object => {
-            const mesh = object as THREE.Mesh;
-            if (mesh.geometry instanceof THREE.BufferGeometry) {
-                if (mesh.geometry.index !== undefined && mesh.geometry.index !== null) {
-                    this.m_numVertices += mesh.geometry.index.count;
-                } else {
-                    this.m_numVertices += mesh.geometry.getAttribute("position").count / 3;
+        this.objects
+            .filter(object => object instanceof THREE.Mesh)
+            .forEach(object => {
+                const mesh = object as THREE.Mesh;
+                if (mesh.geometry instanceof THREE.BufferGeometry) {
+                    if (mesh.geometry.index !== undefined && mesh.geometry.index !== null) {
+                        this.m_numVertices += mesh.geometry.index.count;
+                    } else {
+                        this.m_numVertices += mesh.geometry.getAttribute("position").count / 3;
+                    }
                 }
-            }
-            if (mesh.geometry instanceof THREE.Geometry) {
-                this.m_numVertices = mesh.geometry.vertices.length;
-            }
-        });
+                if (mesh.geometry instanceof THREE.Geometry) {
+                    this.m_numVertices = mesh.geometry.vertices.length;
+                }
+            });
     }
 
     /**

@@ -580,8 +580,8 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                 currentHeight !== undefined
                     ? currentHeight * scaleFactor
                     : defaultHeight !== undefined
-                        ? defaultHeight * scaleFactor
-                        : height;
+                    ? defaultHeight * scaleFactor
+                    : height;
         }
 
         const start = indices.length;
