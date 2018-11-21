@@ -4,7 +4,6 @@ test/
 tsconfig.json
 .gitignore
 .gitreview
-resources/fonts
 resources-dev/
 scripts/
 *.tgz
