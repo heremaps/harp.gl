@@ -59,7 +59,8 @@
     "start-tests": "webpack-dev-server -d --config webpack.tests.config.js",
     "build": "webpack -d --config webpack.examples.config.js",
     "build-tests": "webpack -d --config webpack.tests.config.js",
-    "typedoc": "ts-node ./scripts/doc-snippets.ts && typedoc --options typedoc.json"
+    "typedoc": "ts-node ./scripts/doc-snippets.ts && typedoc --options typedoc.json",
+    "tslint": "tslint --project tsconfig.json"
   },
   "engines": {
     "node": ">=9.11.1",
