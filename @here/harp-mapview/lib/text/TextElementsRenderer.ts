@@ -2167,8 +2167,8 @@ export class TextElementsRenderer {
                 textElement.tracking !== undefined
                     ? textElement.tracking
                     : style.tracking !== undefined
-                        ? style.tracking
-                        : 0.0;
+                    ? style.tracking
+                    : 0.0;
 
             let width = 0;
             let direction;
@@ -2212,8 +2212,8 @@ export class TextElementsRenderer {
                 textElement.color !== undefined
                     ? textElement.color
                     : style.color !== undefined
-                        ? ColorCache.instance.getColor(style.color)
-                        : this.m_mapView.defaultTextColor;
+                    ? ColorCache.instance.getColor(style.color)
+                    : this.m_mapView.defaultTextColor;
 
             textElement.allGlyphsLoaded = true;
             textElement.allCaps = allCaps;

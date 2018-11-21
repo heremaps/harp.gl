@@ -207,13 +207,7 @@ export namespace TripleViewExample {
             "./resources/reducedNight.json",
             "./decoder.bundle.js"
         ),
-        view3: initMapView(
-            "mapCanvas3",
-            2,
-            0,
-            "./resources/reducedDay.json",
-            "./decoder.bundle.js"
-        )
+        view3: initMapView("mapCanvas3", 2, 0, "./resources/reducedDay.json", "./decoder.bundle.js")
     };
     // end:vislib_multiview_tripleView_1.ts
 

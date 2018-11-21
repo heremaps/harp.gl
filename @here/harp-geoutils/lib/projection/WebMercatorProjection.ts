@@ -33,15 +33,15 @@ class WebMercatorProjection extends MercatorProjection {
         }
 
         /*
-        * The following tslint:disable is due to the fact that the [[WorldCoordinates]]
-        * might be a concrete class which is not available at runtime.
-        * Consider the following example:
-        *
-        *  const x: THREE.Vector3 = new THREE.Vector3(0,0,0);
-        *  const result = EquirectangularProjection.projectPoint<THREE.Vector3>(x);
-        *
-        * Note: type of `result` is Vector3Like and not as expected: THREE.Vector3!
-        */
+         * The following tslint:disable is due to the fact that the [[WorldCoordinates]]
+         * might be a concrete class which is not available at runtime.
+         * Consider the following example:
+         *
+         *  const x: THREE.Vector3 = new THREE.Vector3(0,0,0);
+         *  const result = EquirectangularProjection.projectPoint<THREE.Vector3>(x);
+         *
+         * Note: type of `result` is Vector3Like and not as expected: THREE.Vector3!
+         */
         if (!result) {
             // tslint:disable-next-line:no-object-literal-type-assertion
             result = { x: 0, y: 0, z: 0 } as WorldCoordinates;
