@@ -13,8 +13,10 @@ before_install:
 jobs:
   include:
     - stage: test
-      name: "Execute unit tests (node)"
-      script: yarn test
+      name: "Execute tests (node)"
+      script: |
+        yarn test && \
+        yarn tslint
     - script: |
         yarn run typedoc && \
         echo -e 'include:\n  - "_*"' > doc/_config.yml

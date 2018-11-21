@@ -39,7 +39,6 @@
         "no-namespace": false,
         "no-submodule-imports": false,
         "no-trailing-whitespace": true,
-        "no-unused-variable": [true, {"ignore-pattern": "^_"}],
         "no-var-keyword": true,
         "object-literal-sort-keys": false,
         "ordered-imports": true,
