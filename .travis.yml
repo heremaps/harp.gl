@@ -1,9 +1,13 @@
 language: node_js
 dist: xenial
 node_js:
-    - "10"
+  - "10"
 cache:
   yarn: true
+
+branches:
+  only:
+    - master
 
 # upgrade yarn to a more recent version
 before_install:
