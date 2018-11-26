@@ -80,4 +80,12 @@ npm test
 
 Copyright (C) 2018 HERE Europe B.V.
 
-See the [LICENSE](./LICENSE) file in the root of this project for license details.
+See the [LICENSE](./LICENSE) file in the root of this project for license details about using `harp.gl`.
+
+In addition, see the following license limitations for using `harp.gl` with data sources not provided by [HERE](https://www.here.com):
+
+* [fonts](https://github.com/heremaps/harp-font-resources)
+* assets
+* themes
+
+For other use cases not listed in the license terms, please [contact us](https://developer.here.com/contact-us).
