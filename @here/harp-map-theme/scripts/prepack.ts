@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { ncp } from 'ncp';
-import * as path from 'path';
+import { ncp } from "ncp";
+import * as path from "path";
 
 // tslint:disable:no-console
 
@@ -20,6 +20,8 @@ function onCopyError(err: Error) {
 
 const fontDir = path.dirname(require.resolve("@here/harp-font-resources/package.json"));
 
-ncp(path.join(fontDir, "resources", "fonts"),
+ncp(
+    path.join(fontDir, "resources", "fonts"),
     path.join(__dirname, "..", "resources", "fonts"),
-    onCopyError);
+    onCopyError
+);
