@@ -395,9 +395,9 @@ export class ExtendedTileInfoWriter {
     ) {}
 
     /**
-     * Add a [[Technique]] to the catalog of techniques. Individual techniques have a file `_index`
-     * which has been created in the [[StyleSetEvaluator]]. This index is required to identify the
-     * techniques. A `Map` is used map techniques to already added techniques, or store the
+     * Adds a [[Technique]] to the catalog of techniques. Individual techniques have a `_index` file
+     * which has been created in the [[StyleSetEvaluator]]. This index is required to identify a
+     * technique. The `Map` is used to map techniques to already added techniques, or store the
      * technique as new, and add it to the map.
      *
      * @param technique The [[Technique]] to add.
@@ -576,6 +576,9 @@ export class ExtendedTileInfoWriter {
         featureGroup.numPositions += contour.length;
     }
 
+    /**
+     * Finalize the tile info's feature group.
+     */
     finish(): any {
         ExtendedTileInfo.finish(this.tileInfo);
     }
@@ -649,11 +652,31 @@ export interface ExtendedTileInfoPolygonAccessor {
  * Implementation of [[ExtendedTileInfoPolygonAccessor]].
  */
 class ExtendedTileInfoPolygonAccessorImpl implements ExtendedTileInfoPolygonAccessor {
+    /**
+     * Accessed data for polygons feature group.
+     */
     polygons: PolygonFeatureGroup = new PolygonFeatureGroup(false, 5000);
+    /**
+     * Feature's index in the group.
+     */
     featureIndex: number = 0;
+    /**
+     * Indicates where the ring starts.
+     */
     ringStart: number = 0;
+    /**
+     * Number of rings.
+     */
     numRings: number = 0;
 
+    /**
+     * Setup the accessor for extended [[TileInfo]].
+     *
+     * @param polygons polygons feature group.
+     * @param featureIndex feature's index in the group.
+     * @param ringStart where the ring starts.
+     * @param numRings number of rings.
+     */
     setup(
         polygons: PolygonFeatureGroup,
         featureIndex: number,
