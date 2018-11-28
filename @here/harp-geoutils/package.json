@@ -1,6 +1,6 @@
 {
   "name": "@here/harp-geoutils",
-  "version": "0.2.55",
+  "version": "0.2.56",
   "description": "Typescript version of geoutils",
   "main": "index.js",
   "typings": "index",

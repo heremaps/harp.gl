@@ -1,6 +1,6 @@
 {
   "name": "@here/harp-examples",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "Visualisation Library Examples",
   "bin": "harp-examples",
   "scripts": {

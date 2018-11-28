@@ -1,6 +1,6 @@
 {
   "name": "@here/harp-omv-datasource",
-  "version": "0.2.58",
+  "version": "0.2.59",
   "description": "OMV Data source",
   "main": "index.js",
   "typings": "index",
