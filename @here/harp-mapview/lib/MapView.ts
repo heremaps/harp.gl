@@ -5,6 +5,7 @@
  */
 import { createLight, ImageTexture, Light, Sky, Theme } from "@here/harp-datasource-protocol";
 import { GeoCoordinates, MathUtils, mercatorProjection, Projection } from "@here/harp-geoutils";
+import { LRUCache } from "@here/harp-lrucache";
 import { TextMaterial } from "@here/harp-materials";
 import { TextMaterialConstructor } from "@here/harp-text-renderer";
 import { LoggerManager, PerformanceTimer } from "@here/harp-utils";
@@ -411,6 +412,11 @@ export class MapView extends THREE.EventDispatcher {
      * The constructor to use by default for text rendering.
      */
     defaultTextMaterialConstructor: TextMaterialConstructor = TextMaterial;
+
+    /**
+     * The LRU cache where the materials used during the lifetime of the application are stored.
+     */
+    materialsCache = new LRUCache<string, THREE.MeshMaterialType>(64);
 
     /**
      * The instance of [[MapRenderingManager]] managing the rendering of the map. It is a public

@@ -37,7 +37,7 @@
     "sinon": "^7.1.1",
     "stats.js": "^0.17.0",
     "style-loader": "^0.23.0",
-    "three": "^0.98.0",
+    "three": "^0.99.0",
     "ts-loader": "^5.2.0",
     "ts-mocha": "^2.0.0",
     "ts-node": "^7.0.1",

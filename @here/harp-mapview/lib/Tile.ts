@@ -535,8 +535,23 @@ export class Tile implements CachedResource {
         this.clear();
         this.preparePois(decodedTile);
         this.createTextElements(decodedTile);
+        this.addGroundPlane(this.objects);
         this.createObjects(decodedTile, this.objects);
         this.countVertices();
+    }
+
+    addGroundPlane(objects: TileObject[]) {
+        // Add a ground plane to the tile.
+        const planeSize = new THREE.Vector3();
+        this.boundingBox.getSize(planeSize);
+        const groundPlane = this.createPlane(
+            planeSize.x,
+            planeSize.y,
+            this.center,
+            this.mapView.clearColor
+        );
+        this.registerTileObject(groundPlane);
+        objects.push(groundPlane);
     }
 
     /**
@@ -1021,13 +1036,9 @@ export class Tile implements CachedResource {
     ): THREE.Mesh {
         const geometry = new THREE.PlaneGeometry(width, height, 1);
         // TODO cache the material HARP-4207
-        const material = new THREE.MeshBasicMaterial({
-            color: colorHex,
-            polygonOffset: true,
-            polygonOffsetFactor: 0.0,
-            polygonOffsetUnits: 0.0
-        });
-        const plane = new THREE.Mesh(geometry, material);
+
+        const material = this.getGroundPlaneMaterial(colorHex);
+        const plane = new THREE.Mesh(geometry, material as THREE.MeshBasicMaterial);
         plane.position.copy(planeCenter);
         return plane;
     }
@@ -1041,6 +1052,7 @@ export class Tile implements CachedResource {
     createObjects(decodedTile: DecodedTile, objects: TileObject[]) {
         const materials: THREE.Material[] = [];
         const displayZoomLevel = this.mapView.zoomLevel;
+
         for (const srcGeometry of decodedTile.geometries) {
             const groups = srcGeometry.groups;
             const groupCount = groups.length;
@@ -1281,17 +1293,6 @@ export class Tile implements CachedResource {
                 this.registerTileObject(object);
                 objects.push(object);
 
-                // Add a ground plane to the tile.
-                const planeSize = new THREE.Vector3();
-                this.boundingBox.getSize(planeSize);
-                const groundPlane = this.createPlane(
-                    planeSize.x,
-                    planeSize.y,
-                    this.center,
-                    this.mapView.clearColor
-                );
-                objects.push(groundPlane);
-
                 // Add the extruded building edges as a separate geometry.
                 if (technique.name === "extruded-polygon" && srcGeometry.edgeIndex !== undefined) {
                     const edgeGeometry = new THREE.BufferGeometry();
@@ -1520,5 +1521,23 @@ export class Tile implements CachedResource {
             lineFadeNear,
             lineFadeFar
         };
+    }
+
+    // TODO use LRU cache for all the materials in our app #HARP-4259
+    private getGroundPlaneMaterial(colorHex: number): THREE.MeshMaterialType {
+        const key = `harp-mapview-${this.dataSource.name}-mapview-ground-plane-${colorHex}`;
+        const cachedMat = this.mapView.materialsCache.get(key);
+        if (cachedMat !== undefined) {
+            return cachedMat;
+        } else {
+            const material = new THREE.MeshBasicMaterial({
+                color: colorHex,
+                polygonOffset: true,
+                polygonOffsetFactor: 0.0,
+                polygonOffsetUnits: 0.0
+            });
+            this.mapView.materialsCache.set(key, material);
+            return material;
+        }
     }
 }
