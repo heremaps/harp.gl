@@ -11,7 +11,7 @@ import {
     webMercatorTilingScheme
 } from "@here/harp-geoutils";
 import { MapControls } from "@here/harp-map-controls";
-import { DataSource, MapView, Tile } from "@here/harp-mapview";
+import { CopyrightElementHandler, DataSource, MapView, Tile } from "@here/harp-mapview";
 import * as THREE from "three";
 
 // creates a new MapView for the HTMLCanvasElement of the given id
@@ -22,6 +22,16 @@ function initializeMapView(id: string): MapView {
         canvas,
         theme: {} // dummy theme
     });
+
+    CopyrightElementHandler.install("copyrightNotice")
+        .attach(sampleMapView)
+        .setDefaults([
+            {
+                id: "openstreetmap.org",
+                label: "OpenStreetMap contributors",
+                link: "https://www.openstreetmap.org/copyright"
+            }
+        ]);
 
     // let the camera float over the map, looking straight down
     sampleMapView.camera.position.set(0, 0, 800);
