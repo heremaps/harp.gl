@@ -1,6 +1,6 @@
 {
   "name": "@here/harp-lines",
-  "version": "0.1.39",
+  "version": "0.1.40",
   "description": "Create three.js geometries for wide lines",
   "main": "index.js",
   "typings": "index",

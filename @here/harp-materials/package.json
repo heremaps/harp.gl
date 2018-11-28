@@ -1,6 +1,6 @@
 {
   "name": "@here/harp-materials",
-  "version": "0.1.14",
+  "version": "0.1.15",
   "description": "Harp4Web Materials",
   "main": "index.js",
   "typings": "index",
