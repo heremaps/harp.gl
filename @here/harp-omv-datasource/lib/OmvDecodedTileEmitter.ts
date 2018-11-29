@@ -214,13 +214,15 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
 
                                 if (name && typeof name === "string") {
                                     texts.push(meshBuffers.addText(name));
-                                    positions.push(x, y, 0);
                                 } else {
                                     texts.push(INVALID_ARRAY_INDEX);
                                 }
-                            } else {
-                                positions.push(x, y, 0);
                             }
+
+                            // Always store the position, otherwise the following POIs will be
+                            // misplaced.
+                            positions.push(x, y, 0);
+
                             if (this.m_gatherFeatureIds) {
                                 featureIds.push(featureId);
                             }
