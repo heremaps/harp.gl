@@ -1727,7 +1727,7 @@
                             "poiNameField": "kind",
                             "iconScale": 1,
                             "scale": 0.5,
-                            "yOffset": -22,
+                            "yOffset": 24,
                             "textIsOptional": true,
                             "iconIsOptional": false,
                             "renderTextDuringMovements": false,
