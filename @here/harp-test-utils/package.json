@@ -1,6 +1,6 @@
 {
   "name": "@here/harp-test-utils",
-  "version": "0.1.10",
+  "version": "0.1.11",
   "description": "Provides utilities for tests",
   "main": "index.js",
   "browser": "index.web.js",

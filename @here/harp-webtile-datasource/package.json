@@ -1,6 +1,6 @@
 {
   "name": "@here/harp-webtile-datasource",
-  "version": "0.2.40",
+  "version": "0.2.41",
   "description": "WebTile Data source",
   "main": "index.js",
   "typings": "index",
