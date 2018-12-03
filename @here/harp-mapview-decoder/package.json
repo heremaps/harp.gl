@@ -1,6 +1,6 @@
 {
   "name": "@here/harp-mapview-decoder",
-  "version": "0.2.49",
+  "version": "0.2.50",
   "description": "Decoder worker for mapview",
   "main": "index.js",
   "typings": "index",

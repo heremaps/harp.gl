@@ -1,6 +1,6 @@
 {
   "name": "@here/harp-map-controls",
-  "version": "0.1.51",
+  "version": "0.1.52",
   "description": "Camera controller which implements a common default set of camera functionality in a map context.",
   "main": "index.js",
   "typings": "index",
