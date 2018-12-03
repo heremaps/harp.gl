@@ -49,10 +49,7 @@ export interface GeoJsonDecodedTile extends DecodedTile {
  */
 export class GeoJsonTileDecoder extends ThemedTileDecoder {
     /**
-     * Default constructor.
-     *
-     * @param m_projection Desired map projection.
-     * @param m_evaluator Theme evaluator.
+     * Builds a `GeoJsonTileDecoder`.
      */
     constructor() {
         super();
