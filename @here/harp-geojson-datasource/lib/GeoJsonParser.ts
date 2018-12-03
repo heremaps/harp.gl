@@ -41,7 +41,7 @@ export interface PolygonsData {
  */
 interface PointsData {
     vertices: number[];
-    geojsonProperties: [{} | undefined];
+    geojsonProperties: Array<{} | undefined>;
 }
 
 /**
@@ -72,7 +72,7 @@ export class GeometryData {
      */
     labelProperty?: string;
     type: string | undefined;
-    points: PointsData = { vertices: [], geojsonProperties: [undefined] };
+    points: PointsData = { vertices: [], geojsonProperties: [] };
     lines: LinesData = { vertices: [], geojsonProperties: [] };
     polygons: PolygonsData[] = [];
 }
@@ -572,9 +572,8 @@ export class GeoJsonParser {
                 this.m_cached_worldCoord.y,
                 this.m_cached_worldCoord.z
             );
+            buffer.points.geojsonProperties.push(geojsonProperties);
         }
-        const pointIndex = buffer.points.vertices.length / 3 - 1;
-        buffer.points.geojsonProperties[pointIndex] = geojsonProperties;
     }
 
     private static processPointLabels(
@@ -639,7 +638,8 @@ export class GeoJsonParser {
         const featureDetails: FeatureDetails = Flattener.flatten(feature.properties, "properties");
         featureDetails.featureId = feature.id;
         const env = new MapEnv({ type: envType, ...featureDetails });
-        return styleSetEvaluator.getMatchingTechniques(env).map(technique => {
+        const techniques = styleSetEvaluator.getMatchingTechniques(env);
+        return techniques.map(technique => {
             if (technique._index === undefined) {
                 throw new Error(
                     "GeoJsonDecoder#findOrCreateTechniqueIndex: Internal error - No technique index"
