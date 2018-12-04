@@ -7,6 +7,11 @@
   resolved "https://registry.yarnpkg.com/@here/harp-font-resources/-/harp-font-resources-0.1.1.tgz#ce9f71f361ed8b5a4943a3f2ae7ea4c302afaf08"
   integrity sha512-8ct9+FP7F0CUtG6Dks1r2QBwMcCakZijB4cDvH/BmZoh+8TqiRSd+Ku/YjgVDuOw18EzSsZRPyeNwuCnv7tFNg==
 
+"@here/harp-font-resources@^0.2.0":
+  version "0.2.0"
+  resolved "https://registry.yarnpkg.com/@here/harp-font-resources/-/harp-font-resources-0.2.0.tgz#19d78dd9d8aa4290fa55acf2ce9bbb05698161af"
+  integrity sha512-rgOewwpzlnJBTC81Ql1F/58M/RIIEviD86yVx3XsKHidsbOtgrzP6qeKW/zjoGpa/pEsn8fXGMkrR2GBwz6Abg==
+
 "@protobufjs/aspromise@^1.1.1", "@protobufjs/aspromise@^1.1.2":
   version "1.1.2"
   resolved "https://registry.yarnpkg.com/@protobufjs/aspromise/-/aspromise-1.1.2.tgz#9b8b0cc663d669a7d8f6f5d0893a14d348f30fbf"
@@ -183,6 +188,11 @@
   version "10.12.9"
   resolved "https://registry.yarnpkg.com/@types/node/-/node-10.12.9.tgz#a07bfa74331471e1dc22a47eb72026843f7b95c8"
   integrity sha512-eajkMXG812/w3w4a1OcBlaTwsFPO5F7fJ/amy+tieQxEMWBlbV1JGSjkFM+zkHNf81Cad+dfIRA+IBkvmvdAeA==
+
+"@types/node@^10.1.4":
+  version "10.12.12"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-10.12.12.tgz#e15a9d034d9210f00320ef718a50c4a799417c47"
+  integrity sha512-Pr+6JRiKkfsFvmU/LK68oBRCQeEg36TyAbPhc2xpez24OOZZCuoIhWGTd39VZy6nGafSbxzGouFPTFD/rR1A0A==
 
 "@types/shelljs@^0.8.0":
   version "0.8.0"
@@ -4892,10 +4902,15 @@ typedoc@^0.13.0:
     typedoc-default-themes "^0.5.0"
     typescript "3.1.x"
 
-typescript@3.1.x, typescript@~3.1.1:
+typescript@3.1.x:
   version "3.1.6"
   resolved "https://registry.yarnpkg.com/typescript/-/typescript-3.1.6.tgz#b6543a83cfc8c2befb3f4c8fba6896f5b0c9be68"
   integrity sha512-tDMYfVtvpb96msS1lDX9MEdHrW4yOuZ4Kdc4Him9oU796XldPYF/t2+uKoX0BBa0hXXwDlqYQbXY5Rzjzc5hBA==
+
+typescript@~3.2.1:
+  version "3.2.1"
+  resolved "https://registry.yarnpkg.com/typescript/-/typescript-3.2.1.tgz#0b7a04b8cf3868188de914d9568bd030f0c56192"
+  integrity sha512-jw7P2z/h6aPT4AENXDGjcfHTu5CSqzsbZc6YlUIebTyBAq8XaKp78x7VcSh30xwSCcsu5irZkYZUSFP1MrAMbg==
 
 uglify-js@3.4.x, uglify-js@^3.1.4:
   version "3.4.9"
