@@ -89,6 +89,11 @@ syncDirsIfNeeded({
     destDir: "../@here/harp-map-theme/resources/fonts"
 });
 
+syncDirsIfNeeded({
+    sourceDir: "../@here/harp-text-canvas/node_modules/@here/harp-font-resources/resources/fonts",
+    destDir: "../@here/harp-text-canvas/resources/fonts"
+});
+
 //
 // harp-examples
 //
@@ -123,7 +128,13 @@ syncFiles({
 //
 // install test data
 //
-["harp-mapview", "harp-test-utils", "harp-omv-datasource", "harp-map-theme"].forEach(module => {
+[
+    "harp-mapview",
+    "harp-test-utils",
+    "harp-omv-datasource",
+    "harp-map-theme",
+    "harp-text-canvas"
+].forEach(module => {
     mkpath.sync(`dist/test/${module}/resources`);
     mkpath.sync(`dist/test/${module}/test/resources`);
 
