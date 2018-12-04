@@ -13,6 +13,7 @@
         "jsx": "react",
         "jsxFactory": "React.createElement",
         "strict": true,
+        "resolveJsonModule": true,
         "downlevelIteration": true,
         "newLine": "LF",
         "noImplicitReturns": true
