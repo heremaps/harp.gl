@@ -157,7 +157,9 @@ export namespace TextCanvasMeasureExample {
 
             textPosition.set(0.0, 0.0, 0.0);
             // snippet:textcanvas_measure_0.ts
-            textCanvas.measureText(textSampleA, textBounds, characterBounds);
+            textCanvas.measureText(textSampleA, textBounds, {
+                outputCharacterBounds: characterBounds
+            });
             // end:textcanvas_measure_0.ts
             textCanvas.addText(textSampleA, textPosition);
 

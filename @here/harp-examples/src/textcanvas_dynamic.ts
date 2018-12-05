@@ -298,10 +298,12 @@ export namespace TextCanvasDynamicExample {
 
             textCanvas.style = textStyle;
             if (guiOptions.boundsEnabled) {
-                textCanvas.measureText(textSample, textBounds, characterBounds);
+                textCanvas.measureText(textSample, textBounds, {
+                    outputCharacterBounds: characterBounds
+                });
             }
 
-            textCanvas.addText(textSample, penPosition, true);
+            textCanvas.addText(textSample, penPosition, { updatePosition: true });
             textCanvas.render(camera);
         }
 

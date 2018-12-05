@@ -426,11 +426,14 @@ Use MIDDLE click to remove positions from the path.`;
 
             textCanvas.style = textStyle;
             textCanvas.layoutStyle = layoutStyle;
-            textCanvas.addPathText(textSample, textPath);
+            textCanvas.addText(textSample, boundsPosition, { path: textPath });
             textCanvas.render(camera);
 
             if (guiOptions.boundsEnabled) {
-                textCanvas.measurePathText(textSample, textPath, textBounds, characterBounds);
+                textCanvas.measureText(textSample, textBounds, {
+                    path: textPath,
+                    outputCharacterBounds: characterBounds
+                });
                 updateDebugBounds(boundsPosition);
                 webglRenderer.render(boundsScene, camera);
             }

@@ -339,7 +339,9 @@ he said "ٱٹ!" to her
             textCanvas.render(camera);
 
             if (guiOptions.boundsEnabled) {
-                textCanvas.measureText(textSample, textBounds, characterBounds);
+                textCanvas.measureText(textSample, textBounds, {
+                    outputCharacterBounds: characterBounds
+                });
                 updateDebugBounds(textPosition);
                 webglRenderer.render(boundsScene, camera);
             }
