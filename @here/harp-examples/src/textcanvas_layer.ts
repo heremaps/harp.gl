@@ -8,22 +8,16 @@
 const Stats = require("stats.js");
 import * as THREE from "three";
 
-import {
-    DefaultTextStyle,
-    FontCatalog,
-    FontUnit,
-    TextCanvas,
-    TextStyle
-} from "@here/harp-text-canvas";
+import { FontCatalog, TextCanvas } from "@here/harp-text-canvas";
 
 /**
- * This example showcases how [[TextCanvas]] can handle picking the different strings of text added
- * to it.
+ * This example showcases how you can add text to different layers of [[TextCanvas]], to preserve
+ * proper rendering order independently from addition order.
  *
  * For more information regarding basic [[TextCanvas]] initialization and usage, please check:
  * [[TextCanvasMinimalExample]] documentation.
  */
-export namespace TextCanvasPickingExample {
+export namespace TextCanvasLayerExample {
     const stats = new Stats();
     let webglRenderer: THREE.WebGLRenderer;
     let camera: THREE.OrthographicCamera;
@@ -31,58 +25,29 @@ export namespace TextCanvasPickingExample {
     let textCanvas: TextCanvas;
     let assetsLoaded: boolean = false;
 
-    let textSample = "black";
-    const textPosition = new THREE.Vector3();
-    let textStyle: TextStyle;
+    function addText() {
+        const position = new THREE.Vector3(30.0, 0.0, 0.0);
+        textCanvas.style.fontSize!.size *= 4.0;
+        for (let i = 9; i >= 0; --i) {
+            textCanvas.style.rotation = i * ((2.0 * Math.PI) / 10.0);
+            textCanvas.style.color = new THREE.Color(Math.random(), Math.random(), Math.random());
+            textCanvas.addText(String(i), position, { layer: i });
+        }
+    }
 
     function onWindowResize() {
         webglRenderer.setSize(window.innerWidth, window.innerHeight);
-
         camera.left = -window.innerWidth / 2.0;
         camera.right = window.innerWidth / 2.0;
         camera.bottom = -window.innerHeight / 2.0;
         camera.top = window.innerHeight / 2.0;
-
         camera.updateProjectionMatrix();
-    }
-
-    function onMouseClick(event: any) {
-        if (assetsLoaded) {
-            textCanvas.pickText(
-                new THREE.Vector2(
-                    event.clientX - window.innerWidth * 0.5,
-                    -event.clientY + window.innerHeight * 0.5
-                ),
-                (data: any) => {
-                    textSample = data;
-                }
-            );
-        }
     }
 
     function animate() {
         requestAnimationFrame(animate);
         webglRenderer.clear();
         if (assetsLoaded) {
-            textCanvas.clear();
-            textCanvas.style = textStyle;
-
-            textStyle.color!.setRGB(0, 0, 0);
-            textPosition.set(-window.innerWidth * 0.25, window.innerHeight * 0.25, 0.0);
-            textCanvas.addText(textSample, textPosition, { pickingData: "black" });
-
-            textStyle.color!.setRGB(1, 0, 0);
-            textPosition.set(window.innerWidth * 0.25, window.innerHeight * 0.25, 0.0);
-            textCanvas.addText(textSample, textPosition, { pickingData: "red" });
-
-            textStyle.color!.setRGB(0, 1, 0);
-            textPosition.set(-window.innerWidth * 0.25, -window.innerHeight * 0.25, 0.0);
-            textCanvas.addText(textSample, textPosition, { pickingData: "green" });
-
-            textStyle.color!.setRGB(0, 0, 1);
-            textPosition.set(window.innerWidth * 0.25, -window.innerHeight * 0.25, 0.0);
-            textCanvas.addText(textSample, textPosition, { pickingData: "blue" });
-
             textCanvas.render(camera);
         }
         stats.update();
@@ -100,7 +65,6 @@ export namespace TextCanvasPickingExample {
         document.body.appendChild(webglRenderer.domElement);
         document.body.appendChild(stats.dom);
         window.addEventListener("resize", onWindowResize);
-        window.addEventListener("mouseup", onMouseClick);
 
         camera = new THREE.OrthographicCamera(
             -window.innerWidth / 2.0,
@@ -113,22 +77,16 @@ export namespace TextCanvasPickingExample {
         camera.updateProjectionMatrix();
 
         // Init TextCanvas
-        textStyle = DefaultTextStyle.initializeTextStyle({
-            fontSize: {
-                unit: FontUnit.Percent,
-                size: 200.0,
-                backgroundSize: 0.0
-            }
-        });
         FontCatalog.load("resources/harp-text-canvas/fonts/Default_FontCatalog.json", 16).then(
             (loadedFontCatalog: FontCatalog) => {
                 textCanvas = new TextCanvas({
                     renderer: webglRenderer,
                     fontCatalog: loadedFontCatalog,
-                    maxGlyphCount: 64
+                    maxGlyphCount: 12
                 });
-                loadedFontCatalog.loadCharset("black" + "red" + "green" + "blue", {}).then(() => {
+                loadedFontCatalog.loadCharset("0123456789", {}).then(() => {
                     assetsLoaded = true;
+                    addText();
                 });
             }
         );

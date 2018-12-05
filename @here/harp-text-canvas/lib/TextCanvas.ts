@@ -27,9 +27,65 @@ const tempTextPosition = new THREE.Vector3();
 
 interface TextPlacementParameters {
     inputText: string;
+    layer: TextCanvasLayer;
     textPath?: THREE.Path | THREE.CurvePath<THREE.Vector2>;
     bounds?: THREE.Box2;
     individualBounds?: THREE.Box2[];
+}
+
+/**
+ * Optional parameters passed on [[TextCanvas]].`addText` function call.
+ */
+export interface AdditionParameters {
+    /**
+     * Path where text should be placed on. Overrides the original position parameter.
+     */
+    path?: THREE.Path | THREE.CurvePath<THREE.Vector2>;
+
+    /**
+     * Layer where text will be added.
+     */
+    layer?: number;
+
+    /**
+     * If `true`, the input position parameter will be updated to contain the position of the last
+     * glyph added.
+     */
+    updatePosition?: boolean;
+
+    /**
+     * Object containing additional data intended to be retrieved during picking.
+     */
+    pickingData?: any;
+}
+
+/**
+ * Optional parameters passed on [[TextCanvas]].`measureText` function call.
+ */
+export interface MeasurementParameters {
+    /**
+     * Path where text should be placed on. Overrides the original position parameter.
+     */
+    path?: THREE.Path | THREE.CurvePath<THREE.Vector2>;
+
+    /**
+     * Output per-character bounds.
+     */
+    outputCharacterBounds?: THREE.Box2[];
+}
+
+/**
+ * Default's [[TextCanvas]] layer identifier.
+ */
+export const DEFAULT_TEXT_CANVAS_LAYER = 0;
+
+/**
+ * [[TextCanvas]] rendering layer.
+ */
+export interface TextCanvasLayer {
+    id: number;
+    scene: THREE.Scene;
+    geometry: TextGeometry;
 }
 
 /**
@@ -80,12 +136,13 @@ export class TextCanvas {
     private readonly m_defaultLayoutStyle: LayoutStyle;
     private m_currentLayoutStyle: LayoutStyle;
 
-    private readonly m_textScene: THREE.Scene;
-    private m_textGeometry: TextGeometry;
     private m_material: SdfTextMaterial | THREE.MeshMaterialType;
     private m_bgMaterial: SdfTextMaterial | THREE.MeshMaterialType;
     private m_ownsMaterial: boolean;
     private m_ownsBgMaterial: boolean;
+
+    private m_defaultLayer: TextCanvasLayer;
+    private m_layers: TextCanvasLayer[];
 
     private m_lineTypesetter: LineTypesetter;
     private m_pathTypesetter: PathTypesetter;
@@ -120,13 +177,16 @@ export class TextCanvas {
             this.m_bgMaterial = params.backgroundMaterial;
         }
 
-        this.m_textGeometry = new TextGeometry(
-            this.m_material,
-            this.m_bgMaterial,
-            this.maxGlyphCount
+        this.m_defaultLayer = {
+            id: DEFAULT_TEXT_CANVAS_LAYER,
+            scene: new THREE.Scene(),
+            geometry: new TextGeometry(this.m_material, this.m_bgMaterial, this.maxGlyphCount)
+        };
+        this.m_defaultLayer.scene.add(
+            this.m_defaultLayer.geometry.backgroundMesh,
+            this.m_defaultLayer.geometry.mesh
         );
-        this.m_textScene = new THREE.Scene();
-        this.m_textScene.add(this.m_textGeometry.backgroundMesh, this.m_textGeometry.mesh);
+        this.m_layers = [this.m_defaultLayer];
 
         this.m_defaultTextStyle = DefaultTextStyle.initializeTextStyle();
         this.m_currentTextStyle = this.m_defaultTextStyle;
@@ -135,13 +195,6 @@ export class TextCanvas {
 
         this.m_lineTypesetter = new LineTypesetter();
         this.m_pathTypesetter = new PathTypesetter();
-    }
-
-    /**
-     * Count of glyphs currently in the `TextCanvas`.
-     */
-    get glyphCount(): number {
-        return this.m_textGeometry.drawCount;
     }
 
     /**
@@ -187,7 +240,9 @@ export class TextCanvas {
         }
 
         this.m_material = value;
-        this.m_textGeometry.mesh.material = this.m_material;
+        for (const layer of this.m_layers) {
+            layer.geometry.mesh.material = this.m_material;
+        }
     }
 
     /**
@@ -203,7 +258,9 @@ export class TextCanvas {
         }
 
         this.m_bgMaterial = value;
-        this.m_textGeometry.backgroundMesh.material = this.m_bgMaterial;
+        for (const layer of this.m_layers) {
+            layer.geometry.backgroundMesh.material = this.m_bgMaterial;
+        }
     }
 
     /**
@@ -236,7 +293,9 @@ export class TextCanvas {
      * Clears all the placed glyphs in this `TextCanvas` (as well as resetting the current style).
      */
     clear() {
-        this.m_textGeometry.clear();
+        for (const layer of this.m_layers) {
+            layer.geometry.clear();
+        }
         this.m_currentTextStyle = this.m_defaultTextStyle;
     }
 
@@ -249,8 +308,38 @@ export class TextCanvas {
      */
     render(camera: THREE.OrthographicCamera, target?: THREE.WebGLRenderTarget, clear?: boolean) {
         this.m_fontCatalog.update(this.m_renderer);
-        this.m_textGeometry.update();
-        this.m_renderer.render(this.m_textScene, camera, target, clear);
+        if (target !== undefined) {
+            this.m_renderer.setRenderTarget(target);
+        }
+        if (clear === true) {
+            this.m_renderer.clear(true);
+        }
+        for (const layer of this.m_layers) {
+            layer.geometry.update();
+            this.m_renderer.clear(false, true);
+            this.m_renderer.render(layer.scene, camera, target);
+        }
+        this.m_renderer.setRenderTarget();
+    }
+
+    /**
+     * Retrieves a specific `TextCanvas` rendering layer.
+     *
+     * @param layerId Desired layer identifier.
+     *
+     * @returns Selected [[TextCanvasLayer]].
+     */
+    getLayer(layerId: number): TextCanvasLayer | undefined {
+        return this.m_layers.find(layer => layer.id === layerId);
+    }
+
+    /**
+     * Retrieves all `TextCanvas` rendering layers.
+     *
+     * @returns Array of [[TextCanvasLayer]]s.
+     */
+    getAllLayers(): TextCanvasLayer[] {
+        return this.m_layers;
     }
 
     /**
@@ -259,18 +348,33 @@ export class TextCanvas {
      *
      * @param text Input text.
      * @param outputBounds Output text bounding box.
-     * @param outputCharacterBounds Output per-character bounds.
+     * @param params Optional measurement parameters.
      *
      * @returns If `false`, some error occurred during execution and the output should be dismissed.
      */
-    measureText(
-        text: string,
-        outputBounds: THREE.Box2,
-        outputCharacterBounds?: THREE.Box2[]
-    ): boolean {
-        tempTextPosition.set(0, 0, 0);
+    measureText(text: string, outputBounds: THREE.Box2, params?: MeasurementParameters): boolean {
+        let outputCharacterBounds;
+        let path;
+
+        if (params !== undefined) {
+            path = params.path;
+            outputCharacterBounds = params.outputCharacterBounds;
+
+            if (params.path !== undefined) {
+                const pathOrigin = params.path.getPoint(0);
+                if (pathOrigin === null) {
+                    return false;
+                }
+                tempTextPosition.set(pathOrigin.x, pathOrigin.y, 0.0);
+            } else {
+                tempTextPosition.set(0, 0, 0);
+            }
+        }
+
         return this.placeText({
             inputText: text,
+            layer: this.m_defaultLayer,
+            textPath: path,
             bounds: outputBounds,
             individualBounds: outputCharacterBounds
         });
@@ -282,96 +386,49 @@ export class TextCanvas {
      *
      * @param text Input text.
      * @param position Screen position.
-     * @param updatePosition If `true`, the position will be set to match the end of the added text.
-     * @param pickingData Object containing additional data intended to be retrieved during picking.
+     * @param params Optional addition parameters.
      *
      * @returns If `false`, some error occurred during execution and the output should be dismissed.
      */
-    addText(
-        text: string,
-        position: THREE.Vector3,
-        updatePosition?: boolean,
-        pickingData?: any
-    ): boolean {
+    addText(text: string, position: THREE.Vector3, params?: AdditionParameters): boolean {
         tempTextPosition.copy(position);
-        const pickingOffset = this.m_textGeometry.drawCount;
 
-        const result = this.placeText({ inputText: text });
-        if (result) {
-            if (updatePosition === true) {
-                position.copy(tempTextPosition);
+        let path;
+        let targetLayer = this.m_defaultLayer;
+
+        if (params !== undefined) {
+            path = params.path;
+
+            if (params.layer !== undefined) {
+                let tempLayer = this.getLayer(params.layer);
+                if (tempLayer === undefined) {
+                    tempLayer = this.addLayer(params.layer);
+                }
+                targetLayer = tempLayer;
             }
-            if (pickingData !== undefined) {
-                this.m_textGeometry.addPickingData(
-                    pickingOffset,
-                    this.m_textGeometry.drawCount,
-                    pickingData
-                );
+
+            if (params.path !== undefined) {
+                tempTextPosition.set(0, 0, 0);
             }
         }
-
-        return result;
-    }
-
-    /**
-     * Returns the computed bounding box for the input path text. The current [[TextStyle]] and
-     * [[LayoutStyle]] will influence the results of this function.
-     *
-     * @param text Input text.
-     * @param path Path text should be placed on.
-     * @param outputBounds Output text bounding box.
-     * @param outputCharacterBounds Output per-character bounds.
-     *
-     * @returns If `false`, some error occurred during execution and the output should be dismissed.
-     */
-    measurePathText(
-        text: string,
-        path: THREE.Path | THREE.CurvePath<THREE.Vector2>,
-        outputBounds: THREE.Box2,
-        outputCharacterBounds?: THREE.Box2[]
-    ): boolean {
-        const pathOrigin = path.getPoint(0);
-        if (pathOrigin === null) {
-            return false;
-        }
-        tempTextPosition.set(pathOrigin.x, pathOrigin.y, 0.0);
-
-        return this.placeText({
-            inputText: text,
-            textPath: path,
-            bounds: outputBounds,
-            individualBounds: outputCharacterBounds
-        });
-    }
-
-    /**
-     * Adds the input text to this `TextCanvas` following the specified path. The current
-     * [[TextStyle]] and [[LayoutStyle]] will influence the results of this function.
-     *
-     * @param text Input text.
-     * @param path Path text should be placed on.
-     * @param pickingData Object containing additional data intended to be retrieved during picking.
-     *
-     * @returns If `false`, some error occurred during execution and the output should be dismissed.
-     */
-    addPathText(
-        text: string,
-        path: THREE.Path | THREE.CurvePath<THREE.Vector2>,
-        pickingData?: any
-    ): boolean {
-        tempTextPosition.set(0, 0, 0);
-        const pickingOffset = this.m_textGeometry.drawCount;
+        const pickingOffset = targetLayer.geometry.drawCount;
 
         const result = this.placeText({
             inputText: text,
-            textPath: path
+            textPath: path,
+            layer: targetLayer
         });
-        if (result && pickingData !== undefined) {
-            this.m_textGeometry.addPickingData(
-                pickingOffset,
-                this.m_textGeometry.drawCount,
-                pickingData
-            );
+        if (result && params !== undefined) {
+            if (params.updatePosition === true) {
+                position.copy(tempTextPosition);
+            }
+            if (params.pickingData !== undefined) {
+                targetLayer.geometry.addPickingData(
+                    pickingOffset,
+                    targetLayer.geometry.drawCount,
+                    params.pickingData
+                );
+            }
         }
 
         return result;
@@ -385,7 +442,26 @@ export class TextCanvas {
      * @param pickCallback Callback to be called for every picked element.
      */
     pickText(position: THREE.Vector2, callback: (pickData: any | undefined) => void): void {
-        this.m_textGeometry.pick(position, callback);
+        for (const layer of this.m_layers) {
+            layer.geometry.pick(position, callback);
+        }
+    }
+
+    // Adds a new layer to the TextCanvas when requested.
+    private addLayer(layerId: number): TextCanvasLayer {
+        const newLayer = {
+            id: layerId,
+            scene: new THREE.Scene(),
+            geometry: new TextGeometry(this.m_material, this.m_bgMaterial, this.maxGlyphCount)
+        };
+        newLayer.scene.add(newLayer.geometry.backgroundMesh, newLayer.geometry.mesh);
+
+        this.m_layers.push(newLayer);
+        this.m_layers.sort((a: TextCanvasLayer, b: TextCanvasLayer) => {
+            return a.id - b.id;
+        });
+
+        return newLayer;
     }
 
     // Places all glyphs for input text. Depending on parameters, it can store the resulting glyphs
@@ -439,7 +515,7 @@ export class TextCanvas {
             textStyle: this.m_currentTextStyle,
             layoutStyle: this.m_currentLayoutStyle,
             position: tempTextPosition,
-            geometry: this.m_textGeometry,
+            geometry: params.layer.geometry,
             globalBounds: params.bounds,
             individualBounds: glyphBounds
         };

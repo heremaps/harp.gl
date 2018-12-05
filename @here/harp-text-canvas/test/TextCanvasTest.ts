@@ -100,7 +100,9 @@ describe("TextCanvas", () => {
         assert.deepEqual(textCanvas.style.fontSize, DefaultTextStyle.DEFAULT_FONT_SIZE);
     });
     it("Successfully measures text.", () => {
-        const result = textCanvas.measureText("Hello World!", bounds, individualBounds);
+        const result = textCanvas.measureText("Hello World!", bounds, {
+            outputCharacterBounds: individualBounds
+        });
         assert.isTrue(result);
 
         assert.strictEqual(bounds.min.x, -0.5);
@@ -169,23 +171,23 @@ describe("TextCanvas", () => {
         assert.strictEqual(individualBounds[11].max.y, 13.0);
     });
     it("Successfully adds text.", () => {
-        const result = textCanvas.addText(textSample, position, true);
+        const result = textCanvas.addText(textSample, position, { updatePosition: true });
         assert.isTrue(result);
         assert.strictEqual(position.x, 88.5);
         assert.strictEqual(position.y, 0.0);
         assert.strictEqual(position.z, 0.0);
-        assert.strictEqual(textCanvas.glyphCount, textSample.length);
+        assert.strictEqual(textCanvas.getLayer(0)!.geometry.drawCount, textSample.length);
     });
     it("Is cleared.", () => {
         textCanvas.clear();
-        assert.strictEqual(textCanvas.glyphCount, 0.0);
+        assert.strictEqual(textCanvas.getLayer(0)!.geometry.drawCount, 0.0);
     });
     it("Fails when adding too many characters.", () => {
         let resultA = true;
         let resultB = true;
         try {
-            resultA = textCanvas.addText(textSample, position, true);
-            resultB = textCanvas.addText(textSample, position, true);
+            resultA = textCanvas.addText(textSample, position, { updatePosition: true });
+            resultB = textCanvas.addText(textSample, position, { updatePosition: true });
             assert(false);
         } catch (e) {
             assert(resultA && !resultB);
@@ -194,7 +196,9 @@ describe("TextCanvas", () => {
     it("Fails when adding unloaded characters.", () => {
         textCanvas.clear();
         textCanvas.fontCatalog.clear();
-        assert.isFalse(textCanvas.measureText(textSample, bounds, individualBounds));
-        assert.isFalse(textCanvas.addText(textSample, position, true));
+        assert.isFalse(
+            textCanvas.measureText(textSample, bounds, { outputCharacterBounds: individualBounds })
+        );
+        assert.isFalse(textCanvas.addText(textSample, position, { updatePosition: true }));
     });
 });
