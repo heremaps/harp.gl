@@ -73,12 +73,15 @@ export class LineTypesetter implements Typesetter {
             this.m_currentParams.textStyle.fontSize!.unit,
             this.m_currentParams.fontCatalog.size
         );
-        this.m_tempPixelBgSize = TypesettingUtils.getPixelSize(
-            this.m_currentParams.textStyle.fontSize!.backgroundSize,
-            this.m_currentParams.textStyle.fontSize!.unit,
-            this.m_currentParams.fontCatalog.size
-        );
         this.m_tempScale = this.m_tempPixelSize / this.m_currentParams.fontCatalog.size;
+        this.m_tempPixelBgSize = Math.min(
+            TypesettingUtils.getPixelSize(
+                this.m_currentParams.textStyle.fontSize!.backgroundSize,
+                this.m_currentParams.textStyle.fontSize!.unit,
+                this.m_currentParams.fontCatalog.size
+            ),
+            this.m_currentParams!.fontCatalog.distanceRange * this.m_tempScale
+        );
 
         this.m_currentParams.position.y +=
             this.m_currentParams.layoutStyle.verticalAlignment! *

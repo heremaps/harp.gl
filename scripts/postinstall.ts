@@ -115,6 +115,11 @@ syncDirsIfNeeded({
 });
 
 syncDirsIfNeeded({
+    sourceDir: `../@here/harp-text-canvas/resources`,
+    destDir: `../dist/harp-examples/dist/resources/harp-text-canvas`
+});
+
+syncDirsIfNeeded({
     sourceDir: `../@here/harp-examples/resources`,
     destDir: `../dist/harp-examples/dist/resources`
 });
