@@ -12,7 +12,7 @@
     "prepare": "node scripts/postinstall.js && cross-env PREPARE_ONLY=true webpack -p"
   },
   "author": {
-    "name": "HERE Global B.V. and its affiliate(s)",
+    "name": "HERE Europe B.V.",
     "url": "https://here.com"
   },
   "license": "Apache-2.0",
