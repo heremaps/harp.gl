@@ -33,7 +33,7 @@ export class CameraMovementDetector {
      * events for client code to be notified when these cues occur.
      *
      * @param m_throttlingTimeout The delay, in milliseconds, between the last user interaction
-     * dected and the call to `m_movementFinishedFunc`; the default is `300`.
+     * detected and the call to `m_movementFinishedFunc`; the default is `300`.
      * @param m_movementStartedFunc Callback function, called when the user starts interacting.
      * @param m_movementFinishedFunc Callback function, called when the user stops interacting.
      */
@@ -84,6 +84,22 @@ export class CameraMovementDetector {
         }
 
         return this.m_cameraMovedLastFrame;
+    }
+
+    /**
+     * Reset the saved camera position. Next time checkCameraMoved is called, it will return
+     * `false`.
+     */
+    clear(mapView: MapView) {
+        const newCameraPos = mapView.camera.getWorldPosition(this.m_newCameraPos);
+        this.m_lastCameraPos.set(newCameraPos.x, newCameraPos.y, newCameraPos.z);
+    }
+
+    /**
+     * Force change of camera position. Next time checkCameraMoved is called, it will return `true`.
+     */
+    forceMoved() {
+        this.m_lastCameraPos.set(Number.NaN, Number.NaN, Number.NaN);
     }
 
     /**

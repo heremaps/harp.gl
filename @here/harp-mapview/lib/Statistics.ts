@@ -3,7 +3,6 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-
 import { LoggerManager, PerformanceTimer } from "@here/harp-utils";
 
 const logger = LoggerManager.instance.create("Statistics");
@@ -89,6 +88,18 @@ export class RingBuffer<T> {
 
         this.tail = next;
         return data;
+    }
+
+    /**
+     * Obtains the latest element (LIFO) without removing it. Throws an exception if a buffer is
+     * empty. Before calling this method, make sure that `size > 0`.
+     */
+    get top(): T {
+        if (this.size === 0) {
+            throw new Error("Ringbuffer underrun");
+        }
+
+        return this.buffer[this.tail];
     }
 
     /**
@@ -273,40 +284,64 @@ export class SimpleTimer implements Timer {
 }
 
 /**
+ * Simple statistics about the values in an array.
+ */
+export interface Stats {
+    /**
+     * The lowest value in the array.
+     */
+    min: number;
+
+    /**
+     * The highest value in the array.
+     */
+    max: number;
+
+    /**
+     * The average duration of all values in the array.
+     */
+    avg: number;
+
+    /**
+     * The median duration of all values in the array.
+     */
+    median: number;
+
+    /**
+     * The 90th percentile median of all values in the array.
+     */
+    median90: number;
+
+    /**
+     * The 95th percentile median of all values in the array.
+     */
+    median95: number;
+
+    /**
+     * The 97th percentile median of all values in the array.
+     */
+    median97: number;
+
+    /**
+     * The 99th percentile median of all values in the array.
+     */
+    median99: number;
+
+    /**
+     * The 99.9th percentile median of all values in the array.
+     */
+    median999: number;
+
+    /**
+     * The number of values in the array.
+     */
+    numSamples: number;
+}
+
+/**
  * A timer that stores the last `n` samples in a ring buffer.
  */
 export class SampledTimer extends SimpleTimer {
-    /**
-     * The lowest timer duration measured, or `undefined` if no timer was run.
-     */
-    min?: number;
-
-    /**
-     * The highest timer duration measured, or `undefined` if no timer was run.
-     */
-    max?: number;
-
-    /**
-     * The average duration of all timers.
-     */
-    avg?: number;
-
-    /**
-     * The median duration of all timers.
-     */
-    median?: number;
-
-    /**
-     * The 95th percentile median duration of all timers.
-     */
-    median95?: number;
-
-    /**
-     * The number of times the timer was started and subsequently stopped; cannot exceed
-     * `maxNumSamples`.
-     */
-    numSamples = 0;
-
     /**
      * The number of times the timer has reset.
      */
@@ -319,8 +354,7 @@ export class SampledTimer extends SimpleTimer {
     maxNumSamples = 1000;
 
     /**
-     * The number of times the timer was started and subsequently stopped; cannot exceed
-     * `maxNumSamples`.
+     * The array of sampled values, its length cannot exceed `maxNumSamples`.
      */
     samples = new RingBuffer<number>(this.maxNumSamples);
 
@@ -339,7 +373,7 @@ export class SampledTimer extends SimpleTimer {
      */
     reset() {
         super.reset();
-        this.updateStats();
+        this.getStats();
         this.samples.clear();
         this.numResets++;
     }
@@ -354,7 +388,6 @@ export class SampledTimer extends SimpleTimer {
 
         if (val !== undefined) {
             this.samples.enqOne(val);
-            this.numSamples++;
         }
     }
 
@@ -362,55 +395,81 @@ export class SampledTimer extends SimpleTimer {
      * Updates the `min`, `max`, `avg`, and `median` values. Currently, this function is expensive,
      * as it requires a copy of the sampled values.
      */
-    updateStats(): void {
-        if (this.samples.size === 0) {
-            return;
-        }
-
-        //Fixme: This could be done properly without copying the values. This is only done for quick
-        // and dirty (aka. simple) computation of the median, min and max
-
-        const samples = this.samples.asArray();
-
-        samples.sort((a: number, b: number) => {
-            return a - b;
-        });
-
-        const min = samples[0];
-        const max = samples[samples.length - 1];
-        let median: number;
-        let median95: number;
-
-        if (samples.length === 1) {
-            median95 = median = samples[0];
-        } else if (samples.length === 2) {
-            median = samples[0] * 0.5 + samples[1] * 0.5;
-            median95 = samples[1];
-        } else {
-            const mid = Math.floor(samples.length / 2);
-            median =
-                samples.length % 2 === 0
-                    ? samples[mid] * 0.5 + samples[mid + 1] * 0.5
-                    : samples[mid];
-
-            const mid95 = Math.floor(samples.length * 0.95);
-            median95 = samples[mid95];
-        }
-
-        let sum = 0;
-
-        for (let i = 0, l = samples.length; i < l; i++) {
-            sum += samples[i];
-        }
-
-        const avg = sum / samples.length;
-
-        this.min = min;
-        this.max = max;
-        this.avg = avg;
-        this.median = median;
-        this.median95 = median95;
+    getStats(): Stats | undefined {
+        return computeArrayStats(this.samples.asArray());
     }
+}
+
+/**
+ * Only exported for testing
+ * @ignore
+ *
+ * Compute the [[ArrayStats]] for the passed in array of numbers.
+ *
+ * @param {number[]} samples Array containing sampled values. Will be modified (!) by sorting the
+ *      entries.
+ * @returns {(Stats | undefined)}
+ */
+export function computeArrayStats(samples: number[]): Stats | undefined {
+    if (samples.length === 0) {
+        return undefined;
+    }
+
+    samples.sort((a: number, b: number) => {
+        return a - b;
+    });
+
+    const min: number = samples[0];
+    const max: number = samples[samples.length - 1];
+    let median: number;
+    let median90: number;
+    let median95: number;
+    let median97: number;
+    let median99: number;
+    let median999: number;
+
+    if (samples.length === 1) {
+        median90 = median95 = median97 = median99 = median999 = median = samples[0];
+    } else if (samples.length === 2) {
+        median = samples[0] * 0.5 + samples[1] * 0.5;
+        median90 = median95 = median97 = median99 = median999 = samples[1];
+    } else {
+        const mid = Math.floor(samples.length / 2);
+        median =
+            samples.length % 2 === 0 ? samples[mid - 1] * 0.5 + samples[mid] * 0.5 : samples[mid];
+
+        const mid90 = Math.round(samples.length * 0.9) - 1;
+        median90 = samples[mid90];
+        const mid95 = Math.round(samples.length * 0.95) - 1;
+        median95 = samples[mid95];
+        const mid97 = Math.round(samples.length * 0.97) - 1;
+        median97 = samples[mid97];
+        const mid99 = Math.round(samples.length * 0.99) - 1;
+        median99 = samples[mid99];
+        const mid999 = Math.round(samples.length * 0.999) - 1;
+        median999 = samples[mid999];
+    }
+
+    let sum = 0;
+
+    for (let i = 0, l = samples.length; i < l; i++) {
+        sum += samples[i];
+    }
+
+    const avg = sum / samples.length;
+
+    return {
+        min,
+        max,
+        avg,
+        median,
+        median90,
+        median95,
+        median97,
+        median99,
+        median999,
+        numSamples: samples.length
+    };
 }
 
 /**
@@ -620,11 +679,16 @@ export class Statistics {
 
             // sampled timers also update their stats and log them
             if (timer instanceof SampledTimer) {
-                timer.updateStats();
-                s +=
-                    `  [ min=${print(timer.min)}, max=${print(timer.max)}, ` +
-                    `avg=${print(timer.avg)}, med=${print(timer.median)}, ` +
-                    `med95=${print(timer.median95)}, N=${print(timer.numSamples)} ]`;
+                const simpleStats = timer.getStats();
+                if (simpleStats !== undefined) {
+                    s +=
+                        `  [ min=${print(simpleStats.min)}, max=${print(simpleStats.max)}, ` +
+                        `avg=${print(simpleStats.avg)}, med=${print(simpleStats.median)}, ` +
+                        `med95=${print(simpleStats.median95)}, med99=${print(
+                            simpleStats.median99
+                        )}, ` +
+                        `N=${print(simpleStats.numSamples)} ]`;
+                }
             }
             logger.log(s);
         });
@@ -632,5 +696,387 @@ export class Statistics {
         if (footer !== undefined) {
             logger.log(footer);
         }
+    }
+}
+
+/**
+ * Class containing all counters, timers and events of the current frame.
+ */
+export class FrameStats {
+    readonly entries: Map<string, number> = new Map();
+    messages?: string[] = undefined;
+
+    /**
+     * Retrieve the value of the performance number.
+     *
+     * @param name Name of the performance number.
+     * @returns The value of the performance number or `undefined` if it has not been declared by
+     *      `setValue` before.
+     */
+    getValue(name: string): number | undefined {
+        return this.entries.get(name);
+    }
+
+    /**
+     * Set the value of the performance number.
+     *
+     * @param name Name of the performance number.
+     * @param name New value of the performance number.
+     */
+    setValue(name: string, value: number) {
+        this.entries.set(name, value);
+    }
+
+    /**
+     * Add a value to the current value of the performance number. If the performance is not known,
+     * it will be initialized with `value`.
+     *
+     * @param name Name of the performance number.
+     * @param name Value to be added to the performance number.
+     */
+    addValue(name: string, value: number) {
+        const oldValue = this.entries.get(name);
+        this.entries.set(name, value + (oldValue === undefined ? 0 : oldValue));
+    }
+
+    /**
+     * Add a text message to the frame, like "Font XYZ has been loaded"
+     *
+     * @param message The message to add.
+     */
+    addMessage(message: string) {
+        if (this.messages === undefined) {
+            this.messages = [];
+        }
+        this.messages.push(message);
+    }
+
+    /**
+     * Reset all known performance values to `0` and the messages to `undefined`.
+     */
+    reset() {
+        this.entries.forEach((value: number, name: string) => {
+            this.entries.set(name, 0);
+        });
+
+        this.messages = undefined;
+    }
+}
+
+/**
+ * @ignore
+ * Only exported for testing.
+ *
+ * Instead of passing around an array of objects, we store the frame statistics as an object of
+ * arrays. This allows convenient computations from [[RingBuffer]],
+ */
+export class FrameStatsArray {
+    readonly frameEntries: Map<string, RingBuffer<number>> = new Map();
+    readonly messages: RingBuffer<string[] | undefined>;
+
+    constructor(readonly capacity: number = 0) {
+        this.messages = new RingBuffer<string[] | undefined>(capacity);
+    }
+
+    get length(): number {
+        return this.messages.size;
+    }
+
+    reset() {
+        this.frameEntries.forEach((buffer: RingBuffer<number>, name: string) => {
+            buffer.clear();
+        });
+        this.messages.clear();
+    }
+
+    addFrame(frameStats: FrameStats) {
+        const currentSize = this.length;
+        const frameEntries = this.frameEntries;
+
+        frameStats.entries.forEach((value: number, name: string) => {
+            let buffer = frameEntries.get(name);
+
+            if (buffer === undefined) {
+                // If there is a buffer that has not been known before, add it to the known buffers,
+                // fill it up with with 0 to the size of all the other buffers to make them of equal
+                // size to make PerfViz happy.
+                buffer = new RingBuffer<number>(this.capacity);
+                for (let i = 0; i < currentSize; i++) {
+                    buffer.enqOne(0);
+                }
+                this.frameEntries.set(name, buffer);
+            }
+            buffer.enqOne(value);
+        });
+
+        this.messages.enq(frameStats.messages);
+    }
+
+    /**
+     * Prints all values to the console.
+     */
+    log() {
+        let maxNameLength = 0;
+        this.frameEntries.forEach((buffer: RingBuffer<number>, name: string) => {
+            maxNameLength = Math.max(maxNameLength, name.length);
+        });
+
+        // simple printing function for number limits the number of decimal points.
+        const print = (v: number | undefined) => {
+            return v !== undefined ? v.toFixed(5) : "?";
+        };
+
+        this.frameEntries.forEach((buffer: RingBuffer<number>, name: string) => {
+            let s = name + ": " + " ".repeat(maxNameLength - name.length);
+
+            const simpleStats = computeArrayStats(buffer.asArray());
+            if (simpleStats !== undefined) {
+                s +=
+                    `  [ min=${print(simpleStats.min)}, max=${print(simpleStats.max)}, ` +
+                    `avg=${print(simpleStats.avg)}, med=${print(simpleStats.median)}, ` +
+                    `med95=${print(simpleStats.median95)}, med99=${print(simpleStats.median99)}, ` +
+                    `N=${print(simpleStats.numSamples)} ]`;
+            }
+            logger.log(s);
+        });
+    }
+}
+
+/**
+ * Chrome's MemoryInfo interface.
+ */
+interface ChromeMemoryInfo {
+    totalJSHeapSize: number;
+    usedJSHeapSize: number;
+    jsHeapSizeLimit: number;
+}
+
+/**
+ * Performance measurement central. Maintains the current [[FrameStats]], which holds all individual
+ * performance numbers.
+ *
+ * Implemented as an instance for easy access.
+ */
+export class PerformanceStatistics {
+    /**
+     * Returns `true` when the maximum number of storable frames is reached.
+     *
+     * @readonly
+     * @type {boolean}
+     * @memberof PerformanceStatistics
+     */
+    get isFull(): boolean {
+        return this.m_frameEvents.length >= this.maxNumFrames;
+    }
+    /**
+     * Global instance to the instance. The current instance can be overridden by creating a new
+     * `PerformanceStatistics`.
+     */
+    static get instance(): PerformanceStatistics {
+        if (PerformanceStatistics.m_instance === undefined) {
+            PerformanceStatistics.m_instance = new PerformanceStatistics(false, 0);
+        }
+        return PerformanceStatistics.m_instance;
+    }
+
+    private static m_instance?: PerformanceStatistics = undefined;
+
+    /**
+     * Current frame statistics. Contains all values for the current frame. Will be cleared when
+     * [[PerformanceStatistics#storeFrameInfo]] is called.
+     *
+     * @type {FrameStats}
+     * @memberof PerformanceStatistics
+     */
+    readonly currentFrame: FrameStats = new FrameStats();
+
+    /**
+     * @ignore
+     * Only exported for testing.
+     *
+     * Return the array of frame events.
+     */
+    get frameEvents(): FrameStatsArray {
+        return this.m_frameEvents;
+    }
+
+    /**
+     * Additional results stored for the current application run, not per frame. Only the last value
+     * is stored.
+     *
+     * @type {(Map<string, number>)}
+     */
+    readonly appResults: Map<string, number> = new Map();
+
+    /**
+     * Additional configuration values stored for the current application run, not per frame. Only
+     * the last value is stored.
+     *
+     * @type {(Map<string, string>)}
+     * @memberof PerformanceStatistics
+     */
+    readonly configs: Map<string, string> = new Map();
+
+    // Current array of frame events.
+    private m_frameEvents: FrameStatsArray;
+
+    /**
+     * Creates an instance of PerformanceStatistics. Overrides the current `instance`.
+     *
+     * @param {boolean} [enabled=true] If `false` the performance values will not be stored.
+     * @param {number} [maxNumFrames=1000] The maximum number of frames that are to be stored.
+     * @memberof PerformanceStatistics
+     */
+    constructor(public enabled = true, public maxNumFrames = 1000) {
+        PerformanceStatistics.m_instance = this;
+        this.m_frameEvents = new FrameStatsArray(maxNumFrames);
+    }
+
+    /**
+     * Clears all settings, all stored frame events as well as the current frame values.
+     *
+     * @memberof PerformanceStatistics
+     */
+    clear() {
+        this.clearFrames();
+        this.configs.clear();
+        this.appResults.clear();
+    }
+
+    /**
+     * Clears only all stored frame events as well as the current frame values.
+     *
+     * @memberof PerformanceStatistics
+     */
+    clearFrames() {
+        this.m_frameEvents.reset();
+        this.currentFrame.reset();
+    }
+
+    /**
+     * Stores the current frame events into the array of events. Uses [[THREE.WebGLInfo]] to add the
+     * render state information to the current frame.
+     *
+     * @param {THREE.WebGLInfo} webGlInfo
+     * @returns {boolean} Returns `false` if the maximum number of storable frames has been reached.
+     * @memberof PerformanceStatistics
+     */
+    storeFrameInfo(webGlInfo?: THREE.WebGLInfo): boolean {
+        if (this.m_frameEvents.length >= this.maxNumFrames) {
+            return false;
+        }
+
+        if (webGlInfo !== undefined) {
+            this.currentFrame.setValue("gl.numCalls", webGlInfo.render.calls);
+            this.currentFrame.setValue("gl.numGeometries", webGlInfo.memory.geometries);
+            this.currentFrame.setValue("gl.numLines", webGlInfo.render.lines);
+            this.currentFrame.setValue("gl.numPoints", webGlInfo.render.points);
+            this.currentFrame.setValue(
+                "gl.numPrograms",
+                webGlInfo.programs === null ? 0 : webGlInfo.programs.length
+            );
+            this.currentFrame.setValue("gl.numTextures", webGlInfo.memory.textures);
+            this.currentFrame.setValue("gl.numTriangles", webGlInfo.render.triangles);
+        }
+
+        if (window !== undefined && window.performance !== undefined) {
+            const memory = (window.performance as any).memory as ChromeMemoryInfo;
+            if (memory !== undefined) {
+                this.currentFrame.setValue("memory.totalJSHeapSize", memory.totalJSHeapSize);
+                this.currentFrame.setValue("memory.usedJSHeapSize", memory.usedJSHeapSize);
+                this.currentFrame.setValue("memory.jsHeapSizeLimit", memory.jsHeapSizeLimit);
+            }
+        }
+
+        this.m_frameEvents.addFrame(this.currentFrame);
+
+        this.currentFrame.reset();
+        return true;
+    }
+
+    /**
+     * Logs all values to the logger.
+     *
+     * @param header Optional header line.
+     * @param footer Optional footer line.
+     */
+    log(header?: string, footer?: string) {
+        logger.log(header !== undefined ? header : "PerformanceStatistics");
+
+        const appResults = this.appResults;
+        appResults.forEach((value: number, name: string) => {
+            logger.log(name, value);
+        });
+        const configs = this.configs;
+        configs.forEach((value: string, name: string) => {
+            logger.log(name, value);
+        });
+        this.m_frameEvents.log();
+
+        if (footer !== undefined) {
+            logger.log(footer);
+        }
+    }
+
+    /**
+     * Convert to a plain object that can be serialized. Required to copy the test results over to
+     * nightwatch.
+     */
+    getAsPlainObject(): any {
+        const appResults: any = {};
+        const configs: any = {};
+        const frames: any = {};
+        const plainObject: any = {
+            configs,
+            appResults,
+            frames
+        };
+
+        const appResultValues = this.appResults;
+        appResultValues.forEach((value: number, name: string) => {
+            appResults[name] = value;
+        });
+
+        const configValues = this.configs;
+        configValues.forEach((value: string, name: string) => {
+            configs[name] = value;
+        });
+
+        for (const [name, buffer] of this.m_frameEvents.frameEntries) {
+            frames[name] = buffer.asArray();
+        }
+        plainObject.messages = this.m_frameEvents.messages.asArray();
+        return plainObject;
+    }
+
+    /**
+     * Convert the last frame values to a plain object that can be serialized. Required to copy the
+     * test results over to nightwatch.
+     */
+    getLastFrameStatistics(): any {
+        const appResults: any = {};
+        const configs: any = {};
+        const frames: any = {};
+        const plainObject: any = {
+            configs,
+            appResults,
+            frames
+        };
+
+        const appResultValues = this.appResults;
+        appResultValues.forEach((value: number, name: string) => {
+            appResults[name] = value;
+        });
+
+        const configValues = this.configs;
+        configValues.forEach((value: string, name: string) => {
+            configs[name] = value;
+        });
+
+        for (const [name, buffer] of this.m_frameEvents.frameEntries) {
+            frames[name] = buffer.top;
+        }
+        plainObject.messages = this.m_frameEvents.messages.asArray();
+        return plainObject;
     }
 }

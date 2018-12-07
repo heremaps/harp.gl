@@ -53,6 +53,7 @@ import {
 } from "./DepthPrePass";
 import { MapView } from "./MapView";
 import { MapViewPoints } from "./MapViewPoints";
+import { PerformanceStatistics } from "./Statistics";
 import { TextElement } from "./text/TextElement";
 import { DEFAULT_TEXT_DISTANCE_SCALE } from "./text/TextElementsRenderer";
 import { MapViewUtils } from "./Utils";
@@ -202,25 +203,17 @@ export interface TileResourceUsageInfo {
 }
 
 /**
- * The SORT_WEIGHT_SEQUENCE and SORT_WEIGHT_PATH_LENGTH constants control how the priority
- * of the labels are computed based on two factors:
- * - The occurrence in the set of labels, from first to last
- * - The length of the label strings
- * Consequently, this priority is slightly modified while generating [[TextElement]]s from the
- * [[DecodedTile]], to get a meaningful priority and stable results.
+ * The SORT_WEIGHT_PATH_LENGTH constants control how the priority of the labels are computed based
+ * on the length of the label strings.
+ *
+ * Consequently, the [[Technique]]s priority is slightly modified while generating
+ * [[TextElement]]s from the [[DecodedTile]], to get a more meaningful priority and stable results.
  */
 
 /**
- * The amount of influence the original position has on rendering the [[TextElement]]. Sorts
- * both point labels with path lengths (such as roads) and those without path lengths.
+ * Gives [[TextElement]]s with longer paths a higher priority.
  */
-const SORT_WEIGHT_SEQUENCE = 0.1;
-
-/**
- * Gives [[TextElement]]s with longer paths a higher priority since they are easier to place,
- * so they are more likely to be placed. If resource is limited, less labels are checked.
- */
-const SORT_WEIGHT_PATH_LENGTH = 1.0 - SORT_WEIGHT_SEQUENCE;
+const SORT_WEIGHT_PATH_LENGTH = 0.1;
 
 /**
  * A factor used for memory estimation.
@@ -491,8 +484,8 @@ export class Tile implements CachedResource {
         this.m_decodedTile = undefined;
 
         setTimeout(() => {
-            const stats = this.mapView.statistics;
             let now = 0;
+            const stats = PerformanceStatistics.instance;
             if (stats.enabled) {
                 now = PerformanceTimer.now();
             }
@@ -500,7 +493,32 @@ export class Tile implements CachedResource {
             this.createGeometries(decodedTile);
 
             if (stats.enabled) {
-                stats.getTimer("geometryCreation").setValue(PerformanceTimer.now() - now);
+                const geometryCreationTime = PerformanceTimer.now() - now;
+                const currentFrame = stats.currentFrame;
+
+                currentFrame.addValue("geometry.geometryCreationTime", geometryCreationTime);
+
+                currentFrame.addValue("geometryCount.numGeometries", decodedTile.geometries.length);
+                currentFrame.addValue("geometryCount.numTechniques", decodedTile.techniques.length);
+                currentFrame.addValue(
+                    "geometryCount.numPoiGeometries",
+                    decodedTile.poiGeometries !== undefined ? decodedTile.poiGeometries.length : 0
+                );
+                currentFrame.addValue(
+                    "geometryCount.numTextGeometries",
+                    decodedTile.textGeometries !== undefined ? decodedTile.textGeometries.length : 0
+                );
+                currentFrame.addValue(
+                    "geometryCount.numTextPathGeometries",
+                    decodedTile.textPathGeometries !== undefined
+                        ? decodedTile.textPathGeometries.length
+                        : 0
+                );
+                currentFrame.addMessage(
+                    `Decoded tile: ${this.dataSource.name} # lvl=${this.tileKey.level} col=${
+                        this.tileKey.column
+                    } row=${this.tileKey.row}`
+                );
             }
 
             this.dataSource.requestUpdate();
@@ -521,7 +539,7 @@ export class Tile implements CachedResource {
      * Called after [[MapView]] has rendered this `Tile`.
      */
     didRender(): void {
-        // to be overriden by subclasses
+        // to be overridden by subclasses
     }
 
     /**
@@ -553,10 +571,11 @@ export class Tile implements CachedResource {
         this.m_decodedTile = decodedTile;
         this.invalidateUsageInfoCache();
 
-        const dataSource = this.dataSource;
-        const stats = dataSource.mapView.statistics;
-        if (stats.enabled) {
-            stats.getTimer("decoding").setValue(decodedTile.decodeTime);
+        if (decodedTile.decodeTime !== undefined) {
+            PerformanceStatistics.instance.currentFrame.addValue(
+                "decode.decodingTime",
+                decodedTile.decodeTime
+            );
         }
     }
 
@@ -834,8 +853,6 @@ export class Tile implements CachedResource {
                 // Make sorting stable and make pathLengthSqr a differentiator for placement.
                 const priority =
                     getOptionValue(getPropertyValue(technique.priority, displayZoomLevel), 0) +
-                    (SORT_WEIGHT_SEQUENCE * (numTextElements - numTextElementsCreated)) /
-                        numTextElements +
                     (maxPathLengthSqr > 0
                         ? (SORT_WEIGHT_PATH_LENGTH * textPath.pathLengthSqr) / maxPathLengthSqr
                         : 0);
@@ -921,13 +938,10 @@ export class Tile implements CachedResource {
                     continue;
                 }
 
-                // Keep TextElements sorted. The builtin sorting method is not stable, and a stable
-                // sorting should reduce flicker of labels.
-                const priority =
-                    getOptionValue(getPropertyValue(technique.priority, displayZoomLevel), 0) +
-                    (SORT_WEIGHT_SEQUENCE * (numTextElements - numTextElementsCreated)) /
-                        numTextElements;
-                const singleElementPriorityFactor = SORT_WEIGHT_SEQUENCE / numPositions;
+                const priority = getOptionValue(
+                    getPropertyValue(technique.priority, displayZoomLevel),
+                    0
+                );
 
                 for (let i = 0; i < numPositions; ++i) {
                     const x = positions.getX(i);
@@ -938,14 +952,10 @@ export class Tile implements CachedResource {
                         continue;
                     }
 
-                    const singleElementPriority =
-                        priority +
-                        (singleElementPriorityFactor * (numPositions - i)) / numPositions;
-
                     const textElement = new TextElement(
                         label!,
                         new THREE.Vector2(x, y),
-                        singleElementPriority,
+                        priority,
                         getOptionValue(getPropertyValue(technique.scale, displayZoomLevel), 1.0),
                         technique.xOffset || 0.0,
                         technique.yOffset || 0.0,

@@ -395,7 +395,7 @@ export class PoiTableManager {
      * @readonly
      */
     get finishedLoading(): boolean {
-        return this.m_isLoading;
+        return !this.m_isLoading;
     }
 
     private startLoading() {

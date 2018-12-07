@@ -120,6 +120,17 @@ export class GroupedPriorityList<T extends PriorityListElement> {
     }
 
     /**
+     * Apply function to all elements in this `GroupedPriorityList`.
+     *
+     * @param {(element: T) => void} fun Function to apply.
+     */
+    forEach(fun: (element: T) => void): void {
+        for (const group of this.groups) {
+            group[1].elements.forEach(fun);
+        }
+    }
+
+    /**
      * Get group of elements that have the same (integer) priority.
      *
      * @param priority The priority to retrieve all elements from.
