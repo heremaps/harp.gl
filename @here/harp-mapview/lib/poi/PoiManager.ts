@@ -41,12 +41,6 @@ interface ImageTextureDef {
 }
 
 /**
- * Multiplier to apply for a random priority during construction of POIs. Important when many POIs
- * with identical priorities have the same to the camera.
- */
-const RANDOM_SORT_WEIGHT_SEQUENCE = 0.01;
-
-/**
  * POI manager class, responsible for loading the [[PoiGeometry]] objects from the [[DecodedTile]],
  * and preparing them for rendering. Also loads and manages the texture atlases for the icons.
  */
@@ -439,10 +433,7 @@ export class PoiManager {
             text = "";
         }
         if (text !== undefined) {
-            let priority = technique.priority !== undefined ? technique.priority : 0;
-
-            // make sorting stable
-            priority += RANDOM_SORT_WEIGHT_SEQUENCE * Math.random();
+            const priority = technique.priority !== undefined ? technique.priority : 0;
 
             const positions = Array.isArray(x) ? (x as THREE.Vector2[]) : new THREE.Vector2(x, y);
             const displayZoomLevel = this.mapView.zoomLevel;

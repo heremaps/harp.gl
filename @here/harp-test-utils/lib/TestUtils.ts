@@ -14,9 +14,9 @@ declare const global: any;
  * A `prototype` preserving, node/browser environment aware version of
  * `sandbox.stub(window | global, name).
  *
- * Use to stub global contstructors like `Worker` or `XMLHttpRequest`.
+ * Use to stub global constructors like `Worker` or `XMLHttpRequest`.
  *
- * @param sandbox `sinin.Sandbox` instance, required for proper cleanup after test
+ * @param sandbox `sinon.Sandbox` instance, required for proper cleanup after test
  * @param name name of global symbol to be constructor
  */
 export function stubGlobalConstructor(sandbox: sinon.SinonSandbox, name: string) {
@@ -57,13 +57,13 @@ let mochaCurrentTest: any; // any is used to skip import of whole 'Mocha' for on
  * Repeats block of code until it passes without `AssertionError`.
  *
  * Additionally, if test fails due to timeout, last error that was encountered is rethrown, so any
- * error that have constructor called `AssertionError` (matches chai assertions) willcause `test` to
- * be repeated after 1ms delay.
+ * error that have constructor called `AssertionError` (matches chai assertions) will cause `test`
+ * to be repeated after 1ms delay.
  *
  * The last error that blocked `willEventually` from resolving will be rethrown in `afterEach` to
  * mark which assertion didn't hold (see [[reportWillEventuallyBlockingAssertion]]).
  *
- * Use for API's that are internally asynchronous without explicit means to monitor completion of
+ * Use for APIs that are internally asynchronous without explicit means to monitor completion of
  * tasks.
  *
  * Example:

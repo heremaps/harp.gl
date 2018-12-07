@@ -119,6 +119,11 @@ export interface DataSourceTileList {
     allVisibleTileLoaded: boolean;
 
     /**
+     * The number of tiles which are still loading.
+     */
+    numTilesLoading: number;
+
+    /**
      * Missing Typedoc
      */
     visibleTiles: Tile[];
@@ -133,7 +138,7 @@ export interface DataSourceTileList {
  * Manages visible [[Tile]]s for [[MapView]].
  *
  * Responsible for election of rendered tiles:
- *  - quad-tree traveral
+ *  - quad-tree traversal
  *  - frustum culling
  *  - sorting tiles by relevance (visible area) to prioritize load
  *  - limiting number of visible tiles
@@ -178,14 +183,14 @@ export class VisibleTileSet {
     }
 
     /**
-     * Gets ammount of visible tiles.
+     * Retrieves maximum number of visible tiles.
      */
     getNumberOfVisibleTiles() {
         return this.options.maxVisibleDataSourceTiles;
     }
 
     /**
-     * Sets ammount of visible tiles.
+     * Sets maximum number of visible tiles.
      *
      * @param size size of visible tiles array
      */
@@ -329,6 +334,7 @@ export class VisibleTileSet {
 
             const actuallyVisibleTiles: Tile[] = [];
             let allDataSourceTilesLoaded = true;
+            let numTilesLoading = 0;
             // Create actual tiles only for the allowed number of visible tiles
             for (
                 let i = 0;
@@ -347,6 +353,9 @@ export class VisibleTileSet {
 
                 tile.prepareForRender();
                 allDataSourceTilesLoaded = allDataSourceTilesLoaded && tile.hasGeometry;
+                if (!tile.hasGeometry) {
+                    numTilesLoading++;
+                }
                 actuallyVisibleTiles.push(tile);
             }
 
@@ -355,6 +364,7 @@ export class VisibleTileSet {
                 storageLevel,
                 zoomLevel: displayZoomLevel,
                 allVisibleTileLoaded: allDataSourceTilesLoaded,
+                numTilesLoading,
                 visibleTiles: actuallyVisibleTiles,
                 renderedTiles: actuallyVisibleTiles
             });
