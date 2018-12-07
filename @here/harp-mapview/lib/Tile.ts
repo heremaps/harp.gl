@@ -1534,7 +1534,8 @@ export class Tile implements CachedResource {
                 color: colorHex,
                 polygonOffset: true,
                 polygonOffsetFactor: 0.0,
-                polygonOffsetUnits: 0.0
+                polygonOffsetUnits: 0.0,
+                visible: false
             });
             this.mapView.materialsCache.set(key, material);
             return material;
