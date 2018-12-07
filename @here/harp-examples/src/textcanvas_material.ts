@@ -10,14 +10,12 @@ import * as THREE from "three";
 
 import {
     createSdfTextMaterial,
-    DefaultLayoutStyle,
-    DefaultTextStyle,
     FontCatalog,
     FontUnit,
     HorizontalAlignment,
-    LayoutStyle,
     TextCanvas,
-    TextStyle
+    TextLayoutStyle,
+    TextRenderStyle
 } from "@here/harp-text-canvas";
 
 /**
@@ -41,8 +39,8 @@ export namespace TextCanvasMaterialExample {
     let materialB: THREE.RawShaderMaterial;
     const initialTime = new Date().getTime();
 
-    let textStyle: TextStyle;
-    let layoutStyle: LayoutStyle;
+    let textRenderStyle: TextRenderStyle;
+    let textLayoutStyle: TextLayoutStyle;
     let textCanvas: TextCanvas;
     let assetsLoaded: boolean = false;
 
@@ -156,17 +154,17 @@ export namespace TextCanvasMaterialExample {
         }`;
 
         // Init TextCanvas
-        textStyle = DefaultTextStyle.initializeTextStyle({
+        textRenderStyle = new TextRenderStyle({
             fontSize: {
                 unit: FontUnit.Percent,
                 size: 300.0,
                 backgroundSize: 0.0
             }
         });
-        layoutStyle = DefaultLayoutStyle.initializeLayoutStyle({
+        textLayoutStyle = new TextLayoutStyle({
             horizontalAlignment: HorizontalAlignment.Center
         });
-        FontCatalog.load("resources/harp-text-canvas/fonts/Default_FontCatalog.json", 16).then(
+        FontCatalog.load("resources/fonts/Default_FontCatalog.json", 16).then(
             (loadedFontCatalog: FontCatalog) => {
                 // snippet:textcanvas_material_0.ts
                 materialA = createSdfTextMaterial({
@@ -188,10 +186,10 @@ export namespace TextCanvasMaterialExample {
                     material: materialA
                 });
                 // end:textcanvas_material_0.ts
-                loadedFontCatalog.loadCharset("TextCanvas", {}).then(() => {
+                loadedFontCatalog.loadCharset("TextCanvas", textRenderStyle).then(() => {
                     assetsLoaded = true;
-                    textCanvas.style = textStyle;
-                    textCanvas.layoutStyle = layoutStyle;
+                    textCanvas.textRenderStyle = textRenderStyle;
+                    textCanvas.textLayoutStyle = textLayoutStyle;
                     textCanvas.addText("TextCanvas", new THREE.Vector3(0, 0, 0));
                 });
             }

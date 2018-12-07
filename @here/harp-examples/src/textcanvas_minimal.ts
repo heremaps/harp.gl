@@ -8,7 +8,7 @@
 const Stats = require("stats.js");
 import * as THREE from "three";
 
-import { FontCatalog, TextCanvas } from "@here/harp-text-canvas";
+import { FontCatalog, TextCanvas, TextRenderStyle } from "@here/harp-text-canvas";
 
 /**
  * This example showcases how a minimal [[TextCanvas]] application can be implemented.
@@ -106,7 +106,7 @@ export namespace TextCanvasMinimalExample {
 
         // Init TextCanvas
         // snippet:textcanvas_minimal_0.ts
-        FontCatalog.load("resources/harp-text-canvas/fonts/Default_FontCatalog.json", 16).then(
+        FontCatalog.load("resources/fonts/Default_FontCatalog.json", 16).then(
             // end:textcanvas_minimal_0.ts
             (loadedFontCatalog: FontCatalog) => {
                 // snippet:textcanvas_minimal_1.ts
@@ -117,7 +117,7 @@ export namespace TextCanvasMinimalExample {
                 });
                 // end:textcanvas_minimal_1.ts
                 // snippet:textcanvas_minimal_2.ts
-                loadedFontCatalog.loadCharset("Hello World!", {}).then(() => {
+                loadedFontCatalog.loadCharset("Hello World!", new TextRenderStyle()).then(() => {
                     assetsLoaded = true;
                     // end:textcanvas_minimal_2.ts
                     // snippet:textcanvas_minimal_3.ts

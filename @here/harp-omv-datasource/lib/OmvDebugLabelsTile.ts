@@ -8,6 +8,11 @@ import { DecodedTile } from "@here/harp-datasource-protocol";
 import { TileKey } from "@here/harp-geoutils/lib/tiling/TileKey";
 import { DataSource, TextElement } from "@here/harp-mapview";
 import { debugContext } from "@here/harp-mapview/lib/DebugContext";
+import {
+    ContextualArabicConverter,
+    TextLayoutStyle,
+    TextRenderStyle
+} from "@here/harp-text-canvas";
 import * as THREE from "three";
 import { OmvTile } from "./OmvTile";
 
@@ -29,6 +34,9 @@ const debugBlackCircleMaterial = new THREE.MeshBasicMaterial({
     depthTest: false,
     depthFunc: THREE.NeverDepth
 });
+
+const textRenderStyle = new TextRenderStyle();
+const textLayoutStyle = new TextLayoutStyle();
 
 export class OmvDebugLabelsTile extends OmvTile {
     constructor(dataSource: DataSource, tileKey: TileKey) {
@@ -110,14 +118,14 @@ export class OmvDebugLabelsTile extends OmvTile {
                                     ? text + ":" + pointIndex
                                     : Number(pointIndex).toString();
                             const labelElement = new TextElement(
-                                label,
+                                ContextualArabicConverter.instance.convert(label),
                                 new THREE.Vector3(x, y, z),
+                                textRenderStyle,
+                                textLayoutStyle,
                                 technique.priority || 0,
-                                technique.scale || 1.0,
                                 technique.xOffset || 0.0,
                                 technique.yOffset || 0.0
                             );
-                            labelElement.color = black;
                             labelElement.minZoomLevel = technique.minZoomLevel;
                             labelElement.mayOverlap = true;
                             labelElement.reserveSpace = false;

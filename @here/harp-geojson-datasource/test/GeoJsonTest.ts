@@ -4,6 +4,19 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+// tslint:disable:no-unused-expression
+//    expect-type assertions are unused expressions and are perfectly valid
+
+// tslint:disable:no-empty
+//    lots of stubs are needed which are just placeholders and are empty
+
+// tslint:disable:only-arrow-functions
+//    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
+
+import { assert } from "chai";
+import * as sinon from "sinon";
+import * as THREE from "three";
+
 import { GeometryType, StyleSet, StyleSetEvaluator } from "@here/harp-datasource-protocol";
 import {
     Projection,
@@ -11,12 +24,15 @@ import {
     webMercatorProjection,
     webMercatorTilingScheme
 } from "@here/harp-geoutils";
+import { ColorCache, MapView } from "@here/harp-mapview";
 import { DataProvider, TileDataSource, TileFactory } from "@here/harp-mapview-decoder";
-import { assert } from "chai";
+
 import { GeoJson } from "../lib/GeoJsonDataType";
 import { GeoJsonTileDecoder } from "../lib/GeoJsonDecoder";
 import { GeoJsonTile } from "../lib/GeoJsonTile";
 import { Flattener } from "./../lib/utils/Flattener";
+
+declare const global: any;
 
 const TEST_JSON: GeoJson = {
     type: "FeatureCollection",
@@ -58,6 +74,49 @@ const TEST_JSON: GeoJson = {
 };
 
 describe("@here-geojson-datasource", () => {
+    const inNodeContext = typeof window === "undefined";
+    let sandbox: sinon.SinonSandbox;
+    let clearColorStub: sinon.SinonStub;
+    // tslint:disable-next-line:no-unused-variable
+    let webGlStub: sinon.SinonStub;
+    let mapView: MapView;
+
+    beforeEach(function() {
+        sandbox = sinon.createSandbox();
+        clearColorStub = sandbox.stub();
+        webGlStub = sandbox.stub(THREE, "WebGLRenderer").returns({
+            getClearColor: () => undefined,
+            setClearColor: clearColorStub,
+            getSize: () => undefined,
+            setSize: () => undefined,
+            setPixelRatio: () => undefined,
+            getPixelRatio: () => undefined,
+            clear: () => undefined,
+            render: () => undefined,
+            dispose: () => undefined,
+            info: { autoReset: true, reset: () => undefined }
+        });
+        if (inNodeContext) {
+            const theGlobal: any = global;
+            theGlobal.window = { window: { devicePixelRatio: 10 } };
+            theGlobal.navigator = {};
+            theGlobal.requestAnimationFrame = () => {};
+        }
+    });
+
+    afterEach(function() {
+        if (mapView !== undefined) {
+            ColorCache.instance.clear();
+            mapView.dispose();
+        }
+        sandbox.restore();
+        if (inNodeContext) {
+            delete global.window;
+            delete global.requestAnimationFrame;
+            delete global.navigator;
+        }
+    });
+
     it("flattens JSON-like objects", () => {
         const jsonLike = {
             number: 0,
@@ -240,7 +299,24 @@ describe("@here-geojson-datasource", () => {
         ];
         const decoder = new GeoJsonTileDecoder();
         const decodedTile = await getDecodedTile(styleSet);
-        const tile = new FakeGeoJsonTile(new FakeGeoJsonDataSource(decoder), new TileKey(1, 1, 5));
+        const datasource = new FakeGeoJsonDataSource(decoder);
+
+        if (inNodeContext) {
+            const theGlobal: any = global;
+            theGlobal.window = { window: { devicePixelRatio: 10 } };
+            theGlobal.requestAnimationFrame = () => {};
+        }
+
+        const canvas = {
+            width: 0,
+            height: 0,
+            addEventListener: () => {},
+            removeEventListener: () => {}
+        };
+        mapView = new MapView({ canvas: (canvas as any) as HTMLCanvasElement });
+        mapView.addDataSource(datasource);
+
+        const tile = new FakeGeoJsonTile(datasource, new TileKey(1, 1, 5));
         tile.createTextElements(decodedTile);
         const userTextElements = tile.userTextElements;
 

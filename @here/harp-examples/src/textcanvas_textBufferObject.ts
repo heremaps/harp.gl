@@ -16,6 +16,7 @@ import {
     FontUnit,
     FontVariant,
     HorizontalAlignment,
+    TextBufferObject,
     TextCanvas,
     TextLayoutStyle,
     TextRenderStyle,
@@ -24,17 +25,19 @@ import {
 } from "@here/harp-text-canvas";
 
 /**
- * This example showcases how [[TextCanvas]] can handle loading of multiple heavy [[FontCatalog]]
- * assets, and present text on-demand when all required assets are ready.
+ * This example showcases how [[TextCanvas]] can handle computing a text attribute buffer for a
+ * specific text (or layout) style to avoid repeating expensive text placing operations every frame.
  *
  * For more information regarding basic [[TextCanvas]] initialization and usage, please check:
  * [[TextCanvasMinimalExample]] documentation.
  */
-export namespace TextCanvasStressTestExample {
+export namespace TextCanvasTextBufferObjectExample {
     const stats = new Stats();
     const gui = new GUI({ hideable: false });
     const guiOptions = {
         fontName: "",
+        fontCatalog: 0,
+        needsUpdate: true,
         gridEnabled: false,
         boundsEnabled: false,
         color: {
@@ -46,6 +49,18 @@ export namespace TextCanvasStressTestExample {
             r: 0.0,
             g: 0.0,
             b: 0.0
+        },
+        scale: 1.0,
+        rotation: 0.0,
+        update: () => {
+            if (assetsLoaded) {
+                textCanvas.textRenderStyle = textRenderStyle;
+                textCanvas.textLayoutStyle = textLayoutStyle;
+                textBuffer = textCanvas.createTextBufferObject(textSample);
+                textCanvas.measureText(textSample, textBounds, {
+                    outputCharacterBounds: characterBounds
+                });
+            }
         }
     };
 
@@ -58,6 +73,7 @@ export namespace TextCanvasStressTestExample {
     let assetsLoaded: boolean = false;
 
     const textPosition: THREE.Vector3 = new THREE.Vector3(0, window.innerHeight / 2.0, 0.0);
+    let recordingPosition = false;
 
     const textBounds: THREE.Box2 = new THREE.Box2(new THREE.Vector2(), new THREE.Vector2());
     const characterBounds: THREE.Box2[] = [];
@@ -70,6 +86,7 @@ export namespace TextCanvasStressTestExample {
 
     // tslint:disable:max-line-length
     const characterCount = 32768;
+    let textBuffer: TextBufferObject | undefined;
     const textSample = ContextualArabicConverter.instance.convert(`LATIN
 Lorem ipsum dolor sit amet, cum omnis solet consequuntur id, cum aliquid torquatos cu. Probo porro nominavi quo no, ut vix congue officiis. Homero principes posidonium eam at. Pro movet fuisset volumus at, sea ad vidit maluisset consequat. Ne cum scaevola recusabo. Ea simul prodesset sea.
 Nonumy consul delicata mea an. Pro et mollis conclusionemque, falli fierent ad has, ei eos commodo molestiae. Alia wisi doming his ut, usu et tota altera. Sit eu errem tractatos definitionem, vix ut exerci nominati assueverit. Tota maiorum expetendis pro at, cu pro consul nusquam.
@@ -192,6 +209,7 @@ CHINESE
     // tslint:enable:max-line-length
 
     function addGUIControls() {
+        gui.add(guiOptions, "update");
         gui.add(guiOptions, "gridEnabled");
         gui.add(guiOptions, "boundsEnabled");
 
@@ -294,6 +312,9 @@ CHINESE
             .onChange((value: string) => {
                 textLayoutStyle.wrappingMode = Number(value);
             });
+
+        gui.add(guiOptions, "scale", 0.01, 10.0, 0.01);
+        gui.add(guiOptions, "rotation", 0.0, 2.0 * Math.PI, 0.1);
     }
 
     function initDebugGrid() {
@@ -408,6 +429,9 @@ CHINESE
 
         boundsObject.position.x = position.x;
         boundsObject.position.y = position.y;
+        boundsObject.scale.x = guiOptions.scale;
+        boundsObject.scale.y = guiOptions.scale;
+        boundsObject.rotation.z = guiOptions.rotation;
     }
 
     function onWindowResize() {
@@ -422,6 +446,22 @@ CHINESE
         textPosition.setY(window.innerHeight * 0.5);
     }
 
+    function onMouseMove(event: any) {
+        if (recordingPosition) {
+            textPosition.set(
+                event.clientX - window.innerWidth * 0.5,
+                -event.clientY + window.innerHeight * 0.5,
+                0.0
+            );
+        }
+    }
+
+    function onKeyUp(event: any) {
+        if (event.code === "Space") {
+            recordingPosition = !recordingPosition;
+        }
+    }
+
     function animate() {
         requestAnimationFrame(animate);
         webglRenderer.clear();
@@ -431,15 +471,19 @@ CHINESE
         }
         if (assetsLoaded) {
             textCanvas.clear();
-            textCanvas.textRenderStyle = textRenderStyle;
-            textCanvas.textLayoutStyle = textLayoutStyle;
-            textCanvas.addText(textSample, textPosition);
+
+            textCanvas.addTextBufferObject(textBuffer!, {
+                position: textPosition,
+                scale: guiOptions.scale,
+                rotation: guiOptions.rotation,
+                color: textRenderStyle.color,
+                opacity: textRenderStyle.opacity,
+                backgroundColor: textRenderStyle.backgroundColor,
+                backgroundOpacity: textRenderStyle.backgroundOpacity
+            });
             textCanvas.render(camera);
 
             if (guiOptions.boundsEnabled) {
-                textCanvas.measureText(textSample, textBounds, {
-                    outputCharacterBounds: characterBounds
-                });
                 updateDebugBounds(textPosition);
                 webglRenderer.render(boundsScene, camera);
             }
@@ -459,7 +503,15 @@ CHINESE
         webglRenderer.setSize(window.innerWidth, window.innerHeight);
         document.body.appendChild(webglRenderer.domElement);
         document.body.appendChild(stats.dom);
-        window.addEventListener("resize", onWindowResize);
+        window.addEventListener("resize", () => {
+            onWindowResize();
+        });
+        window.addEventListener("mousemove", event => {
+            onMouseMove(event);
+        });
+        window.addEventListener("keyup", event => {
+            onKeyUp(event);
+        });
 
         camera = new THREE.OrthographicCamera(
             -window.innerWidth / 2.0,
@@ -471,7 +523,7 @@ CHINESE
         camera.near = 0.0;
         camera.updateProjectionMatrix();
 
-        // Init textCanvas
+        // Init textLayoutManager
         textLayoutStyle = new TextLayoutStyle({
             horizontalAlignment: HorizontalAlignment.Center,
             verticalAlignment: VerticalAlignment.Below,
@@ -493,6 +545,7 @@ CHINESE
                 });
                 loadedFontCatalog.loadCharset(textSample, textRenderStyle).then(() => {
                     assetsLoaded = true;
+                    guiOptions.update();
                 });
             }
         );

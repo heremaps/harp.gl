@@ -9,7 +9,7 @@ import * as sinon from "sinon";
 import * as THREE from "three";
 
 import { getTestResourceUrl } from "@here/harp-test-utils";
-import { DefaultTextStyle, FontCatalog, TextCanvas } from "../index";
+import { DefaultTextStyle, FontCatalog, GlyphData, TextCanvas, TextRenderStyle } from "../index";
 
 async function loadTexture(url: string): Promise<THREE.Texture> {
     return new Promise(resolve => {
@@ -24,6 +24,89 @@ async function loadJSON(url: string): Promise<any> {
     }
     const rawJSON = await response.text();
     return JSON.parse(rawJSON);
+}
+
+function createFontCatalogStub(
+    stub_url: string,
+    stub_name: string,
+    stub_type: string,
+    stub_size: number,
+    stub_maxWidth: number,
+    stub_maxHeight: number,
+    stub_distanceRange: number,
+    stub_fonts: any[],
+    stub_unicodeBlocks: any[],
+    stub_maxCodePointCount: number,
+    stub_replacementJson: any,
+    stub_replacementTexture: THREE.Texture
+): FontCatalog {
+    const replacementFont = stub_fonts.find(font => font.name === "Extra");
+    const replacementGlyph = new GlyphData(
+        65533,
+        "Specials",
+        stub_replacementJson.chars[0].width,
+        stub_replacementJson.chars[0].height,
+        stub_replacementJson.chars[0].xadvance,
+        stub_replacementJson.chars[0].xoffset,
+        stub_replacementJson.chars[0].yoffset,
+        0.0,
+        0.0,
+        1.0,
+        1.0,
+        stub_replacementTexture,
+        replacementFont!
+    );
+
+    return ({
+        url: stub_url,
+        name: stub_name,
+        type: stub_type,
+        size: stub_size,
+        maxWidth: stub_maxWidth,
+        maxHeight: stub_maxHeight,
+        distanceRange: stub_distanceRange,
+        fonts: stub_fonts,
+        unicodeBlocks: stub_unicodeBlocks,
+        maxCodePointCount: stub_maxCodePointCount,
+        m_replacementGlyph: replacementGlyph,
+        m_glyphTextureCache: {
+            has: (hash: number) => {
+                return true;
+            },
+            add: (hash: number, glyph: GlyphData) => {
+                glyph.isInCache = true;
+                return;
+            },
+            clear: () => {
+                return;
+            },
+            dispose: () => {
+                return;
+            }
+        },
+        m_loadingJson: new Map<string, Promise<any>>(),
+        m_loadingPages: new Map<string, Promise<THREE.Texture>>(),
+        m_loadingGlyphs: new Map<string, Promise<GlyphData>>(),
+        m_loadedJson: new Map<string, any>(),
+        m_loadedPages: new Map<string, THREE.Texture>(),
+        m_loadedGlyphs: new Map<string, Map<number, GlyphData>>(),
+        dispose: FontCatalog.prototype.dispose,
+        clear: FontCatalog.prototype.clear,
+        update: FontCatalog.prototype.update,
+        texture: THREE.Texture.DEFAULT_IMAGE,
+        textureSize: new THREE.Vector2(1, 1),
+        isLoading: false,
+        loadBlock: FontCatalog.prototype.loadBlock,
+        removeBloc: FontCatalog.prototype.removeBlock,
+        loadCharset: FontCatalog.prototype.loadCharset,
+        getGlyph: FontCatalog.prototype.getGlyph,
+        getGlyphs: FontCatalog.prototype.getGlyphs,
+        getFont: FontCatalog.prototype.getFont,
+        createReplacementGlyph: (FontCatalog.prototype as any).createReplacementGlyph,
+        loadAssets: (FontCatalog.prototype as any).loadAssets,
+        loadPage: (FontCatalog.prototype as any).loadPage,
+        getAssetsPath: (FontCatalog.prototype as any).getAssetsPath
+    } as any) as FontCatalog;
 }
 
 const textSample = "Hello World!";
@@ -57,6 +140,7 @@ describe("TextCanvas", () => {
     });
 
     const webglRenderer = {};
+    const textRenderStyle = new TextRenderStyle();
     let textCanvas: TextCanvas;
     it("Creates an instance successfully.", async () => {
         const catalogJson = await loadJSON(
@@ -78,7 +162,7 @@ describe("TextCanvas", () => {
             )
         );
 
-        const loadedFontCatalog = new FontCatalog(
+        const loadedFontCatalog = createFontCatalogStub(
             getTestResourceUrl("@here/harp-font-resources", "resources/fonts"),
             catalogJson.name,
             catalogJson.type,
@@ -92,7 +176,7 @@ describe("TextCanvas", () => {
             replacementJson,
             replacementTexture
         );
-        await loadedFontCatalog.loadCharset(textSample, {});
+        await loadedFontCatalog.loadCharset(textSample, textRenderStyle);
         textCanvas = new TextCanvas({
             renderer: webglRenderer as THREE.WebGLRenderer,
             fontCatalog: loadedFontCatalog,
@@ -100,7 +184,7 @@ describe("TextCanvas", () => {
         });
 
         assert.strictEqual(textCanvas.maxGlyphCount, 16);
-        assert.deepEqual(textCanvas.style.fontSize, DefaultTextStyle.DEFAULT_FONT_SIZE);
+        assert.deepEqual(textCanvas.textRenderStyle.fontSize, DefaultTextStyle.DEFAULT_FONT_SIZE);
     });
     it("Successfully measures text.", () => {
         const result = textCanvas.measureText("Hello World!", bounds, {

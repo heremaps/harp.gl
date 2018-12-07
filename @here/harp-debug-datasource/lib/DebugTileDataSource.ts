@@ -6,7 +6,7 @@
 
 import { TilingScheme } from "@here/harp-geoutils";
 import { TileKey } from "@here/harp-geoutils/lib/tiling/TileKey";
-import { DataSource, TextElement, Tile } from "@here/harp-mapview";
+import { DataSource, DEFAULT_TEXT_STYLE_CACHE_ID, TextElement, Tile } from "@here/harp-mapview";
 
 import * as THREE from "three";
 
@@ -25,6 +25,9 @@ const TEXT_SCALE = 0.8;
 export class DebugTile extends Tile {
     private readonly geometry = new THREE.Geometry();
     private readonly m_labelPositions = new THREE.BufferAttribute(new Float32Array(3), 3);
+
+    private m_textRenderStyle = this.mapView.textRenderStyleCache.get(DEFAULT_TEXT_STYLE_CACHE_ID)!;
+    private m_textLayoutStyle = this.mapView.textLayoutStyleCache.get(DEFAULT_TEXT_STYLE_CACHE_ID)!;
 
     constructor(dataSource: DataSource, tileKey: TileKey) {
         super(dataSource, tileKey);
@@ -49,6 +52,8 @@ export class DebugTile extends Tile {
         const textElement = new TextElement(
             tileKey.toHereTile(),
             new THREE.Vector2(0, 0),
+            this.m_textRenderStyle,
+            this.m_textLayoutStyle,
             PRIORITY_ALWAYS,
             TEXT_SCALE
         );

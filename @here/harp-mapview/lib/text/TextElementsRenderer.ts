@@ -4,28 +4,19 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { FontCatalogConfig, LineMarkerTechnique, Theme } from "@here/harp-datasource-protocol";
+import { LineMarkerTechnique, TextStyle, Theme } from "@here/harp-datasource-protocol";
 import {
-    DEFAULT_FONT_CATALOG_NAME,
-    DEFAULT_STYLE_NAME,
-    DEFAULT_TEXT_RENDER_ORDER,
-    FontCatalog,
-    GLYPH_CACHE_TEXTURE_SIZE,
-    GLYPH_CACHE_WIDTH,
-    GlyphDirection,
-    GlyphTextureCache,
-    TextBackgroundMode,
-    TextBackgroundModeStrings,
-    TextBuffer,
-    TextMaterialConstructor,
-    TextRenderer,
-    TextStyle
-} from "@here/harp-text-renderer";
-import { GroupedPriorityList, LoggerManager, Math2D, MathUtils } from "@here/harp-utils";
+    getOptionValue,
+    GroupedPriorityList,
+    LoggerManager,
+    Math2D,
+    MathUtils
+} from "@here/harp-utils";
 import * as THREE from "three";
 
 import { ColorCache } from "../ColorCache";
 import { DataSource } from "../DataSource";
+import { debugContext } from "../DebugContext";
 import { MapView } from "../MapView";
 import { PickObjectType, PickResult } from "../PickHandler";
 import { PoiRenderer } from "../poi/PoiRenderer";
@@ -33,11 +24,49 @@ import { ScreenCollisions } from "../ScreenCollisions";
 import { ScreenProjector } from "../ScreenProjector";
 import { Tile } from "../Tile";
 import { SimpleLineCurve, SimplePath } from "./SimplePath";
-import { FadingState, RenderState, TextElement, TextPickResult } from "./TextElement";
+import { FadingState, LoadingState, RenderState, TextElement, TextPickResult } from "./TextElement";
+import { DEFAULT_TEXT_STYLE_CACHE_ID } from "./TextStyleCache";
 
-const DEBUG_GLYPH_MESH = false;
+import {
+    AdditionParameters,
+    DEFAULT_TEXT_CANVAS_LAYER,
+    FontCatalog,
+    FontStyle,
+    FontUnit,
+    FontVariant,
+    HorizontalAlignment,
+    MeasurementParameters,
+    TextBufferAdditionParameters,
+    TextCanvas,
+    TextLayoutParameters,
+    TextLayoutStyle,
+    TextRenderParameters,
+    TextRenderStyle,
+    VerticalAlignment
+} from "@here/harp-text-canvas";
 
-const DEBUG_TEXT_LAYOUT = false;
+const DEFAULT_STYLE_NAME = "default";
+const DEFAULT_FONT_CATALOG_NAME = "default";
+const MAX_INITIALIZED_TEXT_ELEMENTS_PER_FRAME = Infinity;
+const MAX_GLYPH_COUNT = 32768;
+
+interface TextCanvasRenderer {
+    fontCatalog: string;
+    textCanvas: TextCanvas;
+    poiRenderer: PoiRenderer;
+}
+
+/**
+ * [[TextElementsRenderer]] representation of a [[Theme]]'s TextStyle.
+ */
+export interface TextElementStyle {
+    name: string;
+    fontCatalog: string;
+    renderParams: TextRenderParameters;
+    layoutParams: TextLayoutParameters;
+    textCanvas?: TextCanvas;
+    poiRenderer?: PoiRenderer;
+}
 
 /**
  * Default number of labels/POIs rendered in the scene
@@ -71,53 +100,19 @@ const DEFAULT_LABEL_SCALE_START_DISTANCE = 0.4;
 // Development flag: Enable debug print.
 const PRINT_LABEL_DEBUG_INFO: boolean = false;
 
-// Some punctuation characters (like: (, ), <, >, [,], {, }) need to be mirrored when rendering an
-// RTL string to preserve their intrinsic meaning.
-// https://en.wikipedia.org/wiki/Basic_Latin_(Unicode_block)#Table_of_characters
-const rtlMirroredCodepoints = [40, 41, 60, 62, 91, 93, 123, 125];
-
 const logger = LoggerManager.instance.create("TextElementsRenderer");
 
 // Cache the DevicePixelRatio here:
 let devicePixelRatio = 1;
 
-const tempCorners = new Array<THREE.Vector2>();
-const tempGlyphBox = new THREE.Box2();
-const tempGlyphBox2D = new Math2D.Box();
-const tempWorldPos = new THREE.Vector3();
+const tempBox = new THREE.Box2();
+const tempBoxes: THREE.Box2[] = [];
+const tempBox2D = new Math2D.Box();
 
 const tempPosition = new THREE.Vector3();
+const tempPoiPosition = new THREE.Vector3(0, 0, 0);
 const tempScreenPosition = new THREE.Vector2();
 const tempPoiScreenPosition = new THREE.Vector2();
-
-const tempTransform = new THREE.Matrix4();
-const tempTextBounds = new Math2D.Box();
-const tempOffset = new THREE.Vector3();
-
-const tempTextRect = { x: Infinity, y: Infinity, width: -Infinity, height: -Infinity };
-const tempTextLabelBounds = new THREE.Box2();
-const tempV3 = new THREE.Vector3(0, 0, 0);
-const tempV4 = new THREE.Vector4();
-
-const tempScreenBox: Math2D.Box = new Math2D.Box();
-
-enum PathPlacementError {
-    None,
-    Visibility,
-    ExtremeAngle,
-    PathOverflow,
-    BufferOverflow
-}
-
-interface PathData {
-    startIndex?: number;
-    startOffset?: number;
-    offset?: number;
-    tangent?: THREE.Vector2;
-    prevTangent?: THREE.Vector2;
-    direction?: number;
-    placementError?: PathPlacementError;
-}
 
 class TileTextElements {
     constructor(readonly tile: Tile, readonly textElements: TextElement[]) {}
@@ -133,27 +128,17 @@ class TextElementLists {
  * Internal class to manage all text rendering.
  */
 export class TextElementsRenderer {
-    private m_debugGeometry?: THREE.BufferGeometry;
-    private m_debugPositions?: THREE.BufferAttribute;
-    private m_debugIndex?: THREE.BufferAttribute;
-    private m_debugMesh?: THREE.Mesh;
-    private m_positionCount = 0;
-    private m_indexCount = 0;
-    private m_textRenderer?: TextRenderer;
-    private m_poiRenderer?: PoiRenderer;
-    private m_fontCatalogs: Map<string, FontCatalog> = new Map();
-    private m_textStyles: TextStyle[] = [];
-    private m_defaultStyle: TextStyle = {
+    private m_initializedTextElementCount = 0;
+
+    private m_textRenderers: TextCanvasRenderer[] = [];
+    private m_textStyles: Map<string, TextElementStyle> = new Map();
+    private m_defaultStyle: TextElementStyle = {
         name: DEFAULT_STYLE_NAME,
-        fontCatalogName: DEFAULT_FONT_CATALOG_NAME,
-        color: "#6d7477",
-        bgMode: TextBackgroundModeStrings.Outline,
-        bgColor: "#F7FBFD",
-        bgFactor: 5,
-        bgAlpha: 0.5,
-        allCaps: false,
-        smallCaps: false
+        fontCatalog: DEFAULT_FONT_CATALOG_NAME,
+        renderParams: this.m_mapView.textRenderStyleCache.get(DEFAULT_TEXT_STYLE_CACHE_ID)!.params,
+        layoutParams: this.m_mapView.textLayoutStyleCache.get(DEFAULT_TEXT_STYLE_CACHE_ID)!.params
     };
+
     private m_lastRenderedTextElements: TextElement[] = [];
     private m_secondChanceTextElements: TextElement[] = [];
 
@@ -179,7 +164,6 @@ export class TextElementsRenderer {
      * @param m_labelStartScaleDistance Distance at which the [[TextElement]]s start to apply their
      *          `distanceScale` value, expressed as a fraction of the distance between the near and
      *          far plane [0, 1.0]. Defaults to `0.4`.
-     * @param m_textMaterialConstructor Factory method to allow to create custom font materials.
      */
     constructor(
         private m_mapView: MapView,
@@ -189,8 +173,7 @@ export class TextElementsRenderer {
         private m_maxNumVisibleLabels: number | undefined,
         private m_numSecondChanceLabels: number | undefined,
         private m_maxDistanceRatioForLabels: number | undefined,
-        private m_labelStartScaleDistance: number | undefined,
-        private m_textMaterialConstructor: TextMaterialConstructor
+        private m_labelStartScaleDistance: number | undefined
     ) {
         if (this.m_maxNumVisibleLabels === undefined) {
             this.m_maxNumVisibleLabels = DEFAULT_MAX_NUM_RENDERED_TEXT_ELEMENTS;
@@ -205,123 +188,29 @@ export class TextElementsRenderer {
             this.m_labelStartScaleDistance = DEFAULT_LABEL_SCALE_START_DISTANCE;
         }
 
-        this.initTextRenderer();
+        devicePixelRatio = this.m_mapView.renderer.getPixelRatio();
 
-        if (DEBUG_GLYPH_MESH) {
-            const planeGeometry = new THREE.PlaneGeometry(
-                GLYPH_CACHE_TEXTURE_SIZE / 2.5,
-                GLYPH_CACHE_TEXTURE_SIZE / 2.5,
-                GLYPH_CACHE_WIDTH,
-                GLYPH_CACHE_WIDTH
-            );
-            const material = new THREE.MeshBasicMaterial({
-                transparent: true,
-                depthWrite: false,
-                depthTest: false
-            });
-            this.m_debugGlyphTextureCacheMesh = new THREE.Mesh(planeGeometry, material);
-            this.m_debugGlyphTextureCacheMesh.renderOrder = 10000;
-            this.m_debugGlyphTextureCacheMesh.visible = false;
-
-            this.m_debugGlyphTextureCacheMesh.name = "glyphDebug";
-
-            const wireframe = new THREE.WireframeGeometry(planeGeometry);
-            const wireframeMaterial = new THREE.LineBasicMaterial({
-                transparent: true,
-                color: 0x999999,
-                depthWrite: false,
-                depthTest: false
-            });
-            this.m_debugGlyphTextureCacheWireMesh = new THREE.LineSegments(
-                wireframe,
-                wireframeMaterial
-            );
-            this.m_debugGlyphTextureCacheWireMesh.renderOrder = 9999;
-            this.m_debugGlyphTextureCacheWireMesh.visible = false;
-
-            this.m_debugGlyphTextureCacheWireMesh.name = "glyphDebug";
-        }
-
-        if (DEBUG_TEXT_LAYOUT) {
-            this.m_debugPositions = new THREE.BufferAttribute(new Float32Array(10 * 1024), 3);
-            this.m_debugPositions.setDynamic(true);
-
-            this.m_debugIndex = new THREE.BufferAttribute(new Uint32Array(10 * 1024), 1);
-            this.m_debugIndex.setDynamic(true);
-
-            this.m_debugGeometry = new THREE.BufferGeometry();
-
-            this.m_debugGeometry.addAttribute("position", this.m_debugPositions);
-            this.m_debugGeometry.setIndex(this.m_debugIndex);
-
-            this.m_debugMesh = new THREE.Mesh(
-                this.m_debugGeometry,
-                new THREE.MeshBasicMaterial({
-                    //wireframe: true,
-                    color: "#f00"
-                })
-            );
-
-            this.m_debugMesh.renderOrder = 1000;
-
-            this.m_debugPositions.count = 0;
-            this.m_debugIndex.count = 0;
-        }
-    }
-
-    /**
-     * Signal end of rendering of a frame, prepares for creating geometry from all buffers.
-     */
-    end() {
-        if (
-            !DEBUG_TEXT_LAYOUT ||
-            this.m_debugPositions === undefined ||
-            this.m_debugIndex === undefined
-        ) {
-            return;
-        }
-
-        if (this.m_positionCount > 0) {
-            this.m_debugPositions.updateRange.count =
-                this.m_positionCount * this.m_debugPositions.itemSize;
-            this.m_debugPositions.needsUpdate = true;
-        }
-
-        this.m_debugPositions.count = this.m_positionCount * this.m_debugPositions.itemSize;
-
-        if (this.m_indexCount > 0) {
-            this.m_debugIndex.updateRange.count = this.m_indexCount;
-            this.m_debugIndex.needsUpdate = true;
-        }
-
-        this.m_debugIndex.count = this.m_indexCount;
-
-        this.m_positionCount = 0;
-        this.m_indexCount = 0;
-    }
-
-    /**
-     * Access the debug mesh which contains areas covered by text (even if no text is visible).
-     */
-    get debugMesh(): THREE.Mesh | undefined {
-        return this.m_debugMesh;
+        this.initializeDefaultAssets();
+        this.initializeTextCanvases();
     }
 
     /**
      * Render the text using the specified camera into the current canvas.
      *
-     * @param renderer The WebGLRenderer to call.
      * @param camera Orthographic camera to use.
      */
-    renderText(renderer: THREE.WebGLRenderer, camera: THREE.OrthographicCamera) {
-        if (this.m_textRenderer !== undefined) {
-            this.m_textRenderer.render(
-                renderer,
-                camera,
-                this.m_mapView.cameraIsMoving ||
-                    this.m_mapView.animating ||
-                    this.m_mapView.updatePending
-            );
+    renderText(camera: THREE.OrthographicCamera) {
+        const debugGlyphs = debugContext.getValue("DEBUG_GLYPHS");
+        if (
+            debugGlyphs !== undefined &&
+            this.m_debugGlyphTextureCacheMesh !== undefined &&
+            this.m_debugGlyphTextureCacheWireMesh !== undefined
+        ) {
+            this.m_debugGlyphTextureCacheMesh.visible = debugGlyphs;
+            this.m_debugGlyphTextureCacheWireMesh.visible = debugGlyphs;
+        }
+        for (const textRenderer of this.m_textRenderers) {
+            textRenderer.textCanvas.render(camera);
         }
     }
 
@@ -329,46 +218,21 @@ export class TextElementsRenderer {
      * Reset internal state at the beginning of a frame.
      */
     reset() {
-        devicePixelRatio = window.devicePixelRatio;
+        devicePixelRatio = this.m_mapView.renderer.getPixelRatio();
         this.m_screenCollisions.reset();
-        if (this.m_textRenderer !== undefined) {
-            this.m_textRenderer.reset();
-            this.m_poiRenderer!.reset();
-
-            for (const fontCatalog of this.m_textRenderer.fontCatalogs) {
-                const glyphCache = this.m_textRenderer.getGlyphTextureCacheForFontCatalog(
-                    fontCatalog
-                );
-                if (glyphCache === undefined) {
-                    logger.error("FontCatalog not used by text renderer: " + fontCatalog);
-                    return;
-                }
-                glyphCache.resetBuffer();
-            }
+        for (const textRenderer of this.m_textRenderers) {
+            textRenderer.textCanvas.clear();
+            textRenderer.poiRenderer.reset();
         }
+        this.m_initializedTextElementCount = 0;
     }
 
     /**
-     * Create the geometries at the end of a frame before rendering them.
-     *
-     * @param renderer WebGLRenderer used to copy the glyphs.
+     * Update the geometries at the end of a frame before rendering them.
      */
-    update(renderer: THREE.WebGLRenderer) {
-        if (this.m_textRenderer !== undefined) {
-            this.m_textRenderer.update();
-            this.m_poiRenderer!.update();
-
-            for (const fontCatalog of this.m_textRenderer.fontCatalogs) {
-                const glyphCache = this.m_textRenderer.getGlyphTextureCacheForFontCatalog(
-                    fontCatalog
-                );
-                if (glyphCache === undefined) {
-                    logger.error("FontCatalog not used by text renderer: " + fontCatalog);
-                    return;
-                }
-                glyphCache.updateBuffer();
-                glyphCache.updateTexture(renderer);
-            }
+    update() {
+        for (const textRenderer of this.m_textRenderers) {
+            textRenderer.poiRenderer.update();
         }
     }
 
@@ -399,23 +263,12 @@ export class TextElementsRenderer {
     }
 
     /**
-     * Sets the debug option to render the internal [[GlyphTextureCache]]s into the canvas.
-     */
-    set debugGlyphTextureCache(value: boolean) {
-        if (DEBUG_GLYPH_MESH) {
-            this.m_debugGlyphTextureCacheMesh!.visible = value;
-            this.m_debugGlyphTextureCacheWireMesh!.visible = value;
-        }
-    }
-
-    /**
      * Render the user [[TextElement]]s.
      *
      * @param time Current time for animations.
      * @param frameNumber Integer number incremented every frame.
      */
     renderUserTextElements(time: number, frameNumber: number) {
-        const textCache = new Map<string, THREE.Vector2[]>();
         const renderList = this.m_mapView.visibleTileSet.dataSourceTileList;
 
         // Take the world position of the camera as the origin to compute the distance to the
@@ -434,13 +287,7 @@ export class TextElementsRenderer {
                     this.updateViewDistance(worldCenter, textElement);
                 }
 
-                this.renderTextElements(
-                    tile.userTextElements,
-                    time,
-                    frameNumber,
-                    zoomLevel,
-                    textCache
-                );
+                this.renderTextElements(tile.userTextElements, time, frameNumber, zoomLevel);
             }
         });
     }
@@ -452,7 +299,6 @@ export class TextElementsRenderer {
      * @param frameNumber Integer number incremented every frame.
      */
     renderAllTileText(time: number, frameNumber: number) {
-        const textCache = new Map<string, THREE.Vector2[]>();
         const renderList = this.m_mapView.visibleTileSet.dataSourceTileList;
         const zoomLevel = this.m_mapView.zoomLevel;
 
@@ -464,7 +310,6 @@ export class TextElementsRenderer {
                     time,
                     frameNumber,
                     zoomLevel,
-                    textCache,
                     this.m_lastRenderedTextElements,
                     this.m_secondChanceTextElements
                 );
@@ -474,13 +319,7 @@ export class TextElementsRenderer {
             const allRenderableTextElements = this.m_lastRenderedTextElements.concat(
                 this.m_secondChanceTextElements
             );
-            this.renderTextElements(
-                allRenderableTextElements,
-                time,
-                frameNumber,
-                zoomLevel,
-                textCache
-            );
+            this.renderTextElements(allRenderableTextElements, time, frameNumber, zoomLevel);
         }
     }
 
@@ -546,17 +385,33 @@ export class TextElementsRenderer {
             }
         };
 
-        if (this.m_textRenderer !== undefined) {
-            this.m_textRenderer.pickTextElements(screenPosition, (pickData: any | undefined) => {
+        for (const textRenderer of this.m_textRenderers) {
+            textRenderer.textCanvas.pickText(screenPosition, (pickData: any | undefined) => {
                 pickHandler(pickData, PickObjectType.Text);
             });
+            textRenderer.poiRenderer.pickTextElements(
+                screenPosition,
+                (pickData: any | undefined) => {
+                    pickHandler(pickData, PickObjectType.Icon);
+                }
+            );
         }
+    }
 
-        if (this.m_poiRenderer !== undefined) {
-            this.m_poiRenderer.pickTextElements(screenPosition, (pickData: any | undefined) => {
-                pickHandler(pickData, PickObjectType.Icon);
-            });
+    /**
+     * Retrieves a [[TextElementStyle]] for [[Theme]]'s [[TextStyle]] id.
+     */
+    getTextElementStyle(styleId?: string): TextElementStyle {
+        let result;
+        if (styleId === undefined) {
+            result = this.m_defaultStyle;
+        } else {
+            result = this.m_textStyles.get(styleId);
+            if (result === undefined) {
+                result = this.m_defaultStyle;
+            }
         }
+        return result;
     }
 
     /**
@@ -564,9 +419,8 @@ export class TextElementsRenderer {
      */
     get loading(): boolean {
         let isLoading = false;
-        // tslint:disable-next-line:no-unused-variable
-        for (const [fontCatalogName, fontCatalog] of this.m_fontCatalogs) {
-            isLoading = isLoading || fontCatalog.loading;
+        for (const textRenderer of this.m_textRenderers) {
+            isLoading = isLoading || textRenderer.textCanvas.fontCatalog.isLoading;
         }
         return isLoading;
     }
@@ -593,11 +447,8 @@ export class TextElementsRenderer {
         });
     }
 
-    private initTextRenderer() {
-        let defaultFontCatalogName: string | undefined;
-
-        devicePixelRatio = window.devicePixelRatio;
-
+    private initializeDefaultAssets(): void {
+        // Initialize default font catalog.
         if (
             this.m_theme.fontCatalogs === undefined ||
             (Array.isArray(this.m_theme.fontCatalogs) && this.m_theme.fontCatalogs.length === 0)
@@ -611,6 +462,7 @@ export class TextElementsRenderer {
         }
         const fontCatalogs = this.m_theme.fontCatalogs;
 
+        let defaultFontCatalogName: string | undefined;
         if (fontCatalogs.length > 0) {
             for (const fontCatalog of fontCatalogs) {
                 if (fontCatalog.name !== undefined) {
@@ -624,139 +476,220 @@ export class TextElementsRenderer {
             }
         }
 
+        // Initialize default text style.
         if (this.m_theme.textStyles === undefined) {
             this.m_theme.textStyles = [];
         }
-
         const styles = this.m_theme.textStyles;
+
         const themedDefaultStyle = styles.find(style => style.name === DEFAULT_STYLE_NAME);
-
         if (themedDefaultStyle !== undefined) {
-            // The TextStyle named "default" overrides the old `defaultTextStyle` in `Theme`.
-            this.m_defaultStyle = themedDefaultStyle;
+            this.m_defaultStyle = this.createTextElementStyle(
+                themedDefaultStyle,
+                DEFAULT_STYLE_NAME
+            );
         } else if (this.m_theme.defaultTextStyle !== undefined) {
-            // The old `defaultTextStyle` in `Theme` is the new default.
-            this.m_defaultStyle = this.m_theme.defaultTextStyle;
-            this.m_defaultStyle.name = DEFAULT_STYLE_NAME;
-            styles.push(this.m_defaultStyle);
+            this.m_defaultStyle = this.createTextElementStyle(
+                this.m_theme.defaultTextStyle,
+                DEFAULT_STYLE_NAME
+            );
         } else if (styles.length > 0) {
-            // The first style in the list is the new default style.
-            this.m_defaultStyle = styles[0];
-            this.m_defaultStyle.name = DEFAULT_STYLE_NAME;
-        } else {
-            // Last fallback:
-            styles.push(this.m_defaultStyle);
+            this.m_defaultStyle = this.createTextElementStyle(styles[0], DEFAULT_STYLE_NAME);
         }
+        this.m_defaultStyle.fontCatalog = defaultFontCatalogName!;
 
-        this.m_defaultStyle.fontCatalogName = defaultFontCatalogName;
-
-        if (this.m_defaultStyle.color !== undefined) {
-            this.m_mapView.defaultTextColor = new THREE.Color(this.m_defaultStyle.color);
+        // Initialize default text color.
+        if (this.m_defaultStyle.renderParams.color !== undefined) {
+            this.m_mapView.defaultTextColor = this.m_defaultStyle.renderParams.color;
         }
-
-        this.loadThemeFonts(fontCatalogs);
     }
 
-    private loadThemeFonts(fontCatalogs?: FontCatalogConfig[]) {
-        if (fontCatalogs === undefined) {
-            return;
-        }
+    private createTextElementStyle(style: TextStyle, styleName: string): TextElementStyle {
+        return {
+            name: styleName,
+            fontCatalog: getOptionValue(style.fontCatalogName, DEFAULT_FONT_CATALOG_NAME),
+            renderParams: {
+                fontSize: {
+                    unit: FontUnit.Percent,
+                    size: 50.0,
+                    backgroundSize: style.bgFactor !== undefined ? style.bgFactor * 3.0 : 0.0
+                },
+                fontVariant:
+                    style.smallCaps === true
+                        ? FontVariant.SmallCaps
+                        : style.allCaps === true
+                        ? FontVariant.AllCaps
+                        : undefined,
+                fontStyle:
+                    style.bold === true
+                        ? style.oblique === true
+                            ? FontStyle.BoldItalic
+                            : FontStyle.Bold
+                        : style.oblique === true
+                        ? FontStyle.Italic
+                        : undefined,
+                color:
+                    style.color !== undefined
+                        ? ColorCache.instance.getColor(style.color)
+                        : undefined,
+                backgroundColor:
+                    style.bgColor !== undefined
+                        ? ColorCache.instance.getColor(style.bgColor)
+                        : undefined,
+                backgroundOpacity: style.bgAlpha
+            },
+            layoutParams: {
+                tracking: style.tracking,
+                verticalAlignment: VerticalAlignment.Center,
+                horizontalAlignment: HorizontalAlignment.Center
+            }
+        };
+    }
 
+    private initializeTextCanvases(): void {
         const promises: Array<Promise<void>> = [];
-        const missingFontCatalogs: string[] = [];
-        fontCatalogs.forEach(fontCatalog => {
-            const fontCatalogPromise: Promise<FontCatalog> = FontCatalog.load(
-                fontCatalog.url,
-                fontCatalog.name,
-                () => {
-                    this.m_mapView.update();
-                }
-            );
-            const fontCatalogLoadedPromise: Promise<void> = fontCatalogPromise
-                .then((fontCatalogInfo: FontCatalog) => {
-                    this.m_fontCatalogs.set(fontCatalogInfo.name, fontCatalogInfo);
-                    this.m_mapView.update();
-                    return;
+        this.m_theme.fontCatalogs!.forEach(fontCatalogConfig => {
+            const fontCatalogPromise: Promise<void> = FontCatalog.load(fontCatalogConfig.url, 1024)
+                .then((loadedFontCatalog: FontCatalog) => {
+                    const loadedTextCanvas = new TextCanvas({
+                        renderer: this.m_mapView.renderer,
+                        fontCatalog: loadedFontCatalog,
+                        maxGlyphCount: MAX_GLYPH_COUNT
+                    });
+                    this.m_textRenderers.push({
+                        fontCatalog: fontCatalogConfig.name,
+                        textCanvas: loadedTextCanvas,
+                        poiRenderer: new PoiRenderer(this.m_mapView, loadedTextCanvas)
+                    });
                 })
                 .catch((error: Error) => {
-                    missingFontCatalogs.push(fontCatalog.name);
-                    logger.error("failed to load font. ", error);
+                    logger.error("Failed to load FontCatalog: ", error);
                 });
-            promises.push(fontCatalogLoadedPromise);
+            promises.push(fontCatalogPromise);
         });
+
         Promise.all(promises).then(() => {
-            this.initTextStyles();
-            this.createTextRenderer();
+            this.initializeTextElementStyles();
+
+            const defaultFontCatalog = this.m_textRenderers[0].textCanvas.fontCatalog;
+
+            // Initialize glyph-debugging mesh.
+            const planeGeometry = new THREE.PlaneGeometry(
+                defaultFontCatalog.textureSize.width / 2.5,
+                defaultFontCatalog.textureSize.height / 2.5,
+                defaultFontCatalog.textureSize.width / defaultFontCatalog.maxWidth,
+                defaultFontCatalog.textureSize.height / defaultFontCatalog.maxHeight
+            );
+            const material = new THREE.MeshBasicMaterial({
+                transparent: true,
+                depthWrite: false,
+                depthTest: false,
+                map: defaultFontCatalog.texture
+            });
+            this.m_debugGlyphTextureCacheMesh = new THREE.Mesh(planeGeometry, material);
+            this.m_debugGlyphTextureCacheMesh.renderOrder = 10000;
+            this.m_debugGlyphTextureCacheMesh.visible = false;
+
+            this.m_debugGlyphTextureCacheMesh.name = "glyphDebug";
+
+            const wireframe = new THREE.WireframeGeometry(planeGeometry);
+            const wireframeMaterial = new THREE.LineBasicMaterial({
+                transparent: true,
+                color: 0x999999,
+                depthWrite: false,
+                depthTest: false
+            });
+            this.m_debugGlyphTextureCacheWireMesh = new THREE.LineSegments(
+                wireframe,
+                wireframeMaterial
+            );
+            this.m_debugGlyphTextureCacheWireMesh.renderOrder = 9999;
+            this.m_debugGlyphTextureCacheWireMesh.visible = false;
+
+            this.m_debugGlyphTextureCacheWireMesh.name = "glyphDebug";
+
+            this.m_textRenderers[0].textCanvas
+                .getLayer(DEFAULT_TEXT_CANVAS_LAYER)!
+                .scene.add(
+                    this.m_debugGlyphTextureCacheMesh,
+                    this.m_debugGlyphTextureCacheWireMesh
+                );
+
+            this.m_mapView.update();
         });
     }
 
-    private initTextStyles() {
-        if (
-            this.m_theme === undefined ||
-            this.m_theme.textStyles === undefined ||
-            this.m_theme.textStyles.length === undefined
-        ) {
-            return;
-        }
-
-        this.m_theme.textStyles.forEach(element => {
-            this.m_textStyles.push({ ...element });
-        });
-        this.assignFontCatalogsToStyles();
-    }
-
-    private assignFontCatalogsToStyles() {
-        let defaultFontCatalog: FontCatalog | undefined;
-        this.m_fontCatalogs.forEach(fontCatalog => {
-            if (defaultFontCatalog === undefined) {
-                defaultFontCatalog = fontCatalog;
+    private initializeTextElementStyles() {
+        // Find the default TextCanvas and PoiRenderer.
+        let defaultTextCanvas: TextCanvas | undefined;
+        this.m_textRenderers.forEach(textRenderer => {
+            if (defaultTextCanvas === undefined) {
+                defaultTextCanvas = textRenderer.textCanvas;
             }
         });
-        for (const style of this.m_textStyles) {
-            if (style.fontCatalog === undefined) {
-                if (style.fontCatalogName !== undefined) {
-                    style.fontCatalog = this.m_fontCatalogs.get(style.fontCatalogName);
+        const defaultPoiRenderer = new PoiRenderer(this.m_mapView, defaultTextCanvas!);
+
+        // Initialize default text style.
+        if (this.m_defaultStyle.fontCatalog !== undefined) {
+            const styledTextRenderer = this.m_textRenderers.find(
+                textRenderer => textRenderer.fontCatalog === this.m_defaultStyle.fontCatalog
+            );
+            this.m_defaultStyle.textCanvas =
+                styledTextRenderer !== undefined ? styledTextRenderer.textCanvas : undefined;
+            this.m_defaultStyle.poiRenderer =
+                styledTextRenderer !== undefined ? styledTextRenderer.poiRenderer : undefined;
+        }
+        if (this.m_defaultStyle.textCanvas === undefined) {
+            if (this.m_defaultStyle.fontCatalog !== undefined) {
+                logger.warn(
+                    `FontCatalog '${this.m_defaultStyle.fontCatalog}' set in TextStyle '${
+                        this.m_defaultStyle.name
+                    }' not found, using default fontCatalog(${
+                        defaultTextCanvas!.fontCatalog.name
+                    }).`
+                );
+            }
+            this.m_defaultStyle.textCanvas = defaultTextCanvas;
+            this.m_defaultStyle.poiRenderer = defaultPoiRenderer;
+        }
+
+        // Initialize theme text styles.
+        this.m_theme.textStyles!.forEach(element => {
+            this.m_textStyles.set(
+                element.name!,
+                this.createTextElementStyle(element, element.name!)
+            );
+        });
+        for (const [name, style] of this.m_textStyles) {
+            if (style.textCanvas === undefined) {
+                if (style.fontCatalog !== undefined) {
+                    const styledTextRenderer = this.m_textRenderers.find(
+                        textRenderer => textRenderer.fontCatalog === style.fontCatalog
+                    );
+                    style.textCanvas =
+                        styledTextRenderer !== undefined
+                            ? styledTextRenderer.textCanvas
+                            : undefined;
+                    style.poiRenderer =
+                        styledTextRenderer !== undefined
+                            ? styledTextRenderer.poiRenderer
+                            : undefined;
                 }
-                if (style.fontCatalog === undefined) {
-                    if (style.fontCatalogName !== undefined) {
+                if (style.textCanvas === undefined) {
+                    if (style.fontCatalog !== undefined) {
                         logger.warn(
-                            `FontCatalog '${style.fontCatalogName}' set in TextStyle`,
-                            style,
-                            "not found, using default fontCatalog."
+                            `FontCatalog '${style.fontCatalog}' set in TextStyle '${
+                                style.name
+                            }' not found, using default fontCatalog(${
+                                defaultTextCanvas!.fontCatalog.name
+                            }).`
                         );
                     }
-                    style.fontCatalog = defaultFontCatalog;
+                    style.textCanvas = defaultTextCanvas;
+                    style.poiRenderer = defaultPoiRenderer;
                 }
             }
         }
-    }
-
-    private createTextRenderer() {
-        this.m_textRenderer = new TextRenderer(this.m_textStyles, this.m_textMaterialConstructor);
-        if (this.debugMesh !== undefined) {
-            this.m_textRenderer.sceneSet.getScene(DEFAULT_TEXT_RENDER_ORDER).add(this.debugMesh);
-        }
-        this.m_poiRenderer = new PoiRenderer(this.m_mapView, this.m_textRenderer.sceneSet);
-
-        const glyphCache = this.m_textRenderer.getGlyphTextureCacheForFontCatalog(
-            this.m_defaultStyle.fontCatalogName
-        );
-        if (glyphCache === undefined) {
-            logger.error(
-                "FontCatalog not used by text renderer: " + this.m_defaultStyle.fontCatalogName
-            );
-            return;
-        }
-
-        if (DEBUG_GLYPH_MESH) {
-            (this.m_debugGlyphTextureCacheMesh!.material as THREE.MeshBasicMaterial).map =
-                glyphCache.texture;
-            this.m_textRenderer.sceneSet
-                .getScene(DEFAULT_TEXT_RENDER_ORDER)
-                .add(this.m_debugGlyphTextureCacheMesh!, this.m_debugGlyphTextureCacheWireMesh!);
-        }
-
-        this.m_mapView.update();
     }
 
     private updateViewDistance(
@@ -771,26 +704,26 @@ export class TextElementsRenderer {
         ) {
             // For POIs:
             const pos = textElement.position3;
-            tempV3.x = pos.x + textElement.tileCenterX!;
-            tempV3.y = pos.y + textElement.tileCenterY!;
-            viewDistance = worldCenter.distanceTo(tempV3);
+            tempPoiPosition.x = pos.x + textElement.tileCenterX!;
+            tempPoiPosition.y = pos.y + textElement.tileCenterY!;
+            viewDistance = worldCenter.distanceTo(tempPoiPosition);
         } else if (Array.isArray(textElement.points)) {
             if (textElement.points.length === 1) {
                 const posPoint = (textElement.points as THREE.Vector2[])[0];
-                tempV3.x = posPoint.x + textElement.tileCenterX!;
-                tempV3.y = posPoint.y + textElement.tileCenterY!;
-                viewDistance = worldCenter.distanceTo(tempV3);
+                tempPoiPosition.x = posPoint.x + textElement.tileCenterX!;
+                tempPoiPosition.y = posPoint.y + textElement.tileCenterY!;
+                viewDistance = worldCenter.distanceTo(tempPoiPosition);
             } else if (textElement.points.length > 1) {
                 const pathPoints = textElement.points as THREE.Vector2[];
                 let posPoint = pathPoints[0];
-                tempV3.x = posPoint.x + textElement.tileCenterX!;
-                tempV3.y = posPoint.y + textElement.tileCenterY!;
-                const viewDistance0 = worldCenter.distanceTo(tempV3);
+                tempPoiPosition.x = posPoint.x + textElement.tileCenterX!;
+                tempPoiPosition.y = posPoint.y + textElement.tileCenterY!;
+                const viewDistance0 = worldCenter.distanceTo(tempPoiPosition);
 
                 posPoint = pathPoints[pathPoints.length - 1];
-                tempV3.x = posPoint.x + textElement.tileCenterX!;
-                tempV3.y = posPoint.y + textElement.tileCenterY!;
-                const viewDistance1 = worldCenter.distanceTo(tempV3);
+                tempPoiPosition.x = posPoint.x + textElement.tileCenterX!;
+                tempPoiPosition.y = posPoint.y + textElement.tileCenterY!;
+                const viewDistance1 = worldCenter.distanceTo(tempPoiPosition);
 
                 viewDistance = Math.min(viewDistance0, viewDistance1);
             }
@@ -882,7 +815,7 @@ export class TextElementsRenderer {
         sortedTiles: Tile[],
         sortedGroups: TextElementLists[]
     ) {
-        if (this.m_textRenderer === undefined || sortedTiles.length === 0) {
+        if (this.m_textRenderers.length === 0 || sortedTiles.length === 0) {
             return;
         }
 
@@ -1016,196 +949,154 @@ export class TextElementsRenderer {
     }
 
     private renderOverlayTextElements(textElements: TextElement[]) {
-        if (this.m_textRenderer === undefined) {
+        if (this.m_textRenderers.length === 0) {
             return;
         }
 
-        const screenXOrigin = (-window.innerWidth * window.devicePixelRatio) / 2.0;
-        const screenYOrigin = (window.innerHeight * window.devicePixelRatio) / 2.0;
+        const screenSize = this.m_mapView.renderer.getSize();
+        const screenXOrigin = (-screenSize.width * devicePixelRatio) / 2.0;
+        const screenYOrigin = (screenSize.height * devicePixelRatio) / 2.0;
 
-        let allTextElementsReady = true;
+        const tempAdditionParams: AdditionParameters = {};
+        const tempBufferAdditionParams: TextBufferAdditionParameters = {};
 
         // Place text elements one by one.
         for (const textElement of textElements) {
-            const textRendererBuffer = this.m_textRenderer.getTextRendererBufferForStyle(
-                textElement.style
-            );
-
-            if (textRendererBuffer === undefined) {
-                break;
+            // Get the TextElementStyle.
+            const textElementStyle = this.getTextElementStyle(textElement.style);
+            const textCanvas = textElementStyle.textCanvas;
+            if (textCanvas === undefined) {
+                continue;
             }
+            const layer = textCanvas.getLayer(textElement.renderOrder || DEFAULT_TEXT_CANVAS_LAYER);
 
-            // Get the objects used for placing all glyphs.
-            const style = textRendererBuffer.textStyle;
-            const fontCatalog = style.fontCatalog;
-            const buffer = textRendererBuffer.textBuffer;
+            const isPathLabel = textElement.path !== undefined && !textElement.isLineMarker;
 
-            // Get style options common to all glyphs.
-            const bgMode =
-                style.bgMode === TextBackgroundModeStrings.Glow
-                    ? TextBackgroundMode.Glow
-                    : TextBackgroundMode.Outline;
-            const textScale = textElement.scale * devicePixelRatio;
+            // Trigger the glyph load if needed.
+            if (textElement.loadingState === undefined) {
+                textElement.loadingState = LoadingState.Requested;
 
-            // Compute the codepoints for this text element (reshaping, allCaps) if needed.
-            if (textElement.codePoints === undefined) {
-                textElement.computeCodePoints(textElement.allCaps);
+                if (textElement.renderStyle === undefined) {
+                    textElement.renderStyle = new TextRenderStyle({
+                        ...textElementStyle.renderParams,
+                        ...textElement.renderParams
+                    });
+                }
+                if (textElement.layoutStyle === undefined) {
+                    textElement.layoutStyle = new TextLayoutStyle({
+                        ...textElementStyle.layoutParams,
+                        ...textElement.layoutParams
+                    });
+                }
+
+                if (textElement.text === "") {
+                    textElement.loadingState = LoadingState.Loaded;
+                } else {
+                    textCanvas.fontCatalog
+                        .loadCharset(textElement.text, textElement.renderStyle)
+                        .then(() => {
+                            textElement.loadingState = LoadingState.Loaded;
+                            this.m_mapView.update();
+                        });
+                }
             }
-            if (
-                buffer === undefined ||
-                !buffer.canAddElements(textElement.codePoints.length) ||
-                fontCatalog === undefined
-            ) {
-                break;
+            if (textElement.loadingState === LoadingState.Loaded) {
+                if (this.m_initializedTextElementCount < MAX_INITIALIZED_TEXT_ELEMENTS_PER_FRAME) {
+                    textCanvas.textRenderStyle = textElement.renderStyle!;
+                    textCanvas.textLayoutStyle = textElement.layoutStyle!;
+                    if (!isPathLabel) {
+                        textElement.textBufferObject = textCanvas.createTextBufferObject(
+                            textElement.text
+                        );
+                    } else {
+                        textElement.glyphs = textCanvas.fontCatalog.getGlyphs(
+                            textElement.text,
+                            textCanvas.textRenderStyle
+                        );
+                    }
+                    textElement.loadingState = LoadingState.Initialized;
+                    ++this.m_initializedTextElementCount;
+                }
             }
-
-            // Get the GlyphTextureCache where the glyphs SDFs are stored.
-            const glyphCache = this.m_textRenderer.getGlyphTextureCacheForFontCatalog(
-                fontCatalog.name
-            );
-            if (glyphCache === undefined) {
-                logger.error("FontCatalog not used by text renderer: " + fontCatalog.name);
-                return;
-            }
-
-            // Check if the TextElement we're about to render has been fully loaded.
-            if (!this.isTextElementLoaded(textElement, fontCatalog, style)) {
-                allTextElementsReady = false;
+            if (textElement.loadingState !== LoadingState.Initialized) {
                 continue;
             }
 
-            // Define the point and path label placement functions.
-            const addPointLabel = (pointLabel: TextElement) => {
+            // Move onto the next TextElement if we cannot continue adding glyphs to this layer.
+            if (layer !== undefined) {
+                if (!isPathLabel) {
+                    if (
+                        layer.geometry.drawCount + textElement.textBufferObject!.glyphs.length >
+                        MAX_GLYPH_COUNT
+                    ) {
+                        continue;
+                    }
+                } else {
+                    if (layer.geometry.drawCount + textElement.glyphs!.length > MAX_GLYPH_COUNT) {
+                        continue;
+                    }
+                }
+            }
+
+            // Set the current style for the canvas.
+            textCanvas.textRenderStyle = textElement.renderStyle!;
+            textCanvas.textLayoutStyle = textElement.layoutStyle!;
+
+            // Place text.
+            let textPath;
+            if (!isPathLabel) {
+                // Adjust the label positioning.
+                tempScreenPosition.x =
+                    screenXOrigin + textElement.position.x * screenSize.width * devicePixelRatio;
+                tempScreenPosition.y =
+                    screenYOrigin - textElement.position.y * screenSize.height * devicePixelRatio;
+                if (textElement.xOffset !== undefined) {
+                    tempScreenPosition.x += textElement.xOffset * devicePixelRatio;
+                }
+                if (textElement.yOffset !== undefined) {
+                    tempScreenPosition.y -= textElement.yOffset * devicePixelRatio;
+                }
+
+                tempPosition.x = tempScreenPosition.x;
+                tempPosition.y = tempScreenPosition.y;
+                tempPosition.z = 0.0;
+
+                tempBufferAdditionParams.position = tempPosition;
+                tempBufferAdditionParams.layer = textElement.renderOrder;
+                textCanvas.addTextBufferObject(
+                    textElement.textBufferObject!,
+                    tempBufferAdditionParams
+                );
+            } else {
                 // Adjust the label positioning.
                 tempScreenPosition.x = screenXOrigin;
                 tempScreenPosition.y = screenYOrigin;
-                if (pointLabel.xOffset !== undefined) {
-                    tempScreenPosition.x += pointLabel.xOffset * devicePixelRatio;
+                if (textElement.xOffset !== undefined) {
+                    tempScreenPosition.x += textElement.xOffset * devicePixelRatio;
                 }
-                if (pointLabel.yOffset !== undefined) {
-                    tempScreenPosition.y -= pointLabel.yOffset * devicePixelRatio;
+                if (textElement.yOffset !== undefined) {
+                    tempScreenPosition.y -= textElement.yOffset * devicePixelRatio;
                 }
-                tempOffset.x = tempScreenPosition.x;
-                tempOffset.y = tempScreenPosition.y;
 
-                // TODO: Add support for horizontal alignment.
-
-                // Add the label to the TextBuffer.
-                if (pointLabel.bidirectional) {
-                    this.addBidirectionalLabel(
-                        pointLabel,
-                        buffer,
-                        fontCatalog,
-                        glyphCache,
-                        tempOffset,
-                        textScale,
-                        1.0,
-                        pointLabel.smallCaps!,
-                        bgMode
-                    );
-                } else {
-                    this.addDirectionalGlyphRun(
-                        pointLabel,
-                        pointLabel.textDirection,
-                        0,
-                        pointLabel.codePoints.length - 1,
-                        buffer,
-                        fontCatalog,
-                        glyphCache,
-                        tempOffset,
-                        textScale,
-                        1.0,
-                        pointLabel.smallCaps!,
-                        bgMode
-                    );
-                }
-            };
-            const addPathLabel = (pathLabel: TextElement) => {
                 // Get the screen points that define the label's segments and create a path with
                 // them.
                 // TODO: Optimize array allocations.
                 const screenPoints: THREE.Vector2[] = [];
-                for (const pt of pathLabel.path!) {
-                    const pX = screenXOrigin + pt.x;
-                    const pY = screenYOrigin - pt.y;
+                for (const pt of textElement.path!) {
+                    const pX = tempScreenPosition.x + pt.x * screenSize.width * devicePixelRatio;
+                    const pY = tempScreenPosition.y - pt.y * screenSize.height * devicePixelRatio;
                     screenPoints.push(new THREE.Vector2(pX, pY));
                 }
-                const path = new SimplePath();
+                textPath = new SimplePath();
                 for (let i = 0; i < screenPoints.length - 1; ++i) {
-                    path.add(new SimpleLineCurve(screenPoints[i], screenPoints[i + 1]));
+                    textPath.add(new THREE.LineCurve(screenPoints[i], screenPoints[i + 1]));
                 }
 
-                // Initialize the path data (if needed).
-                const pathData = pathLabel as PathData;
-                if (pathData.startIndex === undefined || pathData.startOffset === undefined) {
-                    const screenParam = path.getParamAt(0.5);
-                    pathData.startIndex = screenParam!.index;
-                    pathData.startOffset = screenParam!.t * screenParam!.t;
-                }
-
-                // Compute the initial offset in the label.
-                const lengths = path.getLengths();
-                const l1 = lengths[THREE.Math.clamp(pathData.startIndex, 0, lengths.length - 1)];
-                const l2 =
-                    lengths[THREE.Math.clamp(pathData.startIndex + 1, 0, lengths.length - 1)];
-                pathData.offset = THREE.Math.clamp(
-                    l1 * (1 - pathData.startOffset) + l2 * pathData.startOffset,
-                    0.0,
-                    1.0
-                );
-
-                // Compute the path initial tangent and direction.
-                pathData.tangent = path.getTangent(pathData.offset / path.getLength());
-                pathData.direction = pathData.tangent && pathData.tangent.x < 0 ? -1 : 1;
-                if (pathData.direction < 0) {
-                    pathData.offset += pathLabel.textWidth * textScale;
-                }
-
-                // Add the label to the TextBuffer.
-                if (pathLabel.bidirectional) {
-                    this.addBidirectionalLabel(
-                        pathLabel,
-                        buffer,
-                        fontCatalog,
-                        glyphCache,
-                        tempOffset,
-                        textScale,
-                        1.0,
-                        pathLabel.smallCaps!,
-                        bgMode,
-                        path
-                    );
-                } else {
-                    this.addDirectionalGlyphRun(
-                        pathLabel,
-                        pathLabel.textDirection,
-                        0,
-                        pathLabel.codePoints.length - 1,
-                        buffer,
-                        fontCatalog,
-                        glyphCache,
-                        tempOffset,
-                        textScale,
-                        1.0,
-                        pathLabel.smallCaps!,
-                        bgMode,
-                        path
-                    );
-                }
-            };
-
-            // Render a point label...
-            if (textElement.path === undefined || textElement.path.length <= 1) {
-                addPointLabel(textElement);
+                tempAdditionParams.path = textPath;
+                tempAdditionParams.pathOverflow = true;
+                tempAdditionParams.layer = textElement.renderOrder;
+                textCanvas.addText(textElement.glyphs!, tempPosition, tempAdditionParams);
             }
-            // ... or a path label.
-            else {
-                addPathLabel(textElement);
-            }
-        }
-
-        if (!allTextElementsReady) {
-            this.m_mapView.update();
         }
     }
 
@@ -1234,11 +1125,10 @@ export class TextElementsRenderer {
         time: number,
         frameNumber: number,
         zoomLevel: number,
-        textCache: Map<string, THREE.Vector2[]>,
         renderedTextElements?: TextElement[],
         secondChanceTextElements?: TextElement[]
     ): number {
-        if (this.m_textRenderer === undefined || this.m_poiRenderer === undefined) {
+        if (this.m_textRenderers.length === 0) {
             return 0;
         }
 
@@ -1246,10 +1136,6 @@ export class TextElementsRenderer {
 
         const printInfo = textElements.length > 5000;
         let numNotVisible = 0;
-        let numPlacementIssue1 = 0;
-        let numPlacementIssue2 = 0;
-        let numPlacementIssue3 = 0;
-        let numPlacementIssue4 = 0;
         let numCannotAdd = 0;
         let numRenderedPoiIcons = 0;
         let numRenderedPoiTexts = 0;
@@ -1268,7 +1154,6 @@ export class TextElementsRenderer {
         const poiTextMaxDistance = this.getMaxDistance(poiTextFarDistanceLimitRatio);
 
         const cameraIsMoving = this.m_mapView.cameraIsMoving;
-        const poiRenderer = this.m_poiRenderer!;
         const cameraFar = this.m_mapView.camera.far;
         // Take the world position of the camera as the origin to compute the distance to the
         // tex elements.
@@ -1277,7 +1162,9 @@ export class TextElementsRenderer {
         // Keep track if we need to call another update() on MapView.
         let fadeAnimationRunning = false;
 
-        let allTextElementsReady = true;
+        const tempAdditionParams: AdditionParameters = {};
+        const tempMeasurementParams: MeasurementParameters = {};
+        const tempBufferAdditionParams: TextBufferAdditionParameters = {};
 
         // Place text elements one by one.
         for (const textElement of textElements) {
@@ -1289,52 +1176,67 @@ export class TextElementsRenderer {
                 break;
             }
 
-            const textRendererBuffer = this.m_textRenderer.getTextRendererBufferForStyle(
-                textElement.style,
-                textElement.renderOrder
-            );
-
-            if (textRendererBuffer === undefined) {
-                break;
+            // Get the TextElementStyle.
+            const textElementStyle = this.getTextElementStyle(textElement.style);
+            const textCanvas = textElementStyle.textCanvas;
+            const poiRenderer = textElementStyle.poiRenderer;
+            if (textCanvas === undefined || poiRenderer === undefined) {
+                continue;
             }
+            const layer = textCanvas.getLayer(textElement.renderOrder || DEFAULT_TEXT_CANVAS_LAYER);
 
-            // Get the objects used for placing all glyphs.
-            const style = textRendererBuffer.textStyle;
-            const fontCatalog = style.fontCatalog;
-            const buffer = textRendererBuffer.textBuffer;
+            const isPathLabel = textElement.path !== undefined && !textElement.isLineMarker;
 
-            // Get style options common to all glyphs.
-            const bgMode =
-                style.bgMode === TextBackgroundModeStrings.Glow
-                    ? TextBackgroundMode.Glow
-                    : TextBackgroundMode.Outline;
+            // Trigger the glyph load if needed.
+            if (textElement.loadingState === undefined) {
+                textElement.loadingState = LoadingState.Requested;
 
-            // Compute the codepoints for this text element (reshaping, allCaps) if needed.
-            if (textElement.codePoints === undefined) {
-                textElement.computeCodePoints(textElement.allCaps);
+                if (textElement.renderStyle === undefined) {
+                    textElement.renderStyle = new TextRenderStyle({
+                        ...textElementStyle.renderParams,
+                        ...textElement.renderParams
+                    });
+                }
+                if (textElement.layoutStyle === undefined) {
+                    textElement.layoutStyle = new TextLayoutStyle({
+                        ...textElementStyle.layoutParams,
+                        ...textElement.layoutParams
+                    });
+                }
+
+                if (textElement.text === "") {
+                    textElement.loadingState = LoadingState.Loaded;
+                } else {
+                    textCanvas.fontCatalog
+                        .loadCharset(textElement.text, textElement.renderStyle)
+                        .then(() => {
+                            textElement.loadingState = LoadingState.Loaded;
+                            this.m_mapView.update();
+                        });
+                }
             }
-
-            if (
-                buffer === undefined ||
-                !buffer.canAddElements(textElement.codePoints.length) ||
-                fontCatalog === undefined
-            ) {
-                // Buffer space is exhausted, no need to proceed.
-                break;
+            if (textElement.loadingState === LoadingState.Loaded) {
+                if (this.m_initializedTextElementCount < MAX_INITIALIZED_TEXT_ELEMENTS_PER_FRAME) {
+                    textCanvas.textRenderStyle = textElement.renderStyle!;
+                    textCanvas.textLayoutStyle = textElement.layoutStyle!;
+                    if (!isPathLabel) {
+                        textElement.textBufferObject = textCanvas.createTextBufferObject(
+                            textElement.text,
+                            {
+                                outputBounds: true
+                            }
+                        );
+                    } else {
+                        textElement.glyphs = textCanvas.fontCatalog.getGlyphs(
+                            textElement.text,
+                            textCanvas.textRenderStyle
+                        );
+                    }
+                    textElement.loadingState = LoadingState.Initialized;
+                    ++this.m_initializedTextElementCount;
+                }
             }
-
-            // Get the GlyphTextureCache where the glyphs SDFs are stored.
-            const glyphCache = this.m_textRenderer.getGlyphTextureCacheForFontCatalog(
-                fontCatalog.name
-            );
-            if (glyphCache === undefined) {
-                logger.error("FontCatalog not used by text renderer: " + fontCatalog.name);
-                return -1;
-            }
-
-            // Check if the TextElement we're about to render has been fully loaded.
-            if (!this.isTextElementLoaded(textElement, fontCatalog, style)) {
-                allTextElementsReady = false;
+            if (textElement.loadingState !== LoadingState.Initialized) {
                 if (
                     secondChanceTextElements !== undefined &&
                     secondChanceTextElements.length < numSecondChanceLabels
@@ -1343,6 +1245,28 @@ export class TextElementsRenderer {
                 }
                 continue;
             }
+
+            // Move onto the next TextElement if we cannot continue adding glyphs to this layer.
+            if (layer !== undefined) {
+                if (!isPathLabel) {
+                    if (
+                        layer.geometry.drawCount + textElement.textBufferObject!.glyphs.length >
+                        MAX_GLYPH_COUNT
+                    ) {
+                        ++numCannotAdd;
+                        continue;
+                    }
+                } else {
+                    if (layer.geometry.drawCount + textElement.glyphs!.length > MAX_GLYPH_COUNT) {
+                        ++numCannotAdd;
+                        continue;
+                    }
+                }
+            }
+
+            // Set the current style for the canvas.
+            textCanvas.textRenderStyle = textElement.renderStyle!;
+            textCanvas.textLayoutStyle = textElement.layoutStyle!;
 
             // Define the point, poi, lineMarker and path label placement functions.
             const addPointLabel = (
@@ -1363,7 +1287,7 @@ export class TextElementsRenderer {
                 }
 
                 // Scale the text depending on the label's distance to the camera.
-                let textScale = pointLabel.scale * devicePixelRatio;
+                let textScale = devicePixelRatio;
                 let distanceScale = 1.0;
                 const textDistance = worldCenter.distanceTo(position);
                 if (textDistance !== undefined) {
@@ -1412,13 +1336,13 @@ export class TextElementsRenderer {
                         tempPoiScreenPosition,
                         distanceScale,
                         this.m_screenCollisions,
-                        tempScreenBox
+                        tempBox2D
                     );
 
                     if (iconIsVisible) {
                         iconSpaceAvailable = poiRenderer.isSpaceAvailable(
                             this.m_screenCollisions,
-                            tempScreenBox
+                            tempBox2D
                         );
 
                         // Reserve screen space if necessary, return false if failed:
@@ -1490,69 +1414,35 @@ export class TextElementsRenderer {
                         poiInfo.iconIsOptional !== false);
 
                 // Render the label's text...
-                if (doRenderText && pointLabel.codePoints.length > 0) {
-                    // Find the text bounding rect.
-                    let penX = 0;
-                    tempTextRect.x = Infinity;
-                    tempTextRect.y = Infinity;
-                    tempTextRect.width = -Infinity;
-                    tempTextRect.height = -Infinity;
-
-                    for (let i = 0; i < pointLabel.codePoints.length; ++i) {
-                        const glyph = fontCatalog.getGlyph(
-                            pointLabel.codePoints[i],
-                            pointLabel.bold
-                        );
-                        if (glyph === undefined) {
-                            continue;
-                        }
-
-                        const smallCapsScale =
-                            pointLabel.convertedToUpperCase[i] && textElement.smallCaps
-                                ? glyph.metrics.xHeight! / glyph.metrics.capHeight!
-                                : 1.0;
-
-                        const left = penX + glyph.offsetX;
-                        const right = left + glyph.width * smallCapsScale;
-                        const bottom = 0;
-                        const top = bottom - glyph.offsetY + glyph.height * smallCapsScale;
-
-                        if (left < tempTextRect.x) {
-                            tempTextRect.x = left;
-                        }
-                        if (bottom < tempTextRect.y) {
-                            tempTextRect.y = bottom;
-                        }
-                        if (right - tempTextRect.x > tempTextRect.width) {
-                            tempTextRect.width = right - tempTextRect.x;
-                        }
-                        if (top - tempTextRect.y > tempTextRect.height) {
-                            tempTextRect.height = top - tempTextRect.y;
-                        }
-
-                        penX += (glyph.advanceX + pointLabel.tracking) * smallCapsScale;
-                    }
-                    const scaledTextWidth = tempTextRect.width * textScale;
-                    const scaledTextHeight = tempTextRect.height * textScale;
-
-                    tempTextBounds.x =
-                        tempScreenPosition.x - scaledTextWidth * textElement.horizontalAlignment;
-                    tempTextBounds.y = tempScreenPosition.y - scaledTextHeight;
-                    tempTextBounds.w = scaledTextWidth;
-                    tempTextBounds.h = scaledTextHeight * 2.0;
-
+                if (doRenderText && textElement.text !== "") {
                     // Adjust the label positioning to match its bounding box.
-                    tempOffset.x = tempTextBounds.x;
-                    tempOffset.y = tempTextBounds.y + scaledTextHeight;
+                    tempPosition.x = tempScreenPosition.x;
+                    tempPosition.y = tempScreenPosition.y;
+                    tempPosition.z = textElement.renderDistance;
+
+                    tempBox2D.x =
+                        tempScreenPosition.x +
+                        pointLabel.textBufferObject!.bounds!.min.x * textScale;
+                    tempBox2D.y =
+                        tempScreenPosition.y +
+                        pointLabel.textBufferObject!.bounds!.min.y * textScale;
+                    tempBox2D.w =
+                        (pointLabel.textBufferObject!.bounds!.max.x -
+                            pointLabel.textBufferObject!.bounds!.min.x) *
+                        textScale;
+                    tempBox2D.h =
+                        (pointLabel.textBufferObject!.bounds!.max.y -
+                            pointLabel.textBufferObject!.bounds!.min.y) *
+                        textScale;
 
                     // TODO: Make the margin configurable
-                    tempTextBounds.x -= 4 * textScale;
-                    tempTextBounds.y -= 2 * textScale;
-                    tempTextBounds.w += 8 * textScale;
-                    tempTextBounds.h += 4 * textScale;
+                    tempBox2D.x -= 4 * textScale;
+                    tempBox2D.y -= 2 * textScale;
+                    tempBox2D.w += 8 * textScale;
+                    tempBox2D.h += 4 * textScale;
 
                     // Check the text visibility.
-                    if (!this.m_screenCollisions.isVisible(tempTextBounds)) {
+                    if (!this.m_screenCollisions.isVisible(tempBox2D)) {
                         if (
                             secondChanceTextElements !== undefined &&
                             secondChanceTextElements.length < numSecondChanceLabels
@@ -1571,7 +1461,7 @@ export class TextElementsRenderer {
                         textRenderState !== undefined && textRenderState.isFadingIn();
                     const textIsFadingOut =
                         textRenderState !== undefined && textRenderState.isFadingOut();
-                    const textSpaceAvailable = !this.m_screenCollisions.isAllocated(tempTextBounds);
+                    const textSpaceAvailable = !this.m_screenCollisions.isAllocated(tempBox2D);
                     const textVisible =
                         pointLabel.textMayOverlap ||
                         textSpaceAvailable ||
@@ -1579,14 +1469,9 @@ export class TextElementsRenderer {
                         textIsFadingOut;
 
                     if (textVisible) {
-                        // Add the debug view of the text bounding box if needed.
-                        if (DEBUG_TEXT_LAYOUT) {
-                            this.addDebugBoundingBox();
-                        }
-
                         // Allocate collision info if needed.
                         if (!textIsFadingOut && pointLabel.textReservesSpace) {
-                            this.m_screenCollisions.allocate(tempTextBounds);
+                            this.m_screenCollisions.allocate(tempBox2D);
                         }
 
                         // Do not actually render (just allocate space) if camera is moving and
@@ -1625,35 +1510,17 @@ export class TextElementsRenderer {
                                     ? textRenderState.opacity
                                     : iconRenderState.opacity;
 
-                            // Add the label to the TextBuffer.
-                            if (pointLabel.bidirectional) {
-                                this.addBidirectionalLabel(
-                                    pointLabel,
-                                    buffer,
-                                    fontCatalog,
-                                    glyphCache,
-                                    tempOffset,
-                                    textScale,
-                                    opacity * distanceFadeFactor,
-                                    pointLabel.smallCaps!,
-                                    bgMode
-                                );
-                            } else {
-                                this.addDirectionalGlyphRun(
-                                    pointLabel,
-                                    pointLabel.textDirection,
-                                    0,
-                                    pointLabel.codePoints.length - 1,
-                                    buffer,
-                                    fontCatalog,
-                                    glyphCache,
-                                    tempOffset,
-                                    textScale,
-                                    opacity * distanceFadeFactor,
-                                    pointLabel.smallCaps!,
-                                    bgMode
-                                );
-                            }
+                            tempBufferAdditionParams.layer = pointLabel.renderOrder;
+                            tempBufferAdditionParams.position = tempPosition;
+                            tempBufferAdditionParams.scale = textScale;
+                            tempBufferAdditionParams.opacity = opacity * distanceFadeFactor;
+                            tempBufferAdditionParams.backgroundOpacity =
+                                tempBufferAdditionParams.opacity *
+                                textElement.renderStyle!.backgroundOpacity;
+                            textCanvas.addTextBufferObject(
+                                pointLabel.textBufferObject!,
+                                tempBufferAdditionParams
+                            );
                         }
                         numRenderedPoiTexts++;
                     }
@@ -1803,13 +1670,6 @@ export class TextElementsRenderer {
                 if (minDistanceSqr > 0 && shieldGroup !== undefined) {
                     for (let i = 0; i < lineMarkerLabel.path.length; i++) {
                         const point = lineMarkerLabel.path[i];
-
-                        // Check if there is enough space in the buffer left for one more line
-                        // marker
-                        if (!buffer.canAddElements(lineMarkerLabel.codePoints.length)) {
-                            break;
-                        }
-
                         // Calculate the world position of this label.
                         tempPosition.x = point.x + lineMarkerLabel.tileCenterX!;
                         tempPosition.y = point.y + lineMarkerLabel.tileCenterY!;
@@ -1855,15 +1715,6 @@ export class TextElementsRenderer {
                 }
                 // Process markers (without shield groups).
                 else {
-                    // Check if there is enough space in the buffer left for all line markers.
-                    if (
-                        !buffer.canAddElements(
-                            lineMarkerLabel.path.length * lineMarkerLabel.codePoints.length
-                        )
-                    ) {
-                        return;
-                    }
-
                     for (let i = 0; i < lineMarkerLabel.path.length; i++) {
                         const point = lineMarkerLabel.path[i];
 
@@ -1889,7 +1740,7 @@ export class TextElementsRenderer {
                 }
             };
 
-            const addPathLabel = (pathLabel: TextElement) => {
+            const addPathLabel = (pathLabel: TextElement): boolean => {
                 // Limit the text rendering of path labels in the far distance.
                 if (
                     !(
@@ -1898,11 +1749,12 @@ export class TextElementsRenderer {
                         pathLabel.currentViewDistance < textMaxDistance
                     )
                 ) {
-                    return;
+                    return false;
                 }
 
                 // Compute values common for all glyphs in the label.
-                let textScale = pathLabel.scale * devicePixelRatio;
+                let textScale =
+                    (textCanvas.textRenderStyle.fontSize.size / 100.0) * devicePixelRatio;
                 let opacity = 1.0;
                 const tileCenterX = pathLabel.tileCenterX!;
                 const tileCenterY = pathLabel.tileCenterY!;
@@ -1910,8 +1762,6 @@ export class TextElementsRenderer {
                 const firstPoint = pathLabel.path![0].clone();
                 firstPoint.x += tileCenterX;
                 firstPoint.y += tileCenterY;
-                // It is expensive to transform all glyphs back to 3D to get the correct depth, so
-                // the current distance used for sorting is applied here.
 
                 // Scale the text depending on the label's distance to the camera.
                 let distanceScale = 1.0;
@@ -1922,7 +1772,7 @@ export class TextElementsRenderer {
                 ) {
                     // The label is farther away than fadeFar value, which means it is totally
                     // transparent
-                    return;
+                    return false;
                 }
 
                 // Update the real rendering distance to have smooth fading and scaling
@@ -1949,10 +1799,10 @@ export class TextElementsRenderer {
                 //      the visible part of the path.
                 const screenPoints: THREE.Vector2[] = [];
                 for (const pt of pathLabel.path!) {
-                    tempWorldPos.set(pt.x + tileCenterX, pt.y + tileCenterY, 0);
-                    const screenPoint = this.m_screenProjector.project(tempWorldPos);
+                    tempPosition.set(pt.x + tileCenterX, pt.y + tileCenterY, 0);
+                    const screenPoint = this.m_screenProjector.project(tempPosition);
                     if (screenPoint === undefined) {
-                        return;
+                        return false;
                     }
                     screenPoints.push(screenPoint);
                 }
@@ -1964,63 +1814,48 @@ export class TextElementsRenderer {
                 });
                 if (indexOfFirstVisibleScreenPoint === -1) {
                     numNotVisible++;
-                    return;
+                    return false;
                 }
-                const path = new SimplePath();
-                for (let i = 0; i < screenPoints.length - 1; ++i) {
-                    path.add(new SimpleLineCurve(screenPoints[i], screenPoints[i + 1]));
-                }
-
-                // Avoid placing labels that are bigger than their path.
-                if (pathLabel.textWidth * textScale > path.getLength()) {
-                    numPlacementIssue4++;
-                    return;
-                }
-
-                // Initialize the path data (if needed).
-                const pathData = pathLabel as PathData;
-                if (pathData.startIndex === undefined && pathData.startOffset === undefined) {
-                    const screenParam = path.getParamAt(0.5);
-                    pathData.startIndex = screenParam!.index;
-
-                    tempV4.set(
-                        pathLabel.path![pathData.startIndex].x + tileCenterX,
-                        pathLabel.path![pathData.startIndex].y + tileCenterY,
-                        0,
-                        1
-                    );
-                    this.m_screenProjector.projectVector(tempV4);
-                    const w1 = tempV4.w;
-
-                    tempV4.set(
-                        pathLabel.path![pathData.startIndex + 1].x + tileCenterX,
-                        pathLabel.path![pathData.startIndex + 1].y + tileCenterY,
-                        0,
-                        1
-                    );
-                    this.m_screenProjector.projectVector(tempV4);
-                    const w2 = tempV4.w;
-
-                    pathData.startOffset =
-                        (screenParam!.t * w1) / (w2 + (w1 - w2) / screenParam!.t);
+                const textPath = new THREE.Path();
+                if (screenPoints[1].x - screenPoints[0].x >= 0) {
+                    tempScreenPosition.copy(screenPoints[0]);
+                    for (let i = 0; i < screenPoints.length - 1; ++i) {
+                        textPath.add(new SimpleLineCurve(screenPoints[i], screenPoints[i + 1]));
+                    }
+                } else {
+                    tempScreenPosition.copy(screenPoints[screenPoints.length - 1]);
+                    for (let i = screenPoints.length - 1; i > 0; --i) {
+                        textPath.add(new SimpleLineCurve(screenPoints[i], screenPoints[i - 1]));
+                    }
                 }
 
-                // Compute the initial offset in the label.
-                const lengths = path.getLengths();
-                const l1 = lengths[THREE.Math.clamp(pathData.startIndex!, 0, lengths.length - 1)];
-                const l2 =
-                    lengths[THREE.Math.clamp(pathData.startIndex! + 1, 0, lengths.length - 1)];
-                pathData.offset = l1 * (1 - pathData.startOffset!) + l2 * pathData.startOffset!;
-                if (pathData.offset > path.getLength()) {
-                    numPlacementIssue1++;
-                    return;
+                // Scale the path label correctly.
+                const prevSize = textCanvas.textRenderStyle.fontSize.size;
+                textCanvas.textRenderStyle.fontSize.size = textScale * 100;
+
+                // Recalculate the text bounds for this path label. If measurement fails, the whole
+                // label doesn't fit the path and should be discarded.
+                tempMeasurementParams.path = textPath;
+                tempMeasurementParams.outputCharacterBounds = tempBoxes;
+                if (!textCanvas.measureText(pathLabel.glyphs!, tempBox, tempMeasurementParams)) {
+                    textCanvas.textRenderStyle.fontSize.size = prevSize;
+                    return false;
                 }
 
-                // Compute the path initial tangent and direction.
-                pathData.tangent = path.getTangent(pathData.offset / path.getLength());
-                pathData.direction = pathData.tangent && pathData.tangent.x < 0 ? -1 : 1;
-                if (pathData.direction < 0) {
-                    pathData.offset += pathLabel.textWidth * textScale;
+                // Perform per-character collision checks.
+                for (const charBounds of tempBoxes) {
+                    tempBox2D.x = tempScreenPosition.x + charBounds.min.x;
+                    tempBox2D.y = tempScreenPosition.y + charBounds.min.y;
+                    tempBox2D.w = charBounds.max.x - charBounds.min.x;
+                    tempBox2D.h = charBounds.max.y - charBounds.min.y;
+                    if (
+                        !this.m_screenCollisions.isVisible(tempBox2D) ||
+                        (!textElement.textMayOverlap &&
+                            this.m_screenCollisions.isAllocated(tempBox2D))
+                    ) {
+                        textCanvas.textRenderStyle.fontSize.size = prevSize;
+                        return false;
+                    }
                 }
 
                 // Fade-in after skipping rendering during movement.
@@ -2047,80 +1882,26 @@ export class TextElementsRenderer {
                     opacity = pathLabel.textRenderState.opacity;
                 }
 
+                const prevOpacity = textCanvas.textRenderStyle.opacity;
+                const prevBgOpacity = textCanvas.textRenderStyle.backgroundOpacity;
                 const distanceFadeFactor = this.getDistanceFadingFactor(pathLabel, cameraFar);
+                textCanvas.textRenderStyle.opacity = opacity * distanceFadeFactor;
+                textCanvas.textRenderStyle.backgroundOpacity =
+                    textCanvas.textRenderStyle.opacity * textElement.renderStyle!.backgroundOpacity;
 
-                // Save the current TextBuffer state before adding the label (so we can restore it
-                // if placement fails).
-                const textBufferState = buffer.saveState();
-                pathData.placementError = PathPlacementError.None;
-                tempTextLabelBounds.makeEmpty();
+                tempPosition.z = textElement.renderDistance;
 
-                // Add the label to the TextBuffer.
-                if (pathLabel.bidirectional) {
-                    this.addBidirectionalLabel(
-                        pathLabel,
-                        buffer,
-                        fontCatalog,
-                        glyphCache,
-                        tempOffset,
-                        textScale,
-                        opacity * distanceFadeFactor,
-                        pathLabel.smallCaps!,
-                        bgMode,
-                        path,
-                        true
-                    );
-                } else {
-                    this.addDirectionalGlyphRun(
-                        pathLabel,
-                        pathLabel.textDirection,
-                        0,
-                        pathLabel.codePoints.length - 1,
-                        buffer,
-                        fontCatalog,
-                        glyphCache,
-                        tempOffset,
-                        textScale,
-                        opacity * distanceFadeFactor,
-                        pathLabel.smallCaps!,
-                        bgMode,
-                        path,
-                        true
-                    );
-                }
-
-                // Check that everything was correct during placement before continuing.
-                if (pathData.placementError !== PathPlacementError.None) {
-                    buffer.restoreState(textBufferState);
-
-                    if (pathData.placementError === PathPlacementError.Visibility) {
-                        numNotVisible++;
-                        if (
-                            secondChanceTextElements !== undefined &&
-                            secondChanceTextElements.length < this.m_numSecondChanceLabels!
-                        ) {
-                            secondChanceTextElements.push(textElement);
-                        }
-                    } else if (pathData.placementError === PathPlacementError.ExtremeAngle) {
-                        numPlacementIssue3++;
-                    } else if (pathData.placementError === PathPlacementError.PathOverflow) {
-                        numPlacementIssue2++;
-                    } else if (pathData.placementError === PathPlacementError.BufferOverflow) {
-                        numCannotAdd++;
-                    }
-
-                    return;
-                }
-
-                // Add the debug view of the text bounding box if needed.
-                if (DEBUG_TEXT_LAYOUT) {
-                    this.addDebugBoundingBox();
-                }
+                tempAdditionParams.path = textPath;
+                tempAdditionParams.layer = pathLabel.renderOrder;
+                textCanvas.addText(pathLabel.glyphs!, tempPosition, tempAdditionParams);
 
                 // Allocate collision info if needed.
                 if (pathLabel.textReservesSpace) {
-                    ScreenCollisions.toBox2D(tempTextLabelBounds, tempGlyphBox2D);
-                    this.m_screenCollisions.allocate(tempGlyphBox2D);
+                    tempBox2D.x = tempScreenPosition.x + tempBox.min.x;
+                    tempBox2D.y = tempScreenPosition.y + tempBox.min.y;
+                    tempBox2D.w = tempBox.max.x - tempBox.min.x;
+                    tempBox2D.h = tempBox.max.y - tempBox.min.y;
+                    this.m_screenCollisions.allocate(tempBox2D);
                 }
 
                 // Add this label to the list of rendered elements.
@@ -2128,6 +1909,12 @@ export class TextElementsRenderer {
                     renderedTextElements.push(pathLabel);
                 }
                 numRenderedTextElements++;
+
+                // Restore previous style values for text elements using the same style.
+                textCanvas.textRenderStyle.fontSize.size = prevSize;
+                textCanvas.textRenderStyle.opacity = prevOpacity;
+                textCanvas.textRenderStyle.backgroundOpacity = prevBgOpacity;
+                return true;
             };
 
             // Render a POI...
@@ -2151,14 +1938,10 @@ export class TextElementsRenderer {
             logger.log("numRenderedPoiTexts", numRenderedPoiTexts);
             logger.log("numPoiTextsInvisible", numPoiTextsInvisible);
             logger.log("numNotVisible", numNotVisible);
-            logger.log("numPlacementIssue1", numPlacementIssue1);
-            logger.log("numPlacementIssue2", numPlacementIssue2);
-            logger.log("numPlacementIssue3", numPlacementIssue3);
-            logger.log("numPlacementIssue4", numPlacementIssue4);
             logger.log("numCannotAdd", numCannotAdd);
         }
 
-        if ((!this.m_mapView.fadingDisabled && fadeAnimationRunning) || !allTextElementsReady) {
+        if (!this.m_mapView.fadingDisabled && fadeAnimationRunning) {
             this.m_mapView.update();
         }
 
@@ -2170,11 +1953,10 @@ export class TextElementsRenderer {
         time: number,
         frameNumber: number,
         zoomLevel: number,
-        textCache: Map<string, THREE.Vector2[]>,
         renderedTextElements?: TextElement[],
         secondChanceTextElements?: TextElement[]
     ) {
-        if (this.m_textRenderer === undefined || visibleTiles.length === 0) {
+        if (this.m_textRenderers.length === 0 || visibleTiles.length === 0) {
             return;
         }
 
@@ -2199,7 +1981,6 @@ export class TextElementsRenderer {
                 time,
                 frameNumber,
                 zoomLevel,
-                textCache,
                 renderedTextElements,
                 secondChanceTextElements
             );
@@ -2207,482 +1988,6 @@ export class TextElementsRenderer {
             if (numRenderedTextElements > maxNumRenderedTextElements) {
                 break;
             }
-        }
-    }
-
-    private isTextElementLoaded(
-        textElement: TextElement,
-        fontCatalog: FontCatalog,
-        style: TextStyle
-    ): boolean {
-        // Load all glyphs and store values computed after load on the TextElement.
-        if (!textElement.allGlyphsLoaded) {
-            const bold = textElement.bold !== undefined ? textElement.bold : style.bold === true;
-            const tracking =
-                textElement.tracking !== undefined
-                    ? textElement.tracking
-                    : style.tracking !== undefined
-                    ? style.tracking
-                    : 0.0;
-
-            let width = 0;
-            let direction;
-            let allGlyphsLoaded = true;
-            for (const codePoint of textElement.codePoints) {
-                const glyph = fontCatalog.getGlyph(codePoint, bold);
-                if (glyph === undefined) {
-                    allGlyphsLoaded = false;
-                    break;
-                }
-                width += glyph.advanceX + tracking;
-
-                if (direction === undefined) {
-                    if (
-                        glyph.direction === GlyphDirection.LTR ||
-                        glyph.direction === GlyphDirection.RTL
-                    ) {
-                        direction = glyph.direction;
-                    }
-                } else if (direction !== glyph.direction) {
-                    textElement.bidirectional = true;
-                }
-            }
-
-            if (!allGlyphsLoaded) {
-                return false;
-            }
-
-            const smallCaps =
-                textElement.smallCaps !== undefined
-                    ? textElement.smallCaps
-                    : style.smallCaps === true;
-            const allCaps =
-                (textElement.allCaps !== undefined
-                    ? textElement.allCaps
-                    : style.allCaps === true) || smallCaps;
-            const oblique =
-                textElement.oblique !== undefined ? textElement.oblique : style.oblique === true;
-            const color =
-                textElement.color !== undefined
-                    ? textElement.color
-                    : style.color !== undefined
-                    ? ColorCache.instance.getColor(style.color)
-                    : this.m_mapView.defaultTextColor;
-
-            textElement.allGlyphsLoaded = true;
-            textElement.allCaps = allCaps;
-            textElement.smallCaps = smallCaps;
-            textElement.bold = bold;
-            textElement.oblique = oblique;
-            textElement.tracking = tracking;
-            textElement.color = color;
-            textElement.textWidth = width;
-            textElement.textDirection = direction !== undefined ? direction : GlyphDirection.LTR;
-        }
-
-        return true;
-    }
-
-    private computeGlyphTransform(
-        position: THREE.Vector3,
-        scale: number,
-        path?: SimplePath,
-        pathData?: PathData
-    ) {
-        tempTransform.set(
-            path !== undefined ? scale * pathData!.tangent!.x : scale,
-            path !== undefined ? scale * -pathData!.tangent!.y : 0.0,
-            0.0,
-            position.x,
-            path !== undefined ? scale * pathData!.tangent!.y : 0.0,
-            path !== undefined ? scale * pathData!.tangent!.x : scale,
-            0,
-            position.y,
-            0,
-            0,
-            scale,
-            0,
-            0,
-            0,
-            0,
-            1
-        );
-    }
-
-    private addDirectionalGlyphRun(
-        textElement: TextElement,
-        direction: GlyphDirection,
-        firstCodePoint: number,
-        lastCodePoint: number,
-        buffer: TextBuffer,
-        fontCatalog: FontCatalog,
-        glyphCache: GlyphTextureCache,
-        position: THREE.Vector3,
-        scale: number,
-        opacity: number,
-        smallCaps: boolean,
-        bgMode: TextBackgroundMode,
-        path?: SimplePath,
-        pathBounds?: boolean
-    ): boolean {
-        // Get the label extents.
-        const start = direction === GlyphDirection.LTR ? firstCodePoint : lastCodePoint;
-        const end = direction === GlyphDirection.LTR ? lastCodePoint : firstCodePoint;
-        const pathData = textElement as PathData;
-
-        // Place the glyph in their LTR display direction (which doesn't match the logical memory
-        // order for RTL runs).
-        for (
-            let i = start;
-            direction === GlyphDirection.LTR ? i <= end : i >= end;
-            i += direction
-        ) {
-            const glyph = fontCatalog.getGlyph(textElement.codePoints[i], textElement.bold)!;
-            glyphCache.add(glyph!.codepoint, textElement.bold);
-
-            // If we're processing an RTL run and we find a weak (numeral) sequence, we should
-            // render them as an LTR run.
-            if (direction === GlyphDirection.RTL && glyph.direction === GlyphDirection.Weak) {
-                // Find the start and end of the weak run.
-                const weakRunEnd = i;
-                let weakRunStart = i;
-                let weakGlyph = fontCatalog.getGlyph(
-                    textElement.codePoints[weakRunStart--],
-                    textElement.bold
-                )!;
-                while (
-                    weakGlyph.direction === GlyphDirection.Weak ||
-                    (weakGlyph.direction === GlyphDirection.Neutral && weakGlyph.codepoint !== 32)
-                ) {
-                    weakGlyph = fontCatalog.getGlyph(
-                        textElement.codePoints[weakRunStart--],
-                        textElement.bold
-                    )!;
-                }
-                weakRunStart += 2;
-
-                // Add the extra LTR run.
-                this.addDirectionalGlyphRun(
-                    textElement,
-                    GlyphDirection.LTR,
-                    weakRunStart,
-                    weakRunEnd,
-                    buffer,
-                    fontCatalog,
-                    glyphCache,
-                    position,
-                    scale,
-                    opacity,
-                    smallCaps,
-                    bgMode,
-                    path
-                );
-
-                // Shift the glyph index accordingly.
-                i = weakRunStart;
-                continue;
-            }
-
-            // Check if glyph should be mirrored.
-            const mirrored = rtlMirroredCodepoints.find(element => {
-                return element === glyph.codepoint;
-            });
-
-            // Check if the glyph is in smallCaps
-            const smallCapsScale =
-                textElement.convertedToUpperCase[i] && smallCaps
-                    ? glyph.metrics.xHeight! / glyph.metrics.capHeight!
-                    : 1.0;
-
-            // Compute the position of the glyph in the path (if any).
-            if (path !== undefined) {
-                const t0 = pathData.offset! / path.getLength();
-                const t1 =
-                    t0 +
-                    (pathData.direction! * (glyph.width * scale * smallCapsScale)) /
-                        path.getLength();
-
-                // Check that we don't cover more area that the path defines.
-                if (pathBounds === true) {
-                    if (t0 < 0 || t0 > 1 || t1 < 0 || t1 > 1) {
-                        pathData.placementError = PathPlacementError.PathOverflow;
-                        return false;
-                    }
-                }
-
-                const p0 = path.getPoint(THREE.Math.clamp(t0, 0.0, 1.0));
-                const p1 = path.getPoint(THREE.Math.clamp(t1, 0.0, 1.0));
-                pathData.tangent = p1.sub(p0).normalize();
-
-                // Check that we don't try to place a label over a really acute angle.
-                if (pathBounds === true) {
-                    if (pathData.prevTangent !== undefined) {
-                        const theta = Math.atan2(
-                            pathData.prevTangent.x * pathData.tangent.y -
-                                pathData.tangent.x * pathData.prevTangent.y,
-                            pathData.tangent.dot(pathData.prevTangent)
-                        );
-                        if (Math.abs(theta) > Math.PI / 8) {
-                            pathData.placementError = PathPlacementError.ExtremeAngle;
-                            return false;
-                        }
-                    }
-                    pathData.prevTangent = pathData.tangent;
-                }
-
-                p0.x += textElement.xOffset || 0.0;
-                p0.y -= textElement.yOffset || 0.0;
-                position.set(p0.x, p0.y, 0);
-            }
-
-            // Compute the transformation matrix for this glyph.
-            this.computeGlyphTransform(position, scale, path, pathData);
-
-            // Check that path labels' bounding boxes are visible.
-            if (pathBounds === true) {
-                FontCatalog.getGlyphCorners(
-                    glyph,
-                    tempTransform,
-                    tempCorners,
-                    true,
-                    textElement.verticalAlignment,
-                    textElement.oblique!
-                );
-                tempGlyphBox.setFromPoints(tempCorners);
-                ScreenCollisions.toBox2D(tempGlyphBox, tempGlyphBox2D);
-                if (
-                    !this.m_screenCollisions.isVisible(tempGlyphBox2D) ||
-                    (!textElement.textMayOverlap &&
-                        this.m_screenCollisions.isAllocated(tempGlyphBox2D))
-                ) {
-                    pathData.placementError = PathPlacementError.Visibility;
-                    return false;
-                }
-                tempTextLabelBounds.union(tempGlyphBox);
-            }
-
-            // Add the glyph to the TextBuffer.
-            const result = buffer.addGlyph(
-                glyph,
-                textElement.color!,
-                opacity,
-                textElement.renderDistance,
-                tempTransform,
-                tempCorners,
-                true,
-                textElement.verticalAlignment,
-                direction === GlyphDirection.RTL && mirrored !== undefined,
-                textElement.oblique!,
-                smallCapsScale !== 1.0,
-                bgMode,
-                textElement.poiInfo
-            );
-
-            // TODO: Add these errors to all types of labels.
-            if (pathBounds === true && !result) {
-                pathData.placementError = PathPlacementError.BufferOverflow;
-                return false;
-            }
-
-            // Advance the label position (as well as the path position if needed).
-            const glyphStep = (glyph.advanceX + textElement.tracking) * scale * smallCapsScale;
-            position.x += glyphStep;
-            if (path !== undefined) {
-                pathData.offset! += pathData.direction! * glyphStep;
-            }
-        }
-
-        return true;
-    }
-
-    private addBidirectionalLabel(
-        textElement: TextElement,
-        buffer: TextBuffer,
-        fontCatalog: FontCatalog,
-        glyphCache: GlyphTextureCache,
-        position: THREE.Vector3,
-        scale: number,
-        opacity: number,
-        smallCaps: boolean,
-        bgMode: TextBackgroundMode,
-        path?: SimplePath,
-        pathBounds?: boolean
-    ) {
-        const origin = position.x;
-        let offset = 0;
-
-        let runOffset = 0;
-        let runStart = 0;
-        let runEnd = 0;
-
-        let lastStrongDir;
-        let lastStrongIdx = -1;
-        let lastStrongOffset = -1;
-
-        let currIdx = 0;
-        let currDir = textElement.textDirection;
-        while (currIdx !== textElement.codePoints.length) {
-            // Get the currently processed glyph.
-            const glyph = fontCatalog.getGlyph(textElement.codePoints[currIdx], textElement.bold)!;
-            offset += (glyph.advanceX + textElement.tracking) * scale;
-
-            // Get the surrounding glyphs.
-            const prevGlyph = fontCatalog.getGlyph(
-                textElement.codePoints[currIdx - 1],
-                textElement.bold
-            )!;
-            const nextGlyph = fontCatalog.getGlyph(
-                textElement.codePoints[currIdx + 1],
-                textElement.bold
-            )!;
-
-            // Process weak glyphs.
-            if (glyph.direction === GlyphDirection.Weak) {
-                // Weak glyphs do not modify LTR runs and they're treated internally on RTL runs,
-                // so no extra work is needed here.
-            }
-            // Process neutral glyphs.
-            else if (glyph.direction === GlyphDirection.Neutral) {
-                // If we're opening a neutral run, record the left-most strong dir.
-                if (lastStrongDir === undefined) {
-                    if (prevGlyph.direction !== GlyphDirection.Neutral) {
-                        lastStrongDir = prevGlyph.direction;
-                        lastStrongIdx = currIdx - 1;
-                        lastStrongOffset = offset;
-                    }
-                }
-                // If we have an open neutral run...
-                if (lastStrongDir !== undefined && nextGlyph.direction !== GlyphDirection.Neutral) {
-                    // Close it if it's between two runs with the same direction.
-                    if (nextGlyph.direction === lastStrongDir) {
-                        lastStrongDir = undefined;
-                        lastStrongIdx = -1;
-                        lastStrongOffset = -1;
-                    }
-                    // Render the previous glyphs if it means the end of a run.
-                    else if (nextGlyph.direction === -lastStrongDir) {
-                        runEnd =
-                            lastStrongDir !== textElement.textDirection ? lastStrongIdx : currIdx;
-                        position.x = origin + runOffset;
-                        const result = this.addDirectionalGlyphRun(
-                            textElement,
-                            currDir,
-                            runStart,
-                            runEnd,
-                            buffer,
-                            fontCatalog,
-                            glyphCache,
-                            position,
-                            scale,
-                            opacity,
-                            smallCaps,
-                            bgMode,
-                            path,
-                            pathBounds
-                        );
-                        if (!result) {
-                            return;
-                        }
-
-                        runOffset = lastStrongOffset;
-                        runStart = runEnd + 1;
-                        currDir = -currDir;
-
-                        lastStrongDir = undefined;
-                        lastStrongIdx = -1;
-                        lastStrongOffset = -1;
-                    }
-                }
-            }
-            // Process strong glyphs.
-            else {
-                // If the following glyph changes the direction, process the current run.
-                if (nextGlyph.direction === -currDir) {
-                    runEnd = currIdx;
-                    position.x = origin + runOffset;
-                    const result = this.addDirectionalGlyphRun(
-                        textElement,
-                        currDir,
-                        runStart,
-                        runEnd,
-                        buffer,
-                        fontCatalog,
-                        glyphCache,
-                        position,
-                        scale,
-                        opacity,
-                        smallCaps,
-                        bgMode,
-                        path,
-                        pathBounds
-                    );
-                    if (!result) {
-                        return;
-                    }
-
-                    runOffset = offset;
-                    runStart = runEnd + 1;
-                    currDir = -currDir;
-                }
-            }
-
-            // Go for the next glyph.
-            currIdx++;
-        }
-
-        // Process remaining glyphs.
-        if (runStart < textElement.codePoints.length) {
-            runEnd = currIdx - 1;
-            position.x = origin + runOffset;
-            const result = this.addDirectionalGlyphRun(
-                textElement,
-                currDir,
-                runStart,
-                runEnd,
-                buffer,
-                fontCatalog,
-                glyphCache,
-                position,
-                scale,
-                opacity,
-                smallCaps,
-                bgMode,
-                path,
-                pathBounds
-            );
-            if (!result) {
-                return;
-            }
-        }
-    }
-
-    private addDebugBoundingBox() {
-        if (this.m_debugPositions !== undefined && this.m_debugIndex !== undefined) {
-            const baseVertex = this.m_positionCount;
-
-            this.m_debugPositions.setXY(this.m_positionCount++, tempTextBounds.x, tempTextBounds.y);
-            this.m_debugPositions.setXY(
-                this.m_positionCount++,
-                tempTextBounds.x + tempTextBounds.w,
-                tempTextBounds.y
-            );
-            this.m_debugPositions.setXY(
-                this.m_positionCount++,
-                tempTextBounds.x,
-                tempTextBounds.y + tempTextBounds.h
-            );
-            this.m_debugPositions.setXY(
-                this.m_positionCount++,
-                tempTextBounds.x + tempTextBounds.w,
-                tempTextBounds.y + tempTextBounds.h
-            );
-
-            this.m_debugIndex.setX(this.m_indexCount++, baseVertex);
-            this.m_debugIndex.setX(this.m_indexCount++, baseVertex + 1);
-            this.m_debugIndex.setX(this.m_indexCount++, baseVertex + 2);
-            this.m_debugIndex.setX(this.m_indexCount++, baseVertex + 2);
-            this.m_debugIndex.setX(this.m_indexCount++, baseVertex + 1);
-            this.m_debugIndex.setX(this.m_indexCount++, baseVertex + 3);
         }
     }
 

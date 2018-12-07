@@ -5,7 +5,9 @@
  */
 
 export * from "./lib/rendering/FontCatalog";
+export * from "./lib/rendering/GlyphData";
 export * from "./lib/rendering/TextStyle";
+export * from "./lib/rendering/TextBufferObject";
 export * from "./lib/TextCanvas";
 
 export * from "./lib/utils/ContextualArabicConverter";

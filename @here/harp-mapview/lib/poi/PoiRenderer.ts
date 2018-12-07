@@ -6,7 +6,7 @@
 
 import { ImageTexture } from "@here/harp-datasource-protocol";
 import { IconMaterial } from "@here/harp-materials";
-import { BoxBuffer, SceneSet } from "@here/harp-text-renderer";
+import { TextCanvas } from "@here/harp-text-canvas";
 import { assert, LoggerManager, Math2D } from "@here/harp-utils";
 import * as THREE from "three";
 
@@ -15,6 +15,7 @@ import { ImageItem } from "../image/Image";
 import { MapView } from "../MapView";
 import { ScreenCollisions } from "../ScreenCollisions";
 import { PoiInfo, TextElement } from "../text/TextElement";
+import { BoxBuffer } from "./BoxBuffer";
 import { IconTexture } from "./Poi";
 
 const logger = LoggerManager.instance.create("PoiRenderer");
@@ -23,6 +24,8 @@ const INVALID_RENDER_BATCH = -1;
 
 // Cache the DevicePixelRatio here:
 let devicePixelRatio = 1;
+
+const tempPos = new THREE.Vector3(0);
 
 /**
  * The `PoiRenderBufferBatch` contains the geometry and the material for all POIs that share the
@@ -137,10 +140,11 @@ class PoiRenderBuffer {
      * Create the `PoiRenderBuffer`.
      *
      * @param mapView The [[MapView]] to be rendered to.
-     * @param sceneSet The set of Scenes to add patch geometry to. The actual scene a TextElement
-     *              is added to is specified by the renderOrder of the TextElement.
+     * @param textCanvas The [[TextCanvas]] to which scenes this `PoiRenderBuffer` adds geometry to.
+     * The actual scene a [[TextElement]] is added to is specified by the renderOrder of the
+     * [[TextElement]].
      */
-    constructor(readonly mapView: MapView, readonly sceneSet: SceneSet) {
+    constructor(readonly mapView: MapView, readonly textCanvas: TextCanvas) {
         devicePixelRatio = window.devicePixelRatio;
     }
 
@@ -180,12 +184,14 @@ class PoiRenderBuffer {
             return mappedIndex;
         }
         mappedIndex = this.batches.length;
-        const scene = this.sceneSet.getScene(renderOrder);
-        if (scene === undefined) {
-            return INVALID_RENDER_BATCH;
+
+        let layer = this.textCanvas.getLayer(renderOrder);
+        if (layer === undefined) {
+            this.textCanvas.addText("", tempPos, { layer: renderOrder });
+            layer = this.textCanvas.getLayer(renderOrder);
         }
 
-        bufferBatch = new PoiRenderBufferBatch(this.mapView, scene, imageItem, renderOrder);
+        bufferBatch = new PoiRenderBufferBatch(this.mapView, layer!.scene, imageItem, renderOrder);
         bufferBatch.init();
         batchSet.set(renderOrder, mappedIndex);
         this.batches.push(bufferBatch);
@@ -297,11 +303,11 @@ export class PoiRenderer {
      * Create the `PoiRenderer` for the specified [[MapView]].
      *
      * @param mapView The MapView to be rendered to.
-     * @param sceneSet The set of Scenes to add patch geometry to. The actual scene a TextElement
-     *                 is added to is specified by the renderOrder of the TextElement.
+     * @param textCanvas The [[TextCanvas]] this `PoiRenderer` is associated to. POIs are added to
+     * the different layers of this [[TextCanvas]] based on renderOrder.
      */
-    constructor(readonly mapView: MapView, readonly sceneSet: SceneSet) {
-        this.m_renderBuffer = new PoiRenderBuffer(mapView, sceneSet);
+    constructor(readonly mapView: MapView, readonly textCanvas: TextCanvas) {
+        this.m_renderBuffer = new PoiRenderBuffer(mapView, textCanvas);
     }
 
     /**
