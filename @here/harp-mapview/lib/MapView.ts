@@ -440,7 +440,7 @@ export class MapView extends THREE.EventDispatcher {
     private m_pointOfView?: THREE.PerspectiveCamera;
 
     private m_tempVector3: THREE.Vector3 = new THREE.Vector3();
-    private m_pixelToWorld: number = 1.0;
+    private m_pixelToWorld?: number;
 
     private readonly m_scene: THREE.Scene = new THREE.Scene();
     private readonly m_fog: MapViewFog = new MapViewFog(this.m_scene);
@@ -1335,7 +1335,15 @@ export class MapView extends THREE.EventDispatcher {
      * Returns the ratio between a pixel and a world unit for the current camera (in the center of
      * the camera projection).
      */
-    get pixelToWorld() {
+    get pixelToWorld(): number {
+        if (this.m_pixelToWorld === undefined) {
+            const { clientWidth, clientHeight } = this.canvas;
+            const center = this.getWorldPositionAt(clientWidth * 0.5, clientHeight);
+            const unitOffset = this.getWorldPositionAt(clientWidth * 0.5 + 1.0, clientHeight);
+
+            this.m_pixelToWorld =
+                center !== null && unitOffset !== null ? unitOffset.sub(center).length() : 1.0;
+        }
         return this.m_pixelToWorld;
     }
 
@@ -1344,7 +1352,7 @@ export class MapView extends THREE.EventDispatcher {
      * the camera projection).
      */
     get wordlToPixel() {
-        return 1.0 / this.m_pixelToWorld;
+        return 1.0 / this.pixelToWorld;
     }
 
     /**
@@ -1582,11 +1590,7 @@ export class MapView extends THREE.EventDispatcher {
         this.m_screenProjector.update(this.m_camera, this.m_worldCenter, width, height);
         this.m_screenCollisions.update(width, height);
 
-        const center = this.getWorldPositionAt(width * 0.5, height);
-        const unitOffset = this.getWorldPositionAt(width * 0.5 + 1.0, height);
-        if (center !== null && unitOffset !== null) {
-            this.m_pixelToWorld = unitOffset.sub(center).length();
-        }
+        this.m_pixelToWorld = undefined;
     }
 
     /**
