@@ -62,51 +62,46 @@ export namespace TypesettingUtils {
     /**
      * Gets the scale applied to a certain character when using the [[FontVariant]].`SmallCaps`.
      *
-     * @param glyphDataArray Array containing [[GlyphData]].
-     * @param glyphTransformationData Array containing the result of applying a [[FontVariant]] on
-     * every character represented in `glyphDataArray`.
+     * @param glyphs Array containing [[TransformedGlyphData]].
      * @param index Index to `glyphDataArray`.
      * @param fontVariant Currently active [[FontVariant]].
      *
      * @returns Glyph `SmallCaps` scale.
      */
     export function getSmallCapsScale(
-        glyphDataArray: GlyphData[],
-        glyphTransformationData: boolean[],
+        glyphs: GlyphData[],
+        smallCapsTransformations: boolean[],
         index: number,
         fontVariant: FontVariant
     ): number {
-        const isSmallCaps = glyphTransformationData[index] && fontVariant === FontVariant.SmallCaps;
+        const isSmallCaps =
+            smallCapsTransformations[index] && fontVariant === FontVariant.SmallCaps;
         return isSmallCaps
-            ? glyphDataArray[index].font.metrics.xHeight /
-                  glyphDataArray[index].font.metrics.capHeight
+            ? glyphs[index].font.metrics.xHeight / glyphs[index].font.metrics.capHeight
             : 1.0;
     }
 
     /**
      * Returns the first strong direction (LTR or RTL) found for a given array of [[GlyphData]].
      *
-     * @param glyphDataArray Array containing [[GlyphData]].
+     * @param glyphs Array containing [[GlyphData]].
      * @param offset `glyphDataArray` offset.
      *
      * @returns Strong direction.
      */
-    export function getDirection(
-        glyphDataArray: GlyphData[],
-        offset: number
-    ): UnicodeUtils.Direction {
+    export function getDirection(glyphs: GlyphData[], offset: number): UnicodeUtils.Direction {
         let result = UnicodeUtils.Direction.LTR;
         let index = offset;
         while (
-            glyphDataArray[index].direction !== UnicodeUtils.Direction.LTR &&
-            glyphDataArray[index].direction !== UnicodeUtils.Direction.RTL &&
-            index < glyphDataArray.length - 1
+            glyphs[index].direction !== UnicodeUtils.Direction.LTR &&
+            glyphs[index].direction !== UnicodeUtils.Direction.RTL &&
+            index < glyphs.length - 1
         ) {
             ++index;
         }
 
-        if (Math.abs(glyphDataArray[index].direction) === 1.0) {
-            result = glyphDataArray[index].direction;
+        if (Math.abs(glyphs[index].direction) === 1.0) {
+            result = glyphs[index].direction;
         }
         return result;
     }

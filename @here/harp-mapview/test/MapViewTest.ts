@@ -22,7 +22,7 @@ import { MapView, MapViewEventNames } from "../lib/MapView";
 import { MapViewFog } from "../lib/MapViewFog";
 import { MapViewUtils } from "../lib/Utils";
 
-import { FontCatalog } from "@here/harp-text-renderer";
+import { FontCatalog } from "@here/harp-text-canvas";
 import { FakeOmvDataSource } from "./FakeOmvDataSource";
 
 declare const global: any;
@@ -45,6 +45,7 @@ describe("MapView", function() {
             setClearColor: clearColorStub,
             setSize: () => undefined,
             setPixelRatio: () => undefined,
+            clear: () => undefined,
             render: () => undefined,
             dispose: () => undefined,
             info: { autoReset: true, reset: () => undefined }

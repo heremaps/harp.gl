@@ -1,7 +1,0 @@
-*.ts
-!*.d.ts
-test/
-tsconfig.json
-.gitignore
-.gitreview
-*.tgz

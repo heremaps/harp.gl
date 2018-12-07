@@ -11,7 +11,7 @@ import { Font, FontMetrics } from "./FontCatalog";
 import { GlyphData } from "./GlyphData";
 import { TextGeometry } from "./TextGeometry";
 import { GlyphClearMaterial, GlyphCopyMaterial } from "./TextMaterials";
-import { DefaultTextStyle, FontUnit, TextStyle } from "./TextStyle";
+import { FontUnit, TextRenderStyle } from "./TextStyle";
 
 /**
  * Maximum number of texture atlas pages we can copy from in a single go. This amount is determined
@@ -51,7 +51,7 @@ export class GlyphTextureCache {
     private m_camera: THREE.OrthographicCamera;
     private m_rt: THREE.WebGLRenderTarget;
 
-    private m_textStyle: TextStyle;
+    private m_textRenderStyle: TextRenderStyle;
 
     private m_copyMaterial: GlyphCopyMaterial;
     private m_copyTextureSet: Set<THREE.Texture>;
@@ -119,7 +119,7 @@ export class GlyphTextureCache {
             stencilBuffer: false
         });
 
-        this.m_textStyle = DefaultTextStyle.initializeTextStyle({
+        this.m_textRenderStyle = new TextRenderStyle({
             fontSize: { unit: FontUnit.Percent, size: 100, backgroundSize: 0.0 }
         });
 
@@ -222,7 +222,15 @@ export class GlyphTextureCache {
             );
             this.m_copyPositions[i].applyMatrix3(this.m_copyTransform);
         }
-        this.m_copyGeometry.add(glyph, this.m_copyPositions, 0, 0, false, this.m_textStyle, true);
+        this.m_copyGeometry.add(
+            glyph,
+            this.m_copyPositions,
+            0,
+            0,
+            false,
+            this.m_textRenderStyle,
+            true
+        );
 
         const u0 = this.m_copyPositions[0].x / this.m_textureSize.x;
         const v0 = this.m_copyPositions[0].y / this.m_textureSize.y;
@@ -233,10 +241,22 @@ export class GlyphTextureCache {
         glyph.dynamicTextureCoordinates[2].set(u0, v1);
         glyph.dynamicTextureCoordinates[3].set(u1, v1);
 
+        glyph.isInCache = true;
         this.m_entryCache.set(hash, {
             glyphData: glyph,
             location: oldestEntry.value.location
         });
+    }
+
+    /**
+     * Checks if an entry is in the cache.
+     *
+     * @param hash Entry's hash.
+     *
+     * @returns Test result.
+     */
+    has(hash: string): boolean {
+        return this.m_entryCache.has(hash);
     }
 
     /**
@@ -269,29 +289,33 @@ export class GlyphTextureCache {
      */
     update(renderer: THREE.WebGLRenderer): void {
         this.m_clearGeometry.update();
-        this.m_clearGeometry.mesh.visible = true;
-        this.m_copyGeometry.mesh.visible = false;
-        renderer.render(this.m_scene, this.m_camera, this.m_rt);
-        this.m_clearGeometry.clear();
+        if (this.m_clearGeometry.drawCount > 0) {
+            this.m_clearGeometry.mesh.visible = true;
+            this.m_copyGeometry.mesh.visible = false;
+            renderer.render(this.m_scene, this.m_camera, this.m_rt);
+            this.m_clearGeometry.clear();
+            this.m_clearGeometry.mesh.visible = false;
+        }
 
         this.m_copyGeometry.update();
-        this.m_clearGeometry.mesh.visible = false;
-        this.m_copyGeometry.mesh.visible = true;
-        const srcPages = Array.from(this.m_copyTextureSet);
-        const nCopies = Math.ceil(this.m_copyTextureSet.size / MAX_NUM_COPY_PAGES);
-        for (let copyIndex = 0; copyIndex < nCopies; copyIndex++) {
-            const pageOffset = copyIndex * MAX_NUM_COPY_PAGES;
-            this.m_copyMaterial.uniforms.pageOffset.value = pageOffset;
-            for (let i = 0; i < MAX_NUM_COPY_PAGES; i++) {
-                const pageIndex = pageOffset + i;
-                if (pageIndex < this.m_copyTextureSet.size) {
-                    this.m_copyMaterial.uniforms["page" + i].value = srcPages[pageIndex];
+        if (this.m_copyGeometry.drawCount > 0) {
+            this.m_copyGeometry.mesh.visible = true;
+            const srcPages = Array.from(this.m_copyTextureSet);
+            const nCopies = Math.ceil(this.m_copyTextureSet.size / MAX_NUM_COPY_PAGES);
+            for (let copyIndex = 0; copyIndex < nCopies; copyIndex++) {
+                const pageOffset = copyIndex * MAX_NUM_COPY_PAGES;
+                this.m_copyMaterial.uniforms.pageOffset.value = pageOffset;
+                for (let i = 0; i < MAX_NUM_COPY_PAGES; i++) {
+                    const pageIndex = pageOffset + i;
+                    if (pageIndex < this.m_copyTextureSet.size) {
+                        this.m_copyMaterial.uniforms["page" + i].value = srcPages[pageIndex];
+                    }
                 }
+                renderer.render(this.m_scene, this.m_camera, this.m_rt);
             }
-            renderer.render(this.m_scene, this.m_camera, this.m_rt);
+            this.m_copyTextureSet.clear();
+            this.m_copyGeometry.clear();
         }
-        this.m_copyTextureSet.clear();
-        this.m_copyGeometry.clear();
     }
 
     private initCacheEntries() {
@@ -370,6 +394,7 @@ export class GlyphTextureCache {
     }
 
     private clearCacheEntry(entry: GlyphCacheEntry) {
+        entry.glyphData.isInCache = false;
         this.m_copyPositions[0].set(
             entry.location.x * this.entryWidth,
             entry.location.y * this.entryHeight,
@@ -396,7 +421,7 @@ export class GlyphTextureCache {
             0,
             0,
             false,
-            this.m_textStyle,
+            this.m_textRenderStyle,
             true
         );
     }

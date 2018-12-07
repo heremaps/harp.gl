@@ -5,8 +5,6 @@
  */
 import { createLight, ImageTexture, Light, Sky, Theme } from "@here/harp-datasource-protocol";
 import { GeoCoordinates, MathUtils, mercatorProjection, Projection } from "@here/harp-geoutils";
-import { TextMaterial } from "@here/harp-materials";
-import { TextMaterialConstructor } from "@here/harp-text-renderer";
 import { LoggerManager, PerformanceTimer } from "@here/harp-utils";
 import * as THREE from "three";
 
@@ -26,6 +24,7 @@ import { SkyBackground } from "./SkyBackground";
 import { FrameStats, PerformanceStatistics } from "./Statistics";
 import { TextElement } from "./text/TextElement";
 import { TextElementsRenderer } from "./text/TextElementsRenderer";
+import { TextLayoutStyleCache, TextRenderStyleCache } from "./text/TextStyleCache";
 import { ThemeLoader } from "./ThemeLoader";
 import { Tile } from "./Tile";
 import { MapViewUtils } from "./Utils";
@@ -179,11 +178,6 @@ export interface MapViewOptions {
      * The path to the font catalog file. Default is `./resources/fonts/Default_FontCatalog.json`.
      */
     fontCatalog?: string;
-
-    /**
-     * The text material used to render fonts. Default is 'TextMaterial'.
-     */
-    textMaterialConstructor?: TextMaterialConstructor;
 
     /**
      * `Projection` used by the `MapView`.
@@ -413,11 +407,6 @@ export class MapView extends THREE.EventDispatcher {
     defaultFontCatalog: string = DEFAULT_FONT_CATALOG;
 
     /**
-     * The constructor to use by default for text rendering.
-     */
-    defaultTextMaterialConstructor: TextMaterialConstructor = TextMaterial;
-
-    /**
      * The instance of [[MapRenderingManager]] managing the rendering of the map. It is a public
      * property to allow access and modification of some parameters of the rendering process at
      * runtime.
@@ -460,6 +449,8 @@ export class MapView extends THREE.EventDispatcher {
     private m_frameNumber = 0;
 
     private m_textElementsRenderer?: TextElementsRenderer;
+    private m_textRenderStyleCache = new TextRenderStyleCache();
+    private m_textLayoutStyleCache = new TextLayoutStyleCache();
     private m_defaultTextColor = new THREE.Color(0, 0, 0);
     private m_overlayTextElements?: TextElement[] = [];
 
@@ -504,8 +495,6 @@ export class MapView extends THREE.EventDispatcher {
     private m_languages: string[] | undefined;
     private m_copyrightInfo: CopyrightInfo[] = [];
 
-    private m_debugGlyphTextureCache = false;
-
     /**
      * Constructs a new `MapView` with the given options or canvas element.
      *
@@ -531,10 +520,6 @@ export class MapView extends THREE.EventDispatcher {
 
         if (this.m_options.fontCatalog !== undefined) {
             this.defaultFontCatalog = this.m_options.fontCatalog;
-        }
-
-        if (this.m_options.textMaterialConstructor !== undefined) {
-            this.defaultTextMaterialConstructor = this.m_options.textMaterialConstructor;
         }
 
         if (this.m_options.decoderUrl !== undefined) {
@@ -656,6 +641,22 @@ export class MapView extends THREE.EventDispatcher {
      */
     get textElementsRenderer(): TextElementsRenderer | undefined {
         return this.m_textElementsRenderer;
+    }
+
+    /**
+     * @hidden
+     * The [[TextRenderStyleCache]] used for this instance of `MapView`.
+     */
+    get textRenderStyleCache(): TextRenderStyleCache {
+        return this.m_textRenderStyleCache;
+    }
+
+    /**
+     * @hidden
+     * The [[TextLayoutStyleCache]] used for this instance of `MapView`.
+     */
+    get textLayoutStyleCache(): TextLayoutStyleCache {
+        return this.m_textLayoutStyleCache;
     }
 
     /**
@@ -802,6 +803,9 @@ export class MapView extends THREE.EventDispatcher {
         this.m_theme.textStyles = theme.textStyles;
         this.m_theme.defaultTextStyle = theme.defaultTextStyle;
         this.m_theme.fontCatalogs = theme.fontCatalogs;
+        this.m_textRenderStyleCache.clear();
+        this.m_textLayoutStyleCache.clear();
+
         this.updateTextRenderer();
 
         if (this.m_theme.styles === undefined) {
@@ -1561,13 +1565,6 @@ export class MapView extends THREE.EventDispatcher {
     }
 
     /**
-     * Sets the debug option to render the internal [[GlyphTextureCache]]s into the canvas.
-     */
-    set debugGlyphTextureCache(value: boolean) {
-        this.m_debugGlyphTextureCache = value;
-    }
-
-    /**
      * Updates the camera and the projections and resets the screen collisions.
      */
     private updateCameras() {
@@ -1875,8 +1872,6 @@ export class MapView extends THREE.EventDispatcher {
             this.m_textElementsRenderer.placeAllTileLabels();
         }
 
-        this.m_textElementsRenderer.debugGlyphTextureCache = this.m_debugGlyphTextureCache;
-
         let shouldDrawText;
         this.camera.getWorldDirection(this.m_tempVector3);
         const angle = THREE.Math.radToDeg(this.m_tempVector3.angleTo(EYE_INVERSE));
@@ -1899,18 +1894,16 @@ export class MapView extends THREE.EventDispatcher {
             this.m_textElementsRenderer.renderAllTileText(time, this.m_frameNumber);
         }
         this.m_textElementsRenderer.renderOverlay(this.m_overlayTextElements);
-        this.m_textElementsRenderer.update(this.m_renderer);
+        this.m_textElementsRenderer.update();
     }
 
     private finishRenderTextElements() {
         const canRenderTextElements = this.m_pointOfView === undefined;
 
         if (canRenderTextElements && this.m_textElementsRenderer) {
-            this.m_textElementsRenderer.end();
-
             // copy far value from scene camera, as the distance to the POIs matter now.
             this.m_screenCamera.far = this.camera.far;
-            this.m_textElementsRenderer.renderText(this.m_renderer, this.m_screenCamera);
+            this.m_textElementsRenderer.renderText(this.m_screenCamera);
         }
     }
 
@@ -2221,8 +2214,7 @@ export class MapView extends THREE.EventDispatcher {
                 this.m_options.maxNumVisibleLabels,
                 this.m_options.numSecondChanceLabels,
                 this.m_options.maxDistanceRatioForLabels,
-                this.m_options.labelStartScaleDistance,
-                this.defaultTextMaterialConstructor
+                this.m_options.labelStartScaleDistance
             );
         }
         this.m_textElementsRenderer.placeAllTileLabels();

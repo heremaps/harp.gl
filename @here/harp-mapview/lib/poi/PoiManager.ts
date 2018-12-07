@@ -14,17 +14,23 @@ import {
     PoiTechnique
 } from "@here/harp-datasource-protocol";
 import {
-    TextHorizontalAlignment,
-    TextHorizontalAlignmentStrings,
-    TextVerticalAlignment,
-    TextVerticalAlignmentStrings
-} from "@here/harp-text-renderer";
+    ContextualArabicConverter,
+    FontStyle,
+    FontUnit,
+    FontVariant,
+    HorizontalAlignment,
+    TextLayoutStyle,
+    TextRenderStyle,
+    VerticalAlignment
+} from "@here/harp-text-canvas";
 import { assert, assertExists, getOptionValue, LoggerManager } from "@here/harp-utils";
 import * as THREE from "three";
 
+import { ColorCache } from "../ColorCache";
 import { MapView } from "../MapView";
 import { TextElement } from "../text/TextElement";
 import { DEFAULT_TEXT_DISTANCE_SCALE } from "../text/TextElementsRenderer";
+import { computeStyleCacheId } from "../text/TextStyleCache";
 import { Tile } from "../Tile";
 
 const logger = LoggerManager.instance.create("PoiManager");
@@ -437,20 +443,26 @@ export class PoiManager {
 
             const positions = Array.isArray(x) ? (x as THREE.Vector2[]) : new THREE.Vector2(x, y);
             const displayZoomLevel = this.mapView.zoomLevel;
+
+            const color = ColorCache.instance.getColor(
+                getOptionValue(
+                    getPropertyValue(technique.color, displayZoomLevel),
+                    this.mapView.defaultTextColor.getHexString()
+                )
+            );
+            const textSize =
+                getOptionValue(getPropertyValue(technique.scale, displayZoomLevel), 1.0) * 100.0;
+
             textElement = new TextElement(
-                text,
+                ContextualArabicConverter.instance.convert(text),
                 positions,
+                this.getRenderStyle(textSize, technique, color),
+                this.getLayoutStyle(technique),
                 priority,
-                getOptionValue(getPropertyValue(technique.scale, displayZoomLevel), 1.0),
                 technique.xOffset !== undefined ? technique.xOffset : 0.0,
                 technique.yOffset !== undefined ? technique.yOffset : 0.0,
                 featureId,
                 technique.style,
-                technique.allCaps,
-                technique.smallCaps,
-                technique.bold,
-                technique.oblique,
-                technique.tracking,
                 getPropertyValue(technique.fadeNear, displayZoomLevel),
                 getPropertyValue(technique.fadeFar, displayZoomLevel)
             );
@@ -512,30 +524,97 @@ export class PoiManager {
                 }
             }
 
-            if (technique.color !== undefined) {
-                textElement.color = new THREE.Color(technique.color);
-            }
-
             textElement.distanceScale = distanceScale;
-
-            if (
-                technique.hAlignment !== undefined &&
-                (technique.hAlignment === TextHorizontalAlignmentStrings.Left ||
-                    technique.hAlignment === TextHorizontalAlignmentStrings.Center ||
-                    technique.hAlignment === TextHorizontalAlignmentStrings.Right)
-            ) {
-                textElement.horizontalAlignment = TextHorizontalAlignment[technique.hAlignment];
-            }
-            if (
-                technique.vAlignment !== undefined &&
-                (technique.vAlignment === TextVerticalAlignmentStrings.Above ||
-                    technique.vAlignment === TextVerticalAlignmentStrings.Center ||
-                    technique.vAlignment === TextVerticalAlignmentStrings.Below)
-            ) {
-                textElement.verticalAlignment = TextVerticalAlignment[technique.vAlignment];
-            }
         }
 
         return textElement;
+    }
+
+    private getRenderStyle(
+        textSize: number,
+        textTechnique: PoiTechnique | LineMarkerTechnique,
+        textColor?: THREE.Color
+    ): TextRenderStyle {
+        const cacheId = computeStyleCacheId(textTechnique, this.mapView.zoomLevel);
+        let renderStyle = this.mapView.textRenderStyleCache.get(cacheId);
+        if (renderStyle === undefined) {
+            let styleColor = textColor;
+            if (styleColor === undefined) {
+                styleColor = this.mapView.defaultTextColor;
+            }
+            const styleFontVariant =
+                textTechnique.smallCaps === true
+                    ? FontVariant.SmallCaps
+                    : textTechnique.allCaps === true
+                    ? FontVariant.AllCaps
+                    : FontVariant.Regular;
+            const styleFontStyle =
+                textTechnique.bold === true
+                    ? textTechnique.oblique
+                        ? FontStyle.BoldItalic
+                        : FontStyle.Bold
+                    : textTechnique.oblique === true
+                    ? FontStyle.Italic
+                    : FontStyle.Regular;
+
+            const renderParams = {
+                fontSize: {
+                    unit: FontUnit.Percent,
+                    size: textSize,
+                    backgroundSize: textSize * 0.25
+                },
+                color: styleColor,
+                fontVariant: styleFontVariant,
+                fontStyle: styleFontStyle
+            };
+
+            renderStyle = new TextRenderStyle({
+                ...this.mapView.textElementsRenderer!.getTextElementStyle(textTechnique.style)
+                    .renderParams,
+                ...renderParams
+            });
+            this.mapView.textRenderStyleCache.set(cacheId, renderStyle);
+        }
+
+        return renderStyle;
+    }
+
+    private getLayoutStyle(textTechnique: PoiTechnique | LineMarkerTechnique): TextLayoutStyle {
+        const cacheId = computeStyleCacheId(textTechnique, this.mapView.zoomLevel);
+        let layoutStyle = this.mapView.textLayoutStyleCache.get(cacheId);
+        if (layoutStyle === undefined) {
+            const trackingFactor = textTechnique.tracking || 0.0;
+            let hAlignment = HorizontalAlignment.Center;
+            if (
+                textTechnique.hAlignment === "Left" ||
+                textTechnique.hAlignment === "Center" ||
+                textTechnique.hAlignment === "Right"
+            ) {
+                hAlignment = HorizontalAlignment[textTechnique.hAlignment];
+            }
+            let vAlignment = VerticalAlignment.Center;
+            if (
+                textTechnique.vAlignment === "Above" ||
+                textTechnique.vAlignment === "Center" ||
+                textTechnique.vAlignment === "Below"
+            ) {
+                vAlignment = VerticalAlignment[textTechnique.vAlignment];
+            }
+
+            const layoutParams = {
+                tracking: trackingFactor,
+                horizontalAlignment: hAlignment,
+                verticalAlignment: vAlignment
+            };
+
+            layoutStyle = new TextLayoutStyle({
+                ...this.mapView.textElementsRenderer!.getTextElementStyle(textTechnique.style)
+                    .layoutParams,
+                ...layoutParams
+            });
+            this.mapView.textLayoutStyleCache.set(cacheId, layoutStyle);
+        }
+
+        return layoutStyle;
     }
 }

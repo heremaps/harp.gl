@@ -6,6 +6,7 @@
 
 import * as THREE from "three";
 
+import { QUAD_VERTEX_MEMORY_FOOTPRINT } from "../rendering/TextGeometry";
 import { FontStyle, FontVariant, WrappingMode } from "../rendering/TextStyle";
 import { TypesettingUtils } from "../utils/TypesettingUtils";
 import { UnicodeUtils } from "../utils/UnicodeUtils";
@@ -23,6 +24,7 @@ export class LineTypesetter implements Typesetter {
     private m_tempPixelSize: number;
     private m_tempPixelBgSize: number;
     private m_tempScale: number;
+    private m_tempSmallCaps: boolean;
 
     private m_currentParams?: TypesettingParameters;
 
@@ -44,11 +46,12 @@ export class LineTypesetter implements Typesetter {
         this.m_tempPixelSize = 1.0;
         this.m_tempPixelBgSize = 1.0;
         this.m_tempScale = 1.0;
+        this.m_tempSmallCaps = false;
     }
 
     /**
      * Arranges the specified glyphs using this `LineTypesetter`. Text will be placed into multiple
-     * bidirectional lines, that will be generated taking into account [[LayoutStyle]] features,
+     * bidirectional lines, that will be generated taking into account [[textLayoutStyle]] features,
      * such as:
      * - Maximum line width.
      * - Word and character wrapping.
@@ -63,36 +66,38 @@ export class LineTypesetter implements Typesetter {
     arrangeGlyphs(params: TypesettingParameters): boolean {
         // Initializes common typesetting parameters (used across all functions in this class).
         this.m_currentParams = params;
-        this.m_tempLineDirection = TypesettingUtils.getDirection(
-            this.m_currentParams.glyphDataArray,
-            0
-        );
+        this.m_tempLineDirection = TypesettingUtils.getDirection(this.m_currentParams.glyphs, 0);
         this.m_tempRunDirection = this.m_tempLineDirection;
         this.m_tempPixelSize = TypesettingUtils.getPixelSize(
-            this.m_currentParams.textStyle.fontSize!.size,
-            this.m_currentParams.textStyle.fontSize!.unit,
+            this.m_currentParams.textRenderStyle.fontSize.size,
+            this.m_currentParams.textRenderStyle.fontSize.unit,
             this.m_currentParams.fontCatalog.size
         );
         this.m_tempScale = this.m_tempPixelSize / this.m_currentParams.fontCatalog.size;
         this.m_tempPixelBgSize = Math.min(
             TypesettingUtils.getPixelSize(
-                this.m_currentParams.textStyle.fontSize!.backgroundSize,
-                this.m_currentParams.textStyle.fontSize!.unit,
+                this.m_currentParams.textRenderStyle.fontSize.backgroundSize,
+                this.m_currentParams.textRenderStyle.fontSize.unit,
                 this.m_currentParams.fontCatalog.size
             ),
             this.m_currentParams!.fontCatalog.distanceRange * this.m_tempScale
         );
+        this.m_tempSmallCaps = this.m_currentParams!.smallCapsArray !== undefined;
 
         this.m_currentParams.position.y +=
-            this.m_currentParams.layoutStyle.verticalAlignment! *
-            this.m_currentParams.glyphDataArray[0].font.metrics.capHeight *
+            this.m_currentParams.textLayoutStyle.verticalAlignment *
+            this.m_currentParams.glyphs[0].font.metrics.capHeight *
             this.m_tempScale;
+
+        const isOnlyMeasured =
+            this.m_currentParams.globalBounds !== undefined &&
+            this.m_currentParams.vertexBuffer === undefined;
 
         // Compute line origin and height.
         const origin = this.m_currentParams.position.x;
         const lineHeight =
-            this.m_currentParams.glyphDataArray[0].font.metrics.lineHeight +
-            this.m_currentParams.layoutStyle.leading!;
+            this.m_currentParams.glyphs[0].font.metrics.lineHeight +
+            this.m_currentParams.textLayoutStyle.leading;
 
         // Initialize line-breaking and wrapping variables.
         let lineStartIdx = 0;
@@ -105,11 +110,15 @@ export class LineTypesetter implements Typesetter {
 
         let lineCount = 0;
         let isBidirectionalLine = false;
-        for (let i = 0; i < this.m_currentParams.glyphDataArray.length; ++i) {
-            if (lineCount > this.m_currentParams.layoutStyle.maxLines! - 1) {
+        for (let i = 0; i < this.m_currentParams.glyphs.length; ++i) {
+            if (lineCount > this.m_currentParams.textLayoutStyle.maxLines - 1) {
                 break;
             }
-            const glyphData = this.m_currentParams.glyphDataArray[i];
+            const glyphData = this.m_currentParams.glyphs[i];
+            if (!glyphData.isInCache && !isOnlyMeasured) {
+                return false;
+            }
+
             const isNewLine = UnicodeUtils.isNewLine(glyphData.codePoint);
             const isWhiteSpace = UnicodeUtils.isWhiteSpace(glyphData.codePoint);
 
@@ -120,14 +129,16 @@ export class LineTypesetter implements Typesetter {
             // Advance the line's current X offset (only for printable characters).
             if (UnicodeUtils.isPrintable(glyphData.codePoint)) {
                 lineCurrX +=
-                    (glyphData.advanceX + this.m_currentParams.textStyle.tracking!) *
+                    (glyphData.advanceX + this.m_currentParams.textLayoutStyle.tracking) *
                     this.m_tempScale *
-                    TypesettingUtils.getSmallCapsScale(
-                        this.m_currentParams.glyphDataArray,
-                        this.m_currentParams.glyphTransformationArray,
-                        i,
-                        this.m_currentParams.textStyle.fontVariant!
-                    );
+                    (this.m_tempSmallCaps
+                        ? TypesettingUtils.getSmallCapsScale(
+                              this.m_currentParams.glyphs,
+                              this.m_currentParams.smallCapsArray!,
+                              i,
+                              this.m_currentParams.textRenderStyle.fontVariant
+                          )
+                        : 1.0);
             }
             // If this is the first character in a line, update the line's X offset values (needed
             // to properly center and wrap).
@@ -140,16 +151,16 @@ export class LineTypesetter implements Typesetter {
             // Check if should break the current line.
             if (
                 isNewLine ||
-                (this.m_currentParams.layoutStyle.wrappingMode! !== WrappingMode.None &&
-                    lineCurrX > this.m_currentParams.layoutStyle.lineWidth!)
+                (this.m_currentParams.textLayoutStyle.wrappingMode !== WrappingMode.None &&
+                    lineCurrX > this.m_currentParams.textLayoutStyle.lineWidth)
             ) {
                 // Perform wrapping.
-                if (this.m_currentParams.layoutStyle.wrappingMode! !== WrappingMode.None) {
+                if (this.m_currentParams.textLayoutStyle.wrappingMode !== WrappingMode.None) {
                     let wrapPointIdx = glyphWrapIdx;
                     let wrapPointX = glyphWrapX;
                     // Only wrap words when more than a single word fits into the current line.
                     if (
-                        this.m_currentParams.layoutStyle.wrappingMode! === WrappingMode.Word &&
+                        this.m_currentParams.textLayoutStyle.wrappingMode === WrappingMode.Word &&
                         wordWrapX !== lineStartX
                     ) {
                         wrapPointIdx = wordWrapIdx;
@@ -159,7 +170,7 @@ export class LineTypesetter implements Typesetter {
                     lineCurrX = wrapPointX;
                     i = Math.min(
                         isNewLine ? (lineStartIdx === i ? wrapPointIdx : i) : wrapPointIdx,
-                        this.m_currentParams.glyphDataArray.length - 1
+                        this.m_currentParams.glyphs.length - 1
                     );
                 }
 
@@ -167,8 +178,8 @@ export class LineTypesetter implements Typesetter {
                 // all glyphs in it.
                 const lineAlignment =
                     this.m_tempLineDirection === UnicodeUtils.Direction.RTL && isBidirectionalLine
-                        ? 1.0 + this.m_currentParams.layoutStyle.horizontalAlignment!
-                        : this.m_currentParams.layoutStyle.horizontalAlignment!;
+                        ? 1.0 + this.m_currentParams.textLayoutStyle.horizontalAlignment
+                        : this.m_currentParams.textLayoutStyle.horizontalAlignment;
                 this.m_currentParams.position.x =
                     this.m_currentParams.position.x + lineCurrX * lineAlignment;
                 if (
@@ -184,13 +195,13 @@ export class LineTypesetter implements Typesetter {
                 // Find the beginning of a new line (removing trailing white spaces).
                 while (
                     i !== lineStartIdx &&
-                    i + 1 < this.m_currentParams.glyphDataArray.length &&
-                    UnicodeUtils.isWhiteSpace(this.m_currentParams.glyphDataArray[i + 1].codePoint)
+                    i + 1 < this.m_currentParams.glyphs.length &&
+                    UnicodeUtils.isWhiteSpace(this.m_currentParams.glyphs[i + 1].codePoint)
                 ) {
                     ++i;
                 }
                 lineStartIdx = i + 1;
-                if (lineStartIdx === this.m_currentParams.glyphDataArray.length) {
+                if (lineStartIdx === this.m_currentParams.glyphs.length) {
                     break;
                 }
 
@@ -199,7 +210,7 @@ export class LineTypesetter implements Typesetter {
                 // multiple lines).
                 if (isNewLine) {
                     this.m_tempLineDirection = TypesettingUtils.getDirection(
-                        this.m_currentParams.glyphDataArray,
+                        this.m_currentParams.glyphs,
                         lineStartIdx
                     );
                     this.m_tempRunDirection = this.m_tempLineDirection;
@@ -217,7 +228,7 @@ export class LineTypesetter implements Typesetter {
             }
             // If not, should if we should record any new wrapping points.
             else if (
-                this.m_currentParams.layoutStyle.wrappingMode !== WrappingMode.None &&
+                this.m_currentParams.textLayoutStyle.wrappingMode !== WrappingMode.None &&
                 !isWhiteSpace
             ) {
                 // Update the per-glyph wrapping point.
@@ -227,14 +238,10 @@ export class LineTypesetter implements Typesetter {
                 // Update the word wrapping point (only if mode is correctly set and we are
                 // currently placed at the end of a word).
                 if (
-                    this.m_currentParams.layoutStyle.wrappingMode === WrappingMode.Word &&
-                    i + 1 < this.m_currentParams.glyphDataArray.length &&
-                    (UnicodeUtils.isWhiteSpace(
-                        this.m_currentParams.glyphDataArray[i + 1].codePoint
-                    ) ||
-                        UnicodeUtils.isNewLine(
-                            this.m_currentParams.glyphDataArray[i + 1].codePoint
-                        ))
+                    this.m_currentParams.textLayoutStyle.wrappingMode === WrappingMode.Word &&
+                    i + 1 < this.m_currentParams.glyphs.length &&
+                    (UnicodeUtils.isWhiteSpace(this.m_currentParams.glyphs[i + 1].codePoint) ||
+                        UnicodeUtils.isNewLine(this.m_currentParams.glyphs[i + 1].codePoint))
                 ) {
                     wordWrapIdx = i;
                     wordWrapX = lineCurrX;
@@ -244,20 +251,20 @@ export class LineTypesetter implements Typesetter {
 
         // If we still haven't placed all characters, place a final line.
         if (
-            lineCount <= this.m_currentParams.layoutStyle.maxLines! - 1 &&
-            lineStartIdx <= this.m_currentParams.glyphDataArray.length - 1
+            lineCount <= this.m_currentParams.textLayoutStyle.maxLines - 1 &&
+            lineStartIdx <= this.m_currentParams.glyphs.length - 1
         ) {
             const offset =
                 this.m_tempLineDirection === UnicodeUtils.Direction.RTL && isBidirectionalLine
-                    ? 1.0 + this.m_currentParams.layoutStyle.horizontalAlignment!
-                    : this.m_currentParams.layoutStyle.horizontalAlignment!;
+                    ? 1.0 + this.m_currentParams.textLayoutStyle.horizontalAlignment
+                    : this.m_currentParams.textLayoutStyle.horizontalAlignment;
             this.m_currentParams.position.setX(
                 this.m_currentParams.position.x + lineCurrX * offset
             );
             if (
                 !this.placeLine(
                     lineStartIdx,
-                    this.m_currentParams.glyphDataArray.length - 1,
+                    this.m_currentParams.glyphs.length - 1,
                     this.m_tempLineDirection,
                     isBidirectionalLine
                 )
@@ -283,9 +290,10 @@ export class LineTypesetter implements Typesetter {
         }
 
         // Gather common typesetting parameters.
-        const glyphDataArray = this.m_currentParams!.glyphDataArray;
-        const glyphTransformationArray = this.m_currentParams!.glyphTransformationArray;
-        const textStyle = this.m_currentParams!.textStyle;
+        const glyphDataArray = this.m_currentParams!.glyphs;
+        const smallCapsArray = this.m_currentParams!.smallCapsArray;
+        const textRenderStyle = this.m_currentParams!.textRenderStyle;
+        const textLayoutStyle = this.m_currentParams!.textLayoutStyle;
         const position = this.m_currentParams!.position;
 
         // Initialize line placement parameters.
@@ -347,14 +355,16 @@ export class LineTypesetter implements Typesetter {
 
             // Advance the offset position in the line.
             offset +=
-                (glyphData.advanceX + textStyle.tracking!) *
+                (glyphData.advanceX + textLayoutStyle.tracking) *
                 this.m_tempScale *
-                TypesettingUtils.getSmallCapsScale(
-                    glyphDataArray,
-                    glyphTransformationArray,
-                    i,
-                    textStyle.fontVariant!
-                ) *
+                (this.m_tempSmallCaps
+                    ? TypesettingUtils.getSmallCapsScale(
+                          glyphDataArray,
+                          smallCapsArray!,
+                          i,
+                          textRenderStyle.fontVariant
+                      )
+                    : 1.0) *
                 direction;
         }
 
@@ -377,14 +387,16 @@ export class LineTypesetter implements Typesetter {
     // Place a directional run of index inside a line.
     private placeRun(startIdx: number, endIdx: number, direction: UnicodeUtils.Direction): boolean {
         // Gather common typesetting parameters.
-        const glyphDataArray = this.m_currentParams!.glyphDataArray;
-        const glyphTransformationArray = this.m_currentParams!.glyphTransformationArray;
+        const glyphDataArray = this.m_currentParams!.glyphs;
+        const smallCapsArray = this.m_currentParams!.smallCapsArray;
         const fontCatalog = this.m_currentParams!.fontCatalog;
-        const textStyle = this.m_currentParams!.textStyle;
+        const textRenderStyle = this.m_currentParams!.textRenderStyle;
+        const textLayoutStyle = this.m_currentParams!.textLayoutStyle;
         const position = this.m_currentParams!.position;
         const geometry = this.m_currentParams!.geometry;
         const globalBounds = this.m_currentParams!.globalBounds;
         const individualBounds = this.m_currentParams!.individualBounds;
+        const vertexBuffer = this.m_currentParams!.vertexBuffer;
 
         // Move through the glyph array following the run's direction (as the order of the glyphs in
         // memory might not match the order on glyphs on scree).
@@ -406,6 +418,7 @@ export class LineTypesetter implements Typesetter {
             // text).
             if (
                 startIdx !== endIdx &&
+                i !== 0 &&
                 direction === UnicodeUtils.Direction.RTL &&
                 glyphData.direction === UnicodeUtils.Direction.Weak
             ) {
@@ -430,7 +443,7 @@ export class LineTypesetter implements Typesetter {
             // Compute various rendering parameters for this glyph.
             const glyphFont = glyphData.font;
             const glyphFontMetrics = glyphFont.metrics;
-            const fontStyle = textStyle.fontStyle;
+            const fontStyle = textRenderStyle.fontStyle;
 
             const isBoldEmulated =
                 (fontStyle === FontStyle.Bold && glyphFont.bold === undefined) ||
@@ -443,28 +456,23 @@ export class LineTypesetter implements Typesetter {
                     glyphFont.italic === undefined &&
                     glyphFont.boldItalic === undefined);
 
-            const isSmallCaps =
-                glyphTransformationArray[i] && textStyle.fontVariant === FontVariant.SmallCaps;
+            const isSmallCaps = this.m_tempSmallCaps
+                ? smallCapsArray![i] && textRenderStyle.fontVariant === FontVariant.SmallCaps
+                : false;
             const smallCapsScale = isSmallCaps
                 ? glyphFontMetrics.xHeight / glyphFontMetrics.capHeight
                 : 1.0;
             const glyphScale = this.m_tempScale * smallCapsScale;
 
-            let emulationWeight: number = 0;
-            let bgWeight: number = 0;
-            let isMirrored: boolean = false;
-            if (globalBounds === undefined) {
-                emulationWeight =
-                    ((isBoldEmulated ? 0.02 : 0.0) + (isSmallCaps ? 0.01 : 0.0)) *
-                    (fontCatalog.size / fontCatalog.distanceRange);
-                bgWeight =
-                    (0.5 * this.m_tempPixelBgSize!) /
-                    (fontCatalog.distanceRange * Math.max(glyphScale, 1.0));
-                isMirrored =
-                    UnicodeUtils.isRtlMirrored(glyphData.codePoint) &&
-                    direction === UnicodeUtils.Direction.RTL;
-            }
-
+            const emulationWeight =
+                ((isBoldEmulated ? 0.02 : 0.0) + (isSmallCaps ? 0.01 : 0.0)) *
+                (fontCatalog.size / fontCatalog.distanceRange);
+            const bgWeight =
+                (0.5 * this.m_tempPixelBgSize!) /
+                (fontCatalog.distanceRange * Math.max(glyphScale, 1.0));
+            const isMirrored =
+                UnicodeUtils.isRtlMirrored(glyphData.codePoint) &&
+                direction === UnicodeUtils.Direction.RTL;
             const verticalOffset =
                 glyphFontMetrics.lineHeight -
                 glyphFontMetrics.base -
@@ -475,8 +483,8 @@ export class LineTypesetter implements Typesetter {
                 this.m_tempTransform,
                 position,
                 glyphScale,
-                textStyle.rotation || 0.0,
-                textStyle.glyphRotation || 0.0
+                textLayoutStyle.lineRotation,
+                textRenderStyle.rotation
             );
             for (let j = 0; j < 4; ++j) {
                 const glyphVertexPosition = glyphData.positions[j];
@@ -494,9 +502,7 @@ export class LineTypesetter implements Typesetter {
 
             // Depending on the typesetting options, add the computed glyph to the TextGeometry or
             // update the text bounds.
-            if (globalBounds !== undefined) {
-                TypesettingUtils.updateBounds(this.m_tempCorners, globalBounds, individualBounds);
-            } else {
+            if (globalBounds === undefined && vertexBuffer === undefined) {
                 if (
                     !geometry.add(
                         glyphData,
@@ -504,15 +510,35 @@ export class LineTypesetter implements Typesetter {
                         emulationWeight,
                         emulationWeight + bgWeight,
                         isMirrored,
-                        textStyle
+                        textRenderStyle
                     )
                 ) {
                     return false;
                 }
+            } else {
+                if (globalBounds !== undefined) {
+                    TypesettingUtils.updateBounds(
+                        this.m_tempCorners,
+                        globalBounds,
+                        individualBounds
+                    );
+                }
+                if (vertexBuffer !== undefined) {
+                    geometry.addToBuffer(
+                        vertexBuffer,
+                        i * QUAD_VERTEX_MEMORY_FOOTPRINT,
+                        glyphData,
+                        this.m_tempCorners,
+                        emulationWeight,
+                        emulationWeight + bgWeight,
+                        isMirrored,
+                        textRenderStyle
+                    );
+                }
             }
 
             // Advance the current position and proceed to next glyph in the run.
-            position.x += (glyphData.advanceX + textStyle.tracking!) * glyphScale;
+            position.x += (glyphData.advanceX + textLayoutStyle.tracking) * glyphScale;
         }
 
         return true;

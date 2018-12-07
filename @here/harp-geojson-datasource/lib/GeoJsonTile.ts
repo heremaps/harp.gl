@@ -18,6 +18,7 @@ import {
     Tile,
     TileObject
 } from "@here/harp-mapview";
+import { ContextualArabicConverter } from "@here/harp-text-canvas";
 import * as THREE from "three";
 import {
     GeoJsonPoiGeometry,
@@ -195,10 +196,11 @@ export class GeoJsonTile extends Tile {
         const featureId = DEFAULT_LABELED_ICON.featureId;
 
         const textElement = new TextElement(
-            text,
+            ContextualArabicConverter.instance.convert(text),
             path,
+            this.getRenderStyle(scale, technique),
+            this.getLayoutStyle(technique),
             priority,
-            scale,
             xOffset,
             yOffset,
             featureId
@@ -271,11 +273,13 @@ export class GeoJsonTile extends Tile {
             technique.yOffset === undefined ? DEFAULT_LABELED_ICON.yOffset : technique.yOffset;
 
         const featureId = DEFAULT_LABELED_ICON.featureId;
+
         const textElement = new TextElement(
-            text,
+            ContextualArabicConverter.instance.convert(text),
             position,
+            this.getRenderStyle(scale, technique),
+            this.getLayoutStyle(technique),
             priority,
-            scale,
             xOffset,
             yOffset,
             featureId
@@ -337,11 +341,13 @@ export class GeoJsonTile extends Tile {
             technique.yOffset === undefined ? DEFAULT_LABELED_ICON.yOffset : technique.yOffset;
 
         const featureId = DEFAULT_LABELED_ICON.featureId;
+
         const textElement = new TextElement(
-            label,
+            ContextualArabicConverter.instance.convert(label),
             position,
+            this.getRenderStyle(scale, technique),
+            this.getLayoutStyle(technique),
             priority,
-            scale,
             xOffset,
             yOffset,
             featureId

@@ -8,7 +8,7 @@ import * as THREE from "three";
 
 import { GlyphData } from "./GlyphData";
 import { GlyphTextureCache } from "./GlyphTextureCache";
-import { DefaultTextStyle, FontStyle, FontVariant, TextStyle } from "./TextStyle";
+import { FontStyle, FontVariant, TextRenderStyle } from "./TextStyle";
 
 const ASSETS_PATH = "_Assets/";
 const BOLD_ASSETS_PATH = "_BoldAssets/";
@@ -103,6 +103,23 @@ export class FontCatalog {
         replacementTexture.minFilter = THREE.NearestFilter;
         replacementTexture.needsUpdate = true;
 
+        const replacementFont = fontCatalog.fonts.find((font: Font) => font.name === "Extra");
+        const replacementGlyph = new GlyphData(
+            65533,
+            "Specials",
+            replacementJson.chars[0].width,
+            replacementJson.chars[0].height,
+            replacementJson.chars[0].xadvance,
+            replacementJson.chars[0].xoffset,
+            replacementJson.chars[0].yoffset,
+            0.0,
+            0.0,
+            1.0,
+            1.0,
+            replacementTexture,
+            replacementFont!
+        );
+
         const fontCatalogInfo = new FontCatalog(
             url.href.substr(0, url.href.lastIndexOf("/")),
             fontCatalog.name,
@@ -114,8 +131,7 @@ export class FontCatalog {
             fontCatalog.fonts,
             fontCatalog.supportedBlocks,
             maxCodePointCount,
-            replacementJson,
-            replacementTexture
+            replacementGlyph
         );
         return fontCatalogInfo;
     }
@@ -136,13 +152,16 @@ export class FontCatalog {
     }
 
     private m_glyphTextureCache: GlyphTextureCache;
-    private m_replacementGlyph: GlyphData;
+
     private m_loadingJson: Map<string, Promise<any>>;
     private m_loadingPages: Map<string, Promise<THREE.Texture>>;
+    private m_loadingGlyphs: Map<string, Promise<GlyphData>>;
     private m_loadedJson: Map<string, any>;
     private m_loadedPages: Map<string, THREE.Texture>;
+    private m_loadedGlyphs: Map<string, Map<number, GlyphData>>;
 
     /**
+     * @hidden
      * Creates a new FontCatalog.
      *
      * @param url FontCatalog's URL.
@@ -156,10 +175,12 @@ export class FontCatalog {
      * @param unicodeBlocks Array of supported Unicode blocks.
      * @param maxCodePointCount Maximum number of unique code points bitmaps this `FontCatalog`'s
      * internal texture can store simultaneously.
+     * @param m_replacementGlyph [[GlyphData]] to be used whenever a Unicode code point is not
+     * supported by this `FontCatalog`.
      *
      * @returns New FontCatalog.
      */
-    constructor(
+    private constructor(
         readonly url: string,
         readonly name: string,
         readonly type: string,
@@ -170,26 +191,8 @@ export class FontCatalog {
         readonly fonts: Font[],
         readonly unicodeBlocks: UnicodeBlock[],
         readonly maxCodePointCount: number,
-        replacementJson: any,
-        replacementTexture: THREE.Texture
+        private m_replacementGlyph: GlyphData
     ) {
-        const replacementFont = fonts.find(font => font.name === "Extra");
-        this.m_replacementGlyph = new GlyphData(
-            65533,
-            "Specials",
-            replacementJson.chars[0].width,
-            replacementJson.chars[0].height,
-            replacementJson.chars[0].xadvance,
-            replacementJson.chars[0].xoffset,
-            replacementJson.chars[0].yoffset,
-            0.0,
-            0.0,
-            1.0,
-            1.0,
-            replacementTexture,
-            replacementFont!
-        );
-
         this.m_glyphTextureCache = new GlyphTextureCache(
             maxCodePointCount,
             this.maxWidth + 1,
@@ -198,8 +201,10 @@ export class FontCatalog {
 
         this.m_loadingJson = new Map<string, Promise<any>>();
         this.m_loadingPages = new Map<string, Promise<THREE.Texture>>();
+        this.m_loadingGlyphs = new Map<string, Promise<GlyphData>>();
         this.m_loadedJson = new Map<string, any>();
         this.m_loadedPages = new Map<string, THREE.Texture>();
+        this.m_loadedGlyphs = new Map<string, Map<number, GlyphData>>();
     }
 
     /**
@@ -211,8 +216,10 @@ export class FontCatalog {
         this.m_glyphTextureCache.dispose();
         this.m_loadingJson.clear();
         this.m_loadingPages.clear();
+        this.m_loadingGlyphs.clear();
         this.m_loadedJson.clear();
         this.m_loadedPages.clear();
+        this.m_loadedGlyphs.clear();
     }
 
     /**
@@ -222,8 +229,10 @@ export class FontCatalog {
         this.m_glyphTextureCache.clear();
         this.m_loadingJson.clear();
         this.m_loadingPages.clear();
+        this.m_loadingGlyphs.clear();
         this.m_loadedJson.clear();
         this.m_loadedPages.clear();
+        this.m_loadedGlyphs.clear();
     }
 
     /**
@@ -251,6 +260,17 @@ export class FontCatalog {
     }
 
     /**
+     * Current internal loading state.
+     */
+    get isLoading(): boolean {
+        return (
+            this.m_loadingJson.size > 0 ||
+            this.m_loadingPages.size > 0 ||
+            this.m_loadingGlyphs.size > 0
+        );
+    }
+
+    /**
      * Loads the description file for a specific [[UnicodeBlock]]. This speeds up consequent calls
      * to `FontCatalog`.loadCharset() that require glyphs from this block to be loaded.
      *
@@ -261,7 +281,7 @@ export class FontCatalog {
      *
      * @returns Loaded Unicode Block json.
      */
-    async loadUnicodeBlock(
+    async loadBlock(
         block: UnicodeBlock,
         font: Font,
         fontStyle: FontStyle,
@@ -288,12 +308,14 @@ export class FontCatalog {
                 json = await jsonPromise;
             }
         }
+
+        const pagePromises: Array<Promise<THREE.Texture>> = [];
         if (loadPages === true) {
             for (const page of json.pages) {
-                const pagePath = `${assetsPath}/${page}`;
-                await this.loadPage(pagePath);
+                pagePromises.push(this.loadPage(`${assetsPath}/${page}`));
             }
         }
+        await Promise.all(pagePromises);
 
         return json;
     }
@@ -322,63 +344,76 @@ export class FontCatalog {
     }
 
     /**
-     * Loads all the required assets needed to render all glyphs provided as input.
-     * Character repetition will not be considered, and only styled assets (with applied font
-     * selection, style and variants) will be loaded.
+     * Loads all the required glyphs needed to render the input text. Character repetition will not
+     * be considered, and only styled assets (with applied font selection, style and variants) will
+     * be loaded.
      *
-     * @param input Input string.
-     * @param style Style to apply to the input.
+     * @param input Input text.
+     * @param style Specific [[TextRenderStyle]] for which glyphs will be loaded.
+     *
+     * @returns Promise containing an array of all loaded [[GlyphData]] for the input text.
      */
-    async loadCharset(input: string, style: TextStyle): Promise<void> {
-        const fontName = style.font !== undefined ? style.font : "";
-        const fontStyle =
-            style.fontStyle !== undefined ? style.fontStyle : DefaultTextStyle.DEFAULT_FONT_STYLE;
-        const fontVariant =
-            style.fontVariant !== undefined
-                ? style.fontVariant
-                : DefaultTextStyle.DEFAULT_FONT_VARIANT;
+    async loadCharset(input: string, style: TextRenderStyle): Promise<GlyphData[]> {
+        const fontName = style.fontName;
+        const fontStyle = style.fontStyle;
+        const shouldTransform =
+            style.fontVariant === FontVariant.AllCaps ||
+            style.fontVariant === FontVariant.SmallCaps;
 
-        const charset = input.replace(/[\s\S](?=([\s\S]+))/g, (c, s) => {
-            return s.indexOf(c) + 1 ? "" : c;
-        });
-        for (const sourceChar of charset) {
-            const variantText =
-                fontVariant === FontVariant.AllCaps || fontVariant === FontVariant.SmallCaps
-                    ? sourceChar.toUpperCase()
-                    : sourceChar;
+        const charset = (shouldTransform ? input.toUpperCase() : input).replace(
+            /[\s\S](?=([\s\S]+))/g,
+            (c, s) => {
+                return s.indexOf(c) + 1 ? "" : c;
+            }
+        );
+        const glyphPromises: Array<Promise<GlyphData>> = [];
+        for (const char of charset) {
+            const codePoint = char.codePointAt(0)!;
+            const font = this.getFont(codePoint, fontName);
+            const fontHash = `${font.name}_${fontStyle}`;
+            const glyphHash = `${fontHash}_${codePoint}`;
 
-            for (const char of variantText) {
-                const codePoint = char.codePointAt(0)!;
-                const font = this.getFont(codePoint, fontName);
-                const hash = `${font.name}_${fontStyle}_${codePoint}`;
-                if (font.charset.indexOf(String.fromCodePoint(codePoint)) === -1) {
-                    const glyph = this.m_replacementGlyph.clone(codePoint);
-                    this.m_glyphTextureCache.add(hash, glyph);
-                    continue;
-                }
+            let fontGlyphMap = this.m_loadedGlyphs.get(fontHash);
+            if (fontGlyphMap === undefined) {
+                fontGlyphMap = new Map();
+                this.m_loadedGlyphs.set(fontHash, fontGlyphMap);
+            }
 
-                let charUnicodeBlock: UnicodeBlock | undefined;
-                for (const block of this.unicodeBlocks) {
-                    if (codePoint >= block.min && codePoint <= block.max) {
-                        charUnicodeBlock = block;
-                        break;
+            const glyph = fontGlyphMap.get(codePoint);
+            if (glyph === undefined) {
+                let glyphPromise = this.m_loadingGlyphs.get(glyphHash);
+                if (glyphPromise === undefined) {
+                    if (font.charset.indexOf(String.fromCodePoint(codePoint)) === -1) {
+                        const replacementGlyph = this.createReplacementGlyph(codePoint, char, font);
+                        fontGlyphMap!.set(codePoint, replacementGlyph);
+                        this.m_glyphTextureCache.add(glyphHash, replacementGlyph);
+                        continue;
                     }
-                }
-                if (charUnicodeBlock === undefined) {
-                    const glyph = this.m_replacementGlyph.clone(codePoint);
-                    this.m_glyphTextureCache.add(hash, glyph);
-                    continue;
-                }
 
-                const glyphData = await this.loadAssets(
-                    codePoint,
-                    fontStyle,
-                    charUnicodeBlock,
-                    font
-                );
-                this.m_glyphTextureCache.add(hash, glyphData);
+                    let charUnicodeBlock: UnicodeBlock | undefined;
+                    for (const block of this.unicodeBlocks) {
+                        if (codePoint >= block.min && codePoint <= block.max) {
+                            charUnicodeBlock = block;
+                            break;
+                        }
+                    }
+
+                    glyphPromise = this.loadAssets(codePoint, fontStyle, charUnicodeBlock!, font);
+                    this.m_loadingGlyphs.set(glyphHash, glyphPromise);
+                    glyphPromise.then((loadedGlyph: GlyphData) => {
+                        this.m_loadingGlyphs.delete(glyphHash);
+                        fontGlyphMap!.set(codePoint, loadedGlyph);
+                        this.m_glyphTextureCache.add(glyphHash, loadedGlyph);
+                    });
+                }
+                glyphPromises.push(glyphPromise);
+            } else if (!this.m_glyphTextureCache.has(glyphHash)) {
+                glyphPromises.push(Promise.resolve(glyph));
+                this.m_glyphTextureCache.add(glyphHash, glyph);
             }
         }
+
+        return Promise.all(glyphPromises);
     }
 
     /**
@@ -386,15 +421,57 @@ export class FontCatalog {
      * Returns `undefined` if the assets for this glyph haven't been loaded yet.
      *
      * @param codePoint Character's Unicode code point.
-     * @param font Font to get this glyph from.
-     * @param fontStyle Specific font style to use.
+     * @param font [[Font]] to get this glyph from.
+     * @param fontStyle Specific [[FontStyle]] to get glyphs for.
      *
      * @returns [[GlyphData]] for this code point.
      */
     getGlyph(codePoint: number, font: Font, fontStyle: FontStyle): GlyphData | undefined {
-        const hash = `${font.name}_${fontStyle}_${codePoint}`;
-        const cacheEntry = this.m_glyphTextureCache.get(hash);
-        return cacheEntry === undefined ? cacheEntry : cacheEntry.glyphData;
+        const fontGlyphMap = this.m_loadedGlyphs.get(`${font.name}_${fontStyle}`);
+        if (fontGlyphMap === undefined) {
+            return undefined;
+        }
+        return fontGlyphMap.get(codePoint);
+    }
+
+    /**
+     * Retrieves the loaded [[GlyphData]] for the specified text.
+     * Returns `undefined` if the assets for these glyphs haven't been loaded yet.
+     *
+     * @param input Input text.
+     * @param style Specific [[TextRenderStyle]] to get glyphs for.
+     * @param letterCaseArray Array containing the original letter case for the requested glyphs.
+     *
+     * @returns Array containing [[GlyphData]] for each character of the input text.
+     */
+    getGlyphs(
+        input: string,
+        style: TextRenderStyle,
+        letterCaseArray?: boolean[]
+    ): GlyphData[] | undefined {
+        const result = [];
+        const fontName = style.fontName;
+        const fontStyle = style.fontStyle;
+        const fontVariant = style.fontVariant;
+        const shouldTransform =
+            fontVariant === FontVariant.AllCaps || fontVariant === FontVariant.SmallCaps;
+        for (const character of input) {
+            const transformedCharacter = shouldTransform ? character.toUpperCase() : character;
+            for (const char of transformedCharacter) {
+                const codePoint = char.codePointAt(0)!;
+                const font = this.getFont(codePoint, fontName);
+                const glyphData = this.getGlyph(codePoint, font, fontStyle);
+                if (glyphData !== undefined) {
+                    result.push(glyphData);
+                    if (letterCaseArray !== undefined) {
+                        letterCaseArray.push(char !== character);
+                    }
+                } else {
+                    return undefined;
+                }
+            }
+        }
+        return result;
     }
 
     /**
@@ -425,13 +502,21 @@ export class FontCatalog {
         })!;
     }
 
+    private createReplacementGlyph(codePoint: number, char: string, font: Font): GlyphData {
+        const replacementGlyph = this.m_replacementGlyph.clone();
+        (replacementGlyph as any).codePoint = codePoint;
+        (replacementGlyph as any).character = char;
+        (replacementGlyph as any).font = font;
+        return replacementGlyph;
+    }
+
     private async loadAssets(
         codePoint: number,
         fontStyle: FontStyle,
         block: UnicodeBlock,
         font: Font
     ): Promise<GlyphData> {
-        const json = await this.loadUnicodeBlock(block, font, fontStyle);
+        const json = await this.loadBlock(block, font, fontStyle);
 
         const sourceGlyphData = (json.chars as SrcGlyphData[]).find(char => char.id === codePoint);
         const assetsPath = this.getAssetsPath(fontStyle, font);

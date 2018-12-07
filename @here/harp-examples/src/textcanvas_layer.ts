@@ -8,7 +8,7 @@
 const Stats = require("stats.js");
 import * as THREE from "three";
 
-import { FontCatalog, TextCanvas } from "@here/harp-text-canvas";
+import { FontCatalog, TextCanvas, TextRenderStyle } from "@here/harp-text-canvas";
 
 /**
  * This example showcases how you can add text to different layers of [[TextCanvas]], to preserve
@@ -27,10 +27,14 @@ export namespace TextCanvasLayerExample {
 
     function addText() {
         const position = new THREE.Vector3(30.0, 0.0, 0.0);
-        textCanvas.style.fontSize!.size *= 4.0;
+        textCanvas.textRenderStyle.fontSize!.size *= 4.0;
         for (let i = 9; i >= 0; --i) {
-            textCanvas.style.rotation = i * ((2.0 * Math.PI) / 10.0);
-            textCanvas.style.color = new THREE.Color(Math.random(), Math.random(), Math.random());
+            textCanvas.textLayoutStyle.lineRotation = i * ((2.0 * Math.PI) / 10.0);
+            textCanvas.textRenderStyle.color = new THREE.Color(
+                Math.random(),
+                Math.random(),
+                Math.random()
+            );
             textCanvas.addText(String(i), position, { layer: i });
         }
     }
@@ -77,14 +81,14 @@ export namespace TextCanvasLayerExample {
         camera.updateProjectionMatrix();
 
         // Init TextCanvas
-        FontCatalog.load("resources/harp-text-canvas/fonts/Default_FontCatalog.json", 16).then(
+        FontCatalog.load("resources/fonts/Default_FontCatalog.json", 16).then(
             (loadedFontCatalog: FontCatalog) => {
                 textCanvas = new TextCanvas({
                     renderer: webglRenderer,
                     fontCatalog: loadedFontCatalog,
                     maxGlyphCount: 12
                 });
-                loadedFontCatalog.loadCharset("0123456789", {}).then(() => {
+                loadedFontCatalog.loadCharset("0123456789", new TextRenderStyle()).then(() => {
                     assetsLoaded = true;
                     addText();
                 });

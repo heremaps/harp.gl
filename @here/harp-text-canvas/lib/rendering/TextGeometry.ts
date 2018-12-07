@@ -7,15 +7,16 @@
 import * as THREE from "three";
 
 import { GlyphData } from "./GlyphData";
-import { TextStyle } from "./TextStyle";
+import { TextBufferObject } from "./TextBufferObject";
+import { TextRenderStyle } from "./TextStyle";
 
-const MAX_CAPACITY = 65536;
-const VERTEX_BUFFER_STRIDE = 16;
-const INDEX_BUFFER_STRIDE = 1;
-const VERTICES_PER_QUAD = 4;
-const INDICES_PER_QUAD = 6;
-const QUAD_VERTEX_MEMORY_FOOTPRINT = VERTICES_PER_QUAD * VERTEX_BUFFER_STRIDE;
-const QUAD_INDEX_MEMORY_FOOTPRINT = INDICES_PER_QUAD * INDEX_BUFFER_STRIDE;
+export const MAX_CAPACITY = 65536;
+export const VERTEX_BUFFER_STRIDE = 16;
+export const INDEX_BUFFER_STRIDE = 1;
+export const VERTICES_PER_QUAD = 4;
+export const INDICES_PER_QUAD = 6;
+export const QUAD_VERTEX_MEMORY_FOOTPRINT = VERTICES_PER_QUAD * VERTEX_BUFFER_STRIDE;
+export const QUAD_INDEX_MEMORY_FOOTPRINT = INDICES_PER_QUAD * INDEX_BUFFER_STRIDE;
 
 /**
  * Interface containing user-supplied picking data, as well as the [[TextGeometry]] range it's
@@ -167,7 +168,7 @@ export class TextGeometry {
      * @param weight Foreground glyph sampling weight.
      * @param bgWeight Foreground glyph sampling weight.
      * @param mirrored If `true`, UVs will be horizontally mirrored (needed for RTL punctuation).
-     * @param style Currently set [[TextStyle]].
+     * @param style Currently set [[TextRenderStyle]].
      * @param isCopyGeometry If `true`, it will use the original UVs to copy the glyph data.
      *
      * @returns Result of the addition.
@@ -178,7 +179,7 @@ export class TextGeometry {
         weight: number,
         bgWeight: number,
         mirrored: boolean,
-        style: TextStyle,
+        style: TextRenderStyle,
         isCopyGeometry?: boolean
     ): boolean {
         if (this.m_drawCount >= this.capacity) {
@@ -196,7 +197,7 @@ export class TextGeometry {
                 corners[i].z,
                 isCopyGeometry === true
                     ? glyphData.copyIndex
-                    : (mirrored ? -1.0 : 1.0) * style.glyphRotation!
+                    : (mirrored ? -1.0 : 1.0) * style.rotation
             );
             const mirroredUVIdx = mirrored ? ((i + 1) % 2) + Math.floor(i / 2) * 2 : i;
             this.m_uvAttribute.setXYZW(
@@ -212,17 +213,17 @@ export class TextGeometry {
             );
             this.m_colorAttribute.setXYZW(
                 baseVertex + i,
-                style.color!.r,
-                style.color!.g,
-                style.color!.b,
-                style.opacity!
+                style.color.r,
+                style.color.g,
+                style.color.b,
+                style.opacity
             );
             this.m_bgColorAttribute.setXYZW(
                 baseVertex + i,
-                style.backgroundColor!.r,
-                style.backgroundColor!.g,
-                style.backgroundColor!.b,
-                style.backgroundOpacity!
+                style.backgroundColor.r,
+                style.backgroundColor.g,
+                style.backgroundColor.b,
+                style.backgroundOpacity
             );
         }
 
@@ -234,6 +235,181 @@ export class TextGeometry {
         this.m_indexBuffer.setX(baseIndex + 5, baseVertex + 3);
 
         ++this.m_drawCount;
+        return true;
+    }
+
+    /**
+     * Add a new glyph to a text buffer.
+     *
+     * @param buffer Target buffer where glyph attributes will be stored.
+     * @param offset Offset of the target buffer.
+     * @param glyphData [[GlyphData]] holding the glyph description.
+     * @param corners Transformed glyph corners.
+     * @param weight Foreground glyph sampling weight.
+     * @param bgWeight Foreground glyph sampling weight.
+     * @param mirrored If `true`, UVs will be mirrored (needed for RTL punctuation).
+     * @param style Currently set [[TextRenderStyle]].
+     */
+    addToBuffer(
+        buffer: Float32Array,
+        offset: number,
+        glyphData: GlyphData,
+        corners: THREE.Vector3[],
+        weight: number,
+        bgWeight: number,
+        mirrored: boolean,
+        style: TextRenderStyle
+    ): void {
+        for (let i = 0; i < VERTICES_PER_QUAD; ++i) {
+            const vertexOffset = offset + VERTEX_BUFFER_STRIDE * i;
+            buffer[vertexOffset] = corners[i].x;
+            buffer[vertexOffset + 1] = corners[i].y;
+            buffer[vertexOffset + 2] = corners[i].z;
+            buffer[vertexOffset + 3] = (mirrored ? -1.0 : 1.0) * style.rotation;
+
+            const mirroredUVIdx = mirrored ? ((i + 1) % 2) + Math.floor(i / 2) * 2 : i;
+            buffer[vertexOffset + 4] = glyphData.dynamicTextureCoordinates[mirroredUVIdx].x;
+            buffer[vertexOffset + 5] = glyphData.dynamicTextureCoordinates[mirroredUVIdx].y;
+            buffer[vertexOffset + 6] = weight;
+            buffer[vertexOffset + 7] = bgWeight;
+
+            buffer[vertexOffset + 8] = style.color.r;
+            buffer[vertexOffset + 9] = style.color.g;
+            buffer[vertexOffset + 10] = style.color.b;
+            buffer[vertexOffset + 11] = style.opacity;
+
+            buffer[vertexOffset + 12] = style.backgroundColor.r;
+            buffer[vertexOffset + 13] = style.backgroundColor.g;
+            buffer[vertexOffset + 14] = style.backgroundColor.b;
+            buffer[vertexOffset + 15] = style.backgroundOpacity;
+        }
+    }
+
+    /**
+     * Add a previously computed [[TextBufferObject]] to the `TextGeometry`. Extra parameters can
+     * be passed to override the passed attribute data.
+     *
+     * @param textBufferObject [[TextBufferObject]] containing computed glyphs.
+     * @param position Override position value.
+     * @param scale Override scale value.
+     * @param rotation Override rotation value.
+     * @param color Override color value.
+     * @param opacity Override opacity value.
+     * @param bgColor Override background color value.
+     * @param bgOpacity Override background opacity value.
+     *
+     * @returns Result of the addition.
+     */
+    addTextBufferObject(
+        textBufferObject: TextBufferObject,
+        position?: THREE.Vector3,
+        scale?: number,
+        rotation?: number,
+        color?: THREE.Color,
+        opacity?: number,
+        bgColor?: THREE.Color,
+        bgOpacity?: number
+    ): boolean {
+        if (this.m_drawCount + textBufferObject.glyphs.length >= this.capacity) {
+            return false;
+        }
+
+        const s = scale || 1.0;
+        const r = rotation || 0.0;
+        const cosR = Math.cos(r);
+        const sinR = Math.sin(r);
+        const offsetX = position !== undefined ? position.x : 0.0;
+        const offsetY = position !== undefined ? position.y : 0.0;
+        const offsetZ = position !== undefined ? position.z : 0.0;
+
+        const buffer = textBufferObject.buffer;
+
+        const rot = buffer[3];
+        const rotSign = rot < 0 ? -1.0 : 1.0;
+
+        const w = buffer[6];
+        const bw = buffer[7];
+
+        const red = color !== undefined ? color.r : buffer[8];
+        const green = color !== undefined ? color.g : buffer[9];
+        const blue = color !== undefined ? color.b : buffer[10];
+        const alpha = opacity !== undefined ? opacity : buffer[11];
+        const bgRed = bgColor !== undefined ? bgColor.r : buffer[12];
+        const bgGreen = bgColor !== undefined ? bgColor.g : buffer[13];
+        const bgBlue = bgColor !== undefined ? bgColor.b : buffer[14];
+        const bgAlpha = bgOpacity !== undefined ? bgOpacity : buffer[15];
+
+        const targetOffset = this.m_drawCount * VERTICES_PER_QUAD;
+        for (let i = 0; i < textBufferObject.glyphs.length; ++i) {
+            const srcOffset = i * QUAD_VERTEX_MEMORY_FOOTPRINT;
+
+            const glyph = textBufferObject.glyphs[i];
+            if (!glyph.isInCache) {
+                return false;
+            }
+            const mirrored = buffer[srcOffset + 4] > buffer[srcOffset + VERTEX_BUFFER_STRIDE + 4];
+
+            for (let j = 0; j < VERTICES_PER_QUAD; ++j) {
+                const x = buffer[srcOffset + j * VERTEX_BUFFER_STRIDE];
+                const y = buffer[srcOffset + j * VERTEX_BUFFER_STRIDE + 1];
+                this.m_positionAttribute.setXYZW(
+                    targetOffset + i * VERTICES_PER_QUAD + j,
+                    x * s * cosR + y * s * -sinR + offsetX,
+                    x * s * sinR + y * s * cosR + offsetY,
+                    buffer[srcOffset + j * VERTEX_BUFFER_STRIDE + 2] + offsetZ,
+                    buffer[srcOffset + j * VERTEX_BUFFER_STRIDE + 3] + rotSign * r
+                );
+                const mirroredUVIdx = mirrored ? ((j + 1) % 2) + Math.floor(j / 2) * 2 : j;
+                this.m_uvAttribute.setXYZW(
+                    targetOffset + i * VERTICES_PER_QUAD + j,
+                    glyph.dynamicTextureCoordinates[mirroredUVIdx].x,
+                    glyph.dynamicTextureCoordinates[mirroredUVIdx].y,
+                    w,
+                    (bw - w) / s + w
+                );
+                this.m_colorAttribute.setXYZW(
+                    targetOffset + i * VERTICES_PER_QUAD + j,
+                    red,
+                    green,
+                    blue,
+                    alpha
+                );
+                this.m_bgColorAttribute.setXYZW(
+                    targetOffset + i * VERTICES_PER_QUAD + j,
+                    bgRed,
+                    bgGreen,
+                    bgBlue,
+                    bgAlpha
+                );
+            }
+
+            this.m_indexBuffer.setX(
+                (this.m_drawCount + i) * INDICES_PER_QUAD,
+                (this.m_drawCount + i) * VERTICES_PER_QUAD
+            );
+            this.m_indexBuffer.setX(
+                (this.m_drawCount + i) * INDICES_PER_QUAD + 1,
+                (this.m_drawCount + i) * VERTICES_PER_QUAD + 1
+            );
+            this.m_indexBuffer.setX(
+                (this.m_drawCount + i) * INDICES_PER_QUAD + 2,
+                (this.m_drawCount + i) * VERTICES_PER_QUAD + 2
+            );
+            this.m_indexBuffer.setX(
+                (this.m_drawCount + i) * INDICES_PER_QUAD + 3,
+                (this.m_drawCount + i) * VERTICES_PER_QUAD + 2
+            );
+            this.m_indexBuffer.setX(
+                (this.m_drawCount + i) * INDICES_PER_QUAD + 4,
+                (this.m_drawCount + i) * VERTICES_PER_QUAD + 1
+            );
+            this.m_indexBuffer.setX(
+                (this.m_drawCount + i) * INDICES_PER_QUAD + 5,
+                (this.m_drawCount + i) * VERTICES_PER_QUAD + 3
+            );
+        }
+
+        this.m_drawCount += textBufferObject.glyphs.length;
         return true;
     }
 
@@ -273,7 +449,7 @@ export class TextGeometry {
             }
 
             for (let i = pickingData.start; i < pickingData.end; ++i) {
-                const positionIndex = i * 4;
+                const positionIndex = i * VERTICES_PER_QUAD;
 
                 const minX = Math.min(
                     this.m_positionAttribute.getX(positionIndex + 2),

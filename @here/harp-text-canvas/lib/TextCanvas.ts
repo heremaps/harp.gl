@@ -8,29 +8,57 @@ import * as THREE from "three";
 
 import { FontCatalog } from "./rendering/FontCatalog";
 import { GlyphData } from "./rendering/GlyphData";
-import { TextGeometry } from "./rendering/TextGeometry";
+import { TextBufferObject } from "./rendering/TextBufferObject";
+import { QUAD_VERTEX_MEMORY_FOOTPRINT, TextGeometry } from "./rendering/TextGeometry";
 import { SdfTextMaterial } from "./rendering/TextMaterials";
-import {
-    DefaultLayoutStyle,
-    DefaultTextStyle,
-    FontStyle,
-    FontVariant,
-    LayoutStyle,
-    TextStyle
-} from "./rendering/TextStyle";
+import { FontVariant, TextLayoutStyle, TextRenderStyle } from "./rendering/TextStyle";
 import { LineTypesetter } from "./typesetting/LineTypesetter";
 import { PathTypesetter, PathTypesettingParameters } from "./typesetting/PathTypesetter";
 import { TypesettingParameters } from "./typesetting/Typesetter";
 import { createSdfTextMaterial } from "./utils/MaterialUtils";
 
 const tempTextPosition = new THREE.Vector3();
+const tempTextBounds = {
+    array: [new THREE.Box2()],
+    offset: 0
+};
+let tempVertexBuffer = new Float32Array();
 
 interface TextPlacementParameters {
-    inputText: string;
+    input: string | GlyphData[];
     layer: TextCanvasLayer;
     textPath?: THREE.Path | THREE.CurvePath<THREE.Vector2>;
+    textPathOverflow?: boolean;
     bounds?: THREE.Box2;
     individualBounds?: THREE.Box2[];
+    computeTextBuffer?: boolean;
+    letterCaseArray?: boolean[];
+}
+
+/**
+ * Optional parameters passed on [[TextCanvas]].`measureText` function call.
+ */
+export interface MeasurementParameters {
+    /**
+     * Path where text should be placed on. Overrides the original position parameter.
+     */
+    path?: THREE.Path | THREE.CurvePath<THREE.Vector2>;
+
+    /**
+     * If `true`, text on a path will be placed even when its size its bigger than the path's size.
+     */
+    pathOverflow?: boolean;
+
+    /**
+     * Output per-character bounds.
+     */
+    outputCharacterBounds?: THREE.Box2[];
+
+    /**
+     * Array containing info on whether the glyphs are upper or lower case. Needed to support
+     * `SmallCaps`.
+     */
+    letterCaseArray?: boolean[];
 }
 
 /**
@@ -41,6 +69,11 @@ export interface AdditionParameters {
      * Path where text should be placed on. Overrides the original position parameter.
      */
     path?: THREE.Path | THREE.CurvePath<THREE.Vector2>;
+
+    /**
+     * If `true`, text on a path will be placed even when its size its bigger than the path's size.
+     */
+    pathOverflow?: boolean;
 
     /**
      * Layer where text will be added.
@@ -57,21 +90,52 @@ export interface AdditionParameters {
      * Object containing additional data intended to be retrieved during picking.
      */
     pickingData?: any;
+
+    /**
+     * Array containing info on whether the glyphs are upper or lower case. Needed to support
+     * `SmallCaps`.
+     */
+    letterCaseArray?: boolean[];
 }
 
 /**
- * Optional parameters passed on [[TextCanvas]].`measureText` function call.
+ * Optional parameters passed on [[TextCanvas]].`createTextBufferObject` function call.
  */
-export interface MeasurementParameters {
+export interface TextBufferCreationParameters {
     /**
      * Path where text should be placed on. Overrides the original position parameter.
      */
     path?: THREE.Path | THREE.CurvePath<THREE.Vector2>;
 
     /**
+     * If `true`, text on a path will be placed even when its size its bigger than the path's size.
+     */
+    pathOverflow?: boolean;
+
+    /**
+     * Output text bounding-box.
+     */
+    outputBounds?: boolean;
+
+    /**
      * Output per-character bounds.
      */
-    outputCharacterBounds?: THREE.Box2[];
+    outputCharacterBounds?: boolean;
+}
+
+/**
+ * Optional parameters passed on [[TextCanvas]].`addTextBufferObject` function call.
+ */
+export interface TextBufferAdditionParameters {
+    layer?: number;
+    position?: THREE.Vector3;
+    scale?: number;
+    rotation?: number;
+    color?: THREE.Color;
+    opacity?: number;
+    backgroundColor?: THREE.Color;
+    backgroundOpacity?: number;
+    pickingData?: any;
 }
 
 /**
@@ -131,10 +195,10 @@ export class TextCanvas {
     private m_renderer: THREE.WebGLRenderer;
     private m_fontCatalog: FontCatalog;
 
-    private readonly m_defaultTextStyle: TextStyle;
-    private m_currentTextStyle: TextStyle;
-    private readonly m_defaultLayoutStyle: LayoutStyle;
-    private m_currentLayoutStyle: LayoutStyle;
+    private readonly m_defaultTextRenderStyle: TextRenderStyle;
+    private m_currentTextRenderStyle: TextRenderStyle;
+    private readonly m_defaultTextLayoutStyle: TextLayoutStyle;
+    private m_currentTextLayoutStyle: TextLayoutStyle;
 
     private m_material: SdfTextMaterial | THREE.MeshMaterialType;
     private m_bgMaterial: SdfTextMaterial | THREE.MeshMaterialType;
@@ -188,10 +252,10 @@ export class TextCanvas {
         );
         this.m_layers = [this.m_defaultLayer];
 
-        this.m_defaultTextStyle = DefaultTextStyle.initializeTextStyle();
-        this.m_currentTextStyle = this.m_defaultTextStyle;
-        this.m_defaultLayoutStyle = DefaultLayoutStyle.initializeLayoutStyle();
-        this.m_currentLayoutStyle = this.m_defaultLayoutStyle;
+        this.m_defaultTextRenderStyle = new TextRenderStyle();
+        this.m_currentTextRenderStyle = this.m_defaultTextRenderStyle;
+        this.m_defaultTextLayoutStyle = new TextLayoutStyle();
+        this.m_currentTextLayoutStyle = this.m_defaultTextLayoutStyle;
 
         this.m_lineTypesetter = new LineTypesetter();
         this.m_pathTypesetter = new PathTypesetter();
@@ -266,27 +330,21 @@ export class TextCanvas {
     /**
      * Currently active text rendering style.
      */
-    get style(): TextStyle {
-        return this.m_currentTextStyle;
+    get textRenderStyle(): TextRenderStyle {
+        return this.m_currentTextRenderStyle;
     }
-    set style(style: TextStyle) {
-        this.m_currentTextStyle = {
-            ...this.m_defaultTextStyle,
-            ...style
-        };
+    set textRenderStyle(style: TextRenderStyle) {
+        this.m_currentTextRenderStyle = style;
     }
 
     /**
      * Currently active text layout style.
      */
-    get layoutStyle(): LayoutStyle {
-        return this.m_currentLayoutStyle;
+    get textLayoutStyle(): TextLayoutStyle {
+        return this.m_currentTextLayoutStyle;
     }
-    set layoutStyle(style: LayoutStyle) {
-        this.m_currentLayoutStyle = {
-            ...this.m_defaultLayoutStyle,
-            ...style
-        };
+    set textLayoutStyle(style: TextLayoutStyle) {
+        this.m_currentTextLayoutStyle = style;
     }
 
     /**
@@ -296,7 +354,7 @@ export class TextCanvas {
         for (const layer of this.m_layers) {
             layer.geometry.clear();
         }
-        this.m_currentTextStyle = this.m_defaultTextStyle;
+        this.m_currentTextRenderStyle = this.m_defaultTextRenderStyle;
     }
 
     /**
@@ -323,6 +381,32 @@ export class TextCanvas {
     }
 
     /**
+     * Creates a new `TextCanvas` rendering layer and returns. If there was already a layer for the
+     * input `layerId`, it just returns this one instead.
+     *
+     * @param layerId Desired layer identifier.
+     *
+     * @returns Created [[TextCanvasLayer]].
+     */
+    addLayer(layerId: number): TextCanvasLayer {
+        let result = this.getLayer(layerId);
+        if (result === undefined) {
+            result = {
+                id: layerId,
+                scene: new THREE.Scene(),
+                geometry: new TextGeometry(this.m_material, this.m_bgMaterial, this.maxGlyphCount)
+            };
+            result.scene.add(result.geometry.backgroundMesh, result.geometry.mesh);
+
+            this.m_layers.push(result);
+            this.m_layers.sort((a: TextCanvasLayer, b: TextCanvasLayer) => {
+                return a.id - b.id;
+            });
+        }
+        return result;
+    }
+
+    /**
      * Retrieves a specific `TextCanvas` rendering layer.
      *
      * @param layerId Desired layer identifier.
@@ -343,62 +427,79 @@ export class TextCanvas {
     }
 
     /**
-     * Returns the computed bounding box for the input text. The current [[TextStyle]] and
-     * [[LayoutStyle]] will influence the results of this function.
+     * Returns the computed bounding box for the input text. The current [[TextRenderStyle]] and
+     * [[TextLayoutStyle]] will influence the results of this function.
      *
-     * @param text Input text.
+     * @param text Input text. Provide an array of [[GlyphData]] for better performance.
      * @param outputBounds Output text bounding box.
      * @param params Optional measurement parameters.
      *
-     * @returns If `false`, some error occurred during execution and the output should be dismissed.
+     * @returns Result of the measurement. If `false`, some error occurred during execution and the
+     * input text couldn't be properly measured.
      */
-    measureText(text: string, outputBounds: THREE.Box2, params?: MeasurementParameters): boolean {
-        let outputCharacterBounds;
-        let path;
+    measureText(
+        text: string | GlyphData[],
+        outputBounds: THREE.Box2,
+        params?: MeasurementParameters
+    ): boolean {
+        tempTextPosition.set(0, 0, 0);
 
+        let path;
+        let pathOverflow;
+        let upperCaseArray;
+        let outputCharacterBounds;
         if (params !== undefined) {
             path = params.path;
+            pathOverflow = params.pathOverflow;
             outputCharacterBounds = params.outputCharacterBounds;
-
             if (params.path !== undefined) {
                 const pathOrigin = params.path.getPoint(0);
                 if (pathOrigin === null) {
                     return false;
                 }
                 tempTextPosition.set(pathOrigin.x, pathOrigin.y, 0.0);
-            } else {
-                tempTextPosition.set(0, 0, 0);
+            }
+            if (params.letterCaseArray) {
+                upperCaseArray = params.letterCaseArray;
             }
         }
 
         return this.placeText({
-            inputText: text,
+            input: text,
             layer: this.m_defaultLayer,
             textPath: path,
+            textPathOverflow: pathOverflow,
             bounds: outputBounds,
-            individualBounds: outputCharacterBounds
+            individualBounds: outputCharacterBounds,
+            letterCaseArray: upperCaseArray
         });
     }
 
     /**
      * Adds the input text to this `TextCanvas` in the specified screen position. The current
-     * [[TextStyle]] and [[LayoutStyle]] will influence the results of this function.
+     * [[TextRenderStyle]] and [[TextLayoutStyle]] will influence the results of this function.
      *
-     * @param text Input text.
+     * @param text Input text. Provide an array of [[GlyphData]] for better performance.
      * @param position Screen position.
      * @param params Optional addition parameters.
      *
-     * @returns If `false`, some error occurred during execution and the output should be dismissed.
+     * @returns Result of the addition. If `false`, some error occurred during execution and the
+     * input text couldn't be properly added.
      */
-    addText(text: string, position: THREE.Vector3, params?: AdditionParameters): boolean {
+    addText(
+        text: string | GlyphData[],
+        position: THREE.Vector3,
+        params?: AdditionParameters
+    ): boolean {
         tempTextPosition.copy(position);
 
         let path;
+        let pathOverflow;
+        let upperCaseArray;
         let targetLayer = this.m_defaultLayer;
-
         if (params !== undefined) {
             path = params.path;
-
+            pathOverflow = params.pathOverflow;
             if (params.layer !== undefined) {
                 let tempLayer = this.getLayer(params.layer);
                 if (tempLayer === undefined) {
@@ -406,17 +507,21 @@ export class TextCanvas {
                 }
                 targetLayer = tempLayer;
             }
-
             if (params.path !== undefined) {
-                tempTextPosition.set(0, 0, 0);
+                tempTextPosition.set(0, 0, tempTextPosition.z);
+            }
+            if (params.letterCaseArray) {
+                upperCaseArray = params.letterCaseArray;
             }
         }
-        const pickingOffset = targetLayer.geometry.drawCount;
+        const prevDrawCount = targetLayer.geometry.drawCount;
 
         const result = this.placeText({
-            inputText: text,
+            input: text,
             textPath: path,
-            layer: targetLayer
+            textPathOverflow: pathOverflow,
+            layer: targetLayer,
+            letterCaseArray: upperCaseArray
         });
         if (result && params !== undefined) {
             if (params.updatePosition === true) {
@@ -424,13 +529,136 @@ export class TextCanvas {
             }
             if (params.pickingData !== undefined) {
                 targetLayer.geometry.addPickingData(
-                    pickingOffset,
+                    prevDrawCount,
                     targetLayer.geometry.drawCount,
                     params.pickingData
                 );
             }
+        } else if (!result) {
+            (targetLayer.geometry as any).m_drawCount = prevDrawCount;
+        }
+        return result;
+    }
+
+    /**
+     * Creates a new [[TextBufferObject]]. The computed text vertex buffer is equivalent to the
+     * result of performing the `addText` function for the input text in the screen origin.
+     *
+     * @param text Input text.
+     * @param params Optional creation parameters.
+     *
+     * @returns New [[TextBufferObject]] (or `undefined` if requested text glyphs couldn't be
+     * retrieved from the current [[FontCatalog]]).
+     */
+    createTextBufferObject(
+        text: string,
+        params?: TextBufferCreationParameters
+    ): TextBufferObject | undefined {
+        tempTextPosition.set(0, 0, 0);
+
+        const glyphArray = this.m_fontCatalog.getGlyphs(text, this.m_currentTextRenderStyle);
+        if (glyphArray === undefined) {
+            return undefined;
         }
 
+        let path;
+        let pathOverflow;
+        let textBounds;
+        let characterBounds;
+        if (params !== undefined) {
+            path = params.path;
+            pathOverflow = params.pathOverflow;
+            if (params.outputBounds === true) {
+                textBounds = new THREE.Box2();
+            }
+            if (params.outputCharacterBounds === true) {
+                characterBounds = [];
+            }
+        }
+
+        this.placeText({
+            input: glyphArray,
+            layer: this.m_defaultLayer,
+            computeTextBuffer: true,
+            textPath: path,
+            textPathOverflow: pathOverflow,
+            bounds: textBounds,
+            individualBounds: characterBounds
+        });
+
+        return new TextBufferObject(
+            text,
+            glyphArray,
+            new Float32Array(tempVertexBuffer),
+            this.m_currentTextRenderStyle,
+            this.m_currentTextLayoutStyle,
+            textBounds,
+            characterBounds
+        );
+    }
+
+    /**
+     * Adds a previously created [[TextBufferObject]] to the `TextCanvas`. Additional parameters can
+     * be provided to override the attributes stored in the buffer.
+     *
+     * @param textBufferObject [[TextBufferObject]] to add.
+     * @param params Optional addition parameters.
+     *
+     * @returns Result of the addition. If `false`, some error occurred during execution and the
+     * input text couldn't be properly added.
+     */
+    addTextBufferObject(
+        textBufferObject: TextBufferObject,
+        params?: TextBufferAdditionParameters
+    ): boolean {
+        let targetLayer = this.m_defaultLayer;
+        let position;
+        let scale;
+        let rotation;
+        let color;
+        let opacity;
+        let bgColor;
+        let bgOpacity;
+
+        if (params !== undefined) {
+            if (params.layer !== undefined) {
+                let tempLayer = this.getLayer(params.layer);
+                if (tempLayer === undefined) {
+                    tempLayer = this.addLayer(params.layer);
+                }
+                targetLayer = tempLayer;
+            }
+            position = params.position;
+            scale = params.scale;
+            rotation = params.rotation;
+            color = params.color;
+            opacity = params.opacity;
+            bgColor = params.backgroundColor;
+            bgOpacity = params.backgroundOpacity;
+        }
+        const prevDrawCount = targetLayer.geometry.drawCount;
+
+        const result = targetLayer.geometry.addTextBufferObject(
+            textBufferObject,
+            position,
+            scale,
+            rotation,
+            color,
+            opacity,
+            bgColor,
+            bgOpacity
+        );
+        if (result && params !== undefined) {
+            if (params.pickingData !== undefined) {
+                targetLayer.geometry.addPickingData(
+                    prevDrawCount,
+                    targetLayer.geometry.drawCount,
+                    params.pickingData
+                );
+            }
+        } else if (!result) {
+            (targetLayer.geometry as any).m_drawCount = prevDrawCount;
+        }
         return result;
     }
 
@@ -447,28 +675,11 @@ export class TextCanvas {
         }
     }
 
-    // Adds a new layer to the TextCanvas when requested.
-    private addLayer(layerId: number): TextCanvasLayer {
-        const newLayer = {
-            id: layerId,
-            scene: new THREE.Scene(),
-            geometry: new TextGeometry(this.m_material, this.m_bgMaterial, this.maxGlyphCount)
-        };
-        newLayer.scene.add(newLayer.geometry.backgroundMesh, newLayer.geometry.mesh);
-
-        this.m_layers.push(newLayer);
-        this.m_layers.sort((a: TextCanvasLayer, b: TextCanvasLayer) => {
-            return a.id - b.id;
-        });
-
-        return newLayer;
-    }
-
     // Places all glyphs for input text. Depending on parameters, it can store the resulting glyphs
     // in the current [[TextGeometry]] (or into a separate buffer) or compute the bounding box for
     // the input (as a whole or on a per-character basis).
     private placeText(params: TextPlacementParameters): boolean {
-        if (params.inputText.length <= 0 || this.m_currentLayoutStyle.maxLines! === 0) {
+        if (params.input.length === 0 || this.m_currentTextLayoutStyle.maxLines! === 0) {
             if (params.bounds !== undefined) {
                 params.bounds.min.set(0, 0);
                 params.bounds.max.set(0, 0);
@@ -479,51 +690,60 @@ export class TextCanvas {
             return true;
         }
 
-        const glyphArray: GlyphData[] = [];
-        const transformationArray: boolean[] = [];
-        if (
-            !this.getGlyphData(
-                params.inputText,
-                this.m_currentTextStyle.font!,
-                this.m_currentTextStyle.fontStyle!,
-                this.m_currentTextStyle.fontVariant!,
-                this.m_fontCatalog,
-                glyphArray,
-                transformationArray
-            )
-        ) {
-            return false;
+        let glyphArray;
+        let smallCapsTransformations: boolean[] | undefined;
+        const smallCapsEnabled =
+            this.m_currentTextRenderStyle.fontVariant === FontVariant.SmallCaps;
+        if (typeof params.input !== "string") {
+            glyphArray = params.input;
+            if (params.letterCaseArray) {
+                smallCapsTransformations = params.letterCaseArray;
+            }
+        } else {
+            smallCapsTransformations = [];
+            glyphArray = this.m_fontCatalog.getGlyphs(
+                params.input,
+                this.m_currentTextRenderStyle,
+                smallCapsEnabled ? smallCapsTransformations : undefined
+            );
+            if (glyphArray === undefined) {
+                return false;
+            }
         }
 
-        const glyphBounds =
-            params.individualBounds !== undefined
-                ? {
-                      array: params.individualBounds,
-                      offset: 0
-                  }
-                : undefined;
+        let glyphBounds;
+        if (params.individualBounds !== undefined) {
+            tempTextBounds.array = params.individualBounds;
+            tempTextBounds.offset = 0;
+            glyphBounds = tempTextBounds;
+        }
         if (params.bounds !== undefined) {
             params.bounds.min.set(Infinity, Infinity);
             params.bounds.max.set(-Infinity, -Infinity);
         }
+        if (params.computeTextBuffer === true) {
+            tempVertexBuffer = new Float32Array(glyphArray.length * QUAD_VERTEX_MEMORY_FOOTPRINT);
+        }
 
         const isPath = params.textPath !== undefined;
         const typesettingParams: TypesettingParameters | PathTypesettingParameters = {
-            glyphDataArray: glyphArray,
-            glyphTransformationArray: transformationArray,
+            glyphs: glyphArray,
             fontCatalog: this.m_fontCatalog,
-            textStyle: this.m_currentTextStyle,
-            layoutStyle: this.m_currentLayoutStyle,
+            textRenderStyle: this.m_currentTextRenderStyle,
+            textLayoutStyle: this.m_currentTextLayoutStyle,
             position: tempTextPosition,
             geometry: params.layer.geometry,
+            smallCapsArray: smallCapsEnabled ? smallCapsTransformations : undefined,
             globalBounds: params.bounds,
-            individualBounds: glyphBounds
+            individualBounds: glyphBounds,
+            vertexBuffer: params.computeTextBuffer === true ? tempVertexBuffer : undefined
         };
 
         let result = true;
         if (isPath) {
             Object.assign(typesettingParams as PathTypesettingParameters, {
-                path: params.textPath
+                path: params.textPath,
+                pathOverflow: params.textPathOverflow === true
             });
             result = this.m_pathTypesetter.arrangeGlyphs(
                 typesettingParams as PathTypesettingParameters
@@ -531,44 +751,10 @@ export class TextCanvas {
         } else {
             result = this.m_lineTypesetter.arrangeGlyphs(typesettingParams);
         }
-
         if (glyphBounds !== undefined) {
             glyphBounds.array.length = glyphBounds.offset;
         }
 
         return result;
-    }
-
-    // Retrieves all the glyphs corresponding for the input text and current set [[TextStyle]], as
-    // well as information on which glyphs have been transformed (lowercase -> uppercase). As
-    // retrieving this information can be a slow proccess, this should be done only once before
-    // typesetting (which uses the results from this function to correctly arrange all glyphs).
-    private getGlyphData(
-        input: string,
-        fontName: string,
-        fontStyle: FontStyle,
-        fontVariant: FontVariant,
-        fontCatalog: FontCatalog,
-        outputGlyphArray: GlyphData[],
-        outputGlyphTransformationData: boolean[]
-    ): boolean {
-        for (const character of input) {
-            const shouldTransform =
-                fontVariant === FontVariant.AllCaps || fontVariant === FontVariant.SmallCaps;
-            const transformedCharacter = shouldTransform ? character.toUpperCase() : character;
-            for (const char of transformedCharacter) {
-                const codePoint = shouldTransform ? char.codePointAt(0)! : char.codePointAt(0)!;
-                const font = fontCatalog.getFont(codePoint, fontName);
-                const glyphData = fontCatalog.getGlyph(codePoint, font, fontStyle);
-                if (glyphData !== undefined) {
-                    outputGlyphArray.push(glyphData);
-                    outputGlyphTransformationData.push(codePoint !== character.codePointAt(0));
-                } else {
-                    return false;
-                }
-            }
-        }
-
-        return true;
     }
 }

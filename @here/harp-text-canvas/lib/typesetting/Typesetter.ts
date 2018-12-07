@@ -7,7 +7,7 @@
 import { FontCatalog } from "../rendering/FontCatalog";
 import { GlyphData } from "../rendering/GlyphData";
 import { TextGeometry } from "../rendering/TextGeometry";
-import { LayoutStyle, TextStyle } from "../rendering/TextStyle";
+import { TextLayoutStyle, TextRenderStyle } from "../rendering/TextStyle";
 
 /**
  * Parameters passed when placing glyphs using [[Typesetter]]'s `arrangeGlyphs` function.
@@ -16,12 +16,7 @@ export interface TypesettingParameters {
     /**
      * Array of all [[GlyphData]] to be placed.
      */
-    glyphDataArray: GlyphData[];
-
-    /**
-     * Array of all results of [[FontVariant]] transformations for all glyphs in `glyphDataArray`.
-     */
-    glyphTransformationArray: boolean[];
+    glyphs: GlyphData[];
 
     /**
      * [[FontCatalog]] used to retrieve all glyphs in `glyphDataArray`.
@@ -29,14 +24,14 @@ export interface TypesettingParameters {
     fontCatalog: FontCatalog;
 
     /**
-     * [[TextStyle]] to be applied when arranging glyphs.
+     * [[TextRenderStyle]] to be applied when arranging glyphs.
      */
-    textStyle: TextStyle;
+    textRenderStyle: TextRenderStyle;
 
     /**
-     * [[LayoutStyle]] to be applied when arranging glyphs.
+     * [[TextLayoutStyle]] to be applied when arranging glyphs.
      */
-    layoutStyle: LayoutStyle;
+    textLayoutStyle: TextLayoutStyle;
 
     /**
      * Screen-space position where to start arranging glyphs.
@@ -49,6 +44,12 @@ export interface TypesettingParameters {
     geometry: TextGeometry;
 
     /**
+     * Array of booleans containing information regarding if a glyph is emulating the `smallCaps`
+     * feature (which modifies its scale during typesetting).
+     */
+    smallCapsArray?: boolean[];
+
+    /**
      * Global bounding box for all glyphs added in this call of `arrangeGlyphs`.
      */
     globalBounds?: THREE.Box2;
@@ -57,6 +58,11 @@ export interface TypesettingParameters {
      * Individual bounding boxes for each glyph added in this call of `arrangeGlyphs`.
      */
     individualBounds?: { array: THREE.Box2[]; offset: number };
+
+    /**
+     * Target `Float32Array` where arranged glyphs will be stored. Overrides `geometry` parameter.
+     */
+    vertexBuffer?: Float32Array;
 }
 
 /**

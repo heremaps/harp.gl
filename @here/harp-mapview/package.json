@@ -28,7 +28,7 @@
     "@here/harp-lines": "^0.1.31",
     "@here/harp-lrucache": "^0.1.26",
     "@here/harp-materials": "^0.1.0",
-    "@here/harp-text-renderer": "^0.2.38",
+    "@here/harp-text-canvas": "^0.1.0",
     "@here/harp-utils": "^0.1.0",
     "rtree": "^1.4.2"
   },
