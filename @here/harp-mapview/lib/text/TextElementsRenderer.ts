@@ -35,7 +35,7 @@ import { Tile } from "../Tile";
 import { SimpleLineCurve, SimplePath } from "./SimplePath";
 import { FadingState, RenderState, TextElement, TextPickResult } from "./TextElement";
 
-const DEBUG_GLYPH_MESH = true;
+const DEBUG_GLYPH_MESH = false;
 
 const DEBUG_TEXT_LAYOUT = false;
 
@@ -577,6 +577,28 @@ export class TextElementsRenderer {
         return isLoading;
     }
 
+    /**
+     * Reset the current text render states of all visible tiles. All [[TextElement]]s will fade in
+     * after that as if they have just been added.
+     */
+    clearRenderStates() {
+        const renderList = this.m_mapView.visibleTileSet.dataSourceTileList;
+
+        renderList.forEach(renderListEntry => {
+            for (const tile of renderListEntry.visibleTiles) {
+                // Reset the render states, handle them as if they were just added to the tile.
+                tile.userTextElements.forEach(textElement => {
+                    textElement.iconRenderState = undefined;
+                    textElement.textRenderState = undefined;
+                });
+                tile.textElementGroups.forEach(textElement => {
+                    textElement.iconRenderState = undefined;
+                    textElement.textRenderState = undefined;
+                });
+            }
+        });
+    }
+
     private initTextRenderer() {
         let defaultFontCatalogName: string | undefined;
 
@@ -786,12 +808,17 @@ export class TextElementsRenderer {
 
     private sortTextElements(textElements: TextElement[], maxViewDistance: number) {
         const distancePriorityFactor = 0.1;
+        const indexPriorityFactor = 0.01 * (1 / textElements.length);
 
         // Compute the sortPriority once for all elements, because the computation is done more
-        // than once per element
-        for (const textElement of textElements) {
+        // than once per element. Also, make sorting stable by taking the index into the array into
+        // account, this is required to get repeatable results for testing.
+        for (let i = 0; i < textElements.length; i++) {
+            const textElement = textElements[i];
+
             textElement.sortPriority =
                 textElement.priority +
+                i * indexPriorityFactor +
                 distancePriorityFactor -
                 distancePriorityFactor * (textElement.currentViewDistance! / maxViewDistance);
         }
@@ -825,12 +852,18 @@ export class TextElementsRenderer {
         zoomLevel: number,
         visibleTiles: Tile[]
     ) {
-        for (const tile of visibleTiles) {
+        const sortedTiles = visibleTiles;
+
+        sortedTiles.sort((a: Tile, b: Tile) => {
+            return a.tileKey.mortonCode() - b.tileKey.mortonCode();
+        });
+
+        for (const tile of sortedTiles) {
             this.prepareUserTextElements(tile);
         }
 
         const sortedGroups: TextElementLists[] = [];
-        this.createSortedGroupsForSorting(tileDataSource, storageLevel, visibleTiles, sortedGroups);
+        this.createSortedGroupsForSorting(tileDataSource, storageLevel, sortedTiles, sortedGroups);
 
         const textElementGroups: TextElement[][] = [];
         this.selectTextElementsToPlaceByDistance(zoomLevel, sortedGroups, textElementGroups);
@@ -852,16 +885,16 @@ export class TextElementsRenderer {
     private createSortedGroupsForSorting(
         tileDataSource: DataSource,
         storageLevel: number,
-        visibleTiles: Tile[],
+        sortedTiles: Tile[],
         sortedGroups: TextElementLists[]
     ) {
-        if (this.m_textRenderer === undefined || visibleTiles.length === 0) {
+        if (this.m_textRenderer === undefined || sortedTiles.length === 0) {
             return;
         }
 
         const tilesToRender: Tile[] = [];
 
-        for (const tile of visibleTiles) {
+        for (const tile of sortedTiles) {
             tile.placedTextElements.clear();
             if (tileDataSource.shouldRenderText(storageLevel, tile.tileKey)) {
                 tilesToRender.push(tile);
@@ -898,6 +931,10 @@ export class TextElementsRenderer {
             sortedGroups.push(lists);
         }
 
+        sortedGroups.sort((a: TextElementLists, b: TextElementLists) => {
+            return b.priority - a.priority;
+        });
+
         const printTextInfo = false;
 
         if (PRINT_LABEL_DEBUG_INFO && printTextInfo) {
@@ -924,10 +961,6 @@ export class TextElementsRenderer {
         sortedGroups: TextElementLists[],
         textElementGroups: TextElement[][]
     ) {
-        sortedGroups.sort((a: TextElementLists, b: TextElementLists) => {
-            return b.priority - a.priority;
-        });
-
         // Take the world position of the camera as the origin to compute the distance to the
         // text elements.
         const worldCenter = this.m_mapView.worldCenter.clone().add(this.m_mapView.camera.position);
@@ -940,6 +973,26 @@ export class TextElementsRenderer {
             for (const tileTextElements of textElementLists.textElementLists) {
                 const tile = tileTextElements.tile;
                 for (const textElement of tileTextElements.textElements) {
+                    if (!textElement.visible) {
+                        continue;
+                    }
+
+                    // If a PoiTable is specified in the technique, the table is required to be
+                    // loaded before the POI can be rendered.
+                    if (
+                        textElement.poiInfo !== undefined &&
+                        textElement.poiInfo.poiTableName !== undefined
+                    ) {
+                        if (this.m_mapView.poiManager.updatePoiFromPoiTable(textElement)) {
+                            // Remove poiTableName to mark this POI as processed.
+                            textElement.poiInfo.poiTableName = undefined;
+                        } else {
+                            // PoiTable has not been loaded, but is required to determine
+                            // visibility.
+                            continue;
+                        }
+                    }
+
                     if (
                         !textElement.visible ||
                         !MathUtils.isClamped(
@@ -1272,6 +1325,7 @@ export class TextElementsRenderer {
                 !buffer.canAddElements(textElement.codePoints.length) ||
                 fontCatalog === undefined
             ) {
+                // Buffer space is exhausted, no need to proceed.
                 break;
             }
 
@@ -1408,7 +1462,7 @@ export class TextElementsRenderer {
                             secondChanceTextElements.push(pointLabel);
                         }
 
-                        // Forced making it uncurrent.
+                        // Forced making it un-current.
                         iconRenderState.lastFrameNumber = -1;
 
                         return false;
@@ -1691,6 +1745,12 @@ export class TextElementsRenderer {
                     if (poiLabel.iconRenderState === undefined) {
                         poiLabel.iconRenderState = new RenderState();
                         poiLabel.textRenderState = new RenderState();
+
+                        if (this.m_mapView.fadingDisabled) {
+                            // Force fadingTime to zero to keep it from fading in and out.
+                            poiLabel.iconRenderState.fadingTime = 0;
+                            poiLabel.textRenderState.fadingTime = 0;
+                        }
                     }
 
                     // Add this POI as a point label.
@@ -1731,6 +1791,9 @@ export class TextElementsRenderer {
                     lineMarkerLabel.path.forEach(() => {
                         const renderState = new RenderState();
                         renderState.state = FadingState.FadingIn;
+                        renderState.fadingTime = this.m_mapView.fadingDisabled
+                            ? 0
+                            : renderState.fadingTime;
                         renderStates.push(renderState);
                     });
                     lineMarkerLabel.iconRenderStates = renderStates;
@@ -1882,29 +1945,6 @@ export class TextElementsRenderer {
                     textScale *= distanceScale;
                 }
 
-                // Avoid rendering labels with the same text that share a similar position.
-                // NOTE: Does this ever happen? We're dinamically allocating a map every frame just
-                // for this.
-                const cacheEntry = textCache.get(textElement.text);
-                if (cacheEntry === undefined) {
-                    textCache.set(textElement.text, [firstPoint]);
-                } else {
-                    let shouldSkip = false;
-                    for (const pt of cacheEntry) {
-                        if (
-                            Math.abs(pt.x - firstPoint.x) < 0.001 &&
-                            Math.abs(pt.y - firstPoint.y) < 0.001
-                        ) {
-                            shouldSkip = true;
-                            break;
-                        }
-                    }
-                    if (shouldSkip) {
-                        return;
-                    }
-                    cacheEntry.push(firstPoint);
-                }
-
                 // Get the screen points that define the label's segments and create a path with
                 // them.
                 // TODO: Optimize array allocations.
@@ -1993,6 +2033,9 @@ export class TextElementsRenderer {
                 // NOTE: Shouldn't this only happen once we know the label is gonna be visible?
                 if (pathLabel.textRenderState === undefined) {
                     pathLabel.textRenderState = new RenderState();
+                    pathLabel.textRenderState.fadingTime = this.m_mapView.fadingDisabled
+                        ? 0
+                        : pathLabel.textRenderState.fadingTime;
                 }
                 if (
                     pathLabel.textRenderState.state === FadingState.Undefined ||
@@ -2121,7 +2164,7 @@ export class TextElementsRenderer {
             logger.log("numCannotAdd", numCannotAdd);
         }
 
-        if (fadeAnimationRunning || !allTextElementsReady) {
+        if ((!this.m_mapView.fadingDisabled && fadeAnimationRunning) || !allTextElementsReady) {
             this.m_mapView.update();
         }
 
@@ -2486,7 +2529,7 @@ export class TextElementsRenderer {
         let currIdx = 0;
         let currDir = textElement.textDirection;
         while (currIdx !== textElement.codePoints.length) {
-            // Get the currently proccessed glyph.
+            // Get the currently processed glyph.
             const glyph = fontCatalog.getGlyph(textElement.codePoints[currIdx], textElement.bold)!;
             offset += (glyph.advanceX + textElement.tracking) * scale;
 

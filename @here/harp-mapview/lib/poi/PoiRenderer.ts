@@ -374,7 +374,7 @@ export class PoiRenderer {
      * Render the icon.
      *
      * @param poiInfo PoiInfo containing information for rendering the POI icon.
-     * @param screenPosition Position on screnn (2D):
+     * @param screenPosition Position on screen (2D):
      * @param screenCollisions Object handling the collision checks for screen-aligned 2D boxes.
      * @param scale Scaling factor to apply to text and icon.
      * @param allocateScreenSpace If `true` screen space will be allocated for the icon.
@@ -473,14 +473,16 @@ export class PoiRenderer {
             return;
         }
 
-        if (
-            poiInfo.poiTableName !== undefined &&
-            this.mapView.poiManager.updatePoiFromPoiTable(pointLabel)
-        ) {
-            // Remove poiTableName to mark this POI as processed.
-            poiInfo.poiTableName = undefined;
-            if (!pointLabel.visible) {
-                // PoiTable set this POI to not visible.
+        if (poiInfo.poiTableName !== undefined) {
+            if (this.mapView.poiManager.updatePoiFromPoiTable(pointLabel)) {
+                // Remove poiTableName to mark this POI as processed.
+                poiInfo.poiTableName = undefined;
+                if (!pointLabel.visible) {
+                    // PoiTable set this POI to not visible.
+                    return;
+                }
+            } else {
+                // PoiTable has not been loaded, but is required to determine visibility.
                 return;
             }
         }
@@ -614,24 +616,9 @@ export class PoiRenderer {
         };
         poiInfo.imageItem = imageItem;
         poiInfo.imageTexture = imageTexture;
-
-        // const xDisplayOffset = technique.iconXOffset !== undefined ? technique.iconXOffset : 0;
-        // const yDisplayOffset = technique.iconYOffset !== undefined ? technique.iconYOffset : 0;
-        // const offset = new THREE.Vector2(xDisplayOffset, yDisplayOffset);
-
         poiInfo.poiRenderBatch = this.m_renderBuffer.registerPoi(poiInfo);
-
         poiInfo.isValid = true;
 
         assert(poiInfo.poiRenderBatch !== undefined);
     }
-
-    // Will be useful later:
-    // private pixelSize(distance: number): number {
-    //     const camera = this.mapView.camera;
-    //     return (
-    //         this.mapView.viewportHeight /
-    //         (distance * Math.tan(THREE.Math.degToRad(camera.fov / 2)) * 2)
-    //     );
-    // }
 }

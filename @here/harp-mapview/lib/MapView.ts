@@ -23,7 +23,7 @@ import { PoiTableManager } from "./poi/PoiTableManager";
 import { ScreenCollisions, ScreenCollisionsDebug } from "./ScreenCollisions";
 import { ScreenProjector } from "./ScreenProjector";
 import { SkyBackground } from "./SkyBackground";
-import { MultiStageTimer, Statistics } from "./Statistics";
+import { FrameStats, PerformanceStatistics } from "./Statistics";
 import { TextElement } from "./text/TextElement";
 import { TextElementsRenderer } from "./text/TextElementsRenderer";
 import { ThemeLoader } from "./ThemeLoader";
@@ -171,7 +171,7 @@ export interface MapViewOptions {
 
     /**
      * Antialias settings for the map rendering. It is better to disable the native antialising if
-     * the custom antialising is enabled.
+     * the custom antialiasing is enabled.
      */
     customAntialiasSettings?: IMapAntialiasSettings;
 
@@ -344,7 +344,7 @@ export interface MapViewOptions {
 
     /**
      * The number of [[TextElement]]s that the [[TextElementsRenderer]] tries to render even
-     * if they were not visible during placement. This property only applies to [[TextElemen]]s
+     * if they were not visible during placement. This property only applies to [[TextElement]]s
      * that were culled by the frustum; useful for map movements and animations.
      * @default `300`.
      */
@@ -379,6 +379,12 @@ export interface MapViewOptions {
      * An array of ISO 639-1 language codes for data sources.
      */
     languages?: string[];
+
+    /**
+     * @hidden
+     * Disable all fading animations for debugging and performance measurement.
+     */
+    disableFading?: boolean;
 }
 
 /**
@@ -451,7 +457,7 @@ export class MapView extends THREE.EventDispatcher {
     private m_drawing: boolean = false;
     private m_updatePending: boolean = false;
     private m_renderer: THREE.WebGLRenderer;
-    private m_snapshot = 0;
+    private m_frameNumber = 0;
 
     private m_textElementsRenderer?: TextElementsRenderer;
     private m_defaultTextColor = new THREE.Color(0, 0, 0);
@@ -474,12 +480,7 @@ export class MapView extends THREE.EventDispatcher {
 
     private m_theme: Theme = { styles: {} };
 
-    private m_stats: Statistics;
-    private m_stagedRenderTimer: MultiStageTimer;
-    private m_logStatsFrames = 100;
-
     private m_previousFrameTimeStamp?: number;
-
     private m_firstFrameRendered = false;
     private m_firstFrameComplete = false;
 
@@ -600,16 +601,7 @@ export class MapView extends THREE.EventDispatcher {
         this.m_pickHandler = new PickHandler(this, this.m_options.enableRoadPicking === true);
 
         // Initialization of the stats
-        this.m_stats = new Statistics("MapView", this.m_options.enableStatistics);
-        this.setupStats();
-        this.m_stagedRenderTimer = new MultiStageTimer(this.m_stats, "stagedRenderTimer", [
-            "render.setup",
-            "render.culling",
-            "render.text.render",
-            "render.draw",
-            "render.text.post",
-            "render.cleanup"
-        ]);
+        this.setupStats(this.m_options.enableStatistics);
 
         // Initialization of the renderer
         this.m_renderer = new THREE.WebGLRenderer({
@@ -664,6 +656,15 @@ export class MapView extends THREE.EventDispatcher {
      */
     get textElementsRenderer(): TextElementsRenderer | undefined {
         return this.m_textElementsRenderer;
+    }
+
+    /**
+     * @hidden
+     * The [[CameraMovementDetector]] detects camera movements. Made available for performance
+     * measurements.
+     */
+    get cameraMovementDetector(): CameraMovementDetector {
+        return this.m_movementDetector;
     }
 
     /**
@@ -859,6 +860,23 @@ export class MapView extends THREE.EventDispatcher {
 
     get copyrightInfo(): CopyrightInfo[] {
         return this.m_copyrightInfo;
+    }
+
+    /**
+     * @hidden
+     * Return if all fading animations (for debugging and performance measurement) should be
+     * disabled.
+     */
+    get fadingDisabled(): boolean {
+        return this.m_options.disableFading === true;
+    }
+
+    /**
+     * @hidden
+     * Return current frame number.
+     */
+    get frameNumber(): number {
+        return this.m_frameNumber;
     }
 
     /**
@@ -1350,7 +1368,7 @@ export class MapView extends THREE.EventDispatcher {
      * Returns the ratio between a world and a pixel unit for the current camera (in the center of
      * the camera projection).
      */
-    get wordlToPixel() {
+    get worldToPixel() {
         return 1.0 / this.pixelToWorld;
     }
 
@@ -1645,22 +1663,49 @@ export class MapView extends THREE.EventDispatcher {
         if (this.m_drawing) {
             return;
         }
+        ++this.m_frameNumber;
+
+        const stats = PerformanceStatistics.instance;
+        const gatherStatistics: boolean = stats.enabled;
+
+        const frameStartTime = PerformanceTimer.now();
+
+        RENDER_EVENT.time = time;
+        this.dispatchEvent(RENDER_EVENT);
+
+        let currentFrameEvent: FrameStats | undefined;
+
+        if (gatherStatistics) {
+            currentFrameEvent = stats.currentFrame;
+            currentFrameEvent.setValue("renderCount.frameNumber", this.m_frameNumber);
+
+            if (this.m_previousFrameTimeStamp !== undefined) {
+                const timeSincePreviousFrame = frameStartTime - this.m_previousFrameTimeStamp;
+                if (gatherStatistics) {
+                    currentFrameEvent.setValue("render.fullFrameTime", timeSincePreviousFrame);
+                    // For convenience and easy readability
+                    currentFrameEvent.setValue("render.fps", 1000 / timeSincePreviousFrame);
+                }
+            }
+        }
+
+        this.m_previousFrameTimeStamp = frameStartTime;
+
+        let setupTime: number | undefined;
+        let cullTime: number | undefined;
+        let textPlacementTime: number | undefined;
+        let drawTime: number | undefined;
+        let textDrawTime: number | undefined;
+        let endTime: number | undefined;
 
         this.m_renderer.info.reset();
-
-        this.m_stagedRenderTimer.start();
 
         this.m_updatePending = false;
         this.m_thisFrameTilesChanged = undefined;
 
-        ++this.m_snapshot;
-
         this.m_drawing = true;
 
         this.m_renderer.setPixelRatio(window.devicePixelRatio);
-
-        RENDER_EVENT.time = time;
-        this.dispatchEvent(RENDER_EVENT);
 
         this.updateCameras();
         this.m_fog.update(this.m_camera);
@@ -1677,7 +1722,9 @@ export class MapView extends THREE.EventDispatcher {
             this.m_maxZoomLevel
         );
 
-        this.m_stagedRenderTimer.stage = "render.culling";
+        if (gatherStatistics) {
+            setupTime = PerformanceTimer.now();
+        }
 
         // TBD: Update renderList only any of its params (camera, etc...) has changed.
         if (!this.lockVisibleTileSet) {
@@ -1688,13 +1735,32 @@ export class MapView extends THREE.EventDispatcher {
                 this.getEnabledTileDataSources()
             );
         }
+
+        if (gatherStatistics) {
+            cullTime = PerformanceTimer.now();
+        }
+
         const renderList = this.m_visibleTiles.dataSourceTileList;
 
-        renderList.forEach(({ zoomLevel, renderedTiles }) => {
+        renderList.forEach(({ zoomLevel, renderedTiles, visibleTiles, numTilesLoading }) => {
             renderedTiles.forEach(tile => {
                 this.renderTileObjects(tile, zoomLevel);
             });
         });
+
+        if (currentFrameEvent !== undefined) {
+            // Make sure the counters all have a value.
+            currentFrameEvent.addValue("renderCount.numTilesRendered", 0);
+            currentFrameEvent.addValue("renderCount.numTilesVisible", 0);
+            currentFrameEvent.addValue("renderCount.numTilesLoading", 0);
+
+            // Increment the counters for all data sources.
+            renderList.forEach(({ zoomLevel, renderedTiles, visibleTiles, numTilesLoading }) => {
+                currentFrameEvent!.addValue("renderCount.numTilesRendered", renderedTiles.length);
+                currentFrameEvent!.addValue("renderCount.numTilesVisible", visibleTiles.length);
+                currentFrameEvent!.addValue("renderCount.numTilesLoading", numTilesLoading);
+            });
+        }
 
         this.checkCameraMoved();
 
@@ -1703,19 +1769,9 @@ export class MapView extends THREE.EventDispatcher {
 
         this.prepareRenderTextElements(time);
 
-        this.m_stagedRenderTimer.stage = "render.draw";
-
-        if (this.m_stats.enabled) {
-            const now = PerformanceTimer.now();
-            if (this.m_previousFrameTimeStamp !== undefined) {
-                const frameTime = now - this.m_previousFrameTimeStamp;
-                this.m_stats.getTimer("render.frameTime").setValue(frameTime);
-                // for convenience and easy readability
-                this.m_stats.getTimer("render.fps").setValue(1000 / frameTime);
-            }
-            this.m_previousFrameTimeStamp = now;
+        if (gatherStatistics) {
+            textPlacementTime = PerformanceTimer.now();
         }
-
         if (this.m_skyBackground !== undefined) {
             this.m_skyBackground.update(this.m_camera);
         }
@@ -1723,15 +1779,23 @@ export class MapView extends THREE.EventDispatcher {
         const isStaticFrame = !(this.animating || this.m_updatePending);
         this.mapRenderingManager.render(this.m_renderer, this.m_scene, camera, isStaticFrame);
 
+        if (gatherStatistics) {
+            drawTime = PerformanceTimer.now();
+        }
+
         this.finishRenderTextElements();
 
-        this.m_stagedRenderTimer.stage = "render.cleanup";
-
-        DID_RENDER_EVENT.time = time;
-        this.dispatchEvent(DID_RENDER_EVENT);
+        if (gatherStatistics) {
+            textDrawTime = PerformanceTimer.now();
+        }
 
         if (!this.m_firstFrameRendered) {
             this.m_firstFrameRendered = true;
+
+            if (gatherStatistics) {
+                stats.appResults.set("firstFrame", time);
+            }
+
             FIRST_FRAME_EVENT.time = time;
             this.dispatchEvent(FIRST_FRAME_EVENT);
         }
@@ -1745,27 +1809,41 @@ export class MapView extends THREE.EventDispatcher {
             !this.m_textElementsRenderer.loading
         ) {
             this.m_firstFrameComplete = true;
+
+            if (gatherStatistics) {
+                stats.appResults.set("firstFrameComplete", time);
+            }
+
             FRAME_COMPLETE_EVENT.time = time;
             this.dispatchEvent(FRAME_COMPLETE_EVENT);
         }
 
         this.m_visibleTiles.disposePendingTiles();
 
-        this.m_stagedRenderTimer.stop();
-
         this.m_drawing = false;
-
-        if (this.m_stats.enabled) {
-            if (this.m_snapshot % this.m_logStatsFrames === 0) {
-                this.m_stats.log();
-            }
-        }
 
         if (this.animating || this.m_updatePending) {
             this.drawFrame();
         }
 
         this.checkCopyrightUpdates();
+
+        if (currentFrameEvent !== undefined) {
+            endTime = PerformanceTimer.now();
+
+            currentFrameEvent.setValue("render.setupTime", setupTime! - frameStartTime);
+            currentFrameEvent.setValue("render.cullTime", cullTime! - setupTime!);
+            currentFrameEvent.setValue("render.textPlacementTime", textPlacementTime! - cullTime!);
+            currentFrameEvent.setValue("render.drawTime", drawTime! - textPlacementTime!);
+            currentFrameEvent.setValue("render.textDrawTime", textDrawTime! - drawTime!);
+            currentFrameEvent.setValue("render.cleanupTime", endTime - textDrawTime!);
+            currentFrameEvent.setValue("render.frameRenderTime", endTime - frameStartTime);
+
+            PerformanceStatistics.instance.storeFrameInfo(this.m_renderer.info);
+        }
+
+        DID_RENDER_EVENT.time = time;
+        this.dispatchEvent(DID_RENDER_EVENT);
     }
 
     private renderTileObjects(tile: Tile, zoomLevel: number) {
@@ -1783,14 +1861,6 @@ export class MapView extends THREE.EventDispatcher {
     }
 
     private prepareRenderTextElements(time: number) {
-        if (this.checkIfTextElementsChanged() || this.checkIfTilesChanged()) {
-            if (this.m_textElementsRenderer !== undefined) {
-                this.m_textElementsRenderer.placeAllTileLabels();
-            }
-        }
-
-        this.m_stagedRenderTimer.stage = "render.text.render";
-
         // Disable rendering of text elements for debug camera. TextElements are rendered using an
         // orthographic camera that covers the entire available screen space. Unfortunately, this
         // particular camera set up is not compatible with the debug camera.
@@ -1798,6 +1868,10 @@ export class MapView extends THREE.EventDispatcher {
 
         if (this.m_textElementsRenderer === undefined || debugCameraActive) {
             return;
+        }
+
+        if (this.checkIfTextElementsChanged() || this.checkIfTilesChanged()) {
+            this.m_textElementsRenderer.placeAllTileLabels();
         }
 
         this.m_textElementsRenderer.debugGlyphTextureCache = this.m_debugGlyphTextureCache;
@@ -1820,16 +1894,14 @@ export class MapView extends THREE.EventDispatcher {
             // User TextElements have the priority when it comes to reserving screen space, so
             // they are handled first. They will be rendered after the normal map objects and
             // TextElements
-            this.m_textElementsRenderer.renderUserTextElements(time, this.m_snapshot);
-            this.m_textElementsRenderer.renderAllTileText(time, this.m_snapshot);
+            this.m_textElementsRenderer.renderUserTextElements(time, this.m_frameNumber);
+            this.m_textElementsRenderer.renderAllTileText(time, this.m_frameNumber);
         }
         this.m_textElementsRenderer.renderOverlay(this.m_overlayTextElements);
         this.m_textElementsRenderer.update(this.m_renderer);
     }
 
     private finishRenderTextElements() {
-        this.m_stagedRenderTimer.stage = "render.text.post";
-
         const canRenderTextElements = this.m_pointOfView === undefined;
 
         if (canRenderTextElements && this.m_textElementsRenderer) {
@@ -2121,35 +2193,9 @@ export class MapView extends THREE.EventDispatcher {
         this.poiTableManager.loadPoiTables(this.m_theme as Theme);
     }
 
-    get statistics(): Statistics {
-        if (this.m_stats === undefined) {
-            throw new Error("Statistics are not initialized.");
-        }
-
-        return this.m_stats;
-    }
-
-    private setupStats() {
-        this.m_stats.createTimer("render.frameTime", true);
-        this.m_stats.createTimer("render.fps", true);
-        this.m_stats.createTimer("render.setup", true);
-        this.m_stats.createTimer("render.culling", true);
-        this.m_stats.createTimer("render.text.render", true);
-        this.m_stats.createTimer("render.draw", true);
-        this.m_stats.createTimer("render.text.post", true);
-        this.m_stats.createTimer("render.cleanup", true);
-
-        this.m_stats.createTimer("decoding", true);
-        this.m_stats.createTimer("geometryCreation", true);
-
-        this.m_stagedRenderTimer = new MultiStageTimer(this.m_stats, "stagedRenderTimer", [
-            "render.setup",
-            "render.culling",
-            "render.text.render",
-            "render.draw",
-            "render.text.post",
-            "render.cleanup"
-        ]);
+    private setupStats(enable: boolean) {
+        // tslint:disable-next-line:no-unused-expression
+        new PerformanceStatistics(enable, 1000);
     }
 
     private setupRenderer() {

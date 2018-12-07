@@ -658,7 +658,7 @@ export class TextElement {
     }
 
     /**
-     * Contains additional information about icon to be rendered alog with text.
+     * Contains additional information about icon to be rendered along with text.
      */
     get poiInfo(): PoiInfo | undefined {
         return this.m_poiInfo;
