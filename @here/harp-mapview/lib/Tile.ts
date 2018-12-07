@@ -1531,11 +1531,10 @@ export class Tile implements CachedResource {
             return cachedMat;
         } else {
             const material = new THREE.MeshBasicMaterial({
-                color: colorHex,
-                polygonOffset: true,
-                polygonOffsetFactor: 0.0,
-                polygonOffsetUnits: 0.0,
-                visible: false
+                color: 0xff0000, //colorHex
+                transparent: false,
+                depthWrite: true,
+                depthTest: false
             });
             this.mapView.materialsCache.set(key, material);
             return material;
