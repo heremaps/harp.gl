@@ -14,10 +14,13 @@ import {
     getPropertyValue,
     isExtrudedPolygonTechnique,
     isStandardTechnique,
+    LineMarkerTechnique,
+    PoiTechnique,
     SolidLineTechnique,
     StandardExtrudedLineTechnique,
     Technique,
-    TextPathGeometry
+    TextPathGeometry,
+    TextTechnique
 } from "@here/harp-datasource-protocol";
 import { GeoBox, Projection, TileKey } from "@here/harp-geoutils";
 import {
@@ -29,11 +32,15 @@ import {
     SolidLineMaterial
 } from "@here/harp-materials";
 import {
-    TextHorizontalAlignment,
-    TextHorizontalAlignmentStrings,
-    TextVerticalAlignment,
-    TextVerticalAlignmentStrings
-} from "@here/harp-text-renderer";
+    ContextualArabicConverter,
+    FontStyle,
+    FontUnit,
+    FontVariant,
+    HorizontalAlignment,
+    TextLayoutStyle,
+    TextRenderStyle,
+    VerticalAlignment
+} from "@here/harp-text-canvas";
 import {
     CachedResource,
     getOptionValue,
@@ -56,6 +63,7 @@ import { MapViewPoints } from "./MapViewPoints";
 import { PerformanceStatistics } from "./Statistics";
 import { TextElement } from "./text/TextElement";
 import { DEFAULT_TEXT_DISTANCE_SCALE } from "./text/TextElementsRenderer";
+import { computeStyleCacheId } from "./text/TextStyleCache";
 import { MapViewUtils } from "./Utils";
 
 export type TileObject = THREE.Object3D & {
@@ -855,24 +863,23 @@ export class Tile implements CachedResource {
                         ? (SORT_WEIGHT_PATH_LENGTH * textPath.pathLengthSqr) / maxPathLengthSqr
                         : 0);
 
+                const textSize =
+                    getOptionValue(getPropertyValue(technique.scale, displayZoomLevel), 1.0) *
+                    100.0;
+
                 const textElement = new TextElement(
-                    textPath.text,
+                    ContextualArabicConverter.instance.convert(textPath.text),
                     path,
+                    this.getRenderStyle(textSize, technique, colorMap.get(textPath.technique)),
+                    this.getLayoutStyle(technique),
                     priority,
-                    getOptionValue(getPropertyValue(technique.scale, displayZoomLevel), 1.0),
                     technique.xOffset !== undefined ? technique.xOffset : 0.0,
                     technique.yOffset !== undefined ? technique.yOffset : 0.0,
                     textPath.featureId,
                     technique.style,
-                    technique.allCaps,
-                    technique.smallCaps,
-                    technique.oblique,
-                    technique.bold,
-                    technique.tracking,
                     getPropertyValue(technique.fadeNear, displayZoomLevel),
                     getPropertyValue(technique.fadeFar, displayZoomLevel)
                 );
-                textElement.color = colorMap.get(textPath.technique);
                 textElement.minZoomLevel =
                     technique.minZoomLevel !== undefined
                         ? technique.minZoomLevel
@@ -887,23 +894,6 @@ export class Tile implements CachedResource {
                         : DEFAULT_TEXT_DISTANCE_SCALE;
                 textElement.mayOverlap = technique.mayOverlap === true;
                 textElement.reserveSpace = technique.reserveSpace !== false;
-
-                if (
-                    technique.hAlignment !== undefined &&
-                    (technique.hAlignment === TextHorizontalAlignmentStrings.Left ||
-                        technique.hAlignment === TextHorizontalAlignmentStrings.Center ||
-                        technique.hAlignment === TextHorizontalAlignmentStrings.Right)
-                ) {
-                    textElement.horizontalAlignment = TextHorizontalAlignment[technique.hAlignment];
-                }
-                if (
-                    technique.vAlignment !== undefined &&
-                    (technique.vAlignment === TextVerticalAlignmentStrings.Above ||
-                        technique.vAlignment === TextVerticalAlignmentStrings.Center ||
-                        technique.vAlignment === TextVerticalAlignmentStrings.Below)
-                ) {
-                    textElement.verticalAlignment = TextVerticalAlignment[technique.vAlignment];
-                }
 
                 this.addTextElement(textElement);
                 numTextElementsCreated++;
@@ -950,23 +940,22 @@ export class Tile implements CachedResource {
                         continue;
                     }
 
+                    const textSize =
+                        getOptionValue(getPropertyValue(technique.scale, displayZoomLevel), 1.0) *
+                        100.0;
+
                     const textElement = new TextElement(
-                        label!,
+                        ContextualArabicConverter.instance.convert(label!),
                         new THREE.Vector2(x, y),
+                        this.getRenderStyle(textSize, technique, colorMap.get(text.technique)),
+                        this.getLayoutStyle(technique),
                         priority,
-                        getOptionValue(getPropertyValue(technique.scale, displayZoomLevel), 1.0),
                         technique.xOffset || 0.0,
                         technique.yOffset || 0.0,
                         text.featureId,
-                        technique.style,
-                        technique.allCaps,
-                        technique.smallCaps,
-                        technique.oblique,
-                        technique.bold,
-                        technique.tracking
+                        technique.style
                     );
 
-                    textElement.color = colorMap.get(text.technique);
                     textElement.minZoomLevel =
                         technique.minZoomLevel !== undefined
                             ? technique.minZoomLevel
@@ -980,24 +969,6 @@ export class Tile implements CachedResource {
 
                     textElement.fadeNear = getPropertyValue(technique.fadeNear, displayZoomLevel);
                     textElement.fadeFar = getPropertyValue(technique.fadeFar, displayZoomLevel);
-
-                    if (
-                        technique.hAlignment !== undefined &&
-                        (technique.hAlignment === TextHorizontalAlignmentStrings.Left ||
-                            technique.hAlignment === TextHorizontalAlignmentStrings.Center ||
-                            technique.hAlignment === TextHorizontalAlignmentStrings.Right)
-                    ) {
-                        textElement.horizontalAlignment =
-                            TextHorizontalAlignment[technique.hAlignment];
-                    }
-                    if (
-                        technique.vAlignment !== undefined &&
-                        (technique.vAlignment === TextVerticalAlignmentStrings.Above ||
-                            technique.vAlignment === TextVerticalAlignmentStrings.Center ||
-                            technique.vAlignment === TextVerticalAlignmentStrings.Below)
-                    ) {
-                        textElement.verticalAlignment = TextVerticalAlignment[technique.vAlignment];
-                    }
 
                     this.addTextElement(textElement);
                     numTextElementsCreated++;
@@ -1428,6 +1399,118 @@ export class Tile implements CachedResource {
         if (decodedTile.poiGeometries !== undefined) {
             this.mapView.poiManager.addPois(this, decodedTile);
         }
+    }
+
+    /**
+     * Gets the appropiate [[TextRenderStyle]] to use for a label. Depends heavily on the label's
+     * [[Technique]] and the current zoomLevel.
+     *
+     * @param textSize Label's size.
+     * @param textTechnique Label's technique.
+     * @param textColor Label's color.
+     */
+    protected getRenderStyle(
+        textSize: number,
+        textTechnique: TextTechnique | PoiTechnique | LineMarkerTechnique,
+        textColor?: THREE.Color
+    ): TextRenderStyle {
+        const cacheId = computeStyleCacheId(textTechnique, this.mapView.zoomLevel);
+        let renderStyle = this.mapView.textRenderStyleCache.get(cacheId);
+        if (renderStyle === undefined) {
+            let styleColor = textColor;
+            if (styleColor === undefined) {
+                styleColor = this.mapView.defaultTextColor;
+            }
+            const styleFontVariant =
+                textTechnique.smallCaps === true
+                    ? FontVariant.SmallCaps
+                    : textTechnique.allCaps === true
+                    ? FontVariant.AllCaps
+                    : FontVariant.Regular;
+            const styleFontStyle =
+                textTechnique.bold === true
+                    ? textTechnique.oblique
+                        ? FontStyle.BoldItalic
+                        : FontStyle.Bold
+                    : textTechnique.oblique === true
+                    ? FontStyle.Italic
+                    : FontStyle.Regular;
+
+            const renderParams = {
+                fontSize: {
+                    unit: FontUnit.Percent,
+                    size: textSize,
+                    backgroundSize: textSize * 0.25
+                },
+                color: styleColor,
+                fontVariant: styleFontVariant,
+                fontStyle: styleFontStyle
+            };
+
+            const themeRenderParams =
+                this.mapView.textElementsRenderer !== undefined
+                    ? this.mapView.textElementsRenderer!.getTextElementStyle(textTechnique.style)
+                          .renderParams
+                    : {};
+            renderStyle = new TextRenderStyle({
+                ...themeRenderParams,
+                ...renderParams
+            });
+            this.mapView.textRenderStyleCache.set(cacheId, renderStyle);
+        }
+
+        return renderStyle;
+    }
+
+    /**
+     * Gets the appropiate [[TextRenderStyle]] to use for a label. Depends heavily on the label's
+     * [[Technique]] and the current zoomLevel.
+     *
+     * @param textTechnique Label's technique.
+     */
+    protected getLayoutStyle(
+        textTechnique: TextTechnique | PoiTechnique | LineMarkerTechnique
+    ): TextLayoutStyle {
+        const cacheId = computeStyleCacheId(textTechnique, this.mapView.zoomLevel);
+        let layoutStyle = this.mapView.textLayoutStyleCache.get(cacheId);
+        if (layoutStyle === undefined) {
+            const trackingFactor = textTechnique.tracking || 0.0;
+            let hAlignment = HorizontalAlignment.Center;
+            if (
+                textTechnique.hAlignment === "Left" ||
+                textTechnique.hAlignment === "Center" ||
+                textTechnique.hAlignment === "Right"
+            ) {
+                hAlignment = HorizontalAlignment[textTechnique.hAlignment];
+            }
+            let vAlignment = VerticalAlignment.Center;
+            if (
+                textTechnique.vAlignment === "Above" ||
+                textTechnique.vAlignment === "Center" ||
+                textTechnique.vAlignment === "Below"
+            ) {
+                vAlignment = VerticalAlignment[textTechnique.vAlignment];
+            }
+
+            const layoutParams = {
+                tracking: trackingFactor,
+                horizontalAlignment: hAlignment,
+                verticalAlignment: vAlignment
+            };
+
+            const themeLayoutParams =
+                this.mapView.textElementsRenderer !== undefined
+                    ? this.mapView.textElementsRenderer!.getTextElementStyle(textTechnique.style)
+                          .layoutParams
+                    : {};
+            layoutStyle = new TextLayoutStyle({
+                ...themeLayoutParams,
+                ...layoutParams
+            });
+            this.mapView.textLayoutStyleCache.set(cacheId, layoutStyle);
+        }
+
+        return layoutStyle;
     }
 
     private getMaterialsCount() {

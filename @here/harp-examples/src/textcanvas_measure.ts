@@ -12,7 +12,7 @@ import {
     ContextualArabicConverter,
     FontCatalog,
     TextCanvas,
-    TextStyle
+    TextRenderStyle
 } from "@here/harp-text-canvas";
 
 /**
@@ -23,7 +23,7 @@ import {
  * [[include:textcanvas_measure_0.ts]]
  * ```
  *
- * As well as how an animated [[TextStyle]] can influence the output of this function:
+ * As well as how an animated [[TextRenderStyle]] can influence the output of this function:
  *
  * ```typescript
  * [[include:textcanvas_measure_1.ts]]
@@ -40,7 +40,6 @@ export namespace TextCanvasMeasureExample {
     let currentFrameTime = new Date().getTime();
     let lastFrameTime = new Date().getTime();
 
-    let textStyle: TextStyle;
     let textCanvas: TextCanvas;
     let assetsLoaded: boolean = false;
 
@@ -150,9 +149,8 @@ export namespace TextCanvasMeasureExample {
             textCanvas.clear();
 
             // snippet:textcanvas_measure_1.ts
-            textStyle.rotation! += (currentFrameTime - lastFrameTime) / 1000;
-            textStyle.glyphRotation! += (currentFrameTime - lastFrameTime) / 1000;
-            textCanvas.style = textStyle;
+            textCanvas.textRenderStyle.rotation += (currentFrameTime - lastFrameTime) / 1000;
+            textCanvas.textLayoutStyle.lineRotation += (currentFrameTime - lastFrameTime) / 1000;
             // end:textcanvas_measure_1.ts
 
             textPosition.set(0.0, 0.0, 0.0);
@@ -163,10 +161,14 @@ export namespace TextCanvasMeasureExample {
             // end:textcanvas_measure_0.ts
             textCanvas.addText(textSampleA, textPosition);
 
-            textCanvas.style.rotation! = 0.0;
-            textCanvas.style.glyphRotation! = 0.0;
+            const tempRot = textCanvas.textRenderStyle.rotation;
+            const tempLineRotation = textCanvas.textLayoutStyle.lineRotation;
+            textCanvas.textRenderStyle.rotation = 0.0;
+            textCanvas.textLayoutStyle.lineRotation = 0.0;
             textPosition.set(0.0, textBounds.max.y, 0.0);
             textCanvas.addText(textSampleB, textPosition);
+            textCanvas.textRenderStyle.rotation = tempRot;
+            textCanvas.textLayoutStyle.lineRotation = tempLineRotation;
 
             textCanvas.render(camera);
         }
@@ -202,17 +204,18 @@ export namespace TextCanvasMeasureExample {
         camera.updateProjectionMatrix();
 
         // Init TextCanvas
-        textStyle = { rotation: 0, glyphRotation: 0 };
-        FontCatalog.load("resources/harp-text-canvas/fonts/Default_FontCatalog.json", 16).then(
+        FontCatalog.load("resources/fonts/Default_FontCatalog.json", 16).then(
             (loadedFontCatalog: FontCatalog) => {
                 textCanvas = new TextCanvas({
                     renderer: webglRenderer,
                     fontCatalog: loadedFontCatalog,
                     maxGlyphCount: 24
                 });
-                loadedFontCatalog.loadCharset(textSampleA + textSampleB, textStyle).then(() => {
-                    assetsLoaded = true;
-                });
+                loadedFontCatalog
+                    .loadCharset(textSampleA + textSampleB, new TextRenderStyle())
+                    .then(() => {
+                        assetsLoaded = true;
+                    });
             }
         );
 

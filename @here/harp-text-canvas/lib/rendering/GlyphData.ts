@@ -15,6 +15,16 @@ import { Font } from "./FontCatalog";
  */
 export class GlyphData {
     /**
+     * Unicode character represented by this glyph.
+     */
+    readonly character: string;
+
+    /**
+     * Glyph' direction.
+     */
+    readonly direction: UnicodeUtils.Direction;
+
+    /**
      * Array containing the positions for all corners of this glyph.
      */
     positions: THREE.Vector3[] = [];
@@ -37,9 +47,9 @@ export class GlyphData {
     copyIndex: number = 0;
 
     /**
-     * Glyph' direction.
+     * Flag indicating if glyph can be currently rendered.
      */
-    readonly direction: UnicodeUtils.Direction;
+    isInCache: boolean = false;
 
     /**
      * Creates a new `GlyphData` object.
@@ -75,6 +85,7 @@ export class GlyphData {
         readonly texture: THREE.Texture,
         readonly font: Font
     ) {
+        this.character = String.fromCodePoint(codePoint);
         this.direction = UnicodeUtils.getDirection(codePoint, block);
 
         const left = this.offsetX;
@@ -107,13 +118,11 @@ export class GlyphData {
     /**
      * Clone this `GlyphData`.
      *
-     * @param codePoint Optional code point override value.
-     *
      * @returns Cloned `GlyphData`.
      */
-    clone(codePoint?: number): GlyphData {
+    clone(): GlyphData {
         return new GlyphData(
-            codePoint !== undefined ? codePoint : this.codePoint,
+            this.codePoint,
             this.block,
             this.width,
             this.height,

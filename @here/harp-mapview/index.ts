@@ -15,6 +15,7 @@ export * from "./lib/image/ImageCache";
 export * from "./lib/image/MapViewImageCache";
 export * from "./lib/text/TextElement";
 export * from "./lib/text/TextElementsRenderer";
+export * from "./lib/text/TextStyleCache";
 export * from "./lib/poi/Poi";
 export * from "./lib/poi/PoiManager";
 export * from "./lib/poi/PoiTableManager";

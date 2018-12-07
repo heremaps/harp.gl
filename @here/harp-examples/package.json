@@ -30,7 +30,6 @@
     "@here/harp-mapview-decoder": "^0.2.29",
     "@here/harp-materials": "^0.1.0",
     "@here/harp-omv-datasource": "^0.2.38",
-    "@here/harp-text-renderer": "^0.2.38",
     "@here/harp-text-canvas": "^0.1.4",
     "@here/harp-webtile-datasource": "^0.2.9",
     "@tweenjs/tween.js": "^17.2.0",

@@ -10,13 +10,13 @@ const Stats = require("stats.js");
 import * as THREE from "three";
 
 import {
-    DefaultTextStyle,
+    ContextualArabicConverter,
     FontCatalog,
     FontStyle,
     FontUnit,
     FontVariant,
     TextCanvas,
-    TextStyle
+    TextRenderStyle
 } from "@here/harp-text-canvas";
 
 /**
@@ -30,7 +30,8 @@ export namespace TextCanvasDynamicExample {
     const stats = new Stats();
     const gui = new GUI({ hideable: false });
     const guiOptions = {
-        font: "",
+        input: "Type to start...",
+        fontName: "",
         gridEnabled: true,
         boundsEnabled: true,
         color: {
@@ -48,13 +49,12 @@ export namespace TextCanvasDynamicExample {
     let webglRenderer: THREE.WebGLRenderer;
     let camera: THREE.OrthographicCamera;
 
-    const fontCatalogs: FontCatalog[] = [];
     let textCanvas: TextCanvas;
-    let textStyle: TextStyle;
+    let textRenderStyle: TextRenderStyle;
     let assetsLoaded = false;
 
     const characterCount = 256;
-    let textSample = "Type to start...";
+    let textSample = guiOptions.input;
     const penPosition: THREE.Vector3 = new THREE.Vector3(
         Math.floor(-window.innerWidth / 4.0),
         0,
@@ -73,65 +73,71 @@ export namespace TextCanvasDynamicExample {
     let penObject: THREE.Object3D;
 
     function addGUIControls() {
-        guiOptions.color.r = textStyle.color!.r * 255.0;
-        guiOptions.color.g = textStyle.color!.g * 255.0;
-        guiOptions.color.b = textStyle.color!.b * 255.0;
-        guiOptions.backgroundColor.r = textStyle.backgroundColor!.r * 255.0;
-        guiOptions.backgroundColor.g = textStyle.backgroundColor!.g * 255.0;
-        guiOptions.backgroundColor.b = textStyle.backgroundColor!.b * 255.0;
+        guiOptions.color.r = textRenderStyle.color!.r * 255.0;
+        guiOptions.color.g = textRenderStyle.color!.g * 255.0;
+        guiOptions.color.b = textRenderStyle.color!.b * 255.0;
+        guiOptions.backgroundColor.r = textRenderStyle.backgroundColor!.r * 255.0;
+        guiOptions.backgroundColor.g = textRenderStyle.backgroundColor!.g * 255.0;
+        guiOptions.backgroundColor.b = textRenderStyle.backgroundColor!.b * 255.0;
 
+        gui.add(guiOptions, "input").onFinishChange((value: string) => {
+            textSample = ContextualArabicConverter.instance.convert(value);
+            assetsLoaded = false;
+            textCanvas.fontCatalog.loadCharset(textSample, textRenderStyle).then(() => {
+                assetsLoaded = true;
+            });
+        });
         gui.add(guiOptions, "gridEnabled");
         gui.add(guiOptions, "boundsEnabled");
-        gui.add(textStyle.fontSize!, "unit", {
+        gui.add(textRenderStyle.fontSize!, "unit", {
             Em: FontUnit.Em,
             Pixel: FontUnit.Pixel,
             Point: FontUnit.Point,
             Percent: FontUnit.Percent
         }).onChange((value: string) => {
-            textStyle.fontSize!.unit = Number(value);
+            textRenderStyle.fontSize!.unit = Number(value);
         });
-        gui.add(textStyle.fontSize!, "size", 0.1, 100, 0.1);
-        gui.add(textStyle.fontSize!, "backgroundSize", 0.0, 100, 0.1);
-        gui.add(textStyle, "tracking", -3.0, 3.0, 0.1);
+        gui.add(textRenderStyle.fontSize!, "size", 0.1, 100, 0.1);
+        gui.add(textRenderStyle.fontSize!, "backgroundSize", 0.0, 100, 0.1);
         gui.addColor(guiOptions, "color").onChange(() => {
-            textStyle.color!.r = guiOptions.color.r / 255.0;
-            textStyle.color!.g = guiOptions.color.g / 255.0;
-            textStyle.color!.b = guiOptions.color.b / 255.0;
+            textRenderStyle.color!.r = guiOptions.color.r / 255.0;
+            textRenderStyle.color!.g = guiOptions.color.g / 255.0;
+            textRenderStyle.color!.b = guiOptions.color.b / 255.0;
         });
-        gui.add(textStyle, "opacity", 0.0, 1.0, 0.01);
+        gui.add(textRenderStyle, "opacity", 0.0, 1.0, 0.01);
         gui.addColor(guiOptions, "backgroundColor").onChange(() => {
-            textStyle.backgroundColor!.r = guiOptions.backgroundColor.r / 255.0;
-            textStyle.backgroundColor!.g = guiOptions.backgroundColor.g / 255.0;
-            textStyle.backgroundColor!.b = guiOptions.backgroundColor.b / 255.0;
+            textRenderStyle.backgroundColor!.r = guiOptions.backgroundColor.r / 255.0;
+            textRenderStyle.backgroundColor!.g = guiOptions.backgroundColor.g / 255.0;
+            textRenderStyle.backgroundColor!.b = guiOptions.backgroundColor.b / 255.0;
         });
-        gui.add(textStyle, "backgroundOpacity", 0.0, 1.0, 0.1);
-        gui.add(guiOptions, "font").onFinishChange((value: string) => {
-            textStyle.font = value;
+        gui.add(textRenderStyle, "backgroundOpacity", 0.0, 1.0, 0.1);
+        gui.add(guiOptions, "fontName").onFinishChange((value: string) => {
+            textRenderStyle.fontName = value;
             assetsLoaded = false;
-            textCanvas.fontCatalog.loadCharset(textSample, textStyle).then(() => {
+            textCanvas.fontCatalog.loadCharset(textSample, textRenderStyle).then(() => {
                 assetsLoaded = true;
             });
         });
-        gui.add(textStyle, "fontStyle", {
+        gui.add(textRenderStyle, "fontStyle", {
             Regular: FontStyle.Regular,
             Bold: FontStyle.Bold,
             Italic: FontStyle.Italic,
             BoldItalic: FontStyle.BoldItalic
         }).onChange((value: string) => {
-            textStyle.fontStyle = Number(value);
+            textRenderStyle.fontStyle = Number(value);
             assetsLoaded = false;
-            textCanvas.fontCatalog.loadCharset(textSample, textStyle).then(() => {
+            textCanvas.fontCatalog.loadCharset(textSample, textRenderStyle).then(() => {
                 assetsLoaded = true;
             });
         });
-        gui.add(textStyle, "fontVariant", {
+        gui.add(textRenderStyle, "fontVariant", {
             Regular: FontVariant.Regular,
             AllCaps: FontVariant.AllCaps,
             SmallCaps: FontVariant.SmallCaps
         }).onChange((value: string) => {
-            textStyle.fontVariant = Number(value);
+            textRenderStyle.fontVariant = Number(value);
             assetsLoaded = false;
-            textCanvas.fontCatalog.loadCharset(textSample, textStyle).then(() => {
+            textCanvas.fontCatalog.loadCharset(textSample, textRenderStyle).then(() => {
                 assetsLoaded = true;
             });
         });
@@ -276,7 +282,7 @@ export namespace TextCanvasDynamicExample {
             const char = String.fromCharCode(key);
             textSample += char;
             assetsLoaded = false;
-            textCanvas.fontCatalog.loadCharset(char, textStyle).then(() => {
+            textCanvas.fontCatalog.loadCharset(char, textRenderStyle).then(() => {
                 assetsLoaded = true;
             });
         }
@@ -296,7 +302,7 @@ export namespace TextCanvasDynamicExample {
         if (assetsLoaded) {
             textCanvas.clear();
 
-            textCanvas.style = textStyle;
+            textCanvas.textRenderStyle = textRenderStyle;
             if (guiOptions.boundsEnabled) {
                 textCanvas.measureText(textSample, textBounds, {
                     outputCharacterBounds: characterBounds
@@ -340,20 +346,20 @@ export namespace TextCanvasDynamicExample {
         camera.updateProjectionMatrix();
 
         // Init TextCanvas
-        textStyle = DefaultTextStyle.initializeTextStyle({
+        textRenderStyle = new TextRenderStyle({
             fontSize: { unit: FontUnit.Pixel, size: 64.0, backgroundSize: 8.0 },
             color: new THREE.Color(0xff0000),
             backgroundColor: new THREE.Color(0x000000),
             backgroundOpacity: 1.0
         });
-        FontCatalog.load("resources/harp-text-canvas/fonts/Default_FontCatalog.json", 2048).then(
+        FontCatalog.load("resources/fonts/Default_FontCatalog.json", 2048).then(
             (loadedFontCatalog: FontCatalog) => {
                 textCanvas = new TextCanvas({
                     renderer: webglRenderer,
                     fontCatalog: loadedFontCatalog,
                     maxGlyphCount: characterCount
                 });
-                loadedFontCatalog.loadCharset(textSample, textStyle).then(() => {
+                loadedFontCatalog.loadCharset(textSample, textRenderStyle).then(() => {
                     assetsLoaded = true;
                 });
             }

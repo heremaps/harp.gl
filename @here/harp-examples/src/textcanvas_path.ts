@@ -11,16 +11,14 @@ import * as THREE from "three";
 
 import {
     ContextualArabicConverter,
-    DefaultLayoutStyle,
-    DefaultTextStyle,
     FontCatalog,
     FontStyle,
     FontUnit,
     FontVariant,
     HorizontalAlignment,
-    LayoutStyle,
     TextCanvas,
-    TextStyle,
+    TextLayoutStyle,
+    TextRenderStyle,
     VerticalAlignment,
     WrappingMode
 } from "@here/harp-text-canvas";
@@ -42,7 +40,7 @@ export namespace TextCanvasPathExample {
     }
 
     const guiOptions = {
-        font: "",
+        fontName: "",
         gridEnabled: false,
         boundsEnabled: true,
         pathMode: TextPathMode.Curve,
@@ -62,8 +60,8 @@ export namespace TextCanvasPathExample {
     let camera: THREE.OrthographicCamera;
 
     let textCanvas: TextCanvas;
-    let layoutStyle: LayoutStyle;
-    let textStyle: TextStyle;
+    let textLayoutStyle: TextLayoutStyle;
+    let textRenderStyle: TextRenderStyle;
     let assetsLoaded: boolean = false;
 
     const characterCount = 512;
@@ -100,8 +98,8 @@ he said "ٱٹ!" to her`);
 Use LEFT click to add positions to the path.
 Use MIDDLE click to remove positions from the path.`;
     const demoTextPosition = new THREE.Vector3();
-    const demoTextStyle = DefaultTextStyle.initializeTextStyle();
-    const demoLayoutStyle = DefaultLayoutStyle.initializeLayoutStyle();
+    const demoTextRenderStyle = new TextRenderStyle();
+    const demoTextLayoutStyle = new TextLayoutStyle();
 
     const applicationCharset = textSample + demoText;
 
@@ -138,104 +136,104 @@ Use MIDDLE click to remove positions from the path.`;
             }
         });
 
-        guiOptions.color.r = textStyle.color!.r * 255.0;
-        guiOptions.color.g = textStyle.color!.g * 255.0;
-        guiOptions.color.b = textStyle.color!.b * 255.0;
-        guiOptions.backgroundColor.r = textStyle.backgroundColor!.r * 255.0;
-        guiOptions.backgroundColor.g = textStyle.backgroundColor!.g * 255.0;
-        guiOptions.backgroundColor.b = textStyle.backgroundColor!.b * 255.0;
+        guiOptions.color.r = textRenderStyle.color!.r * 255.0;
+        guiOptions.color.g = textRenderStyle.color!.g * 255.0;
+        guiOptions.color.b = textRenderStyle.color!.b * 255.0;
+        guiOptions.backgroundColor.r = textRenderStyle.backgroundColor!.r * 255.0;
+        guiOptions.backgroundColor.g = textRenderStyle.backgroundColor!.g * 255.0;
+        guiOptions.backgroundColor.b = textRenderStyle.backgroundColor!.b * 255.0;
 
         const textStyleGui = gui.addFolder("TextStyle");
         textStyleGui
-            .add(textStyle.fontSize!, "unit", {
+            .add(textRenderStyle.fontSize, "unit", {
                 Em: FontUnit.Em,
                 Pixel: FontUnit.Pixel,
                 Point: FontUnit.Point,
                 Percent: FontUnit.Percent
             })
             .onChange((value: string) => {
-                textStyle.fontSize!.unit = Number(value);
+                textRenderStyle.fontSize.unit = Number(value);
             });
-        textStyleGui.add(textStyle.fontSize!, "size", 0.1, 100, 0.1);
-        textStyleGui.add(textStyle.fontSize!, "backgroundSize", 0.0, 100, 0.1);
-        textStyleGui.add(textStyle, "tracking", -3.0, 3.0, 0.1);
+        textStyleGui.add(textRenderStyle.fontSize, "size", 0.1, 100, 0.1);
+        textStyleGui.add(textRenderStyle.fontSize, "backgroundSize", 0.0, 100, 0.1);
         textStyleGui.addColor(guiOptions, "color").onChange(() => {
-            textStyle.color!.r = guiOptions.color.r / 255.0;
-            textStyle.color!.g = guiOptions.color.g / 255.0;
-            textStyle.color!.b = guiOptions.color.b / 255.0;
+            textRenderStyle.color!.r = guiOptions.color.r / 255.0;
+            textRenderStyle.color!.g = guiOptions.color.g / 255.0;
+            textRenderStyle.color!.b = guiOptions.color.b / 255.0;
         });
-        textStyleGui.add(textStyle, "opacity", 0.0, 1.0, 0.01);
+        textStyleGui.add(textRenderStyle, "opacity", 0.0, 1.0, 0.01);
         textStyleGui.addColor(guiOptions, "backgroundColor").onChange(() => {
-            textStyle.backgroundColor!.r = guiOptions.backgroundColor.r / 255.0;
-            textStyle.backgroundColor!.g = guiOptions.backgroundColor.g / 255.0;
-            textStyle.backgroundColor!.b = guiOptions.backgroundColor.b / 255.0;
+            textRenderStyle.backgroundColor!.r = guiOptions.backgroundColor.r / 255.0;
+            textRenderStyle.backgroundColor!.g = guiOptions.backgroundColor.g / 255.0;
+            textRenderStyle.backgroundColor!.b = guiOptions.backgroundColor.b / 255.0;
         });
-        textStyleGui.add(textStyle, "backgroundOpacity", 0.0, 1.0, 0.1);
-        textStyleGui.add(guiOptions, "font").onFinishChange((value: string) => {
-            textStyle.font = value;
+        textStyleGui.add(textRenderStyle, "backgroundOpacity", 0.0, 1.0, 0.1);
+        textStyleGui.add(guiOptions, "fontName").onFinishChange((value: string) => {
+            textRenderStyle.fontName = value;
             assetsLoaded = false;
-            textCanvas.fontCatalog.loadCharset(applicationCharset, textStyle).then(() => {
+            textCanvas.fontCatalog.loadCharset(applicationCharset, textRenderStyle).then(() => {
                 assetsLoaded = true;
             });
         });
         textStyleGui
-            .add(textStyle, "fontStyle", {
+            .add(textRenderStyle, "fontStyle", {
                 Regular: FontStyle.Regular,
                 Bold: FontStyle.Bold,
                 Italic: FontStyle.Italic,
                 BoldItalic: FontStyle.BoldItalic
             })
             .onChange((value: string) => {
-                textStyle.fontStyle = Number(value);
+                textRenderStyle.fontStyle = Number(value);
                 assetsLoaded = false;
-                textCanvas.fontCatalog.loadCharset(applicationCharset, textStyle).then(() => {
+                textCanvas.fontCatalog.loadCharset(applicationCharset, textRenderStyle).then(() => {
                     assetsLoaded = true;
                 });
             });
         textStyleGui
-            .add(textStyle, "fontVariant", {
+            .add(textRenderStyle, "fontVariant", {
                 Regular: FontVariant.Regular,
                 AllCaps: FontVariant.AllCaps,
                 SmallCaps: FontVariant.SmallCaps
             })
             .onChange((value: string) => {
-                textStyle.fontVariant = Number(value);
+                textRenderStyle.fontVariant = Number(value);
                 assetsLoaded = false;
-                textCanvas.fontCatalog.loadCharset(applicationCharset, textStyle).then(() => {
+                textCanvas.fontCatalog.loadCharset(applicationCharset, textRenderStyle).then(() => {
                     assetsLoaded = true;
                 });
             });
 
         const textLayoutGui = gui.addFolder("TextLayout");
-        textLayoutGui.add(layoutStyle, "lineWidth", 1.0, window.innerWidth, 1.0);
-        textLayoutGui.add(layoutStyle, "maxLines", 0.0, 128, 1.0);
-        textLayoutGui.add(layoutStyle, "leading", -3.0, 3.0, 0.1);
+        textLayoutGui.add(textLayoutStyle, "lineWidth", 1.0, window.innerWidth, 1.0);
+        textLayoutGui.add(textLayoutStyle, "maxLines", 0.0, 128, 1.0);
+        textLayoutGui.add(textLayoutStyle, "tracking", -3.0, 3.0, 0.1);
+        textLayoutGui.add(textLayoutStyle, "leading", -3.0, 3.0, 0.1);
         textLayoutGui
-            .add(layoutStyle, "horizontalAlignment", {
+            .add(textLayoutStyle, "horizontalAlignment", {
                 Left: HorizontalAlignment.Left,
                 Center: HorizontalAlignment.Center,
                 Right: HorizontalAlignment.Right
             })
             .onChange((value: string) => {
-                layoutStyle.horizontalAlignment = Number(value);
+                textLayoutStyle.horizontalAlignment = Number(value);
             });
         textLayoutGui
-            .add(layoutStyle, "verticalAlignment", {
+            .add(textLayoutStyle, "verticalAlignment", {
                 Above: VerticalAlignment.Above,
                 Center: VerticalAlignment.Center,
                 Below: VerticalAlignment.Below
             })
             .onChange((value: string) => {
-                layoutStyle.verticalAlignment = Number(value);
+                textLayoutStyle.verticalAlignment = Number(value);
             });
         textLayoutGui
-            .add(layoutStyle, "wrappingMode", {
+            .add(textLayoutStyle, "wrappingMode", {
                 None: WrappingMode.None,
                 Character: WrappingMode.Character,
                 Word: WrappingMode.Word
             })
             .onChange((value: string) => {
-                layoutStyle.wrappingMode = Number(value);
+                textLayoutStyle.wrappingMode = Number(value);
             });
     }
 
@@ -414,8 +412,8 @@ Use MIDDLE click to remove positions from the path.`;
         if (assetsLoaded) {
             textCanvas.clear();
 
-            textCanvas.style = demoTextStyle;
-            textCanvas.layoutStyle = demoLayoutStyle;
+            textCanvas.textRenderStyle = demoTextRenderStyle;
+            textCanvas.textLayoutStyle = demoTextLayoutStyle;
             textCanvas.measureText(demoText, textBounds);
             demoTextPosition.set(
                 -window.innerWidth * 0.5,
@@ -424,14 +422,15 @@ Use MIDDLE click to remove positions from the path.`;
             );
             textCanvas.addText(demoText, demoTextPosition);
 
-            textCanvas.style = textStyle;
-            textCanvas.layoutStyle = layoutStyle;
-            textCanvas.addText(textSample, boundsPosition, { path: textPath });
+            textCanvas.textRenderStyle = textRenderStyle;
+            textCanvas.textLayoutStyle = textLayoutStyle;
+            textCanvas.addText(textSample, boundsPosition, { path: textPath, pathOverflow: true });
             textCanvas.render(camera);
 
             if (guiOptions.boundsEnabled) {
                 textCanvas.measureText(textSample, textBounds, {
                     path: textPath,
+                    pathOverflow: true,
                     outputCharacterBounds: characterBounds
                 });
                 updateDebugBounds(boundsPosition);
@@ -469,19 +468,19 @@ Use MIDDLE click to remove positions from the path.`;
         camera.updateProjectionMatrix();
 
         // Init textCanvas
-        layoutStyle = DefaultLayoutStyle.initializeLayoutStyle({
+        textLayoutStyle = new TextLayoutStyle({
             horizontalAlignment: HorizontalAlignment.Left,
             verticalAlignment: VerticalAlignment.Center
         });
-        textStyle = DefaultTextStyle.initializeTextStyle();
-        FontCatalog.load("resources/harp-text-canvas/fonts/Default_FontCatalog.json", 1024).then(
+        textRenderStyle = new TextRenderStyle();
+        FontCatalog.load("resources/fonts/Default_FontCatalog.json", 1024).then(
             (loadedFontCatalog: FontCatalog) => {
                 textCanvas = new TextCanvas({
                     renderer: webglRenderer,
                     fontCatalog: loadedFontCatalog,
                     maxGlyphCount: characterCount
                 });
-                loadedFontCatalog.loadCharset(applicationCharset, textStyle).then(() => {
+                loadedFontCatalog.loadCharset(applicationCharset, textRenderStyle).then(() => {
                     assetsLoaded = true;
                 });
             }

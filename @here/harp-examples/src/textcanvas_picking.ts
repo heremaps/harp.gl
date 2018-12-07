@@ -8,13 +8,7 @@
 const Stats = require("stats.js");
 import * as THREE from "three";
 
-import {
-    DefaultTextStyle,
-    FontCatalog,
-    FontUnit,
-    TextCanvas,
-    TextStyle
-} from "@here/harp-text-canvas";
+import { FontCatalog, FontUnit, TextCanvas, TextRenderStyle } from "@here/harp-text-canvas";
 
 /**
  * This example showcases how [[TextCanvas]] can handle picking the different strings of text added
@@ -33,7 +27,7 @@ export namespace TextCanvasPickingExample {
 
     let textSample = "black";
     const textPosition = new THREE.Vector3();
-    let textStyle: TextStyle;
+    let textRenderStyle: TextRenderStyle;
 
     function onWindowResize() {
         webglRenderer.setSize(window.innerWidth, window.innerHeight);
@@ -65,21 +59,21 @@ export namespace TextCanvasPickingExample {
         webglRenderer.clear();
         if (assetsLoaded) {
             textCanvas.clear();
-            textCanvas.style = textStyle;
+            textCanvas.textRenderStyle = textRenderStyle;
 
-            textStyle.color!.setRGB(0, 0, 0);
+            textRenderStyle.color!.setRGB(0, 0, 0);
             textPosition.set(-window.innerWidth * 0.25, window.innerHeight * 0.25, 0.0);
             textCanvas.addText(textSample, textPosition, { pickingData: "black" });
 
-            textStyle.color!.setRGB(1, 0, 0);
+            textRenderStyle.color!.setRGB(1, 0, 0);
             textPosition.set(window.innerWidth * 0.25, window.innerHeight * 0.25, 0.0);
             textCanvas.addText(textSample, textPosition, { pickingData: "red" });
 
-            textStyle.color!.setRGB(0, 1, 0);
+            textRenderStyle.color!.setRGB(0, 1, 0);
             textPosition.set(-window.innerWidth * 0.25, -window.innerHeight * 0.25, 0.0);
             textCanvas.addText(textSample, textPosition, { pickingData: "green" });
 
-            textStyle.color!.setRGB(0, 0, 1);
+            textRenderStyle.color!.setRGB(0, 0, 1);
             textPosition.set(window.innerWidth * 0.25, -window.innerHeight * 0.25, 0.0);
             textCanvas.addText(textSample, textPosition, { pickingData: "blue" });
 
@@ -113,23 +107,25 @@ export namespace TextCanvasPickingExample {
         camera.updateProjectionMatrix();
 
         // Init TextCanvas
-        textStyle = DefaultTextStyle.initializeTextStyle({
+        textRenderStyle = new TextRenderStyle({
             fontSize: {
                 unit: FontUnit.Percent,
                 size: 200.0,
                 backgroundSize: 0.0
             }
         });
-        FontCatalog.load("resources/harp-text-canvas/fonts/Default_FontCatalog.json", 16).then(
+        FontCatalog.load("resources/fonts/Default_FontCatalog.json", 32).then(
             (loadedFontCatalog: FontCatalog) => {
                 textCanvas = new TextCanvas({
                     renderer: webglRenderer,
                     fontCatalog: loadedFontCatalog,
                     maxGlyphCount: 64
                 });
-                loadedFontCatalog.loadCharset("black" + "red" + "green" + "blue", {}).then(() => {
-                    assetsLoaded = true;
-                });
+                loadedFontCatalog
+                    .loadCharset("black" + "red" + "green" + "blue", textRenderStyle)
+                    .then(() => {
+                        assetsLoaded = true;
+                    });
             }
         );
 

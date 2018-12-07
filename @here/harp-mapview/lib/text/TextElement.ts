@@ -11,12 +11,13 @@ import {
     PoiTechnique
 } from "@here/harp-datasource-protocol";
 import {
-    BG_TEXT_RENDER_ORDER,
-    ContextualArabicConverter,
-    GlyphDirection,
-    TextHorizontalAlignment,
-    TextVerticalAlignment
-} from "@here/harp-text-renderer";
+    GlyphData,
+    TextBufferObject,
+    TextLayoutParameters,
+    TextLayoutStyle,
+    TextRenderParameters,
+    TextRenderStyle
+} from "@here/harp-text-canvas";
 import { Math2D, MathUtils } from "@here/harp-utils";
 
 import * as THREE from "three";
@@ -188,6 +189,15 @@ export enum FadingState {
 }
 
 /**
+ * State of loading.
+ */
+export enum LoadingState {
+    Requested,
+    Loaded,
+    Initialized
+}
+
+/**
  * Time to fade in/fade out the labels in milliseconds.
  */
 export const DEFAULT_FADE_TIME = 800;
@@ -303,11 +313,6 @@ export class TextElement {
     maxZoomLevel?: number;
 
     /**
-     * Optional color of text. Overrides color in `style`.
-     */
-    color?: THREE.Color;
-
-    /**
      * If `true`, label is allowed to overlap other labels or icons of lower priority.
      * @default `false`
      */
@@ -385,6 +390,12 @@ export class TextElement {
      * @hidden
      * Used during rendering.
      */
+    loadingState?: LoadingState;
+
+    /**
+     * @hidden
+     * Used during rendering.
+     */
     iconRenderState?: RenderState;
 
     /**
@@ -402,56 +413,32 @@ export class TextElement {
     iconRenderStates?: RenderState[];
 
     /**
-     * Flag specifying if all glyphs in this `TextElement` have loaded all the needed assets and are
-     * ready for rendering.
+     * @hidden
+     * Text rendering style.
      */
-    allGlyphsLoaded: boolean = false;
+    renderStyle?: TextRenderStyle;
 
     /**
-     * Width of all glyph in this `TextElement`. Valid only after `allGlyphsLoaded` is `true`.
+     * @hidden
+     * Text rendering style.
      */
-    textWidth: number = 0;
+    layoutStyle?: TextLayoutStyle;
 
     /**
-     * General [[GlyphDirection]] for this `TextElement`. Valid only after `allGlyphsLoaded` is
-     * `true`.
+     * @hidden
+     * Pre-computed text vertex buffer. Used by point labels in [[TextElementsRenderer]]. Valid
+     * after `loadingState` is `Initialized`.
      */
-    textDirection: GlyphDirection = GlyphDirection.LTR;
+    textBufferObject?: TextBufferObject;
 
     /**
-     * Flag that signals if this `TextElement` contains LTR/RTL glyphs. Valid only after
-     * `allGlyphsLoaded` is `true`.
+     * @hidden
+     * Array storing the style [[GlyphData]] for this `TextElement` to speed up rendering. Used by
+     * path labels in [[TextElementsRenderer]]. Valid after `loadingState` is `Initialized`.
      */
-    bidirectional: boolean = false;
-
-    /**
-     * Vertical alignment used when placing the glyphs in this `TextElement`.
-     */
-    verticalAlignment: TextVerticalAlignment = TextVerticalAlignment.Center;
-
-    /**
-     * Horizontal alignment used when placing the glyphs in this `TextElement`.
-     */
-    horizontalAlignment: TextHorizontalAlignment = TextHorizontalAlignment.Center;
-
-    /**
-     * Horizontal separation between the glyphs in this `TextElement`.
-     */
-    private m_trackingFactor: number = 0;
+    glyphs?: GlyphData[];
 
     private m_poiInfo?: PoiInfo;
-
-    /**
-     * @hidden
-     * Stores code points for glyphs of text.
-     */
-    private m_codepoints?: number[];
-
-    /**
-     * @hidden
-     * Stores if characters have been converted from lower-case to upper-case.
-     */
-    private m_convertedToUpperCase?: boolean[];
 
     /**
      * Creates a new `TextElement`.
@@ -459,24 +446,15 @@ export class TextElement {
      * @param text The text to display.
      * @param points The position in world coordinates or a list of points in world coordinates for
      *              a curved text.
+     * @param renderParams `TextElement` text rendering parameters.
+     * @param layoutParams `TextElement` text layout parameters.
      * @param priority The priority of the `TextElement. Elements with the highest priority get
      *              placed first, elements with priority of `0` are placed last, elements with a
      *              negative value are always rendered, ignoring priorities and allowing
      *              overrides.
-     * @param scale The scale used to display the text.
      * @param xOffset Optional X offset of this `TextElement` in screen coordinates.
      * @param yOffset Optional Y offset of this `TextElement` in screen coordinates.
      * @param featureId Optional number to identify feature (originated from `OmvDataSource`).
-     * @param style The style used to display the text.
-     * @param allCaps Optional style feature. Overrides allCaps in `style`. If `true`, it will
-     *              render text using upper-case letters only.
-     * @param smallCaps Optional style feature. Overrides smallCaps in `style`. If `true`, it will
-     *              render lower-case characters as small upper-case characters.
-     * @param oblique Optional style feature. If `true`, it will render the glyphs in this
-     *              `TextElement` slightly slanted.
-     * @param bold Optional style feature. If `true`, it will use a bold font to render this
-     *             `TextElement`.
-     * @param tracking Horizontal separation between the glyphs in this `TextElement`.
      * @param fadeNear Distance to the camera (0.0 = camera position, 1.0 = farPlane) at which the
      *              label starts fading out (opacity decreases).
      * @param fadeFar Distance to the camera (0.0 = camera position, 1.0 = farPlane) at which the
@@ -485,24 +463,24 @@ export class TextElement {
     constructor(
         readonly text: string,
         readonly points: THREE.Vector2[] | THREE.Vector2 | THREE.Vector3,
+        readonly renderParams: TextRenderParameters | TextRenderStyle,
+        readonly layoutParams: TextLayoutParameters | TextLayoutStyle,
         public priority = 0,
-        readonly scale = 1,
         public xOffset?: number,
         public yOffset?: number,
         public featureId?: number,
         public style?: string,
-        public allCaps?: boolean,
-        public smallCaps?: boolean,
-        public oblique?: boolean,
-        public bold?: boolean,
-        tracking?: number,
         public fadeNear?: number,
         public fadeFar?: number
     ) {
-        if (tracking !== undefined) {
-            this.m_trackingFactor = tracking;
+        if (renderParams instanceof TextRenderStyle) {
+            this.renderStyle = renderParams;
+        }
+        if (layoutParams instanceof TextLayoutStyle) {
+            this.layoutStyle = layoutParams;
         }
     }
+
     /**
      * The position of this text element in world coordinates or the first point of the path used to
      * render a curved text.
@@ -569,68 +547,6 @@ export class TextElement {
     }
 
     /**
-     * Horizontal separation between the glyphs in this `TextElement`.
-     * @default `0`
-     */
-    get tracking(): number {
-        return this.m_trackingFactor;
-    }
-
-    set tracking(trackingFactor: number) {
-        this.m_trackingFactor = trackingFactor;
-    }
-
-    /**
-     * Get the [[text]] as code points.
-     *
-     * Caches result.
-     * Use instead of `text.charCodeAt(i)` for amortized O(1) performance.
-     *
-     * @param allCaps Interpret all code points as uppercase characters.
-     */
-    computeCodePoints(allCaps?: boolean): number[] {
-        if (this.m_codepoints === undefined) {
-            let text = "";
-            this.m_codepoints = [];
-            this.m_convertedToUpperCase = [];
-            for (const char of this.text) {
-                const styledChar = allCaps === true ? char.toUpperCase() : char;
-                const smallCaps = char !== styledChar;
-                // A single character can be transformed into more than one character (ß -> SS)
-                const nChars = styledChar.length;
-                let charIdx = 0;
-                while (charIdx++ < nChars) {
-                    this.m_convertedToUpperCase.push(smallCaps);
-                }
-                text += styledChar;
-            }
-
-            const reshapedStr = ContextualArabicConverter.instance.convert(text);
-            for (const char of reshapedStr) {
-                this.m_codepoints.push(char.codePointAt(0)!);
-            }
-        }
-        return this.m_codepoints as number[];
-    }
-
-    /**
-     * Get an array of booleans describing if the characters in this `TextElement` have been
-     * converted from lower-case into upper-case.
-     */
-    get convertedToUpperCase(): boolean[] {
-        return this.m_convertedToUpperCase as boolean[];
-    }
-
-    /*
-     * Get this `TextElement`'s text as unicode code points. Valid after `computeCodePoints` has
-     * been called once.
-     * @default `undefined`
-     */
-    get codePoints(): number[] {
-        return this.m_codepoints as number[];
-    }
-
-    /**
      * Determine if the `TextElement` is a line marker.
      *
      * @returns `true` if this `TextElement` is a line marker.
@@ -667,8 +583,7 @@ export class TextElement {
     set poiInfo(poiInfo: PoiInfo | undefined) {
         this.m_poiInfo = poiInfo;
         if (poiInfo !== undefined) {
-            const poiRenderOrder =
-                this.renderOrder !== undefined ? BG_TEXT_RENDER_ORDER + this.renderOrder : 0;
+            const poiRenderOrder = this.renderOrder !== undefined ? this.renderOrder : 0;
             poiInfo.renderOrder = poiRenderOrder;
         }
     }
