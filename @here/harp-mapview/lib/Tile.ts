@@ -3,7 +3,6 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-
 import {
     createMaterial,
     DecodedTile,
@@ -29,6 +28,7 @@ import {
     EdgeMaterial,
     EdgeMaterialParameters,
     FadingFeature,
+    MapMeshBasicMaterial,
     SolidLineMaterial
 } from "@here/harp-materials";
 import {
@@ -1017,18 +1017,21 @@ export class Tile implements CachedResource {
         width: number,
         height: number,
         planeCenter: THREE.Vector3,
-        colorHex: number
+        colorHex: number,
+        isVisible: boolean
     ): THREE.Mesh {
         const geometry = new THREE.PlaneGeometry(width, height, 1);
         // TODO cache the material HARP-4207
-        const material = new THREE.MeshBasicMaterial({
+        const material = new MapMeshBasicMaterial({
             color: colorHex,
-            polygonOffset: true,
-            polygonOffsetFactor: 0.0,
-            polygonOffsetUnits: 0.0
+            visible: isVisible,
+            // All 2D ground geometry is rendered with renderOrder set and with depthTest === false.
+            depthTest: false
         });
         const plane = new THREE.Mesh(geometry, material);
         plane.position.copy(planeCenter);
+        // Render before everything else
+        plane.renderOrder = Number.MIN_SAFE_INTEGER;
         return plane;
     }
 
@@ -1041,6 +1044,25 @@ export class Tile implements CachedResource {
     createObjects(decodedTile: DecodedTile, objects: TileObject[]) {
         const materials: THREE.Material[] = [];
         const displayZoomLevel = this.mapView.zoomLevel;
+
+        if (this.dataSource.addTileBackground) {
+            // Add a ground plane to the tile.
+            const planeSize = new THREE.Vector3();
+            this.boundingBox.getSize(planeSize);
+            const groundPlane = this.createPlane(
+                planeSize.x,
+                planeSize.y,
+                this.center,
+                this.dataSource.tileBackgroundColor === undefined
+                    ? this.mapView.clearColor
+                    : this.dataSource.tileBackgroundColor,
+                this.dataSource.tileBackgroundIsVisible
+            );
+
+            this.registerTileObject(groundPlane);
+            objects.push(groundPlane);
+        }
+
         for (const srcGeometry of decodedTile.geometries) {
             const groups = srcGeometry.groups;
             const groupCount = groups.length;
@@ -1280,17 +1302,6 @@ export class Tile implements CachedResource {
 
                 this.registerTileObject(object);
                 objects.push(object);
-
-                // Add a ground plane to the tile.
-                const planeSize = new THREE.Vector3();
-                this.boundingBox.getSize(planeSize);
-                const groundPlane = this.createPlane(
-                    planeSize.x,
-                    planeSize.y,
-                    this.center,
-                    this.mapView.clearColor
-                );
-                objects.push(groundPlane);
 
                 // Add the extruded building edges as a separate geometry.
                 if (technique.name === "extruded-polygon" && srcGeometry.edgeIndex !== undefined) {

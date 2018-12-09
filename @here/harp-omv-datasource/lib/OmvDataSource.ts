@@ -199,6 +199,8 @@ export class OmvDataSource extends TileDataSource<OmvTile> {
             this.m_params.minZoomLevel !== undefined ? this.m_params.minZoomLevel : 1;
         this.m_maxZoomLevelOption =
             this.m_params.maxZoomLevel !== undefined ? this.m_params.maxZoomLevel : 14;
+
+        this.tileBackgroundIsVisible = true;
     }
 
     /**
