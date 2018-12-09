@@ -41,6 +41,6 @@
     "typescript": "~3.2.1"
   },
   "peerDependencies": {
-    "three": "^0.98.0"
+    "three": "^0.99.0"
   }
 }
