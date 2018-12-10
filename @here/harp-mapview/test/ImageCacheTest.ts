@@ -52,12 +52,12 @@ describe("MapViewImageCache", function() {
     });
 
     if (typeof document !== "undefined") {
-        it("#addImage", done => {
+        it("#addImage", async function() {
             const cache = new MapViewImageCache(mapView);
             cache.clear();
 
             const imageName = "headshot.png";
-            const imageUrl = "../dist/test/harp-mapview/test/resources/headshot.png";
+            const imageUrl = "../dist/test/@here/harp-mapview/test/resources/headshot.png";
 
             const promise = cache.addImage(imageName, imageUrl, true);
 
@@ -68,25 +68,15 @@ describe("MapViewImageCache", function() {
 
             assert.isTrue(promise instanceof Promise);
 
-            try {
-                if (promise instanceof Promise) {
-                    promise
-                        .then(() => {
-                            const loadedImageItem = cache.findImageByName(imageName);
-                            assert.exists(loadedImageItem);
-                            assert.isDefined(loadedImageItem!.imageData);
-                            assert.isTrue(loadedImageItem!.loaded);
-                            const image = loadedImageItem!.imageData!;
-                            assert.equal(image.width, 37);
-                            assert.equal(image.height, 36);
-                            done();
-                        })
-                        .catch(ex => {
-                            assert.fail(ex);
-                        });
-                }
-            } catch (ex) {
-                assert.fail(ex);
+            if (promise instanceof Promise) {
+                await promise;
+                const loadedImageItem = cache.findImageByName(imageName);
+                assert.exists(loadedImageItem);
+                assert.isDefined(loadedImageItem!.imageData);
+                assert.isTrue(loadedImageItem!.loaded);
+                const image = loadedImageItem!.imageData!;
+                assert.equal(image.width, 37);
+                assert.equal(image.height, 36);
             }
         });
     }
@@ -204,13 +194,13 @@ describe("ImageCache", function() {
     });
 
     if (typeof document !== "undefined") {
-        it("#addImage", done => {
+        it("#addImage", async function() {
             // tslint:disable-next-line:no-object-literal-type-assertion
             const mapView: MapView = {} as MapView;
             const instance = ImageCache.instance;
             instance.clearAll();
 
-            const imageUrl = "../dist/test/harp-mapview/test/resources/headshot.png";
+            const imageUrl = "../dist/test/@here/harp-mapview/test/resources/headshot.png";
 
             const promise = instance.addImage(mapView, imageUrl, true);
 
@@ -221,25 +211,15 @@ describe("ImageCache", function() {
 
             assert.isTrue(promise instanceof Promise);
 
-            try {
-                if (promise instanceof Promise) {
-                    promise
-                        .then(() => {
-                            const loadedImageItem = instance.findImage(imageUrl);
-                            assert.exists(loadedImageItem);
-                            assert.isDefined(loadedImageItem!.imageData);
-                            assert.isTrue(loadedImageItem!.loaded);
-                            const image = loadedImageItem!.imageData!;
-                            assert.equal(image.width, 37);
-                            assert.equal(image.height, 36);
-                            done();
-                        })
-                        .catch(ex => {
-                            assert.fail(ex);
-                        });
-                }
-            } catch (ex) {
-                assert.fail(ex);
+            if (promise instanceof Promise) {
+                await promise;
+                const loadedImageItem = instance.findImage(imageUrl);
+                assert.exists(loadedImageItem);
+                assert.isDefined(loadedImageItem!.imageData);
+                assert.isTrue(loadedImageItem!.loaded);
+                const image = loadedImageItem!.imageData!;
+                assert.equal(image.width, 37);
+                assert.equal(image.height, 36);
             }
         });
     }
