@@ -39,7 +39,7 @@ describe("WorkerLoader", function() {
         WorkerLoader.directlyFallbackToBlobBasedLoading = false;
     });
 
-    const testWorkerUrl = getTestResourceUrl("harp-mapview", "test/resources/testWorker.js");
+    const testWorkerUrl = getTestResourceUrl("@here/harp-mapview", "test/resources/testWorker.js");
 
     it("WorkerLoader falls back to blob / sync", async function() {
         // setup an environment in which any attempt to load worker from from non-blob URL

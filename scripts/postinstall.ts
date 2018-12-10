@@ -140,16 +140,16 @@ syncFiles({
     "harp-map-theme",
     "harp-text-canvas"
 ].forEach(module => {
-    mkpath.sync(`dist/test/${module}/resources`);
-    mkpath.sync(`dist/test/${module}/test/resources`);
+    mkpath.sync(`dist/test/@here/${module}/resources`);
+    mkpath.sync(`dist/test/@here/${module}/test/resources`);
 
     syncDirsIfNeeded({
         sourceDir: `../@here/${module}/resources`,
-        destDir: `../dist/test/${module}/resources`
+        destDir: `../dist/test/@here/${module}/resources`
     });
 
     syncDirsIfNeeded({
         sourceDir: `../@here/${module}/test/resources`,
-        destDir: `../dist/test/${module}/test/resources`
+        destDir: `../dist/test/@here/${module}/test/resources`
     });
 });

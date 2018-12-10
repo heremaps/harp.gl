@@ -85,7 +85,8 @@ export function loadTestResourceNode(
     fileName: string,
     type: "arraybuffer" | "text" | "json"
 ): Promise<any> {
-    const filePath = path.join("dist", "test", module, fileName);
+    const modulePath = path.dirname(require.resolve(module + "/package.json"));
+    const filePath = path.join(modulePath, fileName);
 
     return new Promise((resolve, reject) => {
         const encoding = type === "arraybuffer" ? null : "utf-8";
