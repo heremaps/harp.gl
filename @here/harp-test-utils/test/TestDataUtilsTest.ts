@@ -16,7 +16,7 @@ describe("@here/harp-test-utils", function() {
     describe("#loadTestResource", function() {
         it(`loads static text file`, async function() {
             const textFromFile = await loadTestResource(
-                "harp-test-utils",
+                "@here/harp-test-utils",
                 "./test/resources/test.txt",
                 "text"
             );
@@ -26,7 +26,7 @@ describe("@here/harp-test-utils", function() {
         });
         it(`loads static json file`, async function() {
             const jsonFromFile = await loadTestResource(
-                "harp-test-utils",
+                "@here/harp-test-utils",
                 "./test/resources/test.json",
                 "json"
             );
@@ -36,7 +36,7 @@ describe("@here/harp-test-utils", function() {
         });
         it(`loads static binary file`, async function() {
             const bufferResult = await loadTestResource(
-                "harp-test-utils",
+                "@here/harp-test-utils",
                 "./test/resources/test.bin",
                 "arraybuffer"
             );
