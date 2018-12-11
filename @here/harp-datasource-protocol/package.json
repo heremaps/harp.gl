@@ -1,6 +1,6 @@
 {
   "name": "@here/harp-datasource-protocol",
-  "version": "0.2.64",
+  "version": "0.2.65",
   "description": "Datasource protocol",
   "main": "index.js",
   "typings": "index",

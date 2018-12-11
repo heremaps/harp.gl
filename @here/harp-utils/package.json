@@ -1,6 +1,6 @@
 {
   "name": "@here/harp-utils",
-  "version": "0.1.19",
+  "version": "0.1.20",
   "description": "Provides utilities: logging, debugging and etc.",
   "main": "index.js",
   "scripts": {
