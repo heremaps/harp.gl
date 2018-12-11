@@ -1,6 +1,6 @@
 {
   "name": "@here/harp-mapview",
-  "version": "0.7.81",
+  "version": "0.7.82",
   "description": "MapView renderer",
   "main": "index.js",
   "typings": "index",
