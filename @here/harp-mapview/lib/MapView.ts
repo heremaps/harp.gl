@@ -15,7 +15,6 @@ import { IMapAntialiasSettings, IMapRenderingManager, MapRenderingManager } from
 import { ConcurrentDecoderFacade } from "./ConcurrentDecoderFacade";
 import { CopyrightInfo } from "./CopyrightInfo";
 import { DataSource } from "./DataSource";
-import { resetDepthBasedPolygonOffsetIndex } from "./DepthPrePass";
 import { MapViewImageCache } from "./image/MapViewImageCache";
 import { MapViewFog } from "./MapViewFog";
 import { PickHandler, PickResult } from "./PickHandler";
@@ -1666,9 +1665,6 @@ export class MapView extends THREE.EventDispatcher {
         this.updateCameras();
         this.m_fog.update(this.m_camera);
         this.m_renderer.clear();
-
-        // Initialize depth base polygonOffset to prevent overlapping geometries from z-fighting
-        resetDepthBasedPolygonOffsetIndex();
 
         // clear the scene
         while (this.m_mapTilesRoot.children.length > 0) {

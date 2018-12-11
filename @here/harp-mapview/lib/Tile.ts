@@ -49,10 +49,9 @@ import { ColorCache } from "./ColorCache";
 import { CopyrightInfo } from "./CopyrightInfo";
 import { DataSource } from "./DataSource";
 import {
-    applyDepthBasedPolygonOffset,
     createDepthPrePassMesh,
-    DEFAULT_DEPTH_BASED_POLYGON_OFFSET_MULTIPLIER,
-    isRenderDepthPrePassEnabled
+    isRenderDepthPrePassEnabled,
+    setDepthPrePassStencil
 } from "./DepthPrePass";
 import { MapView } from "./MapView";
 import { TextElement } from "./text/TextElement";
@@ -1293,11 +1292,7 @@ export class Tile implements CachedResource {
                     const depthPassMesh = createDepthPrePassMesh(object as THREE.Mesh);
                     objects.push(depthPassMesh);
 
-                    applyDepthBasedPolygonOffset(
-                        DEFAULT_DEPTH_BASED_POLYGON_OFFSET_MULTIPLIER,
-                        depthPassMesh,
-                        object as THREE.Mesh
-                    );
+                    setDepthPrePassStencil(depthPassMesh, object as THREE.Mesh);
                 }
 
                 this.registerTileObject(object);
@@ -1325,17 +1320,14 @@ export class Tile implements CachedResource {
                     const edgeMaterial = new EdgeMaterial(materialParams);
                     const edgeObj = new THREE.LineSegments(edgeGeometry, edgeMaterial);
 
-                    // Set the correct render order (based on transparency).
-                    edgeObj.renderOrder =
-                        edgeMaterial.transparent && !renderDepthPrePass
-                            ? -1
-                            : object.renderOrder + 0.1;
+                    // Set the correct render order.
+                    edgeObj.renderOrder = object.renderOrder + 0.1;
 
                     FadingFeature.addRenderHelper(
                         edgeObj,
                         fadingParams.lineFadeNear,
                         fadingParams.lineFadeFar,
-                        true,
+                        false,
                         false
                     );
 

@@ -98,6 +98,7 @@ export class EdgeMaterial extends THREE.RawShaderMaterial implements FadingFeatu
             depthWrite: false
         };
         super(shaderParams);
+        this.transparent = true;
 
         FadingFeature.patchGlobalShaderChunks();
 
