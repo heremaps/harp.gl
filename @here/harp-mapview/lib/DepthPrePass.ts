@@ -8,17 +8,10 @@ import { BaseStandardTechnique } from "@here/harp-datasource-protocol";
 import * as THREE from "three";
 
 /**
- * The depth pass mesh needs to have small depth buffer offset, so we can use `THREE.LessDepth`
- * operator instead of `THREE.LessEqualDepth`.
- *
- * `THREE.LessDepth` depth function gives better visual effects.
+ * Bitmask used for the depth pre-pass to prevent multiple fragments in the same screen position
+ * from rendering color.
  */
-export const DEPTH_PASS_POLYGON_OFFSET_UNITS = 1;
-
-/**
- * Default multiplier to be used with [[applyDepthBasedPolygonOffset]].
- */
-export const DEFAULT_DEPTH_BASED_POLYGON_OFFSET_MULTIPLIER = DEPTH_PASS_POLYGON_OFFSET_UNITS + 1;
+export const DEPTH_PRE_PASS_STENCIL_MASK = 0x01;
 
 /**
  * Check if technique requires (and not disables) use of depth prepass.
@@ -29,7 +22,6 @@ export const DEFAULT_DEPTH_BASED_POLYGON_OFFSET_MULTIPLIER = DEPTH_PASS_POLYGON_
  * @param technique [[BaseStandardTechnique]] instance to be checked
  */
 export function isRenderDepthPrePassEnabled(technique: BaseStandardTechnique) {
-    //
     return (
         technique.enableDepthPrePass !== false &&
         technique.opacity !== undefined &&
@@ -51,20 +43,18 @@ export function isRenderDepthPrePassEnabled(technique: BaseStandardTechnique) {
 export function createDepthPrePassMaterial(
     baseMaterial: THREE.MeshMaterialType
 ): THREE.MeshMaterialType {
-    baseMaterial.depthWrite = true;
-    baseMaterial.depthFunc = THREE.LessDepth;
+    baseMaterial.depthWrite = false;
+    baseMaterial.depthFunc = THREE.EqualDepth;
     baseMaterial.colorWrite = true;
     baseMaterial.transparent = true;
 
     const depthPassMaterial = baseMaterial.clone();
-
     depthPassMaterial.depthWrite = true;
     depthPassMaterial.depthTest = true;
+    depthPassMaterial.depthFunc = THREE.LessDepth;
     depthPassMaterial.colorWrite = false;
     depthPassMaterial.transparent = false;
     depthPassMaterial.opacity = 1.0;
-    depthPassMaterial.polygonOffset = true;
-    depthPassMaterial.polygonOffsetUnits = DEPTH_PASS_POLYGON_OFFSET_UNITS;
     return depthPassMaterial;
 }
 
@@ -128,78 +118,46 @@ export function createDepthPrePassMesh(mesh: THREE.Mesh): THREE.Mesh {
 }
 
 /**
- * Applies depth increasing polygon offset units to the mesh group specified.
+ * Sets up all the needed stencil logic needed for the depth pre-pass.
  *
- * Based on the assumption that `meshes[0]` is rendered in `front-to-back` order, this method
- * applies z-increasing `polygonOffsetUnits` to mesh groups (mesh refers to `THREE.Mesh`) rendered
- * in one frame, where:
+ * This logic is in place to avoid z-fighting artifacts that can appear in geometries that have
+ * coplanar triangles inside the same mesh.
  *
- * * each mesh group has non-overlapping `polygonOffsetUnits` increasing with distance from
- *   camera
- * * the first mesh in the group, typically depth pass mesh, has a slightly higher offset, see
- *   [[DEPTH_PASS_POLYGON_OFFSET_UNITS]]
- * * all mesh groups rendered later have higher `polygonOffsetUnits`
- *
- * The values of `polygonOffsetUnits` applied to each mesh group are separated by `multiplier`
- * "units", so that the minimal correct value is `[[DEPTH_PASS_POLYGON_OFFSET_UNITS]] + 1`.
- *
- * Ideally, a value of `2` for the `multiplier` should suffice, as WebGL specifies that the
- * internal coefficient used for `polygonOffsetUnits` guarantees separation in the z-buffer
- * (https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glPolygonOffset.xhtml).
- * However, some WebGL stacks show higher fragility to z-fighting, so you can increase this value
- * if z-fighting artifacts are visible on an extruded-building. Note that these artifacts are
- * especially visible on overlapping areas of tiles, when the building is very near the camera.
- *
- * Call the [[resetDepthBasedPolygonOffsetIndex]] function after a frame has been rendered, to
- * reset the counters.
- *
- * This mechanism is useful, for transparent extruded buildings on tiles, to prevent z-fighting of
- * same buildings that come from two or more tiles. Consequently, building from a tile that is
- * nearest the to camera has the smallest `polygonOffsetUnits` and prevents z-fighting with
- * other copies of this building from farther tiles.
- *
- * @param multiplier The `polygonOffsetUnits` multiplier. If unsure, use
- *  [[DEFAULT_DEPTH_BASED_POLYGON_OFFSET_MULTIPLIER]].
- * @param meshes A `mesh` group that has the same `polygonOffsetUnits` applied.
+ * @param depthMesh Mesh created by `createDepthPrePassMesh`.
+ * @param colorMesh Original mesh.
  */
-export function applyDepthBasedPolygonOffset(multiplier: number, ...meshes: THREE.Mesh[]) {
-    for (const mesh of meshes) {
-        forEachMeshMaterial(mesh, material => {
-            material.polygonOffset = true;
-            material.polygonOffsetFactor = 0;
-        });
-    }
-
-    meshes[0].onBeforeRender = () => {
-        const polygonOffsetUnits = depthBasedPolygonOffsetMeshIndex++ * multiplier;
-
-        for (let i = 0; i < meshes.length; ++i) {
-            const mesh = meshes[i];
-            const depthPassFactor = i === 0 ? DEPTH_PASS_POLYGON_OFFSET_UNITS : 0;
-            forEachMeshMaterial(mesh, material => {
-                material.polygonOffsetUnits = polygonOffsetUnits + depthPassFactor;
-            });
-        }
+export function setDepthPrePassStencil(depthMesh: THREE.Mesh, colorMesh: THREE.Mesh) {
+    // Set up depth mesh stencil logic.
+    // Set the depth pre-pass stencil bit for all processed fragments. We use `gl.ALWAYS` and not
+    // `gl.NOTEQUAL` to force all fragments to pass the stencil test and write the correct depth
+    // value.
+    depthMesh.onBeforeRender = renderer => {
+        const gl = renderer.context;
+        renderer.state.buffers.stencil.setTest(true);
+        renderer.state.buffers.stencil.setMask(DEPTH_PRE_PASS_STENCIL_MASK);
+        renderer.state.buffers.stencil.setOp(gl.KEEP, gl.KEEP, gl.REPLACE);
+        renderer.state.buffers.stencil.setFunc(gl.ALWAYS, 0xff, DEPTH_PRE_PASS_STENCIL_MASK);
     };
-}
 
-let depthBasedPolygonOffsetMeshIndex = 0;
+    // Set up color mesh stencil logic.
+    // Only write color for pixels with the depth pre-pass stencil bit set. Also, once a pixel is
+    // rendered, set the stencil bit to 0 to prevent subsequent pixels in the same clip position
+    // from rendering color again.
+    colorMesh.onBeforeRender = renderer => {
+        const gl = renderer.context;
+        renderer.state.buffers.stencil.setTest(true);
+        renderer.state.buffers.stencil.setMask(DEPTH_PRE_PASS_STENCIL_MASK);
+        renderer.state.buffers.stencil.setOp(gl.KEEP, gl.KEEP, gl.ZERO);
+        renderer.state.buffers.stencil.setFunc(gl.EQUAL, 0xff, DEPTH_PRE_PASS_STENCIL_MASK);
+    };
 
-/**
- * Resets the depth-based mesh index.
- *
- * Resets the index used to maintain the increasing `polygonOffsetUnits` used by
- * [[applyDepthBasedPolygonOffset]]. Call this function after a frame has been rendered, to reset
- * the counters.
- */
-export function resetDepthBasedPolygonOffsetIndex() {
-    depthBasedPolygonOffsetMeshIndex = 0;
-}
-
-function forEachMeshMaterial(mesh: THREE.Mesh, callback: (material: THREE.Material) => void) {
-    if (mesh.material instanceof Array) {
-        mesh.material.forEach(callback);
-    } else {
-        callback(mesh.material);
-    }
+    // Disable stencil test after rendering each mesh.
+    depthMesh.onAfterRender = renderer => {
+        renderer.state.buffers.stencil.setTest(false);
+        renderer.state.buffers.stencil.setMask(0xff);
+    };
+    colorMesh.onAfterRender = renderer => {
+        renderer.state.buffers.stencil.setTest(false);
+        renderer.state.buffers.stencil.setMask(0xff);
+    };
 }
