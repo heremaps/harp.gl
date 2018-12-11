@@ -1,6 +1,6 @@
 {
   "name": "@here/harp-text-canvas",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "SDF based text rendering for TypeScript",
   "main": "index.js",
   "typings": "index",
