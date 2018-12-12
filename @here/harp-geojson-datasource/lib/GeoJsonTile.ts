@@ -12,13 +12,13 @@ import {
     PoiTechnique,
     TextTechnique
 } from "@here/harp-datasource-protocol";
+import { DEFAULT_TEXT_DISTANCE_SCALE, TextElement, Tile, TileObject } from "@here/harp-mapview";
+import * as THREE from "three";
 import {
     GeoJsonPoiGeometry,
     GeoJsonTextGeometry,
     GeoJsonTextPathGeometry
-} from "@here/harp-geojson-datasource/lib/GeoJsonGeometryCreator";
-import { DEFAULT_TEXT_DISTANCE_SCALE, TextElement, Tile, TileObject } from "@here/harp-mapview";
-import * as THREE from "three";
+} from "./GeoJsonGeometryCreator";
 
 /**
  * The data that is contained in a [[GeoJsonTileObject]].

@@ -4,8 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+// @here:check-imports:environment:node
+
 // tslint:disable-next-line:no-var-requires
 const node_fetch = require("node-fetch");
+
 import * as fs from "fs";
 import { URL } from "url";
 
