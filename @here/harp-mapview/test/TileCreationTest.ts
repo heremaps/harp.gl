@@ -6,18 +6,12 @@
 
 // tslint:disable:only-arrow-functions
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
-
-import { createMaterial } from "../lib/DecodedTile";
-import { getObjectConstructor, ShaderTechnique } from "../lib/Techniques";
-
+import { ShaderTechnique } from "@here/harp-datasource-protocol";
 import { assert } from "chai";
 import * as THREE from "three";
+import { createMaterial, getObjectConstructor } from "./../lib/DecodedTileHelpers";
 
-describe("DataSourceProtocol", function() {
-    it("ok", function() {
-        assert.isTrue(true);
-    });
-
+describe("Tile Creation", function() {
     it("ShaderTechnique", function() {
         const technique: ShaderTechnique = {
             name: "shader",

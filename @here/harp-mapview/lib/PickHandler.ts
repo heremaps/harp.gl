@@ -8,6 +8,8 @@ import { GeometryType, Technique } from "@here/harp-datasource-protocol";
 import * as THREE from "three";
 
 import { MapView } from "./MapView";
+import { MapViewPoints } from "./MapViewPoints";
+import { PickingRaycaster } from "./PickingRaycaster";
 import { RoadPicker } from "./RoadPicker";
 import { RoadIntersectionData, Tile, TileFeatureData } from "./Tile";
 
@@ -52,9 +54,9 @@ export enum PickObjectType {
 }
 
 /**
- * A general pick result. You can access details about picked geometry from `intersection`, which
- * is available if actual 3D geometry was hit. If a road was hit, a [[RoadPickResult]] is
- * returned, which has additional information, but no `intersection`.
+ * A general pick result. You can access the details of a picked geometry from the property
+ * `intersection`, which is available if a geometry was hit. If a road was hit, a [[RoadPickResult]]
+ * is returned, which has additional information, but no `intersection`.
  */
 export interface PickResult {
     /**
@@ -89,7 +91,9 @@ export interface PickResult {
     technique?: Technique;
 
     /**
-     * Optional user data that has has been defined in the picked object.
+     * Optional user data that has been defined in the picked object. This object points directly to
+     * information contained in the original [[TileFeatureData]] stored in [[MapView]], and should
+     * not be modified.
      */
     userData?: any;
 }
@@ -98,11 +102,12 @@ export interface PickResult {
  * Handles the picking of scene geometry and roads.
  */
 export class PickHandler {
-    private readonly m_rayCaster = new THREE.Raycaster();
+    private readonly m_rayCaster: PickingRaycaster;
     private readonly m_plane = new THREE.Plane(new THREE.Vector3(0, 0, 1));
     private readonly m_roadPicker?: RoadPicker;
 
     constructor(readonly mapView: MapView, public enableRoadPicking = true) {
+        this.m_rayCaster = new PickingRaycaster(mapView);
         if (enableRoadPicking) {
             this.m_roadPicker = new RoadPicker(mapView);
         }
@@ -141,7 +146,6 @@ export class PickHandler {
         }
 
         rayCaster.setFromCamera(worldPos, this.mapView.camera);
-        rayCaster.linePrecision = 1;
 
         // calculate objects intersecting the picking ray
         const intersects = rayCaster.intersectObjects(this.mapView.worldRootObject.children, true);
@@ -229,7 +233,10 @@ export class PickHandler {
         intersect: THREE.Intersection,
         pickResult: PickResult
     ) {
-        if (
+        if (pickResult.intersection!.object instanceof MapViewPoints) {
+            pickResult.userData = featureData.objInfos![intersect.index!];
+            return;
+        } else if (
             featureData.objInfos === undefined ||
             featureData.starts === undefined ||
             intersect.faceIndex === undefined
@@ -245,11 +252,9 @@ export class PickHandler {
                 }
                 objInfosIndex++;
             }
-            intersect.object.userData.objInfo = { ...featureData.objInfos[objInfosIndex - 1] };
-            pickResult.userData = { ...featureData.objInfos[objInfosIndex - 1] };
+            pickResult.userData = featureData.objInfos[objInfosIndex - 1];
         } else {
-            intersect.object.userData.objInfo = { ...featureData.objInfos[0] };
-            pickResult.userData = { ...featureData.objInfos[0] };
+            pickResult.userData = featureData.objInfos[0];
         }
     }
 }
