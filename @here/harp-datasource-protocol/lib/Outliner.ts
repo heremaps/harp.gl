@@ -4,7 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Geometry, IMeshBuffers } from "@here/harp-datasource-protocol";
+import { Geometry } from "./DecodedTile";
+import { IMeshBuffers } from "./IMeshBuffers";
 import { indexNeeded } from "./OutlineIndicesDetector";
 
 /**
