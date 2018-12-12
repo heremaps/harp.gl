@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import {
-    createMaterial,
     DecodedTile,
     ExtrudedPolygonTechnique,
     FillTechnique,
@@ -12,8 +11,6 @@ import {
     GeometryType,
     getArrayConstructor,
     getAttributeValue,
-    getBufferAttribute,
-    getObjectConstructor,
     getPropertyValue,
     isExtrudedPolygonTechnique,
     isStandardTechnique,
@@ -48,12 +45,14 @@ import * as THREE from "three";
 import { ColorCache } from "./ColorCache";
 import { CopyrightInfo } from "./CopyrightInfo";
 import { DataSource } from "./DataSource";
+import { createMaterial, getBufferAttribute, getObjectConstructor } from "./DecodedTileHelpers";
 import {
     createDepthPrePassMesh,
     isRenderDepthPrePassEnabled,
     setDepthPrePassStencil
 } from "./DepthPrePass";
 import { MapView } from "./MapView";
+import { MapViewPoints } from "./MapViewPoints";
 import { TextElement } from "./text/TextElement";
 import { DEFAULT_TEXT_DISTANCE_SCALE } from "./text/TextElementsRenderer";
 import { MapViewUtils } from "./Utils";
@@ -1190,6 +1189,13 @@ export class Tile implements CachedResource {
                     object.userData.geometryId = srcGeometry.uuid;
                 }
 
+                if (
+                    (technique.name === "circles" || technique.name === "squares") &&
+                    technique.enablePicking !== undefined
+                ) {
+                    (object as MapViewPoints).enableRayTesting = technique.enablePicking;
+                }
+
                 // Lines renderOrder fix: Render them as transparent objects, but make sure they end
                 // up in the opaque rendering queue (by disabling transparency onAfterRender, and
                 // enabling it onBeforeRender).
@@ -1431,14 +1437,21 @@ export class Tile implements CachedResource {
         return num;
     }
 
+    /**
+     * Pass the feature data on to the object, so it can be used in picking
+     * `MapView.intersectMapObjects()`. Do not pass the feature data if the technique is a
+     * dashed-line or a solid-line, because the line picking functionality for the lines is not
+     * object based, but tile based.
+     *
+     * @param srcGeometry The original [[Geometry]].
+     * @param technique The corresponding [[Technique]].
+     * @param object The object to pass info to.
+     */
     private addFeatureData(srcGeometry: Geometry, technique: Technique, object: THREE.Object3D) {
-        // Pass the feature data on to the object, so it can be used in picking
-        // MapView.intersectMapObjects().
-        // Do not pass the feature data if the technique is a dashed-line or a solid-line, because
-        // the line picking functionality for the lines is not object based, but tile based.
         if (
-            srcGeometry.featureIds !== undefined &&
-            srcGeometry.featureIds.length > 0 &&
+            ((srcGeometry.featureIds !== undefined && srcGeometry.featureIds.length > 0) ||
+                technique.name === "circles" ||
+                technique.name === "squares") &&
             technique.name !== "solid-line" &&
             technique.name !== "dashed-line"
         ) {

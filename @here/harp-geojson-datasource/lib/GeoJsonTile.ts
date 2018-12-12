@@ -6,20 +6,24 @@
 
 import {
     DecodedTile,
-    getBufferAttribute,
     isPoiTechnique,
     isTextTechnique,
     PoiTechnique,
     TextTechnique
 } from "@here/harp-datasource-protocol";
-import { DEFAULT_TEXT_DISTANCE_SCALE, TextElement, Tile, TileObject } from "@here/harp-mapview";
+import {
+    DEFAULT_TEXT_DISTANCE_SCALE,
+    getBufferAttribute,
+    TextElement,
+    Tile,
+    TileObject
+} from "@here/harp-mapview";
 import * as THREE from "three";
 import {
     GeoJsonPoiGeometry,
     GeoJsonTextGeometry,
     GeoJsonTextPathGeometry
 } from "./GeoJsonGeometryCreator";
-
 /**
  * The data that is contained in a [[GeoJsonTileObject]].
  */

@@ -3,14 +3,6 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-
-import {
-    CirclePointsMaterial,
-    DashedLineMaterial,
-    MapMeshBasicMaterial,
-    MapMeshStandardMaterial,
-    SolidLineMaterial
-} from "@here/harp-materials";
 import * as THREE from "three";
 
 /**
@@ -202,6 +194,10 @@ export interface SquaresTechnique extends BaseTechnique {
      * Size of point in pixels.
      */
     size?: number;
+    /**
+     * Whether to enable picking on these points.
+     */
+    enablePicking?: boolean;
 }
 
 export interface CirclesTechnique extends BaseTechnique {
@@ -232,6 +228,10 @@ export interface CirclesTechnique extends BaseTechnique {
      * Size of point in pixels.
      */
     size?: number;
+    /**
+     * Whether to enable picking on these points.
+     */
+    enablePicking?: boolean;
 }
 
 /**
@@ -1115,130 +1115,6 @@ export function isShaderTechnique(technique: Technique): technique is ShaderTech
 }
 
 /**
- * Generic material type constructor.
- */
-export type MaterialConstructor = new (params?: {}) => THREE.Material;
-
-/**
- * Returns a [[MaterialConstructor]] basing on provided technique object.
- *
- * @param technique [[Technique]] object which the material will be based on.
- */
-export function getMaterialConstructor(technique: Technique): MaterialConstructor | undefined {
-    switch (technique.name) {
-        case "extruded-line":
-            return technique.shading === "standard"
-                ? MapMeshStandardMaterial
-                : MapMeshBasicMaterial;
-
-        case "standard":
-        case "standard-textured":
-        case "landmark":
-        case "extruded-polygon":
-            return MapMeshStandardMaterial;
-
-        case "solid-line":
-            return SolidLineMaterial;
-
-        case "dashed-line":
-            return DashedLineMaterial;
-
-        case "fill":
-            return MapMeshBasicMaterial;
-
-        case "squares":
-            return THREE.PointsMaterial;
-
-        case "circles":
-            return CirclePointsMaterial;
-
-        case "line":
-        case "segments":
-            return THREE.LineBasicMaterial;
-
-        case "shader":
-            return THREE.ShaderMaterial;
-
-        case "text":
-        case "labeled-icon":
-        case "line-marker":
-            return undefined;
-    }
-}
-
-/**
- * The default `three.js` object used with a specific technique.
- */
-export interface ObjectConstructor {
-    new (
-        geometry?: THREE.Geometry | THREE.BufferGeometry,
-        material?: THREE.Material
-    ): THREE.Object3D;
-}
-
-/**
- * Gets the default `three.js` object constructor associated with the given technique.
- *
- * @param technique The technique.
- */
-export function getObjectConstructor(technique: Technique): ObjectConstructor | undefined {
-    switch (technique.name) {
-        case "extruded-line":
-        case "standard":
-        case "standard-textured":
-        case "landmark":
-        case "extruded-polygon":
-        case "fill":
-        case "solid-line":
-        case "dashed-line":
-            return THREE.Mesh as ObjectConstructor;
-
-        case "circles":
-        case "squares":
-            return THREE.Points as ObjectConstructor;
-
-        case "line":
-            return THREE.LineSegments as ObjectConstructor;
-
-        case "segments":
-            return THREE.LineSegments as ObjectConstructor;
-
-        case "shader": {
-            switch (technique.primitive) {
-                case "line":
-                    return THREE.Line as ObjectConstructor;
-                case "segments":
-                    return THREE.LineSegments as ObjectConstructor;
-                case "point":
-                    return THREE.Points as ObjectConstructor;
-                case "mesh":
-                    return THREE.Mesh as ObjectConstructor;
-                default:
-                    return undefined;
-            }
-        }
-
-        case "text":
-        case "labeled-icon":
-        case "line-marker":
-            return undefined;
-    }
-}
-
-/**
- * Non material properties of [[BaseTechnique]]
- */
-export const BASE_TECHNIQUE_NON_MATERIAL_PROPS = [
-    "name",
-    "id",
-    "renderOrder",
-    "renderOrderBiasProperty",
-    "renderOrderBiasGroup",
-    "renderOrderBiasRange",
-    "transient"
-];
-
-/**
  * Property which value is coupled with the value of the zoom level. It enables specifying different
  * values for certain zoom level ranges which for example enables drawing some object on the map
  * differently when the map zoom level changes.
@@ -1265,7 +1141,7 @@ export type CaseProperty<T> =
 /**
  * Type guard to check if an object is an instance of `CaseProperty`.
  */
-function isCaseProperty<T>(p: any): p is CaseProperty<T> {
+export function isCaseProperty<T>(p: any): p is CaseProperty<T> {
     if (p instanceof Array && p.length > 0 && p[0].value !== undefined) {
         return true;
     }
@@ -1340,51 +1216,4 @@ export function toWrappingMode(mode: WrappingMode): THREE.Wrapping {
         return THREE.MirroredRepeatWrapping;
     }
     throw new Error(`invalid wrapping: ${mode}`);
-}
-
-/**
- * Apply generic technique parameters to material.
- *
- * Skips non-material [[Technique]] props:
- *  * [[BaseTechnique]] props,
- *  * `name` which is used as discriminator for technique types,
- *  * props starting with `_`
- *  * props found `skipExtraProps`
- *
- * `THREE.Color` properties are supported.
- *
- * @param technique technique from where params are copied
- * @param material target material
- * @param level optional, tile zoom level for zoom-level dependent props
- * @param skipExtraProps optional, skipped props
- */
-export function applyTechniqueToMaterial(
-    technique: Technique,
-    material: THREE.Material,
-    level?: number,
-    skipExtraProps?: string[]
-) {
-    Object.getOwnPropertyNames(technique).forEach(propertyName => {
-        if (
-            propertyName.startsWith("_") ||
-            BASE_TECHNIQUE_NON_MATERIAL_PROPS.indexOf(propertyName) !== -1 ||
-            (skipExtraProps !== undefined && skipExtraProps.indexOf(propertyName) !== -1)
-        ) {
-            return;
-        }
-        const prop = propertyName as keyof (typeof technique);
-        const m = material as any;
-        let value = technique[prop];
-        if (typeof m[prop] === "undefined") {
-            return;
-        }
-        if (level !== undefined && isCaseProperty<any>(value)) {
-            value = getPropertyValue<any>(value, level);
-        }
-        if (m[prop] instanceof THREE.Color) {
-            m[prop].set(value);
-        } else {
-            m[prop] = value;
-        }
-    });
 }

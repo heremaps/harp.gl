@@ -47,7 +47,9 @@ export interface CirclePointsMaterialParameters extends THREE.ShaderMaterialPara
 const DEFAULT_CIRCLE_SIZE = 1;
 
 /**
- * Material designed to render circle points.
+ * Material designed to render circle points. Note that it is always transparent since the circle
+ * shape is created with an alpha channel to benefit an antialising that a mere `discard` could
+ * not bring.
  */
 export class CirclePointsMaterial extends ShaderMaterial {
     isCirclePointsMaterial: true;
@@ -72,6 +74,7 @@ export class CirclePointsMaterial extends ShaderMaterial {
         this.type = "CirclePointsMaterial";
         this.vertexShader = vertexShader;
         this.fragmentShader = fragmentShader;
+        this.transparent = true;
 
         this.m_size = parameters.size || DEFAULT_CIRCLE_SIZE;
         this.m_color = new Color();
