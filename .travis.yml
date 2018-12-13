@@ -8,6 +8,7 @@ cache:
 branches:
   only:
     - master
+    - /^v\d+\.\d+(\.\d+)?(-\S*)?$/
 
 # upgrade yarn to a more recent version
 before_install:
@@ -35,6 +36,7 @@ jobs:
         github-token: $GITHUB_TOKEN
         on:
           branch: master
+          tags: true
     - script: yarn run build
       name: "Build web bundles"
 
