@@ -42,7 +42,12 @@ jobs:
 
 deploy:
   - provider: script
-    script: echo npx lerna publish -y from-git
+    script:
+      - echo '//registry.npmjs.org/:_authToken=${NPM_TOKEN}' > ~/.npmrc
+      - |
+          if ./scripts/git-is-first-tag.sh "$TRAVIS_TAG" ; then \
+              echo npx lerna publish -y from-git ; \
+          fi
     skip_cleanup: true
     on:
       tags: true
