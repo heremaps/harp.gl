@@ -60,23 +60,26 @@ describe("TextCanvas", () => {
     let textCanvas: TextCanvas;
     it("Creates an instance successfully.", async () => {
         const catalogJson = await loadJSON(
-            getTestResourceUrl("@here/harp-text-canvas", "resources/fonts/Default_FontCatalog.json")
+            getTestResourceUrl(
+                "@here/harp-font-resources",
+                "resources/fonts/Default_FontCatalog.json"
+            )
         );
         const replacementJson = await loadJSON(
             getTestResourceUrl(
-                "@here/harp-text-canvas",
+                "@here/harp-font-resources",
                 "resources/fonts/Default_Assets/Extra/Specials.json"
             )
         );
         const replacementTexture = await loadTexture(
             getTestResourceUrl(
-                "@here/harp-text-canvas",
+                "@here/harp-font-resources",
                 "resources/fonts/Default_Assets/Extra/Specials.png"
             )
         );
 
         const loadedFontCatalog = new FontCatalog(
-            getTestResourceUrl("@here/harp-text-canvas", "resources/fonts"),
+            getTestResourceUrl("@here/harp-font-resources", "resources/fonts"),
             catalogJson.name,
             catalogJson.type,
             catalogJson.size,

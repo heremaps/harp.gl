@@ -12,6 +12,11 @@
   resolved "https://registry.yarnpkg.com/@here/harp-font-resources/-/harp-font-resources-0.2.0.tgz#19d78dd9d8aa4290fa55acf2ce9bbb05698161af"
   integrity sha512-rgOewwpzlnJBTC81Ql1F/58M/RIIEviD86yVx3XsKHidsbOtgrzP6qeKW/zjoGpa/pEsn8fXGMkrR2GBwz6Abg==
 
+"@here/harp-font-resources@^0.2.1":
+  version "0.2.1"
+  resolved "https://registry.yarnpkg.com/@here/harp-font-resources/-/harp-font-resources-0.2.1.tgz#aac028eb6e50eeddae1d361c531c2ca0ba4c323c"
+  integrity sha512-X/Pn0mKhdp+ygiAqotlqvTvMZ33aM3lyC1UGFNrSQkP9TF0NejK0oew037CI625zCsHAzGwSxPCO+YCMsc1vNw==
+
 "@protobufjs/aspromise@^1.1.1", "@protobufjs/aspromise@^1.1.2":
   version "1.1.2"
   resolved "https://registry.yarnpkg.com/@protobufjs/aspromise/-/aspromise-1.1.2.tgz#9b8b0cc663d669a7d8f6f5d0893a14d348f30fbf"
