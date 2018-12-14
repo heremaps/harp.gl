@@ -9,6 +9,7 @@
 
 import { assert } from "chai";
 
+import { getTestResourceUrl } from "@here/harp-test-utils";
 import { ImageCache } from "../lib/image/ImageCache";
 import { MapViewImageCache } from "../lib/image/MapViewImageCache";
 import { MapView } from "../lib/MapView";
@@ -57,7 +58,10 @@ describe("MapViewImageCache", function() {
             cache.clear();
 
             const imageName = "headshot.png";
-            const imageUrl = "../dist/test/@here/harp-mapview/test/resources/headshot.png";
+            const imageUrl = getTestResourceUrl(
+                "@here/harp-mapview",
+                "test/resources/headshot.png"
+            );
 
             const promise = cache.addImage(imageName, imageUrl, true);
 
@@ -200,7 +204,10 @@ describe("ImageCache", function() {
             const instance = ImageCache.instance;
             instance.clearAll();
 
-            const imageUrl = "../dist/test/@here/harp-mapview/test/resources/headshot.png";
+            const imageUrl = getTestResourceUrl(
+                "@here/harp-mapview",
+                "test/resources/headshot.png"
+            );
 
             const promise = instance.addImage(mapView, imageUrl, true);
 

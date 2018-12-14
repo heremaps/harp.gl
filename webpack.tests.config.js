@@ -1,6 +1,15 @@
 const webpack = require("webpack");
 const glob = require("glob");
 const path = require("path");
+const CopyWebpackPlugin = require('copy-webpack-plugin');
+
+const testResourceDirs = glob.sync(path.join(__dirname, "@here/*/test/resources"));
+const testResources = testResourceDirs.map(dir => { return {
+    from: dir,
+    to: path.relative(__dirname, dir)
+}});
+
+const harpFontResourcesPath = path.dirname(require.resolve("@here/harp-font-resources/package.json"));
 
 const browserTestsConfig = {
     devtool: "source-map",
@@ -24,14 +33,23 @@ const browserTestsConfig = {
         test: glob.sync("@here/*/test/**/*.ts")
     },
     output: {
-        path: __dirname,
-        filename: "dist/test/[name].bundle.js"
+        path: path.join(__dirname, "dist/test"),
+        filename: "[name].bundle.js"
     },
     plugins: [
         new webpack.EnvironmentPlugin({
             // default NODE_ENV to development. Override by setting the environment variable NODE_ENV to 'production'
             NODE_ENV: process.env.NODE_ENV || "development"
-        })
+        }),
+        new CopyWebpackPlugin([
+            path.join(__dirname, "test/index.html"),
+            require.resolve("three/build/three.min.js"),
+            require.resolve("mocha/mocha.js"),
+            require.resolve("mocha/mocha.css"),
+            ...testResources,
+            { from: path.join(harpFontResourcesPath, "resources"), to: "@here/harp-font-resources/resources" }
+        ])
+
     ],
     externals: {
         fs: 'undefined',
@@ -40,9 +58,6 @@ const browserTestsConfig = {
     },
     performance: {
         hints: false
-    },
-    devServer: {
-        contentBase: [path.resolve(__dirname, "test"), path.resolve(__dirname)]
     },
     mode: process.env.NODE_ENV || "development"
 };

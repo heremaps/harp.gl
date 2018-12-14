@@ -47,7 +47,7 @@ describe("WorkerChannel", function() {
             level: LogLevel.Log
         };
 
-        const stubbedPost = sinon.stub(self, "postMessage");
+        const stubbedPost = sinon.stub(self, "postMessage") as any;
 
         LoggerManager.instance.setChannel(new WorkerChannel());
         const logger = LoggerManager.instance.create(loggerName);

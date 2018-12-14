@@ -7,12 +7,14 @@
 const webpack = require("webpack");
 const merge = require("webpack-merge");
 const path = require("path");
-const fs = require("fs");
 const glob = require("glob");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 
 const prepareOnly = process.env["PREPARE_ONLY"] === "true";
+
+const harpMapThemePath = path.dirname(require.resolve("@here/harp-map-theme/package.json"));
+const harpFontResourcesPath = path.dirname(require.resolve("@here/harp-font-resources/package.json"));
 
 const commonConfig = {
     context: __dirname,
@@ -33,7 +35,7 @@ const commonConfig = {
             loader: "ts-loader",
             exclude: /node_modules/,
             options: {
-                configFile: path.join(__dirname, "tsconfig.json"),
+                configFile: path.join(process.cwd(), "tsconfig.json"),
                 onlyCompileBundledFiles: true,
                 transpileOnly: prepareOnly,
                 compilerOptions: {
@@ -43,17 +45,19 @@ const commonConfig = {
         }]
     },
     output: {
-        path: __dirname
-    }
+        path: path.join(process.cwd(), "dist/examples"),
+        filename: "[name].bundle.js"
+    },
+    performance: {
+        hints: false
+    },
+    mode: process.env.NODE_ENV || "development"
 };
 
 const decoderConfig = merge(commonConfig, {
     target: "webworker",
     entry: {
         decoder: "./decoder/decoder.ts"
-    },
-    output: {
-        filename: "dist/[name].bundle.js"
     }
 });
 
@@ -90,31 +94,19 @@ function filterExamples(pattern) {
 const browserConfig = merge(commonConfig, {
     entry: webpackEntries,
     output: {
-        filename: "dist/[name]_bundle.js"
-    },
-    devServer: {
-        publicPath: "/dist",
-        contentBase: [path.resolve(__dirname)],
-        host: "0.0.0.0",
-        disableHostCheck: true
+        filename: "[name]_bundle.js"
     }
 });
 
 const exampleBrowserConfig = merge(commonConfig, {
     entry: {
         "example-browser": "./example-browser.ts"
-    },
-    output: {
-        filename: "dist/[name].bundle.js"
     }
 });
 
 const codeBrowserConfig = merge(commonConfig, {
     entry: {
         codebrowser: "./codebrowser.ts"
-    },
-    output: {
-        filename: "dist/[name].bundle.js"
     }
 });
 
@@ -123,19 +115,9 @@ browserConfig.plugins = Object.keys(browserConfig.entry).map(
     new HtmlWebpackPlugin({
         template: "template/example.html",
         chunks: ["common_chunks", chunk],
-        filename: `dist/${chunk}.html`
+        filename: `${chunk}.html`
     })
 );
-
-// move common dependencies to the separate shared chunk
-if (process.env.NODE_ENV === "production") {
-    browserConfig.plugins.unshift(
-        new webpack.optimize.CommonsChunkPlugin({
-            name: "common_chunks",
-            minChunks: 3
-        })
-    );
-}
 
 const allEntries = Object.assign({}, webpackEntries, htmlEntries);
 
@@ -147,7 +129,7 @@ const allEntries = Object.assign({}, webpackEntries, htmlEntries);
  * }
  */
 const exampleDefs = Object.keys(allEntries).reduce(function (r, entry) {
-    r["dist/" + entry + ".html"] = path.relative(__dirname, allEntries[entry]);
+    r[entry + ".html"] = path.relative(__dirname, allEntries[entry]);
     return r;
 }, {});
 
@@ -159,10 +141,15 @@ browserConfig.plugins.push(
         transform: (content) => {
             return content.toString().replace("{{EXAMPLES}}", JSON.stringify(exampleDefs, true, 4));
         }
-    }, {
-        from: "src/*.html",
-        to: "dist/[name].[ext]"
-    }])
+    },
+    { from: "src/*.html", to: "[name].[ext]" },
+    path.join(__dirname, "index.html"),
+    path.join(__dirname, "codebrowser.html"),
+    path.join(__dirname, "src"),
+    { from: path.join(__dirname, "resources"), to: "resources", toType: "dir" },
+    { from: path.join(harpMapThemePath, "resources"), to: "resources", toType: "dir" },
+    { from: path.join(harpFontResourcesPath, "resources"), to: "resources", toType: "dir" },
+    require.resolve("three/build/three.min.js")])
 );
 
 module.exports = [decoderConfig, browserConfig, codeBrowserConfig, exampleBrowserConfig];

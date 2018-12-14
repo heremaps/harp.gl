@@ -9,12 +9,15 @@
 import * as fs from "fs";
 import * as path from "path";
 
+declare const TEST_RESOURCES_DIR: string | undefined;
+
 /**
  * Base path from which test resources are loaded.
 
  * @hidden
  */
-export const testResourcesRoot = "dist/test/";
+export const testResourcesRoot =
+    typeof TEST_RESOURCES_DIR === "undefined" ? "" : TEST_RESOURCES_DIR;
 
 /**
  * Get URL of test resource.
@@ -25,7 +28,8 @@ export const testResourcesRoot = "dist/test/";
  * @param fileName: file relative to module path (e.g. `test/resources/berlin.bin)`
  */
 export function getTestResourceUrl(module: string, fileName: string) {
-    return path.join(testResourcesRoot, module, fileName);
+    const modulePath = path.dirname(require.resolve(module + "/package.json"));
+    return path.join(testResourcesRoot, modulePath, fileName);
 }
 
 /**

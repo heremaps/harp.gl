@@ -16,7 +16,8 @@ declare const TEST_RESOURCES_DIR: string | undefined;
  * Base path from which test resources are loaded.
  * @hidden
  */
-export const testResourcesRoot = TEST_RESOURCES_DIR === undefined ? "" : TEST_RESOURCES_DIR;
+export const testResourcesRoot =
+    typeof TEST_RESOURCES_DIR === "undefined" ? "" : TEST_RESOURCES_DIR;
 
 /**
  * Get URL of test resource.
