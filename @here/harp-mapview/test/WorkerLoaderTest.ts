@@ -78,7 +78,7 @@ describe("WorkerLoader", function() {
             // immediately from Worker constructor
 
             const originalWorkerConstructor = Worker;
-            const workerConstructorStub = stubGlobalConstructor(sandbox, "Worker");
+            const workerConstructorStub = stubGlobalConstructor(sandbox, "Worker") as any;
             workerConstructorStub.callsFake(function(this: Worker, scriptUrl: string) {
                 if (!scriptUrl.startsWith("blob:")) {
                     throw new Error("content policy violated, ouch");
@@ -112,7 +112,7 @@ describe("WorkerLoader", function() {
             // asynchronously with 'error' event
 
             const originalWorkerConstructor = Worker;
-            const workerConstructorStub = stubGlobalConstructor(sandbox, "Worker");
+            const workerConstructorStub = stubGlobalConstructor(sandbox, "Worker") as any;
             workerConstructorStub.callsFake(function(this: Worker, scriptUrl: string) {
                 const actualWorker = new originalWorkerConstructor(scriptUrl);
                 if (!scriptUrl.startsWith("blob:")) {

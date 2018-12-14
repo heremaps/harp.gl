@@ -4,19 +4,19 @@
 <head>
   <meta charset="utf-8">
   <title>mapsdk Tests</title>
-  <link href="../node_modules/mocha/mocha.css" rel="stylesheet">
+  <link href="mocha.css" rel="stylesheet">
 </head>
 
 <body>
   <div id="mocha"></div>
-  <script src="../node_modules/three/build/three.min.js"></script>
-  <script src="../node_modules/mocha/mocha.js"></script>
+  <script src="three.min.js"></script>
+  <script src="mocha.js"></script>
   <script>
     mocha.setup({
       ui: "bdd"
     })
   </script>
-  <script src="../dist/test/test.bundle.js"></script>
+  <script src="test.bundle.js"></script>
   <script>
     mocha.checkLeaks();
     mocha.run();

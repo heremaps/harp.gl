@@ -6,6 +6,7 @@
     "@here/*"
   ],
   "devDependencies": {
+    "@here/harp-font-resources": "^0.2.1",
     "@tweenjs/tween.js": "^17.2.0",
     "@types/chai": "^4.0.4",
     "@types/dat.gui": "^0.7.1",
@@ -54,10 +55,9 @@
   },
   "scripts": {
     "test": "ts-mocha -r tsconfig-paths/register ./test/*.ts ./@here/*/test/*.ts",
-    "postinstall": "ts-node ./scripts/postinstall.ts",
-    "start": "webpack-dev-server -d --config webpack.examples.config.js --content-base \"./dist/harp-examples\"",
+    "start": "webpack-dev-server -d --config @here/harp-examples/webpack.config.js",
+    "build": "webpack -d --config @here/harp-examples/webpack.config.js",
     "start-tests": "webpack-dev-server -d --config webpack.tests.config.js",
-    "build": "webpack -d --config webpack.examples.config.js",
     "build-tests": "webpack -d --config webpack.tests.config.js",
     "typedoc": "ts-node ./scripts/doc-snippets.ts && typedoc --options typedoc.json",
     "tslint": "tslint --project tsconfig.json",
