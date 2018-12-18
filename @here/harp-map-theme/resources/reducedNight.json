@@ -1204,9 +1204,12 @@
                     },
                     {
                         "when": "kind in ['archipelago', 'cliff', 'ridge', 'island', 'islet']",
-                        "technique": "line",
+                        "technique": "text",
                         "attr": {
-                            "color": "#C1BDB3"
+                            "opacity": 0.6,
+                            "scale": [
+                                { "value": 0.5 }
+                            ]
                         }
                     }
                 ]
