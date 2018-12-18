@@ -14,7 +14,11 @@ const CopyWebpackPlugin = require('copy-webpack-plugin');
 const prepareOnly = process.env["PREPARE_ONLY"] === "true";
 
 const harpMapThemePath = path.dirname(require.resolve("@here/harp-map-theme/package.json"));
-const harpFontResourcesPath = path.dirname(require.resolve("@here/harp-font-resources/package.json"));
+
+// TEMPORARY HACK - REMOVE THIS ONCE THE LEGACY harp-font-resources IS REMOVED
+// SEE https://github.com/heremaps/harp.gl/pull/149
+// const harpFontResourcesPath = path.dirname(require.resolve("@here/harp-font-resources/package.json"));
+const harpFontResourcesPath = path.dirname(path.join(harpMapThemePath, "node_modules/@here/harp-font-resources/package.json"));
 
 const commonConfig = {
     context: __dirname,
