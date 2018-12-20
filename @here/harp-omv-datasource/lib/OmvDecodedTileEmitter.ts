@@ -571,7 +571,6 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
         const defaultHeight = extrudedPolygonTechnique.defaultHeight;
         const isExtruded = technique.name === "extruded-polygon";
         const isFilled = technique.name === "fill";
-        const defaultBuildingColor = new THREE.Color(0xff0000);
 
         if (isExtruded) {
             const origin = new THREE.Vector3();
@@ -705,18 +704,17 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
         }
 
         this.m_outliner.fill(outlineIndices);
-
         const positionCount = (positions.length - basePosition) / 3;
-
         const count = indices.length - start;
 
         if (technique.name === "extruded-polygon") {
-            const techniqueDefinedColor = technique.color; //check if technique has a color defined
-            const colorValue =
-                techniqueDefinedColor !== undefined ? techniqueDefinedColor : env.lookup("color");
-
-            const color =
-                typeof colorValue === "string" ? new THREE.Color(colorValue) : defaultBuildingColor;
+            const color = new THREE.Color(
+                this.isColorStringValid(technique.color)
+                    ? technique.color
+                    : this.isColorStringValid(env.lookup("color") as string)
+                    ? (env.lookup("color") as string)
+                    : technique.defaultColor
+            );
 
             for (let i = 0; i < positionCount; ++i) {
                 colors.push(color.r, color.g, color.b);
@@ -973,5 +971,9 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                 this.m_sources.push(source);
             }
         }
+    }
+
+    private isColorStringValid(color: Value): boolean {
+        return typeof color === "string" && color.length > 0;
     }
 }
