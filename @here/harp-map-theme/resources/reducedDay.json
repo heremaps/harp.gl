@@ -1486,7 +1486,6 @@
             {
                 "when": "$layer ^= 'buildings'",
                 "attr": {
-                    "color": "#f7f9f9",
                     "roughness": 1.95,
                     "metalness": 0.85,
                     "emissive": "#f7f9f9",
@@ -1511,7 +1510,7 @@
                                 "technique": "extruded-polygon",
                                 "renderOrder": 2000,
                                 "attr": {
-                                    "color": "#e7e9e9",
+                                    "defaultColor": "#e7e9e9",
                                     "vertexColors": false,
                                     "lineColor": "#898989",
                                     "lineColorMix": 0.0

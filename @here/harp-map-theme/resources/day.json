@@ -1748,7 +1748,6 @@
             {
                 "when": "$layer ^= 'buildings'",
                 "attr": {
-                    "color": "#f7f9f9",
                     "roughness": 1.95,
                     "metalness": 0.85,
                     "emissive": "#f7f9f9",
@@ -1773,7 +1772,7 @@
                                 "technique": "extruded-polygon",
                                 "renderOrder": 2000,
                                 "attr": {
-                                    "color": "#f7f9f9",
+                                    "defaultColor": "#f7f9f9",
                                     "opacity": 0.8,
                                     "defaultHeight": 20
                                 }

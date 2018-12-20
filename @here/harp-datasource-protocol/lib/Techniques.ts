@@ -792,6 +792,11 @@ export interface ExtrudedPolygonTechnique extends BaseStandardTechnique {
      */
     name: "extruded-polygon";
     /**
+     * Derived property that has first priority in use for rendering.
+     * In case property is absent class will try to get color from the [[MapEnv]].
+     */
+    color?: string;
+    /**
      * Renders the footprint lines if set to 'true'.
      */
     footprint?: boolean;
@@ -831,6 +836,12 @@ export interface ExtrudedPolygonTechnique extends BaseStandardTechnique {
      * This attribute allows to define a default height of an extruded polygon in the theme.
      */
     defaultHeight?: number;
+
+    /**
+     * Default color used if feature doesn't provide color attribute
+     * and [[MapEnv]] did not return it too.
+     */
+    defaultColor?: string;
 }
 
 /**
