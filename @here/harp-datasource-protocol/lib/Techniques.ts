@@ -1031,6 +1031,13 @@ export function isLineMarkerTechnique(technique: Technique): technique is LineMa
 }
 
 /**
+ * Type guard to check if an object is an instance of [[DashedLineTechnique]].
+ */
+export function isDashedLineTechnique(technique: Technique): technique is DashedLineTechnique {
+    return technique.name === "dashed-line";
+}
+
+/**
  * Type guard to check if an object is an instance of [[LineTechnique]].
  */
 export function isLineTechnique(technique: Technique): technique is LineTechnique {

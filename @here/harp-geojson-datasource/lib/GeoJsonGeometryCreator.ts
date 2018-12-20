@@ -148,6 +148,11 @@ export class GeoJsonGeometryCreator {
                         this.createSolidLineGeometry(geometryData, techniqueIndex)
                     );
                     break;
+                case "dashed-line":
+                    geometries.geometries.push(
+                        this.createSolidLineGeometry(geometryData, techniqueIndex)
+                    );
+                    break;
                 case "polygon":
                     geometries.geometries.push(
                         this.createPolygonGeometry(geometryData, techniqueIndex)
