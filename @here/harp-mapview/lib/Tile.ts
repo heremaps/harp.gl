@@ -1216,8 +1216,7 @@ export class Tile implements CachedResource {
                                 this.tileKey.level
                             );
                             if (metricUnits === "Pixel") {
-                                const pixelToWorld =
-                                    renderer.getPixelRatio() * this.mapView.pixelToWorld * 0.5;
+                                const pixelToWorld = this.mapView.pixelToWorld * 0.5;
                                 const lineWidth = getAttributeValue(
                                     technique.lineWidth,
                                     displayZoomLevel
