@@ -11,4 +11,5 @@ export {
     MapRenderingManager
 } from "./MapRenderingManager";
 export { IPass, Pass } from "./Pass";
+export { RenderComposer } from "./RenderComposer";
 export { MSAARenderPass, MSAASampling } from "./MSAARenderPass";

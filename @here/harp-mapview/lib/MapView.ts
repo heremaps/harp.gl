@@ -11,7 +11,7 @@ import { LoggerManager, PerformanceTimer } from "@here/harp-utils";
 import * as THREE from "three";
 
 import { CameraMovementDetector } from "./CameraMovementDetector";
-import { IMapAntialiasSettings, IMapRenderingManager, MapRenderingManager } from "./composing";
+import { IMapAntialiasSettings, IMapRenderingManager, MapRenderingManager, RenderComposer } from "./composing";
 import { ConcurrentDecoderFacade } from "./ConcurrentDecoderFacade";
 import { CopyrightInfo } from "./CopyrightInfo";
 import { DataSource } from "./DataSource";
@@ -379,6 +379,11 @@ export interface MapViewOptions {
      * An array of ISO 639-1 language codes for data sources.
      */
     languages?: string[];
+
+    /**
+     * Defines either MapView should have an outside RenderComposer (target: true)
+     */
+    target?: boolean;
 }
 
 /**
@@ -416,7 +421,7 @@ export class MapView extends THREE.EventDispatcher {
      * property to allow access and modification of some parameters of the rendering process at
      * runtime.
      */
-    readonly mapRenderingManager: IMapRenderingManager;
+    // readonly mapRenderingManager: IMapRenderingManager;
 
     private m_zoomLevelBias: number = 1;
     private m_createdLights?: THREE.Light[];
@@ -450,7 +455,8 @@ export class MapView extends THREE.EventDispatcher {
     private m_animationFrameHandle: number | undefined;
     private m_drawing: boolean = false;
     private m_updatePending: boolean = false;
-    private m_renderer: THREE.WebGLRenderer;
+    private m_renderComposer: RenderComposer;
+    // private m_renderer: THREE.WebGLRenderer;
     private m_snapshot = 0;
 
     private m_textElementsRenderer?: TextElementsRenderer;
@@ -596,7 +602,7 @@ export class MapView extends THREE.EventDispatcher {
             this.m_screenCollisions = new ScreenCollisionsDebug(this.m_collisionDebugCanvas);
         }
 
-        this.handleRequestAnimationFrame = this.renderFunc.bind(this);
+        // this.handleRequestAnimationFrame = this.renderFunc.bind(this);
         this.m_pickHandler = new PickHandler(this, this.m_options.enableRoadPicking === true);
 
         // Initialization of the stats
@@ -612,18 +618,31 @@ export class MapView extends THREE.EventDispatcher {
         ]);
 
         // Initialization of the renderer
-        this.m_renderer = new THREE.WebGLRenderer({
-            canvas: this.canvas,
-            antialias: this.m_options.enableNativeWebglAntialias !== false,
-            alpha: this.m_options.alpha,
-            preserveDrawingBuffer: this.m_options.preserveDrawingBuffer === true
-        });
-        this.m_renderer.autoClear = false;
+        // this.m_renderer = new THREE.WebGLRenderer({
+        //     canvas: this.canvas,
+        //     antialias: this.m_options.enableNativeWebglAntialias !== false,
+        //     alpha: this.m_options.alpha,
+        //     preserveDrawingBuffer: this.m_options.preserveDrawingBuffer === true
+        // });
+        // this.m_renderer.autoClear = false;
 
         // This is detailed at https://threejs.org/docs/#api/renderers/WebGLRenderer.info
         // When using several WebGLRenderer#render calls per frame, it is the only way to get
         // correct rendering data from ThreeJS.
-        this.m_renderer.info.autoReset = false;
+        // this.m_renderer.info.autoReset = false;
+
+        // TODO: Replace target with more clear approach such as m_options.renderComposer
+        // + before() should be executed only once for multiple MapViews, therefore we need a flag.
+        if (this.m_options.target !== true) {
+            this.m_renderComposer = new RenderComposer();
+            this.m_renderComposer.before({
+              options: this.m_options
+            });
+        }
+
+        // window.renderComposer = this.m_renderComposer;
+
+        this.m_renderComposer.registerMapView(this, this.render.bind(this));
 
         this.setupRenderer();
 
@@ -642,17 +661,18 @@ export class MapView extends THREE.EventDispatcher {
         );
 
         const mapPassAntialiasSettings = this.m_options.customAntialiasSettings;
-        this.mapRenderingManager = new MapRenderingManager(
-            clientWidth,
-            clientHeight,
-            mapPassAntialiasSettings
-        );
+        // this.mapRenderingManager = new MapRenderingManager(
+        //     clientWidth,
+        //     clientHeight,
+        //     mapPassAntialiasSettings
+        // );
 
         this.m_visibleTiles = new VisibleTileSet(this.m_camera, this.m_visibleTileSetOptions);
 
         this.initTheme();
 
-        this.drawFrame();
+        // this.drawFrame();
+        this.m_renderComposer.start();
 
         this.canvas.addEventListener("webglcontextlost", this.onWebGLContextLost);
         this.canvas.addEventListener("webglcontextrestored", this.onWebGLContextRestored);
@@ -689,7 +709,7 @@ export class MapView extends THREE.EventDispatcher {
             dataSource.dispose();
         }
         this.m_visibleTiles.clearTileCache();
-        this.m_renderer.dispose();
+        this.m_renderComposer.renderer.dispose();
         this.m_imageCache.clear();
 
         this.m_movementDetector.dispose();
@@ -786,7 +806,8 @@ export class MapView extends THREE.EventDispatcher {
 
         // Clear color.
         this.m_theme.clearColor = theme.clearColor;
-        this.renderer.setClearColor(new THREE.Color(theme.clearColor));
+        // TODO: incapsulate.
+        this.m_renderComposer.renderer.setClearColor(new THREE.Color(theme.clearColor));
 
         // Images.
         this.m_theme.images = theme.images;
@@ -936,21 +957,21 @@ export class MapView extends THREE.EventDispatcher {
      * The THREE.js `WebGLRenderer` used by this scene.
      */
     get renderer(): THREE.WebGLRenderer {
-        return this.m_renderer;
+        return this.m_renderComposer.renderer;
     }
 
     /**
      * The color used to clear the view.
      */
     get clearColor() {
-        return this.m_renderer.getClearColor().getHex();
+        return this.m_renderComposer.renderer.getClearColor().getHex();
     }
 
     /**
      * The color used to clear the view.
      */
     set clearColor(color: number) {
-        this.m_renderer.setClearColor(color);
+        this.m_renderComposer.renderer.setClearColor(color);
     }
 
     /**
@@ -1443,12 +1464,13 @@ export class MapView extends THREE.EventDispatcher {
      * @param height The new height.
      */
     resize(width: number, height: number) {
-        this.m_renderer.setSize(width, height, false);
-        this.m_renderer.setPixelRatio(window.devicePixelRatio);
+        // FIXME: Check if exist
+        this.m_renderComposer.resize(width, height);
 
-        if (this.mapRenderingManager !== undefined) {
-            this.mapRenderingManager.setSize(width, height);
-        }
+        // FIXME: Remove below when done.
+        // if (this.mapRenderingManager !== undefined) {
+        //     this.mapRenderingManager.setSize(width, height);
+        // }
 
         if (this.collisionDebugCanvas !== undefined) {
             this.collisionDebugCanvas.width = width;
@@ -1599,12 +1621,8 @@ export class MapView extends THREE.EventDispatcher {
         if (this.m_drawing) {
             return;
         }
-        // Cancel an active requestAnimationFrame() cycle. Failure to do this may end up in
-        // rendering multiple times during a single frame.
-        if (this.m_animationFrameHandle !== undefined) {
-            cancelAnimationFrame(this.m_animationFrameHandle);
-        }
-        this.m_animationFrameHandle = requestAnimationFrame(this.handleRequestAnimationFrame);
+
+        this.m_renderComposer.requestUpdate(this);
     }
 
     /**
@@ -1646,7 +1664,8 @@ export class MapView extends THREE.EventDispatcher {
             return;
         }
 
-        this.m_renderer.info.reset();
+        // TODO: incapsulate all "this.m_renderComposer.renderer"
+        this.m_renderComposer.renderer.info.reset();
 
         this.m_stagedRenderTimer.start();
 
@@ -1657,14 +1676,14 @@ export class MapView extends THREE.EventDispatcher {
 
         this.m_drawing = true;
 
-        this.m_renderer.setPixelRatio(window.devicePixelRatio);
+        this.m_renderComposer.renderer.setPixelRatio(window.devicePixelRatio);
 
         RENDER_EVENT.time = time;
         this.dispatchEvent(RENDER_EVENT);
 
         this.updateCameras();
         this.m_fog.update(this.m_camera);
-        this.m_renderer.clear();
+        this.m_renderComposer.renderer.clear();
 
         // clear the scene
         while (this.m_mapTilesRoot.children.length > 0) {
@@ -1721,7 +1740,8 @@ export class MapView extends THREE.EventDispatcher {
         }
 
         const isStaticFrame = !(this.animating || this.m_updatePending);
-        this.mapRenderingManager.render(this.m_renderer, this.m_scene, camera, isStaticFrame);
+
+        this.m_renderComposer.render(this.m_scene, camera, isStaticFrame);
 
         this.finishRenderTextElements();
 
@@ -1824,7 +1844,7 @@ export class MapView extends THREE.EventDispatcher {
             this.m_textElementsRenderer.renderAllTileText(time, this.m_snapshot);
         }
         this.m_textElementsRenderer.renderOverlay(this.m_overlayTextElements);
-        this.m_textElementsRenderer.update(this.m_renderer);
+        this.m_textElementsRenderer.update(this.m_renderComposer.renderer);
     }
 
     private finishRenderTextElements() {
@@ -1837,7 +1857,7 @@ export class MapView extends THREE.EventDispatcher {
 
             // copy far value from scene camera, as the distance to the POIs matter now.
             this.m_screenCamera.far = this.camera.far;
-            this.m_textElementsRenderer.renderText(this.m_renderer, this.m_screenCamera);
+            this.m_textElementsRenderer.renderText(this.m_renderComposer.renderer, this.m_screenCamera);
         }
     }
 
@@ -1934,7 +1954,7 @@ export class MapView extends THREE.EventDispatcher {
 
         const theme = this.m_theme as Theme;
         if (theme.clearColor !== undefined) {
-            this.m_renderer.setClearColor(new THREE.Color(theme.clearColor));
+            this.m_renderComposer.renderer.setClearColor(new THREE.Color(theme.clearColor));
         }
 
         if (this.m_createdLights) {
@@ -2153,7 +2173,7 @@ export class MapView extends THREE.EventDispatcher {
     }
 
     private setupRenderer() {
-        this.m_renderer.setClearColor(DEFAULT_CLEAR_COLOR);
+        this.m_renderComposer.renderer.setClearColor(DEFAULT_CLEAR_COLOR);
 
         this.m_scene.add(this.m_mapTilesRoot);
     }
@@ -2195,9 +2215,9 @@ export class MapView extends THREE.EventDispatcher {
     private onWebGLContextRestored = (event: Event) => {
         this.dispatchEvent(CONTEXT_RESTORED_EVENT);
         if (this.m_theme !== undefined && this.m_theme.clearColor !== undefined) {
-            this.m_renderer.setClearColor(new THREE.Color(this.m_theme.clearColor));
+            this.m_renderComposer.renderer.setClearColor(new THREE.Color(this.m_theme.clearColor));
         } else {
-            this.m_renderer.setClearColor(DEFAULT_CLEAR_COLOR);
+            this.m_renderComposer.renderer.setClearColor(DEFAULT_CLEAR_COLOR);
         }
         this.update();
         logger.log("WebGL context restored", event);
