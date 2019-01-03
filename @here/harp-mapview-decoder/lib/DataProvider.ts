@@ -14,6 +14,11 @@ import { TileKey } from "@here/harp-geoutils";
  */
 export interface DataProvider {
     /**
+     * Helps determine whether the class implemented is an [[UntiledDataProvider]].
+     */
+    isUntiled?: boolean;
+
+    /**
      * Connect to the data source. Returns a promise to wait for successful (or failed) connection.
      *
      * @returns A promise which is resolved when the connection has been established.

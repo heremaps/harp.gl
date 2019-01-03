@@ -16,6 +16,7 @@ import {
 
 import { DataProvider } from "./DataProvider";
 import { TileInfoLoader, TileLoader } from "./TileLoader";
+import { UntiledDataProvider } from "./UntiledDataProvider";
 
 /**
  * Set of common options for all [[TileDataSource]]s.
@@ -174,10 +175,11 @@ export class TileDataSource<TileType extends Tile> extends DataSource {
      * @param tileKey Quadtree address of the requested tile.
      */
     getTile(tileKey: TileKey): TileType | undefined {
+        if (this.dataIsUntiled() && !this.requestedTileIsUntiledDataRootTile(tileKey)) {
+            return undefined;
+        }
         const tile = this.m_tileFactory.create(this, tileKey);
-
         tile.tileLoader = new TileLoader(this, tileKey, this.m_options.dataProvider, this.decoder);
-
         this.updateTile(tile);
         return tile;
     }
@@ -211,6 +213,13 @@ export class TileDataSource<TileType extends Tile> extends DataSource {
         return promise;
     }
 
+    shouldRender(zoomLevel: number, tileKey: TileKey): boolean {
+        if (this.dataIsUntiled()) {
+            return this.requestedTileIsUntiledDataRootTile(tileKey);
+        }
+        return tileKey.level === zoomLevel;
+    }
+
     updateTile(tile: Tile) {
         const tileLoader = tile.tileLoader;
         if (tileLoader === undefined) {
@@ -240,6 +249,20 @@ export class TileDataSource<TileType extends Tile> extends DataSource {
             (decodedTile.poiGeometries !== undefined && decodedTile.poiGeometries.length) ||
             (decodedTile.textGeometries !== undefined && decodedTile.textGeometries.length) ||
             (decodedTile.textPathGeometries !== undefined && decodedTile.textPathGeometries.length)
+        );
+    }
+
+    private dataIsUntiled(): boolean {
+        return (
+            this.m_options.dataProvider.isUntiled !== undefined &&
+            this.m_options.dataProvider.isUntiled
+        );
+    }
+
+    private requestedTileIsUntiledDataRootTile(requestedTileKey: TileKey): boolean {
+        return (
+            requestedTileKey.mortonCode() ===
+            (this.m_options.dataProvider as UntiledDataProvider).rootTileKey.mortonCode()
         );
     }
 }
