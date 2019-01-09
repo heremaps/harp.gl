@@ -36,7 +36,7 @@ interface DebugInfo {
     __debugContext?: DebugContext;
 }
 
-const isNode = new Function("return typeof window === 'undefined' || this !== window")();
+const isNode = typeof window === "undefined";
 
 /**
  * A `DebugOption` is a pair that consists of an option value and an array of change listeners.

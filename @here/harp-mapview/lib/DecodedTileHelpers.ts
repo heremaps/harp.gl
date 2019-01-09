@@ -144,13 +144,10 @@ export function getBufferAttribute(attribute: BufferAttribute): THREE.BufferAttr
 /**
  * The default `three.js` object used with a specific technique.
  */
-export interface ObjectConstructor {
-    new (
-        geometry?: THREE.Geometry | THREE.BufferGeometry,
-        material?: THREE.Material
-    ): THREE.Object3D;
-}
-
+export type ObjectConstructor = new (
+    geometry?: THREE.Geometry | THREE.BufferGeometry,
+    material?: THREE.Material
+) => THREE.Object3D;
 /**
  * Gets the default `three.js` object constructor associated with the given technique.
  *

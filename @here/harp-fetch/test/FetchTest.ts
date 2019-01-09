@@ -10,7 +10,7 @@ import "../index";
 
 // tslint:disable:only-arrow-functions
 
-const isNode = new Function("return typeof window === 'undefined' || this !== window")();
+const isNode = typeof window === "undefined";
 const describeOnlyNode = isNode ? describe : xdescribe;
 
 describe("@here/harp-fetch", function() {
