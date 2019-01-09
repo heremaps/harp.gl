@@ -76,6 +76,21 @@ Run:
 npm test
 ```
 
+### Run unit & integration tests in Browser environment
+
+Run:
+
+```
+npm run start-tests
+ℹ ｢wds｣: Project is running at http://localhost:8081/
+```
+
+Note the URL and invoke tests using `mocha-webdriver-runner`. Example:
+```
+npx mocha-webdriver-runner http://localhost:8081/ --chrome
+npx mocha-webdriver-runner http://localhost:8081/ --headless-firefox
+```
+
 ## License
 
 Copyright (C) 2018 HERE Europe B.V.
