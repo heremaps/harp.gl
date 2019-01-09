@@ -141,6 +141,15 @@ export class CopyrightElementHandler {
             .map(mapView => mapView.copyrightInfo)
             .reduce(CopyrightInfo.mergeArrays, this.staticInfo || []);
 
+        // Conditionally hiding of element with copyright information.
+        // If nothing to show we schould to avoid empty white rectangle in right bottom corner.
+        if (mergedCopyrightInfo.length === 0) {
+            this.m_element.style.display = "none";
+            return;
+        } else {
+            this.m_element.style.display = "block";
+        }
+
         if (this.m_defaults.size !== 0) {
             for (const sourceInfo of mergedCopyrightInfo) {
                 const defaults = this.m_defaults.get(sourceInfo.id);

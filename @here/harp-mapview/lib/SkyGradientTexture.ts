@@ -73,7 +73,9 @@ export class SkyGradientTexture {
      * @param offset The offset of the texture.
      */
     updateYOffset(offset: number) {
-        this.m_texture.offset.set(0, offset);
+        if (offset <= 0) {
+            this.m_texture.offset.set(0, offset);
+        }
     }
 
     /**
