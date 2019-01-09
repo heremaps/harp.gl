@@ -28,7 +28,16 @@ describe("LicenseHeaderCheck", function() {
     it("Contains license header", function() {
         const failedFiles = new Array<string>();
         for (const sourceFile of sourceFiles) {
-            const contents = fs.readFileSync(sourceFile, { encoding: "utf8" });
+            let contents = fs.readFileSync(sourceFile, { encoding: "utf8" });
+
+            // support for shebang scripts
+            if (contents.startsWith("#!/")) {
+                const firstNewLineIndex = contents.indexOf("\n");
+                if (firstNewLineIndex !== -1) {
+                    contents = contents.substr(firstNewLineIndex + 1);
+                }
+            }
+
             if (!contents.startsWith(license)) {
                 failedFiles.push(sourceFile);
             }

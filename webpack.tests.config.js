@@ -2,6 +2,7 @@ const webpack = require("webpack");
 const glob = require("glob");
 const path = require("path");
 const CopyWebpackPlugin = require('copy-webpack-plugin');
+const HardSourceWebpackPlugin = require("hard-source-webpack-plugin");
 
 const testResourceDirs = glob.sync(path.join(__dirname, "@here/*/test/resources"));
 const testResources = testResourceDirs.map(dir => { return {
@@ -37,6 +38,7 @@ const browserTestsConfig = {
         filename: "[name].bundle.js"
     },
     plugins: [
+        new HardSourceWebpackPlugin(),
         new webpack.EnvironmentPlugin({
             // default NODE_ENV to development. Override by setting the environment variable NODE_ENV to 'production'
             NODE_ENV: process.env.NODE_ENV || "development"
@@ -46,6 +48,7 @@ const browserTestsConfig = {
             require.resolve("three/build/three.min.js"),
             require.resolve("mocha/mocha.js"),
             require.resolve("mocha/mocha.css"),
+            require.resolve("mocha-webdriver-runner/dist/mocha-webdriver-client.js"),
             ...testResources,
             { from: path.join(harpFontResourcesPath, "resources"), to: "@here/harp-font-resources/resources" }
         ])
