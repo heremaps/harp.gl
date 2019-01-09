@@ -5,6 +5,11 @@ node_js:
 cache:
   yarn: true
 
+addons:
+  # TODO: reenable, when chrome 72 will become stable
+  # chrome: stable
+  firefox: latest
+
 branches:
   only:
     - master
@@ -12,21 +17,29 @@ branches:
 
 # upgrade yarn to a more recent version
 before_install:
-  - curl -o- -L https://yarnpkg.com/install.sh | bash -s -- --version 1.12.3
+  - curl -o- -L https://yarnpkg.com/install.sh | bash -s -- --version 1.13.0
   - export PATH="$HOME/.yarn/bin:$PATH"
 
 jobs:
   include:
-    - stage: test
-      name: "Execute tests (node)"
+    - name: "Build & test"
       script: |
-        yarn test && \
-        yarn run tslint && \
+        set -ex
+        npx ts-mocha -r tsconfig-paths/register ./test/*.ts
+        yarn run tslint
         yarn run prettier
-    - script: |
+        yarn run build
+        yarn run build-tests
+        npx ts-mocha -r tsconfig-paths/register ./@here/*/test/*.ts
+        yarn test-browser --headless-firefox
+        # disabled as Chrome 71 doesn't like blob: urls in headless mode
+        # TODO: reenable, when chrome 72 will become stable
+        #yarn test-browser --headless-chrome
+
+    - name: "Build documentation"
+      script: |
         yarn run typedoc && \
         echo -e 'include:\n  - "_*"' > doc/_config.yml
-      name: "Build documentation"
       deploy:
         provider: pages
         skip_cleanup: true
@@ -37,9 +50,6 @@ jobs:
         on:
           branch: master
           tags: true
-    - script: yarn run build
-      name: "Build web bundles"
-
 deploy:
   - provider: script
     script:
