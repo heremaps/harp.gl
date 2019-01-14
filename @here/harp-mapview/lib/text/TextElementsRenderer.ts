@@ -976,6 +976,8 @@ export class TextElementsRenderer {
         const screenXOrigin = (-window.innerWidth * window.devicePixelRatio) / 2.0;
         const screenYOrigin = (window.innerHeight * window.devicePixelRatio) / 2.0;
 
+        let allTextElementsReady = true;
+
         // Place text elements one by one.
         for (const textElement of textElements) {
             const textRendererBuffer = this.m_textRenderer.getTextRendererBufferForStyle(
@@ -1021,6 +1023,7 @@ export class TextElementsRenderer {
 
             // Check if the TextElement we're about to render has been fully loaded.
             if (!this.isTextElementLoaded(textElement, fontCatalog, style)) {
+                allTextElementsReady = false;
                 continue;
             }
 
@@ -1153,6 +1156,10 @@ export class TextElementsRenderer {
                 addPathLabel(textElement);
             }
         }
+
+        if (!allTextElementsReady) {
+            this.m_mapView.update();
+        }
     }
 
     private getDistanceFadingFactor(label: TextElement, cameraFar: number): number {
@@ -1223,6 +1230,8 @@ export class TextElementsRenderer {
         // Keep track if we need to call another update() on MapView.
         let fadeAnimationRunning = false;
 
+        let allTextElementsReady = true;
+
         // Place text elements one by one.
         for (const textElement of textElements) {
             if (
@@ -1277,6 +1286,13 @@ export class TextElementsRenderer {
 
             // Check if the TextElement we're about to render has been fully loaded.
             if (!this.isTextElementLoaded(textElement, fontCatalog, style)) {
+                allTextElementsReady = false;
+                if (
+                    secondChanceTextElements !== undefined &&
+                    secondChanceTextElements.length < numSecondChanceLabels
+                ) {
+                    secondChanceTextElements.push(textElement);
+                }
                 continue;
             }
 
@@ -2105,9 +2121,10 @@ export class TextElementsRenderer {
             logger.log("numCannotAdd", numCannotAdd);
         }
 
-        if (fadeAnimationRunning) {
+        if (fadeAnimationRunning || !allTextElementsReady) {
             this.m_mapView.update();
         }
+
         return numRenderedTextElements;
     }
 

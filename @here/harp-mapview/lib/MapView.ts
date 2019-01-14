@@ -2162,7 +2162,7 @@ export class MapView extends THREE.EventDispatcher {
      * Gradually initialize & update TextRenderer as assets arrive.
      */
     private updateTextRenderer() {
-        if (this.m_theme === undefined) {
+        if (this.m_theme.textStyles === undefined) {
             return;
         }
         if (this.m_textElementsRenderer === undefined) {
