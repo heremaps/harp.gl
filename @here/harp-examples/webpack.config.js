@@ -99,6 +99,13 @@ const browserConfig = merge(commonConfig, {
     entry: webpackEntries,
     output: {
         filename: "[name]_bundle.js"
+    },
+    optimization: {
+        splitChunks: {
+            chunks: "all",
+            minSize: 1000,
+            name: "common",
+        }
     }
 });
 
@@ -118,7 +125,7 @@ browserConfig.plugins = Object.keys(browserConfig.entry).map(
     chunk =>
     new HtmlWebpackPlugin({
         template: "template/example.html",
-        chunks: ["common_chunks", chunk],
+        chunks: ["common", chunk],
         filename: `${chunk}.html`
     })
 );
