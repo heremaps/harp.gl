@@ -226,11 +226,11 @@ export class TileDataSource<TileType extends Tile> extends DataSource {
                         : this.m_options.copyrightInfo;
 
                 tile.setDecodedTile(tileLoader.decodedTile);
-                this.requestUpdate();
             } else {
                 // empty tiles are traditionally ignored and don't need decode
                 tile.forceHasGeometry(true);
             }
+            this.requestUpdate();
         });
     }
 
