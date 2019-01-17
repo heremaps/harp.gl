@@ -18,6 +18,7 @@ import { MapViewFog } from "./MapViewFog";
 import { PickHandler, PickResult } from "./PickHandler";
 import { PoiManager } from "./poi/PoiManager";
 import { PoiTableManager } from "./poi/PoiTableManager";
+import { RenderLoopController } from "./RenderLoopController";
 import { ScreenCollisions, ScreenCollisionsDebug } from "./ScreenCollisions";
 import { ScreenProjector } from "./ScreenProjector";
 import { SkyBackground } from "./SkyBackground";
@@ -386,6 +387,21 @@ export interface MapViewOptions {
      * Disable all fading animations for debugging and performance measurement.
      */
     disableFading?: boolean;
+
+    /**
+     * Use custom `WebGLRenderer`.
+     *
+     * If custom `WebGLRenderer` is used, one must call `renderer.setSize` on its own.
+     */
+    renderer?: THREE.WebGLRenderer;
+
+    /**
+     * Use custom [[RenderLoopController]].
+     *
+     * If used, MapView will not call [[MapView.render]] on it's own, but user have to call by
+     * himself for example in [[RenderLoopController.renderFunction]] callback
+     */
+    renderLoopController?: RenderLoopController;
 }
 
 /**
@@ -454,11 +470,12 @@ export class MapView extends THREE.EventDispatcher {
     private readonly m_worldCenter = new THREE.Vector3();
     private readonly m_mapTilesRoot = new THREE.Object3D();
 
-    private m_animationCount: number = 0;
-    private m_animationFrameHandle: number | undefined;
     private m_drawing: boolean = false;
-    private m_updatePending: boolean = false;
+    private m_updateNeeded: boolean = false;
     private m_renderer: THREE.WebGLRenderer;
+    private m_clearColor: THREE.Color = new THREE.Color(DEFAULT_CLEAR_COLOR);
+    private m_ownRenderer: boolean;
+    private m_renderLoop: RenderLoopController;
     private m_frameNumber = 0;
 
     private m_textElementsRenderer?: TextElementsRenderer;
@@ -488,7 +505,7 @@ export class MapView extends THREE.EventDispatcher {
     private m_firstFrameRendered = false;
     private m_firstFrameComplete = false;
 
-    private handleRequestAnimationFrame: any;
+    //private handleRequestAnimationFrame: any;
 
     private m_pickHandler: PickHandler;
 
@@ -597,27 +614,33 @@ export class MapView extends THREE.EventDispatcher {
             this.m_screenCollisions = new ScreenCollisionsDebug(this.m_collisionDebugCanvas);
         }
 
-        this.handleRequestAnimationFrame = this.renderFunc.bind(this);
         this.m_pickHandler = new PickHandler(this, this.m_options.enableRoadPicking === true);
 
         // Initialization of the stats
         this.setupStats(this.m_options.enableStatistics);
 
-        // Initialization of the renderer
-        this.m_renderer = new THREE.WebGLRenderer({
-            canvas: this.canvas,
-            antialias: this.m_options.enableNativeWebglAntialias !== false,
-            alpha: this.m_options.alpha,
-            preserveDrawingBuffer: this.m_options.preserveDrawingBuffer === true
-        });
-        this.m_renderer.autoClear = false;
+        if (this.m_options.renderer !== undefined) {
+            this.m_renderer = this.m_options.renderer;
+            this.m_ownRenderer = false;
+        } else {
+            this.m_ownRenderer = true;
+            // Initialization of the renderer
+            this.m_renderer = new THREE.WebGLRenderer({
+                canvas: this.canvas,
+                antialias: this.m_options.enableNativeWebglAntialias !== false,
+                alpha: this.m_options.alpha,
+                preserveDrawingBuffer: this.m_options.preserveDrawingBuffer === true
+            });
+            this.m_renderer.autoClear = false;
+            this.setupRenderer();
+        }
 
-        // This is detailed at https://threejs.org/docs/#api/renderers/WebGLRenderer.info
-        // When using several WebGLRenderer#render calls per frame, it is the only way to get
-        // correct rendering data from ThreeJS.
-        this.m_renderer.info.autoReset = false;
+        this.m_renderLoop =
+            this.m_options.renderLoopController === undefined
+                ? new RenderLoopController(this.doRender.bind(this))
+                : this.m_options.renderLoopController;
 
-        this.setupRenderer();
+        this.m_scene.add(this.m_mapTilesRoot);
 
         // Initialization of mCamera and mVisibleTiles
         const { clientWidth, clientHeight } = this.canvas;
@@ -644,7 +667,7 @@ export class MapView extends THREE.EventDispatcher {
 
         this.initTheme();
 
-        this.drawFrame();
+        this.update();
 
         this.canvas.addEventListener("webglcontextlost", this.onWebGLContextLost);
         this.canvas.addEventListener("webglcontextrestored", this.onWebGLContextRestored);
@@ -694,9 +717,8 @@ export class MapView extends THREE.EventDispatcher {
      * cleanup, you must ensure that all references to this `MapView` are removed.
      */
     dispose() {
-        if (this.m_animationFrameHandle !== undefined) {
-            cancelAnimationFrame(this.m_animationFrameHandle);
-            this.m_animationFrameHandle = undefined;
+        if (this.m_options.renderLoopController === undefined) {
+            this.m_renderLoop.dispose();
         }
 
         this.canvas.removeEventListener("webglcontextlost", this.onWebGLContextLost);
@@ -706,7 +728,9 @@ export class MapView extends THREE.EventDispatcher {
             dataSource.dispose();
         }
         this.m_visibleTiles.clearTileCache();
-        this.m_renderer.dispose();
+        if (this.m_ownRenderer) {
+            this.m_renderer.dispose();
+        }
         this.m_imageCache.clear();
 
         this.m_movementDetector.dispose();
@@ -803,7 +827,10 @@ export class MapView extends THREE.EventDispatcher {
 
         // Clear color.
         this.m_theme.clearColor = theme.clearColor;
-        this.renderer.setClearColor(new THREE.Color(theme.clearColor));
+        this.m_clearColor = new THREE.Color(theme.clearColor);
+        if (this.m_ownRenderer) {
+            this.m_renderer.setClearColor(this.m_clearColor);
+        }
 
         // Images.
         this.m_theme.images = theme.images;
@@ -980,14 +1007,17 @@ export class MapView extends THREE.EventDispatcher {
      * The color used to clear the view.
      */
     get clearColor() {
-        return this.m_renderer.getClearColor().getHex();
+        return this.m_clearColor.getHex();
     }
 
     /**
      * The color used to clear the view.
      */
     set clearColor(color: number) {
-        this.m_renderer.setClearColor(color);
+        this.m_clearColor = new THREE.Color(color);
+        if (this.m_ownRenderer) {
+            this.m_renderer.setClearColor(color);
+        }
     }
 
     /**
@@ -1329,18 +1359,18 @@ export class MapView extends THREE.EventDispatcher {
      * Returns `true` if this `MapView` is constantly redrawing the scene.
      */
     get animating(): boolean {
-        return this.m_animationCount > 0;
+        return this.m_renderLoop.isAnimating();
     }
 
     /**
      * Begin animating the scene.
      */
     beginAnimation() {
-        if (this.m_animationCount++ === 0) {
-            if (!this.m_updatePending) {
-                this.m_updatePending = true;
-                this.drawFrame();
-            }
+        const isAnimating = this.m_renderLoop.isAnimating();
+        this.m_renderLoop.beginAnimating();
+
+        // TODO: animation events from external loop controller
+        if (!isAnimating) {
             ANIMATION_STARTED_EVENT.time = Date.now();
             this.dispatchEvent(ANIMATION_STARTED_EVENT);
         }
@@ -1350,11 +1380,11 @@ export class MapView extends THREE.EventDispatcher {
      * Stop animating the scene.
      */
     endAnimation() {
-        if (this.m_animationCount > 0) {
-            --this.m_animationCount;
-        }
+        const wasAnimating = this.m_renderLoop.isAnimating();
+        this.m_renderLoop.endAnimating();
 
-        if (this.m_animationCount === 0) {
+        // TODO: animation events from external loop controller
+        if (wasAnimating && !this.m_renderLoop.isAnimating()) {
             ANIMATION_FINISHED_EVENT.time = Date.now();
             this.dispatchEvent(ANIMATION_FINISHED_EVENT);
         }
@@ -1515,9 +1545,11 @@ export class MapView extends THREE.EventDispatcher {
      * @param height The new height.
      */
     resize(width: number, height: number) {
-        this.m_renderer.setSize(width, height, false);
-        if (this.m_renderer.getPixelRatio() !== this.pixelRatio) {
-            this.m_renderer.setPixelRatio(this.pixelRatio);
+        if (this.m_ownRenderer) {
+            this.m_renderer.setSize(width, height, false);
+            if (this.m_renderer.getPixelRatio() !== this.pixelRatio) {
+                this.m_renderer.setPixelRatio(this.pixelRatio);
+            }
         }
 
         if (this.mapRenderingManager !== undefined) {
@@ -1537,17 +1569,8 @@ export class MapView extends THREE.EventDispatcher {
      * Requests a redraw of the scene.
      */
     update() {
-        if (this.m_updatePending) {
-            return;
-        } // compress the update request
-
-        this.m_updatePending = true;
-
-        if (this.animating) {
-            return;
-        } // nothing to do
-
-        this.drawFrame();
+        this.m_updateNeeded = true;
+        this.m_renderLoop.update();
     }
 
     /**
@@ -1555,7 +1578,7 @@ export class MapView extends THREE.EventDispatcher {
      * frame, the next frame will be rendered immediately.
      */
     get updatePending(): boolean {
-        return this.m_updatePending;
+        return this.m_updateNeeded || this.animating;
     }
 
     /**
@@ -1617,6 +1640,31 @@ export class MapView extends THREE.EventDispatcher {
     }
 
     /**
+     * Render one frame.
+     *
+     * Note, by default [[MapView]] manages udpdates automatically, use it together with custom
+     * [[RenderLoopController]].
+     *
+     * @param time Frame time as received in `requestAnimationFrame` callback
+     * @param target Optional, If passed, renders to custom `WebGLRenderTarget` instead of canvas.
+     */
+    render(time: number, target?: THREE.WebGLRenderTarget) {
+        this.doRender(time, target);
+    }
+
+    /**
+     * Like [[render]], but render only if update was really requested for this particular instance.
+     *
+     * @param time Frame time as received in `requestAnimationFrame` callback
+     * @param target Optional, If passed, renders to custom `WebGLRenderTarget` instead of canvas.
+     */
+    renderIfNeeded(time: number, target?: THREE.WebGLRenderTarget) {
+        if (this.m_updateNeeded || this.animating) {
+            this.doRender(time, target);
+        }
+    }
+
+    /**
      * Updates the camera and the projections and resets the screen collisions.
      */
     private updateCameras() {
@@ -1660,28 +1708,6 @@ export class MapView extends THREE.EventDispatcher {
     }
 
     /**
-     * Draw a new frame.
-     */
-    private drawFrame() {
-        if (this.m_drawing) {
-            return;
-        }
-        // Cancel an active requestAnimationFrame() cycle. Failure to do this may end up in
-        // rendering multiple times during a single frame.
-        if (this.m_animationFrameHandle !== undefined) {
-            cancelAnimationFrame(this.m_animationFrameHandle);
-        }
-        this.m_animationFrameHandle = requestAnimationFrame(this.handleRequestAnimationFrame);
-    }
-
-    /**
-     * Draw a new frame.
-     */
-    private renderFunc(time: number) {
-        this.render(time);
-    }
-
-    /**
      * Returns the list of the enabled data sources.
      */
     private getEnabledTileDataSources(): DataSource[] {
@@ -1708,7 +1734,7 @@ export class MapView extends THREE.EventDispatcher {
     /**
      * Renders the current frame.
      */
-    private render(time: number): void {
+    private doRender(time: number, target?: THREE.WebGLRenderTarget): void {
         if (this.m_drawing) {
             return;
         }
@@ -1749,7 +1775,7 @@ export class MapView extends THREE.EventDispatcher {
 
         this.m_renderer.info.reset();
 
-        this.m_updatePending = false;
+        this.m_updateNeeded = false;
         this.m_thisFrameTilesChanged = undefined;
 
         this.m_drawing = true;
@@ -1760,6 +1786,12 @@ export class MapView extends THREE.EventDispatcher {
 
         this.updateCameras();
         this.m_fog.update(this.m_camera);
+
+        this.m_renderer.setRenderTarget(target);
+        if (!this.m_ownRenderer) {
+            this.m_renderer.setClearColor(this.m_clearColor.getHex());
+        }
+
         this.m_renderer.clear();
 
         // clear the scene
@@ -1827,14 +1859,21 @@ export class MapView extends THREE.EventDispatcher {
             this.m_skyBackground.update(this.m_camera);
         }
 
-        const isStaticFrame = !(this.animating || this.m_updatePending);
-        this.mapRenderingManager.render(this.m_renderer, this.m_scene, camera, isStaticFrame);
+        const isStaticFrame = !(this.animating || this.updatePending);
+        this.mapRenderingManager.render(
+            this.m_renderer,
+            this.m_scene,
+            camera,
+            target,
+            isStaticFrame
+        );
 
         if (gatherStatistics) {
             drawTime = PerformanceTimer.now();
         }
 
-        this.finishRenderTextElements();
+        this.finishRenderTextElements(target);
+        this.m_renderer.setRenderTarget(undefined);
 
         if (gatherStatistics) {
             textDrawTime = PerformanceTimer.now();
@@ -1855,7 +1894,7 @@ export class MapView extends THREE.EventDispatcher {
             !this.m_firstFrameComplete &&
             this.m_visibleTiles.allVisibleTilesLoaded &&
             this.m_connectedDataSources.size === this.m_tileDataSources.length &&
-            !this.m_updatePending &&
+            !this.m_updateNeeded &&
             !this.animating &&
             this.m_textElementsRenderer !== undefined &&
             !this.m_textElementsRenderer.loading
@@ -1873,10 +1912,6 @@ export class MapView extends THREE.EventDispatcher {
         this.m_visibleTiles.disposePendingTiles();
 
         this.m_drawing = false;
-
-        if (this.animating || this.m_updatePending) {
-            this.drawFrame();
-        }
 
         this.checkCopyrightUpdates();
 
@@ -1951,13 +1986,13 @@ export class MapView extends THREE.EventDispatcher {
         this.m_textElementsRenderer.update();
     }
 
-    private finishRenderTextElements() {
+    private finishRenderTextElements(target?: THREE.WebGLRenderTarget) {
         const canRenderTextElements = this.m_pointOfView === undefined;
 
         if (canRenderTextElements && this.m_textElementsRenderer) {
             // copy far value from scene camera, as the distance to the POIs matter now.
             this.m_screenCamera.far = this.camera.far;
-            this.m_textElementsRenderer.renderText(this.m_screenCamera);
+            this.m_textElementsRenderer.renderText(this.m_screenCamera, target);
         }
     }
 
@@ -2053,10 +2088,6 @@ export class MapView extends THREE.EventDispatcher {
         }
 
         const theme = this.m_theme as Theme;
-        if (theme.clearColor !== undefined) {
-            this.m_renderer.setClearColor(new THREE.Color(theme.clearColor));
-        }
-
         if (this.m_createdLights) {
             this.m_createdLights.forEach((light: THREE.Light) => {
                 this.m_scene.remove(light);
@@ -2247,9 +2278,15 @@ export class MapView extends THREE.EventDispatcher {
     }
 
     private setupRenderer() {
-        this.m_renderer.setClearColor(DEFAULT_CLEAR_COLOR);
+        this.m_renderer.autoClear = false;
+        // This is detailed at https://threejs.org/docs/#api/renderers/WebGLRenderer.info
+        // When using several WebGLRenderer#render calls per frame, it is the only way to get
+        // correct rendering data from ThreeJS.
+        this.m_renderer.info.autoReset = false;
 
-        this.m_scene.add(this.m_mapTilesRoot);
+        if (this.m_ownRenderer) {
+            this.m_renderer.setClearColor(DEFAULT_CLEAR_COLOR);
+        }
     }
 
     /**
@@ -2287,10 +2324,8 @@ export class MapView extends THREE.EventDispatcher {
      */
     private onWebGLContextRestored = (event: Event) => {
         this.dispatchEvent(CONTEXT_RESTORED_EVENT);
-        if (this.m_theme !== undefined && this.m_theme.clearColor !== undefined) {
-            this.m_renderer.setClearColor(new THREE.Color(this.m_theme.clearColor));
-        } else {
-            this.m_renderer.setClearColor(DEFAULT_CLEAR_COLOR);
+        if (this.m_ownRenderer) {
+            this.m_renderer.setClearColor(this.m_clearColor);
         }
         this.update();
         logger.log("WebGL context restored", event);

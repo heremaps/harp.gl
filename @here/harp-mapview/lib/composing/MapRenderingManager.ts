@@ -82,6 +82,7 @@ export interface IMapRenderingManager extends IPassManager {
         renderer: THREE.WebGLRenderer,
         scene: THREE.Scene,
         camera: THREE.PerspectiveCamera | THREE.OrthographicCamera,
+        target: THREE.WebGLRenderTarget | undefined,
         isStaticFrame: boolean,
         time?: number
     ): void;
@@ -140,6 +141,7 @@ export class MapRenderingManager implements IMapRenderingManager {
         renderer: THREE.WebGLRenderer,
         scene: THREE.Scene,
         camera: THREE.PerspectiveCamera | THREE.OrthographicCamera,
+        target: THREE.WebGLRenderTarget | undefined,
         isStaticFrame: boolean
     ) {
         const isHighDpiDevice = renderer.getPixelRatio() > 1.1; // On desktop IE11 is ~1.01.
@@ -148,18 +150,17 @@ export class MapRenderingManager implements IMapRenderingManager {
         if (isHighDpiDevice) {
             // On smartphones, discard AAs as the pixel ratio already stands for this and also makes
             // AA passes much more expensive.
-            renderer.render(scene, camera);
+            renderer.render(scene, camera, target);
         } else {
             // Later with further effects, a ThreeJS WebGLRenderTarget will be needed as the
             // destination of the render call.
-            const target = undefined;
             if (this.m_msaaPass.enabled) {
                 // Use a higher MSAA sampling level for static rendering.
                 this.m_msaaPass.samplingLevel = isStaticFrame
                     ? this.m_staticMsaaSamplingLevel
                     : this.m_dynamicMsaaSamplingLevel;
                 // MSAA is the only effect for the moment.
-                this.m_msaaPass.renderToScreen = true;
+                this.m_msaaPass.renderToScreen = target === undefined;
                 // Render to the specified target with the MSAA pass.
                 this.m_msaaPass.render(renderer, scene, camera, target, this.m_readBuffer);
             } else {
