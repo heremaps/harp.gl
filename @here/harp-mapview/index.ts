@@ -22,6 +22,7 @@ export * from "./lib/poi/PoiTableManager";
 export * from "./lib/MapView";
 export * from "./lib/MapViewFog";
 export * from "./lib/PickHandler";
+export * from "./lib/RenderController";
 export * from "./lib/ConcurrentDecoderFacade";
 export * from "./lib/ConcurrentTilerFacade";
 export * from "./lib/WorkerBasedDecoder";

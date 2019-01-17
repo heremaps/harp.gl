@@ -199,7 +199,7 @@ export class TextElementsRenderer {
      *
      * @param camera Orthographic camera to use.
      */
-    renderText(camera: THREE.OrthographicCamera) {
+    renderText(camera: THREE.OrthographicCamera, target: THREE.WebGLRenderTarget | undefined) {
         const debugGlyphs = debugContext.getValue("DEBUG_GLYPHS");
         if (
             debugGlyphs !== undefined &&
@@ -210,7 +210,7 @@ export class TextElementsRenderer {
             this.m_debugGlyphTextureCacheWireMesh.visible = debugGlyphs;
         }
         for (const textRenderer of this.m_textRenderers) {
-            textRenderer.textCanvas.render(camera);
+            textRenderer.textCanvas.render(camera, target);
         }
     }
 

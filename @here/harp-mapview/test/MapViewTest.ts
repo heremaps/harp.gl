@@ -55,6 +55,7 @@ describe("MapView", function() {
     afterEach(function() {
         if (mapView !== undefined) {
             mapView.dispose();
+            mapView = undefined!;
         }
         sandbox.restore();
         if (inNodeContext) {
@@ -123,22 +124,23 @@ describe("MapView", function() {
         const webGlContextLostHandler = addEventListenerSpy.getCall(0).args[1];
 
         const dispatchEventSpy = sinon.spy(mapView, "dispatchEvent");
-        // @ts-ignore: Conversion to Theme type
-        mapView.m_theme = {};
-        // @ts-ignore: Conversion to Number type
-        mapView.m_theme.clearColor = 0xffffff;
+        expect(clearColorStub.callCount).to.be.equal(1);
+
+        mapView.clearColor = 0xffffff;
+
         webGlContextRestoredHandler();
-        // @ts-ignore: Conversion to undefined
-        mapView.m_theme.clearColor = undefined;
+
+        mapView.clearColor = 0xefe9e1;
+
         webGlContextRestoredHandler();
         webGlContextLostHandler();
 
-        expect(clearColorStub.callCount).to.be.equal(3);
+        expect(clearColorStub.callCount).to.be.equal(5);
         expect(clearColorStub.getCall(0).calledWith(0xefe9e1)).to.be.equal(true);
-        expect(clearColorStub.getCall(1).args[0].r).to.be.equal(1);
-        expect(clearColorStub.getCall(1).args[0].g).to.be.equal(1);
-        expect(clearColorStub.getCall(1).args[0].b).to.be.equal(1);
-        expect(clearColorStub.getCall(2).calledWith(0xefe9e1)).to.be.equal(true);
+        expect(clearColorStub.getCall(2).args[0].r).to.be.equal(1);
+        expect(clearColorStub.getCall(2).args[0].g).to.be.equal(1);
+        expect(clearColorStub.getCall(2).args[0].b).to.be.equal(1);
+        expect(clearColorStub.getCall(3).calledWith(0xefe9e1)).to.be.equal(true);
         expect(updateSpy.callCount).to.be.equal(2);
         expect(dispatchEventSpy.callCount).to.be.equal(3);
         expect(dispatchEventSpy.getCall(0).args[0].type).to.be.equal(
@@ -151,6 +153,14 @@ describe("MapView", function() {
     });
 
     it("Correctly sets and removes event listeners by API", function() {
+        const canvas = {
+            width: 0,
+            height: 0,
+            addEventListener: sinon.stub(),
+            removeEventListener: sinon.stub()
+        };
+        mapView = new MapView({ canvas: (canvas as any) as HTMLCanvasElement });
+
         const restoreStub = sinon.stub();
         const lostStub = sinon.stub();
 
