@@ -236,13 +236,15 @@ export class GeoJsonTile extends Tile {
     private addTexts(geometry: GeoJsonTextGeometry, technique: TextTechnique) {
         const attribute = getBufferAttribute(geometry.positions);
 
-        const currentVertexCache = new THREE.Vector2();
-
         for (let index = 0; index < attribute.count; index++) {
-            currentVertexCache.set(attribute.getX(index), attribute.getY(index));
+            const currentVertexCache = new THREE.Vector2(
+                attribute.getX(index),
+                attribute.getY(index)
+            );
+
             const properties =
                 geometry.objInfos !== undefined ? geometry.objInfos[index] : undefined;
-            const text = geometry.stringCatalog![geometry.texts[0]] as string;
+            const text = geometry.stringCatalog![index] as string;
             this.addText(currentVertexCache, text, technique, properties);
         }
     }
@@ -289,14 +291,10 @@ export class GeoJsonTile extends Tile {
             technique.mayOverlap === undefined
                 ? DEFAULT_LABELED_ICON.iconMayOverlap
                 : technique.mayOverlap;
-        const reserveSpace =
-            technique.reserveSpace === undefined
-                ? DEFAULT_LABELED_ICON.textReserveSpace
-                : technique.reserveSpace;
         const distanceScale = DEFAULT_TEXT_DISTANCE_SCALE;
 
         textElement.mayOverlap = mayOverlap;
-        textElement.reserveSpace = reserveSpace;
+        textElement.reserveSpace = false;
         textElement.distanceScale = distanceScale;
 
         this.addUserTextElement(textElement);
@@ -364,15 +362,16 @@ export class GeoJsonTile extends Tile {
                 ? DEFAULT_LABELED_ICON.textReserveSpace
                 : technique.iconReserveSpace;
         const distanceScale = DEFAULT_TEXT_DISTANCE_SCALE;
-
-        textElement.mayOverlap = mayOverlap;
-        textElement.reserveSpace = reserveSpace;
-        textElement.distanceScale = distanceScale;
-
         const alwaysOnTop =
             technique.alwaysOnTop === undefined
                 ? DEFAULT_LABELED_ICON.alwaysOnTop
                 : technique.alwaysOnTop;
+
+        textElement.mayOverlap = mayOverlap;
+        textElement.reserveSpace = reserveSpace;
+        textElement.distanceScale = distanceScale;
+        textElement.alwaysOnTop = alwaysOnTop;
+
         const textIsOptional =
             technique.textIsOptional === undefined
                 ? DEFAULT_LABELED_ICON.textIsOptional
@@ -401,8 +400,6 @@ export class GeoJsonTile extends Tile {
             reserveSpace,
             featureId
         };
-
-        textElement.alwaysOnTop = alwaysOnTop;
 
         this.addUserTextElement(textElement);
     }
