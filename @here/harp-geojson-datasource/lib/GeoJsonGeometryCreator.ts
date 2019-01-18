@@ -209,11 +209,9 @@ export class GeoJsonGeometryCreator {
         techniqueIndex: number
     ): GeoJsonTextGeometry {
         const labelProperty = geometryData.labelProperty! as string;
-        const stringCatalog = geometryData.points.geojsonProperties
-            .map((properties: any) => {
-                return properties[labelProperty].toString();
-            })
-            .reverse();
+        const stringCatalog = geometryData.points.geojsonProperties.map((properties: any) => {
+            return properties[labelProperty].toString();
+        });
         return {
             positions: {
                 name: "position",

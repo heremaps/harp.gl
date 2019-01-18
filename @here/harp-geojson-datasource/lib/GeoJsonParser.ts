@@ -328,8 +328,8 @@ export class GeoJsonParser {
                             feature.properties
                         );
                     } else if (isTextTechnique(technique)) {
-                        this.processPolygonLabels(
-                            feature.geometry.coordinates,
+                        this.processMultiPolygonLabels(
+                            [feature.geometry.coordinates],
                             center,
                             projection,
                             techniqueIndex,
@@ -356,17 +356,15 @@ export class GeoJsonParser {
                             feature.properties
                         );
                     } else if (isTextTechnique(technique)) {
-                        for (const polygons of feature.geometry.coordinates) {
-                            this.processPolygonLabels(
-                                polygons,
-                                center,
-                                projection,
-                                techniqueIndex,
-                                technique.label!,
-                                buffers.textGeometryBuffer,
-                                feature.properties
-                            );
-                        }
+                        this.processMultiPolygonLabels(
+                            feature.geometry.coordinates,
+                            center,
+                            projection,
+                            techniqueIndex,
+                            technique.label!,
+                            buffers.textGeometryBuffer,
+                            feature.properties
+                        );
                     }
                 }
                 break;
@@ -603,8 +601,8 @@ export class GeoJsonParser {
         buffer.lines.geojsonProperties.push(geojsonProperties);
     }
 
-    private static processPolygonLabels(
-        polygons: number[][][],
+    private static processMultiPolygonLabels(
+        multiPolygon: number[][][][],
         center: THREE.Vector3,
         projection: Projection,
         techniqueIndex: number,
@@ -616,32 +614,36 @@ export class GeoJsonParser {
         buffer.type = "point";
         buffer.labelProperty = labelProperty;
 
-        for (const polygon of polygons) {
-            const points = { x: [] as number[], y: [] as number[], z: [] as number[] };
-            for (const point of polygon) {
-                this.m_cached_geoCoord.latitude = point[1];
-                this.m_cached_geoCoord.longitude = point[0];
+        const points = { x: [] as number[], y: [] as number[], z: [] as number[] };
+        for (const polygons of multiPolygon) {
+            for (const polygon of polygons) {
+                for (const point of polygon) {
+                    this.m_cached_geoCoord.latitude = point[1];
+                    this.m_cached_geoCoord.longitude = point[0];
 
-                projection
-                    .projectPoint(this.m_cached_geoCoord, this.m_cached_worldCoord)
-                    .sub(center);
+                    projection
+                        .projectPoint(this.m_cached_geoCoord, this.m_cached_worldCoord)
+                        .sub(center);
 
-                points.x.push(this.m_cached_worldCoord.x);
-                points.y.push(this.m_cached_worldCoord.y);
-                points.z.push(this.m_cached_worldCoord.z);
+                    points.x.push(this.m_cached_worldCoord.x);
+                    points.y.push(this.m_cached_worldCoord.y);
+                    points.z.push(this.m_cached_worldCoord.z);
+                }
             }
-
-            this.m_cached_worldCoord.setX(points.x.reduce((a, b) => a + b) / polygon.length);
-            this.m_cached_worldCoord.setY(points.y.reduce((a, b) => a + b) / polygon.length);
-            this.m_cached_worldCoord.setZ(points.z.reduce((a, b) => a + b) / polygon.length);
-
-            buffer.points.vertices.push(
-                this.m_cached_worldCoord.x,
-                this.m_cached_worldCoord.y,
-                this.m_cached_worldCoord.z
-            );
-            buffer.points.geojsonProperties.push(geojsonProperties);
         }
+
+        const length = points.x.length;
+
+        this.m_cached_worldCoord.setX(points.x.reduce((a, b) => a + b) / length);
+        this.m_cached_worldCoord.setY(points.y.reduce((a, b) => a + b) / length);
+        this.m_cached_worldCoord.setZ(points.z.reduce((a, b) => a + b) / length);
+
+        buffer.points.vertices.push(
+            this.m_cached_worldCoord.x,
+            this.m_cached_worldCoord.y,
+            this.m_cached_worldCoord.z
+        );
+        buffer.points.geojsonProperties.push(geojsonProperties);
     }
 
     private static processPointLabels(

@@ -259,13 +259,13 @@ describe("@here-geojson-datasource", () => {
         assert.deepEqual(result0, expectedResult0);
 
         // Text paths for lines.
-        const text3Coords = userTextElements[3].points as THREE.Vector2[];
+        const text3Coords = userTextElements[2].points as THREE.Vector2[];
         const result3 = {
             x1: text3Coords[0].x,
             y1: text3Coords[0].y,
             x2: text3Coords[1].x,
             y2: text3Coords[1].y,
-            text: userTextElements[3].text
+            text: userTextElements[2].text
         };
         const expectedResult3 = {
             text: "blablabla",
@@ -277,16 +277,16 @@ describe("@here-geojson-datasource", () => {
         assert.deepEqual(result3, expectedResult3);
 
         // Texts for polygons.
-        const text2Coords = userTextElements[2].points as THREE.Vector2;
+        const text2Coords = userTextElements[1].points as THREE.Vector2;
         const result2 = {
             x: text2Coords.x,
             y: text2Coords.y,
-            text: userTextElements[2].text
+            text: userTextElements[1].text
         };
         const expectedResult2 = {
             text: "blablablabla",
             x: 18492950,
-            y: -18307436
+            y: -18307488
         };
         assert.deepEqual(result2, expectedResult2);
     });
