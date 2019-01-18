@@ -571,11 +571,9 @@ export class Tile implements CachedResource {
         this.m_decodedTile = decodedTile;
         this.invalidateUsageInfoCache();
 
-        if (decodedTile.decodeTime !== undefined) {
-            PerformanceStatistics.instance.currentFrame.addValue(
-                "decode.decodingTime",
-                decodedTile.decodeTime
-            );
+        const stats = PerformanceStatistics.instance;
+        if (stats.enabled && decodedTile.decodeTime !== undefined) {
+            stats.currentFrame.addValue("decode.decodingTime", decodedTile.decodeTime);
         }
     }
 
