@@ -13,15 +13,12 @@ import {
 import { MapEnv } from "@here/harp-datasource-protocol/lib/Theme";
 import * as THREE from "three";
 
-import { GeometryCommands, isClosePathCommand, isLineToCommand, isMoveToCommand } from "./OmvData";
+import { GeoCoordinates } from "@here/harp-geoutils";
 import { IOmvEmitter, OmvDecoder, Ring } from "./OmvDecoder";
-import { com } from "./proto/vector_tile";
 
 export class OmvTileInfoEmitter implements IOmvEmitter {
     private readonly m_tileInfo: ExtendedTileInfo;
     private readonly m_tileInfoWriter: ExtendedTileInfoWriter;
-
-    private readonly geometryCommands = new GeometryCommands();
 
     /**
      * Create OmvTileInfoEmitter object
@@ -48,18 +45,17 @@ export class OmvTileInfoEmitter implements IOmvEmitter {
     }
 
     processPointFeature(
-        layer: com.mapbox.pb.Tile.ILayer,
-        feature: com.mapbox.pb.Tile.IFeature,
+        layer: string,
+        geometry: GeoCoordinates[],
         env: MapEnv,
         techniques: Technique[],
         featureId: number | undefined
     ): void {
-        if (!feature.geometry) {
-            return;
-        }
+        const tileInfoWriter = this.m_tileInfoWriter;
+
+        const { projection, center } = this.m_decodeInfo;
 
         const worldPos = new THREE.Vector3();
-        const tileInfoWriter = this.m_tileInfoWriter;
 
         for (const technique of techniques) {
             if (technique === undefined) {
@@ -68,72 +64,46 @@ export class OmvTileInfoEmitter implements IOmvEmitter {
 
             const infoTileTechniqueIndex = tileInfoWriter.addTechnique(technique);
 
-            this.geometryCommands.accept(
-                feature.geometry,
-                this.m_decodeInfo.tileKey,
-                this.m_decodeInfo.geoBox,
-                layer.extent,
-                {
-                    visitCommand: command => {
-                        if (isMoveToCommand(command)) {
-                            const { x, y } = this.m_decodeInfo.projection
-                                .projectPoint(command, worldPos)
-                                .sub(this.m_decodeInfo.center);
+            for (const geoPos of geometry) {
+                const { x, y } = projection.projectPoint(geoPos, worldPos).sub(center);
 
-                            tileInfoWriter.addFeature(
-                                this.m_tileInfo.pointGroup,
-                                technique,
-                                env,
-                                featureId,
-                                infoTileTechniqueIndex,
-                                false
-                            );
-                            tileInfoWriter.addFeaturePoint(this.m_tileInfo.pointGroup, x, y);
-                        }
-                    }
-                }
-            );
+                tileInfoWriter.addFeature(
+                    this.m_tileInfo.pointGroup,
+                    technique,
+                    env,
+                    featureId,
+                    infoTileTechniqueIndex,
+                    false
+                );
+
+                tileInfoWriter.addFeaturePoint(this.m_tileInfo.pointGroup, x, y);
+            }
         }
     }
 
     processLineFeature(
-        layer: com.mapbox.pb.Tile.ILayer,
-        feature: com.mapbox.pb.Tile.IFeature,
+        layer: string,
+        geometry: GeoCoordinates[][],
         env: MapEnv,
         techniques: Technique[],
         featureId: number | undefined
     ): void {
-        if (!feature.geometry) {
-            return;
-        }
-
         const tileInfoWriter = this.m_tileInfoWriter;
 
-        const lines: number[][] = [];
-        let line: number[];
+        const { projection, center } = this.m_decodeInfo;
+
         const worldPos = new THREE.Vector3();
-        this.geometryCommands.accept(
-            feature.geometry,
-            this.m_decodeInfo.tileKey,
-            this.m_decodeInfo.geoBox,
-            layer.extent,
-            {
-                visitCommand: command => {
-                    if (isMoveToCommand(command)) {
-                        this.m_decodeInfo.projection
-                            .projectPoint(command, worldPos)
-                            .sub(this.m_decodeInfo.center);
-                        line = [worldPos.x, worldPos.y];
-                        lines.push(line);
-                    } else if (isLineToCommand(command)) {
-                        this.m_decodeInfo.projection
-                            .projectPoint(command, worldPos)
-                            .sub(this.m_decodeInfo.center);
-                        line.push(worldPos.x, worldPos.y);
-                    }
-                }
+
+        const lines: number[][] = [];
+
+        for (const polyline of geometry) {
+            const line: number[] = [];
+            for (const geoPos of polyline) {
+                const { x, y } = projection.projectPoint(geoPos, worldPos).sub(center);
+                line.push(x, y);
             }
-        );
+            lines.push(line);
+        }
 
         for (const technique of techniques) {
             if (technique === undefined) {
@@ -172,15 +142,12 @@ export class OmvTileInfoEmitter implements IOmvEmitter {
     }
 
     processPolygonFeature(
-        layer: com.mapbox.pb.Tile.ILayer,
-        feature: com.mapbox.pb.Tile.IFeature,
+        layer: string,
+        geometry: GeoCoordinates[][][],
         env: MapEnv,
         techniques: Technique[],
         featureId: number | undefined
     ): void {
-        if (!feature.geometry) {
-            return;
-        }
         if (techniques.length === 0) {
             throw new Error(
                 "OmvTileInfoEmitter#processPolygonFeature: Internal error - No technique index"
@@ -189,32 +156,24 @@ export class OmvTileInfoEmitter implements IOmvEmitter {
 
         const tileInfoWriter = this.m_tileInfoWriter;
 
+        const { projection, center } = this.m_decodeInfo;
+
+        const polygons: Ring[][] = [];
+
         const worldPos = new THREE.Vector3();
-        const rings = new Array<Ring>();
-        let ring: number[];
-        this.geometryCommands.accept(
-            feature.geometry,
-            this.m_decodeInfo.tileKey,
-            this.m_decodeInfo.geoBox,
-            layer.extent,
-            {
-                visitCommand: command => {
-                    if (isMoveToCommand(command)) {
-                        const { x, y } = this.m_decodeInfo.projection
-                            .projectPoint(command, worldPos)
-                            .sub(this.m_decodeInfo.center);
-                        ring = [x, y];
-                    } else if (isLineToCommand(command)) {
-                        const { x, y } = this.m_decodeInfo.projection
-                            .projectPoint(command, worldPos)
-                            .sub(this.m_decodeInfo.center);
-                        ring.push(x, y);
-                    } else if (isClosePathCommand(command)) {
-                        rings.push(new Ring(ring));
-                    }
+
+        for (const polygon of geometry) {
+            const rings: Ring[] = [];
+            for (const outline of polygon) {
+                const contour2: number[] = [];
+                for (const geoPoint of outline) {
+                    const { x, y } = projection.projectPoint(geoPoint, worldPos).sub(center);
+                    contour2.push(x, y);
                 }
+                rings.push(new Ring(contour2));
             }
-        );
+            polygons.push(rings);
+        }
 
         for (const technique of techniques) {
             if (technique === undefined) {
@@ -233,13 +192,15 @@ export class OmvTileInfoEmitter implements IOmvEmitter {
             );
         }
 
-        // rings are shared between techniques
-        for (const aRing of rings) {
-            tileInfoWriter.addRingPoints(
-                this.m_tileInfo.polygonGroup,
-                aRing.contour,
-                aRing.isOuterRing
-            );
+        for (const rings of polygons) {
+            // rings are shared between techniques
+            for (const aRing of rings) {
+                tileInfoWriter.addRingPoints(
+                    this.m_tileInfo.polygonGroup,
+                    aRing.contour,
+                    aRing.isOuterRing
+                );
+            }
         }
     }
 

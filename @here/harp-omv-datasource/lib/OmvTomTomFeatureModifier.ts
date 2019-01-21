@@ -8,7 +8,6 @@ import { MapEnv } from "@here/harp-datasource-protocol";
 import { LoggerManager } from "@here/harp-utils";
 import { OmvGenericFeatureModifier } from "./OmvDataFilter";
 import { OmvFeatureFilterDescription, OmvFilterDescription } from "./OmvDecoderDefs";
-import { com } from "./proto/vector_tile";
 
 const logger = LoggerManager.instance.create("OmvTomTomFeatureModifier");
 
@@ -29,7 +28,7 @@ export class OmvTomTomFeatureModifier extends OmvGenericFeatureModifier {
     protected doProcessFeature(
         itemsToProcess: OmvFilterDescription[],
         itemsToIgnore: OmvFilterDescription[],
-        layer: com.mapbox.pb.Tile.ILayer,
+        layer: string,
         env: MapEnv,
         defaultResult: boolean
     ): boolean {
@@ -47,7 +46,7 @@ export class OmvTomTomFeatureModifier extends OmvGenericFeatureModifier {
      * @param layer
      * @param env
      */
-    private rewriteEnvironment(layer: com.mapbox.pb.Tile.ILayer, env: MapEnv) {
+    private rewriteEnvironment(layer: string, env: MapEnv) {
         // Rewriting landuse layers
         if (this.isWood(layer)) {
             this.updateEnvironment(env, "landuse", "wood");
@@ -140,172 +139,170 @@ export class OmvTomTomFeatureModifier extends OmvGenericFeatureModifier {
         }
     }
 
-    private isWood(layer: com.mapbox.pb.Tile.ILayer): boolean {
-        return layer.name === "Woodland" || layer.name === "Moor or heathland";
+    private isWood(layer: string): boolean {
+        return layer === "Woodland" || layer === "Moor or heathland";
     }
 
-    private isHospital(layer: com.mapbox.pb.Tile.ILayer): boolean {
-        return layer.name === "Hospital";
+    private isHospital(layer: string): boolean {
+        return layer === "Hospital";
     }
 
-    private isCemetery(layer: com.mapbox.pb.Tile.ILayer): boolean {
-        return layer.name === "Cemetery";
+    private isCemetery(layer: string): boolean {
+        return layer === "Cemetery";
     }
 
-    private isIndustrial(layer: com.mapbox.pb.Tile.ILayer): boolean {
-        return layer.name.indexOf("Industrial") >= 0 || layer.name === "Airport";
+    private isIndustrial(layer: string): boolean {
+        return layer.indexOf("Industrial") >= 0 || layer === "Airport";
     }
 
-    private isPark(layer: com.mapbox.pb.Tile.ILayer): boolean {
+    private isPark(layer: string): boolean {
         return (
-            layer.name === "Park" ||
-            layer.name === "City park" ||
-            layer.name === "National park" ||
-            layer.name === "Regional park" ||
-            layer.name.indexOf("grass") >= 0 ||
-            layer.name.indexOf("greens") >= 0
+            layer === "Park" ||
+            layer === "City park" ||
+            layer === "National park" ||
+            layer === "Regional park" ||
+            layer.indexOf("grass") >= 0 ||
+            layer.indexOf("greens") >= 0
         );
     }
 
-    private isBuiltup(layer: com.mapbox.pb.Tile.ILayer): boolean {
+    private isBuiltup(layer: string): boolean {
         return (
-            layer.name === "Built-up area" ||
-            layer.name === "Town paved area" ||
-            layer.name === "Shopping" ||
-            layer.name === "University" ||
-            layer.name === "Stadium" ||
-            layer.name.indexOf("ground") > 0
+            layer === "Built-up area" ||
+            layer === "Town paved area" ||
+            layer === "Shopping" ||
+            layer === "University" ||
+            layer === "Stadium" ||
+            layer.indexOf("ground") > 0
         );
     }
 
-    private isWater(layer: com.mapbox.pb.Tile.ILayer): boolean {
+    private isWater(layer: string): boolean {
         return (
-            layer.name === "Other water" ||
-            layer.name === "Ocean or sea" ||
-            layer.name === "Ocean" ||
-            layer.name === "Lake" ||
-            layer.name === "Sea" ||
-            layer.name === "Town swimming pool" ||
-            layer.name === "River"
+            layer === "Other water" ||
+            layer === "Ocean or sea" ||
+            layer === "Ocean" ||
+            layer === "Lake" ||
+            layer === "Sea" ||
+            layer === "Town swimming pool" ||
+            layer === "River"
         );
     }
 
-    private isRoadLabel(layer: com.mapbox.pb.Tile.ILayer): boolean {
-        return layer.name.indexOf("road label") >= 0;
+    private isRoadLabel(layer: string): boolean {
+        return layer.indexOf("road label") >= 0;
     }
 
-    private isRoadPath(layer: com.mapbox.pb.Tile.ILayer): boolean {
+    private isRoadPath(layer: string): boolean {
         return (
-            layer.name.indexOf("path") > 0 ||
-            layer.name === "Parking road" ||
-            layer.name === "Town walkway" ||
-            layer.name === "Pedestrian road" ||
-            layer.name === "Walkway road" ||
-            layer.name === "Town carriageway divider" ||
-            layer.name === "Runway" ||
-            layer.name === "Non public road"
+            layer.indexOf("path") > 0 ||
+            layer === "Parking road" ||
+            layer === "Town walkway" ||
+            layer === "Pedestrian road" ||
+            layer === "Walkway road" ||
+            layer === "Town carriageway divider" ||
+            layer === "Runway" ||
+            layer === "Non public road"
         );
     }
 
-    private isRoadStreet(layer: com.mapbox.pb.Tile.ILayer): boolean {
+    private isRoadStreet(layer: string): boolean {
         return (
-            layer.name.indexOf("Minor local road") >= 0 ||
-            layer.name.indexOf("minor local road") >= 0 ||
-            layer.name.indexOf("Toll local road") >= 0 ||
-            layer.name.indexOf("Local road") >= 0
+            layer.indexOf("Minor local road") >= 0 ||
+            layer.indexOf("minor local road") >= 0 ||
+            layer.indexOf("Toll local road") >= 0 ||
+            layer.indexOf("Local road") >= 0
         );
     }
-    private isRoadPrimary(layer: com.mapbox.pb.Tile.ILayer): boolean {
+    private isRoadPrimary(layer: string): boolean {
         return (
-            layer.name.indexOf("Major local road") >= 0 ||
-            layer.name.indexOf("Major road") >= 0 ||
-            layer.name.indexOf("major road") >= 0 ||
-            layer.name.indexOf("Motorway") >= 0 ||
-            layer.name.indexOf("motorway") >= 0 ||
-            layer.name.indexOf("International road") >= 0 ||
-            layer.name.indexOf("international road") >= 0
-        );
-    }
-
-    private isRoadSecondary(layer: com.mapbox.pb.Tile.ILayer): boolean {
-        return (
-            layer.name.indexOf("connecting road") >= 0 ||
-            layer.name.indexOf("Connecting road") >= 0 ||
-            layer.name.indexOf("secondary road") >= 0 ||
-            layer.name.indexOf("Secondary road") >= 0
+            layer.indexOf("Major local road") >= 0 ||
+            layer.indexOf("Major road") >= 0 ||
+            layer.indexOf("major road") >= 0 ||
+            layer.indexOf("Motorway") >= 0 ||
+            layer.indexOf("motorway") >= 0 ||
+            layer.indexOf("International road") >= 0 ||
+            layer.indexOf("international road") >= 0
         );
     }
 
-    private isRailway(layer: com.mapbox.pb.Tile.ILayer): boolean {
-        return layer.name === "Railway";
-    }
-
-    private isFerry(layer: com.mapbox.pb.Tile.ILayer): boolean {
-        return layer.name === "Ferry road";
-    }
-
-    private isBorder(layer: com.mapbox.pb.Tile.ILayer): boolean {
-        return layer.name.indexOf("border") > 0;
-    }
-
-    private isCountryLabel(layer: com.mapbox.pb.Tile.ILayer): boolean {
-        return layer.name === "Country name" || layer.name === "Country label";
-    }
-
-    private isStateLabel(layer: com.mapbox.pb.Tile.ILayer): boolean {
-        return layer.name === "City" || layer.name.indexOf("city") > 0;
-    }
-
-    private isRegionLabel(layer: com.mapbox.pb.Tile.ILayer): boolean {
-        return layer.name === "Town";
-    }
-
-    private isCountyLabel(layer: com.mapbox.pb.Tile.ILayer): boolean {
-        return layer.name === "Village";
-    }
-
-    private isPlaceLabel(layer: com.mapbox.pb.Tile.ILayer): boolean {
+    private isRoadSecondary(layer: string): boolean {
         return (
-            layer.name === "Park" ||
-            layer.name === "Railway station" ||
-            layer.name === "Airport POI" ||
-            layer.name === "Town greens"
+            layer.indexOf("connecting road") >= 0 ||
+            layer.indexOf("Connecting road") >= 0 ||
+            layer.indexOf("secondary road") >= 0 ||
+            layer.indexOf("Secondary road") >= 0
         );
     }
 
-    private isWaterLabel(layer: com.mapbox.pb.Tile.ILayer): boolean {
+    private isRailway(layer: string): boolean {
+        return layer === "Railway";
+    }
+
+    private isFerry(layer: string): boolean {
+        return layer === "Ferry road";
+    }
+
+    private isBorder(layer: string): boolean {
+        return layer.indexOf("border") > 0;
+    }
+
+    private isCountryLabel(layer: string): boolean {
+        return layer === "Country name" || layer === "Country label";
+    }
+
+    private isStateLabel(layer: string): boolean {
+        return layer === "City" || layer.indexOf("city") > 0;
+    }
+
+    private isRegionLabel(layer: string): boolean {
+        return layer === "Town";
+    }
+
+    private isCountyLabel(layer: string): boolean {
+        return layer === "Village";
+    }
+
+    private isPlaceLabel(layer: string): boolean {
         return (
-            layer.name === "Ocean name" ||
-            layer.name === "River label" ||
-            layer.name.indexOf("water label") > 0
+            layer === "Park" ||
+            layer === "Railway station" ||
+            layer === "Airport POI" ||
+            layer === "Town greens"
         );
     }
 
-    private isMarineLabel(layer: com.mapbox.pb.Tile.ILayer): boolean {
-        return layer.name.indexOf("water label") > 0;
-    }
-
-    private isPoiLabel(layer: com.mapbox.pb.Tile.ILayer): boolean {
+    private isWaterLabel(layer: string): boolean {
         return (
-            layer.name === "National park name" ||
-            layer.name === "Landmark label" ||
-            layer.name.indexOf("label") >= 0
+            layer === "Ocean name" || layer === "River label" || layer.indexOf("water label") > 0
         );
     }
 
-    private isAeroway(layer: com.mapbox.pb.Tile.ILayer): boolean {
-        return layer.name === "Airport";
+    private isMarineLabel(layer: string): boolean {
+        return layer.indexOf("water label") > 0;
     }
 
-    private isBuilding(layer: com.mapbox.pb.Tile.ILayer): boolean {
-        return layer.name.indexOf("building") >= 0;
+    private isPoiLabel(layer: string): boolean {
+        return (
+            layer === "National park name" ||
+            layer === "Landmark label" ||
+            layer.indexOf("label") >= 0
+        );
     }
 
-    private isTunnel(layer: com.mapbox.pb.Tile.ILayer): boolean {
-        return layer.name.indexOf("tunnel") >= 0;
+    private isAeroway(layer: string): boolean {
+        return layer === "Airport";
     }
 
-    private isBridge(layer: com.mapbox.pb.Tile.ILayer): boolean {
-        return layer.name.indexOf("bridge") >= 0;
+    private isBuilding(layer: string): boolean {
+        return layer.indexOf("building") >= 0;
+    }
+
+    private isTunnel(layer: string): boolean {
+        return layer.indexOf("tunnel") >= 0;
+    }
+
+    private isBridge(layer: string): boolean {
+        return layer.indexOf("bridge") >= 0;
     }
 }
