@@ -27,61 +27,52 @@ import { assert } from "chai";
  */
 
 export class RoadFilter implements OmvFeatureFilter {
-    wantsLayer(layer: com.mapbox.pb.Tile.ILayer): boolean {
-        // return layer.name !== undefined && layer.name.startsWith("road");// roads and road labels
-        return layer.name !== undefined && layer.name === "road"; // only road lines, no labels
+    wantsLayer(layer: string): boolean {
+        // return layer !== undefined && layer.startsWith("road");// roads and road labels
+        return layer !== undefined && layer === "road"; // only road lines, no labels
     }
 
-    wantsPointFeature(
-        _layer: com.mapbox.pb.Tile.ILayer,
-        _feature: com.mapbox.pb.Tile.IFeature
-    ): boolean {
+    wantsPointFeature(_layer: string, _geometryType: OmvGeometryType): boolean {
         return false;
     }
 
-    wantsLineFeature(
-        _layer: com.mapbox.pb.Tile.ILayer,
-        _feature: com.mapbox.pb.Tile.IFeature
-    ): boolean {
+    wantsLineFeature(_layer: string, _geometryType: OmvGeometryType): boolean {
         return true;
     }
 
-    wantsPolygonFeature(
-        _layer: com.mapbox.pb.Tile.ILayer,
-        _feature: com.mapbox.pb.Tile.IFeature
-    ): boolean {
+    wantsPolygonFeature(_layer: string, _geometryType: OmvGeometryType): boolean {
         return false;
     }
 }
 
 export class RoadFeatureFilter implements OmvFeatureModifier {
-    doProcessPointFeature(_layer: com.mapbox.pb.Tile.ILayer, _env: MapEnv): boolean {
+    doProcessPointFeature(_layer: string, _env: MapEnv): boolean {
         return false;
     }
 
-    doProcessLineFeature(_layer: com.mapbox.pb.Tile.ILayer, env: MapEnv): boolean {
+    doProcessLineFeature(_layer: string, env: MapEnv): boolean {
         const roadClass = env.lookup("class");
         const isRoad = roadClass !== undefined && roadClass.toString().indexOf("rail") < 0;
         return isRoad;
     }
 
-    doProcessPolygonFeature(_layer: com.mapbox.pb.Tile.ILayer, _env: MapEnv): boolean {
+    doProcessPolygonFeature(_layer: string, _env: MapEnv): boolean {
         return false;
     }
 }
 
 export class RoadsToRailroads implements OmvFeatureModifier {
-    doProcessPointFeature(_layer: com.mapbox.pb.Tile.ILayer, _env: MapEnv): boolean {
+    doProcessPointFeature(_layer: string, _env: MapEnv): boolean {
         return false;
     }
 
-    doProcessLineFeature(_layer: com.mapbox.pb.Tile.ILayer, env: MapEnv): boolean {
+    doProcessLineFeature(_layer: string, env: MapEnv): boolean {
         // turn all roads into railroads
         env.entries.class = "major_rail";
         return true;
     }
 
-    doProcessPolygonFeature(_layer: com.mapbox.pb.Tile.ILayer, _env: MapEnv): boolean {
+    doProcessPolygonFeature(_layer: string, _env: MapEnv): boolean {
         return false;
     }
 }

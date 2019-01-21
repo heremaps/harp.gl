@@ -13,11 +13,17 @@ import {
     Technique,
     TileInfo
 } from "@here/harp-datasource-protocol";
-import { Env, MapEnv, ValueMap } from "@here/harp-datasource-protocol/lib/Theme";
-import { GeoBox, Projection, TileKey, webMercatorTilingScheme } from "@here/harp-geoutils";
+import { Env, MapEnv } from "@here/harp-datasource-protocol/lib/Theme";
+import {
+    GeoBox,
+    GeoCoordinates,
+    Projection,
+    TileKey,
+    webMercatorTilingScheme
+} from "@here/harp-geoutils";
 
 import { LoggerManager, PerformanceTimer } from "@here/harp-utils";
-import * as Long from "long";
+
 import * as THREE from "three";
 
 import {
@@ -25,7 +31,8 @@ import {
     TileDecoderService,
     WorkerServiceManager
 } from "@here/harp-mapview-decoder/index-worker";
-import { FeatureAttributes, OmvVisitor, visitOmv, visitOmvLayer } from "./OmvData";
+import { IGeometryProcessor } from "./IGeometryProcessor";
+import { OmvProtobufDataAdapter } from "./OmvData";
 import {
     OmvFeatureFilter,
     OmvFeatureModifier,
@@ -41,7 +48,6 @@ import {
 } from "./OmvDecoderDefs";
 import { OmvTileInfoEmitter } from "./OmvTileInfoEmitter";
 import { OmvTomTomFeatureModifier } from "./OmvTomTomFeatureModifier";
-import { com } from "./proto/vector_tile";
 
 const logger = LoggerManager.instance.create("OmvDecoder", { enabled: false });
 
@@ -73,37 +79,63 @@ export class Ring {
 
 export interface IOmvEmitter {
     processPointFeature(
-        layer: com.mapbox.pb.Tile.ILayer,
-        feature: com.mapbox.pb.Tile.IFeature,
+        layer: string,
+        geometry: GeoCoordinates[],
         env: MapEnv,
         techniques: Technique[],
         featureId: number | undefined
     ): void;
 
     processLineFeature(
-        layer: com.mapbox.pb.Tile.ILayer,
-        feature: com.mapbox.pb.Tile.IFeature,
+        layer: string,
+        feature: GeoCoordinates[][],
         env: MapEnv,
         techniques: Technique[],
         featureId: number | undefined
     ): void;
 
     processPolygonFeature(
-        layer: com.mapbox.pb.Tile.ILayer,
-        feature: com.mapbox.pb.Tile.IFeature,
+        layer: string,
+        feature: GeoCoordinates[][][],
         env: MapEnv,
         techniques: Technique[],
         featureId: number | undefined
     ): void;
 }
 
-export class OmvDecoder implements OmvVisitor {
-    private readonly m_featureAttributes = new FeatureAttributes();
+/**
+ * The class [[OmvDataAdapter]] prepares protobuf encoded OMV data so they
+ * can be processed by [[OmvDecoder]].
+ */
+export interface OmvDataAdapter {
+    /**
+     * Checks if the given data can be processed by this OmvDataAdpter.
+     * @param data The raw data to adapt.
+     */
+    canProcess(data: ArrayBufferLike | {}): boolean;
 
+    /**
+     * Process the given raw data.
+     *
+     * @param data The raw data to process.
+     * @param tileKey The TileKey of the enclosing Tile.
+     * @param geoBox The GeoBox of the enclosing Tile.
+     * @param displayZoomLevel The current display zoom level.
+     */
+    process(
+        data: ArrayBufferLike | {},
+        tileKey: TileKey,
+        geoBox: GeoBox,
+        displayZoomLevel: number
+    ): void;
+}
+
+export class OmvDecoder implements IGeometryProcessor {
     // The emitters are both optional now.
     // TODO: Add option to control emitter generation.
     private m_decodedTileEmitter: OmvDecodedTileEmitter | undefined;
     private m_infoTileEmitter: OmvTileInfoEmitter | undefined;
+    private readonly m_dataAdapters: OmvDataAdapter[] = [];
 
     constructor(
         private readonly m_projection: Projection,
@@ -115,9 +147,11 @@ export class OmvDecoder implements OmvVisitor {
         private readonly m_createTileInfo = false,
         private readonly m_gatherRoadSegments = false,
         private readonly m_languages?: string[]
-    ) {}
+    ) {
+        // Register the default adapters.
 
-    endVisitLayer?(_layer: com.mapbox.pb.Tile.Layer): void;
+        this.m_dataAdapters.push(new OmvProtobufDataAdapter(this, m_dataFilter, logger));
+    }
 
     /**
      * Given a tile and a protobuffer, it returns a decoded tile and it creates the geometries that
@@ -127,8 +161,11 @@ export class OmvDecoder implements OmvVisitor {
      * @param data The protobuffer to decode from.
      * @returns A [[DecodedTile]]
      */
-    getDecodedTile(tileKey: TileKey, displayZoomLevel: number, data: ArrayBufferLike): DecodedTile {
-        const proto = com.mapbox.pb.Tile.decode(new Uint8Array(data));
+    getDecodedTile(
+        tileKey: TileKey,
+        displayZoomLevel: number,
+        data: ArrayBufferLike | {}
+    ): DecodedTile {
         const geoBox = webMercatorTilingScheme.getGeoBox(tileKey);
         const tileBounds = this.m_projection.projectBox(geoBox, new THREE.Box3());
         const center = new THREE.Vector3();
@@ -160,73 +197,27 @@ export class OmvDecoder implements OmvVisitor {
             );
         }
 
-        const dataFilter = this.m_dataFilter;
-
-        visitOmv(proto, {
-            visitLayer: layer => {
-                const storageLevel = tileKey.level;
-
-                if (dataFilter === undefined || dataFilter.wantsLayer(layer, storageLevel)) {
-                    visitOmvLayer(layer, {
-                        visitPolygonFeature: feature => {
-                            if (
-                                dataFilter === undefined ||
-                                dataFilter.wantsPolygonFeature(layer, feature, storageLevel)
-                            ) {
-                                this.processPolygonFeature(
-                                    layer,
-                                    feature,
-                                    storageLevel,
-                                    displayZoomLevel
-                                );
-                            }
-                        },
-                        visitLineFeature: feature => {
-                            if (
-                                dataFilter === undefined ||
-                                dataFilter.wantsLineFeature(layer, feature, storageLevel)
-                            ) {
-                                this.processLineFeature(
-                                    layer,
-                                    feature,
-                                    storageLevel,
-                                    displayZoomLevel
-                                );
-                            }
-                        },
-                        visitPointFeature: feature => {
-                            if (
-                                dataFilter === undefined ||
-                                dataFilter.wantsPointFeature(layer, feature, storageLevel)
-                            ) {
-                                this.processPointFeature(
-                                    layer,
-                                    feature,
-                                    storageLevel,
-                                    displayZoomLevel
-                                );
-                            }
-                        }
-                    });
-                }
-                return false;
+        for (const adapter of this.m_dataAdapters.values()) {
+            if (adapter.canProcess(data)) {
+                adapter.process(data, tileKey, geoBox, displayZoomLevel);
+                break;
             }
-        });
+        }
 
         const decodedTile = this.m_decodedTileEmitter.getDecodedTile();
 
         if (this.m_createTileInfo) {
             decodedTile.tileInfo = this.m_infoTileEmitter!.getTileInfo();
         }
+
         return decodedTile;
     }
 
     getTileInfo(
         tileKey: TileKey,
         displayZoomLevel: number,
-        data: ArrayBufferLike
+        data: ArrayBufferLike | {}
     ): ExtendedTileInfo {
-        const proto = com.mapbox.pb.Tile.decode(new Uint8Array(data));
         const geoBox = webMercatorTilingScheme.getGeoBox(tileKey);
         const tileBounds = this.m_projection.projectBox(geoBox, new THREE.Box3());
         const center = new THREE.Vector3();
@@ -249,74 +240,23 @@ export class OmvDecoder implements OmvVisitor {
             this.m_gatherRoadSegments
         );
 
-        const dataFilter = this.m_dataFilter;
-
-        visitOmv(proto, {
-            visitLayer: layer => {
-                const storageLevel = tileKey.level;
-
-                if (dataFilter === undefined || dataFilter.wantsLayer(layer, storageLevel)) {
-                    visitOmvLayer(layer, {
-                        visitPolygonFeature: feature => {
-                            if (
-                                dataFilter === undefined ||
-                                dataFilter.wantsPolygonFeature(layer, feature, storageLevel)
-                            ) {
-                                this.processPolygonFeature(
-                                    layer,
-                                    feature,
-                                    storageLevel,
-                                    displayZoomLevel
-                                );
-                            }
-                        },
-                        visitLineFeature: feature => {
-                            if (
-                                dataFilter === undefined ||
-                                dataFilter.wantsLineFeature(layer, feature, storageLevel)
-                            ) {
-                                this.processLineFeature(
-                                    layer,
-                                    feature,
-                                    storageLevel,
-                                    displayZoomLevel
-                                );
-                            }
-                        },
-                        visitPointFeature: feature => {
-                            if (
-                                dataFilter === undefined ||
-                                dataFilter.wantsPointFeature(layer, feature, storageLevel)
-                            ) {
-                                this.processPointFeature(
-                                    layer,
-                                    feature,
-                                    storageLevel,
-                                    displayZoomLevel
-                                );
-                            }
-                        }
-                    });
-                }
-                return false;
+        for (const adapter of this.m_dataAdapters.values()) {
+            if (adapter.canProcess(data)) {
+                adapter.process(data, tileKey, geoBox, displayZoomLevel);
+                break;
             }
-        });
+        }
 
         return this.m_infoTileEmitter.getTileInfo();
     }
 
-    private processPointFeature(
-        layer: com.mapbox.pb.Tile.ILayer,
-        feature: com.mapbox.pb.Tile.IFeature,
+    processPointFeature(
+        layer: string,
+        geometry: GeoCoordinates[],
+        env: MapEnv,
         storageLevel: number,
         displayLevel: number
     ): void {
-        if (!feature.geometry) {
-            return;
-        }
-
-        const env = this.createEnv(layer, feature, "point", storageLevel, displayLevel);
-
         if (
             this.m_featureModifier !== undefined &&
             !this.m_featureModifier.doProcessPointFeature(layer, env, storageLevel)
@@ -341,29 +281,24 @@ export class OmvDecoder implements OmvVisitor {
         if (this.m_decodedTileEmitter) {
             this.m_decodedTileEmitter.processPointFeature(
                 layer,
-                feature,
+                geometry,
                 env,
                 techniques,
                 featureId
             );
         }
         if (this.m_infoTileEmitter) {
-            this.m_infoTileEmitter.processPointFeature(layer, feature, env, techniques, featureId);
+            this.m_infoTileEmitter.processPointFeature(layer, geometry, env, techniques, featureId);
         }
     }
 
-    private processLineFeature(
-        layer: com.mapbox.pb.Tile.ILayer,
-        feature: com.mapbox.pb.Tile.IFeature,
+    processLineFeature(
+        layer: string,
+        geometry: GeoCoordinates[][],
+        env: MapEnv,
         storageLevel: number,
         displayLevel: number
     ): void {
-        if (!feature.geometry) {
-            return;
-        }
-
-        const env = this.createEnv(layer, feature, "line", storageLevel, displayLevel);
-
         if (
             this.m_featureModifier !== undefined &&
             !this.m_featureModifier.doProcessLineFeature(layer, env, storageLevel)
@@ -388,29 +323,24 @@ export class OmvDecoder implements OmvVisitor {
         if (this.m_decodedTileEmitter) {
             this.m_decodedTileEmitter.processLineFeature(
                 layer,
-                feature,
+                geometry,
                 env,
                 techniques,
                 featureId
             );
         }
         if (this.m_infoTileEmitter) {
-            this.m_infoTileEmitter.processLineFeature(layer, feature, env, techniques, featureId);
+            this.m_infoTileEmitter.processLineFeature(layer, geometry, env, techniques, featureId);
         }
     }
 
-    private processPolygonFeature(
-        layer: com.mapbox.pb.Tile.ILayer,
-        feature: com.mapbox.pb.Tile.IFeature,
+    processPolygonFeature(
+        layer: string,
+        geometry: GeoCoordinates[][][],
+        env: MapEnv,
         storageLevel: number,
         displayLevel: number
     ): void {
-        if (!feature.geometry) {
-            return;
-        }
-
-        const env = this.createEnv(layer, feature, "polygon", storageLevel, displayLevel);
-
         if (
             this.m_featureModifier !== undefined &&
             !this.m_featureModifier.doProcessPolygonFeature(layer, env, storageLevel)
@@ -435,7 +365,7 @@ export class OmvDecoder implements OmvVisitor {
         if (this.m_decodedTileEmitter) {
             this.m_decodedTileEmitter.processPolygonFeature(
                 layer,
-                feature,
+                geometry,
                 env,
                 techniques,
                 featureId
@@ -444,87 +374,12 @@ export class OmvDecoder implements OmvVisitor {
         if (this.m_infoTileEmitter) {
             this.m_infoTileEmitter.processPolygonFeature(
                 layer,
-                feature,
+                geometry,
                 env,
                 techniques,
                 featureId
             );
         }
-    }
-
-    private decodeFeatureId(feature: com.mapbox.pb.Tile.IFeature): number | undefined {
-        if (feature.id !== undefined) {
-            if (typeof feature.id === "number") {
-                return feature.id;
-            } else if (Long.isLong(feature.id)) {
-                if (feature.id.greaterThan(Number.MAX_SAFE_INTEGER)) {
-                    logger.error(
-                        "Invalid ID: Larger than largest available Number in feature: ",
-                        feature
-                    );
-                }
-                return (feature.id as any).toNumber(); // long
-            }
-        }
-        return undefined;
-    }
-
-    private createEnv(
-        layer: com.mapbox.pb.Tile.ILayer,
-        feature: com.mapbox.pb.Tile.IFeature,
-        geometryType: string,
-        storageLevel: number,
-        displayLevel: number,
-        parent?: Env
-    ): MapEnv {
-        const attributes: ValueMap = {
-            $layer: layer.name,
-            $level: storageLevel,
-            $displayLevel: displayLevel,
-            $geometryType: geometryType
-        };
-
-        // Some sources serve `id` directly as `IFeature` property ...
-        if (feature.id !== undefined) {
-            attributes.$id = this.decodeFeatureId(feature);
-        }
-
-        this.m_featureAttributes.accept(layer, feature, {
-            visitAttribute(key, value) {
-                const v = value as any;
-                if (v.hasOwnProperty("stringValue")) {
-                    attributes[key] = value.stringValue;
-                } else if (v.hasOwnProperty("boolValue")) {
-                    attributes[key] = value.boolValue;
-                } else if (v.hasOwnProperty("doubleValue")) {
-                    attributes[key] = value.doubleValue;
-                } else if (v.hasOwnProperty("floatValue")) {
-                    attributes[key] = value.floatValue;
-                } else if (v.hasOwnProperty("intValue")) {
-                    attributes[key] =
-                        typeof value.intValue === "number"
-                            ? value.intValue
-                            : (value.intValue as any).toNumber(); // long
-                } else if (v.hasOwnProperty("uintValue")) {
-                    attributes[key] =
-                        typeof value.uintValue === "number"
-                            ? value.uintValue
-                            : (value.uintValue as any).toNumber(); // long
-                } else if (v.hasOwnProperty("sintValue")) {
-                    attributes[key] =
-                        typeof value.sintValue === "number"
-                            ? value.sintValue
-                            : (value.sintValue as any).toNumber(); // long
-                }
-
-                // ... while some sources serve `id` in attributes.
-                if (key === "id") {
-                    attributes.$id = attributes[key];
-                }
-                return true;
-            }
-        });
-        return new MapEnv(attributes, parent);
     }
 }
 

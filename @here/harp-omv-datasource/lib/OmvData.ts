@@ -4,7 +4,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GeoBox, TileKey } from "@here/harp-geoutils";
+import { Env, MapEnv, Value, ValueMap } from "@here/harp-datasource-protocol";
+import { GeoBox, GeoCoordinates, TileKey } from "@here/harp-geoutils";
+import { ILogger } from "@here/harp-utils";
+import * as Long from "long";
+import { IGeometryProcessor } from "./IGeometryProcessor";
+import { OmvFeatureFilter } from "./OmvDataFilter";
+import { OmvDataAdapter } from "./OmvDecoder";
+import { OmvGeometryType } from "./OmvDecoderDefs";
 import { com } from "./proto/vector_tile";
 
 /**
@@ -228,5 +235,410 @@ export class GeometryCommands {
                 visitor.visitCommand({ kind });
             }
         }
+    }
+}
+
+const propertyCategories = [
+    "stringValue",
+    "floatValue",
+    "doubleValue",
+    "intValue",
+    "uintValue",
+    "sintValue",
+    "boolValue"
+];
+
+function simplifiedValue(value: com.mapbox.pb.Tile.IValue): Value {
+    const hasOwnProperty = Object.prototype.hasOwnProperty;
+
+    for (const category of propertyCategories) {
+        if (hasOwnProperty.call(value, category)) {
+            const v = value[category as keyof com.mapbox.pb.Tile.IValue];
+
+            if (v === undefined) {
+                throw new Error("unpexted undefined value");
+            }
+
+            return Long.isLong(v) ? (v as any).toNumber() : v;
+        }
+    }
+
+    throw new Error("not happening");
+}
+
+function replaceReservedName(name: string): string {
+    switch (name) {
+        case "id":
+            return "$id";
+        default:
+            return name;
+    } // switch
+}
+
+function decodeFeatureId(
+    feature: com.mapbox.pb.Tile.IFeature,
+    logger?: ILogger
+): number | undefined {
+    if (feature.id !== undefined) {
+        if (typeof feature.id === "number") {
+            return feature.id;
+        } else if (Long.isLong(feature.id)) {
+            if (feature.id.greaterThan(Number.MAX_SAFE_INTEGER)) {
+                if (logger !== undefined) {
+                    logger.error(
+                        "Invalid ID: Larger than largest available Number in feature: ",
+                        feature
+                    );
+                }
+            }
+            return (feature.id as any).toNumber(); // long
+        }
+    }
+    return undefined;
+}
+
+function readAttributes(
+    layer: com.mapbox.pb.Tile.ILayer,
+    feature: com.mapbox.pb.Tile.IFeature,
+    defaultAttributes: ValueMap = {}
+): ValueMap {
+    const attrs = new FeatureAttributes();
+
+    const attributes: ValueMap = defaultAttributes || {};
+
+    attrs.accept(layer, feature, {
+        visitAttribute: (name, value) => {
+            attributes[replaceReservedName(name)] = simplifiedValue(value);
+            return true;
+        }
+    });
+
+    return attributes;
+}
+
+function createFeatureEnv(
+    layer: com.mapbox.pb.Tile.ILayer,
+    feature: com.mapbox.pb.Tile.IFeature,
+    geometryType: string,
+    storageLevel: number,
+    displayLevel: number,
+    logger?: ILogger,
+    parent?: Env
+): MapEnv {
+    const attributes: ValueMap = {
+        $layer: layer.name,
+        $level: storageLevel,
+        $displayLevel: displayLevel,
+        $geometryType: geometryType
+    };
+
+    // Some sources serve `id` directly as `IFeature` property ...
+    if (feature.id !== undefined) {
+        attributes.$id = decodeFeatureId(feature, logger);
+    }
+
+    readAttributes(layer, feature, attributes);
+
+    return new MapEnv(attributes, parent);
+}
+
+function asGeometryType(feature: com.mapbox.pb.Tile.IFeature | undefined): OmvGeometryType {
+    if (feature === undefined) {
+        return OmvGeometryType.UNKNOWN;
+    }
+
+    switch (feature.type) {
+        case com.mapbox.pb.Tile.GeomType.UNKNOWN:
+            return OmvGeometryType.UNKNOWN;
+        case com.mapbox.pb.Tile.GeomType.POINT:
+            return OmvGeometryType.POINT;
+        case com.mapbox.pb.Tile.GeomType.LINESTRING:
+            return OmvGeometryType.LINESTRING;
+        case com.mapbox.pb.Tile.GeomType.POLYGON:
+            return OmvGeometryType.POLYGON;
+        default:
+            return OmvGeometryType.UNKNOWN;
+    } // switch
+}
+
+function isArrayBufferLike(data: any): data is ArrayBufferLike {
+    return data instanceof ArrayBuffer || data instanceof SharedArrayBuffer;
+}
+
+/**
+ * The class [[OmvProtobufDataAdapter]] converts OMV protobuf geo data
+ * to geometries for the given [[IGeometryProcessor]].
+ */
+export class OmvProtobufDataAdapter implements OmvDataAdapter, OmvVisitor {
+    private readonly m_geometryCommands = new GeometryCommands();
+    private readonly m_processor: IGeometryProcessor;
+    private readonly m_logger?: ILogger;
+    private m_dataFilter?: OmvFeatureFilter;
+
+    private m_tileKey!: TileKey;
+    private m_geoBox!: GeoBox;
+    private m_displayZoomLevel!: number;
+    private m_layer!: com.mapbox.pb.Tile.ILayer;
+
+    /**
+     * Constructs a new [[OmvProtobufDataAdapter]].
+     *
+     * @param processor The [[IGeometryProcessor]] used to process the data.
+     * @param dataFilter The [[OmvFeatureFilter]] used to filter features.
+     * @param logger The [[ILogger]] used to log diagnostic messages.
+     */
+    constructor(processor: IGeometryProcessor, dataFilter?: OmvFeatureFilter, logger?: ILogger) {
+        this.m_processor = processor;
+        this.m_dataFilter = dataFilter;
+        this.m_logger = logger;
+    }
+
+    /**
+     * The [[OmvFeatureFilter]] used to filter features.
+     */
+    get dataFilter(): OmvFeatureFilter | undefined {
+        return this.m_dataFilter;
+    }
+
+    /**
+     * The [[OmvFeatureFilter]] used to filter features.
+     */
+    set dataFilter(dataFilter: OmvFeatureFilter | undefined) {
+        this.m_dataFilter = dataFilter;
+    }
+
+    /**
+     * Checks that the given data can be processed by this [[OmvProtobufDataAdapter]].
+     */
+    canProcess(data: ArrayBufferLike | {}): boolean {
+        return isArrayBufferLike(data);
+    }
+
+    /**
+     * Processes the given data payload using this adapter's [[IGeometryProcessor]].
+     *
+     * @param data The data payload to process.
+     * @param tileKey The [[TileKey]] of the tile enclosing the data.
+     * @param geoBox The [[GeoBox]] of the tile enclosing the data.
+     * @param displayZoomLevel The current zoom level.
+     */
+    process(data: ArrayBufferLike, tileKey: TileKey, geoBox: GeoBox, displayZoomLevel: number) {
+        const payload = new Uint8Array(data);
+        const proto = com.mapbox.pb.Tile.decode(payload);
+
+        this.m_tileKey = tileKey;
+        this.m_geoBox = geoBox;
+        this.m_displayZoomLevel = displayZoomLevel;
+
+        visitOmv(proto, this);
+    }
+
+    /**
+     * Visits the OMV layer.
+     *
+     * @param layer The OMV layer to process.
+     */
+    visitLayer(layer: com.mapbox.pb.Tile.ILayer): boolean {
+        this.m_layer = layer;
+
+        const storageLevel = this.m_tileKey.level;
+        const layerName = layer.name;
+
+        if (
+            this.m_dataFilter !== undefined &&
+            !this.m_dataFilter.wantsLayer(layerName, storageLevel)
+        ) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Visits point features.
+     *
+     * @param feature The OMV point features to process.
+     */
+    visitPointFeature(feature: com.mapbox.pb.Tile.IFeature): void {
+        if (feature.geometry === undefined) {
+            return;
+        }
+
+        const storageLevel = this.m_tileKey.level;
+        const layerName = this.m_layer.name;
+
+        if (
+            this.m_dataFilter !== undefined &&
+            !this.m_dataFilter.wantsPointFeature(layerName, asGeometryType(feature), storageLevel)
+        ) {
+            return;
+        }
+
+        const geometry: GeoCoordinates[] = [];
+        this.m_geometryCommands.accept(
+            feature.geometry,
+            this.m_tileKey,
+            this.m_geoBox,
+            this.m_layer.extent,
+            {
+                visitCommand: command => {
+                    if (isMoveToCommand(command)) {
+                        geometry.push(new GeoCoordinates(command.latitude, command.longitude));
+                    }
+                }
+            }
+        );
+
+        if (geometry.length === 0) {
+            return;
+        }
+
+        const env = createFeatureEnv(
+            this.m_layer,
+            feature,
+            "point",
+            storageLevel,
+            this.m_displayZoomLevel,
+            this.m_logger
+        );
+
+        this.m_processor.processPointFeature(
+            layerName,
+            geometry,
+            env,
+            storageLevel,
+            this.m_displayZoomLevel
+        );
+    }
+
+    /**
+     * Visits the line features.
+     *
+     * @param feature The line features to process.
+     */
+    visitLineFeature(feature: com.mapbox.pb.Tile.IFeature): void {
+        if (feature.geometry === undefined) {
+            return;
+        }
+
+        const storageLevel = this.m_tileKey.level;
+        const layerName = this.m_layer.name;
+
+        if (
+            this.m_dataFilter !== undefined &&
+            !this.m_dataFilter.wantsLineFeature(layerName, asGeometryType(feature), storageLevel)
+        ) {
+            return;
+        }
+
+        const geometry: GeoCoordinates[][] = [];
+        let currentLine: GeoCoordinates[];
+        this.m_geometryCommands.accept(
+            feature.geometry,
+            this.m_tileKey,
+            this.m_geoBox,
+            this.m_layer.extent,
+            {
+                visitCommand: command => {
+                    if (isMoveToCommand(command)) {
+                        const geoPoint = new GeoCoordinates(command.latitude, command.longitude);
+                        currentLine = [geoPoint];
+                        geometry.push(currentLine);
+                    } else if (isLineToCommand(command)) {
+                        currentLine.push(new GeoCoordinates(command.latitude, command.longitude));
+                    }
+                }
+            }
+        );
+
+        if (geometry.length === 0) {
+            return;
+        }
+
+        const env = createFeatureEnv(
+            this.m_layer,
+            feature,
+            "line",
+            storageLevel,
+            this.m_displayZoomLevel,
+            this.m_logger
+        );
+
+        this.m_processor.processLineFeature(
+            layerName,
+            geometry,
+            env,
+            storageLevel,
+            this.m_displayZoomLevel
+        );
+    }
+
+    /**
+     * Visits the polygon features.
+     *
+     * @param feature The polygon features to process.
+     */
+    visitPolygonFeature(feature: com.mapbox.pb.Tile.IFeature): void {
+        if (feature.geometry === undefined) {
+            return;
+        }
+
+        const storageLevel = this.m_tileKey.level;
+        const layerName = this.m_layer.name;
+
+        if (
+            this.m_dataFilter !== undefined &&
+            !this.m_dataFilter.wantsPolygonFeature(layerName, asGeometryType(feature), storageLevel)
+        ) {
+            return;
+        }
+
+        const geometry: GeoCoordinates[][][] = [];
+        const currentPolygon: GeoCoordinates[][] = [];
+        let currentRing: GeoCoordinates[];
+        this.m_geometryCommands.accept(
+            feature.geometry,
+            this.m_tileKey,
+            this.m_geoBox,
+            this.m_layer.extent,
+            {
+                visitCommand: command => {
+                    if (isMoveToCommand(command)) {
+                        const geoPoint = new GeoCoordinates(command.latitude, command.longitude);
+                        currentRing = [geoPoint];
+                    } else if (isLineToCommand(command)) {
+                        const geoPoint = new GeoCoordinates(command.latitude, command.longitude);
+                        currentRing.push(geoPoint);
+                    } else if (isClosePathCommand(command)) {
+                        currentPolygon.push(currentRing);
+                    }
+                }
+            }
+        );
+
+        if (currentPolygon.length > 0) {
+            geometry.push(currentPolygon);
+        }
+
+        if (geometry.length === 0) {
+            return;
+        }
+
+        const env = createFeatureEnv(
+            this.m_layer,
+            feature,
+            "polygon",
+            storageLevel,
+            this.m_displayZoomLevel,
+            this.m_logger
+        );
+
+        this.m_processor.processPolygonFeature(
+            layerName,
+            geometry,
+            env,
+            storageLevel,
+            this.m_displayZoomLevel
+        );
     }
 }

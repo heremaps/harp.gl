@@ -37,11 +37,9 @@ import { assert, LoggerManager, Math2D } from "@here/harp-utils";
 import earcut from "earcut";
 import * as THREE from "three";
 
-import { identityProjection } from "@here/harp-geoutils";
-import { GeometryCommands, isClosePathCommand, isLineToCommand, isMoveToCommand } from "./OmvData";
+import { GeoCoordinates, identityProjection } from "@here/harp-geoutils";
 import { LinesGeometry } from "./OmvDataSource";
 import { IOmvEmitter, OmvDecoder, Ring } from "./OmvDecoder";
-import { com } from "./proto/vector_tile";
 
 const logger = LoggerManager.instance.create("OmvDecodedTileEmitter");
 
@@ -104,8 +102,6 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
     private readonly m_solidLines: LinesGeometry[] = [];
     private readonly m_dashedLines: LinesGeometry[] = [];
 
-    private readonly m_geometryCommands = new GeometryCommands();
-
     private m_outliner: Outliner = new Outliner();
     private m_extruder: Extruder = new Extruder();
     private readonly m_sources: string[] = [];
@@ -127,21 +123,13 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
      * @param featureId The id of the feature.
      */
     processPointFeature(
-        layer: com.mapbox.pb.Tile.ILayer,
-        feature: com.mapbox.pb.Tile.IFeature,
+        layer: string,
+        geometry: GeoCoordinates[],
         env: MapEnv,
         techniques: Technique[],
         featureId: number | undefined
     ): void {
-        if (!feature.geometry) {
-            return;
-        }
-
         this.processFeatureCommon(env);
-
-        const geometry = feature.geometry;
-
-        const worldPos = new THREE.Vector3();
 
         for (const technique of techniques) {
             if (technique === undefined) {
@@ -191,57 +179,49 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                 }
             }
 
-            this.m_geometryCommands.accept(
-                geometry,
-                this.m_decodeInfo.tileKey,
-                this.m_decodeInfo.geoBox,
-                layer.extent,
-                {
-                    visitCommand: command => {
-                        if (isMoveToCommand(command)) {
-                            const { x, y } = this.m_decodeInfo.projection
-                                .projectPoint(command, worldPos)
-                                .sub(this.m_decodeInfo.center);
-                            if (shouldCreateTextGeometries) {
-                                const textTechnique = technique as TextTechnique;
-                                const textLabel = textTechnique.label;
-                                const useAbbreviation = textTechnique.useAbbreviation as boolean;
-                                const useIsoCode = textTechnique.useIsoCode as boolean;
-                                const name: Value =
-                                    typeof textLabel === "string"
-                                        ? env.lookup(textLabel)
-                                        : OmvDecoder.getFeatureName(
-                                              env,
-                                              useAbbreviation,
-                                              useIsoCode,
-                                              this.m_languages
-                                          );
+            const worldPos = new THREE.Vector3();
 
-                                if (name && typeof name === "string") {
-                                    texts.push(meshBuffers.addText(name));
-                                } else {
-                                    texts.push(INVALID_ARRAY_INDEX);
-                                }
-                            }
+            for (const geoPoint of geometry) {
+                const { x, y } = this.m_decodeInfo.projection
+                    .projectPoint(geoPoint, worldPos)
+                    .sub(this.m_decodeInfo.center);
+                if (shouldCreateTextGeometries) {
+                    const textTechnique = technique as TextTechnique;
+                    const textLabel = textTechnique.label;
+                    const useAbbreviation = textTechnique.useAbbreviation as boolean;
+                    const useIsoCode = textTechnique.useIsoCode as boolean;
+                    const name: Value =
+                        typeof textLabel === "string"
+                            ? env.lookup(textLabel)
+                            : OmvDecoder.getFeatureName(
+                                  env,
+                                  useAbbreviation,
+                                  useIsoCode,
+                                  this.m_languages
+                              );
 
-                            // Always store the position, otherwise the following POIs will be
-                            // misplaced.
-                            positions.push(x, y, 0);
-
-                            if (this.m_gatherFeatureIds) {
-                                featureIds.push(featureId);
-                            }
-                            if (isPoiTechnique) {
-                                if (imageTexture === undefined) {
-                                    imageTextures.push(INVALID_ARRAY_INDEX);
-                                } else {
-                                    imageTextures.push(meshBuffers.addText(imageTexture));
-                                }
-                            }
-                        }
+                    if (name && typeof name === "string") {
+                        texts.push(meshBuffers.addText(name));
+                    } else {
+                        texts.push(INVALID_ARRAY_INDEX);
                     }
                 }
-            );
+
+                // Always store the position, otherwise the following POIs will be
+                // misplaced.
+                positions.push(x, y, 0);
+
+                if (this.m_gatherFeatureIds) {
+                    featureIds.push(featureId);
+                }
+                if (isPoiTechnique) {
+                    if (imageTexture === undefined) {
+                        imageTextures.push(INVALID_ARRAY_INDEX);
+                    } else {
+                        imageTextures.push(meshBuffers.addText(imageTexture));
+                    }
+                }
+            }
         }
     }
 
@@ -256,45 +236,28 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
      * @param featureId The id of the feature.
      */
     processLineFeature(
-        layer: com.mapbox.pb.Tile.ILayer,
-        feature: com.mapbox.pb.Tile.IFeature,
+        layer: string,
+        geometry: GeoCoordinates[][],
         env: MapEnv,
         techniques: Technique[],
         featureId: number | undefined
     ): void {
-        if (!feature.geometry) {
-            return;
-        }
-
         this.processFeatureCommon(env);
 
         const lines: number[][] = [];
-        let line: number[];
 
         const worldPos = new THREE.Vector3();
 
-        this.m_geometryCommands.accept(
-            feature.geometry,
-            this.m_decodeInfo.tileKey,
-            this.m_decodeInfo.geoBox,
-            layer.extent,
-            {
-                visitCommand: command => {
-                    if (isMoveToCommand(command)) {
-                        this.m_decodeInfo.projection
-                            .projectPoint(command, worldPos)
-                            .sub(this.m_decodeInfo.center);
-                        line = [worldPos.x, worldPos.y];
-                        lines.push(line);
-                    } else if (isLineToCommand(command)) {
-                        this.m_decodeInfo.projection
-                            .projectPoint(command, worldPos)
-                            .sub(this.m_decodeInfo.center);
-                        line.push(worldPos.x, worldPos.y);
-                    }
-                }
-            }
-        );
+        const { projection, center } = this.m_decodeInfo;
+
+        for (const polyline of geometry) {
+            const line: number[] = [];
+            polyline.forEach(geoPoint => {
+                const { x, y } = projection.projectPoint(geoPoint, worldPos).sub(center);
+                line.push(x, y);
+            });
+            lines.push(line);
+        }
 
         const wantCircle = this.m_decodeInfo.tileKey.level >= 11;
 
@@ -507,16 +470,12 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
      * @param featureId The id of the feature.
      */
     processPolygonFeature(
-        layer: com.mapbox.pb.Tile.ILayer,
-        feature: com.mapbox.pb.Tile.IFeature,
+        layer: string,
+        geometry: GeoCoordinates[][][],
         env: MapEnv,
         techniques: Technique[],
         featureId: number | undefined
     ): void {
-        if (!feature.geometry) {
-            return;
-        }
-
         this.processFeatureCommon(env);
 
         const techniqueIndex = techniques[0]._index;
@@ -552,156 +511,117 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
             return;
         }
 
-        const worldPos = new THREE.Vector3();
-        const rings = new Array<Ring>();
-        let ring: number[];
-        let ringTexCoords: number[];
+        const { projection, center } = this.m_decodeInfo;
 
+        const polygons: Ring[][] = [];
+
+        const worldPos = new THREE.Vector3();
         const texCoord = new THREE.Vector3();
+
         const texCoordProjection = identityProjection;
+
         const texCoordBox = texCoordProjection.projectBox(
             this.m_decodeInfo.geoBox,
             new THREE.Box3()
         );
+
         const texCoordBoxSize = texCoordBox.getSize(new THREE.Vector3());
 
-        this.m_geometryCommands.accept(
-            feature.geometry,
-            this.m_decodeInfo.tileKey,
-            this.m_decodeInfo.geoBox,
-            layer.extent,
-            {
-                visitCommand: command => {
-                    if (isMoveToCommand(command)) {
-                        const { x, y } = this.m_decodeInfo.projection
-                            .projectPoint(command, worldPos)
-                            .sub(this.m_decodeInfo.center);
-                        ring = [x, y];
-                        if (isTextured) {
-                            const { x: u, y: v } = texCoordProjection
-                                .projectPoint(command, texCoord)
-                                .sub(texCoordBox.min)
-                                .divide(texCoordBoxSize);
+        for (const polygon of geometry) {
+            const rings: Ring[] = [];
+            for (const outline of polygon) {
+                const ringContour: number[] = [];
+                let ringTexCoords: number[] | undefined;
+                for (const geoPoint of outline) {
+                    const { x, y } = projection.projectPoint(geoPoint, worldPos).sub(center);
+                    ringContour.push(x, y);
+
+                    if (isTextured) {
+                        const { x: u, y: v } = texCoordProjection
+                            .projectPoint(geoPoint, texCoord)
+                            .sub(texCoordBox.min)
+                            .divide(texCoordBoxSize);
+                        if (ringTexCoords === undefined) {
                             ringTexCoords = [u, v];
-                        }
-                    } else if (isLineToCommand(command)) {
-                        const { x, y } = this.m_decodeInfo.projection
-                            .projectPoint(command, worldPos)
-                            .sub(this.m_decodeInfo.center);
-                        ring.push(x, y);
-                        if (isTextured) {
-                            const { x: u, y: v } = texCoordProjection
-                                .projectPoint(command, texCoord)
-                                .sub(texCoordBox.min)
-                                .divide(texCoordBoxSize);
+                        } else {
                             ringTexCoords.push(u, v);
                         }
-                    } else if (isClosePathCommand(command)) {
-                        rings.push(new Ring(ring, ringTexCoords));
                     }
                 }
+                rings.push(new Ring(ringContour, ringTexCoords));
             }
-        );
+            polygons.push(rings);
+        }
 
-        let minHeight = 0;
-        let height = 0;
         // Use the height data if it is present in the data received
         const currentHeight = env.lookup("height") as number;
         // A defaultHeight can be defined in the theme
         const defaultHeight = extrudedPolygonTechnique.defaultHeight;
 
-        if (isExtruded) {
-            const origin = new THREE.Vector3();
-            this.m_decodeInfo.tileBounds.getCenter(origin);
-            origin.x += rings[0].contour[0];
-            origin.y += rings[0].contour[1];
-            const scaleFactor = this.m_decodeInfo.projection.getScaleFactor(origin);
-            const currentMinHeight = env.lookup("min_height") as number;
+        for (const rings of polygons) {
+            let minHeight = 0;
+            let height = 0;
 
-            minHeight = currentMinHeight !== undefined ? currentMinHeight * scaleFactor : minHeight;
-
-            height =
-                currentHeight !== undefined
-                    ? currentHeight * scaleFactor
-                    : defaultHeight !== undefined
-                    ? defaultHeight * scaleFactor
-                    : height;
-        }
-
-        const start = indices.length;
-
-        const basePosition = positions.length;
-
-        const tileWorldBounds = new THREE.Box3();
-        this.m_decodeInfo.projection.projectBox(this.m_decodeInfo.geoBox, tileWorldBounds);
-        const tileWorldExtents = tileWorldBounds.max.sub(this.m_decodeInfo.center).x;
-
-        const maxSlope =
-            extrudedPolygonTechnique.maxSlope !== undefined
-                ? extrudedPolygonTechnique.maxSlope
-                : 0.9;
-        const footprintEdges =
-            extrudedPolygonTechnique.footprint !== undefined
-                ? extrudedPolygonTechnique.footprint
-                : true;
-        const extrudedEdgeWidth =
-            extrudedPolygonTechnique.lineWidth !== undefined
-                ? extrudedPolygonTechnique.lineWidth
-                : 0.0;
-        const outlineColor = getPropertyValue(
-            fillTechnique.lineColor,
-            this.m_decodeInfo.displayZoomLevel
-        );
-
-        let contour: number[];
-        let contourTexCoords: number[] | undefined;
-        for (let ringIndex = 0; ringIndex < rings.length; ) {
-            const baseVertex = positions.length / 3;
-
-            // Get the contour vertices for this ring.
-            contour = rings[ringIndex].contour;
-            contourTexCoords = rings[ringIndex].countourTexCoords;
-            ringIndex++;
-            let vertices: number[] = contour;
-            let texCoords: number[] | undefined = contourTexCoords;
-            // TODO: Add similar edgeIndex check for filled-polygon edges.
             if (isExtruded) {
-                this.m_extruder.addExtrudedWalls(
-                    indices,
-                    baseVertex,
-                    contour,
-                    extrudedEdgeWidth > 0.0,
-                    edgeIndices,
-                    tileWorldExtents,
-                    footprintEdges,
-                    maxSlope
-                );
+                const origin = new THREE.Vector3();
+                this.m_decodeInfo.tileBounds.getCenter(origin);
+                origin.x += rings[0].contour[0];
+                origin.y += rings[0].contour[1];
+                const scaleFactor = this.m_decodeInfo.projection.getScaleFactor(origin);
+                const currentMinHeight = env.lookup("min_height") as number;
+
+                minHeight =
+                    currentMinHeight !== undefined ? currentMinHeight * scaleFactor : minHeight;
+
+                height =
+                    currentHeight !== undefined
+                        ? currentHeight * scaleFactor
+                        : defaultHeight !== undefined
+                        ? defaultHeight * scaleFactor
+                        : height;
             }
 
-            if (outlineColor !== undefined && isFilled) {
-                this.m_outliner.addEdges(baseVertex, contour, tileWorldExtents, outlineIndices);
-            }
+            const start = indices.length;
 
-            // Repeat the process for all the inner rings (holes).
-            const holes: number[] = [];
-            for (; ringIndex < rings.length && rings[ringIndex].isInnerRing; ++ringIndex) {
-                holes.push(vertices.length / 2);
+            const basePosition = positions.length;
 
+            const tileWorldBounds = new THREE.Box3();
+            this.m_decodeInfo.projection.projectBox(this.m_decodeInfo.geoBox, tileWorldBounds);
+            const tileWorldExtents = tileWorldBounds.max.sub(this.m_decodeInfo.center).x;
+
+            const maxSlope =
+                extrudedPolygonTechnique.maxSlope !== undefined
+                    ? extrudedPolygonTechnique.maxSlope
+                    : 0.9;
+            const footprintEdges =
+                extrudedPolygonTechnique.footprint !== undefined
+                    ? extrudedPolygonTechnique.footprint
+                    : true;
+            const extrudedEdgeWidth =
+                extrudedPolygonTechnique.lineWidth !== undefined
+                    ? extrudedPolygonTechnique.lineWidth
+                    : 0.0;
+            const outlineColor = getPropertyValue(
+                fillTechnique.lineColor,
+                this.m_decodeInfo.displayZoomLevel
+            );
+
+            let contour: number[];
+            let contourTexCoords: number[] | undefined;
+            for (let ringIndex = 0; ringIndex < rings.length; ) {
+                const baseVertex = positions.length / 3;
+
+                // Get the contour vertices for this ring.
                 contour = rings[ringIndex].contour;
                 contourTexCoords = rings[ringIndex].countourTexCoords;
-                // As we are predicting the indexes before the vertices are added, the vertex offset
-                // has to be taken into account
-                const vertexOffset = vertices.length;
-                const vertexOffsetFill = vertices.length / 2;
-                vertices = vertices.concat(contour);
-                if (contourTexCoords && texCoords) {
-                    texCoords = texCoords.concat(contourTexCoords);
-                }
-
+                ringIndex++;
+                let vertices: number[] = contour;
+                let texCoords: number[] | undefined = contourTexCoords;
+                // TODO: Add similar edgeIndex check for filled-polygon edges.
                 if (isExtruded) {
                     this.m_extruder.addExtrudedWalls(
                         indices,
-                        vertexOffset + baseVertex,
+                        baseVertex,
                         contour,
                         extrudedEdgeWidth > 0.0,
                         edgeIndices,
@@ -712,70 +632,104 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                 }
 
                 if (outlineColor !== undefined && isFilled) {
-                    const offset = baseVertex + vertexOffsetFill;
-                    this.m_outliner.addEdges(offset, contour, tileWorldExtents, outlineIndices);
+                    this.m_outliner.addEdges(baseVertex, contour, tileWorldExtents, outlineIndices);
                 }
-            }
 
-            try {
-                // Triangulate the footprint polyline.
-                const triangles = earcut(vertices, holes);
+                // Repeat the process for all the inner rings (holes).
+                const holes: number[] = [];
+                for (; ringIndex < rings.length && rings[ringIndex].isInnerRing; ++ringIndex) {
+                    holes.push(vertices.length / 2);
 
-                // Add the footprint/roof vertices to the position buffer.
-                for (let i = 0; i < vertices.length; i += 2) {
-                    positions.push(vertices[i], vertices[i + 1], minHeight);
+                    contour = rings[ringIndex].contour;
+                    contourTexCoords = rings[ringIndex].countourTexCoords;
+                    // As we are predicting the indexes before the vertices are added,
+                    // the vertex offset has to be taken into account
+                    const vertexOffset = vertices.length;
+                    const vertexOffsetFill = vertices.length / 2;
+                    vertices = vertices.concat(contour);
+                    if (contourTexCoords && texCoords) {
+                        texCoords = texCoords.concat(contourTexCoords);
+                    }
+
                     if (isExtruded) {
-                        positions.push(vertices[i], vertices[i + 1], height);
-                    } else if (isTextured && texCoords) {
-                        textureCoordinates.push(texCoords[i], texCoords[i + 1]);
+                        this.m_extruder.addExtrudedWalls(
+                            indices,
+                            vertexOffset + baseVertex,
+                            contour,
+                            extrudedEdgeWidth > 0.0,
+                            edgeIndices,
+                            tileWorldExtents,
+                            footprintEdges,
+                            maxSlope
+                        );
+                    }
+
+                    if (outlineColor !== undefined && isFilled) {
+                        const offset = baseVertex + vertexOffsetFill;
+                        this.m_outliner.addEdges(offset, contour, tileWorldExtents, outlineIndices);
                     }
                 }
 
-                // Add the footprint/roof indices to the index buffer.
-                const vertexStride = isExtruded ? 2 : 1;
-                for (let i = 0; i < triangles.length; i += 3) {
-                    const v0 = baseVertex + triangles[i + 0] * vertexStride;
-                    const v1 = baseVertex + triangles[i + 1] * vertexStride;
-                    const v2 = baseVertex + triangles[i + 2] * vertexStride;
-                    indices.push(v0, v1, v2);
+                try {
+                    // Triangulate the footprint polyline.
+                    const triangles = earcut(vertices, holes);
 
-                    if (isExtruded) {
-                        const v3 = baseVertex + triangles[i + 0] * vertexStride + 1;
-                        const v4 = baseVertex + triangles[i + 1] * vertexStride + 1;
-                        const v5 = baseVertex + triangles[i + 2] * vertexStride + 1;
-                        indices.push(v3, v4, v5);
+                    // Add the footprint/roof vertices to the position buffer.
+                    for (let i = 0; i < vertices.length; i += 2) {
+                        positions.push(vertices[i], vertices[i + 1], minHeight);
+                        if (isExtruded) {
+                            positions.push(vertices[i], vertices[i + 1], height);
+                        } else if (isTextured && texCoords) {
+                            textureCoordinates.push(texCoords[i], texCoords[i + 1]);
+                        }
                     }
+
+                    // Add the footprint/roof indices to the index buffer.
+                    const vertexStride = isExtruded ? 2 : 1;
+                    for (let i = 0; i < triangles.length; i += 3) {
+                        const v0 = baseVertex + triangles[i + 0] * vertexStride;
+                        const v1 = baseVertex + triangles[i + 1] * vertexStride;
+                        const v2 = baseVertex + triangles[i + 2] * vertexStride;
+                        indices.push(v0, v1, v2);
+
+                        if (isExtruded) {
+                            const v3 = baseVertex + triangles[i + 0] * vertexStride + 1;
+                            const v4 = baseVertex + triangles[i + 1] * vertexStride + 1;
+                            const v5 = baseVertex + triangles[i + 2] * vertexStride + 1;
+                            indices.push(v3, v4, v5);
+                        }
+                    }
+                } catch (err) {
+                    logger.error(`cannot triangulate geometry`, err);
                 }
-            } catch (err) {
-                logger.error(`cannot triangulate geometry`, err);
             }
-        }
 
-        this.m_outliner.fill(outlineIndices);
-        const positionCount = (positions.length - basePosition) / 3;
-        const count = indices.length - start;
+            this.m_outliner.fill(outlineIndices);
+            const positionCount = (positions.length - basePosition) / 3;
+            const count = indices.length - start;
 
-        if (technique.name === "extruded-polygon") {
-            const color = new THREE.Color(
-                this.isColorStringValid(technique.color)
-                    ? technique.color
-                    : this.isColorStringValid(env.lookup("color") as string)
-                    ? (env.lookup("color") as string)
-                    : technique.defaultColor
-            );
+            if (technique.name === "extruded-polygon") {
+                const color = new THREE.Color(
+                    this.isColorStringValid(technique.color)
+                        ? technique.color
+                        : this.isColorStringValid(env.lookup("color") as string)
+                        ? (env.lookup("color") as string)
+                        : technique.defaultColor
+                );
 
-            for (let i = 0; i < positionCount; ++i) {
-                colors.push(color.r, color.g, color.b);
+                for (let i = 0; i < positionCount; ++i) {
+                    colors.push(color.r, color.g, color.b);
+                }
             }
-        }
 
-        if (count > 0) {
-            groups.push({
-                start,
-                count,
-                technique: techniqueIndex,
-                featureId
-            });
+            if (count > 0) {
+                groups.push({
+                    start,
+                    count,
+                    technique: techniqueIndex,
+                    featureId
+                });
+            }
         }
     }
 
