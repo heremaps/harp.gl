@@ -5,9 +5,7 @@
  */
 
 import { LoggerManager } from "@here/harp-utils";
-import { Technique } from "./Techniques";
-
-import * as THREE from "three";
+import { CaseProperty, Technique } from "./Techniques";
 
 const logger = LoggerManager.instance.create("Theme");
 
@@ -927,10 +925,10 @@ export interface Style {
     /**
      * Attributes that define the technique.
      */
-    attr?: ValueMap;
+    attr?: { [name: string]: CaseProperty<number> | CaseProperty<string> | CaseProperty<boolean> };
 
     /**
-     * Array of substyles.
+     * Array of sub-styles.
      */
     styles?: StyleSet;
 
@@ -1169,39 +1167,6 @@ export interface Theme {
 export interface FontCatalogConfig {
     url: string;
     name: string;
-}
-
-/**
- * Create a specific light for lightening the map.
- */
-export function createLight(lightDescription: Light): THREE.Light {
-    switch (lightDescription.type) {
-        case "ambient": {
-            const light = new THREE.AmbientLight(
-                lightDescription.color,
-                lightDescription.intensity
-            );
-            light.name = lightDescription.name;
-            return light;
-        }
-        case "directional": {
-            const light = new THREE.DirectionalLight(
-                lightDescription.color,
-                lightDescription.intensity
-            );
-            light.name = lightDescription.name;
-            if (lightDescription.castShadow !== undefined) {
-                light.castShadow = lightDescription.castShadow;
-            }
-            light.position.set(
-                lightDescription.direction.x,
-                lightDescription.direction.y,
-                lightDescription.direction.z
-            );
-            light.position.normalize();
-            return light;
-        }
-    }
 }
 
 /**

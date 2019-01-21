@@ -208,7 +208,7 @@ export class RoadPicker {
             );
         } else {
             const lineTechnique = technique as LineTechnique;
-            return getAttributeValue(lineTechnique.lineWidth, level);
+            return getAttributeValue(lineTechnique.lineWidth, level) as number;
         }
     }
 }

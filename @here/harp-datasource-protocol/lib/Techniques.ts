@@ -96,16 +96,16 @@ export interface BaseStandardTechnique extends BaseTechnique {
      * Color of a line in hexadecimal or CSS-style notation, for example: `"#e4e9ec"`, `"#fff"`,
      * `"rgb(255, 0, 0)"`, or `"hsl(35, 11%, 88%)"`.
      */
-    color?: string;
+    color?: CaseProperty<string>;
     /**
      * A value of `true` creates a wireframe geometry. (May not be supported with all techniques).
      */
-    wireframe?: boolean;
+    wireframe?: CaseProperty<boolean>;
     /**
      * If `vertexColors` is `true`, every vertex has color information, which is interpolated
      * between vertices.
      */
-    vertexColors?: boolean;
+    vertexColors?: CaseProperty<boolean>;
     /**
      * How rough the material appears. `0.0` means a smooth mirror reflection. `1.0` means fully
      * diffuse. Default is `0.5`.
@@ -117,41 +117,41 @@ export interface BaseStandardTechnique extends BaseTechnique {
      * `0.0` and `1.0` can be used for a rusty metal look. If `metalnessMap` is also provided, both
      * values are multiplied.
      */
-    metalness?: number;
+    metalness?: CaseProperty<number>;
     /**
      * The material will not be rendered if the opacity is lower than this value.
      */
-    alphaTest?: number;
+    alphaTest?: CaseProperty<number>;
     /**
      * Skip rendering clobbered pixels.
      */
-    depthTest?: boolean;
+    depthTest?: CaseProperty<boolean>;
     /**
      * Set to 'true' if line should appear transparent. Rendering transparent lines may come with a
      * slight performance impact.
      */
-    transparent?: boolean;
+    transparent?: CaseProperty<boolean>;
     /**
      * For transparent lines, set a value between 0.0 for totally transparent, to 1.0 for totally
      * opaque.
      */
-    opacity?: number;
+    opacity?: CaseProperty<number>;
     /**
      * Emissive (light) color of the material, essentially a solid color unaffected by other
      * lighting. Default is black.
      */
-    emissive?: string;
+    emissive?: CaseProperty<string>;
     /**
      * Intensity of the emissive light. Modulates the emissive color. Default is `1`.
      */
-    emissiveIntensity?: number;
+    emissiveIntensity?: CaseProperty<number>;
     /**
      * The index of refraction (IOR) of air (approximately 1) divided by the index of refraction of
      * the material. It is used with environment mapping modes `THREE.CubeRefractionMapping` and
      * `THREE.EquirectangularRefractionMapping`. The refraction ratio should not exceed `1`. Default
      *  is `0.98`.
      */
-    refractionRatio?: number;
+    refractionRatio?: CaseProperty<number>;
 
     /**
      * Control rendering of depth prepass before the actual geometry.
@@ -163,7 +163,7 @@ export interface BaseStandardTechnique extends BaseTechnique {
      * By default, each [[DataSource]] determines how/if enable the depth pre-pass. A value of
      * `false` forcefully disables depth prepass.
      */
-    enableDepthPrePass?: boolean;
+    enableDepthPrePass?: CaseProperty<boolean>;
 }
 
 export interface SquaresTechnique extends BaseTechnique {
@@ -173,9 +173,9 @@ export interface SquaresTechnique extends BaseTechnique {
     name: "squares";
     /**
      * Color of a point in hexadecimal or CSS-style notation, for example: `"#e4e9ec"`, `"#fff"`,
-     * `"rgb(255, 0, 0)"`, or `"hsl(35, 11%, 88%)"`.
+     * `"rgb(123, 123, 123)"`, or `"hsl(35, 11%, 88%)"`.
      */
-    color?: string;
+    color?: CaseProperty<string>;
     /**
      * URL of a texture image to be loaded.
      */
@@ -513,7 +513,7 @@ export interface LineTechnique extends BaseTechnique {
      * Width of line in pixels. WebGL implementations will normally render all lines with 1 pixel
      * width, and ignore this value.
      */
-    lineWidth: number;
+    lineWidth: CaseProperty<number>;
 }
 
 /**
@@ -541,7 +541,7 @@ export interface SegmentsTechnique extends BaseTechnique {
     /**
      * Width of a line in meters.
      */
-    lineWidth: number;
+    lineWidth: CaseProperty<number>;
 }
 
 /**
@@ -701,7 +701,7 @@ export interface SolidLineTechnique extends BaseTechnique, PolygonalTechnique {
     /**
      * Width of a line in `metricUnit`s for different zoom levels.
      */
-    lineWidth: CaseProperty<number>;
+    lineWidth: number;
     /**
      * Clip the line outside the tile if `true`.
      */
@@ -766,21 +766,21 @@ export interface FillTechnique extends BaseTechnique, PolygonalTechnique {
      * Fill color in hexadecimal or CSS-style notation, for example: `"#e4e9ec"`, `"#fff"`,
      * `"rgb(255, 0, 0)"`, or `"hsl(35, 11%, 88%)"`.
      */
-    color?: string;
+    color?: CaseProperty<string>;
     /**
      * Set to `true` if line should appear transparent. Rendering transparent lines may come with a
      * slight performance impact.
      */
-    transparent?: boolean;
+    transparent?: CaseProperty<boolean>;
     /**
      * For transparent lines, set a value between `0.0` for fully transparent, to `1.0` for fully
      * opaque.
      */
-    opacity?: number;
+    opacity?: CaseProperty<number>;
     /**
      * A value of `true` creates a wireframe geometry. (May not be supported with all techniques).
      */
-    wireframe?: boolean;
+    wireframe?: CaseProperty<boolean>;
 }
 
 /**
@@ -808,7 +808,7 @@ export interface ExtrudedPolygonTechnique extends BaseStandardTechnique {
     /**
      * Width of the lines. Currently limited to the [0, 1] range.
      */
-    lineWidth?: number;
+    lineWidth?: CaseProperty<number>;
     /**
      * Fill color in hexadecimal or CSS-style notation, for example: `"#e4e9ec"`, `"#fff"`,
      * `"rgb(255, 0, 0)"`, or `"hsl(35, 11%, 88%)"`.
@@ -899,7 +899,7 @@ export interface StandardTexturedTechnique extends BaseStandardTechnique {
      */
     texture?: string | TextureBuffer;
 
-    /**
+    /**CaseProperty<>
      * Texture horizontal wrapping mode.
      */
     wrapS?: WrappingMode;
@@ -925,12 +925,12 @@ export interface TextTechnique extends BaseTechnique {
     /**
      * If `true`, the abbreviation (field `abbr`) of the elements is used as text.
      */
-    useAbbreviation?: boolean;
+    useAbbreviation?: CaseProperty<boolean>;
     /**
      * If `true`, the iso code (field 'iso_code') of the elements is used as text.
      * The `iso_code` field contains the ISO 3166-1 2-letter country code.
      */
-    useIsoCode?: boolean;
+    useIsoCode?: CaseProperty<boolean>;
     /**
      * Text color in hexadecimal or CSS-style notation, for example: `"#e4e9ec"`, `"#fff"`,
      * `"rgb(255, 0, 0)"`, or `"hsl(35, 11%, 88%)"`.
