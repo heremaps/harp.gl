@@ -12,7 +12,6 @@ import {
     OmvGeometryType,
     OmvLayerFilterDescription
 } from "./OmvDecoderDefs";
-import { com } from "./proto/vector_tile";
 
 /**
  * The `OmvFeatureFilter` is designed to work in an `OmvVisitor`/`visitOmv` combination (for
@@ -30,7 +29,7 @@ export interface OmvFeatureFilter {
      * @param layer Current layer.
      * @param level Level of tile.
      */
-    wantsLayer(layer: com.mapbox.pb.Tile.ILayer, level: number): boolean;
+    wantsLayer(layer: string, level: number): boolean;
 
     /**
      * Return `false` if the point feature should not be processed.
@@ -39,11 +38,7 @@ export interface OmvFeatureFilter {
      * @param feature Current feature.
      * @param level Level of tile.
      */
-    wantsPointFeature(
-        layer: com.mapbox.pb.Tile.ILayer,
-        feature: com.mapbox.pb.Tile.IFeature,
-        level: number
-    ): boolean;
+    wantsPointFeature(layer: string, geometryType: OmvGeometryType, level: number): boolean;
 
     /**
      * Return `false` if the line feature should not be processed.
@@ -52,11 +47,7 @@ export interface OmvFeatureFilter {
      * @param feature Current feature.
      * @param level Level of tile.
      */
-    wantsLineFeature(
-        layer: com.mapbox.pb.Tile.ILayer,
-        feature: com.mapbox.pb.Tile.IFeature,
-        level: number
-    ): boolean;
+    wantsLineFeature(layer: string, geometryType: OmvGeometryType, level: number): boolean;
 
     /**
      * Return `false` if the polygon feature should not be processed.
@@ -65,11 +56,7 @@ export interface OmvFeatureFilter {
      * @param feature Current feature.
      * @param level Level of tile.
      */
-    wantsPolygonFeature(
-        layer: com.mapbox.pb.Tile.ILayer,
-        feature: com.mapbox.pb.Tile.IFeature,
-        level: number
-    ): boolean;
+    wantsPolygonFeature(layer: string, geometryType: OmvGeometryType, level: number): boolean;
 }
 
 /**
@@ -92,7 +79,7 @@ export interface OmvFeatureModifier {
      * @param level Level of tile.
      * @returns `false` to ignore feature.
      */
-    doProcessPointFeature(layer: com.mapbox.pb.Tile.ILayer, env: MapEnv, level: number): boolean;
+    doProcessPointFeature(layer: string, env: MapEnv, level: number): boolean;
 
     /**
      * Check if the line feature described by `env` should be processed. The properties can be
@@ -103,7 +90,7 @@ export interface OmvFeatureModifier {
      * @param level Level of tile.
      * @returns `false` to ignore feature.
      */
-    doProcessLineFeature(layer: com.mapbox.pb.Tile.ILayer, env: MapEnv, level: number): boolean;
+    doProcessLineFeature(layer: string, env: MapEnv, level: number): boolean;
 
     /**
      * Check if the polygon feature described by `env` should be processed. The properties can be
@@ -114,7 +101,7 @@ export interface OmvFeatureModifier {
      * @param level Level of tile.
      * @returns `false` to ignore feature.
      */
-    doProcessPolygonFeature(layer: com.mapbox.pb.Tile.ILayer, env: MapEnv, level: number): boolean;
+    doProcessPolygonFeature(layer: string, env: MapEnv, level: number): boolean;
 }
 
 /**
@@ -660,7 +647,7 @@ export namespace OmvFeatureFilterDescriptionBuilder {
  */
 export class OmvGenericFeatureFilter implements OmvFeatureFilter {
     private static matchLayer(
-        layer: com.mapbox.pb.Tile.ILayer,
+        layer: string,
         layerItems: OmvLayerFilterDescription[],
         level: number
     ): boolean {
@@ -669,7 +656,7 @@ export class OmvGenericFeatureFilter implements OmvFeatureFilter {
                 continue;
             }
 
-            if (OmvFilterString.matchString(layer.name, layerItem.name)) {
+            if (OmvFilterString.matchString(layer, layerItem.name)) {
                 return true;
             }
         }
@@ -678,7 +665,7 @@ export class OmvGenericFeatureFilter implements OmvFeatureFilter {
 
     constructor(private description: OmvFeatureFilterDescription) {}
 
-    wantsLayer(layer: com.mapbox.pb.Tile.ILayer, level: number): boolean {
+    wantsLayer(layer: string, level: number): boolean {
         if (OmvGenericFeatureFilter.matchLayer(layer, this.description.layersToProcess, level)) {
             return true;
         }
@@ -690,46 +677,34 @@ export class OmvGenericFeatureFilter implements OmvFeatureFilter {
         return this.description.processLayersDefault;
     }
 
-    wantsPointFeature(
-        layer: com.mapbox.pb.Tile.ILayer,
-        feature: com.mapbox.pb.Tile.IFeature,
-        level: number
-    ): boolean {
+    wantsPointFeature(layer: string, geometryType: OmvGeometryType, level: number): boolean {
         return this.wantsFeature(
             this.description.pointsToProcess,
             this.description.pointsToIgnore,
             layer,
-            feature,
+            geometryType,
             level,
             this.description.processPointsDefault
         );
     }
 
-    wantsLineFeature(
-        layer: com.mapbox.pb.Tile.ILayer,
-        feature: com.mapbox.pb.Tile.IFeature,
-        level: number
-    ): boolean {
+    wantsLineFeature(layer: string, geometryType: OmvGeometryType, level: number): boolean {
         return this.wantsFeature(
             this.description.linesToProcess,
             this.description.linesToIgnore,
             layer,
-            feature,
+            geometryType,
             level,
             this.description.processLinesDefault
         );
     }
 
-    wantsPolygonFeature(
-        layer: com.mapbox.pb.Tile.ILayer,
-        feature: com.mapbox.pb.Tile.IFeature,
-        level: number
-    ): boolean {
+    wantsPolygonFeature(layer: string, geometryType: OmvGeometryType, level: number): boolean {
         return this.wantsFeature(
             this.description.polygonsToProcess,
             this.description.polygonsToIgnore,
             layer,
-            feature,
+            geometryType,
             level,
             this.description.processPolygonsDefault
         );
@@ -738,8 +713,8 @@ export class OmvGenericFeatureFilter implements OmvFeatureFilter {
     private wantsFeature(
         itemsToProcess: OmvFilterDescription[],
         itemsToIgnore: OmvFilterDescription[],
-        layer: com.mapbox.pb.Tile.ILayer,
-        feature: com.mapbox.pb.Tile.IFeature,
+        layer: string,
+        geometryType: OmvGeometryType,
         level: number,
         defaultResult: boolean
     ): boolean {
@@ -748,31 +723,23 @@ export class OmvGenericFeatureFilter implements OmvFeatureFilter {
                 continue;
             }
 
-            if (!OmvFilterString.matchString(layer.name, item.layerName)) {
+            if (!OmvFilterString.matchString(layer, item.layerName)) {
                 // this rule is not for this layer
                 continue;
             }
 
-            if (
-                item.geometryTypes !== undefined &&
-                feature.type !== undefined &&
-                item.geometryTypes.indexOf(feature.type.valueOf() as OmvGeometryType) >= 0
-            ) {
+            if (item.geometryTypes !== undefined && item.geometryTypes.indexOf(geometryType) >= 0) {
                 return true;
             }
         }
 
         for (const item of itemsToIgnore) {
-            if (!OmvFilterString.matchString(layer.name, item.layerName)) {
+            if (!OmvFilterString.matchString(layer, item.layerName)) {
                 // this rule is not for this layer
                 continue;
             }
 
-            if (
-                item.geometryTypes !== undefined &&
-                feature.type !== undefined &&
-                item.geometryTypes.indexOf(feature.type.valueOf() as OmvGeometryType) >= 0
-            ) {
+            if (item.geometryTypes !== undefined && item.geometryTypes.indexOf(geometryType) >= 0) {
                 return false;
             }
         }
@@ -813,7 +780,7 @@ export class OmvGenericFeatureModifier implements OmvFeatureModifier {
 
     constructor(private description: OmvFeatureFilterDescription) {}
 
-    doProcessPointFeature(layer: com.mapbox.pb.Tile.ILayer, env: MapEnv): boolean {
+    doProcessPointFeature(layer: string, env: MapEnv): boolean {
         return this.doProcessFeature(
             this.description.pointsToProcess,
             this.description.pointsToIgnore,
@@ -823,7 +790,7 @@ export class OmvGenericFeatureModifier implements OmvFeatureModifier {
         );
     }
 
-    doProcessLineFeature(layer: com.mapbox.pb.Tile.ILayer, env: MapEnv): boolean {
+    doProcessLineFeature(layer: string, env: MapEnv): boolean {
         return this.doProcessFeature(
             this.description.linesToProcess,
             this.description.linesToIgnore,
@@ -833,7 +800,7 @@ export class OmvGenericFeatureModifier implements OmvFeatureModifier {
         );
     }
 
-    doProcessPolygonFeature(layer: com.mapbox.pb.Tile.ILayer, env: MapEnv): boolean {
+    doProcessPolygonFeature(layer: string, env: MapEnv): boolean {
         return this.doProcessFeature(
             this.description.polygonsToProcess,
             this.description.polygonsToIgnore,
@@ -846,11 +813,11 @@ export class OmvGenericFeatureModifier implements OmvFeatureModifier {
     protected doProcessFeature(
         itemsToProcess: OmvFilterDescription[],
         itemsToIgnore: OmvFilterDescription[],
-        layer: com.mapbox.pb.Tile.ILayer,
+        layer: string,
         env: MapEnv,
         defaultResult: boolean
     ): boolean {
-        if (layer === undefined || layer.name === undefined) {
+        if (layer === undefined || layer === undefined) {
             return defaultResult;
         }
 
@@ -863,14 +830,14 @@ export class OmvGenericFeatureModifier implements OmvFeatureModifier {
 
         if (
             featureClass &&
-            OmvGenericFeatureModifier.matchItems(layer.name, featureClass, itemsToProcess)
+            OmvGenericFeatureModifier.matchItems(layer, featureClass, itemsToProcess)
         ) {
             return true;
         }
 
         if (
             featureClass &&
-            OmvGenericFeatureModifier.matchItems(layer.name, featureClass, itemsToIgnore)
+            OmvGenericFeatureModifier.matchItems(layer, featureClass, itemsToIgnore)
         ) {
             return false;
         }

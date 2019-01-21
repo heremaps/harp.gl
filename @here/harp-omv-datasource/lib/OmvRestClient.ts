@@ -65,7 +65,7 @@ export enum APIFormat {
     MapzenV1,
 
     /**
-     * Use the REST API format of Mapzen Vector Tile API v1.
+     * Use the REST API format of Mapzen Vector Tile API v2.
      *
      * Usage:
      * `<OmvRestClientParams.baseUrl>/tiles/omsbase/256/<zoom>/<X>/<Y>.mvt?api_key=<OmvRestClientParams.authenticationCode>`
@@ -77,6 +77,20 @@ export enum APIFormat {
      * `https://xyz.api.here.com/tiles/osmbase/256/all/16/19293/24641.mvt?api_key=your-mapzen-api-key`
      */
     MapzenV2,
+
+    /**
+     * Use the REST API format of Mapzen Vector Tile API v2.
+     *
+     * Usage:
+     * `<OmvRestClientParams.baseUrl>/tiles/omsbase/256/<zoom>/<X>/<Y>.mvt?api_key=<OmvRestClientParams.authenticationCode>`
+     *
+     * Format definition:
+     * `http|s://<base-url>/tiles/{layers}/{z}/{x}/{y}/{format}?api_key={api_key}`
+     *
+     * Sample URL:
+     * `https://xyz.api.here.com/tiles/osmbase/256/all/16/19293/24641.json?api_key=your-mapzen-api-key`
+     */
+    MapzenV2Json,
 
     /**
      * Use the REST API format of Tomtoms Vector Tile API v1.
@@ -242,7 +256,7 @@ export class OmvRestClient implements DataProvider {
     async getTile(
         tileKey: TileKey,
         abortSignal?: AbortSignal | undefined
-    ): Promise<ArrayBufferLike> {
+    ): Promise<ArrayBufferLike | {}> {
         const init: RequestInit = { signal: abortSignal };
 
         let tileUrl = this.dataUrl(tileKey);
@@ -250,6 +264,10 @@ export class OmvRestClient implements DataProvider {
         const authenticationCode = await this.getActualAuthenticationCode();
 
         tileUrl = this.applyAuthCode(tileUrl, init, authenticationCode);
+
+        if (this.params.apiFormat === APIFormat.MapzenV2Json) {
+            return this.downloadManager.downloadJson(tileUrl, init);
+        }
 
         return this.downloadManager.downloadArrayBuffer(tileUrl, init);
     }
@@ -342,6 +360,9 @@ export class OmvRestClient implements DataProvider {
                 break;
             case APIFormat.MapzenV2:
                 path += ".mvt";
+                break;
+            case APIFormat.MapzenV2Json:
+                path += ".json";
                 break;
             case APIFormat.TomtomV1:
                 path += ".pbf";
