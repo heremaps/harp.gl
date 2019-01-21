@@ -9,18 +9,41 @@ import * as THREE from "three";
 const UNIT_Z = new THREE.Vector3(0, 0, 1);
 const POINTS = [0, 1, 2, 1, 3, 2];
 
-const SECTORS_IN_CIRCLE = 16;
-const STEP = (Math.PI * 2.0) / SECTORS_IN_CIRCLE;
+const SECTORS_IN_CIRCLE = 8;
+const STEP = Math.PI / SECTORS_IN_CIRCLE;
 
-function addCircle(x: number, y: number, radius: number, vertices: number[], indices: number[]) {
+/**
+ * Adds a half-circle geometry to original line
+ *
+ * @param x The line end X (used as circle center X)
+ * @param y The line end Y (used as circle center Y)
+ * @param lineAngle The cap incline angle
+ * @param radius The cap (circle) radius
+ * @param vertices The input vertex buffer (cap vertices are added there)
+ * @param indices The input index buffer (cap indices are is added there)
+ */
+function addCircle(
+    x: number,
+    y: number,
+    lineAngle: number,
+    radius: number,
+    vertices: number[],
+    indices: number[]
+) {
+    const tmpVertices = [] as number[];
     const baseVertex = vertices.length / 3;
+
+    // Add cap center to vertices directly (it doesn't need rotation)
     vertices.push(x, y, 0);
-    for (let i = 0; i < SECTORS_IN_CIRCLE; ++i) {
-        vertices.push(x + radius * Math.cos(STEP * i), y + radius * Math.sin(STEP * i), 0);
+
+    for (let i = 0; i < SECTORS_IN_CIRCLE + 1; ++i) {
+        const angle = STEP * i + Math.PI / 2 + lineAngle; // Start angle is -90deg
+        vertices.push(x + radius * Math.cos(angle), y + radius * Math.sin(angle), 0);
+
         indices.push(
             baseVertex,
             baseVertex + i + 1,
-            baseVertex + ((i + 1) % SECTORS_IN_CIRCLE) + 1
+            baseVertex + ((i + 1) % (SECTORS_IN_CIRCLE + 1)) + 1
         );
     }
 }
@@ -32,7 +55,7 @@ function addCircle(x: number, y: number, radius: number, vertices: number[], ind
  */
 // tslint:disable-next-line:no-unused-variable
 export function numCirclePoints(lineWidth: number): number {
-    return SECTORS_IN_CIRCLE;
+    return SECTORS_IN_CIRCLE + 1;
 }
 
 /**
@@ -53,12 +76,21 @@ export function triangulateLine(
     startWithCircle = true,
     endWithCircle = startWithCircle
 ) {
-    if (points.length === 0) {
+    if (points.length < 2) {
         return;
     }
 
+    // This vector is used for computing cap angle
+    const angleVec = new THREE.Vector2();
+
     if (startWithCircle) {
-        addCircle(points[0], points[1], width, vertices, indices);
+        // Define lineAngle as (direction - origin) vector angle to X axis
+        const lineAngle =
+            points.length !== 2
+                ? angleVec.set(points[2] - points[0], points[3] - points[1]).angle()
+                : 0;
+
+        addCircle(points[0], points[1], lineAngle, width, vertices, indices);
     }
 
     const baseVertex = vertices.length / 3;
@@ -109,7 +141,24 @@ export function triangulateLine(
     }
 
     if (endWithCircle) {
-        addCircle(points[(N - 1) * 2], points[(N - 1) * 2 + 1], width, vertices, indices);
+        const lineAngle =
+            points.length !== 2
+                ? angleVec
+                      .set(
+                          points[(N - 2) * 2] - points[(N - 1) * 2],
+                          points[(N - 2) * 2 + 1] - points[(N - 1) * 2 + 1]
+                      )
+                      .angle()
+                : Math.PI;
+
+        addCircle(
+            points[(N - 1) * 2],
+            points[(N - 1) * 2 + 1],
+            lineAngle,
+            width,
+            vertices,
+            indices
+        );
     }
 }
 
