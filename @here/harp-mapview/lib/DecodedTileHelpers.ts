@@ -8,6 +8,7 @@ import {
     BufferAttribute,
     getPropertyValue,
     isCaseProperty,
+    Light,
     Technique
 } from "@here/harp-datasource-protocol";
 import {
@@ -308,4 +309,37 @@ export function applyTechniqueToMaterial(
             m[prop] = value;
         }
     });
+}
+
+/**
+ * Create a specific light for lightening the map.
+ */
+export function createLight(lightDescription: Light): THREE.Light {
+    switch (lightDescription.type) {
+        case "ambient": {
+            const light = new THREE.AmbientLight(
+                lightDescription.color,
+                lightDescription.intensity
+            );
+            light.name = lightDescription.name;
+            return light;
+        }
+        case "directional": {
+            const light = new THREE.DirectionalLight(
+                lightDescription.color,
+                lightDescription.intensity
+            );
+            light.name = lightDescription.name;
+            if (lightDescription.castShadow !== undefined) {
+                light.castShadow = lightDescription.castShadow;
+            }
+            light.position.set(
+                lightDescription.direction.x,
+                lightDescription.direction.y,
+                lightDescription.direction.z
+            );
+            light.position.normalize();
+            return light;
+        }
+    }
 }
