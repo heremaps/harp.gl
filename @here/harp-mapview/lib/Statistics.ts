@@ -9,7 +9,7 @@ const logger = LoggerManager.instance.create("Statistics");
 
 /**
  * A simple ring buffer to store the last `n` values of the timer. The buffer works on
- * a Last-In-First-Out (LIFO) basis.
+ * a First-In-First-Out (FIFO) basis.
  */
 export class RingBuffer<T> {
     buffer: T[];
@@ -69,7 +69,7 @@ export class RingBuffer<T> {
     }
 
     /**
-     * Obtains the latest element (LIFO). May throw an exception if a buffer underrun occurs.
+     * Obtains the oldest element (FIFO). May throw an exception if a buffer underrun occurs.
      * Before calling this method, make sure that `size > 0`.
      */
     deq(): T {
@@ -91,7 +91,7 @@ export class RingBuffer<T> {
     }
 
     /**
-     * Obtains the latest element (LIFO) without removing it. Throws an exception if a buffer is
+     * Obtains the oldest element (FIFO) without removing it. Throws an exception if a buffer is
      * empty. Before calling this method, make sure that `size > 0`.
      */
     get top(): T {
@@ -100,6 +100,22 @@ export class RingBuffer<T> {
         }
 
         return this.buffer[this.tail];
+    }
+
+    /**
+     * Obtains the latest element (LIFO) without removing it. Throws an exception if a buffer is
+     * empty. Before calling this method, make sure that `size > 0`.
+     */
+    get bottom(): T {
+        if (this.size === 0) {
+            throw new Error("Ringbuffer underrun");
+        }
+
+        let previous = this.head - 1;
+        if (previous < 0) {
+            previous = this.capacity - 1;
+        }
+        return this.buffer[previous];
     }
 
     /**
@@ -1074,7 +1090,7 @@ export class PerformanceStatistics {
         });
 
         for (const [name, buffer] of this.m_frameEvents.frameEntries) {
-            frames[name] = buffer.top;
+            frames[name] = buffer.bottom;
         }
         plainObject.messages = this.m_frameEvents.messages.asArray();
         return plainObject;

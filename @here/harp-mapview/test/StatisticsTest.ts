@@ -41,6 +41,7 @@ describe("mapview-statistics", function() {
         rb.enq(7);
         assert.equal(rb.size, 3);
         assert.equal(rb.top, 5);
+        assert.equal(rb.bottom, 7);
         assert.equal(rb.deq(), 5);
         assert.equal(rb.deq(), 6);
         assert.equal(rb.deq(), 7);
@@ -68,6 +69,7 @@ describe("mapview-statistics", function() {
         rb.enq(99, 100);
 
         assert.equal(rb.top, 92);
+        assert.equal(rb.bottom, 100);
         assert.equal(rb.deq(), 92);
         assert.equal(rb.deq(), 93);
         assert.equal(rb.deq(), 94);
@@ -86,6 +88,41 @@ describe("mapview-statistics", function() {
             // tslint:disable-next-line:no-unused-expression
             rb.top;
         });
+        assert.throws(() => {
+            // tslint:disable-next-line:no-unused-expression
+            rb.bottom;
+        });
+
+        rb.clear();
+        rb.enq(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11);
+        assert.equal(rb.deq(), 2);
+        assert.equal(rb.deq(), 3);
+        assert.equal(rb.size, 8);
+        assert.equal(rb.top, 4);
+        assert.equal(rb.bottom, 11);
+        rb.enq(12);
+        assert.equal(rb.size, 9);
+        assert.equal(rb.top, 4);
+        assert.equal(rb.bottom, 12);
+        rb.enq(13);
+        assert.equal(rb.size, 10);
+        assert.equal(rb.top, 4);
+        assert.equal(rb.bottom, 13);
+        rb.enq(14);
+        assert.equal(rb.size, 10);
+        assert.equal(rb.top, 5);
+        assert.equal(rb.bottom, 14);
+        assert.equal(rb.deq(), 5);
+        assert.equal(rb.deq(), 6);
+        assert.equal(rb.deq(), 7);
+        assert.equal(rb.deq(), 8);
+        assert.equal(rb.deq(), 9);
+        assert.equal(rb.deq(), 10);
+        assert.equal(rb.deq(), 11);
+        assert.equal(rb.deq(), 12);
+        assert.equal(rb.deq(), 13);
+        assert.equal(rb.deq(), 14);
+        assert.equal(rb.size, 0);
     });
 
     it("init", function() {
@@ -418,6 +455,10 @@ describe("mapview-statistics", function() {
         assert.equal(arrayA[1], 150);
         assert.equal(arrayB[0], 0);
         assert.equal(arrayB[1], 200);
+
+        const frameStats = stats.getLastFrameStatistics();
+        assert.equal(frameStats.frames.a, 150);
+        assert.equal(frameStats.frames.b, 200);
     });
 
     it("add PerformanceStatistics appResults", function() {
