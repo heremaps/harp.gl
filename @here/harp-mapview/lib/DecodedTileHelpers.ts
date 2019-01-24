@@ -194,6 +194,7 @@ export function getObjectConstructor(technique: Technique): ObjectConstructor | 
         case "text":
         case "labeled-icon":
         case "line-marker":
+        case "none":
             return undefined;
     }
 }
@@ -259,6 +260,7 @@ export function getMaterialConstructor(technique: Technique): MaterialConstructo
         case "text":
         case "labeled-icon":
         case "line-marker":
+        case "none":
             return undefined;
     }
 }
