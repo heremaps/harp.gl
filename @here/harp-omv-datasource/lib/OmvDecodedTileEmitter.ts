@@ -483,7 +483,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
 
                 const count = indices.length - start;
                 groups.push({ start, count, technique: techniqueIndex, featureId });
-            } else {
+            } else if (techniqueName !== "none") {
                 logger.warn(
                     `OmvDecodedTileEmitter#processLineFeature: Invalid line technique
                      ${techniqueName} for layer: ${env.entries.$layer} `

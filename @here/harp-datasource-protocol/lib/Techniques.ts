@@ -25,7 +25,8 @@ export type Technique =
     | ExtrudedPolygonTechnique
     | ShaderTechnique
     | LandmarkTechnique
-    | TextTechnique;
+    | TextTechnique
+    | NoneTechnique;
 
 /**
  * Techniques are used to specify how a geometry is drawn on the canvas.
@@ -86,6 +87,16 @@ export interface BaseTechnique {
      * opacity and stops fading out. A value of <= 0.0 disables fading.
      */
     fadeFar?: CaseProperty<number>;
+}
+
+/**
+ * The technique to keep a style description without triggering a decoding for it.
+ */
+export interface NoneTechnique extends BaseTechnique {
+    /**
+     * Name of technique. Is used in the theme file.
+     */
+    name: "none";
 }
 
 /**
