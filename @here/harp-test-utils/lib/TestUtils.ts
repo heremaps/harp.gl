@@ -6,6 +6,33 @@
 
 import * as sinon from "sinon";
 
+/**
+ * Check if we're executing in Web Browser environment (but not in Web Worker)
+ *
+ * https://stackoverflow.com/questions/17575790/environment-detection-node-js-or-browser
+ */
+export function inBrowserContext() {
+    return function(this: any) {
+        return typeof window !== "undefined" && this === window;
+    }.call(undefined);
+}
+
+/**
+ * Check if we're executing in Web Worker environment.
+ */
+export function inWebWorkerContext() {
+    return typeof self !== "undefined" && typeof (self as any).importScripts === "function";
+}
+
+/**
+ * Define a suite that is executed only in Node.JS environment.
+ */
+export function inNodeContext() {
+    return function(this: any) {
+        return typeof global !== "undefined" && this === global;
+    }.call(undefined);
+}
+
 declare const global: any;
 
 /**
@@ -114,6 +141,11 @@ export function willEventually<T = void>(test: () => T): Promise<T> {
     });
 }
 
+export interface EventSource<T> {
+    addEventListener(type: string, listener: (event: T) => void): void;
+    removeEventListener(type: string, listener: (event: T) => void): void;
+}
+
 /**
  * Wait for particular event on `THREE.EventDispatcher` or DOM `EventTarget` compatible objects.
  *
@@ -125,7 +157,7 @@ export function willEventually<T = void>(test: () => T): Promise<T> {
  * @returns promise that resolves to first event that is received
  */
 export function waitForEvent<T>(
-    source: Pick<EventTarget, "addEventListener" | "removeEventListener">,
+    source: EventSource<T>,
     eventType: string
 ): Promise<T> {
     const currentTest = mochaCurrentTest;
