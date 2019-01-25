@@ -5,7 +5,7 @@
  */
 
 import { LoggerManager } from "@here/harp-utils";
-import { Technique } from "./Techniques";
+import { CaseProperty, Technique } from "./Techniques";
 
 import * as THREE from "three";
 
@@ -927,7 +927,7 @@ export interface Style {
     /**
      * Attributes that define the technique.
      */
-    attr?: ValueMap;
+    attr?: { [name: string]: CaseProperty<number> | CaseProperty<string> | CaseProperty<boolean> };
 
     /**
      * Array of substyles.
