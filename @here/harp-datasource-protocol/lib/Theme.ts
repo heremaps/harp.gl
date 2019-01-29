@@ -238,7 +238,7 @@ class StringLiteralExpr extends Expr {
 }
 
 /**
- * A has expression with an attribute, for example `has(maki)`.
+ * A has expression with an attribute, for example `has(ref)`.
  */
 class HasAttributeExpr extends Expr {
     constructor(readonly attribute: string) {
