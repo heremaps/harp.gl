@@ -15,7 +15,7 @@ import { Vector2, Vector3 } from "three";
  * @param screenSizeX Width of the reference screen size.
  * @param screenSizeY Height of the reference screen size.
  */
-export function calculateNormalizedScreenCoordinates(
+export function calculateNormalizedDeviceCoordinates(
     screenCoordinateX: number,
     screenCoordinateY: number,
     screenSizeX: number,

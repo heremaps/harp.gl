@@ -12,15 +12,32 @@ import { expect } from "chai";
 import * as sinon from "sinon";
 import { MapControls } from "../lib/MapControls";
 
+declare const global: any;
+
+const inNodeContext = typeof window === "undefined";
+
 describe("MapControls", function() {
     let sandbox: sinon.SinonSandbox;
 
     beforeEach(function() {
         sandbox = sinon.createSandbox();
+        if (inNodeContext) {
+            const theGlobal: any = global;
+            // tslint:disable-next-line:no-empty
+            theGlobal.requestAnimationFrame = () => {};
+            theGlobal.performance = {
+                // tslint:disable-next-line:no-empty
+                now: () => {}
+            };
+        }
     });
 
     afterEach(function() {
         sandbox.restore();
+        if (inNodeContext) {
+            delete global.requestAnimationFrame;
+            delete global.performance;
+        }
     });
 
     describe("on object creation", function() {
