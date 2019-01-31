@@ -5,7 +5,7 @@
  */
 
 import * as geoUtils from "@here/harp-geoutils";
-import { MapView, MapViewUtils } from "@here/harp-mapview";
+import { MapView, MapViewEventNames, MapViewUtils } from "@here/harp-mapview";
 import * as THREE from "three";
 import * as utils from "./Utils";
 
@@ -13,7 +13,8 @@ enum State {
     NONE,
     PAN,
     ROTATE,
-    ORBIT
+    ORBIT,
+    TOUCH
 }
 
 interface TouchState {
@@ -67,6 +68,11 @@ const pitchAxis = new THREE.Vector3(1, 0, 0);
  * it reaches the minimum camera height.
  */
 const MAX_DELTA_ALTITUDE_STEPS = 10;
+
+/**
+ * The number of user's inputs to consider for panning inertia, to reduce erratic inputs.
+ */
+const USER_INPUTS_TO_CONSIDER = 5;
 
 /**
  * This map control provides basic map-related building blocks to interact with the map. It also
@@ -136,6 +142,21 @@ export class MapControls extends THREE.EventDispatcher {
     rotateEnabled = true;
 
     /**
+     * Set to `true` to enable an inertia dampening on zooming and panning. `false` cancels inertia.
+     */
+    inertiaEnabled = true;
+
+    /**
+     * Inertia damping duration for the zoom, in seconds.
+     */
+    zoomInertiaDampingDuration = 0.5;
+
+    /**
+     * Inertia damping duration for the panning, in seconds.
+     */
+    panInertiaDampingDuration = 1.0;
+
+    /**
      * Determines the zoom level delta for single mouse wheel movement. So after each mouse wheel
      * movement the current zoom level will be added or subtracted by this value. The default value
      * is `0.2` - this means that every 5th mouse wheel movement you will cross a zoom level.
@@ -172,6 +193,27 @@ export class MapControls extends THREE.EventDispatcher {
     private readonly m_currentViewDirection = new THREE.Vector3();
 
     private readonly m_lastMousePosition = new THREE.Vector2(0, 0);
+
+    private m_needsRenderLastFrame: boolean = true;
+
+    private m_panIsAnimated: boolean = false;
+    private m_panDistanceFrameDelta: THREE.Vector3 = new THREE.Vector3();
+    private m_panAnimationTime: number = 0;
+    private m_panAnimationStartTime: number = 0;
+    private m_lastAveragedPanDistance: number = 0;
+    private m_currentInertialPanningSpeed: number = 0;
+    private m_lastPanVector: THREE.Vector3 = new THREE.Vector3();
+    private m_recentPanDistances: [number, number, number, number, number] = [0, 0, 0, 0, 0];
+    private m_currentPanDistanceIndex: number = 0;
+
+    private m_zoomIsAnimated: boolean = false;
+    private m_zoomDeltaRequested: number = 0;
+    private m_zoomTargetNormalizedCoordinates: THREE.Vector2 = new THREE.Vector2();
+    private m_zoomAnimationTime: number = 0;
+    private m_zoomAnimationStartTime: number = 0;
+    private m_startZoom: number = 0;
+    private m_targettedZoom?: number;
+    private m_currentZoom?: number;
 
     private m_state: State = State.NONE;
 
@@ -210,6 +252,8 @@ export class MapControls extends THREE.EventDispatcher {
         this.minZoomLevel = mapView.minZoomLevel;
         this.minCameraHeight = mapView.minCameraHeight;
         this.bindInputEvents(this.domElement);
+        this.zoom = this.zoom.bind(this);
+        this.pan = this.pan.bind(this);
     }
 
     /**
@@ -269,6 +313,8 @@ export class MapControls extends THREE.EventDispatcher {
      * @param deltaAltitude Delta altitude in degrees.
      */
     orbitFocusPoint(deltaAzimuth: number, deltaAltitude: number) {
+        this.stopZoom();
+
         this.mapView.camera.getWorldDirection(this.m_currentViewDirection);
         const currentAzimuthAltitude = utils.directionToAzimuthAltitude(
             this.m_currentViewDirection
@@ -402,6 +448,143 @@ export class MapControls extends THREE.EventDispatcher {
         return geoUtils.MathUtils.radToDeg(this.m_minPitchAngle);
     }
 
+    private set currentZoom(zoom: number) {
+        this.m_currentZoom = zoom;
+    }
+
+    private get currentZoom(): number {
+        return this.m_currentZoom !== undefined
+            ? this.m_currentZoom
+            : MapViewUtils.calculateZoomLevelFromHeight(
+                  this.mapView.camera.position.z,
+                  this.mapView
+              );
+    }
+
+    private get zoomLevelTargetted(): number {
+        return this.m_targettedZoom === undefined ? this.currentZoom : this.m_targettedZoom;
+    }
+
+    private easeOutCubic(startValue: number, endValue: number, time: number): number {
+        return startValue + (endValue - startValue) * (--time * time * time + 1);
+    }
+
+    private zoom() {
+        if (this.m_zoomDeltaRequested !== 0) {
+            this.m_targettedZoom = Math.max(
+                Math.min(this.zoomLevelTargetted + this.m_zoomDeltaRequested, this.maxZoomLevel),
+                this.minZoomLevel
+            );
+            this.m_zoomDeltaRequested = 0;
+        }
+        if (this.inertiaEnabled) {
+            if (!this.m_zoomIsAnimated) {
+                this.m_zoomIsAnimated = true;
+                this.mapView.addEventListener(MapViewEventNames.AfterRender, this.zoom);
+            }
+            const currentTime = performance.now();
+            this.m_zoomAnimationTime = (currentTime - this.m_zoomAnimationStartTime) / 1000;
+            const zoomFinished = this.m_zoomAnimationTime > this.zoomInertiaDampingDuration;
+            if (zoomFinished) {
+                if (this.m_needsRenderLastFrame) {
+                    this.m_needsRenderLastFrame = false;
+                    this.m_zoomAnimationTime = this.zoomInertiaDampingDuration;
+                    this.stopZoom();
+                }
+            } else {
+                this.m_needsRenderLastFrame = true;
+            }
+        }
+
+        this.currentZoom = !this.inertiaEnabled
+            ? this.zoomLevelTargetted
+            : this.easeOutCubic(
+                  this.m_startZoom,
+                  this.zoomLevelTargetted,
+                  Math.min(1, this.m_zoomAnimationTime / this.zoomInertiaDampingDuration)
+              );
+
+        MapViewUtils.zoomOnTargetPosition(
+            this.mapView,
+            this.m_zoomTargetNormalizedCoordinates.x,
+            this.m_zoomTargetNormalizedCoordinates.y,
+            this.currentZoom
+        );
+
+        this.updateMapView();
+    }
+
+    private stopZoom() {
+        this.mapView.removeEventListener(MapViewEventNames.AfterRender, this.zoom);
+        this.m_zoomIsAnimated = false;
+        this.m_targettedZoom = this.m_currentZoom = undefined;
+    }
+
+    private pan() {
+        if (this.m_state === State.NONE && this.m_lastAveragedPanDistance === 0) {
+            return;
+        }
+
+        if (this.inertiaEnabled && !this.m_panIsAnimated) {
+            this.m_panIsAnimated = true;
+            this.mapView.addEventListener(MapViewEventNames.AfterRender, this.pan);
+        }
+
+        const applyInertia =
+            this.inertiaEnabled &&
+            this.m_state === State.NONE &&
+            this.m_lastAveragedPanDistance > 0;
+
+        if (applyInertia) {
+            const currentTime = performance.now();
+            this.m_panAnimationTime = (currentTime - this.m_panAnimationStartTime) / 1000;
+            const panFinished = this.m_panAnimationTime > this.panInertiaDampingDuration;
+
+            if (panFinished) {
+                if (this.m_needsRenderLastFrame) {
+                    this.m_needsRenderLastFrame = false;
+                    this.m_panAnimationTime = this.panInertiaDampingDuration;
+                    this.mapView.removeEventListener(MapViewEventNames.AfterRender, this.pan);
+                    this.m_panIsAnimated = false;
+                }
+            } else {
+                this.m_needsRenderLastFrame = true;
+            }
+
+            const animationTime = this.m_panAnimationTime / this.panInertiaDampingDuration;
+            this.m_currentInertialPanningSpeed = this.easeOutCubic(
+                this.m_lastAveragedPanDistance,
+                0,
+                Math.min(1, animationTime)
+            );
+            if (this.m_currentInertialPanningSpeed === 0) {
+                this.m_lastAveragedPanDistance = 0;
+            }
+            this.m_panDistanceFrameDelta
+                .copy(this.m_lastPanVector)
+                .setLength(this.m_currentInertialPanningSpeed);
+        } else {
+            this.m_lastPanVector.copy(this.m_panDistanceFrameDelta);
+            const panDistance = this.m_lastPanVector.length();
+            this.m_currentPanDistanceIndex =
+                (this.m_currentPanDistanceIndex + 1) % USER_INPUTS_TO_CONSIDER;
+            this.m_recentPanDistances[this.m_currentPanDistanceIndex] = panDistance;
+            this.m_lastAveragedPanDistance =
+                this.m_recentPanDistances.reduce((a, b) => a + b) / USER_INPUTS_TO_CONSIDER;
+        }
+
+        MapViewUtils.pan(
+            this.mapView,
+            this.m_panDistanceFrameDelta.x,
+            this.m_panDistanceFrameDelta.y
+        );
+        if (!applyInertia) {
+            this.m_panDistanceFrameDelta.set(0, 0, 0);
+        }
+
+        this.updateMapView();
+    }
+
     private bindInputEvents(domElement: HTMLCanvasElement) {
         const onContextMenu = this.contextMenu.bind(this);
         const onMouseDown = this.mouseDown.bind(this);
@@ -429,7 +612,6 @@ export class MapControls extends THREE.EventDispatcher {
 
     private updateMapView() {
         this.dispatchEvent(MAPCONTROL_EVENT);
-
         this.mapView.update();
     }
 
@@ -463,8 +645,6 @@ export class MapControls extends THREE.EventDispatcher {
 
         this.m_lastMousePosition.setX(event.offsetX);
         this.m_lastMousePosition.setY(event.offsetY);
-
-        this.mapView.beginAnimation();
 
         const onMouseMove = this.mouseMove.bind(this);
         const onMouseUp = this.mouseUp.bind(this);
@@ -504,6 +684,7 @@ export class MapControls extends THREE.EventDispatcher {
 
         this.m_lastMousePosition.setX(this.m_lastMousePosition.x + event.movementX);
         this.m_lastMousePosition.setY(this.m_lastMousePosition.y + event.movementY);
+        this.m_zoomAnimationStartTime = performance.now();
 
         this.updateMapView();
         event.preventDefault();
@@ -515,7 +696,6 @@ export class MapControls extends THREE.EventDispatcher {
             return;
         }
 
-        this.mapView.endAnimation();
         this.updateMapView();
 
         event.preventDefault();
@@ -537,32 +717,28 @@ export class MapControls extends THREE.EventDispatcher {
 
         this.dispatchEvent(MAPCONTROL_EVENT_BEGIN_INTERACTION);
 
-        const currentZoomLevel = MapViewUtils.calculateZoomLevelFromHeight(
-            this.mapView.camera.position.z,
-            this.mapView
-        );
-        let targetZoomLevel =
-            currentZoomLevel +
-            (event.deltaY > 0 ? -this.zoomLevelDeltaOnMouseWheel : this.zoomLevelDeltaOnMouseWheel);
-        targetZoomLevel = Math.max(Math.min(targetZoomLevel, this.maxZoomLevel), this.minZoomLevel);
+        // Register the zoom request
+        this.m_startZoom = this.currentZoom;
+        this.m_zoomDeltaRequested =
+            event.deltaY > 0 ? -this.zoomLevelDeltaOnMouseWheel : this.zoomLevelDeltaOnMouseWheel;
+
+        // Cancel panning so the point of origin of the zoom is maintained.
+        this.m_panDistanceFrameDelta.set(0, 0, 0);
+        this.m_lastAveragedPanDistance = 0;
 
         const { width, height } = utils.getWidthAndHeightFromCanvas(this.domElement);
 
-        const positionInNDC = utils.calculateNormalizedScreenCoordinates(
+        this.m_zoomTargetNormalizedCoordinates = utils.calculateNormalizedDeviceCoordinates(
             event.offsetX,
             event.offsetY,
             width,
             height
         );
 
-        MapViewUtils.zoomOnTargetPosition(
-            this.mapView,
-            positionInNDC.x,
-            positionInNDC.y,
-            targetZoomLevel
-        );
+        // Assign the new animation start time.
+        this.m_zoomAnimationStartTime = performance.now();
 
-        this.updateMapView();
+        this.zoom();
 
         event.preventDefault();
         event.stopPropagation();
@@ -618,7 +794,7 @@ export class MapControls extends THREE.EventDispatcher {
 
         const { width, height } = utils.getWidthAndHeightFromCanvas(this.domElement);
 
-        const touchPointInNDC = utils.calculateNormalizedScreenCoordinates(
+        const touchPointInNDC = utils.calculateNormalizedDeviceCoordinates(
             newTouchPoint.x,
             newTouchPoint.y,
             width,
@@ -682,9 +858,10 @@ export class MapControls extends THREE.EventDispatcher {
             return;
         }
 
+        this.m_state = State.TOUCH;
+
         this.dispatchEvent(MAPCONTROL_EVENT_BEGIN_INTERACTION);
         this.setTouchState(event.touches);
-        this.mapView.beginAnimation();
 
         event.preventDefault();
         event.stopPropagation();
@@ -701,9 +878,15 @@ export class MapControls extends THREE.EventDispatcher {
         if (this.m_touchState.touches.length <= 2) {
             const to = this.m_touchState.touches[0].currentWorldPosition.clone();
             const from = this.m_touchState.touches[0].initialWorldPosition.clone();
-            const deltaWorldPosition = from.sub(to);
+            this.m_panDistanceFrameDelta = from.sub(to);
 
-            MapViewUtils.pan(this.mapView, deltaWorldPosition.x, deltaWorldPosition.y);
+            // Cancel zoom inertia if a panning is triggered, so that the mouse location is kept.
+            this.m_startZoom = this.m_targettedZoom = this.currentZoom;
+
+            // Assign the new animation start time.
+            this.m_panAnimationStartTime = performance.now();
+
+            this.pan();
         }
 
         if (this.m_touchState.touches.length === 2) {
@@ -723,6 +906,8 @@ export class MapControls extends THREE.EventDispatcher {
             );
         }
 
+        this.m_zoomAnimationStartTime = performance.now();
+
         this.updateMapView();
         event.preventDefault();
         event.stopPropagation();
@@ -732,11 +917,11 @@ export class MapControls extends THREE.EventDispatcher {
         if (this.enabled === false) {
             return;
         }
+        this.m_state = State.NONE;
 
         this.setTouchState(event.touches);
 
         this.dispatchEvent(MAPCONTROL_EVENT_END_INTERACTION);
-        this.mapView.endAnimation();
         this.updateMapView();
 
         event.preventDefault();
@@ -750,8 +935,8 @@ export class MapControls extends THREE.EventDispatcher {
     private panFromTo(fromX: number, fromY: number, toX: number, toY: number): void {
         const { width, height } = utils.getWidthAndHeightFromCanvas(this.domElement);
 
-        const from = utils.calculateNormalizedScreenCoordinates(fromX, fromY, width, height);
-        const to = utils.calculateNormalizedScreenCoordinates(toX, toY, width, height);
+        const from = utils.calculateNormalizedDeviceCoordinates(fromX, fromY, width, height);
+        const to = utils.calculateNormalizedDeviceCoordinates(toX, toY, width, height);
 
         const toWorld = MapViewUtils.rayCastWorldCoordinates(this.mapView, to.x, to.y);
         const fromWorld = MapViewUtils.rayCastWorldCoordinates(this.mapView, from.x, from.y);
@@ -760,9 +945,15 @@ export class MapControls extends THREE.EventDispatcher {
             return;
         }
 
-        const diffWorld = fromWorld.sub(toWorld);
+        this.m_panDistanceFrameDelta = fromWorld.sub(toWorld);
 
-        MapViewUtils.pan(this.mapView, diffWorld.x, diffWorld.y);
+        // Cancel zoom inertia if a panning is triggered, so that the mouse location is kept.
+        this.stopZoom();
+
+        // Assign the new animation start time.
+        this.m_panAnimationStartTime = performance.now();
+
+        this.pan();
     }
 
     private constrainPitchAngle(pitchAngle: number, deltaPitch: number): number {
