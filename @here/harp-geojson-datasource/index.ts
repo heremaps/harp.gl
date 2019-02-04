@@ -5,3 +5,4 @@
  */
 
 export * from "./lib/GeoJsonDataSource";
+export * from "./lib/GeoJsonDataProvider";
