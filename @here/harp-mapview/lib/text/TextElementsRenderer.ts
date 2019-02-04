@@ -102,9 +102,6 @@ const PRINT_LABEL_DEBUG_INFO: boolean = false;
 
 const logger = LoggerManager.instance.create("TextElementsRenderer");
 
-// Cache the DevicePixelRatio here:
-let devicePixelRatio = 1;
-
 const tempBox = new THREE.Box2();
 const tempBoxes: THREE.Box2[] = [];
 const tempBox2D = new Math2D.Box();
@@ -188,8 +185,6 @@ export class TextElementsRenderer {
             this.m_labelStartScaleDistance = DEFAULT_LABEL_SCALE_START_DISTANCE;
         }
 
-        devicePixelRatio = this.m_mapView.renderer.getPixelRatio();
-
         this.initializeDefaultAssets();
         this.initializeTextCanvases();
     }
@@ -218,7 +213,6 @@ export class TextElementsRenderer {
      * Reset internal state at the beginning of a frame.
      */
     reset() {
-        devicePixelRatio = this.m_mapView.renderer.getPixelRatio();
         this.m_screenCollisions.reset();
         for (const textRenderer of this.m_textRenderers) {
             textRenderer.textCanvas.clear();
@@ -953,9 +947,10 @@ export class TextElementsRenderer {
             return;
         }
 
+        const pixelRatio = this.m_mapView.pixelRatio;
         const screenSize = this.m_mapView.renderer.getSize();
-        const screenXOrigin = (-screenSize.width * devicePixelRatio) / 2.0;
-        const screenYOrigin = (screenSize.height * devicePixelRatio) / 2.0;
+        const screenXOrigin = (-screenSize.width * pixelRatio) / 2.0;
+        const screenYOrigin = (screenSize.height * pixelRatio) / 2.0;
 
         const tempAdditionParams: AdditionParameters = {};
         const tempBufferAdditionParams: TextBufferAdditionParameters = {};
@@ -1047,14 +1042,14 @@ export class TextElementsRenderer {
             if (!isPathLabel) {
                 // Adjust the label positioning.
                 tempScreenPosition.x =
-                    screenXOrigin + textElement.position.x * screenSize.width * devicePixelRatio;
+                    screenXOrigin + textElement.position.x * screenSize.width * pixelRatio;
                 tempScreenPosition.y =
-                    screenYOrigin - textElement.position.y * screenSize.height * devicePixelRatio;
+                    screenYOrigin - textElement.position.y * screenSize.height * pixelRatio;
                 if (textElement.xOffset !== undefined) {
-                    tempScreenPosition.x += textElement.xOffset * devicePixelRatio;
+                    tempScreenPosition.x += textElement.xOffset * pixelRatio;
                 }
                 if (textElement.yOffset !== undefined) {
-                    tempScreenPosition.y -= textElement.yOffset * devicePixelRatio;
+                    tempScreenPosition.y -= textElement.yOffset * pixelRatio;
                 }
 
                 tempPosition.x = tempScreenPosition.x;
@@ -1072,10 +1067,10 @@ export class TextElementsRenderer {
                 tempScreenPosition.x = screenXOrigin;
                 tempScreenPosition.y = screenYOrigin;
                 if (textElement.xOffset !== undefined) {
-                    tempScreenPosition.x += textElement.xOffset * devicePixelRatio;
+                    tempScreenPosition.x += textElement.xOffset * pixelRatio;
                 }
                 if (textElement.yOffset !== undefined) {
-                    tempScreenPosition.y -= textElement.yOffset * devicePixelRatio;
+                    tempScreenPosition.y -= textElement.yOffset * pixelRatio;
                 }
 
                 // Get the screen points that define the label's segments and create a path with
@@ -1083,8 +1078,8 @@ export class TextElementsRenderer {
                 // TODO: Optimize array allocations.
                 const screenPoints: THREE.Vector2[] = [];
                 for (const pt of textElement.path!) {
-                    const pX = tempScreenPosition.x + pt.x * screenSize.width * devicePixelRatio;
-                    const pY = tempScreenPosition.y - pt.y * screenSize.height * devicePixelRatio;
+                    const pX = tempScreenPosition.x + pt.x * screenSize.width * pixelRatio;
+                    const pY = tempScreenPosition.y - pt.y * screenSize.height * pixelRatio;
                     screenPoints.push(new THREE.Vector2(pX, pY));
                 }
                 textPath = new SimplePath();
@@ -1276,18 +1271,19 @@ export class TextElementsRenderer {
                 position: THREE.Vector3,
                 screenPosition: THREE.Vector2
             ): boolean => {
+                const pixelRatio = this.m_mapView.pixelRatio;
                 // Find the label's original position.
                 tempScreenPosition.x = tempPoiScreenPosition.x = screenPosition.x;
                 tempScreenPosition.y = tempPoiScreenPosition.y = screenPosition.y;
                 if (pointLabel.xOffset !== undefined) {
-                    tempScreenPosition.x += pointLabel.xOffset * devicePixelRatio;
+                    tempScreenPosition.x += pointLabel.xOffset * pixelRatio;
                 }
                 if (pointLabel.yOffset !== undefined) {
-                    tempScreenPosition.y += pointLabel.yOffset * devicePixelRatio;
+                    tempScreenPosition.y += pointLabel.yOffset * pixelRatio;
                 }
 
                 // Scale the text depending on the label's distance to the camera.
-                let textScale = devicePixelRatio;
+                let textScale = pixelRatio;
                 let distanceScale = 1.0;
                 const textDistance = worldCenter.distanceTo(position);
                 if (textDistance !== undefined) {
@@ -1752,9 +1748,9 @@ export class TextElementsRenderer {
                     return false;
                 }
 
+                const pixelRatio = this.m_mapView.pixelRatio;
                 // Compute values common for all glyphs in the label.
-                let textScale =
-                    (textCanvas.textRenderStyle.fontSize.size / 100.0) * devicePixelRatio;
+                let textScale = (textCanvas.textRenderStyle.fontSize.size / 100.0) * pixelRatio;
                 let opacity = 1.0;
                 const tileCenterX = pathLabel.tileCenterX!;
                 const tileCenterY = pathLabel.tileCenterY!;
