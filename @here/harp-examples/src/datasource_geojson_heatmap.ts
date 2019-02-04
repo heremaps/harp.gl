@@ -5,14 +5,12 @@
  */
 
 import { StyleSet } from "@here/harp-datasource-protocol";
-import { GeoJsonDataSource } from "@here/harp-geojson-datasource";
-import { GeoCoordinates, TileKey } from "@here/harp-geoutils";
+import { GeoJsonDataProvider } from "@here/harp-geojson-datasource";
+import { GeoCoordinates } from "@here/harp-geoutils";
 import { MapControls } from "@here/harp-map-controls";
 import { CopyrightElementHandler, MapView } from "@here/harp-mapview";
-import { DataProvider } from "@here/harp-mapview-decoder";
 import { APIFormat, OmvDataSource } from "@here/harp-omv-datasource";
 import * as THREE from "three";
-import * as italyData from "../resources/italy.json";
 
 /**
  * This example demonstrates how to generate a heatmap-like [[StyleSet]] for a GeoJson. To do so,
@@ -21,7 +19,7 @@ import * as italyData from "../resources/italy.json";
  * through the properties held in each feature. This GeoJson is a map of Italy, each feature
  * represents a region, and the properties bear the population density of that region. We can
  * narrow the `when` [[Expr]] condition of a [[Style]] to a value in a property, by simply writing
- * `property.propertyName` in the condition. The algorithm then reads:
+ * `propertyName` in the condition. The algorithm then reads:
  * ```typescript
  * [[include:geojson_heatmap1.ts]]
  * ```
@@ -33,7 +31,7 @@ import * as italyData from "../resources/italy.json";
  * [[include:geojson_heatmap2.ts]]
  * ```
  *
- * Finally this [[StyleSet]] is assigned to the [[GeoJsonDataSource]]:
+ * Finally this [[StyleSet]] is assigned to the [[DataSource]]:
  * ```typescript
  * [[include:geojson_heatmap3.ts]]
  * ```
@@ -46,35 +44,6 @@ export namespace GeoJsonHeatmapExample {
             }
         </style>
     `;
-
-    /**
-     * Fake datasource to return an untiled GeoJson on the root tile.
-     */
-    class StaticGeoJsonDataSource extends GeoJsonDataSource {
-        shouldRender(zoomLevel: number, tileKey: TileKey) {
-            return tileKey.mortonCode() === 1;
-        }
-        getTile(tileKey: TileKey) {
-            if (tileKey.mortonCode() !== 1) {
-                return undefined;
-            }
-            return super.getTile(tileKey);
-        }
-    }
-
-    /**
-     * Fake dataprovider to return an untiled GeoJson for every tile.
-     */
-    class StaticDataProvider implements DataProvider {
-        ready(): boolean {
-            return true;
-        }
-        // tslint:disable-next-line:no-empty
-        async connect(): Promise<void> {}
-        async getTile(): Promise<{}> {
-            return italyData;
-        }
-    }
 
     /**
      * Creates a new MapView for the HTMLCanvasElement of the given id.
@@ -148,13 +117,16 @@ export namespace GeoJsonHeatmapExample {
             const style = {
                 description: "geoJson property-based style",
                 when:
-                    `type == 'polygon'` +
-                    `&& properties.${propertyName} > ${min}` +
-                    `&& properties.${propertyName} <= ${max}`,
+                    `$geometryType == 'polygon'` +
+                    `&& ${propertyName} > ${min}` +
+                    `&& ${propertyName} <= ${max}`,
                 renderOrder: 1000,
-                technique: "fill",
+                technique: "extruded-polygon",
                 attr: {
-                    color: "#" + color.getHexString()
+                    color: "#" + color.getHexString(),
+                    transparent: true,
+                    opacity: 0.8,
+                    lineWidth: 1.0
                 }
             };
             // end:geojson_heatmap1.ts
@@ -165,10 +137,13 @@ export namespace GeoJsonHeatmapExample {
 
     const baseMap = initializeBaseMap("mapCanvas");
 
-    const staticDataProvider = new StaticDataProvider();
-    const geoJsonDataSource = new StaticGeoJsonDataSource({
-        dataProvider: staticDataProvider,
-        name: "geojson"
+    const geoJsonDataProvider = new GeoJsonDataProvider(
+        new URL("resources/italy.json", window.location.href)
+    );
+    const geoJsonDataSource = new OmvDataSource({
+        dataProvider: geoJsonDataProvider,
+        name: "geojson",
+        styleSetName: "geojson"
     });
     baseMap.addDataSource(geoJsonDataSource).then(() => {
         // snippet:geojson_heatmap3.ts

@@ -48,6 +48,7 @@ import {
 } from "./OmvDecoderDefs";
 import { OmvTileInfoEmitter } from "./OmvTileInfoEmitter";
 import { OmvTomTomFeatureModifier } from "./OmvTomTomFeatureModifier";
+import { VTJsonDataAdapter } from "./VTJsonDataAdapter";
 
 const logger = LoggerManager.instance.create("OmvDecoder", { enabled: false });
 
@@ -149,8 +150,8 @@ export class OmvDecoder implements IGeometryProcessor {
         private readonly m_languages?: string[]
     ) {
         // Register the default adapters.
-
         this.m_dataAdapters.push(new OmvProtobufDataAdapter(this, m_dataFilter, logger));
+        this.m_dataAdapters.push(new VTJsonDataAdapter(this, m_dataFilter, logger));
     }
 
     /**

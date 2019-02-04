@@ -43,6 +43,9 @@ import { IOmvEmitter, OmvDecoder, Ring } from "./OmvDecoder";
 
 const logger = LoggerManager.instance.create("OmvDecodedTileEmitter");
 
+const tempTileOrigin = new THREE.Vector3();
+const tempVertOrigin = new THREE.Vector3();
+
 /**
  * Used to identify an invalid (or better: unused) array index.
  */
@@ -553,34 +556,22 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
             polygons.push(rings);
         }
 
-        // Use the height data if it is present in the data received
+        // Get the height values for the footprint and extrusion.
         const currentHeight = env.lookup("height") as number;
-        // A defaultHeight can be defined in the theme
+        const currentMinHeight = env.lookup("min_height") as number;
         const defaultHeight = extrudedPolygonTechnique.defaultHeight;
+        const constantHeight = env.lookup("constantHeight") as boolean;
+        const minHeight = currentMinHeight !== undefined ? currentMinHeight : 0;
+        const height =
+            currentHeight !== undefined
+                ? currentHeight
+                : defaultHeight !== undefined
+                ? defaultHeight
+                : 0;
+
+        this.m_decodeInfo.tileBounds.getCenter(tempTileOrigin);
 
         for (const rings of polygons) {
-            let minHeight = 0;
-            let height = 0;
-
-            if (isExtruded) {
-                const origin = new THREE.Vector3();
-                this.m_decodeInfo.tileBounds.getCenter(origin);
-                origin.x += rings[0].contour[0];
-                origin.y += rings[0].contour[1];
-                const scaleFactor = this.m_decodeInfo.projection.getScaleFactor(origin);
-                const currentMinHeight = env.lookup("min_height") as number;
-
-                minHeight =
-                    currentMinHeight !== undefined ? currentMinHeight * scaleFactor : minHeight;
-
-                height =
-                    currentHeight !== undefined
-                        ? currentHeight * scaleFactor
-                        : defaultHeight !== undefined
-                        ? defaultHeight * scaleFactor
-                        : height;
-            }
-
             const start = indices.length;
 
             const basePosition = positions.length;
@@ -676,9 +667,21 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
 
                     // Add the footprint/roof vertices to the position buffer.
                     for (let i = 0; i < vertices.length; i += 2) {
-                        positions.push(vertices[i], vertices[i + 1], minHeight);
+                        let scaleFactor = 1.0;
+                        if (isExtruded && constantHeight !== true) {
+                            tempVertOrigin.set(
+                                tempTileOrigin.x + vertices[i],
+                                tempTileOrigin.y + vertices[i + 1],
+                                tempTileOrigin.z
+                            );
+                            scaleFactor = this.m_decodeInfo.projection.getScaleFactor(
+                                tempVertOrigin
+                            );
+                        }
+
+                        positions.push(vertices[i], vertices[i + 1], minHeight * scaleFactor);
                         if (isExtruded) {
-                            positions.push(vertices[i], vertices[i + 1], height);
+                            positions.push(vertices[i], vertices[i + 1], height * scaleFactor);
                         } else if (isTextured && texCoords) {
                             textureCoordinates.push(texCoords[i], texCoords[i + 1]);
                         }
