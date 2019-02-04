@@ -44,6 +44,7 @@ describe("MapView", function() {
             getClearColor: () => undefined,
             setClearColor: clearColorStub,
             setSize: () => undefined,
+            getPixelRatio: () => undefined,
             setPixelRatio: () => undefined,
             clear: () => undefined,
             render: () => undefined,

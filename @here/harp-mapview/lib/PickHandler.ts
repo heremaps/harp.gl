@@ -139,8 +139,8 @@ export class PickHandler {
 
         if (this.mapView.textElementsRenderer !== undefined) {
             const { clientWidth, clientHeight } = this.mapView.canvas;
-            const screenX = worldPos.x * clientWidth * 0.5 * devicePixelRatio;
-            const screenY = worldPos.y * clientHeight * 0.5 * devicePixelRatio;
+            const screenX = worldPos.x * clientWidth * 0.5 * this.mapView.pixelRatio;
+            const screenY = worldPos.y * clientHeight * 0.5 * this.mapView.pixelRatio;
             const scenePosition = new THREE.Vector2(screenX, screenY);
             this.mapView.textElementsRenderer.pickTextElements(scenePosition, pickResults);
         }

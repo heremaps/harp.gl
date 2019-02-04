@@ -22,9 +22,6 @@ const logger = LoggerManager.instance.create("PoiRenderer");
 
 const INVALID_RENDER_BATCH = -1;
 
-// Cache the DevicePixelRatio here:
-let devicePixelRatio = 1;
-
 const tempPos = new THREE.Vector3(0);
 
 /**
@@ -145,7 +142,7 @@ class PoiRenderBuffer {
      * [[TextElement]].
      */
     constructor(readonly mapView: MapView, readonly textCanvas: TextCanvas) {
-        devicePixelRatio = window.devicePixelRatio;
+        devicePixelRatio = mapView.pixelRatio;
     }
 
     /**
@@ -250,7 +247,7 @@ class PoiRenderBuffer {
      * beginning of a frame before the POIs are placed.
      */
     reset(): void {
-        devicePixelRatio = window.devicePixelRatio;
+        devicePixelRatio = this.mapView.pixelRatio;
         for (const batch of this.batches) {
             batch.reset();
         }

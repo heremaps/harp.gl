@@ -375,6 +375,13 @@ export interface MapViewOptions {
     languages?: string[];
 
     /**
+     * Set fixed pixel ratio for rendering. Useful when rendering on high resolution displays with
+     * low performance GPUs that may be fill-rate limited.
+     * @default `window.devicePixelRatio`
+     */
+    pixelRatio?: number;
+
+    /**
      * @hidden
      * Disable all fading animations for debugging and performance measurement.
      */
@@ -393,7 +400,12 @@ export const MapViewDefaults = {
     tileCacheSize: 40,
     tileCacheMemorySize: 400 * 1024 * 1024,
     quadTreeSearchDistanceUp: 3,
-    quadTreeSearchDistanceDown: 2
+    quadTreeSearchDistanceDown: 2,
+
+    pixelRatio:
+        typeof window !== "undefined" && window.devicePixelRatio !== undefined
+            ? window.devicePixelRatio
+            : 1.0
 };
 
 /**
@@ -435,6 +447,7 @@ export class MapView extends THREE.EventDispatcher {
 
     private m_tempVector3: THREE.Vector3 = new THREE.Vector3();
     private m_pixelToWorld?: number;
+    private m_pixelRatio?: number;
 
     private readonly m_scene: THREE.Scene = new THREE.Scene();
     private readonly m_fog: MapViewFog = new MapViewFog(this.m_scene);
@@ -562,6 +575,8 @@ export class MapView extends THREE.EventDispatcher {
             this.m_visibleTileSetOptions.quadTreeSearchDistanceDown =
                 options.quadTreeSearchDistanceDown;
         }
+
+        this.m_pixelRatio = options.pixelRatio;
 
         options.fov = MathUtils.clamp(
             options.fov === undefined ? DEFAULT_FIELD_OF_VIEW : options.fov,
@@ -1377,6 +1392,41 @@ export class MapView extends THREE.EventDispatcher {
     }
 
     /**
+     * Return the ratio for rendered pixels to screen pixels. May contain values > 1.0 for high
+     * resolution screens (HiDPI).
+     *
+     * @readonly
+     * @type {number}
+     * @memberof MapView
+     */
+    get pixelRatio(): number {
+        if (this.m_pixelRatio !== undefined) {
+            return this.m_pixelRatio;
+        }
+        return typeof window !== "undefined" && window.devicePixelRatio !== undefined
+            ? window.devicePixelRatio
+            : 1.0;
+    }
+
+    /**
+     * Set the new pixelRatio in the WebGlRenderer. A value of `undefined` will make the getter
+     * return `window.devicePixelRatio`, a value of `1.0` will disable the use of HiDPI on all
+     * devices.
+     *
+     * @note Since the current pixelRatio may have been used in some calculations (e.g. the icons)
+     * they may appear in the wrong size now. To ensure proper display of data, a call to
+     * `clearTileCache()` is required if the pixelRatio is changed after tiles have been loaded.
+     *
+     * @memberof MapView
+     */
+    set pixelRatio(pixelRatio: number) {
+        this.m_pixelRatio = pixelRatio;
+        if (this.renderer.getPixelRatio() !== this.pixelRatio) {
+            this.renderer.setPixelRatio(this.pixelRatio);
+        }
+    }
+
+    /**
      * Returns the screen position of the given geo coordinates.
      *
      * @param geoPos The geo coordinates.
@@ -1389,8 +1439,8 @@ export class MapView extends THREE.EventDispatcher {
         const p = this.m_screenProjector.project(worldPos);
         if (p !== undefined) {
             const { width, height } = this.canvas;
-            p.x = (p.x + width / 2) / window.devicePixelRatio;
-            p.y = (height - (p.y + height / 2)) / window.devicePixelRatio;
+            p.x = (p.x + width / 2) / this.pixelRatio;
+            p.y = (height - (p.y + height / 2)) / this.pixelRatio;
         }
         return p;
     }
@@ -1466,7 +1516,9 @@ export class MapView extends THREE.EventDispatcher {
      */
     resize(width: number, height: number) {
         this.m_renderer.setSize(width, height, false);
-        this.m_renderer.setPixelRatio(window.devicePixelRatio);
+        if (this.m_renderer.getPixelRatio() !== this.pixelRatio) {
+            this.m_renderer.setPixelRatio(this.pixelRatio);
+        }
 
         if (this.mapRenderingManager !== undefined) {
             this.mapRenderingManager.setSize(width, height);
@@ -1702,7 +1754,9 @@ export class MapView extends THREE.EventDispatcher {
 
         this.m_drawing = true;
 
-        this.m_renderer.setPixelRatio(window.devicePixelRatio);
+        if (this.m_renderer.getPixelRatio() !== this.pixelRatio) {
+            this.m_renderer.setPixelRatio(this.pixelRatio);
+        }
 
         this.updateCameras();
         this.m_fog.update(this.m_camera);
