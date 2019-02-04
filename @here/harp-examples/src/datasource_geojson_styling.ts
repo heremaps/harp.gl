@@ -5,18 +5,16 @@
  */
 
 import { StyleSet } from "@here/harp-datasource-protocol";
-import { GeoJsonDataSource } from "@here/harp-geojson-datasource";
+import { GeoJsonDataProvider } from "@here/harp-geojson-datasource";
 import { GeoCoordinates, TileKey } from "@here/harp-geoutils";
 import { MapControls } from "@here/harp-map-controls";
 import { CopyrightElementHandler, MapView } from "@here/harp-mapview";
-import { DataProvider } from "@here/harp-mapview-decoder";
 import { APIFormat, OmvDataSource } from "@here/harp-omv-datasource";
-import * as italyData from "../resources/italy.json";
 
 /**
  * This example demonstrates how to use [[MapView]] map rendering SDK, fetching
  * data using the `StaticDataProvider` and [[StyleSet]] changing with the help of the
- * [[GeoJsonDataSource.setStyleSet]] method.
+ * [[DataSource.setStyleSet]] method.
  *
  * At first, we need to setup the [[MapView]] and connect to data source.
  * ```typescript
@@ -24,7 +22,7 @@ import * as italyData from "../resources/italy.json";
  * ```
  *
  * Then we have to write a `updateGeoJsonStyleSet()` function that accepts both,
- * the [[MapView]] that we're going to work with, and the [[Styleset]] array.
+ * the [[MapView]] that we're going to work with, and the [[StyleSet]] array.
  * ```typescript
  * [[include:datasource_style2.ts]]
  * ```
@@ -34,19 +32,8 @@ import * as italyData from "../resources/italy.json";
  * ```typescript
  * [[include:datasource_style3.ts]]
  * ```
- *
- * In this example we use `StaticGeoJsonDataSource` and `StaticDataProvider` which are
- * wrappers of [[GeoJsonDataSource]] and [[DataProvider]] accordingly. The idea was
- * to implement a [[DataSource]] that will work with raw, untiled GeoJSON data that is retreived
- * from a local `italy.json` file and assigned as an `italyData` variable.
- * ```typescript
- * [[include:datasource_style_static.ts]]
- * ```
- * `StaticGeoJsonDataSource` in this case was made as an optimization that keeps
- * everything in one tile with `mortonCode: 1`.
- *
  */
-export namespace StyleSetExample {
+export namespace GeoJsonStylingExample {
     document.body.innerHTML += `
         <style>
             #styleset-toggle{
@@ -83,7 +70,7 @@ export namespace StyleSetExample {
     const orangeStyle: StyleSet = [
         {
             description: "geoJson polygon",
-            when: "type == 'polygon'",
+            when: "$geometryType == 'polygon'",
             renderOrder: 1000,
             technique: "fill",
             attr: {
@@ -97,7 +84,7 @@ export namespace StyleSetExample {
     const greenStyle: StyleSet = [
         {
             description: "geoJson polygon",
-            when: "type == 'polygon'",
+            when: "$geometryType == 'polygon'",
             renderOrder: 1000,
             technique: "fill",
             attr: {
@@ -107,38 +94,6 @@ export namespace StyleSetExample {
             }
         }
     ];
-
-    // snippet:datasource_style_static.ts
-    class StaticGeoJsonDataSource extends GeoJsonDataSource {
-        // rendering optimization
-        shouldRender(zoomLevel: number, tileKey: TileKey) {
-            return tileKey.mortonCode() === 1;
-        }
-
-        // return GeoJSONTile only if mortonCode is 1, else = nothing
-        getTile(tileKey: TileKey) {
-            if (tileKey.mortonCode() !== 1) {
-                return undefined;
-            }
-            return super.getTile(tileKey);
-        }
-    }
-
-    class StaticDataProvider implements DataProvider {
-        // This is required to work
-        ready(): boolean {
-            return true;
-        }
-        async connect(): Promise<void> {
-            //not needed
-        }
-
-        // Returns italyData json object.
-        async getTile(): Promise<{}> {
-            return italyData;
-        }
-    }
-    // end:datasource_style_static.ts
 
     const mapView = initializeMapView("mapCanvas");
 
@@ -191,11 +146,13 @@ export namespace StyleSetExample {
     // end:datasource_style1.ts
 
     function initializeMapViewDataSource(mapViewUsed: MapView) {
-        const staticDataProvider = new StaticDataProvider();
-
-        const geoJsonDataSource = new StaticGeoJsonDataSource({
-            dataProvider: staticDataProvider,
-            name: "geojson"
+        const geoJsonDataProvider = new GeoJsonDataProvider(
+            new URL("resources/italy.json", window.location.href)
+        );
+        const geoJsonDataSource = new OmvDataSource({
+            dataProvider: geoJsonDataProvider,
+            name: "geojson",
+            styleSetName: "geojson"
         });
 
         mapViewUsed.addDataSource(geoJsonDataSource).then(() => {

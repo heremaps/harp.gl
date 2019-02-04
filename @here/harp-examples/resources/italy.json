@@ -12,6 +12,7 @@
                 "area": 25394103941.6,
                 "name": "piemonte",
                 "density": 172,
+                "height": 8600,
                 "length": 1236869.3688,
                 "@ns:com:here:xyz": {
                     "tags": [],
@@ -483,6 +484,7 @@
                 "area": 3259040961.3,
                 "name": "valle d'aosta",
                 "density": 38.7,
+                "height": 1935,
                 "length": 311165.134877,
                 "@ns:com:here:xyz": {
                     "tags": [],
@@ -606,6 +608,7 @@
                 "area": 23862698613.6,
                 "name": "lombardia",
                 "density": 420,
+                "height": 21000,
                 "length": 1411265.07152,
                 "@ns:com:here:xyz": {
                     "tags": [],
@@ -1161,6 +1164,7 @@
                 "area": 13608018378.5,
                 "name": "trentino-alto adige/sudtirol",
                 "density": 87,
+                "height": 4350,
                 "length": 800534.132495,
                 "@ns:com:here:xyz": {
                     "tags": [],
@@ -1465,6 +1469,7 @@
                 "area": 18405499479.4,
                 "name": "veneto",
                 "density": 267,
+                "height": 13350,
                 "length": 1057855.9676,
                 "@ns:com:here:xyz": {
                     "tags": [],
@@ -1839,6 +1844,7 @@
                 "area": 7864293935.04,
                 "name": "friuli venezia giulia",
                 "density": 150,
+                "height": 7500,
                 "length": 667489.73706,
                 "@ns:com:here:xyz": {
                     "tags": [],
@@ -2320,6 +2326,7 @@
                 "area": 5415464956.44,
                 "name": "liguria",
                 "density": 290,
+                "height": 14500,
                 "length": 834224.468035,
                 "@ns:com:here:xyz": {
                     "tags": [],
@@ -3073,6 +3080,7 @@
                 "area": 22451465521.9,
                 "name": "emilia-romagna",
                 "density": 200,
+                "height": 10000,
                 "length": 1164723.05925,
                 "@ns:com:here:xyz": {
                     "tags": [],
@@ -3518,6 +3526,7 @@
                 "area": 22984426772,
                 "name": "toscana",
                 "density": 160,
+                "height": 8000,
                 "length": 1316658.00191,
                 "@ns:com:here:xyz": {
                     "tags": [],
@@ -4359,6 +4368,7 @@
                 "area": 8464007915.76,
                 "name": "umbria",
                 "density": 110,
+                "height": 5500,
                 "length": 620315.16993,
                 "@ns:com:here:xyz": {
                     "tags": [],
@@ -4613,6 +4623,7 @@
                 "area": 9401177971.95,
                 "name": "marche",
                 "density": 160,
+                "height": 8000,
                 "length": 629209.047201,
                 "@ns:com:here:xyz": {
                     "tags": [],
@@ -4850,6 +4861,7 @@
                 "area": 17227617801.3,
                 "name": "lazio",
                 "density": 342,
+                "height": 17100,
                 "length": 1055355.14651,
                 "@ns:com:here:xyz": {
                     "tags": [],
@@ -5360,6 +5372,7 @@
                 "area": 10829102919.5,
                 "name": "abruzzo",
                 "density": 120,
+                "height": 6000,
                 "length": 614513.705789,
                 "@ns:com:here:xyz": {
                     "tags": [],
@@ -5572,6 +5585,7 @@
                 "area": 4461149496.36,
                 "name": "molise",
                 "density": 69,
+                "height": 3450,
                 "length": 433874.67797,
                 "@ns:com:here:xyz": {
                     "tags": [],
@@ -5735,6 +5749,7 @@
                 "area": 13663989800.1,
                 "name": "campania",
                 "density": 426,
+                "height": 21300,
                 "length": 892379.131913,
                 "@ns:com:here:xyz": {
                     "tags": [],
@@ -6330,6 +6345,7 @@
                 "area": 19537077223,
                 "name": "puglia",
                 "density": 210,
+                "height": 10500,
                 "length": 1176242.99348,
                 "@ns:com:here:xyz": {
                     "tags": [],
@@ -7004,6 +7020,7 @@
                 "area": 10073260222.6,
                 "name": "basilicata",
                 "density": 56,
+                "height": 2350,
                 "length": 614219.205497,
                 "@ns:com:here:xyz": {
                     "tags": [],
@@ -7268,6 +7285,7 @@
                 "area": 15216683867.8,
                 "name": "calabria",
                 "density": 130,
+                "height": 6500,
                 "length": 838194.35773,
                 "@ns:com:here:xyz": {
                     "tags": [],
@@ -7517,6 +7535,7 @@
                 "area": 25824775591.4,
                 "name": "sicilia",
                 "density": 196,
+                "height": 9800,
                 "length": 1339973.64188,
                 "@ns:com:here:xyz": {
                     "tags": [],
@@ -8497,6 +8516,7 @@
                 "area": 24094165311.9,
                 "name": "sardegna",
                 "density": 69,
+                "height": 3450,
                 "length": 1460657.08082,
                 "@ns:com:here:xyz": {
                     "tags": [],

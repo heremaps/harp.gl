@@ -54,6 +54,62 @@
         }
     ],
     "styles": {
+        "geojson": [
+            {
+                "styles": [
+                    {
+                        "when": "$geometryType ^= 'polygon' && extruded",
+                        "renderOrder": 1000,
+                        "technique": "extruded-polygon",
+                        "attr": {
+                            "color": "#ff0000",
+                            "transparent": true,
+                            "opacity": 0.5,
+                            "maxSlope": 0.9,
+                            "lineWidth": 1.0
+                        }
+                    },
+                    {
+                        "when": "$geometryType ^= 'polygon'",
+                        "renderOrder": 1000,
+                        "technique": "fill",
+                        "attr": {
+                            "color": "#ff0000",
+                            "transparent": true,
+                            "opacity": 0.5
+                        }
+                    },
+                    {
+                        "when": "$geometryType ^= 'line'",
+                        "renderOrder": 1000,
+                        "technique": "solid-line",
+                        "attr": {
+                            "color": "#00ff00",
+                            "transparent": true,
+                            "opacity": 0.5,
+                            "metricUnit": "Pixel",
+                            "lineWidth": 10
+                        }
+                    },
+                    {
+                        "when": "$geometryType ^= 'point'",
+                        "renderOrder": 1000,
+                        "technique": "labeled-icon",
+                        "final": true,
+                        "attr": {
+                            "label": "text",
+                            "textMayOverlap": true,
+                            "scale": 0.5,
+                            "imageTexture": "custom-icon",
+                            "screenHeight": 32,
+                            "iconYOffset": 16,
+                            "fadeNear": 0.9,
+                            "fadeFar": 1.0
+                        }
+                    }
+                ]
+            }
+        ],
         "tilezen": [
             {
                 "description": "Default render order",

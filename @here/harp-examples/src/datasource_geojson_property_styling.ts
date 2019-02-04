@@ -4,13 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GeoJsonDataSource } from "@here/harp-geojson-datasource";
-import { GeoCoordinates, TileKey } from "@here/harp-geoutils";
+import { GeoJsonDataProvider } from "@here/harp-geojson-datasource";
+import { GeoCoordinates } from "@here/harp-geoutils";
 import { MapControls } from "@here/harp-map-controls";
 import { CopyrightElementHandler, MapView } from "@here/harp-mapview";
-import { DataProvider } from "@here/harp-mapview-decoder";
 import { APIFormat, OmvDataSource } from "@here/harp-omv-datasource";
-import * as italyData from "../resources/italy.json";
 
 /**
  * With the GeoJson format, objects are arranged into features, and each feature can bear custom
@@ -32,10 +30,8 @@ import * as italyData from "../resources/italy.json";
  * Properties nested in objects or arrays can also be accessed the same way, as one would do in
  * JavaScript. For instance: `properties.myArray[1].key2`.
  *
- * Finally a [[GeoJsonDataSource]] is created and added to [[MapView]], and the above [[StyleSet]]
- * is passed afterwards. Note that the GeoJson of Italy used in this example is not tiled, so
- * intermediate classes for the [[DataSource]] and its [[DataProvider]] are created so that this
- * GeoJson can be used directly:
+ * Finally a [[DataSource]] is created and added to [[MapView]], and the above [[StyleSet]]
+ * is passed afterwards:
  * ```typescript
  * [[include:geojson_property_styling3.ts]]
  * ```
@@ -129,7 +125,7 @@ export namespace GeoJsonPropertyStylingExample {
             "geojson": [
                 {
                     "description": "Technique for all regions but Toscana.",
-                    "when": "type == 'polygon' && properties.name != 'toscana'",
+                    "when": "$geometryType == 'polygon' && name != 'toscana'",
                     "renderOrder": 1000,
                     "technique": "fill",
                     "attr": {
@@ -140,7 +136,7 @@ export namespace GeoJsonPropertyStylingExample {
                 },
                 {
                     "description": "Technique for Toscana.",
-                    "when": "type == 'polygon' && properties.name == 'toscana'",
+                    "when": "$geometryType == 'polygon' && name == 'toscana'",
                     "renderOrder": 1000,
                     "technique": "fill",
                     "attr": {
@@ -153,36 +149,6 @@ export namespace GeoJsonPropertyStylingExample {
         }
     }`;
     // end:geojson_property_styling2.ts
-
-    /**
-     * Fake datasource to return an untiled GeoJson on the root tile.
-     */
-    class StaticGeoJsonDataSource extends GeoJsonDataSource {
-        shouldRender(zoomLevel: number, tileKey: TileKey) {
-            return tileKey.mortonCode() === 1;
-        }
-        getTile(tileKey: TileKey) {
-            if (tileKey.mortonCode() !== 1) {
-                return undefined;
-            }
-            return super.getTile(tileKey);
-        }
-    }
-
-    /**
-     * Fake dataprovider to return an untiled GeoJson for every tile.
-     */
-    class StaticDataProvider implements DataProvider {
-        ready(): boolean {
-            return true;
-        }
-        // tslint:disable-next-line:no-empty
-        async connect(): Promise<void> {}
-
-        async getTile(): Promise<{}> {
-            return italyData;
-        }
-    }
 
     /**
      * Creates a new MapView for the HTMLCanvasElement of the given id.
@@ -230,10 +196,13 @@ export namespace GeoJsonPropertyStylingExample {
     const baseMap = initializeBaseMap("mapCanvas");
 
     // snippet:geojson_property_styling3.ts
-    const staticDataProvider = new StaticDataProvider();
-    const geoJsonDataSource = new StaticGeoJsonDataSource({
-        dataProvider: staticDataProvider,
-        name: "geojson"
+    const geoJsonDataProvider = new GeoJsonDataProvider(
+        new URL("resources/italy.json", window.location.href)
+    );
+    const geoJsonDataSource = new OmvDataSource({
+        dataProvider: geoJsonDataProvider,
+        name: "geojson",
+        styleSetName: "geojson"
     });
     baseMap.addDataSource(geoJsonDataSource).then(() => {
         geoJsonDataSource.setStyleSet(JSON.parse(theme).styles.geojson);
