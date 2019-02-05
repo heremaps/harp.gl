@@ -8,7 +8,11 @@ import {
     BufferAttribute,
     getPropertyValue,
     isCaseProperty,
-    Technique
+    isExtrudedPolygonTechnique,
+    isShaderTechnique,
+    isStandardTexturedTechnique,
+    Technique,
+    toWrappingMode
 } from "@here/harp-datasource-protocol";
 import {
     CirclePointsMaterial,
@@ -18,8 +22,11 @@ import {
     MapMeshStandardMaterial,
     SolidLineMaterial
 } from "@here/harp-materials";
+import { LoggerManager } from "@here/harp-utils";
 import * as THREE from "three";
 import { Circles, Squares } from "./MapViewPoints";
+
+const logger = LoggerManager.instance.create("DecodedTileHelpers");
 
 /**
  * The structure of the options to pass into [[createMaterial]].
@@ -53,11 +60,17 @@ export interface MaterialOptions {
  * Create a material, depending on the rendering technique provided in the options.
  *
  * @param options The material options the subsequent functions need.
+ * @param materialUpdateCallback Optional callback when the material gets updated,
+ *                               e.g. after texture loading.
  *
  * @returns new material instance that matches `technique.name`
  */
-export function createMaterial(options: MaterialOptions): THREE.Material | undefined {
-    const Constructor = getMaterialConstructor(options.technique);
+export function createMaterial(
+    options: MaterialOptions,
+    materialUpdateCallback?: () => void
+): THREE.Material | undefined {
+    const technique = options.technique;
+    const Constructor = getMaterialConstructor(technique);
 
     const settings: { [key: string]: any } = {};
 
@@ -74,21 +87,56 @@ export function createMaterial(options: MaterialOptions): THREE.Material | undef
 
     const material = new Constructor(settings);
 
-    if (options.technique.id !== undefined) {
-        material.name = options.technique.id;
+    if (technique.id !== undefined) {
+        material.name = technique.id;
     }
 
-    if (options.technique.name === "extruded-polygon") {
+    if (isExtrudedPolygonTechnique(technique)) {
         material.flatShading = true;
     }
 
-    material.depthTest =
-        options.technique.name === "extruded-polygon" && options.technique.depthTest !== false;
+    material.depthTest = isExtrudedPolygonTechnique(technique) && technique.depthTest !== false;
 
-    if (options.technique.name === "shader") {
+    if (isStandardTexturedTechnique(technique) && technique.texture !== undefined) {
+        let textureUrl: string | undefined;
+        if (typeof technique.texture === "string") {
+            textureUrl = technique.texture;
+        } else {
+            const textureBlob = new Blob([technique.texture.buffer], {
+                type: technique.texture.format
+            });
+            textureUrl = URL.createObjectURL(textureBlob);
+        }
+        new THREE.TextureLoader().load(
+            textureUrl,
+            texture => {
+                // onLoad
+                if (technique.wrapS !== undefined) {
+                    texture.wrapS = toWrappingMode(technique.wrapS);
+                }
+                if (technique.wrapT !== undefined) {
+                    texture.wrapT = toWrappingMode(technique.wrapT);
+                }
+
+                (material as THREE.MeshStandardMaterial).map = texture;
+                texture.needsUpdate = true;
+                material.needsUpdate = true;
+                if (materialUpdateCallback) {
+                    materialUpdateCallback();
+                }
+            },
+            undefined, // onProgress
+            error => {
+                // onError
+                logger.error("#createMaterial: Failed to load texture: ", error);
+            }
+        );
+    }
+
+    if (isShaderTechnique(technique)) {
         // special case for ShaderTechnique.
         // The shader technique takes the argument from its `params' member.
-        const params = options.technique.params as { [key: string]: any };
+        const params = technique.params as { [key: string]: any };
         Object.getOwnPropertyNames(params).forEach(property => {
             const prop = property as keyof (typeof params);
             if (prop === "name") {
@@ -103,12 +151,7 @@ export function createMaterial(options: MaterialOptions): THREE.Material | undef
             }
         });
     } else {
-        applyTechniqueToMaterial(
-            options.technique,
-            material,
-            options.level,
-            options.skipExtraProps
-        );
+        applyTechniqueToMaterial(technique, material, options.level, options.skipExtraProps);
     }
 
     return material;

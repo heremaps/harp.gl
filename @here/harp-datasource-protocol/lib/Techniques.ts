@@ -1069,7 +1069,7 @@ export function isLineTechnique(technique: Technique): technique is LineTechniqu
 /**
  * Type guard to check if an object is an instance of [[SolidLineTechnique]].
  */
-export function isSolidLineTechnique(technique: Technique): technique is LineTechnique {
+export function isSolidLineTechnique(technique: Technique): technique is SolidLineTechnique {
     return technique.name === "solid-line";
 }
 

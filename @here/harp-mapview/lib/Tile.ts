@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import {
+    BaseTechnique,
     DecodedTile,
     ExtrudedPolygonTechnique,
     FillTechnique,
@@ -12,11 +13,17 @@ import {
     getArrayConstructor,
     getAttributeValue,
     getPropertyValue,
+    isCirclesTechnique,
+    isDashedLineTechnique,
+    isExtrudedLineTechnique,
     isExtrudedPolygonTechnique,
+    isFillTechnique,
+    isSolidLineTechnique,
+    isSquaresTechnique,
     isStandardTechnique,
+    isStandardTexturedTechnique,
     LineMarkerTechnique,
     PoiTechnique,
-    SolidLineTechnique,
     StandardExtrudedLineTechnique,
     Technique,
     TextPathGeometry,
@@ -1074,11 +1081,17 @@ export class Tile implements CachedResource {
                 let material: THREE.Material | undefined = materials[techniqueIndex];
 
                 if (material === undefined) {
-                    material = createMaterial({
-                        technique,
-                        level: displayZoomLevel,
-                        fog: this.mapView.scene.fog !== null
-                    });
+                    const onMaterialUpdated = () => {
+                        this.dataSource.requestUpdate();
+                    };
+                    material = createMaterial(
+                        {
+                            technique,
+                            level: displayZoomLevel,
+                            fog: this.mapView.scene.fog !== null
+                        },
+                        onMaterialUpdated
+                    );
                     if (material === undefined) {
                         continue;
                     }
@@ -1115,13 +1128,16 @@ export class Tile implements CachedResource {
                     bufferGeometry.setIndex(getBufferAttribute(srcGeometry.index));
                 }
 
-                if (!bufferGeometry.getAttribute("normal") && isStandardTechnique(technique)) {
+                if (
+                    !bufferGeometry.getAttribute("normal") &&
+                    (isStandardTechnique(technique) || isStandardTexturedTechnique(technique))
+                ) {
                     bufferGeometry.computeVertexNormals();
                 }
 
                 bufferGeometry.addGroup(start, count);
 
-                if (technique.name === "solid-line" || technique.name === "dashed-line") {
+                if (isSolidLineTechnique(technique) || isDashedLineTechnique(technique)) {
                     const lineMaterial = material as THREE.RawShaderMaterial;
                     lineMaterial.uniforms.opacity.value = material.opacity;
 
@@ -1138,9 +1154,10 @@ export class Tile implements CachedResource {
                 // Add polygon offset to the extruded buildings and to the fill area to avoid depth
                 // problems when rendering edges.
                 const isExtruded: boolean =
-                    technique.name === "extruded-polygon" && srcGeometry.edgeIndex !== undefined;
+                    isExtrudedPolygonTechnique(technique) && srcGeometry.edgeIndex !== undefined;
                 const isFilled: boolean =
-                    technique.name === "fill" && srcGeometry.outlineIndicesAttributes !== undefined;
+                    isFillTechnique(technique) &&
+                    srcGeometry.outlineIndicesAttributes !== undefined;
                 if (isExtruded || isFilled) {
                     material.polygonOffset = true;
                     material.polygonOffsetFactor = 0.25;
@@ -1169,7 +1186,7 @@ export class Tile implements CachedResource {
                 }
 
                 if (
-                    (technique.name === "circles" || technique.name === "squares") &&
+                    (isCirclesTechnique(technique) || isSquaresTechnique(technique)) &&
                     technique.enablePicking !== undefined
                 ) {
                     (object as MapViewPoints).enableRayTesting = technique.enablePicking;
@@ -1178,8 +1195,8 @@ export class Tile implements CachedResource {
                 // Lines renderOrder fix: Render them as transparent objects, but make sure they end
                 // up in the opaque rendering queue (by disabling transparency onAfterRender, and
                 // enabling it onBeforeRender).
-                if (technique.name === "solid-line" || technique.name === "dashed-line") {
-                    const fadingParams = this.getFadingParams(technique as SolidLineTechnique);
+                if (isSolidLineTechnique(technique) || isDashedLineTechnique(technique)) {
+                    const fadingParams = this.getFadingParams(technique);
                     FadingFeature.addRenderHelper(
                         object,
                         fadingParams.fadeNear,
@@ -1206,7 +1223,7 @@ export class Tile implements CachedResource {
                                         : SolidLineMaterial.DEFAULT_WIDTH) * pixelToWorld;
 
                                 // Do the same for dashSize and gapSize for dashed lines.
-                                if (technique.name === "dashed-line") {
+                                if (isDashedLineTechnique(technique)) {
                                     const dashedLineMaterial = lineMaterial as DashedLineMaterial;
 
                                     const dashSize = getAttributeValue(
@@ -1232,7 +1249,7 @@ export class Tile implements CachedResource {
                     );
                 }
 
-                if (technique.name === "extruded-line") {
+                if (isExtrudedLineTechnique(technique)) {
                     // extruded lines are normal meshes, and need transparency only when fading
                     // is defined.
                     if (technique.fadeFar !== undefined && technique.fadeFar >= 0) {
@@ -1251,13 +1268,11 @@ export class Tile implements CachedResource {
 
                 this.addFeatureData(srcGeometry, technique, object);
 
-                if (isExtruded || technique.name === "fill") {
-                    const fillTechnique = technique as FillTechnique;
-
+                if (isExtruded || isFillTechnique(technique)) {
                     // filled polygons are normal meshes, and need transparency only when fading is
                     // defined.
                     if (technique.fadeFar !== undefined && technique.fadeFar >= 0) {
-                        const fadingParams = this.getFadingParams(fillTechnique);
+                        const fadingParams = this.getFadingParams(technique);
 
                         FadingFeature.addRenderHelper(
                             object,
@@ -1561,9 +1576,7 @@ export class Tile implements CachedResource {
     /**
      * Gets the fading parameters for several kinds of objects.
      */
-    private getFadingParams(
-        technique: FillTechnique | SolidLineTechnique | StandardExtrudedLineTechnique
-    ): FadingParameters {
+    private getFadingParams(technique: BaseTechnique): FadingParameters {
         const displayZoomLevel = this.mapView.zoomLevel;
         const fadeNear =
             technique.fadeNear !== undefined
