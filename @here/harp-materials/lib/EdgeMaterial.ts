@@ -24,7 +24,7 @@ varying vec3 vColor;
 #endif
 
 void main() {
-    #if USE_COLOR
+    #ifdef USE_COLOR
     vColor = mix(edgeColor.rgb, color.rgb, edgeColorMix);
     #else
     vColor = edgeColor.rgb;
