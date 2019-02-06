@@ -48,7 +48,7 @@ const logger = LoggerManager.instance.create("OmvDecoder", { enabled: false });
 export class Ring {
     readonly isOuterRing: boolean;
 
-    constructor(readonly contour: number[]) {
+    constructor(readonly contour: number[], readonly countourTexCoords?: number[]) {
         this.isOuterRing = this.area() < 0;
     }
 

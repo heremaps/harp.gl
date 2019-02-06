@@ -892,6 +892,8 @@ export interface LandmarkTechnique extends BaseStandardTechnique {
 
 /**
  * Technique used to render a geometry with a texture.
+ * When using this technique, the datasource will produce texture coordinates in
+ * local tile space (i.e. [0,0] at south-west and [1,1] at noth-east tile corner )
  */
 export interface StandardTexturedTechnique extends BaseStandardTechnique {
     name: "standard-textured";

@@ -17,6 +17,9 @@ import {
     Group,
     IMeshBuffers,
     InterleavedBufferAttribute,
+    isExtrudedPolygonTechnique,
+    isFillTechnique,
+    isStandardTexturedTechnique,
     LineMarkerTechnique,
     Outliner,
     PoiGeometry,
@@ -30,10 +33,11 @@ import {
 } from "@here/harp-datasource-protocol";
 import { MapEnv } from "@here/harp-datasource-protocol/lib/Theme";
 import { LINE_VERTEX_ATTRIBUTE_DESCRIPTORS, Lines, triangulateLine } from "@here/harp-lines";
-import { LoggerManager, Math2D } from "@here/harp-utils";
+import { assert, LoggerManager, Math2D } from "@here/harp-utils";
 import earcut from "earcut";
 import * as THREE from "three";
 
+import { identityProjection } from "@here/harp-geoutils";
 import { GeometryCommands, isClosePathCommand, isLineToCommand, isMoveToCommand } from "./OmvData";
 import { LinesGeometry } from "./OmvDataSource";
 import { IOmvEmitter, OmvDecoder, Ring } from "./OmvDecoder";
@@ -48,6 +52,7 @@ const INVALID_ARRAY_INDEX = -1;
 // for tilezen by default extrude all buildings even those without height data
 class MeshBuffers implements IMeshBuffers {
     readonly positions: number[] = [];
+    readonly textureCoordinates: number[] = [];
     readonly colors: number[] = [];
     readonly indices: number[] = [];
     readonly edgeIndices: number[] = [];
@@ -525,11 +530,23 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
         if (meshBuffers === undefined) {
             return;
         }
-        const { positions, colors, indices, edgeIndices, outlineIndices, groups } = meshBuffers;
+        const {
+            positions,
+            textureCoordinates,
+            colors,
+            indices,
+            edgeIndices,
+            outlineIndices,
+            groups
+        } = meshBuffers;
 
         const technique = techniques[0];
         const extrudedPolygonTechnique = technique as ExtrudedPolygonTechnique;
         const fillTechnique = technique as FillTechnique;
+
+        const isExtruded = isExtrudedPolygonTechnique(technique);
+        const isFilled = isFillTechnique(technique);
+        const isTextured = isStandardTexturedTechnique(technique);
 
         if (technique === undefined) {
             return;
@@ -538,6 +555,15 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
         const worldPos = new THREE.Vector3();
         const rings = new Array<Ring>();
         let ring: number[];
+        let ringTexCoords: number[];
+
+        const texCoord = new THREE.Vector3();
+        const texCoordProjection = identityProjection;
+        const texCoordBox = texCoordProjection.projectBox(
+            this.m_decodeInfo.geoBox,
+            new THREE.Box3()
+        );
+        const texCoordBoxSize = texCoordBox.getSize(new THREE.Vector3());
 
         this.m_geometryCommands.accept(
             feature.geometry,
@@ -551,13 +577,27 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                             .projectPoint(command, worldPos)
                             .sub(this.m_decodeInfo.center);
                         ring = [x, y];
+                        if (isTextured) {
+                            const { x: u, y: v } = texCoordProjection
+                                .projectPoint(command, texCoord)
+                                .sub(texCoordBox.min)
+                                .divide(texCoordBoxSize);
+                            ringTexCoords = [u, v];
+                        }
                     } else if (isLineToCommand(command)) {
                         const { x, y } = this.m_decodeInfo.projection
                             .projectPoint(command, worldPos)
                             .sub(this.m_decodeInfo.center);
                         ring.push(x, y);
+                        if (isTextured) {
+                            const { x: u, y: v } = texCoordProjection
+                                .projectPoint(command, texCoord)
+                                .sub(texCoordBox.min)
+                                .divide(texCoordBoxSize);
+                            ringTexCoords.push(u, v);
+                        }
                     } else if (isClosePathCommand(command)) {
-                        rings.push(new Ring(ring));
+                        rings.push(new Ring(ring, ringTexCoords));
                     }
                 }
             }
@@ -569,8 +609,6 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
         const currentHeight = env.lookup("height") as number;
         // A defaultHeight can be defined in the theme
         const defaultHeight = extrudedPolygonTechnique.defaultHeight;
-        const isExtruded = technique.name === "extruded-polygon";
-        const isFilled = technique.name === "fill";
 
         if (isExtruded) {
             const origin = new THREE.Vector3();
@@ -616,12 +654,16 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
         );
 
         let contour: number[];
+        let contourTexCoords: number[] | undefined;
         for (let ringIndex = 0; ringIndex < rings.length; ) {
             const baseVertex = positions.length / 3;
 
             // Get the contour vertices for this ring.
-            contour = rings[ringIndex++].contour;
+            contour = rings[ringIndex].contour;
+            contourTexCoords = rings[ringIndex].countourTexCoords;
+            ringIndex++;
             let vertices: number[] = contour;
+            let texCoords: number[] | undefined = contourTexCoords;
             // TODO: Add similar edgeIndex check for filled-polygon edges.
             if (isExtruded) {
                 this.m_extruder.addExtrudedWalls(
@@ -646,11 +688,15 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                 holes.push(vertices.length / 2);
 
                 contour = rings[ringIndex].contour;
+                contourTexCoords = rings[ringIndex++].countourTexCoords;
                 // As we are predicting the indexes before the vertices are added, the vertex offset
                 // has to be taken into account
                 const vertexOffset = vertices.length;
                 const vertexOffsetFill = vertices.length / 2;
                 vertices = vertices.concat(contour);
+                if (contourTexCoords && texCoords) {
+                    texCoords = texCoords.concat(contourTexCoords);
+                }
 
                 if (isExtruded) {
                     this.m_extruder.addExtrudedWalls(
@@ -680,6 +726,8 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                     positions.push(vertices[i], vertices[i + 1], minHeight);
                     if (isExtruded) {
                         positions.push(vertices[i], vertices[i + 1], height);
+                    } else if (isTextured && texCoords) {
+                        textureCoordinates.push(texCoords[i], texCoords[i + 1]);
                     }
                 }
 
@@ -842,16 +890,34 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
 
             if (meshBuffers.colors.length > 0) {
                 const colors = new Float32Array(meshBuffers.colors);
-                if (colors.length !== positionElements.length) {
-                    throw new Error(
-                        "length of colors buffer is different than the length of the " +
-                            "position buffer"
-                    );
-                }
+                assert(
+                    colors.length === positionElements.length,
+                    "length of colors buffer is different than the length of the " +
+                        "position buffer"
+                );
+
                 geometry.vertexAttributes.push({
                     name: "color",
                     buffer: colors.buffer as ArrayBuffer,
                     itemCount: 3,
+                    type: "float"
+                });
+            }
+
+            if (meshBuffers.textureCoordinates.length > 0) {
+                const positionCount = meshBuffers.positions.length / 3;
+                const texCoordCount = meshBuffers.textureCoordinates.length / 2;
+                assert(
+                    texCoordCount === positionCount,
+                    "length of textureCoordinates buffer is different than the length of the" +
+                        "position buffer"
+                );
+
+                const textureCoordinates = new Float32Array(meshBuffers.textureCoordinates);
+                geometry.vertexAttributes.push({
+                    name: "uv",
+                    buffer: textureCoordinates.buffer as ArrayBuffer,
+                    itemCount: 2,
                     type: "float"
                 });
             }
