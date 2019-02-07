@@ -54,7 +54,7 @@ export namespace ThemesExample {
     </div>
 `;
 
-    const availableThemes: string[] = ["./resources/theme.json", "./resources/reducedDay.json"];
+    const availableThemes: string[] = ["./resources/day.json", "./resources/reducedNight.json"];
 
     const defaultThemeUrl = availableThemes[0];
 

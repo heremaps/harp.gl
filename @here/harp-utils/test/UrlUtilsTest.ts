@@ -24,7 +24,7 @@ describe("UrlUtils", function() {
         });
         it("correctly resolves origin-absolute URLs", function() {
             assert.equal(
-                resolveReferenceUrl("https://user@bar.com/foo/theme.json", "/bar.js"),
+                resolveReferenceUrl("https://user@bar.com/foo/day.json", "/bar.js"),
                 "https://user@bar.com/bar.js"
             );
         });

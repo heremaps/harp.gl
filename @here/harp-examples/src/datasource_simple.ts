@@ -22,7 +22,7 @@ function initializeMapView(id: string): MapView {
     const sampleMapView = new MapView({
         canvas,
         //theme: { styles: [] }, // dummy theme
-        theme: "resources/theme.json"
+        theme: "resources/day.json"
     });
 
     CopyrightElementHandler.install("copyrightNotice")
