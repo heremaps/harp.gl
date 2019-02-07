@@ -1,8 +1,17 @@
 {
   "name": "@here/harp-examples",
-  "version": "0.1.8",
+  "version": "0.1.9",
   "description": "Visualisation Library Examples",
-  "keywords": ["examples", "map", "map-renderer", "vector-tiles", "geojson", "typescript", "webgl", "harpgl"],
+  "keywords": [
+    "examples",
+    "map",
+    "map-renderer",
+    "vector-tiles",
+    "geojson",
+    "typescript",
+    "webgl",
+    "harpgl"
+  ],
   "bin": "harp-examples",
   "scripts": {
     "test": "exit 0",

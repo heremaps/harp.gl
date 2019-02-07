@@ -1,8 +1,16 @@
 {
   "name": "@here/harp-mapview",
-  "version": "0.7.83",
+  "version": "0.7.84",
   "description": "MapView renderer",
-  "keywords": ["map", "map-renderer", "vector-tiles", "geojson", "typescript", "webgl", "harpgl"],
+  "keywords": [
+    "map",
+    "map-renderer",
+    "vector-tiles",
+    "geojson",
+    "typescript",
+    "webgl",
+    "harpgl"
+  ],
   "main": "index.js",
   "typings": "index",
   "directories": {
