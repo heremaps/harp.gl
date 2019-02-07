@@ -1,6 +1,6 @@
 {
   "name": "@here/harp-map-theme",
-  "version": "0.1.74",
+  "version": "0.1.75",
   "description": "Map themes",
   "main": "index.js",
   "typings": "index",

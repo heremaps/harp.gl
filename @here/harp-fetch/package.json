@@ -1,6 +1,6 @@
 {
   "name": "@here/harp-fetch",
-  "version": "0.2.6",
+  "version": "0.2.7",
   "description": "Typescript version of a fetch function",
   "main": "index.js",
   "browser": "index.web.js",
