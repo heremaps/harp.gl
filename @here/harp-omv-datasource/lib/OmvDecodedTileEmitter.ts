@@ -688,7 +688,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                 holes.push(vertices.length / 2);
 
                 contour = rings[ringIndex].contour;
-                contourTexCoords = rings[ringIndex++].countourTexCoords;
+                contourTexCoords = rings[ringIndex].countourTexCoords;
                 // As we are predicting the indexes before the vertices are added, the vertex offset
                 // has to be taken into account
                 const vertexOffset = vertices.length;
