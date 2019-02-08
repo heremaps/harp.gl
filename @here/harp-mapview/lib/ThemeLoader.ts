@@ -43,7 +43,8 @@ export class ThemeLoader {
             defaultUrlResolver
         );
         if (theme.images) {
-            for (const image of theme.images) {
+            for (const name of Object.keys(theme.images)) {
+                const image = theme.images[name];
                 image.url = childUrlResolver(image.url);
 
                 if (image.atlas !== undefined) {
