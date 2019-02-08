@@ -8,6 +8,7 @@ import * as THREE from "three";
 
 const UNIT_Z = new THREE.Vector3(0, 0, 1);
 const POINTS = [0, 1, 2, 1, 3, 2];
+const BEVEL_POINTS = [0, 1, 3, 3, 1, 2, 0, 3, 4, 5, 4, 3];
 
 const SECTORS_IN_CIRCLE = 8;
 const STEP = Math.PI / SECTORS_IN_CIRCLE;
@@ -102,42 +103,103 @@ export function triangulateLine(
     const aver = new THREE.Vector3();
     const p0 = new THREE.Vector3();
     const p1 = new THREE.Vector3();
+    const p2 = new THREE.Vector3();
+    const p3 = new THREE.Vector3();
 
     const N = points.length / 2;
 
+    let vertexOffset = 0;
     for (let i = 0; i < N; ++i) {
+        let useBevel = false;
         p.set(points[i * 2], points[i * 2 + 1], 0);
+
         if (i + 1 < N) {
             n.set(points[(i + 1) * 2], points[(i + 1) * 2 + 1], 0);
+
             dir.copy(n)
                 .sub(p)
                 .normalize()
                 .cross(UNIT_Z);
+
             aver.copy(dir);
+
             if (i > 0) {
                 aver.add(prevDir).multiplyScalar(1.0 - 0.5 * dir.dot(prevDir));
+
+                useBevel = prevDir.angleTo(dir) > Math.PI / 2;
+
+                if (useBevel) {
+                    const inclineWidth = width / Math.cos(dir.angleTo(prevDir) / 2);
+
+                    p0.copy(dir)
+                        .add(prevDir)
+                        .normalize()
+                        .multiplyScalar(-inclineWidth)
+                        .add(p);
+
+                    p1.copy(prevDir)
+                        .multiplyScalar(width)
+                        .add(p);
+
+                    // p2 is used for "miter" connections
+                    p2.copy(dir)
+                        .add(prevDir)
+                        .normalize()
+                        .multiplyScalar(inclineWidth)
+                        .add(p);
+
+                    p3.copy(dir)
+                        .multiplyScalar(width)
+                        .add(p);
+                }
             }
-            p0.copy(aver)
-                .multiplyScalar(-width)
-                .add(p);
-            p1.copy(aver)
-                .multiplyScalar(width)
-                .add(p);
-            vertices.push(p0.x, p0.y, p0.z, p1.x, p1.y, p1.z);
+
+            if (useBevel) {
+                vertices.push(
+                    p0.x,
+                    p0.y,
+                    p0.z,
+                    p1.x,
+                    p1.y,
+                    p1.z,
+                    p2.x,
+                    p2.y,
+                    p2.z,
+                    p3.x,
+                    p3.y,
+                    p3.z
+                );
+            } else {
+                p0.copy(aver)
+                    .multiplyScalar(-width)
+                    .add(p);
+
+                p1.copy(aver)
+                    .multiplyScalar(width)
+                    .add(p);
+
+                vertices.push(p0.x, p0.y, p0.z, p1.x, p1.y, p1.z);
+            }
+
             prevDir.copy(dir);
         } else {
             p0.copy(prevDir)
                 .multiplyScalar(-width)
                 .add(p);
+
             p1.copy(prevDir)
                 .multiplyScalar(width)
                 .add(p);
+
             vertices.push(p0.x, p0.y, p0.z, p1.x, p1.y, p1.z);
         }
-    }
 
-    for (let i = 0; i < N - 1; ++i) {
-        POINTS.forEach(o => indices.push(baseVertex + i * 2 + o));
+        if (i !== N - 1) {
+            (useBevel ? BEVEL_POINTS : POINTS).forEach(o =>
+                indices.push(baseVertex + vertexOffset + o)
+            );
+            vertexOffset += useBevel ? 4 : 2;
+        }
     }
 
     if (endWithCircle) {
