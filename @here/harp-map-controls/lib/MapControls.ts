@@ -649,12 +649,17 @@ export class MapControls extends THREE.EventDispatcher {
         const onMouseMove = this.mouseMove.bind(this);
         const onMouseUp = this.mouseUp.bind(this);
 
-        document.addEventListener("mousemove", onMouseMove, false);
-        document.addEventListener("mouseup", onMouseUp, false);
+        // iframe handling for the examples.
+        window.addEventListener("mousemove", onMouseMove, false);
+        window.top.addEventListener("mousemove", onMouseMove, false);
+        window.addEventListener("mouseup", onMouseUp, false);
+        window.top.addEventListener("mouseup", onMouseUp, false);
 
         this.m_cleanupMouseEventListeners = () => {
-            document.removeEventListener("mousemove", onMouseMove);
-            document.removeEventListener("mouseup", onMouseUp);
+            window.removeEventListener("mousemove", onMouseMove);
+            window.top.removeEventListener("mousemove", onMouseMove);
+            window.removeEventListener("mouseup", onMouseUp);
+            window.top.removeEventListener("mouseup", onMouseUp);
         };
     }
 
