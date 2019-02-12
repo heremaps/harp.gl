@@ -330,6 +330,16 @@ export interface MapViewOptions {
     collisionDebugCanvas?: HTMLCanvasElement;
 
     /**
+     * Optional limit of number of glyphs (characters) for labels. In situations with limited,
+     * available memory, decreasing this number may be beneficial.
+     *
+     * @type {number}
+     * @default `32768`
+     * @memberof MapViewOptions
+     */
+    maxNumGlyphs?: number;
+
+    /**
      * Limits the number of [[DataSource]] labels visible, such as road names and POIs.
      * On small devices, you can reduce this number to to increase performance.
      * @default `500`.
@@ -2264,6 +2274,7 @@ export class MapView extends THREE.EventDispatcher {
                 this,
                 this.m_screenCollisions,
                 this.m_screenProjector,
+                this.m_options.maxNumGlyphs,
                 this.m_theme,
                 this.m_options.maxNumVisibleLabels,
                 this.m_options.numSecondChanceLabels,
