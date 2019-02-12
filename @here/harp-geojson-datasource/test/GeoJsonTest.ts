@@ -26,6 +26,7 @@ import {
 } from "@here/harp-geoutils";
 import { ColorCache, MapView } from "@here/harp-mapview";
 import { DataProvider, TileDataSource, TileFactory } from "@here/harp-mapview-decoder";
+import * as TestUtils from "@here/harp-test-utils/lib/WebGLStub";
 
 import { GeoJson } from "../lib/GeoJsonDataType";
 import { GeoJsonTileDecoder } from "../lib/GeoJsonDecoder";
@@ -80,22 +81,12 @@ describe("@here-geojson-datasource", () => {
     // tslint:disable-next-line:no-unused-variable
     let webGlStub: sinon.SinonStub;
     let mapView: MapView;
-
     beforeEach(function() {
         sandbox = sinon.createSandbox();
         clearColorStub = sandbox.stub();
-        webGlStub = sandbox.stub(THREE, "WebGLRenderer").returns({
-            getClearColor: () => undefined,
-            setClearColor: clearColorStub,
-            getSize: () => undefined,
-            setSize: () => undefined,
-            setPixelRatio: () => undefined,
-            getPixelRatio: () => undefined,
-            clear: () => undefined,
-            render: () => undefined,
-            dispose: () => undefined,
-            info: { autoReset: true, reset: () => undefined }
-        });
+        webGlStub = sandbox
+            .stub(THREE, "WebGLRenderer")
+            .returns(TestUtils.getWebGLRendererStub(sandbox, clearColorStub));
         if (inNodeContext) {
             const theGlobal: any = global;
             theGlobal.window = { window: { devicePixelRatio: 10 } };
