@@ -655,7 +655,7 @@ class ExtendedTileInfoPolygonAccessorImpl implements ExtendedTileInfoPolygonAcce
     /**
      * Accessed data for polygons feature group.
      */
-    polygons: PolygonFeatureGroup = new PolygonFeatureGroup(false, 5000);
+    polygons?: PolygonFeatureGroup;
     /**
      * Feature's index in the group.
      */
@@ -689,10 +689,20 @@ class ExtendedTileInfoPolygonAccessorImpl implements ExtendedTileInfoPolygonAcce
         this.numRings = numRings;
     }
 
+    /**
+     * Shut down the accessor and free all references.
+     */
+    reset() {
+        this.polygons = undefined;
+        this.featureIndex = 0;
+        this.ringStart = 0;
+        this.numRings = 0;
+    }
+
     isOuterRing(ringIndex: number): boolean {
         assert(ringIndex >= 0);
         assert(ringIndex < this.numRings);
-        if (ringIndex < 0 || ringIndex >= this.numRings) {
+        if (ringIndex < 0 || ringIndex >= this.numRings || this.polygons === undefined) {
             throw new Error("ExtendedTileInfoPolygonAccessor: Invalid ring index");
         }
         return this.polygons.innerRingIsOuterContour[this.ringStart + ringIndex] !== 0;
@@ -707,7 +717,7 @@ class ExtendedTileInfoPolygonAccessorImpl implements ExtendedTileInfoPolygonAcce
     } {
         assert(ringIndex >= 0);
         assert(ringIndex < this.numRings);
-        if (ringIndex < 0 || ringIndex >= this.numRings) {
+        if (ringIndex < 0 || ringIndex >= this.numRings || this.polygons === undefined) {
             throw new Error("ExtendedTileInfoPolygonAccessor: Invalid ring index");
         }
 
@@ -957,6 +967,10 @@ export class ExtendedTileInfoVisitor {
      * @param handler The `handler` to use.
      */
     private visitPolygonFeature(featureIndex: number, handler: ExtendedTileInfoHandler): void {
+        if (handler.acceptPolygon === undefined) {
+            return;
+        }
+
         const tileInfo = this.tileInfo;
         const polygons = tileInfo.polygonGroup;
 
@@ -970,16 +984,17 @@ export class ExtendedTileInfoVisitor {
         // Use a static instance, so we do not allocate anything here
         ExtendedTileInfoVisitor.polygonAccessor.setup(polygons, featureIndex, ringStart, numRings);
 
-        if (!!handler.acceptPolygon) {
-            handler.acceptPolygon(
-                polygons.featureIds[featureIndex],
-                polygons.techniqueIndex[featureIndex],
-                polygons.textIndex[featureIndex],
-                this.getTag(featureIndex, polygons.layerIndex!),
-                this.getTag(featureIndex, polygons.classIndex!),
-                this.getTag(featureIndex, polygons.typeIndex!),
-                ExtendedTileInfoVisitor.polygonAccessor
-            );
-        }
+        handler.acceptPolygon(
+            polygons.featureIds[featureIndex],
+            polygons.techniqueIndex[featureIndex],
+            polygons.textIndex[featureIndex],
+            this.getTag(featureIndex, polygons.layerIndex!),
+            this.getTag(featureIndex, polygons.classIndex!),
+            this.getTag(featureIndex, polygons.typeIndex!),
+            ExtendedTileInfoVisitor.polygonAccessor
+        );
+
+        // Free all data references.
+        ExtendedTileInfoVisitor.polygonAccessor.reset();
     }
 }
