@@ -152,6 +152,7 @@ export class TextElementsRenderer {
      * @param m_screenCollisions General 2D screen occlusion management, may be shared between
      *     instances.
      * @param m_screenProjector Projects 3D coordinates into screen space.
+     * @param m_maxNumGlyphs Maximum number of glyphs. Controls the size of internal buffers.
      * @param m_theme Theme defining  text styles.
      * @param m_maxNumVisibleLabels Maximum number of visible [[TextElement]]s.
      * @param m_numSecondChanceLabels Number of [[TextElement]] that will be rendered again.
@@ -166,12 +167,16 @@ export class TextElementsRenderer {
         private m_mapView: MapView,
         private m_screenCollisions: ScreenCollisions,
         private m_screenProjector: ScreenProjector,
+        private m_maxNumGlyphs: number | undefined,
         private m_theme: Theme,
         private m_maxNumVisibleLabels: number | undefined,
         private m_numSecondChanceLabels: number | undefined,
         private m_maxDistanceRatioForLabels: number | undefined,
         private m_labelStartScaleDistance: number | undefined
     ) {
+        if (this.m_maxNumGlyphs === undefined) {
+            this.m_maxNumGlyphs = MAX_GLYPH_COUNT;
+        }
         if (this.m_maxNumVisibleLabels === undefined) {
             this.m_maxNumVisibleLabels = DEFAULT_MAX_NUM_RENDERED_TEXT_ELEMENTS;
         }
@@ -254,6 +259,17 @@ export class TextElementsRenderer {
      */
     movementFinished() {
         this.placeAllLabels();
+    }
+
+    /**
+     * Return the maximum number of glyphs that can be rendered.
+     *
+     * @readonly
+     * @type {number}
+     * @memberof TextElementsRenderer
+     */
+    get maxNumGlyphs(): number {
+        return this.m_maxNumGlyphs!;
     }
 
     /**
@@ -548,7 +564,7 @@ export class TextElementsRenderer {
                     const loadedTextCanvas = new TextCanvas({
                         renderer: this.m_mapView.renderer,
                         fontCatalog: loadedFontCatalog,
-                        maxGlyphCount: MAX_GLYPH_COUNT
+                        maxGlyphCount: this.maxNumGlyphs
                     });
                     this.m_textRenderers.push({
                         fontCatalog: fontCatalogConfig.name,
@@ -1022,12 +1038,12 @@ export class TextElementsRenderer {
                 if (!isPathLabel) {
                     if (
                         layer.geometry.drawCount + textElement.textBufferObject!.glyphs.length >
-                        MAX_GLYPH_COUNT
+                        this.maxNumGlyphs
                     ) {
                         continue;
                     }
                 } else {
-                    if (layer.geometry.drawCount + textElement.glyphs!.length > MAX_GLYPH_COUNT) {
+                    if (layer.geometry.drawCount + textElement.glyphs!.length > this.maxNumGlyphs) {
                         continue;
                     }
                 }
@@ -1246,13 +1262,13 @@ export class TextElementsRenderer {
                 if (!isPathLabel) {
                     if (
                         layer.geometry.drawCount + textElement.textBufferObject!.glyphs.length >
-                        MAX_GLYPH_COUNT
+                        this.maxNumGlyphs
                     ) {
                         ++numCannotAdd;
                         continue;
                     }
                 } else {
-                    if (layer.geometry.drawCount + textElement.glyphs!.length > MAX_GLYPH_COUNT) {
+                    if (layer.geometry.drawCount + textElement.glyphs!.length > this.maxNumGlyphs) {
                         ++numCannotAdd;
                         continue;
                     }
