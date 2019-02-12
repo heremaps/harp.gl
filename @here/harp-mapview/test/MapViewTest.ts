@@ -18,6 +18,7 @@ import * as sinon from "sinon";
 import * as THREE from "three";
 
 import { GeoCoordinates } from "@here/harp-geoutils";
+import * as TestUtils from "@here/harp-test-utils/lib/WebGLStub";
 import { MapView, MapViewEventNames } from "../lib/MapView";
 import { MapViewFog } from "../lib/MapViewFog";
 import { MapViewUtils } from "../lib/Utils";
@@ -36,21 +37,12 @@ describe("MapView", function() {
     // tslint:disable-next-line:no-unused-variable
     let fontStub: sinon.SinonStub;
     let mapView: MapView;
-
     beforeEach(function() {
         sandbox = sinon.createSandbox();
         clearColorStub = sandbox.stub();
-        webGlStub = sandbox.stub(THREE, "WebGLRenderer").returns({
-            getClearColor: () => undefined,
-            setClearColor: clearColorStub,
-            setSize: () => undefined,
-            getPixelRatio: () => undefined,
-            setPixelRatio: () => undefined,
-            clear: () => undefined,
-            render: () => undefined,
-            dispose: () => undefined,
-            info: { autoReset: true, reset: () => undefined }
-        });
+        webGlStub = sandbox
+            .stub(THREE, "WebGLRenderer")
+            .returns(TestUtils.getWebGLRendererStub(sandbox, clearColorStub));
         fontStub = sandbox.stub(FontCatalog, "load").returns(new Promise(() => {}));
         if (inNodeContext) {
             const theGlobal: any = global;
@@ -85,8 +77,8 @@ describe("MapView", function() {
         }
 
         const canvas = {
-            width: 0,
-            height: 0,
+            clientWidth: 0,
+            clientHeight: 0,
             addEventListener: () => {},
             removeEventListener: () => {}
         };
@@ -111,8 +103,8 @@ describe("MapView", function() {
 
     it("Correctly sets event listeners and handlers webgl context restored", function() {
         const canvas = {
-            width: 0,
-            height: 0,
+            clientWidth: 0,
+            clientHeight: 0,
             addEventListener: sinon.stub(),
             removeEventListener: sinon.stub()
         };
@@ -181,8 +173,8 @@ describe("MapView", function() {
 
     it("supports #dispose", async function() {
         const canvas = {
-            width: 0,
-            height: 0,
+            clientWidth: 0,
+            clientHeight: 0,
             addEventListener: sinon.stub(),
             removeEventListener: sinon.stub()
         };
@@ -202,34 +194,90 @@ describe("MapView", function() {
 
     it("maintains vertical fov limit", function() {
         const canvas = {
-            width: 100,
-            height: 1000,
+            clientWidth: 100,
+            clientHeight: 100,
             addEventListener: sinon.stub(),
             removeEventListener: sinon.stub()
         };
-        mapView = new MapView({ canvas: (canvas as any) as HTMLCanvasElement });
-        mapView.resize(100, 1000);
+        const fov = 45;
+        mapView = new MapView({
+            canvas: (canvas as any) as HTMLCanvasElement,
+            fovCalculation: { type: "fixed", fov }
+        });
+        mapView.resize(100, 100);
+        expect(mapView.camera.fov).to.be.closeTo(fov, 0.00000000001);
 
-        expect(mapView.fov).to.be.closeTo(82.36449238608574, 0.00000000001);
+        mapView.resize(100, 101);
+        expect(mapView.camera.fov).to.be.closeTo(fov, 0.00000000001);
     });
 
     it("maintains horizontal fov limit", function() {
         const canvas = {
-            width: 1000,
-            height: 100,
+            clientWidth: 100,
+            clientHeight: 100,
             addEventListener: sinon.stub(),
             removeEventListener: sinon.stub()
         };
-        mapView = new MapView({ canvas: (canvas as any) as HTMLCanvasElement });
-        mapView.resize(1000, 100);
+        const fov = 45;
+        mapView = new MapView({
+            canvas: (canvas as any) as HTMLCanvasElement,
+            fovCalculation: { type: "fixed", fov }
+        });
 
-        expect(mapView.fov).to.be.closeTo(30.725626488233594, 0.00000000001);
+        mapView.resize(100, 100);
+        expect(mapView.camera.fov).to.be.closeTo(fov, 0.00000000001);
+
+        // Check that the FOV doesn't change
+        mapView.resize(100, 101);
+        expect(mapView.camera.fov).to.be.closeTo(fov, 0.00000000001);
+    });
+
+    it("changes vertical fov when resizing with dynamic fov", function() {
+        const canvas = {
+            clientWidth: 100,
+            clientHeight: 100,
+            addEventListener: sinon.stub(),
+            removeEventListener: sinon.stub()
+        };
+        const fov = 45;
+        mapView = new MapView({
+            canvas: (canvas as any) as HTMLCanvasElement,
+            fovCalculation: { type: "dynamic", fov }
+        });
+
+        mapView.resize(100, 100);
+        expect(mapView.camera.fov).to.be.closeTo(fov, 0.00000000001);
+
+        // Check that resizing height changes the FOV (because we specified a dynamic calculation)
+        mapView.resize(100, 101);
+        expect(mapView.camera.fov).to.be.not.eq(fov);
+    });
+
+    it("not changes horizontal fov when resizing with focal length", function() {
+        const canvas = {
+            clientWidth: 100,
+            clientHeight: 100,
+            addEventListener: sinon.stub(),
+            removeEventListener: sinon.stub()
+        };
+        const fov = 45;
+        mapView = new MapView({
+            canvas: (canvas as any) as HTMLCanvasElement,
+            fovCalculation: { type: "dynamic", fov }
+        });
+
+        mapView.resize(100, 100);
+        expect(mapView.camera.fov).to.be.closeTo(fov, 0.00000000001);
+
+        // Check that resizing width keeps the FOV constant with dynamic fov.
+        mapView.resize(101, 100);
+        expect(mapView.camera.fov).to.be.closeTo(fov, 0.00000000001);
     });
 
     it("returns the fog through #fog getter", function() {
         const canvas = {
-            width: 0,
-            height: 0,
+            clientWidth: 0,
+            clientHeight: 0,
             addEventListener: sinon.stub(),
             removeEventListener: sinon.stub()
         };

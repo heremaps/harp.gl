@@ -393,6 +393,24 @@ export namespace MapViewUtils {
     }
 
     /**
+     * Calculates the focal length based on the vertical FOV and height.
+     * @param vFov Vertical field of view in rad.
+     * @param height Height of canvas in pixels.
+     */
+    export function calculateFocalLengthByVerticalFov(vFov: number, height: number): number {
+        return height / 2 / Math.tan(vFov / 2);
+    }
+
+    /**
+     * Calculates the vertical field of view based on the focal length and the height.
+     * @param focalLength Focal length in pixels (see [[calculateFocalLengthByVerticalFov]])
+     * @param height Height of canvas in pixels.
+     */
+    export function calculateFovByFocalLength(focalLength: number, height: number): number {
+        return geoUtils.MathUtils.radToDeg(2 * Math.atan(height / 2 / focalLength));
+    }
+
+    /**
      * Computes estimate of size in memory for given object.
      *
      * @param object
