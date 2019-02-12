@@ -265,8 +265,6 @@ export class TextElementsRenderer {
      * Return the maximum number of glyphs that can be rendered.
      *
      * @readonly
-     * @type {number}
-     * @memberof TextElementsRenderer
      */
     get maxNumGlyphs(): number {
         return this.m_maxNumGlyphs!;
