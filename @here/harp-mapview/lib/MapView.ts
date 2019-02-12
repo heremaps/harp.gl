@@ -333,9 +333,7 @@ export interface MapViewOptions {
      * Optional limit of number of glyphs (characters) for labels. In situations with limited,
      * available memory, decreasing this number may be beneficial.
      *
-     * @type {number}
      * @default `32768`
-     * @memberof MapViewOptions
      */
     maxNumGlyphs?: number;
 
