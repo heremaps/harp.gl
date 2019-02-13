@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 HERE Europe B.V.
+ * Copyright (C) 2017-2019 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -70,6 +70,7 @@ export namespace TiledGeoJsonTechniquesExample {
 
         // Create a [[GeoJsonDataProvider]] from a GeoJson URL and plug it into an OmvDataSource.
         const geoJsonDataProvider = new GeoJsonDataProvider(
+            "basicFeatures",
             new URL("resources/basicFeatures.json", window.location.href)
         );
         const geoJsonDataSource = new OmvDataSource({

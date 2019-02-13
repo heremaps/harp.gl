@@ -147,6 +147,7 @@ export namespace GeoJsonStylingExample {
 
     function initializeMapViewDataSource(mapViewUsed: MapView) {
         const geoJsonDataProvider = new GeoJsonDataProvider(
+            "italy",
             new URL("resources/italy.json", window.location.href)
         );
         const geoJsonDataSource = new OmvDataSource({

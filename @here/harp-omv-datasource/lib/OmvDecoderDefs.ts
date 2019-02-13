@@ -157,3 +157,10 @@ export interface OmvDecoderOptions {
  * Used for requesting decoder services using [[WorkerServiceManager]].
  */
 export const OMV_TILE_DECODER_SERVICE_TYPE = "omv-tile-decoder";
+
+/**
+ * Default OMV tiler service type.
+ *
+ * Used for requesting tiler services using [[WorkerServiceManager]].
+ */
+export const OMV_TILER_SERVICE_TYPE = "omv-tiler";

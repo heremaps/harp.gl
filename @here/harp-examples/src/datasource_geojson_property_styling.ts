@@ -197,6 +197,7 @@ export namespace GeoJsonPropertyStylingExample {
 
     // snippet:geojson_property_styling3.ts
     const geoJsonDataProvider = new GeoJsonDataProvider(
+        "italy",
         new URL("resources/italy.json", window.location.href)
     );
     const geoJsonDataSource = new OmvDataSource({

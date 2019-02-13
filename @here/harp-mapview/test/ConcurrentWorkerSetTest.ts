@@ -13,30 +13,24 @@ import * as sinon from "sinon";
 import { Logger, LogLevel, WorkerChannel, WORKERCHANNEL_MSG_TYPE } from "@here/harp-utils";
 import { ConcurrentWorkerSet, isLoggingMessage } from "../lib/ConcurrentWorkerSet";
 
-import {
-    DecodedTileMessageName,
-    DecodeTileRequest,
-    InitializedMessage,
-    Requests,
-    ResponseMessage
-} from "@here/harp-datasource-protocol";
+import { WorkerDecoderProtocol, WorkerServiceProtocol } from "@here/harp-datasource-protocol";
 import { stubGlobalConstructor, willEventually } from "@here/harp-test-utils";
 import { FakeWebWorker, willExecuteWorkerScript } from "./FakeWebWorker";
 
 declare const global: any;
 
-const isInitializedMessage: InitializedMessage = {
+const isInitializedMessage: WorkerServiceProtocol.InitializedMessage = {
     service: "service-id",
-    type: DecodedTileMessageName.Initialized
+    type: WorkerServiceProtocol.ServiceMessageName.Initialized
 };
 
-const sampleMessage = {
-    type: DecodedTileMessageName.Configuration,
+const sampleMessage: WorkerServiceProtocol.ServiceMessage = {
+    type: WorkerServiceProtocol.ServiceMessageName.Request,
     service: "service-id"
 };
 
-const sampleRequest: DecodeTileRequest = {
-    type: Requests.DecodeTileRequest,
+const sampleRequest: WorkerDecoderProtocol.DecodeTileRequest = {
+    type: WorkerDecoderProtocol.Requests.DecodeTileRequest,
     tileKey: 10,
     data: new ArrayBuffer(0),
     projection: "bar"
@@ -244,8 +238,8 @@ describe("ConcurrentWorkerSet", function() {
                 assert.isDefined(message.messageId);
                 assert.isDefined(message.request);
 
-                const responseMessage: ResponseMessage = {
-                    type: DecodedTileMessageName.Response,
+                const responseMessage: WorkerServiceProtocol.ResponseMessage = {
+                    type: WorkerServiceProtocol.ServiceMessageName.Response,
                     service: message.service,
                     messageId: message.messageId,
                     response: {
@@ -272,8 +266,8 @@ describe("ConcurrentWorkerSet", function() {
         //
         const promises: Array<Promise<any>> = [];
         for (let i = 0; i < 10; i++) {
-            const request: DecodeTileRequest = {
-                type: Requests.DecodeTileRequest,
+            const request: WorkerDecoderProtocol.DecodeTileRequest = {
+                type: WorkerDecoderProtocol.Requests.DecodeTileRequest,
                 tileKey: i,
                 data: new ArrayBuffer(0),
                 projection: "bar"
@@ -303,8 +297,8 @@ describe("ConcurrentWorkerSet", function() {
 
             self.onmessage = (event: any) => {
                 const message = event.data;
-                const responseMessage: ResponseMessage = {
-                    type: DecodedTileMessageName.Response,
+                const responseMessage: WorkerServiceProtocol.ResponseMessage = {
+                    type: WorkerServiceProtocol.ServiceMessageName.Response,
                     service: message.service,
                     messageId: message.messageId,
                     error: "some error" as any

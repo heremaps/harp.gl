@@ -6,5 +6,6 @@
 
 export * from "./lib/ThemedTileDecoder";
 export * from "./lib/TileDecoderService";
+export * from "./lib/TilerService";
 export * from "./lib/WorkerService";
 export * from "./lib/WorkerServiceManager";

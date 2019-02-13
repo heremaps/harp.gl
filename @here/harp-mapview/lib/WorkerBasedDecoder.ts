@@ -5,19 +5,14 @@
  */
 
 import {
-    ConfigurationMessage,
-    CreateServiceMessage,
     DecodedTile,
-    DecodedTileMessageName,
-    DecodeTileRequest,
     getProjectionName,
     ITileDecoder,
-    Requests,
     StyleSet,
     TileInfo,
-    TileInfoRequest,
     ValueMap,
-    WORKER_SERVICE_MANAGER_SERVICE_ID
+    WorkerDecoderProtocol,
+    WorkerServiceProtocol
 } from "@here/harp-datasource-protocol";
 import { Projection, TileKey } from "@here/harp-geoutils";
 import { ConcurrentWorkerSet } from "./ConcurrentWorkerSet";
@@ -41,7 +36,10 @@ export class WorkerBasedDecoder implements ITileDecoder {
     private m_serviceCreated: boolean = false;
 
     /**
-     * Missing Typedoc
+     * Creates a new `WorkerBasedDecoder`.
+     *
+     * @param workerSet [[ConcurrentWorkerSet]] this tiler will live in.
+     * @param decoderServiceType Service type identifier.
      */
     constructor(
         private readonly workerSet: ConcurrentWorkerSet,
@@ -57,10 +55,13 @@ export class WorkerBasedDecoder implements ITileDecoder {
      */
     dispose() {
         if (this.m_serviceCreated) {
-            this.workerSet.broadcastMessage({
-                type: DecodedTileMessageName.DestroyService,
-                service: WORKER_SERVICE_MANAGER_SERVICE_ID
-            });
+            this.workerSet.broadcastRequest(
+                WorkerServiceProtocol.WORKER_SERVICE_MANAGER_SERVICE_ID,
+                {
+                    type: WorkerServiceProtocol.Requests.DestroyService,
+                    targetServiceId: this.serviceId
+                }
+            );
         }
 
         this.workerSet.removeReference();
@@ -71,15 +72,16 @@ export class WorkerBasedDecoder implements ITileDecoder {
      * dedicated [[TileDecoderService]]s in all workers to serve decode requests.
      */
     async connect(): Promise<void> {
-        await this.workerSet.connect(WORKER_SERVICE_MANAGER_SERVICE_ID);
+        await this.workerSet.connect(WorkerServiceProtocol.WORKER_SERVICE_MANAGER_SERVICE_ID);
         if (!this.m_serviceCreated) {
-            const msg: CreateServiceMessage = {
-                service: WORKER_SERVICE_MANAGER_SERVICE_ID,
-                type: DecodedTileMessageName.CreateService,
-                targetServiceType: this.decoderServiceType,
-                targetServiceId: this.serviceId
-            };
-            this.workerSet.broadcastMessage(msg);
+            await this.workerSet.broadcastRequest(
+                WorkerServiceProtocol.WORKER_SERVICE_MANAGER_SERVICE_ID,
+                {
+                    type: WorkerServiceProtocol.Requests.CreateService,
+                    targetServiceType: this.decoderServiceType,
+                    targetServiceId: this.serviceId
+                }
+            );
             this.m_serviceCreated = true;
         }
     }
@@ -97,8 +99,8 @@ export class WorkerBasedDecoder implements ITileDecoder {
     ): Promise<DecodedTile> {
         const tileKeyCode = tileKey.mortonCode();
 
-        const message: DecodeTileRequest = {
-            type: Requests.DecodeTileRequest,
+        const message: WorkerDecoderProtocol.DecodeTileRequest = {
+            type: WorkerDecoderProtocol.Requests.DecodeTileRequest,
             tileKey: tileKeyCode,
             displayZoomLevel,
             data,
@@ -123,8 +125,8 @@ export class WorkerBasedDecoder implements ITileDecoder {
     ): Promise<TileInfo | undefined> {
         const tileKeyCode = tileKey.mortonCode();
 
-        const message: TileInfoRequest = {
-            type: Requests.TileInfoRequest,
+        const message: WorkerDecoderProtocol.TileInfoRequest = {
+            type: WorkerDecoderProtocol.Requests.TileInfoRequest,
             tileKey: tileKeyCode,
             displayZoomLevel,
             data,
@@ -145,14 +147,14 @@ export class WorkerBasedDecoder implements ITileDecoder {
      * @param options   new options, undefined options are not changed
      */
     configure(styleSet?: StyleSet, languages?: string[], options?: ValueMap): void {
-        const configurationMessage: ConfigurationMessage = {
+        const message: WorkerDecoderProtocol.ConfigurationMessage = {
             service: this.serviceId,
-            type: DecodedTileMessageName.Configuration,
+            type: WorkerDecoderProtocol.DecoderMessageName.Configuration,
             styleSet,
             options,
             languages
         };
 
-        this.workerSet.broadcastMessage(configurationMessage);
+        this.workerSet.broadcastMessage(message);
     }
 }
