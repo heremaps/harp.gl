@@ -702,6 +702,7 @@ class ExtendedTileInfoPolygonAccessorImpl implements ExtendedTileInfoPolygonAcce
     isOuterRing(ringIndex: number): boolean {
         assert(ringIndex >= 0);
         assert(ringIndex < this.numRings);
+        assert(this.polygons !== undefined);
         if (ringIndex < 0 || ringIndex >= this.numRings || this.polygons === undefined) {
             throw new Error("ExtendedTileInfoPolygonAccessor: Invalid ring index");
         }
@@ -717,6 +718,7 @@ class ExtendedTileInfoPolygonAccessorImpl implements ExtendedTileInfoPolygonAcce
     } {
         assert(ringIndex >= 0);
         assert(ringIndex < this.numRings);
+        assert(this.polygons !== undefined);
         if (ringIndex < 0 || ringIndex >= this.numRings || this.polygons === undefined) {
             throw new Error("ExtendedTileInfoPolygonAccessor: Invalid ring index");
         }
