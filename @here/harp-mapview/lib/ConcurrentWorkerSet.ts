@@ -5,12 +5,9 @@
  */
 
 import {
-    DecodedTileMessage,
-    DecodedTileMessageName,
-    isInitializedMessage,
-    isResponseMessage,
-    Request,
-    RequestMessage
+    WorkerDecoderProtocol,
+    WorkerServiceProtocol,
+    WorkerTilerProtocol
 } from "@here/harp-datasource-protocol";
 
 import {
@@ -248,12 +245,12 @@ export class ConcurrentWorkerSet {
      * @param serviceId The name of service, as registered with the [[WorkerClient]] instance.
      * @param request The request to process.
      * @param transferList An optional array of `ArrayBuffer`s to transfer to the worker context.
+     *
      * @returns A `Promise` that resolves with a response from the service.
      */
-    // tslint:disable-next-line:no-unused-variable
-    invokeRequest<Req extends Request, Res>(
+    invokeRequest<Res>(
         serviceId: string,
-        request: Request,
+        request: WorkerServiceProtocol.ServiceRequest,
         transferList?: ArrayBuffer[]
     ): Promise<Res> {
         this.ensureStarted();
@@ -277,9 +274,9 @@ export class ConcurrentWorkerSet {
             resolver: resolver!
         });
 
-        const message: RequestMessage = {
+        const message: WorkerServiceProtocol.RequestMessage = {
             service: serviceId,
-            type: DecodedTileMessageName.Request,
+            type: WorkerServiceProtocol.ServiceMessageName.Request,
             messageId,
             request
         };
@@ -288,12 +285,73 @@ export class ConcurrentWorkerSet {
     }
 
     /**
+     * Invokes a request that expects responses from all workers.
+     *
+     * Send [[RequestMessage]]  to all workers and resolves when all workers have sent a matching
+     * [[ResponseMessage]]. Use this function to wait on request that need to happen on all workers
+     * before proceeding (like synchronous worker service creation).
+     *
+     * @param serviceId The name of service, as registered with the [[WorkerClient]] instance.
+     * @param request The request to process.
+     * @param transferList An optional array of `ArrayBuffer`s to transfer to the worker context.
+     *
+     * @returns Array of `Promise`s that resolves with a response from each worker (unspecified
+     * order).
+     */
+    broadcastRequest<Res>(
+        serviceId: string,
+        request:
+            | WorkerServiceProtocol.WorkerServiceManagerRequest
+            | WorkerServiceProtocol.ServiceRequest,
+        transferList?: ArrayBuffer[]
+    ): Promise<Res[]> {
+        this.ensureStarted();
+
+        const promises = [];
+        for (const worker of this.m_workers) {
+            const messageId = this.m_nextMessageId++;
+
+            let resolver: ((error?: any, response?: any) => void) | undefined;
+            const promise = new Promise<Res>((resolve, reject) => {
+                resolver = (error, response) => {
+                    this.m_requests.delete(messageId);
+
+                    if (error !== undefined) {
+                        reject(new Error(error.toString()));
+                    } else {
+                        resolve(response as Res);
+                    }
+                };
+            });
+            promises.push(promise);
+
+            this.m_requests.set(messageId, {
+                promise,
+                resolver: resolver!
+            });
+
+            const message: WorkerServiceProtocol.RequestMessage = {
+                service: serviceId,
+                type: WorkerServiceProtocol.ServiceMessageName.Request,
+                messageId,
+                request
+            };
+            worker.postMessage(message, transferList);
+        }
+
+        return Promise.all(promises);
+    }
+
+    /**
      * Posts a message to a random worker.
      *
      * @param message The message to send.
      * @param buffers Optional buffers to transfer to the worker.
      */
-    postMessage(message: DecodedTileMessage, buffers?: ArrayBuffer[] | undefined) {
+    postMessage(
+        message: WorkerServiceProtocol.ServiceMessage,
+        buffers?: ArrayBuffer[] | undefined
+    ) {
         this.ensureStarted();
         if (this.m_workers.length === 0) {
             throw new Error("ConcurrentWorkerSet#postMessage: no workers started");
@@ -309,7 +367,7 @@ export class ConcurrentWorkerSet {
      * @param message The message to send.
      * @param buffers Optional buffers to transfer to the workers.
      */
-    broadcastMessage(message: DecodedTileMessage, buffers?: ArrayBuffer[] | undefined) {
+    broadcastMessage(message: any, buffers?: ArrayBuffer[] | undefined) {
         this.ensureStarted();
 
         this.m_workers.forEach(worker => worker.postMessage(message, buffers));
@@ -335,7 +393,7 @@ export class ConcurrentWorkerSet {
      * @param event The event to dispatch.
      */
     protected onWorkerMessage = (event: MessageEvent) => {
-        if (isResponseMessage(event.data)) {
+        if (WorkerServiceProtocol.isResponseMessage(event.data)) {
             const response = event.data;
             if (response.messageId === null) {
                 logger.error(`[${this.m_options.scriptUrl}]: Bad ResponseMessage: no messageId`);
@@ -349,7 +407,7 @@ export class ConcurrentWorkerSet {
                 return;
             }
             entry.resolver(response.error, response.response);
-        } else if (isInitializedMessage(event.data)) {
+        } else if (WorkerServiceProtocol.isInitializedMessage(event.data)) {
             const readyPromise = this.getReadyPromise(event.data.service);
             if (++readyPromise.count === this.m_workerPromises.length) {
                 readyPromise.resolve();

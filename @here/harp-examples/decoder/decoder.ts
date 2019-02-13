@@ -11,7 +11,8 @@ declare let self: Worker & {
 self.importScripts("three.min.js");
 
 import { GeoJsonTileDecoderService } from "@here/harp-geojson-datasource/index-worker";
-import { OmvTileDecoderService } from "@here/harp-omv-datasource/index-worker";
+import { OmvTileDecoderService, OmvTilerService } from "@here/harp-omv-datasource/index-worker";
 
 OmvTileDecoderService.start();
+OmvTilerService.start();
 GeoJsonTileDecoderService.start();

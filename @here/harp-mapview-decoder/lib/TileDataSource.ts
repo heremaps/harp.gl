@@ -134,7 +134,7 @@ export class TileDataSource<TileType extends Tile> extends DataSource {
     }
 
     ready(): boolean {
-        return this.m_isReady;
+        return this.m_isReady && this.m_options.dataProvider.ready();
     }
 
     /**

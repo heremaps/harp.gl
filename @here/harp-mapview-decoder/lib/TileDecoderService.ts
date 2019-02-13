@@ -5,16 +5,11 @@
  */
 
 import {
-    ConfigurationMessage,
-    DecodeTileRequest,
     getProjection,
-    isConfigurationMessage,
-    isDecodeTileRequest,
     isStandardTexturedTechnique,
     isTextureBuffer,
-    isTileInfoRequest,
     ITileDecoder,
-    TileInfoRequest
+    WorkerDecoderProtocol
 } from "@here/harp-datasource-protocol";
 import { TileKey } from "@here/harp-geoutils";
 import { LoggerManager } from "@here/harp-utils";
@@ -62,14 +57,10 @@ export class TileDecoderService extends WorkerService {
      * @returns A promise which resolves to a [[WorkerServiceResponse]].
      */
     protected handleRequest(request: any): Promise<WorkerServiceResponse> {
-        if (isDecodeTileRequest(request)) {
-            return new Promise<WorkerServiceResponse>(resolve => {
-                resolve(this.handleDecodeTileRequest(request));
-            });
-        } else if (isTileInfoRequest(request)) {
-            return new Promise<WorkerServiceResponse>(resolve => {
-                resolve(this.handleTileInfoRequest(request));
-            });
+        if (WorkerDecoderProtocol.isDecodeTileRequest(request)) {
+            return this.handleDecodeTileRequest(request);
+        } else if (WorkerDecoderProtocol.isTileInfoRequest(request)) {
+            return this.handleTileInfoRequest(request);
         } else {
             return super.handleRequest(request);
         }
@@ -81,14 +72,16 @@ export class TileDecoderService extends WorkerService {
      * @param request Message of type [[ConfigurationMessage]].
      */
     protected handleMessage(message: any) {
-        if (isConfigurationMessage(message)) {
+        if (WorkerDecoderProtocol.isConfigurationMessage(message)) {
             this.handleConfigurationMessage(message);
         } else {
             logger.error(`[${this.serviceId}]: invalid message ${message.type}`);
         }
     }
 
-    private handleDecodeTileRequest(request: DecodeTileRequest): Promise<WorkerServiceResponse> {
+    private handleDecodeTileRequest(
+        request: WorkerDecoderProtocol.DecodeTileRequest
+    ): Promise<WorkerServiceResponse> {
         const tileKey = TileKey.fromMortonCode(request.tileKey);
         const projection = getProjection(request.projection);
 
@@ -125,7 +118,9 @@ export class TileDecoderService extends WorkerService {
             });
     }
 
-    private handleTileInfoRequest(request: TileInfoRequest): Promise<WorkerServiceResponse> {
+    private handleTileInfoRequest(
+        request: WorkerDecoderProtocol.TileInfoRequest
+    ): Promise<WorkerServiceResponse> {
         const tileKey = TileKey.fromMortonCode(request.tileKey);
         const projection = getProjection(request.projection);
 
@@ -143,7 +138,7 @@ export class TileDecoderService extends WorkerService {
             });
     }
 
-    private handleConfigurationMessage(message: ConfigurationMessage) {
+    private handleConfigurationMessage(message: WorkerDecoderProtocol.ConfigurationMessage) {
         this.m_decoder.configure(message.styleSet, message.languages, message.options);
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 HERE Europe B.V.
+ * Copyright (C) 2017-2019 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -10,6 +10,7 @@ import { ILogger } from "@here/harp-utils";
 import { IGeometryProcessor } from "./IGeometryProcessor";
 import { OmvFeatureFilter } from "./OmvDataFilter";
 import { OmvDataAdapter } from "./OmvDecoder";
+import { isArrayBufferLike, lat2tile, tile2lat } from "./OmvUtils";
 
 type VTJsonPosition = [number, number];
 
@@ -56,24 +57,6 @@ interface VTJsonTileInterface {
     layer: string;
 }
 
-function lat2tile(lat: number, zoom: number): number {
-    return Math.floor(
-        ((1 -
-            Math.log(Math.tan((lat * Math.PI) / 180) + 1 / Math.cos((lat * Math.PI) / 180)) /
-                Math.PI) /
-            2) *
-            Math.pow(2, zoom)
-    );
-}
-function tile2lat(y: number, level: number): number {
-    const n = Math.PI - (2 * Math.PI * y) / Math.pow(2, level);
-    return (180 / Math.PI) * Math.atan(0.5 * (Math.exp(n) - Math.exp(-n)));
-}
-
-function isArrayBufferLike(data: any): data is ArrayBufferLike {
-    return data instanceof ArrayBuffer || data instanceof SharedArrayBuffer;
-}
-
 /**
  * The class [[VTJsonDataAdapter]] converts VT-json data to geometries for the given
  * [[IGeometryProcessor]].
@@ -99,7 +82,13 @@ export class VTJsonDataAdapter implements OmvDataAdapter {
         }
 
         const tile = data as VTJsonTileInterface;
-        if (tile.features === undefined) {
+        if (
+            tile.features === undefined ||
+            tile.source === undefined ||
+            tile.x === undefined ||
+            tile.y === undefined ||
+            tile.z === undefined
+        ) {
             return false;
         }
 

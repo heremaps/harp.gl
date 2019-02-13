@@ -12,6 +12,7 @@ import { IGeometryProcessor } from "./IGeometryProcessor";
 import { OmvFeatureFilter } from "./OmvDataFilter";
 import { OmvDataAdapter } from "./OmvDecoder";
 import { OmvGeometryType } from "./OmvDecoderDefs";
+import { isArrayBufferLike, lat2tile, tile2lat } from "./OmvUtils";
 import { com } from "./proto/vector_tile";
 
 /**
@@ -169,21 +170,6 @@ export class FeatureAttributes {
  */
 export interface GeometryCommandsVisitor {
     visitCommand(command: GeometryCommand): void;
-}
-
-function lat2tile(lat: number, zoom: number): number {
-    return Math.floor(
-        ((1 -
-            Math.log(Math.tan((lat * Math.PI) / 180) + 1 / Math.cos((lat * Math.PI) / 180)) /
-                Math.PI) /
-            2) *
-            Math.pow(2, zoom)
-    );
-}
-
-function tile2lat(y: number, level: number): number {
-    const n = Math.PI - (2 * Math.PI * y) / Math.pow(2, level);
-    return (180 / Math.PI) * Math.atan(0.5 * (Math.exp(n) - Math.exp(-n)));
 }
 
 /**
@@ -359,10 +345,6 @@ function asGeometryType(feature: com.mapbox.pb.Tile.IFeature | undefined): OmvGe
         default:
             return OmvGeometryType.UNKNOWN;
     } // switch
-}
-
-function isArrayBufferLike(data: any): data is ArrayBufferLike {
-    return data instanceof ArrayBuffer || data instanceof SharedArrayBuffer;
 }
 
 /**

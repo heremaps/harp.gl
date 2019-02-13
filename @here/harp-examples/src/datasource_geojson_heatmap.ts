@@ -138,6 +138,7 @@ export namespace GeoJsonHeatmapExample {
     const baseMap = initializeBaseMap("mapCanvas");
 
     const geoJsonDataProvider = new GeoJsonDataProvider(
+        "italy",
         new URL("resources/italy.json", window.location.href)
     );
     const geoJsonDataSource = new OmvDataSource({
