@@ -4,13 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
-    DecodedTileMessageName,
-    WORKER_SERVICE_MANAGER_SERVICE_ID,
-    WorkerServiceManagerMessage
-} from "@here/harp-datasource-protocol";
+import { WorkerServiceProtocol } from "@here/harp-datasource-protocol";
 import { LoggerManager } from "@here/harp-utils";
-import { WorkerService } from "./WorkerService";
+import { WorkerService, WorkerServiceResponse } from "./WorkerService";
 
 const logger = LoggerManager.instance.create("WorkerServiceManager");
 
@@ -39,7 +35,9 @@ export class WorkerServiceManager extends WorkerService {
      */
     static getInstance() {
         if (this.m_service === undefined) {
-            this.m_service = new WorkerServiceManager(WORKER_SERVICE_MANAGER_SERVICE_ID);
+            this.m_service = new WorkerServiceManager(
+                WorkerServiceProtocol.WORKER_SERVICE_MANAGER_SERVICE_ID
+            );
         }
         return this.m_service;
     }
@@ -59,7 +57,9 @@ export class WorkerServiceManager extends WorkerService {
      */
     private m_services = new Map<string, WorkerService>();
 
-    private constructor(serviceId: string = WORKER_SERVICE_MANAGER_SERVICE_ID) {
+    private constructor(
+        serviceId: string = WorkerServiceProtocol.WORKER_SERVICE_MANAGER_SERVICE_ID
+    ) {
         super(serviceId);
     }
 
@@ -72,36 +72,37 @@ export class WorkerServiceManager extends WorkerService {
         this.m_factories.set(workerServiceDescriptor.serviceType, workerServiceDescriptor.factory);
     }
 
-    protected handleMessage(message: WorkerServiceManagerMessage): void {
-        if (message.type === DecodedTileMessageName.CreateService) {
-            const existingService = this.m_services.get(message.targetServiceId);
+    protected handleRequest(request: any): Promise<WorkerServiceResponse> {
+        if (request.type === WorkerServiceProtocol.Requests.CreateService) {
+            const existingService = this.m_services.get(request.targetServiceId);
             if (existingService !== undefined) {
-                logger.error(
+                throw Error(
                     `error - service with targetServiceId='${
-                        message.targetServiceId
+                        request.targetServiceId
                     }' already running, ignoring CreateService request`
                 );
-                return;
             }
 
-            const factory = this.m_factories.get(message.targetServiceType);
+            const factory = this.m_factories.get(request.targetServiceType);
 
             if (factory === undefined) {
-                logger.error(`unknown targetServiceType requested: '${message.targetServiceType}'`);
-                return;
+                throw Error(`unknown targetServiceType requested: '${request.targetServiceType}'`);
             }
 
-            const service = factory(message.targetServiceId);
-            this.m_services.set(message.targetServiceId, service);
+            const service = factory(request.targetServiceId);
+            this.m_services.set(request.targetServiceId, service);
         }
-        if (message.type === DecodedTileMessageName.DestroyService) {
-            const service = this.m_services.get(message.targetServiceId);
+        if (request.type === WorkerServiceProtocol.Requests.DestroyService) {
+            const service = this.m_services.get(request.targetServiceId);
             if (service === undefined) {
-                logger.error(`unknown targetServiceId '${message.targetServiceId}'`);
-                return;
+                throw Error(`unknown targetServiceId '${request.targetServiceId}'`);
             }
             service.destroy();
-            this.m_services.delete(message.targetServiceId);
+            this.m_services.delete(request.targetServiceId);
         }
+
+        return Promise.resolve({
+            response: {}
+        });
     }
 }

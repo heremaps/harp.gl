@@ -5,4 +5,5 @@
  */
 
 export * from "./lib/OmvDecoder";
+export * from "./lib/OmvTiler";
 export * from "./lib/OmvDecoderDefs";

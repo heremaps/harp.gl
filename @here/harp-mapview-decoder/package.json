@@ -29,13 +29,13 @@
     "@here/harp-datasource-protocol": "^0.2.39",
     "@here/harp-fetch": "^0.2.0",
     "@here/harp-geoutils": "^0.2.40",
-    "@here/harp-mapview": "^0.7.55"
+    "@here/harp-mapview": "^0.7.55",
+    "geojson-vt": "^3.2.1"
   },
   "devDependencies": {
     "@here/harp-test-utils": "^0.1.0",
     "@types/chai": "^4.1.2",
     "@types/mocha": "^5.2.5",
-    "@types/node": "^10.9.0",
     "@types/sinon": "^5.0.1",
     "chai": "^4.0.2",
     "cross-env": "^5.2.0",

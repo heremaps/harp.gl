@@ -84,6 +84,7 @@ export namespace GeoJsonExample {
         // snippet:datasource_geojson1.ts
         // Create a [[GeoJsonDataProvider]] from a GeoJson URL and plug it into an OmvDataSource.
         const geoJsonDataProvider = new GeoJsonDataProvider(
+            "italy",
             new URL("resources/italy.json", window.location.href)
         );
         const geoJsonDataSource = new OmvDataSource({

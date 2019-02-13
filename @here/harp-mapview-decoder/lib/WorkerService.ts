@@ -4,12 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
-    DecodedTileMessageName,
-    InitializedMessage,
-    isRequestMessage,
-    ResponseMessage
-} from "@here/harp-datasource-protocol";
+import { WorkerServiceProtocol } from "@here/harp-datasource-protocol";
 import { LoggerManager } from "@here/harp-utils";
 
 const logger = LoggerManager.instance.create("WorkerService", { enabled: false });
@@ -75,9 +70,9 @@ export abstract class WorkerService {
     constructor(readonly serviceId: string) {
         self.addEventListener("message", this.onMessage);
 
-        const isInitializedMessage: InitializedMessage = {
+        const isInitializedMessage: WorkerServiceProtocol.InitializedMessage = {
             service: serviceId,
-            type: DecodedTileMessageName.Initialized
+            type: WorkerServiceProtocol.ServiceMessageName.Initialized
         };
         self.postMessage(isInitializedMessage);
     }
@@ -123,7 +118,7 @@ export abstract class WorkerService {
         }
 
         try {
-            if (isRequestMessage(message.data)) {
+            if (WorkerServiceProtocol.isRequestMessage(message.data)) {
                 const request = message.data;
                 const requestEntry = {
                     service: request.service,
@@ -137,7 +132,7 @@ export abstract class WorkerService {
                             requestEntry,
                             {
                                 service: this.serviceId,
-                                type: DecodedTileMessageName.Response,
+                                type: WorkerServiceProtocol.ServiceMessageName.Response,
                                 messageId: request.messageId,
                                 response: response.response
                             },
@@ -147,7 +142,7 @@ export abstract class WorkerService {
                     .catch(error => {
                         this.doSendResponse(requestEntry, {
                             service: this.serviceId,
-                            type: DecodedTileMessageName.Response,
+                            type: WorkerServiceProtocol.ServiceMessageName.Response,
                             messageId: request.messageId,
                             error: error.toString()
                         });
@@ -186,7 +181,7 @@ export abstract class WorkerService {
 
     private doSendResponse(
         requestEntry: RequestEntry,
-        response: ResponseMessage,
+        response: WorkerServiceProtocol.ResponseMessage,
         transferList?: ArrayBuffer[]
     ) {
         if (requestEntry.responseSent) {
@@ -203,7 +198,7 @@ export abstract class WorkerService {
         this.m_pendingRequests.forEach(requestEntry => {
             this.doSendResponse(requestEntry, {
                 service: this.serviceId,
-                type: DecodedTileMessageName.Response,
+                type: WorkerServiceProtocol.ServiceMessageName.Response,
                 messageId: requestEntry.messageId,
                 error: "cancelled" as any
             });

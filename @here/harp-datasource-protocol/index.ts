@@ -5,6 +5,7 @@
  */
 
 export * from "./lib/ITileDecoder";
+export * from "./lib/ITiler";
 export * from "./lib/DecodedTile";
 export * from "./lib/Extruder";
 export * from "./lib/IMeshBuffers";
@@ -13,4 +14,6 @@ export * from "./lib/OutlineIndicesDetector";
 export * from "./lib/Techniques";
 export * from "./lib/Theme";
 export * from "./lib/TileInfo";
+export * from "./lib/WorkerServiceProtocol";
 export * from "./lib/WorkerDecoderProtocol";
+export * from "./lib/WorkerTilerProtocol";
