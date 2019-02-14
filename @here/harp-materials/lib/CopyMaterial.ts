@@ -3,6 +3,7 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
+import * as THREE from "three";
 
 /**
  * The base shader to use for [[MapView]]'s composing passes, like [[MSAAMaterial]].
@@ -28,3 +29,27 @@ export const CopyShader: THREE.Shader = {
         gl_FragColor = opacity * texel;
     }`
 };
+
+/**
+ * The material is used for composing.
+ */
+export class CopyMaterial extends THREE.ShaderMaterial {
+    /**
+     * The constructor of `CopyMaterial`.
+     *
+     * @param uniforms The [[CopyShader]]'s uniforms.
+     */
+    constructor(uniforms: { [uniformName: string]: THREE.IUniform }) {
+        super({
+            name: "CopyMaterial",
+            uniforms,
+            vertexShader: CopyShader.vertexShader,
+            fragmentShader: CopyShader.fragmentShader,
+            premultipliedAlpha: true,
+            transparent: false,
+            blending: THREE.NoBlending,
+            depthTest: false,
+            depthWrite: false
+        });
+    }
+}
