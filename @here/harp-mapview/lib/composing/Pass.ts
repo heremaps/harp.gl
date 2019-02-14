@@ -63,7 +63,7 @@ export interface IPass {
  * These only are proper shader passes.
  */
 export class Pass implements IPass {
-    enabled: boolean = true;
+    enabled: boolean = false;
     renderToScreen: boolean = false;
     // tslint:disable-next-line:no-unused-variable
     setSize(width: number, height: number) {

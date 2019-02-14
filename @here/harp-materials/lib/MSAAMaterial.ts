@@ -3,14 +3,14 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
+import * as THREE from "three";
 
-import { AdditiveBlending, ShaderMaterial } from "three";
-import { CopyShader } from "./CopyShader";
+import { CopyShader } from "./CopyMaterial";
 
 /**
  * The material to use for the quad of the [[MSAARenderPass]] in the composing.
  */
-export class MSAAMaterial extends ShaderMaterial {
+export class MSAAMaterial extends THREE.ShaderMaterial {
     /**
      * The constructor of `MSAAMaterial`.
      *
@@ -23,7 +23,7 @@ export class MSAAMaterial extends ShaderMaterial {
             fragmentShader: CopyShader.fragmentShader,
             premultipliedAlpha: true,
             transparent: true,
-            blending: AdditiveBlending,
+            blending: THREE.AdditiveBlending,
             depthTest: false,
             depthWrite: false
         });

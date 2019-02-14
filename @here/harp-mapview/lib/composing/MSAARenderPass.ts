@@ -3,17 +3,9 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-
 import { CopyShader, MSAAMaterial } from "@here/harp-materials";
-import {
-    LinearFilter,
-    Mesh,
-    OrthographicCamera,
-    PlaneBufferGeometry,
-    RGBAFormat,
-    Scene,
-    WebGLRenderTarget
-} from "three";
+import * as THREE from "three";
+
 import { Pass } from "./Pass";
 
 /**
@@ -52,7 +44,7 @@ export class MSAARenderPass extends Pass {
     samplingLevel: MSAASampling = MSAASampling.Level_1;
 
     private m_renderTarget: THREE.WebGLRenderTarget | null = null;
-    private readonly m_localCamera: THREE.OrthographicCamera = new OrthographicCamera(
+    private readonly m_localCamera: THREE.OrthographicCamera = new THREE.OrthographicCamera(
         -1,
         1,
         1,
@@ -60,12 +52,12 @@ export class MSAARenderPass extends Pass {
         0,
         1
     );
-    private readonly m_quadScene: THREE.Scene = new Scene();
+    private readonly m_quadScene: THREE.Scene = new THREE.Scene();
     private readonly m_quadUniforms: { [uniformName: string]: THREE.IUniform } =
         CopyShader.uniforms;
     private readonly m_quadMaterial: THREE.ShaderMaterial = new MSAAMaterial(this.m_quadUniforms);
-    private readonly m_quad: THREE.Mesh = new Mesh(
-        new PlaneBufferGeometry(2, 2),
+    private readonly m_quad: THREE.Mesh = new THREE.Mesh(
+        new THREE.PlaneBufferGeometry(2, 2),
         this.m_quadMaterial
     );
 
@@ -125,10 +117,10 @@ export class MSAARenderPass extends Pass {
 
         // Initiates the local render target with the read buffer's dimensions, if not available.
         if (this.m_renderTarget === null) {
-            this.m_renderTarget = new WebGLRenderTarget(readBuffer.width, readBuffer.height, {
-                minFilter: LinearFilter,
-                magFilter: LinearFilter,
-                format: RGBAFormat
+            this.m_renderTarget = new THREE.WebGLRenderTarget(readBuffer.width, readBuffer.height, {
+                minFilter: THREE.LinearFilter,
+                magFilter: THREE.LinearFilter,
+                format: THREE.RGBAFormat
             });
             this.m_renderTarget.texture.name = "MSAARenderPass.sample";
         }
@@ -136,7 +128,8 @@ export class MSAARenderPass extends Pass {
 
         const offsets = MSAARenderPass.OffsetVectors[this.samplingLevel];
 
-        const oldClearColor = renderer.getClearColor().getHex();
+        const rendererClearColor = renderer.getClearColor();
+        const oldClearColor = rendererClearColor !== undefined ? rendererClearColor.getHex() : 0;
 
         // The method `camera.setViewOffset` will be called in the next loop. In order to maintain
         // its usability externally (like for the triple view in mosaic demo) we must cache the
@@ -197,7 +190,7 @@ export class MSAARenderPass extends Pass {
                 this.renderToScreen ? undefined : writeBuffer,
                 i === 0
             );
-            if (i === 0) {
+            if (i === 0 && rendererClearColor !== undefined) {
                 renderer.setClearColor(oldClearColor);
             }
         }

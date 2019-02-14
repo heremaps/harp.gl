@@ -390,6 +390,27 @@ export interface MapViewOptions {
     pixelRatio?: number;
 
     /**
+     * Set fixed pixel ratio for rendering when the camera is moving or an animation is running.
+     * Useful when rendering on high resolution displays with low performance GPUs that may be
+     * fill-rate limited.
+     *
+     * If a value is specified, a low resolution render pass is used to render the scene into a
+     * low resolution render target, before it is copied to the screen.
+     *
+     * A value of `undefined` disables the low res render pass. Values between 0.5 and
+     * `window.devicePixelRatio` can be tried to give  good results. The value should not be larger
+     * than `window.devicePixelRatio`.
+     *
+     * @note Since no anti-aliasing is applied during dynamic rendering with `dynamicPixelRatio`
+     * defined, visual artifacts may occur, especially with thin lines..
+     *
+     * @note The resolution of icons and text labels is not affected.
+     *
+     * @default `undefined`
+     */
+    dynamicPixelRatio?: number;
+
+    /**
      * @hidden
      * Disable all fading animations for debugging and performance measurement.
      */
@@ -645,6 +666,7 @@ export class MapView extends THREE.EventDispatcher {
         this.mapRenderingManager = new MapRenderingManager(
             clientWidth,
             clientHeight,
+            this.m_options.dynamicPixelRatio,
             mapPassAntialiasSettings
         );
 
@@ -988,7 +1010,8 @@ export class MapView extends THREE.EventDispatcher {
      * The color used to clear the view.
      */
     get clearColor() {
-        return this.m_renderer.getClearColor().getHex();
+        const rendererClearColor = this.m_renderer.getClearColor();
+        return rendererClearColor !== undefined ? rendererClearColor.getHex() : 0;
     }
 
     /**
@@ -1399,14 +1422,6 @@ export class MapView extends THREE.EventDispatcher {
         return 1.0 / this.pixelToWorld;
     }
 
-    /**
-     * Return the ratio for rendered pixels to screen pixels. May contain values > 1.0 for high
-     * resolution screens (HiDPI).
-     *
-     * @readonly
-     * @type {number}
-     * @memberof MapView
-     */
     get pixelRatio(): number {
         if (this.m_pixelRatio !== undefined) {
             return this.m_pixelRatio;
@@ -1417,9 +1432,11 @@ export class MapView extends THREE.EventDispatcher {
     }
 
     /**
-     * Set the new pixelRatio in the WebGlRenderer. A value of `undefined` will make the getter
-     * return `window.devicePixelRatio`, a value of `1.0` will disable the use of HiDPI on all
-     * devices.
+     * PixelRatio in the WebGlRenderer. May contain values > 1.0 for high resolution screens
+     * (HiDPI).
+     *
+     * A value of `undefined` will make the getter return `window.devicePixelRatio`, setting a value
+     * of `1.0` will disable the use of HiDPI on all devices.
      *
      * @note Since the current pixelRatio may have been used in some calculations (e.g. the icons)
      * they may appear in the wrong size now. To ensure proper display of data, a call to
@@ -1432,6 +1449,33 @@ export class MapView extends THREE.EventDispatcher {
         if (this.renderer.getPixelRatio() !== this.pixelRatio) {
             this.renderer.setPixelRatio(this.pixelRatio);
         }
+    }
+
+    /**
+     * PixelRatio ratio for rendering when the camera is moving or an animation is running. Useful
+     * when rendering on high resolution displays with low performance GPUs that may be
+     * fill-rate-limited.
+     *
+     * If a value is specified, a low resolution render pass is used to render the scene into a
+     * low resolution render target, before it is copied to the screen.
+     *
+     * A value of `undefined` disables the low res render pass. Values between 0.5 and
+     * `window.devicePixelRatio` can be tried to give  good results. The value should not be larger
+     * than `window.devicePixelRatio`.
+     *
+     * @note Since no anti-aliasing is applied during dynamic rendering with `dynamicPixelRatio`
+     * defined, visual artifacts may occur, especially with thin lines..
+     *
+     * @note The resolution of icons and text labels is not affected.
+     *
+     * @default `undefined`
+     */
+    set dynamicPixelRatio(ratio: number | undefined) {
+        this.mapRenderingManager.lowResPixelRatio = ratio;
+    }
+
+    get dynamicPixelRatio(): number | undefined {
+        return this.mapRenderingManager.lowResPixelRatio;
     }
 
     /**
@@ -1835,8 +1879,8 @@ export class MapView extends THREE.EventDispatcher {
             this.m_skyBackground.update(this.m_camera);
         }
 
-        const isStaticFrame = !(this.animating || this.m_updatePending);
-        this.mapRenderingManager.render(this.m_renderer, this.m_scene, camera, isStaticFrame);
+        const isDynamicFrame = this.cameraIsMoving || this.animating || this.m_updatePending;
+        this.mapRenderingManager.render(this.m_renderer, this.m_scene, camera, !isDynamicFrame);
 
         if (gatherStatistics) {
             drawTime = PerformanceTimer.now();
