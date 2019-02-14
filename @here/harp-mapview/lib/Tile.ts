@@ -683,7 +683,11 @@ export class Tile implements CachedResource {
 
             if (object.material !== undefined && this.shouldDisposeObjectMaterial(object)) {
                 if (object.material instanceof Array) {
-                    object.material.forEach(material => material.dispose());
+                    object.material.forEach(material => {
+                        if (material !== undefined) {
+                            material.dispose();
+                        }
+                    });
                 } else {
                     object.material.dispose();
                 }
