@@ -3,9 +3,10 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-
 import { WebGLRenderTarget } from "three";
+
 import { IPassManager } from "./IPassManager";
+import { LowResRenderPass } from "./LowResRenderPass";
 import { MSAARenderPass, MSAASampling } from "./MSAARenderPass";
 
 const DEFAULT_DYNAMIC_MSAA_SAMPLING_LEVEL = MSAASampling.Level_1;
@@ -45,6 +46,13 @@ export interface IMapAntialiasSettings {
  * to modify some of the rendering processes like the antialiasing behaviour at runtime.
  */
 export interface IMapRenderingManager extends IPassManager {
+    /**
+     * Set a `pixelRatio` for dynamic rendering (i.e. during animations). If a value is specified,
+     * the `LowResRenderPass` will be employed to used to render the scene into a lower resolution
+     * render target, which will then be rendered to the screen.
+     */
+    lowResPixelRatio?: number;
+
     /**
      * The level of MSAA sampling while the user interacts. It should be a low level so that the
      * MSAA does not impact the framerate.
@@ -96,17 +104,22 @@ export class MapRenderingManager implements IMapRenderingManager {
     private m_readBuffer: THREE.WebGLRenderTarget;
     private m_dynamicMsaaSamplingLevel: MSAASampling;
     private m_staticMsaaSamplingLevel: MSAASampling;
-
+    private m_lowResPass: LowResRenderPass;
     /**
      * The constructor of `MapRenderingManager`.
      *
      * @param width Width of the frame buffer.
      * @param height Height of the frame buffer.
+     * @param lowResPixelRatio The `pixelRatio` determines the resolution of the internal
+     *  `WebGLRenderTarget`. Values between 0.5 and `window.devicePixelRatio` can be tried to give
+     * good results. A value of `undefined` disables the low res render pass. The value should not
+     * be larger than`window.devicePixelRatio`.
      * @param antialiasSetting The object defining the demeanor of MSAA.
      */
     constructor(
         width: number,
         height: number,
+        lowResPixelRatio: number | undefined,
         antialiasSettings: IMapAntialiasSettings | undefined = { msaaEnabled: false }
     ) {
         this.m_readBuffer = new WebGLRenderTarget(width, height);
@@ -121,6 +134,8 @@ export class MapRenderingManager implements IMapRenderingManager {
             antialiasSettings.staticMsaaSamplingLevel === undefined
                 ? DEFAULT_STATIC_MSAA_SAMPLING_LEVEL
                 : antialiasSettings.staticMsaaSamplingLevel;
+        this.m_lowResPass = new LowResRenderPass(lowResPixelRatio);
+        this.m_lowResPass.enabled = lowResPixelRatio !== undefined;
     }
 
     /**
@@ -133,8 +148,6 @@ export class MapRenderingManager implements IMapRenderingManager {
      * @param camera The ThreeJS Camera instance to render the scene through.
      * @param isStaticFrame Whether the frame to render is static or dynamic. Selects level of
      * antialiasing.
-     * @param time Optional time argument provided by the requestAnimationFrame, to pass to
-     * sub-passes.
      */
     render(
         renderer: THREE.WebGLRenderer,
@@ -142,6 +155,14 @@ export class MapRenderingManager implements IMapRenderingManager {
         camera: THREE.PerspectiveCamera | THREE.OrthographicCamera,
         isStaticFrame: boolean
     ) {
+        if (!isStaticFrame && this.m_lowResPass.pixelRatio !== undefined) {
+            // Not designed to be combined with our own MSAA
+            const target = undefined;
+            this.m_lowResPass.renderToScreen = true;
+            this.m_lowResPass.render(renderer, scene, camera, target, this.m_readBuffer);
+            return;
+        }
+
         const isHighDpiDevice = renderer.getPixelRatio() > 1.1; // On desktop IE11 is ~1.01.
 
         // 1. First pass (and only for the map part) : base scene render.
@@ -180,6 +201,22 @@ export class MapRenderingManager implements IMapRenderingManager {
     setSize(width: number, height: number) {
         this.m_readBuffer.setSize(width, height);
         this.m_msaaPass.setSize(width, height);
+        this.m_lowResPass.setSize(width, height);
+    }
+
+    /**
+     * The `lowResPixelRatio` determines the resolution of the internal `WebGLRenderTarget`. Values
+     * between 0.5 and `window.devicePixelRatio` can be tried to give  good results. A value of
+     * `undefined` disables the low res render pass. The value should not be larger than
+     * `window.devicePixelRatio`.
+     */
+    get lowResPixelRatio(): number | undefined {
+        return this.m_lowResPass.pixelRatio;
+    }
+
+    set lowResPixelRatio(pixelRatio: number | undefined) {
+        this.m_lowResPass.pixelRatio = pixelRatio;
+        this.m_lowResPass.enabled = pixelRatio !== undefined;
     }
 
     /**

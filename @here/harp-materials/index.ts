@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-export * from "./lib/CopyShader";
+export * from "./lib/CopyMaterial";
 export * from "./lib/DashedLineMaterial";
 export * from "./lib/EdgeMaterial";
 export * from "./lib/MapMeshMaterials";
