@@ -381,7 +381,7 @@ export interface MarkerTechnique extends BaseTechnique {
      */
     style?: string;
     /**
-     * If `true`, the abbreviation (field `abbr`) of the elements is used as text.
+     * If `true`, the abbreviation (field `name:short`) of the elements is used as text.
      */
     useAbbreviation?: boolean;
     /**
@@ -936,7 +936,7 @@ export interface TextTechnique extends BaseTechnique {
      */
     label?: string;
     /**
-     * If `true`, the abbreviation (field `abbr`) of the elements is used as text.
+     * If `true`, the abbreviation (field `name:short`) of the elements is used as text.
      */
     useAbbreviation?: boolean;
     /**
