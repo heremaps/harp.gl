@@ -401,7 +401,7 @@ export namespace OmvDecoder {
     ): string | undefined {
         let name;
         if (useAbbreviation) {
-            const abbreviation = env.lookup(`abbr`);
+            const abbreviation = env.lookup(`name:short`);
             if (typeof abbreviation === "string" && abbreviation.length > 0) {
                 return abbreviation;
             }
