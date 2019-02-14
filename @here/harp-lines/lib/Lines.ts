@@ -7,15 +7,6 @@
 import * as THREE from "three";
 
 /**
- * Converts a `double` precision number to `float` precision. May be a bit slow.
- *
- * @param d Double precision number to convert.
- */
-function doubleToFloat(d: number) {
-    return new Float32Array([d])[0];
-}
-
-/**
  * Class that holds the vertex and index attributes for a [[Lines]] object.
  */
 export class LineGeometry {
@@ -79,8 +70,8 @@ export function createLineGeometry(
                 V.push(x, y, L1, L2, T1[0], T1[1], T2[0], T2[1], 0, 0, +1, -1);
                 V.push(x, y, L1, L2, T1[0], T1[1], T2[0], T2[1], 0, 0, +1, +1);
             } else {
-                const hx = doubleToFloat(x);
-                const hy = doubleToFloat(y);
+                const hx = Math.fround(x);
+                const hy = Math.fround(y);
                 const lx = x - hx;
                 const ly = y - hy;
                 V.push(hx, hy, lx, ly, L1, L2, T1[0], T1[1], T2[0], T2[1], 0, 0, +1, -1);
@@ -94,8 +85,8 @@ export function createLineGeometry(
                 V.push(x, y, L1, L2, T1[0], T1[1], T2[0], T2[1], 0, 0, -1, -1);
                 V.push(x, y, L1, L2, T1[0], T1[1], T2[0], T2[1], 0, 0, -1, +1);
             } else {
-                const hx = doubleToFloat(x);
-                const hy = doubleToFloat(y);
+                const hx = Math.fround(x);
+                const hy = Math.fround(y);
                 const lx = x - hx;
                 const ly = y - hy;
                 V.push(hx, hy, lx, ly, L1, L2, T1[0], T1[1], T2[0], T2[1], 0, 0, -1, -1);
