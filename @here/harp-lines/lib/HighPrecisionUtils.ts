@@ -29,22 +29,13 @@ import { triangulateLine } from "./TriangulateLines";
 
 export namespace HighPrecisionUtils {
     /**
-     * Converts a `double` precision number to `float` precision. May be a bit slow...
-     *
-     * @param d Double precision number to convert.
-     */
-    export function doubleToFloat(d: number) {
-        return new Float32Array([d])[0];
-    }
-
-    /**
      * Extract the `float` parts of all vector members, Making this a `Vector3` of `float`.
      * precision.
      *
      * @param v
      */
     export function doubleToFloatVec(v: Vector3): Vector3 {
-        return new Vector3(doubleToFloat(v.x), doubleToFloat(v.y), doubleToFloat(v.z));
+        return new Vector3(Math.fround(v.x), Math.fround(v.y), Math.fround(v.z));
     }
 
     /**
@@ -54,15 +45,15 @@ export namespace HighPrecisionUtils {
      * @param v Vector3 to convert to float IN-PLACE!
      */
     export function makeFloatVec(v: Vector3): Vector3 {
-        const majorX = doubleToFloat(v.x);
-        const majorY = doubleToFloat(v.y);
-        const majorZ = doubleToFloat(v.z);
+        const majorX = Math.fround(v.x);
+        const majorY = Math.fround(v.y);
+        const majorZ = Math.fround(v.z);
 
         const minorVec = new Vector3(v.x - majorX, v.y - majorY, v.z - majorZ);
 
-        v.x = doubleToFloat(majorX);
-        v.y = doubleToFloat(majorY);
-        v.z = doubleToFloat(majorZ);
+        v.x = Math.fround(majorX);
+        v.y = Math.fround(majorY);
+        v.z = Math.fround(majorZ);
 
         return minorVec;
     }
@@ -212,7 +203,7 @@ export namespace HighPrecisionUtils {
 
             const addHPValue = (...values: number[]) => {
                 for (const value of values) {
-                    const major = doubleToFloat(value);
+                    const major = Math.fround(value);
                     positionVecLow.push(value - major);
                     positionVec.push(major);
                 }
@@ -286,11 +277,11 @@ export namespace HighPrecisionUtils {
             const x = positions[i + positionOffset];
             const y = positions[i + positionOffset + 1];
             const z = positions[i + positionOffset + 2];
-            const majorX = doubleToFloat(x);
+            const majorX = Math.fround(x);
             const minorX = x - majorX;
-            const majorY = doubleToFloat(y);
+            const majorY = Math.fround(y);
             const minorY = y - majorY;
-            const majorZ = doubleToFloat(z);
+            const majorZ = Math.fround(z);
             const minorZ = z - majorZ;
 
             // insert values in interleaved buffer
