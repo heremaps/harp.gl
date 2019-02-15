@@ -5,7 +5,7 @@
  */
 
 import { LoggerManager } from "@here/harp-utils";
-import { CaseProperty, Technique } from "./Techniques";
+import { InterpolationMode, Technique } from "./Techniques";
 
 import * as THREE from "three";
 
@@ -858,6 +858,91 @@ class Parser {
     }
 }
 
+interface InterpolatedPropertyDefinition<T> {
+    interpolation?: "Discrete" | "Linear" | "Cubic";
+    zoomLevels: number[];
+    values: T[];
+}
+
+function isInterpolatedPropertyDefinition<T>(p: any): p is InterpolatedPropertyDefinition<T> {
+    if (
+        p.values instanceof Array &&
+        p.values.length > 0 &&
+        p.values[0] !== undefined &&
+        p.zoomLevels instanceof Array &&
+        p.zoomLevels.length > 0 &&
+        p.zoomLevels[0] !== undefined &&
+        p.values.length === p.zoomLevels.length
+    ) {
+        return true;
+    }
+    return false;
+}
+
+function removeDuplicatePropertyValues<T>(p: InterpolatedPropertyDefinition<T>) {
+    for (let i = 0; i < p.values.length; ++i) {
+        const firstIdx = p.zoomLevels.findIndex((a: number) => {
+            return a === p.zoomLevels[i];
+        });
+        if (firstIdx !== i) {
+            p.zoomLevels.splice(--i, 1);
+            p.values.splice(--i, 1);
+        }
+    }
+}
+
+function createInterpolatedProperty<T>(prop: InterpolatedPropertyDefinition<T>) {
+    removeDuplicatePropertyValues(prop);
+    const propKeys = new Float32Array(prop.zoomLevels);
+    let propValues;
+    switch (typeof prop.values[0]) {
+        default:
+        case "number":
+            propValues = new Float32Array((prop.values as any[]) as number[]);
+            return {
+                interpolationMode:
+                    prop.interpolation !== undefined
+                        ? InterpolationMode[prop.interpolation]
+                        : InterpolationMode.Discrete,
+                zoomLevels: propKeys,
+                values: propValues
+            };
+        case "boolean":
+            propValues = new Float32Array(prop.values.length);
+            for (let i = 0; i < prop.values.length; ++i) {
+                propValues[i] = ((prop.values[i] as unknown) as boolean) ? 1 : 0;
+            }
+            return {
+                interpolationMode: InterpolationMode.Discrete,
+                zoomLevels: propKeys,
+                values: propValues
+            };
+        case "string":
+            propValues = new Float32Array(prop.values.length * 3);
+            for (let i = 0; i < prop.values.length; ++i) {
+                const value = +((prop.values[i] as unknown) as string).replace("#", "0x");
+                // tslint:disable:no-bitwise
+                const channels = [
+                    ((value >> 16) & 255) / 255,
+                    ((value >> 8) & 255) / 255,
+                    ((value >> 0) & 255) / 255
+                ];
+                // tslint:disable:bitwise
+                for (let j = 0; j < prop.values.length * 3; ++j) {
+                    propValues[i * 3 + j] = channels[j];
+                }
+            }
+            return {
+                interpolationMode:
+                    prop.interpolation !== undefined
+                        ? InterpolationMode[prop.interpolation]
+                        : InterpolationMode.Discrete,
+                zoomLevels: propKeys,
+                values: propValues
+            };
+    }
+}
+
 /**
  * An array of [[Style]]s that are used together to define how a [[DataSource]] should be rendered.
  * `StyleSet`s are applied to sources providing vector tiles via their method `setStyleSet`. This
@@ -927,7 +1012,15 @@ export interface Style {
     /**
      * Attributes that define the technique.
      */
-    attr?: { [name: string]: CaseProperty<number> | CaseProperty<string> | CaseProperty<boolean> };
+    attr?: {
+        [name: string]:
+            | number
+            | InterpolatedPropertyDefinition<number>
+            | boolean
+            | InterpolatedPropertyDefinition<boolean>
+            | string
+            | InterpolatedPropertyDefinition<string>;
+    };
 
     /**
      * Array of substyles.
@@ -1488,7 +1581,29 @@ export class StyleSetEvaluator {
                                 }
 
                                 if (currStyle.attr !== undefined) {
-                                    technique[property] = currStyle.attr[property];
+                                    const prop = currStyle.attr[property];
+                                    if (isInterpolatedPropertyDefinition(prop)) {
+                                        switch (typeof prop.values[0]) {
+                                            default:
+                                            case "number":
+                                                technique[property] = createInterpolatedProperty(
+                                                    prop as InterpolatedPropertyDefinition<number>
+                                                );
+                                                break;
+                                            case "boolean":
+                                                technique[property] = createInterpolatedProperty(
+                                                    prop as InterpolatedPropertyDefinition<boolean>
+                                                );
+                                                break;
+                                            case "string":
+                                                technique[property] = createInterpolatedProperty(
+                                                    prop as InterpolatedPropertyDefinition<string>
+                                                );
+                                                break;
+                                        }
+                                    } else {
+                                        technique[property] = prop;
+                                    }
                                 }
                             });
                         }

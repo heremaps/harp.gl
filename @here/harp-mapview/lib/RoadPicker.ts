@@ -6,7 +6,7 @@
 
 import {
     ExtendedTileInfo,
-    getAttributeValue,
+    getPropertyValue,
     LineTechnique,
     SolidLineTechnique,
     Technique
@@ -195,12 +195,12 @@ export class RoadPicker {
 
     private getLineWidthInWorldUnit(technique: Technique, level: number): number | undefined {
         const solidLineTech = technique as SolidLineTechnique;
-        const metricUnit = getAttributeValue(solidLineTech.metricUnit, level);
+        const metricUnit = getPropertyValue(solidLineTech.metricUnit, level);
 
         if (metricUnit === "Pixel") {
             const pixelToWorld =
                 this.m_mapView.renderer.getPixelRatio() * this.m_mapView.pixelToWorld * 0.5;
-            const lineWidth = getAttributeValue(solidLineTech.lineWidth, level);
+            const lineWidth = getPropertyValue(solidLineTech.lineWidth, level);
             return (
                 (lineWidth !== undefined
                     ? (lineWidth as number)
@@ -208,7 +208,7 @@ export class RoadPicker {
             );
         } else {
             const lineTechnique = technique as LineTechnique;
-            return getAttributeValue(lineTechnique.lineWidth, level);
+            return getPropertyValue(lineTechnique.lineWidth, level);
         }
     }
 }
