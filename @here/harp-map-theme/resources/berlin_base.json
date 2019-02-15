@@ -1,4 +1,93 @@
 {
+ "sky": {
+  "type": "gradient",
+  "colorTop": "#015EBB",
+  "colorBottom": "#DDDCDA",
+  "groundColor": "#87959A",
+  "monomialPower": 1
+ },
+ "fog": {
+  "startRatio": 0.8
+ },
+ "clearColor": "#87959A",
+ "lights": [
+  {
+   "type": "ambient",
+   "color": "#FFFFFF",
+   "name": "ambientLight",
+   "intensity": 0.9
+  },
+  {
+   "type": "directional",
+   "color": "#CCCBBB",
+   "name": "light1",
+   "intensity": 0.8,
+   "direction": {
+    "x": 1,
+    "y": 5,
+    "z": 0.5
+   }
+  },
+  {
+   "type": "directional",
+   "color": "#F4DB9C",
+   "name": "light2",
+   "intensity": 0.8,
+   "direction": {
+    "x": -1,
+    "y": -3,
+    "z": 1
+   }
+  }
+ ],
+ "defaultTextStyle": {
+  "name": "defaultTextStyle",
+  "color": "#6D7477",
+  "backgroundColor": "#F7FBFD",
+  "backgroundSize": 16,
+  "backgroundAlpha": 0.5,
+  "fontCatalogName": "fira"
+ },
+ "textStyles": [
+  {
+   "name": "smallSign",
+   "color": "#000000",
+   "backgroundColor": "#000000",
+   "backgroundSize": 8,
+   "backgroundAlpha": 0.5,
+   "fontCatalogName": "fira"
+  },
+  {
+   "name": "smallSignLight",
+   "color": "#FFFFFF",
+   "backgroundColor": "#FFFFFF",
+   "backgroundSize": 8,
+   "backgroundAlpha": 0.5,
+   "fontCatalogName": "fira"
+  },
+  {
+   "name": "placeMarker",
+   "color": "#60FF60",
+   "backgroundColor": "#202020",
+   "backgroundSize": 12,
+   "backgroundAlpha": 0.5,
+   "fontCatalogName": "fira"
+  }
+ ],
+ "fontCatalogs": [
+  {
+   "name": "fira",
+   "url": "fonts/Default_FontCatalog.json"
+  }
+ ],
+ "images": [
+  {
+   "name": "maki_icons",
+   "url": "maki_icons.png",
+   "preload": true,
+   "atlas": "maki_icons.json"
+  }
+ ],
  "styles": {
   "tilezen": [
    {
@@ -7,20 +96,19 @@
     "technique": "solid-line",
     "attr": {
      "color": "#FAFDFE",
-     "lineWidth": [
-      {
-       "maxLevel": 13,
-       "value": 1.5
-      },
-      {
-       "maxLevel": 14,
-       "value": 1.2
-      },
-      {
-       "maxLevel": 21,
-       "value": 0.9
-      }
-     ],
+     "lineWidth": {
+      "interpolation": "Linear",
+      "zoomLevels": [
+       13,
+       14,
+       15
+      ],
+      "values": [
+       1.5,
+       1.2,
+       0.9
+      ]
+     },
      "fadeNear": 0.8,
      "fadeFar": 0.9,
      "clipping": false
@@ -35,28 +123,23 @@
     "technique": "solid-line",
     "attr": {
      "color": "#3A4C69",
-     "lineWidth": [
-      {
-       "maxLevel": 10,
-       "value": 42
-      },
-      {
-       "maxLevel": 11,
-       "value": 28
-      },
-      {
-       "maxLevel": 12,
-       "value": 18
-      },
-      {
-       "maxLevel": 13,
-       "value": 7
-      },
-      {
-       "maxLevel": 21,
-       "value": 4
-      }
-     ],
+     "lineWidth": {
+      "interpolation": "Linear",
+      "zoomLevels": [
+       10,
+       11,
+       12,
+       13,
+       14
+      ],
+      "values": [
+       42,
+       28,
+       18,
+       7,
+       4
+      ]
+     },
      "fadeNear": 0.8,
      "fadeFar": 0.9,
      "clipping": false
@@ -70,28 +153,23 @@
     "technique": "solid-line",
     "attr": {
      "color": "#EDECD9",
-     "lineWidth": [
-      {
-       "maxLevel": 10,
-       "value": 38
-      },
-      {
-       "maxLevel": 11,
-       "value": 24
-      },
-      {
-       "maxLevel": 12,
-       "value": 13
-      },
-      {
-       "maxLevel": 13,
-       "value": 5
-      },
-      {
-       "maxLevel": 21,
-       "value": 3
-      }
-     ],
+     "lineWidth": {
+      "interpolation": "Linear",
+      "zoomLevels": [
+       10,
+       11,
+       12,
+       13,
+       14
+      ],
+      "values": [
+       38,
+       24,
+       13,
+       5,
+       3
+      ]
+     },
      "fadeNear": 0.8,
      "fadeFar": 0.9,
      "clipping": false
@@ -106,7 +184,7 @@
     "attr": {
      "color": "#000000",
      "textLabel": "kind_detail",
-     "scale": 0.5,
+     "size": 16,
      "priority": 15,
      "fadeNear": 0.8,
      "fadeFar": 0.9,
@@ -121,40 +199,29 @@
     "technique": "solid-line",
     "attr": {
      "color": "#3A4C69",
-     "lineWidth": [
-      {
-       "maxLevel": 7,
-       "value": 180
-      },
-      {
-       "maxLevel": 8,
-       "value": 110
-      },
-      {
-       "maxLevel": 9,
-       "value": 45
-      },
-      {
-       "maxLevel": 10,
-       "value": 30
-      },
-      {
-       "maxLevel": 11,
-       "value": 20
-      },
-      {
-       "maxLevel": 12,
-       "value": 16
-      },
-      {
-       "maxLevel": 13,
-       "value": 9
-      },
-      {
-       "maxLevel": 21,
-       "value": 6
-      }
-     ],
+     "lineWidth": {
+      "interpolation": "Linear",
+      "zoomLevels": [
+       7,
+       8,
+       9,
+       10,
+       11,
+       12,
+       13,
+       14
+      ],
+      "values": [
+       180,
+       110,
+       45,
+       30,
+       20,
+       16,
+       9,
+       6
+      ]
+     },
      "fadeNear": 0.8,
      "fadeFar": 0.9,
      "clipping": false
@@ -168,40 +235,29 @@
     "technique": "solid-line",
     "attr": {
      "color": "#E3D49A",
-     "lineWidth": [
-      {
-       "maxLevel": 7,
-       "value": 180
-      },
-      {
-       "maxLevel": 8,
-       "value": 110
-      },
-      {
-       "maxLevel": 9,
-       "value": 45
-      },
-      {
-       "maxLevel": 10,
-       "value": 30
-      },
-      {
-       "maxLevel": 11,
-       "value": 20
-      },
-      {
-       "maxLevel": 12,
-       "value": 12
-      },
-      {
-       "maxLevel": 13,
-       "value": 7
-      },
-      {
-       "maxLevel": 21,
-       "value": 5
-      }
-     ],
+     "lineWidth": {
+      "interpolation": "Linear",
+      "zoomLevels": [
+       7,
+       8,
+       9,
+       10,
+       11,
+       12,
+       13,
+       14
+      ],
+      "values": [
+       180,
+       110,
+       45,
+       30,
+       20,
+       12,
+       7,
+       5
+      ]
+     },
      "fadeNear": 0.8,
      "fadeFar": 0.9,
      "clipping": false
@@ -215,7 +271,7 @@
     "technique": "text",
     "attr": {
      "color": "#000000",
-     "scale": 0.5,
+     "size": 16,
      "priority": 20,
      "fadeNear": 0.8,
      "fadeFar": 0.9,
@@ -230,44 +286,31 @@
     "technique": "solid-line",
     "attr": {
      "color": "#3A4C69",
-     "lineWidth": [
-      {
-       "maxLevel": 6,
-       "value": 550
-      },
-      {
-       "maxLevel": 7,
-       "value": 300
-      },
-      {
-       "maxLevel": 8,
-       "value": 100
-      },
-      {
-       "maxLevel": 9,
-       "value": 70
-      },
-      {
-       "maxLevel": 10,
-       "value": 38
-      },
-      {
-       "maxLevel": 11,
-       "value": 24
-      },
-      {
-       "maxLevel": 12,
-       "value": 14
-      },
-      {
-       "maxLevel": 13,
-       "value": 7
-      },
-      {
-       "maxLevel": 21,
-       "value": 5
-      }
-     ],
+     "lineWidth": {
+      "interpolation": "Linear",
+      "zoomLevels": [
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12,
+       13,
+       14
+      ],
+      "values": [
+       550,
+       300,
+       100,
+       70,
+       38,
+       24,
+       14,
+       7,
+       5
+      ]
+     },
      "fadeNear": 0.8,
      "fadeFar": 0.9,
      "clipping": false
@@ -281,48 +324,33 @@
     "technique": "solid-line",
     "attr": {
      "color": "#F0E8B5",
-     "lineWidth": [
-      {
-       "maxLevel": 5,
-       "value": 830
-      },
-      {
-       "maxLevel": 6,
-       "value": 410
-      },
-      {
-       "maxLevel": 7,
-       "value": 220
-      },
-      {
-       "maxLevel": 8,
-       "value": 100
-      },
-      {
-       "maxLevel": 9,
-       "value": 50
-      },
-      {
-       "maxLevel": 10,
-       "value": 30
-      },
-      {
-       "maxLevel": 11,
-       "value": 20
-      },
-      {
-       "maxLevel": 12,
-       "value": 11
-      },
-      {
-       "maxLevel": 13,
-       "value": 6
-      },
-      {
-       "maxLevel": 21,
-       "value": 4
-      }
-     ],
+     "lineWidth": {
+      "interpolation": "Linear",
+      "zoomLevels": [
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12,
+       13,
+       14
+      ],
+      "values": [
+       830,
+       410,
+       220,
+       100,
+       50,
+       30,
+       20,
+       11,
+       6,
+       4
+      ]
+     },
      "fadeNear": 0.8,
      "fadeFar": 0.9,
      "clipping": false
@@ -336,7 +364,7 @@
     "technique": "text",
     "attr": {
      "color": "#000000",
-     "scale": 0.5,
+     "size": 16,
      "priority": 25,
      "fadeNear": 0.8,
      "fadeFar": 0.9,
@@ -351,44 +379,31 @@
     "technique": "solid-line",
     "attr": {
      "color": "#3A4C69",
-     "lineWidth": [
-      {
-       "maxLevel": 6,
-       "value": 700
-      },
-      {
-       "maxLevel": 7,
-       "value": 400
-      },
-      {
-       "maxLevel": 8,
-       "value": 250
-      },
-      {
-       "maxLevel": 9,
-       "value": 120
-      },
-      {
-       "maxLevel": 10,
-       "value": 50
-      },
-      {
-       "maxLevel": 11,
-       "value": 33
-      },
-      {
-       "maxLevel": 12,
-       "value": 16
-      },
-      {
-       "maxLevel": 13,
-       "value": 11
-      },
-      {
-       "maxLevel": 21,
-       "value": 7
-      }
-     ],
+     "lineWidth": {
+      "interpolation": "Linear",
+      "zoomLevels": [
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12,
+       13,
+       14
+      ],
+      "values": [
+       700,
+       400,
+       250,
+       120,
+       50,
+       33,
+       16,
+       11,
+       7
+      ]
+     },
      "fadeNear": 0.8,
      "fadeFar": 0.9,
      "clipping": false
@@ -402,48 +417,33 @@
     "technique": "solid-line",
     "attr": {
      "color": "#D6C789",
-     "lineWidth": [
-      {
-       "maxLevel": 5,
-       "value": 830
-      },
-      {
-       "maxLevel": 6,
-       "value": 550
-      },
-      {
-       "maxLevel": 7,
-       "value": 300
-      },
-      {
-       "maxLevel": 8,
-       "value": 150
-      },
-      {
-       "maxLevel": 9,
-       "value": 70
-      },
-      {
-       "maxLevel": 10,
-       "value": 35
-      },
-      {
-       "maxLevel": 11,
-       "value": 22
-      },
-      {
-       "maxLevel": 12,
-       "value": 12
-      },
-      {
-       "maxLevel": 13,
-       "value": 8
-      },
-      {
-       "maxLevel": 21,
-       "value": 6
-      }
-     ],
+     "lineWidth": {
+      "interpolation": "Linear",
+      "zoomLevels": [
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12,
+       13,
+       14
+      ],
+      "values": [
+       830,
+       550,
+       300,
+       150,
+       70,
+       35,
+       22,
+       12,
+       8,
+       6
+      ]
+     },
      "fadeNear": 0.8,
      "fadeFar": 0.9,
      "clipping": false
@@ -457,7 +457,7 @@
     "technique": "text",
     "attr": {
      "color": "#03334E",
-     "scale": 0.5,
+     "size": 16,
      "priority": 25,
      "fadeNear": 0.8,
      "fadeFar": 0.9,
@@ -472,140 +472,91 @@
     "attr": {
      "clipping": false,
      "color": "#184F6E",
-     "dashSize": [
-      {
-       "maxLevel": 6,
-       "value": 4000
-      },
-      {
-       "maxLevel": 7,
-       "value": 2500
-      },
-      {
-       "maxLevel": 8,
-       "value": 1500
-      },
-      {
-       "maxLevel": 9,
-       "value": 1200
-      },
-      {
-       "maxLevel": 10,
-       "value": 560
-      },
-      {
-       "maxLevel": 11,
-       "value": 100
-      },
-      {
-       "maxLevel": 12,
-       "value": 50
-      },
-      {
-       "maxLevel": 13,
-       "value": 25
-      },
-      {
-       "maxLevel": 14,
-       "value": 16
-      },
-      {
-       "maxLevel": 15,
-       "value": 12
-      },
-      {
-       "maxLevel": 21,
-       "value": 10
-      }
-     ],
-     "gapSize": [
-      {
-       "maxLevel": 6,
-       "value": 4000
-      },
-      {
-       "maxLevel": 7,
-       "value": 2500
-      },
-      {
-       "maxLevel": 8,
-       "value": 1500
-      },
-      {
-       "maxLevel": 9,
-       "value": 1200
-      },
-      {
-       "maxLevel": 10,
-       "value": 300
-      },
-      {
-       "maxLevel": 11,
-       "value": 100
-      },
-      {
-       "maxLevel": 12,
-       "value": 50
-      },
-      {
-       "maxLevel": 13,
-       "value": 25
-      },
-      {
-       "maxLevel": 14,
-       "value": 16
-      },
-      {
-       "maxLevel": 15,
-       "value": 12
-      },
-      {
-       "maxLevel": 21,
-       "value": 10
-      }
-     ],
-     "lineWidth": [
-      {
-       "maxLevel": 5,
-       "value": 320
-      },
-      {
-       "maxLevel": 6,
-       "value": 160
-      },
-      {
-       "maxLevel": 7,
-       "value": 80
-      },
-      {
-       "maxLevel": 8,
-       "value": 40
-      },
-      {
-       "maxLevel": 9,
-       "value": 15
-      },
-      {
-       "maxLevel": 10,
-       "value": 9
-      },
-      {
-       "maxLevel": 11,
-       "value": 6
-      },
-      {
-       "maxLevel": 12,
-       "value": 3
-      },
-      {
-       "maxLevel": 13,
-       "value": 1.5
-      },
-      {
-       "maxLevel": 21,
-       "value": 1
-      }
-     ],
+     "dashSize": {
+      "interpolation": "Linear",
+      "zoomLevels": [
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12,
+       13,
+       14,
+       15,
+       16
+      ],
+      "values": [
+       4000,
+       2500,
+       1500,
+       1200,
+       560,
+       100,
+       50,
+       25,
+       16,
+       12,
+       10
+      ]
+     },
+     "gapSize": {
+      "interpolation": "Linear",
+      "zoomLevels": [
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12,
+       13,
+       14,
+       15,
+       16
+      ],
+      "values": [
+       4000,
+       2500,
+       1500,
+       1200,
+       300,
+       100,
+       50,
+       25,
+       16,
+       12,
+       10
+      ]
+     },
+     "lineWidth": {
+      "interpolation": "Linear",
+      "zoomLevels": [
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12,
+       13,
+       14
+      ],
+      "values": [
+       320,
+       160,
+       80,
+       40,
+       15,
+       9,
+       6,
+       3,
+       1.5,
+       1
+      ]
+     },
      "fadeNear": 0.8,
      "fadeFar": 0.9
     },
@@ -661,20 +612,19 @@
     "technique": "solid-line",
     "attr": {
      "color": "#B9B9B9",
-     "lineWidth": [
-      {
-       "maxLevel": 13,
-       "value": 1.5
-      },
-      {
-       "maxLevel": 16,
-       "value": 0.75
-      },
-      {
-       "maxLevel": 21,
-       "value": 0.4
-      }
-     ]
+     "lineWidth": {
+      "interpolation": "Linear",
+      "zoomLevels": [
+       13,
+       16,
+       17
+      ],
+      "values": [
+       1.5,
+       0.75,
+       0.4
+      ]
+     }
     },
     "renderOrder": 50,
     "final": true
@@ -697,20 +647,19 @@
     "attr": {
      "color": "#696A6B",
      "xclipping": false,
-     "lineWidth": [
-      {
-       "maxLevel": 13,
-       "value": 3.5
-      },
-      {
-       "maxLevel": 14.6,
-       "value": 1.5
-      },
-      {
-       "maxLevel": 21,
-       "value": 0.5
-      }
-     ]
+     "lineWidth": {
+      "interpolation": "Linear",
+      "zoomLevels": [
+       13,
+       14.6,
+       15.6
+      ],
+      "values": [
+       3.5,
+       1.5,
+       0.5
+      ]
+     }
     },
     "renderOrder": 5.2
    },
@@ -722,16 +671,17 @@
     "attr": {
      "color": "#696A6B",
      "xclipping": false,
-     "lineWidth": [
-      {
-       "maxLevel": 13,
-       "value": 3.5
-      },
-      {
-       "maxLevel": 21,
-       "value": 2.5
-      }
-     ]
+     "lineWidth": {
+      "interpolation": "Linear",
+      "zoomLevels": [
+       13,
+       14
+      ],
+      "values": [
+       3.5,
+       2.5
+      ]
+     }
     },
     "renderOrder": 5.1
    },
@@ -743,36 +693,27 @@
      "color": "#696A6B",
      "xclipping": false,
      "dashSize": 1,
-     "gapSize": [
-      {
-       "maxLevel": 10,
-       "value": 100
-      },
-      {
-       "maxLevel": 11,
-       "value": 40
-      },
-      {
-       "maxLevel": 12,
-       "value": 24
-      },
-      {
-       "maxLevel": 13,
-       "value": 30
-      },
-      {
-       "maxLevel": 14,
-       "value": 25
-      },
-      {
-       "maxLevel": 15,
-       "value": 15
-      },
-      {
-       "maxLevel": 21,
-       "value": 8
-      }
-     ],
+     "gapSize": {
+      "interpolation": "Linear",
+      "zoomLevels": [
+       10,
+       11,
+       12,
+       13,
+       14,
+       15,
+       16
+      ],
+      "values": [
+       100,
+       40,
+       24,
+       30,
+       25,
+       15,
+       8
+      ]
+     },
      "lineWidth": 3.75
     },
     "renderOrder": 5.25,
@@ -785,83 +726,66 @@
     "attr": {
      "color": "#DDDDDD",
      "xclipping": false,
-     "dashSize": [
-      {
-       "maxLevel": 10,
-       "value": 100
-      },
-      {
-       "maxLevel": 11,
-       "value": 40
-      },
-      {
-       "maxLevel": 12,
-       "value": 24
-      },
-      {
-       "maxLevel": 13,
-       "value": 30
-      },
-      {
-       "maxLevel": 14,
-       "value": 25
-      },
-      {
-       "maxLevel": 15,
-       "value": 15
-      },
-      {
-       "maxLevel": 21,
-       "value": 8
-      }
-     ],
-     "gapSize": [
-      {
-       "maxLevel": 10,
-       "value": 100
-      },
-      {
-       "maxLevel": 11,
-       "value": 40
-      },
-      {
-       "maxLevel": 12,
-       "value": 24
-      },
-      {
-       "maxLevel": 13,
-       "value": 30
-      },
-      {
-       "maxLevel": 14,
-       "value": 25
-      },
-      {
-       "maxLevel": 15,
-       "value": 15
-      },
-      {
-       "maxLevel": 21,
-       "value": 8
-      }
-     ],
-     "lineWidth": [
-      {
-       "maxLevel": 13,
-       "value": 2.75
-      },
-      {
-       "maxLevel": 21,
-       "value": 1.75
-      }
-     ]
+     "dashSize": {
+      "interpolation": "Linear",
+      "zoomLevels": [
+       10,
+       11,
+       12,
+       13,
+       14,
+       15,
+       16
+      ],
+      "values": [
+       100,
+       40,
+       24,
+       30,
+       25,
+       15,
+       8
+      ]
+     },
+     "gapSize": {
+      "interpolation": "Linear",
+      "zoomLevels": [
+       10,
+       11,
+       12,
+       13,
+       14,
+       15,
+       16
+      ],
+      "values": [
+       100,
+       40,
+       24,
+       30,
+       25,
+       15,
+       8
+      ]
+     },
+     "lineWidth": {
+      "interpolation": "Linear",
+      "zoomLevels": [
+       13,
+       14
+      ],
+      "values": [
+       2.75,
+       1.75
+      ]
+     }
     },
     "renderOrder": 5.15,
     "final": true
    },
    {
     "description": "water",
-    "when": "$layer == 'water' && ($layer == 'water')",
+    "when": "$layer == 'water' && 'all'",
     "technique": "fill",
     "attr": {
      "color": "#436981"
@@ -870,12 +794,12 @@
    },
    {
     "description": "water",
-    "when": "$layer == 'water' && ($layer == 'water')",
+    "when": "$layer == 'water' && 'all'",
     "technique": "text",
     "attr": {
      "color": "#012337",
      "opacity": 0.5,
-     "scale": 0.4
+     "size": 12.8
     }
    },
    {
@@ -885,64 +809,41 @@
     "technique": "solid-line",
     "attr": {
      "color": "#52676E",
-     "lineWidth": [
-      {
-       "maxLevel": 1,
-       "value": 10000
-      },
-      {
-       "maxLevel": 2,
-       "value": 8000
-      },
-      {
-       "maxLevel": 3,
-       "value": 7000
-      },
-      {
-       "maxLevel": 4,
-       "value": 5000
-      },
-      {
-       "maxLevel": 5,
-       "value": 3000
-      },
-      {
-       "maxLevel": 6,
-       "value": 2000
-      },
-      {
-       "maxLevel": 7,
-       "value": 1000
-      },
-      {
-       "maxLevel": 8,
-       "value": 500
-      },
-      {
-       "maxLevel": 9,
-       "value": 250
-      },
-      {
-       "maxLevel": 10,
-       "value": 120
-      },
-      {
-       "maxLevel": 11,
-       "value": 80
-      },
-      {
-       "maxLevel": 12,
-       "value": 40
-      },
-      {
-       "maxLevel": 13,
-       "value": 20
-      },
-      {
-       "maxLevel": 21,
-       "value": 10
-      }
-     ]
+     "lineWidth": {
+      "interpolation": "Linear",
+      "zoomLevels": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12,
+       13,
+       14
+      ],
+      "values": [
+       10000,
+       8000,
+       7000,
+       5000,
+       3000,
+       2000,
+       1000,
+       500,
+       250,
+       120,
+       80,
+       40,
+       20,
+       10
+      ]
+     }
     },
     "renderOrder": 4
    },
@@ -953,60 +854,39 @@
     "technique": "solid-line",
     "attr": {
      "color": "#2F444B",
-     "lineWidth": [
-      {
-       "maxLevel": 2,
-       "value": 2000
-      },
-      {
-       "maxLevel": 3,
-       "value": 1400
-      },
-      {
-       "maxLevel": 4,
-       "value": 1000
-      },
-      {
-       "maxLevel": 5,
-       "value": 500
-      },
-      {
-       "maxLevel": 6,
-       "value": 220
-      },
-      {
-       "maxLevel": 7,
-       "value": 90
-      },
-      {
-       "maxLevel": 8,
-       "value": 50
-      },
-      {
-       "maxLevel": 9,
-       "value": 30
-      },
-      {
-       "maxLevel": 10,
-       "value": 20
-      },
-      {
-       "maxLevel": 11,
-       "value": 15
-      },
-      {
-       "maxLevel": 12,
-       "value": 10
-      },
-      {
-       "maxLevel": 13,
-       "value": 5
-      },
-      {
-       "maxLevel": 21,
-       "value": 2
-      }
-     ]
+     "lineWidth": {
+      "interpolation": "Linear",
+      "zoomLevels": [
+       2,
+       3,
+       4,
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12,
+       13,
+       14
+      ],
+      "values": [
+       2000,
+       1400,
+       1000,
+       500,
+       220,
+       90,
+       50,
+       30,
+       20,
+       15,
+       10,
+       5,
+       2
+      ]
+     }
     },
     "renderOrder": 4.1
    },
@@ -1017,7 +897,7 @@
     "attr": {
      "priority": 100,
      "color": "#000000",
-     "scale": 0.4
+     "size": 12.8
     }
    },
    {
@@ -1027,60 +907,39 @@
     "technique": "solid-line",
     "attr": {
      "color": "#7C7C7C",
-     "lineWidth": [
-      {
-       "maxLevel": 2,
-       "value": 600
-      },
-      {
-       "maxLevel": 3,
-       "value": 300
-      },
-      {
-       "maxLevel": 4,
-       "value": 150
-      },
-      {
-       "maxLevel": 5,
-       "value": 100
-      },
-      {
-       "maxLevel": 6,
-       "value": 60
-      },
-      {
-       "maxLevel": 7,
-       "value": 30
-      },
-      {
-       "maxLevel": 8,
-       "value": 20
-      },
-      {
-       "maxLevel": 9,
-       "value": 12
-      },
-      {
-       "maxLevel": 10,
-       "value": 8
-      },
-      {
-       "maxLevel": 11,
-       "value": 5
-      },
-      {
-       "maxLevel": 12,
-       "value": 3
-      },
-      {
-       "maxLevel": 13,
-       "value": 2
-      },
-      {
-       "maxLevel": 21,
-       "value": 1
-      }
-     ]
+     "lineWidth": {
+      "interpolation": "Linear",
+      "zoomLevels": [
+       2,
+       3,
+       4,
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12,
+       13,
+       14
+      ],
+      "values": [
+       600,
+       300,
+       150,
+       100,
+       60,
+       30,
+       20,
+       12,
+       8,
+       5,
+       3,
+       2,
+       1
+      ]
+     }
     },
     "renderOrder": 4.1
    },
@@ -1090,60 +949,39 @@
     "technique": "solid-line",
     "attr": {
      "color": "#7C7C7C",
-     "lineWidth": [
-      {
-       "maxLevel": 2,
-       "value": 600
-      },
-      {
-       "maxLevel": 3,
-       "value": 300
-      },
-      {
-       "maxLevel": 4,
-       "value": 150
-      },
-      {
-       "maxLevel": 5,
-       "value": 100
-      },
-      {
-       "maxLevel": 6,
-       "value": 60
-      },
-      {
-       "maxLevel": 7,
-       "value": 30
-      },
-      {
-       "maxLevel": 8,
-       "value": 20
-      },
-      {
-       "maxLevel": 9,
-       "value": 12
-      },
-      {
-       "maxLevel": 10,
-       "value": 8
-      },
-      {
-       "maxLevel": 11,
-       "value": 5
-      },
-      {
-       "maxLevel": 12,
-       "value": 3
-      },
-      {
-       "maxLevel": 13,
-       "value": 2
-      },
-      {
-       "maxLevel": 21,
-       "value": 1
-      }
-     ]
+     "lineWidth": {
+      "interpolation": "Linear",
+      "zoomLevels": [
+       2,
+       3,
+       4,
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12,
+       13,
+       14
+      ],
+      "values": [
+       600,
+       300,
+       150,
+       100,
+       60,
+       30,
+       20,
+       12,
+       8,
+       5,
+       3,
+       2,
+       1
+      ]
+     }
     },
     "renderOrder": 4.1
    },
@@ -1154,7 +992,7 @@
     "attr": {
      "priority": 90,
      "color": "#000000",
-     "scale": 0.4
+     "size": 12.8
     }
    },
    {
@@ -1162,7 +1000,7 @@
     "technique": "text",
     "attr": {
      "color": "#000000",
-     "scale": 0.85,
+     "size": 27.2,
      "priority": 200
     },
     "renderOrder": 7
@@ -1182,32 +1020,25 @@
     "when": "$layer ^= 'landuse' && (($geometryType ^= 'polygon') && (kind ^= 'urban_area'))",
     "technique": "none",
     "attr": {
-     "color": [
-      {
-       "maxLevel": 7,
-       "value": "#E6FCFF"
-      },
-      {
-       "maxLevel": 8,
-       "value": "#E6FCFF"
-      },
-      {
-       "maxLevel": 9,
-       "value": "#E7ECEF"
-      },
-      {
-       "maxLevel": 10,
-       "value": "#E6EBEE"
-      },
-      {
-       "maxLevel": 11,
-       "value": "#E5E9EC"
-      },
-      {
-       "maxLevel": 21,
-       "value": "#E6FCFF"
-      }
-     ]
+     "color": {
+      "interpolation": "Linear",
+      "zoomLevels": [
+       7,
+       8,
+       9,
+       10,
+       11,
+       12
+      ],
+      "values": [
+       "#E6FCFF",
+       "#E6FCFF",
+       "#E7ECEF",
+       "#E6EBEE",
+       "#E5E9EC",
+       "#E6FCFF"
+      ]
+     }
     },
     "renderOrder": 0.1
    },
@@ -1334,20 +1165,19 @@
     "when": "$layer == 'earth' && (kind != 'island')",
     "technique": "text",
     "attr": {
-     "priority": [
-      {
-       "maxLevel": 2,
-       "value": 120
-      },
-      {
-       "maxLevel": 3,
-       "value": 100
-      },
-      {
-       "maxLevel": 21,
-       "value": 60
-      }
-     ],
+     "priority": {
+      "interpolation": "Linear",
+      "zoomLevels": [
+       2,
+       3,
+       4
+      ],
+      "values": [
+       120,
+       100,
+       60
+      ]
+     },
      "color": "#3F1821",
      "allCaps": true,
      "opacity": 0.6
@@ -1360,12 +1190,7 @@
     "attr": {
      "color": "#57564D",
      "opacity": 0.6,
-     "scale": [
-      {
-       "maxLevel": 21,
-       "value": 0.5
-      }
-     ]
+     "size": 16
     }
    },
    {
@@ -1374,28 +1199,23 @@
     "technique": "text",
     "attr": {
      "priority": 100,
-     "scale": [
-      {
-       "maxLevel": 1,
-       "value": 0.35
-      },
-      {
-       "maxLevel": 2,
-       "value": 0.4
-      },
-      {
-       "maxLevel": 3,
-       "value": 0.6
-      },
-      {
-       "maxLevel": 3,
-       "value": 0.7
-      },
-      {
-       "maxLevel": 21,
-       "value": 0.8
-      }
-     ],
+     "size": {
+      "interpolation": "Linear",
+      "zoomLevels": [
+       1,
+       2,
+       3,
+       3,
+       4
+      ],
+      "values": [
+       11.2,
+       12.8,
+       19.2,
+       22.4,
+       25.6
+      ]
+     },
      "color": "#3F1821",
      "allCaps": true,
      "opacity": 0.8,
@@ -1412,28 +1232,23 @@
     "technique": "text",
     "attr": {
      "priority": 100,
-     "scale": [
-      {
-       "maxLevel": 2,
-       "value": 0.25
-      },
-      {
-       "maxLevel": 2,
-       "value": 0.3
-      },
-      {
-       "maxLevel": 3,
-       "value": 0.4
-      },
-      {
-       "maxLevel": 4,
-       "value": 0.5
-      },
-      {
-       "maxLevel": 21,
-       "value": 0.6
-      }
-     ],
+     "size": {
+      "interpolation": "Linear",
+      "zoomLevels": [
+       2,
+       2,
+       3,
+       4,
+       5
+      ],
+      "values": [
+       8,
+       9.6,
+       12.8,
+       16,
+       19.2
+      ]
+     },
      "color": "#3F1821",
      "allCaps": true,
      "opacity": 0.8,
@@ -1450,28 +1265,23 @@
     "technique": "text",
     "attr": {
      "priority": 90,
-     "scale": [
-      {
-       "maxLevel": 2,
-       "value": 0.2
-      },
-      {
-       "maxLevel": 2,
-       "value": 0.35
-      },
-      {
-       "maxLevel": 3,
-       "value": 0.3
-      },
-      {
-       "maxLevel": 4,
-       "value": 0.4
-      },
-      {
-       "maxLevel": 21,
-       "value": 0.5
-      }
-     ],
+     "size": {
+      "interpolation": "Linear",
+      "zoomLevels": [
+       2,
+       2,
+       3,
+       4,
+       5
+      ],
+      "values": [
+       6.4,
+       11.2,
+       9.6,
+       12.8,
+       16
+      ]
+     },
      "color": "#3F1922",
      "allCaps": true,
      "opacity": 0.8,
@@ -1487,24 +1297,21 @@
     "when": "$layer ^= 'places' && kind in ['region']",
     "technique": "none",
     "attr": {
-     "scale": [
-      {
-       "maxLevel": 3,
-       "value": 0.3
-      },
-      {
-       "maxLevel": 4,
-       "value": 0.34
-      },
-      {
-       "maxLevel": 5,
-       "value": 0.4
-      },
-      {
-       "maxLevel": 21,
-       "value": 0.45
-      }
-     ],
+     "size": {
+      "interpolation": "Linear",
+      "zoomLevels": [
+       3,
+       4,
+       5,
+       6
+      ],
+      "values": [
+       9.6,
+       10.88,
+       12.8,
+       14.4
+      ]
+     },
      "priority": 65,
      "color": "#060606",
      "allCaps": true,
@@ -1522,48 +1329,33 @@
     "attr": {
      "bold": true,
      "priority": 61,
-     "scale": [
-      {
-       "maxLevel": 1,
-       "value": 0.3
-      },
-      {
-       "maxLevel": 2,
-       "value": 0.35
-      },
-      {
-       "maxLevel": 3,
-       "value": 0.4
-      },
-      {
-       "maxLevel": 4,
-       "value": 0.45
-      },
-      {
-       "maxLevel": 5,
-       "value": 0.5
-      },
-      {
-       "maxLevel": 6,
-       "value": 0.6
-      },
-      {
-       "maxLevel": 7,
-       "value": 0.7
-      },
-      {
-       "maxLevel": 8,
-       "value": 0.8
-      },
-      {
-       "maxLevel": 9,
-       "value": 0.9
-      },
-      {
-       "maxLevel": 21,
-       "value": 1
-      }
-     ],
+     "size": {
+      "interpolation": "Linear",
+      "zoomLevels": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       6,
+       7,
+       8,
+       9,
+       10
+      ],
+      "values": [
+       9.6,
+       11.2,
+       12.8,
+       14.4,
+       16,
+       19.2,
+       22.4,
+       25.6,
+       28.8,
+       32
+      ]
+     },
      "color": "#090A0B",
      "textFadeTime": 0.75,
      "iconFadeTime": 0.5,
@@ -1578,48 +1370,33 @@
     "technique": "text",
     "attr": {
      "priority": 61,
-     "scale": [
-      {
-       "maxLevel": 1,
-       "value": 0.3
-      },
-      {
-       "maxLevel": 2,
-       "value": 0.35
-      },
-      {
-       "maxLevel": 3,
-       "value": 0.4
-      },
-      {
-       "maxLevel": 4,
-       "value": 0.45
-      },
-      {
-       "maxLevel": 5,
-       "value": 0.5
-      },
-      {
-       "maxLevel": 6,
-       "value": 0.6
-      },
-      {
-       "maxLevel": 7,
-       "value": 0.7
-      },
-      {
-       "maxLevel": 8,
-       "value": 0.8
-      },
-      {
-       "maxLevel": 9,
-       "value": 0.9
-      },
-      {
-       "maxLevel": 21,
-       "value": 1
-      }
-     ],
+     "size": {
+      "interpolation": "Linear",
+      "zoomLevels": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       6,
+       7,
+       8,
+       9,
+       10
+      ],
+      "values": [
+       9.6,
+       11.2,
+       12.8,
+       14.4,
+       16,
+       19.2,
+       22.4,
+       25.6,
+       28.8,
+       32
+      ]
+     },
      "color": "#090A0B",
      "textFadeTime": 0.75,
      "iconFadeTime": 0.5,
@@ -1634,48 +1411,33 @@
     "technique": "text",
     "attr": {
      "priority": 60,
-     "scale": [
-      {
-       "maxLevel": 2,
-       "value": 0.3
-      },
-      {
-       "maxLevel": 3,
-       "value": 0.35
-      },
-      {
-       "maxLevel": 4,
-       "value": 0.4
-      },
-      {
-       "maxLevel": 5,
-       "value": 0.45
-      },
-      {
-       "maxLevel": 6,
-       "value": 0.5
-      },
-      {
-       "maxLevel": 7,
-       "value": 0.6
-      },
-      {
-       "maxLevel": 8,
-       "value": 0.7
-      },
-      {
-       "maxLevel": 9,
-       "value": 0.8
-      },
-      {
-       "maxLevel": 10,
-       "value": 0.9
-      },
-      {
-       "maxLevel": 21,
-       "value": 1
-      }
-     ],
+     "size": {
+      "interpolation": "Linear",
+      "zoomLevels": [
+       2,
+       3,
+       4,
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       11
+      ],
+      "values": [
+       9.6,
+       11.2,
+       12.8,
+       14.4,
+       16,
+       19.2,
+       22.4,
+       25.6,
+       28.8,
+       32
+      ]
+     },
      "color": "#090A0B",
      "textFadeTime": 0.75,
      "iconFadeTime": 0.5,
@@ -1690,40 +1452,29 @@
     "technique": "text",
     "attr": {
      "priority": 59,
-     "scale": [
-      {
-       "maxLevel": 4,
-       "value": 0.35
-      },
-      {
-       "maxLevel": 5,
-       "value": 0.4
-      },
-      {
-       "maxLevel": 6,
-       "value": 0.5
-      },
-      {
-       "maxLevel": 7,
-       "value": 0.6
-      },
-      {
-       "maxLevel": 8,
-       "value": 0.7
-      },
-      {
-       "maxLevel": 9,
-       "value": 0.75
-      },
-      {
-       "maxLevel": 10,
-       "value": 0.8
-      },
-      {
-       "maxLevel": 21,
-       "value": 0.85
-      }
-     ],
+     "size": {
+      "interpolation": "Linear",
+      "zoomLevels": [
+       4,
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       11
+      ],
+      "values": [
+       11.2,
+       12.8,
+       16,
+       19.2,
+       22.4,
+       24,
+       25.6,
+       27.2
+      ]
+     },
      "color": "#090A0B",
      "textFadeTime": 0.75,
      "iconFadeTime": 0.5,
@@ -1738,44 +1489,31 @@
     "technique": "text",
     "attr": {
      "priority": 58,
-     "scale": [
-      {
-       "maxLevel": 4,
-       "value": 0.3
-      },
-      {
-       "maxLevel": 5,
-       "value": 0.35
-      },
-      {
-       "maxLevel": 6,
-       "value": 0.4
-      },
-      {
-       "maxLevel": 7,
-       "value": 0.5
-      },
-      {
-       "maxLevel": 8,
-       "value": 0.6
-      },
-      {
-       "maxLevel": 9,
-       "value": 0.65
-      },
-      {
-       "maxLevel": 10,
-       "value": 0.7
-      },
-      {
-       "maxLevel": 11,
-       "value": 0.75
-      },
-      {
-       "maxLevel": 21,
-       "value": 0.8
-      }
-     ],
+     "size": {
+      "interpolation": "Linear",
+      "zoomLevels": [
+       4,
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12
+      ],
+      "values": [
+       9.6,
+       11.2,
+       12.8,
+       16,
+       19.2,
+       20.8,
+       22.4,
+       24,
+       25.6
+      ]
+     },
      "color": "#090A0B",
      "textFadeTime": 0.75,
      "iconFadeTime": 0.5,
@@ -1790,24 +1528,21 @@
     "technique": "text",
     "attr": {
      "priority": 57,
-     "scale": [
-      {
-       "maxLevel": 10,
-       "value": 0.5
-      },
-      {
-       "maxLevel": 11,
-       "value": 0.6
-      },
-      {
-       "maxLevel": 12,
-       "value": 0.7
-      },
-      {
-       "maxLevel": 21,
-       "value": 0.75
-      }
-     ],
+     "size": {
+      "interpolation": "Linear",
+      "zoomLevels": [
+       10,
+       11,
+       12,
+       13
+      ],
+      "values": [
+       16,
+       19.2,
+       22.4,
+       24
+      ]
+     },
      "color": "#090A0B",
      "textFadeTime": 0.75,
      "iconFadeTime": 0.5,
@@ -1822,28 +1557,23 @@
     "technique": "text",
     "attr": {
      "priority": 56,
-     "scale": [
-      {
-       "maxLevel": 11,
-       "value": 0.5
-      },
-      {
-       "maxLevel": 12,
-       "value": 0.55
-      },
-      {
-       "maxLevel": 13,
-       "value": 0.6
-      },
-      {
-       "maxLevel": 14,
-       "value": 0.65
-      },
-      {
-       "maxLevel": 21,
-       "value": 0.7
-      }
-     ],
+     "size": {
+      "interpolation": "Linear",
+      "zoomLevels": [
+       11,
+       12,
+       13,
+       14,
+       15
+      ],
+      "values": [
+       16,
+       17.6,
+       19.2,
+       20.8,
+       22.4
+      ]
+     },
      "color": "#090A0B",
      "textFadeTime": 0.75,
      "iconFadeTime": 0.5,
@@ -1858,28 +1588,23 @@
     "technique": "text",
     "attr": {
      "priority": 50,
-     "scale": [
-      {
-       "maxLevel": 11,
-       "value": 0.4
-      },
-      {
-       "maxLevel": 12,
-       "value": 0.45
-      },
-      {
-       "maxLevel": 13,
-       "value": 0.5
-      },
-      {
-       "maxLevel": 14,
-       "value": 0.55
-      },
-      {
-       "maxLevel": 21,
-       "value": 0.6
-      }
-     ],
+     "size": {
+      "interpolation": "Linear",
+      "zoomLevels": [
+       11,
+       12,
+       13,
+       14,
+       15
+      ],
+      "values": [
+       12.8,
+       14.4,
+       16,
+       17.6,
+       19.2
+      ]
+     },
      "color": "#090A0B",
      "textFadeTime": 0.75,
      "iconFadeTime": 0.5,
@@ -1919,7 +1644,7 @@
     "attr": {
      "color": "#A9A9A9",
      "label": "addr_housenumber",
-     "scale": 0.45,
+     "size": 14.4,
      "opacity": 0.6,
      "minZoomLevel": 17,
      "roughness": 1.95,
@@ -1957,7 +1682,7 @@
     "final": true
    },
    {
-    "when": "$layer == 'landmark' && ($layer == 'landmark')",
+    "when": "$layer == 'landmark' && 'all'",
     "technique": "standard",
     "attr": {
      "color": "#F7F9F9",
@@ -1972,98 +1697,5 @@
     "renderOrder": 110
    }
   ]
- },
- "fog": {
-  "startRatio": 0.8
- },
- "sky": {
-  "type": "gradient",
-  "colorTop": "#015EBB",
-  "colorBottom": "#DDDCDA",
-  "groundColor": "#87959A",
-  "monomialPower": 1
- },
- "lights": [
-  {
-   "type": "ambient",
-   "color": "#FFFFFF",
-   "name": "ambientLight",
-   "intensity": 0.9
-  },
-  {
-   "type": "directional",
-   "color": "#CCCBBB",
-   "name": "light1",
-   "intensity": 0.8,
-   "direction": {
-    "x": 1,
-    "y": 5,
-    "z": 0.5
-   }
-  },
-  {
-   "type": "directional",
-   "color": "#F4DB9C",
-   "name": "light2",
-   "intensity": 0.8,
-   "direction": {
-    "x": -1,
-    "y": -3,
-    "z": 1
-   }
-  }
- ],
- "clearColor": "#87959A",
- "images": [
-  {
-   "name": "maki_icons",
-   "url": "maki_icons.png",
-   "preload": true,
-   "atlas": "maki_icons.json"
-  }
- ],
- "textStyles": [
-  {
-   "name": "smallSign",
-   "color": "#000000",
-   "bgMode": "Outline",
-   "bgColor": "#000000",
-   "bgFactor": 1.5,
-   "bgAlpha": 0.5,
-   "fontCatalogName": "fira"
-  },
-  {
-   "name": "smallSignLight",
-   "color": "#FFFFFF",
-   "bgMode": "Outline",
-   "bgColor": "#FFFFFF",
-   "bgFactor": 1.5,
-   "bgAlpha": 0.5,
-   "fontCatalogName": "fira"
-  },
-  {
-   "name": "placeMarker",
-   "color": "#60FF60",
-   "bgMode": "Outline",
-   "bgColor": "#202020",
-   "bgFactor": 3.5,
-   "bgAlpha": 0.5,
-   "fontCatalogName": "fira"
-  }
- ],
- "defaultTextStyle": {
-  "name": "defaultTextStyle",
-  "color": "#6D7477",
-  "bgMode": "Outline",
-  "bgColor": "#F7FBFD",
-  "bgFactor": 5,
-  "bgAlpha": 0.5,
-  "fontCatalogName": "fira"
- },
- "fontCatalogs": [
-  {
-   "name": "fira",
-   "url": "fonts/Default_FontCatalog.json"
-  }
- ]
+ }
 }

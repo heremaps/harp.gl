@@ -3,6 +3,8 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
+
+import { MathUtils } from "@here/harp-geoutils";
 import * as THREE from "three";
 
 /**
@@ -80,13 +82,13 @@ export interface BaseTechnique {
      * Distance to the camera (0.0 = camera position, 1.0 = farPlane) at which the object start
      * fading out (opacity decreases).
      */
-    fadeNear?: CaseProperty<number>;
+    fadeNear?: number;
 
     /**
      * Distance to the camera (0.0 = camera position, 1.0 = farPlane) at which the object has zero
      * opacity and stops fading out. A value of <= 0.0 disables fading.
      */
-    fadeFar?: CaseProperty<number>;
+    fadeFar?: number;
 }
 
 /**
@@ -443,12 +445,12 @@ export interface MarkerTechnique extends BaseTechnique {
      * Distance to the camera (0.0 = camera position, 1.0 = farPlane) at which the object start
      * fading out (opacity decreases).
      */
-    fadeNear?: CaseProperty<number>;
+    fadeNear?: number;
     /**
      * Distance to the camera (0.0 = camera position, 1.0 = farPlane) at which the object becomes
      * transparent. A value of <= 0.0 disables fading.
      */
-    fadeFar?: CaseProperty<number>;
+    fadeFar?: number;
     /**
      * Name of the POI table which should be used for this POI.
      */
@@ -612,13 +614,13 @@ export interface PolygonalTechnique {
      * Distance to the camera (0.0 = nearPlane, 1.0 = farPlane) at which the object edges start
      * fading out.
      */
-    lineFadeNear?: CaseProperty<number>;
+    lineFadeNear?: number;
 
     /**
      * Distance to the camera (0.0 = nearPlane, 1.0 = farPlane) at which the object edges become
      * transparent. A value of <= 0.0 disables fading.
      */
-    lineFadeFar?: CaseProperty<number>;
+    lineFadeFar?: number;
 }
 
 /**
@@ -655,7 +657,7 @@ export interface BasicExtrudedLineTechnique extends BaseTechnique, PolygonalTech
     /**
      * Width of line in meters for different zoom levels.
      */
-    lineWidth: CaseProperty<number>;
+    lineWidth: number;
     /**
      * A value of `true` creates a wireframe geometry. (May not be supported with all techniques).
      */
@@ -686,7 +688,7 @@ export interface StandardExtrudedLineTechnique extends BaseStandardTechnique, Po
     /**
      * Width of a line in meters for different zoom levels.
      */
-    lineWidth: CaseProperty<number>;
+    lineWidth: number;
     /**
      * Style of both end caps. Possible values: `"None"`, `"Circle"`. A value of undefined maps to
      * `"Circle"`.
@@ -725,7 +727,7 @@ export interface SolidLineTechnique extends BaseTechnique, PolygonalTechnique {
     /**
      * Width of a line in `metricUnit`s for different zoom levels.
      */
-    lineWidth: CaseProperty<number>;
+    lineWidth: number;
     /**
      * Clip the line outside the tile if `true`.
      */
@@ -763,15 +765,15 @@ export interface DashedLineTechnique extends BaseTechnique, PolygonalTechnique {
     /**
      * Width of a line in `metricUnit`s for different zoom levels.
      */
-    lineWidth: CaseProperty<number>;
+    lineWidth: number;
     /**
      * Length of a line in meters for different zoom levels.
      */
-    dashSize?: CaseProperty<number>;
+    dashSize?: number;
     /**
      * Size of a gap between lines in meters for different zoom levels.
      */
-    gapSize?: CaseProperty<number>;
+    gapSize?: number;
     /**
      * Clip the line outside the tile if `true`.
      */
@@ -847,13 +849,13 @@ export interface ExtrudedPolygonTechnique extends BaseStandardTechnique {
      * Distance to the camera (0.0 = nearPlane, 1.0 = farPlane) at which the object edges start
      * fading out.
      */
-    lineFadeNear?: CaseProperty<number>;
+    lineFadeNear?: number;
 
     /**
      * Distance to the camera (0.0 = nearPlane, 1.0 = farPlane) at which the object edges become
      * transparent. A value of <= 0.0 disables fading.
      */
-    lineFadeFar?: CaseProperty<number>;
+    lineFadeFar?: number;
 
     /**
      * In some data sources, for example Tilezen, building extrusion information might be missing.
@@ -1177,62 +1179,6 @@ export function isShaderTechnique(technique: Technique): technique is ShaderTech
 }
 
 /**
- * Property which value is coupled with the value of the zoom level. It enables specifying different
- * values for certain zoom level ranges which for example enables drawing some object on the map
- * differently when the map zoom level changes.
- */
-export type CaseProperty<T> =
-    | T
-    | Array<{
-          /**
-           * Minimum zoom level.
-           */
-          minLevel?: number;
-
-          /**
-           * Maximum zoom level.
-           */
-          maxLevel?: number;
-
-          /**
-           * The value of the property.
-           */
-          value: T;
-      }>;
-
-/**
- * Type guard to check if an object is an instance of `CaseProperty`.
- */
-export function isCaseProperty<T>(p: any): p is CaseProperty<T> {
-    if (p instanceof Array && p.length > 0 && p[0].value !== undefined) {
-        return true;
-    }
-    return false;
-}
-
-/**
- * Returns a value for a given property at the given zoom level.
- */
-export function getPropertyValue<T>(
-    property: CaseProperty<T> | undefined,
-    level: number
-): T | undefined {
-    if (property instanceof Array) {
-        for (const range of property) {
-            if (range.minLevel !== undefined && level < range.minLevel) {
-                continue;
-            }
-            if (range.maxLevel !== undefined && level > range.maxLevel) {
-                continue;
-            }
-            return range.value;
-        }
-        return undefined;
-    }
-    return property;
-}
-
-/**
  * Buffer holding a texture.
  */
 export interface TextureBuffer {
@@ -1254,6 +1200,13 @@ export interface TextureBuffer {
 }
 
 /**
+ * Type guard to check if an object is an instance of `TextureBuffer`.
+ */
+export function isTextureBuffer(object: any): object is TextureBuffer {
+    return object && object.buffer && typeof object.type === "string";
+}
+
+/**
  * Properties of a DataTexture (https://threejs.org/docs/#api/en/textures/DataTexture).
  */
 export interface DataTextureProperties {
@@ -1264,25 +1217,87 @@ export interface DataTextureProperties {
     type?: TextureDataType;
 }
 
+const interpolants = [THREE.DiscreteInterpolant, THREE.LinearInterpolant, THREE.CubicInterpolant];
+
 /**
- * Type guard to check if an object is an instance of `TextureBuffer`.
+ * Interpolation mode used when computing a [[InterpolatedProperty]] value for a given zoom level.
  */
-export function isTextureBuffer(object: any): object is TextureBuffer {
-    return object && object.buffer && typeof object.type === "string";
+export enum InterpolationMode {
+    Discrete,
+    Linear,
+    Cubic
 }
 
 /**
- * Get the value of the specified attribute at the given zoom level. Handles [[CaseProperty]]
+ * Property which value is interpolated across different zoom levels.
+ */
+export interface InterpolatedProperty<T> {
+    /**
+     * Interpolation mode that should be used for this property.
+     */
+    interpolationMode: InterpolationMode;
+
+    /**
+     * Zoom level keys array.
+     */
+    zoomLevels: Float32Array;
+
+    /**
+     * Property values array.
+     */
+    values: Float32Array;
+}
+
+/**
+ * Type guard to check if an object is an instance of `InterpolatedProperty`.
+ */
+export function isInterpolatedProperty<T>(p: any): p is InterpolatedProperty<T> {
+    if (
+        p !== undefined &&
+        p.interpolationMode !== undefined &&
+        p.zoomLevels !== undefined &&
+        p.values !== undefined &&
+        p.values.length > 0 &&
+        (p.zoomLevels.length === p.values.length / 3 || p.zoomLevels.length === p.values.length)
+    ) {
+        return true;
+    }
+    return false;
+}
+
+/**
+ * Get the value of the specified property at the given zoom level. Handles [[InterpolatedProperty]]
  * instances as well as future interpolated values.
  *
- * @param attribute Attribute of a technique.
- * @param level Display level the attribute should be rendered at.
+ * @param property Property of a technique.
+ * @param level Display level the property should be rendered at.
  */
-export function getAttributeValue<T>(attribute: T, level: number): T | undefined {
-    if (isCaseProperty(attribute)) {
-        return getPropertyValue(attribute, level);
+export function getPropertyValue<T>(
+    property: InterpolatedProperty<T> | T,
+    level: number
+): T | undefined {
+    if (!isInterpolatedProperty(property)) {
+        return property;
+    } else {
+        const nChannels = property.values.length / property.zoomLevels.length;
+        const isMultiChannel = nChannels > 1;
+        const interpolant = new interpolants[property.interpolationMode](
+            property.zoomLevels,
+            property.values,
+            nChannels
+        );
+        interpolant.evaluate(level);
+        let result = isMultiChannel ? "#" : 0;
+        // tslint:disable:no-bitwise
+        for (const value of interpolant.resultBuffer) {
+            const val = isMultiChannel
+                ? ("0" + ((MathUtils.clamp(value, 0, 1) * 255) | 0).toString(16)).slice(-2)
+                : value;
+            result += val;
+        }
+        // tslint:disable:bitwise
+        return (result as unknown) as T;
     }
-    return attribute;
 }
 
 export type PixelFormat =
