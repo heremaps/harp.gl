@@ -1,5 +1,18 @@
 # General
 
+A guide to our coding style and conventions.
+
+We try to have reasonable rules and follow them to the best of our capabilities, so that we can:
+
+1. Have better and clear code
+1. Ease the maintenance and reusability
+1. Limit the discussions about how to write and what to write in commits, comments and code
+1. An overall better developer experience
+
+If you have suggestions, please see our [contribution guidelines](CONTRIBUTING.md) and feel free to make a pull request.
+
+---
+
 1. Use PascalCase for file names.
 1. Use PascalCase for class and namespace names, for example: `ClassName`, `NamespaceName`
 1. Use camelCase for method names, for example: `ClassName.methodName`
