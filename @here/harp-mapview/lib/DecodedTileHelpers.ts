@@ -7,8 +7,8 @@
 import {
     BufferAttribute,
     getPropertyValue,
-    isCaseProperty,
     isExtrudedPolygonTechnique,
+    isInterpolatedProperty,
     isShaderTechnique,
     isStandardTexturedTechnique,
     isTextureBuffer,
@@ -377,7 +377,7 @@ export function applyTechniqueToMaterial(
         if (typeof m[prop] === "undefined") {
             return;
         }
-        if (level !== undefined && isCaseProperty<any>(value)) {
+        if (level !== undefined && isInterpolatedProperty<any>(value)) {
             value = getPropertyValue<any>(value, level);
         }
         if (m[prop] instanceof THREE.Color) {

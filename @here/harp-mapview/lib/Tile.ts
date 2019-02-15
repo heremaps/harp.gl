@@ -11,13 +11,13 @@ import {
     Geometry,
     GeometryType,
     getArrayConstructor,
-    getAttributeValue,
     getPropertyValue,
     isCirclesTechnique,
     isDashedLineTechnique,
     isExtrudedLineTechnique,
     isExtrudedPolygonTechnique,
     isFillTechnique,
+    isInterpolatedProperty,
     isSolidLineTechnique,
     isSquaresTechnique,
     isStandardTechnique,
@@ -1137,7 +1137,7 @@ export class Tile implements CachedResource {
                     material = createMaterial(
                         {
                             technique,
-                            level: displayZoomLevel,
+                            level: Math.floor(displayZoomLevel),
                             fog: this.mapView.scene.fog !== null
                         },
                         onMaterialUpdated
@@ -1256,44 +1256,37 @@ export class Tile implements CachedResource {
                         (renderer, mat) => {
                             const lineMaterial = mat as SolidLineMaterial;
 
-                            // Modify the lineWidth every frame for "Pixel-wide" lines.
-                            const metricUnits = getAttributeValue(
+                            const metricUnits = getPropertyValue(
                                 technique.metricUnit,
                                 this.tileKey.level
                             );
-                            if (metricUnits === "Pixel") {
-                                const pixelToWorld = this.mapView.pixelToWorld * 0.5;
-                                const lineWidth = getAttributeValue(
-                                    technique.lineWidth,
-                                    displayZoomLevel
-                                );
-                                lineMaterial.lineWidth =
-                                    (lineWidth !== undefined
-                                        ? (lineWidth as number)
-                                        : SolidLineMaterial.DEFAULT_WIDTH) * pixelToWorld;
+                            const unitFactor =
+                                metricUnits === "Pixel" ? this.mapView.pixelToWorld * 0.5 : 1.0;
 
-                                // Do the same for dashSize and gapSize for dashed lines.
-                                if (isDashedLineTechnique(technique)) {
-                                    const dashedLineMaterial = lineMaterial as DashedLineMaterial;
+                            lineMaterial.lineWidth =
+                                getOptionValue(
+                                    getPropertyValue(technique.lineWidth, this.mapView.zoomLevel),
+                                    SolidLineMaterial.DEFAULT_WIDTH
+                                ) * unitFactor;
 
-                                    const dashSize = getAttributeValue(
-                                        technique.dashSize,
-                                        displayZoomLevel
-                                    );
-                                    dashedLineMaterial.dashSize =
-                                        (dashSize !== undefined
-                                            ? (dashSize as number)
-                                            : DashedLineMaterial.DEFAULT_DASH_SIZE) * pixelToWorld;
+                            // Do the same for dashSize and gapSize for dashed lines.
+                            if (isDashedLineTechnique(technique)) {
+                                const dashedLineMaterial = lineMaterial as DashedLineMaterial;
 
-                                    const gapSize = getAttributeValue(
-                                        technique.gapSize,
-                                        displayZoomLevel
-                                    );
-                                    dashedLineMaterial.gapSize =
-                                        (gapSize !== undefined
-                                            ? (gapSize as number)
-                                            : DashedLineMaterial.DEFAULT_GAP_SIZE) * pixelToWorld;
-                                }
+                                dashedLineMaterial.dashSize =
+                                    getOptionValue(
+                                        getPropertyValue(
+                                            technique.dashSize,
+                                            this.mapView.zoomLevel
+                                        ),
+                                        DashedLineMaterial.DEFAULT_DASH_SIZE
+                                    ) * unitFactor;
+
+                                dashedLineMaterial.gapSize =
+                                    getOptionValue(
+                                        getPropertyValue(technique.gapSize, this.mapView.zoomLevel),
+                                        DashedLineMaterial.DEFAULT_GAP_SIZE
+                                    ) * unitFactor;
                             }
                         }
                     );
@@ -1302,7 +1295,7 @@ export class Tile implements CachedResource {
                 if (isExtrudedLineTechnique(technique)) {
                     // extruded lines are normal meshes, and need transparency only when fading
                     // is defined.
-                    if (technique.fadeFar !== undefined && technique.fadeFar >= 0) {
+                    if (technique.fadeFar !== undefined) {
                         const fadingParams = this.getFadingParams(
                             technique as StandardExtrudedLineTechnique
                         );
@@ -1321,9 +1314,8 @@ export class Tile implements CachedResource {
                 if (isExtruded || isFillTechnique(technique)) {
                     // filled polygons are normal meshes, and need transparency only when fading is
                     // defined.
-                    if (technique.fadeFar !== undefined && technique.fadeFar >= 0) {
+                    if (technique.fadeFar !== undefined) {
                         const fadingParams = this.getFadingParams(technique);
-
                         FadingFeature.addRenderHelper(
                             object,
                             fadingParams.fadeNear,

@@ -503,6 +503,7 @@ export class MapView extends THREE.EventDispatcher {
     private m_visibleTiles: VisibleTileSet;
     private m_visibleTileSetLock: boolean = false;
 
+    private m_zoomLevel: number = DEFAULT_MIN_ZOOM_LEVEL;
     private m_minZoomLevel: number = DEFAULT_MIN_ZOOM_LEVEL;
     private m_maxZoomLevel: number = DEFAULT_MAX_ZOOM_LEVEL;
     private m_minCameraHeight: number = DEFAULT_MIN_CAMERA_HEIGHT;
@@ -1226,9 +1227,7 @@ export class MapView extends THREE.EventDispatcher {
      * Returns the zoom level for the given camera setup.
      */
     get zoomLevel(): number {
-        const distance = Math.abs(this.camera.position.z);
-        const zoomLevel = MapViewUtils.calculateZoomLevelFromHeight(distance, this);
-        return Math.floor(zoomLevel);
+        return this.m_zoomLevel;
     }
 
     /**
@@ -1762,6 +1761,11 @@ export class MapView extends THREE.EventDispatcher {
         this.m_screenProjector.update(this.m_camera, this.m_worldCenter, width, height);
         this.m_screenCollisions.update(width, height);
 
+        this.m_zoomLevel = MapViewUtils.calculateZoomLevelFromHeight(
+            Math.abs(this.m_camera.position.z),
+            this
+        );
+
         this.m_pixelToWorld = undefined;
     }
 
@@ -1874,7 +1878,7 @@ export class MapView extends THREE.EventDispatcher {
         }
 
         const storageLevel = THREE.Math.clamp(
-            this.zoomLevel,
+            Math.floor(this.zoomLevel),
             this.m_minZoomLevel,
             this.m_maxZoomLevel
         );
@@ -1888,7 +1892,7 @@ export class MapView extends THREE.EventDispatcher {
             this.m_visibleTiles.updateRenderList(
                 this.m_worldCenter,
                 storageLevel,
-                this.zoomLevel,
+                Math.floor(this.zoomLevel),
                 this.getEnabledTileDataSources()
             );
         }
