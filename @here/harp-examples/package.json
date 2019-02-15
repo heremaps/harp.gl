@@ -1,7 +1,7 @@
 {
   "name": "@here/harp-examples",
   "version": "0.1.9",
-  "description": "Visualisation Library Examples",
+  "description": "harp.gl Examples",
   "keywords": [
     "examples",
     "map",
