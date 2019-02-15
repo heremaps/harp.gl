@@ -273,6 +273,10 @@ export class MapControls extends THREE.EventDispatcher {
      * @param deltaPitch Delta pitch in degrees.
      */
     rotate(deltaYaw: number, deltaPitch: number) {
+        if (this.inertiaEnabled && this.m_zoomIsAnimated) {
+            this.stopZoom();
+        }
+
         const yawPitchRoll = MapViewUtils.extractYawPitchRoll(this.camera.quaternion);
 
         //yaw
@@ -313,7 +317,9 @@ export class MapControls extends THREE.EventDispatcher {
      * @param deltaAltitude Delta altitude in degrees.
      */
     orbitFocusPoint(deltaAzimuth: number, deltaAltitude: number) {
-        this.stopZoom();
+        if (this.inertiaEnabled && this.m_zoomIsAnimated) {
+            this.stopZoom();
+        }
 
         this.mapView.camera.getWorldDirection(this.m_currentViewDirection);
         const currentAzimuthAltitude = utils.directionToAzimuthAltitude(
