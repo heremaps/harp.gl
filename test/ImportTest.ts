@@ -74,7 +74,10 @@ function checkImports() {
     // now, iterate all typescript source files
     const sourceFiles = glob
         .sync(__dirname + "/../@here/**/*.ts")
-        .filter(sourcePath => !sourcePath.includes("node_modules"));
+        .filter(
+            sourcePath =>
+                !sourcePath.includes("node_modules") && !sourcePath.includes("generator-harp.gl")
+        );
 
     // regular expression catching all imported modules
     const importRE = /(.*)?import\s*{[\s\S]*?}\s*from\s+["'](.*)["']/gi;

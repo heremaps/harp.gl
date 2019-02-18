@@ -90,7 +90,7 @@ export enum APIFormat {
      * `http|s://<base-url>/tiles/herebase.02/{z}/{x}/{y}/{format}?access_token={access_token}`
      *
      * Sample URL:
-     * `https://xyz.api.here.com/tiles/osmbase/herebase.02/14/2649/6338/omv?access_token=your-xyz-access-token`
+     * `https://xyz.api.here.com/tiles/herebase.02/14/2649/6338/omv?access_token=your-xyz-access-token`
      *
      * Default authentication method used: [[AuthenticationTypeAccessToken]].
      */
