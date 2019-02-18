@@ -1,7 +1,7 @@
 {
-  "name": "vsdk-mono",
+  "name": "harpgl",
   "version": "1.0.0",
-  "description": "Mono Repo for core render components",
+  "description": "Core render components of harp.gl, an open-source 3D map rendering engine.",
   "workspaces": [
     "@here/*"
   ],
