@@ -1,7 +1,7 @@
 {
   "name": "@here/harp-geoutils",
   "version": "0.2.58",
-  "description": "Typescript version of geoutils",
+  "description": "Utility classes for working with geospatial data",
   "main": "index.js",
   "typings": "index",
   "scripts": {

@@ -1,8 +1,10 @@
-# harp.gl Examples
+# @here/harp-examples
 
-## Building and running
+## Overview
 
 This repository contains examples for `harp.gl`.
+
+## Building and running
 
 Usage:
 
