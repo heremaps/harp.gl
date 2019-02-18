@@ -2,6 +2,8 @@
 
 `harp.gl` is an open-source 3D map rendering engine.
 
+This is some bla bla for testing multiple commits in one branch.
+
 You can use this engine to:
 
   * Develop visually appealing 3D maps
@@ -97,6 +99,8 @@ Note the URL and invoke tests using `mocha-webdriver-runner`. Example:
 npx mocha-webdriver-runner http://localhost:8081/ --chrome
 npx mocha-webdriver-runner http://localhost:8081/ --headless-firefox
 ```
+
+This is the same as in line 3
 
 ## License
 
