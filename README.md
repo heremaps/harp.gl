@@ -1,6 +1,8 @@
 # harp.gl
 
-`harp.gl` is an open-source 3D map rendering engine.
+`harp.gl` is an _experimental and work in progress_ open-source 3D map rendering engine.
+
+## Overview
 
 You can use this engine to:
 
@@ -10,7 +12,12 @@ You can use this engine to:
   * Create a smooth map experience with highly performant map rendering and decoding. Web workers parallelize the CPU intensive tasks, for optimal responsiveness.
   * Design your maps modularly, where you can swap out modules and data providers as required.
 
+With that in mind, we have included some modules that let's you get started with some simple web applications
+that can display a map using our default style. You can get results like the one shown below:
+
 ![New York City rendered with our default style](docs/nyc.png)
+
+If you want to learn more about the applications you can create, please check the [Getting Started Guide](docs/GettingStartedGuide.md).
 
 ## About This Repository
 
@@ -88,7 +95,7 @@ Run:
 
 ```sh
 yarn run start-tests
-ℹ ｢wds｣: Project is running at http://localhost:8080/
+>: Project is running at http://localhost:8080/
 ```
 
 Note the URL and invoke tests using `mocha-webdriver-runner`. Example:
@@ -104,10 +111,6 @@ Copyright (C) 2019 HERE Europe B.V.
 
 See the [LICENSE](./LICENSE) file in the root of this project for license details about using `harp.gl`.
 
-In addition, see the following license limitations for using `harp.gl` with data sources not provided by [HERE](https://www.here.com):
-
-* [fonts](https://github.com/heremaps/harp-font-resources)
-* assets
-* themes
+In addition, please see the following license limitations for using `harp.gl` with the [fonts resources](https://github.com/heremaps/harp-font-resources).
 
 For other use cases not listed in the license terms, please [contact us](https://developer.here.com/contact-us).

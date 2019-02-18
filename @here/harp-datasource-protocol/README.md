@@ -1,4 +1,6 @@
-# Overview
+# @here/harp-datasource-protocol
+
+## Overview
 
 The DataSource Protocol package contains components used for the decoding and styling of data that
 is used by the Datasources. This code is shared between the ui-thread and the web-workers which are
@@ -201,7 +203,7 @@ the above conditions would match all features from `earth` layer which `kind` is
 
 ## How to nest two or more conditions
 
-The HARP4Web's theming system enables nesting conditions. This comes in very handy when one wants to
+`harp.gl`'s theming system enables nesting conditions. This comes in very handy when one wants to
 apply some general level styling to for example a whole `layer` and they define a more fine grained
 styling options for smaller subsets of feature (like `kind`s or `kind_detail`s).
 
@@ -250,7 +252,7 @@ The general structure of such nested conditions looks like this:
 }
 ```
 
-In the above example the first `when` condition matches all features from the *water* layer.
+In the above example the first `when` condition matches all features from the `water` layer.
 All those features are then matched against each of the sub-conditions from the `styles` array.
 
 It is important to take into account that a certain map feature could be matched either none, one or
