@@ -885,6 +885,16 @@ export interface ExtrudedPolygonTechnique extends BaseStandardTechnique {
      * @default `true`
      */
     boundaryWalls?: boolean;
+
+    /**
+     * Animate the extrusion of the buildings if set to `true`.
+     */
+    animateExtrusion?: boolean;
+
+    /**
+     * Duration of the building's extrusion in milliseconds
+     */
+    animateExtrusionDuration?: number;
 }
 
 /**

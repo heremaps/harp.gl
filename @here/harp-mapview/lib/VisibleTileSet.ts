@@ -164,6 +164,7 @@ export class VisibleTileSet {
     private readonly m_viewProjectionMatrix = new THREE.Matrix4();
     private readonly m_mapTileCuller: MapTileCuller;
     private readonly m_frustum: THREE.Frustum = new THREE.Frustum();
+    private m_prevDataSourceTileList: DataSourceTileList[] = [];
 
     constructor(private readonly camera: THREE.PerspectiveCamera, options: VisibleTileSetOptions) {
         this.m_mapTileCuller = new MapTileCuller(camera);
@@ -388,8 +389,13 @@ export class VisibleTileSet {
             allVisibleTilesLoaded = allVisibleTilesLoaded && allDataSourceTilesLoaded;
         }
 
+        this.m_prevDataSourceTileList = this.dataSourceTileList;
+
         this.dataSourceTileList = newRenderList;
         this.allVisibleTilesLoaded = allVisibleTilesLoaded;
+
+        this.forEachVisibleTile(tile => tile.visible = true);
+        this.forEachRemovedTile(tile => tile.visible = false);
 
         this.fillMissingTilesFromCache();
 
@@ -507,6 +513,29 @@ export class VisibleTileSet {
             dataSourceCache.tileCache.forEach(tile => {
                 fun(tile);
             });
+        });
+    }
+
+    forEachRemovedTile(fun: (tile: Tile) => void): void {
+        const removedTilesList: DataSourceTileList[] = [];
+
+        this.m_prevDataSourceTileList.forEach(prevTilesList => {
+            const tilesList = this.dataSourceTileList.find(currentTilesList =>
+                prevTilesList.dataSource.name === currentTilesList.dataSource.name);
+            if (tilesList) {
+                prevTilesList.visibleTiles = prevTilesList.visibleTiles.filter(tile => {
+                    return tilesList.visibleTiles.indexOf(tile) === -1;
+                });
+                if (prevTilesList.visibleTiles.length) {
+                    removedTilesList.push(prevTilesList);
+                }
+            } else {
+                removedTilesList.push(prevTilesList);
+            }
+        });
+
+        removedTilesList.forEach(removedTiles => {
+            removedTiles.visibleTiles.forEach(fun);
         });
     }
 

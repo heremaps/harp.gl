@@ -66,7 +66,7 @@ import {
     isRenderDepthPrePassEnabled,
     setDepthPrePassStencil
 } from "./DepthPrePass";
-import { MapView } from "./MapView";
+import { MapView, MapViewEventNames, RenderEvent } from "./MapView";
 import { MapViewPoints } from "./MapViewPoints";
 import { PerformanceStatistics } from "./Statistics";
 import { TextElement } from "./text/TextElement";
@@ -365,10 +365,11 @@ export class Tile implements CachedResource {
 
     private m_colorMap: Map<string, THREE.Color> = new Map();
     private m_extrusionAnimationList: THREE.Object3D[] = [];
-    private m_extrusionRAF: number | undefined;
     private m_extrusionAnimationStartTime: number | undefined;
-    private m_extrusionAnimationCurrentTime: number | undefined;
-    private readonly m_extrusionAnimationDuration: number = 750;
+    private m_extrusionAnimationDuration: number = 0;
+    private m_canAnimateExtrusion: boolean = false;
+    private m_handleAnimateExtrusion: any;
+    private m_isVisible: boolean = false;
 
     /**
      * Creates a new `Tile`.
@@ -380,6 +381,16 @@ export class Tile implements CachedResource {
         this.geoBox = this.dataSource.getTilingScheme().getGeoBox(this.tileKey);
         this.projection.projectBox(this.geoBox, this.boundingBox);
         this.boundingBox.getCenter(this.center);
+    }
+
+    set visible(value: boolean) {
+        if (this.m_isVisible !== value) {
+            this.visibilityChanged(value);
+        }
+        this.m_isVisible = value;
+    }
+    get visible() {
+        return this.m_isVisible;
     }
 
     /**
@@ -783,6 +794,7 @@ export class Tile implements CachedResource {
         this.textElementGroups.clear();
         this.userTextElements.length = 0;
         this.invalidateUsageInfoCache();
+        this.stopExtrusionAnimation();
     }
 
     /**
@@ -1341,12 +1353,12 @@ export class Tile implements CachedResource {
                 }
 
                 const renderDepthPrePass =
-                    technique.name === "extruded-polygon" && isRenderDepthPrePassEnabled(technique);
+                    isExtrudedPolygonTechnique(technique) && isRenderDepthPrePassEnabled(technique);
 
                 if (renderDepthPrePass) {
                     const depthPassMesh = createDepthPrePassMesh(object as THREE.Mesh);
                     objects.push(depthPassMesh);
-                    extrudedObjects.push(depthPassMesh);
+                    this.m_extrusionAnimationList.push(depthPassMesh);
 
                     setDepthPrePassStencil(depthPassMesh, object as THREE.Mesh);
                 }
@@ -1391,13 +1403,21 @@ export class Tile implements CachedResource {
 
                     this.registerTileObject(edgeObj);
                     objects.push(edgeObj);
-                    extrudedObjects.push(edgeObj);
+                    this.m_extrusionAnimationList.push(edgeObj);
                 }
 
                 // animate the extrusion of buildings
-                if (isExtrudedPolygonTechnique(technique) || isFillTechnique(technique)) {
-                    extrudedObjects.push(object);
-                    this.startExtrusionAnimation(extrudedObjects);
+                if (isExtrudedPolygonTechnique(technique)) {
+                    this.m_extrusionAnimationList.push(object);
+
+                    const extrudedPolygonTechnique = technique as ExtrudedPolygonTechnique;
+                    if (extrudedPolygonTechnique.animateExtrusion === true &&
+                        extrudedPolygonTechnique.animateExtrusionDuration) {
+                        this.m_canAnimateExtrusion = extrudedPolygonTechnique.animateExtrusion;
+                        this.m_extrusionAnimationDuration
+                            = extrudedPolygonTechnique.animateExtrusionDuration;
+                        this.startExtrusionAnimation();
+                    }
                 }
 
                 // Add the fill area edges as a separate geometry.
@@ -1771,37 +1791,58 @@ export class Tile implements CachedResource {
         return startValue + (endValue - startValue) * timeValue;
     }
 
-    private animateExtrusion(): void {
-        this.m_extrusionRAF = requestAnimationFrame(this.animateExtrusion.bind(this));
+    private visibilityChanged(isVisible: boolean): void {
+        if (isVisible && this.m_canAnimateExtrusion) {
+            this.startExtrusionAnimation();
+        }
+    }
+
+    private animateExtrusion(event?: RenderEvent): void {
+        const time = (event && event.time) || 0;
+
+        if (!this.m_handleAnimateExtrusion) {
+            this.m_handleAnimateExtrusion = this.animateExtrusion.bind(this);
+        }
+        this.mapView
+            .addEventListener(MapViewEventNames.AfterRender, this.m_handleAnimateExtrusion);
 
         if (!this.m_extrusionAnimationStartTime) {
-            this.m_extrusionAnimationStartTime = performance.now();
+            this.m_extrusionAnimationStartTime = time;
         }
 
-        this.m_extrusionAnimationCurrentTime = Math.min(
-            performance.now() - this.m_extrusionAnimationStartTime,
+        const currentTime = Math.min(
+            time - this.m_extrusionAnimationStartTime,
             this.m_extrusionAnimationDuration
         );
 
         const extrusionScale = this.easeInOutCubic(
             MIN_EXTRUSION_SCALE,
             MAX_EXTRUSION_SCALE,
-            this.m_extrusionAnimationCurrentTime / this.m_extrusionAnimationDuration
+            currentTime / this.m_extrusionAnimationDuration
         );
 
         this.m_extrusionAnimationList.forEach(object => {
             object.scale.z = extrusionScale;
         });
 
-        if (this.m_extrusionAnimationCurrentTime >= this.m_extrusionAnimationDuration) {
-            cancelAnimationFrame(this.m_extrusionRAF);
+        if (currentTime >= this.m_extrusionAnimationDuration) {
+            this.stopExtrusionAnimation();
         }
+        this.dataSource.requestUpdate();
     }
 
-    private startExtrusionAnimation(objects: THREE.Object3D[]): void {
-        if (this.m_extrusionAnimationDuration > 0) {
-            this.m_extrusionAnimationList = objects;
-            this.animateExtrusion();
+    private stopExtrusionAnimation(): void {
+        if (this.m_canAnimateExtrusion && this.m_handleAnimateExtrusion) {
+            this.mapView
+                .removeEventListener(MapViewEventNames.AfterRender, this.m_handleAnimateExtrusion);
         }
+        this.m_extrusionAnimationStartTime = undefined;
+    }
+
+    private startExtrusionAnimation(): void {
+        if (this.m_extrusionAnimationStartTime !== undefined) {
+            this.stopExtrusionAnimation();
+        }
+        this.animateExtrusion();
     }
 }
