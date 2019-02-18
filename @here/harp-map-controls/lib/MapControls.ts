@@ -81,9 +81,9 @@ const USER_INPUTS_TO_CONSIDER = 5;
  *
  * Mouse interaction:
  *  - Left mouse button + move = Panning the map.
- *  - Right mouse button + move = Rotating the view. Up down movement changes the pitch. Left/right
+ *  - Right mouse button + move = Orbits the camera around the focus point.
+ *  - Middle mouse button + move = Rotating the view. Up down movement changes the pitch. Left/right
  *    movement changes the yaw.
- *  - Middle mouse button + move = Orbits the camera around the focus point.
  *  - Mouse wheel = Zooms up and down by one zoom level, zooms on target.
  *
  * Touch interaction:
@@ -639,10 +639,10 @@ export class MapControls extends THREE.EventDispatcher {
 
         if (event.button === 0) {
             this.m_state = State.PAN;
-        } else if (event.button === 1 && this.tiltEnabled) {
-            this.m_state = State.ORBIT;
-        } else if (event.button === 2) {
+        } else if (event.button === 1) {
             this.m_state = State.ROTATE;
+        } else if (event.button === 2 && this.tiltEnabled) {
+            this.m_state = State.ORBIT;
         } else {
             return;
         }
