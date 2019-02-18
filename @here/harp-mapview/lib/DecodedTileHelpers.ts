@@ -11,7 +11,10 @@ import {
     isExtrudedPolygonTechnique,
     isShaderTechnique,
     isStandardTexturedTechnique,
+    isTextureBuffer,
     Technique,
+    toPixelFormat,
+    toTextureDataType,
     toWrappingMode
 } from "@here/harp-datasource-protocol";
 import {
@@ -22,7 +25,7 @@ import {
     MapMeshStandardMaterial,
     SolidLineMaterial
 } from "@here/harp-materials";
-import { LoggerManager } from "@here/harp-utils";
+import { assert, LoggerManager } from "@here/harp-utils";
 import * as THREE from "three";
 import { Circles, Squares } from "./MapViewPoints";
 
@@ -98,39 +101,69 @@ export function createMaterial(
     material.depthTest = isExtrudedPolygonTechnique(technique) && technique.depthTest !== false;
 
     if (isStandardTexturedTechnique(technique) && technique.texture !== undefined) {
+        const onLoad = (texture: THREE.Texture) => {
+            if (technique.wrapS !== undefined) {
+                texture.wrapS = toWrappingMode(technique.wrapS);
+            }
+            if (technique.wrapT !== undefined) {
+                texture.wrapT = toWrappingMode(technique.wrapT);
+            }
+            if (technique.flipY !== undefined) {
+                texture.flipY = technique.flipY;
+            }
+
+            (material as THREE.MeshStandardMaterial).map = texture;
+            texture.needsUpdate = true;
+            material.needsUpdate = true;
+            if (materialUpdateCallback) {
+                materialUpdateCallback();
+            }
+        };
+
+        const onError = (error: ErrorEvent | string) => {
+            logger.error("#createMaterial: Failed to load texture: ", error);
+        };
+
         let textureUrl: string | undefined;
         if (typeof technique.texture === "string") {
             textureUrl = technique.texture;
-        } else {
-            const textureBlob = new Blob([technique.texture.buffer], {
-                type: technique.texture.format
-            });
-            textureUrl = URL.createObjectURL(textureBlob);
-        }
-        new THREE.TextureLoader().load(
-            textureUrl,
-            texture => {
-                // onLoad
-                if (technique.wrapS !== undefined) {
-                    texture.wrapS = toWrappingMode(technique.wrapS);
+        } else if (isTextureBuffer(technique.texture)) {
+            if (technique.texture.type === "image/raw") {
+                const properties = technique.texture.dataTextureProperties;
+                if (properties !== undefined) {
+                    const texture = new THREE.DataTexture(
+                        technique.texture.buffer,
+                        properties.width,
+                        properties.height,
+                        properties.format ? toPixelFormat(properties.format) : undefined,
+                        properties.type ? toTextureDataType(properties.type) : undefined
+                    );
+                    // Technique does not support to specify filtering yet, but three.js Texture
+                    // is created with linear filtering by default whereas three.js DataTexture is
+                    // created with nearest by default. To be consistent also set the filtering to
+                    // linear here.
+                    texture.magFilter = THREE.LinearFilter;
+                    texture.minFilter = THREE.LinearFilter;
+                    onLoad(texture);
+                } else {
+                    onError("no data texture properties provided.");
                 }
-                if (technique.wrapT !== undefined) {
-                    texture.wrapT = toWrappingMode(technique.wrapT);
-                }
-
-                (material as THREE.MeshStandardMaterial).map = texture;
-                texture.needsUpdate = true;
-                material.needsUpdate = true;
-                if (materialUpdateCallback) {
-                    materialUpdateCallback();
-                }
-            },
-            undefined, // onProgress
-            error => {
-                // onError
-                logger.error("#createMaterial: Failed to load texture: ", error);
+            } else {
+                const textureBlob = new Blob([technique.texture.buffer], {
+                    type: technique.texture.type
+                });
+                textureUrl = URL.createObjectURL(textureBlob);
             }
-        );
+        }
+
+        if (textureUrl) {
+            new THREE.TextureLoader().load(
+                textureUrl,
+                onLoad,
+                undefined, // onProgress
+                onError
+            );
+        }
     }
 
     if (isShaderTechnique(technique)) {
