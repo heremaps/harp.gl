@@ -237,6 +237,12 @@ const SORT_WEIGHT_PATH_LENGTH = 0.1;
 const MEMORY_UNDERESTIMATION_FACTOR = 2;
 
 /**
+ * Minimum and maximum values for height extrusion animation
+ */
+const MIN_EXTRUSION_SCALE = 0.1;
+const MAX_EXTRUSION_SCALE = 1;
+
+/**
  * Parameters that control fading.
  */
 interface FadingParameters {
@@ -358,6 +364,11 @@ export class Tile implements CachedResource {
     private m_textElementsChanged: boolean = false;
 
     private m_colorMap: Map<string, THREE.Color> = new Map();
+    private m_extrusionAnimationList: THREE.Object3D[] = [];
+    private m_extrusionRAF: number | undefined;
+    private m_extrusionAnimationStartTime: number | undefined;
+    private m_extrusionAnimationCurrentTime: number | undefined;
+    private readonly m_extrusionAnimationDuration: number = 750;
 
     /**
      * Creates a new `Tile`.
@@ -1311,6 +1322,9 @@ export class Tile implements CachedResource {
 
                 this.addFeatureData(srcGeometry, technique, object);
 
+
+                const extrudedObjects: THREE.Object3D[] = [];
+
                 if (isExtrudedPolygonTechnique(technique) || isFillTechnique(technique)) {
                     // filled polygons are normal meshes, and need transparency only when fading is
                     // defined.
@@ -1332,6 +1346,7 @@ export class Tile implements CachedResource {
                 if (renderDepthPrePass) {
                     const depthPassMesh = createDepthPrePassMesh(object as THREE.Mesh);
                     objects.push(depthPassMesh);
+                    extrudedObjects.push(depthPassMesh);
 
                     setDepthPrePassStencil(depthPassMesh, object as THREE.Mesh);
                 }
@@ -1376,6 +1391,13 @@ export class Tile implements CachedResource {
 
                     this.registerTileObject(edgeObj);
                     objects.push(edgeObj);
+                    extrudedObjects.push(edgeObj);
+                }
+
+                // animate the extrusion of buildings
+                if (isExtrudedPolygonTechnique(technique) || isFillTechnique(technique)) {
+                    extrudedObjects.push(object);
+                    this.startExtrusionAnimation(extrudedObjects);
                 }
 
                 // Add the fill area edges as a separate geometry.
@@ -1740,5 +1762,46 @@ export class Tile implements CachedResource {
             lineFadeNear,
             lineFadeFar
         };
+    }
+
+    private easeInOutCubic(startValue: number, endValue: number, time: number): number {
+        const timeValue = time < .5
+            ? 4 * time * time * time
+            : (time - 1) * (2 * time - 2) * (2 * time - 2) + 1;
+        return startValue + (endValue - startValue) * timeValue;
+    }
+
+    private animateExtrusion(): void {
+        this.m_extrusionRAF = requestAnimationFrame(this.animateExtrusion.bind(this));
+
+        if (!this.m_extrusionAnimationStartTime) {
+            this.m_extrusionAnimationStartTime = performance.now();
+        }
+
+        this.m_extrusionAnimationCurrentTime = Math.min(
+            performance.now() - this.m_extrusionAnimationStartTime,
+            this.m_extrusionAnimationDuration
+        );
+
+        const extrusionScale = this.easeInOutCubic(
+            MIN_EXTRUSION_SCALE,
+            MAX_EXTRUSION_SCALE,
+            this.m_extrusionAnimationCurrentTime / this.m_extrusionAnimationDuration
+        );
+
+        this.m_extrusionAnimationList.forEach(object => {
+            object.scale.z = extrusionScale;
+        });
+
+        if (this.m_extrusionAnimationCurrentTime >= this.m_extrusionAnimationDuration) {
+            cancelAnimationFrame(this.m_extrusionRAF);
+        }
+    }
+
+    private startExtrusionAnimation(objects: THREE.Object3D[]): void {
+        if (this.m_extrusionAnimationDuration > 0) {
+            this.m_extrusionAnimationList = objects;
+            this.animateExtrusion();
+        }
     }
 }
