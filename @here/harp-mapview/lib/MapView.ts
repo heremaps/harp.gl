@@ -1965,6 +1965,8 @@ export class MapView extends THREE.EventDispatcher {
                     object.position.add(object.displacement);
                 }
                 object.position.sub(this.m_worldCenter);
+                object.matrixAutoUpdate = false;
+                object.matrix.setPosition(object.position);
                 this.m_mapTilesRoot.add(object);
             }
         }
