@@ -1,8 +1,10 @@
 # @here/harp-download-manager
 
+## Overview
+
 This module provides a download manager that orchestrates downloading URLs, particularly static map resources.
 
-In particular, the module:
+The module:
 
 * limits the number of parallel concurrent downloads
 * retries downloads on HTTP errors with increasing timeouts, which is the best practice for many content delivery platforms

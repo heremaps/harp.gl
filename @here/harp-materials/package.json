@@ -1,7 +1,7 @@
 {
   "name": "@here/harp-materials",
   "version": "0.1.19",
-  "description": "Harp4Web Materials",
+  "description": "harp.gl Materials defining the appearance of objects",
   "main": "index.js",
   "typings": "index",
   "scripts": {

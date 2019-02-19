@@ -50,13 +50,13 @@ export interface WebTileDataSourceParameters {
      * (https://developer.here.com/documentation/map-tile/topics/examples-base.html):
      *
      *     https://
-     *       2.base.maps.cit.api.here.com/maptile/2.1/maptile/newest/normal.day/11/525/761/256/png8
+     *       2.base.maps.api.here.com/maptile/2.1/maptile/newest/normal.day/11/525/761/256/png8
      *       ?app_id={YOUR_APP_ID}
      *       &app_code={YOUR_APP_CODE}
      *
      * `tileBaseAddress` should be:
      *
-     *      base.maps.cit.api.here.com/maptile/2.1/maptile/newest/normal.day
+     *      base.maps.api.here.com/maptile/2.1/maptile/newest/normal.day
      *
      * Rest of parameters are added by [[WebTileDataSource]].
      *
@@ -230,27 +230,27 @@ export class WebTileDataSource extends DataSource {
      * @see https://developer.here.com/documentation/map-tile/topics/example-normal-day-view.html
      */
     static readonly TILE_BASE_NORMAL =
-        "base.maps.cit.api.here.com/maptile/2.1/maptile/newest/normal.day";
+        "base.maps.api.here.com/maptile/2.1/maptile/newest/normal.day";
     /**
      * Base address for Aerial Map rendered using `hybrid.day` scheme.
      * @see https://developer.here.com/documentation/map-tile/topics/example-hybrid-map.html
      */
     static readonly TILE_AERIAL_HYBRID =
-        "aerial.maps.cit.api.here.com/maptile/2.1/maptile/newest/hybrid.day";
+        "aerial.maps.api.here.com/maptile/2.1/maptile/newest/hybrid.day";
 
     /**
      * Base address for Aerial Map rendered using `satellite.day` scheme.
      * @see https://developer.here.com/documentation/map-tile/topics/example-satellite-map.html
      */
     static readonly TILE_AERIAL_SATELLITE =
-        "aerial.maps.cit.api.here.com/maptile/2.1/maptile/newest/satellite.day";
+        "aerial.maps.api.here.com/maptile/2.1/maptile/newest/satellite.day";
 
     /**
      * Base address for Traffic Map rendered using `normal.day` scheme.
      * @see https://developer.here.com/documentation/map-tile/topics/example-traffic.html
      */
     static readonly TILE_TRAFFIC_NORMAL =
-        "traffic.maps.cit.api.here.com/maptile/2.1/traffictile/newest/normal.day";
+        "traffic.maps.api.here.com/maptile/2.1/traffictile/newest/normal.day";
 
     private m_resolution: number;
     private m_tileBaseAddress: string;
