@@ -1,7 +1,7 @@
 {
   "name": "@here/harp-utils",
   "version": "0.1.21",
-  "description": "Provides utilities: logging, debugging and etc.",
+  "description": "Provides utilities: logging, debugging.",
   "main": "index.js",
   "scripts": {
     "build": "tsc",
