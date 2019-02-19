@@ -105,6 +105,16 @@ npx mocha-webdriver-runner http://localhost:8081/ --chrome
 npx mocha-webdriver-runner http://localhost:8081/ --headless-firefox
 ```
 
+### Generate documentation
+
+Run:
+
+```sh
+yarn run typedoc
+```
+
+It will output all documentation under `/dist/doc`.
+
 ## License
 
 Copyright (C) 2019 HERE Europe B.V.
