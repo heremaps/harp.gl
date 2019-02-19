@@ -38,7 +38,7 @@ class PoiRenderBufferBatch {
 
     boxBuffer: BoxBuffer | undefined;
 
-    private m_material?: THREE.MeshMaterialType | THREE.MeshMaterialType[];
+    private m_material?: THREE.Material | THREE.Material[];
 
     /**
      * Create the `PoiRenderBufferBatch`.

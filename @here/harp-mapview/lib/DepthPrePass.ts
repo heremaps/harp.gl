@@ -40,9 +40,7 @@ export function isRenderDepthPrePassEnabled(technique: BaseStandardTechnique) {
  *     and then used. This parameter is a template for depth prepass material that is returned.
  * @returns depth prepass material, which is a clone of `baseMaterial` with the adapted settings.
  */
-export function createDepthPrePassMaterial(
-    baseMaterial: THREE.MeshMaterialType
-): THREE.MeshMaterialType {
+export function createDepthPrePassMaterial(baseMaterial: THREE.Material): THREE.Material {
     baseMaterial.depthWrite = false;
     baseMaterial.depthFunc = THREE.EqualDepth;
     baseMaterial.colorWrite = true;

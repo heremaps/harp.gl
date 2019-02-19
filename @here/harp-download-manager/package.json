@@ -27,8 +27,8 @@
   },
   "devDependencies": {
     "@types/chai": "^4.1.2",
-    "@types/mocha": "^5.2.5",
-    "@types/sinon": "^5.0.1",
+    "@types/mocha": "^5.2.6",
+    "@types/sinon": "^7.0.6",
     "chai": "^4.0.2",
     "cross-env": "^5.2.0",
     "glob": "^7.1.1",

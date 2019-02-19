@@ -174,12 +174,12 @@ export interface TextCanvasParameters {
     /**
      * Material used to render text.
      */
-    material?: THREE.MeshMaterialType;
+    material?: THREE.Material;
 
     /**
      * Material used to render text background.
      */
-    backgroundMaterial?: THREE.MeshMaterialType;
+    backgroundMaterial?: THREE.Material;
 }
 
 /**
@@ -200,8 +200,8 @@ export class TextCanvas {
     private readonly m_defaultTextLayoutStyle: TextLayoutStyle;
     private m_currentTextLayoutStyle: TextLayoutStyle;
 
-    private m_material: SdfTextMaterial | THREE.MeshMaterialType;
-    private m_bgMaterial: SdfTextMaterial | THREE.MeshMaterialType;
+    private m_material: THREE.Material;
+    private m_bgMaterial: THREE.Material;
     private m_ownsMaterial: boolean;
     private m_ownsBgMaterial: boolean;
 
@@ -294,10 +294,10 @@ export class TextCanvas {
     /**
      * Currently active text rendering material.
      */
-    get material(): THREE.MeshMaterialType {
+    get material(): THREE.Material {
         return this.m_material;
     }
-    set material(value: THREE.MeshMaterialType) {
+    set material(value: THREE.Material) {
         if (this.m_ownsMaterial) {
             this.m_material.dispose();
             this.m_ownsMaterial = false;
@@ -312,10 +312,10 @@ export class TextCanvas {
     /**
      * Currently active text background rendering material.
      */
-    get backgroundMaterial(): THREE.MeshMaterialType {
+    get backgroundMaterial(): THREE.Material {
         return this.m_bgMaterial;
     }
-    set backgroundMaterial(value: THREE.MeshMaterialType) {
+    set backgroundMaterial(value: THREE.Material) {
         if (this.m_ownsBgMaterial) {
             this.m_bgMaterial.dispose();
             this.m_ownsBgMaterial = false;

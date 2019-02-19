@@ -63,11 +63,7 @@ export class TextGeometry {
      *
      * @returns New `TextGeometry`.
      */
-    constructor(
-        material: THREE.MeshMaterialType,
-        backgroundMaterial: THREE.MeshMaterialType,
-        capacity: number
-    ) {
+    constructor(material: THREE.Material, backgroundMaterial: THREE.Material, capacity: number) {
         this.capacity = Math.min(capacity, MAX_CAPACITY);
         this.m_drawCount = 0;
         this.m_updateOffset = 0;

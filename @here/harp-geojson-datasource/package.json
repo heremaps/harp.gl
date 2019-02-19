@@ -36,9 +36,9 @@
   "devDependencies": {
     "@types/chai": "^4.1.2",
     "@types/earcut": "^2.1.0",
-    "@types/node": "^10.9.0",
-    "@types/mocha": "^5.2.5",
-    "@types/three": "0.92.24",
+    "@types/node": "^11.9.4",
+    "@types/mocha": "^5.2.6",
+    "@types/three": "^0.93.22",
     "chai": "^4.0.2",
     "cross-env": "^5.2.0",
     "mocha": "^5.2.0",
