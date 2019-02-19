@@ -3,7 +3,14 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-import { createLight, ImageTexture, Light, Sky, Theme } from "@here/harp-datasource-protocol";
+import {
+    createLight,
+    ImageDefinition,
+    ImageTexture,
+    Light,
+    Sky,
+    Theme
+} from "@here/harp-datasource-protocol";
 import { GeoCoordinates, MathUtils, mercatorProjection, Projection } from "@here/harp-geoutils";
 import { LoggerManager, PerformanceTimer } from "@here/harp-utils";
 import * as THREE from "three";
@@ -2267,12 +2274,13 @@ export class MapView extends THREE.EventDispatcher {
         this.poiManager.clear();
 
         if (theme.images !== undefined) {
-            theme.images.forEach((image: { [key: string]: any }) => {
-                this.m_imageCache.addImage(image.name, image.url, image.preload === true);
+            for (const name of Object.keys(theme.images)) {
+                const image = theme.images[name];
+                this.m_imageCache.addImage(name, image.url, image.preload === true);
                 if (typeof image.atlas === "string") {
-                    this.poiManager.addTextureAtlas(image.name, image.atlas);
+                    this.poiManager.addTextureAtlas(name, image.atlas);
                 }
-            });
+            }
         }
 
         if (theme.imageTextures !== undefined) {

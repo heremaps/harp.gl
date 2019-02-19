@@ -1045,14 +1045,17 @@ export interface Fog {
  * Define an image (e.g. icon).
  */
 export interface ImageDefinition {
-    /** Name of Image. */
-    name: string;
     /** Url to load content from. */
     url: string;
     /** `true` to start loading at init tile, `false` to lazily wait until required. */
     preload: boolean;
     /** Url of JSON file containing the texture atlas */
     atlas?: string;
+}
+
+export interface ImageDefinitions {
+    /** Name of Image. */
+    [name: string]: ImageDefinition;
 }
 
 /**
@@ -1138,6 +1141,10 @@ export interface PoiTableEntryDef {
     textMaxLevel?: number;
 }
 
+interface Styles {
+    [styleSetName: string]: StyleSet;
+}
+
 /**
  * Map theme is used to define what features are shown and how the map is styled, for example
  * which lightning is used or whether fog should be displayed.
@@ -1152,10 +1159,10 @@ export interface Theme {
     lights?: Light[];
     sky?: Sky;
     fog?: Fog;
-    styles?: { [styleSetName: string]: StyleSet };
+    styles?: Styles;
     textStyles?: TextStyle[];
     fontCatalogs?: FontCatalogConfig[];
-    images?: ImageDefinition[];
+    images?: ImageDefinitions;
     imageTextures?: ImageTexture[];
     /**
      * Optional list of [[ThemePoiTableDef]]s.

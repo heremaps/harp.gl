@@ -83,14 +83,13 @@
     "fog": {
         "startRatio": 0.8
     },
-    "images": [
-        {
-            "name": "icons_day",
+    "images": {
+        "icons_day": {
             "url": "icons_day.png",
             "atlas": "icons_day.json",
             "preload": true
         }
-    ],
+    },
     "poiTables": [
         {
             "name": "tzPoiTable",
