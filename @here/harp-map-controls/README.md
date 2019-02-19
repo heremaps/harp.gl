@@ -1,4 +1,8 @@
-## MapControls and MapAnimations
+# @here/harp-map-controls
+
+## Overview
+
+This module provides MapControls and MapAnimations which implement a common default set of camera functionality in a map context.
 
 ### Using the MapAnimations
 

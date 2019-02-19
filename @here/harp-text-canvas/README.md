@@ -1,7 +1,10 @@
-# Harp-Text-Canvas
+# @here/harp-text-canvas
 
-`Harp-Text-Canvas` is a robust SDF (Signed Distance Field) text rendering library for `three.js`. It
+## Overview
+
+`Harp-Text-Canvas` is a robust [Signed Distance Field (SDF)](https://en.wikipedia.org/wiki/Signed_distance_function) text rendering library for `three.js`. It
 handles:
+
   * Proper typesetting.
   * Rich text styling.
   * Complex text layouts.

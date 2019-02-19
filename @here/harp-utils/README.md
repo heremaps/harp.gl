@@ -1,6 +1,15 @@
-Utility classes for logging, debugging, profiling and etc.
+# @here/harp-utils
 
-# Logger
+## Overview
+
+This module provides utility classes. Such as, but not limited to:
+
+* logging
+* caching
+* URL resolving
+* Simple Math
+
+## Logger
 Custom logger for writing messages to browser console or separate window.
 Messages could be filtered by log names or completely disabled via URI parameters or UI.
 Logger name is required and cannot be empty.
