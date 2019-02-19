@@ -1872,7 +1872,7 @@ export class MapView extends THREE.EventDispatcher {
             });
         }
 
-        this.checkCameraMoved();
+        this.m_movementDetector.checkCameraMoved(this, time);
 
         // The camera used to render the scene.
         const camera = this.m_pointOfView !== undefined ? this.m_pointOfView : this.m_camera;
@@ -2158,10 +2158,6 @@ export class MapView extends THREE.EventDispatcher {
         if (!this.animating) {
             setTimeout(() => this.update(), 0);
         }
-    }
-
-    private checkCameraMoved(): boolean {
-        return this.m_movementDetector.checkCameraMoved(this);
     }
 
     /**

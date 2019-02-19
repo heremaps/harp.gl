@@ -27,6 +27,7 @@ export class CameraMovementDetector {
     private m_lastWorldCenter = new Vector3();
     private m_cameraMovedLastFrame: boolean | undefined;
     private m_throttlingTimerId?: number = undefined;
+    private m_movementDetectorDeadline: number = 0;
 
     /**
      * Initializes the detector with timeout value and callbacks. [[MapView]] also provides
@@ -54,7 +55,7 @@ export class CameraMovementDetector {
      *
      * @param mapView [[Mapview]]'s position and camera are checked for modifications.
      */
-    checkCameraMoved(mapView: MapView): boolean {
+    checkCameraMoved(mapView: MapView, now: number): boolean {
         const newYawPitchRoll = MapViewUtils.extractYawPitchRoll(mapView.camera.quaternion);
         const newCameraPos = mapView.camera.getWorldPosition(this.m_newCameraPos);
 
@@ -80,7 +81,8 @@ export class CameraMovementDetector {
         }
         if (cameraMoved) {
             // Start timer
-            this.startMovementFinishedTimer();
+            this.m_movementDetectorDeadline = now + this.m_throttlingTimeout!;
+            this.startMovementFinishedTimer(now);
         }
 
         return this.m_cameraMovedLastFrame;
@@ -139,14 +141,22 @@ export class CameraMovementDetector {
         }
     }
 
-    private startMovementFinishedTimer() {
-        this.removeMovementFinishedTimer();
-
-        this.m_throttlingTimerId = setTimeout(
-            () => this.movementFinished(),
-            this.m_throttlingTimeout
-        ) as any;
+    private startMovementFinishedTimer(now: number) {
+        if (this.m_throttlingTimerId === undefined) {
+            const remainingTime = Math.max(0, this.m_movementDetectorDeadline - now);
+            this.m_throttlingTimerId = setTimeout(this.onDeadlineTimer, remainingTime) as any;
+        }
     }
+
+    private onDeadlineTimer = () => {
+        this.m_throttlingTimerId = undefined;
+        const now = performance.now();
+        if (now >= this.m_movementDetectorDeadline) {
+            this.movementFinished();
+        } else {
+            this.startMovementFinishedTimer(now);
+        }
+    };
 
     private removeMovementFinishedTimer() {
         if (this.m_throttlingTimerId !== undefined) {
