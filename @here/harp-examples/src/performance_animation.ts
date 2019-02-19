@@ -3,7 +3,6 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-
 import { GeoCoordinates, MathUtils } from "@here/harp-geoutils";
 import { CameraRotationAnimation, MapControls } from "@here/harp-map-controls";
 import { CopyrightElementHandler, MapView, MapViewEventNames } from "@here/harp-mapview";
@@ -66,6 +65,26 @@ const Stats = require("stats.js");
  *
  */
 export namespace AnimationExample {
+    document.body.innerHTML += `
+    <style>
+        #pixelRatio-toggle{
+            position: relative;
+            background: #37afaa;
+            display: inline-block;
+            height: 34px;
+            color: white;
+            border: none;
+            width: 140px;
+            vertical-align: bottom;
+            cursor: pointer;
+            left: 20px;
+            top: 20px;
+        }
+    </style>
+
+    <button id="pixelRatio-toggle">Toggle dynamicPixelRatio</button>
+`;
+
     // creates a new MapView for the HTMLCanvasElement of the given id
     function initializeMapView(id: string): MapView {
         // snippet:vislib_hello_animation_example_0.ts
@@ -99,7 +118,7 @@ export namespace AnimationExample {
         sampleMapView.camera.rotateX(MathUtils.degToRad(45));
 
         // Instantiate the default map controls, allowing the user to pan around freely, even while
-        // the animatioon is running.
+        // the animation is running.
         const controls = new MapControls(sampleMapView);
 
         // Create a simple rotation to animate the scene:
@@ -165,6 +184,37 @@ export namespace AnimationExample {
         return sampleMapView;
     }
 
+    /**
+     * Initializes pixelRatio toggling process
+     */
+    function initializePixelRatioToggle() {
+        const toggleElement = document.getElementById(
+            "pixelRatio-toggle"
+        ) as HTMLButtonElement | null;
+
+        if (toggleElement !== null) {
+            toggleElement.addEventListener("click", () => {
+                let newDynamicPixelRatio: number | undefined;
+
+                if (mapView.dynamicPixelRatio === undefined) {
+                    newDynamicPixelRatio = 1.5;
+                } else {
+                    newDynamicPixelRatio = mapView.dynamicPixelRatio - 0.5;
+                    if (newDynamicPixelRatio < 0.5) {
+                        newDynamicPixelRatio = undefined;
+                    }
+                }
+                mapView.dynamicPixelRatio = newDynamicPixelRatio;
+
+                toggleElement.innerText =
+                    "dynamicPixelRatio: " +
+                    (mapView.dynamicPixelRatio === undefined
+                        ? "default"
+                        : String(mapView.dynamicPixelRatio));
+            });
+        }
+    }
+
     const mapView = initializeMapView("mapCanvas");
 
     // snippet:vislib_hello_animation_example_4.ts
@@ -179,4 +229,6 @@ export namespace AnimationExample {
     // snippet:vislib_hello_animation_example_5.ts
     mapView.addDataSource(omvDataSource);
     // end:vislib_hello_animation_example_5.ts
+
+    initializePixelRatioToggle();
 }
