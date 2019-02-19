@@ -25,7 +25,7 @@ import {
     MapMeshStandardMaterial,
     SolidLineMaterial
 } from "@here/harp-materials";
-import { assert, LoggerManager } from "@here/harp-utils";
+import { LoggerManager } from "@here/harp-utils";
 import * as THREE from "three";
 import { Circles, Squares } from "./MapViewPoints";
 
