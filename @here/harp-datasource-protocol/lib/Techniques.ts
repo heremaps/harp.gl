@@ -1211,7 +1211,7 @@ export function getPropertyValue<T>(
  */
 export interface TextureBuffer {
     /**
-     * Buffer containing the (compressed)image or the raw texture data.
+     * Buffer containing the (compressed) image or the raw texture data.
      */
     buffer: ArrayBuffer;
 
@@ -1221,13 +1221,14 @@ export interface TextureBuffer {
     type: string;
 
     /**
-     * Properties for creating a [[THREE.DataTexture]]
+     * Properties for creating a three.js DataTexture
+     * (https://threejs.org/docs/#api/en/textures/DataTexture).
      */
     dataTextureProperties?: DataTextureProperties;
 }
 
 /**
- * Properties of a DataTexture. See [[THREE.DataTexture]].
+ * Properties of a DataTexture (https://threejs.org/docs/#api/en/textures/DataTexture).
  */
 export interface DataTextureProperties {
     width: number;
@@ -1266,8 +1267,8 @@ export type PixelFormat =
     | "LuminanceAlpha"
     | "RGBE"
     | "Depth"
-    | "DepthStencil"
-    | "Red";
+    | "DepthStencil";
+// | "Red" FIXME: Red is missing from DefinitelyTyped (HARP-4881)
 
 /**
  * Returns `three.js` pixel format object basing on a [[PixelFormat]] specified.
