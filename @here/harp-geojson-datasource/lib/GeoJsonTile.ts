@@ -49,7 +49,7 @@ export interface GeoJsonTileObject extends TileObject {
  */
 interface LabeledIconParams {
     priority: number;
-    scale: number;
+    size: number;
     xOffset: number;
     yOffset: number;
     mayOverlap: boolean;
@@ -70,7 +70,7 @@ interface LabeledIconParams {
  */
 const DEFAULT_LABELED_ICON: Readonly<LabeledIconParams> = {
     priority: 1000,
-    scale: 0.5,
+    size: 16,
     xOffset: 0.0,
     yOffset: 0.0,
     mayOverlap: false,
@@ -176,7 +176,7 @@ export class GeoJsonTile extends Tile {
      * Add a label available for mouse picking at the given path.
      *
      * @param path Path of the text path.
-     * @param tec Technique in use.
+     * @param technique Technique in use.
      * @param geojsonProperties Properties defined by the user.
      */
     private addTextPath(
@@ -187,33 +187,18 @@ export class GeoJsonTile extends Tile {
     ) {
         const priority =
             technique.priority === undefined ? DEFAULT_LABELED_ICON.priority : technique.priority;
-        const scale = technique.scale === undefined ? DEFAULT_LABELED_ICON.scale : technique.scale;
         const xOffset =
             technique.xOffset === undefined ? DEFAULT_LABELED_ICON.xOffset : technique.xOffset;
         const yOffset =
             technique.yOffset === undefined ? DEFAULT_LABELED_ICON.yOffset : technique.yOffset;
 
         const featureId = DEFAULT_LABELED_ICON.featureId;
-        const color = new THREE.Color(technique.color);
-        const backgroundColor = new THREE.Color(technique.backgroundColor);
-        const renderStyle = this.getRenderStyle(
-            scale,
-            technique,
-            color,
-            FontUnit.Pixel,
-            backgroundColor
-        ).params;
-        renderStyle.backgroundOpacity = 1;
-        const layoutStyle = this.getLayoutStyle(technique).params;
-
-        // XYZ project does not allow transparency so far for text.
-        renderStyle.backgroundOpacity = 1;
 
         const textElement = new TextElement(
             ContextualArabicConverter.instance.convert(text),
             path,
-            { ...renderStyle },
-            { ...layoutStyle },
+            this.getRenderStyle(technique),
+            this.getLayoutStyle(technique),
             priority,
             xOffset,
             yOffset,
@@ -269,7 +254,7 @@ export class GeoJsonTile extends Tile {
      * Add a label available for mouse picking at the given position.
      *
      * @param position position of the labeled Icon, in world coordinate.
-     * @param tec Technique in use.
+     * @param technique Technique in use.
      * @param geojsonProperties Properties defined by the user.
      */
     private addText(
@@ -280,36 +265,18 @@ export class GeoJsonTile extends Tile {
     ) {
         const priority =
             technique.priority === undefined ? DEFAULT_LABELED_ICON.priority : technique.priority;
-        const scale = technique.scale === undefined ? DEFAULT_LABELED_ICON.scale : technique.scale;
         const xOffset =
             technique.xOffset === undefined ? DEFAULT_LABELED_ICON.xOffset : technique.xOffset;
         const yOffset =
             technique.yOffset === undefined ? DEFAULT_LABELED_ICON.yOffset : technique.yOffset;
 
         const featureId = DEFAULT_LABELED_ICON.featureId;
-        const color = new THREE.Color(technique.color);
-        const backgroundColor = new THREE.Color(technique.backgroundColor);
-
-        const renderStyle = this.getRenderStyle(
-            scale,
-            technique,
-            color,
-            FontUnit.Pixel,
-            backgroundColor,
-            technique.backgroundSize,
-            text
-        ).params;
-
-        // XYZ project does not allow transparency so far for text.
-        renderStyle.backgroundOpacity = 1;
-
-        const layoutStyle = this.getLayoutStyle(technique).params;
 
         const textElement = new TextElement(
             ContextualArabicConverter.instance.convert(text),
             position,
-            { ...renderStyle },
-            { ...layoutStyle },
+            this.getRenderStyle(technique),
+            this.getLayoutStyle(technique),
             priority,
             xOffset,
             yOffset,
@@ -358,14 +325,13 @@ export class GeoJsonTile extends Tile {
      * Add a POI available for mouse picking at the given position.
      *
      * @param position position of the labeled Icon, in world coordinate.
-     * @param tec Technique in use.
+     * @param technique Technique in use.
      * @param geojsonProperties Properties defined by the user.
      */
     private addPoi(position: THREE.Vector2, technique: PoiTechnique, geojsonProperties?: {}) {
         const label = DEFAULT_LABELED_ICON.label;
         const priority =
             technique.priority === undefined ? DEFAULT_LABELED_ICON.priority : technique.priority;
-        const scale = technique.scale === undefined ? DEFAULT_LABELED_ICON.scale : technique.scale;
         const xOffset =
             technique.xOffset === undefined ? DEFAULT_LABELED_ICON.xOffset : technique.xOffset;
         const yOffset =
@@ -376,7 +342,7 @@ export class GeoJsonTile extends Tile {
         const textElement = new TextElement(
             ContextualArabicConverter.instance.convert(label),
             position,
-            this.getRenderStyle(scale, technique),
+            this.getRenderStyle(technique),
             this.getLayoutStyle(technique),
             priority,
             xOffset,

@@ -8,12 +8,12 @@
     ],
     "defaultTextStyle": {
         "color": "#8b98a1",
-        "bgMode": "Outline",
-        "bgColor": "#000000",
-        "bgFactor": 0.5,
-        "bgAlpha": 0.5,
+        "backgroundColor": "#000000",
+        "backgroundSize": 8,
+        "backgroundAlpha": 0.5,
         "fontCatalogName": "fira"
     },
+    "textStyles": [],
     "lights": [
         {
             "type": "ambient",
@@ -41,16 +41,6 @@
                 "y": 0,
                 "z": 1
             }
-        }
-    ],
-    "textStyles": [
-        {
-            "name": "placeMarker",
-            "color": "#60FF60",
-            "outlineColor": "#202020",
-            "outlineFactor": 3.5,
-            "outlineAlpha": 0.5,
-            "fontCatalogName": "fira"
         }
     ],
     "styles": {
@@ -99,7 +89,7 @@
                         "attr": {
                             "label": "text",
                             "textMayOverlap": true,
-                            "scale": 0.5,
+                            "size": 16,
                             "imageTexture": "custom-icon",
                             "screenHeight": 32,
                             "iconYOffset": 16,
@@ -166,7 +156,7 @@
                                 "technique": "text",
                                 "attr": {
                                     "color": "#708497",
-                                    "scale": 0.5,
+                                    "size": 16,
                                     "priority": 20.0
                                 }
                             },
@@ -218,7 +208,7 @@
                                 "technique": "text",
                                 "attr": {
                                     "color": "#66788a",
-                                    "scale": 0.5,
+                                    "size": 16,
                                     "priority": 20.0
                                 }
                             },
@@ -272,7 +262,7 @@
                                 "attr": {
                                     "color": "#6d8193",
                                     "textLabel": "kind_detail",
-                                    "scale": 0.5,
+                                    "size": 16,
                                     "priority": 15.0
                                 }
                             },
@@ -324,7 +314,7 @@
                                 "technique": "text",
                                 "attr": {
                                     "color": "#778ca1",
-                                    "scale": 0.5,
+                                    "size": 16,
                                     "priority": 20.0
                                 }
                             },
@@ -378,7 +368,7 @@
                                 "technique": "text",
                                 "attr": {
                                     "color": "#8ca5bd",
-                                    "scale": 0.5,
+                                    "size": 16,
                                     "priority": 25.0
                                 }
                             },
@@ -488,7 +478,7 @@
                                 "technique": "text",
                                 "attr": {
                                     "color": "#8ca5bd",
-                                    "scale": 0.5,
+                                    "size": 16,
                                     "priority": 35.0
                                 }
                             },
@@ -660,7 +650,7 @@
                                 "technique": "text",
                                 "attr": {
                                     "color": "#565660",
-                                    "scale": 0.5,
+                                    "size": 16,
                                     "priority": 25.0
                                 }
                             },
@@ -772,7 +762,7 @@
                                         "when": "!has(is_tunnel)",
                                         "technique": "text",
                                         "attr": {
-                                            "scale": 0.45,
+                                            "size": 15,
                                             "oblique": true,
                                             "priority": -40
                                         }
@@ -837,7 +827,7 @@
                         "renderOrder": 120,
                         "clipping": false,
                         "attr": {
-                            "scale": 0.45,
+                            "size": 15,
                             "priority": -50
                         },
                         "styles": [
@@ -850,7 +840,7 @@
                                 "when": "kind == 'ocean'",
                                 "technique": "text",
                                 "attr": {
-                                    "scale": 0.7,
+                                    "size": 22.5,
                                     "priority": -45
                                 }
                             },
@@ -858,12 +848,12 @@
                                 "when": "kind == 'sea'",
                                 "technique": "text",
                                 "attr": {
-                                    "scale": [
-                                        { "maxLevel": 2, "value": 0.3 },
-                                        { "maxLevel": 3, "value": 0.35 },
-                                        { "maxLevel": 4, "value": 0.4 },
-                                        { "maxLevel": 5, "value": 0.5 },
-                                        { "value": 0.6 }
+                                    "size": [
+                                        { "maxLevel": 2, "value": 9.5 },
+                                        { "maxLevel": 3, "value": 11 },
+                                        { "maxLevel": 4, "value": 13 },
+                                        { "maxLevel": 5, "value": 16 },
+                                        { "value": 19 }
                                     ],
                                     "priority": -50
                                 }
@@ -872,7 +862,7 @@
                                 "description": "lakes (on high level, only biggest lakes)",
                                 "when": "kind == 'lake' || has(area)",
                                 "attr": {
-                                    "scale": [
+                                    "size": [
                                         { "maxLevel": 2, "value": 0.3 },
                                         { "maxLevel": 3, "value": 0.3 },
                                         { "maxLevel": 4, "value": 0.35 },
@@ -1030,7 +1020,7 @@
                         "technique": "text",
                         "attr": {
                             "color": "#3D3B3C",
-                            "scale": 0.5,
+                            "size": 16,
                             "priority": 100
                         }
                     }
@@ -1071,7 +1061,7 @@
                                 "attr": {
                                     "priority": 100,
                                     "color": "#393939",
-                                    "scale": 0.4
+                                    "size": 13
                                 }
                             }
                         ]
@@ -1105,7 +1095,7 @@
                                 "attr": {
                                     "priority": 90,
                                     "color": "#393939",
-                                    "scale": 0.4
+                                    "size": 13
                                 }
                             }
                         ]
@@ -1118,7 +1108,7 @@
                 "renderOrder": 7,
                 "attr": {
                     "color": "#6d7477",
-                    "scale": 0.85,
+                    "size": 27,
                     "priority": 200
                 }
             },
@@ -1263,8 +1253,8 @@
                         "technique": "text",
                         "attr": {
                             "opacity": 0.6,
-                            "scale": [
-                                { "value": 0.5 }
+                            "size": [
+                                { "value": 16 }
                             ]
                         }
                     }
@@ -1299,12 +1289,12 @@
                                 "final": true,
                                 "attr": {
                                     "priority": 100,
-                                    "scale": [
-                                        { "maxLevel": 1, "value": 0.35 },
-                                        { "maxLevel": 2, "value": 0.4 },
-                                        { "maxLevel": 3, "value": 0.6 },
-                                        { "maxLevel": 3, "value": 0.7 },
-                                        { "value": 0.8 }
+                                    "size": [
+                                        { "maxLevel": 1, "value": 11 },
+                                        { "maxLevel": 2, "value": 13 },
+                                        { "maxLevel": 3, "value": 19 },
+                                        { "maxLevel": 4, "value": 22.5 },
+                                        { "value": 25.5 }
                                     ]
                                 }
                             },
@@ -1314,12 +1304,12 @@
                                 "final": true,
                                 "attr": {
                                     "priority": 100,
-                                    "scale": [
-                                        { "maxLevel": 2, "value": 0.25 },
-                                        { "maxLevel": 2, "value": 0.3 },
-                                        { "maxLevel": 3, "value": 0.4 },
-                                        { "maxLevel": 4, "value": 0.5 },
-                                        { "value": 0.6 }
+                                    "size": [
+                                        { "maxLevel": 2, "value": 8 },
+                                        { "maxLevel": 2, "value": 9.5 },
+                                        { "maxLevel": 3, "value": 13 },
+                                        { "maxLevel": 4, "value": 16 },
+                                        { "value": 19 }
                                     ]
                                 }
                             },
@@ -1328,12 +1318,12 @@
                                 "final": true,
                                 "attr": {
                                     "priority": 90,
-                                    "scale": [
-                                        { "maxLevel": 2, "value": 0.2 },
-                                        { "maxLevel": 2, "value": 0.35 },
-                                        { "maxLevel": 3, "value": 0.3 },
-                                        { "maxLevel": 4, "value": 0.4 },
-                                        { "value": 0.5 }
+                                    "size": [
+                                        { "maxLevel": 2, "value": 6.5 },
+                                        { "maxLevel": 2, "value": 9.5 },
+                                        { "maxLevel": 3, "value": 11 },
+                                        { "maxLevel": 4, "value": 13 },
+                                        { "value": 16 }
                                     ]
                                 }
                             }
@@ -1343,11 +1333,11 @@
                         "when": "kind in ['region']",
                         "technique": "none",
                         "attr": {
-                            "scale": [
-                                { "maxLevel": 3, "value": 0.3 },
-                                { "maxLevel": 4, "value": 0.34 },
-                                { "maxLevel": 5, "value": 0.4 },
-                                { "value": 0.45 }
+                            "size": [
+                                { "maxLevel": 3, "value": 9.5 },
+                                { "maxLevel": 4, "value": 11 },
+                                { "maxLevel": 5, "value": 13 },
+                                { "value": 15 }
                             ],
                             "priority": 65,
                             "color": [
@@ -1368,17 +1358,17 @@
                                 "when": "population > 10000000 || has(country_capital)",
                                 "attr": {
                                     "priority": 61,
-                                    "scale": [
-                                        { "maxLevel": 1, "value": 0.3 },
-                                        { "maxLevel": 2, "value": 0.35 },
-                                        { "maxLevel": 3, "value": 0.4 },
-                                        { "maxLevel": 4, "value": 0.45 },
-                                        { "maxLevel": 5, "value": 0.5 },
-                                        { "maxLevel": 6, "value": 0.6 },
-                                        { "maxLevel": 7, "value": 0.7 },
-                                        { "maxLevel": 8, "value": 0.8 },
-                                        { "maxLevel": 9, "value": 0.9 },
-                                        { "value": 1 }
+                                    "size": [
+                                        { "maxLevel": 1, "value": 9.5 },
+                                        { "maxLevel": 2, "value": 11 },
+                                        { "maxLevel": 3, "value": 11 },
+                                        { "maxLevel": 4, "value": 15 },
+                                        { "maxLevel": 5, "value": 16 },
+                                        { "maxLevel": 6, "value": 19 },
+                                        { "maxLevel": 7, "value": 22.5 },
+                                        { "maxLevel": 8, "value": 25.5 },
+                                        { "maxLevel": 9, "value": 29 },
+                                        { "value": 32 }
                                     ]
                                 },
                                 "styles": [
@@ -1401,17 +1391,17 @@
                                 "final": true,
                                 "attr": {
                                     "priority": 60,
-                                    "scale": [
-                                        { "maxLevel": 2, "value": 0.3 },
-                                        { "maxLevel": 3, "value": 0.35 },
-                                        { "maxLevel": 4, "value": 0.4 },
-                                        { "maxLevel": 5, "value": 0.45 },
-                                        { "maxLevel": 6, "value": 0.5 },
-                                        { "maxLevel": 7, "value": 0.6 },
-                                        { "maxLevel": 8, "value": 0.7 },
-                                        { "maxLevel": 9, "value": 0.8 },
-                                        { "maxLevel": 10, "value": 0.9 },
-                                        { "value": 1 }
+                                    "size": [
+                                        { "maxLevel": 2, "value": 9.5 },
+                                        { "maxLevel": 3, "value": 11 },
+                                        { "maxLevel": 4, "value": 11 },
+                                        { "maxLevel": 5, "value": 15 },
+                                        { "maxLevel": 6, "value": 16 },
+                                        { "maxLevel": 7, "value": 19 },
+                                        { "maxLevel": 8, "value": 22.5 },
+                                        { "maxLevel": 9, "value": 25.5 },
+                                        { "maxLevel": 10, "value": 29 },
+                                        { "value": 32 }
                                     ]
                                 }
                             },
@@ -1421,15 +1411,15 @@
                                 "final": true,
                                 "attr": {
                                     "priority": 59,
-                                    "scale": [
-                                        { "maxLevel": 4, "value": 0.35 },
-                                        { "maxLevel": 5, "value": 0.4 },
-                                        { "maxLevel": 6, "value": 0.5 },
-                                        { "maxLevel": 7, "value": 0.6 },
-                                        { "maxLevel": 8, "value": 0.7 },
-                                        { "maxLevel": 9, "value": 0.75 },
-                                        { "maxLevel": 10, "value": 0.8 },
-                                        { "value": 0.85 }
+                                    "size": [
+                                        { "maxLevel": 4, "value": 9.55 },
+                                        { "maxLevel": 5, "value": 11 },
+                                        { "maxLevel": 6, "value": 16 },
+                                        { "maxLevel": 7, "value": 19 },
+                                        { "maxLevel": 8, "value": 22.5 },
+                                        { "maxLevel": 9, "value": 24 },
+                                        { "maxLevel": 10, "value": 25.5 },
+                                        { "value": 27 }
                                     ]
                                 }
                             },
@@ -1439,16 +1429,16 @@
                                 "final": true,
                                 "attr": {
                                     "priority": 58,
-                                    "scale": [
-                                        { "maxLevel": 4, "value": 0.3 },
-                                        { "maxLevel": 5, "value": 0.35 },
-                                        { "maxLevel": 6, "value": 0.4 },
-                                        { "maxLevel": 7, "value": 0.5 },
-                                        { "maxLevel": 8, "value": 0.6 },
-                                        { "maxLevel": 9, "value": 0.65 },
-                                        { "maxLevel": 10, "value": 0.7 },
-                                        { "maxLevel": 11, "value": 0.75 },
-                                        { "value": 0.8 }
+                                    "size": [
+                                        { "maxLevel": 4, "value": 9.5 },
+                                        { "maxLevel": 5, "value": 11 },
+                                        { "maxLevel": 6, "value": 13 },
+                                        { "maxLevel": 7, "value": 16 },
+                                        { "maxLevel": 8, "value": 19 },
+                                        { "maxLevel": 9, "value": 21 },
+                                        { "maxLevel": 10, "value": 22.5 },
+                                        { "maxLevel": 11, "value": 24 },
+                                        { "value": 25.5 }
                                     ]
                                 }
                             },
@@ -1458,11 +1448,11 @@
                                 "final": true,
                                 "attr": {
                                     "priority": 57,
-                                    "scale": [
-                                        { "maxLevel": 10, "value": 0.5 },
-                                        { "maxLevel": 11, "value": 0.6 },
-                                        { "maxLevel": 12, "value": 0.7 },
-                                        { "value": 0.75 }
+                                    "size": [
+                                        { "maxLevel": 10, "value": 16 },
+                                        { "maxLevel": 11, "value": 19 },
+                                        { "maxLevel": 12, "value": 22.5 },
+                                        { "value": 24 }
                                     ]
                                 }
                             },
@@ -1472,12 +1462,12 @@
                                 "final": true,
                                 "attr": {
                                     "priority": 56,
-                                    "scale": [
-                                        { "maxLevel": 11, "value": 0.5 },
-                                        { "maxLevel": 12, "value": 0.55 },
-                                        { "maxLevel": 13, "value": 0.6 },
-                                        { "maxLevel": 14, "value": 0.65 },
-                                        { "value": 0.7 }
+                                    "size": [
+                                        { "maxLevel": 11, "value": 16 },
+                                        { "maxLevel": 12, "value": 17.5 },
+                                        { "maxLevel": 13, "value": 19 },
+                                        { "maxLevel": 14, "value": 21 },
+                                        { "value": 22.5 }
                                     ]
                                 }
                             },
@@ -1487,12 +1477,12 @@
                                 "final": true,
                                 "attr": {
                                     "priority": 50,
-                                    "scale": [
-                                        { "maxLevel": 11, "value": 0.4 },
-                                        { "maxLevel": 12, "value": 0.45 },
-                                        { "maxLevel": 13, "value": 0.5 },
-                                        { "maxLevel": 14, "value": 0.55 },
-                                        { "value": 0.6 }
+                                    "size": [
+                                        { "maxLevel": 11, "value": 13 },
+                                        { "maxLevel": 12, "value": 15 },
+                                        { "maxLevel": 13, "value": 16 },
+                                        { "maxLevel": 14, "value": 17.5 },
+                                        { "value": 19 }
                                     ]
                                 }
                             }
@@ -1521,7 +1511,7 @@
                                 "attr": {
                                     "color": "#A9A9A9",
                                     "label": "addr_housenumber",
-                                    "scale": 0.45,
+                                    "size": 15,
                                     "opacity": 0.6,
                                     "minZoomLevel": 17
                                 }

@@ -510,6 +510,10 @@ export class TextElementsRenderer {
         if (this.m_defaultStyle.renderParams.color !== undefined) {
             this.m_mapView.defaultTextColor = this.m_defaultStyle.renderParams.color;
         }
+        if (this.m_defaultStyle.renderParams.backgroundColor !== undefined) {
+            // tslint:disable-next-line:max-line-length
+            this.m_mapView.defaultTextBackgroundColor = this.m_defaultStyle.renderParams.backgroundColor;
+        }
     }
 
     private createTextElementStyle(style: TextStyle, styleName: string): TextElementStyle {
@@ -518,9 +522,9 @@ export class TextElementsRenderer {
             fontCatalog: getOptionValue(style.fontCatalogName, DEFAULT_FONT_CATALOG_NAME),
             renderParams: {
                 fontSize: {
-                    unit: FontUnit.Percent,
-                    size: 50.0,
-                    backgroundSize: style.bgFactor !== undefined ? style.bgFactor * 3.0 : 0.0
+                    unit: FontUnit.Pixel,
+                    size: 16.0,
+                    backgroundSize: style.backgroundSize || 0
                 },
                 fontVariant:
                     style.smallCaps === true
@@ -541,10 +545,10 @@ export class TextElementsRenderer {
                         ? ColorCache.instance.getColor(style.color)
                         : undefined,
                 backgroundColor:
-                    style.bgColor !== undefined
-                        ? ColorCache.instance.getColor(style.bgColor)
+                    style.backgroundColor !== undefined
+                        ? ColorCache.instance.getColor(style.backgroundColor)
                         : undefined,
-                backgroundOpacity: style.bgAlpha
+                backgroundOpacity: style.backgroundAlpha
             },
             layoutParams: {
                 tracking: style.tracking,

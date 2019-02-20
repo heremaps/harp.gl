@@ -501,6 +501,7 @@ export class MapView extends THREE.EventDispatcher {
     private m_textRenderStyleCache = new TextRenderStyleCache();
     private m_textLayoutStyleCache = new TextLayoutStyleCache();
     private m_defaultTextColor = new THREE.Color(0, 0, 0);
+    private m_defaultTextBgColor = new THREE.Color(1, 1, 1);
     private m_overlayTextElements?: TextElement[] = [];
 
     private m_forceCameraAspect: number | undefined = undefined;
@@ -1040,6 +1041,20 @@ export class MapView extends THREE.EventDispatcher {
      */
     set defaultTextColor(color: THREE.Color) {
         this.m_defaultTextColor.set(color);
+    }
+
+    /**
+     * The color used to draw the background of text elements.
+     */
+    get defaultTextBackgroundColor() {
+        return this.m_defaultTextBgColor;
+    }
+
+    /**
+     * The color used to draw the background of text elements.
+     */
+    set defaultTextBackgroundColor(color: THREE.Color) {
+        this.m_defaultTextBgColor.set(color);
     }
 
     /**
