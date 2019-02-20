@@ -326,6 +326,8 @@ export class Tile implements CachedResource {
     // If `true`, the text content of the [[Tile]] changed.
     private m_textElementsChanged: boolean = false;
 
+    private m_colorMap: Map<string, THREE.Color> = new Map();
+
     /**
      * Creates a new `Tile`.
      *
@@ -821,8 +823,6 @@ export class Tile implements CachedResource {
      * @param decodedTile The [[DecodedTile]].
      */
     createTextElements(decodedTile: DecodedTile) {
-        const colorMap = new Map<number, THREE.Color>();
-
         // gather the sum of [[TextElement]]s (upper boundary), to compute the priority, such that
         // the text elements that come first get the highest priority, so they get placed first.
         let numTextElements = 0;
@@ -835,7 +835,7 @@ export class Tile implements CachedResource {
             numTextElements += decodedTile.textGeometries.length;
         }
 
-        const displayZoomLevel = this.mapView.zoomLevel;
+        const displayZoomLevel = Math.floor(this.mapView.zoomLevel);
         if (decodedTile.textPathGeometries !== undefined) {
             this.m_preparedTextPaths = this.prepareTextPaths(decodedTile.textPathGeometries);
 
@@ -858,10 +858,7 @@ export class Tile implements CachedResource {
                 if (technique.name !== "text") {
                     continue;
                 }
-                const color = getPropertyValue(technique.color, displayZoomLevel);
-                if (color !== undefined) {
-                    colorMap.set(textPath.technique, ColorCache.instance.getColor(color));
-                }
+
                 const path: THREE.Vector2[] = [];
                 for (let i = 0; i < textPath.path.length; i += 2) {
                     path.push(new THREE.Vector2(textPath.path[i], textPath.path[i + 1]));
@@ -874,14 +871,10 @@ export class Tile implements CachedResource {
                         ? (SORT_WEIGHT_PATH_LENGTH * textPath.pathLengthSqr) / maxPathLengthSqr
                         : 0);
 
-                const textSize =
-                    getOptionValue(getPropertyValue(technique.scale, displayZoomLevel), 1.0) *
-                    100.0;
-
                 const textElement = new TextElement(
                     ContextualArabicConverter.instance.convert(textPath.text),
                     path,
-                    this.getRenderStyle(textSize, technique, colorMap.get(textPath.technique)),
+                    this.getRenderStyle(technique),
                     this.getLayoutStyle(technique),
                     priority,
                     technique.xOffset !== undefined ? technique.xOffset : 0.0,
@@ -923,10 +916,6 @@ export class Tile implements CachedResource {
                     continue;
                 }
 
-                const color = getPropertyValue(technique.color, displayZoomLevel);
-                if (color !== undefined) {
-                    colorMap.set(text.technique, ColorCache.instance.getColor(color));
-                }
                 const positions = new THREE.BufferAttribute(
                     new Float32Array(text.positions.buffer),
                     text.positions.itemCount
@@ -951,14 +940,10 @@ export class Tile implements CachedResource {
                         continue;
                     }
 
-                    const textSize =
-                        getOptionValue(getPropertyValue(technique.scale, displayZoomLevel), 1.0) *
-                        100.0;
-
                     const textElement = new TextElement(
                         ContextualArabicConverter.instance.convert(label!),
                         new THREE.Vector2(x, y),
-                        this.getRenderStyle(textSize, technique, colorMap.get(text.technique)),
+                        this.getRenderStyle(technique),
                         this.getLayoutStyle(technique),
                         priority,
                         technique.xOffset || 0.0,
@@ -1424,65 +1409,80 @@ export class Tile implements CachedResource {
      * Gets the appropiate [[TextRenderStyle]] to use for a label. Depends heavily on the label's
      * [[Technique]] and the current zoomLevel.
      *
-     * @param textSize Label's size.
-     * @param textTechnique Label's technique.
-     * @param textColor Label's color.
+     * @param technique Label's technique.
+     * @param techniqueIdx Label's technique index.
      */
     protected getRenderStyle(
-        textSize: number,
-        textTechnique: TextTechnique | PoiTechnique | LineMarkerTechnique,
-        textColor?: THREE.Color,
-        textSizeUnit?: FontUnit,
-        backgroundColor?: THREE.Color,
-        backgroundSize?: number,
-        text?: string
+        technique: TextTechnique | PoiTechnique | LineMarkerTechnique
     ): TextRenderStyle {
-        const cacheId = computeStyleCacheId(textTechnique, this.mapView.zoomLevel);
+        const cacheId = computeStyleCacheId(
+            this.dataSource.name,
+            technique,
+            this.mapView.zoomLevel
+        );
         let renderStyle = this.mapView.textRenderStyleCache.get(cacheId);
-        if (
-            renderStyle === undefined ||
-            (textColor !== undefined && textColor.r !== renderStyle.color.r) ||
-            (backgroundColor !== undefined &&
-                backgroundColor.r !== renderStyle.backgroundColor.r) ||
-            (backgroundSize !== undefined &&
-                backgroundSize !== renderStyle.fontSize!.backgroundSize)
-        ) {
-            let styleColor = textColor;
-            if (styleColor === undefined) {
-                styleColor = this.mapView.defaultTextColor;
+        if (renderStyle === undefined) {
+            const textSize = getOptionValue(
+                getPropertyValue(technique.size, Math.floor(this.mapView.zoomLevel)),
+                32
+            );
+            const bgSize = getOptionValue(
+                getPropertyValue(technique.backgroundSize, Math.floor(this.mapView.zoomLevel)),
+                8
+            );
+
+            const hexColor = getPropertyValue(technique.color, Math.floor(this.mapView.zoomLevel));
+            if (hexColor !== undefined) {
+                this.m_colorMap.set(cacheId, ColorCache.instance.getColor(hexColor));
             }
+            const styleColor = this.m_colorMap.get(cacheId) || this.mapView.defaultTextColor;
+
+            const hexBgColor = getPropertyValue(
+                technique.backgroundColor,
+                Math.floor(this.mapView.zoomLevel)
+            );
+            if (hexBgColor !== undefined) {
+                this.m_colorMap.set(cacheId + "_bg", ColorCache.instance.getColor(hexBgColor));
+            }
+            const styleBgColor =
+                this.m_colorMap.get(cacheId + "_bg") || this.mapView.defaultTextBackgroundColor;
+
+            const bgAlpha = getOptionValue(
+                getPropertyValue(technique.backgroundAlpha, Math.floor(this.mapView.zoomLevel)),
+                0.5
+            );
+
             const styleFontVariant =
-                textTechnique.smallCaps === true
+                technique.smallCaps === true
                     ? FontVariant.SmallCaps
-                    : textTechnique.allCaps === true
+                    : technique.allCaps === true
                     ? FontVariant.AllCaps
                     : FontVariant.Regular;
             const styleFontStyle =
-                textTechnique.bold === true
-                    ? textTechnique.oblique
+                technique.bold === true
+                    ? technique.oblique
                         ? FontStyle.BoldItalic
                         : FontStyle.Bold
-                    : textTechnique.oblique === true
+                    : technique.oblique === true
                     ? FontStyle.Italic
                     : FontStyle.Regular;
 
             const renderParams = {
                 fontSize: {
-                    unit: textSizeUnit === undefined ? FontUnit.Percent : textSizeUnit,
+                    unit: FontUnit.Pixel,
                     size: textSize,
-                    backgroundSize: backgroundSize !== undefined ? backgroundSize : textSize * 0.5
+                    backgroundSize: bgSize
                 },
                 color: styleColor,
+                backgroundColor: styleBgColor,
+                backgroundOpacity: bgAlpha,
                 fontVariant: styleFontVariant,
                 fontStyle: styleFontStyle
             };
-            if (backgroundColor !== undefined) {
-                (renderParams as any).backgroundColor = backgroundColor;
-            }
 
             const themeRenderParams =
                 this.mapView.textElementsRenderer !== undefined
-                    ? this.mapView.textElementsRenderer!.getTextElementStyle(textTechnique.style)
+                    ? this.mapView.textElementsRenderer!.getTextElementStyle(technique.style)
                           .renderParams
                     : {};
             renderStyle = new TextRenderStyle({
@@ -1499,30 +1499,34 @@ export class Tile implements CachedResource {
      * Gets the appropiate [[TextRenderStyle]] to use for a label. Depends heavily on the label's
      * [[Technique]] and the current zoomLevel.
      *
-     * @param textTechnique Label's technique.
+     * @param technique Label's technique.
      */
     protected getLayoutStyle(
-        textTechnique: TextTechnique | PoiTechnique | LineMarkerTechnique
+        technique: TextTechnique | PoiTechnique | LineMarkerTechnique
     ): TextLayoutStyle {
-        const cacheId = computeStyleCacheId(textTechnique, this.mapView.zoomLevel);
+        const cacheId = computeStyleCacheId(
+            this.dataSource.name,
+            technique,
+            this.mapView.zoomLevel
+        );
         let layoutStyle = this.mapView.textLayoutStyleCache.get(cacheId);
         if (layoutStyle === undefined) {
-            const trackingFactor = textTechnique.tracking || 0.0;
+            const trackingFactor = technique.tracking || 0.0;
             let hAlignment = HorizontalAlignment.Center;
             if (
-                textTechnique.hAlignment === "Left" ||
-                textTechnique.hAlignment === "Center" ||
-                textTechnique.hAlignment === "Right"
+                technique.hAlignment === "Left" ||
+                technique.hAlignment === "Center" ||
+                technique.hAlignment === "Right"
             ) {
-                hAlignment = HorizontalAlignment[textTechnique.hAlignment];
+                hAlignment = HorizontalAlignment[technique.hAlignment];
             }
             let vAlignment = VerticalAlignment.Center;
             if (
-                textTechnique.vAlignment === "Above" ||
-                textTechnique.vAlignment === "Center" ||
-                textTechnique.vAlignment === "Below"
+                technique.vAlignment === "Above" ||
+                technique.vAlignment === "Center" ||
+                technique.vAlignment === "Below"
             ) {
-                vAlignment = VerticalAlignment[textTechnique.vAlignment];
+                vAlignment = VerticalAlignment[technique.vAlignment];
             }
 
             const layoutParams = {
@@ -1533,7 +1537,7 @@ export class Tile implements CachedResource {
 
             const themeLayoutParams =
                 this.mapView.textElementsRenderer !== undefined
-                    ? this.mapView.textElementsRenderer!.getTextElementStyle(textTechnique.style)
+                    ? this.mapView.textElementsRenderer!.getTextElementStyle(technique.style)
                           .layoutParams
                     : {};
             layoutStyle = new TextLayoutStyle({

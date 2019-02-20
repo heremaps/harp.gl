@@ -1005,10 +1005,9 @@ export interface TextStyle {
     smallCaps?: boolean;
     bold?: boolean;
     oblique?: boolean;
-    bgMode?: string;
-    bgColor?: string;
-    bgFactor?: number;
-    bgAlpha?: number;
+    backgroundColor?: string;
+    backgroundSize?: number;
+    backgroundAlpha?: number;
     tracking?: number;
     fontCatalogName?: string;
     name?: string;

@@ -60,22 +60,6 @@ const NUM_UV_VALUES_PER_VERTEX = 4;
 const NUM_INDEX_VALUES_PER_VERTEX = 1;
 
 /**
- * Rendering mode of the text background elements.
- */
-export enum TextBackgroundMode {
-    Outline = 0.0,
-    Glow = 1.0
-}
-
-/**
- * Rendering mode of the text background elements (string representation).
- */
-export enum TextBackgroundModeStrings {
-    Outline = "Outline",
-    Glow = "Glow"
-}
-
-/**
  * SubClass of [[THREE.Mesh]] to identify meshes that have been created by [[BoxBuffer]] and
  * [[TextBuffer]]. Add the isEmpty flag to quickly test for empty meshes.
  */
