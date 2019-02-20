@@ -44,7 +44,7 @@
     "mocha": "^5.2.0",
     "sinon": "^7.2.3",
     "source-map-support": "^0.5.2",
-    "typescript": "~3.2.1",
+    "typescript": "~3.3.3",
     "three": "^0.99.0"
   }
 }

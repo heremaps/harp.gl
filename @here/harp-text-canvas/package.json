@@ -33,7 +33,7 @@
     "source-map-support": "^0.5.2",
     "three": "^0.99.0",
     "ts-node": "^7.0.1",
-    "typescript": "~3.2.1"
+    "typescript": "~3.3.3"
   },
   "peerDependencies": {
     "three": "^0.99.0"

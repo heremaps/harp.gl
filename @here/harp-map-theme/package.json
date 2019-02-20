@@ -37,6 +37,6 @@
     "ncp": "^2.0.0",
     "source-map-support": "^0.5.2",
     "ts-node": "^7.0.1",
-    "typescript": "~3.2.1"
+    "typescript": "~3.3.3"
   }
 }
