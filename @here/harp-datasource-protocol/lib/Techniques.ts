@@ -395,9 +395,22 @@ export interface MarkerTechnique extends BaseTechnique {
      */
     color?: string;
     /**
-     * Scaling factor of text.
+     * Text background color in hexadecimal or CSS-style notation, for example: `"#e4e9ec"`,
+     * `"#fff"`, `"rgb(255, 0, 0)"`, or `"hsl(35, 11%, 88%)"`.
      */
-    scale?: number;
+    backgroundColor?: string;
+    /**
+     * Background text alpha (opacity) value.
+     */
+    backgroundAlpha?: number;
+    /**
+     * Size of the text (pixels).
+     */
+    size?: number;
+    /**
+     * Size of the text background (pixels).
+     */
+    backgroundSize?: number;
     /**
      * Horizontal offset (to the right) in screen pixels.
      */
@@ -960,17 +973,21 @@ export interface TextTechnique extends BaseTechnique {
      */
     backgroundColor?: string;
     /**
-     * Size of the background.
+     * Background text alpha (opacity) value.
      */
-    backgroundSize?: number;
+    backgroundAlpha?: number;
     /**
      * Priority of text, defaults to `0`. Elements with highest priority get placed first.
      */
     priority?: number;
     /**
-     * Scaling factor of text.
+     * Size of the text (pixels).
      */
-    scale?: number;
+    size?: number;
+    /**
+     * Size of the text background (pixels).
+     */
+    backgroundSize?: number;
     /**
      * Scaling factor of the text. Defaults to 0.5, reducing the size ot 50% in the distance.
      */

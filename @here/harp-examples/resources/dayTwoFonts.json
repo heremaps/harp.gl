@@ -11,43 +11,36 @@
         {
             "name": "firaStyle",
             "color": "#6d7477",
-            "bgMode": "Outline",
-            "bgColor": "#F7FBFD",
-            "bgFactor": 5.0,
-            "bgAlpha": 0.75,
+            "backgroundColor": "#F7FBFD",
+            "backgroundSize": 8,
+            "backgroundAlpha": 0.75,
             "fontName": "fira"
         },
         {
             "name": "TestStyle0",
             "color": "#6d7477",
-            "tracking": -3.0,
             "fontName": "fira"
         },
         {
             "name": "TestStyle1",
             "color": "#6d7477",
-            "bgMode": "Outline",
-            "bgColor": "#F7FBFD",
-            "bgFactor": 2.0,
-            "bgAlpha": 0.3,
-            "tracking": 3.0,
+            "backgroundColor": "#F7FBFD",
+            "backgroundSize": 8,
+            "backgroundAlpha": 1.0,
             "fontName": "fira"
         },
         {
             "name": "TestStyle2",
             "color": "#6d7477",
             "allCaps": true,
-            "tracking": -3.0,
             "fontName": "fira"
         },
         {
             "name": "TestStyle3",
             "color": "#6d7477",
-            "bgMode": "Glow",
-            "bgColor": "#F7FBFD",
-            "bgFactor": 2.0,
-            "bgAlpha": 1.0,
-            "tracking": 3.0,
+            "backgroundColor": "#F7FBFD",
+            "backgroundSize": 4,
+            "backgroundAlpha": 0.3,
             "allCaps": true,
             "smallCaps": true,
             "fontName": "fira"
@@ -1302,7 +1295,7 @@
                 "technique": "text",
                 "attr": {
                     "color": "#6d7477",
-                    "scale": 0.75,
+                    "size": 24,
                     "style": "firaStyle"
                 }
             },
@@ -1315,7 +1308,7 @@
                         "technique": "text",
                         "attr": {
                             "color": "#929292",
-                            "scale": 0.45,
+                            "size": 15,
                             "style": "firaStyle"
                         }
                     },
@@ -1323,7 +1316,7 @@
                         "when": "$layer == 'state_label' && $level >= 5",
                         "technique": "text",
                         "attr": {
-                            "scale": 0.75,
+                            "size": 24,
                             "style": "firaStyle"
                         }
                     },
@@ -1332,7 +1325,7 @@
                         "technique": "text",
                         "attr": {
                             "useAbbreviation": true,
-                            "scale": 0.75,
+                            "size": 24,
                             "style": "firaStyle"
                         }
                     },
@@ -1340,7 +1333,7 @@
                         "when": "$layer == 'region_label'",
                         "technique": "text",
                         "attr": {
-                            "scale": 0.7,
+                            "size": 22.5,
                             "style": "firaStyle"
                         }
                     },
@@ -1348,7 +1341,7 @@
                         "when": "$layer == 'county_label'",
                         "technique": "text",
                         "attr": {
-                            "scale": 0.7,
+                            "size": 22.5,
                             "style": "firaStyle"
                         }
                     },
@@ -1357,7 +1350,7 @@
                         "technique": "text",
                         "attr": {
                             "color": "#505050",
-                            "scale": 0.7,
+                            "size": 22.5,
                             "style": "firaStyle"
                         }
                     },
@@ -1366,7 +1359,7 @@
                         "technique": "text",
                         "attr": {
                             "color": "#565660",
-                            "scale": 0.5,
+                            "size": 16,
                             "style": "firaStyle"
                         }
                     },
@@ -1375,7 +1368,7 @@
                         "technique": "text",
                         "attr": {
                             "color": "#565660",
-                            "scale": 0.5,
+                            "size": 16,
                             "style": "firaStyle"
                         }
                     },
@@ -1384,7 +1377,7 @@
                         "technique": "text",
                         "attr": {
                             "color": "#2c70c3",
-                            "scale": 0.45,
+                            "size": 15,
                             "style": "firaStyle"
                         }
                     },
@@ -1393,7 +1386,7 @@
                         "technique": "text",
                         "attr": {
                             "color": "#2c70c3",
-                            "scale": 0.5,
+                            "size": 16,
                             "style": "firaStyle"
                         }
                     },
@@ -1403,7 +1396,7 @@
                         "attr": {
                             "label": "house_num",
                             "color": "#7c969c",
-                            "scale": 0.4,
+                            "size": 13,
                             "minZoomLevel": 16,
                             "style": "firaStyle"
                         }
@@ -1412,7 +1405,7 @@
                         "when": "$layer == 'marine_label' && labelrank == 1",
                         "technique": "text",
                         "attr": {
-                            "scale": 0.35,
+                            "size": 11,
                             "style": "firaStyle"
                         }
                     },
@@ -1420,7 +1413,7 @@
                         "when": "$layer == 'marine_label' && labelrank == 2",
                         "technique": "text",
                         "attr": {
-                            "scale": 0.4,
+                            "size": 13,
                             "style": "firaStyle"
                         }
                     },
@@ -1428,7 +1421,7 @@
                         "when": "$layer == 'marine_label' && labelrank == 3",
                         "technique": "text",
                         "attr": {
-                            "scale": 0.45,
+                            "size": 15,
                             "style": "firaStyle"
                         }
                     },
@@ -1437,7 +1430,7 @@
                         "technique": "text",
                         "attr": {
                             "color": "#2c70c3",
-                            "scale": 0.5,
+                            "size": 16,
                             "style": "firaStyle"
                         }
                     },
@@ -1445,7 +1438,7 @@
                         "when": "$layer == 'marine_label' && labelrank == 5",
                         "technique": "text",
                         "attr": {
-                            "scale": 0.55,
+                            "size": 15,
                             "style": "firaStyle"
                         }
                     },
@@ -1454,7 +1447,7 @@
                         "technique": "text",
                         "attr": {
                             "color": "#2c70c3",
-                            "scale": 0.6,
+                            "size": 19,
                             "style": "firaStyle"
                         }
                     },

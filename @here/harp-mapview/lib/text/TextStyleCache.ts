@@ -23,7 +23,7 @@ const MAX_ZOOM_LEVEL = 100;
  * [[TextStyle]] id for the default value inside a [[TextRenderStyleCache]] or a
  * [[TextLayoutStyleCache]].
  */
-export const DEFAULT_TEXT_STYLE_CACHE_ID = -1;
+export const DEFAULT_TEXT_STYLE_CACHE_ID = "Default";
 
 /**
  * Calculates the [[TextStyle]] id that identifies either a [[TextRenderStyle]] or a
@@ -35,15 +35,19 @@ export const DEFAULT_TEXT_STYLE_CACHE_ID = -1;
  *
  * @returns [[TextStyle]] id.
  */
-export function computeStyleCacheId(technique: Technique, zoomLevel: number) {
-    return technique._renderOrderAuto! * MAX_ZOOM_LEVEL + zoomLevel;
+export function computeStyleCacheId(
+    datasourceName: string,
+    technique: Technique,
+    zoomLevel: number
+): string {
+    return `${datasourceName}_${technique._renderOrderAuto!}_${zoomLevel}`;
 }
 
 /**
  * Cache storing [[MapView]]'s [[TextRenderStyle]]s.
  */
 export class TextRenderStyleCache {
-    private m_map: Map<number, TextRenderStyle> = new Map();
+    private m_map: Map<string, TextRenderStyle> = new Map();
     constructor() {
         this.m_map.set(
             DEFAULT_TEXT_STYLE_CACHE_ID,
@@ -64,11 +68,11 @@ export class TextRenderStyleCache {
         return this.m_map.size;
     }
 
-    get(id: number): TextRenderStyle | undefined {
+    get(id: string): TextRenderStyle | undefined {
         return this.m_map.get(id);
     }
 
-    set(id: number, value: TextRenderStyle): void {
+    set(id: string, value: TextRenderStyle): void {
         this.m_map.set(id, value);
     }
 
@@ -94,7 +98,7 @@ export class TextRenderStyleCache {
  * Cache storing [[MapView]]'s [[TextLayoutStyle]]s.
  */
 export class TextLayoutStyleCache {
-    private m_map: Map<number, TextLayoutStyle> = new Map();
+    private m_map: Map<string, TextLayoutStyle> = new Map();
     constructor() {
         this.m_map.set(
             DEFAULT_TEXT_STYLE_CACHE_ID,
@@ -109,11 +113,11 @@ export class TextLayoutStyleCache {
         return this.m_map.size;
     }
 
-    get(id: number): TextLayoutStyle | undefined {
+    get(id: string): TextLayoutStyle | undefined {
         return this.m_map.get(id);
     }
 
-    set(id: number, value: TextLayoutStyle): void {
+    set(id: string, value: TextLayoutStyle): void {
         this.m_map.set(id, value);
     }
 
