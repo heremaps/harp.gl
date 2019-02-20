@@ -1,7 +1,7 @@
 {
   "name": "@here/harp-download-manager",
   "version": "0.1.55",
-  "description": "Typescript version of a download manager",
+  "description": "Provides a download manager that orchestrates downloading URLs, particularly static map resources.",
   "main": "index.js",
   "typings": "index",
   "directories": {

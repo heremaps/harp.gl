@@ -1,5 +1,5 @@
 {
-  "name": "harpgl",
+  "name": "harp.gl",
   "version": "1.0.0",
   "description": "Core render components of harp.gl, an open-source 3D map rendering engine.",
   "workspaces": [

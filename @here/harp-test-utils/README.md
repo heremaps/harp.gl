@@ -1,3 +1,5 @@
-# Utility classes for testing
+# @here/harp-test-utils
 
-This package provided utilities used in tests.
+## Overview
+
+This module provides utilities used in tests.

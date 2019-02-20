@@ -1,5 +1,5 @@
 {
-    "name": "Visualisation Library SDK",
+    "name": "harp.gl",
     "mode": "modules",
     "module": "commonjs",
     "out": "doc",
