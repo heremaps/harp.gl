@@ -921,6 +921,11 @@ export interface StandardTexturedTechnique extends BaseStandardTechnique {
      * Texture vertical wrapping mode.
      */
     wrapT?: WrappingMode;
+
+    /**
+     * Flip texture vertically.
+     */
+    flipY?: boolean;
 }
 
 /**
@@ -1214,15 +1219,39 @@ export function getPropertyValue<T>(
  * Buffer holding a texture.
  */
 export interface TextureBuffer {
+    /**
+     * Buffer containing the (compressed) image or the raw texture data.
+     */
     buffer: ArrayBuffer;
-    format: string;
+
+    /**
+     * Mime type of the image or 'image/raw' in case of raw texture data.
+     */
+    type: string;
+
+    /**
+     * Properties for creating a three.js DataTexture
+     * (https://threejs.org/docs/#api/en/textures/DataTexture).
+     */
+    dataTextureProperties?: DataTextureProperties;
+}
+
+/**
+ * Properties of a DataTexture (https://threejs.org/docs/#api/en/textures/DataTexture).
+ */
+export interface DataTextureProperties {
+    width: number;
+    height: number;
+
+    format?: PixelFormat;
+    type?: TextureDataType;
 }
 
 /**
  * Type guard to check if an object is an instance of `TextureBuffer`.
  */
 export function isTextureBuffer(object: any): object is TextureBuffer {
-    return object && object.buffer && typeof object.format === "string";
+    return object && object.buffer && typeof object.type === "string";
 }
 
 /**
@@ -1237,6 +1266,75 @@ export function getAttributeValue<T>(attribute: T, level: number): T | undefined
         return getPropertyValue(attribute, level);
     }
     return attribute;
+}
+
+export type PixelFormat =
+    | "Alpha"
+    | "RGB"
+    | "RGBA"
+    | "Luminance"
+    | "LuminanceAlpha"
+    | "RGBE"
+    | "Depth"
+    | "DepthStencil";
+// | "Red" FIXME: Red is missing from DefinitelyTyped (HARP-4881)
+
+/**
+ * Returns `three.js` pixel format object basing on a [[PixelFormat]] specified.
+ */
+export function toPixelFormat(format: PixelFormat): THREE.PixelFormat {
+    if (format === "Alpha") {
+        return THREE.AlphaFormat;
+    } else if (format === "RGB") {
+        return THREE.RGBFormat;
+    } else if (format === "RGBA") {
+        return THREE.RGBAFormat;
+    } else if (format === "Luminance") {
+        return THREE.LuminanceFormat;
+    } else if (format === "LuminanceAlpha") {
+        return THREE.LuminanceAlphaFormat;
+    } else if (format === "RGBE") {
+        return THREE.RGBEFormat;
+    } else if (format === "Depth") {
+        return THREE.DepthFormat;
+    } else if (format === "DepthStencil") {
+        return THREE.DepthStencilFormat;
+    }
+    throw new Error(`invalid pixel format: ${format}`);
+}
+
+export type TextureDataType =
+    | "UnsignedByte"
+    | "Byte"
+    | "Short"
+    | "UnsignedShort"
+    | "Int"
+    | "UnsignedInt"
+    | "Float"
+    | "HalfFloat";
+
+/**
+ * Returns `three.js` texture data types based on a [[TextureDataType]] specified.
+ */
+export function toTextureDataType(dataType: TextureDataType): THREE.TextureDataType {
+    if (dataType === "UnsignedByte") {
+        return THREE.UnsignedByteType;
+    } else if (dataType === "Byte") {
+        return THREE.ByteType;
+    } else if (dataType === "Short") {
+        return THREE.ShortType;
+    } else if (dataType === "UnsignedShort") {
+        return THREE.UnsignedShortType;
+    } else if (dataType === "Int") {
+        return THREE.IntType;
+    } else if (dataType === "UnsignedInt") {
+        return THREE.UnsignedIntType;
+    } else if (dataType === "Float") {
+        return THREE.FloatType;
+    } else if (dataType === "HalfFloat") {
+        return THREE.HalfFloatType;
+    }
+    throw new Error(`invalid texture data type: ${dataType}`);
 }
 
 /**
