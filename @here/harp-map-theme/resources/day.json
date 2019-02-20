@@ -94,7 +94,7 @@
         {
             "name": "tzPoiTable",
             "url": "resources/poi_masterlist.json",
-            "useAltNamesForKey" : true
+            "useAltNamesForKey": true
         }
     ],
     "styles": {
@@ -234,7 +234,6 @@
                                 }
                             }
                         ]
-
                     },
                     {
                         "description": "major streets",
@@ -335,9 +334,9 @@
                                         { "maxLevel": 8, "value": 100 },
                                         { "maxLevel": 9, "value": 50 },
                                         { "maxLevel": 10, "value": 30 },
-                                        { "maxLevel": 11,   "value": 20 },
-                                        { "maxLevel": 12,   "value": 12 },
-                                        { "maxLevel": 13,   "value": 8 },
+                                        { "maxLevel": 11, "value": 20 },
+                                        { "maxLevel": 12, "value": 12 },
+                                        { "maxLevel": 13, "value": 8 },
                                         { "value": 4 }
                                     ]
                                 }
@@ -648,7 +647,7 @@
                                         { "maxLevel": 6, "value": 4000 },
                                         { "maxLevel": 7, "value": 2500 },
                                         { "maxLevel": 8, "value": 1500 },
-                                        { "maxLevel": 9,  "value": 1200 },
+                                        { "maxLevel": 9, "value": 1200 },
                                         { "maxLevel": 10, "value": 560 },
                                         { "maxLevel": 11, "value": 100 },
                                         { "maxLevel": 12, "value": 50 },
@@ -817,7 +816,6 @@
                                             "color": "#99ceff"
                                         }
                                     }
-
                                 ]
                             }
                         ]
@@ -896,10 +894,7 @@
                                         { "maxLevel": 4, "value": 0.35 },
                                         { "value": 0.4 }
                                     ],
-                                    "priority": [
-                                        { "maxLevel": 1, "value": -100 },
-                                        { "value": -30 }
-                                    ]
+                                    "priority": [{ "maxLevel": 1, "value": -100 }, { "value": -30 }]
                                 },
                                 "styles": [
                                     {
@@ -1012,7 +1007,7 @@
                             {
                                 "when": "!is_tunnel",
                                 "technique": "solid-line",
-                                "renderOrder": 5.20,
+                                "renderOrder": 5.2,
                                 "attr": {
                                     "color": "#8c8c8c"
                                 }
@@ -1020,13 +1015,12 @@
                             {
                                 "when": "is_tunnel",
                                 "technique": "solid-line",
-                                "renderOrder": 5.10,
+                                "renderOrder": 5.1,
                                 "attr": {
                                     "_color": "#bcbcbc",
                                     "color": "#8c8c8c"
                                 }
                             }
-
                         ]
                     },
                     {
@@ -1120,7 +1114,6 @@
                                     "color": "#dddddd"
                                 }
                             }
-
                         ]
                     }
                 ]
@@ -1473,9 +1466,7 @@
                         "technique": "text",
                         "attr": {
                             "opacity": 0.6,
-                            "scale": [
-                                { "value": 0.5 }
-                            ]
+                            "scale": [{ "value": 0.5 }]
                         }
                     }
                 ]
@@ -1494,7 +1485,6 @@
                         "when": "kind in ['country']",
                         "technique": "text",
                         "attr": {
-
                             "color": [
                                 { "maxLevel": 2, "value": "#696969" },
                                 { "value": "#A7ABAB" }

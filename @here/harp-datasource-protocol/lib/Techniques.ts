@@ -950,6 +950,15 @@ export interface TextTechnique extends BaseTechnique {
      */
     color?: string;
     /**
+     * Text background color in hexadecimal or CSS-style notation, for example: `"#e4e9ec"`,
+     * `"#fff"`, `"rgb(255, 0, 0)"`, or `"hsl(35, 11%, 88%)"`.
+     */
+    backgroundColor?: string;
+    /**
+     * Size of the background.
+     */
+    backgroundSize?: number;
+    /**
      * Priority of text, defaults to `0`. Elements with highest priority get placed first.
      */
     priority?: number;
