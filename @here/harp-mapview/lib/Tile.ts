@@ -1431,11 +1431,22 @@ export class Tile implements CachedResource {
     protected getRenderStyle(
         textSize: number,
         textTechnique: TextTechnique | PoiTechnique | LineMarkerTechnique,
-        textColor?: THREE.Color
+        textColor?: THREE.Color,
+        textSizeUnit?: FontUnit,
+        backgroundColor?: THREE.Color,
+        backgroundSize?: number,
+        text?: string
     ): TextRenderStyle {
         const cacheId = computeStyleCacheId(textTechnique, this.mapView.zoomLevel);
         let renderStyle = this.mapView.textRenderStyleCache.get(cacheId);
-        if (renderStyle === undefined) {
+        if (
+            renderStyle === undefined ||
+            (textColor !== undefined && textColor.r !== renderStyle.color.r) ||
+            (backgroundColor !== undefined &&
+                backgroundColor.r !== renderStyle.backgroundColor.r) ||
+            (backgroundSize !== undefined &&
+                backgroundSize !== renderStyle.fontSize!.backgroundSize)
+        ) {
             let styleColor = textColor;
             if (styleColor === undefined) {
                 styleColor = this.mapView.defaultTextColor;
@@ -1457,14 +1468,17 @@ export class Tile implements CachedResource {
 
             const renderParams = {
                 fontSize: {
-                    unit: FontUnit.Percent,
+                    unit: textSizeUnit === undefined ? FontUnit.Percent : textSizeUnit,
                     size: textSize,
-                    backgroundSize: textSize * 0.25
+                    backgroundSize: backgroundSize !== undefined ? backgroundSize : textSize * 0.5
                 },
                 color: styleColor,
                 fontVariant: styleFontVariant,
                 fontStyle: styleFontStyle
             };
+            if (backgroundColor !== undefined) {
+                (renderParams as any).backgroundColor = backgroundColor;
+            }
 
             const themeRenderParams =
                 this.mapView.textElementsRenderer !== undefined
