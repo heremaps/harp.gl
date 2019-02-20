@@ -18,7 +18,7 @@ import {
     Tile,
     TileObject
 } from "@here/harp-mapview";
-import { ContextualArabicConverter } from "@here/harp-text-canvas";
+import { ContextualArabicConverter, FontUnit } from "@here/harp-text-canvas";
 import * as THREE from "three";
 import {
     GeoJsonPoiGeometry,
@@ -194,12 +194,26 @@ export class GeoJsonTile extends Tile {
             technique.yOffset === undefined ? DEFAULT_LABELED_ICON.yOffset : technique.yOffset;
 
         const featureId = DEFAULT_LABELED_ICON.featureId;
+        const color = new THREE.Color(technique.color);
+        const backgroundColor = new THREE.Color(technique.backgroundColor);
+        const renderStyle = this.getRenderStyle(
+            scale,
+            technique,
+            color,
+            FontUnit.Pixel,
+            backgroundColor
+        ).params;
+        renderStyle.backgroundOpacity = 1;
+        const layoutStyle = this.getLayoutStyle(technique).params;
+
+        // XYZ project does not allow transparency so far for text.
+        renderStyle.backgroundOpacity = 1;
 
         const textElement = new TextElement(
             ContextualArabicConverter.instance.convert(text),
             path,
-            this.getRenderStyle(scale, technique),
-            this.getLayoutStyle(technique),
+            { ...renderStyle },
+            { ...layoutStyle },
             priority,
             xOffset,
             yOffset,
@@ -273,12 +287,29 @@ export class GeoJsonTile extends Tile {
             technique.yOffset === undefined ? DEFAULT_LABELED_ICON.yOffset : technique.yOffset;
 
         const featureId = DEFAULT_LABELED_ICON.featureId;
+        const color = new THREE.Color(technique.color);
+        const backgroundColor = new THREE.Color(technique.backgroundColor);
+
+        const renderStyle = this.getRenderStyle(
+            scale,
+            technique,
+            color,
+            FontUnit.Pixel,
+            backgroundColor,
+            technique.backgroundSize,
+            text
+        ).params;
+
+        // XYZ project does not allow transparency so far for text.
+        renderStyle.backgroundOpacity = 1;
+
+        const layoutStyle = this.getLayoutStyle(technique).params;
 
         const textElement = new TextElement(
             ContextualArabicConverter.instance.convert(text),
             position,
-            this.getRenderStyle(scale, technique),
-            this.getLayoutStyle(technique),
+            { ...renderStyle },
+            { ...layoutStyle },
             priority,
             xOffset,
             yOffset,
