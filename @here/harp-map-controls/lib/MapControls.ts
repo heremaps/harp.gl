@@ -75,6 +75,11 @@ const MAX_DELTA_ALTITUDE_STEPS = 10;
 const USER_INPUTS_TO_CONSIDER = 5;
 
 /**
+ * The default maximum for the camera pitch. This value avoids seeing the horizon.
+ */
+const DEFAULT_MAX_PITCH_ANGLE = Math.PI / 4;
+
+/**
  * This map control provides basic map-related building blocks to interact with the map. It also
  * provides a default way of handling user input. Currently we support basic mouse interaction and
  * touch input interaction.
@@ -225,7 +230,7 @@ export class MapControls extends THREE.EventDispatcher {
     /**
      * Determines the maximum angle the camera can pitch to. It is defined in radians.
      */
-    private m_maxPitchAngle = Math.PI;
+    private m_maxPitchAngle = DEFAULT_MAX_PITCH_ANGLE;
 
     private m_cleanupMouseEventListeners?: () => void;
 
