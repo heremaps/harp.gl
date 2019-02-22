@@ -17,7 +17,7 @@ export namespace WebTileDataSourceExample {
 
         const sampleMapView = new MapView({
             canvas,
-            theme: "resources/day.json"
+            theme: "resources/berlin_base.json"
         });
 
         // instantiate the default map controls, allowing the user to pan around freely.

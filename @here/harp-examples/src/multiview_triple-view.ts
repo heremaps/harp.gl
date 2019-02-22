@@ -208,7 +208,13 @@ export namespace TripleViewExample {
     // create `${numberOfSyncXViews}` MapViews, each with their own theme file
     // snippet:harp_gl_multiview_tripleView_1.ts
     const mapViews = {
-        view1: initMapView("mapCanvas", 0, 0, "./resources/day.json", "./decoder.bundle.js"),
+        view1: initMapView(
+            "mapCanvas",
+            0,
+            0,
+            "./resources/berlin_base.json",
+            "./decoder.bundle.js"
+        ),
         view2: initMapView(
             "mapCanvas2",
             1,
