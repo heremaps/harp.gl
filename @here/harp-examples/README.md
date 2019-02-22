@@ -3,6 +3,8 @@
 ## Overview
 
 This repository contains examples for `harp.gl`.
+This is a test commit for running the GPU performance tests.
+DO NOT MERGE.
 
 ## Building and running
 
