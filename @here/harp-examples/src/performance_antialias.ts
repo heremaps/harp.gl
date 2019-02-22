@@ -75,34 +75,28 @@ export namespace AntialiasExample {
 `;
 
     // 2. Create 2 [[MapView]] instances, each with its own antialiasing parameters.
-    const omvSource = new OmvDataSource({
-        baseUrl: "https://xyz.api.here.com/tiles/osmbase/256/all",
-        apiFormat: APIFormat.MapzenV2,
-        styleSetName: "tilezen",
-        maxZoomLevel: 17
-    });
     const defaultTheme = "./resources/day.json";
     // snippet:vislib_performance_antialias_1.ts
-    const viewWithNativeAntialiasing = initializeMapView(
+    const viewWithNativeAA = initializeMapView(
         "mapCanvas-antialiased",
         defaultTheme,
         "./decoder.bundle.js",
-        omvSource
+        createOmvDataSource()
     );
-    const viewWithoutNativeAntialising = initializeMapView(
+    const viewWithoutNativeAA = initializeMapView(
         "mapCanvas",
         defaultTheme,
         "./decoder.bundle.js",
-        omvSource
+        createOmvDataSource()
     );
-    viewWithNativeAntialiasing.mapView.canvas.style.display = "none";
-    viewWithNativeAntialiasing.mapView.endAnimation();
-    viewWithoutNativeAntialising.mapView.beginAnimation();
+    viewWithNativeAA.mapView.canvas.style.display = "none";
+    viewWithNativeAA.mapView.endAnimation();
+    viewWithoutNativeAA.mapView.beginAnimation();
     // end:vislib_performance_antialias_1.ts
 
     // 3. Create the GUI to allow fiddling with the antialiasing settings.
     // snippet:vislib_performance_antialias_2.ts
-    createUIForAntialiasingSettings(viewWithNativeAntialiasing, viewWithoutNativeAntialising);
+    createUIForAntialiasingSettings(viewWithNativeAA, viewWithoutNativeAA);
     // end:vislib_performance_antialias_2.ts
 
     // 4. Add stats widget to observe the impact of the antialiasing settings.
@@ -110,10 +104,10 @@ export namespace AntialiasExample {
     const stats = new Stats();
     stats.domElement.id = "stats";
     document.body.appendChild(stats.domElement);
-    viewWithNativeAntialiasing.mapView.addEventListener(MapViewEventNames.Render, stats.begin);
-    viewWithoutNativeAntialising.mapView.addEventListener(MapViewEventNames.Render, stats.begin);
-    viewWithNativeAntialiasing.mapView.addEventListener(MapViewEventNames.AfterRender, stats.end);
-    viewWithoutNativeAntialising.mapView.addEventListener(MapViewEventNames.AfterRender, stats.end);
+    viewWithNativeAA.mapView.addEventListener(MapViewEventNames.Render, stats.begin);
+    viewWithoutNativeAA.mapView.addEventListener(MapViewEventNames.Render, stats.begin);
+    viewWithNativeAA.mapView.addEventListener(MapViewEventNames.AfterRender, stats.end);
+    viewWithoutNativeAA.mapView.addEventListener(MapViewEventNames.AfterRender, stats.end);
     // end:vislib_performance_antialias_3.ts
 
     /**
@@ -171,10 +165,8 @@ export namespace AntialiasExample {
         // Add Omv data source.
         mapView.addDataSource(omvDataSource);
 
-        // Position the camera over the map.
-        mapView.camera.position.set(0, 0, 800);
-        // Center the camera on Berlin.
-        mapView.geoCenter = new GeoCoordinates(52.518611, 13.376111, 0);
+        mapView.camera.position.z = 800; // Set camera height in meters.
+        mapView.geoCenter = new GeoCoordinates(52.518611, 13.376111, 0); // Berlin.
 
         // Instantiate the default map controls.
         const mapControls = new MapControls(mapView);
@@ -193,14 +185,13 @@ export namespace AntialiasExample {
     /**
      * Builds a dat.GUI user interface for testing antialising settings on the page.
      *
-     * @param viewWithNativeAA A [[MapView]] instance initialized with the native WebGL antialising.
-     * @param viewWithoutNativeAA A [[MapView]] instance initialized without the native WebGL
+     * @param antialiasedView A [[MapView]] instance initialized with the native WebGL antialising.
+     * @param aliasedView A [[MapView]] instance initialized without the native WebGL
      * antialising.
      */
-
     export function createUIForAntialiasingSettings(
-        viewWithNativeAA: ViewControlPair,
-        viewWithoutNativeAA: ViewControlPair
+        antialiasedView: ViewControlPair,
+        aliasedView: ViewControlPair
     ) {
         const gui = new GUI({ width: 300 });
 
@@ -220,16 +211,16 @@ export namespace AntialiasExample {
         options.nativeAA.option = nativeAAGUIOption;
         nativeAAGUIOption.name("Native WebGL MSAA (4samples)");
         nativeAAGUIOption.onChange((nativeAAEnabled: boolean) => {
-            viewWithNativeAA.mapView.canvas.style.display = nativeAAEnabled ? "" : "none";
-            viewWithoutNativeAA.mapView.canvas.style.display = nativeAAEnabled ? "none" : "";
+            antialiasedView.mapView.canvas.style.display = nativeAAEnabled ? "" : "none";
+            aliasedView.mapView.canvas.style.display = nativeAAEnabled ? "none" : "";
             if (nativeAAEnabled) {
-                synchronizeMapViews(viewWithoutNativeAA, viewWithNativeAA);
-                viewWithNativeAA.mapView.beginAnimation();
-                viewWithoutNativeAA.mapView.endAnimation();
+                synchronizeMapViews(aliasedView, antialiasedView);
+                antialiasedView.mapView.beginAnimation();
+                //aliasedView.mapView.endAnimation();
             } else {
-                synchronizeMapViews(viewWithNativeAA, viewWithoutNativeAA);
-                viewWithNativeAA.mapView.endAnimation();
-                viewWithoutNativeAA.mapView.beginAnimation();
+                synchronizeMapViews(antialiasedView, aliasedView);
+                antialiasedView.mapView.endAnimation();
+                //aliasedView.mapView.beginAnimation();
             }
         });
 
@@ -239,8 +230,8 @@ export namespace AntialiasExample {
         options.msaa.option = msaaOption;
         msaaOption.name("Enable");
         msaaOption.onChange((msaaEnabled: boolean) => {
-            viewWithoutNativeAA.mapView.mapRenderingManager.msaaEnabled = msaaEnabled;
-            viewWithNativeAA.mapView.mapRenderingManager.msaaEnabled = msaaEnabled;
+            aliasedView.mapView.mapRenderingManager.msaaEnabled = msaaEnabled;
+            antialiasedView.mapView.mapRenderingManager.msaaEnabled = msaaEnabled;
         });
 
         const msaaLevelOption = customAAs.add(options.msaa, "samplingLevel", {
@@ -257,8 +248,8 @@ export namespace AntialiasExample {
             // in this example, because we want to monitor the impact of the MSAA sampling level on
             // the framerate over time.
             // tslint:disable-next-line:max-line-length
-            viewWithoutNativeAA.mapView.mapRenderingManager.dynamicMsaaSamplingLevel = samplingLevel;
-            viewWithNativeAA.mapView.mapRenderingManager.dynamicMsaaSamplingLevel = samplingLevel;
+            aliasedView.mapView.mapRenderingManager.dynamicMsaaSamplingLevel = samplingLevel;
+            antialiasedView.mapView.mapRenderingManager.dynamicMsaaSamplingLevel = samplingLevel;
         });
     }
 
@@ -270,12 +261,20 @@ export namespace AntialiasExample {
      * @param destView The destination [[ViewControlPair]], with the camera projection to
      * paste.
      */
-
     export function synchronizeMapViews(srcView: ViewControlPair, destView: ViewControlPair) {
         const ypr = srcView.mapControls.yawPitchRoll;
         destView.mapControls.setRotation(ypr.yaw, ypr.pitch);
         destView.mapControls.cameraHeight = srcView.mapControls.cameraHeight;
         destView.mapView.worldCenter.copy(srcView.mapView.worldCenter);
         destView.mapView.update();
+    }
+
+    function createOmvDataSource(): OmvDataSource {
+        return new OmvDataSource({
+            baseUrl: "https://xyz.api.here.com/tiles/osmbase/256/all",
+            apiFormat: APIFormat.MapzenV2,
+            styleSetName: "tilezen",
+            maxZoomLevel: 17
+        });
     }
 }
