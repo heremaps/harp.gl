@@ -84,7 +84,7 @@ The conditions can be based on the datasource metadata
 (for example data layer like water or buildings or a specific flag like `isBridge`).
 
 An example theme file used in harp-examples could be found in the
-[@here/harp-map-theme/resources/day.json](../harp-map-theme/resources/day.json).
+[berlin_base.json](../harp-map-theme/resources/berlin_base.json).
 Theme file is closely connected with the type of data received from the datasource.
 
 `"technique"` - determines which technique should be applied to objects fulfilling the condition
