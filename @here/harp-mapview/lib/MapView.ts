@@ -1691,6 +1691,13 @@ export class MapView extends THREE.EventDispatcher {
     }
 
     /**
+     * Look at this meaningful function.
+     */
+    meaningfulFunction(): string {
+        return "This is a meaningful function!";
+    }
+
+    /**
      * Updates the camera and the projections and resets the screen collisions.
      */
     private updateCameras() {
