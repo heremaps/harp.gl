@@ -50,7 +50,7 @@ export namespace FreeCameraApp_DebugingToolExample {
      * The parameters of the [[FreeCameraApp]] are set in the [[FreeCameraAppOptions]] object.
      *
      * ```typescript
-     * [[include:vislib_freecamera_app_0.ts]]
+     * [[include:harp_gl_freecamera_app_0.ts]]
      * ```
      *
      */
@@ -212,7 +212,7 @@ Press 'V' to change the scene point of view<br>`;
         const canvas = document.getElementById("mapCanvas") as HTMLCanvasElement;
         const geoCenter = new GeoCoordinates(52.518611, 13.376111, 0);
 
-        // snippet:vislib_freecamera_app_0.ts
+        // snippet:harp_gl_freecamera_app_0.ts
         const app = new FreeCameraApp({
             decoderUrl: "./decoder.bundle.js",
             canvas,
@@ -221,7 +221,7 @@ Press 'V' to change the scene point of view<br>`;
         });
 
         app.start();
-        // end:vislib_freecamera_app_0.ts
+        // end:harp_gl_freecamera_app_0.ts
     }
 
     main();
