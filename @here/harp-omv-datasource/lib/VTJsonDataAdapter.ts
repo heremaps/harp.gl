@@ -7,7 +7,7 @@
 import { MapEnv, ValueMap } from "@here/harp-datasource-protocol/lib/Theme";
 import { GeoBox, GeoCoordinates, TileKey } from "@here/harp-geoutils";
 import { ILogger } from "@here/harp-utils";
-import { IGeometryProcessor } from "./IGeometryProcessor";
+import { IGeometryProcessor, ILineGeometry, IPolygonGeometry, IRing } from "./IGeometryProcessor";
 import { OmvFeatureFilter } from "./OmvDataFilter";
 import { OmvDataAdapter } from "./OmvDecoder";
 import { isArrayBufferLike, lat2tile, tile2lat } from "./OmvUtils";
@@ -131,11 +131,11 @@ export class VTJsonDataAdapter implements OmvDataAdapter {
                 }
                 case VTJsonGeometryType.LineString: {
                     for (const lineGeometry of feature.geometry as VTJsonPosition[][]) {
-                        const line: GeoCoordinates[] = [];
+                        const line: ILineGeometry = { coordinates: [] };
                         for (const [x, y] of lineGeometry) {
                             const longitude = west + x * longitudeScale;
                             const latitude = tile2lat(top + y, tileKey.level + N);
-                            line.push(new GeoCoordinates(latitude, longitude));
+                            line.coordinates.push(new GeoCoordinates(latitude, longitude));
                         }
 
                         this.m_processor.processLineFeature(
@@ -150,25 +150,38 @@ export class VTJsonDataAdapter implements OmvDataAdapter {
                 }
                 case VTJsonGeometryType.Polygon: {
                     let polygonValid = true;
-                    const polygon: GeoCoordinates[][] = [];
+                    const polygon: IPolygonGeometry = { rings: [] };
                     for (const outline of feature.geometry as VTJsonPosition[][]) {
                         let minX = Infinity;
                         let minY = Infinity;
                         let maxX = 0;
                         let maxY = 0;
 
-                        const ring: GeoCoordinates[] = [];
-                        for (const [x, y] of outline) {
-                            if (polygon.length > 0) {
-                                minX = Math.min(minX, x);
-                                minY = Math.min(minY, y);
-                                maxX = Math.max(maxX, x);
-                                maxY = Math.max(maxY, y);
+                        const ring: IRing = { coordinates: [], outlines: [] };
+                        for (let coordIdx = 0; coordIdx < outline.length; ++coordIdx) {
+                            const currX = outline[coordIdx][0];
+                            const currY = outline[coordIdx][1];
+                            const nextX = outline[(coordIdx + 1) % outline.length][0];
+                            const nextY = outline[(coordIdx + 1) % outline.length][1];
+
+                            if (polygon.rings.length > 0) {
+                                minX = Math.min(minX, currX);
+                                minY = Math.min(minY, currY);
+                                maxX = Math.max(maxX, currX);
+                                maxY = Math.max(maxY, currY);
                             }
 
-                            const longitude = west + x * longitudeScale;
-                            const latitude = tile2lat(top + y, tileKey.level + N);
-                            ring.push(new GeoCoordinates(latitude, longitude));
+                            const longitude = west + currX * longitudeScale;
+                            const latitude = tile2lat(top + currY, tileKey.level + N);
+                            ring.coordinates.push(new GeoCoordinates(latitude, longitude));
+                            ring.outlines!.push(
+                                !(
+                                    (currX === 0 && nextX === 0) ||
+                                    (currX === extent && nextX === extent) ||
+                                    (currY === 0 && nextY === 0) ||
+                                    (currY === extent && nextY === extent)
+                                )
+                            );
                         }
 
                         if (minX === 0 && minY === 0 && maxX === extent && maxY === extent) {
@@ -178,7 +191,7 @@ export class VTJsonDataAdapter implements OmvDataAdapter {
                             minX = minY = Infinity;
                             maxX = maxY = 0;
                         }
-                        polygon.push(ring);
+                        polygon.rings.push(ring);
                     }
 
                     if (polygonValid) {

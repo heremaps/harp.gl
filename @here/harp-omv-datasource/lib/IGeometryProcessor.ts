@@ -8,6 +8,42 @@ import { MapEnv } from "@here/harp-datasource-protocol/lib/Theme";
 import { GeoCoordinates } from "@here/harp-geoutils";
 
 /**
++ *  An interface to represent inner and outer rings of a [[IPolygonGeometry]].
++ */
+export interface IRing {
+    /**
+     * The [[GeoCoordinates]] of this [[IRing]].
+     */
+    coordinates: GeoCoordinates[];
+
+    /**
+     * Boolean array representing if the edges of this [[IRing]] should be considered as potential
+     * outlines.
+     */
+    outlines?: boolean[];
+}
+
+/**
+ * An interface to represent polygon geometries.
+ */
+export interface IPolygonGeometry {
+    /**
+     * The rings of this polygon.
+     */
+    rings: IRing[];
+}
+
+/**
+ * An interface to represent line geometries.
+ */
+export interface ILineGeometry {
+    /**
+     * The [[GeoCoordinates]] of the line.
+     */
+    coordinates: GeoCoordinates[];
+}
+
+/**
  * The IGeometryProcessor is used to process geo data.
  *
  * The methods of concrete implementations of [[IGeometryProcessor]]
@@ -47,7 +83,7 @@ export interface IGeometryProcessor {
      */
     processLineFeature(
         layerName: string,
-        geometry: GeoCoordinates[][],
+        geometry: ILineGeometry[],
         env: MapEnv,
         storageLevel: number,
         displayZoomLevel: number
@@ -67,7 +103,7 @@ export interface IGeometryProcessor {
      */
     processPolygonFeature(
         layerName: string,
-        geometry: GeoCoordinates[][][],
+        geometry: IPolygonGeometry[],
         env: MapEnv,
         storageLevel: number,
         displayZoomLevel: number

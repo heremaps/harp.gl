@@ -46,7 +46,7 @@
    {
     "styles": [
      {
-      "when": "$geometryType ^= 'polygon' && extruded",
+      "when": "$geometryType ^= 'polygon' && height",
       "renderOrder": 1000,
       "technique": "extruded-polygon",
       "attr": {
@@ -54,7 +54,9 @@
        "transparent": true,
        "opacity": 0.5,
        "maxSlope": 0.9,
-       "lineWidth": 1.0
+       "lineWidth": 1.0,
+       "constantHeight": true,
+       "boundaryWalls": false
       }
      },
      {

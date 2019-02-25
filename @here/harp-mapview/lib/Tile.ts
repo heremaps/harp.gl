@@ -5,6 +5,7 @@
  */
 import {
     BaseTechnique,
+    BufferAttribute,
     DecodedTile,
     ExtrudedPolygonTechnique,
     FillTechnique,
@@ -1203,12 +1204,11 @@ export class Tile implements CachedResource {
 
                 // Add polygon offset to the extruded buildings and to the fill area to avoid depth
                 // problems when rendering edges.
-                const isExtruded: boolean =
+                const hasExtrudedOutlines: boolean =
                     isExtrudedPolygonTechnique(technique) && srcGeometry.edgeIndex !== undefined;
-                const isFilled: boolean =
-                    isFillTechnique(technique) &&
-                    srcGeometry.outlineIndicesAttributes !== undefined;
-                if (isExtruded || isFilled) {
+                const hasFillOutlines: boolean =
+                    isFillTechnique(technique) && srcGeometry.edgeIndex !== undefined;
+                if (hasExtrudedOutlines || hasFillOutlines) {
                     material.polygonOffset = true;
                     material.polygonOffsetFactor = 0.75;
                     material.polygonOffsetUnits = 4.0;
@@ -1311,7 +1311,7 @@ export class Tile implements CachedResource {
 
                 this.addFeatureData(srcGeometry, technique, object);
 
-                if (isExtruded || isFillTechnique(technique)) {
+                if (isExtrudedPolygonTechnique(technique) || isFillTechnique(technique)) {
                     // filled polygons are normal meshes, and need transparency only when fading is
                     // defined.
                     if (technique.fadeFar !== undefined) {
@@ -1340,11 +1340,13 @@ export class Tile implements CachedResource {
                 objects.push(object);
 
                 // Add the extruded building edges as a separate geometry.
-                if (technique.name === "extruded-polygon" && srcGeometry.edgeIndex !== undefined) {
+                if (hasExtrudedOutlines) {
                     const edgeGeometry = new THREE.BufferGeometry();
                     edgeGeometry.addAttribute("position", bufferGeometry.getAttribute("position"));
                     edgeGeometry.addAttribute("color", bufferGeometry.getAttribute("color"));
-                    edgeGeometry.setIndex(getBufferAttribute(srcGeometry.edgeIndex));
+                    edgeGeometry.setIndex(
+                        getBufferAttribute(srcGeometry.edgeIndex! as BufferAttribute)
+                    );
 
                     // Read the uniforms from the technique values (and apply the default values).
                     const extrudedPolygonTechnique = technique as ExtrudedPolygonTechnique;
@@ -1376,19 +1378,16 @@ export class Tile implements CachedResource {
                     objects.push(edgeObj);
                 }
 
-                // polygon outline
-                if (isFilled && srcGeometry.outlineIndicesAttributes !== undefined) {
-                    // iterate through all the arrays inside the outlineIndicesAttributes for each
-                    // of them, create an object and add it to objects
-                    for (const indices of srcGeometry.outlineIndicesAttributes) {
+                // Add the fill area edges as a separate geometry.
+                if (hasFillOutlines) {
+                    const edgeIndexBuffers = srcGeometry.edgeIndex! as BufferAttribute[];
+                    for (const edgeIndexBufferAttribute of edgeIndexBuffers) {
                         const outlineGeometry = new THREE.BufferGeometry();
                         outlineGeometry.addAttribute(
                             "position",
                             bufferGeometry.getAttribute("position")
                         );
-                        if (indices !== undefined) {
-                            outlineGeometry.setIndex(getBufferAttribute(indices));
-                        }
+                        outlineGeometry.setIndex(getBufferAttribute(edgeIndexBufferAttribute));
 
                         const fillTechnique = technique as FillTechnique;
 
@@ -1397,6 +1396,7 @@ export class Tile implements CachedResource {
                         // Configure the edge material based on the theme values.
                         const materialParams: EdgeMaterialParameters = {
                             color: fadingParams.color,
+                            colorMix: fadingParams.colorMix,
                             fadeNear: fadingParams.lineFadeNear,
                             fadeFar: fadingParams.lineFadeFar
                         };
