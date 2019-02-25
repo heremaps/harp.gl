@@ -807,6 +807,10 @@ export interface FillTechnique extends BaseTechnique, PolygonalTechnique {
      * A value of `true` creates a wireframe geometry. (May not be supported with all techniques).
      */
     wireframe?: boolean;
+    /**
+     * Width of the lines. Currently limited to the [0, 1] range.
+     */
+    lineWidth?: number;
 }
 
 /**
@@ -868,6 +872,19 @@ export interface ExtrudedPolygonTechnique extends BaseStandardTechnique {
      * and [[MapEnv]] did not return it too.
      */
     defaultColor?: string;
+
+    /**
+     * If `true`, the height of the extruded buildings will not be modified by the mercator
+     * projection distortion that happens around the poles.
+     * @default `false`
+     */
+    constantHeight?: boolean;
+
+    /**
+     * If `false`, wall geometry will not be added along the tile boundaries.
+     * @default `true`
+     */
+    boundaryWalls?: boolean;
 }
 
 /**

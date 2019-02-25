@@ -31,7 +31,7 @@ import {
     TileDecoderService,
     WorkerServiceManager
 } from "@here/harp-mapview-decoder/index-worker";
-import { IGeometryProcessor } from "./IGeometryProcessor";
+import { IGeometryProcessor, ILineGeometry, IPolygonGeometry } from "./IGeometryProcessor";
 import { OmvProtobufDataAdapter } from "./OmvData";
 import {
     OmvFeatureFilter,
@@ -55,7 +55,11 @@ const logger = LoggerManager.instance.create("OmvDecoder", { enabled: false });
 export class Ring {
     readonly isOuterRing: boolean;
 
-    constructor(readonly contour: number[], readonly countourTexCoords?: number[]) {
+    constructor(
+        readonly contour: number[],
+        readonly contourOutlines?: boolean[],
+        readonly countourTexCoords?: number[]
+    ) {
         this.isOuterRing = this.area() < 0;
     }
 
@@ -89,7 +93,7 @@ export interface IOmvEmitter {
 
     processLineFeature(
         layer: string,
-        feature: GeoCoordinates[][],
+        feature: ILineGeometry[],
         env: MapEnv,
         techniques: Technique[],
         featureId: number | undefined
@@ -97,7 +101,7 @@ export interface IOmvEmitter {
 
     processPolygonFeature(
         layer: string,
-        feature: GeoCoordinates[][][],
+        feature: IPolygonGeometry[],
         env: MapEnv,
         techniques: Technique[],
         featureId: number | undefined
@@ -295,7 +299,7 @@ export class OmvDecoder implements IGeometryProcessor {
 
     processLineFeature(
         layer: string,
-        geometry: GeoCoordinates[][],
+        geometry: ILineGeometry[],
         env: MapEnv,
         storageLevel: number,
         displayLevel: number
@@ -337,7 +341,7 @@ export class OmvDecoder implements IGeometryProcessor {
 
     processPolygonFeature(
         layer: string,
-        geometry: GeoCoordinates[][][],
+        geometry: IPolygonGeometry[],
         env: MapEnv,
         storageLevel: number,
         displayLevel: number

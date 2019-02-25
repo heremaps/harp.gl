@@ -8,7 +8,7 @@ import { Env, MapEnv, Value, ValueMap } from "@here/harp-datasource-protocol";
 import { GeoBox, GeoCoordinates, TileKey } from "@here/harp-geoutils";
 import { ILogger } from "@here/harp-utils";
 import * as Long from "long";
-import { IGeometryProcessor } from "./IGeometryProcessor";
+import { IGeometryProcessor, ILineGeometry, IPolygonGeometry, IRing } from "./IGeometryProcessor";
 import { OmvFeatureFilter } from "./OmvDataFilter";
 import { OmvDataAdapter } from "./OmvDecoder";
 import { OmvGeometryType } from "./OmvDecoderDefs";
@@ -37,6 +37,7 @@ export interface BaseCommand {
 export interface PositionCommand extends BaseCommand {
     latitude: number;
     longitude: number;
+    outline?: boolean;
 }
 
 /**
@@ -169,6 +170,7 @@ export class FeatureAttributes {
  * @hidden
  */
 export interface GeometryCommandsVisitor {
+    type: "Point" | "Line" | "Polygon";
     visitCommand(command: GeometryCommand): void;
 }
 
@@ -193,9 +195,12 @@ export class GeometryCommands {
 
         const top = lat2tile(north, tileKey.level + N);
 
-        let offsetX = 0;
-        let offsetY = 0;
+        let currX = 0;
+        let currY = 0;
 
+        const xCoords: number[] = [];
+        const yCoords: number[] = [];
+        const commands: GeometryCommand[] = [];
         for (let cmdIndex = 0; cmdIndex < geometryCount; ) {
             // tslint:disable:no-bitwise
             const kind = (geometry[cmdIndex] & 0x7) as CommandKind;
@@ -207,18 +212,43 @@ export class GeometryCommands {
                 for (let n = 0; n < count; ++n) {
                     const xx = geometry[cmdIndex++];
                     const yy = geometry[cmdIndex++];
+
                     // tslint:disable:no-bitwise
-                    offsetX += (xx >> 1) ^ -(xx & 1);
-                    offsetY += (yy >> 1) ^ -(yy & 1);
-                    // tslint:enable:no-bitwise
+                    currX += (xx >> 1) ^ -(xx & 1);
+                    currY += (yy >> 1) ^ -(yy & 1);
+                    if (visitor.type === "Polygon") {
+                        xCoords.push(currX);
+                        yCoords.push(currY);
+                    }
 
-                    const longitude = west + offsetX * longitudeScale;
-                    const latitude = tile2lat(top + offsetY, tileKey.level + N);
-
-                    visitor.visitCommand({ kind, latitude, longitude });
+                    const longitude = west + currX * longitudeScale;
+                    const latitude = tile2lat(top + currY, tileKey.level + N);
+                    commands.push({ kind, latitude, longitude });
                 }
             } else {
+                for (let i = 0; i < commands.length; ++i) {
+                    const prevX = xCoords[i];
+                    const prevY = yCoords[i];
+                    const nextX = xCoords[(i + 1) % xCoords.length];
+                    const nextY = yCoords[(i + 1) % yCoords.length];
+                    (commands[i] as PositionCommand).outline = !(
+                        (prevX <= 0 && nextX <= 0) ||
+                        (prevX >= extent && nextX >= extent) ||
+                        (prevY <= 0 && nextY <= 0) ||
+                        (prevY >= extent && nextY >= extent)
+                    );
+                    visitor.visitCommand(commands[i]);
+                }
                 visitor.visitCommand({ kind });
+                xCoords.length = 0;
+                yCoords.length = 0;
+                commands.length = 0;
+            }
+        }
+
+        if (commands.length > 0) {
+            for (const command of commands) {
+                visitor.visitCommand(command);
             }
         }
     }
@@ -463,6 +493,7 @@ export class OmvProtobufDataAdapter implements OmvDataAdapter, OmvVisitor {
             this.m_geoBox,
             this.m_layer.extent,
             {
+                type: "Point",
                 visitCommand: command => {
                     if (isMoveToCommand(command)) {
                         geometry.push(new GeoCoordinates(command.latitude, command.longitude));
@@ -513,21 +544,22 @@ export class OmvProtobufDataAdapter implements OmvDataAdapter, OmvVisitor {
             return;
         }
 
-        const geometry: GeoCoordinates[][] = [];
-        let currentLine: GeoCoordinates[];
+        const geometry: ILineGeometry[] = [];
+        let coordinates: GeoCoordinates[];
         this.m_geometryCommands.accept(
             feature.geometry,
             this.m_tileKey,
             this.m_geoBox,
             this.m_layer.extent,
             {
+                type: "Line",
                 visitCommand: command => {
                     if (isMoveToCommand(command)) {
                         const geoPoint = new GeoCoordinates(command.latitude, command.longitude);
-                        currentLine = [geoPoint];
-                        geometry.push(currentLine);
+                        coordinates = [geoPoint];
+                        geometry.push({ coordinates });
                     } else if (isLineToCommand(command)) {
-                        currentLine.push(new GeoCoordinates(command.latitude, command.longitude));
+                        coordinates.push(new GeoCoordinates(command.latitude, command.longitude));
                     }
                 }
             }
@@ -575,30 +607,32 @@ export class OmvProtobufDataAdapter implements OmvDataAdapter, OmvVisitor {
             return;
         }
 
-        const geometry: GeoCoordinates[][][] = [];
-        const currentPolygon: GeoCoordinates[][] = [];
-        let currentRing: GeoCoordinates[];
+        const geometry: IPolygonGeometry[] = [];
+        const currentPolygon: IPolygonGeometry = { rings: [] };
+        let currentRing: IRing;
         this.m_geometryCommands.accept(
             feature.geometry,
             this.m_tileKey,
             this.m_geoBox,
             this.m_layer.extent,
             {
+                type: "Polygon",
                 visitCommand: command => {
                     if (isMoveToCommand(command)) {
                         const geoPoint = new GeoCoordinates(command.latitude, command.longitude);
-                        currentRing = [geoPoint];
+                        currentRing = { coordinates: [geoPoint], outlines: [command.outline!] };
                     } else if (isLineToCommand(command)) {
                         const geoPoint = new GeoCoordinates(command.latitude, command.longitude);
-                        currentRing.push(geoPoint);
+                        currentRing.coordinates.push(geoPoint);
+                        currentRing.outlines!.push(command.outline!);
                     } else if (isClosePathCommand(command)) {
-                        currentPolygon.push(currentRing);
+                        currentPolygon.rings.push(currentRing);
                     }
                 }
             }
         );
 
-        if (currentPolygon.length > 0) {
+        if (currentPolygon.rings.length > 0) {
             geometry.push(currentPolygon);
         }
 
