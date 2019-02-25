@@ -100,9 +100,8 @@ export interface Geometry {
     vertexAttributes: BufferAttribute[];
     interleavedVertexAttributes?: InterleavedBufferAttribute[];
     index?: BufferAttribute;
-    edgeIndex?: BufferAttribute;
+    edgeIndex?: BufferAttribute | BufferAttribute[];
     groups: Group[];
-    outlineIndicesAttributes?: BufferAttribute[];
     uuid?: string;
 
     /**

@@ -23,14 +23,9 @@ export interface IMeshBuffers {
     readonly indices: number[];
 
     /**
-     * Array used by the [[Outliner]] class to create outlines of areas.
+     * Array that stores the indices of the mesh edges.
      */
-    readonly outlineIndices: number[][];
-
-    /**
-     * Array used by the [[Extruder]] class to create extruded geometry for the buildings.
-     */
-    readonly edgeIndices: number[];
+    readonly edgeIndices: number[] | number[][];
 
     /**
      * Optional list of feature IDs. Currently only Number is supported, will fail if features have

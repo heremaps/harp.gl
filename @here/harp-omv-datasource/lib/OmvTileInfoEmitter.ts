@@ -14,6 +14,7 @@ import { MapEnv } from "@here/harp-datasource-protocol/lib/Theme";
 import * as THREE from "three";
 
 import { GeoCoordinates } from "@here/harp-geoutils";
+import { ILineGeometry, IPolygonGeometry } from "./IGeometryProcessor";
 import { IOmvEmitter, OmvDecoder, Ring } from "./OmvDecoder";
 
 export class OmvTileInfoEmitter implements IOmvEmitter {
@@ -83,7 +84,7 @@ export class OmvTileInfoEmitter implements IOmvEmitter {
 
     processLineFeature(
         layer: string,
-        geometry: GeoCoordinates[][],
+        geometry: ILineGeometry[],
         env: MapEnv,
         techniques: Technique[],
         featureId: number | undefined
@@ -98,7 +99,7 @@ export class OmvTileInfoEmitter implements IOmvEmitter {
 
         for (const polyline of geometry) {
             const line: number[] = [];
-            for (const geoPos of polyline) {
+            for (const geoPos of polyline.coordinates) {
                 const { x, y } = projection.projectPoint(geoPos, worldPos).sub(center);
                 line.push(x, y);
             }
@@ -143,7 +144,7 @@ export class OmvTileInfoEmitter implements IOmvEmitter {
 
     processPolygonFeature(
         layer: string,
-        geometry: GeoCoordinates[][][],
+        geometry: IPolygonGeometry[],
         env: MapEnv,
         techniques: Technique[],
         featureId: number | undefined
@@ -164,9 +165,9 @@ export class OmvTileInfoEmitter implements IOmvEmitter {
 
         for (const polygon of geometry) {
             const rings: Ring[] = [];
-            for (const outline of polygon) {
+            for (const outline of polygon.rings) {
                 const contour2: number[] = [];
-                for (const geoPoint of outline) {
+                for (const geoPoint of outline.coordinates) {
                     const { x, y } = projection.projectPoint(geoPoint, worldPos).sub(center);
                     contour2.push(x, y);
                 }

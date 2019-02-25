@@ -65,9 +65,7 @@
     {
       "type": "Feature",
       "properties": {
-        "extruded": true,
-        "height": 50000,
-        "constantHeight": true
+        "height": 50000
       },
       "geometry": {
         "type": "Polygon",
@@ -100,9 +98,7 @@
     {
       "type": "Feature",
       "properties": {
-        "extruded": true,
-        "height": 20000,
-        "constantHeight": true
+        "height": 20000
       },
       "geometry": {
         "type": "Polygon",

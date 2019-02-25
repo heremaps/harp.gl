@@ -9,7 +9,6 @@ import {
     GeometryType,
     Group,
     IMeshBuffers,
-    indexNeeded,
     PoiGeometry,
     StyleSetEvaluator,
     TextGeometry,
@@ -541,13 +540,10 @@ export class GeoJsonGeometryCreator {
         for (let i = 0; i < contour.length; i += 2) {
             outline.push(contour[i], contour[i + 1]);
             if (
-                !indexNeeded(
-                    contour[i],
-                    contour[i + 1],
-                    contour[i + 2],
-                    contour[i + 3],
-                    tileExtents
-                )
+                (this.isOnTileBorder(contour[i], tileExtents) &&
+                    this.isOnTileBorder(contour[i + 2], tileExtents)) ||
+                (this.isOnTileBorder(contour[i + 1], tileExtents) &&
+                    this.isOnTileBorder(contour[i + 3], tileExtents))
             ) {
                 lines.add([...outline]);
                 buffer.push(...outline);
@@ -556,5 +552,9 @@ export class GeoJsonGeometryCreator {
         }
         lines.add([...outline]);
         buffer.push(...outline);
+    }
+
+    private static isOnTileBorder(value: number, extents: number): boolean {
+        return extents - Math.abs(value) <= 0.01;
     }
 }
