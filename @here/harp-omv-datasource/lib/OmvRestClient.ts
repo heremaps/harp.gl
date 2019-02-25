@@ -49,23 +49,7 @@ export enum APIFormat {
     MapboxV4,
 
     /**
-     * Use the REST API format of Mapzen Vector Tile API v1.
-     *
-     * Usage:
-     * `<OmvRestClientParams.baseUrl>/<zoom>/<X>/<Y>.pbf?api_key=<OmvRestClientParams.authenticationCode>`
-     *
-     * Format definition:
-     * `http|s://<base-url>/{API version}/{layers}/{z}/{x}/{y}/{format}?api_key={api_key}`
-     *
-     * Sample URL:
-     * `https://tile.mapzen.com/mapzen/vector/v1/all/16/19293/24641.json?api_key=your-mapzen-api-key`
-     *
-     * Default authentication method used: [[AuthenticationTypeMapZenV1]].
-     */
-    MapzenV1,
-
-    /**
-     * Use the REST API format of Mapzen Vector Tile API v2.
+     * Use the REST API format of XYZ Vector Tile API in MVT format.
      *
      * Usage:
      * `<OmvRestClientParams.baseUrl>/tiles/omsbase/256/<zoom>/<X>/<Y>.mvt?api_key=<OmvRestClientParams.authenticationCode>`
@@ -74,12 +58,12 @@ export enum APIFormat {
      * `http|s://<base-url>/tiles/{layers}/{z}/{x}/{y}/{format}?api_key={api_key}`
      *
      * Sample URL:
-     * `https://xyz.api.here.com/tiles/osmbase/256/all/16/19293/24641.mvt?api_key=your-mapzen-api-key`
+     * `https://xyz.api.here.com/tiles/osmbase/256/all/16/19293/24641.mvt?api_key=your-xyz-api-key`
      */
-    MapzenV2,
+    XYZMVT,
 
     /**
-     * Use the REST API format of Mapzen Vector Tile API v2.
+     * Use the REST API format of XYZ Vector Tile API in JSON format.
      *
      * Usage:
      * `<OmvRestClientParams.baseUrl>/tiles/omsbase/256/<zoom>/<X>/<Y>.mvt?api_key=<OmvRestClientParams.authenticationCode>`
@@ -88,9 +72,9 @@ export enum APIFormat {
      * `http|s://<base-url>/tiles/{layers}/{z}/{x}/{y}/{format}?api_key={api_key}`
      *
      * Sample URL:
-     * `https://xyz.api.here.com/tiles/osmbase/256/all/16/19293/24641.json?api_key=your-mapzen-api-key`
+     * `https://xyz.api.here.com/tiles/osmbase/256/all/16/19293/24641.json?api_key=your-xyz-api-key`
      */
-    MapzenV2Json,
+    XYZJson,
 
     /**
      * Use the REST API format of Tomtoms Vector Tile API v1.
@@ -149,7 +133,7 @@ export const AuthenticationTypeMapboxV4: AuthenticationMethodInfo = {
     method: AuthenticationMethod.QueryString,
     name: "access_token"
 };
-export const AuthenticationTypeMapZenV1: AuthenticationMethodInfo = {
+export const AuthenticationTypeXYZ: AuthenticationMethodInfo = {
     method: AuthenticationMethod.QueryString,
     name: "api_key"
 };
@@ -265,7 +249,7 @@ export class OmvRestClient implements DataProvider {
 
         tileUrl = this.applyAuthCode(tileUrl, init, authenticationCode);
 
-        if (this.params.apiFormat === APIFormat.MapzenV2Json) {
+        if (this.params.apiFormat === APIFormat.XYZJson) {
             return this.downloadManager.downloadJson(tileUrl, init);
         }
 
@@ -300,9 +284,9 @@ export class OmvRestClient implements DataProvider {
                 return AuthenticationTypeBearer;
             case APIFormat.MapboxV4:
                 return AuthenticationTypeMapboxV4;
-            case APIFormat.MapzenV1:
-            case APIFormat.MapzenV2:
-                return AuthenticationTypeMapZenV1;
+            case APIFormat.XYZMVT:
+            case APIFormat.XYZJson:
+                return AuthenticationTypeXYZ;
             case APIFormat.TomtomV1:
                 return AuthenticationTypeTomTomV1;
             default:
@@ -355,13 +339,10 @@ export class OmvRestClient implements DataProvider {
             case APIFormat.MapboxV4:
                 path += ".mvt";
                 break;
-            case APIFormat.MapzenV1:
-                path += ".pbf";
-                break;
-            case APIFormat.MapzenV2:
+            case APIFormat.XYZMVT:
                 path += ".mvt";
                 break;
-            case APIFormat.MapzenV2Json:
+            case APIFormat.XYZJson:
                 path += ".json";
                 break;
             case APIFormat.TomtomV1:
