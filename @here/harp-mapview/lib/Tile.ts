@@ -1149,8 +1149,8 @@ export class Tile implements CachedResource {
                     srcGeometry.outlineIndicesAttributes !== undefined;
                 if (isExtruded || isFilled) {
                     material.polygonOffset = true;
-                    material.polygonOffsetFactor = 0.25;
-                    material.polygonOffsetUnits = 0.1;
+                    material.polygonOffsetFactor = 0.75;
+                    material.polygonOffsetUnits = 4.0;
                 }
 
                 const object = new ObjectCtor(bufferGeometry, material);
