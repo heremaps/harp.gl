@@ -1,0 +1,53 @@
+/*
+ * Copyright (C) 2017-2019 HERE Europe B.V.
+ * Licensed under Apache 2.0, see full license in LICENSE
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+import { Vector3Like } from "./Vector3Like";
+
+/**
+ * The interface [[OrientedBox3Like]] is used to represent oriented bounding box.
+ */
+export interface OrientedBox3Like {
+    /**
+     * The position of this bounding box.
+     */
+    readonly position: Vector3Like;
+
+    /**
+     * The x-axis of this bounding box.
+     */
+    readonly xAxis: Vector3Like;
+
+    /**
+     * The y-axis of this bounding box.
+     */
+    readonly yAxis: Vector3Like;
+
+    /**
+     * The z-axis of this bounding box.
+     */
+    readonly zAxis: Vector3Like;
+
+    /**
+     * The extents of this bounding box.
+     */
+    readonly extents: Vector3Like;
+}
+
+/**
+ * Returns true if the given object implements the interface [[OrientedBox3Like]].
+ *
+ * @param object The object.
+ */
+export function isOrientedBox3Like(object: {}): object is OrientedBox3Like {
+    const obb = object as Partial<OrientedBox3Like>;
+    return (
+        obb.position !== undefined &&
+        obb.xAxis !== undefined &&
+        obb.yAxis !== undefined &&
+        obb.zAxis !== undefined &&
+        obb.extents !== undefined
+    );
+}

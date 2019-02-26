@@ -7,8 +7,9 @@
 import { GeoBox } from "../coordinates/GeoBox";
 import { GeoCoordinates } from "../coordinates/GeoCoordinates";
 import { GeoCoordinatesLike } from "../coordinates/GeoCoordinatesLike";
-import { Box3Like } from "../math/Box3Like";
+import { Box3Like, isBox3Like } from "../math/Box3Like";
 import { MathUtils } from "../math/MathUtils";
+import { isOrientedBox3Like, OrientedBox3Like } from "../math/OrientedBox3Like";
 import { Vector3Like } from "../math/Vector3Like";
 import { Projection } from "./Projection";
 
@@ -18,7 +19,7 @@ class EquirectangularProjection implements Projection {
     static geoToWorldScale: number = 1.0 / (2.0 * Math.PI);
     static worldToGeoScale: number = (2.0 * Math.PI) / 1.0;
 
-    getScaleFactor<WorldCoordinates extends Vector3Like>(_worldPoint: WorldCoordinates): number {
+    getScaleFactor(_worldPoint: Vector3Like): number {
         return 1;
     }
 
@@ -75,7 +76,7 @@ class EquirectangularProjection implements Projection {
         return geoPoint;
     }
 
-    projectBox<WorldBoundingBox extends Box3Like>(
+    projectBox<WorldBoundingBox extends Box3Like | OrientedBox3Like>(
         geoBox: GeoBox,
         result?: WorldBoundingBox
     ): WorldBoundingBox {
@@ -88,16 +89,28 @@ class EquirectangularProjection implements Projection {
         if (!result) {
             result = MathUtils.newEmptyBox3() as WorldBoundingBox;
         }
-        result.min.x = worldCenter.x - sizeX * 0.5;
-        result.min.y = worldCenter.y - sizeY * 0.5;
-        result.max.x = worldCenter.x + sizeX * 0.5;
-        result.max.y = worldCenter.y + sizeY * 0.5;
-        if (altitudeSpan !== undefined) {
-            result.min.z = worldCenter.z - altitudeSpan * 0.5;
-            result.max.z = worldCenter.z + altitudeSpan * 0.5;
-        } else {
-            result.min.z = 0;
-            result.max.z = 0;
+        if (isBox3Like(result)) {
+            result.min.x = worldCenter.x - sizeX * 0.5;
+            result.min.y = worldCenter.y - sizeY * 0.5;
+            result.max.x = worldCenter.x + sizeX * 0.5;
+            result.max.y = worldCenter.y + sizeY * 0.5;
+            if (altitudeSpan !== undefined) {
+                result.min.z = worldCenter.z - altitudeSpan * 0.5;
+                result.max.z = worldCenter.z + altitudeSpan * 0.5;
+            } else {
+                result.min.z = 0;
+                result.max.z = 0;
+            }
+        } else if (isOrientedBox3Like(result)) {
+            MathUtils.newVector3(1, 0, 0, result.xAxis);
+            MathUtils.newVector3(0, 1, 0, result.yAxis);
+            MathUtils.newVector3(0, 0, 1, result.zAxis);
+            result.position.x = worldCenter.x;
+            result.position.y = worldCenter.y;
+            result.position.z = worldCenter.z;
+            result.extents.x = sizeX * 0.5;
+            result.extents.y = sizeY * 0.5;
+            result.extents.z = Math.max(Number.EPSILON, (altitudeSpan || 0) * 0.5);
         }
         return result;
     }

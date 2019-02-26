@@ -13,10 +13,20 @@ export interface Box3Like {
     /**
      * The minimum position in world coordinates of this bounding box.
      */
-    min: Vector3Like;
+    readonly min: Vector3Like;
 
     /**
      * The maximum position in world coordinates of this bounding box.
      */
-    max: Vector3Like;
+    readonly max: Vector3Like;
+}
+
+/**
+ * Returns true if the given object implements the [[Box3Like]] interface.
+ *
+ * @param object A valid object.
+ */
+export function isBox3Like(object: {}): object is Box3Like {
+    const box3 = object as Partial<Box3Like>;
+    return box3.min !== undefined && box3.max !== undefined;
 }

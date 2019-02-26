@@ -5,6 +5,7 @@
  */
 
 import { Box3Like } from "./Box3Like";
+import { Vector3Like } from "./Vector3Like";
 
 const DEG2RAD = Math.PI / 180;
 const RAD2DEG = 180 / Math.PI;
@@ -18,6 +19,48 @@ export namespace MathUtils {
             min: { x: Infinity, y: Infinity, z: Infinity },
             max: { x: -Infinity, y: -Infinity, z: -Infinity }
         };
+    }
+
+    /**
+     * Creates a new [Vector3Like] instance.
+     *
+     * @param x The x component.
+     * @param y The y component.
+     * @param z The z component.
+     */
+    export function newVector3(x: number, y: number, z: number): Vector3Like;
+
+    /**
+     * Creates a new [Vector3Like] instance.
+     *
+     * @param x The x component.
+     * @param y The y component.
+     * @param z The z component.
+     * @param v The resulting [Vector3Like] instance.
+     */
+    export function newVector3<Vector extends Vector3Like>(
+        x: number,
+        y: number,
+        z: number,
+        v: Vector
+    ): Vector;
+
+    /**
+     * Set the components of the given [Vector3Like] instance.
+     *
+     * @param x The x component.
+     * @param y The y component.
+     * @param z The z component.
+     * @param v The [Vector3Like]
+     */
+    export function newVector3(x: number, y: number, z: number, v?: Vector3Like): Vector3Like {
+        if (v === undefined) {
+            return { x, y, z };
+        }
+        v.x = x;
+        v.y = y;
+        v.z = z;
+        return v;
     }
 
     /**

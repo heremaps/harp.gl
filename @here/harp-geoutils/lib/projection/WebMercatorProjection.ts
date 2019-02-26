@@ -8,6 +8,8 @@ import { GeoBox } from "../coordinates/GeoBox";
 import { GeoCoordinates } from "../coordinates/GeoCoordinates";
 import { GeoCoordinatesLike } from "../coordinates/GeoCoordinatesLike";
 import { Box3Like } from "../math/Box3Like";
+import { MathUtils } from "../math/MathUtils";
+import { isOrientedBox3Like, OrientedBox3Like } from "../math/OrientedBox3Like";
 import { Vector3Like } from "../math/Vector3Like";
 import { EarthConstants } from "./EarthConstants";
 import { MercatorProjection } from "./MercatorProjection";
@@ -74,6 +76,19 @@ class WebMercatorProjection extends MercatorProjection {
         const latitude = 90 - (360 * Math.atan(Math.exp(-y * 2 * Math.PI))) / Math.PI;
 
         return new GeoCoordinates(latitude, longitude, worldPoint.z);
+    }
+
+    projectBox<WorldBoundingBox extends Box3Like | OrientedBox3Like>(
+        geoBox: GeoBox,
+        result?: WorldBoundingBox
+    ): WorldBoundingBox {
+        const r = super.projectBox(geoBox, result);
+        if (isOrientedBox3Like(r)) {
+            MathUtils.newVector3(1, 0, 0, r.xAxis);
+            MathUtils.newVector3(0, -1, 0, r.yAxis);
+            MathUtils.newVector3(0, 0, -1, r.zAxis);
+        }
+        return r;
     }
 
     unprojectBox(worldBox: Box3Like): GeoBox {
