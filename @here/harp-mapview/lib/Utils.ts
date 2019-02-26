@@ -16,6 +16,9 @@ export namespace MapViewUtils {
     const rotationMatrix = new Matrix4();
     const unprojectionMatrix = new Matrix4();
     const rayCaster = new Raycaster();
+    const tempQuat = new Quaternion();
+
+    const EYE_INVERSE = new Vector3(0, 0, -1);
 
     /**
      * Yaw rotation as quaternion. Declared as a const to avoid object re-creation in certain
@@ -208,7 +211,12 @@ export namespace MapViewUtils {
         const visibleGroundUnit =
             2.0 * Math.tan(geoUtils.MathUtils.degToRad(mapView.camera.fov) * 0.5);
 
-        return tileSize / (visibleGroundUnit * mapView.zoomLevelBias);
+        const downQuat = tempQuat.setFromAxisAngle(EYE_INVERSE, -mapView.camera.rotation.z);
+
+        // "any" used to fix missing .angleTo() ts error
+        const cameraAngle = (mapView.camera.quaternion as any).angleTo(downQuat);
+
+        return (tileSize / (visibleGroundUnit * mapView.zoomLevelBias)) * Math.cos(cameraAngle);
     }
 
     /**
@@ -307,7 +315,8 @@ export namespace MapViewUtils {
     }
 
     /**
-     * Calculates the zoom level, which corresponds to the current height position of the camera.
+     * Calculates the zoom level, which corresponds to the current distance from
+     * camera to lookAt point.
      * Therefore the zoom level is a `float` and not an `int`. The height of the camera can be in
      * between zoom levels. By setting the zoom level, you change the height position of the camera
      * in away that the field of view of the camera should be able to cover one tile for the given
@@ -317,11 +326,11 @@ export namespace MapViewUtils {
      * set the zoom level of the camera to 14, then you are able to see the whole tile in front of
      * you.
      */
-    export function calculateZoomLevelFromHeight(height: number, mapView: MapView): number {
+    export function calculateZoomLevelFromDistance(distance: number, mapView: MapView): number {
         const targetSubdivisions = 2;
-        const biasedHeight = height * mapView.zoomLevelBias;
-        const visibleHeight =
-            2 * biasedHeight * Math.tan(geoUtils.MathUtils.degToRad(mapView.camera.fov / 2));
+        const biasedDistance = distance * mapView.zoomLevelBias;
+        const visibleDistance =
+            2 * biasedDistance * Math.tan(geoUtils.MathUtils.degToRad(mapView.camera.fov / 2));
 
         /**
          * Use half the circumference as a reference point. This makes a few assumptions:
@@ -335,7 +344,7 @@ export namespace MapViewUtils {
          *    bit more than it would otherwise, but it shouldn't be much of an issue.
          */
         const halfCircumference = EarthConstants.EQUATORIAL_CIRCUMFERENCE / 2;
-        const targetSize = visibleHeight / targetSubdivisions;
+        const targetSize = visibleDistance / targetSubdivisions;
 
         const zoomLevel = Math.log2(halfCircumference / targetSize);
         return geoUtils.MathUtils.clamp(zoomLevel, mapView.minZoomLevel, mapView.maxZoomLevel);

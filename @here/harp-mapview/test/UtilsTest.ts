@@ -25,18 +25,18 @@ describe("map-view#Utils", function() {
         };
         const mapView = (mapViewMock as any) as MapView;
 
-        let result = MapViewUtils.calculateZoomLevelFromHeight(0, mapView);
+        let result = MapViewUtils.calculateZoomLevelFromDistance(0, mapView);
         expect(result).to.be.equal(20);
-        result = MapViewUtils.calculateZoomLevelFromHeight(1000000000000, mapView);
+        result = MapViewUtils.calculateZoomLevelFromDistance(1000000000000, mapView);
         expect(result).to.be.equal(1);
         /*
          *   23.04.2018 - Zoom level outputs come from HARP
          */
-        result = MapViewUtils.calculateZoomLevelFromHeight(1000, mapView);
+        result = MapViewUtils.calculateZoomLevelFromDistance(1000, mapView);
         expect(result).to.be.closeTo(15.79, 0.05);
-        result = MapViewUtils.calculateZoomLevelFromHeight(10000, mapView);
+        result = MapViewUtils.calculateZoomLevelFromDistance(10000, mapView);
         expect(result).to.be.closeTo(12.47, 0.05);
-        result = MapViewUtils.calculateZoomLevelFromHeight(1000000, mapView);
+        result = MapViewUtils.calculateZoomLevelFromDistance(1000000, mapView);
         expect(result).to.be.closeTo(5.82, 0.05);
     });
 
@@ -67,7 +67,7 @@ describe("map-view#Utils", function() {
     });
 
     describe("converts zoom level to height and height to zoom level", function() {
-        const height = 1000;
+        const distance = 1000;
         let mapViewMock: any;
 
         beforeEach(function() {
@@ -80,13 +80,16 @@ describe("map-view#Utils", function() {
         });
 
         it("ensures that both functions are inverse", function() {
-            const zoomLevel = MapViewUtils.calculateZoomLevelFromHeight(height, { ...mapViewMock });
+            const zoomLevel = MapViewUtils.calculateZoomLevelFromDistance(distance, {
+                ...mapViewMock
+            });
+
             const calculatedHeight = MapViewUtils.calculateDistanceToGroundFromZoomLevel(
                 mapViewMock,
                 zoomLevel
             );
 
-            expect(height).to.be.closeTo(calculatedHeight, Math.pow(10, -11));
+            expect(distance).to.be.closeTo(calculatedHeight, Math.pow(10, -11));
         });
 
         it("respect zoomLevelBias property", function() {
