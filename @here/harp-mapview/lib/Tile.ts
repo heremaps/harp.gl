@@ -178,13 +178,13 @@ export interface ITileLoader {
     payload?: ArrayBufferLike | {};
     decodedTile?: DecodedTile;
 
+    isFinished: boolean;
+
     loadAndDecode(): Promise<TileLoaderState>;
     waitSettled(): Promise<TileLoaderState>;
 
     cancel(): void;
     dispose(): void;
-
-    isFinished(): boolean;
 }
 
 /**
@@ -293,6 +293,36 @@ export class Tile implements CachedResource {
      * Copyright information of this `Tile`'s data.
      */
     copyrightInfo?: CopyrightInfo[];
+
+    /**
+     * Keeping some stats for the individual `Tile`s to analyze caching behavior.
+     *
+     * The frame the `Tile` was requested.
+     */
+    frameNumRequested: number = -1;
+
+    /**
+     * The frame the `Tile` was first visible.
+     */
+    frameNumVisible: number = -1;
+
+    /**
+     * The last frame this `Tile` has been rendered (or was in the visible set). Used to determine
+     * visibility of `Tile` at the end of a frame, if the number is the current frame number, it is
+     * visible.
+     */
+    frameNumLastVisible: number = -1;
+
+    /**
+     * After removing from cache, this is the number of frames the `Tile` was visible.
+     */
+    numFramesVisible: number = 0;
+
+    /**
+     * The visibility status of the `Tile`. It is actually visible or planned to become visible, and
+     * as such it should not be removed from cache.
+     */
+    isVisible: boolean = false;
 
     private m_disposed: boolean = false;
 
@@ -492,6 +522,14 @@ export class Tile implements CachedResource {
         if (!this.m_decodedTile || this.m_disposed) {
             return;
         }
+
+        // If the tile is not ready for display, or if it has become invisible while being loaded,
+        // for example by moving the camera, the tile is not finished and its geometry is not
+        // created. This is an optimization for fast camera movements and zooms.
+        if (!this.isVisible) {
+            return;
+        }
+
         const decodedTile = this.m_decodedTile;
 
         if (decodedTile.tileInfo !== undefined) {
@@ -501,8 +539,28 @@ export class Tile implements CachedResource {
         this.m_decodedTile = undefined;
 
         setTimeout(() => {
-            let now = 0;
             const stats = PerformanceStatistics.instance;
+
+            // If the tile has become invisible while being loaded, for example by moving the
+            // camera, the tile is not finished and its geometry is not created. This is an
+            // optimization for fast camera movements and zooms.
+            if (!this.isVisible) {
+                // Dispose the tile from the visible set, so it can be reloaded properly next time
+                // it is needed.
+                this.mapView.visibleTileSet.disposeTile(this);
+
+                if (stats.enabled) {
+                    stats.currentFrame.addMessage(
+                        `Decoded tile: ${this.dataSource.name} # lvl=${this.tileKey.level} col=${
+                            this.tileKey.column
+                        } row=${this.tileKey.row} DISCARDED - invisible`
+                    );
+                }
+
+                return;
+            }
+
+            let now = 0;
             if (stats.enabled) {
                 now = PerformanceTimer.now();
             }
@@ -729,6 +787,9 @@ export class Tile implements CachedResource {
         this.clear();
         this.userTextElements.length = 0;
         this.m_disposed = true;
+
+        // Ensure that tile is removable from tile cache.
+        this.isVisible = false;
     }
 
     /**
