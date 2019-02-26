@@ -229,7 +229,7 @@ export namespace TripleViewExample {
     // snippet:harp_gl_multiview_tripleView_2.ts
     const xyzDataSourceParams = {
         baseUrl: "https://xyz.api.here.com/tiles/osmbase/256/all",
-        apiFormat: APIFormat.MapzenV2,
+        apiFormat: APIFormat.XYZMVT,
         styleSetName: "tilezen",
         maxZoomLevel: 17
     };

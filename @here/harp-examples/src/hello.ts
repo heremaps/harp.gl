@@ -109,7 +109,7 @@ export namespace HelloWorldExample {
     // snippet:harp_gl_hello_world_example_4.ts
     const omvDataSource = new OmvDataSource({
         baseUrl: "https://xyz.api.here.com/tiles/osmbase/256/all",
-        apiFormat: APIFormat.MapzenV2,
+        apiFormat: APIFormat.XYZMVT,
         styleSetName: "tilezen",
         maxZoomLevel: 17
     });
