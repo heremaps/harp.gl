@@ -81,17 +81,6 @@ describe("OmvRestClient", function() {
         assert.equal(downloadSpy.args[0][0], "https://a.tomtom.base.url/3/2/1.pbf?key=123");
     });
 
-    it("generates proper Url with MapZen Format", async function() {
-        const restClient = new OmvRestClient({
-            baseUrl: "https://a.mapzen.base.url",
-            apiFormat: APIFormat.MapzenV1,
-            authenticationCode: "123",
-            downloadManager: mockDownloadManager
-        });
-        await restClient.getTile(new TileKey(1, 2, 3));
-        assert.equal(downloadSpy.args[0][0], "https://a.mapzen.base.url/3/2/1.pbf?api_key=123");
-    });
-
     it("supports custom authentication method based on query string key", async function() {
         const restClient = new OmvRestClient({
             baseUrl: "https://some.base.url",
