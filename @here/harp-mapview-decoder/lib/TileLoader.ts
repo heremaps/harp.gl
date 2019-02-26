@@ -159,7 +159,7 @@ export class TileLoader {
     /**
      * Return `true` if [[Tile]] is still loading, `false` otherwise.
      */
-    isFinished(): boolean {
+    get isFinished(): boolean {
         return (
             this.state === TileLoaderState.Ready ||
             this.state === TileLoaderState.Canceled ||

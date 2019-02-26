@@ -107,7 +107,11 @@ export class DownloadManager {
                 return response;
             }
         } catch (err) {
-            if (err.hasOwnProperty("isCancelled") || retryCount > maxRetries) {
+            if (
+                err.hasOwnProperty("isCancelled") ||
+                (err.hasOwnProperty("name") && err.name === "AbortError") ||
+                retryCount > maxRetries
+            ) {
                 throw err;
             }
         }
