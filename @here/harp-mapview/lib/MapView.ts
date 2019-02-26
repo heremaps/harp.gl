@@ -12,7 +12,7 @@ import {
     Theme
 } from "@here/harp-datasource-protocol";
 import { GeoCoordinates, MathUtils, mercatorProjection, Projection } from "@here/harp-geoutils";
-import { LoggerManager, PerformanceTimer } from "@here/harp-utils";
+import { assert, LoggerManager, PerformanceTimer } from "@here/harp-utils";
 import * as THREE from "three";
 
 import { CameraMovementDetector } from "./CameraMovementDetector";
@@ -77,7 +77,7 @@ const logger = LoggerManager.instance.create("MapView");
 const DEFAULT_FONT_CATALOG = "./resources/fonts/Default_FontCatalog.json";
 const DEFAULT_CLEAR_COLOR = 0xefe9e1;
 const EYE_INVERSE = new THREE.Vector3(0, 0, -1);
-const DEFAULT_FIELD_OF_VIEW = 40;
+const DEFAULT_FOV_CALCULATION: FovCalculation = { type: "dynamic", fov: 40 };
 const MAX_FIELD_OF_VIEW = 140;
 const MIN_FIELD_OF_VIEW = 10;
 
@@ -152,6 +152,36 @@ export type FarPlaneEvaluator = (
     defaultNearValue: number,
     defaultFarValue: number
 ) => { near: number; far: number };
+
+/**
+ * Specifies how the FOV (Field of View) should be calculated.
+ */
+export interface FovCalculation {
+    /**
+     * How to interpret the [[fov]], can be either `fixed` or `dynamic`.
+     *
+     * `fixed` means that the FOV is fixed regardless of the [[viewportHeight]],
+     * such that shrinking the height causes the map to shrink to keep the
+     * content in view.
+     *
+     * `dynamic` means that the focal length is calculated based on the supplied
+     * [[fov]] and [[viewportHeight]], this means that the map doesn't scale
+     * (the image is essentially cropped but not shrunk) when the
+     * [[viewportHeight]] or [[viewportWidth]] is changed.
+     */
+    type: "fixed" | "dynamic";
+
+    /**
+     * If [[type]] is `fixed` then the supplied [[fov]] is fixed regardless of
+     * [[viewportHeight]] or [[viewportWidth]].
+     *
+     * If [[type]] is `dynamic` then the supplied [[fov]] is applied to the
+     * first frame, and the focal length calculated. Changes to the viewport
+     * height no longer shrink the content because the field of view is updated
+     * dynamically.
+     */
+    fov: number;
+}
 
 /**
  * User configuration for the [[MapView]].
@@ -379,10 +409,11 @@ export interface MapViewOptions {
      */
     movementThrottleTimeout?: number;
 
-    /*
-     * The vertical field of view, in degrees.
+    /**
+     * How to calculate the Field of View, if not specified, then
+     * [[DEFAULT_FOV_CALCULATION]] is used.
      */
-    fov?: number;
+    fovCalculation?: FovCalculation;
 
     /*
      * An array of ISO 639-1 language codes for data sources.
@@ -479,6 +510,7 @@ export class MapView extends THREE.EventDispatcher {
     private readonly m_screenCamera = new THREE.OrthographicCamera(-1, 1, 1, -1);
 
     private m_camera: THREE.PerspectiveCamera;
+    private m_focalLength: number;
     private m_pointOfView?: THREE.PerspectiveCamera;
 
     private m_tempVector3: THREE.Vector3 = new THREE.Vector3();
@@ -615,12 +647,6 @@ export class MapView extends THREE.EventDispatcher {
 
         this.m_pixelRatio = options.pixelRatio;
 
-        options.fov = MathUtils.clamp(
-            options.fov === undefined ? DEFAULT_FIELD_OF_VIEW : options.fov,
-            MIN_FIELD_OF_VIEW,
-            MAX_FIELD_OF_VIEW
-        );
-
         this.m_options.enableStatistics = this.m_options.enableStatistics === true;
 
         this.m_languages = this.m_options.languages || MapViewUtils.getBrowserLanguages();
@@ -656,12 +682,25 @@ export class MapView extends THREE.EventDispatcher {
 
         this.setupRenderer();
 
+        this.m_options.fovCalculation =
+            this.m_options.fovCalculation === undefined
+                ? DEFAULT_FOV_CALCULATION
+                : this.m_options.fovCalculation;
+        this.m_options.fovCalculation.fov = MathUtils.clamp(
+            this.m_options.fovCalculation!.fov,
+            MIN_FIELD_OF_VIEW,
+            MAX_FIELD_OF_VIEW
+        );
         // Initialization of mCamera and mVisibleTiles
         const { clientWidth, clientHeight } = this.canvas;
         const aspect = clientWidth / clientHeight;
-        this.m_options.fov = this.limitFov(this.m_options.fov, aspect);
-
-        this.m_camera = new THREE.PerspectiveCamera(this.m_options.fov, aspect, 0.1, 4000000);
+        this.m_camera = new THREE.PerspectiveCamera(
+            this.m_options.fovCalculation.fov,
+            aspect,
+            0.1,
+            4000000
+        );
+        this.m_focalLength = 0;
         this.setupCamera();
 
         this.m_movementDetector = new CameraMovementDetector(
@@ -1193,26 +1232,6 @@ export class MapView extends THREE.EventDispatcher {
     }
 
     /**
-     * Returns the field of view in degrees.
-     */
-    get fov(): number {
-        return this.m_camera.fov;
-    }
-
-    /**
-     * Sets the field of view in degrees.
-     *
-     * @param fov Field of view in degrees.
-     */
-    set fov(fov: number) {
-        fov = this.limitFov(fov, this.m_camera.aspect);
-        this.m_camera.fov = fov;
-        this.m_camera.updateProjectionMatrix();
-        this.m_camera.updateMatrixWorld(false);
-        this.update();
-    }
-
-    /**
      * Returns height of the viewport in pixels.
      */
     get viewportHeight(): number {
@@ -1224,6 +1243,18 @@ export class MapView extends THREE.EventDispatcher {
      */
     get dataSources(): DataSource[] {
         return this.m_tileDataSources;
+    }
+
+    /**
+     * Set's the way in which the fov is calculated on the map view. Note, for
+     * this to take visual effect, the map should be rendered after calling this
+     * function.
+     * @param fovCalculation How the FOV is calculated.
+     */
+    setFovCalculation(fovCalculation: FovCalculation) {
+        this.m_options.fovCalculation = fovCalculation;
+        this.calculateFocalLength(this.m_renderer.getSize().height);
+        this.updateCameras();
     }
 
     /**
@@ -1691,13 +1722,14 @@ export class MapView extends THREE.EventDispatcher {
     }
 
     /**
-     * Updates the camera and the projections and resets the screen collisions.
+     * Updates the camera and the projections and resets the screen collisions,
+     * note, setupCamera must be called before this is called.
      */
     private updateCameras() {
-        const { width, height } = this.canvas;
+        const { width, height } = this.m_renderer.getSize();
         this.m_camera.aspect =
             this.m_forceCameraAspect !== undefined ? this.m_forceCameraAspect : width / height;
-        this.m_camera.fov = this.limitFov(this.m_camera.fov, this.m_camera.aspect);
+        this.setFovOnCamera(this.m_options.fovCalculation!, height);
 
         const kMinNear = 0.1;
         const kMultiplier = 50.0;
@@ -2060,6 +2092,7 @@ export class MapView extends THREE.EventDispatcher {
         this.m_camera.position.set(0, 0, 3000);
         this.m_camera.lookAt(new THREE.Vector3(0, 0, 0));
 
+        this.calculateFocalLength(clientHeight);
         this.m_visibleTiles = new VisibleTileSet(this.m_camera, this.m_visibleTileSetOptions);
         // ### move & customize
         this.resize(clientWidth, clientHeight);
@@ -2368,12 +2401,8 @@ export class MapView extends THREE.EventDispatcher {
         logger.log("WebGL context restored", event);
     };
 
-    private limitFov(fov: number | undefined, aspect: number): number {
-        fov = MathUtils.clamp(
-            fov === undefined ? DEFAULT_FIELD_OF_VIEW : fov,
-            MIN_FIELD_OF_VIEW,
-            MAX_FIELD_OF_VIEW
-        );
+    private limitFov(fov: number, aspect: number): number {
+        fov = MathUtils.clamp(fov, MIN_FIELD_OF_VIEW, MAX_FIELD_OF_VIEW);
 
         let hFov = MathUtils.radToDeg(
             MapViewUtils.calculateHorizontalFovByVerticalFov(MathUtils.degToRad(fov), aspect)
@@ -2386,5 +2415,35 @@ export class MapView extends THREE.EventDispatcher {
             );
         }
         return fov as number;
+    }
+
+    /**
+     * Sets the field of view calculation, and applies it immediately to the camera.
+     *
+     * @param type How to calculate the FOV
+     */
+    private setFovOnCamera(fovCalculation: FovCalculation, height: number) {
+        this.m_camera.fov = this.limitFov(
+            fovCalculation.type === "fixed"
+                ? fovCalculation.fov
+                : MapViewUtils.calculateFovByFocalLength(this.m_focalLength, height),
+            this.m_camera.aspect
+        );
+    }
+
+    /**
+     * Computes the focal length based on the supplied fov (if the type is
+     * dynamic) and the height of the canvas.
+     * @param height Height of the canvas in pixels.
+     */
+    private calculateFocalLength(height: number) {
+        assert(this.m_options.fovCalculation !== undefined);
+        if (this.m_options.fovCalculation!.type === "fixed") {
+            return;
+        }
+        this.m_focalLength = MapViewUtils.calculateFocalLengthByVerticalFov(
+            MathUtils.degToRad(this.m_options.fovCalculation!.fov),
+            height
+        );
     }
 }
