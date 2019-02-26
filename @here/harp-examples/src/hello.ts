@@ -66,7 +66,7 @@ export namespace HelloWorldExample {
         // snippet:harp_gl_hello_world_example_1.ts
         const sampleMapView = new MapView({
             canvas,
-            theme: "resources/day.json"
+            theme: "resources/berlin_base.json"
         });
         // end:harp_gl_hello_world_example_1.ts
 
