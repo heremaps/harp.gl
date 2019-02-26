@@ -4,7 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { mercatorProjection, Projection, webMercatorProjection } from "@here/harp-geoutils";
+import {
+    mercatorProjection,
+    Projection,
+    sphereProjection,
+    webMercatorProjection
+} from "@here/harp-geoutils";
 import { Technique } from "./Techniques";
 import { TileInfo } from "./TileInfo";
 
@@ -188,6 +193,8 @@ export function getProjection(projectionName: string): Projection | never {
             return mercatorProjection;
         case "webMercator":
             return webMercatorProjection;
+        case "sphere":
+            return sphereProjection;
         default:
             throw new Error(`Unknown projection ${projectionName}`);
     } // switch
@@ -203,6 +210,8 @@ export function getProjectionName(projection: Projection): string | never {
         return "mercator";
     } else if (projection === webMercatorProjection) {
         return "webMercator";
+    } else if (projection === sphereProjection) {
+        return "sphere";
     }
     throw new Error("Unknown projection");
 }

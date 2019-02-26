@@ -7,15 +7,16 @@
 import { GeoBox } from "../coordinates/GeoBox";
 import { GeoCoordinates } from "../coordinates/GeoCoordinates";
 import { GeoCoordinatesLike } from "../coordinates/GeoCoordinatesLike";
-import { Box3Like } from "../math/Box3Like";
+import { Box3Like, isBox3Like } from "../math/Box3Like";
 import { MathUtils } from "../math/MathUtils";
+import { isOrientedBox3Like, OrientedBox3Like } from "../math/OrientedBox3Like";
 import { Vector3Like } from "../math/Vector3Like";
 import { Projection } from "./Projection";
 
 const DEG2RAD = Math.PI / 180;
 
 class IdentityProjection implements Projection {
-    getScaleFactor<WorldCoordinates extends Vector3Like>(_worldPoint: WorldCoordinates): number {
+    getScaleFactor(_worldPoint: Vector3Like): number {
         return 1;
     }
 
@@ -55,21 +56,34 @@ class IdentityProjection implements Projection {
         return geoPoint;
     }
 
-    projectBox<WorldBoundingBox extends Box3Like>(
+    projectBox<WorldBoundingBox extends Box3Like | OrientedBox3Like>(
         geoBox: GeoBox,
         result?: WorldBoundingBox
     ): WorldBoundingBox {
         if (!result) {
             result = MathUtils.newEmptyBox3() as WorldBoundingBox;
         }
-        this.projectPoint(
-            new GeoCoordinates(geoBox.south, geoBox.west, geoBox.minAltitude),
-            result.min
+        const min = this.projectPoint(
+            new GeoCoordinates(geoBox.south, geoBox.west, geoBox.minAltitude)
         );
-        this.projectPoint(
-            new GeoCoordinates(geoBox.north, geoBox.east, geoBox.maxAltitude),
-            result.max
+        const max = this.projectPoint(
+            new GeoCoordinates(geoBox.north, geoBox.east, geoBox.maxAltitude)
         );
+        if (isBox3Like(result)) {
+            result.min.x = result.max.x;
+            result.min.y = result.max.y;
+            result.min.z = result.max.z;
+        } else if (isOrientedBox3Like(result)) {
+            MathUtils.newVector3(1, 0, 0, result.xAxis);
+            MathUtils.newVector3(0, 1, 0, result.yAxis);
+            MathUtils.newVector3(0, 0, 1, result.zAxis);
+            result.position.x = (min.x + max.x) * 0.5;
+            result.position.y = (min.y + max.y) * 0.5;
+            result.position.z = (min.z + max.z) * 0.5;
+            result.extents.x = (max.x - min.x) * 0.5;
+            result.extents.y = (max.y - min.y) * 0.5;
+            result.extents.z = Math.max(Number.EPSILON, (max.z - min.z) * 0.5);
+        }
         return result;
     }
 

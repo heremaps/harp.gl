@@ -8,6 +8,7 @@ import { GeoBox } from "../coordinates/GeoBox";
 import { GeoCoordinates } from "../coordinates/GeoCoordinates";
 import { GeoCoordinatesLike } from "../coordinates/GeoCoordinatesLike";
 import { Box3Like } from "../math/Box3Like";
+import { OrientedBox3Like } from "../math/OrientedBox3Like";
 import { Vector3Like } from "../math/Vector3Like";
 
 /**
@@ -66,17 +67,29 @@ export interface Projection {
      *
      * Example:
      * ```typescript
-     * const boundingBox = new THREE.Box3();
-     * projection.projectBox(geoBox, boundingBox);
-     * console.log(geoBox.min, geoBox.max, geoBox.getCenter());
+     * const bounds = projection.projectBox(geoBox);
+     * console.log(bounds.min, bounds.max);
      * ```
      *
      * @param geoBox The bounding box in geo coordinates.
-     * @param result The resulting bounding box in world coordinates.
      */
-    projectBox<WorldBoundingBox extends Box3Like>(
+    projectBox(geoBox: GeoBox): Box3Like;
+
+    /**
+     * Projects bounds in geo coordinates to a bounding box in world coordinates.
+     *
+     * Example:
+     * ```typescript
+     * const bounds = projection.projectBox(geoBox, new THREE.Box3());
+     * console.log(bounds.min, bounds.max);
+     * ```
+     *
+     * @param geoBox The bounding box in geo coordinates.
+     * @param result The resulting [[OrientedBox3Like]].
+     */
+    projectBox<WorldBoundingBox extends Box3Like | OrientedBox3Like>(
         geoBox: GeoBox,
-        result?: WorldBoundingBox
+        result: WorldBoundingBox
     ): WorldBoundingBox;
 
     /**
@@ -98,5 +111,5 @@ export interface Projection {
      *
      * @param worldPoint The position in world coordinates.
      */
-    getScaleFactor<WorldCoordinates extends Vector3Like>(worldPoint: WorldCoordinates): number;
+    getScaleFactor(worldPoint: Vector3Like): number;
 }
