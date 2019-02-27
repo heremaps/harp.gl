@@ -18,17 +18,17 @@ import * as THREE from "three";
  */
 export interface VisibleTileSetOptions {
     /**
-     * Missing Typedoc
+     * The projection of the view.
      */
     projection: Projection;
 
     /**
-     * Missing Typedoc
+     * Limit of tiles that can be visible per datasource.
      */
     maxVisibleDataSourceTiles: number;
 
     /**
-     * Missing Typedoc
+     * In addition to the simple frustum culling also do additional checks with [[MapTileCuller]].
      */
     extendedFrustumCulling: boolean;
 
@@ -43,12 +43,12 @@ export interface VisibleTileSetOptions {
     tileCacheMemorySize: number;
 
     /**
-     * Missing Typedoc
+     * Number of levels to go up when searching for fallback tiles.
      */
     quadTreeSearchDistanceUp: number;
 
     /**
-     * Missing Typedoc
+     * Number of levels to go down when searching for fallback tiles.
      */
     quadTreeSearchDistanceDown: number;
 }
@@ -95,26 +95,27 @@ class DataSourceCache {
 }
 
 /**
- * Missing Typedoc
+ * List of visible tiles for a datasource.
  */
 export interface DataSourceTileList {
     /**
-     * Missing Typedoc
+     * The datasource that was producing the tiles.
      */
     dataSource: DataSource;
 
     /**
-     * Missing Typedoc
+     * FIXME: zoomlevel is the actual storagelevel?!
      */
     zoomLevel: number;
 
     /**
-     * Missing Typedoc
+     * The storage level of the visibleTiles.
+     * Note: renderedTiles might contain tiles from different levels.
      */
     storageLevel: number;
 
     /**
-     * Missing Typedoc
+     * True if all [[visibleTiles]] are loaded.
      */
     allVisibleTileLoaded: boolean;
 
@@ -124,12 +125,13 @@ export interface DataSourceTileList {
     numTilesLoading: number;
 
     /**
-     * Missing Typedoc
+     * List of tiles we want to render but they might not be renderable yet (e.g. loading).
      */
     visibleTiles: Tile[];
 
     /**
-     * Missing Typedoc
+     * List of tiles that will be rendered. This includes tiles that are not in the visibleTiles
+     * list but that are used as fallbacks b/c they are still in the cache.
      */
     renderedTiles: Tile[];
 }
