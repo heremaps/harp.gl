@@ -225,12 +225,9 @@ export class VisibleTileSet {
 
             const tilingScheme = dataSource.getTilingScheme();
 
-            const workList: TileKeyEntry[] = [new TileKeyEntry(rootTileKey, 0)];
+            const workList: TileKeyEntry[] = [new TileKeyEntry(rootTileKey, Infinity)];
 
             const visibleTiles: TileKeyEntry[] = [];
-
-            const tileFrustumIntersectionCache = new Map<number, number>();
-            tileFrustumIntersectionCache.set(rootTileKey.mortonCode(), Infinity);
 
             while (workList.length > 0) {
                 const tileEntry = workList.pop();
@@ -239,7 +236,7 @@ export class VisibleTileSet {
                     continue;
                 }
 
-                const area = tileFrustumIntersectionCache.get(tileEntry.tileKey.mortonCode());
+                const area = tileEntry.area;
 
                 if (area === undefined) {
                     throw new Error("Unexpected tile key");
@@ -254,63 +251,45 @@ export class VisibleTileSet {
                 }
 
                 tilingScheme.getSubTileKeys(tileEntry.tileKey).forEach(childTileKey => {
-                    const intersectsFrustum = tileFrustumIntersectionCache.get(
-                        childTileKey.mortonCode()
-                    );
-
                     let subTileArea = 0;
+                    const geoBox = tilingScheme.getGeoBox(childTileKey);
+                    this.options.projection.projectBox(geoBox, tileBounds);
+                    tileBounds.min.sub(worldCenter);
+                    tileBounds.max.sub(worldCenter);
 
-                    if (intersectsFrustum === undefined) {
-                        const geoBox = tilingScheme.getGeoBox(childTileKey);
-                        this.options.projection.projectBox(geoBox, tileBounds);
-                        tileBounds.min.sub(worldCenter);
-                        tileBounds.max.sub(worldCenter);
+                    if (
+                        (!this.options.extendedFrustumCulling ||
+                            this.m_mapTileCuller.frustumIntersectsTileBox(tileBounds)) &&
+                        this.m_frustum.intersectsBox(tileBounds)
+                    ) {
+                        const contour = [
+                            new THREE.Vector3(tileBounds.min.x, tileBounds.min.y, 0).applyMatrix4(
+                                this.m_viewProjectionMatrix
+                            ),
+                            new THREE.Vector3(tileBounds.max.x, tileBounds.min.y, 0).applyMatrix4(
+                                this.m_viewProjectionMatrix
+                            ),
+                            new THREE.Vector3(tileBounds.max.x, tileBounds.max.y, 0).applyMatrix4(
+                                this.m_viewProjectionMatrix
+                            ),
+                            new THREE.Vector3(tileBounds.min.x, tileBounds.max.y, 0).applyMatrix4(
+                                this.m_viewProjectionMatrix
+                            )
+                        ];
 
-                        if (
-                            (!this.options.extendedFrustumCulling ||
-                                this.m_mapTileCuller.frustumIntersectsTileBox(tileBounds)) &&
-                            this.m_frustum.intersectsBox(tileBounds)
-                        ) {
-                            const contour = [
-                                new THREE.Vector3(
-                                    tileBounds.min.x,
-                                    tileBounds.min.y,
-                                    0
-                                ).applyMatrix4(this.m_viewProjectionMatrix),
-                                new THREE.Vector3(
-                                    tileBounds.max.x,
-                                    tileBounds.min.y,
-                                    0
-                                ).applyMatrix4(this.m_viewProjectionMatrix),
-                                new THREE.Vector3(
-                                    tileBounds.max.x,
-                                    tileBounds.max.y,
-                                    0
-                                ).applyMatrix4(this.m_viewProjectionMatrix),
-                                new THREE.Vector3(
-                                    tileBounds.min.x,
-                                    tileBounds.max.y,
-                                    0
-                                ).applyMatrix4(this.m_viewProjectionMatrix)
-                            ];
+                        contour.push(contour[0]);
 
-                            contour.push(contour[0]);
+                        const n = contour.length;
 
-                            const n = contour.length;
-
-                            for (let p = n - 1, q = 0; q < n; p = q++) {
-                                subTileArea +=
-                                    contour[p].x * contour[q].y - contour[q].x * contour[p].y;
-                            }
-
-                            subTileArea = Math.abs(subTileArea * 0.5);
+                        for (let p = n - 1, q = 0; q < n; p = q++) {
+                            subTileArea +=
+                                contour[p].x * contour[q].y - contour[q].x * contour[p].y;
                         }
-
-                        tileFrustumIntersectionCache.set(childTileKey.mortonCode(), subTileArea);
-                    }
-
-                    if (subTileArea > 0) {
-                        workList.push(new TileKeyEntry(childTileKey, subTileArea));
+                        const epsilon = 0.0000001;
+                        subTileArea = Math.abs(subTileArea);
+                        if (subTileArea > epsilon) {
+                            workList.push(new TileKeyEntry(childTileKey, subTileArea));
+                        }
                     }
                 });
             }
