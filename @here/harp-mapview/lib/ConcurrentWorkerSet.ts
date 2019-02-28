@@ -3,13 +3,7 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-
-import {
-    WorkerDecoderProtocol,
-    WorkerServiceProtocol,
-    WorkerTilerProtocol
-} from "@here/harp-datasource-protocol";
-
+import { RequestController, WorkerServiceProtocol } from "@here/harp-datasource-protocol";
 import {
     getOptionValue,
     IWorkerChannelMessage,
@@ -52,6 +46,15 @@ export interface ConcurrentWorkerSetOptions {
      */
     workerCount?: number;
 }
+/**
+ * Interface for an item in the request queue. Stores the data to be decoded along with an
+ * [[AbortController]].
+ */
+interface WorkerRequestEntry {
+    message: WorkerServiceProtocol.RequestMessage;
+    buffers?: ArrayBuffer[] | undefined;
+    requestController?: RequestController;
+}
 
 /**
  * The default number of Web Workers to use if `navigator.hardwareConcurrency` is unavailable.
@@ -68,15 +71,27 @@ const DEFAULT_WORKER_COUNT = 4;
  *  - [[broadcastMessage]] : send unidirectional broadcast message
  *  - [[invokeRequest]] : send a request that waits for a response, with load balancing
  *  - [[postMessage]] : send a unidirectional message, with load balancing
+ *
+ * The request queue holds all requests before they are stuffed into the event queue, allows for
+ * easy (and early) cancelling of requests. The workers now only get a single new RequestMessage
+ * when they return their previous result, or if they are idle. When they are idle, they are stored
+ * in m_availableWorkers.
  */
 export class ConcurrentWorkerSet {
     private m_workerChannelLogger = LoggerManager.instance.create("WorkerChannel");
     private readonly m_eventListeners = new Map<string, (message: any) => void>();
     private m_workers = new Array<Worker>();
+
+    private m_workerListeners = new Array<EventListener>();
+
+    // List of idle workers that can be given the next job. It is using a LIFO scheme to reduce
+    // memory consumption in idle workers.
+    private m_availableWorkers = new Array<Worker>();
     private m_workerPromises = new Array<Promise<Worker>>();
 
     private readonly m_readyPromises = new Map<string, ReadyPromise>();
     private readonly m_requests: Map<number, RequestEntry> = new Map();
+    private readonly m_workerRequestQueue: WorkerRequestEntry[] = [];
 
     private m_nextMessageId: number = 0;
     private m_stopped: boolean = true;
@@ -147,15 +162,23 @@ export class ConcurrentWorkerSet {
             DEFAULT_WORKER_COUNT
         );
 
-        for (let i = 0; i < workerCount; ++i) {
+        // Initialize the workers. The workers now have an ID to identify specific workers and
+        // handle their busy state.
+        for (let workerId = 0; workerId < workerCount; ++workerId) {
             const workerPromise = WorkerLoader.startWorker(this.m_options.scriptUrl);
             workerPromise
                 .then(worker => {
-                    worker.addEventListener("message", this.onWorkerMessage);
+                    const listener = (evt: Event): void => {
+                        this.onWorkerMessage(workerId, evt as MessageEvent);
+                    };
+
+                    this.m_workerListeners.push(listener);
+                    worker.addEventListener("message", listener);
                     this.m_workers.push(worker);
+                    this.m_availableWorkers.push(worker);
                 })
                 .catch(error => {
-                    logger.error(`failed to load worker ${i}: ${error}`);
+                    logger.error(`failed to load worker ${workerId}: ${error}`);
                 });
             this.m_workerPromises.push(workerPromise);
         }
@@ -245,13 +268,15 @@ export class ConcurrentWorkerSet {
      * @param serviceId The name of service, as registered with the [[WorkerClient]] instance.
      * @param request The request to process.
      * @param transferList An optional array of `ArrayBuffer`s to transfer to the worker context.
+     * @param requestController An optional [[RequestController]] to store state of cancelling.
      *
      * @returns A `Promise` that resolves with a response from the service.
      */
     invokeRequest<Res>(
         serviceId: string,
         request: WorkerServiceProtocol.ServiceRequest,
-        transferList?: ArrayBuffer[]
+        transferList?: ArrayBuffer[],
+        requestController?: RequestController
     ): Promise<Res> {
         this.ensureStarted();
 
@@ -280,7 +305,7 @@ export class ConcurrentWorkerSet {
             messageId,
             request
         };
-        this.postMessage(message, transferList);
+        this.postRequestMessage(message, transferList, requestController);
         return promise;
     }
 
@@ -343,22 +368,60 @@ export class ConcurrentWorkerSet {
     }
 
     /**
-     * Posts a message to a random worker.
+     * Posts a [[WorkerServiceProtocol.RequestMessage]] to an available worker. If no worker is
+     * available, the request is put into a queue.
      *
      * @param message The message to send.
      * @param buffers Optional buffers to transfer to the worker.
+     * @param requestController An optional [[RequestController]] to store state of cancelling.
      */
-    postMessage(
-        message: WorkerServiceProtocol.ServiceMessage,
-        buffers?: ArrayBuffer[] | undefined
+    postRequestMessage(
+        message: WorkerServiceProtocol.RequestMessage,
+        buffers?: ArrayBuffer[] | undefined,
+        requestController?: RequestController
     ) {
         this.ensureStarted();
         if (this.m_workers.length === 0) {
             throw new Error("ConcurrentWorkerSet#postMessage: no workers started");
         }
 
-        const index = Math.floor(Math.random() * this.m_workers.length);
-        this.m_workers[index].postMessage(message, buffers);
+        // Check if the requestController has received the abort signal, in which case the request
+        // is ignored.
+        if (requestController !== undefined && requestController.signal.aborted) {
+            const entry = this.m_requests.get(message.messageId);
+            if (entry === undefined) {
+                logger.error(
+                    `[${this.m_options.scriptUrl}]: Bad ResponseMessage: invalid messageId`
+                );
+                return;
+            }
+
+            const err = new Error("Aborted");
+            err.name = "AbortError";
+
+            entry.resolver(err, undefined);
+            return;
+        }
+
+        if (this.m_availableWorkers.length > 0) {
+            const worker = this.m_availableWorkers.pop()!;
+
+            worker.postMessage(message, buffers);
+        } else {
+            // We need a priority to keep sorting stable, so we have to add a RequestController.
+            if (requestController === undefined) {
+                requestController = new RequestController(0);
+            }
+            if (requestController.priority === 0) {
+                // If the requests do not get a priority, they should keep their sorting order.
+                requestController.priority = -this.m_nextMessageId;
+            }
+            this.m_workerRequestQueue.unshift({
+                message,
+                buffers,
+                requestController
+            });
+        }
     }
 
     /**
@@ -371,6 +434,27 @@ export class ConcurrentWorkerSet {
         this.ensureStarted();
 
         this.m_workers.forEach(worker => worker.postMessage(message, buffers));
+    }
+
+    /**
+     * The size of the request queue for debugging and profiling.
+     */
+    get requestQueueSize() {
+        return this.m_workerRequestQueue.length;
+    }
+
+    /**
+     * The number of workers for debugging and profiling.
+     */
+    get numWorkers() {
+        return this.m_workers.length;
+    }
+
+    /**
+     * The number of workers for debugging and profiling.
+     */
+    get numIdleWorkers() {
+        return this.m_availableWorkers.length;
     }
 
     /**
@@ -390,9 +474,10 @@ export class ConcurrentWorkerSet {
      * Handles messages received from workers. This method is protected so that the message
      * reception can be simulated through an extended class, to avoid relying on real workers.
      *
+     * @param workerId The workerId of the web worker.
      * @param event The event to dispatch.
      */
-    protected onWorkerMessage = (event: MessageEvent) => {
+    protected onWorkerMessage = (workerId: number, event: MessageEvent) => {
         if (WorkerServiceProtocol.isResponseMessage(event.data)) {
             const response = event.data;
             if (response.messageId === null) {
@@ -406,6 +491,16 @@ export class ConcurrentWorkerSet {
                 );
                 return;
             }
+
+            if (workerId >= 0 && workerId < this.m_workers.length) {
+                const worker = this.m_workers[workerId];
+                this.m_availableWorkers.push(worker);
+                // Check if any new work has been put into the queue.
+                this.checkWorkerRequestQueue();
+            } else {
+                logger.error(`[${this.m_options.scriptUrl}]: onWorkerMessage: invalid workerId`);
+            }
+
             entry.resolver(response.error, response.response);
         } else if (WorkerServiceProtocol.isInitializedMessage(event.data)) {
             const readyPromise = this.getReadyPromise(event.data.service);
@@ -465,7 +560,17 @@ export class ConcurrentWorkerSet {
         this.m_workerPromises.forEach(workerPromise => {
             workerPromise
                 .then(worker => {
-                    worker.removeEventListener("message", this.onWorkerMessage);
+                    const workerId = this.m_workers.indexOf(worker);
+                    if (workerId >= 0) {
+                        const listener = this.m_workerListeners[workerId];
+                        worker.removeEventListener("message", listener);
+                    } else {
+                        logger.error(
+                            `[${
+                                this.m_options.scriptUrl
+                            }]: ConcurrentWorkerSet#terminateWorkers: invalid workerId`
+                        );
+                    }
                     worker.terminate();
                 })
                 .catch(() => {
@@ -474,7 +579,9 @@ export class ConcurrentWorkerSet {
                 });
         });
         this.m_workers = [];
+        this.m_workerListeners = [];
         this.m_workerPromises = [];
+        this.m_availableWorkers = [];
         this.m_readyPromises.clear();
     }
 
@@ -511,5 +618,28 @@ export class ConcurrentWorkerSet {
 
         this.m_readyPromises.set(id, newPromise);
         return newPromise;
+    }
+
+    /**
+     * Check the worker request queue, if there are any queued up decoding jobs and idle workers,
+     * they will be executed with postRequestMessage. The requests in the queue are sorted before
+     * the request with the highest priority is selected for processing.
+     */
+    private checkWorkerRequestQueue() {
+        if (this.m_workerRequestQueue.length > 0) {
+            this.m_workerRequestQueue.sort((a: WorkerRequestEntry, b: WorkerRequestEntry) => {
+                return a.requestController!.priority - b.requestController!.priority;
+            });
+
+            if (this.m_availableWorkers.length > 0) {
+                // Get the request with the highest priority and send it (again).
+                const request = this.m_workerRequestQueue.pop()!;
+                this.postRequestMessage(
+                    request.message,
+                    request.buffers,
+                    request.requestController
+                );
+            }
+        }
     }
 }

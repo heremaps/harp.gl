@@ -184,6 +184,8 @@ export interface ITileLoader {
     loadAndDecode(): Promise<TileLoaderState>;
     waitSettled(): Promise<TileLoaderState>;
 
+    updatePriority(area: number): void;
+
     cancel(): void;
     dispose(): void;
 }
@@ -358,6 +360,8 @@ export class Tile implements CachedResource {
     private m_textElementsChanged: boolean = false;
 
     private m_colorMap: Map<string, THREE.Color> = new Map();
+
+    private m_visibleArea: number = 0;
 
     /**
      * Creates a new `Tile`.
@@ -616,6 +620,20 @@ export class Tile implements CachedResource {
      */
     didRender(): void {
         // to be overridden by subclasses
+    }
+
+    /**
+     * Estimated visible area of tile used for sorting the priorities during loading.
+     */
+    get visibleArea(): number {
+        return this.m_visibleArea;
+    }
+
+    set visibleArea(area: number) {
+        this.m_visibleArea = area;
+        if (this.tileLoader !== undefined) {
+            this.tileLoader.updatePriority(area);
+        }
     }
 
     /**

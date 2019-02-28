@@ -3,19 +3,21 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-
-// tslint:disable:only-arrow-functions
-//    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
-
+import {
+    RequestController,
+    WorkerDecoderProtocol,
+    WorkerServiceProtocol
+} from "@here/harp-datasource-protocol";
+import { stubGlobalConstructor, willEventually } from "@here/harp-test-utils";
+import { Logger, LogLevel, WorkerChannel, WORKERCHANNEL_MSG_TYPE } from "@here/harp-utils";
 import { assert } from "chai";
 import * as sinon from "sinon";
 
-import { Logger, LogLevel, WorkerChannel, WORKERCHANNEL_MSG_TYPE } from "@here/harp-utils";
 import { ConcurrentWorkerSet, isLoggingMessage } from "../lib/ConcurrentWorkerSet";
-
-import { WorkerDecoderProtocol, WorkerServiceProtocol } from "@here/harp-datasource-protocol";
-import { stubGlobalConstructor, willEventually } from "@here/harp-test-utils";
 import { FakeWebWorker, willExecuteWorkerScript } from "./FakeWebWorker";
+
+// tslint:disable:only-arrow-functions
+//    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
 declare const global: any;
 
@@ -27,6 +29,13 @@ const isInitializedMessage: WorkerServiceProtocol.InitializedMessage = {
 const sampleMessage: WorkerServiceProtocol.ServiceMessage = {
     type: WorkerServiceProtocol.ServiceMessageName.Request,
     service: "service-id"
+};
+
+const sampleRequestMessage: WorkerServiceProtocol.RequestMessage = {
+    type: WorkerServiceProtocol.ServiceMessageName.Request,
+    service: "service-id",
+    messageId: 0,
+    request: undefined
 };
 
 const sampleRequest: WorkerDecoderProtocol.DecodeTileRequest = {
@@ -120,7 +129,7 @@ describe("ConcurrentWorkerSet", function() {
 
         // Assert
         assert.throws(() => {
-            victim.postMessage(sampleMessage);
+            victim.postRequestMessage(sampleRequestMessage);
         });
 
         assert.throws(() => {
@@ -164,7 +173,7 @@ describe("ConcurrentWorkerSet", function() {
         });
 
         assert.throws(() => {
-            victim.postMessage(sampleMessage);
+            victim.postRequestMessage(sampleRequestMessage);
         });
 
         assert.throws(() => {
@@ -192,12 +201,14 @@ describe("ConcurrentWorkerSet", function() {
         });
 
         await victim.connect(isInitializedMessage.service);
-        victim.postMessage(sampleMessage);
+        victim.postRequestMessage(sampleRequestMessage);
 
         // Assert
         await willEventually(() => {
             assert.equal(workerConstructorStub.prototype.postMessage.callCount, 1);
-            assert(workerConstructorStub.prototype.postMessage.alwaysCalledWith(sampleMessage));
+            assert(
+                workerConstructorStub.prototype.postMessage.alwaysCalledWith(sampleRequestMessage)
+            );
         });
     });
 
