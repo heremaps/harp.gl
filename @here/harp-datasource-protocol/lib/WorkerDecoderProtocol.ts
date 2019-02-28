@@ -15,6 +15,38 @@ export interface OptionsMap {
 }
 
 /**
+ * Allows to cancel and prioritize requests inside the requestQueue. Useful to optimize the order of
+ * decoding tiles during animations and camera movements.
+ *
+ * `RequestController` is not extending [[AbortController]], because this is not supported in ES5.
+ */
+export class RequestController implements AbortController {
+    /**
+     * Creates an instance of `RequestController`.
+     *
+     * @param {number} priority
+     * @param {AbortController} abortController Optional [[AbortController]] used internally, since
+     *      [[AbortController]]s should not be subclassed.
+     */
+    constructor(
+        public priority: number = 0,
+        public abortController: AbortController = new AbortController()
+    ) {}
+
+    get signal(): AbortSignal {
+        return this.abortController.signal;
+    }
+
+    /**
+     * Invoking this method will set this object's AbortSignal's aborted flag and
+     * signal to any observers that the associated activity is to be aborted.
+     */
+    abort(): void {
+        this.abortController.abort();
+    }
+}
+
+/**
  * Communication protocol with [[ITileDecoder]].
  */
 export namespace WorkerDecoderProtocol {

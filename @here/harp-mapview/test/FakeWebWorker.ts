@@ -22,10 +22,10 @@ export class FakeWebWorker {
     dispatchEvent() {}
 }
 
-type Listener = (message: any) => void;
+type Listener = EventListener | EventListenerObject;
 
 /**
- * Simple message queue thay holds messages until some listener is registered.
+ * Simple message queue that holds messages until some listener is registered.
  *
  * Required to simulate behavior of Worker's onmessage/postMessage pairs which to so
  * to prevent race condition between adding first listener and posting first message.
@@ -54,7 +54,11 @@ class MessageQueue {
         while (this.messageQueue.length > 0) {
             const event = this.messageQueue.shift();
             this.listeners.forEach(listener => {
-                listener(event);
+                if (typeof listener === "function") {
+                    listener(event);
+                } else {
+                    listener.handleEvent(event);
+                }
             });
         }
         this.messageQueue = [];
@@ -103,8 +107,8 @@ export interface LimitedWorkerScope {
  * "worker script" has `self` faked using [[FakeWebWorker.fakeSelf]] .
  *
  * Perfect for race condition testing, because it starts worker script immediately in next
- * 'microtask' after contruction (which indeed can happen in real environment, when worker code is
- * already available and computer is laggy).
+ * 'microtask' after construction (which indeed can happen in real environment, when worker code is
+ * already available and computer is slow).
  *
  * @param workerConstructorStub worker constructor stub to be instrumented
  * @param workerScript  fake worker script to be executed
@@ -126,7 +130,7 @@ export function willExecuteWorkerScript(
         this.extListeners = extListeners;
 
         const workerSelf: LimitedWorkerScope = {
-            set onmessage(listener: Listener) {
+            set onmessage(listener: any) {
                 intListeners.message.addListener(listener);
             },
             set onerror(listener: any) {
@@ -192,7 +196,7 @@ class FakeWorkerSelf {
     /**
      * Sets new `self` to be used.
      *
-     * Also, fakes `setTimetout` and `setInterval` so any callback registered when `self` is faked
+     * Also, fakes `setTimeout` and `setInterval` so any callback registered when `self` is faked
      * will have also `self` faked when it's run.
      *
      * Call to [[restoreSelf]] call is mandatory, otherwise strange things happen.

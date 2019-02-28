@@ -52,7 +52,7 @@ interface RequestEntry {
  *
  * Listens to Web Worker messages from [[ConcurrentWorkerSet]] and implements:
  *  - worker service initialization
- *  - request/respone scheme
+ *  - request/response scheme
  *  - error handling.
  *
  * This class should be subclassed to provide concrete like [[TileDecoderService]].

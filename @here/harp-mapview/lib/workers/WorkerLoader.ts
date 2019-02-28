@@ -21,7 +21,7 @@ export class WorkerLoader {
 
     /**
      * Starts worker by first attempting load from `scriptUrl` using native `Worker` constructor.
-     * Then waits (using [[waitWorkerInitialized]]) for its successfull initialization. In case of
+     * Then waits (using [[waitWorkerInitialized]]) for its successful initialization. In case of
      * error falls back to [[startWorkerBlob]].
      *
      * This method is needed as browsers in general forbid to load worker if it's not on 'same
@@ -81,7 +81,7 @@ export class WorkerLoader {
 
     /**
      * Start worker, loading it immediately from `scriptUrl`. Waits (using
-     * [[waitWorkerInitialized]]) for successfull worker start.
+     * [[waitWorkerInitialized]]) for successful worker start.
      *
      * @param scriptUrl web worker script URL
      */
@@ -97,7 +97,7 @@ export class WorkerLoader {
     /**
      * Start worker "via blob" by first loading worker script code with [[fetch]], creating `Blob`
      * and attempting to start worker from blob url. Waits (using [[waitWorkerInitialized]]) for
-     * successfull worker start.
+     * successful worker start.
      *
      * @param scriptUrl web worker script URL
      */
@@ -137,7 +137,7 @@ export class WorkerLoader {
     }
 
     /**
-     * Waits for successfull Web Worker start.
+     * Waits for successful Web Worker start.
      *
      * Expects that worker script sends initial message.
      *
@@ -148,7 +148,7 @@ export class WorkerLoader {
      * rejected.
      *
      * (NOTE: The initial 'message' - if received - is immediately replayed using worker's
-     * `dispatchEvent`, so application code can also consume it as confirmation of successfull
+     * `dispatchEvent`, so application code can also consume it as confirmation of successful
      * worker initialization.
      *
      * @param worker [[Worker]] instance to be checked
