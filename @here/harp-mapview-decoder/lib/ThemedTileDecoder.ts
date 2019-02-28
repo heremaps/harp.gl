@@ -24,18 +24,28 @@ import { Projection, TileKey } from "@here/harp-geoutils";
 export abstract class ThemedTileDecoder implements ITileDecoder {
     languages?: string[];
     protected m_styleSetEvaluator?: StyleSetEvaluator;
+    private m_connectResolver?: () => void;
+    private m_styleSetReady: Promise<void>;
+
+    constructor() {
+        this.m_styleSetReady = new Promise<void>(resolve => {
+            this.m_connectResolver = resolve;
+        });
+    }
     abstract connect(): Promise<void>;
 
     dispose() {
         // implemented in subclasses
     }
 
-    decodeTile(
+    async decodeTile(
         data: ArrayBufferLike,
         tileKey: TileKey,
         projection: Projection,
         displayZoomLevel?: number
     ): Promise<DecodedTile> {
+        await this.m_styleSetReady;
+
         if (this.m_styleSetEvaluator === undefined) {
             return Promise.reject(new Error("No style is defined"));
         }
@@ -63,6 +73,12 @@ export abstract class ThemedTileDecoder implements ITileDecoder {
     configure(styleSet?: StyleSet, languages?: string[], options?: OptionsMap): void {
         if (styleSet !== undefined) {
             this.m_styleSetEvaluator = new StyleSetEvaluator(styleSet);
+
+            if (this.m_connectResolver) {
+                this.m_connectResolver();
+
+                this.m_connectResolver = undefined;
+            }
         }
         if (languages !== undefined) {
             this.languages = languages;
