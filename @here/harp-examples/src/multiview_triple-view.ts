@@ -5,7 +5,7 @@
  */
 
 import { GeoCoordinates } from "@here/harp-geoutils";
-import { MapControls } from "@here/harp-map-controls";
+import { MapControls, MapControlsUI } from "@here/harp-map-controls";
 import { CopyrightElementHandler, MapView, MapViewUtils } from "@here/harp-mapview";
 import { APIFormat, OmvDataSource } from "@here/harp-omv-datasource";
 import { accessToken } from "../config";
@@ -189,6 +189,12 @@ export namespace TripleViewExample {
 
         // instantiate the default map controls, allowing the user to pan around freely.
         const mapControls = new MapControls(sampleMapView);
+
+        // Add an UI.
+        if (gridPositionX === 1) {
+            const ui = new MapControlsUI(mapControls);
+            canvas.parentElement!.appendChild(ui.domElement);
+        }
 
         //Set the cameras height according to the given zoom level.
         sampleMapView.camera.position.setZ(
