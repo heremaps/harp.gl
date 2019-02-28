@@ -33,7 +33,7 @@ export enum APIFormat {
     HereV1,
 
     /**
-     * Use the REST API format of Mapbox Vector Tile API v4.
+     * Use the REST API format of Mapbox Vector Tile API v7.
      *
      * Usage:
      * `<OmvRestClientParams.baseUrl>/<zoom>/<X>/<Y>.mvt?access_token=<OmvRestClientParams.authenticationCode>`
@@ -44,9 +44,9 @@ export enum APIFormat {
      * Sample URL:
      * `http://a.tiles.mapbox.com/v4/mapbox.mapbox-streets-v7/14/4823/6160.mvt?access_token=<your access token>`
      *
-     * Default authentication method used: [[AuthenticationTypeMapboxV4]].
+     * Default authentication method used: [[AuthenticationTypeMapboxV7]].
      */
-    MapboxV4,
+    MapboxV7,
 
     /**
      * Use the REST API format of XYZ Vector Tile API in MVT format.
@@ -145,7 +145,7 @@ export const AuthenticationTypeTomTomV1: AuthenticationMethodInfo = {
     method: AuthenticationMethod.QueryString,
     name: "key"
 };
-export const AuthenticationTypeMapboxV4: AuthenticationMethodInfo = {
+export const AuthenticationTypeMapboxV7: AuthenticationMethodInfo = {
     method: AuthenticationMethod.QueryString,
     name: "access_token"
 };
@@ -298,9 +298,9 @@ export class OmvRestClient implements DataProvider {
         switch (this.params.apiFormat) {
             case APIFormat.HereV1:
                 return AuthenticationTypeBearer;
-            case APIFormat.MapboxV4:
+            case APIFormat.MapboxV7:
             case APIFormat.XYZOMV:
-                return AuthenticationTypeMapboxV4;
+                return AuthenticationTypeMapboxV7;
             case APIFormat.XYZMVT:
             case APIFormat.XYZJson:
                 return AuthenticationTypeXYZ;
@@ -354,7 +354,7 @@ export class OmvRestClient implements DataProvider {
             case APIFormat.XYZOMV:
                 path += "/omv";
                 break;
-            case APIFormat.MapboxV4:
+            case APIFormat.MapboxV7:
                 path += ".mvt";
                 break;
             case APIFormat.XYZMVT:
