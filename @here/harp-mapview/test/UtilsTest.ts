@@ -160,6 +160,7 @@ describe("map-view#Utils", function() {
     });
 
     it("estimate size of world with 1000 cubes", async function() {
+        this.timeout(4000);
         const scene: THREE.Scene = new THREE.Scene();
         for (let i = 0; i < 1000; i++) {
             const geometry = new THREE.BoxGeometry(1, 1, 1);
