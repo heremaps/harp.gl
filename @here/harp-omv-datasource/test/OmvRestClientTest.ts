@@ -59,7 +59,7 @@ describe("OmvRestClient", function() {
     it("generates proper Url with MapBox Format", async function() {
         const restClient = new OmvRestClient({
             baseUrl: "https://a.tiles.mapbox.com/v4/mapbox.mapbox-streets-v7",
-            apiFormat: APIFormat.MapboxV4,
+            apiFormat: APIFormat.MapboxV7,
             authenticationCode: async () => "123",
             downloadManager: mockDownloadManager
         });
