@@ -81,6 +81,20 @@ describe("OmvRestClient", function() {
         assert.equal(downloadSpy.args[0][0], "https://a.tomtom.base.url/3/2/1.pbf?key=123");
     });
 
+    it("generates proper Url with XYZ OMV Format", async function() {
+        const restClient = new OmvRestClient({
+            baseUrl: "https://xyz.api.here.com/tiles/herebase.02",
+            apiFormat: APIFormat.XYZOMV,
+            authenticationCode: async () => "123",
+            downloadManager: mockDownloadManager
+        });
+        await restClient.getTile(new TileKey(6338, 2649, 14));
+        assert.equal(
+            downloadSpy.args[0][0],
+            "https://xyz.api.here.com/tiles/herebase.02/14/2649/6338/omv?access_token=123"
+        );
+    });
+
     it("supports custom authentication method based on query string key", async function() {
         const restClient = new OmvRestClient({
             baseUrl: "https://some.base.url",

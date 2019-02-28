@@ -15,6 +15,7 @@ import {
 } from "@here/harp-mapview";
 import { APIFormat, OmvDataSource } from "@here/harp-omv-datasource";
 import * as THREE from "three";
+import { accessToken } from "../config";
 
 // Import the gesture handlers from the three.js additional libraries.
 // The controls are not in common.js they explictly require a
@@ -70,9 +71,10 @@ export namespace FreeCameraApp_DebugingToolExample {
                 .attach(this.mapView)
                 .setDefaults([
                     {
-                        id: "openstreetmap.org",
-                        label: "OpenStreetMap contributors",
-                        link: "https://www.openstreetmap.org/copyright"
+                        id: "here.com",
+                        label: "HERE",
+                        link: "https://legal.here.com/terms",
+                        year: 2019
                     }
                 ]);
 
@@ -101,10 +103,11 @@ export namespace FreeCameraApp_DebugingToolExample {
          */
         start() {
             const omvDataSource = new OmvDataSource({
-                baseUrl: "https://xyz.api.here.com/tiles/osmbase/256/all",
-                apiFormat: APIFormat.XYZMVT,
+                baseUrl: "https://xyz.api.here.com/tiles/herebase.02",
+                apiFormat: APIFormat.XYZOMV,
                 styleSetName: "tilezen",
-                maxZoomLevel: 17
+                maxZoomLevel: 17,
+                authenticationCode: accessToken
             });
 
             const debugTileDataSource = new DebugTileDataSource(webMercatorTilingScheme);
@@ -125,7 +128,7 @@ export namespace FreeCameraApp_DebugingToolExample {
 
             this.mapView.scene.add(pointOfView);
 
-            pointOfView.position.set(0, -3000, 3000);
+            pointOfView.position.set(0, -1500, 1500);
 
             this.mapView.pointOfView = pointOfView;
 
