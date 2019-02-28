@@ -5,7 +5,7 @@
  */
 
 import { GeoCoordinates } from "@here/harp-geoutils";
-import { MapControls } from "@here/harp-map-controls";
+import { MapControls, MapControlsUI } from "@here/harp-map-controls";
 import { CopyrightElementHandler, MapView } from "@here/harp-mapview";
 import { WebTileDataSource } from "@here/harp-webtile-datasource";
 import { appCode, appId } from "../config";
@@ -21,7 +21,12 @@ export namespace WebTileDataSourceExample {
         });
 
         // instantiate the default map controls, allowing the user to pan around freely.
-        MapControls.create(sampleMapView);
+        const controls = new MapControls(sampleMapView);
+
+        // Add an UI.
+        const ui = new MapControlsUI(controls);
+        canvas.parentElement!.appendChild(ui.domElement);
+
         CopyrightElementHandler.install("copyrightNotice", sampleMapView);
 
         // resize the mapView to maximum
