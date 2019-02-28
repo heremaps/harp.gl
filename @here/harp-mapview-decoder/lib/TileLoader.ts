@@ -3,9 +3,14 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-
-import { DecodedTile, ITileDecoder, TileInfo } from "@here/harp-datasource-protocol";
 import "@here/harp-fetch";
+
+import {
+    DecodedTile,
+    ITileDecoder,
+    RequestController,
+    TileInfo
+} from "@here/harp-datasource-protocol";
 import { TileKey } from "@here/harp-geoutils";
 import { DataSource, TileLoaderState } from "@here/harp-mapview";
 import { LoggerManager } from "@here/harp-utils";
@@ -16,7 +21,7 @@ const logger = LoggerManager.instance.create("TileLoader");
 
 /**
  * The `TileLoader` manages the different states of loading and decoding for a [[Tile]]. Used by the
- * [[TiledataSource]].
+ * [[TileDataSource]].
  */
 export class TileLoader {
     /**
@@ -47,7 +52,7 @@ export class TileLoader {
     /**
      * The  notifying the [[ITileDecoder]] to cancel decoding.
      */
-    protected decodeAbortController?: AbortController;
+    protected requestController?: RequestController;
 
     /**
      * The promise which is resolved when loading and decoding have finished.
@@ -66,12 +71,14 @@ export class TileLoader {
      * @param tileKey The quadtree address of a [[Tile]].
      * @param dataProvider The [[DataProvider]] that retrieves the binary tile data.
      * @param tileDecoder The [[ITileDecoder]] that decodes the binary tile to a [[DecodeTile]].
+     * @param priority The priority given to the loading job. Highest number will be served first.
      */
     constructor(
         protected dataSource: DataSource,
         protected tileKey: TileKey,
         protected dataProvider: DataProvider,
-        protected tileDecoder: ITileDecoder
+        protected tileDecoder: ITileDecoder,
+        public priority: number
     ) {}
 
     /**
@@ -136,9 +143,9 @@ export class TileLoader {
                 break;
 
             case TileLoaderState.Decoding:
-                if (this.decodeAbortController) {
-                    this.decodeAbortController.abort();
-                    this.decodeAbortController = undefined;
+                if (this.requestController) {
+                    this.requestController.abort();
+                    this.requestController = undefined;
                 }
                 break;
         }
@@ -165,6 +172,17 @@ export class TileLoader {
             this.state === TileLoaderState.Canceled ||
             this.state === TileLoaderState.Failed
         );
+    }
+
+    /**
+     * Update the priority of this [[Tile]]'s priority. Is effective to sort the decoding requests
+     * in the request queue (used during heavy load).
+     */
+    updatePriority(priority: number): void {
+        this.priority = priority;
+        if (this.requestController !== undefined) {
+            this.requestController.priority = priority;
+        }
     }
 
     /**
@@ -212,7 +230,8 @@ export class TileLoader {
                 this.onLoaded(payload);
             })
             .catch(error => {
-                if (error.name === "AbortError") {
+                // Handle abort messages from fetch and also our own.
+                if (error.name === "AbortError" || error.message === "AbortError: Aborted") {
                     return;
                 }
                 this.onError(error);
@@ -247,7 +266,7 @@ export class TileLoader {
             return;
         }
 
-        // TBD: we might susspend decode if tile is not visible ... ?
+        // TBD: we might suspend decode if tile is not visible ... ?
         this.startDecodeTile();
     }
 
@@ -266,8 +285,8 @@ export class TileLoader {
 
         // Save our cancellation point, so we can be reliably cancelled by any subsequent decode
         // attempts
-        const myCancellationPoint = new AbortController();
-        this.decodeAbortController = myCancellationPoint;
+        const requestController = new RequestController(this.priority);
+        this.requestController = requestController;
 
         const dataSource = this.dataSource;
         this.tileDecoder
@@ -275,10 +294,11 @@ export class TileLoader {
                 payload,
                 this.tileKey,
                 dataSource.projection,
-                this.dataSource.mapView.zoomLevel
+                this.dataSource.mapView.zoomLevel,
+                requestController
             )
             .then(decodedTile => {
-                if (myCancellationPoint.signal.aborted) {
+                if (requestController.signal.aborted) {
                     // our flow is cancelled, silently return
                     return;
                 }
@@ -286,7 +306,8 @@ export class TileLoader {
                 this.onDecoded(decodedTile);
             })
             .catch(error => {
-                if (error.name === "AbortError") {
+                // Handle abort messages from fetch and also our own.
+                if (error.name === "AbortError" || error.message === "AbortError: Aborted") {
                     // our flow is cancelled, silently return
                     return;
                 }
@@ -308,10 +329,10 @@ export class TileLoader {
      * Cancel the decoding process.
      */
     protected cancelDecoding() {
-        if (this.decodeAbortController !== undefined) {
+        if (this.requestController !== undefined) {
             // we should cancel any decodes already in progress!
-            this.decodeAbortController.abort();
-            this.decodeAbortController = undefined;
+            this.requestController.abort();
+            this.requestController = undefined;
         }
     }
 
@@ -366,8 +387,8 @@ export class TileInfoLoader extends TileLoader {
 
         // Save our cancellation point, so we can be reliably cancelled by any subsequent decode
         // attempts
-        const myCancellationPoint = new AbortController();
-        this.decodeAbortController = myCancellationPoint;
+        const requestController = new RequestController(this.priority);
+        this.requestController = requestController;
 
         const dataSource = this.dataSource;
         this.tileDecoder
@@ -375,10 +396,11 @@ export class TileInfoLoader extends TileLoader {
                 payload,
                 this.tileKey,
                 dataSource.projection,
-                this.dataSource.mapView.zoomLevel
+                this.dataSource.mapView.zoomLevel,
+                requestController
             )
             .then(tileInfo => {
-                if (myCancellationPoint.signal.aborted) {
+                if (requestController.signal.aborted) {
                     // our flow is cancelled, silently return
                     return;
                 }
@@ -387,7 +409,8 @@ export class TileInfoLoader extends TileLoader {
                 this.onDone(TileLoaderState.Ready);
             })
             .catch(error => {
-                if (error.name === "AbortError") {
+                // Handle abort messages from fetch and also our own.
+                if (error.name === "AbortError" || error.message === "AbortError: Aborted") {
                     // our flow is cancelled, silently return
                     return;
                 }

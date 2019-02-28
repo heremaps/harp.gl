@@ -3,11 +3,11 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-
 import {
     DecodedTile,
     getProjectionName,
     ITileDecoder,
+    RequestController,
     StyleSet,
     TileInfo,
     ValueMap,
@@ -15,6 +15,7 @@ import {
     WorkerServiceProtocol
 } from "@here/harp-datasource-protocol";
 import { Projection, TileKey } from "@here/harp-geoutils";
+
 import { ConcurrentWorkerSet } from "./ConcurrentWorkerSet";
 
 /**
@@ -95,7 +96,8 @@ export class WorkerBasedDecoder implements ITileDecoder {
         data: ArrayBufferLike,
         tileKey: TileKey,
         projection: Projection,
-        displayZoomLevel?: number
+        displayZoomLevel?: number,
+        requestController?: RequestController
     ): Promise<DecodedTile> {
         const tileKeyCode = tileKey.mortonCode();
 
@@ -109,7 +111,12 @@ export class WorkerBasedDecoder implements ITileDecoder {
 
         const transferList = data instanceof ArrayBuffer ? [data] : undefined;
 
-        return this.workerSet.invokeRequest(this.serviceId, message, transferList);
+        return this.workerSet.invokeRequest(
+            this.serviceId,
+            message,
+            transferList,
+            requestController
+        );
     }
 
     /**
@@ -121,7 +128,8 @@ export class WorkerBasedDecoder implements ITileDecoder {
         data: ArrayBufferLike,
         tileKey: TileKey,
         projection: Projection,
-        displayZoomLevel?: number
+        displayZoomLevel?: number,
+        requestController?: RequestController
     ): Promise<TileInfo | undefined> {
         const tileKeyCode = tileKey.mortonCode();
 
@@ -134,7 +142,12 @@ export class WorkerBasedDecoder implements ITileDecoder {
         };
 
         const transferList = data instanceof ArrayBuffer ? [data] : undefined;
-        return this.workerSet.invokeRequest(this.serviceId, message, transferList);
+        return this.workerSet.invokeRequest(
+            this.serviceId,
+            message,
+            transferList,
+            requestController
+        );
     }
 
     /**

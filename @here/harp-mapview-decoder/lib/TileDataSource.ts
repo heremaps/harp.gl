@@ -176,7 +176,13 @@ export class TileDataSource<TileType extends Tile> extends DataSource {
     getTile(tileKey: TileKey): TileType | undefined {
         const tile = this.m_tileFactory.create(this, tileKey);
 
-        tile.tileLoader = new TileLoader(this, tileKey, this.m_options.dataProvider, this.decoder);
+        tile.tileLoader = new TileLoader(
+            this,
+            tileKey,
+            this.m_options.dataProvider,
+            this.decoder,
+            0
+        );
 
         this.updateTile(tile);
         return tile;
@@ -194,7 +200,8 @@ export class TileDataSource<TileType extends Tile> extends DataSource {
                 this,
                 tileKey,
                 this.m_options.dataProvider,
-                this.decoder
+                this.decoder,
+                0
             );
 
             tileLoader.loadAndDecode().then(loaderState => {
