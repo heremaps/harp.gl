@@ -5,7 +5,7 @@
  */
 
 import { GeoCoordinates } from "@here/harp-geoutils";
-import { MapControls } from "@here/harp-map-controls";
+import { MapControls, MapControlsUI } from "@here/harp-map-controls";
 import { CopyrightElementHandler, MapView } from "@here/harp-mapview";
 import { APIFormat, OmvDataSource } from "@here/harp-omv-datasource";
 import { accessToken } from "../config";
@@ -92,6 +92,10 @@ export namespace HelloWorldExample {
         const mapControls = new MapControls(sampleMapView);
         mapControls.setRotation(0.9, 23.928);
         // end:harp_gl_hello_world_example_2.ts
+
+        // Add an UI.
+        const ui = new MapControlsUI(mapControls);
+        canvas.parentElement!.appendChild(ui.domElement);
 
         // snippet:harp_gl_hello_world_example_3.ts
         // resize the mapView to maximum
