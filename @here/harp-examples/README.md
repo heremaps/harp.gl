@@ -6,7 +6,7 @@ This repository contains examples for `harp.gl`.
 
 ## Building and running
 
-Usage:
+You can build and run the examples running the following commands from the root path of the project:
 
 ```shell
 yarn install
