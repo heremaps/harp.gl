@@ -8,6 +8,7 @@ import { GeoCoordinates } from "@here/harp-geoutils";
 import { MapControls } from "@here/harp-map-controls";
 import { CopyrightElementHandler, MapView, MapViewUtils } from "@here/harp-mapview";
 import { APIFormat, OmvDataSource } from "@here/harp-omv-datasource";
+import { accessToken } from "../config";
 
 /**
  * An example showing triple map view build with 3 [[MapView]]s each with a different theme and/or
@@ -178,9 +179,10 @@ export namespace TripleViewExample {
             .attach(sampleMapView)
             .setDefaults([
                 {
-                    id: "openstreetmap.org",
-                    label: "OpenStreetMap contributors",
-                    link: "https://www.openstreetmap.org/copyright"
+                    id: "here.com",
+                    label: "HERE",
+                    link: "https://legal.here.com/terms",
+                    year: 2019
                 }
             ]);
         sampleMapView.camera.position.set(0, 0, 800);
@@ -228,10 +230,11 @@ export namespace TripleViewExample {
 
     // snippet:harp_gl_multiview_tripleView_2.ts
     const xyzDataSourceParams = {
-        baseUrl: "https://xyz.api.here.com/tiles/osmbase/256/all",
-        apiFormat: APIFormat.XYZMVT,
+        baseUrl: "https://xyz.api.here.com/tiles/herebase.02",
+        apiFormat: APIFormat.XYZOMV,
         styleSetName: "tilezen",
-        maxZoomLevel: 17
+        maxZoomLevel: 17,
+        authenticationCode: accessToken
     };
     const dataSources = {
         omvDataSource1: new OmvDataSource(xyzDataSourceParams),

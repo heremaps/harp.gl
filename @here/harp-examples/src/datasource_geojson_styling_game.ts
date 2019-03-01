@@ -10,6 +10,7 @@ import { GeoCoordinates, TileKey } from "@here/harp-geoutils";
 import { CopyrightElementHandler, MapView } from "@here/harp-mapview";
 import { DataProvider } from "@here/harp-mapview-decoder";
 import { APIFormat, OmvDataSource } from "@here/harp-omv-datasource";
+import { accessToken } from "../config";
 import * as geojson from "../resources/italy.json";
 
 /**
@@ -80,9 +81,10 @@ export namespace GeoJsonStylingGame {
         .attach(mapView)
         .setDefaults([
             {
-                id: "openstreetmap.org",
-                label: "OpenStreetMap contributors",
-                link: "https://www.openstreetmap.org/copyright"
+                id: "here.com",
+                label: "HERE",
+                link: "https://legal.here.com/terms",
+                year: 2019
             }
         ]);
     mapView.camera.position.set(1900000, 3350000, 2500000); // Europe.
@@ -93,10 +95,11 @@ export namespace GeoJsonStylingGame {
     });
 
     const baseMap = new OmvDataSource({
-        baseUrl: "https://xyz.api.here.com/tiles/osmbase/256/all",
-        apiFormat: APIFormat.XYZMVT,
+        baseUrl: "https://xyz.api.here.com/tiles/herebase.02",
+        apiFormat: APIFormat.XYZOMV,
         styleSetName: "tilezen",
-        maxZoomLevel: 17
+        maxZoomLevel: 17,
+        authenticationCode: accessToken
     });
     mapView.addDataSource(baseMap);
     // end:initmapview.ts

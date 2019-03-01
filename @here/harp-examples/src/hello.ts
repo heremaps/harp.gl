@@ -8,6 +8,7 @@ import { GeoCoordinates } from "@here/harp-geoutils";
 import { MapControls } from "@here/harp-map-controls";
 import { CopyrightElementHandler, MapView } from "@here/harp-mapview";
 import { APIFormat, OmvDataSource } from "@here/harp-omv-datasource";
+import { accessToken } from "../config";
 
 /**
  * MapView initialization sequence enables setting all the necessary elements on a map  and returns
@@ -74,9 +75,10 @@ export namespace HelloWorldExample {
             .attach(sampleMapView)
             .setDefaults([
                 {
-                    id: "openstreetmap.org",
-                    label: "OpenStreetMap contributors",
-                    link: "https://www.openstreetmap.org/copyright"
+                    id: "here.com",
+                    label: "HERE",
+                    link: "https://legal.here.com/terms",
+                    year: 2019
                 }
             ]);
 
@@ -108,10 +110,11 @@ export namespace HelloWorldExample {
 
     // snippet:harp_gl_hello_world_example_4.ts
     const omvDataSource = new OmvDataSource({
-        baseUrl: "https://xyz.api.here.com/tiles/osmbase/256/all",
-        apiFormat: APIFormat.XYZMVT,
+        baseUrl: "https://xyz.api.here.com/tiles/herebase.02",
+        apiFormat: APIFormat.XYZOMV,
         styleSetName: "tilezen",
-        maxZoomLevel: 17
+        maxZoomLevel: 17,
+        authenticationCode: accessToken
     });
     // end:harp_gl_hello_world_example_4.ts
 
