@@ -26,6 +26,6 @@
     "cross-env": "^5.2.0",
     "mocha": "^5.2.0",
     "source-map-support": "^0.5.2",
-    "typescript": "~3.2.1"
+    "typescript": "^3.3.0"
   }
 }
