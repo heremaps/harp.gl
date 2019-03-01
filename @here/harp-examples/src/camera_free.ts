@@ -63,6 +63,7 @@ export namespace FreeCameraApp_DebugingToolExample {
         // creates a new MapView for the HTMLCanvasElement of the given id
         constructor(readonly options: FreeCameraAppOptions) {
             this.mapView = new MapView(options);
+            this.mapView.fog.enabled = false;
 
             this.mapControls = new MapControls(this.mapView);
             this.mapControls.enabled = false;
@@ -134,6 +135,15 @@ export namespace FreeCameraApp_DebugingToolExample {
 
             const transformControls = new THREE.TransformControls(pointOfView, this.mapView.canvas);
             transformControls.attach(this.mapView.camera);
+            transformControls.addEventListener("mouseDown", event => {
+                trackball.enabled = false;
+            });
+            transformControls.addEventListener("mouseUp", event => {
+                trackball.enabled = true;
+            });
+            transformControls.addEventListener("objectChange", event => {
+                this.mapView.update();
+            });
 
             this.mapView.scene.add(transformControls);
 
@@ -149,6 +159,10 @@ export namespace FreeCameraApp_DebugingToolExample {
 
             // Set up the trackball gesture handler
             const trackball = new THREE.TrackballControls(pointOfView, this.mapView.canvas);
+            trackball.staticMoving = true;
+            trackball.rotateSpeed = 3.0;
+            trackball.zoomSpeed = 4.0;
+            trackball.panSpeed = 2.0;
 
             trackball.addEventListener("start", () => {
                 this.mapView.beginAnimation();
@@ -160,7 +174,6 @@ export namespace FreeCameraApp_DebugingToolExample {
 
             // Update the debug controls.
             this.mapView.addEventListener(MapViewEventNames.Render, () => {
-                transformControls.update();
                 trackball.update();
                 this.helpers.forEach(helper => helper.update());
             });
@@ -172,7 +185,7 @@ export namespace FreeCameraApp_DebugingToolExample {
                 this.mapView.update();
             });
 
-            window.addEventListener("keydown", event => {
+            window.top.addEventListener("keydown", event => {
                 switch (event.code) {
                     case "KeyT":
                         transformControls.setMode("translate");
