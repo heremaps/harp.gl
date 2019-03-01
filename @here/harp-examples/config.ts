@@ -9,3 +9,6 @@ export const appId = "devportal-demo-20180625";
 
 /** @hidden */
 export const appCode = "9v2BkviRwi9Ot26kp2IysQ";
+
+/** @hidden */
+export const accessToken = "AYlqpxvwl7C8tSVG22lX2lg";

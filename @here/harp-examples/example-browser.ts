@@ -128,7 +128,7 @@ function exampleBrowser(exampleDefinitions: ExampleDefinitions) {
         const baseTitle = "<strong>harp.gl</strong> examples";
         document.title = exampleName ? `${exampleName} - harp.gl examples` : `harp.gl examples`;
 
-        titleHeader.innerHTML = exampleName ? `"<strong>harp.gl</strong> examples` : `${baseTitle}`;
+        titleHeader.innerHTML = exampleName ? `<strong>harp.gl</strong> examples` : `${baseTitle}`;
 
         subtitle.textContent = exampleName || "";
     }

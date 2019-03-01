@@ -77,6 +77,22 @@ export enum APIFormat {
     XYZJson,
 
     /**
+     * Use the REST API format of XYZ Vector Tile API in OMV format.
+     *
+     * Usage:
+     * `<OmvRestClientParams.baseUrl>/tiles/herebase.02/<zoom>/<X>/<Y>/omv?access_token=<OmvRestClientParams.authenticationCode>`
+     *
+     * Format definition:
+     * `http|s://<base-url>/tiles/herebase.02/{z}/{x}/{y}/{format}?access_token={access_token}`
+     *
+     * Sample URL:
+     * `https://xyz.api.here.com/tiles/osmbase/herebase.02/14/2649/6338/omv?access_token=your-xyz-access-token`
+     *
+     * Default authentication method used: [[AuthenticationTypeMapboxV4]].
+     */
+    XYZOMV,
+
+    /**
      * Use the REST API format of Tomtoms Vector Tile API v1.
      *
      * Usage:
@@ -283,6 +299,7 @@ export class OmvRestClient implements DataProvider {
             case APIFormat.HereV1:
                 return AuthenticationTypeBearer;
             case APIFormat.MapboxV4:
+            case APIFormat.XYZOMV:
                 return AuthenticationTypeMapboxV4;
             case APIFormat.XYZMVT:
             case APIFormat.XYZJson:
@@ -334,6 +351,7 @@ export class OmvRestClient implements DataProvider {
         let path = `/${tileKey.level}/${tileKey.column}/${tileKey.row}`;
         switch (this.params.apiFormat) {
             case APIFormat.HereV1:
+            case APIFormat.XYZOMV:
                 path += "/omv";
                 break;
             case APIFormat.MapboxV4:
