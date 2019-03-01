@@ -1722,11 +1722,20 @@ export class MapView extends THREE.EventDispatcher {
     }
 
     /**
+     * This should be used instead of: const {width,height} = this.canvas
+     * Because the resize method could be called without the canvas changing
+     * size (the tests do this), so this means we have the correct width and height.
+     */
+    private getCanvasSize() {
+        const { width, height } = this.m_renderer.getSize();
+        return { width: width * this.pixelRatio, height: height * this.pixelRatio };
+    }
+    /**
      * Updates the camera and the projections and resets the screen collisions,
      * note, setupCamera must be called before this is called.
      */
     private updateCameras() {
-        const { width, height } = this.m_renderer.getSize();
+        const { width, height } = this.getCanvasSize();
         this.m_camera.aspect =
             this.m_forceCameraAspect !== undefined ? this.m_forceCameraAspect : width / height;
         this.setFovOnCamera(this.m_options.fovCalculation!, height);
