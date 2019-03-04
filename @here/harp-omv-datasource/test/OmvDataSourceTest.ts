@@ -11,7 +11,7 @@ import "@here/harp-fetch";
 import { TileKey } from "@here/harp-geoutils";
 import { DataProvider } from "@here/harp-mapview-decoder";
 import { assert } from "chai";
-import { APIFormat, AuthenticationTypeMapboxV4, OmvDataSource, OmvRestClient } from "../index";
+import { APIFormat, AuthenticationTypeAccessToken, OmvDataSource, OmvRestClient } from "../index";
 import { OmvTileDecoder } from "../index-worker";
 
 class MockDataProvider implements DataProvider {
@@ -50,7 +50,7 @@ describe("DataProviders", function() {
             baseUrl: "https://a.tiles.mapbox.com/v4/mapbox.mapbox-streets-v7",
             apiFormat: APIFormat.MapboxV4,
             authenticationCode: "123",
-            authenticationMethod: AuthenticationTypeMapboxV4
+            authenticationMethod: AuthenticationTypeAccessToken
         });
         const provider = omvDataSource.dataProvider();
         assert.instanceOf(provider, OmvRestClient);
@@ -62,7 +62,10 @@ describe("DataProviders", function() {
         );
         assert.equal(omvRestClientProvider.params.apiFormat, APIFormat.MapboxV4);
         assert.equal(omvRestClientProvider.params.authenticationCode, "123");
-        assert.equal(omvRestClientProvider.params.authenticationMethod, AuthenticationTypeMapboxV4);
+        assert.equal(
+            omvRestClientProvider.params.authenticationMethod,
+            AuthenticationTypeAccessToken
+        );
     });
 
     it("Creates OmvDataSource with custom DataProvider, ignoring other attributes", function() {
