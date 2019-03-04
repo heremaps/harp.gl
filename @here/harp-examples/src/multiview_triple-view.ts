@@ -6,8 +6,9 @@
 
 import { GeoCoordinates } from "@here/harp-geoutils";
 import { MapControls } from "@here/harp-map-controls";
-import { MapView, MapViewUtils } from "@here/harp-mapview";
+import { CopyrightElementHandler, MapView, MapViewUtils } from "@here/harp-mapview";
 import { APIFormat, OmvDataSource } from "@here/harp-omv-datasource";
+import { accessToken } from "../config";
 
 /**
  * An example showing triple map view build with 3 [[MapView]]s each with a different theme and/or
@@ -15,17 +16,17 @@ import { APIFormat, OmvDataSource } from "@here/harp-omv-datasource";
  *
  * Creates 3 views with their own MapView and MapControl as WebTileDataSourceOptions:
  * ```typescript
- * [[include:vislib_multiview_tripleView_1.ts]]
+ * [[include:harp_gl_multiview_tripleView_1.ts]]
  * ```
  *
  * Create 3 separate [[MapView]]s and datasources that will populate them.
  * ```typescript
- * [[include:vislib_multiview_tripleView_2.ts]]
+ * [[include:harp_gl_multiview_tripleView_2.ts]]
  * ```
  * After adding the MapViews and their dedicated datasources (each one possibly with different
  * theme, added event handlers to sync between them [[MapView]]s:
  * ```typescript
- * [[include:vislib_multiview_tripleView_3.ts]]
+ * [[include:harp_gl_multiview_tripleView_3.ts]]
  * ```
  */
 
@@ -107,13 +108,13 @@ export namespace TripleViewExample {
 <canvas id="mapCanvas3"></canvas>
 <div class="titleRow">
     <div class="themeName" id="mapTheme1">
-        Data:<em> Tilezen/Omv</em><br/> Theme: <em>Day</em>
+        Data:<em> OMV</em><br/> Theme: <em>Base</em>
     </div>
     <div class="themeName" id="mapTheme2">
-        Data:<em> Tilezen/Omv</em><br/> Theme: <em>Reduced Night</em>
+        Data:<em> OMV</em><br/> Theme: <em>Dark</em>
     </div>
     <div class="themeName" id="mapTheme3">
-        Data:<em> Tilezen/Omv</em><br/> Theme: <em>Reduced Day</em>
+        Data:<em> OMV</em><br/> Theme: <em>Reduced</em>
     </div>
 </div>
 `;
@@ -174,6 +175,16 @@ export namespace TripleViewExample {
             theme: theme !== undefined ? theme : defaultTheme,
             decoderUrl
         });
+        CopyrightElementHandler.install("copyrightNotice")
+            .attach(sampleMapView)
+            .setDefaults([
+                {
+                    id: "here.com",
+                    label: "HERE",
+                    link: "https://legal.here.com/terms",
+                    year: 2019
+                }
+            ]);
         sampleMapView.camera.position.set(0, 0, 800);
 
         // instantiate the default map controls, allowing the user to pan around freely.
@@ -197,9 +208,15 @@ export namespace TripleViewExample {
     }
 
     // create `${numberOfSyncXViews}` MapViews, each with their own theme file
-    // snippet:vislib_multiview_tripleView_1.ts
+    // snippet:harp_gl_multiview_tripleView_1.ts
     const mapViews = {
-        view1: initMapView("mapCanvas", 0, 0, "./resources/day.json", "./decoder.bundle.js"),
+        view1: initMapView(
+            "mapCanvas",
+            0,
+            0,
+            "./resources/berlin_base.json",
+            "./decoder.bundle.js"
+        ),
         view2: initMapView(
             "mapCanvas2",
             1,
@@ -209,14 +226,15 @@ export namespace TripleViewExample {
         ),
         view3: initMapView("mapCanvas3", 2, 0, "./resources/reducedDay.json", "./decoder.bundle.js")
     };
-    // end:vislib_multiview_tripleView_1.ts
+    // end:harp_gl_multiview_tripleView_1.ts
 
-    // snippet:vislib_multiview_tripleView_2.ts
+    // snippet:harp_gl_multiview_tripleView_2.ts
     const xyzDataSourceParams = {
-        baseUrl: "https://xyz.api.here.com/tiles/osmbase/256/all",
-        apiFormat: APIFormat.MapzenV2,
+        baseUrl: "https://xyz.api.here.com/tiles/herebase.02",
+        apiFormat: APIFormat.XYZOMV,
         styleSetName: "tilezen",
-        maxZoomLevel: 17
+        maxZoomLevel: 17,
+        authenticationCode: accessToken
     };
     const dataSources = {
         omvDataSource1: new OmvDataSource(xyzDataSourceParams),
@@ -227,7 +245,7 @@ export namespace TripleViewExample {
     mapViews.view1.mapView.addDataSource(dataSources.omvDataSource1);
     mapViews.view2.mapView.addDataSource(dataSources.omvDataSource2);
     mapViews.view3.mapView.addDataSource(dataSources.omvDataSource3);
-    // end:vislib_multiview_tripleView_2.ts
+    // end:harp_gl_multiview_tripleView_2.ts
 
     /**
      * A function that copies the position and orientation of one MapView/MapControl to the others.
@@ -237,7 +255,7 @@ export namespace TripleViewExample {
      * @param destView Destination MapView synced to current location; MapControl synced to current
      *                  position and orientation
      */
-    // snippet:vislib_multiview_tripleView_3.ts
+    // snippet:harp_gl_multiview_tripleView_3.ts
     export const syncMapViews = (srcView: ViewControlPair, destView: ViewControlPair) => {
         const ypr = srcView.mapControls.yawPitchRoll;
         destView.mapControls.setRotation(ypr.yaw, ypr.pitch);
@@ -266,5 +284,5 @@ export namespace TripleViewExample {
             );
         });
     });
-    // end:vislib_multiview_tripleView_3.ts
+    // end:harp_gl_multiview_tripleView_3.ts
 }

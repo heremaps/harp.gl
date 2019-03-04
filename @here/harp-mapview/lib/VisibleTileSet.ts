@@ -3,15 +3,13 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
+import { Projection, TileKey } from "@here/harp-geoutils";
+import { LRUCache } from "@here/harp-lrucache";
+import * as THREE from "three";
 
 import { DataSource } from "./DataSource";
 import { MapTileCuller } from "./MapTileCuller";
 import { Tile } from "./Tile";
-
-import { Projection, TileKey } from "@here/harp-geoutils";
-import { LRUCache } from "@here/harp-lrucache";
-
-import * as THREE from "three";
 
 /**
  * Limited set of [[MapViewOptions]] used for [[VisibleTileSet]].
@@ -77,7 +75,14 @@ class DataSourceCache {
     constructor(options: VisibleTileSetOptions) {
         this.tileCache = new LRUCache<number, Tile>(options.tileCacheSize);
         this.tileCache.evictionCallback = (_, tile) => {
+            if (tile.tileLoader !== undefined) {
+                // Cancel downloads as early as possible.
+                tile.tileLoader.cancel();
+            }
             this.disposedTiles.push(tile);
+        };
+        this.tileCache.canEvict = (_, tile) => {
+            return !tile.isVisible;
         };
     }
 
@@ -351,10 +356,20 @@ export class VisibleTileSet {
                     continue;
                 }
 
+                // Keep the new tile from being removed from the cache.
+                tile.isVisible = true;
+
                 tile.prepareForRender();
                 allDataSourceTilesLoaded = allDataSourceTilesLoaded && tile.hasGeometry;
                 if (!tile.hasGeometry) {
                     numTilesLoading++;
+                } else {
+                    tile.numFramesVisible++;
+
+                    if (tile.frameNumVisible < 0) {
+                        // Store the fist frame the tile became visible.
+                        tile.frameNumVisible = dataSource.mapView.frameNumber;
+                    }
                 }
                 actuallyVisibleTiles.push(tile);
             }
@@ -376,6 +391,16 @@ export class VisibleTileSet {
 
         this.fillMissingTilesFromCache();
 
+        this.forEachCachedTile(tile => {
+            // Remove all tiles that are still being loaded, but are no longer visible. They have to
+            // be reloaded when they become visible again. Hopefully, they are still in the browser
+            // cache by then.
+            if (!tile.isVisible && tile.tileLoader !== undefined && !tile.tileLoader.isFinished) {
+                tile.tileLoader.cancel();
+                this.disposeTile(tile);
+            }
+        });
+
         return newRenderList;
     }
 
@@ -396,13 +421,15 @@ export class VisibleTileSet {
 
         if (tile !== undefined) {
             tileCache.set(tileKey.mortonCode(), tile);
+            // Store the frame number this tile has been requested.
+            tile.frameNumRequested = dataSource.mapView.frameNumber;
         }
 
         return tile;
     }
 
     /**
-     * Removes all internal bookeeping entries and cache related to specified datasource.
+     * Removes all internal bookkeeping entries and cache related to specified datasource.
      *
      * Called by [[MapView]] when [[DataSource]] has been removed from [[MapView]].
      */
@@ -482,11 +509,22 @@ export class VisibleTileSet {
     }
 
     /**
+     * Dispose a `Tile` from cache, 'dispose()' is also called on the tile to free its resources.
+     */
+    disposeTile(tile: Tile): void {
+        const cache = this.m_dataSourceCache.get(tile.dataSource.name);
+        if (cache) {
+            cache.tileCache.delete(tile.tileKey.mortonCode());
+            tile.dispose();
+        }
+    }
+
+    /**
      * Search cache to replace visible but yet empty tiles with already loaded siblings in nearby
      * zoom levels.
      *
      * Useful, when zooming in/out and when "newly elected" tiles are not yet loaded. Prevents
-     * flickering by rendering already loaded tiles from uppper/higher zoom levels.
+     * flickering by rendering already loaded tiles from upper/higher zoom levels.
      */
     private fillMissingTilesFromCache() {
         this.dataSourceTileList.forEach(renderListEntry => {
@@ -496,7 +534,7 @@ export class VisibleTileSet {
             const renderedTiles: Map<number, Tile> = new Map<number, Tile>();
             const checkedTiles: Set<number> = new Set<number>();
 
-            // direction in quad tree to seach: up -> shallower levels, down -> deeper lewels
+            // Direction in quad tree to search: up -> shallower levels, down -> deeper levels.
             enum SearchDirection {
                 UP,
                 DOWN,
@@ -524,7 +562,7 @@ export class VisibleTileSet {
                     ? SearchDirection.DOWN
                     : SearchDirection.UP;
 
-            let incompleteTiles: Map<number, SearchDirection> = new Map<number, SearchDirection>();
+            let incompleteTiles: Map<number, SearchDirection> = new Map();
 
             renderListEntry.visibleTiles.forEach(tile => {
                 const tileCode = tile.tileKey.mortonCode();

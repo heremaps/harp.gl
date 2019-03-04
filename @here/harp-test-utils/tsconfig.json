@@ -1,5 +1,4 @@
 {
-    "compileOnSave": true,
     "compilerOptions": {
         "target": "es5",
         "lib": [
@@ -14,11 +13,6 @@
         "noImplicitReturns": true,
         "noImplicitThis": true,
         "noUnusedLocals": false,
-        "downlevelIteration": true,
-        "types": [
-            "chai",
-            "node",
-            "mocha"
-        ]
+        "downlevelIteration": true
     }
 }

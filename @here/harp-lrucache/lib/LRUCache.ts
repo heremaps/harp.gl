@@ -30,6 +30,18 @@ export class LRUCache<Key, Value> {
      */
     evictionCallback?: (key: Key, value: Value) => void;
 
+    /**
+     * Optional callback that is called on every item that should be evicted from the cache to
+     * determine if it can be removed, or should be locked in the cache.
+     *
+     * It returns `true` if the item can be removed from cache, `false` otherwise. Locking items in
+     * the cache should be a temporary measure, since if the cache is filled with non-evictable
+     * items only, it may grow beyond its capacity.
+     *
+     * **Note**: This callback is not called when an item is explicitly deleted from the map via
+     * [[delete]] or [[clear]].
+     */
+    canEvict?: (key: Key, value: Value) => boolean;
     private m_capacity: number;
     private m_size = 0;
 
@@ -144,9 +156,7 @@ export class LRUCache<Key, Value> {
      */
     setCapacity(newCapacity: number): void {
         this.m_capacity = newCapacity;
-        while (this.m_size > this.m_capacity) {
-            this.evict();
-        }
+        this.evict();
     }
 
     /**
@@ -172,7 +182,7 @@ export class LRUCache<Key, Value> {
             this.evict();
         } else {
             if (valueSize > this.m_capacity) {
-                return; // too big to cache
+                return; // single item too big to cache
             }
 
             entry = new Entry<Key, Value>(key, value, valueSize, null, null);
@@ -276,23 +286,48 @@ export class LRUCache<Key, Value> {
         return this.m_map.delete(key);
     }
 
-    protected evict(): void {
+    protected evict() {
         while (this.m_size > this.m_capacity) {
-            this.evictOldest();
+            const evicted = this.evictOldest();
+            if (evicted === undefined) {
+                return;
+            }
         }
     }
 
-    protected evictOldest(): Entry<Key, Value> {
+    protected evictOldest(): Entry<Key, Value> | undefined {
         assert(this.m_oldest !== null);
         const oldest = this.m_oldest!;
         assert(oldest.older === null);
-        const itemToRemove = oldest;
+        let itemToRemove = oldest;
 
-        this.m_oldest = itemToRemove.newer;
-        if (itemToRemove.newer !== null) {
-            assert(itemToRemove.newer.older === itemToRemove);
-            itemToRemove.newer.older = null;
+        if (this.canEvict !== undefined) {
+            while (!this.canEvict(itemToRemove.key, itemToRemove.value)) {
+                if (itemToRemove.newer === null) {
+                    return undefined;
+                }
+                itemToRemove = itemToRemove.newer;
+            }
         }
+
+        if (itemToRemove === oldest) {
+            this.m_oldest = itemToRemove.newer;
+            if (itemToRemove.newer !== null) {
+                assert(itemToRemove.newer.older === itemToRemove);
+                itemToRemove.newer.older = null;
+            }
+        } else {
+            if (itemToRemove.newer !== null) {
+                assert(itemToRemove.newer.older === itemToRemove);
+                itemToRemove.newer.older = itemToRemove.older;
+                if (itemToRemove.older !== null) {
+                    itemToRemove.older.newer = itemToRemove.newer;
+                }
+            } else {
+                return undefined;
+            }
+        }
+
         const isOk = this.m_map.delete(itemToRemove.key);
         assert(isOk === true);
         if (isOk && this.evictionCallback !== undefined) {

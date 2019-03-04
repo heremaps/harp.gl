@@ -56,11 +56,11 @@ a datasource (for example a tilezen based one, check [here for more information 
                         "when": "kind in ['continent']",
                         "technique": "text",
                         "attr": {
-                            "priority": [
-                                { "maxLevel": 2, "value": 120 },
-                                { "maxLevel": 3, "value": 100 },
-                                { "value": 60 }
-                            ],
+                            "priority": {
+                                "interpolation": "Discrete",
+                                "zoomLevels": [2, 3, 4],
+                                "values": [120, 100, 60]
+                            },
                             "color": "#E48892",
                             "allCaps": true,
                             "opacity": 0.6
@@ -84,7 +84,7 @@ The conditions can be based on the datasource metadata
 (for example data layer like water or buildings or a specific flag like `isBridge`).
 
 An example theme file used in harp-examples could be found in the
-[@here/harp-map-theme/resources/day.json](../harp-map-theme/resources/day.json).
+[berlin_base.json](../harp-map-theme/resources/berlin_base.json).
 Theme file is closely connected with the type of data received from the datasource.
 
 `"technique"` - determines which technique should be applied to objects fulfilling the condition
@@ -96,11 +96,11 @@ Theme file is closely connected with the type of data received from the datasour
     "technique": "solid-line",
     "attr": {
         "color": "#00f",
-        "lineWidth": [
-            { "maxLevel": 13, "value": 1.5 },
-            { "maxLevel": 14, "value": 1.2 },
-            { "value": 0.9 }
-        ]
+        "lineWidth": {
+            "interpolation": "Linear",
+            "zoomLevels": [13, 14, 15],
+            "values": [1.5, 1.2, 0.9]
+        }
     }
 }
 ```
@@ -282,11 +282,11 @@ example:
 
 ```json
 "attr": {
-    "priority": [
-        { "maxLevel": 2, "value": 120 },
-        { "maxLevel": 3, "value": 100 },
-        { "value": 60 }
-    ],
+    "priority": {
+        "interpolation": "Discrete",
+        "zoomLevels": [2, 3, 4],
+        "values": [120, 100, 60]
+    },
     "color": "#E48892",
     "allCaps": true,
     "opacity": 0.6

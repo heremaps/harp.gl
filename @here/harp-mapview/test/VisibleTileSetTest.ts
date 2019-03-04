@@ -11,7 +11,7 @@ import { TileKey } from "@here/harp-geoutils";
 import { assert } from "chai";
 import * as sinon from "sinon";
 import * as THREE from "three";
-import { MapViewDefaults } from "../lib/MapView";
+import { MapView, MapViewDefaults } from "../lib/MapView";
 import { Tile } from "../lib/Tile";
 import { VisibleTileSet } from "../lib/VisibleTileSet";
 import { FakeOmvDataSource } from "./FakeOmvDataSource";
@@ -31,6 +31,12 @@ function createBerlinCenterCameraFromSamples() {
     return { camera, worldCenter };
 }
 
+class FakeMapView {
+    get frameNumber(): number {
+        return 0;
+    }
+}
+
 describe("VisibleTileSet", function() {
     it("#updateRenderList properly culls Berlin center example view", function() {
         const { camera, worldCenter } = createBerlinCenterCameraFromSamples();
@@ -38,6 +44,8 @@ describe("VisibleTileSet", function() {
         const zoomLevel = 15;
         const storageLevel = 14;
         const ds = new FakeOmvDataSource();
+
+        ds.attach(new FakeMapView() as MapView);
 
         const renderList = vts.updateRenderList(worldCenter, zoomLevel, storageLevel, [ds]);
 
@@ -72,6 +80,8 @@ describe("VisibleTileSet", function() {
         const storageLevel = 14;
         const ds = new FakeOmvDataSource();
 
+        ds.attach(new FakeMapView() as MapView);
+
         const renderList = vts.updateRenderList(worldCenter, zoomLevel, storageLevel, [ds]);
 
         assert.equal(renderList.length, 1);
@@ -96,6 +106,8 @@ describe("VisibleTileSet", function() {
         const zoomLevel = 15;
         const storageLevel = 14;
         const dataSource = new FakeOmvDataSource();
+
+        dataSource.attach(new FakeMapView() as MapView);
 
         // same as first found code few lines below
         const parentCode = TileKey.parentMortonCode(371506851);
@@ -127,6 +139,8 @@ describe("VisibleTileSet", function() {
         const zoomLevel = 15;
         const storageLevel = 14;
         const ds = new FakeOmvDataSource();
+
+        ds.attach(new FakeMapView() as MapView);
 
         const renderList = vts.updateRenderList(worldCenter, zoomLevel, storageLevel, [ds]);
 

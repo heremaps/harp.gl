@@ -11,13 +11,13 @@ import {
     Geometry,
     GeometryType,
     getArrayConstructor,
-    getAttributeValue,
     getPropertyValue,
     isCirclesTechnique,
     isDashedLineTechnique,
     isExtrudedLineTechnique,
     isExtrudedPolygonTechnique,
     isFillTechnique,
+    isInterpolatedProperty,
     isSolidLineTechnique,
     isSquaresTechnique,
     isStandardTechnique,
@@ -178,13 +178,13 @@ export interface ITileLoader {
     payload?: ArrayBufferLike | {};
     decodedTile?: DecodedTile;
 
+    isFinished: boolean;
+
     loadAndDecode(): Promise<TileLoaderState>;
     waitSettled(): Promise<TileLoaderState>;
 
     cancel(): void;
     dispose(): void;
-
-    isFinished(): boolean;
 }
 
 /**
@@ -293,6 +293,36 @@ export class Tile implements CachedResource {
      * Copyright information of this `Tile`'s data.
      */
     copyrightInfo?: CopyrightInfo[];
+
+    /**
+     * Keeping some stats for the individual `Tile`s to analyze caching behavior.
+     *
+     * The frame the `Tile` was requested.
+     */
+    frameNumRequested: number = -1;
+
+    /**
+     * The frame the `Tile` was first visible.
+     */
+    frameNumVisible: number = -1;
+
+    /**
+     * The last frame this `Tile` has been rendered (or was in the visible set). Used to determine
+     * visibility of `Tile` at the end of a frame, if the number is the current frame number, it is
+     * visible.
+     */
+    frameNumLastVisible: number = -1;
+
+    /**
+     * After removing from cache, this is the number of frames the `Tile` was visible.
+     */
+    numFramesVisible: number = 0;
+
+    /**
+     * The visibility status of the `Tile`. It is actually visible or planned to become visible, and
+     * as such it should not be removed from cache.
+     */
+    isVisible: boolean = false;
 
     private m_disposed: boolean = false;
 
@@ -492,6 +522,14 @@ export class Tile implements CachedResource {
         if (!this.m_decodedTile || this.m_disposed) {
             return;
         }
+
+        // If the tile is not ready for display, or if it has become invisible while being loaded,
+        // for example by moving the camera, the tile is not finished and its geometry is not
+        // created. This is an optimization for fast camera movements and zooms.
+        if (!this.isVisible) {
+            return;
+        }
+
         const decodedTile = this.m_decodedTile;
 
         if (decodedTile.tileInfo !== undefined) {
@@ -501,8 +539,28 @@ export class Tile implements CachedResource {
         this.m_decodedTile = undefined;
 
         setTimeout(() => {
-            let now = 0;
             const stats = PerformanceStatistics.instance;
+
+            // If the tile has become invisible while being loaded, for example by moving the
+            // camera, the tile is not finished and its geometry is not created. This is an
+            // optimization for fast camera movements and zooms.
+            if (!this.isVisible) {
+                // Dispose the tile from the visible set, so it can be reloaded properly next time
+                // it is needed.
+                this.mapView.visibleTileSet.disposeTile(this);
+
+                if (stats.enabled) {
+                    stats.currentFrame.addMessage(
+                        `Decoded tile: ${this.dataSource.name} # lvl=${this.tileKey.level} col=${
+                            this.tileKey.column
+                        } row=${this.tileKey.row} DISCARDED - invisible`
+                    );
+                }
+
+                return;
+            }
+
+            let now = 0;
             if (stats.enabled) {
                 now = PerformanceTimer.now();
             }
@@ -729,6 +787,9 @@ export class Tile implements CachedResource {
         this.clear();
         this.userTextElements.length = 0;
         this.m_disposed = true;
+
+        // Ensure that tile is removable from tile cache.
+        this.isVisible = false;
     }
 
     /**
@@ -1076,7 +1137,7 @@ export class Tile implements CachedResource {
                     material = createMaterial(
                         {
                             technique,
-                            level: displayZoomLevel,
+                            level: Math.floor(displayZoomLevel),
                             fog: this.mapView.scene.fog !== null
                         },
                         onMaterialUpdated
@@ -1149,8 +1210,8 @@ export class Tile implements CachedResource {
                     srcGeometry.outlineIndicesAttributes !== undefined;
                 if (isExtruded || isFilled) {
                     material.polygonOffset = true;
-                    material.polygonOffsetFactor = 0.25;
-                    material.polygonOffsetUnits = 0.1;
+                    material.polygonOffsetFactor = 0.75;
+                    material.polygonOffsetUnits = 4.0;
                 }
 
                 const object = new ObjectCtor(bufferGeometry, material);
@@ -1195,44 +1256,37 @@ export class Tile implements CachedResource {
                         (renderer, mat) => {
                             const lineMaterial = mat as SolidLineMaterial;
 
-                            // Modify the lineWidth every frame for "Pixel-wide" lines.
-                            const metricUnits = getAttributeValue(
+                            const metricUnits = getPropertyValue(
                                 technique.metricUnit,
                                 this.tileKey.level
                             );
-                            if (metricUnits === "Pixel") {
-                                const pixelToWorld = this.mapView.pixelToWorld * 0.5;
-                                const lineWidth = getAttributeValue(
-                                    technique.lineWidth,
-                                    displayZoomLevel
-                                );
-                                lineMaterial.lineWidth =
-                                    (lineWidth !== undefined
-                                        ? (lineWidth as number)
-                                        : SolidLineMaterial.DEFAULT_WIDTH) * pixelToWorld;
+                            const unitFactor =
+                                metricUnits === "Pixel" ? this.mapView.pixelToWorld * 0.5 : 1.0;
 
-                                // Do the same for dashSize and gapSize for dashed lines.
-                                if (isDashedLineTechnique(technique)) {
-                                    const dashedLineMaterial = lineMaterial as DashedLineMaterial;
+                            lineMaterial.lineWidth =
+                                getOptionValue(
+                                    getPropertyValue(technique.lineWidth, this.mapView.zoomLevel),
+                                    SolidLineMaterial.DEFAULT_WIDTH
+                                ) * unitFactor;
 
-                                    const dashSize = getAttributeValue(
-                                        technique.dashSize,
-                                        displayZoomLevel
-                                    );
-                                    dashedLineMaterial.dashSize =
-                                        (dashSize !== undefined
-                                            ? (dashSize as number)
-                                            : DashedLineMaterial.DEFAULT_DASH_SIZE) * pixelToWorld;
+                            // Do the same for dashSize and gapSize for dashed lines.
+                            if (isDashedLineTechnique(technique)) {
+                                const dashedLineMaterial = lineMaterial as DashedLineMaterial;
 
-                                    const gapSize = getAttributeValue(
-                                        technique.gapSize,
-                                        displayZoomLevel
-                                    );
-                                    dashedLineMaterial.gapSize =
-                                        (gapSize !== undefined
-                                            ? (gapSize as number)
-                                            : DashedLineMaterial.DEFAULT_GAP_SIZE) * pixelToWorld;
-                                }
+                                dashedLineMaterial.dashSize =
+                                    getOptionValue(
+                                        getPropertyValue(
+                                            technique.dashSize,
+                                            this.mapView.zoomLevel
+                                        ),
+                                        DashedLineMaterial.DEFAULT_DASH_SIZE
+                                    ) * unitFactor;
+
+                                dashedLineMaterial.gapSize =
+                                    getOptionValue(
+                                        getPropertyValue(technique.gapSize, this.mapView.zoomLevel),
+                                        DashedLineMaterial.DEFAULT_GAP_SIZE
+                                    ) * unitFactor;
                             }
                         }
                     );
@@ -1241,7 +1295,7 @@ export class Tile implements CachedResource {
                 if (isExtrudedLineTechnique(technique)) {
                     // extruded lines are normal meshes, and need transparency only when fading
                     // is defined.
-                    if (technique.fadeFar !== undefined && technique.fadeFar >= 0) {
+                    if (technique.fadeFar !== undefined) {
                         const fadingParams = this.getFadingParams(
                             technique as StandardExtrudedLineTechnique
                         );
@@ -1260,9 +1314,8 @@ export class Tile implements CachedResource {
                 if (isExtruded || isFillTechnique(technique)) {
                     // filled polygons are normal meshes, and need transparency only when fading is
                     // defined.
-                    if (technique.fadeFar !== undefined && technique.fadeFar >= 0) {
+                    if (technique.fadeFar !== undefined) {
                         const fadingParams = this.getFadingParams(technique);
-
                         FadingFeature.addRenderHelper(
                             object,
                             fadingParams.fadeNear,

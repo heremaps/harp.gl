@@ -59,7 +59,7 @@ describe("OmvRestClient", function() {
     it("generates proper Url with MapBox Format", async function() {
         const restClient = new OmvRestClient({
             baseUrl: "https://a.tiles.mapbox.com/v4/mapbox.mapbox-streets-v7",
-            apiFormat: APIFormat.MapboxV4,
+            apiFormat: APIFormat.MapboxV7,
             authenticationCode: async () => "123",
             downloadManager: mockDownloadManager
         });
@@ -81,15 +81,18 @@ describe("OmvRestClient", function() {
         assert.equal(downloadSpy.args[0][0], "https://a.tomtom.base.url/3/2/1.pbf?key=123");
     });
 
-    it("generates proper Url with MapZen Format", async function() {
+    it("generates proper Url with XYZ OMV Format", async function() {
         const restClient = new OmvRestClient({
-            baseUrl: "https://a.mapzen.base.url",
-            apiFormat: APIFormat.MapzenV1,
-            authenticationCode: "123",
+            baseUrl: "https://xyz.api.here.com/tiles/herebase.02",
+            apiFormat: APIFormat.XYZOMV,
+            authenticationCode: async () => "123",
             downloadManager: mockDownloadManager
         });
-        await restClient.getTile(new TileKey(1, 2, 3));
-        assert.equal(downloadSpy.args[0][0], "https://a.mapzen.base.url/3/2/1.pbf?api_key=123");
+        await restClient.getTile(new TileKey(6338, 2649, 14));
+        assert.equal(
+            downloadSpy.args[0][0],
+            "https://xyz.api.here.com/tiles/herebase.02/14/2649/6338/omv?access_token=123"
+        );
     });
 
     it("supports custom authentication method based on query string key", async function() {

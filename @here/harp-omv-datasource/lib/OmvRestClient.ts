@@ -33,7 +33,7 @@ export enum APIFormat {
     HereV1,
 
     /**
-     * Use the REST API format of Mapbox Vector Tile API v4.
+     * Use the REST API format of Mapbox Vector Tile API v7.
      *
      * Usage:
      * `<OmvRestClientParams.baseUrl>/<zoom>/<X>/<Y>.mvt?access_token=<OmvRestClientParams.authenticationCode>`
@@ -44,53 +44,53 @@ export enum APIFormat {
      * Sample URL:
      * `http://a.tiles.mapbox.com/v4/mapbox.mapbox-streets-v7/14/4823/6160.mvt?access_token=<your access token>`
      *
+     * Default authentication method used: [[AuthenticationTypeMapboxV7]].
+     */
+    MapboxV7,
+
+    /**
+     * Use the REST API format of XYZ Vector Tile API in MVT format.
+     *
+     * Usage:
+     * `<OmvRestClientParams.baseUrl>/tiles/omsbase/256/<zoom>/<X>/<Y>.mvt?api_key=<OmvRestClientParams.authenticationCode>`
+     *
+     * Format definition:
+     * `http|s://<base-url>/tiles/{layers}/{z}/{x}/{y}/{format}?api_key={api_key}`
+     *
+     * Sample URL:
+     * `https://xyz.api.here.com/tiles/osmbase/256/all/16/19293/24641.mvt?api_key=your-xyz-api-key`
+     */
+    XYZMVT,
+
+    /**
+     * Use the REST API format of XYZ Vector Tile API in JSON format.
+     *
+     * Usage:
+     * `<OmvRestClientParams.baseUrl>/tiles/omsbase/256/<zoom>/<X>/<Y>.mvt?api_key=<OmvRestClientParams.authenticationCode>`
+     *
+     * Format definition:
+     * `http|s://<base-url>/tiles/{layers}/{z}/{x}/{y}/{format}?api_key={api_key}`
+     *
+     * Sample URL:
+     * `https://xyz.api.here.com/tiles/osmbase/256/all/16/19293/24641.json?api_key=your-xyz-api-key`
+     */
+    XYZJson,
+
+    /**
+     * Use the REST API format of XYZ Vector Tile API in OMV format.
+     *
+     * Usage:
+     * `<OmvRestClientParams.baseUrl>/tiles/herebase.02/<zoom>/<X>/<Y>/omv?access_token=<OmvRestClientParams.authenticationCode>`
+     *
+     * Format definition:
+     * `http|s://<base-url>/tiles/herebase.02/{z}/{x}/{y}/{format}?access_token={access_token}`
+     *
+     * Sample URL:
+     * `https://xyz.api.here.com/tiles/osmbase/herebase.02/14/2649/6338/omv?access_token=your-xyz-access-token`
+     *
      * Default authentication method used: [[AuthenticationTypeMapboxV4]].
      */
-    MapboxV4,
-
-    /**
-     * Use the REST API format of Mapzen Vector Tile API v1.
-     *
-     * Usage:
-     * `<OmvRestClientParams.baseUrl>/<zoom>/<X>/<Y>.pbf?api_key=<OmvRestClientParams.authenticationCode>`
-     *
-     * Format definition:
-     * `http|s://<base-url>/{API version}/{layers}/{z}/{x}/{y}/{format}?api_key={api_key}`
-     *
-     * Sample URL:
-     * `https://tile.mapzen.com/mapzen/vector/v1/all/16/19293/24641.json?api_key=your-mapzen-api-key`
-     *
-     * Default authentication method used: [[AuthenticationTypeMapZenV1]].
-     */
-    MapzenV1,
-
-    /**
-     * Use the REST API format of Mapzen Vector Tile API v2.
-     *
-     * Usage:
-     * `<OmvRestClientParams.baseUrl>/tiles/omsbase/256/<zoom>/<X>/<Y>.mvt?api_key=<OmvRestClientParams.authenticationCode>`
-     *
-     * Format definition:
-     * `http|s://<base-url>/tiles/{layers}/{z}/{x}/{y}/{format}?api_key={api_key}`
-     *
-     * Sample URL:
-     * `https://xyz.api.here.com/tiles/osmbase/256/all/16/19293/24641.mvt?api_key=your-mapzen-api-key`
-     */
-    MapzenV2,
-
-    /**
-     * Use the REST API format of Mapzen Vector Tile API v2.
-     *
-     * Usage:
-     * `<OmvRestClientParams.baseUrl>/tiles/omsbase/256/<zoom>/<X>/<Y>.mvt?api_key=<OmvRestClientParams.authenticationCode>`
-     *
-     * Format definition:
-     * `http|s://<base-url>/tiles/{layers}/{z}/{x}/{y}/{format}?api_key={api_key}`
-     *
-     * Sample URL:
-     * `https://xyz.api.here.com/tiles/osmbase/256/all/16/19293/24641.json?api_key=your-mapzen-api-key`
-     */
-    MapzenV2Json,
+    XYZOMV,
 
     /**
      * Use the REST API format of Tomtoms Vector Tile API v1.
@@ -145,11 +145,11 @@ export const AuthenticationTypeTomTomV1: AuthenticationMethodInfo = {
     method: AuthenticationMethod.QueryString,
     name: "key"
 };
-export const AuthenticationTypeMapboxV4: AuthenticationMethodInfo = {
+export const AuthenticationTypeMapboxV7: AuthenticationMethodInfo = {
     method: AuthenticationMethod.QueryString,
     name: "access_token"
 };
-export const AuthenticationTypeMapZenV1: AuthenticationMethodInfo = {
+export const AuthenticationTypeXYZ: AuthenticationMethodInfo = {
     method: AuthenticationMethod.QueryString,
     name: "api_key"
 };
@@ -265,7 +265,7 @@ export class OmvRestClient implements DataProvider {
 
         tileUrl = this.applyAuthCode(tileUrl, init, authenticationCode);
 
-        if (this.params.apiFormat === APIFormat.MapzenV2Json) {
+        if (this.params.apiFormat === APIFormat.XYZJson) {
             return this.downloadManager.downloadJson(tileUrl, init);
         }
 
@@ -298,11 +298,12 @@ export class OmvRestClient implements DataProvider {
         switch (this.params.apiFormat) {
             case APIFormat.HereV1:
                 return AuthenticationTypeBearer;
-            case APIFormat.MapboxV4:
-                return AuthenticationTypeMapboxV4;
-            case APIFormat.MapzenV1:
-            case APIFormat.MapzenV2:
-                return AuthenticationTypeMapZenV1;
+            case APIFormat.MapboxV7:
+            case APIFormat.XYZOMV:
+                return AuthenticationTypeMapboxV7;
+            case APIFormat.XYZMVT:
+            case APIFormat.XYZJson:
+                return AuthenticationTypeXYZ;
             case APIFormat.TomtomV1:
                 return AuthenticationTypeTomTomV1;
             default:
@@ -350,18 +351,16 @@ export class OmvRestClient implements DataProvider {
         let path = `/${tileKey.level}/${tileKey.column}/${tileKey.row}`;
         switch (this.params.apiFormat) {
             case APIFormat.HereV1:
+            case APIFormat.XYZOMV:
                 path += "/omv";
                 break;
-            case APIFormat.MapboxV4:
+            case APIFormat.MapboxV7:
                 path += ".mvt";
                 break;
-            case APIFormat.MapzenV1:
-                path += ".pbf";
-                break;
-            case APIFormat.MapzenV2:
+            case APIFormat.XYZMVT:
                 path += ".mvt";
                 break;
-            case APIFormat.MapzenV2Json:
+            case APIFormat.XYZJson:
                 path += ".json";
                 break;
             case APIFormat.TomtomV1:

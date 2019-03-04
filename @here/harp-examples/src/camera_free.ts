@@ -15,6 +15,7 @@ import {
 } from "@here/harp-mapview";
 import { APIFormat, OmvDataSource } from "@here/harp-omv-datasource";
 import * as THREE from "three";
+import { accessToken } from "../config";
 
 // Import the gesture handlers from the three.js additional libraries.
 // The controls are not in common.js they explictly require a
@@ -50,7 +51,7 @@ export namespace FreeCameraApp_DebugingToolExample {
      * The parameters of the [[FreeCameraApp]] are set in the [[FreeCameraAppOptions]] object.
      *
      * ```typescript
-     * [[include:vislib_freecamera_app_0.ts]]
+     * [[include:harp_gl_freecamera_app_0.ts]]
      * ```
      *
      */
@@ -62,6 +63,7 @@ export namespace FreeCameraApp_DebugingToolExample {
         // creates a new MapView for the HTMLCanvasElement of the given id
         constructor(readonly options: FreeCameraAppOptions) {
             this.mapView = new MapView(options);
+            this.mapView.fog.enabled = false;
 
             this.mapControls = new MapControls(this.mapView);
             this.mapControls.enabled = false;
@@ -70,9 +72,10 @@ export namespace FreeCameraApp_DebugingToolExample {
                 .attach(this.mapView)
                 .setDefaults([
                     {
-                        id: "openstreetmap.org",
-                        label: "OpenStreetMap contributors",
-                        link: "https://www.openstreetmap.org/copyright"
+                        id: "here.com",
+                        label: "HERE",
+                        link: "https://legal.here.com/terms",
+                        year: 2019
                     }
                 ]);
 
@@ -101,10 +104,11 @@ export namespace FreeCameraApp_DebugingToolExample {
          */
         start() {
             const omvDataSource = new OmvDataSource({
-                baseUrl: "https://xyz.api.here.com/tiles/osmbase/256/all",
-                apiFormat: APIFormat.MapzenV2,
+                baseUrl: "https://xyz.api.here.com/tiles/herebase.02",
+                apiFormat: APIFormat.XYZOMV,
                 styleSetName: "tilezen",
-                maxZoomLevel: 17
+                maxZoomLevel: 17,
+                authenticationCode: accessToken
             });
 
             const debugTileDataSource = new DebugTileDataSource(webMercatorTilingScheme);
@@ -125,12 +129,21 @@ export namespace FreeCameraApp_DebugingToolExample {
 
             this.mapView.scene.add(pointOfView);
 
-            pointOfView.position.set(0, -3000, 3000);
+            pointOfView.position.set(0, -1500, 1500);
 
             this.mapView.pointOfView = pointOfView;
 
             const transformControls = new THREE.TransformControls(pointOfView, this.mapView.canvas);
             transformControls.attach(this.mapView.camera);
+            transformControls.addEventListener("mouseDown", event => {
+                trackball.enabled = false;
+            });
+            transformControls.addEventListener("mouseUp", event => {
+                trackball.enabled = true;
+            });
+            transformControls.addEventListener("objectChange", event => {
+                this.mapView.update();
+            });
 
             this.mapView.scene.add(transformControls);
 
@@ -146,6 +159,10 @@ export namespace FreeCameraApp_DebugingToolExample {
 
             // Set up the trackball gesture handler
             const trackball = new THREE.TrackballControls(pointOfView, this.mapView.canvas);
+            trackball.staticMoving = true;
+            trackball.rotateSpeed = 3.0;
+            trackball.zoomSpeed = 4.0;
+            trackball.panSpeed = 2.0;
 
             trackball.addEventListener("start", () => {
                 this.mapView.beginAnimation();
@@ -157,7 +174,6 @@ export namespace FreeCameraApp_DebugingToolExample {
 
             // Update the debug controls.
             this.mapView.addEventListener(MapViewEventNames.Render, () => {
-                transformControls.update();
                 trackball.update();
                 this.helpers.forEach(helper => helper.update());
             });
@@ -169,7 +185,7 @@ export namespace FreeCameraApp_DebugingToolExample {
                 this.mapView.update();
             });
 
-            window.addEventListener("keydown", event => {
+            window.top.addEventListener("keydown", event => {
                 switch (event.code) {
                     case "KeyT":
                         transformControls.setMode("translate");
@@ -212,16 +228,16 @@ Press 'V' to change the scene point of view<br>`;
         const canvas = document.getElementById("mapCanvas") as HTMLCanvasElement;
         const geoCenter = new GeoCoordinates(52.518611, 13.376111, 0);
 
-        // snippet:vislib_freecamera_app_0.ts
+        // snippet:harp_gl_freecamera_app_0.ts
         const app = new FreeCameraApp({
             decoderUrl: "./decoder.bundle.js",
             canvas,
-            theme: "./resources/day.json",
+            theme: "./resources/berlin_base.json",
             geoCenter
         });
 
         app.start();
-        // end:vislib_freecamera_app_0.ts
+        // end:harp_gl_freecamera_app_0.ts
     }
 
     main();
