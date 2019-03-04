@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+declare function require(module: any): any;
+
 import { GUI } from "dat.gui";
 // tslint:disable-next-line:no-var-requires
 const Stats = require("stats.js");

@@ -1,5 +1,4 @@
 {
-    "compileOnSave": true,
     "compilerOptions": {
         "target": "es5",
         "lib": [
@@ -18,11 +17,6 @@
         "downlevelIteration": true,
         "jsx": "react",
         "skipLibCheck": true,
-        "types": [
-            "highlight.js",
-            "long",
-            "three",
-            "tween.js"
-        ]
+        "baseUrl": "../../"
     }
 }
