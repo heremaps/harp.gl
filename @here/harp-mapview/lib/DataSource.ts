@@ -214,7 +214,7 @@ export abstract class DataSource extends THREE.EventDispatcher {
      *
      * @param tileKey The unique identifier for a map tile.
      */
-    abstract getTile(tileKey: TileKey): Tile | undefined;
+    abstract getTile(tileKey: TileKey, offset: number): Tile | undefined;
 
     /**
      * This method is called by [[MapView]] before the tile needs to be updated, for example after

@@ -147,6 +147,7 @@ class GeoJsonDecoder {
 
     private getTileCenter(tileKey: TileKey) {
         const geoBox = webMercatorTilingScheme.getGeoBox(tileKey);
+        // Todo: normalize
         const tileBounds = this.m_projection.projectBox(geoBox, new THREE.Box3());
         const center = new THREE.Vector3();
         tileBounds.getCenter(center);

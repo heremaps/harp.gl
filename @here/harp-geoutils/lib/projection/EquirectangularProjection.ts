@@ -41,7 +41,8 @@ class EquirectangularProjection implements Projection {
 
     projectPoint<WorldCoordinates extends Vector3Like>(
         geoPoint: GeoCoordinatesLike,
-        result?: WorldCoordinates
+        result?: WorldCoordinates,
+        normalize: boolean = true
     ): WorldCoordinates {
         if (result === undefined) {
             /*
@@ -77,10 +78,13 @@ class EquirectangularProjection implements Projection {
 
     projectBox<WorldBoundingBox extends Box3Like>(
         geoBox: GeoBox,
-        result?: WorldBoundingBox
+        result?: WorldBoundingBox,
+        normalize?: boolean
     ): WorldBoundingBox {
         const worldCenter = this.projectPoint(
-            new GeoCoordinates(geoBox.center.latitude, geoBox.center.longitude, 0)
+            new GeoCoordinates(geoBox.center.latitude, geoBox.center.longitude, 0),
+            undefined,
+            normalize
         );
         const { latitudeSpanInRadians, longitudeSpanInRadians, altitudeSpan } = geoBox;
         const sizeX = longitudeSpanInRadians * EquirectangularProjection.geoToWorldScale;

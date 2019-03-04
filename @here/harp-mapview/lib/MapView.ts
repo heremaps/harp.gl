@@ -1114,7 +1114,7 @@ export class MapView extends THREE.EventDispatcher {
      * The position in geo coordinates of the center of the scene.
      */
     set geoCenter(geoCenter: GeoCoordinates) {
-        this.projection.projectPoint(geoCenter, this.m_worldCenter);
+        this.projection.projectPoint(geoCenter, this.m_worldCenter, false);
         this.update();
     }
 
@@ -1540,7 +1540,7 @@ export class MapView extends THREE.EventDispatcher {
      */
     getScreenPosition(geoPos: GeoCoordinates): THREE.Vector2 | undefined {
         const worldPos = new THREE.Vector3();
-        this.projection.projectPoint(geoPos, worldPos);
+        this.projection.projectPoint(geoPos, worldPos, false);
         const p = this.m_screenProjector.project(worldPos);
         if (p !== undefined) {
             const { width, height } = this.canvas;

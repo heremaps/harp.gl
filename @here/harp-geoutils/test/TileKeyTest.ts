@@ -106,6 +106,7 @@ describe("WebMercator", function() {
     it("projectBox", function() {
         const tileKey = TileKey.fromRowColumnLevel(0, 0, 0);
         const box = webMercatorTilingScheme.getGeoBox(tileKey);
+        //Todo: test with normalize
         const projectedBox = webMercatorProjection.projectBox(box);
         const unprojectedBox = webMercatorProjection.unprojectBox(projectedBox);
 

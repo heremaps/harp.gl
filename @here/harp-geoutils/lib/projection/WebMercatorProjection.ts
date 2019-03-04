@@ -17,18 +17,19 @@ class WebMercatorProjection extends MercatorProjection {
     static readonly MAXIMUM_LATITUDE: number = 1.4844222297453323;
 
     projectPoint<WorldCoordinates extends Vector3Like>(
-        geoPoint: GeoCoordinatesLike,
-        result?: WorldCoordinates
+        geoPointLike: GeoCoordinatesLike,
+        result?: WorldCoordinates,
+        normalize: boolean = true
     ): WorldCoordinates {
-        let normalized: GeoCoordinates;
+        let geoPoint: GeoCoordinates;
 
-        if (geoPoint instanceof GeoCoordinates) {
-            normalized = geoPoint.normalized();
+        if (geoPointLike instanceof GeoCoordinates) {
+            geoPoint = normalize ? geoPointLike.normalized() : geoPointLike;
         } else {
-            normalized = new GeoCoordinates(
-                geoPoint.latitude,
-                geoPoint.longitude,
-                geoPoint.altitude
+            geoPoint = new GeoCoordinates(
+                geoPointLike.latitude,
+                geoPointLike.longitude,
+                geoPointLike.altitude
             ).normalized();
         }
 
@@ -47,8 +48,8 @@ class WebMercatorProjection extends MercatorProjection {
             result = { x: 0, y: 0, z: 0 } as WorldCoordinates;
         }
 
-        result.x = ((normalized.longitude + 180) / 360) * EarthConstants.EQUATORIAL_CIRCUMFERENCE;
-        const sy = Math.sin(MercatorProjection.latitudeClamp(normalized.latitudeInRadians));
+        result.x = ((geoPoint.longitude + 180) / 360) * EarthConstants.EQUATORIAL_CIRCUMFERENCE;
+        const sy = Math.sin(MercatorProjection.latitudeClamp(geoPoint.latitudeInRadians));
         result.y =
             (0.5 - Math.log((1 + sy) / (1 - sy)) / (4 * Math.PI)) *
             EarthConstants.EQUATORIAL_CIRCUMFERENCE;

@@ -8,7 +8,7 @@ import { DataSource } from "./DataSource";
 import { MapTileCuller } from "./MapTileCuller";
 import { Tile } from "./Tile";
 
-import { Projection, TileKey } from "@here/harp-geoutils";
+import { Projection, TileKey, GeoBox, GeoCoordinates } from "@here/harp-geoutils";
 import { LRUCache } from "@here/harp-lrucache";
 
 import * as THREE from "three";
@@ -64,7 +64,7 @@ export class TileEntry {
  * Missing Typedoc
  */
 class TileKeyEntry {
-    constructor(public tileKey: TileKey, public area: number) {}
+    constructor(public tileKey: TileKey, public area: number, public offset: number) {}
 }
 
 /**
@@ -133,6 +133,8 @@ export interface DataSourceTileList {
      */
     renderedTiles: Tile[];
 }
+
+const MaxWrapAntimeridian = 20;
 
 /**
  * Manages visible [[Tile]]s for [[MapView]].
@@ -204,6 +206,7 @@ export class VisibleTileSet {
         zoomLevel: number,
         dataSources: DataSource[]
     ): DataSourceTileList[] {
+        const worldGeoPoint = this.options.projection.unprojectPoint(worldCenter);
         this.m_viewProjectionMatrix.multiplyMatrices(
             this.camera.projectionMatrix,
             this.camera.matrixWorldInverse
@@ -225,7 +228,7 @@ export class VisibleTileSet {
 
             const tilingScheme = dataSource.getTilingScheme();
 
-            const workList: TileKeyEntry[] = [new TileKeyEntry(rootTileKey, Infinity)];
+            const workList: TileKeyEntry[] = [new TileKeyEntry(rootTileKey, Infinity, 0)];
 
             const visibleTiles: TileKeyEntry[] = [];
 
@@ -252,43 +255,62 @@ export class VisibleTileSet {
 
                 tilingScheme.getSubTileKeys(tileEntry.tileKey).forEach(childTileKey => {
                     let subTileArea = 0;
-                    const geoBox = tilingScheme.getGeoBox(childTileKey);
-                    this.options.projection.projectBox(geoBox, tileBounds);
-                    tileBounds.min.sub(worldCenter);
-                    tileBounds.max.sub(worldCenter);
-
-                    if (
-                        (!this.options.extendedFrustumCulling ||
-                            this.m_mapTileCuller.frustumIntersectsTileBox(tileBounds)) &&
-                        this.m_frustum.intersectsBox(tileBounds)
+                    const circleDegrees = 360;
+                    for (
+                        let offset = -MaxWrapAntimeridian * circleDegrees;
+                        offset <= MaxWrapAntimeridian * circleDegrees;
+                        offset += circleDegrees
                     ) {
-                        const contour = [
-                            new THREE.Vector3(tileBounds.min.x, tileBounds.min.y, 0).applyMatrix4(
-                                this.m_viewProjectionMatrix
-                            ),
-                            new THREE.Vector3(tileBounds.max.x, tileBounds.min.y, 0).applyMatrix4(
-                                this.m_viewProjectionMatrix
-                            ),
-                            new THREE.Vector3(tileBounds.max.x, tileBounds.max.y, 0).applyMatrix4(
-                                this.m_viewProjectionMatrix
-                            ),
-                            new THREE.Vector3(tileBounds.min.x, tileBounds.max.y, 0).applyMatrix4(
-                                this.m_viewProjectionMatrix
-                            )
-                        ];
+                        let geoBox = tilingScheme.getGeoBox(childTileKey);
+                        geoBox = new GeoBox(
+                            new GeoCoordinates(geoBox.south, geoBox.west + offset),
+                            new GeoCoordinates(geoBox.north, geoBox.east + offset)
+                        );
+                        this.options.projection.projectBox(geoBox, tileBounds, false);
+                        tileBounds.min.sub(worldCenter);
+                        tileBounds.max.sub(worldCenter);
 
-                        contour.push(contour[0]);
+                        if (
+                            (!this.options.extendedFrustumCulling ||
+                                this.m_mapTileCuller.frustumIntersectsTileBox(tileBounds)) &&
+                            this.m_frustum.intersectsBox(tileBounds)
+                        ) {
+                            const contour = [
+                                new THREE.Vector3(
+                                    tileBounds.min.x,
+                                    tileBounds.min.y,
+                                    0
+                                ).applyMatrix4(this.m_viewProjectionMatrix),
+                                new THREE.Vector3(
+                                    tileBounds.max.x,
+                                    tileBounds.min.y,
+                                    0
+                                ).applyMatrix4(this.m_viewProjectionMatrix),
+                                new THREE.Vector3(
+                                    tileBounds.max.x,
+                                    tileBounds.max.y,
+                                    0
+                                ).applyMatrix4(this.m_viewProjectionMatrix),
+                                new THREE.Vector3(
+                                    tileBounds.min.x,
+                                    tileBounds.max.y,
+                                    0
+                                ).applyMatrix4(this.m_viewProjectionMatrix)
+                            ];
 
-                        const n = contour.length;
+                            contour.push(contour[0]);
 
-                        for (let p = n - 1, q = 0; q < n; p = q++) {
-                            subTileArea +=
-                                contour[p].x * contour[q].y - contour[q].x * contour[p].y;
-                        }
-                        const epsilon = 0.0000001;
-                        subTileArea = Math.abs(subTileArea);
-                        if (subTileArea > epsilon) {
-                            workList.push(new TileKeyEntry(childTileKey, subTileArea));
+                            const n = contour.length;
+
+                            for (let p = n - 1, q = 0; q < n; p = q++) {
+                                subTileArea +=
+                                    contour[p].x * contour[q].y - contour[q].x * contour[p].y;
+                            }
+                            const epsilon = 0.0000001;
+                            subTileArea = Math.abs(subTileArea);
+                            if (subTileArea > epsilon) {
+                                workList.push(new TileKeyEntry(childTileKey, subTileArea, offset));
+                            }
                         }
                     }
                 });
@@ -325,7 +347,7 @@ export class VisibleTileSet {
                 if (!dataSource.shouldRender(displayZoomLevel, tileEntry.tileKey)) {
                     continue;
                 }
-                const tile = this.getTile(dataSource, tileEntry.tileKey);
+                const tile = this.getTile(dataSource, tileEntry.tileKey, tileEntry.offset);
                 if (tile === undefined) {
                     continue;
                 }
@@ -358,23 +380,26 @@ export class VisibleTileSet {
         return newRenderList;
     }
 
-    getTile(dataSource: DataSource, tileKey: TileKey): Tile | undefined {
+    getTile(dataSource: DataSource, tileKey: TileKey, offset: number): Tile | undefined {
         if (!dataSource.cacheable) {
-            return dataSource.getTile(tileKey);
+            return dataSource.getTile(tileKey, offset);
         }
 
         const { tileCache } = this.getOrCreateCache(dataSource);
 
-        let tile = tileCache.get(tileKey.mortonCode());
+        const shift = offset / MaxWrapAntimeridian / 360 + MaxWrapAntimeridian / 2 + 1;
+        let tile = tileCache.get(tileKey.mortonCode() * shift);
+
+        let tile2 = tile;       
 
         if (tile !== undefined) {
             return tile;
         }
 
-        tile = dataSource.getTile(tileKey);
+        tile = dataSource.getTile(tileKey, offset);
 
         if (tile !== undefined) {
-            tileCache.set(tileKey.mortonCode(), tile);
+            tileCache.set(tileKey.mortonCode() * shift, tile);
         }
 
         return tile;

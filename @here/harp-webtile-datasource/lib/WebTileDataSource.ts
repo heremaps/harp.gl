@@ -296,7 +296,7 @@ export class WebTileDataSource extends DataSource {
         return THREE.Math.clamp(zoomLevel + 1, this.minZoomLevel, this.maxZoomLevel);
     }
 
-    getTile(tileKey: TileKey): Tile {
+    getTile(tileKey: TileKey, ): Tile {
         const tile = new Tile(this, tileKey);
 
         const column = tileKey.column;

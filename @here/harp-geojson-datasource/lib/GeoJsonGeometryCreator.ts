@@ -131,6 +131,7 @@ export class GeoJsonGeometryCreator {
 
         const tileWorldBounds = new THREE.Box3();
         const geoBox = webMercatorTilingScheme.getGeoBox(extendedTile.info.tileKey);
+        // Todo: normalize?
         const tileBounds = projection.projectBox(geoBox, tileWorldBounds);
         const tileCenter = new THREE.Vector3();
         tileBounds.getCenter(tileCenter);

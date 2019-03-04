@@ -29,7 +29,7 @@ import {
     TextPathGeometry,
     TextTechnique
 } from "@here/harp-datasource-protocol";
-import { GeoBox, Projection, TileKey } from "@here/harp-geoutils";
+import { GeoBox, Projection, TileKey, GeoCoordinates } from "@here/harp-geoutils";
 import {
     DashedLineMaterial,
     EdgeMaterial,
@@ -334,9 +334,17 @@ export class Tile implements CachedResource {
      * @param dataSource The [[DataSource]] that created this `Tile`.
      * @param tileKey The unique identifier for this `Tile`.
      */
-    constructor(readonly dataSource: DataSource, readonly tileKey: TileKey) {
-        this.geoBox = this.dataSource.getTilingScheme().getGeoBox(this.tileKey);
-        this.projection.projectBox(this.geoBox, this.boundingBox);
+    constructor(
+        readonly dataSource: DataSource,
+        readonly tileKey: TileKey,
+        readonly offset?: number
+    ) {
+        const geoBox = this.dataSource.getTilingScheme().getGeoBox(this.tileKey);
+        this.geoBox = new GeoBox(
+            new GeoCoordinates(geoBox.south, geoBox.west + (offset === undefined ? 0 : offset!)),
+            new GeoCoordinates(geoBox.north, geoBox.east + (offset === undefined ? 0 : offset!))
+        );
+        this.projection.projectBox(this.geoBox, this.boundingBox, false);
         this.boundingBox.getCenter(this.center);
     }
 

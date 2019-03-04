@@ -38,7 +38,8 @@ class IdentityProjection implements Projection {
 
     projectPoint<WorldCoordinates extends Vector3Like>(
         geoPoint: GeoCoordinatesLike,
-        result?: WorldCoordinates
+        result?: WorldCoordinates,
+        normalize: boolean = true
     ): WorldCoordinates {
         if (!result) {
             // tslint:disable-next-line:no-object-literal-type-assertion
@@ -57,18 +58,21 @@ class IdentityProjection implements Projection {
 
     projectBox<WorldBoundingBox extends Box3Like>(
         geoBox: GeoBox,
-        result?: WorldBoundingBox
+        result?: WorldBoundingBox,
+        normalize?: boolean
     ): WorldBoundingBox {
         if (!result) {
             result = MathUtils.newEmptyBox3() as WorldBoundingBox;
         }
         this.projectPoint(
             new GeoCoordinates(geoBox.south, geoBox.west, geoBox.minAltitude),
-            result.min
+            result.min,
+            normalize
         );
         this.projectPoint(
             new GeoCoordinates(geoBox.north, geoBox.east, geoBox.maxAltitude),
-            result.max
+            result.max,
+            normalize
         );
         return result;
     }

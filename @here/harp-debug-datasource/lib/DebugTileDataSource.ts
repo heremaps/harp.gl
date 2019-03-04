@@ -29,8 +29,8 @@ export class DebugTile extends Tile {
     private m_textRenderStyle = this.mapView.textRenderStyleCache.get(DEFAULT_TEXT_STYLE_CACHE_ID)!;
     private m_textLayoutStyle = this.mapView.textLayoutStyleCache.get(DEFAULT_TEXT_STYLE_CACHE_ID)!;
 
-    constructor(dataSource: DataSource, tileKey: TileKey) {
-        super(dataSource, tileKey);
+    constructor(dataSource: DataSource, tileKey: TileKey, offset: number) {
+        super(dataSource, tileKey, offset);
 
         const tileBounds = this.boundingBox.clone();
 
@@ -81,8 +81,8 @@ export class DebugTileDataSource extends DataSource {
         return this.m_tilingScheme;
     }
 
-    getTile(tileKey: TileKey): DebugTile {
-        const tile = new DebugTile(this, tileKey);
+    getTile(tileKey: TileKey, offset: number): DebugTile {
+        const tile = new DebugTile(this, tileKey, offset);
         return tile;
     }
 

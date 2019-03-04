@@ -29,8 +29,8 @@ export interface Projection {
     ): Bounds;
 
     /**
-     * Projects a point from geo coordinates (latitude, longitude, altitude) to world coordinates
-     * (x,y,z).
+     * Projects a point from geo coordinates (latitude, longitude, altitude) to
+     * world coordinates (x,y,z).
      *
      * Example:
      * ```typescript
@@ -39,12 +39,15 @@ export interface Projection {
      * ```
      *
      * @param geoPoint The position in geo coordinates.
-     * @param result The optional object used to store the resulting world position, result must
-     * implement [[Vector3Like]].
+     * @param result The optional object used to store the resulting world
+     * position, result must implement [[Vector3Like]].
+     * @param normalize If the position should be normalized, i.e. the supplied
+     * geo coordinate is wrapped
      */
     projectPoint<WorldCoordinates extends Vector3Like>(
         geoPoint: GeoCoordinatesLike,
-        result?: WorldCoordinates
+        result?: WorldCoordinates,
+        normalize?: boolean
     ): WorldCoordinates;
 
     /**
@@ -76,7 +79,8 @@ export interface Projection {
      */
     projectBox<WorldBoundingBox extends Box3Like>(
         geoBox: GeoBox,
-        result?: WorldBoundingBox
+        result?: WorldBoundingBox,
+        normalize?: boolean
     ): WorldBoundingBox;
 
     /**

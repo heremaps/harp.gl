@@ -31,6 +31,17 @@ function createBerlinCenterCameraFromSamples() {
     return { camera, worldCenter };
 }
 
+function createCameraAtLowZoomAndCenter() {
+    const worldCenter = new THREE.Vector3(0, 0, 0);
+    const camera = new THREE.PerspectiveCamera(60, 2, 80, 200000100);
+    camera.setRotationFromEuler(new THREE.Euler(0, 0, 0, "XYZ"));
+    camera.scale.set(1, 1, 1);
+    camera.position.set(0, 0, 200000000);
+    camera.updateProjectionMatrix();
+    camera.updateMatrixWorld(false);
+    return { camera, worldCenter };
+}
+
 describe("VisibleTileSet", function() {
     it("#updateRenderList properly culls Berlin center example view", function() {
         const { camera, worldCenter } = createBerlinCenterCameraFromSamples();
@@ -159,5 +170,25 @@ describe("VisibleTileSet", function() {
         assert(visibleTileDisposeSpies[0].notCalled);
         assert(visibleTileDisposeSpies[1].notCalled);
         assert(parentDisposeSpy.calledOnce);
+    });
+
+    it("#updateRenderList wraps around antimeridian for mercator", function() {
+        const { camera, worldCenter } = createCameraAtLowZoomAndCenter();
+        const vts = new VisibleTileSet(camera, MapViewDefaults);
+        const zoomLevel = 0;
+        const storageLevel = 0;
+        const ds = new FakeOmvDataSource();
+
+        const renderList = vts.updateRenderList(worldCenter, zoomLevel, storageLevel, [ds]);
+
+        assert.equal(renderList.length, 1);
+        assert.equal(renderList[0].visibleTiles.length, 2);
+
+        const visibleTiles = renderList[0].visibleTiles;
+        assert.equal(visibleTiles[0].tileKey.mortonCode(), 371506851);
+        assert.equal(visibleTiles[1].tileKey.mortonCode(), 371506850);
+
+        const renderedTiles = renderList[0].renderedTiles;
+        assert.equal(renderedTiles.length, 0);
     });
 });

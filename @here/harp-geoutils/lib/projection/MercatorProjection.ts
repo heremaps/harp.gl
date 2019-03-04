@@ -64,28 +64,33 @@ export class MercatorProjection implements Projection {
     }
 
     projectPoint<WorldCoordinates extends Vector3Like>(
-        geoPoint: GeoCoordinatesLike,
-        result?: WorldCoordinates
+        geoPointLike: GeoCoordinatesLike,
+        result?: WorldCoordinates,
+        normalize: boolean = true
     ): WorldCoordinates {
-        let normalized: GeoCoordinates;
+        let geoPoint: GeoCoordinates;
 
-        if (geoPoint instanceof GeoCoordinates) {
-            normalized = geoPoint.normalized();
+        if (geoPointLike instanceof GeoCoordinates) {
+            geoPoint =
+                normalize !== undefined && !normalize ? geoPointLike : geoPointLike.normalized();
         } else {
-            normalized = new GeoCoordinates(
-                geoPoint.latitude,
-                geoPoint.longitude,
-                geoPoint.altitude
-            ).normalized();
+            geoPoint = new GeoCoordinates(
+                geoPointLike.latitude,
+                geoPointLike.longitude,
+                geoPointLike.altitude
+            );
+            if (normalize === undefined || normalize) {
+                geoPoint.normalized();
+            }
         }
 
         if (!result) {
             // tslint:disable-next-line:no-object-literal-type-assertion
             result = { x: 0, y: 0, z: 0 } as WorldCoordinates;
         }
-        result.x = ((normalized.longitude + 180) / 360) * EarthConstants.EQUATORIAL_CIRCUMFERENCE;
+        result.x = ((geoPoint.longitude + 180) / 360) * EarthConstants.EQUATORIAL_CIRCUMFERENCE;
         result.y =
-            (MercatorProjection.latitudeClampProject(normalized.latitudeInRadians) * 0.5 + 0.5) *
+            (MercatorProjection.latitudeClampProject(geoPoint.latitudeInRadians) * 0.5 + 0.5) *
             EarthConstants.EQUATORIAL_CIRCUMFERENCE;
         result.z = geoPoint.altitude || 0;
         return result;
@@ -104,11 +109,14 @@ export class MercatorProjection implements Projection {
 
     projectBox<WorldBoundingBox extends Box3Like>(
         geoBox: GeoBox,
-        result?: WorldBoundingBox
+        result?: WorldBoundingBox,
+        normalize?: boolean
     ): WorldBoundingBox {
         const center = geoBox.center;
         const worldCenter = this.projectPoint(
-            new GeoCoordinates(center.latitude, center.longitude, 0)
+            new GeoCoordinates(center.latitude, center.longitude, 0),
+            undefined,
+            normalize
         );
         const worldNorth =
             (MercatorProjection.latitudeClampProject(geoBox.northEast.latitudeInRadians) * 0.5 +
