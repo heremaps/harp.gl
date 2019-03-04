@@ -6,8 +6,7 @@ cache:
   yarn: true
 
 addons:
-  # TODO: reenable, when chrome 72 will become stable
-  # chrome: stable
+  chrome: stable
   firefox: latest
 
 branches:
@@ -32,9 +31,7 @@ jobs:
         yarn run build-tests
         npx ts-mocha -r tsconfig-paths/register ./@here/*/test/*.ts
         yarn test-browser --headless-firefox
-        # disabled as Chrome 71 doesn't like blob: urls in headless mode
-        # TODO: reenable, when chrome 72 will become stable
-        #yarn test-browser --headless-chrome
+        yarn test-browser --headless-chrome
 
     - name: "Build documentation"
       script: |
