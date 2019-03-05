@@ -6,6 +6,7 @@
 
 import {
     ImageTexture,
+    isLineMarkerTechnique,
     LineMarkerTechnique,
     PoiStackMode,
     PoiTechnique
@@ -575,7 +576,7 @@ export class TextElement {
     get isLineMarker(): boolean {
         return (
             this.points !== undefined &&
-            (this.m_poiInfo !== undefined && this.m_poiInfo.technique.name === "line-marker")
+            (this.m_poiInfo !== undefined && isLineMarkerTechnique(this.m_poiInfo.technique))
         );
     }
 

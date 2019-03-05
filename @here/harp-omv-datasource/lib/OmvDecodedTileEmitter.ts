@@ -5,9 +5,6 @@
  */
 
 import {
-    addExtrudedWalls,
-    addPolygonEdges,
-    BasicExtrudedLineTechnique,
     BufferAttribute,
     DecodedTile,
     ExtrudedPolygonTechnique,
@@ -16,26 +13,35 @@ import {
     GeometryType,
     getPropertyValue,
     Group,
-    IMeshBuffers,
+    IndexedTechnique,
     InterleavedBufferAttribute,
     isDashedLineTechnique,
+    isExtrudedLineTechnique,
     isExtrudedPolygonTechnique,
     isFillTechnique,
+    isLineMarkerTechnique,
     isLineTechnique,
+    isPoiTechnique,
     isSolidLineTechnique,
     isStandardTechnique,
     isStandardTexturedTechnique,
+    isTextTechnique,
     LineMarkerTechnique,
     PoiGeometry,
     PoiTechnique,
-    StyleSetEvaluator,
     Technique,
     TextGeometry,
     TextPathGeometry,
-    TextTechnique,
-    Value
+    TextTechnique
 } from "@here/harp-datasource-protocol";
-import { MapEnv } from "@here/harp-datasource-protocol/lib/Theme";
+import {
+    addExtrudedWalls,
+    addPolygonEdges,
+    IMeshBuffers,
+    MapEnv,
+    StyleSetEvaluator,
+    Value
+} from "@here/harp-datasource-protocol/index-decoder";
 import { LineGroup, triangulateLine } from "@here/harp-lines";
 import { assert, LoggerManager, Math2D } from "@here/harp-utils";
 import earcut from "earcut";
@@ -151,7 +157,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
         layer: string,
         geometry: GeoCoordinates[],
         env: MapEnv,
-        techniques: Technique[],
+        techniques: IndexedTechnique[],
         featureId: number | undefined
     ): void {
         this.processFeatureCommon(env);
@@ -162,13 +168,6 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
             }
 
             const techniqueIndex = technique._index;
-            if (techniqueIndex === undefined) {
-                throw new Error(
-                    "OmvDecodedTileEmitter#processPointFeature: Internal error " +
-                        "- No technique index"
-                );
-            }
-
             const meshBuffers = this.findOrCreateMeshBuffers(techniqueIndex, GeometryType.Point);
 
             if (meshBuffers === undefined) {
@@ -178,12 +177,12 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
             const { positions, texts, featureIds, imageTextures } = meshBuffers;
 
             const shouldCreateTextGeometries =
-                technique.name === "text" || technique.name === "labeled-icon";
+                isTextTechnique(technique) || isPoiTechnique(technique);
 
             let imageTexture: string | undefined;
-            const isPoiTechnique = technique.name === "labeled-icon";
+            const wantsPoi = isPoiTechnique(technique);
 
-            if (isPoiTechnique) {
+            if (wantsPoi) {
                 const poiTechnique = technique as PoiTechnique;
                 imageTexture = poiTechnique.imageTexture;
 
@@ -264,7 +263,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
         layer: string,
         geometry: ILineGeometry[],
         env: MapEnv,
-        techniques: Technique[],
+        techniques: IndexedTechnique[],
         featureId: number | undefined
     ): void {
         this.processFeatureCommon(env);
@@ -296,12 +295,6 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
             }
 
             const techniqueIndex = technique._index;
-            if (techniqueIndex === undefined) {
-                throw new Error(
-                    "OmvDecodedTileEmitter#processLineFeature: Internal error - No technique idx"
-                );
-            }
-
             const techniqueName = technique.name;
 
             if (
@@ -328,7 +321,11 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                     lines,
                     env
                 );
-            } else if (techniqueName === "text" || techniqueName === "line-marker") {
+            } else if (
+                isTextTechnique(technique) ||
+                isPoiTechnique(technique) ||
+                isLineMarkerTechnique(technique)
+            ) {
                 const textTechnique = technique as TextTechnique;
                 const textLabel = textTechnique.label;
                 const useAbbreviation = textTechnique.useAbbreviation as boolean;
@@ -402,7 +399,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                     continue;
                 }
 
-                if (techniqueName === "text") {
+                if (isTextTechnique(technique)) {
                     if (text === undefined) {
                         continue;
                     }
@@ -447,7 +444,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                         });
                     }
                 }
-            } else if (techniqueName === "extruded-line") {
+            } else if (isExtrudedLineTechnique(technique)) {
                 const meshBuffers = this.findOrCreateMeshBuffers(
                     techniqueIndex,
                     GeometryType.ExtrudedLine
@@ -458,10 +455,8 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                 const { positions, indices, groups, featureIds, featureStarts } = meshBuffers;
                 const start = indices.length;
 
-                const extrudedLineTechnique = technique as BasicExtrudedLineTechnique;
-
                 const lineWidth = getPropertyValue(
-                    extrudedLineTechnique.lineWidth,
+                    technique.lineWidth,
                     this.m_decodeInfo.tileKey.level
                 );
 
@@ -470,9 +465,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                 }
 
                 const addCircle =
-                    wantCircle &&
-                    (extrudedLineTechnique.caps === undefined ||
-                        extrudedLineTechnique.caps === "Circle");
+                    wantCircle && (technique.caps === undefined || technique.caps === "Circle");
 
                 lines.forEach(aLine => {
                     triangulateLine(aLine, lineWidth, positions, indices, addCircle);
@@ -485,7 +478,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
 
                 const count = indices.length - start;
                 groups.push({ start, count, technique: techniqueIndex, featureId });
-            } else if (techniqueName !== "none") {
+            } else {
                 logger.warn(
                     `OmvDecodedTileEmitter#processLineFeature: Invalid line technique
                      ${techniqueName} for layer: ${env.entries.$layer} `
@@ -507,7 +500,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
         layer: string,
         geometry: IPolygonGeometry[],
         env: MapEnv,
-        techniques: Technique[],
+        techniques: IndexedTechnique[],
         featureId: number | undefined
     ): void {
         this.processFeatureCommon(env);
@@ -874,7 +867,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
             const positionCount = (positions.length - basePosition) / 3;
             const count = indices.length - start;
 
-            if (technique.name === "extruded-polygon") {
+            if (isExtrudedPolygonTechnique(technique)) {
                 const color = new THREE.Color(
                     this.isColorStringValid(technique.color)
                         ? technique.color
@@ -919,7 +912,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
 
             const positionElements = new Float32Array(meshBuffers.positions);
 
-            if (meshBuffers.texts.length > 0 && technique.name === "text") {
+            if (meshBuffers.texts.length > 0 && isTextTechnique(technique)) {
                 this.m_textGeometries.push({
                     positions: {
                         name: "position",
@@ -935,7 +928,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                 return;
             }
 
-            if (meshBuffers.texts.length > 0 && technique.name === "labeled-icon") {
+            if (meshBuffers.texts.length > 0 && isPoiTechnique(technique)) {
                 this.m_poiGeometries.push({
                     positions: {
                         name: "position",

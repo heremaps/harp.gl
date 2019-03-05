@@ -7,10 +7,10 @@ import {
     DecodedTile,
     getProjectionName,
     ITileDecoder,
+    OptionsMap,
     RequestController,
     StyleSet,
     TileInfo,
-    ValueMap,
     WorkerDecoderProtocol,
     WorkerServiceProtocol
 } from "@here/harp-datasource-protocol";
@@ -155,7 +155,7 @@ export class WorkerBasedDecoder implements ITileDecoder {
      * @param languages new list of languages
      * @param options   new options, undefined options are not changed
      */
-    configure(styleSet?: StyleSet, languages?: string[], options?: ValueMap): void {
+    configure(styleSet?: StyleSet, languages?: string[], options?: OptionsMap): void {
         const message: WorkerDecoderProtocol.ConfigurationMessage = {
             service: this.serviceId,
             type: WorkerDecoderProtocol.DecoderMessageName.Configuration,

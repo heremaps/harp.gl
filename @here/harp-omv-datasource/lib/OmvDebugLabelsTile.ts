@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { DecodedTile } from "@here/harp-datasource-protocol";
+import { DecodedTile, isTextTechnique } from "@here/harp-datasource-protocol";
 import { TileKey } from "@here/harp-geoutils/lib/tiling/TileKey";
 import { DataSource, TextElement } from "@here/harp-mapview";
 import { debugContext } from "@here/harp-mapview/lib/DebugContext";
@@ -80,7 +80,7 @@ export class OmvDebugLabelsTile extends OmvTile {
 
             for (const textPath of this.preparedTextPaths) {
                 const technique = decodedTile.techniques[textPath.technique];
-                if (technique.name !== "text") {
+                if (!isTextTechnique(technique)) {
                     continue;
                 }
                 if (technique.color !== undefined) {

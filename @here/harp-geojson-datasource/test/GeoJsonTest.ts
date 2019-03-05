@@ -17,7 +17,8 @@ import { assert } from "chai";
 import * as sinon from "sinon";
 import * as THREE from "three";
 
-import { GeoJson, GeometryType, StyleSet, StyleSetEvaluator } from "@here/harp-datasource-protocol";
+import { GeoJson, GeometryType, StyleSet } from "@here/harp-datasource-protocol";
+import { StyleSetEvaluator } from "@here/harp-datasource-protocol/index-decoder";
 import {
     Projection,
     TileKey,

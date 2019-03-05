@@ -10,6 +10,7 @@ import {
     Feature,
     FeatureDetails,
     GeoJson,
+    IndexedTechnique,
     isCirclesTechnique,
     isDashedLineTechnique,
     isFillTechnique,
@@ -17,12 +18,10 @@ import {
     isSolidLineTechnique,
     isSquaresTechnique,
     isTextTechnique,
-    LineFeatureGroup,
-    MapEnv,
-    StyleSetEvaluator,
-    Technique,
-    Value
+    LineFeatureGroup
 } from "@here/harp-datasource-protocol";
+import { MapEnv, StyleSetEvaluator, Value } from "@here/harp-datasource-protocol/index-decoder";
+
 import { GeoCoordinates, Projection } from "@here/harp-geoutils";
 import { LoggerManager } from "@here/harp-utils";
 import * as THREE from "three";
@@ -712,18 +711,13 @@ export class GeoJsonParser {
         const env = new MapEnv({ type: envType, ...featureDetails });
         const techniques = styleSetEvaluator.getMatchingTechniques(env);
         return techniques.map(technique => {
-            if (technique._index === undefined) {
-                throw new Error(
-                    "GeoJsonDecoder#findOrCreateTechniqueIndex: Internal error - No technique index"
-                );
-            }
             return technique._index;
         });
     }
 
     private static addTileInfo(
         extendedTile: ExtendedTile,
-        techniques: Technique[],
+        techniques: IndexedTechnique[],
         lines: number[][],
         featureId: number,
         env: MapEnv,

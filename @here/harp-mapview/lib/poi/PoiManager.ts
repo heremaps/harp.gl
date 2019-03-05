@@ -9,6 +9,7 @@ import {
     getPropertyValue,
     ImageTexture,
     isLineMarkerTechnique,
+    isPoiTechnique,
     LineMarkerTechnique,
     PoiGeometry,
     PoiTechnique
@@ -25,7 +26,6 @@ import {
 } from "@here/harp-text-canvas";
 import { assert, assertExists, getOptionValue, LoggerManager } from "@here/harp-utils";
 import * as THREE from "three";
-
 import { ColorCache } from "../ColorCache";
 import { MapView } from "../MapView";
 import { TextElement } from "../text/TextElement";
@@ -81,7 +81,8 @@ export class PoiManager {
             assert(poiGeometry.technique !== undefined);
             const techniqueIndex = assertExists(poiGeometry.technique);
             const technique = decodedTile.techniques[techniqueIndex];
-            if (technique.name !== "line-marker" && technique.name !== "labeled-icon") {
+
+            if (!isLineMarkerTechnique(technique) && !isPoiTechnique(technique)) {
                 continue;
             }
 

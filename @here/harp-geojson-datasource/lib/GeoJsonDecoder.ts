@@ -8,9 +8,10 @@ import {
     DecodedTile,
     ExtendedTileInfo,
     ExtendedTileInfoWriter,
-    GeoJson,
-    StyleSetEvaluator
+    GeoJson
 } from "@here/harp-datasource-protocol";
+
+import { StyleSetEvaluator } from "@here/harp-datasource-protocol/index-decoder";
 import { Projection, TileKey, webMercatorTilingScheme } from "@here/harp-geoutils";
 import { ThemedTileDecoder } from "@here/harp-mapview-decoder";
 import { WorkerServiceManager } from "@here/harp-mapview-decoder/index-worker";

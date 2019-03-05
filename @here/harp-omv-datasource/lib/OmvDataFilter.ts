@@ -3,8 +3,7 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-
-import { MapEnv } from "@here/harp-datasource-protocol/lib/Theme";
+import { MapEnv } from "@here/harp-datasource-protocol/index-decoder";
 import {
     OmvFeatureFilterDescription,
     OmvFilterDescription,

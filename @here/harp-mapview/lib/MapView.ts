@@ -3,7 +3,7 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-import { createLight, ImageTexture, Light, Sky, Theme } from "@here/harp-datasource-protocol";
+import { ImageTexture, Light, Sky, Theme } from "@here/harp-datasource-protocol";
 import { GeoCoordinates, MathUtils, mercatorProjection, Projection } from "@here/harp-geoutils";
 import { assert, LoggerManager, PerformanceTimer } from "@here/harp-utils";
 import * as THREE from "three";
@@ -26,6 +26,7 @@ import { FrameStats, PerformanceStatistics } from "./Statistics";
 import { TextElement } from "./text/TextElement";
 import { TextElementsRenderer } from "./text/TextElementsRenderer";
 import { TextLayoutStyleCache, TextRenderStyleCache } from "./text/TextStyleCache";
+import { createLight } from "./ThemeHelpers";
 import { ThemeLoader } from "./ThemeLoader";
 import { Tile } from "./Tile";
 import { MapViewUtils } from "./Utils";

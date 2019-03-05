@@ -9,11 +9,11 @@ import {
     ExtendedTileInfo,
     OptionsMap,
     StyleSet,
-    StyleSetEvaluator,
     Technique,
     TileInfo
 } from "@here/harp-datasource-protocol";
-import { Env, MapEnv } from "@here/harp-datasource-protocol/lib/Theme";
+import { Env, MapEnv, StyleSetEvaluator } from "@here/harp-datasource-protocol/index-decoder";
+
 import {
     GeoBox,
     GeoCoordinates,
