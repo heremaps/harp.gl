@@ -764,7 +764,7 @@
      "clipping": false,
      "color": "#52606E",
      "dashSize": {
-      "interpolation": "Linear",
+      "interpolation": "Discrete",
       "zoomLevels": [
        6,
        7,
@@ -793,7 +793,7 @@
       ]
      },
      "gapSize": {
-      "interpolation": "Linear",
+      "interpolation": "Discrete",
       "zoomLevels": [
        6,
        7,

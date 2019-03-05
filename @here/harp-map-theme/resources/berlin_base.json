@@ -473,7 +473,7 @@
      "clipping": false,
      "color": "#184F6E",
      "dashSize": {
-      "interpolation": "Linear",
+      "interpolation": "Discrete",
       "zoomLevels": [
        6,
        7,
@@ -502,7 +502,7 @@
       ]
      },
      "gapSize": {
-      "interpolation": "Linear",
+      "interpolation": "Discrete",
       "zoomLevels": [
        6,
        7,
@@ -694,7 +694,7 @@
      "xclipping": false,
      "dashSize": 1,
      "gapSize": {
-      "interpolation": "Linear",
+      "interpolation": "Discrete",
       "zoomLevels": [
        10,
        11,
@@ -727,7 +727,7 @@
      "color": "#DDDDDD",
      "xclipping": false,
      "dashSize": {
-      "interpolation": "Linear",
+      "interpolation": "Discrete",
       "zoomLevels": [
        10,
        11,
@@ -748,7 +748,7 @@
       ]
      },
      "gapSize": {
-      "interpolation": "Linear",
+      "interpolation": "Discrete",
       "zoomLevels": [
        10,
        11,
