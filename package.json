@@ -12,7 +12,7 @@
     "ts-mocha": "^2.0.0",
     "tslint": "^5.11.1",
     "tslint-config-prettier": "^1.18.0",
-    "typedoc": "^0.13.0"
+    "typedoc": "^0.14.2"
   },
   "scripts": {
     "test": "ts-mocha -r tsconfig-paths/register ./test/*.ts ./@here/*/test/*.ts",
