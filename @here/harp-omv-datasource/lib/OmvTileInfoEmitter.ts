@@ -7,10 +7,9 @@
 import {
     ExtendedTileInfo,
     ExtendedTileInfoWriter,
-    StyleSetEvaluator,
-    Technique
+    IndexedTechnique
 } from "@here/harp-datasource-protocol";
-import { MapEnv } from "@here/harp-datasource-protocol/lib/Theme";
+import { MapEnv, StyleSetEvaluator } from "@here/harp-datasource-protocol/index-decoder";
 import * as THREE from "three";
 
 import { GeoCoordinates } from "@here/harp-geoutils";
@@ -49,7 +48,7 @@ export class OmvTileInfoEmitter implements IOmvEmitter {
         layer: string,
         geometry: GeoCoordinates[],
         env: MapEnv,
-        techniques: Technique[],
+        techniques: IndexedTechnique[],
         featureId: number | undefined
     ): void {
         const tileInfoWriter = this.m_tileInfoWriter;
@@ -86,7 +85,7 @@ export class OmvTileInfoEmitter implements IOmvEmitter {
         layer: string,
         geometry: ILineGeometry[],
         env: MapEnv,
-        techniques: Technique[],
+        techniques: IndexedTechnique[],
         featureId: number | undefined
     ): void {
         const tileInfoWriter = this.m_tileInfoWriter;
@@ -146,7 +145,7 @@ export class OmvTileInfoEmitter implements IOmvEmitter {
         layer: string,
         geometry: IPolygonGeometry[],
         env: MapEnv,
-        techniques: Technique[],
+        techniques: IndexedTechnique[],
         featureId: number | undefined
     ): void {
         if (techniques.length === 0) {

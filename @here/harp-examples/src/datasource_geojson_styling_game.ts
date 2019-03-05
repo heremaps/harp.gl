@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Style, StyleSet } from "@here/harp-datasource-protocol";
+import { FillStyle, Style, StyleSet } from "@here/harp-datasource-protocol";
 import { GeoJsonDataSource } from "@here/harp-geojson-datasource";
 import { GeoCoordinates, TileKey } from "@here/harp-geoutils";
 import { CopyrightElementHandler, CopyrightInfo, MapView } from "@here/harp-mapview";
@@ -197,7 +197,7 @@ export namespace GeoJsonStylingGame {
             color: "#37afaa"
         }
     };
-    const activeRegionStyle: Style = {
+    const activeRegionStyle: FillStyle = {
         description: "GeoJson polygon",
         when: "type == 'polygon'",
         renderOrder: 1001,

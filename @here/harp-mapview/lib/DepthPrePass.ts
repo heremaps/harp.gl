@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { BaseStandardTechnique } from "@here/harp-datasource-protocol";
+import { BaseStandardTechniqueParams } from "@here/harp-datasource-protocol";
 import { chainCallbacks } from "@here/harp-utils";
 import * as THREE from "three";
 
@@ -22,7 +22,7 @@ export const DEPTH_PRE_PASS_STENCIL_MASK = 0x01;
  *
  * @param technique [[BaseStandardTechnique]] instance to be checked
  */
-export function isRenderDepthPrePassEnabled(technique: BaseStandardTechnique) {
+export function isRenderDepthPrePassEnabled(technique: BaseStandardTechniqueParams) {
     return (
         technique.enableDepthPrePass !== false &&
         technique.opacity !== undefined &&

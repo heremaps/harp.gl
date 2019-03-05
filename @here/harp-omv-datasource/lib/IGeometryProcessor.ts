@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { MapEnv } from "@here/harp-datasource-protocol/lib/Theme";
+import { MapEnv } from "@here/harp-datasource-protocol/index-decoder";
 import { GeoCoordinates } from "@here/harp-geoutils";
 
 /**

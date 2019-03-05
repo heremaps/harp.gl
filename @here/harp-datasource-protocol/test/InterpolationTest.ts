@@ -8,7 +8,8 @@
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
 import { assert } from "chai";
-import { getPropertyValue, InterpolatedProperty, InterpolationMode } from "../lib/Techniques";
+import { getPropertyValue } from "../lib/InterpolatedProperty";
+import { InterpolatedProperty, InterpolationMode } from "../lib/InterpolatedPropertyDefs";
 
 const levels = new Float32Array([0, 5, 10]);
 const numberProperty: InterpolatedProperty<number> = {

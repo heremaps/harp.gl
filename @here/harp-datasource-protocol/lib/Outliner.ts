@@ -18,7 +18,6 @@ const prevEdgeGoal = new THREE.Vector2();
  * @param vertexOffset Starting offset of the vertices composing the contour.
  * @param polygonContour Vertices that compose the contour.
  * @param polygonContourEdges Collection of booleans indicating if contour edges should be added.
- *
  */
 export function addPolygonEdges(
     indexBuffer: number[],

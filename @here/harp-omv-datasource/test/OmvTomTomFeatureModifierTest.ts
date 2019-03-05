@@ -7,7 +7,7 @@
 // tslint:disable:only-arrow-functions
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
-import { MapEnv } from "@here/harp-datasource-protocol";
+import { MapEnv } from "@here/harp-datasource-protocol/index-decoder";
 import { assert } from "chai";
 import { OmvFeatureFilterDescriptionBuilder } from "../lib/OmvDataFilter";
 import { OmvFeatureFilterDescription } from "../lib/OmvDecoderDefs";

@@ -5,15 +5,16 @@
  */
 
 export * from "./lib/Techniques";
+export * from "./lib/TechniqueParams";
 export * from "./lib/Theme";
+export * from "./lib/InterpolatedProperty";
+export * from "./lib/InterpolatedPropertyDefs";
 export * from "./lib/WorkerServiceProtocol";
 export * from "./lib/WorkerTilerProtocol";
 export * from "./lib/WorkerDecoderProtocol";
 export * from "./lib/ITileDecoder";
 export * from "./lib/ITiler";
 export * from "./lib/DecodedTile";
-export * from "./lib/Extruder";
-export * from "./lib/IMeshBuffers";
-export * from "./lib/Outliner";
 export * from "./lib/TileInfo";
 export * from "./lib/GeoJsonDataType";
+export * from "./lib/ThemeVisitor";

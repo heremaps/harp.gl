@@ -7,14 +7,8 @@
 // tslint:disable:only-arrow-functions
 // Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
-import {
-    GeometryType,
-    isStandardTexturedTechnique,
-    MapEnv,
-    StandardTexturedTechnique,
-    StyleSetEvaluator,
-    Technique
-} from "@here/harp-datasource-protocol";
+import { GeometryType, isStandardTexturedTechnique, Style } from "@here/harp-datasource-protocol";
+import { MapEnv, StyleSetEvaluator } from "@here/harp-datasource-protocol/index-decoder";
 import {
     GeoCoordinates,
     mercatorProjection,
@@ -60,31 +54,26 @@ describe("OmvDecodedTileEmitter", function() {
             tileSizeOnScreen
         };
 
-        const technique: StandardTexturedTechnique = {
-            name: "standard-textured",
-            _index: 0
-        };
-
-        class MockStyleSetEvaluator {
-            constructor(readonly m_techniques: Technique[]) {}
-
-            get techniques(): Technique[] {
-                return this.m_techniques;
+        const styleSet: Style[] = [
+            {
+                technique: "standard-textured",
+                when: "1"
             }
-        }
+        ];
 
-        const mockStyleSetEvaluator = new MockStyleSetEvaluator([technique]);
+        const styleSetEvaluator = new StyleSetEvaluator(styleSet);
 
-        const tileEmmiter = new OmvDecodedTileEmitter(
-            decodeInfo,
-            (mockStyleSetEvaluator as any) as StyleSetEvaluator,
-            false,
-            false
+        const tileEmmiter = new OmvDecodedTileEmitter(decodeInfo, styleSetEvaluator, false, false);
+
+        const mockEnv = new MapEnv({ layer: "mock-layer" });
+        const matchedTechniques = styleSetEvaluator.getMatchingTechniques(mockEnv);
+        tileEmmiter.processPolygonFeature(
+            "mock-layer",
+            polygons,
+            mockEnv,
+            matchedTechniques,
+            undefined
         );
-
-        const mockEnv = new MapEnv({});
-
-        tileEmmiter.processPolygonFeature("mock-layer", polygons, mockEnv, [technique], undefined);
 
         const decodedTile = tileEmmiter.getDecodedTile();
 
