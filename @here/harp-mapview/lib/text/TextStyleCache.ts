@@ -54,8 +54,8 @@ export class TextRenderStyleCache {
             new TextRenderStyle({
                 fontSize: {
                     unit: FontUnit.Pixel,
-                    size: 32.0,
-                    backgroundSize: 4.0
+                    size: 32,
+                    backgroundSize: 8
                 },
                 color: ColorCache.instance.getColor("#6d7477"),
                 backgroundColor: ColorCache.instance.getColor("#f7fbfd"),
@@ -83,8 +83,8 @@ export class TextRenderStyleCache {
             new TextRenderStyle({
                 fontSize: {
                     unit: FontUnit.Pixel,
-                    size: 32.0,
-                    backgroundSize: 4.0
+                    size: 32,
+                    backgroundSize: 8
                 },
                 color: ColorCache.instance.getColor("#6d7477"),
                 backgroundColor: ColorCache.instance.getColor("#f7fbfd"),

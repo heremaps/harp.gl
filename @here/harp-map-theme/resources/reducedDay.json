@@ -32,6 +32,9 @@
  "defaultTextStyle": {
   "name": "defaultTextStyle",
   "color": "#6D7477",
+  "backgroundColor": "#F7FBFD",
+  "backgroundSize": 16,
+  "backgroundAlpha": 0.5,
   "fontCatalogName": "fira"
  },
  "textStyles": [],

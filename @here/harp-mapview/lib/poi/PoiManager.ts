@@ -56,7 +56,7 @@ export class PoiManager {
     private static m_missingPoiName: Map<string, boolean> = new Map();
     private m_imageTextures: Map<string, ImageTexture> = new Map();
     private m_poiShieldGroups: Map<string, number> = new Map();
-    private m_colorMap: Map<number, THREE.Color> = new Map();
+    private m_colorMap: Map<string, THREE.Color> = new Map();
 
     /**
      * The constructor of the `PoiManager`.
@@ -537,42 +537,55 @@ export class PoiManager {
         const cacheId = computeStyleCacheId(dataSourceName, technique, this.mapView.zoomLevel);
         let renderStyle = this.mapView.textRenderStyleCache.get(cacheId);
         if (renderStyle === undefined) {
+            const defaultRenderParams = this.mapView.textElementsRenderer!.defaultStyle
+                .renderParams;
+
             const textSize = getOptionValue(
                 getPropertyValue(technique.size, Math.floor(this.mapView.zoomLevel)),
-                32
+                defaultRenderParams.fontSize!.size
             );
             const bgSize = getOptionValue(
                 getPropertyValue(technique.backgroundSize, Math.floor(this.mapView.zoomLevel)),
-                8
+                defaultRenderParams.fontSize!.backgroundSize
             );
 
             const hexColor = getPropertyValue(technique.color, Math.floor(this.mapView.zoomLevel));
             if (hexColor !== undefined) {
-                this.m_colorMap.set(techniqueIdx, ColorCache.instance.getColor(hexColor));
+                this.m_colorMap.set(cacheId, ColorCache.instance.getColor(hexColor));
             }
-            const styleColor = this.m_colorMap.get(techniqueIdx) || this.mapView.defaultTextColor;
+            const styleColor = getOptionValue(
+                this.m_colorMap.get(cacheId),
+                defaultRenderParams.color
+            );
 
             const hexBgColor = getPropertyValue(
                 technique.backgroundColor,
                 Math.floor(this.mapView.zoomLevel)
             );
             if (hexBgColor !== undefined) {
-                this.m_colorMap.set(techniqueIdx + 0.5, ColorCache.instance.getColor(hexBgColor));
+                this.m_colorMap.set(cacheId + "_bg", ColorCache.instance.getColor(hexBgColor));
             }
-            const styleBgColor =
-                this.m_colorMap.get(techniqueIdx + 0.5) || this.mapView.defaultTextBackgroundColor;
+            const styleBgColor = getOptionValue(
+                this.m_colorMap.get(cacheId + "_bg"),
+                defaultRenderParams.backgroundColor
+            );
 
             const bgAlpha = getOptionValue(
                 getPropertyValue(technique.backgroundAlpha, Math.floor(this.mapView.zoomLevel)),
-                0.5
+                defaultRenderParams.backgroundOpacity
             );
 
-            const styleFontVariant =
-                technique.smallCaps === true
-                    ? FontVariant.SmallCaps
-                    : technique.allCaps === true
-                    ? FontVariant.AllCaps
-                    : FontVariant.Regular;
+            const isSmallCaps =
+                technique.smallCaps === true ||
+                defaultRenderParams.fontVariant === FontVariant.SmallCaps;
+            const isAllCaps =
+                technique.allCaps === true ||
+                defaultRenderParams.fontVariant === FontVariant.AllCaps;
+            const styleFontVariant = isSmallCaps
+                ? FontVariant.SmallCaps
+                : isAllCaps
+                ? FontVariant.AllCaps
+                : undefined;
             const styleFontStyle =
                 technique.bold === true
                     ? technique.oblique
@@ -580,7 +593,7 @@ export class PoiManager {
                         : FontStyle.Bold
                     : technique.oblique === true
                     ? FontStyle.Italic
-                    : FontStyle.Regular;
+                    : defaultRenderParams.fontStyle;
 
             const renderParams = {
                 fontSize: {
@@ -617,8 +630,11 @@ export class PoiManager {
         const cacheId = computeStyleCacheId(dataSourceName, technique, this.mapView.zoomLevel);
         let layoutStyle = this.mapView.textLayoutStyleCache.get(cacheId);
         if (layoutStyle === undefined) {
-            const trackingFactor = technique.tracking || 0.0;
-            let hAlignment = HorizontalAlignment.Center;
+            const defaultLayoutParams = this.mapView.textElementsRenderer!.defaultStyle
+                .layoutParams;
+
+            const trackingFactor = getOptionValue(technique.tracking, defaultLayoutParams.tracking);
+            let hAlignment = defaultLayoutParams.horizontalAlignment;
             if (
                 technique.hAlignment === "Left" ||
                 technique.hAlignment === "Center" ||
@@ -626,7 +642,7 @@ export class PoiManager {
             ) {
                 hAlignment = HorizontalAlignment[technique.hAlignment];
             }
-            let vAlignment = VerticalAlignment.Center;
+            let vAlignment = defaultLayoutParams.verticalAlignment;
             if (
                 technique.vAlignment === "Above" ||
                 technique.vAlignment === "Center" ||
@@ -641,9 +657,13 @@ export class PoiManager {
                 verticalAlignment: vAlignment
             };
 
+            const themeLayoutParams =
+                this.mapView.textElementsRenderer !== undefined
+                    ? this.mapView.textElementsRenderer!.getTextElementStyle(technique.style)
+                          .layoutParams
+                    : {};
             layoutStyle = new TextLayoutStyle({
-                ...this.mapView.textElementsRenderer!.getTextElementStyle(technique.style)
-                    .layoutParams,
+                ...themeLayoutParams,
                 ...layoutParams
             });
             this.mapView.textLayoutStyleCache.set(cacheId, layoutStyle);
