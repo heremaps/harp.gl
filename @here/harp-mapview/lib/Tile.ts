@@ -1475,20 +1475,34 @@ export class Tile implements CachedResource {
         );
         let renderStyle = this.mapView.textRenderStyleCache.get(cacheId);
         if (renderStyle === undefined) {
+            const defaultRenderParams =
+                this.mapView.textElementsRenderer !== undefined
+                    ? this.mapView.textElementsRenderer.defaultStyle.renderParams
+                    : {
+                          fontSize: {
+                              unit: FontUnit.Pixel,
+                              size: 32,
+                              backgroundSize: 8
+                          }
+                      };
+
             const textSize = getOptionValue(
                 getPropertyValue(technique.size, Math.floor(this.mapView.zoomLevel)),
-                32
+                defaultRenderParams.fontSize!.size
             );
             const bgSize = getOptionValue(
                 getPropertyValue(technique.backgroundSize, Math.floor(this.mapView.zoomLevel)),
-                8
+                defaultRenderParams.fontSize!.backgroundSize
             );
 
             const hexColor = getPropertyValue(technique.color, Math.floor(this.mapView.zoomLevel));
             if (hexColor !== undefined) {
                 this.m_colorMap.set(cacheId, ColorCache.instance.getColor(hexColor));
             }
-            const styleColor = this.m_colorMap.get(cacheId) || this.mapView.defaultTextColor;
+            const styleColor = getOptionValue(
+                this.m_colorMap.get(cacheId),
+                defaultRenderParams.color
+            );
 
             const hexBgColor = getPropertyValue(
                 technique.backgroundColor,
@@ -1497,20 +1511,27 @@ export class Tile implements CachedResource {
             if (hexBgColor !== undefined) {
                 this.m_colorMap.set(cacheId + "_bg", ColorCache.instance.getColor(hexBgColor));
             }
-            const styleBgColor =
-                this.m_colorMap.get(cacheId + "_bg") || this.mapView.defaultTextBackgroundColor;
+            const styleBgColor = getOptionValue(
+                this.m_colorMap.get(cacheId + "_bg"),
+                defaultRenderParams.backgroundColor
+            );
 
             const bgAlpha = getOptionValue(
                 getPropertyValue(technique.backgroundAlpha, Math.floor(this.mapView.zoomLevel)),
-                0.5
+                defaultRenderParams.backgroundOpacity
             );
 
-            const styleFontVariant =
-                technique.smallCaps === true
-                    ? FontVariant.SmallCaps
-                    : technique.allCaps === true
-                    ? FontVariant.AllCaps
-                    : FontVariant.Regular;
+            const isSmallCaps =
+                technique.smallCaps === true ||
+                defaultRenderParams.fontVariant === FontVariant.SmallCaps;
+            const isAllCaps =
+                technique.allCaps === true ||
+                defaultRenderParams.fontVariant === FontVariant.AllCaps;
+            const styleFontVariant = isSmallCaps
+                ? FontVariant.SmallCaps
+                : isAllCaps
+                ? FontVariant.AllCaps
+                : undefined;
             const styleFontStyle =
                 technique.bold === true
                     ? technique.oblique
@@ -1518,7 +1539,7 @@ export class Tile implements CachedResource {
                         : FontStyle.Bold
                     : technique.oblique === true
                     ? FontStyle.Italic
-                    : FontStyle.Regular;
+                    : defaultRenderParams.fontStyle;
 
             const renderParams = {
                 fontSize: {
@@ -1564,8 +1585,13 @@ export class Tile implements CachedResource {
         );
         let layoutStyle = this.mapView.textLayoutStyleCache.get(cacheId);
         if (layoutStyle === undefined) {
-            const trackingFactor = technique.tracking || 0.0;
-            let hAlignment = HorizontalAlignment.Center;
+            const defaultLayoutParams =
+                this.mapView.textElementsRenderer !== undefined
+                    ? this.mapView.textElementsRenderer.defaultStyle.layoutParams
+                    : {};
+
+            const trackingFactor = getOptionValue(technique.tracking, defaultLayoutParams.tracking);
+            let hAlignment = defaultLayoutParams.horizontalAlignment;
             if (
                 technique.hAlignment === "Left" ||
                 technique.hAlignment === "Center" ||
@@ -1573,7 +1599,7 @@ export class Tile implements CachedResource {
             ) {
                 hAlignment = HorizontalAlignment[technique.hAlignment];
             }
-            let vAlignment = VerticalAlignment.Center;
+            let vAlignment = defaultLayoutParams.verticalAlignment;
             if (
                 technique.vAlignment === "Above" ||
                 technique.vAlignment === "Center" ||

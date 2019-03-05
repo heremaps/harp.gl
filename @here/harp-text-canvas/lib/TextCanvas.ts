@@ -556,7 +556,16 @@ export class TextCanvas {
     ): TextBufferObject | undefined {
         tempTextPosition.set(0, 0, 0);
 
-        const glyphArray = this.m_fontCatalog.getGlyphs(text, this.m_currentTextRenderStyle);
+        let glyphLetterCaseArray;
+        if (this.m_currentTextRenderStyle.fontVariant === FontVariant.SmallCaps) {
+            glyphLetterCaseArray = [];
+        }
+
+        const glyphArray = this.m_fontCatalog.getGlyphs(
+            text,
+            this.m_currentTextRenderStyle,
+            glyphLetterCaseArray
+        );
         if (glyphArray === undefined) {
             return undefined;
         }
@@ -583,7 +592,8 @@ export class TextCanvas {
             textPath: path,
             textPathOverflow: pathOverflow,
             bounds: textBounds,
-            individualBounds: characterBounds
+            individualBounds: characterBounds,
+            letterCaseArray: glyphLetterCaseArray
         });
 
         return new TextBufferObject(
