@@ -271,6 +271,13 @@ export class TextElementsRenderer {
     }
 
     /**
+     * Default [[TextElementStyle]] used to render [[TextElement]]s.
+     */
+    get defaultStyle(): TextElementStyle {
+        return this.m_defaultStyle;
+    }
+
+    /**
      * Render the user [[TextElement]]s.
      *
      * @param time Current time for animations.
@@ -505,15 +512,6 @@ export class TextElementsRenderer {
             this.m_defaultStyle = this.createTextElementStyle(styles[0], DEFAULT_STYLE_NAME);
         }
         this.m_defaultStyle.fontCatalog = defaultFontCatalogName!;
-
-        // Initialize default text color.
-        if (this.m_defaultStyle.renderParams.color !== undefined) {
-            this.m_mapView.defaultTextColor = this.m_defaultStyle.renderParams.color;
-        }
-        if (this.m_defaultStyle.renderParams.backgroundColor !== undefined) {
-            // tslint:disable-next-line:max-line-length
-            this.m_mapView.defaultTextBackgroundColor = this.m_defaultStyle.renderParams.backgroundColor;
-        }
     }
 
     private createTextElementStyle(style: TextStyle, styleName: string): TextElementStyle {
@@ -523,8 +521,8 @@ export class TextElementsRenderer {
             renderParams: {
                 fontSize: {
                     unit: FontUnit.Pixel,
-                    size: 16.0,
-                    backgroundSize: style.backgroundSize || 0
+                    size: 32,
+                    backgroundSize: style.backgroundSize || 8
                 },
                 fontVariant:
                     style.smallCaps === true
@@ -1022,9 +1020,11 @@ export class TextElementsRenderer {
                             textElement.text
                         );
                     } else {
+                        textElement.glyphCaseArray = [];
                         textElement.glyphs = textCanvas.fontCatalog.getGlyphs(
                             textElement.text,
-                            textCanvas.textRenderStyle
+                            textCanvas.textRenderStyle,
+                            textElement.glyphCaseArray
                         );
                     }
                     textElement.loadingState = LoadingState.Initialized;
@@ -1108,6 +1108,7 @@ export class TextElementsRenderer {
                 tempAdditionParams.path = textPath;
                 tempAdditionParams.pathOverflow = true;
                 tempAdditionParams.layer = textElement.renderOrder;
+                tempAdditionParams.letterCaseArray = textElement.glyphCaseArray;
                 textCanvas.addText(textElement.glyphs!, tempPosition, tempAdditionParams);
             }
         }
@@ -1240,9 +1241,11 @@ export class TextElementsRenderer {
                             }
                         );
                     } else {
+                        textElement.glyphCaseArray = [];
                         textElement.glyphs = textCanvas.fontCatalog.getGlyphs(
                             textElement.text,
-                            textCanvas.textRenderStyle
+                            textCanvas.textRenderStyle,
+                            textElement.glyphCaseArray
                         );
                     }
                     textElement.loadingState = LoadingState.Initialized;
@@ -1851,6 +1854,7 @@ export class TextElementsRenderer {
                 // label doesn't fit the path and should be discarded.
                 tempMeasurementParams.path = textPath;
                 tempMeasurementParams.outputCharacterBounds = tempBoxes;
+                tempMeasurementParams.letterCaseArray = pathLabel.glyphCaseArray!;
                 if (!textCanvas.measureText(pathLabel.glyphs!, tempBox, tempMeasurementParams)) {
                     textCanvas.textRenderStyle.fontSize.size = prevSize;
                     return false;
@@ -1907,6 +1911,7 @@ export class TextElementsRenderer {
 
                 tempAdditionParams.path = textPath;
                 tempAdditionParams.layer = pathLabel.renderOrder;
+                tempAdditionParams.letterCaseArray = pathLabel.glyphCaseArray;
                 textCanvas.addText(pathLabel.glyphs!, tempPosition, tempAdditionParams);
 
                 // Allocate collision info if needed.

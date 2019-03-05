@@ -327,9 +327,6 @@ export class TextGeometry {
         const rot = buffer[3];
         const rotSign = rot < 0 ? -1.0 : 1.0;
 
-        const w = buffer[6];
-        const bw = buffer[7];
-
         const red = color !== undefined ? color.r : buffer[8];
         const green = color !== undefined ? color.g : buffer[9];
         const blue = color !== undefined ? color.b : buffer[10];
@@ -347,7 +344,10 @@ export class TextGeometry {
             if (!glyph.isInCache) {
                 return false;
             }
+
             const mirrored = buffer[srcOffset + 4] > buffer[srcOffset + VERTEX_BUFFER_STRIDE + 4];
+            const w = buffer[srcOffset + 6];
+            const bw = buffer[srcOffset + 7];
 
             for (let j = 0; j < VERTICES_PER_QUAD; ++j) {
                 const x = buffer[srcOffset + j * VERTEX_BUFFER_STRIDE];

@@ -438,6 +438,14 @@ export class TextElement {
      */
     glyphs?: GlyphData[];
 
+    /**
+     * @hidden
+     * Array storing the casing (`true`: uppercase, `false`: lowercase) for this `TextElement`.
+     * Used by path labels in [[TextElementsRenderer]] to support `SmallCaps`. Valid after
+     *  `loadingState` is `Initialized`.
+     */
+    glyphCaseArray?: boolean[];
+
     private m_poiInfo?: PoiInfo;
 
     /**
