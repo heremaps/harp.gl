@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Env, MapEnv, Value, ValueMap } from "@here/harp-datasource-protocol";
+import { Env, MapEnv, Value, ValueMap } from "@here/harp-datasource-protocol/index-decoder";
 import { GeoBox, GeoCoordinates, TileKey } from "@here/harp-geoutils";
 import { ILogger } from "@here/harp-utils";
 import * as Long from "long";

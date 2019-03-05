@@ -9,9 +9,9 @@ import {
     ITileDecoder,
     OptionsMap,
     StyleSet,
-    StyleSetEvaluator,
     TileInfo
 } from "@here/harp-datasource-protocol";
+import { StyleSetEvaluator } from "@here/harp-datasource-protocol/index-decoder";
 import { Projection, TileKey } from "@here/harp-geoutils";
 
 /**

@@ -7,16 +7,14 @@
 import {
     BufferAttribute,
     getPropertyValue,
+    isExtrudedLineTechnique,
     isExtrudedPolygonTechnique,
     isInterpolatedProperty,
     isShaderTechnique,
     isStandardTexturedTechnique,
     isTextureBuffer,
     Technique,
-    TextureProperties,
-    toPixelFormat,
-    toTextureDataType,
-    toWrappingMode
+    TextureProperties
 } from "@here/harp-datasource-protocol";
 import {
     CirclePointsMaterial,
@@ -29,6 +27,7 @@ import {
 import { LoggerManager } from "@here/harp-utils";
 import * as THREE from "three";
 import { Circles, Squares } from "./MapViewPoints";
+import { toPixelFormat, toTextureDataType, toWrappingMode } from "./ThemeHelpers";
 
 const logger = LoggerManager.instance.create("DecodedTileHelpers");
 
@@ -242,6 +241,9 @@ export type ObjectConstructor = new (
  * @param technique The technique.
  */
 export function getObjectConstructor(technique: Technique): ObjectConstructor | undefined {
+    if (technique.name === undefined) {
+        return undefined;
+    }
     switch (technique.name) {
         case "extruded-line":
         case "standard":
@@ -264,6 +266,9 @@ export function getObjectConstructor(technique: Technique): ObjectConstructor | 
             return THREE.LineSegments as ObjectConstructor;
 
         case "shader": {
+            if (!isShaderTechnique(technique)) {
+                throw new Error("Invalid technique");
+            }
             switch (technique.primitive) {
                 case "line":
                     return THREE.Line as ObjectConstructor;
@@ -281,7 +286,6 @@ export function getObjectConstructor(technique: Technique): ObjectConstructor | 
         case "text":
         case "labeled-icon":
         case "line-marker":
-        case "none":
             return undefined;
     }
 }
@@ -310,8 +314,15 @@ export type MaterialConstructor = new (params?: {}) => THREE.Material;
  * @param technique [[Technique]] object which the material will be based on.
  */
 export function getMaterialConstructor(technique: Technique): MaterialConstructor | undefined {
+    if (technique.name === undefined) {
+        return undefined;
+    }
+
     switch (technique.name) {
         case "extruded-line":
+            if (!isExtrudedLineTechnique(technique)) {
+                throw new Error("Invalid extruded-line technique");
+            }
             return technique.shading === "standard"
                 ? MapMeshStandardMaterial
                 : MapMeshBasicMaterial;
@@ -346,7 +357,6 @@ export function getMaterialConstructor(technique: Technique): MaterialConstructo
         case "text":
         case "labeled-icon":
         case "line-marker":
-        case "none":
             return undefined;
     }
 }

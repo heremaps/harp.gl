@@ -23,7 +23,8 @@ describe("Tile Creation", function() {
                 },
                 vertexShader: "",
                 fragmentShader: ""
-            }
+            },
+            renderOrder: 0
         };
         const shaderMaterial = createMaterial({ technique });
         assert.isTrue(
@@ -55,44 +56,57 @@ describe("Tile Creation", function() {
         const ExtrudedLineCtor = getObjectConstructor({
             name: "extruded-line",
             color: "#f00",
-            lineWidth: 1
+            lineWidth: 1,
+            renderOrder: 0
         });
         assert.isFunction(ExtrudedLineCtor);
         if (ExtrudedLineCtor !== undefined) {
             assert.isTrue(new ExtrudedLineCtor() instanceof THREE.Mesh);
         }
 
-        const LandmarkCtor = getObjectConstructor({ name: "standard-textured" });
+        const LandmarkCtor = getObjectConstructor({
+            name: "standard-textured",
+            renderOrder: 0
+        });
         assert.isFunction(LandmarkCtor);
         if (LandmarkCtor !== undefined) {
             assert.isTrue(new LandmarkCtor() instanceof THREE.Mesh);
         }
 
-        const StandardCtor = getObjectConstructor({ name: "standard" });
+        const StandardCtor = getObjectConstructor({ name: "standard", renderOrder: 0 });
         assert.isFunction(StandardCtor);
         if (StandardCtor !== undefined) {
             assert.isTrue(new StandardCtor() instanceof THREE.Mesh);
         }
 
-        const ExtrudedPolygonCtor = getObjectConstructor({ name: "extruded-polygon" });
+        const ExtrudedPolygonCtor = getObjectConstructor({
+            name: "extruded-polygon",
+            lineWidth: 1,
+            renderOrder: 0
+        });
         assert.isFunction(ExtrudedPolygonCtor);
         if (ExtrudedPolygonCtor !== undefined) {
             assert.isTrue(new ExtrudedPolygonCtor() instanceof THREE.Mesh);
         }
 
-        const FillCtor = getObjectConstructor({ name: "fill" });
+        const FillCtor = getObjectConstructor({ name: "fill", renderOrder: 0 });
         assert.isFunction(FillCtor);
         if (FillCtor !== undefined) {
             assert.isTrue(new FillCtor() instanceof THREE.Mesh);
         }
 
-        const PointCtor = getObjectConstructor({ name: "squares" });
+        const PointCtor = getObjectConstructor({ name: "squares", renderOrder: 0 });
         assert.isFunction(PointCtor);
         if (PointCtor !== undefined) {
             assert.isTrue(new PointCtor() instanceof THREE.Points);
         }
 
-        const LineCtor = getObjectConstructor({ name: "line", color: "#f00", lineWidth: 1 });
+        const LineCtor = getObjectConstructor({
+            name: "line",
+            color: "#f00",
+            lineWidth: 1,
+            renderOrder: 0
+        });
         assert.isFunction(LineCtor);
         if (LineCtor !== undefined) {
             assert.isTrue(new LineCtor() instanceof THREE.Line);
@@ -101,7 +115,8 @@ describe("Tile Creation", function() {
         const SegmentsCtor = getObjectConstructor({
             name: "segments",
             color: "#f00",
-            lineWidth: 1
+            lineWidth: 1,
+            renderOrder: 0
         });
         assert.isFunction(SegmentsCtor);
         if (SegmentsCtor !== undefined) {
@@ -111,7 +126,8 @@ describe("Tile Creation", function() {
         const ShaderPointCtor = getObjectConstructor({
             name: "shader",
             primitive: "point",
-            params: {}
+            params: {},
+            renderOrder: 0
         });
         assert.isFunction(ShaderPointCtor);
         if (ShaderPointCtor !== undefined) {
@@ -121,7 +137,8 @@ describe("Tile Creation", function() {
         const ShaderLineCtor = getObjectConstructor({
             name: "shader",
             primitive: "line",
-            params: {}
+            params: {},
+            renderOrder: 0
         });
         assert.isFunction(ShaderLineCtor);
         if (ShaderLineCtor !== undefined) {
@@ -131,7 +148,8 @@ describe("Tile Creation", function() {
         const ShaderLineSegmentsCtor = getObjectConstructor({
             name: "shader",
             primitive: "segments",
-            params: {}
+            params: {},
+            renderOrder: 0
         });
         assert.isFunction(ShaderLineSegmentsCtor);
         if (ShaderLineSegmentsCtor !== undefined) {
@@ -141,14 +159,15 @@ describe("Tile Creation", function() {
         const ShaderMeshCtor = getObjectConstructor({
             name: "shader",
             primitive: "mesh",
-            params: {}
+            params: {},
+            renderOrder: 0
         });
         assert.isFunction(ShaderMeshCtor);
         if (ShaderMeshCtor !== undefined) {
             assert.isTrue(new ShaderMeshCtor() instanceof THREE.Mesh);
         }
 
-        const TextCtor = getObjectConstructor({ name: "text" });
+        const TextCtor = getObjectConstructor({ name: "text", renderOrder: 0 });
         assert.isUndefined(TextCtor); // text techniques don't create scene objects
     });
 });

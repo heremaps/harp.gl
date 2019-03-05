@@ -35,7 +35,7 @@ export function computeStyleCacheId(
     technique: Technique,
     zoomLevel: number
 ): string {
-    return `${datasourceName}_${technique._renderOrderAuto!}_${zoomLevel}`;
+    return `${datasourceName}_${technique.renderOrder}_${zoomLevel}`;
 }
 
 /**

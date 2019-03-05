@@ -9,12 +9,11 @@ import {
     Geometry,
     GeometryType,
     Group,
-    IMeshBuffers,
     PoiGeometry,
-    StyleSetEvaluator,
     TextGeometry,
     TextPathGeometry
 } from "@here/harp-datasource-protocol";
+import { IMeshBuffers, StyleSetEvaluator } from "@here/harp-datasource-protocol/index-decoder";
 import { Projection, webMercatorTilingScheme } from "@here/harp-geoutils";
 import { LineGroup } from "@here/harp-lines";
 import { Math2D } from "@here/harp-utils";

@@ -8,8 +8,8 @@
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
 import { TileKey } from "@here/harp-geoutils";
-import { FillTechnique, LineTechnique, SquaresTechnique, Technique } from "../lib/Techniques";
-import { MapEnv } from "../lib/Theme";
+import { MapEnv } from "../lib/Expr";
+import { IndexedTechnique, Technique } from "../lib/Techniques";
 import {
     ExtendedTileInfo,
     ExtendedTileInfoPolygonAccessor,
@@ -209,18 +209,19 @@ describe("ExtendedTileInfo", function() {
 
     function createPointInfo(
         index: number
-    ): { technique: Technique; storedTechnique: Technique; env: MapEnv } {
-        const technique: SquaresTechnique = {
+    ): { technique: IndexedTechnique; storedTechnique: IndexedTechnique; env: MapEnv } {
+        const technique: IndexedTechnique = {
             name: "squares",
             color: "#F00",
             size: index,
-            _index: index,
-            _renderOrderAuto: -1
+            renderOrder: 0,
+            _index: index
         };
-        const storedTechnique: SquaresTechnique = {
+        const storedTechnique: IndexedTechnique = {
             name: "squares",
             color: "#F00",
             size: index,
+            renderOrder: 0,
             _index: index
         };
         const env = new MapEnv({
@@ -239,18 +240,19 @@ describe("ExtendedTileInfo", function() {
 
     function createLineInfo(
         index: number
-    ): { technique: Technique; storedTechnique: Technique; env: MapEnv } {
-        const technique: LineTechnique = {
+    ): { technique: IndexedTechnique; storedTechnique: IndexedTechnique; env: MapEnv } {
+        const technique: IndexedTechnique = {
             name: "line",
             color: "#0F0",
             lineWidth: index,
-            _index: index,
-            _renderOrderAuto: -1
+            renderOrder: 0,
+            _index: index
         };
-        const storedTechnique: LineTechnique = {
+        const storedTechnique: IndexedTechnique = {
             name: "line",
             color: "#0F0",
             lineWidth: index,
+            renderOrder: 0,
             _index: index
         };
         const env = new MapEnv({
@@ -269,16 +271,17 @@ describe("ExtendedTileInfo", function() {
 
     function createPolygonInfo(
         index: number
-    ): { technique: Technique; storedTechnique: Technique; env: MapEnv } {
-        const technique: FillTechnique = {
+    ): { technique: IndexedTechnique; storedTechnique: IndexedTechnique; env: MapEnv } {
+        const technique: IndexedTechnique = {
             name: "fill",
             color: "#00f",
-            _index: index,
-            _renderOrderAuto: -1
+            renderOrder: 0,
+            _index: index
         };
-        const storedTechnique: FillTechnique = {
+        const storedTechnique: IndexedTechnique = {
             name: "fill",
             color: "#00f",
+            renderOrder: 0,
             _index: index
         };
         const env = new MapEnv({

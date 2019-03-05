@@ -9,12 +9,11 @@
 
 import {
     GeometryType,
+    IndexedTechnique,
     isStandardTexturedTechnique,
-    MapEnv,
-    StandardTexturedTechnique,
-    StyleSetEvaluator,
     Technique
 } from "@here/harp-datasource-protocol";
+import { MapEnv, StyleSetEvaluator } from "@here/harp-datasource-protocol/index-decoder";
 import {
     GeoCoordinates,
     mercatorProjection,
@@ -60,8 +59,9 @@ describe("OmvDecodedTileEmitter", function() {
             tileSizeOnScreen
         };
 
-        const technique: StandardTexturedTechnique = {
+        const technique: IndexedTechnique = {
             name: "standard-textured",
+            renderOrder: 0,
             _index: 0
         };
 

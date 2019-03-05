@@ -178,6 +178,11 @@ export interface Group {
     start: number;
     count: number;
     technique: number;
+
+    /**
+     * Offset added to [[Technique]]'s [[renderOrder]] when calculating final `renderOrder` of
+     * geometry object from given group.
+     */
     renderOrderOffset?: number;
     featureId?: number;
 }

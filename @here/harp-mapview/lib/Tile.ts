@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import {
-    BaseTechnique,
+    BaseTechniqueParams,
     BufferAttribute,
     DecodedTile,
     ExtrudedPolygonTechnique,
@@ -22,6 +22,7 @@ import {
     isSquaresTechnique,
     isStandardTechnique,
     isStandardTexturedTechnique,
+    isTextTechnique,
     LineMarkerTechnique,
     PoiTechnique,
     SolidLineTechnique,
@@ -888,7 +889,7 @@ export class Tile implements CachedResource {
 
             if (object.material !== undefined && this.shouldDisposeObjectMaterial(object)) {
                 if (object.material instanceof Array) {
-                    object.material.forEach(material => {
+                    object.material.forEach((material: THREE.Material | undefined) => {
                         if (material !== undefined) {
                             disposeMaterial(material);
                         }
@@ -1042,7 +1043,7 @@ export class Tile implements CachedResource {
             let maxPathLengthSqr = 0;
             for (const textPath of this.preparedTextPaths) {
                 const technique = decodedTile.techniques[textPath.technique];
-                if (technique.name !== "text") {
+                if (!isTextTechnique(technique)) {
                     continue;
                 }
                 if (textPath.pathLengthSqr > maxPathLengthSqr) {
@@ -1052,7 +1053,7 @@ export class Tile implements CachedResource {
 
             for (const textPath of this.preparedTextPaths) {
                 const technique = decodedTile.techniques[textPath.technique];
-                if (technique.name !== "text") {
+                if (!isTextTechnique(technique)) {
                     continue;
                 }
 
@@ -1108,7 +1109,7 @@ export class Tile implements CachedResource {
 
                 const technique = decodedTile.techniques[text.technique];
 
-                if (technique.name !== "text") {
+                if (!isTextTechnique(technique)) {
                     continue;
                 }
 
@@ -1281,28 +1282,45 @@ export class Tile implements CachedResource {
 
                 const bufferGeometry = new THREE.BufferGeometry();
 
-                srcGeometry.vertexAttributes.forEach(vertexAttribute => {
+                srcGeometry.vertexAttributes.forEach((vertexAttribute: BufferAttribute) => {
                     const buffer = getBufferAttribute(vertexAttribute);
                     bufferGeometry.addAttribute(vertexAttribute.name, buffer);
                 });
 
                 if (srcGeometry.interleavedVertexAttributes !== undefined) {
-                    srcGeometry.interleavedVertexAttributes.forEach(attr => {
-                        const ArrayCtor = getArrayConstructor(attr.type);
-                        const buffer = new THREE.InterleavedBuffer(
-                            new ArrayCtor(attr.buffer),
-                            attr.stride
-                        );
-                        attr.attributes.forEach(interleavedAttr => {
-                            const attribute = new THREE.InterleavedBufferAttribute(
-                                buffer,
-                                interleavedAttr.itemSize,
-                                interleavedAttr.offset,
-                                false
+                    srcGeometry.interleavedVertexAttributes.forEach(
+                        (attr: {
+                            type: any;
+                            buffer: any;
+                            stride: any;
+                            attributes: {
+                                forEach: (
+                                    arg0: (interleavedAttr: {
+                                        itemSize: any;
+                                        offset: any;
+                                        name: any;
+                                    }) => void
+                                ) => void;
+                            };
+                        }) => {
+                            const ArrayCtor = getArrayConstructor(attr.type);
+                            const buffer = new THREE.InterleavedBuffer(
+                                new ArrayCtor(attr.buffer),
+                                attr.stride
                             );
-                            bufferGeometry.addAttribute(interleavedAttr.name, attribute);
-                        });
-                    });
+                            attr.attributes.forEach(
+                                (interleavedAttr: { itemSize: any; offset: any; name: any }) => {
+                                    const attribute = new THREE.InterleavedBufferAttribute(
+                                        buffer,
+                                        interleavedAttr.itemSize,
+                                        interleavedAttr.offset,
+                                        false
+                                    );
+                                    bufferGeometry.addAttribute(interleavedAttr.name, attribute);
+                                }
+                            );
+                        }
+                    );
                 }
 
                 if (srcGeometry.index) {
@@ -1333,7 +1351,6 @@ export class Tile implements CachedResource {
                         lineMaterial.defines.TILE_CLIP = 1;
                     }
                 }
-
                 // Add polygon offset to the extruded buildings and to the fill area to avoid depth
                 // problems when rendering edges.
                 const hasExtrudedOutlines: boolean =
@@ -1354,14 +1371,7 @@ export class Tile implements CachedResource {
 
                 object.frustumCulled = false;
 
-                if (technique.renderOrder !== undefined) {
-                    object.renderOrder = technique.renderOrder;
-                } else {
-                    if (technique._renderOrderAuto === undefined) {
-                        throw new Error("Technique has no renderOrderAuto");
-                    }
-                    object.renderOrder = technique._renderOrderAuto;
-                }
+                object.renderOrder = technique.renderOrder;
 
                 if (group.renderOrderOffset !== undefined) {
                     object.renderOrder += group.renderOrderOffset;
@@ -1375,7 +1385,8 @@ export class Tile implements CachedResource {
                     (isCirclesTechnique(technique) || isSquaresTechnique(technique)) &&
                     technique.enablePicking !== undefined
                 ) {
-                    (object as MapViewPoints).enableRayTesting = technique.enablePicking;
+                    // tslint:disable-next-line:max-line-length
+                    (object as MapViewPoints).enableRayTesting = technique.enablePicking!;
                 }
 
                 // Lines renderOrder fix: Render them as transparent objects, but make sure they end
@@ -1488,7 +1499,7 @@ export class Tile implements CachedResource {
                 }
 
                 const renderDepthPrePass =
-                    technique.name === "extruded-polygon" && isRenderDepthPrePassEnabled(technique);
+                    isExtrudedPolygonTechnique(technique) && isRenderDepthPrePassEnabled(technique);
 
                 if (renderDepthPrePass) {
                     const depthPassMesh = createDepthPrePassMesh(object as THREE.Mesh);
@@ -1629,14 +1640,11 @@ export class Tile implements CachedResource {
                     outlineMaterial.uniforms.diffuse.value = outlineColor;
                     const outlineObj = new ObjectCtor(bufferGeometry, outlineMaterial);
 
-                    if (outlineTechnique.secondaryRenderOrder !== undefined) {
-                        outlineObj.renderOrder = outlineTechnique.secondaryRenderOrder;
-                    } else {
-                        if (technique._renderOrderAuto === undefined) {
-                            throw new Error("Technique has no renderOrderAuto");
-                        }
-                        outlineObj.renderOrder = technique._renderOrderAuto - 0.0000001;
-                    }
+                    outlineObj.renderOrder =
+                        outlineTechnique.secondaryRenderOrder !== undefined
+                            ? outlineTechnique.secondaryRenderOrder
+                            : technique.renderOrder - 0.0000001;
+
                     if (group.renderOrderOffset !== undefined) {
                         outlineObj.renderOrder += group.renderOrderOffset;
                     }
@@ -1941,10 +1949,10 @@ export class Tile implements CachedResource {
     private addFeatureData(srcGeometry: Geometry, technique: Technique, object: THREE.Object3D) {
         if (
             ((srcGeometry.featureIds !== undefined && srcGeometry.featureIds.length > 0) ||
-                technique.name === "circles" ||
-                technique.name === "squares") &&
-            technique.name !== "solid-line" &&
-            technique.name !== "dashed-line"
+                isCirclesTechnique(technique) ||
+                isSquaresTechnique(technique)) &&
+            !isSolidLineTechnique(technique) &&
+            !isDashedLineTechnique(technique)
         ) {
             const featureData: TileFeatureData = {
                 geometryType: srcGeometry.type,
@@ -1962,7 +1970,7 @@ export class Tile implements CachedResource {
     /**
      * Gets the fading parameters for several kinds of objects.
      */
-    private getFadingParams(technique: BaseTechnique): FadingParameters {
+    private getFadingParams(technique: BaseTechniqueParams): FadingParameters {
         const displayZoomLevel = this.mapView.zoomLevel;
         const fadeNear =
             technique.fadeNear !== undefined
