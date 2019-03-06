@@ -23,7 +23,7 @@
   },
   "license": "Apache-2.0",
   "dependencies": {
-    "@here/harp-materials": "^0.1.0"
+    "@here/harp-materials": "^0.1.19"
   },
   "devDependencies": {
     "@types/chai": "^4.1.2",

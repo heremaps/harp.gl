@@ -22,11 +22,11 @@
   },
   "license": "Apache-2.0",
   "dependencies": {
-    "@here/harp-datasource-protocol": "^0.2.39",
-    "@here/harp-geoutils": "^0.2.40",
-    "@here/harp-lrucache": "^0.1.26",
-    "@here/harp-mapview": "^0.7.55",
-    "@here/harp-utils": "^0.1.10",
+    "@here/harp-datasource-protocol": "^0.2.67",
+    "@here/harp-geoutils": "^0.2.58",
+    "@here/harp-lrucache": "^0.1.47",
+    "@here/harp-mapview": "^0.7.84",
+    "@here/harp-utils": "^0.1.21",
     "rtree": "^1.4.2"
   },
   "devDependencies": {
