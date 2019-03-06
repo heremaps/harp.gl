@@ -37,6 +37,7 @@ We can group the examples by several categories, looking at what kind of feature
 1. [Display an interactive map of Italy](src/datasource_geojson_styling_game.ts) on a reduced map style that showcases picking and using GeoJSON Data that relies on [geojson-datasource](../harp-geojson-datasource/README.md).
 1. [Show OMV Data](src/hello.ts) with our default map style.
 1. [Render raster map tiles](src/datasource_webtile.ts) using the [webtile-datasource](../harp-webtile-datasource/README.md).
+1. [Show OSM MVT Data](src/datasource_xyzmvt.ts) with our default map style.
 
 ### Styling
 

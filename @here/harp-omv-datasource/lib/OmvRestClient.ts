@@ -39,12 +39,12 @@ export enum APIFormat {
      * `<OmvRestClientParams.baseUrl>/<zoom>/<X>/<Y>.mvt?access_token=<OmvRestClientParams.authenticationCode>`
      *
      * Format definition:
-     * `http|s://<base-url>/v4/{map_id}/{z}/{x}/{y}{@2x}.{format}?[style]?[access_token]`
+     * `http|s://<base-url>/v4/{map_id}/{z}/{x}/{y}{@2x}.{format}?[style]&access_token={access_token}`
      *
      * Sample URL:
-     * `http://a.tiles.mapbox.com/v4/mapbox.mapbox-streets-v7/14/4823/6160.mvt?access_token=<your access token>`
+     * `http://a.tiles.mapbox.com/v4/mapbox.mapbox-streets-v7/14/4823/6160.mvt?access_token=your-mapbox-access-token`
      *
-     * Default authentication method used: [[AuthenticationTypeMapboxV4]].
+     * Default authentication method used: [[AuthenticationTypeAccessToken]].
      */
     MapboxV4,
 
@@ -52,13 +52,15 @@ export enum APIFormat {
      * Use the REST API format of XYZ Vector Tile API in MVT format.
      *
      * Usage:
-     * `<OmvRestClientParams.baseUrl>/tiles/omsbase/256/<zoom>/<X>/<Y>.mvt?api_key=<OmvRestClientParams.authenticationCode>`
+     * `<OmvRestClientParams.baseUrl>/tiles/omsbase/256/<zoom>/<X>/<Y>.mvt?access_token=<OmvRestClientParams.authenticationCode>`
      *
      * Format definition:
-     * `http|s://<base-url>/tiles/{layers}/{z}/{x}/{y}/{format}?api_key={api_key}`
+     * `http|s://<base-url>/tiles/{layers}/{z}/{x}/{y}/{format}?access_token={access_token}`
      *
      * Sample URL:
-     * `https://xyz.api.here.com/tiles/osmbase/256/all/16/19293/24641.mvt?api_key=your-xyz-api-key`
+     * `https://xyz.api.here.com/tiles/osmbase/256/all/16/19293/24641.mvt?access_token=your-xyz-access-token`
+     *
+     * Default authentication method used: [[AuthenticationTypeAccessToken]].
      */
     XYZMVT,
 
@@ -66,13 +68,15 @@ export enum APIFormat {
      * Use the REST API format of XYZ Vector Tile API in JSON format.
      *
      * Usage:
-     * `<OmvRestClientParams.baseUrl>/tiles/omsbase/256/<zoom>/<X>/<Y>.mvt?api_key=<OmvRestClientParams.authenticationCode>`
+     * `<OmvRestClientParams.baseUrl>/tiles/omsbase/256/<zoom>/<X>/<Y>.mvt?access_token=<OmvRestClientParams.authenticationCode>`
      *
      * Format definition:
-     * `http|s://<base-url>/tiles/{layers}/{z}/{x}/{y}/{format}?api_key={api_key}`
+     * `http|s://<base-url>/tiles/{layers}/{z}/{x}/{y}/{format}?access_token={access_token}`
      *
      * Sample URL:
-     * `https://xyz.api.here.com/tiles/osmbase/256/all/16/19293/24641.json?api_key=your-xyz-api-key`
+     * `https://xyz.api.here.com/tiles/osmbase/256/all/16/19293/24641.json?access_token=your-xyz-api-key`
+     *
+     * Default authentication method used: [[AuthenticationTypeAccessToken]].
      */
     XYZJson,
 
@@ -88,7 +92,7 @@ export enum APIFormat {
      * Sample URL:
      * `https://xyz.api.here.com/tiles/osmbase/herebase.02/14/2649/6338/omv?access_token=your-xyz-access-token`
      *
-     * Default authentication method used: [[AuthenticationTypeMapboxV4]].
+     * Default authentication method used: [[AuthenticationTypeAccessToken]].
      */
     XYZOMV,
 
@@ -145,13 +149,9 @@ export const AuthenticationTypeTomTomV1: AuthenticationMethodInfo = {
     method: AuthenticationMethod.QueryString,
     name: "key"
 };
-export const AuthenticationTypeMapboxV4: AuthenticationMethodInfo = {
+export const AuthenticationTypeAccessToken: AuthenticationMethodInfo = {
     method: AuthenticationMethod.QueryString,
     name: "access_token"
-};
-export const AuthenticationTypeXYZ: AuthenticationMethodInfo = {
-    method: AuthenticationMethod.QueryString,
-    name: "api_key"
 };
 
 export interface OmvRestClientParameters {
@@ -300,10 +300,9 @@ export class OmvRestClient implements DataProvider {
                 return AuthenticationTypeBearer;
             case APIFormat.MapboxV4:
             case APIFormat.XYZOMV:
-                return AuthenticationTypeMapboxV4;
             case APIFormat.XYZMVT:
             case APIFormat.XYZJson:
-                return AuthenticationTypeXYZ;
+                return AuthenticationTypeAccessToken;
             case APIFormat.TomtomV1:
                 return AuthenticationTypeTomTomV1;
             default:
