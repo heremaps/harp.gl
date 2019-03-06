@@ -568,7 +568,6 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
         const currentMinHeight = env.lookup("min_height") as number;
         const defaultHeight = extrudedPolygonTechnique.defaultHeight;
         const constantHeight = extrudedPolygonTechnique.constantHeight;
-        const boundaryWalls = extrudedPolygonTechnique.boundaryWalls;
         const minHeight = currentMinHeight !== undefined ? currentMinHeight : 0;
         const height =
             currentHeight !== undefined
@@ -609,16 +608,22 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                 if (isExtruded) {
                     addExtrudedWalls(
                         indices,
+                        baseVertex,
+                        contour,
+                        contourOutlines,
+                        extrudedPolygonTechnique.boundaryWalls
+                    );
+                }
+                if (contourOutlines !== undefined) {
+                    addPolygonEdges(
                         edgeIndexBuffer,
                         baseVertex,
                         contour,
-                        boundaryWalls,
                         contourOutlines,
+                        isExtruded,
                         extrudedPolygonTechnique.footprint,
                         extrudedPolygonTechnique.maxSlope
                     );
-                } else if (isFilled && contourOutlines !== undefined) {
-                    addPolygonEdges(edgeIndexBuffer, baseVertex, contour, contourOutlines);
                 }
 
                 // Repeat the process for all the inner rings (holes).
@@ -640,20 +645,21 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                     if (isExtruded) {
                         addExtrudedWalls(
                             indices,
-                            edgeIndexBuffer,
                             vertexOffset + baseVertex,
                             contour,
-                            boundaryWalls,
                             contourOutlines,
-                            extrudedPolygonTechnique.footprint,
-                            extrudedPolygonTechnique.maxSlope
+                            extrudedPolygonTechnique.boundaryWalls
                         );
-                    } else if (isFilled && contourOutlines !== undefined) {
+                    }
+                    if (contourOutlines !== undefined) {
                         addPolygonEdges(
                             edgeIndexBuffer,
-                            vertexOffset / 2 + baseVertex,
+                            (isExtruded ? vertexOffset : vertexOffset / 2) + baseVertex,
                             contour,
-                            contourOutlines
+                            contourOutlines,
+                            isExtruded,
+                            extrudedPolygonTechnique.footprint,
+                            extrudedPolygonTechnique.maxSlope
                         );
                     }
                 }
