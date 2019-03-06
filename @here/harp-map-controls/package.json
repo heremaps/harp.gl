@@ -22,8 +22,8 @@
   },
   "license": "Apache-2.0",
   "dependencies": {
-    "@here/harp-geoutils": "^0.2.40",
-    "@here/harp-mapview": "^0.7.55",
+    "@here/harp-geoutils": "^0.2.58",
+    "@here/harp-mapview": "^0.7.84",
     "@tweenjs/tween.js": "^17.1.1"
   },
   "devDependencies": {

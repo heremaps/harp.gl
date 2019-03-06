@@ -19,7 +19,7 @@
   },
   "license": "SEE LICENSE IN HERE_NOTICE",
   "dependencies": {
-    "@here/harp-utils": "^0.1.15"
+    "@here/harp-utils": "^0.1.21"
   },
   "devDependencies": {
     "@types/chai": "^4.1.2",

@@ -22,9 +22,9 @@
   },
   "license": "Apache-2.0",
   "dependencies": {
-    "@here/harp-geoutils": "^0.2.40",
-    "@here/harp-lines": "^0.1.20",
-    "@here/harp-utils": "^0.1.0"
+    "@here/harp-geoutils": "^0.2.58",
+    "@here/harp-lines": "^0.1.43",
+    "@here/harp-utils": "^0.1.21"
   },
   "devDependencies": {
     "@types/chai": "^4.1.2",
