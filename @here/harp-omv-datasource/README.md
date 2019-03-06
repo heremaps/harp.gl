@@ -37,7 +37,7 @@ You can find more about the HERE XYZ Services [here](https://www.here.xyz/).
 
 ### Mapbox Vector Tiles
 
-REST service implemented with `APIFormat.MapboxV4` in `OmvRestClient.ts`.
+REST service implemented with `APIFormat.MapboxV7` in `OmvRestClient.ts`.
 
 You can find more information [here](https://docs.mapbox.com/vector-tiles/reference/).
 
