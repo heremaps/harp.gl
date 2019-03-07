@@ -2,6 +2,8 @@
 
 `harp.gl` is an _experimental and work in progress_ open-source 3D map rendering engine.
 
+The _harp_ acronym stands for **Ha**ndy Map **R**endering **P**latform, as we aim to provide an easy to use (=handy) map rendering engine that can be used as a platform where you can develop your own applications.
+
 ## Overview
 
 You can use this engine to:
@@ -121,6 +123,6 @@ Copyright (C) 2019 HERE Europe B.V.
 
 See the [LICENSE](./LICENSE) file in the root of this project for license details about using `harp.gl`.
 
-In addition, please see the following license limitations for using `harp.gl` with the [fonts resources](https://github.com/heremaps/harp-font-resources).
+In addition, please note that the [fonts resources](https://github.com/heremaps/harp-font-resources) are under a different set of licenses.
 
 For other use cases not listed in the license terms, please [contact us](https://developer.here.com/contact-us).
