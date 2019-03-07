@@ -785,7 +785,7 @@
    },
    {
     "description": "water",
-    "when": "$layer == 'water' && 'all'",
+    "when": "$layer == 'water' && $geometryType == 'polygon'",
     "technique": "fill",
     "attr": {
      "color": "#436981"
@@ -794,7 +794,7 @@
    },
    {
     "description": "water",
-    "when": "$layer == 'water' && 'all'",
+    "when": "$layer == 'water'",
     "technique": "text",
     "attr": {
      "color": "#012337",
@@ -1682,7 +1682,7 @@
     "final": true
    },
    {
-    "when": "$layer == 'landmark' && 'all'",
+    "when": "$layer == 'landmark'",
     "technique": "standard",
     "attr": {
      "color": "#F7F9F9",
