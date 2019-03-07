@@ -1,48 +1,48 @@
 {
   "sky": {
     "type": "gradient",
-    "colorTop": "#015EBB",
-    "colorBottom": "#DDDCDA",
-    "groundColor": "#87959A",
+    "colorTop": "#161719",
+    "colorBottom": "#262829",
+    "groundColor": "#262829",
     "monomialPower": 1
   },
   "fog": {
     "startRatio": 0.8
   },
-  "clearColor": "#87959A",
+  "clearColor": "#4A4D4E",
   "lights": [
     {
       "type": "ambient",
-      "color": "#FFFFFF",
+      "color": "#C9CACC",
       "name": "ambientLight",
-      "intensity": 0.9
+      "intensity": 0.8
     },
     {
       "type": "directional",
-      "color": "#CCCBBB",
+      "color": "#C5C7CA",
       "name": "light1",
-      "intensity": 0.8,
+      "intensity": 0.4,
       "direction": {
         "x": 1,
-        "y": 5,
-        "z": 0.5
+        "y": 0,
+        "z": 1
       }
     },
     {
       "type": "directional",
-      "color": "#F4DB9C",
+      "color": "#B6B6B6",
       "name": "light2",
-      "intensity": 0.8,
+      "intensity": 0.4,
       "direction": {
         "x": -1,
-        "y": -3,
+        "y": 0,
         "z": 1
       }
     }
   ],
   "defaultTextStyle": {
     "name": "defaultTextStyle",
-    "color": "#6D7477",
+    "color": "#090A0A",
     "fontCatalogName": "fira"
   },
   "textStyles": [
@@ -53,12 +53,12 @@
     },
     {
       "name": "smallSignLight",
-      "color": "#FFFFFF",
+      "color": "#202121",
       "fontCatalogName": "fira"
     },
     {
       "name": "placeMarker",
-      "color": "#60FF60",
+      "color": "#202121",
       "fontCatalogName": "fira"
     }
   ],
@@ -82,7 +82,7 @@
         "when": "$layer == 'roads' && ((kind != 'rail') && ((kind_detail == 'pier') || (landuse_kind == 'pier')))",
         "technique": "solid-line",
         "attr": {
-          "color": "#FAFDFE",
+          "color": "#333334",
           "lineWidth": {
             "interpolation": "Linear",
             "zoomLevels": [
@@ -111,7 +111,7 @@
             "category": "outline",
             "technique": "solid-line",
             "attr": {
-              "color": "#3A4C69",
+              "color": "#535557",
               "lineWidth": {
                 "interpolation": "Linear",
                 "zoomLevels": [
@@ -136,10 +136,11 @@
             "renderOrder": 11
           },
           {
+            "description": "residential",
             "category": "fill",
             "technique": "solid-line",
             "attr": {
-              "color": "#EDECD9",
+              "color": "#3B3D3F",
               "lineWidth": {
                 "interpolation": "Linear",
                 "zoomLevels": [
@@ -165,28 +166,31 @@
           },
           {
             "technique": "text",
-                    "attr": {
-          "color": "#000000",
-          "backgroundColor": "#FFFFFF",
-          "backgroundAlpha": 0.5,
-          "size": 16,
-          "priority": 15,
-          "fadeNear": 0.8,
-          "fadeFar": 0.9,
-          "clipping": false
-        },
+            "attr": {
+              "color": "#999999",
+              "backgroundColor": "#141414",
+              "backgroundAlpha": 0.5,
+              "textLabel": "kind_detail",
+              "size": 16,
+              "priority": 15,
+              "fadeNear": 0.8,
+              "fadeFar": 0.9,
+              "clipping": false
+            },
             "renderOrder": 12
           }
         ]
       },
+      {},
       {
         "description": "secondary",
         "when": "$layer == 'roads' && ((kind != 'rail') && ((kind == 'major_road') && (kind_detail == 'secondary')))",
         "technique": "text",
         "attr": {
-          "color": "#000000",
-          "backgroundColor": "#FFFFFF",
+          "color": "#999999",
+          "backgroundColor": "#141414",
           "backgroundAlpha": 0.5,
+          "textLabel": "kind_detail",
           "size": 16,
           "priority": 15,
           "fadeNear": 0.8,
@@ -201,7 +205,7 @@
         "when": "$layer == 'roads' && ((kind != 'rail') && ((kind == 'major_road') && (kind_detail == 'secondary')))",
         "technique": "solid-line",
         "attr": {
-          "color": "#3A4C69",
+          "color": "#616467",
           "lineWidth": {
             "interpolation": "Linear",
             "zoomLevels": [
@@ -237,7 +241,7 @@
         "when": "$layer == 'roads' && ((kind != 'rail') && ((kind == 'major_road') && (kind_detail == 'secondary')))",
         "technique": "solid-line",
         "attr": {
-          "color": "#E3D49A",
+          "color": "#393A3C",
           "lineWidth": {
             "interpolation": "Linear",
             "zoomLevels": [
@@ -273,10 +277,10 @@
         "when": "$layer == 'roads' && ((kind != 'rail') && ((kind == 'major_road') && kind_detail in ['primary','tertiary']))",
         "technique": "text",
         "attr": {
-          "color": "#000000",
-          "backgroundColor": "#FFFFFF",
+          "color": "#999999",
+          "backgroundColor": "#141414",
           "backgroundAlpha": 0.5,
-          "size": 16,
+          "size": 12.8,
           "priority": 20,
           "fadeNear": 0.8,
           "fadeFar": 0.9,
@@ -290,7 +294,7 @@
         "when": "$layer == 'roads' && ((kind != 'rail') && ((kind == 'major_road') && kind_detail in ['primary','tertiary']))",
         "technique": "solid-line",
         "attr": {
-          "color": "#3A4C69",
+          "color": "#56585B",
           "lineWidth": {
             "interpolation": "Linear",
             "zoomLevels": [
@@ -328,7 +332,7 @@
         "when": "$layer == 'roads' && ((kind != 'rail') && ((kind == 'major_road') && kind_detail in ['primary','tertiary']))",
         "technique": "solid-line",
         "attr": {
-          "color": "#F0E8B5",
+          "color": "#3D3E41",
           "lineWidth": {
             "interpolation": "Linear",
             "zoomLevels": [
@@ -368,8 +372,8 @@
         "when": "$layer == 'roads' && ((kind != 'rail') && ((kind == 'highway') && ((kind_detail == 'motorway') || (kind_detail == 'primary'))))",
         "technique": "text",
         "attr": {
-          "color": "#000000",
-          "backgroundColor": "#FFFFFF",
+          "color": "#999999",
+          "backgroundColor": "#141414",
           "backgroundAlpha": 0.5,
           "size": 16,
           "priority": 25,
@@ -385,7 +389,7 @@
         "when": "$layer == 'roads' && ((kind != 'rail') && ((kind == 'highway') && ((kind_detail == 'motorway') || (kind_detail == 'primary'))))",
         "technique": "solid-line",
         "attr": {
-          "color": "#3A4C69",
+          "color": "#56585B",
           "lineWidth": {
             "interpolation": "Linear",
             "zoomLevels": [
@@ -402,8 +406,8 @@
             "values": [
               700,
               400,
-              250,
-              120,
+              200,
+              90,
               50,
               33,
               16,
@@ -423,7 +427,7 @@
         "when": "$layer == 'roads' && ((kind != 'rail') && ((kind == 'highway') && ((kind_detail == 'motorway') || (kind_detail == 'primary'))))",
         "technique": "solid-line",
         "attr": {
-          "color": "#D6C789",
+          "color": "#3C3D3F",
           "lineWidth": {
             "interpolation": "Linear",
             "zoomLevels": [
@@ -463,8 +467,8 @@
         "when": "$layer == 'roads' && ((kind != 'rail') && kind in ['ferry'])",
         "technique": "text",
         "attr": {
-          "color": "#03334E",
-          "backgroundColor": "#FFFFFF",
+          "color": "#999999",
+          "backgroundColor": "#141414",
           "backgroundAlpha": 0.5,
           "size": 12.8,
           "priority": 25,
@@ -480,7 +484,7 @@
         "technique": "dashed-line",
         "attr": {
           "clipping": false,
-          "color": "#184F6E",
+          "color": "#484A4C",
           "dashSize": {
             "interpolation": "Linear",
             "zoomLevels": [
@@ -577,7 +581,7 @@
         "when": "$layer == 'roads' && ((kind != 'rail') && kind_detail in ['driveway','parking_aisle','drive_through'])",
         "technique": "solid-line",
         "attr": {
-          "color": "#A8ABA8",
+          "color": "#5E6062",
           "lineWidth": 5,
           "fadeNear": 0.8,
           "fadeFar": 0.9,
@@ -594,8 +598,8 @@
             "category": "outline",
             "technique": "solid-line",
             "attr": {
-              "color": "#3A4C69",
-              "lineWidth": 3,
+              "color": "#5D5F62",
+              "lineWidth": 1.5,
               "fadeNear": 0.8,
               "fadeFar": 0.9,
               "clipping": false
@@ -604,10 +608,11 @@
           },
           {
             "category": "fill",
+            "when": "$layer == 'roads' && ((kind != 'rail') && ((kind == 'path') && (kind_detail in ['pedestrian','path','footway'] || landuse_kind in ['park','residential','footway','garden','pedestrian','grass','allotments','forest','cemetery','natural_wood'])))",
             "technique": "solid-line",
             "attr": {
-              "color": "#B1B5B6",
-              "lineWidth": 2.5,
+              "color": "#353637",
+              "lineWidth": 1.3,
               "fadeNear": 0.8,
               "fadeFar": 0.9,
               "clipping": false
@@ -617,8 +622,8 @@
           {
             "technique": "text",
             "attr": {
-              "color": "#000000",
-              "backgroundColor": "#FFFFFF",
+              "color": "#999999",
+              "backgroundColor": "#141414",
               "backgroundAlpha": 0.5,
               "textLabel": "kind_detail",
               "size": 16,
@@ -636,7 +641,7 @@
         "when": "$layer == 'roads' && (((($geometryType ^= 'line') && (kind == 'rail')) && kind_detail in ['rail','light_rail','tram']) && (kind_detail == 'tram'))",
         "technique": "solid-line",
         "attr": {
-          "color": "#B9B9B9",
+          "color": "#57585B",
           "lineWidth": {
             "interpolation": "Linear",
             "zoomLevels": [
@@ -659,7 +664,7 @@
         "when": "$layer == 'roads' && (((($geometryType ^= 'line') && (kind == 'rail')) && kind_detail in ['rail','light_rail','tram']) && service in ['siding','industrial','yard','spur','crossover'])",
         "technique": "solid-line",
         "attr": {
-          "color": "#A4A8A2"
+          "color": "#606164"
         },
         "renderOrder": 5,
         "final": true
@@ -670,7 +675,7 @@
         "when": "$layer == 'roads' && (((($geometryType ^= 'line') && (kind == 'rail')) && kind_detail in ['rail','light_rail','tram']) && !(is_tunnel))",
         "technique": "solid-line",
         "attr": {
-          "color": "#696A6B",
+          "color": "#6A6C6F",
           "xclipping": false,
           "lineWidth": {
             "interpolation": "Linear",
@@ -694,7 +699,7 @@
         "when": "$layer == 'roads' && (((($geometryType ^= 'line') && (kind == 'rail')) && kind_detail in ['rail','light_rail','tram']) && is_tunnel)",
         "technique": "solid-line",
         "attr": {
-          "color": "#696A6B",
+          "color": "#6A6C6F",
           "xclipping": false,
           "lineWidth": {
             "interpolation": "Linear",
@@ -715,9 +720,29 @@
         "when": "$layer == 'roads' && (((($geometryType ^= 'line') && (kind == 'rail')) && kind_detail in ['rail','light_rail','tram']) && !(is_tunnel))",
         "technique": "dashed-line",
         "attr": {
-          "color": "#696A6B",
+          "color": "#7B7E81",
           "xclipping": false,
-          "dashSize": 1,
+          "dashSize": {
+            "interpolation": "Linear",
+            "zoomLevels": [
+              10,
+              11,
+              12,
+              13,
+              14,
+              15,
+              20
+            ],
+            "values": [
+              30,
+              20,
+              12,
+              7,
+              4,
+              2,
+              1
+            ]
+          },
           "gapSize": {
             "interpolation": "Linear",
             "zoomLevels": [
@@ -727,19 +752,29 @@
               13,
               14,
               15,
-              21
+              20
             ],
             "values": [
               100,
+              55,
+              50,
               40,
-              24,
-              30,
               25,
-              15,
+              12,
               8
             ]
           },
-          "lineWidth": 3.75
+          "lineWidth": {
+            "interpolation": "Linear",
+            "zoomLevels": [
+              13,
+              21
+            ],
+            "values": [
+              2.75,
+              1.75
+            ]
+          }
         },
         "renderOrder": 5.25,
         "final": true
@@ -749,7 +784,7 @@
         "when": "$layer == 'roads' && (((($geometryType ^= 'line') && (kind == 'rail')) && kind_detail in ['rail','light_rail','tram']) && is_tunnel)",
         "technique": "dashed-line",
         "attr": {
-          "color": "#DDDDDD",
+          "color": "#454648",
           "xclipping": false,
           "dashSize": {
             "interpolation": "Linear",
@@ -813,7 +848,7 @@
         "when": "$layer == 'water' ",
         "technique": "fill",
         "attr": {
-          "color": "#436981"
+          "color": "#3A3C3E"
         },
         "renderOrder": 5
       },
@@ -822,8 +857,8 @@
         "when": "$layer == 'water' ",
         "technique": "text",
         "attr": {
-          "color": "#012337",
-          "backgroundColor": "#FFFFFF",
+          "color": "#999999",
+          "backgroundColor": "#141414",
           "backgroundAlpha": 0.5,
           "opacity": 0.5,
           "size": 12.8
@@ -835,7 +870,7 @@
         "when": "$layer ^= 'boundaries' && (($geometryType ^= 'line') && (kind == 'country'))",
         "technique": "solid-line",
         "attr": {
-          "color": "#52676E",
+          "color": "#373A3C",
           "lineWidth": {
             "interpolation": "Linear",
             "zoomLevels": [
@@ -855,24 +890,24 @@
               21
             ],
             "values": [
-              10000,
-              8000,
-              7000,
               5000,
-              3000,
-              2000,
+              4000,
+              3500,
+              2500,
+              1500,
               1000,
               500,
               250,
-              120,
-              80,
+              125,
+              60,
               40,
               20,
-              10
+              10,
+              5
             ]
           }
         },
-        "renderOrder": 4
+        "renderOrder": 5
       },
       {
         "description": "country border",
@@ -880,7 +915,7 @@
         "when": "$layer ^= 'boundaries' && (($geometryType ^= 'line') && (kind == 'country'))",
         "technique": "solid-line",
         "attr": {
-          "color": "#2F444B",
+          "color": "#2E3234",
           "lineWidth": {
             "interpolation": "Linear",
             "zoomLevels": [
@@ -899,23 +934,23 @@
               21
             ],
             "values": [
-              2000,
-              1400,
               1000,
+              700,
               500,
-              220,
-              90,
-              50,
-              30,
-              20,
+              250,
+              110,
+              45,
+              25,
               15,
               10,
+              7.5,
               5,
-              2
+              2.5,
+              1
             ]
           }
         },
-        "renderOrder": 4.1
+        "renderOrder": 5
       },
       {
         "description": "country border",
@@ -923,8 +958,8 @@
         "technique": "text",
         "attr": {
           "priority": 100,
-          "color": "#000000",
-          "backgroundColor": "#FFFFFF",
+          "color": "#999999",
+          "backgroundColor": "#141414",
           "backgroundAlpha": 0.5,
           "size": 12.8
         }
@@ -1020,8 +1055,8 @@
         "technique": "text",
         "attr": {
           "priority": 90,
-          "color": "#000000",
-          "backgroundColor": "#FFFFFF",
+          "color": "#999999",
+          "backgroundColor": "#141414",
           "backgroundAlpha": 0.5,
           "size": 12.8
         }
@@ -1030,8 +1065,8 @@
         "when": "$layer ^= 'boundaries' && ($geometryType ^= 'point')",
         "technique": "text",
         "attr": {
-          "color": "#000000",
-          "backgroundColor": "#FFFFFF",
+          "color": "#999999",
+          "backgroundColor": "#141414",
           "backgroundAlpha": 0.5,
           "size": 27.2,
           "priority": 200
@@ -1044,7 +1079,7 @@
         "technique": "fill",
         "attr": {
           "opacity": 0.8,
-          "color": "#919ea3"
+          "color": "#525556"
         },
         "renderOrder": 0
       },
@@ -1064,12 +1099,12 @@
               21
             ],
             "values": [
-              "#E6FCFF",
-              "#E6FCFF",
-              "#E7ECEF",
-              "#E6EBEE",
-              "#E5E9EC",
-              "#E6FCFF"
+              "#646668",
+              "#646668",
+              "#616465",
+              "#616365",
+              "#616365",
+              "#646668"
             ]
           }
         },
@@ -1080,7 +1115,7 @@
         "when": "$layer ^= 'landuse' && (($geometryType ^= 'polygon') && kind in ['nature','forest','park','wood','natural_wood','grass','meadow','village_green','dog_park','garden','nature_reserve','protected_area'])",
         "technique": "fill",
         "attr": {
-          "color": "#6C9478"
+          "color": "#474A4B"
         },
         "renderOrder": 0.2
       },
@@ -1089,7 +1124,7 @@
         "when": "$layer ^= 'landuse' && (($geometryType ^= 'polygon') && (kind == 'runway'))",
         "technique": "fill",
         "attr": {
-          "color": "#6A7A82"
+          "color": "#3F4243"
         },
         "renderOrder": 20,
         "final": true
@@ -1099,7 +1134,7 @@
         "when": "$layer ^= 'landuse' && (($geometryType ^= 'polygon') && (kind ^= 'aerodrome'))",
         "technique": "fill",
         "attr": {
-          "color": "#718189"
+          "color": "#444748"
         },
         "renderOrder": 0.3
       },
@@ -1108,7 +1143,7 @@
         "when": "$layer ^= 'landuse' && (($geometryType ^= 'polygon') && (kind ^= 'national_park'))",
         "technique": "fill",
         "attr": {
-          "color": "#789185"
+          "color": "#454849"
         },
         "renderOrder": 1
       },
@@ -1117,7 +1152,7 @@
         "when": "$layer ^= 'landuse' && (($geometryType ^= 'polygon') && kind in ['pitch'])",
         "technique": "fill",
         "attr": {
-          "color": "#718989"
+          "color": "#444748"
         },
         "renderOrder": 1
       },
@@ -1126,7 +1161,7 @@
         "when": "$layer ^= 'landuse' && (($geometryType ^= 'polygon') && (kind ^= 'hospital'))",
         "technique": "fill",
         "attr": {
-          "color": "#89878A"
+          "color": "#46484A"
         },
         "renderOrder": 0.1
       },
@@ -1135,7 +1170,7 @@
         "when": "$layer ^= 'landuse' && (($geometryType ^= 'polygon') && (kind ^= 'cemetery'))",
         "technique": "fill",
         "attr": {
-          "color": "#718989"
+          "color": "#444748"
         },
         "renderOrder": 0.1
       },
@@ -1144,7 +1179,7 @@
         "when": "$layer ^= 'landuse' && (($geometryType ^= 'polygon') && kind in ['bridge'])",
         "technique": "fill",
         "attr": {
-          "color": "#7E939A"
+          "color": "#505355"
         },
         "renderOrder": 1
       },
@@ -1153,7 +1188,7 @@
         "when": "$layer ^= 'landuse' && (($geometryType ^= 'polygon') && kind in ['sport','sports_centre','attraction','zoo'])",
         "technique": "fill",
         "attr": {
-          "color": "#728989"
+          "color": "#414345"
         },
         "renderOrder": 1
       },
@@ -1162,7 +1197,7 @@
         "when": "$layer ^= 'landuse' && (($geometryType ^= 'polygon') && (kind ^= 'religion'))",
         "technique": "fill",
         "attr": {
-          "color": "#0DF3ED"
+          "color": "#616466"
         },
         "renderOrder": 1
       },
@@ -1171,7 +1206,7 @@
         "when": "$layer ^= 'landuse' && (($geometryType ^= 'polygon') && kind in ['common','surface','commercial','military','industrial'])",
         "technique": "fill",
         "attr": {
-          "color": "#7B8990"
+          "color": "#444748"
         },
         "renderOrder": 0
       },
@@ -1180,7 +1215,7 @@
         "when": "$layer ^= 'landuse' && (($geometryType ^= 'polygon') && kind in ['animal','aviary','zoo','farm','farmland','farmyard'])",
         "technique": "fill",
         "attr": {
-          "color": "#BFF90D"
+          "color": "#616364"
         },
         "renderOrder": 0
       },
@@ -1189,7 +1224,7 @@
         "when": "$layer ^= 'landuse' && (($geometryType ^= 'polygon') && (kind in ['beach'] || (kind $= '_site')))",
         "technique": "fill",
         "attr": {
-          "color": "#A9A992"
+          "color": "#5B5E5F"
         },
         "renderOrder": 1
       },
@@ -1211,7 +1246,8 @@
               60
             ]
           },
-          "color": "#3F1821",
+          "color": "#f4f4f4",
+          "backgroundColor": "#000000",
           "allCaps": true,
           "opacity": 0.6
         }
@@ -1221,7 +1257,8 @@
         "when": "$layer == 'earth' && kind in ['island']",
         "technique": "text",
         "attr": {
-          "color": "#57564D",
+          "color": "#f4f4f4",
+          "backgroundColor": "#000000",
           "opacity": 0.6,
           "size": 16
         }
@@ -1249,8 +1286,8 @@
               25.6
             ]
           },
-          "color": "#3F1821",
-          "backgroundColor": "#FFFFFF",
+          "color": "#ffffff",
+          "backgroundColor": "#000000",
           "backgroundAlpha": 0.5,
           "allCaps": true,
           "opacity": 0.8,
@@ -1284,8 +1321,8 @@
               19.2
             ]
           },
-          "color": "#3F1821",
-          "backgroundColor": "#FFFFFF",
+          "color": "#ffffff",
+          "backgroundColor": "#000000",
           "backgroundAlpha": 0.5,
           "allCaps": true,
           "opacity": 0.8,
@@ -1319,8 +1356,8 @@
               16
             ]
           },
-          "color": "#3F1922",
-          "backgroundColor": "#FFFFFF",
+          "color": "#ffffff",
+          "backgroundColor": "#000000",
           "backgroundAlpha": 0.5,
           "allCaps": true,
           "opacity": 0.8,
@@ -1352,7 +1389,8 @@
             ]
           },
           "priority": 65,
-          "color": "#060606",
+          "color": "#ffffff",
+          "backgroundColor": "#000000",
           "allCaps": true,
           "opacity": 0.8,
           "textFadeTime": 0.75,
@@ -1395,8 +1433,8 @@
               32
             ]
           },
-          "color": "#090A0B",
-          "backgroundColor": "#FFFFFF",
+          "color": "#ffffff",
+          "backgroundColor": "#000000",
           "backgroundAlpha": 0.5,
           "textFadeTime": 0.75,
           "iconFadeTime": 0.5,
@@ -1438,8 +1476,8 @@
               32
             ]
           },
-          "color": "#090A0B",
-          "backgroundColor": "#FFFFFF",
+          "color": "#ffffff",
+          "backgroundColor": "#000000",
           "backgroundAlpha": 0.5,
           "textFadeTime": 0.75,
           "iconFadeTime": 0.5,
@@ -1481,8 +1519,8 @@
               32
             ]
           },
-          "color": "#090A0B",
-          "backgroundColor": "#FFFFFF",
+          "color": "#f4f4f4",
+          "backgroundColor": "#000000",
           "backgroundAlpha": 0.5,
           "textFadeTime": 0.75,
           "iconFadeTime": 0.5,
@@ -1520,8 +1558,8 @@
               27.2
             ]
           },
-          "color": "#090A0B",
-          "backgroundColor": "#FFFFFF",
+          "color": "#f4f4f4",
+          "backgroundColor": "#000000",
           "backgroundAlpha": 0.5,
           "textFadeTime": 0.75,
           "iconFadeTime": 0.5,
@@ -1561,8 +1599,8 @@
               25.6
             ]
           },
-          "color": "#090A0B",
-          "backgroundColor": "#FFFFFF",
+          "color": "#f4f4f4",
+          "backgroundColor": "#000000",
           "backgroundAlpha": 0.5,
           "textFadeTime": 0.75,
           "iconFadeTime": 0.5,
@@ -1592,8 +1630,8 @@
               24
             ]
           },
-          "color": "#090A0B",
-          "backgroundColor": "#FFFFFF",
+          "color": "#f4f4f4",
+          "backgroundColor": "#000000",
           "backgroundAlpha": 0.5,
           "textFadeTime": 0.75,
           "iconFadeTime": 0.5,
@@ -1625,8 +1663,8 @@
               22.4
             ]
           },
-          "color": "#090A0B",
-          "backgroundColor": "#FFFFFF",
+          "color": "#f4f4f4",
+          "backgroundColor": "#000000",
           "backgroundAlpha": 0.5,
           "textFadeTime": 0.75,
           "iconFadeTime": 0.5,
@@ -1658,8 +1696,8 @@
               19.2
             ]
           },
-          "color": "#090A0B",
-          "backgroundColor": "#FFFFFF",
+          "color": "#f4f4f4",
+          "backgroundColor": "#000000",
           "backgroundAlpha": 0.5,
           "textFadeTime": 0.75,
           "iconFadeTime": 0.5,
@@ -1673,22 +1711,22 @@
         "when": "$layer ^= 'buildings' && (($level >= 15) && ($geometryType ^= 'polygon'))",
         "technique": "extruded-polygon",
         "attr": {
-          "color": "#EDE7E1",
-          "opacity": 0.9,
+          "color": "#7C7F81",
+          "opacity": 0.95,
           "roughness": 1,
-          "metalness": 0.8,
-          "emissive": "#78858C",
-          "emissiveIntensity": 0.85,
+          "metalness": 0.9,
+          "emissive": "#323436",
+          "emissiveIntensity": 0.75,
           "vertexColors": true,
           "footprint": true,
           "maxSlope": 0.8799999999999999,
           "lineWidth": 1,
-          "lineColor": "#172023",
-          "lineColorMix": 0.6,
+          "lineColor": "#2F3233",
+          "lineColorMix": 0,
           "fadeNear": 0.9,
           "fadeFar": 1,
-          "lineFadeNear": -0.75,
-          "lineFadeFar": 1
+          "lineFadeNear": 0.1,
+          "lineFadeFar": 0.7
         },
         "renderOrder": 2000
       },
@@ -1697,20 +1735,20 @@
         "when": "$layer ^= 'buildings' && (($level >= 15) && (((kind ^= 'address') && ($geometryType ^= 'point')) && label_placement))",
         "technique": "text",
         "attr": {
-          "color": "#A9A9A9",
+          "color": "#131313",
           "label": "addr_housenumber",
           "size": 14.4,
           "opacity": 0.6,
           "minZoomLevel": 17,
           "roughness": 1.95,
           "metalness": 0.85,
-          "emissive": "#F7F9F9",
+          "emissive": "#1F2020",
           "emissiveIntensity": 0.625,
           "vertexColors": true,
           "footprint": true,
           "maxSlope": 0.9,
           "lineWidth": 1,
-          "lineColor": "#595959",
+          "lineColor": "#070707",
           "lineColorMix": 0.5,
           "fadeNear": 0.9,
           "fadeFar": 1,
@@ -1725,10 +1763,10 @@
         "when": "$layer == 'landmark' && ($enableLandmarkTextures && $hasTexture)",
         "technique": "standard-textured",
         "attr": {
-          "color": "#F7F9F9",
+          "color": "#1F2020",
           "roughness": 1,
           "metalness": 0.2,
-          "emissive": "#F7F9F9",
+          "emissive": "#1F2020",
           "emissiveIntensity": 0.1,
           "fadeNear": 0.9,
           "fadeFar": 1
@@ -1740,10 +1778,10 @@
         "when": "$layer == 'landmark' ",
         "technique": "standard",
         "attr": {
-          "color": "#F7F9F9",
+          "color": "#C2C4C6",
           "roughness": 1.95,
           "metalness": 0.85,
-          "emissive": "#F7F9F9",
+          "emissive": "#C2C4C6",
           "emissiveIntensity": 0.6,
           "vertexColors": false,
           "fadeNear": 0.9,
