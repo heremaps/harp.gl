@@ -88,7 +88,7 @@
             "zoomLevels": [
               13,
               14,
-              21
+              15
             ],
             "values": [
               1.5,
@@ -119,7 +119,7 @@
                   11,
                   12,
                   13,
-                  21
+                  14
                 ],
                 "values": [
                   42,
@@ -148,7 +148,7 @@
                   11,
                   12,
                   13,
-                  21
+                  14
                 ],
                 "values": [
                   38,
@@ -216,7 +216,7 @@
               11,
               12,
               13,
-              21
+              14
             ],
             "values": [
               180,
@@ -252,7 +252,7 @@
               11,
               12,
               13,
-              21
+              14
             ],
             "values": [
               180,
@@ -306,7 +306,7 @@
               11,
               12,
               13,
-              21
+              14
             ],
             "values": [
               550,
@@ -345,7 +345,7 @@
               11,
               12,
               13,
-              21
+              14
             ],
             "values": [
               830,
@@ -401,7 +401,7 @@
               11,
               12,
               13,
-              21
+              14
             ],
             "values": [
               700,
@@ -440,7 +440,7 @@
               11,
               12,
               13,
-              21
+              14
             ],
             "values": [
               830,
@@ -486,7 +486,7 @@
           "clipping": false,
           "color": "#484A4C",
           "dashSize": {
-            "interpolation": "Linear",
+            "interpolation": "Discrete",
             "zoomLevels": [
               6,
               7,
@@ -498,7 +498,7 @@
               13,
               14,
               15,
-              21
+              16
             ],
             "values": [
               4000,
@@ -515,7 +515,7 @@
             ]
           },
           "gapSize": {
-            "interpolation": "Linear",
+            "interpolation": "Discrete",
             "zoomLevels": [
               6,
               7,
@@ -527,7 +527,7 @@
               13,
               14,
               15,
-              21
+              16
             ],
             "values": [
               4000,
@@ -555,7 +555,7 @@
               11,
               12,
               13,
-              21
+              14
             ],
             "values": [
               320,
@@ -647,7 +647,7 @@
             "zoomLevels": [
               13,
               16,
-              21
+              17
             ],
             "values": [
               1.5,
@@ -682,7 +682,7 @@
             "zoomLevels": [
               13,
               14.6,
-              21
+              15
             ],
             "values": [
               3.5,
@@ -723,7 +723,7 @@
           "color": "#7B7E81",
           "xclipping": false,
           "dashSize": {
-            "interpolation": "Linear",
+            "interpolation": "Discrete",
             "zoomLevels": [
               10,
               11,
@@ -744,7 +744,7 @@
             ]
           },
           "gapSize": {
-            "interpolation": "Linear",
+            "interpolation": "Discrete",
             "zoomLevels": [
               10,
               11,
@@ -787,7 +787,7 @@
           "color": "#454648",
           "xclipping": false,
           "dashSize": {
-            "interpolation": "Linear",
+            "interpolation": "Discrete",
             "zoomLevels": [
               10,
               11,
@@ -795,7 +795,7 @@
               13,
               14,
               15,
-              21
+              16
             ],
             "values": [
               100,
@@ -808,7 +808,7 @@
             ]
           },
           "gapSize": {
-            "interpolation": "Linear",
+            "interpolation": "Discrete",
             "zoomLevels": [
               10,
               11,
@@ -816,7 +816,7 @@
               13,
               14,
               15,
-              21
+              16
             ],
             "values": [
               100,
@@ -832,7 +832,7 @@
             "interpolation": "Linear",
             "zoomLevels": [
               13,
-              21
+              14
             ],
             "values": [
               2.75,
@@ -845,7 +845,7 @@
       },
       {
         "description": "water",
-        "when": "$layer == 'water' ",
+        "when": "$layer == 'water' && $geometryType ^= 'polygon'",
         "technique": "fill",
         "attr": {
           "color": "#3A3C3E"
@@ -854,7 +854,7 @@
       },
       {
         "description": "water",
-        "when": "$layer == 'water' ",
+        "when": "$layer == 'water'",
         "technique": "text",
         "attr": {
           "color": "#999999",
@@ -887,7 +887,7 @@
               11,
               12,
               13,
-              21
+              14
             ],
             "values": [
               5000,
@@ -931,7 +931,7 @@
               11,
               12,
               13,
-              21
+              14
             ],
             "values": [
               1000,
@@ -986,7 +986,7 @@
               11,
               12,
               13,
-              21
+              14
             ],
             "values": [
               600,
@@ -1028,7 +1028,7 @@
               11,
               12,
               13,
-              21
+              14
             ],
             "values": [
               600,
@@ -1096,7 +1096,7 @@
               9,
               10,
               11,
-              21
+              12
             ],
             "values": [
               "#646668",
@@ -1238,7 +1238,7 @@
             "zoomLevels": [
               2,
               3,
-              21
+              4
             ],
             "values": [
               120,
@@ -1248,7 +1248,7 @@
           },
           "color": "#f4f4f4",
           "backgroundColor": "#000000",
-          "allCaps": true,
+          "smallCaps": true,
           "opacity": 0.6
         }
       },
@@ -1275,8 +1275,8 @@
               1,
               2,
               3,
-              3,
-              21
+              4,
+              5
             ],
             "values": [
               11.2,
@@ -1289,7 +1289,7 @@
           "color": "#ffffff",
           "backgroundColor": "#000000",
           "backgroundAlpha": 0.5,
-          "allCaps": true,
+          "smallCaps": true,
           "opacity": 0.8,
           "textFadeTime": 0.75,
           "iconFadeTime": 0.5,
@@ -1307,11 +1307,11 @@
           "size": {
             "interpolation": "Linear",
             "zoomLevels": [
-              2,
+              1,
               2,
               3,
               4,
-              21
+              5
             ],
             "values": [
               8,
@@ -1324,7 +1324,7 @@
           "color": "#ffffff",
           "backgroundColor": "#000000",
           "backgroundAlpha": 0.5,
-          "allCaps": true,
+          "smallCaps": true,
           "opacity": 0.8,
           "textFadeTime": 0.75,
           "iconFadeTime": 0.5,
@@ -1342,11 +1342,11 @@
           "size": {
             "interpolation": "Linear",
             "zoomLevels": [
-              2,
+              1,
               2,
               3,
               4,
-              21
+              5
             ],
             "values": [
               6.4,
@@ -1359,7 +1359,7 @@
           "color": "#ffffff",
           "backgroundColor": "#000000",
           "backgroundAlpha": 0.5,
-          "allCaps": true,
+          "smallCaps": true,
           "opacity": 0.8,
           "textFadeTime": 0.75,
           "iconFadeTime": 0.5,
@@ -1379,7 +1379,7 @@
               3,
               4,
               5,
-              21
+              6
             ],
             "values": [
               9.6,
@@ -1391,7 +1391,7 @@
           "priority": 65,
           "color": "#ffffff",
           "backgroundColor": "#000000",
-          "allCaps": true,
+          "smallCaps": true,
           "opacity": 0.8,
           "textFadeTime": 0.75,
           "iconFadeTime": 0.5,
@@ -1418,7 +1418,7 @@
               7,
               8,
               9,
-              21
+              10
             ],
             "values": [
               9.6,
@@ -1461,7 +1461,7 @@
               7,
               8,
               9,
-              21
+              10
             ],
             "values": [
               9.6,
@@ -1504,7 +1504,7 @@
               8,
               9,
               10,
-              21
+              11
             ],
             "values": [
               9.6,
@@ -1545,7 +1545,7 @@
               8,
               9,
               10,
-              21
+              11
             ],
             "values": [
               11.2,
@@ -1585,7 +1585,7 @@
               9,
               10,
               11,
-              21
+              12
             ],
             "values": [
               9.6,
@@ -1621,7 +1621,7 @@
               10,
               11,
               12,
-              21
+              13
             ],
             "values": [
               16,
@@ -1653,7 +1653,7 @@
               12,
               13,
               14,
-              21
+              15
             ],
             "values": [
               16,
@@ -1686,7 +1686,7 @@
               12,
               13,
               14,
-              21
+              15
             ],
             "values": [
               12.8,
@@ -1775,7 +1775,7 @@
         "final": true
       },
       {
-        "when": "$layer == 'landmark' ",
+        "when": "$layer == 'landmark'",
         "technique": "standard",
         "attr": {
           "color": "#C2C4C6",
