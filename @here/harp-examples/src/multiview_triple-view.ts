@@ -119,7 +119,7 @@ export namespace TripleViewExample {
 </div>
 `;
 
-    const defaultTheme = "./resources/reducedDay.json";
+    const defaultTheme = "./resources/berlin_reduced_day.json";
     const numberOfSyncXViews = 3;
     // Adjust CSS to see more then 1 row in Y axis
     const numberOfSyncYViews = 1;
@@ -221,10 +221,16 @@ export namespace TripleViewExample {
             "mapCanvas2",
             1,
             0,
-            "./resources/reducedNight.json",
+            "./resources/berlin_reduced_night.json",
             "./decoder.bundle.js"
         ),
-        view3: initMapView("mapCanvas3", 2, 0, "./resources/reducedDay.json", "./decoder.bundle.js")
+        view3: initMapView(
+            "mapCanvas3",
+            2,
+            0,
+            "./resources/berlin_reduced_day.json",
+            "./decoder.bundle.js"
+        )
     };
     // end:harp_gl_multiview_tripleView_1.ts
 
