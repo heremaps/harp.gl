@@ -47,5 +47,7 @@
     "url": "https://here.com"
   },
   "license": "Apache-2.0",
-  "dependencies": {}
+  "dependencies": {
+    "serve-handler": "^5.0.8"
+  }
 }
