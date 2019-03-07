@@ -75,7 +75,7 @@ export namespace GeoJsonStylingGame {
     // snippet:initmapview.ts
     const mapView = new MapView({
         canvas: document.getElementById("mapCanvas") as HTMLCanvasElement,
-        theme: "resources/reducedNight.json"
+        theme: "resources/berlin_reduced_night.json"
     });
     CopyrightElementHandler.install("copyrightNotice")
         .attach(mapView)
