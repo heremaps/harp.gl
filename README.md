@@ -2,14 +2,14 @@
 
 `harp.gl` is an _experimental and work in progress_ open-source 3D map rendering engine.
 
-The _harp_ acronym stands for **Ha**ndy Map **R**endering **P**latform, as we aim to provide an easy to use (=handy) map rendering engine that can be used as a platform where you can develop your own applications.
+The _harp_ acronym stands for **Ha**ndy Map **R**endering **P**latform, as we aim to provide an easy to use (=handy) map rendering engine that can be used as a platform on top of which you can develop your own applications.
 
 ## Overview
 
 You can use this engine to:
 
   * Develop visually appealing 3D maps
-  * Create highly animated and dynamic map visualization with WebGL, using the popular [THREE.js](https://threejs.org/) library.
+  * Create highly animated and dynamic map visualization with WebGL, using the popular [three.js](https://threejs.org/) library.
   * Create themeable maps, with themes that can change on the fly.
   * Create a smooth map experience with highly performant map rendering and decoding. Web workers parallelize the CPU intensive tasks, for optimal responsiveness.
   * Design your maps modularly, where you can swap out modules and data providers as required.
@@ -119,7 +119,7 @@ It will output all documentation under `/dist/doc`.
 
 ## License
 
-Copyright (C) 2019 HERE Europe B.V.
+Copyright (C) 2018-2019 HERE Europe B.V.
 
 See the [LICENSE](./LICENSE) file in the root of this project for license details about using `harp.gl`.
 

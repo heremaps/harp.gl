@@ -20,8 +20,4 @@ function onCopyError(err: Error) {
 
 const fontDir = path.dirname(require.resolve("@here/harp-font-resources/package.json"));
 
-ncp(
-    path.join(fontDir, "resources", "fonts"),
-    path.join(__dirname, "..", "resources", "fonts"),
-    onCopyError
-);
+ncp(path.join(fontDir, "resources"), path.join(__dirname, "..", "resources", "fonts"), onCopyError);
