@@ -1,0 +1,47 @@
+language: node_js
+dist: xenial
+node_js:
+  - "10"
+cache:
+  yarn: true
+
+branches:
+  only:
+    - master
+
+# upgrade yarn to a more recent version
+before_install:
+  - curl -o- -L https://yarnpkg.com/install.sh | bash -s -- --version 1.12.3
+  - export PATH="$HOME/.yarn/bin:$PATH"
+
+jobs:
+  include:
+    - stage: test
+      name: "Execute tests (node)"
+      script: |
+        yarn test && \
+        yarn run tslint && \
+        yarn run prettier
+    - script: |
+        yarn run typedoc && \
+        echo -e 'include:\n  - "_*"' > doc/_config.yml
+      name: "Build documentation"
+      deploy:
+        provider: pages
+        skip_cleanup: true
+        committer-from-gh: true
+        keep-history: false
+        local-dir: doc
+        github-token: $GITHUB_TOKEN
+        on:
+          branch: master
+    - script: yarn run build
+      name: "Build web bundles"
+
+deploy:
+  - provider: script
+    script: echo npx lerna publish -y from-git
+    skip_cleanup: true
+    on:
+      tags: true
+      branch: master

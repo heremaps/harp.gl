@@ -1,0 +1,16 @@
+{
+  "packages": [
+    "@here/*"
+  ],
+  "version": "independent",
+  "npmClient": "yarn",
+  "useWorkspaces": true,
+  "command": {
+    "publish": {
+      "ignoreChanges": [
+        "test/**",
+        "README.md"
+      ]
+    }
+  }
+}
