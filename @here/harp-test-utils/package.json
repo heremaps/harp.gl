@@ -29,5 +29,8 @@
     "cross-env": "^5.2.0",
     "source-map-support": "^0.5.3",
     "typescript": "^3.3.0"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

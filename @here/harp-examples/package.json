@@ -63,5 +63,8 @@
   "repository": {
     "type": "git",
     "url": "git://github.com:heremaps/harp.gl.git"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

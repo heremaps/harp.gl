@@ -39,5 +39,8 @@
     "stream": "0.0.2",
     "typescript": "^3.3.0",
     "zlib": "^1.0.5"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

@@ -38,5 +38,8 @@
     "source-map-support": "^0.5.2",
     "ts-node": "^7.0.1",
     "typescript": "^3.3.0"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

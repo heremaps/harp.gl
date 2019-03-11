@@ -40,5 +40,8 @@
   },
   "peerDependencies": {
     "three": "^0.99.0"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }
