@@ -7,9 +7,9 @@
 // tslint:disable:only-arrow-functions
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
-import { DownloadManager } from "@here/harp-download-manager";
 import "@here/harp-fetch";
 import { TileKey } from "@here/harp-geoutils";
+import { TransferManager } from "@here/harp-transfer-manager";
 import { assert } from "chai";
 import * as sinon from "sinon";
 import { APIFormat, AuthenticationMethod, AuthenticationTypeBearer, OmvRestClient } from "../index";
@@ -28,12 +28,12 @@ function createMockDownloadResponse(tileUrl: string) {
     return mock;
 }
 
-class MockDownloadManager extends DownloadManager {
+class MockTransferManager extends TransferManager {
     download(tileUrl: string): Promise<Response> {
         return Promise.resolve((createMockDownloadResponse(tileUrl) as any) as Response);
     }
 }
-const mockDownloadManager = new MockDownloadManager();
+const mockDownloadManager = new MockTransferManager();
 
 describe("OmvRestClient", function() {
     let downloadSpy: sinon.SinonSpy;

@@ -1,4 +1,4 @@
-# @here/harp-download-manager
+# @here/harp-transfer-manager
 
 ## Overview
 
