@@ -163,7 +163,11 @@ browserConfig.plugins.push(
         path.join(__dirname, "src"),
         { from: path.join(__dirname, "resources"), to: "resources", toType: "dir" },
         { from: path.join(harpMapThemePath, "resources"), to: "resources", toType: "dir" },
-        { from: path.join(harpFontResourcesPath, "resources"), to: "resources", toType: "dir" },
+        {
+            from: path.join(harpFontResourcesPath, "resources"),
+            to: "resources/fonts",
+            toType: "dir"
+        },
         require.resolve("three/build/three.min.js")
     ])
 );
