@@ -11,9 +11,9 @@
 import "@here/harp-fetch";
 import { assert } from "chai";
 import * as sinon from "sinon";
-import { DownloadManager } from "../index";
+import { TransferManager } from "../index";
 
-describe("DownloadManager", function() {
+describe("TransferManager", function() {
     const fakeDataUrl = `https://download.example.url`;
 
     function createMockDownloadResponse() {
@@ -35,7 +35,7 @@ describe("DownloadManager", function() {
         const mock = createMockDownloadResponse();
         mock.json.resolves({ version: "4" });
         const fetchStub = sinon.stub().resolves(mock);
-        const downloadMgr = new DownloadManager(fetchStub, 5);
+        const downloadMgr = new TransferManager(fetchStub, 5);
 
         // Act
         const response = await downloadMgr.downloadJson(fakeDataUrl);
@@ -53,7 +53,7 @@ describe("DownloadManager", function() {
         mock.ok = false;
         mock.json.resolves({ version: "4" });
         const fetchStub = sinon.stub().resolves(mock);
-        const downloadMgr = new DownloadManager(fetchStub, 5);
+        const downloadMgr = new TransferManager(fetchStub, 5);
 
         // Act
         const downloadResponse = downloadMgr.download(fakeDataUrl);
@@ -74,14 +74,14 @@ describe("DownloadManager", function() {
     });
 
     it("#instance handles returning same single static instance correctly", async function() {
-        const downloadMgr1 = DownloadManager.instance();
-        const downloadMgr2 = DownloadManager.instance();
+        const downloadMgr1 = TransferManager.instance();
+        const downloadMgr2 = TransferManager.instance();
 
         assert.deepEqual(downloadMgr1, downloadMgr2);
     });
 
     /*
-     * Note, DownloadManager limits the number of html headers sent to MAX_PARALLEL_DOWNLOADS, but
+     * Note, TransferManager limits the number of html headers sent to MAX_PARALLEL_DOWNLOADS, but
      * will allow more then MAX_PARALLEL_DOWNLOADS of parallel download under the hood.
      */
     it("#downloadJson performs download with maxParallelDownloads exceeded", async function() {
@@ -92,7 +92,7 @@ describe("DownloadManager", function() {
         const mock = createMockDownloadResponse();
         mock.json.resolves({ version: "4" });
         const fetchStub = sinon.stub().resolves(mock);
-        const downloadMgr = new DownloadManager(fetchStub, 5);
+        const downloadMgr = new TransferManager(fetchStub, 5);
 
         // Act
         const downloadResponses = new Array<Promise<Response>>();
@@ -139,7 +139,7 @@ describe("DownloadManager", function() {
             });
         };
 
-        const dm = new DownloadManager(fetchFunction as any);
+        const dm = new TransferManager(fetchFunction as any);
 
         // do a couple of downloads
         const jsonResult = await Promise.all(Array(42).fill(dm.downloadJson("")));

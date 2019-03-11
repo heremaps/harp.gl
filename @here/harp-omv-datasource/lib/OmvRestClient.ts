@@ -4,10 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { DownloadManager } from "@here/harp-download-manager";
 import "@here/harp-fetch";
 import { TileKey, TilingScheme } from "@here/harp-geoutils";
 import { DataProvider } from "@here/harp-mapview-decoder";
+import { TransferManager } from "@here/harp-transfer-manager";
 import { LoggerManager } from "@here/harp-utils";
 
 const logger = LoggerManager.instance.create("OmvRestClient");
@@ -190,9 +190,9 @@ export interface OmvRestClientParameters {
     tilingScheme?: TilingScheme;
 
     /**
-     * Download Manager to use; creates an own instance if none passed.
+     * Transfer Manager to use; creates an own instance if none passed.
      */
-    downloadManager?: DownloadManager;
+    downloadManager?: TransferManager;
 
     /**
      * Function to retrieve the Bearer Token
@@ -206,12 +206,12 @@ export interface OmvRestClientParameters {
  * REST client supporting getting protobuf OMV Tile from REST-based servers.
  */
 export class OmvRestClient implements DataProvider {
-    private readonly downloadManager: DownloadManager;
+    private readonly downloadManager: TransferManager;
 
     constructor(readonly params: OmvRestClientParameters) {
         this.downloadManager =
             params.downloadManager === undefined
-                ? DownloadManager.instance()
+                ? TransferManager.instance()
                 : params.downloadManager;
     }
 

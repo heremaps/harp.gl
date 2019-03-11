@@ -1,7 +1,7 @@
 {
-  "name": "@here/harp-download-manager",
-  "version": "0.1.55",
-  "description": "Provides a download manager that orchestrates downloading URLs, particularly static map resources.",
+  "name": "@here/harp-transfer-manager",
+  "version": "0.1.0",
+  "description": "Provides a manager that orchestrates downloading URLs, particularly static map resources.",
   "main": "index.js",
   "typings": "index",
   "directories": {
