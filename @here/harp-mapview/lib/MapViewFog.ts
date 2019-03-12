@@ -6,14 +6,14 @@
 
 import { Theme } from "@here/harp-datasource-protocol";
 import { HighPrecisionLineMaterial, SolidLineMaterial } from "@here/harp-materials";
-import { Fog, Material, Mesh } from "three";
+import { Fog, Material, Mesh, OrthographicCamera, PerspectiveCamera, Scene } from "three";
 
 /**
  * Manages the fog display in [[MapView]].
  */
 export class MapViewFog {
     private m_enabled: boolean = true;
-    private m_fog: THREE.Fog = new Fog(0x000000); // Default color asked by DefinitelyTyped.
+    private m_fog: Fog = new Fog(0x000000); // Default color asked by DefinitelyTyped.
     private m_fogIsDefined: boolean = false;
     private m_cachedTheme: Theme = { styles: {} };
 
@@ -22,7 +22,7 @@ export class MapViewFog {
      *
      * @param m_scene The scene used in [[MapView]] that contains the map objects.
      */
-    constructor(private m_scene: THREE.Scene) {}
+    constructor(private m_scene: Scene) {}
 
     /**
      * Allows for disabling the fog, even if it is defined in the theme. Use this property for
@@ -83,7 +83,7 @@ export class MapViewFog {
      *
      * @param camera An instance of a `THREE.Camera` with a `far` property.
      */
-    update(camera: THREE.PerspectiveCamera | THREE.OrthographicCamera) {
+    update(camera: PerspectiveCamera | OrthographicCamera) {
         if (
             this.m_scene.fog !== null &&
             camera.far !== undefined &&

@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Color, ShaderMaterial, Uniform } from "three";
+import { Color, IUniform, ShaderMaterial, ShaderMaterialParameters, Uniform } from "three";
 
 const vertexShader: string = `
 uniform float size;
@@ -37,7 +37,7 @@ void main() {
 /**
  * Parameters used when constructing a new [[HighPrecisionPointMaterial]].
  */
-export interface CirclePointsMaterialParameters extends THREE.ShaderMaterialParameters {
+export interface CirclePointsMaterialParameters extends ShaderMaterialParameters {
     /**
      * Point size.
      */
@@ -53,12 +53,12 @@ const DEFAULT_CIRCLE_SIZE = 1;
  */
 export class CirclePointsMaterial extends ShaderMaterial {
     isCirclePointsMaterial: true;
-    uniforms: { [uniform: string]: THREE.IUniform };
+    uniforms: { [uniform: string]: IUniform };
     vertexShader: string;
     fragmentShader: string;
 
     private m_size: number;
-    private m_color: THREE.Color;
+    private m_color: Color;
 
     /**
      * Constructs a new `CirclePointsMaterial`.

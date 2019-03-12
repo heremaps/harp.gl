@@ -64,10 +64,7 @@ const NUM_INDEX_VALUES_PER_VERTEX = 1;
  * [[TextBuffer]]. Add the isEmpty flag to quickly test for empty meshes.
  */
 export class BoxBufferMesh extends THREE.Mesh {
-    constructor(
-        geometry: THREE.BufferGeometry,
-        material: THREE.MeshMaterialType | THREE.MeshMaterialType[]
-    ) {
+    constructor(geometry: THREE.BufferGeometry, material: THREE.Material | THREE.Material[]) {
         super(geometry, material);
 
         this.type = "BoxBufferMesh";
@@ -132,7 +129,7 @@ export class BoxBuffer {
      * @param maxElementCount Maximum number of elements this `BoxBuffer` can hold.
      */
     constructor(
-        readonly material: THREE.MeshMaterialType | THREE.MeshMaterialType[],
+        readonly material: THREE.Material | THREE.Material[],
         readonly renderOrder: number = 0,
         readonly startElementCount = START_BOX_BUFFER_SIZE,
         readonly maxElementCount = MAX_BOX_BUFFER_SIZE

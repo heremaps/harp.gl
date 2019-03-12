@@ -178,18 +178,19 @@ export class MSAARenderPass extends Pass {
             const sampleWeight = 1.0 / offsets.length + uniformCenteredDistribution / 32;
 
             this.m_quadUniforms.opacity.value = sampleWeight;
-            renderer.render(scene, camera, this.m_renderTarget, true);
+
+            const oldRenderTarget = renderer.getRenderTarget();
+            renderer.setRenderTarget(this.m_renderTarget);
+            renderer.clear();
+            renderer.render(scene, camera);
 
             // 6. Render the quad on top of the previous renders.
+            renderer.setRenderTarget(this.renderToScreen ? undefined : writeBuffer);
             if (i === 0) {
                 renderer.setClearColor(0x000000);
+                renderer.clear();
             }
-            renderer.render(
-                this.m_quadScene,
-                this.m_localCamera,
-                this.renderToScreen ? undefined : writeBuffer,
-                i === 0
-            );
+            renderer.render(this.m_quadScene, this.m_localCamera);
             if (i === 0 && rendererClearColor !== undefined) {
                 renderer.setClearColor(oldClearColor);
             }

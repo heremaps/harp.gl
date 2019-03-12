@@ -3,14 +3,7 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-import {
-    createLight,
-    ImageDefinition,
-    ImageTexture,
-    Light,
-    Sky,
-    Theme
-} from "@here/harp-datasource-protocol";
+import { createLight, ImageTexture, Light, Sky, Theme } from "@here/harp-datasource-protocol";
 import { GeoCoordinates, MathUtils, mercatorProjection, Projection } from "@here/harp-geoutils";
 import { assert, LoggerManager, PerformanceTimer } from "@here/harp-utils";
 import * as THREE from "three";
@@ -1222,7 +1215,7 @@ export class MapView extends THREE.EventDispatcher {
      */
     setFovCalculation(fovCalculation: FovCalculation) {
         this.m_options.fovCalculation = fovCalculation;
-        this.calculateFocalLength(this.m_renderer.getSize().height);
+        this.calculateFocalLength(this.m_renderer.getSize(new THREE.Vector2()).height);
         this.updateCameras();
     }
 
@@ -1696,7 +1689,7 @@ export class MapView extends THREE.EventDispatcher {
      * concerns, this is the preferred approach.
      */
     private getFrameBufferSize() {
-        const { width, height } = this.m_renderer.getSize();
+        const { width, height } = this.m_renderer.getSize(new THREE.Vector2());
         return { width: width * this.pixelRatio, height: height * this.pixelRatio };
     }
     /**

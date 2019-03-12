@@ -10,6 +10,7 @@
 import { MapView } from "@here/harp-mapview";
 import { expect } from "chai";
 import * as sinon from "sinon";
+import * as THREE from "three";
 import { MapControls } from "../lib/MapControls";
 
 declare const global: any;

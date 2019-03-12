@@ -47,7 +47,6 @@
     "@types/mocha": "^5.2.5",
     "@types/node": "^10.9.0",
     "@types/sinon": "^5.0.1",
-    "@types/three": "0.92.24",
     "chai": "^4.0.2",
     "copyfiles": "^2.0.0",
     "cross-env": "^5.2.0",

@@ -28,16 +28,15 @@
   "devDependencies": {
     "@types/chai": "^4.1.2",
     "@types/mocha": "^5.2.5",
-    "@types/three": "0.92.24",
     "chai": "^4.0.2",
     "cross-env": "^5.2.0",
     "mocha": "^5.2.0",
     "source-map-support": "^0.5.2",
-    "three": "^0.99.0",
+    "three": "^0.102.0",
     "typescript": "^3.3.0"
   },
   "peerDependencies": {
-    "three": "^0.99.0"
+    "three": "^0.102.0"
   },
   "publishConfig": {
     "access": "public"

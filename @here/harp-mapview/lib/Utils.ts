@@ -6,7 +6,16 @@
 
 import * as geoUtils from "@here/harp-geoutils";
 import { EarthConstants } from "@here/harp-geoutils/lib/projection/EarthConstants";
-import { Math as MATH, Matrix4, Plane, Quaternion, Raycaster, Vector3 } from "three";
+import {
+    Camera,
+    Math as MATH,
+    Matrix4,
+    PerspectiveCamera,
+    Plane,
+    Quaternion,
+    Raycaster,
+    Vector3
+} from "three";
 import { MapView } from "./MapView";
 
 export namespace MapViewUtils {
@@ -349,11 +358,8 @@ export namespace MapViewUtils {
      * @param clipDistance Distance from the camera in clip space (range: [0, 1]).
      * @param camera Camera applying the perspective projection.
      */
-    export function calculateDepthFromClipDistance(
-        clipDistance: number,
-        camera: THREE.Camera
-    ): number {
-        const perspCam = camera as THREE.PerspectiveCamera;
+    export function calculateDepthFromClipDistance(clipDistance: number, camera: Camera): number {
+        const perspCam = camera as PerspectiveCamera;
         const cameraRange = perspCam.far - perspCam.near;
         const viewSpaceDistance = clipDistance * perspCam.far;
 
@@ -367,8 +373,8 @@ export namespace MapViewUtils {
      * @param distance Distance from the camera (range: [0, 1]).
      * @param camera Camera applying the perspective projection.
      */
-    export function cameraToWorldDistance(distance: number, camera: THREE.Camera): number {
-        const perspCam = camera as THREE.PerspectiveCamera;
+    export function cameraToWorldDistance(distance: number, camera: Camera): number {
+        const perspCam = camera as PerspectiveCamera;
         return distance * perspCam.far;
     }
 

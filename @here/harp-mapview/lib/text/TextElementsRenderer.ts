@@ -964,7 +964,7 @@ export class TextElementsRenderer {
         }
 
         const pixelRatio = this.m_mapView.pixelRatio;
-        const screenSize = this.m_mapView.renderer.getSize();
+        const screenSize = this.m_mapView.renderer.getSize(new THREE.Vector2());
         const screenXOrigin = (-screenSize.width * pixelRatio) / 2.0;
         const screenYOrigin = (screenSize.height * pixelRatio) / 2.0;
 
