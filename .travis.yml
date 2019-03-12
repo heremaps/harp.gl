@@ -53,7 +53,7 @@ deploy:
       - echo '//registry.npmjs.org/:_authToken=${NPM_TOKEN}' > ~/.npmrc
       - |
           if ./scripts/git-is-first-tag.sh "$TRAVIS_TAG" ; then \
-              echo npx lerna publish -y from-git ; \
+              npx lerna publish -y from-git ; \
           fi
     skip_cleanup: true
     on:
