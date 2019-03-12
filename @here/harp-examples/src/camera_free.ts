@@ -133,15 +133,18 @@ export namespace FreeCameraApp_DebugingToolExample {
 
             this.mapView.pointOfView = pointOfView;
 
-            const transformControls = new THREE.TransformControls(pointOfView, this.mapView.canvas);
+            const transformControls = new (THREE as any).TransformControls(
+                pointOfView,
+                this.mapView.canvas
+            );
             transformControls.attach(this.mapView.camera);
-            transformControls.addEventListener("mouseDown", event => {
+            transformControls.addEventListener("mouseDown", () => {
                 trackball.enabled = false;
             });
-            transformControls.addEventListener("mouseUp", event => {
+            transformControls.addEventListener("mouseUp", () => {
                 trackball.enabled = true;
             });
-            transformControls.addEventListener("objectChange", event => {
+            transformControls.addEventListener("objectChange", () => {
                 this.mapView.update();
             });
 
@@ -158,7 +161,10 @@ export namespace FreeCameraApp_DebugingToolExample {
             this.helpers.push(cameraHelper);
 
             // Set up the trackball gesture handler
-            const trackball = new THREE.TrackballControls(pointOfView, this.mapView.canvas);
+            const trackball = new (THREE as any).TrackballControls(
+                pointOfView,
+                this.mapView.canvas
+            );
             trackball.staticMoving = true;
             trackball.rotateSpeed = 3.0;
             trackball.zoomSpeed = 4.0;

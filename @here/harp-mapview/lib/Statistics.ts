@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import { LoggerManager, PerformanceTimer } from "@here/harp-utils";
+import * as THREE from "three";
 
 const logger = LoggerManager.instance.create("Statistics");
 

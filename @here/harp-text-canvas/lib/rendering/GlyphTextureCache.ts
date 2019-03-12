@@ -289,16 +289,26 @@ export class GlyphTextureCache {
      */
     update(renderer: THREE.WebGLRenderer): void {
         this.m_clearGeometry.update();
-        if (this.m_clearGeometry.drawCount > 0) {
+        let oldRenderTarget: THREE.RenderTarget | undefined;
+
+        const willClearGeometry = this.m_clearGeometry.drawCount > 0;
+        const willCopyGeometry = this.m_copyGeometry.drawCount > 0;
+
+        if (willClearGeometry || willCopyGeometry) {
+            oldRenderTarget = renderer.getRenderTarget();
+            renderer.setRenderTarget(this.m_rt);
+        }
+        if (willClearGeometry) {
             this.m_clearGeometry.mesh.visible = true;
             this.m_copyGeometry.mesh.visible = false;
-            renderer.render(this.m_scene, this.m_camera, this.m_rt);
+
+            renderer.render(this.m_scene, this.m_camera);
             this.m_clearGeometry.clear();
             this.m_clearGeometry.mesh.visible = false;
         }
 
         this.m_copyGeometry.update();
-        if (this.m_copyGeometry.drawCount > 0) {
+        if (willCopyGeometry) {
             this.m_copyGeometry.mesh.visible = true;
             const srcPages = Array.from(this.m_copyTextureSet);
             const nCopies = Math.ceil(this.m_copyTextureSet.size / MAX_NUM_COPY_PAGES);
@@ -311,10 +321,14 @@ export class GlyphTextureCache {
                         this.m_copyMaterial.uniforms["page" + i].value = srcPages[pageIndex];
                     }
                 }
-                renderer.render(this.m_scene, this.m_camera, this.m_rt);
+
+                renderer.render(this.m_scene, this.m_camera);
             }
             this.m_copyTextureSet.clear();
             this.m_copyGeometry.clear();
+        }
+        if (willClearGeometry || willCopyGeometry) {
+            renderer.setRenderTarget(oldRenderTarget);
         }
     }
 

@@ -3,7 +3,7 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-import { WebGLRenderTarget } from "three";
+import * as THREE from "three";
 
 import { IPassManager } from "./IPassManager";
 import { LowResRenderPass } from "./LowResRenderPass";
@@ -122,7 +122,7 @@ export class MapRenderingManager implements IMapRenderingManager {
         lowResPixelRatio: number | undefined,
         antialiasSettings: IMapAntialiasSettings | undefined = { msaaEnabled: false }
     ) {
-        this.m_readBuffer = new WebGLRenderTarget(width, height);
+        this.m_readBuffer = new THREE.WebGLRenderTarget(width, height);
         this.m_msaaPass = new MSAARenderPass();
         this.m_msaaPass.enabled =
             antialiasSettings !== undefined ? antialiasSettings.msaaEnabled === true : false;
@@ -184,7 +184,7 @@ export class MapRenderingManager implements IMapRenderingManager {
                 // Render to the specified target with the MSAA pass.
                 this.m_msaaPass.render(renderer, scene, camera, target, this.m_readBuffer);
             } else {
-                renderer.render(scene, camera, target);
+                renderer.render(scene, camera);
             }
         }
 

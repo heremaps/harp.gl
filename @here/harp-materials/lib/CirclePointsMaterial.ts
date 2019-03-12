@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Color, ShaderMaterial, Uniform } from "three";
+import * as THREE from "three";
 
 const vertexShader: string = `
 uniform float size;
@@ -51,7 +51,7 @@ const DEFAULT_CIRCLE_SIZE = 1;
  * shape is created with an alpha channel to benefit an antialising that a mere `discard` could
  * not bring.
  */
-export class CirclePointsMaterial extends ShaderMaterial {
+export class CirclePointsMaterial extends THREE.ShaderMaterial {
     isCirclePointsMaterial: true;
     uniforms: { [uniform: string]: THREE.IUniform };
     vertexShader: string;
@@ -77,11 +77,11 @@ export class CirclePointsMaterial extends ShaderMaterial {
         this.transparent = true;
 
         this.m_size = parameters.size || DEFAULT_CIRCLE_SIZE;
-        this.m_color = new Color();
+        this.m_color = new THREE.Color();
 
         this.uniforms = {
-            diffuse: new Uniform(this.m_color),
-            size: new Uniform(this.m_size)
+            diffuse: new THREE.Uniform(this.m_color),
+            size: new THREE.Uniform(this.m_size)
         };
 
         this.extensions.derivatives = true;

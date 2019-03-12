@@ -133,16 +133,18 @@ export class LowResRenderPass extends Pass {
         this.m_quadUniforms.tDiffuse.value = this.m_renderTarget.texture;
         this.m_quadUniforms.opacity.value = 1.0;
 
+        const oldRenderTarget = renderer.getRenderTarget();
+        renderer.setRenderTarget(this.m_renderTarget);
+        renderer.clear();
         // Render into the low resolution internal render target.
-        renderer.render(scene, camera, this.m_renderTarget, true);
+        renderer.render(scene, camera);
 
         // Render the low resolution target into the screen.
-        renderer.render(
-            this.m_quadScene,
-            this.m_localCamera,
-            this.renderToScreen ? undefined : writeBuffer,
-            true
-        );
+        // NOTE: three.js doesn't like undefined as renderTarget, but works with `null`
+        renderer.setRenderTarget(this.renderToScreen ? null! : writeBuffer);
+        renderer.clear();
+        renderer.render(this.m_quadScene, this.m_localCamera);
+        renderer.setRenderTarget(oldRenderTarget);
     }
 
     /**

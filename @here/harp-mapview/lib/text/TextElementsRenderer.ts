@@ -143,6 +143,8 @@ export class TextElementsRenderer {
     private m_debugGlyphTextureCacheMesh?: THREE.Mesh;
     private m_debugGlyphTextureCacheWireMesh?: THREE.LineSegments;
 
+    private m_tmpVector = new THREE.Vector2();
+
     /**
      * Create the `TextElementsRenderer` which selects which labels should be placed on screen as
      * a preprocessing step, which is not done every frame, and also renders the placed
@@ -964,7 +966,7 @@ export class TextElementsRenderer {
         }
 
         const pixelRatio = this.m_mapView.pixelRatio;
-        const screenSize = this.m_mapView.renderer.getSize();
+        const screenSize = this.m_mapView.renderer.getSize(this.m_tmpVector);
         const screenXOrigin = (-screenSize.width * pixelRatio) / 2.0;
         const screenYOrigin = (screenSize.height * pixelRatio) / 2.0;
 
