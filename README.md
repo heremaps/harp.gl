@@ -2,8 +2,6 @@
 
 `harp.gl` is an _experimental and work in progress_ open-source 3D map rendering engine.
 
-The _harp_ acronym stands for **Ha**ndy Map **R**endering **P**latform, as we aim to provide an easy to use (=handy) map rendering engine that can be used as a platform on top of which you can develop your own applications.
-
 ## Overview
 
 You can use this engine to:
