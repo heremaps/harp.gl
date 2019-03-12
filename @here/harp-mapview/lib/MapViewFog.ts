@@ -6,14 +6,14 @@
 
 import { Theme } from "@here/harp-datasource-protocol";
 import { HighPrecisionLineMaterial, SolidLineMaterial } from "@here/harp-materials";
-import { Fog, Material, Mesh } from "three";
+import * as THREE from "three";
 
 /**
  * Manages the fog display in [[MapView]].
  */
 export class MapViewFog {
     private m_enabled: boolean = true;
-    private m_fog: THREE.Fog = new Fog(0x000000); // Default color asked by DefinitelyTyped.
+    private m_fog: THREE.Fog = new THREE.Fog(0x000000); // Default color asked by DefinitelyTyped.
     private m_fogIsDefined: boolean = false;
     private m_cachedTheme: Theme = { styles: {} };
 
@@ -124,10 +124,10 @@ export class MapViewFog {
      */
     private setFogInRawShaderMaterials(enableFog: boolean) {
         this.m_scene.traverse(object => {
-            if (object instanceof Mesh) {
-                if (object.material instanceof Material) {
+            if (object instanceof THREE.Mesh) {
+                if (object.material instanceof THREE.Material) {
                     if (
-                        object.material instanceof Material &&
+                        object.material instanceof THREE.Material &&
                         // HighPrecisionLineMaterial does not support fog
                         !(object.material instanceof HighPrecisionLineMaterial)
                     ) {

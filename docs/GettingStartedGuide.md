@@ -26,7 +26,7 @@ format require us to use some javascript code bundler - this example will facili
 
 Install them into your project:
 ```shell
-npm install --save @here/harp-mapview @here/harp-omv-datasource @here/harp-map-theme three@0.99
+npm install --save @here/harp-mapview @here/harp-omv-datasource @here/harp-map-theme three@0.102
 ```
 
 You have installed 3 key components needed to render basic map:

@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import * as THREE from "three";
+
 /**
  * `IPassManager` provides a base interface for [[Pass]] managers like [[MapRenderingManager]].
  */

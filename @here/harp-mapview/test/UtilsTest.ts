@@ -156,7 +156,7 @@ describe("map-view#Utils", function() {
         const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
         const cube = new THREE.Mesh(geometry, material);
         scene.add(cube);
-        expect(MapViewUtils.estimateObjectSize(scene)).to.be.equal(4626);
+        expect(MapViewUtils.estimateObjectSize(scene)).to.be.equal(4634);
     });
 
     it("estimate size of world with 1000 cubes", async function() {
@@ -168,6 +168,6 @@ describe("map-view#Utils", function() {
             const cube = new THREE.Mesh(geometry, material);
             scene.add(cube);
         }
-        expect(MapViewUtils.estimateObjectSize(scene)).to.be.equal(4078548);
+        expect(MapViewUtils.estimateObjectSize(scene)).to.be.equal(4082552);
     });
 });

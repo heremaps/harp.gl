@@ -158,6 +158,7 @@ export class MSAARenderPass extends Pass {
             oldView.height = camera.view.height;
         }
 
+        const oldRenderTarget = renderer.getRenderTarget();
         for (let i = 0; i < offsets.length; i++) {
             // 4. Then for each sample, call `setViewOffset` with our object. This also updates the
             // `camera.view` object in Three.js.
@@ -178,22 +179,25 @@ export class MSAARenderPass extends Pass {
             const sampleWeight = 1.0 / offsets.length + uniformCenteredDistribution / 32;
 
             this.m_quadUniforms.opacity.value = sampleWeight;
-            renderer.render(scene, camera, this.m_renderTarget, true);
+
+            renderer.setRenderTarget(this.m_renderTarget);
+            renderer.clear();
+            renderer.render(scene, camera);
 
             // 6. Render the quad on top of the previous renders.
+
+            // NOTE: three.js doesn't like undefined as renderTarget, but works with `null`
+            renderer.setRenderTarget(this.renderToScreen ? null! : writeBuffer);
             if (i === 0) {
                 renderer.setClearColor(0x000000);
+                renderer.clear();
             }
-            renderer.render(
-                this.m_quadScene,
-                this.m_localCamera,
-                this.renderToScreen ? undefined : writeBuffer,
-                i === 0
-            );
+            renderer.render(this.m_quadScene, this.m_localCamera);
             if (i === 0 && rendererClearColor !== undefined) {
                 renderer.setClearColor(oldClearColor);
             }
         }
+        renderer.setRenderTarget(oldRenderTarget);
 
         // 7. Restore `camera.view` as set externally (or not).
         if (camera.view !== null) {

@@ -3,14 +3,7 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-import {
-    createLight,
-    ImageDefinition,
-    ImageTexture,
-    Light,
-    Sky,
-    Theme
-} from "@here/harp-datasource-protocol";
+import { createLight, ImageTexture, Light, Sky, Theme } from "@here/harp-datasource-protocol";
 import { GeoCoordinates, MathUtils, mercatorProjection, Projection } from "@here/harp-geoutils";
 import { assert, LoggerManager, PerformanceTimer } from "@here/harp-utils";
 import * as THREE from "three";
@@ -125,6 +118,8 @@ const MOVEMENT_FINISHED_EVENT: RenderEvent = { type: MapViewEventNames.MovementF
 const CONTEXT_LOST_EVENT: RenderEvent = { type: MapViewEventNames.ContextLost } as any;
 const CONTEXT_RESTORED_EVENT: RenderEvent = { type: MapViewEventNames.ContextRestored } as any;
 const COPYRIGHT_CHANGED_EVENT: RenderEvent = { type: MapViewEventNames.CopyrightChanged } as any;
+
+const tmpVector = new THREE.Vector2();
 
 /**
  * Compute visibility for the text elements. Called every frame.
@@ -1222,7 +1217,7 @@ export class MapView extends THREE.EventDispatcher {
      */
     setFovCalculation(fovCalculation: FovCalculation) {
         this.m_options.fovCalculation = fovCalculation;
-        this.calculateFocalLength(this.m_renderer.getSize().height);
+        this.calculateFocalLength(this.m_renderer.getSize(tmpVector).height);
         this.updateCameras();
     }
 
@@ -1696,7 +1691,7 @@ export class MapView extends THREE.EventDispatcher {
      * concerns, this is the preferred approach.
      */
     private getFrameBufferSize() {
-        const { width, height } = this.m_renderer.getSize();
+        const { width, height } = this.m_renderer.getSize(tmpVector);
         return { width: width * this.pixelRatio, height: height * this.pixelRatio };
     }
     /**

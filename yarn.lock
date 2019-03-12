@@ -224,11 +224,6 @@
   resolved "https://registry.yarnpkg.com/@types/sinon/-/sinon-5.0.7.tgz#0d9f89dd0c9988c4f1505a92a3a324ee7bdb18a6"
   integrity sha512-opwMHufhUwkn/UUDk35LDbKJpA2VBsZT8WLU8NjayvRLGPxQkN+8XmfC2Xl35MAscBE8469koLLBjaI3XLEIww==
 
-"@types/three@0.92.24":
-  version "0.92.24"
-  resolved "https://registry.yarnpkg.com/@types/three/-/three-0.92.24.tgz#ad5cba7950579daf5253ec819d706ff802fb1e8c"
-  integrity sha512-B+bYpY40/rTpb8LrSaED9wpG3IZwACpybHWj8volYwBalMJCzRmi+a6wRTkua7L3yO4YsQU0pah0jtmWo69mDQ==
-
 "@types/tween.js@^16.9.0":
   version "16.9.0"
   resolved "https://registry.yarnpkg.com/@types/tween.js/-/tween.js-16.9.0.tgz#af25067f86e15d2cba89b26776fc273ff7f55650"
@@ -5580,10 +5575,10 @@ textextensions@^2.4.0:
   resolved "https://registry.yarnpkg.com/textextensions/-/textextensions-2.4.0.tgz#6a143a985464384cc2cff11aea448cd5b018e72b"
   integrity sha512-qftQXnX1DzpSV8EddtHIT0eDDEiBF8ywhFYR2lI9xrGtxqKN+CvLXhACeCIGbCpQfxxERbrkZEFb8cZcDKbVZA==
 
-three@^0.99.0:
-  version "0.99.0"
-  resolved "https://registry.yarnpkg.com/three/-/three-0.99.0.tgz#65711fda7a16501da83948121437d824df1fea19"
-  integrity sha512-DmNNq6H6nRGaqxScJ8x7v5VjdtDZR72oTVwDdKbB2BYNFxCkAoo9vdFAznEsMu9YzTV2yFvbVs7qHRzvJZzTIg==
+three@^0.102.0:
+  version "0.102.1"
+  resolved "https://registry.yarnpkg.com/three/-/three-0.102.1.tgz#fc08b6b11860cf59e8cd45b7e90e34d1d1a8cbd6"
+  integrity sha512-btHBdww/Es4vdBkB2GjTE9mpj0vy8tgtxkX7ne7uxySXV8zoGxWJv1N88BydxnCqvAfmD4ZUTqPeESO7oDgeOQ==
 
 through2@^2.0.0, through2@^2.0.1:
   version "2.0.5"

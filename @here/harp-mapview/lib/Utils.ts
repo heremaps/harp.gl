@@ -6,40 +6,40 @@
 
 import * as geoUtils from "@here/harp-geoutils";
 import { EarthConstants } from "@here/harp-geoutils/lib/projection/EarthConstants";
-import { Math as MATH, Matrix4, Plane, Quaternion, Raycaster, Vector3 } from "three";
+import * as THREE from "three";
 import { MapView } from "./MapView";
 
 export namespace MapViewUtils {
     //Caching those for performance reasons.
-    const groundPlane = new Plane(new Vector3(0, 0, 1));
-    const cameraZPosition = new Vector3(0, 0, 0);
-    const rotationMatrix = new Matrix4();
-    const unprojectionMatrix = new Matrix4();
-    const rayCaster = new Raycaster();
+    const groundPlane = new THREE.Plane(new THREE.Vector3(0, 0, 1));
+    const cameraZPosition = new THREE.Vector3(0, 0, 0);
+    const rotationMatrix = new THREE.Matrix4();
+    const unprojectionMatrix = new THREE.Matrix4();
+    const rayCaster = new THREE.Raycaster();
 
     /**
      * Yaw rotation as quaternion. Declared as a const to avoid object re-creation in certain
      * functions.
      */
-    const yawQuaternion = new Quaternion();
+    const yawQuaternion = new THREE.Quaternion();
 
     /**
      * Pitch rotation as quaternion. Declared as a const to avoid object re-creation in certain
      *  functions.
      */
-    const pitchQuaternion = new Quaternion();
+    const pitchQuaternion = new THREE.Quaternion();
 
     /**
      * The yaw axis around we rotate when we change the yaw.
      * This axis is fix and is the -Z axis `(0,0,1)`.
      */
-    const yawAxis = new Vector3(0, 0, 1);
+    const yawAxis = new THREE.Vector3(0, 0, 1);
 
     /**
      * The pitch axis which we use to rotate around when we change the pitch.
      * The axis is fix and is the +X axis `(1,0,0)`.
      */
-    const pitchAxis = new Vector3(1, 0, 0);
+    const pitchAxis = new THREE.Vector3(1, 0, 0);
 
     /**
      * Missing Typedoc
@@ -122,11 +122,11 @@ export namespace MapViewUtils {
     ): geoUtils.GeoCoordinates {
         // Get the world distance between the target and the camera.
         const worldCameraHeight = calculateDistanceToGroundFromZoomLevel(mapView, zoom);
-        const pitchRad = MATH.degToRad(pitchDeg);
+        const pitchRad = THREE.Math.degToRad(pitchDeg);
         const worldTargetCameraDistance = worldCameraHeight * Math.tan(pitchRad);
 
         // Get the camera coordinates.
-        const yawRad = MATH.degToRad(yawDeg);
+        const yawRad = THREE.Math.degToRad(yawDeg);
         const worldTargetCoordinates = mapView.projection.projectPoint(targetCoordinates);
         const cameraWorldCoordinates = {
             x: worldTargetCoordinates.x + Math.sin(yawRad) * worldTargetCameraDistance,
@@ -152,8 +152,8 @@ export namespace MapViewUtils {
         mapView: MapView,
         pointOnScreenXinNDC: number,
         pointOnScreenYinNDC: number
-    ): Vector3 | null {
-        const pointInNDCPosition = new Vector3(pointOnScreenXinNDC, pointOnScreenYinNDC, 0.5);
+    ): THREE.Vector3 | null {
+        const pointInNDCPosition = new THREE.Vector3(pointOnScreenXinNDC, pointOnScreenYinNDC, 0.5);
         const worldPosition = mapView.worldCenter;
 
         cameraZPosition.copy(mapView.camera.position);
@@ -171,7 +171,7 @@ export namespace MapViewUtils {
         //Use the point in camera space as the vector towards this point.
         rayCaster.set(cameraZPosition, pointInCameraSpace.normalize());
 
-        const vec3 = new Vector3();
+        const vec3 = new THREE.Vector3();
         const rayGroundPlaneIntersectionPosition = rayCaster.ray.intersectPlane(groundPlane, vec3);
 
         if (!rayGroundPlaneIntersectionPosition) {
@@ -257,7 +257,7 @@ export namespace MapViewUtils {
      * @param q : Quaternion that represents the given rotation
      * from which to extract the yaw, roll, and pitch.
      */
-    export function extractYawPitchRoll(q: Quaternion): YawPitchRoll {
+    export function extractYawPitchRoll(q: THREE.Quaternion): YawPitchRoll {
         const ysqr = q.y * q.y;
 
         // pitch (x-axis rotation)

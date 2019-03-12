@@ -55,6 +55,14 @@ const commonConfig = {
     performance: {
         hints: false
     },
+    stats: {
+        all: false,
+        timings: true,
+        exclude: "/resources/",
+        errors: true,
+        entrypoints: true,
+        warnings: true
+    },
     mode: process.env.NODE_ENV || "development"
 };
 
