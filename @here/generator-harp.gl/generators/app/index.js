@@ -14,6 +14,11 @@ module.exports = class extends Generator {
                 name: 'packagename',
                 message: 'package name',
                 default: path.basename(process.cwd())
+            },
+            {
+                type: 'input',
+                name: 'access_token',
+                message: 'access token'
             }
         ]);
 
@@ -29,6 +34,7 @@ module.exports = class extends Generator {
             this.destinationPath(''),
             {
                 packagename: this.answers.packagename,
+                access_token: this.answers.access_token,
                 generator_version: version
             }
         );
