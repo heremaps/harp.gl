@@ -169,6 +169,7 @@ export type OmvWithCustomDataProvider = OmvDataSourceParameters & { dataProvider
 
 export class OmvDataSource extends TileDataSource<OmvTile> {
     private readonly m_decoderOptions: OmvDecoderOptions;
+    private readonly m_zoomLevelOffset: number;
     private readonly m_minZoomLevelOption: number;
     private readonly m_maxZoomLevelOption: number;
 
@@ -195,6 +196,10 @@ export class OmvDataSource extends TileDataSource<OmvTile> {
             featureModifierId: this.m_params.featureModifierId
         };
 
+        this.m_zoomLevelOffset =
+            this.m_params.zoomStorageLevelOffset !== undefined
+                ? this.m_params.zoomStorageLevelOffset
+                : -2;
         this.m_minZoomLevelOption =
             this.m_params.minZoomLevel !== undefined ? this.m_params.minZoomLevel : 1;
         this.m_maxZoomLevelOption =
@@ -280,9 +285,10 @@ export class OmvDataSource extends TileDataSource<OmvTile> {
     }
 
     getDisplayZoomLevel(zoomLevel: number): number {
-        if (this.m_params.zoomStorageLevelOffset !== undefined) {
-            zoomLevel += this.m_params.zoomStorageLevelOffset;
-        }
-        return MathUtils.clamp(zoomLevel, this.minZoomLevel, this.maxZoomLevel);
+        return MathUtils.clamp(
+            zoomLevel + this.m_zoomLevelOffset,
+            this.minZoomLevel,
+            this.maxZoomLevel
+        );
     }
 }

@@ -487,7 +487,6 @@ export class MapView extends THREE.EventDispatcher {
      */
     readonly mapRenderingManager: IMapRenderingManager;
 
-    private m_zoomLevelBias: number = 1;
     private m_createdLights?: THREE.Light[];
     private m_skyBackground?: SkyBackground;
     private readonly m_screenProjector = new ScreenProjector();
@@ -1070,6 +1069,13 @@ export class MapView extends THREE.EventDispatcher {
     }
 
     /**
+     * The distance (in pixels) between the screen and the camera.
+     */
+    get focalLength(): number {
+        return this.m_focalLength;
+    }
+
+    /**
      * The position in geo coordinates of the center of the scene.
      */
     get geoCenter(): GeoCoordinates {
@@ -1170,21 +1176,6 @@ export class MapView extends THREE.EventDispatcher {
      */
     set maxZoomLevel(zoomLevel: number) {
         this.m_maxZoomLevel = zoomLevel;
-        this.update();
-    }
-
-    /**
-     * Gets the bias to apply to the zoom level. Default is 1.
-     */
-    get zoomLevelBias(): number {
-        return this.m_zoomLevelBias;
-    }
-
-    /**
-     * Sets the bias to apply to the zoom level.
-     */
-    set zoomLevelBias(bias: number) {
-        this.m_zoomLevelBias = bias;
         this.update();
     }
 
@@ -1686,20 +1677,11 @@ export class MapView extends THREE.EventDispatcher {
     }
 
     /**
-     * Gets the size of the underlying frame buffer. Note this is equivalent to accessing the
-     * height and width from the this.m_renderer.domElement object, but because of performance
-     * concerns, this is the preferred approach.
-     */
-    private getFrameBufferSize() {
-        const { width, height } = this.m_renderer.getSize(tmpVector);
-        return { width: width * this.pixelRatio, height: height * this.pixelRatio };
-    }
-    /**
      * Updates the camera and the projections and resets the screen collisions,
      * note, setupCamera must be called before this is called.
      */
     private updateCameras() {
-        const { width, height } = this.getFrameBufferSize();
+        const { width, height } = this.m_renderer.getSize(tmpVector);
         this.m_camera.aspect =
             this.m_forceCameraAspect !== undefined ? this.m_forceCameraAspect : width / height;
         this.setFovOnCamera(this.m_options.fovCalculation!, height);

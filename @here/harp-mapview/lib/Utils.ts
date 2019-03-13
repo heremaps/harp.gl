@@ -202,13 +202,8 @@ export namespace MapViewUtils {
         mapView: MapView,
         zoomLevel: number
     ): number {
-        //TODO: Power to the base of 2 is hardcoded and should be dependent on the tiling schema.
-        const amountOfTilesOnZoomLevel = Math.pow(2, zoomLevel);
-        const tileSize = EarthConstants.EQUATORIAL_CIRCUMFERENCE / amountOfTilesOnZoomLevel;
-        const visibleGroundUnit =
-            2.0 * Math.tan(geoUtils.MathUtils.degToRad(mapView.camera.fov) * 0.5);
-
-        return tileSize / (visibleGroundUnit * mapView.zoomLevelBias);
+        const tileSize = EarthConstants.EQUATORIAL_CIRCUMFERENCE / Math.pow(2, zoomLevel);
+        return (mapView.focalLength * tileSize) / 256;
     }
 
     /**
@@ -318,27 +313,12 @@ export namespace MapViewUtils {
      * you.
      */
     export function calculateZoomLevelFromHeight(height: number, mapView: MapView): number {
-        const targetSubdivisions = 2;
-        const biasedHeight = height * mapView.zoomLevelBias;
-        const visibleHeight =
-            2 * biasedHeight * Math.tan(geoUtils.MathUtils.degToRad(mapView.camera.fov / 2));
-
-        /**
-         * Use half the circumference as a reference point. This makes a few assumptions:
-         * 1. That the equitorial circumference is close enough to the vertical circumference to
-         *    not matter.
-         * 2. That distance is consistent throughout the globe. This isn't necessarily the case for
-         *    mercator projections, but shouldn't be a huge problem since the geometry is distorted
-         *    anyway.
-         * 3. That in most cases the curvature of the earth won't have a large impact. In the case
-         *    of zooming out to view the whole globe with a sphere projection, it will subdivide a
-         *    bit more than it would otherwise, but it shouldn't be much of an issue.
-         */
-        const halfCircumference = EarthConstants.EQUATORIAL_CIRCUMFERENCE / 2;
-        const targetSize = visibleHeight / targetSubdivisions;
-
-        const zoomLevel = Math.log2(halfCircumference / targetSize);
-        return geoUtils.MathUtils.clamp(zoomLevel, mapView.minZoomLevel, mapView.maxZoomLevel);
+        const tileSize = (256 * height) / mapView.focalLength;
+        return geoUtils.MathUtils.clamp(
+            Math.log2(EarthConstants.EQUATORIAL_CIRCUMFERENCE / tileSize),
+            mapView.minZoomLevel,
+            mapView.maxZoomLevel
+        );
     }
 
     /**
