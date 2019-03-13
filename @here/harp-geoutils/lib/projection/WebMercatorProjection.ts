@@ -17,19 +17,19 @@ class WebMercatorProjection extends MercatorProjection {
     static readonly MAXIMUM_LATITUDE: number = 1.4844222297453323;
 
     projectPoint<WorldCoordinates extends Vector3Like>(
-        geoPoint: GeoCoordinatesLike,
+        geoPointLike: GeoCoordinatesLike,
         result?: WorldCoordinates
     ): WorldCoordinates {
-        let normalized: GeoCoordinates;
+        let geoPoint: GeoCoordinates;
 
-        if (geoPoint instanceof GeoCoordinates) {
-            normalized = geoPoint.normalized();
+        if (geoPointLike instanceof GeoCoordinates) {
+            geoPoint = geoPointLike;
         } else {
-            normalized = new GeoCoordinates(
-                geoPoint.latitude,
-                geoPoint.longitude,
-                geoPoint.altitude
-            ).normalized();
+            geoPoint = new GeoCoordinates(
+                geoPointLike.latitude,
+                geoPointLike.longitude,
+                geoPointLike.altitude
+            );
         }
 
         /*
@@ -47,8 +47,8 @@ class WebMercatorProjection extends MercatorProjection {
             result = { x: 0, y: 0, z: 0 } as WorldCoordinates;
         }
 
-        result.x = ((normalized.longitude + 180) / 360) * EarthConstants.EQUATORIAL_CIRCUMFERENCE;
-        const sy = Math.sin(MercatorProjection.latitudeClamp(normalized.latitudeInRadians));
+        result.x = ((geoPoint.longitude + 180) / 360) * EarthConstants.EQUATORIAL_CIRCUMFERENCE;
+        const sy = Math.sin(MercatorProjection.latitudeClamp(geoPoint.latitudeInRadians));
         result.y =
             (0.5 - Math.log((1 + sy) / (1 - sy)) / (4 * Math.PI)) *
             EarthConstants.EQUATORIAL_CIRCUMFERENCE;
@@ -57,18 +57,8 @@ class WebMercatorProjection extends MercatorProjection {
     }
 
     unprojectPoint(worldPoint: Vector3Like): GeoCoordinates {
-        const clampedX = MercatorProjection.clamp(
-            worldPoint.x,
-            0,
-            EarthConstants.EQUATORIAL_CIRCUMFERENCE
-        );
-        const x = clampedX / EarthConstants.EQUATORIAL_CIRCUMFERENCE - 0.5;
-        const clampedY = MercatorProjection.clamp(
-            worldPoint.y,
-            0,
-            EarthConstants.EQUATORIAL_CIRCUMFERENCE
-        );
-        const y = 0.5 - clampedY / EarthConstants.EQUATORIAL_CIRCUMFERENCE;
+        const x = worldPoint.x / EarthConstants.EQUATORIAL_CIRCUMFERENCE - 0.5;
+        const y = 0.5 - worldPoint.y / EarthConstants.EQUATORIAL_CIRCUMFERENCE;
 
         const longitude = 360 * x;
         const latitude = 90 - (360 * Math.atan(Math.exp(-y * 2 * Math.PI))) / Math.PI;

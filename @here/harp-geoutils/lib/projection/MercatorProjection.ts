@@ -64,28 +64,28 @@ export class MercatorProjection implements Projection {
     }
 
     projectPoint<WorldCoordinates extends Vector3Like>(
-        geoPoint: GeoCoordinatesLike,
+        geoPointLike: GeoCoordinatesLike,
         result?: WorldCoordinates
     ): WorldCoordinates {
-        let normalized: GeoCoordinates;
+        let geoPoint: GeoCoordinates;
 
-        if (geoPoint instanceof GeoCoordinates) {
-            normalized = geoPoint.normalized();
+        if (geoPointLike instanceof GeoCoordinates) {
+            geoPoint = geoPointLike;
         } else {
-            normalized = new GeoCoordinates(
-                geoPoint.latitude,
-                geoPoint.longitude,
-                geoPoint.altitude
-            ).normalized();
+            geoPoint = new GeoCoordinates(
+                geoPointLike.latitude,
+                geoPointLike.longitude,
+                geoPointLike.altitude
+            );
         }
 
         if (!result) {
             // tslint:disable-next-line:no-object-literal-type-assertion
             result = { x: 0, y: 0, z: 0 } as WorldCoordinates;
         }
-        result.x = ((normalized.longitude + 180) / 360) * EarthConstants.EQUATORIAL_CIRCUMFERENCE;
+        result.x = ((geoPoint.longitude + 180) / 360) * EarthConstants.EQUATORIAL_CIRCUMFERENCE;
         result.y =
-            (MercatorProjection.latitudeClampProject(normalized.latitudeInRadians) * 0.5 + 0.5) *
+            (MercatorProjection.latitudeClampProject(geoPoint.latitudeInRadians) * 0.5 + 0.5) *
             EarthConstants.EQUATORIAL_CIRCUMFERENCE;
         result.z = geoPoint.altitude || 0;
         return result;
