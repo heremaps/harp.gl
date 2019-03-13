@@ -15,3 +15,4 @@ export * from "./lib/PerformanceTimer";
 export * from "./lib/OptionsUtils";
 export * from "./lib/UrlResolver";
 export * from "./lib/UrlUtils";
+export * from "./lib/Functions";

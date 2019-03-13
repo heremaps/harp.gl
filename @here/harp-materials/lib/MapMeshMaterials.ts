@@ -4,11 +4,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { applyMixinsWithoutProperties } from "@here/harp-utils";
+import { applyMixinsWithoutProperties, chainCallbacks } from "@here/harp-utils";
+import { AnimatedExtrusionTileHandler } from "../../harp-mapview/lib/AnimatedExtrusionHandler";
+import { insertShaderInclude } from "./Utils";
 
 import * as THREE from "three";
 
-import fadingShaderChunk from "@here/harp-materials/lib/ShaderChunks/FadingChunks";
+import extrusionShaderChunk from "./ShaderChunks/ExtrusionChunks";
+import fadingShaderChunk from "./ShaderChunks/FadingChunks";
 
 /**
  * The MapMeshMaterials [[MapMeshBasicMaterial]] and [[MapMeshStandardMaterial]] are the standard
@@ -33,6 +36,16 @@ export interface FadingFeatureParameters {
      * Distance to the camera (range: `[0.0, 1.0]`) from which the objects are transparent.
      */
     fadeFar?: number;
+}
+
+/**
+ * Parameters used when constructing a new implementor of [[ExtrusionFeature]].
+ */
+export interface ExtrusionFeatureParameters {
+    /**
+     * Ratio of the extruded objects, where `1.0` is the default value
+     */
+    extrusionRatio?: number;
 }
 
 /**
@@ -110,6 +123,19 @@ export interface FadingFeature extends HiddenThreeJSMaterialProperties {
 }
 
 /**
+ * Base interface for all objects that should have animated extrusion effect. The implemntation of
+ * the actual ExtrusionFeature is done with the help of the mixin class [[ExtrusionFeatureMixin]]
+ * and a set of supporting functions in the namespace of the same name.
+ */
+export interface ExtrusionFeature extends HiddenThreeJSMaterialProperties {
+    /**
+     * Ratio of the extruded objects, where `1.0` is the default value. Minimum suggested value
+     * is `0.01`
+     */
+    extrusionRatio?: number;
+}
+
+/**
  * Namespace with support functions for implementors of `FadingFeature`.
  */
 export namespace FadingFeature {
@@ -145,34 +171,6 @@ export namespace FadingFeature {
     }
 
     /**
-     * Special function to insert shader includes after another shader include.
-     *
-     * @param shaderContent Original string.
-     * @param shaderName String to append to.
-     * @param insertedShaderName String to append after string `shaderA`.
-     * @param addTab If `true`, a tab character will be inserted before `shaderB`.
-     */
-    export function insertShaderInclude(
-        shaderContent: string,
-        shaderName: string,
-        insertedShaderName: string,
-        addTab?: boolean
-    ): string {
-        const tabChar = addTab === true ? "\t" : "";
-
-        const result = shaderContent.replace(
-            `#include <${shaderName}>`,
-            `
-#include <${shaderName}>
-// << Patched fading shader START >>
-${tabChar}#include <${insertedShaderName}>
-// << Patched fading shader END >>
-`
-        );
-        return result;
-    }
-
-    /**
      * This function should be called on implementors of FadingFeature in the `onBeforeCompile`
      * callback of that material. It adds the required code to the shaders and declares the new
      * uniforms that control fading based on view distance.
@@ -199,26 +197,26 @@ ${tabChar}#include <${insertedShaderName}>
 
         // Append the new fading shader cod directly after the fog code. This is done by adding an
         // include directive for the fading code.
-        shader.vertexShader = FadingFeature.insertShaderInclude(
+        shader.vertexShader = insertShaderInclude(
             shader.vertexShader,
             "fog_pars_vertex",
             "fading_pars_vertex"
         );
 
-        shader.vertexShader = FadingFeature.insertShaderInclude(
+        shader.vertexShader = insertShaderInclude(
             shader.vertexShader,
             "fog_vertex",
             "fading_vertex",
             true
         );
 
-        shader.fragmentShader = FadingFeature.insertShaderInclude(
+        shader.fragmentShader = insertShaderInclude(
             shader.fragmentShader,
             "fog_pars_fragment",
             "fading_pars_fragment"
         );
 
-        shader.fragmentShader = FadingFeature.insertShaderInclude(
+        shader.fragmentShader = insertShaderInclude(
             shader.fragmentShader,
             "fog_fragment",
             "fading_fragment",
@@ -255,42 +253,50 @@ ${tabChar}#include <${insertedShaderName}>
         ) => void
     ) {
         // tslint:disable-next-line:no-unused-variable
-        object.onBeforeRender = (
-            renderer,
-            scene,
-            camera,
-            geom,
-            material: THREE.Material & FadingFeature
-        ) => {
-            if (forceMaterialToTransparent) {
-                material.transparent = true;
-            }
-            const fadingMaterial = material as FadingFeature;
+        object.onBeforeRender = chainCallbacks(
+            object.onBeforeRender,
+            (
+                renderer: THREE.WebGLRenderer,
+                scene: THREE.Scene,
+                camera: THREE.Camera,
+                geometry: THREE.Geometry | THREE.BufferGeometry,
+                material: THREE.Material & FadingFeature,
+                group: THREE.Group
+            ) => {
+                if (forceMaterialToTransparent) {
+                    //
+                    material.transparent = true;
+                }
+                const fadingMaterial = material as FadingFeature;
 
-            fadingMaterial.fadeNear =
-                fadeNear === undefined
-                    ? FadingFeature.DEFAULT_FADE_NEAR
-                    : cameraToWorldDistance(fadeNear, camera);
+                fadingMaterial.fadeNear =
+                    fadeNear === undefined
+                        ? FadingFeature.DEFAULT_FADE_NEAR
+                        : cameraToWorldDistance(fadeNear, camera);
 
-            fadingMaterial.fadeFar =
-                fadeFar === undefined
-                    ? FadingFeature.DEFAULT_FADE_FAR
-                    : cameraToWorldDistance(fadeFar, camera);
+                fadingMaterial.fadeFar =
+                    fadeFar === undefined
+                        ? FadingFeature.DEFAULT_FADE_FAR
+                        : cameraToWorldDistance(fadeFar, camera);
 
-            if (updateUniforms) {
-                const properties = renderer.properties.get(material);
+                if (updateUniforms) {
+                    const properties = renderer.properties.get(material);
 
-                if (properties.shader !== undefined) {
-                    properties.shader.uniforms.fadeNear.value = fadingMaterial.fadeNear;
-                    properties.shader.uniforms.fadeFar.value = fadingMaterial.fadeFar;
-                    fadingMaterial.uniformsNeedUpdate = true;
+                    if (
+                        properties.shader !== undefined &&
+                        properties.shader.uniforms.fadeNear !== undefined
+                    ) {
+                        properties.shader.uniforms.fadeNear.value = fadingMaterial.fadeNear;
+                        properties.shader.uniforms.fadeFar.value = fadingMaterial.fadeFar;
+                        fadingMaterial.uniformsNeedUpdate = true;
+                    }
+                }
+
+                if (additionalCallback !== undefined) {
+                    additionalCallback(renderer, material);
                 }
             }
-
-            if (additionalCallback !== undefined) {
-                additionalCallback(renderer, material);
-            }
-        };
+        );
 
         if (forceMaterialToTransparent) {
             object.onAfterRender = (renderer, scene, camera, geom, material) => {
@@ -407,6 +413,192 @@ export class FadingFeatureMixin implements FadingFeature {
     }
 }
 
+export namespace ExtrusionFeature {
+    /**
+     * Patch the THREE.ShaderChunk on first call with some extra shader chunks.
+     */
+    export function patchGlobalShaderChunks() {
+        if (THREE.ShaderChunk.extrusion_pars_vertex === undefined) {
+            Object.assign(THREE.ShaderChunk, extrusionShaderChunk);
+        }
+    }
+
+    /**
+     * Update the internals of the `ExtrusionFeature` depending on the value of [[extrusionRatio]].
+     *
+     * @param ExtrusionMaterial ExtrusionFeature
+     */
+    export function updateExtrusionFeature(extrusionMaterial: ExtrusionFeature): void {
+        extrusionMaterial.needsUpdate = true;
+
+        if (extrusionMaterial.defines === undefined) {
+            extrusionMaterial.defines = {};
+        }
+
+        if (
+            extrusionMaterial.extrusionRatio !== undefined &&
+            extrusionMaterial.extrusionRatio >= AnimatedExtrusionTileHandler.DEFAULT_RATIO_MAX
+        ) {
+            // Add this define to differentiate it internally from other MeshBasicMaterial
+            extrusionMaterial.defines.EXTRUSION_MATERIAL = "";
+        }
+    }
+
+    /**
+     * This function should be called on implementors of ExtrusionFeature in the `onBeforeCompile`
+     * callback of that material. It adds the required code to the shaders and declares the new
+     * uniforms that control extrusion.
+     *
+     * @param extrusionMaterial Material to add uniforms to.
+     * @param shader [[THREE.WebGLShader]] containing the vertex and fragment shaders to add the
+     *                  special includes to.
+     */
+    export function onBeforeCompile(extrusionMaterial: ExtrusionFeature, shader: any) {
+        if (extrusionMaterial.extrusionRatio === undefined) {
+            return;
+        }
+        // The vertex and fragment shaders have been constructed dynamically. The uniforms and
+        // the shader includes are now appended to them.
+
+        // Create the uniforms for the shader (if not already existing), and add the new uniforms
+        // to it:
+        const uniforms = shader.uniforms as UniformsType;
+        uniforms.extrusionRatio = { value: extrusionMaterial.extrusionRatio };
+
+        shader.vertexShader = insertShaderInclude(
+            shader.vertexShader,
+            "common",
+            "extrusion_pars_vertex"
+        );
+
+        shader.vertexShader = insertShaderInclude(
+            shader.vertexShader,
+            "begin_vertex",
+            "extrusion_vertex",
+            true
+        );
+
+        shader.fragmentShader = insertShaderInclude(
+            shader.fragmentShader,
+            "fog_pars_fragment",
+            "extrusion_pars_fragment"
+        );
+
+        shader.fragmentShader = insertShaderInclude(
+            shader.fragmentShader,
+            "fog_fragment",
+            "extrusion_fragment",
+            true
+        );
+    }
+
+    /**
+     * Handles animated extrusion on each frame. Should be installed as respective
+     * Object3D.onBeforeRender of meshes which use animated extusion feature.
+     */
+    export function addRenderHelper(object: THREE.Object3D) {
+        object.onBeforeRender = chainCallbacks(
+            object.onBeforeRender,
+            ExtrusionFeature.onBeforeRender
+        );
+    }
+
+    export function onBeforeRender(
+        renderer: THREE.WebGLRenderer,
+        scene: THREE.Scene,
+        camera: THREE.Camera,
+        geometry: THREE.Geometry | THREE.BufferGeometry,
+        material: THREE.Material,
+        group: THREE.Group
+    ) {
+        const extrusionMaterial = material as ExtrusionFeature;
+        const properties = renderer.properties.get(material);
+
+        if (
+            properties.shader !== undefined &&
+            properties.shader.uniforms.extrusionRatio !== undefined
+        ) {
+            properties.shader.uniforms.extrusionRatio.value =
+                extrusionMaterial.extrusionRatio || AnimatedExtrusionTileHandler.DEFAULT_RATIO_MAX;
+            extrusionMaterial.uniformsNeedUpdate = true;
+        }
+    }
+}
+
+/**
+ * Mixin class for extended THREE materials. Adds new properties required for `extrusionRatio`.
+ * Thre is some special handling for the extrusionRatio property, which get some setters and
+ * getters in a way that works well with the mixin.
+ *
+ * @see [[Tile#addRenderHelper]]
+ */
+export class ExtrusionFeatureMixin implements ExtrusionFeature {
+    needsUpdate?: boolean;
+    uniformsNeedUpdate?: boolean;
+    private m_extrusion: number = AnimatedExtrusionTileHandler.DEFAULT_RATIO_MAX;
+
+    /**
+     * @see [[ExtrusionFeature#extrusion]]
+     */
+    protected getExtrusionRatio(): number {
+        return this.m_extrusion;
+    }
+    /**
+     * @see [[ExtrusionFeature#extrusion]]
+     */
+    protected setExtrusionRatio(value: number) {
+        this.needsUpdate = this.needsUpdate || value !== this.m_extrusion;
+        this.m_extrusion = value;
+        if (this.needsUpdate) {
+            ExtrusionFeature.updateExtrusionFeature(this);
+        }
+    }
+
+    /**
+     * The mixin class should call this method to register the property [[extrusionRatio]]
+     */
+    protected addExtrusionProperties(): void {
+        Object.defineProperty(this, "extrusionRatio", {
+            get: () => {
+                return this.getExtrusionRatio();
+            },
+            set: val => {
+                this.setExtrusionRatio(val);
+            }
+        });
+    }
+
+    /**
+     * Apply the extrusionRatio value from the parameters to the respective properties.
+     */
+    protected applyExtrusionParameters(params?: ExtrusionFeatureParameters) {
+        // Apply initial parameter values.
+        if (params !== undefined) {
+            if (params.extrusionRatio !== undefined) {
+                this.setExtrusionRatio(params.extrusionRatio);
+            }
+        }
+
+        (this as any).onBeforeCompile = (shader: any) => {
+            ExtrusionFeature.onBeforeCompile(this, shader);
+        };
+    }
+
+    /**
+     * Copy extrusionRatio values from other ExtrusionFeature.
+     *
+     * @param source The material to copy property values from.
+     */
+    protected copyExtrusionParameters(source: ExtrusionFeature) {
+        this.setExtrusionRatio(
+            source.extrusionRatio === undefined
+                ? AnimatedExtrusionTileHandler.DEFAULT_RATIO_MAX
+                : source.extrusionRatio
+        );
+        return this;
+    }
+}
+
 /**
  * Subclass of [[THREE.MeshBasicMaterial]]. Adds new properties required for [[fadeNear]] and
  * [[fadeFar]]. In addition to the new properties (which update their respective uniforms), it is
@@ -416,21 +608,29 @@ export class FadingFeatureMixin implements FadingFeature {
  *
  * @see [[Tile#addRenderHelper]]
  */
-export class MapMeshBasicMaterial extends THREE.MeshBasicMaterial implements FadingFeature {
-    uniformsNeedUpdate?: boolean;
-
+export class MapMeshBasicMaterial extends THREE.MeshBasicMaterial
+    implements FadingFeature, ExtrusionFeature {
     /**
      * Constructs a new `FadingMeshBasicMaterial`.
      *
      * @param params `FadingMeshBasicMaterial` parameters.
      */
-    constructor(params?: THREE.MeshBasicMaterialParameters & FadingFeatureParameters) {
+    constructor(
+        params?: THREE.MeshBasicMaterialParameters &
+            FadingFeatureParameters &
+            ExtrusionFeatureParameters
+    ) {
         super(params);
 
         FadingFeature.patchGlobalShaderChunks();
 
         this.addFadingProperties();
         this.applyFadingParameters(params);
+
+        ExtrusionFeature.patchGlobalShaderChunks();
+
+        this.addExtrusionProperties();
+        this.applyExtrusionParameters(params);
     }
 
     clone(): this {
@@ -440,13 +640,15 @@ export class MapMeshBasicMaterial extends THREE.MeshBasicMaterial implements Fad
     copy(source: this): any {
         super.copy(source);
         this.copyFadingParameters(source);
+        this.copyExtrusionParameters(source);
         return this;
     }
 
     // Only here to make the compiler happy, these methods will be overriden: The actual
-    // implementations are those in [[FadingFeatureMixin]], see below:
+    // implementations are those in [[FadingFeatureMixin]] and [[ExtrusionFeatureMixin]], see below:
     //
     // applyMixinsWithoutProperties(FadingMeshBasicMaterial, [FadingFeatureMixin]);
+    // applyMixinsWithoutProperties(ExtrudionMeshBasicMaterial, [ExtrusionFeatureMixin]);
     //
     // Mixin declarations start ---------------------------------------------------------
 
@@ -466,6 +668,14 @@ export class MapMeshBasicMaterial extends THREE.MeshBasicMaterial implements Fad
         // to be overridden
     }
 
+    get extrusionRatio(): number {
+        return AnimatedExtrusionTileHandler.DEFAULT_RATIO_MAX;
+    }
+    // tslint:disable-next-line:no-unused-variable
+    set extrusionRatio(value: number) {
+        // to be overridden
+    }
+
     protected addFadingProperties(): void {
         // to be overridden
     }
@@ -477,6 +687,20 @@ export class MapMeshBasicMaterial extends THREE.MeshBasicMaterial implements Fad
 
     // tslint:disable-next-line:no-unused-variable
     protected copyFadingParameters(source: FadingFeature) {
+        // to be overridden
+    }
+
+    protected addExtrusionProperties(): void {
+        // to be overridden
+    }
+
+    // tslint:disable-next-line:no-unused-variable
+    protected applyExtrusionParameters(params?: ExtrusionFeatureParameters) {
+        // to be overridden
+    }
+
+    // tslint:disable-next-line:no-unused-variable
+    protected copyExtrusionParameters(source: FadingFeature) {
         // to be overridden
     }
     // Mixin declarations end -----------------------------------------------------------
@@ -491,7 +715,8 @@ export class MapMeshBasicMaterial extends THREE.MeshBasicMaterial implements Fad
  *
  * @see [[Tile#addRenderHelper]]
  */
-export class MapMeshStandardMaterial extends THREE.MeshStandardMaterial implements FadingFeature {
+export class MapMeshStandardMaterial extends THREE.MeshStandardMaterial
+    implements FadingFeature, ExtrusionFeature {
     uniformsNeedUpdate?: boolean;
 
     /**
@@ -499,13 +724,22 @@ export class MapMeshStandardMaterial extends THREE.MeshStandardMaterial implemen
      *
      * @param params `FadingMeshStandardMaterial` parameters.
      */
-    constructor(params?: THREE.MeshStandardMaterialParameters & FadingFeatureParameters) {
+    constructor(
+        params?: THREE.MeshStandardMaterialParameters &
+            FadingFeatureParameters &
+            ExtrusionFeatureParameters
+    ) {
         super(params);
 
         FadingFeature.patchGlobalShaderChunks();
 
         this.addFadingProperties();
         this.applyFadingParameters(params);
+
+        ExtrusionFeature.patchGlobalShaderChunks();
+
+        this.addExtrusionProperties();
+        this.applyExtrusionParameters(params);
     }
 
     clone(): this {
@@ -515,13 +749,15 @@ export class MapMeshStandardMaterial extends THREE.MeshStandardMaterial implemen
     copy(source: this): any {
         super.copy(source);
         this.copyFadingParameters(source);
+        this.copyExtrusionParameters(source);
         return this;
     }
 
     // Only here to make the compiler happy, these methods will be overriden: The actual
-    // implementations are those in [[FadingFeatureMixin]], see below:
+    // implementations are those in [[FadingFeatureMixin]] and [[ExtrusionFeatureMixin]], see below:
     //
     // applyMixinsWithoutProperties(FadingMeshBasicMaterial, [FadingFeatureMixin]);
+    // applyMixinsWithoutProperties(ExtrudionMeshBasicMaterial, [ExtrusionFeatureMixin]);
     //
     // Mixin declarations start ---------------------------------------------------------
 
@@ -541,6 +777,14 @@ export class MapMeshStandardMaterial extends THREE.MeshStandardMaterial implemen
         // to be overridden
     }
 
+    get extrusionRatio(): number {
+        return AnimatedExtrusionTileHandler.DEFAULT_RATIO_MAX;
+    }
+    // tslint:disable-next-line:no-unused-variable
+    set extrusionRatio(value: number) {
+        // to be overridden
+    }
+
     protected addFadingProperties(): void {
         // to be overridden
     }
@@ -554,6 +798,20 @@ export class MapMeshStandardMaterial extends THREE.MeshStandardMaterial implemen
     protected copyFadingParameters(source: FadingFeature) {
         // to be overridden
     }
+
+    protected addExtrusionProperties(): void {
+        // to be overridden
+    }
+
+    // tslint:disable-next-line:no-unused-variable
+    protected applyExtrusionParameters(params?: ExtrusionFeatureParameters) {
+        // to be overridden
+    }
+
+    // tslint:disable-next-line:no-unused-variable
+    protected copyExtrusionParameters(source: FadingFeature) {
+        // to be overridden
+    }
     // Mixin declarations end -----------------------------------------------------------
 }
 
@@ -563,3 +821,5 @@ export class MapMeshStandardMaterial extends THREE.MeshStandardMaterial implemen
  */
 applyMixinsWithoutProperties(MapMeshBasicMaterial, [FadingFeatureMixin]);
 applyMixinsWithoutProperties(MapMeshStandardMaterial, [FadingFeatureMixin]);
+applyMixinsWithoutProperties(MapMeshBasicMaterial, [ExtrusionFeatureMixin]);
+applyMixinsWithoutProperties(MapMeshStandardMaterial, [ExtrusionFeatureMixin]);

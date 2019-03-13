@@ -6,7 +6,8 @@
 
 import * as THREE from "three";
 
-import { FadingFeature, FadingFeatureParameters } from "./MapMeshMaterials";
+import { AnimatedExtrusionTileHandler } from "../../harp-mapview/lib/AnimatedExtrusionHandler";
+import { ExtrusionFeature, FadingFeature, FadingFeatureParameters } from "./MapMeshMaterials";
 
 const vertexSource: string = `
 attribute vec3 position;
@@ -19,6 +20,10 @@ uniform float edgeColorMix;
 
 varying vec3 vColor;
 
+#ifdef USE_EXTRUSION
+#include <extrusion_pars_vertex>
+#endif
+
 #ifdef USE_FADING
 #include <fading_pars_vertex>
 #endif
@@ -30,7 +35,14 @@ void main() {
     vColor = edgeColor.rgb;
     #endif
 
-    vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );
+    vec3 transformed = vec3( position );
+
+    #ifdef USE_EXTRUSION
+    #include <extrusion_vertex>
+    #endif
+
+    vec4 mvPosition = modelViewMatrix * vec4( transformed, 1.0 );
+
     gl_Position = projectionMatrix * mvPosition;
 
     #ifdef USE_FADING
@@ -44,6 +56,10 @@ precision highp int;
 
 varying vec3 vColor;
 
+#ifdef USE_EXTRUSION
+#include <extrusion_pars_fragment>
+#endif
+
 #ifdef USE_FADING
 #include <fading_pars_fragment>
 #endif
@@ -51,6 +67,10 @@ varying vec3 vColor;
 void main() {
     float alphaValue = 1.0;
     gl_FragColor = vec4(vColor, alphaValue);
+
+    #ifdef USE_EXTRUSION
+    #include <extrusion_fragment>
+    #endif
 
     #ifdef USE_FADING
     #include <fading_fragment>
@@ -75,7 +95,8 @@ export interface EdgeMaterialParameters extends FadingFeatureParameters {
  * Material designed to render the edges of extruded buildings using GL_LINES. It supports solid
  * colors, vertex colors, color mixing and distance fading.
  */
-export class EdgeMaterial extends THREE.RawShaderMaterial implements FadingFeature {
+export class EdgeMaterial extends THREE.RawShaderMaterial
+    implements FadingFeature, ExtrusionFeature {
     static DEFAULT_COLOR: number = 0x000000;
     static DEFAULT_COLOR_MIX: number = 0.0;
 
@@ -93,7 +114,8 @@ export class EdgeMaterial extends THREE.RawShaderMaterial implements FadingFeatu
                 edgeColor: new THREE.Uniform(new THREE.Color(EdgeMaterial.DEFAULT_COLOR)),
                 edgeColorMix: new THREE.Uniform(EdgeMaterial.DEFAULT_COLOR_MIX),
                 fadeNear: new THREE.Uniform(FadingFeature.DEFAULT_FADE_NEAR),
-                fadeFar: new THREE.Uniform(FadingFeature.DEFAULT_FADE_FAR)
+                fadeFar: new THREE.Uniform(FadingFeature.DEFAULT_FADE_FAR),
+                extrusionRatio: new THREE.Uniform(AnimatedExtrusionTileHandler.DEFAULT_RATIO_MIN)
             },
             depthWrite: false
         };
@@ -101,6 +123,7 @@ export class EdgeMaterial extends THREE.RawShaderMaterial implements FadingFeatu
         this.transparent = true;
 
         FadingFeature.patchGlobalShaderChunks();
+        ExtrusionFeature.patchGlobalShaderChunks();
 
         // Apply initial parameter values.
         if (params !== undefined) {
@@ -163,6 +186,22 @@ export class EdgeMaterial extends THREE.RawShaderMaterial implements FadingFeatu
         } else {
             this.needsUpdate = this.needsUpdate || this.defines.USE_FADING !== undefined;
             delete this.defines.USE_FADING;
+        }
+    }
+
+    get extrusionRatio(): number {
+        return this.uniforms.extrusionRatio.value as number;
+    }
+    set extrusionRatio(value: number) {
+        this.uniforms.extrusionRatio.value = value;
+        const doExtrusion =
+            value !== undefined && value >= AnimatedExtrusionTileHandler.DEFAULT_RATIO_MIN;
+        if (doExtrusion) {
+            this.needsUpdate = this.needsUpdate || this.defines.USE_EXTRUSION === undefined;
+            this.defines.USE_EXTRUSION = "";
+        } else {
+            this.needsUpdate = this.needsUpdate || this.defines.USE_EXTRUSION !== undefined;
+            delete this.defines.USE_EXTRUSION;
         }
     }
 }

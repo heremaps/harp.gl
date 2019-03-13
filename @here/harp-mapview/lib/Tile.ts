@@ -58,6 +58,7 @@ import {
 } from "@here/harp-utils";
 import * as THREE from "three";
 
+import { AnimatedExtrusionTileHandler } from "./AnimatedExtrusionHandler";
 import { ColorCache } from "./ColorCache";
 import { CopyrightInfo } from "./CopyrightInfo";
 import { DataSource } from "./DataSource";
@@ -443,6 +444,8 @@ export class Tile implements CachedResource {
 
     // List of owned textures for disposal
     private m_ownedTextures: WeakSet<THREE.Texture> = new WeakSet();
+
+    private m_animatedExtrusionTileHandler: AnimatedExtrusionTileHandler | undefined;
 
     /**
      * Creates a new `Tile`.
@@ -907,6 +910,10 @@ export class Tile implements CachedResource {
 
         if (this.m_preparedTextPaths) {
             this.m_preparedTextPaths = [];
+        }
+
+        if (this.m_animatedExtrusionTileHandler !== undefined) {
+            this.m_animatedExtrusionTileHandler.dispose();
         }
 
         this.placedTextElements.clear();
@@ -1467,12 +1474,44 @@ export class Tile implements CachedResource {
                     }
                 }
 
+                const extrudedObjects: Array<{
+                    object: THREE.Object3D;
+                    /**
+                     * If set to `true`, an [[ExtrusionFeature]] that injects extrusion shader
+                     * chunk will be applied to the material. Otherwise, extrusion should
+                     * be added in the material's shader manually.
+                     */
+                    materialFeature: boolean;
+                }> = [];
+
+                const animatedExtrusionHandler = this.mapView.animatedExtrusionHandler;
+
+                let extrusionAnimatonEnabled: boolean | undefined = false;
+
+                if (
+                    isExtrudedPolygonTechnique(technique) &&
+                    animatedExtrusionHandler !== undefined
+                ) {
+                    extrusionAnimatonEnabled =
+                        technique.animateExtrusion !== undefined &&
+                        animatedExtrusionHandler.forceEnabled === false
+                            ? technique.animateExtrusion
+                            : animatedExtrusionHandler.enabled;
+                }
+
                 const renderDepthPrePass =
                     technique.name === "extruded-polygon" && isRenderDepthPrePassEnabled(technique);
 
                 if (renderDepthPrePass) {
                     const depthPassMesh = createDepthPrePassMesh(object as THREE.Mesh);
                     objects.push(depthPassMesh);
+
+                    if (extrusionAnimatonEnabled) {
+                        extrudedObjects.push({
+                            object: depthPassMesh,
+                            materialFeature: true
+                        });
+                    }
 
                     setDepthPrePassStencil(depthPassMesh, object as THREE.Mesh);
                 }
@@ -1515,8 +1554,36 @@ export class Tile implements CachedResource {
                         false
                     );
 
+                    if (extrusionAnimatonEnabled) {
+                        extrudedObjects.push({
+                            object: edgeObj,
+                            materialFeature: false
+                        });
+                    }
+
                     this.registerTileObject(edgeObj);
                     objects.push(edgeObj);
+                }
+
+                // animate the extrusion of buildings
+                if (isExtrudedPolygonTechnique(technique) && extrusionAnimatonEnabled) {
+                    extrudedObjects.push({
+                        object,
+                        materialFeature: true
+                    });
+
+                    const extrusionAnimatonDuration =
+                        technique.animateExtrusionDuration !== undefined &&
+                        animatedExtrusionHandler.forceEnabled === false
+                            ? technique.animateExtrusionDuration
+                            : animatedExtrusionHandler.duration;
+
+                    this.m_animatedExtrusionTileHandler = new AnimatedExtrusionTileHandler(
+                        this,
+                        extrudedObjects,
+                        extrusionAnimatonDuration
+                    );
+                    this.mapView.animatedExtrusionHandler.add(this.m_animatedExtrusionTileHandler);
                 }
 
                 // Add the fill area edges as a separate geometry.

@@ -8,6 +8,7 @@ import { GeoCoordinates, MathUtils, mercatorProjection, Projection } from "@here
 import { assert, LoggerManager, PerformanceTimer } from "@here/harp-utils";
 import * as THREE from "three";
 
+import { AnimatedExtrusionHandler } from "./AnimatedExtrusionHandler";
 import { CameraMovementDetector } from "./CameraMovementDetector";
 import { IMapAntialiasSettings, IMapRenderingManager, MapRenderingManager } from "./composing";
 import { ConcurrentDecoderFacade } from "./ConcurrentDecoderFacade";
@@ -578,6 +579,8 @@ export class MapView extends THREE.EventDispatcher {
     private m_languages: string[] | undefined;
     private m_copyrightInfo: CopyrightInfo[] = [];
 
+    private m_animatedExtrusionHandler: AnimatedExtrusionHandler;
+
     /**
      * Constructs a new `MapView` with the given options or canvas element.
      *
@@ -720,6 +723,8 @@ export class MapView extends THREE.EventDispatcher {
 
         this.m_visibleTiles = new VisibleTileSet(this.m_camera, this.m_visibleTileSetOptions);
 
+        this.m_animatedExtrusionHandler = new AnimatedExtrusionHandler(this);
+
         this.initTheme();
 
         this.drawFrame();
@@ -759,6 +764,14 @@ export class MapView extends THREE.EventDispatcher {
      */
     get cameraMovementDetector(): CameraMovementDetector {
         return this.m_movementDetector;
+    }
+
+    /**
+     * The [[AnimatedExtrusionHandler]] controlls animated extrussion effect
+     * of the extruded objects in the [[Tile]]
+     */
+    get animatedExtrusionHandler(): AnimatedExtrusionHandler {
+        return this.m_animatedExtrusionHandler;
     }
 
     /**
@@ -1908,6 +1921,8 @@ export class MapView extends THREE.EventDispatcher {
                 tile.frameNumLastVisible = this.m_frameNumber;
             });
         });
+
+        this.m_animatedExtrusionHandler.zoom = this.m_zoomLevel;
 
         if (currentFrameEvent !== undefined) {
             // Make sure the counters all have a value.

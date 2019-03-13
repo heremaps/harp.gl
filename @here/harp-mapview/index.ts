@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+export * from "./lib/AnimatedExtrusionHandler";
 export * from "./lib/CameraMovementDetector";
 export * from "./lib/ColorCache";
 export * from "./lib/MapViewPoints";

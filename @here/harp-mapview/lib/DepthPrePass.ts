@@ -5,6 +5,7 @@
  */
 
 import { BaseStandardTechnique } from "@here/harp-datasource-protocol";
+import { chainCallbacks } from "@here/harp-utils";
 import * as THREE from "three";
 
 /**
@@ -129,25 +130,31 @@ export function setDepthPrePassStencil(depthMesh: THREE.Mesh, colorMesh: THREE.M
     // Set the depth pre-pass stencil bit for all processed fragments. We use `gl.ALWAYS` and not
     // `gl.NOTEQUAL` to force all fragments to pass the stencil test and write the correct depth
     // value.
-    depthMesh.onBeforeRender = renderer => {
-        const gl = renderer.context;
-        renderer.state.buffers.stencil.setTest(true);
-        renderer.state.buffers.stencil.setMask(DEPTH_PRE_PASS_STENCIL_MASK);
-        renderer.state.buffers.stencil.setOp(gl.KEEP, gl.KEEP, gl.REPLACE);
-        renderer.state.buffers.stencil.setFunc(gl.ALWAYS, 0xff, DEPTH_PRE_PASS_STENCIL_MASK);
-    };
+    depthMesh.onBeforeRender = chainCallbacks(
+        depthMesh.onBeforeRender,
+        (renderer, scene, camera, geometry, material, group) => {
+            const gl = renderer.context;
+            renderer.state.buffers.stencil.setTest(true);
+            renderer.state.buffers.stencil.setMask(DEPTH_PRE_PASS_STENCIL_MASK);
+            renderer.state.buffers.stencil.setOp(gl.KEEP, gl.KEEP, gl.REPLACE);
+            renderer.state.buffers.stencil.setFunc(gl.ALWAYS, 0xff, DEPTH_PRE_PASS_STENCIL_MASK);
+        }
+    );
 
     // Set up color mesh stencil logic.
     // Only write color for pixels with the depth pre-pass stencil bit set. Also, once a pixel is
     // rendered, set the stencil bit to 0 to prevent subsequent pixels in the same clip position
     // from rendering color again.
-    colorMesh.onBeforeRender = renderer => {
-        const gl = renderer.context;
-        renderer.state.buffers.stencil.setTest(true);
-        renderer.state.buffers.stencil.setMask(DEPTH_PRE_PASS_STENCIL_MASK);
-        renderer.state.buffers.stencil.setOp(gl.KEEP, gl.KEEP, gl.ZERO);
-        renderer.state.buffers.stencil.setFunc(gl.EQUAL, 0xff, DEPTH_PRE_PASS_STENCIL_MASK);
-    };
+    colorMesh.onBeforeRender = chainCallbacks(
+        colorMesh.onBeforeRender,
+        (renderer, scene, camera, geometry, material, group) => {
+            const gl = renderer.context;
+            renderer.state.buffers.stencil.setTest(true);
+            renderer.state.buffers.stencil.setMask(DEPTH_PRE_PASS_STENCIL_MASK);
+            renderer.state.buffers.stencil.setOp(gl.KEEP, gl.KEEP, gl.ZERO);
+            renderer.state.buffers.stencil.setFunc(gl.EQUAL, 0xff, DEPTH_PRE_PASS_STENCIL_MASK);
+        }
+    );
 
     // Disable stencil test after rendering each mesh.
     depthMesh.onAfterRender = renderer => {
