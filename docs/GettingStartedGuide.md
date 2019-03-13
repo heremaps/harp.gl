@@ -139,7 +139,7 @@ mapView.addDataSource(dataSource);
 
 Note, that this example will uses vector tiles downloaded from HERE XYZ service, and access to these
 files is protected by access token. You should replace `your access token for xyz service` with real
-one, see [HERE Credentials](#credentials) secion below.
+one, see [HERE Credentials](#credentials) section below.
 
 ### Enable user interaction with map
 
