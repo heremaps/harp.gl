@@ -15,7 +15,7 @@ Yeoman generator for [harp.gl](https://github.com/heremaps/harp.gl) based projec
 ```sh
 mkdir 3dmap-example
 cd 3dmap-example
-yo @here/harp.gl
+npx -p yo -p @here/generator-harp.gl yo @here/harp.gl
 > package name 3dmap-example name:
 ```
 This command will generate complete, clean project based on Node.js, Webpack, Typescript.
