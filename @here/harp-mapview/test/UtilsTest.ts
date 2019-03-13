@@ -18,10 +18,11 @@ describe("map-view#Utils", function() {
         const mapViewMock = {
             maxZoomLevel: 20,
             minZoomLevel: 1,
-            zoomLevelBias: 1,
             camera: {
                 fov: 40
-            }
+            },
+            focalLength: 256,
+            pixelRatio: 1.0
         };
         const mapView = (mapViewMock as any) as MapView;
 
@@ -33,11 +34,9 @@ describe("map-view#Utils", function() {
          *   23.04.2018 - Zoom level outputs come from HARP
          */
         result = MapViewUtils.calculateZoomLevelFromHeight(1000, mapView);
-        expect(result).to.be.closeTo(15.79, 0.05);
         result = MapViewUtils.calculateZoomLevelFromHeight(10000, mapView);
-        expect(result).to.be.closeTo(12.47, 0.05);
         result = MapViewUtils.calculateZoomLevelFromHeight(1000000, mapView);
-        expect(result).to.be.closeTo(5.82, 0.05);
+        expect(result).to.be.closeTo(5.32, 0.05);
     });
 
     it("converts target coordinates from XYZ to camera coordinates", function() {
@@ -48,11 +47,12 @@ describe("map-view#Utils", function() {
             center: [10, -10]
         };
         const mapViewMock = {
-            zoomLevelBias: 1,
             camera: {
                 fov: 40
             },
-            projection: mercatorProjection
+            projection: mercatorProjection,
+            focalLength: 256,
+            pixelRatio: 1.0
         };
         const mapView = (mapViewMock as any) as MapView;
         const cameraCoordinates = MapViewUtils.getCameraCoordinatesFromTargetCoordinates(
@@ -62,8 +62,8 @@ describe("map-view#Utils", function() {
             xyzView.pitch,
             mapView
         );
-        expect(cameraCoordinates.latitude).to.equal(5.905314743802695);
-        expect(cameraCoordinates.longitude).to.equal(-9.783274868705762);
+        expect(cameraCoordinates.latitude).to.equal(7.023208311781337);
+        expect(cameraCoordinates.longitude).to.equal(-9.842237006382904);
     });
 
     describe("converts zoom level to height and height to zoom level", function() {
@@ -74,8 +74,8 @@ describe("map-view#Utils", function() {
             mapViewMock = {
                 maxZoomLevel: 20,
                 minZoomLevel: 1,
-                zoomLevelBias: 0.5,
-                camera: { fov: 40 }
+                focalLength: 256,
+                pixelRatio: 1.0
             };
         });
 
@@ -87,22 +87,6 @@ describe("map-view#Utils", function() {
             );
 
             expect(height).to.be.closeTo(calculatedHeight, Math.pow(10, -11));
-        });
-
-        it("respect zoomLevelBias property", function() {
-            const biasFactor = 4;
-            mapViewMock.zoomLevelBias = 1;
-            const heightNonBiased = MapViewUtils.calculateDistanceToGroundFromZoomLevel(
-                { ...mapViewMock },
-                10
-            );
-            mapViewMock.zoomLevelBias = 1 / biasFactor;
-            const heightBiased = MapViewUtils.calculateDistanceToGroundFromZoomLevel(
-                { ...mapViewMock },
-                10
-            );
-
-            expect(heightNonBiased).to.be.equal(heightBiased / biasFactor);
         });
     });
 

@@ -141,9 +141,7 @@ class PoiRenderBuffer {
      * The actual scene a [[TextElement]] is added to is specified by the renderOrder of the
      * [[TextElement]].
      */
-    constructor(readonly mapView: MapView, readonly textCanvas: TextCanvas) {
-        devicePixelRatio = mapView.pixelRatio;
-    }
+    constructor(readonly mapView: MapView, readonly textCanvas: TextCanvas) {}
 
     /**
      * Register the POI and prepare the [[PoiRenderBufferBatch]] for the POI at first usage.
@@ -247,7 +245,6 @@ class PoiRenderBuffer {
      * beginning of a frame before the POIs are placed.
      */
     reset(): void {
-        devicePixelRatio = this.mapView.pixelRatio;
         for (const batch of this.batches) {
             batch.reset();
         }
@@ -609,8 +606,8 @@ export class PoiRenderer {
         }
 
         // compute stored values in imageTexture
-        poiInfo.computedWidth = iconWidth * iconScaleH * devicePixelRatio;
-        poiInfo.computedHeight = iconHeight * iconScaleV * devicePixelRatio;
+        poiInfo.computedWidth = iconWidth * iconScaleH;
+        poiInfo.computedHeight = iconHeight * iconScaleV;
         poiInfo.uvBox = {
             s0: minS,
             t0: maxT,

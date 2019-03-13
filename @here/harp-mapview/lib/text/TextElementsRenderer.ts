@@ -965,10 +965,9 @@ export class TextElementsRenderer {
             return;
         }
 
-        const pixelRatio = this.m_mapView.pixelRatio;
         const screenSize = this.m_mapView.renderer.getSize(this.m_tmpVector);
-        const screenXOrigin = (-screenSize.width * pixelRatio) / 2.0;
-        const screenYOrigin = (screenSize.height * pixelRatio) / 2.0;
+        const screenXOrigin = -screenSize.width / 2.0;
+        const screenYOrigin = screenSize.height / 2.0;
 
         const tempAdditionParams: AdditionParameters = {};
         const tempBufferAdditionParams: TextBufferAdditionParameters = {};
@@ -1061,15 +1060,13 @@ export class TextElementsRenderer {
             let textPath;
             if (!isPathLabel) {
                 // Adjust the label positioning.
-                tempScreenPosition.x =
-                    screenXOrigin + textElement.position.x * screenSize.width * pixelRatio;
-                tempScreenPosition.y =
-                    screenYOrigin - textElement.position.y * screenSize.height * pixelRatio;
+                tempScreenPosition.x = screenXOrigin + textElement.position.x * screenSize.width;
+                tempScreenPosition.y = screenYOrigin - textElement.position.y * screenSize.height;
                 if (textElement.xOffset !== undefined) {
-                    tempScreenPosition.x += textElement.xOffset * pixelRatio;
+                    tempScreenPosition.x += textElement.xOffset;
                 }
                 if (textElement.yOffset !== undefined) {
-                    tempScreenPosition.y -= textElement.yOffset * pixelRatio;
+                    tempScreenPosition.y -= textElement.yOffset;
                 }
 
                 tempPosition.x = tempScreenPosition.x;
@@ -1087,10 +1084,10 @@ export class TextElementsRenderer {
                 tempScreenPosition.x = screenXOrigin;
                 tempScreenPosition.y = screenYOrigin;
                 if (textElement.xOffset !== undefined) {
-                    tempScreenPosition.x += textElement.xOffset * pixelRatio;
+                    tempScreenPosition.x += textElement.xOffset;
                 }
                 if (textElement.yOffset !== undefined) {
-                    tempScreenPosition.y -= textElement.yOffset * pixelRatio;
+                    tempScreenPosition.y -= textElement.yOffset;
                 }
 
                 // Get the screen points that define the label's segments and create a path with
@@ -1098,8 +1095,8 @@ export class TextElementsRenderer {
                 // TODO: Optimize array allocations.
                 const screenPoints: THREE.Vector2[] = [];
                 for (const pt of textElement.path!) {
-                    const pX = tempScreenPosition.x + pt.x * screenSize.width * pixelRatio;
-                    const pY = tempScreenPosition.y - pt.y * screenSize.height * pixelRatio;
+                    const pX = tempScreenPosition.x + pt.x * screenSize.width;
+                    const pY = tempScreenPosition.y - pt.y * screenSize.height;
                     screenPoints.push(new THREE.Vector2(pX, pY));
                 }
                 textPath = new SimplePath();
@@ -1294,19 +1291,18 @@ export class TextElementsRenderer {
                 position: THREE.Vector3,
                 screenPosition: THREE.Vector2
             ): boolean => {
-                const pixelRatio = this.m_mapView.pixelRatio;
                 // Find the label's original position.
                 tempScreenPosition.x = tempPoiScreenPosition.x = screenPosition.x;
                 tempScreenPosition.y = tempPoiScreenPosition.y = screenPosition.y;
                 if (pointLabel.xOffset !== undefined) {
-                    tempScreenPosition.x += pointLabel.xOffset * pixelRatio;
+                    tempScreenPosition.x += pointLabel.xOffset;
                 }
                 if (pointLabel.yOffset !== undefined) {
-                    tempScreenPosition.y += pointLabel.yOffset * pixelRatio;
+                    tempScreenPosition.y += pointLabel.yOffset;
                 }
 
                 // Scale the text depending on the label's distance to the camera.
-                let textScale = pixelRatio;
+                let textScale = 1.0;
                 let distanceScale = 1.0;
                 const textDistance = worldCenter.distanceTo(position);
                 if (textDistance !== undefined) {
@@ -1771,9 +1767,8 @@ export class TextElementsRenderer {
                     return false;
                 }
 
-                const pixelRatio = this.m_mapView.pixelRatio;
                 // Compute values common for all glyphs in the label.
-                let textScale = (textCanvas.textRenderStyle.fontSize.size / 100.0) * pixelRatio;
+                let textScale = textCanvas.textRenderStyle.fontSize.size / 100.0;
                 let opacity = 1.0;
                 const tileCenterX = pathLabel.tileCenterX!;
                 const tileCenterY = pathLabel.tileCenterY!;
