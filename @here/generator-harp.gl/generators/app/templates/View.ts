@@ -51,7 +51,7 @@ export class View {
             apiFormat: APIFormat.XYZOMV,
             styleSetName: "tilezen",
             maxZoomLevel: 17,
-            authenticationCode: "access_token"
+            authenticationCode: "<%= access_token %>"
         });
         mapView.addDataSource(omvDataSource);
 

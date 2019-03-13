@@ -31,7 +31,7 @@ describe("harp.gl:app", function () {
                 }
             })
             .withPrompts({
-                'appname': 'test_name'
+                'access_token': 'test_token'
             });
 
         assert.isString(helperDirectory);
