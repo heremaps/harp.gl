@@ -121,6 +121,18 @@ export interface TextBufferCreationParameters {
      * Output per-character bounds.
      */
     outputCharacterBounds?: boolean;
+
+    /**
+     * Array containing info on whether the glyphs are upper or lower case. Needed to support
+     * `SmallCaps`.
+     */
+    letterCaseArray?: boolean[];
+
+    /**
+     * If `true`, both the [[TextRenderStyle]] and [[TextLayoutStyle]] used to generate the
+     * [[TextBufferObject]] will be stored in it.
+     */
+    storeStyles?: boolean;
 }
 
 /**
@@ -548,36 +560,45 @@ export class TextCanvas {
      * Creates a new [[TextBufferObject]]. The computed text vertex buffer is equivalent to the
      * result of performing the `addText` function for the input text in the screen origin.
      *
-     * @param text Input text.
+     * @param text Input text. Provide an array of [[GlyphData]] for better performance.
      * @param params Optional creation parameters.
      *
      * @returns New [[TextBufferObject]] (or `undefined` if requested text glyphs couldn't be
      * retrieved from the current [[FontCatalog]]).
      */
     createTextBufferObject(
-        text: string,
+        text: string | GlyphData[],
         params?: TextBufferCreationParameters
     ): TextBufferObject | undefined {
         tempTextPosition.set(0, 0, 0);
 
-        let glyphLetterCaseArray;
-        if (this.m_currentTextRenderStyle.fontVariant === FontVariant.SmallCaps) {
-            glyphLetterCaseArray = [];
-        }
-
-        const glyphArray = this.m_fontCatalog.getGlyphs(
-            text,
-            this.m_currentTextRenderStyle,
-            glyphLetterCaseArray
-        );
-        if (glyphArray === undefined) {
-            return undefined;
+        let glyphArray;
+        let upperCaseArray: boolean[] | undefined;
+        const smallCapsEnabled =
+            this.m_currentTextRenderStyle.fontVariant === FontVariant.SmallCaps;
+        if (typeof text !== "string") {
+            glyphArray = text;
+            if (params !== undefined && params.letterCaseArray) {
+                upperCaseArray = params.letterCaseArray;
+            }
+        } else {
+            upperCaseArray = [];
+            glyphArray = this.m_fontCatalog.getGlyphs(
+                text,
+                this.m_currentTextRenderStyle,
+                smallCapsEnabled ? upperCaseArray : undefined
+            );
+            if (glyphArray === undefined) {
+                return undefined;
+            }
         }
 
         let path;
         let pathOverflow;
         let textBounds;
         let characterBounds;
+        let renderStyle;
+        let layoutStyle;
         if (params !== undefined) {
             path = params.path;
             pathOverflow = params.pathOverflow;
@@ -587,27 +608,30 @@ export class TextCanvas {
             if (params.outputCharacterBounds === true) {
                 characterBounds = [];
             }
+            if (params.storeStyles === true) {
+                renderStyle = this.m_currentTextRenderStyle;
+                layoutStyle = this.m_currentTextLayoutStyle;
+            }
         }
 
         this.placeText({
-            input: glyphArray,
+            input: text,
             layer: this.m_defaultLayer,
             computeTextBuffer: true,
             textPath: path,
             textPathOverflow: pathOverflow,
             bounds: textBounds,
             individualBounds: characterBounds,
-            letterCaseArray: glyphLetterCaseArray
+            letterCaseArray: upperCaseArray
         });
 
         return new TextBufferObject(
-            text,
             glyphArray,
             new Float32Array(tempVertexBuffer),
-            this.m_currentTextRenderStyle,
-            this.m_currentTextLayoutStyle,
             textBounds,
-            characterBounds
+            characterBounds,
+            renderStyle,
+            layoutStyle
         );
     }
 

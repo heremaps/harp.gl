@@ -1016,18 +1016,12 @@ export class TextElementsRenderer {
                 if (this.m_initializedTextElementCount < MAX_INITIALIZED_TEXT_ELEMENTS_PER_FRAME) {
                     textCanvas.textRenderStyle = textElement.renderStyle!;
                     textCanvas.textLayoutStyle = textElement.layoutStyle!;
-                    if (!isPathLabel) {
-                        textElement.textBufferObject = textCanvas.createTextBufferObject(
-                            textElement.text
-                        );
-                    } else {
-                        textElement.glyphCaseArray = [];
-                        textElement.glyphs = textCanvas.fontCatalog.getGlyphs(
-                            textElement.text,
-                            textCanvas.textRenderStyle,
-                            textElement.glyphCaseArray
-                        );
-                    }
+                    textElement.glyphCaseArray = [];
+                    textElement.glyphs = textCanvas.fontCatalog.getGlyphs(
+                        textElement.text,
+                        textCanvas.textRenderStyle,
+                        textElement.glyphCaseArray
+                    );
                     textElement.loadingState = LoadingState.Initialized;
                     ++this.m_initializedTextElementCount;
                 }
@@ -1038,17 +1032,8 @@ export class TextElementsRenderer {
 
             // Move onto the next TextElement if we cannot continue adding glyphs to this layer.
             if (layer !== undefined) {
-                if (!isPathLabel) {
-                    if (
-                        layer.geometry.drawCount + textElement.textBufferObject!.glyphs.length >
-                        this.maxNumGlyphs
-                    ) {
-                        continue;
-                    }
-                } else {
-                    if (layer.geometry.drawCount + textElement.glyphs!.length > this.maxNumGlyphs) {
-                        continue;
-                    }
+                if (layer.geometry.drawCount + textElement.glyphs!.length > this.maxNumGlyphs) {
+                    continue;
                 }
             }
 
@@ -1074,11 +1059,9 @@ export class TextElementsRenderer {
                 tempPosition.z = 0.0;
 
                 tempBufferAdditionParams.position = tempPosition;
-                tempBufferAdditionParams.layer = textElement.renderOrder;
-                textCanvas.addTextBufferObject(
-                    textElement.textBufferObject!,
-                    tempBufferAdditionParams
-                );
+                tempAdditionParams.layer = textElement.renderOrder;
+                tempAdditionParams.letterCaseArray = textElement.glyphCaseArray;
+                textCanvas.addText(textElement.glyphs!, tempPosition, tempAdditionParams);
             } else {
                 // Adjust the label positioning.
                 tempScreenPosition.x = screenXOrigin;
@@ -1176,6 +1159,7 @@ export class TextElementsRenderer {
         let fadeAnimationRunning = false;
 
         const tempAdditionParams: AdditionParameters = {};
+        const tempPoiMeasurementParams: MeasurementParameters = {};
         const tempMeasurementParams: MeasurementParameters = {};
         const tempBufferAdditionParams: TextBufferAdditionParameters = {};
 
@@ -1232,19 +1216,19 @@ export class TextElementsRenderer {
                 if (this.m_initializedTextElementCount < MAX_INITIALIZED_TEXT_ELEMENTS_PER_FRAME) {
                     textCanvas.textRenderStyle = textElement.renderStyle!;
                     textCanvas.textLayoutStyle = textElement.layoutStyle!;
+                    textElement.glyphCaseArray = [];
+                    textElement.glyphs = textCanvas.fontCatalog.getGlyphs(
+                        textElement.text,
+                        textCanvas.textRenderStyle,
+                        textElement.glyphCaseArray
+                    );
                     if (!isPathLabel) {
-                        textElement.textBufferObject = textCanvas.createTextBufferObject(
-                            textElement.text,
-                            {
-                                outputBounds: true
-                            }
-                        );
-                    } else {
-                        textElement.glyphCaseArray = [];
-                        textElement.glyphs = textCanvas.fontCatalog.getGlyphs(
-                            textElement.text,
-                            textCanvas.textRenderStyle,
-                            textElement.glyphCaseArray
+                        textElement.bounds = new THREE.Box2();
+                        tempPoiMeasurementParams.letterCaseArray = textElement.glyphCaseArray!;
+                        textCanvas.measureText(
+                            textElement.glyphs!,
+                            textElement.bounds,
+                            tempPoiMeasurementParams
                         );
                     }
                     textElement.loadingState = LoadingState.Initialized;
@@ -1263,19 +1247,9 @@ export class TextElementsRenderer {
 
             // Move onto the next TextElement if we cannot continue adding glyphs to this layer.
             if (layer !== undefined) {
-                if (!isPathLabel) {
-                    if (
-                        layer.geometry.drawCount + textElement.textBufferObject!.glyphs.length >
-                        this.maxNumGlyphs
-                    ) {
-                        ++numCannotAdd;
-                        continue;
-                    }
-                } else {
-                    if (layer.geometry.drawCount + textElement.glyphs!.length > this.maxNumGlyphs) {
-                        ++numCannotAdd;
-                        continue;
-                    }
+                if (layer.geometry.drawCount + textElement.glyphs!.length > this.maxNumGlyphs) {
+                    ++numCannotAdd;
+                    continue;
                 }
             }
 
@@ -1435,20 +1409,10 @@ export class TextElementsRenderer {
                     tempPosition.y = tempScreenPosition.y;
                     tempPosition.z = textElement.renderDistance;
 
-                    tempBox2D.x =
-                        tempScreenPosition.x +
-                        pointLabel.textBufferObject!.bounds!.min.x * textScale;
-                    tempBox2D.y =
-                        tempScreenPosition.y +
-                        pointLabel.textBufferObject!.bounds!.min.y * textScale;
-                    tempBox2D.w =
-                        (pointLabel.textBufferObject!.bounds!.max.x -
-                            pointLabel.textBufferObject!.bounds!.min.x) *
-                        textScale;
-                    tempBox2D.h =
-                        (pointLabel.textBufferObject!.bounds!.max.y -
-                            pointLabel.textBufferObject!.bounds!.min.y) *
-                        textScale;
+                    tempBox2D.x = tempScreenPosition.x + pointLabel.bounds!.min.x * textScale;
+                    tempBox2D.y = tempScreenPosition.y + pointLabel.bounds!.min.y * textScale;
+                    tempBox2D.w = (pointLabel.bounds!.max.x - pointLabel.bounds!.min.x) * textScale;
+                    tempBox2D.h = (pointLabel.bounds!.max.y - pointLabel.bounds!.min.y) * textScale;
 
                     // TODO: Make the margin configurable
                     tempBox2D.x -= 4 * textScale;
@@ -1484,6 +1448,13 @@ export class TextElementsRenderer {
                         textIsFadingOut;
 
                     if (textVisible) {
+                        // Compute the TextBufferObject when we know we're gonna render this label.
+                        if (pointLabel.textBufferObject === undefined) {
+                            pointLabel.textBufferObject = textCanvas.createTextBufferObject(
+                                pointLabel.glyphs!
+                            );
+                        }
+
                         // Allocate collision info if needed.
                         if (!textIsFadingOut && pointLabel.textReservesSpace) {
                             this.m_screenCollisions.allocate(tempBox2D);
