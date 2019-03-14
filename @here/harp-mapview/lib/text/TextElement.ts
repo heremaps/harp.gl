@@ -426,25 +426,31 @@ export class TextElement {
 
     /**
      * @hidden
-     * Pre-computed text vertex buffer. Used by point labels in [[TextElementsRenderer]]. Valid
-     * after `loadingState` is `Initialized`.
-     */
-    textBufferObject?: TextBufferObject;
-
-    /**
-     * @hidden
-     * Array storing the style [[GlyphData]] for this `TextElement` to speed up rendering. Used by
-     * path labels in [[TextElementsRenderer]]. Valid after `loadingState` is `Initialized`.
+     * Array storing the style [[GlyphData]] for this `TextElement` to speed up label placement in
+     * [[TextElementsRenderer]]. Valid after `loadingState` is `Initialized`.
      */
     glyphs?: GlyphData[];
 
     /**
      * @hidden
      * Array storing the casing (`true`: uppercase, `false`: lowercase) for this `TextElement`.
-     * Used by path labels in [[TextElementsRenderer]] to support `SmallCaps`. Valid after
-     *  `loadingState` is `Initialized`.
+     * Used by labels in [[TextElementsRenderer]] to support `SmallCaps`. Valid after `loadingState`
+     * is `Initialized`.
      */
     glyphCaseArray?: boolean[];
+
+    /**
+     * Screen space bounds for this `TextElement`. Used by point labels in [[TextElementsRenderer]].
+     * Valid after `loadingState` is `Initialized`.
+     */
+    bounds?: THREE.Box2;
+
+    /**
+     * @hidden
+     * Pre-computed text vertex buffer. Used by point labels in [[TextElementsRenderer]]. Valid
+     * after label becomes visible for the first time.
+     */
+    textBufferObject?: TextBufferObject;
 
     private m_poiInfo?: PoiInfo;
 
