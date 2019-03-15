@@ -13,29 +13,35 @@ import * as THREE from "three";
 import { MapView } from "../lib/MapView";
 import { MapViewUtils } from "../lib/Utils";
 
+const cameraMock = {
+    fov: 40,
+    rotation: {
+        z: 0
+    },
+    quaternion: new THREE.Quaternion()
+};
+
 describe("map-view#Utils", function() {
     it("calculates zoom level", function() {
         const mapViewMock = {
             maxZoomLevel: 20,
             minZoomLevel: 1,
-            camera: {
-                fov: 40
-            },
+            camera: cameraMock,
             focalLength: 256,
             pixelRatio: 1.0
         };
         const mapView = (mapViewMock as any) as MapView;
 
-        let result = MapViewUtils.calculateZoomLevelFromHeight(0, mapView);
+        let result = MapViewUtils.calculateZoomLevelFromDistance(0, mapView);
         expect(result).to.be.equal(20);
-        result = MapViewUtils.calculateZoomLevelFromHeight(1000000000000, mapView);
+        result = MapViewUtils.calculateZoomLevelFromDistance(1000000000000, mapView);
         expect(result).to.be.equal(1);
         /*
          *   23.04.2018 - Zoom level outputs come from HARP
          */
-        result = MapViewUtils.calculateZoomLevelFromHeight(1000, mapView);
-        result = MapViewUtils.calculateZoomLevelFromHeight(10000, mapView);
-        result = MapViewUtils.calculateZoomLevelFromHeight(1000000, mapView);
+        result = MapViewUtils.calculateZoomLevelFromDistance(1000, mapView);
+        result = MapViewUtils.calculateZoomLevelFromDistance(10000, mapView);
+        result = MapViewUtils.calculateZoomLevelFromDistance(1000000, mapView);
         expect(result).to.be.closeTo(5.32, 0.05);
     });
 
@@ -47,9 +53,7 @@ describe("map-view#Utils", function() {
             center: [10, -10]
         };
         const mapViewMock = {
-            camera: {
-                fov: 40
-            },
+            camera: cameraMock,
             projection: mercatorProjection,
             focalLength: 256,
             pixelRatio: 1.0
@@ -67,26 +71,30 @@ describe("map-view#Utils", function() {
     });
 
     describe("converts zoom level to height and height to zoom level", function() {
-        const height = 1000;
+        const distance = 1000;
         let mapViewMock: any;
 
         beforeEach(function() {
             mapViewMock = {
                 maxZoomLevel: 20,
                 minZoomLevel: 1,
+                camera: cameraMock,
                 focalLength: 256,
                 pixelRatio: 1.0
             };
         });
 
         it("ensures that both functions are inverse", function() {
-            const zoomLevel = MapViewUtils.calculateZoomLevelFromHeight(height, { ...mapViewMock });
+            const zoomLevel = MapViewUtils.calculateZoomLevelFromDistance(distance, {
+                ...mapViewMock
+            });
+
             const calculatedHeight = MapViewUtils.calculateDistanceToGroundFromZoomLevel(
                 mapViewMock,
                 zoomLevel
             );
 
-            expect(height).to.be.closeTo(calculatedHeight, Math.pow(10, -11));
+            expect(distance).to.be.closeTo(calculatedHeight, Math.pow(10, -11));
         });
     });
 

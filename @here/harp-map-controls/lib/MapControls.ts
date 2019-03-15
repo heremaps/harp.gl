@@ -464,12 +464,7 @@ export class MapControls extends THREE.EventDispatcher {
     }
 
     private get currentZoom(): number {
-        return this.m_currentZoom !== undefined
-            ? this.m_currentZoom
-            : MapViewUtils.calculateZoomLevelFromHeight(
-                  this.mapView.camera.position.z,
-                  this.mapView
-              );
+        return this.m_currentZoom !== undefined ? this.m_currentZoom : this.mapView.zoomLevel;
     }
 
     private get zoomLevelTargetted(): number {

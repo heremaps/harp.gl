@@ -16,6 +16,9 @@ export namespace MapViewUtils {
     const rotationMatrix = new THREE.Matrix4();
     const unprojectionMatrix = new THREE.Matrix4();
     const rayCaster = new THREE.Raycaster();
+    const tempQuat = new THREE.Quaternion();
+
+    const EYE_INVERSE = new THREE.Vector3(0, 0, -1);
 
     /**
      * Yaw rotation as quaternion. Declared as a const to avoid object re-creation in certain
@@ -202,8 +205,13 @@ export namespace MapViewUtils {
         mapView: MapView,
         zoomLevel: number
     ): number {
+        tempQuat.setFromAxisAngle(EYE_INVERSE, -mapView.camera.rotation.z);
+
+        // "any" used to fix missing .angleTo() ts error
+        const cameraAngle = (mapView.camera.quaternion as any).angleTo(tempQuat);
+
         const tileSize = EarthConstants.EQUATORIAL_CIRCUMFERENCE / Math.pow(2, zoomLevel);
-        return (mapView.focalLength * tileSize) / 256;
+        return ((mapView.focalLength * tileSize) / 256) * Math.cos(cameraAngle);
     }
 
     /**
@@ -302,7 +310,8 @@ export namespace MapViewUtils {
     }
 
     /**
-     * Calculates the zoom level, which corresponds to the current height position of the camera.
+     * Calculates the zoom level, which corresponds to the current distance from
+     * camera to lookAt point.
      * Therefore the zoom level is a `float` and not an `int`. The height of the camera can be in
      * between zoom levels. By setting the zoom level, you change the height position of the camera
      * in away that the field of view of the camera should be able to cover one tile for the given
@@ -312,8 +321,8 @@ export namespace MapViewUtils {
      * set the zoom level of the camera to 14, then you are able to see the whole tile in front of
      * you.
      */
-    export function calculateZoomLevelFromHeight(height: number, mapView: MapView): number {
-        const tileSize = (256 * height) / mapView.focalLength;
+    export function calculateZoomLevelFromDistance(distance: number, mapView: MapView): number {
+        const tileSize = (256 * distance) / mapView.focalLength;
         return geoUtils.MathUtils.clamp(
             Math.log2(EarthConstants.EQUATORIAL_CIRCUMFERENCE / tileSize),
             mapView.minZoomLevel,
