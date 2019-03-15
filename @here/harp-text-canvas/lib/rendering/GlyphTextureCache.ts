@@ -9,9 +9,7 @@ import * as THREE from "three";
 
 import { Font, FontMetrics } from "./FontCatalog";
 import { GlyphData } from "./GlyphData";
-import { TextGeometry } from "./TextGeometry";
 import { GlyphClearMaterial, GlyphCopyMaterial } from "./TextMaterials";
-import { FontUnit, TextRenderStyle } from "./TextStyle";
 
 /**
  * Maximum number of texture atlas pages we can copy from in a single go. This amount is determined
@@ -51,17 +49,22 @@ export class GlyphTextureCache {
     private m_camera: THREE.OrthographicCamera;
     private m_rt: THREE.WebGLRenderTarget;
 
-    private m_textRenderStyle: TextRenderStyle;
-
-    private m_copyMaterial: GlyphCopyMaterial;
     private m_copyTextureSet: Set<THREE.Texture>;
     private m_copyTransform: THREE.Matrix3;
-    private m_copyPositions: THREE.Vector3[];
-    private m_copyGeometry: TextGeometry;
+    private m_copyPositions: THREE.Vector2[];
+    private m_copyMaterial: GlyphCopyMaterial;
+    private m_copyVertexBuffer: THREE.InterleavedBuffer;
+    private m_copyPositionAttribute: THREE.InterleavedBufferAttribute;
+    private m_copyUVAttribute: THREE.InterleavedBufferAttribute;
+    private m_copyGeometry: THREE.BufferGeometry;
+    private m_copyMesh: THREE.Mesh;
+    private m_copyGeometryDrawCount: number;
 
     private m_clearMaterial: GlyphClearMaterial;
-    private m_clearGlyph: GlyphData;
-    private m_clearGeometry: TextGeometry;
+    private m_clearPositionAttribute: THREE.BufferAttribute;
+    private m_clearGeometry: THREE.BufferGeometry;
+    private m_clearMesh: THREE.Mesh;
+    private m_clearGeometryDrawCount: number;
 
     /**
      * Creates a `GlyphTextureCache` object.
@@ -119,31 +122,58 @@ export class GlyphTextureCache {
             stencilBuffer: false
         });
 
-        this.m_textRenderStyle = new TextRenderStyle({
-            fontSize: { unit: FontUnit.Percent, size: 100, backgroundSize: 0.0 }
-        });
-
-        this.m_copyMaterial = new GlyphCopyMaterial();
         this.m_copyTextureSet = new Set<THREE.Texture>();
         this.m_copyTransform = new THREE.Matrix3();
         this.m_copyPositions = [];
         this.m_copyPositions.push(
-            new THREE.Vector3(),
-            new THREE.Vector3(),
-            new THREE.Vector3(),
-            new THREE.Vector3()
+            new THREE.Vector2(),
+            new THREE.Vector2(),
+            new THREE.Vector2(),
+            new THREE.Vector2()
         );
-        this.m_copyGeometry = new TextGeometry(this.m_copyMaterial, this.m_copyMaterial, capacity);
+
+        this.m_copyMaterial = new GlyphCopyMaterial();
+        this.m_copyVertexBuffer = new THREE.InterleavedBuffer(new Float32Array(capacity * 20), 5);
+        this.m_copyVertexBuffer.setDynamic(true);
+
+        this.m_copyPositionAttribute = new THREE.InterleavedBufferAttribute(
+            this.m_copyVertexBuffer,
+            3,
+            0
+        );
+        this.m_copyUVAttribute = new THREE.InterleavedBufferAttribute(
+            this.m_copyVertexBuffer,
+            2,
+            3
+        );
+        this.m_copyGeometry = new THREE.BufferGeometry();
+        this.m_copyGeometry.addAttribute("position", this.m_copyPositionAttribute);
+        this.m_copyGeometry.addAttribute("uv", this.m_copyUVAttribute);
+
+        const copyIndexBuffer = new THREE.BufferAttribute(new Uint32Array(capacity * 6), 1);
+        copyIndexBuffer.setDynamic(true);
+        this.m_copyGeometry.setIndex(copyIndexBuffer);
+        this.m_copyMesh = new THREE.Mesh(this.m_copyGeometry, this.m_copyMaterial);
+        this.m_copyMesh.frustumCulled = false;
+        this.m_copyGeometryDrawCount = 0;
 
         this.m_clearMaterial = new GlyphClearMaterial();
-        this.m_clearGeometry = new TextGeometry(
-            this.m_clearMaterial,
-            this.m_clearMaterial,
-            capacity
+        this.m_clearPositionAttribute = new THREE.BufferAttribute(
+            new Float32Array(capacity * 8),
+            2
         );
-        this.m_clearGlyph = this.initClearGlyph();
+        this.m_clearPositionAttribute.setDynamic(true);
+        this.m_clearGeometry = new THREE.BufferGeometry();
+        this.m_clearGeometry.addAttribute("position", this.m_clearPositionAttribute);
+        const clearIndexBuffer = new THREE.BufferAttribute(new Uint32Array(capacity * 6), 1);
+        clearIndexBuffer.setDynamic(true);
 
-        this.m_scene.add(this.m_clearGeometry.mesh, this.m_copyGeometry.mesh);
+        this.m_clearGeometry.setIndex(clearIndexBuffer);
+        this.m_clearMesh = new THREE.Mesh(this.m_clearGeometry, this.m_clearMaterial);
+        this.m_clearMesh.frustumCulled = false;
+        this.m_clearGeometryDrawCount = 0;
+
+        this.m_scene.add(this.m_clearMesh, this.m_copyMesh);
     }
 
     /**
@@ -151,7 +181,7 @@ export class GlyphTextureCache {
      */
     dispose(): void {
         this.m_entryCache.clear();
-        this.m_scene.remove(this.m_clearGeometry.mesh, this.m_copyGeometry.mesh);
+        this.m_scene.remove(this.m_clearMesh, this.m_copyMesh);
         this.m_rt.dispose();
         this.m_clearMaterial.dispose();
         this.m_copyMaterial.dispose();
@@ -192,60 +222,7 @@ export class GlyphTextureCache {
             throw new Error("GlyphTextureCache is uninitialized!");
         }
         this.clearCacheEntry(oldestEntry.value);
-
-        this.m_copyTextureSet.add(glyph.texture);
-        let copyTextureIndex = 0;
-        for (const value of this.m_copyTextureSet.values()) {
-            if (value === glyph.texture) {
-                break;
-            }
-            copyTextureIndex++;
-        }
-        glyph.copyIndex = copyTextureIndex;
-
-        this.m_copyTransform.set(
-            1.0,
-            0.0,
-            oldestEntry.value.location.x * this.entryWidth - glyph.offsetX,
-            0.0,
-            1.0,
-            oldestEntry.value.location.y * this.entryHeight - glyph.positions[0].y,
-            0.0,
-            0.0,
-            0.0
-        );
-        for (let i = 0; i < 4; ++i) {
-            this.m_copyPositions[i].set(
-                glyph.positions[i].x,
-                glyph.positions[i].y,
-                glyph.positions[i].z
-            );
-            this.m_copyPositions[i].applyMatrix3(this.m_copyTransform);
-        }
-        this.m_copyGeometry.add(
-            glyph,
-            this.m_copyPositions,
-            0,
-            0,
-            false,
-            this.m_textRenderStyle,
-            true
-        );
-
-        const u0 = this.m_copyPositions[0].x / this.m_textureSize.x;
-        const v0 = this.m_copyPositions[0].y / this.m_textureSize.y;
-        const u1 = this.m_copyPositions[3].x / this.m_textureSize.x;
-        const v1 = this.m_copyPositions[3].y / this.m_textureSize.y;
-        glyph.dynamicTextureCoordinates[0].set(u0, v0);
-        glyph.dynamicTextureCoordinates[1].set(u1, v0);
-        glyph.dynamicTextureCoordinates[2].set(u0, v1);
-        glyph.dynamicTextureCoordinates[3].set(u1, v1);
-
-        glyph.isInCache = true;
-        this.m_entryCache.set(hash, {
-            glyphData: glyph,
-            location: oldestEntry.value.location
-        });
+        this.copyGlyphToCache(hash, glyph, oldestEntry.value.location);
     }
 
     /**
@@ -274,8 +251,8 @@ export class GlyphTextureCache {
      * Clears the internal LRUCache.
      */
     clear(): void {
-        this.m_clearGeometry.clear();
-        this.m_copyGeometry.clear();
+        this.m_copyGeometryDrawCount = 0;
+        this.m_clearGeometryDrawCount = 0;
         this.m_entryCache.clear();
         this.m_copyTextureSet.clear();
         this.initCacheEntries();
@@ -288,28 +265,43 @@ export class GlyphTextureCache {
      * @param renderer WebGLRenderer.
      */
     update(renderer: THREE.WebGLRenderer): void {
-        this.m_clearGeometry.update();
         let oldRenderTarget: THREE.RenderTarget | undefined;
 
-        const willClearGeometry = this.m_clearGeometry.drawCount > 0;
-        const willCopyGeometry = this.m_copyGeometry.drawCount > 0;
+        const willClearGeometry = this.m_clearGeometryDrawCount > 0;
+        const willCopyGeometry = this.m_copyGeometryDrawCount > 0;
 
         if (willClearGeometry || willCopyGeometry) {
             oldRenderTarget = renderer.getRenderTarget();
             renderer.setRenderTarget(this.m_rt);
         }
+
         if (willClearGeometry) {
-            this.m_clearGeometry.mesh.visible = true;
-            this.m_copyGeometry.mesh.visible = false;
+            this.m_clearPositionAttribute.needsUpdate = true;
+            this.m_clearPositionAttribute.updateRange.offset = 0;
+            this.m_clearPositionAttribute.updateRange.count = this.m_clearGeometryDrawCount * 8;
+            this.m_clearGeometry.index.needsUpdate = true;
+            this.m_clearGeometry.index.updateRange.offset = 0;
+            this.m_clearGeometry.index.updateRange.count = this.m_clearGeometryDrawCount * 6;
+            this.m_clearGeometry.setDrawRange(0, this.m_clearGeometryDrawCount * 6);
+
+            this.m_clearMesh.visible = true;
+            this.m_copyMesh.visible = false;
 
             renderer.render(this.m_scene, this.m_camera);
-            this.m_clearGeometry.clear();
-            this.m_clearGeometry.mesh.visible = false;
+            this.m_clearGeometryDrawCount = 0;
+            this.m_clearMesh.visible = false;
         }
 
-        this.m_copyGeometry.update();
         if (willCopyGeometry) {
-            this.m_copyGeometry.mesh.visible = true;
+            this.m_copyVertexBuffer.needsUpdate = true;
+            this.m_copyVertexBuffer.updateRange.offset = 0;
+            this.m_copyVertexBuffer.updateRange.count = this.m_copyGeometryDrawCount * 20;
+            this.m_copyGeometry.index.needsUpdate = true;
+            this.m_copyGeometry.index.updateRange.offset = 0;
+            this.m_copyGeometry.index.updateRange.count = this.m_copyGeometryDrawCount * 6;
+            this.m_copyGeometry.setDrawRange(0, this.m_copyGeometryDrawCount * 6);
+
+            this.m_copyMesh.visible = true;
             const srcPages = Array.from(this.m_copyTextureSet);
             const nCopies = Math.ceil(this.m_copyTextureSet.size / MAX_NUM_COPY_PAGES);
             for (let copyIndex = 0; copyIndex < nCopies; copyIndex++) {
@@ -325,7 +317,7 @@ export class GlyphTextureCache {
                 renderer.render(this.m_scene, this.m_camera);
             }
             this.m_copyTextureSet.clear();
-            this.m_copyGeometry.clear();
+            this.m_copyGeometryDrawCount = 0;
         }
         if (willClearGeometry || willCopyGeometry) {
             renderer.setRenderTarget(oldRenderTarget);
@@ -375,68 +367,118 @@ export class GlyphTextureCache {
         }
     }
 
-    private initClearGlyph() {
-        const dummyMetrics: FontMetrics = {
-            size: 0,
-            distanceRange: 0,
-            base: 0,
-            lineHeight: 0,
-            lineGap: 0,
-            capHeight: 0,
-            xHeight: 0
-        };
-        const dummyFont: Font = {
-            name: "",
-            metrics: dummyMetrics,
-            charset: ""
-        };
-        return new GlyphData(
-            0,
-            "",
-            this.entryWidth,
-            this.entryHeight,
-            this.entryWidth,
-            0,
-            0,
-            0,
-            0,
-            1,
-            1,
-            THREE.Texture.DEFAULT_IMAGE,
-            dummyFont
+    private copyGlyphToCache(hash: string, glyph: GlyphData, cacheLocation: THREE.Vector2) {
+        this.m_copyTextureSet.add(glyph.texture);
+        let copyTextureIndex = 0;
+        for (const value of this.m_copyTextureSet.values()) {
+            if (value === glyph.texture) {
+                break;
+            }
+            copyTextureIndex++;
+        }
+        glyph.copyIndex = copyTextureIndex;
+
+        this.m_copyTransform.set(
+            1.0,
+            0.0,
+            cacheLocation.x * this.entryWidth - glyph.offsetX,
+            0.0,
+            1.0,
+            cacheLocation.y * this.entryHeight - glyph.positions[0].y,
+            0.0,
+            0.0,
+            0.0
         );
+        for (let i = 0; i < 4; ++i) {
+            this.m_copyPositions[i].set(glyph.positions[i].x, glyph.positions[i].y);
+            this.m_copyPositions[i].applyMatrix3(this.m_copyTransform);
+        }
+
+        if (this.m_copyGeometryDrawCount >= this.capacity) {
+            return;
+        }
+        const baseVertex = this.m_copyGeometryDrawCount * 4;
+        const baseIndex = this.m_copyGeometryDrawCount * 6;
+
+        for (let i = 0; i < 4; ++i) {
+            this.m_copyPositionAttribute.setXYZ(
+                baseVertex + i,
+                this.m_copyPositions[i].x,
+                this.m_copyPositions[i].y,
+                glyph.copyIndex
+            );
+            this.m_copyUVAttribute.setXY(
+                baseVertex + i,
+                glyph.sourceTextureCoordinates[i].x,
+                glyph.sourceTextureCoordinates[i].y
+            );
+        }
+
+        this.m_copyGeometry.index.setX(baseIndex, baseVertex);
+        this.m_copyGeometry.index.setX(baseIndex + 1, baseVertex + 1);
+        this.m_copyGeometry.index.setX(baseIndex + 2, baseVertex + 2);
+        this.m_copyGeometry.index.setX(baseIndex + 3, baseVertex + 2);
+        this.m_copyGeometry.index.setX(baseIndex + 4, baseVertex + 1);
+        this.m_copyGeometry.index.setX(baseIndex + 5, baseVertex + 3);
+
+        ++this.m_copyGeometryDrawCount;
+
+        const u0 = this.m_copyPositions[0].x / this.m_textureSize.x;
+        const v0 = this.m_copyPositions[0].y / this.m_textureSize.y;
+        const u1 = this.m_copyPositions[3].x / this.m_textureSize.x;
+        const v1 = this.m_copyPositions[3].y / this.m_textureSize.y;
+        glyph.dynamicTextureCoordinates[0].set(u0, v0);
+        glyph.dynamicTextureCoordinates[1].set(u1, v0);
+        glyph.dynamicTextureCoordinates[2].set(u0, v1);
+        glyph.dynamicTextureCoordinates[3].set(u1, v1);
+
+        glyph.isInCache = true;
+        this.m_entryCache.set(hash, {
+            glyphData: glyph,
+            location: cacheLocation
+        });
     }
 
     private clearCacheEntry(entry: GlyphCacheEntry) {
         entry.glyphData.isInCache = false;
         this.m_copyPositions[0].set(
             entry.location.x * this.entryWidth,
-            entry.location.y * this.entryHeight,
-            0
+            entry.location.y * this.entryHeight
         );
         this.m_copyPositions[1].set(
             (entry.location.x + 1) * this.entryWidth,
-            entry.location.y * this.entryHeight,
-            0
+            entry.location.y * this.entryHeight
         );
         this.m_copyPositions[2].set(
             entry.location.x * this.entryWidth,
-            (entry.location.y + 1) * this.entryHeight,
-            0
+            (entry.location.y + 1) * this.entryHeight
         );
         this.m_copyPositions[3].set(
             (entry.location.x + 1) * this.entryWidth,
-            (entry.location.y + 1) * this.entryHeight,
-            0
+            (entry.location.y + 1) * this.entryHeight
         );
-        this.m_clearGeometry.add(
-            this.m_clearGlyph,
-            this.m_copyPositions,
-            0,
-            0,
-            false,
-            this.m_textRenderStyle,
-            true
-        );
+
+        if (this.m_clearGeometryDrawCount >= this.capacity) {
+            return;
+        }
+        const baseVertex = this.m_clearGeometryDrawCount * 4;
+        const baseIndex = this.m_clearGeometryDrawCount * 6;
+
+        for (let i = 0; i < 4; ++i) {
+            this.m_clearPositionAttribute.setXY(
+                baseVertex + i,
+                this.m_copyPositions[i].x,
+                this.m_copyPositions[i].y
+            );
+        }
+
+        this.m_clearGeometry.index.setX(baseIndex, baseVertex);
+        this.m_clearGeometry.index.setX(baseIndex + 1, baseVertex + 1);
+        this.m_clearGeometry.index.setX(baseIndex + 2, baseVertex + 2);
+        this.m_clearGeometry.index.setX(baseIndex + 3, baseVertex + 2);
+        this.m_clearGeometry.index.setX(baseIndex + 4, baseVertex + 1);
+        this.m_clearGeometry.index.setX(baseIndex + 5, baseVertex + 3);
+
+        ++this.m_clearGeometryDrawCount;
     }
 }

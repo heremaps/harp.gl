@@ -186,7 +186,12 @@ class PoiRenderBuffer {
             layer = this.textCanvas.getLayer(renderOrder);
         }
 
-        bufferBatch = new PoiRenderBufferBatch(this.mapView, layer!.scene, imageItem, renderOrder);
+        bufferBatch = new PoiRenderBufferBatch(
+            this.mapView,
+            layer!.storage.scene,
+            imageItem,
+            renderOrder
+        );
         bufferBatch.init();
         batchSet.set(renderOrder, mappedIndex);
         this.batches.push(bufferBatch);

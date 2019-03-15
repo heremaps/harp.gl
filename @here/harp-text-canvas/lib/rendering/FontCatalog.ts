@@ -517,6 +517,9 @@ export class FontCatalog {
         font: Font
     ): Promise<GlyphData> {
         const json = await this.loadBlock(block, font, fontStyle);
+        if (json === undefined) {
+            return this.m_replacementGlyph;
+        }
 
         const sourceGlyphData = (json.chars as SrcGlyphData[]).find(char => char.id === codePoint);
         const assetsPath = this.getAssetsPath(fontStyle, font);

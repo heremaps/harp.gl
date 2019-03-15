@@ -37,6 +37,7 @@ export class TextGeometry {
      */
     readonly capacity: number;
 
+    private m_currentCapacity: number;
     private m_drawCount: number;
     private m_updateOffset: number;
 
@@ -59,17 +60,26 @@ export class TextGeometry {
      *
      * @param material Material used to render foreground glyphs.
      * @param backgroundMaterial Material used to render background glyphs.
+     * @param initialSize Initial amount of glyphs that can be stored.
      * @param capacity Maximum glyph capacity.
      *
      * @returns New `TextGeometry`.
      */
-    constructor(material: THREE.Material, backgroundMaterial: THREE.Material, capacity: number) {
+    constructor(
+        readonly scene: THREE.Scene,
+        material: THREE.Material,
+        backgroundMaterial: THREE.Material,
+        initialSize: number,
+        capacity: number
+    ) {
         this.capacity = Math.min(capacity, MAX_CAPACITY);
+        this.m_currentCapacity = Math.min(initialSize, capacity);
         this.m_drawCount = 0;
         this.m_updateOffset = 0;
+        this.m_pickingCount = 0;
 
         this.m_vertexBuffer = new THREE.InterleavedBuffer(
-            new Float32Array(this.capacity * QUAD_VERTEX_MEMORY_FOOTPRINT),
+            new Float32Array(this.m_currentCapacity * QUAD_VERTEX_MEMORY_FOOTPRINT),
             VERTEX_BUFFER_STRIDE
         );
         this.m_vertexBuffer.setDynamic(true);
@@ -79,7 +89,7 @@ export class TextGeometry {
         this.m_bgColorAttribute = new THREE.InterleavedBufferAttribute(this.m_vertexBuffer, 4, 12);
 
         this.m_indexBuffer = new THREE.BufferAttribute(
-            new Uint32Array(this.capacity * QUAD_INDEX_MEMORY_FOOTPRINT),
+            new Uint32Array(this.m_currentCapacity * QUAD_INDEX_MEMORY_FOOTPRINT),
             INDEX_BUFFER_STRIDE
         );
         this.m_indexBuffer.setDynamic(true);
@@ -91,19 +101,20 @@ export class TextGeometry {
         this.m_geometry.addAttribute("bgColor", this.m_bgColorAttribute);
         this.m_geometry.setIndex(this.m_indexBuffer);
 
+        this.m_pickingDataArray = new Array(this.m_currentCapacity);
+
         this.m_mesh = new THREE.Mesh(this.m_geometry, material);
         this.m_bgMesh = new THREE.Mesh(this.m_geometry, backgroundMaterial);
         this.m_mesh.renderOrder = Number.MAX_SAFE_INTEGER;
         this.m_bgMesh.renderOrder = Number.MAX_SAFE_INTEGER - 1;
-
-        this.m_pickingCount = 0;
-        this.m_pickingDataArray = new Array(capacity);
+        this.scene.add(this.m_bgMesh, this.m_mesh);
     }
 
     /**
      * Release all allocated resources.
      */
     dispose() {
+        this.scene.remove(this.m_bgMesh, this.m_mesh);
         this.m_geometry.dispose();
     }
 
@@ -166,7 +177,6 @@ export class TextGeometry {
      * @param bgWeight Foreground glyph sampling weight.
      * @param mirrored If `true`, UVs will be horizontally mirrored (needed for RTL punctuation).
      * @param style Currently set [[TextRenderStyle]].
-     * @param isCopyGeometry If `true`, it will use the original UVs to copy the glyph data.
      *
      * @returns Result of the addition.
      */
@@ -176,11 +186,13 @@ export class TextGeometry {
         weight: number,
         bgWeight: number,
         mirrored: boolean,
-        style: TextRenderStyle,
-        isCopyGeometry?: boolean
+        style: TextRenderStyle
     ): boolean {
         if (this.m_drawCount >= this.capacity) {
             return false;
+        } else if (this.m_drawCount >= this.m_currentCapacity) {
+            const newSize = Math.min(this.m_currentCapacity * 2, this.capacity);
+            this.resizeBuffers(newSize);
         }
 
         const baseVertex = this.m_drawCount * VERTICES_PER_QUAD;
@@ -192,19 +204,13 @@ export class TextGeometry {
                 corners[i].x,
                 corners[i].y,
                 corners[i].z,
-                isCopyGeometry === true
-                    ? glyphData.copyIndex
-                    : (mirrored ? -1.0 : 1.0) * style.rotation
+                (mirrored ? -1.0 : 1.0) * style.rotation
             );
             const mirroredUVIdx = mirrored ? ((i + 1) % 2) + Math.floor(i / 2) * 2 : i;
             this.m_uvAttribute.setXYZW(
                 baseVertex + i,
-                (isCopyGeometry === true
-                    ? glyphData.sourceTextureCoordinates
-                    : glyphData.dynamicTextureCoordinates)[mirroredUVIdx].x,
-                (isCopyGeometry === true
-                    ? glyphData.sourceTextureCoordinates
-                    : glyphData.dynamicTextureCoordinates)[mirroredUVIdx].y,
+                glyphData.dynamicTextureCoordinates[mirroredUVIdx].x,
+                glyphData.dynamicTextureCoordinates[mirroredUVIdx].y,
                 weight,
                 bgWeight
             );
@@ -309,6 +315,9 @@ export class TextGeometry {
     ): boolean {
         if (this.m_drawCount + textBufferObject.glyphs.length >= this.capacity) {
             return false;
+        } else if (this.m_drawCount + textBufferObject.glyphs.length >= this.m_currentCapacity) {
+            const newSize = Math.min(this.m_currentCapacity * 2, this.capacity);
+            this.resizeBuffers(newSize);
         }
 
         const s = scale || 1.0;
@@ -418,7 +427,7 @@ export class TextGeometry {
      * @param pickingData Picking data to be added.
      */
     addPickingData(startIdx: number, endIdx: number, pickingData: any): boolean {
-        if (this.m_pickingCount >= this.capacity) {
+        if (this.m_pickingCount >= this.m_currentCapacity) {
             return false;
         }
 
@@ -484,5 +493,40 @@ export class TextGeometry {
                 break;
             }
         }
+    }
+
+    private resizeBuffers(size: number) {
+        this.m_currentCapacity = size;
+
+        const newVertexBuffer = new Float32Array(size * QUAD_VERTEX_MEMORY_FOOTPRINT);
+        newVertexBuffer.set(this.m_vertexBuffer.array);
+        this.m_vertexBuffer = new THREE.InterleavedBuffer(newVertexBuffer, VERTEX_BUFFER_STRIDE);
+        this.m_vertexBuffer.setDynamic(true);
+        this.m_positionAttribute = new THREE.InterleavedBufferAttribute(this.m_vertexBuffer, 4, 0);
+        this.m_uvAttribute = new THREE.InterleavedBufferAttribute(this.m_vertexBuffer, 4, 4);
+        this.m_colorAttribute = new THREE.InterleavedBufferAttribute(this.m_vertexBuffer, 4, 8);
+        this.m_bgColorAttribute = new THREE.InterleavedBufferAttribute(this.m_vertexBuffer, 4, 12);
+
+        const newIndexBuffer = new Uint32Array(size * QUAD_INDEX_MEMORY_FOOTPRINT);
+        newIndexBuffer.set(this.m_indexBuffer.array);
+        this.m_indexBuffer = new THREE.BufferAttribute(newIndexBuffer, INDEX_BUFFER_STRIDE);
+        this.m_indexBuffer.setDynamic(true);
+
+        this.m_geometry.dispose();
+        this.m_geometry = new THREE.BufferGeometry();
+        this.m_geometry.addAttribute("position", this.m_positionAttribute);
+        this.m_geometry.addAttribute("uv", this.m_uvAttribute);
+        this.m_geometry.addAttribute("color", this.m_colorAttribute);
+        this.m_geometry.addAttribute("bgColor", this.m_bgColorAttribute);
+        this.m_geometry.setIndex(this.m_indexBuffer);
+
+        this.m_pickingDataArray.length = this.m_currentCapacity;
+
+        this.scene.remove(this.m_bgMesh, this.m_mesh);
+        this.m_mesh = new THREE.Mesh(this.m_geometry, this.m_mesh.material);
+        this.m_bgMesh = new THREE.Mesh(this.m_geometry, this.m_bgMesh.material);
+        this.m_mesh.renderOrder = Number.MAX_SAFE_INTEGER;
+        this.m_bgMesh.renderOrder = Number.MAX_SAFE_INTEGER - 1;
+        this.scene.add(this.m_bgMesh, this.m_mesh);
     }
 }

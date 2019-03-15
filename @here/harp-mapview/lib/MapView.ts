@@ -362,6 +362,14 @@ export interface MapViewOptions {
     collisionDebugCanvas?: HTMLCanvasElement;
 
     /**
+     * Optional initial number of glyphs (characters) for labels. In situations with limited,
+     * available memory, decreasing this number may be beneficial.
+     *
+     * @default `1024`
+     */
+    minNumGlyphs?: number;
+
+    /**
      * Optional limit of number of glyphs (characters) for labels. In situations with limited,
      * available memory, decreasing this number may be beneficial.
      *
@@ -2347,6 +2355,7 @@ export class MapView extends THREE.EventDispatcher {
                 this,
                 this.m_screenCollisions,
                 this.m_screenProjector,
+                this.m_options.minNumGlyphs,
                 this.m_options.maxNumGlyphs,
                 this.m_theme,
                 this.m_options.maxNumVisibleLabels,

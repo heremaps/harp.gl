@@ -359,6 +359,7 @@ export namespace TextCanvasDynamicExample {
                 textCanvas = new TextCanvas({
                     renderer: webglRenderer,
                     fontCatalog: loadedFontCatalog,
+                    minGlyphCount: 16,
                     maxGlyphCount: characterCount
                 });
                 loadedFontCatalog.loadCharset(textSample, textRenderStyle).then(() => {

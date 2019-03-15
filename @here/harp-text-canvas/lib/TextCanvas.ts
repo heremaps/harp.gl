@@ -160,8 +160,7 @@ export const DEFAULT_TEXT_CANVAS_LAYER = 0;
  */
 export interface TextCanvasLayer {
     id: number;
-    scene: THREE.Scene;
-    geometry: TextGeometry;
+    storage: TextGeometry;
 }
 
 /**
@@ -179,7 +178,12 @@ export interface TextCanvasParameters {
     fontCatalog: FontCatalog;
 
     /**
-     * Maximum amount of glyphs this [[TextCanvas]] can render simultaneously.
+     * Minimum amount of glyphs each [[TextCanvas]] layer can store.
+     */
+    minGlyphCount: number;
+
+    /**
+     * Maximum amount of glyphs each [[TextCanvas]] layer can store.
      */
     maxGlyphCount: number;
 
@@ -200,7 +204,12 @@ export interface TextCanvasParameters {
  */
 export class TextCanvas {
     /**
-     * Maximum amount of glyphs this [[TextCanvas]] can render simultaneously.
+     * Minimum amount of glyphs each [[TextCanvas]] layer can store.
+     */
+    readonly minGlyphCount: number;
+
+    /**
+     * Maximum amount of glyphs each [[TextCanvas]] layer can store.
      */
     readonly maxGlyphCount: number;
 
@@ -233,6 +242,7 @@ export class TextCanvas {
     constructor(params: TextCanvasParameters) {
         this.m_renderer = params.renderer;
         this.m_fontCatalog = params.fontCatalog;
+        this.minGlyphCount = params.minGlyphCount;
         this.maxGlyphCount = params.maxGlyphCount;
 
         if (params.material === undefined) {
@@ -255,13 +265,14 @@ export class TextCanvas {
 
         this.m_defaultLayer = {
             id: DEFAULT_TEXT_CANVAS_LAYER,
-            scene: new THREE.Scene(),
-            geometry: new TextGeometry(this.m_material, this.m_bgMaterial, this.maxGlyphCount)
+            storage: new TextGeometry(
+                new THREE.Scene(),
+                this.m_material,
+                this.m_bgMaterial,
+                this.minGlyphCount,
+                this.maxGlyphCount
+            )
         };
-        this.m_defaultLayer.scene.add(
-            this.m_defaultLayer.geometry.backgroundMesh,
-            this.m_defaultLayer.geometry.mesh
-        );
         this.m_layers = [this.m_defaultLayer];
 
         this.m_defaultTextRenderStyle = new TextRenderStyle();
@@ -317,7 +328,7 @@ export class TextCanvas {
 
         this.m_material = value;
         for (const layer of this.m_layers) {
-            layer.geometry.mesh.material = this.m_material;
+            layer.storage.mesh.material = this.m_material;
         }
     }
 
@@ -335,7 +346,7 @@ export class TextCanvas {
 
         this.m_bgMaterial = value;
         for (const layer of this.m_layers) {
-            layer.geometry.backgroundMesh.material = this.m_bgMaterial;
+            layer.storage.backgroundMesh.material = this.m_bgMaterial;
         }
     }
 
@@ -364,7 +375,7 @@ export class TextCanvas {
      */
     clear() {
         for (const layer of this.m_layers) {
-            layer.geometry.clear();
+            layer.storage.clear();
         }
         this.m_currentTextRenderStyle = this.m_defaultTextRenderStyle;
     }
@@ -387,9 +398,9 @@ export class TextCanvas {
             this.m_renderer.clear(true);
         }
         for (const layer of this.m_layers) {
-            layer.geometry.update();
+            layer.storage.update();
             this.m_renderer.clear(false, true);
-            this.m_renderer.render(layer.scene, camera);
+            this.m_renderer.render(layer.storage.scene, camera);
         }
         if (target !== undefined) {
             this.m_renderer.setRenderTarget(oldTarget);
@@ -409,10 +420,14 @@ export class TextCanvas {
         if (result === undefined) {
             result = {
                 id: layerId,
-                scene: new THREE.Scene(),
-                geometry: new TextGeometry(this.m_material, this.m_bgMaterial, this.maxGlyphCount)
+                storage: new TextGeometry(
+                    new THREE.Scene(),
+                    this.m_material,
+                    this.m_bgMaterial,
+                    this.minGlyphCount,
+                    this.maxGlyphCount
+                )
             };
-            result.scene.add(result.geometry.backgroundMesh, result.geometry.mesh);
 
             this.m_layers.push(result);
             this.m_layers.sort((a: TextCanvasLayer, b: TextCanvasLayer) => {
@@ -530,7 +545,7 @@ export class TextCanvas {
                 upperCaseArray = params.letterCaseArray;
             }
         }
-        const prevDrawCount = targetLayer.geometry.drawCount;
+        const prevDrawCount = targetLayer.storage.drawCount;
 
         const result = this.placeText({
             input: text,
@@ -544,14 +559,14 @@ export class TextCanvas {
                 position.copy(tempTextPosition);
             }
             if (params.pickingData !== undefined) {
-                targetLayer.geometry.addPickingData(
+                targetLayer.storage.addPickingData(
                     prevDrawCount,
-                    targetLayer.geometry.drawCount,
+                    targetLayer.storage.drawCount,
                     params.pickingData
                 );
             }
         } else if (!result) {
-            (targetLayer.geometry as any).m_drawCount = prevDrawCount;
+            (targetLayer.storage as any).m_drawCount = prevDrawCount;
         }
         return result;
     }
@@ -674,9 +689,9 @@ export class TextCanvas {
             bgColor = params.backgroundColor;
             bgOpacity = params.backgroundOpacity;
         }
-        const prevDrawCount = targetLayer.geometry.drawCount;
+        const prevDrawCount = targetLayer.storage.drawCount;
 
-        const result = targetLayer.geometry.addTextBufferObject(
+        const result = targetLayer.storage.addTextBufferObject(
             textBufferObject,
             position,
             scale,
@@ -688,14 +703,14 @@ export class TextCanvas {
         );
         if (result && params !== undefined) {
             if (params.pickingData !== undefined) {
-                targetLayer.geometry.addPickingData(
+                targetLayer.storage.addPickingData(
                     prevDrawCount,
-                    targetLayer.geometry.drawCount,
+                    targetLayer.storage.drawCount,
                     params.pickingData
                 );
             }
         } else if (!result) {
-            (targetLayer.geometry as any).m_drawCount = prevDrawCount;
+            (targetLayer.storage as any).m_drawCount = prevDrawCount;
         }
         return result;
     }
@@ -709,7 +724,7 @@ export class TextCanvas {
      */
     pickText(position: THREE.Vector2, callback: (pickData: any | undefined) => void): void {
         for (const layer of this.m_layers) {
-            layer.geometry.pick(position, callback);
+            layer.storage.pick(position, callback);
         }
     }
 
@@ -770,7 +785,7 @@ export class TextCanvas {
             textRenderStyle: this.m_currentTextRenderStyle,
             textLayoutStyle: this.m_currentTextLayoutStyle,
             position: tempTextPosition,
-            geometry: params.layer.geometry,
+            geometry: params.layer.storage,
             smallCapsArray: smallCapsEnabled ? smallCapsTransformations : undefined,
             globalBounds: params.bounds,
             individualBounds: glyphBounds,

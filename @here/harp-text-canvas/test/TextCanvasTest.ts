@@ -177,6 +177,7 @@ describe("TextCanvas", () => {
         textCanvas = new TextCanvas({
             renderer: webglRenderer as THREE.WebGLRenderer,
             fontCatalog: loadedFontCatalog,
+            minGlyphCount: 16,
             maxGlyphCount: 16
         });
 
@@ -260,11 +261,11 @@ describe("TextCanvas", () => {
         assert.strictEqual(position.x, 88.5);
         assert.strictEqual(position.y, 0.0);
         assert.strictEqual(position.z, 0.0);
-        assert.strictEqual(textCanvas.getLayer(0)!.geometry.drawCount, textSample.length);
+        assert.strictEqual(textCanvas.getLayer(0)!.storage.drawCount, textSample.length);
     });
     it("Is cleared.", () => {
         textCanvas.clear();
-        assert.strictEqual(textCanvas.getLayer(0)!.geometry.drawCount, 0.0);
+        assert.strictEqual(textCanvas.getLayer(0)!.storage.drawCount, 0.0);
     });
     it("Fails when adding too many characters.", () => {
         let resultA = true;
