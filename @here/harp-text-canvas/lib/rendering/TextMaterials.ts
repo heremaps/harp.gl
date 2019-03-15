@@ -66,13 +66,13 @@ const SdfShaderChunks = {
 Object.assign(THREE.ShaderChunk, SdfShaderChunks);
 
 const clearVertexSource: string = `
-    attribute vec4 position;
+    attribute vec2 position;
 
     uniform mat4 modelViewMatrix;
     uniform mat4 projectionMatrix;
 
     void main() {
-        gl_Position = projectionMatrix * modelViewMatrix * vec4(position.xyz, 1.0);
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position.xy, 0.0, 1.0);
     }`;
 
 const clearFragmentSource: string = `
@@ -84,8 +84,8 @@ const clearFragmentSource: string = `
     }`;
 
 const copyVertexSource: string = `
-    attribute vec4 position;
-    attribute vec3 uv;
+    attribute vec3 position;
+    attribute vec2 uv;
 
     uniform mat4 modelViewMatrix;
     uniform mat4 projectionMatrix;
@@ -93,8 +93,8 @@ const copyVertexSource: string = `
     varying vec3 vUv;
 
     void main() {
-        vUv = vec3(uv.xy, position.w);
-        gl_Position = projectionMatrix * modelViewMatrix * vec4(position.xyz, 1.0);
+        vUv = vec3(uv.xy, position.z);
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position.xy, 0.0, 1.0);
     }`;
 
 const copyFragmentSource: string = `

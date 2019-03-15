@@ -48,6 +48,7 @@ import {
 const DEFAULT_STYLE_NAME = "default";
 const DEFAULT_FONT_CATALOG_NAME = "default";
 const MAX_INITIALIZED_TEXT_ELEMENTS_PER_FRAME = Infinity;
+const MIN_GLYPH_COUNT = 1024;
 const MAX_GLYPH_COUNT = 32768;
 
 interface TextCanvasRenderer {
@@ -154,7 +155,10 @@ export class TextElementsRenderer {
      * @param m_screenCollisions General 2D screen occlusion management, may be shared between
      *     instances.
      * @param m_screenProjector Projects 3D coordinates into screen space.
-     * @param m_maxNumGlyphs Maximum number of glyphs. Controls the size of internal buffers.
+     * @param m_minNumGlyphs Minimum number of glyphs (per-layer). Controls the size of internal
+     * buffers.
+     * @param m_maxNumGlyphs Maximum number of glyphs (per-layer). Controls the size of internal
+     * buffers.
      * @param m_theme Theme defining  text styles.
      * @param m_maxNumVisibleLabels Maximum number of visible [[TextElement]]s.
      * @param m_numSecondChanceLabels Number of [[TextElement]] that will be rendered again.
@@ -169,6 +173,7 @@ export class TextElementsRenderer {
         private m_mapView: MapView,
         private m_screenCollisions: ScreenCollisions,
         private m_screenProjector: ScreenProjector,
+        private m_minNumGlyphs: number | undefined,
         private m_maxNumGlyphs: number | undefined,
         private m_theme: Theme,
         private m_maxNumVisibleLabels: number | undefined,
@@ -176,6 +181,9 @@ export class TextElementsRenderer {
         private m_maxDistanceRatioForLabels: number | undefined,
         private m_labelStartScaleDistance: number | undefined
     ) {
+        if (this.m_minNumGlyphs === undefined) {
+            this.m_minNumGlyphs = MIN_GLYPH_COUNT;
+        }
         if (this.m_maxNumGlyphs === undefined) {
             this.m_maxNumGlyphs = MAX_GLYPH_COUNT;
         }
@@ -261,15 +269,6 @@ export class TextElementsRenderer {
      */
     movementFinished() {
         this.placeAllLabels();
-    }
-
-    /**
-     * Return the maximum number of glyphs that can be rendered.
-     *
-     * @readonly
-     */
-    get maxNumGlyphs(): number {
-        return this.m_maxNumGlyphs!;
     }
 
     /**
@@ -566,7 +565,8 @@ export class TextElementsRenderer {
                     const loadedTextCanvas = new TextCanvas({
                         renderer: this.m_mapView.renderer,
                         fontCatalog: loadedFontCatalog,
-                        maxGlyphCount: this.maxNumGlyphs
+                        minGlyphCount: this.m_minNumGlyphs!,
+                        maxGlyphCount: this.m_maxNumGlyphs!
                     });
                     this.m_textRenderers.push({
                         fontCatalog: fontCatalogConfig.name,
@@ -622,7 +622,7 @@ export class TextElementsRenderer {
 
             this.m_textRenderers[0].textCanvas
                 .getLayer(DEFAULT_TEXT_CANVAS_LAYER)!
-                .scene.add(
+                .storage.scene.add(
                     this.m_debugGlyphTextureCacheMesh,
                     this.m_debugGlyphTextureCacheWireMesh
                 );
@@ -1032,7 +1032,7 @@ export class TextElementsRenderer {
 
             // Move onto the next TextElement if we cannot continue adding glyphs to this layer.
             if (layer !== undefined) {
-                if (layer.geometry.drawCount + textElement.glyphs!.length > this.maxNumGlyphs) {
+                if (layer.storage.drawCount + textElement.glyphs!.length > layer.storage.capacity) {
                     continue;
                 }
             }
@@ -1247,7 +1247,7 @@ export class TextElementsRenderer {
 
             // Move onto the next TextElement if we cannot continue adding glyphs to this layer.
             if (layer !== undefined) {
-                if (layer.geometry.drawCount + textElement.glyphs!.length > this.maxNumGlyphs) {
+                if (layer.storage.drawCount + textElement.glyphs!.length > layer.storage.capacity) {
                     ++numCannotAdd;
                     continue;
                 }
