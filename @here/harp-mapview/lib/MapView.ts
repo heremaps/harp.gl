@@ -28,7 +28,7 @@ import { TextLayoutStyleCache, TextRenderStyleCache } from "./text/TextStyleCach
 import { ThemeLoader } from "./ThemeLoader";
 import { Tile } from "./Tile";
 import { MapViewUtils } from "./Utils";
-import { VisibleTileSet, VisibleTileSetOptions } from "./VisibleTileSet";
+import { ResourceComputationType, VisibleTileSet, VisibleTileSetOptions } from "./VisibleTileSet";
 
 declare const process: any;
 
@@ -303,11 +303,11 @@ export interface MapViewOptions {
     tileCacheSize?: number;
 
     /**
-     * Size of a tile cache in bytes.
+     * Specify if the cache should be counted in tiles or in megabytes.
      *
-     * @see [[MapViewDefaults.tileCacheMemorySize]].
+     * @see [[MapViewDefaults.resourceComputationType]].
      */
-    tileCacheMemorySize?: number;
+    resourceComputationType?: ResourceComputationType;
 
     /**
      * Limits the number of reduced zoom levels (lower detail) to be searched for fallback tiles.
@@ -468,7 +468,7 @@ export const MapViewDefaults = {
     extendedFrustumCulling: true,
 
     tileCacheSize: 40,
-    tileCacheMemorySize: 400 * 1024 * 1024,
+    resourceComputationType: ResourceComputationType.EstimationInMb,
     quadTreeSearchDistanceUp: 3,
     quadTreeSearchDistanceDown: 2,
 
@@ -633,8 +633,8 @@ export class MapView extends THREE.EventDispatcher {
             this.m_visibleTileSetOptions.tileCacheSize = options.tileCacheSize;
         }
 
-        if (options.tileCacheMemorySize !== undefined) {
-            this.m_visibleTileSetOptions.tileCacheMemorySize = options.tileCacheMemorySize;
+        if (options.resourceComputationType !== undefined) {
+            this.m_visibleTileSetOptions.resourceComputationType = options.resourceComputationType;
         }
 
         if (options.quadTreeSearchDistanceUp !== undefined) {
@@ -789,6 +789,18 @@ export class MapView extends THREE.EventDispatcher {
         this.m_imageCache.clear();
 
         this.m_movementDetector.dispose();
+    }
+
+    /**
+     * The way the cache usage is computed, either based on size in MB (mega bytes) or in number of
+     * tiles.
+     */
+    get resourceComputationType(): ResourceComputationType {
+        return this.m_visibleTiles.resourceComputationType;
+    }
+
+    set resourceComputationType(value: ResourceComputationType) {
+        this.m_visibleTiles.resourceComputationType = value;
     }
 
     /**
@@ -1213,6 +1225,13 @@ export class MapView extends THREE.EventDispatcher {
      */
     get viewportHeight(): number {
         return this.canvas.height;
+    }
+
+    /**
+     * Returns `true` if the native WebGL antialiasing is enabled.
+     */
+    get nativeWebglAntialiasEnabled(): boolean {
+        return this.m_options.enableNativeWebglAntialias !== false;
     }
 
     /**

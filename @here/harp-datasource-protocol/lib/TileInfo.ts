@@ -3,7 +3,6 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-
 import { TileKey } from "@here/harp-geoutils";
 import { assert } from "@here/harp-utils";
 
@@ -17,7 +16,13 @@ export interface TileInfo {
     readonly tileKey: TileKey;
     readonly setupTime: number;
     readonly transferList?: ArrayBuffer[];
+    readonly numBytes: number;
 }
+
+/**
+ * Minimum estimated size of a JS object.
+ */
+const MINIMUM_OBJECT_SIZE_ESTIMATION = 100;
 
 /**
  * Structure of arrays containing data for all features of this group. No methods, since the object
@@ -92,6 +97,23 @@ export class FeatureGroup {
             this.typeIndex.length = startSize;
         }
     }
+
+    /**
+     * Compute size in bytes.
+     */
+    getNumBytes(): number {
+        return (
+            (this.featureIds.length +
+                this.techniqueIndex.length +
+                this.textIndex.length +
+                this.positionIndex.length +
+                this.positions.length +
+                (this.layerIndex !== undefined ? this.layerIndex.length : 0) +
+                (this.classIndex !== undefined ? this.classIndex.length : 0) +
+                (this.typeIndex !== undefined ? this.typeIndex.length : 0)) *
+            8
+        );
+    }
 }
 
 /**
@@ -122,6 +144,16 @@ export class LineFeatureGroup extends FeatureGroup {
      * feature is not a road, or if the object for that feature is undefined).
      */
     userData?: Array<{} | undefined> = [];
+
+    getNumBytes(): number {
+        return (
+            super.getNumBytes() +
+            ((this.segmentIds !== undefined ? this.segmentIds.length : 0) +
+                (this.segmentStartOffsets !== undefined ? this.segmentStartOffsets.length : 0) +
+                (this.segmentEndOffsets !== undefined ? this.segmentEndOffsets.length : 0)) *
+                8
+        );
+    }
 }
 
 /**
@@ -177,6 +209,18 @@ export class PolygonFeatureGroup extends FeatureGroup {
         this.innerRingIsOuterContour.length = startSize;
         this.innerRingStartIndex = new Array<number>(startSize);
         this.innerRingStartIndex.length = startSize;
+    }
+
+    getNumBytes(): number {
+        return (
+            super.getNumBytes() +
+            ((this.outerRingStartIndex !== undefined ? this.outerRingStartIndex.length : 0) +
+                (this.innerRingIsOuterContour !== undefined
+                    ? this.innerRingIsOuterContour.length
+                    : 0) +
+                (this.innerRingStartIndex !== undefined ? this.innerRingStartIndex.length : 0)) *
+                8
+        );
     }
 }
 
@@ -238,6 +282,11 @@ export class ExtendedTileInfo implements TileInfo {
      */
     setupTime: number = 0;
 
+    /**
+     * Size in bytes.
+     */
+    numBytes: number = 0;
+
     constructor(readonly tileKey: TileKey, storeExtendedTags: boolean) {
         this.pointGroup = new FeatureGroup(storeExtendedTags);
         this.lineGroup = new LineFeatureGroup(storeExtendedTags);
@@ -248,6 +297,36 @@ export class ExtendedTileInfo implements TileInfo {
             this.classCatalog = new Array<string>();
             this.typeCatalog = new Array<string>();
         }
+    }
+
+    /**
+     * Compute the memory footprint caused by objects owned by the `ExtendedTileInfo`.
+     */
+    getNumBytes(): number {
+        let numBytes = MINIMUM_OBJECT_SIZE_ESTIMATION;
+        for (const str of this.textCatalog) {
+            numBytes += 2 * str.length;
+        }
+
+        numBytes += this.techniqueCatalog.length * MINIMUM_OBJECT_SIZE_ESTIMATION;
+
+        numBytes += this.pointGroup.getNumBytes();
+        numBytes += this.lineGroup.getNumBytes();
+        numBytes += this.polygonGroup.getNumBytes();
+
+        if (this.layerCatalog !== undefined) {
+            for (const str of this.layerCatalog) {
+                numBytes += 2 * str.length;
+            }
+            for (const str of this.classCatalog!) {
+                numBytes += 2 * str.length;
+            }
+            for (const str of this.typeCatalog!) {
+                numBytes += 2 * str.length;
+            }
+        }
+
+        return numBytes;
     }
 }
 
@@ -293,6 +372,7 @@ export namespace ExtendedTileInfo {
         finishFeatureGroup(tileInfo.pointGroup);
         finishLineFeatureGroup(tileInfo.lineGroup);
         finishPolygonFeatureGroup(tileInfo.polygonGroup);
+        tileInfo.numBytes = tileInfo.getNumBytes();
     }
 
     /**

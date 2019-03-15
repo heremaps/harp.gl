@@ -12,6 +12,15 @@ import { MapTileCuller } from "./MapTileCuller";
 import { Tile } from "./Tile";
 
 /**
+ * Way the memory consumption of a tile is computed. Either in number of tiles, or in MegaBytes. If
+ * it is in MB, an estimation is used.
+ */
+export enum ResourceComputationType {
+    EstimationInMb = 0,
+    NumberOfTiles
+}
+
+/**
  * Limited set of [[MapViewOptions]] used for [[VisibleTileSet]].
  */
 export interface VisibleTileSetOptions {
@@ -38,7 +47,7 @@ export interface VisibleTileSetOptions {
     /**
      * Missing Typedoc
      */
-    tileCacheMemorySize: number;
+    resourceComputationType: ResourceComputationType;
 
     /**
      * Number of levels to go up when searching for fallback tiles.
@@ -65,6 +74,8 @@ class TileKeyEntry {
     constructor(public tileKey: TileKey, public area: number) {}
 }
 
+const MB_FACTOR = 1.0 / (1024.0 * 1024.0);
+
 /**
  * Missing Typedoc
  */
@@ -72,8 +83,21 @@ class DataSourceCache {
     readonly tileCache: LRUCache<number, Tile>;
     readonly disposedTiles: Tile[] = [];
 
+    resourceComputationType: ResourceComputationType = ResourceComputationType.EstimationInMb;
+
     constructor(options: VisibleTileSetOptions) {
-        this.tileCache = new LRUCache<number, Tile>(options.tileCacheSize);
+        this.resourceComputationType =
+            options.resourceComputationType === undefined
+                ? ResourceComputationType.EstimationInMb
+                : options.resourceComputationType;
+        this.tileCache = new LRUCache<number, Tile>(options.tileCacheSize, (tile: Tile) => {
+            if (this.resourceComputationType === ResourceComputationType.EstimationInMb) {
+                // Default is size in MB.
+                return tile.memoryUsage * MB_FACTOR;
+            } else {
+                return 1;
+            }
+        });
         this.tileCache.evictionCallback = (_, tile) => {
             if (tile.tileLoader !== undefined) {
                 // Cancel downloads as early as possible.
@@ -164,6 +188,8 @@ export class VisibleTileSet {
     private readonly m_viewProjectionMatrix = new THREE.Matrix4();
     private readonly m_mapTileCuller: MapTileCuller;
     private readonly m_frustum: THREE.Frustum = new THREE.Frustum();
+    private m_ResourceComputationType: ResourceComputationType =
+        ResourceComputationType.EstimationInMb;
 
     constructor(private readonly camera: THREE.PerspectiveCamera, options: VisibleTileSetOptions) {
         this.m_mapTileCuller = new MapTileCuller(camera);
@@ -181,12 +207,16 @@ export class VisibleTileSet {
      * Sets cache size.
      *
      * @param size cache size
+     * @param computationType Optional value specifying the way a [[Tile]]s cache usage is computed,
+     *      either based on size in MB (mega bytes) or in number of tiles. Defaults to
+     *      `ResourceComputationType.EstimationInMb`.
      */
-    setDataSourceCacheSize(size: number): void {
+    setDataSourceCacheSize(
+        size: number,
+        computationType: ResourceComputationType = ResourceComputationType.EstimationInMb
+    ): void {
         this.options.tileCacheSize = size;
-        this.m_dataSourceCache.forEach(dataStore => {
-            dataStore.tileCache.setCapacity(size);
-        });
+        this.resourceComputationType = computationType;
     }
 
     /**
@@ -203,6 +233,23 @@ export class VisibleTileSet {
      */
     setNumberOfVisibleTiles(size: number) {
         this.options.maxVisibleDataSourceTiles = size;
+    }
+
+    /**
+     * The way the cache usage is computed, either based on size in MB (mega bytes) or in number of
+     * tiles.
+     */
+    get resourceComputationType(): ResourceComputationType {
+        return this.m_ResourceComputationType;
+    }
+
+    set resourceComputationType(computationType: ResourceComputationType) {
+        this.m_ResourceComputationType = computationType;
+        this.m_dataSourceCache.forEach(dataStore => {
+            dataStore.tileCache.setCapacity(this.options.tileCacheSize);
+            dataStore.resourceComputationType = computationType;
+            dataStore.tileCache.shrinkToCapacity();
+        });
     }
 
     updateRenderList(
@@ -404,6 +451,14 @@ export class VisibleTileSet {
             if (!tile.isVisible && tile.tileLoader !== undefined && !tile.tileLoader.isFinished) {
                 tile.tileLoader.cancel();
                 this.disposeTile(tile);
+            }
+        });
+
+        this.dataSourceTileList.forEach(renderListEntry => {
+            const dataSource = renderListEntry.dataSource;
+            const cache = this.m_dataSourceCache.get(dataSource.name);
+            if (cache !== undefined) {
+                cache.tileCache.shrinkToCapacity();
             }
         });
 

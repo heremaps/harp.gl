@@ -56,7 +56,7 @@ export class RoadPicker {
         const lineFeatures = extendedTileInfo.lineGroup;
 
         if (lineFeatures === undefined || lineFeatures.numFeatures === 0) {
-            // tileInfo not of extepected type [[ExtendedTileInfo]]
+            // tileInfo not of expected type [[ExtendedTileInfo]]
             return undefined;
         }
 

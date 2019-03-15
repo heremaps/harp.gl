@@ -61,7 +61,7 @@ export class LRUCache<Key, Value> {
     private m_oldest: Entry<Key, Value> | null = null;
 
     /**
-     * The internal cost function
+     * A function determining the size per element.
      */
     private m_sizeFunction: (v: Value) => number;
 
@@ -156,6 +156,26 @@ export class LRUCache<Key, Value> {
      */
     setCapacity(newCapacity: number): void {
         this.m_capacity = newCapacity;
+        this.evict();
+    }
+
+    /**
+     * Updates the size of all elements in this cache. If their aggregated size is larger than the
+     * capacity, items will be evicted until the cache shrinks to fit the capacity.
+     */
+    shrinkToCapacity(): void {
+        let size = 0;
+        const sizeFunction = this.m_sizeFunction;
+
+        let entry = this.m_newest;
+        while (entry !== null) {
+            const entrySize = sizeFunction(entry.value);
+            entry.size = entrySize;
+            size += entrySize;
+            entry = entry.older;
+        }
+
+        this.m_size = size;
         this.evict();
     }
 
@@ -287,7 +307,7 @@ export class LRUCache<Key, Value> {
     }
 
     protected evict() {
-        while (this.m_size > this.m_capacity) {
+        while (this.m_oldest !== null && this.m_size > this.m_capacity) {
             const evicted = this.evictOldest();
             if (evicted === undefined) {
                 return;

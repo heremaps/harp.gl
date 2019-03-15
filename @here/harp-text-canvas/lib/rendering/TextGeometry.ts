@@ -3,9 +3,9 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-
 import * as THREE from "three";
 
+import { MemoryUsage } from "../TextCanvas";
 import { GlyphData } from "./GlyphData";
 import { TextBufferObject } from "./TextBufferObject";
 import { TextRenderStyle } from "./TextStyle";
@@ -17,6 +17,16 @@ export const VERTICES_PER_QUAD = 4;
 export const INDICES_PER_QUAD = 6;
 export const QUAD_VERTEX_MEMORY_FOOTPRINT = VERTICES_PER_QUAD * VERTEX_BUFFER_STRIDE;
 export const QUAD_INDEX_MEMORY_FOOTPRINT = INDICES_PER_QUAD * INDEX_BUFFER_STRIDE;
+
+/**
+ * Number of bytes for float in an Float32Array.
+ */
+const NUM_BYTES_PER_FLOAT = 4;
+
+/**
+ * Number of bytes for integer number in an UInt32Array.
+ */
+const NUM_BYTES_PER_INT32 = 4;
 
 /**
  * Interface containing user-supplied picking data, as well as the [[TextGeometry]] range it's
@@ -32,6 +42,26 @@ interface PickingData {
  * Procedural geometry that holds vertex attribute data for all glyphs in a [[TextCanvas]].
  */
 export class TextGeometry {
+    /**
+     * Count of currently drawn glyphs.
+     */
+    get drawCount(): number {
+        return this.m_drawCount;
+    }
+
+    /**
+     * Mesh used to render foreground glyphs.
+     */
+    get mesh(): THREE.Mesh {
+        return this.m_mesh;
+    }
+
+    /**
+     * Mesh used to render background glyphs.
+     */
+    get backgroundMesh(): THREE.Mesh {
+        return this.m_bgMesh;
+    }
     /**
      * Maximum glyph capacity.
      */
@@ -116,27 +146,6 @@ export class TextGeometry {
     dispose() {
         this.scene.remove(this.m_bgMesh, this.m_mesh);
         this.m_geometry.dispose();
-    }
-
-    /**
-     * Count of currently drawn glyphs.
-     */
-    get drawCount(): number {
-        return this.m_drawCount;
-    }
-
-    /**
-     * Mesh used to render foreground glyphs.
-     */
-    get mesh(): THREE.Mesh {
-        return this.m_mesh;
-    }
-
-    /**
-     * Mesh used to render background glyphs.
-     */
-    get backgroundMesh(): THREE.Mesh {
-        return this.m_bgMesh;
     }
 
     /**
@@ -493,6 +502,19 @@ export class TextGeometry {
                 break;
             }
         }
+    }
+
+    /**
+     * Update the info with the memory footprint caused by objects owned by the `TextGeometry`.
+     *
+     * @param info The info object to increment with the values from this `TextGeometry`.
+     */
+    updateMemoryUsage(info: MemoryUsage) {
+        const numBytes =
+            this.m_vertexBuffer.count * NUM_BYTES_PER_FLOAT +
+            this.m_indexBuffer.count * NUM_BYTES_PER_INT32;
+        info.heapSize += numBytes;
+        info.gpuSize += numBytes;
     }
 
     private resizeBuffers(size: number) {
