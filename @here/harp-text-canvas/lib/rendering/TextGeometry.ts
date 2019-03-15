@@ -92,8 +92,9 @@ export class TextGeometry {
         this.m_geometry.setIndex(this.m_indexBuffer);
 
         this.m_mesh = new THREE.Mesh(this.m_geometry, material);
-        this.m_mesh.renderOrder = Infinity;
         this.m_bgMesh = new THREE.Mesh(this.m_geometry, backgroundMaterial);
+        this.m_mesh.renderOrder = Number.MAX_SAFE_INTEGER;
+        this.m_bgMesh.renderOrder = Number.MAX_SAFE_INTEGER - 1;
 
         this.m_pickingCount = 0;
         this.m_pickingDataArray = new Array(capacity);
