@@ -6,6 +6,7 @@
 
 import * as THREE from "three";
 
+import { MemoryUsage } from "../TextCanvas";
 import { GlyphData } from "./GlyphData";
 import { GlyphTextureCache } from "./GlyphTextureCache";
 import { FontStyle, FontVariant, TextRenderStyle } from "./TextStyle";
@@ -500,6 +501,35 @@ export class FontCatalog {
         return this.fonts.find(element => {
             return element.name === selectedFontName;
         })!;
+    }
+
+    /**
+     * Update the info with the memory footprint caused by objects owned by the `FontCatalog`.
+     *
+     * @param info The info object to increment with the values from this `FontCatalog`.
+     */
+    updateMemoryUsage(info: MemoryUsage) {
+        let numBytes = 0;
+
+        for (const block of this.unicodeBlocks) {
+            numBytes += (block.max - block.min) * 2;
+        }
+
+        // Always stored in RGBA internally.
+        let textureBytes =
+            this.m_glyphTextureCache.textureSize.x * this.m_glyphTextureCache.textureSize.y * 4;
+
+        for (const page in this.m_loadedPages.entries) {
+            if (this.m_loadedPages.get(page) !== undefined) {
+                const loadedPage = this.m_loadedPages.get(page);
+                if (loadedPage !== undefined) {
+                    textureBytes += loadedPage.image.width * loadedPage.image.height * 4;
+                }
+            }
+        }
+
+        info.heapSize += numBytes + textureBytes;
+        info.gpuSize += textureBytes;
     }
 
     private createReplacementGlyph(codePoint: number, char: string, font: Font): GlyphData {

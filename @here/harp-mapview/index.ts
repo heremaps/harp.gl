@@ -36,3 +36,4 @@ export * from "./lib/Statistics";
 export * from "./lib/DepthPrePass";
 export * from "./lib/CopyrightInfo";
 export * from "./lib/CopyrightElementHandler";
+export * from "./lib/VisibleTileSet";

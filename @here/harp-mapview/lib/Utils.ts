@@ -3,11 +3,23 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-
 import * as geoUtils from "@here/harp-geoutils";
 import { EarthConstants } from "@here/harp-geoutils/lib/projection/EarthConstants";
+import { MapMeshBasicMaterial, MapMeshStandardMaterial } from "@here/harp-materials";
+import { LoggerManager } from "@here/harp-utils";
 import * as THREE from "three";
+
 import { MapView } from "./MapView";
+import { getFeatureDataSize, TileFeatureData } from "./Tile";
+
+const logger = LoggerManager.instance.create("MapViewUtils");
+
+// Estimation of the size of an Object3D with all the simple properties, like matrices and flags.
+// There may be cases where it is possible to construct Object3Ds with considerable less memory
+// consumption, but this value is used to simplify the estimation.
+const MINIMUM_OBJECT3D_SIZE_ESTIMATION = 1000;
+
+const MINIMUM_ATTRIBUTE_SIZE_ESTIMATION = 56;
 
 export namespace MapViewUtils {
     //Caching those for performance reasons.
@@ -62,6 +74,14 @@ export namespace MapViewUtils {
          * Missing Typedoc
          */
         roll: number;
+    }
+
+    /**
+     * Describes estimated usage of memory on heap and GPU.
+     */
+    export interface MemoryUsage {
+        heapSize: number;
+        gpuSize: number;
     }
 
     /**
@@ -142,9 +162,8 @@ export namespace MapViewUtils {
     }
 
     /**
-     * Raycasts a point in NDC space from the current map view
-     * and returns the intersection point of that
-     * ray against the map in world space or `null` in case the raycast failed.
+     * Casts a ray in NDC space from the current map view and returns the intersection point of that
+     * ray wih the map in world space, or `null` in case the raycast failed.
      *
      * @param mapView Instance of MapView.
      * @param pointOnScreenXinNDC X coordinate in NDC space.
@@ -283,9 +302,9 @@ export namespace MapViewUtils {
     }
 
     /**
-     * Raycasts a point in NDC space from the current view of the camera and returns the
-     * intersection point of that ray against the map in geo coordinates. The return
-     * value can be `null` when the raycast is above the horizon.
+     * Casts a ray in NDC space from the current view of the camera and returns the intersection
+     * point of that ray against the map in geo coordinates. The return value can be `null` when
+     * the raycast is above the horizon.
      *
      * @param mapView Instance of MapView.
      * @param pointOnScreenNDC  Point in NDC space.
@@ -333,7 +352,7 @@ export namespace MapViewUtils {
     /**
      * Translates a linear clip-space distance value to the actual value stored in the depth buffer.
      * This is useful as the depth values are not stored in the depth buffer linearly, and this can
-     * lead into confusing behaviour when not taken into account.
+     * lead into confusing behavior when not taken into account.
      *
      * @param clipDistance Distance from the camera in clip space (range: [0, 1]).
      * @param camera Camera applying the perspective projection.
@@ -383,6 +402,7 @@ export namespace MapViewUtils {
 
     /**
      * Calculates the focal length based on the vertical FOV and height.
+     *
      * @param vFov Vertical field of view in rad.
      * @param height Height of canvas in pixels.
      */
@@ -392,6 +412,7 @@ export namespace MapViewUtils {
 
     /**
      * Calculates the vertical field of view based on the focal length and the height.
+     *
      * @param focalLength Focal length in pixels (see [[calculateFocalLengthByVerticalFov]])
      * @param height Height of canvas in pixels.
      */
@@ -400,59 +421,251 @@ export namespace MapViewUtils {
     }
 
     /**
-     * Computes estimate of size in memory for given object.
+     * Computes estimate for size of a THREE.Object3D object and its children. Shared materials
+     * and/or attributes will be counted multiple times.
      *
-     * @param object
-     * @returns Estimate of object size in bytes.
+     * @param object The mesh object to evaluate
+     * @param size The [[MemoryUsage]] to update.
+     * @param visitedObjects Optional map to store large objects that could be shared.
+     *
+     * @returns Estimate of object size in bytes for heap and GPU.
      */
-    export function estimateObjectSize(object: object): number {
-        if (typeof object === "function") {
-            return 0;
+    export function estimateObject3dSize(
+        object: THREE.Object3D,
+        parentSize?: MemoryUsage,
+        visitedObjects?: Map<string, boolean>
+    ): MemoryUsage {
+        const size =
+            parentSize !== undefined
+                ? parentSize
+                : {
+                      heapSize: 0,
+                      gpuSize: 0
+                  };
+
+        if (visitedObjects === undefined) {
+            visitedObjects = new Map();
         }
 
-        const objects = new Map();
-        const stack = [object];
-        let bytes = 0;
+        estimateMeshSize(object, size, visitedObjects);
 
-        while (stack.length > 0) {
-            const value = stack.pop() as any;
-            if (Array.isArray(value) && value.length > 0 && typeof value[0] !== "object") {
-                if (typeof value[0] === "boolean") {
-                    bytes += 4 * value.length;
-                } else if (typeof value[0] === "string") {
-                    value.forEach((item: string) => {
-                        if (item.length !== undefined) {
-                            bytes += item.length * 2;
-                        }
-                    });
-                } else if (typeof value[0] === "number") {
-                    bytes += 8 * value.length;
-                }
-                continue;
-            } else if (typeof value === "boolean") {
-                bytes += 4;
-            } else if (typeof value === "string") {
-                const a = value as string;
-                bytes += a.length * 2;
-            } else if (typeof value === "number") {
-                bytes += 8;
-            } else if (value !== undefined && value !== null && value.byteLength !== undefined) {
-                bytes += value.byteLength;
-            } else if (
-                typeof value === "object" &&
-                value !== null &&
-                objects.has(value) === false
-            ) {
-                objects.set(value, "");
-                const element = value as any;
-                for (const key in element) {
-                    if (element[key] !== undefined && typeof element[key] !== "function") {
-                        stack.push(element[key]);
+        if (object.children.length > 0) {
+            for (const child of object.children) {
+                estimateObject3dSize(child, size, visitedObjects);
+            }
+        }
+        return size;
+    }
+
+    function estimateTextureSize(
+        texture: THREE.Texture | null,
+        objectSize: MemoryUsage,
+        visitedObjects: Map<string, boolean>
+    ): void {
+        if (texture === null || texture.image === undefined) {
+            return;
+        }
+
+        if (texture.uuid !== undefined && visitedObjects.get(texture.uuid) === true) {
+            return;
+        }
+        visitedObjects.set(texture.uuid, true);
+
+        // May be HTMLImage or ImageData
+        const image = texture.image;
+        // Assuming RGBA
+        const imageBytes = 4 * image.width * image.height;
+        objectSize.heapSize += imageBytes;
+        objectSize.gpuSize += imageBytes;
+    }
+
+    function estimateMaterialSize(
+        material: THREE.Material,
+        objectSize: MemoryUsage,
+        visitedObjects: Map<string, boolean>
+    ): void {
+        if (material.uuid !== undefined && visitedObjects.get(material.uuid) === true) {
+            return;
+        }
+        visitedObjects.set(material.uuid, true);
+
+        if (
+            material instanceof THREE.RawShaderMaterial ||
+            material instanceof THREE.ShaderMaterial
+        ) {
+            const rawMaterial = material;
+            for (const name in rawMaterial.uniforms) {
+                if (rawMaterial.uniforms[name] !== undefined) {
+                    const uniform = rawMaterial.uniforms[name];
+                    if (uniform instanceof THREE.Texture) {
+                        estimateTextureSize(uniform, objectSize, visitedObjects);
                     }
                 }
             }
+        } else if (
+            material instanceof THREE.MeshBasicMaterial ||
+            material instanceof MapMeshBasicMaterial
+        ) {
+            const meshMaterial = material;
+            estimateTextureSize(meshMaterial.map, objectSize, visitedObjects);
+            estimateTextureSize(meshMaterial.aoMap, objectSize, visitedObjects);
+            estimateTextureSize(meshMaterial.specularMap, objectSize, visitedObjects);
+            estimateTextureSize(meshMaterial.alphaMap, objectSize, visitedObjects);
+            estimateTextureSize(meshMaterial.envMap, objectSize, visitedObjects);
+        } else if (material instanceof MapMeshStandardMaterial) {
+            const standardMaterial = material;
+            estimateTextureSize(standardMaterial.map, objectSize, visitedObjects);
+            estimateTextureSize(standardMaterial.aoMap, objectSize, visitedObjects);
+            estimateTextureSize(standardMaterial.alphaMap, objectSize, visitedObjects);
+            estimateTextureSize(standardMaterial.envMap, objectSize, visitedObjects);
+        } else if (
+            material instanceof THREE.LineBasicMaterial ||
+            material instanceof THREE.LineDashedMaterial
+        ) {
+            // Nothing to be done here
+        } else {
+            logger.warn("estimateMeshSize: unidentified material: ", material);
         }
-        return bytes;
+    }
+
+    function estimateAttributeSize(
+        attribute: any,
+        attrName: string,
+        objectSize: MemoryUsage,
+        visitedObjects: Map<string, boolean>
+    ): void {
+        // Attributes (apparently) do not have their uuid set up.
+        if (attribute.uuid === undefined) {
+            attribute.uuid = THREE.Math.generateUUID();
+        }
+
+        if (visitedObjects.get(attribute.uuid) === true) {
+            return;
+        }
+        visitedObjects.set(attribute.uuid, true);
+
+        let attrBytes = 0;
+        let bytesPerElement = 4;
+        if (attribute.array.BYTES_PER_ELEMENT !== undefined) {
+            bytesPerElement = attribute.array.BYTES_PER_ELEMENT;
+        }
+        if (
+            attribute instanceof THREE.InterleavedBufferAttribute ||
+            attribute instanceof THREE.BufferAttribute
+        ) {
+            attrBytes = bytesPerElement * attribute.count * attribute.itemSize;
+        } else {
+            logger.warn("estimateMeshSize: unidentified attribute: ", attrName);
+        }
+
+        objectSize.heapSize += attrBytes + MINIMUM_ATTRIBUTE_SIZE_ESTIMATION;
+        objectSize.gpuSize += attrBytes;
+    }
+
+    function estimateMeshSize(
+        object: THREE.Object3D,
+        objectSize: MemoryUsage,
+        visitedObjects: Map<string, boolean>
+    ): void {
+        if (!object.isObject3D || object instanceof THREE.Scene) {
+            return;
+        }
+
+        if (object.uuid !== undefined && visitedObjects.get(object.uuid) === true) {
+            return;
+        }
+        visitedObjects.set(object.uuid, true);
+
+        if ((object as any).isMesh || (object as any).isLine) {
+            // Estimated minimum impact on heap.
+            let heapSize = MINIMUM_OBJECT3D_SIZE_ESTIMATION;
+            const gpuSize = 0;
+
+            const mesh = object as THREE.Mesh;
+
+            if (mesh.material !== undefined) {
+                if (Array.isArray(mesh.material)) {
+                    const materials = mesh.material as THREE.Material[];
+                    for (const material of materials) {
+                        estimateMaterialSize(material, objectSize, visitedObjects);
+                    }
+                } else {
+                    const material = mesh.material as THREE.Material;
+                    estimateMaterialSize(material, objectSize, visitedObjects);
+                }
+            }
+
+            if (mesh.geometry !== undefined) {
+                const geometry = mesh.geometry;
+
+                const isNewObject =
+                    geometry.uuid === undefined || visitedObjects.get(geometry.uuid) !== true;
+
+                if (isNewObject) {
+                    visitedObjects.set(geometry.uuid, true);
+
+                    // Estimated minimum overhead.
+                    heapSize += MINIMUM_OBJECT3D_SIZE_ESTIMATION;
+
+                    let bufferGeometry: THREE.BufferGeometry | undefined;
+
+                    if (geometry instanceof THREE.Geometry) {
+                        heapSize += geometry.vertices.length * 12;
+                        // Face: 3 indices (24 byte), 1 normal (3 floats = 24). Vertex normals and
+                        // colors are not counted here.
+                        heapSize += geometry.faces.length * (24 + 24);
+                        // Additionally, the internal _bufferGeometry is also counted:
+                        bufferGeometry = (geometry as any)._bufferGeometry;
+                    } else if (geometry instanceof THREE.BufferGeometry) {
+                        bufferGeometry = geometry;
+                    } else {
+                        bufferGeometry = undefined;
+                    }
+
+                    if (bufferGeometry !== undefined) {
+                        const attributes = bufferGeometry.attributes;
+                        if (attributes !== undefined) {
+                            for (const property in attributes) {
+                                if (attributes[property] !== undefined) {
+                                    estimateAttributeSize(
+                                        attributes[property],
+                                        property,
+                                        objectSize,
+                                        visitedObjects
+                                    );
+                                }
+                            }
+                            if (bufferGeometry.index !== null) {
+                                estimateAttributeSize(
+                                    bufferGeometry.index,
+                                    "index",
+                                    objectSize,
+                                    visitedObjects
+                                );
+                            }
+                        } else {
+                            logger.warn("estimateMeshSize: unidentified geometry: ", mesh.geometry);
+                        }
+                    }
+
+                    // Add info that is required for picking (parts of) objects and match them to
+                    // the featureID in the map data.
+                    const featureData: TileFeatureData | undefined =
+                        object.userData !== undefined
+                            ? (object.userData.feature as TileFeatureData)
+                            : undefined;
+
+                    if (featureData !== undefined) {
+                        heapSize += getFeatureDataSize(featureData);
+                    }
+                }
+            }
+
+            objectSize.heapSize += heapSize;
+            objectSize.gpuSize += gpuSize;
+        } else {
+            logger.warn("estimateMeshSize: unidentified object", object);
+        }
     }
 
     /**

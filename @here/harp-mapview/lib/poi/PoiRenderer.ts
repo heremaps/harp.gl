@@ -6,7 +6,7 @@
 
 import { ImageTexture } from "@here/harp-datasource-protocol";
 import { IconMaterial } from "@here/harp-materials";
-import { TextCanvas } from "@here/harp-text-canvas";
+import { MemoryUsage, TextCanvas } from "@here/harp-text-canvas";
 import { assert, LoggerManager, Math2D } from "@here/harp-utils";
 import * as THREE from "three";
 
@@ -85,6 +85,18 @@ class PoiRenderBufferBatch {
             this.init();
         }
         this.boxBuffer!.updateBufferGeometry();
+    }
+
+    /**
+     * Update the info with the memory footprint caused by objects owned by the
+     * `PoiRenderBufferBatch`.
+     *
+     * @param info The info object to increment with the values from this `PoiRenderBufferBatch`.
+     */
+    updateMemoryUsage(info: MemoryUsage) {
+        if (this.boxBuffer !== undefined) {
+            this.boxBuffer.updateMemoryUsage(info);
+        }
     }
 
     /**
@@ -282,6 +294,25 @@ class PoiRenderBuffer {
             batch.boxBuffer!.pickBoxes(screenPosition, pickCallback, batch.imageItem.imageData);
         }
     }
+
+    /**
+     * Update the info with the memory footprint caused by objects owned by the `PoiRenderBuffer`.
+     *
+     * @param info The info object to increment with the values from this `PoiRenderBuffer`.
+     */
+    updateMemoryUsage(info: MemoryUsage) {
+        for (const batch of this.batches) {
+            if (batch.imageItem.imageData !== undefined) {
+                const imageBytes =
+                    batch.imageItem.imageData.width * batch.imageItem.imageData.height * 4;
+                info.heapSize += imageBytes;
+                info.gpuSize += imageBytes;
+            }
+            if (batch.boxBuffer !== undefined) {
+                batch.boxBuffer.updateMemoryUsage(info);
+            }
+        }
+    }
 }
 
 /**
@@ -432,6 +463,15 @@ export class PoiRenderer {
         pickCallback: (pickData: any | undefined) => void
     ) {
         this.m_renderBuffer.pickTextElements(screenPosition, pickCallback);
+    }
+
+    /**
+     * Update the info with the memory footprint caused by objects owned by the `PoiRenderer`.
+     *
+     * @param info The info object to increment with the values from this `PoiRenderer`.
+     */
+    getMemoryUsage(info: MemoryUsage) {
+        this.m_renderBuffer.updateMemoryUsage(info);
     }
 
     /**

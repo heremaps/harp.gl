@@ -199,6 +199,14 @@ export interface TextCanvasParameters {
 }
 
 /**
+ * Describes estimated usage of memory on heap and GPU.
+ */
+export interface MemoryUsage {
+    heapSize: number;
+    gpuSize: number;
+}
+
+/**
  * three.js text rendering engine which can manage and render high-quality, transformable, stylable
  * and properly layout SDF and MSDF text.
  */
@@ -725,6 +733,19 @@ export class TextCanvas {
     pickText(position: THREE.Vector2, callback: (pickData: any | undefined) => void): void {
         for (const layer of this.m_layers) {
             layer.storage.pick(position, callback);
+        }
+    }
+
+    /**
+     * Update the info with the memory footprint caused by objects owned by the `TextCanvas`.
+     *
+     * @param info The info object to increment with the values from this `TextCanvas`.
+     */
+    getMemoryUsage(info: MemoryUsage) {
+        this.m_fontCatalog.updateMemoryUsage(info);
+
+        for (const layer of this.m_layers) {
+            layer.storage.updateMemoryUsage(info);
         }
     }
 

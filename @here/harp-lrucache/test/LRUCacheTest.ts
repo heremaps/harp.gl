@@ -293,4 +293,46 @@ describe("LRUCache", function() {
         cache.set(9, 9);
         cache.assertInternalIntegrity([9]);
     });
+
+    interface SizeObjType {
+        size: number;
+    }
+
+    it("shrinkToCapacity empty", function() {
+        const cache = new TestLRUCache<number, number>(-10, n => n);
+
+        cache.shrinkToCapacity();
+        assert.strictEqual(cache.size, 0);
+    });
+
+    it("shrinkToCapacity", function() {
+        const cache = new TestLRUCache<number, SizeObjType>(10, n => n.size);
+
+        // check capacity, nothing should change
+        cache.shrinkToCapacity();
+        assert.strictEqual(cache.size, 0);
+
+        const obj1 = {
+            size: 1
+        };
+        const obj2 = {
+            size: 2
+        };
+        // fill cache, make sure size is correct
+        cache.set(1, obj1);
+        cache.set(2, obj2);
+        assert.strictEqual(cache.size, 3);
+        cache.assertInternalIntegrity([2, 1]);
+
+        // check capacity, nothing should change
+        cache.shrinkToCapacity();
+        assert.strictEqual(cache.size, 3);
+        cache.assertInternalIntegrity([2, 1]);
+
+        obj2.size = 10;
+        // check capacity again, now
+        cache.shrinkToCapacity();
+        assert.strictEqual(cache.size, 10);
+        cache.assertInternalIntegrity([2]);
+    });
 });

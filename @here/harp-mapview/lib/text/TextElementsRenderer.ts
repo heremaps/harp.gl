@@ -23,6 +23,7 @@ import { PoiRenderer } from "../poi/PoiRenderer";
 import { ScreenCollisions } from "../ScreenCollisions";
 import { ScreenProjector } from "../ScreenProjector";
 import { Tile } from "../Tile";
+import { MapViewUtils } from "../Utils";
 import { SimpleLineCurve, SimplePath } from "./SimplePath";
 import { FadingState, LoadingState, RenderState, TextElement, TextPickResult } from "./TextElement";
 import { DEFAULT_TEXT_STYLE_CACHE_ID } from "./TextStyleCache";
@@ -461,6 +462,25 @@ export class TextElementsRenderer {
                 });
             }
         });
+    }
+
+    /**
+     * Return memory used by all objects managed by `TextElementsRenderer`.
+     *
+     * @returns `MemoryUsage` Heap and GPU memory used by this `TextElementsRenderer`.
+     */
+    getMemoryUsage(): MapViewUtils.MemoryUsage {
+        const memoryUsage = {
+            heapSize: 0,
+            gpuSize: 0
+        };
+
+        for (const renderer of this.m_textRenderers) {
+            renderer.textCanvas.getMemoryUsage(memoryUsage);
+            renderer.poiRenderer.getMemoryUsage(memoryUsage);
+        }
+
+        return memoryUsage;
     }
 
     private initializeDefaultAssets(): void {

@@ -3,9 +3,10 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-
 import { Math2D } from "@here/harp-utils";
 import * as THREE from "three";
+
+import { MemoryUsage } from "@here/harp-text-canvas";
 import { getPixelFromImage, screenToUvCoordinates } from "./PixelPicker";
 
 /**
@@ -58,6 +59,16 @@ const NUM_UV_VALUES_PER_VERTEX = 4;
  * Number of values per index.
  */
 const NUM_INDEX_VALUES_PER_VERTEX = 1;
+
+/**
+ * Number of bytes for float in an Float32Array.
+ */
+const NUM_BYTES_PER_FLOAT = 4;
+
+/**
+ * Number of bytes for integer number in an UInt32Array.
+ */
+const NUM_BYTES_PER_INT32 = 4;
 
 /**
  * SubClass of [[THREE.Mesh]] to identify meshes that have been created by [[BoxBuffer]] and
@@ -467,6 +478,22 @@ export class BoxBuffer {
             this.internalMesh.geometry = this.geometry;
         }
         return this.internalMesh;
+    }
+
+    /**
+     * Update the info with the memory footprint caused by objects owned by the `BoxBuffer`.
+     *
+     * @param info The info object to increment with the values from this `BoxBuffer`.
+     */
+    updateMemoryUsage(info: MemoryUsage) {
+        const numBytes =
+            this.positionAttribute!.count * NUM_POSITION_VALUES_PER_VERTEX * NUM_BYTES_PER_FLOAT +
+            this.colorAttribute!.count * NUM_COLOR_VALUES_PER_VERTEX +
+            this.uvAttribute!.count * NUM_UV_VALUES_PER_VERTEX * NUM_BYTES_PER_FLOAT +
+            this.indexAttribute!.count * NUM_BYTES_PER_INT32; // May be UInt16, so we overestimate
+
+        info.heapSize += numBytes;
+        info.gpuSize += numBytes;
     }
 
     /**

@@ -3,12 +3,11 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-
-import * as THREE from "three";
-
 import { StyleSet } from "@here/harp-datasource-protocol";
 import { Projection, TileKey, TilingScheme } from "@here/harp-geoutils";
 import { assert } from "@here/harp-utils";
+import * as THREE from "three";
+
 import { MapView } from "./MapView";
 import { Tile } from "./Tile";
 
@@ -273,7 +272,7 @@ export abstract class DataSource extends THREE.EventDispatcher {
     }
 
     /**
-     * Gets the minimum zoom level.
+     * The minimum zoom level to use for display.
      *
      * @returns The minimum zoom level to use for display.
      */
@@ -281,13 +280,19 @@ export abstract class DataSource extends THREE.EventDispatcher {
         return this.m_minZoomLevel;
     }
 
+    set minZoomLevel(level: number) {
+        this.m_minZoomLevel = level;
+    }
+
     /**
-     * Gets the maximum zoom level.
-     *
-     * @returns The maximum zoom level to use for display.
+     * The maximum zoom level to use for display.
      */
     get maxZoomLevel(): number {
         return this.m_maxZoomLevel;
+    }
+
+    set maxZoomLevel(level: number) {
+        this.m_maxZoomLevel = level;
     }
 
     /**

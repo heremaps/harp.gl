@@ -109,57 +109,59 @@ describe("map-view#Utils", function() {
         expect(vFov).to.be.closeTo(calculatedVFov, 0.00000000001);
     });
 
-    it("calculates memory usage", function() {
-        const testObject1 = { str: "aaa", bool: true, num: 12, test: {} };
-        const testObject2 = { num: 1, test: testObject1 };
-        testObject1.test = testObject2;
-        const result = MapViewUtils.estimateObjectSize(testObject1);
-        expect(result).to.be.equal(26);
-    });
-
-    it("calculates memory usage for circular references", function() {
-        const testObject1 = { str: "aaa", bool: true, num: 12, test: {} };
-        const testObject2 = { num: 1, test: {} };
-        const testObject3 = { string: "bbb", test: {} };
-        testObject1.test = testObject2;
-        testObject2.test = testObject3;
-        testObject3.test = testObject1;
-        const result = MapViewUtils.estimateObjectSize(testObject1);
-        expect(result).to.be.equal(32);
-    });
-
-    it("calculates memory usage for arrays of values and arrays of objects", function() {
-        const testObject = {
-            str: "aaa",
-            bool: true,
-            num: 12,
-            arr: [1, 2, 3, true, false, "ccc"],
-            arrObj: [{}, { num: 12 }, { num: 11, obj: { str: "aaa" } }],
-            arrBuff: new ArrayBuffer(100),
-            typedBuff: new Float32Array(10)
-        };
-        const result = MapViewUtils.estimateObjectSize(testObject);
-        expect(result).to.be.equal(228);
-    });
-
     it("estimate size of world with one cube", async function() {
         const scene: THREE.Scene = new THREE.Scene();
         const geometry = new THREE.BoxGeometry(1, 1, 1);
         const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
         const cube = new THREE.Mesh(geometry, material);
         scene.add(cube);
-        expect(MapViewUtils.estimateObjectSize(scene)).to.be.equal(4634);
+
+        const objSize = MapViewUtils.estimateObject3dSize(scene);
+        expect(objSize.heapSize).to.be.equal(2672);
+        expect(objSize.gpuSize).to.be.equal(0);
     });
 
-    it("estimate size of world with 1000 cubes", async function() {
+    it("estimate size of world with one cube (BufferGeometry)", async function() {
+        const scene: THREE.Scene = new THREE.Scene();
+        const geometry = new THREE.BoxGeometry(1, 1, 1);
+        const bufferGeometry = new THREE.BufferGeometry().fromGeometry(geometry);
+        const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+        const cube = new THREE.Mesh(bufferGeometry, material);
+        scene.add(cube);
+
+        const objSize = MapViewUtils.estimateObject3dSize(scene);
+        expect(objSize.heapSize).to.be.equal(3808);
+        expect(objSize.gpuSize).to.be.equal(1584);
+    });
+
+    it("estimate size of world with two cubes that share the geometry", async function() {
+        const scene: THREE.Scene = new THREE.Scene();
+        const geometry = new THREE.BoxGeometry(1, 1, 1);
+        const bufferGeometry = new THREE.BufferGeometry().fromGeometry(geometry);
+        const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+        const cube0 = new THREE.Mesh(bufferGeometry, material);
+        scene.add(cube0);
+        const cube1 = new THREE.Mesh(bufferGeometry, material);
+        scene.add(cube1);
+
+        const objSize = MapViewUtils.estimateObject3dSize(scene);
+        expect(objSize.heapSize).to.be.equal(3808 + 1000); // see previous test
+        expect(objSize.gpuSize).to.be.equal(1584); // see previous test
+    });
+
+    it("estimate size of world with 1000 cubes (BufferGeometry)", async function() {
         this.timeout(4000);
         const scene: THREE.Scene = new THREE.Scene();
         for (let i = 0; i < 1000; i++) {
             const geometry = new THREE.BoxGeometry(1, 1, 1);
+            const bufferGeometry = new THREE.BufferGeometry().fromGeometry(geometry);
             const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
-            const cube = new THREE.Mesh(geometry, material);
+            const cube = new THREE.Mesh(bufferGeometry, material);
             scene.add(cube);
         }
-        expect(MapViewUtils.estimateObjectSize(scene)).to.be.equal(4082552);
+
+        const objSize = MapViewUtils.estimateObject3dSize(scene);
+        expect(objSize.heapSize).to.be.equal(3808000);
+        expect(objSize.gpuSize).to.be.equal(1584000);
     });
 });
