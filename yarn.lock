@@ -2,12 +2,10 @@
 # yarn lockfile v1
 
 
-"@here/harp-font-resources@^0.2.2":
-  version "0.2.2"
-  resolved "https://registry.yarnpkg.com/@here/harp-font-resources/-/harp-font-resources-0.2.2.tgz#2fe6a6167f0a204daf4047fb2878f76858c16f1f"
-  integrity sha512-Rukfg1Se2+6ooYFCSx60iaxQ3LOwfBM/ZzyCXUwSkS+DFuDouUYO3VQtkZhUgsANZBazii1yGwO8mXuvGmSgDA==
-  dependencies:
-    node "^10.15.3"
+"@here/harp-font-resources@^0.2.3":
+  version "0.2.3"
+  resolved "https://registry.yarnpkg.com/@here/harp-font-resources/-/harp-font-resources-0.2.3.tgz#61ce7b9bd40e59f09d82536a67d641c6589f5206"
+  integrity sha512-SWdYm8De7KU2NUSb4MY59MFRj7rgX7gx/zoHdWQhRK02Nw0YZfyMMz9uXQdsWKHSvM1Oz5Ci+8TdizpB+3m5mA==
 
 "@mrmlnc/readdir-enhanced@^2.2.1":
   version "2.2.1"
@@ -3864,11 +3862,6 @@ no-case@^2.2.0:
   dependencies:
     lower-case "^1.1.1"
 
-node-bin-setup@^1.0.0:
-  version "1.0.6"
-  resolved "https://registry.yarnpkg.com/node-bin-setup/-/node-bin-setup-1.0.6.tgz#4b5c9bb937ece702d7069b36ca78af4684677528"
-  integrity sha512-uPIxXNis1CRbv1DwqAxkgBk5NFV3s7cMN/Gf556jSw6jBvV7ca4F9lRL/8cALcZecRibeqU+5dFYqFFmzv5a0Q==
-
 node-fetch@^2.2.0:
   version "2.3.0"
   resolved "https://registry.yarnpkg.com/node-fetch/-/node-fetch-2.3.0.tgz#1a1d940bbfb916a1d3e0219f037e89e71f8c5fa5"
@@ -3928,13 +3921,6 @@ node-pre-gyp@^0.10.0:
     rimraf "^2.6.1"
     semver "^5.3.0"
     tar "^4"
-
-node@^10.15.3:
-  version "10.15.3"
-  resolved "https://registry.yarnpkg.com/node/-/node-10.15.3.tgz#ab238afa60540e04adcb349265d32b480d3f733a"
-  integrity sha512-8FAchZpzFwaxNLcdgr1QrXMj2D5taqRi6DwW70d560HApdHW+bkrdLjiGcPZCRG3xVxtvv1JAkCKilIPHvhljA==
-  dependencies:
-    node-bin-setup "^1.0.0"
 
 noms@0.0.0:
   version "0.0.0"
