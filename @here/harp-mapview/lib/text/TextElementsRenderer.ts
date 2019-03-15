@@ -1801,14 +1801,16 @@ export class TextElementsRenderer {
                     numNotVisible++;
                     return false;
                 }
-                const textPath = new THREE.Path();
-                if (screenPoints[1].x - screenPoints[0].x >= 0) {
-                    tempScreenPosition.copy(screenPoints[0]);
-                    for (let i = 0; i < screenPoints.length - 1; ++i) {
-                        textPath.add(new SimpleLineCurve(screenPoints[i], screenPoints[i + 1]));
-                    }
-                } else {
+
+                let textPath = new THREE.Path();
+                tempScreenPosition.copy(screenPoints[0]);
+                for (let i = 0; i < screenPoints.length - 1; ++i) {
+                    textPath.add(new SimpleLineCurve(screenPoints[i], screenPoints[i + 1]));
+                }
+                // Flip the path if the label is gonna be rendered downwards.
+                if (textPath.getPoint(0.5).x - textPath.getPoint(0.51).x > 0) {
                     tempScreenPosition.copy(screenPoints[screenPoints.length - 1]);
+                    textPath = new THREE.Path();
                     for (let i = screenPoints.length - 1; i > 0; --i) {
                         textPath.add(new SimpleLineCurve(screenPoints[i], screenPoints[i - 1]));
                     }
