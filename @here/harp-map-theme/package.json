@@ -25,7 +25,7 @@
     "@here/harp-datasource-protocol": "^0.3.1"
   },
   "devDependencies": {
-    "@here/harp-font-resources": "^0.2.2",
+    "@here/harp-font-resources": "^0.2.3",
     "@types/chai": "^4.1.2",
     "@types/mocha": "^5.2.5",
     "@types/ncp": "^2.0.1",

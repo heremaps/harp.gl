@@ -246,6 +246,11 @@ export class TileDataSource<TileType extends Tile> extends DataSource {
         }
 
         tileLoader.loadAndDecode().then(() => {
+            // if decodedTile once set on tile - do nothing
+            if (tile.decodedTile !== undefined) {
+                return;
+            }
+
             if (tileLoader.decodedTile && this.decodedTileHasGeometry(tileLoader.decodedTile)) {
                 const decodedTile = tileLoader.decodedTile;
                 tile.copyrightInfo =
@@ -255,8 +260,15 @@ export class TileDataSource<TileType extends Tile> extends DataSource {
 
                 tile.setDecodedTile(tileLoader.decodedTile);
             } else {
-                // empty tiles are traditionally ignored and don't need decode
-                tile.forceHasGeometry(true);
+                if (tileLoader.decodedTile !== undefined) {
+                    // to render at least an empty surface
+                    // when the data is loaded
+                    // tile requires "decodedTile" object,
+                    tile.setDecodedTile(tileLoader.decodedTile);
+                }
+                // Force to be handled as if tile has geometry,
+                // in case nothing has been extracted from the decodedTile.
+                tile.forceHasGeometry(tileLoader.decodedTile === undefined || !tile.hasGeometry);
             }
             this.requestUpdate();
         });
