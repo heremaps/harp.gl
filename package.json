@@ -15,6 +15,7 @@
     "tslint": "^5.11.1",
     "tslint-config-prettier": "^1.18.0",
     "typedoc": "^0.14.2",
+    "typedoc-plugin-external-module-map": "^1.0.0",
     "typescript": "^3.3.0",
     "webpack": "^4.28.3",
     "webpack-cli": "^3.1.0",
