@@ -64,6 +64,21 @@ export interface TileDataSourceOptions {
      * Implementation should provide this information from the source data if possible.
      */
     copyrightInfo?: CopyrightInfo[];
+
+    /**
+     * Optional minimum zoom level (storage level) for [[Tile]]s. Default is 1.
+     */
+    minZoomLevel?: number;
+
+    /**
+     * Optional maximum zoom level (storage level) for [[Tile]]s. Default is 20.
+     */
+    maxZoomLevel?: number;
+
+    /**
+     * Optional storage level offset for [[Tile]]s. Default is 0.
+     */
+    storageLevelOffset?: number;
 }
 
 /**
@@ -111,7 +126,13 @@ export class TileDataSource<TileType extends Tile> extends DataSource {
         private readonly m_tileFactory: TileFactory<TileType>,
         private readonly m_options: TileDataSourceOptions
     ) {
-        super(m_options.name, m_options.styleSetName);
+        super(
+            m_options.name,
+            m_options.styleSetName,
+            m_options.minZoomLevel,
+            m_options.maxZoomLevel,
+            m_options.storageLevelOffset
+        );
         if (m_options.decoder) {
             this.m_decoder = m_options.decoder;
         } else if (m_options.concurrentDecoderServiceName) {
