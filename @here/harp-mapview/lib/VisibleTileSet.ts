@@ -109,7 +109,7 @@ export interface DataSourceTileList {
     dataSource: DataSource;
 
     /**
-     * FIXME: zoomlevel is the actual storagelevel?!
+     * The current [[MapView]] zoom level.
      */
     zoomLevel: number;
 

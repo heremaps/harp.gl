@@ -125,14 +125,8 @@ export interface OmvDataAdapter {
      * @param data The raw data to process.
      * @param tileKey The TileKey of the enclosing Tile.
      * @param geoBox The GeoBox of the enclosing Tile.
-     * @param displayZoomLevel The current display zoom level.
      */
-    process(
-        data: ArrayBufferLike | {},
-        tileKey: TileKey,
-        geoBox: GeoBox,
-        displayZoomLevel: number
-    ): void;
+    process(data: ArrayBufferLike | {}, tileKey: TileKey, geoBox: GeoBox): void;
 }
 
 export class OmvDecoder implements IGeometryProcessor {
@@ -166,11 +160,7 @@ export class OmvDecoder implements IGeometryProcessor {
      * @param data The protobuffer to decode from.
      * @returns A [[DecodedTile]]
      */
-    getDecodedTile(
-        tileKey: TileKey,
-        displayZoomLevel: number,
-        data: ArrayBufferLike | {}
-    ): DecodedTile {
+    getDecodedTile(tileKey: TileKey, data: ArrayBufferLike | {}): DecodedTile {
         const geoBox = webMercatorTilingScheme.getGeoBox(tileKey);
         const tileBounds = this.m_projection.projectBox(geoBox, new THREE.Box3());
         const center = new THREE.Vector3();
@@ -178,7 +168,6 @@ export class OmvDecoder implements IGeometryProcessor {
 
         const decodeInfo = {
             tileKey,
-            displayZoomLevel,
             projection: this.m_projection,
             geoBox,
             tileBounds,
@@ -204,7 +193,7 @@ export class OmvDecoder implements IGeometryProcessor {
 
         for (const adapter of this.m_dataAdapters.values()) {
             if (adapter.canProcess(data)) {
-                adapter.process(data, tileKey, geoBox, displayZoomLevel);
+                adapter.process(data, tileKey, geoBox);
                 break;
             }
         }
@@ -218,11 +207,7 @@ export class OmvDecoder implements IGeometryProcessor {
         return decodedTile;
     }
 
-    getTileInfo(
-        tileKey: TileKey,
-        displayZoomLevel: number,
-        data: ArrayBufferLike | {}
-    ): ExtendedTileInfo {
+    getTileInfo(tileKey: TileKey, data: ArrayBufferLike | {}): ExtendedTileInfo {
         const geoBox = webMercatorTilingScheme.getGeoBox(tileKey);
         const tileBounds = this.m_projection.projectBox(geoBox, new THREE.Box3());
         const center = new THREE.Vector3();
@@ -230,7 +215,6 @@ export class OmvDecoder implements IGeometryProcessor {
 
         const decodeInfo = {
             tileKey,
-            displayZoomLevel,
             projection: this.m_projection,
             geoBox,
             tileBounds,
@@ -247,7 +231,7 @@ export class OmvDecoder implements IGeometryProcessor {
 
         for (const adapter of this.m_dataAdapters.values()) {
             if (adapter.canProcess(data)) {
-                adapter.process(data, tileKey, geoBox, displayZoomLevel);
+                adapter.process(data, tileKey, geoBox);
                 break;
             }
         }
@@ -259,8 +243,7 @@ export class OmvDecoder implements IGeometryProcessor {
         layer: string,
         geometry: GeoCoordinates[],
         env: MapEnv,
-        storageLevel: number,
-        displayLevel: number
+        storageLevel: number
     ): void {
         if (
             this.m_featureModifier !== undefined &&
@@ -301,8 +284,7 @@ export class OmvDecoder implements IGeometryProcessor {
         layer: string,
         geometry: ILineGeometry[],
         env: MapEnv,
-        storageLevel: number,
-        displayLevel: number
+        storageLevel: number
     ): void {
         if (
             this.m_featureModifier !== undefined &&
@@ -343,8 +325,7 @@ export class OmvDecoder implements IGeometryProcessor {
         layer: string,
         geometry: IPolygonGeometry[],
         env: MapEnv,
-        storageLevel: number,
-        displayLevel: number
+        storageLevel: number
     ): void {
         if (
             this.m_featureModifier !== undefined &&
@@ -391,7 +372,6 @@ export class OmvDecoder implements IGeometryProcessor {
 export namespace OmvDecoder {
     export interface DecodeInfo {
         readonly tileKey: TileKey;
-        readonly displayZoomLevel: number;
         readonly projection: Projection;
         readonly geoBox: GeoBox;
         readonly tileBounds: THREE.Box3;
@@ -449,8 +429,7 @@ export class OmvTileDecoder extends ThemedTileDecoder {
         data: ArrayBufferLike,
         tileKey: TileKey,
         styleSetEvaluator: StyleSetEvaluator,
-        projection: Projection,
-        displayZoomLevel?: number
+        projection: Projection
     ): Promise<DecodedTile> {
         const startTime = PerformanceTimer.now();
 
@@ -466,10 +445,7 @@ export class OmvTileDecoder extends ThemedTileDecoder {
             this.languages
         );
 
-        if (displayZoomLevel === undefined) {
-            displayZoomLevel = tileKey.level;
-        }
-        const decodedTile = decoder.getDecodedTile(tileKey, displayZoomLevel, data);
+        const decodedTile = decoder.getDecodedTile(tileKey, data);
 
         decodedTile.decodeTime = PerformanceTimer.now() - startTime;
 
@@ -479,8 +455,7 @@ export class OmvTileDecoder extends ThemedTileDecoder {
     getTileInfo(
         data: ArrayBufferLike,
         tileKey: TileKey,
-        projection: Projection,
-        displayZoomLevel: number
+        projection: Projection
     ): Promise<TileInfo | undefined> {
         const startTime = PerformanceTimer.now();
 
@@ -501,11 +476,7 @@ export class OmvTileDecoder extends ThemedTileDecoder {
             this.languages
         );
 
-        if (displayZoomLevel === undefined) {
-            displayZoomLevel = tileKey.level;
-        }
-
-        const tileInfo = decoder.getTileInfo(tileKey, displayZoomLevel, data);
+        const tileInfo = decoder.getTileInfo(tileKey, data);
 
         tileInfo.setupTime = PerformanceTimer.now() - startTime;
 

@@ -429,7 +429,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
 
                 const lineWidth = getPropertyValue(
                     extrudedLineTechnique.lineWidth,
-                    this.m_decodeInfo.displayZoomLevel
+                    this.m_decodeInfo.tileKey.level
                 );
 
                 if (lineWidth === undefined) {

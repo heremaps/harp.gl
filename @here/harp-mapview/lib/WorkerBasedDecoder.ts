@@ -96,7 +96,6 @@ export class WorkerBasedDecoder implements ITileDecoder {
         data: ArrayBufferLike,
         tileKey: TileKey,
         projection: Projection,
-        displayZoomLevel?: number,
         requestController?: RequestController
     ): Promise<DecodedTile> {
         const tileKeyCode = tileKey.mortonCode();
@@ -104,7 +103,6 @@ export class WorkerBasedDecoder implements ITileDecoder {
         const message: WorkerDecoderProtocol.DecodeTileRequest = {
             type: WorkerDecoderProtocol.Requests.DecodeTileRequest,
             tileKey: tileKeyCode,
-            displayZoomLevel,
             data,
             projection: getProjectionName(projection)
         };
@@ -128,7 +126,6 @@ export class WorkerBasedDecoder implements ITileDecoder {
         data: ArrayBufferLike,
         tileKey: TileKey,
         projection: Projection,
-        displayZoomLevel?: number,
         requestController?: RequestController
     ): Promise<TileInfo | undefined> {
         const tileKeyCode = tileKey.mortonCode();
@@ -136,7 +133,6 @@ export class WorkerBasedDecoder implements ITileDecoder {
         const message: WorkerDecoderProtocol.TileInfoRequest = {
             type: WorkerDecoderProtocol.Requests.TileInfoRequest,
             tileKey: tileKeyCode,
-            displayZoomLevel,
             data,
             projection: getProjectionName(projection)
         };

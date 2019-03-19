@@ -60,14 +60,12 @@ export interface IGeometryProcessor {
      * @param geometry The list of geo points.
      * @param env The enviroment containing the properties of the geometry.
      * @param storageLevel The storage level of the data.
-     * @param displayZoomLevel The desired display zoom level.
      */
     processPointFeature(
         layerName: string,
         geometry: GeoCoordinates[],
         env: MapEnv,
-        storageLevel: number,
-        displayZoomLevel: number
+        storageLevel: number
     ): void;
 
     /**
@@ -79,14 +77,12 @@ export interface IGeometryProcessor {
      * @param geometry The list of line geometries.
      * @param env The enviroment containing the properties of the geometry.
      * @param storageLevel The storage level of the data.
-     * @param displayZoomLevel The desired display zoom level.
      */
     processLineFeature(
         layerName: string,
         geometry: ILineGeometry[],
         env: MapEnv,
-        storageLevel: number,
-        displayZoomLevel: number
+        storageLevel: number
     ): void;
 
     /**
@@ -99,13 +95,11 @@ export interface IGeometryProcessor {
      * @param geometry The list of polygons.
      * @param env The enviroment containing the properties of the geometry.
      * @param storageLevel The storage level of the data.
-     * @param displayZoomLevel The desired display zoom level.
      */
     processPolygonFeature(
         layerName: string,
         geometry: IPolygonGeometry[],
         env: MapEnv,
-        storageLevel: number,
-        displayZoomLevel: number
+        storageLevel: number
     ): void;
 }
