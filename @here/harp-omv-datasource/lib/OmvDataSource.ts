@@ -5,10 +5,11 @@
  */
 
 import { GeometryType, ITileDecoder, StyleSet } from "@here/harp-datasource-protocol";
-import { MathUtils, TileKey, webMercatorTilingScheme } from "@here/harp-geoutils";
+import { TileKey, webMercatorTilingScheme } from "@here/harp-geoutils";
 import { Lines } from "@here/harp-lines";
 import { CopyrightInfo } from "@here/harp-mapview";
 import { DataProvider, TileDataSource, TileFactory } from "@here/harp-mapview-decoder";
+import { getOptionValue } from "@here/harp-utils";
 import {
     FeatureModifierId,
     OMV_TILE_DECODER_SERVICE_TYPE,
@@ -53,8 +54,6 @@ export interface OmvDataSourceParameters {
      *  @default "omv"
      */
     styleSetName?: string;
-
-    zoomStorageLevelOffset?: number;
 
     /**
      * Custom layer name to be rendered.
@@ -125,16 +124,6 @@ export interface OmvDataSourceParameters {
     tileFactory?: TileFactory<OmvTile>;
 
     /**
-     * Optional minimum zoom level (storage level) for [[Tile]]s. Default is 1.
-     */
-    minZoomLevel?: number;
-
-    /**
-     * Optional maximum zoom level (storage level) for [[Tile]]s. Default is 14.
-     */
-    maxZoomLevel?: number;
-
-    /**
      * Identifier used to choose OmvFeatureModifier, if undefined [[OmvGenericFeatureModifier]] is
      * used. This parameter gets applied to the decoder used in the [[OmvDataSource]] which might
      * be shared between various [[OmvDataSource]]s.
@@ -147,6 +136,21 @@ export interface OmvDataSourceParameters {
      * Implementation should provide this information from the source data if possible.
      */
     copyrightInfo?: CopyrightInfo[];
+
+    /**
+     * Optional minimum zoom level (storage level) for [[Tile]]s. Default is 1.
+     */
+    minZoomLevel?: number;
+
+    /**
+     * Optional maximum zoom level (storage level) for [[Tile]]s. Default is 14.
+     */
+    maxZoomLevel?: number;
+
+    /**
+     * Optional storage level offset for [[Tile]]s. Default is -2.
+     */
+    storageLevelOffset?: number;
 }
 
 /**
@@ -169,9 +173,6 @@ export type OmvWithCustomDataProvider = OmvDataSourceParameters & { dataProvider
 
 export class OmvDataSource extends TileDataSource<OmvTile> {
     private readonly m_decoderOptions: OmvDecoderOptions;
-    private readonly m_zoomLevelOffset: number;
-    private readonly m_minZoomLevelOption: number;
-    private readonly m_maxZoomLevelOption: number;
 
     constructor(private m_params: OmvWithRestClientParams | OmvWithCustomDataProvider) {
         super(m_params.tileFactory || new TileFactory(OmvTile), {
@@ -182,7 +183,10 @@ export class OmvDataSource extends TileDataSource<OmvTile> {
             concurrentDecoderServiceName: OMV_TILE_DECODER_SERVICE_TYPE,
             decoder: m_params.decoder,
             concurrentDecoderScriptUrl: m_params.concurrentDecoderScriptUrl,
-            copyrightInfo: m_params.copyrightInfo
+            copyrightInfo: m_params.copyrightInfo,
+            minZoomLevel: getOptionValue(m_params.minZoomLevel, 1),
+            maxZoomLevel: getOptionValue(m_params.maxZoomLevel, 14),
+            storageLevelOffset: getOptionValue(m_params.storageLevelOffset, -2)
         });
 
         this.cacheable = true;
@@ -195,15 +199,6 @@ export class OmvDataSource extends TileDataSource<OmvTile> {
             gatherRoadSegments: this.m_params.gatherRoadSegments === true,
             featureModifierId: this.m_params.featureModifierId
         };
-
-        this.m_zoomLevelOffset =
-            this.m_params.zoomStorageLevelOffset !== undefined
-                ? this.m_params.zoomStorageLevelOffset
-                : -2;
-        this.m_minZoomLevelOption =
-            this.m_params.minZoomLevel !== undefined ? this.m_params.minZoomLevel : 1;
-        this.m_maxZoomLevelOption =
-            this.m_params.maxZoomLevel !== undefined ? this.m_params.maxZoomLevel : 14;
 
         this.tileBackgroundIsVisible = true;
     }
@@ -274,21 +269,5 @@ export class OmvDataSource extends TileDataSource<OmvTile> {
             this.m_decoder.configure(undefined, languages, undefined);
             this.mapView.markTilesDirty(this);
         }
-    }
-
-    get minZoomLevel(): number {
-        return this.m_minZoomLevelOption;
-    }
-
-    get maxZoomLevel(): number {
-        return this.m_maxZoomLevelOption;
-    }
-
-    getDisplayZoomLevel(zoomLevel: number): number {
-        return MathUtils.clamp(
-            zoomLevel + this.m_zoomLevelOffset,
-            this.minZoomLevel,
-            this.maxZoomLevel
-        );
     }
 }

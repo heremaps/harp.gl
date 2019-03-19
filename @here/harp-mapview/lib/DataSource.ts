@@ -73,13 +73,37 @@ export abstract class DataSource extends THREE.EventDispatcher {
     private m_styleSetName?: string;
 
     /**
+     * Minimum zoom level this `DataSource` can be displayed in.
+     */
+    private m_minZoomLevel: number = 1;
+
+    /**
+     * Maximum zoom level this `DataSource` can be displayed in.
+     */
+    private m_maxZoomLevel: number = 20;
+
+    /**
+     * Storage level offset applied to this `DataSource`.
+     */
+    private m_storageLevelOffset: number = 0;
+
+    /**
      * Constructs a new `DataSource`.
      *
      * @param uniqueName A unique name that represents this `DataSource`.
      * @param styleSetName The name of the [[StyleSet]] to refer to in a [[Theme]], to decode vector
      * tiles.
+     * @param minZoomLevel Minimum zoom level this `DataSource` can be displayed in.
+     * @param maxZoomLevel Maximum zoom level this `DataSource` can be displayed in.
+     * @param storageLevelOffset Storage level offset applied to this `DataSource`.
      */
-    constructor(uniqueName?: string, styleSetName?: string) {
+    constructor(
+        uniqueName?: string,
+        styleSetName?: string,
+        minZoomLevel?: number,
+        maxZoomLevel?: number,
+        storageLevelOffset?: number
+    ) {
         super();
         if (uniqueName === undefined || uniqueName.length === 0) {
             uniqueName = `anonymous-datasource#${++DataSource.uniqueNameCounter}`;
@@ -87,6 +111,16 @@ export abstract class DataSource extends THREE.EventDispatcher {
         this.name = uniqueName;
 
         this.styleSetName = styleSetName;
+
+        if (minZoomLevel !== undefined) {
+            this.m_minZoomLevel = minZoomLevel;
+        }
+        if (maxZoomLevel !== undefined) {
+            this.m_maxZoomLevel = maxZoomLevel;
+        }
+        if (storageLevelOffset !== undefined) {
+            this.m_storageLevelOffset = storageLevelOffset;
+        }
     }
 
     /**
@@ -244,7 +278,7 @@ export abstract class DataSource extends THREE.EventDispatcher {
      * @returns The minimum zoom level to use for display.
      */
     get minZoomLevel(): number {
-        return 1;
+        return this.m_minZoomLevel;
     }
 
     /**
@@ -253,7 +287,7 @@ export abstract class DataSource extends THREE.EventDispatcher {
      * @returns The maximum zoom level to use for display.
      */
     get maxZoomLevel(): number {
-        return 20;
+        return this.m_maxZoomLevel;
     }
 
     /**
@@ -263,7 +297,11 @@ export abstract class DataSource extends THREE.EventDispatcher {
      * @returns The zoom level to use for display.
      */
     getDisplayZoomLevel(zoomLevel: number): number {
-        return THREE.Math.clamp(zoomLevel, this.minZoomLevel, this.maxZoomLevel);
+        return THREE.Math.clamp(
+            zoomLevel + this.m_storageLevelOffset,
+            this.m_minZoomLevel,
+            this.m_maxZoomLevel
+        );
     }
 
     /**
