@@ -34,7 +34,6 @@ export interface ITileDecoder {
         data: ArrayBufferLike | {},
         tileKey: TileKey,
         projection: Projection,
-        displayZoomLevel?: number,
         requestController?: RequestController
     ): Promise<DecodedTile>;
 
@@ -47,7 +46,6 @@ export interface ITileDecoder {
         data: ArrayBufferLike | {},
         tileKey: TileKey,
         projection: Projection,
-        displayZoomLevel?: number,
         requestController?: RequestController
     ): Promise<TileInfo | undefined>;
 

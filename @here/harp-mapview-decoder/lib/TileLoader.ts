@@ -290,13 +290,7 @@ export class TileLoader {
 
         const dataSource = this.dataSource;
         this.tileDecoder
-            .decodeTile(
-                payload,
-                this.tileKey,
-                dataSource.projection,
-                this.dataSource.mapView.zoomLevel,
-                requestController
-            )
+            .decodeTile(payload, this.tileKey, dataSource.projection, requestController)
             .then(decodedTile => {
                 if (requestController.signal.aborted) {
                     // our flow is cancelled, silently return
@@ -392,13 +386,7 @@ export class TileInfoLoader extends TileLoader {
 
         const dataSource = this.dataSource;
         this.tileDecoder
-            .getTileInfo(
-                payload,
-                this.tileKey,
-                dataSource.projection,
-                this.dataSource.mapView.zoomLevel,
-                requestController
-            )
+            .getTileInfo(payload, this.tileKey, dataSource.projection, requestController)
             .then(tileInfo => {
                 if (requestController.signal.aborted) {
                     // our flow is cancelled, silently return

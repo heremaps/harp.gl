@@ -337,14 +337,12 @@ function createFeatureEnv(
     feature: com.mapbox.pb.Tile.IFeature,
     geometryType: string,
     storageLevel: number,
-    displayLevel: number,
     logger?: ILogger,
     parent?: Env
 ): MapEnv {
     const attributes: ValueMap = {
         $layer: layer.name,
         $level: storageLevel,
-        $displayLevel: displayLevel,
         $geometryType: geometryType
     };
 
@@ -389,7 +387,6 @@ export class OmvProtobufDataAdapter implements OmvDataAdapter, OmvVisitor {
 
     private m_tileKey!: TileKey;
     private m_geoBox!: GeoBox;
-    private m_displayZoomLevel!: number;
     private m_layer!: com.mapbox.pb.Tile.ILayer;
 
     /**
@@ -432,15 +429,13 @@ export class OmvProtobufDataAdapter implements OmvDataAdapter, OmvVisitor {
      * @param data The data payload to process.
      * @param tileKey The [[TileKey]] of the tile enclosing the data.
      * @param geoBox The [[GeoBox]] of the tile enclosing the data.
-     * @param displayZoomLevel The current zoom level.
      */
-    process(data: ArrayBufferLike, tileKey: TileKey, geoBox: GeoBox, displayZoomLevel: number) {
+    process(data: ArrayBufferLike, tileKey: TileKey, geoBox: GeoBox) {
         const payload = new Uint8Array(data);
         const proto = com.mapbox.pb.Tile.decode(payload);
 
         this.m_tileKey = tileKey;
         this.m_geoBox = geoBox;
-        this.m_displayZoomLevel = displayZoomLevel;
 
         visitOmv(proto, this);
     }
@@ -506,22 +501,9 @@ export class OmvProtobufDataAdapter implements OmvDataAdapter, OmvVisitor {
             return;
         }
 
-        const env = createFeatureEnv(
-            this.m_layer,
-            feature,
-            "point",
-            storageLevel,
-            this.m_displayZoomLevel,
-            this.m_logger
-        );
+        const env = createFeatureEnv(this.m_layer, feature, "point", storageLevel, this.m_logger);
 
-        this.m_processor.processPointFeature(
-            layerName,
-            geometry,
-            env,
-            storageLevel,
-            this.m_displayZoomLevel
-        );
+        this.m_processor.processPointFeature(layerName, geometry, env, storageLevel);
     }
 
     /**
@@ -569,22 +551,9 @@ export class OmvProtobufDataAdapter implements OmvDataAdapter, OmvVisitor {
             return;
         }
 
-        const env = createFeatureEnv(
-            this.m_layer,
-            feature,
-            "line",
-            storageLevel,
-            this.m_displayZoomLevel,
-            this.m_logger
-        );
+        const env = createFeatureEnv(this.m_layer, feature, "line", storageLevel, this.m_logger);
 
-        this.m_processor.processLineFeature(
-            layerName,
-            geometry,
-            env,
-            storageLevel,
-            this.m_displayZoomLevel
-        );
+        this.m_processor.processLineFeature(layerName, geometry, env, storageLevel);
     }
 
     /**
@@ -640,21 +609,8 @@ export class OmvProtobufDataAdapter implements OmvDataAdapter, OmvVisitor {
             return;
         }
 
-        const env = createFeatureEnv(
-            this.m_layer,
-            feature,
-            "polygon",
-            storageLevel,
-            this.m_displayZoomLevel,
-            this.m_logger
-        );
+        const env = createFeatureEnv(this.m_layer, feature, "polygon", storageLevel, this.m_logger);
 
-        this.m_processor.processPolygonFeature(
-            layerName,
-            geometry,
-            env,
-            storageLevel,
-            this.m_displayZoomLevel
-        );
+        this.m_processor.processPolygonFeature(layerName, geometry, env, storageLevel);
     }
 }

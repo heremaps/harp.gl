@@ -33,28 +33,20 @@ export abstract class ThemedTileDecoder implements ITileDecoder {
     decodeTile(
         data: ArrayBufferLike,
         tileKey: TileKey,
-        projection: Projection,
-        displayZoomLevel?: number
+        projection: Projection
     ): Promise<DecodedTile> {
         if (this.m_styleSetEvaluator === undefined) {
             return Promise.reject(new Error("No style is defined"));
         }
 
-        return this.decodeThemedTile(
-            data,
-            tileKey,
-            this.m_styleSetEvaluator,
-            projection,
-            displayZoomLevel
-        );
+        return this.decodeThemedTile(data, tileKey, this.m_styleSetEvaluator, projection);
     }
 
     // tslint:disable:no-unused-variable
     getTileInfo(
         data: ArrayBufferLike,
         tileKey: TileKey,
-        projection: Projection,
-        displayZoomLevel?: number
+        projection: Projection
     ): Promise<TileInfo | undefined> {
         return Promise.resolve(undefined);
     }
@@ -83,7 +75,6 @@ export abstract class ThemedTileDecoder implements ITileDecoder {
         data: ArrayBufferLike | {},
         tileKey: TileKey,
         styleSetEvaluator: StyleSetEvaluator,
-        projection: Projection,
-        displayZoomLevel?: number
+        projection: Projection
     ): Promise<DecodedTile>;
 }

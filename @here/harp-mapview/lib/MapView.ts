@@ -1196,6 +1196,18 @@ export class MapView extends THREE.EventDispatcher {
     }
 
     /**
+     * Returns the storage level for the given camera setup.
+     * Actual storage level of the rendered data also depends on [[DataSource.storageLevelOffset]].
+     */
+    get storageLevel(): number {
+        return THREE.Math.clamp(
+            Math.floor(this.m_zoomLevel),
+            this.m_minZoomLevel,
+            this.m_maxZoomLevel
+        );
+    }
+
+    /**
      * Returns height of the viewport in pixels.
      */
     get viewportHeight(): number {
@@ -1849,12 +1861,6 @@ export class MapView extends THREE.EventDispatcher {
             this.m_mapTilesRoot.remove(this.m_mapTilesRoot.children[0]);
         }
 
-        const storageLevel = THREE.Math.clamp(
-            Math.floor(this.zoomLevel),
-            this.m_minZoomLevel,
-            this.m_maxZoomLevel
-        );
-
         if (gatherStatistics) {
             setupTime = PerformanceTimer.now();
         }
@@ -1863,7 +1869,7 @@ export class MapView extends THREE.EventDispatcher {
         if (!this.lockVisibleTileSet) {
             this.m_visibleTiles.updateRenderList(
                 this.m_worldCenter,
-                storageLevel,
+                this.storageLevel,
                 Math.floor(this.zoomLevel),
                 this.getEnabledTileDataSources()
             );

@@ -105,7 +105,6 @@ export namespace WorkerDecoderProtocol {
         tileKey: number;
         data: ArrayBufferLike;
         projection: string;
-        displayZoomLevel?: number;
     }
 
     /**
@@ -128,7 +127,6 @@ export namespace WorkerDecoderProtocol {
         tileKey: number;
         data: ArrayBufferLike;
         projection: string;
-        displayZoomLevel?: number;
     }
 
     /**

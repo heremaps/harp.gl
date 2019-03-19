@@ -95,7 +95,7 @@ export class VTJsonDataAdapter implements OmvDataAdapter {
         return true;
     }
 
-    process(tile: VTJsonTileInterface, tileKey: TileKey, geoBox: GeoBox, displayZoomLevel: number) {
+    process(tile: VTJsonTileInterface, tileKey: TileKey, geoBox: GeoBox) {
         const extent = 4096;
         const longitudeScale = geoBox.longitudeSpan / extent;
         const { north, west } = geoBox;
@@ -107,8 +107,7 @@ export class VTJsonDataAdapter implements OmvDataAdapter {
                 ...feature.tags,
                 $layer: tile.layer,
                 $geometryType: this.convertGeometryType(feature.type),
-                $level: tileKey.level,
-                $displayLevel: displayZoomLevel
+                $level: tileKey.level
             });
 
             switch (feature.type) {
@@ -123,8 +122,7 @@ export class VTJsonDataAdapter implements OmvDataAdapter {
                             tile.layer,
                             [new GeoCoordinates(latitude, longitude)],
                             env,
-                            tileKey.level,
-                            displayZoomLevel
+                            tileKey.level
                         );
                     }
                     break;
@@ -138,13 +136,7 @@ export class VTJsonDataAdapter implements OmvDataAdapter {
                             line.coordinates.push(new GeoCoordinates(latitude, longitude));
                         }
 
-                        this.m_processor.processLineFeature(
-                            tile.layer,
-                            [line],
-                            env,
-                            tileKey.level,
-                            displayZoomLevel
-                        );
+                        this.m_processor.processLineFeature(tile.layer, [line], env, tileKey.level);
                     }
                     break;
                 }
@@ -199,8 +191,7 @@ export class VTJsonDataAdapter implements OmvDataAdapter {
                             tile.layer,
                             [polygon],
                             env,
-                            tileKey.level,
-                            displayZoomLevel
+                            tileKey.level
                         );
                     }
                     break;
