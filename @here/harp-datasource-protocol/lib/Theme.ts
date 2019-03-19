@@ -857,12 +857,57 @@ class Parser {
         return expr;
     }
 }
-
-interface InterpolatedPropertyDefinition<T> {
+/**
+ * An [[InterpolatedPropertyDefinition]] defines a set of values
+ * for a given [[Style.attr]], which will be used for interpolations.
+ * You define a set of [[InterpolatedPropertyDefinition.zoomLevels]]
+ * and corresponding [[InterpolatedPropertyDefinition.values]],
+ * where you define a singular value for each zoom level.
+ * Depending on the [[InterpolatedPropertyDefinition.interpolation]] mode set,
+ * a different interpolation curve will be used to
+ * retrieve the value of [[Style.attr]] for a specific level.
+ */
+export interface InterpolatedPropertyDefinition<T> {
+    /**
+     * Interpolation function which will be used to interpolate zoom level values.
+     *  * Discrete: Step wise interpolation of values between zoom levels.
+     *  * Linear: A linear interpolation of values between zoom levels.
+     *  * Cubic: A cubic interpolation of values between zoom levels.
+     */
     interpolation?: "Discrete" | "Linear" | "Cubic";
+    /**
+     * Array of zoom levels for which you want to define values for.
+     * [[InterpolatedPropertyDefinition.zoomLevels]] length have to be equal to
+     * [[InterpolatedPropertyDefinition.values]] length.
+     */
     zoomLevels: number[];
+    /**
+     * Array of values corresponding to the given
+     * [[InterpolatedPropertyDefinition.zoomLevels]].
+     *
+     * [[InterpolatedPropertyDefinition.zoomLevels]] length have to be equal to
+     * [[InterpolatedPropertyDefinition.values]] length.
+     */
     values: T[];
 }
+
+/**
+ * Type definition for style attribute values. See [[Style.attr]] .
+ * A style attribute can either be one of the following primitive types.
+ *  * number
+ *  * boolean
+ *  * string
+ * Or it can be an [[InterpolatedPropertyDefinition]] with the given types above.
+ * This means that you can also define a set of interpolation values
+ * for a given attribute for a [[Style.attr]] .
+ */
+export type AttributeValue =
+    | number
+    | InterpolatedPropertyDefinition<number>
+    | boolean
+    | InterpolatedPropertyDefinition<boolean>
+    | string
+    | InterpolatedPropertyDefinition<string>;
 
 function isInterpolatedPropertyDefinition<T>(p: any): p is InterpolatedPropertyDefinition<T> {
     if (
@@ -1013,13 +1058,7 @@ export interface Style {
      * Attributes that define the technique.
      */
     attr?: {
-        [name: string]:
-            | number
-            | InterpolatedPropertyDefinition<number>
-            | boolean
-            | InterpolatedPropertyDefinition<boolean>
-            | string
-            | InterpolatedPropertyDefinition<string>;
+        [name: string]: AttributeValue;
     };
 
     /**
