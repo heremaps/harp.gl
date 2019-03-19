@@ -930,6 +930,116 @@
         }
       },
       {
+        "description": "disputed border line background",
+        "category": "outline",
+        "when": "$layer ^= 'boundaries' && (($geometryType ^= 'line') && (kind in ['disputed','indefinite','indeterminate','lease_limit','line_of_control','overlay_limit']))",
+        "technique": "solid-line",
+        "attr": {
+          "color": "#52676E",
+          "lineWidth": {
+            "interpolation": "Linear",
+            "zoomLevels": [
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8,
+              9,
+              10,
+              11,
+              12,
+              13,
+              14
+            ],
+            "values": [
+              10000,
+              8000,
+              7000,
+              5000,
+              3000,
+              2000,
+              1000,
+              500,
+              250,
+              120,
+              80,
+              40,
+              20,
+              10
+            ]
+          }
+        },
+        "renderOrder": 4
+      },
+      {
+        "description": "disputed border line foreground",
+        "category": "fill",
+        "when": "$layer ^= 'boundaries' && (($geometryType ^= 'line') && (kind in ['disputed','indefinite','indeterminate','lease_limit','line_of_control','overlay_limit']))",
+        "technique": "dashed-line",
+        "attr": {
+          "color": "#2F444B",
+          "lineWidth": {
+            "interpolation": "Linear",
+            "zoomLevels": [
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8,
+              9,
+              10,
+              11,
+              12,
+              13,
+              14
+            ],
+            "values": [
+              2000,
+              1400,
+              1000,
+              500,
+              220,
+              90,
+              50,
+              30,
+              20,
+              15,
+              10,
+              5,
+              2
+            ]
+          },
+          "dashSize": {
+            "interpolation": "Discrete",
+            "zoomLevels": [6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
+            "values": [4000, 2500, 1500, 1200, 560, 100, 50, 25, 16, 12, 10]
+        },
+        "gapSize": {
+            "interpolation": "Linear",
+            "zoomLevels": [6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
+            "values": [4800, 3000, 2000, 1400, 360, 120, 60, 30, 19, 14, 12]
+        }
+        },
+        "renderOrder": 4.1
+      },
+      {
+        "description": "disputed border line text",
+        "when": "$layer ^= 'boundaries' && (($geometryType ^= 'line') && (kind in ['disputed','indefinite','indeterminate','lease_limit','line_of_control','overlay_limit']))",
+        "technique": "text",
+        "attr": {
+          "priority": 100,
+          "color": "#000000",
+          "backgroundColor": "#FFFFFF",
+          "backgroundAlpha": 0.5,
+          "size": 12.8
+        }
+      },
+      {
         "description": "region border",
         "category": "outline",
         "when": "$layer ^= 'boundaries' && (($geometryType ^= 'line') && (kind == 'region'))",
