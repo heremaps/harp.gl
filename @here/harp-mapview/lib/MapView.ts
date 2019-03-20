@@ -229,7 +229,7 @@ export interface MapViewOptions {
 
     /**
      * The number of Web Workers used to decode data. The default is
-     * `navigator.hardwareConcurrency`.
+     * CLAMP(`navigator.hardwareConcurrency` - 1, 1, 4).
      */
     decoderCount?: number;
 
