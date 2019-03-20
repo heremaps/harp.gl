@@ -1093,6 +1093,7 @@ export class MapView extends THREE.EventDispatcher {
 
     /**
      * The position in geo coordinates of the center of the scene.
+     * Longitude values outside of -180 and +180 are acceptable.
      */
     set geoCenter(geoCenter: GeoCoordinates) {
         this.projection.projectPoint(geoCenter, this.m_worldCenter);

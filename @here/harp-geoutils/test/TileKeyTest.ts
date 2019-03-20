@@ -10,7 +10,6 @@
 import { assert } from "chai";
 import { GeoBox } from "../lib/coordinates/GeoBox";
 import { GeoCoordinates } from "../lib/coordinates/GeoCoordinates";
-import { webMercatorProjection } from "../lib/projection/WebMercatorProjection";
 import { TileKey } from "../lib/tiling/TileKey";
 import { TileKeyUtils } from "../lib/tiling/TileKeyUtils";
 import { webMercatorTilingScheme } from "../lib/tiling/WebMercatorTilingScheme";
@@ -92,43 +91,6 @@ describe("WebMercator", function() {
         assert.isNotNull(tileKey);
         assert.strictEqual(tileKey.row, 5374);
         assert.strictEqual(tileKey.column, 8800);
-    });
-
-    it("project", function() {
-        const coords = new GeoCoordinates(52.504951, 13.371806);
-        const projected = webMercatorProjection.projectPoint(coords);
-        const unprojected = webMercatorProjection.unprojectPoint(projected);
-
-        assert.approximately(coords.latitudeInRadians, unprojected.latitudeInRadians, 0.0001);
-        assert.approximately(coords.longitudeInRadians, unprojected.longitudeInRadians, 0.0001);
-    });
-
-    it("projectBox", function() {
-        const tileKey = TileKey.fromRowColumnLevel(0, 0, 0);
-        const box = webMercatorTilingScheme.getGeoBox(tileKey);
-        const projectedBox = webMercatorProjection.projectBox(box);
-        const unprojectedBox = webMercatorProjection.unprojectBox(projectedBox);
-
-        assert.approximately(
-            box.southWest.latitudeInRadians,
-            unprojectedBox.southWest.latitudeInRadians,
-            0.0001
-        );
-        assert.approximately(
-            box.southWest.longitudeInRadians,
-            unprojectedBox.southWest.longitudeInRadians,
-            0.0001
-        );
-        assert.approximately(
-            box.northEast.latitudeInRadians,
-            unprojectedBox.northEast.latitudeInRadians,
-            0.0001
-        );
-        assert.approximately(
-            box.northEast.longitudeInRadians,
-            unprojectedBox.northEast.longitudeInRadians,
-            0.0001
-        );
     });
 
     it("geoRect", function() {
