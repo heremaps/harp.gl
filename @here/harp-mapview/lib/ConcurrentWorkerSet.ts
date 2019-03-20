@@ -9,6 +9,7 @@ import {
     IWorkerChannelMessage,
     LoggerManager,
     LogLevel,
+    MathUtils,
     WORKERCHANNEL_MSG_TYPE
 } from "@here/harp-utils";
 
@@ -42,7 +43,7 @@ export interface ConcurrentWorkerSetOptions {
     /**
      * The number of Web Workers for processing data.
      *
-     * Defaults to `navigator.hardwareConcurrency` or [[DEFAULT_WORKER_COUNT]].
+     * Defaults to CLAMP(`navigator.hardwareConcurrency` - 1, 1, 4) or [[DEFAULT_WORKER_COUNT]].
      */
     workerCount?: number;
 }
@@ -157,7 +158,8 @@ export class ConcurrentWorkerSet {
         const workerCount = getOptionValue(
             this.m_options.workerCount,
             typeof navigator !== "undefined" && navigator.hardwareConcurrency !== undefined
-                ? Math.max(1, navigator.hardwareConcurrency) // we need to have at least one worker
+                ? // We need to have at least one worker
+                  MathUtils.clamp(navigator.hardwareConcurrency - 1, 1, 4)
                 : undefined,
             DEFAULT_WORKER_COUNT
         );
