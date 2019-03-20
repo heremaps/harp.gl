@@ -118,6 +118,7 @@ export interface TileFeatureData {
 /**
  * Minimum estimated size of a JS object.
  */
+const MINIMUM_SMALL_OBJECT_SIZE_ESTIMATION = 16;
 const MINIMUM_OBJECT_SIZE_ESTIMATION = 100;
 
 /**
@@ -127,14 +128,14 @@ export function getFeatureDataSize(featureData: TileFeatureData): number {
     let numBytes = MINIMUM_OBJECT_SIZE_ESTIMATION;
 
     if (featureData.ids !== undefined) {
-        numBytes += featureData.ids.length * 4;
+        numBytes += featureData.ids.length * 8;
     }
     if (featureData.starts !== undefined) {
-        numBytes += featureData.starts.length * 4;
+        numBytes += featureData.starts.length * 8;
     }
     if (featureData.objInfos !== undefined) {
         // 16 (estimated) bytes per objInfos
-        numBytes += featureData.objInfos.length * 16;
+        numBytes += featureData.objInfos.length * MINIMUM_SMALL_OBJECT_SIZE_ESTIMATION;
     }
 
     return numBytes;
@@ -192,12 +193,12 @@ export interface RoadIntersectionData {
 function getRoadIntersectionDataSize(intersectionData: RoadIntersectionData): number {
     let numBytes = MINIMUM_OBJECT_SIZE_ESTIMATION;
 
-    // 4 bytes per techniqueIndex
-    // 4 bytes per start
-    // 4 bytes per width
-    // 4 bytes per position
+    // 8 bytes per techniqueIndex
+    // 8 bytes per start
+    // 8 bytes per width
+    // 8 bytes per position
     // 100 (estimated) bytes per technique
-    const bytesPerEntry = 4 + 4 + 4 + 4 + MINIMUM_OBJECT_SIZE_ESTIMATION;
+    const bytesPerEntry = 8 + 8 + 8 + 8 + MINIMUM_OBJECT_SIZE_ESTIMATION;
     const numEntries = intersectionData.techniqueIndex.length;
     numBytes += intersectionData.techniqueIndex.length * bytesPerEntry;
 
@@ -207,7 +208,7 @@ function getRoadIntersectionDataSize(intersectionData: RoadIntersectionData): nu
 
     if (intersectionData.objInfos !== undefined) {
         // 16 (estimated) bytes per objInfos
-        numBytes += numEntries * 16;
+        numBytes += numEntries * MINIMUM_SMALL_OBJECT_SIZE_ESTIMATION;
     }
 
     return numBytes;
