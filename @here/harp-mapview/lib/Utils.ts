@@ -6,6 +6,7 @@
 
 import * as geoUtils from "@here/harp-geoutils";
 import { EarthConstants } from "@here/harp-geoutils/lib/projection/EarthConstants";
+import { assert } from "@here/harp-utils";
 import * as THREE from "three";
 import { MapView } from "./MapView";
 
@@ -479,5 +480,109 @@ export namespace MapViewUtils {
      */
     function getIsoLanguageCode(language: string) {
         return language.substring(0, 2);
+    }
+}
+
+export namespace TileOffsetUtils {
+    /**
+     * Creates a unique key based on the supplied parameters. Note, the uniqueness is bounded by the
+     * bitshift. The mortonCode supports currently up to 26 levels, the bitshift reduces this
+     * accordingly, so given the default bitshift of four, we support up to 22 levels. Given the
+     * current support up to level 19 this should be fine.
+     *
+     * @param tileKey The unique [[TileKey]] from which to compute the unique key.
+     * @param offset How much the given [[TileKey]] is offset
+     * @param bitshift How much space we have to store the offset. The default of 4 means we have
+     *      enough space to store 16 unique tiles.
+     */
+    export function getKeyForTileKeyAndOffset(
+        tileKey: geoUtils.TileKey,
+        offset: number,
+        bitshift: number = 3
+    ) {
+        const shiftedOffset = getShiftedOffset(offset, bitshift);
+        return tileKey.mortonCode() + shiftedOffset;
+    }
+
+    /**
+     * Packs the supplied offset into the high bits, where the highbits are between 2^53 and
+     * 2^(53-bitshift+1), +1 because we use one bit for storing if the given offset is negative.
+     *
+     * Whether the offset is negative is stored in the bit before the `bitshift` high bits.
+     *
+     * The given offset has the modulo taken of 2^bitshift incase it is bigger than this number.
+     *
+     * Note, because bit shifting in JavaScript works on 32 bit integers, we use powers of 2 to set
+     * the high bits instead.
+     *
+     * @param offset Offset to pack into the high bits.
+     * @param bitshift How many bits to use to pack the offset.
+     */
+    export function getShiftedOffset(offset: number, bitshift: number = 3) {
+        let result = 0;
+        const maxOffset = Math.pow(2, bitshift);
+        if (offset < 0) {
+            offset += Math.pow(2, bitshift);
+            result += Math.pow(2, 53 - bitshift - 1);
+        }
+        offset %= maxOffset;
+        for (let i = 0; i < bitshift && offset > 0; i++) {
+            // tslint:disable: no-bitwise
+            // 53 is used because 2^53 is the biggest number that Javascript can represent as an
+            // integer safely. Technically it is 2^53-1, but that is just because 2^53 and 2^53 + 1
+            // are the same, so it isn't therefore safe, however it is unique from 2^53-1, so I deem
+            // it acceptable in this particular use case.
+            if (offset & 0x1) {
+                result += Math.pow(2, 53 - bitshift + i);
+            }
+            offset >>>= 1;
+            // tslint:enable: no-bitwise
+        }
+        assert(offset === 0);
+        return result;
+    }
+
+    /**
+     * Extracts the offset and morton key from the given key (must be created by:
+     * [[getKeyForTileKeyAndOffset]])
+     *
+     * @param key Key to extract offset and morton key.
+     * @param bitshift How many bits to shift by, must be the same as was used when creating the
+     * key.
+     */
+    export function extractOffsetAndMortonKeyFromKey(key: number, bitshift: number = 3) {
+        let offset = 0;
+        let mortonCode = key;
+        let i = 0;
+        // Compute the offset
+        for (; i < bitshift; i++) {
+            const num = Math.pow(2, 53 - bitshift + i);
+            if (mortonCode > num) {
+                mortonCode -= num;
+                offset += Math.pow(2, i);
+            }
+        }
+        // Check if the negative bit set
+        const negativeBit = Math.pow(2, 53 - bitshift - 1);
+        if (mortonCode >= negativeBit) {
+            offset *= -1;
+            mortonCode -= negativeBit;
+        }
+        return { offset, mortonCode };
+    }
+
+    /**
+     * Returns the key of the parent. Key must have been computed using the function
+     * [[getKeyForTileKeyAndOffset]].
+     *
+     * @param calculatedKey Key to decompose
+     * @param bitshift Bit shift used to create the key
+     */
+    export function getParentKeyFromKey(calculatedKey: number, bitshift: number = 3) {
+        const { offset, mortonCode } = extractOffsetAndMortonKeyFromKey(calculatedKey, bitshift);
+        const parentTileKey = geoUtils.TileKey.fromMortonCode(
+            geoUtils.TileKey.parentMortonCode(mortonCode)
+        );
+        return getKeyForTileKeyAndOffset(parentTileKey, offset, bitshift);
     }
 }

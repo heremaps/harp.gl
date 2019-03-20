@@ -7,9 +7,13 @@ import { Projection, TileKey } from "@here/harp-geoutils";
 import { LRUCache } from "@here/harp-lrucache";
 import * as THREE from "three";
 
+import { assert } from "@here/harp-utils";
 import { DataSource } from "./DataSource";
+import { ITile } from "./ITile";
 import { MapTileCuller } from "./MapTileCuller";
 import { Tile } from "./Tile";
+import { TileProxy } from "./TileProxy";
+import { TileOffsetUtils } from "./Utils";
 
 /**
  * Limited set of [[MapViewOptions]] used for [[VisibleTileSet]].
@@ -52,28 +56,21 @@ export interface VisibleTileSetOptions {
 }
 
 /**
- * Missing Typedoc
- */
-export class TileEntry {
-    constructor(public tile: Tile, public area: number) {}
-}
-
-/**
- * Missing Typedoc
+ * Represents a unique TileKey and the area it takes up on screen.
  */
 class TileKeyEntry {
-    constructor(public tileKey: TileKey, public area: number) {}
+    constructor(public tileKey: TileKey, public offset: number, public area: number) {}
 }
 
 /**
- * Missing Typedoc
+ * Stores [[Tile]]s or [[TileProxy]]'s in an [[LRUCache]]
  */
 class DataSourceCache {
-    readonly tileCache: LRUCache<number, Tile>;
-    readonly disposedTiles: Tile[] = [];
+    readonly tileCache: LRUCache<number, ITile>;
+    readonly disposedTiles: ITile[] = [];
 
     constructor(options: VisibleTileSetOptions) {
-        this.tileCache = new LRUCache<number, Tile>(options.tileCacheSize);
+        this.tileCache = new LRUCache<number, ITile>(options.tileCacheSize);
         this.tileCache.evictionCallback = (_, tile) => {
             if (tile.tileLoader !== undefined) {
                 // Cancel downloads as early as possible.
@@ -82,7 +79,11 @@ class DataSourceCache {
             this.disposedTiles.push(tile);
         };
         this.tileCache.canEvict = (_, tile) => {
-            return !tile.isVisible;
+            // It is possible that there are cache entries of type [[TileProxy]] which are pointed
+            // to a disposed tile, so we can evict these also. Note, there is currently no way to
+            // remove all [[TileProxy]]s, so it is possible that there are cached elements which
+            // point to disposed [[Tile]]s, hence the check to see if it is disposed.
+            return !tile.isVisible || tile.disposed;
         };
     }
 
@@ -94,7 +95,7 @@ class DataSourceCache {
         this.disposedTiles.length = 0;
     }
 
-    get(tileCode: number): Tile | undefined {
+    get(tileCode: number): ITile | undefined {
         return this.tileCache.get(tileCode);
     }
 }
@@ -132,17 +133,17 @@ export interface DataSourceTileList {
     /**
      * List of tiles we want to render but they might not be renderable yet (e.g. loading).
      */
-    visibleTiles: Tile[];
+    visibleTiles: ITile[];
 
     /**
      * List of tiles that will be rendered. This includes tiles that are not in the visibleTiles
      * list but that are used as fallbacks b/c they are still in the cache.
      */
-    renderedTiles: Tile[];
+    renderedTiles: ITile[];
 }
 
 /**
- * Manages visible [[Tile]]s for [[MapView]].
+ * Manages visible [[ITile]]s for [[MapView]].
  *
  * Responsible for election of rendered tiles:
  *  - quad-tree traversal
@@ -211,6 +212,7 @@ export class VisibleTileSet {
         zoomLevel: number,
         dataSources: DataSource[]
     ): DataSourceTileList[] {
+        const worldGeoPoint = this.options.projection.unprojectPoint(worldCenter);
         this.m_viewProjectionMatrix.multiplyMatrices(
             this.camera.projectionMatrix,
             this.camera.matrixWorldInverse
@@ -232,12 +234,15 @@ export class VisibleTileSet {
 
             const tilingScheme = dataSource.getTilingScheme();
 
-            const workList: TileKeyEntry[] = [new TileKeyEntry(rootTileKey, 0)];
+            const workList: TileKeyEntry[] = [new TileKeyEntry(rootTileKey, 0, 0)];
 
             const visibleTiles: TileKeyEntry[] = [];
 
             const tileFrustumIntersectionCache = new Map<number, number>();
-            tileFrustumIntersectionCache.set(rootTileKey.mortonCode(), Infinity);
+            tileFrustumIntersectionCache.set(
+                TileOffsetUtils.getKeyForTileKeyAndOffset(rootTileKey, 0),
+                Infinity
+            );
 
             while (workList.length > 0) {
                 const tileEntry = workList.pop();
@@ -246,78 +251,99 @@ export class VisibleTileSet {
                     continue;
                 }
 
-                const area = tileFrustumIntersectionCache.get(tileEntry.tileKey.mortonCode());
+                const tileKey = tileEntry.tileKey;
+                const uniqueKey = TileOffsetUtils.getKeyForTileKeyAndOffset(
+                    tileKey,
+                    tileEntry.offset
+                );
+                const area = tileFrustumIntersectionCache.get(uniqueKey);
 
                 if (area === undefined) {
                     throw new Error("Unexpected tile key");
                 }
 
-                if (area <= 0 || tileEntry.tileKey.level > displayZoomLevel) {
+                if (area <= 0 || tileKey.level > displayZoomLevel) {
                     continue;
                 }
 
-                if (dataSource.shouldRender(displayZoomLevel, tileEntry.tileKey)) {
+                if (dataSource.shouldRender(displayZoomLevel, tileKey)) {
                     visibleTiles.push(tileEntry);
                 }
 
-                tilingScheme.getSubTileKeys(tileEntry.tileKey).forEach(childTileKey => {
-                    const intersectsFrustum = tileFrustumIntersectionCache.get(
-                        childTileKey.mortonCode()
-                    );
+                tilingScheme.getSubTileKeys(tileKey).forEach(childTileKey => {
+                    // Here we attempt to find unique Tiles with +/- 5 offsets (which means
+                    // there is a total of 11 possible tiles rendered)
+                    const longitudeOffset = Math.round(worldGeoPoint.longitudeInDegrees / 360);
+                    const ShiftAttempts = 5;
+                    for (
+                        let offset = longitudeOffset - ShiftAttempts;
+                        offset <= longitudeOffset + ShiftAttempts;
+                        offset++
+                    ) {
+                        const intersectsFrustum = tileFrustumIntersectionCache.get(
+                            TileOffsetUtils.getKeyForTileKeyAndOffset(childTileKey, offset)
+                        );
 
-                    let subTileArea = 0;
+                        let subTileArea = 0;
 
-                    if (intersectsFrustum === undefined) {
-                        const geoBox = tilingScheme.getGeoBox(childTileKey);
-                        this.options.projection.projectBox(geoBox, tileBounds);
-                        tileBounds.min.sub(worldCenter);
-                        tileBounds.max.sub(worldCenter);
+                        if (intersectsFrustum === undefined) {
+                            const tileGeoBox = tilingScheme.getGeoBox(childTileKey);
+                            this.options.projection.projectBox(tileGeoBox, tileBounds);
+                            const worldOffsetX =
+                                this.options.projection.worldExtent(0, 0).max.x * offset;
+                            tileBounds.translate(new THREE.Vector3(worldOffsetX, 0, 0));
+                            tileBounds.min.sub(worldCenter);
+                            tileBounds.max.sub(worldCenter);
 
-                        if (
-                            (!this.options.extendedFrustumCulling ||
-                                this.m_mapTileCuller.frustumIntersectsTileBox(tileBounds)) &&
-                            this.m_frustum.intersectsBox(tileBounds)
-                        ) {
-                            const contour = [
-                                new THREE.Vector3(
-                                    tileBounds.min.x,
-                                    tileBounds.min.y,
-                                    0
-                                ).applyMatrix4(this.m_viewProjectionMatrix),
-                                new THREE.Vector3(
-                                    tileBounds.max.x,
-                                    tileBounds.min.y,
-                                    0
-                                ).applyMatrix4(this.m_viewProjectionMatrix),
-                                new THREE.Vector3(
-                                    tileBounds.max.x,
-                                    tileBounds.max.y,
-                                    0
-                                ).applyMatrix4(this.m_viewProjectionMatrix),
-                                new THREE.Vector3(
-                                    tileBounds.min.x,
-                                    tileBounds.max.y,
-                                    0
-                                ).applyMatrix4(this.m_viewProjectionMatrix)
-                            ];
+                            if (
+                                (!this.options.extendedFrustumCulling ||
+                                    this.m_mapTileCuller.frustumIntersectsTileBox(tileBounds)) &&
+                                this.m_frustum.intersectsBox(tileBounds)
+                            ) {
+                                const contour = [
+                                    new THREE.Vector3(
+                                        tileBounds.min.x,
+                                        tileBounds.min.y,
+                                        0
+                                    ).applyMatrix4(this.m_viewProjectionMatrix),
+                                    new THREE.Vector3(
+                                        tileBounds.max.x,
+                                        tileBounds.min.y,
+                                        0
+                                    ).applyMatrix4(this.m_viewProjectionMatrix),
+                                    new THREE.Vector3(
+                                        tileBounds.max.x,
+                                        tileBounds.max.y,
+                                        0
+                                    ).applyMatrix4(this.m_viewProjectionMatrix),
+                                    new THREE.Vector3(
+                                        tileBounds.min.x,
+                                        tileBounds.max.y,
+                                        0
+                                    ).applyMatrix4(this.m_viewProjectionMatrix)
+                                ];
 
-                            contour.push(contour[0]);
+                                contour.push(contour[0]);
 
-                            const n = contour.length;
+                                const n = contour.length;
 
-                            for (let p = n - 1, q = 0; q < n; p = q++) {
-                                subTileArea +=
-                                    contour[p].x * contour[q].y - contour[q].x * contour[p].y;
+                                for (let p = n - 1, q = 0; q < n; p = q++) {
+                                    subTileArea +=
+                                        contour[p].x * contour[q].y - contour[q].x * contour[p].y;
+                                }
+
+                                subTileArea = Math.abs(subTileArea * 0.5);
                             }
 
-                            subTileArea = Math.abs(subTileArea * 0.5);
+                            tileFrustumIntersectionCache.set(
+                                TileOffsetUtils.getKeyForTileKeyAndOffset(childTileKey, offset),
+                                subTileArea
+                            );
                         }
 
-                        tileFrustumIntersectionCache.set(childTileKey.mortonCode(), subTileArea);
-                    }
-
-                    if (subTileArea > 0) {
-                        workList.push(new TileKeyEntry(childTileKey, subTileArea));
+                        if (subTileArea > 0) {
+                            workList.push(new TileKeyEntry(childTileKey, offset, subTileArea));
+                        }
                     }
                 });
             }
@@ -339,7 +365,7 @@ export class VisibleTileSet {
                     : areaDiff;
             });
 
-            const actuallyVisibleTiles: Tile[] = [];
+            const actuallyVisibleTiles: ITile[] = [];
             let allDataSourceTilesLoaded = true;
             let numTilesLoading = 0;
             // Create actual tiles only for the allowed number of visible tiles
@@ -353,7 +379,7 @@ export class VisibleTileSet {
                 if (!dataSource.shouldRender(displayZoomLevel, tileEntry.tileKey)) {
                     continue;
                 }
-                const tile = this.getTile(dataSource, tileEntry.tileKey);
+                const tile = this.getTile(dataSource, tileEntry.tileKey, tileEntry.offset);
                 if (tile === undefined) {
                     continue;
                 }
@@ -395,7 +421,7 @@ export class VisibleTileSet {
         this.dataSourceTileList = newRenderList;
         this.allVisibleTilesLoaded = allVisibleTilesLoaded;
 
-        this.fillMissingTilesFromCache();
+        this.computeTilesToRender();
 
         this.forEachCachedTile(tile => {
             // Remove all tiles that are still being loaded, but are no longer visible. They have to
@@ -410,28 +436,56 @@ export class VisibleTileSet {
         return newRenderList;
     }
 
-    getTile(dataSource: DataSource, tileKey: TileKey): Tile | undefined {
+    getTile(dataSource: DataSource, tileKey: TileKey, offset: number = 0): ITile | undefined {
         if (!dataSource.cacheable) {
             return dataSource.getTile(tileKey);
         }
 
         const { tileCache } = this.getOrCreateCache(dataSource);
 
-        let tile = tileCache.get(tileKey.mortonCode());
+        if (offset === 0) {
+            let tile = tileCache.get(tileKey.mortonCode());
 
-        if (tile !== undefined) {
+            if (tile !== undefined) {
+                return tile;
+            }
+
+            tile = dataSource.getTile(tileKey);
+
+            if (tile !== undefined) {
+                tileCache.set(tileKey.mortonCode(), tile);
+                assert(!tile.isProxy);
+                // Store the frame number this tile has been requested.
+                (tile as Tile).frameNumRequested = dataSource.mapView.frameNumber;
+            }
+
+            return tile;
+        } else {
+            const uniqueKey = TileOffsetUtils.getKeyForTileKeyAndOffset(tileKey, offset);
+            const tileProxy = tileCache.get(uniqueKey);
+            if (tileProxy !== undefined && tileProxy.isProxy) {
+                // We check if the
+                if (tileProxy instanceof TileProxy && tileProxy.canClone()) {
+                    tileProxy.clone();
+                }
+                // It is possible that there is a TileProxy in the cache which proxies a disposed
+                // Tile, in this case we need to make a new request for the Tile.
+                if (!tileProxy.disposed) {
+                    return tileProxy;
+                }
+            }
+            // Search for the Tile which the TileProxy must proxy (offset is 0)
+            const tile = this.getTile(dataSource, tileKey, 0);
+            if (tile instanceof Tile) {
+                const newTileProxy = new TileProxy(tile, offset);
+                tileCache.set(uniqueKey, newTileProxy);
+                return newTileProxy;
+            }
+            // We should never reach this, because getTile with a 0 offset should never return a
+            // TileProxy
+            assert(false);
             return tile;
         }
-
-        tile = dataSource.getTile(tileKey);
-
-        if (tile !== undefined) {
-            tileCache.set(tileKey.mortonCode(), tile);
-            // Store the frame number this tile has been requested.
-            tile.frameNumRequested = dataSource.mapView.frameNumber;
-        }
-
-        return tile;
     }
 
     /**
@@ -500,13 +554,13 @@ export class VisibleTileSet {
         });
     }
 
-    forEachVisibleTile(fun: (tile: Tile) => void): void {
+    forEachVisibleTile(fun: (tile: ITile) => void): void {
         for (const listEntry of this.dataSourceTileList) {
             listEntry.visibleTiles.forEach(fun);
         }
     }
 
-    forEachCachedTile(fun: (tile: Tile) => void): void {
+    forEachCachedTile(fun: (tile: ITile) => void): void {
         this.m_dataSourceCache.forEach(dataSourceCache => {
             dataSourceCache.tileCache.forEach(tile => {
                 fun(tile);
@@ -517,7 +571,7 @@ export class VisibleTileSet {
     /**
      * Dispose a `Tile` from cache, 'dispose()' is also called on the tile to free its resources.
      */
-    disposeTile(tile: Tile): void {
+    disposeTile(tile: ITile): void {
         const cache = this.m_dataSourceCache.get(tile.dataSource.name);
         if (cache) {
             cache.tileCache.delete(tile.tileKey.mortonCode());
@@ -526,18 +580,20 @@ export class VisibleTileSet {
     }
 
     /**
+     * Computes the list of tiles that are to be rendered on screen.
+     *
      * Search cache to replace visible but yet empty tiles with already loaded siblings in nearby
      * zoom levels.
      *
      * Useful, when zooming in/out and when "newly elected" tiles are not yet loaded. Prevents
      * flickering by rendering already loaded tiles from upper/higher zoom levels.
      */
-    private fillMissingTilesFromCache() {
+    private computeTilesToRender() {
         this.dataSourceTileList.forEach(renderListEntry => {
             const dataSource = renderListEntry.dataSource;
             const tilingScheme = dataSource.getTilingScheme();
             const displayZoomLevel = renderListEntry.zoomLevel;
-            const renderedTiles: Map<number, Tile> = new Map<number, Tile>();
+            const renderedTiles: Map<number, ITile> = new Map<number, ITile>();
             const checkedTiles: Set<number> = new Set<number>();
 
             // Direction in quad tree to search: up -> shallower levels, down -> deeper levels.
@@ -547,14 +603,15 @@ export class VisibleTileSet {
                 BOTH
             }
             const tileCache = this.m_dataSourceCache.get(dataSource.name);
+            if (tileCache === undefined) {
+                return;
+            }
 
             const cacheSearchUp =
                 this.options.quadTreeSearchDistanceUp > 0 &&
-                tileCache !== undefined &&
                 displayZoomLevel > dataSource.minZoomLevel;
             const cacheSearchDown =
                 this.options.quadTreeSearchDistanceDown > 0 &&
-                tileCache !== undefined &&
                 displayZoomLevel < dataSource.maxZoomLevel;
 
             if (!cacheSearchDown && !cacheSearchUp) {
@@ -571,8 +628,11 @@ export class VisibleTileSet {
             let incompleteTiles: Map<number, SearchDirection> = new Map();
 
             renderListEntry.visibleTiles.forEach(tile => {
-                const tileCode = tile.tileKey.mortonCode();
-                if (tile.hasGeometry) {
+                const tileCode = TileOffsetUtils.getKeyForTileKeyAndOffset(
+                    tile.tileKey,
+                    tile.offset
+                );
+                if (tile.hasGeometry && !tile.disposed) {
                     renderedTiles.set(tileCode, tile);
                 } else {
                     // if dataSource supports cache and it was existing before this render
@@ -589,7 +649,7 @@ export class VisibleTileSet {
             // iterate over incomplete (not loaded tiles)
             // and find their parents or children that are in cache that can be rendered temporarily
             // until tile is loaded
-            while (tileCache !== undefined && incompleteTiles.size !== 0) {
+            while (incompleteTiles.size !== 0) {
                 const nextLevelCandidates: Map<number, SearchDirection> = new Map();
 
                 incompleteTiles.forEach((searchDirection, tileKeyCode) => {
@@ -597,20 +657,28 @@ export class VisibleTileSet {
                         searchDirection === SearchDirection.BOTH ||
                         searchDirection === SearchDirection.UP
                     ) {
-                        const parentCode = TileKey.parentMortonCode(tileKeyCode);
+                        const parentCode = TileOffsetUtils.getParentKeyFromKey(tileKeyCode);
 
                         if (!checkedTiles.has(parentCode) && !renderedTiles.get(parentCode)) {
                             checkedTiles.add(parentCode);
                             const parentTile = tileCache.get(parentCode);
-                            if (parentTile !== undefined && parentTile.hasGeometry) {
+                            if (
+                                parentTile !== undefined &&
+                                parentTile.hasGeometry &&
+                                // TODO: Check that this works as expected.
+                                !parentTile.disposed
+                            ) {
                                 // parentTile has geometry, so can be reused as fallback
                                 renderedTiles.set(parentCode, parentTile);
                                 return;
                             }
 
+                            const { mortonCode } = TileOffsetUtils.extractOffsetAndMortonKeyFromKey(
+                                parentCode
+                            );
                             const parentTileKey = parentTile
                                 ? parentTile.tileKey
-                                : TileKey.fromMortonCode(parentCode);
+                                : TileKey.fromMortonCode(mortonCode);
 
                             // if parentTile is missing or incomplete, try at max 3 levels up from
                             // current display level
@@ -625,13 +693,24 @@ export class VisibleTileSet {
                         searchDirection === SearchDirection.BOTH ||
                         searchDirection === SearchDirection.DOWN
                     ) {
-                        const tileKey = TileKey.fromMortonCode(tileKeyCode);
+                        const {
+                            offset,
+                            mortonCode
+                        } = TileOffsetUtils.extractOffsetAndMortonKeyFromKey(tileKeyCode);
+                        const tileKey = TileKey.fromMortonCode(mortonCode);
                         tilingScheme.getSubTileKeys(tileKey).forEach(childTileKey => {
-                            const childTileCode = childTileKey.mortonCode();
-                            const childTile = tileCache.get(childTileCode);
-
+                            const childTileCode = TileOffsetUtils.getKeyForTileKeyAndOffset(
+                                childTileKey,
+                                offset
+                            );
                             checkedTiles.add(childTileCode);
-                            if (childTile !== undefined && childTile.hasGeometry) {
+
+                            const childTile = tileCache.get(childTileCode);
+                            if (
+                                childTile !== undefined &&
+                                childTile.hasGeometry &&
+                                !childTile.disposed
+                            ) {
                                 // childTile has geometry, so can be reused as fallback
                                 renderedTiles.set(childTileCode, childTile);
                                 return;
@@ -669,13 +748,14 @@ export class VisibleTileSet {
         const dataSourceCache = this.m_dataSourceCache.get(renderListEntry.dataSource.name);
         const retainedTiles: Set<number> = new Set();
         renderListEntry.visibleTiles.forEach(tile => {
-            retainedTiles.add(tile.tileKey.mortonCode());
+            const uniqueKey = TileOffsetUtils.getKeyForTileKeyAndOffset(tile.tileKey, tile.offset);
+            retainedTiles.add(uniqueKey);
             tile.reload();
         });
         renderListEntry.renderedTiles.forEach(tile => {
-            const tileCode = tile.tileKey.mortonCode();
-            if (!retainedTiles.has(tileCode)) {
-                retainedTiles.add(tileCode);
+            const uniqueKey = TileOffsetUtils.getKeyForTileKeyAndOffset(tile.tileKey, tile.offset);
+            if (!retainedTiles.has(uniqueKey)) {
+                retainedTiles.add(uniqueKey);
                 tile.reload();
             }
         });

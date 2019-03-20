@@ -17,12 +17,12 @@ import * as THREE from "three";
 import { ColorCache } from "../ColorCache";
 import { DataSource } from "../DataSource";
 import { debugContext } from "../DebugContext";
+import { ITile } from "../ITile";
 import { MapView } from "../MapView";
 import { PickObjectType, PickResult } from "../PickHandler";
 import { PoiRenderer } from "../poi/PoiRenderer";
 import { ScreenCollisions } from "../ScreenCollisions";
 import { ScreenProjector } from "../ScreenProjector";
-import { Tile } from "../Tile";
 import { SimpleLineCurve, SimplePath } from "./SimplePath";
 import { FadingState, LoadingState, RenderState, TextElement, TextPickResult } from "./TextElement";
 import { DEFAULT_TEXT_STYLE_CACHE_ID } from "./TextStyleCache";
@@ -112,7 +112,7 @@ const tempScreenPosition = new THREE.Vector2();
 const tempPoiScreenPosition = new THREE.Vector2();
 
 class TileTextElements {
-    constructor(readonly tile: Tile, readonly textElements: TextElement[]) {}
+    constructor(readonly tile: ITile, readonly textElements: TextElement[]) {}
 }
 
 class TextElementLists {
@@ -789,11 +789,11 @@ export class TextElementsRenderer {
         tileDataSource: DataSource,
         storageLevel: number,
         zoomLevel: number,
-        visibleTiles: Tile[]
+        visibleTiles: ITile[]
     ) {
         const sortedTiles = visibleTiles;
 
-        sortedTiles.sort((a: Tile, b: Tile) => {
+        sortedTiles.sort((a: ITile, b: ITile) => {
             return a.tileKey.mortonCode() - b.tileKey.mortonCode();
         });
 
@@ -814,7 +814,7 @@ export class TextElementsRenderer {
      *
      * @param tile The Tile to process all user [[TextElements]] of.
      */
-    private prepareUserTextElements(tile: Tile) {
+    private prepareUserTextElements(tile: ITile) {
         for (const textElement of tile.userTextElements) {
             textElement.tileCenterX = tile.center.x;
             textElement.tileCenterY = tile.center.y;
@@ -824,14 +824,14 @@ export class TextElementsRenderer {
     private createSortedGroupsForSorting(
         tileDataSource: DataSource,
         storageLevel: number,
-        sortedTiles: Tile[],
+        sortedTiles: ITile[],
         sortedGroups: TextElementLists[]
     ) {
         if (this.m_textRenderers.length === 0 || sortedTiles.length === 0) {
             return;
         }
 
-        const tilesToRender: Tile[] = [];
+        const tilesToRender: ITile[] = [];
 
         for (const tile of sortedTiles) {
             tile.placedTextElements.clear();
@@ -1936,7 +1936,7 @@ export class TextElementsRenderer {
     }
 
     private renderTileList(
-        visibleTiles: Tile[],
+        visibleTiles: ITile[],
         time: number,
         frameNumber: number,
         zoomLevel: number,

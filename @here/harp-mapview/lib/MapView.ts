@@ -14,6 +14,7 @@ import { ConcurrentDecoderFacade } from "./ConcurrentDecoderFacade";
 import { CopyrightInfo } from "./CopyrightInfo";
 import { DataSource } from "./DataSource";
 import { MapViewImageCache } from "./image/MapViewImageCache";
+import { ITile } from "./ITile";
 import { MapViewFog } from "./MapViewFog";
 import { PickHandler, PickResult } from "./PickHandler";
 import { PoiManager } from "./poi/PoiManager";
@@ -26,7 +27,6 @@ import { TextElement } from "./text/TextElement";
 import { TextElementsRenderer } from "./text/TextElementsRenderer";
 import { TextLayoutStyleCache, TextRenderStyleCache } from "./text/TextStyleCache";
 import { ThemeLoader } from "./ThemeLoader";
-import { Tile } from "./Tile";
 import { MapViewUtils } from "./Utils";
 import { VisibleTileSet, VisibleTileSetOptions } from "./VisibleTileSet";
 
@@ -1645,7 +1645,7 @@ export class MapView extends THREE.EventDispatcher {
      *
      * @param fun Visitor function
      */
-    forEachVisibleTile(fun: (tile: Tile) => void) {
+    forEachVisibleTile(fun: (tile: ITile) => void) {
         this.m_visibleTiles.forEachVisibleTile(fun);
     }
 
@@ -1654,7 +1654,7 @@ export class MapView extends THREE.EventDispatcher {
      *
      * @param visitor Visitor function
      */
-    forEachCachedTile(visitor: (tile: Tile) => void) {
+    forEachCachedTile(visitor: (tile: ITile) => void) {
         this.m_visibleTiles.forEachCachedTile(visitor);
     }
 
@@ -1876,6 +1876,7 @@ export class MapView extends THREE.EventDispatcher {
             });
             renderedTiles.forEach(tile => {
                 this.renderTileObjects(tile, zoomLevel);
+                // Done to keep the tile from being evicted from the cache.
                 tile.frameNumLastVisible = this.m_frameNumber;
             });
         });
@@ -1984,12 +1985,17 @@ export class MapView extends THREE.EventDispatcher {
         this.dispatchEvent(DID_RENDER_EVENT);
     }
 
-    private renderTileObjects(tile: Tile, zoomLevel: number) {
+    private renderTileObjects(tile: ITile, zoomLevel: number) {
+        // World space longitudinal offset
+        const worldOffsetX = this.projection.worldExtent(0, 0).max.x * tile.offset;
         if (tile.willRender(zoomLevel)) {
             for (const object of tile.objects) {
                 object.position.copy(tile.center);
                 if (object.displacement !== undefined) {
                     object.position.add(object.displacement);
+                }
+                if (worldOffsetX !== 0) {
+                    object.position.x += worldOffsetX;
                 }
                 object.position.sub(this.m_worldCenter);
                 this.m_mapTilesRoot.add(object);
@@ -2277,6 +2283,10 @@ export class MapView extends THREE.EventDispatcher {
         let result: CopyrightInfo[] = [];
         for (const tileList of this.m_visibleTiles.dataSourceTileList) {
             for (const tile of tileList.renderedTiles) {
+                if (tile.isProxy) {
+                    // Skip TileProxys because it points to an existing Tile.
+                    continue;
+                }
                 const tileCopyrightInfo = tile.copyrightInfo;
                 if (tileCopyrightInfo === undefined || tileCopyrightInfo.length === 0) {
                     continue;

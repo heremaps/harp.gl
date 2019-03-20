@@ -14,9 +14,9 @@ import {
 import { SolidLineMaterial } from "@here/harp-materials";
 import { assert, LoggerManager, Math2D } from "@here/harp-utils";
 import * as THREE from "three";
+import { ITile, RoadIntersectionData } from "./ITile";
 import { MapView } from "./MapView";
 import { PickObjectType, PickResult } from "./PickHandler";
-import { RoadIntersectionData, Tile } from "./Tile";
 
 const logger = LoggerManager.instance.create("RoadPicker");
 
@@ -47,7 +47,7 @@ export class RoadPicker {
      *
      * @param tile The tile to register.
      */
-    registerTile(tile: Tile): RoadIntersectionData | undefined {
+    registerTile(tile: ITile): RoadIntersectionData | undefined {
         assert(tile.decodedTile !== undefined);
         if (tile.decodedTile === undefined || tile.decodedTile.tileInfo === undefined) {
             return undefined;
@@ -93,7 +93,7 @@ export class RoadPicker {
      * @param results The existing array of [[PickResult]]; new results should be appended.
      */
     intersectRoads(
-        tile: Tile,
+        tile: ITile,
         eyePos: THREE.Vector3,
         pickPos: THREE.Vector3,
         results: PickResult[]

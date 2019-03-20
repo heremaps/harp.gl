@@ -7,11 +7,11 @@
 import { GeometryType, Technique } from "@here/harp-datasource-protocol";
 import * as THREE from "three";
 
+import { ITile, RoadIntersectionData, TileFeatureData } from "./ITile";
 import { MapView } from "./MapView";
 import { MapViewPoints } from "./MapViewPoints";
 import { PickingRaycaster } from "./PickingRaycaster";
 import { RoadPicker } from "./RoadPicker";
-import { RoadIntersectionData, Tile, TileFeatureData } from "./Tile";
 
 /**
  * Describes the general type of a picked object.
@@ -118,7 +118,7 @@ export class PickHandler {
      * since their geometry is generated in the vertex shader. The `RoadPicker` requires that
      * all [[Tile]]s are registered before they can be picked successfully.
      */
-    registerTile(tile: Tile): RoadIntersectionData | undefined {
+    registerTile(tile: ITile): RoadIntersectionData | undefined {
         return this.m_roadPicker !== undefined ? this.m_roadPicker.registerTile(tile) : undefined;
     }
 
@@ -210,11 +210,17 @@ export class PickHandler {
             planeIntersectPosition.add(this.mapView.worldCenter);
 
             const cameraPos = this.mapView.worldCenter.clone().add(this.mapView.camera.position);
-
+            const worldExtents = this.mapView.projection.worldExtent(0, 0).max.x;
             this.mapView.forEachVisibleTile(tile => {
+                // This removes any offset from the camera position, such that the intersection
+                // query takes place as if the camera is over the [[Tile]] at offset 0.
+                const nonOffsetPosition = cameraPos;
+                if (tile.offset !== 0) {
+                    nonOffsetPosition.x -= worldExtents * tile.offset;
+                }
                 this.m_roadPicker!.intersectRoads(
                     tile,
-                    cameraPos,
+                    nonOffsetPosition,
                     planeIntersectPosition,
                     pickResults
                 );
