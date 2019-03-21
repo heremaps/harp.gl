@@ -2,10 +2,10 @@
 # yarn lockfile v1
 
 
-"@here/harp-font-resources@^0.2.3":
-  version "0.2.3"
-  resolved "https://registry.yarnpkg.com/@here/harp-font-resources/-/harp-font-resources-0.2.3.tgz#61ce7b9bd40e59f09d82536a67d641c6589f5206"
-  integrity sha512-SWdYm8De7KU2NUSb4MY59MFRj7rgX7gx/zoHdWQhRK02Nw0YZfyMMz9uXQdsWKHSvM1Oz5Ci+8TdizpB+3m5mA==
+"@here/harp-font-resources@^0.2.4":
+  version "0.2.4"
+  resolved "https://registry.yarnpkg.com/@here/harp-font-resources/-/harp-font-resources-0.2.4.tgz#266bff0187a45317ae92a5ba82083e324c26fa1b"
+  integrity sha512-/DVU+1Mo8dW6NPyucJKuBVQ3NFIR0HPt6Oio1gtMaxQh3t3zIH7kXJMKOyjzcQrrENZar99pbyZKnemgIwNgWg==
 
 "@mrmlnc/readdir-enhanced@^2.2.1":
   version "2.2.1"
