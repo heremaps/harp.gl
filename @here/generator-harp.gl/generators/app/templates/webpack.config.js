@@ -45,6 +45,14 @@ module.exports = [
         ],
         devServer: {
             contentBase: path.join(__dirname, 'dist')
+        },
+        stats: {
+            all: false,
+            timings: true,
+            exclude: "/resources/",
+            errors: true,
+            entrypoints: true,
+            warnings: true
         }
     },
     {
