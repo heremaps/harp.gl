@@ -47,7 +47,7 @@ export class MapControlsUI {
         });
 
         // tslint:disable-next-line:max-line-length
-        this.domElement.style.cssText = `position: absolute; right: 0; padding: 10px; top: 50%; margin-top: -60px;`;
+        this.domElement.style.cssText = `position: absolute; right: 10px; top: 50%; margin-top: -70px;`;
         zoomInButton.className = zoomOutButton.className = tiltButton.className = "controls-button";
 
         return this;
@@ -77,6 +77,7 @@ export class MapControlsUI {
                 border-radius: 4px;
                 box-shadow: 0px 0px 4px #aaa;
                 transition: all 0.1s;
+                padding: 0 0 1px 1px;
             }
             .controls-button:active {
                 background-color: #37afaa;
