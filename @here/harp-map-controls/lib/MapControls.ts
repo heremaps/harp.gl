@@ -257,6 +257,9 @@ export class MapControls extends THREE.EventDispatcher {
     private m_tiltState?: TiltState;
     private m_state: State = State.NONE;
 
+    private m_tmpVector2: THREE.Vector2 = new THREE.Vector2();
+    private m_tmpVector3: THREE.Vector3 = new THREE.Vector3();
+
     /**
      * Determines the minimum angle the camera can pitch to. It is defined in radians.
      */
@@ -939,14 +942,18 @@ export class MapControls extends THREE.EventDispatcher {
             return 0;
         }
 
-        const initialDistance = this.m_touchState.touches[0].initialWorldPosition
-            .clone()
-            .sub(this.m_touchState.touches[1].initialWorldPosition)
+        const initialDistance = this.m_tmpVector3
+            .subVectors(
+                this.m_touchState.touches[0].initialWorldPosition,
+                this.m_touchState.touches[1].initialWorldPosition
+            )
             .length();
 
-        const currentDistance = this.m_touchState.touches[0].currentWorldPosition
-            .clone()
-            .sub(this.m_touchState.touches[1].currentWorldPosition)
+        const currentDistance = this.m_tmpVector3
+            .subVectors(
+                this.m_touchState.touches[0].currentWorldPosition,
+                this.m_touchState.touches[1].currentWorldPosition
+            )
             .length();
 
         return currentDistance - initialDistance;
@@ -969,15 +976,15 @@ export class MapControls extends THREE.EventDispatcher {
             touchPointInNDC.y
         );
 
-        if (!newWorldPosition) {
+        if (newWorldPosition === null) {
             return null;
         }
 
         return {
-            currentTouchPoint: newTouchPoint.clone(),
-            lastTouchPoint: newTouchPoint.clone(),
-            currentWorldPosition: newWorldPosition.clone(),
-            initialWorldPosition: newWorldPosition.clone()
+            currentTouchPoint: newTouchPoint,
+            lastTouchPoint: newTouchPoint,
+            currentWorldPosition: newWorldPosition,
+            initialWorldPosition: newWorldPosition
         };
     }
 
@@ -1008,7 +1015,7 @@ export class MapControls extends THREE.EventDispatcher {
         for (let i = 0; i < length; ++i) {
             const oldTouchState = this.m_touchState.touches[i];
             const newTouchState = this.convertTouchPoint(touches[i]);
-            if (newTouchState) {
+            if (newTouchState !== null) {
                 newTouchState.initialWorldPosition = oldTouchState.initialWorldPosition;
                 newTouchState.lastTouchPoint = oldTouchState.currentTouchPoint;
                 this.m_touchState.touches[i] = newTouchState;
@@ -1039,9 +1046,10 @@ export class MapControls extends THREE.EventDispatcher {
         this.updateTouchState();
 
         if (this.m_touchState.touches.length <= 2) {
-            const to = this.m_touchState.touches[0].currentWorldPosition.clone();
-            const from = this.m_touchState.touches[0].initialWorldPosition.clone();
-            this.m_panDistanceFrameDelta = from.sub(to);
+            this.m_panDistanceFrameDelta.subVectors(
+                this.m_touchState.touches[0].initialWorldPosition,
+                this.m_touchState.touches[0].currentWorldPosition
+            );
 
             // Cancel zoom inertia if a panning is triggered, so that the mouse location is kept.
             this.m_startZoom = this.m_targettedZoom = this.currentZoom;
@@ -1061,11 +1069,14 @@ export class MapControls extends THREE.EventDispatcher {
 
         if (this.m_touchState.touches.length === 3 && this.tiltEnabled) {
             const firstTouch = this.m_touchState.touches[0];
-            const diff = firstTouch.lastTouchPoint.clone().sub(firstTouch.currentTouchPoint);
+            const diff = this.m_tmpVector2.subVectors(
+                firstTouch.currentTouchPoint,
+                firstTouch.lastTouchPoint
+            );
 
             this.orbitFocusPoint(
                 this.orbitingTouchDeltaFactor * diff.x,
-                this.orbitingTouchDeltaFactor * diff.y
+                -this.orbitingTouchDeltaFactor * diff.y
             );
         }
 
