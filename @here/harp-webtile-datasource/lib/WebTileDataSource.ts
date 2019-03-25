@@ -77,6 +77,11 @@ export interface WebTileDataSourceParameters {
     resolution?: number;
 
     /**
+     * String which is appended to the tile request url.
+     */
+    additionalRequestParameters?: string;
+
+    /**
      * Whether to provide copyright info.
      *
      * @default `true`
@@ -292,10 +297,6 @@ export class WebTileDataSource extends DataSource {
         }
     }
 
-    getDisplayZoomLevel(zoomLevel: number): number {
-        return THREE.Math.clamp(zoomLevel + 1, this.minZoomLevel, this.maxZoomLevel);
-    }
-
     getTile(tileKey: TileKey): Tile {
         const tile = new Tile(this, tileKey);
 
@@ -308,7 +309,8 @@ export class WebTileDataSource extends DataSource {
         let url =
             `https://${server}.${this.m_tileBaseAddress}/` +
             `${level}/${column}/${row}/${this.m_resolution}/png8` +
-            `?app_id=${appId}&app_code=${appCode}`;
+            `?app_id=${appId}&app_code=${appCode}` +
+            getOptionValue(this.m_options.additionalRequestParameters, "");
 
         if (this.m_languages !== undefined && this.m_languages[0] !== undefined) {
             url += `&lg=${this.m_languages[0]}`;
