@@ -127,4 +127,17 @@ describe("GroupedPriorityList", function() {
             assert.equal(sortedGroups[i].priority, 9 - i);
         }
     });
+
+    it("#count", function() {
+        const priorityList = new GroupedPriorityList<Item>();
+
+        for (let i = 99; i >= 0; i--) {
+            priorityList.add({ priority: i / 10 });
+        }
+
+        assert.equal(priorityList.groups.size, 10);
+        assert.equal(priorityList.sortedGroups.length, 10);
+
+        assert.equal(priorityList.count(), 100);
+    });
 });
