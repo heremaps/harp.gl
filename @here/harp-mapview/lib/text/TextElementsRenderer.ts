@@ -3,31 +3,7 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-
 import { LineMarkerTechnique, TextStyle, Theme } from "@here/harp-datasource-protocol";
-import {
-    getOptionValue,
-    GroupedPriorityList,
-    LoggerManager,
-    Math2D,
-    MathUtils
-} from "@here/harp-utils";
-import * as THREE from "three";
-
-import { ColorCache } from "../ColorCache";
-import { DataSource } from "../DataSource";
-import { debugContext } from "../DebugContext";
-import { MapView } from "../MapView";
-import { PickObjectType, PickResult } from "../PickHandler";
-import { PoiRenderer } from "../poi/PoiRenderer";
-import { ScreenCollisions } from "../ScreenCollisions";
-import { ScreenProjector } from "../ScreenProjector";
-import { Tile } from "../Tile";
-import { MapViewUtils } from "../Utils";
-import { SimpleLineCurve, SimplePath } from "./SimplePath";
-import { FadingState, LoadingState, RenderState, TextElement, TextPickResult } from "./TextElement";
-import { DEFAULT_TEXT_STYLE_CACHE_ID } from "./TextStyleCache";
-
 import {
     AdditionParameters,
     DEFAULT_TEXT_CANVAS_LAYER,
@@ -45,6 +21,29 @@ import {
     TextRenderStyle,
     VerticalAlignment
 } from "@here/harp-text-canvas";
+import {
+    getOptionValue,
+    GroupedPriorityList,
+    LoggerManager,
+    Math2D,
+    MathUtils,
+    PerformanceTimer
+} from "@here/harp-utils";
+import * as THREE from "three";
+
+import { ColorCache } from "../ColorCache";
+import { DataSource } from "../DataSource";
+import { debugContext } from "../DebugContext";
+import { MapView } from "../MapView";
+import { PickObjectType, PickResult } from "../PickHandler";
+import { PoiRenderer } from "../poi/PoiRenderer";
+import { ScreenCollisions } from "../ScreenCollisions";
+import { ScreenProjector } from "../ScreenProjector";
+import { Tile } from "../Tile";
+import { MapViewUtils } from "../Utils";
+import { SimpleLineCurve, SimplePath } from "./SimplePath";
+import { FadingState, LoadingState, RenderState, TextElement, TextPickResult } from "./TextElement";
+import { DEFAULT_TEXT_STYLE_CACHE_ID } from "./TextStyleCache";
 
 const DEFAULT_STYLE_NAME = "default";
 const DEFAULT_FONT_CATALOG_NAME = "default";
@@ -99,6 +98,38 @@ const DEFAULT_MAX_DISTANCE_RATIO_FOR_TEXT_LABELS = 0.99;
  */
 const DEFAULT_LABEL_SCALE_START_DISTANCE = 0.4;
 
+/**
+ * Maximum number of recommended labels. If more labels are encountered, the "overloaded" mode is
+ * set, which modifies the behavior of label placement and rendering, trying to keep delivering an
+ * interactive performance. The overloaded mode should not be activated if the [[MapView]] is
+ * rendering a static image (camera not moving and no animation running).
+ */
+const OVERLOAD_LABEL_LIMIT = 20000;
+
+/**
+ * If "overloaded" is `true`:
+ *
+ * Default number of labels/POIs placed in the scene. They are rendered only if they fit. If the
+ * camera is not moving, it is ignored. See [[TextElementsRenderer.isDynamicFrame]].
+ */
+const OVERLOAD_PLACED_LABEL_LIMIT = 100;
+
+/**
+ * If "overloaded" is `true`:
+ *
+ * Maximum time in milliseconds available for placement. If value is <= 0, or if the camera is not
+ * moving, it is ignored. See [[TextElementsRenderer.isDynamicFrame]].
+ */
+const OVERLOAD_PLACEMENT_TIME_LIMIT = 5;
+
+/**
+ * If "overloaded" is `true`:
+ *
+ * Maximum time in milliseconds available for rendering. If value is <= 0, or if the camera is not
+ * moving, it is ignored. See [[TextElementsRenderer.isDynamicFrame]].
+ */
+const OVERLOAD_RENDER_TIME_LIMIT = 10;
+
 // Development flag: Enable debug print.
 const PRINT_LABEL_DEBUG_INFO: boolean = false;
 
@@ -119,6 +150,17 @@ class TileTextElements {
 
 class TextElementLists {
     constructor(readonly priority: number, readonly textElementLists: TileTextElements[]) {}
+
+    /**
+     * Sum up the number of elements in all lists.
+     */
+    count(): number {
+        let n = 0;
+        for (const list of this.textElementLists) {
+            n += list.textElements.length;
+        }
+        return n;
+    }
 }
 
 /**
@@ -146,6 +188,7 @@ export class TextElementsRenderer {
     private m_debugGlyphTextureCacheWireMesh?: THREE.LineSegments;
 
     private m_tmpVector = new THREE.Vector2();
+    private m_overloaded: boolean = false;
 
     /**
      * Create the `TextElementsRenderer` which selects which labels should be placed on screen as
@@ -280,6 +323,23 @@ export class TextElementsRenderer {
     }
 
     /**
+     * Is `true` if number of [[TextElement]]s in visible tiles is larger than the recommended
+     * number `OVERLOAD_LABEL_LIMIT`.
+     */
+    get overloaded(): boolean {
+        return this.m_overloaded;
+    }
+
+    /**
+     * Is `true` if [[MapView]] is currently animating or the camera is moving or an update is
+     * pending.
+     */
+    get isDynamicFrame(): boolean {
+        const mapView = this.m_mapView;
+        return mapView.cameraIsMoving || mapView.animating || mapView.updatePending;
+    }
+
+    /**
      * Render the user [[TextElement]]s.
      *
      * @param time Current time for animations.
@@ -319,7 +379,12 @@ export class TextElementsRenderer {
         const renderList = this.m_mapView.visibleTileSet.dataSourceTileList;
         const zoomLevel = this.m_mapView.zoomLevel;
 
+        this.checkIfOverloaded();
+
         if (this.m_lastRenderedTextElements.length === 0) {
+            const renderStartTime =
+                this.overloaded && this.isDynamicFrame ? PerformanceTimer.now() : undefined;
+
             // Nothing has been rendered before, process the list of placed labels in all tiles.
             renderList.forEach(renderListEntry => {
                 this.renderTileList(
@@ -327,6 +392,7 @@ export class TextElementsRenderer {
                     time,
                     frameNumber,
                     zoomLevel,
+                    renderStartTime,
                     this.m_lastRenderedTextElements,
                     this.m_secondChanceTextElements
                 );
@@ -792,12 +858,18 @@ export class TextElementsRenderer {
         const renderList = this.m_mapView.visibleTileSet.dataSourceTileList;
         const zoomLevel = this.m_mapView.zoomLevel;
 
+        this.checkIfOverloaded();
+
+        const placementStartTime =
+            this.overloaded && this.isDynamicFrame ? PerformanceTimer.now() : undefined;
+
         renderList.forEach(tileList => {
             this.placeTextElements(
                 tileList.dataSource,
                 tileList.storageLevel,
                 zoomLevel,
-                tileList.visibleTiles
+                tileList.visibleTiles,
+                placementStartTime
             );
         });
 
@@ -809,7 +881,8 @@ export class TextElementsRenderer {
         tileDataSource: DataSource,
         storageLevel: number,
         zoomLevel: number,
-        visibleTiles: Tile[]
+        visibleTiles: Tile[],
+        placementStartTime: number | undefined
     ) {
         const sortedTiles = visibleTiles;
 
@@ -825,7 +898,35 @@ export class TextElementsRenderer {
         this.createSortedGroupsForSorting(tileDataSource, storageLevel, sortedTiles, sortedGroups);
 
         const textElementGroups: TextElement[][] = [];
-        this.selectTextElementsToPlaceByDistance(zoomLevel, sortedGroups, textElementGroups);
+
+        let numTextElementsPlaced = 0;
+
+        for (const textElementLists of sortedGroups) {
+            this.selectTextElementsToPlaceByDistance(
+                zoomLevel,
+                textElementLists,
+                textElementGroups
+            );
+
+            // The value of placementStartTime is set if this.overloaded is true.
+            if (placementStartTime !== undefined) {
+                // If overloaded and all time is used up, exit early.
+                if (OVERLOAD_PLACEMENT_TIME_LIMIT > 0) {
+                    const endTime = PerformanceTimer.now();
+                    const elapsedTime = endTime - placementStartTime;
+                    if (elapsedTime > OVERLOAD_PLACEMENT_TIME_LIMIT) {
+                        break;
+                    }
+                }
+
+                // Try not to place too many elements. They will be checked for visibility each
+                // frame.
+                numTextElementsPlaced += textElementLists.count();
+                if (numTextElementsPlaced >= OVERLOAD_PLACED_LABEL_LIMIT) {
+                    break;
+                }
+            }
+        }
     }
 
     /**
@@ -917,7 +1018,7 @@ export class TextElementsRenderer {
 
     private selectTextElementsToPlaceByDistance(
         zoomLevel: number,
-        sortedGroups: TextElementLists[],
+        textElementLists: TextElementLists,
         textElementGroups: TextElement[][]
     ) {
         // Take the world position of the camera as the origin to compute the distance to the
@@ -927,57 +1028,55 @@ export class TextElementsRenderer {
         const farDistanceLimitRatio = this.m_maxDistanceRatioForLabels!;
         const maxDistance = this.getMaxDistance(farDistanceLimitRatio);
 
-        for (const textElementLists of sortedGroups) {
-            const textElementGroup: TextElement[] = [];
-            for (const tileTextElements of textElementLists.textElementLists) {
-                const tile = tileTextElements.tile;
-                for (const textElement of tileTextElements.textElements) {
-                    if (!textElement.visible) {
-                        continue;
-                    }
-
-                    // If a PoiTable is specified in the technique, the table is required to be
-                    // loaded before the POI can be rendered.
-                    if (
-                        textElement.poiInfo !== undefined &&
-                        textElement.poiInfo.poiTableName !== undefined
-                    ) {
-                        if (this.m_mapView.poiManager.updatePoiFromPoiTable(textElement)) {
-                            // Remove poiTableName to mark this POI as processed.
-                            textElement.poiInfo.poiTableName = undefined;
-                        } else {
-                            // PoiTable has not been loaded, but is required to determine
-                            // visibility.
-                            continue;
-                        }
-                    }
-
-                    if (
-                        !textElement.visible ||
-                        !MathUtils.isClamped(
-                            zoomLevel,
-                            textElement.minZoomLevel,
-                            textElement.maxZoomLevel
-                        )
-                    ) {
-                        continue;
-                    }
-
-                    textElement.tileCenterX = tile.center.x;
-                    textElement.tileCenterY = tile.center.y;
-
-                    const textDistance = this.updateViewDistance(worldCenter, textElement);
-
-                    // If the distance is greater than allowed, skip it.
-                    if (textDistance !== undefined && textDistance > maxDistance) {
-                        continue;
-                    }
-
-                    tile.placedTextElements.add(textElement);
+        const textElementGroup: TextElement[] = [];
+        for (const tileTextElements of textElementLists.textElementLists) {
+            const tile = tileTextElements.tile;
+            for (const textElement of tileTextElements.textElements) {
+                if (!textElement.visible) {
+                    continue;
                 }
+
+                // If a PoiTable is specified in the technique, the table is required to be
+                // loaded before the POI can be rendered.
+                if (
+                    textElement.poiInfo !== undefined &&
+                    textElement.poiInfo.poiTableName !== undefined
+                ) {
+                    if (this.m_mapView.poiManager.updatePoiFromPoiTable(textElement)) {
+                        // Remove poiTableName to mark this POI as processed.
+                        textElement.poiInfo.poiTableName = undefined;
+                    } else {
+                        // PoiTable has not been loaded, but is required to determine
+                        // visibility.
+                        continue;
+                    }
+                }
+
+                if (
+                    !textElement.visible ||
+                    !MathUtils.isClamped(
+                        zoomLevel,
+                        textElement.minZoomLevel,
+                        textElement.maxZoomLevel
+                    )
+                ) {
+                    continue;
+                }
+
+                textElement.tileCenterX = tile.center.x;
+                textElement.tileCenterY = tile.center.y;
+
+                const textDistance = this.updateViewDistance(worldCenter, textElement);
+
+                // If the distance is greater than allowed, skip it.
+                if (textDistance !== undefined && textDistance > maxDistance) {
+                    continue;
+                }
+
+                tile.placedTextElements.add(textElement);
             }
-            textElementGroups.push(textElementGroup);
         }
+        textElementGroups.push(textElementGroup);
     }
 
     private renderOverlayTextElements(textElements: TextElement[]) {
@@ -1962,6 +2061,7 @@ export class TextElementsRenderer {
         time: number,
         frameNumber: number,
         zoomLevel: number,
+        renderStartTime: number | undefined,
         renderedTextElements?: TextElement[],
         secondChanceTextElements?: TextElement[]
     ) {
@@ -1997,7 +2097,34 @@ export class TextElementsRenderer {
             if (numRenderedTextElements > maxNumRenderedTextElements) {
                 break;
             }
+
+            // renderStartTime is set if this.overloaded is true
+            if (renderStartTime !== undefined && OVERLOAD_RENDER_TIME_LIMIT > 0) {
+                const endTime = PerformanceTimer.now();
+                const elapsedTime = endTime - renderStartTime;
+                if (elapsedTime > OVERLOAD_RENDER_TIME_LIMIT) {
+                    return;
+                }
+            }
         }
+    }
+
+    private checkIfOverloaded(): boolean {
+        const renderList = this.m_mapView.visibleTileSet.dataSourceTileList;
+
+        // Count the number of TextElements in the scene to see if we have to switch to
+        // "overloadMode".
+        let numTextElementsInScene = 0;
+
+        renderList.forEach(renderListEntry => {
+            for (const tile of renderListEntry.renderedTiles) {
+                numTextElementsInScene += tile.textElementGroups.count();
+                numTextElementsInScene += tile.userTextElements.length;
+            }
+        });
+        this.m_overloaded = numTextElementsInScene > OVERLOAD_LABEL_LIMIT;
+
+        return this.m_overloaded;
     }
 
     private checkStartFadeIn(

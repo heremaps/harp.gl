@@ -131,6 +131,17 @@ export class GroupedPriorityList<T extends PriorityListElement> {
     }
 
     /**
+     * Count the number of elements in this `GroupedPriorityList`.
+     */
+    count(): number {
+        let n = 0;
+        for (const group of this.groups) {
+            n += group[1].elements.length;
+        }
+        return n;
+    }
+
+    /**
      * Get group of elements that have the same (integer) priority.
      *
      * @param priority The priority to retrieve all elements from.
