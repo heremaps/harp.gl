@@ -77,9 +77,18 @@ export interface WebTileDataSourceParameters {
     resolution?: number;
 
     /**
-     * String which is appended to the tile request url.
+     * String which is appended to the tile request url, e.g. to add additional parameters
+     * to the tile requests as described in
+     * @see https://developer.here.com/documentation/map-tile/topics/resource-base-basetile.html
      */
     additionalRequestParameters?: string;
+
+    /**
+     * ppi parameter which impacts font/icon sizes, road width and other content
+     * of the map tiles. For valid values and restrictions
+     * @see https://developer.here.com/documentation/map-tile/topics/resource-base-basetile.html#ppi
+     */
+    ppi?: number;
 
     /**
      * Whether to provide copyright info.
@@ -258,6 +267,7 @@ export class WebTileDataSource extends DataSource {
         "traffic.maps.api.here.com/maptile/2.1/traffictile/newest/normal.day";
 
     private m_resolution: number;
+    private m_ppi: number;
     private m_tileBaseAddress: string;
     private m_languages?: string[];
     private m_cachedCopyrightResponse?: Promise<AreaCopyrightInfo[]>;
@@ -270,7 +280,8 @@ export class WebTileDataSource extends DataSource {
     constructor(private readonly m_options: WebTileDataSourceParameters) {
         super("webtile");
         this.cacheable = true;
-        this.m_resolution = m_options.resolution || 512;
+        this.m_resolution = getOptionValue(m_options.resolution, 512);
+        this.m_ppi = getOptionValue(m_options.ppi, 320);
         this.m_tileBaseAddress = m_options.tileBaseAddress || WebTileDataSource.TILE_BASE_NORMAL;
     }
 
@@ -310,6 +321,7 @@ export class WebTileDataSource extends DataSource {
             `https://${server}.${this.m_tileBaseAddress}/` +
             `${level}/${column}/${row}/${this.m_resolution}/png8` +
             `?app_id=${appId}&app_code=${appCode}` +
+            `&ppi=${this.m_ppi}` +
             getOptionValue(this.m_options.additionalRequestParameters, "");
 
         if (this.m_languages !== undefined && this.m_languages[0] !== undefined) {
