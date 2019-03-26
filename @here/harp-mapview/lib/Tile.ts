@@ -122,6 +122,14 @@ const MINIMUM_SMALL_OBJECT_SIZE_ESTIMATION = 16;
 const MINIMUM_OBJECT_SIZE_ESTIMATION = 100;
 
 /**
+ * A default empty [[DecodedTile]], for tiles that must be rendered but do not have any objects.
+ */
+const defaultEmptyDecodedTile: DecodedTile = {
+    techniques: [],
+    geometries: []
+};
+
+/**
  * Compute the memory footprint of `TileFeatureData`.
  */
 export function getFeatureDataSize(featureData: TileFeatureData): number {
@@ -593,7 +601,7 @@ export class Tile implements CachedResource {
      * Called by [[VisibleTileSet]] to mark that [[Tile]] is visible and it should prepare geometry.
      */
     prepareForRender() {
-        if (!this.m_decodedTile || this.m_disposed) {
+        if (this.m_disposed || this.m_decodedTile === undefined) {
             return;
         }
 
@@ -601,6 +609,13 @@ export class Tile implements CachedResource {
         // for example by moving the camera, the tile is not finished and its geometry is not
         // created. This is an optimization for fast camera movements and zooms.
         if (!this.isVisible) {
+            return;
+        }
+
+        // creates an empty plane if there are no objects on it, but it must be rendered
+        if (this.m_forceHasGeometry && this.dataSource.addTileBackground) {
+            this.clear();
+            this.addGroundPlane();
             return;
         }
 
@@ -791,6 +806,9 @@ export class Tile implements CachedResource {
      * @param value A new value for the [[hasGeometry]] flag.
      */
     forceHasGeometry(value: boolean) {
+        if (value) {
+            this.setDecodedTile(defaultEmptyDecodedTile);
+        }
         this.m_forceHasGeometry = value;
     }
 
@@ -1168,21 +1186,7 @@ export class Tile implements CachedResource {
         const displayZoomLevel = this.mapView.zoomLevel;
 
         if (this.dataSource.addTileBackground) {
-            // Add a ground plane to the tile.
-            const planeSize = new THREE.Vector3();
-            this.boundingBox.getSize(planeSize);
-            const groundPlane = this.createPlane(
-                planeSize.x,
-                planeSize.y,
-                this.center,
-                this.dataSource.tileBackgroundColor === undefined
-                    ? this.mapView.clearColor
-                    : this.dataSource.tileBackgroundColor,
-                this.dataSource.tileBackgroundIsVisible
-            );
-
-            this.registerTileObject(groundPlane);
-            objects.push(groundPlane);
+            this.addGroundPlane();
         }
 
         for (const srcGeometry of decodedTile.geometries) {
@@ -1870,5 +1874,26 @@ export class Tile implements CachedResource {
             lineFadeNear,
             lineFadeFar
         };
+    }
+
+    /**
+     * Creates and add a background plane for the tile.
+     */
+    private addGroundPlane() {
+        // Add a ground plane to the tile.
+        const planeSize = new THREE.Vector3();
+        this.boundingBox.getSize(planeSize);
+        const groundPlane = this.createPlane(
+            planeSize.x,
+            planeSize.y,
+            this.center,
+            this.dataSource.tileBackgroundColor === undefined
+                ? this.mapView.clearColor
+                : this.dataSource.tileBackgroundColor,
+            this.dataSource.tileBackgroundIsVisible
+        );
+
+        this.registerTileObject(groundPlane);
+        this.objects.push(groundPlane);
     }
 }
