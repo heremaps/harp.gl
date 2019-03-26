@@ -57,7 +57,8 @@ export class GeoJsonDataSource extends TileDataSource<GeoJsonTile> {
             name: params.name,
             tilingScheme: webMercatorTilingScheme,
             dataProvider: params.dataProvider,
-            concurrentDecoderServiceName: "geojson-tile-decoder"
+            concurrentDecoderServiceName: "geojson-tile-decoder",
+            storageLevelOffset: -1
         });
     }
 
