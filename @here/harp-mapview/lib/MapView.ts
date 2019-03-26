@@ -694,8 +694,8 @@ export class MapView extends THREE.EventDispatcher {
             MAX_FIELD_OF_VIEW
         );
         // Initialization of mCamera and mVisibleTiles
-        const { clientWidth, clientHeight } = this.canvas;
-        const aspect = clientWidth / clientHeight;
+        const { width, height } = this.getCanvasClientSize();
+        const aspect = width / height;
         this.m_camera = new THREE.PerspectiveCamera(
             this.m_options.fovCalculation.fov,
             aspect,
@@ -713,8 +713,8 @@ export class MapView extends THREE.EventDispatcher {
 
         const mapPassAntialiasSettings = this.m_options.customAntialiasSettings;
         this.mapRenderingManager = new MapRenderingManager(
-            clientWidth,
-            clientHeight,
+            width,
+            height,
             this.m_options.dynamicPixelRatio,
             mapPassAntialiasSettings
         );
@@ -1453,9 +1453,9 @@ export class MapView extends THREE.EventDispatcher {
      */
     get pixelToWorld(): number {
         if (this.m_pixelToWorld === undefined) {
-            const { clientWidth, clientHeight } = this.canvas;
-            const center = this.getWorldPositionAt(clientWidth * 0.5, clientHeight);
-            const unitOffset = this.getWorldPositionAt(clientWidth * 0.5 + 1.0, clientHeight);
+            const { width, height } = this.getCanvasClientSize();
+            const center = this.getWorldPositionAt(width * 0.5, height);
+            const unitOffset = this.getWorldPositionAt(width * 0.5 + 1.0, height);
 
             this.m_pixelToWorld =
                 center !== null && unitOffset !== null ? unitOffset.sub(center).length() : 1.0;
@@ -1592,8 +1592,8 @@ export class MapView extends THREE.EventDispatcher {
     getNormalizedScreenCoordinates(x: number, y: number): THREE.Vector3 {
         // use clientWidth and clientHeight as it does not apply the pixelRatio and
         // therefore supports also HiDPI devices
-        const { clientWidth, clientHeight } = this.canvas;
-        return new THREE.Vector3((x / clientWidth) * 2 - 1, -((y / clientHeight) * 2) + 1, 0);
+        const { width, height } = this.getCanvasClientSize();
+        return new THREE.Vector3((x / width) * 2 - 1, -((y / height) * 2) + 1, 0);
     }
 
     /**
@@ -2098,17 +2098,17 @@ export class MapView extends THREE.EventDispatcher {
     }
 
     private setupCamera() {
-        const { clientWidth, clientHeight } = this.canvas;
+        const { width, height } = this.getCanvasClientSize();
 
         this.m_scene.add(this.m_camera); // ensure the camera is added to the scene.
 
         this.m_camera.position.set(0, 0, 3000);
         this.m_camera.lookAt(new THREE.Vector3(0, 0, 0));
 
-        this.calculateFocalLength(clientHeight);
+        this.calculateFocalLength(height);
         this.m_visibleTiles = new VisibleTileSet(this.m_camera, this.m_visibleTileSetOptions);
         // ### move & customize
-        this.resize(clientWidth, clientHeight);
+        this.resize(width, height);
 
         this.geoCenter = new GeoCoordinates(52.518611, 13.376111, 0);
 
@@ -2448,7 +2448,8 @@ export class MapView extends THREE.EventDispatcher {
     /**
      * Computes the focal length based on the supplied fov (if the type is
      * dynamic) and the height of the canvas.
-     * @param height Height of the canvas in pixels.
+     *
+     * @param height Height of the canvas in css/client pixels.
      */
     private calculateFocalLength(height: number) {
         assert(this.m_options.fovCalculation !== undefined);
@@ -2459,5 +2460,29 @@ export class MapView extends THREE.EventDispatcher {
             MathUtils.degToRad(this.m_options.fovCalculation!.fov),
             height
         );
+    }
+
+    /**
+     * Get canvas client size in css/client pixels.
+     *
+     * Supports canvases not attached to DOM, which have 0 as `clientWidth` and `clientHeight` by
+     * calculating it from actual canvas size and current pixel ratio.
+     */
+    private getCanvasClientSize(): { width: number; height: number } {
+        const { clientWidth, clientHeight } = this.canvas;
+        if (
+            clientWidth === 0 ||
+            clientHeight === 0 ||
+            typeof clientWidth !== "number" ||
+            typeof clientHeight !== "number"
+        ) {
+            const pixelRatio = this.m_renderer.getPixelRatio();
+            return {
+                width: Math.round(this.canvas.width / pixelRatio),
+                height: Math.round(this.canvas.height / pixelRatio)
+            };
+        } else {
+            return { width: clientWidth, height: clientHeight };
+        }
     }
 }
