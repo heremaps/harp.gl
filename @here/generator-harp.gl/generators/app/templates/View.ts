@@ -9,7 +9,7 @@ import { MapControls } from "@here/harp-map-controls";
 import { CopyrightElementHandler, MapView } from "@here/harp-mapview";
 import { APIFormat, OmvDataSource } from "@here/harp-omv-datasource";
 
-const defaultTheme = "resources/berlin_base.json";
+const defaultTheme = "resources/berlin_tilezen_base.json";
 
 export interface ViewParameters {
     theme?: string | Theme;

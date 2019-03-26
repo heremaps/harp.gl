@@ -238,7 +238,7 @@ Press 'V' to change the scene point of view<br>`;
         const app = new FreeCameraApp({
             decoderUrl: "./decoder.bundle.js",
             canvas,
-            theme: "./resources/berlin_base.json",
+            theme: "./resources/berlin_tilezen_base.json",
             geoCenter
         });
 
