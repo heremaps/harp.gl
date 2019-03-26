@@ -119,7 +119,7 @@ export namespace TripleViewExample {
 </div>
 `;
 
-    const defaultTheme = "./resources/berlin_reduced_day.json";
+    const defaultTheme = "./resources/berlin_tilezen_day_reduced.json";
     const numberOfSyncXViews = 3;
     // Adjust CSS to see more then 1 row in Y axis
     const numberOfSyncYViews = 1;
@@ -220,21 +220,21 @@ export namespace TripleViewExample {
             "mapCanvas",
             0,
             0,
-            "./resources/berlin_base.json",
+            "./resources/berlin_tilezen_base.json",
             "./decoder.bundle.js"
         ),
         view2: initMapView(
             "mapCanvas2",
             1,
             0,
-            "./resources/berlin_reduced_night.json",
+            "./resources/berlin_tilezen_night_reduced.json",
             "./decoder.bundle.js"
         ),
         view3: initMapView(
             "mapCanvas3",
             2,
             0,
-            "./resources/berlin_reduced_day.json",
+            "./resources/berlin_tilezen_day_reduced.json",
             "./decoder.bundle.js"
         )
     };

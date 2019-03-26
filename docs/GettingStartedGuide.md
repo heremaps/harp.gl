@@ -95,7 +95,7 @@ import { MapView } from "@here/harp-mapview";
 const mapCanvas = document.getElementById("mapCanvas");
 const mapView = new MapView({
     canvas: mapCanvas,
-    theme: "node_modules/@here/harp-map-theme/resources/berlin_base.json",
+    theme: "node_modules/@here/harp-map-theme/resources/berlin_tilezen_base.json",
        // note, this URL may vary depending on configuration of webpack
        // for this example, it is assumed that app is server from project root
     decoderUrl: "harp-gl-decoders.bundle.js"

@@ -49,7 +49,7 @@ export function getTestResourceUrl(module: string, fileName: string) {
  *
  * const textData = await  loadTestResourceWeb('test-utils', 'test/resources/test.txt', 'text');
  *
- * const theme = await loadTestResource('map-theme', 'resources/berlin_base.json', 'json');
+ * const theme = await loadTestResource('map-theme', 'resources/berlin_tilezen_base.json', 'json');
  * ```
  *
  * These locations above are mapped in the same way regardless of the runtime environment used
