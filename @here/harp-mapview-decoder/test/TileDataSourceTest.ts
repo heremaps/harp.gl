@@ -165,7 +165,7 @@ describe("TileDataSource", function() {
         assert.equal(mockDataProvider.getTile.callCount, 1);
         assert.equal(getTileToken.aborted, true);
         assert.equal(mockDecoder.decodeTile.callCount, 0);
-        assert.equal(spyTileSetDecodedTile.callCount, 0);
+        assert.equal(spyTileSetDecodedTile.callCount, 2);
     });
 
     it("subsequent, overlapping #updateTile calls load & decode tile once", async function() {
