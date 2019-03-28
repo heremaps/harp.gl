@@ -47,7 +47,7 @@ function reindented(spaces: number, lines: string[]): string[] {
 const mkpath = require("mkpath");
 
 const sdkDir = path.resolve(__dirname, "..");
-const outDir = path.resolve(sdkDir, "dist/doc");
+const outDir = path.resolve(sdkDir, "dist/doc-snippets");
 mkpath.sync(outDir);
 
 const sourceFiles = glob.sync(sdkDir + "/@here/harp-examples/**/*.{ts,tsx,html}");
