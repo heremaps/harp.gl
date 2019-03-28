@@ -6,9 +6,11 @@
     "@here/*"
   ],
   "devDependencies": {
+    "chromedriver": "^2.43.1",
+    "geckodriver": "^1.12.2",
     "hard-source-webpack-plugin": "^0.13.1",
     "mocha": "^5.2.0",
-    "mocha-webdriver-runner": "^0.5.0",
+    "mocha-webdriver-runner": "^0.5.1",
     "prettier": "^1.16.4",
     "three": "^0.102.0",
     "ts-mocha": "^2.0.0",
