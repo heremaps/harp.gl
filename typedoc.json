@@ -2,7 +2,7 @@
     "name": "harp.gl",
     "mode": "modules",
     "module": "commonjs",
-    "out": "doc",
+    "out": "dist/doc",
     "exclude": [
         "**/node_modules/**",
         "**/map-component/*.ts",
@@ -11,7 +11,7 @@
         "**/@here/generator-harp.gl/**/*.ts",
         "**/+(*Test.ts|index_node.ts|index-worker.ts|*_generated.ts|publish-npm.ts|changelog.ts|doc-snippets.ts)"
     ],
-    "includes": "dist/doc",
+    "includes": "dist/doc-snippets",
     "readme": "README.md",
     "target": "ES6",
     "excludePrivate": "true",

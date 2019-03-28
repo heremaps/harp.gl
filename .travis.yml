@@ -21,35 +21,35 @@ before_install:
 
 jobs:
   include:
-    - name: "Build & test"
+    - name: "Test"
       script: |
         set -ex
         npx ts-mocha -r tsconfig-paths/register ./test/*.ts
         yarn run tslint
         yarn run prettier
-        yarn run build
         yarn run build-tests
         npx ts-mocha -r tsconfig-paths/register ./@here/*/test/*.ts
         yarn test-browser --headless-firefox
         yarn test-browser --headless-chrome
-
         ./scripts/test-npm-packages.sh
         git status # just in case test-npm-packages leaves some garbage
 
-    - name: "Build documentation"
+    - name: "Build & Deploy"
       script: |
-        yarn run typedoc && \
-        echo -e 'include:\n  - "_*"' > doc/_config.yml
+        set -ex
+        yarn run build
+        yarn run typedoc
+        cp ./docs/index.html ./dist
+        echo -e 'include:\n  - "_*"' > dist/doc/_config.yml
       deploy:
         provider: pages
         skip_cleanup: true
         committer-from-gh: true
         keep-history: false
-        local-dir: doc
+        local-dir: dist
         github-token: $GITHUB_TOKEN
         on:
           branch: master
-          tags: true
 deploy:
   - provider: script
     script:
