@@ -54,6 +54,7 @@ jobs:
         github-token: $GITHUB_TOKEN
         on:
           branch: master
+          tags: true
 deploy:
   - provider: script
     script:
