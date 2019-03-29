@@ -612,7 +612,13 @@ export class Tile implements CachedResource {
         if (this.m_disposed || this.m_decodedTile === undefined) {
             return;
         }
+
         const decodedTile = this.m_decodedTile;
+
+        if (decodedTile.tileInfo !== undefined) {
+            this.roadIntersectionData = this.dataSource.mapView.pickHandler.registerTile(this);
+        }
+
         this.m_decodedTile = undefined;
 
         // creates an empty plane if there are no objects on it, but it must be rendered
@@ -620,10 +626,6 @@ export class Tile implements CachedResource {
             this.clear();
             this.addGroundPlane();
             return;
-        }
-
-        if (decodedTile.tileInfo !== undefined) {
-            this.roadIntersectionData = this.dataSource.mapView.pickHandler.registerTile(this);
         }
 
         setTimeout(() => {
