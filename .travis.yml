@@ -40,7 +40,11 @@ jobs:
         yarn run build
         yarn run typedoc
         cp ./docs/index.html ./dist
-        echo -e 'include:\n  - "_*"' > dist/doc/_config.yml
+        cp ./LICENSE ./dist/doc
+        cp -R ./docs ./dist/doc/docs
+        rm ./dist/examples/resources/fonts/.gitignore
+        rm ./dist/examples/resources/fonts/.npmignore
+        echo -e 'include:\n  - "_*"' > dist/_config.yml
       deploy:
         provider: pages
         skip_cleanup: true
