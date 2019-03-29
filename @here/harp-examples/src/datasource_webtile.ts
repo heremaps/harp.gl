@@ -15,29 +15,30 @@ export namespace WebTileDataSourceExample {
     export function initializeMapView(id: string): MapView {
         const canvas = document.getElementById(id) as HTMLCanvasElement;
 
-        const sampleMapView = new MapView({
+        const map = new MapView({
             canvas,
             theme: "resources/berlin_tilezen_base.json"
         });
+        map.setCacheSize(100, 100);
 
         // instantiate the default map controls, allowing the user to pan around freely.
-        const controls = new MapControls(sampleMapView);
+        const controls = new MapControls(map);
 
         // Add an UI.
         const ui = new MapControlsUI(controls);
         canvas.parentElement!.appendChild(ui.domElement);
 
-        CopyrightElementHandler.install("copyrightNotice", sampleMapView);
+        CopyrightElementHandler.install("copyrightNotice", map);
 
         // resize the mapView to maximum
-        sampleMapView.resize(window.innerWidth, window.innerHeight);
+        map.resize(window.innerWidth, window.innerHeight);
 
         // react on resize events
         window.addEventListener("resize", () => {
-            sampleMapView.resize(window.innerWidth, window.innerHeight);
+            map.resize(window.innerWidth, window.innerHeight);
         });
 
-        return sampleMapView;
+        return map;
     }
 
     // tslint:disable:max-line-length
