@@ -171,8 +171,8 @@ export interface PoiGeometry {
 }
 
 /**
- * Structured clone compliant WebGL group object and its metadata.
- * Its purpose is to make working with groups of objects easier.
+ * Structured clone compliant WebGL group object and its metadata. Its purpose is to make working
+ * with groups of objects easier. Groups will also be created together.
  */
 export interface Group {
     start: number;
@@ -185,6 +185,11 @@ export interface Group {
      */
     renderOrderOffset?: number;
     featureId?: number;
+
+    /**
+     * Set to `true` if its [[Geometry]] has been created.
+     */
+    created?: boolean;
 }
 
 /**

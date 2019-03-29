@@ -11,6 +11,7 @@ import { TileKey } from "@here/harp-geoutils";
 import { assert } from "chai";
 import * as sinon from "sinon";
 import * as THREE from "three";
+import { SimpleTileGeometryManager } from "../lib/geometry/TileGeometryManager";
 import { MapView, MapViewDefaults } from "../lib/MapView";
 import { Tile } from "../lib/Tile";
 import { VisibleTileSet } from "../lib/VisibleTileSet";
@@ -40,12 +41,14 @@ class FakeMapView {
 describe("VisibleTileSet", function() {
     it("#updateRenderList properly culls Berlin center example view", function() {
         const { camera, worldCenter } = createBerlinCenterCameraFromSamples();
-        const vts = new VisibleTileSet(camera, MapViewDefaults);
         const zoomLevel = 15;
         const storageLevel = 14;
         const ds = new FakeOmvDataSource();
 
-        ds.attach(new FakeMapView() as MapView);
+        const mapView = new FakeMapView() as MapView;
+        ds.attach(mapView);
+        const tileGeometryManager = new SimpleTileGeometryManager(mapView);
+        const vts = new VisibleTileSet(camera, tileGeometryManager, MapViewDefaults);
 
         const renderList = vts.updateRenderList(worldCenter, zoomLevel, storageLevel, [ds]);
 
@@ -75,12 +78,14 @@ describe("VisibleTileSet", function() {
         camera.updateProjectionMatrix();
         camera.updateMatrixWorld(false);
 
-        const vts = new VisibleTileSet(camera, MapViewDefaults);
         const zoomLevel = 16;
         const storageLevel = 14;
         const ds = new FakeOmvDataSource();
 
-        ds.attach(new FakeMapView() as MapView);
+        const mapView = new FakeMapView() as MapView;
+        ds.attach(mapView);
+        const tileGeometryManager = new SimpleTileGeometryManager(mapView);
+        const vts = new VisibleTileSet(camera, tileGeometryManager, MapViewDefaults);
 
         const renderList = vts.updateRenderList(worldCenter, zoomLevel, storageLevel, [ds]);
 
@@ -101,24 +106,26 @@ describe("VisibleTileSet", function() {
 
     it("#updateRenderList properly finds parent loaded tiles in Berlin center", function() {
         const { camera, worldCenter } = createBerlinCenterCameraFromSamples();
-        const vts = new VisibleTileSet(camera, MapViewDefaults);
 
         const zoomLevel = 15;
         const storageLevel = 14;
-        const dataSource = new FakeOmvDataSource();
+        const ds = new FakeOmvDataSource();
 
-        dataSource.attach(new FakeMapView() as MapView);
+        const mapView = new FakeMapView() as MapView;
+        ds.attach(mapView);
+        const tileGeometryManager = new SimpleTileGeometryManager(mapView);
+        const vts = new VisibleTileSet(camera, tileGeometryManager, MapViewDefaults);
 
         // same as first found code few lines below
         const parentCode = TileKey.parentMortonCode(371506851);
 
         // fake MapView to think that it has already loaded
         // parent of both found tiles
-        const parentTile = vts.getTile(dataSource, TileKey.fromMortonCode(parentCode)) as Tile;
+        const parentTile = vts.getTile(ds, TileKey.fromMortonCode(parentCode)) as Tile;
         assert.exists(parentTile);
         parentTile.forceHasGeometry(true);
 
-        const renderList = vts.updateRenderList(worldCenter, zoomLevel, storageLevel, [dataSource]);
+        const renderList = vts.updateRenderList(worldCenter, zoomLevel, storageLevel, [ds]);
 
         assert.equal(renderList.length, 1);
         assert.equal(renderList[0].visibleTiles.length, 2);
@@ -135,12 +142,14 @@ describe("VisibleTileSet", function() {
 
     it("#markTilesDirty properly handles cached & visible tiles", async function() {
         const { camera, worldCenter } = createBerlinCenterCameraFromSamples();
-        const vts = new VisibleTileSet(camera, MapViewDefaults);
         const zoomLevel = 15;
         const storageLevel = 14;
         const ds = new FakeOmvDataSource();
 
-        ds.attach(new FakeMapView() as MapView);
+        const mapView = new FakeMapView() as MapView;
+        ds.attach(mapView);
+        const tileGeometryManager = new SimpleTileGeometryManager(mapView);
+        const vts = new VisibleTileSet(camera, tileGeometryManager, MapViewDefaults);
 
         const renderList = vts.updateRenderList(worldCenter, zoomLevel, storageLevel, [ds]);
 

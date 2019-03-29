@@ -10,6 +10,7 @@ import {
     DashedLineTechniqueParams,
     ExtrudedPolygonTechniqueParams,
     FillTechniqueParams,
+    GeometryKind,
     MarkerTechniqueParams,
     PointTechniqueParams,
     SegmentsTechniqueParams,
@@ -181,6 +182,12 @@ export interface BaseStyle {
      * XYZ defines the property to display as text label of a feature in the styles.
      */
     labelProperty?: string;
+
+    /**
+     * Specified kind(s) of geometry. One kind is set as default in the technique, and can be
+     * overridden in the style. An array of kinds can also be specified.
+     */
+    kind?: GeometryKind | GeometryKind[];
 }
 
 export type Style =

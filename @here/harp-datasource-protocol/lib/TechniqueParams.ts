@@ -7,6 +7,89 @@
 import { MaybeInterpolatedProperty } from "./InterpolatedPropertyDefs";
 
 /**
+ * The kind of geometry is used to
+ *
+ * a) Group objects together, allowing the group to be hidden or displayed.
+ *
+ * b) Assigning the objects a loading phase. If a [[PhasedTileGeometryManager]] is used, techniques
+ *      without a `GeometryKind` may not be processed (at the desired phase).
+ *
+ * Any string can be used to specify the kind of the technique in a style in the theme file. Is is
+ * suggested to specify multiple kinds for specific types of data. For a highway, the following list
+ * of kinds is suggested:
+ *
+ *    ["line", "road", "road:highway"]
+ *
+ * If it is a tunnel for a highway:
+ *
+ *    ["line", "road", "road:highway", "tunnel", "road:tunnel", "road:highway:tunnel"]
+ *
+ * If specified in this way, specific types of data (here: highway roads) can be enabled and/or
+ * disabled.
+ */
+export enum GeometryKind {
+    /**
+     * Used in the enabledKinds/disabledKinds filter to match any kind.
+     */
+    All = "_all_",
+
+    /**
+     * Background geometry.
+     */
+    Background = "background",
+
+    /**
+     * Terrain geometry.
+     */
+    Terrain = "terrain",
+
+    /**
+     * Default value for the FillTechnique.
+     */
+    Area = "area",
+
+    /**
+     * Default value for all line techniques.
+     */
+    Line = "line",
+
+    /**
+     * Default value for the FillTechnique.
+     */
+    Water = "water",
+
+    /**
+     * Political borders.
+     */
+    Border = "border",
+
+    /**
+     * Basis for all roads.
+     */
+    Road = "road",
+
+    /**
+     * Default value for the ExtrudedPolygonTechnique.
+     */
+    Building = "building",
+
+    /**
+     * Default value for the TextTechnique, LineMarkerTechnique and the PoiTechnique.
+     */
+    Label = "label",
+
+    /**
+     * Anything that may show up last.
+     */
+    Detail = "detail"
+}
+
+/**
+ * A set of [[GeometryKind]]s
+ */
+export type GeometryKindSet = Set<GeometryKind>;
+
+/**
  * Common attributes or all [[Technique]]s.
  */
 export interface BaseTechniqueParams {
@@ -18,7 +101,7 @@ export interface BaseTechniqueParams {
     /**
      * The render order of the objects created using this technique.
      *
-     * If not specified in style file, [[StyleSetEvaluator]] will assign monotonicaly increasing
+     * If not specified in style file, [[StyleSetEvaluator]] will assign monotonically increasing
      * values according to style position in file.
      */
     renderOrder: number;
@@ -55,6 +138,18 @@ export interface BaseTechniqueParams {
      * opacity and stops fading out. A value of <= 0.0 disables fading.
      */
     fadeFar?: number;
+
+    /**
+     * Specified kind of geometry. One kind is set as default in the technique, and can be
+     * overridden in the style.
+     */
+    kind?: GeometryKind | GeometryKindSet;
+
+    /**
+     * Set to `true` if this `Technique`s kind is in the set of enabled [[GeometryKind]]s, set to
+     * `false` if is in the disabled [[GeometryKind]]s. Disabling overrules enabling.
+     */
+    enabled?: boolean;
 }
 
 export enum TextureCoordinateType {
@@ -71,7 +166,7 @@ export enum TextureCoordinateType {
 }
 
 /**
- * Standard technique paraneters.
+ * Standard technique parameters.
  */
 export interface StandardTechniqueParams extends BaseTechniqueParams {
     /**

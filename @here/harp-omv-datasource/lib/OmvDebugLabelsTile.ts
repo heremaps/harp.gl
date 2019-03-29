@@ -14,6 +14,8 @@ import {
     TextRenderStyle
 } from "@here/harp-text-canvas";
 import * as THREE from "three";
+
+import { TileGeometryCreator } from "../../harp-mapview/lib/geometry/TileGeometryCreator";
 import { OmvTile } from "./OmvTile";
 
 const debugMaterial = new THREE.LineBasicMaterial({
@@ -63,7 +65,9 @@ export class OmvDebugLabelsTile extends OmvTile {
      * @param decodedTile The decoded tile.
      */
     createTextElements(decodedTile: DecodedTile) {
-        super.createTextElements(decodedTile);
+        const geometryCreator = new TileGeometryCreator();
+
+        geometryCreator.createTextElements(this, decodedTile);
 
         const colorMap = new Map<number, THREE.Color>();
 
@@ -202,14 +206,5 @@ export class OmvDebugLabelsTile extends OmvTile {
                 }
             }
         }
-    }
-
-    /**
-     * Create the geometries for the decoded [[Tile]].
-     *
-     * @param decodedTile The decoded tile.
-     */
-    createGeometries(decodedTile: DecodedTile) {
-        super.createGeometries(decodedTile);
     }
 }

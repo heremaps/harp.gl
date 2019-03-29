@@ -10,6 +10,7 @@ import * as THREE from "three";
 import { OrientedBox3 } from "@here/harp-geometry";
 import { DataSource } from "./DataSource";
 import { CalculationStatus, ElevationRangeSource } from "./ElevationRangeSource";
+import { TileGeometryManager } from "./geometry/TileGeometryManager";
 import { MapTileCuller } from "./MapTileCuller";
 import { Tile } from "./Tile";
 import { MapViewUtils, TileOffsetUtils } from "./Utils";
@@ -155,6 +156,11 @@ export interface DataSourceTileList {
     numTilesLoading: number;
 
     /**
+     * The number of tiles which are loaded but have only parts of their geometry created.
+     */
+    numTilesWithPartialGeometry: number;
+
+    /**
      * List of tiles we want to render (i.e. the tiles computed from the zoom level and view
      * frustum). However some might not be renderable yet (e.g. loading). See [[renderedTiles]] for
      * the actual list of tiles that the user will see.
@@ -194,8 +200,12 @@ export class VisibleTileSet {
     private m_ResourceComputationType: ResourceComputationType =
         ResourceComputationType.EstimationInMb;
 
-    constructor(private readonly camera: THREE.PerspectiveCamera, options: VisibleTileSetOptions) {
-        this.m_mapTileCuller = new MapTileCuller(camera);
+    constructor(
+        private readonly m_camera: THREE.PerspectiveCamera,
+        private readonly m_tileGeometryManager: TileGeometryManager,
+        options: VisibleTileSetOptions
+    ) {
+        this.m_mapTileCuller = new MapTileCuller(m_camera);
         this.options = options;
     }
 
@@ -262,8 +272,8 @@ export class VisibleTileSet {
         dataSources: DataSource[]
     ): DataSourceTileList[] {
         this.m_viewProjectionMatrix.multiplyMatrices(
-            this.camera.projectionMatrix,
-            this.camera.matrixWorldInverse
+            this.m_camera.projectionMatrix,
+            this.m_camera.matrixWorldInverse
         );
         this.m_frustum.setFromMatrix(this.m_viewProjectionMatrix);
 
@@ -311,6 +321,7 @@ export class VisibleTileSet {
             const actuallyVisibleTiles: Tile[] = [];
             let allDataSourceTilesLoaded = true;
             let numTilesLoading = 0;
+            let numTilesWithPartialGeometry = 0;
             // Create actual tiles only for the allowed number of visible tiles
             const displayZoomLevel = dataSource.getDisplayZoomLevel(zoomLevel);
             for (
@@ -328,9 +339,13 @@ export class VisibleTileSet {
                     continue;
                 }
 
-                tile.prepareForRender();
-                allDataSourceTilesLoaded = allDataSourceTilesLoaded && tile.hasGeometry;
-                if (!tile.hasGeometry) {
+                // Keep the new tile from being removed from the cache.
+                tile.isVisible = true;
+
+                tile.prepareTileInfo();
+
+                allDataSourceTilesLoaded = allDataSourceTilesLoaded && tile.basicGeometryLoaded;
+                if (tile.tileLoader !== undefined && !tile.tileLoader.isFinished) {
                     numTilesLoading++;
                 } else {
                     tile.numFramesVisible++;
@@ -338,6 +353,13 @@ export class VisibleTileSet {
                     if (tile.frameNumVisible < 0) {
                         // Store the fist frame the tile became visible.
                         tile.frameNumVisible = dataSource.mapView.frameNumber;
+                    }
+
+                    if (
+                        tile.tileGeometryLoader !== undefined &&
+                        !tile.tileGeometryLoader.allGeometryLoaded
+                    ) {
+                        numTilesWithPartialGeometry++;
                     }
                 }
                 actuallyVisibleTiles.push(tile);
@@ -347,12 +369,15 @@ export class VisibleTileSet {
                 tile.visibleArea = tileEntry.area;
             }
 
+            this.m_tileGeometryManager.updateTiles(actuallyVisibleTiles);
+
             newRenderList.push({
                 dataSource,
                 storageLevel,
                 zoomLevel: displayZoomLevel,
                 allVisibleTileLoaded: allDataSourceTilesLoaded,
                 numTilesLoading,
+                numTilesWithPartialGeometry,
                 visibleTiles: actuallyVisibleTiles,
                 renderedTiles: actuallyVisibleTiles
             });
@@ -417,6 +442,7 @@ export class VisibleTileSet {
             tile.offset = offset;
             updateTile(tile);
             tileCache.set(tileKeyMortonCode, tile);
+            this.m_tileGeometryManager.initTile(tile);
         }
         return tile;
     }
@@ -610,15 +636,16 @@ export class VisibleTileSet {
         // (tan(a->d2) * z).
         // a->e needs just the tilt and trigonometry to compute, result is: (tan(a->e) * z).
 
-        const cameraPitch = MapViewUtils.extractYawPitchRoll(this.camera.quaternion).pitch;
+        const camera = this.m_camera;
+        const cameraPitch = MapViewUtils.extractYawPitchRoll(camera.quaternion).pitch;
         // Ensure that the aspect is >= 1.
-        const aspect = this.camera.aspect > 1 ? this.camera.aspect : 1 / this.camera.aspect;
+        const aspect = camera.aspect > 1 ? camera.aspect : 1 / camera.aspect;
         // Angle between a->d2, note, the fov is vertical, hence we translate to horizontal.
-        const totalAngleRad = MathUtils.degToRad((this.camera.fov * aspect) / 2) + cameraPitch;
+        const totalAngleRad = MathUtils.degToRad((camera.fov * aspect) / 2) + cameraPitch;
         // Length a->d2
-        const worldLengthHorizontalFull = Math.tan(totalAngleRad) * this.camera.position.z;
+        const worldLengthHorizontalFull = Math.tan(totalAngleRad) * camera.position.z;
         // Length a->e
-        const worldLengthHorizontalSmallerHalf = Math.tan(cameraPitch) * this.camera.position.z;
+        const worldLengthHorizontalSmallerHalf = Math.tan(cameraPitch) * camera.position.z;
         // Length e -> d2
         const worldLengthHorizontal = worldLengthHorizontalFull - worldLengthHorizontalSmallerHalf;
         const worldLeftPoint = new THREE.Vector3(
@@ -634,7 +661,7 @@ export class VisibleTileSet {
                 Math.abs((worldGeoPoint.longitude - worldLeftGeoPoint.longitude) / 360) * Math.SQRT2
             ),
             0,
-            // We can store currently up to 16 unique keys(2^4, where 4 is the default bitshift
+            // We can store currently up to 16 unique keys(2^4, where 4 is the default bit-shift
             // value which is used currently in the [[VisibleTileSet]] methods) hence we can have a
             // maximum range of 7 (because 2*7+1 = 15).
             7
@@ -695,12 +722,16 @@ export class VisibleTileSet {
 
             let incompleteTiles: Map<number, SearchDirection> = new Map();
 
+            // FIXME: Do not replace a visible tile (that was chosen from another zoom level) with
+            // the "correct" tile until that correct tile has the same phases loaded as the current
+            // one to keep buildings from popping in.
+
             renderListEntry.visibleTiles.forEach(tile => {
                 const tileCode = TileOffsetUtils.getKeyForTileKeyAndOffset(
                     tile.tileKey,
                     tile.offset
                 );
-                if (tile.hasGeometry) {
+                if (tile.basicGeometryLoaded) {
                     renderedTiles.set(tileCode, tile);
                 } else {
                     // if dataSource supports cache and it was existing before this render
@@ -730,7 +761,7 @@ export class VisibleTileSet {
                         if (!checkedTiles.has(parentCode) && !renderedTiles.get(parentCode)) {
                             checkedTiles.add(parentCode);
                             const parentTile = tileCache.get(parentCode);
-                            if (parentTile !== undefined && parentTile.hasGeometry) {
+                            if (parentTile !== undefined && parentTile.basicGeometryLoaded) {
                                 // parentTile has geometry, so can be reused as fallback
                                 renderedTiles.set(parentCode, parentTile);
                                 return;
@@ -769,7 +800,7 @@ export class VisibleTileSet {
                             checkedTiles.add(childTileCode);
                             const childTile = tileCache.get(childTileCode);
 
-                            if (childTile !== undefined && childTile.hasGeometry) {
+                            if (childTile !== undefined && childTile.basicGeometryLoaded) {
                                 // childTile has geometry, so can be reused as fallback
                                 renderedTiles.set(childTileCode, childTile);
                                 return;
