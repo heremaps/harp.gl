@@ -170,13 +170,13 @@ export namespace TripleViewExample {
     ): ViewControlPair {
         const canvas = document.getElementById(id) as HTMLCanvasElement;
 
-        const sampleMapView = new MapView({
+        const mapView = new MapView({
             canvas,
             theme: theme !== undefined ? theme : defaultTheme,
             decoderUrl
         });
         CopyrightElementHandler.install("copyrightNotice")
-            .attach(sampleMapView)
+            .attach(mapView)
             .setDefaults([
                 {
                     id: "here.com",
@@ -185,10 +185,10 @@ export namespace TripleViewExample {
                     year: 2019
                 }
             ]);
-        sampleMapView.camera.position.set(0, 0, 800);
+        mapView.camera.position.set(0, 0, 800);
 
         // instantiate the default map controls, allowing the user to pan around freely.
-        const mapControls = new MapControls(sampleMapView);
+        const mapControls = new MapControls(mapView);
 
         // Add an UI.
         if (gridPositionX === 1) {
@@ -197,20 +197,20 @@ export namespace TripleViewExample {
         }
 
         //Set the cameras height according to the given zoom level.
-        sampleMapView.camera.position.setZ(
-            MapViewUtils.calculateDistanceToGroundFromZoomLevel(sampleMapView, defaultZoomLevel)
+        mapView.camera.position.setZ(
+            MapViewUtils.calculateDistanceToGroundFromZoomLevel(mapView, defaultZoomLevel)
         );
 
         // center the camera somewhere around Berlin geo locations
-        sampleMapView.geoCenter = new GeoCoordinates(52.518611, 13.376111, 0);
+        mapView.geoCenter = new GeoCoordinates(52.518611, 13.376111, 0);
 
-        setupSyncViewsGrid(sampleMapView, gridPositionX, gridPositionY);
+        setupSyncViewsGrid(mapView, gridPositionX, gridPositionY);
         // react on resize events
         window.addEventListener("resize", () => {
-            setupSyncViewsGrid(sampleMapView, gridPositionX, gridPositionY);
+            setupSyncViewsGrid(mapView, gridPositionX, gridPositionY);
         });
 
-        return { mapView: sampleMapView, mapControls };
+        return { mapView, mapControls };
     }
 
     // create `${numberOfSyncXViews}` MapViews, each with their own theme file

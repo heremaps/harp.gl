@@ -65,14 +65,14 @@ export namespace HelloWorldExample {
         // end:harp_gl_datasource_xyzmvt_example_0.ts
 
         // snippet:harp_gl_datasource_xyzmvt_example_1.ts
-        const sampleMapView = new MapView({
+        const map = new MapView({
             canvas,
             theme: "resources/berlin_tilezen_base.json"
         });
         // end:harp_gl_datasource_xyzmvt_example_1.ts
 
         CopyrightElementHandler.install("copyrightNotice")
-            .attach(sampleMapView)
+            .attach(map)
             .setDefaults([
                 {
                     id: "openstreetmap.org",
@@ -83,26 +83,26 @@ export namespace HelloWorldExample {
 
         // snippet:harp_gl_datasource_xyzmvt_example_2.ts
         // set an isometric view of the map
-        sampleMapView.camera.position.set(0, 0, 1600);
+        map.camera.position.set(0, 0, 1600);
         // center the camera on Manhattan, New York City
-        sampleMapView.geoCenter = new GeoCoordinates(40.7, -74.010241978);
+        map.geoCenter = new GeoCoordinates(40.7, -74.010241978);
 
         // instantiate the default map controls, allowing the user to pan around freely.
-        const mapControls = new MapControls(sampleMapView);
+        const mapControls = new MapControls(map);
         mapControls.setRotation(0.9, 23.928);
         // end:harp_gl_datasource_xyzmvt_example_2.ts
 
         // snippet:harp_gl_datasource_xyzmvt_example_3.ts
         // resize the mapView to maximum
-        sampleMapView.resize(window.innerWidth, window.innerHeight);
+        map.resize(window.innerWidth, window.innerHeight);
 
         // react on resize events
         window.addEventListener("resize", () => {
-            sampleMapView.resize(window.innerWidth, window.innerHeight);
+            map.resize(window.innerWidth, window.innerHeight);
         });
         // end:harp_gl_datasource_xyzmvt_example_3.ts
 
-        return sampleMapView;
+        return map;
     }
 
     const mapView = initializeMapView("mapCanvas");
