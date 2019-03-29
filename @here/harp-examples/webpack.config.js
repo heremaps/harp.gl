@@ -165,10 +165,12 @@ browserConfig.plugins.push(
                     .replace("{{EXAMPLES}}", JSON.stringify(exampleDefs, true, 4));
             }
         },
-        { from: "src/*.html", to: "[name].[ext]" },
+        ...[path.join(__dirname, "src")].map(srcDir => ({
+            from: path.join(srcDir, "*.{ts,tsx,html}"),
+            to: "src/[name].[ext]"
+        })),
         path.join(__dirname, "index.html"),
         path.join(__dirname, "codebrowser.html"),
-        path.join(__dirname, "src"),
         { from: path.join(__dirname, "resources"), to: "resources", toType: "dir" },
         { from: path.join(harpMapThemePath, "resources"), to: "resources", toType: "dir" },
         {
