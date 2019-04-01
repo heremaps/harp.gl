@@ -189,6 +189,7 @@ export class TextElementsRenderer {
 
     private m_tmpVector = new THREE.Vector2();
     private m_overloaded: boolean = false;
+    private m_catalogsLoading: number = 0;
 
     /**
      * Create the `TextElementsRenderer` which selects which labels should be placed on screen as
@@ -498,10 +499,17 @@ export class TextElementsRenderer {
     }
 
     /**
+     * `true` if font catalogs are ready, that means all font catalogs are initialized.
+     */
+    get ready(): boolean {
+        return this.m_catalogsLoading === 0 && this.m_textRenderers.length > 0;
+    }
+
+    /**
      * `true` if any resource used by any `FontCatalog` is still loading.
      */
     get loading(): boolean {
-        let isLoading = false;
+        let isLoading = this.m_catalogsLoading > 0;
         for (const textRenderer of this.m_textRenderers) {
             isLoading = isLoading || textRenderer.textCanvas.fontCatalog.isLoading;
         }
@@ -646,14 +654,17 @@ export class TextElementsRenderer {
     private initializeTextCanvases(): void {
         const promises: Array<Promise<void>> = [];
         this.m_theme.fontCatalogs!.forEach(fontCatalogConfig => {
+            this.m_catalogsLoading += 1;
             const fontCatalogPromise: Promise<void> = FontCatalog.load(fontCatalogConfig.url, 1024)
                 .then((loadedFontCatalog: FontCatalog) => {
+                    this.m_catalogsLoading -= 1;
                     const loadedTextCanvas = new TextCanvas({
                         renderer: this.m_mapView.renderer,
                         fontCatalog: loadedFontCatalog,
                         minGlyphCount: this.m_minNumGlyphs!,
                         maxGlyphCount: this.m_maxNumGlyphs!
                     });
+
                     this.m_textRenderers.push({
                         fontCatalog: fontCatalogConfig.name,
                         textCanvas: loadedTextCanvas,
@@ -661,6 +672,7 @@ export class TextElementsRenderer {
                     });
                 })
                 .catch((error: Error) => {
+                    this.m_catalogsLoading -= 1;
                     logger.error("Failed to load FontCatalog: ", error);
                 });
             promises.push(fontCatalogPromise);
