@@ -34,21 +34,19 @@ export function createLineGeometry(
     const V = geometry.vertices;
     const I = geometry.indices;
 
-    const N: number[] = [];
-    const L: number[] = [];
-    const tangents: Array<[number, number]> = [];
-    const baseVertex = geometry.vertices.length / 12;
+    const L = new Array<number>(pointCount);
+    const tangents = new Array<[number, number]>(pointCount - 1);
+    const baseVertex = V.length / (highPrecision ? HP_LINE_STRIDE_SIZE : LINE_STRIDE_SIZE);
 
     let sum = 0;
-    L.push(0);
+    L[0] = 0;
     for (let i = 0; i < pointCount - 1; ++i) {
         const dx = polyline[(i + 1) * 2] - polyline[i * 2];
         const dy = polyline[(i + 1) * 2 + 1] - polyline[i * 2 + 1];
         const len = Math.sqrt(dx * dx + dy * dy);
-        N[i] = len;
         sum = sum + len;
-        L.push(sum);
-        tangents.push([dx, dy]);
+        L[i + 1] = sum;
+        tangents[i] = [dx, dy];
     }
 
     const isClosed =
@@ -157,6 +155,9 @@ export const LINE_VERTEX_ATTRIBUTE_DESCRIPTORS: VertexAttributeDescriptor[] = [
     { name: "texcoord", itemSize: 2, offset: 10 }
 ];
 
+/** Stride size for line vertex data. */
+export const LINE_STRIDE_SIZE = 12;
+
 /**
  * Declares all the vertex attributes used for rendering a line using the
  * [[HighPrecisionLineMaterial]].
@@ -169,6 +170,9 @@ export const HP_LINE_VERTEX_ATTRIBUTE_DESCRIPTORS: VertexAttributeDescriptor[] =
     { name: "angles", itemSize: 2, offset: 10 },
     { name: "texcoord", itemSize: 2, offset: 12 }
 ];
+
+/** Stride size for high precision line vertex data. */
+export const HP_LINE_STRIDE_SIZE = 14;
 
 /**
  * Class used to render width-variable lines.
@@ -190,7 +194,7 @@ export class Lines {
     ): THREE.BufferGeometry {
         const buffer = new THREE.InterleavedBuffer(
             new Float32Array(vertices),
-            highPrecision ? 14 : 12
+            highPrecision ? HP_LINE_STRIDE_SIZE : LINE_STRIDE_SIZE
         );
 
         const descriptors = highPrecision
