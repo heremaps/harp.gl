@@ -2037,7 +2037,11 @@ export class MapView extends THREE.EventDispatcher {
         // particular camera set up is not compatible with the debug camera.
         const debugCameraActive = this.m_pointOfView !== undefined;
 
-        if (this.m_textElementsRenderer === undefined || debugCameraActive) {
+        if (
+            this.m_textElementsRenderer === undefined ||
+            !this.m_textElementsRenderer.ready ||
+            debugCameraActive
+        ) {
             return;
         }
 
