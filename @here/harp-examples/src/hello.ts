@@ -6,7 +6,7 @@
 
 import { GeoCoordinates } from "@here/harp-geoutils";
 import { MapControls, MapControlsUI } from "@here/harp-map-controls";
-import { CopyrightElementHandler, MapView, CopyrightInfo } from "@here/harp-mapview";
+import { CopyrightElementHandler, CopyrightInfo, MapView } from "@here/harp-mapview";
 import { APIFormat, OmvDataSource } from "@here/harp-omv-datasource";
 import { accessToken } from "../config";
 
@@ -107,7 +107,7 @@ export namespace HelloWorldExample {
         id: "here.com",
         year: new Date().getFullYear(),
         label: "HERE",
-        link: "https://legal.here.com/terms",
+        link: "https://legal.here.com/terms"
     };
     const copyrights: CopyrightInfo[] = [hereCopyrightInfo];
 
