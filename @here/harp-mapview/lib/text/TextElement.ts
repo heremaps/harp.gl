@@ -452,6 +452,13 @@ export class TextElement {
      */
     textBufferObject?: TextBufferObject;
 
+    /**
+     * @hidden
+     * If `true`, the estimated bounding box of the path is too small for the label to fit, so it is
+     * being ignored for rendering in the latest frame.
+     */
+    dbgPathTooSmall?: boolean;
+
     private m_poiInfo?: PoiInfo;
 
     /**

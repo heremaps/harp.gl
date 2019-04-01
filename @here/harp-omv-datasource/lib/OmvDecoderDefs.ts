@@ -138,6 +138,17 @@ export interface OmvDecoderOptions {
     gatherRoadSegments?: boolean;
 
     /**
+     * Optional storage level offset for [[Tile]]s. Default is -2.
+     */
+    storageLevelOffset?: number;
+
+    /**
+     * If not set to `false` very short text labels will be skipped during decoding based on a
+     * heuristic.
+     */
+    skipShortLabels?: boolean;
+
+    /**
      * A description for the feature filter which can be safely passed down to the web workers.
      * It has to be generated with the help of the [[OmvFeatureFilterDescriptionBuilder]] (to
      * guarantee the correctness).

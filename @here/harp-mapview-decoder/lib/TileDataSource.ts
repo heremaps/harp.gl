@@ -147,6 +147,10 @@ export class TileDataSource<TileType extends Tile> extends DataSource {
             );
         }
 
+        this.m_decoder.configure(undefined, undefined, {
+            storageLevelOffset: this.m_options.storageLevelOffset
+        });
+
         this.cacheable = true;
     }
 

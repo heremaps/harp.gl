@@ -130,6 +130,12 @@ const OVERLOAD_PLACEMENT_TIME_LIMIT = 5;
  */
 const OVERLOAD_RENDER_TIME_LIMIT = 10;
 
+/**
+ * Minimum number of pixels per character. Used during estimation if there is enough screen space
+ * available to render a text.
+ */
+const MIN_AVERAGE_CHAR_WIDTH = 5;
+
 // Development flag: Enable debug print.
 const PRINT_LABEL_DEBUG_INFO: boolean = false;
 
@@ -1251,6 +1257,7 @@ export class TextElementsRenderer {
 
         const printInfo = textElements.length > 5000;
         let numNotVisible = 0;
+        let numPathTooSmall = 0;
         let numCannotAdd = 0;
         let numRenderedPoiIcons = 0;
         let numRenderedPoiTexts = 0;
@@ -1299,9 +1306,22 @@ export class TextElementsRenderer {
             if (textCanvas === undefined || poiRenderer === undefined) {
                 continue;
             }
-            const layer = textCanvas.getLayer(textElement.renderOrder || DEFAULT_TEXT_CANVAS_LAYER);
 
             const isPathLabel = textElement.path !== undefined && !textElement.isLineMarker;
+            let screenPoints: THREE.Vector2[];
+
+            // For paths, check if the label may fit.
+            if (isPathLabel) {
+                const screenPointsResult = this.checkForSmallLabels(textElement);
+                if (screenPointsResult === undefined) {
+                    numNotVisible++;
+                    if (textElement.dbgPathTooSmall === true) {
+                        numPathTooSmall++;
+                    }
+                    continue;
+                }
+                screenPoints = screenPointsResult;
+            }
 
             // Trigger the glyph load if needed.
             if (textElement.loadingState === undefined) {
@@ -1363,6 +1383,8 @@ export class TextElementsRenderer {
                 }
                 continue;
             }
+
+            const layer = textCanvas.getLayer(textElement.renderOrder || DEFAULT_TEXT_CANVAS_LAYER);
 
             // Move onto the next TextElement if we cannot continue adding glyphs to this layer.
             if (layer !== undefined) {
@@ -1857,16 +1879,6 @@ export class TextElementsRenderer {
                     return false;
                 }
 
-                // Compute values common for all glyphs in the label.
-                let textScale = textCanvas.textRenderStyle.fontSize.size / 100.0;
-                let opacity = 1.0;
-                const tileCenterX = pathLabel.tileCenterX!;
-                const tileCenterY = pathLabel.tileCenterY!;
-                // TODO: Use temporary.
-                const firstPoint = pathLabel.path![0].clone();
-                firstPoint.x += tileCenterX;
-                firstPoint.y += tileCenterY;
-
                 // Scale the text depending on the label's distance to the camera.
                 let distanceScale = 1.0;
                 if (
@@ -1877,6 +1889,26 @@ export class TextElementsRenderer {
                     // The label is farther away than fadeFar value, which means it is totally
                     // transparent
                     return false;
+                }
+
+                // Compute values common for all glyphs in the label.
+                let textScale = textCanvas.textRenderStyle.fontSize.size / 100.0;
+                let opacity = 1.0;
+
+                // Get the screen points that define the label's segments and create a path with
+                // them.
+                let textPath = new THREE.Path();
+                tempScreenPosition.copy(screenPoints[0]);
+                for (let i = 0; i < screenPoints.length - 1; ++i) {
+                    textPath.add(new SimpleLineCurve(screenPoints[i], screenPoints[i + 1]));
+                }
+                // Flip the path if the label is gonna be rendered downwards.
+                if (textPath.getPoint(0.5).x - textPath.getPoint(0.51).x > 0) {
+                    tempScreenPosition.copy(screenPoints[screenPoints.length - 1]);
+                    textPath = new THREE.Path();
+                    for (let i = screenPoints.length - 1; i > 0; --i) {
+                        textPath.add(new SimpleLineCurve(screenPoints[i], screenPoints[i - 1]));
+                    }
                 }
 
                 // Update the real rendering distance to have smooth fading and scaling
@@ -1891,48 +1923,6 @@ export class TextElementsRenderer {
                         ((renderDistance - startScaleDistance) / (cameraFar - startScaleDistance)) *
                             (1.0 - pathLabel.distanceScale);
                     textScale *= distanceScale;
-                }
-
-                // Get the screen points that define the label's segments and create a path with
-                // them.
-                // TODO: Optimize array allocations.
-                // TODO: (HARP-3515)
-                //      The rendering of a path label that contains just a single point that is not
-                //      visible is impossible, which is problematic with long paths.
-                //      Fix: Skip/clip the invisible points at beginning and end of the path to get
-                //      the visible part of the path.
-                const screenPoints: THREE.Vector2[] = [];
-                for (const pt of pathLabel.path!) {
-                    tempPosition.set(pt.x + tileCenterX, pt.y + tileCenterY, 0);
-                    const screenPoint = this.m_screenProjector.project(tempPosition);
-                    if (screenPoint === undefined) {
-                        return false;
-                    }
-                    screenPoints.push(screenPoint);
-                }
-                const indexOfFirstVisibleScreenPoint = screenPoints.findIndex(p2 => {
-                    if (this.m_screenCollisions.screenBounds.contains(p2.x, p2.y)) {
-                        return true;
-                    }
-                    return false;
-                });
-                if (indexOfFirstVisibleScreenPoint === -1) {
-                    numNotVisible++;
-                    return false;
-                }
-
-                let textPath = new THREE.Path();
-                tempScreenPosition.copy(screenPoints[0]);
-                for (let i = 0; i < screenPoints.length - 1; ++i) {
-                    textPath.add(new SimpleLineCurve(screenPoints[i], screenPoints[i + 1]));
-                }
-                // Flip the path if the label is gonna be rendered downwards.
-                if (textPath.getPoint(0.5).x - textPath.getPoint(0.51).x > 0) {
-                    tempScreenPosition.copy(screenPoints[screenPoints.length - 1]);
-                    textPath = new THREE.Path();
-                    for (let i = screenPoints.length - 1; i > 0; --i) {
-                        textPath.add(new SimpleLineCurve(screenPoints[i], screenPoints[i - 1]));
-                    }
                 }
 
                 // Scale the path label correctly.
@@ -2046,6 +2036,7 @@ export class TextElementsRenderer {
             logger.log("numRenderedPoiTexts", numRenderedPoiTexts);
             logger.log("numPoiTextsInvisible", numPoiTextsInvisible);
             logger.log("numNotVisible", numNotVisible);
+            logger.log("numPathTooSmall", numPathTooSmall);
             logger.log("numCannotAdd", numCannotAdd);
         }
 
@@ -2054,6 +2045,77 @@ export class TextElementsRenderer {
         }
 
         return numRenderedTextElements;
+    }
+
+    private checkForSmallLabels(textElement: TextElement): THREE.Vector2[] | undefined {
+        let indexOfFirstVisibleScreenPoint = -1;
+        // Get the screen points that define the label's segments and create a path with
+        // them.
+        const screenPoints: THREE.Vector2[] = [];
+        let minX = Number.MAX_SAFE_INTEGER;
+        let maxX = Number.MIN_SAFE_INTEGER;
+        let minY = Number.MAX_SAFE_INTEGER;
+        let maxY = Number.MIN_SAFE_INTEGER;
+        const tileCenterX = textElement.tileCenterX!;
+        const tileCenterY = textElement.tileCenterY!;
+        for (const pt of textElement.path!) {
+            tempPosition.set(pt.x + tileCenterX, pt.y + tileCenterY, 0);
+            const screenPoint = this.m_screenProjector.projectInPlace(
+                tempPosition,
+                tempScreenPosition
+            );
+            if (screenPoint === undefined) {
+                continue;
+            }
+            screenPoints.push(tempScreenPosition.clone());
+
+            if (screenPoint.x < minX) {
+                minX = screenPoint.x;
+            }
+            if (screenPoint.x > maxX) {
+                maxX = screenPoint.x;
+            }
+            if (screenPoint.y < minY) {
+                minY = screenPoint.y;
+            }
+            if (screenPoint.y > maxY) {
+                maxY = screenPoint.y;
+            }
+
+            if (indexOfFirstVisibleScreenPoint < 0) {
+                const firstIndex = screenPoints.findIndex(p2 => {
+                    return this.m_screenCollisions.screenBounds.contains(p2.x, p2.y);
+                });
+
+                if (firstIndex >= 0) {
+                    indexOfFirstVisibleScreenPoint = firstIndex;
+                }
+            }
+        }
+
+        // TODO: (HARP-3515)
+        //      The rendering of a path label that contains just a single point that is not
+        //      visible is impossible, which is problematic with long paths.
+        //      Fix: Skip/clip the invisible points at beginning and end of the path to get
+        //      the visible part of the path.
+
+        // If not a single point is visible, skip the path
+        if (indexOfFirstVisibleScreenPoint === -1) {
+            return undefined;
+        }
+
+        // Check/guess if the screen box can hold a string of that length. It is important
+        // to guess that value without measuring the font first to save time.
+        const minScreenSpace = textElement.text.length * MIN_AVERAGE_CHAR_WIDTH;
+        if (
+            (maxX - minX) * (maxX - minX) + (maxY - minY) * (maxY - minY) <
+            minScreenSpace * minScreenSpace
+        ) {
+            textElement.dbgPathTooSmall = true;
+            return undefined;
+        }
+
+        return screenPoints;
     }
 
     private renderTileList(
@@ -2075,15 +2137,13 @@ export class TextElementsRenderer {
             consideredTextElements.merge(tile.placedTextElements);
         }
 
-        const maxViewDistanceSqr = this.m_mapView.camera.far * this.m_mapView.camera.far;
-
         const maxNumRenderedTextElements = this.m_maxNumVisibleLabels!;
         let numRenderedTextElements = 0;
 
         for (const elementGroup of consideredTextElements.sortedGroups) {
             const textElementsInGroup = elementGroup.elements;
 
-            this.sortTextElements(textElementsInGroup, maxViewDistanceSqr);
+            this.sortTextElements(textElementsInGroup, this.m_mapView.camera.far);
 
             numRenderedTextElements += this.renderTextElements(
                 textElementsInGroup,

@@ -29,6 +29,20 @@ const debugCircleMaterial = new THREE.MeshBasicMaterial({
     depthFunc: THREE.NeverDepth
 });
 
+const debugCircleMaterialWF = new THREE.MeshBasicMaterial({
+    color: 0xff0000,
+    depthTest: false,
+    depthFunc: THREE.NeverDepth
+});
+debugCircleMaterialWF.wireframe = true;
+
+const debugCircleMaterial2WF = new THREE.MeshBasicMaterial({
+    color: 0x8080ff,
+    depthTest: false,
+    depthFunc: THREE.NeverDepth
+});
+debugCircleMaterial2WF.wireframe = true;
+
 const debugBlackCircleMaterial = new THREE.MeshBasicMaterial({
     color: 0x000000,
     depthTest: false,
@@ -64,6 +78,8 @@ export class OmvDebugLabelsTile extends OmvTile {
         const indexFilter = debugContext.getValue("DEBUG_TEXT_PATHS.FILTER.INDEX");
 
         if (this.preparedTextPaths !== undefined) {
+            const tooManyPaths = this.preparedTextPaths.length > 500;
+
             for (const textPath of this.preparedTextPaths) {
                 const technique = decodedTile.techniques[textPath.technique];
                 if (technique.name !== "text") {
@@ -71,11 +87,6 @@ export class OmvDebugLabelsTile extends OmvTile {
                 }
                 if (technique.color !== undefined) {
                     colorMap.set(textPath.technique, new THREE.Color(technique.color));
-                }
-
-                const path: THREE.Vector2[] = [];
-                for (let i = 0; i < textPath.path.length; i += 2) {
-                    path.push(new THREE.Vector2(textPath.path[i], textPath.path[i + 1]));
                 }
 
                 const text = textPath.text;
@@ -100,38 +111,73 @@ export class OmvDebugLabelsTile extends OmvTile {
                             const y = textPath.path[i + 1];
                             const z = i / 3; // raise it a bit, so we get identify connectivity
                             // visually by tilting
+
                             positions.push(x, y, z);
 
-                            // give path point a simple geometry: a diamond
-                            const circleGeometry = new THREE.CircleGeometry(2, 4);
-                            circleGeometry.translate(x, y, z);
-                            const cmesh = new THREE.Mesh(
-                                circleGeometry,
-                                i > 0 ? debugCircleMaterial : debugBlackCircleMaterial
-                            );
-                            cmesh.renderOrder = 3000 - i;
-                            this.objects.push(cmesh);
+                            if (!tooManyPaths) {
+                                // give path point a simple geometry: a diamond
+                                const circleGeometry = new THREE.CircleGeometry(2, 4);
+                                circleGeometry.translate(x, y, z);
+                                const cmesh = new THREE.Mesh(
+                                    circleGeometry,
+                                    i > 0 ? debugCircleMaterial : debugBlackCircleMaterial
+                                );
+                                cmesh.renderOrder = 3000 - i;
+                                this.objects.push(cmesh);
 
-                            // give point index a label
-                            const label: string =
-                                pointIndex % 5 === 0
-                                    ? text + ":" + pointIndex
-                                    : Number(pointIndex).toString();
-                            const labelElement = new TextElement(
-                                ContextualArabicConverter.instance.convert(label),
-                                new THREE.Vector3(x, y, z),
-                                textRenderStyle,
-                                textLayoutStyle,
-                                technique.priority || 0,
-                                technique.xOffset || 0.0,
-                                technique.yOffset || 0.0
-                            );
-                            labelElement.minZoomLevel = technique.minZoomLevel;
-                            labelElement.mayOverlap = true;
-                            labelElement.reserveSpace = false;
-                            labelElement.alwaysOnTop = true;
-                            labelElement.ignoreDistance = true;
-                            this.addUserTextElement(labelElement);
+                                // give point index a label
+                                const label: string =
+                                    pointIndex % 5 === 0
+                                        ? text + ":" + pointIndex
+                                        : Number(pointIndex).toString();
+                                const labelElement = new TextElement(
+                                    ContextualArabicConverter.instance.convert(label),
+                                    new THREE.Vector3(x, y, z),
+                                    textRenderStyle,
+                                    textLayoutStyle,
+                                    technique.priority || 0,
+                                    technique.xOffset || 0.0,
+                                    technique.yOffset || 0.0
+                                );
+                                labelElement.minZoomLevel = technique.minZoomLevel;
+                                labelElement.mayOverlap = true;
+                                labelElement.reserveSpace = false;
+                                labelElement.alwaysOnTop = true;
+                                labelElement.ignoreDistance = true;
+                                this.addUserTextElement(labelElement);
+                            }
+                        }
+
+                        if (tooManyPaths) {
+                            if (textPath.path.length > 0) {
+                                const x = textPath.path[0];
+                                const y = textPath.path[0 + 1];
+                                const z = 0;
+                                // give path point a simple geometry: a diamond
+                                const circleGeometry = new THREE.CircleGeometry(2, 4);
+                                circleGeometry.scale(5, 5, 5);
+                                circleGeometry.translate(x, y, z);
+                                const cmesh = new THREE.Mesh(circleGeometry, debugCircleMaterialWF);
+                                cmesh.renderOrder = 3000;
+                                this.objects.push(cmesh);
+                            }
+
+                            if (textPath.path.length > 1) {
+                                const i = textPath.path.length - 2;
+                                const x = textPath.path[i];
+                                const y = textPath.path[i + 1];
+                                const z = 0;
+                                // give path point a simple geometry: a diamond
+                                const circleGeometry = new THREE.CircleGeometry(2, 4);
+                                circleGeometry.scale(3, 3, 3);
+                                circleGeometry.translate(x, y, z);
+                                const cmesh = new THREE.Mesh(
+                                    circleGeometry,
+                                    debugCircleMaterial2WF
+                                );
+                                cmesh.renderOrder = 3000;
+                                this.objects.push(cmesh);
+                            }
                         }
 
                         // the lines of a path share a common geometry
