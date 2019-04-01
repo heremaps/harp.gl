@@ -6,7 +6,7 @@
 
 import { GeoCoordinates } from "@here/harp-geoutils";
 import { MapControls, MapControlsUI } from "@here/harp-map-controls";
-import { CopyrightElementHandler, MapView, MapViewUtils } from "@here/harp-mapview";
+import { CopyrightElementHandler, CopyrightInfo, MapView, MapViewUtils } from "@here/harp-mapview";
 import { APIFormat, OmvDataSource } from "@here/harp-omv-datasource";
 import { accessToken } from "../config";
 
@@ -175,16 +175,7 @@ export namespace TripleViewExample {
             theme: theme !== undefined ? theme : defaultTheme,
             decoderUrl
         });
-        CopyrightElementHandler.install("copyrightNotice")
-            .attach(mapView)
-            .setDefaults([
-                {
-                    id: "here.com",
-                    label: "HERE",
-                    link: "https://legal.here.com/terms",
-                    year: 2019
-                }
-            ]);
+        CopyrightElementHandler.install("copyrightNotice", mapView);
         mapView.camera.position.set(0, 0, 800);
 
         // instantiate the default map controls, allowing the user to pan around freely.
@@ -241,12 +232,21 @@ export namespace TripleViewExample {
     // end:harp_gl_multiview_tripleView_1.ts
 
     // snippet:harp_gl_multiview_tripleView_2.ts
+    const hereCopyrightInfo: CopyrightInfo = {
+        id: "here.com",
+        year: new Date().getFullYear(),
+        label: "HERE",
+        link: "https://legal.here.com/terms",
+    };
+    const copyrights: CopyrightInfo[] = [hereCopyrightInfo];
+
     const xyzDataSourceParams = {
         baseUrl: "https://xyz.api.here.com/tiles/herebase.02",
         apiFormat: APIFormat.XYZOMV,
         styleSetName: "tilezen",
         maxZoomLevel: 17,
-        authenticationCode: accessToken
+        authenticationCode: accessToken,
+        copyrightInfo: copyrights
     };
     const dataSources = {
         omvDataSource1: new OmvDataSource(xyzDataSourceParams),

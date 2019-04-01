@@ -9,6 +9,7 @@ import { GeoCoordinates, webMercatorTilingScheme } from "@here/harp-geoutils";
 import { MapControls } from "@here/harp-map-controls";
 import {
     CopyrightElementHandler,
+    CopyrightInfo,
     MapView,
     MapViewEventNames,
     MapViewOptions
@@ -68,16 +69,7 @@ export namespace FreeCameraApp_DebugingToolExample {
             this.mapControls = new MapControls(this.mapView);
             this.mapControls.enabled = false;
 
-            CopyrightElementHandler.install("copyrightNotice")
-                .attach(this.mapView)
-                .setDefaults([
-                    {
-                        id: "here.com",
-                        label: "HERE",
-                        link: "https://legal.here.com/terms",
-                        year: 2019
-                    }
-                ]);
+            CopyrightElementHandler.install("copyrightNotice", this.mapView);
 
             // let the camera float over the map, looking straight down
             this.mapView.camera.position.set(0, 0, 800);
@@ -103,12 +95,21 @@ export namespace FreeCameraApp_DebugingToolExample {
          * user is seeing (`V`).
          */
         start() {
+            const hereCopyrightInfo: CopyrightInfo = {
+                id: "here.com",
+                year: new Date().getFullYear(),
+                label: "HERE",
+                link: "https://legal.here.com/terms",
+            };
+            const copyrights: CopyrightInfo[] = [hereCopyrightInfo];
+
             const omvDataSource = new OmvDataSource({
                 baseUrl: "https://xyz.api.here.com/tiles/herebase.02",
                 apiFormat: APIFormat.XYZOMV,
                 styleSetName: "tilezen",
                 maxZoomLevel: 17,
-                authenticationCode: accessToken
+                authenticationCode: accessToken,
+                copyrightInfo: copyrights
             });
 
             const debugTileDataSource = new DebugTileDataSource(webMercatorTilingScheme);

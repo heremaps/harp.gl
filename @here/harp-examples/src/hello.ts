@@ -6,7 +6,7 @@
 
 import { GeoCoordinates } from "@here/harp-geoutils";
 import { MapControls, MapControlsUI } from "@here/harp-map-controls";
-import { CopyrightElementHandler, MapView } from "@here/harp-mapview";
+import { CopyrightElementHandler, MapView, CopyrightInfo } from "@here/harp-mapview";
 import { APIFormat, OmvDataSource } from "@here/harp-omv-datasource";
 import { accessToken } from "../config";
 
@@ -71,16 +71,7 @@ export namespace HelloWorldExample {
         });
         // end:harp_gl_hello_world_example_1.ts
 
-        CopyrightElementHandler.install("copyrightNotice")
-            .attach(map)
-            .setDefaults([
-                {
-                    id: "here.com",
-                    label: "HERE",
-                    link: "https://legal.here.com/terms",
-                    year: 2019
-                }
-            ]);
+        CopyrightElementHandler.install("copyrightNotice", map);
 
         // snippet:harp_gl_hello_world_example_2.ts
         // set an isometric view of the map
@@ -112,13 +103,22 @@ export namespace HelloWorldExample {
 
     const mapView = initializeMapView("mapCanvas");
 
+    const hereCopyrightInfo: CopyrightInfo = {
+        id: "here.com",
+        year: new Date().getFullYear(),
+        label: "HERE",
+        link: "https://legal.here.com/terms",
+    };
+    const copyrights: CopyrightInfo[] = [hereCopyrightInfo];
+
     // snippet:harp_gl_hello_world_example_4.ts
     const omvDataSource = new OmvDataSource({
         baseUrl: "https://xyz.api.here.com/tiles/herebase.02",
         apiFormat: APIFormat.XYZOMV,
         styleSetName: "tilezen",
         maxZoomLevel: 17,
-        authenticationCode: accessToken
+        authenticationCode: accessToken,
+        copyrightInfo: copyrights
     });
     // end:harp_gl_hello_world_example_4.ts
 

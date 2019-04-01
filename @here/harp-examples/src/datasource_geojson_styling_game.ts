@@ -7,7 +7,7 @@
 import { Style, StyleSet } from "@here/harp-datasource-protocol";
 import { GeoJsonDataSource } from "@here/harp-geojson-datasource";
 import { GeoCoordinates, TileKey } from "@here/harp-geoutils";
-import { CopyrightElementHandler, MapView } from "@here/harp-mapview";
+import { CopyrightElementHandler, CopyrightInfo, MapView } from "@here/harp-mapview";
 import { DataProvider } from "@here/harp-mapview-decoder";
 import { APIFormat, OmvDataSource } from "@here/harp-omv-datasource";
 import { accessToken } from "../config";
@@ -77,29 +77,27 @@ export namespace GeoJsonStylingGame {
         canvas: document.getElementById("mapCanvas") as HTMLCanvasElement,
         theme: "resources/berlin_tilezen_night_reduced.json"
     });
-    CopyrightElementHandler.install("copyrightNotice")
-        .attach(mapView)
-        .setDefaults([
-            {
-                id: "here.com",
-                label: "HERE",
-                link: "https://legal.here.com/terms",
-                year: 2019
-            }
-        ]);
+    CopyrightElementHandler.install("copyrightNotice", mapView);
     mapView.camera.position.set(1900000, 3350000, 2500000); // Europe.
     mapView.geoCenter = new GeoCoordinates(16, -4, 0);
     mapView.resize(window.innerWidth, window.innerHeight);
     window.addEventListener("resize", () => {
         mapView.resize(window.innerWidth, window.innerHeight);
     });
-
+    const hereCopyrightInfo: CopyrightInfo = {
+        id: "here.com",
+        year: new Date().getFullYear(),
+        label: "HERE",
+        link: "https://legal.here.com/terms",
+    };
+    const copyrights: CopyrightInfo[] = [hereCopyrightInfo];
     const baseMap = new OmvDataSource({
         baseUrl: "https://xyz.api.here.com/tiles/herebase.02",
         apiFormat: APIFormat.XYZOMV,
         styleSetName: "tilezen",
         maxZoomLevel: 17,
-        authenticationCode: accessToken
+        authenticationCode: accessToken,
+        copyrightInfo: copyrights
     });
     mapView.addDataSource(baseMap);
     // end:initmapview.ts
