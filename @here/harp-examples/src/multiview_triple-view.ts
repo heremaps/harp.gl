@@ -236,7 +236,7 @@ export namespace TripleViewExample {
         id: "here.com",
         year: new Date().getFullYear(),
         label: "HERE",
-        link: "https://legal.here.com/terms",
+        link: "https://legal.here.com/terms"
     };
     const copyrights: CopyrightInfo[] = [hereCopyrightInfo];
 
