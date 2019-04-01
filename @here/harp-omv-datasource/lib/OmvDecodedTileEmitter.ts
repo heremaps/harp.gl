@@ -48,6 +48,25 @@ const tempTileOrigin = new THREE.Vector3();
 const tempVertOrigin = new THREE.Vector3();
 
 /**
+ * Minimum number of pixels per character. Used during estimation if there is enough screen space
+ * available to render a text. Based on the estimated screen size of a tile.
+ */
+const MIN_AVERAGE_CHAR_WIDTH = 5;
+
+/**
+ * Estimation "fudge factor", tweaking the size estimation to
+ *
+ * a) allow room for zooming in to the tile, and
+ *
+ * b) allow for some tilting, where the edge of a tile closer to the camera has more space.
+ *
+ * Useful values are between 0 (allow all labels), 0.5 (allow labels at twice the default display
+ * size of the tile) and 1.0 (skip labels that would normally not be displayed at default tile
+ * size).
+ */
+const SIZE_ESTIMATION_FACTOR = 0.5;
+
+/**
  * Used to identify an invalid (or better: unused) array index.
  */
 const INVALID_ARRAY_INDEX = -1;
@@ -111,6 +130,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
         private readonly m_decodeInfo: OmvDecoder.DecodeInfo,
         private readonly m_styleSetEvaluator: StyleSetEvaluator,
         private readonly m_gatherFeatureIds: boolean,
+        private readonly m_skipShortLabels: boolean,
         private readonly m_languages?: string[]
     ) {}
 
@@ -251,6 +271,10 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
 
         const { projection, center } = this.m_decodeInfo;
 
+        const tileWidth = this.m_decodeInfo.tileBounds.max.x - this.m_decodeInfo.tileBounds.min.x;
+        const tileHeight = this.m_decodeInfo.tileBounds.max.y - this.m_decodeInfo.tileBounds.min.y;
+        const tileSizeInMeters = Math.max(tileWidth, tileHeight);
+
         for (const polyline of geometry) {
             const line: number[] = [];
             polyline.coordinates.forEach(geoPoint => {
@@ -359,7 +383,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                 const textLabel = textTechnique.label;
                 const useAbbreviation = textTechnique.useAbbreviation as boolean;
                 const useIsoCode = textTechnique.useIsoCode as boolean;
-                const text: Value =
+                let text: Value =
                     typeof textLabel === "string"
                         ? env.lookup(textLabel)
                         : OmvDecoder.getFeatureName(
@@ -369,11 +393,70 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                               this.m_languages
                           );
 
+                let validLines: number[][] = [];
+
+                if (text === undefined) {
+                    continue;
+                }
+                text = String(text);
+
+                if (this.m_skipShortLabels) {
+                    // Filter the lines, keep only those that are long enough for labelling.
+                    validLines = [];
+
+                    const metersPerPixel = tileSizeInMeters / this.m_decodeInfo.tileSizeOnScreen;
+                    const minTileSpace =
+                        MIN_AVERAGE_CHAR_WIDTH *
+                        text.length *
+                        metersPerPixel *
+                        SIZE_ESTIMATION_FACTOR;
+
+                    // Estimate if the line is long enough for the label, otherwise ignore it for
+                    // rendering text. First, compute the bounding box in world coordinates.
+                    for (const aLine of lines) {
+                        let minX = Number.MAX_SAFE_INTEGER;
+                        let maxX = Number.MIN_SAFE_INTEGER;
+                        let minY = Number.MAX_SAFE_INTEGER;
+                        let maxY = Number.MIN_SAFE_INTEGER;
+                        for (let i = 0; i < aLine.length; i += 2) {
+                            const x = aLine[i];
+                            const y = aLine[i + 1];
+                            if (x < minX) {
+                                minX = x;
+                            }
+                            if (x > maxX) {
+                                maxX = x;
+                            }
+                            if (y < minY) {
+                                minY = y;
+                            }
+                            if (y > maxY) {
+                                maxY = y;
+                            }
+                        }
+
+                        // Check if the diagonal of the bounding box would be long enough to fit the
+                        // label text:
+                        if (
+                            (maxX - minX) * (maxX - minX) + (maxY - minY) * (maxY - minY) >=
+                            minTileSpace * minTileSpace
+                        ) {
+                            validLines.push(aLine);
+                        }
+                    }
+                } else {
+                    validLines = lines;
+                }
+
+                if (validLines.length === 0) {
+                    continue;
+                }
+
                 if (techniqueName === "text") {
                     if (text === undefined) {
                         continue;
                     }
-                    for (const aLine of lines) {
+                    for (const aLine of validLines) {
                         const pathLengthSqr = Math2D.computeSquaredLineLength(aLine);
                         this.m_textPathGeometries.push({
                             technique: techniqueIndex,
@@ -398,7 +481,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                         }
                     }
 
-                    for (const aLine of lines) {
+                    for (const aLine of validLines) {
                         this.m_poiGeometries.push({
                             technique: techniqueIndex,
                             positions: {
@@ -408,7 +491,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                                 itemCount: 2
                             },
                             texts: [0],
-                            stringCatalog: [String(text), imageTexture],
+                            stringCatalog: [text, imageTexture],
                             imageTextures: [1],
                             featureId
                         });

@@ -145,6 +145,8 @@ export class OmvDecoder implements IGeometryProcessor {
         private readonly m_gatherFeatureIds = true,
         private readonly m_createTileInfo = false,
         private readonly m_gatherRoadSegments = false,
+        private readonly m_skipShortLabels = true,
+        private readonly m_storageLevelOffset = 0,
         private readonly m_languages?: string[]
     ) {
         // Register the default adapters.
@@ -165,19 +167,22 @@ export class OmvDecoder implements IGeometryProcessor {
         const tileBounds = this.m_projection.projectBox(geoBox, new THREE.Box3());
         const center = new THREE.Vector3();
         tileBounds.getCenter(center);
+        const tileSizeOnScreen = this.estimatedTileSizeOnScreen();
 
         const decodeInfo = {
             tileKey,
             projection: this.m_projection,
             geoBox,
             tileBounds,
-            center
+            center,
+            tileSizeOnScreen
         };
 
         this.m_decodedTileEmitter = new OmvDecodedTileEmitter(
             decodeInfo,
             this.m_styleSetEvaluator,
             this.m_gatherFeatureIds,
+            this.m_skipShortLabels,
             this.m_languages
         );
 
@@ -212,13 +217,15 @@ export class OmvDecoder implements IGeometryProcessor {
         const tileBounds = this.m_projection.projectBox(geoBox, new THREE.Box3());
         const center = new THREE.Vector3();
         tileBounds.getCenter(center);
+        const tileSizeOnScreen = this.estimatedTileSizeOnScreen();
 
         const decodeInfo = {
             tileKey,
             projection: this.m_projection,
             geoBox,
             tileBounds,
-            center
+            center,
+            tileSizeOnScreen
         };
 
         const storeExtendedTags = true;
@@ -367,6 +374,17 @@ export class OmvDecoder implements IGeometryProcessor {
             );
         }
     }
+
+    /**
+     * Estimate the number of screen pixels a tile will cover. The actual number of pixels will be
+     * influenced by tilt and rotation, so estimated the number here should be an upper bound.
+     *
+     * @returns {number} Estimated number of screen pixels.
+     */
+    protected estimatedTileSizeOnScreen(): number {
+        const tileSizeOnScreen = 256 * Math.pow(2, -this.m_storageLevelOffset);
+        return tileSizeOnScreen;
+    }
 }
 
 export namespace OmvDecoder {
@@ -376,6 +394,7 @@ export namespace OmvDecoder {
         readonly geoBox: GeoBox;
         readonly tileBounds: THREE.Box3;
         readonly center: THREE.Vector3;
+        readonly tileSizeOnScreen: number;
     }
 
     export function getFeatureName(
@@ -420,6 +439,7 @@ export class OmvTileDecoder extends ThemedTileDecoder {
     private m_gatherFeatureIds: boolean = true;
     private m_createTileInfo: boolean = false;
     private m_gatherRoadSegments: boolean = false;
+    private m_skipShortLabels: boolean = true;
 
     connect(): Promise<void> {
         return Promise.resolve();
@@ -442,6 +462,8 @@ export class OmvTileDecoder extends ThemedTileDecoder {
             this.m_gatherFeatureIds,
             this.m_createTileInfo,
             this.m_gatherRoadSegments,
+            this.m_skipShortLabels,
+            this.m_storageLevelOffset,
             this.languages
         );
 
@@ -473,6 +495,8 @@ export class OmvTileDecoder extends ThemedTileDecoder {
             this.m_gatherFeatureIds,
             this.m_createTileInfo,
             this.m_gatherRoadSegments,
+            this.m_skipShortLabels,
+            this.m_storageLevelOffset,
             this.languages
         );
 
@@ -518,6 +542,9 @@ export class OmvTileDecoder extends ThemedTileDecoder {
             }
             if (omvOptions.gatherRoadSegments !== undefined) {
                 this.m_gatherRoadSegments = omvOptions.gatherRoadSegments === true;
+            }
+            if (omvOptions.skipShortLabels !== undefined) {
+                this.m_skipShortLabels = omvOptions.skipShortLabels;
             }
         }
         if (languages !== undefined) {

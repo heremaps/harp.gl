@@ -111,6 +111,12 @@ export interface OmvDataSourceParameters {
     gatherRoadSegments?: boolean;
 
     /**
+     * If not set to `false`, very short text labels will be skipped during decoding based on a
+     * heuristic.
+     */
+    skipShortLabels?: boolean;
+
+    /**
      * A description for the feature filter that can be safely passed down to the web workers. It
      * has to be generated with the help of the [[OmvFeatureFilterDescriptionBuilder]] (to guarantee
      * correctness). This parameter gets applied to the decoder used in the [[OmvDataSource]]
@@ -197,7 +203,9 @@ export class OmvDataSource extends TileDataSource<OmvTile> {
             gatherFeatureIds: this.m_params.gatherFeatureIds === true,
             createTileInfo: this.m_params.createTileInfo === true,
             gatherRoadSegments: this.m_params.gatherRoadSegments === true,
-            featureModifierId: this.m_params.featureModifierId
+            featureModifierId: this.m_params.featureModifierId,
+            skipShortLabels: this.m_params.skipShortLabels,
+            storageLevelOffset: getOptionValue(m_params.storageLevelOffset, -2)
         };
 
         this.tileBackgroundIsVisible = true;
