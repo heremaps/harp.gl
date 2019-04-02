@@ -57,6 +57,11 @@ export class ThemeLoader {
                 font.url = childUrlResolver(font.url);
             }
         }
+        if (theme.poiTables) {
+            for (const poiTable of theme.poiTables) {
+                poiTable.url = childUrlResolver(poiTable.url);
+            }
+        }
         return theme;
     }
 }
