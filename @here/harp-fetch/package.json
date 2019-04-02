@@ -37,7 +37,7 @@
     "sinon": "^7.1.1",
     "source-map-support": "^0.5.2",
     "stream": "0.0.2",
-    "typescript": "^3.3.0",
+    "typescript": "^3.4.1",
     "zlib": "^1.0.5"
   },
   "publishConfig": {

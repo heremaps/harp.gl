@@ -35,7 +35,7 @@
     "mocha": "^5.2.0",
     "sinon": "^7.1.1",
     "source-map-support": "^0.5.2",
-    "typescript": "^3.3.0"
+    "typescript": "^3.4.1"
   },
   "publishConfig": {
     "access": "public"
