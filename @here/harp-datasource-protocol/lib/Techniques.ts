@@ -732,6 +732,19 @@ export interface SolidLineTechnique extends BaseTechnique, PolygonalTechnique {
      * Clip the line outside the tile if `true`.
      */
     clipping?: boolean;
+    /**
+     * Color of secondary line geometry in hexadecimal or CSS-style notation, for example:
+     * `"#e4e9ec"`, `"#fff"`, `"rgb(255, 0, 0)"`, or `"hsl(35, 11%, 88%)"`.
+     */
+    secondaryColor?: string;
+    /**
+     * Width of secondary line geometry in `metricUnit`s for different zoom levels.
+     */
+    secondaryWidth?: number;
+    /**
+     * The render order of the secondary line geometry object created using this technique.
+     */
+    secondaryRenderOrder?: number;
 }
 
 /**
