@@ -225,6 +225,16 @@ const hereCopyrightInfo: CopyrightInfo = {
     label: "HERE"
 };
 
+class WebTile extends Tile {
+    material?: THREE.MeshBasicMaterial;
+    clear() {
+        if (this.material !== undefined && this.material.map) {
+            this.material.map.dispose();
+        }
+        super.clear();
+    }
+}
+
 /**
  * Instances of `WebTileDataSource` can be used to add Web Tile to [[MapView]].
  *
@@ -309,7 +319,7 @@ export class WebTileDataSource extends DataSource {
     }
 
     getTile(tileKey: TileKey): Tile {
-        const tile = new Tile(this, tileKey);
+        const tile = new WebTile(this, tileKey);
 
         const column = tileKey.column;
         const row = tileKey.rowCount() - tileKey.row - 1;
@@ -350,8 +360,10 @@ export class WebTileDataSource extends DataSource {
                 const material = new THREE.MeshBasicMaterial({
                     map: texture
                 });
+                tile.material = material;
                 const mesh = new THREE.Mesh(quad, material);
                 tile.objects.push(mesh);
+                tile.invalidateResourceInfo();
                 this.requestUpdate();
             })
             .catch(error => {
