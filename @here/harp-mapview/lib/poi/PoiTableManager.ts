@@ -219,7 +219,7 @@ export class PoiTable {
                             if (newPoiEntry.name === undefined) {
                                 logger.warn(
                                     `load: Invalid entry in POI table '${poiTableUrl}' : ` +
-                                        `. No name set in entry: ${tableEntry}.`
+                                        `. No name set in entry: ${tableEntry.iconName}.`
                                 );
                             } else {
                                 this.poiDict.set(newPoiEntry.name, newPoiEntry);
@@ -236,13 +236,15 @@ export class PoiTable {
                             } else {
                                 logger.warn(
                                     `load: Invalid entry in POI table '${poiTableUrl}' : ` +
-                                        `No alternative names set in entry: ${tableEntry}.`
+                                        `No alternative names set in entry: ${tableEntry.iconName}.`
                                 );
                             }
                         }
                     } else {
                         logger.warn(
-                            `load: Invalid entry in POI table '${poiTableUrl}' : ${tableEntry}`
+                            `load: Invalid entry in POI table '${poiTableUrl}' : ${
+                                tableEntry.iconName
+                            }`
                         );
                     }
                 }
