@@ -964,50 +964,12 @@
     "renderOrder": 11
    },
    {
-    "description": "borders background",
-    "when": "$layer == 'admin' && ($layer == 'admin')",
-    "technique": "solid-line",
-    "attr": {
-     "color": "#CCCCCC",
-     "lineWidth": {
-      "interpolation": "Linear",
-      "zoomLevels": [
-       3,
-       4,
-       5,
-       6,
-       7,
-       8,
-       9,
-       10,
-       11,
-       12,
-       13,
-       14
-      ],
-      "values": [
-       0,
-       1700,
-       1700,
-       700,
-       350,
-       190,
-       150,
-       120,
-       80,
-       40,
-       25,
-       10
-      ]
-     }
-    }
-   },
-   {
-    "description": "borders foreground",
+    "description": "borders",
     "when": "$layer == 'admin' && ($layer == 'admin')",
     "technique": "solid-line",
     "attr": {
      "color": "#5C5C5C",
+     "secondaryColor": "#CCCCCC",
      "lineWidth": {
       "interpolation": "Linear",
       "zoomLevels": [
@@ -1037,6 +999,37 @@
        10,
        5,
        2
+      ]
+     },
+     "secondaryWidth": {
+      "interpolation": "Linear",
+      "zoomLevels": [
+       3,
+       4,
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12,
+       13,
+       14
+      ],
+      "values": [
+       0,
+       1700,
+       1700,
+       700,
+       350,
+       190,
+       150,
+       120,
+       80,
+       40,
+       25,
+       10
       ]
      }
     }

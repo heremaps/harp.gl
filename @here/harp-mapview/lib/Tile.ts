@@ -26,6 +26,7 @@ import {
     isStandardTexturedTechnique,
     LineMarkerTechnique,
     PoiTechnique,
+    SolidLineTechnique,
     StandardExtrudedLineTechnique,
     Technique,
     TextPathGeometry,
@@ -1306,6 +1307,10 @@ export class Tile implements CachedResource {
                     material.polygonOffsetUnits = 4.0;
                 }
 
+                // Add the solid line outlines as a separate object.
+                const hasSolidLinesOutlines: boolean =
+                    isSolidLineTechnique(technique) && technique.secondaryWidth !== undefined;
+
                 const object = new ObjectCtor(bufferGeometry, material);
 
                 object.frustumCulled = false;
@@ -1507,6 +1512,66 @@ export class Tile implements CachedResource {
                         this.registerTileObject(outlineObj);
                         objects.push(outlineObj);
                     }
+                }
+
+                // Add the fill area edges as a separate geometry.
+                if (hasSolidLinesOutlines) {
+                    const outlineTechnique = technique as SolidLineTechnique;
+                    const outlineMaterial = material.clone() as SolidLineMaterial;
+                    const outlineColor = ColorCache.instance.getColor(
+                        getOptionValue(
+                            getPropertyValue(
+                                outlineTechnique.secondaryColor,
+                                Math.floor(this.mapView.zoomLevel)
+                            ),
+                            "#000000"
+                        )
+                    );
+                    outlineMaterial.uniforms.diffuse.value = outlineColor;
+                    const outlineObj = new ObjectCtor(bufferGeometry, outlineMaterial);
+
+                    if (outlineTechnique.secondaryRenderOrder !== undefined) {
+                        outlineObj.renderOrder = outlineTechnique.secondaryRenderOrder;
+                    } else {
+                        if (technique._renderOrderAuto === undefined) {
+                            throw new Error("Technique has no renderOrderAuto");
+                        }
+                        outlineObj.renderOrder = technique._renderOrderAuto - 0.0000001;
+                    }
+                    if (group.renderOrderOffset !== undefined) {
+                        outlineObj.renderOrder += group.renderOrderOffset;
+                    }
+
+                    const fadingParams = this.getFadingParams(technique);
+                    FadingFeature.addRenderHelper(
+                        outlineObj,
+                        fadingParams.fadeNear,
+                        fadingParams.fadeFar,
+                        true,
+                        false,
+                        (renderer, mat) => {
+                            const lineMaterial = mat as SolidLineMaterial;
+
+                            const metricUnits = getPropertyValue(
+                                outlineTechnique.metricUnit,
+                                this.tileKey.level
+                            );
+                            const unitFactor =
+                                metricUnits === "Pixel" ? this.mapView.pixelToWorld * 0.5 : 1.0;
+
+                            lineMaterial.lineWidth =
+                                getOptionValue(
+                                    getPropertyValue(
+                                        outlineTechnique.secondaryWidth,
+                                        this.mapView.zoomLevel
+                                    ),
+                                    SolidLineMaterial.DEFAULT_WIDTH
+                                ) * unitFactor;
+                        }
+                    );
+
+                    this.registerTileObject(outlineObj);
+                    objects.push(outlineObj);
                 }
             }
         }

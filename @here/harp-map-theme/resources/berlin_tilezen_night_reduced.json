@@ -200,13 +200,36 @@
         "renderOrder": 12
       },
       {
-        "description": "background",
-        "category": "outline",
+        "category": "fill",
         "when": "$layer == 'roads' && ((kind != 'rail') && ((kind == 'major_road') && (kind_detail == 'secondary')))",
         "technique": "solid-line",
         "attr": {
-          "color": "#616467",
+          "color": "#393A3C",
+          "secondaryColor": "#616467",
           "lineWidth": {
+            "interpolation": "Linear",
+            "zoomLevels": [
+              7,
+              8,
+              9,
+              10,
+              11,
+              12,
+              13,
+              14
+            ],
+            "values": [
+              180,
+              110,
+              45,
+              30,
+              20,
+              12,
+              7,
+              5
+            ]
+          },
+          "secondaryWidth": {
             "interpolation": "Linear",
             "zoomLevels": [
               7,
@@ -233,43 +256,8 @@
           "fadeFar": 0.9,
           "clipping": false
         },
-        "renderOrder": 10.3
-      },
-      {
-        "description": "foreground",
-        "category": "fill",
-        "when": "$layer == 'roads' && ((kind != 'rail') && ((kind == 'major_road') && (kind_detail == 'secondary')))",
-        "technique": "solid-line",
-        "attr": {
-          "color": "#393A3C",
-          "lineWidth": {
-            "interpolation": "Linear",
-            "zoomLevels": [
-              7,
-              8,
-              9,
-              10,
-              11,
-              12,
-              13,
-              14
-            ],
-            "values": [
-              180,
-              110,
-              45,
-              30,
-              20,
-              12,
-              7,
-              5
-            ]
-          },
-          "fadeNear": 0.8,
-          "fadeFar": 0.9,
-          "clipping": false
-        },
         "renderOrder": 15.3,
+        "secondaryRenderOrder": 10.3,
         "final": true
       },
       {
@@ -965,29 +953,21 @@
         }
       },
       {
-        "description": "disputed border line - background",
-        "when": "$layer ^= 'boundaries' && (($geometryType ^= 'line') && (kind in ['disputed','indefinite','indeterminate','lease_limit','line_of_control','overlay_limit']))",
-        "technique": "solid-line",
-        "attr": {
-            "color": "#373A3C",
-            "lineWidth": {
-                "interpolation": "Linear",
-                "zoomLevels": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14],
-                "values": [10000, 8000, 7000, 5000, 3000, 2000, 1000, 500, 250, 120, 80, 40, 20, 10]
-            }
-        },
-        "renderOrder": 4
-      },
-      {
-          "description": "disputed border line - foreground",
+          "description": "disputed border line",
           "when": "$layer ^= 'boundaries' && (($geometryType ^= 'line') && (kind in ['disputed','indefinite','indeterminate','lease_limit','line_of_control','overlay_limit']))",
           "technique": "dashed-line",
           "attr": {
               "color": "#2E3234",
+              "secondaryColor": "#373A3C",
               "lineWidth": {
                   "interpolation": "Linear",
                   "zoomLevels": [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
                   "values": [4000, 2600, 1500, 1000, 720, 520, 270, 140, 90, 60, 30, 15, 10, 5, 2]
+              },
+              "secondaryWidth": {
+                "interpolation": "Linear",
+                "zoomLevels": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14],
+                "values": [10000, 8000, 7000, 5000, 3000, 2000, 1000, 500, 250, 120, 80, 40, 20, 10]
               },
               "dashSize": {
                   "interpolation": "Cubic",
@@ -1000,7 +980,8 @@
                   "values": [512, 256, 128, 64, 32]
               }
           },
-          "renderOrder": 4.1
+          "renderOrder": 4.1,
+          "secondaryRenderOrder": 4
       },
       {
           "description": "disputed border line - text",
