@@ -946,31 +946,29 @@ export interface StandardTexturedTechnique extends BaseStandardTechnique {
     /**
      * Render texture if available.
      *
-     * Defaults to true if `texture` is available for mesh.
+     * Defaults to true if `map` is available for mesh.
      *
      * May be used to forcefully disable textures in theme even if textures are available.
      */
     renderTexture?: boolean;
 
     /**
-     * Texture URL or texture buffer
+     * URL or texture buffer that should be used as color map
      */
-    texture?: string | TextureBuffer;
+    map?: string | TextureBuffer;
+    mapProperties?: TextureProperties;
 
     /**
-     * Texture horizontal wrapping mode.
+     * URL or texture buffer that should be used as normal map
      */
-    wrapS?: WrappingMode;
+    normalMap?: string | TextureBuffer;
+    normalMapProperties?: TextureProperties;
 
     /**
-     * Texture vertical wrapping mode.
+     * URL or texture buffer that should be used as displacement map
      */
-    wrapT?: WrappingMode;
-
-    /**
-     * Flip texture vertically.
-     */
-    flipY?: boolean;
+    displacementMap?: string | TextureBuffer;
+    displacementMapProperties?: TextureProperties;
 }
 
 /**
@@ -1245,6 +1243,26 @@ export interface DataTextureProperties {
 
     format?: PixelFormat;
     type?: TextureDataType;
+}
+
+/**
+ * Properties of a Texture (https://threejs.org/docs/#api/en/textures/Texture).
+ */
+export interface TextureProperties {
+    /**
+     * Texture horizontal wrapping mode.
+     */
+    wrapS?: WrappingMode;
+
+    /**
+     * Texture vertical wrapping mode.
+     */
+    wrapT?: WrappingMode;
+
+    /**
+     * Flip texture vertically.
+     */
+    flipY?: boolean;
 }
 
 const interpolants = [THREE.DiscreteInterpolant, THREE.LinearInterpolant, THREE.CubicInterpolant];

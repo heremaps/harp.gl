@@ -101,9 +101,19 @@ export class TileDecoderService extends WorkerService {
 
             decodedTile.techniques.forEach(technique => {
                 if (isStandardTexturedTechnique(technique)) {
-                    if (isTextureBuffer(technique.texture)) {
-                        if (technique.texture.buffer instanceof ArrayBuffer) {
-                            transferList.push(technique.texture.buffer);
+                    if (isTextureBuffer(technique.map)) {
+                        if (technique.map.buffer instanceof ArrayBuffer) {
+                            transferList.push(technique.map.buffer);
+                        }
+                    }
+                    if (isTextureBuffer(technique.normalMap)) {
+                        if (technique.normalMap.buffer instanceof ArrayBuffer) {
+                            transferList.push(technique.normalMap.buffer);
+                        }
+                    }
+                    if (isTextureBuffer(technique.displacementMap)) {
+                        if (technique.displacementMap.buffer instanceof ArrayBuffer) {
+                            transferList.push(technique.displacementMap.buffer);
                         }
                     }
                 }
