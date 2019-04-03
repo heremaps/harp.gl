@@ -12,7 +12,7 @@ You can create simple `harp.gl` app using Yeomans generator [`@here/generator-ha
 ```shell
 $ mkdir 3dmap-example
 $ cd 3dmap-example
-$ npx -p yo -p @here/generator-harp.gl yo @here/harp.gl.gl
+$ npx -p yo -p @here/generator-harp.gl yo @here/harp.gl
 ```
 
 ## <a name="integrate"></a> Integrate `harp.gl` into your existing Webpack based project
