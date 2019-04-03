@@ -198,6 +198,11 @@ export class GeoBox {
         return new GeoBox(this.southWest, this.northEast);
     }
 
+    expandByPoint(point: GeoCoordinates) {
+        this.southWest.min(point);
+        this.northEast.max(point);
+    }
+
     private containsHelper(point: GeoCoordinates): boolean {
         if (point.latitude < this.southWest.latitude || point.latitude >= this.northEast.latitude) {
             return false;

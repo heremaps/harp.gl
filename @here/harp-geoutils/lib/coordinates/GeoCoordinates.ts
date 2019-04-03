@@ -154,4 +154,18 @@ export class GeoCoordinates implements GeoCoordinatesLike {
     clone(): GeoCoordinates {
         return new GeoCoordinates(this.latitude, this.longitude, this.altitude);
     }
+
+    min(other: GeoCoordinates) {
+        this.latitude = Math.min(this.latitude, other.latitude);
+        this.longitude = Math.min(this.longitude, other.longitude);
+        this.altitude =
+            this.altitude && other.altitude ? Math.min(this.altitude, other.altitude) : undefined;
+    }
+
+    max(other: GeoCoordinates) {
+        this.latitude = Math.max(this.latitude, other.latitude);
+        this.longitude = Math.max(this.longitude, other.longitude);
+        this.altitude =
+            this.altitude && other.altitude ? Math.max(this.altitude, other.altitude) : undefined;
+    }
 }
