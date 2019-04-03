@@ -85,9 +85,9 @@ const USER_INPUTS_TO_CONSIDER = 5;
 const DEFAULT_MAX_PITCH_ANGLE = Math.PI / 4;
 
 /**
- * Epsilon value to rule out when a number can be considered 0 (used for pitch angle in radian).
+ * Epsilon value to rule out when a number can be considered 0.
  */
-const EPSILON_PITCH = 0.01;
+const EPSILON = 0.01;
 
 /**
  * This map control provides basic map-related building blocks to interact with the map. It also
@@ -488,7 +488,7 @@ export class MapControls extends THREE.EventDispatcher {
      */
     toggleTilt(): void {
         this.m_startPitch = this.currentPitch;
-        const aimTilt = this.m_startPitch < EPSILON_PITCH || this.m_tiltState === TiltState.Down;
+        const aimTilt = this.m_startPitch < EPSILON || this.m_tiltState === TiltState.Down;
         this.m_pitchRequested = aimTilt ? this.tiltAngle : 0;
         this.m_tiltState = aimTilt ? TiltState.Tilted : TiltState.Down;
         this.m_tiltAnimationStartTime = performance.now();
@@ -558,7 +558,7 @@ export class MapControls extends THREE.EventDispatcher {
     get tiltState(): TiltState {
         if (this.m_tiltState === undefined) {
             this.m_tiltState =
-                this.currentPitch < EPSILON_PITCH || this.m_tiltState === TiltState.Down
+                this.currentPitch < EPSILON || this.m_tiltState === TiltState.Down
                     ? TiltState.Tilted
                     : TiltState.Down;
         }
@@ -675,13 +675,14 @@ export class MapControls extends THREE.EventDispatcher {
             }
         }
 
-        this.currentZoom = !this.inertiaEnabled
-            ? this.zoomLevelTargetted
-            : this.easeOutCubic(
-                  this.m_startZoom,
-                  this.zoomLevelTargetted,
-                  Math.min(1, this.m_zoomAnimationTime / this.zoomInertiaDampingDuration)
-              );
+        this.currentZoom =
+            !this.inertiaEnabled || Math.abs(this.zoomLevelTargetted - this.m_startZoom) < EPSILON
+                ? this.zoomLevelTargetted
+                : this.easeOutCubic(
+                      this.m_startZoom,
+                      this.zoomLevelTargetted,
+                      Math.min(1, this.m_zoomAnimationTime / this.zoomInertiaDampingDuration)
+                  );
 
         MapViewUtils.zoomOnTargetPosition(
             this.mapView,
