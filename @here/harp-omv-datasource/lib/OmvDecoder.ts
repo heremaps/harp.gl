@@ -80,6 +80,42 @@ export class Ring {
 
         return area / 2;
     }
+
+    getOutlineLines() {
+        const { contourOutlines, contour } = this;
+
+        if (contourOutlines === undefined) {
+            const outLine = contour.slice();
+            outLine.push(...outLine.slice(0, 2));
+            return [outLine];
+        }
+
+        const { length } = contourOutlines;
+
+        const lines: number[][] = [];
+        let line: number[] = [];
+
+        for (let i = 0; i < length; i++) {
+            const isOutline = contourOutlines[i];
+
+            if (!isOutline && line.length !== 0) {
+                lines.push(line);
+                line = [];
+            } else if (isOutline && line.length === 0) {
+                let index = i * 2;
+                line.push(...contour.slice(index, index + 2));
+                index = ((i + 1) * 2) % length;
+                line.push(...contour.slice(index, index + 2));
+            } else if (isOutline) {
+                const index = ((i + 1) * 2) % length;
+                line.push(...contour.slice(index, index + 2));
+            }
+        }
+        if (line.length) {
+            lines.push(line);
+        }
+        return lines;
+    }
 }
 
 export interface IOmvEmitter {

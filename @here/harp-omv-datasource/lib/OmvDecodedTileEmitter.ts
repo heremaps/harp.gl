@@ -262,60 +262,6 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
 
         const wantCircle = this.m_decodeInfo.tileKey.level >= 11;
 
-        function applyLineTechnique(
-            linesGeometry: LinesGeometry[],
-            technique: Technique,
-            techniqueIndex: number,
-            gatherFeatureIds: boolean,
-            lineType = LineType.Complex
-        ): void {
-            const renderOrderOffset = technique.renderOrderBiasProperty
-                ? env.lookup(technique.renderOrderBiasProperty)
-                : 0;
-            let linesInstance: Lines;
-            const linesInstanceGeometries = linesGeometry.find(aLine => {
-                return (
-                    aLine.technique === techniqueIndex &&
-                    aLine.renderOrderOffset === renderOrderOffset
-                );
-            });
-            if (linesInstanceGeometries === undefined) {
-                linesInstance = new Lines();
-                const aLine: LinesGeometry = {
-                    type:
-                        lineType === LineType.Complex ? GeometryType.SolidLine : GeometryType.Line,
-                    technique: techniqueIndex,
-                    renderOrderOffset:
-                        renderOrderOffset !== undefined ? Number(renderOrderOffset) : undefined,
-                    lines: linesInstance
-                };
-
-                if (gatherFeatureIds) {
-                    // if this technique is transient, do not save the featureIds with the geometry
-                    aLine.featureIds = technique.transient === true ? undefined : [featureId];
-                    aLine.featureStarts = technique.transient === true ? undefined : [0];
-                }
-
-                linesGeometry.push(aLine);
-            } else {
-                linesInstance = linesInstanceGeometries.lines;
-
-                if (
-                    gatherFeatureIds &&
-                    linesInstanceGeometries.featureIds &&
-                    linesInstanceGeometries.featureStarts
-                ) {
-                    // Add ID to tag the geometry, also provide the current length of the index
-                    // attribute
-                    linesInstanceGeometries.featureIds.push(featureId);
-                    linesInstanceGeometries.featureStarts.push(linesInstance.indices.length);
-                }
-            }
-            lines.forEach(aLine => {
-                linesInstance.add(aLine, lineType === LineType.Simple);
-            });
-        }
-
         for (const technique of techniques) {
             if (technique === undefined) {
                 continue;
@@ -331,28 +277,37 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
             const techniqueName = technique.name;
 
             if (techniqueName === "line") {
-                applyLineTechnique(
+                this.applyLineTechnique(
                     this.m_simpleLines,
                     technique,
                     techniqueIndex,
                     this.m_gatherFeatureIds,
-                    LineType.Simple
+                    LineType.Simple,
+                    featureId,
+                    lines,
+                    env
                 );
             } else if (techniqueName === "solid-line") {
-                applyLineTechnique(
+                this.applyLineTechnique(
                     this.m_solidLines,
                     technique,
                     techniqueIndex,
                     this.m_gatherFeatureIds,
-                    LineType.Complex
+                    LineType.Complex,
+                    featureId,
+                    lines,
+                    env
                 );
             } else if (techniqueName === "dashed-line") {
-                applyLineTechnique(
+                this.applyLineTechnique(
                     this.m_dashedLines,
                     technique,
                     techniqueIndex,
                     this.m_gatherFeatureIds,
-                    LineType.Complex
+                    LineType.Complex,
+                    featureId,
+                    lines,
+                    env
                 );
             } else if (techniqueName === "text" || techniqueName === "line-marker") {
                 const textTechnique = technique as TextTechnique;
@@ -479,89 +434,254 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
     ): void {
         this.processFeatureCommon(env);
 
-        const techniqueIndex = techniques[0]._index;
-        if (techniqueIndex === undefined) {
-            throw new Error(
-                "OmvDecodedTileEmitter#processPolygonFeature: Internal error - No technique index"
-            );
-        }
+        techniques.forEach(technique => {
+            if (technique === undefined) {
+                return;
+            }
 
+            const techniqueIndex = technique._index;
+
+            if (techniqueIndex === undefined) {
+                throw new Error(
+                    "OmvDecodedTileEmitter#processPolygonFeature: " +
+                        "Internal error - No technique index"
+                );
+            }
+
+            const extrudedPolygonTechnique = technique as ExtrudedPolygonTechnique;
+            const fillTechnique = technique as FillTechnique;
+
+            const { projection, center } = this.m_decodeInfo;
+
+            const polygons: Ring[][] = [];
+
+            const worldPos = new THREE.Vector3();
+            const texCoord = new THREE.Vector3();
+
+            const texCoordProjection = identityProjection;
+
+            const texCoordBox = texCoordProjection.projectBox(
+                this.m_decodeInfo.geoBox,
+                new THREE.Box3()
+            );
+
+            const texCoordBoxSize = texCoordBox.getSize(new THREE.Vector3());
+
+            const isExtruded = isExtrudedPolygonTechnique(technique);
+            const isFilled = isFillTechnique(technique);
+            const isTextured = isStandardTexturedTechnique(technique);
+
+            const edgeWidth = isExtruded
+                ? extrudedPolygonTechnique.lineWidth || 0.0
+                : isFilled
+                ? fillTechnique.lineWidth || 0.0
+                : 0.0;
+            const hasEdges = edgeWidth > 0.0;
+
+            for (const polygon of geometry) {
+                const rings: Ring[] = [];
+                for (const outline of polygon.rings) {
+                    const ringContour: number[] = [];
+                    let ringEdges: boolean[] | undefined;
+                    let ringTexCoords: number[] | undefined;
+                    for (let coordIdx = 0; coordIdx < outline.coordinates.length; ++coordIdx) {
+                        const geoPoint = outline.coordinates[coordIdx];
+                        const { x, y } = projection.projectPoint(geoPoint, worldPos).sub(center);
+                        ringContour.push(x, y);
+
+                        if (hasEdges && outline.outlines !== undefined) {
+                            const edge = outline.outlines[coordIdx];
+                            if (ringEdges === undefined) {
+                                ringEdges = [edge];
+                            } else {
+                                ringEdges.push(edge);
+                            }
+                        }
+
+                        if (isTextured) {
+                            const { x: u, y: v } = texCoordProjection
+                                .projectPoint(geoPoint, texCoord)
+                                .sub(texCoordBox.min)
+                                .divide(texCoordBoxSize);
+                            if (ringTexCoords === undefined) {
+                                ringTexCoords = [u, v];
+                            } else {
+                                ringTexCoords.push(u, v);
+                            }
+                        }
+                    }
+                    rings.push(new Ring(ringContour, ringEdges, ringTexCoords));
+                }
+                polygons.push(rings);
+            }
+
+            if (technique.name === "fill" || technique.name === "extruded-polygon") {
+                this.applyPolygonTechnique(polygons, technique, techniqueIndex, featureId, env);
+            } else if (technique.name === "line") {
+                polygons.forEach(rings => {
+                    rings.forEach(ring => {
+                        const lines = ring.getOutlineLines();
+                        if (lines.length === 0) {
+                            return;
+                        }
+                        this.applyLineTechnique(
+                            this.m_simpleLines,
+                            technique,
+                            techniqueIndex,
+                            this.m_gatherFeatureIds,
+                            LineType.Simple,
+                            featureId,
+                            lines,
+                            env
+                        );
+                    });
+                });
+            } else if (technique.name === "solid-line") {
+                polygons.forEach(rings => {
+                    rings.forEach(ring => {
+                        const lines = ring.getOutlineLines();
+                        if (lines.length === 0) {
+                            return;
+                        }
+                        this.applyLineTechnique(
+                            this.m_solidLines,
+                            technique,
+                            techniqueIndex,
+                            this.m_gatherFeatureIds,
+                            LineType.Complex,
+                            featureId,
+                            lines,
+                            env
+                        );
+                    });
+                });
+            } else if (technique.name === "dashed-line") {
+                polygons.forEach(rings => {
+                    rings.forEach(ring => {
+                        const lines = ring.getOutlineLines();
+                        if (lines.length === 0) {
+                            return;
+                        }
+                        this.applyLineTechnique(
+                            this.m_dashedLines,
+                            technique,
+                            techniqueIndex,
+                            this.m_gatherFeatureIds,
+                            LineType.Complex,
+                            featureId,
+                            lines,
+                            env
+                        );
+                    });
+                });
+            }
+        });
+    }
+
+    /**
+     * Creates the geometries that belongs to the [[Tile].
+     *
+     * @returns The [[DecodedTile]]
+     */
+    getDecodedTile(): DecodedTile {
+        this.createGeometries();
+        this.processSimpleLines(this.m_simpleLines);
+        this.processLines(this.m_solidLines);
+        this.processLines(this.m_dashedLines);
+
+        const decodedTile: DecodedTile = {
+            techniques: this.m_styleSetEvaluator.techniques,
+            geometries: this.m_geometries,
+            decodeTime: undefined
+        };
+        if (this.m_textGeometries.length > 0) {
+            decodedTile.textGeometries = this.m_textGeometries;
+        }
+        if (this.m_poiGeometries.length > 0) {
+            decodedTile.poiGeometries = this.m_poiGeometries;
+        }
+        if (this.m_textPathGeometries.length > 0) {
+            decodedTile.textPathGeometries = this.m_textPathGeometries;
+        }
+        if (this.m_sources.length !== 0) {
+            decodedTile.copyrightHolderIds = this.m_sources;
+        }
+        return decodedTile;
+    }
+
+    private applyLineTechnique(
+        linesGeometry: LinesGeometry[],
+        technique: Technique,
+        techniqueIndex: number,
+        gatherFeatureIds: boolean,
+        lineType = LineType.Complex,
+        featureId: number | undefined,
+        lines: number[][],
+        env: MapEnv
+    ): void {
+        const renderOrderOffset = technique.renderOrderBiasProperty
+            ? env.lookup(technique.renderOrderBiasProperty)
+            : 0;
+        let linesInstance: Lines;
+        const linesInstanceGeometries = linesGeometry.find(aLine => {
+            return (
+                aLine.technique === techniqueIndex && aLine.renderOrderOffset === renderOrderOffset
+            );
+        });
+        if (linesInstanceGeometries === undefined) {
+            linesInstance = new Lines();
+            const aLine: LinesGeometry = {
+                type: lineType === LineType.Complex ? GeometryType.SolidLine : GeometryType.Line,
+                technique: techniqueIndex,
+                renderOrderOffset:
+                    renderOrderOffset !== undefined ? Number(renderOrderOffset) : undefined,
+                lines: linesInstance
+            };
+
+            if (gatherFeatureIds) {
+                // if this technique is transient, do not save the featureIds with the geometry
+                aLine.featureIds = technique.transient === true ? undefined : [featureId];
+                aLine.featureStarts = technique.transient === true ? undefined : [0];
+            }
+
+            linesGeometry.push(aLine);
+        } else {
+            linesInstance = linesInstanceGeometries.lines;
+
+            if (
+                gatherFeatureIds &&
+                linesInstanceGeometries.featureIds &&
+                linesInstanceGeometries.featureStarts
+            ) {
+                // Add ID to tag the geometry, also provide the current length of the index
+                // attribute
+                linesInstanceGeometries.featureIds.push(featureId);
+                linesInstanceGeometries.featureStarts.push(linesInstance.indices.length);
+            }
+        }
+        lines.forEach(aLine => {
+            linesInstance.add(aLine, lineType === LineType.Simple);
+        });
+    }
+
+    private applyPolygonTechnique(
+        polygons: Ring[][],
+        technique: Technique,
+        techniqueIndex: number,
+        featureId: number | undefined,
+        env: MapEnv
+    ): void {
         const meshBuffers = this.findOrCreateMeshBuffers(techniqueIndex, GeometryType.Polygon);
+
         if (meshBuffers === undefined) {
             return;
         }
-        const { positions, textureCoordinates, colors, indices, edgeIndices, groups } = meshBuffers;
 
-        const technique = techniques[0];
-        if (technique === undefined) {
-            return;
-        }
         const extrudedPolygonTechnique = technique as ExtrudedPolygonTechnique;
-        const fillTechnique = technique as FillTechnique;
-
-        const { projection, center } = this.m_decodeInfo;
-
-        const polygons: Ring[][] = [];
-
-        const worldPos = new THREE.Vector3();
-        const texCoord = new THREE.Vector3();
-
-        const texCoordProjection = identityProjection;
-
-        const texCoordBox = texCoordProjection.projectBox(
-            this.m_decodeInfo.geoBox,
-            new THREE.Box3()
-        );
-
-        const texCoordBoxSize = texCoordBox.getSize(new THREE.Vector3());
 
         const isExtruded = isExtrudedPolygonTechnique(technique);
         const isFilled = isFillTechnique(technique);
         const isTextured = isStandardTexturedTechnique(technique);
-
-        const edgeWidth = isExtruded
-            ? extrudedPolygonTechnique.lineWidth || 0.0
-            : isFilled
-            ? fillTechnique.lineWidth || 0.0
-            : 0.0;
-        const hasEdges = edgeWidth > 0.0;
-
-        for (const polygon of geometry) {
-            const rings: Ring[] = [];
-            for (const outline of polygon.rings) {
-                const ringContour: number[] = [];
-                let ringEdges: boolean[] | undefined;
-                let ringTexCoords: number[] | undefined;
-                for (let coordIdx = 0; coordIdx < outline.coordinates.length; ++coordIdx) {
-                    const geoPoint = outline.coordinates[coordIdx];
-                    const { x, y } = projection.projectPoint(geoPoint, worldPos).sub(center);
-                    ringContour.push(x, y);
-
-                    if (hasEdges && outline.outlines !== undefined) {
-                        const edge = outline.outlines[coordIdx];
-                        if (ringEdges === undefined) {
-                            ringEdges = [edge];
-                        } else {
-                            ringEdges.push(edge);
-                        }
-                    }
-
-                    if (isTextured) {
-                        const { x: u, y: v } = texCoordProjection
-                            .projectPoint(geoPoint, texCoord)
-                            .sub(texCoordBox.min)
-                            .divide(texCoordBoxSize);
-                        if (ringTexCoords === undefined) {
-                            ringTexCoords = [u, v];
-                        } else {
-                            ringTexCoords.push(u, v);
-                        }
-                    }
-                }
-                rings.push(new Ring(ringContour, ringEdges, ringTexCoords));
-            }
-            polygons.push(rings);
-        }
 
         // Get the height values for the footprint and extrusion.
         const currentHeight = env.lookup("height") as number;
@@ -577,6 +697,8 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                 : 0;
 
         this.m_decodeInfo.tileBounds.getCenter(tempTileOrigin);
+
+        const { positions, textureCoordinates, colors, indices, edgeIndices, groups } = meshBuffers;
 
         for (const rings of polygons) {
             const start = indices.length;
@@ -736,38 +858,6 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                 });
             }
         }
-    }
-
-    /**
-     * Creates the geometries that belongs to the [[Tile].
-     *
-     * @returns The [[DecodedTile]]
-     */
-
-    getDecodedTile(): DecodedTile {
-        this.createGeometries();
-        this.processSimpleLines(this.m_simpleLines);
-        this.processLines(this.m_solidLines);
-        this.processLines(this.m_dashedLines);
-
-        const decodedTile: DecodedTile = {
-            techniques: this.m_styleSetEvaluator.techniques,
-            geometries: this.m_geometries,
-            decodeTime: undefined
-        };
-        if (this.m_textGeometries.length > 0) {
-            decodedTile.textGeometries = this.m_textGeometries;
-        }
-        if (this.m_poiGeometries.length > 0) {
-            decodedTile.poiGeometries = this.m_poiGeometries;
-        }
-        if (this.m_textPathGeometries.length > 0) {
-            decodedTile.textPathGeometries = this.m_textPathGeometries;
-        }
-        if (this.m_sources.length !== 0) {
-            decodedTile.copyrightHolderIds = this.m_sources;
-        }
-        return decodedTile;
     }
 
     private createGeometries(): any {
