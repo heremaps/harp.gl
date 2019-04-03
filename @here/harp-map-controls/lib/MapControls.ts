@@ -696,7 +696,6 @@ export class MapControls extends THREE.EventDispatcher {
     private stopZoom() {
         this.mapView.removeEventListener(MapViewEventNames.AfterRender, this.handleZoom);
         this.m_zoomIsAnimated = false;
-        this.m_targettedZoom = this.m_currentZoom = undefined;
     }
 
     private pan() {
