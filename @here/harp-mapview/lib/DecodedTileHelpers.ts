@@ -71,7 +71,7 @@ export interface MaterialOptions {
  */
 export function createMaterial(
     options: MaterialOptions,
-    materialUpdateCallback?: () => void
+    textureReadyCallback?: (texture: THREE.Texture) => void
 ): THREE.Material | undefined {
     const technique = options.technique;
     const Constructor = getMaterialConstructor(technique);
@@ -126,8 +126,8 @@ export function createMaterial(
                 (material as any)[texturePropertyName] = texture;
                 texture.needsUpdate = true;
                 material.needsUpdate = true;
-                if (materialUpdateCallback) {
-                    materialUpdateCallback();
+                if (textureReadyCallback) {
+                    textureReadyCallback(texture);
                 }
             };
 
