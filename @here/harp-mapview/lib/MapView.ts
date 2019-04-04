@@ -1759,12 +1759,12 @@ export class MapView extends THREE.EventDispatcher {
 
         this.m_pixelToWorld = undefined;
 
-        const cameraPitch = MapViewUtils.extractYawPitchRoll(this.camera.quaternion).pitch;
-
-        const distance = Math.min(
-            Math.abs(this.camera.position.z) / Math.cos(cameraPitch),
-            this.camera.position.z * 2
+        const cameraPitch = Math.min(
+            MapViewUtils.extractYawPitchRoll(this.camera.quaternion).pitch,
+            Math.PI / 3
         );
+
+        const distance = Math.abs(this.camera.position.z) / Math.cos(cameraPitch);
 
         this.m_zoomLevel = MapViewUtils.calculateZoomLevelFromDistance(distance, this);
     }
