@@ -7,7 +7,6 @@ import {
     BaseTechnique,
     BufferAttribute,
     DecodedTile,
-    ExtendedTileInfo,
     ExtrudedPolygonTechnique,
     FillTechnique,
     Geometry,
@@ -19,7 +18,6 @@ import {
     isExtrudedLineTechnique,
     isExtrudedPolygonTechnique,
     isFillTechnique,
-    isInterpolatedProperty,
     isSolidLineTechnique,
     isSquaresTechnique,
     isStandardTechnique,
@@ -447,6 +445,9 @@ export class Tile implements CachedResource {
 
     private m_resourceInfo: TileResourceInfo | undefined;
 
+    // List of owned textures for disposal
+    private m_ownedTextures: WeakSet<THREE.Texture> = new WeakSet();
+
     /**
      * Creates a new `Tile`.
      *
@@ -510,6 +511,15 @@ export class Tile implements CachedResource {
      */
     invalidateResourceInfo(): void {
         this.m_resourceInfo = undefined;
+    }
+
+    /**
+     * Add ownership of a texture to this tile. The texture will be disposed if the `Tile` is
+     * disposed.
+     * @param texture Texture to be owned by the `Tile`
+     */
+    addOwnedTexture(texture: THREE.Texture): void {
+        this.m_ownedTextures.add(texture);
     }
 
     /**
@@ -782,6 +792,17 @@ export class Tile implements CachedResource {
     }
 
     /**
+     * Called when the default implementation of `dispose()` needs
+     * to free a Texture that is part of a `Tile` object's material.
+     *
+     * @param texture The texture about to be disposed.
+     * @returns `true` if the texture can be disposed.
+     */
+    shouldDisposeTexture(texture: THREE.Texture): boolean {
+        return this.m_ownedTextures.has(texture);
+    }
+
+    /**
      * Returns `true` if this `Tile` has been disposed.
      */
     get disposed(): boolean {
@@ -840,10 +861,25 @@ export class Tile implements CachedResource {
     /**
      * Frees the rendering resources allocated by this `Tile`.
      *
-     * The default implementation of this method frees the geometries and
-     * the materials for all the reachable objects.
+     * The default implementation of this method frees the geometries and the materials for all the
+     * reachable objects.
+     * Textures are freed if they are owned by this `Tile` (i.e. if they where created by this
+     * `Tile`or if the ownership was explicitely set to this `Tile` by [[addOwnedTexture]]).
      */
     clear() {
+        const disposeMaterial = (material: THREE.Material) => {
+            Object.getOwnPropertyNames(material).forEach((property: string) => {
+                const materialProperty = (material as any)[property];
+                if (materialProperty !== undefined && materialProperty instanceof THREE.Texture) {
+                    const texture = materialProperty;
+                    if (this.shouldDisposeTexture(texture)) {
+                        texture.dispose();
+                    }
+                }
+            });
+            material.dispose();
+        };
+
         const disposeObject = (object: TileObject & DisposableObject) => {
             if (object.geometry !== undefined && this.shouldDisposeObjectGeometry(object)) {
                 object.geometry.dispose();
@@ -853,11 +889,11 @@ export class Tile implements CachedResource {
                 if (object.material instanceof Array) {
                     object.material.forEach(material => {
                         if (material !== undefined) {
-                            material.dispose();
+                            disposeMaterial(material);
                         }
                     });
                 } else {
-                    object.material.dispose();
+                    disposeMaterial(object.material);
                 }
             }
         };
@@ -869,8 +905,8 @@ export class Tile implements CachedResource {
 
             disposeObject(rootObject);
         });
-
         this.objects.length = 0;
+
         if (this.m_preparedTextPaths) {
             this.m_preparedTextPaths = [];
         }
@@ -1225,8 +1261,11 @@ export class Tile implements CachedResource {
                 let material: THREE.Material | undefined = materials[techniqueIndex];
 
                 if (material === undefined) {
-                    const onMaterialUpdated = () => {
+                    const onMaterialUpdated = (texture: THREE.Texture) => {
                         this.dataSource.requestUpdate();
+                        if (texture !== undefined) {
+                            this.addOwnedTexture(texture);
+                        }
                     };
                     material = createMaterial(
                         {

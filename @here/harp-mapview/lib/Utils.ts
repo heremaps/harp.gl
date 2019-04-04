@@ -508,8 +508,16 @@ export namespace MapViewUtils {
             estimateTextureSize(meshMaterial.envMap, objectSize, visitedObjects);
         } else if (material instanceof MapMeshStandardMaterial) {
             const standardMaterial = material;
+
             estimateTextureSize(standardMaterial.map, objectSize, visitedObjects);
+            estimateTextureSize(standardMaterial.lightMap, objectSize, visitedObjects);
             estimateTextureSize(standardMaterial.aoMap, objectSize, visitedObjects);
+            estimateTextureSize(standardMaterial.emissiveMap, objectSize, visitedObjects);
+            estimateTextureSize(standardMaterial.bumpMap, objectSize, visitedObjects);
+            estimateTextureSize(standardMaterial.normalMap, objectSize, visitedObjects);
+            estimateTextureSize(standardMaterial.displacementMap, objectSize, visitedObjects);
+            estimateTextureSize(standardMaterial.roughnessMap, objectSize, visitedObjects);
+            estimateTextureSize(standardMaterial.metalnessMap, objectSize, visitedObjects);
             estimateTextureSize(standardMaterial.alphaMap, objectSize, visitedObjects);
             estimateTextureSize(standardMaterial.envMap, objectSize, visitedObjects);
         } else if (
