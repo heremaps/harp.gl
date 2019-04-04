@@ -28,9 +28,6 @@ export namespace MapViewUtils {
     const rotationMatrix = new THREE.Matrix4();
     const unprojectionMatrix = new THREE.Matrix4();
     const rayCaster = new THREE.Raycaster();
-    const tempQuat = new THREE.Quaternion();
-
-    const EYE_INVERSE = new THREE.Vector3(0, 0, -1);
 
     /**
      * Yaw rotation as quaternion. Declared as a const to avoid object re-creation in certain
@@ -224,13 +221,10 @@ export namespace MapViewUtils {
         mapView: MapView,
         zoomLevel: number
     ): number {
-        tempQuat.setFromAxisAngle(EYE_INVERSE, -mapView.camera.rotation.z);
-
-        // "any" used to fix missing .angleTo() ts error
-        const cameraAngle = (mapView.camera.quaternion as any).angleTo(tempQuat);
+        const cameraPitch = extractYawPitchRoll(mapView.camera.quaternion).pitch;
 
         const tileSize = EarthConstants.EQUATORIAL_CIRCUMFERENCE / Math.pow(2, zoomLevel);
-        return ((mapView.focalLength * tileSize) / 256) * Math.cos(cameraAngle);
+        return ((mapView.focalLength * tileSize) / 256) * Math.cos(cameraPitch);
     }
 
     /**

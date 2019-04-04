@@ -517,7 +517,6 @@ export class MapView extends THREE.EventDispatcher {
     private m_pointOfView?: THREE.PerspectiveCamera;
 
     private m_tempVector3: THREE.Vector3 = new THREE.Vector3();
-    private m_tempQuat: THREE.Quaternion = new THREE.Quaternion();
     private m_pixelToWorld?: number;
     private m_pixelRatio?: number;
 
@@ -1760,13 +1759,10 @@ export class MapView extends THREE.EventDispatcher {
 
         this.m_pixelToWorld = undefined;
 
-        this.m_tempQuat.setFromAxisAngle(EYE_INVERSE, -this.camera.rotation.z);
-
-        // "any" used to fix missing .angleTo() ts error
-        const cameraAngle = (this.camera.quaternion as any).angleTo(this.m_tempQuat);
+        const cameraPitch = MapViewUtils.extractYawPitchRoll(this.camera.quaternion).pitch;
 
         const distance = Math.min(
-            Math.abs(this.camera.position.z) / Math.cos(cameraAngle),
+            Math.abs(this.camera.position.z) / Math.cos(cameraPitch),
             this.camera.position.z * 2
         );
 
