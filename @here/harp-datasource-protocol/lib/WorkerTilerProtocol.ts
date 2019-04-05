@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { GeoJson } from "../lib/GeoJsonDataType";
 import { WorkerServiceProtocol } from "./WorkerServiceProtocol";
 
 /**
@@ -24,7 +25,7 @@ export namespace WorkerTilerProtocol {
     export interface RegisterIndexRequest extends WorkerServiceProtocol.ServiceRequest {
         type: Requests.RegisterIndex;
         id: string;
-        url: string;
+        input: string | GeoJson;
     }
 
     /**

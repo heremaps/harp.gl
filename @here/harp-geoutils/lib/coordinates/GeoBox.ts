@@ -198,6 +198,35 @@ export class GeoBox {
         return new GeoBox(this.southWest, this.northEast);
     }
 
+    /**
+     * Update the bounding box by considering a given point.
+     *
+     * @param point The point that may expand the bounding box.
+     */
+    growToContain(point: GeoCoordinates) {
+        this.southWest.latitude = Math.min(this.southWest.latitude, point.latitude);
+        this.southWest.longitude = Math.min(this.southWest.longitude, point.longitude);
+        this.southWest.altitude =
+            this.southWest.altitude !== undefined && point.altitude !== undefined
+                ? Math.min(this.southWest.altitude, point.altitude)
+                : this.southWest.altitude !== undefined
+                ? this.southWest.altitude
+                : point.altitude !== undefined
+                ? point.altitude
+                : undefined;
+
+        this.northEast.latitude = Math.max(this.northEast.latitude, point.latitude);
+        this.northEast.longitude = Math.max(this.northEast.longitude, point.longitude);
+        this.northEast.altitude =
+            this.northEast.altitude !== undefined && point.altitude !== undefined
+                ? Math.max(this.northEast.altitude, point.altitude)
+                : this.northEast.altitude !== undefined
+                ? this.northEast.altitude
+                : point.altitude !== undefined
+                ? point.altitude
+                : undefined;
+    }
+
     private containsHelper(point: GeoCoordinates): boolean {
         if (point.latitude < this.southWest.latitude || point.latitude >= this.northEast.latitude) {
             return false;

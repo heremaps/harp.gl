@@ -5,6 +5,7 @@
  */
 
 import {
+    GeoJson,
     Geometry,
     GeometryType,
     Group,
@@ -19,7 +20,6 @@ import { LINE_VERTEX_ATTRIBUTE_DESCRIPTORS, Lines } from "@here/harp-lines";
 import { Math2D } from "@here/harp-utils";
 import earcut from "earcut";
 import * as THREE from "three";
-import { GeoJson } from "./GeoJsonDataType";
 import { ExtendedTile, GeoJsonParser, GeometryData, GeometryDataBuffers } from "./GeoJsonParser";
 
 /**
