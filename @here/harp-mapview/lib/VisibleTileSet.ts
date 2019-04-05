@@ -8,6 +8,7 @@ import { LRUCache } from "@here/harp-lrucache";
 import * as THREE from "three";
 
 import { DataSource } from "./DataSource";
+import { CalculationStatus, ElevationRange, ElevationRangeSource } from "./ElevationRangeSource";
 import { MapTileCuller } from "./MapTileCuller";
 import { Tile } from "./Tile";
 
@@ -272,15 +273,29 @@ export class VisibleTileSet {
 
         const newRenderList: DataSourceTileList[] = [];
         let allVisibleTilesLoaded: boolean = true;
+        let allBoundingBoxesFinal: boolean = true;
 
         if (this.options.extendedFrustumCulling) {
             this.m_mapTileCuller.setup();
+        }
+
+        let elevationRangeSource: ElevationRangeSource | undefined;
+        for (const dataSource of dataSources) {
+            elevationRangeSource = dataSource.getElevationRangeSource();
+            if (elevationRangeSource !== undefined) {
+                // We don't support multiple elevation range sources, but just take the first one
+                // that we find in the enabled data sources.
+                break;
+            }
         }
 
         for (const dataSource of dataSources) {
             const displayZoomLevel = dataSource.getDisplayZoomLevel(zoomLevel);
 
             const tilingScheme = dataSource.getTilingScheme();
+            const useElevationRangeSource: boolean =
+                elevationRangeSource !== undefined &&
+                elevationRangeSource.getTilingScheme() === tilingScheme;
 
             const workList: TileKeyEntry[] = [new TileKeyEntry(rootTileKey, 0)];
 
@@ -319,6 +334,16 @@ export class VisibleTileSet {
 
                     if (intersectsFrustum === undefined) {
                         const geoBox = tilingScheme.getGeoBox(childTileKey);
+
+                        if (useElevationRangeSource) {
+                            const range = elevationRangeSource!.getElevationRange(childTileKey);
+                            geoBox.southWest.altitude = range.minElevation;
+                            geoBox.northEast.altitude = range.maxElevation;
+
+                            allBoundingBoxesFinal =
+                                allBoundingBoxesFinal &&
+                                range.calculationStatus === CalculationStatus.FinalPrecise;
+                        }
                         this.options.projection.projectBox(geoBox, tileBounds);
                         tileBounds.min.sub(worldCenter);
                         tileBounds.max.sub(worldCenter);
@@ -440,7 +465,7 @@ export class VisibleTileSet {
         }
 
         this.dataSourceTileList = newRenderList;
-        this.allVisibleTilesLoaded = allVisibleTilesLoaded;
+        this.allVisibleTilesLoaded = allVisibleTilesLoaded && allBoundingBoxesFinal;
 
         this.fillMissingTilesFromCache();
 
