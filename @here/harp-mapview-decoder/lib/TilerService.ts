@@ -81,14 +81,16 @@ export class TilerService extends WorkerService {
     ): Promise<WorkerServiceResponse> {
         let tileIndex = this.m_tileIndexMap.get(message.id);
         if (tileIndex === undefined) {
-            const response = await fetch(message.url);
-            if (!response.ok) {
-                logger.error(`${message.url} Status Text:  ${response.statusText}`);
-                return { response: {} };
+            let json = message.input;
+            if (typeof message.input === "string") {
+                const response = await fetch(message.input);
+                if (!response.ok) {
+                    logger.error(`${message.input} Status Text:  ${response.statusText}`);
+                    return { response: {} };
+                }
+                json = await response.json();
             }
-            const rawJSON = await response.text();
-
-            tileIndex = geojsonvt.default(JSON.parse(rawJSON), {
+            tileIndex = geojsonvt.default(json, {
                 maxZoom: 20, // max zoom to preserve detail on
                 indexMaxZoom: 5, // max zoom in the tile index
                 indexMaxPoints: 100000, // max number of points per tile in the tile index

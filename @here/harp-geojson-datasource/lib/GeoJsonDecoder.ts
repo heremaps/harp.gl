@@ -8,6 +8,7 @@ import {
     DecodedTile,
     ExtendedTileInfo,
     ExtendedTileInfoWriter,
+    GeoJson,
     StyleSetEvaluator
 } from "@here/harp-datasource-protocol";
 import { Projection, TileKey, webMercatorTilingScheme } from "@here/harp-geoutils";
@@ -16,7 +17,6 @@ import { WorkerServiceManager } from "@here/harp-mapview-decoder/index-worker";
 import { TileDecoderService } from "@here/harp-mapview-decoder/lib/TileDecoderService";
 import { LoggerManager } from "@here/harp-utils";
 import * as THREE from "three";
-import { GeoJson } from "./GeoJsonDataType";
 import { GeoJsonGeometryCreator, GeoJsonTileGeometries } from "./GeoJsonGeometryCreator";
 import { ExtendedTile } from "./GeoJsonParser";
 

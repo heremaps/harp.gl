@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { ITiler } from "@here/harp-datasource-protocol";
+import { GeoJson, ITiler } from "@here/harp-datasource-protocol";
 import "@here/harp-fetch";
 import { TileKey } from "@here/harp-geoutils";
 import { ConcurrentTilerFacade } from "@here/harp-mapview";
@@ -20,17 +20,17 @@ export class GeoJsonDataProvider implements DataProvider {
     /**
      * Constructs a new `GeoJsonDataProvider`.
      *
-     * @param url URL of the input GeoJson.
+     * @param input URL of the GeoJSON, or a GeoJSON.
      *
      * @returns New `GeoJsonDataProvider`.
      */
-    constructor(readonly name: string, readonly url: URL) {
+    constructor(readonly name: string, readonly input: URL | GeoJson) {
         this.m_tiler = ConcurrentTilerFacade.getTiler("omv-tiler");
     }
 
     async connect(): Promise<void> {
         await this.m_tiler.connect();
-        this.m_tiler.registerIndex(this.name, this.url.href).then(() => {
+        this.m_tiler.registerIndex(this.name, this.input).then(() => {
             this.m_registered = true;
         });
     }

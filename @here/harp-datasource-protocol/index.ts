@@ -16,3 +16,4 @@ export * from "./lib/Extruder";
 export * from "./lib/IMeshBuffers";
 export * from "./lib/Outliner";
 export * from "./lib/TileInfo";
+export * from "./lib/GeoJsonDataType";

@@ -4,7 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { ITiler, WorkerServiceProtocol, WorkerTilerProtocol } from "@here/harp-datasource-protocol";
+import {
+    GeoJson,
+    ITiler,
+    WorkerServiceProtocol,
+    WorkerTilerProtocol
+} from "@here/harp-datasource-protocol";
 import { TileKey } from "@here/harp-geoutils";
 import { ConcurrentWorkerSet } from "./ConcurrentWorkerSet";
 
@@ -82,13 +87,13 @@ export class WorkerBasedTiler implements ITiler {
      * tiled payloads using `getTile`.
      *
      * @param indexId Index identifier.
-     * @param indexUrl Url to the index payload.
+     * @param input Url to the index payload, or direct GeoJSON.
      */
-    registerIndex(indexId: string, indexUrl: string): Promise<void> {
+    registerIndex(indexId: string, input: URL | GeoJson): Promise<void> {
         const message: WorkerTilerProtocol.RegisterIndexRequest = {
             type: WorkerTilerProtocol.Requests.RegisterIndex,
             id: indexId,
-            url: indexUrl
+            input: input instanceof URL ? input.href : (input as GeoJson)
         };
         return this.workerSet.invokeRequest(this.serviceId, message);
     }

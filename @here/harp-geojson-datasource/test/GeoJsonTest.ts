@@ -17,7 +17,7 @@ import { assert } from "chai";
 import * as sinon from "sinon";
 import * as THREE from "three";
 
-import { GeometryType, StyleSet, StyleSetEvaluator } from "@here/harp-datasource-protocol";
+import { GeoJson, GeometryType, StyleSet, StyleSetEvaluator } from "@here/harp-datasource-protocol";
 import {
     Projection,
     TileKey,
@@ -28,7 +28,6 @@ import { ColorCache, MapView } from "@here/harp-mapview";
 import { DataProvider, TileDataSource, TileFactory } from "@here/harp-mapview-decoder";
 import * as TestUtils from "@here/harp-test-utils/lib/WebGLStub";
 
-import { GeoJson } from "../lib/GeoJsonDataType";
 import { GeoJsonTileDecoder } from "../lib/GeoJsonDecoder";
 import { GeoJsonTile } from "../lib/GeoJsonTile";
 import { Flattener } from "./../lib/utils/Flattener";

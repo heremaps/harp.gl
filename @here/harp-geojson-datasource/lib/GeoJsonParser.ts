@@ -7,6 +7,9 @@
 import {
     ExtendedTileInfo,
     ExtendedTileInfoWriter,
+    Feature,
+    FeatureDetails,
+    GeoJson,
     isCirclesTechnique,
     isDashedLineTechnique,
     isFillTechnique,
@@ -23,7 +26,6 @@ import {
 import { GeoCoordinates, Projection } from "@here/harp-geoutils";
 import { LoggerManager } from "@here/harp-utils";
 import * as THREE from "three";
-import { Feature, FeatureDetails, GeoJson } from "./GeoJsonDataType";
 import { Flattener } from "./utils/Flattener";
 
 const logger = LoggerManager.instance.create("GeoJsonFeatureParser");

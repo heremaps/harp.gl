@@ -5,6 +5,7 @@
  */
 
 import { TileKey } from "@here/harp-geoutils";
+import { GeoJson } from "../lib/GeoJsonDataType";
 
 /**
  * General type tiler which can be used to provide tile untiled payloads.
@@ -23,9 +24,9 @@ export interface ITiler {
      * tiled payloads using `getTile`.
      *
      * @param indexId Index identifier.
-     * @param indexUrl Url to the index payload.
+     * @param indexUrl Url to the index payload, or direct GeoJson.
      */
-    registerIndex(indexId: string, indexUrl: string): Promise<void>;
+    registerIndex(indexId: string, indexUrl: URL | GeoJson): Promise<void>;
 
     /**
      * Retrieves a tile for a previously registered index.
