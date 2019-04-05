@@ -107,10 +107,7 @@ export class MercatorProjection implements Projection {
         geoBox: GeoBox,
         result?: WorldBoundingBox
     ): WorldBoundingBox {
-        const center = geoBox.center;
-        const worldCenter = this.projectPoint(
-            new GeoCoordinates(center.latitude, center.longitude, 0)
-        );
+        const worldCenter = this.projectPoint(geoBox.center);
         const worldNorth =
             (MercatorProjection.latitudeClampProject(geoBox.northEast.latitudeInRadians) * 0.5 +
                 0.5) *

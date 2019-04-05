@@ -10,6 +10,7 @@ export * from "./lib/MapViewPoints";
 export * from "./lib/composing";
 export * from "./lib/DataSource";
 export * from "./lib/DecodedTileHelpers";
+export * from "./lib/ElevationRangeSource";
 export * from "./lib/image/Image";
 export * from "./lib/image/ImageCache";
 export * from "./lib/image/MapViewImageCache";
