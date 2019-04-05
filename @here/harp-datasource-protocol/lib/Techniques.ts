@@ -26,7 +26,6 @@ export type Technique =
     | StandardExtrudedLineTechnique
     | ExtrudedPolygonTechnique
     | ShaderTechnique
-    | LandmarkTechnique
     | TextTechnique
     | NoneTechnique;
 
@@ -930,11 +929,6 @@ export interface ShaderTechnique extends BaseTechnique {
     primitive: "point" | "line" | "segments" | "mesh";
 }
 
-// deprecated, same as StandardTechnique left for backwards compatibility
-export interface LandmarkTechnique extends BaseStandardTechnique {
-    name: "landmark";
-}
-
 /**
  * Technique used to render a geometry with a texture.
  * When using this technique, the datasource will produce texture coordinates in
@@ -1183,13 +1177,6 @@ export function isStandardTexturedTechnique(
     technique: Technique
 ): technique is StandardTexturedTechnique {
     return technique.name === "standard-textured";
-}
-
-/**
- * Type guard to check if an object is an instance of [[LandmarkTechnique]].
- */
-export function isLandmarkTechnique(technique: Technique): technique is LandmarkTechnique {
-    return technique.name === "landmark";
 }
 
 /**
