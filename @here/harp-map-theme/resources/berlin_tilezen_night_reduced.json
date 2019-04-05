@@ -1788,38 +1788,6 @@
         },
         "renderOrder": 100
       }
-    ],
-    "landmark": [
-      {
-        "when": "$layer == 'landmark' && ($enableLandmarkTextures && $hasTexture)",
-        "technique": "standard-textured",
-        "attr": {
-          "color": "#1F2020",
-          "roughness": 1,
-          "metalness": 0.2,
-          "emissive": "#1F2020",
-          "emissiveIntensity": 0.1,
-          "fadeNear": 0.9,
-          "fadeFar": 1
-        },
-        "renderOrder": 110,
-        "final": true
-      },
-      {
-        "when": "$layer == 'landmark'",
-        "technique": "standard",
-        "attr": {
-          "color": "#C2C4C6",
-          "roughness": 1.95,
-          "metalness": 0.85,
-          "emissive": "#C2C4C6",
-          "emissiveIntensity": 0.6,
-          "vertexColors": false,
-          "fadeNear": 0.9,
-          "fadeFar": 1
-        },
-        "renderOrder": 110
-      }
     ]
   }
 }

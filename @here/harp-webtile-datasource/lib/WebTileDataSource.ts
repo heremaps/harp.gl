@@ -246,7 +246,7 @@ class WebTile extends Tile {
  *     appCode: <appCode>
  * });
  * ```
- * @see [[DataSource]], [[OmvDataSource]], [[LandmarkDataSource]].
+ * @see [[DataSource]], [[OmvDataSource]].
  */
 export class WebTileDataSource extends DataSource {
     /**

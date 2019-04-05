@@ -1018,7 +1018,7 @@ export interface Style {
 
     /**
      * Technique name. Must be one of `"line"`, `"fill"`, `"solid-line"`, `"dashed-line"`,
-     * `"extruded-line"`, `"extruded-polygon"`, `"text"`, `"landmark"`, or `"none"`.
+     * `"extruded-line"`, `"extruded-polygon"`, `"text"`, or `"none"`.
      */
     technique?: string;
 

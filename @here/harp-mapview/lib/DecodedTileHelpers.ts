@@ -246,7 +246,6 @@ export function getObjectConstructor(technique: Technique): ObjectConstructor | 
         case "extruded-line":
         case "standard":
         case "standard-textured":
-        case "landmark":
         case "extruded-polygon":
         case "fill":
         case "solid-line":
@@ -319,7 +318,6 @@ export function getMaterialConstructor(technique: Technique): MaterialConstructo
 
         case "standard":
         case "standard-textured":
-        case "landmark":
         case "extruded-polygon":
             return MapMeshStandardMaterial;
 
