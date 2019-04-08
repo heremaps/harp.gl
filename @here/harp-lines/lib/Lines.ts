@@ -30,7 +30,7 @@ export function createLineGeometry(
         return geometry;
     }
 
-    const pointCount = polyline.length / 2;
+    const pointCount = polyline.length / 3;
     const V = geometry.vertices;
     const I = geometry.indices;
 
@@ -41,8 +41,8 @@ export function createLineGeometry(
     let sum = 0;
     L[0] = 0;
     for (let i = 0; i < pointCount - 1; ++i) {
-        const dx = polyline[(i + 1) * 2] - polyline[i * 2];
-        const dy = polyline[(i + 1) * 2 + 1] - polyline[i * 2 + 1];
+        const dx = polyline[(i + 1) * 3] - polyline[i * 3];
+        const dy = polyline[(i + 1) * 3 + 1] - polyline[i * 3 + 1];
         const len = Math.sqrt(dx * dx + dy * dy);
         sum = sum + len;
         L[i + 1] = sum;
@@ -50,11 +50,12 @@ export function createLineGeometry(
     }
 
     const isClosed =
-        polyline[0] === polyline[polyline.length - 2] &&
-        polyline[1] === polyline[polyline.length - 1];
+        polyline[0] === polyline[polyline.length - 3] &&
+        polyline[1] === polyline[polyline.length - 2];
     for (let i = 0; i < pointCount; ++i) {
-        const x = polyline[i * 2];
-        const y = polyline[i * 2 + 1];
+        const x = polyline[i * 3];
+        const y = polyline[i * 3 + 1];
+        const z = polyline[i * 3 + 2];
         const T1 =
             isClosed && i === 0 ? tangents[tangents.length - 1] : tangents[Math.max(0, i - 1)];
         const T2 =
@@ -65,30 +66,34 @@ export function createLineGeometry(
             const L1 = L[i - 1];
             const L2 = L[i];
             if (!highPrecision) {
-                V.push(x, y, L1, L2, T1[0], T1[1], T2[0], T2[1], 0, 0, +1, -1);
-                V.push(x, y, L1, L2, T1[0], T1[1], T2[0], T2[1], 0, 0, +1, +1);
+                V.push(x, y, z, L1, L2, T1[0], T1[1], T2[0], T2[1], +1, -1);
+                V.push(x, y, z, L1, L2, T1[0], T1[1], T2[0], T2[1], +1, +1);
             } else {
                 const hx = Math.fround(x);
                 const hy = Math.fround(y);
+                const hz = Math.fround(z);
                 const lx = x - hx;
                 const ly = y - hy;
-                V.push(hx, hy, lx, ly, L1, L2, T1[0], T1[1], T2[0], T2[1], 0, 0, +1, -1);
-                V.push(hx, hy, lx, ly, L1, L2, T1[0], T1[1], T2[0], T2[1], 0, 0, +1, +1);
+                const lz = z - hz;
+                V.push(hx, hy, hz, lx, ly, lz, L1, L2, T1[0], T1[1], T2[0], T2[1], +1, -1);
+                V.push(hx, hy, hz, lx, ly, lz, L1, L2, T1[0], T1[1], T2[0], T2[1], +1, +1);
             }
         }
         if (i + 1 < pointCount) {
             const L1 = L[Math.min(i, L.length - 1)];
             const L2 = L[Math.min(i + 1, L.length - 1)];
             if (!highPrecision) {
-                V.push(x, y, L1, L2, T1[0], T1[1], T2[0], T2[1], 0, 0, -1, -1);
-                V.push(x, y, L1, L2, T1[0], T1[1], T2[0], T2[1], 0, 0, -1, +1);
+                V.push(x, y, z, L1, L2, T1[0], T1[1], T2[0], T2[1], -1, -1);
+                V.push(x, y, z, L1, L2, T1[0], T1[1], T2[0], T2[1], -1, +1);
             } else {
                 const hx = Math.fround(x);
                 const hy = Math.fround(y);
+                const hz = Math.fround(z);
                 const lx = x - hx;
                 const ly = y - hy;
-                V.push(hx, hy, lx, ly, L1, L2, T1[0], T1[1], T2[0], T2[1], 0, 0, -1, -1);
-                V.push(hx, hy, lx, ly, L1, L2, T1[0], T1[1], T2[0], T2[1], 0, 0, -1, +1);
+                const lz = z - hz;
+                V.push(hx, hy, hz, lx, ly, lz, L1, L2, T1[0], T1[1], T2[0], T2[1], -1, -1);
+                V.push(hx, hy, hz, lx, ly, lz, L1, L2, T1[0], T1[1], T2[0], T2[1], -1, +1);
             }
         }
     }
@@ -115,21 +120,22 @@ export function createSimpleLineGeometry(
         return geometry;
     }
 
-    const pointCount = polyline.length / 2;
+    const pointCount = polyline.length / 3;
     const V = geometry.vertices;
     const I = geometry.indices;
     let index = V.length / 3;
 
     for (let i = 0; i < pointCount; ++i, index++) {
-        const x = polyline[i * 2];
-        const y = polyline[i * 2 + 1];
+        const x = polyline[i * 3];
+        const y = polyline[i * 3 + 1];
+        const z = polyline[i * 3 + 2];
         if (i > 0) {
             I.push(index);
         }
         if (i < pointCount - 1) {
             I.push(index);
         }
-        V.push(x, y, 0);
+        V.push(x, y, z);
     }
 
     return geometry;
@@ -148,26 +154,24 @@ export interface VertexAttributeDescriptor {
  * Declares all the vertex attributes used for rendering a line using the [[SolidLineMaterial]].
  */
 export const LINE_VERTEX_ATTRIBUTE_DESCRIPTORS: VertexAttributeDescriptor[] = [
-    { name: "position", itemSize: 2, offset: 0 },
-    { name: "segment", itemSize: 2, offset: 2 },
-    { name: "tangents", itemSize: 4, offset: 4 },
-    { name: "angles", itemSize: 2, offset: 8 },
-    { name: "texcoord", itemSize: 2, offset: 10 }
+    { name: "position", itemSize: 3, offset: 0 },
+    { name: "segment", itemSize: 2, offset: 3 },
+    { name: "tangents", itemSize: 4, offset: 5 },
+    { name: "texcoord", itemSize: 2, offset: 9 }
 ];
 
 /** Stride size for line vertex data. */
-export const LINE_STRIDE_SIZE = 12;
+export const LINE_STRIDE_SIZE = 11;
 
 /**
  * Declares all the vertex attributes used for rendering a line using the
  * [[HighPrecisionLineMaterial]].
  */
 export const HP_LINE_VERTEX_ATTRIBUTE_DESCRIPTORS: VertexAttributeDescriptor[] = [
-    { name: "position", itemSize: 2, offset: 0 },
-    { name: "positionLow", itemSize: 2, offset: 2 },
-    { name: "segment", itemSize: 2, offset: 4 },
-    { name: "tangents", itemSize: 4, offset: 6 },
-    { name: "angles", itemSize: 2, offset: 10 },
+    { name: "position", itemSize: 3, offset: 0 },
+    { name: "positionLow", itemSize: 3, offset: 3 },
+    { name: "segment", itemSize: 2, offset: 6 },
+    { name: "tangents", itemSize: 4, offset: 8 },
     { name: "texcoord", itemSize: 2, offset: 12 }
 ];
 

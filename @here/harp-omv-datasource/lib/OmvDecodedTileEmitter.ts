@@ -35,7 +35,12 @@ import {
     Value
 } from "@here/harp-datasource-protocol";
 import { MapEnv } from "@here/harp-datasource-protocol/lib/Theme";
-import { LINE_VERTEX_ATTRIBUTE_DESCRIPTORS, Lines, triangulateLine } from "@here/harp-lines";
+import {
+    LINE_STRIDE_SIZE,
+    LINE_VERTEX_ATTRIBUTE_DESCRIPTORS,
+    Lines,
+    triangulateLine
+} from "@here/harp-lines";
 import { assert, LoggerManager, Math2D } from "@here/harp-utils";
 import earcut from "earcut";
 import * as THREE from "three";
@@ -206,7 +211,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
             const worldPos = new THREE.Vector3();
 
             for (const geoPoint of geometry) {
-                const { x, y } = this.m_decodeInfo.projection
+                const { x, y, z } = this.m_decodeInfo.projection
                     .projectPoint(geoPoint, worldPos)
                     .sub(this.m_decodeInfo.center);
                 if (shouldCreateTextGeometries) {
@@ -233,7 +238,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
 
                 // Always store the position, otherwise the following POIs will be
                 // misplaced.
-                positions.push(x, y, 0);
+                positions.push(x, y, z);
 
                 if (this.m_gatherFeatureIds) {
                     featureIds.push(featureId);
@@ -281,8 +286,8 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
         for (const polyline of geometry) {
             const line: number[] = [];
             polyline.coordinates.forEach(geoPoint => {
-                const { x, y } = projection.projectPoint(geoPoint, worldPos).sub(center);
-                line.push(x, y);
+                const { x, y, z } = projection.projectPoint(geoPoint, worldPos).sub(center);
+                line.push(x, y, z);
             });
             lines.push(line);
         }
@@ -367,7 +372,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                         let maxX = Number.MIN_SAFE_INTEGER;
                         let minY = Number.MAX_SAFE_INTEGER;
                         let maxY = Number.MIN_SAFE_INTEGER;
-                        for (let i = 0; i < aLine.length; i += 2) {
+                        for (let i = 0; i < aLine.length; i += 3) {
                             const x = aLine[i];
                             const y = aLine[i + 1];
                             if (x < minX) {
@@ -437,7 +442,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                                 name: "position",
                                 type: "float",
                                 buffer: new Float32Array(aLine).buffer,
-                                itemCount: 2
+                                itemCount: 3
                             },
                             texts: [0],
                             stringCatalog: [text, imageTexture],
@@ -567,8 +572,8 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                     let ringTexCoords: number[] | undefined;
                     for (let coordIdx = 0; coordIdx < outline.coordinates.length; ++coordIdx) {
                         const geoPoint = outline.coordinates[coordIdx];
-                        const { x, y } = projection.projectPoint(geoPoint, worldPos).sub(center);
-                        ringContour.push(x, y);
+                        const { x, y, z } = projection.projectPoint(geoPoint, worldPos).sub(center);
+                        ringContour.push(x, y, z);
 
                         if (hasEdges && outline.outlines !== undefined) {
                             const edge = outline.outlines[coordIdx];
@@ -580,14 +585,14 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                         }
 
                         if (isTextured) {
-                            const { x: u, y: v } = texCoordProjection
+                            const { x: u, y: v, z: w } = texCoordProjection
                                 .projectPoint(geoPoint, texCoord)
                                 .sub(texCoordBox.min)
                                 .divide(texCoordBoxSize);
                             if (ringTexCoords === undefined) {
-                                ringTexCoords = [u, v];
+                                ringTexCoords = [u, v, w];
                             } else {
-                                ringTexCoords.push(u, v);
+                                ringTexCoords.push(u, v, w);
                             }
                         }
                     }
@@ -782,11 +787,10 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
 
                 let vertices: number[] = contour;
                 let texCoords: number[] | undefined = contourTexCoords;
-                if (isExtruded) {
+                if (isExtruded && contourOutlines !== undefined) {
                     addExtrudedWalls(
                         indices,
                         baseVertex,
-                        contour,
                         contourOutlines,
                         extrudedPolygonTechnique.boundaryWalls
                     );
@@ -806,24 +810,23 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                 // Repeat the process for all the inner rings (holes).
                 const holes: number[] = [];
                 for (; ringIndex < rings.length && rings[ringIndex].isInnerRing; ++ringIndex) {
-                    holes.push(vertices.length / 2);
+                    holes.push(vertices.length / 3);
 
                     contour = rings[ringIndex].contour;
                     contourOutlines = rings[ringIndex].contourOutlines;
                     contourTexCoords = rings[ringIndex].countourTexCoords;
                     // As we are predicting the indexes before the vertices are added,
                     // the vertex offset has to be taken into account
-                    const vertexOffset = vertices.length;
+                    const vertexOffset = (vertices.length / 3) * 2;
                     vertices = vertices.concat(contour);
                     if (contourTexCoords && texCoords) {
                         texCoords = texCoords.concat(contourTexCoords);
                     }
 
-                    if (isExtruded) {
+                    if (isExtruded && contourOutlines !== undefined) {
                         addExtrudedWalls(
                             indices,
                             vertexOffset + baseVertex,
-                            contour,
                             contourOutlines,
                             extrudedPolygonTechnique.boundaryWalls
                         );
@@ -843,25 +846,33 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
 
                 try {
                     // Triangulate the footprint polyline.
-                    const triangles = earcut(vertices, holes);
+                    const triangles = earcut(vertices, holes, 3);
 
                     // Add the footprint/roof vertices to the position buffer.
-                    for (let i = 0; i < vertices.length; i += 2) {
+                    for (let i = 0; i < vertices.length; i += 3) {
                         let scaleFactor = 1.0;
                         if (isExtruded && constantHeight !== true) {
                             tempVertOrigin.set(
                                 tempTileOrigin.x + vertices[i],
                                 tempTileOrigin.y + vertices[i + 1],
-                                tempTileOrigin.z
+                                tempTileOrigin.z + vertices[i + 2]
                             );
                             scaleFactor = this.m_decodeInfo.projection.getScaleFactor(
                                 tempVertOrigin
                             );
                         }
 
-                        positions.push(vertices[i], vertices[i + 1], minHeight * scaleFactor);
+                        positions.push(
+                            vertices[i],
+                            vertices[i + 1],
+                            vertices[i + 2] + minHeight * scaleFactor
+                        );
                         if (isExtruded) {
-                            positions.push(vertices[i], vertices[i + 1], height * scaleFactor);
+                            positions.push(
+                                vertices[i],
+                                vertices[i + 1],
+                                vertices[i + 2] + height * scaleFactor
+                            );
                         } else if (isTextured && texCoords) {
                             textureCoordinates.push(texCoords[i], texCoords[i + 1]);
                         }
@@ -1078,7 +1089,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
             const index = new Uint32Array(indices).buffer as ArrayBuffer;
             const attr: InterleavedBufferAttribute = {
                 type: "float",
-                stride: 12,
+                stride: LINE_STRIDE_SIZE,
                 buffer,
                 attributes: LINE_VERTEX_ATTRIBUTE_DESCRIPTORS
             };

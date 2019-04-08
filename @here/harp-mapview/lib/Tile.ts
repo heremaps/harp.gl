@@ -969,9 +969,9 @@ export class Tile implements CachedResource {
 
             let splitIndex = -1;
 
-            for (let i = 0; i < textPath.path.length - 2; i += 2) {
+            for (let i = 0; i < textPath.path.length - 3; i += 3) {
                 p0.set(textPath.path[i], textPath.path[i + 1]);
-                p1.set(textPath.path[i + 2], textPath.path[i + 3]);
+                p1.set(textPath.path[i + 3], textPath.path[i + 4]);
                 const tangent = p1.sub(p0).normalize();
 
                 if (i > 0) {
@@ -991,7 +991,7 @@ export class Tile implements CachedResource {
             if (splitIndex > 0) {
                 // split off the valid first path points with a clone of the path
                 const firstTextPath = {
-                    path: textPath.path.slice(0, splitIndex + 2),
+                    path: textPath.path.slice(0, splitIndex + 3),
                     text: textPath.text,
                     // Used for placement priorities only, can be kept although it could also be
                     // recomputed
@@ -1065,7 +1065,7 @@ export class Tile implements CachedResource {
                 }
 
                 const path: THREE.Vector2[] = [];
-                for (let i = 0; i < textPath.path.length; i += 2) {
+                for (let i = 0; i < textPath.path.length; i += 3) {
                     path.push(new THREE.Vector2(textPath.path[i], textPath.path[i + 1]));
                 }
 

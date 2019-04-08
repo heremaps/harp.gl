@@ -14,7 +14,7 @@ describe("Outlines", function() {
     const indices: number[] = [];
     const outlineIndicesA: number[] = [];
     const outlineIndicesB: number[] = [];
-    const contour = [-0.5, -0.5, 0.5, -0.5, 0.5, 0.5, -0.5, 0.5];
+    const contour = [-0.5, -0.5, 0.0, 0.5, -0.5, 0.0, 0.5, 0.5, 0.0, -0.5, 0.5, 0.0];
     beforeEach(() => {
         indices.length = 0;
         outlineIndicesA.length = 0;

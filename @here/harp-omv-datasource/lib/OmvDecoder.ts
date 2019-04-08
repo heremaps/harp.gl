@@ -68,14 +68,14 @@ export class Ring {
     }
 
     area(): number {
-        const n = this.contour.length / 2;
+        const n = this.contour.length / 3;
 
         let area = 0.0;
 
         for (let p = n - 1, q = 0; q < n; p = q++) {
             area +=
-                this.contour[p * 2] * this.contour[q * 2 + 1] -
-                this.contour[q * 2] * this.contour[p * 2 + 1];
+                this.contour[p * 3] * this.contour[q * 3 + 1] -
+                this.contour[q * 3] * this.contour[p * 3 + 1];
         }
 
         return area / 2;

@@ -186,7 +186,7 @@ describe("@here-geojson-datasource", () => {
         lineCoords.forEach((value, index) => {
             lineCoordsArray[index] = value;
         });
-        assert.deepEqual(lineCoordsArray, [18270312, -18381676, 18492950, -18604632]);
+        assert.deepEqual(lineCoordsArray, [18270312, -18381676, 0, 18492950, -18604632, 0]);
 
         // Polygon feature support.
         const polygonGeometry = decodedTile.geometries.find(o => o.type === GeometryType.Polygon)!;

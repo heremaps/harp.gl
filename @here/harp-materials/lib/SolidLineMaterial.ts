@@ -10,7 +10,7 @@ import { FadingFeature, FadingFeatureParameters } from "./MapMeshMaterials";
 import linesShaderChunk from "./ShaderChunks/LinesChunks";
 
 const vertexSource: string = `
-attribute vec2 position;
+attribute vec3 position;
 attribute vec4 tangents;
 attribute vec2 segment;
 attribute vec2 angles;
@@ -20,7 +20,7 @@ uniform mat4 modelViewMatrix;
 uniform mat4 projectionMatrix;
 uniform float lineWidth;
 
-varying vec2 vPosition;
+varying vec3 vPosition;
 varying vec2 vTexcoord;
 varying vec2 vSegment;
 varying float vLinewidth;
@@ -45,13 +45,13 @@ void main() {
     vColor = color.rgb;
     #endif
 
-    vec2 pos = position;
+    vec3 pos = position;
     vec2 uvs = texcoord;
-    projectVertex(segment, normalize(tangents.xy), normalize(tangents.zw), lineWidth, pos, uvs);
+    projectVertex(segment, normalize(tangents.xy), normalize(tangents.zw), lineWidth, pos.xy, uvs);
 
     vPosition = pos;
     vTexcoord = vec2(uvs.x, uvs.y * lineWidth);
-    vec4 mvPosition = modelViewMatrix * vec4(pos, 0.0, 1.0);
+    vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
     gl_Position = projectionMatrix * mvPosition;
 
     #ifdef USE_FADING
@@ -73,7 +73,7 @@ uniform float dashSize;
 uniform float gapSize;
 #endif
 
-varying vec2 vPosition;
+varying vec3 vPosition;
 varying vec2 vTexcoord;
 varying vec2 vSegment;
 varying float vLinewidth;
@@ -95,7 +95,7 @@ void main() {
     float alpha = opacity;
 
     #if TILE_CLIP
-    tileClip(vPosition, tileSize);
+    tileClip(vPosition.xy, tileSize);
     #endif
 
     #if DASHED_LINE

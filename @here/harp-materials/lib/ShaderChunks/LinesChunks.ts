@@ -44,17 +44,7 @@ void tileClip(vec2 tilePos, vec2 tileSize) {
         discard;
 }
 `,
-    high_precision_vert2D_func: `
-vec2 subtractDblEyePos( const in vec2 pos ) {
-    vec2 t1 = positionLow - u_eyepos_lowpart.xy;
-    vec2 e = t1 - positionLow.xy;
-    vec2 t2 = ((-u_eyepos_lowpart.xy - e) + (positionLow.xy - (t1 - e))) + pos - u_eyepos.xy;
-    vec2 high_delta = t1 + t2;
-    vec2 low_delta = t2 - (high_delta - t1);
-    return (high_delta + low_delta);
-}
-`,
-    high_precision_vert3D_func: `
+    high_precision_vert_func: `
 vec3 subtractDblEyePos( const in vec3 pos ) {
     vec3 t1 = positionLow - u_eyepos_lowpart;
     vec3 e = t1 - positionLow;
