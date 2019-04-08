@@ -1452,10 +1452,14 @@ export class MapView extends THREE.EventDispatcher {
      */
     get pixelToWorld(): number {
         if (this.m_pixelToWorld === undefined) {
-            const { width, height } = this.getCanvasClientSize();
-            const center = this.getWorldPositionAt(width * 0.5, height);
-            const unitOffset = this.getWorldPositionAt(width * 0.5 + 1.0, height);
-
+            const size = this.getCanvasClientSize();
+            const { centerX, centerY } = { centerX: size.width * 0.5, centerY: size.height * 0.5 };
+            // Calculate canvas middle point (center of projection) world position.
+            const center = this.getWorldPositionAt(centerX, centerY);
+            // Calculate world point that is offset by one pixel in x-axis (or camera right vector)
+            // direction, this ensures that we are perspective/tilt indepenent.
+            const unitOffset = this.getWorldPositionAt(centerX + 1.0, centerY);
+            // Our ratio equals the distance between points in the world space.
             this.m_pixelToWorld =
                 center !== null && unitOffset !== null ? unitOffset.sub(center).length() : 1.0;
         }
