@@ -89,6 +89,16 @@ const DEFAULT_MAX_ZOOM_LEVEL = 20;
 const DEFAULT_MIN_CAMERA_HEIGHT = 20;
 
 /**
+ * Amount of framerate values to pick average from
+ */
+const FRAME_RATE_RING_SIZE = 12;
+
+/**
+ * Default starting value for FPS computation.
+ */
+const FALLBACK_FRAME_RATE = 30;
+
+/**
  * The type of `RenderEvent`.
  */
 export interface RenderEvent extends THREE.Event {
@@ -454,6 +464,17 @@ export interface MapViewOptions {
     dynamicPixelRatio?: number;
 
     /**
+     * Set maximum FPS (Frames Per Second). If VSync in enabled, the specified number may not be
+     * reached, but instead the next smaller number than `maxFps` that is equal to the refresh rate
+     * divided by an integer number.
+     *
+     * E.g.: If the monitors refresh rate is set to 60hz, and if `maxFps` is set to a value of `40`
+     * (60hz/1.5), the actual used FPS may be 30 (60hz/2). For displays that have a refresh rate of
+     * 60hz, good values for `maxFps` are 30, 20, 15, 12, 10, 6, 3 and 1. A value of `0` is ignored.
+     */
+    maxFps?: number;
+
+    /**
      * @hidden
      * Disable all fading animations for debugging and performance measurement.
      */
@@ -534,6 +555,8 @@ export class MapView extends THREE.EventDispatcher {
     private m_updatePending: boolean = false;
     private m_renderer: THREE.WebGLRenderer;
     private m_frameNumber = 0;
+    private m_maxFps = 0;
+    private m_detectedFps: number = FALLBACK_FRAME_RATE;
 
     private m_textElementsRenderer?: TextElementsRenderer;
     private m_textRenderStyleCache = new TextRenderStyleCache();
@@ -560,8 +583,13 @@ export class MapView extends THREE.EventDispatcher {
     private m_previousFrameTimeStamp?: number;
     private m_firstFrameRendered = false;
     private m_firstFrameComplete = false;
+    private m_previousRequestAnimationTime?: number;
+    private m_targetRequestAnimationTime?: number;
+    private m_frameTimeIndex: number = 0;
+    private readonly m_frameTimeRing: number[] = [];
 
     private handleRequestAnimationFrame: any;
+    private handlePostponedAnimationFrame: any;
 
     private m_pickHandler: PickHandler;
 
@@ -653,6 +681,10 @@ export class MapView extends THREE.EventDispatcher {
 
         this.m_pixelRatio = options.pixelRatio;
 
+        if (options.maxFps !== undefined) {
+            this.m_maxFps = Math.max(0, options.maxFps);
+        }
+
         this.m_options.enableStatistics = this.m_options.enableStatistics === true;
 
         this.m_languages = this.m_options.languages || MapViewUtils.getBrowserLanguages();
@@ -667,6 +699,7 @@ export class MapView extends THREE.EventDispatcher {
         }
 
         this.handleRequestAnimationFrame = this.renderFunc.bind(this);
+        this.handlePostponedAnimationFrame = this.postponedAnimationFrame.bind(this);
         this.m_pickHandler = new PickHandler(this, this.m_options.enableRoadPicking === true);
 
         // Initialization of the stats
@@ -963,6 +996,17 @@ export class MapView extends THREE.EventDispatcher {
      */
     set forceCameraAspect(aspect: number | undefined) {
         this.m_forceCameraAspect = aspect;
+    }
+
+    /**
+     * Maximum FPS. If defined (and > 0) it is the maximum FPS that is used.
+     */
+    set maxFps(fps: number) {
+        this.m_maxFps = Math.max(0, fps);
+    }
+
+    get maxFps(): number {
+        return Math.max(0, this.m_maxFps);
     }
 
     /**
@@ -1804,6 +1848,25 @@ export class MapView extends THREE.EventDispatcher {
         this.m_zoomLevel = MapViewUtils.calculateZoomLevelFromDistance(zoomLevelDistance, this);
     }
 
+    private detectCurrentFps(now: number) {
+        // Skip the first frames, they are from not originated from requestAnimationFrame()
+        if (this.m_previousRequestAnimationTime !== undefined && this.m_frameNumber > 5) {
+            const currentFps = 1000 / (now - this.m_previousRequestAnimationTime);
+            this.m_frameTimeRing[this.m_frameTimeIndex % FRAME_RATE_RING_SIZE] = currentFps;
+            this.m_frameTimeIndex++;
+
+            const capturedFrames = Math.min(this.m_frameTimeIndex, FRAME_RATE_RING_SIZE);
+
+            let sum = 0;
+            for (let i = 0; i < capturedFrames; i++) {
+                sum += this.m_frameTimeRing[i];
+            }
+
+            this.m_detectedFps = sum / capturedFrames;
+        }
+        this.m_previousRequestAnimationTime = now;
+    }
+
     /**
      * Draw a new frame.
      */
@@ -1815,8 +1878,47 @@ export class MapView extends THREE.EventDispatcher {
         // rendering multiple times during a single frame.
         if (this.m_animationFrameHandle !== undefined) {
             cancelAnimationFrame(this.m_animationFrameHandle);
+            this.m_animationFrameHandle = undefined;
         }
-        this.m_animationFrameHandle = requestAnimationFrame(this.handleRequestAnimationFrame);
+
+        if (this.m_maxFps <= 0) {
+            // Render at maximum FPS.
+            this.m_animationFrameHandle = requestAnimationFrame(this.handleRequestAnimationFrame);
+            return;
+        }
+
+        // Magic ingredient to compensate time flux.
+        const fudgeTimeInMs = 3;
+        const vSyncFrameTime = 1000 / this.m_detectedFps;
+        const frameInterval = 1000 / this.m_maxFps;
+
+        const previousFrameTime =
+            this.m_previousFrameTimeStamp === undefined ? 0 : this.m_previousFrameTimeStamp;
+
+        // Compute a practical value to compare against.
+        const targetTime = previousFrameTime + frameInterval - vSyncFrameTime - fudgeTimeInMs;
+
+        this.m_targetRequestAnimationTime = targetTime;
+        this.postponedAnimationFrame(previousFrameTime);
+    }
+
+    private postponedAnimationFrame(now: number) {
+        if (this.m_targetRequestAnimationTime === undefined) {
+            return;
+        }
+
+        if (this.m_animationFrameHandle !== undefined) {
+            cancelAnimationFrame(this.m_animationFrameHandle);
+            this.m_animationFrameHandle = undefined;
+        }
+
+        this.detectCurrentFps(now);
+
+        this.m_animationFrameHandle = requestAnimationFrame(
+            now > this.m_targetRequestAnimationTime
+                ? this.handleRequestAnimationFrame
+                : this.handlePostponedAnimationFrame
+        );
     }
 
     /**
@@ -1862,7 +1964,7 @@ export class MapView extends THREE.EventDispatcher {
         const stats = PerformanceStatistics.instance;
         const gatherStatistics: boolean = stats.enabled;
 
-        const frameStartTime = PerformanceTimer.now();
+        const frameStartTime = time;
 
         RENDER_EVENT.time = time;
         this.dispatchEvent(RENDER_EVENT);
