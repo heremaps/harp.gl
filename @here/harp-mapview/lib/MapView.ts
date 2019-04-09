@@ -1897,21 +1897,16 @@ export class MapView extends THREE.EventDispatcher {
 
         const renderList = this.m_visibleTiles.dataSourceTileList;
 
-        renderList.forEach(({ zoomLevel, renderedTiles, visibleTiles, numTilesLoading }) => {
-            // The visible tiles may not actually be rendered, but they have to stay in the cache
-            // for the next frame.
-            visibleTiles.forEach(tile => {
-                tile.frameNumLastVisible = this.m_frameNumber;
-            });
+        renderList.forEach(({ zoomLevel, renderedTiles }) => {
             renderedTiles.forEach(tile => {
                 this.renderTileObjects(tile, zoomLevel);
+                //We know that rendered tiles are visible (in the view frustum), so we update the
+                //frame number, note we don't do this for the visibleTiles because some may still be
+                //loading (and therefore aren't visible in the sense of being seen on the screen).
+                //Note also, this number isn't currently used anywhere so should be considered to be
+                //removed in the future (though could be good for debugging purposes).
                 tile.frameNumLastVisible = this.m_frameNumber;
             });
-        });
-
-        // Update the visibility flag on every tile in the cache, so it does not get evicted.
-        this.forEachCachedTile(tile => {
-            tile.isVisible = tile.frameNumLastVisible === this.m_frameNumber;
         });
 
         if (currentFrameEvent !== undefined) {

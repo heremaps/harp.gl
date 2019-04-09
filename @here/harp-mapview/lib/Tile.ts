@@ -50,6 +50,7 @@ import {
     VerticalAlignment
 } from "@here/harp-text-canvas";
 import {
+    assert,
     CachedResource,
     getOptionValue,
     GroupedPriorityList,
@@ -381,11 +382,12 @@ export class Tile implements CachedResource {
     copyrightInfo?: CopyrightInfo[];
 
     /**
-     * Keeping some stats for the individual `Tile`s to analyze caching behavior.
+     * Keeping some stats for the individual [[Tile]]s to analyze caching behavior.
      *
-     * The frame the `Tile` was requested.
+     * The frame the [[Tile]] was last requested. This is required to know when the given [[Tile]]
+     * can be removed from the cache.
      */
-    frameNumRequested: number = -1;
+    frameNumLastRequested: number = -1;
 
     /**
      * The frame the `Tile` was first visible.
@@ -403,12 +405,6 @@ export class Tile implements CachedResource {
      * After removing from cache, this is the number of frames the `Tile` was visible.
      */
     numFramesVisible: number = 0;
-
-    /**
-     * The visibility status of the `Tile`. It is actually visible or planned to become visible, and
-     * as such it should not be removed from cache.
-     */
-    isVisible: boolean = false;
 
     private m_disposed: boolean = false;
 
@@ -458,6 +454,13 @@ export class Tile implements CachedResource {
         this.geoBox = this.dataSource.getTilingScheme().getGeoBox(this.tileKey);
         this.projection.projectBox(this.geoBox, this.boundingBox);
         this.boundingBox.getCenter(this.center);
+    }
+
+    /**
+     * The visibility status of the [[Tile]]. It is actually visible or planned to become visible.
+     */
+    get isVisible(): boolean {
+        return this.frameNumLastRequested === this.dataSource.mapView.frameNumber;
     }
 
     /**
@@ -612,12 +615,7 @@ export class Tile implements CachedResource {
      * Called by [[VisibleTileSet]] to mark that [[Tile]] is visible and it should prepare geometry.
      */
     prepareForRender() {
-        // If the tile is not ready for display, or if it has become invisible while being loaded,
-        // for example by moving the camera, the tile is not finished and its geometry is not
-        // created. This is an optimization for fast camera movements and zooms.
-        if (!this.isVisible) {
-            return;
-        }
+        assert(this.isVisible);
 
         // Prevents of unnecessary re creation of objects
         if (this.m_disposed || this.m_decodedTile === undefined) {
@@ -931,9 +929,8 @@ export class Tile implements CachedResource {
         this.clear();
         this.userTextElements.length = 0;
         this.m_disposed = true;
-
         // Ensure that tile is removable from tile cache.
-        this.isVisible = false;
+        this.frameNumLastRequested = 0;
     }
 
     /**

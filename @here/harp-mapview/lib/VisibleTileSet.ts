@@ -106,7 +106,8 @@ class DataSourceCache {
             this.disposedTiles.push(tile);
         };
         this.tileCache.canEvict = (_, tile) => {
-            return !tile.isVisible;
+            // Tiles can be evicted that weren't requested in the last frame.
+            return tile.frameNumLastRequested !== tile.dataSource.mapView.frameNumber;
         };
     }
 
@@ -154,13 +155,15 @@ export interface DataSourceTileList {
     numTilesLoading: number;
 
     /**
-     * List of tiles we want to render but they might not be renderable yet (e.g. loading).
+     * List of tiles we want to render (i.e. the tiles computed from the zoom level and view
+     * frustum). However some might not be renderable yet (e.g. loading). See [[renderedTiles]] for
+     * the actual list of tiles that the user will see.
      */
     visibleTiles: Tile[];
 
     /**
-     * List of tiles that will be rendered. This includes tiles that are not in the visibleTiles
-     * list but that are used as fallbacks b/c they are still in the cache.
+     * List of tiles that will be rendered. This includes tiles that are not in the
+     * [[visibleTiles]] list but that are used as fallbacks b/c they are still in the cache.
      */
     renderedTiles: Tile[];
 }
@@ -405,9 +408,6 @@ export class VisibleTileSet {
                     continue;
                 }
 
-                // Keep the new tile from being removed from the cache.
-                tile.isVisible = true;
-
                 tile.prepareForRender();
                 allDataSourceTilesLoaded = allDataSourceTilesLoaded && tile.hasGeometry;
                 if (!tile.hasGeometry) {
@@ -466,8 +466,18 @@ export class VisibleTileSet {
     }
 
     getTile(dataSource: DataSource, tileKey: TileKey): Tile | undefined {
+        function updateTile(tileToUpdate?: Tile) {
+            if (tileToUpdate === undefined) {
+                return;
+            }
+            // Keep the tile from being removed from the cache.
+            tileToUpdate.frameNumLastRequested = dataSource.mapView.frameNumber;
+        }
+
         if (!dataSource.cacheable) {
-            return dataSource.getTile(tileKey);
+            const resultTile = dataSource.getTile(tileKey);
+            updateTile(resultTile);
+            return resultTile;
         }
 
         const { tileCache } = this.getOrCreateCache(dataSource);
@@ -475,17 +485,16 @@ export class VisibleTileSet {
         let tile = tileCache.get(tileKey.mortonCode());
 
         if (tile !== undefined) {
+            updateTile(tile);
             return tile;
         }
 
         tile = dataSource.getTile(tileKey);
 
         if (tile !== undefined) {
+            updateTile(tile);
             tileCache.set(tileKey.mortonCode(), tile);
-            // Store the frame number this tile has been requested.
-            tile.frameNumRequested = dataSource.mapView.frameNumber;
         }
-
         return tile;
     }
 
@@ -557,7 +566,7 @@ export class VisibleTileSet {
 
     forEachVisibleTile(fun: (tile: Tile) => void): void {
         for (const listEntry of this.dataSourceTileList) {
-            listEntry.visibleTiles.forEach(fun);
+            listEntry.renderedTiles.forEach(fun);
         }
     }
 
