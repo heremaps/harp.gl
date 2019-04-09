@@ -38,7 +38,7 @@ You have installed 3 key components needed to render basic map:
 
 ### Decoder bundle
 
-Our example will render OMV/MVT tiles in Web Worker, so we can achieve high performance because creating geometry from vector tiles in CPU intensive. For this, we need to create separate bundle with code that will run in Web Workers dedicated to
+Our example will decode OMV/MVT tiles in Web Workers, so we can achieve high performance because creating geometry from vector tiles is CPU intensive. For this, we need to create separate bundle with code that will run in Web Workers dedicated to
 decoding.
 
 You need to add this config to your Webpack config:
@@ -86,7 +86,7 @@ OmvTileDecoderService.start();
 
 ### MapView
 
-Then, you have to create [`MapView`](https://heremaps.github.io/harp.gl/classes/_here_harp_mapview.mapview.html) that is will render map on `mapCanvas`:
+Then, you have to create [`MapView`](https://heremaps.github.io/harp.gl/doc/classes/_here_harp_mapview.mapview.html) that is will render map on `mapCanvas`:
 
 ```javascript
 // index.js
@@ -100,7 +100,7 @@ const mapView = new MapView({
        // for this example, it is assumed that app is server from project root
     decoderUrl: "harp-gl-decoders.bundle.js"
        // note, this URL may vary depending on configuration of webpack
-       // for this example, it is assumed that webpack emits bundles to '/dist'
+       // for this example, it is assumed that webpack emits bundles to project root
 });
 ```
 
@@ -120,7 +120,7 @@ mapView.resize(mapCanvas.clientWidth, mapCanvas.clientHeight);
 ### Attach data source
 
 Last step is adding some
-[`OmvDataSource`](https://heremaps.github.io/harp.gl/classes/_here_harp_omv_datasource.omvdatasource.html)
+[`OmvDataSource`](https://heremaps.github.io/harp.gl/doc/classes/_here_harp_omv_datasource.omvdatasource.html)
 to our `MapView` instance:
 
 ```javascript
@@ -137,15 +137,15 @@ const dataSource = new OmvDataSource({
 mapView.addDataSource(dataSource);
 ```
 
-Note, that this example will uses vector tiles downloaded from HERE XYZ service, and access to these
+Note, that this example uses vector tiles downloaded from HERE XYZ service and access to these
 files is protected by access token. You should replace `your access token for xyz service` with real
 one, see [HERE Credentials](#credentials) section below.
 
 ### Enable user interaction with map
 
-What we've achieved so far is basic, staic non-interactive. If you want to enable control of map
+What we've achieved so far is basic, static non-interactive. If you want to enable control of map
 like panning, rotating use
-[`MapControls`](https://heremaps.github.io/harp.gl/classes/_here_harp_map_controls.mapcontrols.html)
+[`MapControls`](https://heremaps.github.io/harp.gl/doc/classes/_here_harp_map_controls.mapcontrols.html)
 
 Note, this requires additional module: `npm install --save @here/harp-map-controls`.
 
