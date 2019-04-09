@@ -296,6 +296,27 @@ export abstract class DataSource extends THREE.EventDispatcher {
     }
 
     /**
+     * The difference between storage level and display level of tile.
+     *
+     * Storage level offset is a value applied (added) to current zoom level giving
+     * a final tile level being displayed. This way we may differentate current
+     * zoom level from the storage level that is displayed, giving fine grained
+     * control over the tiles being decoded an displayed.
+     */
+    get storageLevelOffset() {
+        return this.m_storageLevelOffset;
+    }
+
+    /**
+     * Setup the relative offset between storage level and display level of tile.
+     *
+     * @param levelOffset Difference between zoom level and display level.
+     */
+    set storageLevelOffset(levelOffset: number) {
+        this.m_storageLevelOffset = levelOffset;
+    }
+
+    /**
      * Computes the zoom level to use for display.
      *
      * @param zoomLevel The zoom level of the [[MapView]].
