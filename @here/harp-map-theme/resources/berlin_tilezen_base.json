@@ -1082,7 +1082,7 @@
       {
         "description": "urban area",
         "when": "$layer ^= 'landuse' && (($geometryType ^= 'polygon') && (kind ^= 'urban_area'))",
-        "technique": "fill",
+        "technique": "none",
         "attr": {
           "color": {
             "interpolation": "Linear",
