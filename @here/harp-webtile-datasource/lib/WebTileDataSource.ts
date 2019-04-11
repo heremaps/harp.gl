@@ -280,6 +280,7 @@ export class WebTileDataSource extends DataSource {
     constructor(private readonly m_options: WebTileDataSourceParameters) {
         super("webtile");
         this.cacheable = true;
+        this.storageLevelOffset = -1;
         this.m_resolution = getOptionValue(m_options.resolution, 512);
         this.m_ppi = getOptionValue(m_options.ppi, 320);
         this.m_tileBaseAddress = m_options.tileBaseAddress || WebTileDataSource.TILE_BASE_NORMAL;
