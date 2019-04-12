@@ -99,6 +99,22 @@ export class WorkerBasedTiler implements ITiler {
     }
 
     /**
+     * Update index in the tiler. Indexes registered in the tiler can be later used to retrieved
+     * tiled payloads using `getTile`.
+     *
+     * @param indexId Index identifier.
+     * @param input Url to the index payload, or direct GeoJSON.
+     */
+    updateIndex(indexId: string, input: URL | GeoJson): Promise<void> {
+        const message: WorkerTilerProtocol.UpdateIndexRequest = {
+            type: WorkerTilerProtocol.Requests.UpdateIndex,
+            id: indexId,
+            input: input instanceof URL ? input.href : (input as GeoJson)
+        };
+        return this.workerSet.invokeRequest(this.serviceId, message);
+    }
+
+    /**
      * Retrieves a tile for a previously registered index.
      *
      * @param indexId Index identifier.

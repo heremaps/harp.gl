@@ -7,22 +7,6 @@
 /**
  * Feature details contains `feature.id`, `feature.properties.featureClass` which provides
  * possibility to define style in theme for particular feature.
- *
- * @example <caption><b>Example of theme style:</b></caption>
- * <pre>
- * {
- *     dataSource: "geojson",
- *     when: "type == 'polygon' && <strong>featureClass == 'land'</strong>",
- *     continue: true,
- *     technique: {
- *         name: "fill",
- *         color: "rgb(120, 120, 0)",
- *         renderOrder: 200,
- *         transparent: true,
- *         opacity: 0.2
- *     }
- * }
- * </pre>
  */
 export interface FeatureDetails {
     featureId?: string;

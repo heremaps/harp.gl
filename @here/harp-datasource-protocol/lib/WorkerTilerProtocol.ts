@@ -16,6 +16,7 @@ export namespace WorkerTilerProtocol {
      */
     export enum Requests {
         RegisterIndex = "register-index",
+        UpdateIndex = "update-index",
         TileRequest = "tile-request"
     }
 
@@ -35,6 +36,22 @@ export namespace WorkerTilerProtocol {
         return (
             message && typeof message.type === "string" && message.type === Requests.RegisterIndex
         );
+    }
+
+    /**
+     * This object is sent to the tiler to register a new tile index in the worker.
+     */
+    export interface UpdateIndexRequest extends WorkerServiceProtocol.ServiceRequest {
+        type: Requests.UpdateIndex;
+        id: string;
+        input: string | GeoJson;
+    }
+
+    /**
+     * Type guard to check if an object is an update request for the index registration.
+     */
+    export function isUpdateIndexRequest(message: any): message is UpdateIndexRequest {
+        return message && typeof message.type === "string" && message.type === Requests.UpdateIndex;
     }
 
     /**
