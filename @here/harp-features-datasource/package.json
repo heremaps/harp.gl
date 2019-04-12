@@ -1,0 +1,41 @@
+{
+    "name": "@here/harp-features-datasource",
+    "version": "0.0.1",
+    "description": "Provides support for custom features",
+    "main": "index.js",
+    "typings": "index",
+    "scripts": {
+        "build": "tsc",
+        "test": "cross-env mocha --require source-map-support/register $EXTRA_MOCHA_ARGS ./test/*.js",
+        "prepare": "cross-env tsc --sourceMap false $EXTRA_TSC_ARGS"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git://github.com:heremaps/harp.gl.git"
+    },
+    "author": {
+        "name": "HERE Europe B.V.",
+        "url": "https://here.com"
+    },
+    "license": "Apache-2.0",
+    "dependencies": {
+        "@here/harp-datasource-protocol": "^0.3.1",
+        "@here/harp-geojson-datasource": "^0.3.1",
+        "@here/harp-omv-datasource": "^0.3.1",
+        "@here/harp-mapview": "^0.8.1"
+    },
+    "devDependencies": {
+        "@types/chai": "^4.1.2",
+        "@types/mocha": "^5.2.5",
+        "@types/node": "^10.9.0",
+        "chai": "^4.0.2",
+        "cross-env": "^5.2.0",
+        "mocha": "^5.2.0",
+        "sinon": "^7.2.3",
+        "source-map-support": "^0.5.2",
+        "typescript": "^3.3.0"
+    },
+    "publishConfig": {
+        "access": "public"
+    }
+}

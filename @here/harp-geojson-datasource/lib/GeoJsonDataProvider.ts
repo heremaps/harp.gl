@@ -24,8 +24,8 @@ export class GeoJsonDataProvider implements DataProvider {
      *
      * @returns New `GeoJsonDataProvider`.
      */
-    constructor(readonly name: string, readonly input: URL | GeoJson) {
-        this.m_tiler = ConcurrentTilerFacade.getTiler("omv-tiler");
+    constructor(readonly name: string, public input: URL | GeoJson, workerTilerUrl?: string) {
+        this.m_tiler = ConcurrentTilerFacade.getTiler("omv-tiler", workerTilerUrl);
     }
 
     async connect(): Promise<void> {
@@ -33,6 +33,11 @@ export class GeoJsonDataProvider implements DataProvider {
         this.m_tiler.registerIndex(this.name, this.input).then(() => {
             this.m_registered = true;
         });
+    }
+
+    updateInput(input: URL | GeoJson) {
+        this.input = input;
+        this.m_tiler.updateIndex(this.name, this.input);
     }
 
     ready(): boolean {

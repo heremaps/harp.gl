@@ -28,6 +28,7 @@
     "devDependencies": {
         "@here/harp-debug-datasource": "^0.2.3",
         "@here/harp-geojson-datasource": "^0.3.3",
+        "@here/harp-features-datasource": "^0.0.1",
         "@here/harp-lrucache": "^0.2.3",
         "@here/harp-map-controls": "^0.2.3",
         "@here/harp-map-theme": "^0.2.3",
