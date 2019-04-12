@@ -29,6 +29,15 @@ export interface ITiler {
     registerIndex(indexId: string, indexUrl: URL | GeoJson): Promise<void>;
 
     /**
+     * Update index in the tiler. Indexes registered in the tiler can be later used to retrieved
+     * tiled payloads using `getTile`.
+     *
+     * @param indexId Index identifier.
+     * @param indexUrl Url to the index payload, or direct GeoJson.
+     */
+    updateIndex(indexId: string, indexUrl: URL | GeoJson): Promise<void>;
+
+    /**
      * Retrieves a tile for a previously registered index.
      *
      * @param indexId Index identifier.

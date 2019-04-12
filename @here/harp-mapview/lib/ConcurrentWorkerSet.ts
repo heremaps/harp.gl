@@ -502,7 +502,6 @@ export class ConcurrentWorkerSet {
             } else {
                 logger.error(`[${this.m_options.scriptUrl}]: onWorkerMessage: invalid workerId`);
             }
-
             entry.resolver(response.error, response.response);
         } else if (WorkerServiceProtocol.isInitializedMessage(event.data)) {
             const readyPromise = this.getReadyPromise(event.data.service);

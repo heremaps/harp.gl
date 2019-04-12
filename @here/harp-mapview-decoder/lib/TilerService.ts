@@ -56,6 +56,8 @@ export class TilerService extends WorkerService {
     protected handleRequest(request: any): Promise<WorkerServiceResponse> {
         if (WorkerTilerProtocol.isRegisterIndexRequest(request)) {
             return this.handleRegisterIndexRequest(request);
+        } else if (WorkerTilerProtocol.isUpdateIndexRequest(request)) {
+            return this.handleUpdateIndexRequest(request);
         } else if (WorkerTilerProtocol.isTileRequest(request)) {
             return this.handleTileRequest(request);
         } else {
@@ -79,31 +81,45 @@ export class TilerService extends WorkerService {
     private async handleRegisterIndexRequest(
         message: WorkerTilerProtocol.RegisterIndexRequest
     ): Promise<WorkerServiceResponse> {
-        let tileIndex = this.m_tileIndexMap.get(message.id);
+        const tileIndex = this.m_tileIndexMap.get(message.id);
         if (tileIndex === undefined) {
-            let json = message.input;
-            if (typeof message.input === "string") {
-                const response = await fetch(message.input);
-                if (!response.ok) {
-                    logger.error(`${message.input} Status Text:  ${response.statusText}`);
-                    return { response: {} };
-                }
-                json = await response.json();
-            }
-            tileIndex = geojsonvt.default(json, {
-                maxZoom: 20, // max zoom to preserve detail on
-                indexMaxZoom: 5, // max zoom in the tile index
-                indexMaxPoints: 100000, // max number of points per tile in the tile index
-                tolerance: 3, // simplification tolerance (higher means simpler)
-                extent: 4096, // tile extent
-                buffer: 0, // tile buffer on each side
-                lineMetrics: false, // whether to calculate line metrics
-                promoteId: null, // name of a feature property to be promoted to feature.id
-                generateId: false, // whether to generate feature ids. Cannot be used with promoteId
-                debug: 0 // logging level (0, 1 or 2)
-            });
-            this.m_tileIndexMap.set(message.id, tileIndex);
+            await this.writeIndex(message);
         }
+        return { response: {} };
+    }
+
+    private async handleUpdateIndexRequest(
+        message: WorkerTilerProtocol.UpdateIndexRequest
+    ): Promise<WorkerServiceResponse> {
+        await this.writeIndex(message);
+        return { response: {} };
+    }
+
+    private async writeIndex(
+        message: WorkerTilerProtocol.RegisterIndexRequest | WorkerTilerProtocol.UpdateIndexRequest
+    ): Promise<WorkerServiceResponse> {
+        let json = message.input;
+        if (typeof message.input === "string") {
+            const response = await fetch(message.input);
+            if (!response.ok) {
+                logger.error(`${message.input} Status Text:  ${response.statusText}`);
+                return { response: {} };
+            }
+            json = await response.json();
+        }
+        const tileIndex = geojsonvt.default(json, {
+            maxZoom: 20, // max zoom to preserve detail on
+            indexMaxZoom: 5, // max zoom in the tile index
+            indexMaxPoints: 100000, // max number of points per tile in the tile index
+            tolerance: 3, // simplification tolerance (higher means simpler)
+            extent: 4096, // tile extent
+            buffer: 0, // tile buffer on each side
+            lineMetrics: false, // whether to calculate line metrics
+            promoteId: null, // name of a feature property to be promoted to feature.id
+            generateId: false, // whether to generate feature ids. Cannot be used with promoteId
+            debug: 0 // logging level (0, 1 or 2)
+        });
+        this.m_tileIndexMap.set(message.id, tileIndex);
         return { response: {} };
     }
 }
