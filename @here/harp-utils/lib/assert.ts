@@ -39,3 +39,13 @@ export function assertExists<T>(element: T | undefined, message?: string): T {
     }
     return element!;
 }
+
+/**
+ * Run time type check to ensure that all types of x are exhausted. Helpful for functions which use
+ * switch statements and which return void. See "Exhaustive checking" here:
+ * https://www.typescriptlang.org/docs/handbook/advanced-types.html
+ * @param x Type which should not exist
+ */
+export function assertNever(x: never): never {
+    throw new Error("Unexpected object: " + x);
+}

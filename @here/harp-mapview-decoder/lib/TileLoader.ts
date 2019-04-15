@@ -13,7 +13,7 @@ import {
 } from "@here/harp-datasource-protocol";
 import { TileKey } from "@here/harp-geoutils";
 import { DataSource, TileLoaderState } from "@here/harp-mapview";
-import { LoggerManager } from "@here/harp-utils";
+import { assertNever, LoggerManager } from "@here/harp-utils";
 
 import { DataProvider } from "./DataProvider";
 
@@ -111,6 +111,7 @@ export class TileLoader {
                 this.ensureLoadingStarted();
                 return this.donePromise!;
         }
+        assertNever(this.state);
     }
 
     /**
@@ -148,6 +149,17 @@ export class TileLoader {
                     this.requestController = undefined;
                 }
                 break;
+
+            case TileLoaderState.Canceled:
+            case TileLoaderState.Failed:
+            case TileLoaderState.Initialized:
+            case TileLoaderState.Loaded:
+            case TileLoaderState.Ready:
+                logger.warn("cancelling has no affect");
+                return;
+
+            default:
+                assertNever(this.state);
         }
 
         this.onDone(TileLoaderState.Canceled);
@@ -210,7 +222,12 @@ export class TileLoader {
             case TileLoaderState.Disposed:
                 logger.warn("cannot load in disposed state");
                 return;
+
+            case TileLoaderState.Failed:
+                logger.warn("a tile which is failed isn't retried");
+                return;
         }
+        assertNever(this.state);
     }
 
     /**
