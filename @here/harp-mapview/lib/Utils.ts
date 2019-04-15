@@ -6,7 +6,7 @@
 import * as geoUtils from "@here/harp-geoutils";
 import { EarthConstants } from "@here/harp-geoutils/lib/projection/EarthConstants";
 import { MapMeshBasicMaterial, MapMeshStandardMaterial } from "@here/harp-materials";
-import { LoggerManager } from "@here/harp-utils";
+import { assert, LoggerManager } from "@here/harp-utils";
 import * as THREE from "three";
 
 import { MapView } from "./MapView";
@@ -726,5 +726,117 @@ export namespace MapViewUtils {
      */
     function getIsoLanguageCode(language: string) {
         return language.substring(0, 2);
+    }
+}
+
+export namespace TileOffsetUtils {
+    /**
+     * Creates a unique key based on the supplied parameters. Note, the uniqueness is bounded by the
+     * bitshift. The [[TileKey.mortonCode()]] supports currently up to 26 levels (this is because
+     * 26*2 equals 52, and 2^52 is the highest bit that can be set in an integer in Javascript), the
+     * bitshift reduces this accordingly, so given the default bitshift of four, we support up to 24
+     * levels. Given the current support up to level 19 this should be fine.
+     *
+     * @param tileKey The unique [[TileKey]] from which to compute the unique key.
+     * @param offset How much the given [[TileKey]] is offset
+     * @param bitshift How much space we have to store the offset. The default of 4 means we have
+     *      enough space to store 16 unique tiles in a single view.
+     */
+    export function getKeyForTileKeyAndOffset(
+        tileKey: geoUtils.TileKey,
+        offset: number,
+        bitshift: number = 4
+    ) {
+        const shiftedOffset = getShiftedOffset(offset, bitshift);
+        return tileKey.mortonCode() + shiftedOffset;
+    }
+
+    /**
+     * Extracts the offset and morton key from the given key (must be created by:
+     * [[getKeyForTileKeyAndOffset]])
+     *
+     * Note, we can't use bitshift operators in Javascript because they work on 32-bit integers, and
+     * would truncate the numbers, hence using powers of two.
+     *
+     * @param key Key to extract offset and morton key.
+     * @param bitshift How many bits to shift by, must be the same as was used when creating the
+     * key.
+     */
+    export function extractOffsetAndMortonKeyFromKey(key: number, bitshift: number = 4) {
+        let offset = 0;
+        let mortonCode = key;
+        let i = 0;
+        // Compute the offset
+        for (; i < bitshift; i++) {
+            // Note, we use 52, because 2^53-1 is the biggest value, the highest value
+            // that can be set is the bit in the 52th position.
+            const num = Math.pow(2, 52 - i);
+            if (mortonCode >= num) {
+                mortonCode -= num;
+                offset += Math.pow(2, bitshift - 1 - i);
+            }
+        }
+        // We subtract half of the total amount, this undoes what is computed in getShiftedOffset
+        offset -= Math.pow(2, bitshift - 1);
+        return { offset, mortonCode };
+    }
+
+    /**
+     * Returns the key of the parent. Key must have been computed using the function
+     * [[getKeyForTileKeyAndOffset]].
+     *
+     * @param calculatedKey Key to decompose
+     * @param bitshift Bit shift used to create the key
+     */
+    export function getParentKeyFromKey(calculatedKey: number, bitshift: number = 4) {
+        const { offset, mortonCode } = extractOffsetAndMortonKeyFromKey(calculatedKey, bitshift);
+        const parentTileKey = geoUtils.TileKey.fromMortonCode(
+            geoUtils.TileKey.parentMortonCode(mortonCode)
+        );
+        return getKeyForTileKeyAndOffset(parentTileKey, offset, bitshift);
+    }
+
+    /**
+     * Packs the supplied offset into the high bits, where the highbits are between 2^52 and
+     * 2^(52-bitshift).
+     *
+     * Offsets are wrapped around, to fit in the offsetBits. In practice, this doesn't really
+     * matter, this is primarily used to find a unique id, if there is an offset 10, which is
+     * wrapped to 2, it doesn't matter, because the offset of 10 is still stored in the tile.
+     * What can be a problem though is that the cache gets filled up and isn't emptied.
+     *
+     * Note, because bit shifting in JavaScript works on 32 bit integers, we use powers of 2 to set
+     * the high bits instead.
+     *
+     * @param offset Offset to pack into the high bits.
+     * @param offsetBits How many bits to use to pack the offset.
+     */
+    function getShiftedOffset(offset: number, offsetBits: number = 4) {
+        let result = 0;
+        const totalOffsetsToStore = Math.pow(2, offsetBits);
+        //Offsets are stored by adding half 2 ^ (bitshift - 1), i.e.half of the max amount stored,
+        //and then wrapped based on this value.For example, given a bitshift of 3, and an offset -
+        //3, it would have 4 added(half of 2 ^ 3), and be stored as 1, 3 would have 4 added and be
+        //stored as 7, 4 would be added with 4 and be stored as 0 (it wraps around).
+        offset += totalOffsetsToStore / 2;
+        while (offset < 0) {
+            offset += totalOffsetsToStore;
+        }
+        while (offset >= totalOffsetsToStore) {
+            offset -= totalOffsetsToStore;
+        }
+        // Offset is now a number between >= 0 and < totalOffsetsToStore
+        for (let i = 0; i < offsetBits && offset > 0; i++) {
+            // tslint:disable: no-bitwise
+            // 53 is used because 2^53-1 is the biggest number that Javascript can represent as an
+            // integer safely.
+            if (offset & 0x1) {
+                result += Math.pow(2, 53 - offsetBits + i);
+            }
+            offset >>>= 1;
+            // tslint:enable: no-bitwise
+        }
+        assert(offset === 0);
+        return result;
     }
 }

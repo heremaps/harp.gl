@@ -448,12 +448,19 @@ export class Tile implements CachedResource {
     private m_animatedExtrusionTileHandler: AnimatedExtrusionTileHandler | undefined;
 
     /**
-     * Creates a new `Tile`.
+     * Creates a new [[Tile]].
      *
-     * @param dataSource The [[DataSource]] that created this `Tile`.
-     * @param tileKey The unique identifier for this `Tile`.
+     * @param dataSource The [[DataSource]] that created this [[Tile]].
+     * @param tileKey The unique identifier for this [[Tile]]. Currently only up to level 24 is
+     * supported, because of the use of the upper bits for the offset.
+     * @param offset The optional offset, this is an integer which represents what multiple of 360
+     * degrees to shift, only useful for flat projections, hence optional.
      */
-    constructor(readonly dataSource: DataSource, readonly tileKey: TileKey) {
+    constructor(
+        readonly dataSource: DataSource,
+        readonly tileKey: TileKey,
+        public offset: number = 0
+    ) {
         this.geoBox = this.dataSource.getTilingScheme().getGeoBox(this.tileKey);
         this.projection.projectBox(this.geoBox, this.boundingBox);
         this.boundingBox.getCenter(this.center);
