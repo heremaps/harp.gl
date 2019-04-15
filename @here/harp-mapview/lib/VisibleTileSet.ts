@@ -3,7 +3,14 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-import { Projection, TileKey } from "@here/harp-geoutils";
+import {
+    GeoCoordinates,
+    MathUtils,
+    Projection,
+    TileKey,
+    TileKeyUtils,
+    TilingScheme
+} from "@here/harp-geoutils";
 import { LRUCache } from "@here/harp-lrucache";
 import * as THREE from "three";
 
@@ -11,6 +18,7 @@ import { DataSource } from "./DataSource";
 import { CalculationStatus, ElevationRangeSource } from "./ElevationRangeSource";
 import { MapTileCuller } from "./MapTileCuller";
 import { Tile } from "./Tile";
+import { TileOffsetUtils } from "./Utils";
 
 /**
  * Way the memory consumption of a tile is computed. Either in number of tiles, or in MegaBytes. If
@@ -62,17 +70,14 @@ export interface VisibleTileSetOptions {
 }
 
 /**
- * Missing Typedoc
- */
-export class TileEntry {
-    constructor(public tile: Tile, public area: number) {}
-}
-
-/**
- * Missing Typedoc
+ * Represents a unique TileKey and the area it takes up on screen.
+ *
+ * Note, in certain tiling projections, it is possible to have an offset, which represents a tile
+ * which has fully wrapped around, hence this defaults to 0 to simplify usage for projections which
+ * don't require it.
  */
 class TileKeyEntry {
-    constructor(public tileKey: TileKey, public area: number) {}
+    constructor(public tileKey: TileKey, public area: number, public offset: number = 0) {}
 }
 
 const MB_FACTOR = 1.0 / (1024.0 * 1024.0);
@@ -297,12 +302,14 @@ export class VisibleTileSet {
                 elevationRangeSource !== undefined &&
                 elevationRangeSource.getTilingScheme() === tilingScheme;
 
-            const workList: TileKeyEntry[] = [new TileKeyEntry(rootTileKey, 0)];
+            const workList: TileKeyEntry[] = this.getRequiredInitialRootTileKeys(
+                rootTileKey,
+                worldCenter
+            );
 
             const visibleTiles: TileKeyEntry[] = [];
 
-            const tileFrustumIntersectionCache = new Map<number, number>();
-            tileFrustumIntersectionCache.set(rootTileKey.mortonCode(), Infinity);
+            const tileFrustumIntersectionCache = this.createIntersectionCache(workList);
 
             while (workList.length > 0) {
                 const tileEntry = workList.pop();
@@ -311,29 +318,35 @@ export class VisibleTileSet {
                     continue;
                 }
 
-                const area = tileFrustumIntersectionCache.get(tileEntry.tileKey.mortonCode());
+                const tileKey = tileEntry.tileKey;
+                const uniqueKey = TileOffsetUtils.getKeyForTileKeyAndOffset(
+                    tileKey,
+                    tileEntry.offset
+                );
+                const area = tileFrustumIntersectionCache.get(uniqueKey);
 
                 if (area === undefined) {
                     throw new Error("Unexpected tile key");
                 }
 
-                if (area <= 0 || tileEntry.tileKey.level > displayZoomLevel) {
+                if (area <= 0 || tileKey.level > displayZoomLevel) {
                     continue;
                 }
 
-                if (dataSource.shouldRender(displayZoomLevel, tileEntry.tileKey)) {
+                if (dataSource.shouldRender(displayZoomLevel, tileKey)) {
                     visibleTiles.push(tileEntry);
                 }
 
-                tilingScheme.getSubTileKeys(tileEntry.tileKey).forEach(childTileKey => {
+                tilingScheme.getSubTileKeys(tileKey).forEach(childTileKey => {
+                    const offset = tileEntry.offset;
                     const intersectsFrustum = tileFrustumIntersectionCache.get(
-                        childTileKey.mortonCode()
+                        TileOffsetUtils.getKeyForTileKeyAndOffset(childTileKey, offset)
                     );
 
                     let subTileArea = 0;
 
                     if (intersectsFrustum === undefined) {
-                        const geoBox = tilingScheme.getGeoBox(childTileKey);
+                        const geoBox = this.getGeoBox(tilingScheme, childTileKey, offset);
 
                         if (useElevationRangeSource) {
                             const range = elevationRangeSource!.getElevationRange(childTileKey);
@@ -388,11 +401,14 @@ export class VisibleTileSet {
                             subTileArea = Math.abs(subTileArea * 0.5);
                         }
 
-                        tileFrustumIntersectionCache.set(childTileKey.mortonCode(), subTileArea);
+                        tileFrustumIntersectionCache.set(
+                            TileOffsetUtils.getKeyForTileKeyAndOffset(childTileKey, offset),
+                            subTileArea
+                        );
                     }
 
                     if (subTileArea > 0) {
-                        workList.push(new TileKeyEntry(childTileKey, subTileArea));
+                        workList.push(new TileKeyEntry(childTileKey, subTileArea, offset));
                     }
                 });
             }
@@ -428,7 +444,7 @@ export class VisibleTileSet {
                 if (!dataSource.shouldRender(displayZoomLevel, tileEntry.tileKey)) {
                     continue;
                 }
-                const tile = this.getTile(dataSource, tileEntry.tileKey);
+                const tile = this.getTile(dataSource, tileEntry.tileKey, tileEntry.offset);
                 if (tile === undefined) {
                     continue;
                 }
@@ -490,7 +506,7 @@ export class VisibleTileSet {
         return newRenderList;
     }
 
-    getTile(dataSource: DataSource, tileKey: TileKey): Tile | undefined {
+    getTile(dataSource: DataSource, tileKey: TileKey, offset: number = 0): Tile | undefined {
         function updateTile(tileToUpdate?: Tile) {
             if (tileToUpdate === undefined) {
                 return;
@@ -507,9 +523,10 @@ export class VisibleTileSet {
 
         const { tileCache } = this.getOrCreateCache(dataSource);
 
-        let tile = tileCache.get(tileKey.mortonCode());
+        const tileKeyMortonCode = TileOffsetUtils.getKeyForTileKeyAndOffset(tileKey, offset);
+        let tile = tileCache.get(tileKeyMortonCode);
 
-        if (tile !== undefined) {
+        if (tile !== undefined && tile.offset === offset) {
             updateTile(tile);
             return tile;
         }
@@ -517,8 +534,9 @@ export class VisibleTileSet {
         tile = dataSource.getTile(tileKey);
 
         if (tile !== undefined) {
+            tile.offset = offset;
             updateTile(tile);
-            tileCache.set(tileKey.mortonCode(), tile);
+            tileCache.set(tileKeyMortonCode, tile);
         }
         return tile;
     }
@@ -609,9 +627,66 @@ export class VisibleTileSet {
     disposeTile(tile: Tile): void {
         const cache = this.m_dataSourceCache.get(tile.dataSource.name);
         if (cache) {
-            cache.tileCache.delete(tile.tileKey.mortonCode());
+            const tileCode = TileOffsetUtils.getKeyForTileKeyAndOffset(tile.tileKey, tile.offset);
+            cache.tileCache.delete(tileCode);
             tile.dispose();
         }
+    }
+
+    private getGeoBox(tilingScheme: TilingScheme, childTileKey: TileKey, offset: number) {
+        const geoBox = tilingScheme.getGeoBox(childTileKey);
+        const longitudeOffset = 360.0 * offset;
+        geoBox.northEast.longitude += longitudeOffset;
+        geoBox.southWest.longitude += longitudeOffset;
+        return geoBox;
+    }
+
+    /**
+     * Creates the intersection cache and initializes values for the root nodes.
+     *
+     * @param workList The list of work items with which to initialize the cache.
+     */
+    private createIntersectionCache(workList: TileKeyEntry[]) {
+        const map = new Map<number, number>();
+        for (const item of workList) {
+            map.set(TileOffsetUtils.getKeyForTileKeyAndOffset(item.tileKey, item.offset), Infinity);
+        }
+        return map;
+    }
+
+    /**
+     * Create a list of root nodes to test against the frustum.
+     *
+     * @param rootTileKey The root [[TileKey]] from which to start.
+     * @param worldCenter The center of the camera in world space.
+     */
+    private getRequiredInitialRootTileKeys(
+        rootTileKey: TileKey,
+        worldCenter: THREE.Vector3
+    ): TileKeyEntry[] {
+        const worldGeoPoint = this.options.projection.unprojectPoint(worldCenter);
+        const result: TileKeyEntry[] = [];
+        const startOffset = Math.round(worldGeoPoint.longitude / 360.0);
+        const worldLengthHorizontal =
+            Math.tan(MathUtils.degToRad(this.camera.fov) * this.camera.aspect) *
+            -this.camera.position.z;
+        const worldLeftPoint = new THREE.Vector3(
+            worldCenter.x - worldLengthHorizontal,
+            worldCenter.y,
+            worldCenter.z
+        );
+        const worldLeftGeoPoint = this.options.projection.unprojectPoint(worldLeftPoint);
+        const offsetRange = Math.ceil(
+            Math.abs((worldGeoPoint.longitude - worldLeftGeoPoint.longitude) / 360)
+        );
+        for (
+            let offset = -offsetRange + startOffset;
+            offset <= offsetRange + startOffset;
+            offset++
+        ) {
+            result.push(new TileKeyEntry(rootTileKey, 0, offset));
+        }
+        return result;
     }
 
     /**
@@ -636,14 +711,15 @@ export class VisibleTileSet {
                 BOTH
             }
             const tileCache = this.m_dataSourceCache.get(dataSource.name);
+            if (tileCache === undefined) {
+                return;
+            }
 
             const cacheSearchUp =
                 this.options.quadTreeSearchDistanceUp > 0 &&
-                tileCache !== undefined &&
                 displayZoomLevel > dataSource.minZoomLevel;
             const cacheSearchDown =
                 this.options.quadTreeSearchDistanceDown > 0 &&
-                tileCache !== undefined &&
                 displayZoomLevel < dataSource.maxZoomLevel;
 
             if (!cacheSearchDown && !cacheSearchUp) {
@@ -660,7 +736,10 @@ export class VisibleTileSet {
             let incompleteTiles: Map<number, SearchDirection> = new Map();
 
             renderListEntry.visibleTiles.forEach(tile => {
-                const tileCode = tile.tileKey.mortonCode();
+                const tileCode = TileOffsetUtils.getKeyForTileKeyAndOffset(
+                    tile.tileKey,
+                    tile.offset
+                );
                 if (tile.hasGeometry) {
                     renderedTiles.set(tileCode, tile);
                 } else {
@@ -678,7 +757,7 @@ export class VisibleTileSet {
             // iterate over incomplete (not loaded tiles)
             // and find their parents or children that are in cache that can be rendered temporarily
             // until tile is loaded
-            while (tileCache !== undefined && incompleteTiles.size !== 0) {
+            while (incompleteTiles.size !== 0) {
                 const nextLevelCandidates: Map<number, SearchDirection> = new Map();
 
                 incompleteTiles.forEach((searchDirection, tileKeyCode) => {
@@ -686,7 +765,7 @@ export class VisibleTileSet {
                         searchDirection === SearchDirection.BOTH ||
                         searchDirection === SearchDirection.UP
                     ) {
-                        const parentCode = TileKey.parentMortonCode(tileKeyCode);
+                        const parentCode = TileOffsetUtils.getParentKeyFromKey(tileKeyCode);
 
                         if (!checkedTiles.has(parentCode) && !renderedTiles.get(parentCode)) {
                             checkedTiles.add(parentCode);
@@ -697,9 +776,12 @@ export class VisibleTileSet {
                                 return;
                             }
 
+                            const { mortonCode } = TileOffsetUtils.extractOffsetAndMortonKeyFromKey(
+                                parentCode
+                            );
                             const parentTileKey = parentTile
                                 ? parentTile.tileKey
-                                : TileKey.fromMortonCode(parentCode);
+                                : TileKey.fromMortonCode(mortonCode);
 
                             // if parentTile is missing or incomplete, try at max 3 levels up from
                             // current display level
@@ -714,12 +796,19 @@ export class VisibleTileSet {
                         searchDirection === SearchDirection.BOTH ||
                         searchDirection === SearchDirection.DOWN
                     ) {
-                        const tileKey = TileKey.fromMortonCode(tileKeyCode);
+                        const {
+                            offset,
+                            mortonCode
+                        } = TileOffsetUtils.extractOffsetAndMortonKeyFromKey(tileKeyCode);
+                        const tileKey = TileKey.fromMortonCode(mortonCode);
                         tilingScheme.getSubTileKeys(tileKey).forEach(childTileKey => {
-                            const childTileCode = childTileKey.mortonCode();
+                            const childTileCode = TileOffsetUtils.getKeyForTileKeyAndOffset(
+                                childTileKey,
+                                offset
+                            );
+                            checkedTiles.add(childTileCode);
                             const childTile = tileCache.get(childTileCode);
 
-                            checkedTiles.add(childTileCode);
                             if (childTile !== undefined && childTile.hasGeometry) {
                                 // childTile has geometry, so can be reused as fallback
                                 renderedTiles.set(childTileCode, childTile);
