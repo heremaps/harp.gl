@@ -1327,6 +1327,8 @@ export class Tile implements CachedResource {
 
                 if (isSolidLineTechnique(technique) || isDashedLineTechnique(technique)) {
                     const lineMaterial = material as THREE.RawShaderMaterial;
+                    lineMaterial.defines.LINE_3D =
+                        bufferGeometry.getAttribute("position").itemSize - 2;
                     lineMaterial.uniforms.opacity.value = material.opacity;
 
                     if (technique.clipping !== false) {

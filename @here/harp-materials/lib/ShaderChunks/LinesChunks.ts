@@ -5,23 +5,50 @@
  */
 
 export default {
-    project_line_vert_func: `
-void projectVertex(vec2 segment, vec2 t0, vec2 t1, float lineWidth, inout vec2 pos, inout vec2 uv) {
-        float uu = uv.x / 2.0 + 0.5;
-        float ss = mix(segment.x, segment.y, uu);
+    extrude_2D_line_vert_func: `
+void extrudeLine2D(vec2 segment, vec3 bt, float lineWidth, inout vec2 pos, inout vec2 uv) {
+    float uu = uv.x / 2.0 + 0.5;
+    float ss = mix(segment.x, segment.y, uu);
 
-        if (t0 != t1) {
-            float angle = atan(t0.x * t1.y - t0.y * t1.x, t0.x * t1.x + t0.y * t1.y);
-            vec2 t = normalize(t0 + t1);
-            vec2 n = vec2(t.y, -t.x);
-            pos += uv.y * lineWidth * n / cos(angle / 2.0);
-            uv.x = ss + uv.x * lineWidth * uv.y * tan(angle / 2.0);
-        }
-        else {
-            vec2 n = vec2(t0.y, -t0.x);
-            pos += uv.y * lineWidth * n + uv.x * lineWidth * mix(t0, t1, uu);
-            uv.x = ss + uv.x * lineWidth;
-        }
+    float angle = bt.z;
+    vec2 dir = bt.xy;
+    if (angle != 0.0) {
+        pos += uv.y * lineWidth * dir / cos(angle / 2.0);
+        uv.x = ss + uv.x * lineWidth * uv.y * tan(angle / 2.0);
+    }
+    else {
+        vec2 t = vec2(-dir.y, dir.x);
+        pos += uv.y * lineWidth * dir + uv.x * lineWidth * t;
+        uv.x = ss + uv.x * lineWidth;
+    }
+}
+`,
+    extrude_3D_line_vert_func: `
+void extrudeLine3D(vec2 segment, vec4 bt, float lineWidth, inout vec3 pos, inout vec2 uv) {
+    float uu = uv.x / 2.0 + 0.5;
+    float ss = mix(segment.x, segment.y, uu);
+
+    float angle = bt.w;
+    vec3 dir = bt.xyz;
+    if (angle != 0.0) {
+        pos += uv.y * lineWidth * dir / cos(angle / 2.0);
+        uv.x = ss + uv.x * lineWidth * uv.y * tan(angle / 2.0);
+    }
+    else {
+        vec3 t = vec3(-dir.y, dir.x, dir.z);
+        pos += uv.y * lineWidth * dir + uv.x * lineWidth * t;
+        uv.x = ss + uv.x * lineWidth;
+    }
+
+    /* if (angle != 0.0) {
+        pos += uv.y * lineWidth * dir / cos(angle / 2.0);
+        uv.x = ss + uv.x * lineWidth * uv.y * tan(angle / 2.0);
+    }
+    else {
+        vec3 t = normalize(cross(dir, vec3(1,0,0)));
+        pos += uv.y * lineWidth * dir + uv.x * lineWidth * t;
+        uv.x = ss + uv.x * lineWidth;
+    } */
 }
 `,
     join_dist_func: `

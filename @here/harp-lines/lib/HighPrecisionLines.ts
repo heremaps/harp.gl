@@ -10,16 +10,6 @@ import * as THREE from "three";
 import { HighPrecisionUtils } from "./HighPrecisionUtils";
 
 /**
- * Declare interface for `HighPrecisionLineMaterial` which describes additional functionality to
- * render high-precision vertices.
- */
-export interface HighPrecisionLineMaterial extends THREE.RawShaderMaterial {
-    isHighPrecisionLineMaterial: boolean;
-
-    setDimensionality(dimensionality: number): void;
-}
-
-/**
  * Declare interface for `HighPrecisionObject` which describes additional functionality to render
  * high-precision vertices.
  */
@@ -61,7 +51,7 @@ export class HighPrecisionWireFrameLine extends THREE.Line implements HighPrecis
     /**
      * Number of dimensions this `HighPrecisionObject` is specified in (2D/3D).
      */
-    dimensionality: number = 0;
+    dimensionality?: number;
 
     /**
      * Creates a `HighPrecisionWireFrameLine` object.
@@ -109,13 +99,12 @@ export class HighPrecisionWireFrameLine extends THREE.Line implements HighPrecis
     }
 
     setupForRendering(): void {
-        if (this.dimensionality === 0 || this.dimensionality === undefined) {
-            throw new Error("HighPrecisionLine: positions not specified.");
-        }
-        if ((this.material as any).isHighPrecisionLineMaterial) {
+        if (
+            (this.material as any).isHighPrecisionLineMaterial &&
+            this.dimensionality !== undefined
+        ) {
             (this.material as any).setDimensionality(this.dimensionality);
         }
-
         this.onBeforeRender = (
             _renderer: THREE.WebGLRenderer,
             _scene: THREE.Scene,
@@ -148,7 +137,7 @@ export class HighPrecisionLine extends THREE.Mesh implements HighPrecisionObject
     /**
      * Number of dimensions this `HighPrecisionObject` is specified in (2D/3D).
      */
-    dimensionality: number = 0;
+    dimensionality?: number;
 
     /**
      * Creates a `HighPrecisionLine` object.
@@ -199,7 +188,10 @@ export class HighPrecisionLine extends THREE.Mesh implements HighPrecisionObject
     }
 
     setupForRendering(): void {
-        if ((this.material as any).isHighPrecisionLineMaterial) {
+        if (
+            (this.material as any).isHighPrecisionLineMaterial &&
+            this.dimensionality !== undefined
+        ) {
             (this.material as any).setDimensionality(this.dimensionality);
         }
 
