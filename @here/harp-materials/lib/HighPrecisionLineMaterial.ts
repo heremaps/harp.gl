@@ -129,7 +129,7 @@ export class HighPrecisionLineMaterial extends THREE.RawShaderMaterial {
 
         this.type = "HighPrecisionLineMaterial";
         this.isHighPrecisionLineMaterial = true;
-        this.dimensionality = 3;
+        this.dimensionality = 2;
 
         // Apply initial parameter values.
         if (params !== undefined) {

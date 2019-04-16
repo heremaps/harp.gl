@@ -10,20 +10,29 @@ import { FadingFeature, FadingFeatureParameters } from "./MapMeshMaterials";
 import linesShaderChunk from "./ShaderChunks/LinesChunks";
 
 const vertexSource: string = `
-attribute vec2 position;
-attribute vec4 tangents;
-attribute vec2 segment;
-attribute vec2 angles;
+#define SEGMENT_OFFSET 0.00001
+
 attribute vec2 texcoord;
+#if LINE_3D
+attribute vec3 position;
+attribute vec4 bitangent;
+#else
+attribute vec2 position;
+attribute vec3 bitangent;
+#endif
 
 uniform mat4 modelViewMatrix;
 uniform mat4 projectionMatrix;
 uniform float lineWidth;
 
-varying vec2 vPosition;
 varying vec2 vTexcoord;
 varying vec2 vSegment;
 varying float vLinewidth;
+#if LINE_3D
+varying vec3 vPosition;
+#else
+varying vec2 vPosition;
+#endif
 
 #ifdef USE_COLOR
 attribute vec4 color;
@@ -35,23 +44,33 @@ varying vec3 vColor;
 #endif
 
 #include <fog_pars_vertex>
-#include <project_line_vert_func>
+
+#include <extrude_2D_line_vert_func>
+#include <extrude_3D_line_vert_func>
 
 void main() {
     vLinewidth = lineWidth;
-    vSegment = segment;
+    vSegment = abs(texcoord) - SEGMENT_OFFSET;
 
     #ifdef USE_COLOR
     vColor = color.rgb;
     #endif
 
-    vec2 pos = position;
-    vec2 uvs = texcoord;
-    projectVertex(segment, normalize(tangents.xy), normalize(tangents.zw), lineWidth, pos, uvs);
+    vec2 uvs = sign(texcoord);
 
+    #if LINE_3D
+    vec3 pos = position;
+    extrudeLine3D(vSegment, bitangent, lineWidth, pos, uvs);
     vPosition = pos;
-    vTexcoord = vec2(uvs.x, uvs.y * lineWidth);
+    vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
+    #else
+    vec2 pos = position;
+    extrudeLine2D(vSegment, bitangent, lineWidth, pos, uvs);
+    vPosition = pos;
     vec4 mvPosition = modelViewMatrix * vec4(pos, 0.0, 1.0);
+    #endif
+    vTexcoord = vec2(uvs.x, uvs.y * lineWidth);
+
     gl_Position = projectionMatrix * mvPosition;
 
     #ifdef USE_FADING
@@ -73,10 +92,14 @@ uniform float dashSize;
 uniform float gapSize;
 #endif
 
-varying vec2 vPosition;
 varying vec2 vTexcoord;
 varying vec2 vSegment;
 varying float vLinewidth;
+#if LINE_3D
+varying vec3 vPosition;
+#else
+varying vec2 vPosition;
+#endif
 #ifdef USE_COLOR
 varying vec3 color;
 #endif
@@ -95,7 +118,7 @@ void main() {
     float alpha = opacity;
 
     #if TILE_CLIP
-    tileClip(vPosition, tileSize);
+    tileClip(vPosition.xy, tileSize);
     #endif
 
     #if DASHED_LINE
@@ -126,6 +149,11 @@ void main() {
  * Parameters used when constructing a new [[SolidLineMaterial]].
  */
 export interface SolidLineMaterialParameters extends FadingFeatureParameters {
+    /**
+     * Dimensions Whether to render a`2D` or`3D` line.
+     */
+    dimensions?: 2 | 3;
+
     /**
      * Line color.
      */
@@ -171,7 +199,12 @@ export class SolidLineMaterial extends THREE.RawShaderMaterial implements Fading
 
         FadingFeature.patchGlobalShaderChunks();
 
-        const defines: { [key: string]: any } = { DASHED_LINE: 0, TILE_CLIP: 0 };
+        const defines: { [key: string]: any } = {
+            LINE_3D:
+                params !== undefined && params.dimensions !== undefined ? params.dimensions - 2 : 0,
+            DASHED_LINE: 0,
+            TILE_CLIP: 0
+        };
 
         const hasFog = params !== undefined && params.fog === true;
 

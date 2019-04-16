@@ -16,7 +16,7 @@ import {
     TextPathGeometry
 } from "@here/harp-datasource-protocol";
 import { Projection, webMercatorTilingScheme } from "@here/harp-geoutils";
-import { LINE_VERTEX_ATTRIBUTE_DESCRIPTORS, Lines } from "@here/harp-lines";
+import { LineGroup } from "@here/harp-lines";
 import { Math2D } from "@here/harp-utils";
 import earcut from "earcut";
 import * as THREE from "three";
@@ -277,7 +277,7 @@ export class GeoJsonGeometryCreator {
         geometryData: GeometryData,
         techniqueIndex: number
     ): GeoJsonGeometry {
-        const lines = new Lines();
+        const lines = new LineGroup();
         const positions = new Array<number>();
 
         for (const line of geometryData.lines.vertices) {
@@ -296,9 +296,9 @@ export class GeoJsonGeometryCreator {
             interleavedVertexAttributes: [
                 {
                     type: "float",
-                    stride: 12,
+                    stride: lines.stride,
                     buffer: new Float32Array(lines.vertices).buffer,
-                    attributes: LINE_VERTEX_ATTRIBUTE_DESCRIPTORS
+                    attributes: lines.vertexAttributes
                 }
             ],
             vertexAttributes: [
@@ -419,7 +419,7 @@ export class GeoJsonGeometryCreator {
         let contour: number[];
         const holesVertices: number[][] = [];
 
-        const solidOutline = new Lines();
+        const solidOutline = new LineGroup();
         const position = new Array<number>();
 
         for (const polygon of geometryData.polygons) {
@@ -469,9 +469,9 @@ export class GeoJsonGeometryCreator {
             interleavedVertexAttributes: [
                 {
                     type: "float",
-                    stride: 12,
+                    stride: solidOutline.stride,
                     buffer: new Float32Array(solidOutline.vertices).buffer,
-                    attributes: LINE_VERTEX_ATTRIBUTE_DESCRIPTORS
+                    attributes: solidOutline.vertexAttributes
                 }
             ],
             vertexAttributes: [
@@ -533,7 +533,7 @@ export class GeoJsonGeometryCreator {
     private static addOutlineVertices(
         contour: number[],
         tileExtents: number,
-        lines: Lines,
+        lines: LineGroup,
         buffer: number[]
     ): void {
         let outline = [];

@@ -31,7 +31,6 @@ function addCircle(
     vertices: number[],
     indices: number[]
 ) {
-    const tmpVertices = [] as number[];
     const baseVertex = vertices.length / 3;
 
     // Add cap center to vertices directly (it doesn't need rotation)

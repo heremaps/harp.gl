@@ -6,7 +6,7 @@
 
 import { GeometryType, ITileDecoder, StyleSet } from "@here/harp-datasource-protocol";
 import { TileKey, webMercatorTilingScheme } from "@here/harp-geoutils";
-import { Lines } from "@here/harp-lines";
+import { LineGroup } from "@here/harp-lines";
 import { CopyrightInfo } from "@here/harp-mapview";
 import { DataProvider, TileDataSource, TileFactory } from "@here/harp-mapview-decoder";
 import { getOptionValue } from "@here/harp-utils";
@@ -21,7 +21,7 @@ import { OmvTile } from "./OmvTile";
 
 export interface LinesGeometry {
     type: GeometryType;
-    lines: Lines;
+    lines: LineGroup;
     renderOrderOffset?: number;
     technique: number;
 

@@ -35,7 +35,7 @@ import {
     Value
 } from "@here/harp-datasource-protocol";
 import { MapEnv } from "@here/harp-datasource-protocol/lib/Theme";
-import { LINE_VERTEX_ATTRIBUTE_DESCRIPTORS, Lines, triangulateLine } from "@here/harp-lines";
+import { LineGroup, triangulateLine } from "@here/harp-lines";
 import { assert, LoggerManager, Math2D } from "@here/harp-utils";
 import earcut from "earcut";
 import * as THREE from "three";
@@ -677,20 +677,20 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
         const renderOrderOffset = technique.renderOrderBiasProperty
             ? env.lookup(technique.renderOrderBiasProperty)
             : 0;
-        let linesInstance: Lines;
-        const linesInstanceGeometries = linesGeometry.find(aLine => {
+        let lineGroup: LineGroup;
+        const lineGroupGeometries = linesGeometry.find(aLine => {
             return (
                 aLine.technique === techniqueIndex && aLine.renderOrderOffset === renderOrderOffset
             );
         });
-        if (linesInstanceGeometries === undefined) {
-            linesInstance = new Lines();
+        if (lineGroupGeometries === undefined) {
+            lineGroup = new LineGroup({ dimensions: 2 });
             const aLine: LinesGeometry = {
                 type: lineType === LineType.Complex ? GeometryType.SolidLine : GeometryType.Line,
                 technique: techniqueIndex,
                 renderOrderOffset:
                     renderOrderOffset !== undefined ? Number(renderOrderOffset) : undefined,
-                lines: linesInstance
+                lines: lineGroup
             };
 
             if (gatherFeatureIds) {
@@ -701,21 +701,21 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
 
             linesGeometry.push(aLine);
         } else {
-            linesInstance = linesInstanceGeometries.lines;
+            lineGroup = lineGroupGeometries.lines;
 
             if (
                 gatherFeatureIds &&
-                linesInstanceGeometries.featureIds &&
-                linesInstanceGeometries.featureStarts
+                lineGroupGeometries.featureIds &&
+                lineGroupGeometries.featureStarts
             ) {
                 // Add ID to tag the geometry, also provide the current length of the index
                 // attribute
-                linesInstanceGeometries.featureIds.push(featureId);
-                linesInstanceGeometries.featureStarts.push(linesInstance.indices.length);
+                lineGroupGeometries.featureIds.push(featureId);
+                lineGroupGeometries.featureStarts.push(lineGroup.indices.length);
             }
         }
         lines.forEach(aLine => {
-            linesInstance.add(aLine, lineType === LineType.Simple);
+            lineGroup.add(aLine, lineType === LineType.Simple);
         });
     }
 
@@ -1078,9 +1078,9 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
             const index = new Uint32Array(indices).buffer as ArrayBuffer;
             const attr: InterleavedBufferAttribute = {
                 type: "float",
-                stride: 12,
+                stride: linesGeometry.lines.stride,
                 buffer,
-                attributes: LINE_VERTEX_ATTRIBUTE_DESCRIPTORS
+                attributes: linesGeometry.lines.vertexAttributes
             };
             const geometry: Geometry = {
                 type: GeometryType.SolidLine,
@@ -1113,7 +1113,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
             const index = new Uint32Array(indices).buffer as ArrayBuffer;
             const attr: BufferAttribute = {
                 buffer,
-                itemCount: 3,
+                itemCount: 2,
                 type: "float",
                 name: "position"
             };
