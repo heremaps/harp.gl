@@ -13,7 +13,6 @@ import { IMapAntialiasSettings, IMapRenderingManager, MapRenderingManager } from
 import { ConcurrentDecoderFacade } from "./ConcurrentDecoderFacade";
 import { CopyrightInfo } from "./CopyrightInfo";
 import { DataSource } from "./DataSource";
-import { ElevationRangeSource } from "./ElevationRangeSource";
 import { MapViewImageCache } from "./image/MapViewImageCache";
 import { MapViewFog } from "./MapViewFog";
 import { PickHandler, PickResult } from "./PickHandler";
