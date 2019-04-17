@@ -20,8 +20,11 @@ import { DataProvider } from "./DataProvider";
 const logger = LoggerManager.instance.create("TileLoader");
 
 /**
- * The `TileLoader` manages the different states of loading and decoding for a [[Tile]]. Used by the
- * [[TileDataSource]].
+ * The [[TileLoader]] manages the different states of loading and decoding for a [[Tile]]. Used by
+ * the [[TileDataSource]].
+ *
+ * A TileLoader supports loading for multiple tiles, this is required for the wrap around, where
+ * it is possible to see the same tile multiple times.
  */
 export class TileLoader {
     /**
@@ -60,9 +63,21 @@ export class TileLoader {
     protected donePromise?: Promise<TileLoaderState>;
 
     /**
-     * The internal function that is called when loading and decoding have finished.
+     * The internal function that is called when loading and decoding have finished successfully.
      */
     protected resolveDonePromise?: (state: TileLoaderState) => void;
+
+    /**
+     * The internal function that is called when loading and decoding failed.
+     */
+    protected rejectedDonePromise?: (state: TileLoaderState) => void;
+
+    /**
+     * This is a form of reference counting for the result. We keep a track of this because when
+     * cancelling, it is important to know if we can actually cancel, or if there is another Tile
+     * that needs the result.
+     */
+    private countRequests: number = 0;
 
     /**
      * Set up loading of a single [[Tile]].
@@ -89,6 +104,7 @@ export class TileLoader {
     loadAndDecode(): Promise<TileLoaderState> {
         switch (this.state) {
             case TileLoaderState.Loading:
+                this.countRequests++;
                 return this.donePromise!;
 
             case TileLoaderState.Disposed:
@@ -99,10 +115,12 @@ export class TileLoader {
             case TileLoaderState.Failed:
             case TileLoaderState.Initialized:
             case TileLoaderState.Canceled:
+                this.countRequests++;
                 this.ensureLoadingStarted();
                 return this.donePromise!;
 
             case TileLoaderState.Loaded:
+                this.countRequests++;
                 this.startDecodeTile();
                 return this.donePromise!;
 
@@ -127,10 +145,15 @@ export class TileLoader {
     }
 
     /**
-     * Cancel loading of the [[Tile]]. Cancellation token is notified, an internal state is cleaned
-     * up.
+     * Cancel loading of the [[Tile]] if there is only a single request remaining. Cancellation
+     * token is notified, an internal state is cleaned up.
+     *
+     * Otherwise this just reduces the count of requests by one.
      */
     cancel() {
+        if (--this.countRequests !== 0) {
+            return;
+        }
         switch (this.state) {
             case TileLoaderState.Disposed:
                 // prevent accidental escape from disposed state
@@ -238,8 +261,9 @@ export class TileLoader {
             });
 
         if (this.donePromise === undefined) {
-            this.donePromise = new Promise<TileLoaderState>(resolve => {
+            this.donePromise = new Promise<TileLoaderState>((resolve, reject) => {
                 this.resolveDonePromise = resolve;
+                this.rejectedDonePromise = reject;
             });
         }
         this.state = TileLoaderState.Loading;
@@ -331,16 +355,20 @@ export class TileLoader {
     }
 
     /**
-     * Called when loading and decoding has finished successfully. Resolves loading promise.
+     * Called when loading and decoding has finished successfully. Resolves loading promise if the
+     * state is Ready, otherwise it rejects the promise with the supplied state.
      *
      * @param doneState The latest state of loading.
      */
     protected onDone(doneState: TileLoaderState) {
-        if (this.resolveDonePromise) {
+        if (this.resolveDonePromise && doneState === TileLoaderState.Ready) {
             this.resolveDonePromise(doneState);
-            this.resolveDonePromise = undefined;
-            this.donePromise = undefined;
+        } else if (this.rejectedDonePromise) {
+            this.rejectedDonePromise(doneState);
         }
+        this.resolveDonePromise = undefined;
+        this.rejectedDonePromise = undefined;
+        this.donePromise = undefined;
         this.state = doneState;
     }
 
