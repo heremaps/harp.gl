@@ -14,6 +14,8 @@ import {
     TileLoaderState
 } from "@here/harp-mapview";
 
+import { LRUCache } from "@here/harp-lrucache";
+import { assert, LoggerManager } from "@here/harp-utils";
 import { DataProvider } from "./DataProvider";
 import { TileInfoLoader, TileLoader } from "./TileLoader";
 
@@ -113,7 +115,9 @@ export class TileFactory<TileType extends Tile> {
  * asynchronous one is generated.
  */
 export class TileDataSource<TileType extends Tile> extends DataSource {
+    protected readonly logger = LoggerManager.instance.create("TileDataSource");
     protected readonly m_decoder: ITileDecoder;
+    private readonly m_tileLoaderCache: LRUCache<number, TileLoader>;
     private m_isReady: boolean = false;
 
     /**
@@ -152,6 +156,9 @@ export class TileDataSource<TileType extends Tile> extends DataSource {
         });
 
         this.cacheable = true;
+        this.m_tileLoaderCache = new LRUCache<number, TileLoader>(40, tileLoader => {
+            return 1;
+        });
     }
 
     dispose() {
@@ -201,16 +208,72 @@ export class TileDataSource<TileType extends Tile> extends DataSource {
     getTile(tileKey: TileKey): TileType | undefined {
         const tile = this.m_tileFactory.create(this, tileKey);
 
-        tile.tileLoader = new TileLoader(
-            this,
-            tileKey,
-            this.m_options.dataProvider,
-            this.decoder,
-            0
-        );
+        const mortonCode = tileKey.mortonCode();
+        const tileLoader = this.m_tileLoaderCache.get(mortonCode);
+        // Filter out disposed TileLoaders.
+        if (tileLoader !== undefined && tileLoader.state !== TileLoaderState.Disposed) {
+            tile.tileLoader = tileLoader;
+        } else {
+            const newTileLoader = new TileLoader(
+                this,
+                tileKey,
+                this.m_options.dataProvider,
+                this.decoder,
+                0
+            );
+            tile.tileLoader = newTileLoader;
+            // We don't cache tiles with level 4 and above, at this level, there are 16 (2^4)
+            // tiles horizontally, given the assumption that the zoom level assumes the tile
+            // should be 256 pixels wide (see function [[calculateZoomLevelFromDistance]]),
+            // this would mean a horizontal width of 4096 pixels for the entire earth, this
+            // would be quite a lot to pan, hence caching doesn't make sense above this point
+            // (as the chance that we need to share the TileLoader is small, and even if we
+            // did eventually see it, the original TileLoader would probably be evicted
+            // because it was removed by other more recent tiles).
+            if (tileKey.level < 4) {
+                this.m_tileLoaderCache.set(mortonCode, newTileLoader);
+            }
+        }
 
         this.updateTile(tile);
         return tile;
+    }
+
+    updateTile(tile: Tile) {
+        const tileLoader = tile.tileLoader;
+        if (tileLoader === undefined) {
+            return;
+        }
+        if (tileLoader.decodedTile !== undefined) {
+            tile.setDecodedTile(tileLoader.decodedTile);
+        } else {
+            tileLoader
+                .loadAndDecode()
+                .then(tileLoaderState => {
+                    assert(tileLoaderState === TileLoaderState.Ready);
+                    const decodedTile = tileLoader.decodedTile;
+                    if (decodedTile && this.decodedTileHasGeometry(decodedTile)) {
+                        tile.copyrightInfo =
+                            decodedTile.copyrightHolderIds !== undefined
+                                ? decodedTile.copyrightHolderIds.map(id => ({ id }))
+                                : this.m_options.copyrightInfo;
+
+                        tile.setDecodedTile(decodedTile);
+                    } else {
+                        // empty tiles are traditionally ignored and don't need decode
+                        tile.forceHasGeometry(true);
+                    }
+                    this.requestUpdate();
+                })
+                .catch(tileLoaderState => {
+                    if (
+                        tileLoaderState !== TileLoaderState.Canceled &&
+                        tileLoaderState !== TileLoaderState.Failed
+                    ) {
+                        this.logger.error("Unknown error" + tileLoaderState);
+                    }
+                });
+        }
     }
 
     /**
@@ -241,29 +304,6 @@ export class TileDataSource<TileType extends Tile> extends DataSource {
         });
 
         return promise;
-    }
-
-    updateTile(tile: Tile) {
-        const tileLoader = tile.tileLoader;
-        if (tileLoader === undefined) {
-            return;
-        }
-
-        tileLoader.loadAndDecode().then(() => {
-            if (tileLoader.decodedTile && this.decodedTileHasGeometry(tileLoader.decodedTile)) {
-                const decodedTile = tileLoader.decodedTile;
-                tile.copyrightInfo =
-                    decodedTile.copyrightHolderIds !== undefined
-                        ? decodedTile.copyrightHolderIds.map(id => ({ id }))
-                        : this.m_options.copyrightInfo;
-
-                tile.setDecodedTile(tileLoader.decodedTile);
-            } else {
-                // empty tiles are traditionally ignored and don't need decode
-                tile.forceHasGeometry(true);
-            }
-            this.requestUpdate();
-        });
     }
 
     decodedTileHasGeometry(decodedTile: DecodedTile) {
