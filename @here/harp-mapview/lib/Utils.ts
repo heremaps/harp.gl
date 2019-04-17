@@ -415,6 +415,38 @@ export namespace MapViewUtils {
     }
 
     /**
+     * Calculates object's screen size based on the focal length and it's camera distance.
+     *
+     * @param focalLength Focal length in pixels (see [[calculateFocalLengthByVerticalFov]])
+     * @param distance Object distance in world space.
+     * @param worldSize Object size in world space.
+     * @return object size in screen space.
+     */
+    export function calculateScreenSizeByFocalLength(
+        focalLength: number,
+        distance: number,
+        worldSize: number
+    ): number {
+        return (focalLength * worldSize) / distance;
+    }
+
+    /**
+     * Calculates object's world size based on the focal length and it's camera distance.
+     *
+     * @param focalLength Focal length in pixels (see [[calculateFocalLengthByVerticalFov]])
+     * @param distance Object distance in world space.
+     * @param screenSize Object size in screen space.
+     * @return object size in world space.
+     */
+    export function calculateWorldSizeByFocalLength(
+        focalLength: number,
+        distance: number,
+        screenSize: number
+    ): number {
+        return (distance * screenSize) / focalLength;
+    }
+
+    /**
      * Computes estimate for size of a THREE.Object3D object and its children. Shared materials
      * and/or attributes will be counted multiple times.
      *
