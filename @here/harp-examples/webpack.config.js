@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-const webpack = require("webpack");
 const merge = require("webpack-merge");
 const path = require("path");
 const glob = require("glob");
@@ -42,7 +41,8 @@ const commonConfig = {
                     onlyCompileBundledFiles: true,
                     transpileOnly: prepareOnly,
                     compilerOptions: {
-                        sourceMap: !prepareOnly
+                        sourceMap: !prepareOnly,
+                        declaration: false
                     }
                 }
             }
@@ -170,6 +170,10 @@ browserConfig.plugins.push(
             to: "src/[name].[ext]"
         })),
         path.join(__dirname, "index.html"),
+        {
+            from: path.join(__dirname, "src/*.html"),
+            to: "[name].[ext]"
+        },
         path.join(__dirname, "codebrowser.html"),
         { from: path.join(__dirname, "resources"), to: "resources", toType: "dir" },
         { from: path.join(harpMapThemePath, "resources"), to: "resources", toType: "dir" },
@@ -178,7 +182,9 @@ browserConfig.plugins.push(
             to: "resources/fonts",
             toType: "dir"
         },
-        require.resolve("three/build/three.min.js")
+        require.resolve("three/build/three.min.js"),
+        require.resolve("@here/harp.gl/dist/harp.js"),
+        require.resolve("@here/harp.gl/dist/harp-decoders.js"),
         ],
         { ignore: ['*.npmignore','*.gitignore'] }
     )

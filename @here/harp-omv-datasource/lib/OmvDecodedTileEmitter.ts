@@ -43,7 +43,8 @@ import {
     StyleSetEvaluator,
     Value
 } from "@here/harp-datasource-protocol/index-decoder";
-import { LineGroup, triangulateLine } from "@here/harp-lines";
+import { LineGroup } from "@here/harp-lines/lib/Lines";
+import { triangulateLine } from "@here/harp-lines/lib/TriangulateLines";
 import { assert, LoggerManager, Math2D } from "@here/harp-utils";
 import earcut from "earcut";
 import * as THREE from "three";
