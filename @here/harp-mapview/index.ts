@@ -26,6 +26,7 @@ export * from "./lib/MapViewFog";
 export * from "./lib/PickHandler";
 export * from "./lib/ConcurrentDecoderFacade";
 export * from "./lib/ConcurrentTilerFacade";
+export * from "./lib/workers/WorkerLoader";
 export * from "./lib/WorkerBasedDecoder";
 export * from "./lib/WorkerBasedTiler";
 export * from "./lib/Tile";

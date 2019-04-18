@@ -1,0 +1,54 @@
+{
+    "name": "@here/harp.gl",
+    "version": "0.1.0",
+    "description": "JS Bundle containing all the functionality needed to render a map with harp.gl",
+    "keywords": [
+        "map",
+        "map-renderer",
+        "vector-tiles",
+        "geojson",
+        "typescript",
+        "webgl",
+        "harpgl"
+    ],
+    "main": "dist/harp.js",
+    "scripts": {
+        "prepare": "webpack && NODE_ENV=production webpack",
+        "profile-min": "NODE_ENV=production webpack --profile --json > webpack-stats-production.json",
+        "profile-dev": "webpack --profile --json > webpack-stats-dev.json",
+        "test": "true"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git://github.com:heremaps/harp.gl.git"
+    },
+    "author": {
+        "name": "HERE Europe B.V.",
+        "url": "https://here.com"
+    },
+    "license": "Apache-2.0",
+    "dependencies": {
+        "three": "^0.102.0"
+    },
+    "devDependencies": {
+        "@here/harp-mapview": "^0.8.1",
+        "@here/harp-geoutils": "^0.3.1",
+        "@here/harp-omv-datasource": "^0.3.1",
+        "@here/harp-geojson-datasource": "^0.3.1",
+        "@here/harp-lines": "^0.2.1",
+        "@here/harp-lrucache": "^0.2.1",
+        "@here/harp-materials": "^0.2.1",
+        "@here/harp-text-canvas": "^0.2.1",
+        "@here/harp-utils": "^0.2.2",
+        "@here/harp-test-utils": "^0.2.1",
+        "three": "^0.102.0",
+        "ts-loader": "^5.2.1",
+        "typescript": "^3.4.1",
+        "webpack": "^4.30.0",
+        "webpack-cli": "^3.3.2",
+        "webpack-merge": "^4.1.1"
+    },
+    "publishConfig": {
+        "access": "public"
+    }
+}

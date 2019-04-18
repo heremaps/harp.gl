@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta
+            name="viewport"
+            content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0"
+        />
+        <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+        <title>harp.gl - map bundle example</title>
+        <style>
+            body {
+                background: #fff;
+                padding: 0;
+                margin: 0;
+                font-weight: bold;
+                overflow: hidden;
+            }
+
+            #mapCanvas {
+                position: absolute;
+                border: 0px;
+                left: 0px;
+                width: 100%;
+                height: 100%;
+                overflow: hidden;
+                z-index: -1;
+            }
+
+            #copyrightNotice {
+                position: absolute;
+                right: 0;
+                bottom: 0;
+                background-color: #f0fef1;
+                z-index: 100;
+                padding: 2px 5px;
+                font-family: sans-serif;
+                font-size: 0.8em;
+                font-weight: normal;
+            }
+        </style>
+    </head>
+    <body>
+        <canvas id="mapCanvas"></canvas>
+        <div id="app"></div>
+        <div id="copyrightNotice"></div>
+
+        <!--
+            These paths are to be used by clients, when using map bundle from CDN.
+        -->
+        <!--
+            <script src="https://unpkg.com/three@0.102.0/build/three.min.js"></script>
+            <script src="https://unpkg.com/@here/harp.gl/dist/harp.js"></script>
+        -->
+        <!--
+            These paths are used here to be compatible with harp.gl CI.
+        -->
+        <script src="three.min.js"></script>
+        <script src="harp.js"></script>
+
+        <script>
+            const canvas = document.getElementById("mapCanvas");
+
+            const map = new harp.MapView({
+                canvas,
+                theme:
+                    "https://unpkg.com/@here/harp-map-theme@0.2.2/resources/berlin_tilezen_base.json"
+            });
+
+            harp.CopyrightElementHandler.install("copyrightNotice", map);
+
+            map.setCameraGeolocationAndZoom(new harp.GeoCoordinates(40.6935, -74.009), 16.9);
+
+            const mapControls = new harp.MapControls(map);
+            mapControls.maxPitchAngle = 50;
+            mapControls.setRotation(6.3, 50);
+
+            const ui = new harp.MapControlsUI(mapControls);
+            canvas.parentElement.appendChild(ui.domElement);
+
+            map.resize(window.innerWidth, window.innerHeight);
+
+            window.addEventListener("resize", () => {
+                map.resize(window.innerWidth, window.innerHeight);
+            });
+
+            const hereCopyrightInfo = {
+                id: "here.com",
+                year: new Date().getFullYear(),
+                label: "HERE",
+                link: "https://legal.here.com/terms"
+            };
+            const copyrights = [hereCopyrightInfo];
+
+            const xyzAccessToken = "AYlqpxvwl7C8tSVG22lX2lg";
+
+            const omvDataSource = new harp.OmvDataSource({
+                baseUrl: "https://xyz.api.here.com/tiles/herebase.02",
+                apiFormat: harp.APIFormat.XYZOMV,
+                styleSetName: "tilezen",
+                maxZoomLevel: 17,
+                authenticationCode: xyzAccessToken,
+                copyrightInfo: copyrights,
+            });
+
+            map.addDataSource(omvDataSource);
+        </script>
+    </body>
+</html>

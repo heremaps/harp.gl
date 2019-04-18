@@ -26,7 +26,9 @@
     "scripts": {
         "test": "ts-mocha -r tsconfig-paths/register ./test/*.ts ./@here/*/test/*.ts",
         "start": "webpack-dev-server -d --config @here/harp-examples/webpack.config.js",
-        "build": "webpack -d --config @here/harp-examples/webpack.config.js",
+        "build": "npm run build-bundle && npm run build-examples",
+        "build-examples": "webpack -d --config @here/harp-examples/webpack.config.js",
+        "build-bundle": "cd @here/harp.gl && webpack",
         "start-tests": "webpack-dev-server -d --config webpack.tests.config.js",
         "test-browser": "ts-node -- ./scripts/with-http-server.ts -C dist/test -p 8079 -- mocha-webdriver-runner http://localhost:8079/index.html",
         "build-tests": "webpack -d --config webpack.tests.config.js",

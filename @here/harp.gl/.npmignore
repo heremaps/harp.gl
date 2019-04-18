@@ -1,0 +1,10 @@
+*.ts
+!*.d.ts
+test/
+lib/
+tsconfig.json
+webpack.config.ts
+.gitignore
+.gitreview
+*.tgz
+.rpt2_cache

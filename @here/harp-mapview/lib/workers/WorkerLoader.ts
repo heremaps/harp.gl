@@ -7,6 +7,7 @@
 import "@here/harp-fetch";
 
 import { LoggerManager } from "@here/harp-utils";
+import { isWorkerBootstrapRequest, WorkerBootstrapResponse } from "./WorkerBootstrapDefs";
 
 const logger = LoggerManager.instance.create("WorkerLoader");
 
@@ -19,6 +20,7 @@ export class WorkerLoader {
     static directlyFallbackToBlobBasedLoading: boolean = false;
     static sourceLoaderCache = new Map<string, Promise<string>>();
 
+    static dependencyUrlMapping: { [name: string]: string } = {};
     /**
      * Starts worker by first attempting load from `scriptUrl` using native `Worker` constructor.
      * Then waits (using [[waitWorkerInitialized]]) for its successful initialization. In case of
@@ -157,8 +159,34 @@ export class WorkerLoader {
     static waitWorkerInitialized(worker: Worker): Promise<Worker> {
         return new Promise<Worker>((resolve, reject) => {
             const firstMessageCallback = (event: MessageEvent) => {
+                const message = event.data;
+                if (isWorkerBootstrapRequest(message)) {
+                    const dependencies = message.dependencies;
+                    const resolvedDependencies: string[] = [];
+                    for (const dependency of dependencies) {
+                        const resolved = this.dependencyUrlMapping[dependency];
+                        if (!resolved) {
+                            reject(
+                                new Error(
+                                    `#waitWorkerInitialized: Unable to resolve '${dependency}'` +
+                                        ` as needed by worker script.`
+                                )
+                            );
+                            return;
+                        }
+                        resolvedDependencies.push(resolved);
+                    }
+                    const response: WorkerBootstrapResponse = {
+                        type: "worker-bootstrap-response",
+                        resolvedDependencies
+                    };
+                    worker.postMessage(response);
+                    return;
+                }
+
                 worker.removeEventListener("message", firstMessageCallback);
                 worker.removeEventListener("error", errorCallback);
+
                 resolve(worker);
 
                 // We've just consumed first message from worker before client has any chance to

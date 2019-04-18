@@ -1,3 +1,5 @@
 @here/harp-omv-datasource/lib/proto/vector_tile.d.ts
 @here/harp-datasource-protocol/theme.schema.json
+@here/harp-map-theme/resources/fonts/
+@here/harp-text-canvas/resources/fonts/
 dist/
