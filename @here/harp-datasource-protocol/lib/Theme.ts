@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { Vector3Like } from "@here/harp-geoutils/lib/math/Vector3Like";
 import {
     BasicExtrudedLineTechniqueParams,
     DashedLineTechniqueParams,
@@ -318,15 +319,6 @@ export interface NoneStyle extends BaseStyle {
     attr?: {
         [name: string]: any;
     };
-}
-
-/**
- * Interface describing a `Vector3` class.
- */
-export interface Vector3Like {
-    x: number;
-    y: number;
-    z: number;
 }
 
 /**

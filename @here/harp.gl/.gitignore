@@ -1,0 +1,9 @@
+.vscode
+.idea
+node_modules
+dist
+*.d.ts
+*.js
+*.js.map
+*.tgz
+.rpt2_cache

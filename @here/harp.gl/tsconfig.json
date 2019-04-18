@@ -1,0 +1,15 @@
+{
+    "compilerOptions": {
+        "target": "es6",
+        "lib": ["es2017", "dom"],
+        "module": "commonjs",
+        "sourceMap": true,
+        "declaration": false,
+        "strictNullChecks": true,
+        "noImplicitAny": true,
+        "noImplicitReturns": true,
+        "noImplicitThis": true,
+        "noUnusedLocals": false,
+        "downlevelIteration": true
+    }
+}
