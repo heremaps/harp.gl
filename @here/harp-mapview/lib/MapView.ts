@@ -515,6 +515,7 @@ export class MapView extends THREE.EventDispatcher {
 
     private m_camera: THREE.PerspectiveCamera;
     private m_focalLength: number;
+    private m_lookAtDistance: number;
     private m_pointOfView?: THREE.PerspectiveCamera;
 
     private m_tempVector3: THREE.Vector3 = new THREE.Vector3();
@@ -702,6 +703,7 @@ export class MapView extends THREE.EventDispatcher {
             0.1,
             4000000
         );
+        this.m_lookAtDistance = 0;
         this.m_focalLength = 0;
         this.setupCamera();
 
@@ -1453,12 +1455,32 @@ export class MapView extends THREE.EventDispatcher {
      */
     get pixelToWorld(): number {
         if (this.m_pixelToWorld === undefined) {
-            const { width, height } = this.getCanvasClientSize();
-            const center = this.getWorldPositionAt(width * 0.5, height);
-            const unitOffset = this.getWorldPositionAt(width * 0.5 + 1.0, height);
+            // At this point fov calculation should be always defined.
+            assert(this.m_options.fovCalculation !== undefined);
+            let focalLength = this.m_focalLength;
+            // Focal length is not updated in map view in "fixed" fov setting.
+            if (this.m_options.fovCalculation!.type === "fixed") {
+                const height = this.m_renderer.getSize(tmpVector).height;
+                focalLength = MapViewUtils.calculateFocalLengthByVerticalFov(
+                    MathUtils.degToRad(this.m_camera.fov),
+                    height
+                );
+            }
+            // NOTE: Look at distance is the distance to camera focus (and pivot) point.
+            // In screen space this point is located in the center of canvas.
+            // Given that zoom level is not modified (clamped by camera pitch), the following
+            // formulas are all equivalent:
+            // lookAtDistance = (EQUATORIAL_CIRCUMFERENCE * focalLength) / (256 * zoomLevel^2);
+            // lookAtDistance = abs(cameraPos.z) / cos(cameraPitch);
+            // Here we may use precalulated distance (once pre frame):
+            const lookAtDistance = this.m_lookAtDistance;
 
-            this.m_pixelToWorld =
-                center !== null && unitOffset !== null ? unitOffset.sub(center).length() : 1.0;
+            // Find world space object size that corresponds to one pixel on screen.
+            this.m_pixelToWorld = MapViewUtils.calculateWorldSizeByFocalLength(
+                focalLength,
+                lookAtDistance,
+                1
+            );
         }
         return this.m_pixelToWorld;
     }
@@ -1760,14 +1782,13 @@ export class MapView extends THREE.EventDispatcher {
 
         this.m_pixelToWorld = undefined;
 
-        const cameraPitch = Math.min(
-            MapViewUtils.extractYawPitchRoll(this.camera.quaternion).pitch,
-            Math.PI / 3
-        );
+        const cameraPitch = MapViewUtils.extractYawPitchRoll(this.camera.quaternion).pitch;
+        const cameraPosZ = Math.abs(this.camera.position.z);
 
-        const distance = Math.abs(this.camera.position.z) / Math.cos(cameraPitch);
+        this.m_lookAtDistance = cameraPosZ / Math.cos(cameraPitch);
 
-        this.m_zoomLevel = MapViewUtils.calculateZoomLevelFromDistance(distance, this);
+        const zoomLevelDistance = cameraPosZ / Math.cos(Math.min(cameraPitch, Math.PI / 3));
+        this.m_zoomLevel = MapViewUtils.calculateZoomLevelFromDistance(zoomLevelDistance, this);
     }
 
     /**
@@ -2100,6 +2121,7 @@ export class MapView extends THREE.EventDispatcher {
 
         this.m_camera.position.set(0, 0, 3000);
         this.m_camera.lookAt(new THREE.Vector3(0, 0, 0));
+        this.m_lookAtDistance = 3000;
 
         this.calculateFocalLength(height);
         this.m_visibleTiles = new VisibleTileSet(this.m_camera, this.m_visibleTileSetOptions);
