@@ -22,6 +22,8 @@ describe("OmvDecoder", function() {
         //  0,1       1,1
 
         const ring = new Ring(
+            // VertexStride
+            2,
             // Contour
             [0, 0, 1, 0, 0, 1, 1, 1],
             // ContourOutlines
@@ -49,6 +51,8 @@ describe("OmvDecoder", function() {
         //  0,1       1,1
 
         const ring = new Ring(
+            // VertexStride
+            2,
             // Contour
             [0, 0, 1, 0, 0, 1, 1, 1],
             // ContourOutlines
@@ -85,6 +89,8 @@ describe("OmvDecoder", function() {
         // 0,0 - start
 
         const ring = new Ring(
+            // VertexStride
+            2,
             // Contour
             [0, 0, 2, 0, 2, 1, 1, 1, 1, 2, 2, 2, 2, 3, 0, 3],
             // ContourOutlines

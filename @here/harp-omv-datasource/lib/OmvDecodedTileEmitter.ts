@@ -23,6 +23,7 @@ import {
     isFillTechnique,
     isLineTechnique,
     isSolidLineTechnique,
+    isStandardTechnique,
     isStandardTexturedTechnique,
     LineMarkerTechnique,
     PoiGeometry,
@@ -40,7 +41,7 @@ import { assert, LoggerManager, Math2D } from "@here/harp-utils";
 import earcut from "earcut";
 import * as THREE from "three";
 
-import { GeoCoordinates, identityProjection } from "@here/harp-geoutils";
+import { GeoCoordinates } from "@here/harp-geoutils";
 import { ILineGeometry, IPolygonGeometry } from "./IGeometryProcessor";
 import { LinesGeometry } from "./OmvDataSource";
 import { IOmvEmitter, OmvDecoder, Ring } from "./OmvDecoder";
@@ -272,10 +273,10 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
 
         const worldPos = new THREE.Vector3();
 
-        const { projection, center } = this.m_decodeInfo;
+        const { projection, center, tileBounds } = this.m_decodeInfo;
 
-        const tileWidth = this.m_decodeInfo.tileBounds.max.x - this.m_decodeInfo.tileBounds.min.x;
-        const tileHeight = this.m_decodeInfo.tileBounds.max.y - this.m_decodeInfo.tileBounds.min.y;
+        const tileWidth = tileBounds.max.x - tileBounds.min.x;
+        const tileHeight = tileBounds.max.y - tileBounds.min.y;
         const tileSizeInMeters = Math.max(tileWidth, tileHeight);
 
         for (const polyline of geometry) {
@@ -528,43 +529,40 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
             const extrudedPolygonTechnique = technique as ExtrudedPolygonTechnique;
             const fillTechnique = technique as FillTechnique;
 
-            const { projection, center } = this.m_decodeInfo;
+            const { projection, center, tileBounds } = this.m_decodeInfo;
+            const tileSize = tileBounds.getSize(new THREE.Vector3());
 
             const polygons: Ring[][] = [];
 
             const worldPos = new THREE.Vector3();
             const texCoord = new THREE.Vector3();
 
-            const texCoordProjection = identityProjection;
-
-            const texCoordBox = texCoordProjection.projectBox(
-                this.m_decodeInfo.geoBox,
-                new THREE.Box3()
-            );
-
-            const texCoordBoxSize = texCoordBox.getSize(new THREE.Vector3());
-
             const isExtruded = isExtrudedPolygonTechnique(technique);
             const isFilled = isFillTechnique(technique);
             const isTextured = isStandardTexturedTechnique(technique);
+            const isLine =
+                isSolidLineTechnique(technique) ||
+                isDashedLineTechnique(technique) ||
+                isLineTechnique(technique);
+            const isPolygon =
+                isExtruded ||
+                isFillTechnique(technique) ||
+                isStandardTechnique(technique) ||
+                isStandardTexturedTechnique(technique);
 
             const edgeWidth = isExtruded
                 ? extrudedPolygonTechnique.lineWidth || 0.0
                 : isFilled
                 ? fillTechnique.lineWidth || 0.0
                 : 0.0;
-            const hasEdges =
-                edgeWidth > 0.0 ||
-                isSolidLineTechnique(technique) ||
-                isDashedLineTechnique(technique) ||
-                isLineTechnique(technique);
+            const hasEdges = edgeWidth > 0.0 || isLine;
 
+            const vertexStride = isTextured ? 4 : 2;
             for (const polygon of geometry) {
                 const rings: Ring[] = [];
                 for (const outline of polygon.rings) {
                     const ringContour: number[] = [];
                     let ringEdges: boolean[] | undefined;
-                    let ringTexCoords: number[] | undefined;
                     for (let coordIdx = 0; coordIdx < outline.coordinates.length; ++coordIdx) {
                         const geoPoint = outline.coordinates[coordIdx];
                         const { x, y } = projection.projectPoint(geoPoint, worldPos).sub(center);
@@ -580,29 +578,21 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                         }
 
                         if (isTextured) {
-                            const { x: u, y: v } = texCoordProjection
+                            const { x: u, y: v } = projection
                                 .projectPoint(geoPoint, texCoord)
-                                .sub(texCoordBox.min)
-                                .divide(texCoordBoxSize);
-                            if (ringTexCoords === undefined) {
-                                ringTexCoords = [u, v];
-                            } else {
-                                ringTexCoords.push(u, v);
-                            }
+                                .sub(tileBounds.min)
+                                .divide(tileSize);
+                            ringContour.push(u, v);
                         }
                     }
-                    rings.push(new Ring(ringContour, ringEdges, ringTexCoords));
+                    rings.push(new Ring(vertexStride, ringContour, ringEdges));
                 }
                 polygons.push(rings);
             }
 
-            if (technique.name === "fill" || technique.name === "extruded-polygon") {
+            if (isPolygon) {
                 this.applyPolygonTechnique(polygons, technique, techniqueIndex, featureId, env);
-            } else if (
-                technique.name === "line" ||
-                technique.name === "solid-line" ||
-                technique.name === "dashed-line"
-            ) {
+            } else if (isLine) {
                 const lineGeometry =
                     technique.name === "line"
                         ? this.m_simpleLines
@@ -755,6 +745,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
 
         const { positions, textureCoordinates, colors, indices, edgeIndices, groups } = meshBuffers;
 
+        const stride = isTextured ? 4 : 2;
         for (const rings of polygons) {
             const start = indices.length;
             const basePosition = positions.length;
@@ -764,14 +755,12 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
 
             let contour: number[];
             let contourOutlines: boolean[] | undefined;
-            let contourTexCoords: number[] | undefined;
             for (let ringIndex = 0; ringIndex < rings.length; ) {
                 const baseVertex = positions.length / 3;
 
                 // Get the contour vertices for this ring.
                 contour = rings[ringIndex].contour;
                 contourOutlines = rings[ringIndex].contourOutlines;
-                contourTexCoords = rings[ringIndex].countourTexCoords;
                 ringIndex++;
 
                 let edgeIndexBuffer = edgeIndices as number[];
@@ -781,7 +770,6 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                 }
 
                 let vertices: number[] = contour;
-                let texCoords: number[] | undefined = contourTexCoords;
                 if (isExtruded) {
                     addExtrudedWalls(
                         indices,
@@ -806,18 +794,14 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                 // Repeat the process for all the inner rings (holes).
                 const holes: number[] = [];
                 for (; ringIndex < rings.length && rings[ringIndex].isInnerRing; ++ringIndex) {
-                    holes.push(vertices.length / 2);
+                    holes.push(vertices.length / stride);
 
                     contour = rings[ringIndex].contour;
                     contourOutlines = rings[ringIndex].contourOutlines;
-                    contourTexCoords = rings[ringIndex].countourTexCoords;
                     // As we are predicting the indexes before the vertices are added,
                     // the vertex offset has to be taken into account
                     const vertexOffset = vertices.length;
                     vertices = vertices.concat(contour);
-                    if (contourTexCoords && texCoords) {
-                        texCoords = texCoords.concat(contourTexCoords);
-                    }
 
                     if (isExtruded) {
                         addExtrudedWalls(
@@ -843,10 +827,10 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
 
                 try {
                     // Triangulate the footprint polyline.
-                    const triangles = earcut(vertices, holes);
+                    const triangles = earcut(vertices, holes, stride);
 
                     // Add the footprint/roof vertices to the position buffer.
-                    for (let i = 0; i < vertices.length; i += 2) {
+                    for (let i = 0; i < vertices.length; i += stride) {
                         let scaleFactor = 1.0;
                         if (isExtruded && constantHeight !== true) {
                             tempVertOrigin.set(
@@ -862,8 +846,8 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                         positions.push(vertices[i], vertices[i + 1], minHeight * scaleFactor);
                         if (isExtruded) {
                             positions.push(vertices[i], vertices[i + 1], height * scaleFactor);
-                        } else if (isTextured && texCoords) {
-                            textureCoordinates.push(texCoords[i], texCoords[i + 1]);
+                        } else if (isTextured) {
+                            textureCoordinates.push(vertices[i + 2], vertices[i + 3]);
                         }
                     }
 
