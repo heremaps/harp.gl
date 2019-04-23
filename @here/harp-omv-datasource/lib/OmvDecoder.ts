@@ -56,9 +56,9 @@ export class Ring {
     readonly isOuterRing: boolean;
 
     constructor(
+        readonly vertexStride: number,
         readonly contour: number[],
-        readonly contourOutlines?: boolean[],
-        readonly countourTexCoords?: number[]
+        readonly contourOutlines?: boolean[]
     ) {
         this.isOuterRing = this.area() < 0;
     }
@@ -68,14 +68,15 @@ export class Ring {
     }
 
     area(): number {
-        const n = this.contour.length / 2;
+        const stride = this.vertexStride;
+        const n = this.contour.length / stride;
 
         let area = 0.0;
 
         for (let p = n - 1, q = 0; q < n; p = q++) {
             area +=
-                this.contour[p * 2] * this.contour[q * 2 + 1] -
-                this.contour[q * 2] * this.contour[p * 2 + 1];
+                this.contour[p * stride] * this.contour[q * stride + 1] -
+                this.contour[q * stride] * this.contour[p * stride + 1];
         }
 
         return area / 2;
@@ -85,11 +86,12 @@ export class Ring {
      * Extracts outlines from the ring contour data
      */
     getOutlines() {
+        const stride = this.vertexStride;
         const { contourOutlines, contour } = this;
 
         if (contourOutlines === undefined) {
             const outLine = contour.slice();
-            outLine.push(...outLine.slice(0, 2));
+            outLine.push(...outLine.slice(0, stride));
             return [outLine];
         }
 
@@ -100,18 +102,18 @@ export class Ring {
 
         for (let i = 0; i < length; i++) {
             const isOutline = contourOutlines[i];
-            let index = i * 2;
+            let index = i * stride;
 
             if (!isOutline && line.length !== 0) {
                 lines.push(line);
                 line = [];
             } else if (isOutline && line.length === 0) {
-                line.push(...contour.slice(index, index + 2));
-                index = (index + 2) % (length * 2);
-                line.push(...contour.slice(index, index + 2));
+                line.push(...contour.slice(index, index + stride));
+                index = (index + stride) % (length * stride);
+                line.push(...contour.slice(index, index + stride));
             } else if (isOutline) {
-                index = (index + 2) % (length * 2);
-                line.push(...contour.slice(index, index + 2));
+                index = (index + stride) % (length * stride);
+                line.push(...contour.slice(index, index + stride));
             }
         }
         if (line.length) {
