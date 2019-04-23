@@ -70,9 +70,12 @@ class IdentityProjection implements Projection {
             new GeoCoordinates(geoBox.north, geoBox.east, geoBox.maxAltitude)
         );
         if (isBox3Like(result)) {
-            result.min.x = result.max.x;
-            result.min.y = result.max.y;
-            result.min.z = result.max.z;
+            result.min.x = min.x;
+            result.min.y = min.y;
+            result.min.z = min.z;
+            result.max.x = max.x;
+            result.max.y = max.y;
+            result.max.z = max.z;
         } else if (isOrientedBox3Like(result)) {
             MathUtils.newVector3(1, 0, 0, result.xAxis);
             MathUtils.newVector3(0, 1, 0, result.yAxis);
