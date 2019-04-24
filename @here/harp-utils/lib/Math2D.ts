@@ -87,15 +87,15 @@ export namespace Math2D {
     /**
      * Computes the squared length of a line.
      *
-     * @param line An array of even length, which form a line via [x,y,x,y,...] pairs.
+     * @param line An array of that forms a line via [x,y,z,x,y,z,...] tuples.
      */
     export function computeSquaredLineLength(line: number[]): number {
         let squaredLineLength: number = 0;
 
-        const length = line.length - 3;
-        for (let i = 0; i < length; i += 2) {
-            const xDiff = line[i + 2] - line[i];
-            const yDiff = line[i + 3] - line[i + 1];
+        const length = line.length - 4;
+        for (let i = 0; i < length; i += 3) {
+            const xDiff = line[i + 3] - line[i];
+            const yDiff = line[i + 4] - line[i + 1];
             squaredLineLength += xDiff * xDiff + yDiff * yDiff;
         }
         return squaredLineLength;

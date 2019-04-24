@@ -167,10 +167,10 @@ export class OmvTileInfoEmitter implements IOmvEmitter {
             for (const outline of polygon.rings) {
                 const contour: number[] = [];
                 for (const geoPoint of outline.coordinates) {
-                    const { x, y } = projection.projectPoint(geoPoint, worldPos).sub(center);
-                    contour.push(x, y);
+                    const { x, y, z } = projection.projectPoint(geoPoint, worldPos).sub(center);
+                    contour.push(x, y, z);
                 }
-                rings.push(new Ring(2, contour));
+                rings.push(new Ring(3, contour));
             }
             polygons.push(rings);
         }

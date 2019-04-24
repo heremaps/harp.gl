@@ -34,10 +34,7 @@ export class DashedLineMaterial extends SolidLineMaterial {
      * @param params `DashedLineMaterial` parameters.
      */
     constructor(params?: DashedLineMaterialParameters) {
-        const shaderParams: SolidLineMaterialParameters = { dimensions: 2 };
-        if (params !== undefined && params.dimensions !== undefined) {
-            shaderParams.dimensions = params.dimensions as any;
-        }
+        const shaderParams: SolidLineMaterialParameters = {};
         if (params !== undefined && params.color !== undefined) {
             shaderParams.color = params.color as any;
         }

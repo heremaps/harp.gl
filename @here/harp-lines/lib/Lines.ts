@@ -7,13 +7,12 @@
 import * as THREE from "three";
 
 // Preallocate temp variables used during line generation.
-const tmpTangent0_2D = new THREE.Vector2();
-const tmpTangent1_2D = new THREE.Vector2();
-const tmpBitangent_2D = new THREE.Vector2();
-const tmpTangent0_3D = new THREE.Vector3();
-const tmpTangent1_3D = new THREE.Vector3();
-const tmpBitangent_3D = new THREE.Vector3();
-const SEGMENT_OFFSET = 0.00001;
+const tmpV = new THREE.Vector3();
+const tmpNormal = new THREE.Vector3();
+const tmpTangent0 = new THREE.Vector3();
+const tmpTangent1 = new THREE.Vector3();
+const tmpBitangent = new THREE.Vector3();
+const SEGMENT_OFFSET = 0.1;
 
 /**
  * Describes vertex attribute parameters of interleaved buffer.
@@ -27,93 +26,75 @@ interface VertexAttributeDescriptor {
 /**
  * Declares all the vertex attributes used for rendering a line using the [[SolidLineMaterial]].
  */
-const LINE_VERTEX_ATTRIBUTES: VertexAttributeDescriptor[][] = [
-    [
-        { name: "texcoord", itemSize: 2, offset: 0 },
-        { name: "position", itemSize: 2, offset: 2 },
-        { name: "bitangent", itemSize: 3, offset: 4 }
-    ],
-    [
-        { name: "texcoord", itemSize: 2, offset: 0 },
-        { name: "position", itemSize: 3, offset: 2 },
-        { name: "bitangent", itemSize: 4, offset: 5 }
-    ]
+const LINE_VERTEX_ATTRIBUTES: VertexAttributeDescriptor[] = [
+    { name: "texcoord", itemSize: 2, offset: 0 },
+    { name: "position", itemSize: 3, offset: 2 },
+    { name: "tangent", itemSize: 3, offset: 5 },
+    { name: "bitangent", itemSize: 4, offset: 8 }
 ];
 
 /** Stride size for line vertex data. */
-const LINE_STRIDE = [7, 9];
+const LINE_STRIDE = 12;
 
 /**
  * Declares all the vertex attributes used for rendering a line using the
  * [[HighPrecisionLineMaterial]].
  */
-const HP_LINE_VERTEX_ATTRIBUTES: VertexAttributeDescriptor[][] = [
-    [
-        { name: "texcoord", itemSize: 2, offset: 0 },
-        { name: "position", itemSize: 2, offset: 2 },
-        { name: "positionLow", itemSize: 2, offset: 4 },
-        { name: "bitangent", itemSize: 3, offset: 6 }
-    ],
-    [
-        { name: "texcoord", itemSize: 2, offset: 0 },
-        { name: "position", itemSize: 3, offset: 2 },
-        { name: "positionLow", itemSize: 3, offset: 5 },
-        { name: "bitangent", itemSize: 4, offset: 8 }
-    ]
+const HP_LINE_VERTEX_ATTRIBUTES: VertexAttributeDescriptor[] = [
+    { name: "texcoord", itemSize: 2, offset: 0 },
+    { name: "position", itemSize: 3, offset: 2 },
+    { name: "positionLow", itemSize: 3, offset: 5 },
+    { name: "tangent", itemSize: 3, offset: 8 },
+    { name: "bitangent", itemSize: 4, offset: 11 }
 ];
 
 /** Stride size for high precision line vertex data. */
-const HP_LINE_STRIDE = [9, 12];
+const HP_LINE_STRIDE = 15;
 
 /**
  * Class that holds the vertex and index attributes for a [[Lines]] object.
  */
 export class LineGeometry {
-    readonly dimensions: 2 | 3;
     vertices: number[] = [];
     indices: number[] = [];
-
-    constructor(params: { dimensions: 2 | 3 }) {
-        this.dimensions = params.dimensions;
-    }
 }
 
 /**
  * Creates a [[LineGeometry]] object out of a polyline.
  *
  * @param polyline Array of `numbers` describing a polyline.
+ * @param center Center of the tile.
  * @param geometry [[LineGeometry]] object used to store the vertex and index attributes.
  * @param highPrecision If `true` will create high-precision vertex information.
  */
 export function createLineGeometry(
     polyline: ArrayLike<number>,
-    geometry = new LineGeometry({ dimensions: 2 }),
+    center: THREE.Vector3,
+    geometry = new LineGeometry(),
     highPrecision: boolean = false
 ): LineGeometry {
     if (polyline.length === 0) {
         return geometry;
     }
 
-    const is3D = geometry.dimensions === 3;
-    const stride = highPrecision
-        ? HP_LINE_STRIDE[geometry.dimensions - 2]
-        : LINE_STRIDE[geometry.dimensions - 2];
+    const stride = highPrecision ? HP_LINE_STRIDE : LINE_STRIDE;
 
-    const pointCount = polyline.length / geometry.dimensions;
+    const pointCount = polyline.length / 3;
     const segments = new Array<number>(pointCount);
-    const tangents = new Array<number>(polyline.length - geometry.dimensions);
+    const tangents = new Array<number>(polyline.length - 3);
     const baseVertex = geometry.vertices.length / stride;
 
     // Compute segments and tangents.
     let sum = SEGMENT_OFFSET;
     segments[0] = sum;
+    let isFlat = true;
     for (let i = 0; i < pointCount - 1; ++i) {
         let sqrLength = 0;
-        for (let j = 0; j < geometry.dimensions; ++j) {
-            const d =
-                polyline[(i + 1) * geometry.dimensions + j] - polyline[i * geometry.dimensions + j];
-            tangents[i * geometry.dimensions + j] = d;
+        for (let j = 0; j < 3; ++j) {
+            const d = polyline[(i + 1) * 3 + j] - polyline[i * 3 + j];
+            tangents[i * 3 + j] = d;
             sqrLength += d * d;
+            isFlat = j === 2 ? isFlat && polyline[(i + 1) * 3 + j] === 0.0 : isFlat;
         }
         const len = Math.sqrt(sqrLength);
         sum = sum + len;
@@ -122,25 +103,14 @@ export function createLineGeometry(
 
     // Check if we're working with a closed line.
     let isClosed = true;
-    for (let j = 0; j < geometry.dimensions; ++j) {
-        isClosed = isClosed && polyline[j] === polyline[polyline.length - geometry.dimensions + j];
+    for (let j = 0; j < 3; ++j) {
+        isClosed = isClosed && polyline[j] === polyline[polyline.length - 3 + j];
     }
-
-    // Select the correct dimensions for the tangents.
-    const tmpTangent0 = is3D ? tmpTangent0_3D : tmpTangent0_2D;
-    const tmpTangent1 = is3D ? tmpTangent1_3D : tmpTangent1_2D;
-    const tmpBitangent = is3D ? tmpBitangent_3D : tmpBitangent_2D;
 
     for (let i = 0; i < pointCount; ++i) {
         // Retrieve the per-point tangents.
-        const T1 =
-            isClosed && i === 0
-                ? tangents.length - geometry.dimensions
-                : Math.max(0, i - 1) * geometry.dimensions;
-        const T2 =
-            isClosed && i === pointCount - 1
-                ? 0
-                : Math.min(i * geometry.dimensions, tangents.length - geometry.dimensions);
+        const T1 = isClosed && i === 0 ? tangents.length - 3 : Math.max(0, i - 1) * 3;
+        const T2 = isClosed && i === pointCount - 1 ? 0 : Math.min(i * 3, tangents.length - 3);
 
         // Process v0 and v1.
         if (i > 0) {
@@ -149,32 +119,29 @@ export function createLineGeometry(
                 geometry.vertices.push(segments[i - 1], segments[i] * v);
 
                 // Store the position attribute (component-dependant).
-                for (let j = 0; j < geometry.dimensions; ++j) {
+                for (let j = 0; j < 3; ++j) {
                     if (!highPrecision) {
-                        geometry.vertices.push(polyline[i * geometry.dimensions + j]);
+                        geometry.vertices.push(polyline[i * 3 + j]);
                     } else {
-                        const highComp = Math.fround(polyline[i * geometry.dimensions + j]);
-                        const lowComp = polyline[i * geometry.dimensions + j] - highComp;
+                        const highComp = Math.fround(polyline[i * 3 + j]);
+                        const lowComp = polyline[i * 3 + j] - highComp;
                         geometry.vertices.push(highComp, lowComp);
                     }
+                    tmpNormal.setComponent(j, polyline[i * 3 + j]);
                 }
 
                 // Store the bitangent attribute (component-dependant).
-                for (let j = 0; j < geometry.dimensions; ++j) {
+                for (let j = 0; j < 3; ++j) {
                     tmpTangent0.setComponent(j, tangents[T1 + j]);
                     tmpTangent1.setComponent(j, tangents[T2 + j]);
                 }
-                const angle = is3D
-                    ? computeBitangent3D(
-                          tmpTangent0_3D.normalize(),
-                          tmpTangent1_3D.normalize(),
-                          tmpBitangent_3D
-                      )
-                    : computeBitangent2D(
-                          tmpTangent0_2D.normalize(),
-                          tmpTangent1_2D.normalize(),
-                          tmpBitangent_2D
-                      );
+                geometry.vertices.push(...tmpTangent0.normalize().toArray());
+                const angle = computeBitangent(
+                    isFlat ? tmpNormal.set(0, 0, 1) : tmpNormal.add(center).normalize(),
+                    tmpTangent0.normalize(),
+                    tmpTangent1.normalize(),
+                    tmpBitangent
+                );
                 geometry.vertices.push(...tmpBitangent.toArray(), angle);
             }
         }
@@ -189,32 +156,29 @@ export function createLineGeometry(
                 );
 
                 // Store the position attribute (component-dependant).
-                for (let j = 0; j < geometry.dimensions; ++j) {
+                for (let j = 0; j < 3; ++j) {
                     if (!highPrecision) {
-                        geometry.vertices.push(polyline[i * geometry.dimensions + j]);
+                        geometry.vertices.push(polyline[i * 3 + j]);
                     } else {
-                        const highComp = Math.fround(polyline[i * geometry.dimensions + j]);
-                        const lowComp = polyline[i * geometry.dimensions + j] - highComp;
+                        const highComp = Math.fround(polyline[i * 3 + j]);
+                        const lowComp = polyline[i * 3 + j] - highComp;
                         geometry.vertices.push(highComp, lowComp);
                     }
+                    tmpNormal.setComponent(j, polyline[i * 3 + j]);
                 }
 
                 // Store the bitangent attribute (component-dependant).
-                for (let j = 0; j < geometry.dimensions; ++j) {
+                for (let j = 0; j < 3; ++j) {
                     tmpTangent0.setComponent(j, tangents[T1 + j]);
                     tmpTangent1.setComponent(j, tangents[T2 + j]);
                 }
-                const angle = is3D
-                    ? computeBitangent3D(
-                          tmpTangent0_3D.normalize(),
-                          tmpTangent1_3D.normalize(),
-                          tmpBitangent_3D
-                      )
-                    : computeBitangent2D(
-                          tmpTangent0_2D.normalize(),
-                          tmpTangent1_2D.normalize(),
-                          tmpBitangent_2D
-                      );
+                geometry.vertices.push(...tmpTangent0.normalize().toArray());
+                const angle = computeBitangent(
+                    isFlat ? tmpNormal.set(0, 0, 1) : tmpNormal.add(center).normalize(),
+                    tmpTangent0.normalize(),
+                    tmpTangent1.normalize(),
+                    tmpBitangent
+                );
                 geometry.vertices.push(...tmpBitangent.toArray(), angle);
             }
         }
@@ -237,14 +201,14 @@ export function createLineGeometry(
  */
 export function createSimpleLineGeometry(
     polyline: ArrayLike<number>,
-    geometry = new LineGeometry({ dimensions: 2 })
+    geometry = new LineGeometry()
 ): LineGeometry {
     if (polyline.length === 0) {
         return geometry;
     }
 
-    const pointCount = polyline.length / geometry.dimensions;
-    let index = geometry.vertices.length / geometry.dimensions;
+    const pointCount = polyline.length / 3;
+    let index = geometry.vertices.length / 3;
 
     for (let i = 0; i < pointCount; ++i, index++) {
         if (i > 0) {
@@ -253,8 +217,8 @@ export function createSimpleLineGeometry(
         if (i < pointCount - 1) {
             geometry.indices.push(index);
         }
-        for (let j = 0; j < geometry.dimensions; ++j) {
-            geometry.vertices.push(polyline[i * geometry.dimensions + j]);
+        for (let j = 0; j < 3; ++j) {
+            geometry.vertices.push(polyline[i * 3 + j]);
         }
     }
 
@@ -262,7 +226,7 @@ export function createSimpleLineGeometry(
 }
 
 /**
- * Class used to render groups (or batches) of width-variable lines.
+ * Class used to render groups (or batches) of width-variable lines (in the same tile).
  */
 export class LineGroup {
     /**
@@ -271,22 +235,16 @@ export class LineGroup {
      * @param vertices Array of vertex positions.
      * @param indices Array of vertex indices.
      * @param geometry [[BufferGeometry]] object which will store all the `Lines` attribute data.
-     * @param dimensionality Number of components per polyline point.
      * @param highPrecision If `true` will create high-precision vertex information.
      */
     static createGeometry(
         vertices: ArrayLike<number>,
         indices: ArrayLike<number>,
         geometry: THREE.BufferGeometry,
-        dimensionality: 2 | 3 = 2,
         highPrecision = false
     ): THREE.BufferGeometry {
-        const stride = highPrecision
-            ? HP_LINE_STRIDE[dimensionality - 2]
-            : LINE_STRIDE[dimensionality - 2];
-        const descriptors = highPrecision
-            ? HP_LINE_VERTEX_ATTRIBUTES[dimensionality - 2]
-            : LINE_VERTEX_ATTRIBUTES[dimensionality - 2];
+        const stride = highPrecision ? HP_LINE_STRIDE : LINE_STRIDE;
+        const descriptors = highPrecision ? HP_LINE_VERTEX_ATTRIBUTES : LINE_VERTEX_ATTRIBUTES;
 
         const buffer = new THREE.InterleavedBuffer(new Float32Array(vertices), stride);
         descriptors.forEach(descr => {
@@ -304,18 +262,12 @@ export class LineGroup {
         return geometry;
     }
 
-    readonly dimensions: 2 | 3 = 2;
-    readonly highPrecision: boolean = false;
+    private readonly m_origin: THREE.Vector3;
     private readonly m_geometry: LineGeometry;
 
-    constructor(params?: { dimensions: 2 | 3; highPrecision?: boolean }) {
-        if (params !== undefined) {
-            this.dimensions = params.dimensions;
-            if (params.highPrecision !== undefined) {
-                this.highPrecision = params.highPrecision;
-            }
-        }
-        this.m_geometry = new LineGeometry({ dimensions: this.dimensions });
+    constructor(readonly highPrecision: boolean = false, readonly isSimple: boolean = false) {
+        this.m_origin = new THREE.Vector3();
+        this.m_geometry = new LineGeometry();
     }
 
     /**
@@ -327,14 +279,14 @@ export class LineGroup {
     }
 
     /**
-     * Add the given points to this line set.
+     * Add the given points to this line group.
      *
-     * @param points Sequence of (x,y) coordinates.
-     * @param isSimple `true` to create simple (nonsolid, nonextruded) lines. Defaults to `false`.
+     * @param points Sequence of (x,y,z) coordinates.
+     * @param center World center of the provided points.
      */
-    add(points: ArrayLike<number>, isSimple: boolean = false): this {
-        if (!isSimple) {
-            createLineGeometry(points, this.m_geometry, this.highPrecision);
+    add(points: ArrayLike<number>, center: THREE.Vector3 = this.m_origin): this {
+        if (!this.isSimple) {
+            createLineGeometry(points, center, this.m_geometry, this.highPrecision);
         } else {
             createSimpleLineGeometry(points, this.m_geometry);
         }
@@ -359,18 +311,14 @@ export class LineGroup {
      * Returns the list of [[VertexAttributeDescriptor]]s.
      */
     get vertexAttributes(): VertexAttributeDescriptor[] {
-        return this.highPrecision
-            ? HP_LINE_VERTEX_ATTRIBUTES[this.dimensions - 2]
-            : LINE_VERTEX_ATTRIBUTES[this.dimensions - 2];
+        return this.highPrecision ? HP_LINE_VERTEX_ATTRIBUTES : LINE_VERTEX_ATTRIBUTES;
     }
 
     /**
      * Returns the vertex attribute stride.
      */
     get stride(): number {
-        return this.highPrecision
-            ? HP_LINE_STRIDE[this.dimensions - 2]
-            : LINE_STRIDE[this.dimensions - 2];
+        return this.highPrecision ? HP_LINE_STRIDE : LINE_STRIDE;
     }
 
     /**
@@ -384,28 +332,28 @@ export class LineGroup {
             this.m_geometry.vertices,
             this.m_geometry.indices,
             geometry,
-            this.dimensions,
             this.highPrecision
         );
     }
 }
 
-function computeBitangent2D(t0: THREE.Vector2, t1: THREE.Vector2, bt: THREE.Vector2): number {
-    const angle = Math.atan2(t0.x * t1.y - t0.y * t1.x, t0.x * t1.x + t0.y * t1.y);
+function computeBitangent(
+    n: THREE.Vector3,
+    t0: THREE.Vector3,
+    t1: THREE.Vector3,
+    bt: THREE.Vector3
+): number {
+    let angle = 0;
+    if (!t0.equals(t1)) {
+        angle = Math.acos(t0.dot(t1)) * Math.sign(n.dot(tmpV.copy(t0).cross(t1)));
+        if (Number.isNaN(angle)) {
+            angle = 0;
+        }
+    }
     bt.copy(t0)
         .add(t1)
         .normalize()
-        .set(bt.y, -bt.x);
-    return angle;
-}
-
-function computeBitangent3D(t0: THREE.Vector3, t1: THREE.Vector3, bt: THREE.Vector3): number {
-    // NOTE: We're assuming a 2D projection on the XY plane here.
-    // TODO: Add projection information to the lines to get appropriate bitangents.
-    const angle = Math.atan2(t0.x * t1.y - t0.y * t1.x, t0.x * t1.x + t0.y * t1.y);
-    bt.copy(t0)
-        .add(t1)
-        .normalize()
-        .set(bt.y, -bt.x, bt.z);
+        .cross(n)
+        .normalize();
     return angle;
 }

@@ -35,7 +35,7 @@ export class HighPrecisionPoints extends THREE.Points implements HighPrecisionOb
     constructor(
         geometry?: THREE.BufferGeometry,
         material?: HighPrecisionPointMaterial,
-        positions?: number[] | THREE.Vector2[] | THREE.Vector3[],
+        positions?: number[] | THREE.Vector3[],
         color?: THREE.Color,
         opacity?: number
     ) {
@@ -70,8 +70,8 @@ export class HighPrecisionPoints extends THREE.Points implements HighPrecisionOb
         return this.material as THREE.ShaderMaterial;
     }
 
-    setPositions(positions: number[] | THREE.Vector2[] | THREE.Vector3[]): void {
-        this.dimensionality = HighPrecisionUtils.setPositions(this, positions);
+    setPositions(positions: number[] | THREE.Vector3[]): void {
+        HighPrecisionUtils.setPositions(this, positions);
     }
 
     setupForRendering(): void {

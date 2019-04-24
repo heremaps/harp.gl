@@ -76,7 +76,7 @@ export function triangulateLine(
     startWithCircle = true,
     endWithCircle = startWithCircle
 ) {
-    if (points.length < 2) {
+    if (points.length < 3) {
         return;
     }
 
@@ -86,8 +86,8 @@ export function triangulateLine(
     if (startWithCircle) {
         // Define lineAngle as (direction - origin) vector angle to X axis
         const lineAngle =
-            points.length !== 2
-                ? angleVec.set(points[2] - points[0], points[3] - points[1]).angle()
+            points.length !== 3
+                ? angleVec.set(points[3] - points[0], points[4] - points[1]).angle()
                 : 0;
 
         addCircle(points[0], points[1], lineAngle, width, vertices, indices);
@@ -110,10 +110,10 @@ export function triangulateLine(
     let vertexOffset = 0;
     for (let i = 0; i < N; ++i) {
         let useBevel = false;
-        p.set(points[i * 2], points[i * 2 + 1], 0);
+        p.set(points[i * 3], points[i * 3 + 1], 0);
 
         if (i + 1 < N) {
-            n.set(points[(i + 1) * 2], points[(i + 1) * 2 + 1], 0);
+            n.set(points[(i + 1) * 3], points[(i + 1) * 3 + 1], points[(i + 1) * 3 + 2]);
 
             dir.copy(n)
                 .sub(p)
@@ -206,15 +206,15 @@ export function triangulateLine(
             points.length !== 2
                 ? angleVec
                       .set(
-                          points[(N - 2) * 2] - points[(N - 1) * 2],
-                          points[(N - 2) * 2 + 1] - points[(N - 1) * 2 + 1]
+                          points[(N - 3) * 3] - points[(N - 2) * 3],
+                          points[(N - 3) * 3 + 1] - points[(N - 2) * 3 + 1]
                       )
                       .angle()
                 : Math.PI;
 
         addCircle(
-            points[(N - 1) * 2],
-            points[(N - 1) * 2 + 1],
+            points[(N - 2) * 3],
+            points[(N - 2) * 3 + 1],
             lineAngle,
             width,
             vertices,

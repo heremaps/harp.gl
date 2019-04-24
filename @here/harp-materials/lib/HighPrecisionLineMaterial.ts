@@ -7,33 +7,7 @@
 import * as THREE from "three";
 import linesShaderChunk from "./ShaderChunks/LinesChunks";
 
-const vertexSource2D: string = `
-#ifdef USE_COLOR
-attribute vec4 color;
-varying vec3 vColor;
-#endif
-
-// uniforms to implement double-precision
-uniform mat4 u_mvp;             // combined modelView and projection matrix
-uniform vec3 u_eyepos;          // eye position major
-uniform vec3 u_eyepos_lowpart;  // eye position minor ((double) eyepos - (float) eyepos)
-
-// vertex attributes
-attribute vec2 position;        // high part
-attribute vec2 positionLow;     // low part
-
-#include <high_precision_vert2D_func>
-
-void main() {
-    #ifdef USE_COLOR
-    vColor = color.rgb;
-    #endif
-
-    vec2 pos = subtractDblEyePos(position);
-    gl_Position = u_mvp * vec4(pos, 0.0, 1.0);
-}`;
-
-const vertexSource3D: string = `
+const vertexSource: string = `
 #ifdef USE_COLOR
 attribute vec4 color;
 varying vec3 vColor;
@@ -48,7 +22,7 @@ uniform vec3 u_eyepos_lowpart;  // eye position minor ((double) eyepos - (float)
 attribute vec3 position;        // high part
 attribute vec3 positionLow;     // low part
 
-#include <high_precision_vert3D_func>
+#include <high_precision_vert_func>
 
 void main() {
     #ifdef USE_COLOR
@@ -100,7 +74,6 @@ export class HighPrecisionLineMaterial extends THREE.RawShaderMaterial {
     static DEFAULT_OPACITY: number = 1.0;
 
     isHighPrecisionLineMaterial: boolean;
-    dimensionality: number;
 
     /**
      * Constructs a new `HighPrecisionLineMaterial`.
@@ -112,7 +85,7 @@ export class HighPrecisionLineMaterial extends THREE.RawShaderMaterial {
 
         const shaderParams = {
             name: "HighPrecisionLineMaterial",
-            vertexShader: vertexSource3D,
+            vertexShader: vertexSource,
             fragmentShader: fragmentSource,
             uniforms: {
                 diffuse: new THREE.Uniform(
@@ -129,7 +102,6 @@ export class HighPrecisionLineMaterial extends THREE.RawShaderMaterial {
 
         this.type = "HighPrecisionLineMaterial";
         this.isHighPrecisionLineMaterial = true;
-        this.dimensionality = 2;
 
         // Apply initial parameter values.
         if (params !== undefined) {
@@ -152,17 +124,6 @@ export class HighPrecisionLineMaterial extends THREE.RawShaderMaterial {
     }
     set color(value: THREE.Color) {
         this.uniforms.diffuse.value = value;
-    }
-
-    /**
-     * Sets the number of dimensions this material is intended to work for (2D/3D).
-     * @param dimensionality Number of dimensions (`2` = 2D, `3` = 3D).
-     */
-    setDimensionality(dimensionality: number): void {
-        if (dimensionality !== this.dimensionality) {
-            this.dimensionality = dimensionality;
-            this.vertexShader = this.dimensionality === 2 ? vertexSource2D : vertexSource3D;
-        }
     }
 
     private updateTransparencyFeature() {

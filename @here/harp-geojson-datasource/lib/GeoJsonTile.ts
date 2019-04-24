@@ -164,7 +164,7 @@ export class GeoJsonTile extends Tile {
      */
     private addTextPaths(geometry: GeoJsonTextPathGeometry, technique: TextTechnique) {
         const path: THREE.Vector2[] = [];
-        for (let i = 0; i < geometry.path.length; i += 2) {
+        for (let i = 0; i < geometry.path.length; i += 3) {
             path.push(new THREE.Vector2(geometry.path[i], geometry.path[i + 1]));
         }
 
