@@ -1700,8 +1700,8 @@
         "final": true
       },
       {
-        "description": "building_level_>=15",
-        "when": "$layer ^= 'buildings' && (($level >= 15) && ($geometryType ^= 'polygon'))",
+        "description": "building_geometry",
+        "when": "$layer ^= 'buildings' && ($geometryType ^= 'polygon')",
         "technique": "extruded-polygon",
         "attr": {
           "color": "#EDE7E1",
@@ -1725,7 +1725,7 @@
       },
       {
         "description": "building_address",
-        "when": "$layer ^= 'buildings' && (($level >= 15) && (((kind ^= 'address') && ($geometryType ^= 'point')) && label_placement))",
+        "when": "$layer ^= 'buildings' && (((kind ^= 'address') && ($geometryType ^= 'point')) && label_placement)",
         "technique": "text",
         "attr": {
           "color": "#A9A9A9",
