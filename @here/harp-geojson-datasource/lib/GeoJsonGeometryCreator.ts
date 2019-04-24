@@ -15,7 +15,7 @@ import {
 } from "@here/harp-datasource-protocol";
 import { IMeshBuffers, StyleSetEvaluator } from "@here/harp-datasource-protocol/index-decoder";
 import { Projection, webMercatorTilingScheme } from "@here/harp-geoutils";
-import { LineGroup } from "@here/harp-lines";
+import { LineGroup } from "@here/harp-lines/lib/Lines";
 import { Math2D } from "@here/harp-utils";
 import earcut from "earcut";
 import * as THREE from "three";
