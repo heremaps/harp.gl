@@ -139,4 +139,18 @@ export namespace MathUtils {
         }
         return true;
     }
+
+    /**
+     * Smoothly interpolates between two values using cubic formula
+     *
+     * @param startValue
+     * @param endValue
+     * @param time
+     * @returns Result of the interpolation within the range of `[startValue, endValue]`
+     */
+    export function easeInOutCubic(startValue: number, endValue: number, time: number): number {
+        const timeValue =
+            time < 0.5 ? 4 * time * time * time : (time - 1) * (2 * time - 2) * (2 * time - 2) + 1;
+        return startValue + (endValue - startValue) * timeValue;
+    }
 }
