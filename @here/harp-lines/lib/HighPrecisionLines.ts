@@ -33,7 +33,7 @@ export interface HighPrecisionObject extends THREE.Object3D {
      * Sets up attributes for position (one attribute for major 32 bits position "halve", and one
      * attribute for lower 32 bits).
      */
-    setPositions(positions: number[] | THREE.Vector2[] | THREE.Vector3[]): void;
+    setPositions(positions: number[] | THREE.Vector3[]): void;
 
     /**
      * Prepare the objects "`onBeforeRender()`" callback to generate proper high-precision camera
@@ -49,11 +49,6 @@ export class HighPrecisionWireFrameLine extends THREE.Line implements HighPrecis
     matrixWorldInverse: THREE.Matrix4;
 
     /**
-     * Number of dimensions this `HighPrecisionObject` is specified in (2D/3D).
-     */
-    dimensionality?: number;
-
-    /**
      * Creates a `HighPrecisionWireFrameLine` object.
      *
      * @param geometry [[BufferGeometry]] used to render this object.
@@ -66,7 +61,7 @@ export class HighPrecisionWireFrameLine extends THREE.Line implements HighPrecis
     constructor(
         geometry?: THREE.BufferGeometry,
         material?: HighPrecisionLineMaterial,
-        positions?: number[] | THREE.Vector2[] | THREE.Vector3[],
+        positions?: number[] | THREE.Vector3[],
         color?: THREE.Color,
         opacity?: number
     ) {
@@ -94,17 +89,11 @@ export class HighPrecisionWireFrameLine extends THREE.Line implements HighPrecis
         return this.material as THREE.ShaderMaterial;
     }
 
-    setPositions(positions: number[] | THREE.Vector2[] | THREE.Vector3[]): void {
-        this.dimensionality = HighPrecisionUtils.setPositions(this, positions);
+    setPositions(positions: number[] | THREE.Vector3[]): void {
+        HighPrecisionUtils.setPositions(this, positions);
     }
 
     setupForRendering(): void {
-        if (
-            (this.material as any).isHighPrecisionLineMaterial &&
-            this.dimensionality !== undefined
-        ) {
-            (this.material as any).setDimensionality(this.dimensionality);
-        }
         this.onBeforeRender = (
             _renderer: THREE.WebGLRenderer,
             _scene: THREE.Scene,
@@ -135,11 +124,6 @@ export class HighPrecisionLine extends THREE.Mesh implements HighPrecisionObject
     matrixWorldInverse: THREE.Matrix4;
 
     /**
-     * Number of dimensions this `HighPrecisionObject` is specified in (2D/3D).
-     */
-    dimensionality?: number;
-
-    /**
      * Creates a `HighPrecisionLine` object.
      *
      * @param geometry [[BufferGeometry]] used to render this object.
@@ -152,7 +136,7 @@ export class HighPrecisionLine extends THREE.Mesh implements HighPrecisionObject
     constructor(
         geometry?: THREE.BufferGeometry,
         material?: HighPrecisionLineMaterial,
-        positions?: number[] | THREE.Vector2[] | THREE.Vector3[],
+        positions?: number[] | THREE.Vector3[],
         color?: THREE.Color,
         opacity?: number
     ) {
@@ -180,21 +164,11 @@ export class HighPrecisionLine extends THREE.Mesh implements HighPrecisionObject
         return this.material as THREE.ShaderMaterial;
     }
 
-    setPositions(
-        positions: number[] | THREE.Vector2[] | THREE.Vector3[],
-        dimensionality?: number
-    ): void {
-        this.dimensionality = HighPrecisionUtils.setPositions(this, positions, dimensionality);
+    setPositions(positions: number[] | THREE.Vector3[]): void {
+        HighPrecisionUtils.setPositions(this, positions);
     }
 
     setupForRendering(): void {
-        if (
-            (this.material as any).isHighPrecisionLineMaterial &&
-            this.dimensionality !== undefined
-        ) {
-            (this.material as any).setDimensionality(this.dimensionality);
-        }
-
         this.onBeforeRender = (
             _renderer: THREE.WebGLRenderer,
             _scene: THREE.Scene,

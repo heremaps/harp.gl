@@ -7,37 +7,7 @@
 import * as THREE from "three";
 import linesShaderChunk from "./ShaderChunks/LinesChunks";
 
-const vertexSource2D: string = `
-#ifdef USE_COLOR
-varying vec3 vColor;
-#endif
-
-uniform float size;
-
-// uniforms to implement double-precision
-uniform mat4 u_mvp;             // combined modelView and projection matrix
-uniform vec3 u_eyepos;          // eye position major
-uniform vec3 u_eyepos_lowpart;  // eye position minor ((double) eyepos - (float) eyepos)
-
-// vertex attributes
-attribute vec2 position;        // high part
-attribute vec2 positionLow;     // low part
-
-#include <high_precision_vert2D_func>
-
-void main() {
-    #ifdef USE_COLOR
-    vColor = color.rgb;
-    #endif
-
-    vec2 pos = subtractDblEyePos(position);
-    gl_Position = u_mvp * vec4(pos, 0.0, 1.0);
-
-    // ignore sizeAttenuation for now!
-    gl_PointSize = size;
-}`;
-
-const vertexSource3D: string = `
+const vertexSource: string = `
 #ifdef USE_COLOR
 varying vec3 vColor;
 #endif
@@ -52,7 +22,7 @@ uniform vec3 u_eyepos_lowpart;  // eye position minor ((double) eyepos - (float)
 // vertex attributes
 attribute vec3 positionLow;     // low part
 
-#include <high_precision_vert3D_func>
+#include <high_precision_vert_func>
 
 void main() {
     #ifdef USE_COLOR
@@ -98,7 +68,6 @@ export class HighPrecisionPointMaterial extends THREE.PointsMaterial {
     static DEFAULT_SCALE: number = 1.0;
 
     isHighPrecisionPointMaterial: boolean;
-    dimensionality: number;
     uniforms: { [uniform: string]: THREE.IUniform };
     vertexShader?: string;
     fragmentShader?: string;
@@ -115,7 +84,7 @@ export class HighPrecisionPointMaterial extends THREE.PointsMaterial {
         super(shaderParams);
 
         this.type = "HighPrecisionPointMaterial";
-        this.vertexShader = vertexSource3D;
+        this.vertexShader = vertexSource;
         this.fragmentShader = THREE.ShaderChunk.points_frag;
         this.fog = false;
 
@@ -132,7 +101,6 @@ export class HighPrecisionPointMaterial extends THREE.PointsMaterial {
         };
 
         this.isHighPrecisionPointMaterial = true;
-        this.dimensionality = 3;
 
         // Apply initial parameter values.
         if (params !== undefined) {
@@ -176,17 +144,6 @@ export class HighPrecisionPointMaterial extends THREE.PointsMaterial {
     }
     set uvTransform(value: THREE.Matrix3) {
         this.uniforms.uvTransform.value = value;
-    }
-
-    /**
-     * Sets the number of dimensions this material is intended to work for (2D/3D).
-     * @param dimensionality Number of dimensions (`2` = 2D, `3` = 3D).
-     */
-    setDimensionality(dimensionality: number) {
-        if (dimensionality !== this.dimensionality) {
-            this.dimensionality = dimensionality;
-            this.vertexShader = this.dimensionality === 2 ? vertexSource2D : vertexSource3D;
-        }
     }
 }
 

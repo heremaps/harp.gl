@@ -16,45 +16,50 @@ const prevEdgeGoal = new THREE.Vector2();
  *
  * @param indexBuffer Edge index buffer to be filled.
  * @param vertexOffset Starting offset of the vertices composing the contour.
+ * @param vertexStride Number of elements per contour vertex.
  * @param polygonContour Vertices that compose the contour.
  * @param polygonContourEdges Collection of booleans indicating if contour edges should be added.
  */
 export function addPolygonEdges(
     indexBuffer: number[],
     vertexOffset: number,
+    vertexStride: number,
     polygonContour: number[],
     polygonContourEdges: boolean[],
     isExtruded?: boolean,
     addFootprintEdges?: boolean,
     wallEdgeSlope?: number
 ) {
-    for (let i = 0; i < polygonContour.length; i += 2) {
-        const edgeIdx = i / 2;
-        if (polygonContourEdges[edgeIdx]) {
+    for (let i = 0; i < polygonContourEdges.length; ++i) {
+        if (polygonContourEdges[i]) {
             if (isExtruded === true) {
-                const vFootprint0 = vertexOffset + i;
-                const vRoof0 = vertexOffset + i + 1;
-                const vFootprint1 = vertexOffset + ((i + 2) % polygonContour.length);
-                const vRoof1 = vertexOffset + ((i + 3) % polygonContour.length);
+                const vFootprint0 = vertexOffset + i * 2;
+                const vRoof0 = vFootprint0 + 1;
+                const vFootprint1 = vertexOffset + ((i + 1) % polygonContourEdges.length) * 2;
+                const vRoof1 = vFootprint1 + 1;
 
                 if (addFootprintEdges === true) {
                     indexBuffer.push(vFootprint0, vFootprint1);
                 }
                 indexBuffer.push(vRoof0, vRoof1);
 
-                const prevEdgeIdx = (i === 0 ? polygonContour.length : i) - 2;
-                if (polygonContourEdges[prevEdgeIdx / 2]) {
+                const prevEdgeIdx = (i === 0 ? polygonContourEdges.length : i) - 1;
+                if (polygonContourEdges[prevEdgeIdx]) {
                     if (wallEdgeSlope !== undefined) {
-                        const v0x = polygonContour[i];
-                        const v0y = polygonContour[i + 1];
-                        const v1x = polygonContour[(i + 2) % polygonContour.length];
-                        const v1y = polygonContour[(i + 3) % polygonContour.length];
+                        const v0x = polygonContour[i * vertexStride];
+                        const v0y = polygonContour[i * vertexStride + 1];
+                        const v1x =
+                            polygonContour[((i + 1) % polygonContourEdges.length) * vertexStride];
+                        const v1y =
+                            polygonContour[
+                                ((i + 1) % polygonContourEdges.length) * vertexStride + 1
+                            ];
 
                         currEdgeStart.set(v0x, v0y);
                         currEdgeGoal.set(v1x, v1y);
                         prevEdgeStart.set(
-                            polygonContour[prevEdgeIdx],
-                            polygonContour[prevEdgeIdx + 1]
+                            polygonContour[prevEdgeIdx * vertexStride],
+                            polygonContour[prevEdgeIdx * vertexStride + 1]
                         );
                         prevEdgeGoal.set(currEdgeStart.x, currEdgeStart.y);
 
@@ -71,8 +76,8 @@ export function addPolygonEdges(
                     }
                 }
             } else {
-                const vFoot0 = vertexOffset + edgeIdx;
-                const vRoof0 = vertexOffset + ((edgeIdx + 1) % polygonContourEdges.length);
+                const vFoot0 = vertexOffset + i;
+                const vRoof0 = vertexOffset + ((i + 1) % polygonContourEdges.length);
                 indexBuffer.push(vFoot0, vRoof0);
             }
         }

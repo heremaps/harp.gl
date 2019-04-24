@@ -21,7 +21,6 @@ import {
     PointsMaterialParameters,
     ShaderMaterial,
     ShaderMaterialParameters,
-    Vector2,
     Vector3
 } from "three";
 
@@ -183,12 +182,9 @@ export namespace HighPrecisionUtils {
      * Assembles the necessary attribute buffers needed to render [[HighPrecisionObject]].
      *
      * @param positions Array of positions.
-     * @param dimensionality Number of components of the vectors inside the `positions` array.
-     * (2D/3D).
      */
     export function createAttributes(
-        positions: ArrayLike<number> | ArrayLike<Vector2> | ArrayLike<Vector3>,
-        dimensionality?: number
+        positions: ArrayLike<number> | ArrayLike<Vector3>
     ): {
         positionHigh: BufferAttribute;
         positionLow: BufferAttribute;
@@ -220,18 +216,7 @@ export namespace HighPrecisionUtils {
                 (positions as Vector3[]).forEach(vec => {
                     addHPVector(vec);
                 });
-                dimensionality = 3;
-            } else if (vAny.y !== undefined) {
-                (positions as Vector2[]).forEach(vec => {
-                    addHPValue(vec.x, vec.y);
-                });
-                dimensionality = 2;
             } else {
-                if (dimensionality === undefined) {
-                    throw Error(
-                        "Positions are float array, please provide dimensionality (2 or 3)"
-                    );
-                }
                 if (positionVec.length % 3 !== 0) {
                     throw Error("Positions must be 3D, not 2D");
                 }
@@ -243,13 +228,13 @@ export namespace HighPrecisionUtils {
             }
 
             return {
-                positionHigh: new Float32BufferAttribute(positionVec, dimensionality),
-                positionLow: new Float32BufferAttribute(positionVecLow, dimensionality)
+                positionHigh: new Float32BufferAttribute(positionVec, 3),
+                positionLow: new Float32BufferAttribute(positionVecLow, 3)
             };
         } else {
             return {
-                positionHigh: new Float32BufferAttribute([], dimensionality || 3),
-                positionLow: new Float32BufferAttribute([], dimensionality || 3)
+                positionHigh: new Float32BufferAttribute([], 3),
+                positionLow: new Float32BufferAttribute([], 3)
             };
         }
     }
@@ -302,15 +287,12 @@ export namespace HighPrecisionUtils {
      *
      * @param object [[HighPrecisionObject]] which position attribute will be set.
      * @param positions Array of positions.
-     * @param dimensionality Number of components of the vectors inside the `positions` array.
-     * (2D/3D).
      */
     export function setPositions(
         object: HPL.HighPrecisionObject,
-        positions: ArrayLike<number> | ArrayLike<Vector2> | ArrayLike<Vector3>,
-        dimensionality?: number
+        positions: ArrayLike<number> | ArrayLike<Vector3>
     ): number {
-        const attributes = createAttributes(positions, dimensionality);
+        const attributes = createAttributes(positions);
 
         object.bufferGeometry.addAttribute("position", attributes.positionHigh);
         object.bufferGeometry.addAttribute("positionLow", attributes.positionLow);
@@ -319,19 +301,15 @@ export namespace HighPrecisionUtils {
     }
 
     /**
-     * Convert positions from `Array<Vector2|Vector3>` to `Array<number>`. The argument
-     * `dimensionality` can be used to force `Vector3` elements to be handled as `Vector2` elements.
+     * Convert positions from `Array<Vector3>` to `Array<number>`.
      *
      * @param positions Array of positions.
-     * @param dimensionality Number of components of the vectors inside the `positions` array.
-     * (2D/3D).
      */
     export function convertPositions(
-        positions: ArrayLike<number> | ArrayLike<Vector2> | ArrayLike<Vector3>,
-        dimensionality?: number
-    ): { positions: number[]; dimensionality?: number } {
+        positions: ArrayLike<number> | ArrayLike<Vector3>
+    ): { positions: number[] } {
         if (positions.length <= 0) {
-            return { positions: [], dimensionality };
+            return { positions: [] };
         }
 
         const v = positions[0];
@@ -342,26 +320,15 @@ export namespace HighPrecisionUtils {
 
         const vAny = v as any;
         if (vAny.y === undefined && vAny.z === undefined) {
-            return { positions: positions as number[], dimensionality };
+            return { positions: positions as number[] };
         }
 
         const returnPositions = new Array<number>();
+        (positions as Vector3[]).forEach(vec => {
+            returnPositions.push(vec.x, vec.y, vec.z);
+        });
 
-        if (vAny.z !== undefined && dimensionality !== 2) {
-            dimensionality = 3;
-
-            (positions as Vector3[]).forEach(vec => {
-                returnPositions.push(vec.x, vec.y, vec.z);
-            });
-        } else {
-            dimensionality = 2;
-
-            (positions as Vector2[]).forEach(vec => {
-                returnPositions.push(vec.x, vec.y);
-            });
-        }
-
-        return { positions: returnPositions, dimensionality };
+        return { positions: returnPositions };
     }
 
     /**
@@ -418,11 +385,9 @@ export namespace HighPrecisionUtils {
     ): HPP.HighPrecisionPoints {
         const indices: number[] = [];
 
-        const dimensionality = 3;
-
         // tslint:disable-next-line:prefer-for-of - pointPositions doesn't have iterable interface
         for (let i = 0; i < pointPositions.length; i++) {
-            indices.push(indices.length / dimensionality);
+            indices.push(indices.length / 3);
         }
 
         const hpPointsGeometry = new BufferGeometry();
@@ -433,7 +398,7 @@ export namespace HighPrecisionUtils {
 
         const pointsObject = new HPP.HighPrecisionPoints(hpPointsGeometry, hpPointsMaterial);
 
-        setPositions(pointsObject, pointPositions, dimensionality);
+        setPositions(pointsObject, pointPositions);
 
         pointsObject.setupForRendering();
 

@@ -10,16 +10,12 @@ import { FadingFeature, FadingFeatureParameters } from "./MapMeshMaterials";
 import linesShaderChunk from "./ShaderChunks/LinesChunks";
 
 const vertexSource: string = `
-#define SEGMENT_OFFSET 0.00001
+#define SEGMENT_OFFSET 0.1
 
 attribute vec2 texcoord;
-#if LINE_3D
 attribute vec3 position;
 attribute vec4 bitangent;
-#else
-attribute vec2 position;
-attribute vec3 bitangent;
-#endif
+attribute vec3 tangent;
 
 uniform mat4 modelViewMatrix;
 uniform mat4 projectionMatrix;
@@ -28,11 +24,7 @@ uniform float lineWidth;
 varying vec2 vTexcoord;
 varying vec2 vSegment;
 varying float vLinewidth;
-#if LINE_3D
 varying vec3 vPosition;
-#else
-varying vec2 vPosition;
-#endif
 
 #ifdef USE_COLOR
 attribute vec4 color;
@@ -45,8 +37,7 @@ varying vec3 vColor;
 
 #include <fog_pars_vertex>
 
-#include <extrude_2D_line_vert_func>
-#include <extrude_3D_line_vert_func>
+#include <extrude_line_vert_func>
 
 void main() {
     vLinewidth = lineWidth;
@@ -56,21 +47,15 @@ void main() {
     vColor = color.rgb;
     #endif
 
+    vec3 pos = position;
     vec2 uvs = sign(texcoord);
 
-    #if LINE_3D
-    vec3 pos = position;
-    extrudeLine3D(vSegment, bitangent, lineWidth, pos, uvs);
+    extrudeLine(vSegment, bitangent, tangent, lineWidth, pos, uvs);
+
     vPosition = pos;
-    vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
-    #else
-    vec2 pos = position;
-    extrudeLine2D(vSegment, bitangent, lineWidth, pos, uvs);
-    vPosition = pos;
-    vec4 mvPosition = modelViewMatrix * vec4(pos, 0.0, 1.0);
-    #endif
     vTexcoord = vec2(uvs.x, uvs.y * lineWidth);
 
+    vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
     gl_Position = projectionMatrix * mvPosition;
 
     #ifdef USE_FADING
@@ -95,11 +80,7 @@ uniform float gapSize;
 varying vec2 vTexcoord;
 varying vec2 vSegment;
 varying float vLinewidth;
-#if LINE_3D
 varying vec3 vPosition;
-#else
-varying vec2 vPosition;
-#endif
 #ifdef USE_COLOR
 varying vec3 color;
 #endif
@@ -150,11 +131,6 @@ void main() {
  */
 export interface SolidLineMaterialParameters extends FadingFeatureParameters {
     /**
-     * Dimensions Whether to render a`2D` or`3D` line.
-     */
-    dimensions?: 2 | 3;
-
-    /**
      * Line color.
      */
     color?: number | string;
@@ -200,8 +176,6 @@ export class SolidLineMaterial extends THREE.RawShaderMaterial implements Fading
         FadingFeature.patchGlobalShaderChunks();
 
         const defines: { [key: string]: any } = {
-            LINE_3D:
-                params !== undefined && params.dimensions !== undefined ? params.dimensions - 2 : 0,
             DASHED_LINE: 0,
             TILE_CLIP: 0
         };
