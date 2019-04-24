@@ -13,8 +13,7 @@ import {
 
 import { StyleSetEvaluator } from "@here/harp-datasource-protocol/index-decoder";
 import { Projection, TileKey, webMercatorTilingScheme } from "@here/harp-geoutils";
-import { ThemedTileDecoder } from "@here/harp-mapview-decoder";
-import { WorkerServiceManager } from "@here/harp-mapview-decoder/index-worker";
+import { ThemedTileDecoder, WorkerServiceManager } from "@here/harp-mapview-decoder/index-worker";
 import { TileDecoderService } from "@here/harp-mapview-decoder/lib/TileDecoderService";
 import { LoggerManager } from "@here/harp-utils";
 import * as THREE from "three";
