@@ -8,16 +8,16 @@
 
 You can use this engine to:
 
-  * Develop visually appealing 3D maps
-  * Create highly animated and dynamic map visualization with WebGL, using the popular [three.js](https://threejs.org/) library.
-  * Create themeable maps, with themes that can change on the fly.
-  * Create a smooth map experience with highly performant map rendering and decoding. Web workers parallelize the CPU intensive tasks, for optimal responsiveness.
-  * Design your maps modularly, where you can swap out modules and data providers as required.
+-   Develop visually appealing 3D maps
+-   Create highly animated and dynamic map visualization with WebGL, using the popular [three.js](https://threejs.org/) library.
+-   Create themeable maps, with themes that can change on the fly.
+-   Create a smooth map experience with highly performant map rendering and decoding. Web workers parallelize the CPU intensive tasks, for optimal responsiveness.
+-   Design your maps modularly, where you can swap out modules and data providers as required.
 
 With that in mind, we have included some modules that let's you get started with some simple web applications
 that can display a map using our default style. You can get results like the one shown below:
 
-![New York City rendered with our default style](docs/nyc.png)
+![New York City rendered with our default style](docs/nyc.jpg)
 
 If you want to learn more about the applications you can create, please check the [Getting Started Guide](docs/GettingStartedGuide.md).
 
@@ -50,8 +50,8 @@ Since `harp.gl` consists of a set of modules, there are no ready-made bundles av
 
 ### Prerequisites
 
-* __Node.js__ - Please see [nodejs.org](https://nodejs.org/) for installation instructions
-* __Yarn__ -  Please see [yarnpkg.com](https://yarnpkg.com/en/) for installation instructions.
+-   **Node.js** - Please see [nodejs.org](https://nodejs.org/) for installation instructions
+-   **Yarn** - Please see [yarnpkg.com](https://yarnpkg.com/en/) for installation instructions.
 
 ### Download dependencies
 
