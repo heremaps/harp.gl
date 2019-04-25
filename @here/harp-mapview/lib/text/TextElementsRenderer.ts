@@ -776,6 +776,7 @@ export class TextElementsRenderer {
                 this.createTextElementStyle(element, element.name!)
             );
         });
+        // tslint:disable-next-line:no-unused-variable
         for (const [name, style] of this.m_textStyles) {
             if (style.textCanvas === undefined) {
                 if (style.fontCatalog !== undefined) {

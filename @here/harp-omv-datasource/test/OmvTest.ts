@@ -15,7 +15,6 @@ import {
     OmvFilterString,
     OmvGeometryType
 } from "../index";
-import { com } from "../lib/proto/vector_tile";
 
 import { assert } from "chai";
 

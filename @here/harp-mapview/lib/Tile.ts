@@ -1032,18 +1032,6 @@ export class Tile implements CachedResource {
      * @param decodedTile The [[DecodedTile]].
      */
     createTextElements(decodedTile: DecodedTile) {
-        // gather the sum of [[TextElement]]s (upper boundary), to compute the priority, such that
-        // the text elements that come first get the highest priority, so they get placed first.
-        let numTextElements = 0;
-        let numTextElementsCreated = 0;
-
-        if (decodedTile.textPathGeometries !== undefined) {
-            numTextElements += decodedTile.textPathGeometries.length;
-        }
-        if (decodedTile.textGeometries !== undefined) {
-            numTextElements += decodedTile.textGeometries.length;
-        }
-
         const displayZoomLevel = Math.floor(this.mapView.zoomLevel);
         if (decodedTile.textPathGeometries !== undefined) {
             this.m_preparedTextPaths = this.prepareTextPaths(decodedTile.textPathGeometries);
@@ -1109,7 +1097,6 @@ export class Tile implements CachedResource {
                 textElement.reserveSpace = technique.reserveSpace !== false;
 
                 this.addTextElement(textElement);
-                numTextElementsCreated++;
             }
         }
 
@@ -1176,7 +1163,6 @@ export class Tile implements CachedResource {
                     textElement.fadeFar = getPropertyValue(technique.fadeFar, displayZoomLevel);
 
                     this.addTextElement(textElement);
-                    numTextElementsCreated++;
                 }
             }
         }
@@ -1940,20 +1926,6 @@ export class Tile implements CachedResource {
             numTextElements,
             numUserTextElements
         };
-    }
-
-    private getMaterialsCount() {
-        let num = 0;
-        this.objects.forEach((rootObject: TileObject & DisposableObject) => {
-            if (rootObject.material) {
-                if (Array.isArray(rootObject.material)) {
-                    num += rootObject.material.length;
-                } else {
-                    num += 1;
-                }
-            }
-        });
-        return num;
     }
 
     /**

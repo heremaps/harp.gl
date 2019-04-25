@@ -15,11 +15,6 @@ import {
 import { ColorCache } from "../ColorCache";
 
 /**
- * Maximum zoom level possible considered in [[computeStyleCacheId]].
- */
-const MAX_ZOOM_LEVEL = 100;
-
-/**
  * [[TextStyle]] id for the default value inside a [[TextRenderStyleCache]] or a
  * [[TextLayoutStyleCache]].
  */

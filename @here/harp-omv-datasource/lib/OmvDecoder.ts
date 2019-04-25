@@ -182,7 +182,7 @@ export class OmvDecoder implements IGeometryProcessor {
         private readonly m_projection: Projection,
         private readonly m_styleSetEvaluator: StyleSetEvaluator,
         private readonly m_showMissingTechniques: boolean,
-        private readonly m_dataFilter?: OmvFeatureFilter,
+        dataFilter?: OmvFeatureFilter,
         private readonly m_featureModifier?: OmvFeatureModifier,
         private readonly m_gatherFeatureIds = true,
         private readonly m_createTileInfo = false,
@@ -192,8 +192,8 @@ export class OmvDecoder implements IGeometryProcessor {
         private readonly m_languages?: string[]
     ) {
         // Register the default adapters.
-        this.m_dataAdapters.push(new OmvProtobufDataAdapter(this, m_dataFilter, logger));
-        this.m_dataAdapters.push(new VTJsonDataAdapter(this, m_dataFilter, logger));
+        this.m_dataAdapters.push(new OmvProtobufDataAdapter(this, dataFilter, logger));
+        this.m_dataAdapters.push(new VTJsonDataAdapter(this, dataFilter, logger));
     }
 
     /**

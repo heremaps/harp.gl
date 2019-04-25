@@ -4,13 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import * as THREE from "three";
-
-const currEdgeStart = new THREE.Vector2();
-const currEdgeGoal = new THREE.Vector2();
-const prevEdgeStart = new THREE.Vector2();
-const prevEdgeGoal = new THREE.Vector2();
-
 /**
  * Fills an index buffer with the indices for the extruded walls for a polygon contour.
  *
