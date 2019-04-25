@@ -12,7 +12,7 @@ addons:
 branches:
   only:
     - master
-    - /^@here\//
+    - /^@here\/.*/
 
 # upgrade yarn to a more recent version
 before_install:
