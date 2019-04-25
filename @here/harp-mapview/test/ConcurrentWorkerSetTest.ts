@@ -3,11 +3,7 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-import {
-    RequestController,
-    WorkerDecoderProtocol,
-    WorkerServiceProtocol
-} from "@here/harp-datasource-protocol";
+import { WorkerDecoderProtocol, WorkerServiceProtocol } from "@here/harp-datasource-protocol";
 import { stubGlobalConstructor, willEventually } from "@here/harp-test-utils";
 import { Logger, LogLevel, WorkerChannel, WORKERCHANNEL_MSG_TYPE } from "@here/harp-utils";
 import { assert } from "chai";

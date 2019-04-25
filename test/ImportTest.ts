@@ -9,7 +9,6 @@ import * as glob from "glob";
 import * as path from "path";
 
 import { assert } from "chai";
-import { stringify } from "querystring";
 
 // tslint:disable:only-arrow-functions
 // tslint:disable:forin

@@ -8,7 +8,7 @@ import { LRUCache } from "@here/harp-lrucache";
 import * as THREE from "three";
 
 import { DataSource } from "./DataSource";
-import { CalculationStatus, ElevationRange, ElevationRangeSource } from "./ElevationRangeSource";
+import { CalculationStatus, ElevationRangeSource } from "./ElevationRangeSource";
 import { MapTileCuller } from "./MapTileCuller";
 import { Tile } from "./Tile";
 

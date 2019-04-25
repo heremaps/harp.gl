@@ -66,8 +66,6 @@ export class OmvDebugLabelsTile extends OmvTile {
         super.createTextElements(decodedTile);
 
         const colorMap = new Map<number, THREE.Color>();
-        // black color for point numbers
-        const black = new THREE.Color(0);
 
         // activate in the browser with:
         // window.__debugContext.setValue("DEBUG_TEXT_PATHS", true)

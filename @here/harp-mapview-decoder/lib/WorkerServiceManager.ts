@@ -5,10 +5,7 @@
  */
 
 import { WorkerServiceProtocol } from "@here/harp-datasource-protocol";
-import { LoggerManager } from "@here/harp-utils";
 import { WorkerService, WorkerServiceResponse } from "./WorkerService";
-
-const logger = LoggerManager.instance.create("WorkerServiceManager");
 
 /**
  * Factory function that creates [[WorkerService]].

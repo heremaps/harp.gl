@@ -18,7 +18,7 @@ import {
     Tile,
     TileObject
 } from "@here/harp-mapview";
-import { ContextualArabicConverter, FontUnit } from "@here/harp-text-canvas";
+import { ContextualArabicConverter } from "@here/harp-text-canvas";
 import * as THREE from "three";
 import {
     GeoJsonPoiGeometry,

@@ -15,8 +15,6 @@ import * as THREE from "three";
 
 import * as geo from "@here/harp-geoutils";
 
-import * as fs from "fs";
-
 describe("SphericalGeometrySubdivisionModifier", function() {
     it("SubdivideTileBounds", function() {
         const geoPoint = new geo.GeoCoordinates(53.3, 13.4);
