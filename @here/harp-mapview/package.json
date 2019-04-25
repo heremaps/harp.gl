@@ -1,65 +1,65 @@
 {
-  "name": "@here/harp-mapview",
-  "version": "0.8.2",
-  "description": "Functionality needed to render a map.",
-  "keywords": [
-    "map",
-    "map-renderer",
-    "vector-tiles",
-    "geojson",
-    "typescript",
-    "webgl",
-    "harpgl"
-  ],
-  "main": "index.js",
-  "typings": "index",
-  "directories": {
-    "test": "test"
-  },
-  "scripts": {
-    "build": "tsc",
-    "test": "cross-env mocha --require source-map-support/register $EXTRA_MOCHA_ARGS ./test/*.js",
-    "prepare": "cross-env tsc --sourceMap false $EXTRA_TSC_ARGS"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git://github.com:heremaps/harp.gl.git"
-  },
-  "author": {
-    "name": "HERE Europe B.V.",
-    "url": "https://here.com"
-  },
-  "license": "Apache-2.0",
-  "dependencies": {
-    "@here/harp-datasource-protocol": "^0.3.2",
-    "@here/harp-geoutils": "^0.3.2",
-    "@here/harp-lines": "^0.2.2",
-    "@here/harp-lrucache": "^0.2.2",
-    "@here/harp-materials": "^0.2.2",
-    "@here/harp-text-canvas": "^0.2.2",
-    "@here/harp-utils": "^0.2.3",
-    "rtree": "^1.4.2"
-  },
-  "devDependencies": {
-    "@here/harp-test-utils": "^0.2.2",
-    "@types/chai": "^4.1.2",
-    "@types/mocha": "^5.2.5",
-    "@types/node": "^10.9.0",
-    "@types/sinon": "^5.0.1",
-    "@types/tween.js": "^16.9.0",
-    "chai": "^4.0.2",
-    "copyfiles": "^2.0.0",
-    "cross-env": "^5.2.0",
-    "mocha": "^5.2.0",
-    "sinon": "^7.1.1",
-    "source-map-support": "^0.5.2",
-    "three": "^0.102.0",
-    "typescript": "^3.4.1"
-  },
-  "peerDependencies": {
-    "three": "^0.102.0"
-  },
-  "publishConfig": {
-    "access": "public"
-  }
+    "name": "@here/harp-mapview",
+    "version": "0.8.2",
+    "description": "Functionality needed to render a map.",
+    "keywords": [
+        "map",
+        "map-renderer",
+        "vector-tiles",
+        "geojson",
+        "typescript",
+        "webgl",
+        "harpgl"
+    ],
+    "main": "index.js",
+    "typings": "index",
+    "directories": {
+        "test": "test"
+    },
+    "scripts": {
+        "build": "tsc",
+        "test": "cross-env mocha --require source-map-support/register $EXTRA_MOCHA_ARGS ./test/*.js",
+        "prepare": "cross-env tsc --sourceMap false $EXTRA_TSC_ARGS"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git://github.com:heremaps/harp.gl.git"
+    },
+    "author": {
+        "name": "HERE Europe B.V.",
+        "url": "https://here.com"
+    },
+    "license": "Apache-2.0",
+    "dependencies": {
+        "@here/harp-datasource-protocol": "^0.3.2",
+        "@here/harp-geoutils": "^0.3.2",
+        "@here/harp-lines": "^0.2.2",
+        "@here/harp-lrucache": "^0.2.2",
+        "@here/harp-materials": "^0.2.2",
+        "@here/harp-text-canvas": "^0.2.2",
+        "@here/harp-utils": "^0.2.3",
+        "rtree": "^1.4.2"
+    },
+    "devDependencies": {
+        "@here/harp-test-utils": "^0.2.2",
+        "@types/chai": "^4.1.2",
+        "@types/mocha": "^5.2.5",
+        "@types/node": "^10.9.0",
+        "@types/sinon": "^5.0.1",
+        "@types/tween.js": "^16.9.0",
+        "chai": "^4.0.2",
+        "copyfiles": "^2.0.0",
+        "cross-env": "^5.2.0",
+        "mocha": "^5.2.0",
+        "sinon": "^7.1.1",
+        "source-map-support": "^0.5.2",
+        "three": "^0.102.0",
+        "typescript": "^3.4.1"
+    },
+    "peerDependencies": {
+        "three": "^0.102.0"
+    },
+    "publishConfig": {
+        "access": "public"
+    }
 }

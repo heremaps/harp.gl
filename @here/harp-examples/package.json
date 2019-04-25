@@ -1,69 +1,69 @@
 {
-  "name": "@here/harp-examples",
-  "version": "0.2.2",
-  "description": "harp.gl Examples",
-  "keywords": [
-    "examples",
-    "map",
-    "map-renderer",
-    "vector-tiles",
-    "geojson",
-    "typescript",
-    "webgl",
-    "harpgl"
-  ],
-  "scripts": {
-    "test": "exit 0",
-    "prebuild": "node scripts/postinstall.js",
-    "build": "webpack",
-    "start": "webpack-dev-server",
-    "publish-html": "node scripts/publish-html.js",
-    "prepare": "node scripts/postinstall.js && cross-env PREPARE_ONLY=true webpack -p"
-  },
-  "author": {
-    "name": "HERE Europe B.V.",
-    "url": "https://here.com"
-  },
-  "license": "Apache-2.0",
-  "devDependencies": {
-    "@here/harp-debug-datasource": "^0.2.2",
-    "@here/harp-geojson-datasource": "^0.3.2",
-    "@here/harp-lrucache": "^0.2.2",
-    "@here/harp-map-controls": "^0.2.2",
-    "@here/harp-map-theme": "^0.2.2",
-    "@here/harp-mapview": "^0.8.2",
-    "@here/harp-mapview-decoder": "^0.3.2",
-    "@here/harp-materials": "^0.2.2",
-    "@here/harp-omv-datasource": "^0.3.2",
-    "@here/harp-text-canvas": "^0.2.2",
-    "@here/harp-webtile-datasource": "^0.3.2",
-    "@tweenjs/tween.js": "^17.2.0",
-    "@types/dat.gui": "^0.7.1",
-    "@types/highlight.js": "^9.12.2",
-    "@types/long": "^4.0.0",
-    "@types/tween.js": "^16.9.0",
-    "copy-webpack-plugin": "^4.5.2",
-    "cross-env": "^5.2.0",
-    "css-loader": "^1.0.0",
-    "dat.gui": "^0.7.2",
-    "highlight.js": "^9.12.0",
-    "html-webpack-plugin": "^3.2.0",
-    "ncp": "^2.0.0",
-    "stats.js": "^0.17.0",
-    "style-loader": "^0.23.0",
-    "three": "^0.102.0",
-    "ts-loader": "^5.2.1",
-    "typescript": "^3.4.1",
-    "webpack": "^4.16.5",
-    "webpack-cli": "^3.1.0",
-    "webpack-dev-server": "^3.1.5",
-    "webpack-merge": "^4.1.1"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git://github.com:heremaps/harp.gl.git"
-  },
-  "publishConfig": {
-    "access": "public"
-  }
+    "name": "@here/harp-examples",
+    "version": "0.2.2",
+    "description": "harp.gl Examples",
+    "keywords": [
+        "examples",
+        "map",
+        "map-renderer",
+        "vector-tiles",
+        "geojson",
+        "typescript",
+        "webgl",
+        "harpgl"
+    ],
+    "scripts": {
+        "test": "exit 0",
+        "prebuild": "node scripts/postinstall.js",
+        "build": "webpack",
+        "start": "webpack-dev-server",
+        "publish-html": "node scripts/publish-html.js",
+        "prepare": "node scripts/postinstall.js && cross-env PREPARE_ONLY=true webpack -p"
+    },
+    "author": {
+        "name": "HERE Europe B.V.",
+        "url": "https://here.com"
+    },
+    "license": "Apache-2.0",
+    "devDependencies": {
+        "@here/harp-debug-datasource": "^0.2.2",
+        "@here/harp-geojson-datasource": "^0.3.2",
+        "@here/harp-lrucache": "^0.2.2",
+        "@here/harp-map-controls": "^0.2.2",
+        "@here/harp-map-theme": "^0.2.2",
+        "@here/harp-mapview": "^0.8.2",
+        "@here/harp-mapview-decoder": "^0.3.2",
+        "@here/harp-materials": "^0.2.2",
+        "@here/harp-omv-datasource": "^0.3.2",
+        "@here/harp-text-canvas": "^0.2.2",
+        "@here/harp-webtile-datasource": "^0.3.2",
+        "@tweenjs/tween.js": "^17.2.0",
+        "@types/dat.gui": "^0.7.1",
+        "@types/highlight.js": "^9.12.2",
+        "@types/long": "^4.0.0",
+        "@types/tween.js": "^16.9.0",
+        "copy-webpack-plugin": "^4.5.2",
+        "cross-env": "^5.2.0",
+        "css-loader": "^1.0.0",
+        "dat.gui": "^0.7.2",
+        "highlight.js": "^9.12.0",
+        "html-webpack-plugin": "^3.2.0",
+        "ncp": "^2.0.0",
+        "stats.js": "^0.17.0",
+        "style-loader": "^0.23.0",
+        "three": "^0.102.0",
+        "ts-loader": "^5.2.1",
+        "typescript": "^3.4.1",
+        "webpack": "^4.16.5",
+        "webpack-cli": "^3.1.0",
+        "webpack-dev-server": "^3.1.5",
+        "webpack-merge": "^4.1.1"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git://github.com:heremaps/harp.gl.git"
+    },
+    "publishConfig": {
+        "access": "public"
+    }
 }

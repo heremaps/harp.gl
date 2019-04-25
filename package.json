@@ -1,56 +1,56 @@
 {
-  "name": "harp.gl",
-  "version": "1.0.0",
-  "description": "Core render components of harp.gl, an open-source 3D map rendering engine.",
-  "workspaces": [
-    "@here/*"
-  ],
-  "devDependencies": {
-    "chromedriver": "^2.43.1",
-    "geckodriver": "^1.12.2",
-    "hard-source-webpack-plugin": "^0.13.1",
-    "mocha": "^5.2.0",
-    "mocha-webdriver-runner": "^0.5.1",
-    "prettier": "^1.16.4",
-    "three": "^0.102.0",
-    "ts-mocha": "^2.0.0",
-    "tslint": "^5.11.1",
-    "tslint-config-prettier": "^1.18.0",
-    "typedoc": "^0.14.2",
-    "typedoc-plugin-external-module-map": "^1.0.0",
-    "typescript": "^3.4.1",
-    "webpack": "^4.28.3",
-    "webpack-cli": "^3.1.0",
-    "webpack-dev-server": "^3.1.5"
-  },
-  "scripts": {
-    "test": "ts-mocha -r tsconfig-paths/register ./test/*.ts ./@here/*/test/*.ts",
-    "start": "webpack-dev-server -d --config @here/harp-examples/webpack.config.js",
-    "build": "webpack -d --config @here/harp-examples/webpack.config.js",
-    "start-tests": "webpack-dev-server -d --config webpack.tests.config.js",
-    "test-browser": "ts-node -- ./scripts/with-http-server.ts -C dist/test -p 8079 -- mocha-webdriver-runner http://localhost:8079/index.html",
-    "build-tests": "webpack -d --config webpack.tests.config.js",
-    "typedoc": "ts-node ./scripts/doc-snippets.ts && typedoc --options typedoc.json",
-    "tslint": "tslint --project tsconfig.json",
-    "prettier": "prettier -l '**/*.ts' '**/*.tsx'",
-    "prettier:fix": "prettier --write '**/*.ts' '**/*.tsx'"
-  },
-  "engines": {
-    "node": ">=9.11.1",
-    "npm": ">=5.8.0",
-    "yarn": ">=1.11.1"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git://github.com:heremaps/harp.gl.git"
-  },
-  "private": true,
-  "author": {
-    "name": "HERE Europe B.V.",
-    "url": "https://here.com"
-  },
-  "license": "Apache-2.0",
-  "dependencies": {
-    "serve-handler": "^5.0.8"
-  }
+    "name": "harp.gl",
+    "version": "1.0.0",
+    "description": "Core render components of harp.gl, an open-source 3D map rendering engine.",
+    "workspaces": [
+        "@here/*"
+    ],
+    "devDependencies": {
+        "chromedriver": "^2.43.1",
+        "geckodriver": "^1.12.2",
+        "hard-source-webpack-plugin": "^0.13.1",
+        "mocha": "^5.2.0",
+        "mocha-webdriver-runner": "^0.5.1",
+        "prettier": "^1.16.4",
+        "three": "^0.102.0",
+        "ts-mocha": "^2.0.0",
+        "tslint": "^5.11.1",
+        "tslint-config-prettier": "^1.18.0",
+        "typedoc": "^0.14.2",
+        "typedoc-plugin-external-module-map": "^1.0.0",
+        "typescript": "^3.4.1",
+        "webpack": "^4.28.3",
+        "webpack-cli": "^3.1.0",
+        "webpack-dev-server": "^3.1.5"
+    },
+    "scripts": {
+        "test": "ts-mocha -r tsconfig-paths/register ./test/*.ts ./@here/*/test/*.ts",
+        "start": "webpack-dev-server -d --config @here/harp-examples/webpack.config.js",
+        "build": "webpack -d --config @here/harp-examples/webpack.config.js",
+        "start-tests": "webpack-dev-server -d --config webpack.tests.config.js",
+        "test-browser": "ts-node -- ./scripts/with-http-server.ts -C dist/test -p 8079 -- mocha-webdriver-runner http://localhost:8079/index.html",
+        "build-tests": "webpack -d --config webpack.tests.config.js",
+        "typedoc": "ts-node ./scripts/doc-snippets.ts && typedoc --options typedoc.json",
+        "tslint": "tslint --project tsconfig.json",
+        "prettier": "prettier -l '**/*.ts' '**/*.tsx' '**/*.json'",
+        "prettier:fix": "prettier --write '**/*.ts' '**/*.tsx' '**/*.json'"
+    },
+    "engines": {
+        "node": ">=9.11.1",
+        "npm": ">=5.8.0",
+        "yarn": ">=1.11.1"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git://github.com:heremaps/harp.gl.git"
+    },
+    "private": true,
+    "author": {
+        "name": "HERE Europe B.V.",
+        "url": "https://here.com"
+    },
+    "license": "Apache-2.0",
+    "dependencies": {
+        "serve-handler": "^5.0.8"
+    }
 }

@@ -2,10 +2,7 @@
     "compilerOptions": {
         "module": "commonjs",
         "target": "es6",
-        "lib": [
-            "es2017",
-            "dom"
-        ],
+        "lib": ["es2017", "dom"],
         "sourceMap": true,
         "baseUrl": ".",
         "rootDir": ".",
@@ -18,9 +15,5 @@
         "newLine": "LF",
         "noImplicitReturns": true
     },
-    "exclude": [
-        "node_modules",
-        "@here/*/node_modules",
-        "dist"
-    ]
+    "exclude": ["node_modules", "@here/*/node_modules", "dist"]
 }
