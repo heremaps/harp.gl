@@ -58,7 +58,7 @@ import { accessToken } from "../config";
  *
  */
 export namespace HelloWorldExample {
-    // creates a new MapView for the HTMLCanvasElement of the given id
+    // Create a new MapView for the HTMLCanvasElement of the given id.
     function initializeMapView(id: string): MapView {
         // snippet:harp_gl_hello_world_example_0.ts
         const canvas = document.getElementById(id) as HTMLCanvasElement;
@@ -74,14 +74,13 @@ export namespace HelloWorldExample {
         CopyrightElementHandler.install("copyrightNotice", map);
 
         // snippet:harp_gl_hello_world_example_2.ts
-        // set an isometric view of the map
-        map.camera.position.set(0, 0, 1600);
-        // center the camera on Manhattan, New York City
-        map.geoCenter = new GeoCoordinates(40.7, -74.010241978);
+        // Center the camera on Manhattan, New York City.
+        map.setCameraGeolocationAndZoom(new GeoCoordinates(40.6935, -74.009), 16.9);
 
-        // instantiate the default map controls, allowing the user to pan around freely.
+        // Instantiate the default map controls, allowing the user to pan around freely.
         const mapControls = new MapControls(map);
-        mapControls.setRotation(0.9, 23.928);
+        mapControls.maxPitchAngle = 50;
+        mapControls.setRotation(6.3, 50);
         // end:harp_gl_hello_world_example_2.ts
 
         // Add an UI.
@@ -89,10 +88,10 @@ export namespace HelloWorldExample {
         canvas.parentElement!.appendChild(ui.domElement);
 
         // snippet:harp_gl_hello_world_example_3.ts
-        // resize the mapView to maximum
+        // Resize the mapView to maximum.
         map.resize(window.innerWidth, window.innerHeight);
 
-        // react on resize events
+        // React on resize events.
         window.addEventListener("resize", () => {
             map.resize(window.innerWidth, window.innerHeight);
         });
