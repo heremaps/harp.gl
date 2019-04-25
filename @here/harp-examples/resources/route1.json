@@ -4,9 +4,7 @@
         "mapVersion": "8.30.78.150",
         "moduleVersion": "7.2.201748-3343",
         "interfaceVersion": "2.6.34",
-        "availableMapVersion": [
-            "8.30.78.150"
-        ]
+        "availableMapVersion": ["8.30.78.150"]
     },
     "route": [
         {
@@ -48,9 +46,7 @@
             ],
             "mode": {
                 "type": "fastest",
-                "transportModes": [
-                    "car"
-                ],
+                "transportModes": ["car"],
                 "trafficMode": "disabled",
                 "feature": []
             },
@@ -3028,10 +3024,7 @@
                 "distance": 153835,
                 "trafficTime": 7593,
                 "baseTime": 6597,
-                "flags": [
-                    "motorway",
-                    "builtUpArea"
-                ],
+                "flags": ["motorway", "builtUpArea"],
                 "text": "The trip takes <span class=\"length\">154 km</span> and <span class=\"time\">1:50 h</span>.",
                 "travelTime": 6597
             }

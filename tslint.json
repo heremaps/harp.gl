@@ -48,9 +48,6 @@
     },
     "extends": ["tslint:latest", "tslint-config-prettier"],
     "linterOptions": {
-        "exclude": [
-            "@here/**/**/*.d.ts",
-            "**/*.json"
-        ]
+        "exclude": ["@here/**/**/*.d.ts", "**/*.json"]
     }
 }
