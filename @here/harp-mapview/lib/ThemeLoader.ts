@@ -32,14 +32,17 @@ export class ThemeLoader {
         if (theme === null) {
             throw new Error("ThemeLoader#loadAsync: loaded resource is not valid JSON");
         }
-
         // Remember the URL where the theme has been loaded from.
         theme.url = themeUrl;
 
+        return this.resolveUrls(theme);
+    }
+
+    private static resolveUrls(theme: Theme): Theme {
         // Ensure that all resources referenced in theme by relative URLs are in fact relative to
         // theme.
         const childUrlResolver = composeUrlResolvers(
-            (childUrl: string) => resolveReferenceUrl(themeUrl, childUrl),
+            (childUrl: string) => resolveReferenceUrl(theme.url, childUrl),
             defaultUrlResolver
         );
         if (theme.images) {
@@ -60,6 +63,30 @@ export class ThemeLoader {
         if (theme.poiTables) {
             for (const poiTable of theme.poiTables) {
                 poiTable.url = childUrlResolver(poiTable.url);
+            }
+        }
+
+        if (theme.styles) {
+            for (const styleSetName in theme.styles) {
+                if (!theme.styles.hasOwnProperty(styleSetName)) {
+                    continue;
+                }
+                const styleSet = theme.styles[styleSetName];
+                for (const style of styleSet) {
+                    if (!style.attr) {
+                        continue;
+                    }
+                    ["map", "normalMap", "displacementMap", "roughnessMap"].forEach(
+                        texturePropertyName => {
+                            const textureProperty = (style.attr! as any)[texturePropertyName];
+                            if (textureProperty && typeof textureProperty === "string") {
+                                (style.attr! as any)[texturePropertyName] = childUrlResolver(
+                                    textureProperty
+                                );
+                            }
+                        }
+                    );
+                }
             }
         }
         return theme;
