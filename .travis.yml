@@ -31,7 +31,7 @@ jobs:
         npx ts-mocha -r tsconfig-paths/register ./@here/*/test/*.ts
         yarn test-browser --headless-firefox
         yarn test-browser --headless-chrome
-        if [ -z ${TRAVIS_TAG} ]; then
+        if [ -z "${TRAVIS_TAG}" ] ; then
           ./scripts/test-npm-packages.sh
           git status # just in case test-npm-packages leaves some garbage
         fi
