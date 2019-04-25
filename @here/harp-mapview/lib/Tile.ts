@@ -1265,15 +1265,7 @@ export class Tile implements CachedResource {
                         {
                             technique,
                             level: Math.floor(displayZoomLevel),
-                            fog: this.mapView.scene.fog !== null,
-                            skipExtraProps: [
-                                "map",
-                                "normalMap",
-                                "displacementMap",
-                                "mapProperties",
-                                "normalMapProperties",
-                                "displacementMapProperties"
-                            ]
+                            fog: this.mapView.scene.fog !== null
                         },
                         onMaterialUpdated
                     );

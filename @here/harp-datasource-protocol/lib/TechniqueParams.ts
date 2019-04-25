@@ -829,23 +829,61 @@ export interface StandardTexturedTechniqueParams extends BaseStandardTechniquePa
     renderTexture?: boolean;
 
     /**
-     * URL or texture buffer that should be used as color map
+     * URL or texture buffer that should be used as color map. See:
+     * https://threejs.org/docs/#api/en/materials/MeshStandardMaterial.map
      */
     map?: string | TextureBuffer;
     mapProperties?: TextureProperties;
 
     /**
-     * URL or texture buffer that should be used as normal map
+     * URL or texture buffer that should be used as normal map. See:
+     * https://threejs.org/docs/#api/en/materials/MeshStandardMaterial.normalMap
      */
     normalMap?: string | TextureBuffer;
     normalMapType?: number;
     normalMapProperties?: TextureProperties;
 
     /**
-     * URL or texture buffer that should be used as displacement map
+     * URL or texture buffer that should be used as displacement map. See:
+     * https://threejs.org/docs/#api/en/materials/MeshStandardMaterial.displacementMap
      */
     displacementMap?: string | TextureBuffer;
     displacementMapProperties?: TextureProperties;
+
+    /**
+     * URL or texture buffer that should be used as roughness map. See:
+     * https://threejs.org/docs/#api/en/materials/MeshStandardMaterial.roughnessMap
+     */
+    roughnessMap?: string | TextureBuffer;
+    roughnessMapProperties?: TextureProperties;
+
+    /**
+     * URL or texture buffer that should be used as emissive map. See:
+     * https://threejs.org/docs/#api/en/materials/MeshStandardMaterial.emissiveMap
+     */
+    emissiveMap?: string | TextureBuffer;
+    emissiveMapProperties?: TextureProperties;
+
+    /**
+     * URL or texture buffer that should be used as bump map. See:
+     * https://threejs.org/docs/#api/en/materials/MeshStandardMaterial.bumpMap
+     */
+    bumpMap?: string | TextureBuffer;
+    bumpMapProperties?: TextureProperties;
+
+    /**
+     * URL or texture buffer that should be used as metalness map. See:
+     * https://threejs.org/docs/#api/en/materials/MeshStandardMaterial.metalnessMap
+     */
+    metalnessMap?: string | TextureBuffer;
+    metalnessMapProperties?: TextureProperties;
+
+    /**
+     * URL or texture buffer that should be used as alpha map. See:
+     * https://threejs.org/docs/#api/en/materials/MeshStandardMaterial.alphaMap
+     */
+    alphaMap?: string | TextureBuffer;
+    alphaMapProperties?: TextureProperties;
 }
 
 /**
@@ -1018,18 +1056,33 @@ export interface DataTextureProperties {
 export interface TextureProperties {
     /**
      * Texture horizontal wrapping mode.
+     * See: https://threejs.org/docs/#api/en/textures/Texture.wrapS.
      */
     wrapS?: WrappingMode;
 
     /**
      * Texture vertical wrapping mode.
+     * See: https://threejs.org/docs/#api/en/textures/Texture.wrapT.
      */
     wrapT?: WrappingMode;
 
     /**
      * Flip texture vertically.
+     * See: https://threejs.org/docs/#api/en/textures/Texture.flipY.
      */
     flipY?: boolean;
+
+    /**
+     * Texture horizontal repetition rate.
+     * See: https://threejs.org/docs/#api/en/textures/Texture.repeat.
+     */
+    repeatU?: number;
+
+    /**
+     * Texture vertical repetition rate.
+     * See: https://threejs.org/docs/#api/en/textures/Texture.repeat.
+     */
+    repeatV?: number;
 }
 
 export type PixelFormat =

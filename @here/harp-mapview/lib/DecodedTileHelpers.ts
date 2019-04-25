@@ -30,6 +30,28 @@ import { Circles, Squares } from "./MapViewPoints";
 import { toPixelFormat, toTextureDataType, toWrappingMode } from "./ThemeHelpers";
 
 const logger = LoggerManager.instance.create("DecodedTileHelpers");
+const TEXTURE_PROPERTY_KEYS = [
+    "map",
+    "normalMap",
+    "displacementMap",
+    "roughnessMap",
+    "emissiveMap",
+    "alphaMap",
+    "metalnessMap",
+    "bumpMap"
+];
+
+const DEFAULT_SKIP_PROPERTIES = [
+    ...TEXTURE_PROPERTY_KEYS,
+    "mapProperties",
+    "normalMapProperties",
+    "displacementMapProperties",
+    "roughnessMapProperties",
+    "emissiveMapProperties",
+    "alphaMapProperties",
+    "metalnessMapProperties",
+    "bumpMapProperties"
+];
 
 /**
  * The structure of the options to pass into [[createMaterial]].
@@ -101,7 +123,7 @@ export function createMaterial(
     material.depthTest = isExtrudedPolygonTechnique(technique) && technique.depthTest !== false;
 
     if (isStandardTexturedTechnique(technique)) {
-        ["map", "normalMap", "displacementMap"].forEach((texturePropertyName: string) => {
+        TEXTURE_PROPERTY_KEYS.forEach((texturePropertyName: string) => {
             const textureProperty = (technique as any)[texturePropertyName];
             if (textureProperty === undefined) {
                 return;
@@ -120,6 +142,12 @@ export function createMaterial(
                     }
                     if (properties.flipY !== undefined) {
                         texture.flipY = properties.flipY;
+                    }
+                    if (properties.repeatU !== undefined) {
+                        texture.repeat.x = properties.repeatU;
+                    }
+                    if (properties.repeatV !== undefined) {
+                        texture.repeat.y = properties.repeatV;
                     }
                 }
                 (material as any)[texturePropertyName] = texture;
@@ -148,10 +176,10 @@ export function createMaterial(
                             properties.format ? toPixelFormat(properties.format) : undefined,
                             properties.type ? toTextureDataType(properties.type) : undefined
                         );
-                        // Technique does not support to specify filtering yet, but three.js Texture
-                        // is created with linear filtering by default whereas three.js DataTexture
-                        // is created with nearest by default. To be consistent also set the
-                        // filtering to linear here.
+                        // Technique does not support to specify filtering yet, but three.js
+                        // Texture is created with linear filtering by default whereas three.js
+                        // DataTexture is created with nearest by default. To be consistent
+                        // also set the filtering to linear here.
                         texture.magFilter = THREE.LinearFilter;
                         texture.minFilter = THREE.LinearFilter;
                         onLoad(texture);
@@ -387,6 +415,7 @@ export function applyTechniqueToMaterial(
         if (
             propertyName.startsWith("_") ||
             BASE_TECHNIQUE_NON_MATERIAL_PROPS.indexOf(propertyName) !== -1 ||
+            DEFAULT_SKIP_PROPERTIES.indexOf(propertyName) !== -1 ||
             (skipExtraProps !== undefined && skipExtraProps.indexOf(propertyName) !== -1)
         ) {
             return;
