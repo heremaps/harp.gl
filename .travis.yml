@@ -13,6 +13,7 @@ branches:
   only:
     - master
     - /^@here\/.*/
+    - FORCE_RELEASE
 
 # upgrade yarn to a more recent version
 before_install:
