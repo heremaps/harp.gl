@@ -57,7 +57,7 @@ import { accessToken } from "../config";
  * ```
  *
  */
-export namespace HelloWorldExample {
+export namespace DatasourceXYZMVTExample {
     // creates a new MapView for the HTMLCanvasElement of the given id
     function initializeMapView(id: string): MapView {
         // snippet:harp_gl_datasource_xyzmvt_example_0.ts

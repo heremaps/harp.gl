@@ -25,8 +25,6 @@ import {
  * This example showcases how [[TextCanvas]] can handle dynamic loading of multiple [[FontCatalog]]
  * assets, as well as dynamic real-time text styling.
  *
- * For more information regarding basic [[TextCanvas]] initialization and usage, please check:
- * [[TextCanvasMinimalExample]] documentation.
  */
 export namespace TextCanvasDynamicExample {
     const stats = new Stats();
