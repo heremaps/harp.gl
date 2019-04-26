@@ -72,7 +72,7 @@ export namespace GeoJsonStylingGame {
     // that the user cannot miss it in case he clicked on another one immediately after.
     let discardPick: boolean = false;
 
-    // snippet:initmapview.ts
+    // snippet:harp_gl_initmapview.ts
     const mapView = new MapView({
         canvas: document.getElementById("mapCanvas") as HTMLCanvasElement,
         theme: "resources/berlin_tilezen_night_reduced.json"
@@ -100,9 +100,9 @@ export namespace GeoJsonStylingGame {
         copyrightInfo: copyrights
     });
     mapView.addDataSource(baseMap);
-    // end:initmapview.ts
+    // end:harp_gl_initmapview.ts
 
-    // snippet:staticgeojson.ts
+    // snippet:harp_gl_staticgeojson.ts
     class StaticGeoJsonDataSource extends GeoJsonDataSource {
         shouldRender(zoomLevel: number, tileKey: TileKey) {
             return tileKey.mortonCode() === 1;
@@ -140,9 +140,9 @@ export namespace GeoJsonStylingGame {
         askName();
         mapView.canvas.addEventListener("click", displayAnswer);
     });
-    // end:staticgeojson.ts
+    // end:harp_gl_staticgeojson.ts
 
-    // snippet:gamelogic.ts
+    // snippet:harp_gl_gamelogic.ts
     function displayAnswer(e: MouseEvent) {
         if (discardPick) {
             return;
@@ -170,7 +170,7 @@ export namespace GeoJsonStylingGame {
             );
         }
     }
-    // end:gamelogic.ts
+    // end:harp_gl_gamelogic.ts
 
     interface IStatus {
         name: string;
@@ -205,7 +205,7 @@ export namespace GeoJsonStylingGame {
         attr: {}
     };
 
-    // snippet:gamestyleset.ts
+    // snippet:harp_gl_gamestyleset.ts
     function setStyleSet(status?: IStatus) {
         const styleSet: StyleSet = [baseRegionsStyle, outlineStyle];
         if (status !== undefined) {
@@ -216,7 +216,7 @@ export namespace GeoJsonStylingGame {
         geoJsonDataSource.setStyleSet(styleSet);
         mapView.update();
     }
-    // end:gamestyleset.ts
+    // end:harp_gl_gamestyleset.ts
 
     function askName() {
         const nameIndex = Math.floor(Math.random() * REGION_LIST.length);

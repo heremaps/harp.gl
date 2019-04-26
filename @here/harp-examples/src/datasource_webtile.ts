@@ -10,6 +10,23 @@ import { CopyrightElementHandler, MapView } from "@here/harp-mapview";
 import { WebTileDataSource } from "@here/harp-webtile-datasource";
 import { appCode, appId } from "../config";
 
+// tslint:disable:max-line-length
+/**
+ * A simple example using the webtile data source. Tiles are retrieved from
+ * ```typescript
+ * https://1.base.maps.api.here.com/maptile/2.1/maptile/newest/normal.day/${level}/${column}/${row}/512/png8?app_id=${appId}&app_code=${appCode}
+ * ```
+ *
+ * A [[WebTileDataSource]] is created with specified applications' appId and appCode passed
+ * as [[WebTileDataSourceOptions]]
+ * ```typescript
+ * [[include:harp_gl_datasource_webtile_1.ts]]
+ * ```
+ * Then added to the [[MapView]]
+ * ```typescript
+ * [[include:harp_gl_datasource_webtile_2.ts]]
+ * ```
+ */
 export namespace WebTileDataSourceExample {
     // creates a new MapView for the HTMLCanvasElement of the given id
     export function initializeMapView(id: string): MapView {
@@ -40,25 +57,6 @@ export namespace WebTileDataSourceExample {
 
         return map;
     }
-
-    // tslint:disable:max-line-length
-    /**
-     * A simple example using the webtile data source. Tiles are retrieved from
-     * ```typescript
-     * https://1.base.maps.api.here.com/maptile/2.1/maptile/newest/normal.day/${level}/${column}/${row}/512/png8?app_id=${appId}&app_code=${appCode}
-     * ```
-     *
-     * A [[WebTileDataSource]] is created with specified applications' appId and appCode passed
-     * as [[WebTileDataSourceOptions]]
-     * ```typescript
-     * [[include:harp_gl_datasource_webtile_1.ts]]
-     * ```
-     * Then added to the [[MapView]]
-     * ```typescript
-     * [[include:harp_gl_datasource_webtile_2.ts]]
-     * ```
-     */
-    // tslint:enable:max-line-length
 
     const mapView = initializeMapView("mapCanvas");
 
