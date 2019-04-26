@@ -33,8 +33,12 @@ import "three/examples/js/controls/TransformControls";
  * The app enables to change the position of the camera: translate it, rotate it
  * as well as change the point of view (to the one the user would actually see).
  *
+ * ```typescript
+ * [[include:harp_gl_freecamera_app_0.ts]]
+ * ```
+ *
  */
-export namespace FreeCameraApp_DebugingToolExample {
+export namespace FreeCameraAppDebuggingToolExample {
     interface Helper extends THREE.Object3D {
         update(): void;
     }
