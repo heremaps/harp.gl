@@ -179,7 +179,9 @@ browserConfig.plugins.push(
             toType: "dir"
         },
         require.resolve("three/build/three.min.js")
-    ])
+        ],
+        { ignore: ['*.npmignore','*.gitignore'] }
+    )
 );
 
 module.exports = [decoderConfig, browserConfig, codeBrowserConfig, exampleBrowserConfig];
