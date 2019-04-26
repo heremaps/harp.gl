@@ -5,6 +5,7 @@
  */
 
 import * as fs from "fs";
+import * as fse from "fs-extra";
 import * as glob from "glob";
 import * as path from "path";
 
@@ -48,7 +49,12 @@ const mkpath = require("mkpath");
 
 const sdkDir = path.resolve(__dirname, "..");
 const outDir = path.resolve(sdkDir, "dist/doc-snippets");
+const distOutDir = path.resolve(sdkDir, "dist/doc");
+const distDocsOutDir = path.resolve(distOutDir, "docs");
+
 mkpath.sync(outDir);
+mkpath.sync(distOutDir);
+mkpath.sync(distDocsOutDir);
 
 const sourceFiles = glob.sync(sdkDir + "/@here/harp-examples/**/*.{ts,tsx,html}");
 
@@ -83,3 +89,6 @@ for (const sourceFile of sourceFiles) {
 }
 
 fs.copyFileSync(path.join(sdkDir, "LICENSE"), path.join(outDir, "LICENSE"));
+fs.copyFileSync(path.join(sdkDir, "docs/index.html"), "dist/index.html");
+fs.copyFileSync(path.join(sdkDir, "LICENSE"), path.join(distOutDir, "LICENSE"));
+fse.copySync(path.join(sdkDir, "docs"), distDocsOutDir);
