@@ -596,6 +596,54 @@ export namespace MapViewUtils {
         objectSize.gpuSize += attrBytes;
     }
 
+    function estimateGeometrySize(
+        geometry: THREE.Geometry | THREE.BufferGeometry,
+        objectSize: MemoryUsage,
+        visitedObjects: Map<string, boolean>
+    ): void {
+        const isNewObject =
+            geometry.uuid === undefined || visitedObjects.get(geometry.uuid) !== true;
+
+        if (!isNewObject) {
+            return;
+        }
+        visitedObjects.set(geometry.uuid, true);
+
+        let bufferGeometry: THREE.BufferGeometry | undefined;
+
+        if (geometry instanceof THREE.Geometry) {
+            // Each vertex is represented as 3 floats vector (24 bytes).
+            objectSize.heapSize += geometry.vertices.length * 24;
+            // Face: 3 indices (24 byte), 1 normal (3 floats = 24). Vertex normals and
+            // colors are not counted here.
+            objectSize.heapSize += geometry.faces.length * (24 + 24);
+            // Additionally, the internal _bufferGeometry is also counted:
+            bufferGeometry = (geometry as any)._bufferGeometry;
+        } else if (geometry instanceof THREE.BufferGeometry) {
+            bufferGeometry = geometry;
+        }
+
+        if (bufferGeometry === undefined) {
+            // Nothing more to calculate.
+            return;
+        }
+
+        const attributes = bufferGeometry.attributes;
+        if (attributes === undefined) {
+            logger.warn("estimateGeometrySize: unidentified geometry: ", geometry);
+            return;
+        }
+
+        for (const property in attributes) {
+            if (attributes[property] !== undefined) {
+                estimateAttributeSize(attributes[property], property, objectSize, visitedObjects);
+            }
+        }
+        if (bufferGeometry.index !== null) {
+            estimateAttributeSize(bufferGeometry.index, "index", objectSize, visitedObjects);
+        }
+    }
+
     function estimateMeshSize(
         object: THREE.Object3D,
         objectSize: MemoryUsage,
@@ -610,13 +658,15 @@ export namespace MapViewUtils {
         }
         visitedObjects.set(object.uuid, true);
 
-        if ((object as any).isMesh || (object as any).isLine) {
+        if ((object as any).isMesh || (object as any).isLine || (object as any).isPoints) {
             // Estimated minimum impact on heap.
             let heapSize = MINIMUM_OBJECT3D_SIZE_ESTIMATION;
             const gpuSize = 0;
 
-            const mesh = object as THREE.Mesh;
+            // Cast to Points class which contains the minimal required properties sub-set.
+            const mesh = object as THREE.Points;
 
+            // Calculate material(s) impact.
             if (mesh.material !== undefined) {
                 if (Array.isArray(mesh.material)) {
                     const materials = mesh.material as THREE.Material[];
@@ -629,70 +679,20 @@ export namespace MapViewUtils {
                 }
             }
 
+            // Calculate cost of geometry.
             if (mesh.geometry !== undefined) {
-                const geometry = mesh.geometry;
+                estimateGeometrySize(mesh.geometry, objectSize, visitedObjects);
+            }
 
-                const isNewObject =
-                    geometry.uuid === undefined || visitedObjects.get(geometry.uuid) !== true;
+            // Add info that is required for picking (parts of) objects and match them to
+            // the featureID in the map data.
+            const featureData: TileFeatureData | undefined =
+                object.userData !== undefined
+                    ? (object.userData.feature as TileFeatureData)
+                    : undefined;
 
-                if (isNewObject) {
-                    visitedObjects.set(geometry.uuid, true);
-
-                    // Estimated minimum overhead.
-                    heapSize += MINIMUM_OBJECT3D_SIZE_ESTIMATION;
-
-                    let bufferGeometry: THREE.BufferGeometry | undefined;
-
-                    if (geometry instanceof THREE.Geometry) {
-                        heapSize += geometry.vertices.length * 12;
-                        // Face: 3 indices (24 byte), 1 normal (3 floats = 24). Vertex normals and
-                        // colors are not counted here.
-                        heapSize += geometry.faces.length * (24 + 24);
-                        // Additionally, the internal _bufferGeometry is also counted:
-                        bufferGeometry = (geometry as any)._bufferGeometry;
-                    } else if (geometry instanceof THREE.BufferGeometry) {
-                        bufferGeometry = geometry;
-                    } else {
-                        bufferGeometry = undefined;
-                    }
-
-                    if (bufferGeometry !== undefined) {
-                        const attributes = bufferGeometry.attributes;
-                        if (attributes !== undefined) {
-                            for (const property in attributes) {
-                                if (attributes[property] !== undefined) {
-                                    estimateAttributeSize(
-                                        attributes[property],
-                                        property,
-                                        objectSize,
-                                        visitedObjects
-                                    );
-                                }
-                            }
-                            if (bufferGeometry.index !== null) {
-                                estimateAttributeSize(
-                                    bufferGeometry.index,
-                                    "index",
-                                    objectSize,
-                                    visitedObjects
-                                );
-                            }
-                        } else {
-                            logger.warn("estimateMeshSize: unidentified geometry: ", mesh.geometry);
-                        }
-                    }
-
-                    // Add info that is required for picking (parts of) objects and match them to
-                    // the featureID in the map data.
-                    const featureData: TileFeatureData | undefined =
-                        object.userData !== undefined
-                            ? (object.userData.feature as TileFeatureData)
-                            : undefined;
-
-                    if (featureData !== undefined) {
-                        heapSize += getFeatureDataSize(featureData);
-                    }
-                }
+            if (featureData !== undefined) {
+                heapSize += getFeatureDataSize(featureData);
             }
 
             objectSize.heapSize += heapSize;
