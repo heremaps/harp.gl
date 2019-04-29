@@ -4,11 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import {
-    GeoCoordinates,
     MathUtils,
     Projection,
     TileKey,
-    TileKeyUtils,
     TilingScheme
 } from "@here/harp-geoutils";
 import { LRUCache } from "@here/harp-lrucache";
