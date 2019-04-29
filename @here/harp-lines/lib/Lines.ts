@@ -236,30 +236,41 @@ export class LineGroup {
      * @param indices Array of vertex indices.
      * @param geometry [[BufferGeometry]] object which will store all the `Lines` attribute data.
      * @param highPrecision If `true` will create high-precision vertex information.
+     * @param isSimple `true` to create simple (nonsolid, nonextruded) lines. Defaults to `false`.
      */
     static createGeometry(
         vertices: ArrayLike<number>,
         indices: ArrayLike<number>,
         geometry: THREE.BufferGeometry,
-        highPrecision = false
+        highPrecision = false,
+        isSimple = false
     ): THREE.BufferGeometry {
-        const stride = highPrecision ? HP_LINE_STRIDE : LINE_STRIDE;
-        const descriptors = highPrecision ? HP_LINE_VERTEX_ATTRIBUTES : LINE_VERTEX_ATTRIBUTES;
-
-        const buffer = new THREE.InterleavedBuffer(new Float32Array(vertices), stride);
-        descriptors.forEach(descr => {
-            const attribute = new THREE.InterleavedBufferAttribute(
-                buffer,
-                descr.itemSize,
-                descr.offset,
-                false
+        if (isSimple) {
+            geometry.addAttribute(
+                "position",
+                new THREE.BufferAttribute(new Float32Array(vertices), 3)
             );
-            geometry.addAttribute(descr.name, attribute);
-        });
+            geometry.setIndex(new THREE.BufferAttribute(new Uint32Array(indices), 1));
+            return geometry;
+        } else {
+            const stride = highPrecision ? HP_LINE_STRIDE : LINE_STRIDE;
+            const descriptors = highPrecision ? HP_LINE_VERTEX_ATTRIBUTES : LINE_VERTEX_ATTRIBUTES;
 
-        geometry.setIndex(new THREE.BufferAttribute(new Uint32Array(indices), 1));
+            const buffer = new THREE.InterleavedBuffer(new Float32Array(vertices), stride);
+            descriptors.forEach(descr => {
+                const attribute = new THREE.InterleavedBufferAttribute(
+                    buffer,
+                    descr.itemSize,
+                    descr.offset,
+                    false
+                );
+                geometry.addAttribute(descr.name, attribute);
+            });
 
-        return geometry;
+            geometry.setIndex(new THREE.BufferAttribute(new Uint32Array(indices), 1));
+
+            return geometry;
+        }
     }
 
     private readonly m_origin: THREE.Vector3;
