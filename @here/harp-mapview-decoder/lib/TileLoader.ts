@@ -107,10 +107,6 @@ export class TileLoader {
                 this.countRequests++;
                 return this.donePromise!;
 
-            case TileLoaderState.Disposed:
-                logger.warn("cannot load in disposed state");
-                return Promise.resolve(TileLoaderState.Disposed);
-
             case TileLoaderState.Ready:
             case TileLoaderState.Failed:
             case TileLoaderState.Initialized:
@@ -155,11 +151,6 @@ export class TileLoader {
             return;
         }
         switch (this.state) {
-            case TileLoaderState.Disposed:
-                // prevent accidental escape from disposed state
-                logger.warn("attempting to cancel disposed TileLoader");
-                return;
-
             case TileLoaderState.Loading:
                 this.loadAbortController.abort();
                 this.loadAbortController = new AbortController();
@@ -174,16 +165,6 @@ export class TileLoader {
         }
 
         this.onDone(TileLoaderState.Canceled);
-    }
-
-    /**
-     * Cancel loading and remove all references.
-     */
-    dispose() {
-        if (this.state !== TileLoaderState.Disposed) {
-            this.cancel();
-            this.state = TileLoaderState.Disposed;
-        }
     }
 
     /**
@@ -228,10 +209,6 @@ export class TileLoader {
             case TileLoaderState.Decoding:
                 this.cancelDecoding();
                 this.doStartLoad();
-                return;
-
-            case TileLoaderState.Disposed:
-                logger.warn("cannot load in disposed state");
                 return;
         }
     }
