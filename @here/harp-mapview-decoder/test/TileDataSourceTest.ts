@@ -19,7 +19,6 @@ import { DataSource, MapView, Statistics, Tile, TileLoaderState } from "@here/ha
 import { assert } from "chai";
 import * as sinon from "sinon";
 import { DataProvider, TileDataSource, TileFactory } from "../index";
-import { TileLoader } from "../lib/TileLoader";
 
 function createMockDataProvider() {
     const mockTemplate: DataProvider = {
@@ -158,7 +157,6 @@ describe("TileDataSource", function() {
         });
 
         assert.notExists(tile.tileLoader);
-        assert.equal(savedLoader!.state, TileLoaderState.Disposed);
 
         assert.equal(mockDataProvider.getTile.callCount, 1);
         assert.equal(getTileToken.aborted, true);
