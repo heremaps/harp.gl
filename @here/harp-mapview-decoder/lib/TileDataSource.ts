@@ -210,8 +210,7 @@ export class TileDataSource<TileType extends Tile> extends DataSource {
 
         const mortonCode = tileKey.mortonCode();
         const tileLoader = this.m_tileLoaderCache.get(mortonCode);
-        // Filter out disposed TileLoaders.
-        if (tileLoader !== undefined && tileLoader.state !== TileLoaderState.Disposed) {
+        if (tileLoader !== undefined) {
             tile.tileLoader = tileLoader;
         } else {
             const newTileLoader = new TileLoader(

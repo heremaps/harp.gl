@@ -233,8 +233,7 @@ export enum TileLoaderState {
     Decoding,
     Ready,
     Canceled,
-    Failed,
-    Disposed
+    Failed
 }
 
 export interface ITileLoader {
@@ -250,7 +249,6 @@ export interface ITileLoader {
     updatePriority(area: number): void;
 
     cancel(): void;
-    dispose(): void;
 }
 
 /**
@@ -937,7 +935,7 @@ export class Tile implements CachedResource {
             return;
         }
         if (this.m_tileLoader) {
-            this.m_tileLoader.dispose();
+            this.m_tileLoader.cancel();
             this.m_tileLoader = undefined;
         }
         this.clear();
