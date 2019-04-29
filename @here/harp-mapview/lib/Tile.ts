@@ -1192,9 +1192,7 @@ export class Tile implements CachedResource {
         // TODO cache the material HARP-4207
         const material = new MapMeshBasicMaterial({
             color: colorHex,
-            visible: isVisible,
-            // All 2D ground geometry is rendered with renderOrder set and with depthTest === false.
-            depthTest: false
+            visible: isVisible
         });
         const plane = new THREE.Mesh(geometry, material);
         plane.position.copy(planeCenter);
