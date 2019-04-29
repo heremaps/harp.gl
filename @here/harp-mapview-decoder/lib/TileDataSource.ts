@@ -109,6 +109,7 @@ export class TileFactory<TileType extends Tile> {
     }
 }
 
+const maxLevelTileLoaderCache = 3;
 /**
  * Common base class for the typical [[DataSource]] which uses an [[ITileDecoder]] to decode the
  * tile content asynchronously. The decoder can be passed in as an option, or a default
@@ -156,9 +157,7 @@ export class TileDataSource<TileType extends Tile> extends DataSource {
         });
 
         this.cacheable = true;
-        this.m_tileLoaderCache = new LRUCache<number, TileLoader>(40, tileLoader => {
-            return 1;
-        });
+        this.m_tileLoaderCache = new LRUCache<number, TileLoader>(this.getCacheCount());
     }
 
     dispose() {
@@ -221,15 +220,16 @@ export class TileDataSource<TileType extends Tile> extends DataSource {
                 0
             );
             tile.tileLoader = newTileLoader;
-            // We don't cache tiles with level 4 and above, at this level, there are 16 (2^4)
-            // tiles horizontally, given the assumption that the zoom level assumes the tile
-            // should be 256 pixels wide (see function [[calculateZoomLevelFromDistance]]),
-            // this would mean a horizontal width of 4096 pixels for the entire earth, this
-            // would be quite a lot to pan, hence caching doesn't make sense above this point
-            // (as the chance that we need to share the TileLoader is small, and even if we
-            // did eventually see it, the original TileLoader would probably be evicted
-            // because it was removed by other more recent tiles).
-            if (tileKey.level < 4) {
+            // We don't cache tiles with level 4 and above, at this level, there are 16 (2^4) tiles
+            // horizontally, given the assumption that the zoom level assumes the tile should be 256
+            // pixels wide (see function [[calculateZoomLevelFromDistance]]), and the current
+            // storage offset of -2 (which makes the tiles then 1024 pixels wide). this would mean a
+            // horizontal width of ~16k pixels for the entire earth, this would be quite a lot to
+            // pan, hence caching doesn't make sense above this point (as the chance that we need to
+            // share the TileLoader is small, and even if we did eventually see it, the original
+            // TileLoader would probably be evicted because it was removed by other more recent
+            // tiles).
+            if (tileKey.level <= maxLevelTileLoaderCache) {
                 this.m_tileLoaderCache.set(mortonCode, newTileLoader);
             }
         }
@@ -244,25 +244,14 @@ export class TileDataSource<TileType extends Tile> extends DataSource {
             return;
         }
         if (tileLoader.decodedTile !== undefined) {
-            tile.setDecodedTile(tileLoader.decodedTile);
+            this.setDecodedTileOnTile(tileLoader.decodedTile, tile);
         } else {
             tileLoader
                 .loadAndDecode()
                 .then(tileLoaderState => {
                     assert(tileLoaderState === TileLoaderState.Ready);
                     const decodedTile = tileLoader.decodedTile;
-                    if (decodedTile && this.decodedTileHasGeometry(decodedTile)) {
-                        tile.copyrightInfo =
-                            decodedTile.copyrightHolderIds !== undefined
-                                ? decodedTile.copyrightHolderIds.map(id => ({ id }))
-                                : this.m_options.copyrightInfo;
-
-                        tile.setDecodedTile(decodedTile);
-                    } else {
-                        // empty tiles are traditionally ignored and don't need decode
-                        tile.forceHasGeometry(true);
-                    }
-                    this.requestUpdate();
+                    this.setDecodedTileOnTile(decodedTile, tile);
                 })
                 .catch(tileLoaderState => {
                     if (
@@ -312,5 +301,30 @@ export class TileDataSource<TileType extends Tile> extends DataSource {
             (decodedTile.textGeometries !== undefined && decodedTile.textGeometries.length) ||
             (decodedTile.textPathGeometries !== undefined && decodedTile.textPathGeometries.length)
         );
+    }
+
+    private getCacheCount(): number {
+        // We support up to [[maxLevelTileLoaderCache]] levels, this equates to roughly
+        // 2^maxLevelTileLoaderCache^2 tiles in total (at level maxLevelTileLoaderCache), we don't
+        // generally see that many, so we add a factor of 2 to try to get the worst case.
+        return Math.pow(2, maxLevelTileLoaderCache) * 2;
+    }
+
+    // Applies the decoded tile to the tile.
+    // If the geometry is empty, then the tile's forceHasGeometry flag is set.
+    // Map is updated.
+    private setDecodedTileOnTile(decodedTile: DecodedTile | undefined, tile: Tile) {
+        if (decodedTile && this.decodedTileHasGeometry(decodedTile)) {
+            tile.copyrightInfo =
+                decodedTile.copyrightHolderIds !== undefined
+                    ? decodedTile.copyrightHolderIds.map(id => ({ id }))
+                    : this.m_options.copyrightInfo;
+
+            tile.setDecodedTile(decodedTile);
+        } else {
+            // empty tiles are traditionally ignored and don't need decode
+            tile.forceHasGeometry(true);
+        }
+        this.requestUpdate();
     }
 }
