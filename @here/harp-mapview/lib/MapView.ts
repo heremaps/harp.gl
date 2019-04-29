@@ -2046,12 +2046,14 @@ export class MapView extends THREE.EventDispatcher {
     }
 
     private renderTileObjects(tile: Tile, zoomLevel: number) {
+        const worldOffsetX = this.projection.worldExtent(0, 0).max.x * tile.offset;
         if (tile.willRender(zoomLevel)) {
             for (const object of tile.objects) {
                 object.position.copy(tile.center);
                 if (object.displacement !== undefined) {
                     object.position.add(object.displacement);
                 }
+                object.position.x += worldOffsetX;
                 object.position.sub(this.m_worldCenter);
                 this.m_mapTilesRoot.add(object);
             }

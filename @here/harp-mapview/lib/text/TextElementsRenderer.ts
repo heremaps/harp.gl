@@ -1050,6 +1050,7 @@ export class TextElementsRenderer {
         const textElementGroup: TextElement[] = [];
         for (const tileTextElements of textElementLists.textElementLists) {
             const tile = tileTextElements.tile;
+            const worldOffsetX = this.m_mapView.projection.worldExtent(0, 0).max.x * tile.offset;
             for (const textElement of tileTextElements.textElements) {
                 if (!textElement.visible) {
                     continue;
@@ -1082,7 +1083,7 @@ export class TextElementsRenderer {
                     continue;
                 }
 
-                textElement.tileCenterX = tile.center.x;
+                textElement.tileCenterX = tile.center.x + worldOffsetX;
                 textElement.tileCenterY = tile.center.y;
 
                 const textDistance = this.updateViewDistance(worldCenter, textElement);
