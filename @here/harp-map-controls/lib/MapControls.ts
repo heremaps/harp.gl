@@ -224,6 +224,7 @@ export class MapControls extends THREE.EventDispatcher {
     private readonly m_currentViewDirection = new THREE.Vector3();
 
     private readonly m_lastMousePosition = new THREE.Vector2(0, 0);
+    private readonly m_mouseDelta = new THREE.Vector2(0, 0);
 
     private m_needsRenderLastFrame: boolean = true;
 
@@ -822,8 +823,8 @@ export class MapControls extends THREE.EventDispatcher {
 
         this.dispatchEvent(MAPCONTROL_EVENT_BEGIN_INTERACTION);
 
-        this.m_lastMousePosition.setX(event.offsetX);
-        this.m_lastMousePosition.setY(event.offsetY);
+        this.m_lastMousePosition.setX(event.clientX);
+        this.m_lastMousePosition.setY(event.clientY);
 
         const onMouseMove = this.mouseMove.bind(this);
         const onMouseUp = this.mouseUp.bind(this);
@@ -847,27 +848,32 @@ export class MapControls extends THREE.EventDispatcher {
             return;
         }
 
+        this.m_mouseDelta.set(
+            event.clientX - this.m_lastMousePosition.x,
+            event.clientY - this.m_lastMousePosition.y
+        );
+
         if (this.m_state === State.PAN) {
             this.panFromTo(
                 this.m_lastMousePosition.x,
                 this.m_lastMousePosition.y,
-                this.m_lastMousePosition.x + event.movementX,
-                this.m_lastMousePosition.y + event.movementY
+                event.clientX,
+                event.clientY
             );
         } else if (this.m_state === State.ROTATE) {
             this.rotate(
-                -this.rotationMouseDeltaFactor * event.movementX,
-                this.rotationMouseDeltaFactor * event.movementY
+                -this.rotationMouseDeltaFactor * this.m_mouseDelta.x,
+                this.rotationMouseDeltaFactor * this.m_mouseDelta.y
             );
         } else if (this.m_state === State.ORBIT) {
             this.orbitFocusPoint(
-                this.orbitingMouseDeltaFactor * event.movementX,
-                -this.orbitingMouseDeltaFactor * event.movementY
+                this.orbitingMouseDeltaFactor * this.m_mouseDelta.x,
+                -this.orbitingMouseDeltaFactor * this.m_mouseDelta.y
             );
         }
 
-        this.m_lastMousePosition.setX(this.m_lastMousePosition.x + event.movementX);
-        this.m_lastMousePosition.setY(this.m_lastMousePosition.y + event.movementY);
+        this.m_lastMousePosition.setX(event.clientX);
+        this.m_lastMousePosition.setY(event.clientY);
         this.m_zoomAnimationStartTime = performance.now();
 
         this.updateMapView();
