@@ -488,7 +488,7 @@ export class VisibleTileSet {
             // be reloaded when they become visible again. Hopefully, they are still in the browser
             // cache by then.
             if (!tile.isVisible && tile.tileLoader !== undefined && !tile.tileLoader.isFinished) {
-                tile.tileLoader.cancel();
+                // The internal TileLoader is cancelled automatically when the Tile is disposed.
                 this.disposeTile(tile);
             }
         });
