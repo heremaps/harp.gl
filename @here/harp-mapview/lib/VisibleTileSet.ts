@@ -3,12 +3,7 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-import {
-    MathUtils,
-    Projection,
-    TileKey,
-    TilingScheme
-} from "@here/harp-geoutils";
+import { MathUtils, Projection, TileKey, TilingScheme } from "@here/harp-geoutils";
 import { LRUCache } from "@here/harp-lrucache";
 import * as THREE from "three";
 
@@ -845,11 +840,12 @@ export class VisibleTileSet {
         const dataSourceCache = this.m_dataSourceCache.get(renderListEntry.dataSource.name);
         const retainedTiles: Set<number> = new Set();
         renderListEntry.visibleTiles.forEach(tile => {
-            retainedTiles.add(tile.tileKey.mortonCode());
+            const tileCode = TileOffsetUtils.getKeyForTileKeyAndOffset(tile.tileKey, tile.offset);
+            retainedTiles.add(tileCode);
             tile.reload();
         });
         renderListEntry.renderedTiles.forEach(tile => {
-            const tileCode = tile.tileKey.mortonCode();
+            const tileCode = TileOffsetUtils.getKeyForTileKeyAndOffset(tile.tileKey, tile.offset);
             if (!retainedTiles.has(tileCode)) {
                 retainedTiles.add(tileCode);
                 tile.reload();
