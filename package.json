@@ -33,7 +33,8 @@
         "typedoc": "ts-node ./scripts/doc-snippets.ts && typedoc --disableOutputCheck --options typedoc.json",
         "tslint": "tslint --project tsconfig.json",
         "prettier": "prettier -l '**/*.ts' '**/*.tsx' '**/*.json'",
-        "prettier:fix": "prettier --write '**/*.ts' '**/*.tsx' '**/*.json'"
+        "prettier:fix": "prettier --write '**/*.ts' '**/*.tsx' '**/*.json'",
+        "postinstall": "ts-node ./scripts/postinstall.ts"
     },
     "engines": {
         "node": ">=9.11.1",

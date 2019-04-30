@@ -199,7 +199,7 @@ export type Style =
     | StandardExtrudedLineStyle
     | ExtrudedPolygonStyle
     | ShaderStyle
-    | TextStyle
+    | TextTechniqueStyle
     | NoneStyle;
 
 /**
@@ -315,7 +315,7 @@ export interface ShaderStyle extends BaseStyle {
     attr?: Partial<ShaderTechniqueParams>;
 }
 
-export interface TextStyle extends BaseStyle {
+export interface TextTechniqueStyle extends BaseStyle {
     technique: "text";
     attr?: Partial<TextTechniqueParams>;
 }
