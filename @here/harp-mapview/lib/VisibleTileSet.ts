@@ -266,12 +266,8 @@ export class VisibleTileSet {
         );
         this.m_frustum.setFromMatrix(this.m_viewProjectionMatrix);
 
-        const rootTileKey = TileKey.fromRowColumnLevel(0, 0, 0);
-        const tileBounds = new THREE.Box3();
-
         const newRenderList: DataSourceTileList[] = [];
         let allVisibleTilesLoaded: boolean = true;
-        let allBoundingBoxesFinal: boolean = true;
 
         if (this.options.extendedFrustumCulling) {
             this.m_mapTileCuller.setup();
@@ -287,125 +283,13 @@ export class VisibleTileSet {
             }
         }
 
-        for (const dataSource of dataSources) {
-            const displayZoomLevel = dataSource.getDisplayZoomLevel(zoomLevel);
-
-            const tilingScheme = dataSource.getTilingScheme();
-            const useElevationRangeSource: boolean =
-                elevationRangeSource !== undefined &&
-                elevationRangeSource.getTilingScheme() === tilingScheme;
-
-            const workList: TileKeyEntry[] = this.getRequiredInitialRootTileKeys(
-                rootTileKey,
-                worldCenter
-            );
-
-            const visibleTiles: TileKeyEntry[] = [];
-
-            const tileFrustumIntersectionCache = this.createIntersectionCache(workList);
-
-            while (workList.length > 0) {
-                const tileEntry = workList.pop();
-
-                if (tileEntry === undefined) {
-                    continue;
-                }
-
-                const tileKey = tileEntry.tileKey;
-                const uniqueKey = TileOffsetUtils.getKeyForTileKeyAndOffset(
-                    tileKey,
-                    tileEntry.offset
-                );
-                const area = tileFrustumIntersectionCache.get(uniqueKey);
-
-                if (area === undefined) {
-                    throw new Error("Unexpected tile key");
-                }
-
-                if (area <= 0 || tileKey.level > displayZoomLevel) {
-                    continue;
-                }
-
-                if (dataSource.shouldRender(displayZoomLevel, tileKey)) {
-                    visibleTiles.push(tileEntry);
-                }
-
-                tilingScheme.getSubTileKeys(tileKey).forEach(childTileKey => {
-                    const offset = tileEntry.offset;
-                    const intersectsFrustum = tileFrustumIntersectionCache.get(
-                        TileOffsetUtils.getKeyForTileKeyAndOffset(childTileKey, offset)
-                    );
-
-                    let subTileArea = 0;
-
-                    if (intersectsFrustum === undefined) {
-                        const geoBox = this.getGeoBox(tilingScheme, childTileKey, offset);
-
-                        if (useElevationRangeSource) {
-                            const range = elevationRangeSource!.getElevationRange(childTileKey);
-                            geoBox.southWest.altitude = range.minElevation;
-                            geoBox.northEast.altitude = range.maxElevation;
-
-                            allBoundingBoxesFinal =
-                                allBoundingBoxesFinal &&
-                                range.calculationStatus === CalculationStatus.FinalPrecise;
-                        }
-                        this.options.projection.projectBox(geoBox, tileBounds);
-                        tileBounds.min.sub(worldCenter);
-                        tileBounds.max.sub(worldCenter);
-
-                        if (
-                            (!this.options.extendedFrustumCulling ||
-                                this.m_mapTileCuller.frustumIntersectsTileBox(tileBounds)) &&
-                            this.m_frustum.intersectsBox(tileBounds)
-                        ) {
-                            const contour = [
-                                new THREE.Vector3(
-                                    tileBounds.min.x,
-                                    tileBounds.min.y,
-                                    0
-                                ).applyMatrix4(this.m_viewProjectionMatrix),
-                                new THREE.Vector3(
-                                    tileBounds.max.x,
-                                    tileBounds.min.y,
-                                    0
-                                ).applyMatrix4(this.m_viewProjectionMatrix),
-                                new THREE.Vector3(
-                                    tileBounds.max.x,
-                                    tileBounds.max.y,
-                                    0
-                                ).applyMatrix4(this.m_viewProjectionMatrix),
-                                new THREE.Vector3(
-                                    tileBounds.min.x,
-                                    tileBounds.max.y,
-                                    0
-                                ).applyMatrix4(this.m_viewProjectionMatrix)
-                            ];
-
-                            contour.push(contour[0]);
-
-                            const n = contour.length;
-
-                            for (let p = n - 1, q = 0; q < n; p = q++) {
-                                subTileArea +=
-                                    contour[p].x * contour[q].y - contour[q].x * contour[p].y;
-                            }
-
-                            subTileArea = Math.abs(subTileArea * 0.5);
-                        }
-
-                        tileFrustumIntersectionCache.set(
-                            TileOffsetUtils.getKeyForTileKeyAndOffset(childTileKey, offset),
-                            subTileArea
-                        );
-                    }
-
-                    if (subTileArea > 0) {
-                        workList.push(new TileKeyEntry(childTileKey, subTileArea, offset));
-                    }
-                });
-            }
-
+        const visibleTileResult = this.getVisibleTilesForDataSources(
+            worldCenter,
+            zoomLevel,
+            dataSources,
+            elevationRangeSource
+        );
+        for (const { dataSource, visibleTiles } of visibleTileResult.tiles) {
             // Sort by projected (visible) area, now the tiles that are further away are at the end
             // of the list.
             //
@@ -427,6 +311,7 @@ export class VisibleTileSet {
             let allDataSourceTilesLoaded = true;
             let numTilesLoading = 0;
             // Create actual tiles only for the allowed number of visible tiles
+            const displayZoomLevel = dataSource.getDisplayZoomLevel(zoomLevel);
             for (
                 let i = 0;
                 i < visibleTiles.length &&
@@ -474,7 +359,8 @@ export class VisibleTileSet {
         }
 
         this.dataSourceTileList = newRenderList;
-        this.allVisibleTilesLoaded = allVisibleTilesLoaded && allBoundingBoxesFinal;
+        this.allVisibleTilesLoaded =
+            allVisibleTilesLoaded && visibleTileResult.allBoundingBoxesFinal;
 
         this.fillMissingTilesFromCache();
 
@@ -886,5 +772,139 @@ export class VisibleTileSet {
                 }
             });
         }
+    }
+
+    // Computes the visible tiles for each supplied datasource.
+    private getVisibleTilesForDataSources(
+        worldCenter: THREE.Vector3,
+        zoomLevel: number,
+        dataSources: DataSource[],
+        elevationRangeSource: ElevationRangeSource | undefined
+    ): {
+        tiles: Array<{ dataSource: DataSource; visibleTiles: TileKeyEntry[] }>;
+        allBoundingBoxesFinal: boolean;
+    } {
+        const tiles = [];
+        let allBoundingBoxesFinal: boolean = true;
+
+        for (const dataSource of dataSources) {
+            const displayZoomLevel = dataSource.getDisplayZoomLevel(zoomLevel);
+
+            const tilingScheme = dataSource.getTilingScheme();
+            const useElevationRangeSource: boolean =
+                elevationRangeSource !== undefined &&
+                elevationRangeSource.getTilingScheme() === tilingScheme;
+
+            const rootTileKey = TileKey.fromRowColumnLevel(0, 0, 0);
+            const tileBounds = new THREE.Box3();
+            const workList: TileKeyEntry[] = this.getRequiredInitialRootTileKeys(
+                rootTileKey,
+                worldCenter
+            );
+
+            const visibleTiles: TileKeyEntry[] = [];
+
+            const tileFrustumIntersectionCache = this.createIntersectionCache(workList);
+
+            while (workList.length > 0) {
+                const tileEntry = workList.pop();
+
+                if (tileEntry === undefined) {
+                    continue;
+                }
+
+                const tileKey = tileEntry.tileKey;
+                const uniqueKey = TileOffsetUtils.getKeyForTileKeyAndOffset(
+                    tileKey,
+                    tileEntry.offset
+                );
+                const area = tileFrustumIntersectionCache.get(uniqueKey);
+
+                if (area === undefined) {
+                    throw new Error("Unexpected tile key");
+                }
+
+                if (area <= 0 || tileKey.level > displayZoomLevel) {
+                    continue;
+                }
+
+                if (dataSource.shouldRender(displayZoomLevel, tileKey)) {
+                    visibleTiles.push(tileEntry);
+                }
+
+                tilingScheme.getSubTileKeys(tileKey).forEach(childTileKey => {
+                    const offset = tileEntry.offset;
+                    const tileKeyAndOffset = TileOffsetUtils.getKeyForTileKeyAndOffset(
+                        childTileKey,
+                        offset
+                    );
+                    const intersectsFrustum = tileFrustumIntersectionCache.get(tileKeyAndOffset);
+
+                    if (intersectsFrustum === undefined) {
+                        const geoBox = this.getGeoBox(tilingScheme, childTileKey, offset);
+
+                        if (useElevationRangeSource) {
+                            const range = elevationRangeSource!.getElevationRange(childTileKey);
+                            geoBox.southWest.altitude = range.minElevation;
+                            geoBox.northEast.altitude = range.maxElevation;
+
+                            allBoundingBoxesFinal =
+                                allBoundingBoxesFinal &&
+                                range.calculationStatus === CalculationStatus.FinalPrecise;
+                        }
+                        this.options.projection.projectBox(geoBox, tileBounds);
+                        tileBounds.min.sub(worldCenter);
+                        tileBounds.max.sub(worldCenter);
+
+                        const subTileArea = this.computeSubTileArea(tileBounds);
+
+                        tileFrustumIntersectionCache.set(tileKeyAndOffset, subTileArea);
+
+                        if (subTileArea > 0) {
+                            workList.push(new TileKeyEntry(childTileKey, subTileArea, offset));
+                        }
+                    }
+                });
+            }
+            tiles.push({ dataSource, visibleTiles });
+        }
+        return { tiles, allBoundingBoxesFinal };
+    }
+
+    // Computes the rough screen area of the supplied box.
+    // TileBounds must be in world space.
+    private computeSubTileArea(tileBounds: THREE.Box3) {
+        if (
+            (!this.options.extendedFrustumCulling ||
+                this.m_mapTileCuller.frustumIntersectsTileBox(tileBounds)) &&
+            this.m_frustum.intersectsBox(tileBounds)
+        ) {
+            const contour = [
+                new THREE.Vector3(tileBounds.min.x, tileBounds.min.y, 0).applyMatrix4(
+                    this.m_viewProjectionMatrix
+                ),
+                new THREE.Vector3(tileBounds.max.x, tileBounds.min.y, 0).applyMatrix4(
+                    this.m_viewProjectionMatrix
+                ),
+                new THREE.Vector3(tileBounds.max.x, tileBounds.max.y, 0).applyMatrix4(
+                    this.m_viewProjectionMatrix
+                ),
+                new THREE.Vector3(tileBounds.min.x, tileBounds.max.y, 0).applyMatrix4(
+                    this.m_viewProjectionMatrix
+                )
+            ];
+
+            contour.push(contour[0]);
+
+            const n = contour.length;
+
+            let subTileArea = 0;
+            for (let p = n - 1, q = 0; q < n; p = q++) {
+                subTileArea += contour[p].x * contour[q].y - contour[q].x * contour[p].y;
+            }
+
+            return Math.abs(subTileArea * 0.5);
+        }
+        return 0;
     }
 }
