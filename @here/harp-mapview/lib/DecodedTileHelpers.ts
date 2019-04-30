@@ -12,6 +12,7 @@ import {
     isInterpolatedProperty,
     isShaderTechnique,
     isStandardTexturedTechnique,
+    isTerrainTechnique,
     isTextureBuffer,
     Technique,
     TextureProperties
@@ -27,7 +28,7 @@ import {
 import { LoggerManager } from "@here/harp-utils";
 import * as THREE from "three";
 import { Circles, Squares } from "./MapViewPoints";
-import { toPixelFormat, toTextureDataType, toWrappingMode } from "./ThemeHelpers";
+import { toPixelFormat, toTextureDataType, toTextureFilter, toWrappingMode } from "./ThemeHelpers";
 
 const logger = LoggerManager.instance.create("DecodedTileHelpers");
 const TEXTURE_PROPERTY_KEYS = [
@@ -122,7 +123,7 @@ export function createMaterial(
 
     material.depthTest = isExtrudedPolygonTechnique(technique) && technique.depthTest !== false;
 
-    if (isStandardTexturedTechnique(technique)) {
+    if (isStandardTexturedTechnique(technique) || isTerrainTechnique(technique)) {
         TEXTURE_PROPERTY_KEYS.forEach((texturePropertyName: string) => {
             const textureProperty = (technique as any)[texturePropertyName];
             if (textureProperty === undefined) {
@@ -140,6 +141,12 @@ export function createMaterial(
                     if (properties.wrapT !== undefined) {
                         texture.wrapT = toWrappingMode(properties.wrapT);
                     }
+                    if (properties.magFilter !== undefined) {
+                        texture.magFilter = toTextureFilter(properties.magFilter);
+                    }
+                    if (properties.minFilter !== undefined) {
+                        texture.minFilter = toTextureFilter(properties.minFilter);
+                    }
                     if (properties.flipY !== undefined) {
                         texture.flipY = properties.flipY;
                     }
@@ -153,6 +160,7 @@ export function createMaterial(
                 (material as any)[texturePropertyName] = texture;
                 texture.needsUpdate = true;
                 material.needsUpdate = true;
+
                 if (textureReadyCallback) {
                     textureReadyCallback(texture);
                 }
@@ -176,12 +184,6 @@ export function createMaterial(
                             properties.format ? toPixelFormat(properties.format) : undefined,
                             properties.type ? toTextureDataType(properties.type) : undefined
                         );
-                        // Technique does not support to specify filtering yet, but three.js
-                        // Texture is created with linear filtering by default whereas three.js
-                        // DataTexture is created with nearest by default. To be consistent
-                        // also set the filtering to linear here.
-                        texture.magFilter = THREE.LinearFilter;
-                        texture.minFilter = THREE.LinearFilter;
                         onLoad(texture);
                     } else {
                         onError("no data texture properties provided.");
@@ -276,6 +278,7 @@ export function getObjectConstructor(technique: Technique): ObjectConstructor | 
         case "extruded-line":
         case "standard":
         case "standard-textured":
+        case "terrain":
         case "extruded-polygon":
         case "fill":
         case "solid-line":
@@ -357,6 +360,7 @@ export function getMaterialConstructor(technique: Technique): MaterialConstructo
 
         case "standard":
         case "standard-textured":
+        case "terrain":
         case "extruded-polygon":
             return MapMeshStandardMaterial;
 

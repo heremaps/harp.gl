@@ -816,7 +816,7 @@ export interface ShaderTechniqueParams extends BaseTechniqueParams {
 /**
  * Technique used to render a geometry with a texture.
  * When using this technique, the datasource will produce texture coordinates in
- * local tile space (i.e. [0,0] at south-west and [1,1] at north-east tile corner )
+ * local tile space (i.e. [0,0] at south-west and [1,1] at north-east tile corner).
  */
 export interface StandardTexturedTechniqueParams extends BaseStandardTechniqueParams {
     /**
@@ -884,6 +884,30 @@ export interface StandardTexturedTechniqueParams extends BaseStandardTechniquePa
      */
     alphaMap?: string | TextureBuffer;
     alphaMapProperties?: TextureProperties;
+}
+
+/**
+ * Technique used to render a terrain geometry with a texture.
+ * When using this technique, the datasource will produce texture coordinates in
+ * local tile space (i.e. [0,0] at south-west and [1,1] at north-east tile corner).
+ */
+export interface TerrainTechniqueParams extends StandardTexturedTechniqueParams {
+    /**
+     * Colors to be applied at different heights (as a results of a `displacementMap`).
+     */
+    heightBasedColors?: HeightBasedColors;
+
+    /**
+     * If `heightBasedColors` is defined, this value defines the interpolation method used to
+     * generate the height-based gradient texture (defaults to `Discrete`).
+     */
+    heightGradientInterpolation?: "Discrete" | "Linear" | "Cubic";
+
+    /**
+     * If `heightBasedColors` is defined, this value defines the width (in pixels) of the generated
+     * gradient texture (defaults to `128`).
+     */
+    heightGradientWidth?: number;
 }
 
 /**
@@ -1067,6 +1091,16 @@ export interface TextureProperties {
     wrapT?: WrappingMode;
 
     /**
+     * Texture magnification filter.
+     */
+    magFilter?: MagFilter;
+
+    /**
+     * Texture minification filter.
+     */
+    minFilter?: MinFilter;
+
+    /**
      * Flip texture vertically.
      * See: https://threejs.org/docs/#api/en/textures/Texture.flipY.
      */
@@ -1085,6 +1119,15 @@ export interface TextureProperties {
     repeatV?: number;
 }
 
+/**
+ * Interface containing the definition of different colors to be used at different heights with the
+ * [[TerrainTechnique]].
+ */
+export interface HeightBasedColors {
+    heightArray: number[];
+    colorArray: string[];
+}
+
 export type PixelFormat =
     | "Alpha"
     | "RGB"
@@ -1093,8 +1136,8 @@ export type PixelFormat =
     | "LuminanceAlpha"
     | "RGBE"
     | "Depth"
-    | "DepthStencil";
-// | "Red" FIXME: Red is missing from DefinitelyTyped (HARP-4881)
+    | "DepthStencil"
+    | "Red";
 
 export type TextureDataType =
     | "UnsignedByte"
@@ -1110,3 +1153,19 @@ export type TextureDataType =
  * Available texture wrapping modes.
  */
 export type WrappingMode = "clamp" | "repeat" | "mirror";
+
+/**
+ * Available texture magnification filters.
+ */
+export type MagFilter = "nearest" | "linear";
+
+/**
+ * Available texture minification filters.
+ */
+export type MinFilter =
+    | "nearest"
+    | "nearestMipMapNearest"
+    | "nearestMipMapLinear"
+    | "linear"
+    | "linearMipMapNearest"
+    | "linearMipMapLinear";

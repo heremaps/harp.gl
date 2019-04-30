@@ -17,6 +17,7 @@ import {
     SolidLineTechniqueParams,
     StandardExtrudedLineTechniqueParams,
     StandardTexturedTechniqueParams,
+    TerrainTechniqueParams,
     TextTechniqueParams
 } from "./TechniqueParams";
 
@@ -282,6 +283,11 @@ export interface StandardStyle extends BaseStyle {
 export interface StandardTexturedStyle extends BaseStyle {
     technique: "standard-textured";
     attr?: Partial<StandardTexturedTechniqueParams>;
+}
+
+export interface TerrainStyle extends BaseStyle {
+    technique: "terrain";
+    attr?: Partial<TerrainTechniqueParams>;
 }
 
 export interface BasicExtrudedLineStyle extends BaseStyle {

@@ -6,68 +6,105 @@
 
 import * as THREE from "three";
 
-import { Light, PixelFormat, TextureDataType, WrappingMode } from "@here/harp-datasource-protocol";
+import {
+    Light,
+    MagFilter,
+    MinFilter,
+    PixelFormat,
+    TextureDataType,
+    WrappingMode
+} from "@here/harp-datasource-protocol";
 
 /**
  * Returns `three.js` pixel format object basing on a [[PixelFormat]] specified.
  */
 export function toPixelFormat(format: PixelFormat): THREE.PixelFormat {
-    if (format === "Alpha") {
-        return THREE.AlphaFormat;
-    } else if (format === "RGB") {
-        return THREE.RGBFormat;
-    } else if (format === "RGBA") {
-        return THREE.RGBAFormat;
-    } else if (format === "Luminance") {
-        return THREE.LuminanceFormat;
-    } else if (format === "LuminanceAlpha") {
-        return THREE.LuminanceAlphaFormat;
-    } else if (format === "RGBE") {
-        return THREE.RGBEFormat;
-    } else if (format === "Depth") {
-        return THREE.DepthFormat;
-    } else if (format === "DepthStencil") {
-        return THREE.DepthStencilFormat;
+    switch (format) {
+        case "Alpha":
+            return THREE.AlphaFormat;
+        case "RGB":
+            return THREE.RGBFormat;
+        case "RGBA":
+            return THREE.RGBAFormat;
+        case "Luminance":
+            return THREE.LuminanceFormat;
+        case "LuminanceAlpha":
+            return THREE.LuminanceAlphaFormat;
+        case "RGBE":
+            return THREE.RGBEFormat;
+        case "Depth":
+            return THREE.DepthFormat;
+        case "DepthStencil":
+            return THREE.DepthStencilFormat;
+        case "Red":
+            return THREE.RedFormat;
+        default:
+            throw new Error(`invalid pixel format: ${format}`);
     }
-    throw new Error(`invalid pixel format: ${format}`);
 }
 
 /**
  * Returns `three.js` texture data types based on a [[TextureDataType]] specified.
  */
 export function toTextureDataType(dataType: TextureDataType): THREE.TextureDataType {
-    if (dataType === "UnsignedByte") {
-        return THREE.UnsignedByteType;
-    } else if (dataType === "Byte") {
-        return THREE.ByteType;
-    } else if (dataType === "Short") {
-        return THREE.ShortType;
-    } else if (dataType === "UnsignedShort") {
-        return THREE.UnsignedShortType;
-    } else if (dataType === "Int") {
-        return THREE.IntType;
-    } else if (dataType === "UnsignedInt") {
-        return THREE.UnsignedIntType;
-    } else if (dataType === "Float") {
-        return THREE.FloatType;
-    } else if (dataType === "HalfFloat") {
-        return THREE.HalfFloatType;
+    switch (dataType) {
+        case "UnsignedByte":
+            return THREE.UnsignedByteType;
+        case "Byte":
+            return THREE.ByteType;
+        case "Short":
+            return THREE.ShortType;
+        case "UnsignedShort":
+            return THREE.UnsignedShortType;
+        case "Int":
+            return THREE.IntType;
+        case "UnsignedInt":
+            return THREE.UnsignedIntType;
+        case "Float":
+            return THREE.FloatType;
+        case "HalfFloat":
+            return THREE.HalfFloatType;
+        default:
+            throw new Error(`invalid texture data type: ${dataType}`);
     }
-    throw new Error(`invalid texture data type: ${dataType}`);
 }
 
 /**
- * Returns `three.js` wrapping mode object basing on a [[WrappingMode]] specified.
+ * Returns `three.js` wrapping mode object based on a [[WrappingMode]] specified.
  */
 export function toWrappingMode(mode: WrappingMode): THREE.Wrapping {
-    if (mode === "clamp") {
-        return THREE.ClampToEdgeWrapping;
-    } else if (mode === "repeat") {
-        return THREE.RepeatWrapping;
-    } else if (mode === "mirror") {
-        return THREE.MirroredRepeatWrapping;
+    switch (mode) {
+        case "clamp":
+            return THREE.ClampToEdgeWrapping;
+        case "repeat":
+            return THREE.RepeatWrapping;
+        case "mirror":
+            return THREE.MirroredRepeatWrapping;
+        default:
+            throw new Error(`invalid wrapping mode: ${mode}`);
     }
-    throw new Error(`invalid wrapping: ${mode}`);
+}
+
+/**
+ * Returns `three.js` texture filter object based on a [[MagFilter]] or [[MinFilter]] specified.
+ */
+export function toTextureFilter(filter: MagFilter | MinFilter): THREE.TextureFilter {
+    switch (filter) {
+        case "nearest":
+            return THREE.NearestFilter;
+        case "nearestMipMapNearest":
+            return THREE.NearestMipMapNearestFilter;
+        case "nearestMipMapLinear":
+            return THREE.NearestMipMapLinearFilter;
+        case "linear":
+            return THREE.LinearFilter;
+        case "linearMipMapNearest":
+            return THREE.LinearMipMapNearestFilter;
+        case "linearMipMapLinear":
+            return THREE.LinearMipMapLinearFilter;
+        default:
+            throw new Error(`invalid texture filter: ${filter}`);
+    }
 }
 
 /**
