@@ -263,6 +263,9 @@ export class StyleSetEvaluator {
             if (currStyle.renderOrderBiasGroup !== undefined) {
                 technique.renderOrderBiasGroup = currStyle.renderOrderBiasGroup;
             }
+            if ((currStyle as any).secondaryRenderOrder !== undefined) {
+                technique.secondaryRenderOrder = (currStyle as any).secondaryRenderOrder;
+            }
             if (currStyle.attr !== undefined) {
                 Object.getOwnPropertyNames(currStyle.attr).forEach(property => {
                     const prop = (currStyle.attr as any)[property];
