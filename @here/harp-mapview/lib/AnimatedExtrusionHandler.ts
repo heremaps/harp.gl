@@ -288,7 +288,8 @@ export class AnimatedExtrusionTileHandler {
                 let tileKey = tile.tileKey;
                 while (
                     quadTreeSearchDistanceUp > nextLevelDiff &&
-                    extrusionStartTime === undefined
+                    extrusionStartTime === undefined &&
+                    tileKey.level !== 0
                 ) {
                     const parentTileKey = tileKey.parent();
                     tileHandler = this.m_animatedExtrusionHandler.find([parentTileKey]);
