@@ -278,4 +278,17 @@ export class OmvDataSource extends TileDataSource<OmvTile> {
             this.mapView.markTilesDirty(this);
         }
     }
+
+    get storageLevelOffset() {
+        return super.storageLevelOffset;
+    }
+
+    set storageLevelOffset(levelOffset: number) {
+        super.storageLevelOffset = levelOffset;
+
+        this.m_decoderOptions.storageLevelOffset = this.storageLevelOffset;
+        this.m_decoder.configure(undefined, undefined, {
+            storageLevelOffset: this.storageLevelOffset
+        });
+    }
 }
