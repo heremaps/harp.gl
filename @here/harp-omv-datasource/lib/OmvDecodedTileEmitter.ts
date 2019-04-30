@@ -880,7 +880,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
             const positionCount = (positions.length - basePosition) / 3;
             const count = indices.length - start;
 
-            if (isExtrudedPolygonTechnique(technique)) {
+            if (isExtrudedPolygonTechnique(technique) && technique.vertexColors === true) {
                 const color = new THREE.Color(
                     this.isColorStringValid(technique.color)
                         ? technique.color
