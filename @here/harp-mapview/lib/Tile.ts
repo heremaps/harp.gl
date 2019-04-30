@@ -1549,7 +1549,12 @@ export class Tile implements CachedResource {
                 if (hasExtrudedOutlines) {
                     const edgeGeometry = new THREE.BufferGeometry();
                     edgeGeometry.addAttribute("position", bufferGeometry.getAttribute("position"));
-                    edgeGeometry.addAttribute("color", bufferGeometry.getAttribute("color"));
+
+                    const colorAttribute = bufferGeometry.getAttribute("color");
+                    if (colorAttribute !== undefined) {
+                        edgeGeometry.addAttribute("color", colorAttribute);
+                    }
+
                     edgeGeometry.setIndex(
                         getBufferAttribute(srcGeometry.edgeIndex! as BufferAttribute)
                     );
