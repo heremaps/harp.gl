@@ -10,4 +10,10 @@ export class EarthConstants {
 
     /** The equatorial radius in meters. */
     static EQUATORIAL_RADIUS: number = 6378137.0;
+
+    /** The lowest point on earth (Dead Sea) in meters. */
+    static MIN_ELEVATION: number = -433.0;
+
+    /** The highest point on earth (Mt. Everest) in meters. */
+    static MAX_ELEVATION: number = 8848.0;
 }

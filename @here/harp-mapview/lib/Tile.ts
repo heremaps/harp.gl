@@ -22,6 +22,7 @@ import {
     isSquaresTechnique,
     isStandardTechnique,
     isStandardTexturedTechnique,
+    isTerrainTechnique,
     isTextTechnique,
     LineMarkerTechnique,
     PoiTechnique,
@@ -31,7 +32,7 @@ import {
     TextPathGeometry,
     TextTechnique
 } from "@here/harp-datasource-protocol";
-import { GeoBox, Projection, TileKey } from "@here/harp-geoutils";
+import { EarthConstants, GeoBox, Projection, TileKey } from "@here/harp-geoutils";
 import {
     DashedLineMaterial,
     EdgeMaterial,
@@ -1275,6 +1276,37 @@ export class Tile implements CachedResource {
                     materials[techniqueIndex] = material;
                 }
 
+                // Modify the standard textured shader to support height-based coloring.
+                if (
+                    isTerrainTechnique(technique) &&
+                    technique.heightBasedColors !== undefined &&
+                    technique.displacementMap !== undefined
+                ) {
+                    (material as any).onBeforeCompile = (shader: THREE.Shader) => {
+                        shader.fragmentShader = shader.fragmentShader.replace(
+                            "#include <map_pars_fragment>",
+                            `#include <map_pars_fragment>
+    uniform sampler2D displacementMap;
+    uniform float displacementScale;
+    uniform float displacementBias;`
+                        );
+
+                        shader.fragmentShader = shader.fragmentShader.replace(
+                            "#include <map_fragment>",
+                            `#ifdef USE_MAP
+    float minElevation = ${EarthConstants.MIN_ELEVATION.toFixed(1)};
+    float maxElevation = ${EarthConstants.MAX_ELEVATION.toFixed(1)};
+    float elevationRange = maxElevation - minElevation;
+
+    float disp = texture2D( displacementMap, vUv ).x * displacementScale + displacementBias;
+    vec4 texelColor = texture2D( map, vec2((disp - minElevation) / elevationRange, 0.0) );
+    texelColor = mapTexelToLinear( texelColor );
+    diffuseColor *= texelColor;
+#endif`
+                        );
+                    };
+                }
+
                 const bufferGeometry = new THREE.BufferGeometry();
 
                 srcGeometry.vertexAttributes.forEach((vertexAttribute: BufferAttribute) => {
@@ -1324,7 +1356,9 @@ export class Tile implements CachedResource {
 
                 if (
                     !bufferGeometry.getAttribute("normal") &&
-                    (isStandardTechnique(technique) || isStandardTexturedTechnique(technique))
+                    (isStandardTechnique(technique) ||
+                        isStandardTexturedTechnique(technique) ||
+                        isTerrainTechnique(technique))
                 ) {
                     bufferGeometry.computeVertexNormals();
                 }

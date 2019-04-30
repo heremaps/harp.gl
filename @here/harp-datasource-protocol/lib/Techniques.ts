@@ -18,6 +18,7 @@ import {
     SolidLineTechniqueParams,
     StandardExtrudedLineTechniqueParams,
     StandardTexturedTechniqueParams,
+    TerrainTechniqueParams,
     TextTechniqueParams
 } from "./TechniqueParams";
 
@@ -134,6 +135,13 @@ export interface StandardTexturedTechnique extends StandardTexturedTechniquePara
 }
 
 /**
+ * Technique used to render a terrain geometry with textures.
+ */
+export interface TerrainTechnique extends TerrainTechniqueParams {
+    name: "terrain";
+}
+
+/**
  * Possible techniques that can be used to draw a geometry on the map.
  */
 export type Technique =
@@ -148,6 +156,7 @@ export type Technique =
     | FillTechnique
     | StandardTechnique
     | StandardTexturedTechnique
+    | TerrainTechnique
     | BasicExtrudedLineTechnique
     | StandardExtrudedLineTechnique
     | ExtrudedPolygonTechnique
@@ -266,6 +275,13 @@ export function isStandardTexturedTechnique(
     technique: Technique
 ): technique is StandardTexturedTechnique {
     return technique.name === "standard-textured";
+}
+
+/**
+ * Type guard to check if an object is an instance of [[TerrainTechnique]].
+ */
+export function isTerrainTechnique(technique: Technique): technique is TerrainTechnique {
+    return technique.name === "terrain";
 }
 
 /**
