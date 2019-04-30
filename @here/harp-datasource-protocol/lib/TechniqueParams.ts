@@ -838,6 +838,7 @@ export interface StandardTexturedTechniqueParams extends BaseStandardTechniquePa
      * URL or texture buffer that should be used as normal map
      */
     normalMap?: string | TextureBuffer;
+    normalMapType?: number;
     normalMapProperties?: TextureProperties;
 
     /**
