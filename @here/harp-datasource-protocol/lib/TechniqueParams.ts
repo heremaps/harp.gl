@@ -813,6 +813,11 @@ export interface ShaderTechniqueParams extends BaseTechniqueParams {
     primitive: "point" | "line" | "segments" | "mesh";
 }
 
+export interface HeightBasedColors {
+    heights: number[];
+    colors: string[];
+}
+
 /**
  * Technique used to render a geometry with a texture.
  * When using this technique, the datasource will produce texture coordinates in
@@ -829,23 +834,28 @@ export interface StandardTexturedTechniqueParams extends BaseStandardTechniquePa
     renderTexture?: boolean;
 
     /**
-     * URL or texture buffer that should be used as color map
+     * URL or texture buffer that should be used as color map.
      */
     map?: string | TextureBuffer;
     mapProperties?: TextureProperties;
 
     /**
-     * URL or texture buffer that should be used as normal map
+     * URL or texture buffer that should be used as normal map.
      */
     normalMap?: string | TextureBuffer;
     normalMapType?: number;
     normalMapProperties?: TextureProperties;
 
     /**
-     * URL or texture buffer that should be used as displacement map
+     * URL or texture buffer that should be used as displacement map.
      */
     displacementMap?: string | TextureBuffer;
     displacementMapProperties?: TextureProperties;
+
+    /**
+     * Colors to be applied as a result of a `displacementMap`.
+     */
+    heightBasedColors?: HeightBasedColors;
 }
 
 /**
