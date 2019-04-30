@@ -1,2 +1,3 @@
 @here/harp-omv-datasource/lib/proto/vector_tile.d.ts
+@here/harp-datasource-protocol/theme.schema.json
 dist/

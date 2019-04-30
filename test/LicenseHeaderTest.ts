@@ -23,6 +23,7 @@ describe("LicenseHeaderCheck", function() {
     const sourceFiles = glob
         .sync(path.join(__dirname, "..", "**/*.ts"))
         .filter(file => !file.includes("/node_modules/"))
+        .filter(file => !file.includes("/dist/"))
         .filter(file => !file.endsWith(".d.ts"));
 
     it("Contains license header", function() {

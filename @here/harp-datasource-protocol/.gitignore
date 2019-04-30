@@ -2,6 +2,7 @@
 node_modules
 dist
 doc
+theme.schema.json
 *.d.ts
 *.js
 *.js.map

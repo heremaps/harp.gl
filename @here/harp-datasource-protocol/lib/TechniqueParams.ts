@@ -591,10 +591,6 @@ export interface StandardExtrudedLineTechniqueParams
  */
 export interface SolidLineTechniqueParams extends BaseTechniqueParams, PolygonalTechniqueParams {
     /**
-     * Name of technique. Is used in the theme file.
-     */
-    name: "solid-line";
-    /**
      * Color of a line in hexadecimal or CSS-style notation, for example: `"#e4e9ec"`, `"#fff"`,
      * `"rgb(255, 0, 0)"`, or `"hsl(35, 11%, 88%)"`.
      */
@@ -630,7 +626,7 @@ export interface SolidLineTechniqueParams extends BaseTechniqueParams, Polygonal
     /**
      * Width of secondary line geometry in `metricUnit`s for different zoom levels.
      */
-    secondaryWidth?: number;
+    secondaryWidth?: MaybeInterpolatedProperty<number>;
     /**
      * The render order of the secondary line geometry object created using this technique.
      */
@@ -641,10 +637,6 @@ export interface SolidLineTechniqueParams extends BaseTechniqueParams, Polygonal
  * Declares a a geometry as a dashed line.
  */
 export interface DashedLineTechniqueParams extends BaseTechniqueParams, PolygonalTechniqueParams {
-    /**
-     * Name of technique. Is used in the theme file.
-     */
-    name: "dashed-line";
     /**
      * Color of a line in hexadecimal or CSS-style notation, for example: `"#e4e9ec"`, `"#fff"`,
      * `"rgb(255, 0, 0)"`, or `"hsl(35, 11%, 88%)"`.
