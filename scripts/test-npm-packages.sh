@@ -10,18 +10,20 @@ set -e
 # direct and indirect harp.gl dependencies of our test app
 # (TODO, read it from package.json)
 packages="\
-    @here/harp-lines \
-    @here/harp-geoutils \
-    @here/harp-materials \
-    @here/harp-text-canvas \
     @here/harp-datasource-protocol \
-    @here/harp-utils \
+    @here/harp-fetch \
+    @here/harp-geoutils \
+    @here/harp-lines \
     @here/harp-lrucache \
     @here/harp-map-controls \
     @here/harp-map-theme \
     @here/harp-mapview \
     @here/harp-mapview-decoder \
-    @here/harp-omv-datasource"
+    @here/harp-materials \
+    @here/harp-omv-datasource \
+    @here/harp-text-canvas \
+    @here/harp-transfer-manager \
+    @here/harp-utils"
 
 
 # ensure we have clean environment before and after test
