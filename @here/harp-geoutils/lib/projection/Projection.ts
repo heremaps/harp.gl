@@ -132,4 +132,12 @@ export interface Projection {
      * @param worldPoint The position in world coordinates.
      */
     getScaleFactor(worldPoint: Vector3Like): number;
+
+    /**
+     * Returns the signed distance between the given coordinates and
+     * the closest point on the surface.
+     *
+     * @param worldPoint The position in world coordinates.
+     */
+    groundDistance(worldPoint: Vector3Like): number;
 }

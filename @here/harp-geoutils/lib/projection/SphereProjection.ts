@@ -310,6 +310,13 @@ class SphereProjection implements Projection {
     getScaleFactor(_worldPoint: Vector3Like): number {
         return 1;
     }
+
+    groundDistance(worldPoint: Vector3Like): number {
+        const d = Math.sqrt(
+            worldPoint.x * worldPoint.x + worldPoint.y * worldPoint.y + worldPoint.z * worldPoint.z
+        );
+        return d - EarthConstants.EQUATORIAL_RADIUS;
+    }
 }
 
 export const sphereProjection = new SphereProjection();

@@ -97,6 +97,10 @@ class IdentityProjection implements Projection {
         const maxGeo = this.unprojectPoint(worldBox.max);
         return GeoBox.fromCoordinates(minGeo, maxGeo);
     }
+
+    groundDistance(worldPoint: Vector3Like): number {
+        return worldPoint.z;
+    }
 }
 
 /**
