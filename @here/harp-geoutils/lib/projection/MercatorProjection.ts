@@ -163,6 +163,10 @@ export class MercatorProjection implements Projection {
         const geoBox = GeoBox.fromCoordinates(minGeo, maxGeo);
         return geoBox;
     }
+
+    groundDistance(worldPoint: Vector3Like): number {
+        return worldPoint.z;
+    }
 }
 
 /**

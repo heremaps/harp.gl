@@ -49,6 +49,12 @@ describe("SphereProjection", function() {
         assert.approximately(geoPoint.altitude!, geoPoint2.altitude!, epsilon);
     });
 
+    it("GroundDistance", function() {
+        const geoPoint = new GeoCoordinates(37.8178183439856, -122.4410209359072, 12.0);
+        const worldPoint = sphereProjection.projectPoint(geoPoint);
+        assert.approximately(sphereProjection.groundDistance(worldPoint), 12.0, epsilon);
+    });
+
     samples.forEach(([geoPoint, expectedWorldPoint]) => {
         it(`ProjectPoint (${geoPoint.latitude}, ${geoPoint.longitude}, ${
             geoPoint.altitude
