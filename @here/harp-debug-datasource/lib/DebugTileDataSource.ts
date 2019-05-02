@@ -90,7 +90,7 @@ export class DebugTileDataSource extends DataSource {
         name = "debug",
         public maxDbgZoomLevel: number = 20
     ) {
-        super(name, undefined, 1, 20, -2);
+        super(name, undefined, 1, 20, -1);
 
         this.cacheable = true;
     }
