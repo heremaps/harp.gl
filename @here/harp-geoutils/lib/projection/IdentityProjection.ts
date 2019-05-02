@@ -11,11 +11,13 @@ import { Box3Like, isBox3Like } from "../math/Box3Like";
 import { MathUtils } from "../math/MathUtils";
 import { isOrientedBox3Like, OrientedBox3Like } from "../math/OrientedBox3Like";
 import { Vector3Like } from "../math/Vector3Like";
-import { Projection } from "./Projection";
+import { Projection, ProjectionType } from "./Projection";
 
 const DEG2RAD = Math.PI / 180;
 
 class IdentityProjection implements Projection {
+    readonly type: ProjectionType = ProjectionType.Planar;
+
     getScaleFactor(_worldPoint: Vector3Like): number {
         return 1;
     }

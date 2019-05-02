@@ -12,10 +12,30 @@ import { OrientedBox3Like } from "../math/OrientedBox3Like";
 import { Vector3Like } from "../math/Vector3Like";
 
 /**
+ * The type of projection.
+ */
+export enum ProjectionType {
+    /**
+     * A type of [Projection] with zero curvature.
+     */
+    Planar,
+
+    /**
+     * A spherical [Projection].
+     */
+    Spherical
+}
+
+/**
  * `Projection` is used to convert positions from geo coordinates to world coordinates and vice
  * versa.
  */
 export interface Projection {
+    /**
+     * The type of this [Projection].
+     */
+    readonly type: ProjectionType;
+
     /**
      * Returns the world extents in world coordinates.
      *
