@@ -1291,9 +1291,15 @@ export class MapView extends THREE.EventDispatcher {
     addDataSource(dataSource: DataSource): Promise<void> {
         const twinDataSource = this.getDataSourceByName(dataSource.name);
         if (twinDataSource !== undefined) {
-            throw new Error(
-                `A DataSource with the name "${dataSource.name}" already exists in this MapView.`
-            );
+            if (twinDataSource === dataSource) {
+                return new Promise(resolve => resolve());
+            } else {
+                throw new Error(
+                    `Another datasource with the name ${dataSource.name} already ` +
+                        `exists in this MapView. Names identify datasources. If you see this ` +
+                        `message, consider giving individual names to your datasources.`
+                );
+            }
         }
         dataSource.attach(this);
         this.m_tileDataSources.push(dataSource);
