@@ -12,7 +12,7 @@ import { MathUtils } from "../math/MathUtils";
 import { isOrientedBox3Like, OrientedBox3Like } from "../math/OrientedBox3Like";
 import { Vector3Like } from "../math/Vector3Like";
 import { EarthConstants } from "./EarthConstants";
-import { Projection } from "./Projection";
+import { Projection, ProjectionType } from "./Projection";
 
 /**
  * Transforms the given vector using the provided basis.
@@ -140,6 +140,8 @@ function project<WorldCoordinates extends Vector3Like>(
 }
 
 class SphereProjection implements Projection {
+    readonly type: ProjectionType = ProjectionType.Spherical;
+
     worldExtent<Bounds extends Box3Like>(
         _minElevation: number,
         maxElevation: number,

@@ -12,7 +12,7 @@ import { MathUtils } from "../math/MathUtils";
 import { isOrientedBox3Like, OrientedBox3Like } from "../math/OrientedBox3Like";
 import { Vector3Like } from "../math/Vector3Like";
 import { EarthConstants } from "./EarthConstants";
-import { Projection } from "./Projection";
+import { Projection, ProjectionType } from "./Projection";
 
 export class MercatorProjection implements Projection {
     static MAXIMUM_LATITUDE: number = 1.4844222297453323;
@@ -40,6 +40,8 @@ export class MercatorProjection implements Projection {
     private static unprojectLatitude(y: number): number {
         return 2.0 * Math.atan(Math.exp(Math.PI * y)) - Math.PI * 0.5;
     }
+
+    readonly type: ProjectionType = ProjectionType.Planar;
 
     getScaleFactor(worldPoint: Vector3Like): number {
         return Math.cosh(
