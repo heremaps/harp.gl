@@ -154,7 +154,7 @@ export interface OmvDataSourceParameters {
     maxZoomLevel?: number;
 
     /**
-     * Optional storage level offset for [[Tile]]s. Default is -2.
+     * Optional storage level offset for [[Tile]]s. Default is -1.
      */
     storageLevelOffset?: number;
 }
@@ -192,7 +192,7 @@ export class OmvDataSource extends TileDataSource<OmvTile> {
             copyrightInfo: m_params.copyrightInfo,
             minZoomLevel: getOptionValue(m_params.minZoomLevel, 1),
             maxZoomLevel: getOptionValue(m_params.maxZoomLevel, 14),
-            storageLevelOffset: getOptionValue(m_params.storageLevelOffset, -2)
+            storageLevelOffset: getOptionValue(m_params.storageLevelOffset, -1)
         });
 
         this.cacheable = true;
@@ -205,7 +205,7 @@ export class OmvDataSource extends TileDataSource<OmvTile> {
             gatherRoadSegments: this.m_params.gatherRoadSegments === true,
             featureModifierId: this.m_params.featureModifierId,
             skipShortLabels: this.m_params.skipShortLabels,
-            storageLevelOffset: getOptionValue(m_params.storageLevelOffset, -2)
+            storageLevelOffset: getOptionValue(m_params.storageLevelOffset, -1)
         };
 
         this.tileBackgroundIsVisible = true;
