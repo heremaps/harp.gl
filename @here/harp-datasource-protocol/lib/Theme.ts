@@ -43,7 +43,7 @@ export interface Theme {
     /**
      * Define the default text style for styling labels and texts.
      */
-    defaultTextStyle?: TextStyle;
+    defaultTextStyle?: TextStyleDefinition;
 
     /**
      * Define the lightning available on the three.js scene.
@@ -68,7 +68,7 @@ export interface Theme {
     /**
      * Define the style to render different types of text used on the map.
      */
-    textStyles?: TextStyle[];
+    textStyles?: TextStyleDefinition[];
 
     /**
      * List available fonts to be used while rendering text.
@@ -363,7 +363,7 @@ export interface DirectionalLight extends BaseLight {
 /**
  * Various text styles used with labels and texts.
  */
-export interface TextStyle {
+export interface TextStyleDefinition {
     color?: string;
     allCaps?: boolean;
     smallCaps?: boolean;
