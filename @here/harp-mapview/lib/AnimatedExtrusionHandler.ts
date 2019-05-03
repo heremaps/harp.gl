@@ -73,8 +73,13 @@ export class AnimatedExtrusionHandler {
         // if zoomLevel has been changed since last render
         if (this.m_zoomLevelPrevious !== zoomLevel) {
             this.m_tileHandlerMap.forEach(tileHandler => {
-                this.m_zoomDirection = zoomLevel > this.m_zoomLevelPrevious ? 1 : -1;
-                tileHandler.zoomLevelChanged(this.m_zoomDirection);
+                if (
+                    this.m_mapView.getDataSourceByName(tileHandler.tile.dataSource.name) !==
+                    undefined
+                ) {
+                    this.m_zoomDirection = zoomLevel > this.m_zoomLevelPrevious ? 1 : -1;
+                    tileHandler.zoomLevelChanged(this.m_zoomDirection);
+                }
             });
             this.m_zoomLevelPrevious = zoomLevel;
         }
