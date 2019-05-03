@@ -3,7 +3,7 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-import { LineMarkerTechnique, TextStyle, Theme } from "@here/harp-datasource-protocol";
+import { LineMarkerTechnique, TextStyleDefinition, Theme } from "@here/harp-datasource-protocol";
 import {
     AdditionParameters,
     DEFAULT_TEXT_CANVAS_LAYER,
@@ -615,7 +615,10 @@ export class TextElementsRenderer {
         this.m_defaultStyle.fontCatalog = defaultFontCatalogName!;
     }
 
-    private createTextElementStyle(style: TextStyle, styleName: string): TextElementStyle {
+    private createTextElementStyle(
+        style: TextStyleDefinition,
+        styleName: string
+    ): TextElementStyle {
         return {
             name: styleName,
             fontCatalog: getOptionValue(style.fontCatalogName, DEFAULT_FONT_CATALOG_NAME),
