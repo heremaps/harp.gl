@@ -3,7 +3,7 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-import { MathUtils, Projection, TileKey, TilingScheme } from "@here/harp-geoutils";
+import { MathUtils, Projection, ProjectionType, TileKey, TilingScheme } from "@here/harp-geoutils";
 import { LRUCache } from "@here/harp-lrucache";
 import * as THREE from "three";
 
@@ -626,6 +626,29 @@ export class VisibleTileSet {
         }
     }
 
+    /**
+     * Returns the target [[Projection]].
+     */
+    private get projection() {
+        return this.options.projection;
+    }
+
+    /**
+     * Returns the type of the target [[Projection]].
+     */
+    private get projectionType() {
+        return this.projection.type;
+    }
+
+    /**
+     * Returns true if the tile wrapping is enabled.
+     *
+     * The default implementation returns true for planar projections.
+     */
+    private get tileWrappingEnabled() {
+        return this.projectionType === ProjectionType.Planar;
+    }
+
     private getGeoBox(tilingScheme: TilingScheme, childTileKey: TileKey, offset: number) {
         const geoBox = tilingScheme.getGeoBox(childTileKey);
         const longitudeOffset = 360.0 * offset;
@@ -657,6 +680,9 @@ export class VisibleTileSet {
         rootTileKey: TileKey,
         worldCenter: THREE.Vector3
     ): TileKeyEntry[] {
+        if (!this.tileWrappingEnabled) {
+            return [new TileKeyEntry(rootTileKey, 0)];
+        }
         const worldGeoPoint = this.options.projection.unprojectPoint(worldCenter);
         const result: TileKeyEntry[] = [];
         const startOffset = Math.round(worldGeoPoint.longitude / 360.0);
