@@ -12,7 +12,7 @@ addons:
 branches:
   only:
     - master
-    - /^@here\/.*/
+    - release
 
 # upgrade yarn to a more recent version
 before_install:
@@ -31,10 +31,8 @@ jobs:
         npx ts-mocha -r tsconfig-paths/register ./@here/*/test/*.ts
         yarn test-browser --headless-firefox
         yarn test-browser --headless-chrome
-        if [ -z "${TRAVIS_TAG}" ] ; then
-          ./scripts/test-npm-packages.sh
-          git status # just in case test-npm-packages leaves some garbage
-        fi
+        ./scripts/test-npm-packages.sh
+        git status # just in case test-npm-packages leaves some garbage
     - name: "Build & Deploy"
       script: |
         set -ex
@@ -49,17 +47,13 @@ jobs:
         local-dir: dist
         github-token: $GITHUB_TOKEN
         on:
-          branch: master
-          tags: true
+          branch: release
+
 deploy:
   - provider: script
     script:
       - echo '//registry.npmjs.org/:_authToken=${NPM_TOKEN}' > ~/.npmrc
-      - |
-          if ./scripts/git-is-first-tag.sh "$TRAVIS_TAG" ; then \
-              npx lerna publish -y from-git ; \
-          fi
+      - npx lerna publish -y from-git
     skip_cleanup: true
     on:
-      tags: true
-      branch: master
+      branch: release
