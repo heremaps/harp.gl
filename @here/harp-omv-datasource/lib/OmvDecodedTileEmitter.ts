@@ -727,7 +727,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
         const currentMinHeight = env.lookup("min_height") as number;
         const defaultHeight = extrudedPolygonTechnique.defaultHeight;
         const constantHeight = extrudedPolygonTechnique.constantHeight;
-        const minHeight = currentMinHeight !== undefined ? currentMinHeight : 0;
+        const minHeight = currentMinHeight !== undefined && !isFilled ? currentMinHeight : 0;
         const height =
             currentHeight !== undefined
                 ? currentHeight
