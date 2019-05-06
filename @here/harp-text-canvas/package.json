@@ -28,7 +28,7 @@
         "@types/node": "^10.1.4",
         "chai": "^4.0.2",
         "cross-env": "^5.2.0",
-        "mocha": "^5.2.0",
+        "mocha": "^6.1.4",
         "source-map-support": "^0.5.2",
         "three": "^0.102.0",
         "ts-node": "^7.0.1",
