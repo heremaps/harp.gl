@@ -11,7 +11,7 @@ import { DataSource } from "./DataSource";
 import { CalculationStatus, ElevationRangeSource } from "./ElevationRangeSource";
 import { MapTileCuller } from "./MapTileCuller";
 import { Tile } from "./Tile";
-import { TileOffsetUtils } from "./Utils";
+import { MapViewUtils, TileOffsetUtils } from "./Utils";
 
 /**
  * Way the memory consumption of a tile is computed. Either in number of tiles, or in MegaBytes. If
@@ -557,32 +557,86 @@ export class VisibleTileSet {
     }
 
     /**
-     * Create a list of root nodes to test against the frustum.
+     * Create a list of root nodes to test against the frustum. The root nodes each start at level 0
+     * and have an offset (see [[Tile]]) based on:
+     * - the current position [[worldCenter]].
+     * - the height of the camera above the world.
+     * - the field of view of the camera (the maximum value between the horizontal / vertical
+     *   values)
+     * - the tilt of the camera (because we see more tiles when tilted).
      *
-     * @param rootTileKey The root [[TileKey]] from which to start.
      * @param worldCenter The center of the camera in world space.
      */
-    private getRequiredInitialRootTileKeys(
-        rootTileKey: TileKey,
-        worldCenter: THREE.Vector3
-    ): TileKeyEntry[] {
+    private getRequiredInitialRootTileKeys(worldCenter: THREE.Vector3): TileKeyEntry[] {
+        const rootTileKey = TileKey.fromRowColumnLevel(0, 0, 0);
         if (!this.tileWrappingEnabled) {
             return [new TileKeyEntry(rootTileKey, 0)];
         }
+
         const worldGeoPoint = this.options.projection.unprojectPoint(worldCenter);
         const result: TileKeyEntry[] = [];
         const startOffset = Math.round(worldGeoPoint.longitude / 360.0);
-        const worldLengthHorizontal =
-            Math.tan(MathUtils.degToRad(this.camera.fov) * this.camera.aspect) *
-            -this.camera.position.z;
+
+        // This algorithm computes the number of offsets we need to test. The following diagram may
+        // help explain the algorithm below.
+        //
+        //   |🎥
+        //   |.\ .
+        //   | . \  .
+        // z |  .  \   .c2
+        //   |  c1.  \b    .
+        //   |     .   \      .
+        //___|a___d1.____\e______.d2______f
+        //
+        // Where:
+        // - 🎥 is the camera
+        // - z is the height of the camera above the ground.
+        // - a is a right angle.
+        // - b is the look at vector of the camera.
+        // - c1 and c2 are the frustum planes of the camera.
+        // - c1 to c2 is the fov.
+        // - d1 and d2 are the intersection points of the frustum with the world plane.
+        // - e is the tilt/pitch of the camera.
+        // - f is the world
+        //
+        // The goal is to find the distance from e->d2. This is a longitude value, and we convert it
+        // to some offset range. Note e->d2 >= e->d1 (because we can't have a negative tilt).
+        // To find e->d2, we use the right triangle 🎥, a, d2 and subtract the distance a->d2 with
+        // a->e.
+        // a->d2 is found using the angle between a and d2 from the 🎥, this is simply e (because of
+        // similar triangles, angle between a, 🎥 and e equals the tilt) + half of the fov (because
+        // we need the angle between e, 🎥 and d2) and using trigonometry, result is therefore:
+        // (tan(a->d2) * z).
+        // a->e needs just the tilt and trigonometry to compute, result is: (tan(a->e) * z).
+
+        const cameraPitch = MapViewUtils.extractYawPitchRoll(this.camera.quaternion).pitch;
+        // Ensure that the aspect is >= 1.
+        const aspect = this.camera.aspect > 1 ? this.camera.aspect : 1 / this.camera.aspect;
+        // Angle between a->d2, note, the fov is vertical, hence we translate to horizontal.
+        const totalAngleRad = MathUtils.degToRad((this.camera.fov * aspect) / 2) + cameraPitch;
+        // Length a->d2
+        const worldLengthHorizontalFull = Math.tan(totalAngleRad) * this.camera.position.z;
+        // Length a->e
+        const worldLengthHorizontalSmallerHalf = Math.tan(cameraPitch) * this.camera.position.z;
+        // Length e -> d2
+        const worldLengthHorizontal = worldLengthHorizontalFull - worldLengthHorizontalSmallerHalf;
         const worldLeftPoint = new THREE.Vector3(
             worldCenter.x - worldLengthHorizontal,
             worldCenter.y,
             worldCenter.z
         );
         const worldLeftGeoPoint = this.options.projection.unprojectPoint(worldLeftPoint);
-        const offsetRange = Math.ceil(
-            Math.abs((worldGeoPoint.longitude - worldLeftGeoPoint.longitude) / 360)
+        // We multiply by SQRT2 because we need to account for a rotated view (in which case there
+        // are more tiles that can be seen).
+        const offsetRange = MathUtils.clamp(
+            Math.ceil(
+                Math.abs((worldGeoPoint.longitude - worldLeftGeoPoint.longitude) / 360) * Math.SQRT2
+            ),
+            0,
+            // We can store currently up to 16 unique keys(2^4, where 4 is the default bitshift
+            // value which is used currently in the [[VisibleTileSet]] methods) hence we can have a
+            // maximum range of 7 (because 2*7+1 = 15).
+            7
         );
         for (
             let offset = -offsetRange + startOffset;
@@ -795,12 +849,8 @@ export class VisibleTileSet {
                 elevationRangeSource !== undefined &&
                 elevationRangeSource.getTilingScheme() === tilingScheme;
 
-            const rootTileKey = TileKey.fromRowColumnLevel(0, 0, 0);
             const tileBounds = new THREE.Box3();
-            const workList: TileKeyEntry[] = this.getRequiredInitialRootTileKeys(
-                rootTileKey,
-                worldCenter
-            );
+            const workList: TileKeyEntry[] = this.getRequiredInitialRootTileKeys(worldCenter);
 
             const visibleTiles: TileKeyEntry[] = [];
 
