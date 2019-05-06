@@ -33,7 +33,7 @@
         "chai": "^4.0.2",
         "cross-env": "^5.2.0",
         "glob": "^7.1.1",
-        "mocha": "^5.2.0",
+        "mocha": "^6.1.4",
         "sinon": "^7.1.1",
         "source-map-support": "^0.5.2",
         "stream": "0.0.2",

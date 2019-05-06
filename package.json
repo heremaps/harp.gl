@@ -6,22 +6,22 @@
         "@here/*"
     ],
     "devDependencies": {
-        "chromedriver": "^2.43.1",
+        "chromedriver": "^74.0.0",
         "geckodriver": "^1.12.2",
         "hard-source-webpack-plugin": "^0.13.1",
-        "mocha": "^5.2.0",
+        "mocha": "^6.1.4",
         "mocha-webdriver-runner": "^0.5.1",
-        "prettier": "^1.16.4",
+        "prettier": "^1.17.0",
         "three": "^0.102.0",
-        "ts-mocha": "^2.0.0",
-        "tslint": "^5.11.1",
+        "ts-mocha": "^6.0.0",
+        "tslint": "^5.16.0",
         "tslint-config-prettier": "^1.18.0",
         "typedoc": "^0.14.2",
         "@strictsoftware/typedoc-plugin-monorepo": "^0.2.1",
         "typescript": "^3.4.1",
-        "webpack": "^4.28.3",
-        "webpack-cli": "^3.1.0",
-        "webpack-dev-server": "^3.1.5"
+        "webpack": "^4.30.0",
+        "webpack-cli": "^3.3.2",
+        "webpack-dev-server": "^3.3.1"
     },
     "scripts": {
         "test": "ts-mocha -r tsconfig-paths/register ./test/*.ts ./@here/*/test/*.ts",
@@ -51,6 +51,6 @@
     },
     "license": "Apache-2.0",
     "dependencies": {
-        "serve-handler": "^5.0.8"
+        "serve-handler": "^6.0.0"
     }
 }

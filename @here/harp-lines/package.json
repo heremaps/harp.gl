@@ -30,7 +30,7 @@
         "@types/mocha": "^5.2.5",
         "chai": "^4.0.2",
         "cross-env": "^5.2.0",
-        "mocha": "^5.2.0",
+        "mocha": "^6.1.4",
         "source-map-support": "^0.5.2",
         "three": "^0.102.0",
         "typescript": "^3.4.1"
