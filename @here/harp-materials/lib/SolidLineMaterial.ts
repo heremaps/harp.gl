@@ -141,6 +141,11 @@ export interface SolidLineMaterialParameters extends FadingFeatureParameters {
     depthTest?: boolean;
 
     /**
+     * Enables/Disable depth write.
+     */
+    depthWrite?: boolean;
+
+    /**
      * `SolidLineMaterial` extends the ThreeJS `RawShaderMaterial` that does not update fog at
      * runtime, so instead of recompiling everything we pass it in the constructor.
      */
@@ -224,6 +229,9 @@ export class SolidLineMaterial extends THREE.RawShaderMaterial implements Fading
             }
             if (params.depthTest !== undefined) {
                 this.depthTest = params.depthTest;
+            }
+            if (params.depthWrite !== undefined) {
+                this.depthWrite = params.depthWrite;
             }
             if (params.fadeNear !== undefined) {
                 this.fadeNear = params.fadeNear;
