@@ -38,7 +38,13 @@ export class ThemeLoader {
         return this.resolveUrls(theme);
     }
 
-    private static resolveUrls(theme: Theme): Theme {
+    /**
+     * Resolves all [[Theme]]'s relatives URLs to full URL using the [[Theme]]'s URL
+     * (see: https://www.w3.org/TR/WD-html40-970917/htmlweb.html#h-5.1.2).
+     *
+     * @param theme The [[Theme]] to resolve.
+     */
+    static resolveUrls(theme: Theme): Theme {
         // Ensure that all resources referenced in theme by relative URLs are in fact relative to
         // theme.
         const childUrlResolver = composeUrlResolvers(
