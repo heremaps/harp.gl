@@ -259,14 +259,13 @@ export class VisibleTileSet {
         storageLevel: number,
         zoomLevel: number,
         dataSources: DataSource[]
-    ): DataSourceTileList[] {
+    ) {
         this.m_viewProjectionMatrix.multiplyMatrices(
             this.camera.projectionMatrix,
             this.camera.matrixWorldInverse
         );
         this.m_frustum.setFromMatrix(this.m_viewProjectionMatrix);
 
-        const newRenderList: DataSourceTileList[] = [];
         let allVisibleTilesLoaded: boolean = true;
 
         if (this.options.extendedFrustumCulling) {
@@ -289,6 +288,7 @@ export class VisibleTileSet {
             dataSources,
             elevationRangeSource
         );
+        this.dataSourceTileList = [];
         for (const { dataSource, visibleTiles } of visibleTileResult.tiles) {
             // Sort by projected (visible) area, now the tiles that are further away are at the end
             // of the list.
@@ -346,7 +346,7 @@ export class VisibleTileSet {
                 tile.visibleArea = tileEntry.area;
             }
 
-            newRenderList.push({
+            this.dataSourceTileList.push({
                 dataSource,
                 storageLevel,
                 zoomLevel: displayZoomLevel,
@@ -358,7 +358,6 @@ export class VisibleTileSet {
             allVisibleTilesLoaded = allVisibleTilesLoaded && allDataSourceTilesLoaded;
         }
 
-        this.dataSourceTileList = newRenderList;
         this.allVisibleTilesLoaded =
             allVisibleTilesLoaded && visibleTileResult.allBoundingBoxesFinal;
 
@@ -381,8 +380,6 @@ export class VisibleTileSet {
                 cache.tileCache.shrinkToCapacity();
             }
         });
-
-        return newRenderList;
     }
 
     getTile(dataSource: DataSource, tileKey: TileKey, offset: number = 0): Tile | undefined {

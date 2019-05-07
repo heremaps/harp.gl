@@ -47,16 +47,17 @@ describe("VisibleTileSet", function() {
 
         ds.attach(new FakeMapView() as MapView);
 
-        const renderList = vts.updateRenderList(worldCenter, zoomLevel, storageLevel, [ds]);
+        vts.updateRenderList(worldCenter, zoomLevel, storageLevel, [ds]);
+        const dataSourceTileList = vts.dataSourceTileList;
 
-        assert.equal(renderList.length, 1);
-        assert.equal(renderList[0].visibleTiles.length, 2);
+        assert.equal(dataSourceTileList.length, 1);
+        assert.equal(dataSourceTileList[0].visibleTiles.length, 2);
 
-        const visibleTiles = renderList[0].visibleTiles;
+        const visibleTiles = dataSourceTileList[0].visibleTiles;
         assert.equal(visibleTiles[0].tileKey.mortonCode(), 371506851);
         assert.equal(visibleTiles[1].tileKey.mortonCode(), 371506850);
 
-        const renderedTiles = renderList[0].renderedTiles;
+        const renderedTiles = dataSourceTileList[0].renderedTiles;
         assert.equal(renderedTiles.length, 0);
     });
 
@@ -82,12 +83,13 @@ describe("VisibleTileSet", function() {
 
         ds.attach(new FakeMapView() as MapView);
 
-        const renderList = vts.updateRenderList(worldCenter, zoomLevel, storageLevel, [ds]);
+        vts.updateRenderList(worldCenter, zoomLevel, storageLevel, [ds]);
+        const dataSourceTileList = vts.dataSourceTileList;
 
-        assert.equal(renderList.length, 1);
-        assert.equal(renderList[0].visibleTiles.length, 5);
+        assert.equal(dataSourceTileList.length, 1);
+        assert.equal(dataSourceTileList[0].visibleTiles.length, 5);
 
-        const visibleTiles = renderList[0].visibleTiles;
+        const visibleTiles = dataSourceTileList[0].visibleTiles;
         assert.equal(visibleTiles[0].tileKey.mortonCode(), 371506849);
         assert.equal(visibleTiles[1].tileKey.mortonCode(), 371506848);
         assert.equal(visibleTiles[2].tileKey.mortonCode(), 371506850);
@@ -95,7 +97,7 @@ describe("VisibleTileSet", function() {
         assert.equal(visibleTiles[3].tileKey.mortonCode(), 371506165);
         assert.equal(visibleTiles[4].tileKey.mortonCode(), 371506827);
 
-        const renderedTiles = renderList[0].renderedTiles;
+        const renderedTiles = dataSourceTileList[0].renderedTiles;
         assert.equal(renderedTiles.length, 0);
     });
 
@@ -118,17 +120,18 @@ describe("VisibleTileSet", function() {
         assert.exists(parentTile);
         parentTile.forceHasGeometry(true);
 
-        const renderList = vts.updateRenderList(worldCenter, zoomLevel, storageLevel, [dataSource]);
+        vts.updateRenderList(worldCenter, zoomLevel, storageLevel, [dataSource]);
+        const dataSourceTileList = vts.dataSourceTileList;
 
-        assert.equal(renderList.length, 1);
-        assert.equal(renderList[0].visibleTiles.length, 2);
+        assert.equal(dataSourceTileList.length, 1);
+        assert.equal(dataSourceTileList[0].visibleTiles.length, 2);
 
-        const visibleTiles = renderList[0].visibleTiles;
+        const visibleTiles = dataSourceTileList[0].visibleTiles;
         assert.equal(visibleTiles[0].tileKey.mortonCode(), 371506851);
         assert.equal(visibleTiles[1].tileKey.mortonCode(), 371506850);
 
         // some tiles are visible ^^^, but the parent is actually rendered
-        const renderedTiles = renderList[0].renderedTiles;
+        const renderedTiles = dataSourceTileList[0].renderedTiles;
         assert.equal(renderedTiles.length, 1);
         assert.equal(renderedTiles[0].tileKey.mortonCode(), parentCode);
     });
@@ -142,7 +145,8 @@ describe("VisibleTileSet", function() {
 
         ds.attach(new FakeMapView() as MapView);
 
-        const renderList = vts.updateRenderList(worldCenter, zoomLevel, storageLevel, [ds]);
+        vts.updateRenderList(worldCenter, zoomLevel, storageLevel, [ds]);
+        const dataSourceTileList = vts.dataSourceTileList;
 
         // fill cache with additional arbitrary not visible tile
         // that shall be disposed() in this test
@@ -151,14 +155,14 @@ describe("VisibleTileSet", function() {
         const parentDisposeSpy = sinon.spy(parentTile, "dispose");
         const parentReloadSpy = sinon.spy(parentTile, "reload");
 
-        assert.equal(renderList.length, 1);
-        assert.equal(renderList[0].visibleTiles.length, 2);
+        assert.equal(dataSourceTileList.length, 1);
+        assert.equal(dataSourceTileList[0].visibleTiles.length, 2);
 
-        const visibleTileDisposeSpies = renderList[0].visibleTiles.map(tile =>
+        const visibleTileDisposeSpies = dataSourceTileList[0].visibleTiles.map(tile =>
             sinon.spy(tile, "dispose")
         );
 
-        const visibleTileReloadSpies = renderList[0].visibleTiles.map(tile =>
+        const visibleTileReloadSpies = dataSourceTileList[0].visibleTiles.map(tile =>
             sinon.spy(tile, "reload")
         );
 
