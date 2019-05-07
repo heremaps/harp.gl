@@ -259,7 +259,8 @@ export class VisibleTileSet {
         worldCenter: THREE.Vector3,
         storageLevel: number,
         zoomLevel: number,
-        dataSources: DataSource[]
+        dataSources: DataSource[],
+        elevationRangeSource?: ElevationRangeSource
     ) {
         this.m_viewProjectionMatrix.multiplyMatrices(
             this.camera.projectionMatrix,
@@ -271,16 +272,6 @@ export class VisibleTileSet {
 
         if (this.options.extendedFrustumCulling) {
             this.m_mapTileCuller.setup();
-        }
-
-        let elevationRangeSource: ElevationRangeSource | undefined;
-        for (const dataSource of dataSources) {
-            elevationRangeSource = dataSource.getElevationRangeSource();
-            if (elevationRangeSource !== undefined) {
-                // We don't support multiple elevation range sources, but just take the first one
-                // that we find in the enabled data sources.
-                break;
-            }
         }
 
         const visibleTileResult = this.getVisibleTilesForDataSources(

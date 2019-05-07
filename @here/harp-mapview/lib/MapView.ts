@@ -28,6 +28,8 @@ import { IMapAntialiasSettings, IMapRenderingManager, MapRenderingManager } from
 import { ConcurrentDecoderFacade } from "./ConcurrentDecoderFacade";
 import { CopyrightInfo } from "./CopyrightInfo";
 import { DataSource } from "./DataSource";
+import { ElevationProvider } from "./ElevationProvider";
+import { ElevationRangeSource } from "./ElevationRangeSource";
 import { MapViewImageCache } from "./image/MapViewImageCache";
 import { MapViewFog } from "./MapViewFog";
 import { PickHandler, PickResult } from "./PickHandler";
@@ -549,6 +551,9 @@ export class MapView extends THREE.EventDispatcher {
         | ScreenCollisionsDebug = new ScreenCollisions();
 
     private m_visibleTiles: VisibleTileSet;
+
+    private m_elevationRangeSource?: ElevationRangeSource;
+    private m_elevationProvider?: ElevationProvider;
     private m_visibleTileSetLock: boolean = false;
 
     private m_zoomLevel: number = DEFAULT_MIN_ZOOM_LEVEL;
@@ -1875,6 +1880,32 @@ export class MapView extends THREE.EventDispatcher {
     }
 
     /**
+     * Sets the DataSource which contains the elevations, the elevation range source, and the
+     * elevation provider. Only a single elevation source is possible per [[MapView]]
+     *
+     * If the terrain-datasource is merged with this repository, we could internally construct
+     * the [[ElevationRangeSource]] and the [[ElevationProvider]] and access would be granted to
+     * the application when it asks for it, to simplify the API.
+     *
+     * @param elevationSource The datasource containing the terrain tiles.
+     * @param elevationRangeSource Allows access to the elevation min / max per tile.
+     * @param elevationProvider Allows access to the elevation at a given location or a ray
+     *      from the camera.
+     */
+    setElevationSource(
+        elevationSource: DataSource,
+        elevationRangeSource: ElevationRangeSource,
+        elevationProvider: ElevationProvider
+    ) {
+        // Try to remove incase this method was already called, will do nothing if it doesn't exist.
+        this.removeDataSource(elevationSource);
+        this.addDataSource(elevationSource);
+        this.m_elevationRangeSource = elevationRangeSource;
+        this.m_elevationRangeSource.connect();
+        this.m_elevationProvider = elevationProvider;
+    }
+
+    /**
      * Public access to [[MapViewFog]] allowing to toggle it by setting its `enabled` property.
      */
     get fog(): MapViewFog {
@@ -1903,6 +1934,13 @@ export class MapView extends THREE.EventDispatcher {
                 this.mapRenderingManager.sepia = this.m_postEffects.sepia;
             }
         }
+    }
+
+    /**
+     * Returns the elevation provider.
+     */
+    get elevationProvider(): ElevationProvider | undefined {
+        return this.m_elevationProvider;
     }
 
     /**
@@ -2180,7 +2218,8 @@ export class MapView extends THREE.EventDispatcher {
                 this.m_camera.position,
                 this.storageLevel,
                 Math.floor(this.zoomLevel),
-                this.getEnabledTileDataSources()
+                this.getEnabledTileDataSources(),
+                this.m_elevationRangeSource
             );
         }
 

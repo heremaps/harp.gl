@@ -42,4 +42,9 @@ export interface ElevationRangeSource {
      * ranges returned by [[getElevationRange]] that have the same [[TilingScheme]].
      */
     getTilingScheme(): TilingScheme;
+
+    /**
+     * Connects to the underlying data.
+     */
+    connect(): Promise<void>;
 }

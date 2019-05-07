@@ -7,8 +7,6 @@ import { StyleSet } from "@here/harp-datasource-protocol";
 import { Projection, TileKey, TilingScheme } from "@here/harp-geoutils";
 import { assert } from "@here/harp-utils";
 import * as THREE from "three";
-
-import { ElevationRangeSource } from "./ElevationRangeSource";
 import { MapView } from "./MapView";
 import { Tile } from "./Tile";
 
@@ -195,18 +193,6 @@ export abstract class DataSource extends THREE.EventDispatcher {
      * Returns the [[TilingScheme]] used by this `DataSource`.
      */
     abstract getTilingScheme(): TilingScheme;
-
-    /**
-     * Returns a [[ElevationRangeSource]] so that [[MapView]] can compute proper bounding boxes that
-     * take the elevation range of the data into account.
-     * There can be only one [[ElevationRangeSource]] per [[MapView]]. [[MapView]] will take the
-     * [[ElevationRangeSource]] of the first enabled data source.
-     * Data sources with different tiling schemes are currently not supported and will not have
-     * proper bounding boxes.
-     */
-    getElevationRangeSource(): ElevationRangeSource | undefined {
-        return undefined;
-    }
 
     /**
      * This method is called when this `DataSource` is added to a [[MapView]].
