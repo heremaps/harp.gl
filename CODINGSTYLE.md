@@ -48,6 +48,43 @@ If an interface has data member, it's no longer abstract. Derived classes can't 
     - i.e. In Type/Javascript not everything needs to be a class,  if defining a singleton use a namespace or module instead of a class, so it cannot be instantiated and you can provide your create method
 1. Avoid adding additional libraries, we want to keep the `sdk` as slim as possible.
 1. Avoid truthy/falsy Statements. To avoid the scary mess of JavaScript truthy and falsy statements [read more here](https://www.sitepoint.com/javascript-truthy-falsy/) or [here](https://basarat.gitbooks.io/typescript/docs/tips/truthy.html)
+    - This improves safety, the impression that we know what kind of type the operator has and the impression on the reader that we are not lazy.
+    - When choosing between: _converting to real Boolean values_ to _using strict equality (===) or inequality (!==)_ on more complex objects use the former.
+    ```typescript
+    if (someNonBooleanVariable !== undefined)
+    ```
+1. *Do not use !! in the code*. The !!_trick_ is just a way to make a truthy operation a boolean one, but the issue with truthiness is *not solved*, but *hidden*. Consider the following example:
+
+   ```typescript
+   let str = undefined
+   !!str // is false even when undefined
+
+   let str = ""
+   !!str // is false even when the string has 0 length
+
+   if (str === undefined || str.length ===0)
+   ```
+   Here is a way not to use !! (based on [this](https://stackoverflow.com/questions/784929/what-is-the-not-not-operator-in-javascript/1406618#1406618)):
+   ```typescript
+   // !! is a horribly obscure way to do a type conversion.
+   // ! is NOT.
+   // !true is false,
+   // !false is true
+   // !0 is true, and !1 is false.
+
+   // So you're converting a value to a boolean, then inverting it, then inverting it again.
+
+   // Maximum Obscurity:
+   let val.enabled = !!userId;
+   let this.pauseButton:HTMLElement = new HTMLElement();
+
+   // much easier to understand:
+   let val.enabled = (userId != 0);
+
+   if (this.pauseButton !== undefined) {
+	// ...
+   }
+  ```
 1. Usage of "Non-null assertion operator" in the code. Don't use it when declaring members which are not initialized (if needed use optional operator instead: ?)
 
     ```typescript
