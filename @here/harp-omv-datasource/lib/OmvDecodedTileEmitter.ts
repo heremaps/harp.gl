@@ -47,10 +47,19 @@ import { assert, LoggerManager, Math2D } from "@here/harp-utils";
 import earcut from "earcut";
 import * as THREE from "three";
 
-import { GeoCoordinates } from "@here/harp-geoutils";
+import {
+    EarthConstants,
+    equirectangularProjection,
+    GeoCoordinates,
+    ProjectionType
+} from "@here/harp-geoutils";
+
 import { ILineGeometry, IPolygonGeometry } from "./IGeometryProcessor";
 import { LinesGeometry } from "./OmvDataSource";
 import { IOmvEmitter, OmvDecoder, Ring } from "./OmvDecoder";
+
+// tslint:disable-next-line: max-line-length
+import { SphericalGeometrySubdivisionModifier } from "@here/harp-geometry/lib/SphericalGeometrySubdivisionModifier";
 
 const logger = LoggerManager.instance.create("OmvDecodedTileEmitter");
 
@@ -143,6 +152,14 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
         private readonly m_skipShortLabels: boolean,
         private readonly m_languages?: string[]
     ) {}
+
+    get projection() {
+        return this.m_decodeInfo.projection;
+    }
+
+    get center() {
+        return this.m_decodeInfo.center;
+    }
 
     /**
      * Creates the Point of Interest geometries for the given feature.
@@ -552,15 +569,27 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
             const hasEdges = edgeWidth > 0.0 || isLine;
 
             const vertexStride = isTextured ? 5 : 3;
+
+            const isSpherical = projection.type === ProjectionType.Spherical;
+
             for (const polygon of geometry) {
                 const rings: Ring[] = [];
+
                 for (const outline of polygon.rings) {
                     const ringContour: number[] = [];
+                    const ringPoints: number[] | undefined = isSpherical ? [] : undefined;
                     let ringEdges: boolean[] | undefined;
+
                     for (let coordIdx = 0; coordIdx < outline.coordinates.length; ++coordIdx) {
                         const geoPoint = outline.coordinates[coordIdx];
-                        const { x, y, z } = projection.projectPoint(geoPoint, worldPos).sub(center);
-                        ringContour.push(x, y, z);
+
+                        projection.projectPoint(geoPoint, worldPos).sub(center);
+                        ringContour.push(worldPos.x, worldPos.y, worldPos.z);
+
+                        if (ringPoints !== undefined) {
+                            equirectangularProjection.projectPoint(geoPoint, worldPos);
+                            ringPoints.push(worldPos.x, worldPos.y, worldPos.z);
+                        }
 
                         if (hasEdges && outline.outlines !== undefined) {
                             const edge = outline.outlines[coordIdx];
@@ -579,8 +608,10 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                             ringContour.push(u, v);
                         }
                     }
-                    rings.push(new Ring(vertexStride, ringContour, ringEdges));
+
+                    rings.push(new Ring(vertexStride, ringContour, ringEdges, ringPoints));
                 }
+
                 polygons.push(rings);
             }
 
@@ -740,47 +771,43 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
         const { positions, textureCoordinates, colors, indices, edgeIndices, groups } = meshBuffers;
 
         const stride = isTextured ? 5 : 3;
+
         for (const rings of polygons) {
             const start = indices.length;
             const basePosition = positions.length;
 
-            const tileWorldBounds = new THREE.Box3();
-            this.m_decodeInfo.projection.projectBox(this.m_decodeInfo.geoBox, tileWorldBounds);
-
-            let contour: number[];
-            let contourOutlines: boolean[] | undefined;
             for (let ringIndex = 0; ringIndex < rings.length; ) {
                 const baseVertex = positions.length / 3;
 
                 // Get the contour vertices for this ring.
-                contour = rings[ringIndex].contour;
-                contourOutlines = rings[ringIndex].contourOutlines;
-                ringIndex++;
+                const ring = rings[ringIndex++];
 
                 let edgeIndexBuffer = edgeIndices as number[];
-                if (isFilled && contourOutlines !== undefined) {
+                if (isFilled && ring.contourOutlines !== undefined) {
                     edgeIndexBuffer = [];
                     (edgeIndices as number[][]).push(edgeIndexBuffer);
                 }
 
-                let vertices: number[] = contour;
+                const vertices: number[] = [...ring.contour];
+                const points: number[] = [...ring.points];
+
                 if (isExtruded) {
                     addExtrudedWalls(
                         indices,
                         baseVertex,
                         stride,
-                        contour,
-                        contourOutlines,
+                        ring.contour,
+                        ring.contourOutlines,
                         extrudedPolygonTechnique.boundaryWalls
                     );
                 }
-                if (contourOutlines !== undefined) {
+                if (ring.contourOutlines !== undefined) {
                     addPolygonEdges(
                         edgeIndexBuffer,
                         baseVertex,
                         stride,
-                        contour,
-                        contourOutlines,
+                        ring.contour,
+                        ring.contourOutlines,
                         isExtruded,
                         extrudedPolygonTechnique.footprint,
                         extrudedPolygonTechnique.maxSlope
@@ -790,32 +817,32 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                 // Repeat the process for all the inner rings (holes).
                 const holes: number[] = [];
                 for (; ringIndex < rings.length && rings[ringIndex].isInnerRing; ++ringIndex) {
+                    const current = rings[ringIndex];
                     holes.push(vertices.length / 3);
 
-                    contour = rings[ringIndex].contour;
-                    contourOutlines = rings[ringIndex].contourOutlines;
                     // As we are predicting the indexes before the vertices are added,
                     // the vertex offset has to be taken into account
                     const vertexOffset = (vertices.length / 3) * 2;
-                    vertices = vertices.concat(contour);
+                    vertices.push(...current.contour);
+                    points.push(...current.points);
 
                     if (isExtruded) {
                         addExtrudedWalls(
                             indices,
                             vertexOffset + baseVertex,
                             stride,
-                            contour,
-                            contourOutlines,
+                            current.contour,
+                            current.contourOutlines,
                             extrudedPolygonTechnique.boundaryWalls
                         );
                     }
-                    if (contourOutlines !== undefined) {
+                    if (current.contourOutlines !== undefined) {
                         addPolygonEdges(
                             edgeIndexBuffer,
                             (isExtruded ? vertexOffset : vertexOffset / 2) + baseVertex,
                             stride,
-                            contour,
-                            contourOutlines,
+                            current.contour,
+                            current.contourOutlines,
                             isExtruded,
                             extrudedPolygonTechnique.footprint,
                             extrudedPolygonTechnique.maxSlope
@@ -825,7 +852,44 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
 
                 try {
                     // Triangulate the footprint polyline.
-                    const triangles = earcut(vertices, holes, stride);
+                    const triangles = earcut(points, holes, stride);
+
+                    if (this.m_decodeInfo.projection.type === ProjectionType.Spherical) {
+                        const geom = new THREE.Geometry();
+
+                        for (let i = 0; i < vertices.length; i += 3) {
+                            geom.vertices.push(
+                                new THREE.Vector3(
+                                    vertices[i],
+                                    vertices[i + 1],
+                                    vertices[i + 2]
+                                ).add(this.m_decodeInfo.center)
+                            );
+                        }
+                        for (let i = 0; i < triangles.length; i += 3) {
+                            geom.faces.push(
+                                new THREE.Face3(triangles[i], triangles[i + 1], triangles[i + 2])
+                            );
+                        }
+
+                        const modifier = new SphericalGeometrySubdivisionModifier(
+                            THREE.Math.degToRad(10)
+                        );
+
+                        modifier.modify(geom);
+
+                        vertices.length = 0;
+                        triangles.length = 0;
+
+                        geom.vertices.forEach(p => {
+                            p.normalize();
+                            p.multiplyScalar(EarthConstants.EQUATORIAL_RADIUS);
+                            p.sub(this.m_decodeInfo.center);
+                            vertices.push(p.x, p.y, p.z);
+                        });
+
+                        geom.faces.forEach(({ a, b, c }) => triangles.push(a, b, c));
+                    }
 
                     // Add the footprint/roof vertices to the position buffer.
                     for (let i = 0; i < vertices.length; i += stride) {

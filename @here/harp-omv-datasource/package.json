@@ -35,6 +35,7 @@
         "@here/harp-mapview-decoder": "^0.3.2",
         "@here/harp-transfer-manager": "^0.2.2",
         "@here/harp-utils": "^0.2.3",
+        "@here/harp-geometry": "^0.1.1",
         "earcut": "^2.1.3",
         "long": "^4.0.0",
         "protobufjs": "^6.8.4"

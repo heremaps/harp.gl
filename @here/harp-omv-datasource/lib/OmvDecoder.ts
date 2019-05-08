@@ -55,10 +55,20 @@ const logger = LoggerManager.instance.create("OmvDecoder", { enabled: false });
 export class Ring {
     readonly isOuterRing: boolean;
 
+    /**
+     * Constructs a new [[Ring]].
+     *
+     * @param vertexStride The stride of this elements stored in 'contour' and 'points'.
+     * @param contour The [[Array]] containing the projected world coordinates.
+     * @param points An optional [[Array]] containing points projected
+     *               using the equirectangular projection.
+     * @param contourOutlines An optional [[Array]] of outline attributes.
+     */
     constructor(
         readonly vertexStride: number,
         readonly contour: number[],
-        readonly contourOutlines?: boolean[]
+        readonly contourOutlines?: boolean[],
+        readonly points: number[] = contour
     ) {
         this.isOuterRing = this.area() < 0;
     }
@@ -68,15 +78,16 @@ export class Ring {
     }
 
     area(): number {
+        const points = this.points;
         const stride = this.vertexStride;
-        const n = this.contour.length / stride;
+        const n = points.length / stride;
 
         let area = 0.0;
 
         for (let p = n - 1, q = 0; q < n; p = q++) {
             area +=
-                this.contour[p * stride] * this.contour[q * stride + 1] -
-                this.contour[q * stride] * this.contour[p * stride + 1];
+                points[p * stride] * points[q * stride + 1] -
+                points[q * stride] * points[p * stride + 1];
         }
 
         return area / 2;
