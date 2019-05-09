@@ -1470,15 +1470,6 @@ export class MapView extends THREE.EventDispatcher {
         if (this.m_pixelToWorld === undefined) {
             // At this point fov calculation should be always defined.
             assert(this.m_options.fovCalculation !== undefined);
-            let focalLength = this.m_focalLength;
-            // Focal length is not updated in map view in "fixed" fov setting.
-            if (this.m_options.fovCalculation!.type === "fixed") {
-                const height = this.m_renderer.getSize(tmpVector).height;
-                focalLength = MapViewUtils.calculateFocalLengthByVerticalFov(
-                    MathUtils.degToRad(this.m_camera.fov),
-                    height
-                );
-            }
             // NOTE: Look at distance is the distance to camera focus (and pivot) point.
             // In screen space this point is located in the center of canvas.
             // Given that zoom level is not modified (clamped by camera pitch), the following
@@ -1490,7 +1481,7 @@ export class MapView extends THREE.EventDispatcher {
 
             // Find world space object size that corresponds to one pixel on screen.
             this.m_pixelToWorld = MapViewUtils.calculateWorldSizeByFocalLength(
-                focalLength,
+                this.m_focalLength,
                 lookAtDistance,
                 1
             );
@@ -2472,25 +2463,27 @@ export class MapView extends THREE.EventDispatcher {
      * @param type How to calculate the FOV
      */
     private setFovOnCamera(fovCalculation: FovCalculation, height: number) {
-        this.m_camera.fov = this.limitFov(
-            fovCalculation.type === "fixed"
-                ? fovCalculation.fov
-                : MapViewUtils.calculateFovByFocalLength(this.m_focalLength, height),
-            this.m_camera.aspect
-        );
+        let fov = 0;
+        if (fovCalculation.type === "fixed") {
+            this.calculateFocalLength(height);
+            fov = fovCalculation.fov;
+        } else {
+            assert(this.m_focalLength !== 0);
+            fov = MapViewUtils.calculateFovByFocalLength(this.m_focalLength, height);
+        }
+        this.m_camera.fov = this.limitFov(fov, this.m_camera.aspect);
     }
 
     /**
-     * Computes the focal length based on the supplied fov (if the type is
-     * dynamic) and the height of the canvas.
-     *
-     * @param height Height of the canvas in css/client pixels.
+     * Sets the focal length based on the supplied fov and the height of the canvas. This must be
+     * called at least once. This is necessary to be recalled when the [[FovCalculation]]'s type is
+     * fixed. In such cases, when the height changes, the focal length must be readjusted whereas
+     * the FOV stays the same. The opposite is true for the dynamic case, where the focal length is
+     * fixed but the FOV changes.
+     * @param height Height of the canvas in css / client pixels.
      */
     private calculateFocalLength(height: number) {
         assert(this.m_options.fovCalculation !== undefined);
-        if (this.m_options.fovCalculation!.type === "fixed") {
-            return;
-        }
         this.m_focalLength = MapViewUtils.calculateFocalLengthByVerticalFov(
             MathUtils.degToRad(this.m_options.fovCalculation!.fov),
             height
