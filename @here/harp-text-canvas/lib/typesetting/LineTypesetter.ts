@@ -483,7 +483,7 @@ export class LineTypesetter implements Typesetter {
                 this.m_tempTransform,
                 position,
                 glyphScale,
-                textLayoutStyle.lineRotation,
+                textLayoutStyle.canvasRotation,
                 textRenderStyle.rotation
             );
             for (let j = 0; j < 4; ++j) {
@@ -538,7 +538,17 @@ export class LineTypesetter implements Typesetter {
             }
 
             // Advance the current position and proceed to next glyph in the run.
-            position.x += (glyphData.advanceX + textLayoutStyle.tracking) * glyphScale;
+            position.set(
+                position.x +
+                    (glyphData.advanceX + textLayoutStyle.tracking) *
+                        glyphScale *
+                        Math.cos(textLayoutStyle.lineRotation),
+                position.y +
+                    (glyphData.advanceX + textLayoutStyle.tracking) *
+                        glyphScale *
+                        Math.sin(textLayoutStyle.lineRotation),
+                position.z
+            );
         }
 
         return true;

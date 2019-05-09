@@ -269,10 +269,155 @@ export enum PoiStackMode {
  */
 export interface MarkerTechniqueParams extends BaseTechniqueParams {
     /**
+     * Field name of object containing the text to be rendered.
+     */
+    label?: string;
+    /**
+     * If `true`, the abbreviation (field `name:short`) of the elements is used as text.
+     */
+    useAbbreviation?: boolean;
+    /**
+     * If `true`, the iso code (field 'iso_code') of the elements is used as text.
+     * The `iso_code` field contains the ISO 3166-1 2-letter country code.
+     */
+    useIsoCode?: boolean;
+    /**
      * Priority of marker, defaults to `0`. Markers with highest priority get placed first.
      */
     priority?: number;
-    // Image part of technique:
+    /**
+     * Minimum zoomLevel at which to display the label text. No default.
+     */
+    textMinZoomLevel?: number;
+    /**
+     * Maximum zoomLevel at which to display the label text. No default.
+     */
+    textMaxZoomLevel?: number;
+    /**
+     * Minimum zoomLevel at which to display the label icon. No default.
+     */
+    iconMinZoomLevel?: number;
+    /**
+     * Maximum zoomLevel at which to display the label icon. No default.
+     */
+    iconMaxZoomLevel?: number;
+    /**
+     * Scaling factor of icon. Defaults to 0.5, reducing the size ot 50% in the distance.
+     */
+    distanceScale?: number;
+    /**
+     * If `false`, text may overlap markers.
+     * @default `false`
+     */
+    textMayOverlap?: boolean;
+    /**
+     * If `false`, the icon may overlap text and other icons of lower priority. If not defined, the
+     * property value from `textMayOverlap` will be used.
+     * @default `false`
+     */
+    iconMayOverlap?: boolean;
+    /**
+     * If `false`, text will not reserve screen space, other markers will be able to overlap.
+     * @default `true`
+     */
+    textReserveSpace?: boolean;
+    /**
+     * If `false`, icon will not reserve screen space, other markers will be able to overlap. If not
+     * defined, the property value from `iconReserveSpace` will be used.
+     * @default `true`
+     */
+    iconReserveSpace?: boolean;
+    /**
+     * If `false`, text will not be rendered during animations. Defaults to `true`.
+     */
+    renderTextDuringMovements?: boolean;
+    /**
+     * If `true`, the label will always be rendered on top. If overlapping with other labels with
+     * this flag set, the render order is undefined.
+     * @default `false`
+     */
+    alwaysOnTop?: boolean;
+    /**
+     * If `true`, icon will appear even if the text part is blocked by other labels. Defaults to
+     * `false`.
+     */
+    textIsOptional?: boolean;
+    /**
+     * Should be displayed on map or not. Defaults to `true`.
+     */
+    showOnMap?: boolean;
+    /**
+     * Specify stack mode. Defaults to `ShowInStack`.
+     */
+    stackMode?: PoiStackMode;
+    /**
+     * Minimal distance between markers in screen pixels.
+     */
+    minDistance?: number;
+    /**
+     * If true, the text will appear even if the icon cannot be rendered because of missing icon
+     * graphics. Defaults to `true`.
+     */
+    iconIsOptional?: boolean;
+    /**
+     * Distance to the camera (0.0 = camera position, 1.0 = farPlane) at which the object start
+     * fading out (opacity decreases).
+     */
+    fadeNear?: number;
+    /**
+     * Distance to the camera (0.0 = camera position, 1.0 = farPlane) at which the object becomes
+     * transparent. A value of <= 0.0 disables fading.
+     */
+    fadeFar?: number;
+    /**
+     * Fading time for labels in seconds.
+     */
+    textFadeTime?: number;
+    /**
+     * Fading time for icons in seconds.
+     */
+    iconFadeTime?: number;
+    /**
+     * Horizontal offset (to the right) in screen pixels.
+     */
+    xOffset?: number;
+    /**
+     * Vertical offset (up) in screen pixels.
+     */
+    yOffset?: number;
+    /**
+     * Horizontal offset (to the right) in screen pixels.
+     */
+    iconXOffset?: number;
+    /**
+     * Vertical offset (up) in screen pixels.
+     */
+    iconYOffset?: number;
+    /**
+     * Scaling factor of icon.
+     */
+    iconScale?: number;
+    /**
+     * Vertical height in pixels, controls vertical scaling. Overrides `iconScale`.
+     */
+    screenHeight?: number;
+    /**
+     * Horizontal height in pixels, controls horizontal scaling. Overrides `iconScale`.
+     */
+    screenWidth?: number;
+    /**
+     * Name of the POI table which should be used for this POI.
+     */
+    poiTable?: string;
+    /**
+     * Fixed name to identify POI options in the POI table. If `poiName` has a value, this value
+     * supercedes any value read from the field referenced in `poiNameField`.
+     */
+    poiName?: string;
+    /**
+     * Name of the field to evaluate to get the name of the POI options in the POI table.
+     */
+    poiNameField?: string;
     /**
      * Name of [[ImageTexture]] definition to use.
      */
@@ -290,105 +435,33 @@ export interface MarkerTechniqueParams extends BaseTechniqueParams {
      */
     imageTexturePostfix?: string;
     /**
-     * Scaling factor of icon.
-     */
-    iconScale?: number;
-    /**
-     * Horizontal offset (to the right) in screen pixels.
-     */
-    iconXOffset?: number;
-    /**
-     * Vertical offset (up) in screen pixels.
-     */
-    iconYOffset?: number;
-    /**
-     * Vertical height in pixels, controls vertical scaling. Overrides `iconScale`.
-     */
-    screenHeight?: number;
-    /**
-     * Horizontal height in pixels, controls horizontal scaling. Overrides `iconScale`.
-     */
-    screenWidth?: number;
-    /**
-     * Scaling factor of icon. Defaults to 0.5, reducing the size ot 50% in the distance.
-     */
-    distanceScale?: number;
-    // Text part of technique:
-    /**
-     * Field name of object containing the text to be rendered.
-     */
-    label?: string;
-    /**
-     * If `true`, icon will appear even if the text part is blocked by other labels. Defaults to
-     * `false`.
-     */
-    textIsOptional?: boolean;
-    /**
-     * If true, the text will appear even if the icon cannot be rendered because of missing icon
-     * graphics. Defaults to `true`.
-     */
-    iconIsOptional?: boolean;
-    /**
-     * If `false`, text will not be rendered during animations. Defaults to `true`.
-     */
-    renderTextDuringMovements?: boolean;
-    /**
-     * If `false`, text may overlap markers.
-     * @default `false`
-     */
-    textMayOverlap?: boolean;
-    /**
-     * If `false`, text will not reserve screen space, other markers will be able to overlap.
-     * @default `true`
-     */
-    textReserveSpace?: boolean;
-    /**
-     * If `false`, the icon may overlap text and other icons of lower priority. If not defined, the
-     * property value from `textMayOverlap` will be used.
-     * @default `false`
-     */
-    iconMayOverlap?: boolean;
-    /**
-     * If `false`, icon will not reserve screen space, other markers will be able to overlap. If not
-     * defined, the property value from `iconReserveSpace` will be used.
-     * @default `true`
-     */
-    iconReserveSpace?: boolean;
-    /**
-     * If `true`, the label will always be rendered on top. If overlapping with other labels with
-     * this flag set, the render order is undefined.
-     * @default `false`
-     */
-    alwaysOnTop?: boolean;
-    /**
-     * All caps style modifier.
-     */
-    allCaps?: boolean;
-    /**
-     * Small caps style modifier.
-     */
-    smallCaps?: boolean;
-    /**
-     * Bold style modifier.
-     */
-    bold?: boolean;
-    /**
-     * Oblique style modifier.
-     */
-    oblique?: boolean;
-    /**
      * Name of the text style.
      */
     style?: string;
     /**
-     * If `true`, the abbreviation (field `name:short`) of the elements is used as text.
+     * Name of the preferred [[Font]] to be used when rendering.
      */
-    useAbbreviation?: boolean;
+    fontName?: string;
     /**
-     * If `true`, the iso code (field 'iso_code') of the elements is used as text.
-     * The `iso_code` field contains the ISO 3166-1 2-letter country code.
+     * Size of the text (pixels).
      */
-    useIsoCode?: boolean;
+    size?: MaybeInterpolatedProperty<number>;
+    /**
+     * Size of the text background (pixels).
+     */
+    backgroundSize?: MaybeInterpolatedProperty<number>;
+    /**
+     * Glyph style to apply for the currently active [[Font]].
+     */
+    fontStyle?: "Regular" | "Bold" | "Italic" | "BoldItalic";
+    /**
+     * Glyph variant to apply for the currently active [[Font]].
+     */
+    fontVariant?: "Regular" | "AllCaps" | "SmallCaps";
+    /**
+     * Glyph local rotation (radians).
+     */
+    rotation?: number;
     /**
      * Text color in hexadecimal or CSS-style notation, for example: `"#e4e9ec"`, `"#fff"`,
      * `"rgb(255, 0, 0)"`, or `"hsl(35, 11%, 88%)"`.
@@ -400,96 +473,50 @@ export interface MarkerTechniqueParams extends BaseTechniqueParams {
      */
     backgroundColor?: string;
     /**
-     * Background text alpha (opacity) value.
+     * For transparent text, set a value between 0.0 for totally transparent, to 1.0 for totally
+     * opaque.
      */
-    backgroundAlpha?: number;
+    opacity?: number;
     /**
-     * Size of the text (pixels).
+     * Background text opacity value.
      */
-    size?: number;
+    backgroundOpacity?: number;
     /**
-     * Size of the text background (pixels).
-     */
-    backgroundSize?: number;
-    /**
-     * Horizontal offset (to the right) in screen pixels.
-     */
-    xOffset?: number;
-    /**
-     * Vertical offset (up) in screen pixels.
-     */
-    yOffset?: number;
-    /**
-     * Horizontal alignment on a text line. Either `Left`, `Center` or `Right`.
-     */
-    hAlignment?: string;
-    /**
-     * Vertical alignment on a text line. Either `Above`, `Center` or `Below`.
-     */
-    vAlignment?: string;
-    /*
-     * Horizontal separation between glyphs.
+     * Inter-glyph spacing (pixels). Scaled by `size`.
      */
     tracking?: number;
     /**
-     * Fading time for labels in seconds.
+     * Inter-line spacing (pixels). Scaled by `size`.
      */
-    textFadeTime?: number;
+    leading?: number;
     /**
-     * Fading time for icons in seconds.
+     * Maximum number of lines for this label.
      */
-    iconFadeTime?: number;
+    maxLines?: number;
     /**
-     * Distance to the camera (0.0 = camera position, 1.0 = farPlane) at which the object start
-     * fading out (opacity decreases).
+     * Maximum line width (pixels).
      */
-    fadeNear?: number;
+    lineWidth?: number;
     /**
-     * Distance to the camera (0.0 = camera position, 1.0 = farPlane) at which the object becomes
-     * transparent. A value of <= 0.0 disables fading.
+     * [[TextCanvas]] rotation (radians).
      */
-    fadeFar?: number;
+    canvasRotation?: number;
     /**
-     * Name of the POI table which should be used for this POI.
+     * Line typesetting rotation (radians).
      */
-    poiTable?: string;
+    lineRotation?: number;
     /**
-     * Fixed name to identify POI options in the POI table. If `poiName` has a value, this value
-     * supercedes any value read from the field referenced in `poiNameField`.
+     * Wrapping (line-breaking) mode.
      */
-    poiName?: string;
+    wrappingMode?: "None" | "Character" | "Word";
     /**
-     * Name of the field to evaluate to get the name of the POI options in the POI table.
+     * Text position regarding the baseline.
      */
-    poiNameField?: string;
+    hAlignment?: "Left" | "Center" | "Right";
     /**
-     * Should be displayed on map or not. Defaults to `true`.
+     * Text position inside a line.
      */
-    showOnMap?: boolean;
-    /**
-     * Specify stack mode. Defaults to `ShowInStack`.
-     */
-    stackMode?: PoiStackMode;
-    /**
-     * Minimum zoomLevel at which to display the label icon. No default.
-     */
-    iconMinZoomLevel?: number;
-    /**
-     * Maximum zoomLevel at which to display the label icon. No default.
-     */
-    iconMaxZoomLevel?: number;
-    /**
-     * Minimum zoomLevel at which to display the label text. No default.
-     */
-    textMinZoomLevel?: number;
-    /**
-     * Maximum zoomLevel at which to display the label text. No default.
-     */
-    textMaxZoomLevel?: number;
-    /**
-     * Minimal distance between markers in screen pixels.
-     */
-    minDistance?: number;
+    vAlignment?: "Above" | "Center" | "Below";
 }
 
 export interface LineTechniqueParams extends BaseTechniqueParams {
@@ -922,6 +949,10 @@ export interface TextTechniqueParams extends BaseTechniqueParams {
      */
     label?: string;
     /**
+     * The name of the property containing the text.
+     */
+    textLabel?: string;
+    /**
      * If `true`, the abbreviation (field `name:short`) of the elements is used as text.
      */
     useAbbreviation?: boolean;
@@ -931,40 +962,9 @@ export interface TextTechniqueParams extends BaseTechniqueParams {
      */
     useIsoCode?: boolean;
     /**
-     * For transparent text, set a value between 0.0 for totally transparent, to 1.0 for totally
-     * opaque.
-     */
-    opacity?: number;
-    /**
-     * Text color in hexadecimal or CSS-style notation, for example: `"#e4e9ec"`, `"#fff"`,
-     * `"rgb(255, 0, 0)"`, or `"hsl(35, 11%, 88%)"`.
-     */
-    color?: string;
-    /**
-     * Text background color in hexadecimal or CSS-style notation, for example: `"#e4e9ec"`,
-     * `"#fff"`, `"rgb(255, 0, 0)"`, or `"hsl(35, 11%, 88%)"`.
-     */
-    backgroundColor?: string;
-    /**
-     * Background text alpha (opacity) value.
-     */
-    backgroundAlpha?: number;
-    /**
      * Priority of text, defaults to `0`. Elements with highest priority get placed first.
      */
     priority?: number;
-    /**
-     * Size of the text (pixels).
-     */
-    size?: MaybeInterpolatedProperty<number>;
-    /**
-     * Size of the text background (pixels).
-     */
-    backgroundSize?: MaybeInterpolatedProperty<number>;
-    /**
-     * Scaling factor of the text. Defaults to 0.5, reducing the size ot 50% in the distance.
-     */
-    distanceScale?: number;
     /**
      * Minimal zoom level. If the current zoom level is smaller, the technique will not be used.
      */
@@ -974,29 +974,9 @@ export interface TextTechniqueParams extends BaseTechniqueParams {
      */
     maxZoomLevel?: number;
     /**
-     * Horizontal offset (to the right) in screen pixels.
+     * Scaling factor of the text. Defaults to 0.5, reducing the size ot 50% in the distance.
      */
-    xOffset?: number;
-    /**
-     * Vertical offset (up) in screen pixels.
-     */
-    yOffset?: number;
-    /**
-     * Horizontal alignment on a text line. Either `Left`, `Center` or `Right`.
-     */
-    hAlignment?: "Left" | "Center" | "Right";
-    /**
-     * Vertical alignment on a text line. Either `Above`, `Center` or `Below`.
-     */
-    vAlignment?: "Above" | "Center" | "Below";
-    /**
-     * Horizontal separation between glyphs.
-     */
-    tracking?: number;
-    /**
-     * Name of the text style.
-     */
-    style?: string;
+    distanceScale?: number;
     /**
      * If `true`, icon is allowed to overlap other labels or icons of lower priority.
      * @default `false`
@@ -1009,33 +989,100 @@ export interface TextTechniqueParams extends BaseTechniqueParams {
      */
     reserveSpace?: boolean;
     /**
-     * All caps style modifier.
-     */
-    allCaps?: boolean;
-    /**
-     * Small caps style modifier.
-     */
-    smallCaps?: boolean;
-    /**
-     * Bold style modifier.
-     */
-    bold?: boolean;
-    /**
-     * Oblique style modifier.
-     */
-    oblique?: boolean;
-    /**
      * Fading time for labels in seconds.
      */
     textFadeTime?: number;
     /**
-     * Clip the line outside the tile if `true`.
+     * Horizontal offset (to the right) in screen pixels.
      */
-    clipping?: boolean;
+    xOffset?: number;
     /**
-     * The name of the property containing the text.
+     * Vertical offset (up) in screen pixels.
      */
-    textLabel?: string;
+    yOffset?: number;
+    /**
+     * Name of the text style.
+     */
+    style?: string;
+    /**
+     * Name of the preferred [[Font]] to be used when rendering.
+     */
+    fontName?: string;
+    /**
+     * Size of the text (pixels).
+     */
+    size?: MaybeInterpolatedProperty<number>;
+    /**
+     * Size of the text background (pixels).
+     */
+    backgroundSize?: MaybeInterpolatedProperty<number>;
+    /**
+     * Glyph style to apply for the currently active [[Font]].
+     */
+    fontStyle?: "Regular" | "Bold" | "Italic" | "BoldItalic";
+    /**
+     * Glyph variant to apply for the currently active [[Font]].
+     */
+    fontVariant?: "Regular" | "AllCaps" | "SmallCaps";
+    /**
+     * Glyph local rotation (radians).
+     */
+    rotation?: number;
+    /**
+     * Text color in hexadecimal or CSS-style notation, for example: `"#e4e9ec"`, `"#fff"`,
+     * `"rgb(255, 0, 0)"`, or `"hsl(35, 11%, 88%)"`.
+     */
+    color?: string;
+    /**
+     * Text background color in hexadecimal or CSS-style notation, for example: `"#e4e9ec"`,
+     * `"#fff"`, `"rgb(255, 0, 0)"`, or `"hsl(35, 11%, 88%)"`.
+     */
+    backgroundColor?: string;
+    /**
+     * For transparent text, set a value between 0.0 for totally transparent, to 1.0 for totally
+     * opaque.
+     */
+    opacity?: number;
+    /**
+     * Background text opacity value.
+     */
+    backgroundOpacity?: number;
+    /**
+     * Inter-glyph spacing (pixels). Scaled by `size`.
+     */
+    tracking?: number;
+    /**
+     * Inter-line spacing (pixels). Scaled by `size`.
+     */
+    leading?: number;
+    /**
+     * Maximum number of lines for this label.
+     */
+    maxLines?: number;
+    /**
+     * Maximum line width (pixels).
+     */
+    lineWidth?: number;
+    /**
+     * [[TextCanvas]] rotation (radians).
+     */
+    canvasRotation?: number;
+    /**
+     * Line typesetting rotation (radians).
+     */
+    lineRotation?: number;
+    /**
+     * Wrapping (line-breaking) mode.
+     */
+    wrappingMode?: "None" | "Character" | "Word";
+    /**
+     * Text position regarding the baseline.
+     */
+    hAlignment?: "Left" | "Center" | "Right";
+    /**
+     * Text position inside a line.
+     */
+    vAlignment?: "Above" | "Center" | "Below";
 }
 
 /**

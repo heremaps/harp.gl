@@ -36,7 +36,7 @@
             "color": "#6D7477",
             "backgroundColor": "#F7FBFD",
             "backgroundSize": 8,
-            "backgroundAlpha": 0.75
+            "backgroundOpacity": 0.75
         },
         {
             "name": "TestStyle0",
@@ -47,21 +47,20 @@
             "color": "#6D7477",
             "backgroundColor": "#F7FBFD",
             "backgroundSize": 8,
-            "backgroundAlpha": 1.0
+            "backgroundOpacity": 1.0
         },
         {
             "name": "TestStyle2",
             "color": "#6D7477",
-            "allCaps": true
+            "fontVariant": "AllCaps"
         },
         {
             "name": "TestStyle3",
             "color": "#6D7477",
-            "allCaps": true,
-            "smallCaps": true,
+            "fontVariant": "SmallCaps",
             "backgroundColor": "#F7FBFD",
             "backgroundSize": 8,
-            "backgroundAlpha": 0.3
+            "backgroundOpacity": 0.3
         }
     ],
     "styles": {
