@@ -48,6 +48,13 @@ function getLongitudeQuadrant(longitude: number) {
     return MathUtils.clamp(quadrantIndex, 0, 4);
 }
 
+function lengthOfVector3(worldPoint: Vector3Like): number {
+    const d = Math.sqrt(
+        worldPoint.x * worldPoint.x + worldPoint.y * worldPoint.y + worldPoint.z * worldPoint.z
+    );
+    return d;
+}
+
 /**
  * Creates a Box3 enclosing the geobox.
  *
@@ -312,10 +319,15 @@ class SphereProjection implements Projection {
     }
 
     groundDistance(worldPoint: Vector3Like): number {
-        const d = Math.sqrt(
-            worldPoint.x * worldPoint.x + worldPoint.y * worldPoint.y + worldPoint.z * worldPoint.z
-        );
-        return d - EarthConstants.EQUATORIAL_RADIUS;
+        return lengthOfVector3(worldPoint) - EarthConstants.EQUATORIAL_RADIUS;
+    }
+
+    scalePointToSurface(worldPoint: Vector3Like): Vector3Like {
+        const scale = EarthConstants.EQUATORIAL_RADIUS / (lengthOfVector3(worldPoint) || 1);
+        worldPoint.x *= scale;
+        worldPoint.y *= scale;
+        worldPoint.z *= scale;
+        return worldPoint;
     }
 }
 

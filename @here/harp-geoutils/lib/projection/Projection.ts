@@ -140,4 +140,11 @@ export interface Projection {
      * @param worldPoint The position in world coordinates.
      */
     groundDistance(worldPoint: Vector3Like): number;
+
+    /**
+     * Scales the given world coordinates to the surface.
+     *
+     * @param worldPoint The position in world coordinates.
+     */
+    scalePointToSurface(worldPoint: Vector3Like): Vector3Like;
 }
