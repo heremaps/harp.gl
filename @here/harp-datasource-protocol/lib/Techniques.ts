@@ -5,11 +5,11 @@
  */
 
 import {
-    BaseStandardTechniqueParams,
     BasicExtrudedLineTechniqueParams,
     DashedLineTechniqueParams,
     ExtrudedPolygonTechniqueParams,
     FillTechniqueParams,
+    isTextureBuffer,
     LineTechniqueParams,
     MarkerTechniqueParams,
     PointTechniqueParams,
@@ -17,10 +17,25 @@ import {
     ShaderTechniqueParams,
     SolidLineTechniqueParams,
     StandardExtrudedLineTechniqueParams,
-    StandardTexturedTechniqueParams,
+    StandardTechniqueParams,
     TerrainTechniqueParams,
-    TextTechniqueParams
+    TextTechniqueParams,
+    TextureCoordinateType
 } from "./TechniqueParams";
+
+/**
+ * Names of the supported texure properties.
+ */
+export const TEXTURE_PROPERTY_KEYS = [
+    "map",
+    "normalMap",
+    "displacementMap",
+    "roughnessMap",
+    "emissiveMap",
+    "alphaMap",
+    "metalnessMap",
+    "bumpMap"
+];
 
 /**
  * Runtime representation of [[SquaresStyle]] as parsed by [[StyleSetEvaluator]].
@@ -116,7 +131,7 @@ export interface TextTechnique extends TextTechniqueParams {
 /**
  * Technique used to render a mesh geometry.
  */
-export interface StandardTechnique extends BaseStandardTechniqueParams {
+export interface StandardTechnique extends StandardTechniqueParams {
     name: "standard";
 }
 
@@ -125,13 +140,6 @@ export interface ShaderTechnique extends ShaderTechniqueParams {
      * Name of technique. Is used in the theme file.
      */
     name: "shader";
-}
-
-/**
- * Technique used to render a mesh geometry with textures.
- */
-export interface StandardTexturedTechnique extends StandardTexturedTechniqueParams {
-    name: "standard-textured";
 }
 
 /**
@@ -155,7 +163,6 @@ export type Technique =
     | DashedLineTechnique
     | FillTechnique
     | StandardTechnique
-    | StandardTexturedTechnique
     | TerrainTechnique
     | BasicExtrudedLineTechnique
     | StandardExtrudedLineTechnique
@@ -246,6 +253,24 @@ export function isExtrudedLineTechnique(
 }
 
 /**
+ * Type guard to check if an object is an instance of [[BasicExtrudedLineTechnique]].
+ */
+export function isBasicExtrudedLineTechnique(
+    technique: Technique
+): technique is BasicExtrudedLineTechnique {
+    return isExtrudedLineTechnique(technique) && technique.shading === "basic";
+}
+
+/**
+ * Type guard to check if an object is an instance of [[StandardExtrudedLineTechnique]].
+ */
+export function isStandardExtrudedLineTechnique(
+    technique: Technique
+): technique is StandardExtrudedLineTechnique {
+    return isExtrudedLineTechnique(technique) && technique.shading === "standard";
+}
+
+/**
  * Type guard to check if an object is an instance of [[FillTechnique]].
  */
 export function isFillTechnique(technique: Technique): technique is FillTechnique {
@@ -269,15 +294,6 @@ export function isStandardTechnique(technique: Technique): technique is Standard
 }
 
 /**
- * Type guard to check if an object is an instance of [[StandardTexturedTechnique]].
- */
-export function isStandardTexturedTechnique(
-    technique: Technique
-): technique is StandardTexturedTechnique {
-    return technique.name === "standard-textured";
-}
-
-/**
  * Type guard to check if an object is an instance of [[TerrainTechnique]].
  */
 export function isTerrainTechnique(technique: Technique): technique is TerrainTechnique {
@@ -296,4 +312,49 @@ export function isTextTechnique(technique: Technique): technique is TextTechniqu
  */
 export function isShaderTechnique(technique: Technique): technique is ShaderTechnique {
     return technique.name === "shader";
+}
+
+/**
+ * Check if vertex normals should be generated for this technique (if no normals are in the data).
+ * @param technique Technique to check.
+ */
+export function needsVertexNormals(technique: Technique): boolean {
+    return (
+        isStandardTechnique(technique) ||
+        isTerrainTechnique(technique) ||
+        isStandardExtrudedLineTechnique(technique)
+    );
+}
+
+/**
+ * Get the texture coordinate type if the technique supports it.
+ */
+export function textureCoordinateType(technique: Technique): TextureCoordinateType | undefined {
+    if (isStandardTechnique(technique)) {
+        return technique.textureCoordinateType;
+    } else if (isExtrudedPolygonTechnique(technique)) {
+        return technique.textureCoordinateType;
+    } else if (isTerrainTechnique(technique)) {
+        return technique.textureCoordinateType;
+    } else {
+        return undefined;
+    }
+}
+
+/**
+ * Add all the buffers of the technique to the transfer list.
+ */
+export function addBuffersToTransferList(technique: Technique, transferList: ArrayBuffer[] = []) {
+    if (
+        isStandardTechnique(technique) ||
+        isExtrudedPolygonTechnique(technique) ||
+        isTerrainTechnique(technique)
+    ) {
+        for (const texturePropertyKey of TEXTURE_PROPERTY_KEYS) {
+            const textureProperty = (technique as any)[texturePropertyKey];
+            if (isTextureBuffer(textureProperty)) {
+                transferList.push(textureProperty.buffer);
+            }
+        }
+    }
 }

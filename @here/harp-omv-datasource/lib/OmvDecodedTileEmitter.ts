@@ -24,7 +24,6 @@ import {
     isPoiTechnique,
     isSolidLineTechnique,
     isStandardTechnique,
-    isStandardTexturedTechnique,
     isTextTechnique,
     LineMarkerTechnique,
     PoiGeometry,
@@ -32,7 +31,9 @@ import {
     Technique,
     TextGeometry,
     TextPathGeometry,
-    TextTechnique
+    TextTechnique,
+    textureCoordinateType,
+    TextureCoordinateType
 } from "@here/harp-datasource-protocol";
 import {
     addExtrudedWalls,
@@ -549,14 +550,13 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
 
             const isExtruded = isExtrudedPolygonTechnique(technique);
             const isFilled = isFillTechnique(technique);
-            const isTextured = isStandardTexturedTechnique(technique);
+            const texCoordType = textureCoordinateType(technique);
 
             const isLine =
                 isSolidLineTechnique(technique) ||
                 isDashedLineTechnique(technique) ||
                 isLineTechnique(technique);
-            const isPolygon =
-                isExtruded || isFilled || isStandardTechnique(technique) || isTextured;
+            const isPolygon = isExtruded || isFilled || isStandardTechnique(technique);
 
             const edgeWidth = isExtruded
                 ? extrudedPolygonTechnique.lineWidth || 0.0
@@ -565,9 +565,26 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                 : 0.0;
             const hasEdges = edgeWidth > 0.0 || isLine;
 
-            const vertexStride = isTextured ? 5 : 3;
-
             const isSpherical = projection.type === ProjectionType.Spherical;
+
+            const computeTexCoords =
+                texCoordType === TextureCoordinateType.TileSpace
+                    ? (geoPoint: GeoCoordinates) => {
+                          const { x: u, y: v } = projection
+                              .projectPoint(geoPoint, texCoord)
+                              .sub(tileBounds.min)
+                              .divide(tileSize);
+                          return { u, v };
+                      }
+                    : texCoordType === TextureCoordinateType.EquirectangularSpace
+                    ? (geoPoint: GeoCoordinates) => {
+                          const u = geoPoint.longitudeInDegrees / 360 + 0.5;
+                          const v = geoPoint.latitudeInDegrees / 180 + 0.5;
+                          return { u, v };
+                      }
+                    : undefined;
+
+            const vertexStride = computeTexCoords !== undefined ? 5 : 3;
 
             for (const polygon of geometry) {
                 const rings: Ring[] = [];
@@ -597,11 +614,8 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                             }
                         }
 
-                        if (isTextured) {
-                            const { x: u, y: v } = projection
-                                .projectPoint(geoPoint, texCoord)
-                                .sub(tileBounds.min)
-                                .divide(tileSize);
+                        if (computeTexCoords !== undefined) {
+                            const { u, v } = computeTexCoords(geoPoint);
                             ringContour.push(u, v);
                         }
                     }
@@ -750,7 +764,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
         const extrudedPolygonTechnique = technique as ExtrudedPolygonTechnique;
 
         const isFilled = isFillTechnique(technique);
-        const isTextured = isStandardTexturedTechnique(technique);
+        const texCoordType = textureCoordinateType(technique);
 
         // Get the height values for the footprint and extrusion.
         const currentHeight = env.lookup("height") as number;
@@ -769,7 +783,8 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
 
         const { positions, textureCoordinates, colors, indices, edgeIndices, groups } = meshBuffers;
 
-        const stride = isTextured ? 5 : 3;
+        const stride = texCoordType !== undefined ? 5 : 3;
+        const isSpherical = this.m_decodeInfo.projection.type === ProjectionType.Spherical;
 
         for (const rings of polygons) {
             const start = indices.length;
@@ -851,12 +866,15 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
 
                 try {
                     // Triangulate the footprint polyline.
-                    const triangles = earcut(points, holes, stride);
+                    // For sphere projection the stride of Ring.contour and Ring.points can be
+                    // different b/c Ring.contour contains texture coordinates where Ring.points
+                    // does not.
+                    const triangles = earcut(points, holes, isSpherical ? 3 : stride);
 
-                    if (this.m_decodeInfo.projection.type === ProjectionType.Spherical) {
+                    if (isSpherical) {
                         const geom = new THREE.Geometry();
 
-                        for (let i = 0; i < vertices.length; i += 3) {
+                        for (let i = 0; i < vertices.length; i += stride) {
                             geom.vertices.push(
                                 new THREE.Vector3(
                                     vertices[i],
@@ -869,8 +887,19 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                             geom.faces.push(
                                 new THREE.Face3(triangles[i], triangles[i + 1], triangles[i + 2])
                             );
+                            if (texCoordType !== undefined) {
+                                const i0 = triangles[i] * stride;
+                                const i1 = triangles[i + 1] * stride;
+                                const i2 = triangles[i + 2] * stride;
+                                geom.faceVertexUvs[0][i] = [
+                                    new THREE.Vector2(vertices[i0 + 3], vertices[i0 + 4]),
+                                    new THREE.Vector2(vertices[i1 + 3], vertices[i1 + 4]),
+                                    new THREE.Vector2(vertices[i2 + 3], vertices[i2 + 4])
+                                ];
+                            }
                         }
 
+                        // FIXME(HARP-5700): Subdivison modifer ignores texture coordinates.
                         const modifier = new SphericalGeometrySubdivisionModifier(
                             THREE.Math.degToRad(10)
                         );
@@ -885,6 +914,11 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                             p.multiplyScalar(EarthConstants.EQUATORIAL_RADIUS);
                             p.sub(this.m_decodeInfo.center);
                             vertices.push(p.x, p.y, p.z);
+                            if (texCoordType !== undefined) {
+                                //FIXME(HARP-5700): Get proper texture coordinates from
+                                //faceVertexUvs.
+                                vertices.push(0, 0);
+                            }
                         });
 
                         geom.faces.forEach(({ a, b, c }) => triangles.push(a, b, c));
@@ -909,30 +943,36 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                             vertices[i + 1],
                             vertices[i + 2] + minHeight * scaleFactor
                         );
+                        if (texCoordType !== undefined) {
+                            textureCoordinates.push(vertices[i + 3], vertices[i + 4]);
+                        }
+
                         if (isExtruded) {
                             positions.push(
                                 vertices[i],
                                 vertices[i + 1],
                                 vertices[i + 2] + height * scaleFactor
                             );
-                        } else if (isTextured) {
-                            textureCoordinates.push(vertices[i + 3], vertices[i + 4]);
+                            if (texCoordType !== undefined) {
+                                textureCoordinates.push(vertices[i + 3], vertices[i + 4]);
+                            }
                         }
                     }
 
                     // Add the footprint/roof indices to the index buffer.
-                    const vertexStride = isExtruded ? 2 : 1;
                     for (let i = 0; i < triangles.length; i += 3) {
-                        const v0 = baseVertex + triangles[i + 0] * vertexStride;
-                        const v1 = baseVertex + triangles[i + 1] * vertexStride;
-                        const v2 = baseVertex + triangles[i + 2] * vertexStride;
-                        indices.push(v0, v1, v2);
-
                         if (isExtruded) {
-                            const v3 = baseVertex + triangles[i + 0] * vertexStride + 1;
-                            const v4 = baseVertex + triangles[i + 1] * vertexStride + 1;
-                            const v5 = baseVertex + triangles[i + 2] * vertexStride + 1;
-                            indices.push(v3, v4, v5);
+                            // When extruding we duplicate the vertices, so that all even vertices
+                            // belong to the bottom and all odd vertices belong to the top.
+                            const i0 = baseVertex + triangles[i + 0] * 2 + 1;
+                            const i1 = baseVertex + triangles[i + 1] * 2 + 1;
+                            const i2 = baseVertex + triangles[i + 2] * 2 + 1;
+                            indices.push(i0, i1, i2);
+                        } else {
+                            const i0 = baseVertex + triangles[i + 0];
+                            const i1 = baseVertex + triangles[i + 1];
+                            const i2 = baseVertex + triangles[i + 2];
+                            indices.push(i0, i1, i2);
                         }
                     }
                 } catch (err) {
@@ -940,10 +980,8 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                 }
             }
 
-            const positionCount = (positions.length - basePosition) / 3;
-            const count = indices.length - start;
-
             if (isExtrudedPolygonTechnique(technique) && technique.vertexColors === true) {
+                const positionCount = (positions.length - basePosition) / 3;
                 const color = new THREE.Color(
                     this.isColorStringValid(technique.color)
                         ? technique.color
@@ -957,6 +995,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                 }
             }
 
+            const count = indices.length - start;
             if (count > 0) {
                 groups.push({
                     start,

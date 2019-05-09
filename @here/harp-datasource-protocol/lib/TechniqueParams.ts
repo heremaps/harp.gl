@@ -57,27 +57,44 @@ export interface BaseTechniqueParams {
     fadeFar?: number;
 }
 
+export enum TextureCoordinateType {
+    /**
+     * Texture coordinates are in tile space.
+     * SW of the tile will have (0,0) and NE will have (1,1).
+     */
+    TileSpace = "tile-space",
+    /**
+     * Texture coordinates are in equirectangular space.
+     * (u, v) = ( (longitude+180) / 360, (latitude+90) / 180).
+     */
+    EquirectangularSpace = "equirectangular-space"
+}
+
 /**
  * Standard technique paraneters.
  */
-export interface BaseStandardTechniqueParams extends BaseTechniqueParams {
+export interface StandardTechniqueParams extends BaseTechniqueParams {
     /**
-     * Color of a line in hexadecimal or CSS-style notation, for example: `"#e4e9ec"`, `"#fff"`,
-     * `"rgb(255, 0, 0)"`, or `"hsl(35, 11%, 88%)"`.
+     * Color of the feature in hexadecimal or CSS-style notation, for example: `"#e4e9ec"`,
+     * `"#fff"`, `"rgb(255, 0, 0)"`, or `"hsl(35, 11%, 88%)"`.
+     * See https://threejs.org/docs/#api/en/materials/MeshStandardMaterial.color.
      */
     color?: string;
     /**
      * A value of `true` creates a wireframe geometry. (May not be supported with all techniques).
+     * See https://threejs.org/docs/#api/en/materials/MeshStandardMaterial.wireframe.
      */
     wireframe?: boolean;
     /**
      * If `vertexColors` is `true`, every vertex has color information, which is interpolated
      * between vertices.
+     * See https://threejs.org/docs/#api/en/materials/Material.vertexColors.
      */
     vertexColors?: boolean;
     /**
      * How rough the material appears. `0.0` means a smooth mirror reflection. `1.0` means fully
      * diffuse. Default is `0.5`.
+     * See https://threejs.org/docs/#api/en/materials/MeshStandardMaterial.roughness.
      */
     roughness?: number;
     /**
@@ -85,33 +102,40 @@ export interface BaseStandardTechniqueParams extends BaseTechniqueParams {
      * metallic ones use `1.0`, with nothing (usually) in between. Default is `0.5`. A value between
      * `0.0` and `1.0` can be used for a rusty metal look. If `metalnessMap` is also provided, both
      * values are multiplied.
+     * See https://threejs.org/docs/#api/en/materials/MeshStandardMaterial.metalness.
      */
     metalness?: number;
     /**
      * The material will not be rendered if the opacity is lower than this value.
+     * See https://threejs.org/docs/#api/en/materials/Material.alphaTest.
      */
     alphaTest?: number;
     /**
      * Skip rendering clobbered pixels.
+     * See https://threejs.org/docs/#api/en/materials/Material.depthTest.
      */
     depthTest?: boolean;
     /**
      * Set to 'true' if line should appear transparent. Rendering transparent lines may come with a
      * slight performance impact.
+     * See https://threejs.org/docs/#api/en/materials/Material.transparent.
      */
     transparent?: boolean;
     /**
      * For transparent lines, set a value between 0.0 for totally transparent, to 1.0 for totally
      * opaque.
+     * See https://threejs.org/docs/#api/en/materials/Material.opacity.
      */
     opacity?: number;
     /**
      * Emissive (light) color of the material, essentially a solid color unaffected by other
      * lighting. Default is black.
+     * See https://threejs.org/docs/#api/en/materials/MeshStandardMaterial.emissive.
      */
     emissive?: string;
     /**
      * Intensity of the emissive light. Modulates the emissive color. Default is `1`.
+     * See https://threejs.org/docs/#api/en/materials/MeshStandardMaterial.emissiveIntensity.
      */
     emissiveIntensity?: number;
     /**
@@ -119,20 +143,73 @@ export interface BaseStandardTechniqueParams extends BaseTechniqueParams {
      * the material. It is used with environment mapping modes `THREE.CubeRefractionMapping` and
      * `THREE.EquirectangularRefractionMapping`. The refraction ratio should not exceed `1`. Default
      *  is `0.98`.
+     * See https://threejs.org/docs/#api/en/materials/MeshStandardMaterial.refractionRatio.
      */
     refractionRatio?: number;
 
     /**
-     * Control rendering of depth prepass before the actual geometry.
-     *
-     * Depth prepass is a method to render translucent meshes, hence only the visible front faces of
-     * a mesh are actually rendered, removing artifacts caused by blending with internal faces of
-     * the mesh. This method is used for drawing translucent buildings over map background.
-     *
-     * By default, each [[DataSource]] determines how/if enable the depth pre-pass. A value of
-     * `false` forcefully disables depth prepass.
+     * Whether and how texture coordinates should be generated. No texture coordinates are
+     * generated if `undefined`.
+     * Should be set if any texture assigned (e.g. `map`, `normalMap`, ...).
      */
-    enableDepthPrePass?: boolean;
+    textureCoordinateType?: TextureCoordinateType;
+
+    /*
+     * URL or texture buffer that should be used as color map. See:
+     * https://threejs.org/docs/#api/en/materials/MeshStandardMaterial.map
+     */
+    map?: string | TextureBuffer;
+    mapProperties?: TextureProperties;
+
+    /**
+     * URL or texture buffer that should be used as normal map. See:
+     * https://threejs.org/docs/#api/en/materials/MeshStandardMaterial.normalMap
+     */
+    normalMap?: string | TextureBuffer;
+    normalMapType?: number;
+    normalMapProperties?: TextureProperties;
+
+    /**
+     * URL or texture buffer that should be used as displacement map. See:
+     * https://threejs.org/docs/#api/en/materials/MeshStandardMaterial.displacementMap
+     */
+    displacementMap?: string | TextureBuffer;
+    displacementMapProperties?: TextureProperties;
+
+    /**
+     * URL or texture buffer that should be used as roughness map. See:
+     * https://threejs.org/docs/#api/en/materials/MeshStandardMaterial.roughnessMap
+     */
+    roughnessMap?: string | TextureBuffer;
+    roughnessMapProperties?: TextureProperties;
+
+    /**
+     * URL or texture buffer that should be used as emissive map. See:
+     * https://threejs.org/docs/#api/en/materials/MeshStandardMaterial.emissiveMap
+     */
+    emissiveMap?: string | TextureBuffer;
+    emissiveMapProperties?: TextureProperties;
+
+    /**
+     * URL or texture buffer that should be used as bump map. See:
+     * https://threejs.org/docs/#api/en/materials/MeshStandardMaterial.bumpMap
+     */
+    bumpMap?: string | TextureBuffer;
+    bumpMapProperties?: TextureProperties;
+
+    /**
+     * URL or texture buffer that should be used as metalness map. See:
+     * https://threejs.org/docs/#api/en/materials/MeshStandardMaterial.metalnessMap
+     */
+    metalnessMap?: string | TextureBuffer;
+    metalnessMapProperties?: TextureProperties;
+
+    /**
+     * URL or texture buffer that should be used as alpha map. See:
+     * https://threejs.org/docs/#api/en/materials/MeshStandardMaterial.alphaMap
+     */
+    alphaMap?: string | TextureBuffer;
+    alphaMapProperties?: TextureProperties;
 }
 
 /**
@@ -565,7 +642,7 @@ export interface BasicExtrudedLineTechniqueParams
  * Declares a a geometry as a standard extruded line.
  */
 export interface StandardExtrudedLineTechniqueParams
-    extends BaseStandardTechniqueParams,
+    extends StandardTechniqueParams,
         PolygonalTechniqueParams {
     /**
      * A value determining the shading technique. Valid values are `"basic"` and `"standard"`.
@@ -707,12 +784,7 @@ export interface FillTechniqueParams extends BaseTechniqueParams, PolygonalTechn
 /**
  * Technique used to draw a geometry as an extruded polygon, for example extruded buildings.
  */
-export interface ExtrudedPolygonTechniqueParams extends BaseStandardTechniqueParams {
-    /**
-     * Derived property that has first priority in use for rendering.
-     * In case property is absent class will try to get color from the [[MapEnv]].
-     */
-    color?: string;
+export interface ExtrudedPolygonTechniqueParams extends StandardTechniqueParams {
     /**
      * Renders the footprint lines if set to 'true'.
      */
@@ -782,6 +854,18 @@ export interface ExtrudedPolygonTechniqueParams extends BaseStandardTechniquePar
      * Duration of the building's extrusion in milliseconds
      */
     animateExtrusionDuration?: number;
+
+    /**
+     * Control rendering of depth prepass before the actual geometry.
+     *
+     * Depth prepass is a method to render translucent meshes, hence only the visible front faces of
+     * a mesh are actually rendered, removing artifacts caused by blending with internal faces of
+     * the mesh. This method is used for drawing translucent buildings over map background.
+     *
+     * By default, each [[DataSource]] determines how/if enable the depth pre-pass. A value of
+     * `false` forcefully disables depth prepass.
+     */
+    enableDepthPrePass?: boolean;
 }
 
 export interface ShaderTechniqueMaterialParameters {
@@ -806,84 +890,11 @@ export interface ShaderTechniqueParams extends BaseTechniqueParams {
 }
 
 /**
- * Technique used to render a geometry with a texture.
- * When using this technique, the datasource will produce texture coordinates in
- * local tile space (i.e. [0,0] at south-west and [1,1] at north-east tile corner).
- */
-export interface StandardTexturedTechniqueParams extends BaseStandardTechniqueParams {
-    /**
-     * Render texture if available.
-     *
-     * Defaults to true if `map` is available for mesh.
-     *
-     * May be used to forcefully disable textures in theme even if textures are available.
-     */
-    renderTexture?: boolean;
-
-    /**
-     * URL or texture buffer that should be used as color map. See:
-     * https://threejs.org/docs/#api/en/materials/MeshStandardMaterial.map
-     */
-    map?: string | TextureBuffer;
-    mapProperties?: TextureProperties;
-
-    /**
-     * URL or texture buffer that should be used as normal map. See:
-     * https://threejs.org/docs/#api/en/materials/MeshStandardMaterial.normalMap
-     */
-    normalMap?: string | TextureBuffer;
-    normalMapType?: number;
-    normalMapProperties?: TextureProperties;
-
-    /**
-     * URL or texture buffer that should be used as displacement map. See:
-     * https://threejs.org/docs/#api/en/materials/MeshStandardMaterial.displacementMap
-     */
-    displacementMap?: string | TextureBuffer;
-    displacementMapProperties?: TextureProperties;
-
-    /**
-     * URL or texture buffer that should be used as roughness map. See:
-     * https://threejs.org/docs/#api/en/materials/MeshStandardMaterial.roughnessMap
-     */
-    roughnessMap?: string | TextureBuffer;
-    roughnessMapProperties?: TextureProperties;
-
-    /**
-     * URL or texture buffer that should be used as emissive map. See:
-     * https://threejs.org/docs/#api/en/materials/MeshStandardMaterial.emissiveMap
-     */
-    emissiveMap?: string | TextureBuffer;
-    emissiveMapProperties?: TextureProperties;
-
-    /**
-     * URL or texture buffer that should be used as bump map. See:
-     * https://threejs.org/docs/#api/en/materials/MeshStandardMaterial.bumpMap
-     */
-    bumpMap?: string | TextureBuffer;
-    bumpMapProperties?: TextureProperties;
-
-    /**
-     * URL or texture buffer that should be used as metalness map. See:
-     * https://threejs.org/docs/#api/en/materials/MeshStandardMaterial.metalnessMap
-     */
-    metalnessMap?: string | TextureBuffer;
-    metalnessMapProperties?: TextureProperties;
-
-    /**
-     * URL or texture buffer that should be used as alpha map. See:
-     * https://threejs.org/docs/#api/en/materials/MeshStandardMaterial.alphaMap
-     */
-    alphaMap?: string | TextureBuffer;
-    alphaMapProperties?: TextureProperties;
-}
-
-/**
  * Technique used to render a terrain geometry with a texture.
  * When using this technique, the datasource will produce texture coordinates in
  * local tile space (i.e. [0,0] at south-west and [1,1] at north-east tile corner).
  */
-export interface TerrainTechniqueParams extends StandardTexturedTechniqueParams {
+export interface TerrainTechniqueParams extends StandardTechniqueParams {
     /**
      * Colors to be applied at different heights (as a results of a `displacementMap`).
      */

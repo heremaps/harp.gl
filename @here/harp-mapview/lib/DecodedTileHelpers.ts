@@ -11,10 +11,11 @@ import {
     isExtrudedPolygonTechnique,
     isInterpolatedProperty,
     isShaderTechnique,
-    isStandardTexturedTechnique,
+    isStandardTechnique,
     isTerrainTechnique,
     isTextureBuffer,
     Technique,
+    TEXTURE_PROPERTY_KEYS,
     TextureProperties
 } from "@here/harp-datasource-protocol";
 import {
@@ -31,16 +32,6 @@ import { Circles, Squares } from "./MapViewPoints";
 import { toPixelFormat, toTextureDataType, toTextureFilter, toWrappingMode } from "./ThemeHelpers";
 
 const logger = LoggerManager.instance.create("DecodedTileHelpers");
-const TEXTURE_PROPERTY_KEYS = [
-    "map",
-    "normalMap",
-    "displacementMap",
-    "roughnessMap",
-    "emissiveMap",
-    "alphaMap",
-    "metalnessMap",
-    "bumpMap"
-];
 
 const DEFAULT_SKIP_PROPERTIES = [
     ...TEXTURE_PROPERTY_KEYS,
@@ -123,7 +114,11 @@ export function createMaterial(
 
     material.depthTest = isExtrudedPolygonTechnique(technique) && technique.depthTest !== false;
 
-    if (isStandardTexturedTechnique(technique) || isTerrainTechnique(technique)) {
+    if (
+        isStandardTechnique(technique) ||
+        isTerrainTechnique(technique) ||
+        isExtrudedPolygonTechnique(technique)
+    ) {
         TEXTURE_PROPERTY_KEYS.forEach((texturePropertyName: string) => {
             const textureProperty = (technique as any)[texturePropertyName];
             if (textureProperty === undefined) {
@@ -277,7 +272,6 @@ export function getObjectConstructor(technique: Technique): ObjectConstructor | 
     switch (technique.name) {
         case "extruded-line":
         case "standard":
-        case "standard-textured":
         case "terrain":
         case "extruded-polygon":
         case "fill":
@@ -359,7 +353,6 @@ export function getMaterialConstructor(technique: Technique): MaterialConstructo
                 : MapMeshBasicMaterial;
 
         case "standard":
-        case "standard-textured":
         case "terrain":
         case "extruded-polygon":
             return MapMeshStandardMaterial;

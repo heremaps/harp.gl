@@ -7,7 +7,12 @@
 // tslint:disable:only-arrow-functions
 // Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
-import { GeometryType, isStandardTexturedTechnique, Style } from "@here/harp-datasource-protocol";
+import {
+    GeometryType,
+    isStandardTechnique,
+    Style,
+    TextureCoordinateType
+} from "@here/harp-datasource-protocol";
 import { MapEnv, StyleSetEvaluator } from "@here/harp-datasource-protocol/index-decoder";
 import {
     GeoCoordinates,
@@ -56,8 +61,11 @@ describe("OmvDecodedTileEmitter", function() {
 
         const styleSet: Style[] = [
             {
-                technique: "standard-textured",
-                when: "1"
+                when: "1",
+                technique: "standard",
+                attr: {
+                    textureCoordinateType: TextureCoordinateType.TileSpace
+                }
             }
         ];
 
@@ -81,9 +89,9 @@ describe("OmvDecodedTileEmitter", function() {
 
         assert.equal(techniques.length, 1, "only one technique created");
         assert.equal(
-            isStandardTexturedTechnique(techniques[0]),
+            isStandardTechnique(techniques[0]),
             true,
-            "created technique is standard textured technique"
+            "created technique is standard technique"
         );
         assert.equal(geometries.length, 1, "only one geometry created");
         assert.equal(geometries[0].type, GeometryType.Polygon, "geometry is a polygon");
