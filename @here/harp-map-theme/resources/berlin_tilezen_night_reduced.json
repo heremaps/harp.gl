@@ -137,7 +137,7 @@
                         "attr": {
                             "color": "#999999",
                             "backgroundColor": "#141414",
-                            "backgroundAlpha": 0.5,
+                            "backgroundOpacity": 0.5,
                             "textLabel": "kind_detail",
                             "size": 16,
                             "priority": 15,
@@ -157,7 +157,7 @@
                 "attr": {
                     "color": "#999999",
                     "backgroundColor": "#141414",
-                    "backgroundAlpha": 0.5,
+                    "backgroundOpacity": 0.5,
                     "textLabel": "kind_detail",
                     "size": 16,
                     "priority": 15,
@@ -199,7 +199,7 @@
                 "attr": {
                     "color": "#999999",
                     "backgroundColor": "#141414",
-                    "backgroundAlpha": 0.5,
+                    "backgroundOpacity": 0.5,
                     "size": 12.8,
                     "priority": 20,
                     "fadeNear": 0.8,
@@ -252,7 +252,7 @@
                 "attr": {
                     "color": "#999999",
                     "backgroundColor": "#141414",
-                    "backgroundAlpha": 0.5,
+                    "backgroundOpacity": 0.5,
                     "size": 16,
                     "priority": 25,
                     "fadeNear": 0.8,
@@ -305,7 +305,7 @@
                 "attr": {
                     "color": "#999999",
                     "backgroundColor": "#141414",
-                    "backgroundAlpha": 0.5,
+                    "backgroundOpacity": 0.5,
                     "size": 12.8,
                     "priority": 25,
                     "fadeNear": 0.8,
@@ -390,7 +390,7 @@
                         "attr": {
                             "color": "#999999",
                             "backgroundColor": "#141414",
-                            "backgroundAlpha": 0.5,
+                            "backgroundOpacity": 0.5,
                             "textLabel": "kind_detail",
                             "size": 16,
                             "priority": 15,
@@ -527,7 +527,7 @@
                 "attr": {
                     "color": "#999999",
                     "backgroundColor": "#141414",
-                    "backgroundAlpha": 0.5,
+                    "backgroundOpacity": 0.5,
                     "opacity": 0.5,
                     "size": 12.8
                 }
@@ -585,7 +585,7 @@
                     "priority": 100,
                     "color": "#999999",
                     "backgroundColor": "#141414",
-                    "backgroundAlpha": 0.5,
+                    "backgroundOpacity": 0.5,
                     "size": 12.8
                 }
             },
@@ -659,7 +659,7 @@
                     "priority": 100,
                     "color": "#999999",
                     "backgroundColor": "#141414",
-                    "backgroundAlpha": 0.5,
+                    "backgroundOpacity": 0.5,
                     "size": 12.8
                 }
             },
@@ -700,7 +700,7 @@
                     "priority": 90,
                     "color": "#999999",
                     "backgroundColor": "#141414",
-                    "backgroundAlpha": 0.5,
+                    "backgroundOpacity": 0.5,
                     "size": 12.8
                 }
             },
@@ -710,7 +710,7 @@
                 "attr": {
                     "color": "#999999",
                     "backgroundColor": "#141414",
-                    "backgroundAlpha": 0.5,
+                    "backgroundOpacity": 0.5,
                     "size": 27.2,
                     "priority": 200
                 },
@@ -869,7 +869,7 @@
                     },
                     "color": "#f4f4f4",
                     "backgroundColor": "#000000",
-                    "smallCaps": true,
+                    "fontVariant": "SmallCaps",
                     "opacity": 0.6
                 }
             },
@@ -897,8 +897,8 @@
                     },
                     "color": "#ffffff",
                     "backgroundColor": "#000000",
-                    "backgroundAlpha": 0.5,
-                    "smallCaps": true,
+                    "backgroundOpacity": 0.5,
+                    "fontVariant": "SmallCaps",
                     "opacity": 0.8,
                     "textFadeTime": 0.75,
                     "iconFadeTime": 0.5,
@@ -920,8 +920,8 @@
                     },
                     "color": "#ffffff",
                     "backgroundColor": "#000000",
-                    "backgroundAlpha": 0.5,
-                    "smallCaps": true,
+                    "backgroundOpacity": 0.5,
+                    "fontVariant": "SmallCaps",
                     "opacity": 0.8,
                     "textFadeTime": 0.75,
                     "iconFadeTime": 0.5,
@@ -943,8 +943,8 @@
                     },
                     "color": "#ffffff",
                     "backgroundColor": "#000000",
-                    "backgroundAlpha": 0.5,
-                    "smallCaps": true,
+                    "backgroundOpacity": 0.5,
+                    "fontVariant": "SmallCaps",
                     "opacity": 0.8,
                     "textFadeTime": 0.75,
                     "iconFadeTime": 0.5,
@@ -966,7 +966,7 @@
                     "priority": 65,
                     "color": "#ffffff",
                     "backgroundColor": "#000000",
-                    "smallCaps": true,
+                    "fontVariant": "SmallCaps",
                     "opacity": 0.8,
                     "textFadeTime": 0.75,
                     "iconFadeTime": 0.5,
@@ -979,7 +979,7 @@
                 "when": "$layer ^= 'places' && ((((kind == 'locality') && has(population)) && ((population > 10000000) || has(country_capital))) && has(country_capital))",
                 "technique": "text",
                 "attr": {
-                    "bold": true,
+                    "fontStyle": "Bold",
                     "priority": 61,
                     "size": {
                         "interpolation": "Linear",
@@ -988,7 +988,7 @@
                     },
                     "color": "#ffffff",
                     "backgroundColor": "#000000",
-                    "backgroundAlpha": 0.5,
+                    "backgroundOpacity": 0.5,
                     "textFadeTime": 0.75,
                     "iconFadeTime": 0.5,
                     "fadeNear": 0.8,
@@ -1009,7 +1009,7 @@
                     },
                     "color": "#ffffff",
                     "backgroundColor": "#000000",
-                    "backgroundAlpha": 0.5,
+                    "backgroundOpacity": 0.5,
                     "textFadeTime": 0.75,
                     "iconFadeTime": 0.5,
                     "fadeNear": 0.8,
@@ -1030,7 +1030,7 @@
                     },
                     "color": "#f4f4f4",
                     "backgroundColor": "#000000",
-                    "backgroundAlpha": 0.5,
+                    "backgroundOpacity": 0.5,
                     "textFadeTime": 0.75,
                     "iconFadeTime": 0.5,
                     "fadeNear": 0.8,
@@ -1051,7 +1051,7 @@
                     },
                     "color": "#f4f4f4",
                     "backgroundColor": "#000000",
-                    "backgroundAlpha": 0.5,
+                    "backgroundOpacity": 0.5,
                     "textFadeTime": 0.75,
                     "iconFadeTime": 0.5,
                     "fadeNear": 0.8,
@@ -1072,7 +1072,7 @@
                     },
                     "color": "#f4f4f4",
                     "backgroundColor": "#000000",
-                    "backgroundAlpha": 0.5,
+                    "backgroundOpacity": 0.5,
                     "textFadeTime": 0.75,
                     "iconFadeTime": 0.5,
                     "fadeNear": 0.8,
@@ -1093,7 +1093,7 @@
                     },
                     "color": "#f4f4f4",
                     "backgroundColor": "#000000",
-                    "backgroundAlpha": 0.5,
+                    "backgroundOpacity": 0.5,
                     "textFadeTime": 0.75,
                     "iconFadeTime": 0.5,
                     "fadeNear": 0.8,
@@ -1114,7 +1114,7 @@
                     },
                     "color": "#f4f4f4",
                     "backgroundColor": "#000000",
-                    "backgroundAlpha": 0.5,
+                    "backgroundOpacity": 0.5,
                     "textFadeTime": 0.75,
                     "iconFadeTime": 0.5,
                     "fadeNear": 0.8,
@@ -1135,7 +1135,7 @@
                     },
                     "color": "#f4f4f4",
                     "backgroundColor": "#000000",
-                    "backgroundAlpha": 0.5,
+                    "backgroundOpacity": 0.5,
                     "textFadeTime": 0.75,
                     "iconFadeTime": 0.5,
                     "fadeNear": 0.8,

@@ -338,7 +338,7 @@ export class PathTypesetter implements Typesetter {
                 this.m_tempTransform,
                 this.m_tempPathPosition,
                 glyphScale,
-                textLayoutStyle.lineRotation,
+                0.0,
                 textRenderStyle.rotation
             );
             for (let j = 0; j < 4; ++j) {

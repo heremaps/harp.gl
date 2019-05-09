@@ -94,6 +94,7 @@ export namespace DefaultTextStyle {
     export const DEFAULT_LEADING: number = 0.0;
     export const DEFAULT_MAX_LINES: number = Infinity;
     export const DEFAULT_LINE_WIDTH: number = Infinity;
+    export const DEFAULT_CANVAS_ROTATION: number = 0.0;
     export const DEFAULT_LINE_ROTATION: number = 0.0;
     export const DEFAULT_WRAPPING_MODE: WrappingMode = WrappingMode.Word;
     export const DEFAULT_VERTICAL_ALIGNMENT: VerticalAlignment = VerticalAlignment.Above;
@@ -289,6 +290,7 @@ export interface TextLayoutParameters {
     leading?: number;
     maxLines?: number;
     lineWidth?: number;
+    canvasRotation?: number;
     lineRotation?: number;
     wrappingMode?: WrappingMode;
     verticalAlignment?: VerticalAlignment;
@@ -322,6 +324,10 @@ export class TextLayoutStyle {
                 params.lineWidth !== undefined
                     ? params.lineWidth
                     : DefaultTextStyle.DEFAULT_LINE_WIDTH,
+            canvasRotation:
+                params.canvasRotation !== undefined
+                    ? params.canvasRotation
+                    : DefaultTextStyle.DEFAULT_CANVAS_ROTATION,
             lineRotation:
                 params.lineRotation !== undefined
                     ? params.lineRotation
@@ -389,6 +395,16 @@ export class TextLayoutStyle {
     }
     set lineWidth(value: number) {
         this.m_params.lineWidth = value;
+    }
+
+    /**
+     * [[TextCanvas]] rotation (radians).
+     */
+    get canvasRotation(): number {
+        return this.m_params.canvasRotation!;
+    }
+    set canvasRotation(value: number) {
+        this.m_params.canvasRotation = value;
     }
 
     /**

@@ -62,7 +62,7 @@ a datasource (for example a tilezen based one, check [here for more information 
                                 "values": [120, 100, 60]
                             },
                             "color": "#E48892",
-                            "allCaps": true,
+                            "fontVariant": "AllCaps",
                             "opacity": 0.6
                         }
                     },
@@ -288,7 +288,7 @@ example:
         "values": [120, 100, 60]
     },
     "color": "#E48892",
-    "allCaps": true,
+    "fontVariant": "AllCaps",
     "opacity": 0.6
 }
 ```

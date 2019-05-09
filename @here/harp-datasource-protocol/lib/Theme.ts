@@ -363,17 +363,29 @@ export interface DirectionalLight extends BaseLight {
  * Various text styles used with labels and texts.
  */
 export interface TextStyleDefinition {
-    color?: string;
-    allCaps?: boolean;
-    smallCaps?: boolean;
-    bold?: boolean;
-    oblique?: boolean;
-    backgroundColor?: string;
-    backgroundSize?: number;
-    backgroundAlpha?: number;
-    tracking?: number;
-    fontCatalogName?: string;
     name?: string;
+    fontCatalogName?: string;
+
+    fontName?: string;
+    size?: number;
+    backgroundSize?: number;
+    fontStyle?: "Regular" | "Bold" | "Italic" | "BoldItalic";
+    fontVariant?: "Regular" | "AllCaps" | "SmallCaps";
+    rotation?: number;
+    color?: string;
+    backgroundColor?: string;
+    opacity?: number;
+    backgroundOpacity?: number;
+
+    tracking?: number;
+    leading?: number;
+    maxLines?: number;
+    lineWidth?: number;
+    canvasRotation?: number;
+    lineRotation?: number;
+    wrappingMode?: "None" | "Character" | "Word";
+    hAlignment?: "Left" | "Center" | "Right";
+    vAlignment?: "Above" | "Center" | "Below";
 }
 
 /**

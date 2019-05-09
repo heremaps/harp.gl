@@ -22,7 +22,8 @@ import {
     HorizontalAlignment,
     TextLayoutStyle,
     TextRenderStyle,
-    VerticalAlignment
+    VerticalAlignment,
+    WrappingMode
 } from "@here/harp-text-canvas";
 import { assert, assertExists, getOptionValue, LoggerManager } from "@here/harp-utils";
 import * as THREE from "three";
@@ -456,7 +457,7 @@ export class PoiManager {
             textElement = new TextElement(
                 ContextualArabicConverter.instance.convert(text),
                 positions,
-                this.getRenderStyle(tile.dataSource.name, technique, techniqueIdx),
+                this.getRenderStyle(tile.dataSource.name, technique),
                 this.getLayoutStyle(tile.dataSource.name, technique),
                 priority,
                 technique.xOffset !== undefined ? technique.xOffset : 0.0,
@@ -532,8 +533,7 @@ export class PoiManager {
 
     private getRenderStyle(
         dataSourceName: string,
-        technique: PoiTechnique | LineMarkerTechnique,
-        techniqueIdx: number
+        technique: PoiTechnique | LineMarkerTechnique
     ): TextRenderStyle {
         const cacheId = computeStyleCacheId(dataSourceName, technique, this.mapView.zoomLevel);
         let renderStyle = this.mapView.textRenderStyleCache.get(cacheId);
@@ -541,24 +541,10 @@ export class PoiManager {
             const defaultRenderParams = this.mapView.textElementsRenderer!.defaultStyle
                 .renderParams;
 
-            const textSize = getOptionValue(
-                getPropertyValue(technique.size, Math.floor(this.mapView.zoomLevel)),
-                defaultRenderParams.fontSize!.size
-            );
-            const bgSize = getOptionValue(
-                getPropertyValue(technique.backgroundSize, Math.floor(this.mapView.zoomLevel)),
-                defaultRenderParams.fontSize!.backgroundSize
-            );
-
             const hexColor = getPropertyValue(technique.color, Math.floor(this.mapView.zoomLevel));
             if (hexColor !== undefined) {
                 this.m_colorMap.set(cacheId, ColorCache.instance.getColor(hexColor));
             }
-            const styleColor = getOptionValue(
-                this.m_colorMap.get(cacheId),
-                defaultRenderParams.color
-            );
-
             const hexBgColor = getPropertyValue(
                 technique.backgroundColor,
                 Math.floor(this.mapView.zoomLevel)
@@ -566,47 +552,53 @@ export class PoiManager {
             if (hexBgColor !== undefined) {
                 this.m_colorMap.set(cacheId + "_bg", ColorCache.instance.getColor(hexBgColor));
             }
-            const styleBgColor = getOptionValue(
-                this.m_colorMap.get(cacheId + "_bg"),
-                defaultRenderParams.backgroundColor
-            );
-
-            const bgAlpha = getOptionValue(
-                getPropertyValue(technique.backgroundAlpha, Math.floor(this.mapView.zoomLevel)),
-                defaultRenderParams.backgroundOpacity
-            );
-
-            const isSmallCaps =
-                technique.smallCaps === true ||
-                defaultRenderParams.fontVariant === FontVariant.SmallCaps;
-            const isAllCaps =
-                technique.allCaps === true ||
-                defaultRenderParams.fontVariant === FontVariant.AllCaps;
-            const styleFontVariant = isSmallCaps
-                ? FontVariant.SmallCaps
-                : isAllCaps
-                ? FontVariant.AllCaps
-                : undefined;
-            const styleFontStyle =
-                technique.bold === true
-                    ? technique.oblique
-                        ? FontStyle.BoldItalic
-                        : FontStyle.Bold
-                    : technique.oblique === true
-                    ? FontStyle.Italic
-                    : defaultRenderParams.fontStyle;
 
             const renderParams = {
+                fontName: getOptionValue(technique.fontName, defaultRenderParams.fontName),
                 fontSize: {
                     unit: FontUnit.Pixel,
-                    size: textSize,
-                    backgroundSize: bgSize
+                    size: getOptionValue(
+                        getPropertyValue(technique.size, Math.floor(this.mapView.zoomLevel)),
+                        defaultRenderParams.fontSize!.size
+                    ),
+                    backgroundSize: getOptionValue(
+                        getPropertyValue(
+                            technique.backgroundSize,
+                            Math.floor(this.mapView.zoomLevel)
+                        ),
+                        defaultRenderParams.fontSize!.backgroundSize
+                    )
                 },
-                color: styleColor,
-                backgroundColor: styleBgColor,
-                backgroundOpacity: bgAlpha,
-                fontVariant: styleFontVariant,
-                fontStyle: styleFontStyle
+                fontStyle:
+                    technique.fontStyle === "Regular" ||
+                    technique.fontStyle === "Bold" ||
+                    technique.fontStyle === "Italic" ||
+                    technique.fontStyle === "BoldItalic"
+                        ? FontStyle[technique.fontStyle]
+                        : defaultRenderParams.fontStyle,
+                fontVariant:
+                    technique.fontVariant === "Regular" ||
+                    technique.fontVariant === "AllCaps" ||
+                    technique.fontVariant === "SmallCaps"
+                        ? FontVariant[technique.fontVariant]
+                        : defaultRenderParams.fontVariant,
+                rotation: getOptionValue(technique.rotation, defaultRenderParams.rotation),
+                color: getOptionValue(this.m_colorMap.get(cacheId), defaultRenderParams.color),
+                backgroundColor: getOptionValue(
+                    this.m_colorMap.get(cacheId + "_bg"),
+                    defaultRenderParams.backgroundColor
+                ),
+                opacity: getOptionValue(
+                    getPropertyValue(technique.opacity, Math.floor(this.mapView.zoomLevel)),
+                    defaultRenderParams.opacity
+                ),
+                backgroundOpacity: getOptionValue(
+                    getPropertyValue(
+                        technique.backgroundOpacity,
+                        Math.floor(this.mapView.zoomLevel)
+                    ),
+                    defaultRenderParams.backgroundOpacity
+                )
             };
 
             const themeRenderParams =
@@ -634,28 +626,37 @@ export class PoiManager {
             const defaultLayoutParams = this.mapView.textElementsRenderer!.defaultStyle
                 .layoutParams;
 
-            const trackingFactor = getOptionValue(technique.tracking, defaultLayoutParams.tracking);
-            let hAlignment = defaultLayoutParams.horizontalAlignment;
-            if (
-                technique.hAlignment === "Left" ||
-                technique.hAlignment === "Center" ||
-                technique.hAlignment === "Right"
-            ) {
-                hAlignment = HorizontalAlignment[technique.hAlignment];
-            }
-            let vAlignment = defaultLayoutParams.verticalAlignment;
-            if (
-                technique.vAlignment === "Above" ||
-                technique.vAlignment === "Center" ||
-                technique.vAlignment === "Below"
-            ) {
-                vAlignment = VerticalAlignment[technique.vAlignment];
-            }
-
             const layoutParams = {
-                tracking: trackingFactor,
-                horizontalAlignment: hAlignment,
-                verticalAlignment: vAlignment
+                tracking: getOptionValue(technique.tracking, defaultLayoutParams.tracking),
+                leading: getOptionValue(technique.leading, defaultLayoutParams.leading),
+                maxLines: getOptionValue(technique.maxLines, defaultLayoutParams.maxLines),
+                lineWidth: getOptionValue(technique.lineWidth, defaultLayoutParams.lineWidth),
+                canvasRotation: getOptionValue(
+                    technique.canvasRotation,
+                    defaultLayoutParams.canvasRotation
+                ),
+                lineRotation: getOptionValue(
+                    technique.lineRotation,
+                    defaultLayoutParams.lineRotation
+                ),
+                wrappingMode:
+                    technique.wrappingMode === "None" ||
+                    technique.wrappingMode === "Character" ||
+                    technique.wrappingMode === "Word"
+                        ? WrappingMode[technique.wrappingMode]
+                        : defaultLayoutParams.wrappingMode,
+                horizontalAlignment:
+                    technique.hAlignment === "Left" ||
+                    technique.hAlignment === "Center" ||
+                    technique.hAlignment === "Right"
+                        ? HorizontalAlignment[technique.hAlignment]
+                        : defaultLayoutParams.horizontalAlignment,
+                verticalAlignment:
+                    technique.vAlignment === "Above" ||
+                    technique.vAlignment === "Center" ||
+                    technique.vAlignment === "Below"
+                        ? VerticalAlignment[technique.vAlignment]
+                        : defaultLayoutParams.verticalAlignment
             };
 
             const themeLayoutParams =

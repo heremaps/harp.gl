@@ -19,7 +19,8 @@ import {
     TextLayoutStyle,
     TextRenderParameters,
     TextRenderStyle,
-    VerticalAlignment
+    VerticalAlignment,
+    WrappingMode
 } from "@here/harp-text-canvas";
 import {
     getOptionValue,
@@ -623,25 +624,26 @@ export class TextElementsRenderer {
             name: styleName,
             fontCatalog: getOptionValue(style.fontCatalogName, DEFAULT_FONT_CATALOG_NAME),
             renderParams: {
+                fontName: style.fontName,
                 fontSize: {
                     unit: FontUnit.Pixel,
                     size: 32,
                     backgroundSize: style.backgroundSize || 8
                 },
-                fontVariant:
-                    style.smallCaps === true
-                        ? FontVariant.SmallCaps
-                        : style.allCaps === true
-                        ? FontVariant.AllCaps
-                        : undefined,
                 fontStyle:
-                    style.bold === true
-                        ? style.oblique === true
-                            ? FontStyle.BoldItalic
-                            : FontStyle.Bold
-                        : style.oblique === true
-                        ? FontStyle.Italic
+                    style.fontStyle === "Regular" ||
+                    style.fontStyle === "Bold" ||
+                    style.fontStyle === "Italic" ||
+                    style.fontStyle === "BoldItalic"
+                        ? FontStyle[style.fontStyle]
                         : undefined,
+                fontVariant:
+                    style.fontVariant === "Regular" ||
+                    style.fontVariant === "AllCaps" ||
+                    style.fontVariant === "SmallCaps"
+                        ? FontVariant[style.fontVariant]
+                        : undefined,
+                rotation: style.rotation,
                 color:
                     style.color !== undefined
                         ? ColorCache.instance.getColor(style.color)
@@ -650,12 +652,34 @@ export class TextElementsRenderer {
                     style.backgroundColor !== undefined
                         ? ColorCache.instance.getColor(style.backgroundColor)
                         : undefined,
-                backgroundOpacity: style.backgroundAlpha
+                opacity: style.opacity,
+                backgroundOpacity: style.backgroundOpacity
             },
             layoutParams: {
                 tracking: style.tracking,
-                verticalAlignment: VerticalAlignment.Center,
-                horizontalAlignment: HorizontalAlignment.Center
+                leading: style.leading,
+                maxLines: style.maxLines,
+                lineWidth: style.lineWidth,
+                canvasRotation: style.canvasRotation,
+                lineRotation: style.lineRotation,
+                wrappingMode:
+                    style.wrappingMode === "None" ||
+                    style.wrappingMode === "Character" ||
+                    style.wrappingMode === "Word"
+                        ? WrappingMode[style.wrappingMode]
+                        : WrappingMode.Word,
+                verticalAlignment:
+                    style.vAlignment === "Above" ||
+                    style.vAlignment === "Center" ||
+                    style.vAlignment === "Below"
+                        ? VerticalAlignment[style.vAlignment]
+                        : VerticalAlignment.Center,
+                horizontalAlignment:
+                    style.hAlignment === "Left" ||
+                    style.hAlignment === "Center" ||
+                    style.hAlignment === "Right"
+                        ? HorizontalAlignment[style.hAlignment]
+                        : HorizontalAlignment.Center
             }
         };
     }
@@ -1426,11 +1450,32 @@ export class TextElementsRenderer {
                 // Find the label's original position.
                 tempScreenPosition.x = tempPoiScreenPosition.x = screenPosition.x;
                 tempScreenPosition.y = tempPoiScreenPosition.y = screenPosition.y;
-                if (pointLabel.xOffset !== undefined) {
-                    tempScreenPosition.x += pointLabel.xOffset;
+
+                // Offset the label accordingly to alignment (and POI, if any).
+                let xOffset =
+                    (pointLabel.xOffset || 0.0) *
+                    (pointLabel.layoutStyle!.horizontalAlignment === HorizontalAlignment.Right
+                        ? -1.0
+                        : 1.0);
+                let yOffset =
+                    (pointLabel.yOffset || 0.0) *
+                    (pointLabel.layoutStyle!.verticalAlignment === VerticalAlignment.Below
+                        ? -1.0
+                        : 1.0);
+                if (pointLabel.poiInfo !== undefined) {
+                    xOffset +=
+                        pointLabel.poiInfo.computedWidth! *
+                        (0.5 + pointLabel.layoutStyle!.horizontalAlignment);
+                    yOffset +=
+                        pointLabel.poiInfo.computedHeight! *
+                        (0.5 + pointLabel.layoutStyle!.verticalAlignment);
                 }
-                if (pointLabel.yOffset !== undefined) {
-                    tempScreenPosition.y += pointLabel.yOffset;
+                tempScreenPosition.x += xOffset;
+                tempScreenPosition.y += yOffset;
+                // If we try to place text above their current position, we need to compensate for
+                // its bounding box height.
+                if (pointLabel.layoutStyle!.verticalAlignment === VerticalAlignment.Above) {
+                    tempScreenPosition.y += -pointLabel.bounds!.min.y;
                 }
 
                 // Scale the text depending on the label's distance to the camera.
