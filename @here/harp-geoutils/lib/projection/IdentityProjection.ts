@@ -101,6 +101,11 @@ class IdentityProjection implements Projection {
     groundDistance(worldPoint: Vector3Like): number {
         return worldPoint.z;
     }
+
+    scalePointToSurface(worldPoint: Vector3Like): Vector3Like {
+        worldPoint.z = 0;
+        return worldPoint;
+    }
 }
 
 /**
