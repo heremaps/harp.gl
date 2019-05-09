@@ -20,11 +20,10 @@ import {
     isFillTechnique,
     isSolidLineTechnique,
     isSquaresTechnique,
-    isStandardTechnique,
-    isStandardTexturedTechnique,
     isTerrainTechnique,
     isTextTechnique,
     LineMarkerTechnique,
+    needsVertexNormals,
     PoiTechnique,
     SolidLineTechnique,
     StandardExtrudedLineTechnique,
@@ -1354,13 +1353,7 @@ export class Tile implements CachedResource {
                     bufferGeometry.setIndex(getBufferAttribute(srcGeometry.index));
                 }
 
-                if (
-                    (!bufferGeometry.getAttribute("normal") &&
-                        (isStandardTechnique(technique) ||
-                            isStandardTexturedTechnique(technique) ||
-                            isTerrainTechnique(technique))) ||
-                    (isExtrudedLineTechnique(technique) && technique.shading === "standard")
-                ) {
+                if (!bufferGeometry.getAttribute("normal") && needsVertexNormals(technique)) {
                     bufferGeometry.computeVertexNormals();
                 }
 

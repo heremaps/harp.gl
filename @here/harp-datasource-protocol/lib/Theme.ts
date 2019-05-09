@@ -5,7 +5,6 @@
  */
 
 import {
-    BaseStandardTechniqueParams,
     BasicExtrudedLineTechniqueParams,
     DashedLineTechniqueParams,
     ExtrudedPolygonTechniqueParams,
@@ -16,7 +15,7 @@ import {
     ShaderTechniqueParams,
     SolidLineTechniqueParams,
     StandardExtrudedLineTechniqueParams,
-    StandardTexturedTechniqueParams,
+    StandardTechniqueParams,
     TerrainTechniqueParams,
     TextTechniqueParams
 } from "./TechniqueParams";
@@ -194,7 +193,6 @@ export type Style =
     | DashedLineStyle
     | FillStyle
     | StandardStyle
-    | StandardTexturedStyle
     | BasicExtrudedLineStyle
     | StandardExtrudedLineStyle
     | ExtrudedPolygonStyle
@@ -277,12 +275,7 @@ export interface FillStyle extends BaseStyle {
 
 export interface StandardStyle extends BaseStyle {
     technique: "standard";
-    attr?: Partial<BaseStandardTechniqueParams>;
-}
-
-export interface StandardTexturedStyle extends BaseStyle {
-    technique: "standard-textured";
-    attr?: Partial<StandardTexturedTechniqueParams>;
+    attr?: Partial<StandardTechniqueParams>;
 }
 
 export interface TerrainStyle extends BaseStyle {

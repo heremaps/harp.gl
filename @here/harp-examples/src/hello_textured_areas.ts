@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Theme } from "@here/harp-datasource-protocol";
+import { TextureCoordinateType, Theme } from "@here/harp-datasource-protocol";
 import { GeoCoordinates } from "@here/harp-geoutils";
 import { MapControls, MapControlsUI } from "@here/harp-map-controls";
 import { CopyrightElementHandler, CopyrightInfo, MapView, ThemeLoader } from "@here/harp-mapview";
@@ -74,7 +74,7 @@ West</a>.</p>`;
                 const styleSet = theme.styles[styleSetName];
                 styleSet.forEach(style => {
                     if (style.description === "urban area") {
-                        style.technique = "standard-textured";
+                        style.technique = "standard";
                         style.attr = {
                             color: "#ffffff",
                             map: urbanAreaTexture,
@@ -83,10 +83,11 @@ West</a>.</p>`;
                                 repeatV: 10,
                                 wrapS: "repeat",
                                 wrapT: "repeat"
-                            }
+                            },
+                            textureCoordinateType: TextureCoordinateType.TileSpace
                         };
                     } else if (style.description === "park") {
-                        style.technique = "standard-textured";
+                        style.technique = "standard";
                         style.attr = {
                             color: "#ffffff",
                             map: parkTexture,
@@ -95,7 +96,8 @@ West</a>.</p>`;
                                 repeatV: 5,
                                 wrapS: "repeat",
                                 wrapT: "repeat"
-                            }
+                            },
+                            textureCoordinateType: TextureCoordinateType.TileSpace
                         };
                     } else if (style.description === "building_geometry") {
                         // Disable extruded buildings to reduce noise.

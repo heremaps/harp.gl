@@ -64,15 +64,6 @@ describe("Tile Creation", function() {
             assert.isTrue(new ExtrudedLineCtor() instanceof THREE.Mesh);
         }
 
-        const LandmarkCtor = getObjectConstructor({
-            name: "standard-textured",
-            renderOrder: 0
-        });
-        assert.isFunction(LandmarkCtor);
-        if (LandmarkCtor !== undefined) {
-            assert.isTrue(new LandmarkCtor() instanceof THREE.Mesh);
-        }
-
         const StandardCtor = getObjectConstructor({ name: "standard", renderOrder: 0 });
         assert.isFunction(StandardCtor);
         if (StandardCtor !== undefined) {

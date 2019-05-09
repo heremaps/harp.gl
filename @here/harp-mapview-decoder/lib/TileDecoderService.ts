@@ -5,9 +5,8 @@
  */
 
 import {
+    addBuffersToTransferList,
     getProjection,
-    isStandardTexturedTechnique,
-    isTextureBuffer,
     ITileDecoder,
     WorkerDecoderProtocol
 } from "@here/harp-datasource-protocol";
@@ -100,23 +99,7 @@ export class TileDecoderService extends WorkerService {
             });
 
             decodedTile.techniques.forEach(technique => {
-                if (isStandardTexturedTechnique(technique)) {
-                    if (isTextureBuffer(technique.map)) {
-                        if (technique.map.buffer instanceof ArrayBuffer) {
-                            transferList.push(technique.map.buffer);
-                        }
-                    }
-                    if (isTextureBuffer(technique.normalMap)) {
-                        if (technique.normalMap.buffer instanceof ArrayBuffer) {
-                            transferList.push(technique.normalMap.buffer);
-                        }
-                    }
-                    if (isTextureBuffer(technique.displacementMap)) {
-                        if (technique.displacementMap.buffer instanceof ArrayBuffer) {
-                            transferList.push(technique.displacementMap.buffer);
-                        }
-                    }
-                }
+                addBuffersToTransferList(technique, transferList);
             });
 
             return {
