@@ -4,7 +4,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import { ImageTexture, Light, Sky, Theme } from "@here/harp-datasource-protocol";
-import { GeoCoordinates, MathUtils, mercatorProjection, Projection } from "@here/harp-geoutils";
+import {
+    EarthConstants,
+    GeoCoordinates,
+    MathUtils,
+    mercatorProjection,
+    Projection,
+    ProjectionType
+} from "@here/harp-geoutils";
 import { assert, LoggerManager, PerformanceTimer } from "@here/harp-utils";
 import * as THREE from "three";
 
@@ -511,6 +518,8 @@ export class MapView extends THREE.EventDispatcher {
      */
     defaultFontCatalog: string = DEFAULT_FONT_CATALOG;
 
+    dumpNext = false;
+
     /**
      * The instance of [[MapRenderingManager]] managing the rendering of the map. It is a public
      * property to allow access and modification of some parameters of the rendering process at
@@ -535,7 +544,16 @@ export class MapView extends THREE.EventDispatcher {
 
     private readonly m_screenCamera = new THREE.OrthographicCamera(-1, 1, 1, -1);
 
-    private m_camera: THREE.PerspectiveCamera;
+    private readonly m_camera: THREE.PerspectiveCamera;
+
+    /**
+     * Relative to eye camera.
+     *
+     * This camera is internal camera used to improve precision
+     * when rendering geometries.
+     */
+    private readonly m_rteCamera = new THREE.PerspectiveCamera();
+
     private m_focalLength: number;
     private m_lookAtDistance: number;
     private m_pointOfView?: THREE.PerspectiveCamera;
@@ -546,7 +564,6 @@ export class MapView extends THREE.EventDispatcher {
 
     private readonly m_scene: THREE.Scene = new THREE.Scene();
     private readonly m_fog: MapViewFog = new MapViewFog(this.m_scene);
-    private readonly m_worldCenter = new THREE.Vector3();
     private readonly m_mapTilesRoot = new THREE.Object3D();
 
     private m_animationCount: number = 0;
@@ -574,6 +591,7 @@ export class MapView extends THREE.EventDispatcher {
     // gestures
     private readonly m_raycaster = new THREE.Raycaster();
     private readonly m_plane = new THREE.Plane(new THREE.Vector3(0, 0, 1));
+    private readonly m_sphere = new THREE.Sphere(undefined, EarthConstants.EQUATORIAL_RADIUS);
 
     private readonly m_options: MapViewOptions;
     private readonly m_visibleTileSetOptions: VisibleTileSetOptions;
@@ -739,8 +757,11 @@ export class MapView extends THREE.EventDispatcher {
             0.1,
             4000000
         );
+        this.m_camera.up.set(0, 0, 1);
         this.m_lookAtDistance = 0;
         this.m_focalLength = 0;
+        this.m_scene.add(this.m_camera); // ensure the camera is added to the scene.
+
         this.setupCamera();
 
         this.m_movementDetector = new CameraMovementDetector(
@@ -1159,7 +1180,7 @@ export class MapView extends THREE.EventDispatcher {
      * The position in geo coordinates of the center of the scene.
      */
     get geoCenter(): GeoCoordinates {
-        return this.projection.unprojectPoint(this.m_worldCenter);
+        return this.projection.unprojectPoint(this.m_camera.position);
     }
 
     /**
@@ -1167,7 +1188,18 @@ export class MapView extends THREE.EventDispatcher {
      * Longitude values outside of -180 and +180 are acceptable.
      */
     set geoCenter(geoCenter: GeoCoordinates) {
-        this.projection.projectPoint(geoCenter, this.m_worldCenter);
+        if (geoCenter.altitude !== undefined) {
+            this.projection.projectPoint(geoCenter, this.m_camera.position);
+        } else {
+            // Preserve the current altitude
+            const altitude = this.geoCenter.altitude;
+
+            this.projection.projectPoint(
+                new GeoCoordinates(geoCenter.latitude, geoCenter.longitude, altitude),
+                this.m_camera.position
+            );
+        }
+
         this.update();
     }
 
@@ -1175,15 +1207,7 @@ export class MapView extends THREE.EventDispatcher {
      * The position in world coordinates of the center of the scene.
      */
     get worldCenter(): THREE.Vector3 {
-        return this.m_worldCenter;
-    }
-
-    /**
-     * The position in world coordinates of the center of the scene.
-     */
-    set worldCenter(center: THREE.Vector3) {
-        this.m_worldCenter.copy(center);
-        this.update();
+        return this.m_camera.position;
     }
 
     /**
@@ -1454,13 +1478,30 @@ export class MapView extends THREE.EventDispatcher {
         yaw?: number,
         pitch?: number
     ): void {
-        if (yaw !== undefined && pitch !== undefined) {
-            MapViewUtils.setRotation(this, yaw, pitch);
+        if (this.projection.type === ProjectionType.Planar) {
+            if (yaw !== undefined && pitch !== undefined) {
+                MapViewUtils.setRotation(this, yaw, pitch);
+            }
+
+            this.geoCenter = geoPos;
+            MapViewUtils.zoomOnTargetPosition(this, 0, 0, zoom);
+        } else {
+            this.geoCenter = new GeoCoordinates(geoPos.latitude, geoPos.longitude);
+
+            const distanceToGround = MapViewUtils.calculateDistanceToGroundFromZoomLevel(
+                this,
+                THREE.Math.clamp(zoom, this.minZoomLevel, this.maxZoomLevel)
+            );
+
+            const surfaceNormal = new THREE.Vector3();
+
+            this.projection.surfaceNormal(this.m_camera.position, surfaceNormal);
+
+            this.m_camera.position.addScaledVector(surfaceNormal, distanceToGround);
+
+            this.m_camera.lookAt(this.scene.position);
         }
 
-        this.geoCenter = geoPos;
-        this.camera.position.set(0, 0, 0);
-        MapViewUtils.zoomOnTargetPosition(this, 0, 0, zoom);
         this.update();
     }
 
@@ -1626,15 +1667,11 @@ export class MapView extends THREE.EventDispatcher {
      */
     getWorldPositionAt(x: number, y: number): THREE.Vector3 | null {
         this.m_raycaster.setFromCamera(this.getNormalizedScreenCoordinates(x, y), this.m_camera);
-        const vec3 = new THREE.Vector3();
-        const worldPosition = this.m_raycaster.ray.intersectPlane(this.m_plane, vec3);
-
-        if (!worldPosition) {
-            return null;
+        const worldPosition = new THREE.Vector3();
+        if (this.projection.type === ProjectionType.Spherical) {
+            return this.m_raycaster.ray.intersectSphere(this.m_sphere, worldPosition);
         }
-        worldPosition.add(this.m_worldCenter);
-
-        return worldPosition;
+        return this.m_raycaster.ray.intersectPlane(this.m_plane, worldPosition);
     }
 
     /**
@@ -1797,19 +1834,51 @@ export class MapView extends THREE.EventDispatcher {
             this.m_forceCameraAspect !== undefined ? this.m_forceCameraAspect : width / height;
         this.setFovOnCamera(this.m_options.fovCalculation!, height);
 
-        const kMinNear = 0.1;
-        const kMultiplier = 50.0;
-        const kFarOffset = 200.0;
+        let nearPlane: number = 0;
+        let farPlane: number = 0;
 
-        let nearPlane = Math.max(kMinNear, this.m_camera.position.z * 0.1);
-        let farPlane = nearPlane * kMultiplier + kFarOffset;
+        if (this.projection.type === ProjectionType.Spherical) {
+            // near and far plane for a set up where
+            // the camera is looking at the center of the scene.
+            const r = EarthConstants.EQUATORIAL_RADIUS;
+            const d = this.m_camera.position.length();
+            const alpha = Math.asin(r / d);
+            const xaxis = new THREE.Vector3();
+            const yaxis = new THREE.Vector3();
+            const zaxis = new THREE.Vector3();
+            this.m_camera.matrixWorld.extractBasis(xaxis, yaxis, zaxis);
+            const q = new THREE.Quaternion();
+            q.setFromAxisAngle(xaxis, alpha);
+            const fwd = zaxis.clone().negate();
+            const p = this.m_camera.position.clone();
+            p.addScaledVector(fwd.clone().applyQuaternion(q), Math.sqrt(d * d - r * r));
+            farPlane = p
+                .clone()
+                .sub(this.m_camera.position)
+                .dot(fwd);
+            const bias = 2000; // TODO: generalize.
+            nearPlane = Math.max(1, this.projection.groundDistance(this.m_camera.position) - bias);
+        } else {
+            const kMinNear = 0.1;
+            const kMultiplier = 50.0;
+            const kFarOffset = 200.0;
 
-        if (this.m_options.farPlaneEvaluator !== undefined) {
-            this.camera.getWorldDirection(this.m_tempVector3);
-            const angle = THREE.Math.radToDeg(this.m_tempVector3.angleTo(EYE_INVERSE));
-            const nearFarPlane = this.m_options.farPlaneEvaluator(this, angle, nearPlane, farPlane);
-            nearPlane = Math.max(kMinNear, nearFarPlane.near);
-            farPlane = Math.max(nearPlane + kFarOffset, nearFarPlane.far);
+            const groundDistance = this.projection.groundDistance(this.m_camera.position);
+            nearPlane = Math.max(kMinNear, groundDistance * 0.1);
+            farPlane = nearPlane * kMultiplier + kFarOffset;
+
+            if (this.m_options.farPlaneEvaluator !== undefined) {
+                this.m_camera.getWorldDirection(this.m_tempVector3);
+                const angle = THREE.Math.radToDeg(this.m_tempVector3.angleTo(EYE_INVERSE));
+                const nearFarPlane = this.m_options.farPlaneEvaluator(
+                    this,
+                    angle,
+                    nearPlane,
+                    farPlane
+                );
+                nearPlane = Math.max(kMinNear, nearFarPlane.near);
+                farPlane = Math.max(nearPlane + kFarOffset, nearFarPlane.far);
+            }
         }
 
         this.m_camera.near = nearPlane;
@@ -1818,6 +1887,12 @@ export class MapView extends THREE.EventDispatcher {
         this.m_camera.updateProjectionMatrix();
         this.m_camera.updateMatrixWorld(false);
 
+        // Update the "relative to eye" camera. Copy the public camera parameters
+        // and place the "relative to eye" at the world's origin.
+        this.m_rteCamera.copy(this.m_camera);
+        this.m_rteCamera.position.setScalar(0);
+        this.m_rteCamera.updateMatrixWorld(true);
+
         this.m_screenCamera.left = width / -2;
         this.m_screenCamera.right = width / 2;
         this.m_screenCamera.bottom = height / -2;
@@ -1825,18 +1900,27 @@ export class MapView extends THREE.EventDispatcher {
         this.m_screenCamera.updateProjectionMatrix();
         this.m_screenCamera.updateMatrixWorld(false);
 
-        this.m_screenProjector.update(this.m_camera, this.m_worldCenter, width, height);
+        this.m_screenProjector.update(this.m_camera, this.m_camera.position, width, height);
         this.m_screenCollisions.update(width, height);
 
         this.m_pixelToWorld = undefined;
 
-        const cameraPitch = MapViewUtils.extractYawPitchRoll(this.camera.quaternion).pitch;
-        const cameraPosZ = Math.abs(this.camera.position.z);
+        if (this.projection.type === ProjectionType.Spherical) {
+            this.m_lookAtDistance = this.projection.groundDistance(this.m_camera.position);
 
-        this.m_lookAtDistance = cameraPosZ / Math.cos(cameraPitch);
+            this.m_zoomLevel = MapViewUtils.calculateZoomLevelFromDistance(
+                this.projection.groundDistance(this.m_camera.position),
+                this
+            );
+        } else {
+            const cameraPitch = MapViewUtils.extractYawPitchRoll(this.m_camera.quaternion).pitch;
+            const cameraPosZ = Math.abs(this.projection.groundDistance(this.m_camera.position));
 
-        const zoomLevelDistance = cameraPosZ / Math.cos(Math.min(cameraPitch, Math.PI / 3));
-        this.m_zoomLevel = MapViewUtils.calculateZoomLevelFromDistance(zoomLevelDistance, this);
+            this.m_lookAtDistance = cameraPosZ / Math.cos(cameraPitch);
+
+            const zoomLevelDistance = cameraPosZ / Math.cos(Math.min(cameraPitch, Math.PI / 3));
+            this.m_zoomLevel = MapViewUtils.calculateZoomLevelFromDistance(zoomLevelDistance, this);
+        }
     }
 
     private detectCurrentFps(now: number) {
@@ -2012,7 +2096,7 @@ export class MapView extends THREE.EventDispatcher {
         // TBD: Update renderList only any of its params (camera, etc...) has changed.
         if (!this.lockVisibleTileSet) {
             this.m_visibleTiles.updateRenderList(
-                this.m_worldCenter,
+                this.m_camera.position,
                 this.storageLevel,
                 Math.floor(this.zoomLevel),
                 this.getEnabledTileDataSources()
@@ -2056,7 +2140,7 @@ export class MapView extends THREE.EventDispatcher {
         this.m_movementDetector.checkCameraMoved(this, time);
 
         // The camera used to render the scene.
-        const camera = this.m_pointOfView !== undefined ? this.m_pointOfView : this.m_camera;
+        const camera = this.m_pointOfView !== undefined ? this.m_pointOfView : this.m_rteCamera;
 
         this.prepareRenderTextElements(time);
 
@@ -2147,7 +2231,7 @@ export class MapView extends THREE.EventDispatcher {
                     object.position.add(object.displacement);
                 }
                 object.position.x += worldOffsetX;
-                object.position.sub(this.m_worldCenter);
+                object.position.sub(this.m_camera.position);
                 this.m_mapTilesRoot.add(object);
             }
         }
@@ -2173,7 +2257,7 @@ export class MapView extends THREE.EventDispatcher {
         }
 
         let shouldDrawText;
-        this.camera.getWorldDirection(this.m_tempVector3);
+        this.m_camera.getWorldDirection(this.m_tempVector3);
         const angle = THREE.Math.radToDeg(this.m_tempVector3.angleTo(EYE_INVERSE));
 
         if (this.m_options.labelVisibilityEvaluator !== undefined) {
@@ -2202,7 +2286,7 @@ export class MapView extends THREE.EventDispatcher {
 
         if (canRenderTextElements && this.m_textElementsRenderer) {
             // copy far value from scene camera, as the distance to the POIs matter now.
-            this.m_screenCamera.far = this.camera.far;
+            this.m_screenCamera.far = this.m_camera.far;
             this.m_textElementsRenderer.renderText(this.m_screenCamera);
         }
     }
@@ -2227,18 +2311,24 @@ export class MapView extends THREE.EventDispatcher {
     private setupCamera() {
         const { width, height } = this.getCanvasClientSize();
 
-        this.m_scene.add(this.m_camera); // ensure the camera is added to the scene.
+        const defaultGeoCenter = new GeoCoordinates(52.518611, 13.376111, 3000);
 
-        this.m_camera.position.set(0, 0, 3000);
-        this.m_camera.lookAt(new THREE.Vector3(0, 0, 0));
-        this.m_lookAtDistance = 3000;
+        this.projection.projectPoint(defaultGeoCenter, this.m_camera.position);
+
+        if (this.projection.type === ProjectionType.Spherical) {
+            this.m_camera.lookAt(this.scene.position);
+        }
+
+        this.m_lookAtDistance = defaultGeoCenter.altitude!;
 
         this.calculateFocalLength(height);
+
         this.m_visibleTiles = new VisibleTileSet(this.m_camera, this.m_visibleTileSetOptions);
+
         // ### move & customize
         this.resize(width, height);
 
-        this.geoCenter = new GeoCoordinates(52.518611, 13.376111, 0);
+        this.geoCenter = defaultGeoCenter;
 
         this.m_screenCamera.position.z = 1;
         this.m_screenCamera.near = 0;
@@ -2269,7 +2359,7 @@ export class MapView extends THREE.EventDispatcher {
             new THREE.Color(skyBackground.colorTop),
             new THREE.Color(skyBackground.colorBottom),
             new THREE.Color(groundColor),
-            this.camera,
+            this.m_camera,
             skyBackground.monomialPower
         );
         this.m_scene.background = this.m_skyBackground.texture;
