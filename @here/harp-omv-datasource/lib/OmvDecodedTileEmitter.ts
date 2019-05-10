@@ -539,10 +539,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                 isDashedLineTechnique(technique) ||
                 isLineTechnique(technique);
             const isPolygon =
-                isExtrudedPolygonTechnique ||
-                isFillTechnique(technique) ||
-                isStandardTechnique(technique) ||
-                isStandardTexturedTechnique(technique);
+                isExtruded || isFilled || isStandardTechnique(technique) || isTextured;
 
             const edgeWidth = isExtruded
                 ? extrudedPolygonTechnique.lineWidth || 0.0
