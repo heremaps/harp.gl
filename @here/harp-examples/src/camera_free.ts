@@ -75,9 +75,6 @@ export namespace FreeCameraAppDebuggingToolExample {
 
             CopyrightElementHandler.install("copyrightNotice", this.mapView);
 
-            // let the camera float over the map, looking straight down
-            this.mapView.camera.position.set(0, 0, 800);
-
             // center the camera somewhere around Berlin geo locations
             if (options.geoCenter !== undefined) {
                 this.mapView.geoCenter = options.geoCenter;
@@ -237,7 +234,7 @@ Press 'V' to change the scene point of view<br>`;
         document.body.appendChild(message);
 
         const canvas = document.getElementById("mapCanvas") as HTMLCanvasElement;
-        const geoCenter = new GeoCoordinates(52.518611, 13.376111, 0);
+        const geoCenter = new GeoCoordinates(52.518611, 13.376111);
 
         // snippet:harp_gl_freecamera_app_0.ts
         const app = new FreeCameraApp({

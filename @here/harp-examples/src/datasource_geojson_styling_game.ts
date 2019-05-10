@@ -78,8 +78,7 @@ export namespace GeoJsonStylingGame {
         theme: "resources/berlin_tilezen_night_reduced.json"
     });
     CopyrightElementHandler.install("copyrightNotice", mapView);
-    mapView.camera.position.set(1900000, 3350000, 2500000); // Europe.
-    mapView.geoCenter = new GeoCoordinates(16, -4, 0);
+    mapView.setCameraGeolocationAndZoom(new GeoCoordinates(41.9028, 12.4964), 5.5);
     mapView.resize(window.innerWidth, window.innerHeight);
     window.addEventListener("resize", () => {
         mapView.resize(window.innerWidth, window.innerHeight);
