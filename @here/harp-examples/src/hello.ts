@@ -8,6 +8,7 @@ import { GeoCoordinates } from "@here/harp-geoutils";
 import { MapControls, MapControlsUI } from "@here/harp-map-controls";
 import { CopyrightElementHandler, CopyrightInfo, MapView } from "@here/harp-mapview";
 import { APIFormat, OmvDataSource } from "@here/harp-omv-datasource";
+import { GUI } from "dat.gui";
 import { accessToken } from "../config";
 
 /**
@@ -124,4 +125,27 @@ export namespace HelloWorldExample {
     // snippet:harp_gl_hello_world_example_5.ts
     mapView.addDataSource(omvDataSource);
     // end:harp_gl_hello_world_example_5.ts
+
+    const gui = new GUI({ width: 300 });
+    const options = {
+        theme: {
+            day: "resources/berlin_tilezen_base.json",
+            reducedDay: "resources/berlin_tilezen_day_reduced.json",
+            reducedNight: "resources/berlin_tilezen_night_reduced.json",
+            streets: "resources/berlin_tilezen_effects_streets.json",
+            outlines: "resources/berlin_tilezen_effects_outlines.json"
+        }
+    };
+    gui.add(options, "theme", options.theme)
+        .onChange((value: string) => {
+            fetch(value)
+                .then(response => {
+                    return response.json();
+                })
+                .then((theme: any) => {
+                    mapView.clearTileCache();
+                    mapView.theme = theme;
+                });
+        })
+        .setValue("resources/berlin_tilezen_base.json");
 }

@@ -122,7 +122,7 @@ export interface ExtrudedPolygonTechnique extends ExtrudedPolygonTechniqueParams
 }
 
 /**
- * Runtime representation of [[TextStyle]] as parsed by [[StyleSetEvaluator]].
+ * Runtime representation of [[TextTechniqueStyle]] as parsed by [[StyleSetEvaluator]].
  */
 export interface TextTechnique extends TextTechniqueParams {
     name: "text";
