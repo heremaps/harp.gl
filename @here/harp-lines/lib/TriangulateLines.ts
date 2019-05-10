@@ -61,7 +61,7 @@ export function numCirclePoints(lineWidth: number): number {
 /**
  * Create a triangle mesh from the given polyline.
  *
- * @param points Sequence of (x,y) coordinates.
+ * @param points Sequence of (x,y,z) coordinates.
  * @param width The width of the extruded line.
  * @param vertices The output vertex buffer.
  * @param indices The output index buffer.
@@ -95,59 +95,60 @@ export function triangulateLine(
 
     const baseVertex = vertices.length / 3;
 
-    const prevDir = new THREE.Vector3();
-    const p = new THREE.Vector3();
-    const n = new THREE.Vector3();
-    const dir = new THREE.Vector3();
-    const aver = new THREE.Vector3();
+    // bt = Bitangent (i.e. extrusion vector)
+    const prevBt = new THREE.Vector3();
+    const p = new THREE.Vector3(); // current point
+    const n = new THREE.Vector3(); // next point
+    const bt = new THREE.Vector3();
+    const averageBt = new THREE.Vector3();
     const p0 = new THREE.Vector3();
     const p1 = new THREE.Vector3();
     const p2 = new THREE.Vector3();
     const p3 = new THREE.Vector3();
 
-    const N = points.length / 2;
+    const N = points.length / 3;
 
     let vertexOffset = 0;
     for (let i = 0; i < N; ++i) {
         let useBevel = false;
-        p.set(points[i * 3], points[i * 3 + 1], 0);
+        p.set(points[i * 3], points[i * 3 + 1], points[i * 3 + 2]);
 
         if (i + 1 < N) {
             n.set(points[(i + 1) * 3], points[(i + 1) * 3 + 1], points[(i + 1) * 3 + 2]);
 
-            dir.copy(n)
+            bt.copy(n)
                 .sub(p)
                 .normalize()
                 .cross(UNIT_Z);
 
-            aver.copy(dir);
+            averageBt.copy(bt);
 
             if (i > 0) {
-                aver.add(prevDir).multiplyScalar(1.0 - 0.5 * dir.dot(prevDir));
+                averageBt.add(prevBt).multiplyScalar(1.0 - 0.5 * bt.dot(prevBt));
 
-                useBevel = prevDir.angleTo(dir) > Math.PI / 2;
+                useBevel = prevBt.angleTo(bt) > Math.PI / 2;
 
                 if (useBevel) {
-                    const inclineWidth = width / Math.cos(dir.angleTo(prevDir) / 2);
+                    const inclineWidth = width / Math.cos(bt.angleTo(prevBt) / 2);
 
-                    p0.copy(dir)
-                        .add(prevDir)
+                    p0.copy(bt)
+                        .add(prevBt)
                         .normalize()
                         .multiplyScalar(-inclineWidth)
                         .add(p);
 
-                    p1.copy(prevDir)
+                    p1.copy(prevBt)
                         .multiplyScalar(width)
                         .add(p);
 
                     // p2 is used for "miter" connections
-                    p2.copy(dir)
-                        .add(prevDir)
+                    p2.copy(bt)
+                        .add(prevBt)
                         .normalize()
                         .multiplyScalar(inclineWidth)
                         .add(p);
 
-                    p3.copy(dir)
+                    p3.copy(bt)
                         .multiplyScalar(width)
                         .add(p);
                 }
@@ -169,24 +170,24 @@ export function triangulateLine(
                     p3.z
                 );
             } else {
-                p0.copy(aver)
+                p0.copy(averageBt)
                     .multiplyScalar(-width)
                     .add(p);
 
-                p1.copy(aver)
+                p1.copy(averageBt)
                     .multiplyScalar(width)
                     .add(p);
 
                 vertices.push(p0.x, p0.y, p0.z, p1.x, p1.y, p1.z);
             }
 
-            prevDir.copy(dir);
+            prevBt.copy(bt);
         } else {
-            p0.copy(prevDir)
+            p0.copy(prevBt)
                 .multiplyScalar(-width)
                 .add(p);
 
-            p1.copy(prevDir)
+            p1.copy(prevBt)
                 .multiplyScalar(width)
                 .add(p);
 

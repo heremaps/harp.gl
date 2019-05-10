@@ -1355,10 +1355,11 @@ export class Tile implements CachedResource {
                 }
 
                 if (
-                    !bufferGeometry.getAttribute("normal") &&
-                    (isStandardTechnique(technique) ||
-                        isStandardTexturedTechnique(technique) ||
-                        isTerrainTechnique(technique))
+                    (!bufferGeometry.getAttribute("normal") &&
+                        (isStandardTechnique(technique) ||
+                            isStandardTexturedTechnique(technique) ||
+                            isTerrainTechnique(technique))) ||
+                    (isExtrudedLineTechnique(technique) && technique.shading === "standard")
                 ) {
                     bufferGeometry.computeVertexNormals();
                 }
