@@ -286,10 +286,11 @@ export class MapControls extends THREE.EventDispatcher {
     /**
      * Constructs a new `MapControls` object.
      *
-     * @param mapView [[MapView]] this controller modifies.ZZ
+     * @param mapView [[MapView]] this controller modifies.Z
      */
     constructor(readonly mapView: MapView) {
         super();
+
         this.camera = mapView.camera;
         this.domElement = mapView.renderer.domElement;
         this.maxZoomLevel = mapView.maxZoomLevel;
@@ -410,10 +411,7 @@ export class MapControls extends THREE.EventDispatcher {
     moveAlongTheViewDirection(amount: number) {
         this.mapView.camera.getWorldDirection(this.m_currentViewDirection);
         this.m_currentViewDirection.multiplyScalar(amount);
-
         this.mapView.camera.position.z += this.m_currentViewDirection.z;
-        this.mapView.worldCenter.x += this.m_currentViewDirection.x;
-        this.mapView.worldCenter.y += this.m_currentViewDirection.y;
         this.updateMapView();
     }
 

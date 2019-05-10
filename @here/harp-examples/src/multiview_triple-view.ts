@@ -176,7 +176,6 @@ export namespace TripleViewExample {
             decoderUrl
         });
         CopyrightElementHandler.install("copyrightNotice", mapView);
-        mapView.camera.position.set(0, 0, 800);
 
         // instantiate the default map controls, allowing the user to pan around freely.
         const mapControls = new MapControls(mapView);
@@ -271,7 +270,7 @@ export namespace TripleViewExample {
     export const syncMapViews = (srcView: ViewControlPair, destView: ViewControlPair) => {
         const ypr = srcView.mapControls.yawPitchRoll;
         destView.mapControls.setRotation(ypr.yaw, ypr.pitch);
-        destView.mapView.worldCenter.copy(srcView.mapView.worldCenter);
+        destView.mapView.camera.copy(srcView.mapView.camera);
         destView.mapControls.cameraHeight = srcView.mapControls.cameraHeight;
         //destView.mapView.camera.aspect = numberOfSyncXViews;
         destView.mapView.camera.updateProjectionMatrix();

@@ -39,6 +39,7 @@
         "@here/harp-materials": "^0.2.3",
         "@here/harp-text-canvas": "^0.2.3",
         "@here/harp-utils": "^0.2.4",
+        "@here/harp-geometry": "^0.1.1",
         "rtree": "^1.4.2"
     },
     "devDependencies": {

@@ -24,7 +24,6 @@ export class CameraMovementDetector {
     private m_lastYawPitchRoll?: MapViewUtils.YawPitchRoll;
     private m_lastCameraPos = new Vector3();
     private m_newCameraPos = new Vector3();
-    private m_lastWorldCenter = new Vector3();
     private m_cameraMovedLastFrame: boolean | undefined;
     private m_throttlingTimerId?: number = undefined;
     private m_movementDetectorDeadline: number = 0;
@@ -62,14 +61,12 @@ export class CameraMovementDetector {
         const cameraMoved =
             this.m_lastYawPitchRoll === undefined ||
             !this.m_lastCameraPos.equals(newCameraPos) ||
-            !this.m_lastWorldCenter.equals(mapView.worldCenter) ||
             newYawPitchRoll.yaw !== this.m_lastYawPitchRoll.yaw ||
             newYawPitchRoll.pitch !== this.m_lastYawPitchRoll.pitch ||
             newYawPitchRoll.roll !== this.m_lastYawPitchRoll.roll;
 
         if (cameraMoved) {
             this.m_lastCameraPos.copy(newCameraPos);
-            this.m_lastWorldCenter.copy(mapView.worldCenter);
             this.m_lastYawPitchRoll = newYawPitchRoll;
         }
 

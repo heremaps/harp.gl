@@ -207,9 +207,8 @@ export class PickHandler {
         if (this.enableRoadPicking) {
             const planeIntersectPosition = new THREE.Vector3();
             rayCaster.ray.intersectPlane(this.m_plane, planeIntersectPosition);
-            planeIntersectPosition.add(this.mapView.worldCenter);
 
-            const cameraPos = this.mapView.worldCenter.clone().add(this.mapView.camera.position);
+            const cameraPos = this.mapView.camera.position.clone();
 
             this.mapView.forEachVisibleTile(tile => {
                 this.m_roadPicker!.intersectRoads(

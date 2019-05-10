@@ -31,7 +31,14 @@ import {
     TextPathGeometry,
     TextTechnique
 } from "@here/harp-datasource-protocol";
-import { EarthConstants, GeoBox, Projection, TileKey } from "@here/harp-geoutils";
+import {
+    EarthConstants,
+    GeoBox,
+    GeoCoordinates,
+    Projection,
+    ProjectionType,
+    TileKey
+} from "@here/harp-geoutils";
 import {
     DashedLineMaterial,
     EdgeMaterial,
@@ -60,6 +67,8 @@ import {
 } from "@here/harp-utils";
 import * as THREE from "three";
 
+// tslint:disable-next-line: max-line-length
+import { SphericalGeometrySubdivisionModifier } from "@here/harp-geometry/lib/SphericalGeometrySubdivisionModifier";
 import { AnimatedExtrusionTileHandler } from "./AnimatedExtrusionHandler";
 import { ColorCache } from "./ColorCache";
 import { CopyrightInfo } from "./CopyrightInfo";
@@ -1188,26 +1197,6 @@ export class Tile implements CachedResource {
         userData.dataSource = this.dataSource.name;
     }
 
-    createPlane(
-        width: number,
-        height: number,
-        planeCenter: THREE.Vector3,
-        colorHex: number,
-        isVisible: boolean
-    ): THREE.Mesh {
-        const geometry = new THREE.PlaneGeometry(width, height, 1);
-        // TODO cache the material HARP-4207
-        const material = new MapMeshBasicMaterial({
-            color: colorHex,
-            visible: isVisible
-        });
-        const plane = new THREE.Mesh(geometry, material);
-        plane.position.copy(planeCenter);
-        // Render before everything else
-        plane.renderOrder = Number.MIN_SAFE_INTEGER;
-        return plane;
-    }
-
     /**
      * Creates `Tile` objects from the decoded tile and list of materials specified.
      *
@@ -2067,20 +2056,67 @@ export class Tile implements CachedResource {
      * Creates and add a background plane for the tile.
      */
     private addGroundPlane() {
-        // Add a ground plane to the tile.
-        const planeSize = new THREE.Vector3();
-        this.boundingBox.getSize(planeSize);
-        const groundPlane = this.createPlane(
-            planeSize.x,
-            planeSize.y,
-            this.center,
+        const color =
             this.dataSource.tileBackgroundColor === undefined
                 ? this.mapView.clearColor
-                : this.dataSource.tileBackgroundColor,
-            this.dataSource.tileBackgroundIsVisible
-        );
+                : this.dataSource.tileBackgroundColor;
 
-        this.registerTileObject(groundPlane);
-        this.objects.push(groundPlane);
+        if (this.projection.type === ProjectionType.Spherical) {
+            const { east, west, north, south } = this.geoBox;
+            const g = new THREE.Geometry();
+            g.vertices.push(
+                this.projection.projectPoint(new GeoCoordinates(south, west), new THREE.Vector3()),
+                this.projection.projectPoint(new GeoCoordinates(south, east), new THREE.Vector3()),
+                this.projection.projectPoint(new GeoCoordinates(north, west), new THREE.Vector3()),
+                this.projection.projectPoint(new GeoCoordinates(north, east), new THREE.Vector3())
+            );
+            g.faces.push(new THREE.Face3(0, 1, 2), new THREE.Face3(2, 1, 3));
+            const modifier = new SphericalGeometrySubdivisionModifier(THREE.Math.degToRad(10));
+            modifier.modify(g);
+            g.vertices.forEach(v => this.projection.scalePointToSurface(v));
+            g.translate(-this.center.x, -this.center.y, -this.center.z);
+            const material = new MapMeshBasicMaterial({
+                color,
+                visible: this.dataSource.tileBackgroundIsVisible
+            });
+            const mesh = new THREE.Mesh(g, material);
+            mesh.renderOrder = Number.MIN_SAFE_INTEGER;
+            this.registerTileObject(mesh);
+            this.objects.push(mesh);
+        } else {
+            // Add a ground plane to the tile.
+            const planeSize = new THREE.Vector3();
+            this.boundingBox.getSize(planeSize);
+            const groundPlane = this.createPlane(
+                planeSize.x,
+                planeSize.y,
+                this.center,
+                color,
+                this.dataSource.tileBackgroundIsVisible
+            );
+
+            this.registerTileObject(groundPlane);
+            this.objects.push(groundPlane);
+        }
+    }
+
+    private createPlane(
+        width: number,
+        height: number,
+        planeCenter: THREE.Vector3,
+        colorHex: number,
+        isVisible: boolean
+    ): THREE.Mesh {
+        const geometry = new THREE.PlaneGeometry(width, height, 1);
+        // TODO cache the material HARP-4207
+        const material = new MapMeshBasicMaterial({
+            color: colorHex,
+            visible: isVisible
+        });
+        const plane = new THREE.Mesh(geometry, material);
+        plane.position.copy(planeCenter);
+        // Render before everything else
+        plane.renderOrder = Number.MIN_SAFE_INTEGER;
+        return plane;
     }
 }
