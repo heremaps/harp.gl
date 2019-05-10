@@ -3,7 +3,7 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-import { ImageTexture, Light, Sky, Theme } from "@here/harp-datasource-protocol";
+import { ImageTexture, Light, PostEffects, Sky, Theme } from "@here/harp-datasource-protocol";
 import {
     EarthConstants,
     GeoCoordinates,
@@ -501,11 +501,18 @@ export class MapView extends THREE.EventDispatcher {
     dumpNext = false;
 
     /**
+     * Allows discarding the text rendering after the map rendering.
+     */
+    renderLabels: boolean = true;
+
+    /**
      * The instance of [[MapRenderingManager]] managing the rendering of the map. It is a public
      * property to allow access and modification of some parameters of the rendering process at
      * runtime.
      */
     readonly mapRenderingManager: IMapRenderingManager;
+
+    private m_postEffects?: PostEffects;
 
     private m_createdLights?: THREE.Light[];
     private m_skyBackground?: SkyBackground;
@@ -924,6 +931,32 @@ export class MapView extends THREE.EventDispatcher {
     set pointOfView(pointOfView: THREE.PerspectiveCamera | undefined) {
         this.m_pointOfView = pointOfView;
         this.update();
+    }
+
+    /**
+     * Loads a posteffects file.
+     *
+     * @param postEffectsFile File URL describing the post effects.
+     */
+    loadPostEffects(postEffectsFile: string) {
+        fetch(postEffectsFile)
+            .then(response => response.json())
+            .then((postEffects: PostEffects) => {
+                this.m_postEffects = postEffects;
+                this.setPostEffects();
+            });
+    }
+
+    /**
+     * The abstraction of the [[MapRenderingManager]] API for posteffects.
+     */
+    get postEffects(): PostEffects | undefined {
+        return this.m_postEffects;
+    }
+
+    set postEffects(postEffects: PostEffects | undefined) {
+        this.m_postEffects = postEffects;
+        this.setPostEffects();
     }
 
     /**
@@ -1813,6 +1846,30 @@ export class MapView extends THREE.EventDispatcher {
         return this.m_fog;
     }
 
+    private setPostEffects() {
+        // First clear all the effects, then enable them from what is specified.
+        this.mapRenderingManager.bloom.enabled = false;
+        this.mapRenderingManager.outline.enabled = false;
+        this.mapRenderingManager.vignette.enabled = false;
+        this.mapRenderingManager.sepia.enabled = false;
+
+        if (this.m_postEffects !== undefined) {
+            if (this.m_postEffects.bloom !== undefined) {
+                this.mapRenderingManager.bloom = this.m_postEffects.bloom;
+            }
+            if (this.m_postEffects.outline !== undefined) {
+                this.mapRenderingManager.outline.enabled = this.m_postEffects.outline.enabled;
+                this.mapRenderingManager.updateOutline(this.m_postEffects.outline);
+            }
+            if (this.m_postEffects.vignette !== undefined) {
+                this.mapRenderingManager.vignette = this.m_postEffects.vignette;
+            }
+            if (this.m_postEffects.sepia !== undefined) {
+                this.mapRenderingManager.sepia = this.m_postEffects.sepia;
+            }
+        }
+    }
+
     /**
      * Updates the camera and the projections and resets the screen collisions,
      * note, setupCamera must be called before this is called.
@@ -2131,7 +2188,9 @@ export class MapView extends THREE.EventDispatcher {
         // The camera used to render the scene.
         const camera = this.m_pointOfView !== undefined ? this.m_pointOfView : this.m_rteCamera;
 
-        this.prepareRenderTextElements(time);
+        if (this.renderLabels) {
+            this.prepareRenderTextElements(time);
+        }
 
         if (gatherStatistics) {
             textPlacementTime = PerformanceTimer.now();
@@ -2147,7 +2206,9 @@ export class MapView extends THREE.EventDispatcher {
             drawTime = PerformanceTimer.now();
         }
 
-        this.finishRenderTextElements();
+        if (this.renderLabels) {
+            this.finishRenderTextElements();
+        }
 
         if (gatherStatistics) {
             textDrawTime = PerformanceTimer.now();
@@ -2276,9 +2337,9 @@ export class MapView extends THREE.EventDispatcher {
                 : Promise.resolve<Theme>(this.m_options.theme);
 
         themePromise.then((theme: Theme) => {
+            this.theme = theme;
             THEME_LOADED_EVENT.time = Date.now();
             this.dispatchEvent(THEME_LOADED_EVENT);
-            this.theme = theme;
         });
     }
 
