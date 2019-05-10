@@ -1,0 +1,458 @@
+{
+    "$schema": "./harp-theme.vscode.schema.json",
+    "sky": {
+        "type": "gradient",
+        "colorTop": "#015EBB",
+        "colorBottom": "#DDDCDA",
+        "groundColor": "#87959A",
+        "monomialPower": 1
+    },
+    "fog": {
+        "startRatio": 0.8
+    },
+    "clearColor": "#87959A",
+    "lights": [
+        {
+            "type": "ambient",
+            "color": "#FFFFFF",
+            "name": "ambientLight",
+            "intensity": 0.9
+        }
+    ],
+    "styles": {
+        "tilezen": [
+            {
+                "description": "highway",
+                "category": "outline",
+                "when": "$layer == 'roads' && ((kind == 'highway') && (kind_detail == 'motorway'))",
+                "technique": "solid-line",
+                "attr": {
+                    "color": "#3A4C69",
+                    "lineWidth": {
+                        "interpolation": "Linear",
+                        "zoomLevels": [6, 7, 8, 9, 10, 11, 12, 13, 14],
+                        "values": [700, 400, 250, 120, 50, 33, 16, 11, 7]
+                    },
+                    "fadeNear": 0.8,
+                    "fadeFar": 0.9,
+                    "clipping": false
+                },
+                "renderOrder": 10.4
+            },
+            {
+                "description": "highway",
+                "category": "fill",
+                "when": "$layer == 'roads' && ((kind == 'highway') && (kind_detail == 'motorway'))",
+                "technique": "solid-line",
+                "attr": {
+                    "color": "#D6C789",
+                    "lineWidth": {
+                        "interpolation": "Linear",
+                        "zoomLevels": [5, 6, 7, 8, 9, 10, 11, 12, 13, 14],
+                        "values": [830, 550, 300, 150, 70, 35, 22, 12, 8, 6]
+                    },
+                    "fadeNear": 0.8,
+                    "fadeFar": 0.9,
+                    "clipping": false
+                },
+                "renderOrder": 15.4,
+                "final": true
+            },
+            {
+                "description": "primary",
+                "category": "outline",
+                "when": "$layer == 'roads' && ((kind == 'major_road') && (kind_detail == 'primary'))",
+                "technique": "solid-line",
+                "attr": {
+                    "color": "#3A4C69",
+                    "lineWidth": {
+                        "interpolation": "Linear",
+                        "zoomLevels": [6, 7, 8, 9, 10, 11, 12, 13, 14],
+                        "values": [550, 300, 100, 70, 38, 24, 14, 7, 5]
+                    },
+                    "fadeNear": 0.8,
+                    "fadeFar": 0.9,
+                    "clipping": false
+                },
+                "renderOrder": 10.3
+            },
+            {
+                "description": "primary",
+                "category": "fill",
+                "when": "$layer == 'roads' && ((kind == 'major_road') && (kind_detail == 'primary'))",
+                "technique": "solid-line",
+                "attr": {
+                    "color": "#F0E8B5",
+                    "lineWidth": {
+                        "interpolation": "Linear",
+                        "zoomLevels": [5, 6, 7, 8, 9, 10, 11, 12, 13, 14],
+                        "values": [830, 410, 220, 100, 50, 30, 20, 11, 6, 4]
+                    },
+                    "fadeNear": 0.8,
+                    "fadeFar": 0.9,
+                    "clipping": false
+                },
+                "renderOrder": 15.3,
+                "final": true
+            },
+            {
+                "category": "secondary",
+                "when": "$layer == 'roads' && ((kind == 'major_road') && (kind_detail == 'secondary'))",
+                "technique": "solid-line",
+                "attr": {
+                    "color": "#E3D49A",
+                    "secondaryColor": "#3A4C69",
+                    "lineWidth": {
+                        "interpolation": "Linear",
+                        "zoomLevels": [7, 8, 9, 10, 11, 12, 13, 14],
+                        "values": [180, 110, 45, 30, 20, 12, 7, 5]
+                    },
+                    "secondaryWidth": {
+                        "interpolation": "Linear",
+                        "zoomLevels": [7, 8, 9, 10, 11, 12, 13, 14],
+                        "values": [180, 110, 45, 30, 20, 16, 9, 6]
+                    },
+                    "fadeNear": 0.8,
+                    "fadeFar": 0.9,
+                    "clipping": false
+                },
+                "renderOrder": 15.3,
+                "secondaryRenderOrder": 10.3,
+                "final": true
+            },
+            {
+                "description": "tertiary",
+                "category": "outline",
+                "when": "$layer == 'roads' && ((kind == 'major_road') && (kind_detail == 'tertiary'))",
+                "technique": "solid-line",
+                "attr": {
+                    "color": "#3A4C69",
+                    "lineWidth": {
+                        "interpolation": "Linear",
+                        "zoomLevels": [6, 7, 8, 9, 10, 11, 12, 13, 14],
+                        "values": [550, 300, 100, 70, 38, 24, 14, 7, 5]
+                    },
+                    "fadeNear": 0.8,
+                    "fadeFar": 0.9,
+                    "clipping": false
+                },
+                "renderOrder": 10.3
+            },
+            {
+                "description": "tertiary",
+                "category": "fill",
+                "when": "$layer == 'roads' && ((kind == 'major_road') && (kind_detail == 'tertiary'))",
+                "technique": "solid-line",
+                "attr": {
+                    "color": "#F0E8B5",
+                    "lineWidth": {
+                        "interpolation": "Linear",
+                        "zoomLevels": [5, 6, 7, 8, 9, 10, 11, 12, 13, 14],
+                        "values": [830, 410, 220, 100, 50, 30, 20, 11, 6, 4]
+                    },
+                    "fadeNear": 0.8,
+                    "fadeFar": 0.9,
+                    "clipping": false
+                },
+                "renderOrder": 15.3,
+                "final": true
+            },
+            {
+                "description": "residential",
+                "when": "$layer == 'roads' && ((kind == 'minor_road') && (((kind_detail == 'unclassified') || (kind_detail == 'residential')) || (kind_detail == 'service'))))",
+                "styles": [
+                    {
+                        "category": "outline",
+                        "technique": "solid-line",
+                        "attr": {
+                            "color": "#3A4C69",
+                            "lineWidth": {
+                                "interpolation": "Linear",
+                                "zoomLevels": [10, 11, 12, 13, 14],
+                                "values": [42, 28, 18, 7, 4]
+                            },
+                            "fadeNear": 0.8,
+                            "fadeFar": 0.9,
+                            "clipping": false
+                        },
+                        "renderOrder": 11
+                    },
+                    {
+                        "category": "fill",
+                        "technique": "solid-line",
+                        "attr": {
+                            "color": "#EDECD9",
+                            "lineWidth": {
+                                "interpolation": "Linear",
+                                "zoomLevels": [10, 11, 12, 13, 14],
+                                "values": [38, 24, 13, 5, 3]
+                            },
+                            "fadeNear": 0.8,
+                            "fadeFar": 0.9,
+                            "clipping": false
+                        },
+                        "renderOrder": 11.3
+                    }
+                ]
+            },
+            {
+                "description": "pedestrian",
+                "when": "$layer == 'roads' && ((kind == 'path') && (kind_detail == 'pedestrian'))",
+                "styles": [
+                    {
+                        "category": "outline",
+                        "technique": "solid-line",
+                        "attr": {
+                            "color": "#3A4C69",
+                            "lineWidth": 3,
+                            "fadeNear": 0.8,
+                            "fadeFar": 0.9,
+                            "clipping": false
+                        },
+                        "renderOrder": 10.3
+                    },
+                    {
+                        "category": "fill",
+                        "technique": "solid-line",
+                        "attr": {
+                            "color": "#B1B5B6",
+                            "lineWidth": 2.5,
+                            "fadeNear": 0.8,
+                            "fadeFar": 0.9,
+                            "clipping": false
+                        },
+                        "renderOrder": 12.3
+                    }
+                ]
+            },
+            {
+                "description": "footway",
+                "when": "$layer == 'roads' && ((kind == 'path') && (kind_detail == 'footway'))",
+                "styles": [
+                    {
+                        "category": "outline",
+                        "technique": "solid-line",
+                        "attr": {
+                            "color": "#3A4C69",
+                            "lineWidth": 3,
+                            "fadeNear": 0.8,
+                            "fadeFar": 0.9,
+                            "clipping": false
+                        },
+                        "renderOrder": 10.3
+                    },
+                    {
+                        "category": "fill",
+                        "technique": "solid-line",
+                        "attr": {
+                            "color": "#B1B5B6",
+                            "lineWidth": 2.5,
+                            "fadeNear": 0.8,
+                            "fadeFar": 0.9,
+                            "clipping": false
+                        },
+                        "renderOrder": 12.3
+                    }
+                ]
+            },
+            {
+                "description": "water",
+                "when": "$layer == 'water' && $geometryType ^= 'polygon'",
+                "technique": "standard-textured",
+                "attr": {
+                    "map": "resources/NoiseMap_Four_diffuse.png",
+                    "color": "#4f7a96",
+                    "roughness": 1,
+                    "metalness": 0.0,
+                    "mapProperties": {
+                        "repeatU": 3,
+                        "repeatV": 3,
+                        "wrapS": "repeat",
+                        "wrapT": "repeat"
+                    }
+                },
+                "renderOrder": 5
+            },
+            {
+                "description": "urban",
+                "when": "$layer ^= 'landuse' && (($geometryType ^= 'polygon') && (kind ^= 'urban_area'))",
+                "technique": "standard-textured",
+                "attr": {
+                    "map": "resources/NoiseMap_one_diffuse.png",
+                    "color": "#9fadb3",
+                    "roughness": 1,
+                    "metalness": 0.0,
+                    "mapProperties": {
+                        "repeatU": 5,
+                        "repeatV": 5,
+                        "wrapS": "repeat",
+                        "wrapT": "repeat"
+                    }
+                },
+                "renderOrder": 0
+            },
+            {
+                "description": "park",
+                "when": "$layer ^= 'landuse' && (($geometryType ^= 'polygon') && kind in ['park'])",
+                "technique": "standard-textured",
+                "attr": {
+                    "map": "resources/tree_Trees_2.png",
+                    "color": "#77a384",
+                    "roughness": 1,
+                    "metalness": 0.0,
+                    "mapProperties": {
+                        "repeatU": 20,
+                        "repeatV": 20,
+                        "wrapS": "repeat",
+                        "wrapT": "repeat"
+                    }
+                },
+                "renderOrder": 0.2
+            },
+            {
+                "description": "forest/nature reserve",
+                "when": "$layer ^= 'landuse' && (($geometryType ^= 'polygon') && kind in ['forest','nature_reserve'])",
+                "technique": "standard-textured",
+                "attr": {
+                    "map": "resources/tree_Trees_2.png",
+                    "color": "#77a384",
+                    "roughness": 1,
+                    "metalness": 0.0,
+                    "mapProperties": {
+                        "repeatU": 12,
+                        "repeatV": 12,
+                        "wrapS": "repeat",
+                        "wrapT": "repeat"
+                    }
+                }
+            },
+            {
+                "description": "aerodrome",
+                "when": "$layer ^= 'landuse' && (($geometryType ^= 'polygon') && (kind ^= 'aerodrome'))",
+                "technique": "standard-textured",
+                "attr": {
+                    "map": "resources/NoiseMap_one_diffuse.png",
+                    "color": "#718189",
+                    "roughness": 1,
+                    "metalness": 0.0,
+                    "mapProperties": {
+                        "repeatU": 5,
+                        "repeatV": 5,
+                        "wrapS": "repeat",
+                        "wrapT": "repeat"
+                    }
+                },
+                "renderOrder": 0.3
+            },
+            {
+                "description": "runway",
+                "when": "$layer ^= 'landuse' && (($geometryType ^= 'polygon') && (kind == 'runway'))",
+                "technique": "standard-textured",
+                "attr": {
+                    "map": "resources/NoiseMap_one_diffuse.png",
+                    "color": "#6A7A82",
+                    "roughness": 1,
+                    "metalness": 0.0,
+                    "mapProperties": {
+                        "repeatU": 5,
+                        "repeatV": 5,
+                        "wrapS": "repeat",
+                        "wrapT": "repeat"
+                    }
+                },
+                "renderOrder": 20,
+                "final": true
+            },
+            {
+                "description": "national_park",
+                "when": "$layer ^= 'landuse' && (($geometryType ^= 'polygon') && (kind ^= 'national_park'))",
+                "technique": "fill",
+                "attr": {
+                    "color": "#789185"
+                },
+                "renderOrder": 1
+            },
+            {
+                "description": "hospital",
+                "when": "$layer ^= 'landuse' && (($geometryType ^= 'polygon') && (kind ^= 'hospital'))",
+                "technique": "standard-textured",
+                "attr": {
+                    "map": "resources/NoiseMap_one_diffuse.png",
+                    "color": "#89878A",
+                    "roughness": 1,
+                    "metalness": 0.0,
+                    "mapProperties": {
+                        "repeatU": 5,
+                        "repeatV": 5,
+                        "wrapS": "repeat",
+                        "wrapT": "repeat"
+                    }
+                },
+                "renderOrder": 0.1
+            },
+            {
+                "description": "cemetery",
+                "when": "$layer ^= 'landuse' && (($geometryType ^= 'polygon') && (kind ^= 'cemetery'))",
+                "technique": "standard-textured",
+                "attr": {
+                    "map": "resources/NoiseMap_one_diffuse.png",
+                    "color": "#77a384",
+                    "roughness": 1,
+                    "metalness": 0.0,
+                    "mapProperties": {
+                        "repeatU": 5,
+                        "repeatV": 5,
+                        "wrapS": "repeat",
+                        "wrapT": "repeat"
+                    }
+                },
+                "renderOrder": 0.1
+            },
+            {
+                "description": "sports_centre",
+                "when": "$layer ^= 'landuse' && (($geometryType ^= 'polygon') && kind in ['sports_centre'])",
+                "technique": "standard-textured",
+                "attr": {
+                    "map": "resources/NoiseMap_one_diffuse.png",
+                    "color": "#728989",
+                    "roughness": 1,
+                    "metalness": 0.0,
+                    "mapProperties": {
+                        "repeatU": 5,
+                        "repeatV": 5,
+                        "wrapS": "repeat",
+                        "wrapT": "repeat"
+                    }
+                },
+                "renderOrder": 1
+            },
+            {
+                "description": "industrial",
+                "when": "$layer ^= 'landuse' && (($geometryType ^= 'polygon') && kind in ['common','surface','commercial','military','industrial'])",
+                "technique": "standard-textured",
+                "attr": {
+                    "map": "resources/NoiseMap_one_diffuse.png",
+                    "color": "#7B8990",
+                    "roughness": 1,
+                    "metalness": 0.0,
+                    "mapProperties": {
+                        "repeatU": 5,
+                        "repeatV": 5,
+                        "wrapS": "repeat",
+                        "wrapT": "repeat"
+                    }
+                },
+                "renderOrder": 0
+            },
+            {
+                "description": "beach",
+                "when": "$layer ^= 'landuse' && (($geometryType ^= 'polygon') && (kind in ['beach'] || (kind $= '_site')))",
+                "technique": "fill",
+                "attr": {
+                    "color": "#A9A992"
+                },
+                "renderOrder": 1
+            }
+        ]
+    }
+}

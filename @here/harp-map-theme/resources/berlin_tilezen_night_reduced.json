@@ -1,4 +1,5 @@
 {
+    "$schema": "../theme.schema.json",
     "sky": {
         "type": "gradient",
         "colorTop": "#161719",

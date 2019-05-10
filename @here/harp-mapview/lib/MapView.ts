@@ -512,6 +512,11 @@ export class MapView extends THREE.EventDispatcher {
     defaultFontCatalog: string = DEFAULT_FONT_CATALOG;
 
     /**
+     * Allows discarding the text rendering after the map rendering.
+     */
+    renderLabels: boolean = true;
+
+    /**
      * The instance of [[MapRenderingManager]] managing the rendering of the map. It is a public
      * property to allow access and modification of some parameters of the rendering process at
      * runtime.
@@ -943,6 +948,32 @@ export class MapView extends THREE.EventDispatcher {
         // Clear color.
         this.m_theme.clearColor = theme.clearColor;
         this.renderer.setClearColor(new THREE.Color(theme.clearColor));
+
+        // Effects: first clear all the effects, then enable them from the theme parameters.
+        this.renderer.toneMappingExposure = 1.0;
+        this.mapRenderingManager.bloom.enabled = false;
+        this.mapRenderingManager.outline.enabled = false;
+        this.mapRenderingManager.vignette.enabled = false;
+        this.mapRenderingManager.sepia.enabled = false;
+        const effects = theme.effects;
+        if (effects !== undefined) {
+            if (effects.toneMappingExposure !== undefined) {
+                this.renderer.toneMappingExposure = effects.toneMappingExposure;
+            }
+            if (effects.bloom !== undefined) {
+                this.mapRenderingManager.bloom = effects.bloom;
+            }
+            if (effects.outline !== undefined) {
+                this.mapRenderingManager.outline.enabled = effects.outline.enabled;
+                this.mapRenderingManager.updateOutline(effects.outline);
+            }
+            if (effects.vignette !== undefined) {
+                this.mapRenderingManager.vignette = effects.vignette;
+            }
+            if (effects.sepia !== undefined) {
+                this.mapRenderingManager.sepia = effects.sepia;
+            }
+        }
 
         // Images.
         this.m_theme.images = theme.images;
@@ -2083,7 +2114,9 @@ export class MapView extends THREE.EventDispatcher {
             drawTime = PerformanceTimer.now();
         }
 
-        this.finishRenderTextElements();
+        if (this.renderLabels) {
+            this.finishRenderTextElements();
+        }
 
         if (gatherStatistics) {
             textDrawTime = PerformanceTimer.now();
@@ -2227,9 +2260,9 @@ export class MapView extends THREE.EventDispatcher {
                 : Promise.resolve<Theme>(this.m_options.theme);
 
         themePromise.then((theme: Theme) => {
+            this.theme = theme;
             THEME_LOADED_EVENT.time = Date.now();
             this.dispatchEvent(THEME_LOADED_EVENT);
-            this.theme = theme;
         });
     }
 

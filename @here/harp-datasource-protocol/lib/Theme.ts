@@ -52,6 +52,34 @@ export interface Theme {
     lights?: Light[];
 
     /**
+     * Post-effects parameters.
+     */
+    effects?: {
+        toneMappingExposure?: number;
+        bloom?: {
+            strength: number;
+            threshold: number;
+            radius: number;
+            enabled: boolean;
+        };
+        outline?: {
+            enabled: boolean;
+            ghostExtrudedPolygons: boolean;
+            thickness: number;
+            color: string;
+        };
+        vignette?: {
+            enabled: boolean;
+            offset: number;
+            darkness: number;
+        };
+        sepia?: {
+            enabled: boolean;
+            amount: number;
+        };
+    };
+
+    /**
      * Define the style of the sky presented in the map scene.
      */
     sky?: Sky;
