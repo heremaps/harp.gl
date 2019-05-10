@@ -59,9 +59,9 @@ import { accessToken } from "../config";
  */
 export namespace HelloWorldExample {
     // Create a new MapView for the HTMLCanvasElement of the given id.
-    function initializeMapView(id: string): MapView {
+    function initializeMapView(): MapView {
         // snippet:harp_gl_hello_world_example_0.ts
-        const canvas = document.getElementById(id) as HTMLCanvasElement;
+        const canvas = document.getElementById("mapCanvas") as HTMLCanvasElement;
         // end:harp_gl_hello_world_example_0.ts
 
         // snippet:harp_gl_hello_world_example_1.ts
@@ -100,7 +100,7 @@ export namespace HelloWorldExample {
         return map;
     }
 
-    const mapView = initializeMapView("mapCanvas");
+    const mapView = initializeMapView();
 
     const hereCopyrightInfo: CopyrightInfo = {
         id: "here.com",

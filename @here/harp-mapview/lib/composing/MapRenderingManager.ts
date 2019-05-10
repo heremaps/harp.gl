@@ -5,9 +5,19 @@
  */
 import * as THREE from "three";
 
+import {
+    IBloomEffect,
+    IOutlineEffect,
+    ISepiaEffect,
+    IVignetteEffect
+} from "@here/harp-datasource-protocol";
+import { SepiaShader, VignetteShader } from "@here/harp-materials";
 import { IPassManager } from "./IPassManager";
 import { LowResRenderPass } from "./LowResRenderPass";
 import { MSAARenderPass, MSAASampling } from "./MSAARenderPass";
+import { OutlineEffect } from "./Outline";
+import { RenderPass, ShaderPass } from "./Pass";
+import { BloomPass } from "./UnrealBloomPass";
 
 const DEFAULT_DYNAMIC_MSAA_SAMPLING_LEVEL = MSAASampling.Level_1;
 const DEFAULT_STATIC_MSAA_SAMPLING_LEVEL = MSAASampling.Level_4;
@@ -46,6 +56,26 @@ export interface IMapAntialiasSettings {
  * to modify some of the rendering processes like the antialiasing behaviour at runtime.
  */
 export interface IMapRenderingManager extends IPassManager {
+    /**
+     * Bloom effect parameters.
+     */
+    bloom: IBloomEffect;
+
+    /**
+     * Outline effect parameters.
+     */
+    outline: IOutlineEffect;
+
+    /**
+     * Vignette effect parameters.
+     */
+    vignette: IVignetteEffect;
+
+    /**
+     * Sepia effect parameters.
+     */
+    sepia: ISepiaEffect;
+
     /**
      * Set a `pixelRatio` for dynamic rendering (i.e. during animations). If a value is specified,
      * the `LowResRenderPass` will be employed to used to render the scene into a lower resolution
@@ -93,6 +123,17 @@ export interface IMapRenderingManager extends IPassManager {
         isStaticFrame: boolean,
         time?: number
     ): void;
+
+    /**
+     * Updating the outline rebuilds the outline materials of every outlined mesh.
+     *
+     * @param options outline options from the [[Theme]].
+     */
+    updateOutline(options: {
+        thickness: number;
+        color: string;
+        ghostExtrudedPolygons: boolean;
+    }): void;
 }
 
 /**
@@ -100,11 +141,45 @@ export interface IMapRenderingManager extends IPassManager {
  * rendering.
  */
 export class MapRenderingManager implements IMapRenderingManager {
+    bloom = {
+        enabled: false,
+        strength: 1.5,
+        radius: 0.4,
+        threshold: 0.85
+    };
+    outline = {
+        enabled: false,
+        thickness: 0.005,
+        color: "#000000",
+        ghostExtrudedPolygons: false,
+        needsUpdate: false
+    };
+    vignette = {
+        enabled: false,
+        offset: 1.0,
+        darkness: 1.0
+    };
+    sepia = {
+        enabled: false,
+        amount: 0.5
+    };
+
+    private m_width: number = 1;
+    private m_height: number = 1;
+
+    private m_outlineEffect?: OutlineEffect;
     private m_msaaPass: MSAARenderPass;
+    private m_renderPass: RenderPass = new RenderPass();
+    private m_target1: THREE.WebGLRenderTarget = new THREE.WebGLRenderTarget(1, 1);
+    private m_target2: THREE.WebGLRenderTarget = new THREE.WebGLRenderTarget(1, 1);
+    private m_bloomPass?: BloomPass;
+    private m_sepiaPass: ShaderPass = new ShaderPass(SepiaShader);
+    private m_vignettePass: ShaderPass = new ShaderPass(VignetteShader);
     private m_readBuffer: THREE.WebGLRenderTarget;
     private m_dynamicMsaaSamplingLevel: MSAASampling;
     private m_staticMsaaSamplingLevel: MSAASampling;
     private m_lowResPass: LowResRenderPass;
+
     /**
      * The constructor of `MapRenderingManager`.
      *
@@ -138,6 +213,13 @@ export class MapRenderingManager implements IMapRenderingManager {
         this.m_lowResPass.enabled = lowResPixelRatio !== undefined;
     }
 
+    updateOutline(options: { thickness: number; color: string; ghostExtrudedPolygons: boolean }) {
+        this.outline.color = options.color;
+        this.outline.thickness = options.thickness;
+        this.outline.ghostExtrudedPolygons = options.ghostExtrudedPolygons;
+        this.outline.needsUpdate = true;
+    }
+
     /**
      * The method to call to render the map with the `MapRenderingManager` instance. It contains the
      * chain of sub-passes that can transfer the write and read buffers, and other sheer rendering
@@ -155,40 +237,105 @@ export class MapRenderingManager implements IMapRenderingManager {
         camera: THREE.PerspectiveCamera | THREE.OrthographicCamera,
         isStaticFrame: boolean
     ) {
+        const target = null;
         if (!isStaticFrame && this.m_lowResPass.pixelRatio !== undefined) {
             // Not designed to be combined with our own MSAA
-            const target = null;
             this.m_lowResPass.renderToScreen = true;
             this.m_lowResPass.render(renderer, scene, camera, target, this.m_readBuffer);
             return;
         }
 
-        const isHighDpiDevice = renderer.getPixelRatio() > 1.1; // On desktop IE11 is ~1.01.
+        const usePostEffects =
+            this.bloom.enabled ||
+            this.outline.enabled ||
+            this.vignette.enabled ||
+            this.sepia.enabled;
 
-        // 1. First pass (and only for the map part) : base scene render.
-        if (isHighDpiDevice) {
-            // On smartphones, discard AAs as the pixel ratio already stands for this and also makes
-            // AA passes much more expensive.
-            renderer.render(scene, camera);
+        let activeTarget: null | THREE.WebGLRenderTarget = null;
+
+        // 1. If the bloom is enabled, clear the depth.
+        if (this.bloom.enabled || this.vignette.enabled || this.sepia.enabled) {
+            renderer.setRenderTarget(this.m_target1);
+            renderer.clearDepth();
+        }
+
+        // 2. Render the map.
+
+        if (this.m_msaaPass.enabled) {
+            // Use a higher MSAA sampling level for static rendering.
+            this.m_msaaPass.samplingLevel = isStaticFrame
+                ? this.m_staticMsaaSamplingLevel
+                : this.m_dynamicMsaaSamplingLevel;
+            // MSAA is the only effect for the moment.
+            this.m_msaaPass.renderToScreen = !usePostEffects;
+            // Render to the specified target with the MSAA pass.
+            this.m_msaaPass.render(renderer, scene, camera, target, this.m_readBuffer);
         } else {
-            // Later with further effects, a ThreeJS WebGLRenderTarget will be needed as the
-            // destination of the render call.
-            const target = null;
-            if (this.m_msaaPass.enabled) {
-                // Use a higher MSAA sampling level for static rendering.
-                this.m_msaaPass.samplingLevel = isStaticFrame
-                    ? this.m_staticMsaaSamplingLevel
-                    : this.m_dynamicMsaaSamplingLevel;
-                // MSAA is the only effect for the moment.
-                this.m_msaaPass.renderToScreen = true;
-                // Render to the specified target with the MSAA pass.
-                this.m_msaaPass.render(renderer, scene, camera, target, this.m_readBuffer);
-            } else {
+            if (this.bloom.enabled || this.vignette.enabled || this.sepia.enabled) {
+                activeTarget = this.m_target1;
+                this.m_renderPass.render(renderer, scene, camera, this.m_target1, null!);
+            } else if (!this.outline.enabled || (this.outline.enabled && !this.bloom.enabled)) {
                 renderer.render(scene, camera);
             }
         }
 
-        // 2. Further passes could then be implemented here on top of the base pass.
+        // 3. Apply effects
+        if (this.outline.enabled) {
+            if (this.m_outlineEffect === undefined) {
+                this.m_outlineEffect = new OutlineEffect(renderer);
+            }
+            if (this.outline.needsUpdate) {
+                this.m_outlineEffect.color = this.outline.color;
+                this.m_outlineEffect.thickness = this.outline.thickness;
+                this.m_outlineEffect.ghostExtrudedPolygons = this.outline.ghostExtrudedPolygons;
+                this.outline.needsUpdate = false;
+            }
+            const nextEffectEnabled =
+                this.bloom.enabled || this.vignette.enabled || this.sepia.enabled;
+            if (nextEffectEnabled) {
+                activeTarget = this.m_target1;
+            }
+            renderer.setRenderTarget(nextEffectEnabled ? activeTarget : null!);
+            this.m_outlineEffect.render(scene, camera);
+        }
+
+        if (this.bloom.enabled) {
+            if (this.m_bloomPass === undefined) {
+                this.m_bloomPass = new BloomPass(
+                    new THREE.Vector2(this.m_width, this.m_height),
+                    this.bloom.strength,
+                    this.bloom.radius,
+                    this.bloom.threshold
+                );
+            }
+            const nextEffectEnabled = this.vignette.enabled || this.sepia.enabled;
+            this.m_bloomPass.renderToScreen = !nextEffectEnabled;
+            this.m_bloomPass.radius = this.bloom.radius;
+            this.m_bloomPass.strength = this.bloom.strength;
+            this.m_bloomPass.threshold = this.bloom.threshold;
+            this.m_bloomPass.render(renderer, scene, camera, null!, activeTarget!);
+        } else if (this.m_bloomPass !== undefined) {
+            this.m_bloomPass.dispose();
+            this.m_bloomPass = undefined;
+        }
+
+        if (this.vignette.enabled) {
+            const oldTarget = activeTarget!;
+            const nextEffectEnabled = this.sepia.enabled;
+            this.m_vignettePass.uniforms.offset.value = this.vignette.offset;
+            this.m_vignettePass.uniforms.darkness.value = this.vignette.darkness;
+            this.m_vignettePass.renderToScreen = !nextEffectEnabled;
+            if (nextEffectEnabled) {
+                activeTarget = activeTarget === this.m_target1 ? this.m_target2 : this.m_target1;
+            }
+            this.m_vignettePass.render(renderer, scene, camera, activeTarget!, oldTarget);
+        }
+
+        if (this.sepia.enabled) {
+            this.m_sepiaPass.renderToScreen = true;
+            this.m_sepiaPass.uniforms.amount.value = this.sepia.amount;
+            this.m_sepiaPass.render(renderer, scene, camera, null!, activeTarget!);
+        }
     }
 
     /**
@@ -201,7 +348,14 @@ export class MapRenderingManager implements IMapRenderingManager {
     setSize(width: number, height: number) {
         this.m_readBuffer.setSize(width, height);
         this.m_msaaPass.setSize(width, height);
+        if (this.m_bloomPass !== undefined) {
+            this.m_bloomPass.setSize(width, height);
+        }
         this.m_lowResPass.setSize(width, height);
+        this.m_target1.setSize(width, height);
+        this.m_target2.setSize(width, height);
+        this.m_width = width;
+        this.m_height = height;
     }
 
     /**

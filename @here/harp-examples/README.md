@@ -40,6 +40,17 @@ We can group the examples by several categories, looking at what kind of feature
 1. [Render raster map tiles](src/datasource_webtile.ts) using the [webtile-datasource](../harp-webtile-datasource/README.md).
 1. [Show OSM MVT Data](src/datasource_xyzmvt.ts) with our default map style.
 
+### Custom features
+
+1. [The how-to for custom features](src/features.ts) demonstrates the process of adding features.
+1. [A more advanced example](src/features_custom.ts) mingles Harp's capabilities with custom features to realize an engaging visualization.
+
 ### Styling
 
 1. [Display three map views, side by side](src/multiview_triple-view.ts), in which we show the a map with three different styles at the same time, using OMV Data.
+1. [Themes examples](src/themes.ts) features the various themes open sourced with Harp.
+
+### Effects
+
+1. [Playground for the post effects](src/effects_all.ts).
+1. [Additional themes and post effects configuration files](src/effects_themes.ts), showcasing available setups for fancier renderings.

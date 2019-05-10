@@ -84,3 +84,83 @@ export class Pass implements IPass {
     }
     // tslint:enable:no-unused-variable
 }
+
+/**
+ * The pass that does a default normal scene rendering for further post-effects.
+ */
+export class RenderPass extends Pass {
+    constructor() {
+        super();
+    }
+
+    render(
+        renderer: THREE.WebGLRenderer,
+        scene: THREE.Scene,
+        camera: THREE.Camera,
+        writeBuffer: THREE.WebGLRenderTarget | null,
+        readBuffer: THREE.WebGLRenderTarget | null
+    ) {
+        renderer.setRenderTarget(this.renderToScreen ? null : writeBuffer);
+        renderer.render(scene, camera);
+    }
+}
+
+/**
+ * The base class to extend for post-effects on the final render (like Vignette, Sepia, color
+ * correction...)
+ */
+export class ShaderPass extends Pass {
+    uniforms: { [uniform: string]: THREE.IUniform };
+    material: THREE.Material;
+    fsQuad: FullScreenQuad;
+    constructor(shader: THREE.Shader, private textureID: string = "tDiffuse") {
+        super();
+        if (shader instanceof THREE.ShaderMaterial) {
+            this.uniforms = shader.uniforms;
+            this.material = shader;
+        } else {
+            this.uniforms = THREE.UniformsUtils.clone(shader.uniforms);
+            this.material = new THREE.ShaderMaterial({
+                defines: { ...(shader as any).defines },
+                uniforms: this.uniforms,
+                vertexShader: shader.vertexShader,
+                fragmentShader: shader.fragmentShader
+            });
+        }
+        this.fsQuad = new FullScreenQuad(this.material);
+    }
+    render(
+        renderer: THREE.WebGLRenderer,
+        scene: THREE.Scene,
+        camera: THREE.Camera,
+        writeBuffer: THREE.WebGLRenderTarget,
+        readBuffer: THREE.WebGLRenderTarget,
+        delta?: number
+    ) {
+        if (this.uniforms[this.textureID]) {
+            this.uniforms[this.textureID].value = readBuffer.texture;
+        }
+        this.fsQuad.material = this.material;
+        renderer.setRenderTarget(this.renderToScreen ? null : writeBuffer);
+        this.fsQuad.render(renderer);
+    }
+}
+
+class FullScreenQuad {
+    private m_mesh: THREE.Mesh;
+    private m_camera: THREE.Camera;
+    constructor(material: THREE.Material) {
+        this.m_camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+        const geometry = new THREE.PlaneBufferGeometry(2, 2);
+        this.m_mesh = new THREE.Mesh(geometry, material);
+    }
+    get material(): THREE.Material {
+        return this.m_mesh.material as THREE.Material;
+    }
+    set material(value: THREE.Material) {
+        this.m_mesh.material = value;
+    }
+    render(renderer: THREE.WebGLRenderer) {
+        renderer.render((this.m_mesh as any) as THREE.Scene, this.m_camera);
+    }
+}
