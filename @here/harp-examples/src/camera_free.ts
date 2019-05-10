@@ -75,9 +75,6 @@ export namespace FreeCameraAppDebuggingToolExample {
 
             CopyrightElementHandler.install("copyrightNotice", this.mapView);
 
-            // let the camera float over the map, looking straight down
-            this.mapView.camera.position.set(0, 0, 800);
-
             // center the camera somewhere around Berlin geo locations
             if (options.geoCenter !== undefined) {
                 this.mapView.geoCenter = options.geoCenter;

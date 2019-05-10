@@ -237,9 +237,11 @@ export namespace MapViewUtils {
      * downwards in default camera orientation.
      */
     export function pan(mapView: MapView, offsetX: number, offsetY: number): void {
-        const currentWorldPosition = mapView.worldCenter;
-        currentWorldPosition.setX(currentWorldPosition.x + offsetX);
-        currentWorldPosition.setY(currentWorldPosition.y + offsetY);
+        const { worldCenter, camera } = mapView;
+        worldCenter.x += offsetX;
+        worldCenter.y += offsetY;
+        camera.position.x += offsetX;
+        camera.position.y += offsetY;
         mapView.update();
     }
 

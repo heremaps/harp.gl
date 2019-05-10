@@ -286,10 +286,11 @@ export class MapControls extends THREE.EventDispatcher {
     /**
      * Constructs a new `MapControls` object.
      *
-     * @param mapView [[MapView]] this controller modifies.ZZ
+     * @param mapView [[MapView]] this controller modifies.Z
      */
     constructor(readonly mapView: MapView) {
         super();
+
         this.camera = mapView.camera;
         this.domElement = mapView.renderer.domElement;
         this.maxZoomLevel = mapView.maxZoomLevel;

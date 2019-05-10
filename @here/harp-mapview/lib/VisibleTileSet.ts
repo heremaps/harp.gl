@@ -7,6 +7,7 @@ import { MathUtils, Projection, ProjectionType, TileKey, TilingScheme } from "@h
 import { LRUCache } from "@here/harp-lrucache";
 import * as THREE from "three";
 
+import { OrientedBox3 } from "@here/harp-geometry";
 import { DataSource } from "./DataSource";
 import { CalculationStatus, ElevationRangeSource } from "./ElevationRangeSource";
 import { MapTileCuller } from "./MapTileCuller";
@@ -890,29 +891,39 @@ export class VisibleTileSet {
                     );
                     const intersectsFrustum = tileFrustumIntersectionCache.get(tileKeyAndOffset);
 
-                    if (intersectsFrustum === undefined) {
-                        const geoBox = this.getGeoBox(tilingScheme, childTileKey, offset);
+                    if (intersectsFrustum !== undefined) {
+                        return;
+                    }
 
-                        if (useElevationRangeSource) {
-                            const range = elevationRangeSource!.getElevationRange(childTileKey);
-                            geoBox.southWest.altitude = range.minElevation;
-                            geoBox.northEast.altitude = range.maxElevation;
+                    const geoBox = this.getGeoBox(tilingScheme, childTileKey, offset);
 
-                            allBoundingBoxesFinal =
-                                allBoundingBoxesFinal &&
-                                range.calculationStatus === CalculationStatus.FinalPrecise;
+                    if (useElevationRangeSource) {
+                        const range = elevationRangeSource!.getElevationRange(childTileKey);
+                        geoBox.southWest.altitude = range.minElevation;
+                        geoBox.northEast.altitude = range.maxElevation;
+
+                        allBoundingBoxesFinal =
+                            allBoundingBoxesFinal &&
+                            range.calculationStatus === CalculationStatus.FinalPrecise;
+                    }
+
+                    let subTileArea = 0;
+
+                    if (this.projection.type === ProjectionType.Spherical) {
+                        const obb = new OrientedBox3();
+                        this.options.projection.projectBox(geoBox, obb);
+                        if (obb.intersects(this.m_frustum)) {
+                            subTileArea = 1;
                         }
+                    } else {
                         this.options.projection.projectBox(geoBox, tileBounds);
-                        tileBounds.min.sub(worldCenter);
-                        tileBounds.max.sub(worldCenter);
+                        subTileArea = this.computeSubTileArea(tileBounds);
+                    }
 
-                        const subTileArea = this.computeSubTileArea(tileBounds);
+                    tileFrustumIntersectionCache.set(tileKeyAndOffset, subTileArea);
 
-                        tileFrustumIntersectionCache.set(tileKeyAndOffset, subTileArea);
-
-                        if (subTileArea > 0) {
-                            workList.push(new TileKeyEntry(childTileKey, subTileArea, offset));
-                        }
+                    if (subTileArea > 0) {
+                        workList.push(new TileKeyEntry(childTileKey, subTileArea, offset));
                     }
                 });
             }

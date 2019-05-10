@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { TilingScheme } from "@here/harp-geoutils";
+import { GeoCoordinates, ProjectionType, TilingScheme } from "@here/harp-geoutils";
 import { TileKey } from "@here/harp-geoutils/lib/tiling/TileKey";
 import { DataSource, TextElement, Tile } from "@here/harp-mapview";
 import {
@@ -16,6 +16,9 @@ import {
 } from "@here/harp-text-canvas";
 
 import * as THREE from "three";
+
+// tslint:disable-next-line: max-line-length
+import { SphericalGeometrySubdivisionModifier } from "@here/harp-geometry/lib/SphericalGeometrySubdivisionModifier";
 
 const debugMaterial = new THREE.LineBasicMaterial({
     color: 0xff0000,
@@ -49,38 +52,64 @@ export class DebugTile extends Tile {
     constructor(dataSource: DataSource, tileKey: TileKey) {
         super(dataSource, tileKey);
 
-        const tileBounds = this.boundingBox.clone();
+        if (this.projection.type === ProjectionType.Spherical) {
+            const { east, west, north, south } = this.geoBox;
+            const g = new THREE.Geometry();
+            g.vertices.push(
+                this.projection.projectPoint(new GeoCoordinates(south, west), new THREE.Vector3()),
+                this.projection.projectPoint(new GeoCoordinates(south, east), new THREE.Vector3()),
+                this.projection.projectPoint(new GeoCoordinates(north, west), new THREE.Vector3()),
+                this.projection.projectPoint(new GeoCoordinates(north, east), new THREE.Vector3())
+            );
+            g.faces.push(new THREE.Face3(0, 1, 2), new THREE.Face3(2, 1, 3));
+            const modifier = new SphericalGeometrySubdivisionModifier(THREE.Math.degToRad(10));
+            modifier.modify(g);
+            g.vertices.forEach(v => this.projection.scalePointToSurface(v));
+            g.translate(-this.center.x, -this.center.y, -this.center.z);
+            const material = new THREE.MeshBasicMaterial({
+                color: "red",
+                wireframe: true,
+                transparent: true,
+                depthTest: false
+            });
+            const mesh = new THREE.Mesh(g, material);
+            mesh.name = `debug_tile_${this.tileKey.toHereTile()}`;
+            mesh.renderOrder = 100000;
+            this.objects.push(mesh);
+        } else {
+            const tileBounds = this.boundingBox.clone();
 
-        tileBounds.min.sub(this.center);
-        tileBounds.max.sub(this.center);
-        this.geometry.vertices.push(
-            new THREE.Vector3(tileBounds.min.x, tileBounds.min.y, 0),
-            new THREE.Vector3(tileBounds.max.x, tileBounds.min.y, 0),
-            new THREE.Vector3(tileBounds.max.x, tileBounds.max.y, 0),
-            new THREE.Vector3(tileBounds.min.x, tileBounds.max.y, 0),
-            new THREE.Vector3(tileBounds.min.x, tileBounds.min.y, 0)
-        );
-        const lineObject = new THREE.Line(this.geometry, debugMaterial);
-        lineObject.renderOrder = 100;
-        this.objects.push(lineObject);
+            tileBounds.min.sub(this.center);
+            tileBounds.max.sub(this.center);
+            this.geometry.vertices.push(
+                new THREE.Vector3(tileBounds.min.x, tileBounds.min.y, 0),
+                new THREE.Vector3(tileBounds.max.x, tileBounds.min.y, 0),
+                new THREE.Vector3(tileBounds.max.x, tileBounds.max.y, 0),
+                new THREE.Vector3(tileBounds.min.x, tileBounds.max.y, 0),
+                new THREE.Vector3(tileBounds.min.x, tileBounds.min.y, 0)
+            );
+            const lineObject = new THREE.Line(this.geometry, debugMaterial);
+            lineObject.renderOrder = 100;
+            this.objects.push(lineObject);
 
-        this.m_labelPositions.setXYZ(0, 0, 0, 0);
+            this.m_labelPositions.setXYZ(0, 0, 0, 0);
 
-        const text = `(${tileKey.row}, ${tileKey.column}, ${tileKey.level})`;
-        const textElement = new TextElement(
-            text,
-            new THREE.Vector2(tileBounds.min.x * 0.95, tileBounds.max.y * 0.95),
-            this.m_textRenderStyle,
-            this.m_textLayoutStyle,
-            PRIORITY_ALWAYS,
-            TEXT_SCALE
-        );
-        textElement.mayOverlap = true;
-        textElement.reserveSpace = false;
-        textElement.alwaysOnTop = true;
-        textElement.ignoreDistance = true;
+            const text = `(${tileKey.row}, ${tileKey.column}, ${tileKey.level})`;
+            const textElement = new TextElement(
+                text,
+                new THREE.Vector2(tileBounds.min.x * 0.95, tileBounds.max.y * 0.95),
+                this.m_textRenderStyle,
+                this.m_textLayoutStyle,
+                PRIORITY_ALWAYS,
+                TEXT_SCALE
+            );
+            textElement.mayOverlap = true;
+            textElement.reserveSpace = false;
+            textElement.alwaysOnTop = true;
+            textElement.ignoreDistance = true;
 
-        this.addTextElement(textElement);
+            this.addTextElement(textElement);
+        }
     }
 }
 

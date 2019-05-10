@@ -66,7 +66,6 @@ describe("MapView", function() {
 
     it("Correctly sets geolocation and zoom", function() {
         let coords: GeoCoordinates;
-        let postionSpy: sinon.SinonSpy;
         let rotationSpy: sinon.SinonSpy;
         let zoomSpy: sinon.SinonSpy;
 
@@ -85,14 +84,11 @@ describe("MapView", function() {
         mapView = new MapView({ canvas: (canvas as any) as HTMLCanvasElement });
         coords = new GeoCoordinates(52.5145, 13.3501);
 
-        postionSpy = sinon.spy(mapView.camera.position, "set");
         rotationSpy = sinon.spy(MapViewUtils, "setRotation");
         zoomSpy = sinon.spy(MapViewUtils, "zoomOnTargetPosition");
 
         mapView.setCameraGeolocationAndZoom(coords, 18, 10, 20);
 
-        expect(postionSpy.calledOnce).to.be.true;
-        expect(postionSpy.calledWith(0, 0, 0)).to.be.true;
         expect(zoomSpy.calledOnce).to.be.true;
         expect(zoomSpy.calledWith(mapView, 0, 0, 18)).to.be.true;
         expect(rotationSpy.calledOnce).to.be.true;

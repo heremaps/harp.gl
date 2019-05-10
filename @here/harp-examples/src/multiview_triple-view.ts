@@ -176,7 +176,6 @@ export namespace TripleViewExample {
             decoderUrl
         });
         CopyrightElementHandler.install("copyrightNotice", mapView);
-        mapView.camera.position.set(0, 0, 800);
 
         // instantiate the default map controls, allowing the user to pan around freely.
         const mapControls = new MapControls(mapView);
