@@ -173,7 +173,6 @@ export namespace MapViewUtils {
         pointOnScreenYinNDC: number
     ): THREE.Vector3 | null {
         const pointInNDCPosition = new THREE.Vector3(pointOnScreenXinNDC, pointOnScreenYinNDC, 0.5);
-        const worldPosition = mapView.worldCenter;
 
         cameraZPosition.copy(mapView.camera.position);
 
@@ -196,15 +195,7 @@ export namespace MapViewUtils {
         if (!rayGroundPlaneIntersectionPosition) {
             return null;
         }
-        //Because our camera does not really move, besides going up and down,
-        //the intersection point is relative to the camera.
-        //To get them in into world space, we add the cameras world space position.
-        rayGroundPlaneIntersectionPosition.setX(
-            rayGroundPlaneIntersectionPosition.x + worldPosition.x
-        );
-        rayGroundPlaneIntersectionPosition.setY(
-            rayGroundPlaneIntersectionPosition.y + worldPosition.y
-        );
+
         return rayGroundPlaneIntersectionPosition;
     }
 
@@ -237,9 +228,8 @@ export namespace MapViewUtils {
      * downwards in default camera orientation.
      */
     export function pan(mapView: MapView, offsetX: number, offsetY: number): void {
-        const currentWorldPosition = mapView.worldCenter;
-        currentWorldPosition.setX(currentWorldPosition.x + offsetX);
-        currentWorldPosition.setY(currentWorldPosition.y + offsetY);
+        mapView.camera.position.x += offsetX;
+        mapView.camera.position.y += offsetY;
         mapView.update();
     }
 

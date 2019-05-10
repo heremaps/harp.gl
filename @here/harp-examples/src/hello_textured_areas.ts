@@ -121,8 +121,6 @@ West</a>.</p>`;
 
         CopyrightElementHandler.install("copyrightNotice", map);
 
-        map.camera.position.set(0, 0, 1600);
-
         map.geoCenter = new GeoCoordinates(40.7, -74.010241978);
         const mapControls = new MapControls(map);
         mapControls.setRotation(0.9, 23.928);

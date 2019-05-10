@@ -25,7 +25,7 @@ function createBerlinCenterCameraFromSamples() {
     camera.fov = 60;
     camera.setRotationFromEuler(new THREE.Euler(0, 0, 0, "XYZ"));
     camera.scale.set(1, 1, 1);
-    camera.position.set(0, 0, 800);
+    camera.position.set(0, 0, 800).add(worldCenter);
     camera.updateProjectionMatrix();
     camera.updateMatrixWorld(false);
     return { camera, worldCenter };
@@ -71,7 +71,7 @@ describe("VisibleTileSet", function() {
             new THREE.Euler(0.9524476341218958, 0.3495283765291587, 0.23897332216617775, "XYZ")
         );
         camera.scale.set(1, 1, 1);
-        camera.position.set(0, 0, 348.2202253184507);
+        camera.position.set(0, 0, 348.2202253184507).add(worldCenter);
         camera.updateProjectionMatrix();
         camera.updateMatrixWorld(false);
 
