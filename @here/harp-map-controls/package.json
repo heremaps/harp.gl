@@ -14,7 +14,8 @@
     },
     "repository": {
         "type": "git",
-        "url": "git://github.com:heremaps/harp.gl.git"
+        "url": "git://github.com:heremaps/harp.gl.git",
+        "directory": "@here/harp-map-controls"
     },
     "author": {
         "name": "HERE Europe B.V.",

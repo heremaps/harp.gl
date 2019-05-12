@@ -10,7 +10,8 @@
     },
     "repository": {
         "type": "git",
-        "url": "git://github.com:heremaps/harp.gl.git"
+        "url": "git://github.com:heremaps/harp.gl.git",
+        "directory": "@here/harp-utils"
     },
     "author": {
         "name": "HERE Europe B.V.",
