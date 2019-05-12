@@ -18,7 +18,7 @@
         "name": "HERE Europe B.V.",
         "url": "https://here.com"
     },
-    "license": "SEE LICENSE IN HERE_NOTICE",
+    "license": "Apache-2.0",
     "dependencies": {
         "@here/harp-utils": "^0.2.3"
     },
