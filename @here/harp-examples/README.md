@@ -23,6 +23,7 @@ We can group the examples by several categories, looking at what kind of feature
 ### Getting Started
 
 1. [The hello world example](src/hello.ts) that displays a map in an HTML element with our default map style and default data source.
+2. [The hello add simple object example](src/hello_add_simple_object.ts) that shows how to add a THREE.js object to the map.
 
 ### Camera
 
