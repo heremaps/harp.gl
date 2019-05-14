@@ -1,9 +1,79 @@
-<!DOCTYPE HTML>
-<html lang="en-US">
+<!doctype html>
+<html lang="en">
     <head>
-        <meta charset="UTF-8">
-        <meta http-equiv="refresh" content="0; url=./doc">
-        <title>Page Redirection</title>
+        <meta charset="utf-8">
+        <title>harp.gl</title>
+        <meta name="description" content="Landing page for harp.gl">
+        <meta name="viewport" content="width=device-width">
+        <link rel="stylesheet" href="./css/style.css">
+        <script   src="https://code.jquery.com/jquery-3.4.1.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+
+        <link rel="icon" type="image/x-icon" href="img/favicon.ico">
+
     </head>
-    <body></body>
+    <body class="here">
+        <header class="panel">
+            <div class="content-wrapper">
+                <nav id="service_switcher">
+                    <ul>
+                        <li>
+                            <a class="logo" href="https://here.com" title="Go to HERE.com to find out more about the company"></a>
+                        </li>
+                    </ul>
+                </nav>
+                <div class="header-descr">
+                    <h1 class="title">harp.gl</h1>
+                    <p class="intro">3D Web Rendering Engine.</p>
+                    <div>
+                            <a href="https://github.com/heremaps/harp.gl" class="dp-button dp-button-transparent" target="_blank">BROWSE ON GITHUB</a>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <script type="text/javascript">
+            var S3_URL = "http://harp.gl.s3-website-us-east-1.amazonaws.com/docs/";
+            function openRelease(suffix) {
+                window.open(S3_URL+$('#releases-dropdown').val()+"/"+suffix, "_blank");
+            }
+        </script>
+
+        <div class="content-wrapper">
+            <div  id="repo-section">
+                <section class="teaser light">
+                    <div class="spacer-top">&nbsp;</div>
+                    <h1>Documentation</h1>
+                    <p>Please select the target release...</p>
+                    <select id="releases-dropdown"></select>
+                    <div class="spacer-middle">&nbsp;</div>
+                    <a href="#" title="Click to open the target release" onclick="openRelease('doc');return false;" class="dp-button dp-button-primary" target="_blank">Docs</a>
+                    <a href="#" title="Click to open the target release" onclick="openRelease('examples');return false;" class="dp-button dp-button-primary" target="_blank">Examples</a>
+                    <div class="spacer-bottom">&nbsp;</div>
+                </section>
+            </div>
+        </div>
+
+        <footer>
+                <span class="imprint">
+                        <span class="copyright_string label_block">&copy; 2019    HERE</span> |
+                        <a target="_blank" href="https://legal.here.com/en/terms/serviceterms/us/" class="label_block">Terms</a> |
+                        <a target="_blank" href="https://legal.here.com/en/privacy/policy/us/" class="label_block">Privacy &amp;
+                                Cookies</a>
+                </span>
+        </footer>
+
+		<script type="text/javascript">
+			$( document ).ready(function() {
+				let dropdown = $('#releases-dropdown');
+				dropdown.empty();
+				dropdown.append('<option selected="true" value="master">master</option>');
+				dropdown.prop('selectedIndex', 0);
+				$.getJSON('./s3/releases.json', function (data) {
+					$.each(data, function (key, entry) {
+						dropdown.append($('<option></option>').attr('value', entry.hash).text(entry.date));
+					})
+				});
+			});
+        </script>
+    </body>
 </html>

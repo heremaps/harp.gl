@@ -38,7 +38,7 @@ jobs:
         set -ex
         yarn run build
         yarn run typedoc
-        echo -e 'include:\n  - "_*"' > dist/_config.yml
+      before_deploy: ./scripts/prepare_doc_deploy.sh
       deploy:
         - provider: script
           script: ./scripts/publish-packages.sh
@@ -49,7 +49,20 @@ jobs:
           skip_cleanup: true
           committer-from-gh: true
           keep-history: false
-          local-dir: dist
+          local-dir: dist/gh_deploy
           github-token: $GITHUB_TOKEN
           on:
             branch: release
+        - provider: s3
+          access_key_id: $AWS_ACCESS_KEY_ID
+          secret_access_key: $AWS_SECRET_ACCESS_KEY
+          bucket: "harp.gl"
+          skip_cleanup: true
+          local_dir: dist/s3_deploy
+          upload-dir: docs
+          region: us-east-1
+          acl: public_read
+          on:
+            all_branches: true
+            condition: $TRAVIS_BRANCH =~ ^master|release$
+
