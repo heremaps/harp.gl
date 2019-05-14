@@ -370,63 +370,6 @@ export class ConcurrentWorkerSet {
     }
 
     /**
-     * Posts a [[WorkerServiceProtocol.RequestMessage]] to an available worker. If no worker is
-     * available, the request is put into a queue.
-     *
-     * @param message The message to send.
-     * @param buffers Optional buffers to transfer to the worker.
-     * @param requestController An optional [[RequestController]] to store state of cancelling.
-     */
-    postRequestMessage(
-        message: WorkerServiceProtocol.RequestMessage,
-        buffers?: ArrayBuffer[] | undefined,
-        requestController?: RequestController
-    ) {
-        this.ensureStarted();
-        if (this.m_workers.length === 0) {
-            throw new Error("ConcurrentWorkerSet#postMessage: no workers started");
-        }
-
-        // Check if the requestController has received the abort signal, in which case the request
-        // is ignored.
-        if (requestController !== undefined && requestController.signal.aborted) {
-            const entry = this.m_requests.get(message.messageId);
-            if (entry === undefined) {
-                logger.error(
-                    `[${this.m_options.scriptUrl}]: Bad ResponseMessage: invalid messageId`
-                );
-                return;
-            }
-
-            const err = new Error("Aborted");
-            err.name = "AbortError";
-
-            entry.resolver(err, undefined);
-            return;
-        }
-
-        if (this.m_availableWorkers.length > 0) {
-            const worker = this.m_availableWorkers.pop()!;
-
-            worker.postMessage(message, buffers);
-        } else {
-            // We need a priority to keep sorting stable, so we have to add a RequestController.
-            if (requestController === undefined) {
-                requestController = new RequestController(0);
-            }
-            if (requestController.priority === 0) {
-                // If the requests do not get a priority, they should keep their sorting order.
-                requestController.priority = -this.m_nextMessageId;
-            }
-            this.m_workerRequestQueue.unshift({
-                message,
-                buffers,
-                requestController
-            });
-        }
-    }
-
-    /**
      * Posts a message to all workers.
      *
      * @param message The message to send.
@@ -479,7 +422,7 @@ export class ConcurrentWorkerSet {
      * @param workerId The workerId of the web worker.
      * @param event The event to dispatch.
      */
-    protected onWorkerMessage = (workerId: number, event: MessageEvent) => {
+    private onWorkerMessage = (workerId: number, event: MessageEvent) => {
         if (WorkerServiceProtocol.isResponseMessage(event.data)) {
             const response = event.data;
             if (response.messageId === null) {
@@ -534,6 +477,61 @@ export class ConcurrentWorkerSet {
             this.eventHandler(event);
         }
     };
+
+    /**
+     * Posts a [[WorkerServiceProtocol.RequestMessage]] to an available worker. If no worker is
+     * available, the request is put into a queue.
+     *
+     * @param message The message to send.
+     * @param buffers Optional buffers to transfer to the worker.
+     * @param requestController An optional [[RequestController]] to store state of cancelling.
+     */
+    private postRequestMessage(
+        message: WorkerServiceProtocol.RequestMessage,
+        buffers?: ArrayBuffer[] | undefined,
+        requestController?: RequestController
+    ) {
+        this.ensureStarted();
+        if (this.m_workers.length === 0) {
+            throw new Error("ConcurrentWorkerSet#postMessage: no workers started");
+        }
+
+        // Check if the requestController has received the abort signal, in which case the request
+        // is ignored.
+        if (requestController !== undefined && requestController.signal.aborted) {
+            const entry = this.m_requests.get(message.messageId);
+            if (entry === undefined) {
+                logger.error(`[${this.m_options.scriptUrl}]: Bad RequesMessage: invalid messageId`);
+                return;
+            }
+
+            const err = new Error("Aborted");
+            err.name = "AbortError";
+
+            entry.resolver(err, undefined);
+            return;
+        }
+
+        if (this.m_availableWorkers.length > 0) {
+            const worker = this.m_availableWorkers.pop()!;
+
+            worker.postMessage(message, buffers);
+        } else {
+            // We need a priority to keep sorting stable, so we have to add a RequestController.
+            if (requestController === undefined) {
+                requestController = new RequestController(0);
+            }
+            if (requestController.priority === 0) {
+                // If the requests do not get a priority, they should keep their sorting order.
+                requestController.priority = -this.m_nextMessageId;
+            }
+            this.m_workerRequestQueue.unshift({
+                message,
+                buffers,
+                requestController
+            });
+        }
+    }
 
     private ensureStarted() {
         if (this.m_stopped) {
@@ -628,20 +626,17 @@ export class ConcurrentWorkerSet {
      * the request with the highest priority is selected for processing.
      */
     private checkWorkerRequestQueue() {
-        if (this.m_workerRequestQueue.length > 0) {
-            this.m_workerRequestQueue.sort((a: WorkerRequestEntry, b: WorkerRequestEntry) => {
-                return a.requestController!.priority - b.requestController!.priority;
-            });
+        if (this.m_workerRequestQueue.length === 0 || this.m_availableWorkers.length === 0) {
+            return;
+        }
+        this.m_workerRequestQueue.sort((a: WorkerRequestEntry, b: WorkerRequestEntry) => {
+            return a.requestController!.priority - b.requestController!.priority;
+        });
 
-            if (this.m_availableWorkers.length > 0) {
-                // Get the request with the highest priority and send it (again).
-                const request = this.m_workerRequestQueue.pop()!;
-                this.postRequestMessage(
-                    request.message,
-                    request.buffers,
-                    request.requestController
-                );
-            }
+        // Get the request with the highest priority and send it (again).
+        while (this.m_availableWorkers.length > 0 && this.m_workerRequestQueue.length > 0) {
+            const request = this.m_workerRequestQueue.pop()!;
+            this.postRequestMessage(request.message, request.buffers, request.requestController);
         }
     }
 }
