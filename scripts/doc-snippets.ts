@@ -90,5 +90,8 @@ for (const sourceFile of sourceFiles) {
 
 fs.copyFileSync(path.join(sdkDir, "LICENSE"), path.join(outDir, "LICENSE"));
 fs.copyFileSync(path.join(sdkDir, "docs/index.html"), "dist/index.html");
+fse.copySync(path.join(sdkDir, "docs/img"), "dist/img");
+fse.copySync(path.join(sdkDir, "docs/css"), "dist/css");
 fs.copyFileSync(path.join(sdkDir, "LICENSE"), path.join(distOutDir, "LICENSE"));
 fse.copySync(path.join(sdkDir, "docs"), distDocsOutDir);
+fs.writeFileSync("dist/_config.yml", 'include:\n  - "_*"\n', { encoding: "utf8" });
