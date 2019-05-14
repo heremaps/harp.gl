@@ -556,10 +556,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                 isDashedLineTechnique(technique) ||
                 isLineTechnique(technique);
             const isPolygon =
-                isExtrudedPolygonTechnique ||
-                isFillTechnique(technique) ||
-                isStandardTechnique(technique) ||
-                isStandardTexturedTechnique(technique);
+                isExtruded || isFilled || isStandardTechnique(technique) || isTextured;
 
             const edgeWidth = isExtruded
                 ? extrudedPolygonTechnique.lineWidth || 0.0
@@ -741,7 +738,10 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
         featureId: number | undefined,
         env: MapEnv
     ): void {
-        const meshBuffers = this.findOrCreateMeshBuffers(techniqueIndex, GeometryType.Polygon);
+        const isExtruded = isExtrudedPolygonTechnique(technique);
+
+        const geometryType = isExtruded ? GeometryType.ExtrudedPolygon : GeometryType.Polygon;
+        const meshBuffers = this.findOrCreateMeshBuffers(techniqueIndex, geometryType);
 
         if (meshBuffers === undefined) {
             return;
@@ -749,7 +749,6 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
 
         const extrudedPolygonTechnique = technique as ExtrudedPolygonTechnique;
 
-        const isExtruded = isExtrudedPolygonTechnique(technique);
         const isFilled = isFillTechnique(technique);
         const isTextured = isStandardTexturedTechnique(technique);
 
