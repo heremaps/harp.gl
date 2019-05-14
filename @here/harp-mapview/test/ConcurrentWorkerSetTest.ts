@@ -3,7 +3,11 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-import { WorkerDecoderProtocol, WorkerServiceProtocol } from "@here/harp-datasource-protocol";
+import {
+    RequestController,
+    WorkerDecoderProtocol,
+    WorkerServiceProtocol
+} from "@here/harp-datasource-protocol";
 import { stubGlobalConstructor, willEventually } from "@here/harp-test-utils";
 import { Logger, LogLevel, WorkerChannel, WORKERCHANNEL_MSG_TYPE } from "@here/harp-utils";
 import { assert } from "chai";
@@ -25,13 +29,6 @@ const isInitializedMessage: WorkerServiceProtocol.InitializedMessage = {
 const sampleMessage: WorkerServiceProtocol.ServiceMessage = {
     type: WorkerServiceProtocol.ServiceMessageName.Request,
     service: "service-id"
-};
-
-const sampleRequestMessage: WorkerServiceProtocol.RequestMessage = {
-    type: WorkerServiceProtocol.ServiceMessageName.Request,
-    service: "service-id",
-    messageId: 0,
-    request: undefined
 };
 
 const sampleRequest: WorkerDecoderProtocol.DecodeTileRequest = {
@@ -125,7 +122,7 @@ describe("ConcurrentWorkerSet", function() {
 
         // Assert
         assert.throws(() => {
-            victim.postRequestMessage(sampleRequestMessage);
+            victim.invokeRequest("foo-service", sampleRequest);
         });
 
         assert.throws(() => {
@@ -169,7 +166,7 @@ describe("ConcurrentWorkerSet", function() {
         });
 
         assert.throws(() => {
-            victim.postRequestMessage(sampleRequestMessage);
+            victim.invokeRequest("foo-service", sampleRequest);
         });
 
         assert.throws(() => {
@@ -183,7 +180,7 @@ describe("ConcurrentWorkerSet", function() {
         assert.equal(workerConstructorStub.prototype.postMessage.callCount, 0);
     });
 
-    it("#postMessage sends message to one random worker", async function() {
+    it("#invokeRequest sends message to one random worker", async function() {
         // Arrange
         const workerConstructorStub = stubGlobalConstructor(sandbox, "Worker");
         willExecuteWorkerScript(workerConstructorStub, self => {
@@ -197,14 +194,16 @@ describe("ConcurrentWorkerSet", function() {
         });
 
         await victim.connect(isInitializedMessage.service);
-        victim.postRequestMessage(sampleRequestMessage);
+        victim.invokeRequest("foo-service", sampleRequest);
 
         // Assert
         await willEventually(() => {
             assert.equal(workerConstructorStub.prototype.postMessage.callCount, 1);
-            assert(
-                workerConstructorStub.prototype.postMessage.alwaysCalledWith(sampleRequestMessage)
-            );
+            assert.deepInclude(workerConstructorStub.prototype.postMessage.args[0][0], {
+                type: WorkerServiceProtocol.ServiceMessageName.Request,
+                messageId: 0,
+                request: sampleRequest
+            });
         });
     });
 
@@ -346,6 +345,64 @@ describe("ConcurrentWorkerSet", function() {
         assert.equal(responses.length, 10);
 
         assert.equal(workerConstructorStub.prototype.postMessage.callCount, 10);
+    });
+
+    it("properly drains queue with many aborts", async function() {
+        // Arrange
+        const workerConstructorStub = stubGlobalConstructor(sandbox, "Worker");
+
+        // This worker will reply to all `ConcurrentWorkerSet.invokeRequest` by echoing
+        // request as response.
+        willExecuteWorkerScript(workerConstructorStub, self => {
+            self.postMessage(isInitializedMessage);
+
+            self.onmessage = (messageEvent: MessageEvent) => {
+                const message = messageEvent.data;
+                assert.isTrue(WorkerServiceProtocol.isRequestMessage(message));
+
+                const request = message as WorkerServiceProtocol.RequestMessage;
+                setTimeout(() => {
+                    const response: WorkerServiceProtocol.ResponseMessage = {
+                        service: request.service,
+                        type: WorkerServiceProtocol.ServiceMessageName.Response,
+                        messageId: request.messageId,
+                        response: request.request
+                    };
+                    self.postMessage(response);
+                }, 1);
+            };
+        });
+
+        // Act
+        const victim = new ConcurrentWorkerSet({
+            scriptUrl: "./foo.js",
+            workerCount: 10
+        });
+
+        const N = 100;
+        await victim.connect(isInitializedMessage.service);
+        const promises: Array<Promise<void>> = [];
+        let responses = 0;
+        for (let i = 0; i < N; i++) {
+            const rq = new RequestController();
+            const p = victim
+                .invokeRequest("echo-service", sampleRequest, undefined, rq)
+                .then(() => {
+                    responses += 1;
+                })
+                .catch(() => {
+                    responses += 1;
+                    return;
+                });
+            promises.push(p as any);
+            if (i % 2 === 1) {
+                rq.abort();
+            }
+        }
+        await Promise.all(promises);
+
+        // Assert
+        assert.equal(responses, N);
     });
 
     describe("log forwarding", function() {
