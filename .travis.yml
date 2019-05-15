@@ -49,9 +49,10 @@ jobs:
           on:
             branch: release
         - provider: script
-          script:
-            - echo '//registry.npmjs.org/:_authToken=${NPM_TOKEN}' > ~/.npmrc
-            - npx lerna publish -y from-git
+          script: |
+            set -ex
+            echo '//registry.npmjs.org/:_authToken=${NPM_TOKEN}' > ~/.npmrc
+            npx lerna publish -y from-git
           skip_cleanup: true
           on:
             branch: release
