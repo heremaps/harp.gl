@@ -31,8 +31,8 @@ jobs:
         npx ts-mocha -r tsconfig-paths/register ./@here/*/test/*.ts
         yarn test-browser --headless-firefox
         yarn test-browser --headless-chrome
-        ./scripts/test-npm-packages.sh
-        git status # just in case test-npm-packages leaves some garbage
+        #./scripts/test-npm-packages.sh
+        #git status # just in case test-npm-packages leaves some garbage
     - name: "Build & Deploy"
       script: |
         set -ex
@@ -40,20 +40,18 @@ jobs:
         yarn run typedoc
         echo -e 'include:\n  - "_*"' > dist/_config.yml
       deploy:
-        provider: pages
-        skip_cleanup: true
-        committer-from-gh: true
-        keep-history: false
-        local-dir: dist
-        github-token: $GITHUB_TOKEN
-        on:
-          branch: release
-
-deploy:
-  - provider: script
-    script:
-      - echo '//registry.npmjs.org/:_authToken=${NPM_TOKEN}' > ~/.npmrc
-      - npx lerna publish -y from-git
-    skip_cleanup: true
-    on:
-      branch: release
+        - provider: pages
+          skip_cleanup: true
+          committer-from-gh: true
+          keep-history: false
+          local-dir: dist
+          github-token: $GITHUB_TOKEN
+          on:
+            branch: release
+        - provider: script
+          script:
+            - echo '//registry.npmjs.org/:_authToken=${NPM_TOKEN}' > ~/.npmrc
+            - npx lerna publish -y from-git
+          skip_cleanup: true
+          on:
+            branch: release
