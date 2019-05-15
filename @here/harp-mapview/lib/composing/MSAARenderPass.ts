@@ -108,7 +108,7 @@ export class MSAARenderPass extends Pass {
         renderer: THREE.WebGLRenderer,
         scene: THREE.Scene,
         camera: THREE.PerspectiveCamera | THREE.OrthographicCamera,
-        writeBuffer: THREE.WebGLRenderTarget | undefined,
+        writeBuffer: THREE.WebGLRenderTarget | null,
         readBuffer: THREE.WebGLRenderTarget
     ) {
         if (!this.enabled) {
@@ -187,7 +187,7 @@ export class MSAARenderPass extends Pass {
             // 6. Render the quad on top of the previous renders.
 
             // NOTE: three.js doesn't like undefined as renderTarget, but works with `null`
-            renderer.setRenderTarget(this.renderToScreen ? null! : writeBuffer);
+            renderer.setRenderTarget(this.renderToScreen ? null : writeBuffer);
             if (i === 0) {
                 renderer.setClearColor(0x000000);
                 renderer.clear();

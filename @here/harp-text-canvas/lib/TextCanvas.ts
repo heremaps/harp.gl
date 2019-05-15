@@ -397,7 +397,7 @@ export class TextCanvas {
      */
     render(camera: THREE.OrthographicCamera, target?: THREE.WebGLRenderTarget, clear?: boolean) {
         this.m_fontCatalog.update(this.m_renderer);
-        let oldTarget: THREE.RenderTarget | undefined;
+        let oldTarget: THREE.RenderTarget | null = null;
         if (target !== undefined) {
             oldTarget = this.m_renderer.getRenderTarget();
             this.m_renderer.setRenderTarget(target);

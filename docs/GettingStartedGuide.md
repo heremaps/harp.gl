@@ -1,9 +1,10 @@
 # Getting Started Guide
 
 To begin with `harp.gl`, we provide few starting points
- * [Create simple app](#yeoman) using Yeoman
- * [Integrate `harp.gl` into your existing Webpack based project](#integrate)
- * [Look at examples](#examples)
+
+-   [Create simple app](#yeoman) using Yeoman
+-   [Integrate `harp.gl` into your existing Webpack based project](#integrate)
+-   [Look at examples](#examples)
 
 ## <a name="yeoman"></a> Create Typescript app using Yeoman
 
@@ -25,16 +26,18 @@ format require us to use some javascript code bundler - this example will facili
 ### Installation
 
 Install them into your project:
+
 ```shell
-npm install --save @here/harp-mapview @here/harp-omv-datasource @here/harp-map-theme three@0.102
+npm install --save @here/harp-mapview @here/harp-omv-datasource @here/harp-map-theme three@0.104
 ```
 
 You have installed 3 key components needed to render basic map:
-* `@here/harp-mapview` - map renderer itself
-* `@here/harp-omv-datasource` - tile provider based on OMV/MVT vector tile format
-* `@here/harp-map-theme`  - default theme and font resources required to render map in OMV/tilezen
-   scheme
-* `three` - Three.js - a mandatory dependency of `harp.gl`
+
+-   `@here/harp-mapview` - map renderer itself
+-   `@here/harp-omv-datasource` - tile provider based on OMV/MVT vector tile format
+-   `@here/harp-map-theme` - default theme and font resources required to render map in OMV/tilezen
+    scheme
+-   `three` - Three.js - a mandatory dependency of `harp.gl`
 
 ### Decoder bundle
 
@@ -50,15 +53,16 @@ const appConfig = {
 const harpGlDecodersConfig = {
     target: "webworker",
     entry: {
-        decoder: "./harp-gl-decoders.js",
+        decoder: "./harp-gl-decoders.js"
     },
     output: {
-        filename: "harp-gl-decoders.bundle.js",
+        filename: "harp-gl-decoders.bundle.js"
     },
     mode: process.env.NODE_ENV || "development"
-}
+};
 return [appConfig, harpGlDecodersConfig];
 ```
+
 The `./harp-gl-decoders.js` needs to initialize decoding service:
 
 ```javascript
@@ -96,11 +100,11 @@ const mapCanvas = document.getElementById("mapCanvas");
 const mapView = new MapView({
     canvas: mapCanvas,
     theme: "node_modules/@here/harp-map-theme/resources/berlin_tilezen_base.json",
-       // note, this URL may vary depending on configuration of webpack
-       // for this example, it is assumed that app is server from project root
+    // note, this URL may vary depending on configuration of webpack
+    // for this example, it is assumed that app is server from project root
     decoderUrl: "harp-gl-decoders.bundle.js"
-       // note, this URL may vary depending on configuration of webpack
-       // for this example, it is assumed that webpack emits bundles to project root
+    // note, this URL may vary depending on configuration of webpack
+    // for this example, it is assumed that webpack emits bundles to project root
 });
 ```
 
