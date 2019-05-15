@@ -1,6 +1,6 @@
 {
     "name": "@here/harp-map-theme",
-    "version": "0.2.2",
+    "version": "0.2.3",
     "description": "Map themes",
     "main": "index.js",
     "typings": "index",
@@ -23,7 +23,7 @@
     },
     "license": "Apache-2.0",
     "dependencies": {
-        "@here/harp-datasource-protocol": "^0.3.2"
+        "@here/harp-datasource-protocol": "^0.3.3"
     },
     "devDependencies": {
         "@here/harp-font-resources": "^0.2.4",
