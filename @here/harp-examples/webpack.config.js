@@ -40,10 +40,7 @@ const commonConfig = {
         }
     ],
     resolve: {
-        extensions: [".webpack.js", ".web.ts", ".ts", ".tsx", ".web.js", ".js"],
-        alias: {
-            "react-native": "react-native-web"
-        }
+        extensions: [".webpack.js", ".web.ts", ".ts", ".tsx", ".web.js", ".js"]
     },
     module: {
         rules: [
@@ -52,13 +49,9 @@ const commonConfig = {
                 loader: "ts-loader",
                 exclude: /node_modules/,
                 options: {
-                    configFile: path.join(process.cwd(), "tsconfig.json"),
+                    configFile: path.join(__dirname, "tsconfig-build.json"),
                     onlyCompileBundledFiles: true,
-                    transpileOnly: prepareOnly,
-                    compilerOptions: {
-                        sourceMap: !prepareOnly,
-                        declaration: false
-                    }
+                    projectReferences: true
                 }
             }
         ]
@@ -84,12 +77,13 @@ const commonConfig = {
 const decoderConfig = merge(commonConfig, {
     target: "webworker",
     entry: {
-        decoder: "./decoder/decoder.ts"
+        decoder: "./decoder/decoder"
     }
 });
 
 const webpackEntries = glob
     .sync(path.join(__dirname, "./src/*.{ts,tsx}"))
+    .filter(name => !name.includes(".d.ts"))
     .reduce((result, entry) => {
         const name = path.basename(entry).replace(/.tsx?$/, "");
         if (name.startsWith("common")) {

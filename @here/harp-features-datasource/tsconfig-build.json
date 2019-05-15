@@ -1,0 +1,14 @@
+{
+    "extends": "../../tsconfig.settings.json",
+    "compilerOptions": {
+        "rootDir": ".",
+        "outDir": "."
+    },
+    "references": [
+        { "path": "../harp-datasource-protocol/tsconfig-build.json" },
+        { "path": "../harp-geojson-datasource/tsconfig-build.json" },
+        { "path": "../harp-mapview/tsconfig-build.json" },
+        { "path": "../harp-omv-datasource/tsconfig-build.json" }
+    ],
+    "exclude": ["test/**/*.ts"]
+}

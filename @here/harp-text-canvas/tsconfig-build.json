@@ -1,0 +1,9 @@
+{
+    "extends": "../../tsconfig.settings.json",
+    "compilerOptions": {
+        "rootDir": ".",
+        "outDir": "."
+    },
+    "references": [{ "path": "../harp-lrucache/tsconfig-build.json" }],
+    "exclude": ["test/**/*.ts"]
+}

@@ -24,14 +24,8 @@ const commonConfig = {
                 exclude: /node_modules/,
                 options: {
                     onlyCompileBundledFiles: true,
-                    // use the main tsconfig.json for all compilation
-                    // configFile: path.join(process.cwd(), "tsconfig.json"),
-                    configFile: fs.existsSync("../../tsconfig.json")
-                        ? path.resolve(__dirname, "../../tsconfig.json")
-                        : path.resolve(__dirname, "./tsconfig.json"),
-                    compilerOptions: {
-                        declaration: false
-                    }
+                    projectReferences: true,
+                    configFile: path.join(__dirname, "tsconfig-build.json")
                 }
             }
         ]

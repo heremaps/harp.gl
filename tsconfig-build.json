@@ -1,0 +1,8 @@
+{
+    "files": [],
+    "references": [
+        { "path": "./tsconfig-build-sdk.json" },
+        { "path": "./@here/harp-examples/tsconfig-build.json" },
+        { "path": "./tsconfig-build-tests.json" }
+    ]
+}

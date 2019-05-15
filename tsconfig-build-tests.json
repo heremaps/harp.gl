@@ -1,0 +1,25 @@
+{
+    "files": [],
+    "compilerOptions": {
+        "composite": true
+    },
+    "references": [
+        { "path": "test/tsconfig-build.json" },
+        { "path": "@here/harp-datasource-protocol/test/tsconfig-build.json" },
+        { "path": "@here/harp-fetch/test/tsconfig-build.json" },
+        { "path": "@here/harp-geoutils/test/tsconfig-build.json" },
+        { "path": "@here/harp-geojson-datasource/test/tsconfig-build.json" },
+        { "path": "@here/harp-geometry/test/tsconfig-build.json" },
+        { "path": "@here/harp-lines/test/tsconfig-build.json" },
+        { "path": "@here/harp-lrucache/test/tsconfig-build.json" },
+        { "path": "@here/harp-map-controls/test/tsconfig-build.json" },
+        { "path": "@here/harp-mapview/test/tsconfig-build.json" },
+        { "path": "@here/harp-mapview-decoder/test/tsconfig-build.json" },
+        { "path": "@here/harp-omv-datasource/test/tsconfig-build.json" },
+        { "path": "@here/harp-utils/test/tsconfig-build.json" },
+        { "path": "@here/harp-test-utils/test/tsconfig-build.json" },
+        { "path": "@here/harp-text-canvas/test/tsconfig-build.json" },
+        { "path": "@here/harp-transfer-manager/test/tsconfig-build.json" },
+        { "path": "@here/harp-webtile-datasource/test/tsconfig-build.json" }
+    ]
+}

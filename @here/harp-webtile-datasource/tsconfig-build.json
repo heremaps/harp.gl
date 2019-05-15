@@ -1,0 +1,13 @@
+{
+    "extends": "../../tsconfig.settings.json",
+    "compilerOptions": {
+        "outDir": ".",
+        "rootDir": "."
+    },
+    "references": [
+        { "path": "../harp-geoutils/tsconfig-build.json" },
+        { "path": "../harp-mapview/tsconfig-build.json" },
+        { "path": "../harp-utils/tsconfig-build.json" }
+    ],
+    "exclude": ["test/**/*.ts"]
+}

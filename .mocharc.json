@@ -1,0 +1,5 @@
+{
+    "diff": true,
+    "spec": ["./test/**/*.js", "./@here/*/test/**/*.js"],
+    "exclude": ["./@here/harp-mapview/test/resources/testWorker.js"]
+}

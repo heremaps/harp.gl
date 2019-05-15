@@ -21,12 +21,17 @@ const harpFontResourcesPath = path.dirname(require.resolve("@here/harp-fontcatal
 const allTests = [
     ...glob.sync("@here/*/test/**/*.ts"),
     ...glob.sync("./test/performance/**/*.ts"),
-    ...glob.sync("./test/rendering/*.ts"),
-];
+    ...glob.sync("./test/rendering/*.ts")
+].filter(name => !name.endsWith(".d.ts"))   ;
 
-const unitTests = allTests.filter(name => (name.indexOf("/rendering") === -1 && name.indexOf("/performance/") === -1));
-const performanceTests = allTests.filter(name => name.indexOf("/performance/") > -1);
-const renderingTests = allTests.filter(name => name.indexOf("/rendering/") > -1);
+const unitTests = allTests.filter(
+    name =>
+        !name.includes("/rendering") &&
+        !name.includes("/performance/") &&
+        !name.includes("/generator-harp.gl/")
+);
+const performanceTests = allTests.filter(name => name.includes("/performance/"));
+const renderingTests = allTests.filter(name => name.includes("/rendering/"));
 
 const browserTestsConfig = {
     devtool: "source-map",
@@ -42,8 +47,8 @@ const browserTestsConfig = {
                 exclude: /node_modules/,
                 options: {
                     onlyCompileBundledFiles: true,
-                    // use the main tsconfig.json for all compilation
-                    configFile: path.resolve(__dirname, "tsconfig.json")
+                    projectReferences: true,
+                    configFile: path.join(__dirname, "tsconfig-build-tests.json")
                 }
             }
         ]
@@ -110,6 +115,10 @@ const browserTestsConfig = {
         errors: true,
         entrypoints: true,
         warnings: true
+    },
+    watchOptions: {
+        aggregateTimeout: 300,
+        poll: 1000
     },
     mode: process.env.NODE_ENV || "development"
 };

@@ -42,7 +42,7 @@
         "cov-test": "nyc mocha -r ts-node/register ./@here/*/test/*.ts",
         "cov-report-html": "nyc report --reporter=html",
         "start": "ts-node ./scripts/credentials.ts -- . && webpack-dev-server -d --config @here/harp-examples/webpack.config.js",
-        "build": "npm run build-bundle && npm run build-examples",
+        "build": "yarn build-bundle && yarn build-examples",
         "build-examples": "ts-node ./scripts/credentials.ts -- dist/examples && webpack -d --config @here/harp-examples/webpack.config.js",
         "build-bundle": "cd @here/harp.gl && webpack",
         "start-tests": "webpack-dev-server -d --config webpack.tests.config.js",
@@ -53,7 +53,11 @@
         "tslint:fix": "tslint --fix --project tsconfig.json",
         "prettier": "prettier -l \"**/*.ts\" \"**/*.tsx\" \"**/*.json\"",
         "prettier:fix": "prettier --write \"**/*.ts\" \"**/*.tsx\" \"**/*.json\"",
-        "postinstall": "ts-node ./scripts/postinstall.ts"
+        "postinstall": "ts-node ./scripts/postinstall.ts",
+        "tsc": "tsc -b ./tsconfig-build.json",
+        "tsc-examples": "tsc -b ./@here/harp-examples/tsconfig-build.json",
+        "tsc-sdk": "tsc -b ./tsconfig-build-sdk.json",
+        "tsc-tests": "tsc -b ./tsconfig-build-tests.json"
     },
     "engines": {
         "node": ">=10.5.0",

@@ -1,0 +1,12 @@
+{
+    "extends": "../../../tsconfig.settings.json",
+    "compilerOptions": {
+        "rootDir": ".",
+        "outDir": "."
+    },
+    "references": [
+        { "path": "../tsconfig-build.json" },
+        { "path": "../../harp-geoutils/tsconfig-build.json" },
+        { "path": "../../harp-mapview-decoder/tsconfig-build.json" }
+    ]
+}

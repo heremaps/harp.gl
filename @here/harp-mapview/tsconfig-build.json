@@ -1,0 +1,18 @@
+{
+    "extends": "../../tsconfig.settings.json",
+    "compilerOptions": {
+        "rootDir": ".",
+        "outDir": "."
+    },
+    "references": [
+        { "path": "../harp-datasource-protocol/tsconfig-build.json" },
+        { "path": "../harp-fetch/tsconfig-build.json" },
+        { "path": "../harp-geoutils/tsconfig-build.json" },
+        { "path": "../harp-lines/tsconfig-build.json" },
+        { "path": "../harp-lrucache/tsconfig-build.json" },
+        { "path": "../harp-materials/tsconfig-build.json" },
+        { "path": "../harp-text-canvas/tsconfig-build.json" },
+        { "path": "../harp-utils/tsconfig-build.json" }
+    ],
+    "exclude": ["test/**/*.ts"]
+}

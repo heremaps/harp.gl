@@ -689,7 +689,8 @@ export namespace ExtrusionFeature {
  *
  * @see [[Tile#addRenderHelper]]
  */
-export class ExtrusionFeatureMixin implements ExtrusionFeature {
+
+class ExtrusionFeatureMixin implements ExtrusionFeature {
     needsUpdate?: boolean;
     uniformsNeedUpdate?: boolean;
     private m_extrusion: number = ExtrusionFeature.DEFAULT_RATIO_MAX;

@@ -1,0 +1,31 @@
+{
+    "extends": "../../tsconfig.settings.json",
+    "compilerOptions": {
+        "rootDir": ".",
+        "outDir": ".",
+        "resolveJsonModule": true
+    },
+    "references": [
+        { "path": "../harp-datasource-protocol/tsconfig-build.json" },
+        { "path": "../harp-debug-datasource/tsconfig-build.json" },
+        { "path": "../harp-features-datasource/tsconfig-build.json" },
+        { "path": "../harp-geojson-datasource/tsconfig-build.json" },
+        { "path": "../harp-geoutils/tsconfig-build.json" },
+        { "path": "../harp-map-controls/tsconfig-build.json" },
+        { "path": "../harp-mapview/tsconfig-build.json" },
+        { "path": "../harp-omv-datasource/tsconfig-build.json" },
+        { "path": "../harp-text-canvas/tsconfig-build.json" },
+        { "path": "../harp-utils/tsconfig-build.json" },
+        { "path": "../harp-webtile-datasource/tsconfig-build.json" }
+    ],
+    "include": [
+        "./*.ts",
+        "./src/*.ts",
+        "./lib/*.ts",
+        "./resources/*.ts",
+        "./decoder/*.ts",
+        "./src/*.tsx",
+        "./resources/**/*.json"
+    ],
+    "exclude": ["test/**/*.ts", "dist/**/*.ts"]
+}

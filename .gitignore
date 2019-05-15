@@ -5,5 +5,8 @@ test-npm-packages-app/
 .vscode/
 .DS_Store
 .nyc_output/
-
 credentials.js
+*.d.ts
+*.js
+*.js.map
+tsconfig-build.tsbuildinfo
