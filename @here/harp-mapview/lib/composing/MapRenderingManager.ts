@@ -157,7 +157,7 @@ export class MapRenderingManager implements IMapRenderingManager {
     ) {
         if (!isStaticFrame && this.m_lowResPass.pixelRatio !== undefined) {
             // Not designed to be combined with our own MSAA
-            const target = undefined;
+            const target = null;
             this.m_lowResPass.renderToScreen = true;
             this.m_lowResPass.render(renderer, scene, camera, target, this.m_readBuffer);
             return;
@@ -173,7 +173,7 @@ export class MapRenderingManager implements IMapRenderingManager {
         } else {
             // Later with further effects, a ThreeJS WebGLRenderTarget will be needed as the
             // destination of the render call.
-            const target = undefined;
+            const target = null;
             if (this.m_msaaPass.enabled) {
                 // Use a higher MSAA sampling level for static rendering.
                 this.m_msaaPass.samplingLevel = isStaticFrame

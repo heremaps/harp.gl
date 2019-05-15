@@ -105,7 +105,7 @@ export class LowResRenderPass extends Pass {
         renderer: THREE.WebGLRenderer,
         scene: THREE.Scene,
         camera: THREE.PerspectiveCamera | THREE.OrthographicCamera,
-        writeBuffer: THREE.WebGLRenderTarget | undefined,
+        writeBuffer: THREE.WebGLRenderTarget | null,
         readBuffer: THREE.WebGLRenderTarget
     ) {
         if (!this.enabled || this.pixelRatio === undefined) {
@@ -141,7 +141,7 @@ export class LowResRenderPass extends Pass {
 
         // Render the low resolution target into the screen.
         // NOTE: three.js doesn't like undefined as renderTarget, but works with `null`
-        renderer.setRenderTarget(this.renderToScreen ? null! : writeBuffer);
+        renderer.setRenderTarget(this.renderToScreen ? null : writeBuffer);
         renderer.clear();
         renderer.render(this.m_quadScene, this.m_localCamera);
         renderer.setRenderTarget(oldRenderTarget);

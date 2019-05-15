@@ -46,8 +46,8 @@ export interface IPass {
         renderer: THREE.WebGLRenderer,
         scene: THREE.Scene,
         camera: THREE.Camera,
-        writeBuffer: THREE.WebGLRenderTarget | undefined,
-        readBuffer: THREE.WebGLRenderTarget | undefined,
+        writeBuffer: THREE.WebGLRenderTarget | null,
+        readBuffer: THREE.WebGLRenderTarget | null,
         delta?: number
     ): void;
 }
@@ -76,8 +76,8 @@ export class Pass implements IPass {
         renderer: THREE.WebGLRenderer,
         scene: THREE.Scene,
         camera: THREE.Camera,
-        writeBuffer: THREE.WebGLRenderTarget | undefined,
-        readBuffer: THREE.WebGLRenderTarget | undefined,
+        writeBuffer: THREE.WebGLRenderTarget | null,
+        readBuffer: THREE.WebGLRenderTarget | null,
         delta?: number
     ) {
         // Implemented in sub-classes.

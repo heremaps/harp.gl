@@ -39,7 +39,7 @@
         "typescript": "^3.4.1"
     },
     "peerDependencies": {
-        "three": "^0.102.0"
+        "three": "^0.104.0"
     },
     "publishConfig": {
         "access": "public"

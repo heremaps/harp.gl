@@ -265,7 +265,7 @@ export class GlyphTextureCache {
      * @param renderer WebGLRenderer.
      */
     update(renderer: THREE.WebGLRenderer): void {
-        let oldRenderTarget: THREE.RenderTarget | undefined;
+        let oldRenderTarget: THREE.RenderTarget | null = null;
 
         const willClearGeometry = this.m_clearGeometryDrawCount > 0;
         const willCopyGeometry = this.m_copyGeometryDrawCount > 0;

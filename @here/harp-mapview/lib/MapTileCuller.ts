@@ -88,15 +88,12 @@ export class MapTileCuller {
      */
     private getFrustumCorners(): THREE.Vector3[] {
         const frustumCorners = this.m_frustumCorners;
-
-        const camera = new THREE.Camera();
-
-        camera.projectionMatrix.copy(this.m_camera.projectionMatrix);
+        const invProjMatrix = (this.m_camera as any).projectionMatrixInverse as THREE.Matrix4;
 
         let cornerIndex = 0;
 
         function addPoint(x: number, y: number, z: number) {
-            frustumCorners[cornerIndex++].set(x, y, z).unproject(camera);
+            frustumCorners[cornerIndex++].set(x, y, z).applyMatrix4(invProjMatrix);
         }
 
         const w = 1;

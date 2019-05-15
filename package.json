@@ -12,7 +12,7 @@
         "mocha": "^6.1.4",
         "mocha-webdriver-runner": "^0.5.1",
         "prettier": "^1.17.0",
-        "three": "^0.102.0",
+        "three": "^0.104.0",
         "ts-mocha": "^6.0.0",
         "tslint": "^5.16.0",
         "tslint-config-prettier": "^1.18.0",
