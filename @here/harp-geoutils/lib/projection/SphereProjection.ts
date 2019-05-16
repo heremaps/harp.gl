@@ -329,6 +329,17 @@ class SphereProjection implements Projection {
         worldPoint.z *= scale;
         return worldPoint;
     }
+
+    surfaceNormal(worldPoint: Vector3Like, normal?: Vector3Like) {
+        if (normal === undefined) {
+            normal = { x: 0, y: 0, z: 0 };
+        }
+        const scale = 1 / (lengthOfVector3(worldPoint) || 1);
+        normal.x = worldPoint.x * scale;
+        normal.y = worldPoint.y * scale;
+        normal.z = worldPoint.z * scale;
+        return normal;
+    }
 }
 
 export const sphereProjection = new SphereProjection();
