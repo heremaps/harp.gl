@@ -40,19 +40,16 @@ jobs:
         yarn run typedoc
         echo -e 'include:\n  - "_*"' > dist/_config.yml
       deploy:
+        - provider: script
+          script: chmod +x ./scripts/publish-packages.sh && ./scripts/publish-packages.sh
+          skip_cleanup: true
+          on:
+            branch: release
         - provider: pages
           skip_cleanup: true
           committer-from-gh: true
           keep-history: false
           local-dir: dist
           github-token: $GITHUB_TOKEN
-          on:
-            branch: release
-        - provider: script
-          script: |
-            set -ex
-            echo '//registry.npmjs.org/:_authToken=${NPM_TOKEN}' > ~/.npmrc
-            npx lerna publish -y from-git
-          skip_cleanup: true
           on:
             branch: release
