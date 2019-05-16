@@ -41,7 +41,7 @@ jobs:
         echo -e 'include:\n  - "_*"' > dist/_config.yml
       deploy:
         - provider: script
-          script: chmod +x ./scripts/publish-packages.sh && ./scripts/publish-packages.sh
+          script: ./scripts/publish-packages.sh
           skip_cleanup: true
           on:
             branch: release
