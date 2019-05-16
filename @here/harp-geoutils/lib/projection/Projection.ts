@@ -134,6 +134,21 @@ export interface Projection {
     getScaleFactor(worldPoint: Vector3Like): number;
 
     /**
+     * Returns the surface normal at the given world position.
+     *
+     * @param worldPoint The position in world coordinates.
+     */
+    surfaceNormal(worldPoint: Vector3Like): Vector3Like;
+
+    /**
+     * Returns the surface normal at the given world position.
+     *
+     * @param worldPoint The position in world coordinates.
+     * @returns The resulting normal vector.
+     */
+    surfaceNormal<Normal extends Vector3Like>(worldPoint: Vector3Like, result: Normal): Normal;
+
+    /**
      * Returns the signed distance between the given coordinates and
      * the closest point on the surface.
      *
