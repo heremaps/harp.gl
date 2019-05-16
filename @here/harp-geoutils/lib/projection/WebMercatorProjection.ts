@@ -90,6 +90,17 @@ class WebMercatorProjection extends MercatorProjection {
         );
         return geoBox;
     }
+
+    surfaceNormal(_worldPoint: Vector3Like, normal?: Vector3Like) {
+        if (normal === undefined) {
+            normal = { x: 0, y: 0, z: -1 };
+        } else {
+            normal.x = 0;
+            normal.y = 0;
+            normal.z = -1;
+        }
+        return normal;
+    }
 }
 
 /**

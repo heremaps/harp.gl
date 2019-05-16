@@ -106,6 +106,17 @@ class IdentityProjection implements Projection {
         worldPoint.z = 0;
         return worldPoint;
     }
+
+    surfaceNormal(_worldPoint: Vector3Like, normal?: Vector3Like) {
+        if (normal === undefined) {
+            normal = { x: 0, y: 0, z: 1 };
+        } else {
+            normal.x = 0;
+            normal.y = 0;
+            normal.z = 1;
+        }
+        return normal;
+    }
 }
 
 /**
