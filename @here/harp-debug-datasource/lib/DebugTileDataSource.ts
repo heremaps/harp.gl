@@ -69,7 +69,7 @@ export class DebugTile extends Tile {
         const text = `(${tileKey.row}, ${tileKey.column}, ${tileKey.level})`;
         const textElement = new TextElement(
             text,
-            new THREE.Vector2(tileBounds.min.x * 0.95, tileBounds.max.y * 0.95),
+            new THREE.Vector3(tileBounds.min.x * 0.95, tileBounds.max.y * 0.95, 0),
             this.m_textRenderStyle,
             this.m_textLayoutStyle,
             PRIORITY_ALWAYS,

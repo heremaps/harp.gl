@@ -141,16 +141,6 @@ const COPYRIGHT_CHANGED_EVENT: RenderEvent = { type: MapViewEventNames.Copyright
 const tmpVector = new THREE.Vector2();
 
 /**
- * Compute visibility for the text elements. Called every frame.
- *
- * @param mapView The current [[MapView]] instance.
- * @param tilt Angle in degrees between the vertical vector (eye to ground) and view vector. The
- * value of `0` is looking straight down. `90` is the "camera on the floor". `>90` is camera looking
- * up.
- */
-export type LabelVisibilityEvaluator = (mapView: MapView, tilt: number) => boolean;
-
-/**
  * Compute far plane distance. May be based on tilt. Is being called every frame.
  *
  * @param mapView The current [[MapView]] instance.
@@ -283,16 +273,6 @@ export interface MapViewOptions {
      * The maximum zoom level. The default is `14`.
      */
     maxZoomLevel?: number;
-
-    /**
-     * Maximum tilt where the labels are visible. Default is `65`.
-     */
-    maxLabelAngle?: number;
-
-    /**
-     * User-defined label distance calculator.
-     */
-    labelVisibilityEvaluator?: LabelVisibilityEvaluator;
 
     /**
      * User-defined far plane distance calculator.
@@ -529,7 +509,7 @@ export class MapView extends THREE.EventDispatcher {
 
     private m_createdLights?: THREE.Light[];
     private m_skyBackground?: SkyBackground;
-    private readonly m_screenProjector = new ScreenProjector();
+    private readonly m_screenProjector: ScreenProjector;
     private readonly m_screenCollisions:
         | ScreenCollisions
         | ScreenCollisionsDebug = new ScreenCollisions();
@@ -761,6 +741,7 @@ export class MapView extends THREE.EventDispatcher {
         this.m_lookAtDistance = 0;
         this.m_focalLength = 0;
         this.m_scene.add(this.m_camera); // ensure the camera is added to the scene.
+        this.m_screenProjector = new ScreenProjector(this.m_camera);
 
         this.setupCamera();
 
@@ -1900,7 +1881,7 @@ export class MapView extends THREE.EventDispatcher {
         this.m_screenCamera.updateProjectionMatrix();
         this.m_screenCamera.updateMatrixWorld(false);
 
-        this.m_screenProjector.update(this.m_camera, this.m_camera.position, width, height);
+        this.m_screenProjector.update(this.camera, width, height);
         this.m_screenCollisions.update(width, height);
 
         this.m_pixelToWorld = undefined;
@@ -2256,27 +2237,12 @@ export class MapView extends THREE.EventDispatcher {
             this.m_textElementsRenderer.placeAllTileLabels();
         }
 
-        let shouldDrawText;
-        this.m_camera.getWorldDirection(this.m_tempVector3);
-        const angle = THREE.Math.radToDeg(this.m_tempVector3.angleTo(EYE_INVERSE));
-
-        if (this.m_options.labelVisibilityEvaluator !== undefined) {
-            shouldDrawText = this.m_options.labelVisibilityEvaluator(this, angle);
-        } else {
-            const maxLabelAngle =
-                this.m_options.maxLabelAngle === undefined ? 90 : this.m_options.maxLabelAngle;
-
-            shouldDrawText = angle < maxLabelAngle;
-        }
-
+        // User TextElements have the priority when it comes to reserving screen space, so
+        // they are handled first. They will be rendered after the normal map objects and
+        // TextElements
         this.m_textElementsRenderer.reset();
-        if (shouldDrawText) {
-            // User TextElements have the priority when it comes to reserving screen space, so
-            // they are handled first. They will be rendered after the normal map objects and
-            // TextElements
-            this.m_textElementsRenderer.renderUserTextElements(time, this.m_frameNumber);
-            this.m_textElementsRenderer.renderAllTileText(time, this.m_frameNumber);
-        }
+        this.m_textElementsRenderer.renderUserTextElements(time, this.m_frameNumber);
+        this.m_textElementsRenderer.renderAllTileText(time, this.m_frameNumber);
         this.m_textElementsRenderer.renderOverlay(this.m_overlayTextElements);
         this.m_textElementsRenderer.update();
     }
