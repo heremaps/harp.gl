@@ -24,9 +24,9 @@
     },
     "license": "Apache-2.0",
     "dependencies": {
-        "@here/harp-geoutils": "^0.3.3",
-        "@here/harp-lrucache": "^0.2.3",
-        "@here/harp-mapview": "^0.8.3",
+        "@here/harp-geoutils": "^0.3.2",
+        "@here/harp-lrucache": "^0.2.2",
+        "@here/harp-mapview": "^0.8.2",
         "@here/harp-geometry": "^0.1.1"
     },
     "devDependencies": {

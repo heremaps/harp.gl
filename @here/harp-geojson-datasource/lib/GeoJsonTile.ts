@@ -163,9 +163,11 @@ export class GeoJsonTile extends Tile {
      * @param technique Text technique.
      */
     private addTextPaths(geometry: GeoJsonTextPathGeometry, technique: TextTechnique) {
-        const path: THREE.Vector2[] = [];
+        const path: THREE.Vector3[] = [];
         for (let i = 0; i < geometry.path.length; i += 3) {
-            path.push(new THREE.Vector2(geometry.path[i], geometry.path[i + 1]));
+            path.push(
+                new THREE.Vector3(geometry.path[i], geometry.path[i + 1], geometry.path[i + 2])
+            );
         }
 
         const properties = geometry.objInfos !== undefined ? geometry.objInfos : undefined;
@@ -180,7 +182,7 @@ export class GeoJsonTile extends Tile {
      * @param geojsonProperties Properties defined by the user.
      */
     private addTextPath(
-        path: THREE.Vector2[],
+        path: THREE.Vector3[],
         text: string,
         technique: TextTechnique,
         geojsonProperties?: {}
@@ -238,9 +240,10 @@ export class GeoJsonTile extends Tile {
         const attribute = getBufferAttribute(geometry.positions);
 
         for (let index = 0; index < attribute.count; index++) {
-            const currentVertexCache = new THREE.Vector2(
+            const currentVertexCache = new THREE.Vector3(
                 attribute.getX(index),
-                attribute.getY(index)
+                attribute.getY(index),
+                attribute.getZ(index)
             );
 
             const properties =
@@ -258,7 +261,7 @@ export class GeoJsonTile extends Tile {
      * @param geojsonProperties Properties defined by the user.
      */
     private addText(
-        position: THREE.Vector2,
+        position: THREE.Vector3,
         text: string,
         technique: TextTechnique,
         geojsonProperties?: {}
@@ -311,10 +314,14 @@ export class GeoJsonTile extends Tile {
     private addPois(geometry: GeoJsonPoiGeometry, technique: PoiTechnique) {
         const attribute = getBufferAttribute(geometry.positions);
 
-        const currentVertexCache = new THREE.Vector2();
+        const currentVertexCache = new THREE.Vector3();
 
         for (let index = 0; index < attribute.count; index++) {
-            currentVertexCache.set(attribute.getX(index), attribute.getY(index));
+            currentVertexCache.set(
+                attribute.getX(index),
+                attribute.getY(index),
+                attribute.getZ(index)
+            );
             const properties =
                 geometry.objInfos !== undefined ? geometry.objInfos[index] : undefined;
             this.addPoi(currentVertexCache, technique, properties);
@@ -328,7 +335,7 @@ export class GeoJsonTile extends Tile {
      * @param technique Technique in use.
      * @param geojsonProperties Properties defined by the user.
      */
-    private addPoi(position: THREE.Vector2, technique: PoiTechnique, geojsonProperties?: {}) {
+    private addPoi(position: THREE.Vector3, technique: PoiTechnique, geojsonProperties?: {}) {
         const label = DEFAULT_LABELED_ICON.label;
         const priority =
             technique.priority === undefined ? DEFAULT_LABELED_ICON.priority : technique.priority;
