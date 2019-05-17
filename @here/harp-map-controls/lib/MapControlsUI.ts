@@ -29,7 +29,20 @@ export class MapControlsUI {
     /**
      * The DOM node containing the UI.
      */
-    domElement: HTMLDivElement;
+    readonly domElement = document.createElement("div");
+
+    /**
+     * Displays zoom level if [[MapControlsUIOptions.zoomLevel]] is defined.
+     */
+    private m_zoomLevelElement: HTMLDivElement | HTMLInputElement | null = null;
+    /**
+     * Removes focus from input element.
+     */
+    private m_onWindowClick: (event: MouseEvent) => void;
+    /**
+     * Updates the display of the zoom level.
+     */
+    private m_onMapViewRenderEvent: () => void;
 
     /**
      * Constructor of the UI.
@@ -37,7 +50,32 @@ export class MapControlsUI {
      * @param controls Controls referencing a [[MapView]].
      */
     constructor(readonly controls: MapControls, options: MapControlsUIOptions = {}) {
-        this.domElement = document.createElement("div");
+        this.m_onMapViewRenderEvent = () => {
+            if (this.m_zoomLevelElement === null) {
+                return;
+            }
+
+            const zoom = this.controls.zoomLevelTargetted.toFixed(1);
+
+            if (this.m_zoomLevelElement.tagName === "INPUT") {
+                (this.m_zoomLevelElement as HTMLInputElement).value = zoom;
+            } else {
+                (this.m_zoomLevelElement as HTMLDivElement).innerHTML = zoom;
+            }
+        };
+
+        this.m_onWindowClick = (event: MouseEvent) => {
+            const input = this.m_zoomLevelElement as HTMLInputElement;
+            if (
+                !event ||
+                !event.target ||
+                !(event.target as any).contains ||
+                (event.target === input || (event.target as HTMLElement).contains(input))
+            ) {
+                return;
+            }
+            input.blur();
+        };
 
         const zoomInButton = document.createElement("button");
         zoomInButton.innerText = "+";
@@ -49,25 +87,20 @@ export class MapControlsUI {
         tiltButton.innerText = "3D";
 
         // Optional zoom level displaying
-        let zoomLevelElement: HTMLDivElement | HTMLInputElement | null = null;
         if (options.zoomLevel === "show") {
             const div = document.createElement("div");
-            controls.mapView.addEventListener(MapViewEventNames.Render, () => {
-                div.innerText = controls.zoomLevelTargetted.toLocaleString(undefined, {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2
-                });
-            });
-            zoomLevelElement = div;
+            controls.mapView.addEventListener(
+                MapViewEventNames.Render,
+                this.m_onMapViewRenderEvent
+            );
+            this.m_zoomLevelElement = div;
         } else if (options.zoomLevel === "input") {
-            const input = document.createElement("input") as HTMLInputElement;
+            const input = document.createElement("input");
             input.type = "number";
-            controls.mapView.addEventListener(MapViewEventNames.Render, () => {
-                input.value = controls.zoomLevelTargetted.toLocaleString(undefined, {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2
-                });
-            });
+            controls.mapView.addEventListener(
+                MapViewEventNames.Render,
+                this.m_onMapViewRenderEvent
+            );
 
             const updateZoom = (event: KeyboardEvent | FocusEvent) => {
                 controls.setZoomLevel(parseFloat(input.value));
@@ -80,27 +113,14 @@ export class MapControlsUI {
                     updateZoom(event);
                 }
             });
-
-            // Removes focus from input element.
-            window.addEventListener("click", event => {
-                if (
-                    !event ||
-                    !event.target ||
-                    !(event.target as any).contains ||
-                    (event.target === input || (event.target as HTMLElement).contains(input))
-                ) {
-                    return;
-                }
-                input.blur();
-            });
-
-            zoomLevelElement = input;
+            window.addEventListener("click", this.m_onWindowClick);
+            this.m_zoomLevelElement = input;
         }
 
         this.domElement.appendChild(zoomInButton);
         this.domElement.appendChild(tiltButton);
-        if (zoomLevelElement !== null) {
-            this.domElement.appendChild(zoomLevelElement);
+        if (this.m_zoomLevelElement !== null) {
+            this.domElement.appendChild(this.m_zoomLevelElement);
         }
         this.domElement.appendChild(zoomOutButton);
 
@@ -121,8 +141,8 @@ export class MapControlsUI {
         zoomInButton.className = zoomOutButton.className = tiltButton.className =
             "harp-gl_controls-button";
 
-        if (zoomLevelElement !== null) {
-            zoomLevelElement.className = "harp-gl_controls-zoom";
+        if (this.m_zoomLevelElement !== null) {
+            this.m_zoomLevelElement.className = "harp-gl_controls-zoom";
         }
 
         if (options.disableDefaultStyle !== true) {
@@ -132,6 +152,23 @@ export class MapControlsUI {
         }
 
         return this;
+    }
+
+    /**
+     * Destroy this [[MapControlsUI]] instance. Unregisters all event handlers used. This method
+     * should be called when you stop using [[MapControlsUI]].
+     */
+    dispose() {
+        if (this.m_zoomLevelElement !== null && this.m_zoomLevelElement.tagName === "INPUT") {
+            window.removeEventListener("click", this.m_onWindowClick);
+        }
+
+        this.controls.mapView.removeEventListener(
+            MapViewEventNames.Render,
+            this.m_onMapViewRenderEvent
+        );
+
+        this.domElement.remove();
     }
 
     private initStyle() {
