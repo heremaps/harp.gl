@@ -364,13 +364,9 @@ export class OmvRestClient implements DataProvider {
      * Get actual tile URL depending on configured API format.
      */
     private dataUrl(tileKey: TileKey): string {
-        const path =
-           [`/${tileKey.level}`,tileKey.column,tileKey.row]
-           .join(
-               this.params.apiFormat === APIFormat.XYZSpace ?
-                    "_"
-                    : "/"
-           );
+        const path = [`/${tileKey.level}`, tileKey.column, tileKey.row].join(
+            this.params.apiFormat === APIFormat.XYZSpace ? "_" : "/"
+        );
         switch (this.params.apiFormat) {
             case APIFormat.HereV1:
             case APIFormat.XYZOMV:
@@ -386,8 +382,8 @@ export class OmvRestClient implements DataProvider {
                 path += ".json";
                 break;
             case APIFormat.XYZSpace:
-               path += ".mvt";
-               break;
+                path += ".mvt";
+                break;
             case APIFormat.TomtomV1:
                 path += ".pbf";
                 break;
