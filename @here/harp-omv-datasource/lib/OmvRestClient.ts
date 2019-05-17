@@ -110,7 +110,23 @@ export enum APIFormat {
      *
      * Default authentication method used: [[AuthenticationTypeTomTomV1]].
      */
-    TomtomV1
+    TomtomV1,
+
+    /**
+     * Use the REST API format of XYZ Space Vector Tile API in OMV format.
+     *
+     * Usage:
+     * `<OmvRestClientParams.baseUrl>/hub/spaces/<space-id>/tile/web/<zoom>_<X>_<Y>.mvt?access_token=<OmvRestClientParams.authenticationCode>`
+     *
+     * Format definition:
+     * `http|s://<base-url>/hub/spaces/{spaceId}/tile/web/{z}_{x}_{y}.mvt?access_token={access_token}`
+     *
+     * Sample URL:
+     * `https://xyz.api.here.com/hub/spaces/your-space-id/tile/web/{z}_{x}_{y}.mvt?access_token=your-access-token`
+     *
+     * Default authentication method used: [[AuthenticationTypeAccessToken]].
+     */
+    XYZSpace
 }
 // tslint:enable:max-line-length
 
@@ -301,6 +317,8 @@ export class OmvRestClient implements DataProvider {
             case APIFormat.MapboxV4:
             case APIFormat.XYZOMV:
             case APIFormat.XYZMVT:
+            case APIFormat.XYZSpace:
+               return AuthenticationTypeAccessToken;
             case APIFormat.XYZJson:
                 return AuthenticationTypeAccessToken;
             case APIFormat.TomtomV1:
@@ -348,6 +366,9 @@ export class OmvRestClient implements DataProvider {
      */
     private dataUrl(tileKey: TileKey): string {
         let path = `/${tileKey.level}/${tileKey.column}/${tileKey.row}`;
+        if (this.params.apiFormat === APIFormat.XYZSpace) {
+           path = `/${tileKey.level}_${tileKey.column}_${tileKey.row}`;
+        }
         switch (this.params.apiFormat) {
             case APIFormat.HereV1:
             case APIFormat.XYZOMV:
@@ -362,6 +383,9 @@ export class OmvRestClient implements DataProvider {
             case APIFormat.XYZJson:
                 path += ".json";
                 break;
+            case APIFormat.XYZSpace:
+               path += ".mvt";
+               break;
             case APIFormat.TomtomV1:
                 path += ".pbf";
                 break;
