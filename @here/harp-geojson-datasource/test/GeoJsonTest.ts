@@ -312,7 +312,7 @@ describe("@here-geojson-datasource", () => {
         const userTextElements = tile.userTextElements;
 
         // Text element for points.
-        const text0Coords = userTextElements[0].points as THREE.Vector2;
+        const text0Coords = userTextElements[0].points as THREE.Vector3;
         const result0 = {
             x: text0Coords.x,
             y: text0Coords.y,
@@ -326,7 +326,7 @@ describe("@here-geojson-datasource", () => {
         assert.deepEqual(result0, expectedResult0);
 
         // Text paths for lines.
-        const text3Coords = userTextElements[2].points as THREE.Vector2[];
+        const text3Coords = userTextElements[2].points as THREE.Vector3[];
         const result3 = {
             x1: text3Coords[0].x,
             y1: text3Coords[0].y,
@@ -344,7 +344,7 @@ describe("@here-geojson-datasource", () => {
         assert.deepEqual(result3, expectedResult3);
 
         // Texts for polygons.
-        const text2Coords = userTextElements[1].points as THREE.Vector2;
+        const text2Coords = userTextElements[1].points as THREE.Vector3;
         const result2 = {
             x: text2Coords.x,
             y: text2Coords.y,

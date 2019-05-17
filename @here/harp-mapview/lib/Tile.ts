@@ -1072,9 +1072,15 @@ export class Tile implements CachedResource {
                     continue;
                 }
 
-                const path: THREE.Vector2[] = [];
+                const path: THREE.Vector3[] = [];
                 for (let i = 0; i < textPath.path.length; i += 3) {
-                    path.push(new THREE.Vector2(textPath.path[i], textPath.path[i + 1]));
+                    path.push(
+                        new THREE.Vector3(
+                            textPath.path[i],
+                            textPath.path[i + 1],
+                            textPath.path[i + 2]
+                        )
+                    );
                 }
 
                 // Make sorting stable and make pathLengthSqr a differentiator for placement.
@@ -1146,6 +1152,7 @@ export class Tile implements CachedResource {
                 for (let i = 0; i < numPositions; ++i) {
                     const x = positions.getX(i);
                     const y = positions.getY(i);
+                    const z = positions.getZ(i);
                     const label = text.stringCatalog[text.texts[i]];
                     if (label === undefined) {
                         // skip missing labels
@@ -1154,7 +1161,7 @@ export class Tile implements CachedResource {
 
                     const textElement = new TextElement(
                         ContextualArabicConverter.instance.convert(label!),
-                        new THREE.Vector2(x, y),
+                        new THREE.Vector3(x, y, z),
                         this.getRenderStyle(technique),
                         this.getLayoutStyle(technique),
                         priority,
