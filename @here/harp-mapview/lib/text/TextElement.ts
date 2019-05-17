@@ -367,13 +367,7 @@ export class TextElement {
      * @hidden
      * Used during label placement for optimization.
      */
-    tileCenterX?: number;
-
-    /**
-     * @hidden
-     * Used during label placement for optimization.
-     */
-    tileCenterY?: number;
+    tileCenter?: THREE.Vector3;
 
     /**
      * @hidden
@@ -484,7 +478,7 @@ export class TextElement {
      */
     constructor(
         readonly text: string,
-        readonly points: THREE.Vector2[] | THREE.Vector2 | THREE.Vector3,
+        readonly points: THREE.Vector3[] | THREE.Vector3,
         readonly renderParams: TextRenderParameters | TextRenderStyle,
         readonly layoutParams: TextLayoutParameters | TextLayoutStyle,
         public priority = 0,
@@ -507,34 +501,18 @@ export class TextElement {
      * The position of this text element in world coordinates or the first point of the path used to
      * render a curved text.
      */
-    get position(): THREE.Vector2 {
+    get position(): THREE.Vector3 {
         if (this.points instanceof Array) {
-            return this.points[0];
+            const p = this.points[0];
+            return p;
         }
-        if (this.points instanceof THREE.Vector3) {
-            return new THREE.Vector2(this.points.x, this.points.y);
-        }
-        return this.points;
-    }
-
-    /**
-     * The position of this text element in world coordinates or the first point of the path used to
-     * render a curved text.
-     */
-    get position3(): THREE.Vector3 {
-        if (this.points instanceof THREE.Vector3) {
-            return this.points as THREE.Vector3;
-        }
-        if (this.points instanceof Array) {
-            return new THREE.Vector3(this.points[0].x, this.points[0].y, 0);
-        }
-        return new THREE.Vector3(this.points.x, this.points.y, 0);
+        return this.points as THREE.Vector3;
     }
 
     /**
      * The list of points in world coordinates used to render the text along a path or `undefined`.
      */
-    get path(): THREE.Vector2[] | undefined {
+    get path(): THREE.Vector3[] | undefined {
         if (this.points instanceof Array) {
             return this.points;
         }

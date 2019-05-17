@@ -7,6 +7,7 @@
 // tslint:disable:only-arrow-functions
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
+import { MercatorProjection } from "@here/harp-geoutils";
 import { MapView } from "@here/harp-mapview";
 import { expect } from "chai";
 import * as sinon from "sinon";
@@ -65,6 +66,7 @@ describe("MapControls", function() {
             sandbox.stub(mapView, "maxZoomLevel").get(() => maxZoom);
             sandbox.stub(mapView, "minZoomLevel").get(() => minZoom);
             sandbox.stub(mapView, "minCameraHeight").get(() => minCameraHeight);
+            sandbox.stub(mapView, "projection").get(() => MercatorProjection);
 
             mapControls = new MapControls(mapView);
         });
