@@ -318,7 +318,6 @@ export class OmvRestClient implements DataProvider {
             case APIFormat.XYZOMV:
             case APIFormat.XYZMVT:
             case APIFormat.XYZSpace:
-               return AuthenticationTypeAccessToken;
             case APIFormat.XYZJson:
                 return AuthenticationTypeAccessToken;
             case APIFormat.TomtomV1:
@@ -365,10 +364,13 @@ export class OmvRestClient implements DataProvider {
      * Get actual tile URL depending on configured API format.
      */
     private dataUrl(tileKey: TileKey): string {
-        let path = `/${tileKey.level}/${tileKey.column}/${tileKey.row}`;
-        if (this.params.apiFormat === APIFormat.XYZSpace) {
-           path = `/${tileKey.level}_${tileKey.column}_${tileKey.row}`;
-        }
+        const path =
+           [`/${tileKey.level}`,tileKey.column,tileKey.row]
+           .join(
+               this.params.apiFormat === APIFormat.XYZSpace ?
+                    "_"
+                    : "/"
+           );
         switch (this.params.apiFormat) {
             case APIFormat.HereV1:
             case APIFormat.XYZOMV:
