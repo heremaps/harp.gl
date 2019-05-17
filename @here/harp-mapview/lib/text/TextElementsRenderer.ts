@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import { LineMarkerTechnique, TextStyleDefinition, Theme } from "@here/harp-datasource-protocol";
+import { ProjectionType } from "@here/harp-geoutils";
 import {
     AdditionParameters,
     DEFAULT_TEXT_CANVAS_LAYER,
@@ -355,11 +356,6 @@ export class TextElementsRenderer {
      */
     renderUserTextElements(time: number, frameNumber: number) {
         const renderList = this.m_mapView.visibleTileSet.dataSourceTileList;
-
-        // Take the world position of the camera as the origin to compute the distance to the
-        // text elements.
-        const worldCenter = this.m_mapView.worldCenter.clone().add(this.m_mapView.camera.position);
-
         const zoomLevel = this.m_mapView.zoomLevel;
 
         // Render the user POIs first
@@ -367,9 +363,8 @@ export class TextElementsRenderer {
             for (const tile of renderListEntry.visibleTiles) {
                 for (const textElement of tile.userTextElements) {
                     // update distance
-                    textElement.tileCenterX = tile.center.x;
-                    textElement.tileCenterY = tile.center.y;
-                    this.updateViewDistance(worldCenter, textElement);
+                    textElement.tileCenter = tile.center;
+                    this.updateViewDistance(this.m_mapView.worldCenter, textElement);
                 }
 
                 this.renderTextElements(tile.userTextElements, time, frameNumber, zoomLevel);
@@ -842,35 +837,19 @@ export class TextElementsRenderer {
     ): number | undefined {
         let viewDistance: number | undefined;
 
-        if (
-            textElement.points instanceof THREE.Vector2 ||
-            textElement.points instanceof THREE.Vector3
-        ) {
-            // For POIs:
-            const pos = textElement.position3;
-            tempPoiPosition.x = pos.x + textElement.tileCenterX!;
-            tempPoiPosition.y = pos.y + textElement.tileCenterY!;
+        if (Array.isArray(textElement.points) && textElement.points.length > 1) {
+            tempPoiPosition.copy(textElement.points[0]).add(textElement.tileCenter!);
+            const viewDistance0 = worldCenter.distanceTo(tempPoiPosition);
+
+            tempPoiPosition
+                .copy(textElement.points[textElement.points.length - 1])
+                .add(textElement.tileCenter!);
+            const viewDistance1 = worldCenter.distanceTo(tempPoiPosition);
+
+            viewDistance = Math.min(viewDistance0, viewDistance1);
+        } else {
+            tempPoiPosition.copy(textElement.position).add(textElement.tileCenter!);
             viewDistance = worldCenter.distanceTo(tempPoiPosition);
-        } else if (Array.isArray(textElement.points)) {
-            if (textElement.points.length === 1) {
-                const posPoint = (textElement.points as THREE.Vector2[])[0];
-                tempPoiPosition.x = posPoint.x + textElement.tileCenterX!;
-                tempPoiPosition.y = posPoint.y + textElement.tileCenterY!;
-                viewDistance = worldCenter.distanceTo(tempPoiPosition);
-            } else if (textElement.points.length > 1) {
-                const pathPoints = textElement.points as THREE.Vector2[];
-                let posPoint = pathPoints[0];
-                tempPoiPosition.x = posPoint.x + textElement.tileCenterX!;
-                tempPoiPosition.y = posPoint.y + textElement.tileCenterY!;
-                const viewDistance0 = worldCenter.distanceTo(tempPoiPosition);
-
-                posPoint = pathPoints[pathPoints.length - 1];
-                tempPoiPosition.x = posPoint.x + textElement.tileCenterX!;
-                tempPoiPosition.y = posPoint.y + textElement.tileCenterY!;
-                const viewDistance1 = worldCenter.distanceTo(tempPoiPosition);
-
-                viewDistance = Math.min(viewDistance0, viewDistance1);
-            }
         }
 
         textElement.currentViewDistance = viewDistance;
@@ -983,8 +962,7 @@ export class TextElementsRenderer {
      */
     private prepareUserTextElements(tile: Tile) {
         for (const textElement of tile.userTextElements) {
-            textElement.tileCenterX = tile.center.x;
-            textElement.tileCenterY = tile.center.y;
+            textElement.tileCenter = tile.center;
         }
     }
 
@@ -1067,10 +1045,6 @@ export class TextElementsRenderer {
         textElementLists: TextElementLists,
         textElementGroups: TextElement[][]
     ) {
-        // Take the world position of the camera as the origin to compute the distance to the
-        // text elements.
-        const worldCenter = this.m_mapView.worldCenter.clone().add(this.m_mapView.camera.position);
-
         const farDistanceLimitRatio = this.m_maxDistanceRatioForLabels!;
         const maxDistance = this.getMaxDistance(farDistanceLimitRatio);
 
@@ -1110,17 +1084,38 @@ export class TextElementsRenderer {
                     continue;
                 }
 
-                textElement.tileCenterX = tile.center.x + worldOffsetX;
-                textElement.tileCenterY = tile.center.y;
-
-                const textDistance = this.updateViewDistance(worldCenter, textElement);
-
-                // If the distance is greater than allowed, skip it.
-                if (textDistance !== undefined && textDistance > maxDistance) {
-                    continue;
+                if (textElement.tileCenter === undefined) {
+                    textElement.tileCenter = new THREE.Vector3(
+                        tile.center.x + worldOffsetX,
+                        tile.center.y,
+                        tile.center.z
+                    );
+                } else {
+                    textElement.tileCenter.set(
+                        tile.center.x + worldOffsetX,
+                        tile.center.y,
+                        tile.center.z
+                    );
                 }
 
-                tile.placedTextElements.add(textElement);
+                if (this.m_mapView.projection.type === ProjectionType.Planar) {
+                    // If the distance is greater than allowed, skip it.
+                    const textDistance = this.updateViewDistance(
+                        this.m_mapView.worldCenter,
+                        textElement
+                    );
+                    if (textDistance !== undefined && textDistance <= maxDistance) {
+                        tile.placedTextElements.add(textElement);
+                    }
+                } else if (this.m_mapView.projection.type === ProjectionType.Spherical) {
+                    tempPoiPosition.copy(textElement.position).add(textElement.tileCenter!);
+                    tempPoiPosition.normalize();
+                    const cameraDir = new THREE.Vector3();
+                    this.m_mapView.camera.getWorldDirection(cameraDir);
+                    if (tempPoiPosition.dot(cameraDir) < -0.6) {
+                        tile.placedTextElements.add(textElement);
+                    }
+                }
             }
         }
         textElementGroups.push(textElementGroup);
@@ -1318,9 +1313,6 @@ export class TextElementsRenderer {
 
         const cameraIsMoving = this.m_mapView.cameraIsMoving;
         const cameraFar = this.m_mapView.camera.far;
-        // Take the world position of the camera as the origin to compute the distance to the
-        // tex elements.
-        const worldCenter = this.m_mapView.worldCenter.clone().add(this.m_mapView.camera.position);
 
         // Keep track if we need to call another update() on MapView.
         let fadeAnimationRunning = false;
@@ -1481,27 +1473,36 @@ export class TextElementsRenderer {
                 // Scale the text depending on the label's distance to the camera.
                 let textScale = 1.0;
                 let distanceScale = 1.0;
-                const textDistance = worldCenter.distanceTo(position);
+                const textDistance = this.m_mapView.worldCenter.distanceTo(position);
                 if (textDistance !== undefined) {
-                    if (
-                        pointLabel.fadeFar !== undefined &&
-                        (pointLabel.fadeFar <= 0.0 || pointLabel.fadeFar * cameraFar < textDistance)
-                    ) {
-                        // The label is farther away than fadeFar value, which means it is totally
-                        // transparent
-                        return false;
-                    }
+                    if (this.m_mapView.projection.type === ProjectionType.Planar) {
+                        if (
+                            pointLabel.fadeFar !== undefined &&
+                            (pointLabel.fadeFar <= 0.0 ||
+                                pointLabel.fadeFar * cameraFar < textDistance)
+                        ) {
+                            // The label is farther away than fadeFar value, which means it is
+                            // totally transparent.
+                            return false;
+                        }
 
-                    const startScaleDistance = cameraFar * labelStartScaleDistance;
-                    if (textDistance > startScaleDistance) {
-                        distanceScale =
-                            1.0 -
-                            ((textDistance - startScaleDistance) /
-                                (cameraFar - startScaleDistance)) *
-                                (1.0 - pointLabel.distanceScale);
-                        textScale *= distanceScale;
+                        const startScaleDistance = cameraFar * labelStartScaleDistance;
+                        if (textDistance > startScaleDistance) {
+                            distanceScale =
+                                1.0 -
+                                ((textDistance - startScaleDistance) /
+                                    (cameraFar - startScaleDistance)) *
+                                    (1.0 - pointLabel.distanceScale);
+                            textScale *= distanceScale;
+                        }
+                        textElement.currentViewDistance = textDistance;
+                    } else if (this.m_mapView.projection.type === ProjectionType.Spherical) {
+                        // TODO: GLOBE-FIX
+                        // Currently, camera position is different in mercator proj (relative to
+                        // scene center) than in sphere proj (relative to world center). We cannot
+                        // unify these algorithms until we unify these 2 approaches.
+                        textElement.currentViewDistance = cameraFar * labelStartScaleDistance;
                     }
-                    textElement.currentViewDistance = textDistance;
                 }
                 const distanceFadeFactor = this.getDistanceFadingFactor(pointLabel, cameraFar);
 
@@ -1783,9 +1784,7 @@ export class TextElementsRenderer {
 
             const addPoiLabel = (poiLabel: TextElement): void => {
                 // Calculate the world position of this label.
-                tempPosition.x = poiLabel.position.x + poiLabel.tileCenterX!;
-                tempPosition.y = poiLabel.position.y + poiLabel.tileCenterY!;
-                tempPosition.z = 0;
+                tempPosition.copy(poiLabel.position).add(poiLabel.tileCenter!);
 
                 // Only process labels frustum-clipped labels
                 if (
@@ -1860,9 +1859,7 @@ export class TextElementsRenderer {
                     for (let i = 0; i < lineMarkerLabel.path.length; i++) {
                         const point = lineMarkerLabel.path[i];
                         // Calculate the world position of this label.
-                        tempPosition.x = point.x + lineMarkerLabel.tileCenterX!;
-                        tempPosition.y = point.y + lineMarkerLabel.tileCenterY!;
-                        tempPosition.z = 0;
+                        tempPosition.copy(point).add(lineMarkerLabel.tileCenter!);
 
                         // Only process labels frustum-clipped labels
                         if (
@@ -1908,9 +1905,7 @@ export class TextElementsRenderer {
                         const point = lineMarkerLabel.path[i];
 
                         // Calculate the world position of this label.
-                        tempPosition.x = point.x + lineMarkerLabel.tileCenterX!;
-                        tempPosition.y = point.y + lineMarkerLabel.tileCenterY!;
-                        tempPosition.z = 0;
+                        tempPosition.copy(point).add(lineMarkerLabel.tileCenter!);
 
                         // Only process labels frustum-clipped labels
                         if (
@@ -1974,17 +1969,26 @@ export class TextElementsRenderer {
                 }
 
                 // Update the real rendering distance to have smooth fading and scaling
-                this.updateViewDistance(worldCenter, pathLabel);
-                const textRenderDistance = pathLabel.renderDistance;
+                if (this.m_mapView.projection.type === ProjectionType.Planar) {
+                    this.updateViewDistance(this.m_mapView.worldCenter, pathLabel);
+                    const textRenderDistance = pathLabel.renderDistance;
 
-                const startScaleDistance = cameraFar * labelStartScaleDistance;
-                const renderDistance = -textRenderDistance;
-                if (renderDistance > startScaleDistance) {
-                    distanceScale =
-                        1.0 -
-                        ((renderDistance - startScaleDistance) / (cameraFar - startScaleDistance)) *
-                            (1.0 - pathLabel.distanceScale);
-                    textScale *= distanceScale;
+                    const startScaleDistance = cameraFar * labelStartScaleDistance;
+                    const renderDistance = -textRenderDistance;
+                    if (renderDistance > startScaleDistance) {
+                        distanceScale =
+                            1.0 -
+                            ((renderDistance - startScaleDistance) /
+                                (cameraFar - startScaleDistance)) *
+                                (1.0 - pathLabel.distanceScale);
+                        textScale *= distanceScale;
+                    }
+                } else if (this.m_mapView.projection.type === ProjectionType.Spherical) {
+                    // TODO: GLOBE-FIX
+                    // Currently, camera position is different in mercator proj (relative to scene
+                    // center) than in sphere proj (relative to world center). We cannot unify these
+                    // algorithms until we unify these 2 approaches.
+                    textElement.currentViewDistance = cameraFar * labelStartScaleDistance;
                 }
 
                 // Scale the path label correctly.
@@ -2118,14 +2122,9 @@ export class TextElementsRenderer {
         let maxX = Number.MIN_SAFE_INTEGER;
         let minY = Number.MAX_SAFE_INTEGER;
         let maxY = Number.MIN_SAFE_INTEGER;
-        const tileCenterX = textElement.tileCenterX!;
-        const tileCenterY = textElement.tileCenterY!;
         for (const pt of textElement.path!) {
-            tempPosition.set(pt.x + tileCenterX, pt.y + tileCenterY, 0);
-            const screenPoint = this.m_screenProjector.projectInPlace(
-                tempPosition,
-                tempScreenPosition
-            );
+            tempPosition.copy(pt).add(textElement.tileCenter!);
+            const screenPoint = this.m_screenProjector.project(tempPosition, tempScreenPosition);
             if (screenPoint === undefined) {
                 continue;
             }

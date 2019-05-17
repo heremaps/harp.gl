@@ -113,6 +113,7 @@ export class PoiManager {
                 for (let i = 0; i < positions.count; ++i) {
                     const x = positions.getX(i);
                     const y = positions.getY(i);
+                    const z = positions.getZ(i);
 
                     assert(poiGeometry.texts.length > i);
                     let text = poiGeometry.stringCatalog[poiGeometry.texts[i]];
@@ -159,6 +160,7 @@ export class PoiManager {
                         poiGeometry.featureId,
                         x,
                         y,
+                        z,
                         tile.tileKey.level
                     );
 
@@ -394,10 +396,12 @@ export class PoiManager {
         // Debugging help to identify the group of a shield :
         // text = groupKey + ": " + text;
 
-        const positionArray: THREE.Vector2[] = [];
+        const positionArray: THREE.Vector3[] = [];
 
-        for (let i = 0; i < positions.count; i += 2) {
-            positionArray.push(new THREE.Vector2(positions.getX(i), positions.getY(i)));
+        for (let i = 0; i < positions.count; i += 3) {
+            positionArray.push(
+                new THREE.Vector3(positions.getX(i), positions.getY(i), positions.getZ(i))
+            );
         }
 
         const textElement = this.checkCreateTextElement(
@@ -411,6 +415,7 @@ export class PoiManager {
             shieldGroupIndex,
             poiGeometry.featureId,
             positionArray,
+            undefined,
             undefined,
             tile.tileKey.level
         );
@@ -438,8 +443,9 @@ export class PoiManager {
         poiName: string | undefined,
         shieldGroupIndex: number,
         featureId: number | undefined,
-        x: number | THREE.Vector2[],
+        x: number | THREE.Vector3[],
         y: number | undefined,
+        z: number | undefined,
         storageLevel: number
     ): TextElement | undefined {
         let textElement: TextElement | undefined;
@@ -451,7 +457,9 @@ export class PoiManager {
         if (text !== undefined) {
             const priority = technique.priority !== undefined ? technique.priority : 0;
 
-            const positions = Array.isArray(x) ? (x as THREE.Vector2[]) : new THREE.Vector2(x, y);
+            const positions = Array.isArray(x)
+                ? (x as THREE.Vector3[])
+                : new THREE.Vector3(x, y, z);
             const displayZoomLevel = this.mapView.zoomLevel;
 
             textElement = new TextElement(
