@@ -172,12 +172,20 @@ export function createMaterial(
                 if (textureProperty.type === "image/raw") {
                     const properties = textureProperty.dataTextureProperties;
                     if (properties !== undefined) {
-                        const texture = new THREE.DataTexture(
+                        const textureDataType: THREE.TextureDataType | undefined = properties.type
+                            ? toTextureDataType(properties.type)
+                            : undefined;
+                        const textureBuffer = getTextureBuffer(
                             textureProperty.buffer,
+                            textureDataType
+                        );
+
+                        const texture = new THREE.DataTexture(
+                            textureBuffer,
                             properties.width,
                             properties.height,
                             properties.format ? toPixelFormat(properties.format) : undefined,
-                            properties.type ? toTextureDataType(properties.type) : undefined
+                            textureDataType
                         );
                         onLoad(texture);
                     } else {
@@ -432,4 +440,34 @@ export function applyTechniqueToMaterial(
             m[prop] = value;
         }
     });
+}
+
+function getTextureBuffer(
+    buffer: ArrayBuffer,
+    textureDataType: THREE.TextureDataType | undefined
+): ArrayBufferLike {
+    if (textureDataType === undefined) {
+        return new Uint8Array(buffer);
+    }
+
+    switch (textureDataType) {
+        case THREE.UnsignedByteType:
+            return new Uint8Array(buffer);
+        case THREE.ByteType:
+            return new Int8Array(buffer);
+        case THREE.ShortType:
+            return new Int16Array(buffer);
+        case THREE.UnsignedShortType:
+            return new Uint16Array(buffer);
+        case THREE.IntType:
+            return new Int32Array(buffer);
+        case THREE.UnsignedIntType:
+            return new Uint32Array(buffer);
+        case THREE.FloatType:
+            return new Float32Array(buffer);
+        case THREE.HalfFloatType:
+            return new Uint16Array(buffer);
+    }
+
+    throw new Error("Unsupported texture data type");
 }
