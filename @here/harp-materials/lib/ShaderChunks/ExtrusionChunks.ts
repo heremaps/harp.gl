@@ -6,10 +6,11 @@
 
 export default {
     extrusion_pars_vertex: `
+attribute vec3 extrusionAxis;
 uniform float extrusionRatio;
 `,
     extrusion_vertex: `
-transformed.z = transformed.z * extrusionRatio;
+transformed = transformed + extrusionAxis * extrusionRatio;
 `,
     extrusion_pars_fragment: `
 uniform float extrusionRatio;

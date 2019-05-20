@@ -96,6 +96,7 @@ class MeshBuffers implements IMeshBuffers {
     readonly positions: number[] = [];
     readonly textureCoordinates: number[] = [];
     readonly colors: number[] = [];
+    readonly extrusionAxis: number[] = [];
     readonly indices: number[] = [];
     readonly edgeIndices: number[] | number[][] = [];
     readonly groups: Group[] = [];
@@ -782,7 +783,15 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
 
         this.m_decodeInfo.tileBounds.getCenter(tempTileOrigin);
 
-        const { positions, textureCoordinates, colors, indices, edgeIndices, groups } = meshBuffers;
+        const {
+            positions,
+            textureCoordinates,
+            colors,
+            extrusionAxis,
+            indices,
+            edgeIndices,
+            groups
+        } = meshBuffers;
 
         const stride = texCoordType !== undefined ? 5 : 3;
         const isSpherical = this.m_decodeInfo.projection.type === ProjectionType.Spherical;
@@ -926,6 +935,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                     }
 
                     // Add the footprint/roof vertices to the position buffer.
+                    const normal = new THREE.Vector3(0, 0, 1);
                     for (let i = 0; i < vertices.length; i += stride) {
                         let scaleFactor = 1.0;
                         if (isExtruded && constantHeight !== true) {
@@ -939,10 +949,19 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                             );
                         }
 
+                        if (isSpherical) {
+                            normal
+                                .set(vertices[i], vertices[i + 1], vertices[i + 2])
+                                .add(this.center)
+                                .normalize();
+                        }
+
+                        const minAxis = normal.clone().multiplyScalar(minHeight * scaleFactor);
+                        const maxAxis = normal.clone().multiplyScalar(height * scaleFactor);
                         positions.push(
-                            vertices[i],
-                            vertices[i + 1],
-                            vertices[i + 2] + minHeight * scaleFactor
+                            vertices[i] + minAxis.x,
+                            vertices[i + 1] + minAxis.y,
+                            vertices[i + 2] + minAxis.z
                         );
                         if (texCoordType !== undefined) {
                             textureCoordinates.push(vertices[i + 3], vertices[i + 4]);
@@ -950,9 +969,17 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
 
                         if (isExtruded) {
                             positions.push(
-                                vertices[i],
-                                vertices[i + 1],
-                                vertices[i + 2] + height * scaleFactor
+                                vertices[i] + minAxis.x,
+                                vertices[i + 1] + minAxis.y,
+                                vertices[i + 2] + minAxis.z
+                            );
+                            extrusionAxis.push(
+                                0,
+                                0,
+                                0,
+                                maxAxis.x - minAxis.x,
+                                maxAxis.y - minAxis.y,
+                                maxAxis.z - minAxis.z
                             );
                             if (texCoordType !== undefined) {
                                 textureCoordinates.push(vertices[i + 3], vertices[i + 4]);
@@ -1114,6 +1141,22 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                     name: "uv",
                     buffer: textureCoordinates.buffer as ArrayBuffer,
                     itemCount: 2,
+                    type: "float"
+                });
+            }
+
+            if (meshBuffers.extrusionAxis.length > 0) {
+                const extrusionAxis = new Float32Array(meshBuffers.extrusionAxis);
+                assert(
+                    extrusionAxis.length === positionElements.length,
+                    "length of extrusionAxis buffer is different than the length of the " +
+                        "position buffer"
+                );
+
+                geometry.vertexAttributes.push({
+                    name: "extrusionAxis",
+                    buffer: extrusionAxis.buffer as ArrayBuffer,
+                    itemCount: 3,
                     type: "float"
                 });
             }
