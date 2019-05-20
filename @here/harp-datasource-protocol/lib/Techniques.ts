@@ -344,7 +344,7 @@ export function textureCoordinateType(technique: Technique): TextureCoordinateTy
 /**
  * Add all the buffers of the technique to the transfer list.
  */
-export function addBuffersToTransferList(technique: Technique, transferList: ArrayBuffer[] = []) {
+export function addBuffersToTransferList(technique: Technique, transferList: ArrayBuffer[]) {
     if (
         isStandardTechnique(technique) ||
         isExtrudedPolygonTechnique(technique) ||
@@ -353,7 +353,9 @@ export function addBuffersToTransferList(technique: Technique, transferList: Arr
         for (const texturePropertyKey of TEXTURE_PROPERTY_KEYS) {
             const textureProperty = (technique as any)[texturePropertyKey];
             if (isTextureBuffer(textureProperty)) {
-                transferList.push(textureProperty.buffer);
+                if (textureProperty.buffer instanceof ArrayBuffer) {
+                    transferList.push(textureProperty.buffer);
+                }
             }
         }
     }
