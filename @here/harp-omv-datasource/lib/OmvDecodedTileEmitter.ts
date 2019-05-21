@@ -67,6 +67,9 @@ const logger = LoggerManager.instance.create("OmvDecodedTileEmitter");
 
 const tempTileOrigin = new THREE.Vector3();
 const tempVertOrigin = new THREE.Vector3();
+const tempVertNormal = new THREE.Vector3();
+const tempFootDisp = new THREE.Vector3();
+const tempRoofDisp = new THREE.Vector3();
 
 /**
  * Minimum number of pixels per character. Used during estimation if there is enough screen space
@@ -96,6 +99,7 @@ class MeshBuffers implements IMeshBuffers {
     readonly positions: number[] = [];
     readonly textureCoordinates: number[] = [];
     readonly colors: number[] = [];
+    readonly extrusionAxis: number[] = [];
     readonly indices: number[] = [];
     readonly edgeIndices: number[] | number[][] = [];
     readonly groups: Group[] = [];
@@ -782,7 +786,15 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
 
         this.m_decodeInfo.tileBounds.getCenter(tempTileOrigin);
 
-        const { positions, textureCoordinates, colors, indices, edgeIndices, groups } = meshBuffers;
+        const {
+            positions,
+            textureCoordinates,
+            colors,
+            extrusionAxis,
+            indices,
+            edgeIndices,
+            groups
+        } = meshBuffers;
 
         const stride = texCoordType !== undefined ? 5 : 3;
         const isSpherical = this.m_decodeInfo.projection.type === ProjectionType.Spherical;
@@ -926,6 +938,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                     }
 
                     // Add the footprint/roof vertices to the position buffer.
+                    tempVertNormal.set(0, 0, 1);
                     for (let i = 0; i < vertices.length; i += stride) {
                         let scaleFactor = 1.0;
                         if (isExtruded && constantHeight !== true) {
@@ -939,10 +952,19 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                             );
                         }
 
+                        if (isSpherical) {
+                            tempVertNormal
+                                .set(vertices[i], vertices[i + 1], vertices[i + 2])
+                                .add(this.center)
+                                .normalize();
+                        }
+
+                        tempFootDisp.copy(tempVertNormal).multiplyScalar(minHeight * scaleFactor);
+                        tempRoofDisp.copy(tempVertNormal).multiplyScalar(height * scaleFactor);
                         positions.push(
-                            vertices[i],
-                            vertices[i + 1],
-                            vertices[i + 2] + minHeight * scaleFactor
+                            vertices[i] + tempFootDisp.x,
+                            vertices[i + 1] + tempFootDisp.y,
+                            vertices[i + 2] + tempFootDisp.z
                         );
                         if (texCoordType !== undefined) {
                             textureCoordinates.push(vertices[i + 3], vertices[i + 4]);
@@ -950,9 +972,17 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
 
                         if (isExtruded) {
                             positions.push(
-                                vertices[i],
-                                vertices[i + 1],
-                                vertices[i + 2] + height * scaleFactor
+                                vertices[i] + tempRoofDisp.x,
+                                vertices[i + 1] + tempRoofDisp.y,
+                                vertices[i + 2] + tempRoofDisp.z
+                            );
+                            extrusionAxis.push(
+                                0,
+                                0,
+                                0,
+                                tempRoofDisp.x - tempFootDisp.x,
+                                tempRoofDisp.y - tempFootDisp.y,
+                                tempRoofDisp.z - tempFootDisp.z
                             );
                             if (texCoordType !== undefined) {
                                 textureCoordinates.push(vertices[i + 3], vertices[i + 4]);
@@ -1114,6 +1144,22 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                     name: "uv",
                     buffer: textureCoordinates.buffer as ArrayBuffer,
                     itemCount: 2,
+                    type: "float"
+                });
+            }
+
+            if (meshBuffers.extrusionAxis.length > 0) {
+                const extrusionAxis = new Float32Array(meshBuffers.extrusionAxis);
+                assert(
+                    extrusionAxis.length === positionElements.length,
+                    "length of extrusionAxis buffer is different than the length of the " +
+                        "position buffer"
+                );
+
+                geometry.vertexAttributes.push({
+                    name: "extrusionAxis",
+                    buffer: extrusionAxis.buffer as ArrayBuffer,
+                    itemCount: 3,
                     type: "float"
                 });
             }

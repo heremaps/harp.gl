@@ -95,6 +95,10 @@ export function createDepthPrePassMesh(mesh: THREE.Mesh): THREE.Mesh {
     if (uvAttribute) {
         depthPassGeometry.addAttribute("uv", uvAttribute);
     }
+    const extrusionAxisAttribute = originalGeometry.getAttribute("extrusionAxis");
+    if (extrusionAxisAttribute) {
+        depthPassGeometry.addAttribute("extrusionAxis", extrusionAxisAttribute);
+    }
 
     if (originalGeometry.index) {
         depthPassGeometry.setIndex(originalGeometry.index);
