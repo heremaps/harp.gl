@@ -1546,6 +1546,11 @@ export class Tile implements CachedResource {
                         edgeGeometry.addAttribute("color", colorAttribute);
                     }
 
+                    const extrusionAttribute = bufferGeometry.getAttribute("extrusionAxis");
+                    if (extrusionAttribute !== undefined) {
+                        edgeGeometry.addAttribute("extrusionAxis", extrusionAttribute);
+                    }
+
                     edgeGeometry.setIndex(
                         getBufferAttribute(srcGeometry.edgeIndex! as BufferAttribute)
                     );
