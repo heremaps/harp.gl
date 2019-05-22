@@ -59,9 +59,9 @@ import { accessToken } from "../config";
  */
 export namespace HelloWorldExample {
     // Create a new MapView for the HTMLCanvasElement of the given id.
-    function initializeMapView(): MapView {
+    function initializeMapView(id: string): MapView {
         // snippet:harp_gl_hello_world_example_0.ts
-        const canvas = document.getElementById("mapCanvas") as HTMLCanvasElement;
+        const canvas = document.getElementById(id) as HTMLCanvasElement;
         // end:harp_gl_hello_world_example_0.ts
 
         // snippet:harp_gl_hello_world_example_1.ts
@@ -97,31 +97,37 @@ export namespace HelloWorldExample {
         });
         // end:harp_gl_hello_world_example_3.ts
 
+        addOmvDataSource(map);
+
         return map;
     }
 
-    const mapView = initializeMapView();
+    function addOmvDataSource(map: MapView) {
+        const hereCopyrightInfo: CopyrightInfo = {
+            id: "here.com",
+            year: new Date().getFullYear(),
+            label: "HERE",
+            link: "https://legal.here.com/terms"
+        };
+        const copyrights: CopyrightInfo[] = [hereCopyrightInfo];
 
-    const hereCopyrightInfo: CopyrightInfo = {
-        id: "here.com",
-        year: new Date().getFullYear(),
-        label: "HERE",
-        link: "https://legal.here.com/terms"
-    };
-    const copyrights: CopyrightInfo[] = [hereCopyrightInfo];
+        // snippet:harp_gl_hello_world_example_4.ts
+        const omvDataSource = new OmvDataSource({
+            baseUrl: "https://xyz.api.here.com/tiles/herebase.02",
+            apiFormat: APIFormat.XYZOMV,
+            styleSetName: "tilezen",
+            maxZoomLevel: 17,
+            authenticationCode: accessToken,
+            copyrightInfo: copyrights
+        });
+        // end:harp_gl_hello_world_example_4.ts
 
-    // snippet:harp_gl_hello_world_example_4.ts
-    const omvDataSource = new OmvDataSource({
-        baseUrl: "https://xyz.api.here.com/tiles/herebase.02",
-        apiFormat: APIFormat.XYZOMV,
-        styleSetName: "tilezen",
-        maxZoomLevel: 17,
-        authenticationCode: accessToken,
-        copyrightInfo: copyrights
-    });
-    // end:harp_gl_hello_world_example_4.ts
+        // snippet:harp_gl_hello_world_example_5.ts
+        map.addDataSource(omvDataSource);
+        // end:harp_gl_hello_world_example_5.ts
 
-    // snippet:harp_gl_hello_world_example_5.ts
-    mapView.addDataSource(omvDataSource);
-    // end:harp_gl_hello_world_example_5.ts
+        return map;
+    }
+
+    export const mapView = initializeMapView("mapCanvas");
 }
