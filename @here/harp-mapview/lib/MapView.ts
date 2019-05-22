@@ -1689,6 +1689,10 @@ export class MapView extends THREE.EventDispatcher {
      * THREE.js can raycast, the solid lines that get their geometry in the shader cannot be tested
      * for intersection.
      *
+     * Note, if a [[DataSource]] adds an [[Object3D]] to a [[Tile]], it will be only pickable once
+     * [[MapView.render]] has been called, this is because [[MapView.render]] method creates the
+     * internal three.js root [[Object3D]] which is used in the [[PickHandler]] internally.
+     *
      * @param x The X position in css/client coordinates (without applied display ratio).
      * @param y The Y position in css/client coordinates (without applied display ratio).
      * @returns The list of intersection results.
