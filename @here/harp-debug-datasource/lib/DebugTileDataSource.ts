@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { TilingScheme } from "@here/harp-geoutils";
-import { TileKey } from "@here/harp-geoutils/lib/tiling/TileKey";
+import { GeoCoordinates, ProjectionType, TileKey, TilingScheme } from "@here/harp-geoutils";
 import { DataSource, TextElement, Tile } from "@here/harp-mapview";
 import {
     FontUnit,
@@ -41,35 +40,64 @@ export class DebugTile extends Tile {
         },
         color: new THREE.Color("#ff0000")
     });
-    private m_textLayoutStyle = new TextLayoutStyle({
-        verticalAlignment: VerticalAlignment.Below,
-        horizontalAlignment: HorizontalAlignment.Left
-    });
+
+    private readonly m_textLayoutStyle: TextLayoutStyle;
 
     constructor(dataSource: DataSource, tileKey: TileKey) {
         super(dataSource, tileKey);
 
-        const tileBounds = this.boundingBox.clone();
+        const { south, west, north, east } = this.geoBox;
 
-        tileBounds.min.sub(this.center);
-        tileBounds.max.sub(this.center);
-        this.geometry.vertices.push(
-            new THREE.Vector3(tileBounds.min.x, tileBounds.min.y, 0),
-            new THREE.Vector3(tileBounds.max.x, tileBounds.min.y, 0),
-            new THREE.Vector3(tileBounds.max.x, tileBounds.max.y, 0),
-            new THREE.Vector3(tileBounds.min.x, tileBounds.max.y, 0),
-            new THREE.Vector3(tileBounds.min.x, tileBounds.min.y, 0)
-        );
+        const geoCoordinates: GeoCoordinates[] = [
+            new GeoCoordinates(south, west),
+            new GeoCoordinates(south, east),
+            new GeoCoordinates(north, east),
+            new GeoCoordinates(north, west)
+        ];
+
+        const middlePoint = new THREE.Vector3();
+
+        geoCoordinates.forEach(geoPoint => {
+            const pt = new THREE.Vector3();
+            this.projection.projectPoint(geoPoint, pt);
+            pt.sub(this.center);
+            this.geometry.vertices.push(pt);
+            middlePoint.add(pt);
+        });
+
+        middlePoint.divideScalar(geoCoordinates.length);
+
         const lineObject = new THREE.Line(this.geometry, debugMaterial);
-        lineObject.renderOrder = 100;
+        lineObject.renderOrder = PRIORITY_ALWAYS;
         this.objects.push(lineObject);
 
         this.m_labelPositions.setXYZ(0, 0, 0, 0);
 
+        const textPosition = new THREE.Vector3();
+
+        if (this.projection.type === ProjectionType.Planar) {
+            // place the text position at north/west for planar projections.
+            textPosition.copy(this.geometry.vertices[3]);
+            textPosition.multiplyScalar(0.95);
+
+            this.m_textLayoutStyle = new TextLayoutStyle({
+                verticalAlignment: VerticalAlignment.Below,
+                horizontalAlignment: HorizontalAlignment.Left
+            });
+        } else {
+            textPosition.copy(middlePoint);
+
+            this.m_textLayoutStyle = new TextLayoutStyle({
+                verticalAlignment: VerticalAlignment.Center,
+                horizontalAlignment: HorizontalAlignment.Center
+            });
+        }
+
         const text = `(${tileKey.row}, ${tileKey.column}, ${tileKey.level})`;
+
         const textElement = new TextElement(
             text,
-            new THREE.Vector3(tileBounds.min.x * 0.95, tileBounds.max.y * 0.95, 0),
+            textPosition,
             this.m_textRenderStyle,
             this.m_textLayoutStyle,
             PRIORITY_ALWAYS,
