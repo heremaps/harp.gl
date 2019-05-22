@@ -875,7 +875,7 @@ export interface ExtrudedPolygonTechniqueParams extends StandardTechniqueParams 
     /**
      * Animate the extrusion of the buildings if set to `true`.
      */
-    animateExtrusion?: boolean;
+    animateExtrusion?: MaybeInterpolatedProperty<boolean>;
 
     /**
      * Duration of the building's extrusion in milliseconds

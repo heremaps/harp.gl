@@ -1118,7 +1118,12 @@
                     "fadeNear": 0.9,
                     "fadeFar": 1,
                     "lineFadeNear": -0.75,
-                    "lineFadeFar": 1
+                    "lineFadeFar": 1,
+                    "animateExtrusion": {
+                        "interpolation": "Discrete",
+                        "zoomLevels": [14, 15],
+                        "values": [false, true]
+                    }
                 },
                 "renderOrder": 2000
             },
