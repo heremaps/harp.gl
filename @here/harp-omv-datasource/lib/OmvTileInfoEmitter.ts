@@ -53,7 +53,7 @@ export class OmvTileInfoEmitter implements IOmvEmitter {
     ): void {
         const tileInfoWriter = this.m_tileInfoWriter;
 
-        const { projection, center } = this.m_decodeInfo;
+        const { targetProjection, center } = this.m_decodeInfo;
 
         const worldPos = new THREE.Vector3();
 
@@ -65,7 +65,7 @@ export class OmvTileInfoEmitter implements IOmvEmitter {
             const infoTileTechniqueIndex = tileInfoWriter.addTechnique(technique);
 
             for (const pos of geometry) {
-                const { x, y } = projection
+                const { x, y } = targetProjection
                     .reprojectPoint(webMercatorProjection, pos, worldPos)
                     .sub(center);
 
@@ -92,7 +92,7 @@ export class OmvTileInfoEmitter implements IOmvEmitter {
     ): void {
         const tileInfoWriter = this.m_tileInfoWriter;
 
-        const { projection, center } = this.m_decodeInfo;
+        const { targetProjection, center } = this.m_decodeInfo;
 
         const worldPos = new THREE.Vector3();
 
@@ -101,7 +101,7 @@ export class OmvTileInfoEmitter implements IOmvEmitter {
         for (const polyline of geometry) {
             const line: number[] = [];
             for (const pos of polyline.positions) {
-                const { x, y } = projection
+                const { x, y } = targetProjection
                     .reprojectPoint(webMercatorProjection, pos, worldPos)
                     .sub(center);
                 line.push(x, y);
@@ -160,7 +160,7 @@ export class OmvTileInfoEmitter implements IOmvEmitter {
 
         const tileInfoWriter = this.m_tileInfoWriter;
 
-        const { projection, center } = this.m_decodeInfo;
+        const { targetProjection, center } = this.m_decodeInfo;
 
         const polygons: Ring[][] = [];
 
@@ -171,7 +171,7 @@ export class OmvTileInfoEmitter implements IOmvEmitter {
             for (const outline of polygon.rings) {
                 const contour: number[] = [];
                 for (const pos of outline.positions) {
-                    const { x, y, z } = projection
+                    const { x, y, z } = targetProjection
                         .reprojectPoint(webMercatorProjection, pos, worldPos)
                         .sub(center);
                     contour.push(x, y, z);

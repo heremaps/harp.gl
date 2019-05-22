@@ -161,7 +161,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
     ) {}
 
     get projection() {
-        return this.m_decodeInfo.projection;
+        return this.m_decodeInfo.targetProjection;
     }
 
     get center() {
@@ -230,7 +230,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
             const worldPos = new THREE.Vector3();
 
             for (const pos of geometry) {
-                const { x, y, z } = this.m_decodeInfo.projection
+                const { x, y, z } = this.m_decodeInfo.targetProjection
                     .reprojectPoint(webMercatorProjection, pos, worldPos)
                     .sub(this.m_decodeInfo.center);
                 if (shouldCreateTextGeometries) {
@@ -296,16 +296,16 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
 
         const worldPos = new THREE.Vector3();
 
-        const { projection, center, tileBounds } = this.m_decodeInfo;
+        const { targetProjection, center, projectedTileBounds } = this.m_decodeInfo;
 
-        const tileWidth = tileBounds.max.x - tileBounds.min.x;
-        const tileHeight = tileBounds.max.y - tileBounds.min.y;
+        const tileWidth = projectedTileBounds.max.x - projectedTileBounds.min.x;
+        const tileHeight = projectedTileBounds.max.y - projectedTileBounds.min.y;
         const tileSizeInMeters = Math.max(tileWidth, tileHeight);
 
         for (const polyline of geometry) {
             const line: number[] = [];
             polyline.positions.forEach(pos => {
-                const { x, y, z } = projection
+                const { x, y, z } = targetProjection
                     .reprojectPoint(webMercatorProjection, pos, worldPos)
                     .sub(center);
                 line.push(x, y, z);
@@ -531,6 +531,8 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
     ): void {
         this.processFeatureCommon(env);
 
+        const { targetProjection, center } = this.m_decodeInfo;
+
         techniques.forEach(technique => {
             if (technique === undefined) {
                 return;
@@ -548,13 +550,9 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
             const extrudedPolygonTechnique = technique as ExtrudedPolygonTechnique;
             const fillTechnique = technique as FillTechnique;
 
-            const { projection, center, tileBounds } = this.m_decodeInfo;
-            const tileSize = tileBounds.getSize(new THREE.Vector3());
-
             const polygons: Ring[][] = [];
 
             const worldPos = new THREE.Vector3();
-            const texCoord = new THREE.Vector3();
 
             const isExtruded = isExtrudedPolygonTechnique(technique);
             const isFilled = isFillTechnique(technique);
@@ -573,16 +571,18 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                 : 0.0;
             const hasEdges = edgeWidth > 0.0 || isLine;
 
-            const isSpherical = projection.type === ProjectionType.Spherical;
+            const isSpherical = targetProjection.type === ProjectionType.Spherical;
+
+            const tempTexcoords = new THREE.Vector3();
 
             const computeTexCoords =
                 texCoordType === TextureCoordinateType.TileSpace
                     ? (pos: THREE.Vector3) => {
-                          const { x: u, y: v } = projection
-                              .reprojectPoint(webMercatorProjection, pos, texCoord)
-                              .sub(tileBounds.min)
-                              .divide(tileSize);
-                          return { u, v };
+                          const { x: u, y: v } = tempTexcoords
+                              .copy(pos)
+                              .sub(this.m_decodeInfo.tileBounds.min)
+                              .divide(this.m_decodeInfo.tileSize);
+                          return { u, v: 1 - v };
                       }
                     : texCoordType === TextureCoordinateType.EquirectangularSpace
                     ? (pos: THREE.Vector3) => {
@@ -606,7 +606,9 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
 
                     for (let coordIdx = 0; coordIdx < outline.positions.length; ++coordIdx) {
                         const pos = outline.positions[coordIdx];
-                        projection.reprojectPoint(webMercatorProjection, pos, worldPos).sub(center);
+                        targetProjection
+                            .reprojectPoint(webMercatorProjection, pos, worldPos)
+                            .sub(center);
 
                         ringContour.push(worldPos.x, worldPos.y, worldPos.z);
 
@@ -628,6 +630,9 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                         if (computeTexCoords !== undefined) {
                             const { u, v } = computeTexCoords(pos);
                             ringContour.push(u, v);
+                            if (ringPoints !== undefined) {
+                                ringPoints.push(u, v);
+                            }
                         }
                     }
 
@@ -803,7 +808,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
         } = meshBuffers;
 
         const stride = texCoordType !== undefined ? 5 : 3;
-        const isSpherical = this.m_decodeInfo.projection.type === ProjectionType.Spherical;
+        const isSpherical = this.m_decodeInfo.targetProjection.type === ProjectionType.Spherical;
 
         for (const rings of polygons) {
             const start = indices.length;
@@ -886,7 +891,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                     // For sphere projection the stride of Ring.contour and Ring.points can be
                     // different b/c Ring.contour contains texture coordinates where Ring.points
                     // does not.
-                    const triangles = earcut(points, holes, isSpherical ? 3 : stride);
+                    const triangles = earcut(points, holes, stride);
 
                     if (isSpherical) {
                         const geom = new THREE.Geometry();
@@ -904,10 +909,10 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                                 const i0 = triangles[i] * stride;
                                 const i1 = triangles[i + 1] * stride;
                                 const i2 = triangles[i + 2] * stride;
-                                geom.faceVertexUvs[0][i] = [
-                                    new THREE.Vector2(vertices[i0 + 3], vertices[i0 + 4]),
-                                    new THREE.Vector2(vertices[i1 + 3], vertices[i1 + 4]),
-                                    new THREE.Vector2(vertices[i2 + 3], vertices[i2 + 4])
+                                geom.faceVertexUvs[0][i / 3] = [
+                                    new THREE.Vector2(points[i0 + 3], points[i0 + 4]),
+                                    new THREE.Vector2(points[i1 + 3], points[i1 + 4]),
+                                    new THREE.Vector2(points[i2 + 3], points[i2 + 4])
                                 ];
                             }
                         }
@@ -928,13 +933,22 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                             p.sub(this.m_decodeInfo.center);
                             vertices.push(p.x, p.y, p.z);
                             if (texCoordType !== undefined) {
-                                //FIXME(HARP-5700): Get proper texture coordinates from
-                                //faceVertexUvs.
                                 vertices.push(0, 0);
                             }
                         });
 
-                        geom.faces.forEach(({ a, b, c }) => triangles.push(a, b, c));
+                        geom.faces.forEach((face, i) => {
+                            const { a, b, c } = face;
+                            triangles.push(a, b, c);
+                            if (texCoordType !== undefined) {
+                                const vertexUvs = geom.faceVertexUvs[0][i];
+                                if (vertexUvs !== undefined) {
+                                    vertexUvs[0].toArray(vertices, a * stride + 3);
+                                    vertexUvs[1].toArray(vertices, b * stride + 3);
+                                    vertexUvs[2].toArray(vertices, c * stride + 3);
+                                }
+                            }
+                        });
                     }
 
                     // Add the footprint/roof vertices to the position buffer.
@@ -947,7 +961,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                                 tempTileOrigin.y + vertices[i + 1],
                                 tempTileOrigin.z + vertices[i + 2]
                             );
-                            scaleFactor = this.m_decodeInfo.projection.getScaleFactor(
+                            scaleFactor = this.m_decodeInfo.targetProjection.getScaleFactor(
                                 tempVertOrigin
                             );
                         }
