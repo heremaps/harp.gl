@@ -106,7 +106,11 @@ export class PickHandler {
     private readonly m_plane = new THREE.Plane(new THREE.Vector3(0, 0, 1));
     private readonly m_roadPicker?: RoadPicker;
 
-    constructor(readonly mapView: MapView, public enableRoadPicking = true) {
+    constructor(
+        readonly mapView: MapView,
+        readonly camera: THREE.Camera,
+        public enableRoadPicking = true
+    ) {
         this.m_rayCaster = new PickingRaycaster(mapView);
         if (enableRoadPicking) {
             this.m_roadPicker = new RoadPicker(mapView);
@@ -145,7 +149,7 @@ export class PickHandler {
             this.mapView.textElementsRenderer.pickTextElements(scenePosition, pickResults);
         }
 
-        rayCaster.setFromCamera(worldPos, this.mapView.camera);
+        rayCaster.setFromCamera(worldPos, this.camera);
 
         // calculate objects intersecting the picking ray
         const intersects = rayCaster.intersectObjects(this.mapView.worldRootObject.children, true);
@@ -208,7 +212,7 @@ export class PickHandler {
             const planeIntersectPosition = new THREE.Vector3();
             rayCaster.ray.intersectPlane(this.m_plane, planeIntersectPosition);
 
-            const cameraPos = this.mapView.camera.position.clone();
+            const cameraPos = this.camera.position.clone();
 
             this.mapView.forEachVisibleTile(tile => {
                 this.m_roadPicker!.intersectRoads(

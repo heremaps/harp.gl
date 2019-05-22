@@ -698,7 +698,11 @@ export class MapView extends THREE.EventDispatcher {
 
         this.handleRequestAnimationFrame = this.renderFunc.bind(this);
         this.handlePostponedAnimationFrame = this.postponedAnimationFrame.bind(this);
-        this.m_pickHandler = new PickHandler(this, this.m_options.enableRoadPicking === true);
+        this.m_pickHandler = new PickHandler(
+            this,
+            this.m_rteCamera,
+            this.m_options.enableRoadPicking === true
+        );
 
         // Initialization of the stats
         this.setupStats(this.m_options.enableStatistics);
