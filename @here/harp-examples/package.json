@@ -30,6 +30,7 @@
         "@here/harp-geojson-datasource": "^0.3.3",
         "@here/harp-features-datasource": "^0.0.1",
         "@here/harp-lrucache": "^0.2.3",
+        "@here/harp-map": "^0.1.0",
         "@here/harp-map-controls": "^0.2.3",
         "@here/harp-map-theme": "^0.2.3",
         "@here/harp-mapview": "^0.8.3",

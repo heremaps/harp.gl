@@ -25,10 +25,7 @@ const commonConfig = {
         fs: "undefined"
     },
     resolve: {
-        extensions: [".webpack.js", ".web.ts", ".ts", ".tsx", ".web.js", ".js"],
-        alias: {
-            "react-native": "react-native-web"
-        }
+        extensions: [".webpack.js", ".web.ts", ".ts", ".tsx", ".web.js", ".js"]
     },
     module: {
         rules: [

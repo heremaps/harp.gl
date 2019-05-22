@@ -33,6 +33,7 @@ export * from "@here/harp-map-controls/lib/MapControls";
 export * from "@here/harp-map-controls/lib/MapControlsUI";
 export * from "@here/harp-datasource-protocol";
 export * from "@here/harp-geoutils";
+export * from "@here/harp-map";
 export * from "@here/harp-mapview-decoder";
 
 mapBundleMain();
