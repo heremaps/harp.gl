@@ -94,4 +94,24 @@ describe("Interpolation", function() {
         assert.equal(getPropertyValue(colorProperty, 10), "#0000ff");
         assert.equal(getPropertyValue(colorProperty, Infinity), "#0000ff");
     });
+    it("Exponential", () => {
+        numberProperty.interpolationMode = InterpolationMode.Exponential;
+        colorProperty.interpolationMode = InterpolationMode.Exponential;
+
+        assert.equal(getPropertyValue(numberProperty, -Infinity), 0);
+        assert.equal(getPropertyValue(numberProperty, 0), 0);
+        assert.equal(getPropertyValue(numberProperty, 2.5), 25);
+        assert.equal(getPropertyValue(numberProperty, 5), 100);
+        assert.equal(getPropertyValue(numberProperty, 7.5), 200);
+        assert.equal(getPropertyValue(numberProperty, 10), 500);
+        assert.equal(getPropertyValue(numberProperty, Infinity), 500);
+
+        assert.equal(getPropertyValue(colorProperty, -Infinity), "#ff0000");
+        assert.equal(getPropertyValue(colorProperty, 0), "#ff0000");
+        assert.equal(getPropertyValue(colorProperty, 2.5), "#bf3f00");
+        assert.equal(getPropertyValue(colorProperty, 5), "#00ff00");
+        assert.equal(getPropertyValue(colorProperty, 7.5), "#00bf3f");
+        assert.equal(getPropertyValue(colorProperty, 10), "#0000ff");
+        assert.equal(getPropertyValue(colorProperty, Infinity), "#0000ff");
+    });
 });
