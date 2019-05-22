@@ -6,14 +6,21 @@
 
 import { MathUtils } from "@here/harp-geoutils";
 import { CubicInterpolant, DiscreteInterpolant, LinearInterpolant } from "three";
+import { ExponentialInterpolant } from "./ExponentialInterpolant";
 
 import {
     InterpolatedProperty,
     InterpolatedPropertyDefinition,
+    InterpolationMode,
     MaybeInterpolatedProperty
 } from "./InterpolatedPropertyDefs";
 
-const interpolants = [DiscreteInterpolant, LinearInterpolant, CubicInterpolant];
+const interpolants = [
+    DiscreteInterpolant,
+    LinearInterpolant,
+    CubicInterpolant,
+    ExponentialInterpolant
+];
 
 /**
  * Get the value of the specified property at the given zoom level. Handles [[InterpolatedProperty]]
@@ -39,6 +46,12 @@ export function getPropertyValue<T>(
             property.values,
             nChannels
         );
+        if (
+            property.interpolationMode === InterpolationMode.Exponential &&
+            property.exponent !== undefined
+        ) {
+            (interpolant as ExponentialInterpolant).exponent = property.exponent;
+        }
         interpolant.evaluate(level);
         let result = isMultiChannel ? "#" : 0;
         for (const value of interpolant.resultBuffer) {

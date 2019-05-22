@@ -10,7 +10,8 @@
 export enum InterpolationMode {
     Discrete,
     Linear,
-    Cubic
+    Cubic,
+    Exponential
 }
 
 /**
@@ -25,9 +26,10 @@ export enum InterpolationMode {
  * }
  */
 export interface InterpolatedPropertyDefinition<T> {
-    interpolation?: "Discrete" | "Linear" | "Cubic";
+    interpolation?: "Discrete" | "Linear" | "Cubic" | "Exponential";
     zoomLevels: number[];
     values: T[];
+    exponent?: number;
 }
 
 export type MaybeInterpolatedProperty<T> = T | InterpolatedPropertyDefinition<T>;
@@ -50,4 +52,9 @@ export interface InterpolatedProperty<T> {
      * Property values array.
      */
     values: Float32Array;
+
+    /**
+     * Exponent used in interpolation. Only valid with `Exponential` [[InterpolationMode]].
+     */
+    exponent?: number;
 }
