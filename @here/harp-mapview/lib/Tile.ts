@@ -1300,6 +1300,14 @@ export class Tile implements CachedResource {
     diffuseColor *= texelColor;
 #endif`
                         );
+
+                        // We remove the displacement map from manipulating the vertices, it is
+                        // however still required for the pixel shader, so it can't be directly
+                        // removed.
+                        shader.vertexShader = shader.vertexShader.replace(
+                            "#include <displacementmap_vertex>",
+                            ""
+                        );
                     };
                 }
 
