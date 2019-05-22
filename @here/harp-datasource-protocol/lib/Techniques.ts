@@ -319,7 +319,11 @@ export function isShaderTechnique(technique: Technique): technique is ShaderTech
  * @param technique Technique to check.
  */
 export function needsVertexNormals(technique: Technique): boolean {
-    return isStandardTechnique(technique) || isStandardExtrudedLineTechnique(technique);
+    return (
+        isStandardTechnique(technique) ||
+        isTerrainTechnique(technique) ||
+        isStandardExtrudedLineTechnique(technique)
+    );
 }
 
 /**
