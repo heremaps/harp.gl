@@ -18,11 +18,10 @@ import {
     GeoCoordinates,
     mercatorProjection,
     TileKey,
-    webMercatorProjection,
-    webMercatorTilingScheme
+    webMercatorProjection
 } from "@here/harp-geoutils";
 import { assert } from "chai";
-import { Box3, Vector3 } from "three";
+import { Vector3 } from "three";
 import { IPolygonGeometry } from "../lib/IGeometryProcessor";
 import { OmvDecodedTileEmitter } from "../lib/OmvDecodedTileEmitter";
 import { OmvDecoder } from "../lib/OmvDecoder";
@@ -31,10 +30,11 @@ describe("OmvDecodedTileEmitter", function() {
     it("Ring data conversion to polygon data: whole tile square shape", function() {
         const tileKey = TileKey.fromRowColumnLevel(0, 0, 1);
         const projection = mercatorProjection;
-        const geoBox = webMercatorTilingScheme.getGeoBox(tileKey);
-        const tileBounds = projection.projectBox(geoBox, new Box3());
-        const center = tileBounds.getCenter(new Vector3());
         const tileSizeOnScreen = 100;
+
+        const decodeInfo = new OmvDecoder.DecodeInfo(projection, tileKey, tileSizeOnScreen);
+
+        const geoBox = decodeInfo.geoBox;
 
         const coordinates: GeoCoordinates[] = [
             new GeoCoordinates(geoBox.south, geoBox.west),
@@ -52,15 +52,6 @@ describe("OmvDecodedTileEmitter", function() {
                 rings: [{ positions: worldPositions }]
             }
         ];
-
-        const decodeInfo: OmvDecoder.DecodeInfo = {
-            tileKey,
-            projection,
-            geoBox,
-            tileBounds,
-            center,
-            tileSizeOnScreen
-        };
 
         const styleSet: Style[] = [
             {
