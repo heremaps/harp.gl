@@ -8,7 +8,11 @@
  * @hidden
  */
 export function isArrayBufferLike(data: any): data is ArrayBufferLike {
-    return data instanceof ArrayBuffer || data instanceof SharedArrayBuffer;
+    if (typeof SharedArrayBuffer !== "undefined") {
+        return data instanceof ArrayBuffer || data instanceof SharedArrayBuffer;
+    } else {
+        return data instanceof ArrayBuffer;
+    }
 }
 
 /**
