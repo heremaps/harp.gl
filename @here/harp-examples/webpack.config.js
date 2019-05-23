@@ -17,6 +17,18 @@ const harpFontResourcesPath = path.dirname(
     require.resolve("@here/harp-font-resources/package.json")
 );
 
+function resolveOptional(path, message) {
+    try {
+        return require.resolve(path);
+    } catch (error) {
+        if (!message) {
+            message = "some examples may not work";
+        }
+        console.log(`warning: unable to find '${path}': ${message}`);
+        return undefined;
+    }
+}
+
 const commonConfig = {
     context: __dirname,
     devtool: prepareOnly ? undefined : "source-map",
@@ -154,40 +166,38 @@ const exampleDefs = Object.keys(allEntries).reduce(function(r, entry) {
     return r;
 }, {});
 
+const assets = [
+    {
+        from: __dirname + "/example-definitions.js.in",
+        to: "example-definitions.js",
+        transform: content => {
+            return content.toString().replace("{{EXAMPLES}}", JSON.stringify(exampleDefs, true, 4));
+        }
+    },
+    ...[path.join(__dirname, "src")].map(srcDir => ({
+        from: path.join(srcDir, "*.{ts,tsx,html}"),
+        to: "src/[name].[ext]"
+    })),
+    path.join(__dirname, "index.html"),
+    {
+        from: path.join(__dirname, "src/*.html"),
+        to: "[name].[ext]"
+    },
+    path.join(__dirname, "codebrowser.html"),
+    { from: path.join(__dirname, "resources"), to: "resources", toType: "dir" },
+    { from: path.join(harpMapThemePath, "resources"), to: "resources", toType: "dir" },
+    {
+        from: path.join(harpFontResourcesPath, "resources"),
+        to: "resources/fonts",
+        toType: "dir"
+    },
+    require.resolve("three/build/three.min.js"),
+    resolveOptional("@here/harp.gl/dist/harp.js", "bundle examples require `yarn build-bundle`"),
+    resolveOptional("@here/harp.gl/dist/harp-decoders.js")
+].filter(asset => asset); // ignore stuff that is not found
+
 browserConfig.plugins.push(
-    new CopyWebpackPlugin([
-        {
-            from: __dirname + "/example-definitions.js.in",
-            to: "example-definitions.js",
-            transform: content => {
-                return content
-                    .toString()
-                    .replace("{{EXAMPLES}}", JSON.stringify(exampleDefs, true, 4));
-            }
-        },
-        ...[path.join(__dirname, "src")].map(srcDir => ({
-            from: path.join(srcDir, "*.{ts,tsx,html}"),
-            to: "src/[name].[ext]"
-        })),
-        path.join(__dirname, "index.html"),
-        {
-            from: path.join(__dirname, "src/*.html"),
-            to: "[name].[ext]"
-        },
-        path.join(__dirname, "codebrowser.html"),
-        { from: path.join(__dirname, "resources"), to: "resources", toType: "dir" },
-        { from: path.join(harpMapThemePath, "resources"), to: "resources", toType: "dir" },
-        {
-            from: path.join(harpFontResourcesPath, "resources"),
-            to: "resources/fonts",
-            toType: "dir"
-        },
-        require.resolve("three/build/three.min.js"),
-        require.resolve("@here/harp.gl/dist/harp.js"),
-        require.resolve("@here/harp.gl/dist/harp-decoders.js"),
-        ],
-        { ignore: ['*.npmignore','*.gitignore'] }
-    )
+    new CopyWebpackPlugin(assets, { ignore: ["*.npmignore", "*.gitignore"] })
 );
 
 module.exports = [decoderConfig, browserConfig, codeBrowserConfig, exampleBrowserConfig];
