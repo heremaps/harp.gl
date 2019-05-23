@@ -7,35 +7,27 @@
 #
 set -e
 
-# direct and indirect harp.gl dependencies of our test app
-# (TODO, read it from package.json)
-packages="\
-    @here/harp-datasource-protocol \
-    @here/harp-fetch \
-    @here/harp-geoutils \
-    @here/harp-lines \
-    @here/harp-lrucache \
-    @here/harp-map-controls \
-    @here/harp-map-theme \
-    @here/harp-mapview \
-    @here/harp-mapview-decoder \
-    @here/harp-materials \
-    @here/harp-omv-datasource \
-    @here/harp-text-canvas \
-    @here/harp-transfer-manager \
-    @here/harp-utils"
+# all @here/harp-* packages used (directly or indirectly by our test app)
+packages=$(
+    npx ts-node ./scripts/get-dependencies.ts @here/generator-harp.gl/generators/app/templates/package.json |
+    grep @here/harp |
+    grep -v @here/harp-font-resources
+)
 
 
 # ensure we have clean environment before and after test
 rootDir=`pwd`
 function cleanup() {
     cd $rootDir
+    git checkout -- package.json @here/*/package.json
     rm -f @here/*/*.tgz
 }
 trap cleanup EXIT
 
 set -x
 cleanup
+
+npx lerna version prepatch  --yes --no-push --no-git-tag-version
 
 # build the npm packages
 for package in $packages ; do

@@ -6,9 +6,11 @@
         "@here/*"
     ],
     "devDependencies": {
+        "@strictsoftware/typedoc-plugin-monorepo": "^0.2.1",
         "chromedriver": "^74.0.0",
         "geckodriver": "^1.12.2",
         "hard-source-webpack-plugin": "^0.13.1",
+        "lerna": "^3.14.1",
         "mocha": "^6.1.4",
         "mocha-webdriver-runner": "^0.5.1",
         "prettier": "^1.17.0",
@@ -17,7 +19,6 @@
         "tslint": "^5.16.0",
         "tslint-config-prettier": "^1.18.0",
         "typedoc": "^0.14.2",
-        "@strictsoftware/typedoc-plugin-monorepo": "^0.2.1",
         "typescript": "^3.4.1",
         "webpack": "^4.30.0",
         "webpack-cli": "^3.3.2",
