@@ -48,13 +48,13 @@ export interface BaseTechniqueParams {
      * Distance to the camera (0.0 = camera position, 1.0 = farPlane) at which the object start
      * fading out (opacity decreases).
      */
-    fadeNear?: number;
+    fadeNear?: MaybeInterpolatedProperty<number>;
 
     /**
      * Distance to the camera (0.0 = camera position, 1.0 = farPlane) at which the object has zero
      * opacity and stops fading out. A value of <= 0.0 disables fading.
      */
-    fadeFar?: number;
+    fadeFar?: MaybeInterpolatedProperty<number>;
 }
 
 export enum TextureCoordinateType {
@@ -78,6 +78,7 @@ export interface StandardTechniqueParams extends BaseTechniqueParams {
      * Color of the feature in hexadecimal or CSS-style notation, for example: `"#e4e9ec"`,
      * `"#fff"`, `"rgb(255, 0, 0)"`, or `"hsl(35, 11%, 88%)"`.
      * See https://threejs.org/docs/#api/en/materials/MeshStandardMaterial.color.
+     * @format color-hex
      */
     color?: string;
     /**
@@ -96,7 +97,7 @@ export interface StandardTechniqueParams extends BaseTechniqueParams {
      * diffuse. Default is `0.5`.
      * See https://threejs.org/docs/#api/en/materials/MeshStandardMaterial.roughness.
      */
-    roughness?: number;
+    roughness?: MaybeInterpolatedProperty<number>;
     /**
      * How much the material is like a metal. Nonmetallic materials such as wood or stone use `0.0`,
      * metallic ones use `1.0`, with nothing (usually) in between. Default is `0.5`. A value between
@@ -104,12 +105,12 @@ export interface StandardTechniqueParams extends BaseTechniqueParams {
      * values are multiplied.
      * See https://threejs.org/docs/#api/en/materials/MeshStandardMaterial.metalness.
      */
-    metalness?: number;
+    metalness?: MaybeInterpolatedProperty<number>;
     /**
      * The material will not be rendered if the opacity is lower than this value.
      * See https://threejs.org/docs/#api/en/materials/Material.alphaTest.
      */
-    alphaTest?: number;
+    alphaTest?: MaybeInterpolatedProperty<number>;
     /**
      * Skip rendering clobbered pixels.
      * See https://threejs.org/docs/#api/en/materials/Material.depthTest.
@@ -126,18 +127,19 @@ export interface StandardTechniqueParams extends BaseTechniqueParams {
      * opaque.
      * See https://threejs.org/docs/#api/en/materials/Material.opacity.
      */
-    opacity?: number;
+    opacity?: MaybeInterpolatedProperty<number>;
     /**
      * Emissive (light) color of the material, essentially a solid color unaffected by other
      * lighting. Default is black.
      * See https://threejs.org/docs/#api/en/materials/MeshStandardMaterial.emissive.
+     * @format color-hex
      */
-    emissive?: string;
+    emissive?: MaybeInterpolatedProperty<string>;
     /**
      * Intensity of the emissive light. Modulates the emissive color. Default is `1`.
      * See https://threejs.org/docs/#api/en/materials/MeshStandardMaterial.emissiveIntensity.
      */
-    emissiveIntensity?: number;
+    emissiveIntensity?: MaybeInterpolatedProperty<number>;
     /**
      * The index of refraction (IOR) of air (approximately 1) divided by the index of refraction of
      * the material. It is used with environment mapping modes `THREE.CubeRefractionMapping` and
@@ -145,7 +147,7 @@ export interface StandardTechniqueParams extends BaseTechniqueParams {
      *  is `0.98`.
      * See https://threejs.org/docs/#api/en/materials/MeshStandardMaterial.refractionRatio.
      */
-    refractionRatio?: number;
+    refractionRatio?: MaybeInterpolatedProperty<number>;
 
     /**
      * Whether and how texture coordinates should be generated. No texture coordinates are
@@ -219,8 +221,9 @@ export interface PointTechniqueParams extends BaseTechniqueParams {
     /**
      * Color of a point in hexadecimal or CSS-style notation, for example: `"#e4e9ec"`, `"#fff"`,
      * `"rgb(255, 0, 0)"`, or `"hsl(35, 11%, 88%)"`.
+     * @format color-hex
      */
-    color?: string;
+    color?: MaybeInterpolatedProperty<string>;
     /**
      * URL of a texture image to be loaded.
      */
@@ -234,7 +237,7 @@ export interface PointTechniqueParams extends BaseTechniqueParams {
      * For transparent lines, set a value between 0.0 for totally transparent, to 1.0 for totally
      * opaque.
      */
-    opacity?: number;
+    opacity?: MaybeInterpolatedProperty<number>;
     /**
      * Size of point in pixels.
      */
@@ -284,7 +287,7 @@ export interface MarkerTechniqueParams extends BaseTechniqueParams {
     /**
      * Priority of marker, defaults to `0`. Markers with highest priority get placed first.
      */
-    priority?: number;
+    priority?: MaybeInterpolatedProperty<number>;
     /**
      * Minimum zoomLevel at which to display the label text. No default.
      */
@@ -359,16 +362,6 @@ export interface MarkerTechniqueParams extends BaseTechniqueParams {
      * graphics. Defaults to `true`.
      */
     iconIsOptional?: boolean;
-    /**
-     * Distance to the camera (0.0 = camera position, 1.0 = farPlane) at which the object start
-     * fading out (opacity decreases).
-     */
-    fadeNear?: number;
-    /**
-     * Distance to the camera (0.0 = camera position, 1.0 = farPlane) at which the object becomes
-     * transparent. A value of <= 0.0 disables fading.
-     */
-    fadeFar?: number;
     /**
      * Fading time for labels in seconds.
      */
@@ -465,22 +458,24 @@ export interface MarkerTechniqueParams extends BaseTechniqueParams {
     /**
      * Text color in hexadecimal or CSS-style notation, for example: `"#e4e9ec"`, `"#fff"`,
      * `"rgb(255, 0, 0)"`, or `"hsl(35, 11%, 88%)"`.
+     * @format color-hex
      */
-    color?: string;
+    color?: MaybeInterpolatedProperty<string>;
     /**
      * Text background color in hexadecimal or CSS-style notation, for example: `"#e4e9ec"`,
      * `"#fff"`, `"rgb(255, 0, 0)"`, or `"hsl(35, 11%, 88%)"`.
+     * @format color-hex
      */
-    backgroundColor?: string;
+    backgroundColor?: MaybeInterpolatedProperty<string>;
     /**
      * For transparent text, set a value between 0.0 for totally transparent, to 1.0 for totally
      * opaque.
      */
-    opacity?: number;
+    opacity?: MaybeInterpolatedProperty<number>;
     /**
      * Background text opacity value.
      */
-    backgroundOpacity?: number;
+    backgroundOpacity?: MaybeInterpolatedProperty<number>;
     /**
      * Inter-glyph spacing (pixels). Scaled by `size`.
      */
@@ -523,8 +518,9 @@ export interface LineTechniqueParams extends BaseTechniqueParams {
     /**
      * Color of a line in hexadecimal or CSS-style notation, for example: `"#e4e9ec"`, `"#fff"`,
      * `"rgb(255, 0, 0)"`, or `"hsl(35, 11%, 88%)"`.
+     * @format color-hex
      */
-    color: string;
+    color: MaybeInterpolatedProperty<string>;
     /**
      * Set to true if line should appear transparent. Rendering transparent lines may come with a
      * slight performance impact.
@@ -534,7 +530,7 @@ export interface LineTechniqueParams extends BaseTechniqueParams {
      * For transparent lines, set a value between 0.0 for totally transparent, to 1.0 for totally
      * opaque.
      */
-    opacity?: number;
+    opacity?: MaybeInterpolatedProperty<number>;
     /**
      * Width of line in pixels. WebGL implementations will normally render all lines with 1 pixel
      * width, and ignore this value.
@@ -548,8 +544,9 @@ export interface LineTechniqueParams extends BaseTechniqueParams {
 export interface SegmentsTechniqueParams extends BaseTechniqueParams {
     /**
      * Color of segments in a hexadecimal notation, for example: `"#e4e9ec"` or `"#fff"`.
+     * @format color-hex
      */
-    color: string;
+    color: MaybeInterpolatedProperty<string>;
     /**
      * Set to `true` if line should appear transparent. Rendering transparent lines may come with a
      * slight performance impact.
@@ -559,7 +556,7 @@ export interface SegmentsTechniqueParams extends BaseTechniqueParams {
      * For transparent lines, set a value between `0.0` for fully transparent, to `1.0` for fully
      * opaque.
      */
-    opacity?: number;
+    opacity?: MaybeInterpolatedProperty<number>;
     /**
      * Width of a line in meters.
      */
@@ -594,15 +591,16 @@ export interface PolygonalTechniqueParams {
     /**
      * Sets the polygon offset factor. Default is 0.
      */
-    polygonOffsetFactor?: number;
+    polygonOffsetFactor?: MaybeInterpolatedProperty<number>;
 
     /**
      * Sets the polygon offset units. Default is 0.
      */
-    polygonOffsetUnits?: number;
+    polygonOffsetUnits?: MaybeInterpolatedProperty<number>;
 
     /**
      * Sets the polygon outline color.
+     * @format color-hex
      */
     lineColor?: string;
 
@@ -610,13 +608,13 @@ export interface PolygonalTechniqueParams {
      * Distance to the camera (0.0 = nearPlane, 1.0 = farPlane) at which the object edges start
      * fading out.
      */
-    lineFadeNear?: number;
+    lineFadeNear?: MaybeInterpolatedProperty<number>;
 
     /**
      * Distance to the camera (0.0 = nearPlane, 1.0 = farPlane) at which the object edges become
      * transparent. A value of <= 0.0 disables fading.
      */
-    lineFadeFar?: number;
+    lineFadeFar?: MaybeInterpolatedProperty<number>;
 }
 
 /**
@@ -638,8 +636,9 @@ export interface BasicExtrudedLineTechniqueParams
     /**
      * Color of a line in hexadecimal or CSS-style notation, for example: `"#e4e9ec"`, `"#fff"`,
      * `"rgb(255, 0, 0)"`, or `"hsl(35, 11%, 88%)"`.
+     * @format color-hex
      */
-    color: string;
+    color: MaybeInterpolatedProperty<string>;
     /**
      * Set to `true` if line should appear transparent. Rendering transparent lines may come with a
      * slight performance impact.
@@ -649,7 +648,7 @@ export interface BasicExtrudedLineTechniqueParams
      * For transparent lines, set a value between 0.0 for totally transparent, to 1.0 for totally
      * opaque.
      */
-    opacity?: number;
+    opacity?: MaybeInterpolatedProperty<number>;
     /**
      * Width of line in meters for different zoom levels.
      */
@@ -697,8 +696,9 @@ export interface SolidLineTechniqueParams extends BaseTechniqueParams, Polygonal
     /**
      * Color of a line in hexadecimal or CSS-style notation, for example: `"#e4e9ec"`, `"#fff"`,
      * `"rgb(255, 0, 0)"`, or `"hsl(35, 11%, 88%)"`.
+     * @format color-hex
      */
-    color: string;
+    color: MaybeInterpolatedProperty<string>;
     /**
      * Set to `true` if line should appear transparent. Rendering transparent lines may come with a
      * slight performance impact.
@@ -708,12 +708,12 @@ export interface SolidLineTechniqueParams extends BaseTechniqueParams, Polygonal
      * For transparent lines, set a value between `0.0` for fully transparent, to `1.0` for fully
      * opaque.
      */
-    opacity?: number;
+    opacity?: MaybeInterpolatedProperty<number>;
     // TODO: Make pixel units default.
     /**
      * Units in which different size properties are specified. Either `Meter` (default) or `Pixel`.
      */
-    metricUnit?: string;
+    metricUnit?: MaybeInterpolatedProperty<string>;
     /**
      * Width of a line in `metricUnit`s for different zoom levels.
      */
@@ -725,8 +725,9 @@ export interface SolidLineTechniqueParams extends BaseTechniqueParams, Polygonal
     /**
      * Color of secondary line geometry in hexadecimal or CSS-style notation, for example:
      * `"#e4e9ec"`, `"#fff"`, `"rgb(255, 0, 0)"`, or `"hsl(35, 11%, 88%)"`.
+     * @format color-hex
      */
-    secondaryColor?: string;
+    secondaryColor?: MaybeInterpolatedProperty<string>;
     /**
      * Width of secondary line geometry in `metricUnit`s for different zoom levels.
      */
@@ -744,8 +745,9 @@ export interface DashedLineTechniqueParams extends BaseTechniqueParams, Polygona
     /**
      * Color of a line in hexadecimal or CSS-style notation, for example: `"#e4e9ec"`, `"#fff"`,
      * `"rgb(255, 0, 0)"`, or `"hsl(35, 11%, 88%)"`.
+     * @format color-hex
      */
-    color: string;
+    color: MaybeInterpolatedProperty<string>;
     /**
      * Set to `true` if line should appear transparent. Rendering transparent lines may come with a
      * slight performance impact.
@@ -755,12 +757,12 @@ export interface DashedLineTechniqueParams extends BaseTechniqueParams, Polygona
      * For transparent lines, set a value between `0.0` for fully transparent, to `1.0` for fully
      * opaque.
      */
-    opacity?: number;
+    opacity?: MaybeInterpolatedProperty<number>;
     // TODO: Make pixel units default.
     /**
      * Units in which different size properties are specified. Either `Meter` (default) or `Pixel`.
      */
-    metricUnit?: "Meter" | "Pixel";
+    metricUnit?: MaybeInterpolatedProperty<"Meter" | "Pixel">;
     /**
      * Width of a line in `metricUnit`s for different zoom levels.
      */
@@ -786,8 +788,9 @@ export interface FillTechniqueParams extends BaseTechniqueParams, PolygonalTechn
     /**
      * Fill color in hexadecimal or CSS-style notation, for example: `"#e4e9ec"`, `"#fff"`,
      * `"rgb(255, 0, 0)"`, or `"hsl(35, 11%, 88%)"`.
+     * @format color-hex
      */
-    color?: string;
+    color?: MaybeInterpolatedProperty<string>;
     /**
      * Set to `true` if line should appear transparent. Rendering transparent lines may come with a
      * slight performance impact.
@@ -797,7 +800,7 @@ export interface FillTechniqueParams extends BaseTechniqueParams, PolygonalTechn
      * For transparent lines, set a value between `0.0` for fully transparent, to `1.0` for fully
      * opaque.
      */
-    opacity?: number;
+    opacity?: MaybeInterpolatedProperty<number>;
     /**
      * A value of `true` creates a wireframe geometry. (May not be supported with all techniques).
      */
@@ -828,6 +831,7 @@ export interface ExtrudedPolygonTechniqueParams extends StandardTechniqueParams 
     /**
      * Fill color in hexadecimal or CSS-style notation, for example: `"#e4e9ec"`, `"#fff"`,
      * `"rgb(255, 0, 0)"`, or `"hsl(35, 11%, 88%)"`.
+     * @format color-hex
      */
     lineColor?: string;
     /**
@@ -839,13 +843,13 @@ export interface ExtrudedPolygonTechniqueParams extends StandardTechniqueParams 
      * Distance to the camera (0.0 = nearPlane, 1.0 = farPlane) at which the object edges start
      * fading out.
      */
-    lineFadeNear?: number;
+    lineFadeNear?: MaybeInterpolatedProperty<number>;
 
     /**
      * Distance to the camera (0.0 = nearPlane, 1.0 = farPlane) at which the object edges become
      * transparent. A value of <= 0.0 disables fading.
      */
-    lineFadeFar?: number;
+    lineFadeFar?: MaybeInterpolatedProperty<number>;
 
     /**
      * In some data sources, for example Tilezen, building extrusion information might be missing.
@@ -856,6 +860,7 @@ export interface ExtrudedPolygonTechniqueParams extends StandardTechniqueParams 
     /**
      * Default color used if feature doesn't provide color attribute
      * and [[MapEnv]] did not return it too.
+     * @format color-hex
      */
     defaultColor?: string;
 
@@ -964,7 +969,7 @@ export interface TextTechniqueParams extends BaseTechniqueParams {
     /**
      * Priority of text, defaults to `0`. Elements with highest priority get placed first.
      */
-    priority?: number;
+    priority?: MaybeInterpolatedProperty<number>;
     /**
      * Minimal zoom level. If the current zoom level is smaller, the technique will not be used.
      */
@@ -1031,22 +1036,24 @@ export interface TextTechniqueParams extends BaseTechniqueParams {
     /**
      * Text color in hexadecimal or CSS-style notation, for example: `"#e4e9ec"`, `"#fff"`,
      * `"rgb(255, 0, 0)"`, or `"hsl(35, 11%, 88%)"`.
+     * @format color-hex
      */
-    color?: string;
+    color?: MaybeInterpolatedProperty<string>;
     /**
      * Text background color in hexadecimal or CSS-style notation, for example: `"#e4e9ec"`,
      * `"#fff"`, `"rgb(255, 0, 0)"`, or `"hsl(35, 11%, 88%)"`.
+     * @format color-hex
      */
-    backgroundColor?: string;
+    backgroundColor?: MaybeInterpolatedProperty<string>;
     /**
      * For transparent text, set a value between 0.0 for totally transparent, to 1.0 for totally
      * opaque.
      */
-    opacity?: number;
+    opacity?: MaybeInterpolatedProperty<number>;
     /**
      * Background text opacity value.
      */
-    backgroundOpacity?: number;
+    backgroundOpacity?: MaybeInterpolatedProperty<number>;
     /**
      * Inter-glyph spacing (pixels). Scaled by `size`.
      */

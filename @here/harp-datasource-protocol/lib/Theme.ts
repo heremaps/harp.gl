@@ -38,6 +38,7 @@ export interface Theme {
 
     /**
      * Color to be used as a clear background - no map objects.
+     * @format color-hex
      */
     clearColor?: string;
 
@@ -183,6 +184,166 @@ export interface BaseStyle {
     labelProperty?: string;
 }
 
+/**
+ *
+ * @defaultSnippets [
+ *     {
+ *         "label": "New solid-line",
+ *         "description": "Add a New 'solid-line' Styling Rule",
+ *         "body": {
+ *             "technique": "solid-line",
+ *             "when": "$1",
+ *             "attr": {
+ *                 "color": "#$2fff",
+ *                 "lineWidth": "^${3:1}"
+ *             }
+ *         }
+ *     },
+ *     {
+ *         "label": "New dashed-line",
+ *         "description": "Add a New 'dashed-line' Styling Rule",
+ *         "body": {
+ *             "technique": "dashed-line",
+ *             "when": "$1",
+ *             "attr": {
+ *                 "color": "#$2fff",
+ *                 "lineWidth": "^${3:1}"
+ *             }
+ *         }
+ *     },
+ *     {
+ *         "label": "New fill",
+ *         "description": "Add a New 'fill' Styling Rule",
+ *         "body": {
+ *             "technique": "fill",
+ *             "when": "$1",
+ *             "attr": {
+ *                 "color": "#$2fff"
+ *             }
+ *         }
+ *     },
+ *     {
+ *         "label": "New text",
+ *         "description": "Add a New 'text' Styling Rule",
+ *         "body": {
+ *             "technique": "text",
+ *             "when": "$1",
+ *             "attr": {
+ *                 "scale": "^$2"
+ *             }
+ *         }
+ *     },
+ *     {
+ *         "label": "New labeled-icon",
+ *         "description": "Add a New 'labeled-icon' Styling Rule",
+ *         "body": {
+ *             "technique": "labeled-icon",
+ *             "when": "$1",
+ *             "attr": {}
+ *         }
+ *     },
+ *     {
+ *         "label": "New line-marker",
+ *         "description": "Add a New 'line-marker' Styling Rule",
+ *         "body": {
+ *             "technique": "line-marker",
+ *             "when": "$1",
+ *             "attr": {}
+ *         }
+ *     },
+ *     {
+ *         "label": "New line",
+ *         "description": "Add a New 'line' Styling Rule",
+ *         "body": {
+ *             "technique": "line",
+ *             "when": "$1",
+ *             "attr": {}
+ *         }
+ *     },
+ *     {
+ *         "label": "New segments",
+ *         "description": "Add a New 'segments' Styling Rule",
+ *         "body": {
+ *             "technique": "segments",
+ *             "when": "$1",
+ *             "attr": {}
+ *         }
+ *     },
+ *     {
+ *         "label": "New standard",
+ *         "description": "Add a New 'standard' Styling Rule",
+ *         "body": {
+ *             "technique": "standard",
+ *             "when": "$1",
+ *             "attr": {}
+ *         }
+ *     },
+ *     {
+ *         "label": "New extruded-line",
+ *         "description": "Add a New 'extruded-line' Styling Rule",
+ *         "body": {
+ *             "technique": "extruded-line",
+ *             "when": "$1",
+ *             "attr": {}
+ *         }
+ *     },
+ *     {
+ *         "label": "New extruded-polygon",
+ *         "description": "Add a New 'extruded-polygon' Styling Rule",
+ *         "body": {
+ *             "technique": "extruded-polygon",
+ *             "when": "$1",
+ *             "attr": {}
+ *         }
+ *     },
+ *     {
+ *         "label": "New none",
+ *         "description": "Add a New 'none' Styling Rule",
+ *         "body": {
+ *             "technique": "none",
+ *             "when": "$1",
+ *             "attr": {}
+ *         }
+ *     },
+ *     {
+ *         "label": "New shader",
+ *         "description": "Add a New 'shader' Styling Rule",
+ *         "body": {
+ *             "technique": "shader",
+ *             "when": "$1",
+ *             "attr": {}
+ *         }
+ *     },
+ *     {
+ *         "label": "New landmark",
+ *         "description": "Add a New 'landmark' Styling Rule",
+ *         "body": {
+ *             "technique": "landmark",
+ *             "when": "$1",
+ *             "attr": {}
+ *         }
+ *     },
+ *     {
+ *         "label": "New squares",
+ *         "description": "Add a New 'squares' Styling Rule",
+ *         "body": {
+ *             "technique": "squares",
+ *             "when": "$1",
+ *             "attr": {}
+ *         }
+ *     },
+ *     {
+ *         "label": "New circles",
+ *         "description": "Add a New 'circles' Styling Rule",
+ *         "body": {
+ *             "technique": "circles",
+ *             "when": "$1",
+ *             "attr": {}
+ *         }
+ *     }
+ * ]
+ *
+ */
 export type Style =
     | SquaresStyle
     | CirclesStyle
@@ -198,6 +359,7 @@ export type Style =
     | StandardExtrudedLineStyle
     | ExtrudedPolygonStyle
     | ShaderStyle
+    | TerrainStyle
     | TextTechniqueStyle
     | NoneStyle;
 
@@ -333,18 +495,53 @@ export interface BaseLight {
 
 /**
  * Light type: ambient.
+ * @defaultSnippets [
+ *     {
+ *         "label": "New Ambient Light",
+ *         "description": "Adds a New Ambient Light",
+ *         "body": {
+ *             "type": "ambient",
+ *             "name": "${1:ambient light}",
+ *             "color": "#${2:fff}",
+ *             "intensity": "^${3:1}"
+ *         }
+ *     }
+ * ]
  */
 export interface AmbientLight extends BaseLight {
     type: "ambient";
+    /**
+     * @format color-hex
+     */
     color: string;
     intensity?: number;
 }
 
 /**
  * Light type: directional.
+ * @defaultSnippets [
+ *     {
+ *         "label": "New Directional Light",
+ *         "description": "Adds a New Directional Light",
+ *         "body": {
+ *             "type": "directional",
+ *             "name": "${1:directional-light$:1}",
+ *             "color": "#${2:fff}",
+ *             "intensity": "^${3:1}",
+ *             "direction": {
+ *                 "x": "^${4:1}",
+ *                 "y": "^${5:0}",
+ *                 "z": "^${6:0}"
+ *             }
+ *         }
+ *     }
+ * ]
  */
 export interface DirectionalLight extends BaseLight {
     type: "directional";
+    /**
+     * @format color-hex
+     */
     color: string;
     intensity: number;
     direction: Vector3Like;
@@ -364,7 +561,13 @@ export interface TextStyleDefinition {
     fontStyle?: "Regular" | "Bold" | "Italic" | "BoldItalic";
     fontVariant?: "Regular" | "AllCaps" | "SmallCaps";
     rotation?: number;
+    /**
+     * @format color-hex
+     */
     color?: string;
+    /**
+     * @format color-hex
+     */
     backgroundColor?: string;
     opacity?: number;
     backgroundOpacity?: number;
@@ -391,8 +594,17 @@ export interface TextStyleDefinition {
  */
 export interface Sky {
     type: string;
+    /**
+     * @format color-hex
+     */
     colorTop: string;
+    /**
+     * @format color-hex
+     */
     colorBottom: string;
+    /**
+     * @format color-hex
+     */
     groundColor: string;
     monomialPower?: number;
 }

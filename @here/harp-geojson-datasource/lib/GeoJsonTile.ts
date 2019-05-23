@@ -6,6 +6,7 @@
 
 import {
     DecodedTile,
+    getPropertyValue,
     isPoiTechnique,
     isTextTechnique,
     PoiTechnique,
@@ -201,7 +202,7 @@ export class GeoJsonTile extends Tile {
             path,
             this.getRenderStyle(technique),
             this.getLayoutStyle(technique),
-            priority,
+            getPropertyValue(priority, this.mapView.zoomLevel),
             xOffset,
             yOffset,
             featureId
@@ -280,7 +281,7 @@ export class GeoJsonTile extends Tile {
             position,
             this.getRenderStyle(technique),
             this.getLayoutStyle(technique),
-            priority,
+            getPropertyValue(priority, this.mapView.zoomLevel),
             xOffset,
             yOffset,
             featureId
@@ -351,7 +352,7 @@ export class GeoJsonTile extends Tile {
             position,
             this.getRenderStyle(technique),
             this.getLayoutStyle(technique),
-            priority,
+            getPropertyValue(priority, this.mapView.zoomLevel),
             xOffset,
             yOffset,
             featureId
