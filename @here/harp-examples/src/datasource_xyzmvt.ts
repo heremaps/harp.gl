@@ -87,7 +87,8 @@ export namespace DatasourceXYZMVTExample {
 
         // instantiate the default map controls, allowing the user to pan around freely.
         const mapControls = new MapControls(map);
-        mapControls.setRotation(0.9, 23.928);
+        mapControls.maxPitchAngle = 50;
+        mapControls.setRotation(6.3, 50);
         // end:harp_gl_datasource_xyzmvt_example_2.ts
 
         // snippet:harp_gl_datasource_xyzmvt_example_3.ts
