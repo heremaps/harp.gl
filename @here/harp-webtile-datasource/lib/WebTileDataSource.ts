@@ -6,7 +6,7 @@
 
 import * as THREE from "three";
 
-import { mercatorTilingScheme, TileKey, TilingScheme } from "@here/harp-geoutils";
+import { mercatorTilingScheme, ProjectionType, TileKey, TilingScheme } from "@here/harp-geoutils";
 import { CopyrightInfo, DataSource, Tile } from "@here/harp-mapview";
 import { getOptionValue, LoggerManager } from "@here/harp-utils";
 
@@ -278,7 +278,7 @@ export class WebTileDataSource extends DataSource {
      * @param m_options Represents the [[WebTileDataSourceParameters]].
      */
     constructor(private readonly m_options: WebTileDataSourceParameters) {
-        super("webtile");
+        super("webtile", undefined, 1, 20);
         this.cacheable = true;
         this.storageLevelOffset = -1;
         this.m_resolution = getOptionValue(m_options.resolution, 512);
@@ -292,14 +292,6 @@ export class WebTileDataSource extends DataSource {
 
     getTilingScheme(): TilingScheme {
         return mercatorTilingScheme;
-    }
-
-    get minZoomLevel(): number {
-        return 1;
-    }
-
-    get maxZoomLevel(): number {
-        return 20;
     }
 
     setLanguages(languages?: string[]): void {
@@ -344,17 +336,37 @@ export class WebTileDataSource extends DataSource {
                 texture.generateMipmaps = false;
                 tile.addOwnedTexture(texture);
 
-                const bounds = tile.boundingBox;
+                const shouldSubdivide = this.projection.type === ProjectionType.Spherical;
 
-                bounds.min.sub(tile.center);
-                bounds.max.sub(tile.center);
+                const dataProjection = this.getTilingScheme().projection;
+
+                const resolution = shouldSubdivide ? 10 : 1;
+
+                const bounds = new THREE.Box3();
+                dataProjection.projectBox(tile.geoBox, bounds);
+
                 const size = new THREE.Vector3();
                 bounds.getSize(size);
-                const quad = new THREE.PlaneBufferGeometry(size.x, size.y);
+
+                const geometry = new THREE.PlaneGeometry(size.x, size.y, resolution, resolution);
+
+                if (shouldSubdivide) {
+                    const center = new THREE.Vector3();
+                    bounds.getCenter(center);
+
+                    geometry.vertices.forEach(v => {
+                        v.add(center);
+                        this.projection.projectPoint(dataProjection.unprojectPoint(v), v);
+                        this.projection.scalePointToSurface(v);
+                        v.sub(tile.center);
+                    });
+                }
+
                 const material = new THREE.MeshBasicMaterial({
                     map: texture
                 });
-                const mesh = new THREE.Mesh(quad, material);
+
+                const mesh = new THREE.Mesh(geometry, material);
                 tile.objects.push(mesh);
                 tile.invalidateResourceInfo();
                 this.requestUpdate();
