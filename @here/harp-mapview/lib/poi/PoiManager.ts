@@ -467,7 +467,7 @@ export class PoiManager {
                 positions,
                 this.getRenderStyle(tile.dataSource.name, technique),
                 this.getLayoutStyle(tile.dataSource.name, technique),
-                priority,
+                getPropertyValue(priority, displayZoomLevel),
                 technique.xOffset !== undefined ? technique.xOffset : 0.0,
                 technique.yOffset !== undefined ? technique.yOffset : 0.0,
                 featureId,

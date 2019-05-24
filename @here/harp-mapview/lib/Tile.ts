@@ -2046,11 +2046,13 @@ export class Tile implements CachedResource {
     private getPolygonFadingParams(
         technique: FillTechnique | ExtrudedPolygonTechnique
     ): PolygonFadingParameters {
-        let color: string | number = EdgeMaterial.DEFAULT_COLOR;
+        let color: string | number | undefined;
         let colorMix = EdgeMaterial.DEFAULT_COLOR_MIX;
 
+        const displayZoomLevel = this.mapView.zoomLevel;
+
         if (technique.lineColor !== undefined) {
-            color = technique.lineColor;
+            color = getPropertyValue(technique.lineColor, displayZoomLevel);
             if (isExtrudedPolygonTechnique(technique)) {
                 const extrudedPolygonTechnique = technique as ExtrudedPolygonTechnique;
                 colorMix =
@@ -2059,7 +2061,6 @@ export class Tile implements CachedResource {
                         : EdgeMaterial.DEFAULT_COLOR_MIX;
             }
         }
-        const displayZoomLevel = this.mapView.zoomLevel;
 
         const fadeNear =
             technique.fadeNear !== undefined
@@ -2078,6 +2079,10 @@ export class Tile implements CachedResource {
             technique.lineFadeFar !== undefined
                 ? getPropertyValue(technique.lineFadeFar, displayZoomLevel)
                 : fadeFar;
+
+        if (color === undefined) {
+            color = EdgeMaterial.DEFAULT_COLOR;
+        }
 
         return {
             color,

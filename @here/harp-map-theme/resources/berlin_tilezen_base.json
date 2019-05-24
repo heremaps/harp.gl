@@ -89,8 +89,7 @@
                     "size": 16,
                     "priority": 25,
                     "fadeNear": 0.8,
-                    "fadeFar": 0.9,
-                    "clipping": false
+                    "fadeFar": 0.9
                 },
                 "renderOrder": 10
             },
@@ -165,8 +164,7 @@
                     "size": 16,
                     "priority": 20,
                     "fadeNear": 0.8,
-                    "fadeFar": 0.9,
-                    "clipping": false
+                    "fadeFar": 0.9
                 },
                 "renderOrder": 13
             },
@@ -251,8 +249,7 @@
                     "size": 16,
                     "priority": 15,
                     "fadeNear": 0.8,
-                    "fadeFar": 0.9,
-                    "clipping": false
+                    "fadeFar": 0.9
                 },
                 "renderOrder": 12
             },
@@ -375,8 +372,7 @@
                             "size": 16,
                             "priority": 15,
                             "fadeNear": 0.8,
-                            "fadeFar": 0.9,
-                            "clipping": false
+                            "fadeFar": 0.9
                         },
                         "renderOrder": 12
                     }
@@ -427,8 +423,7 @@
                             "size": 16,
                             "priority": 15,
                             "fadeNear": 0.8,
-                            "fadeFar": 0.9,
-                            "clipping": false
+                            "fadeFar": 0.9
                         },
                         "renderOrder": 12
                     }
@@ -445,8 +440,7 @@
                     "size": 12.8,
                     "priority": 25,
                     "fadeNear": 0.8,
-                    "fadeFar": 0.9,
-                    "clipping": false
+                    "fadeFar": 0.9
                 },
                 "renderOrder": 10
             },
@@ -677,7 +671,6 @@
                 "technique": "dashed-line",
                 "attr": {
                     "color": "#2F444B",
-                    "secondaryColor": "#52676E",
                     "lineWidth": {
                         "interpolation": "Linear",
                         "zoomLevels": [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
@@ -699,26 +692,6 @@
                             2
                         ]
                     },
-                    "secondaryWidth": {
-                        "interpolation": "Linear",
-                        "zoomLevels": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14],
-                        "values": [
-                            10000,
-                            8000,
-                            7000,
-                            5000,
-                            3000,
-                            2000,
-                            1000,
-                            500,
-                            250,
-                            120,
-                            80,
-                            40,
-                            20,
-                            10
-                        ]
-                    },
                     "dashSize": {
                         "interpolation": "Cubic",
                         "zoomLevels": [10, 11, 12, 13, 14],
@@ -730,8 +703,7 @@
                         "values": [512, 256, 128, 64, 32]
                     }
                 },
-                "renderOrder": 4.1,
-                "secondaryRenderOrder": 4
+                "renderOrder": 4.1
             },
             {
                 "description": "disputed border line - text",
