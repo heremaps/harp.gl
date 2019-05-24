@@ -282,7 +282,7 @@ export class WebTileDataSource extends DataSource {
         this.cacheable = true;
         this.storageLevelOffset = -1;
         this.m_resolution = getOptionValue(m_options.resolution, 512);
-        this.m_ppi = getOptionValue(m_options.ppi, 320);
+        this.m_ppi = getOptionValue(m_options.ppi, -1);
         this.m_tileBaseAddress = m_options.tileBaseAddress || WebTileDataSource.TILE_BASE_NORMAL;
     }
 
@@ -299,7 +299,7 @@ export class WebTileDataSource extends DataSource {
     }
 
     get maxZoomLevel(): number {
-        return 19;
+        return 20;
     }
 
     setLanguages(languages?: string[]): void {
@@ -322,9 +322,11 @@ export class WebTileDataSource extends DataSource {
             `https://${server}.${this.m_tileBaseAddress}/` +
             `${level}/${column}/${row}/${this.m_resolution}/png8` +
             `?app_id=${appId}&app_code=${appCode}` +
-            `&ppi=${this.m_ppi}` +
             getOptionValue(this.m_options.additionalRequestParameters, "");
 
+        if (this.m_ppi !== -1) {
+            url += `&ppi=${this.m_ppi}`;
+        }
         if (this.m_languages !== undefined && this.m_languages[0] !== undefined) {
             url += `&lg=${this.m_languages[0]}`;
         }
