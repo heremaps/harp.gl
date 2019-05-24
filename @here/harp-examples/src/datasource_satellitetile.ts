@@ -14,20 +14,20 @@ import { appCode, appId } from "../config";
 /**
  * A simple example using the webtile data source. Tiles are retrieved from
  * ```
- * https://1.base.maps.api.here.com/maptile/2.1/maptile/newest/normal.day/${level}/${column}/${row}/512/png8?app_id=${appId}&app_code=${appCode}
+ * https://1.aerial.maps.api.here.com/maptile/2.1/maptile/newest/satellite.day/${level}/${column}/${row}/512/png8?app_id=${appId}&app_code=${appCode}
  * ```
  *
  * A [[WebTileDataSource]] is created with specified applications' appId and appCode passed
  * as [[WebTileDataSourceOptions]]
  * ```typescript
- * [[include:harp_gl_datasource_webtile_1.ts]]
+ * [[include:harp_gl_datasource_satellitetile_1.ts]]
  * ```
  * Then added to the [[MapView]]
  * ```typescript
- * [[include:harp_gl_datasource_webtile_2.ts]]
+ * [[include:harp_gl_datasource_satellitetile_2.ts]]
  * ```
  */
-export namespace WebTileDataSourceExample {
+export namespace SatelliteDataSourceExample {
     // creates a new MapView for the HTMLCanvasElement of the given id
     export function initializeMapView(id: string): MapView {
         const canvas = document.getElementById(id) as HTMLCanvasElement;
@@ -60,17 +60,17 @@ export namespace WebTileDataSourceExample {
 
     const mapView = initializeMapView("mapCanvas");
 
-    // snippet:harp_gl_datasource_webtile_1.ts
+    // snippet:harp_gl_datasource_satellitetile_1.ts
     const webTileDataSource = new WebTileDataSource({
         appId,
         appCode,
-        ppi: 320
+        tileBaseAddress: WebTileDataSource.TILE_AERIAL_SATELLITE
     });
-    // end:harp_gl_datasource_webtile_1.ts
+    // end:harp_gl_datasource_satellitetile_1.ts
 
     mapView.geoCenter = new GeoCoordinates(40.702, -74.01154);
 
-    // snippet:harp_gl_datasource_webtile_2.ts
+    // snippet:harp_gl_datasource_satellitetile_2.ts
     mapView.addDataSource(webTileDataSource);
-    // end:harp_gl_datasource_webtile_2.ts
+    // end:harp_gl_datasource_satellitetile_2.ts
 }
