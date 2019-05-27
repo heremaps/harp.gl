@@ -1,6 +1,6 @@
 {
     "name": "@here/harp.gl",
-    "version": "0.1.0",
+    "version": "0.2.0",
     "description": "JS Bundle containing all the functionality needed to render a map with harp.gl",
     "keywords": [
         "map",
@@ -31,16 +31,16 @@
         "three": "^0.104.0"
     },
     "devDependencies": {
-        "@here/harp-mapview": "^0.8.1",
-        "@here/harp-geoutils": "^0.3.1",
-        "@here/harp-omv-datasource": "^0.3.1",
-        "@here/harp-geojson-datasource": "^0.3.1",
-        "@here/harp-lines": "^0.2.1",
+        "@here/harp-geojson-datasource": "^0.4.0",
+        "@here/harp-geoutils": "^0.4.0",
+        "@here/harp-lines": "^0.3.0",
         "@here/harp-lrucache": "^0.2.1",
-        "@here/harp-materials": "^0.2.1",
-        "@here/harp-text-canvas": "^0.2.1",
-        "@here/harp-utils": "^0.2.2",
+        "@here/harp-mapview": "^0.9.0",
+        "@here/harp-materials": "^0.3.0",
+        "@here/harp-omv-datasource": "^0.4.0",
         "@here/harp-test-utils": "^0.2.1",
+        "@here/harp-text-canvas": "^0.3.0",
+        "@here/harp-utils": "^0.2.2",
         "ts-loader": "^5.2.1",
         "typescript": "^3.4.1",
         "webpack": "^4.30.0",
