@@ -34,7 +34,7 @@ export namespace WebTileDataSourceGlobeExample {
 
         const map = new MapView({
             canvas,
-            theme: "resources/berlin_tilezen_base.json",
+            theme: "resources/berlin_tilezen_base_globe.json",
             projection: sphereProjection,
             tileCacheSize: 400
         });

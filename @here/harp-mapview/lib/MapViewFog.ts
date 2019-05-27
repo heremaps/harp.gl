@@ -49,10 +49,10 @@ export class MapViewFog {
 
     /**
      * Sets the fog depending on the [[Theme]] instance provided. This function is called when a
-     * theme is loaded. Fog is added only if the theme contains:
-     * - a sky definition with a `colorBottom` property, used to set the fog color
-     * - a fog definition with a `startRatio` property, used to set the start distance of the fog
-     *   as a ratio of the far culling plane distance.
+     * theme is loaded. Fog is added only if the theme contains a fog definition with a:
+     * - `color` property, used to set the fog color.
+     * - `startRatio` property, used to set the start distance of the fog as a ratio of the far
+     * clipping plane distance.
      *
      * @param theme A [[Theme]] instance.
      */
@@ -60,13 +60,12 @@ export class MapViewFog {
         this.m_cachedTheme = theme;
         if (
             theme !== undefined &&
-            theme.sky !== undefined &&
-            theme.sky.colorBottom !== undefined &&
             theme.fog !== undefined &&
-            theme.fog.startRatio !== undefined // This will be necessary in the `update` method.
+            theme.fog.color !== undefined &&
+            theme.fog.startRatio !== undefined
         ) {
             this.m_fogIsDefined = true;
-            this.m_fog.color.set(theme.sky.colorBottom);
+            this.m_fog.color.set(theme.fog.color);
             if (this.m_enabled && this.m_scene.fog === null) {
                 this.add();
             }

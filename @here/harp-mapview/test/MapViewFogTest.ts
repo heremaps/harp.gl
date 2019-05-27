@@ -17,8 +17,7 @@ import { MapViewFog } from "../lib/MapViewFog";
 describe("MapViewFog", function() {
     it("adds fog if defined in the provided theme", function() {
         const theme: Theme = {
-            sky: { colorBottom: "#ffff12", colorTop: "", groundColor: "", type: "" },
-            fog: { startRatio: 0.8 }
+            fog: { color: "#ffff12", startRatio: 0.8 }
         }; // Theme with a fog definition.
         const scene = new Scene(); // Scene without fog.
         const fog = new MapViewFog(scene);
@@ -31,8 +30,7 @@ describe("MapViewFog", function() {
 
     it("handles fog disabling via MapViewFog#enabled", function() {
         const theme: Theme = {
-            sky: { colorBottom: "#ffff12", colorTop: "", groundColor: "", type: "" },
-            fog: { startRatio: 0.8 }
+            fog: { color: "#ffff12", startRatio: 0.8 }
         }; // Theme with a fog definition.
         const scene = new Scene(); // Scene without fog.
         const fog = new MapViewFog(scene);

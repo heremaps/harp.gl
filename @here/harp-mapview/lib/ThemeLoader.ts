@@ -7,6 +7,7 @@
 import { Theme } from "@here/harp-datasource-protocol";
 import "@here/harp-fetch";
 import { composeUrlResolvers, defaultUrlResolver, resolveReferenceUrl } from "@here/harp-utils";
+import { SKY_CUBEMAP_FACE_COUNT, SkyCubemapFaceId } from "./SkyCubemapTexture";
 
 /**
  * Loads and validates a theme from URL objects.
@@ -51,6 +52,14 @@ export class ThemeLoader {
             (childUrl: string) => resolveReferenceUrl(theme.url, childUrl),
             defaultUrlResolver
         );
+        if (theme.sky && theme.sky.params.type === "cubemap") {
+            for (let i = 0; i < SKY_CUBEMAP_FACE_COUNT; ++i) {
+                const faceUrl: string | undefined = (theme.sky.params as any)[SkyCubemapFaceId[i]];
+                if (faceUrl !== undefined) {
+                    (theme.sky.params as any)[SkyCubemapFaceId[i]] = childUrlResolver(faceUrl);
+                }
+            }
+        }
         if (theme.images) {
             for (const name of Object.keys(theme.images)) {
                 const image = theme.images[name];
