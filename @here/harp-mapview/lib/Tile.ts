@@ -1509,10 +1509,23 @@ export class Tile implements CachedResource {
                     isExtrudedPolygonTechnique(technique) &&
                     animatedExtrusionHandler !== undefined
                 ) {
+                    let animateExtrusionValue = getPropertyValue(
+                        technique.animateExtrusion,
+                        Math.floor(this.mapView.zoomLevel)
+                    );
+
+                    if (animateExtrusionValue !== undefined) {
+                        animateExtrusionValue =
+                            typeof animateExtrusionValue === "boolean"
+                                ? animateExtrusionValue
+                                : typeof animateExtrusionValue === "number"
+                                ? animateExtrusionValue !== 0
+                                : false;
+                    }
                     extrusionAnimatonEnabled =
-                        technique.animateExtrusion !== undefined &&
+                        animateExtrusionValue !== undefined &&
                         animatedExtrusionHandler.forceEnabled === false
-                            ? technique.animateExtrusion
+                            ? animateExtrusionValue
                             : animatedExtrusionHandler.enabled;
                 }
 
