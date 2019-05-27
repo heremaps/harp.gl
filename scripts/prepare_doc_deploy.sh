@@ -1,5 +1,6 @@
 #!/bin/bash
-# This script prepares the documentation to be deployed by Travis to an S3 bucket
+# This script prepares the documentation to be deployed by Travis to S3 and
+# gh-pages.
 # Precondition: documentation ready on /dist folder
 # including docs and examples (e.g. after yarn run build && yarn run typedoc)
 
@@ -8,12 +9,13 @@ if [ "$TRAVIS_BRANCH" != "master" ]; then
     folder_name=`git rev-parse --short HEAD`
 fi
 
-# create the following directory structurey
+# create the following directory structure
 # dist
 # ├──s3_deploy (to be deployed to s3)
-# │   ├── master | {githash} (folder with docs and examples)
+# │   ├── [ master | {githash} ] (folder with docs and examples)
 # ├──gh_deploy (to be deployed to gh-pages)
 # │   ├── index.html (and assets for minisite)
+# │   ├── releases.json (list all releases in order)
 
 mkdir -p dist/gh_deploy
 mv dist/index.html dist/gh_deploy
@@ -38,8 +40,8 @@ mv dist/examples dist/s3_deploy/${folder_name}
 
 if [ "$TRAVIS_BRANCH" != "master" ]; then
     print_date=`date +"%d-%m-%y"`
-    new_release='{ \"date\": \"'${print_date}'\",\"hash\": \"'${folder_name}'\"}'
-    wget 'http://harp.gl.s3-website-us-east-1.amazonaws.com/docs/releases.json'
+    new_release='{ "date": "'${print_date}'","hash": "'${folder_name}'"}'
+    wget 'https://heremaps.github.io/harp.gl/releases.json'
 
     if [ ! -f releases.json ]; then
         echo -e '[\n'${new_release}'\n]\n' > releases.json
@@ -47,5 +49,5 @@ if [ "$TRAVIS_BRANCH" != "master" ]; then
         sed -i -e "2i$new_release,\n" releases.json
     fi
 
-    mv releases.json dist/s3_deploy/${folder_name}
+    mv releases.json dist/gh_deploy
 fi

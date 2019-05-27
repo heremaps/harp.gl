@@ -68,7 +68,7 @@
 				dropdown.empty();
 				dropdown.append('<option selected="true" value="master">master</option>');
 				dropdown.prop('selectedIndex', 0);
-				$.getJSON('./s3/releases.json', function (data) {
+				$.getJSON('https://heremaps.github.io/harp.gl/releases.json', function (data) {
 					$.each(data, function (key, entry) {
 						dropdown.append($('<option></option>').attr('value', entry.hash).text(entry.date));
 					})
