@@ -2,7 +2,7 @@
 
 `harp.gl` is an _experimental and work in progress_ open-source 3D map rendering engine.
 
-### [Documentation](https://heremaps.github.io/harp.gl/doc) - [Examples](https://heremaps.github.io/harp.gl/examples)
+### [Documentation](https://heremaps.github.io/harp.gl/)
 
 ## Overview
 
