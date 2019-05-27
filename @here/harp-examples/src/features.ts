@@ -29,10 +29,11 @@ export namespace SimpleFeaturesExample {
     // end:harp_simple_features_example_0.ts
 
     // snippet:harp_simple_features_example_1.ts
-    const square = new MapViewPolygonFeature([[[10, 50], [15, 30], [5, 30]]]);
+    // We need to replicate the first point in the last coordinate to close the polygon.
+    const polygon = new MapViewPolygonFeature([[[10, 50], [10, 30], [5, 30], [5, 50], [10, 50]]]);
     const featuresDataSource = new FeaturesDataSource();
     map.addDataSource(featuresDataSource).then(() => {
-        featuresDataSource.add(square).setStyleSet([
+        featuresDataSource.add(polygon).setStyleSet([
             {
                 technique: "fill",
                 when: "$geometryType == 'polygon'",
@@ -53,7 +54,7 @@ export namespace SimpleFeaturesExample {
             canvas,
             theme: "resources/berlin_tilezen_base.json"
         });
-        mapView.setCameraGeolocationAndZoom(new GeoCoordinates(-25, 13), 3.9);
+        mapView.setCameraGeolocationAndZoom(new GeoCoordinates(25, 13), 3.9);
 
         const controls = new MapControls(mapView);
         const ui = new MapControlsUI(controls);
