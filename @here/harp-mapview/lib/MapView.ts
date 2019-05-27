@@ -3,7 +3,14 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-import { ImageTexture, Light, PostEffects, Sky, Theme } from "@here/harp-datasource-protocol";
+import {
+    GradientSkyParams,
+    ImageTexture,
+    Light,
+    PostEffects,
+    Sky,
+    Theme
+} from "@here/harp-datasource-protocol";
 import {
     EarthConstants,
     GeoCoordinates,
@@ -12,7 +19,7 @@ import {
     Projection,
     ProjectionType
 } from "@here/harp-geoutils";
-import { assert, LoggerManager, PerformanceTimer } from "@here/harp-utils";
+import { assert, getOptionValue, LoggerManager, PerformanceTimer } from "@here/harp-utils";
 import * as THREE from "three";
 
 import { AnimatedExtrusionHandler } from "./AnimatedExtrusionHandler";
@@ -514,8 +521,9 @@ export class MapView extends THREE.EventDispatcher {
 
     private m_postEffects?: PostEffects;
 
-    private m_createdLights?: THREE.Light[];
     private m_skyBackground?: SkyBackground;
+    private m_createdLights?: THREE.Light[];
+
     private readonly m_screenProjector: ScreenProjector;
     private readonly m_screenCollisions:
         | ScreenCollisions
@@ -2195,8 +2203,8 @@ export class MapView extends THREE.EventDispatcher {
         if (gatherStatistics) {
             textPlacementTime = PerformanceTimer.now();
         }
-        if (this.m_skyBackground !== undefined) {
-            this.m_skyBackground.update(this.m_camera);
+        if (this.m_skyBackground !== undefined && this.projection.type === ProjectionType.Planar) {
+            this.m_skyBackground.updateCamera(this.m_camera);
         }
 
         const isDynamicFrame = this.cameraIsMoving || this.animating || this.m_updatePending;
@@ -2387,36 +2395,34 @@ export class MapView extends THREE.EventDispatcher {
         }
     }
 
-    private addNewSkyBackground(skyBackground: Sky, clearColor: string | undefined) {
-        const groundColor =
-            skyBackground.groundColor === undefined ? clearColor : skyBackground.groundColor;
-        this.m_skyBackground = new SkyBackground(
-            new THREE.Color(skyBackground.colorTop),
-            new THREE.Color(skyBackground.colorBottom),
-            new THREE.Color(groundColor),
-            this.m_camera,
-            skyBackground.monomialPower
-        );
+    private addNewSkyBackground(sky: Sky, clearColor: string | undefined) {
+        if (
+            sky.params.type === "gradient" &&
+            (sky.params as GradientSkyParams).groundColor === undefined
+        ) {
+            sky.params.groundColor = getOptionValue(clearColor, "#000000");
+        }
+        this.m_skyBackground = new SkyBackground(sky.params, this.projection.type, this.m_camera);
         this.m_scene.background = this.m_skyBackground.texture;
     }
 
     private removeSkyBackGround() {
         this.m_scene.background = null;
         if (this.m_skyBackground !== undefined) {
-            this.m_skyBackground.texture.dispose();
+            this.m_skyBackground.dispose();
             this.m_skyBackground = undefined;
         }
     }
 
-    private updateSkyBackgroundColors(skyBackground: Sky, clearColor: string | undefined) {
-        const groundColor =
-            skyBackground.groundColor === undefined ? clearColor : skyBackground.groundColor;
+    private updateSkyBackgroundColors(sky: Sky, clearColor: string | undefined) {
+        if (
+            sky.params.type === "gradient" &&
+            (sky.params as GradientSkyParams).groundColor === undefined
+        ) {
+            sky.params.groundColor = getOptionValue(clearColor, "#000000");
+        }
         if (this.m_skyBackground !== undefined) {
-            this.m_skyBackground.updateColors(
-                new THREE.Color(skyBackground.colorTop),
-                new THREE.Color(skyBackground.colorBottom),
-                new THREE.Color(groundColor)
-            );
+            this.m_skyBackground.updateTexture(sky.params);
         }
     }
 

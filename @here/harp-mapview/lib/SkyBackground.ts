@@ -4,218 +4,92 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { CubemapSkyParams, GradientSkyParams } from "@here/harp-datasource-protocol";
+import { ProjectionType } from "@here/harp-geoutils";
+import { SkyCubemapTexture } from "./SkyCubemapTexture";
+import { SkyGradientTexture } from "./SkyGradientTexture";
+
 import * as THREE from "three";
-import { DEFAULT_MONOMIAL_POWER, SkyGradientTexture } from "./SkyGradientTexture";
 
 /**
- * Generates a texture gradient and allows updates to its y-offset.
- *
- * To position the texture correctly, this class reads the value of the four corners of the far
- * clipping plane and calculates the intersection between the line that divides the far clipping
- * plane in to two equal parts, and the ground plane. This intersection point is called
- * `horizonPosition`, and it determines the texture's y-offset.
- *
- * See also [[SkyGradientTexture]].
+ * Class that handles [[MapView]]'s sky background.
  */
 export class SkyBackground {
-    private m_gradient: SkyGradientTexture;
-    private m_farClipPlaneDividedVertically: THREE.Line3;
-    private m_groundPlane: THREE.Plane;
-    private m_bottomMidFarPoint: THREE.Vector3;
-    private m_topMidFarPoint: THREE.Vector3;
-    private m_horizonPosition: THREE.Vector3;
-    private m_farClipPlaneCorners: THREE.Vector3[];
+    private m_skyTexture?: SkyGradientTexture | SkyCubemapTexture;
 
     /**
-     * Constructs a `SkyBackground` instance.
+     * Constructs a new `SkyBackground`.
      *
-     * @param m_topColor Defines the color of the upper part of the gradient.
-     * @param m_bottomColor Defines the color of bottom part of the gradient, that touches the
-     * ground.
-     * @param m_groundColor Defines the color of the first pixel of the gradient, from the bottom.
-     * @param camera Required to calculate the texture's offset.
-     * @param m_monomialPower Defines the texture's gradient power.
-     *
-     * @example
-     * ```TypeScript
-     * // This creates a texture gradient and uses it as background of the scene.
-     * this.m_skyBackground = new SkyBackground(
-     *     new THREE.Color("#FF000"),
-     *     new THREE.Color("#0000FF"),
-     *     new THREE.Color("#F8FBFD"),
-     *     this.camera
-     * );
-     * this.m_scene.background = this.m_skyBackground.texture;
-     *
-     * // Then, when the camera moves at runtime, the skyBackground needs to be updated.
-     * this.m_skyBackground.update(this.m_camera);
-     * ```
+     * @param m_params Sky configuration parameters.
+     * @param m_projectionType [[MapView]]'s projection type.
+     * @param camera [[MapView]]'s camera.
      */
     constructor(
-        private m_topColor: THREE.Color,
-        private m_bottomColor: THREE.Color,
-        private m_groundColor: THREE.Color,
-        camera: THREE.Camera,
-        private m_monomialPower: number = DEFAULT_MONOMIAL_POWER
+        private m_params: GradientSkyParams | CubemapSkyParams,
+        private m_projectionType: ProjectionType,
+        camera: THREE.Camera
     ) {
-        this.m_gradient = new SkyGradientTexture(
-            m_topColor,
-            m_bottomColor,
-            m_groundColor,
-            m_monomialPower
-        );
-        this.m_farClipPlaneDividedVertically = new THREE.Line3();
-        this.m_groundPlane = new THREE.Plane(new THREE.Vector3(0, 0, 1));
-        this.m_bottomMidFarPoint = new THREE.Vector3();
-        this.m_topMidFarPoint = new THREE.Vector3();
-        this.m_horizonPosition = new THREE.Vector3();
-        this.m_farClipPlaneCorners = [
-            new THREE.Vector3(),
-            new THREE.Vector3(),
-            new THREE.Vector3(),
-            new THREE.Vector3()
-        ];
-
-        this.update(camera);
+        switch (this.m_params.type) {
+            case "gradient":
+                this.m_skyTexture = new SkyGradientTexture(this.m_params, this.m_projectionType);
+                this.updateCamera(camera);
+                break;
+            case "cubemap": {
+                this.m_skyTexture = new SkyCubemapTexture(this.m_params);
+                break;
+            }
+        }
     }
 
     /**
-     * Missing Typedoc
+     * Disposes allocated resources.
      */
-    get topColor(): THREE.Color {
-        return this.m_topColor;
+    dispose() {
+        this.m_skyTexture!.dispose();
     }
 
     /**
-     * Missing Typedoc
+     * Sky texture.
      */
-    get bottomColor(): THREE.Color {
-        return this.m_bottomColor;
+    get texture(): THREE.Texture {
+        return this.m_skyTexture!.texture;
     }
 
     /**
-     * Missing Typedoc
-     */
-    get groundColor(): THREE.Color {
-        return this.m_groundColor;
-    }
-
-    /**
-     * Missing Typedoc
-     */
-    get monomialPower(): number {
-        return this.m_monomialPower;
-    }
-
-    /**
-     * Missing Typedoc
-     */
-    get texture(): THREE.DataTexture {
-        return this.m_gradient.texture;
-    }
-
-    /**
-     * Missing Typedoc
-     */
-    get horizon(): THREE.Vector3 {
-        return this.m_horizonPosition;
-    }
-
-    /**
-     * This method updates the position of the texture depending on the camera frustum.
+     * This method updates the skybox based on the camera position (needed for some types of sky).
      *
      * @param camera The camera used in the map view.
      */
-    update(camera: THREE.Camera) {
-        this.setHorizonPosition(camera);
-        this.updateTexturePosition();
+    updateCamera(camera: THREE.Camera) {
+        if (this.m_params.type === "gradient") {
+            (this.m_skyTexture! as SkyGradientTexture).update(camera);
+        }
     }
 
     /**
-     * Updates the sky texture with new colors.
+     * Updates the sky texture with new parameters.
      *
-     * @param topColor Color at the zenith.
-     * @param bottomColor Color at the horizon.
-     * @param groundColor This color should match the renderer's clear color in the theme.
+     * @param params New sky configuration parameters.
      */
-    updateColors(topColor: THREE.Color, bottomColor: THREE.Color, groundColor: THREE.Color) {
-        this.m_topColor = topColor;
-        this.m_bottomColor = bottomColor;
-        this.m_groundColor = groundColor;
-        this.m_gradient.update(topColor, bottomColor, groundColor);
-    }
-
-    private setHorizonPosition(camera: THREE.Camera) {
-        this.setFarPlaneCornersFromCamera(camera, this.m_farClipPlaneCorners);
-        const bottomLeftFarCorner = this.m_farClipPlaneCorners[0];
-        const bottomRightFarCorner = this.m_farClipPlaneCorners[1];
-        const topLeftFarCorner = this.m_farClipPlaneCorners[2];
-        const topRightFarCorner = this.m_farClipPlaneCorners[3];
-
-        this.setMidPoint(bottomLeftFarCorner, bottomRightFarCorner, this.m_bottomMidFarPoint);
-        this.setMidPoint(topLeftFarCorner, topRightFarCorner, this.m_topMidFarPoint);
-
-        this.m_farClipPlaneDividedVertically.set(this.m_bottomMidFarPoint, this.m_topMidFarPoint);
-
-        const hasIntersection = this.m_groundPlane.intersectLine(
-            this.m_farClipPlaneDividedVertically,
-            this.m_horizonPosition
-        );
-
-        // when there is no intersection between the ground plane and the
-        // farClipPlaneDividedVertically, be sure that the horizon is reset. Otherwise a previous
-        // intersection point stored in the m_horizonPosition will be considered the valid one.
-        if (!hasIntersection) {
-            this.m_horizonPosition.set(0.0, 0.0, 0.0);
+    updateTexture(params: GradientSkyParams | CubemapSkyParams) {
+        const isSameSkyType = this.m_params.type === params.type;
+        switch (params.type) {
+            case "gradient":
+                if (isSameSkyType) {
+                    (this.m_skyTexture! as SkyGradientTexture).updateTexture(params);
+                } else {
+                    this.m_skyTexture = new SkyGradientTexture(params, this.m_projectionType);
+                }
+                break;
+            case "cubemap": {
+                if (isSameSkyType) {
+                    (this.m_skyTexture! as SkyCubemapTexture).updateTexture(params);
+                } else {
+                    this.m_skyTexture = new SkyCubemapTexture(params);
+                }
+                break;
+            }
         }
-    }
-
-    private updateTexturePosition() {
-        const coveredBySky = this.m_bottomMidFarPoint.distanceTo(this.m_horizonPosition);
-        const frustumHeight = this.m_farClipPlaneDividedVertically.distance();
-        const skyRatio = coveredBySky / frustumHeight;
-        // if there is no intersection between the ground plane and the line that defines the far
-        // clip plane divided vertically, it means that there is no sky visible and therefore the
-        // ground color should be displayed. When there is no intersection, the length of the
-        // this.m_horizonPosition is still equal to zero, as threejs initialize an empty vector with
-        // all the three components to zero.
-        // If there is an intersection, calculate the offset.
-        let ratio;
-        if (this.m_horizonPosition.length() === 0) {
-            ratio = 1;
-        } else {
-            const groundRatio = 1 / this.m_gradient.texture.image.height;
-            ratio = skyRatio - groundRatio;
-        }
-
-        // if the bottom part of the far clipping plane is under the ground plane, scroll the
-        // texture down. Otherwise, the camera is looking at the sky, therefore, scroll the texture
-        // up.
-        if (this.m_bottomMidFarPoint.z <= 0) {
-            this.m_gradient.updateYOffset(-ratio);
-        } else {
-            this.m_gradient.updateYOffset(skyRatio);
-        }
-    }
-
-    private setMidPoint(start: THREE.Vector3, end: THREE.Vector3, destination: THREE.Vector3) {
-        destination.set((start.x + end.x) / 2, (start.y + end.y) / 2, (start.z + end.z) / 2);
-    }
-
-    private setFarPlaneCornersFromCamera(camera: THREE.Camera, corners: THREE.Vector3[]) {
-        let cornerIndex = 0;
-
-        function addPoint(x: number, y: number, z: number) {
-            corners[cornerIndex++].set(x, y, z).unproject(camera);
-        }
-
-        const w = 1;
-        const h = 1;
-        const f = 1;
-
-        addPoint(-w, -h, f);
-        addPoint(w, -h, f);
-        addPoint(-w, h, f);
-        addPoint(w, h, f);
+        this.m_params = params;
     }
 }
