@@ -1,6 +1,6 @@
 {
     "name": "@here/harp-geojson-datasource",
-    "version": "0.4.0",
+    "version": "0.4.1",
     "description": "Provides support for GeoJSON datasource",
     "main": "index.js",
     "typings": "index",
@@ -28,8 +28,8 @@
         "@here/harp-fetch": "^0.3.3",
         "@here/harp-geoutils": "^0.4.0",
         "@here/harp-lines": "^0.3.0",
-        "@here/harp-mapview": "^0.9.0",
-        "@here/harp-mapview-decoder": "^0.4.0",
+        "@here/harp-mapview": "^0.9.1",
+        "@here/harp-mapview-decoder": "^0.4.1",
         "@here/harp-transfer-manager": "^0.2.3",
         "@here/harp-utils": "^0.2.4",
         "earcut": "^2.1.3"
