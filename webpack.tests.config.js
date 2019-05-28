@@ -13,7 +13,7 @@ const testResources = testResourceDirs.map(dir => {
 });
 
 const harpFontResourcesPath = path.dirname(
-    require.resolve("@here/harp-font-resources/package.json")
+    require.resolve("@here/harp-fontcatalog/package.json")
 );
 
 const browserTestsConfig = {
@@ -58,7 +58,7 @@ const browserTestsConfig = {
             ...testResources,
             {
                 from: path.join(harpFontResourcesPath, "resources"),
-                to: "@here/harp-font-resources/resources"
+                to: "@here/harp-fontcatalog/resources"
             }
         ])
     ],
