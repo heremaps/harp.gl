@@ -175,6 +175,6 @@ Copyright (C) 2018-2019 HERE Europe B.V.
 
 See the [LICENSE](./LICENSE) file in the root of this project for license details about using `harp.gl`.
 
-In addition, please note that the [fonts resources](https://github.com/heremaps/harp-font-resources) are under a different set of licenses.
+In addition, please note that the [fonts](https://github.com/heremaps/harp-fontcatalog) are under a different set of licenses.
 
 For other use cases not listed in the license terms, please [contact us](https://developer.here.com/contact-us).

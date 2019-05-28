@@ -12,7 +12,7 @@
     "dependencies": {
         "@here/harp-map-controls": "^0.3.2",
         "@here/harp-map-theme": "^0.3.1",
-        "@here/harp-font-resources": "^0.2.4",
+        "@here/harp-fontcatalog": "^0.1.1",
         "@here/harp-mapview": "^0.9.2",
         "@here/harp-mapview-decoder": "^0.4.2",
         "@here/harp-omv-datasource": "^0.4.2",

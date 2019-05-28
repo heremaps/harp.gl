@@ -18,6 +18,6 @@ function onCopyError(err: Error) {
     process.exitCode = 1;
 }
 
-const fontDir = path.dirname(require.resolve("@here/harp-font-resources/package.json"));
+const fontDir = path.dirname(require.resolve("@here/harp-fontcatalog/package.json"));
 
 ncp(path.join(fontDir, "resources"), path.join(__dirname, "..", "resources", "fonts"), onCopyError);
