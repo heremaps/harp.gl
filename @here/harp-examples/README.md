@@ -23,7 +23,6 @@ We can group the examples by several categories, looking at what kind of feature
 ### Getting Started
 
 1. [The hello world example](src/hello.ts) that displays a map in an HTML element with our default map style and default data source.
-2. [The hello add simple object example](src/hello_add_simple_object.ts) that shows how to add a THREE.js object to the map.
 
 ### Camera
 
@@ -44,3 +43,8 @@ We can group the examples by several categories, looking at what kind of feature
 ### Styling
 
 1. [Display three map views, side by side](src/multiview_triple-view.ts), in which we show the a map with three different styles at the same time, using OMV Data.
+
+### [three.js](https://threejs.org/)
+
+1. [Add simple object example](src/threejs_add-simple-object.ts) that shows how to add an object to the map.
+1. [Raycast into map scene](src/threejs_raycast.ts) that shows how to raycast into the scene and add points at the intersected locations.
