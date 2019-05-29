@@ -8,7 +8,7 @@ import * as THREE from "three";
 
 import { GeometryType } from "@here/harp-datasource-protocol";
 import { assert, LoggerManager } from "@here/harp-utils";
-import { Tile, TileFeatureData } from "./Tile";
+import { Tile, TileFeatureData } from "../Tile";
 import {
     BufferedGeometryLineAccessor,
     BufferedGeometryObject3dAccessor,
