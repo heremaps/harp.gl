@@ -35,6 +35,7 @@ with `theme` loaded from `unpkg.com` CDN.
      * GeoUtils - [`@here/harp-geoutils`](https://heremaps.github.io/harp.gl/doc/modules/_here_harp_geoutils.html)
      * Map Controls - [`@here/harp-controls`](https://heremaps.github.io/harp.gl/doc/modules/_here_harp_map_controls.html) (excluding [CameraAnimation] related functions)
      * OMV/MVT Tile Provider [`@here/harp-omv-datasource`](https://heremaps.github.io/harp.gl/doc/modules/_here_harp_omv_datasource.html)
+     * Custom Features Provider [`@here/harp-features-datasource`](http://harp.gl.s3-website-us-east-1.amazonaws.com/docs/master/doc/classes/harp_features_datasource.featuresdatasource.html)
      * Web Tile Provider [`@here/harp-webtile-datasource`](https://heremaps.github.io/harp.gl/doc/modules/_here_harp_webtile_datasource.html)
      * GeoJSON Tile Provider [`@here/harp-geojson-datasource`](https://heremaps.github.io/harp.gl/doc/modules/_here_harp_geojson_datasource.html)
 * [`harp-decoders.js`](https://unpkg.com/@here/harp.gl/dist/harp-decoders.js)
