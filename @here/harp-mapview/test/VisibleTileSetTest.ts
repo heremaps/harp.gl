@@ -3,18 +3,19 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-
-// tslint:disable:only-arrow-functions
-//    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
-
 import { TileKey } from "@here/harp-geoutils";
 import { assert } from "chai";
 import * as sinon from "sinon";
 import * as THREE from "three";
+
+import { SimpleTileGeometryManager } from "../lib/geometry/TileGeometryManager";
 import { MapView, MapViewDefaults } from "../lib/MapView";
 import { Tile } from "../lib/Tile";
 import { VisibleTileSet } from "../lib/VisibleTileSet";
 import { FakeOmvDataSource } from "./FakeOmvDataSource";
+
+// tslint:disable:only-arrow-functions
+//    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
 function createBerlinCenterCameraFromSamples() {
     const worldCenter = new THREE.Vector3(21526530.20810355, 26931954.03679565, 0);
@@ -40,10 +41,14 @@ class FakeMapView {
 describe("VisibleTileSet", function() {
     it("#updateRenderList properly culls Berlin center example view", function() {
         const { camera, worldCenter } = createBerlinCenterCameraFromSamples();
-        const vts = new VisibleTileSet(camera, MapViewDefaults);
+        const ds = new FakeOmvDataSource();
+
+        const mapView = new FakeMapView() as MapView;
+        ds.attach(mapView);
+        const tileGeometryManager = new SimpleTileGeometryManager(mapView);
+        const vts = new VisibleTileSet(camera, tileGeometryManager, MapViewDefaults);
         const zoomLevel = 15;
         const storageLevel = 14;
-        const ds = new FakeOmvDataSource();
 
         ds.attach(new FakeMapView() as MapView);
 
@@ -76,10 +81,14 @@ describe("VisibleTileSet", function() {
         camera.updateProjectionMatrix();
         camera.updateMatrixWorld(false);
 
-        const vts = new VisibleTileSet(camera, MapViewDefaults);
+        const ds = new FakeOmvDataSource();
+
+        const mapView = new FakeMapView() as MapView;
+        ds.attach(mapView);
+        const tileGeometryManager = new SimpleTileGeometryManager(mapView);
+        const vts = new VisibleTileSet(camera, tileGeometryManager, MapViewDefaults);
         const zoomLevel = 16;
         const storageLevel = 14;
-        const ds = new FakeOmvDataSource();
 
         ds.attach(new FakeMapView() as MapView);
 
@@ -103,24 +112,26 @@ describe("VisibleTileSet", function() {
 
     it("#updateRenderList properly finds parent loaded tiles in Berlin center", function() {
         const { camera, worldCenter } = createBerlinCenterCameraFromSamples();
-        const vts = new VisibleTileSet(camera, MapViewDefaults);
+        const ds = new FakeOmvDataSource();
+
+        const mapView = new FakeMapView() as MapView;
+        ds.attach(mapView);
+        const tileGeometryManager = new SimpleTileGeometryManager(mapView);
+        const vts = new VisibleTileSet(camera, tileGeometryManager, MapViewDefaults);
 
         const zoomLevel = 15;
         const storageLevel = 14;
-        const dataSource = new FakeOmvDataSource();
-
-        dataSource.attach(new FakeMapView() as MapView);
 
         // same as first found code few lines below
         const parentCode = TileKey.parentMortonCode(371506851);
 
         // fake MapView to think that it has already loaded
         // parent of both found tiles
-        const parentTile = vts.getTile(dataSource, TileKey.fromMortonCode(parentCode)) as Tile;
+        const parentTile = vts.getTile(ds, TileKey.fromMortonCode(parentCode)) as Tile;
         assert.exists(parentTile);
         parentTile.forceHasGeometry(true);
 
-        vts.updateRenderList(worldCenter, zoomLevel, storageLevel, [dataSource]);
+        vts.updateRenderList(worldCenter, zoomLevel, storageLevel, [ds]);
         const dataSourceTileList = vts.dataSourceTileList;
 
         assert.equal(dataSourceTileList.length, 1);
@@ -138,10 +149,14 @@ describe("VisibleTileSet", function() {
 
     it("#markTilesDirty properly handles cached & visible tiles", async function() {
         const { camera, worldCenter } = createBerlinCenterCameraFromSamples();
-        const vts = new VisibleTileSet(camera, MapViewDefaults);
+        const ds = new FakeOmvDataSource();
+
+        const mapView = new FakeMapView() as MapView;
+        ds.attach(mapView);
+        const tileGeometryManager = new SimpleTileGeometryManager(mapView);
+        const vts = new VisibleTileSet(camera, tileGeometryManager, MapViewDefaults);
         const zoomLevel = 15;
         const storageLevel = 14;
-        const ds = new FakeOmvDataSource();
 
         ds.attach(new FakeMapView() as MapView);
 
