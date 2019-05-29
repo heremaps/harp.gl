@@ -28,6 +28,7 @@ export {
 } from "@here/harp-mapview";
 export * from "@here/harp-omv-datasource";
 export * from "@here/harp-geojson-datasource";
+export * from "@here/harp-features-datasource";
 export * from "@here/harp-webtile-datasource";
 export * from "@here/harp-map-controls/lib/MapControls";
 export * from "@here/harp-map-controls/lib/MapControlsUI";
