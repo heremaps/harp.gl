@@ -2,7 +2,7 @@
 
 ## Overview
 
-This is convienience module that provides [`harp.gl`](https://heremaps.github.io/harp.gl/doc/) as
+This is convienience module that provides [`harp.gl`](http://harp.gl.s3-website-us-east-1.amazonaws.com/docs/master/doc/) as
 JS-friendly bundle, with whole `harp.gl` API exposed in `harp` namespace.
 
 Usage example with `unpkg.com` CDN:
@@ -23,7 +23,7 @@ Usage example with `unpkg.com` CDN:
 </script>
 ```
 
-This snippets loads all required scripts and creates [MapView](https://heremaps.github.io/harp.gl/doc/classes/_here_harp_mapview.mapview.html)
+This snippets loads all required scripts and creates [MapView](http://harp.gl.s3-website-us-east-1.amazonaws.com/docs/master/doc/classes/harp_mapview.mapview.html)
 with `theme` loaded from `unpkg.com` CDN.
 
 # Architecture
@@ -31,13 +31,13 @@ with `theme` loaded from `unpkg.com` CDN.
 `@here/harp.gl` provides following bundles:
  * [`harp.js`](https://unpkg.com/@here/harp.gl/dist/harp.js) and [`harp.min.js`](https://unpkg.com/@here/harp.gl/dist/harp.min.js) containing selected symbols from these
    bundles in `harp` namespace:
-     * Core `MapView` functionality - [`@here/harp-mapview`](https://heremaps.github.io/harp.gl/doc/modules/_here_harp_mapview.html)
-     * GeoUtils - [`@here/harp-geoutils`](https://heremaps.github.io/harp.gl/doc/modules/_here_harp_geoutils.html)
-     * Map Controls - [`@here/harp-controls`](https://heremaps.github.io/harp.gl/doc/modules/_here_harp_map_controls.html) (excluding [CameraAnimation] related functions)
-     * OMV/MVT Tile Provider [`@here/harp-omv-datasource`](https://heremaps.github.io/harp.gl/doc/modules/_here_harp_omv_datasource.html)
+     * Core `MapView` functionality - [`@here/harp-mapview`](http://harp.gl.s3-website-us-east-1.amazonaws.com/docs/master/doc/modules/harp_mapview.html)
+     * GeoUtils - [`@here/harp-geoutils`](http://harp.gl.s3-website-us-east-1.amazonaws.com/docs/master/doc/modules/harp_geoutils.html)
+     * Map Controls - [`@here/harp-controls`](http://harp.gl.s3-website-us-east-1.amazonaws.com/docs/master/doc/modules/harp_map_controls.html) (excluding [CameraAnimation] related functions)
+     * OMV/MVT Tile Provider [`@here/harp-omv-datasource`](http://harp.gl.s3-website-us-east-1.amazonaws.com/docs/master/doc/modules/harp_omv_datasource.html)
      * Custom Features Provider [`@here/harp-features-datasource`](http://harp.gl.s3-website-us-east-1.amazonaws.com/docs/master/doc/classes/harp_features_datasource.featuresdatasource.html)
-     * Web Tile Provider [`@here/harp-webtile-datasource`](https://heremaps.github.io/harp.gl/doc/modules/_here_harp_webtile_datasource.html)
-     * GeoJSON Tile Provider [`@here/harp-geojson-datasource`](https://heremaps.github.io/harp.gl/doc/modules/_here_harp_geojson_datasource.html)
+     * Web Tile Provider [`@here/harp-webtile-datasource`](http://harp.gl.s3-website-us-east-1.amazonaws.com/docs/master/doc/modules/harp_webtile_datasource.html)
+     * GeoJSON Tile Provider [`@here/harp-geojson-datasource`](http://harp.gl.s3-website-us-east-1.amazonaws.com/docs/master/doc/modules/harp_geojson_datasource.html)
 * [`harp-decoders.js`](https://unpkg.com/@here/harp.gl/dist/harp-decoders.js)
     * Web Worker script that contains code for services.
     * Due to `same-origin` policy,
@@ -50,8 +50,8 @@ with `theme` loaded from `unpkg.com` CDN.
   Runtime.
 * `harp.gl` uses Web Workers from `harp-decoders.js` to offload CPU intensive work from main thread
   (in particular for
-  [OmvDataSource](https://heremaps.github.io/harp.gl/doc/classes/_here_harp_omv_datasource.omvdatasource.html) and
-  [GeoJsonDataProvider](https://heremaps.github.io/harp.gl/doc/classes/_here_harp_geojson_datasource.geojsondataprovider.html).
+  [OmvDataSource](http://harp.gl.s3-website-us-east-1.amazonaws.com/docs/master/doc/classes/_here_harp_omv_datasource.omvdatasource.html) and
+  [GeoJsonDataProvider](http://harp.gl.s3-website-us-east-1.amazonaws.com/docs/master/doc/classes/_here_harp_geojson_datasource.geojsondataprovider.html).
     Web Workers.
 * For convienience `harp.gl` detects URL from which is loaded and by default detects location of
   `harp-decoders.js` which is distributed together. That may cause problems with `same-origin`
@@ -86,8 +86,8 @@ with `theme` loaded from `unpkg.com` CDN.
     have to load `harp-decoders.js` (and possibly `harp.js`) from _same origin_ as your main page.
 
 # More info
-* [Running example](https://heremaps.github.io/harp.gl/examples/#hello-js_bundle.html)
-* [Example source code](https://heremaps.github.io/harp.gl/examples/src/hello-js_bundle.html)
+* [Running example](http://harp.gl.s3-website-us-east-1.amazonaws.com/docs/master/examples/#hello_js-bundle.html)
+* [Example source code](https://github.com/heremaps/harp.gl/blob/master/%40here/harp-examples/src/hello_js-bundle.html)
 * [`harp.gl` Getting started guide](https://github.com/heremaps/harp.gl/blob/master/docs/GettingStartedGuide.md)
 
 
