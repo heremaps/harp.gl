@@ -35,6 +35,7 @@ export class FeaturesDataSource extends OmvDataSource {
         super({
             dataProvider: new GeoJsonDataProvider(NAME, DEFAULT_GEOJSON, workerTilerUrl)
         });
+        this.addTileBackground = false;
     }
 
     /**
