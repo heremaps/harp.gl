@@ -3,11 +3,10 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
+import { OrientedBox3 } from "@here/harp-geometry";
 import { MathUtils, Projection, ProjectionType, TileKey, TilingScheme } from "@here/harp-geoutils";
 import { LRUCache } from "@here/harp-lrucache";
 import * as THREE from "three";
-
-import { OrientedBox3 } from "@here/harp-geometry";
 import { DataSource } from "./DataSource";
 import { CalculationStatus, ElevationRangeSource } from "./ElevationRangeSource";
 import { MapTileCuller } from "./MapTileCuller";
@@ -85,7 +84,7 @@ class DataSourceCache {
 
     resourceComputationType: ResourceComputationType = ResourceComputationType.EstimationInMb;
 
-    constructor(options: VisibleTileSetOptions) {
+    constructor(options: VisibleTileSetOptions, readonly dataSource: DataSource) {
         this.resourceComputationType =
             options.resourceComputationType === undefined
                 ? ResourceComputationType.EstimationInMb
@@ -481,11 +480,16 @@ export class VisibleTileSet {
         }
     }
 
-    forEachCachedTile(fun: (tile: Tile) => void): void {
+    forEachCachedTile(
+        fun: (tile: Tile) => void,
+        filterDataSource?: (ds: DataSource) => boolean
+    ): void {
         this.m_dataSourceCache.forEach(dataSourceCache => {
-            dataSourceCache.tileCache.forEach(tile => {
-                fun(tile);
-            });
+            if (filterDataSource === undefined || filterDataSource(dataSourceCache.dataSource)) {
+                dataSourceCache.tileCache.forEach(tile => {
+                    fun(tile);
+                });
+            }
         });
     }
 
@@ -783,7 +787,7 @@ export class VisibleTileSet {
         let dataSourceCache = this.m_dataSourceCache.get(dataSourceName);
 
         if (dataSourceCache === undefined) {
-            dataSourceCache = new DataSourceCache(this.options);
+            dataSourceCache = new DataSourceCache(this.options, dataSource);
 
             this.m_dataSourceCache.set(dataSourceName, dataSourceCache);
         }

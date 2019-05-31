@@ -1483,6 +1483,7 @@ export class Tile implements CachedResource {
                 }
 
                 this.addFeatureData(srcGeometry, technique, object);
+                this.addGeometryObjInfos(srcGeometry, object);
 
                 if (isExtrudedPolygonTechnique(technique) || isFillTechnique(technique)) {
                     // filled polygons are normal meshes, and need transparency only when fading is
@@ -2014,6 +2015,12 @@ export class Tile implements CachedResource {
             if (srcGeometry.objInfos !== undefined) {
                 object.userData.feature.objInfos = srcGeometry.objInfos;
             }
+        }
+    }
+
+    private addGeometryObjInfos(srcGeometry: Geometry, object: THREE.Object3D) {
+        if (srcGeometry.objInfos !== undefined && Object.keys(object.userData).length === 0) {
+            object.userData = srcGeometry.objInfos;
         }
     }
 
