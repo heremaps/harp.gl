@@ -78,7 +78,7 @@ export namespace EffectsAllExample {
         labels: false,
         toneMappingExposure: 1.0,
         outline: {
-            enabled: true,
+            enabled: false,
             ghostExtrudedPolygons: false,
             thickness: 0.004,
             color: "#898989"

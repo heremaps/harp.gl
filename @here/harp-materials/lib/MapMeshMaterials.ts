@@ -437,7 +437,7 @@ export namespace ExtrusionFeature {
 
         if (
             extrusionMaterial.extrusionRatio !== undefined &&
-            extrusionMaterial.extrusionRatio >= AnimatedExtrusionTileHandler.DEFAULT_RATIO_MAX
+            extrusionMaterial.extrusionRatio >= AnimatedExtrusionTileHandler.DEFAULT_RATIO_MIN
         ) {
             // Add this define to differentiate it internally from other MeshBasicMaterial
             extrusionMaterial.defines.EXTRUSION_MATERIAL = "";
