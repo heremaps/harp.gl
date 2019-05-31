@@ -48,21 +48,22 @@ class DummyElevationSource extends DataSource {
 /**
  * Gets the elevation by firing a ray into the scene and returning the point. Used to show
  * the validity of the interface. This doesn't represent necessarily a good implementation
- * of this interface.
+ * of this interface, but it does show its usage.
  */
 class SceneElevationProvider implements ElevationProvider {
     constructor(readonly m_mapView: MapView) {}
 
     getHeight(geoPoint: GeoCoordinates, level?: number): number | undefined {
         const raycaster = new THREE.Raycaster();
-        geoPoint.altitude = 8000;
-        const topPoint = this.m_mapView.projection.projectPoint(geoPoint, new THREE.Vector3());
-        topPoint.sub(this.m_mapView.worldCenter);
-        geoPoint.altitude = -500;
-        const bottomPoint = this.m_mapView.projection.projectPoint(geoPoint, new THREE.Vector3());
-        bottomPoint.sub(this.m_mapView.worldCenter);
-        const direction = bottomPoint.sub(topPoint).normalize();
-        raycaster.set(topPoint, direction);
+        // Compute world space point of ray origin that is guaranteed to not intersect terrain (Mt
+        // Everest)
+        geoPoint.altitude = 8849;
+        const worldPoint = new THREE.Vector3();
+        this.m_mapView.projection.projectPoint(geoPoint, worldPoint);
+        const towardsEarth = new THREE.Vector3();
+        this.m_mapView.projection.surfaceNormal(worldPoint, towardsEarth).negate();
+        worldPoint.sub(this.m_mapView.worldCenter);
+        raycaster.set(worldPoint, towardsEarth);
         const intersections = raycaster.intersectObject(this.m_mapView.worldRootObject, true);
         if (intersections.length === 0) {
             return undefined;
@@ -71,8 +72,8 @@ class SceneElevationProvider implements ElevationProvider {
         return this.m_mapView.projection.unprojectPoint(intersectionWorldPoint).altitude;
     }
 
-    rayCast(screenPoint: THREE.Vector2): THREE.Vector3 | undefined {
-        const pickResults = this.m_mapView.intersectMapObjects(screenPoint.x, screenPoint.y);
+    rayCast(x: number, y: number): THREE.Vector3 | undefined {
+        const pickResults = this.m_mapView.intersectMapObjects(x, y);
         const bestResult = pickResults.find(value => {
             return value.point instanceof THREE.Vector3;
         });
@@ -154,8 +155,7 @@ export namespace ElevationProviderExample {
 
             if (event.shiftKey) {
                 // Show usage of the [[ElevationProvider.rayCast]] method.
-                const screenPoint = new THREE.Vector2(event.pageX, event.pageY);
-                const posVector = sceneElevationProvider.rayCast(screenPoint);
+                const posVector = sceneElevationProvider.rayCast(event.pageX, event.pageY);
                 if (posVector !== undefined) {
                     const cube = createPinkCube();
                     map.scene.add(cube);

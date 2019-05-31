@@ -1716,6 +1716,22 @@ export class MapView extends THREE.EventDispatcher {
     }
 
     /**
+     * Returns a ray caster using the supplied screen positions.
+     *
+     * @param x The X position in css/client coordinates (without applied display ratio).
+     * @param y The Y position in css/client coordinates (without applied display ratio).
+     *
+     * @alpha
+     *
+     * @return Raycaster with origin at the camera and direction based on the supplied x / y screen
+     * points.
+     */
+    raycasterFromScreenPoint(x: number, y: number): THREE.Raycaster {
+        this.m_raycaster.setFromCamera(this.getNormalizedScreenCoordinates(x, y), this.m_rteCamera);
+        return this.m_raycaster;
+    }
+
+    /**
      * Returns the world space position from the given screen position. The return value can be
      * `null`, in case the camera is facing the horizon and the given `(x, y)` value is not
      * intersecting the ground plane.
