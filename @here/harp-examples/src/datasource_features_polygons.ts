@@ -16,53 +16,52 @@ import { CopyrightInfo, MapView } from "@here/harp-mapview";
 import { APIFormat, OmvDataSource } from "@here/harp-omv-datasource";
 import * as THREE from "three";
 import { accessToken } from "../config";
-import { COUNTRIES } from "./../resources/countries";
+import { COUNTRIES } from "../resources/countries";
 
 /**
- * This example illustrates how to add custom features in [[MapView]]. They are handled through a
- * special kind of [[DataSource]], a [[FeaturesDataSource]].
+ * This example illustrates how to add user polygons in [[MapView]]. As custom features, they are
+ * handled through a [[FeaturesDataSource]].
  *
  * First we create a base map. For more details, check the `hello` example.
  * ```typescript
- * [[include:harp_demo_features_example_0.ts]]
+ * [[include:harp_demo_features_polygons_0.ts]]
  * ```
  *
  * Then we generate a custom [[StyleSet]] for the countries, with a color gradient based on the
  * year that the country joined the EU. The [[Style]]s are all an [[ExtrudedPolygonStyle]] with only
  * a variation in the color.
  * ```typescript
- * [[include:harp_demo_features_example_1.ts]]
+ * [[include:harp_demo_features_polygons_1.ts]]
  * ```
  *
  * In order to have the extrusion animation for all the individual sets of countries joining, we
  * group them and handle them in separate datasources, so that the various datasources' tiles will
  * get animated independently and highlight new territories. The following snippet highlights the
  * core part of the application's logic: we create these individual [[FeaturesDataSource]] for each
- * set of countries, and create the [[MapViewMultiPolygonFeature]]s of the countries.
+ * set of countries, and create the [[MapViewMultiPolygonFeature]]s for the countries.
  * ```typescript
- * [[include:harp_demo_features_example_2.ts]]
+ * [[include:harp_demo_features_polygons_2.ts]]
  * ```
  *
  * The rest of the code is example-dependent logic to handle the countries sets, with the joining
  * and leaving mechanism, that adds and removes datasources.
  */
-export namespace ComplexFeaturesExample {
-    const EU = getEuropeMemberStatesPerYear();
-
-    // snippet:harp_demo_features_example_0.ts
+export namespace PolygonsFeaturesExample {
+    // snippet:harp_demo_features_polygons_0.ts
     const map = createBaseMap();
-    // end:harp_demo_features_example_0.ts
+    // end:harp_demo_features_polygons_0.ts
 
+    const EU = getEuropeMemberStatesPerYear();
     const steps = Object.keys(EU.steps);
     const stepsNumber = steps.length;
 
-    // snippet:harp_demo_features_example_1.ts
+    // snippet:harp_demo_features_polygons_1.ts
     const { styleSet, colorRamp } = generateStyleSet({
         property: "joiningDate",
         thresholds: steps.map(stringYear => Number(stringYear)),
         color: "#77ccff"
     });
-    // end:harp_demo_features_example_1.ts
+    // end:harp_demo_features_polygons_1.ts
 
     const addPromises: Array<Promise<void>> = [];
 
@@ -103,7 +102,7 @@ export namespace ComplexFeaturesExample {
                 age = steps.length;
             }
 
-            // snippet:harp_demo_features_example_2.ts
+            // snippet:harp_demo_features_polygons_2.ts
             for (const country of stateGroup) {
                 const feature = new MapViewMultiPolygonFeature(COUNTRIES[country], {
                     name: country,
@@ -120,7 +119,7 @@ export namespace ComplexFeaturesExample {
                 featuresDataSource.add(...features);
             });
             datasources.push(featuresDataSource);
-            // end:harp_demo_features_example_2.ts
+            // end:harp_demo_features_polygons_2.ts
         }
         return datasources;
     }
@@ -278,9 +277,10 @@ export namespace ComplexFeaturesExample {
         const canvas = document.getElementById("mapCanvas") as HTMLCanvasElement;
         const mapView = new MapView({
             canvas,
-            theme: "resources/berlin_tilezen_base.json"
+            theme: "resources/berlin_tilezen_night_reduced.json"
         });
         mapView.setCameraGeolocationAndZoom(new GeoCoordinates(-25, 13), 3.9);
+        mapView.renderLabels = false;
 
         const controls = new MapControls(mapView);
         controls.setRotation(0, 28);
@@ -386,7 +386,7 @@ export namespace ComplexFeaturesExample {
                     padding:3px
                 }
                 h1{
-                    font-size:20px;
+                    font-size:15px;
                     text-transform: uppercase;
                 }
                 h1, .date{
@@ -423,11 +423,23 @@ export namespace ComplexFeaturesExample {
                     margin: 10px 0 0 -40%;
                     font-size: 15px;
                 }
+                @media screen and (max-width: 700px) {
+                    .date{
+                        padding:5px;
+                    }
+                    h1{
+                        padding:0px;
+                        margin:5px
+                    }
+                    #info{
+                        font-size:11px;
+                    }
+                }
             </style>
-            <p id=info>This example demonstrates custom features, with features'` +
-            `properties -based styling for the color of the extruded polygons. The height also ` +
+            <p id=info>This example demonstrates user polygons, with ` +
+            `property-based styling for their color. The height also ` +
             `directly comes from the feature's "height" property by default. Here both the color ` +
-            `and the height represent the seniority of a state in the EU.</p>
+            `and the height represent the seniority of a state.</p>
             <div id=caption>
                 <div id=caption-bg>
                     <h1>Member states of the European Union</h1>
