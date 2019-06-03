@@ -1636,41 +1636,61 @@ export class Tile implements CachedResource {
 
                 // Add the fill area edges as a separate geometry.
                 if (hasFillOutlines) {
+                    let edgeIndexLength = 0;
                     const edgeIndexBuffers = srcGeometry.edgeIndex! as BufferAttribute[];
                     for (const edgeIndexBufferAttribute of edgeIndexBuffers) {
-                        const outlineGeometry = new THREE.BufferGeometry();
-                        outlineGeometry.addAttribute(
-                            "position",
-                            bufferGeometry.getAttribute("position")
-                        );
-                        outlineGeometry.setIndex(getBufferAttribute(edgeIndexBufferAttribute));
-
-                        const fillTechnique = technique as FillTechnique;
-
-                        const fadingParams = this.getPolygonFadingParams(fillTechnique);
-
-                        // Configure the edge material based on the theme values.
-                        const materialParams: EdgeMaterialParameters = {
-                            color: fadingParams.color,
-                            colorMix: fadingParams.colorMix,
-                            fadeNear: fadingParams.lineFadeNear,
-                            fadeFar: fadingParams.lineFadeFar
-                        };
-                        const outlineMaterial = new EdgeMaterial(materialParams);
-                        const outlineObj = new THREE.LineSegments(outlineGeometry, outlineMaterial);
-                        outlineObj.renderOrder = object.renderOrder + 0.1;
-
-                        FadingFeature.addRenderHelper(
-                            outlineObj,
-                            fadingParams.lineFadeNear,
-                            fadingParams.lineFadeFar,
-                            true,
-                            false
-                        );
-
-                        this.registerTileObject(outlineObj);
-                        objects.push(outlineObj);
+                        edgeIndexLength += edgeIndexBufferAttribute.buffer.byteLength;
                     }
+
+                    let edgeIndexPosition = 0;
+                    const edgeIndexArray = new Uint8Array(edgeIndexLength);
+                    for (const edgeIndexBufferAttribute of edgeIndexBuffers) {
+                        edgeIndexArray.set(
+                            new Uint8Array(edgeIndexBufferAttribute.buffer),
+                            edgeIndexPosition
+                        );
+                        edgeIndexPosition += edgeIndexBufferAttribute.buffer.byteLength;
+                    }
+
+                    const mergedEdgeBufferAttribute: BufferAttribute = {
+                        type: "uint32",
+                        itemCount: 1,
+                        buffer: edgeIndexArray.buffer,
+                        name: "edgeIndex"
+                    };
+
+                    const outlineGeometry = new THREE.BufferGeometry();
+                    outlineGeometry.addAttribute(
+                        "position",
+                        bufferGeometry.getAttribute("position")
+                    );
+                    outlineGeometry.setIndex(getBufferAttribute(mergedEdgeBufferAttribute));
+
+                    const fillTechnique = technique as FillTechnique;
+
+                    const fadingParams = this.getPolygonFadingParams(fillTechnique);
+
+                    // Configure the edge material based on the theme values.
+                    const materialParams: EdgeMaterialParameters = {
+                        color: fadingParams.color,
+                        colorMix: fadingParams.colorMix,
+                        fadeNear: fadingParams.lineFadeNear,
+                        fadeFar: fadingParams.lineFadeFar
+                    };
+                    const outlineMaterial = new EdgeMaterial(materialParams);
+                    const outlineObj = new THREE.LineSegments(outlineGeometry, outlineMaterial);
+                    outlineObj.renderOrder = object.renderOrder + 0.1;
+
+                    FadingFeature.addRenderHelper(
+                        outlineObj,
+                        fadingParams.lineFadeNear,
+                        fadingParams.lineFadeFar,
+                        true,
+                        false
+                    );
+
+                    this.registerTileObject(outlineObj);
+                    objects.push(outlineObj);
                 }
 
                 // Add the fill area edges as a separate geometry.
