@@ -984,16 +984,40 @@ export class PerformanceStatistics {
         }
 
         if (webGlInfo !== undefined) {
-            this.currentFrame.setValue("gl.numCalls", webGlInfo.render.calls);
-            this.currentFrame.setValue("gl.numGeometries", webGlInfo.memory.geometries);
-            this.currentFrame.setValue("gl.numLines", webGlInfo.render.lines);
-            this.currentFrame.setValue("gl.numPoints", webGlInfo.render.points);
-            this.currentFrame.setValue(
-                "gl.numPrograms",
-                webGlInfo.programs === null ? 0 : webGlInfo.programs.length
-            );
-            this.currentFrame.setValue("gl.numTextures", webGlInfo.memory.textures);
-            this.currentFrame.setValue("gl.numTriangles", webGlInfo.render.triangles);
+            if (webGlInfo.render !== undefined) {
+                this.currentFrame.setValue(
+                    "gl.numCalls",
+                    webGlInfo.render.calls === null ? 0 : webGlInfo.render.calls
+                );
+                this.currentFrame.setValue(
+                    "gl.numPoints",
+                    webGlInfo.render.points === null ? 0 : webGlInfo.render.points
+                );
+                this.currentFrame.setValue(
+                    "gl.numLines",
+                    webGlInfo.render.lines === null ? 0 : webGlInfo.render.lines
+                );
+                this.currentFrame.setValue(
+                    "gl.numTriangles",
+                    webGlInfo.render.triangles === null ? 0 : webGlInfo.render.triangles
+                );
+            }
+            if (webGlInfo.memory !== undefined) {
+                this.currentFrame.setValue(
+                    "gl.numGeometries",
+                    webGlInfo.memory.geometries === null ? 0 : webGlInfo.memory.geometries
+                );
+                this.currentFrame.setValue(
+                    "gl.numTextures",
+                    webGlInfo.memory.textures === null ? 0 : webGlInfo.memory.textures
+                );
+            }
+            if (webGlInfo.programs !== undefined) {
+                this.currentFrame.setValue(
+                    "gl.numPrograms",
+                    webGlInfo.programs === null ? 0 : webGlInfo.programs.length
+                );
+            }
         }
 
         if (window !== undefined && window.performance !== undefined) {

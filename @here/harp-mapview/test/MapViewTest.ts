@@ -280,4 +280,30 @@ describe("MapView", function() {
         mapView = new MapView({ canvas: (canvas as any) as HTMLCanvasElement });
         expect(mapView.fog instanceof MapViewFog).to.equal(true);
     });
+
+    it("converts screen coords to geo to screen", function() {
+        const canvas = {
+            clientWidth: 1920,
+            clientHeight: 1080,
+            pixelRatio: 1,
+            addEventListener: sinon.stub(),
+            removeEventListener: sinon.stub()
+        };
+
+        for (let x = -100; x <= 100; x += 100) {
+            for (let y = -100; y <= 100; y += 100) {
+                mapView = new MapView({ canvas: (canvas as any) as HTMLCanvasElement });
+                const resultA = mapView.getScreenPosition(mapView.getGeoCoordinatesAt(x, y)!);
+
+                canvas.pixelRatio = 2;
+                mapView = new MapView({ canvas: (canvas as any) as HTMLCanvasElement });
+                const resultB = mapView.getScreenPosition(mapView.getGeoCoordinatesAt(x, y)!);
+
+                expect(resultA!.x).to.be.equal(resultB!.x);
+                expect(resultA!.y).to.be.equal(resultB!.y);
+                expect(resultA!.x).to.be.closeTo(x, 0.00000001);
+                expect(resultA!.y).to.be.closeTo(y, 0.00000001);
+            }
+        }
+    });
 });

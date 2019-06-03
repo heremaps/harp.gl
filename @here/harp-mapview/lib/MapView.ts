@@ -1676,9 +1676,9 @@ export class MapView extends THREE.EventDispatcher {
         this.projection.projectPoint(geoPos, worldPos);
         const p = this.m_screenProjector.project(worldPos);
         if (p !== undefined) {
-            const { width, height } = this.canvas;
-            p.x = (p.x + width / 2) / this.pixelRatio;
-            p.y = (height - (p.y + height / 2)) / this.pixelRatio;
+            const { width, height } = this.getCanvasClientSize();
+            p.x = p.x + width / 2;
+            p.y = height - (p.y + height / 2);
         }
         return p;
     }
