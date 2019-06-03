@@ -363,7 +363,11 @@ export class ConcurrentWorkerSet {
                 messageId,
                 request
             };
-            worker.postMessage(message, transferList);
+            if (transferList !== undefined) {
+                worker.postMessage(message, transferList);
+            } else {
+                worker.postMessage(message);
+            }
         }
 
         return Promise.all(promises);
@@ -378,7 +382,11 @@ export class ConcurrentWorkerSet {
     broadcastMessage(message: any, buffers?: ArrayBuffer[] | undefined) {
         this.ensureStarted();
 
-        this.m_workers.forEach(worker => worker.postMessage(message, buffers));
+        if (buffers !== undefined) {
+            this.m_workers.forEach(worker => worker.postMessage(message, buffers));
+        } else {
+            this.m_workers.forEach(worker => worker.postMessage(message));
+        }
     }
 
     /**
@@ -514,7 +522,11 @@ export class ConcurrentWorkerSet {
         if (this.m_availableWorkers.length > 0) {
             const worker = this.m_availableWorkers.pop()!;
 
-            worker.postMessage(message, buffers);
+            if (buffers !== undefined) {
+                worker.postMessage(message, buffers);
+            } else {
+                worker.postMessage(message);
+            }
         } else {
             // We need a priority to keep sorting stable, so we have to add a RequestController.
             if (requestController === undefined) {
