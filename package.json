@@ -18,7 +18,7 @@
         "tslint-config-prettier": "^1.18.0",
         "typedoc": "^0.14.2",
         "@strictsoftware/typedoc-plugin-monorepo": "^0.2.1",
-        "typescript": "^3.4.1",
+        "typescript": "^3.5",
         "webpack": "^4.30.0",
         "webpack-cli": "^3.3.2",
         "webpack-dev-server": "^3.3.1"

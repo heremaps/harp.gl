@@ -39,7 +39,7 @@
         "sinon": "^7.1.1",
         "source-map-support": "^0.5.2",
         "three": "^0.104.0",
-        "typescript": "^3.4.1"
+        "typescript": "^3.5"
     },
     "peerDependencies": {
         "three": "^0.104.0"

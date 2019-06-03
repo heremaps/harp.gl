@@ -43,7 +43,7 @@
         "@here/harp-text-canvas": "^0.3.0",
         "@here/harp-utils": "^0.2.2",
         "ts-loader": "^5.2.1",
-        "typescript": "^3.4.1",
+        "typescript": "^3.5",
         "webpack": "^4.30.0",
         "webpack-cli": "^3.3.2",
         "webpack-merge": "^4.1.1"

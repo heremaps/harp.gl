@@ -188,7 +188,11 @@ export abstract class WorkerService {
             return;
         }
 
-        self.postMessage(response, transferList);
+        if (transferList !== undefined) {
+            self.postMessage(response, transferList);
+        } else {
+            self.postMessage(response);
+        }
 
         requestEntry.responseSent = true;
         this.m_pendingRequests.delete(requestEntry.messageId);

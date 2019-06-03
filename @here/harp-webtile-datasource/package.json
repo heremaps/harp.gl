@@ -38,7 +38,7 @@
         "cross-env": "^5.2.0",
         "mocha": "^6.1.4",
         "source-map-support": "^0.5.2",
-        "typescript": "^3.4.1"
+        "typescript": "^3.5"
     },
     "peerDependencies": {
         "three": "^0.104.0"
