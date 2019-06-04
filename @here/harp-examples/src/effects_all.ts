@@ -37,10 +37,10 @@ export namespace EffectsAllExample {
 
         CopyrightElementHandler.install("copyrightNotice", mapView);
 
-        mapView.setCameraGeolocationAndZoom(new GeoCoordinates(40.6861, -74.0072), 16.6);
         const mapControls = new MapControls(mapView);
         mapControls.maxPitchAngle = 60;
-        mapControls.setRotation(6.3, 60);
+        const NY = new GeoCoordinates(40.707, -74.01);
+        mapView.lookAt(NY, 4000, 50);
 
         const ui = new MapControlsUI(mapControls);
         canvas.parentElement!.appendChild(ui.domElement);

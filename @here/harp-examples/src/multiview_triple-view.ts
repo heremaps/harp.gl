@@ -192,7 +192,8 @@ export namespace TripleViewExample {
         );
 
         // center the camera somewhere around Berlin geo locations
-        mapView.geoCenter = new GeoCoordinates(52.518611, 13.376111, 0);
+        const berlin = new GeoCoordinates(52.518611, 13.376111);
+        mapView.lookAt(berlin, 1000);
 
         setupSyncViewsGrid(mapView, gridPositionX, gridPositionY);
         // react on resize events

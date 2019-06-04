@@ -5,7 +5,7 @@
  */
 
 import { GeoCoordinates } from "@here/harp-geoutils";
-import { MapObject, MapViewEventNames, MapViewUtils, RenderEvent } from "@here/harp-mapview";
+import { MapObject, MapViewEventNames, RenderEvent } from "@here/harp-mapview";
 import * as THREE from "three";
 import { HelloWorldExample } from "./hello";
 
@@ -50,15 +50,9 @@ import "three/examples/js/loaders/FBXLoader";
  */
 export namespace ThreejsAddAnimatedObject {
     const mapView = HelloWorldExample.mapView;
-    const cameraPosition = new GeoCoordinates(
-        40.7039253742025,
-        -74.01438026902773,
-        188.88345172009798
-    );
-    mapView.geoCenter = cameraPosition;
-    MapViewUtils.setRotation(mapView, -40, 40);
 
     const figureGeoPosition = new GeoCoordinates(40.70497091, -74.0135);
+    mapView.lookAt(figureGeoPosition, 190, 40, -40);
 
     const clock = new THREE.Clock();
 

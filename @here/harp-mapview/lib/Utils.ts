@@ -128,29 +128,29 @@ export namespace MapViewUtils {
      * zoom, yaw and pitch.
      *
      * @param targetCoordinates Coordinates of the center of the view.
-     * @param zoom Zoom level.
-     * @param yaw Camera yaw.
-     * @param pitch Camera pitch.
+     * @param distance Distance to the target in meters.
+     * @param yawDeg Camera yaw in degrees.
+     * @param pitchDeg Camera pitch in degrees.
      * @param mapView Active MapView, needed to get the camera fov and map projection.
      */
     export function getCameraCoordinatesFromTargetCoordinates(
         targetCoordinates: geoUtils.GeoCoordinates,
-        zoom: number,
+        distance: number,
         yawDeg: number,
         pitchDeg: number,
         mapView: MapView
     ): geoUtils.GeoCoordinates {
         // Get the world distance between the target and the camera.
-        const worldCameraHeight = calculateDistanceToGroundFromZoomLevel(mapView, zoom);
         const pitchRad = THREE.Math.degToRad(pitchDeg);
-        const worldTargetCameraDistance = worldCameraHeight * Math.tan(pitchRad);
+        const cameraHeight = distance * Math.cos(pitchRad);
+        const projectedDistanceOnTheGround = cameraHeight * Math.tan(pitchRad);
 
         // Get the camera coordinates.
         const yawRad = THREE.Math.degToRad(yawDeg);
         const worldTargetCoordinates = mapView.projection.projectPoint(targetCoordinates);
         const cameraWorldCoordinates = {
-            x: worldTargetCoordinates.x + Math.sin(yawRad) * worldTargetCameraDistance,
-            y: worldTargetCoordinates.y - Math.cos(yawRad) * worldTargetCameraDistance,
+            x: worldTargetCoordinates.x + Math.sin(yawRad) * projectedDistanceOnTheGround,
+            y: worldTargetCoordinates.y - Math.cos(yawRad) * projectedDistanceOnTheGround,
             z: 0
         };
 
