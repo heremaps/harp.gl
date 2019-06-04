@@ -70,6 +70,9 @@ export namespace ThreejsAddSimpleObject {
         const canvas = mapView.canvas;
 
         canvas.addEventListener("mousedown", event => {
+            if (!event.ctrlKey) {
+                return;
+            }
             // snippet:harp_gl_threejs_add_simple_object_1.ts
             // Get the position of the mouse in world space.
             const worldPositionAtMouse = mapView.getWorldPositionAt(event.pageX, event.pageY);
@@ -106,7 +109,7 @@ export namespace ThreejsAddSimpleObject {
     }
 
     const message = document.createElement("div");
-    message.innerHTML = `Click to add a ${scale}m wide cube to scene.`;
+    message.innerHTML = `Ctrl + click to add a ${scale}m wide cube to scene.`;
 
     message.style.position = "absolute";
     message.style.cssFloat = "right";
