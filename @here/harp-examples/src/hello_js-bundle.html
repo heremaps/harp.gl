@@ -63,8 +63,10 @@
 
             const map = new harp.MapView({
                 canvas,
-                theme:
-                    "https://unpkg.com/@here/harp-map-theme@0.2.3/resources/berlin_tilezen_base.json"
+                // This, is relative URL only to make example work in CI environment.
+                // Clients, may use CDN url like:
+                //   https://unpkg.com/@here/harp-map-theme/resources/berlin_tilezen_base.json
+                theme: "resources/berlin_tilezen_base.json"
             });
 
             harp.CopyrightElementHandler.install("copyrightNotice", map);
@@ -100,7 +102,7 @@
                 styleSetName: "tilezen",
                 maxZoomLevel: 17,
                 authenticationCode: xyzAccessToken,
-                copyrightInfo: copyrights,
+                copyrightInfo: copyrights
             });
 
             map.addDataSource(omvDataSource);
