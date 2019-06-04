@@ -58,13 +58,13 @@ export namespace ThreejsRaycast {
 
         CopyrightElementHandler.install("copyrightNotice", map);
 
-        // Center the camera on Manhattan, New York City.
-        map.setCameraGeolocationAndZoom(new GeoCoordinates(40.6935, -74.009), 16.9);
-
         // Instantiate the default map controls, allowing the user to pan around freely.
         const mapControls = new MapControls(map);
         mapControls.maxPitchAngle = 50;
-        mapControls.setRotation(6.3, 50);
+
+        // Center the camera on Manhattan, New York City.
+        const NY = new GeoCoordinates(40.707, -74.01);
+        map.lookAt(NY, 2000, 50);
 
         // Add an UI.
         const ui = new MapControlsUI(mapControls);

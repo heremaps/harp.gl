@@ -27,6 +27,7 @@ We can group the examples by several categories, looking at what kind of feature
 ### Camera
 
 1. [Camera with free movement](src/camera_free.ts), that demonstrates how the camera works in `harp.gl`.
+1. [Orbit camera](src/camera_orbit.ts), showcases the `lookAt` method and how to use it to orbit around a point.
 
 ### Text Rendering
 

@@ -118,12 +118,12 @@ West</a>.</p>`;
             canvas,
             theme: themePromise.then(modifyTheme)
         });
+        const NY = new GeoCoordinates(40.705, -74.01);
+        map.lookAt(NY, 3000, 30);
 
         CopyrightElementHandler.install("copyrightNotice", map);
 
-        map.geoCenter = new GeoCoordinates(40.7, -74.010241978);
         const mapControls = new MapControls(map);
-        mapControls.setRotation(0.9, 23.928);
         const ui = new MapControlsUI(mapControls);
         canvas.parentElement!.appendChild(ui.domElement);
 

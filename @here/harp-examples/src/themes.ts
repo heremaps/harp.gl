@@ -25,11 +25,11 @@ export namespace ThemesExample {
 
         CopyrightElementHandler.install("copyrightNotice", map);
 
-        map.setCameraGeolocationAndZoom(new GeoCoordinates(40.6935, -74.009), 16.9);
-
         const mapControls = new MapControls(map);
         mapControls.maxPitchAngle = 50;
-        mapControls.setRotation(6.3, 50);
+
+        const NY = new GeoCoordinates(40.707, -74.01);
+        map.lookAt(NY, 5000, 50);
 
         const ui = new MapControlsUI(mapControls);
         canvas.parentElement!.appendChild(ui.domElement);

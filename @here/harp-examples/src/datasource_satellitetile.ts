@@ -68,7 +68,8 @@ export namespace SatelliteDataSourceExample {
     });
     // end:harp_gl_datasource_satellitetile_1.ts
 
-    mapView.geoCenter = new GeoCoordinates(40.702, -74.01154);
+    const NY = new GeoCoordinates(40.707, -74.01);
+    mapView.lookAt(NY, 4000, 40);
 
     // snippet:harp_gl_datasource_satellitetile_2.ts
     mapView.addDataSource(webTileDataSource);
