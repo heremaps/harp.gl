@@ -101,7 +101,7 @@ class MeshBuffers implements IMeshBuffers {
     readonly colors: number[] = [];
     readonly extrusionAxis: number[] = [];
     readonly indices: number[] = [];
-    readonly edgeIndices: number[] | number[][] = [];
+    readonly edgeIndices: number[] = [];
     readonly groups: Group[] = [];
     readonly texts: number[] = [];
     readonly pathLengths: number[] = [];
@@ -809,12 +809,6 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                 // Get the contour vertices for this ring.
                 const ring = rings[ringIndex++];
 
-                let edgeIndexBuffer = edgeIndices as number[];
-                if (isFilled && ring.contourOutlines !== undefined) {
-                    edgeIndexBuffer = [];
-                    (edgeIndices as number[][]).push(edgeIndexBuffer);
-                }
-
                 const vertices: number[] = [...ring.contour];
                 const points: number[] = [...ring.points];
 
@@ -830,7 +824,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                 }
                 if (ring.contourOutlines !== undefined) {
                     addPolygonEdges(
-                        edgeIndexBuffer,
+                        edgeIndices,
                         baseVertex,
                         stride,
                         ring.contour,
@@ -865,7 +859,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                     }
                     if (current.contourOutlines !== undefined) {
                         addPolygonEdges(
-                            edgeIndexBuffer,
+                            edgeIndices,
                             (isExtruded ? vertexOffset : vertexOffset / 2) + baseVertex,
                             stride,
                             current.contour,
@@ -1175,27 +1169,14 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
             }
 
             if (meshBuffers.edgeIndices.length > 0) {
-                if (meshBuffers.edgeIndices[0] instanceof Array) {
-                    geometry.edgeIndex = [];
-                    for (const edgeIndexBuffer of meshBuffers.edgeIndices as number[][]) {
-                        // TODO: use uint16 for buffers when possible. Issue HARP-3987
-                        geometry.edgeIndex.push({
-                            name: "edgeIndex",
-                            buffer: new Uint32Array(edgeIndexBuffer).buffer as ArrayBuffer,
-                            itemCount: 1,
-                            type: "uint32"
-                        });
-                    }
-                } else {
-                    // TODO: use uint16 for buffers when possible. Issue HARP-3987
-                    geometry.edgeIndex = {
-                        name: "edgeIndex",
-                        buffer: new Uint32Array(meshBuffers.edgeIndices as number[])
-                            .buffer as ArrayBuffer,
-                        itemCount: 1,
-                        type: "uint32"
-                    };
-                }
+                // TODO: use uint16 for buffers when possible. Issue HARP-3987
+                geometry.edgeIndex = {
+                    name: "edgeIndex",
+                    buffer: new Uint32Array(meshBuffers.edgeIndices as number[])
+                        .buffer as ArrayBuffer,
+                    itemCount: 1,
+                    type: "uint32"
+                };
             }
 
             if (this.m_gatherFeatureIds) {

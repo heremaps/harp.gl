@@ -25,7 +25,7 @@ export interface IMeshBuffers {
     /**
      * Array that stores the indices of the mesh edges.
      */
-    readonly edgeIndices: number[] | number[][];
+    readonly edgeIndices: number[];
 
     /**
      * Optional list of feature IDs. Currently only Number is supported, will fail if features have
