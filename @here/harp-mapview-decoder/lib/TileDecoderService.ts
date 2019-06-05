@@ -96,6 +96,15 @@ export class TileDecoderService extends WorkerService {
                 if (geom.index && geom.index.buffer instanceof ArrayBuffer) {
                     transferList.push(geom.index.buffer);
                 }
+
+                if (
+                    geom.objInfos !== undefined &&
+                    geom.objInfos.length === 1 &&
+                    geom.objInfos[0] !== undefined &&
+                    "displacementMap" in (geom.objInfos[0] as any)
+                ) {
+                    transferList.push((geom.objInfos[0] as any).displacementMap.buffer);
+                }
             });
 
             decodedTile.techniques.forEach(technique => {
