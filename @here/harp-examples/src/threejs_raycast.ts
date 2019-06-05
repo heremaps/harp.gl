@@ -5,7 +5,7 @@
  */
 
 import { GeoCoordinates } from "@here/harp-geoutils";
-import { MapControls, MapControlsUI } from "@here/harp-map-controls";
+import { LongPressHandler, MapControls, MapControlsUI } from "@here/harp-map-controls";
 import {
     CopyrightElementHandler,
     CopyrightInfo,
@@ -78,12 +78,8 @@ export namespace ThreejsRaycast {
             map.resize(window.innerWidth, window.innerHeight);
         });
 
-        canvas.addEventListener("mousedown", event => {
-            // User must have pressed the 'Ctrl' key to add a box.
-            if (!event.ctrlKey) {
-                return;
-            }
-
+        // tslint:disable:no-unused-expression
+        new LongPressHandler(canvas, event => {
             // snippet:harp_gl_threejs_raycast_0.ts
             const pickResults = map.intersectMapObjects(event.pageX, event.pageY);
             if (pickResults.length === 0) {
@@ -124,7 +120,7 @@ export namespace ThreejsRaycast {
     }
 
     const message = document.createElement("div");
-    message.innerHTML = `Click + 'Ctrl' to add a 10m^3 pink box under the mouse cursor location.`;
+    message.innerHTML = `Long click to add a 10m^3 pink box under the mouse cursor location.`;
 
     message.style.position = "absolute";
     message.style.cssFloat = "right";

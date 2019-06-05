@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { LongPressHandler } from "@here/harp-map-controls";
 import { MapObject, MapView } from "@here/harp-mapview";
 import * as THREE from "three";
 import { HelloWorldExample } from "./hello";
@@ -54,10 +55,8 @@ export namespace ThreejsAddSimpleObject {
     function addMouseEventListener(mapView: MapView) {
         const canvas = mapView.canvas;
 
-        canvas.addEventListener("mousedown", event => {
-            if (!event.ctrlKey) {
-                return;
-            }
+        // tslint:disable:no-unused-expression
+        new LongPressHandler(canvas, event => {
             // snippet:harp_gl_threejs_add_simple_object_1.ts
             // Get the position of the mouse in geo space.
             const geoPosition = mapView.getGeoCoordinatesAt(event.pageX, event.pageY);
@@ -80,7 +79,7 @@ export namespace ThreejsAddSimpleObject {
     }
 
     const message = document.createElement("div");
-    message.innerHTML = `Ctrl + click to add a ${scale}m wide cube to scene.`;
+    message.innerHTML = `Long click to add a ${scale}m wide cube to scene.`;
 
     message.style.position = "absolute";
     message.style.cssFloat = "right";
