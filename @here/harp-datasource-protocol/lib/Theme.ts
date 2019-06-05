@@ -381,9 +381,9 @@ export interface TextStyleDefinition {
 }
 
 /**
- * Interface that defines the options to configure a procedural gradient sky.
+ * Interface that defines a procedural gradient sky.
  */
-export interface GradientSkyParams {
+export interface GradientSky {
     /** Sky type. */
     type: "gradient";
     /** Color of the upper part of the gradient. */
@@ -397,9 +397,9 @@ export interface GradientSkyParams {
 }
 
 /**
- * Interface that defines the options to configure a cubemap sky.
+ * Interface that defines a cubemap sky.
  */
-export interface CubemapSkyParams {
+export interface CubemapSky {
     /** Sky type. */
     type: "cubemap";
     /** Positive X cube map face. */
@@ -419,10 +419,7 @@ export interface CubemapSkyParams {
 /**
  * Interface that defines the options to configure the sky.
  */
-export interface Sky {
-    /** Sky configuration parameters. */
-    params: GradientSkyParams | CubemapSkyParams;
-}
+export type Sky = GradientSky | CubemapSky;
 
 /**
  * Interface that defines the options to configure fog.

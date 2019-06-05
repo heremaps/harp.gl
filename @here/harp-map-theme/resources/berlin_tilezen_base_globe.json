@@ -1,14 +1,12 @@
 {
     "sky": {
-        "params": {
-            "type": "cubemap",
-            "positiveX": "Sky_px.png",
-            "negativeX": "Sky_nx.png",
-            "positiveY": "Sky_py.png",
-            "negativeY": "Sky_ny.png",
-            "positiveZ": "Sky_pz.png",
-            "negativeZ": "Sky_nz.png"
-        }
+        "type": "cubemap",
+        "positiveX": "Sky_px.png",
+        "negativeX": "Sky_nx.png",
+        "positiveY": "Sky_py.png",
+        "negativeY": "Sky_ny.png",
+        "positiveZ": "Sky_pz.png",
+        "negativeZ": "Sky_nz.png"
     },
     "fog": {
         "color": "#300A00",

@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GradientSkyParams } from "@here/harp-datasource-protocol";
+import { GradientSky } from "@here/harp-datasource-protocol";
 import { ProjectionType } from "@here/harp-geoutils";
 import { getOptionValue } from "@here/harp-utils";
 import { Color, CubeTexture, DataTexture, Line3, Plane, RGBFormat, Texture, Vector3 } from "three";
@@ -62,25 +62,25 @@ export class SkyGradientTexture {
     /**
      * Constructs a new `SkyGradientTexture`.
      *
-     * @param m_params Initial [[GradientSkyParams]].
+     * @param sky Initial [[GradientSky]] configuration.
      * @param m_projectionType [[MapView]]'s projection type.
      * @param m_height Optional height parameter.
      */
     constructor(
-        params: GradientSkyParams,
+        sky: GradientSky,
         private m_projectionType: ProjectionType,
         private m_height: number = DEFAULT_TEXTURE_SIZE
     ) {
-        const topColor = new Color(params.topColor);
-        const bottomColor = new Color(params.bottomColor);
-        const groundColor = new Color(params.groundColor);
+        const topColor = new Color(sky.topColor);
+        const bottomColor = new Color(sky.bottomColor);
+        const groundColor = new Color(sky.groundColor);
 
         this.m_width = this.m_projectionType === ProjectionType.Planar ? 1.0 : this.m_height;
         this.m_faceCount = this.m_projectionType === ProjectionType.Planar ? 1.0 : 6.0;
         this.m_faces = [];
         for (let i = 0; i < this.m_faceCount; ++i) {
             const data = new Uint8Array(3 * this.m_width * this.m_height);
-            this.fillTextureData(data, i, topColor, bottomColor, groundColor, params.monomialPower);
+            this.fillTextureData(data, i, topColor, bottomColor, groundColor, sky.monomialPower);
 
             const texture = new DataTexture(data, this.m_width, this.m_height, RGBFormat);
             texture.needsUpdate = true;
@@ -141,17 +141,17 @@ export class SkyGradientTexture {
     /**
      * Updates the `SkyGradientTexture` with new parameters.
      *
-     * @param params New [[GradientSkyParams]].
+     * @param params New [[GradientSky]] configuration.
      */
-    updateTexture(params: GradientSkyParams) {
+    updateTexture(sky: GradientSky) {
         for (let i = 0; i < this.m_faceCount; ++i) {
             this.fillTextureData(
                 this.m_faces[i].image.data,
                 i,
-                new Color(params.topColor),
-                new Color(params.bottomColor),
-                new Color(params.groundColor),
-                params.monomialPower
+                new Color(sky.topColor),
+                new Color(sky.bottomColor),
+                new Color(sky.groundColor),
+                sky.monomialPower
             );
             this.m_faces[i].needsUpdate = true;
         }

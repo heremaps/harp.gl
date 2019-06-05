@@ -52,11 +52,11 @@ export class ThemeLoader {
             (childUrl: string) => resolveReferenceUrl(theme.url, childUrl),
             defaultUrlResolver
         );
-        if (theme.sky && theme.sky.params.type === "cubemap") {
+        if (theme.sky && theme.sky.type === "cubemap") {
             for (let i = 0; i < SKY_CUBEMAP_FACE_COUNT; ++i) {
-                const faceUrl: string | undefined = (theme.sky.params as any)[SkyCubemapFaceId[i]];
+                const faceUrl: string | undefined = (theme.sky as any)[SkyCubemapFaceId[i]];
                 if (faceUrl !== undefined) {
-                    (theme.sky.params as any)[SkyCubemapFaceId[i]] = childUrlResolver(faceUrl);
+                    (theme.sky as any)[SkyCubemapFaceId[i]] = childUrlResolver(faceUrl);
                 }
             }
         }
