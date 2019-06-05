@@ -1,12 +1,10 @@
 {
     "sky": {
-        "params": {
-            "type": "gradient",
-            "topColor": "#AAA69A",
-            "bottomColor": "#FBF6EE",
-            "groundColor": "#D4CDC0",
-            "monomialPower": 1
-        }
+        "type": "gradient",
+        "topColor": "#AAA69A",
+        "bottomColor": "#FBF6EE",
+        "groundColor": "#D4CDC0",
+        "monomialPower": 1
     },
     "fog": {
         "color": "#FBF6EE",

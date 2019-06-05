@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import {
-    GradientSkyParams,
+    GradientSky,
     ImageTexture,
     Light,
     PostEffects,
@@ -2396,13 +2396,10 @@ export class MapView extends THREE.EventDispatcher {
     }
 
     private addNewSkyBackground(sky: Sky, clearColor: string | undefined) {
-        if (
-            sky.params.type === "gradient" &&
-            (sky.params as GradientSkyParams).groundColor === undefined
-        ) {
-            sky.params.groundColor = getOptionValue(clearColor, "#000000");
+        if (sky.type === "gradient" && (sky as GradientSky).groundColor === undefined) {
+            sky.groundColor = getOptionValue(clearColor, "#000000");
         }
-        this.m_skyBackground = new SkyBackground(sky.params, this.projection.type, this.m_camera);
+        this.m_skyBackground = new SkyBackground(sky, this.projection.type, this.m_camera);
         this.m_scene.background = this.m_skyBackground.texture;
     }
 
@@ -2415,14 +2412,11 @@ export class MapView extends THREE.EventDispatcher {
     }
 
     private updateSkyBackgroundColors(sky: Sky, clearColor: string | undefined) {
-        if (
-            sky.params.type === "gradient" &&
-            (sky.params as GradientSkyParams).groundColor === undefined
-        ) {
-            sky.params.groundColor = getOptionValue(clearColor, "#000000");
+        if (sky.type === "gradient" && (sky as GradientSky).groundColor === undefined) {
+            sky.groundColor = getOptionValue(clearColor, "#000000");
         }
         if (this.m_skyBackground !== undefined) {
-            this.m_skyBackground.updateTexture(sky.params);
+            this.m_skyBackground.updateTexture(sky);
         }
     }
 
