@@ -15,7 +15,7 @@ import { Projection, ProjectionType } from "./Projection";
 
 const DEG2RAD = Math.PI / 180;
 
-class EquirectangularProjection implements Projection {
+class EquirectangularProjection extends Projection {
     static geoToWorldScale: number = 1.0 / (2.0 * Math.PI);
     static worldToGeoScale: number = (2.0 * Math.PI) / 1.0;
 

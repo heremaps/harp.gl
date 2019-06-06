@@ -11,6 +11,7 @@ import { Box3Like } from "../lib/math/Box3Like";
 import { Vector3Like } from "../lib/math/Vector3Like";
 import { identityProjection } from "../lib/projection/IdentityProjection";
 import { mercatorProjection } from "../lib/projection/MercatorProjection";
+import { sphereProjection } from "../lib/projection/SphereProjection";
 import { webMercatorProjection } from "../lib/projection/WebMercatorProjection";
 import { mercatorTilingScheme } from "../lib/tiling/MercatorTilingScheme";
 import { TileKey } from "../lib/tiling/TileKey";
@@ -18,6 +19,8 @@ import { webMercatorTilingScheme } from "../lib/tiling/WebMercatorTilingScheme";
 
 // tslint:disable:only-arrow-functions
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
+
+const EPSILON = 1e-6;
 
 function containsPoint(box: Box3Like, point: Vector3Like): boolean {
     if (point.x < box.min.x || point.x > box.max.x) {
@@ -41,8 +44,8 @@ describe("WebMercator", function() {
         const projected = webMercatorProjection.projectPoint(coords);
         const unprojected = webMercatorProjection.unprojectPoint(projected);
 
-        assert.approximately(coords.latitudeInRadians, unprojected.latitudeInRadians, 0.0001);
-        assert.approximately(coords.longitudeInRadians, unprojected.longitudeInRadians, 0.0001);
+        assert.approximately(coords.latitudeInRadians, unprojected.latitudeInRadians, EPSILON);
+        assert.approximately(coords.longitudeInRadians, unprojected.longitudeInRadians, EPSILON);
     });
 
     it("project outside normal range", function() {
@@ -50,8 +53,8 @@ describe("WebMercator", function() {
         const projected = webMercatorProjection.projectPoint(coords);
         const unprojected = webMercatorProjection.unprojectPoint(projected);
 
-        assert.approximately(coords.latitudeInRadians, unprojected.latitudeInRadians, 0.0001);
-        assert.approximately(coords.longitudeInRadians, unprojected.longitudeInRadians, 0.0001);
+        assert.approximately(coords.latitudeInRadians, unprojected.latitudeInRadians, EPSILON);
+        assert.approximately(coords.longitudeInRadians, unprojected.longitudeInRadians, EPSILON);
     });
 
     it("projectBox", function() {
@@ -89,8 +92,24 @@ describe("Mercator", function() {
         const projected = mercatorProjection.projectPoint(coords);
         const unprojected = mercatorProjection.unprojectPoint(projected);
 
-        assert.approximately(coords.latitudeInRadians, unprojected.latitudeInRadians, 0.0001);
-        assert.approximately(coords.longitudeInRadians, unprojected.longitudeInRadians, 0.0001);
+        assert.approximately(coords.latitudeInRadians, unprojected.latitudeInRadians, EPSILON);
+        assert.approximately(coords.longitudeInRadians, unprojected.longitudeInRadians, EPSILON);
+    });
+
+    it("reproject mercator to sphere", function() {
+        const geoPos = new GeoCoordinates(52.504951, 13.371806, 12);
+
+        // geo coordinates projected to sphere.
+        const projectedPoint = sphereProjection.projectPoint(geoPos);
+
+        // geo coordinates projected to mercator.
+        const mercatorPoint = mercatorProjection.projectPoint(geoPos);
+
+        // a position in mercator space reprojected using sphereProjection.
+        const reprojectedPoint = sphereProjection.reprojectPoint(mercatorProjection, mercatorPoint);
+        assert.approximately(projectedPoint.x, reprojectedPoint.x, EPSILON);
+        assert.approximately(projectedPoint.y, reprojectedPoint.y, EPSILON);
+        assert.approximately(projectedPoint.z, reprojectedPoint.z, EPSILON);
     });
 
     it("project outside normal range", function() {
@@ -98,8 +117,8 @@ describe("Mercator", function() {
         const projected = mercatorProjection.projectPoint(coords);
         const unprojected = mercatorProjection.unprojectPoint(projected);
 
-        assert.approximately(coords.latitudeInRadians, unprojected.latitudeInRadians, 0.0001);
-        assert.approximately(coords.longitudeInRadians, unprojected.longitudeInRadians, 0.0001);
+        assert.approximately(coords.latitudeInRadians, unprojected.latitudeInRadians, EPSILON);
+        assert.approximately(coords.longitudeInRadians, unprojected.longitudeInRadians, EPSILON);
     });
 
     it("project not normalized", function() {
@@ -107,8 +126,8 @@ describe("Mercator", function() {
         const projected = mercatorProjection.projectPoint(coords, undefined);
         const unprojected = mercatorProjection.unprojectPoint(projected);
 
-        assert.approximately(coords.latitudeInRadians, unprojected.latitudeInRadians, 0.0001);
-        assert.approximately(coords.longitudeInRadians, unprojected.longitudeInRadians, 0.0001);
+        assert.approximately(coords.latitudeInRadians, unprojected.latitudeInRadians, EPSILON);
+        assert.approximately(coords.longitudeInRadians, unprojected.longitudeInRadians, EPSILON);
     });
 
     it("projectBox", function() {
