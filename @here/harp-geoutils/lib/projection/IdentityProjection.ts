@@ -15,7 +15,7 @@ import { Projection, ProjectionType } from "./Projection";
 
 const DEG2RAD = Math.PI / 180;
 
-class IdentityProjection implements Projection {
+class IdentityProjection extends Projection {
     readonly type: ProjectionType = ProjectionType.Planar;
 
     getScaleFactor(_worldPoint: Vector3Like): number {

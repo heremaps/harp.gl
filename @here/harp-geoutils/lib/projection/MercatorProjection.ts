@@ -14,7 +14,7 @@ import { Vector3Like } from "../math/Vector3Like";
 import { EarthConstants } from "./EarthConstants";
 import { Projection, ProjectionType } from "./Projection";
 
-export class MercatorProjection implements Projection {
+export class MercatorProjection extends Projection {
     static MAXIMUM_LATITUDE: number = 1.4844222297453323;
 
     protected static clamp(val: number, min: number, max: number): number {

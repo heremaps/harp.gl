@@ -146,7 +146,7 @@ function project<WorldCoordinates extends Vector3Like>(
     return worldpoint;
 }
 
-class SphereProjection implements Projection {
+class SphereProjection extends Projection {
     readonly type: ProjectionType = ProjectionType.Spherical;
 
     worldExtent<Bounds extends Box3Like>(
