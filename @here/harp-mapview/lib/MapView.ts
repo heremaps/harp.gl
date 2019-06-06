@@ -52,7 +52,7 @@ declare const process: any;
 const isProduction = process.env.NODE_ENV === "production";
 
 /**
- * An interface describing [[THREE.Object3D]]s positioned in
+ * An interface describing [[THREE.Object3D]]s positioned
  * using [[GeoCoordinates]].
  *
  * Example:
@@ -65,7 +65,7 @@ const isProduction = process.env.NODE_ENV === "production";
  */
 export type MapObject<T extends THREE.Object3D = THREE.Object3D> = T & {
     /**
-     * The position of this [[MapObject]] in [[GeoCoordinate]].
+     * The position of this [[MapObject]] in [[GeoCoordinates]].
      */
     geoPosition?: GeoCoordinates;
 };
