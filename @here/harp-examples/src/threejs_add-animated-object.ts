@@ -5,7 +5,7 @@
  */
 
 import { GeoCoordinates } from "@here/harp-geoutils";
-import { MapViewEventNames, MapViewUtils, RenderEvent } from "@here/harp-mapview";
+import { MapObject, MapViewEventNames, MapViewUtils, RenderEvent } from "@here/harp-mapview";
 import * as THREE from "three";
 import { HelloWorldExample } from "./hello";
 
@@ -59,14 +59,10 @@ export namespace ThreejsAddAnimatedObject {
     MapViewUtils.setRotation(mapView, -40, 40);
 
     const figureGeoPosition = new GeoCoordinates(40.70497091, -74.0135);
-    const figureWorldPosition = mapView.projection.projectPoint(
-        figureGeoPosition,
-        new THREE.Vector3()
-    );
 
     const clock = new THREE.Clock();
 
-    let figure: THREE.Group | undefined;
+    let figure: MapObject<THREE.Group> | undefined;
     let mixer: THREE.AnimationMixer | undefined;
     const onLoad = (object: any) => {
         mixer = new THREE.AnimationMixer(object);
@@ -84,7 +80,8 @@ export namespace ThreejsAddAnimatedObject {
         figure.name = "guy";
 
         // snippet:harp_gl_threejs_add_animated-object_add_to_scene.ts
-        mapView.scene.add(figure);
+        figure.geoPosition = figureGeoPosition;
+        mapView.userMapObjects.add(figure);
         // end:harp_gl_threejs_add_animated-object_add_to_scene.ts
     };
 
@@ -94,10 +91,6 @@ export namespace ThreejsAddAnimatedObject {
     // end:harp_gl_threejs_add_animated-object_load.ts
 
     const onRender = (event: RenderEvent) => {
-        if (figure) {
-            figure.position.copy(figureWorldPosition).sub(mapView.worldCenter);
-        }
-
         if (mixer) {
             // snippet:harp_gl_threejs_add_animated-object_update_animation.ts
             const delta = clock.getDelta();
