@@ -26,7 +26,7 @@ If you have suggestions, please see our [contribution guidelines](CONTRIBUTING.m
     - Create customization points by accepting **D**ependencies through abstract interfaces. Give dependencies to objects explicitly instead of pulling them implicitly from the inside.
 1. Include responsibility and collaborators within the documentation.
 Responsibility description should be as simple as a single sentence without conjunctions. If it's not expressible like that, it's a hint that such a class has multiple responsibilities. Documentation should also include potential users and dependencies of the class and it's relationship to them. Check the `Documentation` section below for more details.
-1. Avoid implementation inheritance . Use composition instead.
+1. Avoid implementation inheritance. Use composition instead.
 Inherit not to reuse but to be reused. Implementation inheritance is usually used to reduce effort, not because it's solving a problem. It's actually creating a problem of implicit dependencies and fragile base classes. Specific implementations of an interface should be created from helpers through composition and marked as final to prevent further derivation.
 1. Keep interfaces pure by avoiding data members
 If an interface has data member, it's no longer abstract. Derived classes can't get rid of them and need to pay the cost in object size. Keep interfaces narrow and pure.
@@ -55,36 +55,37 @@ If an interface has data member, it's no longer abstract. Derived classes can't 
     ```
 1. *Do not use !! in the code*. The !!_trick_ is just a way to make a truthy operation a boolean one, but the issue with truthiness is *not solved*, but *hidden*. Consider the following example:
 
-   ```typescript
-   let str = undefined
-   !!str // is false even when undefined
+    ```typescript
+    let str = undefined
+    !!str // is false even when undefined
 
-   let str = ""
-   !!str // is false even when the string has 0 length
+    let str = ""
+    !!str // is false even when the string has 0 length
 
-   if (str === undefined || str.length ===0)
-   ```
-   Here is a way not to use !! (based on [this](https://stackoverflow.com/questions/784929/what-is-the-not-not-operator-in-javascript/1406618#1406618)):
-   ```typescript
-   // !! is a horribly obscure way to do a type conversion.
-   // ! is NOT.
-   // !true is false,
-   // !false is true
-   // !0 is true, and !1 is false.
+    if (str === undefined || str.length ===0)
+    ```
+    Here is a way not to use !! (based on [this](https://stackoverflow.com/questions/784929/what-is-the-not-not-operator-in-javascript/1406618#1406618)):
+    ```typescript
+    // !! is a horribly obscure way to do a type conversion.
+    // ! is NOT.
+    // !true is false,
+    // !false is true
+    // !0 is true, and !1 is false.
 
-   // So you're converting a value to a boolean, then inverting it, then inverting it again.
+    // So you're converting a value to a boolean, then inverting it, then inverting it again.
 
-   // Maximum Obscurity:
-   let val.enabled = !!userId;
-   let this.pauseButton:HTMLElement = new HTMLElement();
+    // Maximum Obscurity:
+    let val.enabled = !!userId;
+    let this.pauseButton:HTMLElement = new HTMLElement();
 
-   // much easier to understand:
-   let val.enabled = (userId != 0);
+    // much easier to understand:
+    let val.enabled = (userId != 0);
 
-   if (this.pauseButton !== undefined) {
-	// ...
-   }
-  ```
+    if (this.pauseButton !== undefined) {
+    // ...
+    }
+    ```
+
 1. Usage of "Non-null assertion operator" in the code. Don't use it when declaring members which are not initialized (if needed use optional operator instead: ?)
 
     ```typescript
@@ -106,7 +107,7 @@ If an interface has data member, it's no longer abstract. Derived classes can't 
     ```typescript
     // If there is a justified need to use ! operator, keep it as close to the invocation as possible
     if (this.storeExtendedTags) {
-                featureGroup.layerIndex![featureGroup.numFeatures] = this.addLayer(env.lookup("$layer")); //mind the ! near layerIndex.
+        featureGroup.layerIndex![featureGroup.numFeatures] = this.addLayer(env.lookup("$layer")); //mind the ! near layerIndex.
     }
     ```
 
