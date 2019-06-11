@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { ConcurrentDecoderFacade } from "@here/harp-mapview";
+import { ConcurrentDecoderFacade, ConcurrentTilerFacade } from "@here/harp-mapview";
 import { WorkerLoader } from "@here/harp-mapview/lib/workers/WorkerLoader";
 import { baseUrl, setDefaultUrlResolver } from "@here/harp-utils";
 
@@ -104,6 +104,29 @@ export function resolveBundledResourceUrl(url: string) {
     return url;
 }
 
+const getActualDecoderScriptUrl = () => {
+    const baseScriptUrl = getBundleScriptUrl();
+    if (!baseScriptUrl) {
+        // tslint:disable-next-line:no-console
+        console.error(
+            `harp.js: Unable to determine default location of 'harp-decoders(min).js'. ` +
+                `See https://github.com/heremaps/harp.gl/@here/harp.gl.`
+        );
+    }
+    if (!WorkerLoader.dependencyUrlMapping.three) {
+        // tslint:disable-next-line:no-console
+        console.error(
+            `harp.js: Unable to determine location of 'three(.min).js'. ` +
+                "`See https://github.com/heremaps/harp.gl/@here/harp.gl.`"
+        );
+    }
+    const isMinified = baseScriptUrl && baseScriptUrl.endsWith(".min.js");
+    const decoderScriptName = !isMinified
+        ? DEFAULT_DECODER_SCRIPT_URL
+        : DEFAULT_DECODER_SCRIPT_URL.replace(".js$", ".min.js");
+    return resolveBundledResourceUrl(decoderScriptName);
+};
+
 /**
  * Guess decoder script URL.
  *
@@ -117,38 +140,30 @@ export function resolveBundledResourceUrl(url: string) {
  */
 function installDefaultDecoderUrlHook() {
     ConcurrentDecoderFacade.defaultScriptUrl = "";
+    ConcurrentTilerFacade.defaultScriptUrl = "";
 
     const threeUrl = getScriptUrl("three")!;
 
     WorkerLoader.dependencyUrlMapping.three = threeUrl;
 
-    const oldGetWorkerSet = ConcurrentDecoderFacade.getWorkerSet;
+    const oldDecoderGetWorkerSet = ConcurrentDecoderFacade.getWorkerSet;
     ConcurrentDecoderFacade.getWorkerSet = (scriptUrl?: string) => {
         if (scriptUrl === undefined && ConcurrentDecoderFacade.defaultScriptUrl === "") {
-            const baseScriptUrl = getBundleScriptUrl();
-            if (!baseScriptUrl) {
-                // tslint:disable-next-line:no-console
-                console.error(
-                    `harp.js: Unable to determine default location of 'harp-decoders(min).js'. ` +
-                        `See https://github.com/heremaps/harp.gl/@here/harp.gl.`
-                );
-            }
-            if (!WorkerLoader.dependencyUrlMapping.three) {
-                // tslint:disable-next-line:no-console
-                console.error(
-                    `harp.js: Unable to determine location of 'three(.min).js'. ` +
-                        "`See https://github.com/heremaps/harp.gl/@here/harp.gl.`"
-                );
-            }
-            const isMinified = baseScriptUrl && baseScriptUrl.endsWith(".min.js");
-            const decoderScriptName = !isMinified
-                ? DEFAULT_DECODER_SCRIPT_URL
-                : DEFAULT_DECODER_SCRIPT_URL.replace(".js$", ".min.js");
-            const newScriptUrl = resolveBundledResourceUrl(decoderScriptName);
+            const newScriptUrl = getActualDecoderScriptUrl();
 
             ConcurrentDecoderFacade.defaultScriptUrl = newScriptUrl;
         }
-        return oldGetWorkerSet.apply(ConcurrentDecoderFacade, [scriptUrl]);
+        return oldDecoderGetWorkerSet.apply(ConcurrentDecoderFacade, [scriptUrl]);
+    };
+
+    const oldTilerGetWorkerSet = ConcurrentTilerFacade.getWorkerSet;
+    ConcurrentTilerFacade.getWorkerSet = (scriptUrl?: string) => {
+        if (scriptUrl === undefined && ConcurrentTilerFacade.defaultScriptUrl === "") {
+            const newScriptUrl = getActualDecoderScriptUrl();
+
+            ConcurrentTilerFacade.defaultScriptUrl = newScriptUrl;
+        }
+        return oldTilerGetWorkerSet.apply(ConcurrentTilerFacade, [scriptUrl]);
     };
 }
 
