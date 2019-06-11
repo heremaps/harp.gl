@@ -29,7 +29,7 @@ import { accessToken } from "../config";
  * [[include:harp_gl_camera_orbit_example_1.ts]]
  * ```
  *
- * Here a GUI is also set up so as to fiddle with the pitch and distance from the page.
+ * Here a GUI is also set up so as to fiddle with the tilt and distance from the page.
  */
 export namespace CameraOrbitExample {
     // snippet:harp_gl_camera_orbit_example_0.ts
@@ -37,17 +37,17 @@ export namespace CameraOrbitExample {
     // end:harp_gl_camera_orbit_example_0.ts
 
     // snippet:harp_gl_camera_orbit_example_1.ts
-    const options = { pitch: 45, distance: 3000 };
+    const options = { tilt: 45, distance: 3000 };
     const NY = new GeoCoordinates(40.707, -74.012);
     let azimuth = 160;
     map.addEventListener(MapViewEventNames.Render, () => {
-        map.lookAt(NY, options.distance, options.pitch, (azimuth += 0.1));
+        map.lookAt(NY, options.distance, options.tilt, (azimuth += 0.1));
         updateHTML();
     });
     // end:harp_gl_camera_orbit_example_1.ts
 
     const gui = new GUI({ width: 300 });
-    gui.add(options, "pitch", 0, 80, 0.1);
+    gui.add(options, "tilt", 0, 80, 0.1);
     gui.add(
         options,
         "distance",
@@ -98,7 +98,7 @@ export namespace CameraOrbitExample {
         const infoElement = document.getElementById("info") as HTMLParagraphElement;
         infoElement.innerHTML =
             `This view is set through the lookAt method: map.lookAt(NY, ` +
-            `${options.distance.toFixed(0)}, ${options.pitch.toFixed(1)}, ${azimuth.toFixed(1)});`;
+            `${options.distance.toFixed(0)}, ${options.tilt.toFixed(1)}, ${azimuth.toFixed(1)});`;
     }
 
     function getExampleHTML() {
