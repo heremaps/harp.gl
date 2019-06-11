@@ -10,6 +10,21 @@ import { TileKey } from "@here/harp-geoutils";
 import { ConcurrentTilerFacade } from "@here/harp-mapview";
 import { DataProvider } from "@here/harp-mapview-decoder";
 
+export interface GeoJsonDataProviderOptions {
+    /**
+     * Worker script hosting [[Tiler Service]]
+     * @default `./decoder.bundle.ts`
+     */
+    workerTilerUrl?: string;
+
+    /**
+     * Custom tiler instance.
+     * If not provided, [[GeoJsonDataProvider]] will obtain [[WorkerBasedTiler]]
+     * from [[ConcurrentTilerFacade]].
+     */
+    tiler?: ITiler;
+}
+
 /**
  * GeoJson [[DataProvider]]. Automatically handles tiling and simplification of static GeoJson.
  */
@@ -22,11 +37,17 @@ export class GeoJsonDataProvider implements DataProvider {
      *
      * @param name Name to be used to reference this `DataProvider`
      * @param input URL of the GeoJSON, or a GeoJSON.
-     *
+     * @param options Optional
      * @returns New `GeoJsonDataProvider`.
      */
-    constructor(readonly name: string, public input: URL | GeoJson, workerTilerUrl?: string) {
-        this.m_tiler = ConcurrentTilerFacade.getTiler("omv-tiler", workerTilerUrl);
+    constructor(
+        readonly name: string,
+        public input: URL | GeoJson,
+        options?: GeoJsonDataProviderOptions
+    ) {
+        this.m_tiler =
+            (options && options.tiler) ||
+            ConcurrentTilerFacade.getTiler("omv-tiler", options && options.workerTilerUrl);
     }
 
     async connect(): Promise<void> {

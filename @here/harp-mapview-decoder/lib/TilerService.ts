@@ -4,16 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { WorkerTilerProtocol } from "@here/harp-datasource-protocol";
+import { ITiler, WorkerTilerProtocol } from "@here/harp-datasource-protocol";
 import { TileKey } from "@here/harp-geoutils";
-import { LoggerManager } from "@here/harp-utils";
+import { GeoJsonTiler } from "./GeoJsonTiler";
 import { WorkerService, WorkerServiceResponse } from "./WorkerService";
-
-declare const require: any;
-// tslint:disable-next-line:no-var-requires
-const geojsonvt = require("geojson-vt");
-
-const logger = LoggerManager.instance.create("TilerService");
 
 /**
  * An extension to [[WorkerService]], the `TilerService` implements an asynchronous (message based)
@@ -34,8 +28,7 @@ export class TilerService extends WorkerService {
     static start(serviceId: string) {
         return new TilerService(serviceId);
     }
-
-    private m_tileIndexMap: Map<string, any>;
+    tiler: ITiler = new GeoJsonTiler();
 
     /**
      * Set up the `TilerService`. The name of the service must be unique
@@ -44,7 +37,6 @@ export class TilerService extends WorkerService {
      */
     constructor(readonly serviceId: string) {
         super(serviceId);
-        this.m_tileIndexMap = new Map();
     }
 
     /**
@@ -68,57 +60,28 @@ export class TilerService extends WorkerService {
     private async handleTileRequest(
         request: WorkerTilerProtocol.TileRequest
     ): Promise<WorkerServiceResponse> {
-        const tileIndex = this.m_tileIndexMap.get(request.index);
-        if (tileIndex === undefined) {
-            return { response: {} };
-        }
-
         const tileKey = TileKey.fromMortonCode(request.tileKey);
-        const tile = tileIndex.getTile(tileKey.level, tileKey.column, tileKey.row);
+        const tile = this.tiler.getTile(request.index, tileKey);
+
         return { response: tile || {} };
     }
 
     private async handleRegisterIndexRequest(
         message: WorkerTilerProtocol.RegisterIndexRequest
     ): Promise<WorkerServiceResponse> {
-        const tileIndex = this.m_tileIndexMap.get(message.id);
-        if (tileIndex === undefined) {
-            await this.writeIndex(message);
-        }
+        const input = typeof message.input === "string" ? new URL(message.input) : message.input;
+        await this.tiler.registerIndex(message.id, input);
+
         return { response: {} };
     }
 
     private async handleUpdateIndexRequest(
         message: WorkerTilerProtocol.UpdateIndexRequest
     ): Promise<WorkerServiceResponse> {
-        return this.writeIndex(message);
-    }
+        const input = typeof message.input === "string" ? new URL(message.input) : message.input;
 
-    private async writeIndex(
-        message: WorkerTilerProtocol.RegisterIndexRequest | WorkerTilerProtocol.UpdateIndexRequest
-    ): Promise<WorkerServiceResponse> {
-        let json = message.input;
-        if (typeof message.input === "string") {
-            const response = await fetch(message.input);
-            if (!response.ok) {
-                logger.error(`${message.input} Status Text:  ${response.statusText}`);
-                return { response: {} };
-            }
-            json = await response.json();
-        }
-        const tileIndex = geojsonvt.default(json, {
-            maxZoom: 20, // max zoom to preserve detail on
-            indexMaxZoom: 5, // max zoom in the tile index
-            indexMaxPoints: 100000, // max number of points per tile in the tile index
-            tolerance: 3, // simplification tolerance (higher means simpler)
-            extent: 4096, // tile extent
-            buffer: 0, // tile buffer on each side
-            lineMetrics: false, // whether to calculate line metrics
-            promoteId: null, // name of a feature property to be promoted to feature.id
-            generateId: false, // whether to generate feature ids. Cannot be used with promoteId
-            debug: 0 // logging level (0, 1 or 2)
-        });
-        this.m_tileIndexMap.set(message.id, tileIndex);
+        this.tiler.updateIndex(message.id, input);
+
         return { response: {} };
     }
 }
