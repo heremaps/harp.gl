@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Technique } from "@here/harp-datasource-protocol";
+import { IndexedTechniqueParams, Technique } from "@here/harp-datasource-protocol";
 import {
     FontUnit,
     HorizontalAlignment,
@@ -32,10 +32,10 @@ export const DEFAULT_TEXT_STYLE_CACHE_ID = "Default";
  */
 export function computeStyleCacheId(
     datasourceName: string,
-    technique: Technique,
+    technique: Technique & Partial<IndexedTechniqueParams>,
     zoomLevel: number
 ): string {
-    return `${datasourceName}_${technique.renderOrder}_${zoomLevel}`;
+    return `${datasourceName}_${technique._styleSetIndex}_${zoomLevel}`;
 }
 
 /**

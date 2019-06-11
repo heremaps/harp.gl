@@ -25,6 +25,12 @@ interface StyleInternalParams {
      * @hidden
      */
     _index?: number;
+
+    /**
+     * Optimization: StyleSet index.
+     * @hidden
+     */
+    _styleSetIndex?: number;
 }
 
 type InternalStyle = Style & Partial<StyleInternalParams>;
@@ -40,6 +46,8 @@ export class StyleSetEvaluator {
 
     constructor(styleSet: StyleSet) {
         let techniqueRenderOrder = 0;
+        let styleSetIndex = 0;
+
         const cloneStyle = (style: Style): Style => {
             return {
                 ...style,
@@ -96,11 +104,13 @@ export class StyleSetEvaluator {
                     computeDefaultRenderOrder(currStyle);
                 }
             } else {
+                style._styleSetIndex = styleSetIndex++;
                 if (style.technique !== undefined && style.renderOrder === undefined) {
                     style.renderOrder = techniqueRenderOrder++;
                 }
             }
         };
+
         for (const style of this.styleSet) {
             computeDefaultRenderOrder(style);
         }
@@ -125,19 +135,6 @@ export class StyleSetEvaluator {
             }
         }
         return result;
-    }
-    /**
-     * Add a technique to the current array of techniques. Add its index to the style, so next time
-     * the technique can be found directly from this index.
-     *
-     * @param style Style that defines technique
-     * @param technique Technique to add
-     */
-    private addTechniqueToIndex(technique: Technique): number {
-        const index = this.m_techniques.length;
-        (technique as IndexedTechnique)._index = index;
-        this.m_techniques.push(technique as IndexedTechnique);
-        return index;
     }
     /**
      * Get the (current) array of techniques that have been created during decoding.
@@ -298,7 +295,12 @@ export class StyleSetEvaluator {
             addAttributes(currStyle);
         }
         addAttributes(style);
-        style._index = this.addTechniqueToIndex(technique);
+
+        style._index = this.m_techniques.length;
+        (technique as IndexedTechnique)._index = style._index;
+        (technique as IndexedTechnique)._styleSetIndex = style._styleSetIndex!;
+        this.m_techniques.push(technique as IndexedTechnique);
+
         return technique as Technique;
     }
 }
