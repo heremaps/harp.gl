@@ -164,6 +164,10 @@ export class TileDataSource<TileType extends Tile> extends DataSource {
         this.decoder.dispose();
     }
 
+    clear() {
+        this.m_tileLoaderCache.clear();
+    }
+
     ready(): boolean {
         return this.m_isReady && this.m_options.dataProvider.ready();
     }
@@ -183,6 +187,7 @@ export class TileDataSource<TileType extends Tile> extends DataSource {
     }
 
     setStyleSet(styleSet?: StyleSet, languages?: string[]): void {
+        super.setStyleSet(styleSet, languages);
         this.m_decoder.configure(styleSet, languages);
         this.mapView.markTilesDirty(this);
     }

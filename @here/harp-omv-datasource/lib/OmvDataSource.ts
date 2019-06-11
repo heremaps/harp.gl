@@ -219,6 +219,7 @@ export class OmvDataSource extends TileDataSource<OmvTile> {
         if (styleSet === undefined) {
             return;
         }
+        super.setStyleSet(styleSet, languages);
         this.decoder.configure(styleSet, languages, this.m_decoderOptions);
         this.mapView.markTilesDirty(this);
     }

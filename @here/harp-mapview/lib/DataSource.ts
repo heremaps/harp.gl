@@ -152,6 +152,14 @@ export abstract class DataSource extends THREE.EventDispatcher {
     }
 
     /**
+     * Clears this `DataSource`. Clearing as opposed to [[dispose]] just resets any internal state,
+     * as opposed to actually destroying allocated objects.
+     */
+    clear() {
+        //
+    }
+
+    /**
      * Returns `true` if this `DataSource` is ready and the [[MapView]] can invoke `getTile()` to
      * start requesting data.
      */
@@ -227,7 +235,7 @@ export abstract class DataSource extends THREE.EventDispatcher {
      */
     // tslint:disable-next-line:no-unused-variable
     setStyleSet(styleSet?: StyleSet, languages?: string[]): void {
-        // to be overwritten by subclasses
+        this.clear();
     }
 
     /**
