@@ -5,7 +5,7 @@
  */
 
 import { GeoCoordinates } from "@here/harp-geoutils";
-import { MapObject, MapViewEventNames, RenderEvent } from "@here/harp-mapview";
+import { MapAnchor, MapViewEventNames, RenderEvent } from "@here/harp-mapview";
 import * as THREE from "three";
 import { HelloWorldExample } from "./hello";
 
@@ -56,7 +56,7 @@ export namespace ThreejsAddAnimatedObject {
 
     const clock = new THREE.Clock();
 
-    let figure: MapObject<THREE.Group> | undefined;
+    let figure: MapAnchor<THREE.Group> | undefined;
     let mixer: THREE.AnimationMixer | undefined;
     const onLoad = (object: any) => {
         mixer = new THREE.AnimationMixer(object);
@@ -75,7 +75,7 @@ export namespace ThreejsAddAnimatedObject {
 
         // snippet:harp_gl_threejs_add_animated-object_add_to_scene.ts
         figure.geoPosition = figureGeoPosition;
-        mapView.mapObjects.add(figure);
+        mapView.mapAnchors.add(figure);
         // end:harp_gl_threejs_add_animated-object_add_to_scene.ts
     };
 
