@@ -5,3 +5,4 @@
  */
 
 export * from "./lib/OrientedBox3";
+export * from "./lib/TechniqueProcessor";
