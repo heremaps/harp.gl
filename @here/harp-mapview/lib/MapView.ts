@@ -54,18 +54,17 @@ declare const process: any;
 const isProduction = process.env.NODE_ENV === "production";
 
 /**
- * An interface describing [[THREE.Object3D]]s positioned
- * using [[GeoCoordinates]].
+ * An interface describing [[THREE.Object3D]]s anchored on given [[GeoCoordinates]].
  *
  * Example:
  * ```typescript
  * const mesh: MapObject<THREE.Mesh> = new THREE.Mesh(geometry, material);
  * mesh.geoPosition = new GeoCoordinates(latitude, longitude, altitude);
- * mapView.mapObjects.add(mesh);
+ * mapView.mapAnchors.add(mesh);
  * ```
  *
  */
-export type MapObject<T extends THREE.Object3D = THREE.Object3D> = T & {
+export type MapAnchor<T extends THREE.Object3D = THREE.Object3D> = T & {
     /**
      * The position of this [[MapObject]] in [[GeoCoordinates]].
      */
@@ -584,7 +583,7 @@ export class MapView extends THREE.EventDispatcher {
     private readonly m_scene: THREE.Scene = new THREE.Scene();
     private readonly m_fog: MapViewFog = new MapViewFog(this.m_scene);
     private readonly m_mapTilesRoot = new THREE.Object3D();
-    private readonly m_mapObjects = new THREE.Object3D();
+    private readonly m_mapAnchors = new THREE.Object3D();
 
     private m_animationCount: number = 0;
     private m_animationFrameHandle: number | undefined;
@@ -1255,10 +1254,13 @@ export class MapView extends THREE.EventDispatcher {
     }
 
     /**
-     * The node in this MapView's scene containing the user [[MapObject]]s.
+     * The node in this MapView's scene containing the user [[MapAnchor]]s.
+     * All (first level) children of this node will be positioned in world space according to the
+     * [[MapAnchor.geoPosition]].
+     * Deeper level children can be used to position custom objects relative to the anchor node.
      */
-    get mapObjects(): THREE.Object3D {
-        return this.m_mapObjects;
+    get mapAnchors(): THREE.Object3D {
+        return this.m_mapAnchors;
     }
 
     /**
@@ -2276,7 +2278,7 @@ export class MapView extends THREE.EventDispatcher {
             });
         });
 
-        this.m_mapObjects.children.forEach((childObject: MapObject) => {
+        this.m_mapAnchors.children.forEach((childObject: MapAnchor) => {
             if (childObject.geoPosition === undefined) {
                 return;
             }
@@ -2729,7 +2731,7 @@ export class MapView extends THREE.EventDispatcher {
         this.m_renderer.setClearColor(DEFAULT_CLEAR_COLOR);
 
         this.m_scene.add(this.m_mapTilesRoot);
-        this.m_scene.add(this.m_mapObjects);
+        this.m_scene.add(this.m_mapAnchors);
     }
 
     /**
