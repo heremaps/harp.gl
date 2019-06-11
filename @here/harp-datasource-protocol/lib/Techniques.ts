@@ -178,6 +178,12 @@ export interface IndexedTechniqueParams {
      * @hidden
      */
     _index: number;
+
+    /**
+     * Optimization: Unique [[Technique]] index within source [[StyleSet]].
+     * @hidden
+     */
+    _styleSetIndex: number;
 }
 
 /**

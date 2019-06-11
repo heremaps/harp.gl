@@ -1056,7 +1056,7 @@ export class TileGeometryCreator {
         const dataSource = tile.dataSource;
         const zoomLevel = mapView.zoomLevel;
 
-        const cacheId = computeStyleCacheId(dataSource.name, technique, zoomLevel);
+        const cacheId = computeStyleCacheId(dataSource.name, technique, Math.floor(zoomLevel));
         let renderStyle = mapView.textRenderStyleCache.get(cacheId);
         if (renderStyle === undefined) {
             const defaultRenderParams =
@@ -1157,7 +1157,7 @@ export class TileGeometryCreator {
         const dataSource = tile.dataSource;
         const zoomLevel = mapView.zoomLevel;
 
-        const cacheId = computeStyleCacheId(dataSource.name, technique, zoomLevel);
+        const cacheId = computeStyleCacheId(dataSource.name, technique, Math.floor(zoomLevel));
         let layoutStyle = mapView.textLayoutStyleCache.get(cacheId);
         if (layoutStyle === undefined) {
             const defaultLayoutParams =
