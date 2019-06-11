@@ -102,16 +102,16 @@ void main() {
     tileClip(vPosition.xy, tileSize);
     #endif
 
-    #if DASHED_LINE
-    float halfSegment = (dashSize + gapSize) / dashSize * 0.5;
-    float segmentDist = mod(vTexcoord.x, dashSize + gapSize) / dashSize;
-    float dist = 0.5 - distance(segmentDist, halfSegment);
-    float width = fwidth(dist);
-    alpha *= smoothstep(-width, width, dist);
-    #else
     float dist = joinDist(vSegment, vTexcoord) - vLinewidth;
     float width = fwidth(dist);
     alpha *= (1.0 - smoothstep(-width, width, dist));
+
+    #if DASHED_LINE
+    float halfSegment = (dashSize + gapSize) / dashSize * 0.5;
+    float segmentDist = mod(vTexcoord.x, dashSize + gapSize) / dashSize;
+    float dashDist = 0.5 - distance(segmentDist, halfSegment);
+    float dashWidth = fwidth(dashDist);
+    alpha *= smoothstep(-dashWidth, dashWidth, dashDist);
     #endif
 
     #ifdef USE_COLOR
