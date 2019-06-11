@@ -26,7 +26,7 @@ import { HelloWorldExample } from "./hello";
  * [[include:harp_gl_threejs_add_simple_object_1.ts]]
  * ```
  *
- * Here the object is created and added to the [[userMapObjects]] node of the [[MapView]] scene.
+ * Here the object is created and added to the [[mapObjects]] node of the [[MapView]] scene.
  * ```typescript
  * [[include:harp_gl_threejs_add_simple_object_2.ts]]
  * ```
@@ -68,7 +68,7 @@ export namespace ThreejsAddSimpleObject {
             // snippet:harp_gl_threejs_add_simple_object_2.ts
             const cube = createPinkCube();
             cube.geoPosition = geoPosition;
-            mapView.userMapObjects.add(cube);
+            mapView.mapObjects.add(cube);
             // end:harp_gl_threejs_add_simple_object_2.ts
 
             // end:harp_gl_threejs_add_simple_object_3.ts

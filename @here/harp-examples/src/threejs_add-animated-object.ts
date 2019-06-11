@@ -81,7 +81,7 @@ export namespace ThreejsAddAnimatedObject {
 
         // snippet:harp_gl_threejs_add_animated-object_add_to_scene.ts
         figure.geoPosition = figureGeoPosition;
-        mapView.userMapObjects.add(figure);
+        mapView.mapObjects.add(figure);
         // end:harp_gl_threejs_add_animated-object_add_to_scene.ts
     };
 
