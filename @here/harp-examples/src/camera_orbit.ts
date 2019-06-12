@@ -39,7 +39,7 @@ export namespace CameraOrbitExample {
     // snippet:harp_gl_camera_orbit_example_1.ts
     const options = { tilt: 45, distance: 3000 };
     const NY = new GeoCoordinates(40.707, -74.012);
-    let azimuth = 160;
+    let azimuth = 0;
     map.addEventListener(MapViewEventNames.Render, () => {
         map.lookAt(NY, options.distance, options.tilt, (azimuth += 0.1));
         updateHTML();
