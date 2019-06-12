@@ -544,7 +544,10 @@ export class TileGeometryCreator {
                     const lineMaterial = material as THREE.RawShaderMaterial;
                     lineMaterial.uniforms.opacity.value = material.opacity;
 
-                    if (technique.clipping !== false) {
+                    if (
+                        technique.clipping !== false &&
+                        tile.projection.type === ProjectionType.Planar
+                    ) {
                         const tileSize = lineMaterial.uniforms.tileSize;
                         const size = new THREE.Vector3();
                         tile.boundingBox.getSize(size);
