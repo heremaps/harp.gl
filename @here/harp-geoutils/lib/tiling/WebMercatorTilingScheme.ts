@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { webMercatorProjection } from "../projection/WebMercatorProjection";
+import { webMercatorProjection } from "../projection/MercatorProjection";
 import { quadTreeSubdivisionScheme } from "./QuadTreeSubdivisionScheme";
 import { TilingScheme } from "./TilingScheme";
 
