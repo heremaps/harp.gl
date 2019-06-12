@@ -12,7 +12,9 @@ import { MathUtils } from "../math/MathUtils";
 import { isOrientedBox3Like, OrientedBox3Like } from "../math/OrientedBox3Like";
 import { Vector3Like } from "../math/Vector3Like";
 import { EarthConstants } from "./EarthConstants";
+import { mercatorProjection } from "./MercatorProjection";
 import { Projection, ProjectionType } from "./Projection";
+import { webMercatorProjection } from "./WebMercatorProjection";
 
 /**
  * Transforms the given vector using the provided basis.
@@ -339,6 +341,41 @@ class SphereProjection extends Projection {
         normal.y = worldPoint.y * scale;
         normal.z = worldPoint.z * scale;
         return normal;
+    }
+
+    reprojectPoint(
+        sourceProjection: Projection,
+        worldPos: Vector3Like,
+        result?: Vector3Like
+    ): Vector3Like {
+        if (sourceProjection === mercatorProjection || sourceProjection === webMercatorProjection) {
+            const { x, y, z } = worldPos;
+            const r = EarthConstants.EQUATORIAL_RADIUS;
+            const mx = x / r - Math.PI;
+            const my = y / r - Math.PI;
+            const w = Math.exp(my);
+            const d = w * w;
+            const gx = (2 * w) / (d + 1);
+            const gy = (d - 1) / (d + 1);
+            const scale = r + z;
+
+            if (result === undefined) {
+                // tslint:disable-next-line: no-object-literal-type-assertion
+                result = {} as Vector3Like;
+            }
+
+            result.x = Math.cos(mx) * gx * scale;
+            result.y = Math.sin(mx) * gx * scale;
+            result.z = gy * scale;
+
+            if (sourceProjection === webMercatorProjection) {
+                result.z = -result.z;
+            }
+
+            return result;
+        }
+
+        return super.reprojectPoint(sourceProjection, worldPos, result!);
     }
 }
 
