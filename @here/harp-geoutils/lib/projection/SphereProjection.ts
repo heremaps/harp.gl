@@ -12,9 +12,8 @@ import { MathUtils } from "../math/MathUtils";
 import { isOrientedBox3Like, OrientedBox3Like } from "../math/OrientedBox3Like";
 import { Vector3Like } from "../math/Vector3Like";
 import { EarthConstants } from "./EarthConstants";
-import { mercatorProjection } from "./MercatorProjection";
+import { mercatorProjection, webMercatorProjection } from "./MercatorProjection";
 import { Projection, ProjectionType } from "./Projection";
-import { webMercatorProjection } from "./WebMercatorProjection";
 
 /**
  * Transforms the given vector using the provided basis.

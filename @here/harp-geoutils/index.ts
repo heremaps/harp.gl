@@ -12,7 +12,6 @@ export * from "./lib/projection/EquirectangularProjection";
 export * from "./lib/projection/IdentityProjection";
 export * from "./lib/projection/Projection";
 export * from "./lib/projection/MercatorProjection";
-export * from "./lib/projection/WebMercatorProjection";
 export * from "./lib/projection/SphereProjection";
 export * from "./lib/tiling/FlatTileBoundingBoxGenerator";
 export * from "./lib/tiling/HalfQuadTreeSubdivisionScheme";

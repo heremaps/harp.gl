@@ -10,10 +10,9 @@ import { GeoCoordinates } from "../lib/coordinates/GeoCoordinates";
 import { Box3Like } from "../lib/math/Box3Like";
 import { Vector3Like } from "../lib/math/Vector3Like";
 import { identityProjection } from "../lib/projection/IdentityProjection";
-import { mercatorProjection } from "../lib/projection/MercatorProjection";
+import { mercatorProjection, webMercatorProjection } from "../lib/projection/MercatorProjection";
 import { Projection } from "../lib/projection/Projection";
 import { sphereProjection } from "../lib/projection/SphereProjection";
-import { webMercatorProjection } from "../lib/projection/WebMercatorProjection";
 import { mercatorTilingScheme } from "../lib/tiling/MercatorTilingScheme";
 import { TileKey } from "../lib/tiling/TileKey";
 import { webMercatorTilingScheme } from "../lib/tiling/WebMercatorTilingScheme";
@@ -123,32 +122,41 @@ describe("Mercator", function() {
             new GeoCoordinates(-13.79540620313281, -55.107421875, 10.2)
         ];
 
-        const sourceProjections: Array<[string, Projection]> = [
+        const projections: Array<[string, Projection]> = [
+            ["sphere", sphereProjection],
             ["mercator", mercatorProjection],
             ["webMercator", webMercatorProjection]
         ];
 
-        sourceProjections.forEach(([sourceProjectionName, sourceProjection]) => {
-            geoPoints.forEach(geoPos => {
-                const altitudeDescr = geoPos.altitude !== undefined ? `, ${geoPos.altitude}` : "";
-                const pointDescr = `(${geoPos.latitude}, ${geoPos.longitude}${altitudeDescr})`;
+        projections.forEach(([targetProjectionName, targetProjection]) => {
+            projections.forEach(([sourceProjectionName, sourceProjection]) => {
+                geoPoints.forEach(geoPos => {
+                    // tslint:disable-next-line: max-line-length
+                    const altitudeDescr =
+                        geoPos.altitude !== undefined ? `, ${geoPos.altitude}` : "";
 
-                it(`reproject ${pointDescr} from ${sourceProjectionName} to sphere`, function() {
-                    // geo coordinates projected to sphere.
-                    const projectedPoint = sphereProjection.projectPoint(geoPos);
+                    const pointDescr = `(${geoPos.latitude}, ${geoPos.longitude}${altitudeDescr})`;
 
-                    // geo coordinates projected to mercator.
-                    const mercatorPoint = sourceProjection.projectPoint(geoPos);
+                    // tslint:disable-next-line: max-line-length
+                    const descr = `reproject ${pointDescr} from ${sourceProjectionName} to ${targetProjectionName}`;
 
-                    // a position in mercator space reprojected using sphereProjection.
-                    const reprojectedPoint = sphereProjection.reprojectPoint(
-                        sourceProjection,
-                        mercatorPoint
-                    );
+                    it(descr, function() {
+                        // geo coordinates projected to sphere.
+                        const projectedPoint = targetProjection.projectPoint(geoPos);
 
-                    assert.approximately(projectedPoint.x, reprojectedPoint.x, EPSILON);
-                    assert.approximately(projectedPoint.y, reprojectedPoint.y, EPSILON);
-                    assert.approximately(projectedPoint.z, reprojectedPoint.z, EPSILON);
+                        // geo coordinates projected to mercator.
+                        const mercatorPoint = sourceProjection.projectPoint(geoPos);
+
+                        // a position in mercator space reprojected using sphereProjection.
+                        const reprojectedPoint = targetProjection.reprojectPoint(
+                            sourceProjection,
+                            mercatorPoint
+                        );
+
+                        assert.approximately(projectedPoint.x, reprojectedPoint.x, EPSILON);
+                        assert.approximately(projectedPoint.y, reprojectedPoint.y, EPSILON);
+                        assert.approximately(projectedPoint.z, reprojectedPoint.z, EPSILON);
+                    });
                 });
             });
         });
