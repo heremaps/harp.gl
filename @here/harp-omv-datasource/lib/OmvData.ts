@@ -5,14 +5,15 @@
  */
 
 import { Env, MapEnv, Value, ValueMap } from "@here/harp-datasource-protocol/index-decoder";
-import { GeoBox, GeoCoordinates, TileKey } from "@here/harp-geoutils";
+import { EarthConstants, GeoBox, TileKey } from "@here/harp-geoutils";
 import { ILogger } from "@here/harp-utils";
 import * as Long from "long";
+import { Vector3 } from "three";
 import { IGeometryProcessor, ILineGeometry, IPolygonGeometry, IRing } from "./IGeometryProcessor";
 import { OmvFeatureFilter } from "./OmvDataFilter";
 import { OmvDataAdapter } from "./OmvDecoder";
 import { OmvGeometryType } from "./OmvDecoderDefs";
-import { isArrayBufferLike, lat2tile, tile2lat } from "./OmvUtils";
+import { isArrayBufferLike, lat2tile } from "./OmvUtils";
 import { com } from "./proto/vector_tile";
 
 /**
@@ -35,8 +36,7 @@ export interface BaseCommand {
  * @hidden
  */
 export interface PositionCommand extends BaseCommand {
-    latitude: number;
-    longitude: number;
+    position: Vector3;
     outline?: boolean;
 }
 
@@ -185,15 +185,13 @@ export class GeometryCommands {
         extent: number = 4096,
         visitor: GeometryCommandsVisitor
     ) {
-        const longitudeScale = geoBox.longitudeSpan / extent;
-
         const geometryCount = geometry.length;
 
         const { north, west } = geoBox;
-
         const N = Math.log2(extent);
-
+        const scale = Math.pow(2, tileKey.level + N);
         const top = lat2tile(north, tileKey.level + N);
+        const left = ((west + 180) / 360) * scale;
 
         let currX = 0;
         let currY = 0;
@@ -221,9 +219,15 @@ export class GeometryCommands {
                         yCoords.push(currY);
                     }
 
-                    const longitude = west + currX * longitudeScale;
-                    const latitude = tile2lat(top + currY, tileKey.level + N);
-                    commands.push({ kind, latitude, longitude });
+                    const R = EarthConstants.EQUATORIAL_CIRCUMFERENCE;
+
+                    const position = new Vector3(
+                        ((left + currX) / scale) * R,
+                        ((top + currY) / scale) * R,
+                        0
+                    );
+
+                    commands.push({ kind, position });
                 }
             } else {
                 for (let i = 0; i < commands.length; ++i) {
@@ -481,7 +485,7 @@ export class OmvProtobufDataAdapter implements OmvDataAdapter, OmvVisitor {
             return;
         }
 
-        const geometry: GeoCoordinates[] = [];
+        const geometry: Vector3[] = [];
         this.m_geometryCommands.accept(
             feature.geometry,
             this.m_tileKey,
@@ -491,7 +495,7 @@ export class OmvProtobufDataAdapter implements OmvDataAdapter, OmvVisitor {
                 type: "Point",
                 visitCommand: command => {
                     if (isMoveToCommand(command)) {
-                        geometry.push(new GeoCoordinates(command.latitude, command.longitude));
+                        geometry.push(command.position);
                     }
                 }
             }
@@ -527,7 +531,7 @@ export class OmvProtobufDataAdapter implements OmvDataAdapter, OmvVisitor {
         }
 
         const geometry: ILineGeometry[] = [];
-        let coordinates: GeoCoordinates[];
+        let positions: Vector3[];
         this.m_geometryCommands.accept(
             feature.geometry,
             this.m_tileKey,
@@ -537,11 +541,10 @@ export class OmvProtobufDataAdapter implements OmvDataAdapter, OmvVisitor {
                 type: "Line",
                 visitCommand: command => {
                     if (isMoveToCommand(command)) {
-                        const geoPoint = new GeoCoordinates(command.latitude, command.longitude);
-                        coordinates = [geoPoint];
-                        geometry.push({ coordinates });
+                        positions = [command.position];
+                        geometry.push({ positions });
                     } else if (isLineToCommand(command)) {
-                        coordinates.push(new GeoCoordinates(command.latitude, command.longitude));
+                        positions.push(command.position);
                     }
                 }
             }
@@ -588,11 +591,12 @@ export class OmvProtobufDataAdapter implements OmvDataAdapter, OmvVisitor {
                 type: "Polygon",
                 visitCommand: command => {
                     if (isMoveToCommand(command)) {
-                        const geoPoint = new GeoCoordinates(command.latitude, command.longitude);
-                        currentRing = { coordinates: [geoPoint], outlines: [command.outline!] };
+                        currentRing = {
+                            positions: [command.position],
+                            outlines: [command.outline!]
+                        };
                     } else if (isLineToCommand(command)) {
-                        const geoPoint = new GeoCoordinates(command.latitude, command.longitude);
-                        currentRing.coordinates.push(geoPoint);
+                        currentRing.positions.push(command.position);
                         currentRing.outlines!.push(command.outline!);
                     } else if (isClosePathCommand(command)) {
                         currentPolygon.rings.push(currentRing);

@@ -14,13 +14,7 @@ import {
 } from "@here/harp-datasource-protocol";
 import { Env, MapEnv, StyleSetEvaluator } from "@here/harp-datasource-protocol/index-decoder";
 
-import {
-    GeoBox,
-    GeoCoordinates,
-    Projection,
-    TileKey,
-    webMercatorTilingScheme
-} from "@here/harp-geoutils";
+import { GeoBox, Projection, TileKey, webMercatorTilingScheme } from "@here/harp-geoutils";
 
 import { LoggerManager, PerformanceTimer } from "@here/harp-utils";
 
@@ -134,7 +128,7 @@ export class Ring {
 export interface IOmvEmitter {
     processPointFeature(
         layer: string,
-        geometry: GeoCoordinates[],
+        geometry: THREE.Vector3[],
         env: MapEnv,
         techniques: Technique[],
         featureId: number | undefined
@@ -295,7 +289,7 @@ export class OmvDecoder implements IGeometryProcessor {
 
     processPointFeature(
         layer: string,
-        geometry: GeoCoordinates[],
+        geometry: THREE.Vector3[],
         env: MapEnv,
         storageLevel: number
     ): void {

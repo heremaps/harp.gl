@@ -5,7 +5,7 @@
  */
 
 import { MapEnv } from "@here/harp-datasource-protocol/index-decoder";
-import { GeoCoordinates } from "@here/harp-geoutils";
+import { Vector3 } from "three";
 
 /**
 + *  An interface to represent inner and outer rings of a [[IPolygonGeometry]].
@@ -14,13 +14,13 @@ export interface IRing {
     /**
      * The [[GeoCoordinates]] of this [[IRing]].
      */
-    coordinates: GeoCoordinates[];
+    readonly positions: Vector3[];
 
     /**
      * Boolean array representing if the edges of this [[IRing]] should be considered as potential
      * outlines.
      */
-    outlines?: boolean[];
+    readonly outlines?: boolean[];
 }
 
 /**
@@ -30,7 +30,7 @@ export interface IPolygonGeometry {
     /**
      * The rings of this polygon.
      */
-    rings: IRing[];
+    readonly rings: IRing[];
 }
 
 /**
@@ -38,13 +38,30 @@ export interface IPolygonGeometry {
  */
 export interface ILineGeometry {
     /**
-     * The [[GeoCoordinates]] of the line.
+     * The positions of this [[IlineGeometry]] projected in world space.
      */
-    coordinates: GeoCoordinates[];
+    readonly positions: Vector3[];
 }
 
 /**
- * The IGeometryProcessor is used to process geo data.
+ * The [[IGeometryProcessor]] is used to process geometry features encoded in OMV tiles.
+ *
+ * [[OmvDecoder]] will pass to the processing methods of the concrete implementations
+ * of this interface, sequences of geometries projected in the world space of the OMV
+ * [[TilingScheme]] that is always defined to be an instance of [[webMercatorTilingScheme]].
+ * If desired, the world positions can be converted to [[GeoCoordinates]] using the
+ * [[Projection.unprojectPoint]], for example:
+ *
+ * ```typescript:
+ *        convert(geometry: ILineGeometry): GeoCoordinates[] {
+ *            const projection = webMercatorTilingScheme.projection;
+ *
+ *            const coordinates = geometry.positions.map(worldP =>
+ *                  projection.unprojectPoint(worldP));
+ *
+ *            return coordinates;
+ *        }
+ * ```
  *
  * The methods of concrete implementations of [[IGeometryProcessor]]
  * are called to process point, linestring and polygon geometries,
@@ -57,13 +74,13 @@ export interface IGeometryProcessor {
      * The points are represented as GeoCoordinates.
      *
      * @param layerName The name of the enclosing layer.
-     * @param geometry The list of geo points.
+     * @param geometry The positions of the point features in the projected world coordinates.
      * @param env The enviroment containing the properties of the geometry.
      * @param storageLevel The storage level of the data.
      */
     processPointFeature(
         layerName: string,
-        geometry: GeoCoordinates[],
+        geometry: Vector3[],
         env: MapEnv,
         storageLevel: number
     ): void;

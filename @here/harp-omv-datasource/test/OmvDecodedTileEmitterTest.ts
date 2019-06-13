@@ -18,6 +18,7 @@ import {
     GeoCoordinates,
     mercatorProjection,
     TileKey,
+    webMercatorProjection,
     webMercatorTilingScheme
 } from "@here/harp-geoutils";
 import { assert } from "chai";
@@ -35,18 +36,20 @@ describe("OmvDecodedTileEmitter", function() {
         const center = tileBounds.getCenter(new Vector3());
         const tileSizeOnScreen = 100;
 
+        const coordinates: GeoCoordinates[] = [
+            new GeoCoordinates(geoBox.south, geoBox.west),
+            new GeoCoordinates(geoBox.south, geoBox.east),
+            new GeoCoordinates(geoBox.north, geoBox.east),
+            new GeoCoordinates(geoBox.north, geoBox.west)
+        ];
+
+        const worldPositions = coordinates.map(p =>
+            webMercatorProjection.projectPoint(p, new Vector3())
+        );
+
         const polygons: IPolygonGeometry[] = [
             {
-                rings: [
-                    {
-                        coordinates: [
-                            new GeoCoordinates(geoBox.south, geoBox.west),
-                            new GeoCoordinates(geoBox.south, geoBox.east),
-                            new GeoCoordinates(geoBox.north, geoBox.east),
-                            new GeoCoordinates(geoBox.north, geoBox.west)
-                        ]
-                    }
-                ]
+                rings: [{ positions: worldPositions }]
             }
         ];
 
