@@ -194,11 +194,15 @@ export class OmvTileInfoEmitter implements IOmvEmitter {
 
         for (const rings of polygons) {
             // rings are shared between techniques
+            if (rings.length === 0) {
+                continue;
+            }
+            const outerRingWinding = rings[0].winding;
             for (const aRing of rings) {
                 tileInfoWriter.addRingPoints(
                     this.m_tileInfo.polygonGroup,
                     aRing.contour,
-                    aRing.isOuterRing
+                    aRing.winding === outerRingWinding
                 );
             }
         }
