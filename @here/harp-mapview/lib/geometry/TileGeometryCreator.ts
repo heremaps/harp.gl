@@ -559,6 +559,10 @@ export class TileGeometryCreator {
                         tileSize.value.y = size.y;
                         lineMaterial.defines.TILE_CLIP = 1;
                     }
+
+                    if (bufferGeometry.getAttribute("color")) {
+                        lineMaterial.defines.USE_COLOR = 1;
+                    }
                 }
                 // Add polygon offset to the extruded buildings and to the fill area to avoid depth
                 // problems when rendering edges.

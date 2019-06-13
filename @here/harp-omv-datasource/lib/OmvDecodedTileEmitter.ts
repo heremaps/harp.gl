@@ -753,7 +753,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
             }
         }
         lines.forEach(aLine => {
-            lineGroup.add(aLine, this.m_decodeInfo.center);
+            lineGroup.add(this.m_decodeInfo.center, aLine);
         });
     }
 
