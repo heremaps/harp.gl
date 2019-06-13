@@ -116,6 +116,10 @@ export interface OmvFeatureFilterDescription {
     linesToIgnore: OmvFilterDescription[];
     polygonsToProcess: OmvFilterDescription[];
     polygonsToIgnore: OmvFilterDescription[];
+
+    // enabledKinds and disabledKinds
+    kindsToProcess: string[];
+    kindsToIgnore: string[];
 }
 
 /**

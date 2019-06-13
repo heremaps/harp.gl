@@ -10,6 +10,8 @@ import {
     ExtrudedPolygonTechnique,
     FillTechnique,
     Geometry,
+    GeometryKind,
+    GeometryKindSet,
     getArrayConstructor,
     getPropertyValue,
     isCirclesTechnique,
@@ -59,6 +61,7 @@ import {
 import { getOptionValue } from "@here/harp-utils";
 import * as THREE from "three";
 
+import { logger } from "@here/harp-datasource-protocol/index-decoder";
 import { AnimatedExtrusionTileHandler } from "../AnimatedExtrusionHandler";
 import { ColorCache } from "../ColorCache";
 import { createMaterial, getBufferAttribute, getObjectConstructor } from "../DecodedTileHelpers";
@@ -113,13 +116,69 @@ export class TileGeometryCreator {
      */
     private static m_colorMap: Map<string, THREE.Color> = new Map();
 
+    private static m_instance: TileGeometryCreator;
+
     /**
-     * Prepare decoded tile for geometry creation.
+     * The `instance` of the `TileGeometryCreator`.
+     *
+     * @returns TileGeometryCreator
+     */
+    static get instance(): TileGeometryCreator {
+        return this.m_instance || (this.m_instance = new TileGeometryCreator());
+    }
+
+    /**
+     *  Creates an instance of TileGeometryCreator. Access is allowed only through `instance`.
+     */
+    private constructor() {
+        //
+    }
+
+    /**
+     * Apply `enabledKinds` and `disabledKinds` to all techniques in the `decodedTile`. If a
+     * technique is identified as disabled, its property `enabled` is set to `false`.
      *
      * @param decodedTile The decodedTile containing the actual tile map data.
+     * @param enabledKinds Optional [[GeometryKindSet]] used to specify which object kinds should be
+     *      created.
+     * @param disabledKinds Optional [[GeometryKindSet]] used to filter objects that should not be
+     *      created.
      */
-    initDecodedTile(_decodedTile: DecodedTile) {
-        //
+    initDecodedTile(
+        decodedTile: DecodedTile,
+        enabledKinds: GeometryKindSet | undefined,
+        disabledKinds: GeometryKindSet | undefined
+    ) {
+        for (const technique of decodedTile.techniques) {
+            // Already processed
+            if (technique.enabled !== undefined) {
+                continue;
+            }
+
+            // Turn technique.kind from the style, which may be a string or an array of strings,
+            // into a GeometryKindSet.
+            if (technique.kind !== undefined) {
+                if (Array.isArray(technique.kind)) {
+                    technique.kind = new GeometryKindSet(technique.kind);
+                } else if (typeof technique.kind !== "string") {
+                    logger.warn("Technique has unknown type of kind:", technique);
+                    technique.kind = undefined;
+                }
+            }
+
+            // No info about kind, no way to filter it.
+            if (
+                technique.kind === undefined ||
+                (technique.kind instanceof Set && (technique.kind as GeometryKindSet).size === 0)
+            ) {
+                technique.enabled = true;
+                continue;
+            }
+
+            technique.enabled =
+                !(disabledKinds !== undefined && disabledKinds.hasOrIntersects(technique.kind)) ||
+                (enabledKinds !== undefined && enabledKinds.hasOrIntersects(technique.kind));
+        }
     }
 
     /**
@@ -144,10 +203,24 @@ export class TileGeometryCreator {
      * @param object The object to add to the root of the tile.
      * @param geometryKind The kind of object. Can be used for filtering.
      */
-    registerTileObject(tile: Tile, object: THREE.Object3D) {
+    registerTileObject(
+        tile: Tile,
+        object: THREE.Object3D,
+        geometryKind: GeometryKind | GeometryKindSet | undefined
+    ) {
         const userData = object.userData || {};
         userData.tileKey = tile.tileKey;
         userData.dataSource = tile.dataSource.name;
+
+        userData.kind =
+            geometryKind instanceof Set
+                ? Array.from((geometryKind as GeometryKindSet).values())
+                : Array.isArray(geometryKind)
+                ? geometryKind
+                : [geometryKind];
+
+        // Force a visibility check of all objects.
+        tile.resetVisibilityCounter();
     }
 
     /**
@@ -155,8 +228,14 @@ export class TileGeometryCreator {
      *
      * @param tile The [[Tile]] to process paths on.
      * @param textPathGeometries The original path geometries that may have defects.
+     * @param textFilter: Optional filter. Should return true for any text technique that is
+     *      applicable.
      */
-    prepareTextPaths(tile: Tile, textPathGeometries: TextPathGeometry[]): TextPathGeometry[] {
+    prepareTextPaths(
+        textPathGeometries: TextPathGeometry[],
+        decodedTile: DecodedTile,
+        textFilter?: (technique: Technique) => boolean
+    ): TextPathGeometry[] {
         const processedPaths = new Array<TextPathGeometry>();
 
         const MAX_CORNER_ANGLE = Math.PI / 8;
@@ -173,6 +252,14 @@ export class TileGeometryCreator {
 
             if (textPath === undefined) {
                 break;
+            }
+
+            const technique = decodedTile.techniques[textPath.technique];
+            if (
+                !isTextTechnique(technique) ||
+                (textFilter !== undefined && !textFilter(technique))
+            ) {
+                continue;
             }
 
             let splitIndex = -1;
@@ -235,18 +322,24 @@ export class TileGeometryCreator {
      *
      * @param tile The [[Tile]] to create the testElements on.
      * @param decodedTile The [[DecodedTile]].
+     * @param textFilter: Optional filter. Should return true for any text technique that is
+     *      applicable.
      */
-    createTextElements(tile: Tile, decodedTile: DecodedTile) {
+    createTextElements(
+        tile: Tile,
+        decodedTile: DecodedTile,
+        textFilter?: (technique: Technique) => boolean
+    ) {
         const mapView = tile.mapView;
         const displayZoomLevel = Math.floor(mapView.zoomLevel);
         if (decodedTile.textPathGeometries !== undefined) {
-            tile.preparedTextPaths = this.prepareTextPaths(tile, decodedTile.textPathGeometries);
+            this.prepareTextPaths(decodedTile.textPathGeometries, decodedTile, textFilter);
 
             // Compute maximum street length (squared). Longer streets should be labelled first,
             // they have a higher chance of being placed in case the number of text elements is
             // limited.
             let maxPathLengthSqr = 0;
-            for (const textPath of tile.preparedTextPaths) {
+            for (const textPath of decodedTile.textPathGeometries) {
                 const technique = decodedTile.techniques[textPath.technique];
                 if (!isTextTechnique(technique)) {
                     continue;
@@ -256,9 +349,13 @@ export class TileGeometryCreator {
                 }
             }
 
-            for (const textPath of tile.preparedTextPaths) {
+            for (const textPath of decodedTile.textPathGeometries) {
                 const technique = decodedTile.techniques[textPath.technique];
-                if (!isTextTechnique(technique)) {
+
+                if (
+                    !isTextTechnique(technique) ||
+                    (textFilter !== undefined && !textFilter(technique))
+                ) {
                     continue;
                 }
 
@@ -320,7 +417,10 @@ export class TileGeometryCreator {
 
                 const technique = decodedTile.techniques[text.technique];
 
-                if (!isTextTechnique(technique)) {
+                if (
+                    !isTextTechnique(technique) ||
+                    (textFilter !== undefined && !textFilter(technique))
+                ) {
                     continue;
                 }
 
@@ -386,8 +486,14 @@ export class TileGeometryCreator {
      *
      * @param tile The [[Tile]] to create the geometry on.
      * @param decodedTile The [[DecodedTile]].
+     * @param techniqueFilter: Optional filter. Should return true for any technique that is
+     *      applicable.
      */
-    createObjects(tile: Tile, decodedTile: DecodedTile) {
+    createObjects(
+        tile: Tile,
+        decodedTile: DecodedTile,
+        techniqueFilter?: (technique: Technique) => boolean
+    ) {
         const materials: THREE.Material[] = [];
         const mapView = tile.mapView;
         const dataSource = tile.dataSource;
@@ -408,6 +514,13 @@ export class TileGeometryCreator {
                 const techniqueIndex = group.technique;
                 const technique = decodedTile.techniques[techniqueIndex];
 
+                if (
+                    group.created === true ||
+                    technique.enabled !== true ||
+                    (techniqueFilter !== undefined && !techniqueFilter(technique))
+                ) {
+                    continue;
+                }
                 let count = group.count;
 
                 // compress consecutive groups
@@ -820,7 +933,7 @@ export class TileGeometryCreator {
                     setDepthPrePassStencil(depthPassMesh, object as THREE.Mesh);
                 }
 
-                this.registerTileObject(tile, object);
+                this.registerTileObject(tile, object, technique.kind);
                 objects.push(object);
 
                 // Add the extruded building edges as a separate geometry.
@@ -891,7 +1004,7 @@ export class TileGeometryCreator {
                         });
                     }
 
-                    this.registerTileObject(tile, edgeObj);
+                    this.registerTileObject(tile, edgeObj, technique.kind);
                     objects.push(edgeObj);
                 }
 
@@ -965,7 +1078,7 @@ export class TileGeometryCreator {
                             : undefined
                     );
 
-                    this.registerTileObject(tile, outlineObj);
+                    this.registerTileObject(tile, outlineObj, technique.kind);
                     objects.push(outlineObj);
                 }
 
@@ -1029,7 +1142,7 @@ export class TileGeometryCreator {
                         }
                     );
 
-                    this.registerTileObject(tile, outlineObj);
+                    this.registerTileObject(tile, outlineObj, technique.kind);
                     objects.push(outlineObj);
                 }
             }
@@ -1258,7 +1371,7 @@ export class TileGeometryCreator {
             bufferGeometry.fromGeometry(g);
             const mesh = new THREE.Mesh(bufferGeometry, material);
             mesh.renderOrder = Number.MIN_SAFE_INTEGER;
-            this.registerTileObject(tile, mesh);
+            this.registerTileObject(tile, mesh, GeometryKind.Background);
             tile.objects.push(mesh);
         } else {
             // Add a ground plane to the tile.
@@ -1272,7 +1385,7 @@ export class TileGeometryCreator {
                 dataSource.tileBackgroundIsVisible
             );
 
-            this.registerTileObject(tile, groundPlane);
+            this.registerTileObject(tile, groundPlane, GeometryKind.Background);
             tile.objects.push(groundPlane);
         }
     }
