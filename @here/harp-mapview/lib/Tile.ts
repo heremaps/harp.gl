@@ -321,6 +321,13 @@ export class Tile implements CachedResource {
     numFramesVisible: number = 0;
 
     /**
+     * Version stamp of the visibility set in the [[TileManager]]. If the counter is different, the
+     * visibility of the Tile's objects has to be calculated. Optimization to reduce overhead of
+     * computing visibility.
+     */
+    visibilityCounter: number = -1;
+
+    /**
      * @hidden
      *
      * Prepared text geometries optimized for display.
@@ -722,6 +729,14 @@ export class Tile implements CachedResource {
             this.setDecodedTile(defaultEmptyDecodedTile);
         }
         this.m_forceHasGeometry = value;
+    }
+
+    /**
+     * Reset the visibility counter. This will force the visibility check to be rerun on all objects
+     * in this `Tile`.
+     */
+    resetVisibilityCounter(): void {
+        this.visibilityCounter = -1;
     }
 
     /**

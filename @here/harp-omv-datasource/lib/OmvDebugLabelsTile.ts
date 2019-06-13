@@ -64,9 +64,7 @@ export class OmvDebugLabelsTile extends OmvTile {
      * @param decodedTile The decoded tile.
      */
     createTextElements(decodedTile: DecodedTile) {
-        const geometryCreator = new TileGeometryCreator();
-
-        geometryCreator.createTextElements(this, decodedTile);
+        TileGeometryCreator.instance.createTextElements(this, decodedTile);
 
         const colorMap = new Map<number, THREE.Color>();
 

@@ -3,6 +3,7 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
+import { GeometryKind, GeometryKindSet } from "@here/harp-datasource-protocol";
 import { MapEnv } from "@here/harp-datasource-protocol/index-decoder";
 import {
     OmvFeatureFilterDescription,
@@ -22,6 +23,11 @@ import {
  * filter for individual features.
  */
 export interface OmvFeatureFilter {
+    /**
+     * Returns `true` if the filter contains rules for specific kinds.
+     */
+    hasKindFilter: boolean;
+
     /**
      * Return `false` if the layer should not be processed.
      *
@@ -56,6 +62,14 @@ export interface OmvFeatureFilter {
      * @param level Level of tile.
      */
     wantsPolygonFeature(layer: string, geometryType: OmvGeometryType, level: number): boolean;
+
+    /**
+     * Return `false` if kind of object is not enabled and the geometry should not be created.
+     *
+     * @param {(string | string[])} kind Tag "kind" of the tag.
+     * @returns {boolean}
+     */
+    wantsKind(kind: string | string[]): boolean;
 }
 
 /**
@@ -122,6 +136,9 @@ export class OmvFeatureFilterDescriptionBuilder {
     private readonly m_linesToIgnore = new Array<OmvFilterDescription>();
     private readonly m_polygonsToProcess = new Array<OmvFilterDescription>();
     private readonly m_polygonsToIgnore = new Array<OmvFilterDescription>();
+
+    private m_kindsToProcess: string[] = [];
+    private m_kindsToIgnore: string[] = [];
 
     /**
      * Builds an `OmvFilterDescription` (internal type) that specifies an [[OmvFeatureFilter]] as
@@ -446,6 +463,24 @@ export class OmvFeatureFilterDescriptionBuilder {
     }
 
     /**
+     * Add all the specified strings as "enabledKinds".
+     *
+     * @param {string[]} enabledKinds List of kinds that should be generated.
+     */
+    processKinds(enabledKinds: string[]) {
+        this.m_kindsToProcess = this.m_kindsToProcess.concat(enabledKinds);
+    }
+
+    /**
+     * Add all the specified strings as "disabledKinds".
+     *
+     * @param {string[]} disabledKinds List of kinds that should _not_ be generated.
+     */
+    ignoreKinds(disabledKinds: string[]) {
+        this.m_kindsToIgnore = this.m_kindsToIgnore.concat(disabledKinds);
+    }
+
+    /**
      * Create a filter description that can be passed as an option to the [[OmvDataSource]].
      */
     createDescription(): OmvFeatureFilterDescription {
@@ -462,7 +497,10 @@ export class OmvFeatureFilterDescriptionBuilder {
             linesToProcess: this.m_linesToProcess,
             linesToIgnore: this.m_linesToIgnore,
             polygonsToProcess: this.m_polygonsToProcess,
-            polygonsToIgnore: this.m_polygonsToIgnore
+            polygonsToIgnore: this.m_polygonsToIgnore,
+
+            kindsToProcess: this.m_kindsToProcess,
+            kindsToIgnore: this.m_kindsToIgnore
         };
     }
 
@@ -662,7 +700,19 @@ export class OmvGenericFeatureFilter implements OmvFeatureFilter {
         return false;
     }
 
-    constructor(private description: OmvFeatureFilterDescription) {}
+    private disabledKinds: GeometryKindSet | undefined;
+    private enabledKinds: GeometryKindSet | undefined;
+
+    constructor(private description: OmvFeatureFilterDescription) {
+        if (this.description.kindsToProcess.length > 0) {
+            this.enabledKinds = new GeometryKindSet(this.description
+                .kindsToProcess as GeometryKind[]);
+        }
+        if (this.description.kindsToIgnore.length > 0) {
+            this.disabledKinds = new GeometryKindSet(this.description
+                .kindsToIgnore as GeometryKind[]);
+        }
+    }
 
     wantsLayer(layer: string, level: number): boolean {
         if (OmvGenericFeatureFilter.matchLayer(layer, this.description.layersToProcess, level)) {
@@ -707,6 +757,26 @@ export class OmvGenericFeatureFilter implements OmvFeatureFilter {
             level,
             this.description.processPolygonsDefault
         );
+    }
+
+    wantsKind(kind: string | string[]): boolean {
+        // undefined -> no way to filter
+        if (kind === undefined) {
+            return true;
+        }
+
+        return (
+            !(
+                this.disabledKinds !== undefined &&
+                this.disabledKinds.hasOrIntersects(kind as GeometryKind)
+            ) ||
+            (this.enabledKinds !== undefined &&
+                this.enabledKinds.hasOrIntersects(kind as GeometryKind))
+        );
+    }
+
+    get hasKindFilter(): boolean {
+        return this.enabledKinds !== undefined || this.disabledKinds !== undefined;
     }
 
     private wantsFeature(

@@ -127,7 +127,7 @@ export class GeoJsonTile extends Tile {
      * @param decodedTile The decoded tile received by the [[GeoJsonDecoder]].
      */
     createTextElements(decodedTile: DecodedTile) {
-        const tileGeometryCreator = new TileGeometryCreator();
+        const tileGeometryCreator = TileGeometryCreator.instance;
 
         if (decodedTile.poiGeometries !== undefined) {
             for (const geometry of decodedTile.poiGeometries) {
@@ -150,8 +150,8 @@ export class GeoJsonTile extends Tile {
 
         if (decodedTile.textPathGeometries !== undefined) {
             this.preparedTextPaths = tileGeometryCreator.prepareTextPaths(
-                this,
-                decodedTile.textPathGeometries
+                decodedTile.textPathGeometries,
+                decodedTile
             );
             for (const textPath of this.preparedTextPaths) {
                 const techniqueIndex = textPath.technique!;

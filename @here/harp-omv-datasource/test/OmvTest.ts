@@ -26,6 +26,16 @@ import { assert } from "chai";
  */
 
 export class RoadFilter implements OmvFeatureFilter {
+    hasKindFilter: boolean = true;
+
+    wantsKind(kind: string | string[]): boolean {
+        return (
+            kind === undefined ||
+            (typeof kind === "string" && kind.includes("road")) ||
+            (Array.isArray(kind) && (kind as string[]).filter(s => s.includes("road")).length > 0)
+        );
+    }
+
     wantsLayer(layer: string): boolean {
         // return layer !== undefined && layer.startsWith("road");// roads and road labels
         return layer !== undefined && layer === "road"; // only road lines, no labels
@@ -123,5 +133,20 @@ describe("OmvFeatureFilterDescriptionBuilder", function() {
         // * create mock datasource with this filterDescr as an option.
         // * request tile at level 14.
         // * assert that there is no road data of class "street"
+    });
+
+    it("addKindFilters", function() {
+        const filterBuilder = new OmvFeatureFilterDescriptionBuilder();
+
+        filterBuilder.ignoreKinds(["area"]);
+        filterBuilder.processKinds(["water"]);
+
+        const filterDescr = filterBuilder.createDescription();
+
+        assert.isObject(filterDescr);
+
+        // * create mock datasource with this filterDescr as an option.
+        // * assert that there is no area that is not water. Will only work if theme file sets
+        // * proper kinds (kind tags)
     });
 });

@@ -203,6 +203,11 @@ export interface Group {
      */
     renderOrderOffset?: number;
     featureId?: number;
+
+    /**
+     * Set to `true` if its [[Geometry]] has been created.
+     */
+    created?: boolean;
 }
 
 /**

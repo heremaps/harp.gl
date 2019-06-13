@@ -3,7 +3,22 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-import { DecodedTile } from "@here/harp-datasource-protocol";
+import {
+    DecodedTile,
+    GeometryKind,
+    GeometryKindSet,
+    isDashedLineTechnique,
+    isExtrudedLineTechnique,
+    isExtrudedPolygonTechnique,
+    isFillTechnique,
+    isLineMarkerTechnique,
+    isLineTechnique,
+    isPoiTechnique,
+    isSegmentsTechnique,
+    isSolidLineTechnique,
+    isTextTechnique,
+    Technique
+} from "@here/harp-datasource-protocol";
 import { PerformanceTimer } from "@here/harp-utils";
 
 import { PerformanceStatistics } from "../Statistics";
@@ -35,14 +50,99 @@ export interface TileGeometryLoader {
     allGeometryLoaded: boolean;
 
     /**
+     * The kinds of geometry stored in this [[Tile]].
+
+     */
+    availableGeometryKinds: GeometryKindSet | undefined;
+
+    /**
      * Start with or continue with loading geometry. Called repeatedly until `isFinished` is `true`.
      */
-    update(): void;
+    update(
+        enabledKinds: GeometryKindSet | undefined,
+        disabledKinds: GeometryKindSet | undefined
+    ): void;
 
     /**
      * Dispose of any resources.
      */
     dispose(): void;
+}
+
+export namespace TileGeometryLoader {
+    /**
+     * Make sure that all technique have their geometryKind set, either from the theme or their
+     * default value.
+     *
+     * Also gather set of the [[GeometryKind]]s found in the techniques and return it.
+     *
+     * @param {DecodedTile} decodedTile
+     * @returns {GeometryKindSet} The set of kinds used in the decodeTile.
+     */
+    export function prepareDecodedTile(decodedTile: DecodedTile): GeometryKindSet {
+        const foundSet: GeometryKindSet = new GeometryKindSet();
+
+        for (const technique of decodedTile.techniques) {
+            let geometryKind = technique.kind;
+
+            // Set default kind based on technique.
+            if (geometryKind === undefined) {
+                geometryKind = setDefaultGeometryKind(technique);
+            }
+
+            if (Array.isArray(geometryKind)) {
+                geometryKind = new GeometryKindSet(geometryKind);
+            }
+
+            if (geometryKind instanceof Set) {
+                for (const kind of geometryKind) {
+                    foundSet.add(kind);
+                }
+            } else {
+                foundSet.add(geometryKind);
+            }
+        }
+        return foundSet;
+    }
+
+    /**
+     * Make sure that the technique has its geometryKind set, either from the theme or their default
+     * value.
+     *
+     * @param {Technique} technique
+     */
+    export function setDefaultGeometryKind(technique: Technique): GeometryKind | GeometryKindSet {
+        let geometryKind = technique.kind;
+
+        // Set default kind based on technique.
+        if (geometryKind === undefined) {
+            if (isFillTechnique(technique)) {
+                geometryKind = GeometryKind.Area;
+            } else if (
+                isLineTechnique(technique) ||
+                isDashedLineTechnique(technique) ||
+                isSolidLineTechnique(technique) ||
+                isSegmentsTechnique(technique) ||
+                isExtrudedLineTechnique(technique)
+            ) {
+                geometryKind = GeometryKind.Line;
+            } else if (isExtrudedPolygonTechnique(technique)) {
+                geometryKind = GeometryKind.Building;
+            } else if (
+                isPoiTechnique(technique) ||
+                isLineMarkerTechnique(technique) ||
+                isTextTechnique(technique)
+            ) {
+                geometryKind = GeometryKind.Label;
+            } else {
+                geometryKind = GeometryKind.All;
+            }
+
+            technique.kind = geometryKind;
+        }
+
+        return geometryKind;
+    }
 }
 
 /**
@@ -51,6 +151,7 @@ export interface TileGeometryLoader {
 export class SimpleTileGeometryLoader implements TileGeometryLoader {
     private m_decodedTile?: DecodedTile;
     private m_isFinished: boolean = false;
+    private m_availableGeometryKinds: GeometryKindSet | undefined;
 
     constructor(private m_tile: Tile) {}
 
@@ -74,10 +175,17 @@ export class SimpleTileGeometryLoader implements TileGeometryLoader {
         this.m_decodedTile = this.m_tile.decodedTile;
     }
 
-    update(): void {
+    get availableGeometryKinds(): GeometryKindSet | undefined {
+        return this.m_availableGeometryKinds;
+    }
+
+    update(
+        enabledKinds: GeometryKindSet | undefined,
+        disabledKinds: GeometryKindSet | undefined
+    ): void {
         if (this.m_decodedTile === undefined && this.m_tile.decodedTile !== undefined) {
             this.setDecodedTile(this.m_tile.decodedTile);
-            this.prepareForRender();
+            this.prepareForRender(enabledKinds, disabledKinds);
             this.finish();
         }
     }
@@ -94,7 +202,10 @@ export class SimpleTileGeometryLoader implements TileGeometryLoader {
     /**
      * Called by [[VisibleTileSet]] to mark that [[Tile]] is visible and it should prepare geometry.
      */
-    private prepareForRender() {
+    private prepareForRender(
+        enabledKinds: GeometryKindSet | undefined,
+        disabledKinds: GeometryKindSet | undefined
+    ) {
         // If the tile is not ready for display, or if it has become invisible while being loaded,
         // for example by moving the camera, the tile is not finished and its geometry is not
         // created. This is an optimization for fast camera movements and zooms.
@@ -127,9 +238,9 @@ export class SimpleTileGeometryLoader implements TileGeometryLoader {
                 now = PerformanceTimer.now();
             }
 
-            const geometryCreator = new TileGeometryCreator();
+            const geometryCreator = TileGeometryCreator.instance;
 
-            geometryCreator.initDecodedTile(decodedTile);
+            geometryCreator.initDecodedTile(decodedTile, enabledKinds, disabledKinds);
 
             geometryCreator.createAllGeometries(tile, decodedTile);
 

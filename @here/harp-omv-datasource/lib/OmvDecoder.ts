@@ -3,17 +3,17 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-
 import {
     DecodedTile,
     ExtendedTileInfo,
+    GeometryKind,
+    IndexedTechnique,
     OptionsMap,
     StyleSet,
     Technique,
     TileInfo
 } from "@here/harp-datasource-protocol";
 import { Env, MapEnv, StyleSetEvaluator } from "@here/harp-datasource-protocol/index-decoder";
-
 import {
     GeoBox,
     Projection,
@@ -21,16 +21,14 @@ import {
     TilingScheme,
     webMercatorTilingScheme
 } from "@here/harp-geoutils";
-
-import { LoggerManager, PerformanceTimer } from "@here/harp-utils";
-
-import * as THREE from "three";
-
 import {
     ThemedTileDecoder,
     TileDecoderService,
     WorkerServiceManager
 } from "@here/harp-mapview-decoder/index-worker";
+import { LoggerManager, PerformanceTimer } from "@here/harp-utils";
+import * as THREE from "three";
+
 import { IGeometryProcessor, ILineGeometry, IPolygonGeometry } from "./IGeometryProcessor";
 import { OmvProtobufDataAdapter } from "./OmvData";
 import {
@@ -163,7 +161,8 @@ export interface IOmvEmitter {
  */
 export interface OmvDataAdapter {
     /**
-     * Checks if the given data can be processed by this OmvDataAdpter.
+     * Checks if the given data can be processed by this OmvDataAdapter.
+     *
      * @param data The raw data to adapt.
      */
     canProcess(data: ArrayBufferLike | {}): boolean;
@@ -189,7 +188,7 @@ export class OmvDecoder implements IGeometryProcessor {
         private readonly m_projection: Projection,
         private readonly m_styleSetEvaluator: StyleSetEvaluator,
         private readonly m_showMissingTechniques: boolean,
-        dataFilter?: OmvFeatureFilter,
+        private readonly m_dataFilter?: OmvFeatureFilter,
         private readonly m_featureModifier?: OmvFeatureModifier,
         private readonly m_gatherFeatureIds = true,
         private readonly m_createTileInfo = false,
@@ -199,8 +198,8 @@ export class OmvDecoder implements IGeometryProcessor {
         private readonly m_languages?: string[]
     ) {
         // Register the default adapters.
-        this.m_dataAdapters.push(new OmvProtobufDataAdapter(this, dataFilter, logger));
-        this.m_dataAdapters.push(new VTJsonDataAdapter(this, dataFilter, logger));
+        this.m_dataAdapters.push(new OmvProtobufDataAdapter(this, m_dataFilter, logger));
+        this.m_dataAdapters.push(new VTJsonDataAdapter(this, m_dataFilter, logger));
     }
 
     /**
@@ -282,7 +281,10 @@ export class OmvDecoder implements IGeometryProcessor {
             return;
         }
 
-        const techniques = this.m_styleSetEvaluator.getMatchingTechniques(env);
+        const techniques = this.applyKindFilter(
+            this.m_styleSetEvaluator.getMatchingTechniques(env),
+            GeometryKind.Label
+        );
 
         if (techniques.length === 0) {
             if (this.m_showMissingTechniques) {
@@ -323,7 +325,10 @@ export class OmvDecoder implements IGeometryProcessor {
             return;
         }
 
-        const techniques = this.m_styleSetEvaluator.getMatchingTechniques(env);
+        const techniques = this.applyKindFilter(
+            this.m_styleSetEvaluator.getMatchingTechniques(env),
+            GeometryKind.Line
+        );
 
         if (techniques.length === 0) {
             if (this.m_showMissingTechniques) {
@@ -364,7 +369,10 @@ export class OmvDecoder implements IGeometryProcessor {
             return;
         }
 
-        const techniques = this.m_styleSetEvaluator.getMatchingTechniques(env);
+        const techniques = this.applyKindFilter(
+            this.m_styleSetEvaluator.getMatchingTechniques(env),
+            GeometryKind.Area
+        );
 
         if (techniques.length === 0) {
             if (this.m_showMissingTechniques) {
@@ -406,6 +414,20 @@ export class OmvDecoder implements IGeometryProcessor {
     protected estimatedTileSizeOnScreen(): number {
         const tileSizeOnScreen = 256 * Math.pow(2, -this.m_storageLevelOffset);
         return tileSizeOnScreen;
+    }
+
+    private applyKindFilter(
+        techniques: IndexedTechnique[],
+        defaultKind: GeometryKind
+    ): IndexedTechnique[] {
+        if (this.m_dataFilter !== undefined && this.m_dataFilter.hasKindFilter) {
+            techniques = techniques.filter(technique => {
+                return technique.kind === undefined
+                    ? this.m_dataFilter!.wantsKind(defaultKind)
+                    : this.m_dataFilter!.wantsKind(technique.kind as GeometryKind);
+            });
+        }
+        return techniques;
     }
 }
 

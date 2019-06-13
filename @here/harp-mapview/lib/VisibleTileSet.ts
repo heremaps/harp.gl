@@ -325,8 +325,8 @@ export class VisibleTileSet {
 
                 tile.prepareTileInfo();
 
-                allDataSourceTilesLoaded = allDataSourceTilesLoaded && tile.hasGeometry;
-                if (!tile.hasGeometry) {
+                allDataSourceTilesLoaded = allDataSourceTilesLoaded && tile.allGeometryLoaded;
+                if (!tile.allGeometryLoaded) {
                     numTilesLoading++;
                 } else {
                     tile.numFramesVisible++;
