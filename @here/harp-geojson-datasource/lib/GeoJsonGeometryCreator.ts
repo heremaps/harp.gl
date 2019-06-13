@@ -276,11 +276,12 @@ export class GeoJsonGeometryCreator {
         geometryData: GeometryData,
         techniqueIndex: number
     ): GeoJsonGeometry {
+        const lineCenter = new THREE.Vector3();
         const lines = new LineGroup();
         const positions = new Array<number>();
 
         for (const line of geometryData.lines.vertices) {
-            lines.add(line);
+            lines.add(lineCenter, line);
             positions.push(...line);
         }
 
@@ -539,6 +540,7 @@ export class GeoJsonGeometryCreator {
         lines: LineGroup,
         buffer: number[]
     ): void {
+        const lineCenter = new THREE.Vector3();
         let outline = [];
         for (let i = 0; i < contour.length; i += 3) {
             outline.push(contour[i], contour[i + 1], contour[i + 2]);
@@ -548,12 +550,12 @@ export class GeoJsonGeometryCreator {
                 (this.isOnTileBorder(contour[i + 1], tileExtents) &&
                     this.isOnTileBorder(contour[i + 4], tileExtents))
             ) {
-                lines.add([...outline]);
+                lines.add(lineCenter, [...outline]);
                 buffer.push(...outline);
                 outline = [];
             }
         }
-        lines.add([...outline]);
+        lines.add(lineCenter, [...outline]);
         buffer.push(...outline);
     }
 

@@ -56,20 +56,23 @@ const HP_LINE_STRIDE = 15;
  */
 export class LineGeometry {
     vertices: number[] = [];
+    vertexColors: number[] = [];
     indices: number[] = [];
 }
 
 /**
  * Creates a [[LineGeometry]] object out of a polyline.
  *
+ * @param center Center of the polyline.
  * @param polyline Array of `numbers` describing a polyline.
- * @param center Center of the tile.
+ * @param colors Array of `numbers` describing a polyline's colors.
  * @param geometry [[LineGeometry]] object used to store the vertex and index attributes.
  * @param highPrecision If `true` will create high-precision vertex information.
  */
 export function createLineGeometry(
-    polyline: ArrayLike<number>,
     center: THREE.Vector3,
+    polyline: ArrayLike<number>,
+    colors?: ArrayLike<number>,
     geometry = new LineGeometry(),
     highPrecision: boolean = false
 ): LineGeometry {
@@ -83,6 +86,8 @@ export function createLineGeometry(
     const segments = new Array<number>(pointCount);
     const tangents = new Array<number>(polyline.length - 3);
     const baseVertex = geometry.vertices.length / stride;
+
+    const vertexColors = colors !== undefined && colors.length && polyline.length;
 
     // Compute segments and tangents.
     let sum = SEGMENT_OFFSET;
@@ -143,6 +148,15 @@ export function createLineGeometry(
                     tmpBitangent
                 );
                 geometry.vertices.push(...tmpBitangent.toArray(), angle);
+
+                // Add vertex colors (if supplied).
+                if (vertexColors) {
+                    geometry.vertexColors.push(
+                        colors![i * 3],
+                        colors![i * 3 + 1],
+                        colors![i * 3 + 2]
+                    );
+                }
             }
         }
 
@@ -180,6 +194,15 @@ export function createLineGeometry(
                     tmpBitangent
                 );
                 geometry.vertices.push(...tmpBitangent.toArray(), angle);
+
+                // Add vertex colors (if supplied).
+                if (vertexColors) {
+                    geometry.vertexColors.push(
+                        colors![i * 3],
+                        colors![i * 3 + 1],
+                        colors![i * 3 + 2]
+                    );
+                }
             }
         }
     }
@@ -197,10 +220,12 @@ export function createLineGeometry(
  * Creates a [[LineGeometry]] object out of a polyline.
  *
  * @param polyline Array of `numbers` describing a polyline.
+ * @param polyline Array of `numbers` describing a polyline's colors.
  * @param geometry [[LineGeometry]] object used to store the vertex and index attributes.
  */
 export function createSimpleLineGeometry(
     polyline: ArrayLike<number>,
+    colors?: ArrayLike<number>,
     geometry = new LineGeometry()
 ): LineGeometry {
     if (polyline.length === 0) {
@@ -209,6 +234,8 @@ export function createSimpleLineGeometry(
 
     const pointCount = polyline.length / 3;
     let index = geometry.vertices.length / 3;
+
+    const vertexColors = colors !== undefined && colors.length && polyline.length;
 
     for (let i = 0; i < pointCount; ++i, index++) {
         if (i > 0) {
@@ -219,6 +246,9 @@ export function createSimpleLineGeometry(
         }
         for (let j = 0; j < 3; ++j) {
             geometry.vertices.push(polyline[i * 3 + j]);
+            if (vertexColors) {
+                geometry.vertexColors.push(colors![i * 3 + j]);
+            }
         }
     }
 
@@ -232,7 +262,8 @@ export class LineGroup {
     /**
      * Adds all the attribute data needed to a [[BufferGeometry]] object for rendering `Lines`.
      *
-     * @param vertices Array of vertex positions.
+     * @param vertices Array of vertex attributes.
+     * @param colors Array of vertex colors.
      * @param indices Array of vertex indices.
      * @param geometry [[BufferGeometry]] object which will store all the `Lines` attribute data.
      * @param highPrecision If `true` will create high-precision vertex information.
@@ -240,6 +271,7 @@ export class LineGroup {
      */
     static createGeometry(
         vertices: ArrayLike<number>,
+        colors: ArrayLike<number>,
         indices: ArrayLike<number>,
         geometry: THREE.BufferGeometry,
         highPrecision = false,
@@ -250,6 +282,12 @@ export class LineGroup {
                 "position",
                 new THREE.BufferAttribute(new Float32Array(vertices), 3)
             );
+            if (colors.length === vertices.length) {
+                geometry.addAttribute(
+                    "color",
+                    new THREE.BufferAttribute(new Float32Array(colors), 3)
+                );
+            }
             geometry.setIndex(new THREE.BufferAttribute(new Uint32Array(indices), 1));
             return geometry;
         } else {
@@ -266,6 +304,12 @@ export class LineGroup {
                 );
                 geometry.addAttribute(descr.name, attribute);
             });
+            if (colors.length === vertices.length) {
+                geometry.addAttribute(
+                    "color",
+                    new THREE.BufferAttribute(new Float32Array(colors), 3)
+                );
+            }
 
             geometry.setIndex(new THREE.BufferAttribute(new Uint32Array(indices), 1));
 
@@ -273,11 +317,9 @@ export class LineGroup {
         }
     }
 
-    private readonly m_origin: THREE.Vector3;
     private readonly m_geometry: LineGeometry;
 
     constructor(readonly highPrecision: boolean = false, readonly isSimple: boolean = false) {
-        this.m_origin = new THREE.Vector3();
         this.m_geometry = new LineGeometry();
     }
 
@@ -286,20 +328,22 @@ export class LineGroup {
      */
     clear() {
         this.m_geometry.vertices = [];
+        this.m_geometry.vertexColors = [];
         this.m_geometry.indices = [];
     }
 
     /**
      * Add the given points to this line group.
      *
-     * @param points Sequence of (x,y,z) coordinates.
      * @param center World center of the provided points.
+     * @param points Sequence of (x,y,z) coordinates.
+     * @param colors Sequence of (r,g,b) color components.
      */
-    add(points: ArrayLike<number>, center: THREE.Vector3 = this.m_origin): this {
+    add(center: THREE.Vector3, points: ArrayLike<number>, colors?: ArrayLike<number>): this {
         if (!this.isSimple) {
-            createLineGeometry(points, center, this.m_geometry, this.highPrecision);
+            createLineGeometry(center, points, colors, this.m_geometry, this.highPrecision);
         } else {
-            createSimpleLineGeometry(points, this.m_geometry);
+            createSimpleLineGeometry(points, colors, this.m_geometry);
         }
         return this;
     }
@@ -309,6 +353,13 @@ export class LineGroup {
      */
     get vertices(): number[] {
         return this.m_geometry.vertices;
+    }
+
+    /**
+     * Returns the list of vertex colors.
+     */
+    get vertexColors(): number[] {
+        return this.m_geometry.vertexColors;
     }
 
     /**
@@ -341,6 +392,7 @@ export class LineGroup {
         }
         return LineGroup.createGeometry(
             this.m_geometry.vertices,
+            this.m_geometry.vertexColors,
             this.m_geometry.indices,
             geometry,
             this.highPrecision

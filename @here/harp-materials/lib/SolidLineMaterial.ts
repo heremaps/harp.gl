@@ -26,8 +26,8 @@ varying vec2 vSegment;
 varying float vLinewidth;
 varying vec3 vPosition;
 
-#ifdef USE_COLOR
-attribute vec4 color;
+#if USE_COLOR
+attribute vec3 color;
 varying vec3 vColor;
 #endif
 
@@ -43,10 +43,6 @@ void main() {
     vLinewidth = lineWidth;
     vSegment = abs(texcoord) - SEGMENT_OFFSET;
 
-    #ifdef USE_COLOR
-    vColor = color.rgb;
-    #endif
-
     vec3 pos = position;
     vec2 uvs = sign(texcoord);
 
@@ -57,6 +53,10 @@ void main() {
 
     vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
     gl_Position = projectionMatrix * mvPosition;
+
+    #if USE_COLOR
+    vColor = color;
+    #endif
 
     #ifdef USE_FADING
     #include <fading_vertex>
@@ -81,8 +81,9 @@ varying vec2 vTexcoord;
 varying vec2 vSegment;
 varying float vLinewidth;
 varying vec3 vPosition;
-#ifdef USE_COLOR
-varying vec3 color;
+
+#if USE_COLOR
+varying vec3 vColor;
 #endif
 
 #include <join_dist_func>
@@ -114,11 +115,12 @@ void main() {
     alpha *= smoothstep(-dashWidth, dashWidth, dashDist);
     #endif
 
-    #ifdef USE_COLOR
+    #if USE_COLOR
     gl_FragColor = vec4( diffuse * vColor, alpha );
     #else
     gl_FragColor = vec4( diffuse, alpha );
     #endif
+
     #include <fog_fragment>
 
     #ifdef USE_FADING
@@ -182,7 +184,8 @@ export class SolidLineMaterial extends THREE.RawShaderMaterial implements Fading
 
         const defines: { [key: string]: any } = {
             DASHED_LINE: 0,
-            TILE_CLIP: 0
+            TILE_CLIP: 0,
+            USE_COLOR: 0
         };
 
         const hasFog = params !== undefined && params.fog === true;
