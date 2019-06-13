@@ -5,12 +5,13 @@
  */
 
 import { MapEnv, ValueMap } from "@here/harp-datasource-protocol/index-decoder";
-import { GeoBox, GeoCoordinates, TileKey } from "@here/harp-geoutils";
+import { EarthConstants, GeoBox, TileKey } from "@here/harp-geoutils";
 import { ILogger } from "@here/harp-utils";
+import { Vector3 } from "three";
 import { IGeometryProcessor, ILineGeometry, IPolygonGeometry, IRing } from "./IGeometryProcessor";
 import { OmvFeatureFilter } from "./OmvDataFilter";
 import { OmvDataAdapter } from "./OmvDecoder";
-import { isArrayBufferLike, lat2tile, tile2lat } from "./OmvUtils";
+import { isArrayBufferLike, lat2tile } from "./OmvUtils";
 
 type VTJsonPosition = [number, number];
 
@@ -97,10 +98,12 @@ export class VTJsonDataAdapter implements OmvDataAdapter {
 
     process(tile: VTJsonTileInterface, tileKey: TileKey, geoBox: GeoBox) {
         const extent = 4096;
-        const longitudeScale = geoBox.longitudeSpan / extent;
         const { north, west } = geoBox;
         const N = Math.log2(extent);
+        const scale = Math.pow(2, tileKey.level + N);
         const top = lat2tile(north, tileKey.level + N);
+        const left = ((west + 180) / 360) * scale;
+        const R = EarthConstants.EQUATORIAL_CIRCUMFERENCE;
 
         for (const feature of tile.features) {
             const env = new MapEnv({
@@ -115,12 +118,16 @@ export class VTJsonDataAdapter implements OmvDataAdapter {
                     for (const pointGeometry of feature.geometry) {
                         const x = (pointGeometry as VTJsonPosition)[0];
                         const y = (pointGeometry as VTJsonPosition)[1];
-                        const longitude = west + x * longitudeScale;
-                        const latitude = tile2lat(top + y, tileKey.level + N);
+
+                        const position = new Vector3(
+                            ((left + x) / scale) * R,
+                            ((top + y) / scale) * R,
+                            0
+                        );
 
                         this.m_processor.processPointFeature(
                             tile.layer,
-                            [new GeoCoordinates(latitude, longitude)],
+                            [position],
                             env,
                             tileKey.level
                         );
@@ -129,11 +136,14 @@ export class VTJsonDataAdapter implements OmvDataAdapter {
                 }
                 case VTJsonGeometryType.LineString: {
                     for (const lineGeometry of feature.geometry as VTJsonPosition[][]) {
-                        const line: ILineGeometry = { coordinates: [] };
+                        const line: ILineGeometry = { positions: [] };
                         for (const [x, y] of lineGeometry) {
-                            const longitude = west + x * longitudeScale;
-                            const latitude = tile2lat(top + y, tileKey.level + N);
-                            line.coordinates.push(new GeoCoordinates(latitude, longitude));
+                            const position = new Vector3(
+                                ((left + x) / scale) * R,
+                                ((top + y) / scale) * R,
+                                0
+                            );
+                            line.positions.push(position);
                         }
 
                         this.m_processor.processLineFeature(tile.layer, [line], env, tileKey.level);
@@ -149,7 +159,7 @@ export class VTJsonDataAdapter implements OmvDataAdapter {
                         let maxX = 0;
                         let maxY = 0;
 
-                        const ring: IRing = { coordinates: [], outlines: [] };
+                        const ring: IRing = { positions: [], outlines: [] };
                         for (let coordIdx = 0; coordIdx < outline.length; ++coordIdx) {
                             const currX = outline[coordIdx][0];
                             const currY = outline[coordIdx][1];
@@ -163,9 +173,13 @@ export class VTJsonDataAdapter implements OmvDataAdapter {
                                 maxY = Math.max(maxY, currY);
                             }
 
-                            const longitude = west + currX * longitudeScale;
-                            const latitude = tile2lat(top + currY, tileKey.level + N);
-                            ring.coordinates.push(new GeoCoordinates(latitude, longitude));
+                            const position = new Vector3(
+                                ((left + currX) / scale) * R,
+                                ((top + currY) / scale) * R,
+                                0
+                            );
+
+                            ring.positions.push(position);
                             ring.outlines!.push(
                                 !(
                                     (currX === 0 && nextX === 0) ||

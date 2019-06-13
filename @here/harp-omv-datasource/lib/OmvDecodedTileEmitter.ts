@@ -53,8 +53,9 @@ import * as THREE from "three";
 import {
     EarthConstants,
     equirectangularProjection,
-    GeoCoordinates,
-    ProjectionType
+    mercatorProjection,
+    ProjectionType,
+    webMercatorProjection
 } from "@here/harp-geoutils";
 
 import { ILineGeometry, IPolygonGeometry } from "./IGeometryProcessor";
@@ -179,7 +180,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
      */
     processPointFeature(
         layer: string,
-        geometry: GeoCoordinates[],
+        geometry: THREE.Vector3[],
         env: MapEnv,
         techniques: IndexedTechnique[],
         featureId: number | undefined
@@ -229,9 +230,9 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
 
             const worldPos = new THREE.Vector3();
 
-            for (const geoPoint of geometry) {
+            for (const pos of geometry) {
                 const { x, y, z } = this.m_decodeInfo.projection
-                    .projectPoint(geoPoint, worldPos)
+                    .reprojectPoint(webMercatorProjection, pos, worldPos)
                     .sub(this.m_decodeInfo.center);
                 if (shouldCreateTextGeometries) {
                     const textTechnique = technique as TextTechnique;
@@ -304,8 +305,10 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
 
         for (const polyline of geometry) {
             const line: number[] = [];
-            polyline.coordinates.forEach(geoPoint => {
-                const { x, y, z } = projection.projectPoint(geoPoint, worldPos).sub(center);
+            polyline.positions.forEach(pos => {
+                const { x, y, z } = projection
+                    .reprojectPoint(webMercatorProjection, pos, worldPos)
+                    .sub(center);
                 line.push(x, y, z);
             });
             lines.push(line);
@@ -575,17 +578,19 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
 
             const computeTexCoords =
                 texCoordType === TextureCoordinateType.TileSpace
-                    ? (geoPoint: GeoCoordinates) => {
+                    ? (pos: THREE.Vector3) => {
                           const { x: u, y: v } = projection
-                              .projectPoint(geoPoint, texCoord)
+                              .reprojectPoint(webMercatorProjection, pos, texCoord)
                               .sub(tileBounds.min)
                               .divide(tileSize);
                           return { u, v };
                       }
                     : texCoordType === TextureCoordinateType.EquirectangularSpace
-                    ? (geoPoint: GeoCoordinates) => {
-                          const u = geoPoint.longitudeInDegrees / 360 + 0.5;
-                          const v = geoPoint.latitudeInDegrees / 180 + 0.5;
+                    ? (pos: THREE.Vector3) => {
+                          const { x: u, y: v } = equirectangularProjection.reprojectPoint(
+                              webMercatorProjection,
+                              pos
+                          );
                           return { u, v };
                       }
                     : undefined;
@@ -600,14 +605,15 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                     const ringPoints: number[] | undefined = isSpherical ? [] : undefined;
                     let ringEdges: boolean[] | undefined;
 
-                    for (let coordIdx = 0; coordIdx < outline.coordinates.length; ++coordIdx) {
-                        const geoPoint = outline.coordinates[coordIdx];
+                    for (let coordIdx = 0; coordIdx < outline.positions.length; ++coordIdx) {
+                        const pos = outline.positions[coordIdx];
+                        projection.reprojectPoint(webMercatorProjection, pos, worldPos).sub(center);
 
-                        projection.projectPoint(geoPoint, worldPos).sub(center);
                         ringContour.push(worldPos.x, worldPos.y, worldPos.z);
 
                         if (ringPoints !== undefined) {
-                            equirectangularProjection.projectPoint(geoPoint, worldPos);
+                            mercatorProjection.reprojectPoint(webMercatorProjection, pos, worldPos);
+
                             ringPoints.push(worldPos.x, worldPos.y, worldPos.z);
                         }
 
@@ -621,7 +627,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                         }
 
                         if (computeTexCoords !== undefined) {
-                            const { u, v } = computeTexCoords(geoPoint);
+                            const { u, v } = computeTexCoords(pos);
                             ringContour.push(u, v);
                         }
                     }
