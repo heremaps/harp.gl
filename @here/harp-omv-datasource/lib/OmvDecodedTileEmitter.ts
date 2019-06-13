@@ -837,9 +837,13 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                 }
 
                 // Repeat the process for all the inner rings (holes).
+                const outerRingWinding = ring.winding;
                 const holes: number[] = [];
-                for (; ringIndex < rings.length && rings[ringIndex].isInnerRing; ++ringIndex) {
-                    const current = rings[ringIndex];
+
+                // Iterate over the inner rings. The inner rings have the oppositve winding
+                // of the outer rings.
+                while (ringIndex < rings.length && rings[ringIndex].winding !== outerRingWinding) {
+                    const current = rings[ringIndex++];
                     holes.push(vertices.length / stride);
 
                     // As we are predicting the indexes before the vertices are added,
