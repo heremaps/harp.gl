@@ -6,7 +6,15 @@
 
 import * as THREE from "three";
 
-import { mercatorTilingScheme, ProjectionType, TileKey, TilingScheme } from "@here/harp-geoutils";
+// tslint:disable-next-line: max-line-length
+import { SphericalGeometrySubdivisionModifier } from "@here/harp-geometry/lib/SphericalGeometrySubdivisionModifier";
+import {
+    GeoCoordinates,
+    mercatorTilingScheme,
+    ProjectionType,
+    TileKey,
+    TilingScheme
+} from "@here/harp-geoutils";
 import { CopyrightInfo, DataSource, Tile } from "@here/harp-mapview";
 import { getOptionValue, LoggerManager } from "@here/harp-utils";
 
@@ -338,29 +346,66 @@ export class WebTileDataSource extends DataSource {
 
                 const shouldSubdivide = this.projection.type === ProjectionType.Spherical;
 
-                const dataProjection = this.getTilingScheme().projection;
-
-                const resolution = shouldSubdivide ? 10 : 1;
+                const sourceProjection = this.getTilingScheme().projection;
 
                 const bounds = new THREE.Box3();
-                dataProjection.projectBox(tile.geoBox, bounds);
+                sourceProjection.projectBox(tile.geoBox, bounds);
 
                 const size = new THREE.Vector3();
                 bounds.getSize(size);
 
-                const geometry = new THREE.PlaneGeometry(size.x, size.y, resolution, resolution);
+                const { east, west, north, south } = tile.geoBox;
+
+                const g = new THREE.Geometry();
+
+                g.vertices.push(
+                    sourceProjection.projectPoint(
+                        new GeoCoordinates(south, west),
+                        new THREE.Vector3()
+                    ),
+
+                    sourceProjection.projectPoint(
+                        new GeoCoordinates(south, east),
+                        new THREE.Vector3()
+                    ),
+
+                    sourceProjection.projectPoint(
+                        new GeoCoordinates(north, west),
+                        new THREE.Vector3()
+                    ),
+
+                    sourceProjection.projectPoint(
+                        new GeoCoordinates(north, east),
+                        new THREE.Vector3()
+                    )
+                );
+
+                g.faceVertexUvs[0] = [
+                    [new THREE.Vector2(0, 0), new THREE.Vector2(1, 0), new THREE.Vector2(0, 1)],
+                    [new THREE.Vector2(0, 1), new THREE.Vector2(1, 0), new THREE.Vector2(1, 1)]
+                ];
+
+                g.faces.push(new THREE.Face3(0, 1, 2), new THREE.Face3(2, 1, 3));
 
                 if (shouldSubdivide) {
+                    const modifier = new SphericalGeometrySubdivisionModifier(
+                        THREE.Math.degToRad(10),
+                        sourceProjection
+                    );
+
+                    modifier.modify(g);
+
                     const center = new THREE.Vector3();
                     bounds.getCenter(center);
-
-                    geometry.vertices.forEach(v => {
-                        v.add(center);
-                        this.projection.projectPoint(dataProjection.unprojectPoint(v), v);
-                        this.projection.scalePointToSurface(v);
-                        v.sub(tile.center);
-                    });
                 }
+
+                g.vertices.forEach(v => {
+                    this.projection.reprojectPoint(sourceProjection, v, v);
+                    v.sub(tile.center);
+                });
+
+                const geometry = new THREE.BufferGeometry();
+                geometry.fromGeometry(g);
 
                 const material = new THREE.MeshBasicMaterial({
                     map: texture
