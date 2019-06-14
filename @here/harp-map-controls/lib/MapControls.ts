@@ -1144,8 +1144,27 @@ export class MapControls extends THREE.EventDispatcher {
         const from = utils.calculateNormalizedDeviceCoordinates(fromX, fromY, width, height);
         const to = utils.calculateNormalizedDeviceCoordinates(toX, toY, width, height);
 
-        const toWorld = MapViewUtils.rayCastWorldCoordinates(this.mapView, to.x, to.y);
-        const fromWorld = MapViewUtils.rayCastWorldCoordinates(this.mapView, from.x, from.y);
+        let toWorld: THREE.Vector3 | null;
+        let fromWorld: THREE.Vector3 | null;
+        if (this.mapView.elevationProvider === undefined) {
+            fromWorld = MapViewUtils.rayCastWorldCoordinates(this.mapView, from.x, from.y);
+            toWorld = MapViewUtils.rayCastWorldCoordinates(this.mapView, to.x, to.y);
+        } else {
+            fromWorld = this.mapView.elevationProvider.rayCast(fromX, fromY);
+            if (fromWorld === null) {
+                return;
+            }
+            const geoCoordFromWorld = this.mapView.projection.unprojectPoint(fromWorld);
+            // We can ensure that points under the mouse stay there by projecting the to point onto
+            // a plane with the altitude based on the initial point.
+            // Todo: Check this works for spherical panning.
+            toWorld = MapViewUtils.rayCastWorldCoordinates(
+                this.mapView,
+                to.x,
+                to.y,
+                geoCoordFromWorld.altitude !== undefined ? -geoCoordFromWorld.altitude : 0
+            );
+        }
 
         if (toWorld === null || fromWorld === null) {
             return;

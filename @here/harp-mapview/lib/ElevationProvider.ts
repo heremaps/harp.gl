@@ -24,9 +24,9 @@ export interface ElevationProvider {
      *
      * @param x The X position in css/client coordinates (without applied display ratio).
      * @param y The Y position in css/client coordinates (without applied display ratio).
-     * @returns World coordinate of the intersection or undefined if no intersection detected.
+     * @returns World coordinate of the intersection or null if no intersection detected.
      */
-    rayCast(x: number, y: number): THREE.Vector3 | undefined;
+    rayCast(x: number, y: number): THREE.Vector3 | null;
 
     /**
      * Get the displacement map for a given tile key. If the displacement map for the given tileKey

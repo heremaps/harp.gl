@@ -156,7 +156,7 @@ export namespace ElevationProviderExample {
             if (event.shiftKey) {
                 // Show usage of the [[ElevationProvider.rayCast]] method.
                 const posVector = sceneElevationProvider.rayCast(event.pageX, event.pageY);
-                if (posVector !== undefined) {
+                if (posVector !== null) {
                     const cube = createPinkCube();
                     map.scene.add(cube);
                     // For the map to rerender
