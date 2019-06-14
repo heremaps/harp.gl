@@ -378,4 +378,4 @@ class SphereProjection extends Projection {
     }
 }
 
-export const sphereProjection = new SphereProjection();
+export const sphereProjection: Projection = new SphereProjection();
