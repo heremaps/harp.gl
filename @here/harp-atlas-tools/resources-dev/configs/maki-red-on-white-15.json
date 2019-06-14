@@ -1,0 +1,12 @@
+{
+    "processingSteps": [
+        { "name": "InvertColor" },
+        { "name": "Grayscale", "method": "Average" },
+        { "name": "Colorize", "color": { "r": 255, "g": 0, "b": 0 } },
+        {
+            "name": "AddBackground",
+            "image": "resources-dev/backgrounds/icon-bg-22x22.png",
+            "offset": { "x": 3, "y": 3 }
+        }
+    ]
+}

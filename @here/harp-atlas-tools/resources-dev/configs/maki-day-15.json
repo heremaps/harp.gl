@@ -1,0 +1,9 @@
+{
+    "processingSteps": [
+        {
+            "name": "AddBackground",
+            "image": "resources-dev/backgrounds/icon-bg-22x22.png",
+            "offset": { "x": 3, "y": 3 }
+        }
+    ]
+}
