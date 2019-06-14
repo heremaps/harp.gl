@@ -1,0 +1,55 @@
+{
+    "name": "@here/harp-atlas-tools",
+    "version": "0.0.1",
+    "description": "Sprites and texture atlas generator for harp.gl maps",
+    "main": "lib/index.js",
+    "bin": {
+        "harp-atlas-generator": "lib/cli-atlas-generator.js",
+        "harp-sprites-generator": "lib/cli-sprites-generator.js"
+    },
+    "scripts": {
+        "build": "tsc",
+        "watch": "tsc -w",
+        "generateAtlas": "ts-node src/cli-atlas-generator.ts",
+        "generateSprites": "ts-node src/cli-sprites-generator.ts",
+        "test": "yarn build && yarn generateAtlas"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git://github.com:heremaps/harp.gl.git",
+        "directory": "@here/harp-atlas-tools"
+    },
+    "author": {
+        "name": "HERE Europe B.V.",
+        "url": "https://here.com"
+    },
+    "license": "Apache-2.0",
+    "keywords": [
+        "here",
+        "harp.gl",
+        "theme",
+        "icons",
+        "sprites",
+        "texture-atlas",
+        "sprites-atlas",
+        "atlas-generator"
+    ],
+    "dependencies": {
+        "@types/mkpath": "^0.1.29",
+        "commander": "^2.20.0",
+        "glob": "^7.1.4",
+        "jimp": "^0.2.28",
+        "mkpath": "^1.0.0",
+        "path": "^0.12.7",
+        "promise-limit": "^2.6.0",
+        "spritesmith": "^3.3.0",
+        "svg2png": "^4.1.1"
+    },
+    "devDependencies": {
+        "ts-node": "^7.0.1",
+        "typescript": "^3.4.1"
+    },
+    "publishConfig": {
+        "access": "public"
+    }
+}

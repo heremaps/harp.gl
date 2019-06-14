@@ -1,0 +1,13 @@
+{
+    "processingSteps": [
+        { "name": "Grayscale", "method": "Average" },
+        {
+            "name": "CombineImages",
+            "image": "resources-dev/backgrounds/icon-bg-17x17.png",
+            "blendMode": "BlendAlpha",
+            "sizeRef": "Dst",
+            "offset": { "x": 3, "y": 3 }
+        },
+        { "name": "InvertColor" }
+    ]
+}
