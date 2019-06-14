@@ -726,7 +726,7 @@ export class MapView extends THREE.EventDispatcher {
 
         this.m_options.enableStatistics = this.m_options.enableStatistics === true;
 
-        this.m_languages = this.m_options.languages || MapViewUtils.getBrowserLanguages();
+        this.m_languages = this.m_options.languages;
 
         if (
             !isProduction &&
@@ -1103,6 +1103,7 @@ export class MapView extends THREE.EventDispatcher {
         this.m_tileDataSources.forEach((dataSource: DataSource) => {
             dataSource.setLanguages(this.m_languages);
         });
+        this.clearTileCache();
         this.update();
     }
 
