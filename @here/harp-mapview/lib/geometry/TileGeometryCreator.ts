@@ -1232,23 +1232,31 @@ export class TileGeometryCreator {
 
         if (tile.projection.type === ProjectionType.Spherical) {
             const { east, west, north, south } = tile.geoBox;
+            const sourceProjection = dataSource.getTilingScheme().projection;
             const g = new THREE.Geometry();
             g.vertices.push(
-                projection.projectPoint(new GeoCoordinates(south, west), new THREE.Vector3()),
-                projection.projectPoint(new GeoCoordinates(south, east), new THREE.Vector3()),
-                projection.projectPoint(new GeoCoordinates(north, west), new THREE.Vector3()),
-                projection.projectPoint(new GeoCoordinates(north, east), new THREE.Vector3())
+                sourceProjection.projectPoint(new GeoCoordinates(south, west), new THREE.Vector3()),
+                sourceProjection.projectPoint(new GeoCoordinates(south, east), new THREE.Vector3()),
+                sourceProjection.projectPoint(new GeoCoordinates(north, west), new THREE.Vector3()),
+                sourceProjection.projectPoint(new GeoCoordinates(north, east), new THREE.Vector3())
             );
             g.faces.push(new THREE.Face3(0, 1, 2), new THREE.Face3(2, 1, 3));
-            const modifier = new SphericalGeometrySubdivisionModifier(THREE.Math.degToRad(10));
+            const modifier = new SphericalGeometrySubdivisionModifier(
+                THREE.Math.degToRad(10),
+                sourceProjection
+            );
             modifier.modify(g);
-            g.vertices.forEach(v => projection.scalePointToSurface(v));
-            g.translate(-tile.center.x, -tile.center.y, -tile.center.z);
+            g.vertices.forEach(v => {
+                projection.reprojectPoint(sourceProjection, v, v);
+                v.sub(tile.center);
+            });
             const material = new MapMeshBasicMaterial({
                 color,
                 visible: dataSource.tileBackgroundIsVisible
             });
-            const mesh = new THREE.Mesh(g, material);
+            const bufferGeometry = new THREE.BufferGeometry();
+            bufferGeometry.fromGeometry(g);
+            const mesh = new THREE.Mesh(bufferGeometry, material);
             mesh.renderOrder = Number.MIN_SAFE_INTEGER;
             this.registerTileObject(tile, mesh);
             tile.objects.push(mesh);

@@ -51,7 +51,6 @@ import earcut from "earcut";
 import * as THREE from "three";
 
 import {
-    EarthConstants,
     equirectangularProjection,
     mercatorProjection,
     ProjectionType,
@@ -894,11 +893,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
 
                         for (let i = 0; i < vertices.length; i += stride) {
                             geom.vertices.push(
-                                new THREE.Vector3(
-                                    vertices[i],
-                                    vertices[i + 1],
-                                    vertices[i + 2]
-                                ).add(this.m_decodeInfo.center)
+                                new THREE.Vector3(points[i], points[i + 1], points[i + 2])
                             );
                         }
                         for (let i = 0; i < triangles.length; i += 3) {
@@ -919,7 +914,8 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
 
                         // FIXME(HARP-5700): Subdivison modifer ignores texture coordinates.
                         const modifier = new SphericalGeometrySubdivisionModifier(
-                            THREE.Math.degToRad(10)
+                            THREE.Math.degToRad(10),
+                            mercatorProjection
                         );
 
                         modifier.modify(geom);
@@ -928,8 +924,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                         triangles.length = 0;
 
                         geom.vertices.forEach(p => {
-                            p.normalize();
-                            p.multiplyScalar(EarthConstants.EQUATORIAL_RADIUS);
+                            this.projection.reprojectPoint(mercatorProjection, p, p);
                             p.sub(this.m_decodeInfo.center);
                             vertices.push(p.x, p.y, p.z);
                             if (texCoordType !== undefined) {
