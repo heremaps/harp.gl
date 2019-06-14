@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GeoCoordinates } from "@here/harp-geoutils";
+import { cylindricalProjection, GeoCoordinates } from "@here/harp-geoutils";
 import { MapControls, MapControlsUI } from "@here/harp-map-controls";
 import { CopyrightElementHandler, CopyrightInfo, MapView } from "@here/harp-mapview";
 import { APIFormat, OmvDataSource } from "@here/harp-omv-datasource";
@@ -73,7 +73,9 @@ export namespace HelloWorldExample {
         // snippet:harp_gl_hello_world_example_1.ts
         const map = new MapView({
             canvas,
-            theme: "resources/berlin_tilezen_base.json"
+            theme: "resources/berlin_tilezen_base.json",
+            projection: cylindricalProjection,
+            fovCalculation: { type: "fixed", fov: 90 }
         });
         // end:harp_gl_hello_world_example_1.ts
 

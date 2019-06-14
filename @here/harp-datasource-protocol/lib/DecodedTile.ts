@@ -5,6 +5,7 @@
  */
 
 import {
+    cylindricalProjection,
     equirectangularProjection,
     mercatorProjection,
     normalizedEquirectangularProjection,
@@ -227,6 +228,8 @@ export function getProjection(projectionName: string): Projection | never {
             return normalizedEquirectangularProjection;
         case "equirectangular":
             return equirectangularProjection;
+        case "cylinder":
+            return cylindricalProjection;
         default:
             throw new Error(`Unknown projection ${projectionName}`);
     } // switch
@@ -248,6 +251,8 @@ export function getProjectionName(projection: Projection): string | never {
         return "normalizedEquirectangular";
     } else if (projection === equirectangularProjection) {
         return "equirectangular";
+    } else if (projection === cylindricalProjection) {
+        return "cylinder";
     }
     throw new Error("Unknown projection");
 }
