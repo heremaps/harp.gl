@@ -67,7 +67,7 @@ header {
    flex-direction: column;
 }
 
-iframe {
+#map {
    position: absolute;
    height: var(--header-height);
    width: 100%;
@@ -86,7 +86,7 @@ nav {
 }
 
 .logo {
-   background-image: url("img/logo.png");
+   background-image: url("../resources/logo.png");
    background-size: contain;
    background-repeat: no-repeat;
    width: 50px;
@@ -283,7 +283,7 @@ footer {
    }
 
    .logo {
-      background-image: url("img/logo.png");
+      background-image: url("../resources/logo.png");
       background-size: contain;
       background-repeat: no-repeat;
       width: 30px;

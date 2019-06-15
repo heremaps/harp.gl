@@ -55,6 +55,7 @@
         <!--
             These paths are used here to be compatible with harp.gl CI.
         -->
+        <script src="../js/credentials.js"></script>
         <script src="three.min.js"></script>
         <script src="harp.js"></script>
 
@@ -93,14 +94,13 @@
             };
             const copyrights = [hereCopyrightInfo];
 
-            const xyzAccessToken = "AYlqpxvwl7C8tSVG22lX2lg";
 
             const omvDataSource = new harp.OmvDataSource({
                 baseUrl: "https://xyz.api.here.com/tiles/herebase.02",
                 apiFormat: harp.APIFormat.XYZOMV,
                 styleSetName: "tilezen",
                 maxZoomLevel: 17,
-                authenticationCode: xyzAccessToken,
+                authenticationCode: token,
                 copyrightInfo: copyrights
             });
 

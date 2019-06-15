@@ -43,5 +43,33 @@ fetch('https://heremaps.github.io/harp.gl/releases.json')
 })
 
 setTimeout(() => {
-   document.querySelector('header').style.backgroundImage = `url('img/background.png')`;
+   document.querySelector('header').style.backgroundImage = `url('resources/background.png')`;
 }, 1000)
+
+//Map information
+
+const canvas = document.getElementById('map');
+const map = new harp.MapView({
+   canvas,
+   theme: "resources/theme.json",
+   maxVisibleDataSourceTiles: 40, 
+   tileCacheSize: 100
+});
+
+map.resize(window.innerWidth, window.innerHeight);
+window.onresize = () => map.resize(window.innerWidth, window.innerHeight);
+
+const omvDataSource = new harp.OmvDataSource({
+   baseUrl: "https://xyz.api.here.com/tiles/herebase.02",
+   apiFormat: harp.APIFormat.XYZOMV,
+   styleSetName: "tilezen",
+   authenticationCode: token,
+});
+map.addDataSource(omvDataSource);
+
+const options = { tilt: 45, distance: 3000 };
+const NY = new harp.GeoCoordinates(42.361145, -71.057083);
+let azimuth = 300;
+map.addEventListener(harp.MapViewEventNames.Render, () => map.lookAt(NY, options.distance, options.tilt, (azimuth += 0.1)));
+window.addEventListener("resize", () => map.resize(window.innerWidth, window.innerHeight));
+map.beginAnimation();
