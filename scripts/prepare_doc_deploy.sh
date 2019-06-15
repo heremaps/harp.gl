@@ -20,7 +20,11 @@ fi
 mkdir -p dist/gh_deploy
 mv dist/index.html dist/gh_deploy
 mv dist/css dist/gh_deploy
-mv dist/img dist/gh_deploy
+mv dist/resources dist/gh_deploy
+mv dist/js dist/gh_deploy
+mv dist/redirect_examples dist/gh_deploy/examples
+mv dist/redirect_docs dist/gh_deploy/docs
+
 mv dist/_config.yml dist/gh_deploy
 
 mkdir -p dist/s3_deploy/${folder_name}

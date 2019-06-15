@@ -3,3 +3,5 @@ dist/
 doc/
 test-npm-packages-app/
 .vscode/
+
+.DS_Store

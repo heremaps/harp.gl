@@ -8,6 +8,7 @@ import * as fs from "fs";
 import * as fse from "fs-extra";
 import * as glob from "glob";
 import * as path from "path";
+import { accessToken } from '../@here/harp-examples/config';
 
 /*
 Simple script that extracts all code snippets from examples
@@ -88,10 +89,17 @@ for (const sourceFile of sourceFiles) {
     }
 }
 
+
 fs.copyFileSync(path.join(sdkDir, "LICENSE"), path.join(outDir, "LICENSE"));
 fs.copyFileSync(path.join(sdkDir, "docs/index.html"), "dist/index.html");
-fse.copySync(path.join(sdkDir, "docs/img"), "dist/img");
+fse.copySync(path.join(sdkDir, "docs/resources"), "dist/resources");
 fse.copySync(path.join(sdkDir, "docs/css"), "dist/css");
+fse.copySync(path.join(sdkDir, "docs/js"), "dist/js");
+fse.copySync(path.join(sdkDir, "docs/examples"), "dist/redirect_examples");
+fse.copySync(path.join(sdkDir, "docs/docs"), "dist/redirect_docs");
 fs.copyFileSync(path.join(sdkDir, "LICENSE"), path.join(distOutDir, "LICENSE"));
 fse.copySync(path.join(sdkDir, "docs"), distDocsOutDir);
 fs.writeFileSync("dist/_config.yml", 'include:\n  - "_*"\n', { encoding: "utf8" });
+
+const credentialsResult = `const token = '${accessToken}'`;
+fs.writeFileSync('dist/js/credentials.js', credentialsResult, { encoding: "utf8" });
