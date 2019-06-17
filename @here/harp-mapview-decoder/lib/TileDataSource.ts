@@ -183,6 +183,7 @@ export class TileDataSource<TileType extends Tile> extends DataSource {
     }
 
     setStyleSet(styleSet?: StyleSet, languages?: string[]): void {
+        this.m_tileLoaderCache.clear();
         this.m_decoder.configure(styleSet, languages);
         this.mapView.markTilesDirty(this);
     }
