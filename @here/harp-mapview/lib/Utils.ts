@@ -325,7 +325,14 @@ export namespace MapViewUtils {
      * you.
      */
     export function calculateZoomLevelFromDistance(distance: number, mapView: MapView): number {
-        const tileSize = (256 * distance) / mapView.focalLength;
+        // For planar projection (i.e. Mercator), the renderer assumes that every tile should cover
+        // 256px on screen. For spherical projections, on the other hand, half of the root tiles
+        // will be occluded by the same sphere, so we assume a bigger tile size (512px) to preserve
+        // a similar visible map features to pixels ratio.
+        const rootTileSize =
+            mapView.projection.type === geoUtils.ProjectionType.Spherical ? 512 : 256;
+
+        const tileSize = (rootTileSize * distance) / mapView.focalLength;
         return geoUtils.MathUtils.clamp(
             Math.log2(EarthConstants.EQUATORIAL_CIRCUMFERENCE / tileSize),
             mapView.minZoomLevel,

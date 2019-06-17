@@ -27,6 +27,7 @@ describe("map-view#Utils", function() {
             maxZoomLevel: 20,
             minZoomLevel: 1,
             camera: cameraMock,
+            projection: mercatorProjection,
             focalLength: 256,
             pixelRatio: 1.0
         };
@@ -82,6 +83,7 @@ describe("map-view#Utils", function() {
                 maxZoomLevel: 20,
                 minZoomLevel: 1,
                 camera: cameraMock,
+                projection: mercatorProjection,
                 focalLength: 256,
                 pixelRatio: 1.0
             };
