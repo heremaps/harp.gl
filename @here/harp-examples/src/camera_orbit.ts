@@ -41,7 +41,7 @@ export namespace CameraOrbitExample {
     const NY = new GeoCoordinates(40.707, -74.012);
     let azimuth = 0;
     map.addEventListener(MapViewEventNames.Render, () => {
-        map.lookAt(NY, options.distance, options.tilt, (azimuth += 0.1));
+        map.lookAt(NY, options.distance, options.tilt, (azimuth = (azimuth + 0.1) % 360));
         updateHTML();
     });
     // end:harp_gl_camera_orbit_example_1.ts
