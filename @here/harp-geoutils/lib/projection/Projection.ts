@@ -92,6 +92,13 @@ export abstract class Projection {
     abstract unprojectPoint(worldPoint: Vector3Like): GeoCoordinates;
 
     /**
+     * Returns the altitude at the given world position (x,y,z) in meters.
+     *
+     * @param worldPoint The position in world coordinates.
+     */
+    abstract unprojectAltitude(worldPoint: Vector3Like): number;
+
+    /**
      * Projects bounds in geo coordinates to a bounding box in world coordinates.
      *
      * Example:

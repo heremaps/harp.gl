@@ -42,12 +42,13 @@ function containsPoint(box: Box3Like, point: Vector3Like): boolean {
 
 describe("WebMercator", function() {
     it("project", function() {
-        const coords = new GeoCoordinates(52.504951, 13.371806);
+        const coords = new GeoCoordinates(52.504951, 13.371806, 100);
         const projected = webMercatorProjection.projectPoint(coords);
         const unprojected = webMercatorProjection.unprojectPoint(projected);
 
         assert.approximately(coords.latitudeInRadians, unprojected.latitudeInRadians, EPSILON);
         assert.approximately(coords.longitudeInRadians, unprojected.longitudeInRadians, EPSILON);
+        assert.equal(coords.altitude, unprojected.altitude);
     });
 
     it("project outside normal range", function() {
@@ -138,12 +139,13 @@ describe("Equirectangular", function() {
 
 describe("Mercator", function() {
     it("project", function() {
-        const coords = new GeoCoordinates(52.504951, 13.371806);
+        const coords = new GeoCoordinates(52.504951, 13.371806, 100);
         const projected = mercatorProjection.projectPoint(coords);
         const unprojected = mercatorProjection.unprojectPoint(projected);
 
         assert.approximately(coords.latitudeInRadians, unprojected.latitudeInRadians, EPSILON);
         assert.approximately(coords.longitudeInRadians, unprojected.longitudeInRadians, EPSILON);
+        assert.equal(coords.altitude, unprojected.altitude);
     });
 
     (function() {

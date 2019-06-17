@@ -1154,7 +1154,8 @@ export class MapControls extends THREE.EventDispatcher {
             if (fromWorld === null) {
                 return;
             }
-            const geoCoordFromWorld = this.mapView.projection.unprojectPoint(fromWorld);
+            const fromGeoAltitude = this.mapView.projection.unprojectAltitude(fromWorld);
+
             // We can ensure that points under the mouse stay there by projecting the to point onto
             // a plane with the altitude based on the initial point.
             // Todo: Check this works for spherical panning.
@@ -1162,7 +1163,7 @@ export class MapControls extends THREE.EventDispatcher {
                 this.mapView,
                 to.x,
                 to.y,
-                geoCoordFromWorld.altitude !== undefined ? -geoCoordFromWorld.altitude : 0
+                fromGeoAltitude
             );
         }
 

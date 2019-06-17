@@ -72,13 +72,13 @@ class SceneElevationProvider implements ElevationProvider {
         return this.m_mapView.projection.unprojectPoint(intersectionWorldPoint).altitude;
     }
 
-    rayCast(x: number, y: number): THREE.Vector3 | undefined {
+    rayCast(x: number, y: number): THREE.Vector3 | null {
         const pickResults = this.m_mapView.intersectMapObjects(x, y);
         const bestResult = pickResults.find(value => {
             return value.point instanceof THREE.Vector3;
         });
         if (bestResult === undefined) {
-            return undefined;
+            return null;
         }
         return (bestResult.point as THREE.Vector3).add(this.m_mapView.worldCenter);
     }
