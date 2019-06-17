@@ -1539,7 +1539,7 @@ export class MapView extends THREE.EventDispatcher {
      * @param target The location to look at.
      * @param distance The distance of the camera to the target in meters.
      * @param tiltDeg The camera tilt angle in degrees (0 is vertical).
-     * @param azimuthDeg The camera azimuth angle in degrees (0 means looking north).
+     * @param azimuthDeg The camera azimuth angle in degrees and clockwise, starting north.
      */
     lookAt(
         target: GeoCoordinates,
@@ -1547,11 +1547,11 @@ export class MapView extends THREE.EventDispatcher {
         tiltDeg: number = 0,
         azimuthDeg: number = 0
     ): void {
-        MapViewUtils.setRotation(this, azimuthDeg, tiltDeg);
+        MapViewUtils.setRotation(this, -azimuthDeg, tiltDeg);
         this.geoCenter = MapViewUtils.getCameraCoordinatesFromTargetCoordinates(
             target,
             distance,
-            azimuthDeg,
+            -azimuthDeg,
             tiltDeg,
             this
         );
