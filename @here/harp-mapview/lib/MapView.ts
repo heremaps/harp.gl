@@ -75,6 +75,8 @@ export type MapAnchor<T extends THREE.Object3D = THREE.Object3D> = T & {
 export enum MapViewEventNames {
     /** Called before this `MapView` starts to render a new frame. */
     Update = "update",
+    /** Called when the WebGL canvas is resized. */
+    Resize = "resize",
     /** Called when the frame is about to be rendered. */
     Render = "render",
     /** Called after a frame has been rendered. */
@@ -1854,6 +1856,14 @@ export class MapView extends THREE.EventDispatcher {
 
         this.updateCameras();
         this.update();
+
+        this.dispatchEvent({
+            type: MapViewEventNames.Resize,
+            size: {
+                width,
+                height
+            }
+        });
     }
 
     /**
