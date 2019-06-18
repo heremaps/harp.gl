@@ -331,7 +331,8 @@ function createInterpolatedProperty<T>(prop: InterpolatedPropertyDefinition<T>) 
                         ? InterpolationMode[prop.interpolation]
                         : InterpolationMode.Discrete,
                 zoomLevels: propKeys,
-                values: propValues
+                values: propValues,
+                exponent: prop.exponent
             };
         case "boolean":
             propValues = new Float32Array(prop.values.length);
@@ -341,7 +342,8 @@ function createInterpolatedProperty<T>(prop: InterpolatedPropertyDefinition<T>) 
             return {
                 interpolationMode: InterpolationMode.Discrete,
                 zoomLevels: propKeys,
-                values: propValues
+                values: propValues,
+                exponent: prop.exponent
             };
         case "string":
             propValues = new Float32Array(prop.values.length * 3);
@@ -364,7 +366,8 @@ function createInterpolatedProperty<T>(prop: InterpolatedPropertyDefinition<T>) 
                         ? InterpolationMode[prop.interpolation]
                         : InterpolationMode.Discrete,
                 zoomLevels: propKeys,
-                values: propValues
+                values: propValues,
+                exponent: prop.exponent
             };
     }
 }
