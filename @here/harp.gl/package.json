@@ -28,7 +28,7 @@
     },
     "license": "Apache-2.0",
     "dependencies": {
-        "three": "^0.104.0"
+        "three": "^0.105.2"
     },
     "devDependencies": {
         "@here/harp-features-datasource": "^0.1.2",
@@ -42,10 +42,10 @@
         "@here/harp-test-utils": "^0.2.4",
         "@here/harp-text-canvas": "^0.3.1",
         "@here/harp-utils": "^0.2.5",
-        "ts-loader": "^5.2.1",
-        "typescript": "^3.5",
-        "webpack": "^4.30.0",
-        "webpack-cli": "^3.3.2",
+        "ts-loader": "^6.0.3",
+        "typescript": "^3.5.2",
+        "webpack": "^4.34.0",
+        "webpack-cli": "^3.3.4",
         "webpack-merge": "^4.1.1"
     },
     "publishConfig": {

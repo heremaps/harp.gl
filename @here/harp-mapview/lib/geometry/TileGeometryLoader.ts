@@ -116,9 +116,8 @@ export class SimpleTileGeometryLoader implements TileGeometryLoader {
 
                 if (stats.enabled) {
                     stats.currentFrame.addMessage(
-                        `Decoded tile: ${tile.dataSource.name} # lvl=${tile.tileKey.level} col=${
-                            tile.tileKey.column
-                        } row=${tile.tileKey.row} DISCARDED - invisible`
+                        // tslint:disable-next-line: max-line-length
+                        `Decoded tile: ${tile.dataSource.name} # lvl=${tile.tileKey.level} col=${tile.tileKey.column} row=${tile.tileKey.row} DISCARDED - invisible`
                     );
                 }
                 return;
@@ -155,9 +154,8 @@ export class SimpleTileGeometryLoader implements TileGeometryLoader {
                         : 0
                 );
                 currentFrame.addMessage(
-                    `Decoded tile: ${tile.dataSource.name} # lvl=${tile.tileKey.level} col=${
-                        tile.tileKey.column
-                    } row=${tile.tileKey.row}`
+                    // tslint:disable-next-line: max-line-length
+                    `Decoded tile: ${tile.dataSource.name} # lvl=${tile.tileKey.level} col=${tile.tileKey.column} row=${tile.tileKey.row}`
                 );
             }
             this.finish();
