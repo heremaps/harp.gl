@@ -104,7 +104,7 @@ export class SimpleTileGeometryLoader implements TileGeometryLoader {
         if (decodedTile === undefined || tile.disposed || !tile.isVisible) {
             return;
         }
-        setTimeout(() => {
+        // setTimeout(() => {
             const stats = PerformanceStatistics.instance;
             // If the tile has become invisible while being loaded, for example by moving the
             // camera, the tile is not finished and its geometry is not created. This is an
@@ -160,6 +160,6 @@ export class SimpleTileGeometryLoader implements TileGeometryLoader {
             }
             this.finish();
             tile.dataSource.requestUpdate();
-        }, 0);
+        // }, 0);
     }
 }
