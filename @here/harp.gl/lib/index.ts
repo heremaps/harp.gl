@@ -14,18 +14,7 @@ if (!(window as any).THREE) {
     );
 }
 
-export {
-    ConcurrentDecoderFacade,
-    ConcurrentTilerFacade,
-    CopyrightElementHandler,
-    DataSource,
-    MapView,
-    MapViewEventNames,
-    MapViewOptions,
-    Tile,
-    ThemeLoader,
-    WorkerLoader
-} from "@here/harp-mapview";
+export * from "@here/harp-mapview";
 export * from "@here/harp-omv-datasource";
 export * from "@here/harp-geojson-datasource";
 export * from "@here/harp-features-datasource";
