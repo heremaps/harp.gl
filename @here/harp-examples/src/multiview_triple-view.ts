@@ -288,12 +288,9 @@ export namespace TripleViewExample {
         otherViews.splice(index, 1);
         // tslint:disable-next-line:no-unused-variable
         otherViews.forEach((otherView: ViewControlPair, indexTemp: number) => {
-            v.mapControls.addEventListener(
-                "update",
-                (): void => {
-                    syncMapViews(views[index], otherViews[indexTemp]);
-                }
-            );
+            v.mapControls.addEventListener("update", (): void => {
+                syncMapViews(views[index], otherViews[indexTemp]);
+            });
         });
     });
     // end:harp_gl_multiview_tripleView_3.ts

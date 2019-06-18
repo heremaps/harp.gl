@@ -6,22 +6,23 @@
         "@here/*"
     ],
     "devDependencies": {
-        "chromedriver": "^74.0.0",
-        "geckodriver": "^1.12.2",
+        "@strictsoftware/typedoc-plugin-monorepo": "^0.2.1",
+        "chromedriver": "^2.44.1",
+        "geckodriver": "^1.16.2",
         "hard-source-webpack-plugin": "^0.13.1",
         "mocha": "^6.1.4",
         "mocha-webdriver-runner": "^0.5.1",
-        "prettier": "^1.17.0",
-        "three": "^0.104.0",
+        "prettier": "^1.18.2",
+        "serve-handler": "^6.0.1",
+        "three": "^0.105.2",
         "ts-mocha": "^6.0.0",
-        "tslint": "^5.16.0",
+        "tslint": "^5.17.0",
         "tslint-config-prettier": "^1.18.0",
         "typedoc": "^0.14.2",
-        "@strictsoftware/typedoc-plugin-monorepo": "^0.2.1",
-        "typescript": "^3.5",
-        "webpack": "^4.30.0",
-        "webpack-cli": "^3.3.2",
-        "webpack-dev-server": "^3.3.1"
+        "typescript": "^3.5.2",
+        "webpack": "^4.34.0",
+        "webpack-cli": "^3.3.4",
+        "webpack-dev-server": "^3.7.2"
     },
     "scripts": {
         "test": "ts-mocha -r tsconfig-paths/register ./test/*.ts ./@here/*/test/*.ts",
@@ -53,8 +54,5 @@
         "name": "HERE Europe B.V.",
         "url": "https://here.com"
     },
-    "license": "Apache-2.0",
-    "dependencies": {
-        "serve-handler": "^6.0.0"
-    }
+    "license": "Apache-2.0"
 }

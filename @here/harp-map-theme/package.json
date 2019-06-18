@@ -28,7 +28,7 @@
     "devDependencies": {
         "@here/harp-font-resources": "^0.2.4",
         "@types/chai": "^4.1.2",
-        "@types/mocha": "^5.2.5",
+        "@types/mocha": "^5.2.7",
         "@types/ncp": "^2.0.1",
         "chai": "^4.0.2",
         "copyfiles": "^2.0.0",
@@ -37,8 +37,8 @@
         "mocha": "^6.1.4",
         "ncp": "^2.0.0",
         "source-map-support": "^0.5.2",
-        "ts-node": "^7.0.1",
-        "typescript": "^3.5"
+        "ts-node": "^8.3.0",
+        "typescript": "^3.5.2"
     },
     "publishConfig": {
         "access": "public"

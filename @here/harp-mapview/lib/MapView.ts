@@ -2572,9 +2572,8 @@ export class MapView extends THREE.EventDispatcher {
                 const light = createLight(lightDescription);
                 if (!light) {
                     logger.log(
-                        `MapView: failed to create light ${lightDescription.name} of type ${
-                            lightDescription.type
-                        }`
+                        // tslint:disable-next-line: max-line-length
+                        `MapView: failed to create light ${lightDescription.name} of type ${lightDescription.type}`
                     );
                     return;
                 }

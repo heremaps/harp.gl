@@ -21,12 +21,12 @@
     "license": "Apache-2.0",
     "devDependencies": {
         "@types/chai": "^4.1.2",
-        "@types/mocha": "^5.2.5",
+        "@types/mocha": "^5.2.7",
         "chai": "^4.0.2",
         "cross-env": "^5.2.0",
         "mocha": "^6.1.4",
         "source-map-support": "^0.5.2",
-        "typescript": "^3.5"
+        "typescript": "^3.5.2"
     },
     "publishConfig": {
         "access": "public"
