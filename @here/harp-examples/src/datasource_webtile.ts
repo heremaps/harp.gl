@@ -36,7 +36,6 @@ export namespace WebTileDataSourceExample {
             canvas,
             theme: "resources/berlin_tilezen_base.json"
         });
-        map.setCacheSize(100, 100);
 
         // instantiate the default map controls, allowing the user to pan around freely.
         const controls = new MapControls(map);

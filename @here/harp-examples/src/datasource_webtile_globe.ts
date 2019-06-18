@@ -35,10 +35,8 @@ export namespace WebTileDataSourceGlobeExample {
         const map = new MapView({
             canvas,
             theme: "resources/berlin_tilezen_base_globe.json",
-            projection: sphereProjection,
-            tileCacheSize: 400
+            projection: sphereProjection
         });
-        map.setCacheSize(100, 100);
 
         // instantiate the default map controls, allowing the user to pan around freely.
         MapControls.create(map);

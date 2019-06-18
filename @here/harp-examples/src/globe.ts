@@ -18,8 +18,7 @@ export namespace GlobeExample {
         const mapView = new MapView({
             canvas,
             theme: "resources/berlin_tilezen_base_globe.json",
-            projection: sphereProjection,
-            maxVisibleDataSourceTiles: 400
+            projection: sphereProjection
         });
 
         CopyrightElementHandler.install("copyrightNotice", mapView);
