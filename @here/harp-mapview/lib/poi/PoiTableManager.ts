@@ -95,7 +95,7 @@ class PoiTableEntry implements PoiTableEntryDef {
     setup(jsonEntry: PoiTableEntryDef) {
         this.name = jsonEntry.name;
         this.altNames = jsonEntry.altNames;
-        this.iconName = jsonEntry.iconName !== undefined ? jsonEntry.iconName : "<undefined>";
+        this.iconName = jsonEntry.iconName;
         this.visible = jsonEntry.visible;
         this.priority = jsonEntry.priority;
         this.iconMinLevel = jsonEntry.iconMinLevel;
@@ -124,24 +124,27 @@ class PoiTableEntry implements PoiTableEntryDef {
  * TextElement and its icon are read from the PoiTable.
  *
  * The key to look up the POI is taken from the data, in case of OSM data with TileZen data, the
- * "poiNameField" is set to "kind", which makes the content of the field "kind" in the data the key
+ * `poiNameField` is set to `kind`, which makes the content of the field `kind` in the data the key
  * to look up the POIs in the [[PoiTable]].
  *
  * On the side of the [[PoiTable]], the key to look up the PoiTableEntry is either the property
- * "name" of the [[PoiTableEntry]]s (which should be unique), or the alternative list of names
- * "altNames", where each value should also be unique. If the property `useAltNamesForKey` is set to
- * `true`, the "altNames" will be used.
+ * "name" of the [[PoiTableEntry]] (which should be unique), or the alternative list of names
+ * `altNames`, where each value should also be unique. If the property `useAltNamesForKey` is set to
+ * `true`, the `altNames` will be used.
  */
 export class PoiTable {
     /**
      * Stores the list of [[PoiTableEntry]]s.
      */
-    readonly poiList: PoiTableEntry[] = new Array();
+    private readonly poiList: PoiTableEntry[] = new Array();
     /**
-     * Dictionary to look up a [[PoiTableEntry]] quickly. The dictionary is either created from the
-     * property `name` of the [[PoiTableEntry]]s, or all of the names in each property `altNames`.
+     * Dictionary to look up for [[PoiTableEntry]] quickly. The dictionary is either created for
+     * the `name` property of the [[PoiTableEntry]], which will identify POI, or for all of
+     * alternative the names defined in `altNames` of [[PoiTableEntry]] JSON object.
+     * Value assigned to key it is the index to [[poiList]] array which contain actual
+     * [[PoiTabelEntry]] objects.
      */
-    readonly poiDict: Map<string, PoiTableEntry> = new Map();
+    private readonly poiDict: Map<string, number> = new Map();
     private m_isLoading = false;
     private m_loadedOk: boolean | undefined = undefined;
 
@@ -170,6 +173,25 @@ export class PoiTable {
      */
     get loadedOk(): boolean {
         return this.m_loadedOk === true;
+    }
+
+    /**
+     * Gets [[PoiTableEntry]] for poi name specified.
+     *
+     * @param poiName poi name or one of its alternative names if [[useAltNamesForKey]] is
+     * set to `true`.
+     * @returns [[PoiTableEntry]] object or undefined if name was not found in dictionary.
+     */
+    getEntry(poiName: string): PoiTableEntry | undefined {
+        const entryIdx: number | undefined = this.poiDict.get(poiName);
+        if (entryIdx !== undefined) {
+            if (entryIdx < this.poiList.length) {
+                return this.poiList[entryIdx];
+            } else {
+                throw new Error("Poi table entry index out of stored list!");
+            }
+        }
+        return undefined;
     }
 
     /**
@@ -212,17 +234,17 @@ export class PoiTable {
                     if (PoiTableEntry.verifyJSON(tableEntry)) {
                         const newPoiEntry = new PoiTableEntry();
                         newPoiEntry.setup(tableEntry);
-                        this.poiList.push(newPoiEntry);
+                        const entryIdx = this.poiList.push(newPoiEntry) - 1;
 
                         if (!this.useAltNamesForKey) {
                             // Use actual name of entry as the key
                             if (newPoiEntry.name === undefined) {
                                 logger.warn(
                                     `load: Invalid entry in POI table '${poiTableUrl}' : ` +
-                                        `. No name set in entry: ${tableEntry.iconName}.`
+                                        `. No name set in entry: ${tableEntry}.`
                                 );
                             } else {
-                                this.poiDict.set(newPoiEntry.name, newPoiEntry);
+                                this.poiDict.set(newPoiEntry.name, entryIdx);
                             }
                         } else {
                             if (
@@ -231,19 +253,22 @@ export class PoiTable {
                             ) {
                                 // Use the list of alternative names as keys.
                                 for (const altName of newPoiEntry.altNames) {
-                                    this.poiDict.set(altName, newPoiEntry);
+                                    this.poiDict.set(altName, entryIdx);
                                 }
                             } else {
                                 logger.warn(
                                     `load: Invalid entry in POI table '${poiTableUrl}' : ` +
-                                        `No alternative names set in entry: ${tableEntry.iconName}.`
+                                        `No alternative names set in entry: ${JSON.stringify(
+                                            tableEntry
+                                        )}.`
                                 );
                             }
                         }
                     } else {
                         logger.warn(
-                            // tslint:disable-next-line: max-line-length
-                            `load: Invalid entry in POI table '${poiTableUrl}' : ${tableEntry.iconName}`
+                            `load: Invalid entry in POI table '${poiTableUrl}' : ${JSON.stringify(
+                                tableEntry
+                            )}`
                         );
                     }
                 }
