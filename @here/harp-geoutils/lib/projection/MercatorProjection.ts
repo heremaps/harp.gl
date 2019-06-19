@@ -44,9 +44,7 @@ class MercatorProjection extends Projection {
     readonly type: ProjectionType = ProjectionType.Planar;
 
     getScaleFactor(worldPoint: Vector3Like): number {
-        return Math.cosh(
-            2 * Math.PI * (worldPoint.y / EarthConstants.EQUATORIAL_CIRCUMFERENCE - 0.5)
-        );
+        return Math.cosh(2 * Math.PI * (worldPoint.y / this.unitScale - 0.5));
     }
 
     worldExtent<WorldBoundingBox extends Box3Like>(
@@ -60,8 +58,8 @@ class MercatorProjection extends Projection {
         result.min.x = 0;
         result.min.y = 0;
         result.min.z = minAltitude;
-        result.max.x = EarthConstants.EQUATORIAL_CIRCUMFERENCE;
-        result.max.y = EarthConstants.EQUATORIAL_CIRCUMFERENCE;
+        result.max.x = this.unitScale;
+        result.max.y = this.unitScale;
         result.max.z = maxAltitude;
         return result;
     }
@@ -86,20 +84,18 @@ class MercatorProjection extends Projection {
             // tslint:disable-next-line:no-object-literal-type-assertion
             result = { x: 0, y: 0, z: 0 } as WorldCoordinates;
         }
-        result.x = ((geoPoint.longitude + 180) / 360) * EarthConstants.EQUATORIAL_CIRCUMFERENCE;
+        result.x = ((geoPoint.longitude + 180) / 360) * this.unitScale;
         result.y =
             (MercatorProjection.latitudeClampProject(geoPoint.latitudeInRadians) * 0.5 + 0.5) *
-            EarthConstants.EQUATORIAL_CIRCUMFERENCE;
+            this.unitScale;
         result.z = geoPoint.altitude || 0;
         return result;
     }
 
     unprojectPoint(worldPoint: Vector3Like): GeoCoordinates {
         const geoPoint = GeoCoordinates.fromRadians(
-            MercatorProjection.unprojectLatitude(
-                (worldPoint.y / EarthConstants.EQUATORIAL_CIRCUMFERENCE - 0.5) * 2.0
-            ),
-            (worldPoint.x / EarthConstants.EQUATORIAL_CIRCUMFERENCE) * 2 * Math.PI - Math.PI,
+            MercatorProjection.unprojectLatitude((worldPoint.y / this.unitScale - 0.5) * 2.0),
+            (worldPoint.x / this.unitScale) * 2 * Math.PI - Math.PI,
             worldPoint.z
         );
         return geoPoint;
@@ -113,18 +109,17 @@ class MercatorProjection extends Projection {
         const worldNorth =
             (MercatorProjection.latitudeClampProject(geoBox.northEast.latitudeInRadians) * 0.5 +
                 0.5) *
-            EarthConstants.EQUATORIAL_CIRCUMFERENCE;
+            this.unitScale;
         const worldSouth =
             (MercatorProjection.latitudeClampProject(geoBox.southWest.latitudeInRadians) * 0.5 +
                 0.5) *
-            EarthConstants.EQUATORIAL_CIRCUMFERENCE;
+            this.unitScale;
         const worldYCenter = (worldNorth + worldSouth) * 0.5;
 
         worldCenter.y = worldYCenter;
 
         const latitudeSpan = worldNorth - worldSouth;
-        const longitudeSpan =
-            (geoBox.longitudeSpan / 360) * EarthConstants.EQUATORIAL_CIRCUMFERENCE;
+        const longitudeSpan = (geoBox.longitudeSpan / 360) * this.unitScale;
         if (!result) {
             result = MathUtils.newEmptyBox3() as WorldBoundingBox;
         }
@@ -204,7 +199,7 @@ class MercatorProjection extends Projection {
             }
 
             result.x = worldPos.x;
-            result.y = EarthConstants.EQUATORIAL_CIRCUMFERENCE - worldPos.y;
+            result.y = this.unitScale - worldPos.y;
             result.z = worldPos.z;
 
             return result;
@@ -248,18 +243,16 @@ class WebMercatorProjection extends MercatorProjection {
             result = { x: 0, y: 0, z: 0 } as WorldCoordinates;
         }
 
-        result.x = ((geoPoint.longitude + 180) / 360) * EarthConstants.EQUATORIAL_CIRCUMFERENCE;
+        result.x = ((geoPoint.longitude + 180) / 360) * this.unitScale;
         const sy = Math.sin(MercatorProjection.latitudeClamp(geoPoint.latitudeInRadians));
-        result.y =
-            (0.5 - Math.log((1 + sy) / (1 - sy)) / (4 * Math.PI)) *
-            EarthConstants.EQUATORIAL_CIRCUMFERENCE;
+        result.y = (0.5 - Math.log((1 + sy) / (1 - sy)) / (4 * Math.PI)) * this.unitScale;
         result.z = geoPoint.altitude || 0;
         return result;
     }
 
     unprojectPoint(worldPoint: Vector3Like): GeoCoordinates {
-        const x = worldPoint.x / EarthConstants.EQUATORIAL_CIRCUMFERENCE - 0.5;
-        const y = 0.5 - worldPoint.y / EarthConstants.EQUATORIAL_CIRCUMFERENCE;
+        const x = worldPoint.x / this.unitScale - 0.5;
+        const y = 0.5 - worldPoint.y / this.unitScale;
 
         const longitude = 360 * x;
         const latitude = 90 - (360 * Math.atan(Math.exp(-y * 2 * Math.PI))) / Math.PI;
@@ -305,9 +298,13 @@ class WebMercatorProjection extends MercatorProjection {
 /**
  * Mercator [[Projection]] used to convert geo coordinates to world coordinates and vice versa.
  */
-export const mercatorProjection: Projection = new MercatorProjection();
+export const mercatorProjection: Projection = new MercatorProjection(
+    EarthConstants.EQUATORIAL_CIRCUMFERENCE
+);
 
 /**
  * Web Mercator [[Projection]] used to convert geo coordinates to world coordinates and vice versa.
  */
-export const webMercatorProjection: Projection = new WebMercatorProjection();
+export const webMercatorProjection: Projection = new WebMercatorProjection(
+    EarthConstants.EQUATORIAL_CIRCUMFERENCE
+);

@@ -37,6 +37,15 @@ export abstract class Projection {
     abstract get type(): ProjectionType;
 
     /**
+     * Constructs the Projection
+     *
+     * @param unitScale How to transform the projected coordinates to world units.
+     */
+    constructor(readonly unitScale: number) {
+        //Prevent empty constructor error.
+    }
+
+    /**
      * Returns the world extents in world coordinates.
      *
      * @param minElevation The minimum elevation in meters.
