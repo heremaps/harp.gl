@@ -5,7 +5,7 @@
  */
 
 import { GeoCoordinates } from "@here/harp-geoutils";
-import { MapViewEventNames, MapViewUtils, RenderEvent } from "@here/harp-mapview";
+import { MapAnchor, MapViewEventNames, RenderEvent } from "@here/harp-mapview";
 import * as THREE from "three";
 import { HelloWorldExample } from "./hello";
 
@@ -50,23 +50,13 @@ import "three/examples/js/loaders/FBXLoader";
  */
 export namespace ThreejsAddAnimatedObject {
     const mapView = HelloWorldExample.mapView;
-    const cameraPosition = new GeoCoordinates(
-        40.7039253742025,
-        -74.01438026902773,
-        188.88345172009798
-    );
-    mapView.geoCenter = cameraPosition;
-    MapViewUtils.setRotation(mapView, -40, 40);
 
     const figureGeoPosition = new GeoCoordinates(40.70497091, -74.0135);
-    const figureWorldPosition = mapView.projection.projectPoint(
-        figureGeoPosition,
-        new THREE.Vector3()
-    );
+    mapView.lookAt(figureGeoPosition, 190, 40, 40);
 
     const clock = new THREE.Clock();
 
-    let figure: THREE.Group | undefined;
+    let figure: MapAnchor<THREE.Group> | undefined;
     let mixer: THREE.AnimationMixer | undefined;
     const onLoad = (object: any) => {
         mixer = new THREE.AnimationMixer(object);
@@ -84,7 +74,8 @@ export namespace ThreejsAddAnimatedObject {
         figure.name = "guy";
 
         // snippet:harp_gl_threejs_add_animated-object_add_to_scene.ts
-        mapView.scene.add(figure);
+        figure.geoPosition = figureGeoPosition;
+        mapView.mapAnchors.add(figure);
         // end:harp_gl_threejs_add_animated-object_add_to_scene.ts
     };
 
@@ -94,10 +85,6 @@ export namespace ThreejsAddAnimatedObject {
     // end:harp_gl_threejs_add_animated-object_load.ts
 
     const onRender = (event: RenderEvent) => {
-        if (figure) {
-            figure.position.copy(figureWorldPosition).sub(mapView.worldCenter);
-        }
-
         if (mixer) {
             // snippet:harp_gl_threejs_add_animated-object_update_animation.ts
             const delta = clock.getDelta();

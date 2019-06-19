@@ -14,7 +14,7 @@ import { Vector3Like } from "../math/Vector3Like";
 import { EarthConstants } from "./EarthConstants";
 import { Projection, ProjectionType } from "./Projection";
 
-export class MercatorProjection implements Projection {
+class MercatorProjection extends Projection {
     static MAXIMUM_LATITUDE: number = 1.4844222297453323;
 
     protected static clamp(val: number, min: number, max: number): number {
@@ -44,9 +44,7 @@ export class MercatorProjection implements Projection {
     readonly type: ProjectionType = ProjectionType.Planar;
 
     getScaleFactor(worldPoint: Vector3Like): number {
-        return Math.cosh(
-            2 * Math.PI * (worldPoint.y / EarthConstants.EQUATORIAL_CIRCUMFERENCE - 0.5)
-        );
+        return Math.cosh(2 * Math.PI * (worldPoint.y / this.unitScale - 0.5));
     }
 
     worldExtent<WorldBoundingBox extends Box3Like>(
@@ -60,8 +58,8 @@ export class MercatorProjection implements Projection {
         result.min.x = 0;
         result.min.y = 0;
         result.min.z = minAltitude;
-        result.max.x = EarthConstants.EQUATORIAL_CIRCUMFERENCE;
-        result.max.y = EarthConstants.EQUATORIAL_CIRCUMFERENCE;
+        result.max.x = this.unitScale;
+        result.max.y = this.unitScale;
         result.max.z = maxAltitude;
         return result;
     }
@@ -86,20 +84,18 @@ export class MercatorProjection implements Projection {
             // tslint:disable-next-line:no-object-literal-type-assertion
             result = { x: 0, y: 0, z: 0 } as WorldCoordinates;
         }
-        result.x = ((geoPoint.longitude + 180) / 360) * EarthConstants.EQUATORIAL_CIRCUMFERENCE;
+        result.x = ((geoPoint.longitude + 180) / 360) * this.unitScale;
         result.y =
             (MercatorProjection.latitudeClampProject(geoPoint.latitudeInRadians) * 0.5 + 0.5) *
-            EarthConstants.EQUATORIAL_CIRCUMFERENCE;
+            this.unitScale;
         result.z = geoPoint.altitude || 0;
         return result;
     }
 
     unprojectPoint(worldPoint: Vector3Like): GeoCoordinates {
         const geoPoint = GeoCoordinates.fromRadians(
-            MercatorProjection.unprojectLatitude(
-                (worldPoint.y / EarthConstants.EQUATORIAL_CIRCUMFERENCE - 0.5) * 2.0
-            ),
-            (worldPoint.x / EarthConstants.EQUATORIAL_CIRCUMFERENCE) * 2 * Math.PI - Math.PI,
+            MercatorProjection.unprojectLatitude((worldPoint.y / this.unitScale - 0.5) * 2.0),
+            (worldPoint.x / this.unitScale) * 2 * Math.PI - Math.PI,
             worldPoint.z
         );
         return geoPoint;
@@ -113,18 +109,17 @@ export class MercatorProjection implements Projection {
         const worldNorth =
             (MercatorProjection.latitudeClampProject(geoBox.northEast.latitudeInRadians) * 0.5 +
                 0.5) *
-            EarthConstants.EQUATORIAL_CIRCUMFERENCE;
+            this.unitScale;
         const worldSouth =
             (MercatorProjection.latitudeClampProject(geoBox.southWest.latitudeInRadians) * 0.5 +
                 0.5) *
-            EarthConstants.EQUATORIAL_CIRCUMFERENCE;
+            this.unitScale;
         const worldYCenter = (worldNorth + worldSouth) * 0.5;
 
         worldCenter.y = worldYCenter;
 
         const latitudeSpan = worldNorth - worldSouth;
-        const longitudeSpan =
-            (geoBox.longitudeSpan / 360) * EarthConstants.EQUATORIAL_CIRCUMFERENCE;
+        const longitudeSpan = (geoBox.longitudeSpan / 360) * this.unitScale;
         if (!result) {
             result = MathUtils.newEmptyBox3() as WorldBoundingBox;
         }
@@ -183,9 +178,133 @@ export class MercatorProjection implements Projection {
         }
         return normal;
     }
+
+    reprojectPoint(
+        sourceProjection: Projection,
+        worldPos: Vector3Like,
+        result?: Vector3Like
+    ): Vector3Like {
+        // this implementation of [[reprojectPoint]] supports both
+        // [[WebMercatorProjection]] and [[MercatorProjection]]. The only
+        // difference betweeen these two variants of WEB Mercator
+        // is in the orientation of the Y axis, so we just flip Y coordinates
+        // when reprojecting between them.
+        if (
+            sourceProjection !== this &&
+            (sourceProjection === webMercatorProjection || sourceProjection === mercatorProjection)
+        ) {
+            if (result === undefined) {
+                // tslint:disable-next-line: no-object-literal-type-assertion
+                result = {} as Vector3Like;
+            }
+
+            result.x = worldPos.x;
+            result.y = this.unitScale - worldPos.y;
+            result.z = worldPos.z;
+
+            return result;
+        }
+
+        return super.reprojectPoint(sourceProjection, worldPos, result!);
+    }
+}
+
+class WebMercatorProjection extends MercatorProjection {
+    static readonly MAXIMUM_LATITUDE: number = 1.4844222297453323;
+
+    projectPoint<WorldCoordinates extends Vector3Like>(
+        geoPointLike: GeoCoordinatesLike,
+        result?: WorldCoordinates
+    ): WorldCoordinates {
+        let geoPoint: GeoCoordinates;
+
+        if (geoPointLike instanceof GeoCoordinates) {
+            geoPoint = geoPointLike;
+        } else {
+            geoPoint = new GeoCoordinates(
+                geoPointLike.latitude,
+                geoPointLike.longitude,
+                geoPointLike.altitude
+            );
+        }
+
+        /*
+         * The following tslint:disable is due to the fact that the [[WorldCoordinates]]
+         * might be a concrete class which is not available at runtime.
+         * Consider the following example:
+         *
+         *  const x: THREE.Vector3 = new THREE.Vector3(0,0,0);
+         *  const result = EquirectangularProjection.projectPoint<THREE.Vector3>(x);
+         *
+         * Note: type of `result` is Vector3Like and not as expected: THREE.Vector3!
+         */
+        if (!result) {
+            // tslint:disable-next-line:no-object-literal-type-assertion
+            result = { x: 0, y: 0, z: 0 } as WorldCoordinates;
+        }
+
+        result.x = ((geoPoint.longitude + 180) / 360) * this.unitScale;
+        const sy = Math.sin(MercatorProjection.latitudeClamp(geoPoint.latitudeInRadians));
+        result.y = (0.5 - Math.log((1 + sy) / (1 - sy)) / (4 * Math.PI)) * this.unitScale;
+        result.z = geoPoint.altitude || 0;
+        return result;
+    }
+
+    unprojectPoint(worldPoint: Vector3Like): GeoCoordinates {
+        const x = worldPoint.x / this.unitScale - 0.5;
+        const y = 0.5 - worldPoint.y / this.unitScale;
+
+        const longitude = 360 * x;
+        const latitude = 90 - (360 * Math.atan(Math.exp(-y * 2 * Math.PI))) / Math.PI;
+
+        return new GeoCoordinates(latitude, longitude, worldPoint.z);
+    }
+
+    projectBox<WorldBoundingBox extends Box3Like | OrientedBox3Like>(
+        geoBox: GeoBox,
+        result?: WorldBoundingBox
+    ): WorldBoundingBox {
+        const r = super.projectBox(geoBox, result);
+        if (isOrientedBox3Like(r)) {
+            MathUtils.newVector3(1, 0, 0, r.xAxis);
+            MathUtils.newVector3(0, -1, 0, r.yAxis);
+            MathUtils.newVector3(0, 0, -1, r.zAxis);
+        }
+        return r;
+    }
+
+    unprojectBox(worldBox: Box3Like): GeoBox {
+        const minGeo = this.unprojectPoint(worldBox.min);
+        const maxGeo = this.unprojectPoint(worldBox.max);
+        const geoBox = new GeoBox(
+            new GeoCoordinates(maxGeo.latitude, minGeo.longitude, minGeo.altitude),
+            new GeoCoordinates(minGeo.latitude, maxGeo.longitude, maxGeo.altitude)
+        );
+        return geoBox;
+    }
+
+    surfaceNormal(_worldPoint: Vector3Like, normal?: Vector3Like) {
+        if (normal === undefined) {
+            normal = { x: 0, y: 0, z: -1 };
+        } else {
+            normal.x = 0;
+            normal.y = 0;
+            normal.z = -1;
+        }
+        return normal;
+    }
 }
 
 /**
  * Mercator [[Projection]] used to convert geo coordinates to world coordinates and vice versa.
  */
-export const mercatorProjection: Projection = new MercatorProjection();
+export const mercatorProjection: Projection = new MercatorProjection(
+    EarthConstants.EQUATORIAL_CIRCUMFERENCE
+);
+
+/**
+ * Web Mercator [[Projection]] used to convert geo coordinates to world coordinates and vice versa.
+ */
+export const webMercatorProjection: Projection = new WebMercatorProjection(
+    EarthConstants.EQUATORIAL_CIRCUMFERENCE
+);

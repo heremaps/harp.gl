@@ -5,7 +5,9 @@
  */
 
 import {
+    equirectangularProjection,
     mercatorProjection,
+    normalizedEquirectangularProjection,
     Projection,
     sphereProjection,
     webMercatorProjection
@@ -105,7 +107,7 @@ export interface Geometry {
     vertexAttributes: BufferAttribute[];
     interleavedVertexAttributes?: InterleavedBufferAttribute[];
     index?: BufferAttribute;
-    edgeIndex?: BufferAttribute | BufferAttribute[];
+    edgeIndex?: BufferAttribute;
     groups: Group[];
     uuid?: string;
 
@@ -200,6 +202,10 @@ export function getProjection(projectionName: string): Projection | never {
             return webMercatorProjection;
         case "sphere":
             return sphereProjection;
+        case "normalizedEquirectangular":
+            return normalizedEquirectangularProjection;
+        case "equirectangular":
+            return equirectangularProjection;
         default:
             throw new Error(`Unknown projection ${projectionName}`);
     } // switch
@@ -217,6 +223,10 @@ export function getProjectionName(projection: Projection): string | never {
         return "webMercator";
     } else if (projection === sphereProjection) {
         return "sphere";
+    } else if (projection === normalizedEquirectangularProjection) {
+        return "normalizedEquirectangular";
+    } else if (projection === equirectangularProjection) {
+        return "equirectangular";
     }
     throw new Error("Unknown projection");
 }

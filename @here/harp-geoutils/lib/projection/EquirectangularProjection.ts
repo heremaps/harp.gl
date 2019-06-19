@@ -11,11 +11,12 @@ import { Box3Like, isBox3Like } from "../math/Box3Like";
 import { MathUtils } from "../math/MathUtils";
 import { isOrientedBox3Like, OrientedBox3Like } from "../math/OrientedBox3Like";
 import { Vector3Like } from "../math/Vector3Like";
+import { EarthConstants } from "./EarthConstants";
 import { Projection, ProjectionType } from "./Projection";
 
 const DEG2RAD = Math.PI / 180;
 
-class EquirectangularProjection implements Projection {
+class EquirectangularProjection extends Projection {
     static geoToWorldScale: number = 1.0 / (2.0 * Math.PI);
     static worldToGeoScale: number = (2.0 * Math.PI) / 1.0;
 
@@ -36,8 +37,8 @@ class EquirectangularProjection implements Projection {
         result.min.x = 0.0;
         result.min.y = 0.0;
         result.min.z = minAltitude;
-        result.max.x = 1.0;
-        result.max.y = 0.5;
+        result.max.x = this.unitScale;
+        result.max.y = this.unitScale / 2;
         result.max.z = maxAltitude;
         return result;
     }
@@ -61,10 +62,13 @@ class EquirectangularProjection implements Projection {
             result = { x: 0, y: 0, z: 0 } as WorldCoordinates;
         }
         result.x =
-            (geoPoint.longitude * DEG2RAD + Math.PI) * EquirectangularProjection.geoToWorldScale;
+            (geoPoint.longitude * DEG2RAD + Math.PI) *
+            EquirectangularProjection.geoToWorldScale *
+            this.unitScale;
         result.y =
             (geoPoint.latitude * DEG2RAD + Math.PI * 0.5) *
-            EquirectangularProjection.geoToWorldScale;
+            EquirectangularProjection.geoToWorldScale *
+            this.unitScale;
         result.z = geoPoint.altitude || 0;
         return result;
     }
@@ -92,10 +96,10 @@ class EquirectangularProjection implements Projection {
             result = MathUtils.newEmptyBox3() as WorldBoundingBox;
         }
         if (isBox3Like(result)) {
-            result.min.x = worldCenter.x - sizeX * 0.5;
-            result.min.y = worldCenter.y - sizeY * 0.5;
-            result.max.x = worldCenter.x + sizeX * 0.5;
-            result.max.y = worldCenter.y + sizeY * 0.5;
+            result.min.x = worldCenter.x - sizeX * 0.5 * this.unitScale;
+            result.min.y = worldCenter.y - sizeY * 0.5 * this.unitScale;
+            result.max.x = worldCenter.x + sizeX * 0.5 * this.unitScale;
+            result.max.y = worldCenter.y + sizeY * 0.5 * this.unitScale;
             if (altitudeSpan !== undefined) {
                 result.min.z = worldCenter.z - altitudeSpan * 0.5;
                 result.max.z = worldCenter.z + altitudeSpan * 0.5;
@@ -110,8 +114,8 @@ class EquirectangularProjection implements Projection {
             result.position.x = worldCenter.x;
             result.position.y = worldCenter.y;
             result.position.z = worldCenter.z;
-            result.extents.x = sizeX * 0.5;
-            result.extents.y = sizeY * 0.5;
+            result.extents.x = sizeX * 0.5 * this.unitScale;
+            result.extents.y = sizeY * 0.5 * this.unitScale;
             result.extents.z = Math.max(Number.EPSILON, (altitudeSpan || 0) * 0.5);
         }
         return result;
@@ -145,7 +149,15 @@ class EquirectangularProjection implements Projection {
 }
 
 /**
+ * Equirectangular [[Projection]] used to convert geo coordinates to unit coordinates and vice
+ * versa.
+ */
+export const normalizedEquirectangularProjection: Projection = new EquirectangularProjection(1);
+
+/**
  * Equirectangular [[Projection]] used to convert geo coordinates to world coordinates and vice
  * versa.
  */
-export const equirectangularProjection: Projection = new EquirectangularProjection();
+export const equirectangularProjection: Projection = new EquirectangularProjection(
+    EarthConstants.EQUATORIAL_CIRCUMFERENCE
+);

@@ -12,7 +12,7 @@ import {
 import { MapEnv, StyleSetEvaluator } from "@here/harp-datasource-protocol/index-decoder";
 import * as THREE from "three";
 
-import { GeoCoordinates } from "@here/harp-geoutils";
+import { webMercatorProjection } from "@here/harp-geoutils";
 import { ILineGeometry, IPolygonGeometry } from "./IGeometryProcessor";
 import { IOmvEmitter, OmvDecoder, Ring } from "./OmvDecoder";
 
@@ -46,14 +46,14 @@ export class OmvTileInfoEmitter implements IOmvEmitter {
 
     processPointFeature(
         layer: string,
-        geometry: GeoCoordinates[],
+        geometry: THREE.Vector3[],
         env: MapEnv,
         techniques: IndexedTechnique[],
         featureId: number | undefined
     ): void {
         const tileInfoWriter = this.m_tileInfoWriter;
 
-        const { projection, center } = this.m_decodeInfo;
+        const { targetProjection, center } = this.m_decodeInfo;
 
         const worldPos = new THREE.Vector3();
 
@@ -64,8 +64,10 @@ export class OmvTileInfoEmitter implements IOmvEmitter {
 
             const infoTileTechniqueIndex = tileInfoWriter.addTechnique(technique);
 
-            for (const geoPos of geometry) {
-                const { x, y } = projection.projectPoint(geoPos, worldPos).sub(center);
+            for (const pos of geometry) {
+                const { x, y } = targetProjection
+                    .reprojectPoint(webMercatorProjection, pos, worldPos)
+                    .sub(center);
 
                 tileInfoWriter.addFeature(
                     this.m_tileInfo.pointGroup,
@@ -90,7 +92,7 @@ export class OmvTileInfoEmitter implements IOmvEmitter {
     ): void {
         const tileInfoWriter = this.m_tileInfoWriter;
 
-        const { projection, center } = this.m_decodeInfo;
+        const { targetProjection, center } = this.m_decodeInfo;
 
         const worldPos = new THREE.Vector3();
 
@@ -98,8 +100,10 @@ export class OmvTileInfoEmitter implements IOmvEmitter {
 
         for (const polyline of geometry) {
             const line: number[] = [];
-            for (const geoPos of polyline.coordinates) {
-                const { x, y } = projection.projectPoint(geoPos, worldPos).sub(center);
+            for (const pos of polyline.positions) {
+                const { x, y } = targetProjection
+                    .reprojectPoint(webMercatorProjection, pos, worldPos)
+                    .sub(center);
                 line.push(x, y);
             }
             lines.push(line);
@@ -156,7 +160,7 @@ export class OmvTileInfoEmitter implements IOmvEmitter {
 
         const tileInfoWriter = this.m_tileInfoWriter;
 
-        const { projection, center } = this.m_decodeInfo;
+        const { targetProjection, center } = this.m_decodeInfo;
 
         const polygons: Ring[][] = [];
 
@@ -166,8 +170,10 @@ export class OmvTileInfoEmitter implements IOmvEmitter {
             const rings: Ring[] = [];
             for (const outline of polygon.rings) {
                 const contour: number[] = [];
-                for (const geoPoint of outline.coordinates) {
-                    const { x, y, z } = projection.projectPoint(geoPoint, worldPos).sub(center);
+                for (const pos of outline.positions) {
+                    const { x, y, z } = targetProjection
+                        .reprojectPoint(webMercatorProjection, pos, worldPos)
+                        .sub(center);
                     contour.push(x, y, z);
                 }
                 rings.push(new Ring(3, contour));
@@ -194,11 +200,15 @@ export class OmvTileInfoEmitter implements IOmvEmitter {
 
         for (const rings of polygons) {
             // rings are shared between techniques
+            if (rings.length === 0) {
+                continue;
+            }
+            const outerRingWinding = rings[0].winding;
             for (const aRing of rings) {
                 tileInfoWriter.addRingPoints(
                     this.m_tileInfo.polygonGroup,
                     aRing.contour,
-                    aRing.isOuterRing
+                    aRing.winding === outerRingWinding
                 );
             }
         }

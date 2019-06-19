@@ -68,7 +68,8 @@ export namespace WebTileDataSourceExample {
     });
     // end:harp_gl_datasource_webtile_1.ts
 
-    mapView.geoCenter = new GeoCoordinates(40.702, -74.01154);
+    const NY = new GeoCoordinates(40.707, -74.01);
+    mapView.lookAt(NY, 4000, 40);
 
     // snippet:harp_gl_datasource_webtile_2.ts
     mapView.addDataSource(webTileDataSource);

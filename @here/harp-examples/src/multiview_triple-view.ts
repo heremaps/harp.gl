@@ -192,7 +192,8 @@ export namespace TripleViewExample {
         );
 
         // center the camera somewhere around Berlin geo locations
-        mapView.geoCenter = new GeoCoordinates(52.518611, 13.376111, 0);
+        const berlin = new GeoCoordinates(52.518611, 13.376111);
+        mapView.lookAt(berlin, 1000);
 
         setupSyncViewsGrid(mapView, gridPositionX, gridPositionY);
         // react on resize events
@@ -287,12 +288,9 @@ export namespace TripleViewExample {
         otherViews.splice(index, 1);
         // tslint:disable-next-line:no-unused-variable
         otherViews.forEach((otherView: ViewControlPair, indexTemp: number) => {
-            v.mapControls.addEventListener(
-                "update",
-                (): void => {
-                    syncMapViews(views[index], otherViews[indexTemp]);
-                }
-            );
+            v.mapControls.addEventListener("update", (): void => {
+                syncMapViews(views[index], otherViews[indexTemp]);
+            });
         });
     });
     // end:harp_gl_multiview_tripleView_3.ts

@@ -12,6 +12,7 @@ import { MathUtils } from "../math/MathUtils";
 import { isOrientedBox3Like, OrientedBox3Like } from "../math/OrientedBox3Like";
 import { Vector3Like } from "../math/Vector3Like";
 import { EarthConstants } from "./EarthConstants";
+import { mercatorProjection, webMercatorProjection } from "./MercatorProjection";
 import { Projection, ProjectionType } from "./Projection";
 
 /**
@@ -61,9 +62,12 @@ function lengthOfVector3(worldPoint: Vector3Like): number {
  * @param geoBox Ghe given geobox
  * @param worldBox The resulting axis aligned bounding box.
  */
-function makeBox3<Bounds extends Box3Like>(geoBox: GeoBox, worldBox: Bounds): Bounds {
-    const halfEquatorialRadius =
-        (EarthConstants.EQUATORIAL_RADIUS + (geoBox.maxAltitude || 0)) * 0.5;
+function makeBox3<Bounds extends Box3Like>(
+    geoBox: GeoBox,
+    worldBox: Bounds,
+    unitScale: number
+): Bounds {
+    const halfEquatorialRadius = (unitScale + (geoBox.maxAltitude || 0)) * 0.5;
 
     const minLongitude = MathUtils.degToRad(geoBox.west);
     const maxLongitude = MathUtils.degToRad(geoBox.east);
@@ -134,9 +138,10 @@ function makeBox3<Bounds extends Box3Like>(geoBox: GeoBox, worldBox: Bounds): Bo
  */
 function project<WorldCoordinates extends Vector3Like>(
     geoPoint: GeoCoordinatesLike,
-    worldpoint: WorldCoordinates
+    worldpoint: WorldCoordinates,
+    unitScale: number
 ): typeof worldpoint {
-    const radius = EarthConstants.EQUATORIAL_RADIUS + (geoPoint.altitude || 0);
+    const radius = unitScale + (geoPoint.altitude || 0);
     const latitude = MathUtils.degToRad(geoPoint.latitude);
     const longitude = MathUtils.degToRad(geoPoint.longitude);
     const cosLatitude = Math.cos(latitude);
@@ -146,7 +151,7 @@ function project<WorldCoordinates extends Vector3Like>(
     return worldpoint;
 }
 
-class SphereProjection implements Projection {
+class SphereProjection extends Projection {
     readonly type: ProjectionType = ProjectionType.Spherical;
 
     worldExtent<Bounds extends Box3Like>(
@@ -154,7 +159,7 @@ class SphereProjection implements Projection {
         maxElevation: number,
         result: Bounds = MathUtils.newEmptyBox3() as Bounds
     ): Bounds {
-        const radius = EarthConstants.EQUATORIAL_RADIUS + maxElevation;
+        const radius = this.unitScale + maxElevation;
         result.min.x = -radius;
         result.min.y = -radius;
         result.min.z = -radius;
@@ -168,7 +173,7 @@ class SphereProjection implements Projection {
         geoPoint: GeoCoordinatesLike,
         result: WorldCoordinates = MathUtils.newVector3(0, 0, 0) as WorldCoordinates
     ): WorldCoordinates {
-        return project(geoPoint, result);
+        return project(geoPoint, result, this.unitScale);
     }
 
     unprojectPoint(point: Vector3Like): GeoCoordinates {
@@ -177,7 +182,7 @@ class SphereProjection implements Projection {
         const v = point.z / parallelRadius;
 
         if (isNaN(v)) {
-            return GeoCoordinates.fromRadians(0, 0, -EarthConstants.EQUATORIAL_RADIUS);
+            return GeoCoordinates.fromRadians(0, 0, -this.unitScale);
         }
 
         const radius = Math.sqrt(parallelRadiusSq + point.z * point.z);
@@ -185,7 +190,7 @@ class SphereProjection implements Projection {
         return GeoCoordinates.fromRadians(
             Math.atan(v),
             Math.atan2(point.y, point.x),
-            radius - EarthConstants.EQUATORIAL_RADIUS
+            radius - this.unitScale
         );
     }
 
@@ -194,10 +199,10 @@ class SphereProjection implements Projection {
         result: Bounds = MathUtils.newEmptyBox3() as Bounds
     ): Bounds {
         if (isBox3Like(result)) {
-            return makeBox3(geoBox, result);
+            return makeBox3(geoBox, result, this.unitScale);
         } else if (isOrientedBox3Like(result)) {
             if (geoBox.longitudeSpan >= 90) {
-                const bounds = makeBox3(geoBox, MathUtils.newEmptyBox3());
+                const bounds = makeBox3(geoBox, MathUtils.newEmptyBox3(), this.unitScale);
                 MathUtils.newVector3(1, 0, 0, result.xAxis);
                 MathUtils.newVector3(0, 1, 0, result.yAxis);
                 MathUtils.newVector3(0, 0, 1, result.zAxis);
@@ -277,8 +282,8 @@ class SphereProjection implements Projection {
                     sinMidY * cosSouth * (cosMidX * cosEast + sinMidX * sinEast);
             }
 
-            const rMax = (EarthConstants.EQUATORIAL_RADIUS + (geoBox.maxAltitude || 0)) * 0.5;
-            const rMin = (EarthConstants.EQUATORIAL_RADIUS + (geoBox.minAltitude || 0)) * 0.5;
+            const rMax = (this.unitScale + (geoBox.maxAltitude || 0)) * 0.5;
+            const rMin = (this.unitScale + (geoBox.minAltitude || 0)) * 0.5;
 
             // min(dot(southEast, zAxis), dot(northEast, zAxis))
 
@@ -319,11 +324,11 @@ class SphereProjection implements Projection {
     }
 
     groundDistance(worldPoint: Vector3Like): number {
-        return lengthOfVector3(worldPoint) - EarthConstants.EQUATORIAL_RADIUS;
+        return lengthOfVector3(worldPoint) - this.unitScale;
     }
 
     scalePointToSurface(worldPoint: Vector3Like): Vector3Like {
-        const scale = EarthConstants.EQUATORIAL_RADIUS / (lengthOfVector3(worldPoint) || 1);
+        const scale = this.unitScale / (lengthOfVector3(worldPoint) || 1);
         worldPoint.x *= scale;
         worldPoint.y *= scale;
         worldPoint.z *= scale;
@@ -340,6 +345,41 @@ class SphereProjection implements Projection {
         normal.z = worldPoint.z * scale;
         return normal;
     }
+
+    reprojectPoint(
+        sourceProjection: Projection,
+        worldPos: Vector3Like,
+        result?: Vector3Like
+    ): Vector3Like {
+        if (sourceProjection === mercatorProjection || sourceProjection === webMercatorProjection) {
+            const { x, y, z } = worldPos;
+            const r = this.unitScale;
+            const mx = x / r - Math.PI;
+            const my = y / r - Math.PI;
+            const w = Math.exp(my);
+            const d = w * w;
+            const gx = (2 * w) / (d + 1);
+            const gy = (d - 1) / (d + 1);
+            const scale = r + z;
+
+            if (result === undefined) {
+                // tslint:disable-next-line: no-object-literal-type-assertion
+                result = {} as Vector3Like;
+            }
+
+            result.x = Math.cos(mx) * gx * scale;
+            result.y = Math.sin(mx) * gx * scale;
+            result.z = gy * scale;
+
+            if (sourceProjection === webMercatorProjection) {
+                result.z = -result.z;
+            }
+
+            return result;
+        }
+
+        return super.reprojectPoint(sourceProjection, worldPos, result!);
+    }
 }
 
-export const sphereProjection = new SphereProjection();
+export const sphereProjection: Projection = new SphereProjection(EarthConstants.EQUATORIAL_RADIUS);

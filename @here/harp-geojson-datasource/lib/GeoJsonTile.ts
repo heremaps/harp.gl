@@ -6,6 +6,7 @@
 
 import {
     DecodedTile,
+    getPropertyValue,
     isPoiTechnique,
     isTextTechnique,
     PoiTechnique,
@@ -18,6 +19,7 @@ import {
     Tile,
     TileObject
 } from "@here/harp-mapview";
+import { TileGeometryCreator } from "@here/harp-mapview/lib/geometry/TileGeometryCreator";
 import { ContextualArabicConverter } from "@here/harp-text-canvas";
 import * as THREE from "three";
 import {
@@ -95,7 +97,6 @@ export class GeoJsonTile extends Tile {
     static readonly POINT_MARKER_SIZE = 128;
 
     private m_currentZoomLevel: number | undefined;
-    private m_preparedPaths?: GeoJsonTextPathGeometry[];
 
     /**
      * Tiles render at all zoom levels. This method stores the zoom level in order to know how to
@@ -126,12 +127,14 @@ export class GeoJsonTile extends Tile {
      * @param decodedTile The decoded tile received by the [[GeoJsonDecoder]].
      */
     createTextElements(decodedTile: DecodedTile) {
+        const tileGeometryCreator = new TileGeometryCreator();
+
         if (decodedTile.poiGeometries !== undefined) {
             for (const geometry of decodedTile.poiGeometries) {
                 const techniqueIndex = geometry.technique!;
                 const technique = decodedTile.techniques[techniqueIndex];
                 if (isPoiTechnique(technique)) {
-                    this.addPois(geometry, technique);
+                    this.addPois(tileGeometryCreator, geometry, technique);
                 }
             }
         }
@@ -140,17 +143,21 @@ export class GeoJsonTile extends Tile {
                 const techniqueIndex = geometry.technique!;
                 const technique = decodedTile.techniques[techniqueIndex];
                 if (isTextTechnique(technique)) {
-                    this.addTexts(geometry, technique);
+                    this.addTexts(tileGeometryCreator, geometry, technique);
                 }
             }
         }
+
         if (decodedTile.textPathGeometries !== undefined) {
-            this.m_preparedPaths = this.prepareTextPaths(decodedTile.textPathGeometries);
-            for (const textPath of this.m_preparedPaths) {
+            this.preparedTextPaths = tileGeometryCreator.prepareTextPaths(
+                this,
+                decodedTile.textPathGeometries
+            );
+            for (const textPath of this.preparedTextPaths) {
                 const techniqueIndex = textPath.technique!;
                 const technique = decodedTile.techniques[techniqueIndex];
                 if (isTextTechnique(technique)) {
-                    this.addTextPaths(textPath, technique);
+                    this.addTextPaths(tileGeometryCreator, textPath, technique);
                 }
             }
         }
@@ -159,10 +166,15 @@ export class GeoJsonTile extends Tile {
     /**
      * Calls `addTextPath` for each TextPath.
      *
+     * @param tileGeometryCreator [[TileGeometryCreator]] to help with the text path.
      * @param geometry The TextPath geometry.
      * @param technique Text technique.
      */
-    private addTextPaths(geometry: GeoJsonTextPathGeometry, technique: TextTechnique) {
+    private addTextPaths(
+        tileGeometryCreator: TileGeometryCreator,
+        geometry: GeoJsonTextPathGeometry,
+        technique: TextTechnique
+    ) {
         const path: THREE.Vector3[] = [];
         for (let i = 0; i < geometry.path.length; i += 3) {
             path.push(
@@ -171,17 +183,20 @@ export class GeoJsonTile extends Tile {
         }
 
         const properties = geometry.objInfos !== undefined ? geometry.objInfos : undefined;
-        this.addTextPath(path, geometry.text, technique, properties);
+        this.addTextPath(tileGeometryCreator, path, geometry.text, technique, properties);
     }
 
     /**
      * Add a label available for mouse picking at the given path.
      *
+     * @param tileGeometryCreator [[TileGeometryCreator]] to help with the text path.
      * @param path Path of the text path.
+     * @param text Text of the path.
      * @param technique Technique in use.
      * @param geojsonProperties Properties defined by the user.
      */
     private addTextPath(
+        tileGeometryCreator: TileGeometryCreator,
         path: THREE.Vector3[],
         text: string,
         technique: TextTechnique,
@@ -199,9 +214,9 @@ export class GeoJsonTile extends Tile {
         const textElement = new TextElement(
             ContextualArabicConverter.instance.convert(text),
             path,
-            this.getRenderStyle(technique),
-            this.getLayoutStyle(technique),
-            priority,
+            tileGeometryCreator.getRenderStyle(this, technique),
+            tileGeometryCreator.getLayoutStyle(this, technique),
+            getPropertyValue(priority, this.mapView.zoomLevel),
             xOffset,
             yOffset,
             featureId
@@ -233,10 +248,15 @@ export class GeoJsonTile extends Tile {
     /**
      * Calls `addText` on each vertex of the geometry.
      *
+     * @param tileGeometryCreator [[TileGeometryCreator]] to help with the text path.
      * @param geometry The Text geometry.
      * @param technique Text technique.
      */
-    private addTexts(geometry: GeoJsonTextGeometry, technique: TextTechnique) {
+    private addTexts(
+        tileGeometryCreator: TileGeometryCreator,
+        geometry: GeoJsonTextGeometry,
+        technique: TextTechnique
+    ) {
         const attribute = getBufferAttribute(geometry.positions);
 
         for (let index = 0; index < attribute.count; index++) {
@@ -249,18 +269,21 @@ export class GeoJsonTile extends Tile {
             const properties =
                 geometry.objInfos !== undefined ? geometry.objInfos[index] : undefined;
             const text = geometry.stringCatalog![index] as string;
-            this.addText(currentVertexCache, text, technique, properties);
+            this.addText(tileGeometryCreator, currentVertexCache, text, technique, properties);
         }
     }
 
     /**
      * Add a label available for mouse picking at the given position.
      *
+     * @param tileGeometryCreator [[TileGeometryCreator]] to help with the text path.
      * @param position position of the labeled Icon, in world coordinate.
+     * @param text Text of the path.
      * @param technique Technique in use.
      * @param geojsonProperties Properties defined by the user.
      */
     private addText(
+        tileGeometryCreator: TileGeometryCreator,
         position: THREE.Vector3,
         text: string,
         technique: TextTechnique,
@@ -278,9 +301,9 @@ export class GeoJsonTile extends Tile {
         const textElement = new TextElement(
             ContextualArabicConverter.instance.convert(text),
             position,
-            this.getRenderStyle(technique),
-            this.getLayoutStyle(technique),
-            priority,
+            tileGeometryCreator.getRenderStyle(this, technique),
+            tileGeometryCreator.getLayoutStyle(this, technique),
+            getPropertyValue(priority, this.mapView.zoomLevel),
             xOffset,
             yOffset,
             featureId
@@ -308,10 +331,15 @@ export class GeoJsonTile extends Tile {
     /**
      * Calls `addPoi` on each vertex of the geometry.
      *
+     * @param tileGeometryCreator [[TileGeometryCreator]] to help with the text path.
      * @param geometry The POI geometry.
      * @param technique POI technique.
      */
-    private addPois(geometry: GeoJsonPoiGeometry, technique: PoiTechnique) {
+    private addPois(
+        tileGeometryCreator: TileGeometryCreator,
+        geometry: GeoJsonPoiGeometry,
+        technique: PoiTechnique
+    ) {
         const attribute = getBufferAttribute(geometry.positions);
 
         const currentVertexCache = new THREE.Vector3();
@@ -324,18 +352,24 @@ export class GeoJsonTile extends Tile {
             );
             const properties =
                 geometry.objInfos !== undefined ? geometry.objInfos[index] : undefined;
-            this.addPoi(currentVertexCache, technique, properties);
+            this.addPoi(tileGeometryCreator, currentVertexCache, technique, properties);
         }
     }
 
     /**
      * Add a POI available for mouse picking at the given position.
      *
+     * @param tileGeometryCreator [[TileGeometryCreator]] to help with the text path.
      * @param position position of the labeled Icon, in world coordinate.
      * @param technique Technique in use.
      * @param geojsonProperties Properties defined by the user.
      */
-    private addPoi(position: THREE.Vector3, technique: PoiTechnique, geojsonProperties?: {}) {
+    private addPoi(
+        tileGeometryCreator: TileGeometryCreator,
+        position: THREE.Vector3,
+        technique: PoiTechnique,
+        geojsonProperties?: {}
+    ) {
         const label = DEFAULT_LABELED_ICON.label;
         const priority =
             technique.priority === undefined ? DEFAULT_LABELED_ICON.priority : technique.priority;
@@ -349,9 +383,9 @@ export class GeoJsonTile extends Tile {
         const textElement = new TextElement(
             ContextualArabicConverter.instance.convert(label),
             position,
-            this.getRenderStyle(technique),
-            this.getLayoutStyle(technique),
-            priority,
+            tileGeometryCreator.getRenderStyle(this, technique),
+            tileGeometryCreator.getLayoutStyle(this, technique),
+            getPropertyValue(priority, this.mapView.zoomLevel),
             xOffset,
             yOffset,
             featureId

@@ -242,9 +242,8 @@ export class PoiTable {
                         }
                     } else {
                         logger.warn(
-                            `load: Invalid entry in POI table '${poiTableUrl}' : ${
-                                tableEntry.iconName
-                            }`
+                            // tslint:disable-next-line: max-line-length
+                            `load: Invalid entry in POI table '${poiTableUrl}' : ${tableEntry.iconName}`
                         );
                     }
                 }

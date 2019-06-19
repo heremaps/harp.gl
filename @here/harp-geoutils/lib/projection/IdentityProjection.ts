@@ -15,7 +15,7 @@ import { Projection, ProjectionType } from "./Projection";
 
 const DEG2RAD = Math.PI / 180;
 
-class IdentityProjection implements Projection {
+class IdentityProjection extends Projection {
     readonly type: ProjectionType = ProjectionType.Planar;
 
     getScaleFactor(_worldPoint: Vector3Like): number {
@@ -120,6 +120,6 @@ class IdentityProjection implements Projection {
 }
 
 /**
- * Identity [[Projection]] used to convert geo coordinates to world coordinates and vice versa.
+ * Identity [[Projection]] used to convert geo coordinates to unit coordinates and vice versa.
  */
-export const identityProjection: Projection = new IdentityProjection();
+export const identityProjection: Projection = new IdentityProjection(1);

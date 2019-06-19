@@ -577,9 +577,8 @@ export class ConcurrentWorkerSet {
                         worker.removeEventListener("message", listener);
                     } else {
                         logger.error(
-                            `[${
-                                this.m_options.scriptUrl
-                            }]: ConcurrentWorkerSet#terminateWorkers: invalid workerId`
+                            // tslint:disable-next-line: max-line-length
+                            `[${this.m_options.scriptUrl}]: ConcurrentWorkerSet#terminateWorkers: invalid workerId`
                         );
                     }
                     worker.terminate();

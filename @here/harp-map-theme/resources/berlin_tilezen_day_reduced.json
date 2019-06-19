@@ -1,12 +1,10 @@
 {
     "sky": {
-        "params": {
-            "type": "gradient",
-            "topColor": "#AAA69A",
-            "bottomColor": "#FBF6EE",
-            "groundColor": "#D4CDC0",
-            "monomialPower": 1
-        }
+        "type": "gradient",
+        "topColor": "#AAA69A",
+        "bottomColor": "#FBF6EE",
+        "groundColor": "#D4CDC0",
+        "monomialPower": 1
     },
     "fog": {
         "color": "#FBF6EE",
@@ -103,7 +101,6 @@
                 "when": "$layer == 'roads' && ((kind != 'rail') && ((kind == 'minor_road') && (((kind_detail == 'unclassified') || (kind_detail == 'residential')) || (kind_detail == 'service'))))",
                 "styles": [
                     {
-                        "category": "outline",
                         "technique": "solid-line",
                         "attr": {
                             "color": "#C4BCA4",
@@ -119,7 +116,6 @@
                         "renderOrder": 11
                     },
                     {
-                        "category": "fill",
                         "technique": "solid-line",
                         "attr": {
                             "color": "#DCD8CB",
@@ -142,8 +138,7 @@
                             "size": 16,
                             "priority": 15,
                             "fadeNear": 0.8,
-                            "fadeFar": 0.9,
-                            "clipping": false
+                            "fadeFar": 0.9
                         },
                         "renderOrder": 12
                     }
@@ -161,13 +156,11 @@
                     "size": 16,
                     "priority": 15,
                     "fadeNear": 0.8,
-                    "fadeFar": 0.9,
-                    "clipping": false
+                    "fadeFar": 0.9
                 },
                 "renderOrder": 12
             },
             {
-                "category": "fill",
                 "when": "$layer == 'roads' && ((kind != 'rail') && ((kind == 'major_road') && (kind_detail == 'secondary')))",
                 "technique": "solid-line",
                 "attr": {
@@ -200,14 +193,12 @@
                     "size": 16,
                     "priority": 20,
                     "fadeNear": 0.8,
-                    "fadeFar": 0.9,
-                    "clipping": false
+                    "fadeFar": 0.9
                 },
                 "renderOrder": 13
             },
             {
                 "description": "tertiary",
-                "category": "outline",
                 "when": "$layer == 'roads' && ((kind != 'rail') && ((kind == 'major_road') && kind_detail in ['primary','tertiary']))",
                 "technique": "solid-line",
                 "attr": {
@@ -225,7 +216,6 @@
             },
             {
                 "description": "tertiary",
-                "category": "fill",
                 "when": "$layer == 'roads' && ((kind != 'rail') && ((kind == 'major_road') && kind_detail in ['primary','tertiary']))",
                 "technique": "solid-line",
                 "attr": {
@@ -253,14 +243,12 @@
                     "size": 16,
                     "priority": 25,
                     "fadeNear": 0.8,
-                    "fadeFar": 0.9,
-                    "clipping": false
+                    "fadeFar": 0.9
                 },
                 "renderOrder": 10
             },
             {
                 "description": "primary",
-                "category": "outline",
                 "when": "$layer == 'roads' && ((kind != 'rail') && ((kind == 'highway') && ((kind_detail == 'motorway') || (kind_detail == 'primary'))))",
                 "technique": "solid-line",
                 "attr": {
@@ -278,7 +266,6 @@
             },
             {
                 "description": "primary",
-                "category": "fill",
                 "when": "$layer == 'roads' && ((kind != 'rail') && ((kind == 'highway') && ((kind_detail == 'motorway') || (kind_detail == 'primary'))))",
                 "technique": "solid-line",
                 "attr": {
@@ -306,8 +293,7 @@
                     "size": 14.4,
                     "priority": 25,
                     "fadeNear": 0.8,
-                    "fadeFar": 0.9,
-                    "clipping": false
+                    "fadeFar": 0.9
                 },
                 "renderOrder": 10
             },
@@ -358,7 +344,6 @@
                 "when": "$layer == 'roads' && ((kind != 'rail') && ((kind == 'path') && (kind_detail in ['pedestrian','path','footway'] || landuse_kind in ['park','residential','footway','garden','pedestrian','grass','allotments','forest','cemetery','natural_wood'])))",
                 "styles": [
                     {
-                        "category": "outline",
                         "technique": "solid-line",
                         "attr": {
                             "color": "#D2C9B1",
@@ -370,7 +355,6 @@
                         "renderOrder": 10.3
                     },
                     {
-                        "category": "fill",
                         "technique": "solid-line",
                         "attr": {
                             "color": "#CFCBBE",
@@ -391,8 +375,7 @@
                             "size": 16,
                             "priority": 15,
                             "fadeNear": 0.8,
-                            "fadeFar": 0.9,
-                            "clipping": false
+                            "fadeFar": 0.9
                         },
                         "renderOrder": 12
                     }
@@ -425,12 +408,11 @@
             },
             {
                 "description": "Railway+S-Bahn background",
-                "category": "outline",
                 "when": "$layer == 'roads' && (((($geometryType ^= 'line') && (kind == 'rail')) && kind_detail in ['rail','light_rail','tram']) && !(is_tunnel))",
                 "technique": "solid-line",
                 "attr": {
                     "color": "#AEA691",
-                    "xclipping": false,
+                    "clipping": false,
                     "lineWidth": {
                         "interpolation": "Linear",
                         "zoomLevels": [13, 14.6, 15],
@@ -441,12 +423,11 @@
             },
             {
                 "description": "Railway+S-Bahn background",
-                "category": "outline",
                 "when": "$layer == 'roads' && (((($geometryType ^= 'line') && (kind == 'rail')) && kind_detail in ['rail','light_rail','tram']) && is_tunnel)",
                 "technique": "solid-line",
                 "attr": {
                     "color": "#B3AA92",
-                    "xclipping": false,
+                    "clipping": false,
                     "lineWidth": {
                         "interpolation": "Linear",
                         "zoomLevels": [13, 14],
@@ -461,7 +442,7 @@
                 "technique": "dashed-line",
                 "attr": {
                     "color": "#9B9789",
-                    "xclipping": false,
+                    "clipping": false,
                     "dashSize": 1,
                     "gapSize": {
                         "interpolation": "Discrete",
@@ -483,7 +464,7 @@
                 "technique": "dashed-line",
                 "attr": {
                     "color": "#D5D1C4",
-                    "xclipping": false,
+                    "clipping": false,
                     "dashSize": {
                         "interpolation": "Discrete",
                         "zoomLevels": [10, 11, 12, 13, 14, 15, 16],
@@ -526,7 +507,6 @@
             },
             {
                 "description": "country border",
-                "category": "outline",
                 "when": "$layer ^= 'boundaries' && (($geometryType ^= 'line') && (kind == 'country'))",
                 "technique": "solid-line",
                 "attr": {
@@ -556,7 +536,6 @@
             },
             {
                 "description": "country border",
-                "category": "fill",
                 "when": "$layer ^= 'boundaries' && (($geometryType ^= 'line') && (kind == 'country'))",
                 "technique": "solid-line",
                 "attr": {
@@ -587,7 +566,6 @@
                 "technique": "dashed-line",
                 "attr": {
                     "color": "#8B8676",
-                    "secondaryColor": "#A7A291",
                     "lineWidth": {
                         "interpolation": "Linear",
                         "zoomLevels": [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
@@ -609,26 +587,6 @@
                             2
                         ]
                     },
-                    "secondaryWidth": {
-                        "interpolation": "Linear",
-                        "zoomLevels": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14],
-                        "values": [
-                            10000,
-                            8000,
-                            7000,
-                            5000,
-                            3000,
-                            2000,
-                            1000,
-                            500,
-                            250,
-                            120,
-                            80,
-                            40,
-                            20,
-                            10
-                        ]
-                    },
                     "dashSize": {
                         "interpolation": "Cubic",
                         "zoomLevels": [10, 11, 12, 13, 14],
@@ -640,8 +598,7 @@
                         "values": [512, 256, 128, 64, 32]
                     }
                 },
-                "renderOrder": 4.1,
-                "secondaryRenderOrder": 4
+                "renderOrder": 4.1
             },
             {
                 "description": "disputed border line - text",
@@ -657,7 +614,6 @@
             },
             {
                 "description": "region border",
-                "category": "outline",
                 "when": "$layer ^= 'boundaries' && (($geometryType ^= 'line') && (kind == 'region'))",
                 "technique": "solid-line",
                 "attr": {
@@ -889,7 +845,6 @@
                     "fontVariant": "SmallCaps",
                     "opacity": 0.8,
                     "textFadeTime": 0.75,
-                    "iconFadeTime": 0.5,
                     "fadeNear": 0.8,
                     "fadeFar": 0.9
                 },
@@ -912,7 +867,6 @@
                     "fontVariant": "SmallCaps",
                     "opacity": 0.8,
                     "textFadeTime": 0.75,
-                    "iconFadeTime": 0.5,
                     "fadeNear": 0.8,
                     "fadeFar": 0.9
                 },
@@ -935,7 +889,6 @@
                     "fontVariant": "SmallCaps",
                     "opacity": 0.8,
                     "textFadeTime": 0.75,
-                    "iconFadeTime": 0.5,
                     "fadeNear": 0.8,
                     "fadeFar": 0.9
                 },
@@ -977,7 +930,6 @@
                     "backgroundColor": "#FFFFFF",
                     "backgroundOpacity": 0.5,
                     "textFadeTime": 0.75,
-                    "iconFadeTime": 0.5,
                     "fadeNear": 0.8,
                     "fadeFar": 0.9
                 },
@@ -998,7 +950,6 @@
                     "backgroundColor": "#FFFFFF",
                     "backgroundOpacity": 0.5,
                     "textFadeTime": 0.75,
-                    "iconFadeTime": 0.5,
                     "fadeNear": 0.8,
                     "fadeFar": 0.9
                 },
@@ -1019,7 +970,6 @@
                     "backgroundColor": "#FFFFFF",
                     "backgroundOpacity": 0.5,
                     "textFadeTime": 0.75,
-                    "iconFadeTime": 0.5,
                     "fadeNear": 0.8,
                     "fadeFar": 0.9
                 },
@@ -1040,7 +990,6 @@
                     "backgroundColor": "#FFFFFF",
                     "backgroundOpacity": 0.5,
                     "textFadeTime": 0.75,
-                    "iconFadeTime": 0.5,
                     "fadeNear": 0.8,
                     "fadeFar": 0.9
                 },
@@ -1061,7 +1010,6 @@
                     "backgroundColor": "#FFFFFF",
                     "backgroundOpacity": 0.5,
                     "textFadeTime": 0.75,
-                    "iconFadeTime": 0.5,
                     "fadeNear": 0.8,
                     "fadeFar": 0.9
                 },
@@ -1082,7 +1030,6 @@
                     "backgroundColor": "#FFFFFF",
                     "backgroundOpacity": 0.5,
                     "textFadeTime": 0.75,
-                    "iconFadeTime": 0.5,
                     "fadeNear": 0.8,
                     "fadeFar": 0.9
                 },
@@ -1103,7 +1050,6 @@
                     "backgroundColor": "#FFFFFF",
                     "backgroundOpacity": 0.5,
                     "textFadeTime": 0.75,
-                    "iconFadeTime": 0.5,
                     "fadeNear": 0.8,
                     "fadeFar": 0.9
                 },
@@ -1124,7 +1070,6 @@
                     "backgroundColor": "#FFFFFF",
                     "backgroundOpacity": 0.5,
                     "textFadeTime": 0.75,
-                    "iconFadeTime": 0.5,
                     "fadeNear": 0.8,
                     "fadeFar": 0.9
                 },
@@ -1163,19 +1108,9 @@
                     "size": 14.4,
                     "opacity": 0.6,
                     "minZoomLevel": 17,
-                    "roughness": 1.95,
-                    "metalness": 0.85,
-                    "emissive": "#E7E7E3",
-                    "emissiveIntensity": 0.625,
-                    "footprint": true,
-                    "maxSlope": 0.9,
                     "lineWidth": 1,
-                    "lineColor": "#908D7D",
-                    "lineColorMix": 0.5,
                     "fadeNear": 0.9,
-                    "fadeFar": 1,
-                    "lineFadeNear": 0.25,
-                    "lineFadeFar": 1
+                    "fadeFar": 1
                 },
                 "renderOrder": 100
             }

@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { CubemapSkyParams } from "@here/harp-datasource-protocol";
+import { CubemapSky } from "@here/harp-datasource-protocol";
 import { LoggerManager } from "@here/harp-utils";
 import { CubeTexture, CubeTextureLoader, Texture } from "three";
 
@@ -36,10 +36,10 @@ export class SkyCubemapTexture {
     /**
      * Constructs a new `SkyCubemapTexture`.
      *
-     * @param m_params Initial [[CubemapSkyParams]].
+     * @param sky Initial [[CubemapSky]] configuration.
      */
-    constructor(params: CubemapSkyParams) {
-        const faces = this.createCubemapFaceArray(params);
+    constructor(sky: CubemapSky) {
+        const faces = this.createCubemapFaceArray(sky);
         this.m_skybox =
             faces !== undefined ? new CubeTextureLoader().load(faces) : new CubeTexture();
     }
@@ -61,17 +61,17 @@ export class SkyCubemapTexture {
     /**
      * Updates the `SkyCubemapTexture` with new parameters.
      *
-     * @param params New [[CubemapSkyParams]].
+     * @param params New [[CubemapSky]] configuration.
      */
-    updateTexture(params: CubemapSkyParams) {
-        const faces = this.createCubemapFaceArray(params);
+    updateTexture(sky: CubemapSky) {
+        const faces = this.createCubemapFaceArray(sky);
         if (faces === undefined) {
             return;
         }
         this.m_skybox = new CubeTextureLoader().load(faces);
     }
 
-    private createCubemapFaceArray(params: CubemapSkyParams): string[] | undefined {
+    private createCubemapFaceArray(sky: CubemapSky): string[] | undefined {
         const faces: Array<string | undefined> = [
             undefined,
             undefined,
@@ -81,7 +81,7 @@ export class SkyCubemapTexture {
             undefined
         ];
         for (let i = 0; i < SKY_CUBEMAP_FACE_COUNT; ++i) {
-            const face: string | undefined = (params as any)[SkyCubemapFaceId[i]];
+            const face: string | undefined = (sky as any)[SkyCubemapFaceId[i]];
             if (face === undefined) {
                 logger.error(`Face "${SkyCubemapFaceId[i]}" was not defined.`);
                 return;

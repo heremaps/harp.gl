@@ -30,11 +30,20 @@ export enum ProjectionType {
  * `Projection` is used to convert positions from geo coordinates to world coordinates and vice
  * versa.
  */
-export interface Projection {
+export abstract class Projection {
     /**
      * The type of this [Projection].
      */
-    readonly type: ProjectionType;
+    abstract get type(): ProjectionType;
+
+    /**
+     * Constructs the Projection
+     *
+     * @param unitScale How to transform the projected coordinates to world units.
+     */
+    constructor(readonly unitScale: number) {
+        //Prevent empty constructor error.
+    }
 
     /**
      * Returns the world extents in world coordinates.
@@ -43,7 +52,7 @@ export interface Projection {
      * @param maxElevation The maximum elevation in meters.
      * @param result The optional object that will be used to create the resulting bounding box.
      */
-    worldExtent<Bounds extends Box3Like>(
+    abstract worldExtent<Bounds extends Box3Like>(
         minElevation: number,
         maxElevation: number,
         result?: Bounds
@@ -63,7 +72,7 @@ export interface Projection {
      * @param result The optional object used to store the resulting world position, result must
      * implement [[Vector3Like]].
      */
-    projectPoint<WorldCoordinates extends Vector3Like>(
+    abstract projectPoint<WorldCoordinates extends Vector3Like>(
         geoPoint: GeoCoordinatesLike,
         result?: WorldCoordinates
     ): WorldCoordinates;
@@ -80,7 +89,7 @@ export interface Projection {
      *
      * @param worldPoint The position in world coordinates.
      */
-    unprojectPoint(worldPoint: Vector3Like): GeoCoordinates;
+    abstract unprojectPoint(worldPoint: Vector3Like): GeoCoordinates;
 
     /**
      * Projects bounds in geo coordinates to a bounding box in world coordinates.
@@ -93,7 +102,7 @@ export interface Projection {
      *
      * @param geoBox The bounding box in geo coordinates.
      */
-    projectBox(geoBox: GeoBox): Box3Like;
+    abstract projectBox(geoBox: GeoBox): Box3Like;
 
     /**
      * Projects bounds in geo coordinates to a bounding box in world coordinates.
@@ -107,7 +116,7 @@ export interface Projection {
      * @param geoBox The bounding box in geo coordinates.
      * @param result The resulting [[OrientedBox3Like]].
      */
-    projectBox<WorldBoundingBox extends Box3Like | OrientedBox3Like>(
+    abstract projectBox<WorldBoundingBox extends Box3Like | OrientedBox3Like>(
         geoBox: GeoBox,
         result: WorldBoundingBox
     ): WorldBoundingBox;
@@ -123,7 +132,7 @@ export interface Projection {
      *
      * @param worldBox The bounding box in world coordinates.
      */
-    unprojectBox(worldBox: Box3Like): GeoBox;
+    abstract unprojectBox(worldBox: Box3Like): GeoBox;
 
     /**
      * Returns the scaling factor that must be used to convert the units used by `worldPoint` to
@@ -131,14 +140,14 @@ export interface Projection {
      *
      * @param worldPoint The position in world coordinates.
      */
-    getScaleFactor(worldPoint: Vector3Like): number;
+    abstract getScaleFactor(worldPoint: Vector3Like): number;
 
     /**
      * Returns the surface normal at the given world position.
      *
      * @param worldPoint The position in world coordinates.
      */
-    surfaceNormal(worldPoint: Vector3Like): Vector3Like;
+    abstract surfaceNormal(worldPoint: Vector3Like): Vector3Like;
 
     /**
      * Returns the surface normal at the given world position.
@@ -146,7 +155,10 @@ export interface Projection {
      * @param worldPoint The position in world coordinates.
      * @returns The resulting normal vector.
      */
-    surfaceNormal<Normal extends Vector3Like>(worldPoint: Vector3Like, result: Normal): Normal;
+    abstract surfaceNormal<Normal extends Vector3Like>(
+        worldPoint: Vector3Like,
+        result: Normal
+    ): Normal;
 
     /**
      * Returns the signed distance between the given coordinates and
@@ -154,12 +166,59 @@ export interface Projection {
      *
      * @param worldPoint The position in world coordinates.
      */
-    groundDistance(worldPoint: Vector3Like): number;
+    abstract groundDistance(worldPoint: Vector3Like): number;
 
     /**
      * Scales the given world coordinates to the surface.
      *
      * @param worldPoint The position in world coordinates.
      */
-    scalePointToSurface(worldPoint: Vector3Like): Vector3Like;
+    abstract scalePointToSurface(worldPoint: Vector3Like): Vector3Like;
+
+    /**
+     * Reproject a world position from the given source [[Projection]].
+     *
+     * @param sourceProjection The source projection.
+     * @param worldPos A valid world position for the given source projection.
+     * @returns The world position reprojected using this [[Projection]].
+     */
+    reprojectPoint(sourceProjection: Projection, worldPos: Vector3Like): Vector3Like;
+
+    /**
+     * Reproject a world position from the given source [[Projection]].
+     *
+     * @param sourceProjection The source projection.
+     * @param worldPos A valid position in the world space defined by the source projection.
+     * @param result The resulting position reprojected using this [[Projection]].
+     */
+    reprojectPoint<WorldCoordinates extends Vector3Like>(
+        sourceProjection: Projection,
+        worldPos: Vector3Like,
+        result: WorldCoordinates
+    ): typeof result;
+
+    /**
+     * Reproject a world position from the given source [[Projection]].
+     *
+     * @param sourceProjection The source projection.
+     * @param worldPos A valid position in the world space defined by the source projection.
+     * @param result The resulting position reprojected using this [[Projection]].
+     * @hidden
+     */
+    reprojectPoint(
+        sourceProjection: Projection,
+        worldPos: Vector3Like,
+        result?: Vector3Like
+    ): Vector3Like {
+        if (sourceProjection === this) {
+            if (result === undefined) {
+                return { x: worldPos.x, y: worldPos.y, z: worldPos.z };
+            }
+            result.x = worldPos.x;
+            result.y = worldPos.y;
+            result.z = worldPos.z;
+            return result;
+        }
+        return this.projectPoint(sourceProjection.unprojectPoint(worldPos), result);
+    }
 }

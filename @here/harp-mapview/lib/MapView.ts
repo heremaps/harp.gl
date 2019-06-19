@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import {
-    GradientSkyParams,
+    GradientSky,
     ImageTexture,
     Light,
     PostEffects,
@@ -28,6 +28,9 @@ import { IMapAntialiasSettings, IMapRenderingManager, MapRenderingManager } from
 import { ConcurrentDecoderFacade } from "./ConcurrentDecoderFacade";
 import { CopyrightInfo } from "./CopyrightInfo";
 import { DataSource } from "./DataSource";
+import { ElevationProvider } from "./ElevationProvider";
+import { ElevationRangeSource } from "./ElevationRangeSource";
+import { SimpleTileGeometryManager, TileGeometryManager } from "./geometry/TileGeometryManager";
 import { MapViewImageCache } from "./image/MapViewImageCache";
 import { MapViewFog } from "./MapViewFog";
 import { PickHandler, PickResult } from "./PickHandler";
@@ -51,9 +54,29 @@ declare const process: any;
 // cache value, because access to process.env.NODE_ENV is SLOW!
 const isProduction = process.env.NODE_ENV === "production";
 
+/**
+ * An interface describing [[THREE.Object3D]]s anchored on given [[GeoCoordinates]].
+ *
+ * Example:
+ * ```typescript
+ * const mesh: MapObject<THREE.Mesh> = new THREE.Mesh(geometry, material);
+ * mesh.geoPosition = new GeoCoordinates(latitude, longitude, altitude);
+ * mapView.mapAnchors.add(mesh);
+ * ```
+ *
+ */
+export type MapAnchor<T extends THREE.Object3D = THREE.Object3D> = T & {
+    /**
+     * The position of this [[MapObject]] in [[GeoCoordinates]].
+     */
+    geoPosition?: GeoCoordinates;
+};
+
 export enum MapViewEventNames {
     /** Called before this `MapView` starts to render a new frame. */
     Update = "update",
+    /** Called when the WebGL canvas is resized. */
+    Resize = "resize",
     /** Called when the frame is about to be rendered. */
     Render = "render",
     /** Called after a frame has been rendered. */
@@ -171,14 +194,18 @@ export interface FovCalculation {
     /**
      * How to interpret the [[fov]], can be either `fixed` or `dynamic`.
      *
-     * `fixed` means that the FOV is fixed regardless of the [[viewportHeight]],
-     * such that shrinking the height causes the map to shrink to keep the
-     * content in view.
+     * `fixed` means that the FOV is fixed regardless of the [[viewportHeight]], such that shrinking
+     * the height causes the map to shrink to keep the content in view. The benefit is that,
+     * regardless of any resizes, the field of view is constant, which means there is no change in
+     * the distortion of buildings near the edges. However the trade off is that the zoom level
+     * changes, which means that the map will pull in new tiles, hence causing some flickering.
      *
-     * `dynamic` means that the focal length is calculated based on the supplied
-     * [[fov]] and [[viewportHeight]], this means that the map doesn't scale
-     * (the image is essentially cropped but not shrunk) when the
-     * [[viewportHeight]] or [[viewportWidth]] is changed.
+     * `dynamic` means that the focal length is calculated based on the supplied [[fov]] and
+     * [[viewportHeight]], this means that the map doesn't scale (the image is essentially cropped
+     * but not shrunk) when the [[viewportHeight]] or [[viewportWidth]] is changed. The benefit is
+     * that the zoom level is (currently) stable during resize, because the focal length is used,
+     * however the tradeoff is that changing from a small to a big height will cause the fov to
+     * change a lot, and thus introduce distortion.
      */
     type: "fixed" | "dynamic";
 
@@ -481,10 +508,10 @@ export interface MapViewOptions {
 export const MapViewDefaults = {
     projection: mercatorProjection,
 
-    maxVisibleDataSourceTiles: 20,
+    maxVisibleDataSourceTiles: 120,
     extendedFrustumCulling: true,
 
-    tileCacheSize: 40,
+    tileCacheSize: 160,
     resourceComputationType: ResourceComputationType.EstimationInMb,
     quadTreeSearchDistanceUp: 3,
     quadTreeSearchDistanceDown: 2,
@@ -530,7 +557,11 @@ export class MapView extends THREE.EventDispatcher {
         | ScreenCollisionsDebug = new ScreenCollisions();
 
     private m_visibleTiles: VisibleTileSet;
+
+    private m_elevationRangeSource?: ElevationRangeSource;
+    private m_elevationProvider?: ElevationProvider;
     private m_visibleTileSetLock: boolean = false;
+    private m_tileGeometryManager: TileGeometryManager;
 
     private m_zoomLevel: number = DEFAULT_MIN_ZOOM_LEVEL;
     private m_minZoomLevel: number = DEFAULT_MIN_ZOOM_LEVEL;
@@ -560,6 +591,7 @@ export class MapView extends THREE.EventDispatcher {
     private readonly m_scene: THREE.Scene = new THREE.Scene();
     private readonly m_fog: MapViewFog = new MapViewFog(this.m_scene);
     private readonly m_mapTilesRoot = new THREE.Object3D();
+    private readonly m_mapAnchors = new THREE.Object3D();
 
     private m_animationCount: number = 0;
     private m_animationFrameHandle: number | undefined;
@@ -700,7 +732,7 @@ export class MapView extends THREE.EventDispatcher {
 
         this.m_options.enableStatistics = this.m_options.enableStatistics === true;
 
-        this.m_languages = this.m_options.languages || MapViewUtils.getBrowserLanguages();
+        this.m_languages = this.m_options.languages;
 
         if (
             !isProduction &&
@@ -778,7 +810,13 @@ export class MapView extends THREE.EventDispatcher {
             mapPassAntialiasSettings
         );
 
-        this.m_visibleTiles = new VisibleTileSet(this.m_camera, this.m_visibleTileSetOptions);
+        this.m_tileGeometryManager = new SimpleTileGeometryManager(this);
+
+        this.m_visibleTiles = new VisibleTileSet(
+            this.m_camera,
+            this.m_tileGeometryManager,
+            this.m_visibleTileSetOptions
+        );
 
         this.m_animatedExtrusionHandler = new AnimatedExtrusionHandler(this);
 
@@ -1071,6 +1109,7 @@ export class MapView extends THREE.EventDispatcher {
         this.m_tileDataSources.forEach((dataSource: DataSource) => {
             dataSource.setLanguages(this.m_languages);
         });
+        this.clearTileCache();
         this.update();
     }
 
@@ -1227,6 +1266,16 @@ export class MapView extends THREE.EventDispatcher {
         }
 
         this.update();
+    }
+
+    /**
+     * The node in this MapView's scene containing the user [[MapAnchor]]s.
+     * All (first level) children of this node will be positioned in world space according to the
+     * [[MapAnchor.geoPosition]].
+     * Deeper level children can be used to position custom objects relative to the anchor node.
+     */
+    get mapAnchors(): THREE.Object3D {
+        return this.m_mapAnchors;
     }
 
     /**
@@ -1490,33 +1539,57 @@ export class MapView extends THREE.EventDispatcher {
     }
 
     /**
-     * Moves the camera to specified geocoordinates, sets desired zoom level and adjusts yaw and
-     * pitch.
+     * The method that sets the camera to the desired angle (`tiltDeg`) and `distance` (in meters)
+     * to the `target` location, from a certain azimuth (`azimuthAngle`).
+     *
+     * @param target The location to look at.
+     * @param distance The distance of the camera to the target in meters.
+     * @param tiltDeg The camera tilt angle in degrees (0 is vertical).
+     * @param azimuthDeg The camera azimuth angle in degrees and clockwise, starting north.
+     */
+    lookAt(
+        target: GeoCoordinates,
+        distance: number,
+        tiltDeg: number = 0,
+        azimuthDeg: number = 0
+    ): void {
+        MapViewUtils.setRotation(this, -azimuthDeg, tiltDeg);
+        this.geoCenter = MapViewUtils.getCameraCoordinatesFromTargetCoordinates(
+            target,
+            distance,
+            -azimuthDeg,
+            tiltDeg,
+            this
+        );
+        const pitchRad = THREE.Math.degToRad(tiltDeg);
+        this.camera.position.setZ(Math.cos(pitchRad) * distance);
+    }
+
+    /**
+     * Moves the camera to the specified [[GeoCoordinates]], sets the desired `zoomLevel` and
+     * adjusts the yaw and pitch.
      *
      * @param geoPos Geolocation to move the camera to.
-     * @param zoom Desired zoom level.
-     * @param yaw Camera yaw.
-     * @param pitch Camera pitch.
+     * @param zoomLevel Desired zoom level.
+     * @param yawDeg Camera yaw in degrees.
+     * @param pitchDeg Camera pitch in degrees.
      */
     setCameraGeolocationAndZoom(
         geoPos: GeoCoordinates,
-        zoom: number,
-        yaw?: number,
-        pitch?: number
+        zoomLevel: number,
+        yawDeg: number = 0,
+        pitchDeg: number = 0
     ): void {
         if (this.projection.type === ProjectionType.Planar) {
-            if (yaw !== undefined && pitch !== undefined) {
-                MapViewUtils.setRotation(this, yaw, pitch);
-            }
-
+            MapViewUtils.setRotation(this, yawDeg, pitchDeg);
             this.geoCenter = geoPos;
-            MapViewUtils.zoomOnTargetPosition(this, 0, 0, zoom);
+            MapViewUtils.zoomOnTargetPosition(this, 0, 0, zoomLevel);
         } else {
             this.geoCenter = new GeoCoordinates(geoPos.latitude, geoPos.longitude);
 
             const distanceToGround = MapViewUtils.calculateDistanceToGroundFromZoomLevel(
                 this,
-                THREE.Math.clamp(zoom, this.minZoomLevel, this.maxZoomLevel)
+                THREE.Math.clamp(zoomLevel, this.minZoomLevel, this.maxZoomLevel)
             );
 
             const surfaceNormal = new THREE.Vector3();
@@ -1684,6 +1757,22 @@ export class MapView extends THREE.EventDispatcher {
     }
 
     /**
+     * Returns a ray caster using the supplied screen positions.
+     *
+     * @param x The X position in css/client coordinates (without applied display ratio).
+     * @param y The Y position in css/client coordinates (without applied display ratio).
+     *
+     * @alpha
+     *
+     * @return Raycaster with origin at the camera and direction based on the supplied x / y screen
+     * points.
+     */
+    raycasterFromScreenPoint(x: number, y: number): THREE.Raycaster {
+        this.m_raycaster.setFromCamera(this.getNormalizedScreenCoordinates(x, y), this.m_rteCamera);
+        return this.m_raycaster;
+    }
+
+    /**
      * Returns the world space position from the given screen position. The return value can be
      * `null`, in case the camera is facing the horizon and the given `(x, y)` value is not
      * intersecting the ground plane.
@@ -1737,6 +1826,8 @@ export class MapView extends THREE.EventDispatcher {
      * Note, if a [[DataSource]] adds an [[Object3D]] to a [[Tile]], it will be only pickable once
      * [[MapView.render]] has been called, this is because [[MapView.render]] method creates the
      * internal three.js root [[Object3D]] which is used in the [[PickHandler]] internally.
+     * This method will not test for intersection custom objects added to the scene by for
+     * example calling directly the [[scene.add]] method from THREE.
      *
      * @param x The X position in css/client coordinates (without applied display ratio).
      * @param y The Y position in css/client coordinates (without applied display ratio).
@@ -1769,6 +1860,14 @@ export class MapView extends THREE.EventDispatcher {
 
         this.updateCameras();
         this.update();
+
+        this.dispatchEvent({
+            type: MapViewEventNames.Resize,
+            size: {
+                width,
+                height
+            }
+        });
     }
 
     /**
@@ -1848,6 +1947,32 @@ export class MapView extends THREE.EventDispatcher {
     }
 
     /**
+     * Sets the DataSource which contains the elevations, the elevation range source, and the
+     * elevation provider. Only a single elevation source is possible per [[MapView]]
+     *
+     * If the terrain-datasource is merged with this repository, we could internally construct
+     * the [[ElevationRangeSource]] and the [[ElevationProvider]] and access would be granted to
+     * the application when it asks for it, to simplify the API.
+     *
+     * @param elevationSource The datasource containing the terrain tiles.
+     * @param elevationRangeSource Allows access to the elevation min / max per tile.
+     * @param elevationProvider Allows access to the elevation at a given location or a ray
+     *      from the camera.
+     */
+    setElevationSource(
+        elevationSource: DataSource,
+        elevationRangeSource: ElevationRangeSource,
+        elevationProvider: ElevationProvider
+    ) {
+        // Try to remove incase this method was already called, will do nothing if it doesn't exist.
+        this.removeDataSource(elevationSource);
+        this.addDataSource(elevationSource);
+        this.m_elevationRangeSource = elevationRangeSource;
+        this.m_elevationRangeSource.connect();
+        this.m_elevationProvider = elevationProvider;
+    }
+
+    /**
      * Public access to [[MapViewFog]] allowing to toggle it by setting its `enabled` property.
      */
     get fog(): MapViewFog {
@@ -1876,6 +2001,13 @@ export class MapView extends THREE.EventDispatcher {
                 this.mapRenderingManager.sepia = this.m_postEffects.sepia;
             }
         }
+    }
+
+    /**
+     * Returns the elevation provider.
+     */
+    get elevationProvider(): ElevationProvider | undefined {
+        return this.m_elevationProvider;
     }
 
     /**
@@ -2153,7 +2285,8 @@ export class MapView extends THREE.EventDispatcher {
                 this.m_camera.position,
                 this.storageLevel,
                 Math.floor(this.zoomLevel),
-                this.getEnabledTileDataSources()
+                this.getEnabledTileDataSources(),
+                this.m_elevationRangeSource
             );
         }
 
@@ -2173,6 +2306,14 @@ export class MapView extends THREE.EventDispatcher {
                 //removed in the future (though could be good for debugging purposes).
                 tile.frameNumLastVisible = this.m_frameNumber;
             });
+        });
+
+        this.m_mapAnchors.children.forEach((childObject: MapAnchor) => {
+            if (childObject.geoPosition === undefined) {
+                return;
+            }
+            this.projection.projectPoint(childObject.geoPosition, childObject.position);
+            childObject.position.sub(this.camera.position);
         });
 
         this.m_animatedExtrusionHandler.zoom = this.m_zoomLevel;
@@ -2366,7 +2507,11 @@ export class MapView extends THREE.EventDispatcher {
 
         this.calculateFocalLength(height);
 
-        this.m_visibleTiles = new VisibleTileSet(this.m_camera, this.m_visibleTileSetOptions);
+        this.m_visibleTiles = new VisibleTileSet(
+            this.m_camera,
+            this.m_tileGeometryManager,
+            this.m_visibleTileSetOptions
+        );
 
         // ### move & customize
         this.resize(width, height);
@@ -2396,13 +2541,10 @@ export class MapView extends THREE.EventDispatcher {
     }
 
     private addNewSkyBackground(sky: Sky, clearColor: string | undefined) {
-        if (
-            sky.params.type === "gradient" &&
-            (sky.params as GradientSkyParams).groundColor === undefined
-        ) {
-            sky.params.groundColor = getOptionValue(clearColor, "#000000");
+        if (sky.type === "gradient" && (sky as GradientSky).groundColor === undefined) {
+            sky.groundColor = getOptionValue(clearColor, "#000000");
         }
-        this.m_skyBackground = new SkyBackground(sky.params, this.projection.type, this.m_camera);
+        this.m_skyBackground = new SkyBackground(sky, this.projection.type, this.m_camera);
         this.m_scene.background = this.m_skyBackground.texture;
     }
 
@@ -2415,14 +2557,11 @@ export class MapView extends THREE.EventDispatcher {
     }
 
     private updateSkyBackgroundColors(sky: Sky, clearColor: string | undefined) {
-        if (
-            sky.params.type === "gradient" &&
-            (sky.params as GradientSkyParams).groundColor === undefined
-        ) {
-            sky.params.groundColor = getOptionValue(clearColor, "#000000");
+        if (sky.type === "gradient" && (sky as GradientSky).groundColor === undefined) {
+            sky.groundColor = getOptionValue(clearColor, "#000000");
         }
         if (this.m_skyBackground !== undefined) {
-            this.m_skyBackground.updateTexture(sky.params);
+            this.m_skyBackground.updateTexture(sky);
         }
     }
 
@@ -2447,9 +2586,8 @@ export class MapView extends THREE.EventDispatcher {
                 const light = createLight(lightDescription);
                 if (!light) {
                     logger.log(
-                        `MapView: failed to create light ${lightDescription.name} of type ${
-                            lightDescription.type
-                        }`
+                        // tslint:disable-next-line: max-line-length
+                        `MapView: failed to create light ${lightDescription.name} of type ${lightDescription.type}`
                     );
                     return;
                 }
@@ -2626,6 +2764,7 @@ export class MapView extends THREE.EventDispatcher {
         this.m_renderer.setClearColor(DEFAULT_CLEAR_COLOR);
 
         this.m_scene.add(this.m_mapTilesRoot);
+        this.m_scene.add(this.m_mapAnchors);
     }
 
     /**

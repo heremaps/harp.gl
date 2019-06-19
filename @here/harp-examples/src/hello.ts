@@ -35,8 +35,14 @@ import { accessToken } from "../config";
  * object is created.
  *
  * ```typescript
- * [[include:harp_gl_hello_world_example_2.ts]]
+ * [[include:harp_gl_hello_world_example_map_controls.ts]]
  * ```
+ * By default the map is looking at Berlin. For this example we want to look at New York from a
+ * nice angle and distance.
+ * ```typescript
+ * [[include:harp_gl_hello_world_example_look_at.ts]]
+ * ```
+ *
  * Finally the map is being resized to fill the whole screen and a listener for a "resize" event is
  * added, which enables adjusting the map's size to the browser's window size changes.
  *
@@ -73,15 +79,17 @@ export namespace HelloWorldExample {
 
         CopyrightElementHandler.install("copyrightNotice", map);
 
-        // snippet:harp_gl_hello_world_example_2.ts
-        // Center the camera on Manhattan, New York City.
-        map.setCameraGeolocationAndZoom(new GeoCoordinates(40.6935, -74.009), 16.9);
-
+        // snippet:harp_gl_hello_world_example_map_controls.ts
         // Instantiate the default map controls, allowing the user to pan around freely.
         const mapControls = new MapControls(map);
         mapControls.maxPitchAngle = 50;
-        mapControls.setRotation(6.3, 50);
-        // end:harp_gl_hello_world_example_2.ts
+        // end:harp_gl_hello_world_example_map_controls.ts
+
+        // snippet:harp_gl_hello_world_example_look_at.ts
+        // Look at New York.
+        const NY = new GeoCoordinates(40.707, -74.01);
+        map.lookAt(NY, 4000, 50, -20);
+        // end:harp_gl_hello_world_example_look_at.ts
 
         // Add an UI.
         const ui = new MapControlsUI(mapControls);

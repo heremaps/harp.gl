@@ -5,7 +5,7 @@
  */
 
 import { GeoCoordinates } from "@here/harp-geoutils";
-import { MapControls, MapControlsUI } from "@here/harp-map-controls";
+import { LongPressHandler, MapControls, MapControlsUI } from "@here/harp-map-controls";
 import {
     CopyrightElementHandler,
     CopyrightInfo,
@@ -58,13 +58,13 @@ export namespace ThreejsRaycast {
 
         CopyrightElementHandler.install("copyrightNotice", map);
 
-        // Center the camera on Manhattan, New York City.
-        map.setCameraGeolocationAndZoom(new GeoCoordinates(40.6935, -74.009), 16.9);
-
         // Instantiate the default map controls, allowing the user to pan around freely.
         const mapControls = new MapControls(map);
         mapControls.maxPitchAngle = 50;
-        mapControls.setRotation(6.3, 50);
+
+        // Center the camera on Manhattan, New York City.
+        const NY = new GeoCoordinates(40.707, -74.01);
+        map.lookAt(NY, 2000, 50);
 
         // Add an UI.
         const ui = new MapControlsUI(mapControls);
@@ -78,12 +78,8 @@ export namespace ThreejsRaycast {
             map.resize(window.innerWidth, window.innerHeight);
         });
 
-        canvas.addEventListener("mousedown", event => {
-            // User must have pressed the 'Ctrl' key to add a box.
-            if (!event.ctrlKey) {
-                return;
-            }
-
+        // tslint:disable:no-unused-expression
+        new LongPressHandler(canvas, event => {
             // snippet:harp_gl_threejs_raycast_0.ts
             const pickResults = map.intersectMapObjects(event.pageX, event.pageY);
             if (pickResults.length === 0) {
@@ -124,7 +120,7 @@ export namespace ThreejsRaycast {
     }
 
     const message = document.createElement("div");
-    message.innerHTML = `Click + 'Ctrl' to add a 10m^3 pink box under the mouse cursor location.`;
+    message.innerHTML = `Long click to add a 10m^3 pink box under the mouse cursor location.`;
 
     message.style.position = "absolute";
     message.style.cssFloat = "right";

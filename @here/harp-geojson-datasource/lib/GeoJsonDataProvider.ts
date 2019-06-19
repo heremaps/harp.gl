@@ -20,6 +20,7 @@ export class GeoJsonDataProvider implements DataProvider {
     /**
      * Constructs a new `GeoJsonDataProvider`.
      *
+     * @param name Name to be used to reference this `DataProvider`
      * @param input URL of the GeoJSON, or a GeoJSON.
      *
      * @returns New `GeoJsonDataProvider`.

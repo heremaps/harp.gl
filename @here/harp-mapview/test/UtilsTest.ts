@@ -27,6 +27,7 @@ describe("map-view#Utils", function() {
             maxZoomLevel: 20,
             minZoomLevel: 1,
             camera: cameraMock,
+            projection: mercatorProjection,
             focalLength: 256,
             pixelRatio: 1.0
         };
@@ -59,9 +60,12 @@ describe("map-view#Utils", function() {
             pixelRatio: 1.0
         };
         const mapView = (mapViewMock as any) as MapView;
+        const cameraHeight =
+            MapViewUtils.calculateDistanceToGroundFromZoomLevel(mapView, xyzView.zoom) /
+            Math.cos(THREE.Math.degToRad(xyzView.pitch));
         const cameraCoordinates = MapViewUtils.getCameraCoordinatesFromTargetCoordinates(
             new GeoCoordinates(xyzView.center[0], xyzView.center[1]),
-            xyzView.zoom,
+            cameraHeight,
             xyzView.yaw,
             xyzView.pitch,
             mapView
@@ -79,6 +83,7 @@ describe("map-view#Utils", function() {
                 maxZoomLevel: 20,
                 minZoomLevel: 1,
                 camera: cameraMock,
+                projection: mercatorProjection,
                 focalLength: 256,
                 pixelRatio: 1.0
             };

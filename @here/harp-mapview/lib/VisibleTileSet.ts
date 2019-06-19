@@ -3,13 +3,13 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
+import { OrientedBox3 } from "@here/harp-geometry";
 import { MathUtils, Projection, ProjectionType, TileKey, TilingScheme } from "@here/harp-geoutils";
 import { LRUCache } from "@here/harp-lrucache";
 import * as THREE from "three";
-
-import { OrientedBox3 } from "@here/harp-geometry";
 import { DataSource } from "./DataSource";
 import { CalculationStatus, ElevationRangeSource } from "./ElevationRangeSource";
+import { TileGeometryManager } from "./geometry/TileGeometryManager";
 import { MapTileCuller } from "./MapTileCuller";
 import { Tile } from "./Tile";
 import { MapViewUtils, TileOffsetUtils } from "./Utils";
@@ -85,7 +85,7 @@ class DataSourceCache {
 
     resourceComputationType: ResourceComputationType = ResourceComputationType.EstimationInMb;
 
-    constructor(options: VisibleTileSetOptions) {
+    constructor(options: VisibleTileSetOptions, readonly dataSource: DataSource) {
         this.resourceComputationType =
             options.resourceComputationType === undefined
                 ? ResourceComputationType.EstimationInMb
@@ -194,8 +194,12 @@ export class VisibleTileSet {
     private m_ResourceComputationType: ResourceComputationType =
         ResourceComputationType.EstimationInMb;
 
-    constructor(private readonly camera: THREE.PerspectiveCamera, options: VisibleTileSetOptions) {
-        this.m_mapTileCuller = new MapTileCuller(camera);
+    constructor(
+        private readonly m_camera: THREE.PerspectiveCamera,
+        private readonly m_tileGeometryManager: TileGeometryManager,
+        options: VisibleTileSetOptions
+    ) {
+        this.m_mapTileCuller = new MapTileCuller(m_camera);
         this.options = options;
     }
 
@@ -259,11 +263,12 @@ export class VisibleTileSet {
         worldCenter: THREE.Vector3,
         storageLevel: number,
         zoomLevel: number,
-        dataSources: DataSource[]
+        dataSources: DataSource[],
+        elevationRangeSource?: ElevationRangeSource
     ) {
         this.m_viewProjectionMatrix.multiplyMatrices(
-            this.camera.projectionMatrix,
-            this.camera.matrixWorldInverse
+            this.m_camera.projectionMatrix,
+            this.m_camera.matrixWorldInverse
         );
         this.m_frustum.setFromMatrix(this.m_viewProjectionMatrix);
 
@@ -271,16 +276,6 @@ export class VisibleTileSet {
 
         if (this.options.extendedFrustumCulling) {
             this.m_mapTileCuller.setup();
-        }
-
-        let elevationRangeSource: ElevationRangeSource | undefined;
-        for (const dataSource of dataSources) {
-            elevationRangeSource = dataSource.getElevationRangeSource();
-            if (elevationRangeSource !== undefined) {
-                // We don't support multiple elevation range sources, but just take the first one
-                // that we find in the enabled data sources.
-                break;
-            }
         }
 
         const visibleTileResult = this.getVisibleTilesForDataSources(
@@ -328,7 +323,8 @@ export class VisibleTileSet {
                     continue;
                 }
 
-                tile.prepareForRender();
+                tile.prepareTileInfo();
+
                 allDataSourceTilesLoaded = allDataSourceTilesLoaded && tile.hasGeometry;
                 if (!tile.hasGeometry) {
                     numTilesLoading++;
@@ -346,6 +342,8 @@ export class VisibleTileSet {
                 // currently loaded and are waiting to be decoded to sort the jobs by area.
                 tile.visibleArea = tileEntry.area;
             }
+
+            this.m_tileGeometryManager.updateTiles(actuallyVisibleTiles);
 
             this.dataSourceTileList.push({
                 dataSource,
@@ -414,6 +412,7 @@ export class VisibleTileSet {
             tile.offset = offset;
             updateTile(tile);
             tileCache.set(tileKeyMortonCode, tile);
+            this.m_tileGeometryManager.initTile(tile);
         }
         return tile;
     }
@@ -490,11 +489,16 @@ export class VisibleTileSet {
         }
     }
 
-    forEachCachedTile(fun: (tile: Tile) => void): void {
+    forEachCachedTile(
+        fun: (tile: Tile) => void,
+        filterDataSource?: (ds: DataSource) => boolean
+    ): void {
         this.m_dataSourceCache.forEach(dataSourceCache => {
-            dataSourceCache.tileCache.forEach(tile => {
-                fun(tile);
-            });
+            if (filterDataSource === undefined || filterDataSource(dataSourceCache.dataSource)) {
+                dataSourceCache.tileCache.forEach(tile => {
+                    fun(tile);
+                });
+            }
         });
     }
 
@@ -607,15 +611,16 @@ export class VisibleTileSet {
         // (tan(a->d2) * z).
         // a->e needs just the tilt and trigonometry to compute, result is: (tan(a->e) * z).
 
-        const cameraPitch = MapViewUtils.extractYawPitchRoll(this.camera.quaternion).pitch;
+        const camera = this.m_camera;
+        const cameraPitch = MapViewUtils.extractYawPitchRoll(camera.quaternion).pitch;
         // Ensure that the aspect is >= 1.
-        const aspect = this.camera.aspect > 1 ? this.camera.aspect : 1 / this.camera.aspect;
+        const aspect = camera.aspect > 1 ? camera.aspect : 1 / camera.aspect;
         // Angle between a->d2, note, the fov is vertical, hence we translate to horizontal.
-        const totalAngleRad = MathUtils.degToRad((this.camera.fov * aspect) / 2) + cameraPitch;
+        const totalAngleRad = MathUtils.degToRad((camera.fov * aspect) / 2) + cameraPitch;
         // Length a->d2
-        const worldLengthHorizontalFull = Math.tan(totalAngleRad) * this.camera.position.z;
+        const worldLengthHorizontalFull = Math.tan(totalAngleRad) * camera.position.z;
         // Length a->e
-        const worldLengthHorizontalSmallerHalf = Math.tan(cameraPitch) * this.camera.position.z;
+        const worldLengthHorizontalSmallerHalf = Math.tan(cameraPitch) * camera.position.z;
         // Length e -> d2
         const worldLengthHorizontal = worldLengthHorizontalFull - worldLengthHorizontalSmallerHalf;
         const worldLeftPoint = new THREE.Vector3(
@@ -631,7 +636,7 @@ export class VisibleTileSet {
                 Math.abs((worldGeoPoint.longitude - worldLeftGeoPoint.longitude) / 360) * Math.SQRT2
             ),
             0,
-            // We can store currently up to 16 unique keys(2^4, where 4 is the default bitshift
+            // We can store currently up to 16 unique keys(2^4, where 4 is the default bit-shift
             // value which is used currently in the [[VisibleTileSet]] methods) hence we can have a
             // maximum range of 7 (because 2*7+1 = 15).
             7
@@ -792,7 +797,7 @@ export class VisibleTileSet {
         let dataSourceCache = this.m_dataSourceCache.get(dataSourceName);
 
         if (dataSourceCache === undefined) {
-            dataSourceCache = new DataSourceCache(this.options);
+            dataSourceCache = new DataSourceCache(this.options, dataSource);
 
             this.m_dataSourceCache.set(dataSourceName, dataSourceCache);
         }

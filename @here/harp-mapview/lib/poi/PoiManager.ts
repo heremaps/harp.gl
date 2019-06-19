@@ -467,7 +467,7 @@ export class PoiManager {
                 positions,
                 this.getRenderStyle(tile.dataSource.name, technique),
                 this.getLayoutStyle(tile.dataSource.name, technique),
-                priority,
+                getPropertyValue(priority, displayZoomLevel),
                 technique.xOffset !== undefined ? technique.xOffset : 0.0,
                 technique.yOffset !== undefined ? technique.yOffset : 0.0,
                 featureId,
@@ -543,7 +543,11 @@ export class PoiManager {
         dataSourceName: string,
         technique: PoiTechnique | LineMarkerTechnique
     ): TextRenderStyle {
-        const cacheId = computeStyleCacheId(dataSourceName, technique, this.mapView.zoomLevel);
+        const cacheId = computeStyleCacheId(
+            dataSourceName,
+            technique,
+            Math.floor(this.mapView.zoomLevel)
+        );
         let renderStyle = this.mapView.textRenderStyleCache.get(cacheId);
         if (renderStyle === undefined) {
             const defaultRenderParams = this.mapView.textElementsRenderer!.defaultStyle
@@ -628,7 +632,11 @@ export class PoiManager {
         dataSourceName: string,
         technique: PoiTechnique | LineMarkerTechnique
     ): TextLayoutStyle {
-        const cacheId = computeStyleCacheId(dataSourceName, technique, this.mapView.zoomLevel);
+        const cacheId = computeStyleCacheId(
+            dataSourceName,
+            technique,
+            Math.floor(this.mapView.zoomLevel)
+        );
         let layoutStyle = this.mapView.textLayoutStyleCache.get(cacheId);
         if (layoutStyle === undefined) {
             const defaultLayoutParams = this.mapView.textElementsRenderer!.defaultStyle

@@ -502,6 +502,7 @@ export class ExtendedTileInfoWriter {
 
         // Keep the index to identify the original technique later.
         storedTechnique._index = technique._index;
+        storedTechnique._styleSetIndex = technique._styleSetIndex;
 
         this.techniqueIndexMap.set(technique._index, infoTileTechniqueIndex);
 

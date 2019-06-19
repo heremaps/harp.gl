@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { CubemapSkyParams, GradientSkyParams } from "@here/harp-datasource-protocol";
+import { CubemapSky, GradientSky } from "@here/harp-datasource-protocol";
 import { ProjectionType } from "@here/harp-geoutils";
 import { SkyCubemapTexture } from "./SkyCubemapTexture";
 import { SkyGradientTexture } from "./SkyGradientTexture";
@@ -20,22 +20,22 @@ export class SkyBackground {
     /**
      * Constructs a new `SkyBackground`.
      *
-     * @param m_params Sky configuration parameters.
+     * @param m_sky Sky configuration parameters.
      * @param m_projectionType [[MapView]]'s projection type.
      * @param camera [[MapView]]'s camera.
      */
     constructor(
-        private m_params: GradientSkyParams | CubemapSkyParams,
+        private m_sky: GradientSky | CubemapSky,
         private m_projectionType: ProjectionType,
         camera: THREE.Camera
     ) {
-        switch (this.m_params.type) {
+        switch (this.m_sky.type) {
             case "gradient":
-                this.m_skyTexture = new SkyGradientTexture(this.m_params, this.m_projectionType);
+                this.m_skyTexture = new SkyGradientTexture(this.m_sky, this.m_projectionType);
                 this.updateCamera(camera);
                 break;
             case "cubemap": {
-                this.m_skyTexture = new SkyCubemapTexture(this.m_params);
+                this.m_skyTexture = new SkyCubemapTexture(this.m_sky);
                 break;
             }
         }
@@ -61,7 +61,7 @@ export class SkyBackground {
      * @param camera The camera used in the map view.
      */
     updateCamera(camera: THREE.Camera) {
-        if (this.m_params.type === "gradient") {
+        if (this.m_sky.type === "gradient") {
             (this.m_skyTexture! as SkyGradientTexture).update(camera);
         }
     }
@@ -71,8 +71,8 @@ export class SkyBackground {
      *
      * @param params New sky configuration parameters.
      */
-    updateTexture(params: GradientSkyParams | CubemapSkyParams) {
-        const isSameSkyType = this.m_params.type === params.type;
+    updateTexture(params: GradientSky | CubemapSky) {
+        const isSameSkyType = this.m_sky.type === params.type;
         switch (params.type) {
             case "gradient":
                 if (isSameSkyType) {
@@ -90,6 +90,6 @@ export class SkyBackground {
                 break;
             }
         }
-        this.m_params = params;
+        this.m_sky = params;
     }
 }
