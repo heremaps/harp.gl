@@ -55,7 +55,7 @@ export class MapControlsUI {
                 return;
             }
 
-            const zoom = this.controls.zoomLevelTargetted.toFixed(1);
+            const zoom = this.controls.zoomLevelTargeted.toFixed(1);
 
             if (this.m_zoomLevelElement.tagName === "INPUT") {
                 (this.m_zoomLevelElement as HTMLInputElement).value = zoom;
@@ -125,11 +125,11 @@ export class MapControlsUI {
         this.domElement.appendChild(zoomOutButton);
 
         zoomInButton.addEventListener("click", event => {
-            const zoomLevel = controls.zoomLevelTargetted + controls.zoomLevelDeltaOnControl;
+            const zoomLevel = controls.zoomLevelTargeted + controls.zoomLevelDeltaOnControl;
             controls.setZoomLevel(zoomLevel);
         });
         zoomOutButton.addEventListener("click", event => {
-            const zoomLevel = controls.zoomLevelTargetted - controls.zoomLevelDeltaOnControl;
+            const zoomLevel = controls.zoomLevelTargeted - controls.zoomLevelDeltaOnControl;
             controls.setZoomLevel(zoomLevel);
         });
         tiltButton.addEventListener("click", event => {

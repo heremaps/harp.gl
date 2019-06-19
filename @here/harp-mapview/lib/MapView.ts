@@ -1783,10 +1783,9 @@ export class MapView extends THREE.EventDispatcher {
     getWorldPositionAt(x: number, y: number): THREE.Vector3 | null {
         this.m_raycaster.setFromCamera(this.getNormalizedScreenCoordinates(x, y), this.m_camera);
         const worldPosition = new THREE.Vector3();
-        if (this.projection.type === ProjectionType.Spherical) {
-            return this.m_raycaster.ray.intersectSphere(this.m_sphere, worldPosition);
-        }
-        return this.m_raycaster.ray.intersectPlane(this.m_plane, worldPosition);
+        return this.projection.type === ProjectionType.Spherical
+            ? this.m_raycaster.ray.intersectSphere(this.m_sphere, worldPosition)
+            : this.m_raycaster.ray.intersectPlane(this.m_plane, worldPosition);
     }
 
     /**

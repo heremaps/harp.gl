@@ -5,10 +5,10 @@
  */
 
 import { GeoCoordinates, sphereProjection } from "@here/harp-geoutils";
+import { MapControls } from "@here/harp-map-controls";
 import { CopyrightElementHandler, MapView } from "@here/harp-mapview";
 import { WebTileDataSource } from "@here/harp-webtile-datasource";
 import { appCode, appId } from "../config";
-import { GlobeControls } from "./utils/GlobeControls";
 
 // tslint:disable:max-line-length
 /**
@@ -41,8 +41,7 @@ export namespace WebTileDataSourceGlobeExample {
         map.setCacheSize(100, 100);
 
         // instantiate the default map controls, allowing the user to pan around freely.
-        const controls = new GlobeControls(map);
-        controls.enabled = true;
+        MapControls.create(map);
 
         CopyrightElementHandler.install("copyrightNotice", map);
 

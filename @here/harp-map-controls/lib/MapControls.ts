@@ -48,15 +48,24 @@ const MAPCONTROL_EVENT_END_INTERACTION: THREE.Event = {
 } as any;
 
 /**
- * Yaw rotation as quaternion. Declared as a const to avoid object re-creation in certain
- * functions.
+ * Yaw rotation as quaternion. Declared as a const to avoid object re-creation across frames.
  */
 const yawQuaternion = new THREE.Quaternion();
 /**
- * Pitch rotation as quaternion. Declared as a const to avoid object re-creation in certain
- * functions.
+ * Pitch rotation as quaternion. Declared as a const to avoid object re-creation across frames.
  */
 const pitchQuaternion = new THREE.Quaternion();
+
+/**
+ * Quaternion used for globe calculations. Declared as a const to avoid re-creation across frames.
+ */
+const quaternion = new THREE.Quaternion();
+
+/**
+ * Matrix declared as a const to avoid re-creation across frames.
+ */
+const matrix = new THREE.Matrix4();
+
 /**
  * The yaw axis around which we rotate when we change the yaw.
  * This axis is fixed and is the -Z axis `(0,0,1)`.
@@ -244,7 +253,7 @@ export class MapControls extends THREE.EventDispatcher {
     private m_zoomAnimationTime: number = 0;
     private m_zoomAnimationStartTime: number = 0;
     private m_startZoom: number = 0;
-    private m_targettedZoom?: number;
+    private m_targetedZoom?: number;
     private m_currentZoom?: number;
 
     private m_tiltIsAnimated: boolean = false;
@@ -252,7 +261,7 @@ export class MapControls extends THREE.EventDispatcher {
     private m_tiltAnimationTime: number = 0;
     private m_tiltAnimationStartTime: number = 0;
     private m_startPitch: number = 0;
-    private m_targettedPitch?: number;
+    private m_targetedPitch?: number;
     private m_currentPitch?: number;
 
     private m_tiltState?: TiltState;
@@ -363,6 +372,9 @@ export class MapControls extends THREE.EventDispatcher {
      * @param deltaAltitude Delta altitude in degrees.
      */
     orbitFocusPoint(deltaAzimuth: number, deltaAltitude: number) {
+        if (this.mapView.projection.type === geoUtils.ProjectionType.Spherical) {
+            return;
+        }
         if (this.inertiaEnabled && this.m_zoomIsAnimated) {
             this.stopZoom();
         }
@@ -463,21 +475,39 @@ export class MapControls extends THREE.EventDispatcher {
         }
 
         this.dispatchEvent(MAPCONTROL_EVENT_BEGIN_INTERACTION);
-
         // Register the zoom request
         this.m_startZoom = this.currentZoom;
-        this.m_zoomDeltaRequested = zoomLevel - this.zoomLevelTargetted;
-
+        this.m_zoomDeltaRequested = zoomLevel - this.zoomLevelTargeted;
         // Cancel panning so the point of origin of the zoom is maintained.
         this.m_panDistanceFrameDelta.set(0, 0, 0);
         this.m_lastAveragedPanDistance = 0;
 
-        this.m_zoomTargetNormalizedCoordinates.set(screenTarget.x, screenTarget.y);
-
         // Assign the new animation start time.
         this.m_zoomAnimationStartTime = performance.now();
 
-        this.handleZoom();
+        if (this.mapView.projection.type === geoUtils.ProjectionType.Planar) {
+            this.m_zoomTargetNormalizedCoordinates.set(screenTarget.x, screenTarget.y);
+            this.handleZoom();
+        } else {
+            const surfaceNormal = this.mapView.projection.surfaceNormal(
+                this.camera.position,
+                new THREE.Vector3()
+            );
+
+            this.camera.position.addScaledVector(
+                surfaceNormal,
+                ((this.zoomLevelTargeted - zoomLevel) / this.zoomLevelDeltaOnMouseWheel) *
+                    this.mapView.projection.groundDistance(this.camera.position) *
+                    0.05
+            );
+
+            if (this.mapView.projection.groundDistance(this.camera.position) < 500) {
+                this.mapView.projection.scalePointToSurface(this.camera.position);
+                this.camera.position.addScaledVector(surfaceNormal, 500);
+            }
+
+            this.updateMapView();
+        }
 
         this.dispatchEvent(MAPCONTROL_EVENT_END_INTERACTION);
     }
@@ -544,11 +574,11 @@ export class MapControls extends THREE.EventDispatcher {
     }
 
     /**
-     * Get the zoom level targetted by `MapControls`. Useful when inertia is on, to add incremented
+     * Get the zoom level targeted by `MapControls`. Useful when inertia is on, to add incremented
      * values to the target instead of getting the random zoomLevel value during the interpolation.
      */
-    get zoomLevelTargetted(): number {
-        return this.m_targettedZoom === undefined ? this.currentZoom : this.m_targettedZoom;
+    get zoomLevelTargeted(): number {
+        return this.m_targetedZoom === undefined ? this.currentZoom : this.m_targetedZoom;
     }
 
     /**
@@ -580,17 +610,17 @@ export class MapControls extends THREE.EventDispatcher {
         return MapViewUtils.extractYawPitchRoll(this.mapView.camera.quaternion).pitch;
     }
 
-    private get targettedPitch(): number {
-        return this.m_targettedPitch === undefined
+    private get targetedPitch(): number {
+        return this.m_targetedPitch === undefined
             ? this.m_currentPitch === undefined
                 ? this.currentPitch
                 : this.m_currentPitch
-            : this.m_targettedPitch;
+            : this.m_targetedPitch;
     }
 
     private tilt() {
         if (this.m_pitchRequested !== undefined) {
-            this.m_targettedPitch = Math.max(
+            this.m_targetedPitch = Math.max(
                 Math.min(this.m_pitchRequested, this.maxPitchAngle),
                 this.m_minPitchAngle
             );
@@ -619,10 +649,10 @@ export class MapControls extends THREE.EventDispatcher {
         this.m_currentPitch = this.inertiaEnabled
             ? this.easeOutCubic(
                   this.m_startPitch,
-                  this.targettedPitch,
+                  this.targetedPitch,
                   Math.min(1, this.m_tiltAnimationTime / this.tiltToggleDuration)
               )
-            : this.targettedPitch;
+            : this.targetedPitch;
 
         const initialPitch = this.currentPitch;
         const deltaAngle = this.m_currentPitch - initialPitch;
@@ -640,7 +670,7 @@ export class MapControls extends THREE.EventDispatcher {
     private stopTilt() {
         this.mapView.removeEventListener(MapViewEventNames.AfterRender, this.tilt);
         this.m_tiltIsAnimated = false;
-        this.m_targettedPitch = this.m_currentPitch = undefined;
+        this.m_targetedPitch = this.m_currentPitch = undefined;
     }
 
     private easeOutCubic(startValue: number, endValue: number, time: number): number {
@@ -649,8 +679,8 @@ export class MapControls extends THREE.EventDispatcher {
 
     private handleZoom() {
         if (this.m_zoomDeltaRequested !== 0) {
-            this.m_targettedZoom = Math.max(
-                Math.min(this.zoomLevelTargetted + this.m_zoomDeltaRequested, this.maxZoomLevel),
+            this.m_targetedZoom = Math.max(
+                Math.min(this.zoomLevelTargeted + this.m_zoomDeltaRequested, this.maxZoomLevel),
                 this.minZoomLevel
             );
             this.m_zoomDeltaRequested = 0;
@@ -675,11 +705,11 @@ export class MapControls extends THREE.EventDispatcher {
         }
 
         this.currentZoom =
-            !this.inertiaEnabled || Math.abs(this.zoomLevelTargetted - this.m_startZoom) < EPSILON
-                ? this.zoomLevelTargetted
+            !this.inertiaEnabled || Math.abs(this.zoomLevelTargeted - this.m_startZoom) < EPSILON
+                ? this.zoomLevelTargeted
                 : this.easeOutCubic(
                       this.m_startZoom,
-                      this.zoomLevelTargetted,
+                      this.zoomLevelTargeted,
                       Math.min(1, this.m_zoomAnimationTime / this.zoomInertiaDampingDuration)
                   );
 
@@ -902,7 +932,7 @@ export class MapControls extends THREE.EventDispatcher {
         );
 
         this.setZoomLevel(
-            this.zoomLevelTargetted + this.zoomLevelDeltaOnMouseWheel * (event.deltaY > 0 ? -1 : 1),
+            this.zoomLevelTargeted + this.zoomLevelDeltaOnMouseWheel * (event.deltaY > 0 ? -1 : 1),
             screenTarget
         );
 
@@ -1050,7 +1080,7 @@ export class MapControls extends THREE.EventDispatcher {
             );
 
             // Cancel zoom inertia if a panning is triggered, so that the mouse location is kept.
-            this.m_startZoom = this.m_targettedZoom = this.currentZoom;
+            this.m_startZoom = this.m_targetedZoom = this.currentZoom;
 
             // Assign the new animation start time.
             this.m_panAnimationStartTime = performance.now();
@@ -1113,19 +1143,25 @@ export class MapControls extends THREE.EventDispatcher {
         const toWorld = MapViewUtils.rayCastWorldCoordinates(this.mapView, to.x, to.y);
         const fromWorld = MapViewUtils.rayCastWorldCoordinates(this.mapView, from.x, from.y);
 
-        if (!toWorld || !fromWorld) {
+        if (toWorld === null || fromWorld === null) {
             return;
         }
 
-        this.m_panDistanceFrameDelta = fromWorld.sub(toWorld);
+        if (this.mapView.projection.type === geoUtils.ProjectionType.Planar) {
+            // Cancel zoom inertia if a panning is triggered, so that the mouse location is kept.
+            this.stopZoom();
 
-        // Cancel zoom inertia if a panning is triggered, so that the mouse location is kept.
-        this.stopZoom();
+            // Assign the new animation start time.
+            this.m_panAnimationStartTime = performance.now();
 
-        // Assign the new animation start time.
-        this.m_panAnimationStartTime = performance.now();
+            this.m_panDistanceFrameDelta = fromWorld.sub(toWorld);
 
-        this.pan();
+            this.pan();
+        } else {
+            quaternion.setFromUnitVectors(fromWorld.normalize(), toWorld.normalize()).inverse();
+            matrix.copyPosition(this.camera.matrix).makeRotationFromQuaternion(quaternion);
+            this.camera.applyMatrix(matrix);
+        }
     }
 
     private constrainPitchAngle(pitchAngle: number, deltaPitch: number): number {
