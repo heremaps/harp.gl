@@ -511,7 +511,7 @@ export const MapViewDefaults = {
     maxVisibleDataSourceTiles: 120,
     extendedFrustumCulling: true,
 
-    tileCacheSize: 160,
+    tileCacheSize: 20,
     resourceComputationType: ResourceComputationType.EstimationInMb,
     quadTreeSearchDistanceUp: 3,
     quadTreeSearchDistanceDown: 2,
