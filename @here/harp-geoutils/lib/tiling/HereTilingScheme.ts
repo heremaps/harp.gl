@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { equirectangularProjection } from "../projection/EquirectangularProjection";
+import { normalizedEquirectangularProjection } from "../projection/EquirectangularProjection";
 import { halfQuadTreeSubdivisionScheme } from "./HalfQuadTreeSubdivisionScheme";
 import { TilingScheme } from "./TilingScheme";
 
@@ -16,5 +16,5 @@ import { TilingScheme } from "./TilingScheme";
  */
 export const hereTilingScheme = new TilingScheme(
     halfQuadTreeSubdivisionScheme,
-    equirectangularProjection
+    normalizedEquirectangularProjection
 );

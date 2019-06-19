@@ -51,8 +51,8 @@ import earcut from "earcut";
 import * as THREE from "three";
 
 import {
-    equirectangularProjection,
     mercatorProjection,
+    normalizedEquirectangularProjection,
     ProjectionType,
     webMercatorProjection
 } from "@here/harp-geoutils";
@@ -586,7 +586,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                       }
                     : texCoordType === TextureCoordinateType.EquirectangularSpace
                     ? (pos: THREE.Vector3) => {
-                          const { x: u, y: v } = equirectangularProjection.reprojectPoint(
+                          const { x: u, y: v } = normalizedEquirectangularProjection.reprojectPoint(
                               webMercatorProjection,
                               pos
                           );
