@@ -118,7 +118,7 @@ const maxLevelTileLoaderCache = 3;
 export class TileDataSource<TileType extends Tile> extends DataSource {
     protected readonly logger = LoggerManager.instance.create("TileDataSource");
     protected readonly m_decoder: ITileDecoder;
-    private readonly m_tileLoaderCache: LRUCache<number, TileLoader>;
+    protected readonly m_tileLoaderCache: LRUCache<number, TileLoader>;
     private m_isReady: boolean = false;
 
     /**
