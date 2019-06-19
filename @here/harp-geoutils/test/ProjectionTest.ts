@@ -9,10 +9,12 @@ import { GeoBox } from "../lib/coordinates/GeoBox";
 import { GeoCoordinates } from "../lib/coordinates/GeoCoordinates";
 import { Box3Like } from "../lib/math/Box3Like";
 import { Vector3Like } from "../lib/math/Vector3Like";
+import { equirectangularProjection } from "../lib/projection/EquirectangularProjection";
 import { identityProjection } from "../lib/projection/IdentityProjection";
 import { mercatorProjection, webMercatorProjection } from "../lib/projection/MercatorProjection";
 import { Projection } from "../lib/projection/Projection";
 import { sphereProjection } from "../lib/projection/SphereProjection";
+import { hereTilingScheme } from "../lib/tiling/HereTilingScheme";
 import { mercatorTilingScheme } from "../lib/tiling/MercatorTilingScheme";
 import { TileKey } from "../lib/tiling/TileKey";
 import { webMercatorTilingScheme } from "../lib/tiling/WebMercatorTilingScheme";
@@ -62,6 +64,54 @@ describe("WebMercator", function() {
         const box = webMercatorTilingScheme.getGeoBox(tileKey);
         const projectedBox = webMercatorProjection.projectBox(box);
         const unprojectedBox = webMercatorProjection.unprojectBox(projectedBox);
+
+        assert.approximately(
+            box.southWest.latitudeInRadians,
+            unprojectedBox.southWest.latitudeInRadians,
+            0.0001
+        );
+        assert.approximately(
+            box.southWest.longitudeInRadians,
+            unprojectedBox.southWest.longitudeInRadians,
+            0.0001
+        );
+        assert.approximately(
+            box.northEast.latitudeInRadians,
+            unprojectedBox.northEast.latitudeInRadians,
+            0.0001
+        );
+        assert.approximately(
+            box.northEast.longitudeInRadians,
+            unprojectedBox.northEast.longitudeInRadians,
+            0.0001
+        );
+    });
+});
+
+describe("Equirectangular", function() {
+    it("project", function() {
+        const coords = new GeoCoordinates(52.504951, 13.371806);
+        const projected = equirectangularProjection.projectPoint(coords);
+        const unprojected = equirectangularProjection.unprojectPoint(projected);
+
+        assert.approximately(coords.latitudeInRadians, unprojected.latitudeInRadians, EPSILON);
+        assert.approximately(coords.longitudeInRadians, unprojected.longitudeInRadians, EPSILON);
+    });
+
+    it("project outside normal range", function() {
+        const coords = new GeoCoordinates(52.504951, 373.371806);
+        const projected = equirectangularProjection.projectPoint(coords);
+        const unprojected = equirectangularProjection.unprojectPoint(projected);
+
+        assert.approximately(coords.latitudeInRadians, unprojected.latitudeInRadians, EPSILON);
+        assert.approximately(coords.longitudeInRadians, unprojected.longitudeInRadians, EPSILON);
+    });
+
+    it("projectBox", function() {
+        const tileKey = TileKey.fromRowColumnLevel(0, 0, 0);
+        const box = hereTilingScheme.getGeoBox(tileKey);
+        const projectedBox = equirectangularProjection.projectBox(box);
+        const unprojectedBox = equirectangularProjection.unprojectBox(projectedBox);
 
         assert.approximately(
             box.southWest.latitudeInRadians,
