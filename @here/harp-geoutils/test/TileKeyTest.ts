@@ -10,6 +10,7 @@
 import { assert } from "chai";
 import { GeoBox } from "../lib/coordinates/GeoBox";
 import { GeoCoordinates } from "../lib/coordinates/GeoCoordinates";
+import { hereTilingScheme } from "../lib/tiling/HereTilingScheme";
 import { TileKey } from "../lib/tiling/TileKey";
 import { TileKeyUtils } from "../lib/tiling/TileKeyUtils";
 import { webMercatorTilingScheme } from "../lib/tiling/WebMercatorTilingScheme";
@@ -91,6 +92,7 @@ describe("WebMercator", function() {
         assert.isNotNull(tileKey);
         assert.strictEqual(tileKey.row, 5374);
         assert.strictEqual(tileKey.column, 8800);
+        assert.strictEqual(tileKey.level, 14);
     });
 
     it("geoRect", function() {
@@ -113,6 +115,17 @@ describe("WebMercator", function() {
         const rect = webMercatorTilingScheme.getGeoBox(tileKey);
         assert.isTrue(rect.southWest.latitudeInRadians < rect.northEast.latitudeInRadians);
         assert.isTrue(rect.southWest.longitudeInRadians < rect.northEast.longitudeInRadians);
+    });
+});
+
+describe("Equirectangular", function() {
+    it("hereTilingScheme", function() {
+        const berlin = new GeoCoordinates(52.504951, 13.371806);
+        const tileKey = hereTilingScheme.getTileKey(berlin, 13) as TileKey;
+        assert.isNotNull(tileKey);
+        assert.strictEqual(tileKey.row, 3242);
+        assert.strictEqual(tileKey.column, 4400);
+        assert.strictEqual(tileKey.level, 13);
     });
 });
 

@@ -75,8 +75,9 @@ class EquirectangularProjection extends Projection {
 
     unprojectPoint(worldPoint: Vector3Like): GeoCoordinates {
         const geoPoint = GeoCoordinates.fromRadians(
-            worldPoint.y * EquirectangularProjection.worldToGeoScale - Math.PI * 0.5,
-            worldPoint.x * EquirectangularProjection.worldToGeoScale - Math.PI,
+            (worldPoint.y * EquirectangularProjection.worldToGeoScale) / this.unitScale -
+                Math.PI * 0.5,
+            (worldPoint.x * EquirectangularProjection.worldToGeoScale) / this.unitScale - Math.PI,
             worldPoint.z
         );
         return geoPoint;
