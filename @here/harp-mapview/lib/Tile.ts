@@ -384,7 +384,11 @@ export class Tile implements CachedResource {
      * The visibility status of the [[Tile]]. It is actually visible or planned to become visible.
      */
     get isVisible(): boolean {
-        return this.frameNumLastRequested === this.dataSource.mapView.frameNumber;
+        // Tiles are not evaluated as invisible until the second frame they aren't requested.
+        // This happens in order to prevent that, during [[VisibleTileSet]] visibility evaluation,
+        // visible tiles that haven't yet been evaluated for the current frame are preemptively
+        // removed from [[DataSourceCache]].
+        return this.frameNumLastRequested >= this.dataSource.mapView.frameNumber - 1;
     }
 
     set isVisible(visible: boolean) {

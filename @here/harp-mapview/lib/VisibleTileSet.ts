@@ -107,7 +107,7 @@ class DataSourceCache {
         };
         this.tileCache.canEvict = (_, tile) => {
             // Tiles can be evicted that weren't requested in the last frame.
-            return tile.frameNumLastRequested !== tile.dataSource.mapView.frameNumber;
+            return !tile.isVisible;
         };
     }
 
