@@ -181,7 +181,6 @@ export class SkyGradientTexture {
         const upDir = new Vector3(0, 0, 1);
         for (let i = 0; i < this.m_height; ++i) {
             for (let j = 0; j < this.m_width; ++j) {
-                let t = i / this.m_height;
                 if (this.m_projectionType === ProjectionType.Spherical) {
                     const offsetX = right
                         .copy(cameraRight[faceIdx])
@@ -193,14 +192,28 @@ export class SkyGradientTexture {
                         .add(offsetX)
                         .add(offsetY)
                         .normalize();
-                    t = Math.max(upDir.dot(dir), 0);
+                    const t = Math.max(upDir.dot(dir), 0);
+
+                    color
+                        .copy(groundColor)
+                        .lerp(bottomColor, Math.min(t * 100, 1))
+                        .lerp(topColor, t ** getOptionValue(monomialPower, DEFAULT_MONOMIAL_POWER))
+                        .multiplyScalar(255);
+                } else {
+                    const t = i / this.m_height;
+                    if (i === 0) {
+                        color.copy(groundColor).multiplyScalar(255);
+                    } else {
+                        color
+                            .copy(bottomColor)
+                            .lerp(
+                                topColor,
+                                t ** getOptionValue(monomialPower, DEFAULT_MONOMIAL_POWER)
+                            )
+                            .multiplyScalar(255);
+                    }
                 }
 
-                color
-                    .copy(groundColor)
-                    .lerp(bottomColor, Math.min(t * 100, 1))
-                    .lerp(topColor, t ** getOptionValue(monomialPower, DEFAULT_MONOMIAL_POWER))
-                    .multiplyScalar(255);
                 data[i * this.m_width * 3 + j * 3] = color.r;
                 data[i * this.m_width * 3 + j * 3 + 1] = color.g;
                 data[i * this.m_width * 3 + j * 3 + 2] = color.b;
@@ -246,13 +259,7 @@ export class SkyGradientTexture {
         // this.m_horizonPosition is still equal to zero, as threejs initialize an empty vector with
         // all the three components to zero.
         // If there is an intersection, calculate the offset.
-        let ratio;
-        if (this.m_horizonPosition!.length() === 0) {
-            ratio = 1;
-        } else {
-            const groundRatio = 1 / this.m_height;
-            ratio = skyRatio - groundRatio;
-        }
+        const ratio = this.m_horizonPosition!.length() === 0 ? 1 : skyRatio - 2 / this.m_height;
 
         // If the bottom part of the far clipping plane is under the ground plane, scroll the
         // texture down. Otherwise, the camera is looking at the sky, therefore, scroll the texture
