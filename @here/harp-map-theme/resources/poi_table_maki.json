@@ -1,0 +1,1612 @@
+{
+    "name": "poiMasterList",
+    "poiList": [
+        {
+            "name": "Restaurant",
+            "altNames": ["bbq", "ice_cream", "restaurant"],
+            "visible": true,
+            "stackMode": "yes",
+            "iconName": "restaurant",
+            "priority": 88,
+            "iconMinLevel": 18,
+            "iconMaxLevel": 20,
+            "textMinLevel": 18,
+            "textMaxLevel": 20
+        },
+        {
+            "name": "Deli",
+            "altNames": ["deli"],
+            "visible": true,
+            "stackMode": "yes",
+            "iconName": "bar",
+            "priority": 94,
+            "iconMinLevel": 18,
+            "iconMaxLevel": 20,
+            "textMinLevel": 18,
+            "textMaxLevel": 20
+        },
+        {
+            "name": "Cafeteria",
+            "altNames": ["cafe"],
+            "visible": true,
+            "stackMode": "yes",
+            "iconName": "cafe",
+            "priority": 95,
+            "iconMinLevel": 18,
+            "iconMaxLevel": 20,
+            "textMinLevel": 18,
+            "textMaxLevel": 20
+        },
+        {
+            "name": "Fast Food",
+            "altNames": ["fast_food"],
+            "visible": true,
+            "stackMode": "yes",
+            "iconName": "fast-food",
+            "priority": 97,
+            "iconMinLevel": 18,
+            "iconMaxLevel": 20,
+            "textMinLevel": 18,
+            "textMaxLevel": 20
+        },
+        {
+            "name": "Coffee-Tea",
+            "altNames": ["coffee"],
+            "visible": true,
+            "stackMode": "yes",
+            "iconName": "cafe",
+            "priority": 99,
+            "iconMinLevel": 18,
+            "iconMaxLevel": 20,
+            "textMinLevel": 18,
+            "textMaxLevel": 20
+        },
+        {
+            "name": "Nightlife-Entertainment",
+            "altNames": ["nightclub"],
+            "visible": true,
+            "stackMode": "yes",
+            "iconName": "beer",
+            "priority": 102,
+            "iconMinLevel": 18,
+            "iconMaxLevel": 20,
+            "textMinLevel": 18,
+            "textMaxLevel": 20
+        },
+        {
+            "name": "Bar-Pub-Stube-Biergarten",
+            "altNames": ["alcohol", "bar", "biergarten", "pub"],
+            "visible": true,
+            "stackMode": "yes",
+            "iconName": "bar",
+            "priority": 103,
+            "iconMinLevel": 18,
+            "iconMaxLevel": 20,
+            "textMinLevel": 18,
+            "textMaxLevel": 20
+        },
+        {
+            "name": "Karaoke",
+            "altNames": ["karaoke_box", "karaoke"],
+            "visible": true,
+            "stackMode": "yes",
+            "iconName": "karaoke",
+            "priority": 106,
+            "iconMinLevel": 18,
+            "iconMaxLevel": 20,
+            "textMinLevel": 18,
+            "textMaxLevel": 20
+        },
+        {
+            "name": "Live Entertainment-Music",
+            "altNames": ["music"],
+            "visible": true,
+            "stackMode": "yes",
+            "iconName": "music",
+            "priority": 107,
+            "iconMinLevel": 18,
+            "iconMaxLevel": 20,
+            "textMinLevel": 18,
+            "textMaxLevel": 20
+        },
+        {
+            "name": "Video Arcade-Game Room",
+            "altNames": ["adult_gaming_centre"],
+            "visible": true,
+            "stackMode": "yes",
+            "iconName": "gaming",
+            "priority": 109,
+            "iconMinLevel": 18,
+            "iconMaxLevel": 20,
+            "textMinLevel": 18,
+            "textMaxLevel": 20
+        },
+        {
+            "name": "Cinema",
+            "altNames": ["cinema"],
+            "visible": true,
+            "stackMode": "yes",
+            "iconName": "cinema",
+            "priority": 37,
+            "iconMinLevel": 16,
+            "iconMaxLevel": 20,
+            "textMinLevel": 16,
+            "textMaxLevel": 20
+        },
+        {
+            "name": "Theatre, Music and Culture",
+            "altNames": ["theatre"],
+            "visible": true,
+            "stackMode": "yes",
+            "iconName": "theatre",
+            "priority": 113,
+            "iconMinLevel": 18,
+            "iconMaxLevel": 20,
+            "textMinLevel": 18,
+            "textMaxLevel": 20
+        },
+        {
+            "name": "Gambling-Lottery-Betting",
+            "altNames": ["gambling"],
+            "visible": true,
+            "stackMode": "yes",
+            "iconName": "gaming",
+            "priority": 115,
+            "iconMinLevel": 18,
+            "iconMaxLevel": 20,
+            "textMinLevel": 18,
+            "textMaxLevel": 20
+        },
+        {
+            "name": "Casino",
+            "altNames": ["casino"],
+            "visible": true,
+            "stackMode": "yes",
+            "iconName": "gaming",
+            "priority": 116,
+            "iconMinLevel": 18,
+            "iconMaxLevel": 20,
+            "textMinLevel": 18,
+            "textMaxLevel": 20
+        },
+        {
+            "name": "Lottery Booth",
+            "altNames": ["lottery"],
+            "visible": true,
+            "stackMode": "yes",
+            "iconName": "",
+            "priority": 117,
+            "iconMinLevel": 18,
+            "iconMaxLevel": 20,
+            "textMinLevel": 18,
+            "textMaxLevel": 20
+        },
+        {
+            "name": "Landmark-Attraction",
+            "altNames": [
+                "archaeological_site",
+                "geyser",
+                "landmark",
+                "lighthouse",
+                "obelisk",
+                "windmill"
+            ],
+            "visible": true,
+            "stackMode": "yes",
+            "iconName": "attraction",
+            "priority": 15,
+            "iconMinLevel": 15,
+            "iconMaxLevel": 20,
+            "textMinLevel": 15,
+            "textMaxLevel": 20
+        },
+        {
+            "name": "Tourist Attraction",
+            "altNames": ["attraction", "memorial"],
+            "visible": true,
+            "stackMode": "yes",
+            "iconName": "attraction",
+            "priority": 16,
+            "iconMinLevel": 15,
+            "iconMaxLevel": 20,
+            "textMinLevel": 15,
+            "textMaxLevel": 20
+        },
+        {
+            "name": "Gallery",
+            "altNames": ["arts_centre", "artwork", "gallery"],
+            "visible": true,
+            "stackMode": "yes",
+            "iconName": "art-gallery",
+            "priority": 118,
+            "iconMinLevel": 18,
+            "iconMaxLevel": 20,
+            "textMinLevel": 18,
+            "textMaxLevel": 20
+        },
+        {
+            "name": "Historical Monument",
+            "altNames": ["monument", "stone"],
+            "visible": true,
+            "stackMode": "yes",
+            "iconName": "monument",
+            "priority": 36,
+            "iconMinLevel": 16,
+            "iconMaxLevel": 20,
+            "textMinLevel": 16,
+            "textMaxLevel": 20
+        },
+        {
+            "name": "Winery",
+            "altNames": ["winery"],
+            "visible": true,
+            "stackMode": "yes",
+            "iconName": "alcohol-shop",
+            "priority": 61,
+            "iconMinLevel": 17,
+            "iconMaxLevel": 20,
+            "textMinLevel": 17,
+            "textMaxLevel": 20
+        },
+        {
+            "name": "Named Intersection-Chowk",
+            "visible": false,
+            "stackMode": "yes"
+        },
+        {
+            "name": "Brewery",
+            "altNames": ["brewery"],
+            "visible": true,
+            "stackMode": "yes",
+            "iconName": "",
+            "priority": 62,
+            "iconMinLevel": 17,
+            "iconMaxLevel": 20,
+            "textMinLevel": 17,
+            "textMaxLevel": 20
+        },
+        {
+            "name": "Museum",
+            "altNames": ["museum"],
+            "visible": true,
+            "stackMode": "yes",
+            "iconName": "museum",
+            "priority": 56,
+            "iconMinLevel": 17,
+            "iconMaxLevel": 20,
+            "textMinLevel": 17,
+            "textMaxLevel": 20
+        },
+        {
+            "name": "Religious Place",
+            "altNames": ["place_of_worship", "religion"],
+            "visible": true,
+            "stackMode": "yes",
+            "iconName": "",
+            "priority": 148,
+            "iconMinLevel": 19,
+            "iconMaxLevel": 20,
+            "textMinLevel": 19,
+            "textMaxLevel": 20
+        },
+        {
+            "name": "Waterfall",
+            "altNames": ["hot_spring", "waterfall"],
+            "visible": true,
+            "stackMode": "yes",
+            "iconName": "natural",
+            "priority": 67,
+            "iconMinLevel": 17,
+            "iconMaxLevel": 20,
+            "textMinLevel": 17,
+            "textMaxLevel": 20
+        },
+        {
+            "name": "Bay-Harbor",
+            "altNames": ["boat_storage", "boatyard", "mooring"],
+            "visible": true,
+            "stackMode": "yes",
+            "iconName": "harbor",
+            "priority": 50,
+            "iconMinLevel": 17,
+            "iconMaxLevel": 20,
+            "textMinLevel": 17,
+            "textMaxLevel": 20
+        },
+        {
+            "name": "Mountain or Hill",
+            "altNames": ["rock"],
+            "iconName": "mountain",
+            "visible": false,
+            "stackMode": "yes"
+        },
+        {
+            "name": "Mountain Passes",
+            "altNames": ["saddle"],
+            "visible": true,
+            "stackMode": "yes",
+            "iconName": "",
+            "priority": 65,
+            "iconMinLevel": 17,
+            "iconMaxLevel": 20,
+            "textMinLevel": 17,
+            "textMaxLevel": 20
+        },
+        {
+            "name": "Mountain Peaks",
+            "altNames": ["peak"],
+            "visible": false,
+            "stackMode": "yes"
+        },
+        {
+            "name": "Forest, Heath or Other Vegetation",
+            "altNames": ["forest", "tree", "wood"],
+            "visible": false,
+            "stackMode": "yes"
+        },
+        {
+            "name": "Airport",
+            "altNames": ["aerodrome", "airport"],
+            "visible": true,
+            "stackMode": "yes",
+            "iconName": "airport",
+            "priority": 1,
+            "iconMinLevel": 9,
+            "iconMaxLevel": 20,
+            "textMinLevel": 9,
+            "textMaxLevel": 20
+        },
+        {
+            "name": "Train Station",
+            "altNames": ["station"],
+            "visible": true,
+            "stackMode": "yes",
+            "iconName": "rail",
+            "priority": 7,
+            "iconMinLevel": 14,
+            "iconMaxLevel": 20,
+            "textMinLevel": 14,
+            "textMaxLevel": 20
+        },
+        {
+            "name": "Bus Station",
+            "altNames": ["bus_station"],
+            "visible": true,
+            "stackMode": "yes",
+            "iconName": "bus",
+            "priority": 27,
+            "iconMinLevel": 16,
+            "iconMaxLevel": 20,
+            "textMinLevel": 16,
+            "textMaxLevel": 20
+        },
+        {
+            "name": "Underground Train-Subway",
+            "altNames": ["substation"],
+            "visible": true,
+            "stackMode": "yes",
+            "iconName": "rail-metro",
+            "priority": 28,
+            "iconMinLevel": 16,
+            "iconMaxLevel": 20,
+            "textMinLevel": 16,
+            "textMaxLevel": 20
+        },
+        {
+            "name": "Commuter Train",
+            "altNames": ["tram_stop"],
+            "visible": true,
+            "stackMode": "yes",
+            "iconName": "rail-light",
+            "priority": 30,
+            "iconMinLevel": 16,
+            "iconMaxLevel": 20,
+            "textMinLevel": 16,
+            "textMaxLevel": 20
+        },
+        {
+            "name": "Public Transit Access",
+            "altNames": ["subway_entrance"],
+            "visible": false,
+            "stackMode": "yes"
+        },
+        {
+            "name": "Bus Stop",
+            "altNames": ["bus_stop"],
+            "visible": true,
+            "stackMode": "yes",
+            "iconName": "bus",
+            "priority": 31,
+            "iconMinLevel": 16,
+            "iconMaxLevel": 20,
+            "textMinLevel": 16,
+            "textMaxLevel": 20
+        },
+        {
+            "name": "Ferry Terminal",
+            "altNames": ["ferry_terminal"],
+            "visible": true,
+            "stackMode": "yes",
+            "iconName": "ferry",
+            "priority": 47,
+            "iconMinLevel": 17,
+            "iconMaxLevel": 20,
+            "textMinLevel": 17,
+            "textMaxLevel": 20
+        },
+        {
+            "name": "Taxi Stand",
+            "altNames": ["taxi"],
+            "visible": true,
+            "stackMode": "yes",
+            "iconName": "",
+            "priority": 68,
+            "iconMinLevel": 17,
+            "iconMaxLevel": 20,
+            "textMinLevel": 17,
+            "textMaxLevel": 20
+        },
+        {
+            "name": "Tollbooth",
+            "altNames": ["toll_booth"],
+            "visible": true,
+            "stackMode": "yes",
+            "iconName": "",
+            "priority": 34,
+            "iconMinLevel": 16,
+            "iconMaxLevel": 20,
+            "textMinLevel": 16,
+            "textMaxLevel": 20
+        },
+        {
+            "name": "Bicycle Sharing Location",
+            "altNames": ["bicycle_rental_station"],
+            "visible": false,
+            "iconName": "bicycle-share",
+            "stackMode": "yes"
+        },
+        {
+            "name": "Bicycle Parking",
+            "altNames": ["bicycle_parking"],
+            "visible": false,
+            "iconName": "bicycle",
+            "stackMode": "yes"
+        },
+        {
+            "name": "Rest Area",
+            "altNames": ["rest_area"],
+            "visible": true,
+            "stackMode": "yes",
+            "iconName": "picnic-site",
+            "priority": 2,
+            "iconMinLevel": 11,
+            "iconMaxLevel": 20,
+            "textMinLevel": 11,
+            "textMaxLevel": 20
+        },
+        {
+            "name": "Scenic Overlook",
+            "altNames": ["viewpoint"],
+            "visible": true,
+            "stackMode": "yes",
+            "iconName": "attraction",
+            "priority": 17,
+            "iconMinLevel": 15,
+            "iconMaxLevel": 20,
+            "textMinLevel": 15,
+            "textMaxLevel": 20
+        },
+        {
+            "name": "Hotel or Motel",
+            "altNames": ["hotel", "love_hotel"],
+            "visible": true,
+            "stackMode": "yes",
+            "iconName": "home",
+            "priority": 69,
+            "iconMinLevel": 17,
+            "iconMaxLevel": 20,
+            "textMinLevel": 17,
+            "textMaxLevel": 20
+        },
+        {
+            "name": "Motel",
+            "altNames": ["motel"],
+            "visible": true,
+            "stackMode": "yes",
+            "iconName": "home",
+            "priority": 71,
+            "iconMinLevel": 17,
+            "iconMaxLevel": 20,
+            "textMinLevel": 17,
+            "textMaxLevel": 20
+        },
+        {
+            "name": "Hostel",
+            "altNames": ["hostel"],
+            "visible": true,
+            "stackMode": "yes",
+            "iconName": "home",
+            "priority": 73,
+            "iconMinLevel": 17,
+            "iconMaxLevel": 20,
+            "textMinLevel": 17,
+            "textMaxLevel": 20
+        },
+        {
+            "name": "Campground",
+            "altNames": ["summer_camp"],
+            "visible": true,
+            "stackMode": "yes",
+            "iconName": "campsite",
+            "priority": 51,
+            "iconMinLevel": 17,
+            "iconMaxLevel": 20,
+            "textMinLevel": 17,
+            "textMaxLevel": 20
+        },
+        {
+            "name": "Guest House",
+            "altNames": ["chalet", "guest_house"],
+            "visible": true,
+            "stackMode": "yes",
+            "iconName": "home",
+            "priority": 74,
+            "iconMinLevel": 17,
+            "iconMaxLevel": 20,
+            "textMinLevel": 17,
+            "textMaxLevel": 20
+        },
+        {
+            "name": "Bed and Breakfast",
+            "altNames": ["bed_and_breakfast"],
+            "visible": true,
+            "stackMode": "yes",
+            "iconName": "home",
+            "priority": 75,
+            "iconMinLevel": 17,
+            "iconMaxLevel": 20,
+            "textMinLevel": 17,
+            "textMaxLevel": 20
+        },
+        {
+            "name": "Trekking Hut",
+            "altNames": ["alpine_hut"],
+            "visible": false,
+            "iconName": "shelter",
+            "stackMode": "yes"
+        },
+        {
+            "name": "Park-Recreation",
+            "altNames": ["national_park", "nature_reserve"],
+            "visible": true,
+            "stackMode": "yes",
+            "iconName": "park-alt1",
+            "priority": 48,
+            "iconMinLevel": 17,
+            "iconMaxLevel": 20,
+            "textMinLevel": 17,
+            "textMaxLevel": 20
+        },
+        {
+            "name": "Park-Recreation Area",
+            "altNames": ["park", "picnic_site"],
+            "visible": true,
+            "stackMode": "yes",
+            "iconName": "park",
+            "priority": 49,
+            "iconMinLevel": 17,
+            "iconMaxLevel": 20,
+            "textMinLevel": 17,
+            "textMaxLevel": 20
+        },
+        {
+            "name": "Garden",
+            "altNames": ["garden", "orchard"],
+            "visible": true,
+            "stackMode": "yes",
+            "iconName": "garden",
+            "priority": 78,
+            "iconMinLevel": 17,
+            "iconMaxLevel": 20,
+            "textMinLevel": 17,
+            "textMaxLevel": 20
+        },
+        {
+            "name": "Beach",
+            "altNames": ["beach_resort"],
+            "visible": true,
+            "stackMode": "yes",
+            "iconName": "",
+            "priority": 44,
+            "iconMinLevel": 16,
+            "iconMaxLevel": 20,
+            "textMinLevel": 16,
+            "textMaxLevel": 20
+        },
+        {
+            "name": "Recreation Center",
+            "altNames": ["sports_centre"],
+            "visible": false,
+            "iconName": "playground",
+            "stackMode": "yes"
+        },
+        {
+            "name": "Scenic Point",
+            "altNames": ["volcano"],
+            "visible": true,
+            "stackMode": "yes",
+            "iconName": "volcano",
+            "priority": 38,
+            "iconMinLevel": 16,
+            "iconMaxLevel": 20,
+            "textMinLevel": 16,
+            "textMaxLevel": 20
+        },
+        {
+            "name": "Trailhead",
+            "altNames": ["trailhead"],
+            "visible": true,
+            "stackMode": "yes",
+            "iconName": "",
+            "priority": 81,
+            "iconMinLevel": 17,
+            "iconMaxLevel": 20,
+            "textMinLevel": 17,
+            "textMaxLevel": 20
+        },
+        {
+            "name": "Campsite",
+            "altNames": ["camp_site"],
+            "visible": true,
+            "stackMode": "yes",
+            "iconName": "campsite",
+            "priority": 52,
+            "iconMinLevel": 17,
+            "iconMaxLevel": 20,
+            "textMinLevel": 17,
+            "textMaxLevel": 20
+        },
+        {
+            "name": "Ranger Station",
+            "altNames": ["ranger_station", "wilderness_hut"],
+            "visible": false,
+            "iconName": "ranger-station",
+            "stackMode": "yes"
+        },
+        {
+            "name": "Amusement or Holiday Park",
+            "altNames": ["amusement_ride", "roller_coaster", "theme_park"],
+            "visible": true,
+            "stackMode": "yes",
+            "iconName": "amusement-park",
+            "priority": 22,
+            "iconMinLevel": 15,
+            "iconMaxLevel": 20,
+            "textMinLevel": 15,
+            "textMaxLevel": 20
+        },
+        {
+            "name": "Zoo",
+            "altNames": ["animal", "zoo"],
+            "visible": true,
+            "stackMode": "yes",
+            "iconName": "zoo",
+            "priority": 41,
+            "iconMinLevel": 16,
+            "iconMaxLevel": 20,
+            "textMinLevel": 16,
+            "textMaxLevel": 20
+        },
+        {
+            "name": "Wild Animal Park",
+            "altNames": ["wildlife_park", "protected_area", "water_works"],
+            "visible": true,
+            "stackMode": "yes",
+            "iconName": "",
+            "priority": 53,
+            "iconMinLevel": 17,
+            "iconMaxLevel": 20,
+            "textMinLevel": 17,
+            "textMaxLevel": 20
+        },
+        {
+            "name": "Wildlife Refuge",
+            "altNames": ["petting_zoo"],
+            "visible": true,
+            "stackMode": "yes",
+            "iconName": "dog-park",
+            "priority": 54,
+            "iconMinLevel": 17,
+            "iconMaxLevel": 20,
+            "textMinLevel": 17,
+            "textMaxLevel": 20
+        },
+        {
+            "name": "Aquarium",
+            "altNames": ["aquarium"],
+            "visible": true,
+            "stackMode": "yes",
+            "iconName": "aquarium",
+            "priority": 120,
+            "iconMinLevel": 18,
+            "iconMaxLevel": 20,
+            "textMinLevel": 18,
+            "textMaxLevel": 20
+        },
+        {
+            "name": "Ski Resort",
+            "altNames": ["ski", "winter_sports"],
+            "visible": true,
+            "stackMode": "yes",
+            "iconName": "skiing",
+            "priority": 55,
+            "iconMinLevel": 17,
+            "iconMaxLevel": 20,
+            "textMinLevel": 17,
+            "textMaxLevel": 20
+        },
+        {
+            "name": "Water Park",
+            "altNames": ["water_park", "water_slide"],
+            "visible": true,
+            "stackMode": "yes",
+            "iconName": "",
+            "priority": 43,
+            "iconMinLevel": 16,
+            "iconMaxLevel": 20,
+            "textMinLevel": 16,
+            "textMaxLevel": 20
+        },
+        {
+            "name": "Other Convenience Store",
+            "altNames": ["convenience", "variety_store"],
+            "visible": false,
+            "iconName": "shop",
+            "stackMode": "yes"
+        },
+        {
+            "name": "Shopping Mall",
+            "altNames": ["mall", "supermarket"],
+            "visible": true,
+            "stackMode": "yes",
+            "iconName": "warehouse",
+            "priority": 14,
+            "iconMinLevel": 15,
+            "iconMaxLevel": 20,
+            "textMinLevel": 15,
+            "textMaxLevel": 20
+        },
+        {
+            "name": "Department Store",
+            "altNames": ["department_store"],
+            "visible": false,
+            "stackMode": "yes"
+        },
+        {
+            "name": "Grocery",
+            "altNames": ["greengrocer", "grocery", "shop"],
+            "visible": true,
+            "stackMode": "yes",
+            "iconName": "grocery",
+            "priority": 121,
+            "iconMinLevel": 18,
+            "iconMaxLevel": 20,
+            "textMinLevel": 18,
+            "textMaxLevel": 20
+        },
+        {
+            "name": "Wine and Liquor",
+            "altNames": ["wine"],
+            "visible": false,
+            "stackMode": "yes"
+        },
+        {
+            "name": "Bakery and Baked Goods Store",
+            "altNames": ["bakery"],
+            "visible": false,
+            "iconName": "bakery",
+            "stackMode": "yes"
+        },
+        {
+            "name": "Butcher",
+            "altNames": ["beacon", "butcher"],
+            "visible": false,
+            "stackMode": "yes"
+        },
+        {
+            "name": "Dairy Goods",
+            "altNames": ["dairy_kitchen"],
+            "visible": false,
+            "stackMode": "yes"
+        },
+        {
+            "name": "Drug Store",
+            "altNames": ["chemist"],
+            "visible": true,
+            "stackMode": "yes",
+            "iconName": "pharmacy",
+            "priority": 123,
+            "iconMinLevel": 18,
+            "iconMaxLevel": 20,
+            "textMinLevel": 18,
+            "textMaxLevel": 20
+        },
+        {
+            "name": "Pharmacy",
+            "altNames": ["pharmacy"],
+            "visible": true,
+            "stackMode": "yes",
+            "iconName": "pharmacy",
+            "priority": 124,
+            "iconMinLevel": 18,
+            "iconMaxLevel": 20,
+            "textMinLevel": 18,
+            "textMaxLevel": 20
+        },
+        {
+            "name": "Computer and Software",
+            "altNames": ["computer", "it"],
+            "visible": false,
+            "stackMode": "yes"
+        },
+        {
+            "name": "Hardware, House and Garden",
+            "altNames": ["garden_centre", "gas_canister", "hardware"],
+            "visible": false,
+            "stackMode": "yes"
+        },
+        {
+            "name": "Home Improvement-Hardware Store",
+            "altNames": ["hvac"],
+            "visible": false,
+            "stackMode": "yes"
+        },
+        {
+            "name": "Furniture Store",
+            "altNames": ["furniture"],
+            "visible": false,
+            "stackMode": "yes"
+        },
+        {
+            "name": "Book Store",
+            "altNames": ["books"],
+            "visible": true,
+            "stackMode": "yes",
+            "iconName": "",
+            "priority": 126,
+            "iconMinLevel": 18,
+            "iconMaxLevel": 20,
+            "textMinLevel": 18,
+            "textMaxLevel": 20
+        },
+        {
+            "name": "Clothing and Accessories",
+            "altNames": ["clothes", "fashion"],
+            "visible": false,
+            "iconName": "clothing-store",
+            "stackMode": "yes"
+        },
+        {
+            "name": "Shoes-Footwear",
+            "altNames": ["shoes"],
+            "visible": false,
+            "iconName": "clothing-store",
+            "stackMode": "yes"
+        },
+        {
+            "name": "Consumer Goods",
+            "altNames": ["perfumery"],
+            "visible": false,
+            "stackMode": "yes"
+        },
+        {
+            "name": "Office Supply and Services Store",
+            "altNames": ["advertising_agency"],
+            "visible": false,
+            "stackMode": "yes"
+        },
+        {
+            "name": "Pet Supply",
+            "altNames": ["pet"],
+            "visible": false,
+            "stackMode": "yes"
+        },
+        {
+            "name": "Flowers and Jewelry",
+            "altNames": ["jewelry"],
+            "visible": false,
+            "stackMode": "yes"
+        },
+        {
+            "name": "Gift, Antique and Art",
+            "altNames": ["art", "gift"],
+            "visible": false,
+            "stackMode": "yes"
+        },
+        {
+            "name": "Hair and Beauty",
+            "altNames": ["beauty", "hairdresser"],
+            "visible": false,
+            "iconName": "hairdresser",
+            "stackMode": "yes"
+        },
+        {
+            "name": "Market",
+            "altNames": ["marketplace"],
+            "visible": false,
+            "stackMode": "yes"
+        },
+        {
+            "name": "Florist",
+            "altNames": ["florist"],
+            "visible": false,
+            "iconName": "florist",
+            "stackMode": "yes"
+        },
+        {
+            "name": "Toy Store",
+            "altNames": ["toys"],
+            "visible": false,
+            "stackMode": "yes"
+        },
+        {
+            "name": "Hunting-Fishing Shop",
+            "altNames": ["hunting"],
+            "visible": false,
+            "stackMode": "yes"
+        },
+        {
+            "name": "Bank",
+            "altNames": ["bank"],
+            "visible": true,
+            "stackMode": "yes",
+            "iconName": "bank",
+            "priority": 127,
+            "iconMinLevel": 18,
+            "iconMaxLevel": 20,
+            "textMinLevel": 18,
+            "textMaxLevel": 20
+        },
+        {
+            "name": "ATM",
+            "altNames": ["atm"],
+            "visible": true,
+            "stackMode": "yes",
+            "iconName": "",
+            "priority": 128,
+            "iconMinLevel": 18,
+            "iconMaxLevel": 20,
+            "textMinLevel": 18,
+            "textMaxLevel": 20
+        },
+        {
+            "name": "Money Transferring Service",
+            "altNames": ["money_transfer"],
+            "visible": false,
+            "stackMode": "yes"
+        },
+        {
+            "name": "Check Cashing Service-Currency Exchange",
+            "altNames": ["bureau_de_change"],
+            "visible": false,
+            "stackMode": "yes"
+        },
+        {
+            "name": "Communication-Media",
+            "altNames": ["telecommunication"],
+            "visible": false,
+            "stackMode": "yes"
+        },
+        {
+            "name": "Telephone Service",
+            "altNames": ["phone", "telephone"],
+            "visible": false,
+            "iconName": "telephone",
+            "stackMode": "yes"
+        },
+        {
+            "name": "Advertising-Marketing, PR and Market Research",
+            "altNames": ["research"],
+            "visible": false,
+            "stackMode": "yes"
+        },
+        {
+            "name": "Mining",
+            "altNames": ["mineshaft"],
+            "visible": false,
+            "stackMode": "yes"
+        },
+        {
+            "name": "Finance and Insurance",
+            "altNames": ["insurance"],
+            "visible": false,
+            "stackMode": "yes"
+        },
+        {
+            "name": "Healthcare and Healthcare Support Services",
+            "altNames": ["healthcare"],
+            "visible": false,
+            "iconName": "heart",
+            "stackMode": "yes"
+        },
+        {
+            "name": "Rental and Leasing",
+            "altNames": ["bicycle_rental", "boat_rental"],
+            "visible": false,
+            "stackMode": "yes"
+        },
+        {
+            "name": "Financial Investment Firm",
+            "altNames": ["financial"],
+            "visible": false,
+            "iconName": "commercial",
+            "stackMode": "yes"
+        },
+        {
+            "name": "Business Facility",
+            "altNames": ["company", "office"],
+            "visible": false,
+            "iconName": "commercial",
+            "stackMode": "yes"
+        },
+        {
+            "name": "Police Station",
+            "altNames": ["police"],
+            "visible": true,
+            "stackMode": "yes",
+            "iconName": "police",
+            "priority": 85,
+            "iconMinLevel": 17,
+            "iconMaxLevel": 20,
+            "textMinLevel": 17,
+            "textMaxLevel": 20
+        },
+        {
+            "name": "Fire Department",
+            "altNames": ["fire_station"],
+            "visible": false,
+            "iconName": "fire-station",
+            "stackMode": "yes"
+        },
+        {
+            "name": "Consumer Services",
+            "altNames": ["service_area"],
+            "visible": false,
+            "stackMode": "yes"
+        },
+        {
+            "name": "Travel Agent-Ticketing",
+            "altNames": ["travel_agency"],
+            "visible": false,
+            "stackMode": "yes"
+        },
+        {
+            "name": "Dry Cleaning and Laundry",
+            "altNames": ["dry_cleaning", "laundry"],
+            "visible": true,
+            "stackMode": "yes",
+            "iconName": "laundry",
+            "priority": 157,
+            "iconMinLevel": 19,
+            "iconMaxLevel": 20,
+            "textMinLevel": 19,
+            "textMaxLevel": 20
+        },
+        {
+            "name": "Funeral Director",
+            "altNames": ["funeral_directors"],
+            "visible": false,
+            "stackMode": "yes"
+        },
+        {
+            "name": "Photography",
+            "altNames": ["photo"],
+            "visible": false,
+            "stackMode": "yes"
+        },
+        {
+            "name": "Repair Service",
+            "altNames": ["shoemaker"],
+            "visible": false,
+            "stackMode": "yes"
+        },
+        {
+            "name": "Tailor and Alteration",
+            "altNames": ["dressmaker", "tailor"],
+            "visible": false,
+            "stackMode": "yes"
+        },
+        {
+            "name": "Tax Service",
+            "altNames": ["tax_advisor"],
+            "visible": false,
+            "stackMode": "yes"
+        },
+        {
+            "name": "Bicycle Service and Maintenance",
+            "altNames": ["bicycle_repair_station"],
+            "visible": false,
+            "stackMode": "yes"
+        },
+        {
+            "name": "Kindergarten and Childcare",
+            "altNames": ["childcare", "kindergarten"],
+            "visible": true,
+            "stackMode": "yes",
+            "iconName": "",
+            "priority": 158,
+            "iconMinLevel": 18,
+            "iconMaxLevel": 20,
+            "textMinLevel": 18,
+            "textMaxLevel": 20
+        },
+        {
+            "name": "Legal Services",
+            "altNames": ["notary"],
+            "visible": false,
+            "stackMode": "yes"
+        },
+        {
+            "name": "Recycling Center",
+            "altNames": ["recycling"],
+            "visible": false,
+            "iconName": "recycling",
+            "stackMode": "yes"
+        },
+        {
+            "name": "Electrical",
+            "altNames": ["electrician"],
+            "visible": false,
+            "stackMode": "yes"
+        },
+        {
+            "name": "Plumbing",
+            "altNames": ["plumber"],
+            "visible": false,
+            "stackMode": "yes"
+        },
+        {
+            "name": "Post Office",
+            "altNames": ["post_office"],
+            "visible": true,
+            "stackMode": "yes",
+            "iconName": "post",
+            "priority": 130,
+            "iconMinLevel": 18,
+            "iconMaxLevel": 20,
+            "textMinLevel": 18,
+            "textMaxLevel": 20
+        },
+        {
+            "name": "Post Box",
+            "altNames": ["post_box"],
+            "visible": false,
+            "stackMode": "yes"
+        },
+        {
+            "name": "Tourist Information",
+            "altNames": ["information"],
+            "visible": true,
+            "stackMode": "yes",
+            "iconName": "information",
+            "priority": 35,
+            "iconMinLevel": 16,
+            "iconMaxLevel": 20,
+            "textMinLevel": 16,
+            "textMaxLevel": 20
+        },
+        {
+            "name": "Petrol-Gasoline Station",
+            "altNames": ["fuel"],
+            "visible": true,
+            "stackMode": "yes",
+            "iconName": "fuel",
+            "priority": 12,
+            "iconMinLevel": 15,
+            "iconMaxLevel": 20,
+            "textMinLevel": 15,
+            "textMaxLevel": 20
+        },
+        {
+            "name": "EV Charging Station",
+            "altNames": ["charging_station", "childrens_centre"],
+            "visible": true,
+            "stackMode": "yes",
+            "iconName": "",
+            "priority": 13,
+            "iconMinLevel": 15,
+            "iconMaxLevel": 20,
+            "textMinLevel": 15,
+            "textMaxLevel": 20
+        },
+        {
+            "name": "Car Wash-Detailing",
+            "altNames": ["car_wash"],
+            "visible": true,
+            "stackMode": "yes",
+            "iconName": "",
+            "priority": 131,
+            "iconMinLevel": 18,
+            "iconMaxLevel": 20,
+            "textMinLevel": 18,
+            "textMaxLevel": 20
+        },
+        {
+            "name": "Car Repair",
+            "altNames": ["car_repair"],
+            "visible": true,
+            "stackMode": "yes",
+            "iconName": "",
+            "priority": 40,
+            "iconMinLevel": 16,
+            "iconMaxLevel": 20,
+            "textMinLevel": 16,
+            "textMaxLevel": 20
+        },
+        {
+            "name": "Auto Parts",
+            "altNames": ["car_parts"],
+            "visible": false,
+            "stackMode": "yes"
+        },
+        {
+            "name": "Tire Repair",
+            "altNames": ["tyres"],
+            "visible": false,
+            "stackMode": "yes"
+        },
+        {
+            "name": "Rental Car Agency",
+            "altNames": ["car_rental"],
+            "visible": true,
+            "stackMode": "yes",
+            "iconName": "",
+            "priority": 46,
+            "iconMinLevel": 17,
+            "iconMaxLevel": 20,
+            "textMinLevel": 17,
+            "textMaxLevel": 20
+        },
+        {
+            "name": "Hospital or Health Care Facility",
+            "altNames": [
+                "ambulatory_care",
+                "doctor",
+                "health_centre",
+                "healthcare_centre",
+                "hospital"
+            ],
+            "visible": true,
+            "stackMode": "yes",
+            "iconName": "hospital",
+            "priority": 20,
+            "iconMinLevel": 15,
+            "iconMaxLevel": 20,
+            "textMinLevel": 15,
+            "textMaxLevel": 20
+        },
+        {
+            "name": "Dentist-Dental Office",
+            "altNames": ["dentist"],
+            "visible": false,
+            "iconName": "dentist",
+            "stackMode": "yes"
+        },
+        {
+            "name": "Family-General Practice Physicians",
+            "altNames": ["physician"],
+            "visible": false,
+            "stackMode": "yes"
+        },
+        {
+            "name": "Psychiatric Institute",
+            "visible": false,
+            "stackMode": "yes"
+        },
+        {
+            "name": "Nursing Home",
+            "altNames": ["nursing_home"],
+            "visible": false,
+            "stackMode": "yes"
+        },
+        {
+            "name": "Medical Services-Clinics",
+            "altNames": ["clinic"],
+            "visible": false,
+            "stackMode": "yes"
+        },
+        {
+            "name": "Hospital",
+            "altNames": ["field_hospital"],
+            "visible": true,
+            "stackMode": "yes",
+            "iconName": "hospital",
+            "priority": 21,
+            "iconMinLevel": 15,
+            "iconMaxLevel": 20,
+            "textMinLevel": 15,
+            "textMaxLevel": 20
+        },
+        {
+            "name": "Optical",
+            "altNames": ["optician"],
+            "visible": false,
+            "stackMode": "yes"
+        },
+        {
+            "name": "Veterinarian",
+            "altNames": ["veterinary"],
+            "visible": false,
+            "iconName": "veterinary",
+            "stackMode": "yes"
+        },
+        {
+            "name": "Therapist",
+            "altNames": ["therapist"],
+            "visible": false,
+            "stackMode": "yes"
+        },
+        {
+            "name": "Blood Bank",
+            "altNames": ["blood_bank"],
+            "visible": false,
+            "iconName": "blood-bank",
+            "stackMode": "yes"
+        },
+        {
+            "name": "Government or Community Facility",
+            "altNames": ["government"],
+            "visible": true,
+            "stackMode": "yes",
+            "iconName": "residential-community",
+            "priority": 132,
+            "iconMinLevel": 18,
+            "iconMaxLevel": 20,
+            "textMinLevel": 18,
+            "textMaxLevel": 20
+        },
+        {
+            "name": "City Hall",
+            "altNames": ["townhall"],
+            "visible": true,
+            "stackMode": "yes",
+            "iconName": "town-hall",
+            "priority": 133,
+            "iconMinLevel": 18,
+            "iconMaxLevel": 20,
+            "textMinLevel": 18,
+            "textMaxLevel": 20
+        },
+        {
+            "name": "Embassy",
+            "altNames": ["embassy"],
+            "visible": false,
+            "iconName": "embassy",
+            "stackMode": "yes"
+        },
+        {
+            "name": "Military Base",
+            "altNames": ["airfield", "battlefield", "military"],
+            "visible": false,
+            "stackMode": "yes"
+        },
+        {
+            "name": "Court House",
+            "altNames": ["courthouse"],
+            "visible": true,
+            "stackMode": "yes",
+            "iconName": "",
+            "priority": 135,
+            "iconMinLevel": 18,
+            "iconMaxLevel": 20,
+            "textMinLevel": 18,
+            "textMaxLevel": 20
+        },
+        {
+            "name": "Border Crossing",
+            "altNames": ["border_control"],
+            "visible": true,
+            "stackMode": "yes",
+            "iconName": "",
+            "priority": 6,
+            "iconMinLevel": 13,
+            "iconMaxLevel": 20,
+            "textMinLevel": 13,
+            "textMaxLevel": 20
+        },
+        {
+            "name": "Education Facility",
+            "altNames": ["college", "educational_institution"],
+            "visible": true,
+            "stackMode": "yes",
+            "iconName": "school",
+            "priority": 136,
+            "iconMinLevel": 18,
+            "iconMaxLevel": 20,
+            "textMinLevel": 18,
+            "textMaxLevel": 20
+        },
+        {
+            "name": "Higher Education",
+            "altNames": ["university"],
+            "visible": true,
+            "stackMode": "yes",
+            "iconName": "school",
+            "priority": 84,
+            "iconMinLevel": 17,
+            "iconMaxLevel": 20,
+            "textMinLevel": 17,
+            "textMaxLevel": 20
+        },
+        {
+            "name": "School",
+            "altNames": ["school"],
+            "visible": true,
+            "stackMode": "yes",
+            "iconName": "school",
+            "priority": 137,
+            "iconMinLevel": 18,
+            "iconMaxLevel": 20,
+            "textMinLevel": 18,
+            "textMaxLevel": 20
+        },
+        {
+            "name": "Library",
+            "altNames": ["library"],
+            "visible": false,
+            "stackMode": "yes"
+        },
+        {
+            "name": "Parking Facility",
+            "altNames": ["parking"],
+            "visible": true,
+            "stackMode": "yes",
+            "iconName": "parking",
+            "priority": 138,
+            "iconMinLevel": 18,
+            "iconMaxLevel": 20,
+            "textMinLevel": 18,
+            "textMaxLevel": 20
+        },
+        {
+            "name": "Parking Garage-Parking House",
+            "altNames": ["parking_garage"],
+            "visible": true,
+            "stackMode": "yes",
+            "iconName": "parking-garage",
+            "priority": 139,
+            "iconMinLevel": 18,
+            "iconMaxLevel": 20,
+            "textMinLevel": 18,
+            "textMaxLevel": 20
+        },
+        {
+            "name": "Sports Facility-Venue",
+            "altNames": ["sports"],
+            "visible": true,
+            "stackMode": "yes",
+            "iconName": "stadium",
+            "priority": 53,
+            "iconMinLevel": 17,
+            "iconMaxLevel": 20,
+            "textMinLevel": 17,
+            "textMaxLevel": 20
+        },
+        {
+            "name": "Sports Complex-Stadium",
+            "altNames": ["stadium"],
+            "visible": true,
+            "stackMode": "yes",
+            "iconName": "stadium",
+            "priority": 54,
+            "iconMinLevel": 17,
+            "iconMaxLevel": 20,
+            "textMinLevel": 17,
+            "textMaxLevel": 20
+        },
+        {
+            "name": "Swimming Pool",
+            "altNames": ["swimming_area"],
+            "visible": true,
+            "stackMode": "yes",
+            "iconName": "swimming",
+            "priority": 144,
+            "iconMinLevel": 18,
+            "iconMaxLevel": 20,
+            "textMinLevel": 18,
+            "textMaxLevel": 20
+        },
+        {
+            "name": "Fitness-Health Club",
+            "altNames": ["fitness"],
+            "visible": true,
+            "stackMode": "yes",
+            "iconName": "",
+            "priority": 146,
+            "iconMinLevel": 18,
+            "iconMaxLevel": 20,
+            "textMinLevel": 18,
+            "textMaxLevel": 20
+        },
+        {
+            "name": "Golf Course",
+            "altNames": ["golf_course", "miniature_golf"],
+            "visible": true,
+            "stackMode": "yes",
+            "iconName": "golf",
+            "priority": 26,
+            "iconMinLevel": 15,
+            "iconMaxLevel": 20,
+            "textMinLevel": 15,
+            "textMaxLevel": 20
+        },
+        {
+            "name": "Diving Center",
+            "altNames": ["dive_centre", "scuba_diving"],
+            "visible": true,
+            "stackMode": "yes",
+            "iconName": "",
+            "priority": 147,
+            "iconMinLevel": 18,
+            "iconMaxLevel": 20,
+            "textMinLevel": 18,
+            "textMaxLevel": 20
+        },
+        {
+            "name": "Cemetery",
+            "altNames": ["cemetery", "grave_yard"],
+            "visible": true,
+            "stackMode": "yes",
+            "iconName": "cemetery",
+            "priority": 156,
+            "iconMinLevel": 19,
+            "iconMaxLevel": 20,
+            "textMinLevel": 19,
+            "textMaxLevel": 20
+        },
+        {
+            "name": "Public Restroom-Toilets",
+            "altNames": ["toilets"],
+            "visible": false,
+            "iconName": "toilet",
+            "stackMode": "yes"
+        },
+        {
+            "name": "Named Place",
+            "altNames": ["resort"],
+            "visible": false,
+            "stackMode": "yes"
+        },
+        {
+            "name": "Industrial Zone",
+            "altNames": ["industrial"],
+            "visible": false,
+            "iconName": "industry",
+            "stackMode": "yes"
+        },
+        {
+            "name": "Marina",
+            "altNames": ["marina"],
+            "visible": true,
+            "stackMode": "yes",
+            "iconName": "harbor",
+            "priority": 25,
+            "iconMinLevel": 15,
+            "iconMaxLevel": 20,
+            "textMinLevel": 15,
+            "textMaxLevel": 20
+        },
+        {
+            "name": "Collective Community",
+            "altNames": ["community_centre", "social_facility"],
+            "visible": false,
+            "stackMode": "yes"
+        },
+        {
+            "name": "Residential Area-Building",
+            "altNames": ["assisted_living", "residential_home"],
+            "visible": false,
+            "stackMode": "yes"
+        }
+    ]
+}

@@ -70,12 +70,19 @@
         }
     ],
     "images": {
-        "maki_icons": {
+        "icons_day_maki": {
             "url": "maki_icons.png",
             "preload": true,
             "atlas": "maki_icons.json"
         }
     },
+    "poiTables": [
+        {
+            "name": "tzPoiTableMaki",
+            "url": "poi_table_maki.json",
+            "useAltNamesForKey": true
+        }
+    ],
     "styles": {
         "tilezen": [
             {
@@ -1179,6 +1186,32 @@
                     "textFadeTime": 0.75,
                     "fadeNear": 0.8,
                     "fadeFar": 0.9
+                },
+                "final": true
+            },
+            {
+                "description": "POIs in tilezen format use maki icons",
+                "when": "$layer == 'pois' && has(kind)",
+                "technique": "labeled-icon",
+                "attr": {
+                    "poiTable": "tzPoiTableMaki",
+                    "poiNameField": "kind",
+                    "imageTexturePostfix": "-15",
+                    "iconScale": 1,
+                    "size": 16,
+                    "yOffset": 8,
+                    "vAlignment": "Above",
+                    "hAlignment": "Center",
+                    "textIsOptional": true,
+                    "iconIsOptional": false,
+                    "renderTextDuringMovements": false,
+                    "textMayOverlap": false,
+                    "textReserveSpace": true,
+                    "iconMayOverlap": true,
+                    "iconReserveSpace": false,
+                    "color": "#090A0B",
+                    "backgroundColor": "#FFFFFF",
+                    "backgroundOpacity": 0.5
                 },
                 "final": true
             },

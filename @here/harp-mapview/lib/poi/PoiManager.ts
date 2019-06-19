@@ -33,6 +33,7 @@ import { TextElement } from "../text/TextElement";
 import { DEFAULT_TEXT_DISTANCE_SCALE } from "../text/TextElementsRenderer";
 import { computeStyleCacheId } from "../text/TextStyleCache";
 import { Tile } from "../Tile";
+import { PoiTable } from "./PoiTableManager";
 
 const logger = LoggerManager.instance.create("PoiManager");
 
@@ -55,6 +56,42 @@ export class PoiManager {
     // Keep track of the missing POI table names, but only warn once.
     private static m_missingPoiTableName: Map<string, boolean> = new Map();
     private static m_missingPoiName: Map<string, boolean> = new Map();
+
+    private static notifyMissingPoiTable(
+        poiTableName: string,
+        poiTable: PoiTable | undefined
+    ): void {
+        // Warn about a missing POI table name, but only once.
+        if (poiTableName === undefined) {
+            poiTableName = "undefined";
+        }
+        if (PoiManager.m_missingPoiTableName.get(poiTableName) === undefined) {
+            PoiManager.m_missingPoiTableName.set(poiTableName, true);
+            if (poiTable !== undefined && !poiTable.loadedOk) {
+                logger.error(`updatePoiFromPoiTable: Could not load POI table '${poiTableName}'!`);
+            } else {
+                logger.error(
+                    `updatePoiFromPoiTable: No POI table with name '${poiTableName}' found!`
+                );
+            }
+        }
+    }
+
+    private static notifyMissingPoi(poiName: string, poiTableName: string): void {
+        // Warn about a missing POI name, but only once.
+        if (poiName === undefined) {
+            poiName = "undefined";
+        }
+        const key: string = `${poiTableName}[${poiName}]`;
+        if (PoiManager.m_missingPoiName.get(key) === undefined) {
+            PoiManager.m_missingPoiName.set(key, true);
+            logger.warn(
+                `updatePoiFromPoiTable: ` +
+                    `Cannot find POI info for '${poiName}' in table '${poiTableName}'.`
+            );
+        }
+    }
+
     private m_imageTextures: Map<string, ImageTexture> = new Map();
     private m_poiShieldGroups: Map<string, number> = new Map();
     private m_colorMap: Map<string, THREE.Color> = new Map();
@@ -275,6 +312,8 @@ export class PoiManager {
      */
     updatePoiFromPoiTable(pointLabel: TextElement): boolean {
         const poiInfo = pointLabel.poiInfo;
+        // PoiTable requires poiName to be defined otherwise mapping via PoiTable is
+        // not possible, such as table key is not defined.
         if (
             poiInfo === undefined ||
             poiInfo.poiTableName === undefined ||
@@ -283,49 +322,40 @@ export class PoiManager {
             return true;
         }
 
-        let poiTableName = poiInfo.poiTableName;
+        // Try to acquire PoiTable
+        const poiTableName = poiInfo.poiTableName;
         const poiTable = this.mapView.poiTableManager.getPoiTable(poiTableName);
 
+        // Check if PoiTable is found, but its still loading.
         if (poiTable !== undefined && poiTable.isLoading) {
             // The PoiTable is still loading, we have to try again.
             return false;
         }
 
+        // PoiTable not found or can not be loaded.
         if (poiTable === undefined || !poiTable.loadedOk) {
-            // Warn about a missing POI table name, but only once.
-            if (poiTableName === undefined) {
-                poiTableName = "undefined";
-            }
-            if (PoiManager.m_missingPoiTableName.get(poiTableName) === undefined) {
-                PoiManager.m_missingPoiTableName.set(poiTableName, true);
-                if (poiTable !== undefined && !poiTable.loadedOk) {
-                    logger.error(`Error loading POI table name ${poiTableName}`);
-                } else {
-                    logger.error(
-                        `updatePoiFromPoiTable: No POI table with name '${poiTableName}' found.`
-                    );
-                }
-            }
+            PoiManager.notifyMissingPoiTable(poiTableName, poiTable);
             return true;
         }
 
-        let poiName = poiInfo.poiName;
-        const poiTableEntry = poiTable.poiDict.get(poiName);
-
+        // Try to acquire PoiTableEntry.
+        const poiName = poiInfo.poiName;
+        const poiTableEntry = poiTable.getEntry(poiName);
         if (poiTableEntry === undefined) {
-            // Warn about a missing POI name, but only once.
-            if (poiName === undefined) {
-                poiName = "undefined";
-            }
-            if (PoiManager.m_missingPoiName.get(poiName) === undefined) {
-                PoiManager.m_missingPoiName.set(poiName, true);
-                logger.warn(`Cannot find POI info '${poiName}' found in table ${poiTableName}.`);
-            }
+            PoiManager.notifyMissingPoi(poiName, poiTableName);
             return true;
         }
 
-        if (poiTableEntry.iconName !== undefined) {
-            poiInfo.imageTextureName = poiTableEntry.iconName;
+        if (poiTableEntry.iconName !== undefined && poiTableEntry.iconName.length > 0) {
+            let imageTexture = poiTableEntry.iconName;
+            const poiTechnique = poiInfo.technique;
+            if (typeof poiTechnique.imageTexturePrefix === "string") {
+                imageTexture = poiTechnique.imageTexturePrefix + imageTexture;
+            }
+            if (typeof poiTechnique.imageTexturePostfix === "string") {
+                imageTexture = imageTexture + poiTechnique.imageTexturePostfix;
+            }
+            poiInfo.imageTextureName = imageTexture;
         }
 
         pointLabel.visible =
@@ -499,6 +529,10 @@ export class PoiManager {
             // imageTextureName may be undefined if a poiTable is used.
             if (imageTextureName === undefined && poiTableName !== undefined) {
                 imageTextureName = "";
+            } else if (imageTextureName !== undefined && poiTableName !== undefined) {
+                logger.warn(
+                    "Possible duplicate POI icon definition via imageTextureName and poiTable!"
+                );
             }
 
             if (imageTextureName !== undefined) {
