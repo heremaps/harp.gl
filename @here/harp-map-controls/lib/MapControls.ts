@@ -494,6 +494,8 @@ export class MapControls extends THREE.EventDispatcher {
                 new THREE.Vector3()
             );
 
+            // TODO: HARP-5431 Use the elevation provider to find the ground distance
+            // if terrain is enabled.
             this.camera.position.addScaledVector(
                 surfaceNormal,
                 ((this.zoomLevelTargeted - zoomLevel) / this.zoomLevelDeltaOnMouseWheel) *
@@ -501,6 +503,8 @@ export class MapControls extends THREE.EventDispatcher {
                     0.05
             );
 
+            // TODO: HARP-5430 Ensures that we don't intersect the terrain, a similar
+            // approach to that should be used here, at least for consistency sake.
             if (this.mapView.projection.groundDistance(this.camera.position) < 500) {
                 this.mapView.projection.scalePointToSurface(this.camera.position);
                 this.camera.position.addScaledVector(surfaceNormal, 500);
