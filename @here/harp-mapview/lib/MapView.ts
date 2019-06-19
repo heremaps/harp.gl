@@ -504,10 +504,10 @@ export interface MapViewOptions {
 export const MapViewDefaults = {
     projection: mercatorProjection,
 
-    maxVisibleDataSourceTiles: 20,
+    maxVisibleDataSourceTiles: 120,
     extendedFrustumCulling: true,
 
-    tileCacheSize: 40,
+    tileCacheSize: 160,
     resourceComputationType: ResourceComputationType.EstimationInMb,
     quadTreeSearchDistanceUp: 3,
     quadTreeSearchDistanceDown: 2,
