@@ -24,6 +24,7 @@ const MINIMUM_ATTRIBUTE_SIZE_ESTIMATION = 56;
 export namespace MapViewUtils {
     //Caching those for performance reasons.
     const groundPlane = new THREE.Plane(new THREE.Vector3(0, 0, 1));
+    const groundSphere = new THREE.Sphere(undefined, EarthConstants.EQUATORIAL_RADIUS);
     const cameraZPosition = new THREE.Vector3(0, 0, 0);
     const rotationMatrix = new THREE.Matrix4();
     const unprojectionMatrix = new THREE.Matrix4();
@@ -160,7 +161,7 @@ export namespace MapViewUtils {
 
     /**
      * Casts a ray in NDC space from the current map view and returns the intersection point of that
-     * ray wih the map in world space, or `null` in case the raycast failed.
+     * ray wih the map in world space.
      *
      * @param mapView Instance of MapView.
      * @param pointOnScreenXinNDC X coordinate in NDC space.
@@ -171,7 +172,7 @@ export namespace MapViewUtils {
         mapView: MapView,
         pointOnScreenXinNDC: number,
         pointOnScreenYinNDC: number
-    ): THREE.Vector3 | null {
+    ): THREE.Vector3 {
         const pointInNDCPosition = new THREE.Vector3(pointOnScreenXinNDC, pointOnScreenYinNDC, 0.5);
 
         cameraZPosition.copy(mapView.camera.position);
@@ -189,14 +190,10 @@ export namespace MapViewUtils {
         //Use the point in camera space as the vector towards this point.
         rayCaster.set(cameraZPosition, pointInCameraSpace.normalize());
 
-        const vec3 = new THREE.Vector3();
-        const rayGroundPlaneIntersectionPosition = rayCaster.ray.intersectPlane(groundPlane, vec3);
-
-        if (!rayGroundPlaneIntersectionPosition) {
-            return null;
-        }
-
-        return rayGroundPlaneIntersectionPosition;
+        const worldPosition = new THREE.Vector3();
+        return mapView.projection.type === geoUtils.ProjectionType.Planar
+            ? rayCaster.ray.intersectPlane(groundPlane, worldPosition)
+            : rayCaster.ray.intersectSphere(groundSphere, worldPosition);
     }
 
     /**
@@ -219,7 +216,7 @@ export namespace MapViewUtils {
     }
 
     /**
-     * Pans the map underneath camera according to the given offset in world space coordinates.
+     * Pans the camera according to the projection.
      *
      * @param mapView Instance of MapView.
      * @param xOffset In world space. Value > 0 will pan the map to the right, value < 0 will pan

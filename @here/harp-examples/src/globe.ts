@@ -5,10 +5,10 @@
  */
 
 import { GeoCoordinates, sphereProjection } from "@here/harp-geoutils";
+import { MapControls } from "@here/harp-map-controls";
 import { CopyrightElementHandler, CopyrightInfo, MapView } from "@here/harp-mapview";
 import { APIFormat, OmvDataSource } from "@here/harp-omv-datasource";
 import { accessToken } from "../config";
-import { GlobeControls } from "./utils/GlobeControls";
 
 export namespace GlobeExample {
     // Create a new MapView for the HTMLCanvasElement of the given id.
@@ -56,8 +56,7 @@ export namespace GlobeExample {
 
         map.addDataSource(omvDataSource);
 
-        const controls = new GlobeControls(map);
-        controls.enabled = true;
+        MapControls.create(map);
 
         map.setCameraGeolocationAndZoom(new GeoCoordinates(40.6935, -74.009), 4);
     }
