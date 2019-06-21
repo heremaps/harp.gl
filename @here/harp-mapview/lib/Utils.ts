@@ -166,12 +166,16 @@ export namespace MapViewUtils {
      * @param mapView Instance of MapView.
      * @param pointOnScreenXinNDC X coordinate in NDC space.
      * @param pointOnScreenYinNDC Y coordinate in NDC space.
+     * @param elevation Optional param used to offset the ground plane. Used when wanting to pan
+     * based on a plane at some altitude. Necessary for example when panning with terrain.
+     *
      * @returns Intersection coordinates, or `null` if raycast failed.
      */
     export function rayCastWorldCoordinates(
         mapView: MapView,
         pointOnScreenXinNDC: number,
-        pointOnScreenYinNDC: number
+        pointOnScreenYinNDC: number,
+        elevation?: number
     ): THREE.Vector3 {
         const pointInNDCPosition = new THREE.Vector3(pointOnScreenXinNDC, pointOnScreenYinNDC, 0.5);
 
@@ -189,11 +193,17 @@ export namespace MapViewUtils {
         const pointInCameraSpace = pointInNDCPosition.applyMatrix4(unprojectionMatrix);
         //Use the point in camera space as the vector towards this point.
         rayCaster.set(cameraZPosition, pointInCameraSpace.normalize());
+        if (elevation !== undefined) {
+            groundPlane.constant = -elevation;
+        }
 
         const worldPosition = new THREE.Vector3();
-        return mapView.projection.type === geoUtils.ProjectionType.Planar
-            ? rayCaster.ray.intersectPlane(groundPlane, worldPosition)
-            : rayCaster.ray.intersectSphere(groundSphere, worldPosition);
+        const result =
+            mapView.projection.type === geoUtils.ProjectionType.Planar
+                ? rayCaster.ray.intersectPlane(groundPlane, worldPosition)
+                : rayCaster.ray.intersectSphere(groundSphere, worldPosition);
+        groundPlane.constant = 0;
+        return result;
     }
 
     /**

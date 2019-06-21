@@ -194,6 +194,11 @@ class SphereProjection extends Projection {
         );
     }
 
+    unprojectAltitude(point: Vector3Like): number {
+        const parallelRadiusSq = point.x * point.x + point.y * point.y + point.z * point.z;
+        return Math.sqrt(parallelRadiusSq) - EarthConstants.EQUATORIAL_RADIUS;
+    }
+
     projectBox<Bounds extends Box3Like | OrientedBox3Like>(
         geoBox: GeoBox,
         result: Bounds = MathUtils.newEmptyBox3() as Bounds

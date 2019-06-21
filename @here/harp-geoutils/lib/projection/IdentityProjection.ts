@@ -58,6 +58,10 @@ class IdentityProjection extends Projection {
         return geoPoint;
     }
 
+    unprojectAltitude(worldPoint: Vector3Like): number {
+        return worldPoint.z;
+    }
+
     projectBox<WorldBoundingBox extends Box3Like | OrientedBox3Like>(
         geoBox: GeoBox,
         result?: WorldBoundingBox
