@@ -1234,6 +1234,17 @@ export class MapView extends THREE.EventDispatcher {
         return this.m_visibleTileSetOptions.projection;
     }
 
+    set projection(projection: Projection) {
+        // The geo center must be reset when changing the projection, because the
+        // camera's position is based on the projected geo center.
+        const geoCenter = this.geoCenter;
+        this.m_visibleTileSetOptions.projection = projection;
+        this.clearTileCache();
+        // We reset the theme, this has the affect of ensuring all caches are cleared.
+        this.theme = this.theme;
+        this.geoCenter = geoCenter;
+    }
+
     /**
      * The distance (in pixels) between the screen and the camera.
      */
