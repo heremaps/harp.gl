@@ -56,6 +56,7 @@ We can group the examples by several categories, looking at what kind of feature
 
 ### Others
 
+1. [A GeoJSON viewer](src/geojson.ts) allows to view and edit GeoJSON with the FeaturesDataSource.
 1. [Elevation provider](src/elevation-provider.ts) shows how to handle scene height given a user input.
 1. Showcase of the [dynamic text rendering](src/textcanvas.ts) capabilities of our [text rendering library](../harp-text-canvas/README.md).
 1. [Display three map views, side by side](src/triple-view.ts), in which we show the a map with three different styles at the same time, using OMV Data.
