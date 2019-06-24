@@ -1245,7 +1245,7 @@ export class MapView extends THREE.EventDispatcher {
      * The position in geo coordinates of the center of the scene.
      */
     get geoCenter(): GeoCoordinates {
-        return this.projection.unprojectPoint(this.m_camera.position);
+        return this.projection.unprojectPoint(this.m_camera.position).normalized();
     }
 
     /**
