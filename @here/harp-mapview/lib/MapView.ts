@@ -2105,9 +2105,21 @@ export class MapView extends THREE.EventDispatcher {
         } else {
             const kMinNear = 0.1;
             const kMultiplier = 50.0;
-            const kFarOffset = 200.0;
+            // It is possible that we are very close to the surface (or terrain) but that we still
+            // want to see far in the distance, hence we use a sufficiently large offset to ensure
+            // the user can see enough, anyway we never have much detail close up, so it doesn't
+            // make sense to max out the accuracy here.
+            const kFarOffset = 20000.0;
 
-            const groundDistance = this.projection.groundDistance(this.m_camera.position);
+            let groundDistance = this.projection.groundDistance(this.m_camera.position);
+            if (this.elevationProvider !== undefined) {
+                const heightAboveTerrain = this.elevationProvider.getHeight(this.geoCenter);
+                if (heightAboveTerrain !== undefined) {
+                    groundDistance =
+                        this.projection.unprojectAltitude(this.m_camera.position) -
+                        heightAboveTerrain;
+                }
+            }
             nearPlane = Math.max(kMinNear, groundDistance * 0.1);
             farPlane = nearPlane * kMultiplier + kFarOffset;
 
