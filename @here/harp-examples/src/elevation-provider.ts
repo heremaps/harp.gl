@@ -90,6 +90,10 @@ class SceneElevationProvider implements ElevationProvider {
     getTilingScheme(): TilingScheme | undefined {
         throw new Error("Not yet implemented");
     }
+
+    clearCache(): void {
+        // Not required
+    }
 }
 
 /**
