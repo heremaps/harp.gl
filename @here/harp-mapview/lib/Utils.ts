@@ -25,6 +25,8 @@ const MINIMUM_ATTRIBUTE_SIZE_ESTIMATION = 56;
 const groundPlane = new THREE.Plane(new THREE.Vector3(0, 0, 1));
 const groundSphere = new THREE.Sphere(undefined, EarthConstants.EQUATORIAL_RADIUS);
 const cameraZPosition = new THREE.Vector3(0, 0, 0);
+// Careful that these aren't both used at the same time!
+const surfaceNormal = cameraZPosition;
 const rotationMatrix = new THREE.Matrix4();
 const unprojectionMatrix = new THREE.Matrix4();
 const rayCaster = new THREE.Raycaster();
@@ -230,18 +232,38 @@ export namespace MapViewUtils {
      * Pans the camera according to the projection.
      *
      * @param mapView Instance of MapView.
-     * @param xOffset In world space. Value > 0 will pan the map to the right, value < 0 will pan
+     * @param offsetX In world space. Value > 0 will pan the map to the right, value < 0 will pan
      * the map to the left in default camera orientation.
-     * @param yOffset In world space. Value > 0 will pan the map upwards, value < 0 will pan the map
+     * @param offsetY In world space. Value > 0 will pan the map upwards, value < 0 will pan the map
      * downwards in default camera orientation.
+     * @param radius World space units used to prevent camera intersection with terrain (if an
+     * [[ElevationProvider]] was configured by the user).
      */
     export function panCameraAboveFlatMap(
         mapView: MapView,
         offsetX: number,
-        offsetY: number
+        offsetY: number,
+        radius: number = 100
     ): void {
-        mapView.camera.position.x += offsetX;
-        mapView.camera.position.y += offsetY;
+        const cameraPosition = mapView.camera.position;
+        cameraPosition.x += offsetX;
+        cameraPosition.y += offsetY;
+        if (mapView.elevationProvider !== undefined) {
+            const cameraHeight = mapView.projection.unprojectAltitude(cameraPosition);
+            const geoPosition = mapView.projection.unprojectPoint(cameraPosition);
+            const terrainHeight = mapView.elevationProvider.getHeight(geoPosition);
+            if (terrainHeight !== undefined) {
+                const surfaceNormalRes = mapView.projection.surfaceNormal(
+                    cameraPosition,
+                    surfaceNormal
+                );
+                const heightToCheck = cameraHeight - radius;
+                if (heightToCheck < terrainHeight) {
+                    cameraPosition.addScaledVector(surfaceNormalRes, terrainHeight - heightToCheck);
+                }
+            }
+        }
+        mapView.update();
     }
 
     /**
