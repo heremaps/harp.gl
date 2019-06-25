@@ -19,7 +19,59 @@ that can display a map using our default style. You can get results like the one
 
 ![New York City rendered with our default style](docs/nyc.jpg)
 
+## Getting started with harp.gl
+
+You can consume the harp.gl api with two different methods:
+
+* linking a simple bundle as a `<script>` tag in your html
+* installing a set of node modules from npm
+
 If you want to learn more about the applications you can create, please check the [Getting Started Guide](docs/GettingStartedGuide.md).
+
+### Simple bundle
+
+Add `three.js` and `harp.gl` to your html and create a canvas with an id `map`:
+```html
+<html>
+   <head>
+      <style>
+         body, html { border: 0; margin: 0; padding: 0 }
+         #map { height: 100vh; width: 100vw; }
+      </style>
+      <script src="https://unpkg.com/three/build/three.min.js"></script>
+      <script src="https://unpkg.com/@here/harp.gl/dist/harp.js"></script>
+   </head>
+   <body>
+      <canvas id="map"></div>
+      <script src="index.js"></script>
+   </body>
+</html>
+```
+Initialize the map:
+```javascript
+const map = new harp.MapView({
+   canvas: document.getElementById('map'),
+   theme: "https://unpkg.com/@here/harp-map-theme@latest/resources/berlin_tilezen_night_reduced.json",
+});
+const mapControls = new harp.MapControls(map);
+const omvDataSource = new harp.OmvDataSource({
+   baseUrl: "https://xyz.api.here.com/tiles/herebase.02",
+   apiFormat: harp.APIFormat.XYZOMV,
+   styleSetName: "tilezen",
+   authenticationCode: 'YOUR-XYZ-TOKEN',
+});
+map.addDataSource(omvDataSource);
+```
+
+### Node modules
+
+Generate a simple app using the package generator:
+
+```shell
+mkdir 3dmap-example
+cd 3dmap-example
+npx -p yo -p @here/generator-harp.gl yo @here/harp.gl
+```
 
 ## About This Repository
 
