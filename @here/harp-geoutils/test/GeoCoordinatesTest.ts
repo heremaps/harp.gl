@@ -26,7 +26,11 @@ describe("GeoCoordinates", function() {
         { args: [-360, 123], expected: [0, 123] },
         { args: [361, 123], expected: [1, 123] },
         { args: [-360, 123, 0], expected: [0, 123, 0] },
-        { args: [361, 123, 50], expected: [1, 123, 50] }
+        { args: [361, 123, 50], expected: [1, 123, 50] },
+        { args: [361, -720, 50], expected: [1, 0, 50] },
+        { args: [361, -711, 50], expected: [1, 9, 50] },
+        { args: [361, -4534, 50], expected: [1, 146, 50] },
+        { args: [361, 4534, 50], expected: [1, -146, 50] }
     ];
 
     tests.forEach(function(test) {

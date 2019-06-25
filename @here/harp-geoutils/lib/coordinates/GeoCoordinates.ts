@@ -112,7 +112,8 @@ export class GeoCoordinates implements GeoCoordinatesLike {
         }
 
         if (longitude < -180 || longitude > 180) {
-            longitude = ((longitude + 180) % 360) - 180;
+            const sign = Math.sign(longitude);
+            longitude = (((longitude % 360) + 180 * sign) % 360) - 180 * sign;
         }
 
         if (latitude === this.latitude && longitude === this.longitude) {
