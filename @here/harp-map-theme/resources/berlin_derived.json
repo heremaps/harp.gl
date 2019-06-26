@@ -1,0 +1,24 @@
+{
+    "extends": "berlin_tilezen_base.json",
+
+    "definitions": {
+        "parkColor": {
+            "type": "color",
+            "value": "red"
+        },
+        "extrudedBuildings": {
+            "technique": "fill",
+            "attr": {
+                "color": "blue"
+            }
+        },
+        "countryBorderLineWidth": {
+            "type": "number",
+            "value": {
+                "interpolation": "Linear",
+                "zoomLevels": [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14],
+                "values": [2000, 1400, 1000, 500, 220, 90, 50, 30, 20, 15, 10, 5, 2]
+            }
+        }
+    }
+}

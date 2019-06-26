@@ -1052,6 +1052,18 @@ export class MapView extends THREE.EventDispatcher {
      * Changes the `Theme` used by this `MapView` to style map elements.
      */
     set theme(theme: Theme) {
+        if (!ThemeLoader.isThemeLoaded(theme)) {
+            // If theme is not yet loaded, let's set theme asynchronously
+            ThemeLoader.load(theme)
+                .then(loadedTheme => {
+                    this.theme = loadedTheme;
+                })
+                .catch(error => {
+                    logger.error(`failed to set theme: ${error}`, error);
+                });
+            return;
+        }
+
         // Fog and sky.
         this.m_theme.fog = theme.fog;
         this.m_theme.sky = theme.sky;
@@ -2584,16 +2596,13 @@ export class MapView extends THREE.EventDispatcher {
             return;
         }
 
-        const themePromise =
-            typeof this.m_options.theme === "string"
-                ? ThemeLoader.loadAsync(this.m_options.theme)
-                : Promise.resolve<Theme>(this.m_options.theme);
-
-        themePromise.then((theme: Theme) => {
-            this.theme = theme;
-            THEME_LOADED_EVENT.time = Date.now();
-            this.dispatchEvent(THEME_LOADED_EVENT);
-        });
+        Promise.resolve<string | Theme>(this.m_options.theme)
+            .then(theme => ThemeLoader.load(theme))
+            .then(theme => {
+                this.theme = theme;
+                THEME_LOADED_EVENT.time = Date.now();
+                this.dispatchEvent(THEME_LOADED_EVENT);
+            });
     }
 
     private setupCamera() {
