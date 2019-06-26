@@ -70,15 +70,18 @@ export class SkyBackground {
      * Updates the sky texture with new parameters.
      *
      * @param params New sky configuration parameters.
+     * @param projectionType Which projection is used, this may also change (in which case the
+     * textures should be recreated).
      */
-    updateTexture(params: GradientSky | CubemapSky) {
-        const isSameSkyType = this.m_sky.type === params.type;
+    updateTexture(params: GradientSky | CubemapSky, projectionType: ProjectionType) {
+        const isSameSkyType =
+            this.m_sky.type === params.type && this.m_projectionType === projectionType;
         switch (params.type) {
             case "gradient":
                 if (isSameSkyType) {
                     (this.m_skyTexture! as SkyGradientTexture).updateTexture(params);
                 } else {
-                    this.m_skyTexture = new SkyGradientTexture(params, this.m_projectionType);
+                    this.m_skyTexture = new SkyGradientTexture(params, projectionType);
                 }
                 break;
             case "cubemap": {
@@ -90,6 +93,7 @@ export class SkyBackground {
                 break;
             }
         }
+        this.m_projectionType = projectionType;
         this.m_sky = params;
     }
 }

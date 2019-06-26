@@ -1235,6 +1235,26 @@ export class MapView extends THREE.EventDispatcher {
     }
 
     /**
+     * Changes the projection at run time.
+     *
+     * TODO: There seems to be some issue with the sphere projection, when changing from this
+     * projection to a planar projection, the map is rotated. This needs to be fixed.
+     */
+    set projection(projection: Projection) {
+        // The geo center must be reset when changing the projection, because the
+        // camera's position is based on the projected geo center.
+        const geoCenter = this.geoCenter;
+        this.m_visibleTileSetOptions.projection = projection;
+        this.clearTileCache();
+        // We reset the theme, this has the affect of ensuring all caches are cleared.
+        this.theme = this.theme;
+        this.geoCenter = geoCenter;
+        // Necessary for the sphereProjection, however this also resets the camera position, so it
+        // should be fixed.
+        //this.setupCamera();
+    }
+
+    /**
      * The distance (in pixels) between the screen and the camera.
      */
     get focalLength(): number {
@@ -2560,7 +2580,7 @@ export class MapView extends THREE.EventDispatcher {
             sky.groundColor = getOptionValue(clearColor, "#000000");
         }
         if (this.m_skyBackground !== undefined) {
-            this.m_skyBackground.updateTexture(sky);
+            this.m_skyBackground.updateTexture(sky, this.projection.type);
         }
     }
 
