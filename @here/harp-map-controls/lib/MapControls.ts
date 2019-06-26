@@ -1144,14 +1144,14 @@ export class MapControls extends THREE.EventDispatcher {
         const from = utils.calculateNormalizedDeviceCoordinates(fromX, fromY, width, height);
         const to = utils.calculateNormalizedDeviceCoordinates(toX, toY, width, height);
 
-        let toWorld: THREE.Vector3 | null;
-        let fromWorld: THREE.Vector3 | null;
+        let toWorld: THREE.Vector3 | undefined;
+        let fromWorld: THREE.Vector3 | undefined;
         if (this.mapView.elevationProvider === undefined) {
             fromWorld = MapViewUtils.rayCastWorldCoordinates(this.mapView, from.x, from.y);
             toWorld = MapViewUtils.rayCastWorldCoordinates(this.mapView, to.x, to.y);
         } else {
             fromWorld = this.mapView.elevationProvider.rayCast(fromX, fromY);
-            if (fromWorld === null) {
+            if (fromWorld === undefined) {
                 return;
             }
             const fromGeoAltitude = this.mapView.projection.unprojectAltitude(fromWorld);
@@ -1167,7 +1167,7 @@ export class MapControls extends THREE.EventDispatcher {
             );
         }
 
-        if (toWorld === null || fromWorld === null) {
+        if (toWorld === undefined || fromWorld === undefined) {
             return;
         }
 
