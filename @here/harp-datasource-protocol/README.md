@@ -13,18 +13,15 @@ via the theme files to draw geometries on the map canvas.
 
 The supported techniques that can be used to draw on the map are:
 
--   Poi Technique
--   Line Techniques: LineMarker, Line, SolidLine, DashedLine
--   Segment Technique
--   Fill Technique
--   Standard Technique
--   StandardTextured Technique
--   Extruded Techniques: Basic Extruded Line, Standard Extruded Line, ExtrudedPolygon
--   Shader Technique
--   Landmark Technique
--   Text Technique
--   Squares Technique
--   Circles Technique
+-   Points: [[PoiTechnique]], [[SquaresTechnique]], [[CirclesTechnique]]
+-   Text: [[TextTechnique]]
+-   Lines: [[LineMarkerTechnique]], [[LineTechnique]], [[SolidLineTechnique]], [[DashedLineTechnique]]
+-   Segments: [[SegmentsTechnique]]
+-   Fill: [[FillTechnique]]
+-   Extruded: [[BasicExtrudedLineTechnique]], [[StandardExtrudedLineTechnique]], [[ExtrudedPolygonTechnique]]
+-   Standard: [[StandardTechnique]]
+-   Terrain: [[TerrainTechnique]]
+-   Shader: [[ShaderTechnique]]
 
 All the techniques are documented in the [`Techniques` class' source code](./lib/Techniques.ts).
 
