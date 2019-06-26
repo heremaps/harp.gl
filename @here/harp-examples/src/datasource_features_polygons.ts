@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Style, StyleSet } from "@here/harp-datasource-protocol";
+import { StyleDeclaration, StyleSet } from "@here/harp-datasource-protocol";
 import {
     FeaturesDataSource,
     MapViewFeature,
@@ -246,7 +246,7 @@ export namespace PolygonsFeaturesExample {
             const max = options.thresholds[i];
             const min = i - 1 < 0 ? 0 : options.thresholds[i - 1];
             const propertyName = options.property;
-            const style: Style = {
+            const style: StyleDeclaration = {
                 description: "geoJson property-based style",
                 technique: "extruded-polygon",
                 when: [

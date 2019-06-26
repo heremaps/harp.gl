@@ -10,7 +10,7 @@
 import {
     GeometryType,
     isStandardTechnique,
-    Style,
+    StyleSet,
     TextureCoordinateType
 } from "@here/harp-datasource-protocol";
 import { MapEnv, StyleSetEvaluator } from "@here/harp-datasource-protocol/index-decoder";
@@ -53,7 +53,7 @@ describe("OmvDecodedTileEmitter", function() {
             }
         ];
 
-        const styleSet: Style[] = [
+        const styleSet: StyleSet = [
             {
                 when: "1",
                 technique: "standard",

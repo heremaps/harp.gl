@@ -1,0 +1,6 @@
+{
+    "extends": "./baseTheme.json",
+    "definitions": {
+        "roadColor": { "type": "color", "value": "#fff" }
+    }
+}

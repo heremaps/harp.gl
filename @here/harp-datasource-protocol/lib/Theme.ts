@@ -5,6 +5,7 @@
  */
 
 import { Vector3Like } from "@here/harp-geoutils/lib/math/Vector3Like";
+import { MaybeInterpolatedProperty } from "./InterpolatedPropertyDefs";
 import {
     BasicExtrudedLineTechniqueParams,
     DashedLineTechniqueParams,
@@ -30,6 +31,14 @@ export interface Theme {
      * The URI of the JSON schema describing themes.
      */
     $schema?: string;
+
+    /**
+     * The base `Theme` or `theme` URL to extend.
+     *
+     * If used, base theme is loaded first, and then all the properties
+     * from inherited theme overwrite these defined in base theme.
+     */
+    extends?: string | Theme;
 
     /**
      * Actual URL the theme has been loaded from.
@@ -63,6 +72,11 @@ export interface Theme {
     fog?: Fog;
 
     /**
+     * The definitions exported by these theme.
+     */
+    definitions?: Definitions;
+
+    /**
      * Map styles available for datasources used to render the map.
      */
     styles?: Styles;
@@ -94,18 +108,218 @@ export interface Theme {
 }
 
 /**
- * A dictionary of [[Styles]]s.
+ * An array of [[Definition]]s.
  */
-export interface Styles {
-    [styleSetName: string]: StyleSet;
+export interface Definitions {
+    [name: string]: Definition;
 }
 
 /**
- * An array of [[Style]]s that are used together to define how a [[DataSource]] should be rendered.
- * `StyleSet`s are applied to sources providing vector tiles via their method `setStyleSet`. This
- * is also handle internally when a whole theme is passed to a [[MapView]] via `mapview.theme`.
+ * A value definition.
  */
-export type StyleSet = Style[];
+export type ValueDefinition =
+    | BooleanValueDefinition
+    | NumericValueDefinition
+    | StringValueDefinition
+    | ColorValueDefinition
+    | SelectorValueDefinition;
+
+/**
+ * Checks if the given definition implements the [[ValueDefinition]] interface.
+ */
+export function isValueDefinition(def: Definition): def is ValueDefinition {
+    const valueDef = def as ValueDefinition;
+    return (
+        typeof valueDef === "object" &&
+        valueDef !== null &&
+        typeof valueDef.type === "string" &&
+        valueDef.value !== undefined
+    );
+}
+
+export function isSelectorDefinition(def: Definition): def is SelectorValueDefinition {
+    const valueDef = def as ValueDefinition;
+    return (
+        typeof valueDef === "object" &&
+        valueDef !== null &&
+        valueDef.type === "selector" &&
+        typeof valueDef.value === "string"
+    );
+}
+
+/**
+ * Value definition commons.
+ */
+export interface BaseValueDefinition {
+    /**
+     * The description of the definition.
+     */
+    description?: string;
+}
+
+/**
+ * A boolean value definition.
+ */
+export interface BooleanValueDefinition extends BaseValueDefinition {
+    /**
+     * The type of the definition.
+     */
+    type: "boolean";
+
+    /**
+     * The value of the definition.
+     */
+    value: MaybeInterpolatedProperty<boolean>;
+}
+
+/**
+ * A numerical value definition.
+ */
+export interface NumericValueDefinition extends BaseValueDefinition {
+    /**
+     * The type of the definition.
+     */
+    type: "number";
+
+    /**
+     * The value of the definition.
+     */
+    value: MaybeInterpolatedProperty<number>;
+}
+
+/**
+ * A string value definition.
+ */
+export interface StringValueDefinition extends BaseValueDefinition {
+    /**
+     * The type of the definition.
+     */
+    type: "string";
+
+    /**
+     * The value of the definition.
+     */
+    value: string;
+}
+
+/**
+ * A color value definition.
+ */
+export interface ColorValueDefinition extends BaseValueDefinition {
+    /**
+     * The type of the definition.
+     */
+    type: "color";
+
+    /**
+     * The value of the definition.
+     */
+    value: MaybeInterpolatedProperty<string>;
+}
+
+export interface SelectorValueDefinition extends BaseValueDefinition {
+    /**
+     * The type of the definition.
+     */
+    type: "selector";
+
+    /**
+     * The value of the definition.
+     *
+     * See [[BaseStyle.when]].
+     */
+    value: string;
+}
+
+/**
+ * Base [StyleSelector] attributes required to match [Style] object against given feature.
+ *
+ * Contains [Style]'s members related to feature matching in [[StyleSetEvaluator]].
+ */
+export interface StyleSelector {
+    /**
+     * Condition that is applied to feature properties to check if given [[Style]] this feature
+     * should emit geometry of this style.
+     *
+     * Conditions are defined using [[Array]]s describing literals, built-in symbols and function
+     * calls:
+     *  - `["has", string]` returns `true` if the given property exists.
+     *  - `["get", string]` returns the value of the given feature property with the given name.
+     *  - `["all", expressions...]` returns `true` if all the sub expressions evaluate to true.
+     *  - `["any", expressions...]` returns `true` if any sub expression evaluates to true.
+     *  - `["in", expression, [literals...]]` returns `true` if the result of evaluating the first
+     *    expression is included in the given `Array` of literals.
+     *  - `["!", expression]` returns `false` if the sub expression evaluates to `true`.
+     *  - `["<", expression, expression]` returns `true` if the result of evaluating the first
+     *    expression is less than the result of evaluating the second expression.
+     *  - `[">", expression, expression]` returns `true` if the result of evaluating the first
+     *    expression is greater than the result of evaluating the second expression.
+     *  - `["<=", expression, expression]` returns `true` if the result of evaluating the first
+     *    expression is less than or equal the result of evaluating the second expression.
+     *  - `[">=", expression, expression]` returns `true` if the result of evaluating the first
+     *    expression is greater than or equal the result of evaluating the second expression.
+     *  - `["==", expression, expression]` returns `true` if the result of evaluating the first
+     *    expression is equal the result of evaluating the second expression.
+     *  - `["!=", expression, expression]` returns `true` if the result of evaluating the first
+     *    expression is not equal to the result of evaluating the second expression.
+     *  - `["length", expression]` returns the length of the given expression if it evaluates to
+     *    a `string` or an `Array`; otherwise, returns `undefined`.
+     *  - `["~=", expression, expression]` if the expressions evaluate to `string`, returns `true`
+     *    if the `string` obtained from the first expression contains the `string` obtained from the
+     *    second expression; otherwise, returns `undefined`.
+     *  - `["^=", expression, expression]` if the expressions evaluate to `string`, returns `true`
+     *    if the `string` obtained from the first expression starts with the `string` obtained from
+     *    the second expression; otherwise, returns `undefined`.
+     *  - `["$=", expression, expression]` if the expressions evaluate to `string`, returns `true`
+     *    if the `string` obtained from the first expression ends with the `string` obtained from
+     *    the second expression; otherwise, returns `undefined`.
+     */
+    when: unknown[] | string | Reference;
+
+    /**
+     * Array of substyles.
+     */
+    styles?: StyleDeclaration[];
+
+    /**
+     * Optional. If `true`, no more matching styles will be evaluated.
+     */
+    final?: boolean;
+}
+
+/**
+ * Like [[StyleDeclaration]], but without [[Reference]] type.
+ */
+export type ResolvedStyleDeclaration = Style & StyleSelector;
+
+/**
+ * Like [[StyleSet]], but without [[Reference]] type.
+ */
+export type ResolvedStyleSet = ResolvedStyleDeclaration[];
+
+/**
+ * Compound type that merges all raw [Style] with selector arguments from [BaseSelector], optionally
+ * a [[Reference]].
+ */
+export type StyleDeclaration = (Style & StyleSelector) | Reference;
+
+export function isActualSelectorDefinition(def: Definition): def is Style & StyleSelector {
+    const styleDef = def as StyleDeclaration;
+    return (
+        typeof styleDef === "object" &&
+        styleDef !== null &&
+        !Array.isArray(styleDef) &&
+        typeof styleDef.technique === "string"
+    );
+}
+
+/**
+ * An array of [[StyleSelector]]s that are used together to define how a [[DataSource]] should be
+ * rendered. `StyleSet`s are applied to sources providing vector tiles via their method
+ * `setStyleSet`. This is also handle internally when a whole theme is passed to a [[MapView]] via
+ * `mapview.theme`.
+ */
+export type StyleSet = StyleDeclaration[];
 
 /**
  * The object that defines what way an item of a [[DataSource]] should be decoded to assemble a
@@ -117,59 +331,6 @@ export interface BaseStyle {
      * Human readable description.
      */
     description?: string;
-
-    /**
-     * Compile-time condition.
-     *
-     * Conditions are defined using [[Array]]s describing literals, built-in
-     * symbols and function calls.
-     *  - `["has", string]` returns `true` if the given property exists.
-     *  - `["get", string]` returns the value of the given property with the
-     *    given name.
-     *  - `["all", expressions...]` returns `true` if all the sub expressions
-     *    evaluate to true.
-     *  - `["any", expressions...]` returns `true` if any sub expression
-     *    evaluates to true.
-     *  - `["in", expression, [literals...]]` returns `true` if the result of
-     *    evaluating the first expression is included in the given `Array` of
-     *    literals.
-     *  - `["!", expression]` returns `false` if the sub expression evaluates to
-     *    `true`.
-     *  - `["<", expression, expression]` returns `true` if the result of
-     *    evaluating the first expression is less than the result of evaluating
-     *    the second expression.
-     *  - `[">", expression, expression]` returns `true` if the result of
-     *    evaluating the first expression is greater than the result of
-     *    evaluating the second expression.
-     *  - `["<=", expression, expression]` returns `true` if the result of
-     *    evaluating the first expression is less than or equal the result of
-     *    evaluating the second expression.
-     *  - `[">=", expression, expression]` returns `true` if the result of
-     *    evaluating the first expression is greater than or equal the result of
-     *    evaluating the second expression.
-     *  - `["==", expression, expression]` returns `true` if the result of
-     *    evaluating the first expression is equal the result of evaluating the
-     *    second expression.
-     *  - `["!=", expression, expression]` returns `true` if the result of
-     *    evaluating the first expression is not equal to the result of
-     *    evaluating the second expression.
-     *  - `["length", expression]` returns the length of the given expression if
-     *    it evaluates to a `string` or an `Array`; otherwise, returns
-     *    `undefined`.
-     *  - `["~=", expression, expression]` if the expressions evaluate to
-     *    `string`, returns `true` if the `string` obtained from the first
-     *    expression contains the `string` obtained from the second expression;
-     *    otherwise, returns `undefined`.
-     *  - `["^=", expression, expression]` if the expressions evaluate to
-     *    `string`, returns `true` if the `string` obtained from the first
-     *    expression starts with the `string` obtained from the second
-     *    expression; otherwise, returns `undefined`.
-     *  - `["$=", expression, expression]` if the expressions evaluate to
-     *    `string`, returns `true` if the `string` obtained from the first
-     *    expression ends with the `string` obtained from the second expression;
-     *    otherwise, returns `undefined`.
-     */
-    when: unknown[] | string;
 
     /**
      * Technique name. Must be one of `"line"`, `"fill"`, `"solid-line"`, `"dashed-line"`,
@@ -199,20 +360,10 @@ export interface BaseStyle {
     renderOrderBiasGroup?: string;
 
     /**
-     * Optional. If `true`, no more matching styles will be evaluated.
-     */
-    final?: boolean;
-
-    /**
      * Optional. If `true`, no IDs will be saved for the geometry this style creates. Default is
      * `false`.
      */
     transient?: boolean;
-
-    /**
-     * Array of substyles.
-     */
-    styles?: StyleSet;
 
     /**
      * Optional: If `true`, the objects with matching `when` statement will be printed to the
@@ -440,7 +591,7 @@ export interface BaseStyle {
  * ]
  *
  */
-export type Style =
+export type AllStyles =
     | SquaresStyle
     | CirclesStyle
     | PoiStyle
@@ -459,6 +610,63 @@ export type Style =
     | TextTechniqueStyle
     | NoneStyle;
 
+export type Style = AllStyles;
+/**
+ * A dictionary of [[StyleSet]]s.
+ */
+export interface Styles {
+    [styleSetName: string]: StyleSet;
+}
+
+/**
+ * Possible values for `definitions` element of [Theme].
+ */
+export type Definition = ValueDefinition | StyleDeclaration;
+
+/**
+ * A reference to a style definition.
+ *
+ * Use as value `attrs` to reference value from `definitions`.
+ *
+ * Example of usage:
+ * ```json
+ * {
+ *   "definitions": {
+ *     "roadColor": { "type": "color", "value": "#f00" }
+ *   },
+ *   "styles": { "tilezen": [
+ *      {
+ *       "when": "kind == 'road",
+ *       "technique": "solid-line",
+ *       "attr": {
+ *         "lineColor": { "$ref": "roadColor" }
+ *       }
+ *     }
+ *   ] }
+ * }
+ * ```
+ */
+export type Reference = ["ref", string];
+
+/**
+ * Checks if the given value is a reference to a definition.
+ *
+ * @param value The value of a technique property.
+ */
+export function isReference(value: any): value is Reference {
+    return (
+        Array.isArray(value) &&
+        value.length === 2 &&
+        value[0] === "ref" &&
+        typeof value[1] === "string"
+    );
+}
+
+/**
+ * The attributes of a technique.
+ */
+export type Attr<T> = { [P in keyof T]?: T[P] | Reference };
+
 /**
  * Render feature as set of squares rendered in screen space.
  *
@@ -466,7 +674,7 @@ export type Style =
  */
 export interface SquaresStyle extends BaseStyle {
     technique: "squares";
-    attr?: Partial<PointTechniqueParams>;
+    attr?: Attr<PointTechniqueParams>;
 }
 
 /**
@@ -476,7 +684,7 @@ export interface SquaresStyle extends BaseStyle {
  */
 export interface CirclesStyle extends BaseStyle {
     technique: "circles";
-    attr?: Partial<PointTechniqueParams>;
+    attr?: Attr<PointTechniqueParams>;
 }
 
 /**
@@ -486,7 +694,7 @@ export interface CirclesStyle extends BaseStyle {
  */
 export interface PoiStyle extends BaseStyle {
     technique: "labeled-icon";
-    attr?: Partial<MarkerTechniqueParams>;
+    attr?: Attr<MarkerTechniqueParams>;
 }
 
 /**
@@ -496,7 +704,7 @@ export interface PoiStyle extends BaseStyle {
  */
 export interface LineMarkerStyle extends BaseStyle {
     technique: "line-marker";
-    attr?: Partial<MarkerTechniqueParams>;
+    attr?: Attr<MarkerTechniqueParams>;
 }
 
 /**
@@ -505,7 +713,7 @@ export interface LineMarkerStyle extends BaseStyle {
 export interface LineStyle extends BaseStyle {
     technique: "line";
     secondaryRenderOrder?: number;
-    attr?: Partial<MarkerTechniqueParams>;
+    attr?: Attr<MarkerTechniqueParams>;
 }
 
 /**
@@ -513,45 +721,45 @@ export interface LineStyle extends BaseStyle {
  */
 export interface SegmentsStyle extends BaseStyle {
     technique: "segments";
-    attr?: Partial<SegmentsTechniqueParams>;
+    attr?: Attr<SegmentsTechniqueParams>;
 }
 
 export interface SolidLineStyle extends BaseStyle {
     technique: "solid-line";
     secondaryRenderOrder?: number;
-    attr?: Partial<SolidLineTechniqueParams>;
+    attr?: Attr<SolidLineTechniqueParams>;
 }
 
 export interface DashedLineStyle extends BaseStyle {
     technique: "dashed-line";
-    attr?: Partial<DashedLineTechniqueParams>;
+    attr?: Attr<DashedLineTechniqueParams>;
 }
 
 export interface FillStyle extends BaseStyle {
     technique: "fill";
-    attr?: Partial<FillTechniqueParams>;
+    attr?: Attr<FillTechniqueParams>;
 }
 
 export interface StandardStyle extends BaseStyle {
     technique: "standard";
-    attr?: Partial<StandardTechniqueParams>;
+    attr?: Attr<StandardTechniqueParams>;
 }
 
 export interface TerrainStyle extends BaseStyle {
     technique: "terrain";
-    attr?: Partial<TerrainTechniqueParams>;
+    attr?: Attr<TerrainTechniqueParams>;
 }
 
 export interface BasicExtrudedLineStyle extends BaseStyle {
     technique: "extruded-line";
     shading?: "basic";
-    attr?: Partial<BasicExtrudedLineTechniqueParams>;
+    attr?: Attr<BasicExtrudedLineTechniqueParams>;
 }
 
 export interface StandardExtrudedLineStyle extends BaseStyle {
     technique: "extruded-line";
     shading: "standard";
-    attr?: Partial<StandardExtrudedLineTechniqueParams>;
+    attr?: Attr<StandardExtrudedLineTechniqueParams>;
 }
 
 /**
@@ -559,17 +767,17 @@ export interface StandardExtrudedLineStyle extends BaseStyle {
  */
 export interface ExtrudedPolygonStyle extends BaseStyle {
     technique: "extruded-polygon";
-    attr?: Partial<ExtrudedPolygonTechniqueParams>;
+    attr?: Attr<ExtrudedPolygonTechniqueParams>;
 }
 
 export interface ShaderStyle extends BaseStyle {
     technique: "shader";
-    attr?: Partial<ShaderTechniqueParams>;
+    attr?: Attr<ShaderTechniqueParams>;
 }
 
 export interface TextTechniqueStyle extends BaseStyle {
     technique: "text";
-    attr?: Partial<TextTechniqueParams>;
+    attr?: Attr<TextTechniqueParams>;
 }
 
 export interface NoneStyle extends BaseStyle {

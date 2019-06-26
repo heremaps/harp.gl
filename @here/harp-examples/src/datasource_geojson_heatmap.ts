@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Style, StyleSet } from "@here/harp-datasource-protocol";
+import { StyleDeclaration, StyleSet } from "@here/harp-datasource-protocol";
 import { GeoJsonDataProvider } from "@here/harp-geojson-datasource";
 import { GeoCoordinates } from "@here/harp-geoutils";
 import { MapControls, MapControlsUI } from "@here/harp-map-controls";
@@ -117,7 +117,7 @@ export namespace GeoJsonHeatmapExample {
             const min = i - 1 < 0 ? 0 : options.thresholds[i - 1];
             // snippet:geojson_heatmap1.ts
             const propertyName = options.property;
-            const style: Style = {
+            const style: StyleDeclaration = {
                 description: "geoJson property-based style",
                 technique: "extruded-polygon",
                 when:

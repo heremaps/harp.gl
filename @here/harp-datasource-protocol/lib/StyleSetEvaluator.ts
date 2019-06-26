@@ -20,7 +20,7 @@ import {
     StringEncodedRGB
 } from "./StringEncodedNumeral";
 import { IndexedTechnique, Technique } from "./Techniques";
-import { Style, StyleSet } from "./Theme";
+import { isReference, Style, StyleDeclaration, StyleSelector, StyleSet } from "./Theme";
 
 export const logger = LoggerManager.instance.create("StyleSetEvaluator");
 
@@ -43,7 +43,7 @@ interface StyleInternalParams {
     _styleSetIndex?: number;
 }
 
-type InternalStyle = Style & Partial<StyleInternalParams>;
+type InternalStyle = Style & StyleSelector & Partial<StyleInternalParams>;
 
 /**
  * Combine data from datasource and apply the rules from a specified theme to show it on the map.
@@ -58,16 +58,24 @@ export class StyleSetEvaluator {
         let techniqueRenderOrder = 0;
         let styleSetIndex = 0;
 
-        const cloneStyle = (style: Style): Style => {
+        const cloneStyle = (style: StyleDeclaration): InternalStyle | undefined => {
+            if (isReference(style)) {
+                return undefined;
+            }
             return {
                 ...style,
                 styles:
                     style.styles !== undefined
-                        ? style.styles.map(subStyle => cloneStyle(subStyle))
+                        ? (style.styles
+                              .map(subStyle => cloneStyle(subStyle))
+                              .filter(subStyle => subStyle !== undefined) as StyleSet)
                         : undefined
             };
         };
-        this.styleSet = styleSet.map(style => cloneStyle(style));
+        this.styleSet = styleSet
+            .map(style => cloneStyle(style))
+            .filter(subStyle => subStyle !== undefined) as InternalStyle[];
+
         const computeDefaultRenderOrder = (style: InternalStyle): void => {
             if (style.renderOrderBiasGroup !== undefined) {
                 const renderOrderBiasGroupOrder = style.renderOrderBiasGroup
@@ -111,7 +119,7 @@ export class StyleSetEvaluator {
             // search through child styles
             if (style.styles !== undefined) {
                 for (const currStyle of style.styles) {
-                    computeDefaultRenderOrder(currStyle);
+                    computeDefaultRenderOrder(currStyle as InternalStyle);
                 }
             } else {
                 style._styleSetIndex = styleSetIndex++;
@@ -135,7 +143,7 @@ export class StyleSetEvaluator {
      */
     getMatchingTechniques(env: MapEnv): IndexedTechnique[] {
         const result: IndexedTechnique[] = [];
-        const styleStack = new Array<Style>();
+        const styleStack = new Array<InternalStyle>();
         for (const currStyle of this.styleSet) {
             if (styleStack.length !== 0) {
                 throw new Error("Internal error: style stack cleanup failed");
@@ -185,8 +193,8 @@ export class StyleSetEvaluator {
      */
     private processStyle(
         env: MapEnv,
-        styleStack: Style[],
-        style: Style & Partial<InternalStyle>,
+        styleStack: InternalStyle[],
+        style: InternalStyle,
         result: Technique[]
     ): boolean {
         if (style.when !== undefined) {
@@ -197,7 +205,7 @@ export class StyleSetEvaluator {
                     if (Array.isArray(style.when)) {
                         style._whenExpr = Expr.fromJSON(style.when);
                     } else {
-                        style._whenExpr = Expr.parse(style.when);
+                        style._whenExpr = Expr.parse(style.when as string);
                     }
                 }
                 if (!style._whenExpr!.evaluate(env)) {
@@ -225,7 +233,7 @@ export class StyleSetEvaluator {
             }
             styleStack.push(style);
             for (const currStyle of style.styles) {
-                if (this.processStyle(env, styleStack, currStyle, result)) {
+                if (this.processStyle(env, styleStack, currStyle as InternalStyle, result)) {
                     styleStack.pop();
                     return true;
                 }

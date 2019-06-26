@@ -10,10 +10,10 @@
 import { assert } from "chai";
 import { MapEnv } from "../lib/Expr";
 import { StyleSetEvaluator } from "../lib/StyleSetEvaluator";
-import { Style } from "../lib/Theme";
+import { StyleSet } from "../lib/Theme";
 
 describe("StyleSetEvaluator", function() {
-    const basicStyleSetAutoOrder: Style[] = [
+    const basicStyleSetAutoOrder: StyleSet = [
         {
             description: "first",
             technique: "fill",
@@ -134,7 +134,7 @@ describe("StyleSetEvaluator", function() {
     });
 
     it("supports renderOrderGroups", function() {
-        const styleSetWithRenderOrderBiasGroups: Style[] = [
+        const styleSetWithRenderOrderBiasGroups: StyleSet = [
             {
                 description: "first",
                 technique: "fill",

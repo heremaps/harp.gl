@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Style, Theme } from "./Theme";
+import { isReference, StyleDeclaration, Theme } from "./Theme";
 
 /**
  * The ThemeVisitor visits every style in the theme in a depth-first fashion.
@@ -18,8 +18,11 @@ export class ThemeVisitor {
      *                  `true` to cancel visitation.
      * @returns `true` if function has finished prematurely.
      */
-    visitStyles(visitFunc: (style: Style) => boolean): boolean {
-        const visit = (style: Style): boolean => {
+    visitStyles(visitFunc: (style: StyleDeclaration) => boolean): boolean {
+        const visit = (style: StyleDeclaration): boolean => {
+            if (isReference(style)) {
+                return false;
+            }
             if (visitFunc(style)) {
                 return true;
             }
