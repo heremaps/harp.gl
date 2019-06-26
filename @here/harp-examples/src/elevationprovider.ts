@@ -72,13 +72,13 @@ class SceneElevationProvider implements ElevationProvider {
         return this.m_mapView.projection.unprojectPoint(intersectionWorldPoint).altitude;
     }
 
-    rayCast(x: number, y: number): THREE.Vector3 | null {
+    rayCast(x: number, y: number): THREE.Vector3 | undefined {
         const pickResults = this.m_mapView.intersectMapObjects(x, y);
         const bestResult = pickResults.find(value => {
             return value.point instanceof THREE.Vector3;
         });
         if (bestResult === undefined) {
-            return null;
+            return undefined;
         }
         return (bestResult.point as THREE.Vector3).add(this.m_mapView.worldCenter);
     }
@@ -87,7 +87,7 @@ class SceneElevationProvider implements ElevationProvider {
         throw new Error("Not yet implemented");
     }
 
-    getTilingSceme(): TilingScheme {
+    getTilingSceme(): TilingScheme | undefined {
         throw new Error("Not yet implemented");
     }
 }
@@ -156,7 +156,7 @@ export namespace ElevationProviderExample {
             if (event.shiftKey) {
                 // Show usage of the [[ElevationProvider.rayCast]] method.
                 const posVector = sceneElevationProvider.rayCast(event.pageX, event.pageY);
-                if (posVector !== null) {
+                if (posVector !== undefined) {
                     const cube = createPinkCube();
                     map.scene.add(cube);
                     // For the map to rerender
