@@ -61,7 +61,7 @@ export class TilerService extends WorkerService {
         request: WorkerTilerProtocol.TileRequest
     ): Promise<WorkerServiceResponse> {
         const tileKey = TileKey.fromMortonCode(request.tileKey);
-        const tile = this.tiler.getTile(request.index, tileKey);
+        const tile = await this.tiler.getTile(request.index, tileKey);
 
         return { response: tile || {} };
     }
