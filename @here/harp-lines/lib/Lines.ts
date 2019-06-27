@@ -4,11 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { Projection } from "@here/harp-geoutils";
 import * as THREE from "three";
 
 // Preallocate temp variables used during line generation.
 const tmpV = new THREE.Vector3();
 const tmpNormal = new THREE.Vector3();
+const tmpWorldPoint = new THREE.Vector3();
 const tmpTangent0 = new THREE.Vector3();
 const tmpTangent1 = new THREE.Vector3();
 const tmpBitangent = new THREE.Vector3();
@@ -72,6 +74,7 @@ export class LineGeometry {
 export function createLineGeometry(
     center: THREE.Vector3,
     polyline: ArrayLike<number>,
+    projection: Projection,
     colors?: ArrayLike<number>,
     geometry = new LineGeometry(),
     highPrecision: boolean = false
@@ -92,14 +95,12 @@ export function createLineGeometry(
     // Compute segments and tangents.
     let sum = SEGMENT_OFFSET;
     segments[0] = sum;
-    let isFlat = true;
     for (let i = 0; i < pointCount - 1; ++i) {
         let sqrLength = 0;
         for (let j = 0; j < 3; ++j) {
             const d = polyline[(i + 1) * 3 + j] - polyline[i * 3 + j];
             tangents[i * 3 + j] = d;
             sqrLength += d * d;
-            isFlat = j === 2 ? isFlat && polyline[(i + 1) * 3 + j] === 0.0 : isFlat;
         }
         const len = Math.sqrt(sqrLength);
         sum = sum + len;
@@ -132,8 +133,10 @@ export function createLineGeometry(
                         const lowComp = polyline[i * 3 + j] - highComp;
                         geometry.vertices.push(highComp, lowComp);
                     }
-                    tmpNormal.setComponent(j, polyline[i * 3 + j]);
+                    tmpWorldPoint.setComponent(j, polyline[i * 3 + j]);
                 }
+                tmpWorldPoint.add(center);
+                projection.surfaceNormal(tmpWorldPoint, tmpNormal);
 
                 // Store the bitangent attribute (component-dependant).
                 for (let j = 0; j < 3; ++j) {
@@ -142,7 +145,7 @@ export function createLineGeometry(
                 }
                 geometry.vertices.push(...tmpTangent0.normalize().toArray());
                 const angle = computeBitangent(
-                    isFlat ? tmpNormal.set(0, 0, 1) : tmpNormal.add(center).normalize(),
+                    tmpNormal,
                     tmpTangent0.normalize(),
                     tmpTangent1.normalize(),
                     tmpBitangent
@@ -178,8 +181,9 @@ export function createLineGeometry(
                         const lowComp = polyline[i * 3 + j] - highComp;
                         geometry.vertices.push(highComp, lowComp);
                     }
-                    tmpNormal.setComponent(j, polyline[i * 3 + j]);
+                    tmpWorldPoint.setComponent(j, polyline[i * 3 + j]);
                 }
+                tmpWorldPoint.add(center);
 
                 // Store the bitangent attribute (component-dependant).
                 for (let j = 0; j < 3; ++j) {
@@ -187,8 +191,9 @@ export function createLineGeometry(
                     tmpTangent1.setComponent(j, tangents[T2 + j]);
                 }
                 geometry.vertices.push(...tmpTangent0.normalize().toArray());
+                projection.surfaceNormal(tmpWorldPoint, tmpNormal);
                 const angle = computeBitangent(
-                    isFlat ? tmpNormal.set(0, 0, 1) : tmpNormal.add(center).normalize(),
+                    tmpNormal,
                     tmpTangent0.normalize(),
                     tmpTangent1.normalize(),
                     tmpBitangent
@@ -339,9 +344,21 @@ export class LineGroup {
      * @param points Sequence of (x,y,z) coordinates.
      * @param colors Sequence of (r,g,b) color components.
      */
-    add(center: THREE.Vector3, points: ArrayLike<number>, colors?: ArrayLike<number>): this {
+    add(
+        center: THREE.Vector3,
+        points: ArrayLike<number>,
+        projection: Projection,
+        colors?: ArrayLike<number>
+    ): this {
         if (!this.isSimple) {
-            createLineGeometry(center, points, colors, this.m_geometry, this.highPrecision);
+            createLineGeometry(
+                center,
+                points,
+                projection,
+                colors,
+                this.m_geometry,
+                this.highPrecision
+            );
         } else {
             createSimpleLineGeometry(points, colors, this.m_geometry);
         }

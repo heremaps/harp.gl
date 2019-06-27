@@ -44,25 +44,22 @@ import {
     StyleSetEvaluator,
     Value
 } from "@here/harp-datasource-protocol/index-decoder";
-import { LineGroup } from "@here/harp-lines/lib/Lines";
-import { triangulateLine } from "@here/harp-lines/lib/TriangulateLines";
-import { assert, LoggerManager, Math2D } from "@here/harp-utils";
-import earcut from "earcut";
-import * as THREE from "three";
-
+// tslint:disable-next-line: max-line-length
+import { SphericalGeometrySubdivisionModifier } from "@here/harp-geometry/lib/SphericalGeometrySubdivisionModifier";
 import {
     mercatorProjection,
     normalizedEquirectangularProjection,
     ProjectionType,
     webMercatorProjection
 } from "@here/harp-geoutils";
-
+import { LineGroup } from "@here/harp-lines/lib/Lines";
+import { triangulateLine } from "@here/harp-lines/lib/TriangulateLines";
+import { assert, LoggerManager, Math2D } from "@here/harp-utils";
+import earcut from "earcut";
+import * as THREE from "three";
 import { ILineGeometry, IPolygonGeometry } from "./IGeometryProcessor";
 import { LinesGeometry } from "./OmvDataSource";
 import { IOmvEmitter, OmvDecoder, Ring } from "./OmvDecoder";
-
-// tslint:disable-next-line: max-line-length
-import { SphericalGeometrySubdivisionModifier } from "@here/harp-geometry/lib/SphericalGeometrySubdivisionModifier";
 
 const logger = LoggerManager.instance.create("OmvDecodedTileEmitter");
 
@@ -758,7 +755,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
             }
         }
         lines.forEach(aLine => {
-            lineGroup.add(this.m_decodeInfo.center, aLine);
+            lineGroup.add(this.m_decodeInfo.center, aLine, this.m_decodeInfo.targetProjection);
         });
     }
 

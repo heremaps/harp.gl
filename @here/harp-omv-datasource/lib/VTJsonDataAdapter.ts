@@ -13,7 +13,7 @@ import { OmvFeatureFilter } from "./OmvDataFilter";
 import { OmvDataAdapter } from "./OmvDecoder";
 import { isArrayBufferLike, lat2tile } from "./OmvUtils";
 
-type VTJsonPosition = [number, number];
+type VTJsonPosition = [number, number, number?];
 
 enum VTJsonGeometryType {
     Unknown,
@@ -118,11 +118,13 @@ export class VTJsonDataAdapter implements OmvDataAdapter {
                     for (const pointGeometry of feature.geometry) {
                         const x = (pointGeometry as VTJsonPosition)[0];
                         const y = (pointGeometry as VTJsonPosition)[1];
+                        const z =
+                            pointGeometry.length > 2 ? (pointGeometry as VTJsonPosition)[2] : 0;
 
                         const position = new Vector3(
                             ((left + x) / scale) * R,
                             ((top + y) / scale) * R,
-                            0
+                            z
                         );
 
                         this.m_processor.processPointFeature(
@@ -137,11 +139,11 @@ export class VTJsonDataAdapter implements OmvDataAdapter {
                 case VTJsonGeometryType.LineString: {
                     for (const lineGeometry of feature.geometry as VTJsonPosition[][]) {
                         const line: ILineGeometry = { positions: [] };
-                        for (const [x, y] of lineGeometry) {
+                        for (const [x, y, z] of lineGeometry) {
                             const position = new Vector3(
                                 ((left + x) / scale) * R,
                                 ((top + y) / scale) * R,
-                                0
+                                z
                             );
                             line.positions.push(position);
                         }
