@@ -42,7 +42,8 @@ const omvDataSource = new harp.OmvDataSource({
 map.addDataSource(omvDataSource);
 ```
 
-You need to [HERE Credentials](obtain authentication code) to replace 'YOUR-XYZ-TOKEN'.
+You need to [obtain authentication code](#credentials) to replace 'YOUR-XYZ-TOKEN'.
+
 
 For more information on the simple bundle, please visit the [@here/harp.gl module](../@here/harp.gl) directory.
 
