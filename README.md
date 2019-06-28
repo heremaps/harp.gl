@@ -42,7 +42,7 @@ Add `three.js` and `harp.gl` to your html and create a canvas with an id `map`:
       <script src="https://unpkg.com/@here/harp.gl/dist/harp.js"></script>
    </head>
    <body>
-      <canvas id="map"></div>
+      <canvas id="map"></canvas>
       <script src="index.js"></script>
    </body>
 </html>
