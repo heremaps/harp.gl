@@ -1,6 +1,6 @@
 {
     "name": "@here/harp-webtile-datasource",
-    "version": "0.4.2",
+    "version": "0.4.3",
     "description": "WebTile Data source",
     "main": "index.js",
     "typings": "index",
@@ -23,11 +23,11 @@
     },
     "license": "Apache-2.0",
     "dependencies": {
-        "@here/harp-datasource-protocol": "^0.4.1",
-        "@here/harp-geoutils": "^0.4.1",
-        "@here/harp-lrucache": "^0.2.4",
-        "@here/harp-mapview": "^0.9.2",
-        "@here/harp-utils": "^0.2.5",
+        "@here/harp-datasource-protocol": "^0.4.2",
+        "@here/harp-geoutils": "^0.4.2",
+        "@here/harp-lrucache": "^0.2.5",
+        "@here/harp-mapview": "^0.9.3",
+        "@here/harp-utils": "^0.2.6",
         "rtree": "^1.4.2"
     },
     "devDependencies": {
