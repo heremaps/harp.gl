@@ -60,10 +60,18 @@ export function getArrayConstructor(attr: BufferElementType) {
     switch (attr) {
         case "float":
             return Float32Array;
+        case "uint8":
+            return Uint8Array;
         case "uint16":
             return Uint16Array;
         case "uint32":
             return Uint32Array;
+        case "int8":
+            return Int8Array;
+        case "int16":
+            return Int16Array;
+        case "int32":
+            return Int32Array;
     }
 }
 
@@ -129,10 +137,17 @@ export interface Geometry {
 }
 
 /**
- * The data stored in Buffers' elements can be of the following elementary types: float, unsigned
- * integer (either 16-bit or 32-bit long)
+ * The data stored in Buffers' elements can be of the following elementary types: float, signed or
+ * unsigned integers (8-bit, 16-bit or 32-bit long).
  */
-export type BufferElementType = "float" | "uint16" | "uint32";
+export type BufferElementType =
+    | "float"
+    | "uint8"
+    | "uint16"
+    | "uint32"
+    | "int8"
+    | "int16"
+    | "int32";
 
 /**
  * Structured clone compliant WebGL buffer and its metadata.
@@ -142,6 +157,7 @@ export interface BufferAttribute {
     buffer: ArrayBufferLike;
     type: BufferElementType;
     itemCount: number;
+    normalized?: boolean;
 }
 
 /**

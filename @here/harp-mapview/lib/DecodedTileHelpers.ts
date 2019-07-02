@@ -246,15 +246,41 @@ export function getBufferAttribute(attribute: BufferAttribute): THREE.BufferAttr
                 new Float32Array(attribute.buffer),
                 attribute.itemCount
             );
+        case "uint8":
+            return new THREE.BufferAttribute(
+                new Uint8Array(attribute.buffer),
+                attribute.itemCount,
+                attribute.normalized
+            );
         case "uint16":
             return new THREE.BufferAttribute(
                 new Uint16Array(attribute.buffer),
-                attribute.itemCount
+                attribute.itemCount,
+                attribute.normalized
             );
         case "uint32":
             return new THREE.BufferAttribute(
                 new Uint32Array(attribute.buffer),
-                attribute.itemCount
+                attribute.itemCount,
+                attribute.normalized
+            );
+        case "int8":
+            return new THREE.BufferAttribute(
+                new Int8Array(attribute.buffer),
+                attribute.itemCount,
+                attribute.normalized
+            );
+        case "int16":
+            return new THREE.BufferAttribute(
+                new Int16Array(attribute.buffer),
+                attribute.itemCount,
+                attribute.normalized
+            );
+        case "int32":
+            return new THREE.BufferAttribute(
+                new Int32Array(attribute.buffer),
+                attribute.itemCount,
+                attribute.normalized
             );
         default:
             throw new Error(`unsupported buffer of type ${attribute.type}`);
