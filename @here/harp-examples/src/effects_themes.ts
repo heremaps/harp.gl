@@ -24,6 +24,8 @@ export namespace EffectsExample {
             theme: "resources/berlin_tilezen_base.json"
         });
 
+        mapView.animatedExtrusionHandler.enabled = false;
+
         CopyrightElementHandler.install("copyrightNotice", mapView);
 
         const mapControls = new MapControls(mapView);
