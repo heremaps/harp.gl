@@ -500,7 +500,7 @@ export class TileGeometryCreator {
         const displayZoomLevel = Math.floor(mapView.zoomLevel);
         const objects = tile.objects;
 
-        if (dataSource.addTileBackground) {
+        if (!tile.hasGeometry && dataSource.addTileBackground) {
             this.addGroundPlane(tile);
         }
 
@@ -522,6 +522,7 @@ export class TileGeometryCreator {
                     continue;
                 }
                 let count = group.count;
+                group.created = true;
 
                 // compress consecutive groups
                 for (
@@ -534,6 +535,9 @@ export class TileGeometryCreator {
                     }
 
                     count += groups[groupIndex].count;
+
+                    // Mark this group as created, so it does not get processed again.
+                    groups[groupIndex].created = true;
                 }
 
                 const ObjectCtor = getObjectConstructor(technique);
