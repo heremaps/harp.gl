@@ -38,29 +38,6 @@ export abstract class DataSource extends THREE.EventDispatcher {
     name: string;
 
     /**
-     * If `true` or `undefined`, a geometry for every tile is generated. The background has the size
-     * of the covered tile area. It is required to clear the area of a tile. It is also used to
-     * identify the tile during picking operations. If no tile background is generated, a tile
-     * cannot be identified during picking if no geometry is defined at the picking location. To be
-     * able to pick the tile with the help of the tile background, tile background does not have to
-     * be visible (set `tileBackgroundIsVisible` to `false`).
-     */
-    addTileBackground: boolean = true;
-
-    /**
-     * If defined, this option defines the color of the tile background. If it is `undefined`, the
-     * [[MapView.clearColor]] defined in the [[Theme]] is used.
-     */
-    tileBackgroundColor: number | undefined = undefined;
-
-    /**
-     * If set to `true`, and if `addTileBackground` is true, the background is actually rendered. If
-     * set to `false` or `undefined`, the background is only used for picking, but is not rendered,
-     * but only used for picking.
-     */
-    tileBackgroundIsVisible: boolean = false;
-
-    /**
      * The [[MapView]] instance holding a reference to this `DataSource`.
      */
     private m_mapView?: MapView;

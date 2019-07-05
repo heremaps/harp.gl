@@ -308,10 +308,6 @@ export class PhasedTileGeometryLoader implements TileGeometryLoader {
         const decodedTile = this.m_decodedTile;
 
         if (decodedTile !== undefined) {
-            if (!tile.hasGeometry && tile.dataSource.addTileBackground) {
-                geometryCreator.addGroundPlane(tile);
-            }
-
             const filter = (technique: Technique): boolean => {
                 if (technique.enabled === false) {
                     return false;

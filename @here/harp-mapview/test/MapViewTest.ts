@@ -13,7 +13,7 @@
 // tslint:disable:only-arrow-functions
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
-import { expect } from "chai";
+import { assert, expect } from "chai";
 import * as sinon from "sinon";
 import * as THREE from "three";
 
@@ -23,7 +23,9 @@ import { MapView, MapViewEventNames } from "../lib/MapView";
 import { MapViewFog } from "../lib/MapViewFog";
 import { MapViewUtils } from "../lib/Utils";
 
+import { waitForEvent } from "@here/harp-test-utils";
 import { FontCatalog } from "@here/harp-text-canvas";
+import { BackgroundDataSource } from "../lib/BackgroundDataSource";
 import { FakeOmvDataSource } from "./FakeOmvDataSource";
 
 declare const global: any;
@@ -36,7 +38,11 @@ describe("MapView", function() {
     let webGlStub: sinon.SinonStub;
     // tslint:disable-next-line:no-unused-variable
     let fontStub: sinon.SinonStub;
+    let addEventListenerSpy: sinon.SinonStub;
+    let removeEventListenerSpy: sinon.SinonStub;
+    let canvas: HTMLCanvasElement;
     let mapView: MapView;
+
     beforeEach(function() {
         sandbox = sinon.createSandbox();
         clearColorStub = sandbox.stub();
@@ -50,39 +56,31 @@ describe("MapView", function() {
             theGlobal.navigator = {};
             theGlobal.requestAnimationFrame = () => {};
         }
+        addEventListenerSpy = sinon.stub();
+        removeEventListenerSpy = sinon.stub();
+        canvas = ({
+            clientWidth: 0,
+            clientHeight: 0,
+            addEventListener: addEventListenerSpy,
+            removeEventListener: removeEventListenerSpy
+        } as unknown) as HTMLCanvasElement;
+        mapView = new MapView({ canvas });
     });
 
     afterEach(function() {
-        if (mapView !== undefined) {
-            mapView.dispose();
-        }
         sandbox.restore();
         if (inNodeContext) {
             delete global.window;
             delete global.requestAnimationFrame;
+            delete global.cancelAnimationFrame;
             delete global.navigator;
         }
     });
 
     it("Correctly sets geolocation and zoom", function() {
-        let coords: GeoCoordinates;
+        const coords: GeoCoordinates = new GeoCoordinates(52.5145, 13.3501);
         let rotationSpy: sinon.SinonSpy;
         let zoomSpy: sinon.SinonSpy;
-
-        if (inNodeContext) {
-            const theGlobal: any = global;
-            theGlobal.window = { window: { devicePixelRatio: 10 } };
-            theGlobal.requestAnimationFrame = () => {};
-        }
-
-        const canvas = {
-            clientWidth: 0,
-            clientHeight: 0,
-            addEventListener: () => {},
-            removeEventListener: () => {}
-        };
-        mapView = new MapView({ canvas: (canvas as any) as HTMLCanvasElement });
-        coords = new GeoCoordinates(52.5145, 13.3501);
 
         rotationSpy = sinon.spy(MapViewUtils, "setRotation");
         zoomSpy = sinon.spy(MapViewUtils, "zoomOnTargetPosition");
@@ -98,14 +96,6 @@ describe("MapView", function() {
     });
 
     it("Correctly sets event listeners and handlers webgl context restored", function() {
-        const canvas = {
-            clientWidth: 0,
-            clientHeight: 0,
-            addEventListener: sinon.stub(),
-            removeEventListener: sinon.stub()
-        };
-        mapView = new MapView({ canvas: (canvas as any) as HTMLCanvasElement });
-        const addEventListenerSpy = canvas.addEventListener;
         const updateSpy = sinon.spy(mapView, "update");
 
         expect(addEventListenerSpy.callCount).to.be.equal(2);
@@ -168,13 +158,6 @@ describe("MapView", function() {
     });
 
     it("supports #dispose", async function() {
-        const canvas = {
-            clientWidth: 0,
-            clientHeight: 0,
-            addEventListener: sinon.stub(),
-            removeEventListener: sinon.stub()
-        };
-        mapView = new MapView({ canvas: (canvas as any) as HTMLCanvasElement });
         const dataSource = new FakeOmvDataSource();
         const dataSourceDisposeStub = sinon.stub(dataSource, "dispose");
         mapView.addDataSource(dataSource);
@@ -183,13 +166,13 @@ describe("MapView", function() {
         mapView.dispose();
 
         expect(dataSourceDisposeStub.callCount).to.be.equal(1);
-        expect(canvas.addEventListener.callCount).to.be.equal(2);
-        expect(canvas.removeEventListener.callCount).to.be.equal(2);
+        expect(addEventListenerSpy.callCount).to.be.equal(2);
+        expect(removeEventListenerSpy.callCount).to.be.equal(2);
         mapView = undefined!;
     });
 
     it("maintains vertical fov limit", function() {
-        const canvas = {
+        const customCanvas = {
             clientWidth: 100,
             clientHeight: 100,
             addEventListener: sinon.stub(),
@@ -197,7 +180,7 @@ describe("MapView", function() {
         };
         const fov = 45;
         mapView = new MapView({
-            canvas: (canvas as any) as HTMLCanvasElement,
+            canvas: (customCanvas as any) as HTMLCanvasElement,
             fovCalculation: { type: "fixed", fov }
         });
         mapView.resize(100, 100);
@@ -208,7 +191,7 @@ describe("MapView", function() {
     });
 
     it("maintains horizontal fov limit", function() {
-        const canvas = {
+        const customCanvas = {
             clientWidth: 100,
             clientHeight: 100,
             addEventListener: sinon.stub(),
@@ -216,7 +199,7 @@ describe("MapView", function() {
         };
         const fov = 45;
         mapView = new MapView({
-            canvas: (canvas as any) as HTMLCanvasElement,
+            canvas: (customCanvas as any) as HTMLCanvasElement,
             fovCalculation: { type: "fixed", fov }
         });
 
@@ -229,7 +212,7 @@ describe("MapView", function() {
     });
 
     it("changes vertical fov when resizing with dynamic fov", function() {
-        const canvas = {
+        const customCanvas = {
             clientWidth: 100,
             clientHeight: 100,
             addEventListener: sinon.stub(),
@@ -237,7 +220,7 @@ describe("MapView", function() {
         };
         const fov = 45;
         mapView = new MapView({
-            canvas: (canvas as any) as HTMLCanvasElement,
+            canvas: (customCanvas as any) as HTMLCanvasElement,
             fovCalculation: { type: "dynamic", fov }
         });
 
@@ -250,7 +233,7 @@ describe("MapView", function() {
     });
 
     it("not changes horizontal fov when resizing with focal length", function() {
-        const canvas = {
+        const customCanvas = {
             clientWidth: 100,
             clientHeight: 100,
             addEventListener: sinon.stub(),
@@ -258,7 +241,7 @@ describe("MapView", function() {
         };
         const fov = 45;
         mapView = new MapView({
-            canvas: (canvas as any) as HTMLCanvasElement,
+            canvas: (customCanvas as any) as HTMLCanvasElement,
             fovCalculation: { type: "dynamic", fov }
         });
 
@@ -271,18 +254,11 @@ describe("MapView", function() {
     });
 
     it("returns the fog through #fog getter", function() {
-        const canvas = {
-            clientWidth: 0,
-            clientHeight: 0,
-            addEventListener: sinon.stub(),
-            removeEventListener: sinon.stub()
-        };
-        mapView = new MapView({ canvas: (canvas as any) as HTMLCanvasElement });
         expect(mapView.fog instanceof MapViewFog).to.equal(true);
     });
 
     it("converts screen coords to geo to screen", function() {
-        const canvas = {
+        const customCanvas = {
             clientWidth: 1920,
             clientHeight: 1080,
             pixelRatio: 1,
@@ -292,11 +268,11 @@ describe("MapView", function() {
 
         for (let x = -100; x <= 100; x += 100) {
             for (let y = -100; y <= 100; y += 100) {
-                mapView = new MapView({ canvas: (canvas as any) as HTMLCanvasElement });
+                mapView = new MapView({ canvas: (customCanvas as any) as HTMLCanvasElement });
                 const resultA = mapView.getScreenPosition(mapView.getGeoCoordinatesAt(x, y)!);
 
-                canvas.pixelRatio = 2;
-                mapView = new MapView({ canvas: (canvas as any) as HTMLCanvasElement });
+                customCanvas.pixelRatio = 2;
+                mapView = new MapView({ canvas: (customCanvas as any) as HTMLCanvasElement });
                 const resultB = mapView.getScreenPosition(mapView.getGeoCoordinatesAt(x, y)!);
 
                 expect(resultA!.x).to.be.equal(resultB!.x);
@@ -305,5 +281,37 @@ describe("MapView", function() {
                 expect(resultA!.y).to.be.closeTo(y, 0.00000001);
             }
         }
+    });
+
+    it("updates background tiling scheme", async function() {
+        this.timeout(500);
+
+        if (inNodeContext) {
+            global.requestAnimationFrame = (callback: FrameRequestCallback) => {
+                setTimeout(() => {
+                    // avoid camera movement events, needed setup is not done.
+                    mapView.cameraMovementDetector.clear(mapView);
+                    callback(0);
+                    return 0;
+                }, 0);
+            };
+            global.cancelAnimationFrame = () => {};
+        }
+        mapView = new MapView({ canvas });
+
+        const dataSource = new FakeOmvDataSource();
+
+        await mapView.addDataSource(dataSource);
+
+        const backgroundDataSource = mapView.getDataSourceByName(
+            "background"
+        ) as BackgroundDataSource;
+        assert.isDefined(backgroundDataSource);
+        const updateTilingSchemeSpy = sinon.spy(backgroundDataSource, "updateTilingScheme");
+
+        mapView.update();
+        await waitForEvent(mapView, MapViewEventNames.AfterRender);
+
+        expect(updateTilingSchemeSpy.called);
     });
 });
