@@ -23,6 +23,7 @@ import { assert, getOptionValue, LoggerManager, PerformanceTimer } from "@here/h
 import * as THREE from "three";
 
 import { AnimatedExtrusionHandler } from "./AnimatedExtrusionHandler";
+import { BackgroundDataSource } from "./BackgroundDataSource";
 import { CameraMovementDetector } from "./CameraMovementDetector";
 import { IMapAntialiasSettings, IMapRenderingManager, MapRenderingManager } from "./composing";
 import { ConcurrentDecoderFacade } from "./ConcurrentDecoderFacade";
@@ -624,6 +625,7 @@ export class MapView extends THREE.EventDispatcher {
     private readonly m_tileDataSources: DataSource[] = [];
     private readonly m_connectedDataSources = new Set<string>();
     private readonly m_failedDataSources = new Set<string>();
+    private m_backgroundDataSource: BackgroundDataSource | undefined = undefined;
 
     // gestures
     private readonly m_raycaster = new THREE.Raycaster();
@@ -832,6 +834,9 @@ export class MapView extends THREE.EventDispatcher {
         );
 
         this.m_animatedExtrusionHandler = new AnimatedExtrusionHandler(this);
+
+        this.m_backgroundDataSource = new BackgroundDataSource();
+        this.addDataSource(this.m_backgroundDataSource);
 
         this.initTheme();
 
@@ -1467,6 +1472,17 @@ export class MapView extends THREE.EventDispatcher {
     }
 
     /**
+     * Returns true if the specified [[DataSource]] is enabled.
+     */
+    isDataSourceEnabled(dataSource: DataSource): boolean {
+        return (
+            dataSource.enabled &&
+            dataSource.ready() &&
+            this.m_connectedDataSources.has(dataSource.name)
+        );
+    }
+
+    /**
      * Adds a new [[DataSource]] to this `MapView`. `MapView` needs at least one [[DataSource]] to
      * display something.
      *
@@ -1479,6 +1495,7 @@ export class MapView extends THREE.EventDispatcher {
                 `A DataSource with the name "${dataSource.name}" already exists in this MapView.`
             );
         }
+
         dataSource.attach(this);
         this.m_tileDataSources.push(dataSource);
 
@@ -1486,7 +1503,11 @@ export class MapView extends THREE.EventDispatcher {
             .connect()
             .then(() => {
                 return new Promise(resolve => {
-                    if (this.theme !== undefined) {
+                    if (
+                        this.theme !== undefined &&
+                        this.theme.styles !== undefined &&
+                        Object.keys(this.theme.styles).length > 0
+                    ) {
                         resolve();
                         return;
                     }
@@ -2256,16 +2277,9 @@ export class MapView extends THREE.EventDispatcher {
         const enabledDataSources: DataSource[] = [];
 
         for (const dataSource of this.m_tileDataSources) {
-            if (!dataSource.enabled) {
-                continue;
+            if (this.isDataSourceEnabled(dataSource)) {
+                enabledDataSources.push(dataSource);
             }
-            if (!dataSource.ready()) {
-                continue;
-            }
-            if (!this.m_connectedDataSources.has(dataSource.name)) {
-                continue;
-            }
-            enabledDataSources.push(dataSource);
         }
 
         return enabledDataSources;
@@ -2335,6 +2349,10 @@ export class MapView extends THREE.EventDispatcher {
 
         if (gatherStatistics) {
             setupTime = PerformanceTimer.now();
+        }
+
+        if (this.m_backgroundDataSource) {
+            this.m_backgroundDataSource.updateTilingScheme();
         }
 
         // TBD: Update renderList only any of its params (camera, etc...) has changed.

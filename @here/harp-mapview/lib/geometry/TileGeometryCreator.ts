@@ -534,10 +534,6 @@ export class TileGeometryCreator {
         const displayZoomLevel = Math.floor(mapView.zoomLevel);
         const objects = tile.objects;
 
-        if (!tile.hasGeometry && dataSource.addTileBackground) {
-            this.addGroundPlane(tile);
-        }
-
         for (const srcGeometry of decodedTile.geometries) {
             const groups = srcGeometry.groups;
             const groupCount = groups.length;
@@ -1369,10 +1365,7 @@ export class TileGeometryCreator {
         const dataSource = tile.dataSource;
         const projection = tile.projection;
 
-        const color =
-            dataSource.tileBackgroundColor === undefined
-                ? mapView.clearColor
-                : dataSource.tileBackgroundColor;
+        const color = mapView.clearColor;
 
         if (tile.projection.type === ProjectionType.Spherical) {
             const { east, west, north, south } = tile.geoBox;
@@ -1396,7 +1389,7 @@ export class TileGeometryCreator {
             });
             const material = new MapMeshBasicMaterial({
                 color,
-                visible: dataSource.tileBackgroundIsVisible
+                visible: true
             });
             const bufferGeometry = new THREE.BufferGeometry();
             bufferGeometry.fromGeometry(g);
@@ -1413,7 +1406,7 @@ export class TileGeometryCreator {
                 planeSize.y,
                 tile.center,
                 color,
-                dataSource.tileBackgroundIsVisible
+                true
             );
 
             this.registerTileObject(tile, groundPlane, GeometryKind.Background);

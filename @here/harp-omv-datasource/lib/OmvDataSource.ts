@@ -207,8 +207,6 @@ export class OmvDataSource extends TileDataSource<OmvTile> {
             skipShortLabels: this.m_params.skipShortLabels,
             storageLevelOffset: getOptionValue(m_params.storageLevelOffset, -1)
         };
-
-        this.tileBackgroundIsVisible = true;
     }
 
     /**
