@@ -3,62 +3,166 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
+
+import { ExprEvaluator } from "./ExprEvaluator";
+import { ExprParser } from "./ExprParser";
+
+export interface ExprVisitor<Result, Context> {
+    visitVarExpr(expr: VarExpr, context: Context): Result;
+    visitBooleanLiteralExpr(expr: BooleanLiteralExpr, context: Context): Result;
+    visitNumberLiteralExpr(expr: NumberLiteralExpr, context: Context): Result;
+    visitStringLiteralExpr(expr: StringLiteralExpr, context: Context): Result;
+    visitHasAttributeExpr(expr: HasAttributeExpr, context: Context): Result;
+    visitLengthExpr(expr: LengthExpr, context: Context): Result;
+    visitContainsExpr(expr: ContainsExpr, context: Context): Result;
+    visitNotExpr(expr: NotExpr, context: Context): Result;
+    visitBinaryExpr(expr: BinaryExpr, context: Context): Result;
+    visitLogicalExpr(expr: LogicalExpr, context: Context): Result;
+}
+
 /**
  * Abstract class defining a shape of a [[Theme]]'s expression
  */
 export abstract class Expr {
     /**
-     * Returns a parsed expression.
-     * @param code String which describes the type of expression to be parsed, for example "var".
+     * Creates an expression from the given `code`.
+     *
+     * @param code The code to parse.
+     * @returns The parsed [[Expr]].
      */
-    static parse(code: string): Expr {
-        const parser = new Parser(code);
+    static parse(code: string): Expr | never {
+        const parser = new ExprParser(code);
         const expr = parser.parse();
         return expr;
     }
 
-    constructor(readonly kind: ExprKind) {}
+    static fromJSON(node: unknown): Expr {
+        if (Array.isArray(node)) {
+            const op = node[0] as Op;
+            switch (op) {
+                case "all": {
+                    if (node.length < 2) {
+                        throw new Error(`'${op}' expectes a sequence of child expressions`);
+                    }
+                    let current: Expr = this.fromJSON(node[1]);
+                    for (let i = 2; i < node.length; ++i) {
+                        current = new LogicalExpr("&&", current, this.fromJSON(node[i]));
+                    }
+                    return current;
+                }
+
+                case "any": {
+                    if (node.length < 2) {
+                        throw new Error(`'${op}' expectes a sequence of child expressions`);
+                    }
+                    let current: Expr = this.fromJSON(node[1]);
+                    for (let i = 2; i < node.length; ++i) {
+                        current = new LogicalExpr("||", current, this.fromJSON(node[i]));
+                    }
+                    return current;
+                }
+
+                case "get":
+                    if (typeof node[1] !== "string") {
+                        throw new Error(`expected the name of an attribute`);
+                    }
+                    return new VarExpr(node[1]);
+
+                case "has":
+                    if (typeof node[1] !== "string") {
+                        throw new Error(`expected the name of an attribute`);
+                    }
+                    return new HasAttributeExpr(node[1]);
+
+                case "length":
+                    if (node.length !== 2) {
+                        throw new Error(`'${op}' expects a child expression`);
+                    }
+                    return new LengthExpr(this.fromJSON(node[1]));
+
+                case "in":
+                    if (!Array.isArray(node[2])) {
+                        // tslint:disable-next-line: max-line-length
+                        throw new Error(
+                            `'${op}' expects an expression followed by an array of literals`
+                        );
+                    }
+                    return new ContainsExpr(
+                        this.fromJSON(node[1]),
+                        node[2].map((n: unknown) => this.fromJSON(n))
+                    );
+
+                case "!":
+                    if (node.length !== 2) {
+                        throw new Error(`'${op}' expects a child expression`);
+                    }
+                    return new NotExpr(this.fromJSON(node[1]));
+
+                case "<":
+                case ">":
+                case "<=":
+                case ">=":
+                case "~=":
+                case "^=":
+                case "$=":
+                case "==":
+                case "!=":
+                    if (node.length !== 3) {
+                        throw new Error(`'${op}' expectes two child expressions`);
+                    }
+                    return new BinaryExpr(
+                        op as any,
+                        this.fromJSON(node[1]),
+                        this.fromJSON(node[2])
+                    );
+            } // switch
+        } else if (typeof node === "boolean") {
+            return new BooleanLiteralExpr(node);
+        } else if (typeof node === "number") {
+            return new NumberLiteralExpr(node);
+        } else if (typeof node === "string") {
+            return new StringLiteralExpr(node);
+        }
+        throw new Error("failed to create expression");
+    }
+
     /**
      * Evaluate an expression returning a [[Value]] object.
      */
+    evaluate(env: Env): Value | never {
+        const e = new ExprEvaluator();
+        return e.evaluate(this, env);
+    }
 
-    abstract evaluate(env: Env): Value | never;
+    toJSON(): unknown {
+        return new ExprSerializer().serialize(this);
+    }
+
+    abstract accept<Result, Context>(
+        visitor: ExprVisitor<Result, Context>,
+        context: Context
+    ): Result;
 }
 
 /**
  * @hidden
  */
-type UnaryOp = "has" | "!";
+export type RelationalOp = "<" | ">" | "<=" | ">=";
 
 /**
  * @hidden
  */
-type RelationalOp = "<" | ">" | "<=" | ">=";
+export type EqualityOp = "~=" | "^=" | "$=" | "==" | "!=";
 
 /**
  * @hidden
  */
-type EqualityOp = "~=" | "^=" | "$=" | "==" | "!=";
+export type BinaryOp = RelationalOp | EqualityOp;
 
 /**
  * @hidden
  */
-type BinaryOp = RelationalOp | EqualityOp;
-
-/**
- * @hidden
- */
-type LogicalOp = "&&" | "||";
-
-/**
- * @hidden
- */
-type Literal = "boolean" | "number" | "string";
-
-/**
- * @hidden
- */
-type ExprKind = "var" | "in" | "length" | Literal | UnaryOp | RelationalOp | EqualityOp | LogicalOp;
+export type LogicalOp = "&&" | "||";
 
 /**
  * @hidden
@@ -135,73 +239,78 @@ export class MapEnv extends Env {
 /**
  * Var expression.
  */
-class VarExpr extends Expr {
+export class VarExpr extends Expr {
     constructor(readonly name: string) {
-        super("var");
+        super();
     }
 
-    evaluate(env: Env): Value | never {
-        const value = env.lookup(this.name);
-        return value;
+    accept<Result, Context>(visitor: ExprVisitor<Result, Context>, context: Context): Result {
+        return visitor.visitVarExpr(this, context);
+    }
+}
+
+/**
+ * Boolean literal expression.
+ */
+export class BooleanLiteralExpr extends Expr {
+    constructor(readonly value: boolean) {
+        super();
+    }
+
+    accept<Result, Context>(visitor: ExprVisitor<Result, Context>, context: Context): Result {
+        return visitor.visitBooleanLiteralExpr(this, context);
     }
 }
 
 /**
  * Number literal expression.
  */
-class NumberLiteralExpr extends Expr {
+export class NumberLiteralExpr extends Expr {
     constructor(readonly value: number) {
-        super("number");
+        super();
     }
 
-    evaluate(): Value | never {
-        return this.value;
+    accept<Result, Context>(visitor: ExprVisitor<Result, Context>, context: Context): Result {
+        return visitor.visitNumberLiteralExpr(this, context);
     }
 }
 
 /**
  * String literal expression.
  */
-class StringLiteralExpr extends Expr {
+export class StringLiteralExpr extends Expr {
     constructor(readonly value: string) {
-        super("string");
+        super();
     }
 
-    evaluate(): Value | never {
-        return this.value;
+    accept<Result, Context>(visitor: ExprVisitor<Result, Context>, context: Context): Result {
+        return visitor.visitStringLiteralExpr(this, context);
     }
 }
 
 /**
  * A has expression with an attribute, for example `has(ref)`.
  */
-class HasAttributeExpr extends Expr {
+export class HasAttributeExpr extends Expr {
     constructor(readonly attribute: string) {
-        super("has");
+        super();
     }
 
-    evaluate(env: Env): Value | never {
-        return env.lookup(this.attribute) !== undefined;
+    accept<Result, Context>(visitor: ExprVisitor<Result, Context>, context: Context): Result {
+        return visitor.visitHasAttributeExpr(this, context);
     }
 }
 
 /**
  * A contains expression.
  */
-class ContainsExpr extends Expr {
+export class ContainsExpr extends Expr {
     constructor(readonly value: Expr, readonly elements: Expr[]) {
-        super("in");
+        super();
     }
 
-    evaluate(env: Env): Value | never {
-        const value = this.value.evaluate(env);
-        for (const e of this.elements) {
-            const element = e.evaluate(env);
-            if (value === element) {
-                return true;
-            }
-        }
-        return false;
+    accept<Result, Context>(visitor: ExprVisitor<Result, Context>, context: Context): Result {
+        return visitor.visitContainsExpr(this, context);
     }
 }
 
@@ -211,612 +320,122 @@ class ContainsExpr extends Expr {
  * Measures the length of the string (number of letters) or counts digits in numerical data type.
  * For boolean data types always returns 1.
  */
-class LengthExpr extends Expr {
-    constructor(readonly value: Expr) {
-        super("length");
+export class LengthExpr extends Expr {
+    constructor(readonly childExpr: Expr) {
+        super();
     }
 
-    evaluate(env: Env): Value {
-        const value = this.value.evaluate(env);
-        if (Array.isArray(value) || typeof value === "string") {
-            return value.length;
-        }
-        return undefined;
+    accept<Result, Context>(visitor: ExprVisitor<Result, Context>, context: Context): Result {
+        return visitor.visitLengthExpr(this, context);
     }
 }
 
 /**
  * A `not` expression.
  */
-class NotExpr extends Expr {
-    constructor(readonly expr: Expr) {
-        super("!");
+export class NotExpr extends Expr {
+    constructor(readonly childExpr: Expr) {
+        super();
     }
 
-    evaluate(env: Env): Value | never {
-        return !this.expr.evaluate(env);
+    accept<Result, Context>(visitor: ExprVisitor<Result, Context>, context: Context): Result {
+        return visitor.visitNotExpr(this, context);
     }
 }
 
 /**
  * A binary operator expression
  */
-class BinaryExpr extends Expr {
+export class BinaryExpr extends Expr {
     constructor(readonly op: BinaryOp, readonly left: Expr, readonly right: Expr) {
-        super(op);
+        super();
     }
 
-    evaluate(env: Env): Value | never {
-        const left = this.left.evaluate(env);
-        const right = this.right.evaluate(env);
-        switch (this.op) {
-            case "~=": {
-                if (typeof left === "string" && typeof right === "string") {
-                    return left.indexOf(right) !== -1;
-                }
-                return false;
-            }
-            case "^=": {
-                if (typeof left === "string" && typeof right === "string") {
-                    return left.startsWith(right);
-                }
-                return false;
-            }
-            case "$=": {
-                if (typeof left === "string" && typeof right === "string") {
-                    return left.endsWith(right);
-                }
-                return false;
-            }
-            case "==":
-                return left === right;
-            case "!=":
-                return left !== right;
-            case "<":
-                return left !== undefined && right !== undefined ? left < right : undefined;
-            case ">":
-                return left !== undefined && right !== undefined ? left > right : undefined;
-            case "<=":
-                return left !== undefined && right !== undefined ? left <= right : undefined;
-            case ">=":
-                return left !== undefined && right !== undefined ? left >= right : undefined;
-        }
-        throw new Error(`invalid relational op ${this.op}`);
+    accept<Result, Context>(visitor: ExprVisitor<Result, Context>, context: Context): Result {
+        return visitor.visitBinaryExpr(this, context);
     }
 }
 
 /**
  * Logical expression.
  */
-class LogicalExpr extends Expr {
+export class LogicalExpr extends Expr {
     constructor(readonly op: LogicalOp, readonly left: Expr, readonly right: Expr) {
-        super(op);
+        super();
     }
 
-    evaluate(env: Env): Value | never {
-        const value = this.left.evaluate(env);
-        switch (this.op) {
-            case "||":
-                return value || this.right.evaluate(env);
+    accept<Result, Context>(visitor: ExprVisitor<Result, Context>, context: Context): Result {
+        return visitor.visitLogicalExpr(this, context);
+    }
+}
+
+type Op = "all" | "any" | "get" | "has" | "length" | "in" | "!" | BinaryOp;
+
+class ExprSerializer implements ExprVisitor<unknown, void> {
+    serialize(expr: Expr): unknown {
+        return expr.accept(this, undefined);
+    }
+
+    visitVarExpr(expr: VarExpr, context: void): unknown {
+        return ["get", expr.name];
+    }
+
+    visitBooleanLiteralExpr(expr: BooleanLiteralExpr, context: void): unknown {
+        return expr.value;
+    }
+
+    visitNumberLiteralExpr(expr: NumberLiteralExpr, context: void): unknown {
+        return expr.value;
+    }
+
+    visitStringLiteralExpr(expr: StringLiteralExpr, context: void): unknown {
+        return expr.value;
+    }
+
+    visitHasAttributeExpr(expr: HasAttributeExpr, context: void): unknown {
+        return ["has", expr.attribute];
+    }
+
+    visitContainsExpr(expr: ContainsExpr, context: void): unknown {
+        return ["in", this.serialize(expr.value), expr.elements.map(e => this.serialize(e))];
+    }
+
+    visitLengthExpr(expr: LengthExpr, context: void): unknown {
+        return ["length", this.serialize(expr.childExpr)];
+    }
+
+    visitNotExpr(expr: NotExpr, context: void): unknown {
+        return ["!", this.serialize(expr.childExpr)];
+    }
+
+    visitBinaryExpr(expr: BinaryExpr, context: void): unknown {
+        return [expr.op, this.serialize(expr.left), this.serialize(expr.right)];
+    }
+
+    visitLogicalExpr(expr: LogicalExpr, context: void): unknown {
+        const result: unknown[] = [this.convertLogicalOp(expr.op)];
+        this.unfold(expr.left, expr.op, result);
+        this.unfold(expr.right, expr.op, result);
+        return result;
+    }
+
+    private convertLogicalOp(op: LogicalOp): string | never {
+        switch (op) {
             case "&&":
-                return value && this.right.evaluate(env);
-        } // switch
-        throw new Error(`invalid logical op ${this.op}`);
-    }
-}
-
-/**
- * Character value
- */
-enum Character {
-    Tab = 9,
-    Lf = 10,
-    Cr = 13,
-    Space = 32,
-    LParen = 40,
-    RParen = 41,
-    Comma = 44,
-    Dot = 46,
-    LBracket = 91,
-    Backslash = 92,
-    RBracket = 93,
-    _0 = 48,
-    _9 = 57,
-    _ = 95,
-    A = 64,
-    Z = 90,
-    a = 97,
-    z = 122,
-    DoubleQuote = 34,
-    SingleQuote = 39,
-    Exclaim = 33,
-    Equal = 61,
-    Caret = 94,
-    Tilde = 126,
-    Dollar = 36,
-    Less = 60,
-    Greater = 62,
-    Bar = 124,
-    Amp = 38
-}
-
-/**
- * Check if a codepoint is a whitespace character.
- */
-function isSpace(codepoint: number): boolean {
-    switch (codepoint) {
-        case Character.Tab:
-        case Character.Lf:
-        case Character.Cr:
-        case Character.Space:
-            return true;
-        default:
-            return false;
-    } // switch
-}
-
-/**
- * Check if codepoint is a digit character.
- */
-function isNumber(codepoint: number): boolean {
-    return codepoint >= Character._0 && codepoint <= Character._9;
-}
-
-/**
- * Check if codepoint is a letter character.
- */
-function isLetter(codepoint: number): boolean {
-    return (
-        (codepoint >= Character.a && codepoint <= Character.z) ||
-        (codepoint >= Character.A && codepoint <= Character.Z)
-    );
-}
-
-/**
- * Check if codepoint is either a digit or a letter character.
- */
-function isLetterOrNumber(codepoint: number): boolean {
-    return isLetter(codepoint) || isNumber(codepoint);
-}
-
-/**
- * Check if codepoint is an identification character: underscore, dollar sign, dot or bracket.
- */
-function isIdentChar(codepoint: number): boolean {
-    return (
-        isLetterOrNumber(codepoint) ||
-        codepoint === Character._ ||
-        codepoint === Character.Dollar ||
-        codepoint === Character.Dot ||
-        codepoint === Character.LBracket ||
-        codepoint === Character.RBracket
-    );
-}
-
-/**
- * Tokens used in theme grammar.
- */
-enum Token {
-    Eof = 0,
-    Error,
-    Identifier,
-    Number,
-    String,
-    Comma,
-    LParen,
-    RParen,
-    LBracket,
-    RBracket,
-    Exclaim,
-    TildeEqual,
-    CaretEqual,
-    DollarEqual,
-    EqualEqual,
-    ExclaimEqual,
-    Less,
-    Greater,
-    LessEqual,
-    GreaterEqual,
-    BarBar,
-    AmpAmp
-}
-
-/**
- * Maps a token to its string name.
- */
-function tokenSpell(token: Token): string {
-    switch (token) {
-        case Token.Eof:
-            return "eof";
-        case Token.Error:
-            return "error";
-        case Token.Identifier:
-            return "identifier";
-        case Token.Number:
-            return "number";
-        case Token.String:
-            return "string";
-        case Token.Comma:
-            return ",";
-        case Token.LParen:
-            return "(";
-        case Token.RParen:
-            return ")";
-        case Token.LBracket:
-            return "[";
-        case Token.RBracket:
-            return "]";
-        case Token.Exclaim:
-            return "!";
-        case Token.TildeEqual:
-            return "~=";
-        case Token.CaretEqual:
-            return "^=";
-        case Token.DollarEqual:
-            return "$=";
-        case Token.EqualEqual:
-            return "==";
-        case Token.ExclaimEqual:
-            return "!=";
-        case Token.Less:
-            return "<";
-        case Token.Greater:
-            return ">";
-        case Token.LessEqual:
-            return "<=";
-        case Token.GreaterEqual:
-            return ">=";
-        case Token.BarBar:
-            return "||";
-        case Token.AmpAmp:
-            return "&&";
-        default:
-            throw new Error(`invalid token ${token}`);
-    }
-}
-
-/**
- * Lexer class implementation.
- */
-class Lexer {
-    private m_token: Token = Token.Error;
-    private m_index = 0;
-    private m_char: number = Character.Lf;
-    private m_text?: string;
-
-    constructor(readonly code: string) {}
-
-    /**
-     * Single lexer token.
-     */
-    token(): Token {
-        return this.m_token;
-    }
-
-    /**
-     * Parsed text.
-     */
-    text(): string {
-        return this.m_text || "";
-    }
-
-    /**
-     * Go to the next token.
-     */
-    next(): Token {
-        this.m_token = this.yylex();
-        if (this.m_token === Token.Error) {
-            throw new Error(`unexpected character ${this.m_char}`);
+                return "all";
+            case "||":
+                return "any";
+            default:
+                throw new Error(`invalid logical op '${op}'`);
         }
-        return this.m_token;
     }
 
-    private yyinp(): void {
-        this.m_char = this.code.codePointAt(this.m_index++) || 0;
-    }
-
-    private yylex(): Token {
-        this.m_text = undefined;
-
-        while (isSpace(this.m_char)) {
-            this.yyinp();
+    private unfold(e: Expr, op: LogicalOp, exprs: unknown[]) {
+        if (e instanceof LogicalExpr && e.op === op) {
+            this.unfold(e.left, op, exprs);
+            this.unfold(e.right, op, exprs);
+        } else {
+            exprs.push(e);
         }
-
-        if (this.m_char === 0) {
-            return Token.Eof;
-        }
-
-        const ch = this.m_char;
-        this.yyinp();
-
-        switch (ch) {
-            case Character.LParen:
-                return Token.LParen;
-            case Character.RParen:
-                return Token.RParen;
-            case Character.LBracket:
-                return Token.LBracket;
-            case Character.RBracket:
-                return Token.RBracket;
-            case Character.Comma:
-                return Token.Comma;
-
-            case Character.SingleQuote:
-            case Character.DoubleQuote: {
-                const start = this.m_index - 1;
-                while (this.m_char && this.m_char !== ch) {
-                    // ### TODO handle escape sequences
-                    this.yyinp();
-                }
-                if (this.m_char !== ch) {
-                    throw new Error("Unfinished string literal");
-                }
-                this.yyinp();
-                this.m_text = this.code.substring(start, this.m_index - 2);
-                return Token.String;
-            }
-
-            case Character.Exclaim:
-                if (this.m_char === Character.Equal) {
-                    this.yyinp();
-                    return Token.ExclaimEqual;
-                }
-                return Token.Exclaim;
-
-            case Character.Caret:
-                if (this.m_char === Character.Equal) {
-                    this.yyinp();
-                    return Token.CaretEqual;
-                }
-                return Token.Error;
-
-            case Character.Tilde:
-                if (this.m_char === Character.Equal) {
-                    this.yyinp();
-                    return Token.TildeEqual;
-                }
-                return Token.Error;
-
-            case Character.Equal:
-                if (this.m_char === Character.Equal) {
-                    this.yyinp();
-                    return Token.EqualEqual;
-                }
-                return Token.Error;
-
-            case Character.Less:
-                if (this.m_char === Character.Equal) {
-                    this.yyinp();
-                    return Token.LessEqual;
-                }
-                return Token.Less;
-
-            case Character.Greater:
-                if (this.m_char === Character.Equal) {
-                    this.yyinp();
-                    return Token.GreaterEqual;
-                }
-                return Token.Greater;
-
-            case Character.Bar:
-                if (this.m_char === Character.Bar) {
-                    this.yyinp();
-                    return Token.BarBar;
-                }
-                return Token.Error;
-
-            case Character.Amp:
-                if (this.m_char === Character.Amp) {
-                    this.yyinp();
-                    return Token.AmpAmp;
-                }
-                return Token.Error;
-
-            default: {
-                const start = this.m_index - 2;
-                if (
-                    isLetter(ch) ||
-                    ch === Character._ ||
-                    (ch === Character.Dollar && isIdentChar(this.m_char))
-                ) {
-                    while (isIdentChar(this.m_char)) {
-                        this.yyinp();
-                    }
-                    this.m_text = this.code.substring(start, this.m_index - 1);
-                    return Token.Identifier;
-                } else if (isNumber(ch)) {
-                    while (isNumber(this.m_char)) {
-                        this.yyinp();
-                    }
-                    if (this.m_char === Character.Dot) {
-                        this.yyinp();
-                        while (isNumber(this.m_char)) {
-                            this.yyinp();
-                        }
-                    }
-                    this.m_text = this.code.substring(start, this.m_index - 1);
-                    return Token.Number;
-                } else if (ch === Character.Dollar) {
-                    if (this.m_char === Character.Equal) {
-                        this.yyinp();
-                        return Token.DollarEqual;
-                    }
-                    return Token.Error;
-                }
-            }
-        }
-
-        return Token.Error;
-    }
-}
-
-function getEqualityOp(token: Token): EqualityOp | undefined {
-    switch (token) {
-        case Token.TildeEqual:
-            return "~=";
-        case Token.CaretEqual:
-            return "^=";
-        case Token.DollarEqual:
-            return "$=";
-        case Token.EqualEqual:
-            return "==";
-        case Token.ExclaimEqual:
-            return "!=";
-        default:
-            return undefined;
-    } // switch
-}
-
-function getRelationalOp(token: Token): RelationalOp | undefined {
-    switch (token) {
-        case Token.Less:
-            return "<";
-        case Token.Greater:
-            return ">";
-        case Token.LessEqual:
-            return "<=";
-        case Token.GreaterEqual:
-            return ">=";
-        default:
-            return undefined;
-    } // switch
-}
-
-export class Parser {
-    private readonly lex: Lexer;
-
-    constructor(code: string) {
-        this.lex = new Lexer(code);
-        this.lex.next();
-    }
-
-    parse(): Expr | never {
-        return this.parseLogicalOr();
-    }
-
-    private yyexpect(token: Token): void | never {
-        if (this.lex.token() !== token) {
-            throw new Error(
-                `Syntax error: Expected token '${tokenSpell(token)}' but ` +
-                    `found '${tokenSpell(this.lex.token())}'`
-            );
-        }
-        this.lex.next();
-    }
-
-    private parsePrimary(): Expr | never {
-        switch (this.lex.token()) {
-            case Token.Identifier: {
-                const text = this.lex.text();
-                switch (text) {
-                    case "has":
-                        this.lex.next(); // skip has keyword
-                        this.yyexpect(Token.LParen);
-                        const hasAttribute = this.lex.text();
-                        this.yyexpect(Token.Identifier);
-                        this.yyexpect(Token.RParen);
-                        return new HasAttributeExpr(hasAttribute);
-                    case "length":
-                        this.lex.next(); // skip length keyword
-                        this.yyexpect(Token.LParen);
-                        const value = this.parseLogicalOr();
-                        this.yyexpect(Token.RParen);
-                        return new LengthExpr(value);
-                    default:
-                        const expr = new VarExpr(text);
-                        this.lex.next();
-                        return expr;
-                }
-            }
-
-            case Token.Number: {
-                const expr = new NumberLiteralExpr(parseFloat(this.lex.text()));
-                this.lex.next();
-                return expr;
-            }
-
-            case Token.String: {
-                const expr = new StringLiteralExpr(this.lex.text());
-                this.lex.next();
-                return expr;
-            }
-
-            case Token.LParen: {
-                this.lex.next();
-                const expr = this.parseLogicalOr();
-                this.yyexpect(Token.RParen);
-                return expr;
-            }
-        }
-
-        throw new Error("Syntax error");
-    }
-
-    private parseUnary(): Expr | never {
-        if (this.lex.token() === Token.Exclaim) {
-            this.lex.next();
-            return new NotExpr(this.parseUnary());
-        }
-        return this.parsePrimary();
-    }
-
-    private parseRelational(): Expr | never {
-        let expr = this.parseUnary();
-        while (true) {
-            if (this.lex.token() === Token.Identifier && this.lex.text() === "in") {
-                this.lex.next();
-                this.yyexpect(Token.LBracket);
-                const elements = [this.parsePrimary()];
-                while (this.lex.token() === Token.Comma) {
-                    this.lex.next();
-                    elements.push(this.parsePrimary());
-                }
-                this.yyexpect(Token.RBracket);
-                expr = new ContainsExpr(expr, elements);
-            } else {
-                const op = getRelationalOp(this.lex.token());
-                if (op === undefined) {
-                    break;
-                }
-                this.lex.next();
-                const right = this.parseUnary();
-                expr = new BinaryExpr(op, expr, right);
-            }
-        }
-        return expr;
-    }
-
-    private parseEquality(): Expr | never {
-        let expr = this.parseRelational();
-        while (true) {
-            const op = getEqualityOp(this.lex.token());
-            if (op === undefined) {
-                break;
-            }
-            this.lex.next();
-            const right = this.parseRelational();
-            expr = new BinaryExpr(op, expr, right);
-        }
-        return expr;
-    }
-
-    private parseLogicalAnd(): Expr | never {
-        let expr = this.parseEquality();
-        while (this.lex.token() === Token.AmpAmp) {
-            this.lex.next();
-            const right = this.parseEquality();
-            expr = new LogicalExpr("&&", expr, right);
-        }
-        return expr;
-    }
-
-    private parseLogicalOr(): Expr | never {
-        let expr = this.parseLogicalAnd();
-        while (this.lex.token() === Token.BarBar) {
-            this.lex.next();
-            const right = this.parseLogicalAnd();
-            expr = new LogicalExpr("||", expr, right);
-        }
-        return expr;
     }
 }
