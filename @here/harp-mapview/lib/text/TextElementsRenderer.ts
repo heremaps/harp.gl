@@ -188,8 +188,8 @@ export class TextElementsRenderer {
         layoutParams: this.m_mapView.textLayoutStyleCache.get(DEFAULT_TEXT_STYLE_CACHE_ID)!.params
     };
 
-    private m_lastRenderedTextElements: TextElement[] = [];
-    private m_secondChanceTextElements: TextElement[] = [];
+    private m_lastRenderedTextElements: Set<TextElement> = new Set();
+    private m_secondChanceTextElements: Set<TextElement> = new Set();
 
     // TODO: Replace this for an array of textures when more fonts are in use.
     private m_debugGlyphTextureCacheMesh?: THREE.Mesh;
@@ -384,7 +384,7 @@ export class TextElementsRenderer {
 
         this.checkIfOverloaded();
 
-        if (this.m_lastRenderedTextElements.length === 0) {
+        if (this.m_lastRenderedTextElements.size === 0) {
             const renderStartTime =
                 this.overloaded && this.isDynamicFrame ? PerformanceTimer.now() : undefined;
 
@@ -402,9 +402,10 @@ export class TextElementsRenderer {
             });
         } else {
             //TODO: Avoid list allocation
-            const allRenderableTextElements = this.m_lastRenderedTextElements.concat(
-                this.m_secondChanceTextElements
-            );
+            const allRenderableTextElements = [
+                ...this.m_lastRenderedTextElements,
+                ...this.m_secondChanceTextElements
+            ];
             this.renderTextElements(allRenderableTextElements, time, frameNumber, zoomLevel);
         }
     }
@@ -898,8 +899,8 @@ export class TextElementsRenderer {
             );
         });
 
-        this.m_lastRenderedTextElements.length = 0;
-        this.m_secondChanceTextElements.length = 0;
+        this.m_lastRenderedTextElements.clear();
+        this.m_secondChanceTextElements.clear();
     }
 
     private placeTextElements(
@@ -1284,16 +1285,17 @@ export class TextElementsRenderer {
         time: number,
         frameNumber: number,
         zoomLevel: number,
-        renderedTextElements?: TextElement[],
-        secondChanceTextElements?: TextElement[]
+        renderedTextElements?: Set<TextElement>,
+        secondChanceTextElements?: Set<TextElement>
     ): number {
-        if (this.m_textRenderers.length === 0) {
+        if (this.m_textRenderers.length === 0 || textElements.length === 0) {
             return 0;
         }
 
+        const textElementSet = new Set(textElements);
         const currentlyRenderingPlacedElements = renderedTextElements === undefined;
 
-        const printInfo = textElements.length > 5000;
+        const printInfo = textElementSet.size > 5000;
         let numNotVisible = 0;
         let numPathTooSmall = 0;
         let numCannotAdd = 0;
@@ -1324,14 +1326,27 @@ export class TextElementsRenderer {
         const tempMeasurementParams: MeasurementParameters = {};
         const tempBufferAdditionParams: TextBufferAdditionParameters = {};
 
+        const giveSecondChance = (textElement: TextElement): void => {
+            if (
+                secondChanceTextElements !== undefined &&
+                secondChanceTextElements.size < numSecondChanceLabels
+            ) {
+                secondChanceTextElements.add(textElement);
+            }
+        };
+
         // Place text elements one by one.
-        for (const textElement of textElements) {
+        for (const textElement of textElementSet) {
             if (
                 !currentlyRenderingPlacedElements &&
                 maxNumRenderedLabels >= 0 &&
                 numRenderedTextElements >= maxNumRenderedLabels
             ) {
                 break;
+            }
+
+            if (renderedTextElements !== undefined && renderedTextElements.has(textElement)) {
+                continue;
             }
 
             // Get the TextElementStyle.
@@ -1410,12 +1425,7 @@ export class TextElementsRenderer {
                 }
             }
             if (textElement.loadingState !== LoadingState.Initialized) {
-                if (
-                    secondChanceTextElements !== undefined &&
-                    secondChanceTextElements.length < numSecondChanceLabels
-                ) {
-                    secondChanceTextElements.push(textElement);
-                }
+                giveSecondChance(textElement);
                 continue;
             }
 
@@ -1559,12 +1569,7 @@ export class TextElementsRenderer {
                     }
                     // If the icon is prepared and valid, but just not visible, try again next time.
                     else {
-                        if (
-                            secondChanceTextElements !== undefined &&
-                            secondChanceTextElements.length < numSecondChanceLabels
-                        ) {
-                            secondChanceTextElements.push(pointLabel);
-                        }
+                        giveSecondChance(pointLabel);
 
                         // Forced making it un-current.
                         iconRenderState.lastFrameNumber = -1;
@@ -1619,12 +1624,7 @@ export class TextElementsRenderer {
 
                     // Check the text visibility.
                     if (!this.m_screenCollisions.isVisible(tempBox2D)) {
-                        if (
-                            secondChanceTextElements !== undefined &&
-                            secondChanceTextElements.length < numSecondChanceLabels
-                        ) {
-                            secondChanceTextElements.push(pointLabel);
-                        }
+                        giveSecondChance(pointLabel);
                         numPoiTextsInvisible++;
                         return false;
                     }
@@ -1724,12 +1724,7 @@ export class TextElementsRenderer {
                             }
                             this.startFadeOut(iconRenderState, frameNumber, time);
                         } else {
-                            if (
-                                secondChanceTextElements !== undefined &&
-                                secondChanceTextElements.length < numSecondChanceLabels
-                            ) {
-                                secondChanceTextElements.push(pointLabel);
-                            }
+                            giveSecondChance(pointLabel);
                             numPoiTextsInvisible++;
                             return false;
                         }
@@ -1769,7 +1764,7 @@ export class TextElementsRenderer {
 
                 // Add this label to the list of rendered elements.
                 if (renderedTextElements !== undefined) {
-                    renderedTextElements.push(pointLabel);
+                    renderedTextElements.add(pointLabel);
                 }
                 numRenderedTextElements++;
                 return true;
@@ -2054,7 +2049,7 @@ export class TextElementsRenderer {
 
                 // Add this label to the list of rendered elements.
                 if (renderedTextElements !== undefined) {
-                    renderedTextElements.push(pathLabel);
+                    renderedTextElements.add(pathLabel);
                 }
                 numRenderedTextElements++;
 
@@ -2080,7 +2075,7 @@ export class TextElementsRenderer {
         }
 
         if (PRINT_LABEL_DEBUG_INFO && printInfo) {
-            logger.log("textElements.length", textElements.length);
+            logger.log("textElementSet.size", textElementSet.size);
             logger.log("numRenderedTextElements", numRenderedTextElements);
             logger.log("numRenderedPoiIcons", numRenderedPoiIcons);
             logger.log("numRenderedPoiTexts", numRenderedPoiTexts);
@@ -2169,8 +2164,8 @@ export class TextElementsRenderer {
         frameNumber: number,
         zoomLevel: number,
         renderStartTime: number | undefined,
-        renderedTextElements?: TextElement[],
-        secondChanceTextElements?: TextElement[]
+        renderedTextElements?: Set<TextElement>,
+        secondChanceTextElements?: Set<TextElement>
     ) {
         if (this.m_textRenderers.length === 0 || visibleTiles.length === 0) {
             return;
