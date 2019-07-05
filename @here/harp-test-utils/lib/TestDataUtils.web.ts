@@ -28,7 +28,7 @@ export const testResourcesRoot =
  * @param fileName: file relative to module path (e.g. `test/resources/berlin.bin)`
  */
 export function getTestResourceUrl(module: string, fileName: string) {
-    return testResourcesRoot + module + "/" + fileName;
+    return testResourcesRoot + "/" + module + "/" + fileName.replace(/.*resources\/?/, "");
 }
 
 /**
