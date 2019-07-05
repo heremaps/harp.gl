@@ -120,8 +120,56 @@ export interface BaseStyle {
 
     /**
      * Compile-time condition.
+     *
+     * Conditions are defined using [[Array]]s describing literals, built-in
+     * symbols and function calls.
+     *  - `["has", string]` returns `true` if the given property exists.
+     *  - `["get", string]` returns the value of the given property with the
+     *    given name.
+     *  - `["all", expressions...]` returns `true` if all the sub expressions
+     *    evaluate to true.
+     *  - `["any", expressions...]` returns `true` if any sub expression
+     *    evaluates to true.
+     *  - `["in", expression, [literals...]]` returns `true` if the result of
+     *    evaluating the first expression is included in the given `Array` of
+     *    literals.
+     *  - `["!", expression]` returns `false` if the sub expression evaluates to
+     *    `true`.
+     *  - `["<", expression, expression]` returns `true` if the result of
+     *    evaluating the first expression is less than the result of evaluating
+     *    the second expression.
+     *  - `[">", expression, expression]` returns `true` if the result of
+     *    evaluating the first expression is greater than the result of
+     *    evaluating the second expression.
+     *  - `["<=", expression, expression]` returns `true` if the result of
+     *    evaluating the first expression is less than or equal the result of
+     *    evaluating the second expression.
+     *  - `[">=", expression, expression]` returns `true` if the result of
+     *    evaluating the first expression is greater than or equal the result of
+     *    evaluating the second expression.
+     *  - `["==", expression, expression]` returns `true` if the result of
+     *    evaluating the first expression is equal the result of evaluating the
+     *    second expression.
+     *  - `["!=", expression, expression]` returns `true` if the result of
+     *    evaluating the first expression is not equal to the result of
+     *    evaluating the second expression.
+     *  - `["length", expression]` returns the length of the given expression if
+     *    it evaluates to a `string` or an `Array`; otherwise, returns
+     *    `undefined`.
+     *  - `["~=", expression, expression]` if the expressions evaluate to
+     *    `string`, returns `true` if the `string` obtained from the first
+     *    expression contains the `string` obtained from the second expression;
+     *    otherwise, returns `undefined`.
+     *  - `["^=", expression, expression]` if the expressions evaluate to
+     *    `string`, returns `true` if the `string` obtained from the first
+     *    expression starts with the `string` obtained from the second
+     *    expression; otherwise, returns `undefined`.
+     *  - `["$=", expression, expression]` if the expressions evaluate to
+     *    `string`, returns `true` if the `string` obtained from the first
+     *    expression ends with the `string` obtained from the second expression;
+     *    otherwise, returns `undefined`.
      */
-    when: string;
+    when: unknown[] | string;
 
     /**
      * Technique name. Must be one of `"line"`, `"fill"`, `"solid-line"`, `"dashed-line"`,

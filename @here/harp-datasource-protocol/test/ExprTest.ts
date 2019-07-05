@@ -8,13 +8,13 @@
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
 import { assert } from "chai";
-import { Env, MapEnv, Parser, Value, ValueMap } from "../lib/Expr";
+import { Env, Expr, MapEnv, Value, ValueMap } from "../lib/Expr";
 
 function evaluate(expr: string, env?: Env | ValueMap): Value {
     if (typeof env === "object" && !(env instanceof Env)) {
         env = new MapEnv(env);
     }
-    return new Parser(expr).parse().evaluate(env || new Env());
+    return Expr.parse(expr).evaluate(env || new Env());
 }
 
 describe("Expr", function() {

@@ -191,10 +191,20 @@ export class StyleSetEvaluator {
     ): boolean {
         if (style.when !== undefined) {
             // optimization: Lazy evaluation of when-expression
-            if (style._whenExpr === undefined) {
-                style._whenExpr = Expr.parse(style.when);
-            }
-            if (!style._whenExpr.evaluate(env)) {
+            try {
+                if (style._whenExpr === undefined) {
+                    // tslint:disable-next-line: prefer-conditional-expression
+                    if (Array.isArray(style.when)) {
+                        style._whenExpr = Expr.fromJSON(style.when);
+                    } else {
+                        style._whenExpr = Expr.parse(style.when);
+                    }
+                }
+                if (!style._whenExpr!.evaluate(env)) {
+                    return false;
+                }
+            } catch (err) {
+                logger.log("failed to evaluate expression", style.when, "error", err);
                 return false;
             }
         }
