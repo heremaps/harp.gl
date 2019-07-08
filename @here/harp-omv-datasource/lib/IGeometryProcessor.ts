@@ -5,32 +5,16 @@
  */
 
 import { MapEnv } from "@here/harp-datasource-protocol/index-decoder";
-import { Vector3 } from "three";
-
-/**
-+ *  An interface to represent inner and outer rings of a [[IPolygonGeometry]].
-+ */
-export interface IRing {
-    /**
-     * The [[GeoCoordinates]] of this [[IRing]].
-     */
-    readonly positions: Vector3[];
-
-    /**
-     * Boolean array representing if the edges of this [[IRing]] should be considered as potential
-     * outlines.
-     */
-    readonly outlines?: boolean[];
-}
+import { Vector2 } from "three";
 
 /**
  * An interface to represent polygon geometries.
  */
 export interface IPolygonGeometry {
     /**
-     * The rings of this polygon.
+     * The rings of this polygon (specified in local webMercator space).
      */
-    readonly rings: IRing[];
+    readonly rings: Vector2[][];
 }
 
 /**
@@ -38,16 +22,16 @@ export interface IPolygonGeometry {
  */
 export interface ILineGeometry {
     /**
-     * The positions of this [[IlineGeometry]] projected in world space.
+     * The positions of this [[ILineGeometry]] projected in local webMercator space.
      */
-    readonly positions: Vector3[];
+    readonly positions: Vector2[];
 }
 
 /**
  * The [[IGeometryProcessor]] is used to process geometry features encoded in OMV tiles.
  *
  * [[OmvDecoder]] will pass to the processing methods of the concrete implementations
- * of this interface, sequences of geometries projected in the world space of the OMV
+ * of this interface, sequences of geometries projected in the local space of the OMV
  * [[TilingScheme]] that is always defined to be an instance of [[webMercatorTilingScheme]].
  * If desired, the world positions can be converted to [[GeoCoordinates]] using the
  * [[Projection.unprojectPoint]], for example:
@@ -63,24 +47,25 @@ export interface ILineGeometry {
  *        }
  * ```
  *
- * The methods of concrete implementations of [[IGeometryProcessor]]
- * are called to process point, linestring and polygon geometries,
- * see [[OmvDecoder]].
+ * The methods of concrete implementations of [[IGeometryProcessor]] are called to process point,
+ * line and polygon geometries, see [[OmvDecoder]].
  */
 export interface IGeometryProcessor {
     /**
      * Process a sequence of point features.
      *
-     * The points are represented as GeoCoordinates.
+     * The points are represented as local webMercator coordinates.
      *
      * @param layerName The name of the enclosing layer.
+     * @param layerExtents The extents of the enclosing layer.
      * @param geometry The positions of the point features in the projected world coordinates.
-     * @param env The enviroment containing the properties of the geometry.
+     * @param env The environment containing the properties of the geometry.
      * @param storageLevel The storage level of the data.
      */
     processPointFeature(
         layerName: string,
-        geometry: Vector3[],
+        layerExtents: number,
+        geometry: Vector2[],
         env: MapEnv,
         storageLevel: number
     ): void;
@@ -88,33 +73,36 @@ export interface IGeometryProcessor {
     /**
      * Process a sequence of line features.
      *
-     * Each line is represented as an Array of GeoCoordinates.
+     * Each line is represented as an Array of local webMercator coordinates.
      *
      * @param layerName The name of the enclosing layer.
+     * @param layerExtents The extents of the enclosing layer.
      * @param geometry The list of line geometries.
-     * @param env The enviroment containing the properties of the geometry.
+     * @param env The environment containing the properties of the geometry.
      * @param storageLevel The storage level of the data.
      */
     processLineFeature(
         layerName: string,
+        layerExtents: number,
         geometry: ILineGeometry[],
         env: MapEnv,
         storageLevel: number
     ): void;
 
     /**
-     * Process a squence of polygon features.
+     * Process a sequence of polygon features.
      *
-     * Each polygon is represented as an Array of countour representing
-     * exterior and interior rings.
+     * Each polygon is represented as an Array of contour representing exterior and interior rings.
      *
      * @param layerName The name of the enclosing layer.
+     * @param layerExtents The extents of the enclosing layer.
      * @param geometry The list of polygons.
-     * @param env The enviroment containing the properties of the geometry.
+     * @param env The environment containing the properties of the geometry.
      * @param storageLevel The storage level of the data.
      */
     processPolygonFeature(
         layerName: string,
+        layerExtents: number,
         geometry: IPolygonGeometry[],
         env: MapEnv,
         storageLevel: number

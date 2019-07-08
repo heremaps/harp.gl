@@ -5,13 +5,15 @@
  */
 
 import { MapEnv, ValueMap } from "@here/harp-datasource-protocol/index-decoder";
-import { EarthConstants, GeoBox, TileKey } from "@here/harp-geoutils";
+import { GeoBox, TileKey } from "@here/harp-geoutils";
 import { ILogger } from "@here/harp-utils";
-import { Vector3 } from "three";
-import { IGeometryProcessor, ILineGeometry, IPolygonGeometry, IRing } from "./IGeometryProcessor";
+import { Vector2 } from "three";
+import { IGeometryProcessor, ILineGeometry, IPolygonGeometry } from "./IGeometryProcessor";
 import { OmvFeatureFilter } from "./OmvDataFilter";
 import { OmvDataAdapter } from "./OmvDecoder";
-import { isArrayBufferLike, lat2tile } from "./OmvUtils";
+import { isArrayBufferLike } from "./OmvUtils";
+
+const VT_JSON_EXTENTS = 4096;
 
 type VTJsonPosition = [number, number];
 
@@ -97,14 +99,6 @@ export class VTJsonDataAdapter implements OmvDataAdapter {
     }
 
     process(tile: VTJsonTileInterface, tileKey: TileKey, geoBox: GeoBox) {
-        const extent = 4096;
-        const { north, west } = geoBox;
-        const N = Math.log2(extent);
-        const scale = Math.pow(2, tileKey.level + N);
-        const top = lat2tile(north, tileKey.level + N);
-        const left = ((west + 180) / 360) * scale;
-        const R = EarthConstants.EQUATORIAL_CIRCUMFERENCE;
-
         for (const feature of tile.features) {
             const env = new MapEnv({
                 ...feature.tags,
@@ -120,14 +114,11 @@ export class VTJsonDataAdapter implements OmvDataAdapter {
                         const x = (pointGeometry as VTJsonPosition)[0];
                         const y = (pointGeometry as VTJsonPosition)[1];
 
-                        const position = new Vector3(
-                            ((left + x) / scale) * R,
-                            ((top + y) / scale) * R,
-                            0
-                        );
+                        const position = new Vector2(x, y);
 
                         this.m_processor.processPointFeature(
                             tile.layer,
+                            VT_JSON_EXTENTS,
                             [position],
                             env,
                             tileKey.level
@@ -139,76 +130,38 @@ export class VTJsonDataAdapter implements OmvDataAdapter {
                     for (const lineGeometry of feature.geometry as VTJsonPosition[][]) {
                         const line: ILineGeometry = { positions: [] };
                         for (const [x, y] of lineGeometry) {
-                            const position = new Vector3(
-                                ((left + x) / scale) * R,
-                                ((top + y) / scale) * R,
-                                0
-                            );
+                            const position = new Vector2(x, y);
                             line.positions.push(position);
                         }
 
-                        this.m_processor.processLineFeature(tile.layer, [line], env, tileKey.level);
-                    }
-                    break;
-                }
-                case VTJsonGeometryType.Polygon: {
-                    let polygonValid = true;
-                    const polygon: IPolygonGeometry = { rings: [] };
-                    for (const outline of feature.geometry as VTJsonPosition[][]) {
-                        let minX = Infinity;
-                        let minY = Infinity;
-                        let maxX = 0;
-                        let maxY = 0;
-
-                        const ring: IRing = { positions: [], outlines: [] };
-                        for (let coordIdx = 0; coordIdx < outline.length; ++coordIdx) {
-                            const currX = outline[coordIdx][0];
-                            const currY = outline[coordIdx][1];
-                            const nextX = outline[(coordIdx + 1) % outline.length][0];
-                            const nextY = outline[(coordIdx + 1) % outline.length][1];
-
-                            if (polygon.rings.length > 0) {
-                                minX = Math.min(minX, currX);
-                                minY = Math.min(minY, currY);
-                                maxX = Math.max(maxX, currX);
-                                maxY = Math.max(maxY, currY);
-                            }
-
-                            const position = new Vector3(
-                                ((left + currX) / scale) * R,
-                                ((top + currY) / scale) * R,
-                                0
-                            );
-
-                            ring.positions.push(position);
-                            ring.outlines!.push(
-                                !(
-                                    (currX === 0 && nextX === 0) ||
-                                    (currX === extent && nextX === extent) ||
-                                    (currY === 0 && nextY === 0) ||
-                                    (currY === extent && nextY === extent)
-                                )
-                            );
-                        }
-
-                        if (minX === 0 && minY === 0 && maxX === extent && maxY === extent) {
-                            polygonValid = false;
-                            break;
-                        } else {
-                            minX = minY = Infinity;
-                            maxX = maxY = 0;
-                        }
-                        polygon.rings.push(ring);
-                    }
-
-                    if (polygonValid) {
-                        this.m_processor.processPolygonFeature(
+                        this.m_processor.processLineFeature(
                             tile.layer,
-                            [polygon],
+                            VT_JSON_EXTENTS,
+                            [line],
                             env,
                             tileKey.level
                         );
                     }
+                    break;
+                }
+                case VTJsonGeometryType.Polygon: {
+                    const polygon: IPolygonGeometry = { rings: [] };
+                    for (const outline of feature.geometry as VTJsonPosition[][]) {
+                        const ring: Vector2[] = [];
+                        for (const [currX, currY] of outline) {
+                            const position = new Vector2(currX, currY);
+                            ring.push(position);
+                        }
+                        polygon.rings.push(ring);
+                    }
+
+                    this.m_processor.processPolygonFeature(
+                        tile.layer,
+                        VT_JSON_EXTENTS,
+                        [polygon],
+                        env,
+                        tileKey.level
+                    );
                     break;
                 }
                 case VTJsonGeometryType.Unknown: {

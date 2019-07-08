@@ -13,9 +13,9 @@ import {
 import { MapEnv, StyleSetEvaluator } from "@here/harp-datasource-protocol/index-decoder";
 import * as THREE from "three";
 
-import { webMercatorProjection } from "@here/harp-geoutils";
 import { ILineGeometry, IPolygonGeometry } from "./IGeometryProcessor";
 import { IOmvEmitter, OmvDecoder, Ring } from "./OmvDecoder";
+import { webMercatorTile2TargetWorld } from "./OmvUtils";
 
 export class OmvTileInfoEmitter implements IOmvEmitter {
     private readonly m_tileInfo: ExtendedTileInfo;
@@ -47,16 +47,15 @@ export class OmvTileInfoEmitter implements IOmvEmitter {
 
     processPointFeature(
         layer: string,
-        geometry: THREE.Vector3[],
+        extents: number,
+        geometry: THREE.Vector2[],
         env: MapEnv,
         techniques: IndexedTechnique[],
         featureId: number | undefined
     ): void {
         const tileInfoWriter = this.m_tileInfoWriter;
 
-        const { targetProjection, center } = this.m_decodeInfo;
-
-        const worldPos = new THREE.Vector3();
+        const tmpV = new THREE.Vector3();
 
         for (const technique of techniques) {
             if (technique === undefined) {
@@ -66,10 +65,7 @@ export class OmvTileInfoEmitter implements IOmvEmitter {
             const infoTileTechniqueIndex = tileInfoWriter.addTechnique(technique);
 
             for (const pos of geometry) {
-                const { x, y } = targetProjection
-                    .reprojectPoint(webMercatorProjection, pos, worldPos)
-                    .sub(center);
-
+                webMercatorTile2TargetWorld(extents, this.m_decodeInfo, pos, tmpV);
                 tileInfoWriter.addFeature(
                     this.m_tileInfo.pointGroup,
                     technique,
@@ -78,14 +74,14 @@ export class OmvTileInfoEmitter implements IOmvEmitter {
                     infoTileTechniqueIndex,
                     FeatureGroupType.Point
                 );
-
-                tileInfoWriter.addFeaturePoint(this.m_tileInfo.pointGroup, x, y);
+                tileInfoWriter.addFeaturePoint(this.m_tileInfo.pointGroup, tmpV.x, tmpV.y);
             }
         }
     }
 
     processLineFeature(
         layer: string,
+        extents: number,
         geometry: ILineGeometry[],
         env: MapEnv,
         techniques: IndexedTechnique[],
@@ -93,19 +89,15 @@ export class OmvTileInfoEmitter implements IOmvEmitter {
     ): void {
         const tileInfoWriter = this.m_tileInfoWriter;
 
-        const { targetProjection, center } = this.m_decodeInfo;
-
-        const worldPos = new THREE.Vector3();
+        const tmpV = new THREE.Vector3();
 
         const lines: number[][] = [];
 
         for (const polyline of geometry) {
             const line: number[] = [];
             for (const pos of polyline.positions) {
-                const { x, y } = targetProjection
-                    .reprojectPoint(webMercatorProjection, pos, worldPos)
-                    .sub(center);
-                line.push(x, y);
+                webMercatorTile2TargetWorld(extents, this.m_decodeInfo, pos, tmpV);
+                line.push(tmpV.x, tmpV.y);
             }
             lines.push(line);
         }
@@ -148,6 +140,7 @@ export class OmvTileInfoEmitter implements IOmvEmitter {
 
     processPolygonFeature(
         layer: string,
+        extents: number,
         geometry: IPolygonGeometry[],
         env: MapEnv,
         techniques: IndexedTechnique[],
@@ -161,23 +154,19 @@ export class OmvTileInfoEmitter implements IOmvEmitter {
 
         const tileInfoWriter = this.m_tileInfoWriter;
 
-        const { targetProjection, center } = this.m_decodeInfo;
+        const tmpV = new THREE.Vector3();
 
         const polygons: Ring[][] = [];
-
-        const worldPos = new THREE.Vector3();
 
         for (const polygon of geometry) {
             const rings: Ring[] = [];
             for (const outline of polygon.rings) {
                 const contour: number[] = [];
-                for (const pos of outline.positions) {
-                    const { x, y, z } = targetProjection
-                        .reprojectPoint(webMercatorProjection, pos, worldPos)
-                        .sub(center);
-                    contour.push(x, y, z);
+                for (const pos of outline) {
+                    webMercatorTile2TargetWorld(extents, this.m_decodeInfo, pos, tmpV);
+                    contour.push(tmpV.x, tmpV.y, tmpV.z);
                 }
-                rings.push(new Ring(3, contour));
+                rings.push(new Ring(extents, 3, contour));
             }
             polygons.push(rings);
         }

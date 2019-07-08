@@ -21,7 +21,7 @@ import {
     webMercatorProjection
 } from "@here/harp-geoutils";
 import { assert } from "chai";
-import { Vector3 } from "three";
+import { Vector2, Vector3 } from "three";
 import { IPolygonGeometry } from "../lib/IGeometryProcessor";
 import { OmvDecodedTileEmitter } from "../lib/OmvDecodedTileEmitter";
 import { OmvDecoder } from "../lib/OmvDecoder";
@@ -43,13 +43,14 @@ describe("OmvDecodedTileEmitter", function() {
             new GeoCoordinates(geoBox.north, geoBox.west)
         ];
 
-        const worldPositions = coordinates.map(p =>
-            webMercatorProjection.projectPoint(p, new Vector3())
-        );
+        const worldPositions = coordinates.map(p => {
+            const projected = webMercatorProjection.projectPoint(p, new Vector3());
+            return new Vector2(projected.x, projected.y);
+        });
 
         const polygons: IPolygonGeometry[] = [
             {
-                rings: [{ positions: worldPositions }]
+                rings: [worldPositions]
             }
         ];
 
@@ -77,6 +78,7 @@ describe("OmvDecodedTileEmitter", function() {
         const matchedTechniques = styleSetEvaluator.getMatchingTechniques(mockEnv);
         tileEmitter.processPolygonFeature(
             "mock-layer",
+            4096,
             polygons,
             mockEnv,
             matchedTechniques,
