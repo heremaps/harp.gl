@@ -485,12 +485,21 @@ export class PoiManager {
             text = "";
         }
         if (text !== undefined) {
+            const displayZoomLevel = this.mapView.zoomLevel;
+
             const priority = technique.priority !== undefined ? technique.priority : 0;
+            const fadeNear =
+                technique.fadeNear !== undefined
+                    ? getPropertyValue(technique.fadeNear, displayZoomLevel)
+                    : 0;
+            const fadeFar =
+                technique.fadeFar !== undefined
+                    ? getPropertyValue(technique.fadeFar, displayZoomLevel)
+                    : 0;
 
             const positions = Array.isArray(x)
                 ? (x as THREE.Vector3[])
                 : new THREE.Vector3(x, y, z);
-            const displayZoomLevel = this.mapView.zoomLevel;
 
             textElement = new TextElement(
                 ContextualArabicConverter.instance.convert(text),
@@ -502,8 +511,8 @@ export class PoiManager {
                 technique.yOffset !== undefined ? technique.yOffset : 0.0,
                 featureId,
                 technique.style,
-                getPropertyValue(technique.fadeNear, displayZoomLevel),
-                getPropertyValue(technique.fadeFar, displayZoomLevel)
+                fadeNear,
+                fadeFar
             );
 
             textElement.mayOverlap = technique.textMayOverlap === true;
@@ -587,15 +596,18 @@ export class PoiManager {
             const defaultRenderParams = this.mapView.textElementsRenderer!.defaultStyle
                 .renderParams;
 
-            const hexColor = getPropertyValue(technique.color, Math.floor(this.mapView.zoomLevel));
-            if (hexColor !== undefined) {
+            if (technique.color !== undefined) {
+                const hexColor = getPropertyValue(
+                    technique.color,
+                    Math.floor(this.mapView.zoomLevel)
+                );
                 this.m_colorMap.set(cacheId, ColorCache.instance.getColor(hexColor));
             }
-            const hexBgColor = getPropertyValue(
-                technique.backgroundColor,
-                Math.floor(this.mapView.zoomLevel)
-            );
-            if (hexBgColor !== undefined) {
+            if (technique.backgroundColor !== undefined) {
+                const hexBgColor = getPropertyValue(
+                    technique.backgroundColor,
+                    Math.floor(this.mapView.zoomLevel)
+                );
                 this.m_colorMap.set(cacheId + "_bg", ColorCache.instance.getColor(hexBgColor));
             }
 
@@ -603,17 +615,17 @@ export class PoiManager {
                 fontName: getOptionValue(technique.fontName, defaultRenderParams.fontName),
                 fontSize: {
                     unit: FontUnit.Pixel,
-                    size: getOptionValue(
-                        getPropertyValue(technique.size, Math.floor(this.mapView.zoomLevel)),
-                        defaultRenderParams.fontSize!.size
-                    ),
-                    backgroundSize: getOptionValue(
-                        getPropertyValue(
-                            technique.backgroundSize,
-                            Math.floor(this.mapView.zoomLevel)
-                        ),
-                        defaultRenderParams.fontSize!.backgroundSize
-                    )
+                    size:
+                        technique.size !== undefined
+                            ? getPropertyValue(technique.size, Math.floor(this.mapView.zoomLevel))
+                            : defaultRenderParams.fontSize!.size,
+                    backgroundSize:
+                        technique.backgroundSize !== undefined
+                            ? getPropertyValue(
+                                  technique.backgroundSize,
+                                  Math.floor(this.mapView.zoomLevel)
+                              )
+                            : defaultRenderParams.fontSize!.backgroundSize
                 },
                 fontStyle:
                     technique.fontStyle === "Regular" ||
@@ -634,17 +646,17 @@ export class PoiManager {
                     this.m_colorMap.get(cacheId + "_bg"),
                     defaultRenderParams.backgroundColor
                 ),
-                opacity: getOptionValue(
-                    getPropertyValue(technique.opacity, Math.floor(this.mapView.zoomLevel)),
-                    defaultRenderParams.opacity
-                ),
-                backgroundOpacity: getOptionValue(
-                    getPropertyValue(
-                        technique.backgroundOpacity,
-                        Math.floor(this.mapView.zoomLevel)
-                    ),
-                    defaultRenderParams.backgroundOpacity
-                )
+                opacity:
+                    technique.opacity !== undefined
+                        ? getPropertyValue(technique.opacity, Math.floor(this.mapView.zoomLevel))
+                        : defaultRenderParams.opacity,
+                backgroundOpacity:
+                    technique.backgroundOpacity !== undefined
+                        ? getPropertyValue(
+                              technique.backgroundOpacity,
+                              Math.floor(this.mapView.zoomLevel)
+                          )
+                        : defaultRenderParams.backgroundOpacity
             };
 
             const themeRenderParams =

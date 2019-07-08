@@ -349,21 +349,19 @@ export namespace TiledGeoJsonTechniquesExample {
                     attr: {
                         color: {
                             interpolation: "Linear",
-                            zoomLevels: [14, 15, 16, 17, 18, 19, 20],
+                            zoomLevels: [14, 15, 16, 18, 20],
                             values: [
                                 "#163d47",
-                                "#5b0876",
-                                "#7c069d",
-                                "#820042",
-                                "#900404",
-                                "#a99d0d",
-                                "#50a304"
+                                "#3fa6ff",
+                                "hsl(180, 100%, 50%)",
+                                "hsl(360, 100%, 50%)",
+                                "#fff250"
                             ]
                         },
                         lineWidth: {
                             interpolation: "Linear",
-                            zoomLevels: [14, 17, 20],
-                            values: [14, 4, 1]
+                            zoomLevels: [16.9, 17, 20],
+                            values: ["10px", "4m", "1m"]
                         }
                     },
                     renderOrder: 1998
@@ -379,14 +377,12 @@ export namespace TiledGeoJsonTechniquesExample {
                         emissiveIntensity: 1,
                         emissive: {
                             interpolation: "Linear",
-                            zoomLevels: [14, 15, 16, 17, 18, 19, 20],
+                            zoomLevels: [14, 15, 16, 18, 20],
                             values: [
                                 "#163d47",
                                 "#1a3b58",
-                                "#210c63",
-                                "#4e126d",
-                                "#5f0e0e",
-                                "#674800",
+                                "hsl(180, 60%, 50%)",
+                                "hsl(360, 60%, 50%)",
                                 "#2d5b03"
                             ]
                         },
@@ -395,14 +391,12 @@ export namespace TiledGeoJsonTechniquesExample {
                         lineColorMix: 0,
                         lineColor: {
                             interpolation: "Linear",
-                            zoomLevels: [14, 15, 16, 17, 18, 19, 20],
+                            zoomLevels: [14, 15, 16, 18, 20],
                             values: [
                                 "#163d47",
                                 "#3fa6ff",
-                                "#e13ca6",
-                                "#cd2afb",
-                                "#ff792a",
-                                "#fd4141",
+                                "hsl(180, 100%, 50%)",
+                                "hsl(360, 100%, 50%)",
                                 "#fff250"
                             ]
                         },

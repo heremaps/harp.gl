@@ -195,17 +195,14 @@ export class RoadPicker {
 
     private getLineWidthInWorldUnit(technique: Technique, level: number): number | undefined {
         const solidLineTech = technique as SolidLineTechnique;
-        const metricUnit = getPropertyValue(solidLineTech.metricUnit, level);
 
-        if (metricUnit === "Pixel") {
-            const pixelToWorld =
-                this.m_mapView.renderer.getPixelRatio() * this.m_mapView.pixelToWorld * 0.5;
-            const lineWidth = getPropertyValue(solidLineTech.lineWidth, level);
-            return (
-                (lineWidth !== undefined
-                    ? (lineWidth as number)
-                    : SolidLineMaterial.DEFAULT_WIDTH) * pixelToWorld
-            );
+        if (solidLineTech.metricUnit === "Pixel") {
+            const lineWidth =
+                getPropertyValue(solidLineTech.lineWidth, level, this.m_mapView.pixelToWorld) * 0.5;
+
+            return lineWidth !== undefined
+                ? (lineWidth as number)
+                : SolidLineMaterial.DEFAULT_WIDTH;
         } else {
             const lineTechnique = technique as LineTechnique;
             return getPropertyValue(lineTechnique.lineWidth, level);

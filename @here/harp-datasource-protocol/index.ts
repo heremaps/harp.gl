@@ -19,3 +19,4 @@ export * from "./lib/DecodedTile";
 export * from "./lib/TileInfo";
 export * from "./lib/GeoJsonDataType";
 export * from "./lib/ThemeVisitor";
+export * from "./lib/StringEncodedNumeral";

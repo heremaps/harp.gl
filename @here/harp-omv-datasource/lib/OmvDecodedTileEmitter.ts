@@ -19,7 +19,6 @@ import {
     isExtrudedLineTechnique,
     isExtrudedPolygonTechnique,
     isFillTechnique,
-    isInterpolatedPropertyDefinition,
     isLineMarkerTechnique,
     isLineTechnique,
     isPoiTechnique,
@@ -1029,13 +1028,13 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
             if (isExtrudedPolygonTechnique(technique) && technique.vertexColors === true) {
                 const positionCount = (positions.length - basePosition) / 3;
                 const color = new THREE.Color(
-                    isInterpolatedPropertyDefinition(technique.color)
+                    technique.color !== undefined
                         ? getPropertyValue(technique.color, this.m_decodeInfo.tileKey.level)
-                        : this.isColorStringValid(technique.color)
-                        ? technique.color
                         : this.isColorStringValid(env.lookup("color") as string)
                         ? (env.lookup("color") as string)
-                        : getPropertyValue(technique.defaultColor, this.m_decodeInfo.tileKey.level)
+                        : technique.defaultColor !== undefined
+                        ? getPropertyValue(technique.defaultColor, this.m_decodeInfo.tileKey.level)
+                        : 0x000000
                 );
 
                 for (let i = 0; i < positionCount; ++i) {
