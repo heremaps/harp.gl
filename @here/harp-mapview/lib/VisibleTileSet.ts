@@ -3,16 +3,14 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-import { OrientedBox3 } from "@here/harp-geometry";
-import { MathUtils, Projection, ProjectionType, TileKey, TilingScheme } from "@here/harp-geoutils";
+import { Projection, TileKey, TilingScheme } from "@here/harp-geoutils";
 import { LRUCache } from "@here/harp-lrucache";
-import * as THREE from "three";
 import { DataSource } from "./DataSource";
-import { CalculationStatus, ElevationRangeSource } from "./ElevationRangeSource";
+import { ElevationRangeSource } from "./ElevationRangeSource";
+import { FrustumIntersection, TileKeyEntry } from "./FrustumIntersection";
 import { TileGeometryManager } from "./geometry/TileGeometryManager";
-import { MapTileCuller } from "./MapTileCuller";
 import { Tile } from "./Tile";
-import { MapViewUtils, TileOffsetUtils } from "./Utils";
+import { TileOffsetUtils } from "./Utils";
 
 /**
  * Way the memory consumption of a tile is computed. Either in number of tiles, or in MegaBytes. If
@@ -61,17 +59,6 @@ export interface VisibleTileSetOptions {
      * Number of levels to go down when searching for fallback tiles.
      */
     quadTreeSearchDistanceDown: number;
-}
-
-/**
- * Represents a unique TileKey and the area it takes up on screen.
- *
- * Note, in certain tiling projections, it is possible to have an offset, which represents a tile
- * which has fully wrapped around, hence this defaults to 0 to simplify usage for projections which
- * don't require it.
- */
-class TileKeyEntry {
-    constructor(public tileKey: TileKey, public area: number, public offset: number = 0) {}
 }
 
 const MB_FACTOR = 1.0 / (1024.0 * 1024.0);
@@ -187,19 +174,14 @@ export class VisibleTileSet {
 
     private readonly m_dataSourceCache = new Map<string, DataSourceCache>();
 
-    // used to project global coordinates into camera local coordinates
-    private readonly m_viewProjectionMatrix = new THREE.Matrix4();
-    private readonly m_mapTileCuller: MapTileCuller;
-    private readonly m_frustum: THREE.Frustum = new THREE.Frustum();
     private m_ResourceComputationType: ResourceComputationType =
         ResourceComputationType.EstimationInMb;
 
     constructor(
-        private readonly m_camera: THREE.PerspectiveCamera,
+        private readonly m_frustumIntersection: FrustumIntersection,
         private readonly m_tileGeometryManager: TileGeometryManager,
         options: VisibleTileSetOptions
     ) {
-        this.m_mapTileCuller = new MapTileCuller(m_camera);
         this.options = options;
     }
 
@@ -259,40 +241,35 @@ export class VisibleTileSet {
         });
     }
 
+    /**
+     * Calculates a new set of visible tiles.
+     * @param storageLevel The camera storage level, see [[MapView.storageLevel]].
+     * @param zoomLevel The camera zoom level.
+     * @param dataSources The data sources for which the visible tiles will be calculated.
+     * @param elevationRangeSource Source of elevation range data if any.
+     */
     updateRenderList(
-        worldCenter: THREE.Vector3,
         storageLevel: number,
         zoomLevel: number,
         dataSources: DataSource[],
         elevationRangeSource?: ElevationRangeSource
     ) {
-        this.m_viewProjectionMatrix.multiplyMatrices(
-            this.m_camera.projectionMatrix,
-            this.m_camera.matrixWorldInverse
-        );
-        this.m_frustum.setFromMatrix(this.m_viewProjectionMatrix);
-
         let allVisibleTilesLoaded: boolean = true;
 
-        if (this.options.extendedFrustumCulling) {
-            this.m_mapTileCuller.setup();
-        }
-
-        const visibleTileResult = this.getVisibleTilesForDataSources(
-            worldCenter,
+        const visibleTileKeysResult = this.getVisibleTileKeysForDataSources(
             zoomLevel,
             dataSources,
             elevationRangeSource
         );
         this.dataSourceTileList = [];
-        for (const { dataSource, visibleTiles } of visibleTileResult.tiles) {
+        for (const { dataSource, visibleTileKeys } of visibleTileKeysResult.tileKeys) {
             // Sort by projected (visible) area, now the tiles that are further away are at the end
             // of the list.
             //
             // Sort is unstable if distance is equal, which happens a lot when looking top-down.
             // Unstable sorting makes label placement unstable at tile borders, leading to
             // flickering.
-            visibleTiles.sort((a: TileKeyEntry, b: TileKeyEntry) => {
+            visibleTileKeys.sort((a: TileKeyEntry, b: TileKeyEntry) => {
                 const areaDiff = b.area - a.area;
 
                 // Take care or numerical precision issues
@@ -310,11 +287,11 @@ export class VisibleTileSet {
             const displayZoomLevel = dataSource.getDisplayZoomLevel(zoomLevel);
             for (
                 let i = 0;
-                i < visibleTiles.length &&
+                i < visibleTileKeys.length &&
                 actuallyVisibleTiles.length < this.options.maxVisibleDataSourceTiles;
                 i++
             ) {
-                const tileEntry = visibleTiles[i];
+                const tileEntry = visibleTileKeys[i];
                 if (!dataSource.shouldRender(displayZoomLevel, tileEntry.tileKey)) {
                     continue;
                 }
@@ -358,7 +335,7 @@ export class VisibleTileSet {
         }
 
         this.allVisibleTilesLoaded =
-            allVisibleTilesLoaded && visibleTileResult.allBoundingBoxesFinal;
+            allVisibleTilesLoaded && visibleTileKeysResult.allBoundingBoxesFinal;
 
         this.fillMissingTilesFromCache();
 
@@ -512,143 +489,6 @@ export class VisibleTileSet {
             cache.tileCache.delete(tileCode);
             tile.dispose();
         }
-    }
-
-    /**
-     * Returns the target [[Projection]].
-     */
-    private get projection() {
-        return this.options.projection;
-    }
-
-    /**
-     * Returns the type of the target [[Projection]].
-     */
-    private get projectionType() {
-        return this.projection.type;
-    }
-
-    /**
-     * Returns true if the tile wrapping is enabled.
-     *
-     * The default implementation returns true for planar projections.
-     */
-    private get tileWrappingEnabled() {
-        return this.projectionType === ProjectionType.Planar;
-    }
-
-    private getGeoBox(tilingScheme: TilingScheme, childTileKey: TileKey, offset: number) {
-        const geoBox = tilingScheme.getGeoBox(childTileKey);
-        const longitudeOffset = 360.0 * offset;
-        geoBox.northEast.longitude += longitudeOffset;
-        geoBox.southWest.longitude += longitudeOffset;
-        return geoBox;
-    }
-
-    /**
-     * Creates the intersection cache and initializes values for the root nodes.
-     *
-     * @param workList The list of work items with which to initialize the cache.
-     */
-    private createIntersectionCache(workList: TileKeyEntry[]) {
-        const map = new Map<number, number>();
-        for (const item of workList) {
-            map.set(TileOffsetUtils.getKeyForTileKeyAndOffset(item.tileKey, item.offset), Infinity);
-        }
-        return map;
-    }
-
-    /**
-     * Create a list of root nodes to test against the frustum. The root nodes each start at level 0
-     * and have an offset (see [[Tile]]) based on:
-     * - the current position [[worldCenter]].
-     * - the height of the camera above the world.
-     * - the field of view of the camera (the maximum value between the horizontal / vertical
-     *   values)
-     * - the tilt of the camera (because we see more tiles when tilted).
-     *
-     * @param worldCenter The center of the camera in world space.
-     */
-    private getRequiredInitialRootTileKeys(worldCenter: THREE.Vector3): TileKeyEntry[] {
-        const rootTileKey = TileKey.fromRowColumnLevel(0, 0, 0);
-        if (!this.tileWrappingEnabled) {
-            return [new TileKeyEntry(rootTileKey, 0)];
-        }
-
-        const worldGeoPoint = this.options.projection.unprojectPoint(worldCenter);
-        const result: TileKeyEntry[] = [];
-        const startOffset = Math.round(worldGeoPoint.longitude / 360.0);
-
-        // This algorithm computes the number of offsets we need to test. The following diagram may
-        // help explain the algorithm below.
-        //
-        //   |🎥
-        //   |.\ .
-        //   | . \  .
-        // z |  .  \   .c2
-        //   |  c1.  \b    .
-        //   |     .   \      .
-        //___|a___d1.____\e______.d2______f
-        //
-        // Where:
-        // - 🎥 is the camera
-        // - z is the height of the camera above the ground.
-        // - a is a right angle.
-        // - b is the look at vector of the camera.
-        // - c1 and c2 are the frustum planes of the camera.
-        // - c1 to c2 is the fov.
-        // - d1 and d2 are the intersection points of the frustum with the world plane.
-        // - e is the tilt/pitch of the camera.
-        // - f is the world
-        //
-        // The goal is to find the distance from e->d2. This is a longitude value, and we convert it
-        // to some offset range. Note e->d2 >= e->d1 (because we can't have a negative tilt).
-        // To find e->d2, we use the right triangle 🎥, a, d2 and subtract the distance a->d2 with
-        // a->e.
-        // a->d2 is found using the angle between a and d2 from the 🎥, this is simply e (because of
-        // similar triangles, angle between a, 🎥 and e equals the tilt) + half of the fov (because
-        // we need the angle between e, 🎥 and d2) and using trigonometry, result is therefore:
-        // (tan(a->d2) * z).
-        // a->e needs just the tilt and trigonometry to compute, result is: (tan(a->e) * z).
-
-        const camera = this.m_camera;
-        const cameraPitch = MapViewUtils.extractYawPitchRoll(camera.quaternion).pitch;
-        // Ensure that the aspect is >= 1.
-        const aspect = camera.aspect > 1 ? camera.aspect : 1 / camera.aspect;
-        // Angle between a->d2, note, the fov is vertical, hence we translate to horizontal.
-        const totalAngleRad = MathUtils.degToRad((camera.fov * aspect) / 2) + cameraPitch;
-        // Length a->d2
-        const worldLengthHorizontalFull = Math.tan(totalAngleRad) * camera.position.z;
-        // Length a->e
-        const worldLengthHorizontalSmallerHalf = Math.tan(cameraPitch) * camera.position.z;
-        // Length e -> d2
-        const worldLengthHorizontal = worldLengthHorizontalFull - worldLengthHorizontalSmallerHalf;
-        const worldLeftPoint = new THREE.Vector3(
-            worldCenter.x - worldLengthHorizontal,
-            worldCenter.y,
-            worldCenter.z
-        );
-        const worldLeftGeoPoint = this.options.projection.unprojectPoint(worldLeftPoint);
-        // We multiply by SQRT2 because we need to account for a rotated view (in which case there
-        // are more tiles that can be seen).
-        const offsetRange = MathUtils.clamp(
-            Math.ceil(
-                Math.abs((worldGeoPoint.longitude - worldLeftGeoPoint.longitude) / 360) * Math.SQRT2
-            ),
-            0,
-            // We can store currently up to 16 unique keys(2^4, where 4 is the default bit-shift
-            // value which is used currently in the [[VisibleTileSet]] methods) hence we can have a
-            // maximum range of 7 (because 2*7+1 = 15).
-            7
-        );
-        for (
-            let offset = -offsetRange + startOffset;
-            offset <= offsetRange + startOffset;
-            offset++
-        ) {
-            result.push(new TileKeyEntry(rootTileKey, 0, offset));
-        }
-        return result;
     }
 
     /**
@@ -831,143 +671,64 @@ export class VisibleTileSet {
         }
     }
 
-    // Computes the visible tiles for each supplied datasource.
-    private getVisibleTilesForDataSources(
-        worldCenter: THREE.Vector3,
+    // Computes the visible tile keys for each supplied datasource.
+    private getVisibleTileKeysForDataSources(
         zoomLevel: number,
         dataSources: DataSource[],
         elevationRangeSource: ElevationRangeSource | undefined
     ): {
-        tiles: Array<{ dataSource: DataSource; visibleTiles: TileKeyEntry[] }>;
+        tileKeys: Array<{ dataSource: DataSource; visibleTileKeys: TileKeyEntry[] }>;
         allBoundingBoxesFinal: boolean;
     } {
-        const tiles = [];
+        const tileKeys = Array<{ dataSource: DataSource; visibleTileKeys: TileKeyEntry[] }>();
         let allBoundingBoxesFinal: boolean = true;
 
-        for (const dataSource of dataSources) {
-            const displayZoomLevel = dataSource.getDisplayZoomLevel(zoomLevel);
+        if (dataSources.length === 0) {
+            return { tileKeys, allBoundingBoxesFinal };
+        }
 
+        const dataSourceBuckets = new Map<TilingScheme, DataSource[]>();
+        dataSources.forEach(dataSource => {
             const tilingScheme = dataSource.getTilingScheme();
-            const useElevationRangeSource: boolean =
-                elevationRangeSource !== undefined &&
-                elevationRangeSource.getTilingScheme() === tilingScheme;
-
-            const tileBounds = new THREE.Box3();
-            const workList: TileKeyEntry[] = this.getRequiredInitialRootTileKeys(worldCenter);
-
-            const visibleTiles: TileKeyEntry[] = [];
-
-            const tileFrustumIntersectionCache = this.createIntersectionCache(workList);
-
-            while (workList.length > 0) {
-                const tileEntry = workList.pop();
-
-                if (tileEntry === undefined) {
-                    continue;
-                }
-
-                const tileKey = tileEntry.tileKey;
-                const uniqueKey = TileOffsetUtils.getKeyForTileKeyAndOffset(
-                    tileKey,
-                    tileEntry.offset
-                );
-                const area = tileFrustumIntersectionCache.get(uniqueKey);
-
-                if (area === undefined) {
-                    throw new Error("Unexpected tile key");
-                }
-
-                if (area <= 0 || tileKey.level > displayZoomLevel) {
-                    continue;
-                }
-
-                if (dataSource.shouldRender(displayZoomLevel, tileKey)) {
-                    visibleTiles.push(tileEntry);
-                }
-
-                tilingScheme.getSubTileKeys(tileKey).forEach(childTileKey => {
-                    const offset = tileEntry.offset;
-                    const tileKeyAndOffset = TileOffsetUtils.getKeyForTileKeyAndOffset(
-                        childTileKey,
-                        offset
-                    );
-                    const intersectsFrustum = tileFrustumIntersectionCache.get(tileKeyAndOffset);
-
-                    if (intersectsFrustum !== undefined) {
-                        return;
-                    }
-
-                    const geoBox = this.getGeoBox(tilingScheme, childTileKey, offset);
-
-                    if (useElevationRangeSource) {
-                        const range = elevationRangeSource!.getElevationRange(childTileKey);
-                        geoBox.southWest.altitude = range.minElevation;
-                        geoBox.northEast.altitude = range.maxElevation;
-
-                        allBoundingBoxesFinal =
-                            allBoundingBoxesFinal &&
-                            range.calculationStatus === CalculationStatus.FinalPrecise;
-                    }
-
-                    let subTileArea = 0;
-
-                    if (this.projection.type === ProjectionType.Spherical) {
-                        const obb = new OrientedBox3();
-                        this.options.projection.projectBox(geoBox, obb);
-                        if (obb.intersects(this.m_frustum)) {
-                            subTileArea = 1;
-                        }
-                    } else {
-                        this.options.projection.projectBox(geoBox, tileBounds);
-                        subTileArea = this.computeSubTileArea(tileBounds);
-                    }
-
-                    tileFrustumIntersectionCache.set(tileKeyAndOffset, subTileArea);
-
-                    if (subTileArea > 0) {
-                        workList.push(new TileKeyEntry(childTileKey, subTileArea, offset));
-                    }
-                });
+            const bucket = dataSourceBuckets.get(tilingScheme);
+            if (bucket === undefined) {
+                dataSourceBuckets.set(tilingScheme, [dataSource]);
+            } else {
+                bucket.push(dataSource);
             }
-            tiles.push({ dataSource, visibleTiles });
-        }
-        return { tiles, allBoundingBoxesFinal };
-    }
+        });
 
-    // Computes the rough screen area of the supplied box.
-    // TileBounds must be in world space.
-    private computeSubTileArea(tileBounds: THREE.Box3) {
-        if (
-            (!this.options.extendedFrustumCulling ||
-                this.m_mapTileCuller.frustumIntersectsTileBox(tileBounds)) &&
-            this.m_frustum.intersectsBox(tileBounds)
-        ) {
-            const contour = [
-                new THREE.Vector3(tileBounds.min.x, tileBounds.min.y, 0).applyMatrix4(
-                    this.m_viewProjectionMatrix
-                ),
-                new THREE.Vector3(tileBounds.max.x, tileBounds.min.y, 0).applyMatrix4(
-                    this.m_viewProjectionMatrix
-                ),
-                new THREE.Vector3(tileBounds.max.x, tileBounds.max.y, 0).applyMatrix4(
-                    this.m_viewProjectionMatrix
-                ),
-                new THREE.Vector3(tileBounds.min.x, tileBounds.max.y, 0).applyMatrix4(
-                    this.m_viewProjectionMatrix
-                )
-            ];
+        this.m_frustumIntersection.updateFrustum();
 
-            contour.push(contour[0]);
+        // For each bucket of data sources with same tiling scheme, calculate frustum intersection
+        // once using the maximum display level.
+        for (const [tilingScheme, bucket] of dataSourceBuckets) {
+            const maxDisplayLevel = Math.max(
+                ...bucket.map(dataSource => dataSource.getDisplayZoomLevel(zoomLevel))
+            );
+            const result = this.m_frustumIntersection.compute(
+                tilingScheme,
+                maxDisplayLevel,
+                elevationRangeSource
+            );
 
-            const n = contour.length;
+            allBoundingBoxesFinal = allBoundingBoxesFinal && result.calculationFinal;
 
-            let subTileArea = 0;
-            for (let p = n - 1, q = 0; q < n; p = q++) {
-                subTileArea += contour[p].x * contour[q].y - contour[q].x * contour[p].y;
+            for (const dataSource of bucket) {
+                const visibleTileKeys: TileKeyEntry[] = [];
+
+                // For each data source check what tiles from the intersection should be rendered
+                // at this zoom level.
+                const displayZoomLevel = dataSource.getDisplayZoomLevel(zoomLevel);
+                for (const tileEntry of result.tileKeyEntries.values()) {
+                    if (dataSource.shouldRender(displayZoomLevel, tileEntry.tileKey)) {
+                        visibleTileKeys.push(tileEntry);
+                    }
+                }
+                tileKeys.push({ dataSource, visibleTileKeys });
             }
-
-            return Math.abs(subTileArea * 0.5);
         }
-        return 0;
+
+        return { tileKeys, allBoundingBoxesFinal };
     }
 }

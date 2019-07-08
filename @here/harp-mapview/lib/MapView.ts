@@ -31,6 +31,7 @@ import { CopyrightInfo } from "./CopyrightInfo";
 import { DataSource } from "./DataSource";
 import { ElevationProvider } from "./ElevationProvider";
 import { ElevationRangeSource } from "./ElevationRangeSource";
+import { FrustumIntersection } from "./FrustumIntersection";
 import { PhasedTileGeometryManager } from "./geometry/PhasedTileGeometryManager";
 import { SimpleTileGeometryManager, TileGeometryManager } from "./geometry/TileGeometryManager";
 import { MapViewImageCache } from "./image/MapViewImageCache";
@@ -635,7 +636,7 @@ export class MapView extends THREE.EventDispatcher {
     private readonly m_options: MapViewOptions;
     private readonly m_visibleTileSetOptions: VisibleTileSetOptions;
 
-    private m_theme: Theme = { styles: {} };
+    private m_theme: Theme = {};
 
     private m_previousFrameTimeStamp?: number;
     private m_firstFrameRendered = false;
@@ -828,7 +829,11 @@ export class MapView extends THREE.EventDispatcher {
                 : new PhasedTileGeometryManager(this);
 
         this.m_visibleTiles = new VisibleTileSet(
-            this.m_camera,
+            new FrustumIntersection(
+                this.m_camera,
+                this.m_visibleTileSetOptions.projection,
+                this.m_visibleTileSetOptions.extendedFrustumCulling
+            ),
             this.m_tileGeometryManager,
             this.m_visibleTileSetOptions
         );
@@ -1088,7 +1093,7 @@ export class MapView extends THREE.EventDispatcher {
                 }
             }
         }
-
+        this.dispatchEvent(THEME_LOADED_EVENT);
         this.update();
     }
 
@@ -1503,11 +1508,7 @@ export class MapView extends THREE.EventDispatcher {
             .connect()
             .then(() => {
                 return new Promise(resolve => {
-                    if (
-                        this.theme !== undefined &&
-                        this.theme.styles !== undefined &&
-                        Object.keys(this.theme.styles).length > 0
-                    ) {
+                    if (this.theme !== undefined && this.theme.styles !== undefined) {
                         resolve();
                         return;
                     }
@@ -2358,7 +2359,6 @@ export class MapView extends THREE.EventDispatcher {
         // TBD: Update renderList only any of its params (camera, etc...) has changed.
         if (!this.lockVisibleTileSet) {
             this.m_visibleTiles.updateRenderList(
-                this.m_camera.position,
                 this.storageLevel,
                 Math.floor(this.zoomLevel),
                 this.getEnabledTileDataSources(),
@@ -2589,7 +2589,11 @@ export class MapView extends THREE.EventDispatcher {
         this.calculateFocalLength(height);
 
         this.m_visibleTiles = new VisibleTileSet(
-            this.m_camera,
+            new FrustumIntersection(
+                this.m_camera,
+                this.m_visibleTileSetOptions.projection,
+                this.m_visibleTileSetOptions.extendedFrustumCulling
+            ),
             this.m_tileGeometryManager,
             this.m_visibleTileSetOptions
         );
