@@ -30,7 +30,11 @@ export class ColorCache {
      * @param colorCode ThreeJS color code or name. You must provide a valid color code or name,
      * as this function does not do any validation.
      */
-    getColor(colorCode: string): THREE.Color {
+    getColor(colorCode: string | number): THREE.Color {
+        if (typeof colorCode === "number") {
+            colorCode = "#" + colorCode.toString(16).padStart(6, "0");
+        }
+
         let color = this.m_map.get(colorCode);
         if (color !== undefined) {
             return color;

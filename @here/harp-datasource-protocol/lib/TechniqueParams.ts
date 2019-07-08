@@ -84,6 +84,18 @@ export enum GeometryKind {
     Detail = "detail"
 }
 
+/*
+ * Description of length units inside a style. Supports literal values (interpreted as `m`), `m` and
+ * `px`(i.e. `80`, `14px`, `0.6m`, etc.).
+ */
+export type StyleLength = string | number;
+
+/**
+ * Description of colors inside a style. Supports hex values as well as CSS hex, rgb and hsl values
+ * (i.e. `0xffffff`, `#f00fab`, `#aaa`, `rgb(255, 0 120)`, `hsl(360, 100%, 100%)`, etc.).
+ */
+export type StyleColor = string | number;
+
 /**
  * A set of [[GeometryKind]]s.
  */
@@ -222,7 +234,7 @@ export interface StandardTechniqueParams extends BaseTechniqueParams {
      * See https://threejs.org/docs/#api/en/materials/MeshStandardMaterial.color.
      * @format color-hex
      */
-    color?: MaybeInterpolatedProperty<string>;
+    color?: MaybeInterpolatedProperty<StyleColor>;
     /**
      * A value of `true` creates a wireframe geometry. (May not be supported with all techniques).
      * See https://threejs.org/docs/#api/en/materials/MeshStandardMaterial.wireframe.
@@ -276,7 +288,7 @@ export interface StandardTechniqueParams extends BaseTechniqueParams {
      * See https://threejs.org/docs/#api/en/materials/MeshStandardMaterial.emissive.
      * @format color-hex
      */
-    emissive?: MaybeInterpolatedProperty<string>;
+    emissive?: MaybeInterpolatedProperty<StyleColor>;
     /**
      * Intensity of the emissive light. Modulates the emissive color. Default is `1`.
      * See https://threejs.org/docs/#api/en/materials/MeshStandardMaterial.emissiveIntensity.
@@ -365,7 +377,7 @@ export interface PointTechniqueParams extends BaseTechniqueParams {
      * `"rgb(255, 0, 0)"`, or `"hsl(35, 11%, 88%)"`.
      * @format color-hex
      */
-    color?: MaybeInterpolatedProperty<string>;
+    color?: MaybeInterpolatedProperty<StyleColor>;
     /**
      * URL of a texture image to be loaded.
      */
@@ -602,13 +614,13 @@ export interface MarkerTechniqueParams extends BaseTechniqueParams {
      * `"rgb(255, 0, 0)"`, or `"hsl(35, 11%, 88%)"`.
      * @format color-hex
      */
-    color?: MaybeInterpolatedProperty<string>;
+    color?: MaybeInterpolatedProperty<StyleColor>;
     /**
      * Text background color in hexadecimal or CSS-style notation, for example: `"#e4e9ec"`,
      * `"#fff"`, `"rgb(255, 0, 0)"`, or `"hsl(35, 11%, 88%)"`.
      * @format color-hex
      */
-    backgroundColor?: MaybeInterpolatedProperty<string>;
+    backgroundColor?: MaybeInterpolatedProperty<StyleColor>;
     /**
      * For transparent text, set a value between 0.0 for totally transparent, to 1.0 for totally
      * opaque.
@@ -662,7 +674,7 @@ export interface LineTechniqueParams extends BaseTechniqueParams {
      * `"rgb(255, 0, 0)"`, or `"hsl(35, 11%, 88%)"`.
      * @format color-hex
      */
-    color: MaybeInterpolatedProperty<string>;
+    color: MaybeInterpolatedProperty<StyleColor>;
     /**
      * Set to true if line should appear transparent. Rendering transparent lines may come with a
      * slight performance impact.
@@ -688,7 +700,7 @@ export interface SegmentsTechniqueParams extends BaseTechniqueParams {
      * Color of segments in a hexadecimal notation, for example: `"#e4e9ec"` or `"#fff"`.
      * @format color-hex
      */
-    color: MaybeInterpolatedProperty<string>;
+    color: MaybeInterpolatedProperty<StyleColor>;
     /**
      * Set to `true` if line should appear transparent. Rendering transparent lines may come with a
      * slight performance impact.
@@ -744,7 +756,7 @@ export interface PolygonalTechniqueParams {
      * Sets the polygon outline color.
      * @format color-hex
      */
-    lineColor?: MaybeInterpolatedProperty<string>;
+    lineColor?: MaybeInterpolatedProperty<StyleColor>;
 
     /**
      * Distance to the camera (0.0 = nearPlane, 1.0 = farPlane) at which the object edges start
@@ -780,7 +792,7 @@ export interface BasicExtrudedLineTechniqueParams
      * `"rgb(255, 0, 0)"`, or `"hsl(35, 11%, 88%)"`.
      * @format color-hex
      */
-    color: MaybeInterpolatedProperty<string>;
+    color: MaybeInterpolatedProperty<StyleColor>;
     /**
      * Set to `true` if line should appear transparent. Rendering transparent lines may come with a
      * slight performance impact.
@@ -840,7 +852,7 @@ export interface SolidLineTechniqueParams extends BaseTechniqueParams, Polygonal
      * `"rgb(255, 0, 0)"`, or `"hsl(35, 11%, 88%)"`.
      * @format color-hex
      */
-    color: MaybeInterpolatedProperty<string>;
+    color: MaybeInterpolatedProperty<StyleColor>;
     /**
      * Set to `true` if line should appear transparent. Rendering transparent lines may come with a
      * slight performance impact.
@@ -853,13 +865,14 @@ export interface SolidLineTechniqueParams extends BaseTechniqueParams, Polygonal
     opacity?: MaybeInterpolatedProperty<number>;
     // TODO: Make pixel units default.
     /**
+     * @deprecated Specify metrics units as part of the value instead.
      * Units in which different size properties are specified. Either `Meter` (default) or `Pixel`.
      */
     metricUnit?: string;
     /**
-     * Width of a line in `metricUnit`s for different zoom levels.
+     * Width of a line in `metricUnit` for different zoom levels.
      */
-    lineWidth: MaybeInterpolatedProperty<number>;
+    lineWidth: MaybeInterpolatedProperty<StyleLength>;
     /**
      * Clip the line outside the tile if `true`.
      */
@@ -869,11 +882,11 @@ export interface SolidLineTechniqueParams extends BaseTechniqueParams, Polygonal
      * `"#e4e9ec"`, `"#fff"`, `"rgb(255, 0, 0)"`, or `"hsl(35, 11%, 88%)"`.
      * @format color-hex
      */
-    secondaryColor?: MaybeInterpolatedProperty<string>;
+    secondaryColor?: MaybeInterpolatedProperty<StyleColor>;
     /**
      * Width of secondary line geometry in `metricUnit`s for different zoom levels.
      */
-    secondaryWidth?: MaybeInterpolatedProperty<number>;
+    secondaryWidth?: MaybeInterpolatedProperty<StyleLength>;
     /**
      * The render order of the secondary line geometry object created using this technique.
      */
@@ -889,7 +902,7 @@ export interface DashedLineTechniqueParams extends BaseTechniqueParams, Polygona
      * `"rgb(255, 0, 0)"`, or `"hsl(35, 11%, 88%)"`.
      * @format color-hex
      */
-    color: MaybeInterpolatedProperty<string>;
+    color: MaybeInterpolatedProperty<StyleColor>;
     /**
      * Set to `true` if line should appear transparent. Rendering transparent lines may come with a
      * slight performance impact.
@@ -908,15 +921,15 @@ export interface DashedLineTechniqueParams extends BaseTechniqueParams, Polygona
     /**
      * Width of a line in `metricUnit`s for different zoom levels.
      */
-    lineWidth: MaybeInterpolatedProperty<number>;
+    lineWidth: MaybeInterpolatedProperty<StyleLength>;
     /**
      * Length of a line in meters for different zoom levels.
      */
-    dashSize?: MaybeInterpolatedProperty<number>;
+    dashSize?: MaybeInterpolatedProperty<StyleLength>;
     /**
      * Size of a gap between lines in meters for different zoom levels.
      */
-    gapSize?: MaybeInterpolatedProperty<number>;
+    gapSize?: MaybeInterpolatedProperty<StyleLength>;
     /**
      * Clip the line outside the tile if `true`.
      */
@@ -932,7 +945,7 @@ export interface FillTechniqueParams extends BaseTechniqueParams, PolygonalTechn
      * `"rgb(255, 0, 0)"`, or `"hsl(35, 11%, 88%)"`.
      * @format color-hex
      */
-    color?: MaybeInterpolatedProperty<string>;
+    color?: MaybeInterpolatedProperty<StyleColor>;
     /**
      * Set to `true` if line should appear transparent. Rendering transparent lines may come with a
      * slight performance impact.
@@ -975,7 +988,7 @@ export interface ExtrudedPolygonTechniqueParams extends StandardTechniqueParams 
      * `"rgb(255, 0, 0)"`, or `"hsl(35, 11%, 88%)"`.
      * @format color-hex
      */
-    lineColor?: MaybeInterpolatedProperty<string>;
+    lineColor?: MaybeInterpolatedProperty<StyleColor>;
     /**
      * Mix value between the lineColor(0.0) and the geometry's vertex colors(1.0).
      */
@@ -1004,7 +1017,7 @@ export interface ExtrudedPolygonTechniqueParams extends StandardTechniqueParams 
      * and [[MapEnv]] did not return it too.
      * @format color-hex
      */
-    defaultColor?: MaybeInterpolatedProperty<string>;
+    defaultColor?: MaybeInterpolatedProperty<StyleColor>;
 
     /**
      * If `true`, the height of the extruded buildings will not be modified by the mercator
@@ -1180,13 +1193,13 @@ export interface TextTechniqueParams extends BaseTechniqueParams {
      * `"rgb(255, 0, 0)"`, or `"hsl(35, 11%, 88%)"`.
      * @format color-hex
      */
-    color?: MaybeInterpolatedProperty<string>;
+    color?: MaybeInterpolatedProperty<StyleColor>;
     /**
      * Text background color in hexadecimal or CSS-style notation, for example: `"#e4e9ec"`,
      * `"#fff"`, `"rgb(255, 0, 0)"`, or `"hsl(35, 11%, 88%)"`.
      * @format color-hex
      */
-    backgroundColor?: MaybeInterpolatedProperty<string>;
+    backgroundColor?: MaybeInterpolatedProperty<StyleColor>;
     /**
      * For transparent text, set a value between 0.0 for totally transparent, to 1.0 for totally
      * opaque.

@@ -457,8 +457,8 @@ export function applyTechniqueToMaterial(
         if (typeof m[prop] === "undefined") {
             return;
         }
-        if (level !== undefined && isInterpolatedProperty<any>(value)) {
-            value = getPropertyValue<any>(value, level);
+        if (level !== undefined && isInterpolatedProperty<number>(value)) {
+            value = getPropertyValue(value, level);
         }
         if (m[prop] instanceof THREE.Color) {
             m[prop].set(value);
