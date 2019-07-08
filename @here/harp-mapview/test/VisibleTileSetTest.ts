@@ -3,11 +3,13 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-import { TileKey } from "@here/harp-geoutils";
-import { assert } from "chai";
+import { hereTilingScheme, TileKey } from "@here/harp-geoutils";
+import { assert, expect } from "chai";
 import * as sinon from "sinon";
 import * as THREE from "three";
 
+import { DataSource } from "../lib/DataSource";
+import { FrustumIntersection } from "../lib/FrustumIntersection";
 import { SimpleTileGeometryManager } from "../lib/geometry/TileGeometryManager";
 import { MapView, MapViewDefaults } from "../lib/MapView";
 import { Tile } from "../lib/Tile";
@@ -17,43 +19,78 @@ import { FakeOmvDataSource } from "./FakeOmvDataSource";
 // tslint:disable:only-arrow-functions
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
-function createBerlinCenterCameraFromSamples() {
-    const worldCenter = new THREE.Vector3(21526530.20810355, 26931954.03679565, 0);
-    const camera = new THREE.PerspectiveCamera();
-    camera.aspect = 1.7541528239202657;
-    camera.far = 4200;
-    camera.near = 80;
-    camera.fov = 60;
-    camera.setRotationFromEuler(new THREE.Euler(0, 0, 0, "XYZ"));
-    camera.scale.set(1, 1, 1);
-    camera.position.set(0, 0, 800).add(worldCenter);
-    camera.updateProjectionMatrix();
-    camera.updateMatrixWorld(false);
-    return { camera, worldCenter };
-}
-
 class FakeMapView {
     get frameNumber(): number {
         return 0;
     }
 }
 
-describe("VisibleTileSet", function() {
-    it("#updateRenderList properly culls Berlin center example view", function() {
-        const { camera, worldCenter } = createBerlinCenterCameraFromSamples();
-        const ds = new FakeOmvDataSource();
+class Fixture {
+    worldCenter: THREE.Vector3;
+    camera: THREE.PerspectiveCamera;
+    mapView: MapView;
+    tileGeometryManager: SimpleTileGeometryManager;
+    ds: DataSource[];
+    frustumIntersection: FrustumIntersection;
+    vts: VisibleTileSet;
 
-        const mapView = new FakeMapView() as MapView;
-        ds.attach(mapView);
-        const tileGeometryManager = new SimpleTileGeometryManager(mapView);
-        const vts = new VisibleTileSet(camera, tileGeometryManager, MapViewDefaults);
+    constructor() {
+        this.worldCenter = new THREE.Vector3();
+        this.camera = new THREE.PerspectiveCamera();
+        this.ds = [new FakeOmvDataSource()];
+        this.mapView = new FakeMapView() as MapView;
+        this.tileGeometryManager = new SimpleTileGeometryManager(this.mapView);
+        this.ds[0].attach(this.mapView);
+        this.frustumIntersection = new FrustumIntersection(
+            this.camera,
+            MapViewDefaults.projection,
+            MapViewDefaults.extendedFrustumCulling
+        );
+        this.vts = new VisibleTileSet(
+            this.frustumIntersection,
+            this.tileGeometryManager,
+            MapViewDefaults
+        );
+    }
+
+    addDataSource(dataSource: DataSource) {
+        dataSource.attach(this.mapView);
+        this.ds.push(dataSource);
+    }
+}
+
+describe("VisibleTileSet", function() {
+    let fixture: Fixture;
+
+    function setupBerlinCenterCameraFromSamples() {
+        fixture.worldCenter.set(21526530.20810355, 26931954.03679565, 0);
+        const camera = fixture.camera;
+        camera.aspect = 1.7541528239202657;
+        camera.far = 4200;
+        camera.near = 80;
+        camera.fov = 60;
+        camera.setRotationFromEuler(new THREE.Euler(0, 0, 0, "XYZ"));
+        camera.scale.set(1, 1, 1);
+        camera.position.set(0, 0, 800).add(fixture.worldCenter);
+        camera.updateProjectionMatrix();
+        camera.updateMatrixWorld(false);
+    }
+
+    function updateRenderList(zoomLevel: number, storageLevel: number) {
+        const intersectionCount = fixture.vts.updateRenderList(zoomLevel, storageLevel, fixture.ds);
+        return { tileList: fixture.vts.dataSourceTileList, intersectionCount };
+    }
+
+    beforeEach(function() {
+        fixture = new Fixture();
+    });
+
+    it("#updateRenderList properly culls Berlin center example view", function() {
+        setupBerlinCenterCameraFromSamples();
         const zoomLevel = 15;
         const storageLevel = 14;
 
-        ds.attach(new FakeMapView() as MapView);
-
-        vts.updateRenderList(worldCenter, zoomLevel, storageLevel, [ds]);
-        const dataSourceTileList = vts.dataSourceTileList;
+        const dataSourceTileList = updateRenderList(zoomLevel, storageLevel).tileList;
 
         assert.equal(dataSourceTileList.length, 1);
         assert.equal(dataSourceTileList[0].visibleTiles.length, 2);
@@ -67,8 +104,8 @@ describe("VisibleTileSet", function() {
     });
 
     it("#updateRenderList properly culls panorama of Berlin center", function() {
-        const worldCenter = new THREE.Vector3(21526192.124894984, 26932362.99119022, 0);
-        const camera = new THREE.PerspectiveCamera();
+        fixture.worldCenter = new THREE.Vector3(21526192.124894984, 26932362.99119022, 0);
+        const camera = fixture.camera;
         camera.aspect = 1.7541528239202657;
         camera.far = 1941.1011265922536;
         camera.near = 34.82202253184507;
@@ -77,23 +114,13 @@ describe("VisibleTileSet", function() {
             new THREE.Euler(0.9524476341218958, 0.3495283765291587, 0.23897332216617775, "XYZ")
         );
         camera.scale.set(1, 1, 1);
-        camera.position.set(0, 0, 348.2202253184507).add(worldCenter);
+        camera.position.set(0, 0, 348.2202253184507).add(fixture.worldCenter);
         camera.updateProjectionMatrix();
         camera.updateMatrixWorld(false);
-
-        const ds = new FakeOmvDataSource();
-
-        const mapView = new FakeMapView() as MapView;
-        ds.attach(mapView);
-        const tileGeometryManager = new SimpleTileGeometryManager(mapView);
-        const vts = new VisibleTileSet(camera, tileGeometryManager, MapViewDefaults);
         const zoomLevel = 16;
         const storageLevel = 14;
 
-        ds.attach(new FakeMapView() as MapView);
-
-        vts.updateRenderList(worldCenter, zoomLevel, storageLevel, [ds]);
-        const dataSourceTileList = vts.dataSourceTileList;
+        const dataSourceTileList = updateRenderList(zoomLevel, storageLevel).tileList;
 
         assert.equal(dataSourceTileList.length, 1);
         assert.equal(dataSourceTileList[0].visibleTiles.length, 5);
@@ -111,13 +138,7 @@ describe("VisibleTileSet", function() {
     });
 
     it("#updateRenderList properly finds parent loaded tiles in Berlin center", function() {
-        const { camera, worldCenter } = createBerlinCenterCameraFromSamples();
-        const ds = new FakeOmvDataSource();
-
-        const mapView = new FakeMapView() as MapView;
-        ds.attach(mapView);
-        const tileGeometryManager = new SimpleTileGeometryManager(mapView);
-        const vts = new VisibleTileSet(camera, tileGeometryManager, MapViewDefaults);
+        setupBerlinCenterCameraFromSamples();
 
         const zoomLevel = 15;
         const storageLevel = 14;
@@ -127,12 +148,14 @@ describe("VisibleTileSet", function() {
 
         // fake MapView to think that it has already loaded
         // parent of both found tiles
-        const parentTile = vts.getTile(ds, TileKey.fromMortonCode(parentCode)) as Tile;
+        const parentTile = fixture.vts.getTile(
+            fixture.ds[0],
+            TileKey.fromMortonCode(parentCode)
+        ) as Tile;
         assert.exists(parentTile);
         parentTile.forceHasGeometry(true);
 
-        vts.updateRenderList(worldCenter, zoomLevel, storageLevel, [ds]);
-        const dataSourceTileList = vts.dataSourceTileList;
+        const dataSourceTileList = updateRenderList(zoomLevel, storageLevel).tileList;
 
         assert.equal(dataSourceTileList.length, 1);
         assert.equal(dataSourceTileList[0].visibleTiles.length, 2);
@@ -148,25 +171,19 @@ describe("VisibleTileSet", function() {
     });
 
     it("#markTilesDirty properly handles cached & visible tiles", async function() {
-        const { camera, worldCenter } = createBerlinCenterCameraFromSamples();
-        const ds = new FakeOmvDataSource();
-
-        const mapView = new FakeMapView() as MapView;
-        ds.attach(mapView);
-        const tileGeometryManager = new SimpleTileGeometryManager(mapView);
-        const vts = new VisibleTileSet(camera, tileGeometryManager, MapViewDefaults);
+        setupBerlinCenterCameraFromSamples();
         const zoomLevel = 15;
         const storageLevel = 14;
 
-        ds.attach(new FakeMapView() as MapView);
-
-        vts.updateRenderList(worldCenter, zoomLevel, storageLevel, [ds]);
-        const dataSourceTileList = vts.dataSourceTileList;
+        const dataSourceTileList = updateRenderList(zoomLevel, storageLevel).tileList;
 
         // fill cache with additional arbitrary not visible tile
         // that shall be disposed() in this test
         const parentTileKey = TileKey.parentMortonCode(371506851);
-        const parentTile = vts.getTile(ds, TileKey.fromMortonCode(parentTileKey)) as Tile;
+        const parentTile = fixture.vts.getTile(
+            fixture.ds[0],
+            TileKey.fromMortonCode(parentTileKey)
+        ) as Tile;
         const parentDisposeSpy = sinon.spy(parentTile, "dispose");
         const parentReloadSpy = sinon.spy(parentTile, "reload");
 
@@ -181,7 +198,7 @@ describe("VisibleTileSet", function() {
             sinon.spy(tile, "reload")
         );
 
-        vts.markTilesDirty();
+        fixture.vts.markTilesDirty();
 
         // only visible should be updated
         assert(visibleTileReloadSpies[0].calledOnce);
@@ -192,5 +209,35 @@ describe("VisibleTileSet", function() {
         assert(visibleTileDisposeSpies[0].notCalled);
         assert(visibleTileDisposeSpies[1].notCalled);
         assert(parentDisposeSpy.calledOnce);
+    });
+
+    it("caches frustum intersection for data sources with same tiling scheme", async function() {
+        setupBerlinCenterCameraFromSamples();
+        const zoomLevel = 15;
+        const storageLevel = 14;
+
+        const secondDataSource = new FakeOmvDataSource();
+        fixture.addDataSource(secondDataSource);
+
+        const intersectionSpy = sinon.spy(fixture.frustumIntersection, "compute");
+        {
+            // Since the two data sources share same tiling scheme, frustum intersection will be
+            // calculated once, and resulting tiles will be the same for the two of them.
+            const result = updateRenderList(zoomLevel, storageLevel);
+            assert.equal(result.tileList.length, 2);
+            expect(result.tileList[0].visibleTiles).to.eql(result.tileList[1].visibleTiles);
+            assert(intersectionSpy.calledOnce);
+        }
+
+        // If the second data source has a different tile scheme, the intersection must be
+        // calculated twice, once for each tiling scheme.
+        sinon.replace(secondDataSource, "getTilingScheme", sinon.stub().returns(hereTilingScheme));
+        intersectionSpy.resetHistory();
+
+        {
+            const result = updateRenderList(zoomLevel, storageLevel);
+            assert.equal(result.tileList.length, 2);
+            assert(intersectionSpy.calledTwice);
+        }
     });
 });

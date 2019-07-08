@@ -284,8 +284,6 @@ describe("MapView", function() {
     });
 
     it("updates background tiling scheme", async function() {
-        this.timeout(500);
-
         if (inNodeContext) {
             global.requestAnimationFrame = (callback: FrameRequestCallback) => {
                 setTimeout(() => {
@@ -298,6 +296,7 @@ describe("MapView", function() {
             global.cancelAnimationFrame = () => {};
         }
         mapView = new MapView({ canvas });
+        mapView.theme = {};
 
         const dataSource = new FakeOmvDataSource();
 
