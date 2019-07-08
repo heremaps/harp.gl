@@ -179,6 +179,11 @@ export class TileGeometryCreator {
                 !(disabledKinds !== undefined && disabledKinds.hasOrIntersects(technique.kind)) ||
                 (enabledKinds !== undefined && enabledKinds.hasOrIntersects(technique.kind));
         }
+        for (const srcGeometry of decodedTile.geometries) {
+            for (const group of srcGeometry.groups) {
+                group.createdOffsets = [];
+            }
+        }
     }
 
     /**
@@ -533,14 +538,14 @@ export class TileGeometryCreator {
                 const technique = decodedTile.techniques[techniqueIndex];
 
                 if (
-                    group.created === true ||
+                    group.createdOffsets!.indexOf(tile.offset) !== -1 ||
                     technique.enabled !== true ||
                     (techniqueFilter !== undefined && !techniqueFilter(technique))
                 ) {
                     continue;
                 }
                 let count = group.count;
-                group.created = true;
+                group.createdOffsets!.push(tile.offset);
 
                 // compress consecutive groups
                 for (
@@ -555,7 +560,7 @@ export class TileGeometryCreator {
                     count += groups[groupIndex].count;
 
                     // Mark this group as created, so it does not get processed again.
-                    groups[groupIndex].created = true;
+                    groups[groupIndex].createdOffsets!.push(tile.offset);
                 }
 
                 const ObjectCtor = getObjectConstructor(technique);

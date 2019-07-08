@@ -205,9 +205,9 @@ export interface Group {
     featureId?: number;
 
     /**
-     * Set to `true` if its [[Geometry]] has been created.
+     * Contains tile offsets if its [[Geometry]] has been created.
      */
-    created?: boolean;
+    createdOffsets?: number[];
 }
 
 /**
