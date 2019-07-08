@@ -25,41 +25,54 @@ describe("SphericalGeometrySubdivisionModifier", function() {
 
         const { south, north, east, west } = geo.webMercatorTilingScheme.getGeoBox(tileKey!);
 
-        const geometry = new THREE.Geometry();
-
-        geometry.vertices.push(
-            geo.sphereProjection.projectPoint(
-                new geo.GeoCoordinates(south, west),
-                new THREE.Vector3()
-            ),
-            geo.sphereProjection.projectPoint(
-                new geo.GeoCoordinates(south, east),
-                new THREE.Vector3()
-            ),
-            geo.sphereProjection.projectPoint(
-                new geo.GeoCoordinates(north, west),
-                new THREE.Vector3()
-            ),
-            geo.sphereProjection.projectPoint(
-                new geo.GeoCoordinates(north, east),
-                new THREE.Vector3()
-            )
+        const geometry = new THREE.BufferGeometry();
+        const posAttr = new THREE.BufferAttribute(
+            new Float32Array([
+                ...geo.sphereProjection
+                    .projectPoint(new geo.GeoCoordinates(south, west), new THREE.Vector3())
+                    .toArray(),
+                ...geo.sphereProjection
+                    .projectPoint(new geo.GeoCoordinates(south, east), new THREE.Vector3())
+                    .toArray(),
+                ...geo.sphereProjection
+                    .projectPoint(new geo.GeoCoordinates(north, west), new THREE.Vector3())
+                    .toArray(),
+                ...geo.sphereProjection
+                    .projectPoint(new geo.GeoCoordinates(north, east), new THREE.Vector3())
+                    .toArray()
+            ]),
+            3
         );
-
-        geometry.faces.push(new THREE.Face3(0, 1, 2), new THREE.Face3(2, 1, 3));
+        geometry.addAttribute("position", posAttr);
+        geometry.setIndex(new THREE.BufferAttribute(new Uint16Array([0, 1, 2, 2, 1, 3]), 1));
 
         const quality = THREE.Math.degToRad(2);
 
         const modifier = new SphericalGeometrySubdivisionModifier(quality);
-
         modifier.modify(geometry);
 
-        assert.equal(geometry.vertices.length, 617);
+        assert.equal(posAttr.length, 1851);
 
-        for (const face of geometry.faces) {
-            const a = geometry.vertices[face.a];
-            const b = geometry.vertices[face.b];
-            const c = geometry.vertices[face.c];
+        const a = new THREE.Vector3();
+        const b = new THREE.Vector3();
+        const c = new THREE.Vector3();
+        const idxBuffer = geometry.getIndex().array;
+        for (let i = 0; i < idxBuffer.length; i += 3) {
+            a.set(
+                posAttr.array[idxBuffer[i] * 3],
+                posAttr.array[idxBuffer[i] * 3 + 1],
+                posAttr.array[idxBuffer[i] * 3 + 2]
+            );
+            b.set(
+                posAttr.array[idxBuffer[i + 1] * 3],
+                posAttr.array[idxBuffer[i + 1] * 3 + 1],
+                posAttr.array[idxBuffer[i + 1] * 3 + 2]
+            );
+            c.set(
+                posAttr.array[idxBuffer[i + 2] * 3],
+                posAttr.array[idxBuffer[i + 2] * 3 + 1],
+                posAttr.array[idxBuffer[i + 2] * 3 + 2]
+            );
 
             assert.isAtMost(a.angleTo(b), quality);
             assert.isAtMost(b.angleTo(c), quality);

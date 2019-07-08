@@ -1401,49 +1401,60 @@ export class TileGeometryCreator {
         const projection = tile.projection;
 
         const color = mapView.clearColor;
+        const tmpV = new THREE.Vector3();
 
         if (tile.projection.type === ProjectionType.Spherical) {
             const { east, west, north, south } = tile.geoBox;
             const sourceProjection = dataSource.getTilingScheme().projection;
-            const g = new THREE.Geometry();
-            g.vertices.push(
-                sourceProjection.projectPoint(new GeoCoordinates(south, west), new THREE.Vector3()),
-                sourceProjection.projectPoint(new GeoCoordinates(south, east), new THREE.Vector3()),
-                sourceProjection.projectPoint(new GeoCoordinates(north, west), new THREE.Vector3()),
-                sourceProjection.projectPoint(new GeoCoordinates(north, east), new THREE.Vector3())
+            const g = new THREE.BufferGeometry();
+            const posAttr = new THREE.BufferAttribute(
+                new Float32Array([
+                    ...sourceProjection
+                        .projectPoint(new GeoCoordinates(south, west), tmpV)
+                        .toArray(),
+                    ...sourceProjection
+                        .projectPoint(new GeoCoordinates(south, east), tmpV)
+                        .toArray(),
+                    ...sourceProjection
+                        .projectPoint(new GeoCoordinates(north, west), tmpV)
+                        .toArray(),
+                    ...sourceProjection
+                        .projectPoint(new GeoCoordinates(north, east), tmpV)
+                        .toArray()
+                ]),
+                3
             );
-            g.faces.push(new THREE.Face3(0, 1, 2), new THREE.Face3(2, 1, 3));
+            g.addAttribute("position", posAttr);
+            g.setIndex(new THREE.BufferAttribute(new Uint16Array([0, 1, 2, 2, 1, 3]), 1));
             const modifier = new SphericalGeometrySubdivisionModifier(
                 THREE.Math.degToRad(10),
                 sourceProjection
             );
             modifier.modify(g);
-            g.vertices.forEach(v => {
-                projection.reprojectPoint(sourceProjection, v, v);
-                v.sub(tile.center);
-            });
+
+            for (let i = 0; i < posAttr.array.length; i += 3) {
+                tmpV.set(posAttr.array[i], posAttr.array[i + 1], posAttr.array[i + 2]);
+                projection.reprojectPoint(sourceProjection, tmpV, tmpV);
+                tmpV.sub(tile.center);
+                (posAttr.array as Float32Array)[i] = tmpV.x;
+                (posAttr.array as Float32Array)[i + 1] = tmpV.y;
+                (posAttr.array as Float32Array)[i + 2] = tmpV.z;
+            }
+            posAttr.needsUpdate = true;
+
             const material = new MapMeshBasicMaterial({
                 color,
                 visible: true,
                 depthWrite: false
             });
-            const bufferGeometry = new THREE.BufferGeometry();
-            bufferGeometry.fromGeometry(g);
-            const mesh = new THREE.Mesh(bufferGeometry, material);
+            const mesh = new THREE.Mesh(g, material);
             mesh.renderOrder = Number.MIN_SAFE_INTEGER;
             this.registerTileObject(tile, mesh, GeometryKind.Background);
             tile.objects.push(mesh);
         } else {
             // Add a ground plane to the tile.
-            const planeSize = new THREE.Vector3();
-            tile.boundingBox.getSize(planeSize);
-            const groundPlane = this.createPlane(
-                planeSize.x,
-                planeSize.y,
-                tile.center,
-                color,
-                true
-            );
+            tile.boundingBox.getSize(tmpV);
+            const groundPlane = this.createPlane(tmpV.x, tmpV.y, tile.center, color, true);
 
             this.registerTileObject(tile, groundPlane, GeometryKind.Background);
             tile.objects.push(groundPlane);

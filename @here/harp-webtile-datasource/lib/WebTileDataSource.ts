@@ -362,67 +362,59 @@ export class WebTileDataSource extends DataSource {
 
                 const sourceProjection = this.getTilingScheme().projection;
 
-                const bounds = new THREE.Box3();
-                sourceProjection.projectBox(tile.geoBox, bounds);
-
-                const size = new THREE.Vector3();
-                bounds.getSize(size);
+                const tmpV = new THREE.Vector3();
 
                 const { east, west, north, south } = tile.geoBox;
 
-                const g = new THREE.Geometry();
-
-                g.vertices.push(
-                    sourceProjection.projectPoint(
-                        new GeoCoordinates(south, west),
-                        new THREE.Vector3()
-                    ),
-
-                    sourceProjection.projectPoint(
-                        new GeoCoordinates(south, east),
-                        new THREE.Vector3()
-                    ),
-
-                    sourceProjection.projectPoint(
-                        new GeoCoordinates(north, west),
-                        new THREE.Vector3()
-                    ),
-
-                    sourceProjection.projectPoint(
-                        new GeoCoordinates(north, east),
-                        new THREE.Vector3()
-                    )
+                const g = new THREE.BufferGeometry();
+                const posAttr = new THREE.BufferAttribute(
+                    new Float32Array([
+                        ...sourceProjection
+                            .projectPoint(new GeoCoordinates(south, west), tmpV)
+                            .toArray(),
+                        ...sourceProjection
+                            .projectPoint(new GeoCoordinates(south, east), tmpV)
+                            .toArray(),
+                        ...sourceProjection
+                            .projectPoint(new GeoCoordinates(north, west), tmpV)
+                            .toArray(),
+                        ...sourceProjection
+                            .projectPoint(new GeoCoordinates(north, east), tmpV)
+                            .toArray()
+                    ]),
+                    3
                 );
-
-                g.faceVertexUvs[0] = [
-                    [new THREE.Vector2(0, 0), new THREE.Vector2(1, 0), new THREE.Vector2(0, 1)],
-                    [new THREE.Vector2(0, 1), new THREE.Vector2(1, 0), new THREE.Vector2(1, 1)]
-                ];
-
-                g.faces.push(new THREE.Face3(0, 1, 2), new THREE.Face3(2, 1, 3));
+                g.addAttribute("position", posAttr);
+                const uvAttr = new THREE.BufferAttribute(
+                    new Float32Array([0, 0, 1, 0, 0, 1, 1, 1]),
+                    2
+                );
+                g.addAttribute("uv", uvAttr);
+                g.setIndex(new THREE.BufferAttribute(new Uint16Array([0, 1, 2, 2, 1, 3]), 1));
 
                 if (shouldSubdivide) {
                     const modifier = new SphericalGeometrySubdivisionModifier(
                         THREE.Math.degToRad(10),
                         sourceProjection
                     );
-
                     modifier.modify(g);
                 }
 
-                g.vertices.forEach(v => {
-                    this.projection.reprojectPoint(sourceProjection, v, v);
-                    v.sub(tile.center);
-                });
-
-                const geometry = new THREE.BufferGeometry();
-                geometry.fromGeometry(g);
+                for (let i = 0; i < posAttr.array.length; i += 3) {
+                    tmpV.set(posAttr.array[i], posAttr.array[i + 1], posAttr.array[i + 2]);
+                    this.projection.reprojectPoint(sourceProjection, tmpV, tmpV);
+                    tmpV.sub(tile.center);
+                    (posAttr.array as Float32Array)[i] = tmpV.x;
+                    (posAttr.array as Float32Array)[i + 1] = tmpV.y;
+                    (posAttr.array as Float32Array)[i + 2] = tmpV.z;
+                }
+                posAttr.needsUpdate = true;
 
                 const material = new THREE.MeshBasicMaterial({
                     map: texture
                 });
 
-                const mesh = new THREE.Mesh(geometry, material);
+                const mesh = new THREE.Mesh(g, material);
                 tile.objects.push(mesh);
                 tile.invalidateResourceInfo();
                 this.requestUpdate();

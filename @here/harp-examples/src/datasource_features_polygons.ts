@@ -10,9 +10,10 @@ import {
     MapViewFeature,
     MapViewMultiPolygonFeature
 } from "@here/harp-features-datasource";
-import { GeoCoordinates } from "@here/harp-geoutils";
-import { MapControls, MapControlsUI } from "@here/harp-map-controls";
+import { GeoCoordinates, sphereProjection } from "@here/harp-geoutils";
+import { MapControls } from "@here/harp-map-controls";
 import { CopyrightInfo, MapView } from "@here/harp-mapview";
+import { AltitudeBasedClipPlanesEvaluator } from "@here/harp-mapview/lib/ClipPlanesEvaluator";
 import { APIFormat, OmvDataSource } from "@here/harp-omv-datasource";
 import * as THREE from "three";
 import { accessToken } from "../config";
@@ -279,15 +280,15 @@ export namespace PolygonsFeaturesExample {
         const canvas = document.getElementById("mapCanvas") as HTMLCanvasElement;
         const mapView = new MapView({
             canvas,
-            theme: "resources/berlin_tilezen_night_reduced.json"
+            theme: "resources/berlin_tilezen_night_reduced.json",
+            projection: sphereProjection,
+            clipPlanesEvaluator: new AltitudeBasedClipPlanesEvaluator(300000)
         });
-        mapView.setCameraGeolocationAndZoom(new GeoCoordinates(-25, 13), 3.9);
+        mapView.setCameraGeolocationAndZoom(new GeoCoordinates(20, 30), 3.9);
         mapView.renderLabels = false;
 
         const controls = new MapControls(mapView);
-        controls.setRotation(0, 28);
-        const ui = new MapControlsUI(controls);
-        canvas.parentElement!.appendChild(ui.domElement);
+        controls.maxPitchAngle = 50;
 
         window.addEventListener("resize", () => mapView.resize(innerWidth, innerHeight));
 
