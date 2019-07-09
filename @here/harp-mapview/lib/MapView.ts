@@ -2521,7 +2521,7 @@ export class MapView extends THREE.EventDispatcher {
         // User TextElements have the priority when it comes to reserving screen space, so
         // they are handled first. They will be rendered after the normal map objects and
         // TextElements
-        this.m_textElementsRenderer.reset();
+        this.m_textElementsRenderer.reset(this.m_frameNumber);
         this.m_textElementsRenderer.renderUserTextElements(time, this.m_frameNumber);
         this.m_textElementsRenderer.renderAllTileText(time, this.m_frameNumber);
         this.m_textElementsRenderer.renderOverlay(this.m_overlayTextElements);

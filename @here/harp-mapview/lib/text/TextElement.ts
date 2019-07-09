@@ -293,12 +293,30 @@ export class RenderState {
             this.state === FadingState.FadingOut;
         return visible;
     }
+
+    /**
+     * Creates a clone of this object, uid is ignored.
+     */
+    clone() {
+        return new RenderState(
+            this.state,
+            this.value,
+            this.startTime,
+            this.opacity,
+            this.lastFrameNumber,
+            this.fadingTime
+        );
+    }
 }
 
 /**
  * `TextElement` is used to create 2D text elements (for example, labels).
  */
 export class TextElement {
+    /**
+     * [[TextElement]] unique ID counter
+     */
+    private static uidCounter = 0;
     /**
      * Determines visibility. If set to `false`, it will not be rendered.
      */
@@ -397,26 +415,6 @@ export class TextElement {
 
     /**
      * @hidden
-     * Used during rendering.
-     */
-    iconRenderState?: RenderState;
-
-    /**
-     * @hidden
-     * Used during rendering.
-     */
-    textRenderState?: RenderState;
-
-    /**
-     * @hidden
-     * Used during rendering. Used for line markers only, which have a points array and multiple
-     * icon positions to render. Since line markers use the same renderState for text part and icon,
-     * there is no separate array of [[RenderState]]s for the text parts of the line markers.
-     */
-    iconRenderStates?: RenderState[];
-
-    /**
-     * @hidden
      * Text rendering style.
      */
     renderStyle?: TextRenderStyle;
@@ -462,7 +460,13 @@ export class TextElement {
      */
     dbgPathTooSmall?: boolean;
 
+    /**
+     * A unique id for each text element
+     */
+    readonly uid = TextElement.uidCounter++;
+
     private m_poiInfo?: PoiInfo;
+    private m_identityKey?: string;
 
     /**
      * Creates a new `TextElement`.
@@ -616,5 +620,22 @@ export class TextElement {
                 );
             }
         }
+    }
+
+    /**
+     * Generates a string from text object properties that can be used to find similar elements.
+     * The text element position and uid are ignored
+     */
+    getWeakLabelHash(): string {
+        if (this.m_identityKey === undefined) {
+            this.m_identityKey =
+                this.text +
+                (this.poiInfo === undefined ? "-" : this.poiInfo.imageTextureName) +
+                (this.featureId || "_") +
+                (this.isLineMarker ? "+" : "-") +
+                (this.path ? this.path.length : "-");
+        }
+
+        return this.m_identityKey;
     }
 }
