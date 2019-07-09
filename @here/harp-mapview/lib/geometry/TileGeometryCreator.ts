@@ -146,8 +146,8 @@ export class TileGeometryCreator {
      */
     initDecodedTile(
         decodedTile: DecodedTile,
-        enabledKinds: GeometryKindSet | undefined,
-        disabledKinds: GeometryKindSet | undefined
+        enabledKinds?: GeometryKindSet | undefined,
+        disabledKinds?: GeometryKindSet | undefined
     ) {
         for (const technique of decodedTile.techniques) {
             // Already processed
@@ -187,7 +187,10 @@ export class TileGeometryCreator {
     }
 
     /**
-     * Called after the `Tile` has been decoded.
+     * Called after the `Tile` has been decoded. It is required to call `initDecodedTile` before
+     * calling this method.
+     *
+     * @see [[TileGeometryCreator#initDecodedTile]]
      *
      * @param tile The [[Tile]] to process.
      * @param decodedTile The decodedTile containing the actual tile map data.
@@ -346,7 +349,7 @@ export class TileGeometryCreator {
             let maxPathLengthSqr = 0;
             for (const textPath of decodedTile.textPathGeometries) {
                 const technique = decodedTile.techniques[textPath.technique];
-                if (!isTextTechnique(technique)) {
+                if (technique.enabled === false || !isTextTechnique(technique)) {
                     continue;
                 }
                 if (textPath.pathLengthSqr > maxPathLengthSqr) {
@@ -358,6 +361,7 @@ export class TileGeometryCreator {
                 const technique = decodedTile.techniques[textPath.technique];
 
                 if (
+                    technique.enabled === false ||
                     !isTextTechnique(technique) ||
                     (textFilter !== undefined && !textFilter(technique))
                 ) {
@@ -419,6 +423,7 @@ export class TileGeometryCreator {
                         : DEFAULT_TEXT_DISTANCE_SCALE;
                 textElement.mayOverlap = technique.mayOverlap === true;
                 textElement.reserveSpace = technique.reserveSpace !== false;
+                textElement.kind = technique.kind;
 
                 tile.addTextElement(textElement);
             }
@@ -433,6 +438,7 @@ export class TileGeometryCreator {
                 const technique = decodedTile.techniques[text.technique];
 
                 if (
+                    technique.enabled === false ||
                     !isTextTechnique(technique) ||
                     (textFilter !== undefined && !textFilter(technique))
                 ) {
@@ -494,6 +500,7 @@ export class TileGeometryCreator {
                             : mapView.maxZoomLevel;
                     textElement.mayOverlap = technique.mayOverlap === true;
                     textElement.reserveSpace = technique.reserveSpace !== false;
+                    textElement.kind = technique.kind;
 
                     textElement.fadeNear = fadeNear;
                     textElement.fadeFar = fadeFar;
@@ -539,11 +546,12 @@ export class TileGeometryCreator {
 
                 if (
                     group.createdOffsets!.indexOf(tile.offset) !== -1 ||
-                    technique.enabled !== true ||
+                    technique.enabled === false ||
                     (techniqueFilter !== undefined && !techniqueFilter(technique))
                 ) {
                     continue;
                 }
+
                 let count = group.count;
                 group.createdOffsets!.push(tile.offset);
 

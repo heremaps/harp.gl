@@ -238,11 +238,7 @@ export abstract class TileGeometryManagerBase implements TileGeometryManager {
                 const geometryKind: GeometryKind[] | undefined =
                     object.userData !== undefined ? object.userData.kind : undefined;
                 if (geometryKind !== undefined) {
-                    let isVisible = true;
-                    for (const kind of geometryKind) {
-                        isVisible = isVisible && !this.hiddenKinds.has(kind);
-                    }
-                    object.visible = isVisible;
+                    object.visible = !geometryKind.some(kind => this.hiddenKinds.has(kind));
                 }
             }
         }

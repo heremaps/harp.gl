@@ -1324,6 +1324,10 @@ export class TextElementsRenderer {
         const tempMeasurementParams: MeasurementParameters = {};
         const tempBufferAdditionParams: TextBufferAdditionParameters = {};
 
+        const tileGeometryManager = this.m_mapView.tileGeometryManager;
+        const hiddenKinds =
+            tileGeometryManager !== undefined ? tileGeometryManager.hiddenGeometryKinds : undefined;
+
         // Place text elements one by one.
         for (const textElement of textElements) {
             if (
@@ -1339,6 +1343,15 @@ export class TextElementsRenderer {
             const textCanvas = textElementStyle.textCanvas;
             const poiRenderer = textElementStyle.poiRenderer;
             if (textCanvas === undefined || poiRenderer === undefined) {
+                continue;
+            }
+
+            // Check if the label should be hidden.
+            if (
+                hiddenKinds !== undefined &&
+                textElement.kind !== undefined &&
+                hiddenKinds.hasOrIntersects(textElement.kind)
+            ) {
                 continue;
             }
 

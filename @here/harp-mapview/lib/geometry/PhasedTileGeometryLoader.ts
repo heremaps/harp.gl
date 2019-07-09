@@ -313,7 +313,7 @@ export class PhasedTileGeometryLoader implements TileGeometryLoader {
             }
 
             const filter = (technique: Technique): boolean => {
-                if (technique.enabled !== true) {
+                if (technique.enabled === false) {
                     return false;
                 }
 

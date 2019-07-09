@@ -129,7 +129,10 @@ export class PoiManager {
             const techniqueIndex = assertExists(poiGeometry.technique);
             const technique = decodedTile.techniques[techniqueIndex];
 
-            if (!isLineMarkerTechnique(technique) && !isPoiTechnique(technique)) {
+            if (
+                technique.enabled === false ||
+                (!isLineMarkerTechnique(technique) && !isPoiTechnique(technique))
+            ) {
                 continue;
             }
 
