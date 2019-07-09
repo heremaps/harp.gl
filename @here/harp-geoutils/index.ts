@@ -9,6 +9,7 @@ export * from "./lib/coordinates/GeoCoordinatesLike";
 export * from "./lib/coordinates/GeoCoordinates";
 export * from "./lib/projection/EarthConstants";
 export * from "./lib/projection/EquirectangularProjection";
+export * from "./lib/projection/FlatEarthProjection";
 export * from "./lib/projection/IdentityProjection";
 export * from "./lib/projection/Projection";
 export * from "./lib/projection/MercatorProjection";

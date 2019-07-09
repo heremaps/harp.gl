@@ -51,6 +51,7 @@ import earcut from "earcut";
 import * as THREE from "three";
 
 import {
+    flatEarthProjection,
     mercatorProjection,
     normalizedEquirectangularProjection,
     ProjectionType,
@@ -567,7 +568,10 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                 : 0.0;
             const hasEdges = edgeWidth > 0.0 || isLine;
 
-            const isSpherical = targetProjection.type === ProjectionType.Spherical;
+            // FIXME: Tesselation should be a dedicated property of the projection.
+            const isSpherical =
+                targetProjection.type === ProjectionType.Spherical ||
+                targetProjection === flatEarthProjection;
 
             const tempTexcoords = new THREE.Vector3();
 
@@ -804,7 +808,9 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
         } = meshBuffers;
 
         const stride = texCoordType !== undefined ? 5 : 3;
-        const isSpherical = this.m_decodeInfo.targetProjection.type === ProjectionType.Spherical;
+        const isSpherical =
+            this.m_decodeInfo.targetProjection.type === ProjectionType.Spherical ||
+            this.m_decodeInfo.targetProjection === flatEarthProjection;
 
         for (const rings of polygons) {
             const start = indices.length;

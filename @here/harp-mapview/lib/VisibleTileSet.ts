@@ -4,7 +4,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import { OrientedBox3 } from "@here/harp-geometry";
-import { MathUtils, Projection, ProjectionType, TileKey, TilingScheme } from "@here/harp-geoutils";
+import {
+    flatEarthProjection,
+    MathUtils,
+    Projection,
+    ProjectionType,
+    TileKey,
+    TilingScheme
+} from "@here/harp-geoutils";
 import { LRUCache } from "@here/harp-lrucache";
 import * as THREE from "three";
 import { DataSource } from "./DataSource";
@@ -534,7 +541,10 @@ export class VisibleTileSet {
      * The default implementation returns true for planar projections.
      */
     private get tileWrappingEnabled() {
-        return this.projectionType === ProjectionType.Planar;
+        // FIXME: It should be possible to disable wrapping in the mapview options.
+        return (
+            this.projectionType === ProjectionType.Planar && this.projection !== flatEarthProjection
+        );
     }
 
     private getGeoBox(tilingScheme: TilingScheme, childTileKey: TileKey, offset: number) {

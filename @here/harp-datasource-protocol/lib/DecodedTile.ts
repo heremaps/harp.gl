@@ -6,6 +6,7 @@
 
 import {
     equirectangularProjection,
+    flatEarthProjection,
     mercatorProjection,
     normalizedEquirectangularProjection,
     Projection,
@@ -227,6 +228,8 @@ export function getProjection(projectionName: string): Projection | never {
             return normalizedEquirectangularProjection;
         case "equirectangular":
             return equirectangularProjection;
+        case "flatEarth":
+            return flatEarthProjection;
         default:
             throw new Error(`Unknown projection ${projectionName}`);
     } // switch
@@ -248,6 +251,8 @@ export function getProjectionName(projection: Projection): string | never {
         return "normalizedEquirectangular";
     } else if (projection === equirectangularProjection) {
         return "equirectangular";
+    } else if (projection === flatEarthProjection) {
+        return "flatEarth";
     }
     throw new Error("Unknown projection");
 }
