@@ -85,6 +85,7 @@ export class MapControlsUI {
 
         const tiltButton = document.createElement("button");
         tiltButton.innerText = "3D";
+        tiltButton.id = "tiltButtonUi";
 
         // Optional zoom level displaying
         if (options.zoomLevel === "show") {
@@ -181,7 +182,7 @@ export class MapControlsUI {
             document.createTextNode(`
             .harp-gl_controls-button {
                 display: block;
-                background-color: #fff;
+                background-color: #272d37;
                 width: 40px;
                 height: 40px;
                 font-size: 22px;
@@ -189,14 +190,16 @@ export class MapControlsUI {
                 outline: none;
                 margin: 5px;
                 border: none;
-                color: #555;
-                opacity: 0.87;
+                color: rgba(255, 255, 255, 0.8);
                 cursor: pointer;
                 border-radius: 4px;
-                box-shadow: 0px 0px 4px #aaa;
+                box-shadow: 0 1px 4px 0  rgba(15, 22, 33, 0.4);
                 transition: all 0.1s;
                 padding: 0 0 1px 1px;
                 user-select: none;
+            }
+            #tiltButtonUi {
+               font-size: 16px;
             }
             .harp-gl_controls-button:active {
                 background-color: #37afaa;
