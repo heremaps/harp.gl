@@ -31,7 +31,7 @@ import { DataSource } from "./DataSource";
 import { ElevationProvider } from "./ElevationProvider";
 import { ElevationRangeSource } from "./ElevationRangeSource";
 import { PhasedTileGeometryManager } from "./geometry/PhasedTileGeometryManager";
-import { TileGeometryManager } from "./geometry/TileGeometryManager";
+import { SimpleTileGeometryManager, TileGeometryManager } from "./geometry/TileGeometryManager";
 import { MapViewImageCache } from "./image/MapViewImageCache";
 import { MapViewFog } from "./MapViewFog";
 import { PickHandler, PickResult } from "./PickHandler";
@@ -497,6 +497,14 @@ export interface MapViewOptions {
     maxFps?: number;
 
     /**
+     * Enable phased loading. If `false`, the geometry on a [[Tile]] is always being created in a
+     * single step, instead of (potentially) over multiple frames to smoothen animations.
+     *
+     * @default `true`
+     */
+    enablePhasedLoading?: boolean;
+
+    /**
      * @hidden
      * Disable all fading animations for debugging and performance measurement.
      */
@@ -812,8 +820,10 @@ export class MapView extends THREE.EventDispatcher {
             mapPassAntialiasSettings
         );
 
-        // this.m_tileGeometryManager = new SimpleTileGeometryManager(this);
-        this.m_tileGeometryManager = new PhasedTileGeometryManager(this);
+        this.m_tileGeometryManager =
+            this.m_options.enablePhasedLoading === false
+                ? new SimpleTileGeometryManager(this)
+                : new PhasedTileGeometryManager(this);
 
         this.m_visibleTiles = new VisibleTileSet(
             this.m_camera,
@@ -991,7 +1001,7 @@ export class MapView extends THREE.EventDispatcher {
     }
 
     /**
-     * Loads a posteffects file.
+     * Loads a post effects definition file.
      *
      * @param postEffectsFile File URL describing the post effects.
      */
@@ -1005,7 +1015,7 @@ export class MapView extends THREE.EventDispatcher {
     }
 
     /**
-     * The abstraction of the [[MapRenderingManager]] API for posteffects.
+     * The abstraction of the [[MapRenderingManager]] API for post effects.
      */
     get postEffects(): PostEffects | undefined {
         return this.m_postEffects;

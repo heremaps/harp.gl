@@ -24,7 +24,7 @@ import {
 } from "./TechniqueParams";
 
 /**
- * Names of the supported texure properties.
+ * Names of the supported texture properties.
  */
 export const TEXTURE_PROPERTY_KEYS = [
     "map",

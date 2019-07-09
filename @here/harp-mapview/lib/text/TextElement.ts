@@ -5,6 +5,8 @@
  */
 
 import {
+    GeometryKind,
+    GeometryKindSet,
     ImageTexture,
     isLineMarkerTechnique,
     LineMarkerTechnique,
@@ -364,6 +366,12 @@ export class TextElement {
     renderOrder?: number = 0;
 
     /**
+     * Specified kind of geometry. One kind is set as default in the technique, and can be
+     * overridden in the style.
+     */
+    kind?: GeometryKind | GeometryKindSet;
+
+    /**
      * @hidden
      * Used during label placement for optimization.
      */
@@ -401,7 +409,7 @@ export class TextElement {
 
     /**
      * @hidden
-     * Used during rendering. Used for line markers only, which have a points array and mltiple
+     * Used during rendering. Used for line markers only, which have a points array and multiple
      * icon positions to render. Since line markers use the same renderState for text part and icon,
      * there is no separate array of [[RenderState]]s for the text parts of the line markers.
      */
