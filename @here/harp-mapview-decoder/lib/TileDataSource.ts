@@ -188,6 +188,10 @@ export class TileDataSource<TileType extends Tile> extends DataSource {
         this.mapView.markTilesDirty(this);
     }
 
+    clearCache() {
+        this.m_tileLoaderCache.clear();
+    }
+
     /**
      * Get the [[DataProvider]] that has been passed in with the options.
      */
