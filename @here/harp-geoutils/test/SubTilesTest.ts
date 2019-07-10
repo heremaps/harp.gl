@@ -1,0 +1,25 @@
+/*
+ * Copyright (C) 2017-2019 HERE Europe B.V.
+ * Licensed under Apache 2.0, see full license in LICENSE
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+// tslint:disable:only-arrow-functions
+//    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
+
+import { assert } from "chai";
+import { SubTiles } from "../lib/tiling/SubTiles";
+import { TileKey } from "../lib/tiling/TileKey";
+
+describe("SubTiles", function() {
+    it("iterates through all masked subtiles", function() {
+        const subTiles = new SubTiles(TileKey.fromRowColumnLevel(0, 0, 0), 1, 0x3);
+        const actualSubtiles: TileKey[] = [];
+
+        for (const subTile of subTiles) {
+            actualSubtiles.push(subTile);
+        }
+
+        assert.equal(actualSubtiles.length, 2);
+    });
+});
