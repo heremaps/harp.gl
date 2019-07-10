@@ -6,7 +6,7 @@
 
 import { TileKey } from "./TileKey";
 
-export class SubTiles {
+export class SubTiles implements Iterable<TileKey> {
     private m_tileKey: TileKey;
     private m_level: number;
     private m_count: number;
@@ -23,9 +23,6 @@ export class SubTiles {
         // tslint:enable:no-bitwise
     }
 
-    get length(): number {
-        return this.m_count;
-    }
     get level(): number {
         return this.m_level;
     }
@@ -33,8 +30,12 @@ export class SubTiles {
         return this.m_tileKey;
     }
 
+    [Symbol.iterator](): SubTiles.SubTileIterator {
+        return new SubTiles.SubTileIterator(this, this.m_count);
+    }
+
     iterator() {
-        return new SubTiles.Iterator(this);
+        return this[Symbol.iterator]();
     }
 
     skip(index: number): number {
@@ -50,13 +51,15 @@ export class SubTiles {
 }
 
 export namespace SubTiles {
-    export class Iterator {
+    export class SubTileIterator implements Iterator<TileKey> {
         private m_parent: SubTiles;
         private m_index: number;
+        private m_totalSubTileCount: number;
 
-        constructor(parent: SubTiles, index: number = 0) {
+        constructor(parent: SubTiles, totalSubTileCount: number, index: number = 0) {
             this.m_parent = parent;
             this.m_index = parent.skip(index);
+            this.m_totalSubTileCount = totalSubTileCount;
         }
 
         get value() {
@@ -73,7 +76,9 @@ export namespace SubTiles {
         }
 
         next() {
+            const current = { value: this.value, done: this.m_index >= this.m_totalSubTileCount };
             this.m_index = this.m_parent.skip(++this.m_index);
+            return current;
         }
     }
 }

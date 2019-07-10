@@ -24,13 +24,10 @@ export class TileTreeTraverse {
         const subTileMask = ~(~0 << subTileCount);
 
         const subTiles = new SubTiles(tileKey, 1, subTileMask);
-        const it = subTiles.iterator();
         const result = new Array<TileKey>();
 
-        // tslint:disable-next-line:prefer-for-of
-        for (let i = 0; i < subTiles.length; ++i) {
-            result.push(it.value);
-            it.next();
+        for (const subTile of subTiles) {
+            result.push(subTile);
         }
 
         return result;
