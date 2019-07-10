@@ -82,7 +82,7 @@ export interface WebTileDataSourceParameters {
     /**
      * The resolution of Web Tile images, defaults to 512.
      */
-    resolution?: number;
+    resolution?: WebTileDataSource.resolutionValue;
 
     /**
      * String which is appended to the tile request url, e.g. to add additional parameters
@@ -93,10 +93,11 @@ export interface WebTileDataSourceParameters {
 
     /**
      * ppi parameter which impacts font/icon sizes, road width and other content
-     * of the map tiles. For valid values and restrictions
+     * of the map tiles. For valid values and restrictions see
      * @see https://developer.here.com/documentation/map-tile/topics/resource-base-basetile.html#ppi
+     * By default it is not used.
      */
-    ppi?: number;
+    ppi?: WebTileDataSource.ppiValue;
 
     /**
      * Whether to provide copyright info.
@@ -217,7 +218,7 @@ interface MapTileParams {
      *
      * @default `newest`
      */
-    mapVestion?: string;
+    mapVersion?: string;
 
     /**
      * Scheme
@@ -274,8 +275,8 @@ export class WebTileDataSource extends DataSource {
     static readonly TILE_TRAFFIC_NORMAL =
         "traffic.maps.api.here.com/maptile/2.1/traffictile/newest/normal.day";
 
-    private m_resolution: number;
-    private m_ppi: number;
+    private m_resolution: WebTileDataSource.resolutionValue;
+    private m_ppi: WebTileDataSource.ppiValue | null;
     private m_tileBaseAddress: string;
     private m_languages?: string[];
     private m_cachedCopyrightResponse?: Promise<AreaCopyrightInfo[]>;
@@ -289,9 +290,21 @@ export class WebTileDataSource extends DataSource {
         super("webtile", undefined, 1, 20);
         this.cacheable = true;
         this.storageLevelOffset = -1;
-        this.m_resolution = getOptionValue(m_options.resolution, 512);
-        this.m_ppi = getOptionValue(m_options.ppi, -1);
+        this.m_resolution = getOptionValue(
+            m_options.resolution,
+            WebTileDataSource.resolutionValue.resolution512
+        );
+        if (this.m_resolution === WebTileDataSource.resolutionValue.resolution512) {
+            this.maxZoomLevel = 19; // 512x512 tiles do not have z19
+        }
+        this.m_ppi = getOptionValue(m_options.ppi, null);
         this.m_tileBaseAddress = m_options.tileBaseAddress || WebTileDataSource.TILE_BASE_NORMAL;
+        if (
+            this.m_tileBaseAddress === WebTileDataSource.TILE_AERIAL_SATELLITE &&
+            this.m_ppi !== null
+        ) {
+            throw new Error("Requested combination of scheme satellite.day and ppi is not valid");
+        }
     }
 
     shouldPreloadTiles(): boolean {
@@ -324,8 +337,8 @@ export class WebTileDataSource extends DataSource {
             `?app_id=${appId}&app_code=${appCode}` +
             getOptionValue(this.m_options.additionalRequestParameters, "");
 
-        if (this.m_ppi !== -1) {
-            url += `&ppi=${this.m_ppi}`;
+        if (this.m_ppi !== null) {
+            url += `&ppi=${this.m_ppi.toString}`;
         }
         if (this.m_languages !== undefined && this.m_languages[0] !== undefined) {
             url += `&lg=${this.m_languages[0]}`;
@@ -434,7 +447,7 @@ export class WebTileDataSource extends DataSource {
             baseUrl: parsed.host,
             path: match[1],
             tileType: match[2],
-            mapVestion: match[3],
+            mapVersion: match[3],
             scheme: match[4]
         };
     }
@@ -500,7 +513,7 @@ export class WebTileDataSource extends DataSource {
 
         const mapTileParams = this.parseBaseUrl(this.m_tileBaseAddress);
         const baseHostName = mapTileParams.baseUrl;
-        const mapId = getOptionValue(mapTileParams.mapVestion, "newest");
+        const mapId = getOptionValue(mapTileParams.mapVersion, "newest");
         const scheme = mapTileParams.scheme || "normal.day";
         const baseScheme = scheme.split(".")[0] || "normal";
         const { appId, appCode } = this.m_options;
@@ -550,5 +563,21 @@ export class WebTileDataSource extends DataSource {
                 this.m_languages.push(WEBTILE_LANGUAGE_DICTIONARY[language]);
             }
         }
+    }
+}
+
+/**
+ * Definitions of variable values to be used with `WebTileDataSource`
+ */
+export namespace WebTileDataSource {
+    export const enum ppiValue {
+        ppi72 = 72,
+        ppi250 = 250,
+        ppi320 = 320,
+        ppi500 = 500
+    }
+    export const enum resolutionValue {
+        resolution256 = 256,
+        resolution512 = 512
     }
 }

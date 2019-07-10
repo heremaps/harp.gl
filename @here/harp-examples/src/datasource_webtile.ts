@@ -63,7 +63,7 @@ export namespace WebTileDataSourceExample {
     const webTileDataSource = new WebTileDataSource({
         appId,
         appCode,
-        ppi: 320
+        ppi: WebTileDataSource.ppiValue.ppi320
     });
     // end:harp_gl_datasource_webtile_1.ts
 
