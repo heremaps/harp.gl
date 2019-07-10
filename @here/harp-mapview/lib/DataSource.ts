@@ -152,6 +152,13 @@ export abstract class DataSource extends THREE.EventDispatcher {
     }
 
     /**
+     * Purges all the caching done by this `DataSource`
+     */
+    clearCache() {
+        // to be overloaded by subclasses
+    }
+
+    /**
      * Returns `true` if this `DataSource` is ready and the [[MapView]] can invoke `getTile()` to
      * start requesting data.
      */
