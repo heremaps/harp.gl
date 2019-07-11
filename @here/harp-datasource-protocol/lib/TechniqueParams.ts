@@ -194,7 +194,7 @@ export interface BaseTechniqueParams {
 
     /**
      * Distance to the camera (0.0 = camera position, 1.0 = farPlane) at which the object has zero
-     * opacity and stops fading out. A value of <= 0.0 disables fading.
+     * opacity and stops fading out. An undefined value disables fading.
      */
     fadeFar?: MaybeInterpolatedProperty<number>;
 
