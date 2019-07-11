@@ -6,8 +6,16 @@
 
 import { GeoCoordinates } from "@here/harp-geoutils";
 import { MapControls, MapControlsUI } from "@here/harp-map-controls";
-import { CopyrightElementHandler, CopyrightInfo, MapView } from "@here/harp-mapview";
+import {
+    CopyrightElementHandler,
+    CopyrightInfo,
+    MapView,
+    MapViewEventNames
+} from "@here/harp-mapview";
 import { APIFormat, OmvDataSource } from "@here/harp-omv-datasource";
+import { GUI } from "dat.gui";
+import { ShadowMapViewer } from "three/examples/jsm/utils/ShadowMapViewer";
+import { Object3D } from "three";
 import { accessToken } from "../config";
 
 /**
@@ -107,6 +115,8 @@ export namespace HelloWorldExample {
 
         addOmvDataSource(map);
 
+        map.update();
+
         return map;
     }
 
@@ -133,6 +143,51 @@ export namespace HelloWorldExample {
         // snippet:harp_gl_hello_world_example_5.ts
         map.addDataSource(omvDataSource);
         // end:harp_gl_hello_world_example_5.ts
+
+        const options = {
+            top: 10000,
+            left: -10000,
+            right: 10000,
+            bottom: -10000,
+            far: 100000,
+            near: 1
+        };
+
+        let shadowMapViewerCreated = false;
+        const updateLightCamera = () => {
+            map.scene.children.forEach((obj: Object3D) => {
+                if ((obj as any).isDirectionalLight) {
+                    const light = obj as THREE.DirectionalLight;
+
+                    if (shadowMapViewerCreated === false) {
+                        shadowMapViewerCreated = true;
+                        const lightShadowMapViewer = new ShadowMapViewer(light) as any;
+                        lightShadowMapViewer.position.x = 10;
+                        lightShadowMapViewer.position.y = 10;
+                        lightShadowMapViewer.size.width = 2048 / 4;
+                        lightShadowMapViewer.size.height = 1024 / 4;
+                        lightShadowMapViewer.update();
+
+                        map.addEventListener(MapViewEventNames.AfterRender, () => {
+                            lightShadowMapViewer.render(map.renderer);
+                        });
+                    }
+
+                    Object.assign(light.shadow.camera, options);
+                    light.shadow.camera.updateProjectionMatrix();
+                    console.log(light.shadow.camera.top);
+                }
+            });
+            map.update();
+        };
+
+        const gui = new GUI({ width: 300 });
+        gui.add(options, "top", 0, 1000000).onChange(updateLightCamera);
+        gui.add(options, "left", -1000000, 0).onChange(updateLightCamera);
+        gui.add(options, "right", 0, 1000000).onChange(updateLightCamera);
+        gui.add(options, "bottom", -1000000, 0).onChange(updateLightCamera);
+        gui.add(options, "near", 0, 1000000).onChange(updateLightCamera);
+        gui.add(options, "far", 0, 1000000).onChange(updateLightCamera);
 
         return map;
     }

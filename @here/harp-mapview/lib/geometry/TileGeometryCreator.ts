@@ -725,6 +725,9 @@ export class TileGeometryCreator {
                 object.frustumCulled = false;
 
                 object.renderOrder = technique.renderOrder;
+                object.receiveShadow = true;
+                // Casting shadows makes only sense for 3d objects
+                object.castShadow = isExtrudedPolygonTechnique(technique);
 
                 if (group.renderOrderOffset !== undefined) {
                     object.renderOrder += group.renderOrderOffset;
@@ -1428,11 +1431,13 @@ export class TileGeometryCreator {
     ): THREE.Mesh {
         const geometry = new THREE.PlaneGeometry(width, height, 1);
         // TODO cache the material HARP-4207
-        const material = new MapMeshBasicMaterial({
+        const material = new MapMeshStandardMaterial({
             color: colorHex,
             visible: isVisible
         });
         const plane = new THREE.Mesh(geometry, material);
+        plane.receiveShadow = true;
+        plane.castShadow = false;
         plane.position.copy(planeCenter);
         // Render before everything else
         plane.renderOrder = Number.MIN_SAFE_INTEGER;

@@ -134,7 +134,7 @@ export function createLight(lightDescription: Light): THREE.Light {
                 lightDescription.direction.y,
                 lightDescription.direction.z
             );
-            light.position.normalize();
+            //light.position.normalize();
             return light;
         }
     }

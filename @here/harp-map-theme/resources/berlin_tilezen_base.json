@@ -24,21 +24,11 @@
             "name": "light1",
             "intensity": 0.8,
             "direction": {
-                "x": 1,
-                "y": 5,
-                "z": 0.5
-            }
-        },
-        {
-            "type": "directional",
-            "color": "#F4DB9C",
-            "name": "light2",
-            "intensity": 0.8,
-            "direction": {
-                "x": -1,
-                "y": -3,
-                "z": 1
-            }
+                "x": 100,
+                "y": 100,
+                "z": 100
+            },
+            "castShadow": true
         }
     ],
     "defaultTextStyle": {
@@ -1059,7 +1049,7 @@
             {
                 "description": "water",
                 "when": "$layer == 'water' && $geometryType ^= 'polygon'",
-                "technique": "fill",
+                "technique": "standard",
                 "attr": {
                     "color": "#436981"
                 },
@@ -1239,7 +1229,7 @@
             {
                 "description": "urban",
                 "when": "$layer ^= 'landuse' && (($geometryType ^= 'polygon') && (kind ^= 'urban'))",
-                "technique": "fill",
+                "technique": "standard",
                 "attr": {
                     "opacity": 0.8,
                     "color": "#919ea3"
@@ -1262,7 +1252,7 @@
             {
                 "description": "park",
                 "when": "$layer ^= 'landuse' && (($geometryType ^= 'polygon') && kind in ['nature','forest','park','wood','natural_wood','grass','meadow','village_green','dog_park','garden','nature_reserve','protected_area'])",
-                "technique": "fill",
+                "technique": "standard",
                 "attr": {
                     "color": "#6C9478"
                 },
@@ -1271,7 +1261,7 @@
             {
                 "description": "runway",
                 "when": "$layer ^= 'landuse' && (($geometryType ^= 'polygon') && (kind == 'runway'))",
-                "technique": "fill",
+                "technique": "standard",
                 "attr": {
                     "color": "#6A7A82"
                 },
@@ -1281,7 +1271,7 @@
             {
                 "description": "aerodrome",
                 "when": "$layer ^= 'landuse' && (($geometryType ^= 'polygon') && (kind ^= 'aerodrome'))",
-                "technique": "fill",
+                "technique": "standard",
                 "attr": {
                     "color": "#718189"
                 },
@@ -1290,7 +1280,7 @@
             {
                 "description": "national_park",
                 "when": "$layer ^= 'landuse' && (($geometryType ^= 'polygon') && (kind ^= 'national_park'))",
-                "technique": "fill",
+                "technique": "standard",
                 "attr": {
                     "color": "#789185"
                 },
@@ -1299,7 +1289,7 @@
             {
                 "description": "pitch",
                 "when": "$layer ^= 'landuse' && (($geometryType ^= 'polygon') && kind in ['pitch'])",
-                "technique": "fill",
+                "technique": "standard",
                 "attr": {
                     "color": "#718989"
                 },
@@ -1308,7 +1298,7 @@
             {
                 "description": "hospital",
                 "when": "$layer ^= 'landuse' && (($geometryType ^= 'polygon') && (kind ^= 'hospital'))",
-                "technique": "fill",
+                "technique": "standard",
                 "attr": {
                     "color": "#89878A"
                 },
@@ -1317,7 +1307,7 @@
             {
                 "description": "cemetery",
                 "when": "$layer ^= 'landuse' && (($geometryType ^= 'polygon') && (kind ^= 'cemetery'))",
-                "technique": "fill",
+                "technique": "standard",
                 "attr": {
                     "color": "#718989"
                 },
@@ -1326,7 +1316,7 @@
             {
                 "description": "bridge",
                 "when": "$layer ^= 'landuse' && (($geometryType ^= 'polygon') && kind in ['bridge'])",
-                "technique": "fill",
+                "technique": "standard",
                 "attr": {
                     "color": "#7E939A"
                 },
@@ -1335,7 +1325,7 @@
             {
                 "description": "zoo",
                 "when": "$layer ^= 'landuse' && (($geometryType ^= 'polygon') && kind in ['sport','sports_centre','attraction','zoo'])",
-                "technique": "fill",
+                "technique": "standard",
                 "attr": {
                     "color": "#728989"
                 },
@@ -1344,7 +1334,7 @@
             {
                 "description": "religion",
                 "when": "$layer ^= 'landuse' && (($geometryType ^= 'polygon') && (kind ^= 'religion'))",
-                "technique": "fill",
+                "technique": "standard",
                 "attr": {
                     "color": "#0DF3ED"
                 },
@@ -1353,7 +1343,7 @@
             {
                 "description": "industrial",
                 "when": "$layer ^= 'landuse' && (($geometryType ^= 'polygon') && kind in ['common','surface','commercial','military','industrial'])",
-                "technique": "fill",
+                "technique": "standard",
                 "attr": {
                     "color": "#7B8990"
                 },
@@ -1362,7 +1352,7 @@
             {
                 "description": "farmyard",
                 "when": "$layer ^= 'landuse' && (($geometryType ^= 'polygon') && kind in ['animal','aviary','zoo','farm','farmland','farmyard'])",
-                "technique": "fill",
+                "technique": "standard",
                 "attr": {
                     "color": "#BFF90D"
                 },
@@ -1371,7 +1361,7 @@
             {
                 "description": "beach",
                 "when": "$layer ^= 'landuse' && (($geometryType ^= 'polygon') && (kind in ['beach'] || (kind $= '_site')))",
-                "technique": "fill",
+                "technique": "standard",
                 "attr": {
                     "color": "#A9A992"
                 },
@@ -1681,11 +1671,7 @@
                 "technique": "extruded-polygon",
                 "attr": {
                     "color": "#EDE7E1",
-                    "opacity": 0.9,
-                    "roughness": 1,
-                    "metalness": 0.8,
-                    "emissive": "#78858C",
-                    "emissiveIntensity": 0.85,
+                    "opacity": 1.0,
                     "footprint": true,
                     "maxSlope": 0.8799999999999999,
                     "lineWidth": 1,
