@@ -491,11 +491,11 @@ export class PoiManager {
             const fadeNear =
                 technique.fadeNear !== undefined
                     ? getPropertyValue(technique.fadeNear, displayZoomLevel)
-                    : 0;
+                    : technique.fadeNear;
             const fadeFar =
                 technique.fadeFar !== undefined
                     ? getPropertyValue(technique.fadeFar, displayZoomLevel)
-                    : 0;
+                    : technique.fadeFar;
 
             const positions = Array.isArray(x)
                 ? (x as THREE.Vector3[])
