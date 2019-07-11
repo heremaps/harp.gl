@@ -5,7 +5,7 @@
  */
 
 import { GeoCoordinates, sphereProjection } from "@here/harp-geoutils";
-import { MapControls } from "@here/harp-map-controls";
+import { MapControls, MapControlsUI } from "@here/harp-map-controls";
 import { CopyrightElementHandler, CopyrightInfo, MapView } from "@here/harp-mapview";
 import { APIFormat, OmvDataSource } from "@here/harp-omv-datasource";
 import { accessToken } from "../config";
@@ -55,7 +55,9 @@ export namespace GlobeExample {
 
         map.addDataSource(omvDataSource);
 
-        MapControls.create(map);
+        const mapControls = new MapControls(map);
+        const ui = new MapControlsUI(mapControls);
+        map.canvas.parentElement!.appendChild(ui.domElement);
 
         map.setCameraGeolocationAndZoom(new GeoCoordinates(40.6935, -74.009), 4);
     }
