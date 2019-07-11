@@ -22,10 +22,10 @@
             "type": "directional",
             "color": "#CCCBBB",
             "name": "light1",
-            "intensity": 0.8,
+            "intensity": 1.3,
             "direction": {
-                "x": 100,
-                "y": 100,
+                "x": 0,
+                "y": -100,
                 "z": 100
             },
             "castShadow": true

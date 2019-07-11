@@ -14,8 +14,8 @@ import {
 } from "@here/harp-mapview";
 import { APIFormat, OmvDataSource } from "@here/harp-omv-datasource";
 import { GUI } from "dat.gui";
-import { ShadowMapViewer } from "three/examples/jsm/utils/ShadowMapViewer";
 import { Object3D } from "three";
+import { ShadowMapViewer } from "three/examples/jsm/utils/ShadowMapViewer";
 import { accessToken } from "../config";
 
 /**
@@ -84,6 +84,7 @@ export namespace HelloWorldExample {
             theme: "resources/berlin_tilezen_base.json"
         });
         // end:harp_gl_hello_world_example_1.ts
+        map.renderLabels = false;
 
         CopyrightElementHandler.install("copyrightNotice", map);
 
@@ -96,7 +97,7 @@ export namespace HelloWorldExample {
         // snippet:harp_gl_hello_world_example_look_at.ts
         // Look at New York.
         const NY = new GeoCoordinates(40.707, -74.01);
-        map.lookAt(NY, 4000, 50, -20);
+        map.lookAt(NY, 4000, 45, -100);
         // end:harp_gl_hello_world_example_look_at.ts
 
         // Add an UI.
@@ -141,16 +142,16 @@ export namespace HelloWorldExample {
         // end:harp_gl_hello_world_example_4.ts
 
         // snippet:harp_gl_hello_world_example_5.ts
-        map.addDataSource(omvDataSource);
+        const promise = map.addDataSource(omvDataSource);
         // end:harp_gl_hello_world_example_5.ts
 
         const options = {
-            top: 10000,
-            left: -10000,
-            right: 10000,
-            bottom: -10000,
-            far: 100000,
-            near: 1
+            top: 0,
+            left: -7000,
+            right: 500,
+            bottom: -6000,
+            far: 4100,
+            near: -600
         };
 
         let shadowMapViewerCreated = false;
@@ -169,25 +170,25 @@ export namespace HelloWorldExample {
                         lightShadowMapViewer.update();
 
                         map.addEventListener(MapViewEventNames.AfterRender, () => {
-                            lightShadowMapViewer.render(map.renderer);
+                            //lightShadowMapViewer.render(map.renderer);
                         });
                     }
 
                     Object.assign(light.shadow.camera, options);
                     light.shadow.camera.updateProjectionMatrix();
-                    console.log(light.shadow.camera.top);
                 }
             });
             map.update();
         };
+        promise.then(updateLightCamera);
 
         const gui = new GUI({ width: 300 });
-        gui.add(options, "top", 0, 1000000).onChange(updateLightCamera);
-        gui.add(options, "left", -1000000, 0).onChange(updateLightCamera);
-        gui.add(options, "right", 0, 1000000).onChange(updateLightCamera);
-        gui.add(options, "bottom", -1000000, 0).onChange(updateLightCamera);
-        gui.add(options, "near", 0, 1000000).onChange(updateLightCamera);
-        gui.add(options, "far", 0, 1000000).onChange(updateLightCamera);
+        gui.add(options, "top", 0, 10000).onChange(updateLightCamera);
+        gui.add(options, "left", -10000, 0).onChange(updateLightCamera);
+        gui.add(options, "right", 0, 10000).onChange(updateLightCamera);
+        gui.add(options, "bottom", -10000, 0).onChange(updateLightCamera);
+        gui.add(options, "near", -1000, 100).onChange(updateLightCamera);
+        gui.add(options, "far", 0, 10000).onChange(updateLightCamera);
 
         return map;
     }
