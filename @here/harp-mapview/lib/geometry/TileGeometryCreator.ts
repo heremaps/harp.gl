@@ -388,9 +388,9 @@ export class TileGeometryCreator {
                         ? getPropertyValue(technique.fadeNear, displayZoomLevel)
                         : technique.fadeNear;
                 const fadeFar =
-                    technique.fadeNear !== undefined
-                        ? getPropertyValue(technique.fadeNear, displayZoomLevel)
-                        : technique.fadeNear;
+                    technique.fadeFar !== undefined
+                        ? getPropertyValue(technique.fadeFar, displayZoomLevel)
+                        : technique.fadeFar;
 
                 const textElement = new TextElement(
                     ContextualArabicConverter.instance.convert(textPath.text),
@@ -458,9 +458,9 @@ export class TileGeometryCreator {
                         ? getPropertyValue(technique.fadeNear, displayZoomLevel)
                         : technique.fadeNear;
                 const fadeFar =
-                    technique.fadeNear !== undefined
-                        ? getPropertyValue(technique.fadeNear, displayZoomLevel)
-                        : technique.fadeNear;
+                    technique.fadeFar !== undefined
+                        ? getPropertyValue(technique.fadeFar, displayZoomLevel)
+                        : technique.fadeFar;
 
                 for (let i = 0; i < numPositions; ++i) {
                     const x = positions.getX(i);
