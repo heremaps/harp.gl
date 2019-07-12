@@ -58,7 +58,7 @@ type Literal = "boolean" | "number" | "string";
 /**
  * @hidden
  */
-type ExprKind = "var" | "in" | Literal | UnaryOp | RelationalOp | EqualityOp | LogicalOp;
+type ExprKind = "var" | "in" | "length" | Literal | UnaryOp | RelationalOp | EqualityOp | LogicalOp;
 
 /**
  * @hidden
@@ -202,6 +202,32 @@ class ContainsExpr extends Expr {
             }
         }
         return false;
+    }
+}
+
+/**
+ * A 'length' expression with an attribute given, for example `length(ref)`.
+ *
+ * Measures the length of the string (number of letters) or counts digits in numerical data type.
+ * For boolean data types always returns 1.
+ */
+class LengthExpr extends Expr {
+    constructor(readonly attribute: string) {
+        super("length");
+    }
+
+    evaluate(env: Env): Value | never {
+        const attrib = env.lookup(this.attribute);
+        switch (typeof attrib) {
+            case "boolean":
+                return 1;
+            case "number":
+                return Number(attrib).toString().length;
+            case "string":
+                return String(attrib).length;
+            default:
+                throw new Error(`invalid length operand: ${this.attribute}!`);
+        }
     }
 }
 
@@ -688,17 +714,24 @@ export class Parser {
         switch (this.lex.token()) {
             case Token.Identifier: {
                 const text = this.lex.text();
-                if (text !== "has") {
-                    const expr = new VarExpr(text);
-                    this.lex.next();
-                    return expr;
+                switch (text) {
+                    case "has":
+                    case "length":
+                        this.lex.next(); // skip has/length keyword
+                        this.yyexpect(Token.LParen);
+                        const attribute = this.lex.text();
+                        this.yyexpect(Token.Identifier);
+                        this.yyexpect(Token.RParen);
+                        if (text === "has") {
+                            return new HasAttributeExpr(attribute);
+                        } else {
+                            return new LengthExpr(attribute);
+                        }
+                    default:
+                        const expr = new VarExpr(text);
+                        this.lex.next();
+                        return expr;
                 }
-                this.lex.next(); // skip has
-                this.yyexpect(Token.LParen);
-                const attribute = this.lex.text();
-                this.yyexpect(Token.Identifier);
-                this.yyexpect(Token.RParen);
-                return new HasAttributeExpr(attribute);
             }
 
             case Token.Number: {

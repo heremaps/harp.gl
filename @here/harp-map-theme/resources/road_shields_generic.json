@@ -1,0 +1,32 @@
+{
+    "default-2": {
+        "x": 0,
+        "y": 34,
+        "width": 24,
+        "height": 16
+    },
+    "default-3": {
+        "x": 49,
+        "y": 17,
+        "width": 30,
+        "height": 16
+    },
+    "default-4": {
+        "x": 49,
+        "y": 0,
+        "width": 36,
+        "height": 16
+    },
+    "default-5": {
+        "x": 0,
+        "y": 17,
+        "width": 42,
+        "height": 16
+    },
+    "default-6": {
+        "x": 0,
+        "y": 0,
+        "width": 48,
+        "height": 16
+    }
+}
