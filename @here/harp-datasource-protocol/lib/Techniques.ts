@@ -366,3 +366,25 @@ export function addBuffersToTransferList(technique: Technique, transferList: Arr
         }
     }
 }
+
+/**
+ * Compose full texture name for given image name with technique specified.
+ * Some techniques allows to add prefix/postfix to icons names specified, this
+ * function uses technique information to create fully qualified texture name.
+ * @param imageName base name of the marker icon.
+ * @param technique the technique describing POI or line marker.
+ * @returns fully qualified texture name for loading from atlas (without extension).
+ */
+export function composeTechniqueTextureName(
+    imageName: string,
+    technique: PoiTechnique | LineMarkerTechnique
+): string {
+    let textureName = imageName;
+    if (typeof technique.imageTexturePrefix === "string") {
+        textureName = technique.imageTexturePrefix + textureName;
+    }
+    if (typeof technique.imageTexturePostfix === "string") {
+        textureName = textureName + technique.imageTexturePostfix;
+    }
+    return textureName;
+}

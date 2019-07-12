@@ -6,6 +6,7 @@
 
 import {
     BufferAttribute,
+    composeTechniqueTextureName,
     DecodedTile,
     ExtrudedPolygonTechnique,
     FillTechnique,
@@ -213,17 +214,11 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                 if (typeof poiTechnique.poiName === "string") {
                     imageTexture = poiTechnique.poiName;
                 } else if (typeof poiTechnique.poiNameField === "string") {
-                    const poiNameFieldValue = env.lookup(poiTechnique.poiNameField);
-                    imageTexture = poiNameFieldValue as string;
+                    const poiNameFieldValue = env.lookup(poiTechnique.poiNameField) as string;
+                    imageTexture = poiNameFieldValue;
                 } else if (typeof poiTechnique.imageTextureField === "string") {
-                    const imageTextureValue = env.lookup(poiTechnique.imageTextureField);
-                    imageTexture = imageTextureValue as string;
-                    if (typeof poiTechnique.imageTexturePrefix === "string") {
-                        imageTexture = poiTechnique.imageTexturePrefix + imageTexture;
-                    }
-                    if (typeof poiTechnique.imageTexturePostfix === "string") {
-                        imageTexture = imageTexture + poiTechnique.imageTexturePostfix;
-                    }
+                    const imageTextureValue = env.lookup(poiTechnique.imageTextureField) as string;
+                    imageTexture = composeTechniqueTextureName(imageTextureValue, poiTechnique);
                 }
             }
 
@@ -443,6 +438,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                     const lineMarkerTechnique = technique as LineMarkerTechnique;
                     let imageTexture = lineMarkerTechnique.imageTexture;
 
+                    // TODO: Move to decoder independent parts of code.
                     if (typeof lineMarkerTechnique.imageTextureField === "string") {
                         const imageTextureValue = env.lookup(lineMarkerTechnique.imageTextureField);
                         imageTexture = imageTextureValue as string;
