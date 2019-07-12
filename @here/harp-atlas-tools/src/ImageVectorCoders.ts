@@ -165,24 +165,6 @@ class ImageVectorEncoder implements ImageEncoder {
             });
         }
     }
-
-    /**
-     * Write image to file synchronously.
-     * @see write.
-     *
-     * @param filePath file storage path.
-     */
-    writeSync(filePath: string): void {
-        if (!this.m_pixelModified && FileSystem.getImageFormat(filePath) === ImageFormat.SVG) {
-            return FileSystem.writeFileSync(filePath, this.m_vectorData);
-        } else {
-            throw new Error("Synchronized write not supported for modified vector image!");
-            // Currently support for synchronous write is not required,
-            // although there are undocumented ways via:
-            // const mime = FileSystem.getImageMimeType(filePath);
-            // this.m_bitmap.getBuffer(mime, (err, buffer) => {});
-        }
-    }
 }
 
 /**

@@ -1,0 +1,13 @@
+{
+    "processingSteps": [
+        { "name": "Grayscale", "method": "Average" },
+        {
+            "name": "CombineImages",
+            "image": "resources-dev/icons/backgrounds/icon-bg-maki-11.png",
+            "blendMode": "BlendAlpha",
+            "sizeRef": "Dst",
+            "offset": { "x": 3, "y": 3 }
+        },
+        { "name": "InvertColor" }
+    ]
+}

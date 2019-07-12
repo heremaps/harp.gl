@@ -7,5 +7,6 @@ doc
 *.js
 *.js.map
 resources/temp
+resources/maki_icons_*
 resources-dev/Fonts/Assets/*
 *.tgz

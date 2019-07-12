@@ -10,6 +10,7 @@
     "scripts": {
         "test": "cross-env mocha --require source-map-support/register $EXTRA_MOCHA_ARGS ./test/*.js",
         "build": "tsc",
+        "prepare-icons": "ts-node ./scripts/prepareIcons.ts",
         "prepare": "cross-env tsc --sourceMap false $EXTRA_TSC_ARGS && ts-node ./scripts/prepack.ts"
     },
     "repository": {
@@ -27,16 +28,19 @@
     },
     "devDependencies": {
         "@here/harp-fontcatalog": "^0.1.1",
+        "@here/harp-atlas-tools": "^0.1.0",
         "@types/chai": "^4.1.2",
         "@types/mocha": "^5.2.7",
         "@types/ncp": "^2.0.1",
         "chai": "^4.0.2",
         "copyfiles": "^2.0.0",
         "cross-env": "^5.2.0",
+        "github-download": "^0.5.0",
         "mkpath": "^1.0.0",
         "mocha": "^6.1.4",
         "ncp": "^2.0.0",
         "source-map-support": "^0.5.2",
+        "tmp": "^0.1.0",
         "ts-node": "^8.3.0",
         "typescript": "^3.5.2"
     },

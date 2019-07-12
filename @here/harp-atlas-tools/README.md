@@ -22,7 +22,7 @@ You may simply launch them from you command line shell, using **npx**, adding **
 
 ```
 npx harp-atlas-generator --help
-npx harp-atlas-tools --help
+npx harp-sprites-generator --help
 ```
 
 # **harp-atlas-generator**
