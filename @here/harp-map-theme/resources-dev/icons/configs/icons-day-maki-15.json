@@ -1,0 +1,9 @@
+{
+    "processingSteps": [
+        {
+            "name": "AddBackground",
+            "image": "resources-dev/icons/backgrounds/icon-bg-maki-15.png",
+            "offset": { "x": 3, "y": 3 }
+        }
+    ]
+}

@@ -136,20 +136,6 @@ class ImageBitmapEncoder implements ImageEncoder {
             }
         });
     }
-
-    /**
-     * Write image to disk synchronously.
-     * @see write.
-     *
-     * @param filePath file storage path.
-     */
-    writeSync(filePath: string): void {
-        throw new Error("Synchronized write not supported!");
-        // Currently support for synchronous write is not required,
-        // although there are undocumented ways via:
-        // const mime = FileSystem.getImageMimeType(filePath);
-        // this.m_image.getBuffer(mime, (err, buffer) => {});
-    }
 }
 
 /**

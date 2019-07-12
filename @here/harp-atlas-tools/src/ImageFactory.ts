@@ -29,7 +29,6 @@ export interface ImageEncoder {
     resize(width: number, height: number): ImageEncoder;
 
     write(filePath: string): Promise<any>;
-    writeSync(filePath: string): void;
 }
 
 export interface ImageDecoderConstructor {
