@@ -35,6 +35,27 @@ describe("WebTileDataSource", function() {
         });
         assert(webTileDataSource.maxZoomLevel === 20);
     });
+    it("#createWebTileDataSource with satellite.day", async function() {
+        const appId = "123";
+        const appCode = "456";
+        const webTileDataSource = new WebTileDataSource({
+            appId,
+            appCode,
+            tileBaseAddress: WebTileDataSource.TILE_AERIAL_SATELLITE
+        });
+        assert(webTileDataSource.maxZoomLevel === 19);
+    });
+    it("#createWebTileDataSource with satellite.day and 256px", async function() {
+        const appId = "123";
+        const appCode = "456";
+        const webTileDataSource = new WebTileDataSource({
+            appId,
+            appCode,
+            tileBaseAddress: WebTileDataSource.TILE_AERIAL_SATELLITE,
+            resolution: WebTileDataSource.resolutionValue.resolution256
+        });
+        assert(webTileDataSource.maxZoomLevel === 20);
+    });
     it("#createWebTileDataSource with satellite.day and ppi320", async function() {
         const appId = "123";
         const appCode = "456";

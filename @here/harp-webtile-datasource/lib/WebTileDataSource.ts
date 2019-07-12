@@ -276,7 +276,7 @@ export class WebTileDataSource extends DataSource {
         "traffic.maps.api.here.com/maptile/2.1/traffictile/newest/normal.day";
 
     private m_resolution: WebTileDataSource.resolutionValue;
-    private m_ppi: WebTileDataSource.ppiValue | null;
+    private m_ppi: WebTileDataSource.ppiValue;
     private m_tileBaseAddress: string;
     private m_languages?: string[];
     private m_cachedCopyrightResponse?: Promise<AreaCopyrightInfo[]>;
@@ -297,11 +297,11 @@ export class WebTileDataSource extends DataSource {
         if (this.m_resolution === WebTileDataSource.resolutionValue.resolution512) {
             this.maxZoomLevel = 19; // 512x512 tiles do not have z19
         }
-        this.m_ppi = getOptionValue(m_options.ppi, null);
+        this.m_ppi = getOptionValue(m_options.ppi, WebTileDataSource.ppiValue.ppi72);
         this.m_tileBaseAddress = m_options.tileBaseAddress || WebTileDataSource.TILE_BASE_NORMAL;
         if (
             this.m_tileBaseAddress === WebTileDataSource.TILE_AERIAL_SATELLITE &&
-            this.m_ppi !== null
+            this.m_ppi !== WebTileDataSource.ppiValue.ppi72
         ) {
             throw new Error("Requested combination of scheme satellite.day and ppi is not valid");
         }
@@ -337,7 +337,8 @@ export class WebTileDataSource extends DataSource {
             `?app_id=${appId}&app_code=${appCode}` +
             getOptionValue(this.m_options.additionalRequestParameters, "");
 
-        if (this.m_ppi !== null) {
+        if (this.m_ppi !== WebTileDataSource.ppiValue.ppi72) {
+            // because ppi=72 is default, we do not include it in the request
             url += `&ppi=${this.m_ppi.toString}`;
         }
         if (this.m_languages !== undefined && this.m_languages[0] !== undefined) {
