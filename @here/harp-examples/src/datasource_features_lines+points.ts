@@ -216,12 +216,13 @@ export namespace LinesPointsFeaturesExample {
                     display: inline-block;
                     background: rgba(255,255,255,0.8);
                     border-radius: 4px;
+                    max-width:calc(100% - 150px);
                     margin: 0 10px;
                 }
                 #caption{
                     width: 100%;
                     position: absolute;
-                    bottom: 70px;
+                    bottom: 25px;
                     text-align:center;
                     font-family: Arial;
                     color:#222;

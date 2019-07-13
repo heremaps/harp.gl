@@ -377,7 +377,7 @@ export namespace PolygonsFeaturesExample {
                 #caption{
                     width: 100%;
                     position: absolute;
-                    bottom: 70px;
+                    bottom: 25px;
                     text-align:center;
                     font-family: Arial;
                     color:#222;
@@ -412,6 +412,7 @@ export namespace PolygonsFeaturesExample {
                     background: rgba(255,255,255,0.8);
                     border-radius: 4px;
                     margin: 0 10px;
+                    max-width:calc(100% - 150px);
                 }
                 #info{
                     color: #fff;
