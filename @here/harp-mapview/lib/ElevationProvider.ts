@@ -42,5 +42,5 @@ export interface ElevationProvider {
      * @returns the TilingScheme used for the DisplacementMaps returned by [[getDisplacementMap]] or
      * undefined if there is no elevation [[DataSource]] attached to the [[MapView]].
      */
-    getTilingSceme(): TilingScheme | undefined;
+    getTilingScheme(): TilingScheme | undefined;
 }
