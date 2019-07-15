@@ -332,10 +332,7 @@ export class WebTileDataSource extends DataSource {
         const quadKey = tileKey.toQuadKey();
         const server = parseInt(quadKey[quadKey.length - 1], 10) + 1;
         let url =
-            `https://${server}.${this.m_tileBaseAddress}/` +
-            `${level}/${column}/${row}/${this.m_resolution}/png8` +
-            `?app_id=${appId}&app_code=${appCode}` +
-            getOptionValue(this.m_options.additionalRequestParameters, "");
+            `https://${server}.${this.m_tileBaseAddress}/` + `${level}/${column}/${row}/${this.m_resolution}/png8` + `?app_id=${appId}&app_code=${appCode}` + getOptionValue(this.m_options.additionalRequestParameters, "");
 
         if (this.m_ppi !== WebTileDataSource.ppiValue.ppi72) {
             // because ppi=72 is default, we do not include it in the request
