@@ -339,7 +339,7 @@ export class WebTileDataSource extends DataSource {
 
         if (this.m_ppi !== WebTileDataSource.ppiValue.ppi72) {
             // because ppi=72 is default, we do not include it in the request
-            url += `&ppi=${this.m_ppi.toString}`;
+            url += `&ppi=${this.m_ppi}`;
         }
         if (this.m_languages !== undefined && this.m_languages[0] !== undefined) {
             url += `&lg=${this.m_languages[0]}`;
