@@ -1,19 +1,19 @@
-const s3Base = 'http://harp.gl.s3-website-us-east-1.amazonaws.com/docs/';
+const s3Base = 'https://www.harp.gl/docs/';
 
 //Update initial links to s3 base
 document.querySelector('.examples-link').href = s3Base + 'master/examples/';
 document.querySelector('.docs-link').href = s3Base + 'master/doc/';
 
 const releases = [{
-   date: 'master',
+   date: 'latest',
    hash: 'master'
 }]
 const dropdown = document.querySelector('select[name=versions]');
 
-fetch('https://heremaps.github.io/harp.gl/releases.json')
+fetch('https://www.harp.gl/releases.json')
 .then(res => res.json())
 .then(res => {
-   
+
    releases.push(...res);
    releases.forEach(release => {
       const option = document.createElement('option');
@@ -27,15 +27,15 @@ fetch('https://heremaps.github.io/harp.gl/releases.json')
       const date = releases.filter(x => x.date === selected.innerText)[0].date;
 
       //Update examples button and link
-      document.querySelector('.examples-link').href = s3Base + hash + '/examples';
+      document.querySelector('.examples-link').href = s3Base + hash + '/examples/';
       document.querySelector('.examples-link').innerText = 'Examples' + (date !== 'master' ? ` (${date})` : '');
 
       //Update docs button and link
-      document.querySelector('.docs-link').href = s3Base + hash + '/doc';
+      document.querySelector('.docs-link').href = s3Base + hash + '/doc/';
       document.querySelector('.docs-link').innerText = 'Documentation' + (date !== 'master' ? ` (${date})` : '');
    }
 }).catch(() => {
-   
+
    //In case network request to build information fails, add master link
    const option = document.createElement('option');
    option.innerText = 'master';
@@ -52,7 +52,7 @@ const canvas = document.getElementById('map');
 const map = new harp.MapView({
    canvas,
    theme: "resources/theme.json",
-   maxVisibleDataSourceTiles: 40, 
+   maxVisibleDataSourceTiles: 40,
    tileCacheSize: 100
 });
 
@@ -67,7 +67,7 @@ const omvDataSource = new harp.OmvDataSource({
 });
 map.addDataSource(omvDataSource);
 
-const options = { tilt: 45, distance: 3000 };
+const options = { tilt: 45, distance: 1500 };
 const NY = new harp.GeoCoordinates(42.361145, -71.057083);
 let azimuth = 300;
 map.addEventListener(harp.MapViewEventNames.Render, () => map.lookAt(NY, options.distance, options.tilt, (azimuth += 0.1)));
