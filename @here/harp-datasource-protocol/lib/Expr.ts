@@ -212,22 +212,16 @@ class ContainsExpr extends Expr {
  * For boolean data types always returns 1.
  */
 class LengthExpr extends Expr {
-    constructor(readonly attribute: string) {
+    constructor(readonly value: Expr) {
         super("length");
     }
 
-    evaluate(env: Env): Value | never {
-        const attrib = env.lookup(this.attribute);
-        switch (typeof attrib) {
-            case "boolean":
-                return 1;
-            case "number":
-                return Number(attrib).toString().length;
-            case "string":
-                return String(attrib).length;
-            default:
-                throw new Error(`invalid length operand: ${this.attribute}!`);
+    evaluate(env: Env): Value {
+        const value = this.value.evaluate(env);
+        if (Array.isArray(value) || typeof value === "string") {
+            return value.length;
         }
+        return undefined;
     }
 }
 
@@ -716,17 +710,18 @@ export class Parser {
                 const text = this.lex.text();
                 switch (text) {
                     case "has":
-                    case "length":
-                        this.lex.next(); // skip has/length keyword
+                        this.lex.next(); // skip has keyword
                         this.yyexpect(Token.LParen);
-                        const attribute = this.lex.text();
+                        const hasAttribute = this.lex.text();
                         this.yyexpect(Token.Identifier);
                         this.yyexpect(Token.RParen);
-                        if (text === "has") {
-                            return new HasAttributeExpr(attribute);
-                        } else {
-                            return new LengthExpr(attribute);
-                        }
+                        return new HasAttributeExpr(hasAttribute);
+                    case "length":
+                        this.lex.next(); // skip length keyword
+                        this.yyexpect(Token.LParen);
+                        const value = this.parseLogicalOr();
+                        this.yyexpect(Token.RParen);
+                        return new LengthExpr(value);
                     default:
                         const expr = new VarExpr(text);
                         this.lex.next();
