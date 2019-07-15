@@ -34,9 +34,13 @@ export class OmvTomTomModifierMock extends OmvTomTomFeatureModifier {
  * Add unit tests for OmvTomTomFeatureModifier
  */
 describe("OmvTomTomFeatureModifier", function() {
-    const filterBuilder = new OmvFeatureFilterDescriptionBuilder();
-    const filterDescription = filterBuilder.createDescription();
-    const tomTomFeatureModifier = new OmvTomTomModifierMock(filterDescription);
+    let tomTomFeatureModifier: OmvTomTomModifierMock;
+
+    before(function() {
+        const filterBuilder = new OmvFeatureFilterDescriptionBuilder();
+        const filterDescription = filterBuilder.createDescription();
+        tomTomFeatureModifier = new OmvTomTomModifierMock(filterDescription);
+    });
 
     it("modify Landuse layers", function() {
         assert.isObject(tomTomFeatureModifier);

@@ -139,11 +139,13 @@ class GlobeControls {
 }
 
 describe("OrientedBox3", function() {
-    const controls = new GlobeControls();
+    it("visible tile obbs are correct", function() {
+        const controls = new GlobeControls();
 
-    controls.set(new GeoCoordinates(53.3, 13.4, 1000));
+        controls.set(new GeoCoordinates(53.3, 13.4, 1000));
 
-    const visibleTiles = controls.getVisibleTiles(webMercatorTilingScheme, 14);
+        const visibleTiles = controls.getVisibleTiles(webMercatorTilingScheme, 14);
 
-    assert.equal(visibleTiles.length, 2);
+        assert.equal(visibleTiles.length, 2);
+    });
 });
