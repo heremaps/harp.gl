@@ -92,7 +92,14 @@
         "tilezen": [
             {
                 "description": "highway-roadshield-2",
-                "when": "$layer == 'roads' && (kind == 'highway') && (kind_detail == 'motorway') && has(ref) && (length(ref) <= 2)",
+                "when": [
+                    "all",
+                    ["==", ["get", "$layer"], "roads"],
+                    ["==", ["get", "kind"], "highway"],
+                    ["==", ["get", "kind_detail"], "motorway"],
+                    ["has", "ref"],
+                    ["<=", ["length", ["get", "ref"]], 2]
+                ],
                 "technique": "line-marker",
                 "attr": {
                     "style": "smallSign",
@@ -117,7 +124,15 @@
             },
             {
                 "description": "highway-roadshield-3, level > 7",
-                "when": "$layer == 'roads' && (kind == 'highway') && (kind_detail == 'motorway') && has(ref) && (length(ref) == 3) && ($level > 7)",
+                "when": [
+                    "all",
+                    ["==", ["get", "$layer"], "roads"],
+                    ["==", ["get", "kind"], "highway"],
+                    ["==", ["get", "kind_detail"], "motorway"],
+                    ["has", "ref"],
+                    ["==", ["length", ["get", "ref"]], 3],
+                    [">", ["get", "$level"], 7]
+                ],
                 "technique": "line-marker",
                 "attr": {
                     "style": "smallSign",
@@ -142,7 +157,15 @@
             },
             {
                 "description": "highway-roadshield-4, level > 8",
-                "when": "$layer == 'roads' && (kind == 'highway') && (kind_detail == 'motorway') && has(ref) && (length(ref) == 4) && ($level > 8)",
+                "when": [
+                    "all",
+                    ["==", ["get", "$layer"], "roads"],
+                    ["==", ["get", "kind"], "highway"],
+                    ["==", ["get", "kind_detail"], "motorway"],
+                    ["has", "ref"],
+                    ["==", ["length", ["get", "ref"]], 4],
+                    [">", ["get", "$level"], 8]
+                ],
                 "technique": "line-marker",
                 "attr": {
                     "style": "smallSign",
@@ -167,7 +190,15 @@
             },
             {
                 "description": "highway-roadshield-5, level > 8",
-                "when": "$layer == 'roads' && (kind == 'highway') && (kind_detail == 'motorway') && has(ref) && (length(ref) == 5) && ($level > 8)",
+                "when": [
+                    "all",
+                    ["==", ["get", "$layer"], "roads"],
+                    ["==", ["get", "kind"], "highway"],
+                    ["==", ["get", "kind_detail"], "motorway"],
+                    ["has", "ref"],
+                    ["==", ["length", ["get", "ref"]], 5],
+                    [">", ["get", "$level"], 8]
+                ],
                 "technique": "line-marker",
                 "attr": {
                     "style": "smallSign",
@@ -192,7 +223,15 @@
             },
             {
                 "description": "highway-roadshield-5+, invisible",
-                "when": "$layer == 'roads' && (kind == 'highway') && (kind_detail == 'motorway') && has(ref) && (length(ref) > 5) && ($level > 8)",
+                "when": [
+                    "all",
+                    ["==", ["get", "$layer"], "roads"],
+                    ["==", ["get", "kind"], "highway"],
+                    ["==", ["get", "kind_detail"], "motorway"],
+                    ["has", "ref"],
+                    [">", ["length", ["get", "ref"]], 5],
+                    [">", ["get", "$level"], 8]
+                ],
                 "technique": "line-marker",
                 "attr": {
                     "style": "smallSign",
@@ -217,7 +256,12 @@
             },
             {
                 "description": "highway-outline",
-                "when": "$layer == 'roads' && ((kind == 'highway') && ((kind_detail == 'motorway')))",
+                "when": [
+                    "all",
+                    ["==", ["get", "$layer"], "roads"],
+                    ["==", ["get", "kind"], "highway"],
+                    ["==", ["get", "kind_detail"], "motorway"]
+                ],
                 "technique": "solid-line",
                 "attr": {
                     "color": "#3A4C69",
@@ -234,7 +278,12 @@
             },
             {
                 "description": "highway-fill",
-                "when": "$layer == 'roads' && ((kind == 'highway') && (kind_detail == 'motorway'))",
+                "when": [
+                    "all",
+                    ["==", ["get", "$layer"], "roads"],
+                    ["==", ["get", "kind"], "highway"],
+                    ["==", ["get", "kind_detail"], "motorway"]
+                ],
                 "technique": "solid-line",
                 "attr": {
                     "color": "#D6C789",
@@ -252,7 +301,12 @@
             },
             {
                 "description": "highway-link",
-                "when": "$layer ^= 'roads' && ((kind == 'highway') && has(is_link))",
+                "when": [
+                    "all",
+                    ["^=", ["get", "$layer"], "roads"],
+                    ["==", ["get", "kind"], "highway"],
+                    ["has", "is_link"]
+                ],
                 "technique": "solid-line",
                 "attr": {
                     "color": "#D6C789",
@@ -277,7 +331,15 @@
             },
             {
                 "description": "primary-road-shield-2, level > 10",
-                "when": "$layer == 'roads' && ((kind == 'major_road') && (kind_detail == 'primary') && has(ref) && (length(ref) == 2) && ($level > 10))",
+                "when": [
+                    "all",
+                    ["==", ["get", "$layer"], "roads"],
+                    ["==", ["get", "kind"], "major_road"],
+                    ["==", ["get", "kind_detail"], "primary"],
+                    ["has", "ref"],
+                    ["==", ["length", ["get", "ref"]], 2],
+                    [">", ["get", "$level"], 10]
+                ],
                 "technique": "line-marker",
                 "attr": {
                     "label": "ref",
@@ -303,7 +365,15 @@
             },
             {
                 "description": "primary-road-shield-3, level > 10",
-                "when": "$layer == 'roads' && ((kind == 'major_road') && (kind_detail == 'primary') && has(ref) && (length(ref) == 3) && ($level > 10))",
+                "when": [
+                    "all",
+                    ["==", ["get", "$layer"], "roads"],
+                    ["==", ["get", "kind"], "major_road"],
+                    ["==", ["get", "kind_detail"], "primary"],
+                    ["has", "ref"],
+                    ["==", ["length", ["get", "ref"]], 3],
+                    [">", ["get", "$level"], 10]
+                ],
                 "technique": "line-marker",
                 "attr": {
                     "label": "ref",
@@ -329,7 +399,15 @@
             },
             {
                 "description": "primary-road-shield-4, level > 10",
-                "when": "$layer == 'roads' && ((kind == 'major_road') && (kind_detail == 'primary') && has(ref) && (length(ref) == 4) && ($level > 10))",
+                "when": [
+                    "all",
+                    ["==", ["get", "$layer"], "roads"],
+                    ["==", ["get", "kind"], "major_road"],
+                    ["==", ["get", "kind_detail"], "primary"],
+                    ["has", "ref"],
+                    ["==", ["length", ["get", "ref"]], 4],
+                    [">", ["get", "$level"], 10]
+                ],
                 "technique": "line-marker",
                 "attr": {
                     "label": "ref",
@@ -355,7 +433,15 @@
             },
             {
                 "description": "primary-road-shield-5, level > 10",
-                "when": "$layer == 'roads' && ((kind == 'major_road') && (kind_detail == 'primary') && has(ref) && (length(ref) == 5) && ($level > 10))",
+                "when": [
+                    "all",
+                    ["==", ["get", "$layer"], "roads"],
+                    ["==", ["get", "kind"], "major_road"],
+                    ["==", ["get", "kind_detail"], "primary"],
+                    ["has", "ref"],
+                    ["==", ["length", ["get", "ref"]], 5],
+                    [">", ["get", "$level"], 10]
+                ],
                 "technique": "line-marker",
                 "attr": {
                     "label": "ref",
@@ -381,7 +467,15 @@
             },
             {
                 "description": "primary-road-shield-5+, level > 10",
-                "when": "$layer == 'roads' && ((kind == 'major_road') && (kind_detail == 'primary') && has(ref) && (length(ref) > 5) && ($level > 10))",
+                "when": [
+                    "all",
+                    ["==", ["get", "$layer"], "roads"],
+                    ["==", ["get", "kind"], "major_road"],
+                    ["==", ["get", "kind_detail"], "primary"],
+                    ["has", "ref"],
+                    [">", ["length", ["get", "ref"]], 5],
+                    [">", ["get", "$level"], 10]
+                ],
                 "technique": "line-marker",
                 "attr": {
                     "label": "ref",
@@ -407,7 +501,12 @@
             },
             {
                 "description": "primary-outline",
-                "when": "$layer == 'roads' && ((kind == 'major_road') && kind_detail in ['primary']))",
+                "when": [
+                    "all",
+                    ["==", ["get", "$layer"], "roads"],
+                    ["==", ["get", "kind"], "major_road"],
+                    ["in", ["get", "kind_detail"], ["primary"]]
+                ],
                 "technique": "solid-line",
                 "attr": {
                     "color": "#3A4C69",
@@ -424,7 +523,12 @@
             },
             {
                 "description": "primary-fill",
-                "when": "$layer == 'roads' && ((kind == 'major_road') && kind_detail in ['primary']))",
+                "when": [
+                    "all",
+                    ["==", ["get", "$layer"], "roads"],
+                    ["==", ["get", "kind"], "major_road"],
+                    ["in", ["get", "kind_detail"], ["primary"]]
+                ],
                 "technique": "solid-line",
                 "attr": {
                     "color": "#F0E8B5",
@@ -442,7 +546,12 @@
             },
             {
                 "description": "highway-trunk-outline",
-                "when": "$layer == 'roads' && ((kind == 'highway') && kind_detail in ['trunk']))",
+                "when": [
+                    "all",
+                    ["==", ["get", "$layer"], "roads"],
+                    ["==", ["get", "kind"], "highway"],
+                    ["in", ["get", "kind_detail"], ["trunk"]]
+                ],
                 "technique": "solid-line",
                 "attr": {
                     "color": "#3A4C69",
@@ -459,7 +568,12 @@
             },
             {
                 "description": "highway-trunk-fill",
-                "when": "$layer == 'roads' && ((kind == 'highway') && kind_detail in ['trunk']))",
+                "when": [
+                    "all",
+                    ["==", ["get", "$layer"], "roads"],
+                    ["==", ["get", "kind"], "highway"],
+                    ["in", ["get", "kind_detail"], ["trunk"]]
+                ],
                 "technique": "solid-line",
                 "attr": {
                     "color": "#F0E8B5",
@@ -477,7 +591,15 @@
             },
             {
                 "description": "secondary-road-shield-2, level > 11",
-                "when": "$layer == 'roads' && ((kind == 'major_road') && (kind_detail == 'secondary') && has(ref) && (length(ref) == 2) && ($level > 11))",
+                "when": [
+                    "all",
+                    ["==", ["get", "$layer"], "roads"],
+                    ["==", ["get", "kind"], "major_road"],
+                    ["==", ["get", "kind_detail"], "secondary"],
+                    ["has", "ref"],
+                    ["==", ["length", ["get", "ref"]], 2],
+                    [">", ["get", "$level"], 11]
+                ],
                 "technique": "line-marker",
                 "attr": {
                     "label": "ref",
@@ -503,7 +625,15 @@
             },
             {
                 "description": "secondary-road-shield-3, level > 11",
-                "when": "$layer == 'roads' && ((kind == 'major_road') && (kind_detail == 'secondary') && has(ref) && (length(ref) == 3) && ($level > 11))",
+                "when": [
+                    "all",
+                    ["==", ["get", "$layer"], "roads"],
+                    ["==", ["get", "kind"], "major_road"],
+                    ["==", ["get", "kind_detail"], "secondary"],
+                    ["has", "ref"],
+                    ["==", ["length", ["get", "ref"]], 3],
+                    [">", ["get", "$level"], 11]
+                ],
                 "technique": "line-marker",
                 "attr": {
                     "label": "ref",
@@ -529,7 +659,15 @@
             },
             {
                 "description": "secondary-road-shield-4, level > 11",
-                "when": "$layer == 'roads' && ((kind == 'major_road') && (kind_detail == 'secondary') && has(ref) && (length(ref) == 4) && ($level > 11))",
+                "when": [
+                    "all",
+                    ["==", ["get", "$layer"], "roads"],
+                    ["==", ["get", "kind"], "major_road"],
+                    ["==", ["get", "kind_detail"], "secondary"],
+                    ["has", "ref"],
+                    ["==", ["length", ["get", "ref"]], 4],
+                    [">", ["get", "$level"], 11]
+                ],
                 "technique": "line-marker",
                 "attr": {
                     "label": "ref",
@@ -555,7 +693,15 @@
             },
             {
                 "description": "secondary-road-shield-5, level > 11",
-                "when": "$layer == 'roads' && ((kind == 'major_road') && (kind_detail == 'secondary') && has(ref) && (length(ref) == 5) && ($level > 11))",
+                "when": [
+                    "all",
+                    ["==", ["get", "$layer"], "roads"],
+                    ["==", ["get", "kind"], "major_road"],
+                    ["==", ["get", "kind_detail"], "secondary"],
+                    ["has", "ref"],
+                    ["==", ["length", ["get", "ref"]], 5],
+                    [">", ["get", "$level"], 11]
+                ],
                 "technique": "line-marker",
                 "attr": {
                     "label": "ref",
@@ -581,7 +727,15 @@
             },
             {
                 "description": "secondary-road-shield-5+, level > 11",
-                "when": "$layer == 'roads' && ((kind == 'major_road') && (kind_detail == 'secondary') && has(ref) && (length(ref) > 5) && ($level > 11))",
+                "when": [
+                    "all",
+                    ["==", ["get", "$layer"], "roads"],
+                    ["==", ["get", "kind"], "major_road"],
+                    ["==", ["get", "kind_detail"], "secondary"],
+                    ["has", "ref"],
+                    [">", ["length", ["get", "ref"]], 5],
+                    [">", ["get", "$level"], 11]
+                ],
                 "technique": "line-marker",
                 "attr": {
                     "label": "ref",
@@ -607,7 +761,12 @@
             },
             {
                 "description": "secondary-fill",
-                "when": "$layer == 'roads' && ((kind == 'major_road') && (kind_detail == 'secondary')))",
+                "when": [
+                    "all",
+                    ["==", ["get", "$layer"], "roads"],
+                    ["==", ["get", "kind"], "major_road"],
+                    ["==", ["get", "kind_detail"], "secondary"]
+                ],
                 "technique": "solid-line",
                 "attr": {
                     "color": "#E3D49A",
@@ -632,7 +791,15 @@
             },
             {
                 "description": "tertiary-road-shield-2, level > 13",
-                "when": "$layer == 'roads' && ((kind == 'major_road') && (kind_detail == 'tertiary') && has(ref) && (length(ref) == 2) && ($level > 13))",
+                "when": [
+                    "all",
+                    ["==", ["get", "$layer"], "roads"],
+                    ["==", ["get", "kind"], "major_road"],
+                    ["==", ["get", "kind_detail"], "tertiary"],
+                    ["has", "ref"],
+                    ["==", ["length", ["get", "ref"]], 2],
+                    [">", ["get", "$level"], 13]
+                ],
                 "technique": "line-marker",
                 "attr": {
                     "label": "ref",
@@ -658,7 +825,15 @@
             },
             {
                 "description": "tertiary-road-shield-3, level > 13",
-                "when": "$layer == 'roads' && ((kind == 'major_road') && (kind_detail == 'tertiary') && has(ref) && (length(ref) == 3) && ($level > 13))",
+                "when": [
+                    "all",
+                    ["==", ["get", "$layer"], "roads"],
+                    ["==", ["get", "kind"], "major_road"],
+                    ["==", ["get", "kind_detail"], "tertiary"],
+                    ["has", "ref"],
+                    ["==", ["length", ["get", "ref"]], 3],
+                    [">", ["get", "$level"], 13]
+                ],
                 "technique": "line-marker",
                 "attr": {
                     "label": "ref",
@@ -684,7 +859,15 @@
             },
             {
                 "description": "tertiary-road-shield-4, level > 13",
-                "when": "$layer == 'roads' && ((kind == 'major_road') && (kind_detail == 'tertiary') && has(ref) && (length(ref) == 4) && ($level > 13))",
+                "when": [
+                    "all",
+                    ["==", ["get", "$layer"], "roads"],
+                    ["==", ["get", "kind"], "major_road"],
+                    ["==", ["get", "kind_detail"], "tertiary"],
+                    ["has", "ref"],
+                    ["==", ["length", ["get", "ref"]], 4],
+                    [">", ["get", "$level"], 13]
+                ],
                 "technique": "line-marker",
                 "attr": {
                     "label": "ref",
@@ -710,7 +893,15 @@
             },
             {
                 "description": "tertiary-road-shield-5, level > 13",
-                "when": "$layer == 'roads' && ((kind == 'major_road') && (kind_detail == 'tertiary') && has(ref) && (length(ref) == 5) && ($level > 13))",
+                "when": [
+                    "all",
+                    ["==", ["get", "$layer"], "roads"],
+                    ["==", ["get", "kind"], "major_road"],
+                    ["==", ["get", "kind_detail"], "tertiary"],
+                    ["has", "ref"],
+                    ["==", ["length", ["get", "ref"]], 5],
+                    [">", ["get", "$level"], 13]
+                ],
                 "technique": "line-marker",
                 "attr": {
                     "label": "ref",
@@ -736,7 +927,15 @@
             },
             {
                 "description": "tertiary-road-shield-5+, level > 13",
-                "when": "$layer == 'roads' && ((kind == 'major_road') && (kind_detail == 'tertiary') && has(ref) && (length(ref) > 5) && ($level > 13))",
+                "when": [
+                    "all",
+                    ["==", ["get", "$layer"], "roads"],
+                    ["==", ["get", "kind"], "major_road"],
+                    ["==", ["get", "kind_detail"], "tertiary"],
+                    ["has", "ref"],
+                    [">", ["length", ["get", "ref"]], 5],
+                    [">", ["get", "$level"], 13]
+                ],
                 "technique": "line-marker",
                 "attr": {
                     "label": "ref",
@@ -762,7 +961,12 @@
             },
             {
                 "description": "tertiary-outline",
-                "when": "$layer == 'roads' && ((kind == 'major_road') && kind_detail in ['tertiary']))",
+                "when": [
+                    "all",
+                    ["==", ["get", "$layer"], "roads"],
+                    ["==", ["get", "kind"], "major_road"],
+                    ["in", ["get", "kind_detail"], ["tertiary"]]
+                ],
                 "technique": "solid-line",
                 "attr": {
                     "color": "#3A4C69",
@@ -779,7 +983,12 @@
             },
             {
                 "description": "tertiary-fill",
-                "when": "$layer == 'roads' && ((kind == 'major_road') && kind_detail in ['tertiary']))",
+                "when": [
+                    "all",
+                    ["==", ["get", "$layer"], "roads"],
+                    ["==", ["get", "kind"], "major_road"],
+                    ["in", ["get", "kind_detail"], ["tertiary"]]
+                ],
                 "technique": "solid-line",
                 "attr": {
                     "color": "#eae4c4",
@@ -797,7 +1006,17 @@
             },
             {
                 "description": "residential",
-                "when": "$layer == 'roads' && ((kind == 'minor_road') && (((kind_detail == 'unclassified') || (kind_detail == 'residential')) || (kind_detail == 'service'))))",
+                "when": [
+                    "all",
+                    ["==", ["get", "$layer"], "roads"],
+                    ["==", ["get", "kind"], "minor_road"],
+                    [
+                        "any",
+                        ["==", ["get", "kind_detail"], "unclassified"],
+                        ["==", ["get", "kind_detail"], "residential"],
+                        ["==", ["get", "kind_detail"], "service"]
+                    ]
+                ],
                 "technique": "none",
                 "styles": [
                     {
@@ -847,7 +1066,12 @@
             },
             {
                 "description": "pedestrian",
-                "when": "$layer == 'roads' && ((kind == 'path') && (kind_detail in ['pedestrian','footway'])))",
+                "when": [
+                    "all",
+                    ["==", ["get", "$layer"], "roads"],
+                    ["==", ["get", "kind"], "path"],
+                    ["in", ["get", "kind_detail"], ["pedestrian", "footway"]]
+                ],
                 "technique": "none",
                 "styles": [
                     {
@@ -898,7 +1122,12 @@
             },
             {
                 "description": "ferry",
-                "when": "$layer == 'roads' && ((kind != 'rail') && kind in ['ferry'])",
+                "when": [
+                    "all",
+                    ["==", ["get", "$layer"], "roads"],
+                    ["!=", ["get", "kind"], "rail"],
+                    ["in", ["get", "kind"], ["ferry"]]
+                ],
                 "technique": "text",
                 "attr": {
                     "color": "#03334E",
@@ -913,7 +1142,12 @@
             },
             {
                 "description": "ferry",
-                "when": "$layer == 'roads' && ((kind != 'rail') && kind in ['ferry'])",
+                "when": [
+                    "all",
+                    ["==", ["get", "$layer"], "roads"],
+                    ["!=", ["get", "kind"], "rail"],
+                    ["in", ["get", "kind"], ["ferry"]]
+                ],
                 "technique": "dashed-line",
                 "attr": {
                     "clipping": false,
@@ -941,7 +1175,12 @@
             },
             {
                 "description": "TODO",
-                "when": "$layer == 'roads' && ((kind != 'rail') && kind_detail in ['driveway','parking_aisle','drive_through'])",
+                "when": [
+                    "all",
+                    ["==", ["get", "$layer"], "roads"],
+                    ["!=", ["get", "kind"], "rail"],
+                    ["in", ["get", "kind_detail"], ["driveway", "parking_aisle", "drive_through"]]
+                ],
                 "technique": "solid-line",
                 "attr": {
                     "color": "#A8ABA8",
@@ -955,7 +1194,14 @@
             },
             {
                 "description": "tram",
-                "when": "$layer == 'roads' && (((($geometryType ^= 'line') && (kind == 'rail')) && kind_detail in ['rail','light_rail','tram']) && (kind_detail == 'tram'))",
+                "when": [
+                    "all",
+                    ["==", ["get", "$layer"], "roads"],
+                    ["^=", ["get", "$geometryType"], "line"],
+                    ["==", ["get", "kind"], "rail"],
+                    ["in", ["get", "kind_detail"], ["rail", "light_rail", "tram"]],
+                    ["==", ["get", "kind_detail"], "tram"]
+                ],
                 "technique": "solid-line",
                 "attr": {
                     "color": "#B9B9B9",
@@ -970,7 +1216,18 @@
             },
             {
                 "description": "industrial_railway",
-                "when": "$layer == 'roads' && (((($geometryType ^= 'line') && (kind == 'rail')) && kind_detail in ['rail','light_rail','tram']) && service in ['siding','industrial','yard','spur','crossover'])",
+                "when": [
+                    "all",
+                    ["==", ["get", "$layer"], "roads"],
+                    ["^=", ["get", "$geometryType"], "line"],
+                    ["==", ["get", "kind"], "rail"],
+                    ["in", ["get", "kind_detail"], ["rail", "light_rail", "tram"]],
+                    [
+                        "in",
+                        ["get", "service"],
+                        ["siding", "industrial", "yard", "spur", "crossover"]
+                    ]
+                ],
                 "technique": "solid-line",
                 "attr": {
                     "color": "#A4A8A2"
@@ -980,7 +1237,14 @@
             },
             {
                 "description": "Railway+S-Bahn background",
-                "when": "$layer == 'roads' && (((($geometryType ^= 'line') && (kind == 'rail')) && kind_detail in ['rail','light_rail','tram']) && !(is_tunnel))",
+                "when": [
+                    "all",
+                    ["==", ["get", "$layer"], "roads"],
+                    ["^=", ["get", "$geometryType"], "line"],
+                    ["==", ["get", "kind"], "rail"],
+                    ["in", ["get", "kind_detail"], ["rail", "light_rail", "tram"]],
+                    ["!", ["get", "is_tunnel"]]
+                ],
                 "technique": "solid-line",
                 "attr": {
                     "color": "#696A6B",
@@ -994,7 +1258,14 @@
             },
             {
                 "description": "Railway+S-Bahn background",
-                "when": "$layer == 'roads' && (((($geometryType ^= 'line') && (kind == 'rail')) && kind_detail in ['rail','light_rail','tram']) && is_tunnel)",
+                "when": [
+                    "all",
+                    ["==", ["get", "$layer"], "roads"],
+                    ["^=", ["get", "$geometryType"], "line"],
+                    ["==", ["get", "kind"], "rail"],
+                    ["in", ["get", "kind_detail"], ["rail", "light_rail", "tram"]],
+                    ["get", "is_tunnel"]
+                ],
                 "technique": "solid-line",
                 "attr": {
                     "color": "#696A6B",
@@ -1008,7 +1279,14 @@
             },
             {
                 "description": "Railway+S-Bahn dashes",
-                "when": "$layer == 'roads' && (((($geometryType ^= 'line') && (kind == 'rail')) && kind_detail in ['rail','light_rail','tram']) && !(is_tunnel))",
+                "when": [
+                    "all",
+                    ["==", ["get", "$layer"], "roads"],
+                    ["^=", ["get", "$geometryType"], "line"],
+                    ["==", ["get", "kind"], "rail"],
+                    ["in", ["get", "kind_detail"], ["rail", "light_rail", "tram"]],
+                    ["!", ["get", "is_tunnel"]]
+                ],
                 "technique": "dashed-line",
                 "attr": {
                     "color": "#696A6B",
@@ -1033,7 +1311,14 @@
             },
             {
                 "description": "Railway+S-Bahn dashes",
-                "when": "$layer == 'roads' && (((($geometryType ^= 'line') && (kind == 'rail')) && kind_detail in ['rail','light_rail','tram']) && is_tunnel)",
+                "when": [
+                    "all",
+                    ["==", ["get", "$layer"], "roads"],
+                    ["^=", ["get", "$geometryType"], "line"],
+                    ["==", ["get", "kind"], "rail"],
+                    ["in", ["get", "kind_detail"], ["rail", "light_rail", "tram"]],
+                    ["get", "is_tunnel"]
+                ],
                 "technique": "dashed-line",
                 "attr": {
                     "color": "#DDDDDD",
@@ -1058,7 +1343,11 @@
             },
             {
                 "description": "water",
-                "when": "$layer == 'water' && $geometryType ^= 'polygon'",
+                "when": [
+                    "all",
+                    ["==", ["get", "$layer"], "water"],
+                    ["^=", ["get", "$geometryType"], "polygon"]
+                ],
                 "technique": "fill",
                 "attr": {
                     "color": "#436981"
@@ -1067,7 +1356,7 @@
             },
             {
                 "description": "water",
-                "when": "$layer == 'water'",
+                "when": ["==", ["get", "$layer"], "water"],
                 "technique": "text",
                 "attr": {
                     "color": "#012337",
@@ -1079,7 +1368,12 @@
             },
             {
                 "description": "country border",
-                "when": "$layer ^= 'boundaries' && (($geometryType ^= 'line') && (kind == 'country'))",
+                "when": [
+                    "all",
+                    ["^=", ["get", "$layer"], "boundaries"],
+                    ["^=", ["get", "$geometryType"], "line"],
+                    ["==", ["get", "kind"], "country"]
+                ],
                 "technique": "solid-line",
                 "attr": {
                     "color": "#52676E",
@@ -1108,7 +1402,12 @@
             },
             {
                 "description": "country border",
-                "when": "$layer ^= 'boundaries' && (($geometryType ^= 'line') && (kind == 'country'))",
+                "when": [
+                    "all",
+                    ["^=", ["get", "$layer"], "boundaries"],
+                    ["^=", ["get", "$geometryType"], "line"],
+                    ["==", ["get", "kind"], "country"]
+                ],
                 "technique": "solid-line",
                 "attr": {
                     "color": "#2F444B",
@@ -1122,7 +1421,12 @@
             },
             {
                 "description": "country border",
-                "when": "$layer ^= 'boundaries' && (($geometryType ^= 'line') && (kind == 'country'))",
+                "when": [
+                    "all",
+                    ["^=", ["get", "$layer"], "boundaries"],
+                    ["^=", ["get", "$geometryType"], "line"],
+                    ["==", ["get", "kind"], "country"]
+                ],
                 "technique": "text",
                 "attr": {
                     "priority": 100,
@@ -1134,7 +1438,23 @@
             },
             {
                 "description": "disputed border line",
-                "when": "$layer ^= 'boundaries' && (($geometryType ^= 'line') && (kind in ['disputed','indefinite','indeterminate','lease_limit','line_of_control','overlay_limit']))",
+                "when": [
+                    "all",
+                    ["^=", ["get", "$layer"], "boundaries"],
+                    ["^=", ["get", "$geometryType"], "line"],
+                    [
+                        "in",
+                        ["get", "kind"],
+                        [
+                            "disputed",
+                            "indefinite",
+                            "indeterminate",
+                            "lease_limit",
+                            "line_of_control",
+                            "overlay_limit"
+                        ]
+                    ]
+                ],
                 "technique": "dashed-line",
                 "attr": {
                     "color": "#2F444B",
@@ -1174,7 +1494,23 @@
             },
             {
                 "description": "disputed border line - text",
-                "when": "$layer ^= 'boundaries' && (($geometryType ^= 'line') && (kind in ['disputed','indefinite','indeterminate','lease_limit','line_of_control','overlay_limit']))",
+                "when": [
+                    "all",
+                    ["^=", ["get", "$layer"], "boundaries"],
+                    ["^=", ["get", "$geometryType"], "line"],
+                    [
+                        "in",
+                        ["get", "kind"],
+                        [
+                            "disputed",
+                            "indefinite",
+                            "indeterminate",
+                            "lease_limit",
+                            "line_of_control",
+                            "overlay_limit"
+                        ]
+                    ]
+                ],
                 "technique": "text",
                 "attr": {
                     "priority": 100,
@@ -1186,7 +1522,12 @@
             },
             {
                 "description": "region border",
-                "when": "$layer ^= 'boundaries' && (($geometryType ^= 'line') && (kind == 'region'))",
+                "when": [
+                    "all",
+                    ["^=", ["get", "$layer"], "boundaries"],
+                    ["^=", ["get", "$geometryType"], "line"],
+                    ["==", ["get", "kind"], "region"]
+                ],
                 "technique": "solid-line",
                 "attr": {
                     "color": "#7C7C7C",
@@ -1200,7 +1541,12 @@
             },
             {
                 "description": "region border",
-                "when": "$layer ^= 'boundaries' && (($geometryType ^= 'line') && (kind == 'region'))",
+                "when": [
+                    "all",
+                    ["^=", ["get", "$layer"], "boundaries"],
+                    ["^=", ["get", "$geometryType"], "line"],
+                    ["==", ["get", "kind"], "region"]
+                ],
                 "technique": "solid-line",
                 "attr": {
                     "color": "#7C7C7C",
@@ -1214,7 +1560,12 @@
             },
             {
                 "description": "region border",
-                "when": "$layer ^= 'boundaries' && (($geometryType ^= 'line') && (kind == 'region'))",
+                "when": [
+                    "all",
+                    ["^=", ["get", "$layer"], "boundaries"],
+                    ["^=", ["get", "$geometryType"], "line"],
+                    ["==", ["get", "kind"], "region"]
+                ],
                 "technique": "text",
                 "attr": {
                     "priority": 90,
@@ -1225,7 +1576,11 @@
                 }
             },
             {
-                "when": "$layer ^= 'boundaries' && ($geometryType ^= 'point')",
+                "when": [
+                    "all",
+                    ["^=", ["get", "$layer"], "boundaries"],
+                    ["^=", ["get", "$geometryType"], "point"]
+                ],
                 "technique": "text",
                 "attr": {
                     "color": "#000000",
@@ -1238,7 +1593,12 @@
             },
             {
                 "description": "urban",
-                "when": "$layer ^= 'landuse' && (($geometryType ^= 'polygon') && (kind ^= 'urban'))",
+                "when": [
+                    "all",
+                    ["^=", ["get", "$layer"], "landuse"],
+                    ["^=", ["get", "$geometryType"], "polygon"],
+                    ["^=", ["get", "kind"], "urban"]
+                ],
                 "technique": "fill",
                 "attr": {
                     "opacity": 0.8,
@@ -1248,7 +1608,12 @@
             },
             {
                 "description": "urban area",
-                "when": "$layer ^= 'landuse' && (($geometryType ^= 'polygon') && (kind ^= 'urban_area'))",
+                "when": [
+                    "all",
+                    ["^=", ["get", "$layer"], "landuse"],
+                    ["^=", ["get", "$geometryType"], "polygon"],
+                    ["^=", ["get", "kind"], "urban_area"]
+                ],
                 "technique": "none",
                 "attr": {
                     "color": {
@@ -1261,7 +1626,29 @@
             },
             {
                 "description": "park",
-                "when": "$layer ^= 'landuse' && (($geometryType ^= 'polygon') && kind in ['nature','forest','park','wood','natural_wood','grass','meadow','village_green','dog_park','garden','nature_reserve','protected_area'])",
+                "when": [
+                    "all",
+                    ["^=", ["get", "$layer"], "landuse"],
+                    ["^=", ["get", "$geometryType"], "polygon"],
+                    [
+                        "in",
+                        ["get", "kind"],
+                        [
+                            "nature",
+                            "forest",
+                            "park",
+                            "wood",
+                            "natural_wood",
+                            "grass",
+                            "meadow",
+                            "village_green",
+                            "dog_park",
+                            "garden",
+                            "nature_reserve",
+                            "protected_area"
+                        ]
+                    ]
+                ],
                 "technique": "fill",
                 "attr": {
                     "color": "#6C9478"
@@ -1270,7 +1657,12 @@
             },
             {
                 "description": "runway",
-                "when": "$layer ^= 'landuse' && (($geometryType ^= 'polygon') && (kind == 'runway'))",
+                "when": [
+                    "all",
+                    ["^=", ["get", "$layer"], "landuse"],
+                    ["^=", ["get", "$geometryType"], "polygon"],
+                    ["==", ["get", "kind"], "runway"]
+                ],
                 "technique": "fill",
                 "attr": {
                     "color": "#6A7A82"
@@ -1280,7 +1672,12 @@
             },
             {
                 "description": "aerodrome",
-                "when": "$layer ^= 'landuse' && (($geometryType ^= 'polygon') && (kind ^= 'aerodrome'))",
+                "when": [
+                    "all",
+                    ["^=", ["get", "$layer"], "landuse"],
+                    ["^=", ["get", "$geometryType"], "polygon"],
+                    ["^=", ["get", "kind"], "aerodrome"]
+                ],
                 "technique": "fill",
                 "attr": {
                     "color": "#718189"
@@ -1289,7 +1686,12 @@
             },
             {
                 "description": "national_park",
-                "when": "$layer ^= 'landuse' && (($geometryType ^= 'polygon') && (kind ^= 'national_park'))",
+                "when": [
+                    "all",
+                    ["^=", ["get", "$layer"], "landuse"],
+                    ["^=", ["get", "$geometryType"], "polygon"],
+                    ["^=", ["get", "kind"], "national_park"]
+                ],
                 "technique": "fill",
                 "attr": {
                     "color": "#789185"
@@ -1298,7 +1700,12 @@
             },
             {
                 "description": "pitch",
-                "when": "$layer ^= 'landuse' && (($geometryType ^= 'polygon') && kind in ['pitch'])",
+                "when": [
+                    "all",
+                    ["^=", ["get", "$layer"], "landuse"],
+                    ["^=", ["get", "$geometryType"], "polygon"],
+                    ["in", ["get", "kind"], ["pitch"]]
+                ],
                 "technique": "fill",
                 "attr": {
                     "color": "#718989"
@@ -1307,7 +1714,12 @@
             },
             {
                 "description": "hospital",
-                "when": "$layer ^= 'landuse' && (($geometryType ^= 'polygon') && (kind ^= 'hospital'))",
+                "when": [
+                    "all",
+                    ["^=", ["get", "$layer"], "landuse"],
+                    ["^=", ["get", "$geometryType"], "polygon"],
+                    ["^=", ["get", "kind"], "hospital"]
+                ],
                 "technique": "fill",
                 "attr": {
                     "color": "#89878A"
@@ -1316,7 +1728,12 @@
             },
             {
                 "description": "cemetery",
-                "when": "$layer ^= 'landuse' && (($geometryType ^= 'polygon') && (kind ^= 'cemetery'))",
+                "when": [
+                    "all",
+                    ["^=", ["get", "$layer"], "landuse"],
+                    ["^=", ["get", "$geometryType"], "polygon"],
+                    ["^=", ["get", "kind"], "cemetery"]
+                ],
                 "technique": "fill",
                 "attr": {
                     "color": "#718989"
@@ -1325,7 +1742,12 @@
             },
             {
                 "description": "bridge",
-                "when": "$layer ^= 'landuse' && (($geometryType ^= 'polygon') && kind in ['bridge'])",
+                "when": [
+                    "all",
+                    ["^=", ["get", "$layer"], "landuse"],
+                    ["^=", ["get", "$geometryType"], "polygon"],
+                    ["in", ["get", "kind"], ["bridge"]]
+                ],
                 "technique": "fill",
                 "attr": {
                     "color": "#7E939A"
@@ -1334,7 +1756,12 @@
             },
             {
                 "description": "zoo",
-                "when": "$layer ^= 'landuse' && (($geometryType ^= 'polygon') && kind in ['sport','sports_centre','attraction','zoo'])",
+                "when": [
+                    "all",
+                    ["^=", ["get", "$layer"], "landuse"],
+                    ["^=", ["get", "$geometryType"], "polygon"],
+                    ["in", ["get", "kind"], ["sport", "sports_centre", "attraction", "zoo"]]
+                ],
                 "technique": "fill",
                 "attr": {
                     "color": "#728989"
@@ -1343,7 +1770,12 @@
             },
             {
                 "description": "religion",
-                "when": "$layer ^= 'landuse' && (($geometryType ^= 'polygon') && (kind ^= 'religion'))",
+                "when": [
+                    "all",
+                    ["^=", ["get", "$layer"], "landuse"],
+                    ["^=", ["get", "$geometryType"], "polygon"],
+                    ["^=", ["get", "kind"], "religion"]
+                ],
                 "technique": "fill",
                 "attr": {
                     "color": "#0DF3ED"
@@ -1352,7 +1784,16 @@
             },
             {
                 "description": "industrial",
-                "when": "$layer ^= 'landuse' && (($geometryType ^= 'polygon') && kind in ['common','surface','commercial','military','industrial'])",
+                "when": [
+                    "all",
+                    ["^=", ["get", "$layer"], "landuse"],
+                    ["^=", ["get", "$geometryType"], "polygon"],
+                    [
+                        "in",
+                        ["get", "kind"],
+                        ["common", "surface", "commercial", "military", "industrial"]
+                    ]
+                ],
                 "technique": "fill",
                 "attr": {
                     "color": "#7B8990"
@@ -1361,7 +1802,16 @@
             },
             {
                 "description": "farmyard",
-                "when": "$layer ^= 'landuse' && (($geometryType ^= 'polygon') && kind in ['animal','aviary','zoo','farm','farmland','farmyard'])",
+                "when": [
+                    "all",
+                    ["^=", ["get", "$layer"], "landuse"],
+                    ["^=", ["get", "$geometryType"], "polygon"],
+                    [
+                        "in",
+                        ["get", "kind"],
+                        ["animal", "aviary", "zoo", "farm", "farmland", "farmyard"]
+                    ]
+                ],
                 "technique": "fill",
                 "attr": {
                     "color": "#BFF90D"
@@ -1370,7 +1820,12 @@
             },
             {
                 "description": "beach",
-                "when": "$layer ^= 'landuse' && (($geometryType ^= 'polygon') && (kind in ['beach'] || (kind $= '_site')))",
+                "when": [
+                    "all",
+                    ["^=", ["get", "$layer"], "landuse"],
+                    ["^=", ["get", "$geometryType"], "polygon"],
+                    ["any", ["in", ["get", "kind"], ["beach"]], ["$=", ["get", "kind"], "_site"]]
+                ],
                 "technique": "fill",
                 "attr": {
                     "color": "#A9A992"
@@ -1379,7 +1834,11 @@
             },
             {
                 "description": "Earth layer",
-                "when": "$layer == 'earth' && (kind != 'island')",
+                "when": [
+                    "all",
+                    ["==", ["get", "$layer"], "earth"],
+                    ["!=", ["get", "kind"], "island"]
+                ],
                 "technique": "text",
                 "attr": {
                     "priority": {
@@ -1394,7 +1853,11 @@
             },
             {
                 "description": "Earth layer",
-                "when": "$layer == 'earth' && kind in ['island']",
+                "when": [
+                    "all",
+                    ["==", ["get", "$layer"], "earth"],
+                    ["in", ["get", "kind"], ["island"]]
+                ],
                 "technique": "text",
                 "attr": {
                     "color": "#57564D",
@@ -1404,7 +1867,12 @@
             },
             {
                 "description": "country_pop_>10000000",
-                "when": "$layer ^= 'places' && (kind in ['country'] && (population > 10000000))",
+                "when": [
+                    "all",
+                    ["^=", ["get", "$layer"], "places"],
+                    ["in", ["get", "kind"], ["country"]],
+                    [">", ["get", "population"], 10000000]
+                ],
                 "technique": "text",
                 "attr": {
                     "priority": 100,
@@ -1426,7 +1894,12 @@
             },
             {
                 "description": "country_pop_>1000000",
-                "when": "$layer ^= 'places' && (kind in ['country'] && (population > 1000000))",
+                "when": [
+                    "all",
+                    ["^=", ["get", "$layer"], "places"],
+                    ["in", ["get", "kind"], ["country"]],
+                    [">", ["get", "population"], 1000000]
+                ],
                 "technique": "text",
                 "attr": {
                     "priority": 100,
@@ -1448,7 +1921,11 @@
             },
             {
                 "description": "country",
-                "when": "$layer ^= 'places' && kind in ['country']",
+                "when": [
+                    "all",
+                    ["^=", ["get", "$layer"], "places"],
+                    ["in", ["get", "kind"], ["country"]]
+                ],
                 "technique": "text",
                 "attr": {
                     "priority": 90,
@@ -1470,7 +1947,11 @@
             },
             {
                 "description": "Places",
-                "when": "$layer ^= 'places' && kind in ['region']",
+                "when": [
+                    "all",
+                    ["^=", ["get", "$layer"], "places"],
+                    ["in", ["get", "kind"], ["region"]]
+                ],
                 "technique": "none",
                 "attr": {
                     "size": {
@@ -1490,7 +1971,14 @@
             },
             {
                 "description": "locality_pop_>10000000",
-                "when": "$layer ^= 'places' && ((((kind == 'locality') && has(population)) && ((population > 10000000) || has(country_capital))) && has(country_capital))",
+                "when": [
+                    "all",
+                    ["^=", ["get", "$layer"], "places"],
+                    ["==", ["get", "kind"], "locality"],
+                    ["has", "population"],
+                    ["any", [">", ["get", "population"], 10000000], ["has", "country_capital"]],
+                    ["has", "country_capital"]
+                ],
                 "technique": "text",
                 "attr": {
                     "fontStyle": "Bold",
@@ -1511,7 +1999,13 @@
             },
             {
                 "description": "locality_pop_>10000000",
-                "when": "$layer ^= 'places' && (((kind == 'locality') && has(population)) && ((population > 10000000) || has(country_capital)))",
+                "when": [
+                    "all",
+                    ["^=", ["get", "$layer"], "places"],
+                    ["==", ["get", "kind"], "locality"],
+                    ["has", "population"],
+                    ["any", [">", ["get", "population"], 10000000], ["has", "country_capital"]]
+                ],
                 "technique": "text",
                 "attr": {
                     "priority": 61,
@@ -1531,7 +2025,13 @@
             },
             {
                 "description": "locality_pop_>1000000",
-                "when": "$layer ^= 'places' && (((kind == 'locality') && has(population)) && ((population > 1000000) || has(region_capital)))",
+                "when": [
+                    "all",
+                    ["^=", ["get", "$layer"], "places"],
+                    ["==", ["get", "kind"], "locality"],
+                    ["has", "population"],
+                    ["any", [">", ["get", "population"], 1000000], ["has", "region_capital"]]
+                ],
                 "technique": "text",
                 "attr": {
                     "priority": 60,
@@ -1551,7 +2051,13 @@
             },
             {
                 "description": "locality_pop_>400000",
-                "when": "$layer ^= 'places' && (((kind == 'locality') && has(population)) && (population > 400000))",
+                "when": [
+                    "all",
+                    ["^=", ["get", "$layer"], "places"],
+                    ["==", ["get", "kind"], "locality"],
+                    ["has", "population"],
+                    [">", ["get", "population"], 400000]
+                ],
                 "technique": "text",
                 "attr": {
                     "priority": 59,
@@ -1571,7 +2077,13 @@
             },
             {
                 "description": "locality_pop_>100000",
-                "when": "$layer ^= 'places' && (((kind == 'locality') && has(population)) && (population > 100000))",
+                "when": [
+                    "all",
+                    ["^=", ["get", "$layer"], "places"],
+                    ["==", ["get", "kind"], "locality"],
+                    ["has", "population"],
+                    [">", ["get", "population"], 100000]
+                ],
                 "technique": "text",
                 "attr": {
                     "priority": 58,
@@ -1591,7 +2103,13 @@
             },
             {
                 "description": "locality_pop_>50000",
-                "when": "$layer ^= 'places' && (((kind == 'locality') && has(population)) && (population > 50000))",
+                "when": [
+                    "all",
+                    ["^=", ["get", "$layer"], "places"],
+                    ["==", ["get", "kind"], "locality"],
+                    ["has", "population"],
+                    [">", ["get", "population"], 50000]
+                ],
                 "technique": "text",
                 "attr": {
                     "priority": 57,
@@ -1611,7 +2129,13 @@
             },
             {
                 "description": "locality_pop_>10000",
-                "when": "$layer ^= 'places' && (((kind == 'locality') && has(population)) && (population > 10000))",
+                "when": [
+                    "all",
+                    ["^=", ["get", "$layer"], "places"],
+                    ["==", ["get", "kind"], "locality"],
+                    ["has", "population"],
+                    [">", ["get", "population"], 10000]
+                ],
                 "technique": "text",
                 "attr": {
                     "priority": 56,
@@ -1631,7 +2155,13 @@
             },
             {
                 "description": "locality_pop_<=10000",
-                "when": "$layer ^= 'places' && (((kind == 'locality') && has(population)) && (population <= 10000))",
+                "when": [
+                    "all",
+                    ["^=", ["get", "$layer"], "places"],
+                    ["==", ["get", "kind"], "locality"],
+                    ["has", "population"],
+                    ["<=", ["get", "population"], 10000]
+                ],
                 "technique": "text",
                 "attr": {
                     "priority": 50,
@@ -1651,7 +2181,7 @@
             },
             {
                 "description": "POIs in tilezen format use maki icons",
-                "when": "$layer == 'pois' && has(kind)",
+                "when": ["all", ["==", ["get", "$layer"], "pois"], ["has", "kind"]],
                 "technique": "labeled-icon",
                 "attr": {
                     "poiTable": "tzPoiTableMaki",
@@ -1677,7 +2207,11 @@
             },
             {
                 "description": "building_geometry",
-                "when": "$layer ^= 'buildings' && ($geometryType ^= 'polygon')",
+                "when": [
+                    "all",
+                    ["^=", ["get", "$layer"], "buildings"],
+                    ["^=", ["get", "$geometryType"], "polygon"]
+                ],
                 "technique": "extruded-polygon",
                 "attr": {
                     "color": "#EDE7E1",
@@ -1705,7 +2239,13 @@
             },
             {
                 "description": "building_address",
-                "when": "$layer ^= 'buildings' && (((kind ^= 'address') && ($geometryType ^= 'point')) && label_placement)",
+                "when": [
+                    "all",
+                    ["^=", ["get", "$layer"], "buildings"],
+                    ["^=", ["get", "kind"], "address"],
+                    ["^=", ["get", "$geometryType"], "point"],
+                    ["get", "label_placement"]
+                ],
                 "technique": "text",
                 "attr": {
                     "color": "#A9A9A9",
