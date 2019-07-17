@@ -341,13 +341,17 @@ export class TileGeometryCreator {
         const mapView = tile.mapView;
         const displayZoomLevel = Math.floor(mapView.zoomLevel);
         if (decodedTile.textPathGeometries !== undefined) {
-            this.prepareTextPaths(decodedTile.textPathGeometries, decodedTile, textFilter);
+            const textPathGeometries = this.prepareTextPaths(
+                decodedTile.textPathGeometries,
+                decodedTile,
+                textFilter
+            );
 
             // Compute maximum street length (squared). Longer streets should be labelled first,
             // they have a higher chance of being placed in case the number of text elements is
             // limited.
             let maxPathLengthSqr = 0;
-            for (const textPath of decodedTile.textPathGeometries) {
+            for (const textPath of textPathGeometries) {
                 const technique = decodedTile.techniques[textPath.technique];
                 if (technique.enabled === false || !isTextTechnique(technique)) {
                     continue;
@@ -357,7 +361,7 @@ export class TileGeometryCreator {
                 }
             }
 
-            for (const textPath of decodedTile.textPathGeometries) {
+            for (const textPath of textPathGeometries) {
                 const technique = decodedTile.techniques[textPath.technique];
 
                 if (

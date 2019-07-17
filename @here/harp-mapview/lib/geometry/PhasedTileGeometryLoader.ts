@@ -381,6 +381,7 @@ export class PhasedTileGeometryLoader implements TileGeometryLoader {
 
     private finish() {
         this.m_decodedTile = undefined;
+        this.m_tile.loadingFinished();
         this.m_tile.removeDecodedTile();
         this.m_isFinished = true;
     }

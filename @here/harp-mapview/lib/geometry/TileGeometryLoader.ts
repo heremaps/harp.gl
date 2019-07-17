@@ -195,6 +195,7 @@ export class SimpleTileGeometryLoader implements TileGeometryLoader {
     }
 
     private finish() {
+        this.m_tile.loadingFinished();
         this.m_tile.removeDecodedTile();
         this.m_isFinished = true;
     }

@@ -629,6 +629,14 @@ export class Tile implements CachedResource {
     }
 
     /**
+     * Called by the [[TileLoader]] after the `Tile` has finished loading its map data. Can be used
+     * to add content to the `Tile`. The [[DecodedTile]] should still be available.
+     */
+    loadingFinished() {
+        // To be used in subclasses.
+    }
+
+    /**
      * Called when the default implementation of `dispose()` needs
      * to free the geometry of a `Tile` object.
      *
