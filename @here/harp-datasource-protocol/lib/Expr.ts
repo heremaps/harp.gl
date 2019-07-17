@@ -211,10 +211,12 @@ export class MapEnv extends Env {
      * @param name Name of property.
      */
     lookup(name: string): Value {
-        const value = this.entries[name];
+        if (this.entries.hasOwnProperty(name)) {
+            const value = this.entries[name];
 
-        if (value !== undefined) {
-            return value;
+            if (value !== undefined) {
+                return value;
+            }
         }
 
         return this.parent ? this.parent.lookup(name) : undefined;

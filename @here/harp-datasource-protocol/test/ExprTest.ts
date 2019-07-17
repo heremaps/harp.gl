@@ -40,3 +40,32 @@ describe("Expr", function() {
         });
     });
 });
+
+describe("MapEnv", function() {
+    let env: MapEnv;
+    before(function() {
+        env = new MapEnv(
+            {
+                foo: "foo",
+                bar: undefined
+            },
+            new MapEnv({
+                parentProperty: 123,
+                bar: "bar"
+            })
+        );
+    });
+    it("provides entries", function() {
+        assert.strictEqual(env.lookup("foo"), "foo");
+        assert.isUndefined(env.lookup("baz"));
+    });
+    it("asks parent for undefined properties", function() {
+        assert.strictEqual(env.lookup("parentProperty"), 123);
+        assert.strictEqual(env.lookup("bar"), "bar");
+    });
+    it("doesn't expose properties inherited from Object.prototype", function() {
+        assert.isUndefined(env.lookup("hasOwnProperty"));
+        assert.isUndefined(env.lookup("constructor"));
+        assert.isUndefined(env.lookup("__proto__"));
+    });
+});
