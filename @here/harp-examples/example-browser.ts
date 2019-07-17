@@ -4,8 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import "style-loader!css-loader!./example-browser.css";
-
 interface ExampleDefinitions {
     [pageUrl: string]: string;
 }
@@ -15,13 +13,14 @@ interface ExampleDefinitions {
  */
 function exampleBrowser(exampleDefinitions: ExampleDefinitions) {
     const navPanel = document.getElementById("navPanel") as HTMLDivElement;
-    const titleHeader = document.getElementById("title") as HTMLElement;
-    const subtitle = document.getElementById("subtitle") as HTMLElement;
     const exampleFrameElement = document.getElementById("exampleFrame") as HTMLIFrameElement;
     const viewSourceButton = document.getElementById("viewSource") as HTMLButtonElement;
 
     let currentlySelectedSource: string | undefined;
-    const menuElements: HTMLAnchorElement[] = [];
+    const categories: { [key: string]: HTMLAnchorElement[] } = {};
+    const orderedCategories: string[] = ["Getting started"];
+    const elements: HTMLAnchorElement[] = [];
+    const titleElements: HTMLElement[] = [];
 
     /**
      * Query params parsed out of hash.
@@ -33,13 +32,14 @@ function exampleBrowser(exampleDefinitions: ExampleDefinitions) {
     installHamburgerHandler();
     populateExamplesMenu();
 
-    installFilter(document.getElementById("filterInput") as HTMLInputElement, menuElements);
+    installFilter(document.getElementById("filterInput") as HTMLInputElement);
 
     function installHamburgerHandler() {
         const expandButton = document.getElementById("hamburgerMenu") as HTMLAnchorElement;
 
         expandButton.addEventListener("click", event => {
             navPanel.classList.toggle("collapsed");
+            expandButton.classList.toggle("expanded");
             event.preventDefault();
         });
     }
@@ -50,22 +50,92 @@ function exampleBrowser(exampleDefinitions: ExampleDefinitions) {
         Object.keys(exampleDefinitions)
             .sort()
             .forEach(pageUrl => {
-                const linkName = getName(pageUrl);
+                const linkName = getName(pageUrl).replace(new RegExp("-", "g"), " ");
+                const linkElements = linkName.split(" / ");
+                // Create category 'miscellaneous' for examples without category name.
+                let linkSubMenu = linkElements.length > 1 ? linkElements[0] : "miscellaneous";
+
+                // Style: uppercase the first letter in case CSS lets lowercase.
+                linkSubMenu = linkSubMenu.charAt(0).toUpperCase() + linkSubMenu.slice(1);
+                // Create category if needed.
+                if (categories[linkSubMenu] === undefined) {
+                    categories[linkSubMenu] = [];
+                }
+                const visibleText =
+                    linkElements.length === 1 ? linkName : linkElements.slice(1).join(" / ");
                 const linkElement = createDomElement<HTMLAnchorElement>("a", {
-                    innerText: linkName,
+                    innerText: visibleText,
                     href: "#" + pageUrl,
                     className: "link"
                 });
-                menuElements.push(linkElement);
-                exampleListElement.appendChild(linkElement);
+                (linkElement as any).nameWithCategory = linkName;
+                (linkElement as any).nameWithoutCategory = visibleText;
+                categories[linkSubMenu].push(linkElement);
+                elements.push(linkElement);
             });
+
+        Object.keys(categories)
+            .sort()
+            .forEach(category => {
+                if (!orderedCategories.includes(category)) {
+                    orderedCategories.push(category);
+                }
+            });
+
+        orderedCategories.forEach(menuElement => {
+            const menu = document.createElement("div");
+            const title = document.createElement("h2");
+            title.innerHTML = menuElement;
+            titleElements.push(title);
+            menu.appendChild(title);
+            categories[menuElement].forEach(anchor => {
+                menu.appendChild(anchor);
+            });
+            exampleListElement.appendChild(menu);
+        });
     }
 
-    function installFilter(filterInput: HTMLInputElement, fileteredElements: HTMLElement[]) {
+    let isSearching: boolean = false;
+
+    function goInSearchMode() {
+        titleElements.forEach(title => {
+            title.style.cssText = "display:none;";
+        });
+        document.getElementById("magnifier-placeholder")!.style.cssText = "display:none;";
+        document.getElementById("clearFilterButton")!.style.cssText = "";
+        elements.forEach(anchor => {
+            anchor.innerText = (anchor as any).nameWithCategory;
+        });
+        isSearching = true;
+    }
+
+    function leaveSearchMode() {
+        titleElements.forEach(title => {
+            title.style.cssText = "";
+        });
+        document.getElementById("magnifier-placeholder")!.style.cssText = "";
+        document.getElementById("clearFilterButton")!.style.cssText = "display:none;";
+        elements.forEach(anchor => {
+            anchor.classList.remove("filtered");
+            anchor.innerText = (anchor as any).nameWithoutCategory;
+        });
+        (document.getElementById("filterInput") as HTMLInputElement).value = "";
+        isSearching = false;
+    }
+
+    function installFilter(filterInput: HTMLInputElement) {
         filterInput.addEventListener("input", e => {
             const filterValue = (filterInput.value || "").trim();
 
-            for (const element of fileteredElements) {
+            if (filterValue.length > 0 && !isSearching) {
+                goInSearchMode();
+            }
+
+            if (filterValue.length === 0 && isSearching) {
+                leaveSearchMode();
+            }
+
+            for (const element of elements) {
                 const text = element.textContent;
                 if (text === null) {
                     continue;
@@ -78,6 +148,7 @@ function exampleBrowser(exampleDefinitions: ExampleDefinitions) {
                 }
             }
         });
+        document.getElementById("clearFilterButton")!.addEventListener("click", leaveSearchMode);
     }
 
     /**
@@ -86,12 +157,12 @@ function exampleBrowser(exampleDefinitions: ExampleDefinitions) {
      * @param pageUrl example page url, must exist in `examples` map
      */
     function showExample(pageUrl: string) {
+        const expandButton = document.getElementById("hamburgerMenu") as HTMLAnchorElement;
+        expandButton.classList.toggle("expanded", !navPanel.classList.contains("collapsed"));
         if (!(pageUrl in exampleDefinitions)) {
             viewSourceButton.style.display = "none";
             exampleFrameElement.contentWindow!.document.body.innerHTML =
                 "Invalid example name, please choose one from menu.";
-
-            setupTitle();
             return;
         }
 
@@ -105,12 +176,10 @@ function exampleBrowser(exampleDefinitions: ExampleDefinitions) {
         exampleFrameElement.src = pageUrl + queryParams;
 
         // highlight selected element in list
-        menuElements.forEach(element => {
+        elements.forEach(element => {
             const elementTargetPage = element.hash.substr(1);
             if (elementTargetPage === pageUrl) {
                 element.classList.add("selected");
-                const exampleName = removeNull(element.textContent);
-                setupTitle(exampleName);
             } else {
                 element.classList.remove("selected");
             }
@@ -122,15 +191,6 @@ function exampleBrowser(exampleDefinitions: ExampleDefinitions) {
 
         // mobile: collapse the navPanel
         navPanel.classList.toggle("collapsed");
-    }
-
-    function setupTitle(exampleName?: string) {
-        const baseTitle = "<strong>harp.gl</strong> examples";
-        document.title = exampleName ? `${exampleName} - harp.gl examples` : `harp.gl examples`;
-
-        titleHeader.innerHTML = exampleName ? `<strong>harp.gl</strong> examples` : `${baseTitle}`;
-
-        subtitle.textContent = exampleName || "";
     }
 
     /**
@@ -217,10 +277,6 @@ function exampleBrowser(exampleDefinitions: ExampleDefinitions) {
         } else {
             return path.substr(i + 1);
         }
-    }
-
-    function removeNull<T>(v: T | null): T | undefined {
-        return v === null ? undefined : v;
     }
 }
 

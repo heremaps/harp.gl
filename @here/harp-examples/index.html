@@ -1,65 +1,400 @@
 <!DOCTYPE html>
 <html lang="en">
+    <head>
+        <title>harp.gl | examples</title>
+        <meta charset="utf-8" />
+        <meta name="viewport"
+            content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0" />
+        <link href="https://fonts.googleapis.com/css?family=Fira+Sans:400,500,600&amp;display=swap" rel="stylesheet">
+        <style>
+            :root{
+                /* COLOURS */
+                /* Color1: main color, from MapControlsUI's background. */
+                --color1-hue: 218;
+                --color1-saturation: 17%;
 
-<head>
-    <title>harp.gl | examples</title>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
-    <style>
-        * {
-            box-sizing: border-box;
-        }
+                /* Colour2: complementary hue. More saturation for constrast. */
+                --color2-hue: 24;
+                --color2-saturation: 70%;
 
-        html {
-            height: 100%;
-        }
+                --gradient: linear-gradient(to bottom right,#e7e1a0,#85e0ce);
 
-        body {
-            background-color: #ffffff;
-            margin: 0px;
-            height: 100%;
-            font-size: 15px;
-            line-height: 18px;
-            overflow: hidden;
-            font-family: sans-serif;
-            color: #82dbbd;
-        }
-        #navPanel {
-            background: #0f1621;
-        }
+                /* Luminosity shades */
+                --dark: 18%;/* MapControlsUI background's luminosity. */
+                --soft: 45%;
+                --light: 65%;
+                --bright: 85%;/* MapControlsUI text's luminosity. */
 
-        a {
-            text-decoration: none;
-        }
-    </style>
-</head>
+                --intermediate: 55%; /* For the title, if colour2 is used. */
 
-<body>
+                /* LAYOUT */
+                --headers-height: 80px;
+                --margin: 15px;
+                --nav-width: 310px;
+            }
 
-    <div id="navPanel" class="collapsed">
-        <div id="titleBar">
-            <h1 id="title">harp.gl | examples</h1>
-            <h1 id="subtitle"></h1>
-            <div style="clear:both"></div>
-            <a id="hamburgerMenu" href="#">
-                <span></span>
-                <span></span>
-                <span></span>
-            </a>
+            html {
+                height: 100%;
+            }
+
+            body {
+                margin: 0;
+                height: 100%;
+                font-size: 17px;
+                line-height: 18px;
+                font-family: 'Fira Sans', sans-serif;
+            }
+
+            a {
+                color: hsl(var(--color1-hue),var(--color1-saturation),var(--bright));
+            }
+
+            a:visited {
+                color: hsl(var(--color1-hue),var(--color1-saturation),var(--bright))
+            }
+
+            #navPanel {
+                background:hsl(var(--color1-hue),var(--color1-saturation),var(--dark));
+                position: fixed;
+                z-index: 1;
+                left: 0px;
+                width: var(--nav-width);
+                height: 100%;
+                max-height: 100%;
+                transition: all 250ms ease;
+            }
+
+            #titleBar {
+                height: var(--headers-height);
+            }
+
+            #github path {
+                fill: hsl(var(--color1-hue),var(--color1-saturation),var(--bright));
+            }
+
+            #github:hover path {
+                fill: hsl(var(--color1-hue),var(--color1-saturation),var(--light));
+            }
+
+            #documentation path {
+                fill:hsl(var(--color1-hue),var(--color1-saturation),var(--bright));
+                stroke: hsl(var(--color1-hue),var(--color1-saturation),var(--bright));
+            }
+
+            #documentation:hover path {
+                fill: hsl(var(--color1-hue),var(--color1-saturation),var(--light));
+                stroke: hsl(var(--color1-hue),var(--color1-saturation),var(--light));
+            }
+
+            #navPanel h1 {
+                margin: 0;
+                font-size: 25px;
+                color: hsla(var(--color2-hue), var(--color2-saturation), var(--intermediate), 1);
+                position: absolute;
+                top: 32px;
+                left: var(--margin);
+                padding: 5px 0;
+                margin-top: -5px;
+                background: var(--gradient);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+            }
+
+            #documentation, #github {
+                position: absolute;
+                right: 20px;
+                top: 26px;
+                height: 20px
+            }
+
+            #github {
+                right: 55px;
+            }
+
+            #exampleFrame {
+                position: absolute;
+                border: 0px;
+                left: var(--nav-width);
+                width: calc(100% - 310px);
+                height: 100%;
+                overflow: auto;
+            }
+
+            /*
+            * Example list
+            */
+            #exampleList {
+                padding: calc(var(--margin) + 26px) 0;/* To comply with space between title and input */
+                overflow: auto;
+                position: absolute;
+                top: calc(2 * var(--headers-height));
+                bottom: 0;
+                width: 100%;
+            }
+
+            #exampleList div {
+                width: 100%;
+            }
+
+            #exampleList div h2 {
+                margin:var(--margin);
+                margin-bottom: calc(1.4 * var(--margin));
+                margin-top: calc(2.7 * var(--margin));
+                font-size: 16px;
+                color: hsl(var(--color1-hue),var(--color1-saturation),var(--bright));
+                text-transform: uppercase;
+                letter-spacing: 3px;
+            }
+
+            #exampleList div:first-of-type h2 {
+                margin-top: 0;
+            }
+
+            #exampleList .link {
+                text-decoration: none;
+                cursor: pointer;
+                display: block;
+                color: hsl(var(--color1-hue),var(--color1-saturation),var(--bright));
+                padding: 3px var(--margin);
+            }
+
+            #exampleList .selected {
+                font-weight: bold;
+                background: hsl(var(--color1-hue),var(--color1-saturation),var(--soft));
+            }
+
+            #exampleList .link:hover {
+                background: hsl(var(--color1-hue),var(--color1-saturation),var(--soft));
+            }
+
+            #exampleList .filtered {
+                display: none !important;
+            }
+
+            /*
+            * View Source button
+            */
+            #viewSource {
+                width: 40px;
+                height: 40px;
+                font-size: 22px;
+                font-weight: bold;
+                border: none;
+                color: rgba(255, 255, 255, 0.8);
+                cursor: pointer;
+                border-radius: 4px;
+                box-shadow: 0 1px 4px 0 rgba(15, 22, 33, 0.4);
+                transition: all 0.1s;
+                padding: 0 0 1px 1px;
+                user-select: none;
+                position: fixed;
+                bottom: 25px;
+                right: 15px;
+                background: #272d37;
+                text-decoration: none;
+            }
+
+            #viewSource p {
+                font-size: 15px;
+                font-weight: bold;
+                margin: 0;
+            }
+
+            /*
+            * Filter input block
+            */
+
+            .filterBlock {
+                position: relative;
+                margin: 0px 0 15px 0;
+            }
+
+            .filterBlock p {
+                margin: 0;
+            }
+
+            #filterInput {
+                background: hsl(var(--color1-hue),var(--color1-saturation),var(--bright));
+                width: 100%;
+                box-sizing: border-box;
+                padding: calc(var(--margin) + 15px) 55px calc(var(--margin) + 15px) var(--margin);
+                color: hsl(var(--color1-hue),var(--color1-saturation),var(--dark));
+                font-family: inherit;
+                font-size: 17px;
+                outline: none;
+                border: none;
+            }
+
+            #filterInput:focus + #magnifier-placeholder {
+                display: none;
+            }
+
+            #magnifier-placeholder {
+                position: absolute;
+                top: 32px;
+                left: calc(var(--margin) + 2px);
+                pointer-events: none;
+                font-size: 25px;
+                transform: rotateZ(-45deg);
+                color: hsl(var(--color1-hue),var(--color1-saturation),var(--dark));
+            }
+
+            #clearFilterButton {
+                text-decoration: none;
+                position: absolute;
+                right: var(--margin);
+                top: 50%;
+                margin-top: -8px;
+                height: 16px;
+                font-size: 30px;
+                color: hsl(var(--color1-hue),var(--color1-saturation),var(--dark));
+                text-align: center;
+                line-height: 0;
+                background: none;
+                border: none;
+                outline: none;
+                cursor: pointer;
+            }
+
+            #clearFilterButton:hover {
+                opacity: 1;
+            }
+
+            /*
+            * Mobile / Responsive support
+            */
+
+            #hamburgerMenu {
+                display: none;
+                position: absolute;
+                left: calc(var(--nav-width) + 18px);
+                top: var(--margin);
+                width: 31px;
+                height: 35px;
+                background: none;
+                border: none;
+                padding:0;
+                outline: none;
+                cursor: pointer;
+            }
+            #hamburgerMenu.expanded {
+                top:22px
+            }
+
+            #hamburgerMenu span {
+                height: 2px;
+                background: hsl(var(--color1-hue),var(--color1-saturation),var(--bright));
+                width: 30px;
+                position: absolute;
+                left: 0;
+                top: 5px;
+                opacity: 1;
+                transition: all 300ms ease;
+            }
+
+            #hamburgerMenu span:nth-child(1) {
+                top: 15px;
+            }
+
+            #hamburgerMenu span:nth-child(2) {
+                top: 25px;
+            }
+
+            #hamburgerMenu.expanded span {
+                opacity: 0;
+            }
+
+            #hamburgerMenu.expanded span:nth-child(1) {
+                top: 16px;
+                transform: rotateZ(45deg);
+                opacity: 1
+            }
+
+            #hamburgerMenu.expanded span:nth-child(2) {
+                top: 16px;
+                transform: rotateZ(-45deg);
+                opacity: 1
+            }
+
+            @media all and (max-width: 640px) {
+
+                #exampleFrame {
+                    position: absolute;
+                    width: 100%;
+                    height: 100%;
+                    top: 0;
+                    left: 0
+                }
+
+                #navPanel {
+                    left: calc(var(--nav-width) * -1);
+                }
+
+                #navPanel.collapsed {
+                    left: 0px;
+                }
+
+                #hamburgerMenu {
+                    display: block;
+                }
+            }
+        </style>
+    </head>
+
+    <body>
+        <div id="navPanel" class="collapsed">
+            <div id="titleBar">
+                <a href="http://harp.gl">
+                    <h1 id="title">harp.gl</h1>
+                </a>
+                <a id=documentation title="Documentation"
+                    href=https://heremaps.github.io/harp.gl/docs> <svg viewBox="0 0 23 60"
+                    height="25" width="23">
+                    <path
+                        d="M -1.6965819,8.2701467 V 35.224035 c 0.0283,0.847295 0.648697,1.588424 1.318981,1.5861 0.64875499,0.0046 1.15590999,-0.400431 1.463019,-0.762541 l 4.217,-7.516842 4.217,7.517911 c 0.327,0.582909 0.9389999,0.856715 1.5499999,0.734786 0.045,-0.0086 0.089,-0.0021 0.134,-0.01497 0.657,-0.195729 1.099,-0.816072 1.099,-1.54444 V 8.2701467 Z" />
+                    <path
+                        style="fill:none;stroke-width:4px;stroke-linecap:round;stroke-linejoin:miter;stroke-opacity:1"
+                        d="M 31.544194,1.8446699 31.499,58.375 H -4.4999998 v -47 H 31.499" />
+                    <path
+                        style="fill:none;stroke-width:4px;stroke-linecap:round;stroke-linejoin:miter;stroke-opacity:1"
+                        d="m -4.5,58.375 c -2.8186816,0.0081 -5.078877,-1.790886 -5.125,-4.3545 V 6.6875 C -9.580216,4.4229047 -7.1760603,2.001032 -4.6438447,1.9924176 L 31.544194,1.8446699" />
+                    <path
+                        style="fill:none;stroke-width:4px;stroke-linecap:round;stroke-linejoin:miter;stroke-opacity:1"
+                        d="m -9.625,6.6875 c 0.02296,2.96301 1.8301551,4.714336 5.1250002,4.6875" />
+                    </svg>
+                </a>
+                <a id=github title="Visit Harp.gl repository on GitHub"
+                    href=https://github.com/heremaps/harp.gl> <svg
+                    class="octicon octicon-mark-github v-align-middle" height="25"
+                    viewBox="0 0 16 16" version="1.1" aria-hidden="true">
+                    <path
+                        d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z">
+                    </path></svg>
+                </a>
+                <div style="clear:both"></div>
+                <button id="hamburgerMenu" class="expanded" href="#">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+            </div>
+
+            <div class="filterBlock">
+                <input type="text" id="filterInput">
+                <p id=magnifier-placeholder>&#9906;</p>
+                </input>
+                <button href="#" id="clearFilterButton" style="display:none;">&#215;</button>
+            </div>
+            <div id="exampleList"></div>
         </div>
 
-        <div class="filterBlock">
-            <input type="text" id="filterInput" placeholder="Type to filter" />
-            <a href="#" id="clearFilterButton">x</a>
-        </div>
-        <div id="exampleList"></div>
-    </div>
+        <iframe id="exampleFrame" allowfullscreen allowvr onmousewheel=""></iframe>
+        <button id="viewSource" title="View the source code" href=#>
+            <p>&#60;/&#62;</p>
+        </button>
 
-    <iframe id="exampleFrame" allowfullscreen allowvr onmousewheel=""></iframe>
-    <div id="viewSource">View Source</div>
-
-    <script src="example-definitions.js"></script>
-    <script src="example-browser.bundle.js"></script>
-</body>
+        <script src="example-definitions.js"></script>
+        <script src="example-browser.bundle.js"></script>
+    </body>
 
 </html>
