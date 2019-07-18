@@ -248,7 +248,7 @@ export namespace LinesPointsFeaturesExample {
             `of the lines is property-based.</p>
                 <div id=caption>
                     <div id=caption-bg>
-                        <h1>Hotsposts on Earth's mantle, with main ridges and trenches.</h1>
+                        <h1>Hotspots on Earth's mantle, with main ridges and trenches.</h1>
                     </div>
                 </div>
         `
