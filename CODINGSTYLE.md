@@ -162,6 +162,7 @@ If an interface has data member, it's no longer abstract. Derived classes can't 
    - Create private `setupXYZ` methods, if applicable.
    - Instead of `setupXYZ` methods, it might be possible to create a subclass of the object and initialize the members there.
    - Consider applying [Carmack's "good judgement"](http://number-none.com/blow/john_carmack_on_inlined_code.html) by breaking this rule ONLY if it is necessary.
+1. Use `undefined`, don't use `null`. Inspired from: https://github.com/Microsoft/TypeScript/wiki/Coding-guidelines#null-and-undefined
 
 ## Formatting
 
