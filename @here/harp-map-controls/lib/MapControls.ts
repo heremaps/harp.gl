@@ -327,7 +327,7 @@ export class MapControls extends THREE.EventDispatcher {
      * @param deltaYaw Delta yaw in degrees.
      * @param deltaPitch Delta pitch in degrees.
      */
-    rotate(deltaYaw: number, deltaPitch: number) {
+    rotate(deltaYaw: number, deltaPitch: number = 0) {
         if (this.inertiaEnabled && this.m_zoomIsAnimated) {
             this.stopZoom();
         }
@@ -504,7 +504,7 @@ export class MapControls extends THREE.EventDispatcher {
             );
 
             // TODO: HARP-5430 Ensures that we don't intersect the terrain, a similar
-            // approach to that should be used here, at least for consistency sake.
+            // approach to that should be used here, at least for consistency's sake.
             if (this.mapView.projection.groundDistance(this.camera.position) < 500) {
                 this.mapView.projection.scalePointToSurface(this.camera.position);
                 this.camera.position.addScaledVector(surfaceNormal, 500);
@@ -973,51 +973,78 @@ export class MapControls extends THREE.EventDispatcher {
         if (this.m_touchState.touches.length < 2) {
             return 0;
         }
+        if (this.mapView.projection.type === geoUtils.ProjectionType.Planar) {
+            const previousDistance = this.m_tmpVector3
+                .subVectors(
+                    this.m_touchState.touches[0].initialWorldPosition,
+                    this.m_touchState.touches[1].initialWorldPosition
+                )
+                .length();
 
-        const initialDistance = this.m_tmpVector3
-            .subVectors(
-                this.m_touchState.touches[0].initialWorldPosition,
-                this.m_touchState.touches[1].initialWorldPosition
-            )
-            .length();
-
-        const currentDistance = this.m_tmpVector3
-            .subVectors(
-                this.m_touchState.touches[0].currentWorldPosition,
-                this.m_touchState.touches[1].currentWorldPosition
-            )
-            .length();
-
-        return currentDistance - initialDistance;
+            const currentDistance = this.m_tmpVector3
+                .subVectors(
+                    this.m_touchState.touches[0].currentWorldPosition,
+                    this.m_touchState.touches[1].currentWorldPosition
+                )
+                .length();
+            return currentDistance - previousDistance;
+        } else {
+            const previousDistance = this.m_tmpVector2
+                .subVectors(
+                    this.m_touchState.touches[0].lastTouchPoint,
+                    this.m_touchState.touches[1].lastTouchPoint
+                )
+                .length();
+            const currentDistance = this.m_tmpVector2
+                .subVectors(
+                    this.m_touchState.touches[0].currentTouchPoint,
+                    this.m_touchState.touches[1].currentTouchPoint
+                )
+                .length();
+            return currentDistance - previousDistance;
+        }
     }
 
-    private convertTouchPoint(touch: Touch): TouchState | null {
+    private convertTouchPoint(touch: Touch, oldTouchState?: TouchState): TouchState | null {
         const newTouchPoint = new THREE.Vector2(touch.pageX, touch.pageY);
 
-        const { width, height } = utils.getWidthAndHeightFromCanvas(this.domElement);
-
-        const touchPointInNDC = utils.calculateNormalizedDeviceCoordinates(
-            newTouchPoint.x,
-            newTouchPoint.y,
-            width,
-            height
-        );
-        const newWorldPosition = MapViewUtils.rayCastWorldCoordinates(
-            this.mapView,
-            touchPointInNDC.x,
-            touchPointInNDC.y
-        );
-
-        if (newWorldPosition === null) {
-            return null;
+        if (oldTouchState !== undefined) {
+            const oldTouchPoint = oldTouchState.currentTouchPoint;
+            const vectors = this.getWorldPositionWithElevation(
+                oldTouchPoint.x,
+                oldTouchPoint.y,
+                newTouchPoint.x,
+                newTouchPoint.y
+            );
+            if (vectors === undefined) {
+                return null;
+            }
+            const { toWorld } = vectors;
+            return {
+                currentTouchPoint: newTouchPoint,
+                lastTouchPoint: newTouchPoint,
+                currentWorldPosition: toWorld,
+                initialWorldPosition: toWorld
+            };
+        } else {
+            const { width, height } = utils.getWidthAndHeightFromCanvas(this.domElement);
+            const to = utils.calculateNormalizedDeviceCoordinates(
+                newTouchPoint.x,
+                newTouchPoint.y,
+                width,
+                height
+            );
+            const toWorld = MapViewUtils.rayCastWorldCoordinates(this.mapView, to.x, to.y);
+            if (toWorld === null) {
+                return null;
+            }
+            return {
+                currentTouchPoint: newTouchPoint,
+                lastTouchPoint: newTouchPoint,
+                currentWorldPosition: toWorld,
+                initialWorldPosition: toWorld
+            };
         }
-
-        return {
-            currentTouchPoint: newTouchPoint,
-            lastTouchPoint: newTouchPoint,
-            currentWorldPosition: newWorldPosition,
-            initialWorldPosition: newWorldPosition
-        };
     }
 
     private setTouchState(touches: TouchList) {
@@ -1046,7 +1073,7 @@ export class MapControls extends THREE.EventDispatcher {
         const length = Math.min(touches.length, this.m_touchState.touches.length);
         for (let i = 0; i < length; ++i) {
             const oldTouchState = this.m_touchState.touches[i];
-            const newTouchState = this.convertTouchPoint(touches[i]);
+            const newTouchState = this.convertTouchPoint(touches[i], oldTouchState);
             if (newTouchState !== null) {
                 newTouchState.initialWorldPosition = oldTouchState.initialWorldPosition;
                 newTouchState.lastTouchPoint = oldTouchState.currentTouchPoint;
@@ -1078,38 +1105,56 @@ export class MapControls extends THREE.EventDispatcher {
         this.updateTouchState();
 
         if (this.m_touchState.touches.length <= 2) {
-            this.m_panDistanceFrameDelta.subVectors(
-                this.m_touchState.touches[0].initialWorldPosition,
-                this.m_touchState.touches[0].currentWorldPosition
-            );
+            if (this.mapView.projection.type === geoUtils.ProjectionType.Planar) {
+                this.m_panDistanceFrameDelta.subVectors(
+                    this.m_touchState.touches[0].initialWorldPosition,
+                    this.m_touchState.touches[0].currentWorldPosition
+                );
 
-            // Cancel zoom inertia if a panning is triggered, so that the mouse location is kept.
-            this.m_startZoom = this.m_targetedZoom = this.currentZoom;
+                // Cancel zoom inertia if a panning is triggered, so that the mouse location is
+                // kept.
+                this.m_startZoom = this.m_targetedZoom = this.currentZoom;
 
-            // Assign the new animation start time.
-            this.m_panAnimationStartTime = performance.now();
+                // Assign the new animation start time.
+                this.m_panAnimationStartTime = performance.now();
 
-            this.pan();
+                this.pan();
+            } else {
+                this.rotateGlobe(
+                    this.m_touchState.touches[0].initialWorldPosition,
+                    this.m_touchState.touches[0].currentWorldPosition
+                );
+                this.mapView.camera.getWorldDirection(this.m_currentViewDirection);
+            }
         }
 
         if (this.m_touchState.touches.length === 2) {
-            const deltaRotation =
-                this.m_touchState.currentRotation - this.m_touchState.initialRotation;
-            this.rotate(geoUtils.MathUtils.radToDeg(deltaRotation), 0);
-            this.moveAlongTheViewDirection(this.calculatePinchDistanceInWorldSpace());
+            if (this.mapView.projection.type === geoUtils.ProjectionType.Planar) {
+                const deltaRotation =
+                    this.m_touchState.currentRotation - this.m_touchState.initialRotation;
+                this.rotate(geoUtils.MathUtils.radToDeg(deltaRotation));
+                const pinchDistance = this.calculatePinchDistanceInWorldSpace();
+                this.moveAlongTheViewDirection(pinchDistance);
+            } else {
+                const pinchDistance = this.calculatePinchDistanceInWorldSpace();
+                this.setZoomLevel(this.currentZoom + pinchDistance * 0.01);
+            }
         }
 
+        // Tilting
         if (this.m_touchState.touches.length === 3 && this.tiltEnabled) {
-            const firstTouch = this.m_touchState.touches[0];
-            const diff = this.m_tmpVector2.subVectors(
-                firstTouch.currentTouchPoint,
-                firstTouch.lastTouchPoint
-            );
+            if (this.mapView.projection.type === geoUtils.ProjectionType.Planar) {
+                const firstTouch = this.m_touchState.touches[0];
+                const diff = this.m_tmpVector2.subVectors(
+                    firstTouch.currentTouchPoint,
+                    firstTouch.lastTouchPoint
+                );
 
-            this.orbitFocusPoint(
-                this.orbitingTouchDeltaFactor * diff.x,
-                -this.orbitingTouchDeltaFactor * diff.y
-            );
+                this.orbitFocusPoint(
+                    this.orbitingTouchDeltaFactor * diff.x,
+                    -this.orbitingTouchDeltaFactor * diff.y
+                );
+            }
         }
 
         this.m_zoomAnimationStartTime = performance.now();
@@ -1138,27 +1183,32 @@ export class MapControls extends THREE.EventDispatcher {
         event.preventDefault();
     }
 
-    private panFromTo(fromX: number, fromY: number, toX: number, toY: number): void {
+    private getWorldPositionWithElevation(
+        fromX: number,
+        fromY: number,
+        toX: number,
+        toY: number
+    ): { fromWorld: THREE.Vector3; toWorld: THREE.Vector3 } | undefined {
         const { width, height } = utils.getWidthAndHeightFromCanvas(this.domElement);
 
         const from = utils.calculateNormalizedDeviceCoordinates(fromX, fromY, width, height);
         const to = utils.calculateNormalizedDeviceCoordinates(toX, toY, width, height);
 
-        let toWorld: THREE.Vector3 | undefined;
-        let fromWorld: THREE.Vector3 | undefined;
+        let toWorld: THREE.Vector3 | null;
+        let fromWorld: THREE.Vector3 | null;
         if (this.mapView.elevationProvider === undefined) {
             fromWorld = MapViewUtils.rayCastWorldCoordinates(this.mapView, from.x, from.y);
             toWorld = MapViewUtils.rayCastWorldCoordinates(this.mapView, to.x, to.y);
         } else {
-            fromWorld = this.mapView.elevationProvider.rayCast(fromX, fromY);
-            if (fromWorld === undefined) {
+            const elevationProviderResult = this.mapView.elevationProvider.rayCast(fromX, fromY);
+            if (elevationProviderResult === undefined) {
                 return;
             }
+            fromWorld = elevationProviderResult;
             const fromGeoAltitude = this.mapView.projection.unprojectAltitude(fromWorld);
 
             // We can ensure that points under the mouse stay there by projecting the to point onto
             // a plane with the altitude based on the initial point.
-            // Todo: Check this works for spherical panning.
             toWorld = MapViewUtils.rayCastWorldCoordinates(
                 this.mapView,
                 to.x,
@@ -1166,10 +1216,18 @@ export class MapControls extends THREE.EventDispatcher {
                 fromGeoAltitude
             );
         }
-
-        if (toWorld === undefined || fromWorld === undefined) {
+        if (fromWorld === null || toWorld === null) {
             return;
         }
+        return { fromWorld, toWorld };
+    }
+
+    private panFromTo(fromX: number, fromY: number, toX: number, toY: number): void {
+        const vectors = this.getWorldPositionWithElevation(fromX, fromY, toX, toY);
+        if (vectors === undefined) {
+            return;
+        }
+        const { fromWorld, toWorld } = vectors;
 
         if (this.mapView.projection.type === geoUtils.ProjectionType.Planar) {
             // Cancel zoom inertia if a panning is triggered, so that the mouse location is kept.
@@ -1182,10 +1240,14 @@ export class MapControls extends THREE.EventDispatcher {
 
             this.pan();
         } else {
-            quaternion.setFromUnitVectors(fromWorld.normalize(), toWorld.normalize()).inverse();
-            matrix.copyPosition(this.camera.matrix).makeRotationFromQuaternion(quaternion);
-            this.camera.applyMatrix(matrix);
+            this.rotateGlobe(fromWorld, toWorld);
         }
+    }
+
+    private rotateGlobe(fromWorld: THREE.Vector3, toWorld: THREE.Vector3) {
+        quaternion.setFromUnitVectors(fromWorld.normalize(), toWorld.normalize()).inverse();
+        matrix.copyPosition(this.camera.matrix).makeRotationFromQuaternion(quaternion);
+        this.camera.applyMatrix(matrix);
     }
 
     private constrainPitchAngle(pitchAngle: number, deltaPitch: number): number {

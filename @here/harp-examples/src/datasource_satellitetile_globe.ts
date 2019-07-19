@@ -5,7 +5,7 @@
  */
 
 import { GeoCoordinates, sphereProjection } from "@here/harp-geoutils";
-import { MapControls } from "@here/harp-map-controls";
+import { MapControls, MapControlsUI } from "@here/harp-map-controls";
 import { CopyrightElementHandler, MapView } from "@here/harp-mapview";
 import { WebTileDataSource } from "@here/harp-webtile-datasource";
 import { appCode, appId } from "../config";
@@ -39,7 +39,10 @@ export namespace SatelliteTileDataSourceGlobeExample {
         });
 
         // instantiate the default map controls, allowing the user to pan around freely.
-        MapControls.create(map);
+        const mapControls = new MapControls(map);
+
+        const ui = new MapControlsUI(mapControls);
+        map.canvas.parentElement!.appendChild(ui.domElement);
 
         CopyrightElementHandler.install("copyrightNotice", map);
 

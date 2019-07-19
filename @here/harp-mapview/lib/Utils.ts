@@ -176,7 +176,7 @@ export namespace MapViewUtils {
         pointOnScreenXinNDC: number,
         pointOnScreenYinNDC: number,
         elevation?: number
-    ): THREE.Vector3 {
+    ): THREE.Vector3 | null {
         const pointInNDCPosition = new THREE.Vector3(pointOnScreenXinNDC, pointOnScreenYinNDC, 0.5);
 
         cameraZPosition.copy(mapView.camera.position);
