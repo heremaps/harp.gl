@@ -1962,15 +1962,6 @@ export class MapView extends THREE.EventDispatcher {
      */
     clearTileCache(dataSourceName?: string) {
         this.m_visibleTiles.clearTileCache(dataSourceName);
-
-        if (dataSourceName !== undefined) {
-            const dataSource = this.getDataSourceByName(dataSourceName);
-            if (dataSource) {
-                dataSource.clearCache();
-            }
-        } else {
-            this.m_tileDataSources.forEach(dataSource => dataSource.clearCache());
-        }
     }
 
     /**
