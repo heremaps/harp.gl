@@ -150,7 +150,7 @@
                 "description": "highway-link",
                 "when": [
                     "all",
-                    ["^=", ["get", "$layer"], "roads"],
+                    ["==", ["get", "$layer"], "roads"],
                     ["==", ["get", "kind"], "highway"],
                     ["has", "is_link"]
                 ],
@@ -599,7 +599,7 @@
                 "when": [
                     "all",
                     ["==", ["get", "$layer"], "roads"],
-                    ["^=", ["get", "$geometryType"], "line"],
+                    ["==", ["get", "$geometryType"], "line"],
                     ["==", ["get", "kind"], "rail"],
                     ["in", ["get", "kind_detail"], ["rail", "light_rail", "tram"]],
                     ["==", ["get", "kind_detail"], "tram"]
@@ -621,7 +621,7 @@
                 "when": [
                     "all",
                     ["==", ["get", "$layer"], "roads"],
-                    ["^=", ["get", "$geometryType"], "line"],
+                    ["==", ["get", "$geometryType"], "line"],
                     ["==", ["get", "kind"], "rail"],
                     ["in", ["get", "kind_detail"], ["rail", "light_rail", "tram"]],
                     [
@@ -642,7 +642,7 @@
                 "when": [
                     "all",
                     ["==", ["get", "$layer"], "roads"],
-                    ["^=", ["get", "$geometryType"], "line"],
+                    ["==", ["get", "$geometryType"], "line"],
                     ["==", ["get", "kind"], "rail"],
                     ["in", ["get", "kind_detail"], ["rail", "light_rail", "tram"]],
                     ["!", ["get", "is_tunnel"]]
@@ -663,7 +663,7 @@
                 "when": [
                     "all",
                     ["==", ["get", "$layer"], "roads"],
-                    ["^=", ["get", "$geometryType"], "line"],
+                    ["==", ["get", "$geometryType"], "line"],
                     ["==", ["get", "kind"], "rail"],
                     ["in", ["get", "kind_detail"], ["rail", "light_rail", "tram"]],
                     ["get", "is_tunnel"]
@@ -684,7 +684,7 @@
                 "when": [
                     "all",
                     ["==", ["get", "$layer"], "roads"],
-                    ["^=", ["get", "$geometryType"], "line"],
+                    ["==", ["get", "$geometryType"], "line"],
                     ["==", ["get", "kind"], "rail"],
                     ["in", ["get", "kind_detail"], ["rail", "light_rail", "tram"]],
                     ["!", ["get", "is_tunnel"]]
@@ -716,7 +716,7 @@
                 "when": [
                     "all",
                     ["==", ["get", "$layer"], "roads"],
-                    ["^=", ["get", "$geometryType"], "line"],
+                    ["==", ["get", "$geometryType"], "line"],
                     ["==", ["get", "kind"], "rail"],
                     ["in", ["get", "kind_detail"], ["rail", "light_rail", "tram"]],
                     ["get", "is_tunnel"]
@@ -748,7 +748,7 @@
                 "when": [
                     "all",
                     ["==", ["get", "$layer"], "water"],
-                    ["^=", ["get", "$geometryType"], "polygon"]
+                    ["==", ["get", "$geometryType"], "polygon"]
                 ],
                 "technique": "fill",
                 "attr": {
@@ -772,8 +772,8 @@
                 "description": "country border",
                 "when": [
                     "all",
-                    ["^=", ["get", "$layer"], "boundaries"],
-                    ["^=", ["get", "$geometryType"], "line"],
+                    ["==", ["get", "$layer"], "boundaries"],
+                    ["==", ["get", "$geometryType"], "line"],
                     ["==", ["get", "kind"], "country"]
                 ],
                 "technique": "solid-line",
@@ -806,8 +806,8 @@
                 "description": "country border",
                 "when": [
                     "all",
-                    ["^=", ["get", "$layer"], "boundaries"],
-                    ["^=", ["get", "$geometryType"], "line"],
+                    ["==", ["get", "$layer"], "boundaries"],
+                    ["==", ["get", "$geometryType"], "line"],
                     ["==", ["get", "kind"], "country"]
                 ],
                 "technique": "solid-line",
@@ -825,8 +825,8 @@
                 "description": "country border",
                 "when": [
                     "all",
-                    ["^=", ["get", "$layer"], "boundaries"],
-                    ["^=", ["get", "$geometryType"], "line"],
+                    ["==", ["get", "$layer"], "boundaries"],
+                    ["==", ["get", "$geometryType"], "line"],
                     ["==", ["get", "kind"], "country"]
                 ],
                 "technique": "text",
@@ -842,8 +842,8 @@
                 "description": "disputed border line",
                 "when": [
                     "all",
-                    ["^=", ["get", "$layer"], "boundaries"],
-                    ["^=", ["get", "$geometryType"], "line"],
+                    ["==", ["get", "$layer"], "boundaries"],
+                    ["==", ["get", "$geometryType"], "line"],
                     [
                         "in",
                         ["get", "kind"],
@@ -920,8 +920,8 @@
                 "description": "disputed border line - text",
                 "when": [
                     "all",
-                    ["^=", ["get", "$layer"], "boundaries"],
-                    ["^=", ["get", "$geometryType"], "line"],
+                    ["==", ["get", "$layer"], "boundaries"],
+                    ["==", ["get", "$geometryType"], "line"],
                     [
                         "in",
                         ["get", "kind"],
@@ -948,8 +948,8 @@
                 "description": "region border",
                 "when": [
                     "all",
-                    ["^=", ["get", "$layer"], "boundaries"],
-                    ["^=", ["get", "$geometryType"], "line"],
+                    ["==", ["get", "$layer"], "boundaries"],
+                    ["==", ["get", "$geometryType"], "line"],
                     ["==", ["get", "kind"], "region"]
                 ],
                 "technique": "solid-line",
@@ -967,8 +967,8 @@
                 "description": "region border",
                 "when": [
                     "all",
-                    ["^=", ["get", "$layer"], "boundaries"],
-                    ["^=", ["get", "$geometryType"], "line"],
+                    ["==", ["get", "$layer"], "boundaries"],
+                    ["==", ["get", "$geometryType"], "line"],
                     ["==", ["get", "kind"], "region"]
                 ],
                 "technique": "solid-line",
@@ -986,8 +986,8 @@
                 "description": "region border",
                 "when": [
                     "all",
-                    ["^=", ["get", "$layer"], "boundaries"],
-                    ["^=", ["get", "$geometryType"], "line"],
+                    ["==", ["get", "$layer"], "boundaries"],
+                    ["==", ["get", "$geometryType"], "line"],
                     ["==", ["get", "kind"], "region"]
                 ],
                 "technique": "text",
@@ -1002,8 +1002,8 @@
             {
                 "when": [
                     "all",
-                    ["^=", ["get", "$layer"], "boundaries"],
-                    ["^=", ["get", "$geometryType"], "point"]
+                    ["==", ["get", "$layer"], "boundaries"],
+                    ["==", ["get", "$geometryType"], "point"]
                 ],
                 "technique": "text",
                 "attr": {
@@ -1019,9 +1019,9 @@
                 "description": "urban",
                 "when": [
                     "all",
-                    ["^=", ["get", "$layer"], "landuse"],
-                    ["^=", ["get", "$geometryType"], "polygon"],
-                    ["^=", ["get", "kind"], "urban"]
+                    ["==", ["get", "$layer"], "landuse"],
+                    ["==", ["get", "$geometryType"], "polygon"],
+                    ["==", ["get", "kind"], "urban"]
                 ],
                 "technique": "fill",
                 "attr": {
@@ -1034,9 +1034,9 @@
                 "description": "urban area",
                 "when": [
                     "all",
-                    ["^=", ["get", "$layer"], "landuse"],
-                    ["^=", ["get", "$geometryType"], "polygon"],
-                    ["^=", ["get", "kind"], "urban_area"]
+                    ["==", ["get", "$layer"], "landuse"],
+                    ["==", ["get", "$geometryType"], "polygon"],
+                    ["==", ["get", "kind"], "urban_area"]
                 ],
                 "technique": "none",
                 "attr": {
@@ -1052,8 +1052,8 @@
                 "description": "park",
                 "when": [
                     "all",
-                    ["^=", ["get", "$layer"], "landuse"],
-                    ["^=", ["get", "$geometryType"], "polygon"],
+                    ["==", ["get", "$layer"], "landuse"],
+                    ["==", ["get", "$geometryType"], "polygon"],
                     [
                         "in",
                         ["get", "kind"],
@@ -1083,8 +1083,8 @@
                 "description": "runway",
                 "when": [
                     "all",
-                    ["^=", ["get", "$layer"], "landuse"],
-                    ["^=", ["get", "$geometryType"], "polygon"],
+                    ["==", ["get", "$layer"], "landuse"],
+                    ["==", ["get", "$geometryType"], "polygon"],
                     ["==", ["get", "kind"], "runway"]
                 ],
                 "technique": "fill",
@@ -1098,9 +1098,9 @@
                 "description": "aerodrome",
                 "when": [
                     "all",
-                    ["^=", ["get", "$layer"], "landuse"],
-                    ["^=", ["get", "$geometryType"], "polygon"],
-                    ["^=", ["get", "kind"], "aerodrome"]
+                    ["==", ["get", "$layer"], "landuse"],
+                    ["==", ["get", "$geometryType"], "polygon"],
+                    ["==", ["get", "kind"], "aerodrome"]
                 ],
                 "technique": "fill",
                 "attr": {
@@ -1112,9 +1112,9 @@
                 "description": "national_park",
                 "when": [
                     "all",
-                    ["^=", ["get", "$layer"], "landuse"],
-                    ["^=", ["get", "$geometryType"], "polygon"],
-                    ["^=", ["get", "kind"], "national_park"]
+                    ["==", ["get", "$layer"], "landuse"],
+                    ["==", ["get", "$geometryType"], "polygon"],
+                    ["==", ["get", "kind"], "national_park"]
                 ],
                 "technique": "fill",
                 "attr": {
@@ -1126,8 +1126,8 @@
                 "description": "pitch",
                 "when": [
                     "all",
-                    ["^=", ["get", "$layer"], "landuse"],
-                    ["^=", ["get", "$geometryType"], "polygon"],
+                    ["==", ["get", "$layer"], "landuse"],
+                    ["==", ["get", "$geometryType"], "polygon"],
                     ["in", ["get", "kind"], ["pitch"]]
                 ],
                 "technique": "fill",
@@ -1140,9 +1140,9 @@
                 "description": "hospital",
                 "when": [
                     "all",
-                    ["^=", ["get", "$layer"], "landuse"],
-                    ["^=", ["get", "$geometryType"], "polygon"],
-                    ["^=", ["get", "kind"], "hospital"]
+                    ["==", ["get", "$layer"], "landuse"],
+                    ["==", ["get", "$geometryType"], "polygon"],
+                    ["==", ["get", "kind"], "hospital"]
                 ],
                 "technique": "fill",
                 "attr": {
@@ -1154,9 +1154,9 @@
                 "description": "cemetery",
                 "when": [
                     "all",
-                    ["^=", ["get", "$layer"], "landuse"],
-                    ["^=", ["get", "$geometryType"], "polygon"],
-                    ["^=", ["get", "kind"], "cemetery"]
+                    ["==", ["get", "$layer"], "landuse"],
+                    ["==", ["get", "$geometryType"], "polygon"],
+                    ["==", ["get", "kind"], "cemetery"]
                 ],
                 "technique": "fill",
                 "attr": {
@@ -1168,8 +1168,8 @@
                 "description": "bridge",
                 "when": [
                     "all",
-                    ["^=", ["get", "$layer"], "landuse"],
-                    ["^=", ["get", "$geometryType"], "polygon"],
+                    ["==", ["get", "$layer"], "landuse"],
+                    ["==", ["get", "$geometryType"], "polygon"],
                     ["in", ["get", "kind"], ["bridge"]]
                 ],
                 "technique": "fill",
@@ -1182,8 +1182,8 @@
                 "description": "zoo",
                 "when": [
                     "all",
-                    ["^=", ["get", "$layer"], "landuse"],
-                    ["^=", ["get", "$geometryType"], "polygon"],
+                    ["==", ["get", "$layer"], "landuse"],
+                    ["==", ["get", "$geometryType"], "polygon"],
                     ["in", ["get", "kind"], ["sport", "sports_centre", "attraction", "zoo"]]
                 ],
                 "technique": "fill",
@@ -1196,9 +1196,9 @@
                 "description": "religion",
                 "when": [
                     "all",
-                    ["^=", ["get", "$layer"], "landuse"],
-                    ["^=", ["get", "$geometryType"], "polygon"],
-                    ["^=", ["get", "kind"], "religion"]
+                    ["==", ["get", "$layer"], "landuse"],
+                    ["==", ["get", "$geometryType"], "polygon"],
+                    ["==", ["get", "kind"], "religion"]
                 ],
                 "technique": "fill",
                 "attr": {
@@ -1210,8 +1210,8 @@
                 "description": "industrial",
                 "when": [
                     "all",
-                    ["^=", ["get", "$layer"], "landuse"],
-                    ["^=", ["get", "$geometryType"], "polygon"],
+                    ["==", ["get", "$layer"], "landuse"],
+                    ["==", ["get", "$geometryType"], "polygon"],
                     [
                         "in",
                         ["get", "kind"],
@@ -1228,8 +1228,8 @@
                 "description": "farmyard",
                 "when": [
                     "all",
-                    ["^=", ["get", "$layer"], "landuse"],
-                    ["^=", ["get", "$geometryType"], "polygon"],
+                    ["==", ["get", "$layer"], "landuse"],
+                    ["==", ["get", "$geometryType"], "polygon"],
                     [
                         "in",
                         ["get", "kind"],
@@ -1246,8 +1246,8 @@
                 "description": "beach",
                 "when": [
                     "all",
-                    ["^=", ["get", "$layer"], "landuse"],
-                    ["^=", ["get", "$geometryType"], "polygon"],
+                    ["==", ["get", "$layer"], "landuse"],
+                    ["==", ["get", "$geometryType"], "polygon"],
                     ["any", ["in", ["get", "kind"], ["beach"]], ["$=", ["get", "kind"], "_site"]]
                 ],
                 "technique": "fill",
@@ -1293,7 +1293,7 @@
                 "description": "country_pop_>10000000",
                 "when": [
                     "all",
-                    ["^=", ["get", "$layer"], "places"],
+                    ["==", ["get", "$layer"], "places"],
                     ["in", ["get", "kind"], ["country"]],
                     [">", ["get", "population"], 10000000]
                 ],
@@ -1320,7 +1320,7 @@
                 "description": "country_pop_>1000000",
                 "when": [
                     "all",
-                    ["^=", ["get", "$layer"], "places"],
+                    ["==", ["get", "$layer"], "places"],
                     ["in", ["get", "kind"], ["country"]],
                     [">", ["get", "population"], 1000000]
                 ],
@@ -1347,7 +1347,7 @@
                 "description": "country",
                 "when": [
                     "all",
-                    ["^=", ["get", "$layer"], "places"],
+                    ["==", ["get", "$layer"], "places"],
                     ["in", ["get", "kind"], ["country"]]
                 ],
                 "technique": "text",
@@ -1373,7 +1373,7 @@
                 "description": "Places",
                 "when": [
                     "all",
-                    ["^=", ["get", "$layer"], "places"],
+                    ["==", ["get", "$layer"], "places"],
                     ["in", ["get", "kind"], ["region"]]
                 ],
                 "technique": "none",
@@ -1397,7 +1397,7 @@
                 "description": "locality_pop_>10000000",
                 "when": [
                     "all",
-                    ["^=", ["get", "$layer"], "places"],
+                    ["==", ["get", "$layer"], "places"],
                     ["==", ["get", "kind"], "locality"],
                     ["has", "population"],
                     ["any", [">", ["get", "population"], 10000000], ["has", "country_capital"]],
@@ -1425,7 +1425,7 @@
                 "description": "locality_pop_>10000000",
                 "when": [
                     "all",
-                    ["^=", ["get", "$layer"], "places"],
+                    ["==", ["get", "$layer"], "places"],
                     ["==", ["get", "kind"], "locality"],
                     ["has", "population"],
                     ["any", [">", ["get", "population"], 10000000], ["has", "country_capital"]]
@@ -1451,7 +1451,7 @@
                 "description": "locality_pop_>1000000",
                 "when": [
                     "all",
-                    ["^=", ["get", "$layer"], "places"],
+                    ["==", ["get", "$layer"], "places"],
                     ["==", ["get", "kind"], "locality"],
                     ["has", "population"],
                     ["any", [">", ["get", "population"], 1000000], ["has", "region_capital"]]
@@ -1477,7 +1477,7 @@
                 "description": "locality_pop_>400000",
                 "when": [
                     "all",
-                    ["^=", ["get", "$layer"], "places"],
+                    ["==", ["get", "$layer"], "places"],
                     ["==", ["get", "kind"], "locality"],
                     ["has", "population"],
                     [">", ["get", "population"], 400000]
@@ -1503,7 +1503,7 @@
                 "description": "locality_pop_>100000",
                 "when": [
                     "all",
-                    ["^=", ["get", "$layer"], "places"],
+                    ["==", ["get", "$layer"], "places"],
                     ["==", ["get", "kind"], "locality"],
                     ["has", "population"],
                     [">", ["get", "population"], 100000]
@@ -1529,7 +1529,7 @@
                 "description": "locality_pop_>50000",
                 "when": [
                     "all",
-                    ["^=", ["get", "$layer"], "places"],
+                    ["==", ["get", "$layer"], "places"],
                     ["==", ["get", "kind"], "locality"],
                     ["has", "population"],
                     [">", ["get", "population"], 50000]
@@ -1555,7 +1555,7 @@
                 "description": "locality_pop_>10000",
                 "when": [
                     "all",
-                    ["^=", ["get", "$layer"], "places"],
+                    ["==", ["get", "$layer"], "places"],
                     ["==", ["get", "kind"], "locality"],
                     ["has", "population"],
                     [">", ["get", "population"], 10000]
@@ -1581,7 +1581,7 @@
                 "description": "locality_pop_<=10000",
                 "when": [
                     "all",
-                    ["^=", ["get", "$layer"], "places"],
+                    ["==", ["get", "$layer"], "places"],
                     ["==", ["get", "kind"], "locality"],
                     ["has", "population"],
                     ["<=", ["get", "population"], 10000]
@@ -1607,8 +1607,8 @@
                 "description": "building_geometry",
                 "when": [
                     "all",
-                    ["^=", ["get", "$layer"], "buildings"],
-                    ["^=", ["get", "$geometryType"], "polygon"]
+                    ["==", ["get", "$layer"], "buildings"],
+                    ["==", ["get", "$geometryType"], "polygon"]
                 ],
                 "technique": "extruded-polygon",
                 "attr": {
@@ -1639,9 +1639,9 @@
                 "description": "building_address",
                 "when": [
                     "all",
-                    ["^=", ["get", "$layer"], "buildings"],
-                    ["^=", ["get", "kind"], "address"],
-                    ["^=", ["get", "$geometryType"], "point"],
+                    ["==", ["get", "$layer"], "buildings"],
+                    ["==", ["get", "kind"], "address"],
+                    ["==", ["get", "$geometryType"], "point"],
                     ["get", "label_placement"]
                 ],
                 "technique": "text",
