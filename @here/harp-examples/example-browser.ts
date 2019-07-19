@@ -18,7 +18,14 @@ function exampleBrowser(exampleDefinitions: ExampleDefinitions) {
 
     let currentlySelectedSource: string | undefined;
     const categories: { [key: string]: HTMLAnchorElement[] } = {};
-    const orderedCategories: string[] = ["Getting started"];
+    const orderedCategories: string[] = [
+        "Getting started",
+        "Datasource",
+        "Rendering",
+        "Styling",
+        "Threejs",
+        "Miscellaneous"
+    ];
     const elements: HTMLAnchorElement[] = [];
     const titleElements: HTMLElement[] = [];
 
