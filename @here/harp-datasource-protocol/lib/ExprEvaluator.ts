@@ -468,3 +468,15 @@ ExprEvaluator.registerBuiltin("tan", {
         return Math.tan(value);
     }
 });
+
+ExprEvaluator.registerBuiltin("to-boolean", {
+    call: (actuals: Value[]) => Boolean(actuals[0])
+});
+
+ExprEvaluator.registerBuiltin("to-number", {
+    call: (actuals: Value[]) => Number(actuals[0])
+});
+
+ExprEvaluator.registerBuiltin("to-string", {
+    call: (actuals: Value[]) => String(actuals[0])
+});

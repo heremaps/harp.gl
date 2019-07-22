@@ -1871,6 +1871,7 @@
                     "all",
                     ["^=", ["get", "$layer"], "places"],
                     ["in", ["get", "kind"], ["country"]],
+                    ["has", "population"],
                     [">", ["get", "population"], 10000000]
                 ],
                 "technique": "text",
@@ -1898,6 +1899,7 @@
                     "all",
                     ["^=", ["get", "$layer"], "places"],
                     ["in", ["get", "kind"], ["country"]],
+                    ["has", "population"],
                     [">", ["get", "population"], 1000000]
                 ],
                 "technique": "text",
@@ -1975,9 +1977,11 @@
                     "all",
                     ["^=", ["get", "$layer"], "places"],
                     ["==", ["get", "kind"], "locality"],
-                    ["has", "population"],
-                    ["any", [">", ["get", "population"], 10000000], ["has", "country_capital"]],
-                    ["has", "country_capital"]
+                    [
+                        "any",
+                        [">", ["number", ["get", "population"], 0], 10000000],
+                        ["has", "country_capital"]
+                    ]
                 ],
                 "technique": "text",
                 "attr": {
@@ -2003,8 +2007,11 @@
                     "all",
                     ["^=", ["get", "$layer"], "places"],
                     ["==", ["get", "kind"], "locality"],
-                    ["has", "population"],
-                    ["any", [">", ["get", "population"], 10000000], ["has", "country_capital"]]
+                    [
+                        "any",
+                        [">", ["number", ["get", "population"], 0], 10000000],
+                        ["has", "country_capital"]
+                    ]
                 ],
                 "technique": "text",
                 "attr": {
@@ -2029,8 +2036,11 @@
                     "all",
                     ["^=", ["get", "$layer"], "places"],
                     ["==", ["get", "kind"], "locality"],
-                    ["has", "population"],
-                    ["any", [">", ["get", "population"], 1000000], ["has", "region_capital"]]
+                    [
+                        "any",
+                        [">", ["number", ["get", "population"], 0], 1000000],
+                        ["has", "region_capital"]
+                    ]
                 ],
                 "technique": "text",
                 "attr": {
