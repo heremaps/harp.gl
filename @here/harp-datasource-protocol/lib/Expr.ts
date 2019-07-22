@@ -8,16 +8,13 @@ import { ExprEvaluator } from "./ExprEvaluator";
 import { ExprParser } from "./ExprParser";
 
 export interface ExprVisitor<Result, Context> {
-    visitVarExpr(expr: VarExpr, context: Context): Result;
     visitBooleanLiteralExpr(expr: BooleanLiteralExpr, context: Context): Result;
     visitNumberLiteralExpr(expr: NumberLiteralExpr, context: Context): Result;
     visitStringLiteralExpr(expr: StringLiteralExpr, context: Context): Result;
+    visitVarExpr(expr: VarExpr, context: Context): Result;
     visitHasAttributeExpr(expr: HasAttributeExpr, context: Context): Result;
-    visitLengthExpr(expr: LengthExpr, context: Context): Result;
     visitContainsExpr(expr: ContainsExpr, context: Context): Result;
-    visitNotExpr(expr: NotExpr, context: Context): Result;
-    visitBinaryExpr(expr: BinaryExpr, context: Context): Result;
-    visitLogicalExpr(expr: LogicalExpr, context: Context): Result;
+    visitCallExpr(expr: CallExpr, context: Context): Result;
 }
 
 /**
@@ -38,84 +35,7 @@ export abstract class Expr {
 
     static fromJSON(node: unknown): Expr {
         if (Array.isArray(node)) {
-            const op = node[0] as Op;
-            switch (op) {
-                case "all": {
-                    if (node.length < 2) {
-                        throw new Error(`'${op}' expectes a sequence of child expressions`);
-                    }
-                    let current: Expr = this.fromJSON(node[1]);
-                    for (let i = 2; i < node.length; ++i) {
-                        current = new LogicalExpr("&&", current, this.fromJSON(node[i]));
-                    }
-                    return current;
-                }
-
-                case "any": {
-                    if (node.length < 2) {
-                        throw new Error(`'${op}' expectes a sequence of child expressions`);
-                    }
-                    let current: Expr = this.fromJSON(node[1]);
-                    for (let i = 2; i < node.length; ++i) {
-                        current = new LogicalExpr("||", current, this.fromJSON(node[i]));
-                    }
-                    return current;
-                }
-
-                case "get":
-                    if (typeof node[1] !== "string") {
-                        throw new Error(`expected the name of an attribute`);
-                    }
-                    return new VarExpr(node[1]);
-
-                case "has":
-                    if (typeof node[1] !== "string") {
-                        throw new Error(`expected the name of an attribute`);
-                    }
-                    return new HasAttributeExpr(node[1]);
-
-                case "length":
-                    if (node.length !== 2) {
-                        throw new Error(`'${op}' expects a child expression`);
-                    }
-                    return new LengthExpr(this.fromJSON(node[1]));
-
-                case "in":
-                    if (!Array.isArray(node[2])) {
-                        // tslint:disable-next-line: max-line-length
-                        throw new Error(
-                            `'${op}' expects an expression followed by an array of literals`
-                        );
-                    }
-                    return new ContainsExpr(
-                        this.fromJSON(node[1]),
-                        node[2].map((n: unknown) => this.fromJSON(n))
-                    );
-
-                case "!":
-                    if (node.length !== 2) {
-                        throw new Error(`'${op}' expects a child expression`);
-                    }
-                    return new NotExpr(this.fromJSON(node[1]));
-
-                case "<":
-                case ">":
-                case "<=":
-                case ">=":
-                case "~=":
-                case "^=":
-                case "$=":
-                case "==":
-                case "!=":
-                    if (node.length !== 3) {
-                        throw new Error(`'${op}' expectes two child expressions`);
-                    }
-                    return new BinaryExpr(
-                        op as any,
-                        this.fromJSON(node[1]),
-                        this.fromJSON(node[2])
-                    );
-            } // switch
+            return Expr.parseCall(node);
         } else if (typeof node === "boolean") {
             return new BooleanLiteralExpr(node);
         } else if (typeof node === "number") {
@@ -124,6 +44,43 @@ export abstract class Expr {
             return new StringLiteralExpr(node);
         }
         throw new Error("failed to create expression");
+    }
+
+    private static parseCall(node: any[]): Expr {
+        const op = node[0];
+
+        if (typeof op !== "string") {
+            throw new Error("expected a builtin function name");
+        }
+
+        switch (op) {
+            case "get":
+                if (typeof node[1] !== "string") {
+                    throw new Error(`expected the name of an attribute`);
+                }
+                return new VarExpr(node[1]);
+
+            case "has":
+                if (typeof node[1] !== "string") {
+                    throw new Error(`expected the name of an attribute`);
+                }
+                return new HasAttributeExpr(node[1]);
+
+            case "in":
+                if (!Array.isArray(node[2])) {
+                    // tslint:disable-next-line: max-line-length
+                    throw new Error(
+                        `'${op}' expects an expression followed by an array of literals`
+                    );
+                }
+                return new ContainsExpr(
+                    this.fromJSON(node[1]),
+                    node[2].map((n: unknown) => this.fromJSON(n))
+                );
+
+            default:
+                return new CallExpr(op, node.slice(1).map(childExpr => this.fromJSON(childExpr)));
+        } // switch
     }
 
     /**
@@ -158,11 +115,6 @@ export type EqualityOp = "~=" | "^=" | "$=" | "==" | "!=";
  * @hidden
  */
 export type BinaryOp = RelationalOp | EqualityOp;
-
-/**
- * @hidden
- */
-export type LogicalOp = "&&" | "||";
 
 /**
  * @hidden
@@ -316,70 +268,19 @@ export class ContainsExpr extends Expr {
     }
 }
 
-/**
- * A 'length' expression with an attribute given, for example `length(ref)`.
- *
- * Measures the length of the string (number of letters) or counts digits in numerical data type.
- * For boolean data types always returns 1.
- */
-export class LengthExpr extends Expr {
-    constructor(readonly childExpr: Expr) {
+export class CallExpr extends Expr {
+    constructor(readonly op: string, readonly children: Expr[]) {
         super();
     }
 
     accept<Result, Context>(visitor: ExprVisitor<Result, Context>, context: Context): Result {
-        return visitor.visitLengthExpr(this, context);
+        return visitor.visitCallExpr(this, context);
     }
 }
-
-/**
- * A `not` expression.
- */
-export class NotExpr extends Expr {
-    constructor(readonly childExpr: Expr) {
-        super();
-    }
-
-    accept<Result, Context>(visitor: ExprVisitor<Result, Context>, context: Context): Result {
-        return visitor.visitNotExpr(this, context);
-    }
-}
-
-/**
- * A binary operator expression
- */
-export class BinaryExpr extends Expr {
-    constructor(readonly op: BinaryOp, readonly left: Expr, readonly right: Expr) {
-        super();
-    }
-
-    accept<Result, Context>(visitor: ExprVisitor<Result, Context>, context: Context): Result {
-        return visitor.visitBinaryExpr(this, context);
-    }
-}
-
-/**
- * Logical expression.
- */
-export class LogicalExpr extends Expr {
-    constructor(readonly op: LogicalOp, readonly left: Expr, readonly right: Expr) {
-        super();
-    }
-
-    accept<Result, Context>(visitor: ExprVisitor<Result, Context>, context: Context): Result {
-        return visitor.visitLogicalExpr(this, context);
-    }
-}
-
-type Op = "all" | "any" | "get" | "has" | "length" | "in" | "!" | BinaryOp;
 
 class ExprSerializer implements ExprVisitor<unknown, void> {
     serialize(expr: Expr): unknown {
         return expr.accept(this, undefined);
-    }
-
-    visitVarExpr(expr: VarExpr, context: void): unknown {
-        return ["get", expr.name];
     }
 
     visitBooleanLiteralExpr(expr: BooleanLiteralExpr, context: void): unknown {
@@ -394,6 +295,10 @@ class ExprSerializer implements ExprVisitor<unknown, void> {
         return expr.value;
     }
 
+    visitVarExpr(expr: VarExpr, context: void): unknown {
+        return ["get", expr.name];
+    }
+
     visitHasAttributeExpr(expr: HasAttributeExpr, context: void): unknown {
         return ["has", expr.attribute];
     }
@@ -402,42 +307,7 @@ class ExprSerializer implements ExprVisitor<unknown, void> {
         return ["in", this.serialize(expr.value), expr.elements.map(e => this.serialize(e))];
     }
 
-    visitLengthExpr(expr: LengthExpr, context: void): unknown {
-        return ["length", this.serialize(expr.childExpr)];
-    }
-
-    visitNotExpr(expr: NotExpr, context: void): unknown {
-        return ["!", this.serialize(expr.childExpr)];
-    }
-
-    visitBinaryExpr(expr: BinaryExpr, context: void): unknown {
-        return [expr.op, this.serialize(expr.left), this.serialize(expr.right)];
-    }
-
-    visitLogicalExpr(expr: LogicalExpr, context: void): unknown {
-        const result: unknown[] = [this.convertLogicalOp(expr.op)];
-        this.unfold(expr.left, expr.op, result);
-        this.unfold(expr.right, expr.op, result);
-        return result;
-    }
-
-    private convertLogicalOp(op: LogicalOp): string | never {
-        switch (op) {
-            case "&&":
-                return "all";
-            case "||":
-                return "any";
-            default:
-                throw new Error(`invalid logical op '${op}'`);
-        }
-    }
-
-    private unfold(e: Expr, op: LogicalOp, exprs: unknown[]) {
-        if (e instanceof LogicalExpr && e.op === op) {
-            this.unfold(e.left, op, exprs);
-            this.unfold(e.right, op, exprs);
-        } else {
-            exprs.push(e);
-        }
+    visitCallExpr(expr: CallExpr, context: void): unknown {
+        return [expr.op, ...expr.children.map(childExpr => this.serialize(childExpr))];
     }
 }
