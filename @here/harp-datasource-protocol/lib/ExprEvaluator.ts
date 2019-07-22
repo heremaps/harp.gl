@@ -239,3 +239,15 @@ ExprEvaluator.registerBuiltin("upcase", {
         return String(actuals[0]).toLocaleUpperCase();
     }
 });
+
+ExprEvaluator.registerBuiltin("+", {
+    call: (actuals: Value[]) => {
+        return actuals.reduce((a, b) => Number(a) + Number(b), 0);
+    }
+});
+
+ExprEvaluator.registerBuiltin("*", {
+    call: (actuals: Value[]) => {
+        return actuals.reduce((a, b) => Number(a) * Number(b), 1);
+    }
+});

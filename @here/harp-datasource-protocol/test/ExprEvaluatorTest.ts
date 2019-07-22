@@ -155,4 +155,16 @@ describe("ExprEvaluator", function() {
             );
         });
     });
+
+    describe("Operator '+'", function() {
+        it("evaluate", function() {
+            assert.strictEqual(evaluate(["+", 123, 321]), 123 + 321);
+        });
+    });
+
+    describe("Operator '*'", function() {
+        it("evaluate", function() {
+            assert.strictEqual(evaluate(["*", 1, 2, 3, 4]), 1 * 2 * 3 * 4);
+        });
+    });
 });
