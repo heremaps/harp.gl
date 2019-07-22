@@ -123,4 +123,36 @@ describe("ExprEvaluator", function() {
             assert.isFalse(evaluate(["!", ["in", ["get", "emptyText"], [defaultEnv.emptyText]]]));
         });
     });
+
+    describe("Operator 'concat'", function() {
+        it("evaluate", function() {
+            assert.strictEqual(evaluate(["concat", 1, 2, 3]), "123");
+            assert.strictEqual(evaluate(["concat", "hello", " ", "world"]), "hello world");
+            assert.strictEqual(evaluate(["concat", "string", "_", 123]), "string_123");
+            assert.strictEqual(
+                evaluate(["concat", ["get", "someText"], "_", 123]),
+                "some text_123"
+            );
+            assert.strictEqual(evaluate(["concat", "on is ", ["get", "on"]]), "on is true");
+            assert.strictEqual(evaluate(["concat", "off is ", ["get", "off"]]), "off is false");
+        });
+    });
+
+    describe("Operator 'downcase'", function() {
+        it("evaluate", function() {
+            assert.strictEqual(
+                evaluate(["downcase", ["get", "someText"]]),
+                defaultEnv.someText.toLocaleLowerCase()
+            );
+        });
+    });
+
+    describe("Operator 'upcase'", function() {
+        it("evaluate", function() {
+            assert.strictEqual(
+                evaluate(["upcase", ["get", "someText"]]),
+                defaultEnv.someText.toLocaleUpperCase()
+            );
+        });
+    });
 });
