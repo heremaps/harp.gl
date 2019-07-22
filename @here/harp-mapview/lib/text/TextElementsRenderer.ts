@@ -1224,6 +1224,7 @@ export class TextElementsRenderer {
                 tempBufferAdditionParams.position = tempPosition;
                 tempAdditionParams.layer = textElement.renderOrder;
                 tempAdditionParams.letterCaseArray = textElement.glyphCaseArray;
+                tempAdditionParams.pickingData = textElement.userData ? textElement : undefined;
                 textCanvas.addText(textElement.glyphs!, tempPosition, tempAdditionParams);
             } else {
                 // Adjust the label positioning.
@@ -1254,6 +1255,7 @@ export class TextElementsRenderer {
                 tempAdditionParams.pathOverflow = true;
                 tempAdditionParams.layer = textElement.renderOrder;
                 tempAdditionParams.letterCaseArray = textElement.glyphCaseArray;
+                tempAdditionParams.pickingData = textElement.userData ? textElement : undefined;
                 textCanvas.addText(textElement.glyphs!, tempPosition, tempAdditionParams);
             }
         }
@@ -1713,6 +1715,9 @@ export class TextElementsRenderer {
                             tempBufferAdditionParams.backgroundOpacity =
                                 tempBufferAdditionParams.opacity *
                                 textElement.renderStyle!.backgroundOpacity;
+                            tempBufferAdditionParams.pickingData = textElement.userData
+                                ? textElement
+                                : undefined;
                             textCanvas.addTextBufferObject(
                                 pointLabel.textBufferObject!,
                                 tempBufferAdditionParams
@@ -2054,6 +2059,7 @@ export class TextElementsRenderer {
                 tempAdditionParams.path = textPath;
                 tempAdditionParams.layer = pathLabel.renderOrder;
                 tempAdditionParams.letterCaseArray = pathLabel.glyphCaseArray;
+                tempAdditionParams.pickingData = textElement.userData ? textElement : undefined;
                 textCanvas.addText(pathLabel.glyphs!, tempPosition, tempAdditionParams);
 
                 // Allocate collision info if needed.

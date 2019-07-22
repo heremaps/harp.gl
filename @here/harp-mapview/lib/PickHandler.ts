@@ -9,7 +9,6 @@ import * as THREE from "three";
 
 import { MapView } from "./MapView";
 import { MapViewPoints } from "./MapViewPoints";
-import { PickingRaycaster } from "./PickingRaycaster";
 import { RoadPicker } from "./RoadPicker";
 import { RoadIntersectionData, Tile, TileFeatureData } from "./Tile";
 
@@ -102,7 +101,6 @@ export interface PickResult {
  * Handles the picking of scene geometry and roads.
  */
 export class PickHandler {
-    private readonly m_rayCaster: PickingRaycaster;
     private readonly m_plane = new THREE.Plane(new THREE.Vector3(0, 0, 1));
     private readonly m_roadPicker?: RoadPicker;
 
@@ -111,7 +109,6 @@ export class PickHandler {
         readonly camera: THREE.Camera,
         public enableRoadPicking = true
     ) {
-        this.m_rayCaster = new PickingRaycaster(mapView);
         if (enableRoadPicking) {
             this.m_roadPicker = new RoadPicker(mapView);
         }
@@ -137,8 +134,8 @@ export class PickHandler {
      */
     intersectMapObjects(x: number, y: number): PickResult[] {
         const worldPos = this.mapView.getNormalizedScreenCoordinates(x, y);
-        const rayCaster = this.m_rayCaster;
 
+        const rayCaster = this.mapView.raycasterFromScreenPoint(x, y);
         const pickResults: PickResult[] = [];
 
         if (this.mapView.textElementsRenderer !== undefined) {
@@ -148,8 +145,6 @@ export class PickHandler {
             const scenePosition = new THREE.Vector2(screenX, screenY);
             this.mapView.textElementsRenderer.pickTextElements(scenePosition, pickResults);
         }
-
-        rayCaster.setFromCamera(worldPos, this.camera);
 
         // calculate objects intersecting the picking ray
         const intersects = rayCaster.intersectObjects(this.mapView.worldRootObject.children, true);
@@ -161,58 +156,57 @@ export class PickHandler {
                 intersection: intersect
             };
 
-            if (intersect.object.userData !== undefined) {
-                const featureData: TileFeatureData | undefined =
-                    intersect.object.userData !== undefined
-                        ? (intersect.object.userData.feature as TileFeatureData)
-                        : undefined;
-
-                if (featureData === undefined) {
-                    pickResults.push(pickResult);
-                    continue;
-                }
-
-                this.addObjInfo(featureData, intersect, pickResult);
-
-                if (featureData.ids !== undefined) {
-                    const featureId = featureData.ids.length === 1 ? featureData.ids[0] : undefined;
-                    pickResult.featureId = featureId;
-                }
-
-                let pickObjectType: PickObjectType;
-
-                switch (featureData.geometryType) {
-                    case GeometryType.Point:
-                    case GeometryType.Text:
-                        pickObjectType = PickObjectType.Point;
-                        break;
-                    case GeometryType.Line:
-                    case GeometryType.ExtrudedLine:
-                    case GeometryType.SolidLine:
-                    case GeometryType.TextPath:
-                        pickObjectType = PickObjectType.Line;
-                        break;
-                    case GeometryType.Polygon:
-                    case GeometryType.ExtrudedPolygon:
-                        pickObjectType = PickObjectType.Area;
-                        break;
-                    case GeometryType.Object3D:
-                        pickObjectType = PickObjectType.Object3D;
-                        break;
-                    default:
-                        pickObjectType = PickObjectType.Unspecified;
-                }
-
-                pickResult.type = pickObjectType;
+            if (
+                intersect.object.userData === undefined ||
+                intersect.object.userData.feature === undefined
+            ) {
                 pickResults.push(pickResult);
+                continue;
             }
+
+            const featureData: TileFeatureData = intersect.object.userData.feature;
+
+            this.addObjInfo(featureData, intersect, pickResult);
+
+            if (featureData.ids !== undefined) {
+                const featureId = featureData.ids.length === 1 ? featureData.ids[0] : undefined;
+                pickResult.featureId = featureId;
+            }
+
+            let pickObjectType: PickObjectType;
+
+            switch (featureData.geometryType) {
+                case GeometryType.Point:
+                case GeometryType.Text:
+                    pickObjectType = PickObjectType.Point;
+                    break;
+                case GeometryType.Line:
+                case GeometryType.ExtrudedLine:
+                case GeometryType.SolidLine:
+                case GeometryType.TextPath:
+                    pickObjectType = PickObjectType.Line;
+                    break;
+                case GeometryType.Polygon:
+                case GeometryType.ExtrudedPolygon:
+                    pickObjectType = PickObjectType.Area;
+                    break;
+                case GeometryType.Object3D:
+                    pickObjectType = PickObjectType.Object3D;
+                    break;
+                default:
+                    pickObjectType = PickObjectType.Unspecified;
+            }
+
+            pickResult.type = pickObjectType;
+            pickResults.push(pickResult);
         }
 
         if (this.enableRoadPicking) {
             const planeIntersectPosition = new THREE.Vector3();
-            rayCaster.ray.intersectPlane(this.m_plane, planeIntersectPosition);
+            const cameraPos = this.mapView.camera.position.clone();
 
-            const cameraPos = this.camera.position.clone();
+            rayCaster.setFromCamera(worldPos, this.mapView.camera);
+            rayCaster.ray.intersectPlane(this.m_plane, planeIntersectPosition);
 
             this.mapView.forEachVisibleTile(tile => {
                 this.m_roadPicker!.intersectRoads(
@@ -250,7 +244,7 @@ export class PickHandler {
         if (featureData.starts.length > 1) {
             let objInfosIndex = 0;
             for (const polygonStartFace of featureData.starts) {
-                if (polygonStartFace > intersect.faceIndex) {
+                if (polygonStartFace > intersect.faceIndex * 3) {
                     break;
                 }
                 objInfosIndex++;

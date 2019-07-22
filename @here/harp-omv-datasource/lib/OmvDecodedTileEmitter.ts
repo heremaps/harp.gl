@@ -120,6 +120,12 @@ class MeshBuffers implements IMeshBuffers {
      */
     readonly featureStarts: number[] = [];
 
+    /**
+     * An optional list of additional data that can be used as additional data for the object
+     * picking.
+     */
+    readonly objInfos: Array<{} | undefined> = [];
+
     constructor(readonly type: GeometryType) {}
 
     addText(text: string) {
@@ -198,7 +204,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                 continue;
             }
 
-            const { positions, texts, featureIds, imageTextures } = meshBuffers;
+            const { positions, texts, featureIds, imageTextures, objInfos } = meshBuffers;
 
             const shouldCreateTextGeometries =
                 isTextTechnique(technique) || isPoiTechnique(technique);
@@ -256,6 +262,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
 
                 if (this.m_gatherFeatureIds) {
                     featureIds.push(featureId);
+                    objInfos.push(env.entries);
                 }
                 if (isPoiTechnique) {
                     if (imageTexture === undefined) {
@@ -431,7 +438,8 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                             path: aLine,
                             pathLengthSqr,
                             text: String(text),
-                            featureId
+                            featureId,
+                            objInfos: this.m_gatherFeatureIds ? env.entries : undefined
                         });
                     }
                 } else {
@@ -462,7 +470,8 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                             texts: [0],
                             stringCatalog: [text, imageTexture],
                             imageTextures: [1],
-                            featureId
+                            featureId,
+                            objInfos: this.m_gatherFeatureIds ? [env.entries] : undefined
                         });
                     }
                 }
@@ -474,7 +483,14 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                 if (meshBuffers === undefined) {
                     continue;
                 }
-                const { positions, indices, groups, featureIds, featureStarts } = meshBuffers;
+                const {
+                    positions,
+                    indices,
+                    groups,
+                    featureIds,
+                    featureStarts,
+                    objInfos
+                } = meshBuffers;
                 const start = indices.length;
 
                 const lineWidth = getPropertyValue(
@@ -492,9 +508,10 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                 lines.forEach(aLine => {
                     triangulateLine(aLine, lineWidth, positions, indices, addCircle);
 
-                    if (this.m_gatherFeatureIds && featureIds && featureStarts) {
+                    if (this.m_gatherFeatureIds) {
                         featureIds.push(featureId);
                         featureStarts.push(start);
+                        objInfos.push(env.entries);
                     }
                 });
 
@@ -1038,6 +1055,12 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                 }
             }
 
+            if (this.m_gatherFeatureIds) {
+                meshBuffers.objInfos.push(env.entries);
+                meshBuffers.featureIds.push(featureId);
+                meshBuffers.featureStarts.push(start);
+            }
+
             const count = indices.length - start;
             if (count > 0) {
                 groups.push({
@@ -1050,7 +1073,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
         }
     }
 
-    private createGeometries(): any {
+    private createGeometries() {
         this.m_meshBuffers.forEach((meshBuffers, techniqueIdx) => {
             if (meshBuffers.positions.length === 0) {
                 return;
@@ -1081,7 +1104,8 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                     texts: meshBuffers.texts,
                     technique: techniqueIdx,
                     featureId: meshBuffers.featureIds ? meshBuffers.featureIds[0] : undefined,
-                    stringCatalog: meshBuffers.stringCatalog
+                    stringCatalog: meshBuffers.stringCatalog,
+                    objInfos: this.m_gatherFeatureIds ? meshBuffers.objInfos : undefined
                 });
                 return;
             }
@@ -1098,7 +1122,8 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                     technique: techniqueIdx,
                     featureId: meshBuffers.featureIds ? meshBuffers.featureIds[0] : undefined,
                     stringCatalog: meshBuffers.stringCatalog,
-                    imageTextures: meshBuffers.imageTextures
+                    imageTextures: meshBuffers.imageTextures,
+                    objInfos: meshBuffers.objInfos
                 });
                 return;
             }
@@ -1200,6 +1225,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
             if (this.m_gatherFeatureIds) {
                 geometry.featureIds = meshBuffers.featureIds;
                 geometry.featureStarts = meshBuffers.featureStarts;
+                geometry.objInfos = meshBuffers.objInfos;
             }
 
             this.m_geometries.push(geometry);

@@ -16,6 +16,7 @@ import {
     ExtendedTileInfoVisitor,
     ExtendedTileInfoWriter,
     FeatureGroup,
+    FeatureGroupType,
     PolygonFeatureGroup
 } from "../lib/TileInfo";
 
@@ -358,7 +359,7 @@ describe("ExtendedTileInfo", function() {
             env,
             1234,
             techniqueIndex,
-            /* isPolygonGroup */ false
+            FeatureGroupType.Point
         );
 
         writer.addFeaturePoint(tileInfo.pointGroup, 5, 6);
@@ -388,7 +389,7 @@ describe("ExtendedTileInfo", function() {
             env,
             3456,
             techniqueIndex,
-            /* isPolygonGroup */ false
+            FeatureGroupType.Point
         );
 
         writer.addFeaturePoint(tileInfo.pointGroup, 5, 6);
@@ -450,7 +451,7 @@ describe("ExtendedTileInfo", function() {
             env,
             3456,
             techniqueIndex,
-            /* isPolygonGroup */ false
+            FeatureGroupType.Point
         );
 
         writer.addFeaturePoint(tileInfo.pointGroup, 5, 6);
@@ -463,7 +464,7 @@ describe("ExtendedTileInfo", function() {
             pointInfo2.env,
             7890,
             techniqueIndex2,
-            /* isPolygonGroup */ false
+            FeatureGroupType.Point
         );
 
         writer.addFeaturePoint(tileInfo.pointGroup, 8, 9);
@@ -548,7 +549,7 @@ describe("ExtendedTileInfo", function() {
             env,
             678,
             techniqueIndex,
-            /* isPolygonGroup */ false
+            FeatureGroupType.Line
         );
 
         writer.addFeaturePoints(tileInfo.lineGroup, [10, 11, 12, 13]);
@@ -605,7 +606,7 @@ describe("ExtendedTileInfo", function() {
             env,
             678,
             techniqueIndex,
-            /* isPolygonGroup */ false
+            FeatureGroupType.Line
         );
 
         writer.addFeaturePoints(tileInfo.lineGroup, [10, 11, 12, 13]);
@@ -618,7 +619,7 @@ describe("ExtendedTileInfo", function() {
             lineInfo2.env,
             7890,
             techniqueIndex2,
-            /* isPolygonGroup */ false
+            FeatureGroupType.Line
         );
 
         writer.addFeaturePoints(tileInfo.lineGroup, [20, 21, 22, 23]);
@@ -693,7 +694,7 @@ describe("ExtendedTileInfo", function() {
             env,
             678,
             techniqueIndex,
-            /* isPolygonGroup */ true
+            FeatureGroupType.Polygon
         );
 
         writer.addRingPoints(tileInfo.polygonGroup, [10, 11, 12, 13, 14, 15], true);
@@ -757,7 +758,7 @@ describe("ExtendedTileInfo", function() {
             env,
             678,
             techniqueIndex,
-            /* isPolygonGroup */ true
+            FeatureGroupType.Polygon
         );
 
         writer.addRingPoints(tileInfo.polygonGroup, [10, 11, 12, 13, 14, 15], true);
@@ -770,7 +771,7 @@ describe("ExtendedTileInfo", function() {
             polygonInfo2.env,
             999,
             techniqueIndex2,
-            /* isPolygonGroup */ true
+            FeatureGroupType.Polygon
         );
 
         writer.addRingPoints(tileInfo.polygonGroup, [125, 135, 145, 155, 165, 175, 185, 195], true);
@@ -854,7 +855,7 @@ describe("ExtendedTileInfo", function() {
             env,
             678,
             techniqueIndex,
-            /* isPolygonGroup */ true
+            FeatureGroupType.Polygon
         );
 
         writer.addRingPoints(tileInfo.polygonGroup, [10, 11, 12, 13, 14, 15], true);
@@ -868,7 +869,7 @@ describe("ExtendedTileInfo", function() {
             polygonInfo2.env,
             999,
             techniqueIndex2,
-            /* isPolygonGroup */ true
+            FeatureGroupType.Polygon
         );
 
         writer.addRingPoints(tileInfo.polygonGroup, [125, 135, 145, 155, 165, 175, 185, 195], true);
@@ -954,7 +955,7 @@ describe("ExtendedTileInfo", function() {
             env,
             678,
             techniqueIndex,
-            /* isPolygonGroup */ true
+            FeatureGroupType.Polygon
         );
 
         writer.addRingPoints(tileInfo.polygonGroup, [10, 11, 12, 13, 14, 15], true);
@@ -969,7 +970,7 @@ describe("ExtendedTileInfo", function() {
             polygonInfo2.env,
             999,
             techniqueIndex2,
-            /* isPolygonGroup */ true
+            FeatureGroupType.Polygon
         );
 
         writer.addRingPoints(tileInfo.polygonGroup, [125, 135, 145, 155, 165, 175, 185, 195], true);
