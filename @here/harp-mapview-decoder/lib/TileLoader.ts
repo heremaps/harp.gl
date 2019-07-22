@@ -355,9 +355,14 @@ export class TileLoader {
      * @param error Error object describing the failing.
      */
     protected onError(error: Error) {
+        if (this.state === TileLoaderState.Canceled) {
+            // If we're canceled, we should simply ignore any state transitions and errors from
+            // underlying load/decode ops.
+            return;
+        }
         const dataSource = this.dataSource;
         logger.error(
-            `[${dataSource.name}]: failed to load tile ${this.tileKey.toHereTile()}`,
+            `[${dataSource.name}]: failed to load tile ${this.tileKey.mortonCode()}`,
             error
         );
 

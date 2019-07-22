@@ -56,13 +56,14 @@ export class WorkerBasedDecoder implements ITileDecoder {
      */
     dispose() {
         if (this.m_serviceCreated) {
-            this.workerSet.broadcastRequest(
-                WorkerServiceProtocol.WORKER_SERVICE_MANAGER_SERVICE_ID,
-                {
+            this.workerSet
+                .broadcastRequest(WorkerServiceProtocol.WORKER_SERVICE_MANAGER_SERVICE_ID, {
                     type: WorkerServiceProtocol.Requests.DestroyService,
                     targetServiceId: this.serviceId
-                }
-            );
+                })
+                .catch(() => {
+                    /* Ignoring these errors as underlying workers possibly do not exist anymore. */
+                });
         }
 
         this.workerSet.removeReference();
