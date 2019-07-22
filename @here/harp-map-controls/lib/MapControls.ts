@@ -99,6 +99,11 @@ const DEFAULT_MAX_PITCH_ANGLE = Math.PI / 4;
 const EPSILON = 0.01;
 
 /**
+ * Maximum duration between start and end touch events to define a finger tap.
+ */
+const MAX_TAP_DURATION = 120;
+
+/**
  * This map control provides basic map-related building blocks to interact with the map. It also
  * provides a default way of handling user input. Currently we support basic mouse interaction and
  * touch input interaction.
@@ -221,6 +226,18 @@ export class MapControls extends THREE.EventDispatcher {
     minCameraHeight = 3;
 
     /**
+     * Zoom level delta to apply when double clicking or double tapping. `0` disables the feature.
+     */
+    zoomLevelDeltaOnDoubleClick = 1.0;
+
+    /**
+     * Double click uses the OS delay through the double click event. Tapping is implemented locally
+     * here in `MapControls` with this duration setting the maximum delay to define a double tap.
+     * The value is in seconds. `300ms` is picked as the default value as jQuery does.
+     */
+    doubleTapTime = 0.3;
+
+    /**
      * Three.js camera that this controller affects.
      */
     readonly camera: THREE.Camera;
@@ -269,6 +286,11 @@ export class MapControls extends THREE.EventDispatcher {
 
     private m_tmpVector2: THREE.Vector2 = new THREE.Vector2();
     private m_tmpVector3: THREE.Vector3 = new THREE.Vector3();
+
+    private m_tapStartTime: number = 0;
+    private m_lastSingleTapTime: number = 0;
+    private m_fingerMoved: boolean = false;
+    private m_isDoubleTap: boolean = false;
 
     /**
      * Determines the minimum angle the camera can pitch to. It is defined in radians.
@@ -484,8 +506,7 @@ export class MapControls extends THREE.EventDispatcher {
         this.m_startZoom = this.currentZoom;
         this.m_zoomDeltaRequested = zoomLevel - this.zoomLevelTargeted;
         // Cancel panning so the point of origin of the zoom is maintained.
-        this.m_panDistanceFrameDelta.set(0, 0, 0);
-        this.m_lastAveragedPanDistance = 0;
+        this.stopPan();
 
         // Assign the new animation start time.
         this.m_zoomAnimationStartTime = performance.now();
@@ -811,6 +832,11 @@ export class MapControls extends THREE.EventDispatcher {
         this.updateMapView();
     }
 
+    private stopPan() {
+        this.m_panDistanceFrameDelta.set(0, 0, 0);
+        this.m_lastAveragedPanDistance = 0;
+    }
+
     private bindInputEvents(domElement: HTMLCanvasElement) {
         const onContextMenu = this.contextMenu.bind(this);
         const onMouseDown = this.mouseDown.bind(this);
@@ -818,7 +844,9 @@ export class MapControls extends THREE.EventDispatcher {
         const onTouchStart = this.touchStart.bind(this);
         const onTouchEnd = this.touchEnd.bind(this);
         const onTouchMove = this.touchMove.bind(this);
+        const onMouseDoubleClick = this.mouseDoubleClick.bind(this);
 
+        domElement.addEventListener("dblclick", onMouseDoubleClick, false);
         domElement.addEventListener("contextmenu", onContextMenu, false);
         domElement.addEventListener("mousedown", onMouseDown, false);
         domElement.addEventListener("wheel", onMouseWheel, false);
@@ -827,6 +855,7 @@ export class MapControls extends THREE.EventDispatcher {
         domElement.addEventListener("touchmove", onTouchMove, false);
 
         this.dispose = () => {
+            domElement.removeEventListener("dblclick", onMouseDoubleClick, false);
             domElement.removeEventListener("contextmenu", onContextMenu, false);
             domElement.removeEventListener("mousedown", onMouseDown, false);
             domElement.removeEventListener("wheel", onMouseWheel, false);
@@ -839,6 +868,13 @@ export class MapControls extends THREE.EventDispatcher {
     private updateMapView() {
         this.dispatchEvent(MAPCONTROL_EVENT);
         this.mapView.update();
+    }
+
+    private mouseDoubleClick(e: MouseEvent) {
+        if (this.enabled === false) {
+            return;
+        }
+        this.zoomOnDoubleClickOrTap(e.clientX, e.clientY);
     }
 
     private mouseDown(event: MouseEvent) {
@@ -1098,15 +1134,28 @@ export class MapControls extends THREE.EventDispatcher {
         }
     }
 
+    private zoomOnDoubleClickOrTap(x: number, y: number) {
+        if (this.zoomLevelDeltaOnDoubleClick === 0) {
+            return;
+        }
+        const { width, height } = utils.getWidthAndHeightFromCanvas(this.domElement);
+        const ndcCoords = utils.calculateNormalizedDeviceCoordinates(x, y, width, height);
+        this.setZoomLevel(this.currentZoom + this.zoomLevelDeltaOnDoubleClick, ndcCoords);
+    }
+
     private touchStart(event: TouchEvent) {
         if (this.enabled === false) {
             return;
         }
 
+        this.m_tapStartTime = performance.now();
+        this.m_fingerMoved = false;
+
         this.m_state = State.TOUCH;
 
         this.dispatchEvent(MAPCONTROL_EVENT_BEGIN_INTERACTION);
         this.setTouchState(event.touches);
+        this.updateTouches(event.touches);
 
         event.preventDefault();
         event.stopPropagation();
@@ -1116,6 +1165,8 @@ export class MapControls extends THREE.EventDispatcher {
         if (this.enabled === false) {
             return;
         }
+
+        this.m_fingerMoved = true;
 
         const touchResult = this.updateTouches(event.touches);
         this.updateTouchState();
@@ -1188,6 +1239,8 @@ export class MapControls extends THREE.EventDispatcher {
         }
         this.m_state = State.NONE;
 
+        this.handleDoubleTap();
+
         this.setTouchState(event.touches);
 
         this.dispatchEvent(MAPCONTROL_EVENT_END_INTERACTION);
@@ -1195,6 +1248,43 @@ export class MapControls extends THREE.EventDispatcher {
 
         event.preventDefault();
         event.stopPropagation();
+    }
+
+    private handleDoubleTap() {
+        // Continue only if no touchmove happened.
+        if (this.m_fingerMoved) {
+            return;
+        }
+
+        const now = performance.now();
+        const tapDuration = now - this.m_tapStartTime;
+
+        // Continue only if proper tap.
+        if (tapDuration > MAX_TAP_DURATION) {
+            return;
+        }
+
+        // Continue only if this is the second valid tap.
+        if (!this.m_isDoubleTap) {
+            this.m_isDoubleTap = true;
+            this.m_lastSingleTapTime = now;
+            return;
+        }
+
+        // Continue only if the delay between the two taps is short enough.
+        if (now - this.m_lastSingleTapTime > this.doubleTapTime * 1000) {
+            // If too long, restart double tap validator too.
+            this.m_isDoubleTap = false;
+            return;
+        }
+
+        this.zoomOnDoubleClickOrTap(
+            this.m_touchState.touches[0].currentTouchPoint.x,
+            this.m_touchState.touches[0].currentTouchPoint.y
+        );
+
+        // Prevent a string of X valid taps and only consider pairs.
+        this.m_isDoubleTap = false;
     }
 
     private contextMenu(event: Event) {
