@@ -5,21 +5,25 @@
  */
 
 import {
-    BinaryExpr,
     BooleanLiteralExpr,
+    CallExpr,
     ContainsExpr,
     Env,
     Expr,
     ExprVisitor,
     HasAttributeExpr,
-    LengthExpr,
-    LogicalExpr,
-    NotExpr,
     NumberLiteralExpr,
     StringLiteralExpr,
     Value,
     VarExpr
 } from "./Expr";
+
+export interface BuiltinDescriptor {
+    // ### TODO: typed signature
+    call: (actuals: Value[]) => Value;
+}
+
+const builtinFunctions = new Map<string, BuiltinDescriptor>();
 
 /**
  * [[ExprEvaluator]] is used to evaluate [[Expr]] in a given environment.
@@ -27,6 +31,10 @@ import {
  * @hidden
  */
 export class ExprEvaluator implements ExprVisitor<Value, Env> {
+    static registerBuiltin(op: string, builtin: BuiltinDescriptor) {
+        builtinFunctions.set(op, builtin);
+    }
+
     /**
      * Evaluate `expr` in the given environment,
      *
@@ -69,64 +77,147 @@ export class ExprEvaluator implements ExprVisitor<Value, Env> {
         return false;
     }
 
-    visitNotExpr(expr: NotExpr, env: Env): Value {
-        return !this.evaluate(expr.childExpr, env);
-    }
+    visitCallExpr(expr: CallExpr, env: Env): Value {
+        switch (expr.op) {
+            case "all":
+                for (const childExpr of expr.children) {
+                    if (!this.evaluate(childExpr, env)) {
+                        return false;
+                    }
+                }
+                return true;
 
-    visitLengthExpr(expr: LengthExpr, env: Env): Value {
-        const value = this.evaluate(expr.childExpr, env);
+            case "any":
+                for (const childExpr of expr.children) {
+                    if (this.evaluate(childExpr, env)) {
+                        return true;
+                    }
+                }
+                return false;
+
+            case "none":
+                for (const childExpr of expr.children) {
+                    if (this.evaluate(childExpr, env)) {
+                        return false;
+                    }
+                }
+                return true;
+
+            default: {
+                const descriptor = builtinFunctions.get(expr.op);
+                if (descriptor) {
+                    const actuals = expr.children.map(arg => this.evaluate(arg, env));
+                    return descriptor.call(actuals);
+                }
+                throw new Error(`undefined operator '${expr.op}`);
+            }
+        } // switch
+    }
+}
+
+ExprEvaluator.registerBuiltin("length", {
+    call: actuals => {
+        const value = actuals[0];
         if (Array.isArray(value) || typeof value === "string") {
             return value.length;
         }
         return undefined;
     }
+});
 
-    visitBinaryExpr(expr: BinaryExpr, env: Env): Value {
-        const left = this.evaluate(expr.left, env);
-        const right = this.evaluate(expr.right, env);
-        switch (expr.op) {
-            case "~=": {
-                if (typeof left === "string" && typeof right === "string") {
-                    return left.indexOf(right) !== -1;
-                }
-                return false;
-            }
-            case "^=": {
-                if (typeof left === "string" && typeof right === "string") {
-                    return left.startsWith(right);
-                }
-                return false;
-            }
-            case "$=": {
-                if (typeof left === "string" && typeof right === "string") {
-                    return left.endsWith(right);
-                }
-                return false;
-            }
-            case "==":
-                return left === right;
-            case "!=":
-                return left !== right;
-            case "<":
-                return left !== undefined && right !== undefined ? left < right : undefined;
-            case ">":
-                return left !== undefined && right !== undefined ? left > right : undefined;
-            case "<=":
-                return left !== undefined && right !== undefined ? left <= right : undefined;
-            case ">=":
-                return left !== undefined && right !== undefined ? left >= right : undefined;
+ExprEvaluator.registerBuiltin("!", {
+    call: actuals => !actuals[0]
+});
+
+ExprEvaluator.registerBuiltin("~=", {
+    call: ([left, right]) => {
+        if (typeof left === "string" && typeof right === "string") {
+            return left.indexOf(right) !== -1;
         }
-        throw new Error(`invalid relational op '${expr.op}'`);
+        return false;
     }
+});
 
-    visitLogicalExpr(expr: LogicalExpr, env: Env): Value {
-        const value = this.evaluate(expr.left, env);
-        switch (expr.op) {
-            case "||":
-                return value || this.evaluate(expr.right, env);
-            case "&&":
-                return value && this.evaluate(expr.right, env);
-        } // switch
-        throw new Error(`invalid logical op '${expr.op}'`);
+ExprEvaluator.registerBuiltin("^=", {
+    call: ([left, right]) => {
+        if (typeof left === "string" && typeof right === "string") {
+            return left.startsWith(right);
+        }
+        return false;
     }
-}
+});
+
+ExprEvaluator.registerBuiltin("$=", {
+    call: ([left, right]) => {
+        if (typeof left === "string" && typeof right === "string") {
+            return left.endsWith(right);
+        }
+        return false;
+    }
+});
+
+ExprEvaluator.registerBuiltin("==", {
+    call: ([left, right]) => {
+        if (typeof left === typeof right) {
+            return left === right;
+        }
+        throw new Error(`invalid call ["==", ${typeof left}, ${typeof right}]`);
+    }
+});
+
+ExprEvaluator.registerBuiltin("!=", {
+    call: ([left, right]) => {
+        if (typeof left === typeof right) {
+            return left !== right;
+        }
+        throw new Error(`invalid call ["!=", ${typeof left}, ${typeof right}]`);
+    }
+});
+
+ExprEvaluator.registerBuiltin("<", {
+    call: ([left, right]) => {
+        if (
+            (typeof left === "number" && typeof right === "number") ||
+            (typeof left === "string" && typeof right === "string")
+        ) {
+            return left < right;
+        }
+        throw new Error(`invalid call ["<", ${typeof left}, ${typeof right}]`);
+    }
+});
+
+ExprEvaluator.registerBuiltin(">", {
+    call: ([left, right]) => {
+        if (
+            (typeof left === "number" && typeof right === "number") ||
+            (typeof left === "string" && typeof right === "string")
+        ) {
+            return left > right;
+        }
+        throw new Error(`invalid call [">", ${typeof left}, ${typeof right}]`);
+    }
+});
+
+ExprEvaluator.registerBuiltin("<=", {
+    call: ([left, right]) => {
+        if (
+            (typeof left === "number" && typeof right === "number") ||
+            (typeof left === "string" && typeof right === "string")
+        ) {
+            return left <= right;
+        }
+        throw new Error(`invalid call ["<=", ${typeof left}, ${typeof right}]`);
+    }
+});
+
+ExprEvaluator.registerBuiltin(">=", {
+    call: ([left, right]) => {
+        if (
+            (typeof left === "number" && typeof right === "number") ||
+            (typeof left === "string" && typeof right === "string")
+        ) {
+            return left >= right;
+        }
+        throw new Error(`invalid call [">=", ${typeof left}, ${typeof right}]`);
+    }
+});
