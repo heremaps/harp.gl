@@ -221,3 +221,21 @@ ExprEvaluator.registerBuiltin(">=", {
         throw new Error(`invalid call [">=", ${typeof left}, ${typeof right}]`);
     }
 });
+
+ExprEvaluator.registerBuiltin("concat", {
+    call: (actuals: unknown[]) => {
+        return "".concat(...actuals.map(a => String(a)));
+    }
+});
+
+ExprEvaluator.registerBuiltin("downcase", {
+    call: (actuals: unknown[]) => {
+        return String(actuals[0]).toLocaleLowerCase();
+    }
+});
+
+ExprEvaluator.registerBuiltin("upcase", {
+    call: (actuals: unknown[]) => {
+        return String(actuals[0]).toLocaleUpperCase();
+    }
+});
