@@ -249,10 +249,12 @@ export namespace PolygonsFeaturesExample {
             const style: Style = {
                 description: "geoJson property-based style",
                 technique: "extruded-polygon",
-                when:
-                    `$geometryType == 'polygon'` +
-                    `&& ${propertyName} > ${min}` +
-                    `&& ${propertyName} <= ${max}`,
+                when: [
+                    "all",
+                    ["==", ["get", "$geometryType"], "polygon"],
+                    [">", ["to-number", ["get", propertyName]], min],
+                    ["<=", ["to-number", ["get", propertyName]], max]
+                ],
                 attr: {
                     color: colorString,
                     transparent: true,

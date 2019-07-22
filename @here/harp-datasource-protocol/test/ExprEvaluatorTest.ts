@@ -234,4 +234,31 @@ describe("ExprEvaluator", function() {
             assert.approximately(Number(evaluate(["pi"])), Math.PI, EPSILON);
         });
     });
+
+    describe("Operator 'to-boolean'", function() {
+        it("evaluate", function() {
+            assert.equal(evaluate(["to-boolean", true]), true);
+            assert.equal(evaluate(["to-boolean", false]), false);
+            assert.equal(evaluate(["to-boolean", 0]), false);
+            assert.equal(evaluate(["to-boolean", 1]), true);
+            assert.equal(evaluate(["to-boolean", 1123.3]), true);
+        });
+    });
+
+    describe("Operator 'to-number'", function() {
+        it("evaluate", function() {
+            assert.equal(evaluate(["to-number", true]), 1);
+            assert.equal(evaluate(["to-number", false]), 0);
+            assert.equal(evaluate(["to-number", "123"]), 123);
+            assert.approximately(evaluate(["to-number", "123.123"]) as number, 123.123, EPSILON);
+        });
+    });
+
+    describe("Operator 'to-string'", function() {
+        it("evaluate", function() {
+            assert.equal(evaluate(["to-string", true]), "true");
+            assert.equal(evaluate(["to-string", false]), "false");
+            assert.equal(evaluate(["to-string", 123]), "123");
+        });
+    });
 });
