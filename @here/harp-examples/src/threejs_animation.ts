@@ -7,7 +7,7 @@
 import { GeoCoordinates } from "@here/harp-geoutils";
 import { MapAnchor, MapViewEventNames, RenderEvent } from "@here/harp-mapview";
 import * as THREE from "three";
-import { HelloWorldExample } from "./getting-started_hello-world";
+import { HelloWorldExample } from "./getting-started_hello-world_npm";
 
 // tslint:disable-next-line:no-var-requires
 (window as any).Zlib = require("three/examples/js/libs/inflate.min.js").Zlib;

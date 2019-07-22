@@ -7,7 +7,7 @@
 import { LongPressHandler } from "@here/harp-map-controls";
 import { MapAnchor, MapView } from "@here/harp-mapview";
 import * as THREE from "three";
-import { HelloWorldExample } from "./getting-started_hello-world";
+import { HelloWorldExample } from "./getting-started_hello-world_npm";
 
 /**
  * This example builds on top of the [[HelloWorldExample]], so please consult that first for any
