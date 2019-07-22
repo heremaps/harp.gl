@@ -31,7 +31,7 @@ interface ReadyPromise {
 
 interface RequestEntry {
     promise: Promise<any>;
-    resolver: (error?: object, response?: object) => void;
+    resolver: (error?: Error, response?: object) => void;
 }
 
 export interface ConcurrentWorkerSetOptions {
@@ -47,6 +47,15 @@ export interface ConcurrentWorkerSetOptions {
      */
     workerCount?: number;
 }
+
+/**
+ * Interface for an item in the started worker list queue.
+ */
+interface WorkerEntry {
+    worker: Worker;
+    listener: EventListener;
+}
+
 /**
  * Interface for an item in the request queue. Stores the data to be decoded along with an
  * [[AbortController]].
@@ -83,16 +92,14 @@ export class ConcurrentWorkerSet {
     private readonly m_eventListeners = new Map<string, (message: any) => void>();
     private m_workers = new Array<Worker>();
 
-    private m_workerListeners = new Array<EventListener>();
-
     // List of idle workers that can be given the next job. It is using a LIFO scheme to reduce
     // memory consumption in idle workers.
     private m_availableWorkers = new Array<Worker>();
-    private m_workerPromises = new Array<Promise<Worker>>();
+    private m_workerPromises = new Array<Promise<WorkerEntry | undefined>>();
 
     private readonly m_readyPromises = new Map<string, ReadyPromise>();
     private readonly m_requests: Map<number, RequestEntry> = new Map();
-    private readonly m_workerRequestQueue: WorkerRequestEntry[] = [];
+    private m_workerRequestQueue: WorkerRequestEntry[] = [];
 
     private m_nextMessageId: number = 0;
     private m_stopped: boolean = true;
@@ -120,6 +127,9 @@ export class ConcurrentWorkerSet {
      */
     addReference() {
         this.m_referenceCount += 1;
+        if (this.m_referenceCount === 1 && this.m_stopped) {
+            this.start();
+        }
     }
 
     /**
@@ -167,20 +177,23 @@ export class ConcurrentWorkerSet {
         // Initialize the workers. The workers now have an ID to identify specific workers and
         // handle their busy state.
         for (let workerId = 0; workerId < workerCount; ++workerId) {
-            const workerPromise = WorkerLoader.startWorker(this.m_options.scriptUrl);
-            workerPromise
+            const workerPromise = WorkerLoader.startWorker(this.m_options.scriptUrl)
                 .then(worker => {
                     const listener = (evt: Event): void => {
                         this.onWorkerMessage(workerId, evt as MessageEvent);
                     };
 
-                    this.m_workerListeners.push(listener);
                     worker.addEventListener("message", listener);
                     this.m_workers.push(worker);
                     this.m_availableWorkers.push(worker);
+                    return {
+                        worker,
+                        listener
+                    };
                 })
                 .catch(error => {
                     logger.error(`failed to load worker ${workerId}: ${error}`);
+                    return undefined;
                 });
             this.m_workerPromises.push(workerPromise);
         }
@@ -219,6 +232,7 @@ export class ConcurrentWorkerSet {
             entry.resolver(new Error("worker destroyed"));
         });
         this.m_requests.clear();
+        this.m_workerRequestQueue = [];
 
         this.terminateWorkers();
 
@@ -290,7 +304,7 @@ export class ConcurrentWorkerSet {
                 this.m_requests.delete(messageId);
 
                 if (error !== undefined) {
-                    reject(new Error(error.toString()));
+                    reject(error instanceof Error ? error : new Error(error.toString()));
                 } else {
                     resolve(response as Res);
                 }
@@ -453,7 +467,11 @@ export class ConcurrentWorkerSet {
             } else {
                 logger.error(`[${this.m_options.scriptUrl}]: onWorkerMessage: invalid workerId`);
             }
-            entry.resolver(response.error, response.response);
+            if (response.error !== undefined) {
+                entry.resolver(new Error(response.error.toString()));
+            } else {
+                entry.resolver(undefined, response.response);
+            }
         } else if (WorkerServiceProtocol.isInitializedMessage(event.data)) {
             const readyPromise = this.getReadyPromise(event.data.service);
             if (++readyPromise.count === this.m_workerPromises.length) {
@@ -508,7 +526,9 @@ export class ConcurrentWorkerSet {
         if (requestController !== undefined && requestController.signal.aborted) {
             const entry = this.m_requests.get(message.messageId);
             if (entry === undefined) {
-                logger.error(`[${this.m_options.scriptUrl}]: Bad RequesMessage: invalid messageId`);
+                logger.error(
+                    `[${this.m_options.scriptUrl}]: Bad RequestMessage: invalid messageId`
+                );
                 return;
             }
 
@@ -569,27 +589,15 @@ export class ConcurrentWorkerSet {
     private terminateWorkers() {
         // terminate all workers
         this.m_workerPromises.forEach(workerPromise => {
-            workerPromise
-                .then(worker => {
-                    const workerId = this.m_workers.indexOf(worker);
-                    if (workerId >= 0) {
-                        const listener = this.m_workerListeners[workerId];
-                        worker.removeEventListener("message", listener);
-                    } else {
-                        logger.error(
-                            // tslint:disable-next-line: max-line-length
-                            `[${this.m_options.scriptUrl}]: ConcurrentWorkerSet#terminateWorkers: invalid workerId`
-                        );
-                    }
-                    worker.terminate();
-                })
-                .catch(() => {
-                    // we ignore exception here, as it's already logged in #start and terminate is
-                    // noop if worker didn't start at all
-                });
+            workerPromise.then(workerEntry => {
+                if (workerEntry === undefined) {
+                    return;
+                }
+                workerEntry.worker.removeEventListener("message", workerEntry.listener);
+                workerEntry.worker.terminate();
+            });
         });
         this.m_workers = [];
-        this.m_workerListeners = [];
         this.m_workerPromises = [];
         this.m_availableWorkers = [];
         this.m_readyPromises.clear();
