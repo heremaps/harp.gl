@@ -1069,7 +1069,7 @@ export class MapControls extends THREE.EventDispatcher {
         this.m_touchState.currentRotation = this.calculateAngleFromTouchPointsInWorldspace();
     }
 
-    private updateTouches(touches: TouchList) {
+    private updateTouches(touches: TouchList): void | null {
         const length = Math.min(touches.length, this.m_touchState.touches.length);
         for (let i = 0; i < length; ++i) {
             const oldTouchState = this.m_touchState.touches[i];
@@ -1078,6 +1078,8 @@ export class MapControls extends THREE.EventDispatcher {
                 newTouchState.initialWorldPosition = oldTouchState.initialWorldPosition;
                 newTouchState.lastTouchPoint = oldTouchState.currentTouchPoint;
                 this.m_touchState.touches[i] = newTouchState;
+            } else {
+                return null;
             }
         }
     }
@@ -1101,7 +1103,7 @@ export class MapControls extends THREE.EventDispatcher {
             return;
         }
 
-        this.updateTouches(event.touches);
+        const touchResult = this.updateTouches(event.touches);
         this.updateTouchState();
 
         if (this.m_touchState.touches.length <= 2) {
@@ -1120,10 +1122,12 @@ export class MapControls extends THREE.EventDispatcher {
 
                 this.pan();
             } else {
-                this.rotateGlobe(
-                    this.m_touchState.touches[0].initialWorldPosition,
-                    this.m_touchState.touches[0].currentWorldPosition
-                );
+                if (touchResult !== null) {
+                    this.rotateGlobe(
+                        this.m_touchState.touches[0].initialWorldPosition,
+                        this.m_touchState.touches[0].currentWorldPosition
+                    );
+                }
                 this.mapView.camera.getWorldDirection(this.m_currentViewDirection);
             }
         }
