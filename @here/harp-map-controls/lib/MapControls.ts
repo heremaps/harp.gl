@@ -689,7 +689,7 @@ export class MapControls extends THREE.EventDispatcher {
             );
             this.m_zoomDeltaRequested = 0;
         }
-        if (this.inertiaEnabled) {
+        if (this.inertiaEnabled && this.zoomInertiaDampingDuration > 0) {
             if (!this.m_zoomIsAnimated) {
                 this.m_zoomIsAnimated = true;
                 this.mapView.addEventListener(MapViewEventNames.AfterRender, this.handleZoom);
@@ -744,6 +744,7 @@ export class MapControls extends THREE.EventDispatcher {
 
         const applyInertia =
             this.inertiaEnabled &&
+            this.panInertiaDampingDuration > 0 &&
             this.m_state === State.NONE &&
             this.m_lastAveragedPanDistance > 0;
 
