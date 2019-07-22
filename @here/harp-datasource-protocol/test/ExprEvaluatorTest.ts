@@ -11,6 +11,8 @@ import { assert } from "chai";
 import { Expr, MapEnv, ValueMap } from "../lib/Expr";
 import { ExprEvaluator } from "../lib/ExprEvaluator";
 
+const EPSILON = 1e-8;
+
 describe("ExprEvaluator", function() {
     const evaluator = new ExprEvaluator();
 
@@ -96,9 +98,13 @@ describe("ExprEvaluator", function() {
                 defaultEnv.someText.length
             );
 
-            assert.isUndefined(evaluate(["length", 123]));
+            assert.throw(() => {
+                evaluate(["length", 123]);
+            }, "invalid operand '123' for operator 'length'");
 
-            assert.isUndefined(evaluate(["length", ["get", "on"]]));
+            assert.throw(() => {
+                evaluate(["length", ["get", "on"]]);
+            }, "invalid operand 'true' for operator 'length'");
         });
     });
 
@@ -182,7 +188,7 @@ describe("ExprEvaluator", function() {
     describe("Operator 'number'", function() {
         it("evaluate", function() {
             assert.strictEqual(evaluate(["number", 123]), 123);
-            assert.approximately(Number(evaluate(["number", 123])), 123, 0.0000000001);
+            assert.approximately(Number(evaluate(["number", 123])), 123, EPSILON);
             assert.strictEqual(evaluate(["number", "x", "y", 123, "z", 321]), 123);
             assert.strictEqual(evaluate(["number", "x", "y", "123", "z", 321]), 321);
         });
@@ -206,6 +212,26 @@ describe("ExprEvaluator", function() {
             assert.strictEqual(evaluate(["typeof", false]), "boolean");
             assert.strictEqual(evaluate(["typeof", ["get", "off"]]), "boolean");
             assert.strictEqual(evaluate(["typeof", ["get", "emptyText"]]), "string");
+        });
+    });
+
+    describe("Operator 'min'", function() {
+        it("evaluate", function() {
+            assert.strictEqual(evaluate(["min", 1, 2, 3]), 1);
+            assert.strictEqual(evaluate(["min", 3, 2, 1]), 1);
+        });
+    });
+
+    describe("Operator 'max'", function() {
+        it("evaluate", function() {
+            assert.strictEqual(evaluate(["max", 1, 2, 3]), 3);
+            assert.strictEqual(evaluate(["max", 3, 2, 1]), 3);
+        });
+    });
+
+    describe("Operator 'pi'", function() {
+        it("evaluate", function() {
+            assert.approximately(Number(evaluate(["pi"])), Math.PI, EPSILON);
         });
     });
 });
