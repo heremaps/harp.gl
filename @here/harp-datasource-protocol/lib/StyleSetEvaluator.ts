@@ -204,7 +204,12 @@ export class StyleSetEvaluator {
                     return false;
                 }
             } catch (err) {
-                logger.log("failed to evaluate expression", style.when, "error", err);
+                logger.log(
+                    "failed to evaluate expression",
+                    JSON.stringify(style.when),
+                    "error",
+                    String(err)
+                );
                 return false;
             }
         }

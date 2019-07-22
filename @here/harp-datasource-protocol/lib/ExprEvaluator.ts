@@ -132,7 +132,7 @@ ExprEvaluator.registerBuiltin("length", {
         if (Array.isArray(value) || typeof value === "string") {
             return value.length;
         }
-        return undefined;
+        throw new Error(`invalid operand '${value}' for operator 'length'`);
     }
 });
 
@@ -168,21 +168,11 @@ ExprEvaluator.registerBuiltin("$=", {
 });
 
 ExprEvaluator.registerBuiltin("==", {
-    call: ([left, right]) => {
-        if (typeof left === typeof right) {
-            return left === right;
-        }
-        throw new Error(`invalid call ["==", ${typeof left}, ${typeof right}]`);
-    }
+    call: ([left, right]) => left === right
 });
 
 ExprEvaluator.registerBuiltin("!=", {
-    call: ([left, right]) => {
-        if (typeof left === typeof right) {
-            return left !== right;
-        }
-        throw new Error(`invalid call ["!=", ${typeof left}, ${typeof right}]`);
-    }
+    call: ([left, right]) => left !== right
 });
 
 ExprEvaluator.registerBuiltin("<", {
@@ -193,7 +183,8 @@ ExprEvaluator.registerBuiltin("<", {
         ) {
             return left < right;
         }
-        throw new Error(`invalid call ["<", ${typeof left}, ${typeof right}]`);
+        // tslint:disable-next-line: max-line-length
+        throw new Error(`invalid operands '${left}' and '${right}' for operator '<'`);
     }
 });
 
@@ -205,7 +196,8 @@ ExprEvaluator.registerBuiltin(">", {
         ) {
             return left > right;
         }
-        throw new Error(`invalid call [">", ${typeof left}, ${typeof right}]`);
+        // tslint:disable-next-line: max-line-length
+        throw new Error(`invalid operands '${left}' and '${right}' for operator '>'`);
     }
 });
 
@@ -217,7 +209,8 @@ ExprEvaluator.registerBuiltin("<=", {
         ) {
             return left <= right;
         }
-        throw new Error(`invalid call ["<=", ${typeof left}, ${typeof right}]`);
+        // tslint:disable-next-line: max-line-length
+        throw new Error(`invalid operands '${left}' and '${right}' for operator '<='`);
     }
 });
 
@@ -229,7 +222,8 @@ ExprEvaluator.registerBuiltin(">=", {
         ) {
             return left >= right;
         }
-        throw new Error(`invalid call [">=", ${typeof left}, ${typeof right}]`);
+        // tslint:disable-next-line: max-line-length
+        throw new Error(`invalid operands '${left}' and '${right}' for operator '>='`);
     }
 });
 
@@ -251,20 +245,226 @@ ExprEvaluator.registerBuiltin("upcase", {
     }
 });
 
-ExprEvaluator.registerBuiltin("+", {
+ExprEvaluator.registerBuiltin("^", {
     call: (actuals: Value[]) => {
-        return actuals.reduce((a, b) => Number(a) + Number(b), 0);
+        const a = actuals[0];
+        const b = actuals[1];
+        if (typeof a !== "number" || typeof b !== "number") {
+            // tslint:disable-next-line: max-line-length
+            throw new Error(`invalid operands '${typeof a}' and '${typeof b}' for operator '^'`);
+        }
+        return Math.pow(a, b);
     }
+});
+
+ExprEvaluator.registerBuiltin("-", {
+    call: (actuals: Value[]) => {
+        const a = actuals[0];
+        const b = actuals[1];
+        if (typeof a !== "number" || typeof b !== "number") {
+            // tslint:disable-next-line: max-line-length
+            throw new Error(`invalid operands '${typeof a}' and '${typeof b}' for operator '-'`);
+        }
+        return a - b;
+    }
+});
+
+ExprEvaluator.registerBuiltin("/", {
+    call: (actuals: Value[]) => {
+        const a = actuals[0];
+        const b = actuals[1];
+        if (typeof a !== "number" || typeof b !== "number") {
+            // tslint:disable-next-line: max-line-length
+            throw new Error(`invalid operands '${typeof a}' and '${typeof b}' for operator '/'`);
+        }
+        return a / b;
+    }
+});
+
+ExprEvaluator.registerBuiltin("%", {
+    call: (actuals: Value[]) => {
+        const a = actuals[0];
+        const b = actuals[1];
+        if (typeof a !== "number" || typeof b !== "number") {
+            // tslint:disable-next-line: max-line-length
+            throw new Error(`invalid operands '${typeof a}' and '${typeof b}' for operator '%'`);
+        }
+        return a % b;
+    }
+});
+
+ExprEvaluator.registerBuiltin("+", {
+    call: (actuals: Value[]) => actuals.reduce((a, b) => Number(a) + Number(b), 0)
 });
 
 ExprEvaluator.registerBuiltin("*", {
-    call: (actuals: Value[]) => {
-        return actuals.reduce((a, b) => Number(a) * Number(b), 1);
-    }
+    call: (actuals: Value[]) => actuals.reduce((a, b) => Number(a) * Number(b), 1)
 });
 
 ExprEvaluator.registerBuiltin("typeof", {
+    call: (actuals: Value[]) => typeof actuals[0]
+});
+
+ExprEvaluator.registerBuiltin("abs", {
     call: (actuals: Value[]) => {
-        return typeof actuals[0];
+        const value = actuals[0];
+        if (typeof value !== "number") {
+            throw new Error(`invalid operand '${value}' for operator 'abs'`);
+        }
+        return Math.abs(value);
+    }
+});
+
+ExprEvaluator.registerBuiltin("acos", {
+    call: (actuals: Value[]) => {
+        const value = actuals[0];
+        if (typeof value !== "number") {
+            throw new Error(`invalid operand '${value}' for operator 'acos'`);
+        }
+        return Math.acos(value);
+    }
+});
+
+ExprEvaluator.registerBuiltin("asin", {
+    call: (actuals: Value[]) => {
+        const value = actuals[0];
+        if (typeof value !== "number") {
+            throw new Error(`invalid operand '${value}' for operator 'asin'`);
+        }
+        return Math.asin(value);
+    }
+});
+
+ExprEvaluator.registerBuiltin("atan", {
+    call: (actuals: Value[]) => {
+        const value = actuals[0];
+        if (typeof value !== "number") {
+            throw new Error(`invalid operand '${value}' for operator 'atan'`);
+        }
+        return Math.atan(value);
+    }
+});
+
+ExprEvaluator.registerBuiltin("ceil", {
+    call: (actuals: Value[]) => {
+        const value = actuals[0];
+        if (typeof value !== "number") {
+            throw new Error(`invalid operand '${value}' for operator 'ceil'`);
+        }
+        return Math.ceil(value);
+    }
+});
+
+ExprEvaluator.registerBuiltin("cos", {
+    call: (actuals: Value[]) => {
+        const value = actuals[0];
+        if (typeof value !== "number") {
+            throw new Error(`invalid operand '${value}' for operator 'cos'`);
+        }
+        return Math.cos(value);
+    }
+});
+
+ExprEvaluator.registerBuiltin("e", {
+    call: () => {
+        return Math.E;
+    }
+});
+
+ExprEvaluator.registerBuiltin("floor", {
+    call: (actuals: Value[]) => {
+        const value = actuals[0];
+        if (typeof value !== "number") {
+            throw new Error(`invalid operand '${value}' for operator 'floor'`);
+        }
+        return Math.floor(value);
+    }
+});
+
+ExprEvaluator.registerBuiltin("ln", {
+    call: (actuals: Value[]) => {
+        const value = actuals[0];
+        if (typeof value !== "number") {
+            throw new Error(`invalid operand '${value}' for operator 'ln'`);
+        }
+        return Math.log(value);
+    }
+});
+
+ExprEvaluator.registerBuiltin("ln2", {
+    call: (actuals: Value[]) => {
+        const value = actuals[0];
+        if (typeof value !== "number") {
+            throw new Error(`invalid operand '${value}' for operator 'ln2'`);
+        }
+        return Math.log2(value);
+    }
+});
+
+ExprEvaluator.registerBuiltin("log10", {
+    call: (actuals: Value[]) => {
+        const value = actuals[0];
+        if (typeof value !== "number") {
+            throw new Error(`invalid operand '${value}' for operator 'log10'`);
+        }
+        return Math.log10(value);
+    }
+});
+
+ExprEvaluator.registerBuiltin("max", {
+    call: (actuals: Value[]) => {
+        return Math.max(...actuals.map(v => Number(v)));
+    }
+});
+
+ExprEvaluator.registerBuiltin("min", {
+    call: (actuals: Value[]) => {
+        return Math.min(...actuals.map(v => Number(v)));
+    }
+});
+
+ExprEvaluator.registerBuiltin("pi", {
+    call: () => {
+        return Math.PI;
+    }
+});
+
+ExprEvaluator.registerBuiltin("round", {
+    call: (actuals: Value[]) => {
+        const value = actuals[0];
+        if (typeof value !== "number") {
+            throw new Error(`invalid operand '${value}' for operator 'round'`);
+        }
+        return Math.round(value);
+    }
+});
+
+ExprEvaluator.registerBuiltin("sin", {
+    call: (actuals: Value[]) => {
+        const value = actuals[0];
+        if (typeof value !== "number") {
+            throw new Error(`invalid operand '${value}' for operator 'sin'`);
+        }
+        return Math.sin(value);
+    }
+});
+
+ExprEvaluator.registerBuiltin("sqrt", {
+    call: (actuals: Value[]) => {
+        const value = actuals[0];
+        if (typeof value !== "number") {
+            throw new Error(`invalid operand '${value}' for operator 'sqrt'`);
+        }
+        return Math.sqrt(value);
+    }
+});
+
+ExprEvaluator.registerBuiltin("tan", {
+    call: (actuals: Value[]) => {
+        const value = actuals[0];
+        if (typeof value !== "number") {
+            throw new Error(`invalid operand '${value}' for operator 'tan'`);
+        }
+        return Math.tan(value);
     }
 });
