@@ -167,4 +167,45 @@ describe("ExprEvaluator", function() {
             assert.strictEqual(evaluate(["*", 1, 2, 3, 4]), 1 * 2 * 3 * 4);
         });
     });
+
+    describe("Operator 'number'", function() {
+        it("evaluate", function() {
+            assert.strictEqual(evaluate(["boolean", true]), true);
+            assert.strictEqual(evaluate(["boolean", false]), false);
+            assert.strictEqual(evaluate(["boolean", "x", true]), true);
+            assert.strictEqual(evaluate(["boolean", 0, "x", true]), true);
+            assert.strictEqual(evaluate(["boolean", ["get", "someText"], true]), true);
+            assert.strictEqual(evaluate(["boolean", ["get", "off"], true]), false);
+        });
+    });
+
+    describe("Operator 'number'", function() {
+        it("evaluate", function() {
+            assert.strictEqual(evaluate(["number", 123]), 123);
+            assert.approximately(Number(evaluate(["number", 123])), 123, 0.0000000001);
+            assert.strictEqual(evaluate(["number", "x", "y", 123, "z", 321]), 123);
+            assert.strictEqual(evaluate(["number", "x", "y", "123", "z", 321]), 321);
+        });
+    });
+
+    describe("Operator 'string'", function() {
+        it("evaluate", function() {
+            assert.strictEqual(evaluate(["string", "x", "y"]), "x");
+            assert.strictEqual(evaluate(["string", 123, "y"]), "y");
+            assert.strictEqual(
+                evaluate(["string", ["get", "emptyText"], "x"]),
+                defaultEnv.emptyText
+            );
+        });
+    });
+
+    describe("Operator 'typeof'", function() {
+        it("evaluate", function() {
+            assert.strictEqual(evaluate(["typeof", "x"]), "string");
+            assert.strictEqual(evaluate(["typeof", 123]), "number");
+            assert.strictEqual(evaluate(["typeof", false]), "boolean");
+            assert.strictEqual(evaluate(["typeof", ["get", "off"]]), "boolean");
+            assert.strictEqual(evaluate(["typeof", ["get", "emptyText"]]), "string");
+        });
+    });
 });
