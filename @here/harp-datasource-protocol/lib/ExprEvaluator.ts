@@ -103,6 +103,17 @@ export class ExprEvaluator implements ExprVisitor<Value, Env> {
                 }
                 return true;
 
+            case "boolean":
+            case "number":
+            case "string":
+                for (const childExpr of expr.children) {
+                    const value = this.evaluate(childExpr, env);
+                    if (typeof value === expr.op) {
+                        return value;
+                    }
+                }
+                throw new Error(`expected a '${expr.op}'`);
+
             default: {
                 const descriptor = builtinFunctions.get(expr.op);
                 if (descriptor) {
@@ -249,5 +260,11 @@ ExprEvaluator.registerBuiltin("+", {
 ExprEvaluator.registerBuiltin("*", {
     call: (actuals: Value[]) => {
         return actuals.reduce((a, b) => Number(a) * Number(b), 1);
+    }
+});
+
+ExprEvaluator.registerBuiltin("typeof", {
+    call: (actuals: Value[]) => {
+        return typeof actuals[0];
     }
 });
