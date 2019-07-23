@@ -10,10 +10,10 @@ import * as THREE from "three";
 import { SphericalGeometrySubdivisionModifier } from "@here/harp-geometry/lib/SphericalGeometrySubdivisionModifier";
 import {
     GeoCoordinates,
-    mercatorTilingScheme,
     ProjectionType,
     TileKey,
-    TilingScheme
+    TilingScheme,
+    webMercatorTilingScheme
 } from "@here/harp-geoutils";
 import { CopyrightInfo, DataSource, Tile } from "@here/harp-mapview";
 import { getOptionValue, LoggerManager } from "@here/harp-utils";
@@ -312,7 +312,7 @@ export class WebTileDataSource extends DataSource {
     }
 
     getTilingScheme(): TilingScheme {
-        return mercatorTilingScheme;
+        return webMercatorTilingScheme;
     }
 
     setLanguages(languages?: string[]): void {
@@ -326,7 +326,7 @@ export class WebTileDataSource extends DataSource {
         const tile = new Tile(this, tileKey);
 
         const column = tileKey.column;
-        const row = tileKey.rowCount() - tileKey.row - 1;
+        const row = tileKey.row;
         const level = tileKey.level;
         const { appId, appCode } = this.m_options;
         const quadKey = tileKey.toQuadKey();
