@@ -280,6 +280,11 @@ footer {
    #docs-nav {
       display: none;
    }
+
+   #tutorial-nav {
+      display: none;
+   }
+   
    nav .nav-item {
       margin-left: 10px;
       color: white;
