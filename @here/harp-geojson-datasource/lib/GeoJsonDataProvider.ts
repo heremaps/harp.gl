@@ -67,6 +67,8 @@ export class GeoJsonDataProvider implements DataProvider {
     }
 
     async getTile(tileKey: TileKey): Promise<{}> {
-        return this.m_tiler.getTile(this.name, tileKey);
+        // return this.m_tiler.getTile(this.name, tileKey);
+        // just for test
+        return {};
     }
 }
