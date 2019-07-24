@@ -95,7 +95,11 @@ function exampleBrowser(exampleDefinitions: ExampleDefinitions) {
             title.innerHTML = menuElement;
             titleElements.push(title);
             menu.appendChild(title);
-            categories[menuElement].forEach(anchor => {
+            const category = categories[menuElement];
+            if (category === undefined) {
+                return;
+            }
+            category.forEach(anchor => {
                 menu.appendChild(anchor);
             });
             exampleListElement.appendChild(menu);
