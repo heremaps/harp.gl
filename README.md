@@ -35,7 +35,7 @@ Add `three.js` and `harp.gl` to your html and create a canvas with an id `map`:
 <html>
    <head>
       <style>
-         body, html { border: 0; margin: 0; padding: 0 }
+         body, html { border: 0; margin: 0; padding: 0; }
          #map { height: 100vh; width: 100vw; }
       </style>
       <script src="https://unpkg.com/three/build/three.min.js"></script>
@@ -50,15 +50,15 @@ Add `three.js` and `harp.gl` to your html and create a canvas with an id `map`:
 Initialize the map:
 ```javascript
 const map = new harp.MapView({
-   canvas: document.getElementById('map'),
+   canvas: document.getElementById("map"),
    theme: "https://unpkg.com/@here/harp-map-theme@latest/resources/berlin_tilezen_night_reduced.json",
 });
-const mapControls = new harp.MapControls(map);
+const controls = new harp.MapControls(map);
 const omvDataSource = new harp.OmvDataSource({
    baseUrl: "https://xyz.api.here.com/tiles/herebase.02",
    apiFormat: harp.APIFormat.XYZOMV,
    styleSetName: "tilezen",
-   authenticationCode: 'YOUR-XYZ-TOKEN',
+   authenticationCode: "YOUR-XYZ-TOKEN",
 });
 map.addDataSource(omvDataSource);
 ```
