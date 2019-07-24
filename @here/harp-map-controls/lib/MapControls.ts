@@ -309,6 +309,7 @@ export class MapControls extends THREE.EventDispatcher {
         this.handleZoom = this.handleZoom.bind(this);
         this.pan = this.pan.bind(this);
         this.tilt = this.tilt.bind(this);
+        this.assignZoomAfterTouchZoomRender = this.assignZoomAfterTouchZoomRender.bind(this);
     }
 
     /**
@@ -425,6 +426,10 @@ export class MapControls extends THREE.EventDispatcher {
         this.m_currentViewDirection.multiplyScalar(amount);
         this.mapView.camera.position.z += this.m_currentViewDirection.z;
         this.updateMapView();
+        this.mapView.addEventListener(
+            MapViewEventNames.AfterRender,
+            this.assignZoomAfterTouchZoomRender
+        );
     }
 
     /**
@@ -620,6 +625,14 @@ export class MapControls extends THREE.EventDispatcher {
                 ? this.currentPitch
                 : this.m_currentPitch
             : this.m_targetedPitch;
+    }
+
+    private assignZoomAfterTouchZoomRender() {
+        this.m_currentZoom = this.mapView.zoomLevel;
+        this.mapView.removeEventListener(
+            MapViewEventNames.AfterRender,
+            this.assignZoomAfterTouchZoomRender
+        );
     }
 
     private tilt() {
