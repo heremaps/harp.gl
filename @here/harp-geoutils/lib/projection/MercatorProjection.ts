@@ -270,7 +270,12 @@ class WebMercatorProjection extends MercatorProjection {
         result?: WorldBoundingBox
     ): WorldBoundingBox {
         const r = super.projectBox(geoBox, result);
-        if (isOrientedBox3Like(r)) {
+        if (isBox3Like(r)) {
+            // Invert the y axis for web mercator, this means that max => min & min => max
+            const maxY = r.max.y;
+            r.max.y = this.unitScale - r.min.y;
+            r.min.y = this.unitScale - maxY;
+        } else if (isOrientedBox3Like(r)) {
             MathUtils.newVector3(1, 0, 0, r.xAxis);
             MathUtils.newVector3(0, -1, 0, r.yAxis);
             MathUtils.newVector3(0, 0, -1, r.zAxis);

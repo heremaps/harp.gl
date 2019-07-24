@@ -87,6 +87,47 @@ describe("WebMercator", function() {
             0.0001
         );
     });
+
+    it("(un)projectBoxFlipsY", function() {
+        // This test ensures that the project & unproject box function of the web mercator
+        // projection correctly inverts the y axis.
+        const geoCoord = new GeoCoordinates(53, 13);
+        const tileKey = webMercatorTilingScheme.getTileKey(geoCoord, 10);
+        assert.isNotNull(tileKey);
+        const worldBox = webMercatorTilingScheme.getWorldBox(tileKey!);
+        const geoBox = webMercatorTilingScheme.getGeoBox(tileKey!);
+        const projWorldBox = webMercatorProjection.projectBox(geoBox);
+        const EPS = 0.001;
+        assert.approximately(worldBox.min.x, projWorldBox.min.x, EPS);
+        assert.approximately(worldBox.min.y, projWorldBox.min.y, EPS);
+        assert.approximately(worldBox.min.z, projWorldBox.min.z, EPS);
+        assert.approximately(worldBox.max.x, projWorldBox.max.x, EPS);
+        assert.approximately(worldBox.max.y, projWorldBox.max.y, EPS);
+        assert.approximately(worldBox.max.z, projWorldBox.max.z, EPS);
+
+        // Test that unprojecting the box gives the correct GeoBox
+        const unprojWorldBox = webMercatorProjection.unprojectBox(projWorldBox);
+        assert.approximately(
+            geoBox.southWest.latitudeInRadians,
+            unprojWorldBox.southWest.latitudeInRadians,
+            EPS
+        );
+        assert.approximately(
+            geoBox.southWest.longitudeInRadians,
+            unprojWorldBox.southWest.longitudeInRadians,
+            EPS
+        );
+        assert.approximately(
+            geoBox.northEast.latitudeInRadians,
+            unprojWorldBox.northEast.latitudeInRadians,
+            EPS
+        );
+        assert.approximately(
+            geoBox.northEast.longitudeInRadians,
+            unprojWorldBox.northEast.longitudeInRadians,
+            EPS
+        );
+    });
 });
 
 describe("Equirectangular", function() {
