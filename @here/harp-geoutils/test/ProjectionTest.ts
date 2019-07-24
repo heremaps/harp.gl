@@ -8,6 +8,8 @@ import { assert } from "chai";
 import { GeoBox } from "../lib/coordinates/GeoBox";
 import { GeoCoordinates } from "../lib/coordinates/GeoCoordinates";
 import { Box3Like } from "../lib/math/Box3Like";
+import { MathUtils } from "../lib/math/MathUtils";
+import { OrientedBox3Like } from "../lib/math/OrientedBox3Like";
 import { Vector3Like } from "../lib/math/Vector3Like";
 import { equirectangularProjection } from "../lib/projection/EquirectangularProjection";
 import { identityProjection } from "../lib/projection/IdentityProjection";
@@ -69,26 +71,26 @@ describe("WebMercator", function() {
         assert.approximately(
             box.southWest.latitudeInRadians,
             unprojectedBox.southWest.latitudeInRadians,
-            0.0001
+            EPSILON
         );
         assert.approximately(
             box.southWest.longitudeInRadians,
             unprojectedBox.southWest.longitudeInRadians,
-            0.0001
+            EPSILON
         );
         assert.approximately(
             box.northEast.latitudeInRadians,
             unprojectedBox.northEast.latitudeInRadians,
-            0.0001
+            EPSILON
         );
         assert.approximately(
             box.northEast.longitudeInRadians,
             unprojectedBox.northEast.longitudeInRadians,
-            0.0001
+            EPSILON
         );
     });
 
-    it("(un)projectBoxFlipsY", function() {
+    it("(un)projectBoxFlipsY AABB", function() {
         // This test ensures that the project & unproject box function of the web mercator
         // projection correctly inverts the y axis.
         const geoCoord = new GeoCoordinates(53, 13);
@@ -97,36 +99,71 @@ describe("WebMercator", function() {
         const worldBox = webMercatorTilingScheme.getWorldBox(tileKey!);
         const geoBox = webMercatorTilingScheme.getGeoBox(tileKey!);
         const projWorldBox = webMercatorProjection.projectBox(geoBox);
-        const EPS = 0.001;
-        assert.approximately(worldBox.min.x, projWorldBox.min.x, EPS);
-        assert.approximately(worldBox.min.y, projWorldBox.min.y, EPS);
-        assert.approximately(worldBox.min.z, projWorldBox.min.z, EPS);
-        assert.approximately(worldBox.max.x, projWorldBox.max.x, EPS);
-        assert.approximately(worldBox.max.y, projWorldBox.max.y, EPS);
-        assert.approximately(worldBox.max.z, projWorldBox.max.z, EPS);
+
+        assert.approximately(worldBox.min.x, projWorldBox.min.x, EPSILON);
+        assert.approximately(worldBox.min.y, projWorldBox.min.y, EPSILON);
+        assert.approximately(worldBox.min.z, projWorldBox.min.z, EPSILON);
+        assert.approximately(worldBox.max.x, projWorldBox.max.x, EPSILON);
+        assert.approximately(worldBox.max.y, projWorldBox.max.y, EPSILON);
+        assert.approximately(worldBox.max.z, projWorldBox.max.z, EPSILON);
 
         // Test that unprojecting the box gives the correct GeoBox
         const unprojWorldBox = webMercatorProjection.unprojectBox(projWorldBox);
         assert.approximately(
             geoBox.southWest.latitudeInRadians,
             unprojWorldBox.southWest.latitudeInRadians,
-            EPS
+            EPSILON
         );
         assert.approximately(
             geoBox.southWest.longitudeInRadians,
             unprojWorldBox.southWest.longitudeInRadians,
-            EPS
+            EPSILON
         );
         assert.approximately(
             geoBox.northEast.latitudeInRadians,
             unprojWorldBox.northEast.latitudeInRadians,
-            EPS
+            EPSILON
         );
         assert.approximately(
             geoBox.northEast.longitudeInRadians,
             unprojWorldBox.northEast.longitudeInRadians,
-            EPS
+            EPSILON
         );
+    });
+
+    it("projectBoxFlipsY OBB", function() {
+        // This test ensures that the project box function of the web mercator
+        // projection correctly inverts the y axis.
+        const obb: OrientedBox3Like = {
+            position: MathUtils.newVector3(0, 0, 0),
+            extents: MathUtils.newVector3(0, 0, 0),
+            xAxis: MathUtils.newVector3(0, 0, 0),
+            yAxis: MathUtils.newVector3(0, 0, 0),
+            zAxis: MathUtils.newVector3(0, 0, 0)
+        };
+        const geoCoord = new GeoCoordinates(53, 13);
+        const tileKey = webMercatorTilingScheme.getTileKey(geoCoord, 10);
+        assert.isNotNull(tileKey);
+        const worldBox = webMercatorTilingScheme.getWorldBox(tileKey!);
+        const geoBox = webMercatorTilingScheme.getGeoBox(tileKey!);
+
+        webMercatorTilingScheme.projection.projectBox(geoBox, obb);
+
+        const min = MathUtils.newVector3(0, 0, 0);
+        const max = MathUtils.newVector3(0, 0, 0);
+
+        min.x = obb.position.x - obb.extents.x;
+        min.y = obb.position.y - obb.extents.y;
+        min.z = obb.position.z - obb.extents.z;
+
+        max.x = obb.position.x + obb.extents.x;
+        max.y = obb.position.y + obb.extents.y;
+        max.z = obb.position.z + obb.extents.z;
+
+        assert.approximately(worldBox.min.x, min.x, EPSILON);
+        assert.approximately(worldBox.min.y, min.y, EPSILON);
+        assert.approximately(worldBox.max.x, max.x, EPSILON);
+        assert.approximately(worldBox.max.y, max.y, EPSILON);
     });
 });
 

@@ -408,9 +408,6 @@ export class WebTileDataSource extends DataSource {
                     );
 
                     modifier.modify(g);
-
-                    const center = new THREE.Vector3();
-                    bounds.getCenter(center);
                 }
 
                 g.vertices.forEach(v => {

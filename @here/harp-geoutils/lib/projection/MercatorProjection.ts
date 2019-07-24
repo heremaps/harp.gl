@@ -279,6 +279,7 @@ class WebMercatorProjection extends MercatorProjection {
             MathUtils.newVector3(1, 0, 0, r.xAxis);
             MathUtils.newVector3(0, -1, 0, r.yAxis);
             MathUtils.newVector3(0, 0, -1, r.zAxis);
+            r.position.y = this.unitScale - r.position.y;
         }
         return r;
     }
