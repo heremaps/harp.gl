@@ -12,11 +12,11 @@ import {
 } from "@here/harp-datasource-protocol";
 
 import { StyleSetEvaluator } from "@here/harp-datasource-protocol/index-decoder";
+import { OrientedBox3 } from "@here/harp-geometry";
 import { Projection, TileKey, webMercatorTilingScheme } from "@here/harp-geoutils";
 import { ThemedTileDecoder, WorkerServiceManager } from "@here/harp-mapview-decoder/index-worker";
 import { TileDecoderService } from "@here/harp-mapview-decoder/lib/TileDecoderService";
 import { LoggerManager } from "@here/harp-utils";
-import * as THREE from "three";
 import { GeoJsonGeometryCreator, GeoJsonTileGeometries } from "./GeoJsonGeometryCreator";
 import { ExtendedTile } from "./GeoJsonParser";
 
@@ -147,10 +147,8 @@ class GeoJsonDecoder {
 
     private getTileCenter(tileKey: TileKey) {
         const geoBox = webMercatorTilingScheme.getGeoBox(tileKey);
-        const tileBounds = this.m_projection.projectBox(geoBox, new THREE.Box3());
-        const center = new THREE.Vector3();
-        tileBounds.getCenter(center);
-        return center;
+        const tileBounds = this.m_projection.projectBox(geoBox, new OrientedBox3());
+        return tileBounds.position;
     }
 
     private getTileInfo(extendedTile: ExtendedTile): ExtendedTileInfo {
