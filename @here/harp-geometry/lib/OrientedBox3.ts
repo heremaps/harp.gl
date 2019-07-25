@@ -67,6 +67,24 @@ export class OrientedBox3 implements OrientedBox3Like {
     }
 
     /**
+     * Gets the center position of this [[OrientedBox3]].
+     *
+     * @param center The returned center position.
+     */
+    getCenter(center = new Vector3()): Vector3 {
+        return center.copy(this.position);
+    }
+
+    /**
+     * Gets the size of this [[OrientedBox3]].
+     *
+     * @param size The returned size.
+     */
+    getSize(size = new Vector3()): Vector3 {
+        return size.copy(this.extents).multiplyScalar(2);
+    }
+
+    /**
      * Gets the orientation matrix of this `OrientedBox3`.
      * @param matrix The output orientation matrix.
      */
@@ -98,5 +116,42 @@ export class OrientedBox3 implements OrientedBox3Like {
         }
 
         return true;
+    }
+
+    /**
+     * Returns the distance from this [[OrientedBox3]] and the given `point`.
+     *
+     * @param point A point.
+     */
+    distanceToPoint(point: Vector3): number {
+        return Math.sqrt(this.distanceToPointSquared(point));
+    }
+
+    /**
+     * Returns the squared distance from this [[OrientedBox3]] and the given `point`.
+     *
+     * @param point A point.
+     */
+    distanceToPointSquared(point: Vector3): number {
+        const d = new Vector3();
+        d.subVectors(point, this.position);
+
+        const lengths = [d.dot(this.xAxis), d.dot(this.yAxis), d.dot(this.zAxis)];
+
+        let result = 0;
+
+        for (let i = 0; i < 3; ++i) {
+            const length = lengths[i];
+            const extent = this.extents.getComponent(i);
+            if (length < -extent) {
+                const dd = extent + length;
+                result = dd * dd;
+            } else if (length > extent) {
+                const dd = length - extent;
+                result += dd * dd;
+            }
+        }
+
+        return result;
     }
 }

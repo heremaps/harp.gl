@@ -13,6 +13,7 @@ import { GeoBox, Projection, TileKey } from "@here/harp-geoutils";
 import { CachedResource, GroupedPriorityList } from "@here/harp-utils";
 import * as THREE from "three";
 
+import { OrientedBox3 } from "@here/harp-geometry";
 import { AnimatedExtrusionTileHandler } from "./AnimatedExtrusionHandler";
 import { CopyrightInfo } from "./CopyrightInfo";
 import { DataSource } from "./DataSource";
@@ -277,7 +278,7 @@ export class Tile implements CachedResource {
     /**
      * The bounding box of this `Tile` in world coordinates.
      */
-    readonly boundingBox: THREE.Box3 = new THREE.Box3();
+    readonly boundingBox = new OrientedBox3();
 
     /**
      * The center of this `Tile` in world coordinates.

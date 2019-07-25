@@ -14,6 +14,7 @@ import {
     TileInfo
 } from "@here/harp-datasource-protocol";
 import { Env, MapEnv, StyleSetEvaluator } from "@here/harp-datasource-protocol/index-decoder";
+import { OrientedBox3 } from "@here/harp-geometry";
 import {
     GeoBox,
     Projection,
@@ -438,6 +439,8 @@ export namespace OmvDecoder {
          */
         readonly geoBox: GeoBox;
 
+        readonly projectedBoundingBox = new OrientedBox3();
+
         /**
          * The tile bounds in the OMV tile space [[webMercatorTilingScheme]].
          */
@@ -478,7 +481,9 @@ export namespace OmvDecoder {
             this.geoBox = this.tilingScheme.getGeoBox(tileKey);
 
             this.targetProjection.projectBox(this.geoBox, this.projectedTileBounds);
-            this.projectedTileBounds.getCenter(this.center);
+
+            this.targetProjection.projectBox(this.geoBox, this.projectedBoundingBox);
+            this.projectedBoundingBox.getCenter(this.center);
 
             this.tilingScheme.getWorldBox(tileKey, this.tileBounds);
             this.tileBounds.getSize(this.tileSize);
