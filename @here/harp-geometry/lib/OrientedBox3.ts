@@ -67,6 +67,18 @@ export class OrientedBox3 implements OrientedBox3Like {
     }
 
     /**
+     * Copies the values of `other` to this [[OrientedBox3]].
+     * @param other The other [[OrientedBox3]] to copy.
+     */
+    copy(other: OrientedBox3) {
+        this.position.copy(other.position);
+        this.xAxis.copy(other.xAxis);
+        this.yAxis.copy(other.yAxis);
+        this.zAxis.copy(other.zAxis);
+        this.extents.copy(other.extents);
+    }
+
+    /**
      * Gets the center position of this [[OrientedBox3]].
      *
      * @param center The returned center position.

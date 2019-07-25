@@ -281,11 +281,6 @@ export class Tile implements CachedResource {
     readonly boundingBox = new OrientedBox3();
 
     /**
-     * The center of this `Tile` in world coordinates.
-     */
-    readonly center: THREE.Vector3 = new THREE.Vector3();
-
-    /**
      * A record of road data that cannot be intersected with THREE.JS, because the geometry is
      * created in the vertex shader.
      */
@@ -385,7 +380,6 @@ export class Tile implements CachedResource {
     ) {
         this.geoBox = this.dataSource.getTilingScheme().getGeoBox(this.tileKey);
         this.projection.projectBox(this.geoBox, this.boundingBox);
-        this.boundingBox.getCenter(this.center);
     }
 
     /**
@@ -433,6 +427,13 @@ export class Tile implements CachedResource {
             this.computeResourceInfo();
         }
         return this.m_resourceInfo!.heapSize;
+    }
+
+    /**
+     * The center of this `Tile` in world coordinates.
+     */
+    get center(): THREE.Vector3 {
+        return this.boundingBox.position;
     }
 
     /**
@@ -613,6 +614,11 @@ export class Tile implements CachedResource {
      */
     setDecodedTile(decodedTile: DecodedTile) {
         this.m_decodedTile = decodedTile;
+        if (this.m_decodedTile.boundingBox !== undefined) {
+            // If the decoder provides a more accurate bounding box than the one we computed from
+            // the flat geo box we take it instead.
+            this.boundingBox.copy(this.m_decodedTile.boundingBox);
+        }
         this.invalidateResourceInfo();
 
         const stats = PerformanceStatistics.instance;
