@@ -14,6 +14,7 @@ import {
 } from "@here/harp-geoutils";
 import { Technique } from "./Techniques";
 import { TileInfo } from "./TileInfo";
+import { OrientedBox3 } from "@here/harp-geometry";
 
 /**
  * This object has geometry data in the form of geometries buffers ready to be used by WebGL.
@@ -28,6 +29,13 @@ export interface DecodedTile {
     poiGeometries?: PoiGeometry[];
     tileInfo?: TileInfo;
     decodeTime?: number; // time used to decode (in ms)
+
+    /**
+     * The default bounding box in [[Tile]] is based on the geo box of the tile.
+     * For data-sources that have 3d data this is not sufficient so the data-source can provide a
+     * more accurate bounding box once the data is decoded.
+     */
+    boundingBox?: OrientedBox3;
 
     /**
      * Tile data Copyright holder identifiers.
