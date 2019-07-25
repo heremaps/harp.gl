@@ -222,6 +222,7 @@ export abstract class Projection {
 
     /**
      * Reproject a world position from the given source [[Projection]].
+     * Implementations should be aware of worldPos and result may be one object
      *
      * @param sourceProjection The source projection.
      * @param worldPos A valid position in the world space defined by the source projection.

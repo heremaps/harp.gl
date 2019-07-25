@@ -6,7 +6,12 @@
 
 import { GeoCoordinates, sphereProjection } from "@here/harp-geoutils";
 import { MapControls, MapControlsUI } from "@here/harp-map-controls";
-import { CopyrightElementHandler, CopyrightInfo, MapView } from "@here/harp-mapview";
+import {
+    CopyrightElementHandler,
+    CopyrightInfo,
+    MapView,
+    PolarTileDataSource
+} from "@here/harp-mapview";
 import { APIFormat, OmvDataSource } from "@here/harp-omv-datasource";
 import { accessToken } from "../config";
 
@@ -18,6 +23,7 @@ export namespace GlobeExample {
         const mapView = new MapView({
             canvas,
             theme: "resources/berlin_tilezen_base_globe.json",
+            maxVisibleDataSourceTiles: 360,
             projection: sphereProjection
         });
 
@@ -53,7 +59,12 @@ export namespace GlobeExample {
             copyrightInfo: copyrights
         });
 
+        const polarDataSource = new PolarTileDataSource({
+            styleSetName: "tilezen"
+        });
+
         map.addDataSource(omvDataSource);
+        map.addDataSource(polarDataSource);
 
         const mapControls = new MapControls(map);
         const ui = new MapControlsUI(mapControls);
