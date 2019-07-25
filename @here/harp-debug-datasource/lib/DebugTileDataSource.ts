@@ -46,13 +46,14 @@ export class DebugTile extends Tile {
     constructor(dataSource: DataSource, tileKey: TileKey) {
         super(dataSource, tileKey);
 
-        const { south, west, north, east } = this.geoBox;
-
+        const tilingScheme = dataSource.getTilingScheme();
+        const worldBox = tilingScheme.boundingBoxGenerator.getWorldBox(tileKey);
+        const projection = tilingScheme.projection;
         const geoCoordinates: GeoCoordinates[] = [
-            new GeoCoordinates(south, west),
-            new GeoCoordinates(south, east),
-            new GeoCoordinates(north, east),
-            new GeoCoordinates(north, west)
+            projection.unprojectPoint(new THREE.Vector3(worldBox.min.x, worldBox.min.y, 0)),
+            projection.unprojectPoint(new THREE.Vector3(worldBox.max.x, worldBox.min.y, 0)),
+            projection.unprojectPoint(new THREE.Vector3(worldBox.max.x, worldBox.max.y, 0)),
+            projection.unprojectPoint(new THREE.Vector3(worldBox.min.x, worldBox.max.y, 0))
         ];
 
         const middlePoint = new THREE.Vector3();

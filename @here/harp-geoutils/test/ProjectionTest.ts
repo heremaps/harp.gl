@@ -16,6 +16,7 @@ import { identityProjection } from "../lib/projection/IdentityProjection";
 import { mercatorProjection, webMercatorProjection } from "../lib/projection/MercatorProjection";
 import { Projection } from "../lib/projection/Projection";
 import { sphereProjection } from "../lib/projection/SphereProjection";
+import { transverseMercatorProjection } from "../lib/projection/TransverseMercatorProjection";
 import { hereTilingScheme } from "../lib/tiling/HereTilingScheme";
 import { mercatorTilingScheme } from "../lib/tiling/MercatorTilingScheme";
 import { TileKey } from "../lib/tiling/TileKey";
@@ -266,12 +267,92 @@ describe("Mercator", function() {
     });
 });
 
+describe("TransverseMercator", function() {
+    it("project", function() {
+        const coords = new GeoCoordinates(52.504951, 13.371806, 100);
+        const projected = mercatorProjection.projectPoint(coords);
+        const unprojected = mercatorProjection.unprojectPoint(projected);
+
+        assert.approximately(coords.latitudeInRadians, unprojected.latitudeInRadians, EPSILON);
+        assert.approximately(coords.longitudeInRadians, unprojected.longitudeInRadians, EPSILON);
+        assert.equal(coords.altitude, unprojected.altitude);
+    });
+    it("project outside normal range", function() {
+        const coords = new GeoCoordinates(52.504951, 373.371806);
+        const projected = mercatorProjection.projectPoint(coords);
+        const unprojected = mercatorProjection.unprojectPoint(projected);
+
+        assert.approximately(coords.latitudeInRadians, unprojected.latitudeInRadians, EPSILON);
+        assert.approximately(coords.longitudeInRadians, unprojected.longitudeInRadians, EPSILON);
+    });
+
+    it("project not normalized", function() {
+        const coords = new GeoCoordinates(52.504951, 373.371806);
+        const projected = mercatorProjection.projectPoint(coords, undefined);
+        const unprojected = mercatorProjection.unprojectPoint(projected);
+
+        assert.approximately(coords.latitudeInRadians, unprojected.latitudeInRadians, EPSILON);
+        assert.approximately(coords.longitudeInRadians, unprojected.longitudeInRadians, EPSILON);
+    });
+
+    it("projectBox", function() {
+        const tileKey = TileKey.fromRowColumnLevel(0, 0, 0);
+        const box = mercatorTilingScheme.getGeoBox(tileKey);
+        const projectedBox = mercatorProjection.projectBox(box);
+        const unprojectedBox = mercatorProjection.unprojectBox(projectedBox);
+
+        assert.approximately(
+            box.southWest.latitudeInRadians,
+            unprojectedBox.southWest.latitudeInRadians,
+            0.0001
+        );
+        assert.approximately(
+            box.southWest.longitudeInRadians,
+            unprojectedBox.southWest.longitudeInRadians,
+            0.0001
+        );
+        assert.approximately(
+            box.northEast.latitudeInRadians,
+            unprojectedBox.northEast.latitudeInRadians,
+            0.0001
+        );
+        assert.approximately(
+            box.northEast.longitudeInRadians,
+            unprojectedBox.northEast.longitudeInRadians,
+            0.0001
+        );
+    });
+});
+
 describe("Reprojection", function() {
+    const ml = (Math.atan(Math.sinh(Math.PI)) * 180) / Math.PI;
+
     const geoPoints: GeoCoordinates[] = [
         new GeoCoordinates(52.504951, 13.371806, 12),
         new GeoCoordinates(52.504951, 13.371806, -12),
         new GeoCoordinates(52.504951, 13.371806, 0),
         new GeoCoordinates(52.504951, 13.371806),
+
+        new GeoCoordinates(0, 0),
+        new GeoCoordinates(0, +85),
+        new GeoCoordinates(0, -85),
+        new GeoCoordinates(0, +ml),
+        new GeoCoordinates(0, -ml),
+        new GeoCoordinates(+45, +ml),
+        new GeoCoordinates(-45, -ml),
+        new GeoCoordinates(+ml, 0),
+        new GeoCoordinates(-ml, 0),
+        new GeoCoordinates(+ml, +45),
+        new GeoCoordinates(-ml, -45),
+        new GeoCoordinates(0, +180),
+        // TODO: this actually fails
+        // new GeoCoordinates(  0, -180),
+        new GeoCoordinates(0, +170),
+        new GeoCoordinates(0, -170),
+        new GeoCoordinates(+5, +170),
+        new GeoCoordinates(-5, -170),
+        new GeoCoordinates(+5, +90),
+        new GeoCoordinates(-5, -90),
 
         new GeoCoordinates(46.64943616335024, 2.4169921875, 43213),
         new GeoCoordinates(43.54854811091288, 12.12890625, 43233),
@@ -295,7 +376,8 @@ describe("Reprojection", function() {
     const projections: Array<[string, Projection]> = [
         ["sphere", sphereProjection],
         ["mercator", mercatorProjection],
-        ["webMercator", webMercatorProjection]
+        ["webMercator", webMercatorProjection],
+        ["transverseMercator", transverseMercatorProjection]
     ];
 
     projections.forEach(([targetProjectionName, targetProjection]) => {

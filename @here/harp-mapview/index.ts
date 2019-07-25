@@ -15,6 +15,7 @@ export * from "./lib/ConcurrentTilerFacade";
 export * from "./lib/CopyrightElementHandler";
 export * from "./lib/CopyrightInfo";
 export * from "./lib/DataSource";
+export * from "./lib/PolarTileDataSource";
 export * from "./lib/DecodedTileHelpers";
 export * from "./lib/DepthPrePass";
 export * from "./lib/DisplacementMap";
