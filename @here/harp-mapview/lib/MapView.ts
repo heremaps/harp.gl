@@ -2109,11 +2109,14 @@ export class MapView extends THREE.EventDispatcher {
             // want to see far in the distance, hence we use a sufficiently large offset to ensure
             // the user can see enough, anyway we never have much detail close up, so it doesn't
             // make sense to max out the accuracy here.
-            const kFarOffset = 20000.0;
+            const kFarOffset = 200.0;
 
             const heightAboveGround = this.getHeightAboveTerrain();
             nearPlane = Math.max(kMinNear, heightAboveGround * 0.1);
-            farPlane = nearPlane * kMultiplier + kFarOffset;
+            // We compute the far plane using a lower resolution mesh, otherwise panning means that
+            // the far plane wobbles, because of the high resolution of the mesh.
+            const heightAboveLevel4 = this.getHeightAboveTerrain(4);
+            farPlane = Math.max(kMinNear, heightAboveLevel4 * 0.1) * kMultiplier + kFarOffset;
 
             if (this.m_options.farPlaneEvaluator !== undefined) {
                 this.m_camera.getWorldDirection(this.m_tempVector3);
@@ -2162,7 +2165,7 @@ export class MapView extends THREE.EventDispatcher {
             );
         } else {
             const cameraPitch = MapViewUtils.extractYawPitchRoll(this.m_camera.quaternion).pitch;
-            const cameraPosZ = this.getHeightAboveTerrain();
+            const cameraPosZ = this.getHeightAboveTerrain(4);
 
             this.m_lookAtDistance = cameraPosZ / Math.cos(cameraPitch);
 
@@ -2171,9 +2174,9 @@ export class MapView extends THREE.EventDispatcher {
         }
     }
 
-    private getHeightAboveTerrain(): number {
+    private getHeightAboveTerrain(level?: number): number {
         if (this.elevationProvider !== undefined) {
-            const heightAboveTerrain = this.elevationProvider.getHeight(this.geoCenter);
+            const heightAboveTerrain = this.elevationProvider.getHeight(this.geoCenter, level);
             if (heightAboveTerrain !== undefined) {
                 const height =
                     this.projection.unprojectAltitude(this.m_camera.position) - heightAboveTerrain;
