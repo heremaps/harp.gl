@@ -331,6 +331,7 @@ export class Tile implements CachedResource {
     preparedTextPaths: TextPathGeometry[] | undefined;
 
     private m_disposed: boolean = false;
+    private m_localTangentSpace = false;
 
     private m_forceHasGeometry: boolean | undefined = undefined;
 
@@ -372,14 +373,17 @@ export class Tile implements CachedResource {
      * supported, because of the use of the upper bits for the offset.
      * @param offset The optional offset, this is an integer which represents what multiple of 360
      * degrees to shift, only useful for flat projections, hence optional.
+     * @param localTangentSpace Whether the tile geometry is in local tangent space or not.
      */
     constructor(
         readonly dataSource: DataSource,
         readonly tileKey: TileKey,
-        public offset: number = 0
+        public offset: number = 0,
+        localTangentSpace?: boolean
     ) {
         this.geoBox = this.dataSource.getTilingScheme().getGeoBox(this.tileKey);
         this.projection.projectBox(this.geoBox, this.boundingBox);
+        this.m_localTangentSpace = localTangentSpace !== undefined ? localTangentSpace : false;
     }
 
     /**
@@ -409,6 +413,16 @@ export class Tile implements CachedResource {
      */
     get mapView(): MapView {
         return this.dataSource.mapView;
+    }
+
+    /**
+     * Whether the data of this tile is in local tangent space or not.
+     * If the data is in local tangent space (i.e. up vector is (0,0,1) for high zoomlevels) then
+     * [[MapView]] will rotate the objects before rendering using the rotation matrix of the
+     * oriented [[boundingBox]].
+     */
+    get localTangentSpace(): boolean {
+        return this.m_localTangentSpace;
     }
 
     /**

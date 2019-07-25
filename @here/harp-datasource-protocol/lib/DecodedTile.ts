@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { OrientedBox3 } from "@here/harp-geometry";
 import {
     equirectangularProjection,
     mercatorProjection,
@@ -14,7 +15,6 @@ import {
 } from "@here/harp-geoutils";
 import { Technique } from "./Techniques";
 import { TileInfo } from "./TileInfo";
-import { OrientedBox3 } from "@here/harp-geometry";
 
 /**
  * This object has geometry data in the form of geometries buffers ready to be used by WebGL.
