@@ -6,23 +6,24 @@
 
 import { LoggerManager } from "@here/harp-utils";
 
-import { Expr, MapEnv } from "./Expr";
+import { DecodedTechnique, makeDecodedTechnique } from "./DecodedTechnique";
+import { DynamicTechniqueExpr, evaluateTechniqueAttr } from "./DynamicTechniqueExpr";
+import { Env, Expr, isJsonExpr, JsonExpr, MapEnv, Value } from "./Expr";
 import { isInterpolatedPropertyDefinition } from "./InterpolatedProperty";
-import { InterpolatedPropertyDefinition, InterpolationMode } from "./InterpolatedPropertyDefs";
+import { InterpolatedProperty } from "./InterpolatedPropertyDefs";
 import {
-    StringEncodedHex,
-    StringEncodedHSL,
-    StringEncodedMeters,
-    StringEncodedNumeralFormat,
-    StringEncodedNumeralFormats,
-    StringEncodedNumeralType,
-    StringEncodedPixels,
-    StringEncodedRGB
-} from "./StringEncodedNumeral";
-import { IndexedTechnique, Technique } from "./Techniques";
-import { isReference, Style, StyleDeclaration, StyleSelector, StyleSet } from "./Theme";
+    mergeTechniqueDescriptor,
+    techniqueAttrType,
+    TechniqueAttrType,
+    TechniqueDescriptor,
+    TechniquePropName
+} from "./TechniqueDescriptor";
+import { IndexedTechnique, Technique, techniqueDescriptors } from "./Techniques";
+import { isReference, LineStyle, Style, StyleDeclaration, StyleSelector, StyleSet } from "./Theme";
 
 export const logger = LoggerManager.instance.create("StyleSetEvaluator");
+
+const emptyTechniqueDescriptor = mergeTechniqueDescriptor({});
 
 interface StyleInternalParams {
     /**
@@ -30,11 +31,38 @@ interface StyleInternalParams {
      */
     _whenExpr?: Expr;
 
+    _staticAttributes?: Array<[string, Value | InterpolatedProperty<unknown>]>;
+
+    /**
+     * These attributes are used to instantiate Technique variants.
+     *
+     * @see [[TechiqueDescriptor.techniquePropNames]]
+     */
+    _dynamicTechniqueAttributes?: Array<[string, DynamicTechniqueExpr]>;
+
+    /**
+     * These attributes must be evaluated basing with feature env.
+     *
+     * @see [[TechiqueDescriptor.featurePropNames]]
+     */
+    _dynamicFeatureAttributes?: Array<[string, DynamicTechniqueExpr]>;
+
+    /**
+     * These attributes are forwarded as serialized by decoder to main thread, so they are resolved
+     * based on [[SceneState]].
+     *
+     * Filtered to by
+     *  - [[TechiqueDescriptor.dynamicMaterialPropNames]]
+     *  - [[TechniqueDescriptor.dynamicObjectPropNames]]
+     */
+    _dynamicForwaredAttributes?: Array<[string, DynamicTechniqueExpr]>;
+    _dynamicTechniques?: Map<string, IndexedTechnique>;
+
     /**
      * Optimization: Index into table in StyleSetEvaluator.
      * @hidden
      */
-    _index?: number;
+    _staticTechnique?: IndexedTechnique;
 
     /**
      * Optimization: StyleSet index.
@@ -43,7 +71,7 @@ interface StyleInternalParams {
     _styleSetIndex?: number;
 }
 
-type InternalStyle = Style & StyleSelector & Partial<StyleInternalParams>;
+type InternalStyle = Style & StyleSelector & StyleInternalParams;
 
 /**
  * Combine data from datasource and apply the rules from a specified theme to show it on the map.
@@ -58,7 +86,7 @@ export class StyleSetEvaluator {
         let techniqueRenderOrder = 0;
         let styleSetIndex = 0;
 
-        const cloneStyle = (style: StyleDeclaration): InternalStyle | undefined => {
+        const cloneStyle = (style: StyleDeclaration): StyleDeclaration | undefined => {
             if (isReference(style)) {
                 return undefined;
             }
@@ -72,10 +100,7 @@ export class StyleSetEvaluator {
                         : undefined
             };
         };
-        this.styleSet = styleSet
-            .map(style => cloneStyle(style))
-            .filter(subStyle => subStyle !== undefined) as InternalStyle[];
-
+        styleSet = styleSet.map(style => cloneStyle(style) as StyleDeclaration);
         const computeDefaultRenderOrder = (style: InternalStyle): void => {
             if (style.renderOrderBiasGroup !== undefined) {
                 const renderOrderBiasGroupOrder = style.renderOrderBiasGroup
@@ -122,16 +147,17 @@ export class StyleSetEvaluator {
                     computeDefaultRenderOrder(currStyle as InternalStyle);
                 }
             } else {
-                style._styleSetIndex = styleSetIndex++;
+                (style as InternalStyle)._styleSetIndex = styleSetIndex++;
                 if (style.technique !== undefined && style.renderOrder === undefined) {
                     style.renderOrder = techniqueRenderOrder++;
                 }
             }
         };
 
-        for (const style of this.styleSet) {
-            computeDefaultRenderOrder(style);
+        for (const style of styleSet) {
+            computeDefaultRenderOrder(style as InternalStyle);
         }
+        this.styleSet = styleSet as InternalStyle[];
     }
     /**
      * Find all techniques that fit the current objects' environment.
@@ -154,29 +180,21 @@ export class StyleSetEvaluator {
         }
         return result;
     }
+
     /**
      * Get the (current) array of techniques that have been created during decoding.
      */
     get techniques(): IndexedTechnique[] {
         return this.m_techniques;
     }
+
     /**
-     * Shorten the style object for debug log. Remove special strings (starting with "_") as well
-     * as the sub-styles of style groups.
-     *
-     * @param key Key in object
-     * @param value value in object
+     * Get the (current) array of techniques that have been created during decoding.
      */
-    private cleanupStyle(key: string, value: any): any {
-        // Filtering out properties
-        if (key === "styles") {
-            return "[...]";
-        }
-        if (key.startsWith("_")) {
-            return undefined;
-        }
-        return value;
+    get decodedTechniques(): DecodedTechnique[] {
+        return this.m_techniques.map(makeDecodedTechnique);
     }
+
     /**
      * Process a style (and its sub-styles) hierarchically to look for the technique that fits the
      * current objects' environment. The attributes of the styles are assembled to create a unique
@@ -223,14 +241,6 @@ export class StyleSetEvaluator {
         }
         // search through sub-styles
         if (style.styles !== undefined) {
-            if (style.debug) {
-                logger.log(
-                    "\n======== style group =========\nenv:",
-                    JSON.stringify(env.unmap(), undefined, 2),
-                    "\nstyle group:",
-                    JSON.stringify(style, this.cleanupStyle, 2)
-                );
-            }
             styleStack.push(style);
             for (const currStyle of style.styles) {
                 if (this.processStyle(env, styleStack, currStyle as InternalStyle, result)) {
@@ -239,204 +249,166 @@ export class StyleSetEvaluator {
                 }
             }
             styleStack.pop();
-        } else {
-            // we found a technique!
-            if (style.technique !== undefined) {
-                if (style.technique !== "none") {
-                    // Check if we already assembled the technique for exactly this style. If we
-                    // have, we return the preassembled technique object. Otherwise we assemble the
-                    // technique from all parent styles' attributes and the current stales'
-                    // attributes, and add it to the cached techniques.
-                    if (style._index === undefined) {
-                        const technique = this.createTechnique(style, styleStack);
-                        result.push(technique);
-                        if (style.debug) {
-                            logger.log(
-                                "\n======== style w/ technique =========\nenv:",
-                                JSON.stringify(env.unmap(), undefined, 2),
-                                "\nstyle:",
-                                JSON.stringify(style, this.cleanupStyle, 2),
-                                "\ntechnique:",
-                                JSON.stringify(technique, this.cleanupStyle, 2)
-                            );
+            return false;
+        }
+
+        if (style.technique === undefined) {
+            return false;
+        }
+        // we found a technique!
+        if (style.technique !== "none") {
+            this.checkStyleDynamicAttributes(style, styleStack);
+
+            if (style._dynamicTechniques !== undefined) {
+                const dynamicAttributes = this.evaluateTechniqueProperties(style, env);
+                const dynamicAttrKey = dynamicAttributes
+                    .map(([attrName, attrValue]) => {
+                        if (attrValue === undefined) {
+                            return "U";
+                        } else {
+                            return JSON.stringify(attrValue);
                         }
-                    } else {
-                        result.push(this.m_techniques[style._index]);
-                    }
+                    })
+                    .join("\0");
+                const key = makeCacheKey(style._styleSetIndex!, dynamicAttrKey);
+                let technique = style._dynamicTechniques!.get(key);
+                if (technique === undefined) {
+                    technique = this.createTechnique(style, dynamicAttributes);
+                    style._dynamicTechniques!.set(key, technique);
                 }
-                // stop processing if "final" is set
-                return style.final === true;
+                result.push(technique);
+            } else {
+                let technique = style._staticTechnique;
+                if (technique === undefined) {
+                    style._staticTechnique = technique = this.createTechnique(
+                        style,
+                        []
+                    ) as IndexedTechnique;
+                }
+                result.push(technique as IndexedTechnique);
             }
         }
-        return false;
+        // stop processing if "final" is set
+        return style.final === true;
     }
 
-    private createTechnique(style: InternalStyle, styleStack: InternalStyle[]) {
+    private checkStyleDynamicAttributes(style: InternalStyle, styleStack: InternalStyle[]) {
+        if (style._dynamicTechniqueAttributes !== undefined || style.technique === "none") {
+            return;
+        }
+
+        style._dynamicTechniqueAttributes = [];
+        style._dynamicFeatureAttributes = [];
+        style._dynamicForwaredAttributes = [];
+        style._staticAttributes = [];
+
+        const dynamicFeatureAttributes = style._dynamicFeatureAttributes;
+        const dynamicTechniqueAttributes = style._dynamicTechniqueAttributes;
+        const dynamicForwardedAttributes = style._dynamicForwaredAttributes;
+        const targetStaticAttributes = style._staticAttributes;
+
+        const techniqueDescriptor =
+            techniqueDescriptors[style.technique] || emptyTechniqueDescriptor;
+
+        function processAttribute(attrName: string, attrValue: Value | JsonExpr | undefined) {
+            if (attrValue === undefined) {
+                return;
+            }
+
+            const attrType = techniqueAttrType(
+                (attrName as any) as TechniquePropName<unknown>,
+                techniqueDescriptor as TechniqueDescriptor<unknown>
+            );
+
+            const targetList =
+                attrType === TechniqueAttrType.Feature
+                    ? dynamicFeatureAttributes
+                    : attrType === TechniqueAttrType.Technique
+                    ? dynamicTechniqueAttributes
+                    : dynamicForwardedAttributes;
+
+            if (isJsonExpr(attrValue)) {
+                targetList.push([
+                    attrName,
+                    {
+                        _cacheKey: makeCacheKey(style._styleSetIndex!, attrName),
+                        transferrableExpr: attrValue
+                    }
+                ]);
+            } else if (isInterpolatedPropertyDefinition(attrValue)) {
+                targetList.push([
+                    attrName,
+                    {
+                        _cacheKey: makeCacheKey(style._styleSetIndex!, attrName),
+                        interpolated: attrValue
+                    }
+                ]);
+            } else {
+                targetStaticAttributes.push([attrName, attrValue]);
+            }
+        }
+
+        function processAttributes(style2: Style) {
+            processAttribute("renderOrder", style2.renderOrder);
+            processAttribute("renderOrderOffset", style2.renderOrderOffset);
+
+            // line & solid-line secondaryRenderOrder should be generic attr
+            // TODO: maybe just warn and force move it to `attr` ?
+            processAttribute("secondaryRenderOrder", (style2 as LineStyle).secondaryRenderOrder);
+
+            if (style2.attr !== undefined) {
+                for (const attrName in style2.attr) {
+                    if (!style2.attr.hasOwnProperty(attrName)) {
+                        continue;
+                    }
+                    processAttribute(attrName, (style2.attr as any)[attrName]);
+                }
+            }
+        }
+
+        for (const parentStyle of styleStack) {
+            processAttributes(parentStyle);
+        }
+        processAttributes(style);
+
+        if (dynamicTechniqueAttributes.length > 0) {
+            style._dynamicTechniques = new Map();
+        }
+    }
+
+    private evaluateTechniqueProperties(style: InternalStyle, env: Env): Array<[string, Value]> {
+        if (style._dynamicTechniqueAttributes === undefined) {
+            return [];
+        }
+        return style._dynamicTechniqueAttributes.map(([attrName, attrExpr]) => {
+            return [attrName, evaluateTechniqueAttr<Value>(attrExpr, env)];
+        });
+    }
+
+    private createTechnique(style: InternalStyle, dynamicAttrs: Array<[string, Value]>) {
         const technique = {} as any;
         technique.name = style.technique;
-        const addAttributes = (currStyle: InternalStyle) => {
-            if (currStyle.renderOrder !== undefined) {
-                technique.renderOrder = currStyle.renderOrder;
+        if (style._staticAttributes !== undefined) {
+            for (const [attrName, attrValue] of style._staticAttributes) {
+                technique[attrName] = attrValue;
             }
-            if (currStyle.transient !== undefined) {
-                technique.transient = currStyle.transient;
-            }
-            if (currStyle.renderOrderBiasProperty !== undefined) {
-                technique.renderOrderBiasProperty = currStyle.renderOrderBiasProperty;
-            }
-            if (currStyle.labelProperty !== undefined) {
-                technique.label = currStyle.labelProperty;
-            }
-            if (currStyle.renderOrderBiasRange !== undefined) {
-                technique.renderOrderBiasRange = currStyle.renderOrderBiasRange;
-            }
-            if (currStyle.renderOrderBiasGroup !== undefined) {
-                technique.renderOrderBiasGroup = currStyle.renderOrderBiasGroup;
-            }
-            if ((currStyle as any).secondaryRenderOrder !== undefined) {
-                technique.secondaryRenderOrder = (currStyle as any).secondaryRenderOrder;
-            }
-            if (currStyle.attr !== undefined) {
-                Object.getOwnPropertyNames(currStyle.attr).forEach(property => {
-                    const prop = (currStyle.attr as any)[property];
-                    if (isInterpolatedPropertyDefinition(prop)) {
-                        removeDuplicatePropertyValues(prop);
-                        const propKeys = new Float32Array(prop.zoomLevels);
-                        let propValues;
-                        let maskValues;
-                        switch (typeof prop.values[0]) {
-                            default:
-                            case "number":
-                                propValues = new Float32Array((prop.values as any[]) as number[]);
-                                technique[property] = {
-                                    interpolationMode:
-                                        prop.interpolation !== undefined
-                                            ? InterpolationMode[prop.interpolation]
-                                            : InterpolationMode.Discrete,
-                                    zoomLevels: propKeys,
-                                    values: propValues,
-                                    exponent: prop.exponent
-                                };
-                                break;
-                            case "boolean":
-                                propValues = new Float32Array(prop.values.length);
-                                for (let i = 0; i < prop.values.length; ++i) {
-                                    propValues[i] = ((prop.values[i] as unknown) as boolean)
-                                        ? 1
-                                        : 0;
-                                }
-                                technique[property] = {
-                                    interpolationMode: InterpolationMode.Discrete,
-                                    zoomLevels: propKeys,
-                                    values: propValues,
-                                    exponent: prop.exponent
-                                };
-                                break;
-                            case "string":
-                                let needsMask = false;
-
-                                const matchedFormat = StringEncodedNumeralFormats.find(format =>
-                                    format.regExp.test((prop.values[0] as unknown) as string)
-                                );
-                                if (matchedFormat === undefined) {
-                                    logger.error(
-                                        `No StringEncodedNumeralFormat matched ${property}.`
-                                    );
-                                    break;
-                                }
-                                propValues = new Float32Array(
-                                    prop.values.length * matchedFormat.size
-                                );
-                                maskValues = new Float32Array(prop.values.length);
-                                needsMask = procesStringEnocodedNumeralInterpolatedProperty(
-                                    matchedFormat,
-                                    prop as InterpolatedPropertyDefinition<string>,
-                                    propValues,
-                                    maskValues
-                                );
-
-                                technique[property] = {
-                                    interpolationMode:
-                                        prop.interpolation !== undefined
-                                            ? InterpolationMode[prop.interpolation]
-                                            : InterpolationMode.Discrete,
-                                    zoomLevels: propKeys,
-                                    values: propValues,
-                                    exponent: prop.exponent,
-                                    _stringEncodedNumeralType: matchedFormat.type,
-                                    _stringEncodedNumeralDynamicMask: needsMask
-                                        ? maskValues
-                                        : undefined
-                                };
-                                break;
-                        }
-                    } else {
-                        technique[property] = prop;
-                    }
-                });
-            }
-        };
-        for (const currStyle of styleStack) {
-            addAttributes(currStyle);
         }
-        addAttributes(style);
+        for (const [attrName, attrValue] of dynamicAttrs) {
+            technique[attrName] = attrValue;
+        }
+        if (style._dynamicForwaredAttributes !== undefined) {
+            for (const [attrName, attrValue] of style._dynamicForwaredAttributes) {
+                technique[attrName] = attrValue;
+            }
+        }
 
-        style._index = this.m_techniques.length;
-        (technique as IndexedTechnique)._index = style._index;
+        (technique as IndexedTechnique)._index = this.m_techniques.length;
         (technique as IndexedTechnique)._styleSetIndex = style._styleSetIndex!;
         this.m_techniques.push(technique as IndexedTechnique);
-
-        return technique as Technique;
+        return technique as IndexedTechnique;
     }
 }
 
-function removeDuplicatePropertyValues<T>(p: InterpolatedPropertyDefinition<T>) {
-    for (let i = 0; i < p.values.length; ++i) {
-        const firstIdx = p.zoomLevels.findIndex((a: number) => {
-            return a === p.zoomLevels[i];
-        });
-        if (firstIdx !== i) {
-            p.zoomLevels.splice(--i, 1);
-            p.values.splice(--i, 1);
-        }
-    }
-}
-
-const colorFormats = [StringEncodedHSL, StringEncodedHex, StringEncodedRGB];
-const worldSizeFormats = [StringEncodedMeters, StringEncodedPixels];
-
-function procesStringEnocodedNumeralInterpolatedProperty(
-    baseFormat: StringEncodedNumeralFormat,
-    prop: InterpolatedPropertyDefinition<string>,
-    propValues: Float32Array,
-    maskValues: Float32Array
-): boolean {
-    let needsMask = false;
-    const allowedValueFormats =
-        baseFormat.type === StringEncodedNumeralType.Meters ||
-        baseFormat.type === StringEncodedNumeralType.Pixels
-            ? worldSizeFormats
-            : colorFormats;
-
-    for (let valueIdx = 0; valueIdx < prop.values.length; ++valueIdx) {
-        for (const valueFormat of allowedValueFormats) {
-            const value = prop.values[valueIdx];
-            if (!valueFormat.regExp.test(value)) {
-                continue;
-            }
-
-            if (valueFormat.mask !== undefined) {
-                maskValues[valueIdx] = valueFormat.mask;
-                needsMask = true;
-            }
-
-            const result = valueFormat.decoder(value);
-            for (let i = 0; i < result.length; ++i) {
-                propValues[valueIdx * valueFormat.size + i] = result[i];
-            }
-            break;
-        }
-    }
-
-    return needsMask;
+function makeCacheKey(...elements: Array<string | number>): string {
+    return elements.map(String).join(":");
 }

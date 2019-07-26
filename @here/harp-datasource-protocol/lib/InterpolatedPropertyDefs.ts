@@ -28,13 +28,11 @@ export enum InterpolationMode {
  * }
  */
 export interface InterpolatedPropertyDefinition<T> {
-    interpolation?: "Discrete" | "Linear" | "Cubic" | "Exponential";
+    interpolation: "Discrete" | "Linear" | "Cubic" | "Exponential";
     zoomLevels: number[];
     values: T[];
     exponent?: number;
 }
-
-export type MaybeInterpolatedProperty<T> = T | InterpolatedPropertyDefinition<T>;
 
 /**
  * Property which value is interpolated across different zoom levels.

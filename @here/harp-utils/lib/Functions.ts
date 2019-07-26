@@ -7,9 +7,9 @@
 /**
  * Chains two functions for further assigning as one wrapped callback function
  */
-export function chainCallbacks<T extends (this: unknown, ...args: any[]) => any>(
+export function chainCallbacks<T extends (this: unknown, ...args: any[]) => any, T1 extends T>(
     f1: T | null | undefined,
-    f2: T
+    f2: T1
 ): T {
     return function(this: any, ...args: any[]): ReturnType<T> {
         if (f1) {

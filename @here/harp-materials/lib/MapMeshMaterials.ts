@@ -10,6 +10,11 @@ import { insertShaderInclude } from "./Utils";
 
 import * as THREE from "three";
 
+import { DynamicTechniqueExpr } from "@here/harp-datasource-protocol/";
+import { Value } from "@here/harp-datasource-protocol/lib/Expr";
+
+// TODO: WTF ?
+import { DynamicTechniqueHandler } from "../../harp-mapview/lib/DynamicTechniqueHandler";
 import extrusionShaderChunk from "./ShaderChunks/ExtrusionChunks";
 import fadingShaderChunk from "./ShaderChunks/FadingChunks";
 
@@ -241,17 +246,15 @@ export namespace FadingFeature {
      * @param additionalCallback If defined, this function will be called before the function will
      *          return.
      */
-    export function addRenderHelper(
+    export function addTransparencyHack(
         object: THREE.Object3D,
-        fadeNear: number | undefined,
-        fadeFar: number | undefined,
         forceMaterialToTransparent: boolean,
-        updateUniforms: boolean,
-        additionalCallback?: (
-            renderer: THREE.WebGLRenderer,
-            material: THREE.Material & FadingFeature
-        ) => void
+        updateUniforms: boolean
     ) {
+        if (!forceMaterialToTransparent && !updateUniforms) {
+            return;
+        }
+
         // tslint:disable-next-line:no-unused-variable
         object.onBeforeRender = chainCallbacks(
             object.onBeforeRender,
@@ -269,16 +272,6 @@ export namespace FadingFeature {
                 }
                 const fadingMaterial = material as FadingFeature;
 
-                fadingMaterial.fadeNear =
-                    fadeNear === undefined
-                        ? FadingFeature.DEFAULT_FADE_NEAR
-                        : cameraToWorldDistance(fadeNear, camera);
-
-                fadingMaterial.fadeFar =
-                    fadeFar === undefined
-                        ? FadingFeature.DEFAULT_FADE_FAR
-                        : cameraToWorldDistance(fadeFar, camera);
-
                 if (updateUniforms) {
                     const properties = renderer.properties.get(material);
 
@@ -286,23 +279,58 @@ export namespace FadingFeature {
                         properties.shader !== undefined &&
                         properties.shader.uniforms.fadeNear !== undefined
                     ) {
+                        // Is this really needed ?
+                        // We update material before render!
                         properties.shader.uniforms.fadeNear.value = fadingMaterial.fadeNear;
                         properties.shader.uniforms.fadeFar.value = fadingMaterial.fadeFar;
                         fadingMaterial.uniformsNeedUpdate = true;
                     }
                 }
-
-                if (additionalCallback !== undefined) {
-                    additionalCallback(renderer, material);
-                }
             }
         );
 
         if (forceMaterialToTransparent) {
-            object.onAfterRender = (renderer, scene, camera, geom, material) => {
-                material.transparent = false;
-            };
+            // tslint:disable-next-line:no-unused-variable
+            object.onAfterRender = chainCallbacks(
+                object.onAfterRender,
+                (renderer, scene, camera, geom, material, group) => {
+                    material.transparent = false;
+                }
+            );
         }
+    }
+
+    export function registerMaterialAttrHandlers(
+        material: FadingFeature,
+        fadeFar: Value | DynamicTechniqueExpr,
+        fadeNear: Value | DynamicTechniqueExpr,
+        dynamicTechniqueHandler: DynamicTechniqueHandler
+    ): void {
+        if (fadeFar === undefined) {
+            fadeFar = FadingFeature.DEFAULT_FADE_FAR;
+        }
+        if (fadeNear === undefined) {
+            fadeNear = FadingFeature.DEFAULT_FADE_NEAR;
+        }
+        dynamicTechniqueHandler.addDynamicAttrHandler(fadeFar, (resolvedFadeFar, sceneState) => {
+            if (resolvedFadeFar === 0) {
+                return;
+            }
+            if (resolvedFadeFar === undefined || typeof resolvedFadeFar !== "number") {
+                resolvedFadeFar = FadingFeature.DEFAULT_FADE_FAR;
+            }
+            material.fadeFar = sceneState.cameraFar * (resolvedFadeFar as number);
+        });
+
+        dynamicTechniqueHandler.addDynamicAttrHandler(fadeNear, (resolvedFadeNear, sceneState) => {
+            if (resolvedFadeNear === 0) {
+                return;
+            }
+            if (resolvedFadeNear === undefined || typeof resolvedFadeNear !== "number") {
+                resolvedFadeNear = FadingFeature.DEFAULT_FADE_NEAR;
+            }
+            material.fadeNear = sceneState.cameraFar * (resolvedFadeNear as number);
+        });
     }
 }
 

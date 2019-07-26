@@ -13,16 +13,26 @@ import {
     sphereProjection,
     webMercatorProjection
 } from "@here/harp-geoutils";
+import { DecodedTechnique } from "./DecodedTechnique";
 import { Technique } from "./Techniques";
 import { TileInfo } from "./TileInfo";
 
+export interface UuidPart {
+    _uuid: string;
+}
+
+export function hasUiid<T>(o: T): o is T & UuidPart {
+    return typeof (o as Partial<UuidPart>)._uuid === "string";
+}
+
+export type MarkedTechnique = Technique & UuidPart;
 /**
  * This object has geometry data in the form of geometries buffers ready to be used by WebGL.
  * These geometries are not `three.js` objects. They are pure data stored as `ArrayBuffer`s and
  * metadata describing these buffers.
  */
 export interface DecodedTile {
-    techniques: Technique[];
+    techniques: DecodedTechnique[];
     geometries: Geometry[];
     textPathGeometries?: TextPathGeometry[];
     textGeometries?: TextGeometry[]; // ### deprecate

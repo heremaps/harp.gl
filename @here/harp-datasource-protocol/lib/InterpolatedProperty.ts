@@ -11,11 +11,10 @@ import { StringEncodedNumeralFormats, StringEncodedNumeralType } from "./StringE
 import {
     InterpolatedProperty,
     InterpolatedPropertyDefinition,
-    InterpolationMode,
-    MaybeInterpolatedProperty
+    InterpolationMode
 } from "./InterpolatedPropertyDefs";
 
-import { StyleColor, StyleLength } from "./TechniqueParams";
+import { DynamicProperty, StyleColor, StyleLength } from "./TechniqueParams";
 
 const interpolants = [
     DiscreteInterpolant,
@@ -75,7 +74,7 @@ export function isInterpolatedProperty<T>(p: any): p is InterpolatedProperty<T> 
  *
  */
 export function getPropertyValue<T>(
-    property: InterpolatedProperty<T> | MaybeInterpolatedProperty<T>,
+    property: InterpolatedProperty<T> | DynamicProperty<T>,
     level: number,
     pixelToMeters: number = 1.0
 ): number {
@@ -119,7 +118,7 @@ export function getPropertyValue<T>(
     return getInterpolatedLength(property, level, pixelToMeters);
 }
 
-function getInterpolatedLength(
+export function getInterpolatedLength(
     property: InterpolatedProperty<StyleLength>,
     level: number,
     pixelToMeters: number
@@ -161,7 +160,10 @@ function getInterpolatedLength(
     }
 }
 
-function getInterpolatedColor(property: InterpolatedProperty<StyleColor>, level: number): number {
+export function getInterpolatedColor(
+    property: InterpolatedProperty<StyleColor>,
+    level: number
+): number {
     const nChannels = property.values.length / property.zoomLevels.length;
     const interpolant = new interpolants[property.interpolationMode](
         property.zoomLevels,

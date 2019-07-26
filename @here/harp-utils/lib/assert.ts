@@ -9,6 +9,18 @@ declare const process: any;
 // cache value, because access to process.env.NODE_ENV is SLOW!
 const isProduction = process.env.NODE_ENV === "production";
 
+export function notInProduction<T>(f: () => void) {
+    if (!isProduction) {
+        f();
+    }
+}
+
+export async function notInProductionAsync<T>(f: () => Promise<void>) {
+    if (!isProduction) {
+        return f();
+    }
+}
+
 //TODO: Make assertHandler configurable
 
 /**

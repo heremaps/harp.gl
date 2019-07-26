@@ -37,7 +37,7 @@
         "mocha": "^6.1.4",
         "source-map-support": "^0.5.2",
         "three": "^0.105.2",
-        "ts-json-schema-generator": "^0.47.0",
+        "ts-json-schema-generator": "^0.52.14",
         "typescript": "^3.5.2",
         "typestring": "^2.9.2"
     },

@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { ExtrudedPolygonTechniqueParams } from "@here/harp-datasource-protocol";
+import { ExtrudedPolygonTechnique } from "@here/harp-datasource-protocol";
 import { chainCallbacks } from "@here/harp-utils";
 import * as THREE from "three";
 
@@ -22,7 +22,7 @@ export const DEPTH_PRE_PASS_STENCIL_MASK = 0x01;
  *
  * @param technique [[BaseStandardTechnique]] instance to be checked
  */
-export function isRenderDepthPrePassEnabled(technique: ExtrudedPolygonTechniqueParams) {
+export function isRenderDepthPrePassEnabled(technique: ExtrudedPolygonTechnique) {
     return (
         technique.enableDepthPrePass !== false &&
         technique.opacity !== undefined &&

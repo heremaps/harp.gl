@@ -135,7 +135,7 @@ export interface IOmvEmitter {
         layer: string,
         geometry: THREE.Vector3[],
         env: MapEnv,
-        techniques: Technique[],
+        techniques: IndexedTechnique[],
         featureId: number | undefined
     ): void;
 
@@ -143,7 +143,7 @@ export interface IOmvEmitter {
         layer: string,
         feature: ILineGeometry[],
         env: MapEnv,
-        techniques: Technique[],
+        techniques: IndexedTechnique[],
         featureId: number | undefined
     ): void;
 
@@ -151,7 +151,7 @@ export interface IOmvEmitter {
         layer: string,
         feature: IPolygonGeometry[],
         env: MapEnv,
-        techniques: Technique[],
+        techniques: IndexedTechnique[],
         featureId: number | undefined
     ): void;
 }

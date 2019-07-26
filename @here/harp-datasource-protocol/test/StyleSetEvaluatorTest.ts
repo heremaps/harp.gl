@@ -8,8 +8,10 @@
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
 import { assert } from "chai";
+import { isDynamicTechniqueExpr } from "../lib/DynamicTechniqueExpr";
 import { MapEnv } from "../lib/Expr";
 import { StyleSetEvaluator } from "../lib/StyleSetEvaluator";
+import { isSolidLineTechnique, SolidLineTechnique } from "../lib/Techniques";
 import { StyleSet } from "../lib/Theme";
 
 describe("StyleSetEvaluator", function() {
@@ -17,7 +19,7 @@ describe("StyleSetEvaluator", function() {
         {
             description: "first",
             technique: "fill",
-            when: "kind == 'bar'",
+            when: ["==", ["get", "kind"], "bar"], // "kind == 'bar'",
             attr: { color: "yellow" }
         },
         {
@@ -157,5 +159,40 @@ describe("StyleSetEvaluator", function() {
         const parsedStyles = ev.styleSet;
         assert.equal(parsedStyles[0].renderOrder, 0);
         assert.equal(parsedStyles[1].renderOrder, 1001);
+    });
+    describe("dynamic technique atribute support", function() {
+        it("supports basic dynamic technique attributes", function() {
+            const testStyle: StyleSet = [
+                {
+                    description: "first",
+                    technique: "solid-line",
+                    when: "kind == 'park'",
+                    attr: {
+                        lineWidth: ["get", "foo"],
+                        color: "#00aa00",
+                        clipping: ["get", "clipping"]
+                    }
+                }
+            ];
+            const ev = new StyleSetEvaluator(testStyle);
+            const r1 = ev.getMatchingTechniques(
+                new MapEnv({ kind: "park", foo: 2, clipping: true })
+            );
+            const r2 = ev.getMatchingTechniques(
+                new MapEnv({ kind: "park", foo: 3, clipping: false })
+            );
+
+            assert.equal(ev.techniques.length, 2);
+
+            assert.equal(r1.length, 1);
+            assert.isTrue(isSolidLineTechnique(r1[0]));
+            assert.equal((r1[0] as SolidLineTechnique).clipping, true);
+            assert.isTrue(isDynamicTechniqueExpr((r1[0] as SolidLineTechnique).lineWidth));
+            assert.equal(ev.techniques.length, 2);
+
+            assert.isTrue(isSolidLineTechnique(r2[0]));
+            assert.equal((r2[0] as SolidLineTechnique).clipping, false);
+            assert.isTrue(isDynamicTechniqueExpr((r2[0] as SolidLineTechnique).lineWidth));
+        });
     });
 });

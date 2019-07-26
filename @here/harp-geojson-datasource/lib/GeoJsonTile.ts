@@ -21,6 +21,7 @@ import {
 } from "@here/harp-mapview";
 import { TileGeometryCreator } from "@here/harp-mapview/lib/geometry/TileGeometryCreator";
 import { ContextualArabicConverter } from "@here/harp-text-canvas";
+import { getOptionValue } from "@here/harp-utils";
 import * as THREE from "three";
 import {
     GeoJsonPoiGeometry,
@@ -228,14 +229,14 @@ export class GeoJsonTile extends Tile {
             textElement.userData = geojsonProperties;
         }
 
-        const mayOverlap =
-            technique.mayOverlap === undefined
-                ? DEFAULT_LABELED_ICON.iconMayOverlap
-                : technique.mayOverlap;
-        const reserveSpace =
-            technique.reserveSpace === undefined
-                ? DEFAULT_LABELED_ICON.textReserveSpace
-                : technique.reserveSpace;
+        const mayOverlap = getOptionValue(
+            technique.mayOverlap,
+            DEFAULT_LABELED_ICON.iconMayOverlap
+        );
+        const reserveSpace = getOptionValue(
+            technique.reserveSpace,
+            DEFAULT_LABELED_ICON.textReserveSpace
+        );
         const distanceScale = DEFAULT_TEXT_DISTANCE_SCALE;
 
         textElement.mayOverlap = mayOverlap;

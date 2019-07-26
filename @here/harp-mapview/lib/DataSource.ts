@@ -7,6 +7,7 @@ import { StyleSet } from "@here/harp-datasource-protocol";
 import { Projection, TileKey, TilingScheme } from "@here/harp-geoutils";
 import { assert } from "@here/harp-utils";
 import * as THREE from "three";
+import { DynamicTechniqueCache } from "./DynamicTechniqueHandler";
 import { MapView } from "./MapView";
 import { Tile } from "./Tile";
 
@@ -41,6 +42,8 @@ export abstract class DataSource extends THREE.EventDispatcher {
      * The unique name of a `DataSource` instance.
      */
     name: string;
+
+    readonly dynamicTechniqueCache = new DynamicTechniqueCache();
 
     /**
      * The [[MapView]] instance holding a reference to this `DataSource`.

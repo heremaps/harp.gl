@@ -17,6 +17,12 @@ export interface ExprVisitor<Result, Context> {
     visitCallExpr(expr: CallExpr, context: Context): Result;
 }
 
+export type JsonExpr = any[];
+
+export function isJsonExpr(v: any): v is JsonExpr {
+    return Array.isArray(v) && v.length > 0 && typeof v[0] === "string";
+}
+
 /**
  * Abstract class defining a shape of a [[Theme]]'s expression
  */
@@ -33,7 +39,7 @@ export abstract class Expr {
         return expr;
     }
 
-    static fromJSON(node: unknown): Expr {
+    static fromJSON(node: JsonExpr): Expr {
         if (Array.isArray(node)) {
             return Expr.parseCall(node);
         } else if (typeof node === "boolean") {
@@ -75,7 +81,7 @@ export abstract class Expr {
                 }
                 return new ContainsExpr(
                     this.fromJSON(node[1]),
-                    node[2].map((n: unknown) => this.fromJSON(n))
+                    node[2].map((n: any[]) => this.fromJSON(n))
                 );
 
             default:
@@ -279,8 +285,8 @@ export class CallExpr extends Expr {
 }
 
 class ExprSerializer implements ExprVisitor<unknown, void> {
-    serialize(expr: Expr): unknown {
-        return expr.accept(this, undefined);
+    serialize(expr: Expr): JsonExpr {
+        return expr.accept(this, undefined) as JsonExpr;
     }
 
     visitBooleanLiteralExpr(expr: BooleanLiteralExpr, context: void): unknown {

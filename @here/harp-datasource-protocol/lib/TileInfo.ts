@@ -7,7 +7,7 @@ import { TileKey } from "@here/harp-geoutils";
 import { assert } from "@here/harp-utils";
 
 import { Env, MapEnv, Value } from "./Expr";
-import { IndexedTechnique, Technique, TextTechnique } from "./Techniques";
+import { IndexedTechnique, TextTechnique } from "./Techniques";
 
 /**
  * Defines a map tile metadata.
@@ -533,7 +533,7 @@ export class ExtendedTileInfoWriter {
      */
     addFeature(
         featureGroup: FeatureGroup,
-        technique: Technique,
+        technique: IndexedTechnique,
         env: MapEnv,
         featureId: number | undefined,
         infoTileTechniqueIndex: number,

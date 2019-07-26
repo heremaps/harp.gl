@@ -20,6 +20,7 @@
     },
     "license": "Apache-2.0",
     "dependencies": {
+        "@here/harp-datasource-protocol": "^0.4.3",
         "@here/harp-utils": "^0.2.7"
     },
     "devDependencies": {

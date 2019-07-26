@@ -5,10 +5,11 @@
  */
 
 import { Vector3Like } from "@here/harp-geoutils/lib/math/Vector3Like";
-import { MaybeInterpolatedProperty } from "./InterpolatedPropertyDefs";
+import { JsonExpr } from "./Expr";
 import {
     BasicExtrudedLineTechniqueParams,
     DashedLineTechniqueParams,
+    DynamicProperty,
     ExtrudedPolygonTechniqueParams,
     FillTechniqueParams,
     MarkerTechniqueParams,
@@ -169,7 +170,7 @@ export interface BooleanValueDefinition extends BaseValueDefinition {
     /**
      * The value of the definition.
      */
-    value: MaybeInterpolatedProperty<boolean>;
+    value: DynamicProperty<boolean>;
 }
 
 /**
@@ -184,7 +185,7 @@ export interface NumericValueDefinition extends BaseValueDefinition {
     /**
      * The value of the definition.
      */
-    value: MaybeInterpolatedProperty<number>;
+    value: DynamicProperty<number>;
 }
 
 /**
@@ -214,7 +215,7 @@ export interface ColorValueDefinition extends BaseValueDefinition {
     /**
      * The value of the definition.
      */
-    value: MaybeInterpolatedProperty<string>;
+    value: DynamicProperty<string>;
 }
 
 export interface SelectorValueDefinition extends BaseValueDefinition {
@@ -228,7 +229,7 @@ export interface SelectorValueDefinition extends BaseValueDefinition {
      *
      * See [[BaseStyle.when]].
      */
-    value: string;
+    value: string | JsonExpr;
 }
 
 /**
@@ -339,12 +340,19 @@ export interface BaseStyle {
     technique?: string;
 
     /**
-     * Specify `renderOrder` of object.
+     * Specify `renderOrder` of value.
      */
-    renderOrder?: number;
+    renderOrder?: number | JsonExpr;
 
     /**
-     * Property that is used to hold the z-order delta.
+     * Specify `renderOrder` of object.
+     */
+    renderOrderOffset?: number | JsonExpr;
+
+    /**
+     * Property that is used to hold the z-order delta in [[renderOrderBiasRange]].
+     *
+     * @deprecated, Use `["get" "propName"] instead.
      */
     renderOrderBiasProperty?: string;
 
@@ -374,6 +382,8 @@ export interface BaseStyle {
     // TODO: Make pixel units default.
     /**
      * Units in which different size properties are specified. Either `Meter` (default) or `Pixel`.
+     *
+     * @deprecated use "string encoded numerals" as documented in TODO, wher eis the doc ?
      */
     metricUnit?: "Meter" | "Pixel";
 
@@ -665,7 +675,7 @@ export function isReference(value: any): value is Reference {
 /**
  * The attributes of a technique.
  */
-export type Attr<T> = { [P in keyof T]?: T[P] | Reference };
+export type Attr<T> = { [P in keyof T]?: T[P] | JsonExpr | Reference };
 
 /**
  * Render feature as set of squares rendered in screen space.
@@ -1058,3 +1068,34 @@ export interface FontCatalogConfig {
     url: string;
     name: string;
 }
+
+declare var USE_THEME_COMPATIBILITY: number;
+
+export const DEFAULT_THEME_COMPATIBILITY = 0;
+export const THEME_COMPATIBILITY =
+    typeof USE_THEME_COMPATIBILITY !== "undefined"
+        ? USE_THEME_COMPATIBILITY
+        : DEFAULT_THEME_COMPATIBILITY;
+
+/**
+ * Version history.
+ *
+ * ## Version 1
+ *
+ * Support for dynamic s-expressions.
+ *
+ * General changes:
+ *  - all technique attributes can be expressed in terms of expressions.
+ *
+ * Technique specific changes:
+ *  - `extruded-line` technique
+ *    - Changed handling of `color`:
+ *      - you're expected to use expressions, consequently
+ *      - will not look for feature `color` by default (use `['get', 'color]`),
+ *      - will not look at `defaultColor` (use literal value for `color`).
+ *
+ * ## Version 0.
+ *
+ * Baseline of theme, no expressions.
+ */
+export const THEME_CURRENT_VERSION = 1;
