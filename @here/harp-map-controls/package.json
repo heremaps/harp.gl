@@ -25,6 +25,7 @@
     "dependencies": {
         "@here/harp-geoutils": "^0.4.3",
         "@here/harp-mapview": "^0.9.4",
+        "@here/harp-utils": "^0.2.7",
         "@tweenjs/tween.js": "^17.4.0"
     },
     "devDependencies": {

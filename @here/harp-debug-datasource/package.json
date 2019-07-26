@@ -26,7 +26,8 @@
     "dependencies": {
         "@here/harp-geoutils": "^0.4.3",
         "@here/harp-lrucache": "^0.2.6",
-        "@here/harp-mapview": "^0.9.4"
+        "@here/harp-mapview": "^0.9.4",
+        "@here/harp-text-canvas": "^0.3.3"
     },
     "devDependencies": {
         "@types/chai": "^4.1.2",
