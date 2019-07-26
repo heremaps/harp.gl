@@ -5,6 +5,7 @@
  */
 import { Projection, TileKey, TilingScheme } from "@here/harp-geoutils";
 import { LRUCache } from "@here/harp-lrucache";
+import { ClipPlanesEvaluator } from "./ClipPlanesEvaluator";
 import { DataSource } from "./DataSource";
 import { ElevationRangeSource } from "./ElevationRangeSource";
 import { FrustumIntersection, TileKeyEntry } from "./FrustumIntersection";
@@ -29,6 +30,11 @@ export interface VisibleTileSetOptions {
      * The projection of the view.
      */
     projection: Projection;
+
+    /**
+     * User-defined camera clipping planes evaluator.
+     */
+    clipPlanesEvaluator: ClipPlanesEvaluator;
 
     /**
      * Limit of tiles that can be visible per datasource.

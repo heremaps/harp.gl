@@ -26,6 +26,7 @@ import * as THREE from "three";
 import { AnimatedExtrusionHandler } from "./AnimatedExtrusionHandler";
 import { BackgroundDataSource } from "./BackgroundDataSource";
 import { CameraMovementDetector } from "./CameraMovementDetector";
+import { ClipPlanesEvaluator, defaultClipPlanesEvaluator } from "./ClipPlanesEvaluator";
 import { IMapAntialiasSettings, IMapRenderingManager, MapRenderingManager } from "./composing";
 import { ConcurrentDecoderFacade } from "./ConcurrentDecoderFacade";
 import { CopyrightInfo } from "./CopyrightInfo";
@@ -114,7 +115,6 @@ export enum MapViewEventNames {
 const logger = LoggerManager.instance.create("MapView");
 const DEFAULT_FONT_CATALOG = "./resources/fonts/Default_FontCatalog.json";
 const DEFAULT_CLEAR_COLOR = 0xefe9e1;
-const EYE_INVERSE = new THREE.Vector3(0, 0, -1);
 const DEFAULT_FOV_CALCULATION: FovCalculation = { type: "dynamic", fov: 40 };
 const MAX_FIELD_OF_VIEW = 140;
 const MIN_FIELD_OF_VIEW = 10;
@@ -180,23 +180,6 @@ const CONTEXT_RESTORED_EVENT: RenderEvent = { type: MapViewEventNames.ContextRes
 const COPYRIGHT_CHANGED_EVENT: RenderEvent = { type: MapViewEventNames.CopyrightChanged } as any;
 
 const tmpVector = new THREE.Vector2();
-
-/**
- * Compute far plane distance. May be based on tilt. Is being called every frame.
- *
- * @param mapView The current [[MapView]] instance.
- * @param tilt Angle in degrees between the vertical vector (eye to ground) and view vector. The
- *             value of `0` is looking straight down. `90` is the "camera on the floor". `>90` is
- *             camera looking up.
- * @param defaultNearValue The value of near plane computed by the [[MapView]].
- * @param defaultFarValue The value of far plane computed by the [[MapView]].
- */
-export type FarPlaneEvaluator = (
-    mapView: MapView,
-    tilt: number,
-    defaultNearValue: number,
-    defaultFarValue: number
-) => { near: number; far: number };
 
 /**
  * Specifies how the FOV (Field of View) should be calculated.
@@ -320,9 +303,12 @@ export interface MapViewOptions {
     maxZoomLevel?: number;
 
     /**
-     * User-defined far plane distance calculator.
+     * User-defined camera clipping planes distance evaluator.
+     * If not defined, [[DefaultClipPlanesEvaluator]] will be used by [[MapView]].
+     *
+     * @default See [[MapViewDefaults.clipPlanesEvaluator]]
      */
-    farPlaneEvaluator?: FarPlaneEvaluator;
+    clipPlanesEvaluator?: ClipPlanesEvaluator;
 
     /**
      * Set to true to extend the frustum culling. This improves the rejection of some tiles, which
@@ -531,6 +517,7 @@ export interface MapViewOptions {
  */
 export const MapViewDefaults = {
     projection: mercatorProjection,
+    clipPlanesEvaluator: defaultClipPlanesEvaluator,
 
     maxVisibleDataSourceTiles: 120,
     extendedFrustumCulling: true,
@@ -608,7 +595,6 @@ export class MapView extends THREE.EventDispatcher {
     private m_lookAtDistance: number;
     private m_pointOfView?: THREE.PerspectiveCamera;
 
-    private m_tempVector3: THREE.Vector3 = new THREE.Vector3();
     private m_pixelToWorld?: number;
     private m_pixelRatio?: number;
 
@@ -721,6 +707,10 @@ export class MapView extends THREE.EventDispatcher {
 
         if (options.projection !== undefined) {
             this.m_visibleTileSetOptions.projection = options.projection;
+        }
+
+        if (options.clipPlanesEvaluator !== undefined) {
+            this.m_visibleTileSetOptions.clipPlanesEvaluator = options.clipPlanesEvaluator;
         }
 
         if (options.extendedFrustumCulling !== undefined) {
@@ -1312,6 +1302,20 @@ export class MapView extends THREE.EventDispatcher {
         // Necessary for the sphereProjection, however this also resets the camera position, so it
         // should be fixed.
         //this.setupCamera();
+    }
+
+    /**
+     * Get camera clipping planes evaluator used.
+     */
+    get clipPlanesEvaluator(): ClipPlanesEvaluator {
+        return this.m_visibleTileSetOptions.clipPlanesEvaluator;
+    }
+
+    /**
+     * Changes the clip planes evaluator at run time.
+     */
+    set clipPlanesEvaluator(clipPlanesEvaluator: ClipPlanesEvaluator) {
+        this.m_visibleTileSetOptions.clipPlanesEvaluator = clipPlanesEvaluator;
     }
 
     /**
@@ -2137,55 +2141,12 @@ export class MapView extends THREE.EventDispatcher {
             this.m_forceCameraAspect !== undefined ? this.m_forceCameraAspect : width / height;
         this.setFovOnCamera(this.m_options.fovCalculation!, height);
 
-        let nearPlane: number = 0;
-        let farPlane: number = 0;
-
-        if (this.projection.type === ProjectionType.Spherical) {
-            // near and far plane for a set up where
-            // the camera is looking at the center of the scene.
-            const r = EarthConstants.EQUATORIAL_RADIUS;
-            const d = this.m_camera.position.length();
-            const alpha = Math.asin(r / d);
-            const xaxis = new THREE.Vector3();
-            const yaxis = new THREE.Vector3();
-            const zaxis = new THREE.Vector3();
-            this.m_camera.matrixWorld.extractBasis(xaxis, yaxis, zaxis);
-            const q = new THREE.Quaternion();
-            q.setFromAxisAngle(xaxis, alpha);
-            const fwd = zaxis.clone().negate();
-            const p = this.m_camera.position.clone();
-            p.addScaledVector(fwd.clone().applyQuaternion(q), Math.sqrt(d * d - r * r));
-            farPlane = p
-                .clone()
-                .sub(this.m_camera.position)
-                .dot(fwd);
-            const bias = 2000; // TODO: generalize.
-            nearPlane = Math.max(1, this.projection.groundDistance(this.m_camera.position) - bias);
-        } else {
-            const kMinNear = 0.1;
-            const kMultiplier = 50.0;
-            const kFarOffset = 200.0;
-
-            const groundDistance = this.projection.groundDistance(this.m_camera.position);
-            nearPlane = Math.max(kMinNear, groundDistance * 0.1);
-            farPlane = nearPlane * kMultiplier + kFarOffset;
-
-            if (this.m_options.farPlaneEvaluator !== undefined) {
-                this.m_camera.getWorldDirection(this.m_tempVector3);
-                const angle = THREE.Math.radToDeg(this.m_tempVector3.angleTo(EYE_INVERSE));
-                const nearFarPlane = this.m_options.farPlaneEvaluator(
-                    this,
-                    angle,
-                    nearPlane,
-                    farPlane
-                );
-                nearPlane = Math.max(kMinNear, nearFarPlane.near);
-                farPlane = Math.max(nearPlane + kFarOffset, nearFarPlane.far);
-            }
-        }
-
-        this.m_camera.near = nearPlane;
-        this.m_camera.far = farPlane;
+        const clipPlanes = this.m_visibleTileSetOptions.clipPlanesEvaluator.evaluateClipPlanes(
+            this.m_camera,
+            this.projection
+        );
+        this.m_camera.near = clipPlanes.near;
+        this.m_camera.far = clipPlanes.far;
 
         this.m_camera.updateProjectionMatrix();
         this.m_camera.updateMatrixWorld(false);
