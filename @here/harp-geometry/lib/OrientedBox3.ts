@@ -67,6 +67,15 @@ export class OrientedBox3 implements OrientedBox3Like {
     }
 
     /**
+     * Create a copy of this [[OrientedBoundingBox]].
+     */
+    clone(): OrientedBox3 {
+        const newBox = new OrientedBox3();
+        newBox.copy(this);
+        return newBox;
+    }
+
+    /**
      * Copies the values of `other` to this [[OrientedBox3]].
      * @param other The other [[OrientedBox3]] to copy.
      */
