@@ -36,7 +36,7 @@
         "no-unused-expression": true,
         "no-unused-variable": true,
         "no-duplicate-variable": true,
-        "no-implicit-dependencies": false,
+        "no-implicit-dependencies": [true, "dev"],
         "no-namespace": false,
         "no-submodule-imports": false,
         "no-trailing-whitespace": true,
@@ -49,6 +49,11 @@
     },
     "extends": ["tslint:latest", "tslint-config-prettier"],
     "linterOptions": {
-        "exclude": ["@here/**/**/*.d.ts", "**/*.json"]
+        "exclude": [
+            "dist/",
+            "@here/**/**/*.d.ts",
+            "**/*.json",
+            "**/@here/generator-harp.gl/**/*.ts"
+        ]
     }
 }

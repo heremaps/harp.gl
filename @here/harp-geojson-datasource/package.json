@@ -30,6 +30,7 @@
         "@here/harp-lines": "^0.3.3",
         "@here/harp-mapview": "^0.9.4",
         "@here/harp-mapview-decoder": "^0.4.4",
+        "@here/harp-text-canvas": "^0.3.3",
         "@here/harp-transfer-manager": "^0.2.6",
         "@here/harp-utils": "^0.2.7",
         "earcut": "^2.1.3"
@@ -39,6 +40,7 @@
         "@types/earcut": "^2.1.0",
         "@types/mocha": "^5.2.7",
         "@types/node": "^12.0.8",
+        "@here/harp-test-utils": "^0.2.5",
         "chai": "^4.0.2",
         "cross-env": "^5.2.0",
         "mocha": "^6.1.4",
