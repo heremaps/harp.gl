@@ -1389,7 +1389,8 @@ export class TileGeometryCreator {
             });
             const material = new MapMeshBasicMaterial({
                 color,
-                visible: true
+                visible: true,
+                depthWrite: false
             });
             const bufferGeometry = new THREE.BufferGeometry();
             bufferGeometry.fromGeometry(g);
@@ -1435,7 +1436,8 @@ export class TileGeometryCreator {
         // TODO cache the material HARP-4207
         const material = new MapMeshBasicMaterial({
             color: colorHex,
-            visible: isVisible
+            visible: isVisible,
+            depthWrite: false
         });
         const plane = new THREE.Mesh(geometry, material);
         plane.position.copy(planeCenter);
