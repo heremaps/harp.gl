@@ -21,37 +21,19 @@ const MINIMUM_OBJECT3D_SIZE_ESTIMATION = 1000;
 
 const MINIMUM_ATTRIBUTE_SIZE_ESTIMATION = 56;
 
+//Caching those for performance reasons.
+const groundPlane = new THREE.Plane(new THREE.Vector3(0, 0, 1));
+const groundSphere = new THREE.Sphere(undefined, EarthConstants.EQUATORIAL_RADIUS);
+const cameraZPosition = new THREE.Vector3(0, 0, 0);
+const rotationMatrix = new THREE.Matrix4();
+const unprojectionMatrix = new THREE.Matrix4();
+const rayCaster = new THREE.Raycaster();
+const yawQuaternion = new THREE.Quaternion();
+const pitchQuaternion = new THREE.Quaternion();
+const tmpQuaternion = new THREE.Quaternion();
+const tmpMatrix = new THREE.Matrix4();
+
 export namespace MapViewUtils {
-    //Caching those for performance reasons.
-    const groundPlane = new THREE.Plane(new THREE.Vector3(0, 0, 1));
-    const groundSphere = new THREE.Sphere(undefined, EarthConstants.EQUATORIAL_RADIUS);
-    const cameraZPosition = new THREE.Vector3(0, 0, 0);
-    const rotationMatrix = new THREE.Matrix4();
-    const unprojectionMatrix = new THREE.Matrix4();
-    const rayCaster = new THREE.Raycaster();
-
-    /**
-     * Yaw rotation as quaternion. Declared as a const to avoid object re-creation in certain
-     * functions.
-     */
-    const yawQuaternion = new THREE.Quaternion();
-
-    /**
-     * Pitch rotation as quaternion. Declared as a const to avoid object re-creation in certain
-     * functions.
-     */
-    const pitchQuaternion = new THREE.Quaternion();
-
-    /**
-     * Cached quaternion for intermediate maths to avoid creating new instances.
-     */
-    const tmpQuaternion = new THREE.Quaternion();
-
-    /**
-     * Cached matrix for intermediate maths to avoid creating new instances.
-     */
-    const tmpMatrix = new THREE.Matrix4();
-
     /**
      * The yaw axis around we rotate when we change the yaw.
      * This axis is fix and is the -Z axis `(0,0,1)`.
@@ -138,7 +120,7 @@ export namespace MapViewUtils {
             // Calculate the difference and pan the map to maintain the map relative to the target
             // position.
             targetPosition.sub(newTargetPosition);
-            pan(mapView, targetPosition.x, targetPosition.y);
+            panCameraAboveFlatMap(mapView, targetPosition.x, targetPosition.y);
         } else if (mapView.projection.type === geoUtils.ProjectionType.Spherical) {
             rotateCameraAroundGlobe(mapView, targetPosition, newTargetPosition);
         }
@@ -203,15 +185,15 @@ export namespace MapViewUtils {
 
         rotationMatrix.extractRotation(mapView.camera.matrixWorld);
 
-        //Prepare the unprojection matrix which projects from NDC space to camera space
-        //and takes the current rotation of the camera into account.
+        // Prepare the unprojection matrix which projects from NDC space to camera space
+        // and takes the current rotation of the camera into account.
         unprojectionMatrix.multiplyMatrices(
             rotationMatrix,
             unprojectionMatrix.getInverse(mapView.camera.projectionMatrix)
         );
-        //Unproject the point via the the unprojection matrix.
+        // Unproject the point via the unprojection matrix.
         const pointInCameraSpace = pointInNDCPosition.applyMatrix4(unprojectionMatrix);
-        //Use the point in camera space as the vector towards this point.
+        // Use the point in camera space as the vector towards this point.
         rayCaster.set(cameraZPosition, pointInCameraSpace.normalize());
         if (elevation !== undefined) {
             groundPlane.constant = -elevation;
@@ -253,10 +235,13 @@ export namespace MapViewUtils {
      * @param yOffset In world space. Value > 0 will pan the map upwards, value < 0 will pan the map
      * downwards in default camera orientation.
      */
-    export function pan(mapView: MapView, offsetX: number, offsetY: number): void {
+    export function panCameraAboveFlatMap(
+        mapView: MapView,
+        offsetX: number,
+        offsetY: number
+    ): void {
         mapView.camera.position.x += offsetX;
         mapView.camera.position.y += offsetY;
-        mapView.update();
     }
 
     /**
@@ -274,6 +259,7 @@ export namespace MapViewUtils {
         tmpQuaternion.setFromUnitVectors(fromWorld.normalize(), toWorld.normalize()).inverse();
         tmpMatrix.makeRotationFromQuaternion(tmpQuaternion);
         mapView.camera.applyMatrix(tmpMatrix);
+        mapView.camera.updateMatrixWorld();
     }
 
     /**

@@ -248,11 +248,21 @@ export class MapControls extends THREE.EventDispatcher {
     private m_panDistanceFrameDelta: THREE.Vector3 = new THREE.Vector3();
     private m_panAnimationTime: number = 0;
     private m_panAnimationStartTime: number = 0;
-    private m_lastAveragedPanDistance: number = 0;
+    private m_lastAveragedPanDistanceOrAngle: number = 0;
     private m_currentInertialPanningSpeed: number = 0;
     private m_lastPanVector: THREE.Vector3 = new THREE.Vector3();
-    private m_recentPanDistances: [number, number, number, number, number] = [0, 0, 0, 0, 0];
-    private m_currentPanDistanceIndex: number = 0;
+    private m_rotateGlobeQuaternion: THREE.Quaternion = new THREE.Quaternion();
+    private m_lastRotateGlobeAxis: THREE.Vector3 = new THREE.Vector3();
+    private m_lastRotateGlobeAngle: number = 0;
+    private m_lastRotateGlobeFromVector: THREE.Vector3 = new THREE.Vector3();
+    private m_recentPanDistancesOrAngles: [number, number, number, number, number] = [
+        0,
+        0,
+        0,
+        0,
+        0
+    ];
+    private m_currentPanDistanceOrAngleIndex: number = 0;
 
     private m_zoomIsAnimated: boolean = false;
     private m_zoomDeltaRequested: number = 0;
@@ -319,7 +329,7 @@ export class MapControls extends THREE.EventDispatcher {
         this.minCameraHeight = mapView.minCameraHeight;
         this.bindInputEvents(this.domElement);
         this.handleZoom = this.handleZoom.bind(this);
-        this.pan = this.pan.bind(this);
+        this.handlePan = this.handlePan.bind(this);
         this.tilt = this.tilt.bind(this);
         this.assignZoomAfterTouchZoomRender = this.assignZoomAfterTouchZoomRender.bind(this);
     }
@@ -327,7 +337,7 @@ export class MapControls extends THREE.EventDispatcher {
     /**
      * Destroy this `MapControls` instance.
      *
-     * Unregisters all grobal event handlers used. This is method should be called when you stop
+     * Unregisters all global event handlers used. This is method should be called when you stop
      * using `MapControls`.
      */
     dispose = () => {
@@ -344,7 +354,9 @@ export class MapControls extends THREE.EventDispatcher {
         if (this.inertiaEnabled && this.m_zoomIsAnimated) {
             this.stopZoom();
         }
-
+        if (this.mapView.projection.type !== geoUtils.ProjectionType.Planar) {
+            return;
+        }
         const yawPitchRoll = MapViewUtils.extractYawPitchRoll(
             this.camera.quaternion,
             this.mapView.projection.type
@@ -429,7 +441,7 @@ export class MapControls extends THREE.EventDispatcher {
         }
 
         const diff = focusPointInWorldPosition.sub(newFocusPointInWorldPosition);
-        MapViewUtils.pan(this.mapView, diff.x, diff.y);
+        MapViewUtils.panCameraAboveFlatMap(this.mapView, diff.x, diff.y);
     }
 
     /**
@@ -743,21 +755,24 @@ export class MapControls extends THREE.EventDispatcher {
         this.m_zoomIsAnimated = false;
     }
 
-    private pan() {
-        if (this.m_state === State.NONE && this.m_lastAveragedPanDistance === 0) {
+    /**
+     * Method to flip crêpes.
+     */
+    private handlePan() {
+        if (this.m_state === State.NONE && this.m_lastAveragedPanDistanceOrAngle === 0) {
             return;
         }
 
         if (this.inertiaEnabled && !this.m_panIsAnimated) {
             this.m_panIsAnimated = true;
-            this.mapView.addEventListener(MapViewEventNames.AfterRender, this.pan);
+            this.mapView.addEventListener(MapViewEventNames.AfterRender, this.handlePan);
         }
 
         const applyInertia =
             this.inertiaEnabled &&
             this.panInertiaDampingDuration > 0 &&
             this.m_state === State.NONE &&
-            this.m_lastAveragedPanDistance > 0;
+            this.m_lastAveragedPanDistanceOrAngle > 0;
 
         if (applyInertia) {
             const currentTime = performance.now();
@@ -768,7 +783,7 @@ export class MapControls extends THREE.EventDispatcher {
                 if (this.m_needsRenderLastFrame) {
                     this.m_needsRenderLastFrame = false;
                     this.m_panAnimationTime = this.panInertiaDampingDuration;
-                    this.mapView.removeEventListener(MapViewEventNames.AfterRender, this.pan);
+                    this.mapView.removeEventListener(MapViewEventNames.AfterRender, this.handlePan);
                     this.m_panIsAnimated = false;
                 }
             } else {
@@ -777,33 +792,66 @@ export class MapControls extends THREE.EventDispatcher {
 
             const animationTime = this.m_panAnimationTime / this.panInertiaDampingDuration;
             this.m_currentInertialPanningSpeed = this.easeOutCubic(
-                this.m_lastAveragedPanDistance,
+                this.m_lastAveragedPanDistanceOrAngle,
                 0,
                 Math.min(1, animationTime)
             );
             if (this.m_currentInertialPanningSpeed === 0) {
-                this.m_lastAveragedPanDistance = 0;
+                this.m_lastAveragedPanDistanceOrAngle = 0;
             }
-            this.m_panDistanceFrameDelta
-                .copy(this.m_lastPanVector)
-                .setLength(this.m_currentInertialPanningSpeed);
+            if (this.mapView.projection.type === geoUtils.ProjectionType.Planar) {
+                this.m_panDistanceFrameDelta
+                    .copy(this.m_lastPanVector)
+                    .setLength(this.m_currentInertialPanningSpeed);
+            } else if (this.mapView.projection.type === geoUtils.ProjectionType.Spherical) {
+                this.m_rotateGlobeQuaternion
+                    .setFromAxisAngle(
+                        this.m_lastRotateGlobeAxis,
+                        this.m_currentInertialPanningSpeed
+                    )
+                    .normalize();
+            }
         } else {
-            this.m_lastPanVector.copy(this.m_panDistanceFrameDelta);
-            const panDistance = this.m_lastPanVector.length();
-            this.m_currentPanDistanceIndex =
-                (this.m_currentPanDistanceIndex + 1) % USER_INPUTS_TO_CONSIDER;
-            this.m_recentPanDistances[this.m_currentPanDistanceIndex] = panDistance;
-            this.m_lastAveragedPanDistance =
-                this.m_recentPanDistances.reduce((a, b) => a + b) / USER_INPUTS_TO_CONSIDER;
+            let panDistanceOrAngle: number = 0;
+            if (this.mapView.projection.type === geoUtils.ProjectionType.Planar) {
+                panDistanceOrAngle = this.m_lastPanVector
+                    .copy(this.m_panDistanceFrameDelta)
+                    .length();
+            } else if (this.mapView.projection.type === geoUtils.ProjectionType.Spherical) {
+                panDistanceOrAngle = this.m_lastRotateGlobeAngle;
+                this.m_rotateGlobeQuaternion.setFromAxisAngle(
+                    this.m_lastRotateGlobeAxis,
+                    this.m_lastRotateGlobeAngle
+                );
+                this.m_rotateGlobeQuaternion.normalize();
+            }
+            this.m_currentPanDistanceOrAngleIndex =
+                (this.m_currentPanDistanceOrAngleIndex + 1) % USER_INPUTS_TO_CONSIDER;
+            this.m_recentPanDistancesOrAngles[
+                this.m_currentPanDistanceOrAngleIndex
+            ] = panDistanceOrAngle;
+            this.m_lastAveragedPanDistanceOrAngle =
+                this.m_recentPanDistancesOrAngles.reduce((a, b) => a + b) / USER_INPUTS_TO_CONSIDER;
         }
 
-        MapViewUtils.pan(
-            this.mapView,
-            this.m_panDistanceFrameDelta.x,
-            this.m_panDistanceFrameDelta.y
-        );
+        if (this.mapView.projection.type === geoUtils.ProjectionType.Planar) {
+            MapViewUtils.panCameraAboveFlatMap(
+                this.mapView,
+                this.m_panDistanceFrameDelta.x,
+                this.m_panDistanceFrameDelta.y
+            );
+        } else if (this.mapView.projection.type === geoUtils.ProjectionType.Spherical) {
+            MapViewUtils.rotateCameraAroundGlobe(
+                this.mapView,
+                this.m_lastRotateGlobeFromVector,
+                this.m_tmpVector3
+                    .copy(this.m_lastRotateGlobeFromVector)
+                    .applyQuaternion(this.m_rotateGlobeQuaternion)
+            );
+        }
         if (!applyInertia) {
             this.m_panDistanceFrameDelta.set(0, 0, 0);
+            this.m_lastRotateGlobeAngle = 0;
         }
 
         this.updateMapView();
@@ -811,7 +859,7 @@ export class MapControls extends THREE.EventDispatcher {
 
     private stopPan() {
         this.m_panDistanceFrameDelta.set(0, 0, 0);
-        this.m_lastAveragedPanDistance = 0;
+        this.m_lastAveragedPanDistanceOrAngle = 0;
     }
 
     private bindInputEvents(domElement: HTMLCanvasElement) {
@@ -907,12 +955,17 @@ export class MapControls extends THREE.EventDispatcher {
         );
 
         if (this.m_state === State.PAN) {
-            this.panFromTo(
+            const vectors = this.getWorldPositionWithElevation(
                 this.m_lastMousePosition.x,
                 this.m_lastMousePosition.y,
                 event.clientX,
                 event.clientY
             );
+            if (vectors === undefined) {
+                return;
+            }
+            const { fromWorld, toWorld } = vectors;
+            this.panFromTo(fromWorld, toWorld);
         } else if (this.m_state === State.ROTATE) {
             this.rotate(
                 -this.rotationMouseDeltaFactor * this.m_mouseDelta.x,
@@ -925,8 +978,7 @@ export class MapControls extends THREE.EventDispatcher {
             );
         }
 
-        this.m_lastMousePosition.setX(event.clientX);
-        this.m_lastMousePosition.setY(event.clientY);
+        this.m_lastMousePosition.set(event.clientX, event.clientY);
         this.m_zoomAnimationStartTime = performance.now();
 
         this.updateMapView();
@@ -1097,7 +1149,7 @@ export class MapControls extends THREE.EventDispatcher {
         this.m_touchState.currentRotation = this.calculateAngleFromTouchPointsInWorldspace();
     }
 
-    private updateTouches(touches: TouchList): void | null {
+    private updateTouches(touches: TouchList) {
         const length = Math.min(touches.length, this.m_touchState.touches.length);
         for (let i = 0; i < length; ++i) {
             const oldTouchState = this.m_touchState.touches[i];
@@ -1106,8 +1158,6 @@ export class MapControls extends THREE.EventDispatcher {
                 newTouchState.initialWorldPosition = oldTouchState.initialWorldPosition;
                 newTouchState.lastTouchPoint = oldTouchState.currentTouchPoint;
                 this.m_touchState.touches[i] = newTouchState;
-            } else {
-                return null;
             }
         }
     }
@@ -1145,35 +1195,14 @@ export class MapControls extends THREE.EventDispatcher {
         }
 
         this.m_fingerMoved = true;
-
-        const touchResult = this.updateTouches(event.touches);
+        this.updateTouches(event.touches);
         this.updateTouchState();
 
         if (this.m_touchState.touches.length <= 2) {
-            if (this.mapView.projection.type === geoUtils.ProjectionType.Planar) {
-                this.m_panDistanceFrameDelta.subVectors(
-                    this.m_touchState.touches[0].initialWorldPosition,
-                    this.m_touchState.touches[0].currentWorldPosition
-                );
-
-                // Cancel zoom inertia if a panning is triggered, so that the mouse location is
-                // kept.
-                this.m_startZoom = this.m_targetedZoom = this.currentZoom;
-
-                // Assign the new animation start time.
-                this.m_panAnimationStartTime = performance.now();
-
-                this.pan();
-            } else if (this.mapView.projection.type === geoUtils.ProjectionType.Spherical) {
-                if (touchResult !== null) {
-                    MapViewUtils.rotateCameraAroundGlobe(
-                        this.mapView,
-                        this.m_touchState.touches[0].initialWorldPosition,
-                        this.m_touchState.touches[0].currentWorldPosition
-                    );
-                }
-                this.mapView.camera.getWorldDirection(this.m_currentViewDirection);
-            }
+            this.panFromTo(
+                this.m_touchState.touches[0].initialWorldPosition,
+                this.m_touchState.touches[0].currentWorldPosition
+            );
         }
 
         if (this.m_touchState.touches.length === 2) {
@@ -1184,7 +1213,8 @@ export class MapControls extends THREE.EventDispatcher {
                 const pinchDistance = this.calculatePinchDistanceInWorldSpace();
                 this.moveAlongTheViewDirection(pinchDistance);
             } else if (this.mapView.projection.type === geoUtils.ProjectionType.Spherical) {
-                // TODO: HARP-6597: Implement rotation for globe.
+                // TODO: HARP-6597: Implement yaw rotation for globe, use `moveAlongViewDirection`
+                // in both Planar and Spherical.
                 const pinchDistance = this.calculatePinchDistanceInWorldSpace();
                 this.setZoomLevel(this.currentZoom + pinchDistance * 0.01);
             }
@@ -1312,25 +1342,27 @@ export class MapControls extends THREE.EventDispatcher {
         return { fromWorld, toWorld };
     }
 
-    private panFromTo(fromX: number, fromY: number, toX: number, toY: number): void {
-        const vectors = this.getWorldPositionWithElevation(fromX, fromY, toX, toY);
-        if (vectors === undefined) {
-            return;
-        }
-        const { fromWorld, toWorld } = vectors;
-
+    private panFromTo(fromWorld: THREE.Vector3, toWorld: THREE.Vector3): void {
         // Cancel zoom inertia if a panning is triggered, so that the mouse location is kept.
         this.stopZoom();
 
+        // Assign the new animation start time.
+        this.m_panAnimationStartTime = performance.now();
+
         if (this.mapView.projection.type === geoUtils.ProjectionType.Planar) {
-            // Assign the new animation start time.
-            this.m_panAnimationStartTime = performance.now();
             this.m_panDistanceFrameDelta.subVectors(fromWorld, toWorld);
-            this.pan();
         } else if (this.mapView.projection.type === geoUtils.ProjectionType.Spherical) {
-            // TODO: HARP-6277: Implement inertia in globe.
-            MapViewUtils.rotateCameraAroundGlobe(this.mapView, fromWorld, toWorld);
+            this.m_lastRotateGlobeFromVector.copy(fromWorld);
+            this.m_lastRotateGlobeAxis.crossVectors(fromWorld, toWorld).normalize();
+            this.m_lastRotateGlobeAngle = fromWorld.angleTo(toWorld);
+            // When fromWorld and toWorld are too close, there is a risk of getting an NaN
+            // value. The following ensures that the controls don't break.
+            if (isNaN(this.m_lastRotateGlobeAngle)) {
+                this.m_lastRotateGlobeAngle = 0;
+            }
         }
+
+        this.handlePan();
     }
 
     private constrainPitchAngle(pitchAngle: number, deltaPitch: number): number {
