@@ -1227,10 +1227,14 @@ export class MapView extends THREE.EventDispatcher {
 
     /**
      * @hidden
-     * Return if all fading animations (for debugging and performance measurement) should be
-     * disabled.
+     * Disable all fading animations (for debugging and performance measurement). Defaults to
+     * `false`.
      */
-    get fadingDisabled(): boolean {
+    set disableFading(disable: boolean) {
+        this.m_options.disableFading = disable;
+    }
+
+    get disableFading(): boolean {
         return this.m_options.disableFading === true;
     }
 
@@ -1240,6 +1244,15 @@ export class MapView extends THREE.EventDispatcher {
      */
     get frameNumber(): number {
         return this.m_frameNumber;
+    }
+
+    /**
+     * @hidden
+     * Reset the frame number to 0.
+     */
+    resetFrameNumber() {
+        this.m_frameNumber = 0;
+        this.m_previousFrameTimeStamp = undefined;
     }
 
     /**

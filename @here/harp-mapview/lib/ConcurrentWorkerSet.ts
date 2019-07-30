@@ -96,6 +96,7 @@ export class ConcurrentWorkerSet {
     // memory consumption in idle workers.
     private m_availableWorkers = new Array<Worker>();
     private m_workerPromises = new Array<Promise<WorkerEntry | undefined>>();
+    private m_workerCount: number | undefined;
 
     private readonly m_readyPromises = new Map<string, ReadyPromise>();
     private readonly m_requests: Map<number, RequestEntry> = new Map();
@@ -165,7 +166,7 @@ export class ConcurrentWorkerSet {
             throw new Error("ConcurrentWorker set already started");
         }
 
-        const workerCount = getOptionValue(
+        this.m_workerCount = getOptionValue(
             this.m_options.workerCount,
             typeof navigator !== "undefined" && navigator.hardwareConcurrency !== undefined
                 ? // We need to have at least one worker
@@ -176,7 +177,7 @@ export class ConcurrentWorkerSet {
 
         // Initialize the workers. The workers now have an ID to identify specific workers and
         // handle their busy state.
-        for (let workerId = 0; workerId < workerCount; ++workerId) {
+        for (let workerId = 0; workerId < this.m_workerCount; ++workerId) {
             const workerPromise = WorkerLoader.startWorker(this.m_options.scriptUrl)
                 .then(worker => {
                     const listener = (evt: Event): void => {
@@ -198,6 +199,14 @@ export class ConcurrentWorkerSet {
             this.m_workerPromises.push(workerPromise);
         }
         this.m_stopped = false;
+    }
+
+    /**
+     * The number of workers started for this worker set. The value is `undefined` until the workers
+     * have been created.
+     */
+    get workerCount(): number | undefined {
+        return this.m_workerCount;
     }
 
     /**
