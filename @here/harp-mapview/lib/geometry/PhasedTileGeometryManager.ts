@@ -42,11 +42,13 @@ export class PhasedTileGeometryManager extends TileGeometryManagerBase {
     }
 
     initTile(tile: Tile): void {
-        tile.tileGeometryLoader = new PhasedTileGeometryLoader(
-            tile,
-            this.m_loadPhaseDefinitions,
-            this.m_basicGeometryKinds
-        );
+        if (tile.dataSource.useGeometryLoader) {
+            tile.tileGeometryLoader = new PhasedTileGeometryLoader(
+                tile,
+                this.m_loadPhaseDefinitions,
+                this.m_basicGeometryKinds
+            );
+        }
     }
 
     updateTiles(tiles: Tile[]): void {
