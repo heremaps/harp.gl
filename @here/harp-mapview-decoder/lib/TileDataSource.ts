@@ -156,6 +156,7 @@ export class TileDataSource<TileType extends Tile> extends DataSource {
             storageLevelOffset: this.m_options.storageLevelOffset
         });
 
+        this.useGeometryLoader = true;
         this.cacheable = true;
         this.m_tileLoaderCache = new LRUCache<number, TileLoader>(this.getCacheCount());
     }

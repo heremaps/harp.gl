@@ -33,6 +33,11 @@ export abstract class DataSource extends THREE.EventDispatcher {
     cacheable: boolean = false;
 
     /**
+     * Set to `true` if the loader should be used to get the tile contents.
+     */
+    useGeometryLoader: boolean = false;
+
+    /**
      * The unique name of a `DataSource` instance.
      */
     name: string;
