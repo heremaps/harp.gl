@@ -148,4 +148,39 @@ describe("OrientedBox3", function() {
 
         assert.equal(visibleTiles.length, 2);
     });
+    describe("distance", function() {
+        it("point inside has zero distance", function() {
+            const box = new OrientedBox3(
+                new THREE.Vector3(),
+                new THREE.Matrix4(),
+                new THREE.Vector3(10, 10, 10)
+            );
+
+            assert.equal(box.distanceToPoint(new THREE.Vector3()), 0);
+        });
+        it("points on each side", function() {
+            const box = new OrientedBox3(
+                new THREE.Vector3(),
+                new THREE.Matrix4(),
+                new THREE.Vector3(10, 10, 10)
+            );
+
+            assert.equal(box.distanceToPoint(new THREE.Vector3(20, 0, 0)), 10);
+            assert.equal(box.distanceToPoint(new THREE.Vector3(-20, 0, 0)), 10);
+            assert.equal(box.distanceToPoint(new THREE.Vector3(0, 20, 0)), 10);
+            assert.equal(box.distanceToPoint(new THREE.Vector3(0, -20, 0)), 10);
+            assert.equal(box.distanceToPoint(new THREE.Vector3(0, 0, 20)), 10);
+            assert.equal(box.distanceToPoint(new THREE.Vector3(0, 0, -20)), 10);
+        });
+        it("arbitrary points", function() {
+            const box = new OrientedBox3(
+                new THREE.Vector3(),
+                new THREE.Matrix4(),
+                new THREE.Vector3(10, 10, 10)
+            );
+
+            assert.equal(box.distanceToPoint(new THREE.Vector3(20, 20, 20)), Math.sqrt(300));
+            assert.equal(box.distanceToPoint(new THREE.Vector3(-20, -20, -20)), Math.sqrt(300));
+        });
+    });
 });

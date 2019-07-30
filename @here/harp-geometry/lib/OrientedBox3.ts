@@ -166,7 +166,7 @@ export class OrientedBox3 implements OrientedBox3Like {
             const extent = this.extents.getComponent(i);
             if (length < -extent) {
                 const dd = extent + length;
-                result = dd * dd;
+                result += dd * dd;
             } else if (length > extent) {
                 const dd = length - extent;
                 result += dd * dd;
