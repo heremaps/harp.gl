@@ -251,6 +251,11 @@ describe("ExprEvaluator", function() {
             assert.equal(evaluate(["to-number", false]), 0);
             assert.equal(evaluate(["to-number", "123"]), 123);
             assert.approximately(evaluate(["to-number", "123.123"]) as number, 123.123, EPSILON);
+            assert.throw(() => evaluate(["to-number", "x"]));
+            assert.equal(evaluate(["to-number", "x", true]), 1);
+            assert.equal(evaluate(["to-number", "123y", false]), 0);
+            assert.equal(evaluate(["to-number", "0y1", "123"]), 123);
+            assert.equal(evaluate(["to-number", 10_000, "123"]), 10_000);
         });
     });
 
