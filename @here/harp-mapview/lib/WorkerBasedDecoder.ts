@@ -167,4 +167,12 @@ export class WorkerBasedDecoder implements ITileDecoder {
 
         this.workerSet.broadcastMessage(message);
     }
+
+    /**
+     * The number of workers started for this decoder. The value is `undefined` until the workers
+     * have been created.
+     */
+    get workerCount(): number | undefined {
+        return this.workerSet.workerCount;
+    }
 }

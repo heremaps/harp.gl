@@ -325,6 +325,11 @@ export interface Stats {
     median: number;
 
     /**
+     * The 75th percentile median of all values in the array.
+     */
+    median75: number;
+
+    /**
      * The 90th percentile median of all values in the array.
      */
     median90: number;
@@ -439,6 +444,7 @@ export function computeArrayStats(samples: number[]): Stats | undefined {
     const min: number = samples[0];
     const max: number = samples[samples.length - 1];
     let median: number;
+    let median75: number;
     let median90: number;
     let median95: number;
     let median97: number;
@@ -446,15 +452,17 @@ export function computeArrayStats(samples: number[]): Stats | undefined {
     let median999: number;
 
     if (samples.length === 1) {
-        median90 = median95 = median97 = median99 = median999 = median = samples[0];
+        median75 = median90 = median95 = median97 = median99 = median999 = median = samples[0];
     } else if (samples.length === 2) {
         median = samples[0] * 0.5 + samples[1] * 0.5;
-        median90 = median95 = median97 = median99 = median999 = samples[1];
+        median75 = median90 = median95 = median97 = median99 = median999 = samples[1];
     } else {
         const mid = Math.floor(samples.length / 2);
         median =
             samples.length % 2 === 0 ? samples[mid - 1] * 0.5 + samples[mid] * 0.5 : samples[mid];
 
+        const mid75 = Math.round(samples.length * 0.75) - 1;
+        median75 = samples[mid75];
         const mid90 = Math.round(samples.length * 0.9) - 1;
         median90 = samples[mid90];
         const mid95 = Math.round(samples.length * 0.95) - 1;
@@ -480,6 +488,7 @@ export function computeArrayStats(samples: number[]): Stats | undefined {
         max,
         avg,
         median,
+        median75,
         median90,
         median95,
         median97,
@@ -487,6 +496,31 @@ export function computeArrayStats(samples: number[]): Stats | undefined {
         median999,
         numSamples: samples.length
     };
+}
+
+/**
+ * Only exported for testing
+ * @ignore
+ *
+ * Compute the averages for the passed in array of numbers.
+ *
+ * @param {number[]} samples Array containing sampled values.
+ * @returns {(Stats | undefined)}
+ */
+export function computeArrayAverage(samples: number[]): number | undefined {
+    if (samples.length === 0) {
+        return undefined;
+    }
+
+    let sum = 0;
+
+    for (let i = 0, l = samples.length; i < l; i++) {
+        sum += samples[i];
+    }
+
+    const avg = sum / samples.length;
+
+    return avg;
 }
 
 /**
@@ -868,6 +902,16 @@ interface ChromeMemoryInfo {
     jsHeapSizeLimit: number;
 }
 
+export interface SimpleFrameStatistics {
+    configs: Map<string, string>;
+    appResults: Map<string, number>;
+    frames: Map<string, number | number[]>;
+    messages: Array<string[] | undefined>;
+    frameStats?: Map<string, Stats | undefined>;
+    zoomLevelLabels?: string[];
+    zoomLevelData?: Map<string, number | number[]>;
+}
+
 /**
  * Performance measurement central. Maintains the current [[FrameStats]], which holds all individual
  * performance numbers.
@@ -1063,7 +1107,7 @@ export class PerformanceStatistics {
      * Convert to a plain object that can be serialized. Required to copy the test results over to
      * nightwatch.
      */
-    getAsPlainObject(): any {
+    getAsPlainObject(onlyLastFrame: boolean = false): any {
         const appResults: any = {};
         const configs: any = {};
         const frames: any = {};
@@ -1083,8 +1127,14 @@ export class PerformanceStatistics {
             configs[name] = value;
         });
 
-        for (const [name, buffer] of this.m_frameEvents.frameEntries) {
-            frames[name] = buffer.asArray();
+        if (onlyLastFrame) {
+            for (const [name, buffer] of this.m_frameEvents.frameEntries) {
+                frames[name] = buffer.bottom;
+            }
+        } else {
+            for (const [name, buffer] of this.m_frameEvents.frameEntries) {
+                frames[name] = buffer.asArray();
+            }
         }
         plainObject.messages = this.m_frameEvents.messages.asArray();
         return plainObject;
@@ -1095,29 +1145,44 @@ export class PerformanceStatistics {
      * test results over to nightwatch.
      */
     getLastFrameStatistics(): any {
-        const appResults: any = {};
-        const configs: any = {};
-        const frames: any = {};
-        const plainObject: any = {
+        return this.getAsPlainObject(true);
+    }
+
+    /**
+     * Convert to a plain object that can be serialized. Required to copy the test results over to
+     * nightwatch.
+     */
+    getAsSimpleFrameStatistics(onlyLastFrame: boolean = false): SimpleFrameStatistics {
+        const configs: Map<string, string> = new Map();
+        const appResults: Map<string, number> = new Map();
+        const frames: Map<string, number | number[]> = new Map();
+
+        const simpleStatistics: SimpleFrameStatistics = {
             configs,
             appResults,
-            frames
+            frames,
+            messages: this.m_frameEvents.messages.asArray()
         };
 
         const appResultValues = this.appResults;
         appResultValues.forEach((value: number, name: string) => {
-            appResults[name] = value;
+            appResults.set(name, value);
         });
 
         const configValues = this.configs;
         configValues.forEach((value: string, name: string) => {
-            configs[name] = value;
+            configs.set(name, value);
         });
 
-        for (const [name, buffer] of this.m_frameEvents.frameEntries) {
-            frames[name] = buffer.bottom;
+        if (onlyLastFrame) {
+            for (const [name, buffer] of this.m_frameEvents.frameEntries) {
+                frames.set(name, buffer.bottom);
+            }
+        } else {
+            for (const [name, buffer] of this.m_frameEvents.frameEntries) {
+                frames.set(name, buffer.asArray());
+            }
         }
-        plainObject.messages = this.m_frameEvents.messages.asArray();
-        return plainObject;
+        return simpleStatistics;
     }
 }

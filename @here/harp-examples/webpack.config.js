@@ -13,9 +13,7 @@ const CopyWebpackPlugin = require("copy-webpack-plugin");
 const prepareOnly = process.env["PREPARE_ONLY"] === "true";
 
 const harpMapThemePath = path.dirname(require.resolve("@here/harp-map-theme/package.json"));
-const harpFontResourcesPath = path.dirname(
-    require.resolve("@here/harp-fontcatalog/package.json")
-);
+const harpFontResourcesPath = path.dirname(require.resolve("@here/harp-fontcatalog/package.json"));
 
 function resolveOptional(path, message) {
     try {

@@ -1829,7 +1829,7 @@ export class TextElementsRenderer {
                         poiLabel.iconRenderState = new RenderState();
                         poiLabel.textRenderState = new RenderState();
 
-                        if (this.m_mapView.fadingDisabled) {
+                        if (this.m_mapView.disableFading) {
                             // Force fadingTime to zero to keep it from fading in and out.
                             poiLabel.iconRenderState.fadingTime = 0;
                             poiLabel.textRenderState.fadingTime = 0;
@@ -1874,7 +1874,7 @@ export class TextElementsRenderer {
                     lineMarkerLabel.path.forEach(() => {
                         const renderState = new RenderState();
                         renderState.state = FadingState.FadingIn;
-                        renderState.fadingTime = this.m_mapView.fadingDisabled
+                        renderState.fadingTime = this.m_mapView.disableFading
                             ? 0
                             : renderState.fadingTime;
                         renderStates.push(renderState);
@@ -2045,7 +2045,7 @@ export class TextElementsRenderer {
                 // NOTE: Shouldn't this only happen once we know the label is gonna be visible?
                 if (pathLabel.textRenderState === undefined) {
                     pathLabel.textRenderState = new RenderState();
-                    pathLabel.textRenderState.fadingTime = this.m_mapView.fadingDisabled
+                    pathLabel.textRenderState.fadingTime = this.m_mapView.disableFading
                         ? 0
                         : pathLabel.textRenderState.fadingTime;
                 }
@@ -2127,7 +2127,7 @@ export class TextElementsRenderer {
             logger.log("numCannotAdd", numCannotAdd);
         }
 
-        if (!this.m_mapView.fadingDisabled && fadeAnimationRunning) {
+        if (!this.m_mapView.disableFading && fadeAnimationRunning) {
             this.m_mapView.update();
         }
 
