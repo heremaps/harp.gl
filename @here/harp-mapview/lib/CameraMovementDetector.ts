@@ -55,7 +55,10 @@ export class CameraMovementDetector {
      * @param mapView [[Mapview]]'s position and camera are checked for modifications.
      */
     checkCameraMoved(mapView: MapView, now: number): boolean {
-        const newYawPitchRoll = MapViewUtils.extractYawPitchRoll(mapView.camera.quaternion);
+        const newYawPitchRoll = MapViewUtils.extractYawPitchRoll(
+            mapView.camera.quaternion,
+            mapView.projection.type
+        );
         const newCameraPos = mapView.camera.getWorldPosition(this.m_newCameraPos);
 
         const cameraMoved =
@@ -93,7 +96,10 @@ export class CameraMovementDetector {
         const newCameraPos = mapView.camera.getWorldPosition(this.m_newCameraPos);
         this.m_lastCameraPos.set(newCameraPos.x, newCameraPos.y, newCameraPos.z);
 
-        const newYawPitchRoll = MapViewUtils.extractYawPitchRoll(mapView.camera.quaternion);
+        const newYawPitchRoll = MapViewUtils.extractYawPitchRoll(
+            mapView.camera.quaternion,
+            mapView.projection.type
+        );
         this.m_lastYawPitchRoll = newYawPitchRoll;
     }
 

@@ -267,7 +267,10 @@ export class FrustumIntersection {
         // a->e needs just the tilt and trigonometry to compute, result is: (tan(a->e) * z).
 
         const camera = this.m_camera;
-        const cameraPitch = MapViewUtils.extractYawPitchRoll(camera.quaternion).pitch;
+        const cameraPitch = MapViewUtils.extractYawPitchRoll(
+            camera.quaternion,
+            this.m_projection.type
+        ).pitch;
         // Ensure that the aspect is >= 1.
         const aspect = camera.aspect > 1 ? camera.aspect : 1 / camera.aspect;
         // Angle between a->d2, note, the fov is vertical, hence we translate to horizontal.

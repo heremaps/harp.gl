@@ -1618,7 +1618,6 @@ export class MapView extends THREE.EventDispatcher {
         tiltDeg: number = 0,
         azimuthDeg: number = 0
     ): void {
-        MapViewUtils.setRotation(this, -azimuthDeg, tiltDeg);
         this.geoCenter = MapViewUtils.getCameraCoordinatesFromTargetCoordinates(
             target,
             distance,
@@ -1626,8 +1625,15 @@ export class MapView extends THREE.EventDispatcher {
             tiltDeg,
             this
         );
+        MapViewUtils.setRotation(this, -azimuthDeg, tiltDeg);
         const pitchRad = THREE.Math.degToRad(tiltDeg);
-        this.camera.position.setZ(Math.cos(pitchRad) * distance);
+        if (this.projection.type === ProjectionType.Planar) {
+            this.camera.position.setZ(Math.cos(pitchRad) * distance);
+        } else if (this.projection.type === ProjectionType.Spherical) {
+            this.camera.position.setLength(EarthConstants.EQUATORIAL_RADIUS + distance);
+            // TODO: HARP-6597 and HARP-6023: Support rotation and tilting for yaw and pitch in
+            // globe.
+        }
     }
 
     /**
@@ -1645,26 +1651,16 @@ export class MapView extends THREE.EventDispatcher {
         yawDeg: number = 0,
         pitchDeg: number = 0
     ): void {
+        this.geoCenter = geoPos;
+
+        // TODO: HARP-6597 and HARP-6023: Support rotation and tilting for yaw and pitch in globe.
         if (this.projection.type === ProjectionType.Planar) {
             MapViewUtils.setRotation(this, yawDeg, pitchDeg);
-            this.geoCenter = geoPos;
-            MapViewUtils.zoomOnTargetPosition(this, 0, 0, zoomLevel);
-        } else {
-            this.geoCenter = new GeoCoordinates(geoPos.latitude, geoPos.longitude);
-
-            const distanceToGround = MapViewUtils.calculateDistanceToGroundFromZoomLevel(
-                this,
-                THREE.Math.clamp(zoomLevel, this.minZoomLevel, this.maxZoomLevel)
-            );
-
-            const surfaceNormal = new THREE.Vector3();
-
-            this.projection.surfaceNormal(this.m_camera.position, surfaceNormal);
-
-            this.m_camera.position.addScaledVector(surfaceNormal, distanceToGround);
-
+        } else if (this.projection.type === ProjectionType.Spherical) {
             this.m_camera.lookAt(this.scene.position);
         }
+
+        MapViewUtils.zoomOnTargetPosition(this, 0, 0, zoomLevel);
 
         this.update();
     }
@@ -2171,22 +2167,16 @@ export class MapView extends THREE.EventDispatcher {
 
         this.m_pixelToWorld = undefined;
 
-        if (this.projection.type === ProjectionType.Spherical) {
-            this.m_lookAtDistance = this.projection.groundDistance(this.m_camera.position);
+        const cameraPitch = MapViewUtils.extractYawPitchRoll(
+            this.m_camera.quaternion,
+            this.projection.type
+        ).pitch;
+        const cameraPosZ = Math.abs(this.projection.groundDistance(this.m_camera.position));
 
-            this.m_zoomLevel = MapViewUtils.calculateZoomLevelFromDistance(
-                this.projection.groundDistance(this.m_camera.position),
-                this
-            );
-        } else {
-            const cameraPitch = MapViewUtils.extractYawPitchRoll(this.m_camera.quaternion).pitch;
-            const cameraPosZ = Math.abs(this.projection.groundDistance(this.m_camera.position));
+        this.m_lookAtDistance = cameraPosZ / Math.cos(cameraPitch);
+        const zoomLevelDistance = cameraPosZ / Math.cos(Math.min(cameraPitch, Math.PI / 3));
 
-            this.m_lookAtDistance = cameraPosZ / Math.cos(cameraPitch);
-
-            const zoomLevelDistance = cameraPosZ / Math.cos(Math.min(cameraPitch, Math.PI / 3));
-            this.m_zoomLevel = MapViewUtils.calculateZoomLevelFromDistance(zoomLevelDistance, this);
-        }
+        this.m_zoomLevel = MapViewUtils.calculateZoomLevelFromDistance(zoomLevelDistance, this);
     }
 
     private detectCurrentFps(now: number) {

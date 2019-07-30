@@ -57,16 +57,6 @@ const yawQuaternion = new THREE.Quaternion();
 const pitchQuaternion = new THREE.Quaternion();
 
 /**
- * Quaternion used for globe calculations. Declared as a const to avoid re-creation across frames.
- */
-const quaternion = new THREE.Quaternion();
-
-/**
- * Matrix declared as a const to avoid re-creation across frames.
- */
-const matrix = new THREE.Matrix4();
-
-/**
  * The yaw axis around which we rotate when we change the yaw.
  * This axis is fixed and is the -Z axis `(0,0,1)`.
  */
@@ -355,7 +345,10 @@ export class MapControls extends THREE.EventDispatcher {
             this.stopZoom();
         }
 
-        const yawPitchRoll = MapViewUtils.extractYawPitchRoll(this.camera.quaternion);
+        const yawPitchRoll = MapViewUtils.extractYawPitchRoll(
+            this.camera.quaternion,
+            this.mapView.projection.type
+        );
 
         //yaw
         let yawAngle = yawPitchRoll.yaw;
@@ -378,7 +371,10 @@ export class MapControls extends THREE.EventDispatcher {
      * Current viewing angles yaw/pitch/roll in degrees.
      */
     get yawPitchRoll(): MapViewUtils.YawPitchRoll {
-        const ypr = MapViewUtils.extractYawPitchRoll(this.camera.quaternion);
+        const ypr = MapViewUtils.extractYawPitchRoll(
+            this.camera.quaternion,
+            this.mapView.projection.type
+        );
         return {
             yaw: geoUtils.MathUtils.radToDeg(ypr.yaw),
             pitch: geoUtils.MathUtils.radToDeg(ypr.pitch),
@@ -502,42 +498,20 @@ export class MapControls extends THREE.EventDispatcher {
         }
 
         this.dispatchEvent(MAPCONTROL_EVENT_BEGIN_INTERACTION);
+
         // Register the zoom request
         this.m_startZoom = this.currentZoom;
         this.m_zoomDeltaRequested = zoomLevel - this.zoomLevelTargeted;
+
         // Cancel panning so the point of origin of the zoom is maintained.
         this.stopPan();
 
         // Assign the new animation start time.
         this.m_zoomAnimationStartTime = performance.now();
 
-        if (this.mapView.projection.type === geoUtils.ProjectionType.Planar) {
-            this.m_zoomTargetNormalizedCoordinates.set(screenTarget.x, screenTarget.y);
-            this.handleZoom();
-        } else {
-            const surfaceNormal = this.mapView.projection.surfaceNormal(
-                this.camera.position,
-                new THREE.Vector3()
-            );
+        this.m_zoomTargetNormalizedCoordinates.set(screenTarget.x, screenTarget.y);
 
-            // TODO: HARP-5431 Use the elevation provider to find the ground distance
-            // if terrain is enabled.
-            this.camera.position.addScaledVector(
-                surfaceNormal,
-                ((this.zoomLevelTargeted - zoomLevel) / this.zoomLevelDeltaOnMouseWheel) *
-                    this.mapView.projection.groundDistance(this.camera.position) *
-                    0.05
-            );
-
-            // TODO: HARP-5430 Ensures that we don't intersect the terrain, a similar
-            // approach to that should be used here, at least for consistency's sake.
-            if (this.mapView.projection.groundDistance(this.camera.position) < 500) {
-                this.mapView.projection.scalePointToSurface(this.camera.position);
-                this.camera.position.addScaledVector(surfaceNormal, 500);
-            }
-
-            this.updateMapView();
-        }
+        this.handleZoom();
 
         this.dispatchEvent(MAPCONTROL_EVENT_END_INTERACTION);
     }
@@ -637,7 +611,10 @@ export class MapControls extends THREE.EventDispatcher {
     }
 
     private get currentPitch(): number {
-        return MapViewUtils.extractYawPitchRoll(this.mapView.camera.quaternion).pitch;
+        return MapViewUtils.extractYawPitchRoll(
+            this.camera.quaternion,
+            this.mapView.projection.type
+        ).pitch;
     }
 
     private get targetedPitch(): number {
@@ -1038,7 +1015,7 @@ export class MapControls extends THREE.EventDispatcher {
                 )
                 .length();
             return currentDistance - previousDistance;
-        } else {
+        } else if (this.mapView.projection.type === geoUtils.ProjectionType.Spherical) {
             const previousDistance = this.m_tmpVector2
                 .subVectors(
                     this.m_touchState.touches[0].lastTouchPoint,
@@ -1053,6 +1030,7 @@ export class MapControls extends THREE.EventDispatcher {
                 .length();
             return currentDistance - previousDistance;
         }
+        return 0;
     }
 
     private convertTouchPoint(touch: Touch, oldTouchState?: TouchState): TouchState | null {
@@ -1186,9 +1164,10 @@ export class MapControls extends THREE.EventDispatcher {
                 this.m_panAnimationStartTime = performance.now();
 
                 this.pan();
-            } else {
+            } else if (this.mapView.projection.type === geoUtils.ProjectionType.Spherical) {
                 if (touchResult !== null) {
-                    this.rotateGlobe(
+                    MapViewUtils.rotateCameraAroundGlobe(
+                        this.mapView,
                         this.m_touchState.touches[0].initialWorldPosition,
                         this.m_touchState.touches[0].currentWorldPosition
                     );
@@ -1204,7 +1183,8 @@ export class MapControls extends THREE.EventDispatcher {
                 this.rotate(geoUtils.MathUtils.radToDeg(deltaRotation));
                 const pinchDistance = this.calculatePinchDistanceInWorldSpace();
                 this.moveAlongTheViewDirection(pinchDistance);
-            } else {
+            } else if (this.mapView.projection.type === geoUtils.ProjectionType.Spherical) {
+                // TODO: HARP-6597: Implement rotation for globe.
                 const pinchDistance = this.calculatePinchDistanceInWorldSpace();
                 this.setZoomLevel(this.currentZoom + pinchDistance * 0.01);
             }
@@ -1223,6 +1203,8 @@ export class MapControls extends THREE.EventDispatcher {
                     this.orbitingTouchDeltaFactor * diff.x,
                     -this.orbitingTouchDeltaFactor * diff.y
                 );
+            } else if (this.mapView.projection.type === geoUtils.ProjectionType.Spherical) {
+                // TODO: HARP-6023: Support tilting in globe.
             }
         }
 
@@ -1337,25 +1319,18 @@ export class MapControls extends THREE.EventDispatcher {
         }
         const { fromWorld, toWorld } = vectors;
 
-        if (this.mapView.projection.type === geoUtils.ProjectionType.Planar) {
-            // Cancel zoom inertia if a panning is triggered, so that the mouse location is kept.
-            this.stopZoom();
+        // Cancel zoom inertia if a panning is triggered, so that the mouse location is kept.
+        this.stopZoom();
 
+        if (this.mapView.projection.type === geoUtils.ProjectionType.Planar) {
             // Assign the new animation start time.
             this.m_panAnimationStartTime = performance.now();
-
-            this.m_panDistanceFrameDelta = fromWorld.sub(toWorld);
-
+            this.m_panDistanceFrameDelta.subVectors(fromWorld, toWorld);
             this.pan();
-        } else {
-            this.rotateGlobe(fromWorld, toWorld);
+        } else if (this.mapView.projection.type === geoUtils.ProjectionType.Spherical) {
+            // TODO: HARP-6277: Implement inertia in globe.
+            MapViewUtils.rotateCameraAroundGlobe(this.mapView, fromWorld, toWorld);
         }
-    }
-
-    private rotateGlobe(fromWorld: THREE.Vector3, toWorld: THREE.Vector3) {
-        quaternion.setFromUnitVectors(fromWorld.normalize(), toWorld.normalize()).inverse();
-        matrix.copyPosition(this.camera.matrix).makeRotationFromQuaternion(quaternion);
-        this.camera.applyMatrix(matrix);
     }
 
     private constrainPitchAngle(pitchAngle: number, deltaPitch: number): number {
@@ -1403,7 +1378,10 @@ export class MapControls extends THREE.EventDispatcher {
                 (1.0 / Math.sin(currentAzimuthAltitude.altitude)) * mockCamera.position.z;
 
             // get the current quaternion from the camera
-            const yawPitchRoll = MapViewUtils.extractYawPitchRoll(mockCamera.quaternion);
+            const yawPitchRoll = MapViewUtils.extractYawPitchRoll(
+                this.camera.quaternion,
+                this.mapView.projection.type
+            );
 
             //calculate the pitch
             const deltaPitchRadians = geoUtils.MathUtils.degToRad(deltaAlt);
