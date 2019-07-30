@@ -20,6 +20,7 @@ import * as THREE from "three";
 import { GeoJson, GeometryType, StyleSet } from "@here/harp-datasource-protocol";
 import { StyleSetEvaluator } from "@here/harp-datasource-protocol/index-decoder";
 import {
+    mercatorProjection,
     Projection,
     TileKey,
     webMercatorProjection,
@@ -176,7 +177,7 @@ describe("@here-geojson-datasource", () => {
         pointCoords.forEach((value, index) => {
             pointCoordsArray[index] = value;
         });
-        assert.deepEqual(pointCoordsArray, [19272186, -20432022, 0]);
+        assert.deepEqual(pointCoordsArray, [19272186, -15885961, 0]);
 
         // Line feature support.
         const lineBuffer = decodedTile.geometries.find(o => o.type === GeometryType.SolidLine)!
@@ -186,7 +187,7 @@ describe("@here-geojson-datasource", () => {
         lineCoords.forEach((value, index) => {
             lineCoordsArray[index] = value;
         });
-        assert.deepEqual(lineCoordsArray, [18270312, -18381676, 0, 18492950, -18604632, 0]);
+        assert.deepEqual(lineCoordsArray, [18270312, -17936308, 0, 18492950, -17713352, 0]);
 
         // Polygon feature support.
         const polygonGeometry = decodedTile.geometries.find(o => o.type === GeometryType.Polygon)!;
@@ -207,41 +208,41 @@ describe("@here-geojson-datasource", () => {
             -18158992,
             0,
             18492950,
-            -18604632,
+            -17713352,
             0,
             18715590,
             -18158992,
             0,
             18381630,
-            -18270318,
+            -18047666,
             0,
             18492950,
-            -18381676,
+            -17936308,
             0,
             18604270,
-            -18270318,
+            -18047666,
             0
         ]);
         // Checks that the hole in the polygon is supported.
         assert.deepEqual(polygonIndicesArray, [
-            2,
             0,
             3,
             4,
-            3,
-            0,
-            2,
-            3,
             5,
-            4,
+            3,
             0,
             1,
-            1,
-            2,
-            5,
-            5,
+            0,
             4,
-            1
+            5,
+            0,
+            2,
+            2,
+            1,
+            4,
+            4,
+            5,
+            2
         ]);
     });
 
@@ -321,7 +322,7 @@ describe("@here-geojson-datasource", () => {
         const expectedResult0 = {
             text: "blabla",
             x: 19272186,
-            y: -20432022
+            y: -15885961
         };
         assert.deepEqual(result0, expectedResult0);
 
@@ -337,9 +338,9 @@ describe("@here-geojson-datasource", () => {
         const expectedResult3 = {
             text: "blablabla",
             x1: 18270311.426446024,
-            y1: -18381676.144158296,
+            y1: -17936307.727147207,
             x2: 18492950.40803257,
-            y2: -18604632.045308776
+            y2: -17713351.825996723
         };
         assert.deepEqual(result3, expectedResult3);
 
@@ -353,7 +354,7 @@ describe("@here-geojson-datasource", () => {
         const expectedResult2 = {
             text: "blablablabla",
             x: 18492950,
-            y: -18307488
+            y: -18010496
         };
         assert.deepEqual(result2, expectedResult2);
     });
@@ -366,6 +367,6 @@ async function getDecodedTile(styleSet: StyleSet) {
         TEST_JSON,
         new TileKey(1, 1, 5), // Random tile.
         styleSetEvaluator,
-        webMercatorProjection
+        mercatorProjection
     );
 }
