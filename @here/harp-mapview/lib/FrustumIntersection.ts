@@ -6,7 +6,7 @@
 
 import { OrientedBox3 } from "@here/harp-geometry";
 import { MathUtils, Projection, ProjectionType, TileKey, TilingScheme } from "@here/harp-geoutils";
-import { assert } from "chai";
+import { assert } from "@here/harp-utils";
 import * as THREE from "three";
 import { CalculationStatus, ElevationRangeSource } from "./ElevationRangeSource";
 import { MapTileCuller } from "./MapTileCuller";
