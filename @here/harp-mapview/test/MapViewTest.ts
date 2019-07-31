@@ -126,14 +126,16 @@ describe("MapView", function() {
         expect(clearColorStub.getCall(1).args[0].b).to.be.equal(1);
         expect(clearColorStub.getCall(2).calledWith(0xefe9e1)).to.be.equal(true);
         expect(updateSpy.callCount).to.be.equal(2);
-        expect(dispatchEventSpy.callCount).to.be.equal(3);
+        expect(dispatchEventSpy.callCount).to.be.equal(5);
         expect(dispatchEventSpy.getCall(0).args[0].type).to.be.equal(
             MapViewEventNames.ContextRestored
         );
-        expect(dispatchEventSpy.getCall(1).args[0].type).to.be.equal(
+        expect(dispatchEventSpy.getCall(1).args[0].type).to.be.equal(MapViewEventNames.Update);
+        expect(dispatchEventSpy.getCall(2).args[0].type).to.be.equal(
             MapViewEventNames.ContextRestored
         );
-        expect(dispatchEventSpy.getCall(2).args[0].type).to.be.equal(MapViewEventNames.ContextLost);
+        expect(dispatchEventSpy.getCall(3).args[0].type).to.be.equal(MapViewEventNames.Update);
+        expect(dispatchEventSpy.getCall(4).args[0].type).to.be.equal(MapViewEventNames.ContextLost);
     });
 
     it("Correctly sets and removes event listeners by API", function() {

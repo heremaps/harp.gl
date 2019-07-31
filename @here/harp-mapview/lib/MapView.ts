@@ -167,6 +167,7 @@ export interface RenderEvent extends THREE.Event {
 }
 
 // Event type: cast needed to workaround wrong THREE.js typings.
+const UPDATE: RenderEvent = { type: MapViewEventNames.Update } as any;
 const RENDER_EVENT: RenderEvent = { type: MapViewEventNames.Render } as any;
 const DID_RENDER_EVENT: RenderEvent = { type: MapViewEventNames.AfterRender } as any;
 const FIRST_FRAME_EVENT: RenderEvent = { type: MapViewEventNames.FirstFrame } as any;
@@ -554,6 +555,23 @@ export interface MapViewOptions {
      * Hint for the WebGL implementation on which power mode to prefer.
      */
     powerPreference?: MapViewPowerPreference;
+
+    /**
+     * Set to `true` to allow rendering scene synchronously.
+     *
+     * By calling `renderSync()` scene draws immediately, opposite to default case when
+     * `update` method requests redraw and waits for the next animation frame.
+     *
+     * You need to set up your own render loop controller.
+     * Event `MapViewEventNames.Update` fired when [[MapView]] requests for an redraw.
+     * E.g.: When tiles loaded asynchronously and ready for rendering.
+     *
+     * @note Internal `maxFps` will be overridden and may not work properly as `renderSync`
+     * intended to be called from external render loop.
+     *
+     * @default false.
+     */
+    synchronousRendering?: boolean;
 }
 
 /**
@@ -2057,9 +2075,21 @@ export class MapView extends THREE.EventDispatcher {
     }
 
     /**
+     * Redraws scene immediately
+     *
+     * @note Before using this method, set `synchronousRendering` to `true`
+     * in the [[MapViewOptions]]
+     */
+    renderSync() {
+        this.renderFunc(PerformanceTimer.now());
+    }
+
+    /**
      * Requests a redraw of the scene.
      */
     update() {
+        this.dispatchEvent(UPDATE);
+
         if (this.m_updatePending) {
             return;
         } // compress the update request
@@ -2326,7 +2356,7 @@ export class MapView extends THREE.EventDispatcher {
      * Draw a new frame.
      */
     private drawFrame() {
-        if (this.m_drawing) {
+        if (this.m_drawing || this.m_options.synchronousRendering) {
             return;
         }
         // Cancel an active requestAnimationFrame() cycle. Failure to do this may end up in

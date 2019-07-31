@@ -106,7 +106,7 @@ export namespace MapViewUtils {
         } else if (mapView.projection.type === geoUtils.ProjectionType.Spherical) {
             mapView.camera.position.setLength(EarthConstants.EQUATORIAL_RADIUS + zoomDistance);
         }
-        mapView.camera.matrixWorldNeedsUpdate = true;
+        mapView.camera.updateMatrixWorld();
 
         // Get new target position after the zoom
         const newTargetPosition = rayCastWorldCoordinates(
