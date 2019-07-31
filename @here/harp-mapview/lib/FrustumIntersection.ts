@@ -8,6 +8,7 @@ import { OrientedBox3 } from "@here/harp-geometry";
 import { MathUtils, Projection, ProjectionType, TileKey, TilingScheme } from "@here/harp-geoutils";
 import { assert } from "@here/harp-utils";
 import * as THREE from "three";
+import { DataSource } from "./DataSource";
 import { CalculationStatus, ElevationRangeSource } from "./ElevationRangeSource";
 import { MapTileCuller } from "./MapTileCuller";
 import { MapViewUtils, TileOffsetUtils } from "./Utils";
@@ -93,7 +94,9 @@ export class FrustumIntersection {
     compute(
         tilingScheme: TilingScheme,
         maxTileLevel: number,
-        elevationRangeSource: ElevationRangeSource | undefined
+        elevationRangeSource: ElevationRangeSource | undefined,
+        zoomLevels: number[],
+        dataSources: DataSource[]
     ): FrustumIntersection.Result {
         this.m_tileKeyEntries.clear();
         let calculationFinal = true;
@@ -120,15 +123,20 @@ export class FrustumIntersection {
             }
 
             const tileKey = tileEntry.tileKey;
+            if (tileKey.level > maxTileLevel) {
+                continue;
+            }
+
+            const proceed = dataSources.some((ds, i) => ds.shouldSubdivide(zoomLevels[i], tileKey));
+            if (proceed === false) {
+                continue;
+            }
+
             const uniqueKey = TileOffsetUtils.getKeyForTileKeyAndOffset(tileKey, tileEntry.offset);
             const cachedTileEntry = this.m_tileKeyEntries.get(uniqueKey);
 
             assert(cachedTileEntry !== undefined);
             assert(cachedTileEntry!.area > 0);
-
-            if (tileKey.level > maxTileLevel) {
-                continue;
-            }
 
             for (const childTileKey of tilingScheme.getSubTileKeys(tileKey)) {
                 const offset = tileEntry.offset;

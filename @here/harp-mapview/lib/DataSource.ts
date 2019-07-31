@@ -340,6 +340,19 @@ export abstract class DataSource extends THREE.EventDispatcher {
     }
 
     /**
+     * Returns `true` if [[MapView]] should traverse tiles further with given [[TileKey]] and
+     * zoom level.
+     *
+     * @param zoomLevel The zoom level of the [[MapView]].
+     * @param tileKey The unique identifier for a map tile.
+     * @returns `true` if the subtiles of the given [[TileKey]] should be
+     * checked for collisions.
+     */
+    shouldSubdivide(zoomLevel: number, tileKey: TileKey): boolean {
+        return tileKey.level < zoomLevel;
+    }
+
+    /**
      * Returns `true` if [[MapView]] should render the text elements with the given [[TileKey]] and
      * zoom level.
      *

@@ -716,13 +716,14 @@ export class VisibleTileSet {
         // For each bucket of data sources with same tiling scheme, calculate frustum intersection
         // once using the maximum display level.
         for (const [tilingScheme, bucket] of dataSourceBuckets) {
-            const maxDisplayLevel = Math.max(
-                ...bucket.map(dataSource => dataSource.getDisplayZoomLevel(zoomLevel))
-            );
+            const zoomLevels = bucket.map(dataSource => dataSource.getDisplayZoomLevel(zoomLevel));
+            const maxDisplayLevel = Math.max(...zoomLevels);
             const result = this.m_frustumIntersection.compute(
                 tilingScheme,
                 maxDisplayLevel,
-                elevationRangeSource
+                elevationRangeSource,
+                zoomLevels,
+                bucket
             );
 
             allBoundingBoxesFinal = allBoundingBoxesFinal && result.calculationFinal;
