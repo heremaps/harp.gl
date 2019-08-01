@@ -283,7 +283,7 @@ describe("MapView", function() {
         }
     });
 
-    it("updates background tiling scheme", async function() {
+    it("updates background storage level offset", async function() {
         if (inNodeContext) {
             global.requestAnimationFrame = (callback: FrameRequestCallback) => {
                 setTimeout(() => {
@@ -306,11 +306,11 @@ describe("MapView", function() {
             "background"
         ) as BackgroundDataSource;
         assert.isDefined(backgroundDataSource);
-        const updateTilingSchemeSpy = sinon.spy(backgroundDataSource, "updateTilingScheme");
+        const updateStorageOffsetSpy = sinon.spy(backgroundDataSource, "updateStorageLevelOffset");
 
         mapView.update();
         await waitForEvent(mapView, MapViewEventNames.AfterRender);
 
-        expect(updateTilingSchemeSpy.called);
+        expect(updateStorageOffsetSpy.called);
     });
 });
