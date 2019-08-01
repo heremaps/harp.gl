@@ -17,7 +17,8 @@ import {
     MathUtils,
     mercatorProjection,
     Projection,
-    ProjectionType
+    ProjectionType,
+    TilingScheme
 } from "@here/harp-geoutils";
 import { assert, getOptionValue, LoggerManager, PerformanceTimer } from "@here/harp-utils";
 import * as THREE from "three";
@@ -514,6 +515,11 @@ export interface MapViewOptions {
     enablePhasedLoading?: boolean;
 
     /**
+     * Set tiling scheme for [[BackgroundDataSource]]
+     */
+    backgroundTilingScheme?: TilingScheme;
+
+    /**
      * @hidden
      * Disable all fading animations for debugging and performance measurement.
      */
@@ -633,7 +639,7 @@ export class MapView extends THREE.EventDispatcher {
     private readonly m_tileDataSources: DataSource[] = [];
     private readonly m_connectedDataSources = new Set<string>();
     private readonly m_failedDataSources = new Set<string>();
-    private m_backgroundDataSource: BackgroundDataSource | undefined = undefined;
+    private m_backgroundDataSource?: BackgroundDataSource;
 
     // gestures
     private readonly m_raycaster = new THREE.Raycaster();
@@ -849,6 +855,10 @@ export class MapView extends THREE.EventDispatcher {
 
         this.m_backgroundDataSource = new BackgroundDataSource();
         this.addDataSource(this.m_backgroundDataSource);
+
+        if (options.backgroundTilingScheme !== undefined) {
+            this.m_backgroundDataSource.setTilingScheme(options.backgroundTilingScheme);
+        }
 
         this.initTheme();
 
@@ -1523,6 +1533,10 @@ export class MapView extends THREE.EventDispatcher {
         dataSource.attach(this);
         this.m_tileDataSources.push(dataSource);
 
+        if (this.m_backgroundDataSource) {
+            this.m_backgroundDataSource.updateStorageLevelOffset();
+        }
+
         return dataSource
             .connect()
             .then(() => {
@@ -1589,6 +1603,10 @@ export class MapView extends THREE.EventDispatcher {
         this.m_tileDataSources.splice(dsIndex, 1);
         this.m_connectedDataSources.delete(dataSource.name);
         this.m_failedDataSources.delete(dataSource.name);
+
+        if (this.m_backgroundDataSource) {
+            this.m_backgroundDataSource.updateStorageLevelOffset();
+        }
 
         this.update();
     }
@@ -2384,10 +2402,6 @@ export class MapView extends THREE.EventDispatcher {
 
         if (gatherStatistics) {
             setupTime = PerformanceTimer.now();
-        }
-
-        if (this.m_backgroundDataSource) {
-            this.m_backgroundDataSource.updateTilingScheme();
         }
 
         // TBD: Update renderList only any of its params (camera, etc...) has changed.

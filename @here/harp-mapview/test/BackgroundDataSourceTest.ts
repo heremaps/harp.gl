@@ -7,11 +7,7 @@
 // tslint:disable:only-arrow-functions
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
-import {
-    hereTilingScheme,
-    mercatorTilingScheme,
-    webMercatorTilingScheme
-} from "@here/harp-geoutils";
+import { hereTilingScheme, mercatorTilingScheme } from "@here/harp-geoutils";
 import { expect } from "chai";
 import * as sinon from "sinon";
 import { BackgroundDataSource } from "../lib/BackgroundDataSource";
@@ -19,54 +15,60 @@ import { MapView } from "../lib/MapView";
 import { FakeOmvDataSource } from "./FakeOmvDataSource";
 
 describe("BackgroundDataSource", function() {
-    describe("#getTilingScheme()", function() {
+    describe("#updateStorageLevelOffset()", function() {
         let fakeDataSource1: FakeOmvDataSource;
         let fakeDataSource2: FakeOmvDataSource;
+        let fakeDataSource3: FakeOmvDataSource;
         let backgroundDataSource: BackgroundDataSource;
         let mapViewStub: sinon.SinonStubbedInstance<MapView>;
-        const defaultTilingScheme = webMercatorTilingScheme;
         beforeEach(function() {
             fakeDataSource1 = new FakeOmvDataSource();
             fakeDataSource2 = new FakeOmvDataSource();
+            fakeDataSource3 = new FakeOmvDataSource();
             sinon.replace(fakeDataSource1, "getTilingScheme", sinon.fake.returns(hereTilingScheme));
             sinon.replace(
                 fakeDataSource2,
                 "getTilingScheme",
                 sinon.fake.returns(mercatorTilingScheme)
             );
+            sinon.replace(
+                fakeDataSource3,
+                "getTilingScheme",
+                sinon.fake.returns(mercatorTilingScheme)
+            );
+            fakeDataSource1.storageLevelOffset = 1;
             fakeDataSource2.storageLevelOffset = -3;
+            fakeDataSource3.storageLevelOffset = -1;
             backgroundDataSource = new BackgroundDataSource();
             mapViewStub = sinon.createStubInstance(MapView);
             sinon.stub(mapViewStub, "dataSources").get(function getterFn() {
-                return [fakeDataSource1, fakeDataSource2, backgroundDataSource];
+                return [backgroundDataSource, fakeDataSource1, fakeDataSource2, fakeDataSource3];
             });
             mapViewStub.removeDataSource.restore();
             backgroundDataSource.attach((mapViewStub as unknown) as MapView);
         });
 
-        it("Returns default tiling scheme after construction", function() {
-            expect(backgroundDataSource.getTilingScheme()).to.be.equal(defaultTilingScheme);
-        });
-
-        it("Returns default tiling scheme if no data source is enabled on update", function() {
-            mapViewStub.isDataSourceEnabled.returns(false);
-            backgroundDataSource.updateTilingScheme();
-            expect(mapViewStub.clearTileCache.called);
-            expect(backgroundDataSource.getTilingScheme()).to.be.equal(defaultTilingScheme);
-        });
-
         // tslint:disable-next-line: max-line-length
-        it("Returns tiling scheme of first enabled data source on update", function() {
-            mapViewStub.isDataSourceEnabled.returns(true);
-            mapViewStub.isDataSourceEnabled.withArgs(fakeDataSource1).returns(false);
-            backgroundDataSource.updateTilingScheme();
+        it("Sets storageLevelOffset to maximum value of matching datasources", function() {
+            backgroundDataSource.setTilingScheme(fakeDataSource2.getTilingScheme());
+            backgroundDataSource.updateStorageLevelOffset();
             expect(mapViewStub.clearTileCache.called);
-            expect(backgroundDataSource.getTilingScheme()).to.be.equal(
-                fakeDataSource2.getTilingScheme()
-            );
             expect(backgroundDataSource.storageLevelOffset).to.be.equal(
-                fakeDataSource2.storageLevelOffset
+                fakeDataSource3.storageLevelOffset
             );
+        });
+
+        it("Resets to default value if no datasources of same tiling scheme found", function() {
+            backgroundDataSource.setTilingScheme(fakeDataSource1.getTilingScheme());
+            backgroundDataSource.updateStorageLevelOffset();
+            expect(mapViewStub.clearTileCache.called);
+            expect(backgroundDataSource.storageLevelOffset).to.be.equal(
+                fakeDataSource1.storageLevelOffset
+            );
+
+            backgroundDataSource.setTilingScheme(undefined);
+            backgroundDataSource.updateStorageLevelOffset();
+            expect(backgroundDataSource.storageLevelOffset).to.be.equal(0);
         });
     });
 });
