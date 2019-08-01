@@ -8,7 +8,6 @@ import * as fs from "fs";
 import * as fse from "fs-extra";
 import * as glob from "glob";
 import * as path from "path";
-import { accessToken } from "../@here/harp-examples/config";
 
 /*
 Simple script that extracts all code snippets from examples
@@ -99,6 +98,3 @@ fse.copySync(path.join(sdkDir, "docs/docs"), "dist/redirect_docs");
 fs.copyFileSync(path.join(sdkDir, "LICENSE"), path.join(distOutDir, "LICENSE"));
 fse.copySync(path.join(sdkDir, "docs"), distDocsOutDir);
 fs.writeFileSync("dist/_config.yml", 'include:\n  - "_*"\n', { encoding: "utf8" });
-
-const credentialsResult = `const token = '${accessToken}'`;
-fs.writeFileSync("dist/js/credentials.js", credentialsResult, { encoding: "utf8" });
