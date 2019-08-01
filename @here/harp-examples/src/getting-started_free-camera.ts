@@ -5,14 +5,15 @@
  */
 
 import { DebugTileDataSource } from "@here/harp-debug-datasource";
-import { GeoCoordinates, webMercatorTilingScheme } from "@here/harp-geoutils";
+import { GeoCoordinates, MathUtils, webMercatorTilingScheme } from "@here/harp-geoutils";
 import { MapControls } from "@here/harp-map-controls";
 import {
     CopyrightElementHandler,
     CopyrightInfo,
     MapView,
     MapViewEventNames,
-    MapViewOptions
+    MapViewOptions,
+    MapViewUtils
 } from "@here/harp-mapview";
 import { APIFormat, OmvDataSource } from "@here/harp-omv-datasource";
 import * as THREE from "three";
@@ -131,6 +132,12 @@ export namespace FreeCameraAppDebuggingToolExample {
 
             this.mapView.scene.add(pointOfView);
 
+            // Setup relative to eye camera which is actually used in
+            // map view to render tiles thus increasing data accuracy.
+            const cameraRelativeToEye = new THREE.PerspectiveCamera();
+
+            this.mapView.scene.add(cameraRelativeToEye);
+
             pointOfView.position.set(0, -1500, 1500);
 
             this.mapView.pointOfView = pointOfView;
@@ -139,7 +146,40 @@ export namespace FreeCameraAppDebuggingToolExample {
                 pointOfView,
                 this.mapView.canvas
             );
-            transformControls.attach(this.mapView.camera);
+            transformControls.setSpace("world");
+            transformControls.attach(cameraRelativeToEye);
+
+            const applyTransformControls = () => {
+                // Apply helper camera offset to main (map view) camera.
+                this.mapView.camera.position.add(cameraRelativeToEye.position);
+                // Make sure that pitch limit contraint is preserved
+                const ypr = MapViewUtils.extractYawPitchRoll(
+                    cameraRelativeToEye.quaternion,
+                    this.mapView.projection.type
+                );
+                ypr.pitch = Math.max(
+                    Math.min(ypr.pitch, MathUtils.degToRad(this.mapControls.maxPitchAngle)),
+                    0
+                );
+                // Finally apply rotation from transformation gizmo.
+                this.mapControls.setRotation(
+                    MathUtils.radToDeg(ypr.yaw),
+                    MathUtils.radToDeg(ypr.pitch)
+                );
+                // Reset RTE camera orientation according to constraints applied.
+                cameraRelativeToEye.copy(this.mapView.camera);
+                // Reset RTE camera position to origin.
+                cameraRelativeToEye.position.setScalar(0);
+                transformControls.update();
+            };
+            applyTransformControls();
+
+            const applyMapControls = () => {
+                cameraRelativeToEye.copy(this.mapView.camera, true);
+                cameraRelativeToEye.position.setScalar(0);
+                transformControls.update();
+            };
+
             transformControls.addEventListener("mouseDown", () => {
                 trackball.enabled = false;
             });
@@ -147,12 +187,13 @@ export namespace FreeCameraAppDebuggingToolExample {
                 trackball.enabled = true;
             });
             transformControls.addEventListener("objectChange", () => {
+                applyTransformControls();
                 this.mapView.update();
             });
 
             this.mapView.scene.add(transformControls);
 
-            const cameraHelper = new THREE.CameraHelper(this.mapView.camera);
+            const cameraHelper = new THREE.CameraHelper(cameraRelativeToEye);
 
             // Set the renderOrder to an arbitrary large number, just to be sure that the camera
             // helpers are rendered on top of the map objects.
@@ -186,6 +227,7 @@ export namespace FreeCameraAppDebuggingToolExample {
                 this.helpers.forEach(helper => helper.update());
             });
 
+            window.focus();
             window.addEventListener("resize", () => {
                 const { width, height } = this.mapView.canvas;
                 pointOfView.aspect = width / height;
@@ -193,23 +235,37 @@ export namespace FreeCameraAppDebuggingToolExample {
                 this.mapView.update();
             });
 
-            window.top.addEventListener("keydown", event => {
+            window.addEventListener("keydown", event => {
                 switch (event.code) {
                     case "KeyT":
                         transformControls.setMode("translate");
+                        // Allow translations at any axis.
+                        transformControls.showX = true;
+                        transformControls.showY = true;
+                        transformControls.showZ = true;
                         this.mapView.update();
                         break;
                     case "KeyR":
                         transformControls.setMode("rotate");
+                        // Only pitch and yaw may be adjusted.
+                        transformControls.showX = true;
+                        transformControls.showY = false;
+                        transformControls.showZ = true;
                         this.mapView.update();
                         break;
                     case "KeyV":
                         if (this.mapView.pointOfView !== undefined) {
                             this.mapView.pointOfView = undefined;
                             this.mapControls.enabled = true;
+                            transformControls.enabled = false;
+                            trackball.enabled = false;
+                            applyTransformControls();
                         } else {
                             this.mapView.pointOfView = pointOfView;
                             this.mapControls.enabled = false;
+                            transformControls.enabled = true;
+                            trackball.enabled = true;
+                            applyMapControls();
                         }
                         this.mapView.update();
                         break;
