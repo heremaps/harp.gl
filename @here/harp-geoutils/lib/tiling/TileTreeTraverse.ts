@@ -5,7 +5,6 @@
  */
 
 import { SubdivisionScheme } from "./SubdivisionScheme";
-import { SubTiles } from "./SubTiles";
 import { TileKey } from "./TileKey";
 
 export class TileTreeTraverse {
@@ -16,18 +15,22 @@ export class TileTreeTraverse {
     }
 
     subTiles(tileKey: TileKey): TileKey[] {
-        const subTileCount =
-            this.m_subdivisionScheme.getSubdivisionX(tileKey.level) *
-            this.m_subdivisionScheme.getSubdivisionY(tileKey.level);
+        const level = tileKey.level;
+        const divX = this.m_subdivisionScheme.getSubdivisionX(level);
+        const divY = this.m_subdivisionScheme.getSubdivisionY(level);
 
-        // tslint:disable-next-line:no-bitwise
-        const subTileMask = ~(~0 << subTileCount);
-
-        const subTiles = new SubTiles(tileKey, 1, subTileMask);
         const result = new Array<TileKey>();
 
-        for (const subTile of subTiles) {
-            result.push(subTile);
+        for (let y = 0; y < divY; y++) {
+            for (let x = 0; x < divX; x++) {
+                result.push(
+                    TileKey.fromRowColumnLevel(
+                        tileKey.row * divY + y,
+                        tileKey.column * divX + x,
+                        level + 1
+                    )
+                );
+            }
         }
 
         return result;
