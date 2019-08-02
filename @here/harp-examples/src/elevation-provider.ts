@@ -84,7 +84,7 @@ class SceneElevationProvider implements ElevationProvider {
     }
 
     getDisplacementMap(tileKey: TileKey): DisplacementMap | undefined {
-        throw new Error("Not yet implemented");
+        return undefined;
     }
 
     getTilingScheme(): TilingScheme | undefined {

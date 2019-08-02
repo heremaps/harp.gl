@@ -163,6 +163,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
         private readonly m_styleSetEvaluator: StyleSetEvaluator,
         private readonly m_gatherFeatureIds: boolean,
         private readonly m_skipShortLabels: boolean,
+        private readonly m_enableElevationOverlay: boolean,
         private readonly m_languages?: string[]
     ) {}
 
@@ -569,7 +570,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
 
             const isExtruded = isExtrudedPolygonTechnique(technique);
             const isFilled = isFillTechnique(technique);
-            const texCoordType = textureCoordinateType(technique);
+            const texCoordType = this.getTextureCoordinateType(technique);
 
             const isLine =
                 isSolidLineTechnique(technique) ||
@@ -719,6 +720,16 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
         return decodedTile;
     }
 
+    private getTextureCoordinateType(technique: Technique): TextureCoordinateType | undefined {
+        // Set TileSpace coordinate type to generate texture coordinates for the displacement map
+        // used in area overlay.
+        if (isFillTechnique(technique) && this.m_enableElevationOverlay) {
+            return TextureCoordinateType.TileSpace;
+        }
+
+        return textureCoordinateType(technique);
+    }
+
     private applyLineTechnique(
         linesGeometry: LinesGeometry[],
         technique: Technique,
@@ -793,7 +804,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
         const extrudedPolygonTechnique = technique as ExtrudedPolygonTechnique;
 
         const isFilled = isFillTechnique(technique);
-        const texCoordType = textureCoordinateType(technique);
+        const texCoordType = this.getTextureCoordinateType(technique);
 
         // Get the height values for the footprint and extrusion.
         const currentHeight = env.lookup("height") as number;

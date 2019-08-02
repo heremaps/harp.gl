@@ -65,11 +65,17 @@ describe("OmvDecodedTileEmitter", function() {
 
         const styleSetEvaluator = new StyleSetEvaluator(styleSet);
 
-        const tileEmmiter = new OmvDecodedTileEmitter(decodeInfo, styleSetEvaluator, false, false);
+        const tileEmitter = new OmvDecodedTileEmitter(
+            decodeInfo,
+            styleSetEvaluator,
+            false,
+            false,
+            false
+        );
 
         const mockEnv = new MapEnv({ layer: "mock-layer" });
         const matchedTechniques = styleSetEvaluator.getMatchingTechniques(mockEnv);
-        tileEmmiter.processPolygonFeature(
+        tileEmitter.processPolygonFeature(
             "mock-layer",
             polygons,
             mockEnv,
@@ -77,7 +83,7 @@ describe("OmvDecodedTileEmitter", function() {
             undefined
         );
 
-        const decodedTile = tileEmmiter.getDecodedTile();
+        const decodedTile = tileEmitter.getDecodedTile();
 
         const { techniques, geometries } = decodedTile;
 

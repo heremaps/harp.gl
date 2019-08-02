@@ -305,6 +305,16 @@ export abstract class DataSource extends THREE.EventDispatcher {
     }
 
     /**
+     * Enables or disables overlay of geometry on elevation. It must be overloaded by data sources
+     * supporting this feature.
+     *
+     * @param value True to enable, false to disable.
+     */
+    setEnableElevationOverlay(enable: boolean) {
+        // to be overloaded by subclasses
+    }
+
+    /**
      * Computes the zoom level to use for display.
      *
      * @param zoomLevel The zoom level of the [[MapView]].

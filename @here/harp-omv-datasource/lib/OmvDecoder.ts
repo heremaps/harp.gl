@@ -196,6 +196,7 @@ export class OmvDecoder implements IGeometryProcessor {
         private readonly m_gatherRoadSegments = false,
         private readonly m_skipShortLabels = true,
         private readonly m_storageLevelOffset = 0,
+        private readonly m_enableElevationOverlay = false,
         private readonly m_languages?: string[]
     ) {
         // Register the default adapters.
@@ -220,6 +221,7 @@ export class OmvDecoder implements IGeometryProcessor {
             this.m_styleSetEvaluator,
             this.m_gatherFeatureIds,
             this.m_skipShortLabels,
+            this.m_enableElevationOverlay,
             this.m_languages
         );
 
@@ -549,6 +551,7 @@ export class OmvTileDecoder extends ThemedTileDecoder {
     private m_createTileInfo: boolean = false;
     private m_gatherRoadSegments: boolean = false;
     private m_skipShortLabels: boolean = true;
+    private m_enableElevationOverlay: boolean = false;
 
     connect(): Promise<void> {
         return Promise.resolve();
@@ -573,6 +576,7 @@ export class OmvTileDecoder extends ThemedTileDecoder {
             this.m_gatherRoadSegments,
             this.m_skipShortLabels,
             this.m_storageLevelOffset,
+            this.m_enableElevationOverlay,
             this.languages
         );
 
@@ -606,6 +610,7 @@ export class OmvTileDecoder extends ThemedTileDecoder {
             this.m_gatherRoadSegments,
             this.m_skipShortLabels,
             this.m_storageLevelOffset,
+            this.m_enableElevationOverlay,
             this.languages
         );
 
@@ -654,6 +659,9 @@ export class OmvTileDecoder extends ThemedTileDecoder {
             }
             if (omvOptions.skipShortLabels !== undefined) {
                 this.m_skipShortLabels = omvOptions.skipShortLabels;
+            }
+            if (omvOptions.enableElevationOverlay !== undefined) {
+                this.m_enableElevationOverlay = omvOptions.enableElevationOverlay;
             }
         }
         if (languages !== undefined) {

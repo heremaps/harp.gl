@@ -34,6 +34,7 @@ import {
     SolidLineTechnique,
     StandardExtrudedLineTechnique,
     Technique,
+    TerrainTechnique,
     TextPathGeometry,
     TextTechnique
 } from "@here/harp-datasource-protocol";
@@ -664,42 +665,8 @@ export class TileGeometryCreator {
                 }
 
                 // Modify the standard textured shader to support height-based coloring.
-                if (
-                    isTerrainTechnique(technique) &&
-                    technique.heightBasedColors !== undefined &&
-                    technique.displacementMap !== undefined
-                ) {
-                    (material as any).onBeforeCompile = (shader: THREE.Shader) => {
-                        shader.fragmentShader = shader.fragmentShader.replace(
-                            "#include <map_pars_fragment>",
-                            `#include <map_pars_fragment>
-    uniform sampler2D displacementMap;
-    uniform float displacementScale;
-    uniform float displacementBias;`
-                        );
-
-                        shader.fragmentShader = shader.fragmentShader.replace(
-                            "#include <map_fragment>",
-                            `#ifdef USE_MAP
-    float minElevation = ${EarthConstants.MIN_ELEVATION.toFixed(1)};
-    float maxElevation = ${EarthConstants.MAX_ELEVATION.toFixed(1)};
-    float elevationRange = maxElevation - minElevation;
-
-    float disp = texture2D( displacementMap, vUv ).x * displacementScale + displacementBias;
-    vec4 texelColor = texture2D( map, vec2((disp - minElevation) / elevationRange, 0.0) );
-    texelColor = mapTexelToLinear( texelColor );
-    diffuseColor *= texelColor;
-#endif`
-                        );
-
-                        // We remove the displacement map from manipulating the vertices, it is
-                        // however still required for the pixel shader, so it can't be directly
-                        // removed.
-                        shader.vertexShader = shader.vertexShader.replace(
-                            "#include <displacementmap_vertex>",
-                            ""
-                        );
-                    };
+                if (isTerrainTechnique(technique)) {
+                    this.setupTerrainMaterial(technique, material, tile.mapView.clearColor);
                 }
 
                 const bufferGeometry = new THREE.BufferGeometry();
@@ -1476,6 +1443,51 @@ export class TileGeometryCreator {
             this.registerTileObject(tile, groundPlane, GeometryKind.Background);
             tile.objects.push(groundPlane);
         }
+    }
+
+    private setupTerrainMaterial(
+        technique: TerrainTechnique,
+        material: THREE.Material,
+        terrainColor: number
+    ) {
+        if (technique.displacementMap === undefined) {
+            // Render terrain using the given color.
+            const stdMaterial = material as MapMeshStandardMaterial;
+            stdMaterial.color.set(terrainColor);
+            return;
+        }
+
+        // Render terrain using height-based colors.
+        (material as any).onBeforeCompile = (shader: THREE.Shader) => {
+            shader.fragmentShader = shader.fragmentShader.replace(
+                "#include <map_pars_fragment>",
+                `#include <map_pars_fragment>
+    uniform sampler2D displacementMap;
+    uniform float displacementScale;
+    uniform float displacementBias;`
+            );
+            shader.fragmentShader = shader.fragmentShader.replace(
+                "#include <map_fragment>",
+                `#ifdef USE_MAP
+    float minElevation = ${EarthConstants.MIN_ELEVATION.toFixed(1)};
+    float maxElevation = ${EarthConstants.MAX_ELEVATION.toFixed(1)};
+    float elevationRange = maxElevation - minElevation;
+
+    float disp = texture2D( displacementMap, vUv ).x * displacementScale + displacementBias;
+    vec4 texelColor = texture2D( map, vec2((disp - minElevation) / elevationRange, 0.0) );
+    texelColor = mapTexelToLinear( texelColor );
+    diffuseColor *= texelColor;
+#endif`
+            );
+            // We remove the displacement map from manipulating the vertices, it is
+            // however still required for the pixel shader, so it can't be directly
+            // removed.
+            shader.vertexShader = shader.vertexShader.replace(
+                "#include <displacementmap_vertex>",
+                ""
+            );
+        };
+        (material as MapMeshStandardMaterial).displacementMap!.needsUpdate = true;
     }
 
     /**
