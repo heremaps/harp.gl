@@ -9,13 +9,10 @@
 
 import { assert } from "chai";
 import { Expr, MapEnv, ValueMap } from "../lib/Expr";
-import { ExprEvaluator } from "../lib/ExprEvaluator";
 
 const EPSILON = 1e-8;
 
 describe("ExprEvaluator", function() {
-    const evaluator = new ExprEvaluator();
-
     const defaultEnv = {
         on: true,
         off: false,
@@ -23,8 +20,9 @@ describe("ExprEvaluator", function() {
         emptyText: ""
     };
 
-    function evaluate(expr: unknown, env: ValueMap = defaultEnv) {
-        return evaluator.evaluate(Expr.fromJSON(expr), new MapEnv(env));
+    function evaluate(expr: unknown, values: ValueMap = defaultEnv) {
+        const env = new MapEnv(values);
+        return Expr.fromJSON(expr).evaluate(env);
     }
 
     describe("Operator 'all'", function() {

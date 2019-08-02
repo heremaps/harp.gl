@@ -4,9 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { ExprEvaluator } from "./ExprEvaluator";
+import { ExprEvaluator, OperatorDescriptor } from "./ExprEvaluator";
 import { ExprParser } from "./ExprParser";
 import { ExprPool } from "./ExprPool";
+
+const exprEvaluator = new ExprEvaluator();
 
 export interface ExprVisitor<Result, Context> {
     visitBooleanLiteralExpr(expr: BooleanLiteralExpr, context: Context): Result;
@@ -89,10 +91,12 @@ export abstract class Expr {
 
     /**
      * Evaluate an expression returning a [[Value]] object.
+     *
+     * @param env The [[Env]] used to lookup symbols.
+     * @param cache A cache of previously computed results.
      */
-    evaluate(env: Env): Value | never {
-        const e = new ExprEvaluator();
-        return e.evaluate(this, env);
+    evaluate(env: Env, cache?: Map<Expr, Value>): Value | never {
+        return this.accept(exprEvaluator, { env, cache });
     }
 
     /**
@@ -206,6 +210,7 @@ export class MapEnv extends Env {
 
 /**
  * Var expression.
+ * @hidden
  */
 export class VarExpr extends Expr {
     constructor(readonly name: string) {
@@ -219,6 +224,7 @@ export class VarExpr extends Expr {
 
 /**
  * Boolean literal expression.
+ * @hidden
  */
 export class BooleanLiteralExpr extends Expr {
     constructor(readonly value: boolean) {
@@ -232,6 +238,7 @@ export class BooleanLiteralExpr extends Expr {
 
 /**
  * Number literal expression.
+ * @hidden
  */
 export class NumberLiteralExpr extends Expr {
     constructor(readonly value: number) {
@@ -245,6 +252,7 @@ export class NumberLiteralExpr extends Expr {
 
 /**
  * String literal expression.
+ * @hidden
  */
 export class StringLiteralExpr extends Expr {
     constructor(readonly value: string) {
@@ -258,6 +266,7 @@ export class StringLiteralExpr extends Expr {
 
 /**
  * A has expression with an attribute, for example `has(ref)`.
+ * @hidden
  */
 export class HasAttributeExpr extends Expr {
     constructor(readonly name: string) {
@@ -271,6 +280,7 @@ export class HasAttributeExpr extends Expr {
 
 /**
  * A contains expression.
+ * @hidden
  */
 export class ContainsExpr extends Expr {
     constructor(readonly value: Expr, readonly elements: Value[]) {
@@ -282,7 +292,12 @@ export class ContainsExpr extends Expr {
     }
 }
 
+/**
+ * @hidden
+ */
 export class CallExpr extends Expr {
+    descriptor?: OperatorDescriptor;
+
     constructor(readonly op: string, readonly children: Expr[]) {
         super();
     }
@@ -292,6 +307,9 @@ export class CallExpr extends Expr {
     }
 }
 
+/**
+ * @hidden
+ */
 class ExprSerializer implements ExprVisitor<unknown, void> {
     serialize(expr: Expr): unknown {
         return expr.accept(this, undefined);
