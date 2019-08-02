@@ -139,6 +139,11 @@ const FRAME_RATE_RING_SIZE = 12;
 const FALLBACK_FRAME_RATE = 30;
 
 /**
+ * Zoom level to request terrain tiles for getting the height of the camera above terrain.
+ */
+const TERRAIN_ZOOM_LEVEL = 4;
+
+/**
  * The type of `RenderEvent`.
  */
 export interface RenderEvent extends THREE.Event {
@@ -1989,6 +1994,10 @@ export class MapView extends THREE.EventDispatcher {
         } else {
             this.m_tileDataSources.forEach(dataSource => dataSource.clearCache());
         }
+
+        if (this.m_elevationProvider !== undefined) {
+            this.m_elevationProvider.clearCache();
+        }
     }
 
     /**
@@ -2171,12 +2180,33 @@ export class MapView extends THREE.EventDispatcher {
             this.m_camera.quaternion,
             this.projection.type
         ).pitch;
-        const cameraPosZ = Math.abs(this.projection.groundDistance(this.m_camera.position));
+        const cameraPosZ = this.getCameraHeightAboveTerrain(TERRAIN_ZOOM_LEVEL);
 
         this.m_lookAtDistance = cameraPosZ / Math.cos(cameraPitch);
         const zoomLevelDistance = cameraPosZ / Math.cos(Math.min(cameraPitch, Math.PI / 3));
 
         this.m_zoomLevel = MapViewUtils.calculateZoomLevelFromDistance(zoomLevelDistance, this);
+    }
+
+    /**
+     * Returns the height of the camera above the earths surface.
+     *
+     * If there is an ElevationProvider, this is used. Otherwise the projection is used to determine
+     * how high the camera is above the surface.
+     *
+     * @param level Which level to request the surface height from.
+     * @return Height in world units.
+     */
+    private getCameraHeightAboveTerrain(level?: number): number {
+        if (this.elevationProvider !== undefined) {
+            const heightAboveTerrain = this.elevationProvider.getHeight(this.geoCenter, level);
+            if (heightAboveTerrain !== undefined) {
+                const height =
+                    this.projection.unprojectAltitude(this.m_camera.position) - heightAboveTerrain;
+                return Math.max(height, 1);
+            }
+        }
+        return Math.abs(this.projection.groundDistance(this.m_camera.position));
     }
 
     private detectCurrentFps(now: number) {

@@ -43,4 +43,9 @@ export interface ElevationProvider {
      * undefined if there is no elevation [[DataSource]] attached to the [[MapView]].
      */
     getTilingScheme(): TilingScheme | undefined;
+
+    /**
+     * Clears the internal cache.
+     */
+    clearCache(): void;
 }
