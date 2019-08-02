@@ -84,13 +84,7 @@ export class ExprEvaluator implements ExprVisitor<Value, Env> {
 
     visitContainsExpr(expr: ContainsExpr, env: Env): Value {
         const value = this.evaluate(expr.value, env);
-        for (const e of expr.elements) {
-            const element = this.evaluate(e, env);
-            if (value === element) {
-                return true;
-            }
-        }
-        return false;
+        return expr.elements.has(value);
     }
 
     visitCallExpr(expr: CallExpr, env: Env): Value {

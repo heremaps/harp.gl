@@ -67,16 +67,19 @@ export abstract class Expr {
                 return new HasAttributeExpr(node[1]);
 
             case "in":
-                if (!Array.isArray(node[2])) {
+                const elements = node[2];
+                if (!Array.isArray(elements)) {
                     // tslint:disable-next-line: max-line-length
                     throw new Error(
                         `'${op}' expects an expression followed by an array of literals`
                     );
                 }
-                return new ContainsExpr(
-                    this.fromJSON(node[1]),
-                    node[2].map((n: unknown) => this.fromJSON(n))
-                );
+                elements.forEach(element => {
+                    if (typeof element === "object" || typeof element === "function") {
+                        throw new Error("expected an array of constant values");
+                    }
+                });
+                return new ContainsExpr(this.fromJSON(node[1]), elements);
 
             default:
                 return new CallExpr(op, node.slice(1).map(childExpr => this.fromJSON(childExpr)));
@@ -259,8 +262,11 @@ export class HasAttributeExpr extends Expr {
  * A contains expression.
  */
 export class ContainsExpr extends Expr {
-    constructor(readonly value: Expr, readonly elements: Expr[]) {
+    readonly elements: Set<Value>;
+
+    constructor(readonly value: Expr, elements: Value[]) {
         super();
+        this.elements = new Set(elements);
     }
 
     accept<Result, Context>(visitor: ExprVisitor<Result, Context>, context: Context): Result {
@@ -304,7 +310,7 @@ class ExprSerializer implements ExprVisitor<unknown, void> {
     }
 
     visitContainsExpr(expr: ContainsExpr, context: void): unknown {
-        return ["in", this.serialize(expr.value), expr.elements.map(e => this.serialize(e))];
+        return ["in", this.serialize(expr.value), expr.elements];
     }
 
     visitCallExpr(expr: CallExpr, context: void): unknown {

@@ -38,6 +38,13 @@ describe("Expr", function() {
             assert.equal(evaluate("has(n)", env), true);
             assert.equal(evaluate("has(foo)", env), false);
         });
+
+        it("supports of literals in the 'in' operator", function() {
+            assert.equal(evaluate("2 in [1,2,3]"), true);
+            assert.equal(evaluate("'x' in ['y','x','z']"), true);
+            assert.throw(() => evaluate("1 in [1,2,(3)]"));
+            assert.throw(() => evaluate("1 in [1,'x',(3)]"));
+        });
     });
 });
 
