@@ -6,7 +6,8 @@
 
 import { LoggerManager } from "@here/harp-utils";
 
-import { Expr, MapEnv } from "./Expr";
+import { Expr, MapEnv, Value } from "./Expr";
+import { ExprPool } from "./ExprPool";
 import { isInterpolatedPropertyDefinition } from "./InterpolatedProperty";
 import { InterpolatedPropertyDefinition, InterpolationMode } from "./InterpolatedPropertyDefs";
 import {
@@ -53,6 +54,8 @@ export class StyleSetEvaluator {
 
     private readonly m_renderOrderBiasGroups: Map<string, number> = new Map();
     private readonly m_techniques: IndexedTechnique[] = [];
+    private readonly m_exprPool = new ExprPool();
+    private readonly m_cachedResults = new Map<Expr, Value>();
 
     constructor(styleSet: StyleSet) {
         let techniqueRenderOrder = 0;
@@ -144,6 +147,7 @@ export class StyleSetEvaluator {
     getMatchingTechniques(env: MapEnv): IndexedTechnique[] {
         const result: IndexedTechnique[] = [];
         const styleStack = new Array<InternalStyle>();
+        this.m_cachedResults.clear();
         for (const currStyle of this.styleSet) {
             if (styleStack.length !== 0) {
                 throw new Error("Internal error: style stack cleanup failed");
@@ -203,12 +207,12 @@ export class StyleSetEvaluator {
                 if (style._whenExpr === undefined) {
                     // tslint:disable-next-line: prefer-conditional-expression
                     if (Array.isArray(style.when)) {
-                        style._whenExpr = Expr.fromJSON(style.when);
+                        style._whenExpr = Expr.fromJSON(style.when).intern(this.m_exprPool);
                     } else {
-                        style._whenExpr = Expr.parse(style.when as string);
+                        style._whenExpr = Expr.parse(style.when).intern(this.m_exprPool);
                     }
                 }
-                if (!style._whenExpr!.evaluate(env)) {
+                if (!style._whenExpr!.evaluate(env, this.m_cachedResults)) {
                     return false;
                 }
             } catch (err) {
