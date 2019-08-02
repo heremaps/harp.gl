@@ -115,6 +115,8 @@ describe("ExprEvaluator", function() {
 
             assert.isTrue(evaluate(["in", ["get", "someText"], [defaultEnv.someText]]));
             assert.isTrue(evaluate(["in", ["get", "emptyText"], [defaultEnv.emptyText]]));
+
+            assert.throw(() => evaluate(["in", ["get", "someText"]]));
         });
     });
 

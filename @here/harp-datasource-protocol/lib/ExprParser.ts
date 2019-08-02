@@ -425,6 +425,20 @@ export class ExprParser {
                 }
             }
 
+            case Token.LParen: {
+                this.lex.next();
+                const expr = this.parseLogicalOr();
+                this.yyexpect(Token.RParen);
+                return expr;
+            }
+
+            default:
+                return this.parseLiteral();
+        } // switch
+    }
+
+    private parseLiteral(): NumberLiteralExpr | StringLiteralExpr | never {
+        switch (this.lex.token()) {
             case Token.Number: {
                 const expr = new NumberLiteralExpr(parseFloat(this.lex.text()));
                 this.lex.next();
@@ -435,14 +449,9 @@ export class ExprParser {
                 this.lex.next();
                 return expr;
             }
-            case Token.LParen: {
-                this.lex.next();
-                const expr = this.parseLogicalOr();
-                this.yyexpect(Token.RParen);
-                return expr;
-            }
-        }
-        throw new Error("Syntax error");
+            default:
+                throw new Error("Syntax error");
+        } // switch
     }
 
     private parseUnary(): Expr | never {
@@ -459,13 +468,13 @@ export class ExprParser {
             if (this.lex.token() === Token.Identifier && this.lex.text() === "in") {
                 this.lex.next();
                 this.yyexpect(Token.LBracket);
-                const elements = [this.parsePrimary()];
+                const elements = [this.parseLiteral()];
                 while (this.lex.token() === Token.Comma) {
                     this.lex.next();
-                    elements.push(this.parsePrimary());
+                    elements.push(this.parseLiteral());
                 }
                 this.yyexpect(Token.RBracket);
-                expr = new ContainsExpr(expr, elements);
+                expr = new ContainsExpr(expr, elements.map(literal => literal.value));
             } else {
                 const op = getRelationalOp(this.lex.token());
                 if (op === undefined) {
