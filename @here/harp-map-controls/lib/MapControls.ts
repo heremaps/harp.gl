@@ -1316,14 +1316,17 @@ export class MapControls extends THREE.EventDispatcher {
 
         let toWorld: THREE.Vector3 | null;
         let fromWorld: THREE.Vector3 | null;
-        if (this.mapView.elevationProvider === undefined) {
+
+        let elevationProviderResult: THREE.Vector3 | undefined;
+
+        if (this.mapView.elevationProvider !== undefined) {
+            elevationProviderResult = this.mapView.elevationProvider.rayCast(fromX, fromY);
+        }
+
+        if (elevationProviderResult === undefined) {
             fromWorld = MapViewUtils.rayCastWorldCoordinates(this.mapView, from.x, from.y);
             toWorld = MapViewUtils.rayCastWorldCoordinates(this.mapView, to.x, to.y);
         } else {
-            const elevationProviderResult = this.mapView.elevationProvider.rayCast(fromX, fromY);
-            if (elevationProviderResult === undefined) {
-                return;
-            }
             fromWorld = elevationProviderResult;
             const fromGeoAltitude = this.mapView.projection.unprojectAltitude(fromWorld);
 
