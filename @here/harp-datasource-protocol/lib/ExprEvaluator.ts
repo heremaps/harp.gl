@@ -35,12 +35,27 @@ export interface OperatorDescriptorMap {
 
 const operatorDescriptors = new Map<string, OperatorDescriptor>();
 
+/*
+ * @hidden
+ */
+export interface ExprEvaluatorContext {
+    /**
+     * The [[Env]] used to lookup symbols.
+     */
+    env: Env;
+
+    /**
+     * Cached results.
+     */
+    cache?: Map<Expr, Value>;
+}
+
 /**
  * [[ExprEvaluator]] is used to evaluate [[Expr]] in a given environment.
  *
  * @hidden
  */
-export class ExprEvaluator implements ExprVisitor<Value, Env> {
+export class ExprEvaluator implements ExprVisitor<Value, ExprEvaluatorContext> {
     static defineOperator(op: string, builtin: OperatorDescriptor) {
         operatorDescriptors.set(op, builtin);
     }
@@ -51,47 +66,44 @@ export class ExprEvaluator implements ExprVisitor<Value, Env> {
         });
     }
 
-    /**
-     * Evaluate `expr` in the given environment,
-     *
-     * @param expr The [[Expr]] to evaluate.
-     * @param env The [[Env]] used to evaluate the expression.
-     */
-    evaluate(expr: Expr, env: Env): Value {
-        return expr.accept(this, env);
-    }
-
-    visitVarExpr(expr: VarExpr, env: Env): Value {
-        const value = env.lookup(expr.name);
+    visitVarExpr(expr: VarExpr, context: ExprEvaluatorContext): Value {
+        const value = context.env.lookup(expr.name);
         return value;
     }
 
-    visitBooleanLiteralExpr(expr: BooleanLiteralExpr, env: Env): Value {
+    visitBooleanLiteralExpr(expr: BooleanLiteralExpr, context: ExprEvaluatorContext): Value {
         return expr.value;
     }
 
-    visitNumberLiteralExpr(expr: NumberLiteralExpr, env: Env): Value {
+    visitNumberLiteralExpr(expr: NumberLiteralExpr, context: ExprEvaluatorContext): Value {
         return expr.value;
     }
 
-    visitStringLiteralExpr(expr: StringLiteralExpr, env: Env): Value {
+    visitStringLiteralExpr(expr: StringLiteralExpr, context: ExprEvaluatorContext): Value {
         return expr.value;
     }
 
-    visitHasAttributeExpr(expr: HasAttributeExpr, env: Env): Value {
-        return env.lookup(expr.name) !== undefined;
+    visitHasAttributeExpr(expr: HasAttributeExpr, context: ExprEvaluatorContext): Value {
+        return context.env.lookup(expr.name) !== undefined;
     }
 
-    visitContainsExpr(expr: ContainsExpr, env: Env): Value {
-        const value = this.evaluate(expr.value, env);
-        return expr.elements.includes(value);
+    visitContainsExpr(expr: ContainsExpr, context: ExprEvaluatorContext): Value {
+        const value = expr.value.accept(this, context);
+
+        const result = expr.elements.includes(value);
+
+        if (context.cache !== undefined) {
+            context.cache.set(expr, result);
+        }
+
+        return result;
     }
 
-    visitCallExpr(expr: CallExpr, env: Env): Value {
+    visitCallExpr(expr: CallExpr, context: ExprEvaluatorContext): Value {
         switch (expr.op) {
             case "all":
                 for (const childExpr of expr.children) {
-                    if (!this.evaluate(childExpr, env)) {
+                    if (!childExpr.accept(this, context)) {
                         return false;
                     }
                 }
@@ -99,7 +111,7 @@ export class ExprEvaluator implements ExprVisitor<Value, Env> {
 
             case "any":
                 for (const childExpr of expr.children) {
-                    if (this.evaluate(childExpr, env)) {
+                    if (childExpr.accept(this, context)) {
                         return true;
                     }
                 }
@@ -107,7 +119,7 @@ export class ExprEvaluator implements ExprVisitor<Value, Env> {
 
             case "none":
                 for (const childExpr of expr.children) {
-                    if (this.evaluate(childExpr, env)) {
+                    if (childExpr.accept(this, context)) {
                         return false;
                     }
                 }
@@ -117,7 +129,7 @@ export class ExprEvaluator implements ExprVisitor<Value, Env> {
             case "number":
             case "string":
                 for (const childExpr of expr.children) {
-                    const value = this.evaluate(childExpr, env);
+                    const value = childExpr.accept(this, context);
                     if (typeof value === expr.op) {
                         return value;
                     }
@@ -125,11 +137,29 @@ export class ExprEvaluator implements ExprVisitor<Value, Env> {
                 throw new Error(`expected a '${expr.op}'`);
 
             default: {
-                const descriptor = operatorDescriptors.get(expr.op);
-                if (descriptor) {
-                    const actuals = expr.children.map(arg => this.evaluate(arg, env));
-                    return descriptor.call(actuals);
+                if (context.cache !== undefined) {
+                    const v = context.cache.get(expr);
+                    if (v !== undefined) {
+                        return v;
+                    }
                 }
+
+                const descriptor = expr.descriptor || operatorDescriptors.get(expr.op);
+
+                if (descriptor) {
+                    expr.descriptor = descriptor;
+
+                    const actuals = expr.children.map(arg => arg.accept(this, context));
+
+                    const result = descriptor.call(actuals);
+
+                    if (context.cache) {
+                        context.cache.set(expr, result);
+                    }
+
+                    return result;
+                }
+
                 throw new Error(`undefined operator '${expr.op}`);
             }
         } // switch
