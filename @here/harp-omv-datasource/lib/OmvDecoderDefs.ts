@@ -164,6 +164,8 @@ export interface OmvDecoderOptions {
      * used.
      */
     featureModifierId?: FeatureModifierId;
+
+    enableElevationOverlay?: boolean;
 }
 
 /**

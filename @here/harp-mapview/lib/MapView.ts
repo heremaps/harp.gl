@@ -34,6 +34,7 @@ import { DataSource } from "./DataSource";
 import { ElevationProvider } from "./ElevationProvider";
 import { ElevationRangeSource } from "./ElevationRangeSource";
 import { FrustumIntersection } from "./FrustumIntersection";
+import { overlayOnElevation } from "./geometry/overlayOnElevation";
 import { PhasedTileGeometryManager } from "./geometry/PhasedTileGeometryManager";
 import { SimpleTileGeometryManager, TileGeometryManager } from "./geometry/TileGeometryManager";
 import { MapViewImageCache } from "./image/MapViewImageCache";
@@ -2114,6 +2115,28 @@ export class MapView extends THREE.EventDispatcher {
         this.m_elevationRangeSource = elevationRangeSource;
         this.m_elevationRangeSource.connect();
         this.m_elevationProvider = elevationProvider;
+        this.dataSources.forEach(dataSource => {
+            dataSource.setEnableElevationOverlay(true);
+        });
+        this.m_tileGeometryManager.setTileUpdateCallback((tile: Tile) => {
+            overlayOnElevation(tile);
+        });
+        this.clearTileCache();
+    }
+
+    /**
+     * Clears any elevation sources and provider previously set.
+     * @param elevationSource The datasource to be cleared.
+     */
+    clearElevationSource(elevationSource: DataSource) {
+        this.removeDataSource(elevationSource);
+        this.m_elevationRangeSource = undefined;
+        this.m_elevationProvider = undefined;
+        this.dataSources.forEach(dataSource => {
+            dataSource.setEnableElevationOverlay(false);
+        });
+        this.m_tileGeometryManager.setTileUpdateCallback(undefined);
+        this.clearTileCache();
     }
 
     /**

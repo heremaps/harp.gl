@@ -9,6 +9,8 @@ import { MapView } from "../MapView";
 import { Tile } from "../Tile";
 import { SimpleTileGeometryLoader, TileGeometryLoader } from "./TileGeometryLoader";
 
+type TileUpdateCallback = (tile: Tile) => void;
+
 /**
  * Manages the content (the geometries) of a tile. Derived classes allow different strategies that
  * control the sequence in which the geometries of the tile are being loaded.
@@ -98,6 +100,15 @@ export interface TileGeometryManager {
      * @returns {GeometryKindSet}
      */
     getAvailableKinds(tiles: Tile[]): GeometryKindSet;
+
+    /**
+     * Sets a callback that will be called for every updated tile on [[updateTiles]].
+     *
+     * @param {TileUpdateCallback} callback The callback that will be called after a tile has been
+     * updated, passing the updated tile as argument. If `undefined`, a previously set callback will
+     * be cleared.
+     */
+    setTileUpdateCallback(callback?: TileUpdateCallback): void;
 }
 
 /**
@@ -139,6 +150,8 @@ export abstract class TileGeometryManagerBase implements TileGeometryManager {
     protected enabledKinds: GeometryKindSet = new GeometryKindSet();
     protected disabledKinds: GeometryKindSet = new GeometryKindSet();
     protected hiddenKinds: GeometryKindSet = new GeometryKindSet();
+
+    protected m_tileUpdateCallback: TileUpdateCallback | undefined;
 
     /**
      * Optimization for evaluation in `update()` method. Only if a kind is hidden/unhidden, the
@@ -244,6 +257,10 @@ export abstract class TileGeometryManagerBase implements TileGeometryManager {
         }
     }
 
+    setTileUpdateCallback(callback?: TileUpdateCallback): void {
+        this.m_tileUpdateCallback = callback;
+    }
+
     protected incrementVisibilityCounter(): number {
         return ++this.m_visibilityCounter;
     }
@@ -324,6 +341,9 @@ export class SimpleTileGeometryManager extends TileGeometryManagerBase {
                     this.enableFilterByKind ? this.enabledGeometryKinds : undefined,
                     this.enableFilterByKind ? this.disabledGeometryKinds : undefined
                 );
+                if (this.m_tileUpdateCallback) {
+                    this.m_tileUpdateCallback(tile);
+                }
             }
         }
 

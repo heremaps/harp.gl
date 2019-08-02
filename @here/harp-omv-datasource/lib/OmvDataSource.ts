@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GeometryType, ITileDecoder, StyleSet } from "@here/harp-datasource-protocol";
+import { GeometryType, ITileDecoder, OptionsMap, StyleSet } from "@here/harp-datasource-protocol";
 import { TileKey, webMercatorTilingScheme } from "@here/harp-geoutils";
 import { LineGroup } from "@here/harp-lines";
 import { CopyrightInfo } from "@here/harp-mapview";
@@ -157,6 +157,11 @@ export interface OmvDataSourceParameters {
      * Optional storage level offset for [[Tile]]s. Default is -1.
      */
     storageLevelOffset?: number;
+
+    /**
+     * Indicates whether overlay on elevation is enabled. Defaults to `false`.
+     */
+    enableElevationOverlay?: boolean;
 }
 
 /**
@@ -205,7 +210,8 @@ export class OmvDataSource extends TileDataSource<OmvTile> {
             gatherRoadSegments: this.m_params.gatherRoadSegments === true,
             featureModifierId: this.m_params.featureModifierId,
             skipShortLabels: this.m_params.skipShortLabels,
-            storageLevelOffset: getOptionValue(m_params.storageLevelOffset, -1)
+            storageLevelOffset: getOptionValue(m_params.storageLevelOffset, -1),
+            enableElevationOverlay: this.m_params.enableElevationOverlay === true
         };
     }
 
@@ -217,9 +223,7 @@ export class OmvDataSource extends TileDataSource<OmvTile> {
         if (styleSet === undefined) {
             return;
         }
-        this.m_tileLoaderCache.clear();
-        this.decoder.configure(styleSet, languages, this.m_decoderOptions);
-        this.mapView.markTilesDirty(this);
+        this.configureDecoder(styleSet, languages, this.m_decoderOptions);
     }
 
     /**
@@ -227,10 +231,9 @@ export class OmvDataSource extends TileDataSource<OmvTile> {
      * Will be applied to the decoder, which might be shared with other omv datasources.
      */
     removeDataFilter(): void {
-        this.decoder.configure(undefined, undefined, {
+        this.configureDecoder(undefined, undefined, {
             filterDescription: null
         });
-        this.mapView.markTilesDirty(this);
     }
 
     /**
@@ -244,10 +247,9 @@ export class OmvDataSource extends TileDataSource<OmvTile> {
         this.m_decoderOptions.filterDescription =
             filterDescription !== null ? filterDescription : undefined;
 
-        this.decoder.configure(undefined, undefined, {
+        this.configureDecoder(undefined, undefined, {
             filterDescription
         });
-        this.mapView.markTilesDirty(this);
     }
 
     shouldPreloadTiles(): boolean {
@@ -273,8 +275,7 @@ export class OmvDataSource extends TileDataSource<OmvTile> {
 
     setLanguages(languages?: string[]): void {
         if (languages !== undefined) {
-            this.m_decoder.configure(undefined, languages, undefined);
-            this.mapView.markTilesDirty(this);
+            this.configureDecoder(undefined, languages, undefined);
         }
     }
 
@@ -284,10 +285,24 @@ export class OmvDataSource extends TileDataSource<OmvTile> {
 
     set storageLevelOffset(levelOffset: number) {
         super.storageLevelOffset = levelOffset;
-
         this.m_decoderOptions.storageLevelOffset = this.storageLevelOffset;
-        this.m_decoder.configure(undefined, undefined, {
+        this.configureDecoder(undefined, undefined, {
             storageLevelOffset: this.storageLevelOffset
         });
+    }
+
+    setEnableElevationOverlay(enable: boolean) {
+        if (this.m_decoderOptions.enableElevationOverlay !== enable) {
+            this.m_decoderOptions.enableElevationOverlay = enable;
+            this.configureDecoder(undefined, undefined, {
+                enableElevationOverlay: enable
+            });
+        }
+    }
+
+    private configureDecoder(styleSet?: StyleSet, languages?: string[], options?: OptionsMap) {
+        this.m_tileLoaderCache.clear();
+        this.decoder.configure(styleSet, languages, options);
+        this.mapView.markTilesDirty(this);
     }
 }

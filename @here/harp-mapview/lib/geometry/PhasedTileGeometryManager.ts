@@ -86,18 +86,26 @@ export class PhasedTileGeometryManager extends TileGeometryManagerBase {
         for (const tile of tiles) {
             const phasedGeometryLoader = tile.tileGeometryLoader as PhasedTileGeometryLoader;
 
-            if (
-                phasedGeometryLoader !== undefined &&
-                phasedGeometryLoader.update(
-                    this.enableFilterByKind ? this.enabledGeometryKinds : undefined,
-                    this.enableFilterByKind ? this.disabledGeometryKinds : undefined
-                )
-            ) {
-                numTilesUpdated++;
+            let limitReached = false;
+            if (phasedGeometryLoader !== undefined) {
                 if (
-                    this.m_maxUpdatedTilePerFrame > 0 &&
-                    numTilesUpdated >= this.m_maxUpdatedTilePerFrame
+                    phasedGeometryLoader.update(
+                        this.enableFilterByKind ? this.enabledGeometryKinds : undefined,
+                        this.enableFilterByKind ? this.disabledGeometryKinds : undefined
+                    )
                 ) {
+                    numTilesUpdated++;
+                    if (
+                        this.m_maxUpdatedTilePerFrame > 0 &&
+                        numTilesUpdated >= this.m_maxUpdatedTilePerFrame
+                    ) {
+                        limitReached = true;
+                    }
+                }
+                if (this.m_tileUpdateCallback) {
+                    this.m_tileUpdateCallback(tile);
+                }
+                if (limitReached) {
                     break;
                 }
             }
@@ -145,6 +153,9 @@ export class PhasedTileGeometryManager extends TileGeometryManagerBase {
                     this.enableFilterByKind ? this.enabledGeometryKinds : undefined,
                     this.enableFilterByKind ? this.disabledGeometryKinds : undefined
                 );
+                if (this.m_tileUpdateCallback) {
+                    this.m_tileUpdateCallback(tile);
+                }
             }
         }
     }

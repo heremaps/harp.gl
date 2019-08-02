@@ -49,6 +49,16 @@ export interface ExtrusionFeatureParameters {
 }
 
 /**
+ * Parameters used when constructing a new implementor of [[DisplacementFeature]].
+ */
+export interface DisplacementFeatureParameters {
+    /**
+     * Texture used for vertex displacement along their normals.
+     */
+    displacementMap?: THREE.Texture;
+}
+
+/**
  * Used internally.
  *
  * @hidden
@@ -133,6 +143,167 @@ export interface ExtrusionFeature extends HiddenThreeJSMaterialProperties {
      * is `0.01`
      */
     extrusionRatio?: number;
+}
+
+export type DisplacementFeature = HiddenThreeJSMaterialProperties & DisplacementFeatureParameters;
+
+export namespace DisplacementFeature {
+    /**
+     * Update the internals of the `DisplacementFeature` depending on the value of
+     * [[displacementMap]].
+     *
+     * @param displacementMaterial DisplacementFeature
+     */
+    export function updateDisplacementFeature(displacementMaterial: DisplacementFeature): void {
+        displacementMaterial.needsUpdate = true;
+
+        if (displacementMaterial.defines === undefined) {
+            displacementMaterial.defines = {};
+        }
+
+        if (displacementMaterial.displacementMap !== undefined) {
+            displacementMaterial.displacementMap.needsUpdate = true;
+            // Add this define to differentiate it internally from other MeshBasicMaterial
+            displacementMaterial.defines.USE_DISPLACEMENTMAP = "";
+        }
+    }
+
+    /**
+     * This function should be called on implementors of DisplacementFeature in the
+     * `onBeforeCompile` callback of that material. It adds the required code to the shaders to
+     * apply displacement maps.
+     *
+     * @param displacementMaterial Material to add uniforms to.
+     * @param shader [[THREE.WebGLShader]] containing the vertex and fragment shaders to add the
+     *                  special includes to.
+     */
+    export function onBeforeCompile(displacementMaterial: DisplacementFeature, shader: any) {
+        if (displacementMaterial.displacementMap === undefined) {
+            return;
+        }
+        // The vertex and fragment shaders have been constructed dynamically. The uniforms and
+        // the shader includes are now appended to them.
+        //
+        // The object "defines" are not available for this material, so the fading shader chunks
+        // have the #ifdefs commented out.
+
+        // Create the uniforms for the shader (if not already existing), and add the new uniforms
+        // to it:
+        const uniforms = shader.uniforms as UniformsType;
+        uniforms.displacementMap = { value: displacementMaterial.displacementMap };
+        uniforms.displacementScale = { value: 1 };
+        uniforms.displacementBias = { value: 0 };
+
+        // Append the displacement map chunk to the vertex shader.
+        shader.vertexShader = shader.vertexShader.replace(
+            "#include <skinbase_vertex>",
+            `#include <skinbase_vertex>
+#ifndef USE_ENVMAP
+    vec3 objectNormal = vec3( normal );
+#endif`
+        );
+        shader.vertexShader = insertShaderInclude(
+            shader.vertexShader,
+            "uv2_pars_vertex",
+            "displacementmap_pars_vertex"
+        );
+
+        shader.vertexShader = insertShaderInclude(
+            shader.vertexShader,
+            "skinning_vertex",
+            "displacementmap_vertex",
+            true
+        );
+    }
+
+    /**
+     * Handles displacement map changes on each frame. Should be installed as respective
+     * Object3D.onBeforeRender of meshes which use displacement map feature.
+     */
+    export function addRenderHelper(object: THREE.Object3D) {
+        object.onBeforeRender = chainCallbacks(
+            object.onBeforeRender,
+            DisplacementFeature.onBeforeRender
+        );
+    }
+
+    export function onBeforeRender(
+        renderer: THREE.WebGLRenderer,
+        scene: THREE.Scene,
+        camera: THREE.Camera,
+        geometry: THREE.Geometry | THREE.BufferGeometry,
+        material: THREE.Material,
+        group: THREE.Group
+    ) {
+        const displacementMaterial = material as DisplacementFeature;
+        const properties = renderer.properties.get(material);
+
+        if (
+            properties.shader !== undefined &&
+            properties.shader.uniforms.displacementMap !== undefined
+        ) {
+            properties.shader.uniforms.displacementMap.value = displacementMaterial.displacementMap;
+            displacementMaterial.uniformsNeedUpdate = true;
+        }
+    }
+}
+
+export class DisplacementFeatureMixin implements DisplacementFeature {
+    needsUpdate?: boolean;
+    uniformsNeedUpdate?: boolean;
+    private m_displacementMap?: THREE.Texture;
+
+    protected getDisplacementMap(): THREE.Texture | undefined {
+        return this.m_displacementMap;
+    }
+
+    protected setDisplacementMap(map: THREE.Texture | undefined) {
+        this.needsUpdate = this.needsUpdate || map !== this.m_displacementMap;
+        this.m_displacementMap = map;
+        if (this.needsUpdate) {
+            DisplacementFeature.updateDisplacementFeature(this);
+        }
+    }
+
+    /**
+     * The mixin class should call this method to register the property [[displacementMap]]
+     */
+    protected addDisplacementProperties(): void {
+        Object.defineProperty(this, "displacementMap", {
+            get: () => {
+                return this.getDisplacementMap();
+            },
+            set: val => {
+                this.setDisplacementMap(val);
+            }
+        });
+    }
+
+    /**
+     * Apply the displacementMap value from the parameters to the respective properties.
+     */
+    protected applyDisplacementParameters(params?: DisplacementFeatureParameters) {
+        // Apply initial parameter values.
+        if (params !== undefined) {
+            if (params.displacementMap !== undefined) {
+                this.setDisplacementMap(params.displacementMap);
+            }
+        }
+
+        (this as any).onBeforeCompile = (shader: any) => {
+            DisplacementFeature.onBeforeCompile(this, shader);
+        };
+    }
+
+    /**
+     * Copy displacementMap from other DisplacementFeature.
+     *
+     * @param source The material to copy property values from.
+     */
+    protected copyDisplacementParameters(source: DisplacementFeature) {
+        this.setDisplacementMap(source.displacementMap);
+        return this;
+    }
 }
 
 /**
@@ -609,7 +780,7 @@ export class ExtrusionFeatureMixin implements ExtrusionFeature {
  * @see [[Tile#addRenderHelper]]
  */
 export class MapMeshBasicMaterial extends THREE.MeshBasicMaterial
-    implements FadingFeature, ExtrusionFeature {
+    implements FadingFeature, ExtrusionFeature, DisplacementFeature {
     /**
      * Constructs a new `FadingMeshBasicMaterial`.
      *
@@ -618,7 +789,8 @@ export class MapMeshBasicMaterial extends THREE.MeshBasicMaterial
     constructor(
         params?: THREE.MeshBasicMaterialParameters &
             FadingFeatureParameters &
-            ExtrusionFeatureParameters
+            ExtrusionFeatureParameters &
+            DisplacementFeatureParameters
     ) {
         super(params);
 
@@ -631,6 +803,9 @@ export class MapMeshBasicMaterial extends THREE.MeshBasicMaterial
 
         this.addExtrusionProperties();
         this.applyExtrusionParameters(params);
+
+        this.addDisplacementProperties();
+        this.applyDisplacementParameters(params);
     }
 
     clone(): this {
@@ -641,6 +816,7 @@ export class MapMeshBasicMaterial extends THREE.MeshBasicMaterial
         super.copy(source);
         this.copyFadingParameters(source);
         this.copyExtrusionParameters(source);
+        this.copyDisplacementParameters(source);
         return this;
     }
 
@@ -676,6 +852,15 @@ export class MapMeshBasicMaterial extends THREE.MeshBasicMaterial
         // to be overridden
     }
 
+    get displacementMap(): THREE.Texture | undefined {
+        return undefined;
+    }
+
+    // tslint:disable-next-line:no-unused-variable
+    set displacementMap(value: THREE.Texture | undefined) {
+        // to be overridden
+    }
+
     protected addFadingProperties(): void {
         // to be overridden
     }
@@ -701,6 +886,20 @@ export class MapMeshBasicMaterial extends THREE.MeshBasicMaterial
 
     // tslint:disable-next-line:no-unused-variable
     protected copyExtrusionParameters(source: FadingFeature) {
+        // to be overridden
+    }
+
+    protected addDisplacementProperties(): void {
+        // to be overridden
+    }
+
+    // tslint:disable-next-line:no-unused-variable
+    protected applyDisplacementParameters(params?: DisplacementFeatureParameters) {
+        // to be overridden
+    }
+
+    // tslint:disable-next-line:no-unused-variable
+    protected copyDisplacementParameters(source: DisplacementFeature) {
         // to be overridden
     }
     // Mixin declarations end -----------------------------------------------------------
@@ -823,3 +1022,4 @@ applyMixinsWithoutProperties(MapMeshBasicMaterial, [FadingFeatureMixin]);
 applyMixinsWithoutProperties(MapMeshStandardMaterial, [FadingFeatureMixin]);
 applyMixinsWithoutProperties(MapMeshBasicMaterial, [ExtrusionFeatureMixin]);
 applyMixinsWithoutProperties(MapMeshStandardMaterial, [ExtrusionFeatureMixin]);
+applyMixinsWithoutProperties(MapMeshBasicMaterial, [DisplacementFeatureMixin]);
