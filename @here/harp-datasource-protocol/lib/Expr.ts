@@ -6,6 +6,7 @@
 
 import { ExprEvaluator } from "./ExprEvaluator";
 import { ExprParser } from "./ExprParser";
+import { ExprPool } from "./ExprPool";
 
 export interface ExprVisitor<Result, Context> {
     visitBooleanLiteralExpr(expr: BooleanLiteralExpr, context: Context): Result;
@@ -92,6 +93,16 @@ export abstract class Expr {
     evaluate(env: Env): Value | never {
         const e = new ExprEvaluator();
         return e.evaluate(this, env);
+    }
+
+    /**
+     * Create a unique object that is structurally equivalent to this [[Expr]].
+     *
+     * @param pool The [[ExprPool]] used to create a unique
+     * equivalent object of this [[Expr]].
+     */
+    intern(pool: ExprPool): Expr {
+        return pool.add(this);
     }
 
     toJSON(): unknown {
@@ -249,7 +260,7 @@ export class StringLiteralExpr extends Expr {
  * A has expression with an attribute, for example `has(ref)`.
  */
 export class HasAttributeExpr extends Expr {
-    constructor(readonly attribute: string) {
+    constructor(readonly name: string) {
         super();
     }
 
@@ -262,11 +273,8 @@ export class HasAttributeExpr extends Expr {
  * A contains expression.
  */
 export class ContainsExpr extends Expr {
-    readonly elements: Set<Value>;
-
-    constructor(readonly value: Expr, elements: Value[]) {
+    constructor(readonly value: Expr, readonly elements: Value[]) {
         super();
-        this.elements = new Set(elements);
     }
 
     accept<Result, Context>(visitor: ExprVisitor<Result, Context>, context: Context): Result {
@@ -306,7 +314,7 @@ class ExprSerializer implements ExprVisitor<unknown, void> {
     }
 
     visitHasAttributeExpr(expr: HasAttributeExpr, context: void): unknown {
-        return ["has", expr.attribute];
+        return ["has", expr.name];
     }
 
     visitContainsExpr(expr: ContainsExpr, context: void): unknown {
