@@ -15,6 +15,7 @@ import { OrientedBox3Like } from "../lib/math/OrientedBox3Like";
 import { Vector3Like } from "../lib/math/Vector3Like";
 import { EarthConstants } from "../lib/projection/EarthConstants";
 import { sphereProjection } from "../lib/projection/SphereProjection";
+import { webMercatorTilingScheme } from "../lib/tiling/WebMercatorTilingScheme";
 
 const epsilon = 0.000001;
 
@@ -60,6 +61,50 @@ describe("SphereProjection", function() {
         const worldPoint = sphereProjection.projectPoint(geoPoint);
         sphereProjection.scalePointToSurface(worldPoint);
         assert.approximately(sphereProjection.groundDistance(worldPoint), 0, epsilon);
+    });
+
+    it("LocalTangentSpace", function() {
+        const transform = {
+            xAxis: { x: 0, y: 0, z: 0 },
+            yAxis: { x: 0, y: 0, z: 0 },
+            zAxis: { x: 0, y: 0, z: 0 },
+            position: { x: 0, y: 0, z: 0 }
+        };
+
+        const obb = {
+            xAxis: { x: 0, y: 0, z: 0 },
+            yAxis: { x: 0, y: 0, z: 0 },
+            zAxis: { x: 0, y: 0, z: 0 },
+            position: { x: 0, y: 0, z: 0 },
+            extents: { x: 0, y: 0, z: 0 }
+        };
+
+        const geoPoint = new GeoCoordinates(40.702, -74.01154);
+        const tileKey = webMercatorTilingScheme.getTileKey(geoPoint, 6)!;
+        const geoBox = webMercatorTilingScheme.getGeoBox(tileKey);
+
+        // get the oriented bounding box enclosing `geoBox`.
+        sphereProjection.projectBox(geoBox, obb);
+
+        // get the local tangent space at `geoBox.center`.
+        sphereProjection.localTangentSpace(geoBox.center, transform);
+
+        // check the orientation of the axes but avoid comparing the `positions`.
+        // In general `obb.position` should be different than `transform.position`.
+        // `obb.position` should be a world point in the middle of the oriented
+        // bounding box; `transform.center` should be on the surface.
+
+        assert.approximately(transform.xAxis.x, obb.xAxis.x, epsilon);
+        assert.approximately(transform.xAxis.y, obb.xAxis.y, epsilon);
+        assert.approximately(transform.xAxis.z, obb.xAxis.z, epsilon);
+
+        assert.approximately(transform.yAxis.x, obb.yAxis.x, epsilon);
+        assert.approximately(transform.yAxis.y, obb.yAxis.y, epsilon);
+        assert.approximately(transform.yAxis.z, obb.yAxis.z, epsilon);
+
+        assert.approximately(transform.zAxis.x, obb.zAxis.x, epsilon);
+        assert.approximately(transform.zAxis.y, obb.zAxis.y, epsilon);
+        assert.approximately(transform.zAxis.z, obb.zAxis.z, epsilon);
     });
 
     samples.forEach(([geoPoint, expectedWorldPoint]) => {

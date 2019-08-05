@@ -8,7 +8,9 @@ import { GeoBox } from "../coordinates/GeoBox";
 import { GeoCoordinates } from "../coordinates/GeoCoordinates";
 import { GeoCoordinatesLike } from "../coordinates/GeoCoordinatesLike";
 import { Box3Like } from "../math/Box3Like";
+import { MathUtils } from "../math/MathUtils";
 import { OrientedBox3Like } from "../math/OrientedBox3Like";
+import { TransformLike } from "../math/TransformLike";
 import { Vector3Like } from "../math/Vector3Like";
 
 /**
@@ -76,6 +78,20 @@ export abstract class Projection {
         geoPoint: GeoCoordinatesLike,
         result?: WorldCoordinates
     ): WorldCoordinates;
+
+    /**
+     * Gets the [[TransformLike]] of the local tangent space at the given geo coordinates.
+     *
+     * @param geoPoint The geo coordinates.
+     * @param result The [[TransformLike]].
+     */
+    localTangentSpace(geoPoint: GeoCoordinatesLike, result: TransformLike): TransformLike {
+        this.projectPoint(geoPoint, result.position);
+        MathUtils.newVector3(1, 0, 0, result.xAxis);
+        MathUtils.newVector3(0, 1, 0, result.yAxis);
+        MathUtils.newVector3(0, 0, 1, result.zAxis);
+        return result;
+    }
 
     /**
      * Returns the geo coordinates (latitude, longitude, altitude) from the given world position

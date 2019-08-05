@@ -4,32 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { TransformLike } from "./TransformLike";
 import { Vector3Like } from "./Vector3Like";
 
 /**
  * The interface [[OrientedBox3Like]] is used to represent oriented bounding box.
  */
-export interface OrientedBox3Like {
-    /**
-     * The position of this bounding box.
-     */
-    readonly position: Vector3Like;
-
-    /**
-     * The x-axis of this bounding box.
-     */
-    readonly xAxis: Vector3Like;
-
-    /**
-     * The y-axis of this bounding box.
-     */
-    readonly yAxis: Vector3Like;
-
-    /**
-     * The z-axis of this bounding box.
-     */
-    readonly zAxis: Vector3Like;
-
+export interface OrientedBox3Like extends TransformLike {
     /**
      * The extents of this bounding box.
      */
