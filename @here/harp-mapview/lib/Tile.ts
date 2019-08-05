@@ -10,7 +10,7 @@ import {
     TextPathGeometry
 } from "@here/harp-datasource-protocol";
 import { GeoBox, Projection, TileKey } from "@here/harp-geoutils";
-import { CachedResource, GroupedPriorityList } from "@here/harp-utils";
+import { assert, CachedResource, GroupedPriorityList, LoggerManager } from "@here/harp-utils";
 import * as THREE from "three";
 
 import { OrientedBox3 } from "@here/harp-geometry";
@@ -23,6 +23,8 @@ import { PerformanceStatistics } from "./Statistics";
 import { TextElement } from "./text/TextElement";
 import { MapViewUtils } from "./Utils";
 
+const logger = LoggerManager.instance.create("Tile");
+
 export type TileObject = THREE.Object3D & {
     /**
      * Distance of this object from the [[Tile]]'s center.
@@ -33,6 +35,15 @@ export type TileObject = THREE.Object3D & {
 interface DisposableObject {
     geometry?: THREE.BufferGeometry | THREE.Geometry;
     material?: THREE.Material[] | THREE.Material;
+}
+
+function decodedTileHasGeometry(decodedTile: DecodedTile) {
+    return (
+        decodedTile.geometries.length ||
+        (decodedTile.poiGeometries !== undefined && decodedTile.poiGeometries.length) ||
+        (decodedTile.textGeometries !== undefined && decodedTile.textGeometries.length) ||
+        (decodedTile.textPathGeometries !== undefined && decodedTile.textPathGeometries.length)
+    );
 }
 
 /**
@@ -622,23 +633,22 @@ export class Tile implements CachedResource {
     }
 
     /**
-     * Called by [[TileLoader]] when data for geometry is available.
-     *
-     * @param decodedTile
+     * Applies the decoded tile to the tile.
+     * If the geometry is empty, then the tile's forceHasGeometry flag is set.
+     * Map is updated.
+     * @param decodedTile The decoded tile to set.
      */
-    setDecodedTile(decodedTile: DecodedTile) {
-        this.m_decodedTile = decodedTile;
-        if (this.m_decodedTile.boundingBox !== undefined) {
-            // If the decoder provides a more accurate bounding box than the one we computed from
-            // the flat geo box we take it instead.
-            this.boundingBox.copy(this.m_decodedTile.boundingBox);
+    set decodedTile(decodedTile: DecodedTile | undefined) {
+        if (decodedTile && decodedTileHasGeometry(decodedTile)) {
+            if (decodedTile.copyrightHolderIds !== undefined) {
+                this.copyrightInfo = decodedTile.copyrightHolderIds.map(id => ({ id }));
+            }
+            this.setDecodedTile(decodedTile);
+        } else {
+            // empty tiles are traditionally ignored and don't need decode
+            this.forceHasGeometry(true);
         }
-        this.invalidateResourceInfo();
-
-        const stats = PerformanceStatistics.instance;
-        if (stats.enabled && decodedTile.decodeTime !== undefined) {
-            stats.currentFrame.addValue("decode.decodingTime", decodedTile.decodeTime);
-        }
+        this.dataSource.requestUpdate();
     }
 
     /**
@@ -785,10 +795,30 @@ export class Tile implements CachedResource {
     }
 
     /**
-     * Forces the update of this `Tile` geometry.
+     * Loads this `Tile` geometry.
      */
-    reload() {
-        this.dataSource.updateTile(this);
+    load() {
+        const tileLoader = this.tileLoader;
+        if (tileLoader === undefined) {
+            return;
+        }
+
+        tileLoader
+            .loadAndDecode()
+            .then(tileLoaderState => {
+                this.clear();
+                assert(tileLoaderState === TileLoaderState.Ready);
+                const decodedTile = tileLoader.decodedTile;
+                this.decodedTile = decodedTile;
+            })
+            .catch(tileLoaderState => {
+                if (
+                    tileLoaderState !== TileLoaderState.Canceled &&
+                    tileLoaderState !== TileLoaderState.Failed
+                ) {
+                    logger.error("Unknown error" + tileLoaderState);
+                }
+            });
     }
 
     /**
@@ -885,6 +915,21 @@ export class Tile implements CachedResource {
         this.m_disposed = true;
         // Ensure that tile is removable from tile cache.
         this.frameNumLastRequested = 0;
+    }
+
+    private setDecodedTile(decodedTile: DecodedTile) {
+        this.m_decodedTile = decodedTile;
+        if (this.m_decodedTile.boundingBox !== undefined) {
+            // If the decoder provides a more accurate bounding box than the one we computed from
+            // the flat geo box we take it instead.
+            this.boundingBox.copy(this.m_decodedTile.boundingBox);
+        }
+        this.invalidateResourceInfo();
+
+        const stats = PerformanceStatistics.instance;
+        if (stats.enabled && decodedTile.decodeTime !== undefined) {
+            stats.currentFrame.addValue("decode.decodingTime", decodedTile.decodeTime);
+        }
     }
 
     private computeResourceInfo(): void {
