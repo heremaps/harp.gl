@@ -12,9 +12,11 @@ const testResources = testResourceDirs.map(dir => {
     };
 });
 
-const harpFontResourcesPath = path.dirname(
-    require.resolve("@here/harp-fontcatalog/package.json")
+const harpMapThemePath = path.dirname(require.resolve("@here/harp-map-theme/package.json"));
+const harpDataSourceProtocolPath = path.dirname(
+    require.resolve("@here/harp-datasource-protocol/package.json")
 );
+const harpFontResourcesPath = path.dirname(require.resolve("@here/harp-fontcatalog/package.json"));
 
 const browserTestsConfig = {
     devtool: "source-map",
@@ -56,6 +58,8 @@ const browserTestsConfig = {
             require.resolve("mocha/mocha.css"),
             require.resolve("mocha-webdriver-runner/dist/mocha-webdriver-client.js"),
             ...testResources,
+            path.join(harpMapThemePath, "resources/berlin*.json"),
+            path.join(harpDataSourceProtocolPath, "theme.schema.json"),
             {
                 from: path.join(harpFontResourcesPath, "resources"),
                 to: "@here/harp-fontcatalog/resources"
