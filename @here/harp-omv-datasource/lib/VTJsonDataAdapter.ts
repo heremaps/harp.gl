@@ -110,7 +110,8 @@ export class VTJsonDataAdapter implements OmvDataAdapter {
                 ...feature.tags,
                 $layer: tile.layer,
                 $geometryType: this.convertGeometryType(feature.type),
-                $level: tileKey.level
+                $level: tileKey.level,
+                id: feature.id
             });
 
             switch (feature.type) {
