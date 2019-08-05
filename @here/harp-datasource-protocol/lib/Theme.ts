@@ -143,7 +143,7 @@ export function isSelectorDefinition(def: Definition): def is SelectorValueDefin
         typeof valueDef === "object" &&
         valueDef !== null &&
         valueDef.type === "selector" &&
-        typeof valueDef.value === "string"
+        (typeof valueDef.value === "string" || Array.isArray(valueDef.value))
     );
 }
 
