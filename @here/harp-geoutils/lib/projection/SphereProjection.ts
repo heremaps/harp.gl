@@ -10,6 +10,7 @@ import { GeoCoordinatesLike } from "../coordinates/GeoCoordinatesLike";
 import { Box3Like, isBox3Like } from "../math/Box3Like";
 import { MathUtils } from "../math/MathUtils";
 import { isOrientedBox3Like, OrientedBox3Like } from "../math/OrientedBox3Like";
+import { TransformLike } from "../math/TransformLike";
 import { Vector3Like } from "../math/Vector3Like";
 import { EarthConstants } from "./EarthConstants";
 import { mercatorProjection, webMercatorProjection } from "./MercatorProjection";
@@ -384,6 +385,36 @@ class SphereProjection extends Projection {
         }
 
         return super.reprojectPoint(sourceProjection, worldPos, result!);
+    }
+
+    localTangentSpace(geoPoint: GeoCoordinatesLike, result: TransformLike): TransformLike {
+        const latitude = MathUtils.degToRad(geoPoint.latitude);
+        const longitude = MathUtils.degToRad(geoPoint.longitude);
+
+        const cosLongitude = Math.cos(longitude);
+        const sinLongitude = Math.sin(longitude);
+        const cosLatitude = Math.cos(latitude);
+        const sinLatitude = Math.sin(latitude);
+
+        MathUtils.newVector3(
+            cosLongitude * cosLatitude,
+            sinLongitude * cosLatitude,
+            sinLatitude,
+            result.zAxis
+        );
+
+        MathUtils.newVector3(-sinLongitude, cosLongitude, 0, result.xAxis);
+
+        MathUtils.newVector3(
+            -cosLongitude * sinLatitude,
+            -sinLongitude * sinLatitude,
+            cosLatitude,
+            result.yAxis
+        );
+
+        this.projectPoint(geoPoint, result.position);
+
+        return result;
     }
 }
 
