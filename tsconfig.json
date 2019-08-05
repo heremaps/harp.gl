@@ -13,7 +13,8 @@
         "resolveJsonModule": true,
         "downlevelIteration": true,
         "newLine": "LF",
-        "noImplicitReturns": true
+        "noImplicitReturns": true,
+        "esModuleInterop": true
     },
     "exclude": ["node_modules", "@here/*/node_modules", "dist"]
 }

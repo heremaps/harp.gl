@@ -7,7 +7,7 @@
 import { Env, MapEnv, Value, ValueMap } from "@here/harp-datasource-protocol/index-decoder";
 import { EarthConstants, GeoBox, TileKey } from "@here/harp-geoutils";
 import { ILogger } from "@here/harp-utils";
-import * as Long from "long";
+import Long from "long";
 import { Vector3 } from "three";
 import { IGeometryProcessor, ILineGeometry, IPolygonGeometry, IRing } from "./IGeometryProcessor";
 import { OmvFeatureFilter } from "./OmvDataFilter";
