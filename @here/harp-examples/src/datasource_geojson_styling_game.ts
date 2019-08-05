@@ -4,7 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Feature, FillStyle, Style, StyleSet } from "@here/harp-datasource-protocol";
+import {
+    Feature,
+    FillStyle,
+    StyleDeclaration,
+    StyleSelector,
+    StyleSet
+} from "@here/harp-datasource-protocol";
 import { GeoJsonDataProvider } from "@here/harp-geojson-datasource";
 import { GeoCoordinates } from "@here/harp-geoutils";
 import { CopyrightElementHandler, CopyrightInfo, MapView } from "@here/harp-mapview";
@@ -162,7 +168,7 @@ export namespace GeoJsonStylingGame {
         correct: boolean;
     }
 
-    const outlineStyle: Style = {
+    const outlineStyle: StyleDeclaration = {
         when: "$geometryType == 'polygon'",
         description: "GeoJson polygon outline",
         renderOrder: 1001,
@@ -173,7 +179,7 @@ export namespace GeoJsonStylingGame {
             metricUnit: "Pixel"
         }
     };
-    const baseRegionsStyle: Style = {
+    const baseRegionsStyle: StyleDeclaration = {
         description: "GeoJson polygon",
         when: "$geometryType == 'polygon'",
         renderOrder: 1000,
@@ -182,7 +188,7 @@ export namespace GeoJsonStylingGame {
             color: "#37afaa"
         }
     };
-    const activeRegionStyle: FillStyle = {
+    const activeRegionStyle: FillStyle & StyleSelector = {
         description: "GeoJson polygon",
         when: "$geometryType == 'polygon'",
         renderOrder: 1010,
