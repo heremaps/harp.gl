@@ -185,7 +185,7 @@ describe("VisibleTileSet", function() {
             TileKey.fromMortonCode(parentTileKey)
         ) as Tile;
         const parentDisposeSpy = sinon.spy(parentTile, "dispose");
-        const parentReloadSpy = sinon.spy(parentTile, "reload");
+        const parentReloadSpy = sinon.spy(parentTile, "load");
 
         assert.equal(dataSourceTileList.length, 1);
         assert.equal(dataSourceTileList[0].visibleTiles.length, 2);
@@ -195,7 +195,7 @@ describe("VisibleTileSet", function() {
         );
 
         const visibleTileReloadSpies = dataSourceTileList[0].visibleTiles.map(tile =>
-            sinon.spy(tile, "reload")
+            sinon.spy(tile, "load")
         );
 
         fixture.vts.markTilesDirty();

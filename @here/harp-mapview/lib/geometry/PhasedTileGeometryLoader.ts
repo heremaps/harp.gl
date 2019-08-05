@@ -280,6 +280,14 @@ export class PhasedTileGeometryLoader implements TileGeometryLoader {
         this.m_decodedTile = undefined;
     }
 
+    reset(): void {
+        this.m_decodedTile = undefined;
+        this.m_isFinished = false;
+        this.m_availableGeometryKinds = undefined;
+        this.m_geometryKindsLoaded.clear();
+        this.m_currentPhaseIndex = 0;
+    }
+
     /**
      * Increment the current phase to activate the next phase of geometries.
      *

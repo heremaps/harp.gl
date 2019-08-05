@@ -67,6 +67,11 @@ export interface TileGeometryLoader {
      * Dispose of any resources.
      */
     dispose(): void;
+
+    /**
+     * Reset the loader to its initial state and cancels any asynchronous work.
+     */
+    reset(): void;
 }
 
 export namespace TileGeometryLoader {
@@ -152,6 +157,7 @@ export class SimpleTileGeometryLoader implements TileGeometryLoader {
     private m_decodedTile?: DecodedTile;
     private m_isFinished: boolean = false;
     private m_availableGeometryKinds: GeometryKindSet | undefined;
+    private m_timeout: any;
 
     constructor(private m_tile: Tile) {}
 
@@ -218,10 +224,22 @@ export class SimpleTileGeometryLoader implements TileGeometryLoader {
         this.m_decodedTile = undefined;
     }
 
+    reset(): void {
+        this.m_decodedTile = undefined;
+        this.m_isFinished = false;
+        if (this.m_availableGeometryKinds !== undefined) {
+            this.m_availableGeometryKinds.clear();
+        }
+        if (this.m_timeout !== undefined) {
+            clearTimeout(this.m_timeout);
+        }
+    }
+
     private finish() {
         this.m_tile.loadingFinished();
         this.m_tile.removeDecodedTile();
         this.m_isFinished = true;
+        this.m_timeout = undefined;
     }
 
     /**
@@ -240,7 +258,7 @@ export class SimpleTileGeometryLoader implements TileGeometryLoader {
         if (decodedTile === undefined || tile.disposed || !tile.isVisible) {
             return;
         }
-        setTimeout(() => {
+        this.m_timeout = setTimeout(() => {
             const stats = PerformanceStatistics.instance;
             // If the tile has become invisible while being loaded, for example by moving the
             // camera, the tile is not finished and its geometry is not created. This is an

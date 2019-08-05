@@ -654,17 +654,23 @@ export class VisibleTileSet {
     private markDataSourceTilesDirty(renderListEntry: DataSourceTileList) {
         const dataSourceCache = this.m_dataSourceCache.get(renderListEntry.dataSource.name);
         const retainedTiles: Set<number> = new Set();
-        renderListEntry.visibleTiles.forEach(tile => {
-            const tileCode = TileOffsetUtils.getKeyForTileKeyAndOffset(tile.tileKey, tile.offset);
-            retainedTiles.add(tileCode);
-            tile.reload();
-        });
-        renderListEntry.renderedTiles.forEach(tile => {
+
+        function markTileDirty(tile: Tile, tileGeometryManager: TileGeometryManager) {
             const tileCode = TileOffsetUtils.getKeyForTileKeyAndOffset(tile.tileKey, tile.offset);
             if (!retainedTiles.has(tileCode)) {
                 retainedTiles.add(tileCode);
-                tile.reload();
+                if (tile.tileGeometryLoader !== undefined) {
+                    tile.tileGeometryLoader.reset();
+                }
+                tile.load();
             }
+        }
+
+        renderListEntry.visibleTiles.forEach(tile => {
+            markTileDirty(tile, this.m_tileGeometryManager);
+        });
+        renderListEntry.renderedTiles.forEach(tile => {
+            markTileDirty(tile, this.m_tileGeometryManager);
         });
 
         if (dataSourceCache !== undefined) {

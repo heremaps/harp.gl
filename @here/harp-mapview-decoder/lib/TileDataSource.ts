@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { DecodedTile, ITileDecoder, StyleSet, TileInfo } from "@here/harp-datasource-protocol";
+import { ITileDecoder, StyleSet, TileInfo } from "@here/harp-datasource-protocol";
 import { TileKey, TilingScheme } from "@here/harp-geoutils";
 import {
     ConcurrentDecoderFacade,
@@ -15,7 +15,7 @@ import {
 } from "@here/harp-mapview";
 
 import { LRUCache } from "@here/harp-lrucache";
-import { assert, LoggerManager } from "@here/harp-utils";
+import { LoggerManager } from "@here/harp-utils";
 import { DataProvider } from "./DataProvider";
 import { TileInfoLoader, TileLoader } from "./TileLoader";
 
@@ -226,6 +226,8 @@ export class TileDataSource<TileType extends Tile> extends DataSource {
                 0
             );
             tile.tileLoader = newTileLoader;
+            tile.copyrightInfo = this.m_options.copyrightInfo;
+
             // We don't cache tiles with level 4 and above, at this level, there are 16 (2^4) tiles
             // horizontally, given the assumption that the zoom level assumes the tile should be 256
             // pixels wide (see function [[calculateZoomLevelFromDistance]]), and the current
@@ -240,34 +242,12 @@ export class TileDataSource<TileType extends Tile> extends DataSource {
             }
         }
 
-        this.updateTile(tile);
-        return tile;
-    }
-
-    updateTile(tile: Tile) {
-        const tileLoader = tile.tileLoader;
-        if (tileLoader === undefined) {
-            return;
-        }
-        if (tileLoader.decodedTile !== undefined) {
-            this.setDecodedTileOnTile(tileLoader.decodedTile, tile);
+        if (tile.tileLoader.decodedTile !== undefined) {
+            tile.decodedTile = tile.tileLoader.decodedTile;
         } else {
-            tileLoader
-                .loadAndDecode()
-                .then(tileLoaderState => {
-                    assert(tileLoaderState === TileLoaderState.Ready);
-                    const decodedTile = tileLoader.decodedTile;
-                    this.setDecodedTileOnTile(decodedTile, tile);
-                })
-                .catch(tileLoaderState => {
-                    if (
-                        tileLoaderState !== TileLoaderState.Canceled &&
-                        tileLoaderState !== TileLoaderState.Failed
-                    ) {
-                        this.logger.error("Unknown error" + tileLoaderState);
-                    }
-                });
+            tile.load();
         }
+        return tile;
     }
 
     /**
@@ -300,37 +280,10 @@ export class TileDataSource<TileType extends Tile> extends DataSource {
         return promise;
     }
 
-    decodedTileHasGeometry(decodedTile: DecodedTile) {
-        return (
-            decodedTile.geometries.length ||
-            (decodedTile.poiGeometries !== undefined && decodedTile.poiGeometries.length) ||
-            (decodedTile.textGeometries !== undefined && decodedTile.textGeometries.length) ||
-            (decodedTile.textPathGeometries !== undefined && decodedTile.textPathGeometries.length)
-        );
-    }
-
     private getCacheCount(): number {
         // We support up to [[maxLevelTileLoaderCache]] levels, this equates to roughly
         // 2^maxLevelTileLoaderCache^2 tiles in total (at level maxLevelTileLoaderCache), we don't
         // generally see that many, so we add a factor of 2 to try to get the worst case.
         return Math.pow(2, maxLevelTileLoaderCache) * 2;
-    }
-
-    // Applies the decoded tile to the tile.
-    // If the geometry is empty, then the tile's forceHasGeometry flag is set.
-    // Map is updated.
-    private setDecodedTileOnTile(decodedTile: DecodedTile | undefined, tile: Tile) {
-        if (decodedTile && this.decodedTileHasGeometry(decodedTile)) {
-            tile.copyrightInfo =
-                decodedTile.copyrightHolderIds !== undefined
-                    ? decodedTile.copyrightHolderIds.map(id => ({ id }))
-                    : this.m_options.copyrightInfo;
-
-            tile.setDecodedTile(decodedTile);
-        } else {
-            // empty tiles are traditionally ignored and don't need decode
-            tile.forceHasGeometry(true);
-        }
-        this.requestUpdate();
     }
 }

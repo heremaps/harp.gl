@@ -3,7 +3,7 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-import { DecodedTile, getPropertyValue, isTextTechnique } from "@here/harp-datasource-protocol";
+import { getPropertyValue, isTextTechnique } from "@here/harp-datasource-protocol";
 import { TileKey } from "@here/harp-geoutils/lib/tiling/TileKey";
 import { DataSource, TextElement } from "@here/harp-mapview";
 import { debugContext } from "@here/harp-mapview/lib/DebugContext";
@@ -65,10 +65,6 @@ textRenderStyle.backgroundOpacity = 0.75;
 export class OmvDebugLabelsTile extends OmvTile {
     constructor(dataSource: DataSource, tileKey: TileKey) {
         super(dataSource, tileKey);
-    }
-
-    setDecodedTile(decodedTile: DecodedTile) {
-        super.setDecodedTile(decodedTile);
     }
 
     loadingFinished() {
