@@ -26,14 +26,14 @@
         "@here/harp-geoutils": "^0.4.3",
         "@here/harp-mapview": "^0.9.4",
         "@here/harp-utils": "^0.2.7",
-        "@tweenjs/tween.js": "^17.4.0"
+        "@tweenjs/tween.js": "^17.4.0",
+        "@types/tween.js": "^17.2.0"
     },
     "devDependencies": {
         "@types/chai": "^4.1.2",
         "@types/mocha": "^5.2.7",
         "@types/node": "^12.0.8",
         "@types/sinon": "^7.0.13",
-        "@types/tween.js": "^17.2.0",
         "chai": "^4.0.2",
         "cross-env": "^5.2.0",
         "mocha": "^6.1.4",
