@@ -105,7 +105,9 @@ export enum MapViewEventNames {
     /** Called when the WebGL context is lost. */
     ContextLost = "webglcontext-lost",
     /** Called when the WebGL context is restored. */
-    ContextRestored = "webglcontext-restored"
+    ContextRestored = "webglcontext-restored",
+    /** Called when camera position has been changed. */
+    CameraPositionChanged = "camera-changed"
 }
 
 const logger = LoggerManager.instance.create("MapView");
@@ -2440,7 +2442,23 @@ export class MapView extends THREE.EventDispatcher {
             });
         }
 
-        this.m_movementDetector.checkCameraMoved(this, time);
+        if (this.m_movementDetector.checkCameraMoved(this, time)) {
+            const { yaw, pitch, roll } = MapViewUtils.extractYawPitchRoll(
+                this.camera.quaternion,
+                this.projection.type
+            );
+            const { latitude, longitude, altitude } = this.geoCenter;
+            this.dispatchEvent({
+                type: MapViewEventNames.CameraPositionChanged,
+                latitude,
+                longitude,
+                altitude,
+                yaw,
+                pitch,
+                roll,
+                zoom: this.zoomLevel
+            });
+        }
 
         // The camera used to render the scene.
         const camera = this.m_pointOfView !== undefined ? this.m_pointOfView : this.m_rteCamera;
