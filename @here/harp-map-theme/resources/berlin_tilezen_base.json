@@ -16,7 +16,7 @@
         "extrudedBuildings": {
             "description": "building_geometry",
             "technique": "extruded-polygon",
-            "when": { "$ref": "extrudedBuildingsCondition" },
+            "when": ["ref", "extrudedBuildingsCondition"],
             "attr": {
                 "color": "#EDE7E1",
                 "opacity": 0.9,
@@ -1699,9 +1699,7 @@
                 ],
                 "technique": "fill",
                 "attr": {
-                    "color": {
-                        "$ref": "parkColor"
-                    }
+                    "color": ["ref", "parkColor"]
                 },
                 "renderOrder": 0.2
             },
@@ -2265,9 +2263,7 @@
                 },
                 "final": true
             },
-            {
-                "$ref": "extrudedBuildings"
-            },
+            ["ref", "extrudedBuildings"],
             {
                 "description": "building_address",
                 "when": [
