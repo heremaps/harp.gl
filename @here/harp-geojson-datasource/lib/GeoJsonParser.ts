@@ -9,6 +9,7 @@ import {
     ExtendedTileInfoWriter,
     Feature,
     FeatureDetails,
+    FeatureGroupType,
     GeoJson,
     IndexedTechnique,
     isCirclesTechnique,
@@ -769,7 +770,7 @@ export class GeoJsonParser {
                     env,
                     featureId,
                     infoTileTechniqueIndex,
-                    false
+                    FeatureGroupType.Line
                 );
 
                 tileInfoWriter.addFeaturePoints(extendedTile.info.lineGroup, aLine);

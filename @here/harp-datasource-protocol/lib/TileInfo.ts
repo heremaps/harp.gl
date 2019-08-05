@@ -20,6 +20,15 @@ export interface TileInfo {
 }
 
 /**
+ * Represents a feature group type for tile info.
+ */
+export enum FeatureGroupType {
+    Point,
+    Line,
+    Polygon
+}
+
+/**
  * Minimum estimated size of a JS object.
  */
 const MINIMUM_OBJECT_SIZE_ESTIMATION = 100;
@@ -143,7 +152,7 @@ export class LineFeatureGroup extends FeatureGroup {
      * An array of object defined by the user. Certain elements may be `undefined` (if this line
      * feature is not a road, or if the object for that feature is undefined).
      */
-    userData?: Array<{} | undefined> = [];
+    userData: Array<{} | undefined> = [];
 
     getNumBytes(): number {
         return (
@@ -528,7 +537,7 @@ export class ExtendedTileInfoWriter {
         env: MapEnv,
         featureId: number | undefined,
         infoTileTechniqueIndex: number,
-        isPolygonGroup: boolean
+        featureGroupType: FeatureGroupType
     ) {
         // compute name/label of feature
         const textTechnique = technique as TextTechnique;
@@ -550,13 +559,19 @@ export class ExtendedTileInfoWriter {
         featureGroup.textIndex[featureGroup.numFeatures] = stringIndex;
         featureGroup.positionIndex[featureGroup.numFeatures] = featureGroup.numPositions;
 
-        // polygons need the extra fields for polygon rings
-        if (isPolygonGroup) {
-            const polygonGroup = featureGroup as PolygonFeatureGroup;
-            assert(polygonGroup.outerRingStartIndex !== undefined);
-            assert(polygonGroup.innerRingStartIndex !== undefined);
-            assert(polygonGroup.innerRingIsOuterContour !== undefined);
-            polygonGroup.outerRingStartIndex[featureGroup.numFeatures] = polygonGroup.groupNumRings;
+        switch (featureGroupType) {
+            case FeatureGroupType.Polygon:
+                // polygons need the extra fields for polygon rings
+                const polygonGroup = featureGroup as PolygonFeatureGroup;
+                assert(polygonGroup.outerRingStartIndex !== undefined);
+                assert(polygonGroup.innerRingStartIndex !== undefined);
+                assert(polygonGroup.innerRingIsOuterContour !== undefined);
+                polygonGroup.outerRingStartIndex[featureGroup.numFeatures] =
+                    polygonGroup.groupNumRings;
+                break;
+            case FeatureGroupType.Line:
+                (featureGroup as LineFeatureGroup).userData[featureGroup.numFeatures] = env.entries;
+                break;
         }
 
         // store the extra feature fields

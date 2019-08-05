@@ -57,6 +57,7 @@ export interface TextPathGeometry {
     text: string;
     technique: number;
     featureId?: number;
+    objInfos?: {};
 }
 
 /**
@@ -178,6 +179,7 @@ export interface TextGeometry {
     technique?: number;
     featureId?: number;
     stringCatalog?: Array<string | undefined>;
+    objInfos?: Array<{} | undefined>;
 }
 
 /**
@@ -194,6 +196,7 @@ export interface PoiGeometry {
     technique?: number;
     featureId?: number;
     stringCatalog?: Array<string | undefined>;
+    objInfos?: Array<{} | undefined>;
 }
 
 /**

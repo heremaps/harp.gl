@@ -47,7 +47,7 @@ export interface GeoJsonTextGeometry extends TextGeometry {
  * Geometry interface that stores the geometry type and the user data for a TextPath.
  */
 export interface GeoJsonTextPathGeometry extends TextPathGeometry {
-    objInfos?: Array<{} | undefined>;
+    objInfos?: {};
 }
 
 /**
@@ -241,7 +241,7 @@ export class GeoJsonGeometryCreator {
                 path,
                 pathLengthSqr,
                 text,
-                objInfos: geometryData.lines.geojsonProperties
+                objInfos: properties
             };
             geometries.textPathGeometries.push(geometry);
         }

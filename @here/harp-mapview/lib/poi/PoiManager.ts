@@ -148,7 +148,7 @@ export class PoiManager {
             );
 
             if (isLineMarkerTechnique(technique) && positions.count > 0) {
-                this.addLineMarker(tile, poiGeometry, technique, techniqueIndex, positions);
+                this.addLineMarker(tile, poiGeometry, technique, positions);
             } else if (isPoiTechnique(technique)) {
                 this.addPoi(tile, poiGeometry, technique, techniqueIndex, positions);
             }
@@ -342,7 +342,6 @@ export class PoiManager {
         tile: Tile,
         poiGeometry: PoiGeometry,
         technique: LineMarkerTechnique,
-        techniqueIdx: number,
         positions: THREE.BufferAttribute
     ) {
         let imageTextureName: string | undefined =
@@ -351,9 +350,11 @@ export class PoiManager {
                 : undefined;
 
         let text: string = "";
+        let userData: {} | undefined;
         if (poiGeometry.stringCatalog !== undefined) {
             assert(poiGeometry.texts.length > 0);
             text = poiGeometry.stringCatalog[poiGeometry.texts[0]] || "";
+            userData = poiGeometry.objInfos ? poiGeometry.objInfos[0] : undefined;
             if (poiGeometry.imageTextures !== undefined) {
                 assert(poiGeometry.imageTextures.length > 0);
                 imageTextureName = poiGeometry.stringCatalog[poiGeometry.imageTextures[0]];
@@ -385,7 +386,6 @@ export class PoiManager {
             tile,
             text,
             technique,
-            techniqueIdx,
             imageTextureName,
             undefined, // TBD for road shields
             undefined,
@@ -394,7 +394,7 @@ export class PoiManager {
             positionArray,
             undefined,
             undefined,
-            tile.tileKey.level
+            userData
         );
 
         // If the poi icon is rendered, the label that shows text should also be rendered.
@@ -434,6 +434,7 @@ export class PoiManager {
             assert(poiGeometry.texts.length > i);
             let imageTextureName = techniqueTextureName;
             const text: string = poiGeometry.stringCatalog[poiGeometry.texts[i]] || "";
+            const userData = poiGeometry.objInfos ? poiGeometry.objInfos[i] : undefined;
             if (poiGeometry.imageTextures !== undefined && poiGeometry.imageTextures[i] >= 0) {
                 assert(poiGeometry.imageTextures.length > i);
                 imageTextureName = poiGeometry.stringCatalog[poiGeometry.imageTextures[i]];
@@ -454,7 +455,6 @@ export class PoiManager {
                 tile,
                 text,
                 technique,
-                techniqueIdx,
                 imageTextureName,
                 poiTableName,
                 poiName,
@@ -463,7 +463,7 @@ export class PoiManager {
                 x,
                 y,
                 z,
-                tile.tileKey.level
+                userData
             );
 
             tile.addTextElement(textElement);
@@ -479,7 +479,6 @@ export class PoiManager {
         tile: Tile,
         text: string,
         technique: PoiTechnique | LineMarkerTechnique,
-        techniqueIdx: number,
         imageTextureName: string | undefined,
         poiTableName: string | undefined,
         poiName: string | undefined,
@@ -488,7 +487,7 @@ export class PoiManager {
         x: number | THREE.Vector3[],
         y: number | undefined,
         z: number | undefined,
-        storageLevel: number
+        userData?: {}
     ): TextElement {
         const priority = technique.priority !== undefined ? technique.priority : 0;
         const positions = Array.isArray(x) ? (x as THREE.Vector3[]) : new THREE.Vector3(x, y, z);
@@ -519,6 +518,7 @@ export class PoiManager {
         textElement.mayOverlap = technique.textMayOverlap === true;
         textElement.reserveSpace = technique.textReserveSpace !== false;
         textElement.alwaysOnTop = technique.alwaysOnTop === true;
+        textElement.userData = userData;
 
         // imageTextureName may be undefined if a poiTable is used.
         if (imageTextureName === undefined && poiTableName !== undefined) {
