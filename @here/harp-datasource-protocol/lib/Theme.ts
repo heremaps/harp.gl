@@ -228,7 +228,7 @@ export interface SelectorValueDefinition extends BaseValueDefinition {
      *
      * See [[BaseStyle.when]].
      */
-    value: string;
+    value: string | unknown[];
 }
 
 /**

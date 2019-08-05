@@ -96,8 +96,7 @@
                     "size": 16,
                     "priority": 25,
                     "fadeNear": 0.8,
-                    "fadeFar": 0.9,
-                    "clipping": false
+                    "fadeFar": 0.9
                 },
                 "renderOrder": 10
             },
@@ -192,8 +191,7 @@
                     "size": 16,
                     "priority": 20,
                     "fadeNear": 0.8,
-                    "fadeFar": 0.9,
-                    "clipping": false
+                    "fadeFar": 0.9
                 },
                 "renderOrder": 13
             },
@@ -303,8 +301,7 @@
                     "size": 16,
                     "priority": 15,
                     "fadeNear": 0.8,
-                    "fadeFar": 0.9,
-                    "clipping": false
+                    "fadeFar": 0.9
                 },
                 "renderOrder": 12
             },
@@ -353,8 +350,7 @@
                     "size": 16,
                     "priority": 20,
                     "fadeNear": 0.8,
-                    "fadeFar": 0.9,
-                    "clipping": false
+                    "fadeFar": 0.9
                 },
                 "renderOrder": 13
             },
@@ -404,7 +400,7 @@
                 "final": true
             },
             {
-                "description": "residential",
+                "description": "residential - foreground",
                 "when": [
                     "all",
                     ["==", ["get", "$layer"], "roads"],
@@ -416,110 +412,109 @@
                         ["==", ["get", "kind_detail"], "service"]
                     ]
                 ],
-                "technique": "none",
-                "styles": [
-                    {
-                        "technique": "solid-line",
-                        "attr": {
-                            "color": "#3A4C69",
-                            "lineWidth": {
-                                "interpolation": "Linear",
-                                "zoomLevels": [13, 14, 16, 18],
-                                "values": [20, 18, 6, 5]
-                            },
-                            "fadeNear": 0.8,
-                            "fadeFar": 0.9,
-                            "clipping": false
-                        },
-                        "renderOrder": 10.3
+                "technique": "solid-line",
+                "attr": {
+                    "color": "#d1d0bf",
+                    "lineWidth": {
+                        "interpolation": "Linear",
+                        "zoomLevels": [13, 14, 16, 18],
+                        "values": [20, 14, 4.5, 4]
                     },
-                    {
-                        "technique": "solid-line",
-                        "attr": {
-                            "color": "#d1d0bf",
-                            "lineWidth": {
-                                "interpolation": "Linear",
-                                "zoomLevels": [13, 14, 16, 18],
-                                "values": [20, 14, 4.5, 4]
-                            },
-                            "fadeNear": 0.8,
-                            "fadeFar": 0.9,
-                            "clipping": false
-                        },
-                        "renderOrder": 15.2
-                    },
-                    {
-                        "technique": "text",
-                        "attr": {
-                            "color": "#000000",
-                            "backgroundColor": "#FFFFFF",
-                            "backgroundOpacity": 0.5,
-                            "size": 16,
-                            "priority": 15,
-                            "fadeNear": 0.8,
-                            "fadeFar": 0.9,
-                            "clipping": false
-                        },
-                        "renderOrder": 12
-                    }
-                ]
+                    "fadeNear": 0.8,
+                    "fadeFar": 0.9,
+                    "clipping": false
+                },
+                "renderOrder": 15.2
             },
             {
-                "description": "pedestrian",
+                "description": "residential - labels",
+                "when": [
+                    "all",
+                    ["==", ["get", "$layer"], "roads"],
+                    ["==", ["get", "kind"], "minor_road"],
+                    [
+                        "any",
+                        ["==", ["get", "kind_detail"], "unclassified"],
+                        ["==", ["get", "kind_detail"], "residential"],
+                        ["==", ["get", "kind_detail"], "service"]
+                    ]
+                ],
+                "technique": "text",
+                "attr": {
+                    "color": "#000000",
+                    "backgroundColor": "#FFFFFF",
+                    "backgroundOpacity": 0.5,
+                    "size": 16,
+                    "priority": 14,
+                    "fadeNear": 0.8,
+                    "fadeFar": 0.9
+                },
+                "renderOrder": 12
+            },
+            {
+                "description": "pedestrian - background",
                 "when": [
                     "all",
                     ["==", ["get", "$layer"], "roads"],
                     ["==", ["get", "kind"], "path"],
                     ["in", ["get", "kind_detail"], ["pedestrian", "footway"]]
                 ],
-                "technique": "none",
-                "styles": [
-                    {
-                        "technique": "solid-line",
-                        "attr": {
-                            "color": "#3A4C69",
-                            "lineWidth": {
-                                "interpolation": "Linear",
-                                "zoomLevels": [13, 14, 16, 18],
-                                "values": [13, 9, 4.5, 3.5]
-                            },
-                            "fadeNear": 0.8,
-                            "fadeFar": 0.9,
-                            "clipping": false
-                        },
-                        "renderOrder": 10.3
+                "technique": "solid-line",
+                "attr": {
+                    "color": "#3A4C69",
+                    "lineWidth": {
+                        "interpolation": "Linear",
+                        "zoomLevels": [13, 14, 16, 18],
+                        "values": [13, 9, 4.5, 3.5]
                     },
-                    {
-                        "technique": "solid-line",
-                        "attr": {
-                            "color": "#B1B5B6",
-                            "lineWidth": {
-                                "interpolation": "Linear",
-                                "zoomLevels": [13, 14, 16, 18],
-                                "values": [13, 9, 3.5, 2.5]
-                            },
-                            "fadeNear": 0.8,
-                            "fadeFar": 0.9,
-                            "clipping": false
-                        },
-                        "renderOrder": 15.1
+                    "fadeNear": 0.8,
+                    "fadeFar": 0.9,
+                    "clipping": false
+                },
+                "renderOrder": 10.3
+            },
+            {
+                "description": "pedestrian - foreground",
+                "when": [
+                    "all",
+                    ["==", ["get", "$layer"], "roads"],
+                    ["==", ["get", "kind"], "path"],
+                    ["in", ["get", "kind_detail"], ["pedestrian", "footway"]]
+                ],
+                "technique": "solid-line",
+                "attr": {
+                    "color": "#B1B5B6",
+                    "lineWidth": {
+                        "interpolation": "Linear",
+                        "zoomLevels": [13, 14, 16, 18],
+                        "values": [13, 9, 3.5, 2.5]
                     },
-                    {
-                        "technique": "text",
-                        "attr": {
-                            "color": "#000000",
-                            "backgroundColor": "#FFFFFF",
-                            "backgroundOpacity": 0.5,
-                            "textLabel": "kind_detail",
-                            "size": 16,
-                            "priority": 15,
-                            "fadeNear": 0.8,
-                            "fadeFar": 0.9,
-                            "clipping": false
-                        },
-                        "renderOrder": 12
-                    }
-                ]
+                    "fadeNear": 0.8,
+                    "fadeFar": 0.9,
+                    "clipping": false
+                },
+                "renderOrder": 15.1
+            },
+            {
+                "description": "pedestrian - labels",
+                "when": [
+                    "all",
+                    ["==", ["get", "$layer"], "roads"],
+                    ["==", ["get", "kind"], "path"],
+                    ["in", ["get", "kind_detail"], ["pedestrian", "footway"]]
+                ],
+                "technique": "text",
+                "attr": {
+                    "color": "#000000",
+                    "backgroundColor": "#FFFFFF",
+                    "backgroundOpacity": 0.5,
+                    "textLabel": "kind_detail",
+                    "size": 16,
+                    "priority": 13,
+                    "fadeNear": 0.8,
+                    "fadeFar": 0.9
+                },
+                "renderOrder": 12
             },
             {
                 "description": "ferry",
@@ -537,8 +532,7 @@
                     "size": 12.8,
                     "priority": 25,
                     "fadeNear": 0.8,
-                    "fadeFar": 0.9,
-                    "clipping": false
+                    "fadeFar": 0.9
                 },
                 "renderOrder": 10
             },
@@ -860,7 +854,6 @@
                 "technique": "dashed-line",
                 "attr": {
                     "color": "#2F444B",
-                    "secondaryColor": "#52676E",
                     "lineWidth": {
                         "interpolation": "Linear",
                         "zoomLevels": [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
@@ -882,26 +875,6 @@
                             2
                         ]
                     },
-                    "secondaryWidth": {
-                        "interpolation": "Linear",
-                        "zoomLevels": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14],
-                        "values": [
-                            10000,
-                            8000,
-                            7000,
-                            5000,
-                            3000,
-                            2000,
-                            1000,
-                            500,
-                            250,
-                            120,
-                            80,
-                            40,
-                            20,
-                            10
-                        ]
-                    },
                     "dashSize": {
                         "interpolation": "Cubic",
                         "zoomLevels": [10, 11, 12, 13, 14],
@@ -913,8 +886,7 @@
                         "values": [512, 256, 128, 64, 32]
                     }
                 },
-                "renderOrder": 4.1,
-                "secondaryRenderOrder": 4
+                "renderOrder": 4.1
             },
             {
                 "description": "disputed border line - text",

@@ -29,9 +29,12 @@
     "devDependencies": {
         "@here/harp-atlas-tools": "^0.1.1",
         "@here/harp-fontcatalog": "^0.1.1",
+        "@here/harp-test-utils": "^0.2.6",
+        "@types/ajv": "^1.0.0",
         "@types/chai": "^4.1.2",
         "@types/mocha": "^5.2.7",
         "@types/ncp": "^2.0.1",
+        "ajv": "^6.10.2",
         "chai": "^4.0.2",
         "copyfiles": "^2.0.0",
         "cross-env": "^5.2.0",

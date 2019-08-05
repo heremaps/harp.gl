@@ -113,7 +113,7 @@
                 "final": true
             },
             {
-                "description": "residential",
+                "description": "residential - background",
                 "when": [
                     "all",
                     ["==", ["get", "$layer"], "roads"],
@@ -126,55 +126,75 @@
                         ["==", ["get", "kind_detail"], "service"]
                     ]
                 ],
-                "styles": [
-                    {
-                        "technique": "solid-line",
-                        "attr": {
-                            "color": "#535557",
-                            "lineWidth": {
-                                "interpolation": "Linear",
-                                "zoomLevels": [10, 11, 12, 13, 14],
-                                "values": [42, 28, 18, 7, 4]
-                            },
-                            "fadeNear": 0.8,
-                            "fadeFar": 0.9,
-                            "clipping": false
-                        },
-                        "renderOrder": 11
+                "technique": "solid-line",
+                "attr": {
+                    "color": "#535557",
+                    "lineWidth": {
+                        "interpolation": "Linear",
+                        "zoomLevels": [10, 11, 12, 13, 14],
+                        "values": [42, 28, 18, 7, 4]
                     },
-                    {
-                        "description": "residential",
-                        "technique": "solid-line",
-                        "attr": {
-                            "color": "#3B3D3F",
-                            "lineWidth": {
-                                "interpolation": "Linear",
-                                "zoomLevels": [10, 11, 12, 13, 14],
-                                "values": [38, 24, 13, 5, 3]
-                            },
-                            "fadeNear": 0.8,
-                            "fadeFar": 0.9,
-                            "clipping": false
-                        },
-                        "renderOrder": 11.3
-                    },
-                    {
-                        "technique": "text",
-                        "attr": {
-                            "color": "#999999",
-                            "backgroundColor": "#141414",
-                            "backgroundOpacity": 0.5,
-                            "textLabel": "kind_detail",
-                            "size": 16,
-                            "priority": 15,
-                            "fadeNear": 0.8,
-                            "fadeFar": 0.9
-                        },
-                        "renderOrder": 12
-                    }
-                ]
+                    "fadeNear": 0.8,
+                    "fadeFar": 0.9,
+                    "clipping": false
+                },
+                "renderOrder": 11
             },
-            {},
+            {
+                "description": "residential - foreground",
+                "when": [
+                    "all",
+                    ["==", ["get", "$layer"], "roads"],
+                    ["!=", ["get", "kind"], "rail"],
+                    ["==", ["get", "kind"], "minor_road"],
+                    [
+                        "any",
+                        ["==", ["get", "kind_detail"], "unclassified"],
+                        ["==", ["get", "kind_detail"], "residential"],
+                        ["==", ["get", "kind_detail"], "service"]
+                    ]
+                ],
+                "technique": "solid-line",
+                "attr": {
+                    "color": "#3B3D3F",
+                    "lineWidth": {
+                        "interpolation": "Linear",
+                        "zoomLevels": [10, 11, 12, 13, 14],
+                        "values": [38, 24, 13, 5, 3]
+                    },
+                    "fadeNear": 0.8,
+                    "fadeFar": 0.9,
+                    "clipping": false
+                },
+                "renderOrder": 11.3
+            },
+            {
+                "description": "residential - labels",
+                "when": [
+                    "all",
+                    ["==", ["get", "$layer"], "roads"],
+                    ["!=", ["get", "kind"], "rail"],
+                    ["==", ["get", "kind"], "minor_road"],
+                    [
+                        "any",
+                        ["==", ["get", "kind_detail"], "unclassified"],
+                        ["==", ["get", "kind_detail"], "residential"],
+                        ["==", ["get", "kind_detail"], "service"]
+                    ]
+                ],
+                "technique": "text",
+                "attr": {
+                    "color": "#999999",
+                    "backgroundColor": "#141414",
+                    "backgroundOpacity": 0.5,
+                    "textLabel": "kind_detail",
+                    "size": 16,
+                    "priority": 15,
+                    "fadeNear": 0.8,
+                    "fadeFar": 0.9
+                },
+                "renderOrder": 12
+            },
             {
                 "description": "secondary",
                 "when": [
@@ -448,7 +468,7 @@
                 "final": true
             },
             {
-                "description": "pedestrian",
+                "description": "pedestrian - background",
                 "when": [
                     "all",
                     ["==", ["get", "$layer"], "roads"],
@@ -475,70 +495,94 @@
                         ]
                     ]
                 ],
-                "styles": [
-                    {
-                        "technique": "solid-line",
-                        "attr": {
-                            "color": "#5D5F62",
-                            "lineWidth": 1.5,
-                            "fadeNear": 0.8,
-                            "fadeFar": 0.9,
-                            "clipping": false
-                        },
-                        "renderOrder": 10.3
-                    },
-                    {
-                        "when": [
-                            "all",
-                            ["==", ["get", "$layer"], "roads"],
-                            ["!=", ["get", "kind"], "rail"],
-                            ["==", ["get", "kind"], "path"],
+                "technique": "solid-line",
+                "attr": {
+                    "color": "#5D5F62",
+                    "lineWidth": 1.5,
+                    "fadeNear": 0.8,
+                    "fadeFar": 0.9,
+                    "clipping": false
+                },
+                "renderOrder": 10.3
+            },
+            {
+                "description": "pedestrian - foreground",
+                "when": [
+                    "all",
+                    ["==", ["get", "$layer"], "roads"],
+                    ["!=", ["get", "kind"], "rail"],
+                    ["==", ["get", "kind"], "path"],
+                    [
+                        "any",
+                        ["in", ["get", "kind_detail"], ["pedestrian", "path", "footway"]],
+                        [
+                            "in",
+                            ["get", "landuse_kind"],
                             [
-                                "any",
-                                ["in", ["get", "kind_detail"], ["pedestrian", "path", "footway"]],
-                                [
-                                    "in",
-                                    ["get", "landuse_kind"],
-                                    [
-                                        "park",
-                                        "residential",
-                                        "footway",
-                                        "garden",
-                                        "pedestrian",
-                                        "grass",
-                                        "allotments",
-                                        "forest",
-                                        "cemetery",
-                                        "natural_wood"
-                                    ]
-                                ]
+                                "park",
+                                "residential",
+                                "footway",
+                                "garden",
+                                "pedestrian",
+                                "grass",
+                                "allotments",
+                                "forest",
+                                "cemetery",
+                                "natural_wood"
                             ]
-                        ],
-                        "technique": "solid-line",
-                        "attr": {
-                            "color": "#353637",
-                            "lineWidth": 1.3,
-                            "fadeNear": 0.8,
-                            "fadeFar": 0.9,
-                            "clipping": false
-                        },
-                        "renderOrder": 12.3
-                    },
-                    {
-                        "technique": "text",
-                        "attr": {
-                            "color": "#999999",
-                            "backgroundColor": "#141414",
-                            "backgroundOpacity": 0.5,
-                            "textLabel": "kind_detail",
-                            "size": 16,
-                            "priority": 15,
-                            "fadeNear": 0.8,
-                            "fadeFar": 0.9
-                        },
-                        "renderOrder": 12
-                    }
-                ]
+                        ]
+                    ]
+                ],
+                "technique": "solid-line",
+                "attr": {
+                    "color": "#353637",
+                    "lineWidth": 1.3,
+                    "fadeNear": 0.8,
+                    "fadeFar": 0.9,
+                    "clipping": false
+                },
+                "renderOrder": 12.3
+            },
+            {
+                "description": "pedestrian - labels",
+                "when": [
+                    "all",
+                    ["==", ["get", "$layer"], "roads"],
+                    ["!=", ["get", "kind"], "rail"],
+                    ["==", ["get", "kind"], "path"],
+                    [
+                        "any",
+                        ["in", ["get", "kind_detail"], ["pedestrian", "path", "footway"]],
+                        [
+                            "in",
+                            ["get", "landuse_kind"],
+                            [
+                                "park",
+                                "residential",
+                                "footway",
+                                "garden",
+                                "pedestrian",
+                                "grass",
+                                "allotments",
+                                "forest",
+                                "cemetery",
+                                "natural_wood"
+                            ]
+                        ]
+                    ]
+                ],
+                "technique": "text",
+                "attr": {
+                    "color": "#999999",
+                    "backgroundColor": "#141414",
+                    "backgroundOpacity": 0.5,
+                    "textLabel": "kind_detail",
+                    "size": 16,
+                    "priority": 15,
+                    "fadeNear": 0.8,
+                    "fadeFar": 0.9
+                },
+                "renderOrder": 12
             },
             {
                 "description": "tram",

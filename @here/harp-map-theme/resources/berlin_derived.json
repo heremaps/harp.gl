@@ -8,6 +8,7 @@
         },
         "extrudedBuildings": {
             "technique": "fill",
+            "when": ["ref", "extrudedBuildingsCondition"],
             "attr": {
                 "color": "blue"
             }
