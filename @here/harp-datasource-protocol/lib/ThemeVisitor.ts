@@ -4,7 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { isReference, StyleDeclaration, Theme } from "./Theme";
+import { isJsonExpr } from "./Expr";
+import { StyleDeclaration, Theme } from "./Theme";
 
 /**
  * The ThemeVisitor visits every style in the theme in a depth-first fashion.
@@ -20,7 +21,7 @@ export class ThemeVisitor {
      */
     visitStyles(visitFunc: (style: StyleDeclaration) => boolean): boolean {
         const visit = (style: StyleDeclaration): boolean => {
-            if (isReference(style)) {
+            if (isJsonExpr(style)) {
                 return false;
             }
             if (visitFunc(style)) {

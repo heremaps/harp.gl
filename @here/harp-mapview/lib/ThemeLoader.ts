@@ -7,7 +7,7 @@
 import {
     Definitions,
     isActualSelectorDefinition,
-    isReference,
+    isJsonExprReference,
     isValueDefinition,
     ResolvedStyleDeclaration,
     ResolvedStyleSet,
@@ -121,7 +121,6 @@ export class ThemeLoader {
             );
             ThemeLoader.resolveThemeReferences(theme, contextLoader);
         }
-
         return theme;
     }
 
@@ -328,7 +327,7 @@ export class ThemeLoader {
         definitions: Definitions | undefined,
         contextLogger: IContextLogger
     ): ResolvedStyleDeclaration | undefined {
-        if (isReference(style)) {
+        if (isJsonExprReference(style)) {
             // expand and instantiate references to style definitions.
 
             const def = definitions && definitions[style[1]];
@@ -407,7 +406,7 @@ export class ThemeLoader {
     ): T | undefined {
         let failed = false;
         function resolveInternal(node: any) {
-            if (isReference(node)) {
+            if (isJsonExprReference(node)) {
                 const defName = node[1];
                 const def = definitions && definitions[defName];
                 if (def === undefined) {

@@ -4,9 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { ExtrudedPolygonTechniqueParams } from "@here/harp-datasource-protocol";
-import { MapMeshStandardMaterial } from "@here/harp-materials";
 import * as THREE from "three";
+
+import { ExtrudedPolygonTechnique } from "@here/harp-datasource-protocol";
+import { MapMeshStandardMaterial } from "@here/harp-materials";
 
 /**
  * Bitmask used for the depth pre-pass to prevent multiple fragments in the same screen position
@@ -22,7 +23,7 @@ export const DEPTH_PRE_PASS_STENCIL_MASK = 0x01;
  *
  * @param technique [[BaseStandardTechnique]] instance to be checked
  */
-export function isRenderDepthPrePassEnabled(technique: ExtrudedPolygonTechniqueParams) {
+export function isRenderDepthPrePassEnabled(technique: ExtrudedPolygonTechnique) {
     return (
         technique.enableDepthPrePass !== false &&
         technique.opacity !== undefined &&

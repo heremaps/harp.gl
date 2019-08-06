@@ -162,6 +162,7 @@ export class VTJsonDataAdapter implements OmvDataAdapter {
                         env,
                         tileKey.level
                     );
+
                     break;
                 }
                 case VTJsonGeometryType.Unknown: {
