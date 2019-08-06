@@ -8,11 +8,11 @@ import { Color, CubicInterpolant, DiscreteInterpolant, LinearInterpolant } from 
 
 import { LoggerManager } from "@here/harp-utils";
 import { ExponentialInterpolant } from "./ExponentialInterpolant";
+import { Expr, Value } from "./Expr";
 import {
     InterpolatedProperty,
     InterpolatedPropertyDefinition,
-    InterpolationMode,
-    MaybeInterpolatedProperty
+    InterpolationMode
 } from "./InterpolatedPropertyDefs";
 import {
     StringEncodedHex,
@@ -86,7 +86,7 @@ export function isInterpolatedProperty<T>(p: any): p is InterpolatedProperty<T> 
  *
  */
 export function getPropertyValue<T>(
-    property: InterpolatedProperty<T> | MaybeInterpolatedProperty<T>,
+    property: Value | Expr | InterpolatedProperty<T> | undefined,
     level: number,
     pixelToMeters: number = 1.0
 ): number {

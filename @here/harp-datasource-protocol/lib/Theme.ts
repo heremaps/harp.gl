@@ -5,10 +5,11 @@
  */
 
 import { Vector3Like } from "@here/harp-geoutils/lib/math/Vector3Like";
-import { MaybeInterpolatedProperty } from "./InterpolatedPropertyDefs";
+import { JsonExpr } from "./Expr";
 import {
     BasicExtrudedLineTechniqueParams,
     DashedLineTechniqueParams,
+    DynamicProperty,
     ExtrudedPolygonTechniqueParams,
     FillTechniqueParams,
     MarkerTechniqueParams,
@@ -169,7 +170,7 @@ export interface BooleanValueDefinition extends BaseValueDefinition {
     /**
      * The value of the definition.
      */
-    value: MaybeInterpolatedProperty<boolean>;
+    value: DynamicProperty<boolean>;
 }
 
 /**
@@ -184,7 +185,7 @@ export interface NumericValueDefinition extends BaseValueDefinition {
     /**
      * The value of the definition.
      */
-    value: MaybeInterpolatedProperty<number>;
+    value: DynamicProperty<number>;
 }
 
 /**
@@ -214,7 +215,7 @@ export interface ColorValueDefinition extends BaseValueDefinition {
     /**
      * The value of the definition.
      */
-    value: MaybeInterpolatedProperty<string>;
+    value: DynamicProperty<string>;
 }
 
 export interface SelectorValueDefinition extends BaseValueDefinition {
@@ -228,7 +229,7 @@ export interface SelectorValueDefinition extends BaseValueDefinition {
      *
      * See [[BaseStyle.when]].
      */
-    value: string | unknown[];
+    value: string | JsonExpr;
 }
 
 /**
@@ -274,7 +275,7 @@ export interface StyleSelector {
      *    if the `string` obtained from the first expression ends with the `string` obtained from
      *    the second expression; otherwise, returns `undefined`.
      */
-    when: unknown[] | string | Reference;
+    when: string | JsonExpr;
 
     /**
      * Array of substyles.
@@ -285,6 +286,22 @@ export interface StyleSelector {
      * Optional. If `true`, no more matching styles will be evaluated.
      */
     final?: boolean;
+}
+
+export type JsonExprReference = ["ref", string];
+
+/**
+ * Checks if the given value is a reference to a definition.
+ *
+ * @param value The value of a technique property.
+ */
+export function isJsonExprReference(value: any): value is JsonExprReference {
+    return (
+        Array.isArray(value) &&
+        value.length === 2 &&
+        value[0] === "ref" &&
+        typeof value[1] === "string"
+    );
 }
 
 /**
@@ -301,7 +318,7 @@ export type ResolvedStyleSet = ResolvedStyleDeclaration[];
  * Compound type that merges all raw [Style] with selector arguments from [BaseSelector], optionally
  * a [[Reference]].
  */
-export type StyleDeclaration = (Style & StyleSelector) | Reference;
+export type StyleDeclaration = (Style & StyleSelector) | JsonExpr;
 
 export function isActualSelectorDefinition(def: Definition): def is Style & StyleSelector {
     const styleDef = def as StyleDeclaration;
@@ -339,12 +356,29 @@ export interface BaseStyle {
     technique?: string;
 
     /**
-     * Specify `renderOrder` of object.
+     * Specify `renderOrder` of value.
+     *
+     * @default If not specified in style file, `renderOrder` will be assigned with monotonically
+     * increasing values according to style position in file.
      */
-    renderOrder?: number;
+    renderOrder?: number | JsonExpr;
 
     /**
-     * Property that is used to hold the z-order delta.
+     * Offset added on top of `renderOrder` of object.
+     *
+     * May be uses to adjust final `renderOrder` without interferring with automatically assigned
+     * values.
+     *
+     * Using [[renderOrderBiasProperty]]
+     *
+     * @default 0
+     */
+    renderOrderOffset?: number | JsonExpr;
+
+    /**
+     * Property that is used to hold the z-order delta in [[renderOrderBiasRange]].
+     *
+     * @deprecated, Use `renderOrderOffset` with `["get", "<propName>"]` instead.
      */
     renderOrderBiasProperty?: string;
 
@@ -374,6 +408,8 @@ export interface BaseStyle {
     // TODO: Make pixel units default.
     /**
      * Units in which different size properties are specified. Either `Meter` (default) or `Pixel`.
+     *
+     * @deprecated use "string encoded numerals" as documented in TODO, wher eis the doc ?
      */
     metricUnit?: "Meter" | "Pixel";
 
@@ -646,26 +682,11 @@ export type Definition = ValueDefinition | StyleDeclaration;
  * }
  * ```
  */
-export type Reference = ["ref", string];
-
-/**
- * Checks if the given value is a reference to a definition.
- *
- * @param value The value of a technique property.
- */
-export function isReference(value: any): value is Reference {
-    return (
-        Array.isArray(value) &&
-        value.length === 2 &&
-        value[0] === "ref" &&
-        typeof value[1] === "string"
-    );
-}
 
 /**
  * The attributes of a technique.
  */
-export type Attr<T> = { [P in keyof T]?: T[P] | Reference };
+export type Attr<T> = { [P in keyof T]?: T[P] | JsonExpr };
 
 /**
  * Render feature as set of squares rendered in screen space.

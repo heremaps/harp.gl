@@ -10,6 +10,7 @@
 import { assert } from "chai";
 import { MapEnv } from "../lib/Expr";
 import { StyleSetEvaluator } from "../lib/StyleSetEvaluator";
+import { isSolidLineTechnique, SolidLineTechnique } from "../lib/Techniques";
 import { StyleSet } from "../lib/Theme";
 
 describe("StyleSetEvaluator", function() {
@@ -17,7 +18,7 @@ describe("StyleSetEvaluator", function() {
         {
             description: "first",
             technique: "fill",
-            when: "kind == 'bar'",
+            when: ["==", ["get", "kind"], "bar"], // "kind == 'bar'",
             attr: { color: "yellow" }
         },
         {
@@ -157,5 +158,82 @@ describe("StyleSetEvaluator", function() {
         const parsedStyles = ev.styleSet;
         assert.equal(parsedStyles[0].renderOrder, 0);
         assert.equal(parsedStyles[1].renderOrder, 1001);
+    });
+    describe("dynamic technique atribute support", function() {
+        const testStyle: StyleSet = [
+            {
+                technique: "solid-line",
+                when: "kind == 'park'",
+                attr: {
+                    lineWidth: ["get", "area"],
+                    color: "#00aa00",
+                    secondaryRenderOrder: ["get", "area"],
+                    clipping: ["!", ["get", "clipping"]]
+                }
+            }
+        ];
+        it("instantiates two techniques from one styleset basing on expression result", function() {
+            const ev = new StyleSetEvaluator(testStyle);
+            const r1 = ev.getMatchingTechniques(
+                new MapEnv({ kind: "park", area: 2, clipping: true })
+            );
+            const r2 = ev.getMatchingTechniques(
+                new MapEnv({ kind: "park", area: 3, clipping: false })
+            );
+
+            assert.notStrictEqual(r1, r2);
+
+            assert.equal(ev.techniques.length, 2);
+
+            assert.equal(r1.length, 1);
+            assert.isTrue(isSolidLineTechnique(r1[0]));
+            assert.equal((r1[0] as SolidLineTechnique).clipping, false);
+            assert.equal((r1[0] as SolidLineTechnique).lineWidth, 2);
+            assert.equal(ev.techniques.length, 2);
+
+            assert.isTrue(isSolidLineTechnique(r2[0]));
+            assert.equal((r2[0] as SolidLineTechnique).clipping, true);
+            assert.equal((r2[0] as SolidLineTechnique).lineWidth, 3);
+        });
+
+        it("generates stable technique cache key", function() {
+            const techniquesTileA = (() => {
+                const ev = new StyleSetEvaluator(testStyle);
+                ev.getMatchingTechniques(new MapEnv({ kind: "park" }));
+                ev.getMatchingTechniques(new MapEnv({ kind: "park", area: 2 }));
+                ev.getMatchingTechniques(new MapEnv({ kind: "park", area: 3 }));
+                return ev.decodedTechniques;
+            })();
+
+            assert.equal(techniquesTileA.length, 3);
+
+            const techniquesTileB = (() => {
+                const ev = new StyleSetEvaluator(testStyle);
+                ev.getMatchingTechniques(new MapEnv({ kind: "park", area: 3 }));
+                return ev.decodedTechniques;
+            })();
+
+            assert.equal(techniquesTileB.length, 1);
+
+            const techniquesTileC = (() => {
+                const ev = new StyleSetEvaluator(testStyle);
+                ev.getMatchingTechniques(new MapEnv({ kind: "park", area: 2 }));
+                ev.getMatchingTechniques(new MapEnv({ kind: "park" }));
+                return ev.decodedTechniques;
+            })();
+
+            assert.equal(techniquesTileC.length, 2);
+
+            // delete _index from result techniques, because it may differ
+            [...techniquesTileA, ...techniquesTileB, ...techniquesTileC].forEach(t => {
+                delete t._index;
+            });
+
+            // Now, respective techniques should have same cache key irrespectively to from
+            // which tile they come.
+            assert.deepEqual(techniquesTileA[1], techniquesTileC[0]);
+            assert.deepEqual(techniquesTileA[2], techniquesTileB[0]);
+            assert.deepEqual(techniquesTileA[0], techniquesTileC[1]);
+        });
     });
 });

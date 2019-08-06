@@ -16,6 +16,17 @@ const operators = {
             }
             throw new Error(`invalid operand '${value}' for operator 'length'`);
         }
+    },
+    coalesce: {
+        call: (context: ExprEvaluatorContext, args: Expr[]) => {
+            for (const childExpr of args) {
+                const value = context.evaluate(childExpr);
+                if (value !== null) {
+                    return value;
+                }
+            }
+            return null;
+        }
     }
 };
 

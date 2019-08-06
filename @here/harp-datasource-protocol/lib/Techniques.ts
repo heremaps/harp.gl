@@ -5,6 +5,7 @@
  */
 
 import {
+    BaseTechniqueParams,
     BasicExtrudedLineTechniqueParams,
     DashedLineTechniqueParams,
     ExtrudedPolygonTechniqueParams,
@@ -13,6 +14,7 @@ import {
     LineTechniqueParams,
     MarkerTechniqueParams,
     PointTechniqueParams,
+    PolygonalTechniqueParams,
     SegmentsTechniqueParams,
     ShaderTechniqueParams,
     SolidLineTechniqueParams,
@@ -23,6 +25,14 @@ import {
     TextureCoordinateType
 } from "./TechniqueParams";
 
+import { Expr, JsonExpr } from "./Expr";
+import { InterpolatedProperty, InterpolatedPropertyDefinition } from "./InterpolatedPropertyDefs";
+import {
+    AttrScope,
+    mergeTechniqueDescriptor,
+    TechniqueDescriptor,
+    TechniqueDescriptorRegistry
+} from "./TechniqueDescriptor";
 /**
  * Names of the supported texture properties.
  */
@@ -37,115 +47,437 @@ export const TEXTURE_PROPERTY_KEYS = [
     "bumpMap"
 ];
 
+// TODO: Can be removed, when all when interpolators are implemented as [[Expr]]s
+export type RemoveInterpolatedPropDef<T> = (T | InterpolatedPropertyDefinition<any>) extends T
+    ? Exclude<T, InterpolatedPropertyDefinition<any>>
+    : T;
+export type RemoveJsonExpr<T> = (T | JsonExpr) extends T ? Exclude<T, JsonExpr> : T;
+
+/**
+ * Make runtime representation of technique attributes from JSON-compatible typings.
+ *
+ * Translates
+ *  - InterpolatedPropertyDefinition -> InterpolatedProperty
+ *  - JsonExpr -> Expr
+ */
+export type MakeTechniqueAttrs<T> = {
+    [P in keyof T]: (T[P] | JsonExpr) extends T[P]
+        ? RemoveInterpolatedPropDef<RemoveJsonExpr<T[P]>> | Expr | InterpolatedProperty<number>
+        : T[P];
+};
+
+export const techniqueDescriptors: TechniqueDescriptorRegistry = {};
+
+export const baseTechniqueParamsDescriptor: TechniqueDescriptor<BaseTechniqueParams> = {
+    attrScopes: {
+        renderOrder: AttrScope.TechniqueGeometry,
+        renderOrderOffset: AttrScope.TechniqueGeometry,
+        enabled: AttrScope.TechniqueGeometry,
+        kind: AttrScope.TechniqueGeometry,
+        transient: AttrScope.TechniqueGeometry,
+        fadeFar: AttrScope.TechniqueRendering,
+        fadeNear: AttrScope.TechniqueRendering
+    }
+};
+
+export const pointTechniquePropTypes = mergeTechniqueDescriptor<PointTechniqueParams>(
+    baseTechniqueParamsDescriptor,
+    {
+        attrScopes: {
+            texture: AttrScope.TechniqueGeometry,
+            enablePicking: AttrScope.TechniqueGeometry,
+            color: AttrScope.TechniqueRendering,
+            transparent: AttrScope.TechniqueRendering,
+            opacity: AttrScope.TechniqueGeometry
+        }
+    }
+);
+
 /**
  * Runtime representation of [[SquaresStyle]] as parsed by [[StyleSetEvaluator]].
  */
-export interface SquaresTechnique extends PointTechniqueParams {
+export interface SquaresTechnique extends MakeTechniqueAttrs<PointTechniqueParams> {
     name: "squares";
 }
+
+export const squaresTechniquePropTypes = mergeTechniqueDescriptor<SquaresTechnique>(
+    baseTechniqueParamsDescriptor,
+    pointTechniquePropTypes
+);
+techniqueDescriptors.squares = squaresTechniquePropTypes;
 
 /**
  * Runtime representation of [[CirclesStyle]] as parsed by [[StyleSetEvaluator]].
  */
-export interface CirclesTechnique extends PointTechniqueParams {
+export interface CirclesTechnique extends MakeTechniqueAttrs<PointTechniqueParams> {
     name: "circles";
 }
+
+export const circlesTechniquePropTypes = mergeTechniqueDescriptor<CirclesTechnique>(
+    baseTechniqueParamsDescriptor,
+    pointTechniquePropTypes
+);
+techniqueDescriptors.circles = circlesTechniquePropTypes;
 
 /**
  * Runtime representation of [[PoiStyle]] as parsed by [[StyleSetEvaluator]].
  */
-export interface PoiTechnique extends MarkerTechniqueParams {
+export interface PoiTechnique extends MakeTechniqueAttrs<MarkerTechniqueParams> {
     name: "labeled-icon";
 }
 
 /**
  * Runtime representation of [[LineMarkerStyle]] as parsed by [[StyleSetEvaluator]].
  */
-export interface LineMarkerTechnique extends MarkerTechniqueParams {
+export interface LineMarkerTechnique extends MakeTechniqueAttrs<MarkerTechniqueParams> {
     name: "line-marker";
 }
+
+const lineMarkerTechniquePropTypes = mergeTechniqueDescriptor<LineMarkerTechnique>(
+    baseTechniqueParamsDescriptor,
+    {
+        attrScopes: {
+            text: AttrScope.FeatureGeometry,
+            label: AttrScope.FeatureGeometry,
+            useAbbreviation: AttrScope.FeatureGeometry,
+            useIsoCode: AttrScope.FeatureGeometry,
+            priority: AttrScope.TechniqueGeometry,
+            textMinZoomLevel: AttrScope.TechniqueGeometry,
+            textMaxZoomLevel: AttrScope.TechniqueGeometry,
+            iconMinZoomLevel: AttrScope.TechniqueGeometry,
+            iconMaxZoomLevel: AttrScope.TechniqueGeometry,
+            distanceScale: AttrScope.TechniqueGeometry,
+            textMayOverlap: AttrScope.TechniqueGeometry,
+            iconMayOverlap: AttrScope.TechniqueGeometry,
+            textReserveSpace: AttrScope.TechniqueGeometry,
+            iconReserveSpace: AttrScope.TechniqueGeometry,
+            renderTextDuringMovements: AttrScope.TechniqueGeometry,
+            alwaysOnTop: AttrScope.TechniqueGeometry,
+            textIsOptional: AttrScope.TechniqueGeometry,
+            showOnMap: AttrScope.TechniqueGeometry,
+            stackMode: AttrScope.TechniqueGeometry,
+            minDistance: AttrScope.TechniqueGeometry,
+            iconIsOptional: AttrScope.TechniqueGeometry,
+            iconFadeTime: AttrScope.TechniqueGeometry,
+            textFadeTime: AttrScope.TechniqueGeometry,
+            xOffset: AttrScope.TechniqueGeometry,
+            yOffset: AttrScope.TechniqueGeometry,
+            iconXOffset: AttrScope.TechniqueGeometry,
+            iconYOffset: AttrScope.TechniqueGeometry,
+            iconScale: AttrScope.TechniqueGeometry,
+            screenHeight: AttrScope.TechniqueGeometry,
+            screenWidth: AttrScope.TechniqueGeometry,
+            poiTable: AttrScope.TechniqueGeometry,
+            poiName: AttrScope.FeatureGeometry,
+            poiNameField: AttrScope.TechniqueGeometry,
+            imageTexture: AttrScope.FeatureGeometry,
+            imageTextureField: AttrScope.TechniqueGeometry,
+            imageTexturePrefix: AttrScope.TechniqueGeometry,
+            imageTexturePostfix: AttrScope.TechniqueGeometry,
+            style: AttrScope.TechniqueGeometry,
+            fontName: AttrScope.TechniqueGeometry,
+            fontStyle: AttrScope.TechniqueGeometry,
+            fontVariant: AttrScope.TechniqueGeometry,
+            rotation: AttrScope.TechniqueGeometry,
+            tracking: AttrScope.TechniqueGeometry,
+            leading: AttrScope.TechniqueGeometry,
+            maxLines: AttrScope.TechniqueGeometry,
+            lineWidth: AttrScope.TechniqueGeometry,
+            canvasRotation: AttrScope.TechniqueGeometry,
+            lineRotation: AttrScope.TechniqueGeometry,
+            wrappingMode: AttrScope.TechniqueGeometry,
+            hAlignment: AttrScope.TechniqueGeometry,
+            vAlignment: AttrScope.TechniqueGeometry,
+            backgroundColor: AttrScope.TechniqueRendering,
+            backgroundSize: AttrScope.TechniqueRendering,
+            backgroundOpacity: AttrScope.TechniqueRendering,
+            color: AttrScope.TechniqueRendering,
+            opacity: AttrScope.TechniqueRendering,
+            size: AttrScope.TechniqueRendering
+        }
+    }
+);
+techniqueDescriptors["line-marker"] = lineMarkerTechniquePropTypes;
+techniqueDescriptors["labeled-icon"] = lineMarkerTechniquePropTypes;
 
 /**
  * Runtime representation of [[SegmentsStyle]] as parsed by [[StyleSetEvaluator]].
  */
-export interface SegmentsTechnique extends SegmentsTechniqueParams {
+export interface SegmentsTechnique extends MakeTechniqueAttrs<SegmentsTechniqueParams> {
     name: "segments";
 }
 
+const polygonalTechniqueDescriptor: TechniqueDescriptor<PolygonalTechniqueParams> = {
+    attrScopes: {
+        polygonOffset: AttrScope.TechniqueRendering,
+        polygonOffsetFactor: AttrScope.TechniqueRendering,
+        polygonOffsetUnits: AttrScope.TechniqueRendering,
+        lineColor: AttrScope.TechniqueRendering,
+        lineFadeFar: AttrScope.TechniqueRendering,
+        lineFadeNear: AttrScope.TechniqueRendering
+    }
+};
 /**
  * Runtime representation of [[BasicExtrudedLineStyle]] as parsed by [[StyleSetEvaluator]].
  */
-export interface BasicExtrudedLineTechnique extends BasicExtrudedLineTechniqueParams {
+export interface BasicExtrudedLineTechnique
+    extends MakeTechniqueAttrs<BasicExtrudedLineTechniqueParams> {
     name: "extruded-line";
 }
 
 /**
  * Runtime representation of [[StandardExtrudedLineStyle]] as parsed by [[StyleSetEvaluator]].
  */
-export interface StandardExtrudedLineTechnique extends StandardExtrudedLineTechniqueParams {
+export interface StandardExtrudedLineTechnique
+    extends MakeTechniqueAttrs<StandardExtrudedLineTechniqueParams> {
     name: "extruded-line";
 }
 
 /**
  * Runtime representation of [[SolidLineStyle]] as parsed by [[StyleSetEvaluator]].
  */
-export interface SolidLineTechnique extends SolidLineTechniqueParams {
+export interface SolidLineTechnique extends MakeTechniqueAttrs<SolidLineTechniqueParams> {
     name: "solid-line";
 }
+
+export const solidLineTechniqueDescriptor = mergeTechniqueDescriptor<SolidLineTechnique>(
+    baseTechniqueParamsDescriptor,
+    polygonalTechniqueDescriptor,
+    {
+        attrScopes: {
+            clipping: AttrScope.TechniqueGeometry,
+            secondaryRenderOrder: AttrScope.TechniqueGeometry,
+            color: AttrScope.TechniqueRendering,
+            opacity: AttrScope.TechniqueRendering,
+            transparent: AttrScope.TechniqueRendering,
+            lineWidth: AttrScope.TechniqueRendering,
+            secondaryWidth: AttrScope.TechniqueRendering,
+            secondaryColor: AttrScope.TechniqueRendering
+        }
+    }
+);
+techniqueDescriptors["solid-line"] = solidLineTechniqueDescriptor;
 
 /**
  * Runtime representation of [[DashedLineStyle]] as parsed by [[StyleSetEvaluator]].
  */
-export interface DashedLineTechnique extends DashedLineTechniqueParams {
+export interface DashedLineTechnique extends MakeTechniqueAttrs<DashedLineTechniqueParams> {
     name: "dashed-line";
 }
+
+export const dashedLineTechniqueDescriptor = mergeTechniqueDescriptor<DashedLineTechnique>(
+    baseTechniqueParamsDescriptor,
+    polygonalTechniqueDescriptor,
+    {
+        attrScopes: {
+            color: AttrScope.TechniqueRendering,
+            clipping: AttrScope.TechniqueGeometry,
+            opacity: AttrScope.TechniqueRendering,
+            transparent: AttrScope.TechniqueRendering,
+            lineWidth: AttrScope.TechniqueRendering,
+            dashSize: AttrScope.TechniqueRendering,
+            gapSize: AttrScope.TechniqueRendering
+        }
+    }
+);
+
+techniqueDescriptors["dashed-line"] = dashedLineTechniqueDescriptor;
 
 /**
  * Runtime representation of [[LineStyle]] as parsed by [[StyleSetEvaluator]].
  */
-export interface LineTechnique extends LineTechniqueParams {
+export interface LineTechnique extends MakeTechniqueAttrs<LineTechniqueParams> {
     name: "line";
 }
+
+export const lineTechniqueDescriptor = mergeTechniqueDescriptor<LineTechnique>(
+    baseTechniqueParamsDescriptor,
+    {
+        attrScopes: {
+            // TODO, check, which are really dynamic !
+            color: AttrScope.TechniqueRendering,
+            opacity: AttrScope.TechniqueRendering,
+            transparent: AttrScope.TechniqueRendering,
+            lineWidth: AttrScope.FeatureGeometry
+        }
+    }
+);
+
+techniqueDescriptors.line = lineTechniqueDescriptor;
 
 /**
  * Runtime representation of [[FillStyle]] as parsed by [[StyleSetEvaluator]].
  */
-export interface FillTechnique extends FillTechniqueParams {
+export interface FillTechnique extends MakeTechniqueAttrs<FillTechniqueParams> {
     name: "fill";
 }
 
-/**
- * Runtime representation of [[ExtrudedPolygonStyle]] as parsed by [[StyleSetEvaluator]].
- */
-export interface ExtrudedPolygonTechnique extends ExtrudedPolygonTechniqueParams {
-    name: "extruded-polygon";
-}
-
-/**
- * Runtime representation of [[TextStyle]] as parsed by [[StyleSetEvaluator]].
- */
-export interface TextTechnique extends TextTechniqueParams {
-    name: "text";
-}
+const fillTechniqueDescriptor = mergeTechniqueDescriptor<FillTechnique>(
+    baseTechniqueParamsDescriptor,
+    polygonalTechniqueDescriptor,
+    {
+        attrScopes: {
+            color: AttrScope.TechniqueRendering,
+            opacity: AttrScope.TechniqueRendering,
+            transparent: AttrScope.TechniqueRendering,
+            lineWidth: AttrScope.TechniqueRendering
+        }
+    }
+);
+techniqueDescriptors.fill = fillTechniqueDescriptor;
 
 /**
  * Technique used to render a mesh geometry.
  */
-export interface StandardTechnique extends StandardTechniqueParams {
+export interface StandardTechnique extends MakeTechniqueAttrs<StandardTechniqueParams> {
     name: "standard";
 }
+const standardTechniqueDescriptor = mergeTechniqueDescriptor<StandardTechnique>(
+    baseTechniqueParamsDescriptor,
+    {
+        attrScopes: {
+            color: AttrScope.FeatureGeometry,
+            vertexColors: AttrScope.FeatureGeometry,
+            wireframe: AttrScope.TechniqueRendering,
+            roughness: AttrScope.TechniqueRendering,
+            metalness: AttrScope.TechniqueRendering,
+            alphaTest: AttrScope.TechniqueRendering,
+            depthTest: AttrScope.TechniqueRendering,
+            transparent: AttrScope.TechniqueRendering,
+            opacity: AttrScope.TechniqueRendering,
+            emissive: AttrScope.TechniqueRendering,
+            emissiveIntensity: AttrScope.TechniqueRendering,
+            refractionRatio: AttrScope.TechniqueRendering,
+            map: AttrScope.TechniqueGeometry,
+            mapProperties: AttrScope.TechniqueGeometry,
+            normalMap: AttrScope.TechniqueGeometry,
+            normalMapProperties: AttrScope.TechniqueGeometry,
+            displacementMap: AttrScope.TechniqueGeometry,
+            displacementMapProperties: AttrScope.TechniqueGeometry,
+            roughnessMap: AttrScope.TechniqueGeometry,
+            roughnessMapProperties: AttrScope.TechniqueGeometry,
+            emissiveMap: AttrScope.TechniqueGeometry,
+            emissiveMapProperties: AttrScope.TechniqueGeometry,
+            bumpMap: AttrScope.TechniqueGeometry,
+            bumpMapProperties: AttrScope.TechniqueGeometry,
+            metalnessMap: AttrScope.TechniqueGeometry,
+            metalnessMapProperties: AttrScope.TechniqueGeometry,
+            alphaMap: AttrScope.TechniqueGeometry,
+            alphaMapProperties: AttrScope.TechniqueGeometry
+        }
+    }
+);
+techniqueDescriptors.standard = standardTechniqueDescriptor;
 
-export interface ShaderTechnique extends ShaderTechniqueParams {
+/**
+ * Runtime representation of [[ExtrudedPolygonStyle]] as parsed by [[StyleSetEvaluator]].
+ */
+export interface ExtrudedPolygonTechnique
+    extends MakeTechniqueAttrs<ExtrudedPolygonTechniqueParams> {
+    name: "extruded-polygon";
+}
+
+const extrudedPolygonTechniqueDescriptor = mergeTechniqueDescriptor<ExtrudedPolygonTechnique>(
+    baseTechniqueParamsDescriptor,
+    standardTechniqueDescriptor,
+    {
+        attrScopes: {
+            height: AttrScope.FeatureGeometry,
+            floorHeight: AttrScope.FeatureGeometry,
+            color: AttrScope.FeatureGeometry,
+            defaultColor: AttrScope.FeatureGeometry,
+            defaultHeight: AttrScope.FeatureGeometry,
+            constantHeight: AttrScope.FeatureGeometry,
+            boundaryWalls: AttrScope.FeatureGeometry,
+            footprint: AttrScope.FeatureGeometry,
+            maxSlope: AttrScope.FeatureGeometry,
+            enableDepthPrePass: AttrScope.TechniqueGeometry,
+            animateExtrusionDuration: AttrScope.TechniqueGeometry,
+            animateExtrusion: AttrScope.TechniqueRendering,
+            opacity: AttrScope.TechniqueRendering,
+            transparent: AttrScope.TechniqueRendering,
+            lineWidth: AttrScope.TechniqueRendering,
+            lineFadeNear: AttrScope.TechniqueRendering,
+            lineFadeFar: AttrScope.TechniqueRendering,
+            lineColorMix: AttrScope.TechniqueGeometry,
+            lineColor: AttrScope.TechniqueRendering
+        }
+    }
+);
+techniqueDescriptors["extruded-polygon"] = extrudedPolygonTechniqueDescriptor;
+/**
+ * Runtime representation of [[TextStyle]] as parsed by [[StyleSetEvaluator]].
+ */
+export interface TextTechnique extends MakeTechniqueAttrs<TextTechniqueParams> {
+    name: "text";
+}
+
+const textTechniqueDescriptor = mergeTechniqueDescriptor<TextTechnique>(
+    baseTechniqueParamsDescriptor,
+    {
+        attrScopes: {
+            text: AttrScope.FeatureGeometry,
+            label: AttrScope.FeatureGeometry,
+            useAbbreviation: AttrScope.FeatureGeometry,
+            useIsoCode: AttrScope.FeatureGeometry,
+
+            minZoomLevel: AttrScope.TechniqueGeometry,
+            maxZoomLevel: AttrScope.TechniqueGeometry,
+            distanceScale: AttrScope.TechniqueGeometry,
+            mayOverlap: AttrScope.TechniqueGeometry,
+            reserveSpace: AttrScope.TechniqueGeometry,
+            textFadeTime: AttrScope.TechniqueGeometry,
+            xOffset: AttrScope.TechniqueGeometry,
+            yOffset: AttrScope.TechniqueGeometry,
+            style: AttrScope.TechniqueGeometry,
+            fontName: AttrScope.TechniqueGeometry,
+            fontStyle: AttrScope.TechniqueGeometry,
+            fontVariant: AttrScope.TechniqueGeometry,
+            rotation: AttrScope.TechniqueGeometry,
+            tracking: AttrScope.TechniqueGeometry,
+            leading: AttrScope.TechniqueGeometry,
+            maxLines: AttrScope.TechniqueGeometry,
+            lineWidth: AttrScope.TechniqueGeometry,
+            canvasRotation: AttrScope.TechniqueGeometry,
+            lineRotation: AttrScope.TechniqueGeometry,
+            wrappingMode: AttrScope.TechniqueGeometry,
+            hAlignment: AttrScope.TechniqueGeometry,
+            vAlignment: AttrScope.TechniqueGeometry,
+            backgroundColor: AttrScope.TechniqueRendering,
+            backgroundSize: AttrScope.TechniqueRendering,
+            backgroundOpacity: AttrScope.TechniqueRendering,
+            color: AttrScope.TechniqueRendering,
+            opacity: AttrScope.TechniqueRendering,
+            priority: AttrScope.TechniqueRendering,
+            size: AttrScope.TechniqueRendering
+        }
+    }
+);
+techniqueDescriptors.text = textTechniqueDescriptor;
+
+export interface ShaderTechnique extends MakeTechniqueAttrs<ShaderTechniqueParams> {
     /**
      * Name of technique. Is used in the theme file.
      */
     name: "shader";
 }
 
+const shaderTechniqueDescriptor = mergeTechniqueDescriptor<ShaderTechnique>(
+    baseTechniqueParamsDescriptor,
+    {
+        attrScopes: {
+            primitive: AttrScope.TechniqueGeometry,
+            params: AttrScope.TechniqueRendering
+        }
+    }
+);
+
+techniqueDescriptors.shader = shaderTechniqueDescriptor;
+
 /**
  * Technique used to render a terrain geometry with textures.
  */
-export interface TerrainTechnique extends TerrainTechniqueParams {
+export interface TerrainTechnique extends MakeTechniqueAttrs<TerrainTechniqueParams> {
     name: "terrain";
 }
 
@@ -169,6 +501,7 @@ export type Technique =
     | ExtrudedPolygonTechnique
     | ShaderTechnique
     | TextTechnique;
+
 /**
  * Additional params used for optimized usage of `Techniques`.
  */
@@ -180,7 +513,14 @@ export interface IndexedTechniqueParams {
     _index: number;
 
     /**
-     * Optimization: Unique [[Technique]] index within source [[StyleSet]].
+     * Unique technique key derived from all dynamic expressions that were input to this particular
+     * technique instance.
+     * @hidden
+     */
+    _key: string;
+
+    /**
+     * Optimization: Unique [[Technique]] index of [[Style]] from which technique was derived.
      * @hidden
      */
     _styleSetIndex: number;

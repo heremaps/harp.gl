@@ -10,9 +10,10 @@ import {
     FeatureGroupType,
     IndexedTechnique
 } from "@here/harp-datasource-protocol";
-import { MapEnv, StyleSetEvaluator } from "@here/harp-datasource-protocol/index-decoder";
+import { StyleSetEvaluator } from "@here/harp-datasource-protocol/index-decoder";
 import * as THREE from "three";
 
+import { AttrEvaluationContext } from "@here/harp-datasource-protocol/lib/TechniqueAttr";
 import { ILineGeometry, IPolygonGeometry } from "./IGeometryProcessor";
 import { IOmvEmitter, OmvDecoder, Ring } from "./OmvDecoder";
 import { webMercatorTile2TargetWorld } from "./OmvUtils";
@@ -40,8 +41,7 @@ export class OmvTileInfoEmitter implements IOmvEmitter {
         this.m_tileInfo = new ExtendedTileInfo(m_decodeInfo.tileKey, this.m_storeExtendedTags);
         this.m_tileInfoWriter = new ExtendedTileInfoWriter(
             this.m_tileInfo,
-            this.m_storeExtendedTags,
-            this.m_languages
+            this.m_storeExtendedTags
         );
     }
 
@@ -49,7 +49,7 @@ export class OmvTileInfoEmitter implements IOmvEmitter {
         layer: string,
         extents: number,
         geometry: THREE.Vector2[],
-        env: MapEnv,
+        context: AttrEvaluationContext,
         techniques: IndexedTechnique[],
         featureId: number | undefined
     ): void {
@@ -63,14 +63,18 @@ export class OmvTileInfoEmitter implements IOmvEmitter {
             }
 
             const infoTileTechniqueIndex = tileInfoWriter.addTechnique(technique);
-
+            const featureText = ExtendedTileInfo.getFeatureText(
+                context,
+                technique,
+                this.m_languages
+            );
             for (const pos of geometry) {
                 webMercatorTile2TargetWorld(extents, this.m_decodeInfo, pos, tmpV);
                 tileInfoWriter.addFeature(
                     this.m_tileInfo.pointGroup,
-                    technique,
-                    env,
+                    context.env,
                     featureId,
+                    featureText,
                     infoTileTechniqueIndex,
                     FeatureGroupType.Point
                 );
@@ -83,11 +87,12 @@ export class OmvTileInfoEmitter implements IOmvEmitter {
         layer: string,
         extents: number,
         geometry: ILineGeometry[],
-        env: MapEnv,
+        context: AttrEvaluationContext,
         techniques: IndexedTechnique[],
         featureId: number | undefined
     ): void {
         const tileInfoWriter = this.m_tileInfoWriter;
+        const env = context.env;
 
         const tmpV = new THREE.Vector3();
 
@@ -108,13 +113,17 @@ export class OmvTileInfoEmitter implements IOmvEmitter {
             }
 
             const infoTileTechniqueIndex = tileInfoWriter.addTechnique(technique);
-
+            const featureText = ExtendedTileInfo.getFeatureText(
+                context,
+                technique,
+                this.m_languages
+            );
             for (const aLine of lines) {
                 tileInfoWriter.addFeature(
                     this.m_tileInfo.lineGroup,
-                    technique,
                     env,
                     featureId,
+                    featureText,
                     infoTileTechniqueIndex,
                     FeatureGroupType.Line
                 );
@@ -142,7 +151,7 @@ export class OmvTileInfoEmitter implements IOmvEmitter {
         layer: string,
         extents: number,
         geometry: IPolygonGeometry[],
-        env: MapEnv,
+        context: AttrEvaluationContext,
         techniques: IndexedTechnique[],
         featureId: number | undefined
     ): void {
@@ -178,11 +187,16 @@ export class OmvTileInfoEmitter implements IOmvEmitter {
 
             const infoTileTechniqueIndex = tileInfoWriter.addTechnique(technique);
 
+            const featureText = ExtendedTileInfo.getFeatureText(
+                context,
+                technique,
+                this.m_languages
+            );
             tileInfoWriter.addFeature(
                 this.m_tileInfo.polygonGroup,
-                technique,
-                env,
+                context.env,
                 featureId,
+                featureText,
                 infoTileTechniqueIndex,
                 FeatureGroupType.Polygon
             );
