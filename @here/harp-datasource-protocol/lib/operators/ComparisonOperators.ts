@@ -4,13 +4,19 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { OperatorDescriptorMap } from "../ExprEvaluator";
+import { Expr } from "../Expr";
+import { ExprEvaluatorContext, OperatorDescriptorMap } from "../ExprEvaluator";
 
 type RelOp = "<" | ">" | "<=" | ">=";
 
-function compare(op: RelOp, actuals: any[], strict: boolean = false) {
-    const left = actuals[0];
-    const right = actuals[1];
+function compare(
+    context: ExprEvaluatorContext,
+    op: RelOp,
+    actuals: Expr[],
+    strict: boolean = false
+) {
+    const left = context.evaluate(actuals[0]) as any;
+    const right = context.evaluate(actuals[1]) as any;
 
     if (
         !(
@@ -39,40 +45,31 @@ function compare(op: RelOp, actuals: any[], strict: boolean = false) {
 
 const operators = {
     "!": {
-        call: (actuals: unknown[]) => !actuals[0]
+        call: (context: ExprEvaluatorContext, args: Expr[]) => {
+            return !context.evaluate(args[0]);
+        }
     },
 
     "==": {
-        call: (actuals: unknown[]) => {
-            const left = actuals[0];
-            const right = actuals[1];
+        call: (context: ExprEvaluatorContext, args: Expr[]) => {
+            const left = context.evaluate(args[0]);
+            const right = context.evaluate(args[1]);
             return left === right;
         }
     },
 
     "!=": {
-        call: (actuals: unknown[]) => {
-            const left = actuals[0];
-            const right = actuals[1];
+        call: (context: ExprEvaluatorContext, args: Expr[]) => {
+            const left = context.evaluate(args[0]);
+            const right = context.evaluate(args[1]);
             return left !== right;
         }
     },
 
-    "<": {
-        call: (actuals: unknown[]) => compare("<", actuals)
-    },
-
-    ">": {
-        call: (actuals: unknown[]) => compare(">", actuals)
-    },
-
-    "<=": {
-        call: (actuals: unknown[]) => compare("<=", actuals)
-    },
-
-    ">=": {
-        call: (actuals: unknown[]) => compare(">=", actuals)
-    }
+    "<": { call: (context: ExprEvaluatorContext, args: Expr[]) => compare(context, "<", args) },
+    ">": { call: (context: ExprEvaluatorContext, args: Expr[]) => compare(context, ">", args) },
+    "<=": { call: (context: ExprEvaluatorContext, args: Expr[]) => compare(context, "<=", args) },
+    ">=": { call: (context: ExprEvaluatorContext, args: Expr[]) => compare(context, ">=", args) }
 };
 
 export const ComparisonOperators: OperatorDescriptorMap = operators;

@@ -20,13 +20,14 @@ import {
 
 import { CastOperators } from "./operators/CastOperators";
 import { ComparisonOperators } from "./operators/ComparisonOperators";
+import { FlowOperators } from "./operators/FlowOperators";
 import { MathOperators } from "./operators/MathOperators";
 import { MiscOperators } from "./operators/MiscOperators";
 import { StringOperators } from "./operators/StringOperators";
 import { TypeOperators } from "./operators/TypeOperators";
 
 export interface OperatorDescriptor {
-    call: (actuals: Value[]) => Value;
+    call: (context: ExprEvaluatorContext, args: Expr[]) => Value;
 }
 
 export interface OperatorDescriptorMap {
@@ -38,16 +39,16 @@ const operatorDescriptors = new Map<string, OperatorDescriptor>();
 /*
  * @hidden
  */
-export interface ExprEvaluatorContext {
-    /**
-     * The [[Env]] used to lookup symbols.
-     */
-    env: Env;
+export class ExprEvaluatorContext {
+    constructor(
+        readonly evaluator: ExprEvaluator,
+        readonly env: Env,
+        readonly cache?: Map<Expr, Value>
+    ) {}
 
-    /**
-     * Cached results.
-     */
-    cache?: Map<Expr, Value>;
+    evaluate(expr: Expr | undefined) {
+        return expr === undefined ? undefined : expr.accept(this.evaluator, this);
+    }
 }
 
 /**
@@ -125,17 +126,6 @@ export class ExprEvaluator implements ExprVisitor<Value, ExprEvaluatorContext> {
                 }
                 return true;
 
-            case "boolean":
-            case "number":
-            case "string":
-                for (const childExpr of expr.children) {
-                    const value = childExpr.accept(this, context);
-                    if (typeof value === expr.op) {
-                        return value;
-                    }
-                }
-                throw new Error(`expected a '${expr.op}'`);
-
             default: {
                 if (context.cache !== undefined) {
                     const v = context.cache.get(expr);
@@ -149,9 +139,7 @@ export class ExprEvaluator implements ExprVisitor<Value, ExprEvaluatorContext> {
                 if (descriptor) {
                     expr.descriptor = descriptor;
 
-                    const actuals = expr.children.map(arg => arg.accept(this, context));
-
-                    const result = descriptor.call(actuals);
+                    const result = descriptor.call(context, expr.children);
 
                     if (context.cache) {
                         context.cache.set(expr, result);
@@ -172,3 +160,4 @@ ExprEvaluator.defineOperators(MathOperators);
 ExprEvaluator.defineOperators(StringOperators);
 ExprEvaluator.defineOperators(TypeOperators);
 ExprEvaluator.defineOperators(MiscOperators);
+ExprEvaluator.defineOperators(FlowOperators);
