@@ -21,6 +21,7 @@ import {
 } from "../lib/TileInfo";
 
 import { assert } from "chai";
+import { FeatureEnv } from "../index-decoder";
 
 describe("ExtendedTileInfo", function() {
     const tileKey = new TileKey(0, 0, 0);
@@ -210,14 +211,15 @@ describe("ExtendedTileInfo", function() {
 
     function createPointInfo(
         index: number
-    ): { technique: IndexedTechnique; storedTechnique: IndexedTechnique; env: MapEnv } {
+    ): { technique: IndexedTechnique; storedTechnique: IndexedTechnique; env: FeatureEnv } {
         const technique: IndexedTechnique = {
             name: "squares",
             color: "#F00",
             size: index,
             renderOrder: 0,
             _index: index,
-            _styleSetIndex: index
+            _styleSetIndex: index,
+            _key: `${index}`
         };
         const storedTechnique: IndexedTechnique = {
             name: "squares",
@@ -225,14 +227,18 @@ describe("ExtendedTileInfo", function() {
             size: index,
             renderOrder: 0,
             _index: index,
-            _styleSetIndex: index
+            _styleSetIndex: index,
+            _key: `${index}`
         };
-        const env = new MapEnv({
-            $layer: "point_layer-" + index,
-            class: "point_class-" + index,
-            type: "point_type-" + index,
-            name: "point_label-" + index
-        });
+        const env = new FeatureEnv(
+            new MapEnv({
+                $layer: "point_layer-" + index,
+                class: "point_class-" + index,
+                type: "point_type-" + index,
+                name: "point_label-" + index
+            }),
+            10
+        );
 
         return {
             technique,
@@ -243,14 +249,15 @@ describe("ExtendedTileInfo", function() {
 
     function createLineInfo(
         index: number
-    ): { technique: IndexedTechnique; storedTechnique: IndexedTechnique; env: MapEnv } {
+    ): { technique: IndexedTechnique; storedTechnique: IndexedTechnique; env: FeatureEnv } {
         const technique: IndexedTechnique = {
             name: "line",
             color: "#0F0",
             lineWidth: index,
             renderOrder: 0,
             _index: index,
-            _styleSetIndex: index
+            _styleSetIndex: index,
+            _key: `${index}`
         };
         const storedTechnique: IndexedTechnique = {
             name: "line",
@@ -258,14 +265,18 @@ describe("ExtendedTileInfo", function() {
             lineWidth: index,
             renderOrder: 0,
             _index: index,
-            _styleSetIndex: index
+            _styleSetIndex: index,
+            _key: `${index}`
         };
-        const env = new MapEnv({
-            $layer: "line_layer-" + index,
-            class: "line_class-" + index,
-            type: "line_type-" + index,
-            name: "lineLabel-" + index
-        });
+        const env = new FeatureEnv(
+            new MapEnv({
+                $layer: "line_layer-" + index,
+                class: "line_class-" + index,
+                type: "line_type-" + index,
+                name: "lineLabel-" + index
+            }),
+            15
+        );
 
         return {
             technique,
@@ -276,27 +287,32 @@ describe("ExtendedTileInfo", function() {
 
     function createPolygonInfo(
         index: number
-    ): { technique: IndexedTechnique; storedTechnique: IndexedTechnique; env: MapEnv } {
+    ): { technique: IndexedTechnique; storedTechnique: IndexedTechnique; env: FeatureEnv } {
         const technique: IndexedTechnique = {
             name: "fill",
             color: "#00f",
             renderOrder: 0,
             _index: index,
-            _styleSetIndex: index
+            _styleSetIndex: index,
+            _key: `${index}`
         };
         const storedTechnique: IndexedTechnique = {
             name: "fill",
             color: "#00f",
             renderOrder: 0,
             _index: index,
-            _styleSetIndex: index
+            _styleSetIndex: index,
+            _key: `${index}`
         };
-        const env = new MapEnv({
-            $layer: "fill_layer-" + index,
-            class: "fill_class-" + index,
-            type: "fill_type-" + index,
-            name: "fillLabel-" + index
-        });
+        const env = new FeatureEnv(
+            new MapEnv({
+                $layer: "fill_layer-" + index,
+                class: "fill_class-" + index,
+                type: "fill_type-" + index,
+                name: "fillLabel-" + index
+            }),
+            10
+        );
 
         return {
             technique,

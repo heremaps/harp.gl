@@ -6,8 +6,15 @@
 import { TileKey } from "@here/harp-geoutils";
 import { assert } from "@here/harp-utils";
 
-import { Env, MapEnv, Value } from "./Expr";
-import { IndexedTechnique, Technique, TextTechnique } from "./Techniques";
+import { Env, Value } from "./Expr";
+import { FeatureEnv } from "./FeatureEnv";
+import {
+    IndexedTechnique,
+    LineMarkerTechnique,
+    PoiTechnique,
+    Technique,
+    TextTechnique
+} from "./Techniques";
 
 /**
  * Defines a map tile metadata.
@@ -410,7 +417,7 @@ export namespace ExtendedTileInfo {
     }
 
     /**
-     * Determine the text string of the (OMV) feature. It implements the special handling required
+     * Determine the name of (OMV) feature. It implements the special handling required
      * to determine the text content of a feature from its tags, which are passed in as the `env`.
      *
      * @param env Environment containing the tags from the (OMV) feature.
@@ -421,8 +428,8 @@ export namespace ExtendedTileInfo {
      */
     export function getFeatureName(
         env: Env,
-        useAbbreviation: boolean,
-        useIsoCode: boolean,
+        useAbbreviation?: boolean,
+        useIsoCode?: boolean,
         languages?: string[]
     ): string | undefined {
         let name;
@@ -451,6 +458,32 @@ export namespace ExtendedTileInfo {
             return name;
         }
         return undefined;
+    }
+
+    /**
+     * Determine the text string of the (OMV) feature. It implements the special handling required
+     * to determine the text content of a feature from its tags, which are passed in as the `env`.
+     *
+     * @param env Environment containing the tags from the (OMV) feature.
+     * @param technique technique defining how text should be created from feature
+     * @param languages List of languages to use, for example: Specify "en" to use the tag "name_en"
+     *                  as the text of the string. Order reflects priority.
+     */
+    export function getFeatureText(
+        env: FeatureEnv,
+        technique: TextTechnique | PoiTechnique | LineMarkerTechnique,
+        languages?: string[]
+    ): string | undefined {
+        let name;
+        if (technique.text !== undefined) {
+            return env.evaluate(technique.text);
+        }
+        if (technique.label !== undefined) {
+            name = env.lookup(technique.label);
+            return typeof name === "string" ? name : undefined;
+        }
+
+        return getFeatureName(env, technique.useAbbreviation, technique.useIsoCode, languages);
     }
 }
 
@@ -511,6 +544,7 @@ export class ExtendedTileInfoWriter {
 
         // Keep the index to identify the original technique later.
         storedTechnique._index = technique._index;
+        storedTechnique._key = technique._key;
         storedTechnique._styleSetIndex = technique._styleSetIndex;
 
         this.techniqueIndexMap.set(technique._index, infoTileTechniqueIndex);
@@ -534,22 +568,17 @@ export class ExtendedTileInfoWriter {
     addFeature(
         featureGroup: FeatureGroup,
         technique: Technique,
-        env: MapEnv,
+        env: FeatureEnv,
         featureId: number | undefined,
         infoTileTechniqueIndex: number,
         featureGroupType: FeatureGroupType
     ) {
         // compute name/label of feature
         const textTechnique = technique as TextTechnique;
-        const textLabel = textTechnique.label;
-        const useAbbreviation = textTechnique.useAbbreviation as boolean;
-        const useIsoCode = textTechnique.useIsoCode as boolean;
-        const name =
-            typeof textLabel === "string"
-                ? env.lookup(textLabel)
-                : ExtendedTileInfo.getFeatureName(env, useAbbreviation, useIsoCode, this.languages);
+
+        const name = ExtendedTileInfo.getFeatureText(env, textTechnique, this.languages);
         let stringIndex = -1;
-        if (name && typeof name === "string") {
+        if (name !== undefined && name.length > 0) {
             stringIndex = this.addText(name);
         }
 

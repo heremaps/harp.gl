@@ -24,7 +24,7 @@ export namespace TiledGeoJsonTechniquesExample {
         </style>
     `;
 
-    const theme: Theme = ({
+    const theme: Theme = {
         clearColor: "#234152",
         styles: {
             tilezen: [
@@ -409,8 +409,7 @@ export namespace TiledGeoJsonTechniquesExample {
                 }
             ]
         }
-        // TODO: as Theme is needed to satisfy `typedoc`
-    } as any) as Theme;
+    };
 
     /**
      * Creates a new MapView for the HTMLCanvasElement of the given id.

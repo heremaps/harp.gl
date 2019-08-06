@@ -10,7 +10,7 @@ import {
     FeatureGroupType,
     IndexedTechnique
 } from "@here/harp-datasource-protocol";
-import { MapEnv, StyleSetEvaluator } from "@here/harp-datasource-protocol/index-decoder";
+import { FeatureEnv, StyleSetEvaluator } from "@here/harp-datasource-protocol/index-decoder";
 import * as THREE from "three";
 
 import { ILineGeometry, IPolygonGeometry } from "./IGeometryProcessor";
@@ -49,7 +49,7 @@ export class OmvTileInfoEmitter implements IOmvEmitter {
         layer: string,
         extents: number,
         geometry: THREE.Vector2[],
-        env: MapEnv,
+        env: FeatureEnv,
         techniques: IndexedTechnique[],
         featureId: number | undefined
     ): void {
@@ -83,7 +83,7 @@ export class OmvTileInfoEmitter implements IOmvEmitter {
         layer: string,
         extents: number,
         geometry: ILineGeometry[],
-        env: MapEnv,
+        env: FeatureEnv,
         techniques: IndexedTechnique[],
         featureId: number | undefined
     ): void {
@@ -142,7 +142,7 @@ export class OmvTileInfoEmitter implements IOmvEmitter {
         layer: string,
         extents: number,
         geometry: IPolygonGeometry[],
-        env: MapEnv,
+        env: FeatureEnv,
         techniques: IndexedTechnique[],
         featureId: number | undefined
     ): void {

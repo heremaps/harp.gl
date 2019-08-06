@@ -17,11 +17,29 @@
             "type": "color",
             "value": "#EDE7E1"
         },
+        "waterColor": {
+            "type": "color",
+            "value": "#436981"
+        },
+        "waterPolygons": {
+            "description": "water",
+            "when": [
+                "all",
+                ["==", ["get", "$layer"], "water"],
+                ["==", ["get", "$geometryType"], "polygon"]
+            ],
+            "technique": "fill",
+            "attr": {
+                "color": ["ref", "waterColor"]
+            },
+            "renderOrder": 5
+        },
         "extrudedBuildings": {
             "description": "buildings with pre-defined color",
             "technique": "extruded-polygon",
             "when": ["all", ["ref", "extrudedBuildingsCondition"], ["!", ["has", "color"]]],
             "attr": {
+                "height": ["get", "height"],
                 "color": ["ref", "defaultBuildingColor"],
                 "opacity": 0.9,
                 "roughness": 1,
@@ -50,8 +68,9 @@
             "technique": "extruded-polygon",
             "when": ["all", ["ref", "extrudedBuildingsCondition"], ["has", "color"]],
             "attr": {
+                "height": ["get", "height"],
                 "vertexColors": true,
-                "defaultColor": ["ref", "defaultBuildingColor"],
+                "color": ["string", ["get", "color", ["ref", "defaultBuildingColor"]]],
                 "opacity": 0.9,
                 "roughness": 1,
                 "metalness": 0.8,
@@ -92,6 +111,45 @@
         "roadsFadeFar": {
             "type": "number",
             "value": 0.95
+        },
+
+        "countryBorderOutlineWidth": {
+            "type": "number",
+            "value": {
+                "interpolation": "Linear",
+                "zoomLevels": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14],
+                "values": [10000, 8000, 7000, 5000, 3000, 2000, 1000, 500, 250, 120, 80, 40, 20, 10]
+            }
+        },
+        "countryBorderLine": {
+            "description": "country border",
+            "when": [
+                "all",
+                ["==", ["get", "$layer"], "boundaries"],
+                ["==", ["get", "$geometryType"], "line"],
+                ["==", ["get", "kind"], "country"]
+            ],
+            "technique": "solid-line",
+            "attr": {
+                "color": "#2F444B",
+                "lineWidth": ["ref", "countryBorderLineWidth"]
+            },
+            "renderOrder": 4.1
+        },
+        "countryBorderOutline": {
+            "description": "country border - outline",
+            "when": [
+                "all",
+                ["==", ["get", "$layer"], "boundaries"],
+                ["==", ["get", "$geometryType"], "line"],
+                ["==", ["get", "kind"], "country"]
+            ],
+            "technique": "solid-line",
+            "attr": {
+                "color": "#52676E",
+                "lineWidth": ["ref", "countryBorderOutlineWidth"]
+            },
+            "renderOrder": 4
         }
     },
     "sky": {
@@ -186,46 +244,13 @@
     "styles": {
         "tilezen": [
             {
-                "description": "highway-roadshield-2",
+                "description": "highway-roadshield",
                 "when": [
                     "all",
                     ["==", ["get", "$layer"], "roads"],
                     ["==", ["get", "kind"], "highway"],
                     ["==", ["get", "kind_detail"], "motorway"],
                     ["has", "ref"],
-                    ["<=", ["length", ["get", "ref"]], 2]
-                ],
-                "technique": "line-marker",
-                "attr": {
-                    "style": "smallSign",
-                    "label": "ref",
-                    "size": 12.8,
-                    "imageTexture": "default-2",
-                    "iconScale": 1.28,
-                    "priority": 35,
-                    "minDistance": 200,
-                    "vAlignment": "Center",
-                    "hAlignment": "Center",
-                    "textIsOptional": false,
-                    "iconIsOptional": false,
-                    "textMayOverlap": false,
-                    "textReserveSpace": true,
-                    "iconMayOverlap": true,
-                    "iconReserveSpace": false,
-                    "renderTextDuringMovements": true,
-                    "color": "#000000",
-                    "showOnMap": false
-                }
-            },
-            {
-                "description": "highway-roadshield-3, level > 7",
-                "when": [
-                    "all",
-                    ["==", ["get", "$layer"], "roads"],
-                    ["==", ["get", "kind"], "highway"],
-                    ["==", ["get", "kind_detail"], "motorway"],
-                    ["has", "ref"],
-                    ["==", ["length", ["get", "ref"]], 3],
                     [">", ["get", "$level"], 7]
                 ],
                 "technique": "line-marker",
@@ -233,108 +258,13 @@
                     "style": "smallSign",
                     "label": "ref",
                     "size": 12.8,
-                    "imageTexture": "default-3",
+                    "imageTexture": [
+                        "concat",
+                        "default-",
+                        ["clamp", ["length", ["get", "ref"]], 2, 6]
+                    ],
                     "iconScale": 1.28,
-                    "priority": 34,
-                    "minDistance": 200,
-                    "vAlignment": "Center",
-                    "hAlignment": "Center",
-                    "textIsOptional": false,
-                    "iconIsOptional": false,
-                    "textMayOverlap": false,
-                    "textReserveSpace": true,
-                    "iconMayOverlap": true,
-                    "iconReserveSpace": false,
-                    "renderTextDuringMovements": true,
-                    "color": "#000000",
-                    "showOnMap": false
-                }
-            },
-            {
-                "description": "highway-roadshield-4, level > 8",
-                "when": [
-                    "all",
-                    ["==", ["get", "$layer"], "roads"],
-                    ["==", ["get", "kind"], "highway"],
-                    ["==", ["get", "kind_detail"], "motorway"],
-                    ["has", "ref"],
-                    ["==", ["length", ["get", "ref"]], 4],
-                    [">", ["get", "$level"], 8]
-                ],
-                "technique": "line-marker",
-                "attr": {
-                    "style": "smallSign",
-                    "label": "ref",
-                    "size": 12.8,
-                    "imageTexture": "default-4",
-                    "iconScale": 1.28,
-                    "priority": 33,
-                    "minDistance": 200,
-                    "vAlignment": "Center",
-                    "hAlignment": "Center",
-                    "textIsOptional": false,
-                    "iconIsOptional": false,
-                    "textMayOverlap": false,
-                    "textReserveSpace": true,
-                    "iconMayOverlap": true,
-                    "iconReserveSpace": false,
-                    "renderTextDuringMovements": true,
-                    "color": "#000000",
-                    "showOnMap": false
-                }
-            },
-            {
-                "description": "highway-roadshield-5, level > 8",
-                "when": [
-                    "all",
-                    ["==", ["get", "$layer"], "roads"],
-                    ["==", ["get", "kind"], "highway"],
-                    ["==", ["get", "kind_detail"], "motorway"],
-                    ["has", "ref"],
-                    ["==", ["length", ["get", "ref"]], 5],
-                    [">", ["get", "$level"], 8]
-                ],
-                "technique": "line-marker",
-                "attr": {
-                    "style": "smallSign",
-                    "label": "ref",
-                    "size": 12.8,
-                    "imageTexture": "default-5",
-                    "iconScale": 1.28,
-                    "priority": 32,
-                    "minDistance": 200,
-                    "vAlignment": "Center",
-                    "hAlignment": "Center",
-                    "textIsOptional": false,
-                    "iconIsOptional": false,
-                    "textMayOverlap": false,
-                    "textReserveSpace": true,
-                    "iconMayOverlap": true,
-                    "iconReserveSpace": false,
-                    "renderTextDuringMovements": true,
-                    "color": "#000000",
-                    "showOnMap": false
-                }
-            },
-            {
-                "description": "highway-roadshield-5+, invisible",
-                "when": [
-                    "all",
-                    ["==", ["get", "$layer"], "roads"],
-                    ["==", ["get", "kind"], "highway"],
-                    ["==", ["get", "kind_detail"], "motorway"],
-                    ["has", "ref"],
-                    [">", ["length", ["get", "ref"]], 5],
-                    [">", ["get", "$level"], 8]
-                ],
-                "technique": "line-marker",
-                "attr": {
-                    "style": "smallSign",
-                    "label": "ref",
-                    "size": 12.8,
-                    "imageTexture": "default-6",
-                    "iconScale": 1.28,
-                    "priority": 31,
+                    "priority": ["-", 37, ["length", ["get", "ref"]]],
                     "minDistance": 200,
                     "vAlignment": "Center",
                     "hAlignment": "Center",
@@ -685,14 +615,13 @@
                 "final": true
             },
             {
-                "description": "secondary-road-shield-2, level > 11",
+                "description": "secondary-road-shield, level > 11",
                 "when": [
                     "all",
                     ["==", ["get", "$layer"], "roads"],
                     ["==", ["get", "kind"], "major_road"],
                     ["==", ["get", "kind_detail"], "secondary"],
                     ["has", "ref"],
-                    ["==", ["length", ["get", "ref"]], 2],
                     [">", ["get", "$level"], 11]
                 ],
                 "technique": "line-marker",
@@ -702,151 +631,19 @@
                     "backgroundColor": "#FFFFFF",
                     "backgroundOpacity": 0.5,
                     "size": 12.8,
-                    "imageTexture": "default-2",
+                    "imageTexture": [
+                        "concat",
+                        "default-",
+                        ["clamp", ["length", ["get", "ref"]], 2, 6]
+                    ],
                     "iconScale": 1.28,
-                    "priority": 25,
+                    "priority": ["-", 26, ["length", ["get", "ref"]]],
                     "fadeNear": 0.8,
                     "fadeFar": 0.9,
                     "minDistance": 300,
                     "textIsOptional": false,
                     "iconIsOptional": false,
-                    "textMayOverlap": false,
-                    "textReserveSpace": true,
-                    "iconMayOverlap": true,
-                    "iconReserveSpace": false,
-                    "renderTextDuringMovements": true,
-                    "showOnMap": false
-                }
-            },
-            {
-                "description": "secondary-road-shield-3, level > 11",
-                "when": [
-                    "all",
-                    ["==", ["get", "$layer"], "roads"],
-                    ["==", ["get", "kind"], "major_road"],
-                    ["==", ["get", "kind_detail"], "secondary"],
-                    ["has", "ref"],
-                    ["==", ["length", ["get", "ref"]], 3],
-                    [">", ["get", "$level"], 11]
-                ],
-                "technique": "line-marker",
-                "attr": {
-                    "label": "ref",
-                    "color": "#000000",
-                    "backgroundColor": "#FFFFFF",
-                    "backgroundOpacity": 0.5,
-                    "size": 12.8,
-                    "imageTexture": "default-3",
-                    "iconScale": 1.28,
-                    "priority": 24,
-                    "fadeNear": 0.8,
-                    "fadeFar": 0.9,
-                    "minDistance": 300,
-                    "textIsOptional": false,
-                    "iconIsOptional": false,
-                    "textMayOverlap": false,
-                    "textReserveSpace": true,
-                    "iconMayOverlap": true,
-                    "iconReserveSpace": false,
-                    "renderTextDuringMovements": true,
-                    "showOnMap": false
-                }
-            },
-            {
-                "description": "secondary-road-shield-4, level > 11",
-                "when": [
-                    "all",
-                    ["==", ["get", "$layer"], "roads"],
-                    ["==", ["get", "kind"], "major_road"],
-                    ["==", ["get", "kind_detail"], "secondary"],
-                    ["has", "ref"],
-                    ["==", ["length", ["get", "ref"]], 4],
-                    [">", ["get", "$level"], 11]
-                ],
-                "technique": "line-marker",
-                "attr": {
-                    "label": "ref",
-                    "color": "#000000",
-                    "backgroundColor": "#FFFFFF",
-                    "backgroundOpacity": 0.5,
-                    "size": 12.8,
-                    "imageTexture": "default-4",
-                    "iconScale": 1.28,
-                    "priority": 23,
-                    "fadeNear": 0.8,
-                    "fadeFar": 0.9,
-                    "minDistance": 300,
-                    "textIsOptional": false,
-                    "iconIsOptional": false,
-                    "textMayOverlap": false,
-                    "textReserveSpace": true,
-                    "iconMayOverlap": true,
-                    "iconReserveSpace": false,
-                    "renderTextDuringMovements": true,
-                    "showOnMap": false
-                }
-            },
-            {
-                "description": "secondary-road-shield-5, level > 11",
-                "when": [
-                    "all",
-                    ["==", ["get", "$layer"], "roads"],
-                    ["==", ["get", "kind"], "major_road"],
-                    ["==", ["get", "kind_detail"], "secondary"],
-                    ["has", "ref"],
-                    ["==", ["length", ["get", "ref"]], 5],
-                    [">", ["get", "$level"], 11]
-                ],
-                "technique": "line-marker",
-                "attr": {
-                    "label": "ref",
-                    "color": "#000000",
-                    "backgroundColor": "#FFFFFF",
-                    "backgroundOpacity": 0.5,
-                    "size": 12.8,
-                    "imageTexture": "default-5",
-                    "iconScale": 1.28,
-                    "priority": 22,
-                    "fadeNear": 0.8,
-                    "fadeFar": 0.9,
-                    "minDistance": 300,
-                    "textIsOptional": false,
-                    "iconIsOptional": false,
-                    "textMayOverlap": false,
-                    "textReserveSpace": true,
-                    "iconMayOverlap": true,
-                    "iconReserveSpace": false,
-                    "renderTextDuringMovements": true,
-                    "showOnMap": false
-                }
-            },
-            {
-                "description": "secondary-road-shield-5+, level > 11",
-                "when": [
-                    "all",
-                    ["==", ["get", "$layer"], "roads"],
-                    ["==", ["get", "kind"], "major_road"],
-                    ["==", ["get", "kind_detail"], "secondary"],
-                    ["has", "ref"],
-                    [">", ["length", ["get", "ref"]], 5],
-                    [">", ["get", "$level"], 11]
-                ],
-                "technique": "line-marker",
-                "attr": {
-                    "label": "ref",
-                    "color": "#000000",
-                    "backgroundColor": "#FFFFFF",
-                    "backgroundOpacity": 0.5,
-                    "size": 12.8,
-                    "imageTexture": "default-6",
-                    "iconScale": 1.28,
-                    "priority": 21,
-                    "fadeNear": 0.8,
-                    "fadeFar": 0.9,
-                    "minDistance": 300,
-                    "textIsOptional": false,
-                    "iconIsOptional": false,
-                    "textMayOverlap": false,
+                    "textMayOverlap": true,
                     "textReserveSpace": true,
                     "iconMayOverlap": true,
                     "iconReserveSpace": false,
@@ -885,14 +682,13 @@
                 "final": true
             },
             {
-                "description": "tertiary-road-shield-2, level > 13",
+                "description": "tertiary-road-shield, level > 13",
                 "when": [
                     "all",
                     ["==", ["get", "$layer"], "roads"],
                     ["==", ["get", "kind"], "major_road"],
                     ["==", ["get", "kind_detail"], "tertiary"],
                     ["has", "ref"],
-                    ["==", ["length", ["get", "ref"]], 2],
                     [">", ["get", "$level"], 13]
                 ],
                 "technique": "line-marker",
@@ -902,145 +698,13 @@
                     "backgroundColor": "#FFFFFF",
                     "backgroundOpacity": 0.5,
                     "size": 12.8,
-                    "imageTexture": "default-2",
+                    "imageTexture": [
+                        "concat",
+                        "default-",
+                        ["clamp", ["length", ["get", "ref"]], 2, 6]
+                    ],
                     "iconScale": 1.28,
-                    "priority": 20,
-                    "fadeNear": 0.8,
-                    "fadeFar": 0.9,
-                    "minDistance": 200,
-                    "textIsOptional": false,
-                    "iconIsOptional": false,
-                    "textMayOverlap": false,
-                    "textReserveSpace": true,
-                    "iconMayOverlap": true,
-                    "iconReserveSpace": false,
-                    "renderTextDuringMovements": true,
-                    "showOnMap": false
-                }
-            },
-            {
-                "description": "tertiary-road-shield-3, level > 13",
-                "when": [
-                    "all",
-                    ["==", ["get", "$layer"], "roads"],
-                    ["==", ["get", "kind"], "major_road"],
-                    ["==", ["get", "kind_detail"], "tertiary"],
-                    ["has", "ref"],
-                    ["==", ["length", ["get", "ref"]], 3],
-                    [">", ["get", "$level"], 13]
-                ],
-                "technique": "line-marker",
-                "attr": {
-                    "label": "ref",
-                    "color": "#000000",
-                    "backgroundColor": "#FFFFFF",
-                    "backgroundOpacity": 0.5,
-                    "size": 12.8,
-                    "imageTexture": "default-3",
-                    "iconScale": 1.28,
-                    "priority": 19,
-                    "fadeNear": 0.8,
-                    "fadeFar": 0.9,
-                    "minDistance": 200,
-                    "textIsOptional": false,
-                    "iconIsOptional": false,
-                    "textMayOverlap": false,
-                    "textReserveSpace": true,
-                    "iconMayOverlap": true,
-                    "iconReserveSpace": false,
-                    "renderTextDuringMovements": true,
-                    "showOnMap": false
-                }
-            },
-            {
-                "description": "tertiary-road-shield-4, level > 13",
-                "when": [
-                    "all",
-                    ["==", ["get", "$layer"], "roads"],
-                    ["==", ["get", "kind"], "major_road"],
-                    ["==", ["get", "kind_detail"], "tertiary"],
-                    ["has", "ref"],
-                    ["==", ["length", ["get", "ref"]], 4],
-                    [">", ["get", "$level"], 13]
-                ],
-                "technique": "line-marker",
-                "attr": {
-                    "label": "ref",
-                    "color": "#000000",
-                    "backgroundColor": "#FFFFFF",
-                    "backgroundOpacity": 0.5,
-                    "size": 12.8,
-                    "imageTexture": "default-4",
-                    "iconScale": 1.28,
-                    "priority": 18,
-                    "fadeNear": 0.8,
-                    "fadeFar": 0.9,
-                    "minDistance": 200,
-                    "textIsOptional": false,
-                    "iconIsOptional": false,
-                    "textMayOverlap": false,
-                    "textReserveSpace": true,
-                    "iconMayOverlap": true,
-                    "iconReserveSpace": false,
-                    "renderTextDuringMovements": true,
-                    "showOnMap": false
-                }
-            },
-            {
-                "description": "tertiary-road-shield-5, level > 13",
-                "when": [
-                    "all",
-                    ["==", ["get", "$layer"], "roads"],
-                    ["==", ["get", "kind"], "major_road"],
-                    ["==", ["get", "kind_detail"], "tertiary"],
-                    ["has", "ref"],
-                    ["==", ["length", ["get", "ref"]], 5],
-                    [">", ["get", "$level"], 13]
-                ],
-                "technique": "line-marker",
-                "attr": {
-                    "label": "ref",
-                    "color": "#000000",
-                    "backgroundColor": "#FFFFFF",
-                    "backgroundOpacity": 0.5,
-                    "size": 12.8,
-                    "imageTexture": "default-5",
-                    "iconScale": 1.28,
-                    "priority": 17,
-                    "fadeNear": 0.8,
-                    "fadeFar": 0.9,
-                    "minDistance": 200,
-                    "textIsOptional": false,
-                    "iconIsOptional": false,
-                    "textMayOverlap": false,
-                    "textReserveSpace": true,
-                    "iconMayOverlap": true,
-                    "iconReserveSpace": false,
-                    "renderTextDuringMovements": true,
-                    "showOnMap": false
-                }
-            },
-            {
-                "description": "tertiary-road-shield-5+, level > 13",
-                "when": [
-                    "all",
-                    ["==", ["get", "$layer"], "roads"],
-                    ["==", ["get", "kind"], "major_road"],
-                    ["==", ["get", "kind_detail"], "tertiary"],
-                    ["has", "ref"],
-                    [">", ["length", ["get", "ref"]], 5],
-                    [">", ["get", "$level"], 13]
-                ],
-                "technique": "line-marker",
-                "attr": {
-                    "label": "ref",
-                    "color": "#000000",
-                    "backgroundColor": "#FFFFFF",
-                    "backgroundOpacity": 0.5,
-                    "size": 12.8,
-                    "imageTexture": "default-6",
-                    "iconScale": 1.28,
-                    "priority": 16,
+                    "priority": ["-", 22, ["length", ["get", "ref"]]],
                     "fadeNear": 0.8,
                     "fadeFar": 0.9,
                     "minDistance": 200,
@@ -1463,19 +1127,7 @@
                 "renderOrder": 5.15,
                 "final": true
             },
-            {
-                "description": "water",
-                "when": [
-                    "all",
-                    ["==", ["get", "$layer"], "water"],
-                    ["==", ["get", "$geometryType"], "polygon"]
-                ],
-                "technique": "fill",
-                "attr": {
-                    "color": "#436981"
-                },
-                "renderOrder": 5
-            },
+            ["ref", "waterPolygons"],
             {
                 "description": "water",
                 "when": ["==", ["get", "$layer"], "water"],
@@ -1488,57 +1140,10 @@
                     "size": 12.8
                 }
             },
+            ["ref", "countryBorderOutline"],
+            ["ref", "countryBorderLine"],
             {
-                "description": "country border",
-                "when": [
-                    "all",
-                    ["==", ["get", "$layer"], "boundaries"],
-                    ["==", ["get", "$geometryType"], "line"],
-                    ["==", ["get", "kind"], "country"]
-                ],
-                "technique": "solid-line",
-                "attr": {
-                    "color": "#52676E",
-                    "lineWidth": {
-                        "interpolation": "Linear",
-                        "zoomLevels": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14],
-                        "values": [
-                            10000,
-                            8000,
-                            7000,
-                            5000,
-                            3000,
-                            2000,
-                            1000,
-                            500,
-                            250,
-                            120,
-                            80,
-                            40,
-                            20,
-                            10
-                        ]
-                    }
-                },
-                "renderOrder": 4
-            },
-            {
-                "description": "country border",
-                "when": [
-                    "all",
-                    ["==", ["get", "$layer"], "boundaries"],
-                    ["==", ["get", "$geometryType"], "line"],
-                    ["==", ["get", "kind"], "country"]
-                ],
-                "technique": "solid-line",
-                "attr": {
-                    "color": "#2F444B",
-                    "lineWidth": ["ref", "countryBorderLineWidth"]
-                },
-                "renderOrder": 4.1
-            },
-            {
-                "description": "country border",
+                "description": "country border - labels",
                 "when": [
                     "all",
                     ["==", ["get", "$layer"], "boundaries"],

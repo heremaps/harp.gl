@@ -22,6 +22,7 @@ import {
 } from "./Expr";
 
 import { CastOperators } from "./operators/CastOperators";
+import { ColorOperators } from "./operators/ColorOperators";
 import { ComparisonOperators } from "./operators/ComparisonOperators";
 import { FlowOperators } from "./operators/FlowOperators";
 import { MathOperators } from "./operators/MathOperators";
@@ -189,6 +190,7 @@ ExprEvaluator.defineOperators(CastOperators);
 ExprEvaluator.defineOperators(ComparisonOperators);
 ExprEvaluator.defineOperators(MathOperators);
 ExprEvaluator.defineOperators(StringOperators);
+ExprEvaluator.defineOperators(ColorOperators);
 ExprEvaluator.defineOperators(TypeOperators);
 ExprEvaluator.defineOperators(MiscOperators);
 ExprEvaluator.defineOperators(FlowOperators);

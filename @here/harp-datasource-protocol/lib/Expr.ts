@@ -23,6 +23,12 @@ export interface ExprVisitor<Result, Context> {
     visitCaseExpr(expr: CaseExpr, context: Context): Result;
 }
 
+export type JsonExpr = unknown[];
+
+export function isJsonExpr(v: any): v is JsonExpr {
+    return Array.isArray(v) && v.length > 0 && typeof v[0] === "string";
+}
+
 /**
  * Abstract class defining a shape of a [[Theme]]'s expression
  */

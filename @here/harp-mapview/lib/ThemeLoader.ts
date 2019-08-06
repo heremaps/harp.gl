@@ -121,7 +121,6 @@ export class ThemeLoader {
             );
             ThemeLoader.resolveThemeReferences(theme, contextLoader);
         }
-
         return theme;
     }
 

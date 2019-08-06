@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { MapEnv } from "@here/harp-datasource-protocol/index-decoder";
+import { FeatureEnv } from "@here/harp-datasource-protocol/index-decoder";
 import { Vector2 } from "three";
 
 /**
@@ -66,8 +66,7 @@ export interface IGeometryProcessor {
         layerName: string,
         layerExtents: number,
         geometry: Vector2[],
-        env: MapEnv,
-        storageLevel: number
+        env: FeatureEnv
     ): void;
 
     /**
@@ -85,8 +84,7 @@ export interface IGeometryProcessor {
         layerName: string,
         layerExtents: number,
         geometry: ILineGeometry[],
-        env: MapEnv,
-        storageLevel: number
+        env: FeatureEnv
     ): void;
 
     /**
@@ -104,7 +102,6 @@ export interface IGeometryProcessor {
         layerName: string,
         layerExtents: number,
         geometry: IPolygonGeometry[],
-        env: MapEnv,
-        storageLevel: number
+        env: FeatureEnv
     ): void;
 }

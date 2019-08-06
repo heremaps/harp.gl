@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { MapEnv, ValueMap } from "@here/harp-datasource-protocol/index-decoder";
+import { FeatureEnv, MapEnv, ValueMap } from "@here/harp-datasource-protocol/index-decoder";
 import { GeoBox, TileKey } from "@here/harp-geoutils";
 import { ILogger } from "@here/harp-utils";
 import { Vector2 } from "three";
@@ -107,6 +107,7 @@ export class VTJsonDataAdapter implements OmvDataAdapter {
                 $level: tileKey.level,
                 id: feature.id
             });
+            const featureEnv = new FeatureEnv(env, tileKey.level);
 
             switch (feature.type) {
                 case VTJsonGeometryType.Point: {
@@ -120,8 +121,7 @@ export class VTJsonDataAdapter implements OmvDataAdapter {
                             tile.layer,
                             VT_JSON_EXTENTS,
                             [position],
-                            env,
-                            tileKey.level
+                            featureEnv
                         );
                     }
                     break;
@@ -138,8 +138,7 @@ export class VTJsonDataAdapter implements OmvDataAdapter {
                             tile.layer,
                             VT_JSON_EXTENTS,
                             [line],
-                            env,
-                            tileKey.level
+                            featureEnv
                         );
                     }
                     break;
@@ -159,9 +158,9 @@ export class VTJsonDataAdapter implements OmvDataAdapter {
                         tile.layer,
                         VT_JSON_EXTENTS,
                         [polygon],
-                        env,
-                        tileKey.level
+                        featureEnv
                     );
+
                     break;
                 }
                 case VTJsonGeometryType.Unknown: {

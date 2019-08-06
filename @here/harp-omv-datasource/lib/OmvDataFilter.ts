@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import { GeometryKind, GeometryKindSet } from "@here/harp-datasource-protocol";
-import { MapEnv } from "@here/harp-datasource-protocol/index-decoder";
+import { FeatureEnv, MapEnv } from "@here/harp-datasource-protocol/index-decoder";
 import {
     OmvFeatureFilterDescription,
     OmvFilterDescription,
@@ -93,7 +93,7 @@ export interface OmvFeatureModifier {
      * @param level Level of tile.
      * @returns `false` to ignore feature.
      */
-    doProcessPointFeature(layer: string, env: MapEnv, level: number): boolean;
+    doProcessPointFeature(layer: string, env: FeatureEnv): boolean;
 
     /**
      * Check if the line feature described by `env` should be processed. The properties can be
@@ -104,7 +104,7 @@ export interface OmvFeatureModifier {
      * @param level Level of tile.
      * @returns `false` to ignore feature.
      */
-    doProcessLineFeature(layer: string, env: MapEnv, level: number): boolean;
+    doProcessLineFeature(layer: string, env: FeatureEnv): boolean;
 
     /**
      * Check if the polygon feature described by `env` should be processed. The properties can be
@@ -115,7 +115,7 @@ export interface OmvFeatureModifier {
      * @param level Level of tile.
      * @returns `false` to ignore feature.
      */
-    doProcessPolygonFeature(layer: string, env: MapEnv, level: number): boolean;
+    doProcessPolygonFeature(layer: string, env: FeatureEnv): boolean;
 }
 
 /**
@@ -723,7 +723,7 @@ export class OmvGenericFeatureModifier implements OmvFeatureModifier {
 
     constructor(private description: OmvFeatureFilterDescription) {}
 
-    doProcessPointFeature(layer: string, env: MapEnv): boolean {
+    doProcessPointFeature(layer: string, env: FeatureEnv): boolean {
         return this.doProcessFeature(
             this.description.pointsToProcess,
             this.description.pointsToIgnore,
@@ -733,7 +733,7 @@ export class OmvGenericFeatureModifier implements OmvFeatureModifier {
         );
     }
 
-    doProcessLineFeature(layer: string, env: MapEnv): boolean {
+    doProcessLineFeature(layer: string, env: FeatureEnv): boolean {
         return this.doProcessFeature(
             this.description.linesToProcess,
             this.description.linesToIgnore,
@@ -743,7 +743,7 @@ export class OmvGenericFeatureModifier implements OmvFeatureModifier {
         );
     }
 
-    doProcessPolygonFeature(layer: string, env: MapEnv): boolean {
+    doProcessPolygonFeature(layer: string, env: FeatureEnv): boolean {
         return this.doProcessFeature(
             this.description.polygonsToProcess,
             this.description.polygonsToIgnore,
@@ -757,7 +757,7 @@ export class OmvGenericFeatureModifier implements OmvFeatureModifier {
         itemsToProcess: OmvFilterDescription[],
         itemsToIgnore: OmvFilterDescription[],
         layer: string,
-        env: MapEnv,
+        env: FeatureEnv,
         defaultResult: boolean
     ): boolean {
         if (layer === undefined || (itemsToProcess.length === 0 && itemsToIgnore.length === 0)) {

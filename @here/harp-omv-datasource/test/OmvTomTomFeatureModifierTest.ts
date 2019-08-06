@@ -7,7 +7,7 @@
 // tslint:disable:only-arrow-functions
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
-import { MapEnv } from "@here/harp-datasource-protocol/index-decoder";
+import { FeatureEnv, MapEnv } from "@here/harp-datasource-protocol/index-decoder";
 import { assert } from "chai";
 import { OmvFeatureFilterDescriptionBuilder } from "../lib/OmvDataFilter";
 import { OmvFeatureFilterDescription } from "../lib/OmvDecoderDefs";
@@ -25,7 +25,7 @@ export class OmvTomTomModifierMock extends OmvTomTomFeatureModifier {
             this.m_description.linesToProcess,
             this.m_description.linesToIgnore,
             layer,
-            env,
+            new FeatureEnv(env, 10),
             true
         );
     }

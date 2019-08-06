@@ -22,6 +22,7 @@ import {
     LineFeatureGroup
 } from "@here/harp-datasource-protocol";
 import {
+    FeatureEnv,
     MapEnv,
     StyleSetEvaluator,
     Value,
@@ -466,7 +467,10 @@ export class GeoJsonParser {
             featureDetails.featureId = featureId;
         }
 
-        const env = new MapEnv({ type: "line", ...(featureDetails as ValueMap) });
+        const env = new FeatureEnv(
+            { type: "line", ...(featureDetails as ValueMap) },
+            extendedTile.info.tileKey.level
+        );
         const techniques = styleSetEvaluator.getMatchingTechniques(env);
         const featureIdNumber = 0; //geojsonTile do not have an integer for the featureId. Use 0.
         if (buffer.lines.vertices.length !== buffer.lines.geojsonProperties.length) {
@@ -524,7 +528,10 @@ export class GeoJsonParser {
             featureDetails.featureId = featureId;
         }
 
-        const env = new MapEnv({ type: "line", ...(featureDetails as ValueMap) });
+        const env = new FeatureEnv(
+            { type: "line", ...(featureDetails as ValueMap) },
+            extendedTile.info.tileKey.level
+        );
         const techniques = styleSetEvaluator.getMatchingTechniques(env);
         const featureIdNumber = 0; //geojsonTile do not have an integer for the featureId. Use 0.
         if (buffer.lines.vertices.length !== buffer.lines.geojsonProperties.length) {
@@ -742,7 +749,7 @@ export class GeoJsonParser {
         techniques: IndexedTechnique[],
         lines: number[][],
         featureId: number,
-        env: MapEnv,
+        env: FeatureEnv,
         geojsonProperties: Array<{} | undefined>
     ) {
         if (geojsonProperties.length !== lines.length) {

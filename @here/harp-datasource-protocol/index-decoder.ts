@@ -5,6 +5,7 @@
  */
 
 export * from "./lib/StyleSetEvaluator";
+export * from "./lib/FeatureEnv";
 export * from "./lib/Extruder";
 export * from "./lib/IMeshBuffers";
 export * from "./lib/Outliner";
