@@ -6,7 +6,6 @@
 
 import {
     ExtendedTileInfo,
-    getPropertyValue,
     LineTechnique,
     SolidLineTechnique,
     Technique
@@ -14,7 +13,6 @@ import {
 import { SolidLineMaterial } from "@here/harp-materials";
 import { assert, LoggerManager, Math2D } from "@here/harp-utils";
 import * as THREE from "three";
-import { MapView } from "./MapView";
 import { PickObjectType, PickResult } from "./PickHandler";
 import { RoadIntersectionData, Tile } from "./Tile";
 
@@ -39,7 +37,6 @@ interface CustomLineTechnique extends LineTechnique {
  * their geometry is generated in the vertex shader.
  */
 export class RoadPicker {
-    constructor(private m_mapView: MapView) {}
     /**
      * Registers a tile with the `RoadPicker`. This function extracts line data from the [[Tile]],
      * but only if the tile has the necessary [[ExtendedTileInfo]] that allows for road features to
@@ -66,7 +63,7 @@ export class RoadPicker {
 
         for (let i = 0; i < lineFeatures.numFeatures; i++) {
             const technique = extendedTileInfo.techniqueCatalog[lineFeatures.techniqueIndex[i]];
-            const width = this.getLineWidthInWorldUnit(technique, level);
+            const width = this.getLineWidthInWorldUnit(tile, technique, level);
             widths[i] = width !== undefined ? Math.max(1, width) : 1;
         }
         const objInfos = extendedTileInfo.lineGroup.userData;
@@ -193,19 +190,18 @@ export class RoadPicker {
         }
     }
 
-    private getLineWidthInWorldUnit(technique: Technique, level: number): number | undefined {
+    private getLineWidthInWorldUnit(
+        tile: Tile,
+        technique: Technique,
+        level: number
+    ): number | undefined {
         const solidLineTech = technique as SolidLineTechnique;
 
-        if (solidLineTech.metricUnit === "Pixel") {
-            const lineWidth =
-                getPropertyValue(solidLineTech.lineWidth, level, this.m_mapView.pixelToWorld) * 0.5;
+        const lineWidth = tile.dynamicTechniqueHandler.evaluateDynamicAttr<number>(
+            solidLineTech.lineWidth as number
+        );
 
-            return lineWidth !== undefined
-                ? (lineWidth as number)
-                : SolidLineMaterial.DEFAULT_WIDTH;
-        } else {
-            const lineTechnique = technique as LineTechnique;
-            return getPropertyValue(lineTechnique.lineWidth, level);
-        }
+        // TODO: End this madness with halving lineWidth
+        return lineWidth !== undefined ? lineWidth * 0.5 : SolidLineMaterial.DEFAULT_WIDTH;
     }
 }

@@ -4,18 +4,20 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import * as THREE from "three";
+
 import {
     BufferAttribute,
-    getPropertyValue,
+    isDynamicTechniqueExpr,
     isExtrudedLineTechnique,
     isExtrudedPolygonTechnique,
-    isInterpolatedProperty,
     isShaderTechnique,
     isStandardTechnique,
     isTerrainTechnique,
     isTextureBuffer,
     Technique,
     TEXTURE_PROPERTY_KEYS,
+    TextureBuffer,
     TextureProperties
 } from "@here/harp-datasource-protocol";
 import {
@@ -27,7 +29,6 @@ import {
     SolidLineMaterial
 } from "@here/harp-materials";
 import { LoggerManager } from "@here/harp-utils";
-import * as THREE from "three";
 import { Circles, Squares } from "./MapViewPoints";
 import { toPixelFormat, toTextureDataType, toTextureFilter, toWrappingMode } from "./ThemeHelpers";
 
@@ -46,19 +47,98 @@ const DEFAULT_SKIP_PROPERTIES = [
 ];
 
 /**
+ *
+ * @param options
+ * @param textureReadyCallback
+ */
+
+export function createTexture(
+    textureProperty: string | TextureBuffer,
+    properties: TextureProperties | undefined,
+    textureReadyCallback: (texture: THREE.Texture) => void
+) {
+    const onLoad = (texture: THREE.Texture) => {
+        if (properties !== undefined) {
+            if (properties.wrapS !== undefined) {
+                texture.wrapS = toWrappingMode(properties.wrapS);
+            }
+            if (properties.wrapT !== undefined) {
+                texture.wrapT = toWrappingMode(properties.wrapT);
+            }
+            if (properties.magFilter !== undefined) {
+                texture.magFilter = toTextureFilter(properties.magFilter);
+            }
+            if (properties.minFilter !== undefined) {
+                texture.minFilter = toTextureFilter(properties.minFilter);
+            }
+            if (properties.flipY !== undefined) {
+                texture.flipY = properties.flipY;
+            }
+            if (properties.repeatU !== undefined) {
+                texture.repeat.x = properties.repeatU;
+            }
+            if (properties.repeatV !== undefined) {
+                texture.repeat.y = properties.repeatV;
+            }
+        }
+        texture.needsUpdate = true;
+
+        textureReadyCallback(texture);
+    };
+
+    const onError = (error: ErrorEvent | string) => {
+        logger.error("#createMaterial: Failed to load texture: ", error);
+    };
+
+    let textureUrl: string | undefined;
+    if (typeof textureProperty === "string") {
+        textureUrl = textureProperty;
+    } else if (isTextureBuffer(textureProperty)) {
+        if (textureProperty.type === "image/raw") {
+            const dataTextureProperties = textureProperty.dataTextureProperties;
+            if (dataTextureProperties !== undefined) {
+                const textureDataType:
+                    | THREE.TextureDataType
+                    | undefined = dataTextureProperties.type
+                    ? toTextureDataType(dataTextureProperties.type)
+                    : undefined;
+                const textureBuffer = getTextureBuffer(textureProperty.buffer, textureDataType);
+
+                const texture = new THREE.DataTexture(
+                    textureBuffer,
+                    dataTextureProperties.width,
+                    dataTextureProperties.height,
+                    dataTextureProperties.format
+                        ? toPixelFormat(dataTextureProperties.format)
+                        : undefined,
+                    textureDataType
+                );
+                onLoad(texture);
+            } else {
+                onError("no data texture properties provided.");
+            }
+        } else {
+            const textureBlob = new Blob([textureProperty.buffer], {
+                type: textureProperty.type
+            });
+            textureUrl = URL.createObjectURL(textureBlob);
+        }
+    }
+
+    if (textureUrl) {
+        new THREE.TextureLoader().load(
+            textureUrl,
+            onLoad,
+            undefined, // onProgress
+            onError
+        );
+    }
+}
+
+/**
  * The structure of the options to pass into [[createMaterial]].
  */
 export interface MaterialOptions {
-    /**
-     * The shader [[Technique]] to choose.
-     */
-    technique: Technique;
-
-    /**
-     * The active zoom level at material creation for zoom-dependent properties.
-     */
-    level?: number;
-
     /**
      * Properties to skip.
      *
@@ -77,16 +157,16 @@ export interface MaterialOptions {
  * Create a material, depending on the rendering technique provided in the options.
  *
  * @param options The material options the subsequent functions need.
- * @param materialUpdateCallback Optional callback when the material gets updated,
+ * @param textureReadyCallback Optional callback when the material gets updated,
  *                               e.g. after texture loading.
  *
  * @returns new material instance that matches `technique.name`
  */
 export function createMaterial(
-    options: MaterialOptions,
-    textureReadyCallback?: (texture: THREE.Texture) => void
+    technique: Technique,
+    textureReadyCallback?: (texture: THREE.Texture) => void,
+    options?: MaterialOptions
 ): THREE.Material | undefined {
-    const technique = options.technique;
     const Constructor = getMaterialConstructor(technique);
 
     const settings: { [key: string]: any } = {};
@@ -99,7 +179,7 @@ export function createMaterial(
         Constructor.prototype instanceof THREE.RawShaderMaterial &&
         Constructor !== HighPrecisionLineMaterial
     ) {
-        settings.fog = options.fog;
+        settings.fog = options && options.fog;
     }
 
     const material = new Constructor(settings);
@@ -119,94 +199,23 @@ export function createMaterial(
         isTerrainTechnique(technique) ||
         isExtrudedPolygonTechnique(technique)
     ) {
-        TEXTURE_PROPERTY_KEYS.forEach((texturePropertyName: string) => {
-            const textureProperty = (technique as any)[texturePropertyName];
+        TEXTURE_PROPERTY_KEYS.forEach((attrName: string) => {
+            const textureProperty = (technique as any)[attrName];
             if (textureProperty === undefined) {
                 return;
             }
 
-            const onLoad = (texture: THREE.Texture) => {
-                const properties = (technique as any)[
-                    texturePropertyName + "Properties"
-                ] as TextureProperties;
-                if (properties !== undefined) {
-                    if (properties.wrapS !== undefined) {
-                        texture.wrapS = toWrappingMode(properties.wrapS);
-                    }
-                    if (properties.wrapT !== undefined) {
-                        texture.wrapT = toWrappingMode(properties.wrapT);
-                    }
-                    if (properties.magFilter !== undefined) {
-                        texture.magFilter = toTextureFilter(properties.magFilter);
-                    }
-                    if (properties.minFilter !== undefined) {
-                        texture.minFilter = toTextureFilter(properties.minFilter);
-                    }
-                    if (properties.flipY !== undefined) {
-                        texture.flipY = properties.flipY;
-                    }
-                    if (properties.repeatU !== undefined) {
-                        texture.repeat.x = properties.repeatU;
-                    }
-                    if (properties.repeatV !== undefined) {
-                        texture.repeat.y = properties.repeatV;
-                    }
-                }
-                (material as any)[texturePropertyName] = texture;
-                texture.needsUpdate = true;
+            const properties = (technique as any)[attrName + "Properties"] as
+                | TextureProperties
+                | undefined;
+            createTexture(textureProperty, properties, (texture: THREE.Texture) => {
+                (material as any)[attrName] = texture;
                 material.needsUpdate = true;
 
                 if (textureReadyCallback) {
                     textureReadyCallback(texture);
                 }
-            };
-
-            const onError = (error: ErrorEvent | string) => {
-                logger.error("#createMaterial: Failed to load texture: ", error);
-            };
-
-            let textureUrl: string | undefined;
-            if (typeof textureProperty === "string") {
-                textureUrl = textureProperty;
-            } else if (isTextureBuffer(textureProperty)) {
-                if (textureProperty.type === "image/raw") {
-                    const properties = textureProperty.dataTextureProperties;
-                    if (properties !== undefined) {
-                        const textureDataType: THREE.TextureDataType | undefined = properties.type
-                            ? toTextureDataType(properties.type)
-                            : undefined;
-                        const textureBuffer = getTextureBuffer(
-                            textureProperty.buffer,
-                            textureDataType
-                        );
-
-                        const texture = new THREE.DataTexture(
-                            textureBuffer,
-                            properties.width,
-                            properties.height,
-                            properties.format ? toPixelFormat(properties.format) : undefined,
-                            textureDataType
-                        );
-                        onLoad(texture);
-                    } else {
-                        onError("no data texture properties provided.");
-                    }
-                } else {
-                    const textureBlob = new Blob([textureProperty.buffer], {
-                        type: textureProperty.type
-                    });
-                    textureUrl = URL.createObjectURL(textureBlob);
-                }
-            }
-
-            if (textureUrl) {
-                new THREE.TextureLoader().load(
-                    textureUrl,
-                    onLoad,
-                    undefined, // onProgress
-                    onError
-                );
-            }
+            });
         });
     }
 
@@ -228,7 +237,7 @@ export function createMaterial(
             }
         });
     } else {
-        applyTechniqueToMaterial(technique, material, options.level, options.skipExtraProps);
+        applyTechniqueStaticPropsToMaterial(technique, material, options && options.skipExtraProps);
     }
 
     return material;
@@ -356,9 +365,7 @@ export const BASE_TECHNIQUE_NON_MATERIAL_PROPS = [
     "name",
     "id",
     "renderOrder",
-    "renderOrderBiasProperty",
-    "renderOrderBiasGroup",
-    "renderOrderBiasRange",
+    "renderOrderOffset",
     "transient"
 ];
 
@@ -421,7 +428,7 @@ export function getMaterialConstructor(technique: Technique): MaterialConstructo
 }
 
 /**
- * Apply generic technique parameters to material.
+ * Apply static technique parameters to material.
  *
  * Skips non-material [[Technique]] props:
  *  * [[BaseTechnique]] props,
@@ -433,13 +440,11 @@ export function getMaterialConstructor(technique: Technique): MaterialConstructo
  *
  * @param technique technique from where params are copied
  * @param material target material
- * @param level optional, tile zoom level for zoom-level dependent props
  * @param skipExtraProps optional, skipped props
  */
-export function applyTechniqueToMaterial(
+export function applyTechniqueStaticPropsToMaterial(
     technique: Technique,
     material: THREE.Material,
-    level?: number,
     skipExtraProps?: string[]
 ) {
     Object.getOwnPropertyNames(technique).forEach(propertyName => {
@@ -453,12 +458,12 @@ export function applyTechniqueToMaterial(
         }
         const prop = propertyName as keyof (typeof technique);
         const m = material as any;
-        let value = technique[prop];
+        const value = technique[prop];
         if (typeof m[prop] === "undefined") {
             return;
         }
-        if (level !== undefined && isInterpolatedProperty<number>(value)) {
-            value = getPropertyValue(value, level);
+        if (isDynamicTechniqueExpr(value)) {
+            return;
         }
         if (m[prop] instanceof THREE.Color) {
             m[prop].set(value);

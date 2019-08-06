@@ -17,6 +17,7 @@ import { OrientedBox3 } from "@here/harp-geometry";
 import { AnimatedExtrusionTileHandler } from "./AnimatedExtrusionHandler";
 import { CopyrightInfo } from "./CopyrightInfo";
 import { DataSource } from "./DataSource";
+import { DynamicTechniqueHandler, MapViewSeneState } from "./DynamicTechniqueHandler";
 import { TileGeometryLoader } from "./geometry/TileGeometryLoader";
 import { MapView } from "./MapView";
 import { PerformanceStatistics } from "./Statistics";
@@ -346,6 +347,8 @@ export class Tile implements CachedResource {
      */
     preparedTextPaths: TextPathGeometry[] | undefined;
 
+    readonly dynamicTechniqueHandler: DynamicTechniqueHandler;
+
     private m_disposed: boolean = false;
     private m_localTangentSpace = false;
 
@@ -405,6 +408,10 @@ export class Tile implements CachedResource {
         this.geoBox = this.dataSource.getTilingScheme().getGeoBox(this.tileKey);
         this.projection.projectBox(this.geoBox, this.boundingBox);
         this.m_localTangentSpace = localTangentSpace !== undefined ? localTangentSpace : false;
+        this.dynamicTechniqueHandler = new DynamicTechniqueHandler(
+            dataSource.dynamicTechniqueCache,
+            new MapViewSeneState(dataSource.mapView)
+        );
     }
 
     /**
@@ -917,6 +924,7 @@ export class Tile implements CachedResource {
         this.placedTextElements.clear();
         this.textElementGroups.clear();
         this.userTextElements.length = 0;
+        this.dynamicTechniqueHandler.reset();
         this.invalidateResourceInfo();
     }
 

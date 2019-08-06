@@ -195,7 +195,6 @@ describe("StyleSetEvaluator", function() {
             assert.equal((r2[0] as SolidLineTechnique).clipping, true);
             assert.equal((r2[0] as SolidLineTechnique).lineWidth, 3);
         });
-
         it("generates stable technique cache key", function() {
             const techniquesTileA = (() => {
                 const ev = new StyleSetEvaluator(testStyle);

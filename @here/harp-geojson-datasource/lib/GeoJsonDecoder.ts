@@ -126,7 +126,7 @@ class GeoJsonDecoder {
 
         const tile: DecodedTile = {
             geometries: geometries.geometries,
-            techniques: this.m_styleSetEvaluator.techniques,
+            techniques: this.m_styleSetEvaluator.decodedTechniques,
             tileInfo: this.getTileInfo(extendedTile)
         };
 

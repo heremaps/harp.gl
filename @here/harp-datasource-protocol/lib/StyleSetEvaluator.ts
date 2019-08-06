@@ -6,6 +6,7 @@
 
 import { LoggerManager } from "@here/harp-utils";
 
+import { DecodedTechnique, makeDecodedTechnique } from "./DecodedTechnique";
 import {
     BooleanLiteralExpr,
     CallExpr,
@@ -359,7 +360,7 @@ export class StyleSetEvaluator {
     /**
      * Get the (current) array of techniques that have been created during decoding.
      */
-    get decodedTechniques(): IndexedTechnique[] {
+    get decodedTechniques(): DecodedTechnique[] {
         return this.m_techniques.map(makeDecodedTechnique);
     }
 
@@ -495,6 +496,7 @@ export class StyleSetEvaluator {
                         `${style._styleSetIndex}`,
                         []
                     ) as IndexedTechnique;
+                    technique._key = "";
                 }
                 result.push(technique as IndexedTechnique);
             }
@@ -645,24 +647,4 @@ export class StyleSetEvaluator {
         this.m_techniques.push(technique as IndexedTechnique);
         return technique as IndexedTechnique;
     }
-}
-
-/**
- * Create transferable representation of dynamic technique.
- *
- * As for now, we remove all `Expr` as they are not supported on other side.
- */
-export function makeDecodedTechnique(technique: IndexedTechnique): IndexedTechnique {
-    const result: Partial<IndexedTechnique> = {};
-    for (const attrName in technique) {
-        if (!technique.hasOwnProperty(attrName)) {
-            continue;
-        }
-        const attrValue: any = (technique as any)[attrName];
-        if (attrValue instanceof Expr) {
-            continue;
-        }
-        (result as any)[attrName] = attrValue;
-    }
-    return (result as any) as IndexedTechnique;
 }
