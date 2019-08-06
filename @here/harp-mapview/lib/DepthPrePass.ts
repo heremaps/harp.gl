@@ -137,7 +137,7 @@ export function setDepthPrePassStencil(depthMesh: THREE.Mesh, colorMesh: THREE.M
     depthMesh.onBeforeRender = chainCallbacks(
         depthMesh.onBeforeRender,
         (renderer, scene, camera, geometry, material, group) => {
-            const gl = renderer.context;
+            const gl = renderer.getContext();
             renderer.state.buffers.stencil.setTest(true);
             renderer.state.buffers.stencil.setMask(DEPTH_PRE_PASS_STENCIL_MASK);
             renderer.state.buffers.stencil.setOp(gl.KEEP, gl.KEEP, gl.REPLACE);
@@ -152,7 +152,7 @@ export function setDepthPrePassStencil(depthMesh: THREE.Mesh, colorMesh: THREE.M
     colorMesh.onBeforeRender = chainCallbacks(
         colorMesh.onBeforeRender,
         (renderer, scene, camera, geometry, material, group) => {
-            const gl = renderer.context;
+            const gl = renderer.getContext();
             renderer.state.buffers.stencil.setTest(true);
             renderer.state.buffers.stencil.setMask(DEPTH_PRE_PASS_STENCIL_MASK);
             renderer.state.buffers.stencil.setOp(gl.KEEP, gl.KEEP, gl.ZERO);

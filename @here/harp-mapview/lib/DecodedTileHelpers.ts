@@ -471,7 +471,7 @@ export function applyTechniqueToMaterial(
 function getTextureBuffer(
     buffer: ArrayBuffer,
     textureDataType: THREE.TextureDataType | undefined
-): ArrayBufferLike {
+): THREE.TypedArray {
     if (textureDataType === undefined) {
         return new Uint8Array(buffer);
     }

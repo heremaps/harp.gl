@@ -54,7 +54,7 @@
         "ncp": "^2.0.0",
         "stats.js": "^0.17.0",
         "style-loader": "^0.23.0",
-        "three": "^0.105.2",
+        "three": "^0.107.0",
         "ts-loader": "^6.0.3",
         "typescript": "^3.5.2",
         "webpack": "^4.34.0",
