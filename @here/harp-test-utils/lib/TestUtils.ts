@@ -207,7 +207,9 @@ function reportAsyncFailuresAfterTestEnd(this: any) {
 
         // Note, this is actually mocha.IHookCallbackContext but it's not imported to not include
         // whole mocha dependency only for this very declaration.
-        this.test.error(`waitEvent didn't receive '${waitEventWaitedEvent}' before test timeouted`);
+        this.test.error(
+            new Error(`waitEvent didn't receive '${waitEventWaitedEvent}' before test timeouted`)
+        );
     }
 
     if (lastWaitedError) {
