@@ -40,7 +40,7 @@
         "typescript": "^3.5.2"
     },
     "peerDependencies": {
-        "three": "^0.105.2"
+        "three": "^0.107.0"
     },
     "publishConfig": {
         "access": "public"
