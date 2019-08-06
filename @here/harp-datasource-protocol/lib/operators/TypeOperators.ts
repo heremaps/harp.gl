@@ -4,12 +4,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Value } from "../Expr";
-import { OperatorDescriptorMap } from "../ExprEvaluator";
+import { Expr } from "../Expr";
+import { ExprEvaluatorContext, OperatorDescriptorMap } from "../ExprEvaluator";
 
 const operators = {
     typeof: {
-        call: (actuals: Value[]) => typeof actuals[0]
+        call: (context: ExprEvaluatorContext, args: Expr[]) => {
+            return typeof context.evaluate(args[0]);
+        }
     }
 };
 

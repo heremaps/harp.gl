@@ -4,14 +4,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Value } from "../Expr";
-import { OperatorDescriptorMap } from "../ExprEvaluator";
+import { Expr } from "../Expr";
+import { ExprEvaluatorContext, OperatorDescriptorMap } from "../ExprEvaluator";
 
 const operators = {
     "^": {
-        call: (actuals: Value[]) => {
-            const a = actuals[0];
-            const b = actuals[1];
+        call: (context: ExprEvaluatorContext, args: Expr[]) => {
+            const a = context.evaluate(args[0]);
+            const b = context.evaluate(args[1]);
             if (typeof a !== "number" || typeof b !== "number") {
                 // tslint:disable-next-line: max-line-length
                 throw new Error(
@@ -23,9 +23,9 @@ const operators = {
     },
 
     "-": {
-        call: (actuals: Value[]) => {
-            const a = actuals[0];
-            const b = actuals[1];
+        call: (context: ExprEvaluatorContext, args: Expr[]) => {
+            const a = context.evaluate(args[0]);
+            const b = context.evaluate(args[1]);
             if (typeof a !== "number" || typeof b !== "number") {
                 // tslint:disable-next-line: max-line-length
                 throw new Error(
@@ -37,9 +37,9 @@ const operators = {
     },
 
     "/": {
-        call: (actuals: Value[]) => {
-            const a = actuals[0];
-            const b = actuals[1];
+        call: (context: ExprEvaluatorContext, args: Expr[]) => {
+            const a = context.evaluate(args[0]);
+            const b = context.evaluate(args[1]);
             if (typeof a !== "number" || typeof b !== "number") {
                 // tslint:disable-next-line: max-line-length
                 throw new Error(
@@ -51,9 +51,9 @@ const operators = {
     },
 
     "%": {
-        call: (actuals: Value[]) => {
-            const a = actuals[0];
-            const b = actuals[1];
+        call: (context: ExprEvaluatorContext, args: Expr[]) => {
+            const a = context.evaluate(args[0]);
+            const b = context.evaluate(args[1]);
             if (typeof a !== "number" || typeof b !== "number") {
                 // tslint:disable-next-line: max-line-length
                 throw new Error(
@@ -65,16 +65,20 @@ const operators = {
     },
 
     "+": {
-        call: (actuals: Value[]) => actuals.reduce((a, b) => Number(a) + Number(b), 0)
+        call: (context: ExprEvaluatorContext, args: Expr[]) => {
+            return args.reduce((a, b) => Number(a) + Number(context.evaluate(b)), 0);
+        }
     },
 
     "*": {
-        call: (actuals: Value[]) => actuals.reduce((a, b) => Number(a) * Number(b), 1)
+        call: (context: ExprEvaluatorContext, args: Expr[]) => {
+            return args.reduce((a, b) => Number(a) * Number(context.evaluate(b)), 1);
+        }
     },
 
     abs: {
-        call: (actuals: Value[]) => {
-            const value = actuals[0];
+        call: (context: ExprEvaluatorContext, args: Expr[]) => {
+            const value = context.evaluate(args[0]);
             if (typeof value !== "number") {
                 throw new Error(`invalid operand '${value}' for operator 'abs'`);
             }
@@ -83,8 +87,8 @@ const operators = {
     },
 
     acos: {
-        call: (actuals: Value[]) => {
-            const value = actuals[0];
+        call: (context: ExprEvaluatorContext, args: Expr[]) => {
+            const value = context.evaluate(args[0]);
             if (typeof value !== "number") {
                 throw new Error(`invalid operand '${value}' for operator 'acos'`);
             }
@@ -93,8 +97,8 @@ const operators = {
     },
 
     asin: {
-        call: (actuals: Value[]) => {
-            const value = actuals[0];
+        call: (context: ExprEvaluatorContext, args: Expr[]) => {
+            const value = context.evaluate(args[0]);
             if (typeof value !== "number") {
                 throw new Error(`invalid operand '${value}' for operator 'asin'`);
             }
@@ -103,8 +107,8 @@ const operators = {
     },
 
     atan: {
-        call: (actuals: Value[]) => {
-            const value = actuals[0];
+        call: (context: ExprEvaluatorContext, args: Expr[]) => {
+            const value = context.evaluate(args[0]);
             if (typeof value !== "number") {
                 throw new Error(`invalid operand '${value}' for operator 'atan'`);
             }
@@ -113,8 +117,8 @@ const operators = {
     },
 
     ceil: {
-        call: (actuals: Value[]) => {
-            const value = actuals[0];
+        call: (context: ExprEvaluatorContext, args: Expr[]) => {
+            const value = context.evaluate(args[0]);
             if (typeof value !== "number") {
                 throw new Error(`invalid operand '${value}' for operator 'ceil'`);
             }
@@ -123,8 +127,8 @@ const operators = {
     },
 
     cos: {
-        call: (actuals: Value[]) => {
-            const value = actuals[0];
+        call: (context: ExprEvaluatorContext, args: Expr[]) => {
+            const value = context.evaluate(args[0]);
             if (typeof value !== "number") {
                 throw new Error(`invalid operand '${value}' for operator 'cos'`);
             }
@@ -139,8 +143,8 @@ const operators = {
     },
 
     floor: {
-        call: (actuals: Value[]) => {
-            const value = actuals[0];
+        call: (context: ExprEvaluatorContext, args: Expr[]) => {
+            const value = context.evaluate(args[0]);
             if (typeof value !== "number") {
                 throw new Error(`invalid operand '${value}' for operator 'floor'`);
             }
@@ -149,8 +153,8 @@ const operators = {
     },
 
     ln: {
-        call: (actuals: Value[]) => {
-            const value = actuals[0];
+        call: (context: ExprEvaluatorContext, args: Expr[]) => {
+            const value = context.evaluate(args[0]);
             if (typeof value !== "number") {
                 throw new Error(`invalid operand '${value}' for operator 'ln'`);
             }
@@ -159,8 +163,8 @@ const operators = {
     },
 
     ln2: {
-        call: (actuals: Value[]) => {
-            const value = actuals[0];
+        call: (context: ExprEvaluatorContext, args: Expr[]) => {
+            const value = context.evaluate(args[0]);
             if (typeof value !== "number") {
                 throw new Error(`invalid operand '${value}' for operator 'ln2'`);
             }
@@ -169,8 +173,8 @@ const operators = {
     },
 
     log10: {
-        call: (actuals: Value[]) => {
-            const value = actuals[0];
+        call: (context: ExprEvaluatorContext, args: Expr[]) => {
+            const value = context.evaluate(args[0]);
             if (typeof value !== "number") {
                 throw new Error(`invalid operand '${value}' for operator 'log10'`);
             }
@@ -179,14 +183,14 @@ const operators = {
     },
 
     max: {
-        call: (actuals: Value[]) => {
-            return Math.max(...actuals.map(v => Number(v)));
+        call: (context: ExprEvaluatorContext, args: Expr[]) => {
+            return Math.max(...args.map(v => Number(context.evaluate(v))));
         }
     },
 
     min: {
-        call: (actuals: Value[]) => {
-            return Math.min(...actuals.map(v => Number(v)));
+        call: (context: ExprEvaluatorContext, args: Expr[]) => {
+            return Math.min(...args.map(v => Number(context.evaluate(v))));
         }
     },
 
@@ -197,8 +201,8 @@ const operators = {
     },
 
     round: {
-        call: (actuals: Value[]) => {
-            const value = actuals[0];
+        call: (context: ExprEvaluatorContext, args: Expr[]) => {
+            const value = context.evaluate(args[0]);
             if (typeof value !== "number") {
                 throw new Error(`invalid operand '${value}' for operator 'round'`);
             }
@@ -207,8 +211,8 @@ const operators = {
     },
 
     sin: {
-        call: (actuals: Value[]) => {
-            const value = actuals[0];
+        call: (context: ExprEvaluatorContext, args: Expr[]) => {
+            const value = context.evaluate(args[0]);
             if (typeof value !== "number") {
                 throw new Error(`invalid operand '${value}' for operator 'sin'`);
             }
@@ -217,8 +221,8 @@ const operators = {
     },
 
     sqrt: {
-        call: (actuals: Value[]) => {
-            const value = actuals[0];
+        call: (context: ExprEvaluatorContext, args: Expr[]) => {
+            const value = context.evaluate(args[0]);
             if (typeof value !== "number") {
                 throw new Error(`invalid operand '${value}' for operator 'sqrt'`);
             }
@@ -227,8 +231,8 @@ const operators = {
     },
 
     tan: {
-        call: (actuals: Value[]) => {
-            const value = actuals[0];
+        call: (context: ExprEvaluatorContext, args: Expr[]) => {
+            const value = context.evaluate(args[0]);
             if (typeof value !== "number") {
                 throw new Error(`invalid operand '${value}' for operator 'tan'`);
             }

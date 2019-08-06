@@ -4,12 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { OperatorDescriptorMap } from "../ExprEvaluator";
+import { Expr } from "../Expr";
+import { ExprEvaluatorContext, OperatorDescriptorMap } from "../ExprEvaluator";
 
 const operators = {
     length: {
-        call: (actuals: unknown[]) => {
-            const value = actuals[0];
+        call: (context: ExprEvaluatorContext, args: Expr[]) => {
+            const value = context.evaluate(args[0]);
             if (Array.isArray(value) || typeof value === "string") {
                 return value.length;
             }

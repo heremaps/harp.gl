@@ -4,31 +4,32 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { OperatorDescriptorMap } from "../ExprEvaluator";
+import { Expr } from "../Expr";
+import { ExprEvaluatorContext, OperatorDescriptorMap } from "../ExprEvaluator";
 
 const operators = {
     concat: {
-        call: (actuals: unknown[]) => {
-            return "".concat(...actuals.map(a => String(a)));
+        call: (context: ExprEvaluatorContext, args: Expr[]) => {
+            return "".concat(...args.map(a => String(context.evaluate(a))));
         }
     },
 
     downcase: {
-        call: (actuals: unknown[]) => {
-            return String(actuals[0]).toLocaleLowerCase();
+        call: (context: ExprEvaluatorContext, args: Expr[]) => {
+            return String(context.evaluate(args[0])).toLocaleLowerCase();
         }
     },
 
     upcase: {
-        call: (actuals: unknown[]) => {
-            return String(actuals[0]).toLocaleUpperCase();
+        call: (context: ExprEvaluatorContext, args: Expr[]) => {
+            return String(context.evaluate(args[0])).toLocaleUpperCase();
         }
     },
 
     "~=": {
-        call: (actuals: unknown[]) => {
-            const left = actuals[0];
-            const right = actuals[1];
+        call: (context: ExprEvaluatorContext, args: Expr[]) => {
+            const left = context.evaluate(args[0]);
+            const right = context.evaluate(args[1]);
             if (typeof left === "string" && typeof right === "string") {
                 return left.indexOf(right) !== -1;
             }
@@ -37,9 +38,9 @@ const operators = {
     },
 
     "^=": {
-        call: (actuals: unknown[]) => {
-            const left = actuals[0];
-            const right = actuals[1];
+        call: (context: ExprEvaluatorContext, args: Expr[]) => {
+            const left = context.evaluate(args[0]);
+            const right = context.evaluate(args[1]);
             if (typeof left === "string" && typeof right === "string") {
                 return left.startsWith(right);
             }
@@ -48,9 +49,9 @@ const operators = {
     },
 
     "$=": {
-        call: (actuals: unknown[]) => {
-            const left = actuals[0];
-            const right = actuals[1];
+        call: (context: ExprEvaluatorContext, args: Expr[]) => {
+            const left = context.evaluate(args[0]);
+            const right = context.evaluate(args[1]);
             if (typeof left === "string" && typeof right === "string") {
                 return left.endsWith(right);
             }

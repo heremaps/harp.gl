@@ -4,19 +4,26 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-export const CastOperators = {
+import { Expr } from "../Expr";
+import { ExprEvaluatorContext, OperatorDescriptorMap } from "../ExprEvaluator";
+
+const operators = {
     "to-boolean": {
-        call: (actuals: unknown[]) => Boolean(actuals[0])
+        call: (context: ExprEvaluatorContext, args: Expr[]) => {
+            return Boolean(context.evaluate(args[0]));
+        }
     },
 
     "to-string": {
-        call: (actuals: unknown[]) => String(actuals[0])
+        call: (context: ExprEvaluatorContext, args: Expr[]) => {
+            return String(context.evaluate(args[0]));
+        }
     },
 
     "to-number": {
-        call: (actuals: unknown[]) => {
-            for (const actual of actuals) {
-                const value = Number(actual);
+        call: (context: ExprEvaluatorContext, args: Expr[]) => {
+            for (const arg of args) {
+                const value = Number(context.evaluate(arg));
                 if (!isNaN(value)) {
                     return value;
                 }
@@ -26,4 +33,5 @@ export const CastOperators = {
     }
 };
 
-export type CastOperatorNames = keyof typeof CastOperators;
+export const CastOperators: OperatorDescriptorMap = operators;
+export type CastOperatorNames = keyof typeof operators;

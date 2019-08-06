@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { ExprEvaluator, OperatorDescriptor } from "./ExprEvaluator";
+import { ExprEvaluator, ExprEvaluatorContext, OperatorDescriptor } from "./ExprEvaluator";
 import { ExprParser } from "./ExprParser";
 import { ExprPool } from "./ExprPool";
 
@@ -96,7 +96,7 @@ export abstract class Expr {
      * @param cache A cache of previously computed results.
      */
     evaluate(env: Env, cache?: Map<Expr, Value>): Value | never {
-        return this.accept(exprEvaluator, { env, cache });
+        return this.accept(exprEvaluator, new ExprEvaluatorContext(exprEvaluator, env, cache));
     }
 
     /**
