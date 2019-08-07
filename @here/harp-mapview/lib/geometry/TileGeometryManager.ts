@@ -311,7 +311,9 @@ export class SimpleTileGeometryManager extends TileGeometryManagerBase {
     }
 
     initTile(tile: Tile): void {
-        tile.tileGeometryLoader = new SimpleTileGeometryLoader(tile);
+        if (tile.dataSource.useGeometryLoader) {
+            tile.tileGeometryLoader = new SimpleTileGeometryLoader(tile);
+        }
     }
 
     updateTiles(tiles: Tile[]): void {

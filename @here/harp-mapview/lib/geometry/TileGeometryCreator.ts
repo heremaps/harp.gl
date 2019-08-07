@@ -20,7 +20,9 @@ import {
     isExtrudedPolygonTechnique,
     isFillTechnique,
     isInterpolatedProperty,
+    isLineMarkerTechnique,
     isLineTechnique,
+    isPoiTechnique,
     isSegmentsTechnique,
     isSolidLineTechnique,
     isSquaresTechnique,
@@ -75,6 +77,7 @@ import { TextElement } from "../text/TextElement";
 import { DEFAULT_TEXT_DISTANCE_SCALE } from "../text/TextElementsRenderer";
 import { computeStyleCacheId } from "../text/TextStyleCache";
 import { Tile, TileFeatureData } from "../Tile";
+import { TileGeometryLoader } from "./TileGeometryLoader";
 
 /**
  * The SORT_WEIGHT_PATH_LENGTH constants control how the priority of the labels are computed based
@@ -197,9 +200,59 @@ export class TileGeometryCreator {
      */
     createAllGeometries(tile: Tile, decodedTile: DecodedTile) {
         tile.clear();
+
+        const filter = (technique: Technique): boolean => {
+            return technique.enabled !== false;
+        };
+
+        this.createObjects(tile, decodedTile, filter);
+
+        const textFilter = (technique: Technique): boolean => {
+            if (
+                !isPoiTechnique(technique) &&
+                !isLineMarkerTechnique(technique) &&
+                !isTextTechnique(technique)
+            ) {
+                return false;
+            }
+            return filter(technique);
+        };
+
         this.preparePois(tile, decodedTile);
-        this.createTextElements(tile, decodedTile);
-        this.createObjects(tile, decodedTile);
+
+        // TextElements do not get their geometry created by Tile, but are managed on a
+        // higher level.
+        this.createTextElements(tile, decodedTile, textFilter);
+    }
+
+    /**
+     * Apply enabled and disabled kinds as a filter.
+     *
+     * @param {DecodedTile} decodedTile
+     * @param {(GeometryKindSet | undefined)} enabledKinds
+     * @param {(GeometryKindSet | undefined)} disabledKinds
+     */
+    processTechniques(
+        decodedTile: DecodedTile,
+        enabledKinds: GeometryKindSet | undefined,
+        disabledKinds: GeometryKindSet | undefined
+    ): void {
+        if (decodedTile === undefined) {
+            return;
+        }
+
+        for (const technique of decodedTile.techniques) {
+            // Make sure that all technique have their geometryKind set, either from the Theme or
+            // their default value.
+            if (technique.kind === undefined) {
+                TileGeometryLoader.setDefaultGeometryKind(technique);
+            }
+        }
+
+        // Speedup and simplify following code: Test all techniques if they intersect with
+        // enabledKinds and disabledKinds, in which case they are flagged. The disabledKinds can be
+        // ignored hereafter.
+        this.initDecodedTile(decodedTile, enabledKinds, disabledKinds);
     }
 
     /**
@@ -216,7 +269,10 @@ export class TileGeometryCreator {
         object: THREE.Object3D,
         geometryKind: GeometryKind | GeometryKindSet | undefined
     ) {
-        const userData = (object.userData = object.userData || {});
+        if (object.userData === undefined) {
+            object.userData = {};
+        }
+        const userData = object.userData;
         userData.tileKey = tile.tileKey;
         userData.dataSource = tile.dataSource.name;
 
@@ -428,7 +484,6 @@ export class TileGeometryCreator {
                 textElement.mayOverlap = technique.mayOverlap === true;
                 textElement.reserveSpace = technique.reserveSpace !== false;
                 textElement.kind = technique.kind;
-                textElement.userData = textPath.objInfos;
 
                 tile.addTextElement(textElement);
             }
@@ -509,10 +564,6 @@ export class TileGeometryCreator {
 
                     textElement.fadeNear = fadeNear;
                     textElement.fadeFar = fadeFar;
-
-                    if (text.objInfos !== undefined) {
-                        textElement.userData = text.objInfos[i];
-                    }
 
                     tile.addTextElement(textElement);
                 }

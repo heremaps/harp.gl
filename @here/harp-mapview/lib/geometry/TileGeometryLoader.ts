@@ -171,8 +171,23 @@ export class SimpleTileGeometryLoader implements TileGeometryLoader {
         return this.m_isFinished;
     }
 
-    setDecodedTile(decodedTile: DecodedTile) {
-        this.m_decodedTile = this.m_tile.decodedTile;
+    /**
+     * Set the [[DecodedTile]] of the tile. Is called after the decoded tile has been loaded, and
+     * prepares its content for later processing in the 'updateXXX' methods.
+     *
+     * @param {DecodedTile} decodedTile The decoded tile with the flat geometry data belonging to
+     *      this tile.
+     * @returns {DecodedTile} The processed decoded tile.
+     */
+    setDecodedTile(decodedTile: DecodedTile): DecodedTile {
+        this.m_decodedTile = decodedTile;
+
+        if (this.m_decodedTile !== undefined) {
+            this.m_availableGeometryKinds = TileGeometryLoader.prepareDecodedTile(
+                this.m_decodedTile
+            );
+        }
+        return this.m_decodedTile;
     }
 
     get availableGeometryKinds(): GeometryKindSet | undefined {
@@ -183,8 +198,17 @@ export class SimpleTileGeometryLoader implements TileGeometryLoader {
         enabledKinds: GeometryKindSet | undefined,
         disabledKinds: GeometryKindSet | undefined
     ): void {
-        if (this.m_decodedTile === undefined && this.m_tile.decodedTile !== undefined) {
-            this.setDecodedTile(this.m_tile.decodedTile);
+        const tile = this.tile;
+
+        // First time this tile is handled:
+        if (this.m_decodedTile === undefined && tile.decodedTile !== undefined) {
+            TileGeometryCreator.instance.processTechniques(
+                tile.decodedTile,
+                enabledKinds,
+                disabledKinds
+            );
+
+            this.setDecodedTile(tile.decodedTile);
             this.prepareForRender(enabledKinds, disabledKinds);
             this.finish();
         }
