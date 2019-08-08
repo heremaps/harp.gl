@@ -484,6 +484,8 @@ export class TileGeometryCreator {
                 textElement.mayOverlap = technique.mayOverlap === true;
                 textElement.reserveSpace = technique.reserveSpace !== false;
                 textElement.kind = technique.kind;
+                // Get the userData for text element picking.
+                textElement.userData = textPath.objInfos;
 
                 tile.addTextElement(textElement);
             }
@@ -564,6 +566,11 @@ export class TileGeometryCreator {
 
                     textElement.fadeNear = fadeNear;
                     textElement.fadeFar = fadeFar;
+
+                    if (text.objInfos !== undefined) {
+                        // Get the userData for text element picking.
+                        textElement.userData = text.objInfos[i];
+                    }
 
                     tile.addTextElement(textElement);
                 }
