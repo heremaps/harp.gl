@@ -32,10 +32,15 @@ function resolveOptional(path, message) {
 const commonConfig = {
     context: __dirname,
     devtool: prepareOnly ? undefined : "source-map",
-    externals: {
-        three: "THREE",
-        fs: "undefined"
-    },
+    externals: [
+        {
+            three: "THREE",
+            fs: "undefined"
+        },
+        function(context, request, callback) {
+            return /three\.module\.js$/.test(request) ? callback(null, "THREE") : callback();
+        }
+    ],
     resolve: {
         extensions: [".webpack.js", ".web.ts", ".ts", ".tsx", ".web.js", ".js"],
         alias: {

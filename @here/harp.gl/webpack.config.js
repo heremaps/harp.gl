@@ -55,9 +55,14 @@ const mapComponentConfig = merge(commonConfig, {
         filename: `harp${bundleSuffix}.js`,
         library: "harp"
     },
-    externals: {
-        three: "THREE"
-    }
+    externals: [
+        {
+            three: "THREE"
+        },
+        function(context, request, callback) {
+            return /three\.module\.js$/.test(request) ? callback(null, "THREE") : callback();
+        }
+    ]
 });
 
 const mapComponentDecoderConfig = merge(commonConfig, {
@@ -65,9 +70,14 @@ const mapComponentDecoderConfig = merge(commonConfig, {
     output: {
         filename: `harp-decoders${bundleSuffix}.js`
     },
-    externals: {
-        three: "THREE"
-    }
+    externals: [
+        {
+            three: "THREE"
+        },
+        function(context, request, callback) {
+            return /three\.module\.js$/.test(request) ? callback(null, "THREE") : callback();
+        }
+    ]
 });
 
 module.exports = [mapComponentConfig, mapComponentDecoderConfig];

@@ -66,11 +66,16 @@ const browserTestsConfig = {
             }
         ])
     ],
-    externals: {
-        fs: "undefined",
-        three: "THREE",
-        typestring: "undefined"
-    },
+    externals: [
+        {
+            fs: "undefined",
+            three: "THREE",
+            typestring: "undefined"
+        },
+        function(context, request, callback) {
+            return /three\.module\.js$/.test(request) ? callback(null, "THREE") : callback();
+        }
+    ],
     performance: {
         hints: false
     },
