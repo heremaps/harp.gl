@@ -15,9 +15,14 @@ module.exports = [
             filename: "[name].bundle.js",
         },
         devtool: 'source-map',
-        externals: {
-            three: "THREE",
-        },
+        externals: [
+            {
+                three: "THREE",
+            },
+            function(context, request, callback) {
+                return /three\.module\.js$/.test(request) ? callback(null, "THREE") : callback();
+            }
+        ],
         resolve: {
             extensions: [".webpack.js", ".web.ts", ".ts", ".tsx", ".web.js", ".js"],
         },
@@ -64,9 +69,14 @@ module.exports = [
             filename: "[name].bundle.js",
         },
         devtool: 'source-map',
-        externals: {
-            three: "THREE",
-        },
+        externals: [
+            {
+                three: "THREE",
+            },
+            function(context, request, callback) {
+                return /three\.module\.js$/.test(request) ? callback(null, "THREE") : callback();
+            }
+        ],
         resolve: {
             extensions: [".webpack.js", ".web.ts", ".ts", ".tsx", ".web.js", ".js"],
         },
