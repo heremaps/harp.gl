@@ -60,7 +60,7 @@ export namespace ThreejsRaycast {
 
         // Instantiate the default map controls, allowing the user to pan around freely.
         const mapControls = new MapControls(map);
-        mapControls.maxPitchAngle = 50;
+        mapControls.maxTiltAngle = 50;
 
         // Center the camera on Manhattan, New York City.
         const NY = new GeoCoordinates(40.707, -74.01);

@@ -232,7 +232,7 @@ export namespace CustomDatasourceExample {
         CopyrightElementHandler.install("copyrightNotice", map);
 
         const mapControls = new MapControls(map);
-        mapControls.maxPitchAngle = 50;
+        mapControls.maxTiltAngle = 50;
 
         const NY = new GeoCoordinates(40.707, -74.01);
         map.lookAt(NY, 4000, 50, -20);

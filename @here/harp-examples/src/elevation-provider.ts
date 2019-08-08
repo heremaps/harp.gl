@@ -131,7 +131,7 @@ export namespace ElevationProviderExample {
 
         // Instantiate the default map controls, allowing the user to pan around freely.
         const mapControls = new MapControls(map);
-        mapControls.maxPitchAngle = 50;
+        mapControls.maxTiltAngle = 50;
         mapControls.setRotation(6.3, 50);
 
         // Add an UI.

@@ -28,26 +28,6 @@ export function calculateNormalizedDeviceCoordinates(
 }
 
 /**
- * Returns the azimuth and altitude in radians for the given direction vector.
- *
- * @param direction The direction vector. Does not have to be normalized.
- */
-export function directionToAzimuthAltitude(
-    direction: Vector3
-): { azimuth: number; altitude: number } {
-    const normalizedDirection = direction.clone().normalize();
-
-    //Shamelessly copied from Jan ;)
-    const xy = new Vector2(normalizedDirection.x, normalizedDirection.y);
-    const nxz = new Vector2(xy.length(), normalizedDirection.z).normalize();
-
-    const azimuth = Math.atan2(xy.x, xy.y);
-    const altitude = -Math.asin(nxz.y);
-
-    return { azimuth, altitude };
-}
-
-/**
  * Returns the direction vector that is described by the given azimuth and altitude.
  *
  * @param azimuth Azimuth in radians.

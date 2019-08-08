@@ -6,7 +6,7 @@
 
 import { GeoCoordinates } from "@here/harp-geoutils";
 import { MapControls, MapControlsUI } from "@here/harp-map-controls";
-import { CopyrightElementHandler, CopyrightInfo, MapView, MapViewUtils } from "@here/harp-mapview";
+import { CopyrightElementHandler, CopyrightInfo, MapView } from "@here/harp-mapview";
 import { APIFormat, OmvDataSource } from "@here/harp-omv-datasource";
 import { accessToken } from "../config";
 
@@ -112,7 +112,6 @@ export namespace TripleViewExample {
     const numberOfSyncXViews = 3;
     // Adjust CSS to see more then 1 row in Y axis
     const numberOfSyncYViews = 1;
-    const defaultZoomLevel = 14;
 
     /**
      * A pair of MapView and MapController.
@@ -174,11 +173,6 @@ export namespace TripleViewExample {
             const ui = new MapControlsUI(mapControls);
             canvas.parentElement!.appendChild(ui.domElement);
         }
-
-        //Set the cameras height according to the given zoom level.
-        mapView.camera.position.setZ(
-            MapViewUtils.calculateDistanceToGroundFromZoomLevel(mapView, defaultZoomLevel)
-        );
 
         // center the camera somewhere around Berlin geo locations
         const berlin = new GeoCoordinates(52.518611, 13.376111);

@@ -56,7 +56,7 @@ export class CameraMovementDetector {
      */
     checkCameraMoved(mapView: MapView, now: number): boolean {
         const newYawPitchRoll = MapViewUtils.extractYawPitchRoll(
-            mapView.camera.quaternion,
+            mapView.camera,
             mapView.projection.type
         );
         const newCameraPos = mapView.camera.getWorldPosition(this.m_newCameraPos);
@@ -97,7 +97,7 @@ export class CameraMovementDetector {
         this.m_lastCameraPos.set(newCameraPos.x, newCameraPos.y, newCameraPos.z);
 
         const newYawPitchRoll = MapViewUtils.extractYawPitchRoll(
-            mapView.camera.quaternion,
+            mapView.camera,
             mapView.projection.type
         );
         this.m_lastYawPitchRoll = newYawPitchRoll;

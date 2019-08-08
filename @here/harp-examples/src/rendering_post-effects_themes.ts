@@ -27,7 +27,7 @@ export namespace EffectsExample {
         CopyrightElementHandler.install("copyrightNotice", mapView);
 
         const mapControls = new MapControls(mapView);
-        mapControls.maxPitchAngle = 60;
+        mapControls.maxTiltAngle = 60;
         const NY = new GeoCoordinates(40.707, -74.01);
         mapView.lookAt(NY, 4000, 60);
 

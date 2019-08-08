@@ -11,7 +11,7 @@ import {
     MapViewMultiPolygonFeature
 } from "@here/harp-features-datasource";
 import { GeoCoordinates, sphereProjection } from "@here/harp-geoutils";
-import { MapControls } from "@here/harp-map-controls";
+import { MapControls, MapControlsUI } from "@here/harp-map-controls";
 import { CopyrightInfo, MapView } from "@here/harp-mapview";
 import { TopViewClipPlanesEvaluator } from "@here/harp-mapview/lib/ClipPlanesEvaluator";
 import { APIFormat, OmvDataSource } from "@here/harp-omv-datasource";
@@ -280,15 +280,52 @@ export namespace PolygonsFeaturesExample {
         const canvas = document.getElementById("mapCanvas") as HTMLCanvasElement;
         const mapView = new MapView({
             canvas,
-            theme: "resources/berlin_tilezen_night_reduced.json",
             projection: sphereProjection,
-            clipPlanesEvaluator: new TopViewClipPlanesEvaluator(300000)
+            clipPlanesEvaluator: new TopViewClipPlanesEvaluator(300000),
+            theme: {
+                extends: "resources/berlin_tilezen_night_reduced.json",
+                definitions: {
+                    northPoleColor: {
+                        type: "color",
+                        value: "#3a3c3e"
+                    },
+                    southPoleColor: {
+                        type: "color",
+                        value: "#4a4d4e"
+                    }
+                },
+                styles: {
+                    polar: [
+                        {
+                            description: "North pole",
+                            when: ["==", ["get", "kind"], "north_pole"],
+                            technique: "fill",
+                            attr: {
+                                color: ["ref", "northPoleColor"]
+                            },
+                            renderOrder: 5
+                        },
+                        {
+                            description: "South pole",
+                            when: ["==", ["get", "kind"], "south_pole"],
+                            technique: "fill",
+                            attr: {
+                                color: ["ref", "southPoleColor"]
+                            },
+                            renderOrder: 5
+                        }
+                    ]
+                }
+            }
         });
-        mapView.setCameraGeolocationAndZoom(new GeoCoordinates(20, 30), 3.9);
+        mapView.setCameraGeolocationAndZoom(new GeoCoordinates(30, 10), 3.2);
         mapView.renderLabels = false;
 
         const controls = new MapControls(mapView);
-        controls.maxPitchAngle = 50;
+        controls.maxTiltAngle = 50;
+
+        const ui = new MapControlsUI(controls);
+        canvas.parentElement!.appendChild(ui.domElement);
 
         window.addEventListener("resize", () => mapView.resize(innerWidth, innerHeight));
 

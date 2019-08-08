@@ -82,7 +82,7 @@ export namespace HelloWorldExample {
         // snippet:harp_gl_hello_world_example_map_controls.ts
         // Instantiate the default map controls, allowing the user to pan around freely.
         const mapControls = new MapControls(map);
-        mapControls.maxPitchAngle = 50;
+        mapControls.maxTiltAngle = 50;
         // end:harp_gl_hello_world_example_map_controls.ts
 
         // snippet:harp_gl_hello_world_example_look_at.ts

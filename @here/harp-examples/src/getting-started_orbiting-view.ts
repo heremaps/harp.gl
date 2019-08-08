@@ -4,13 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GeoCoordinates } from "@here/harp-geoutils";
+import { GeoCoordinates, mercatorProjection, sphereProjection } from "@here/harp-geoutils";
 import {
     CopyrightElementHandler,
     CopyrightInfo,
     MapView,
-    MapViewEventNames,
-    MapViewUtils
+    MapViewEventNames
 } from "@here/harp-mapview";
 import { APIFormat, OmvDataSource } from "@here/harp-omv-datasource";
 import { GUI } from "dat.gui";
@@ -37,7 +36,7 @@ export namespace CameraOrbitExample {
     // end:harp_gl_camera_orbit_example_0.ts
 
     // snippet:harp_gl_camera_orbit_example_1.ts
-    const options = { tilt: 45, distance: 3000 };
+    const options = { tilt: 45, distance: 2500, globe: true };
     const NY = new GeoCoordinates(40.707, -74.012);
     let azimuth = 0;
     map.addEventListener(MapViewEventNames.AfterRender, () => {
@@ -49,13 +48,10 @@ export namespace CameraOrbitExample {
 
     const gui = new GUI({ width: 300 });
     gui.add(options, "tilt", 0, 80, 0.1);
-    gui.add(
-        options,
-        "distance",
-        MapViewUtils.calculateDistanceToGroundFromZoomLevel(map, map.maxZoomLevel),
-        5000,
-        1
-    );
+    gui.add(options, "distance", 300, 30000, 1);
+    gui.add(options, "globe").onChange(() => {
+        map.projection = options.globe ? sphereProjection : mercatorProjection;
+    });
 
     function createBaseMap(): MapView {
         document.body.innerHTML += getExampleHTML();
@@ -63,7 +59,8 @@ export namespace CameraOrbitExample {
         const canvas = document.getElementById("mapCanvas") as HTMLCanvasElement;
         const mapView = new MapView({
             canvas,
-            theme: "resources/berlin_tilezen_base.json"
+            projection: sphereProjection,
+            theme: "resources/berlin_tilezen_base_globe.json"
         });
         canvas.addEventListener("contextmenu", e => e.preventDefault());
 
