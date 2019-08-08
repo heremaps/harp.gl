@@ -216,6 +216,20 @@ export interface FovCalculation {
 }
 
 /**
+ * Hint for the WebGL implementation on which power mode to prefer.
+ *
+ * @see https://www.khronos.org/registry/webgl/specs/latest/1.0/#5.14.12
+ */
+export enum MapViewPowerPreference {
+    /** Default value. */
+    Default = "default",
+    /** Lower power mode, used to conserve energy. */
+    LowPower = "low-power",
+    /** Maximum performance. */
+    HighPerformance = "high-performance"
+}
+
+/**
  * User configuration for the [[MapView]].
  */
 export interface MapViewOptions {
@@ -510,6 +524,11 @@ export interface MapViewOptions {
      * Disable all fading animations for debugging and performance measurement.
      */
     disableFading?: boolean;
+
+    /**
+     * Hint for the WebGL implementation on which power mode to prefer.
+     */
+    powerPreference?: MapViewPowerPreference;
 }
 
 /**
@@ -770,12 +789,19 @@ export class MapView extends THREE.EventDispatcher {
         // Initialization of the stats
         this.setupStats(this.m_options.enableStatistics);
 
+        this.canvas.addEventListener("webglcontextlost", this.onWebGLContextLost);
+        this.canvas.addEventListener("webglcontextrestored", this.onWebGLContextRestored);
+
         // Initialization of the renderer
         this.m_renderer = new THREE.WebGLRenderer({
             canvas: this.canvas,
             antialias: this.m_options.enableNativeWebglAntialias !== false,
             alpha: this.m_options.alpha,
-            preserveDrawingBuffer: this.m_options.preserveDrawingBuffer === true
+            preserveDrawingBuffer: this.m_options.preserveDrawingBuffer === true,
+            powerPreference:
+                this.m_options.powerPreference === undefined
+                    ? MapViewPowerPreference.Default
+                    : this.m_options.powerPreference
         });
         this.m_renderer.autoClear = false;
 
@@ -853,9 +879,6 @@ export class MapView extends THREE.EventDispatcher {
         this.initTheme();
 
         this.drawFrame();
-
-        this.canvas.addEventListener("webglcontextlost", this.onWebGLContextLost);
-        this.canvas.addEventListener("webglcontextrestored", this.onWebGLContextRestored);
     }
 
     /**
@@ -2902,7 +2925,9 @@ export class MapView extends THREE.EventDispatcher {
     }
 
     /**
-     * Default handler for webglcontextlost event
+     * Default handler for webglcontextlost event.
+     *
+     * Note: The renderer `this.m_renderer` may not be initialized when this function is called.
      */
     private onWebGLContextLost = (event: Event) => {
         this.dispatchEvent(CONTEXT_LOST_EVENT);
@@ -2910,16 +2935,20 @@ export class MapView extends THREE.EventDispatcher {
     };
 
     /**
-     * Default handler for webglcontextrestored event
+     * Default handler for webglcontextrestored event.
+     *
+     * Note: The renderer `this.m_renderer` may not be initialized when this function is called.
      */
     private onWebGLContextRestored = (event: Event) => {
         this.dispatchEvent(CONTEXT_RESTORED_EVENT);
-        if (this.m_theme !== undefined && this.m_theme.clearColor !== undefined) {
-            this.m_renderer.setClearColor(new THREE.Color(this.m_theme.clearColor));
-        } else {
-            this.m_renderer.setClearColor(DEFAULT_CLEAR_COLOR);
+        if (this.m_renderer !== undefined) {
+            if (this.m_theme !== undefined && this.m_theme.clearColor !== undefined) {
+                this.m_renderer.setClearColor(new THREE.Color(this.m_theme.clearColor));
+            } else {
+                this.m_renderer.setClearColor(DEFAULT_CLEAR_COLOR);
+            }
+            this.update();
         }
-        this.update();
         logger.log("WebGL context restored", event);
     };
 
