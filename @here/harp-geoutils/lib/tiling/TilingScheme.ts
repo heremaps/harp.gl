@@ -38,7 +38,7 @@ export class TilingScheme {
      * @param tileKey The [[TileKey]].
      * @returns The list of the sub tile keys.
      */
-    getSubTileKeys(tileKey: TileKey): TileKey[] {
+    getSubTileKeys(tileKey: TileKey): Iterable<TileKey> {
         return this.tileTreeTraverse.subTiles(tileKey);
     }
 

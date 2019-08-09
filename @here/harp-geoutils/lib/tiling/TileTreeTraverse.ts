@@ -15,21 +15,10 @@ export class TileTreeTraverse {
         this.m_subdivisionScheme = subdivisionScheme;
     }
 
-    subTiles(tileKey: TileKey): TileKey[] {
-        const subTileCount =
-            this.m_subdivisionScheme.getSubdivisionX(tileKey.level) *
-            this.m_subdivisionScheme.getSubdivisionY(tileKey.level);
+    subTiles(tileKey: TileKey): Iterable<TileKey> {
+        const divX = this.m_subdivisionScheme.getSubdivisionX(tileKey.level);
+        const divY = this.m_subdivisionScheme.getSubdivisionY(tileKey.level);
 
-        // tslint:disable-next-line:no-bitwise
-        const subTileMask = ~(~0 << subTileCount);
-
-        const subTiles = new SubTiles(tileKey, 1, subTileMask);
-        const result = new Array<TileKey>();
-
-        for (const subTile of subTiles) {
-            result.push(subTile);
-        }
-
-        return result;
+        return new SubTiles(tileKey, divX, divY);
     }
 }

@@ -244,13 +244,14 @@ export class AnimatedExtrusionTileHandler {
     }
 
     private getChildTiles(tileKeys: TileKey[]) {
-        let result: TileKey[] = [];
+        const result: TileKey[] = [];
 
         tileKeys.forEach(tileKey => {
-            const dataSource = this.tile.dataSource;
-            const childTileKeys = dataSource.getTilingScheme().getSubTileKeys(tileKey);
+            const childTileKeys = this.tile.dataSource.getTilingScheme().getSubTileKeys(tileKey);
 
-            result = result.concat(childTileKeys);
+            for (const childTileKey of childTileKeys) {
+                result.push(childTileKey);
+            }
         });
         return result;
     }

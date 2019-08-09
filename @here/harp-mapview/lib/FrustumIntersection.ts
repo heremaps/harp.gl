@@ -130,7 +130,7 @@ export class FrustumIntersection {
                 continue;
             }
 
-            tilingScheme.getSubTileKeys(tileKey).forEach(childTileKey => {
+            for (const childTileKey of tilingScheme.getSubTileKeys(tileKey)) {
                 const offset = tileEntry.offset;
                 const tileKeyAndOffset = TileOffsetUtils.getKeyForTileKeyAndOffset(
                     childTileKey,
@@ -169,7 +169,7 @@ export class FrustumIntersection {
                     this.m_tileKeyEntries.set(tileKeyAndOffset, subTileEntry);
                     workList.push(subTileEntry);
                 }
-            });
+            }
         }
         return { tileKeyEntries: this.m_tileKeyEntries, calculationFinal };
     }
