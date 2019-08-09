@@ -18,7 +18,7 @@
         "hard-source-webpack-plugin": "^0.13.1",
         "mkpath": "^1.0.0",
         "mocha": "^6.1.4",
-        "mocha-webdriver-runner": "^0.5.2",
+        "mocha-webdriver-runner": "^0.5.3",
         "prettier": "^1.18.2",
         "serve-handler": "^6.0.1",
         "three": "^0.107.0",

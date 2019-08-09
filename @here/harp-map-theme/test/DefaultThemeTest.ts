@@ -31,7 +31,9 @@ describe("Berlin Theme", function() {
         "resources/berlin_tilezen_base.json",
         "resources/berlin_tilezen_base_globe.json",
         "resources/berlin_tilezen_day_reduced.json",
-        "resources/berlin_tilezen_night_reduced.json"
+        "resources/berlin_tilezen_night_reduced.json",
+        "resources/berlin_tilezen_effects_outlines.json",
+        "resources/berlin_tilezen_effects_streets.json"
     ];
 
     themes.forEach(themePath => {
