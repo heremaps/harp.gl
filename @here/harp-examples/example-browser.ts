@@ -15,6 +15,7 @@ function exampleBrowser(exampleDefinitions: ExampleDefinitions) {
     const navPanel = document.getElementById("navPanel") as HTMLDivElement;
     const exampleFrameElement = document.getElementById("exampleFrame") as HTMLIFrameElement;
     const viewSourceButton = document.getElementById("viewSource") as HTMLButtonElement;
+    const exampleListElement = document.getElementById("exampleList") as HTMLDivElement;
 
     let currentlySelectedSource: string | undefined;
     const categories: { [key: string]: HTMLAnchorElement[] } = {};
@@ -43,17 +44,19 @@ function exampleBrowser(exampleDefinitions: ExampleDefinitions) {
 
     function installHamburgerHandler() {
         const expandButton = document.getElementById("hamburgerMenu") as HTMLAnchorElement;
+        const closeButton = document.getElementById("closeButton") as HTMLButtonElement;
 
         expandButton.addEventListener("click", event => {
             navPanel.classList.toggle("collapsed");
-            expandButton.classList.toggle("expanded");
+            event.preventDefault();
+        });
+        closeButton.addEventListener("click", event => {
+            navPanel.classList.toggle("collapsed");
             event.preventDefault();
         });
     }
 
     function populateExamplesMenu() {
-        const exampleListElement = document.getElementById("exampleList")!;
-
         Object.keys(exampleDefinitions)
             .sort()
             .forEach(pageUrl => {
@@ -172,8 +175,11 @@ function exampleBrowser(exampleDefinitions: ExampleDefinitions) {
         expandButton.classList.toggle("expanded", !navPanel.classList.contains("collapsed"));
         if (!(pageUrl in exampleDefinitions)) {
             viewSourceButton.style.display = "none";
+            exampleListElement.style.bottom = "365px";
             exampleFrameElement.contentWindow!.document.body.innerHTML =
-                "Invalid example name, please choose one from menu.";
+                `<p style="color:#888;font-size:20px;font-family:sans-serif;text-align:center;` +
+                `top: 50%; margin-top: -100px; position: absolute; width: 100% ">` +
+                `<strong style="font-size:80px; ">404</strong><br/>Example not found</p>`;
             return;
         }
 
@@ -199,6 +205,7 @@ function exampleBrowser(exampleDefinitions: ExampleDefinitions) {
         // update current source link
         currentlySelectedSource = exampleDefinitions[pageUrl];
         viewSourceButton.style.display = "block";
+        exampleListElement.style.bottom = "65px";
 
         // mobile: collapse the navPanel
         navPanel.classList.toggle("collapsed");

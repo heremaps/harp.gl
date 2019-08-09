@@ -71,6 +71,7 @@ export namespace TextCanvasDynamicExample {
 
     let gridScene: THREE.Scene;
     let penObject: THREE.Object3D;
+    let upperCase: boolean = false;
 
     function addGUIControls() {
         guiOptions.color.r = textRenderStyle.color!.r * 255.0;
@@ -272,14 +273,25 @@ export namespace TextCanvasDynamicExample {
         camera.top = window.innerHeight / 2.0;
         camera.updateProjectionMatrix();
     }
+    function onKeyUp(event: any) {
+        const key = event.keyCode || event.which;
+        if (key === 16) {
+            upperCase = false;
+        }
+    }
 
     function onKeyDown(event: any) {
         const key = event.keyCode || event.which;
         // Handle backspaces.
         if (key === 8) {
             textSample = textSample.slice(0, textSample.length - 1);
+        } else if (key === 16) {
+            upperCase = true;
         } else {
-            const char = String.fromCharCode(key);
+            const char = upperCase
+                ? String.fromCharCode(key)
+                : String.fromCharCode(key).toLowerCase();
+
             textSample += char;
             assetsLoaded = false;
             textCanvas.fontCatalog.loadCharset(char, textRenderStyle).then(() => {
@@ -326,6 +338,7 @@ export namespace TextCanvasDynamicExample {
         webglRenderer = new THREE.WebGLRenderer({
             canvas: document.getElementById("mapCanvas") as HTMLCanvasElement
         });
+        webglRenderer.domElement.addEventListener("contextmenu", e => e.preventDefault());
         webglRenderer.autoClear = false;
         webglRenderer.setClearColor(0xffffff);
         webglRenderer.setPixelRatio(window.devicePixelRatio);
@@ -334,6 +347,7 @@ export namespace TextCanvasDynamicExample {
         document.body.appendChild(stats.dom);
         window.addEventListener("resize", onWindowResize);
         window.addEventListener("keydown", onKeyDown);
+        window.addEventListener("keyup", onKeyUp);
 
         camera = new THREE.OrthographicCamera(
             -window.innerWidth / 2.0,
