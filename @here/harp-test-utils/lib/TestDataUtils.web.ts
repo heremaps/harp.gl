@@ -92,6 +92,9 @@ export function loadTestResourceWeb(
     logger.log("loadTestResourceWeb, url: ", url);
 
     return fetch(url).then(response => {
+        if (!response.ok) {
+            throw new Error(`failed to load ${url}: ${response.status} ${response.statusText}`);
+        }
         switch (type) {
             case "arraybuffer":
                 return response.arrayBuffer();

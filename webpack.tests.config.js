@@ -59,7 +59,11 @@ const browserTestsConfig = {
             require.resolve("mocha-webdriver-runner/dist/mocha-webdriver-client.js"),
             ...testResources,
             path.join(harpMapThemePath, "resources/berlin*.json"),
-            path.join(harpDataSourceProtocolPath, "theme.schema.json"),
+            {
+                from: path.join(harpDataSourceProtocolPath, "theme.schema.json"),
+                to: "./@here/harp-datasource-protocol",
+                toType: "dir"
+            },
             {
                 from: path.join(harpFontResourcesPath, "resources"),
                 to: "@here/harp-fontcatalog/resources"

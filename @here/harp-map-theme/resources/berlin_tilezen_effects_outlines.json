@@ -105,8 +105,9 @@
                 "renderOrder": 10,
                 "final": true
             },
+
             {
-                "description": "residential",
+                "description": "residential - outline",
                 "when": [
                     "all",
                     ["==", ["get", "$layer"], "roads"],
@@ -119,58 +120,75 @@
                         ["==", ["get", "kind_detail"], "service"]
                     ]
                 ],
-                "styles": [
-                    {
-                        "category": "outline",
-                        "technique": "solid-line",
-                        "attr": {
-                            "color": "#000",
-                            "lineWidth": {
-                                "interpolation": "Linear",
-                                "zoomLevels": [10, 11, 12, 13, 14],
-                                "values": [42, 28, 18, 7, 3.5]
-                            },
-                            "fadeNear": 0.8,
-                            "fadeFar": 0.9,
-                            "clipping": false
-                        },
-                        "renderOrder": 11
+                "technique": "solid-line",
+                "attr": {
+                    "color": "#000",
+                    "lineWidth": {
+                        "interpolation": "Linear",
+                        "zoomLevels": [10, 11, 12, 13, 14],
+                        "values": [42, 28, 18, 7, 3.5]
                     },
-                    {
-                        "description": "residential",
-                        "category": "fill",
-                        "technique": "solid-line",
-                        "attr": {
-                            "color": "#000",
-                            "lineWidth": {
-                                "interpolation": "Linear",
-                                "zoomLevels": [10, 11, 12, 13, 14],
-                                "values": [38, 24, 13, 5, 3]
-                            },
-                            "fadeNear": 0.8,
-                            "fadeFar": 0.9,
-                            "clipping": false
-                        },
-                        "renderOrder": 11.3
-                    },
-                    {
-                        "technique": "text",
-                        "attr": {
-                            "color": "#999999",
-                            "backgroundColor": "#141414",
-                            "backgroundAlpha": 0.5,
-                            "textLabel": "kind_detail",
-                            "size": 0,
-                            "priority": 15,
-                            "fadeNear": 0.8,
-                            "fadeFar": 0.9,
-                            "clipping": false
-                        },
-                        "renderOrder": 12
-                    }
-                ]
+                    "fadeNear": 0.8,
+                    "fadeFar": 0.9,
+                    "clipping": false
+                },
+                "renderOrder": 11
             },
-            {},
+            {
+                "description": "residential - fill",
+                "when": [
+                    "all",
+                    ["==", ["get", "$layer"], "roads"],
+                    ["!=", ["get", "kind"], "rail"],
+                    ["==", ["get", "kind"], "minor_road"],
+                    [
+                        "any",
+                        ["==", ["get", "kind_detail"], "unclassified"],
+                        ["==", ["get", "kind_detail"], "residential"],
+                        ["==", ["get", "kind_detail"], "service"]
+                    ]
+                ],
+                "technique": "solid-line",
+                "attr": {
+                    "color": "#000",
+                    "lineWidth": {
+                        "interpolation": "Linear",
+                        "zoomLevels": [10, 11, 12, 13, 14],
+                        "values": [38, 24, 13, 5, 3]
+                    },
+                    "fadeNear": 0.8,
+                    "fadeFar": 0.9,
+                    "clipping": false
+                },
+                "renderOrder": 11.3
+            },
+            {
+                "description": "residential - text",
+                "when": [
+                    "all",
+                    ["==", ["get", "$layer"], "roads"],
+                    ["!=", ["get", "kind"], "rail"],
+                    ["==", ["get", "kind"], "minor_road"],
+                    [
+                        "any",
+                        ["==", ["get", "kind_detail"], "unclassified"],
+                        ["==", ["get", "kind_detail"], "residential"],
+                        ["==", ["get", "kind_detail"], "service"]
+                    ]
+                ],
+                "technique": "text",
+                "attr": {
+                    "color": "#999999",
+                    "backgroundColor": "#141414",
+                    "backgroundOpacity": 0.5,
+                    "textLabel": "kind_detail",
+                    "size": 0,
+                    "priority": 15,
+                    "fadeNear": 0.8,
+                    "fadeFar": 0.9
+                },
+                "renderOrder": 12
+            },
             {
                 "description": "secondary",
                 "when": [
@@ -184,18 +202,16 @@
                 "attr": {
                     "color": "#999999",
                     "backgroundColor": "#141414",
-                    "backgroundAlpha": 0.5,
+                    "backgroundOpacity": 0.5,
                     "textLabel": "kind_detail",
                     "size": 16,
                     "priority": 15,
                     "fadeNear": 0.8,
-                    "fadeFar": 0.9,
-                    "clipping": false
+                    "fadeFar": 0.9
                 },
                 "renderOrder": 12
             },
             {
-                "category": "fill",
                 "when": [
                     "all",
                     ["==", ["get", "$layer"], "roads"],
@@ -238,18 +254,16 @@
                 "attr": {
                     "color": "#999999",
                     "backgroundColor": "#141414",
-                    "backgroundAlpha": 0.5,
+                    "backgroundOpacity": 0.5,
                     "size": 0,
                     "priority": 20,
                     "fadeNear": 0.8,
-                    "fadeFar": 0.9,
-                    "clipping": false
+                    "fadeFar": 0.9
                 },
                 "renderOrder": 13
             },
             {
-                "description": "tertiary",
-                "category": "outline",
+                "description": "tertiary - outline",
                 "when": [
                     "all",
                     ["==", ["get", "$layer"], "roads"],
@@ -272,8 +286,7 @@
                 "renderOrder": 10.3
             },
             {
-                "description": "tertiary",
-                "category": "fill",
+                "description": "tertiary - fill",
                 "when": [
                     "all",
                     ["==", ["get", "$layer"], "roads"],
@@ -313,18 +326,16 @@
                 "attr": {
                     "color": "#999999",
                     "backgroundColor": "#141414",
-                    "backgroundAlpha": 0.5,
+                    "backgroundOpacity": 0.5,
                     "size": 0,
                     "priority": 25,
                     "fadeNear": 0.8,
-                    "fadeFar": 0.9,
-                    "clipping": false
+                    "fadeFar": 0.9
                 },
                 "renderOrder": 10
             },
             {
-                "description": "primary",
-                "category": "outline",
+                "description": "primary - outline",
                 "when": [
                     "all",
                     ["==", ["get", "$layer"], "roads"],
@@ -351,8 +362,7 @@
                 "renderOrder": 10.4
             },
             {
-                "description": "primary",
-                "category": "fill",
+                "description": "primary - fill",
                 "when": [
                     "all",
                     ["==", ["get", "$layer"], "roads"],
@@ -391,12 +401,11 @@
                 "attr": {
                     "color": "#999999",
                     "backgroundColor": "#141414",
-                    "backgroundAlpha": 0.5,
+                    "backgroundOpacity": 0.5,
                     "size": 0,
                     "priority": 25,
                     "fadeNear": 0.8,
-                    "fadeFar": 0.9,
-                    "clipping": false
+                    "fadeFar": 0.9
                 },
                 "renderOrder": 10
             },
@@ -453,7 +462,7 @@
                 "final": true
             },
             {
-                "description": "pedestrian",
+                "description": "pedestrian - outline",
                 "when": [
                     "all",
                     ["==", ["get", "$layer"], "roads"],
@@ -480,73 +489,94 @@
                         ]
                     ]
                 ],
-                "styles": [
-                    {
-                        "category": "outline",
-                        "technique": "solid-line",
-                        "attr": {
-                            "color": "#000",
-                            "lineWidth": 1.5,
-                            "fadeNear": 0.8,
-                            "fadeFar": 0.9,
-                            "clipping": false
-                        },
-                        "renderOrder": 10.3
-                    },
-                    {
-                        "category": "fill",
-                        "when": [
-                            "all",
-                            ["==", ["get", "$layer"], "roads"],
-                            ["!=", ["get", "kind"], "rail"],
-                            ["==", ["get", "kind"], "path"],
+                "technique": "solid-line",
+                "attr": {
+                    "color": "#000",
+                    "lineWidth": 1.5,
+                    "fadeNear": 0.8,
+                    "fadeFar": 0.9,
+                    "clipping": false
+                },
+                "renderOrder": 10.3
+            },
+            {
+                "description": "pedestrian - fill",
+                "when": [
+                    "all",
+                    ["==", ["get", "$layer"], "roads"],
+                    ["!=", ["get", "kind"], "rail"],
+                    ["==", ["get", "kind"], "path"],
+                    [
+                        "any",
+                        ["in", ["get", "kind_detail"], ["pedestrian", "path", "footway"]],
+                        [
+                            "in",
+                            ["get", "landuse_kind"],
                             [
-                                "any",
-                                ["in", ["get", "kind_detail"], ["pedestrian", "path", "footway"]],
-                                [
-                                    "in",
-                                    ["get", "landuse_kind"],
-                                    [
-                                        "park",
-                                        "residential",
-                                        "footway",
-                                        "garden",
-                                        "pedestrian",
-                                        "grass",
-                                        "allotments",
-                                        "forest",
-                                        "cemetery",
-                                        "natural_wood"
-                                    ]
-                                ]
+                                "park",
+                                "residential",
+                                "footway",
+                                "garden",
+                                "pedestrian",
+                                "grass",
+                                "allotments",
+                                "forest",
+                                "cemetery",
+                                "natural_wood"
                             ]
-                        ],
-                        "technique": "solid-line",
-                        "attr": {
-                            "color": "#000",
-                            "lineWidth": 1.3,
-                            "fadeNear": 0.8,
-                            "fadeFar": 0.9,
-                            "clipping": false
-                        },
-                        "renderOrder": 12.3
-                    },
-                    {
-                        "technique": "text",
-                        "attr": {
-                            "color": "#999999",
-                            "backgroundColor": "#141414",
-                            "backgroundAlpha": 0.5,
-                            "textLabel": "kind_detail",
-                            "size": 0,
-                            "priority": 15,
-                            "fadeNear": 0.8,
-                            "fadeFar": 0.9,
-                            "clipping": false
-                        },
-                        "renderOrder": 12
-                    }
-                ]
+                        ]
+                    ]
+                ],
+                "technique": "solid-line",
+                "attr": {
+                    "color": "#000",
+                    "lineWidth": 1.3,
+                    "fadeNear": 0.8,
+                    "fadeFar": 0.9,
+                    "clipping": false
+                },
+                "renderOrder": 12.3
+            },
+            {
+                "description": "pedestrian - text",
+                "when": [
+                    "all",
+                    ["==", ["get", "$layer"], "roads"],
+                    ["!=", ["get", "kind"], "rail"],
+                    ["==", ["get", "kind"], "path"],
+                    [
+                        "any",
+                        ["in", ["get", "kind_detail"], ["pedestrian", "path", "footway"]],
+                        [
+                            "in",
+                            ["get", "landuse_kind"],
+                            [
+                                "park",
+                                "residential",
+                                "footway",
+                                "garden",
+                                "pedestrian",
+                                "grass",
+                                "allotments",
+                                "forest",
+                                "cemetery",
+                                "natural_wood"
+                            ]
+                        ]
+                    ]
+                ],
+                "technique": "text",
+                "attr": {
+                    "color": "#999999",
+                    "backgroundColor": "#141414",
+                    "backgroundOpacity": 0.5,
+                    "textLabel": "kind_detail",
+                    "size": 0,
+                    "priority": 15,
+                    "fadeNear": 0.8,
+                    "fadeFar": 0.9
+                },
+                "renderOrder": 12
             },
             {
                 "description": "tram",
@@ -592,8 +622,7 @@
                 "final": true
             },
             {
-                "description": "Railway+S-Bahn background",
-                "category": "outline",
+                "description": "Railway+S-Bahn background - outline",
                 "when": [
                     "all",
                     ["==", ["get", "$layer"], "roads"],
@@ -605,7 +634,6 @@
                 "technique": "solid-line",
                 "attr": {
                     "color": "#6A6C6F",
-                    "xclipping": false,
                     "lineWidth": {
                         "interpolation": "Linear",
                         "zoomLevels": [13, 14.6, 15],
@@ -615,8 +643,7 @@
                 "renderOrder": 5.2
             },
             {
-                "description": "Railway+S-Bahn background",
-                "category": "outline",
+                "description": "Railway+S-Bahn background - outline",
                 "when": [
                     "all",
                     ["==", ["get", "$layer"], "roads"],
@@ -628,7 +655,6 @@
                 "technique": "solid-line",
                 "attr": {
                     "color": "#6A6C6F",
-                    "xclipping": false,
                     "lineWidth": {
                         "interpolation": "Linear",
                         "zoomLevels": [13, 21],
@@ -650,7 +676,6 @@
                 "technique": "dashed-line",
                 "attr": {
                     "color": "#7B7E81",
-                    "xclipping": false,
                     "dashSize": {
                         "interpolation": "Discrete",
                         "zoomLevels": [10, 11, 12, 13, 14, 15, 20],
@@ -683,7 +708,6 @@
                 "technique": "dashed-line",
                 "attr": {
                     "color": "#454648",
-                    "xclipping": false,
                     "dashSize": {
                         "interpolation": "Discrete",
                         "zoomLevels": [10, 11, 12, 13, 14, 15, 16],
@@ -723,14 +747,13 @@
                 "attr": {
                     "color": "#999999",
                     "backgroundColor": "#141414",
-                    "backgroundAlpha": 0.5,
+                    "backgroundOpacity": 0.5,
                     "opacity": 0.5,
                     "size": 0
                 }
             },
             {
                 "description": "country border",
-                "category": "outline",
                 "when": [
                     "all",
                     ["==", ["get", "$layer"], "boundaries"],
@@ -765,7 +788,6 @@
             },
             {
                 "description": "country border",
-                "category": "fill",
                 "when": [
                     "all",
                     ["==", ["get", "$layer"], "boundaries"],
@@ -796,7 +818,7 @@
                     "priority": 100,
                     "color": "#999999",
                     "backgroundColor": "#141414",
-                    "backgroundAlpha": 0.5,
+                    "backgroundOpacity": 0.5,
                     "size": 12.8
                 }
             },
@@ -822,7 +844,6 @@
                 "technique": "dashed-line",
                 "attr": {
                     "color": "#2E3234",
-                    "secondaryColor": "#373A3C",
                     "lineWidth": {
                         "interpolation": "Linear",
                         "zoomLevels": [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
@@ -844,26 +865,6 @@
                             2
                         ]
                     },
-                    "secondaryWidth": {
-                        "interpolation": "Linear",
-                        "zoomLevels": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14],
-                        "values": [
-                            10000,
-                            8000,
-                            7000,
-                            5000,
-                            3000,
-                            2000,
-                            1000,
-                            500,
-                            250,
-                            120,
-                            80,
-                            40,
-                            20,
-                            10
-                        ]
-                    },
                     "dashSize": {
                         "interpolation": "Cubic",
                         "zoomLevels": [10, 11, 12, 13, 14],
@@ -875,8 +876,7 @@
                         "values": [512, 256, 128, 64, 32]
                     }
                 },
-                "renderOrder": 4.1,
-                "secondaryRenderOrder": 4
+                "renderOrder": 4.1
             },
             {
                 "description": "disputed border line - text",
@@ -902,13 +902,12 @@
                     "priority": 100,
                     "color": "#999999",
                     "backgroundColor": "#141414",
-                    "backgroundAlpha": 0.5,
+                    "backgroundOpacity": 0.5,
                     "size": 12.8
                 }
             },
             {
-                "description": "region border",
-                "category": "outline",
+                "description": "region border - outline",
                 "when": [
                     "all",
                     ["==", ["get", "$layer"], "boundaries"],
@@ -958,7 +957,7 @@
                     "priority": 90,
                     "color": "#999999",
                     "backgroundColor": "#141414",
-                    "backgroundAlpha": 0.5,
+                    "backgroundOpacity": 0.5,
                     "size": 12.8
                 }
             },
@@ -972,7 +971,7 @@
                 "attr": {
                     "color": "#999999",
                     "backgroundColor": "#141414",
-                    "backgroundAlpha": 0.5,
+                    "backgroundOpacity": 0.5,
                     "size": 27.2,
                     "priority": 200
                 },
@@ -1231,7 +1230,7 @@
                     },
                     "color": "#3B3E45",
                     "backgroundColor": "#000000",
-                    "smallCaps": true,
+                    "fontVariant": "SmallCaps",
                     "opacity": 0.6
                 }
             },
@@ -1268,11 +1267,10 @@
                     },
                     "color": "#ffffff",
                     "backgroundColor": "#000000",
-                    "backgroundAlpha": 0.5,
-                    "smallCaps": true,
+                    "backgroundOpacity": 0.5,
+                    "fontVariant": "SmallCaps",
                     "opacity": 0.8,
                     "textFadeTime": 0.75,
-                    "iconFadeTime": 0.5,
                     "fadeNear": 0.8,
                     "fadeFar": 0.9
                 },
@@ -1296,11 +1294,10 @@
                     },
                     "color": "#ffffff",
                     "backgroundColor": "#000000",
-                    "backgroundAlpha": 0.5,
-                    "smallCaps": true,
+                    "backgroundOpacity": 0.5,
+                    "fontVariant": "SmallCaps",
                     "opacity": 0.8,
                     "textFadeTime": 0.75,
-                    "iconFadeTime": 0.5,
                     "fadeNear": 0.8,
                     "fadeFar": 0.9
                 },
@@ -1323,11 +1320,10 @@
                     },
                     "color": "#ffffff",
                     "backgroundColor": "#000000",
-                    "backgroundAlpha": 0.5,
-                    "smallCaps": true,
+                    "backgroundOpacity": 0.5,
+                    "fontVariant": "SmallCaps",
                     "opacity": 0.8,
                     "textFadeTime": 0.75,
-                    "iconFadeTime": 0.5,
                     "fadeNear": 0.8,
                     "fadeFar": 0.9
                 },
@@ -1350,7 +1346,7 @@
                     "priority": 65,
                     "color": "#ffffff",
                     "backgroundColor": "#000000",
-                    "smallCaps": true,
+                    "fontVariant": "SmallCaps",
                     "opacity": 0.8,
                     "textFadeTime": 0.75,
                     "iconFadeTime": 0.5,
@@ -1370,7 +1366,7 @@
                 ],
                 "technique": "text",
                 "attr": {
-                    "bold": true,
+                    "fontStyle": "Bold",
                     "priority": 61,
                     "size": {
                         "interpolation": "Linear",
@@ -1379,9 +1375,8 @@
                     },
                     "color": "#ffffff",
                     "backgroundColor": "#000000",
-                    "backgroundAlpha": 0.5,
+                    "backgroundOpacity": 0.5,
                     "textFadeTime": 0.75,
-                    "iconFadeTime": 0.5,
                     "fadeNear": 0.8,
                     "fadeFar": 0.9
                 },
@@ -1406,9 +1401,8 @@
                     },
                     "color": "#ffffff",
                     "backgroundColor": "#000000",
-                    "backgroundAlpha": 0.5,
+                    "backgroundOpacity": 0.5,
                     "textFadeTime": 0.75,
-                    "iconFadeTime": 0.5,
                     "fadeNear": 0.8,
                     "fadeFar": 0.9
                 },
@@ -1433,9 +1427,8 @@
                     },
                     "color": "#f4f4f4",
                     "backgroundColor": "#000000",
-                    "backgroundAlpha": 0.5,
+                    "backgroundOpacity": 0.5,
                     "textFadeTime": 0.75,
-                    "iconFadeTime": 0.5,
                     "fadeNear": 0.8,
                     "fadeFar": 0.9
                 },
@@ -1460,9 +1453,8 @@
                     },
                     "color": "#f4f4f4",
                     "backgroundColor": "#000000",
-                    "backgroundAlpha": 0.5,
+                    "backgroundOpacity": 0.5,
                     "textFadeTime": 0.75,
-                    "iconFadeTime": 0.5,
                     "fadeNear": 0.8,
                     "fadeFar": 0.9
                 },
@@ -1487,9 +1479,8 @@
                     },
                     "color": "#f4f4f4",
                     "backgroundColor": "#000000",
-                    "backgroundAlpha": 0.5,
+                    "backgroundOpacity": 0.5,
                     "textFadeTime": 0.75,
-                    "iconFadeTime": 0.5,
                     "fadeNear": 0.8,
                     "fadeFar": 0.9
                 },
@@ -1514,9 +1505,8 @@
                     },
                     "color": "#f4f4f4",
                     "backgroundColor": "#000000",
-                    "backgroundAlpha": 0.5,
+                    "backgroundOpacity": 0.5,
                     "textFadeTime": 0.75,
-                    "iconFadeTime": 0.5,
                     "fadeNear": 0.8,
                     "fadeFar": 0.9
                 },
@@ -1541,9 +1531,8 @@
                     },
                     "color": "#f4f4f4",
                     "backgroundColor": "#000000",
-                    "backgroundAlpha": 0.5,
+                    "backgroundOpacity": 0.5,
                     "textFadeTime": 0.75,
-                    "iconFadeTime": 0.5,
                     "fadeNear": 0.8,
                     "fadeFar": 0.9
                 },
@@ -1568,9 +1557,8 @@
                     },
                     "color": "#f4f4f4",
                     "backgroundColor": "#000000",
-                    "backgroundAlpha": 0.5,
+                    "backgroundOpacity": 0.5,
                     "textFadeTime": 0.75,
-                    "iconFadeTime": 0.5,
                     "fadeNear": 0.8,
                     "fadeFar": 0.9
                 },
@@ -1620,19 +1608,9 @@
                     "size": 14.4,
                     "opacity": 0.6,
                     "minZoomLevel": 17,
-                    "roughness": 1.95,
-                    "metalness": 0.85,
-                    "emissive": "#1F2020",
-                    "emissiveIntensity": 0.625,
-                    "footprint": true,
-                    "maxSlope": 0.9,
                     "lineWidth": 1,
-                    "lineColor": "#070707",
-                    "lineColorMix": 0.5,
                     "fadeNear": 0.9,
-                    "fadeFar": 1,
-                    "lineFadeNear": 0.25,
-                    "lineFadeFar": 1
+                    "fadeFar": 1
                 },
                 "renderOrder": 100
             }
