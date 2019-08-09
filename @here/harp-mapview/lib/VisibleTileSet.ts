@@ -609,7 +609,8 @@ export class VisibleTileSet {
                             mortonCode
                         } = TileOffsetUtils.extractOffsetAndMortonKeyFromKey(tileKeyCode);
                         const tileKey = TileKey.fromMortonCode(mortonCode);
-                        tilingScheme.getSubTileKeys(tileKey).forEach(childTileKey => {
+
+                        for (const childTileKey of tilingScheme.getSubTileKeys(tileKey)) {
                             const childTileCode = TileOffsetUtils.getKeyForTileKeyAndOffset(
                                 childTileKey,
                                 offset
@@ -627,7 +628,7 @@ export class VisibleTileSet {
                             if (nextLevelDiff < this.options.quadTreeSearchDistanceDown) {
                                 nextLevelCandidates.set(childTileCode, SearchDirection.DOWN);
                             }
-                        });
+                        }
                     }
                 });
                 incompleteTiles = nextLevelCandidates;
