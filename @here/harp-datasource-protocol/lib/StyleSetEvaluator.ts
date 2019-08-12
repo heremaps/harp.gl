@@ -6,7 +6,20 @@
 
 import { LoggerManager } from "@here/harp-utils";
 
-import { Expr, MapEnv, Value } from "./Expr";
+import {
+    BooleanLiteralExpr,
+    CallExpr,
+    ContainsExpr,
+    Expr,
+    ExprVisitor,
+    HasAttributeExpr,
+    MapEnv,
+    NullLiteralExpr,
+    NumberLiteralExpr,
+    StringLiteralExpr,
+    Value,
+    VarExpr
+} from "./Expr";
 import { ExprPool } from "./ExprPool";
 import { isInterpolatedPropertyDefinition } from "./InterpolatedProperty";
 import { InterpolatedPropertyDefinition, InterpolationMode } from "./InterpolatedPropertyDefs";
@@ -42,9 +55,125 @@ interface StyleInternalParams {
      * @hidden
      */
     _styleSetIndex?: number;
+
+    /**
+     * Optimization: The `$layer` requested by the `when` condition of this style.
+     * @hidden
+     */
+    _layer?: string;
 }
 
 type InternalStyle = Style & StyleSelector & Partial<StyleInternalParams>;
+
+/**
+ * [[ExprClassifier]] searches for usages of `$layer` in `when` conditions
+ * associated with styling rules.
+ *
+ * @hidden
+ */
+class StyleConditionClassifier implements ExprVisitor<Expr | undefined, Expr | undefined> {
+    private _style!: InternalStyle;
+
+    classify(style: InternalStyle) {
+        if (style._whenExpr) {
+            const savedStyle = this.switchStyle(style);
+            style._whenExpr = style._whenExpr.accept(this, undefined);
+            this._style = savedStyle;
+        }
+    }
+
+    visitNullLiteralExpr(expr: NullLiteralExpr, enclosingExpr: Expr | undefined): Expr {
+        return expr;
+    }
+
+    visitBooleanLiteralExpr(expr: BooleanLiteralExpr, enclosingExpr: Expr | undefined): Expr {
+        return expr;
+    }
+
+    visitNumberLiteralExpr(expr: NumberLiteralExpr, enclosingExpr: Expr | undefined): Expr {
+        return expr;
+    }
+
+    visitStringLiteralExpr(expr: StringLiteralExpr, enclosingExpr: Expr | undefined): Expr {
+        return expr;
+    }
+
+    visitVarExpr(expr: VarExpr, enclosingExpr: Expr | undefined): Expr {
+        return expr;
+    }
+
+    visitHasAttributeExpr(expr: HasAttributeExpr, enclosingExpr: Expr | undefined): Expr {
+        return expr;
+    }
+
+    visitContainsExpr(expr: ContainsExpr, enclosingExpr: Expr | undefined): Expr {
+        return expr;
+    }
+
+    visitCallExpr(call: CallExpr, enclosingExpr: Expr | undefined): Expr | undefined {
+        if (call.op === "all") {
+            // processing of an `["all", e1, e2, ... eN]` expression. In this case
+            // search for expressions matching comparison of `$layer` and string literals
+            // in the sub expressions.
+            const children = call.children
+                .map(childExpr => childExpr.accept(this, call))
+                .filter(childExpr => childExpr !== undefined) as Expr[];
+
+            return new CallExpr(call.op, children);
+        } else if (enclosingExpr) {
+            // `call` is a direct child expression of an `"all"` operator.
+            const matched = this.matchVarStringComparison(call);
+
+            if (matched && this._style._layer === undefined && matched.name === "$layer") {
+                // found a subexpression `["==", ["get", "$layer"], "some layer name"]`
+                // enclosed in an `["all", e1...eN]` expression. Remove it from
+                // its parent expression and store the value of the expected $layer in
+                // [[StyleInternalParams]].
+
+                this._style._layer = matched.value;
+
+                // return `undefined` to remove this sub expression from its parent.
+                return undefined;
+            }
+        }
+
+        return call;
+    }
+
+    /**
+     * Tests if the given `call` matches the structure ["==", ["get", name], value].
+     * If a match is found returns an object containing the `name` and the `value`;
+     *
+     * @param call The expression to match.
+     */
+    private matchVarStringComparison(call: CallExpr) {
+        if (call.op === "==") {
+            const left = call.children[0];
+            const right = call.children[1];
+
+            if (left instanceof VarExpr && right instanceof StringLiteralExpr) {
+                return { name: left.name, value: right.value };
+            }
+
+            if (right instanceof VarExpr && left instanceof StringLiteralExpr) {
+                return { name: right.name, value: left.value };
+            }
+        }
+
+        return undefined;
+    }
+
+    /**
+     * Sets the given `style` as current.
+     *
+     * @returns The previous `style`.
+     */
+    private switchStyle(style: InternalStyle) {
+        const saved = this._style;
+        this._style = style;
+        return saved;
+    }
+}
 
 /**
  * Combine data from datasource and apply the rules from a specified theme to show it on the map.
@@ -56,6 +185,8 @@ export class StyleSetEvaluator {
     private readonly m_techniques: IndexedTechnique[] = [];
     private readonly m_exprPool = new ExprPool();
     private readonly m_cachedResults = new Map<Expr, Value>();
+    private readonly m_styleConditionClassifier = new StyleConditionClassifier();
+    private m_layer: string | undefined;
 
     constructor(styleSet: StyleSet) {
         let techniqueRenderOrder = 0;
@@ -135,7 +266,10 @@ export class StyleSetEvaluator {
         for (const style of this.styleSet) {
             computeDefaultRenderOrder(style);
         }
+
+        this.compileStyleSet();
     }
+
     /**
      * Find all techniques that fit the current objects' environment.
      * *The techniques in the resulting array may not be modified* since they are being reused for
@@ -148,14 +282,27 @@ export class StyleSetEvaluator {
         const result: IndexedTechnique[] = [];
         const styleStack = new Array<InternalStyle>();
         this.m_cachedResults.clear();
+
+        // get the requested $layer, if any.
+        const layer = env.lookup("$layer");
+
+        // set the requested $layer as the current layer.
+        const previousLayer = this.changeLayer(typeof layer === "string" ? layer : undefined);
+
         for (const currStyle of this.styleSet) {
             if (styleStack.length !== 0) {
+                this.changeLayer(previousLayer); // restore the layer
+
                 throw new Error("Internal error: style stack cleanup failed");
             }
+
             if (this.processStyle(env, styleStack, currStyle, result)) {
                 break;
             }
         }
+
+        this.changeLayer(previousLayer); // restore the layer
+
         return result;
     }
     /**
@@ -164,6 +311,13 @@ export class StyleSetEvaluator {
     get techniques(): IndexedTechnique[] {
         return this.m_techniques;
     }
+
+    private changeLayer(layer: string | undefined) {
+        const savedLayer = this.m_layer;
+        this.m_layer = layer;
+        return savedLayer;
+    }
+
     /**
      * Shorten the style object for debug log. Remove special strings (starting with "_") as well
      * as the sub-styles of style groups.
@@ -181,6 +335,49 @@ export class StyleSetEvaluator {
         }
         return value;
     }
+
+    /**
+     * Compile the `when` conditions found when traversting the styling rules.
+     */
+    private compileStyleSet() {
+        this.styleSet.forEach(style => this.compileStyle(style));
+    }
+
+    /**
+     * Compile the `when` conditions reachable from the given `style`.
+     *
+     * @param style The current style.
+     */
+    private compileStyle(style: InternalStyle) {
+        if (style.when !== undefined) {
+            try {
+                style._whenExpr = Array.isArray(style.when)
+                    ? Expr.fromJSON(style.when)
+                    : Expr.parse(style.when);
+
+                // search for usages of '$layer' and any other
+                // special symbol that can be used to speed up the evaluation
+                // of the `when` conditions associated to this `style`.
+                this.m_styleConditionClassifier.classify(style);
+
+                if (style._whenExpr !== undefined) {
+                    style._whenExpr = style._whenExpr.intern(this.m_exprPool);
+                }
+            } catch (err) {
+                logger.log(
+                    "failed to evaluate expression",
+                    JSON.stringify(style.when),
+                    "error",
+                    String(err)
+                );
+            }
+        }
+
+        if (Array.isArray(style.styles)) {
+            style.styles.forEach(nestedStyle => this.compileStyle(nestedStyle as InternalStyle));
+        }
+    }
+
     /**
      * Process a style (and its sub-styles) hierarchically to look for the technique that fits the
      * current objects' environment. The attributes of the styles are assembled to create a unique
@@ -201,31 +398,25 @@ export class StyleSetEvaluator {
         style: InternalStyle,
         result: Technique[]
     ): boolean {
-        if (style.when !== undefined) {
-            // optimization: Lazy evaluation of when-expression
-            try {
-                if (style._whenExpr === undefined) {
-                    // tslint:disable-next-line: prefer-conditional-expression
-                    if (Array.isArray(style.when)) {
-                        style._whenExpr = Expr.fromJSON(style.when).intern(this.m_exprPool);
-                    } else {
-                        style._whenExpr = Expr.parse(style.when).intern(this.m_exprPool);
-                    }
-                }
-                if (!style._whenExpr!.evaluate(env, this.m_cachedResults)) {
-                    return false;
-                }
-            } catch (err) {
-                logger.log(
-                    "failed to evaluate expression",
-                    JSON.stringify(style.when),
-                    "error",
-                    String(err)
-                );
+        if (style._whenExpr) {
+            if (
+                this.m_layer !== undefined &&
+                style._layer !== undefined &&
+                this.m_layer !== style._layer
+            ) {
+                // skip this rule because its requested layer is different than the
+                // layer defined in $layer variable.
+                return false;
+            }
+
+            if (!style._whenExpr.evaluate(env, this.m_cachedResults)) {
+                // Stop processing this styling rule. The `when` condition
+                // associated with the current `style` evaluates to false so
+                // no techinque defined by this style should be applied.
                 return false;
             }
         }
-        // search through sub-styles
+
         if (style.styles !== undefined) {
             if (style.debug) {
                 logger.log(
