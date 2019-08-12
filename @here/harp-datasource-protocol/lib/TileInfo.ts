@@ -691,7 +691,7 @@ export class ExtendedTileInfoWriter {
 
     // Add a string to the strings catalog. Returns index into the catalog.
     private addStringValue(str: Value, catalog: string[], map: Map<string, number>): number {
-        if (str === undefined) {
+        if (str === undefined || str === null) {
             return -1;
         }
         const name = str.toString();

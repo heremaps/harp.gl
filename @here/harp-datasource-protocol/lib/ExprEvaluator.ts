@@ -12,6 +12,7 @@ import {
     Expr,
     ExprVisitor,
     HasAttributeExpr,
+    NullLiteralExpr,
     NumberLiteralExpr,
     StringLiteralExpr,
     Value,
@@ -69,7 +70,11 @@ export class ExprEvaluator implements ExprVisitor<Value, ExprEvaluatorContext> {
 
     visitVarExpr(expr: VarExpr, context: ExprEvaluatorContext): Value {
         const value = context.env.lookup(expr.name);
-        return value;
+        return value !== undefined ? value : null;
+    }
+
+    visitNullLiteralExpr(expr: NullLiteralExpr, context: ExprEvaluatorContext): Value {
+        return null;
     }
 
     visitBooleanLiteralExpr(expr: BooleanLiteralExpr, context: ExprEvaluatorContext): Value {

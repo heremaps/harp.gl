@@ -62,9 +62,9 @@ describe("ExprEvaluator", function() {
         });
 
         it("Ensure builtin symbols are not accessible", function() {
-            assert.isUndefined(evaluate(["get", "has"]));
-            assert.isUndefined(evaluate(["get", "get"]));
-            assert.isUndefined(evaluate(["get", "length"]));
+            assert.strictEqual(evaluate(["get", "has"]), null);
+            assert.strictEqual(evaluate(["get", "get"]), null);
+            assert.strictEqual(evaluate(["get", "length"]), null);
         });
     });
 
@@ -127,6 +127,10 @@ describe("ExprEvaluator", function() {
             assert.isTrue(evaluate(["!", ["has", "xx"]]));
 
             assert.isFalse(evaluate(["!", ["in", ["get", "emptyText"], [defaultEnv.emptyText]]]));
+
+            assert.strictEqual(evaluate(null), null);
+            assert.isTrue(evaluate(["!", null]));
+            assert.isFalse(evaluate(["!", ["!", null]]));
         });
     });
 

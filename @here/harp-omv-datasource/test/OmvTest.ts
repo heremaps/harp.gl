@@ -61,7 +61,10 @@ export class RoadFeatureFilter implements OmvFeatureModifier {
 
     doProcessLineFeature(_layer: string, env: MapEnv): boolean {
         const roadClass = env.lookup("class");
-        const isRoad = roadClass !== undefined && roadClass.toString().indexOf("rail") < 0;
+        const isRoad =
+            roadClass !== undefined &&
+            roadClass !== null &&
+            roadClass.toString().indexOf("rail") < 0;
         return isRoad;
     }
 
