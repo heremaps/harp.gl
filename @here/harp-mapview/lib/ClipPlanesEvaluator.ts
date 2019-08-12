@@ -347,9 +347,71 @@ export class TiltBasedClipPlanesEvaluator extends AltitudeBasedClipPlanesEvaluat
             clipPlanes.far = Math.min(clipPlanes.far, clipPlanes.near * this.nearFarMaxRatio);
             return clipPlanes;
         } else {
-            // Fallback to base implemenation case we don't yet have support for camera
-            // tilting when using spherical projections.
-            return super.evaluateClipPlanes(camera, projection);
+            const clipPlanes = { near: 0.0, far: 0.0 };
+
+            // Near plance calculus is pretty straightforward and does not depent on camera tilt:
+            clipPlanes.near = this.getCameraAltitude(camera, projection) - this.nearMargin;
+            // For far plane we need to find tangent to sphere which gives the maximum
+            // visible distance with regards to sphere curvature and camera position.
+            const worldOrigin = new THREE.Vector3(0, 0, 0);
+            // Acquire camera to origin vector.
+            const cameraToOrigin = worldOrigin.sub(camera.position);
+            // Extract camera X, Y, Z orientation axes into tmp vectors array.
+            camera.matrixWorld.extractBasis(
+                this.m_tmpVectors[0],
+                this.m_tmpVectors[1],
+                this.m_tmpVectors[2]
+            );
+            const xaxis = this.m_tmpVectors[0];
+            const yaxis = this.m_tmpVectors[1];
+            // Extend the far plane by the margin along the shpere normal (radius).
+            const r = EarthConstants.EQUATORIAL_RADIUS + this.farMargin;
+            const d = cameraToOrigin.length();
+            const dNorm = this.m_tmpVectors[2].copy(cameraToOrigin).multiplyScalar(1 / d);
+
+            const sinAlpha = r / d;
+            const alpha = Math.asin(sinAlpha);
+            const cosAlpha = Math.sqrt(1 - sinAlpha * sinAlpha);
+
+            // Apply tangent vector length onto camera to origin direction.
+            // This may be calculated by several methods, firstly:
+            // t_d = d_norm * |t|,
+            // where:
+            // |t| = |d|^2 - |r|^2
+            // |t| = cos(alpha) * |d|
+            // By simplifying t_d equation with the second condition, we get:
+            // t_d = d_norm * cos(alpha) * |d|,
+            // t_d = d * cos(alpha)
+            // Cause cameraToOrigin is no longer needed re-use it to calulate td.
+            const td = cameraToOrigin.multiplyScalar(cosAlpha);
+            // For tangent calculated (in the direction to origin) we then apply
+            // rotation to it on every rotation axes using already known tangent angle,
+            // the angle that defines maximum visibility along the sphere surface.
+            // This gives us the tangent rays in all major directions.
+            const ry = this.m_tmpQuaternion.setFromAxisAngle(yaxis.cross(dNorm), alpha);
+            const tdry = td.clone().applyQuaternion(ry);
+
+            const rx = this.m_tmpQuaternion.setFromAxisAngle(xaxis.cross(dNorm), alpha);
+            const tdrx = td.clone().applyQuaternion(rx);
+
+            const rx2 = this.m_tmpQuaternion.copy(rx).inverse();
+            // Cause td vector in no longer needed, reuse it applying quaternion to it.
+            const tdrx2 = td.applyQuaternion(rx2);
+
+            // Rotated tangents are then added to camera position thus defining far plane
+            // position and orientation - it is enough to have three cooplanar points to
+            // define the plane.
+            // p1 = camera.position + tdrx
+            // p2 = camera.position + tdry
+            // p3 = camera.position + tdrx2
+            // const farPlane = new THREE.Plane().setFromCoplanarPoints(p1, p2, p3);
+            // clipPlanes.far = farPlane.distanceToPoint(camera.position);
+
+            // This of course may be simplified by moving calculus entirelly to camera space,
+            // because far plane is indeed defined in that space anyway:
+            const farPlane = new THREE.Plane().setFromCoplanarPoints(tdrx, tdry, tdrx2);
+            clipPlanes.far = farPlane.constant;
+            return clipPlanes;
         }
     }
 
