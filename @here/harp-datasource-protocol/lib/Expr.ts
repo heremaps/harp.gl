@@ -11,6 +11,7 @@ import { ExprPool } from "./ExprPool";
 const exprEvaluator = new ExprEvaluator();
 
 export interface ExprVisitor<Result, Context> {
+    visitNullLiteralExpr(expr: NullLiteralExpr, context: Context): Result;
     visitBooleanLiteralExpr(expr: BooleanLiteralExpr, context: Context): Result;
     visitNumberLiteralExpr(expr: NumberLiteralExpr, context: Context): Result;
     visitStringLiteralExpr(expr: StringLiteralExpr, context: Context): Result;
@@ -39,6 +40,8 @@ export abstract class Expr {
     static fromJSON(node: unknown): Expr {
         if (Array.isArray(node)) {
             return Expr.parseCall(node);
+        } else if (node === null) {
+            return NullLiteralExpr.instance;
         } else if (typeof node === "boolean") {
             return new BooleanLiteralExpr(node);
         } else if (typeof node === "number") {
@@ -137,7 +140,7 @@ export type BinaryOp = RelationalOp | EqualityOp;
 /**
  * @hidden
  */
-export type Value = undefined | boolean | number | string;
+export type Value = undefined | null | boolean | number | string;
 
 /**
  * @hidden
@@ -219,6 +222,22 @@ export class VarExpr extends Expr {
 
     accept<Result, Context>(visitor: ExprVisitor<Result, Context>, context: Context): Result {
         return visitor.visitVarExpr(this, context);
+    }
+}
+
+/**
+ * Null literal expression.
+ * @hidden
+ */
+export class NullLiteralExpr extends Expr {
+    static instance = new NullLiteralExpr();
+
+    protected constructor() {
+        super();
+    }
+
+    accept<Result, Context>(visitor: ExprVisitor<Result, Context>, context: Context): Result {
+        return visitor.visitNullLiteralExpr(this, context);
     }
 }
 
@@ -313,6 +332,10 @@ export class CallExpr extends Expr {
 class ExprSerializer implements ExprVisitor<unknown, void> {
     serialize(expr: Expr): unknown {
         return expr.accept(this, undefined);
+    }
+
+    visitNullLiteralExpr(expr: NullLiteralExpr, context: void): unknown {
+        return null;
     }
 
     visitBooleanLiteralExpr(expr: BooleanLiteralExpr, context: void): unknown {

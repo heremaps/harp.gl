@@ -893,7 +893,7 @@ export class OmvGenericFeatureModifier implements OmvFeatureModifier {
         let featureClass: string | undefined;
         const featureClassThing = env.lookup("class");
 
-        if (featureClassThing !== undefined) {
+        if (featureClassThing !== undefined && featureClassThing !== null) {
             featureClass = featureClassThing.toString();
         }
 

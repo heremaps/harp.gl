@@ -11,6 +11,7 @@ import {
     Expr,
     ExprVisitor,
     HasAttributeExpr,
+    NullLiteralExpr,
     NumberLiteralExpr,
     StringLiteralExpr,
     VarExpr
@@ -39,6 +40,10 @@ export class ExprPool implements ExprVisitor<Expr, void> {
      */
     add(expr: Expr): Expr {
         return expr.accept(this, undefined);
+    }
+
+    visitNullLiteralExpr(expr: NullLiteralExpr, context: void): Expr {
+        return NullLiteralExpr.instance;
     }
 
     visitBooleanLiteralExpr(expr: BooleanLiteralExpr, context: void): Expr {
