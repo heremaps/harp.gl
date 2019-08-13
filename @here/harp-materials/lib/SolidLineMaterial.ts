@@ -6,22 +6,30 @@
 
 import * as THREE from "three";
 
-import { FadingFeature, FadingFeatureParameters } from "./MapMeshMaterials";
+import {
+    DisplacementFeature,
+    DisplacementFeatureParameters,
+    FadingFeature,
+    FadingFeatureParameters
+} from "./MapMeshMaterials";
 import linesShaderChunk from "./ShaderChunks/LinesChunks";
 
 const vertexSource: string = `
 #define SEGMENT_OFFSET 0.1
 
-attribute vec2 texcoord;
+attribute vec2 extrusionCoord;
 attribute vec3 position;
 attribute vec4 bitangent;
 attribute vec3 tangent;
+attribute vec2 uv;
+attribute vec3 normal;
 
 uniform mat4 modelViewMatrix;
 uniform mat4 projectionMatrix;
 uniform float lineWidth;
+uniform sampler2D displacementMap;
 
-varying vec2 vTexcoord;
+varying vec2 vExtrusionCoord;
 varying vec2 vSegment;
 varying float vLinewidth;
 varying vec3 vPosition;
@@ -41,15 +49,19 @@ varying vec3 vColor;
 
 void main() {
     vLinewidth = lineWidth;
-    vSegment = abs(texcoord) - SEGMENT_OFFSET;
+    vSegment = abs(extrusionCoord) - SEGMENT_OFFSET;
 
     vec3 pos = position;
-    vec2 uvs = sign(texcoord);
+    vec2 extrusionDir = sign(extrusionCoord);
 
-    extrudeLine(vSegment, bitangent, tangent, lineWidth, pos, uvs);
+    extrudeLine(vSegment, bitangent, tangent, lineWidth, pos, extrusionDir);
+
+    #ifdef USE_DISPLACEMENTMAP
+    pos += normalize( normal ) * texture2D( displacementMap, uv ).x;
+    #endif
 
     vPosition = pos;
-    vTexcoord = vec2(uvs.x, uvs.y * lineWidth);
+    vExtrusionCoord = vec2(extrusionDir.x, extrusionDir.y * lineWidth);
 
     vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
     gl_Position = projectionMatrix * mvPosition;
@@ -77,7 +89,7 @@ uniform float dashSize;
 uniform float gapSize;
 #endif
 
-varying vec2 vTexcoord;
+varying vec2 vExtrusionCoord;
 varying vec2 vSegment;
 varying float vLinewidth;
 varying vec3 vPosition;
@@ -103,13 +115,13 @@ void main() {
     tileClip(vPosition.xy, tileSize);
     #endif
 
-    float dist = joinDist(vSegment, vTexcoord) - vLinewidth;
+    float dist = joinDist(vSegment, vExtrusionCoord) - vLinewidth;
     float width = fwidth(dist);
     alpha *= (1.0 - smoothstep(-width, width, dist));
 
     #if DASHED_LINE
     float halfSegment = (dashSize + gapSize) / dashSize * 0.5;
-    float segmentDist = mod(vTexcoord.x, dashSize + gapSize) / dashSize;
+    float segmentDist = mod(vExtrusionCoord.x, dashSize + gapSize) / dashSize;
     float dashDist = 0.5 - distance(segmentDist, halfSegment);
     float dashWidth = fwidth(dashDist);
     alpha *= smoothstep(-dashWidth, dashWidth, dashDist);
@@ -131,7 +143,9 @@ void main() {
 /**
  * Parameters used when constructing a new [[SolidLineMaterial]].
  */
-export interface SolidLineMaterialParameters extends FadingFeatureParameters {
+export interface SolidLineMaterialParameters
+    extends FadingFeatureParameters,
+        DisplacementFeatureParameters {
     /**
      * Line color.
      */
@@ -167,7 +181,8 @@ export interface SolidLineMaterialParameters extends FadingFeatureParameters {
 /**
  * Material designed to render solid variable-width lines.
  */
-export class SolidLineMaterial extends THREE.RawShaderMaterial implements FadingFeature {
+export class SolidLineMaterial extends THREE.RawShaderMaterial
+    implements DisplacementFeature, FadingFeature {
     static DEFAULT_COLOR: number = 0xff0000;
     static DEFAULT_WIDTH: number = 1.0;
     static DEFAULT_OPACITY: number = 1.0;
@@ -194,6 +209,12 @@ export class SolidLineMaterial extends THREE.RawShaderMaterial implements Fading
             defines.USE_FOG = "";
         }
 
+        const hasDisplacementMap = params !== undefined && params.displacementMap !== undefined;
+
+        if (hasDisplacementMap) {
+            defines.USE_DISPLACEMENTMAP = "";
+        }
+
         const shaderParams = {
             name: "SolidLineMaterial",
             vertexShader: vertexSource,
@@ -205,7 +226,10 @@ export class SolidLineMaterial extends THREE.RawShaderMaterial implements Fading
                     opacity: new THREE.Uniform(SolidLineMaterial.DEFAULT_OPACITY),
                     tileSize: new THREE.Uniform(new THREE.Vector2()),
                     fadeNear: new THREE.Uniform(FadingFeature.DEFAULT_FADE_NEAR),
-                    fadeFar: new THREE.Uniform(FadingFeature.DEFAULT_FADE_FAR)
+                    fadeFar: new THREE.Uniform(FadingFeature.DEFAULT_FADE_FAR),
+                    displacementMap: new THREE.Uniform(
+                        hasDisplacementMap ? params!.displacementMap : new THREE.Texture()
+                    )
                 },
                 // We need the fog uniforms available when we use `updateFog` as the internal
                 // recompilation cannot add or remove uniforms.
@@ -241,6 +265,9 @@ export class SolidLineMaterial extends THREE.RawShaderMaterial implements Fading
             }
             if (params.fadeFar !== undefined) {
                 this.fadeFar = params.fadeFar;
+            }
+            if (params.displacementMap !== undefined) {
+                this.displacementMap = params.displacementMap;
             }
             this.fog = hasFog;
         }
@@ -312,5 +339,20 @@ export class SolidLineMaterial extends THREE.RawShaderMaterial implements Fading
         } else {
             delete this.defines.USE_FADING;
         }
+    }
+
+    get displacementMap(): THREE.Texture | undefined {
+        return this.uniforms.displacementMap.value;
+    }
+
+    set displacementMap(map: THREE.Texture | undefined) {
+        this.uniforms.displacementMap.value = map;
+        if (map !== undefined) {
+            this.uniforms.displacementMap.value.needsUpdate = true;
+            this.defines.USE_DISPLACEMENTMAP = "";
+        } else {
+            delete this.defines.USE_DISPLACEMENTMAP;
+        }
+        this.needsUpdate = true;
     }
 }

@@ -145,6 +145,8 @@ export enum LineType {
     Complex
 }
 
+type TexCoordsFunction = (tilePos: THREE.Vector2, tileExtents: number) => { u: number; v: number };
+
 export class OmvDecodedTileEmitter implements IOmvEmitter {
     // mapping from style index to mesh buffers
     private readonly m_meshBuffers = new Map<number, MeshBuffers>();
@@ -297,20 +299,42 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
         this.processFeatureCommon(env);
 
         const lines: number[][] = [];
-
+        const uvs: number[][] = [];
         const { projectedTileBounds } = this.m_decodeInfo;
 
         const tileWidth = projectedTileBounds.max.x - projectedTileBounds.min.x;
         const tileHeight = projectedTileBounds.max.y - projectedTileBounds.min.y;
         const tileSizeInMeters = Math.max(tileWidth, tileHeight);
 
+        let computeTexCoords: TexCoordsFunction | undefined;
+        let texCoordinateType: TextureCoordinateType | undefined;
+
+        for (const technique of techniques) {
+            if (technique === undefined) {
+                continue;
+            }
+            if (!computeTexCoords) {
+                computeTexCoords = this.getComputeTexCoordsFunc(technique);
+                texCoordinateType = this.getTextureCoordinateType(technique);
+            } else {
+                // Support generation of only one type of texture coordinates.
+                assert(texCoordinateType === this.getTextureCoordinateType(technique));
+            }
+        }
+
         for (const polyline of geometry) {
             const line: number[] = [];
+            const lineUvs: number[] = [];
             polyline.positions.forEach(pos => {
                 webMercatorTile2TargetWorld(extents, this.m_decodeInfo, pos, tmpV3);
                 line.push(tmpV3.x, tmpV3.y, tmpV3.z);
+                if (computeTexCoords) {
+                    const { u, v } = computeTexCoords(pos, extents);
+                    lineUvs.push(u, v);
+                }
             });
             lines.push(line);
+            uvs.push(lineUvs);
         }
 
         const wantCircle = this.m_decodeInfo.tileKey.level >= 11;
@@ -319,7 +343,6 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
             if (technique === undefined) {
                 continue;
             }
-
             const techniqueIndex = technique._index;
             const techniqueName = technique.name;
 
@@ -345,7 +368,8 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                     lineType,
                     featureId,
                     lines,
-                    env
+                    env,
+                    this.getTextureCoordinateType(technique) ? uvs : undefined
                 );
             } else if (
                 isTextTechnique(technique) ||
@@ -562,35 +586,13 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
 
             const isExtruded = isExtrudedPolygonTechnique(technique);
             const isFilled = isFillTechnique(technique);
-            const texCoordType = this.getTextureCoordinateType(technique);
 
             const isLine =
                 isSolidLineTechnique(technique) ||
                 isDashedLineTechnique(technique) ||
                 isLineTechnique(technique);
             const isPolygon = isExtruded || isFilled || isStandardTechnique(technique);
-
-            const tempTexcoords = new THREE.Vector3();
-
-            const computeTexCoords =
-                texCoordType === TextureCoordinateType.TileSpace
-                    ? (pos: THREE.Vector3) => {
-                          const { x: u, y: v } = tempTexcoords
-                              .copy(pos)
-                              .sub(this.m_decodeInfo.tileBounds.min)
-                              .divide(this.m_decodeInfo.tileSize);
-                          return { u, v: 1 - v };
-                      }
-                    : texCoordType === TextureCoordinateType.EquirectangularSpace
-                    ? (pos: THREE.Vector3) => {
-                          const { x: u, y: v } = normalizedEquirectangularProjection.reprojectPoint(
-                              webMercatorProjection,
-                              pos
-                          );
-                          return { u, v };
-                      }
-                    : undefined;
-
+            const computeTexCoords = this.getComputeTexCoordsFunc(technique);
             const vertexStride = computeTexCoords !== undefined ? 4 : 2;
 
             for (const polygon of geometry) {
@@ -602,9 +604,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                     for (const coord of outline) {
                         ringContour.push(coord.x, coord.y);
                         if (computeTexCoords !== undefined) {
-                            const { u, v } = computeTexCoords(
-                                new THREE.Vector3(coord.x, coord.y, 0)
-                            );
+                            const { u, v } = computeTexCoords(coord, extents);
                             ringContour.push(u, v);
                         }
                     }
@@ -731,12 +731,39 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
 
     private getTextureCoordinateType(technique: Technique): TextureCoordinateType | undefined {
         // Set TileSpace coordinate type to generate texture coordinates for the displacement map
-        // used in area overlay.
-        if (isFillTechnique(technique) && this.m_enableElevationOverlay) {
+        // used in elevation overlay.
+        if (
+            (isFillTechnique(technique) ||
+                isSolidLineTechnique(technique) ||
+                isDashedLineTechnique(technique)) &&
+            this.m_enableElevationOverlay
+        ) {
             return TextureCoordinateType.TileSpace;
         }
 
         return textureCoordinateType(technique);
+    }
+
+    private getComputeTexCoordsFunc(technique: Technique): TexCoordsFunction | undefined {
+        const texCoordType = this.getTextureCoordinateType(technique);
+
+        return texCoordType === TextureCoordinateType.TileSpace
+            ? (tilePos: THREE.Vector2, tileExtents: number) => {
+                  const { x: u, y: v } = new THREE.Vector2()
+                      .copy(tilePos)
+                      .divideScalar(tileExtents);
+                  return { u, v: 1 - v };
+              }
+            : texCoordType === TextureCoordinateType.EquirectangularSpace
+            ? (tilePos: THREE.Vector2, extents: number) => {
+                  const worldPos = tile2world(extents, this.m_decodeInfo, tilePos);
+                  const { x: u, y: v } = normalizedEquirectangularProjection.reprojectPoint(
+                      webMercatorProjection,
+                      new THREE.Vector3(worldPos.x, worldPos.y, 0)
+                  );
+                  return { u, v };
+              }
+            : undefined;
     }
 
     private applyLineTechnique(
@@ -747,7 +774,8 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
         lineType = LineType.Complex,
         featureId: number | undefined,
         lines: number[][],
-        env: MapEnv
+        env: MapEnv,
+        uvs?: number[][]
     ): void {
         const renderOrderOffset = technique.renderOrderBiasProperty
             ? env.lookup(technique.renderOrderBiasProperty)
@@ -758,8 +786,9 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                 aLine.technique === techniqueIndex && aLine.renderOrderOffset === renderOrderOffset
             );
         });
+        const hasNormalsAndUvs = uvs !== undefined;
         if (lineGroupGeometries === undefined) {
-            lineGroup = new LineGroup(undefined, lineType === LineType.Simple);
+            lineGroup = new LineGroup(hasNormalsAndUvs, undefined, lineType === LineType.Simple);
             const aLine: LinesGeometry = {
                 type: lineType === LineType.Complex ? GeometryType.SolidLine : GeometryType.Line,
                 technique: techniqueIndex,
@@ -789,8 +818,9 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                 lineGroupGeometries.featureStarts.push(lineGroup.indices.length);
             }
         }
+        let i = 0;
         lines.forEach(aLine => {
-            lineGroup.add(this.m_decodeInfo.center, aLine);
+            lineGroup.add(this.m_decodeInfo.center, aLine, uvs ? uvs[i++] : undefined);
         });
     }
 

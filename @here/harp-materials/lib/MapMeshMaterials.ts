@@ -215,37 +215,6 @@ export namespace DisplacementFeature {
             true
         );
     }
-
-    /**
-     * Handles displacement map changes on each frame. Should be installed as respective
-     * Object3D.onBeforeRender of meshes which use displacement map feature.
-     */
-    export function addRenderHelper(object: THREE.Object3D) {
-        object.onBeforeRender = chainCallbacks(
-            object.onBeforeRender,
-            DisplacementFeature.onBeforeRender
-        );
-    }
-
-    export function onBeforeRender(
-        renderer: THREE.WebGLRenderer,
-        scene: THREE.Scene,
-        camera: THREE.Camera,
-        geometry: THREE.Geometry | THREE.BufferGeometry,
-        material: THREE.Material,
-        group: THREE.Group
-    ) {
-        const displacementMaterial = material as DisplacementFeature;
-        const properties = renderer.properties.get(material);
-
-        if (
-            properties.shader !== undefined &&
-            properties.shader.uniforms.displacementMap !== undefined
-        ) {
-            properties.shader.uniforms.displacementMap.value = displacementMaterial.displacementMap;
-            displacementMaterial.uniformsNeedUpdate = true;
-        }
-    }
 }
 
 export class DisplacementFeatureMixin implements DisplacementFeature {

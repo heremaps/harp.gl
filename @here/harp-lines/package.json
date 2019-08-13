@@ -27,6 +27,7 @@
         "@here/harp-materials": "^0.3.3"
     },
     "devDependencies": {
+        "@here/harp-utils": "^0.2.7",
         "@types/chai": "^4.1.2",
         "@types/mocha": "^5.2.7",
         "chai": "^4.0.2",
