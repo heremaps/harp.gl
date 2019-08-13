@@ -25,6 +25,7 @@ import { Vector2, Vector3 } from "three";
 import { IPolygonGeometry } from "../lib/IGeometryProcessor";
 import { OmvDecodedTileEmitter } from "../lib/OmvDecodedTileEmitter";
 import { OmvDecoder } from "../lib/OmvDecoder";
+import { world2tile } from "../lib/OmvUtils";
 
 describe("OmvDecodedTileEmitter", function() {
     it("Ring data conversion to polygon data: whole tile square shape", function() {
@@ -43,14 +44,15 @@ describe("OmvDecodedTileEmitter", function() {
             new GeoCoordinates(geoBox.north, geoBox.west)
         ];
 
-        const worldPositions = coordinates.map(p => {
+        const tileLocalCoords = coordinates.map(p => {
             const projected = webMercatorProjection.projectPoint(p, new Vector3());
-            return new Vector2(projected.x, projected.y);
+            const tileCoords = world2tile(4096, decodeInfo, new Vector2(projected.x, projected.y));
+            return tileCoords;
         });
 
         const polygons: IPolygonGeometry[] = [
             {
-                rings: [worldPositions]
+                rings: [tileLocalCoords]
             }
         ];
 

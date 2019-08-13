@@ -5,9 +5,26 @@
  */
 
 import { GeometryKind } from "@here/harp-datasource-protocol";
-import { DisplacementFeature, MapMeshBasicMaterial } from "@here/harp-materials";
 import * as THREE from "three";
-import { Tile } from "../Tile";
+import { Tile, TileObject } from "../Tile";
+
+function overlayObject(object: TileObject, displacementMap: THREE.DataTexture): void {
+    if (!object.userData || !object.userData.kind) {
+        return;
+    }
+
+    if (
+        !object.userData.kind.find((kind: GeometryKind) => {
+            return kind !== GeometryKind.All && kind !== GeometryKind.Terrain;
+        })
+    ) {
+        return;
+    }
+
+    if (object instanceof THREE.Mesh && "displacementMap" in object.material) {
+        (object.material as any).displacementMap = displacementMap;
+    }
+}
 
 /**
  * Overlays the geometry in the given tile on top of elevation data if available.
@@ -26,21 +43,6 @@ export function overlayOnElevation(tile: Tile): void {
     }
 
     for (const object of tile.objects) {
-        if (
-            object.userData === undefined ||
-            object.userData.kind === undefined ||
-            object.userData.kind.indexOf(GeometryKind.Area) === -1
-        ) {
-            continue;
-        }
-
-        const mesh = object as THREE.Mesh;
-        const material = mesh.material as MapMeshBasicMaterial;
-        if (material === undefined) {
-            continue;
-        }
-
-        material.displacementMap = displacementMap.texture;
-        DisplacementFeature.addRenderHelper(object);
+        overlayObject(object, displacementMap.texture);
     }
 }
