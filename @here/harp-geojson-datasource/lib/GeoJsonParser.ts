@@ -21,7 +21,12 @@ import {
     isTextTechnique,
     LineFeatureGroup
 } from "@here/harp-datasource-protocol";
-import { MapEnv, StyleSetEvaluator, Value } from "@here/harp-datasource-protocol/index-decoder";
+import {
+    MapEnv,
+    StyleSetEvaluator,
+    Value,
+    ValueMap
+} from "@here/harp-datasource-protocol/index-decoder";
 
 import { GeoCoordinates, Projection } from "@here/harp-geoutils";
 import { LoggerManager } from "@here/harp-utils";
@@ -461,7 +466,7 @@ export class GeoJsonParser {
             featureDetails.featureId = featureId;
         }
 
-        const env = new MapEnv({ type: "line", ...featureDetails });
+        const env = new MapEnv({ type: "line", ...(featureDetails as ValueMap) });
         const techniques = styleSetEvaluator.getMatchingTechniques(env);
         const featureIdNumber = 0; //geojsonTile do not have an integer for the featureId. Use 0.
         if (buffer.lines.vertices.length !== buffer.lines.geojsonProperties.length) {
@@ -519,7 +524,7 @@ export class GeoJsonParser {
             featureDetails.featureId = featureId;
         }
 
-        const env = new MapEnv({ type: "line", ...featureDetails });
+        const env = new MapEnv({ type: "line", ...(featureDetails as ValueMap) });
         const techniques = styleSetEvaluator.getMatchingTechniques(env);
         const featureIdNumber = 0; //geojsonTile do not have an integer for the featureId. Use 0.
         if (buffer.lines.vertices.length !== buffer.lines.geojsonProperties.length) {
@@ -725,7 +730,7 @@ export class GeoJsonParser {
     ): number[] {
         const featureDetails: FeatureDetails = Flattener.flatten(feature.properties, "properties");
         featureDetails.featureId = feature.id;
-        const env = new MapEnv({ type: envType, ...featureDetails });
+        const env = new MapEnv({ type: envType, ...(featureDetails as ValueMap) });
         const techniques = styleSetEvaluator.getMatchingTechniques(env);
         return techniques.map(technique => {
             return technique._index;

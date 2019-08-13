@@ -544,7 +544,7 @@ export class ExtendedTileInfoWriter {
         const textLabel = textTechnique.label;
         const useAbbreviation = textTechnique.useAbbreviation as boolean;
         const useIsoCode = textTechnique.useIsoCode as boolean;
-        const name: Value =
+        const name =
             typeof textLabel === "string"
                 ? env.lookup(textLabel)
                 : ExtendedTileInfo.getFeatureName(env, useAbbreviation, useIsoCode, this.languages);
@@ -673,24 +673,28 @@ export class ExtendedTileInfoWriter {
         ExtendedTileInfo.finish(this.tileInfo);
     }
 
-    private addText(name: Value): number {
+    private addText(name: Value | undefined): number {
         return this.addStringValue(name, this.tileInfo.textCatalog, this.stringMap);
     }
 
-    private addLayer(name: Value): number {
+    private addLayer(name: Value | undefined): number {
         return this.addStringValue(name, this.tileInfo.layerCatalog!, this.layerMap);
     }
 
-    private addClass(name: Value): number {
+    private addClass(name: Value | undefined): number {
         return this.addStringValue(name, this.tileInfo.classCatalog!, this.classMap);
     }
 
-    private addType(name: Value): number {
+    private addType(name: Value | undefined): number {
         return this.addStringValue(name, this.tileInfo.typeCatalog!, this.typeMap);
     }
 
     // Add a string to the strings catalog. Returns index into the catalog.
-    private addStringValue(str: Value, catalog: string[], map: Map<string, number>): number {
+    private addStringValue(
+        str: Value | undefined,
+        catalog: string[],
+        map: Map<string, number>
+    ): number {
         if (str === undefined || str === null) {
             return -1;
         }

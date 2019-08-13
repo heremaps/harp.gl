@@ -240,7 +240,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                     const textLabel = textTechnique.label;
                     const useAbbreviation = textTechnique.useAbbreviation as boolean;
                     const useIsoCode = textTechnique.useIsoCode as boolean;
-                    const name: Value =
+                    const name =
                         typeof textLabel === "string"
                             ? env.lookup(textLabel)
                             : OmvDecoder.getFeatureName(
@@ -359,7 +359,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                 const textLabel = textTechnique.label;
                 const useAbbreviation = textTechnique.useAbbreviation as boolean;
                 const useIsoCode = textTechnique.useIsoCode as boolean;
-                let text: Value =
+                let text =
                     typeof textLabel === "string"
                         ? env.lookup(textLabel)
                         : OmvDecoder.getFeatureName(

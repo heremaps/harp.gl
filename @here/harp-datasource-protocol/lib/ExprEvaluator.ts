@@ -48,7 +48,10 @@ export class ExprEvaluatorContext {
     ) {}
 
     evaluate(expr: Expr | undefined) {
-        return expr === undefined ? undefined : expr.accept(this.evaluator, this);
+        if (expr !== undefined) {
+            return expr.accept(this.evaluator, this);
+        }
+        throw new Error("Failed to evaluate expression");
     }
 }
 

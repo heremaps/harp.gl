@@ -352,7 +352,10 @@ function createFeatureEnv(
 
     // Some sources serve `id` directly as `IFeature` property ...
     if (feature.id !== undefined) {
-        attributes.$id = decodeFeatureId(feature, logger);
+        const featureId = decodeFeatureId(feature, logger);
+        if (featureId !== undefined) {
+            attributes.$id = featureId;
+        }
     }
 
     readAttributes(layer, feature, attributes);
