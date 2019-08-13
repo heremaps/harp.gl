@@ -1136,6 +1136,7 @@ export class MapView extends THREE.EventDispatcher {
                 }
             }
         }
+        logger.log("THEME_LOADED_EVENT");
         this.dispatchEvent(THEME_LOADED_EVENT);
         this.update();
     }
@@ -1747,6 +1748,7 @@ export class MapView extends THREE.EventDispatcher {
                 this.drawFrame();
             }
             ANIMATION_STARTED_EVENT.time = Date.now();
+            logger.log("ANIMATION_STARTED_EVENT");
             this.dispatchEvent(ANIMATION_STARTED_EVENT);
         }
     }
@@ -1761,6 +1763,7 @@ export class MapView extends THREE.EventDispatcher {
 
         if (this.m_animationCount === 0) {
             ANIMATION_FINISHED_EVENT.time = Date.now();
+            logger.log("ANIMATION_FINISHED_EVENT");
             this.dispatchEvent(ANIMATION_FINISHED_EVENT);
         }
     }
@@ -1992,6 +1995,7 @@ export class MapView extends THREE.EventDispatcher {
 
         this.updateCameras();
         this.update();
+        logger.log("EVENT RESIZE");
 
         this.dispatchEvent({
             type: MapViewEventNames.Resize,
@@ -2360,6 +2364,7 @@ export class MapView extends THREE.EventDispatcher {
         const frameStartTime = time;
 
         RENDER_EVENT.time = time;
+        logger.log("RENDER_EVENT");
         this.dispatchEvent(RENDER_EVENT);
 
         let currentFrameEvent: FrameStats | undefined;
@@ -2469,6 +2474,8 @@ export class MapView extends THREE.EventDispatcher {
                 this.projection.type
             );
             const { latitude, longitude, altitude } = this.geoCenter;
+            logger.log("CAM CHANGED");
+
             this.dispatchEvent({
                 type: MapViewEventNames.CameraPositionChanged,
                 latitude,
@@ -2525,6 +2532,31 @@ export class MapView extends THREE.EventDispatcher {
             this.dispatchEvent(FIRST_FRAME_EVENT);
         }
 
+        console.log("===============================\n");
+        logger.log("CHECK: !this.m_firstFrameComplete", !this.m_firstFrameComplete);
+        logger.log(
+            "CHECK: this.m_visibleTiles.allVisibleTilesLoaded",
+            this.m_visibleTiles.allVisibleTilesLoaded
+        );
+        logger.log(
+            `CHECK SIZE: ${this.m_connectedDataSources.size} +  ${this.m_failedDataSources.size} = ${this.m_tileDataSources.length}`
+        );
+        logger.log("CHECK: !this.animating", !this.animating);
+        logger.log("CHECK: this.m_textElementsRenderer", this.m_textElementsRenderer);
+        logger.log("CHECK: should render text?: ", this.renderLabels);
+        logger.log("CHECK: update PENDING", !this.m_updatePending);
+        logger.log(
+            "CHECK:",
+            this.renderLabels &&
+                this.m_textElementsRenderer !== undefined &&
+                !this.m_textElementsRenderer.loading
+        );
+        console.log(
+            (this.m_textElementsRenderer && this.m_textElementsRenderer.loading) ||
+                !this.renderLabels
+        );
+        console.log("===============================\n");
+
         if (
             !this.m_firstFrameComplete &&
             this.m_visibleTiles.allVisibleTilesLoaded &&
@@ -2532,8 +2564,10 @@ export class MapView extends THREE.EventDispatcher {
                 this.m_tileDataSources.length &&
             !this.m_updatePending &&
             !this.animating &&
-            this.m_textElementsRenderer !== undefined &&
-            !this.m_textElementsRenderer.loading
+            ((this.renderLabels &&
+                this.m_textElementsRenderer !== undefined &&
+                !this.m_textElementsRenderer.loading) ||
+                !this.renderLabels)
         ) {
             this.m_firstFrameComplete = true;
 
@@ -2542,6 +2576,8 @@ export class MapView extends THREE.EventDispatcher {
             }
 
             FRAME_COMPLETE_EVENT.time = time;
+            logger.log("FRAME_COMPLETE_EVENT _____");
+
             this.dispatchEvent(FRAME_COMPLETE_EVENT);
         }
 
