@@ -140,7 +140,7 @@ export type BinaryOp = RelationalOp | EqualityOp;
 /**
  * @hidden
  */
-export type Value = undefined | null | boolean | number | string;
+export type Value = null | boolean | number | string;
 
 /**
  * @hidden
@@ -151,14 +151,14 @@ export class Env {
      *
      * @param name Name of property.
      */
-    lookup(_name: string): Value {
+    lookup(_name: string): Value | undefined {
         return undefined;
     }
 
     /**
      * Return an object containing all properties of this environment. (Here: empty object).
      */
-    unmap(): any {
+    unmap(): ValueMap {
         return {};
     }
 }
@@ -183,7 +183,7 @@ export class MapEnv extends Env {
      *
      * @param name Name of property.
      */
-    lookup(name: string): Value {
+    lookup(name: string): Value | undefined {
         if (this.entries.hasOwnProperty(name)) {
             const value = this.entries[name];
 
@@ -199,7 +199,7 @@ export class MapEnv extends Env {
      * Return an object containing all properties of this environment, takes care of the parent
      * object.
      */
-    unmap(): any {
+    unmap(): ValueMap {
         const obj: any = this.parent ? this.parent.unmap() : {};
 
         for (const key in this.entries) {

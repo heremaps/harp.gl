@@ -53,8 +53,7 @@ describe("MapEnv", function() {
     before(function() {
         env = new MapEnv(
             {
-                foo: "foo",
-                bar: undefined
+                foo: "foo"
             },
             new MapEnv({
                 parentProperty: 123,
