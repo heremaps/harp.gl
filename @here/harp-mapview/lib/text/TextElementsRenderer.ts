@@ -93,12 +93,17 @@ const DEFAULT_MAX_NUM_SECOND_CHANCE_ELEMENTS = 300;
  * Maximum distance for text labels expressed as a ratio of distance to from the camera (0) to the
  * far plane (1.0). May be synchronized with fog value ?
  */
-const DEFAULT_MAX_DISTANCE_RATIO_FOR_TEXT_LABELS = 0.99;
+const DEFAULT_MAX_DISTANCE_RATIO_FOR_LABELS = 0.99;
 
 /**
- * Distance to the camera (range: `[0.0, 1.0]`) from which label start to scale.
+ * Minimum scaling factor that may be applied to labels when their are distant from focus point.
  */
-const DEFAULT_LABEL_SCALE_START_DISTANCE = 0.4;
+const DEFAULT_LABEL_DISTANCE_SCALE_MIN = 0.7;
+
+/**
+ * Maximum scaling factor that may be applied to labels due to their distance from focus point.
+ */
+const DEFAULT_LABEL_DISTANCE_SCALE_MAX = 1.5;
 
 /**
  * Maximum number of recommended labels. If more labels are encountered, the "overloaded" mode is
@@ -215,12 +220,17 @@ export class TextElementsRenderer {
      * @param m_theme Theme defining  text styles.
      * @param m_maxNumVisibleLabels Maximum number of visible [[TextElement]]s.
      * @param m_numSecondChanceLabels Number of [[TextElement]] that will be rendered again.
-     * @param m_maxDistanceRatioForLabels Maximum distance for [[TextElement]] and icons, expressed
-     *          as a fraction of the distance between the near and far plane [0, 1.0].
-     *          Defaults to `0.99`.
-     * @param m_labelStartScaleDistance Distance at which the [[TextElement]]s start to apply their
-     *          `distanceScale` value, expressed as a fraction of the distance between the near and
-     *          far plane [0, 1.0]. Defaults to `0.4`.
+     * @param m_maxDistanceRatioForTextLabels Maximum distance for pure [[TextElement]], at which
+     *          it should still be rendered, expressed as a fraction of the distance between
+     *          the near and far plane [0, 1.0]. Defaults to
+     *          [[DEFAULT_MAX_DISTANCE_RATIO_FOR_LABELS]].
+     * @param m_maxDistanceRatioForPoiLabels Maximum distance for [[TextElement]] with icon,
+     *          expressed as a fraction of the distance between the near and far plane [0, 1.0].
+     *          Defaults to [[DEFAULT_MAX_DISTANCE_RATIO_FOR_LABELS]].
+     * @param m_labelDistanceScaleMin Minimum scale factor that may be applied to [[TextElement]]s
+     *          due to its disctance from focus point. Defaults to `0.7`.
+     * @param m_labelDistanceScaleMax Maximum scale factor that may be applied to [[TextElement]]s
+     *          due to its distance from focus point. Defaults to `1.5`.
      */
     constructor(
         private m_mapView: MapView,
@@ -231,8 +241,10 @@ export class TextElementsRenderer {
         private m_theme: Theme,
         private m_maxNumVisibleLabels: number | undefined,
         private m_numSecondChanceLabels: number | undefined,
-        private m_maxDistanceRatioForLabels: number | undefined,
-        private m_labelStartScaleDistance: number | undefined
+        private m_labelDistanceScaleMin: number | undefined,
+        private m_labelDistanceScaleMax: number | undefined,
+        private m_maxDistanceRatioForTextLabels: number | undefined,
+        private m_maxDistanceRatioForPoiLabels: number | undefined
     ) {
         if (this.m_minNumGlyphs === undefined) {
             this.m_minNumGlyphs = MIN_GLYPH_COUNT;
@@ -246,11 +258,17 @@ export class TextElementsRenderer {
         if (this.m_numSecondChanceLabels === undefined) {
             this.m_numSecondChanceLabels = DEFAULT_MAX_NUM_SECOND_CHANCE_ELEMENTS;
         }
-        if (this.m_maxDistanceRatioForLabels === undefined) {
-            this.m_maxDistanceRatioForLabels = DEFAULT_MAX_DISTANCE_RATIO_FOR_TEXT_LABELS;
+        if (this.m_labelDistanceScaleMin === undefined) {
+            this.m_labelDistanceScaleMin = DEFAULT_LABEL_DISTANCE_SCALE_MIN;
         }
-        if (this.m_labelStartScaleDistance === undefined) {
-            this.m_labelStartScaleDistance = DEFAULT_LABEL_SCALE_START_DISTANCE;
+        if (this.m_labelDistanceScaleMax === undefined) {
+            this.m_labelDistanceScaleMax = DEFAULT_LABEL_DISTANCE_SCALE_MAX;
+        }
+        if (this.m_maxDistanceRatioForTextLabels === undefined) {
+            this.m_maxDistanceRatioForTextLabels = DEFAULT_MAX_DISTANCE_RATIO_FOR_LABELS;
+        }
+        if (this.m_maxDistanceRatioForPoiLabels === undefined) {
+            this.m_maxDistanceRatioForPoiLabels = DEFAULT_MAX_DISTANCE_RATIO_FOR_LABELS;
         }
 
         this.initializeDefaultAssets();
@@ -1045,7 +1063,10 @@ export class TextElementsRenderer {
         textElementLists: TextElementLists,
         textElementGroups: TextElement[][]
     ) {
-        const farDistanceLimitRatio = this.m_maxDistanceRatioForLabels!;
+        const farDistanceLimitRatio = Math.max(
+            this.m_maxDistanceRatioForTextLabels!,
+            this.m_maxDistanceRatioForPoiLabels!
+        );
         const maxDistance = this.getMaxDistance(farDistanceLimitRatio);
 
         const textElementGroup: TextElement[] = [];
@@ -1261,6 +1282,23 @@ export class TextElementsRenderer {
         }
     }
 
+    private getDistanceScalingFactor(label: TextElement, distance: number): number {
+        // Distance scale is based on relation between camera focus point distance and
+        // the actual label distance. For labels close to camera look at point the scale
+        // remains unchanged, the farther is label from that point the smaller size it is
+        // rendered in screen space. This method is unaffected by near and far clipping planes
+        // distances, but may be improved by taking FOV into equation or customizing the
+        // focus point screen position based on horizont, actual ground, tilt ets.
+        let factor = this.m_mapView.lookAtDistance / distance;
+        // The label.distanceScale property defines the influence ratio at which
+        // distance affects the final scaling of label.
+        factor = 1.0 + (factor - 1.0) * label.distanceScale;
+        // Preserve the constraints
+        factor = Math.max(factor, this.m_labelDistanceScaleMin!);
+        factor = Math.min(factor, this.m_labelDistanceScaleMax!);
+        return factor;
+    }
+
     private getDistanceFadingFactor(label: TextElement, cameraFar: number): number {
         let distanceFadeValue = 1.0;
         const textDistance = label.currentViewDistance;
@@ -1305,15 +1343,12 @@ export class TextElementsRenderer {
 
         const maxNumRenderedLabels = this.m_maxNumVisibleLabels!;
         const numSecondChanceLabels = this.m_numSecondChanceLabels!;
-        const labelStartScaleDistance = this.m_labelStartScaleDistance!;
         let numRenderedTextElements = 0;
 
         const shieldGroups: number[][] = [];
 
-        const textFarDistanceLimitRatio = 0.9;
-        const textMaxDistance = this.getMaxDistance(textFarDistanceLimitRatio);
-        const poiTextFarDistanceLimitRatio = 0.8;
-        const poiTextMaxDistance = this.getMaxDistance(poiTextFarDistanceLimitRatio);
+        const textMaxDistance = this.getMaxDistance(this.m_maxDistanceRatioForTextLabels!);
+        const poiTextMaxDistance = this.getMaxDistance(this.m_maxDistanceRatioForPoiLabels!);
 
         const cameraIsMoving = this.m_mapView.cameraIsMoving;
         const cameraFar = this.m_mapView.camera.far;
@@ -1489,7 +1524,7 @@ export class TextElementsRenderer {
 
                 // Scale the text depending on the label's distance to the camera.
                 let textScale = 1.0;
-                let distanceScale = 1.0;
+                let distanceScaleFactor = 1.0;
                 const textDistance = this.m_mapView.worldCenter.distanceTo(position);
                 if (textDistance !== undefined) {
                     if (
@@ -1500,17 +1535,10 @@ export class TextElementsRenderer {
                         // transparent.
                         return false;
                     }
-
-                    const startScaleDistance = cameraFar * labelStartScaleDistance;
-                    if (textDistance > startScaleDistance) {
-                        distanceScale =
-                            1.0 -
-                            ((textDistance - startScaleDistance) /
-                                (cameraFar - startScaleDistance)) *
-                                (1.0 - pointLabel.distanceScale);
-                        textScale *= distanceScale;
-                    }
                     textElement.currentViewDistance = textDistance;
+
+                    distanceScaleFactor = this.getDistanceScalingFactor(pointLabel, textDistance);
+                    textScale *= distanceScaleFactor;
                 }
                 const distanceFadeFactor = this.getDistanceFadingFactor(pointLabel, cameraFar);
 
@@ -1535,7 +1563,7 @@ export class TextElementsRenderer {
                     const iconIsVisible = poiRenderer.computeScreenBox(
                         poiInfo,
                         tempPoiScreenPosition,
-                        distanceScale,
+                        distanceScaleFactor,
                         this.m_screenCollisions,
                         tempBox2D
                     );
@@ -1775,7 +1803,7 @@ export class TextElementsRenderer {
                         poiInfo,
                         tempPoiScreenPosition,
                         this.m_screenCollisions,
-                        distanceScale,
+                        distanceScaleFactor,
                         poiInfo.reserveSpace !== false,
                         iconRenderState.opacity * distanceFadeFactor
                     );
@@ -1947,8 +1975,6 @@ export class TextElementsRenderer {
                     return false;
                 }
 
-                // Scale the text depending on the label's distance to the camera.
-                let distanceScale = 1.0;
                 if (
                     pathLabel.fadeFar !== undefined &&
                     (pathLabel.fadeFar <= 0.0 ||
@@ -1981,17 +2007,14 @@ export class TextElementsRenderer {
 
                 // Update the real rendering distance to have smooth fading and scaling
                 this.updateViewDistance(this.m_mapView.worldCenter, pathLabel);
-                const textRenderDistance = pathLabel.renderDistance;
+                const textRenderDistance = -pathLabel.renderDistance;
 
-                const startScaleDistance = cameraFar * labelStartScaleDistance;
-                const renderDistance = -textRenderDistance;
-                if (renderDistance > startScaleDistance) {
-                    distanceScale =
-                        1.0 -
-                        ((renderDistance - startScaleDistance) / (cameraFar - startScaleDistance)) *
-                            (1.0 - pathLabel.distanceScale);
-                    textScale *= distanceScale;
-                }
+                // Scale the text depending on the label's distance to the camera.
+                const distanceScaleFactor = this.getDistanceScalingFactor(
+                    pathLabel,
+                    textRenderDistance
+                );
+                textScale *= distanceScaleFactor;
 
                 // Scale the path label correctly.
                 const prevSize = textCanvas.textRenderStyle.fontSize.size;
