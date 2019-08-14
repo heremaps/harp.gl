@@ -61,6 +61,11 @@ export interface TileDataSourceOptions {
     concurrentDecoderScriptUrl?: string;
 
     /**
+     * Optional count of web workers to use with the decoder bundle.
+     */
+    concurrentDecoderWorkerCount?: number;
+
+    /**
      * Optional, default copyright information of tiles provided by this data source.
      *
      * Implementation should provide this information from the source data if possible.
@@ -143,7 +148,8 @@ export class TileDataSource<TileType extends Tile> extends DataSource {
         } else if (m_options.concurrentDecoderServiceName) {
             this.m_decoder = ConcurrentDecoderFacade.getTileDecoder(
                 m_options.concurrentDecoderServiceName,
-                m_options.concurrentDecoderScriptUrl
+                m_options.concurrentDecoderScriptUrl,
+                m_options.concurrentDecoderWorkerCount
             );
         } else {
             throw new Error(

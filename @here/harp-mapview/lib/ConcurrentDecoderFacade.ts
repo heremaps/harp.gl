@@ -31,9 +31,14 @@ export class ConcurrentDecoderFacade {
      *
      * @param decoderServiceType The name of the decoder service type.
      * @param scriptUrl The optional URL with the workers' script.
+     * @param workerCount The number of web workers to use.
      */
-    static getTileDecoder(decoderServiceType: string, scriptUrl?: string): ITileDecoder {
-        const workerSet = this.getWorkerSet(scriptUrl);
+    static getTileDecoder(
+        decoderServiceType: string,
+        scriptUrl?: string,
+        workerCount?: number
+    ): ITileDecoder {
+        const workerSet = this.getWorkerSet(scriptUrl, workerCount);
 
         return new WorkerBasedDecoder(workerSet, decoderServiceType);
     }
@@ -43,8 +48,9 @@ export class ConcurrentDecoderFacade {
      *
      * @param scriptUrl The optional URL with the workers' script. If not specified,
      * the function uses [[defaultScriptUrl]] instead.
+     * @param workerCount The number of web workers to use.
      */
-    static getWorkerSet(scriptUrl?: string): ConcurrentWorkerSet {
+    static getWorkerSet(scriptUrl?: string, workerCount?: number): ConcurrentWorkerSet {
         if (scriptUrl === undefined) {
             scriptUrl = this.defaultScriptUrl;
         }
@@ -53,7 +59,7 @@ export class ConcurrentDecoderFacade {
         if (workerSet === undefined) {
             workerSet = new ConcurrentWorkerSet({
                 scriptUrl,
-                workerCount: this.defaultWorkerCount
+                workerCount: workerCount === undefined ? this.defaultWorkerCount : workerCount
             });
             this.workerSets[scriptUrl] = workerSet;
         }

@@ -31,9 +31,10 @@ export class ConcurrentTilerFacade {
      *
      * @param tilerServiceType The name of the tiler service type.
      * @param scriptUrl The optional URL with the workers' script.
+     * @param workerCount The number of web workers to use.
      */
-    static getTiler(tilerServiceType: string, scriptUrl?: string): ITiler {
-        const workerSet = this.getWorkerSet(scriptUrl);
+    static getTiler(tilerServiceType: string, scriptUrl?: string, workerCount?: number): ITiler {
+        const workerSet = this.getWorkerSet(scriptUrl, workerCount);
 
         return new WorkerBasedTiler(workerSet, tilerServiceType);
     }
@@ -43,8 +44,9 @@ export class ConcurrentTilerFacade {
      *
      * @param scriptUrl The optional URL with the workers' script. If not specified,
      * the function uses [[defaultScriptUrl]] instead.
+     * @param workerCount The number of web workers to use.
      */
-    static getWorkerSet(scriptUrl?: string): ConcurrentWorkerSet {
+    static getWorkerSet(scriptUrl?: string, workerCount?: number): ConcurrentWorkerSet {
         if (scriptUrl === undefined) {
             scriptUrl = this.defaultScriptUrl;
         }
@@ -53,7 +55,7 @@ export class ConcurrentTilerFacade {
         if (workerSet === undefined) {
             workerSet = new ConcurrentWorkerSet({
                 scriptUrl,
-                workerCount: this.defaultWorkerCount
+                workerCount: workerCount === undefined ? this.defaultWorkerCount : workerCount
             });
             this.workerSets[scriptUrl] = workerSet;
         }
