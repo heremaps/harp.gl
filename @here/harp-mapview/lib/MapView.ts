@@ -516,6 +516,15 @@ export interface MapViewOptions {
     enablePhasedLoading?: boolean;
 
     /**
+     * Enable map repeat for planar projections.
+     * If `true`, map will be repeated in longitudinal direction continuously.
+     * If `false`, map will end on lon -180 & 180 deg.
+     *
+     * @default `true`
+     */
+    tileWrappingEnabled?: boolean;
+
+    /**
      * Set tiling scheme for [[BackgroundDataSource]]
      */
     backgroundTilingScheme?: TilingScheme;
@@ -593,6 +602,8 @@ export class MapView extends THREE.EventDispatcher {
     private m_elevationProvider?: ElevationProvider;
     private m_visibleTileSetLock: boolean = false;
     private m_tileGeometryManager: TileGeometryManager;
+
+    private m_tileWrappingEnabled: boolean = true;
 
     private m_zoomLevel: number = DEFAULT_MIN_ZOOM_LEVEL;
     private m_minZoomLevel: number = DEFAULT_MIN_ZOOM_LEVEL;
@@ -787,6 +798,10 @@ export class MapView extends THREE.EventDispatcher {
             this.m_options.enableRoadPicking === true
         );
 
+        if (this.m_options.tileWrappingEnabled !== undefined) {
+            this.m_tileWrappingEnabled = this.m_options.tileWrappingEnabled;
+        }
+
         // Initialization of the stats
         this.setupStats(this.m_options.enableStatistics);
 
@@ -862,7 +877,8 @@ export class MapView extends THREE.EventDispatcher {
             new FrustumIntersection(
                 this.m_camera,
                 this.m_visibleTileSetOptions.projection,
-                this.m_visibleTileSetOptions.extendedFrustumCulling
+                this.m_visibleTileSetOptions.extendedFrustumCulling,
+                this.m_tileWrappingEnabled
             ),
             this.m_tileGeometryManager,
             this.m_visibleTileSetOptions
@@ -2663,7 +2679,8 @@ export class MapView extends THREE.EventDispatcher {
             new FrustumIntersection(
                 this.m_camera,
                 this.m_visibleTileSetOptions.projection,
-                this.m_visibleTileSetOptions.extendedFrustumCulling
+                this.m_visibleTileSetOptions.extendedFrustumCulling,
+                this.m_tileWrappingEnabled
             ),
             this.m_tileGeometryManager,
             this.m_visibleTileSetOptions

@@ -34,7 +34,7 @@ class Fixture {
     frustumIntersection: FrustumIntersection;
     vts: VisibleTileSet;
 
-    constructor() {
+    constructor(params: { tileWrappingEnabled: boolean } = { tileWrappingEnabled: false }) {
         this.worldCenter = new THREE.Vector3();
         this.camera = new THREE.PerspectiveCamera();
         this.ds = [new FakeOmvDataSource()];
@@ -44,7 +44,8 @@ class Fixture {
         this.frustumIntersection = new FrustumIntersection(
             this.camera,
             MapViewDefaults.projection,
-            MapViewDefaults.extendedFrustumCulling
+            MapViewDefaults.extendedFrustumCulling,
+            params.tileWrappingEnabled
         );
         this.vts = new VisibleTileSet(
             this.frustumIntersection,
@@ -239,5 +240,55 @@ describe("VisibleTileSet", function() {
             assert.equal(result.tileList.length, 2);
             assert(intersectionSpy.calledTwice);
         }
+    });
+
+    it("check MapView param tileWrappingEnabled disabled", async function() {
+        fixture = new Fixture({ tileWrappingEnabled: false });
+        fixture.worldCenter = new THREE.Vector3(0, 0, 0);
+        const camera = fixture.camera;
+        camera.aspect = 1.7541528239202657;
+        camera.far = 19000000;
+        camera.near = 34.82202253184507;
+        camera.fov = 60;
+        camera.setRotationFromEuler(
+            new THREE.Euler(0.9524476341218958, 0.3495283765291587, 0.23897332216617775, "XYZ")
+        );
+        camera.scale.set(1, 1, 1);
+        camera.position.set(0, 0, 348.2202253184507).add(fixture.worldCenter);
+        camera.updateProjectionMatrix();
+        camera.updateMatrixWorld(false);
+
+        const zoomLevel = 15;
+        const storageLevel = 14;
+
+        const secondDataSource = new FakeOmvDataSource();
+        fixture.addDataSource(secondDataSource);
+        const result = updateRenderList(zoomLevel, storageLevel).tileList;
+        assert.equal(result[0].visibleTiles.length, 5);
+    });
+
+    it("check MapView param tileWrappingEnabled enabled", async function() {
+        fixture = new Fixture({ tileWrappingEnabled: true });
+        fixture.worldCenter = new THREE.Vector3(0, 0, 0);
+        const camera = fixture.camera;
+        camera.aspect = 1.7541528239202657;
+        camera.far = 19000000;
+        camera.near = 34.82202253184507;
+        camera.fov = 60;
+        camera.setRotationFromEuler(
+            new THREE.Euler(0.9524476341218958, 0.3495283765291587, 0.23897332216617775, "XYZ")
+        );
+        camera.scale.set(1, 1, 1);
+        camera.position.set(0, 0, 348.2202253184507).add(fixture.worldCenter);
+        camera.updateProjectionMatrix();
+        camera.updateMatrixWorld(false);
+
+        const zoomLevel = 15;
+        const storageLevel = 14;
+
+        const secondDataSource = new FakeOmvDataSource();
+        fixture.addDataSource(secondDataSource);
+        const result = updateRenderList(zoomLevel, storageLevel).tileList;
+        assert.equal(result[0].visibleTiles.length, 16);
     });
 });
