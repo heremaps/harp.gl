@@ -1711,7 +1711,8 @@ export class TextElementsRenderer {
                             tempBufferAdditionParams.layer = pointLabel.renderOrder;
                             tempBufferAdditionParams.position = tempPosition;
                             tempBufferAdditionParams.scale = textScale;
-                            tempBufferAdditionParams.opacity = opacity * distanceFadeFactor;
+                            tempBufferAdditionParams.opacity =
+                                opacity * distanceFadeFactor * textElement.renderStyle!.opacity;
                             tempBufferAdditionParams.backgroundOpacity =
                                 tempBufferAdditionParams.opacity *
                                 textElement.renderStyle!.backgroundOpacity;
@@ -1961,7 +1962,7 @@ export class TextElementsRenderer {
 
                 // Compute values common for all glyphs in the label.
                 let textScale = textCanvas.textRenderStyle.fontSize.size / 100.0;
-                let opacity = 1.0;
+                let opacity = textElement.renderStyle!.opacity;
 
                 // Get the screen points that define the label's segments and create a path with
                 // them.
@@ -2044,7 +2045,7 @@ export class TextElementsRenderer {
                 );
                 fadeAnimationRunning = fadeAnimationRunning || startedFadeIn;
                 if (pathLabel.textRenderState.isFading()) {
-                    opacity = pathLabel.textRenderState.opacity;
+                    opacity = pathLabel.textRenderState.opacity * textElement.renderStyle!.opacity;
                 }
 
                 const prevOpacity = textCanvas.textRenderStyle.opacity;
