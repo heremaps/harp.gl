@@ -6,14 +6,14 @@
 
 import { TileKey } from "@here/harp-geoutils";
 
-export interface DisplacementMapTexture {
-    texture: Float32Array;
-    width: number;
-    height: number;
+export interface DisplacementMap {
+    xCountVertices: number;
+    yCountVertices: number;
+    buffer: Float32Array;
 }
 
-export interface DisplacementMap {
+export interface TileDisplacementMap {
     tileKey: TileKey;
-
-    texture: DisplacementMapTexture;
+    texture: THREE.DataTexture;
+    displacementMap: DisplacementMap;
 }

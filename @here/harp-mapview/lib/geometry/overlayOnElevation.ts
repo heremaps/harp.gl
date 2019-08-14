@@ -39,15 +39,8 @@ export function overlayOnElevation(tile: Tile): void {
         if (material === undefined) {
             continue;
         }
-        if (!material.displacementMap) {
-            material.displacementMap = new THREE.DataTexture(
-                displacementMap.texture.texture,
-                displacementMap.texture.width,
-                displacementMap.texture.height,
-                THREE.LuminanceFormat,
-                THREE.FloatType
-            );
-            DisplacementFeature.addRenderHelper(object);
-        }
+
+        material.displacementMap = displacementMap.texture;
+        DisplacementFeature.addRenderHelper(object);
     }
 }

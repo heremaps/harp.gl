@@ -5,7 +5,7 @@
  */
 
 import { GeoCoordinates, TileKey, TilingScheme } from "@here/harp-geoutils";
-import { DisplacementMap } from "./DisplacementMap";
+import { TileDisplacementMap } from "./DisplacementMap";
 
 export interface ElevationProvider {
     /**
@@ -36,7 +36,7 @@ export interface ElevationProvider {
      * @returns Returns the DisplacmentMap for the given tileKey or a lower level tile. Undefined
      *          if the tile or no parent is in the cache.
      */
-    getDisplacementMap(tileKey: TileKey): DisplacementMap | undefined;
+    getDisplacementMap(tileKey: TileKey): TileDisplacementMap | undefined;
 
     /**
      * @returns the TilingScheme used for the DisplacementMaps returned by [[getDisplacementMap]] or
