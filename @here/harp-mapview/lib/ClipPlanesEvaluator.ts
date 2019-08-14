@@ -155,7 +155,7 @@ export class AltitudeBasedClipPlanesEvaluator implements ClipPlanesEvaluator {
         public nearMargin: number = 200,
         public farMargin: number = 50,
         readonly nearMin: number = 0.1,
-        readonly nearFarMaxRatio = 8.0
+        readonly nearFarMaxRatio = 12.0
     ) {
         assert(nearMargin >= 0);
         assert(farMargin >= 0);

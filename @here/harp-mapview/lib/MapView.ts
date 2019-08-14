@@ -438,18 +438,33 @@ export interface MapViewOptions {
     numSecondChanceLabels?: number;
 
     /**
-     * The maximum distance for [[TextElement]] and icons, expressed as a fraction of the distance
+     * The maximum distance for [[TextElement]] to be rendered, expressed as a fraction of
+     * the distance between the near and far plane [0, 1.0].
+     * @default `0.99`.
+     */
+    maxDistanceRatioForTextLabels?: number;
+
+    /**
+     * The maximum distance for [[TextElement]] with icons to be rendered,
+     * expressed as a fraction of the distance
      * between the near and far plane [0, 1.0].
      * @default `0.99`.
      */
-    maxDistanceRatioForLabels?: number;
+    maxDistanceRatioForPoiLabels?: number;
 
     /**
-     * The distance at which [[TextElement]]s start to apply their `distanceScale` value, expressed
-     * as a fraction of the distance between the near and far plane [0, 1.0].
-     * @default `0.4`.
+     * The minimum scaling factor that may be applied to [[TextElement]]s due to their distance.
+     * If not defined the default value specified in [[TextElementsRenderer]] will be used.
+     * @default `0.7`.
      */
-    labelStartScaleDistance?: number;
+    labelDistanceScaleMin?: number;
+
+    /**
+     * The maximum scaling factor that may be applied to [[TextElement]]s due to their distance.
+     * If not defined the default value specified in [[TextElementsRenderer]] will be used.
+     * @default `1.5`.
+     */
+    labelDistanceScaleMax?: number;
 
     /**
      * Maximum timeout, in milliseconds, before a [[MOVEMENT_FINISHED_EVENT]] is sent after the
@@ -1347,6 +1362,13 @@ export class MapView extends THREE.EventDispatcher {
      */
     get focalLength(): number {
         return this.m_focalLength;
+    }
+
+    /**
+     * Get distance from camera to the point of focus in world units.
+     */
+    get lookAtDistance(): number {
+        return this.m_lookAtDistance;
     }
 
     /**
@@ -2940,8 +2962,10 @@ export class MapView extends THREE.EventDispatcher {
                 this.m_theme,
                 this.m_options.maxNumVisibleLabels,
                 this.m_options.numSecondChanceLabels,
-                this.m_options.maxDistanceRatioForLabels,
-                this.m_options.labelStartScaleDistance
+                this.m_options.labelDistanceScaleMin,
+                this.m_options.labelDistanceScaleMax,
+                this.m_options.maxDistanceRatioForTextLabels,
+                this.m_options.maxDistanceRatioForPoiLabels
             );
         }
         this.m_textElementsRenderer.placeAllTileLabels();

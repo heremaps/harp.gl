@@ -2287,7 +2287,9 @@
                     "iconReserveSpace": false,
                     "color": "#090A0B",
                     "backgroundColor": "#FFFFFF",
-                    "backgroundOpacity": 0.5
+                    "backgroundOpacity": 0.5,
+                    "fadeNear": 0.8,
+                    "fadeFar": 0.9
                 },
                 "final": true
             },
