@@ -655,6 +655,8 @@ export class PoiManager {
                               technique.backgroundOpacity,
                               Math.floor(this.mapView.zoomLevel)
                           )
+                        : technique.backgroundColor !== undefined
+                        ? 1.0 // make label background opaque when `backgroundColor` is set
                         : defaultRenderParams.backgroundOpacity
             };
 
