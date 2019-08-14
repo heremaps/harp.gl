@@ -10,13 +10,13 @@ import {
     CopyrightElementHandler,
     CopyrightInfo,
     DataSource,
-    DisplacementMap,
     ElevationProvider,
     ElevationRange,
     ElevationRangeSource,
     MapView,
     MapViewEventNames,
-    Tile
+    Tile,
+    TileDisplacementMap
 } from "@here/harp-mapview";
 import { APIFormat, OmvDataSource } from "@here/harp-omv-datasource";
 import * as THREE from "three";
@@ -83,7 +83,7 @@ class SceneElevationProvider implements ElevationProvider {
         return (bestResult.point as THREE.Vector3).add(this.m_mapView.worldCenter);
     }
 
-    getDisplacementMap(tileKey: TileKey): DisplacementMap | undefined {
+    getDisplacementMap(tileKey: TileKey): TileDisplacementMap | undefined {
         return undefined;
     }
 

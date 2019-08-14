@@ -73,6 +73,7 @@ import {
     isRenderDepthPrePassEnabled,
     setDepthPrePassStencil
 } from "../DepthPrePass";
+import { DisplacementMap, TileDisplacementMap } from "../DisplacementMap";
 import { MapViewPoints } from "../MapViewPoints";
 import { TextElement } from "../text/TextElement";
 import { DEFAULT_TEXT_DISTANCE_SCALE } from "../text/TextElementsRenderer";
@@ -897,7 +898,7 @@ export class TileGeometryCreator {
                 }
 
                 this.addFeatureData(srcGeometry, technique, object);
-                this.addGeometryObjInfos(srcGeometry, object);
+                this.addGeometryObjInfos(tile, srcGeometry, technique, object);
 
                 if (isExtrudedPolygonTechnique(technique) || isFillTechnique(technique)) {
                     // filled polygons are normal meshes, and need transparency only when fading or
@@ -1556,8 +1557,31 @@ export class TileGeometryCreator {
         }
     }
 
-    private addGeometryObjInfos(srcGeometry: Geometry, object: THREE.Object3D) {
-        if (srcGeometry.objInfos !== undefined && Object.keys(object.userData).length === 0) {
+    private addGeometryObjInfos(
+        tile: Tile,
+        srcGeometry: Geometry,
+        technique: Technique,
+        object: THREE.Object3D
+    ) {
+        if (srcGeometry.objInfos === undefined || Object.keys(object.userData).length > 0) {
+            return;
+        }
+
+        if (isTerrainTechnique(technique)) {
+            const displacementMap = (srcGeometry.objInfos as DisplacementMap[])[0];
+            const tileDisplacementMap: TileDisplacementMap = {
+                tileKey: tile.tileKey,
+                texture: new THREE.DataTexture(
+                    displacementMap.buffer,
+                    displacementMap.xCountVertices,
+                    displacementMap.yCountVertices,
+                    THREE.LuminanceFormat,
+                    THREE.FloatType
+                ),
+                displacementMap
+            };
+            object.userData = tileDisplacementMap;
+        } else {
             object.userData = srcGeometry.objInfos;
         }
     }
