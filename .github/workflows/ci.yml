@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  push:
+    branches:
+    - master
+
+jobs:
+  test:
+    name: Test on node ${{ matrix.node_version }} and ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        node_version: [9, 10, 11, 12]
+        os: [ubuntu-latest, windows-latest, macOS-latest]
+
+    steps:
+    - uses: actions/checkout@v1
+    - name: Use Node.js ${{ matrix.node_version }}
+      uses: actions/setup-node@v1
+      with:
+        version: ${{ matrix.node_version }}
+
+    - name: test
+      run: |
+        set -ex
+        npx ts-mocha -r tsconfig-paths/register ./test/*.ts
+        yarn run tslint
+        yarn run prettier
+        yarn run build-tests
+        npx ts-mocha -r tsconfig-paths/register ./@here/*/test/*.ts
+        yarn test-browser --headless-firefox
+        yarn test-browser --headless-chrome
+    - name: build and deploy
+      run: |
+        set -ex
+        yarn run build
+        yarn run typedoc
