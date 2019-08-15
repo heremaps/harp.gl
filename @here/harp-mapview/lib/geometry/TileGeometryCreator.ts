@@ -1298,8 +1298,10 @@ export class TileGeometryCreator {
                 backgroundOpacity:
                     technique.backgroundOpacity !== undefined
                         ? getPropertyValue(technique.backgroundOpacity, Math.floor(zoomLevel))
-                        : technique.backgroundColor !== undefined
-                        ? 1.0 // make label background opaque when `backgroundColor` is set
+                        : technique.backgroundColor !== undefined &&
+                          (technique.backgroundSize !== undefined &&
+                              getPropertyValue(technique.backgroundSize, Math.floor(zoomLevel)) > 0)
+                        ? 1.0 // make label opaque when backgroundColor and backgroundSize are set
                         : defaultRenderParams.backgroundOpacity
             };
 
