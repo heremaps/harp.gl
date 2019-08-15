@@ -24,6 +24,7 @@ jobs:
     - name: test
       run: |
         set -ex
+        yarn
         npx ts-mocha -r tsconfig-paths/register ./test/*.ts
         yarn run tslint
         yarn run prettier
@@ -34,5 +35,6 @@ jobs:
     - name: build and deploy
       run: |
         set -ex
+        yarn
         yarn run build
         yarn run typedoc
