@@ -60,7 +60,8 @@ export class FrustumIntersection {
     constructor(
         private readonly m_camera: THREE.PerspectiveCamera,
         private readonly m_projection: Projection,
-        private readonly m_extendedFrustumCulling: boolean
+        private readonly m_extendedFrustumCulling: boolean,
+        private readonly m_tileWrappingEnabled: boolean
     ) {
         this.m_mapTileCuller = new MapTileCuller(m_camera);
     }
@@ -226,7 +227,8 @@ export class FrustumIntersection {
         this.m_rootTileKeys = [];
         const rootTileKey = TileKey.fromRowColumnLevel(0, 0, 0);
         const tileWrappingEnabled = this.m_projection.type === ProjectionType.Planar;
-        if (!tileWrappingEnabled) {
+
+        if (!tileWrappingEnabled || !this.m_tileWrappingEnabled) {
             this.m_rootTileKeys.push(new TileKeyEntry(rootTileKey, 0));
             return;
         }

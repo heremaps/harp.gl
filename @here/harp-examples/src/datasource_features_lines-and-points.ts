@@ -164,7 +164,8 @@ export namespace LinesPointsFeaturesExample {
         const canvas = document.getElementById("mapCanvas") as HTMLCanvasElement;
         const mapView = new MapView({
             canvas,
-            theme: "resources/berlin_tilezen_day_reduced.json"
+            theme: "resources/berlin_tilezen_day_reduced.json",
+            tileWrappingEnabled: false
         });
         mapView.setCameraGeolocationAndZoom(new GeoCoordinates(10, -150), 2.6);
 
