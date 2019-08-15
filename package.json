@@ -48,7 +48,7 @@
         "postinstall": "ts-node ./scripts/postinstall.ts"
     },
     "engines": {
-        "node": ">=9.11.1",
+        "node": ">=10.5.0",
         "npm": ">=5.8.0",
         "yarn": ">=1.11.1"
     },

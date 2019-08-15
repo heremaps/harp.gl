@@ -1,0 +1,33 @@
+name: CI (MacOS)
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    name: Test on node ${{ matrix.node_version }} and ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        node_version: [10, 11, 12]
+        os: [macOS-latest]
+
+    steps:
+    - uses: actions/checkout@v1
+    - name: Use Node.js ${{ matrix.node_version }}
+      uses: actions/setup-node@v1
+      with:
+        version: ${{ matrix.node_version }}
+    - name: Install dependencies
+      run: |
+        npm install -g chromedriver geckodriver
+    - name: test and build
+      run: |
+        set -ex
+        yarn
+        npx ts-mocha -r tsconfig-paths/register ./test/*.ts
+        yarn run tslint
+        yarn run prettier
+        yarn run build-tests
+        npx ts-mocha -r tsconfig-paths/register ./@here/*/test/*.ts
+        yarn run build
+        yarn run typedoc
