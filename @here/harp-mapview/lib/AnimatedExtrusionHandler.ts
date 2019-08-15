@@ -51,7 +51,7 @@ export class AnimatedExtrusionHandler {
      * Creates an [[AnimatedExtrusionHandler]] in [[MapView]].
      *
      * @param m_mapView Instance of [[MapView]] that passes `zoomLevel`
-     * through the `zoom` poperty update
+     * through the `zoom` property update
      */
     constructor(private m_mapView: MapView) {
         this.m_zoomLevelPrevious = this.m_mapView.zoomLevel;
@@ -146,6 +146,18 @@ export class AnimatedExtrusionHandler {
         }
         return undefined;
     }
+
+    /**
+     * Is `true` if any extrusion handlers are currently animating.
+     */
+    get isAnimating(): boolean {
+        for (const tileHandler of this.m_tileHandlerMap) {
+            if (tileHandler[1].isAnimating) {
+                return true;
+            }
+        }
+        return false;
+    }
 }
 
 /**
@@ -213,6 +225,13 @@ export class AnimatedExtrusionTileHandler {
      */
     get animationState(): AnimatedExtrusionState {
         return this.m_animatedExtrusionState;
+    }
+
+    /**
+     * Is `true` if this handler is currently animating.
+     */
+    get isAnimating(): boolean {
+        return this.m_animatedExtrusionState !== AnimatedExtrusionState.Finished;
     }
 
     /**

@@ -151,7 +151,7 @@ export class PhasedTileGeometryLoader implements TileGeometryLoader {
      *      enabled.
      * @param {(GeometryKindSet | undefined)} disabledKinds The [[GeometryKind]]s that should be
      *      disabled.
-     * @returns {boolean} `true` if actual geometry has been created.
+     * @returns {boolean} `true` if `updateToPhase` was successful.
      */
     updateToPhase(
         toPhase: number,
@@ -161,10 +161,10 @@ export class PhasedTileGeometryLoader implements TileGeometryLoader {
         let didUpdate = false;
         toPhase = Math.min(toPhase, this.numberOfPhases);
         while (this.currentPhase < toPhase) {
-            didUpdate = this.update(enabledKinds, disabledKinds);
-            if (!didUpdate) {
+            if (!this.update(enabledKinds, disabledKinds)) {
                 break;
             }
+            didUpdate = true;
         }
         return didUpdate;
     }
@@ -179,7 +179,9 @@ export class PhasedTileGeometryLoader implements TileGeometryLoader {
      *      disabled.
      * @param doFullUpdate If a value of `true` is specified, the current phase is ignored and all
      *      remaining geometries are created.
-     * @returns {boolean} `true` if actual geometry has been created.
+     * @returns {boolean} `true` if `update` was successful. If `currentPhase` is smaller than
+     *      `numberOfPhases`, `update` can be called again. If `false` is returned, another call to
+     *      `update` is not required.
      */
     update(
         enabledKinds: GeometryKindSet | undefined,
