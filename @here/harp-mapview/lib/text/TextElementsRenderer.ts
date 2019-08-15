@@ -358,15 +358,6 @@ export class TextElementsRenderer {
     }
 
     /**
-     * Is `true` if [[MapView]] is currently animating or the camera is moving or an update is
-     * pending.
-     */
-    get isDynamicFrame(): boolean {
-        const mapView = this.m_mapView;
-        return mapView.cameraIsMoving || mapView.animating || mapView.updatePending;
-    }
-
-    /**
      * Render the user [[TextElement]]s.
      *
      * @param time Current time for animations.
@@ -404,7 +395,9 @@ export class TextElementsRenderer {
 
         if (this.m_lastRenderedTextElements.length === 0) {
             const renderStartTime =
-                this.overloaded && this.isDynamicFrame ? PerformanceTimer.now() : undefined;
+                this.overloaded && this.m_mapView.isDynamicFrame
+                    ? PerformanceTimer.now()
+                    : undefined;
 
             // Nothing has been rendered before, process the list of placed labels in all tiles.
             renderList.forEach(renderListEntry => {
@@ -703,7 +696,6 @@ export class TextElementsRenderer {
             this.m_catalogsLoading += 1;
             const fontCatalogPromise: Promise<void> = FontCatalog.load(fontCatalogConfig.url, 1024)
                 .then((loadedFontCatalog: FontCatalog) => {
-                    this.m_catalogsLoading -= 1;
                     const loadedTextCanvas = new TextCanvas({
                         renderer: this.m_mapView.renderer,
                         fontCatalog: loadedFontCatalog,
@@ -718,8 +710,10 @@ export class TextElementsRenderer {
                     });
                 })
                 .catch((error: Error) => {
-                    this.m_catalogsLoading -= 1;
                     logger.error("Failed to load FontCatalog: ", error);
+                })
+                .finally(() => {
+                    this.m_catalogsLoading -= 1;
                 });
             promises.push(fontCatalogPromise);
         });
@@ -904,7 +898,7 @@ export class TextElementsRenderer {
         this.checkIfOverloaded();
 
         const placementStartTime =
-            this.overloaded && this.isDynamicFrame ? PerformanceTimer.now() : undefined;
+            this.overloaded && this.m_mapView.isDynamicFrame ? PerformanceTimer.now() : undefined;
 
         renderList.forEach(tileList => {
             this.placeTextElements(

@@ -759,12 +759,12 @@ export class Tile implements CachedResource {
     }
 
     /**
-     * Overrides the default value for [[hasGeometry]].
+     * Overrides the default value for [[hasGeometry]] if value is not `undefined`.
      *
      * @param value A new value for the [[hasGeometry]] flag.
      */
-    forceHasGeometry(value: boolean) {
-        if (value) {
+    forceHasGeometry(value: boolean | undefined) {
+        if (value === true) {
             this.setDecodedTile(defaultEmptyDecodedTile);
         }
         this.m_forceHasGeometry = value;

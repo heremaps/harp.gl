@@ -240,7 +240,9 @@ export abstract class TileGeometryManagerBase implements TileGeometryManager {
      *
      * @param {Tile[]} tiles List of [[Tiles]] to process the visibility status of.
      */
-    updateTileObjectVisibility(tiles: Tile[]): void {
+    updateTileObjectVisibility(tiles: Tile[]): boolean {
+        let needUpdate = false;
+
         for (const tile of tiles) {
             if (tile.objects.length === 0 || tile.visibilityCounter === this.visibilityCounter) {
                 continue;
@@ -251,10 +253,13 @@ export abstract class TileGeometryManagerBase implements TileGeometryManager {
                 const geometryKind: GeometryKind[] | undefined =
                     object.userData !== undefined ? object.userData.kind : undefined;
                 if (geometryKind !== undefined) {
-                    object.visible = !geometryKind.some(kind => this.hiddenKinds.has(kind));
+                    const nowVisible = !geometryKind.some(kind => this.hiddenKinds.has(kind));
+                    needUpdate = needUpdate || object.visible !== nowVisible;
+                    object.visible = nowVisible;
                 }
             }
         }
+        return needUpdate;
     }
 
     setTileUpdateCallback(callback?: TileUpdateCallback): void {
@@ -349,6 +354,8 @@ export class SimpleTileGeometryManager extends TileGeometryManagerBase {
 
         // If the visibility status of the kinds changed since the last update, the new visibility
         // status is applied (again).
-        this.updateTileObjectVisibility(tiles);
+        if (this.updateTileObjectVisibility(tiles)) {
+            this.mapView.update();
+        }
     }
 }

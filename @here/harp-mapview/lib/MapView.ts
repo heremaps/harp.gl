@@ -2570,8 +2570,11 @@ export class MapView extends THREE.EventDispatcher {
                 this.m_tileDataSources.length &&
             !this.m_updatePending &&
             !this.animating &&
+            !this.cameraIsMoving &&
+            !this.m_animatedExtrusionHandler.isAnimating &&
             this.m_textElementsRenderer !== undefined &&
-            !this.m_textElementsRenderer.loading
+            !this.m_textElementsRenderer.loading &&
+            this.m_poiTableManager.finishedLoading
         ) {
             this.m_firstFrameComplete = true;
 
@@ -2661,7 +2664,7 @@ export class MapView extends THREE.EventDispatcher {
     private finishRenderTextElements() {
         const canRenderTextElements = this.m_pointOfView === undefined;
 
-        if (canRenderTextElements && this.m_textElementsRenderer) {
+        if (canRenderTextElements && this.m_textElementsRenderer !== undefined) {
             // copy far value from scene camera, as the distance to the POIs matter now.
             this.m_screenCamera.far = this.m_camera.far;
             this.m_textElementsRenderer.renderText(this.m_screenCamera);

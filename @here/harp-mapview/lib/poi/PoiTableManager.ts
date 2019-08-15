@@ -364,7 +364,7 @@ export class PoiTableManager {
                 });
 
                 if (loadPromises.length > 0) {
-                    Promise.all(loadPromises).then(() => {
+                    Promise.all(loadPromises).finally(() => {
                         this.finishLoading();
                         resolve();
                     });
