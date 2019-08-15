@@ -621,6 +621,7 @@ export class MapView extends THREE.EventDispatcher {
      */
     readonly mapRenderingManager: IMapRenderingManager;
 
+    private m_movementFinishedUpdateTimerId?: any;
     private m_postEffects?: PostEffects;
 
     private m_skyBackground?: SkyBackground;
@@ -998,6 +999,11 @@ export class MapView extends THREE.EventDispatcher {
      * cleanup, you must ensure that all references to this `MapView` are removed.
      */
     dispose() {
+        if (this.m_movementFinishedUpdateTimerId) {
+            clearTimeout(this.m_movementFinishedUpdateTimerId);
+            this.m_movementFinishedUpdateTimerId = undefined;
+        }
+
         if (this.m_animationFrameHandle !== undefined) {
             cancelAnimationFrame(this.m_animationFrameHandle);
             this.m_animationFrameHandle = undefined;
@@ -2877,7 +2883,13 @@ export class MapView extends THREE.EventDispatcher {
 
         // render at the next possible time.
         if (!this.animating) {
-            setTimeout(() => this.update(), 0);
+            if (this.m_movementFinishedUpdateTimerId !== undefined) {
+                clearTimeout(this.m_movementFinishedUpdateTimerId);
+            }
+            this.m_movementFinishedUpdateTimerId = setTimeout(() => {
+                this.m_movementFinishedUpdateTimerId = undefined;
+                this.update();
+            }, 0);
         }
     }
 
