@@ -1,9 +1,6 @@
 name: CI
 
-on:
-  push:
-    branches:
-    - master
+on: [push, pull_request]
 
 jobs:
   test:
@@ -11,8 +8,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        node_version: [9, 10, 11, 12]
-        os: [ubuntu-latest, windows-latest, macOS-latest]
+        node_version: [10, 11, 12]
+        os: [ubuntu-latest, windows-latest]
 
     steps:
     - uses: actions/checkout@v1
@@ -20,8 +17,10 @@ jobs:
       uses: actions/setup-node@v1
       with:
         version: ${{ matrix.node_version }}
-
-    - name: test
+    - name: Install dependencies
+      run: |
+        npm install -g chromedriver geckodriver
+    - name: test and build
       run: |
         set -ex
         yarn
@@ -30,11 +29,11 @@ jobs:
         yarn run prettier
         yarn run build-tests
         npx ts-mocha -r tsconfig-paths/register ./@here/*/test/*.ts
+        firefox --version
+        whereis firefox
         yarn test-browser --headless-firefox
+        google-chrome --version
+        whereis google-chrome
         yarn test-browser --headless-chrome
-    - name: build and deploy
-      run: |
-        set -ex
-        yarn
         yarn run build
         yarn run typedoc
