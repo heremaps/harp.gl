@@ -585,27 +585,21 @@ export class PoiManager {
         dataSourceName: string,
         technique: PoiTechnique | LineMarkerTechnique
     ): TextRenderStyle {
-        const cacheId = computeStyleCacheId(
-            dataSourceName,
-            technique,
-            Math.floor(this.mapView.zoomLevel)
-        );
-        let renderStyle = this.mapView.textRenderStyleCache.get(cacheId);
+        const mapView = this.mapView;
+        const zoomLevel = mapView.zoomLevel;
+        const cacheId = computeStyleCacheId(dataSourceName, technique, Math.floor(zoomLevel));
+        let renderStyle = mapView.textRenderStyleCache.get(cacheId);
         if (renderStyle === undefined) {
-            const defaultRenderParams = this.mapView.textElementsRenderer!.defaultStyle
-                .renderParams;
+            const defaultRenderParams = mapView.textElementsRenderer!.defaultStyle.renderParams;
 
             if (technique.color !== undefined) {
-                const hexColor = getPropertyValue(
-                    technique.color,
-                    Math.floor(this.mapView.zoomLevel)
-                );
+                const hexColor = getPropertyValue(technique.color, Math.floor(zoomLevel));
                 this.m_colorMap.set(cacheId, ColorCache.instance.getColor(hexColor));
             }
             if (technique.backgroundColor !== undefined) {
                 const hexBgColor = getPropertyValue(
                     technique.backgroundColor,
-                    Math.floor(this.mapView.zoomLevel)
+                    Math.floor(zoomLevel)
                 );
                 this.m_colorMap.set(cacheId + "_bg", ColorCache.instance.getColor(hexBgColor));
             }
@@ -616,14 +610,11 @@ export class PoiManager {
                     unit: FontUnit.Pixel,
                     size:
                         technique.size !== undefined
-                            ? getPropertyValue(technique.size, Math.floor(this.mapView.zoomLevel))
+                            ? getPropertyValue(technique.size, Math.floor(zoomLevel))
                             : defaultRenderParams.fontSize!.size,
                     backgroundSize:
                         technique.backgroundSize !== undefined
-                            ? getPropertyValue(
-                                  technique.backgroundSize,
-                                  Math.floor(this.mapView.zoomLevel)
-                              )
+                            ? getPropertyValue(technique.backgroundSize, Math.floor(zoomLevel))
                             : defaultRenderParams.fontSize!.backgroundSize
                 },
                 fontStyle:
@@ -647,29 +638,28 @@ export class PoiManager {
                 ),
                 opacity:
                     technique.opacity !== undefined
-                        ? getPropertyValue(technique.opacity, Math.floor(this.mapView.zoomLevel))
+                        ? getPropertyValue(technique.opacity, Math.floor(zoomLevel))
                         : defaultRenderParams.opacity,
                 backgroundOpacity:
                     technique.backgroundOpacity !== undefined
-                        ? getPropertyValue(
-                              technique.backgroundOpacity,
-                              Math.floor(this.mapView.zoomLevel)
-                          )
-                        : technique.backgroundColor !== undefined
-                        ? 1.0 // make label background opaque when `backgroundColor` is set
+                        ? getPropertyValue(technique.backgroundOpacity, Math.floor(zoomLevel))
+                        : technique.backgroundColor !== undefined &&
+                          (technique.backgroundSize !== undefined &&
+                              getPropertyValue(technique.backgroundSize, Math.floor(zoomLevel)) > 0)
+                        ? 1.0 // make label opaque when backgroundColor and backgroundSize are set
                         : defaultRenderParams.backgroundOpacity
             };
 
             const themeRenderParams =
-                this.mapView.textElementsRenderer !== undefined
-                    ? this.mapView.textElementsRenderer!.getTextElementStyle(technique.style)
+                mapView.textElementsRenderer !== undefined
+                    ? mapView.textElementsRenderer!.getTextElementStyle(technique.style)
                           .renderParams
                     : {};
             renderStyle = new TextRenderStyle({
                 ...themeRenderParams,
                 ...renderParams
             });
-            this.mapView.textRenderStyleCache.set(cacheId, renderStyle);
+            mapView.textRenderStyleCache.set(cacheId, renderStyle);
         }
 
         return renderStyle;
