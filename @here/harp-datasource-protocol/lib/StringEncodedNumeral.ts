@@ -65,9 +65,9 @@ export const StringEncodedRGB: StringEncodedNumeralFormat = {
         const channels = StringEncodedRGB.regExp.exec(encodedValue)!;
         tmpColor
             .setRGB(
-                parseInt(channels[1], 16) / 255,
-                parseInt(channels[2], 16) / 255,
-                parseInt(channels[3], 16) / 255
+                parseInt(channels[1], 10) / 255,
+                parseInt(channels[2], 10) / 255,
+                parseInt(channels[3], 10) / 255
             )
             .getHSL(tmpHSL);
         return [tmpHSL.h, tmpHSL.s, tmpHSL.l];
