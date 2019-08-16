@@ -21,6 +21,7 @@ const debugMaterial = new THREE.LineBasicMaterial({
     linewidth: 1,
     depthTest: false
 });
+console.log("Test test")
 
 // Set maximum priority.
 const PRIORITY_ALWAYS = Number.MAX_SAFE_INTEGER;
