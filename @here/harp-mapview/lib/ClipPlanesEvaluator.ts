@@ -147,20 +147,23 @@ export class AltitudeBasedClipPlanesEvaluator implements ClipPlanesEvaluator {
      * @param nearMargin defines near plane offset from the ground in the surface normal direction.
      * @param farMargin defines far plane offset from the ground surface, looking downwards.
      * @param nearMin minimum allowable near plance distance from camera.
-     * @param nearFarMaxRatio maximum ratio between near/far planes distances, allows to limit
-     * viewing distance at overall. It may be usefull to limit amount of rendered tiles in
-     * front of camera, especially on tilt angles close to 90 degrees.
+     * @param farMaxRatio maximum ratio between ground and far plane distance, allows to limit
+     * viewing distance at overall.
+     * @note You may treat [[nearMargin]] and [[farMargin]] parameters as the maximum and minimum
+     * renderable elevation respectivelly along the surface normal, when camera is constantly
+     * looking downwards (top-down view). If you need [[ClipPlanesEvaluator]] for cameras that
+     * support tilt or yaw please use [[TiltBasedClipPlanesEvaluator]].
      */
     constructor(
-        public nearMargin: number = 200,
-        public farMargin: number = 50,
+        protected nearMargin: number = 200,
+        protected farMargin: number = 50,
         readonly nearMin: number = 0.1,
-        readonly nearFarMaxRatio = 12.0
+        readonly farMaxRatio = 8.0
     ) {
         assert(nearMargin >= 0);
         assert(farMargin >= 0);
         assert(nearMin > 0);
-        assert(nearFarMaxRatio > 1.0);
+        assert(farMaxRatio > 1.0);
     }
 
     evaluateClipPlanes(
@@ -173,6 +176,43 @@ export class AltitudeBasedClipPlanesEvaluator implements ClipPlanesEvaluator {
                 : this.evaluateDistanceSphericalProj(camera, projection);
 
         return clipPlanes;
+    }
+
+    /**
+     * Set maximum elevation to be rendered (intersects frustum) above the sea level.
+     * @param elevation the elevation (altitude) value in world units (meters).
+     * @note Reasonable values are in between (0, MtEverestHeight>, where the second is
+     * defined in [[EarthConstant.MAX_ELEVATION]]
+     */
+    set maxElevation(elevation: number) {
+        assert(elevation >= 0);
+        this.nearMargin = elevation;
+    }
+
+    /**
+     * Get maximum elevation to be covered by camera frustum.
+     */
+    get maxElevation(): number {
+        return this.nearMargin;
+    }
+
+    /**
+     * Set minimum elevation beneth the sea level to be rendered.
+     * @param elevation the minimum elevation in world units (meters), should be greater then 0.
+     * @note If you set this parameter to zero you may not see any features rendered if they are
+     * just at or below the sea level. Reasonable values are between (0, DeadSeaLevel>, where the
+     * second is the lowest depression on the earth defined in [[EarthConstants.MIN_ELEVATION]]
+     */
+    set minElevation(elevation: number) {
+        assert(elevation >= 0);
+        this.farMargin = elevation;
+    }
+
+    /**
+     * Get minimum elevation to be covered by camera frustum.
+     */
+    get minElevation(): number {
+        return this.farMargin;
     }
 
     /**
@@ -191,26 +231,19 @@ export class AltitudeBasedClipPlanesEvaluator implements ClipPlanesEvaluator {
         assert(projection.type !== ProjectionType.Spherical);
 
         let nearPlane: number = this.nearMin;
-        let farPlane: number = this.nearMin * this.nearFarMaxRatio;
+        let farPlane: number = this.nearMin * this.farMaxRatio;
 
         // Calculate distance to closest point on the ground.
         const groundDistance = this.getCameraAltitude(camera, projection);
-        // Aquire camera forward (look at) vector (store in tmpVectors[0]).
-        const lookAt = camera.getWorldDirection(this.m_tmpVectors[0]);
-        let tiltCos = Math.cos(
-            lookAt.angleTo(AltitudeBasedClipPlanesEvaluator.GROUND_NORMAL_INV_PLANAR_PROJ)
-        );
-        // Cosines of tilt may close to zero at 90 degrees, do not allow divisions by zero.
-        tiltCos = tiltCos === 0 ? epsilon : tiltCos;
-        // At least try to keep margins along the eye vector (center of the view) in tact with
-        // pitch angle changes - this does not solve all tilt change problems, rather use
-        // more sophisticated evaluator.
-        nearPlane = groundDistance - this.nearMargin / tiltCos;
-        farPlane = groundDistance + this.farMargin / tiltCos;
+        // We could at least try to keep margins along the eye vector (center of the view) in
+        // tact with pitch angle changes, but this does not solve all tilt angle problems,
+        // rather use more sophisticated evaluator.
+        nearPlane = groundDistance - this.maxElevation;
+        farPlane = groundDistance + this.minElevation;
 
         // Apply the constraints.
         nearPlane = Math.max(nearPlane, this.nearMin);
-        farPlane = Math.min(farPlane, nearPlane * this.nearFarMaxRatio);
+        farPlane = Math.min(farPlane, groundDistance * this.farMaxRatio);
 
         return { near: nearPlane, far: farPlane };
     }
@@ -222,19 +255,19 @@ export class AltitudeBasedClipPlanesEvaluator implements ClipPlanesEvaluator {
         assert(projection.type === ProjectionType.Spherical);
 
         let nearPlane: number = this.nearMin;
-        let farPlane: number = this.nearMin * this.nearFarMaxRatio;
+        let farPlane: number = this.nearMin * this.farMaxRatio;
 
         // This solution computes near and far plane for a set up where
         // the camera is looking at the center of the scene.
 
         //         , - ~ ~ ~ - ,
-        //     , '               ' ,
-        //   ,                       ,
-        //  ,                         ,
-        // ,                           ,
-        // ,             . O           ,
-        // ,             | .           ,
-        //  ,            |   .  r     ,
+        //     , '               ' ,        E
+        //   ,           .           ,    . ' far + elev
+        //  ,            .   r + e   , '   /
+        // ,             .     ,  '    ,  /
+        // ,             . O '         , / te
+        // ,             | .           ,/
+        //  ,            |   .  r     ,/
         //   ,           |      .    ,
         //     ,         |        , '_____ far
         //       ' -_, _ | _ ,  ' / T
@@ -247,7 +280,8 @@ export class AltitudeBasedClipPlanesEvaluator implements ClipPlanesEvaluator {
         // The near plane calculus is quite straight forward and works the same as for planar
         // projections. We simply search for the closest point of the ground just above
         // the camera, then we apply margin to it along the sphere surface normal:
-        nearPlane = this.getCameraAltitude(camera, projection) - this.nearMargin;
+        const cameraAltitude = this.getCameraAltitude(camera, projection);
+        nearPlane = cameraAltitude - this.maxElevation;
 
         // The far plane distance calculus requires finding the sphere tangent line that is
         // co-linear with (goes thru) camera position, such tangent creates right angle
@@ -260,12 +294,23 @@ export class AltitudeBasedClipPlanesEvaluator implements ClipPlanesEvaluator {
         let d = camera.position.length();
         d = d === 0 ? epsilon : d;
         const alpha = Math.asin(r / d);
-        // The distance to tangent point may be descibed as:
+        // The distance to tangent point may be described as:
         // t = sqrt(d^2 - r^2)
         const t = Math.sqrt(d * d - r * r);
+        // Because we would like to see elevated geometry that may be visible beyond the tangent
+        // point on ground surface, we need to extend viewing distance along the tangent line
+        // by te (see graph above). Knowing that OTE forms right angle, we have:
+        // (r+e)^2 = r^2 + te^2
+        // te = sqrt((r+e)^2 - r^2)
+        // This reduces to:
+        // te = sqrt(r^2 + 2*r*e + e^2 - r^2)
+        // te = sqrt(2*r*e + e^2)
+        const te = Math.sqrt(2 * r * this.maxElevation + this.maxElevation * this.maxElevation);
+
         // Next step is to project CT vector onto camera eye (forward) vector to get maximum
         // camera far plane distance. Point on sphere beyond that point won't be visible anyway
-        // unless they are above the ground surface. For such cases [[this.farMargin]] applies.
+        // unless they are above the ground surface. For such cases [[this.maxElevation]] applies,
+        // thus we project entire CE vector, of lenght: t + te.
 
         // Extract camera X, Y, Z orientation axes into tmp vectors array.
         camera.matrixWorld.extractBasis(
@@ -282,12 +327,15 @@ export class AltitudeBasedClipPlanesEvaluator implements ClipPlanesEvaluator {
             .copy(cameraFwdVec)
             .applyQuaternion(this.m_tmpQuaternion);
         // Give it a proper length
-        tangentVec.multiplyScalar(t);
+        tangentVec.multiplyScalar(t + te);
         // Calculate tanget projection onto camera eye vector, giving far plane distance.
-        farPlane = tangentVec.dot(cameraFwdVec) + this.farMargin;
+        farPlane = tangentVec.dot(cameraFwdVec);
 
         // Apply the constraints.
         nearPlane = Math.max(nearPlane, this.nearMin);
+        // In extreme cases the largest depression assumed may be further then tangent
+        // based far plane distance, take it into account
+        farPlane = Math.max(farPlane, cameraAltitude + this.minElevation);
 
         return { near: nearPlane, far: farPlane };
     }
@@ -311,15 +359,15 @@ export class TiltBasedClipPlanesEvaluator extends AltitudeBasedClipPlanesEvaluat
             const cameraTilt = this.getCameraTiltAngle(camera, projection);
             const lookAtDist = this.getCameraLookAtDistance(camera, projection);
             // Generally near/far planes are set to keep look at distance, then
-            // margins are applied. Here margins are meant to be defined as distance
-            // along the ground normal vector thus during camera tilt they need to
-            // be projected on the eye vector:
+            // margins are applied. Here margins (min/max elevations) are meant to be
+            // defined as distance along the ground normal vector thus during camera
+            // tilt they need to be projected on the eye vector:
             // actualMargin = margin / groundNormal.dot(eyeVec)
             // Assuming that tilt angle defined relative to actual ground normal, we have:
             let cameraEyeDotGround = Math.cos(cameraTilt);
             cameraEyeDotGround = cameraEyeDotGround === 0 ? epsilon : cameraEyeDotGround;
-            clipPlanes.near = lookAtDist - this.nearMargin / cameraEyeDotGround;
-            clipPlanes.far = lookAtDist + this.farMargin / cameraEyeDotGround;
+            clipPlanes.near = lookAtDist - this.maxElevation / cameraEyeDotGround;
+            clipPlanes.far = lookAtDist + this.minElevation / cameraEyeDotGround;
 
             // Correct cliping planse distance for the top/bottom frustum planes (edges).
             // If we deal with perspective camera type, this step would not be required
@@ -344,13 +392,14 @@ export class TiltBasedClipPlanesEvaluator extends AltitudeBasedClipPlanesEvaluat
             }
             // Clamp values to constraints.
             clipPlanes.near = Math.max(clipPlanes.near, this.nearMin);
-            clipPlanes.far = Math.min(clipPlanes.far, clipPlanes.near * this.nearFarMaxRatio);
+            clipPlanes.far = Math.min(clipPlanes.far, lookAtDist * this.farMaxRatio);
             return clipPlanes;
         } else {
             const clipPlanes = { near: 0.0, far: 0.0 };
 
             // Near plance calculus is pretty straightforward and does not depent on camera tilt:
-            clipPlanes.near = this.getCameraAltitude(camera, projection) - this.nearMargin;
+            const cameraAltitude = this.getCameraAltitude(camera, projection);
+            clipPlanes.near = cameraAltitude - this.maxElevation;
             // For far plane we need to find tangent to sphere which gives the maximum
             // visible distance with regards to sphere curvature and camera position.
             const worldOrigin = new THREE.Vector3(0, 0, 0);
@@ -365,7 +414,10 @@ export class TiltBasedClipPlanesEvaluator extends AltitudeBasedClipPlanesEvaluat
             const xaxis = this.m_tmpVectors[0];
             const yaxis = this.m_tmpVectors[1];
             // Extend the far plane by the margin along the shpere normal (radius).
-            const r = EarthConstants.EQUATORIAL_RADIUS + this.farMargin;
+            // In order to calculate far plane distance we need to find sphere tangent
+            // line that passes thru camera position, method explanation may be found in
+            // AltitudeBasedClipPlanesEvaluator.evaluateDistanceSphericalProj() method.
+            const r = EarthConstants.EQUATORIAL_RADIUS;
             const d = cameraToOrigin.length();
             const dNorm = this.m_tmpVectors[2].copy(cameraToOrigin).multiplyScalar(1 / d);
 
@@ -374,17 +426,39 @@ export class TiltBasedClipPlanesEvaluator extends AltitudeBasedClipPlanesEvaluat
             const cosAlpha = Math.sqrt(1 - sinAlpha * sinAlpha);
 
             // Apply tangent vector length onto camera to origin direction.
-            // This may be calculated by several methods, firstly:
-            // t_d = d_norm * |t|,
-            // where:
-            // |t| = |d|^2 - |r|^2
-            // |t| = cos(alpha) * |d|
-            // By simplifying t_d equation with the second condition, we get:
-            // t_d = d_norm * cos(alpha) * |d|,
-            // t_d = d * cos(alpha)
-            // Cause cameraToOrigin is no longer needed re-use it to calulate td.
-            const td = cameraToOrigin.multiplyScalar(cosAlpha);
-            // For tangent calculated (in the direction to origin) we then apply
+            let td: THREE.Vector3;
+            // First case when elevation is negligible.
+            if (this.maxElevation < epsilon) {
+                // This may be calculated by several methods, firstly:
+                // t_d = d_norm * |t|,
+                // where:
+                // |t| = sqrt(|d|^2 - |r|^2), or
+                // |t| = cos(alpha) * |d|
+                // By simplifying t_d equation with the second condition, we get:
+                // t_d = d_norm * cos(alpha) * |d|, where d = d_norm * |d|
+                // t_d = d * cos(alpha)
+                // Cause cameraToOrigin is no longer needed re-use it to calulate td.
+                td = cameraToOrigin.multiplyScalar(cosAlpha);
+            }
+            // Second case takes into account the elevation above the ground.
+            else {
+                // Here the length of the tangent is extended with 'te' vector that allows to see
+                // elevated geometry beyond the tangent (horizon line), see
+                // AltitudeBasedClipPlanesEvaluator for explanations.
+                // t_d = d_norm * |t + te|,
+                // where:
+                // |t| = cos(alpha) * |d|
+                // |te| = sqrt((r+e)^2 - r^2)
+                // Which reduces to:
+                // |te| = sqrt(2*r*e + e^2)
+                const t = cosAlpha * d;
+                const te = Math.sqrt(
+                    2 * r * this.maxElevation - this.maxElevation * this.maxElevation
+                );
+                // Re-use prealocated vector.
+                td = cameraToOrigin.copy(dNorm).multiplyScalar(t + te);
+            }
+            // For tangent, oriented in the direction to origin, we then apply
             // rotation to it on every rotation axes using already known tangent angle,
             // the angle that defines maximum visibility along the sphere surface.
             // This gives us the tangent rays in all major directions.
@@ -411,6 +485,12 @@ export class TiltBasedClipPlanesEvaluator extends AltitudeBasedClipPlanesEvaluat
             // because far plane is indeed defined in that space anyway:
             const farPlane = new THREE.Plane().setFromCoplanarPoints(tdrx, tdry, tdrx2);
             clipPlanes.far = farPlane.constant;
+
+            // Finally apply the constraints.
+            clipPlanes.near = Math.max(clipPlanes.near, this.nearMin);
+            // Take into account largest depression assumed, that may be further then
+            // tangent based far plane distance.
+            clipPlanes.far = Math.max(clipPlanes.far, cameraAltitude + this.minElevation);
             return clipPlanes;
         }
     }
