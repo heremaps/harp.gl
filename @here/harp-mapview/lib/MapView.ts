@@ -248,7 +248,7 @@ export interface MapViewOptions {
      * Whether the native WebGL antialiasing should be enabled. It is better to disable it if the
      * MapView's MSAA is enabled.
      *
-     * @default `true`
+     * @default `true` for `pixelRatio` < `2.0`, `false` otherwise.
      */
     enableNativeWebglAntialias?: boolean;
 
@@ -826,7 +826,10 @@ export class MapView extends THREE.EventDispatcher {
         // Initialization of the renderer
         this.m_renderer = new THREE.WebGLRenderer({
             canvas: this.canvas,
-            antialias: this.m_options.enableNativeWebglAntialias !== false,
+            antialias:
+                this.m_options.enableNativeWebglAntialias === undefined
+                    ? this.pixelRatio < 2.0
+                    : this.m_options.enableNativeWebglAntialias,
             alpha: this.m_options.alpha,
             preserveDrawingBuffer: this.m_options.preserveDrawingBuffer === true,
             powerPreference:
