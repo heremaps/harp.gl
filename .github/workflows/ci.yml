@@ -30,7 +30,11 @@ jobs:
         yarn run prettier
         yarn run build-tests
         npx ts-mocha -r tsconfig-paths/register ./@here/*/test/*.ts
+        firefox --version
+        whereis firefox
         yarn test-browser --headless-firefox
+        google-chrome --version
+        whereis google-chrome
         yarn test-browser --headless-chrome
     - name: build and deploy
       run: |
