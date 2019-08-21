@@ -14,6 +14,7 @@ import { SdfTextMaterial } from "./rendering/TextMaterials";
 import { FontVariant, TextLayoutStyle, TextRenderStyle } from "./rendering/TextStyle";
 import { LineTypesetter } from "./typesetting/LineTypesetter";
 import { PathTypesetter, PathTypesettingParameters } from "./typesetting/PathTypesetter";
+import { SmoothPathTypesetter } from "./typesetting/SmoothPathTypesetter";
 import { TypesettingParameters } from "./typesetting/Typesetter";
 import { createSdfTextMaterial } from "./utils/MaterialUtils";
 
@@ -33,6 +34,7 @@ interface TextPlacementParameters {
     individualBounds?: THREE.Box2[];
     computeTextBuffer?: boolean;
     letterCaseArray?: boolean[];
+    smoothing?: boolean;
 }
 
 /**
@@ -59,6 +61,11 @@ export interface MeasurementParameters {
      * `SmallCaps`.
      */
     letterCaseArray?: boolean[];
+
+    /**
+     * Use smoothing on text path.
+     */
+    smoothing?: boolean;
 }
 
 /**
@@ -96,6 +103,11 @@ export interface AdditionParameters {
      * `SmallCaps`.
      */
     letterCaseArray?: boolean[];
+
+    /**
+     * Use smoothing on text path.
+     */
+    smoothing?: boolean;
 }
 
 /**
@@ -239,6 +251,7 @@ export class TextCanvas {
 
     private m_lineTypesetter: LineTypesetter;
     private m_pathTypesetter: PathTypesetter;
+    private m_smoothTypesetter: SmoothPathTypesetter;
 
     /**
      * Constructs a new `TextCanvas`.
@@ -290,6 +303,7 @@ export class TextCanvas {
 
         this.m_lineTypesetter = new LineTypesetter();
         this.m_pathTypesetter = new PathTypesetter();
+        this.m_smoothTypesetter = new SmoothPathTypesetter();
     }
 
     /**
@@ -487,10 +501,12 @@ export class TextCanvas {
         let pathOverflow;
         let upperCaseArray;
         let outputCharacterBounds;
+        let smoothing;
         if (params !== undefined) {
             path = params.path;
             pathOverflow = params.pathOverflow;
             outputCharacterBounds = params.outputCharacterBounds;
+            smoothing = params.smoothing;
             if (params.path !== undefined) {
                 const pathOrigin = params.path.getPoint(0);
                 if (pathOrigin === null) {
@@ -510,7 +526,8 @@ export class TextCanvas {
             textPathOverflow: pathOverflow,
             bounds: outputBounds,
             individualBounds: outputCharacterBounds,
-            letterCaseArray: upperCaseArray
+            letterCaseArray: upperCaseArray,
+            smoothing
         });
     }
 
@@ -536,9 +553,11 @@ export class TextCanvas {
         let pathOverflow;
         let upperCaseArray;
         let targetLayer = this.m_defaultLayer;
+        let smoothing;
         if (params !== undefined) {
             path = params.path;
             pathOverflow = params.pathOverflow;
+            smoothing = params.smoothing;
             if (params.layer !== undefined) {
                 let tempLayer = this.getLayer(params.layer);
                 if (tempLayer === undefined) {
@@ -560,7 +579,8 @@ export class TextCanvas {
             textPath: path,
             textPathOverflow: pathOverflow,
             layer: targetLayer,
-            letterCaseArray: upperCaseArray
+            letterCaseArray: upperCaseArray,
+            smoothing
         });
         if (result && params !== undefined) {
             if (params.updatePosition === true) {
@@ -815,13 +835,14 @@ export class TextCanvas {
 
         let result = true;
         if (isPath) {
-            Object.assign(typesettingParams as PathTypesettingParameters, {
+            const pathTypesettingParams = typesettingParams as PathTypesettingParameters;
+            Object.assign(pathTypesettingParams, {
                 path: params.textPath,
                 pathOverflow: params.textPathOverflow === true
             });
-            result = this.m_pathTypesetter.arrangeGlyphs(
-                typesettingParams as PathTypesettingParameters
-            );
+            const typesetter =
+                params.smoothing === true ? this.m_smoothTypesetter : this.m_pathTypesetter;
+            result = typesetter.arrangeGlyphs(pathTypesettingParams);
         } else {
             result = this.m_lineTypesetter.arrangeGlyphs(typesettingParams);
         }

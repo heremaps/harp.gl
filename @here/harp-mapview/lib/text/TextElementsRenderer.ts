@@ -2148,6 +2148,7 @@ export class TextElementsRenderer {
                 tempAdditionParams.layer = pathLabel.renderOrder;
                 tempAdditionParams.letterCaseArray = pathLabel.glyphCaseArray;
                 tempAdditionParams.pickingData = textElement.userData ? textElement : undefined;
+                tempAdditionParams.smoothing = textElement.smoothing;
                 textCanvas.addText(pathLabel.glyphs!, tempPosition, tempAdditionParams);
 
                 // Allocate collision info if needed.

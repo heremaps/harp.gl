@@ -351,6 +351,12 @@ export class TextElement {
     userData?: any;
 
     /**
+     * Enable smoothing on `TextElement` with `path`.
+     * @default `false`
+     */
+    smoothing?: boolean;
+
+    /**
      * Is `true` if is a point label.
      */
     isPointLabel?: boolean;

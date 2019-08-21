@@ -1234,6 +1234,12 @@ export interface TextTechniqueParams extends BaseTechniqueParams {
      */
     mayOverlap?: boolean;
     /**
+     * If `true`, text path will be smoothen for a better look.
+     * Only for `line` geometry type.
+     * @default `false`
+     */
+    smoothing?: boolean;
+    /**
      * If `true`, element will reserve screen space, other markers of lower priority will not be
      * able to overlap.
      * @default `true`

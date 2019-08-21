@@ -1100,6 +1100,23 @@
             ["ref", "waterPolygons"],
             {
                 "description": "water",
+                "when": [
+                    "all",
+                    ["==", ["get", "$layer"], "water"],
+                    ["==", ["get", "$geometryType"], "line"]
+                ],
+                "technique": "text",
+                "attr": {
+                    "color": "#87959a",
+                    "backgroundColor": "#5a7c91",
+                    "backgroundOpacity": 0.5,
+                    "smoothing": true,
+                    "opacity": 0.8,
+                    "size": 12.8
+                }
+            },
+            {
+                "description": "water",
                 "when": ["==", ["get", "$layer"], "water"],
                 "technique": "text",
                 "attr": {
