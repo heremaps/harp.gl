@@ -303,15 +303,7 @@ export class TileGeometryCreator {
         textFilter?: (technique: Technique) => boolean
     ): TextPathGeometry[] {
         const processedPaths = new Array<TextPathGeometry>();
-
-        const MAX_CORNER_ANGLE = Math.PI / 8;
-
         const newPaths = textPathGeometries.slice();
-
-        // maximum reuse of variables to reduce allocations
-        const p0 = new THREE.Vector2();
-        const p1 = new THREE.Vector2();
-        const previousTangent = new THREE.Vector2();
 
         while (newPaths.length > 0) {
             const textPath = newPaths.pop();
@@ -328,56 +320,7 @@ export class TileGeometryCreator {
                 continue;
             }
 
-            let splitIndex = -1;
-
-            for (let i = 0; i < textPath.path.length - 3; i += 3) {
-                p0.set(textPath.path[i], textPath.path[i + 1]);
-                p1.set(textPath.path[i + 3], textPath.path[i + 4]);
-                const tangent = p1.sub(p0).normalize();
-
-                if (i > 0) {
-                    const theta = Math.atan2(
-                        previousTangent.x * tangent.y - tangent.x * previousTangent.y,
-                        tangent.dot(previousTangent)
-                    );
-
-                    if (Math.abs(theta) > MAX_CORNER_ANGLE) {
-                        splitIndex = i;
-                        break;
-                    }
-                }
-                previousTangent.set(tangent.x, tangent.y);
-            }
-
-            if (splitIndex > 0) {
-                // split off the valid first path points with a clone of the path
-                const firstTextPath = {
-                    path: textPath.path.slice(0, splitIndex + 3),
-                    text: textPath.text,
-                    // Used for placement priorities only, can be kept although it could also be
-                    // recomputed
-                    pathLengthSqr: textPath.pathLengthSqr,
-                    technique: textPath.technique,
-                    featureId: textPath.featureId
-                };
-
-                processedPaths.push(firstTextPath);
-
-                // setup a second part with the rest of the path points and process again
-                const secondTextPath = {
-                    path: textPath.path.slice(splitIndex),
-                    text: textPath.text,
-                    // Used for placement priorities only, can be kept although it could also be
-                    // recomputed
-                    pathLengthSqr: textPath.pathLengthSqr,
-                    technique: textPath.technique,
-                    featureId: textPath.featureId
-                };
-
-                newPaths.push(secondTextPath);
-            } else {
-                processedPaths.push(textPath);
-            }
+            processedPaths.push(textPath);
         }
         return processedPaths;
     }

@@ -73,6 +73,10 @@ const tempRoofDisp = new THREE.Vector3();
 const tmpV2 = new THREE.Vector2();
 const tmpV3 = new THREE.Vector3();
 
+const tempP0 = new THREE.Vector2();
+const tempP1 = new THREE.Vector2();
+const tempPreviousTangent = new THREE.Vector2();
+
 /**
  * Minimum number of pixels per character. Used during estimation if there is enough screen space
  * available to render a text. Based on the estimated screen size of a tile.
@@ -91,6 +95,11 @@ const MIN_AVERAGE_CHAR_WIDTH = 5;
  * size).
  */
 const SIZE_ESTIMATION_FACTOR = 0.5;
+
+/**
+ * Maximum allowed corner angle inside a label path.
+ */
+const MAX_CORNER_ANGLE = Math.PI / 8;
 
 /**
  * Used to identify an invalid (or better: unused) array index.
@@ -149,6 +158,13 @@ export enum LineType {
 type TexCoordsFunction = (tilePos: THREE.Vector2, tileExtents: number) => { u: number; v: number };
 
 export class OmvDecodedTileEmitter implements IOmvEmitter {
+    get projection() {
+        return this.m_decodeInfo.targetProjection;
+    }
+
+    get center() {
+        return this.m_decodeInfo.center;
+    }
     // mapping from style index to mesh buffers
     private readonly m_meshBuffers = new Map<number, MeshBuffers>();
 
@@ -170,14 +186,6 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
         private readonly m_enableElevationOverlay: boolean,
         private readonly m_languages?: string[]
     ) {}
-
-    get projection() {
-        return this.m_decodeInfo.targetProjection;
-    }
-
-    get center() {
-        return this.m_decodeInfo.center;
-    }
 
     /**
      * Creates the Point of Interest geometries for the given feature.
@@ -399,49 +407,24 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                 text = String(text);
 
                 if (this.m_skipShortLabels) {
-                    // Filter the lines, keep only those that are long enough for labelling.
-                    validLines = [];
+                    // Filter the lines, keep only those that are long enough for labelling. Also,
+                    // split jagged label paths to keep processing and rendering only those that
+                    // have no sharp corners, which would not be rendered anyway.
 
                     const metersPerPixel = tileSizeInMeters / this.m_decodeInfo.tileSizeOnScreen;
-                    const minTileSpace =
+                    const minEstimatedLabelLength =
                         MIN_AVERAGE_CHAR_WIDTH *
                         text.length *
                         metersPerPixel *
                         SIZE_ESTIMATION_FACTOR;
+                    const minEstimatedLabelLengthSqr =
+                        minEstimatedLabelLength * minEstimatedLabelLength;
 
-                    // Estimate if the line is long enough for the label, otherwise ignore it for
-                    // rendering text. First, compute the bounding box in world coordinates.
-                    for (const aLine of lines) {
-                        let minX = Number.MAX_SAFE_INTEGER;
-                        let maxX = Number.MIN_SAFE_INTEGER;
-                        let minY = Number.MAX_SAFE_INTEGER;
-                        let maxY = Number.MIN_SAFE_INTEGER;
-                        for (let i = 0; i < aLine.length; i += 3) {
-                            const x = aLine[i];
-                            const y = aLine[i + 1];
-                            if (x < minX) {
-                                minX = x;
-                            }
-                            if (x > maxX) {
-                                maxX = x;
-                            }
-                            if (y < minY) {
-                                minY = y;
-                            }
-                            if (y > maxY) {
-                                maxY = y;
-                            }
-                        }
-
-                        // Check if the diagonal of the bounding box would be long enough to fit the
-                        // label text:
-                        if (
-                            (maxX - minX) * (maxX - minX) + (maxY - minY) * (maxY - minY) >=
-                            minTileSpace * minTileSpace
-                        ) {
-                            validLines.push(aLine);
-                        }
-                    }
+                    validLines = this.splitJaggyLines(
+                        lines,
+                        minEstimatedLabelLengthSqr,
+                        MAX_CORNER_ANGLE
+                    );
                 } else {
                     validLines = lines;
                 }
@@ -728,6 +711,117 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
             decodedTile.copyrightHolderIds = this.m_sources;
         }
         return decodedTile;
+    }
+
+    /**
+     * Split the lines array into multiple parts if there are sharp corners. Reject parts that are
+     * too short to display the label text.
+     *
+     * @param {number[][]} lines Array containing the points of the paths.
+     * @param {number} minEstimatedLabelLengthSqr Minimum label size squared.
+     * @param {number} maxCornerAngle Maximum angle between consecutive path segments in radians.
+     * @returns The split and filtered lines array.
+     */
+    protected splitJaggyLines(
+        lines: number[][],
+        minEstimatedLabelLengthSqr: number,
+        maxCornerAngle: number
+    ): number[][] {
+        const validLines: number[][] = [];
+
+        const computeBoundingBoxSizeSqr = (
+            aLine: number[],
+            startIndex: number,
+            endIndex: number
+        ): number => {
+            let minX = Number.MAX_SAFE_INTEGER;
+            let maxX = Number.MIN_SAFE_INTEGER;
+            let minY = Number.MAX_SAFE_INTEGER;
+            let maxY = Number.MIN_SAFE_INTEGER;
+            for (let i = startIndex; i < endIndex; i += 3) {
+                const x = aLine[i];
+                const y = aLine[i + 1];
+                if (x < minX) {
+                    minX = x;
+                }
+                if (x > maxX) {
+                    maxX = x;
+                }
+                if (y < minY) {
+                    minY = y;
+                }
+                if (y > maxY) {
+                    maxY = y;
+                }
+            }
+
+            return (maxX - minX) * (maxX - minX) + (maxY - minY) * (maxY - minY);
+        };
+
+        // Work on a copy of the path.
+        const pathsToCheck = lines.slice();
+
+        while (pathsToCheck.length > 0) {
+            const path = pathsToCheck.pop();
+
+            if (path === undefined || path.length < 6) {
+                continue;
+            }
+
+            let splitIndex = -1;
+
+            for (let i = 0; i < path.length - 3; i += 3) {
+                tempP0.set(path[i], path[i + 1]);
+                tempP1.set(path[i + 3], path[i + 4]);
+                const tangent = tempP1.sub(tempP0).normalize();
+
+                if (i > 0) {
+                    const theta = Math.atan2(
+                        tempPreviousTangent.x * tangent.y - tangent.x * tempPreviousTangent.y,
+                        tangent.dot(tempPreviousTangent)
+                    );
+
+                    if (Math.abs(theta) > maxCornerAngle) {
+                        splitIndex = i;
+                        break;
+                    }
+                }
+                tempPreviousTangent.set(tangent.x, tangent.y);
+            }
+
+            if (splitIndex > 0) {
+                // Estimate if the first part of the path is long enough for the label.
+                const firstPathLengthSqr = computeBoundingBoxSizeSqr(path, 0, splitIndex + 3);
+                // Estimate if the second part of the path is long enough for the label.
+                const secondPathLengthSqr = computeBoundingBoxSizeSqr(
+                    path,
+                    splitIndex,
+                    path.length
+                );
+
+                if (firstPathLengthSqr > minEstimatedLabelLengthSqr) {
+                    // Split off the valid first path points with a clone of the path.
+                    validLines.push(path.slice(0, splitIndex + 3));
+                }
+
+                if (secondPathLengthSqr > minEstimatedLabelLengthSqr) {
+                    // Now process the second part of the path, it may have to be split
+                    // again.
+                    pathsToCheck.push(path.slice(splitIndex));
+                }
+            } else {
+                // Estimate if the path is long enough for the label, otherwise ignore
+                // it for rendering text. First, compute the bounding box in world
+                // coordinates.
+                const pathLengthSqr = computeBoundingBoxSizeSqr(path, 0, path.length);
+
+                if (pathLengthSqr > minEstimatedLabelLengthSqr) {
+                    validLines.push(path);
+                }
+            }
+        }
+
+        return validLines;
     }
 
     private getTextureCoordinateType(technique: Technique): TextureCoordinateType | undefined {
