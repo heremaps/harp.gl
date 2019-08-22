@@ -7,17 +7,40 @@
 import * as THREE from "three";
 
 import { MathUtils } from "@here/harp-utils";
+import { GlyphData } from "../rendering/GlyphData";
 import { QUAD_VERTEX_MEMORY_FOOTPRINT } from "../rendering/TextGeometry";
 import { FontStyle, FontVariant } from "../rendering/TextStyle";
 import { TypesettingUtils } from "../utils/TypesettingUtils";
 import { UnicodeUtils } from "../utils/UnicodeUtils";
-import { PathTypesetter } from "./PathTypesetter";
+import { PathTypesetter, PathTypesettingParameters } from "./PathTypesetter";
 
 /**
  * @hidden
  * [[Typesetter]] implementation that arranges glyphs alongside a specified path.
  */
 export class SmoothPathTypesetter extends PathTypesetter {
+    private m_tempGlyphs: GlyphData[] = [];
+    private m_tempPoints: THREE.Vector2[] = [];
+    private m_tempAngles: number[] = [];
+    private m_tempAngleDelta: number[] = [];
+    private m_tempMirrored: boolean[] = [];
+
+    constructor() {
+        super();
+        this.reset();
+    }
+
+    arrangeGlyphs(params: PathTypesettingParameters): boolean {
+        if (super.arrangeGlyphs(params) === false) {
+            return false;
+        }
+
+        const result = this.commitLine();
+        this.reset();
+
+        return result;
+    }
+
     // Place a directional run of index inside a path line.
     protected placeRun(
         startIdx: number,
@@ -27,33 +50,16 @@ export class SmoothPathTypesetter extends PathTypesetter {
         // Gather common typesetting parameters.
         const glyphDataArray = this.m_currentParams!.glyphs;
         const smallCapsArray = this.m_currentParams!.smallCapsArray;
-        const fontCatalog = this.m_currentParams!.fontCatalog;
         const textRenderStyle = this.m_currentParams!.textRenderStyle;
         const textLayoutStyle = this.m_currentParams!.textLayoutStyle;
-        const position = this.m_currentParams!.position;
-        const geometry = this.m_currentParams!.geometry;
-        const globalBounds = this.m_currentParams!.globalBounds;
-        const individualBounds = this.m_currentParams!.individualBounds;
-        const vertexBuffer = this.m_currentParams!.vertexBuffer;
         const path = this.m_currentParams!.path;
         const pathOverflow = this.m_currentParams!.pathOverflow;
-
-        const defaultGlyphRotation = textRenderStyle.rotation;
-        const normalDisplacement =
-            textLayoutStyle.verticalAlignment *
-            glyphDataArray[0].font.metrics.capHeight *
-            this.m_tempScale;
 
         // Move through the glyph array following the run's direction (as the order of the glyphs in
         // memory might not match the order on glyphs on scree).
         const start = direction === UnicodeUtils.Direction.LTR ? startIdx : endIdx;
         const end = direction === UnicodeUtils.Direction.LTR ? endIdx : startIdx;
-        const points = [];
-        const glyphs = [];
 
-        let firstAngle = 0;
-        let prevAngle = 0;
-        const angleDelta = [0];
         for (
             let i = start;
             direction === UnicodeUtils.Direction.RTL ? i >= end : i <= end;
@@ -94,23 +100,32 @@ export class SmoothPathTypesetter extends PathTypesetter {
 
             // Update the current interpolated path position and angle.
             const textPoint = path.getPoint(this.m_tempPathOffset);
-            if (textPoint === null && pathOverflow === false) {
-                return false;
+            if (textPoint === null) {
+                if (pathOverflow === true) {
+                    break;
+                } else {
+                    return false;
+                }
             }
 
             const tangent = path.getTangent(this.m_tempPathOffset);
             const angle = Math.atan2(tangent.y, tangent.x);
 
-            if (i === 0) {
-                firstAngle = angle;
-            } else {
-                angleDelta.push(MathUtils.circleDistance(angle - prevAngle));
+            const pointsLength = this.m_tempPoints.length;
+            if (pointsLength > 0) {
+                const prevAngle = this.m_tempAngles[pointsLength - 1];
+                this.m_tempAngleDelta.push(MathUtils.circleDistance(angle - prevAngle));
             }
 
-            prevAngle = angle;
+            this.m_tempPoints.push(textPoint);
+            this.m_tempGlyphs.push(glyphData);
+            this.m_tempAngles.push(angle);
 
-            points.push(textPoint);
-            glyphs.push(glyphData);
+            const isMirrored =
+                UnicodeUtils.isRtlMirrored(glyphData.codePoint) &&
+                direction === UnicodeUtils.Direction.RTL;
+
+            this.m_tempMirrored.push(isMirrored);
 
             const glyphFont = glyphData.font;
             const glyphFontMetrics = glyphFont.metrics;
@@ -128,15 +143,38 @@ export class SmoothPathTypesetter extends PathTypesetter {
                 this.m_tempPathLength;
         }
 
-        const e = points.length - 1;
+        return true;
+    }
+
+    private commitLine(): boolean {
+        // Gather common typesetting parameters.
+        const glyphDataArray = this.m_currentParams!.glyphs;
+        const smallCapsArray = this.m_currentParams!.smallCapsArray;
+        const fontCatalog = this.m_currentParams!.fontCatalog;
+        const textRenderStyle = this.m_currentParams!.textRenderStyle;
+        const textLayoutStyle = this.m_currentParams!.textLayoutStyle;
+        const position = this.m_currentParams!.position;
+        const geometry = this.m_currentParams!.geometry;
+        const globalBounds = this.m_currentParams!.globalBounds;
+        const individualBounds = this.m_currentParams!.individualBounds;
+        const vertexBuffer = this.m_currentParams!.vertexBuffer;
+
+        const defaultGlyphRotation = textRenderStyle.rotation;
+        const normalDisplacement =
+            textLayoutStyle.verticalAlignment *
+            glyphDataArray[0].font.metrics.capHeight *
+            this.m_tempScale;
+
+        const e = this.m_tempPoints.length - 1;
 
         const v1 = new THREE.Vector2();
         const v2 = new THREE.Vector2();
+        const normal = new THREE.Vector2();
 
-        let currentAngle = firstAngle;
-        for (let i = 0; i < glyphs.length; i++) {
-            const glyphData = glyphs[i];
-            const textPoint = points[i];
+        let currentAngle = this.m_tempAngles[0];
+        for (let i = 0; i < this.m_tempGlyphs.length; i++) {
+            const glyphData = this.m_tempGlyphs[i];
+            const textPoint = this.m_tempPoints[i];
 
             /**
              * To compute glyph angle we take angle's first derivative
@@ -151,21 +189,21 @@ export class SmoothPathTypesetter extends PathTypesetter {
              *
              * That guarantees that we won't lost any delta
              */
-            const a0 = angleDelta[i - 2 < 0 ? -(i - 2) - 1 : i - 2];
-            const a1 = angleDelta[i - 1 < 0 ? -(i - 1) - 1 : i - 1];
-            const a2 = angleDelta[i];
-            const a3 = angleDelta[i + 1 > e ? 2 * e + 1 - (i + 1) : i + 1];
-            const a4 = angleDelta[i + 2 > e ? 2 * e + 1 - (i + 2) : i + 2];
+            const a0 = this.m_tempAngleDelta[i - 2 < 0 ? -(i - 2) - 1 : i - 2];
+            const a1 = this.m_tempAngleDelta[i - 1 < 0 ? -(i - 1) - 1 : i - 1];
+            const a2 = this.m_tempAngleDelta[i];
+            const a3 = this.m_tempAngleDelta[i + 1 > e ? 2 * e + 1 - (i + 1) : i + 1];
+            const a4 = this.m_tempAngleDelta[i + 2 > e ? 2 * e + 1 - (i + 2) : i + 2];
 
             const angleDeltaAvg = (a0 + a1 + a2 + a3 + a4) / 5;
 
             currentAngle += angleDeltaAvg;
 
-            const normal = new THREE.Vector2(-Math.sin(currentAngle), Math.cos(currentAngle));
+            normal.set(-Math.sin(currentAngle), Math.cos(currentAngle));
 
             const pb = textPoint;
-            const pa = points[i - 1] || pb;
-            const pc = points[i + 1] || pb;
+            const pa = this.m_tempPoints[i - 1] || pb;
+            const pc = this.m_tempPoints[i + 1] || pb;
 
             v1.subVectors(pb, pa);
             v2.subVectors(pc, pa);
@@ -210,9 +248,8 @@ export class SmoothPathTypesetter extends PathTypesetter {
             const bgWeight =
                 (0.5 * this.m_tempPixelBgSize!) /
                 (fontCatalog.distanceRange * Math.max(glyphScale, 1.0));
-            const isMirrored =
-                UnicodeUtils.isRtlMirrored(glyphData.codePoint) &&
-                direction === UnicodeUtils.Direction.RTL;
+
+            const isMirrored = this.m_tempMirrored[i];
 
             const verticalOffset =
                 glyphFontMetrics.lineHeight -
@@ -287,5 +324,13 @@ export class SmoothPathTypesetter extends PathTypesetter {
         }
 
         return true;
+    }
+
+    private reset() {
+        this.m_tempGlyphs = [];
+        this.m_tempPoints = [];
+        this.m_tempAngles = [];
+        this.m_tempAngleDelta = [0];
+        this.m_tempMirrored = [];
     }
 }
