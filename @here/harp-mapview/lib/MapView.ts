@@ -2266,6 +2266,7 @@ export class MapView extends THREE.EventDispatcher {
         const zoomLevelDistance = cameraPosZ / Math.cos(Math.min(cameraPitch, Math.PI / 3));
 
         this.m_zoomLevel = MapViewUtils.calculateZoomLevelFromDistance(zoomLevelDistance, this);
+        this.m_fog.update(this.m_camera, this.projection, clipPlanes.maximum);
     }
 
     /**
@@ -2440,7 +2441,6 @@ export class MapView extends THREE.EventDispatcher {
         }
 
         this.updateCameras();
-        this.m_fog.update(this.m_camera, this.projection);
         this.m_renderer.clear();
 
         // clear the scene
