@@ -3,6 +3,7 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
+import { Value } from "@here/harp-datasource-protocol/index-decoder";
 
 /**
  * Feature Modifier ids to choose which OmvFeatureModifer should be used in OmvDecoder.
@@ -67,12 +68,21 @@ export namespace OmvFilterString {
     }
 }
 
+/**
+ * Definition of a filter for a feature attribute
+ */
+export interface OmvFilterFeatureAttribute {
+    key: string;
+    value: Value;
+}
+
 export enum OmvGeometryType {
     UNKNOWN = 0,
     POINT = 1,
     LINESTRING = 2,
     POLYGON = 3
 }
+
 /**
  * Internal type of a layer filter description, Should not be publicly available.
  *
@@ -95,6 +105,7 @@ export interface OmvFilterDescription {
     classes?: OmvFilterString[];
     minLevel: number;
     maxLevel: number;
+    featureAttribute?: OmvFilterFeatureAttribute;
 }
 
 /**
