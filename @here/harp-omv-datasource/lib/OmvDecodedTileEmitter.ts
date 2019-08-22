@@ -642,9 +642,9 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                         for (let i = 0; i < length; ++i) {
                             const nextIdx = (i + 1) % length;
                             const currX = ring.contour[i * ring.vertexStride];
-                            const currY = -ring.contour[i * ring.vertexStride + 1];
+                            const currY = ring.contour[i * ring.vertexStride + 1];
                             const nextX = ring.contour[nextIdx * ring.vertexStride];
-                            const nextY = -ring.contour[nextIdx * ring.vertexStride + 1];
+                            const nextY = ring.contour[nextIdx * ring.vertexStride + 1];
 
                             const isOutline = !(
                                 (currX <= 0 && nextX <= 0) ||
