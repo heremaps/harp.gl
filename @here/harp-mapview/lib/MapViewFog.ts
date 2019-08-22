@@ -85,20 +85,26 @@ export class MapViewFog {
      *
      * @param camera An instance of a `THREE.Camera` with a `far` property.
      */
-    update(camera: THREE.PerspectiveCamera | THREE.OrthographicCamera, projection: Projection) {
+    update(
+        camera: THREE.PerspectiveCamera | THREE.OrthographicCamera,
+        projection: Projection,
+        viewDistance?: number
+    ) {
         if (
             this.m_scene.fog !== null &&
-            camera.far !== undefined &&
             this.m_cachedTheme !== undefined &&
             this.m_cachedTheme.fog &&
-            this.m_cachedTheme.fog.startRatio !== undefined
+            this.m_cachedTheme.fog.startRatio !== undefined &&
+            (camera.far !== undefined || viewDistance !== undefined)
         ) {
-            // TODO: Instead of using camera.far distance implement max view range
-            // accessors from ClipPlanesEvaluator
-            // TODO: Move below constants to theme Fog definition
+            // If maximum visibility range is available use it instead of camera.far distance,
+            // this makes fog independent from dynamic camera planes and keeps consistent
+            // distance based "melting" (fog) effect during a tilt.
+            const viewRange = viewDistance !== undefined ? viewDistance : camera.far;
+            // TODO: We may move below constants to theme Fog definition
             // Density of the fog when viewing straight along the horizont line.
             const horizontalDensity = 1.0;
-            // Density of the fog when viewing straight from top to down.
+            // Theoretical density of the fog when viewing straight from top to down.
             const verticalDensity = 0.0;
             // The fraction of the maximum viewing distance along the eye vector
             // to start applying the fog.
@@ -108,8 +114,10 @@ export class MapViewFog {
             assert(startRatio <= endRatio);
             const t = Math.abs(Math.cos(MapViewUtils.getCameraTiltAngle(camera, projection)));
             const density = MathUtils.smoothStep(horizontalDensity, verticalDensity, t);
-            this.m_fog.near = MathUtils.lerp(camera.far, camera.far * startRatio, density);
-            this.m_fog.far = MathUtils.lerp(camera.far, camera.far * endRatio, density);
+            this.m_fog.near = MathUtils.lerp(viewRange * startRatio, viewRange, 1.0 - density);
+            this.m_fog.far = MathUtils.lerp(viewRange * endRatio, viewRange, density);
+            this.m_fog.near = Math.min(this.m_fog.near, camera.far);
+            this.m_fog.far = Math.min(this.m_fog.far, camera.far);
         }
     }
 
