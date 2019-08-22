@@ -5,3 +5,5 @@ test-npm-packages-app/
 .vscode/
 .DS_Store
 
+
+credentials.js
