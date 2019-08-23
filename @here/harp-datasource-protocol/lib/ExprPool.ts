@@ -7,6 +7,7 @@
 import {
     BooleanLiteralExpr,
     CallExpr,
+    CaseExpr,
     ContainsExpr,
     Expr,
     ExprVisitor,
@@ -115,6 +116,10 @@ export class ExprPool implements ExprVisitor<Expr, void> {
     }
 
     visitMatchExpr(expr: MatchExpr, context: void): Expr {
+        return expr;
+    }
+
+    visitCaseExpr(expr: CaseExpr, context: void): Expr {
         return expr;
     }
 

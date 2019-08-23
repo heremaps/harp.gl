@@ -20,6 +20,7 @@ export interface ExprVisitor<Result, Context> {
     visitContainsExpr(expr: ContainsExpr, context: Context): Result;
     visitCallExpr(expr: CallExpr, context: Context): Result;
     visitMatchExpr(expr: MatchExpr, context: Context): Result;
+    visitCaseExpr(expr: CaseExpr, context: Context): Result;
 }
 
 /**
@@ -88,7 +89,7 @@ export abstract class Expr {
                 });
                 return new ContainsExpr(this.fromJSON(node[1]), elements);
 
-            case "match":
+            case "match": {
                 const value = this.fromJSON(node[1]);
                 const conditions: Array<[MatchLabel, Expr]> = [];
                 for (let i = 2; i < node.length - 1; i += 2) {
@@ -107,6 +108,18 @@ export abstract class Expr {
                 }
                 const fallback = this.fromJSON(node[node.length - 1]);
                 return new MatchExpr(value, conditions, fallback);
+            }
+
+            case "case": {
+                const branches: Array<[Expr, Expr]> = [];
+                for (let i = 1; i < node.length - 1; i += 2) {
+                    const condition = this.fromJSON(node[i]);
+                    const expr = this.fromJSON(node[i + 1]);
+                    branches.push([condition, expr]);
+                }
+                const caseFallback = this.fromJSON(node[node.length - 1]);
+                return new CaseExpr(branches, caseFallback);
+            }
 
             default:
                 return new CallExpr(op, node.slice(1).map(childExpr => this.fromJSON(childExpr)));
@@ -369,6 +382,19 @@ export class MatchExpr extends Expr {
 /**
  * @hidden
  */
+export class CaseExpr extends Expr {
+    constructor(readonly branches: Array<[Expr, Expr]>, readonly fallback: Expr) {
+        super();
+    }
+
+    accept<Result, Context>(visitor: ExprVisitor<Result, Context>, context: Context): Result {
+        return visitor.visitCaseExpr(this, context);
+    }
+}
+
+/**
+ * @hidden
+ */
 class ExprSerializer implements ExprVisitor<unknown, void> {
     serialize(expr: Expr): unknown {
         return expr.accept(this, undefined);
@@ -412,5 +438,13 @@ class ExprSerializer implements ExprVisitor<unknown, void> {
             branches.push(label, this.serialize(body));
         }
         return ["match", this.serialize(expr.value), ...branches, this.serialize(expr.fallback)];
+    }
+
+    visitCaseExpr(expr: CaseExpr, context: void): unknown {
+        const branches: unknown[] = [];
+        for (const [condition, body] of expr.branches) {
+            branches.push(this.serialize(condition), this.serialize(body));
+        }
+        return ["case", ...branches, this.serialize(expr.fallback)];
     }
 }
