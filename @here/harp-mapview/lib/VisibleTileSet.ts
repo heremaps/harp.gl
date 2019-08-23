@@ -621,7 +621,7 @@ export class VisibleTileSet {
                             if (childTile !== undefined && childTile.hasGeometry) {
                                 // childTile has geometry, so can be reused as fallback
                                 renderedTiles.set(childTileCode, childTile);
-                                return;
+                                continue;
                             }
 
                             const nextLevelDiff = Math.abs(childTileKey.level - displayZoomLevel);
