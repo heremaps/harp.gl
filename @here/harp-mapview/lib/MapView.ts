@@ -2440,7 +2440,7 @@ export class MapView extends THREE.EventDispatcher {
         }
 
         this.updateCameras();
-        this.m_fog.update(this.m_camera);
+        this.m_fog.update(this.m_camera, this.projection);
         this.m_renderer.clear();
 
         // clear the scene

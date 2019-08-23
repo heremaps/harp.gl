@@ -19,6 +19,22 @@ export namespace MathUtils {
     }
 
     /**
+     * Returns a linear interpolation between the values of edge0 and edge1 based on the factor.
+     *
+     * Given two known points the linear interpolant between these points may be presented as
+     * straight line. This means that for given factor change the resulting change of return
+     * value is always const.
+     * @see https://en.wikipedia.org/wiki/Linear_interpolation
+     *
+     * @param edge0
+     * @param edge1
+     * @param factor Interpolation factor that ranges between: 0 <= x <= 1.
+     */
+    export function lerp(edge0: number, edge1: number, factor: number): number {
+        return edge0 * (1 - factor) + edge1 * factor;
+    }
+
+    /**
      * Returns a smooth interpolation between the values edge0 and edge1 based on the interpolation
      * factor x. `0 <= x <= 1`.
      * @see https://en.wikipedia.org/wiki/Smoothstep
@@ -63,13 +79,7 @@ export namespace MathUtils {
      * @param outMin Lower bound of the value's target range.
      * @param outMax Upper bound of the value's target range.
      */
-    export function lerp(
-        val: number,
-        inMin: number,
-        inMax: number,
-        outMin: number,
-        outMax: number
-    ) {
+    export function map(val: number, inMin: number, inMax: number, outMin: number, outMax: number) {
         return ((val - inMin) * (outMax - outMin)) / (inMax - inMin) + outMin;
     }
 
