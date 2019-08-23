@@ -9,6 +9,7 @@ import { LoggerManager } from "@here/harp-utils";
 import {
     BooleanLiteralExpr,
     CallExpr,
+    CaseExpr,
     ContainsExpr,
     Expr,
     ExprVisitor,
@@ -112,6 +113,10 @@ class StyleConditionClassifier implements ExprVisitor<Expr | undefined, Expr | u
     }
 
     visitMatchExpr(expr: MatchExpr, enclosingExpr: Expr | undefined): Expr {
+        return expr;
+    }
+
+    visitCaseExpr(expr: CaseExpr, enclosingExpr: Expr | undefined): Expr {
         return expr;
     }
 

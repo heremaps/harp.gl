@@ -17,7 +17,8 @@ import {
     NumberLiteralExpr,
     StringLiteralExpr,
     Value,
-    VarExpr
+    VarExpr,
+    CaseExpr
 } from "./Expr";
 
 import { CastOperators } from "./operators/CastOperators";
@@ -115,6 +116,15 @@ export class ExprEvaluator implements ExprVisitor<Value, ExprEvaluatorContext> {
             if (Array.isArray(label) && label.includes(r as any)) {
                 return context.evaluate(body);
             } else if (label === r) {
+                return context.evaluate(body);
+            }
+        }
+        return context.evaluate(match.fallback);
+    }
+
+    visitCaseExpr(match: CaseExpr, context: ExprEvaluatorContext): Value {
+        for (const [condition, body] of match.branches) {
+            if (context.evaluate(condition)) {
                 return context.evaluate(body);
             }
         }

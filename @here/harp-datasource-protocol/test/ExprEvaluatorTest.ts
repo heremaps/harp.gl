@@ -298,4 +298,37 @@ describe("ExprEvaluator", function() {
             assert.equal(evaluate(expr), 1);
         });
     });
+
+    describe("Operator 'match'", function() {
+        it("evaluate", function() {
+            assert.equal(evaluate(["case", true, 123, 321]), 123);
+            assert.equal(evaluate(["case", false, 123, 321]), 321);
+            assert.equal(evaluate(["case", ["has", "one"], 123, 321]), 123);
+            assert.equal(evaluate(["case", ["has", "something"], 123, 321]), 321);
+            assert.equal(
+                evaluate([
+                    "case",
+                    ["has", "something"],
+                    123,
+                    ["==", ["get", "someText"], "some text"],
+                    444,
+                    321 // fallback
+                ]),
+                444
+            );
+            assert.equal(evaluate(["case", false, 123, ["has", "something"], 123, 321]), 321);
+        });
+
+        it("serialize", function() {
+            const expr = [
+                "case",
+                ["has", "something"],
+                123,
+                ["==", ["get", "someText"], "some text"],
+                444,
+                321
+            ];
+            assert.equal(JSON.stringify(expr), JSON.stringify(Expr.fromJSON(expr)));
+        });
+    });
 });
