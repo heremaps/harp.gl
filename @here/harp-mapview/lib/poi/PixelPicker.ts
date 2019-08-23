@@ -58,8 +58,8 @@ export function screenToUvCoordinates(
     const maxX = box.x + box.w;
     const minY = box.y;
     const maxY = box.y + box.h;
-    const u = MathUtils.lerp(screenX, minX, maxX, uvBox.s0, uvBox.s1);
-    const v = MathUtils.lerp(screenY, minY, maxY, uvBox.t0, uvBox.t1);
+    const u = MathUtils.map(screenX, minX, maxX, uvBox.s0, uvBox.s1);
+    const v = MathUtils.map(screenY, minY, maxY, uvBox.t0, uvBox.t1);
 
     return { u, v };
 }

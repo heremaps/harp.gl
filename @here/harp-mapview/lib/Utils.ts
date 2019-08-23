@@ -21,8 +21,10 @@ const MINIMUM_OBJECT3D_SIZE_ESTIMATION = 1000;
 
 const MINIMUM_ATTRIBUTE_SIZE_ESTIMATION = 56;
 
-//Caching those for performance reasons.
-const groundPlane = new THREE.Plane(new THREE.Vector3(0, 0, 1));
+// Caching those for performance reasons.
+const groundNormalPlanarProj = new THREE.Vector3(0, 0, 1);
+const groundNormalInvPlanarProj = groundNormalPlanarProj.clone().negate();
+const groundPlane = new THREE.Plane(groundNormalPlanarProj.clone());
 const groundSphere = new THREE.Sphere(undefined, EarthConstants.EQUATORIAL_RADIUS);
 const cameraZPosition = new THREE.Vector3(0, 0, 0);
 const rotationMatrix = new THREE.Matrix4();
@@ -32,6 +34,7 @@ const yawQuaternion = new THREE.Quaternion();
 const pitchQuaternion = new THREE.Quaternion();
 const tmpQuaternion = new THREE.Quaternion();
 const tmpMatrix = new THREE.Matrix4();
+const tmpVectors: THREE.Vector3[] = [new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3()];
 
 export namespace MapViewUtils {
     /**
@@ -327,6 +330,53 @@ export namespace MapViewUtils {
                     pitch: 0,
                     roll: 0
                 };
+        }
+    }
+
+    /**
+     * Return camera tilt angle (in degrees).
+     *
+     * Tilt is the angle between camera __look at__ (forward) vector and ground normal.
+     *
+     * @note It may depend on the projection type.
+     *
+     * @param camera The camera used for tilt angle calculation.
+     * @param projection The projection used to convert geo coordinated to world coordinates.
+     * @returns angle in radians.
+     */
+    export function getCameraTiltAngle(
+        camera: THREE.Camera,
+        projection: geoUtils.Projection
+    ): number {
+        // Note using different temporary vector then internal function used.
+        const lookAt: THREE.Vector3 = tmpVectors[0];
+        camera.getWorldDirection(lookAt);
+        return lookAt.angleTo(getGroundNormalInv(camera.position, projection));
+    }
+
+    /**
+     * Return normal to the ground surface directly above camera position.
+     *
+     * @note Function is not exposed cause it returns internal temporary vectors that
+     * can not be modified. Use with care and clone the result if required.
+     *
+     * @param position The position above the ground for which normal is calculated.
+     * @param projection The projection used to transform geo coordinates to world space.
+     */
+    function getGroundNormalInv(
+        position: THREE.Vector3,
+        projection: geoUtils.Projection
+    ): THREE.Vector3 {
+        // Position on the ground for surface normal calculation does not matter for
+        // any planar projections, so we may simplify calculus by returning const vector:
+        if (projection.type === geoUtils.ProjectionType.Planar) {
+            return groundNormalInvPlanarProj;
+        } else {
+            // Note using different vector then caller, otherwise vector data could be
+            // silently modified.
+            const normal: THREE.Vector3 = tmpVectors[1];
+            projection.surfaceNormal(position, normal);
+            return normal.negate();
         }
     }
 

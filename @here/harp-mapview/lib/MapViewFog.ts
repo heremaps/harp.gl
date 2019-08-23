@@ -5,8 +5,11 @@
  */
 
 import { Theme } from "@here/harp-datasource-protocol";
+import { Projection } from "@here/harp-geoutils";
 import { HighPrecisionLineMaterial, SolidLineMaterial } from "@here/harp-materials";
+import { assert, MathUtils } from "@here/harp-utils";
 import * as THREE from "three";
+import { MapViewUtils } from "./Utils";
 
 /**
  * Manages the fog display in [[MapView]].
@@ -82,7 +85,7 @@ export class MapViewFog {
      *
      * @param camera An instance of a `THREE.Camera` with a `far` property.
      */
-    update(camera: THREE.PerspectiveCamera | THREE.OrthographicCamera) {
+    update(camera: THREE.PerspectiveCamera | THREE.OrthographicCamera, projection: Projection) {
         if (
             this.m_scene.fog !== null &&
             camera.far !== undefined &&
@@ -90,8 +93,23 @@ export class MapViewFog {
             this.m_cachedTheme.fog &&
             this.m_cachedTheme.fog.startRatio !== undefined
         ) {
-            this.m_fog.far = camera.far;
-            this.m_fog.near = camera.far * this.m_cachedTheme.fog.startRatio;
+            // TODO: Instead of using camera.far distance implement max view range
+            // accessors from ClipPlanesEvaluator
+            // TODO: Move below constants to theme Fog definition
+            // Density of the fog when viewing straight along the horizont line.
+            const horizontalDensity = 1.0;
+            // Density of the fog when viewing straight from top to down.
+            const verticalDensity = 0.0;
+            // The fraction of the maximum viewing distance along the eye vector
+            // to start applying the fog.
+            const startRatio = this.m_cachedTheme.fog.startRatio;
+            // The fraction of maximum viewing range at which fog fully covers geometry.
+            const endRatio = 1.0;
+            assert(startRatio <= endRatio);
+            const t = Math.abs(Math.cos(MapViewUtils.getCameraTiltAngle(camera, projection)));
+            const density = MathUtils.smoothStep(horizontalDensity, verticalDensity, t);
+            this.m_fog.near = MathUtils.lerp(camera.far, camera.far * startRatio, density);
+            this.m_fog.far = MathUtils.lerp(camera.far, camera.far * endRatio, density);
         }
     }
 
