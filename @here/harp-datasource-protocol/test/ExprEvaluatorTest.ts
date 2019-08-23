@@ -17,7 +17,10 @@ describe("ExprEvaluator", function() {
         on: true,
         off: false,
         someText: "some text",
-        emptyText: ""
+        emptyText: "",
+        zero: 0,
+        one: 1,
+        two: 2
     };
 
     function evaluate(expr: unknown, values: ValueMap = defaultEnv) {
@@ -268,6 +271,31 @@ describe("ExprEvaluator", function() {
             assert.equal(evaluate(["to-string", true]), "true");
             assert.equal(evaluate(["to-string", false]), "false");
             assert.equal(evaluate(["to-string", 123]), "123");
+        });
+    });
+
+    describe("Operator 'match'", function() {
+        it("evaluate", function() {
+            assert.equal(
+                evaluate([
+                    "match",
+                    ["get", "someText"],
+                    "some text",
+                    true,
+                    false // otherwise
+                ]),
+                true
+            );
+
+            assert.equal(evaluate(["match", ["get", "one"], 1, true, false]), true);
+
+            assert.equal(evaluate(["match", ["get", "two"], [0, 1], false, 2, true, false]), true);
+        });
+
+        it("serialize", function() {
+            const expr = ["match", ["get", "someText"], ["some text", "y"], 1, "z", 2, 3];
+            assert.equal(JSON.stringify(expr), JSON.stringify(Expr.fromJSON(expr)));
+            assert.equal(evaluate(expr), 1);
         });
     });
 });

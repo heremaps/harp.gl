@@ -11,6 +11,7 @@ import {
     Expr,
     ExprVisitor,
     HasAttributeExpr,
+    MatchExpr,
     NullLiteralExpr,
     NumberLiteralExpr,
     StringLiteralExpr,
@@ -111,6 +112,10 @@ export class ExprPool implements ExprVisitor<Expr, void> {
         const e = new ContainsExpr(value, expr.elements);
         this.m_inExprs.set(value, [e]);
         return e;
+    }
+
+    visitMatchExpr(expr: MatchExpr, context: void): Expr {
+        return expr;
     }
 
     visitCallExpr(expr: CallExpr, context: void): Expr {

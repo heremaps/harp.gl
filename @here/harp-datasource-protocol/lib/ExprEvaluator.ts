@@ -12,6 +12,7 @@ import {
     Expr,
     ExprVisitor,
     HasAttributeExpr,
+    MatchExpr,
     NullLiteralExpr,
     NumberLiteralExpr,
     StringLiteralExpr,
@@ -106,6 +107,18 @@ export class ExprEvaluator implements ExprVisitor<Value, ExprEvaluatorContext> {
         }
 
         return result;
+    }
+
+    visitMatchExpr(match: MatchExpr, context: ExprEvaluatorContext): Value {
+        const r = context.evaluate(match.value);
+        for (const [label, body] of match.branches) {
+            if (Array.isArray(label) && label.includes(r as any)) {
+                return context.evaluate(body);
+            } else if (label === r) {
+                return context.evaluate(body);
+            }
+        }
+        return context.evaluate(match.fallback);
     }
 
     visitCallExpr(expr: CallExpr, context: ExprEvaluatorContext): Value {
