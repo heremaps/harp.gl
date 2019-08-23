@@ -14,6 +14,7 @@ import {
     ExprVisitor,
     HasAttributeExpr,
     MapEnv,
+    MatchExpr,
     NullLiteralExpr,
     NumberLiteralExpr,
     StringLiteralExpr,
@@ -107,6 +108,10 @@ class StyleConditionClassifier implements ExprVisitor<Expr | undefined, Expr | u
     }
 
     visitContainsExpr(expr: ContainsExpr, enclosingExpr: Expr | undefined): Expr {
+        return expr;
+    }
+
+    visitMatchExpr(expr: MatchExpr, enclosingExpr: Expr | undefined): Expr {
         return expr;
     }
 

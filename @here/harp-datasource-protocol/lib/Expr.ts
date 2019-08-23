@@ -19,6 +19,7 @@ export interface ExprVisitor<Result, Context> {
     visitHasAttributeExpr(expr: HasAttributeExpr, context: Context): Result;
     visitContainsExpr(expr: ContainsExpr, context: Context): Result;
     visitCallExpr(expr: CallExpr, context: Context): Result;
+    visitMatchExpr(expr: MatchExpr, context: Context): Result;
 }
 
 /**
@@ -86,6 +87,26 @@ export abstract class Expr {
                     }
                 });
                 return new ContainsExpr(this.fromJSON(node[1]), elements);
+
+            case "match":
+                const value = this.fromJSON(node[1]);
+                const conditions: Array<[MatchLabel, Expr]> = [];
+                for (let i = 2; i < node.length - 1; i += 2) {
+                    const label = node[i];
+                    if (
+                        !(
+                            typeof label === "number" ||
+                            typeof label === "string" ||
+                            Array.isArray(label)
+                        )
+                    ) {
+                        throw new Error(`parse error ${JSON.stringify(label)}`);
+                    }
+                    const expr = this.fromJSON(node[i + 1]);
+                    conditions.push([label, expr]);
+                }
+                const fallback = this.fromJSON(node[node.length - 1]);
+                return new MatchExpr(value, conditions, fallback);
 
             default:
                 return new CallExpr(op, node.slice(1).map(childExpr => this.fromJSON(childExpr)));
@@ -326,6 +347,25 @@ export class CallExpr extends Expr {
     }
 }
 
+type MatchLabel = number | string | number[] | string[];
+
+/**
+ * @hidden
+ */
+export class MatchExpr extends Expr {
+    constructor(
+        readonly value: Expr,
+        readonly branches: Array<[MatchLabel, Expr]>,
+        readonly fallback: Expr
+    ) {
+        super();
+    }
+
+    accept<Result, Context>(visitor: ExprVisitor<Result, Context>, context: Context): Result {
+        return visitor.visitMatchExpr(this, context);
+    }
+}
+
 /**
  * @hidden
  */
@@ -364,5 +404,13 @@ class ExprSerializer implements ExprVisitor<unknown, void> {
 
     visitCallExpr(expr: CallExpr, context: void): unknown {
         return [expr.op, ...expr.children.map(childExpr => this.serialize(childExpr))];
+    }
+
+    visitMatchExpr(expr: MatchExpr, context: void): unknown {
+        const branches: unknown[] = [];
+        for (const [label, body] of expr.branches) {
+            branches.push(label, this.serialize(body));
+        }
+        return ["match", this.serialize(expr.value), ...branches, this.serialize(expr.fallback)];
     }
 }
