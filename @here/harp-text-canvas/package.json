@@ -1,6 +1,6 @@
 {
     "name": "@here/harp-text-canvas",
-    "version": "0.3.3",
+    "version": "0.10.0",
     "description": "SDF based text rendering for TypeScript",
     "main": "index.js",
     "typings": "index",
@@ -20,20 +20,20 @@
     },
     "license": "Apache-2.0",
     "dependencies": {
-        "@here/harp-lrucache": "^0.2.6"
+        "@here/harp-lrucache": "^0.10.0"
     },
     "devDependencies": {
-        "@here/harp-test-utils": "^0.2.6",
+        "@here/harp-test-utils": "^0.10.0",
         "@types/chai": "^4.1.2",
         "@types/mocha": "^5.2.7",
         "@types/node": "^12.0.8",
         "chai": "^4.0.2",
         "cross-env": "^5.2.0",
         "mocha": "^6.1.4",
+        "sinon": "^7.3.2",
         "source-map-support": "^0.5.2",
         "three": "^0.107.0",
         "ts-node": "^8.3.0",
-        "sinon": "^7.3.2",
         "typescript": "^3.5.2"
     },
     "peerDependencies": {

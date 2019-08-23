@@ -1,6 +1,6 @@
 {
     "name": "@here/harp-test-utils",
-    "version": "0.2.6",
+    "version": "0.10.0",
     "description": "Provides utilities for tests",
     "main": "index.js",
     "browser": "index.web.js",
@@ -22,7 +22,7 @@
     "license": "Apache-2.0",
     "devDependencies": {
         "@here/harp-fetch": "^0.3.6",
-        "@here/harp-utils": "^0.2.7",
+        "@here/harp-utils": "^0.10.0",
         "@types/chai": "^4.0.4",
         "@types/mocha": "^5.2.7",
         "@types/node": "^12.0.8",
