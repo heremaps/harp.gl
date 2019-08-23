@@ -8,6 +8,12 @@ import { JsonExpr } from "./Expr";
 import { InterpolatedPropertyDefinition } from "./InterpolatedPropertyDefs";
 
 /**
+ * Available line caps types(`"None"`, `"Round"`, `"Square"`, `"TriangleOut"`, `"TriangleIn"`).
+ * Default is `"Round"`.
+ */
+export type LineCaps = "Square" | "Round" | "None" | "TriangleOut" | "TriangleIn";
+
+/**
  * The kind of geometry is used to
  *
  * a) Group objects together, allowing the group to be hidden or displayed.
@@ -916,6 +922,12 @@ export interface SolidLineTechniqueParams extends BaseTechniqueParams, Polygonal
      * The render order of the secondary line geometry object created using this technique.
      */
     secondaryRenderOrder?: number;
+
+    /**
+     * Describes line caps type (`"None"`, `"Round"`, `"Square"`, `"TriangleOut"`, `"TriangleIn"`).
+     * Default is `"Round"`.
+     */
+    caps?: LineCaps;
 }
 
 /**
@@ -975,6 +987,12 @@ export interface DashedLineTechniqueParams extends BaseTechniqueParams, Polygona
      * Clip the line outside the tile if `true`.
      */
     clipping?: boolean;
+
+    /**
+     * Describes line caps type (`"None"`, `"Round"`, `"Square"`, `"TriangleOut"`, `"TriangleIn"`).
+     * Default is `"Round"`.
+     */
+    caps?: LineCaps;
 }
 
 /**

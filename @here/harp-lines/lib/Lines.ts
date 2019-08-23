@@ -36,21 +36,23 @@ interface VertexDescriptor {
 /** Optional normal and uv coordinates. */
 const NORMAL_UV_VERTEX_ATTRIBUTES: VertexDescriptor = {
     attributes: [
-        { name: "uv", itemSize: 2, offset: 12 },
-        { name: "normal", itemSize: 3, offset: 14 }
+        { name: "uv", itemSize: 2, offset: 13 },
+        { name: "normal", itemSize: 3, offset: 15 }
     ],
     stride: 5
 };
 
 /** Base line vertex attributes. */
 const LINE_VERTEX_ATTRIBUTES: VertexDescriptor = {
+    // The "extrusionCoord" its a vec3. Represents UV coordinates + line length for the third
+    // component.
     attributes: [
-        { name: "extrusionCoord", itemSize: 2, offset: 0 },
-        { name: "position", itemSize: 3, offset: 2 },
-        { name: "tangent", itemSize: 3, offset: 5 },
-        { name: "bitangent", itemSize: 4, offset: 8 }
+        { name: "extrusionCoord", itemSize: 3, offset: 0 },
+        { name: "position", itemSize: 3, offset: 3 },
+        { name: "tangent", itemSize: 3, offset: 6 },
+        { name: "bitangent", itemSize: 4, offset: 9 }
     ],
-    stride: 12
+    stride: 13
 };
 
 /** Base line vertex attributes plus normals and uv coordinates. */
@@ -151,6 +153,7 @@ export function createLineGeometry(
         sum = sum + len;
         segments[i + 1] = sum;
     }
+    const lineLength = segments[segments.length - 1];
 
     // Check if we're working with a closed line.
     let isClosed = true;
@@ -167,7 +170,7 @@ export function createLineGeometry(
     ) => {
         for (let v = -1; v <= 1; v += 2) {
             // Store the segment and extrusionCoord attributes.
-            geometry.vertices.push(segment, extrusionCoord * v);
+            geometry.vertices.push(segment, extrusionCoord * v, lineLength);
 
             // Store the position attribute (component-dependant).
             for (let j = 0; j < 3; ++j) {

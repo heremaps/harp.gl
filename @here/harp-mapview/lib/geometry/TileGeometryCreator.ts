@@ -47,6 +47,7 @@ import {
     EdgeMaterial,
     EdgeMaterialParameters,
     FadingFeature,
+    LineCapsDefinitions,
     MapMeshBasicMaterial,
     MapMeshStandardMaterial,
     SolidLineMaterial
@@ -689,6 +690,13 @@ export class TileGeometryCreator {
 
                     if (bufferGeometry.getAttribute("color")) {
                         lineMaterial.defines.USE_COLOR = 1;
+                    }
+
+                    if (
+                        technique.caps !== undefined &&
+                        LineCapsDefinitions.hasOwnProperty(technique.caps)
+                    ) {
+                        lineMaterial.defines[LineCapsDefinitions[technique.caps]] = 1;
                     }
                 }
 
