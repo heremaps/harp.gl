@@ -63,8 +63,8 @@ West</a>.</p>`;
      * @returns The modified theme.
      */
     function modifyTheme(theme: Theme): Theme {
-        const urbanAreaTexture = "resources/wests_textures/paving.png";
-        const parkTexture = "resources/wests_textures/clover.png";
+        const urbanAreaTexture = "wests_textures/paving.png";
+        const parkTexture = "wests_textures/clover.png";
 
         if (theme.styles) {
             for (const styleSetName in theme.styles) {

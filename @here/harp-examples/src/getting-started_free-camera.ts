@@ -126,8 +126,8 @@ export namespace FreeCameraAppDebuggingToolExample {
             const pointOfView = new THREE.PerspectiveCamera(
                 this.mapView.camera.fov,
                 this.mapView.canvas.width / this.mapView.canvas.height,
-                0.1,
-                4000000
+                100,
+                400000
             ); // use an arbitrary large distance for the far plane.
 
             this.mapView.scene.add(pointOfView);
@@ -138,7 +138,7 @@ export namespace FreeCameraAppDebuggingToolExample {
 
             this.mapView.scene.add(cameraRelativeToEye);
 
-            pointOfView.position.set(0, -1500, 1500);
+            pointOfView.position.set(0, -4000, 2700);
 
             this.mapView.pointOfView = pointOfView;
 
@@ -208,6 +208,7 @@ export namespace FreeCameraAppDebuggingToolExample {
                 pointOfView,
                 this.mapView.canvas
             );
+            (trackball.target as THREE.Vector3).set(0, 0, -2000);
             trackball.staticMoving = true;
             trackball.rotateSpeed = 3.0;
             trackball.zoomSpeed = 4.0;

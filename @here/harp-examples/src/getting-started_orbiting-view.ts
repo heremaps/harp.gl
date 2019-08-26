@@ -40,8 +40,9 @@ export namespace CameraOrbitExample {
     const options = { tilt: 45, distance: 3000 };
     const NY = new GeoCoordinates(40.707, -74.012);
     let azimuth = 0;
-    map.addEventListener(MapViewEventNames.Render, () => {
+    map.addEventListener(MapViewEventNames.AfterRender, () => {
         map.lookAt(NY, options.distance, options.tilt, (azimuth = (azimuth + 0.1) % 360));
+        map.update();
         updateHTML();
     });
     // end:harp_gl_camera_orbit_example_1.ts
@@ -64,6 +65,7 @@ export namespace CameraOrbitExample {
             canvas,
             theme: "resources/berlin_tilezen_base.json"
         });
+        canvas.addEventListener("contextmenu", e => e.preventDefault());
 
         CopyrightElementHandler.install("copyrightNotice", mapView);
 
@@ -110,8 +112,6 @@ export namespace CameraOrbitExample {
                 #info{
                     color: #fff;
                     width: 80%;
-                    text-align: center;
-                    font-family: monospace;
                     left: 50%;
                     position: relative;
                     margin: 10px 0 0 -40%;

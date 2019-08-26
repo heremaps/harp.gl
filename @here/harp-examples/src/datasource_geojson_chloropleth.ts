@@ -43,7 +43,21 @@ export namespace GeoJsonHeatmapExample {
             #mapCanvas {
               top: 0;
             }
+            #info{
+                color: #fff;
+                width: 80%;
+                left: 50%;
+                position: relative;
+                margin: 10px 0 0 -40%;
+                font-size: 15px;
+            }
+            @media screen and (max-width: 700px) {
+                #info{
+                    font-size:11px;
+                }
+            }
         </style>
+        <p id=info></p>
     `;
 
     /**
@@ -56,7 +70,7 @@ export namespace GeoJsonHeatmapExample {
             theme: "resources/berlin_tilezen_night_reduced.json"
         });
 
-        mapView.setCameraGeolocationAndZoom(new GeoCoordinates(41.9028, 12.4964), 5.5);
+        mapView.lookAt(new GeoCoordinates(42, 14), 2000000, 40, -70);
 
         const controls = new MapControls(mapView);
 
@@ -112,7 +126,7 @@ export namespace GeoJsonHeatmapExample {
         const length = options.thresholds.length;
         for (let i = 0; i < length; i++) {
             const color = new THREE.Color(options.color);
-            color.multiplyScalar((i + 1) / 2 / length + 0.5);
+            color.multiplyScalar(((i + 1) * 0.8) / length + 0.2);
             const max = options.thresholds[i];
             const min = i - 1 < 0 ? 0 : options.thresholds[i - 1];
             // snippet:geojson_heatmap1.ts
@@ -162,4 +176,10 @@ export namespace GeoJsonHeatmapExample {
     });
 
     baseMap.update();
+
+    const infoElement = document.getElementById("info") as HTMLParagraphElement;
+    infoElement.innerHTML =
+        `This chloropleth shows how to use custom styling to highlight specific features in the` +
+        ` map. Here some height is given to the extruded polygons directly in the GeoJSON, ` +
+        `whereas the color comes from the population density given in the properties.`;
 }

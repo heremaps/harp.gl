@@ -1,34 +1,36 @@
 <!DOCTYPE html>
 <html lang="en">
+
     <head>
         <title>harp.gl | examples</title>
         <meta charset="utf-8" />
         <meta name="viewport"
             content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0" />
-        <link href="https://fonts.googleapis.com/css?family=Fira+Sans:400,500,600&amp;display=swap" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css?family=Fira+Sans:400,500,600&amp;display=swap"
+            rel="stylesheet">
         <style>
-            :root{
+            :root {
                 /* COLOURS */
-                /* Color1: main color, from MapControlsUI's background. */
+                /* Color1: background color. */
                 --color1-hue: 218;
                 --color1-saturation: 17%;
 
-                /* Colour2: complementary hue. More saturation for constrast. */
-                --color2-hue: 24;
-                --color2-saturation: 70%;
-
-                --gradient: linear-gradient(to bottom right,#e7e1a0,#85e0ce);
+                /* Graceful gradients. */
+                --gradient: linear-gradient(to bottom right, #e7e1a0, #85e0ce);
 
                 /* Luminosity shades */
-                --dark: 18%;/* MapControlsUI background's luminosity. */
+                --dark: 18%;
+                /* MapControlsUI background's luminosity. */
                 --soft: 45%;
                 --light: 65%;
-                --bright: 85%;/* MapControlsUI text's luminosity. */
+                --bright: 85%;
+                /* MapControlsUI text's luminosity. */
 
-                --intermediate: 55%; /* For the title, if colour2 is used. */
+                --intermediate: 55%;
+                /* For the title, if colour2 is used. */
 
                 /* LAYOUT */
-                --headers-height: 80px;
+                --headers-height: 65px;
                 --margin: 15px;
                 --nav-width: 310px;
             }
@@ -46,15 +48,15 @@
             }
 
             a {
-                color: hsl(var(--color1-hue),var(--color1-saturation),var(--bright));
+                color: hsl(var(--color1-hue), var(--color1-saturation), var(--bright));
             }
 
             a:visited {
-                color: hsl(var(--color1-hue),var(--color1-saturation),var(--bright))
+                color: hsl(var(--color1-hue), var(--color1-saturation), var(--bright))
             }
 
             #navPanel {
-                background:hsl(var(--color1-hue),var(--color1-saturation),var(--dark));
+                background: hsl(var(--color1-hue), var(--color1-saturation), var(--dark));
                 position: fixed;
                 z-index: 1;
                 left: 0px;
@@ -64,26 +66,34 @@
                 transition: all 250ms ease;
             }
 
+            #navPanel {
+                left: calc(var(--nav-width) * -1);
+            }
+
+            #navPanel.collapsed {
+                left: 0px;
+            }
+
             #titleBar {
                 height: var(--headers-height);
             }
 
             #github path {
-                fill: hsl(var(--color1-hue),var(--color1-saturation),var(--bright));
+                fill: hsl(var(--color1-hue), var(--color1-saturation), var(--bright));
             }
 
             #github:hover path {
-                fill: hsl(var(--color1-hue),var(--color1-saturation),var(--light));
+                fill: hsl(var(--color1-hue), var(--color1-saturation), var(--light));
             }
 
             #documentation path {
-                fill:hsl(var(--color1-hue),var(--color1-saturation),var(--bright));
-                stroke: hsl(var(--color1-hue),var(--color1-saturation),var(--bright));
+                fill: hsl(var(--color1-hue), var(--color1-saturation), var(--bright));
+                stroke: hsl(var(--color1-hue), var(--color1-saturation), var(--bright));
             }
 
             #documentation:hover path {
-                fill: hsl(var(--color1-hue),var(--color1-saturation),var(--light));
-                stroke: hsl(var(--color1-hue),var(--color1-saturation),var(--light));
+                fill: hsl(var(--color1-hue), var(--color1-saturation), var(--light));
+                stroke: hsl(var(--color1-hue), var(--color1-saturation), var(--light));
             }
 
             #navPanel h1 {
@@ -91,7 +101,7 @@
                 font-size: 25px;
                 color: hsla(var(--color2-hue), var(--color2-saturation), var(--intermediate), 1);
                 position: absolute;
-                top: 32px;
+                top: 24px;
                 left: var(--margin);
                 padding: 5px 0;
                 margin-top: -5px;
@@ -100,22 +110,49 @@
                 -webkit-text-fill-color: transparent;
             }
 
-            #documentation, #github {
+            #documentation,
+            #github,
+            #closeButton {
                 position: absolute;
-                right: 20px;
-                top: 26px;
+                top: 20px;
                 height: 20px
             }
 
+            #closeButton {
+                right: 15px;
+                outline: none;
+                background: none;
+                border: none;
+                cursor: pointer;
+                width: 25px;
+                height: 25px
+            }
+
+            #closeButton span:nth-child(1) {
+                left: 0;
+                margin-top: -2px;
+                transform: rotateZ(45deg);
+            }
+
+            #closeButton span:nth-child(2) {
+                left: 0;
+                margin-top: -2px;
+                transform: rotateZ(-45deg);
+            }
+
+            #documentation {
+                right: 50px;
+            }
+
             #github {
-                right: 55px;
+                right: 85px;
             }
 
             #exampleFrame {
                 position: absolute;
                 border: 0px;
-                left: var(--nav-width);
-                width: calc(100% - 310px);
+                left: 0;
+                width: 100%;
                 height: 100%;
                 overflow: auto;
             }
@@ -124,12 +161,14 @@
             * Example list
             */
             #exampleList {
-                padding: calc(var(--margin) + 26px) 0;/* To comply with space between title and input */
+                padding: calc(var(--margin) + 19px) 0;
+                padding-bottom: calc(var(--margin) + 19px);
                 overflow: auto;
                 position: absolute;
                 top: calc(2 * var(--headers-height));
                 bottom: 0;
                 width: 100%;
+                height: calc(100% - 3 * var(--headers-height));
             }
 
             #exampleList div {
@@ -137,11 +176,11 @@
             }
 
             #exampleList div h2 {
-                margin:var(--margin);
-                margin-bottom: calc(1.4 * var(--margin));
-                margin-top: calc(2.7 * var(--margin));
+                margin: var(--margin);
+                margin-bottom: calc(var(--headers-height)/3 - 9px);
+                margin-top: calc(2 * var(--headers-height)/3 - 9px);
                 font-size: 16px;
-                color: hsl(var(--color1-hue),var(--color1-saturation),var(--bright));
+                color: hsl(var(--color1-hue), var(--color1-saturation), var(--bright));
                 text-transform: uppercase;
                 letter-spacing: 3px;
             }
@@ -154,17 +193,17 @@
                 text-decoration: none;
                 cursor: pointer;
                 display: block;
-                color: hsl(var(--color1-hue),var(--color1-saturation),var(--bright));
+                color: hsl(var(--color1-hue), var(--color1-saturation), var(--bright));
                 padding: 3px var(--margin);
             }
 
             #exampleList .selected {
                 font-weight: bold;
-                background: hsl(var(--color1-hue),var(--color1-saturation),var(--soft));
+                background: hsl(var(--color1-hue), var(--color1-saturation), var(--soft));
             }
 
             #exampleList .link:hover {
-                background: hsl(var(--color1-hue),var(--color1-saturation),var(--soft));
+                background: hsl(var(--color1-hue), var(--color1-saturation), var(--soft));
             }
 
             #exampleList .filtered {
@@ -175,22 +214,23 @@
             * View Source button
             */
             #viewSource {
-                width: 40px;
-                height: 40px;
+                width: 50px;
+                height: 50px;
                 font-size: 22px;
+                border-radius: 50%;
                 font-weight: bold;
                 border: none;
-                color: rgba(255, 255, 255, 0.8);
+                color: hsl(var(--color1-hue), var(--color1-saturation), var(--dark));
+                box-shadow:0 0 10px #333;
                 cursor: pointer;
-                border-radius: 4px;
-                box-shadow: 0 1px 4px 0 rgba(15, 22, 33, 0.4);
                 transition: all 0.1s;
                 padding: 0 0 1px 1px;
                 user-select: none;
-                position: fixed;
-                bottom: 25px;
-                right: 15px;
-                background: #272d37;
+                position: absolute;
+                bottom: 0;
+                right: 0;
+                margin: var(--margin);
+                background: var(--gradient);
                 text-decoration: none;
             }
 
@@ -198,6 +238,7 @@
                 font-size: 15px;
                 font-weight: bold;
                 margin: 0;
+                text-transform: uppercase;
             }
 
             /*
@@ -214,29 +255,28 @@
             }
 
             #filterInput {
-                background: hsl(var(--color1-hue),var(--color1-saturation),var(--bright));
+                background: hsl(var(--color1-hue), var(--color1-saturation), var(--bright));
                 width: 100%;
                 box-sizing: border-box;
-                padding: calc(var(--margin) + 15px) 55px calc(var(--margin) + 15px) var(--margin);
-                color: hsl(var(--color1-hue),var(--color1-saturation),var(--dark));
+                padding: calc(var(--margin) + 7px) 50px calc(var(--margin) + 7px) var(--margin);
+                color: hsl(var(--color1-hue), var(--color1-saturation), var(--dark));
                 font-family: inherit;
                 font-size: 17px;
                 outline: none;
                 border: none;
             }
 
-            #filterInput:focus + #magnifier-placeholder {
+            #filterInput:focus+#magnifier-placeholder {
                 display: none;
             }
 
             #magnifier-placeholder {
                 position: absolute;
-                top: 32px;
+                top: 22px;
                 left: calc(var(--margin) + 2px);
                 pointer-events: none;
                 font-size: 25px;
-                transform: rotateZ(-45deg);
-                color: hsl(var(--color1-hue),var(--color1-saturation),var(--dark));
+                color: hsl(var(--color1-hue), var(--color1-saturation), var(--dark));
             }
 
             #clearFilterButton {
@@ -244,10 +284,11 @@
                 position: absolute;
                 right: var(--margin);
                 top: 50%;
+                padding: 0;
                 margin-top: -8px;
                 height: 16px;
                 font-size: 30px;
-                color: hsl(var(--color1-hue),var(--color1-saturation),var(--dark));
+                color: hsl(var(--color1-hue), var(--color1-saturation), var(--dark));
                 text-align: center;
                 line-height: 0;
                 background: none;
@@ -265,83 +306,50 @@
             */
 
             #hamburgerMenu {
-                display: none;
                 position: absolute;
-                left: calc(var(--nav-width) + 18px);
-                top: var(--margin);
-                width: 31px;
-                height: 35px;
-                background: none;
+                background: hsl(var(--color1-hue), var(--color1-saturation), var(--dark));
+                width: 50px;
+                height: 50px;
                 border: none;
-                padding:0;
                 outline: none;
                 cursor: pointer;
+                z-index: 1
             }
-            #hamburgerMenu.expanded {
-                top:22px
+
+            #hamburgerMenu span,
+            #closeButton span {
+                height: 2px;
+                background: hsl(var(--color1-hue), var(--color1-saturation), var(--bright));
+                width: 26px;
+                position: absolute;
+            }
+
+            #closeButton span {
+                background: hsl(var(--color1-hue), var(--color1-saturation), var(--intermediate));
             }
 
             #hamburgerMenu span {
-                height: 2px;
-                background: hsl(var(--color1-hue),var(--color1-saturation),var(--bright));
-                width: 30px;
-                position: absolute;
-                left: 0;
-                top: 5px;
-                opacity: 1;
-                transition: all 300ms ease;
+                left: 11px;
+                top: 14px;
             }
 
             #hamburgerMenu span:nth-child(1) {
-                top: 15px;
+                top: 23px;
             }
 
             #hamburgerMenu span:nth-child(2) {
-                top: 25px;
+                top: 32px;
             }
 
-            #hamburgerMenu.expanded span {
-                opacity: 0;
-            }
-
-            #hamburgerMenu.expanded span:nth-child(1) {
-                top: 16px;
-                transform: rotateZ(45deg);
-                opacity: 1
-            }
-
-            #hamburgerMenu.expanded span:nth-child(2) {
-                top: 16px;
-                transform: rotateZ(-45deg);
-                opacity: 1
-            }
-
-            @media all and (max-width: 640px) {
-
-                #exampleFrame {
-                    position: absolute;
-                    width: 100%;
-                    height: 100%;
-                    top: 0;
-                    left: 0
-                }
-
-                #navPanel {
-                    left: calc(var(--nav-width) * -1);
-                }
-
-                #navPanel.collapsed {
-                    left: 0px;
-                }
-
-                #hamburgerMenu {
-                    display: block;
-                }
-            }
         </style>
     </head>
 
     <body>
+        <button id="hamburgerMenu" href="#">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
         <div id="navPanel" class="collapsed">
             <div id="titleBar">
                 <a href="http://harp.gl">
@@ -371,17 +379,21 @@
                         d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z">
                     </path></svg>
                 </a>
-                <div style="clear:both"></div>
-                <button id="hamburgerMenu" class="expanded" href="#">
-                    <span></span>
+
+                <button id="closeButton" href="#">
                     <span></span>
                     <span></span>
                 </button>
+                <div style="clear:both"></div>
             </div>
 
             <div class="filterBlock">
                 <input type="text" id="filterInput">
-                <p id=magnifier-placeholder>&#9906;</p>
+                <svg id=magnifier-placeholder viewBox="30 30 110 110" width=20 height=20>
+                    <circle style="stroke-width:15;fill:none;stroke:#252c36;" cx="75" cy="75"
+                        r="35" />
+                    <path style="fill:none;stroke:#252c36;stroke-width:15;" d="m 100,100 35,35" />
+                </svg>
                 </input>
                 <button href="#" id="clearFilterButton" style="display:none;">&#215;</button>
             </div>
@@ -389,7 +401,7 @@
         </div>
 
         <iframe id="exampleFrame" allowfullscreen allowvr onmousewheel=""></iframe>
-        <button id="viewSource" title="View the source code" href=#>
+        <button id="viewSource" title="View the source code" href=# style="display:none;">
             <p>&#60;/&#62;</p>
         </button>
 

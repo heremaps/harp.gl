@@ -58,7 +58,10 @@ export namespace GeoJsonStylingGame {
                 margin: 10px;
                 padding: 10px;
                 display: inline-block;
-                background-color: #37afaa
+                background: #252c36;
+                color:#d2d7df;
+                position: absolute;
+                right: 0;
             }
             #asked-name{
                 text-transform: uppercase
@@ -84,11 +87,12 @@ export namespace GeoJsonStylingGame {
         theme: "resources/berlin_tilezen_night_reduced.json"
     });
     CopyrightElementHandler.install("copyrightNotice", mapView);
-    mapView.setCameraGeolocationAndZoom(new GeoCoordinates(41.9028, 12.4964), 5.5);
+    mapView.setCameraGeolocationAndZoom(new GeoCoordinates(42.2, 12.5), 5.9);
     mapView.resize(window.innerWidth, window.innerHeight);
     window.addEventListener("resize", () => {
         mapView.resize(window.innerWidth, window.innerHeight);
     });
+    mapView.canvas.addEventListener("contextmenu", e => e.preventDefault());
     const hereCopyrightInfo: CopyrightInfo = {
         id: "here.com",
         year: new Date().getFullYear(),

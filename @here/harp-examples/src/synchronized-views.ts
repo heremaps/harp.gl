@@ -35,7 +35,6 @@ export namespace TripleViewExample {
     document.body.innerHTML += `
 
 <style>
-
     .themeName {
         font-weight: bold;
         padding: 1em;
@@ -43,6 +42,9 @@ export namespace TripleViewExample {
         margin-bottom: 0.5em;
         margin: 0 auto;
         width: 33%;
+        text-align:center;
+        text-transform:uppercase;
+        font-family: 'Fira Sans', sans-serif;
     }
 
     .titleRow
@@ -52,22 +54,9 @@ export namespace TripleViewExample {
         width: 100%;
     }
 
-    #mapTheme1 {
-        background-color: rgba(0, 128, 128, 0.8);
-        color: rgba(255, 255, 255, 0.8);
-        display: table-cell;
-    }
-
-    #mapTheme2 {
-        background-color: rgba(64, 128, 128, 0.8);
-        color: rgba(255, 250, 200, 0.8);
-        display: table-cell;
-        left: 33%;
-    }
-
-    #mapTheme3 {
-        background-color: rgba(255, 255, 255, 0.8);
-        color: rgba(0, 128, 128, 0.9);
+    #mapTheme1,#mapTheme2,#mapTheme3 {
+        background: hsl(218, 17%, 18%);
+        color: hsl(218, 17%, 85%);
         display: table-cell;
         left: 66%;
     }
@@ -108,13 +97,13 @@ export namespace TripleViewExample {
 <canvas id="mapCanvas3"></canvas>
 <div class="titleRow">
     <div class="themeName" id="mapTheme1">
-        Data:<em> OMV</em><br/> Theme: <em>Base</em>
+        Base theme
     </div>
     <div class="themeName" id="mapTheme2">
-        Data:<em> OMV</em><br/> Theme: <em>Dark</em>
+        Night reduced theme
     </div>
     <div class="themeName" id="mapTheme3">
-        Data:<em> OMV</em><br/> Theme: <em>Reduced</em>
+        Day reduced theme
     </div>
 </div>
 `;
@@ -271,9 +260,9 @@ export namespace TripleViewExample {
     export const syncMapViews = (srcView: ViewControlPair, destView: ViewControlPair) => {
         const ypr = srcView.mapControls.yawPitchRoll;
         destView.mapControls.setRotation(ypr.yaw, ypr.pitch);
-        destView.mapView.camera.copy(srcView.mapView.camera);
+        destView.mapView.camera.position.copy(srcView.mapView.camera.position);
         destView.mapControls.cameraHeight = srcView.mapControls.cameraHeight;
-        //destView.mapView.camera.aspect = numberOfSyncXViews;
+        destView.mapView.camera.aspect = numberOfSyncXViews;
         destView.mapView.camera.updateProjectionMatrix();
 
         // force update on changed MapView
