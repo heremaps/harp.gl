@@ -27,7 +27,10 @@ attribute vec3 normal;
 uniform mat4 modelViewMatrix;
 uniform mat4 projectionMatrix;
 uniform float lineWidth;
+
+#ifdef USE_DISPLACEMENTMAP
 uniform sampler2D displacementMap;
+#endif
 
 varying vec2 vExtrusionCoord;
 varying vec2 vSegment;
