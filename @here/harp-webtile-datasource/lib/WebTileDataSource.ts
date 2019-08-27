@@ -411,7 +411,9 @@ export class WebTileDataSource extends DataSource {
                 posAttr.needsUpdate = true;
 
                 const material = new THREE.MeshBasicMaterial({
-                    map: texture
+                    map: texture,
+                    depthTest: false,
+                    depthWrite: false
                 });
 
                 const mesh = new THREE.Mesh(g, material);

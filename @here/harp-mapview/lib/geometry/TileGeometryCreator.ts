@@ -1445,7 +1445,7 @@ export class TileGeometryCreator {
             const material = new MapMeshBasicMaterial({
                 color,
                 visible: true,
-                depthWrite: false
+                depthWrite: true
             });
             const mesh = new THREE.Mesh(g, material);
             mesh.renderOrder = Number.MIN_SAFE_INTEGER;
