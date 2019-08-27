@@ -12,6 +12,10 @@ import { SolidLineMaterial, SolidLineMaterialParameters } from "./SolidLineMater
  */
 export interface DashedLineMaterialParameters extends SolidLineMaterialParameters {
     /**
+     * Line dashes color.
+     */
+    dashColor?: number | string;
+    /**
      * Size of the dashed segments.
      */
     dashSize?: number;
@@ -38,8 +42,14 @@ export class DashedLineMaterial extends SolidLineMaterial {
         if (params !== undefined && params.color !== undefined) {
             shaderParams.color = params.color as any;
         }
+        if (params !== undefined && params.outlineColor !== undefined) {
+            shaderParams.outlineColor = params.outlineColor as any;
+        }
         if (params !== undefined && params.lineWidth !== undefined) {
             shaderParams.lineWidth = params.lineWidth;
+        }
+        if (params !== undefined && params.outlineWidth !== undefined) {
+            shaderParams.outlineWidth = params.outlineWidth;
         }
         if (params !== undefined && params.opacity !== undefined) {
             shaderParams.opacity = params.opacity;
@@ -65,7 +75,32 @@ export class DashedLineMaterial extends SolidLineMaterial {
             if (params.fog !== undefined) {
                 this.fog = params.fog !== null;
             }
+            if (params.dashColor === undefined) {
+                this.dashTransparency = true;
+            } else {
+                this.dashColor.set(params.dashColor as any);
+                this.dashColor = this.dashColor; // Trigger setter
+            }
         }
+    }
+
+    /**
+     * Dashes color.
+     */
+    get dashColor(): THREE.Color {
+        return this.uniforms.dashColor.value as THREE.Color;
+    }
+    set dashColor(value: THREE.Color) {
+        this.uniforms.dashColor.value = value;
+        this.dashTransparency = false;
+    }
+
+    get dashTransparency(): boolean {
+        return !this.defines.USE_DASH_COLOR;
+    }
+
+    set dashTransparency(value: boolean) {
+        this.defines.USE_DASH_COLOR = value ? 0 : 1;
     }
 
     /**
