@@ -10,7 +10,14 @@
 import { assert } from "chai";
 import * as sinon from "sinon";
 
-import { ResolvedStyleSet, SolidLineStyle, StyleSet, Theme } from "@here/harp-datasource-protocol";
+import {
+    ResolvedStyleSet,
+    SelectorValueDefinition,
+    SolidLineStyle,
+    StyleSelector,
+    StyleSet,
+    Theme
+} from "@here/harp-datasource-protocol";
 import { getTestResourceUrl } from "@here/harp-test-utils";
 import { ContextLogger } from "@here/harp-utils";
 import { ThemeLoader } from "../lib/ThemeLoader";
@@ -77,9 +84,52 @@ describe("ThemeLoader", function() {
             const roadStyle = r.find(s => s.description === "roads")!;
             assert.exists(roadStyle);
             assert.equal(roadStyle.technique, "solid-line");
-            const roadStyleCasted = (roadStyle as any) as SolidLineStyle;
+            const roadStyleCasted = (roadStyle as any) as (SolidLineStyle & StyleSelector);
             assert.equal(roadStyleCasted.description, "roads");
+            assert.deepEqual(
+                roadStyleCasted.when,
+                (theme.definitions!.roadCondition as SelectorValueDefinition).value
+            );
             assert.equal(roadStyleCasted.attr!.lineColor, "#f00");
+        });
+
+        it("resolves refs embedded in expressions", async function() {
+            const theme: Theme = {
+                definitions: {
+                    roadColor: { type: "color", value: "#f00" },
+                    roadCondition: { type: "selector", value: ["==", ["get", "kind"], "road"] },
+                    dataColoredRoadStyle: {
+                        description: "custom-roads",
+                        when: ["all", ["ref", "roadCondition"], ["has", "color"]],
+                        technique: "solid-line",
+                        final: true,
+                        attr: {
+                            lineColor: ["ref", "roadColor"]
+                        }
+                    }
+                },
+                styles: {
+                    tilezen: [["ref", "dataColoredRoadStyle"]]
+                }
+            };
+            const contextLogger = new ContextLogger(console, "test theme: ");
+            const r = ThemeLoader.resolveStyleSet(
+                theme.styles!.tilezen,
+                theme.definitions,
+                contextLogger
+            );
+            const roadStyle = r.find(s => s.description === "custom-roads")!;
+            assert.exists(roadStyle);
+            assert.equal(roadStyle.technique, "solid-line");
+
+            const roadStyleCasted = (roadStyle as any) as (SolidLineStyle & StyleSelector);
+
+            assert.deepEqual(roadStyleCasted.when, [
+                "all",
+                ["==", ["get", "kind"], "road"],
+                ["has", "color"]
+            ]);
+            assert.deepEqual(roadStyleCasted.attr!.lineColor, "#f00");
         });
     });
 
@@ -198,7 +248,8 @@ describe("ThemeLoader", function() {
             assert.deepEqual(result.styles!.tilezen, expectedOverridenStyleSet);
         });
     });
-    describe("diagnostic messages in #load ", function() {
+
+    describe("diagnostic messages in #load", function() {
         it("removes invalid references and warns", async function() {
             const loggerMock = {
                 error: sinon.stub<[...any[]]>(),
