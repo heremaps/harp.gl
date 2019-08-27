@@ -1,0 +1,27 @@
+stages:
+  - build
+  - test
+
+test:
+    stage: test
+    script:
+        - echo "Testing..."
+        - set -ex
+        - yarn
+        - npx ts-mocha -r tsconfig-paths/register ./test/*.ts
+        - yarn run tslint
+        - yarn run prettier
+        - yarn run build-tests
+        - npx ts-mocha -r tsconfig-paths/register ./@here/*/test/*.ts
+        - yarn test-browser --headless-firefox
+        - yarn test-browser --headless-chrome
+
+build:
+    stage: build
+    image: node:latest
+    script:
+        - echo Building project $CI_PROJECT_PATH
+        - git clone https://github.com/heremaps/harp.gl.git coresdk
+        - yarn
+        - yarn run build
+        - npm run-script build
