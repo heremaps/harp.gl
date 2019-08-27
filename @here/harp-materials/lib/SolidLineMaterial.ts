@@ -27,6 +27,7 @@ attribute vec3 normal;
 uniform mat4 modelViewMatrix;
 uniform mat4 projectionMatrix;
 uniform float lineWidth;
+uniform float outlineWidth;
 
 #ifdef USE_DISPLACEMENTMAP
 uniform sampler2D displacementMap;
@@ -34,7 +35,7 @@ uniform sampler2D displacementMap;
 
 varying vec2 vExtrusionCoord;
 varying vec2 vSegment;
-varying float vLinewidth;
+varying float vResultLineWidth;
 varying vec3 vPosition;
 
 #if USE_COLOR
@@ -51,20 +52,20 @@ varying vec3 vColor;
 #include <extrude_line_vert_func>
 
 void main() {
-    vLinewidth = lineWidth;
+    vResultLineWidth = lineWidth + outlineWidth;
     vSegment = abs(extrusionCoord) - SEGMENT_OFFSET;
 
     vec3 pos = position;
     vec2 extrusionDir = sign(extrusionCoord);
 
-    extrudeLine(vSegment, bitangent, tangent, lineWidth, pos, extrusionDir);
+    extrudeLine(vSegment, bitangent, tangent, vResultLineWidth, pos, extrusionDir);
 
     #ifdef USE_DISPLACEMENTMAP
     pos += normalize( normal ) * texture2D( displacementMap, uv ).x;
     #endif
 
     vPosition = pos;
-    vExtrusionCoord = vec2(extrusionDir.x, extrusionDir.y * lineWidth);
+    vExtrusionCoord = vec2(extrusionDir.x, extrusionDir.y * vResultLineWidth);
 
     vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
     gl_Position = projectionMatrix * mvPosition;
@@ -85,16 +86,21 @@ precision highp float;
 precision highp int;
 
 uniform vec3 diffuse;
+uniform vec3 outlineColor;
 uniform float opacity;
+uniform float lineWidth;
+uniform float outlineWidth;
 uniform vec2 tileSize;
+
 #if DASHED_LINE
 uniform float dashSize;
 uniform float gapSize;
+uniform vec3 dashColor;
 #endif
 
 varying vec2 vExtrusionCoord;
 varying vec2 vSegment;
-varying float vLinewidth;
+varying float vResultLineWidth;
 varying vec3 vPosition;
 
 #if USE_COLOR
@@ -111,14 +117,15 @@ varying vec3 vColor;
 #include <fog_pars_fragment>
 
 void main() {
-
     float alpha = opacity;
+    vec3 outputDiffuse = diffuse;
 
     #if TILE_CLIP
     tileClip(vPosition.xy, tileSize);
     #endif
 
-    float dist = joinDist(vSegment, vExtrusionCoord) - vLinewidth;
+    float pointDist = joinDist(vSegment, vExtrusionCoord);
+    float dist = pointDist - vResultLineWidth;
     float width = fwidth(dist);
     alpha *= (1.0 - smoothstep(-width, width, dist));
 
@@ -127,13 +134,45 @@ void main() {
     float segmentDist = mod(vExtrusionCoord.x, dashSize + gapSize) / dashSize;
     float dashDist = 0.5 - distance(segmentDist, halfSegment);
     float dashWidth = fwidth(dashDist);
-    alpha *= smoothstep(-dashWidth, dashWidth, dashDist);
+    float dashedBlendFactor = 1.0 - smoothstep(-dashWidth, dashWidth, dashDist);
+
+    #if USE_DASH_COLOR
+    outputDiffuse = mix(diffuse, dashColor, dashedBlendFactor);
+    #endif
+    #endif
+
+    #ifdef USE_OUTLINE
+    float outlineDist = pointDist - lineWidth;
+    float outlineFWidth = fwidth(outlineDist);
+    float outlineBlendFactor = smoothstep(-outlineFWidth, outlineFWidth, outlineDist);
+
+    #if DASHED_LINE && USE_DASH_COLOR == 0
+    float colorBlendFactor = smoothstep(-1.0, 1.0, dashedBlendFactor - outlineBlendFactor);
+
+    outputDiffuse = mix(
+      mix(
+        mix(outlineColor, diffuse, colorBlendFactor),
+        outputDiffuse,
+        dashedBlendFactor
+      ),
+      outlineColor,
+      outlineBlendFactor
+    );
+    #else
+    outputDiffuse = mix(outputDiffuse, outlineColor, outlineBlendFactor);
+    #endif
+    #endif
+
+    #if DASHED_LINE && defined(USE_OUTLINE) && USE_DASH_COLOR == 0
+    alpha *= clamp(dashedBlendFactor + outlineBlendFactor, 0.0, 1.0);
+    #elif DASHED_LINE && USE_DASH_COLOR == 0
+    alpha *= 1.0 - dashedBlendFactor;
     #endif
 
     #if USE_COLOR
-    gl_FragColor = vec4( diffuse * vColor, alpha );
+    gl_FragColor = vec4( outputDiffuse * vColor, alpha );
     #else
-    gl_FragColor = vec4( diffuse, alpha );
+    gl_FragColor = vec4( outputDiffuse, alpha );
     #endif
 
     #include <fog_fragment>
@@ -153,6 +192,11 @@ export interface SolidLineMaterialParameters
      * Line color.
      */
     color?: number | string;
+
+    /**
+     * Line outline color.
+     */
+    outlineColor?: number | string;
 
     /**
      * Enables/Disable depth test.
@@ -176,6 +220,11 @@ export interface SolidLineMaterialParameters
     lineWidth?: number;
 
     /**
+     * Outline width.
+     */
+    outlineWidth?: number;
+
+    /**
      * Line opacity.
      */
     opacity?: number;
@@ -188,6 +237,7 @@ export class SolidLineMaterial extends THREE.RawShaderMaterial
     implements DisplacementFeature, FadingFeature {
     static DEFAULT_COLOR: number = 0xff0000;
     static DEFAULT_WIDTH: number = 1.0;
+    static DEFAULT_OUTLINE_WIDTH: number = 0.0;
     static DEFAULT_OPACITY: number = 1.0;
 
     /**
@@ -203,7 +253,8 @@ export class SolidLineMaterial extends THREE.RawShaderMaterial
         const defines: { [key: string]: any } = {
             DASHED_LINE: 0,
             TILE_CLIP: 0,
-            USE_COLOR: 0
+            USE_COLOR: 0,
+            USE_DASH_COLOR: 0
         };
 
         const hasFog = params !== undefined && params.fog === true;
@@ -218,6 +269,14 @@ export class SolidLineMaterial extends THREE.RawShaderMaterial
             defines.USE_DISPLACEMENTMAP = "";
         }
 
+        if (
+            params !== undefined &&
+            params.outlineWidth !== undefined &&
+            params.outlineWidth > 0
+        ) {
+            defines.USE_OUTLINE = "";
+        }
+
         const shaderParams = {
             name: "SolidLineMaterial",
             vertexShader: vertexSource,
@@ -225,7 +284,12 @@ export class SolidLineMaterial extends THREE.RawShaderMaterial
             uniforms: THREE.UniformsUtils.merge([
                 {
                     diffuse: new THREE.Uniform(new THREE.Color(SolidLineMaterial.DEFAULT_COLOR)),
+                    dashColor: new THREE.Uniform(new THREE.Color(SolidLineMaterial.DEFAULT_COLOR)),
+                    outlineColor: new THREE.Uniform(
+                        new THREE.Color(SolidLineMaterial.DEFAULT_COLOR)
+                    ),
                     lineWidth: new THREE.Uniform(SolidLineMaterial.DEFAULT_WIDTH),
+                    outlineWidth: new THREE.Uniform(SolidLineMaterial.DEFAULT_OUTLINE_WIDTH),
                     opacity: new THREE.Uniform(SolidLineMaterial.DEFAULT_OPACITY),
                     tileSize: new THREE.Uniform(new THREE.Vector2()),
                     fadeNear: new THREE.Uniform(FadingFeature.DEFAULT_FADE_NEAR),
@@ -251,8 +315,14 @@ export class SolidLineMaterial extends THREE.RawShaderMaterial
             if (params.color !== undefined) {
                 this.color.set(params.color as any);
             }
+            if (params.outlineColor !== undefined) {
+                this.outlineColor.set(params.outlineColor as any);
+            }
             if (params.lineWidth !== undefined) {
                 this.lineWidth = params.lineWidth;
+            }
+            if (params.outlineWidth !== undefined) {
+                this.outlineWidth = params.outlineWidth;
             }
             if (params.opacity !== undefined) {
                 this.opacity = params.opacity;
@@ -290,6 +360,19 @@ export class SolidLineMaterial extends THREE.RawShaderMaterial
     }
 
     /**
+     * The method to call to recompile a material to an outline effect
+     *
+     * @param enableOutline Whether we want to use outline.
+     */
+    updateOutline(enableOutline: boolean) {
+        if (!enableOutline) {
+            delete this.defines.USE_OUTLINE;
+        } else {
+            this.defines.USE_OUTLINE = "";
+        }
+    }
+
+    /**
      * Line opacity.
      */
     get opacity(): number {
@@ -311,14 +394,31 @@ export class SolidLineMaterial extends THREE.RawShaderMaterial
         this.uniforms.diffuse.value = value;
     }
 
+    get outlineColor(): THREE.Color {
+        return this.uniforms.outlineColor.value as THREE.Color;
+    }
+    set outlineColor(value: THREE.Color) {
+        this.uniforms.outlineColor.value = value;
+    }
+
     /**
      * Line width.
      */
     get lineWidth(): number {
         return this.uniforms.lineWidth.value as number;
     }
+
     set lineWidth(value: number) {
         this.uniforms.lineWidth.value = value;
+    }
+
+    get outlineWidth(): number {
+        return this.uniforms.outlineWidth.value as number;
+    }
+
+    set outlineWidth(value: number) {
+        this.uniforms.outlineWidth.value = value;
+        this.updateOutline(value > 0);
     }
 
     get fadeNear(): number {
