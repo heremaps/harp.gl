@@ -8,7 +8,6 @@ import {
     Definitions,
     isActualSelectorDefinition,
     isReference,
-    isSelectorDefinition,
     isValueDefinition,
     ResolvedStyleDeclaration,
     ResolvedStyleSet,
@@ -348,21 +347,18 @@ export class ThemeLoader {
         }
         style = style as ResolvedStyleDeclaration;
 
-        if (isReference(style.when)) {
-            const ref = style.when[1];
+        if (Array.isArray(style.when)) {
             contextLogger.pushAttr("when");
-            const def = definitions && definitions[ref];
-            if (!def) {
-                contextLogger.warn(`invalid reference '${ref}' - not found`);
-                contextLogger.pop();
+            const resolvedWhen = this.resolveExpressionReferences(
+                style.when,
+                definitions,
+                contextLogger
+            );
+            contextLogger.pop();
+            if (resolvedWhen === undefined) {
                 return undefined;
             }
-            if (!isSelectorDefinition(def)) {
-                contextLogger.warn(`invalid reference '${ref}' - expected selector definition`);
-                contextLogger.pop();
-                return undefined;
-            }
-            style.when = def.value;
+            style.when = resolvedWhen;
         }
 
         if (style.attr !== undefined) {
@@ -376,30 +372,23 @@ export class ThemeLoader {
 
                 const value = attr[prop];
 
-                if (!isReference(value)) {
+                if (!Array.isArray(value)) {
                     continue; // nothing to do
                 }
 
-                const def = definitions && definitions[value[1]];
+                contextLogger.pushAttr(prop);
+                const resolvedValue = this.resolveExpressionReferences(
+                    value,
+                    definitions,
+                    contextLogger
+                );
+                contextLogger.pop();
 
-                if (!def) {
+                if (resolvedValue !== undefined) {
+                    attr[prop] = resolvedValue;
+                } else {
                     delete attr[prop];
-                    contextLogger.pushAttr(prop);
-                    contextLogger.warn(`invalid reference '${value[1]}' - not found`);
-                    contextLogger.pop();
-                    continue;
                 }
-                if (!isValueDefinition(def)) {
-                    delete attr[prop];
-                    contextLogger.pushAttr(prop);
-                    contextLogger.warn(
-                        `invalid reference '${value[1]}' - expected value definition`
-                    );
-                    contextLogger.pop();
-                    continue;
-                }
-
-                attr[prop] = def.value;
             }
             contextLogger.pop();
         }
@@ -407,7 +396,52 @@ export class ThemeLoader {
     }
 
     /**
-     * Realize `extends` clause by merging `theme` with it's base [[Theme]].
+     * Resolve `[ref, ...]` in expressions.
+     *
+     * Returns `undefined` some reference was invalid (missing or wrong type).
+     */
+    static resolveExpressionReferences<T>(
+        value: T,
+        definitions: Definitions | undefined,
+        contextLogger: IContextLogger
+    ): T | undefined {
+        let failed = false;
+        function resolveInternal(node: any) {
+            if (isReference(node)) {
+                const defName = node[1];
+                const def = definitions && definitions[defName];
+                if (def === undefined) {
+                    contextLogger.warn(`invalid reference '${defName}' - not found`);
+                    failed = true;
+                    return undefined;
+                }
+                if (!isValueDefinition(def)) {
+                    contextLogger.warn(
+                        `invalid reference '${defName}' - expected value definition`
+                    );
+                    failed = true;
+                    return undefined;
+                }
+                return def.value;
+            } else if (Array.isArray(node)) {
+                const result = [...node];
+                for (let i = 1; i < result.length; ++i) {
+                    result[i] = resolveInternal(result[i]);
+                }
+                return result;
+            } else {
+                return node;
+            }
+        }
+        const r = resolveInternal(value);
+        if (failed) {
+            return undefined;
+        }
+        return r;
+    }
+
+    /**
+     * Realize `extends` clause by merging `theme` with its base [[Theme]].
      *
      * @param theme [Theme] object
      * @param options Optional, a [[ThemeLoadOptions]] objects containing any custom settings for
