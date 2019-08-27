@@ -179,7 +179,7 @@ export namespace GeoJsonHeatmapExample {
 
     const infoElement = document.getElementById("info") as HTMLParagraphElement;
     infoElement.innerHTML =
-        `This chloropleth shows how to use custom styling to highlight specific features in the` +
+        `This choropleth shows how to use custom styling to highlight specific features in the` +
         ` map. Here some height is given to the extruded polygons directly in the GeoJSON, ` +
         `whereas the color comes from the population density given in the properties.`;
 }
