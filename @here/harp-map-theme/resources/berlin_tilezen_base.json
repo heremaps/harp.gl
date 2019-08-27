@@ -13,12 +13,45 @@
                 ["==", ["get", "$geometryType"], "polygon"]
             ]
         },
+        "defaultBuildingColor": {
+            "type": "color",
+            "value": "#EDE7E1"
+        },
         "extrudedBuildings": {
-            "description": "building_geometry",
+            "description": "buildings with pre-defined color",
             "technique": "extruded-polygon",
-            "when": ["ref", "extrudedBuildingsCondition"],
+            "when": ["all", ["ref", "extrudedBuildingsCondition"], ["!", ["has", "color"]]],
             "attr": {
-                "color": "#EDE7E1",
+                "color": ["ref", "defaultBuildingColor"],
+                "opacity": 0.9,
+                "roughness": 1,
+                "metalness": 0.8,
+                "emissive": "#78858C",
+                "emissiveIntensity": 0.85,
+                "footprint": true,
+                "maxSlope": 0.8799999999999999,
+                "lineWidth": 1,
+                "lineColor": "#172023",
+                "lineColorMix": 0.6,
+                "fadeNear": 0.9,
+                "fadeFar": 1,
+                "lineFadeNear": -0.75,
+                "lineFadeFar": 1,
+                "animateExtrusion": {
+                    "interpolation": "Discrete",
+                    "zoomLevels": [14, 15],
+                    "values": [false, true]
+                }
+            },
+            "renderOrder": 2000
+        },
+        "coloredExtrudedBuildings": {
+            "description": "buildings with varying colors",
+            "technique": "extruded-polygon",
+            "when": ["all", ["ref", "extrudedBuildingsCondition"], ["has", "color"]],
+            "attr": {
+                "vertexColors": true,
+                "defaultColor": ["ref", "defaultBuildingColor"],
                 "opacity": 0.9,
                 "roughness": 1,
                 "metalness": 0.8,
@@ -2303,6 +2336,7 @@
                 "final": true
             },
             ["ref", "extrudedBuildings"],
+            ["ref", "coloredExtrudedBuildings"],
             {
                 "description": "building_address",
                 "when": [
