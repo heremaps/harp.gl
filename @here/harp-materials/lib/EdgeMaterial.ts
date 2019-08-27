@@ -7,7 +7,13 @@
 import * as THREE from "three";
 
 import { AnimatedExtrusionTileHandler } from "../../harp-mapview/lib/AnimatedExtrusionHandler";
-import { ExtrusionFeature, FadingFeature, FadingFeatureParameters } from "./MapMeshMaterials";
+import {
+    DisplacementFeature,
+    DisplacementFeatureParameters,
+    ExtrusionFeature,
+    FadingFeature,
+    FadingFeatureParameters
+} from "./MapMeshMaterials";
 
 const vertexSource: string = `
 attribute vec3 position;
@@ -17,6 +23,12 @@ uniform mat4 modelViewMatrix;
 uniform mat4 projectionMatrix;
 uniform vec3 edgeColor;
 uniform float edgeColorMix;
+
+#ifdef USE_DISPLACEMENTMAP
+attribute vec3 normal;
+attribute vec2 uv;
+uniform sampler2D displacementMap;
+#endif
 
 varying vec3 vColor;
 
@@ -29,6 +41,7 @@ varying vec3 vColor;
 #endif
 
 void main() {
+
     #ifdef USE_COLOR
     vColor = mix(edgeColor.rgb, color.rgb, edgeColorMix);
     #else
@@ -39,6 +52,10 @@ void main() {
 
     #ifdef USE_EXTRUSION
     #include <extrusion_vertex>
+    #endif
+
+    #ifdef USE_DISPLACEMENTMAP
+    transformed += normalize( normal ) * texture2D( displacementMap, uv ).x;
     #endif
 
     vec4 mvPosition = modelViewMatrix * vec4( transformed, 1.0 );
@@ -80,7 +97,9 @@ void main() {
 /**
  * Parameters used when constructing a new [[EdgeMaterial]].
  */
-export interface EdgeMaterialParameters extends FadingFeatureParameters {
+export interface EdgeMaterialParameters
+    extends FadingFeatureParameters,
+        DisplacementFeatureParameters {
     /**
      * Edge color.
      */
@@ -96,7 +115,7 @@ export interface EdgeMaterialParameters extends FadingFeatureParameters {
  * colors, vertex colors, color mixing and distance fading.
  */
 export class EdgeMaterial extends THREE.RawShaderMaterial
-    implements FadingFeature, ExtrusionFeature {
+    implements FadingFeature, ExtrusionFeature, DisplacementFeature {
     static DEFAULT_COLOR: number = 0x000000;
     static DEFAULT_COLOR_MIX: number = 0.0;
 
@@ -106,6 +125,13 @@ export class EdgeMaterial extends THREE.RawShaderMaterial
      * @param params `EdgeMaterial` parameters.
      */
     constructor(params?: EdgeMaterialParameters) {
+        const defines: { [key: string]: any } = {};
+        const hasDisplacementMap = params !== undefined && params.displacementMap !== undefined;
+
+        if (hasDisplacementMap) {
+            defines.USE_DISPLACEMENTMAP = "";
+        }
+
         const shaderParams = {
             name: "EdgeMaterial",
             vertexShader: vertexSource,
@@ -115,9 +141,13 @@ export class EdgeMaterial extends THREE.RawShaderMaterial
                 edgeColorMix: new THREE.Uniform(EdgeMaterial.DEFAULT_COLOR_MIX),
                 fadeNear: new THREE.Uniform(FadingFeature.DEFAULT_FADE_NEAR),
                 fadeFar: new THREE.Uniform(FadingFeature.DEFAULT_FADE_FAR),
-                extrusionRatio: new THREE.Uniform(AnimatedExtrusionTileHandler.DEFAULT_RATIO_MIN)
+                extrusionRatio: new THREE.Uniform(AnimatedExtrusionTileHandler.DEFAULT_RATIO_MIN),
+                displacementMap: new THREE.Uniform(
+                    hasDisplacementMap ? params!.displacementMap : new THREE.Texture()
+                )
             },
-            depthWrite: false
+            depthWrite: false,
+            defines
         };
         super(shaderParams);
         this.transparent = true;
@@ -138,6 +168,10 @@ export class EdgeMaterial extends THREE.RawShaderMaterial
             }
             if (params.fadeFar !== undefined) {
                 this.fadeFar = params.fadeFar;
+            }
+
+            if (params.displacementMap !== undefined) {
+                this.displacementMap = params.displacementMap;
             }
         }
     }
@@ -202,6 +236,22 @@ export class EdgeMaterial extends THREE.RawShaderMaterial
         } else {
             this.needsUpdate = this.needsUpdate || this.defines.USE_EXTRUSION !== undefined;
             delete this.defines.USE_EXTRUSION;
+        }
+    }
+
+    get displacementMap(): THREE.Texture | undefined {
+        return this.uniforms.displacementMap.value;
+    }
+
+    set displacementMap(map: THREE.Texture | undefined) {
+        this.uniforms.displacementMap.value = map;
+        if (map !== undefined) {
+            this.uniforms.displacementMap.value.needsUpdate = true;
+            this.defines.USE_DISPLACEMENTMAP = "";
+            this.needsUpdate = this.needsUpdate || this.defines.USE_DISPLACEMENTMAP === undefined;
+        } else {
+            delete this.defines.USE_DISPLACEMENTMAP;
+            this.needsUpdate = this.needsUpdate || this.defines.USE_DISPLACEMENTMAP !== undefined;
         }
     }
 }

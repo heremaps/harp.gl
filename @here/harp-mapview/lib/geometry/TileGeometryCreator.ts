@@ -985,6 +985,9 @@ export class TileGeometryCreator {
 
                 if (renderDepthPrePass) {
                     const depthPassMesh = createDepthPrePassMesh(object as THREE.Mesh);
+                    // Set geometry kind for depth pass mesh so that it gets the displacement map
+                    // for elevation overlay.
+                    this.registerTileObject(tile, depthPassMesh, technique.kind);
                     objects.push(depthPassMesh);
 
                     if (extrusionAnimationEnabled) {
@@ -1013,6 +1016,16 @@ export class TileGeometryCreator {
                     const extrusionAttribute = bufferGeometry.getAttribute("extrusionAxis");
                     if (extrusionAttribute !== undefined) {
                         edgeGeometry.addAttribute("extrusionAxis", extrusionAttribute);
+                    }
+
+                    const normalAttribute = bufferGeometry.getAttribute("normal");
+                    if (normalAttribute !== undefined) {
+                        edgeGeometry.addAttribute("normal", normalAttribute);
+                    }
+
+                    const uvAttribute = bufferGeometry.getAttribute("uv");
+                    if (uvAttribute !== undefined) {
+                        edgeGeometry.addAttribute("uv", uvAttribute);
                     }
 
                     edgeGeometry.setIndex(

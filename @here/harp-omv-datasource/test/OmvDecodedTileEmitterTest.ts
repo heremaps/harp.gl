@@ -8,6 +8,7 @@
 // Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
 import {
+    Geometry,
     GeometryType,
     isStandardTechnique,
     StyleSet,
@@ -28,6 +29,24 @@ import { OmvDecoder } from "../lib/OmvDecoder";
 import { world2tile } from "../lib/OmvUtils";
 
 describe("OmvDecodedTileEmitter", function() {
+    function checkVertexAttribute(
+        geometry: Geometry,
+        index: number,
+        name: string,
+        expectedCount: number,
+        type: string = "float"
+    ): Float32Array {
+        const attribute = geometry.vertexAttributes[index];
+        assert.equal(attribute.name, name, `geometry has ${name} attribute`);
+        assert.equal(attribute.type, type, `${name} is ${type}`);
+
+        const buffer = new Float32Array(attribute.buffer);
+        const count = buffer.length / attribute.itemCount;
+        assert.equal(count, expectedCount);
+
+        return buffer;
+    }
+
     it("Ring data conversion to polygon data: whole tile square shape", function() {
         const tileKey = TileKey.fromRowColumnLevel(0, 0, 1);
         const projection = mercatorProjection;
@@ -99,32 +118,28 @@ describe("OmvDecodedTileEmitter", function() {
         );
         assert.equal(geometries.length, 1, "only one geometry created");
         assert.equal(geometries[0].type, GeometryType.Polygon, "geometry is a polygon");
-        assert.equal(geometries[0].vertexAttributes.length, 2);
-        const positions = geometries[0].vertexAttributes[0];
-        const texCoords = geometries[0].vertexAttributes[1];
-        assert.equal(positions.name, "position", "geometry has position attribute");
-        assert.equal(texCoords.name, "uv", "geometry has texture coordinates");
-        assert.equal(positions.type, "float", "positions are floats");
-        assert.equal(texCoords.type, "float", "texture coordinates are floats");
+        assert.equal(
+            geometries[0].vertexAttributes.length,
+            2,
+            "number of attributes is as expected"
+        );
 
-        const positionsBuffer = new Float32Array(positions.buffer);
-        const texCoordsBuffer = new Float32Array(texCoords.buffer);
-        const positionCount = positionsBuffer.length / positions.itemCount;
-        const texCoordCount = texCoordsBuffer.length / texCoords.itemCount;
-        assert.equal(positionCount, 4);
-        assert.equal(texCoordCount, 4);
+        const firstGeometry = geometries[0];
+        const vertexCount = 4;
+        checkVertexAttribute(firstGeometry, 0, "position", vertexCount);
+        const texCoords = checkVertexAttribute(firstGeometry, 1, "uv", vertexCount);
 
         const eps = 1e-15;
-        assert.closeTo(texCoordsBuffer[0], 0, eps);
-        assert.closeTo(texCoordsBuffer[1], 0, eps);
+        assert.closeTo(texCoords[0], 0, eps);
+        assert.closeTo(texCoords[1], 0, eps);
 
-        assert.closeTo(texCoordsBuffer[2], 1, eps);
-        assert.closeTo(texCoordsBuffer[3], 0, eps);
+        assert.closeTo(texCoords[2], 1, eps);
+        assert.closeTo(texCoords[3], 0, eps);
 
-        assert.closeTo(texCoordsBuffer[4], 1, eps);
-        assert.closeTo(texCoordsBuffer[5], 1, eps);
+        assert.closeTo(texCoords[4], 1, eps);
+        assert.closeTo(texCoords[5], 1, eps);
 
-        assert.closeTo(texCoordsBuffer[6], 0, eps);
-        assert.closeTo(texCoordsBuffer[7], 1, eps);
+        assert.closeTo(texCoords[6], 0, eps);
+        assert.closeTo(texCoords[7], 1, eps);
     });
 });

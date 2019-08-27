@@ -9,20 +9,14 @@ import * as THREE from "three";
 import { Tile, TileObject } from "../Tile";
 
 function overlayObject(object: TileObject, displacementMap: THREE.DataTexture): void {
-    if (!object.userData || !object.userData.kind) {
+    if (!("material" in object)) {
         return;
     }
 
-    if (
-        !object.userData.kind.find((kind: GeometryKind) => {
-            return kind !== GeometryKind.All && kind !== GeometryKind.Terrain;
-        })
-    ) {
-        return;
-    }
+    const material = (object as any).material;
 
-    if (object instanceof THREE.Mesh && "displacementMap" in object.material) {
-        (object.material as any).displacementMap = displacementMap;
+    if ("displacementMap" in material) {
+        (material as any).displacementMap = displacementMap;
     }
 }
 
@@ -38,7 +32,18 @@ export function overlayOnElevation(tile: Tile): void {
         return;
     }
     const displacementMap = elevationProvider.getDisplacementMap(tile.tileKey);
-    if (displacementMap === undefined) {
+    if (displacementMap === undefined || tile.objects.length === 0) {
+        return;
+    }
+
+    const firstObject = tile.objects[0];
+    if (
+        !firstObject.userData ||
+        !firstObject.userData.kind ||
+        !firstObject.userData.kind.find((kind: GeometryKind) => {
+            return kind !== GeometryKind.All && kind !== GeometryKind.Terrain;
+        })
+    ) {
         return;
     }
 

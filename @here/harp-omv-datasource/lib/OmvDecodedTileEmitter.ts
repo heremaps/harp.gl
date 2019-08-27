@@ -99,6 +99,7 @@ const INVALID_ARRAY_INDEX = -1;
 // for tilezen by default extrude all buildings even those without height data
 class MeshBuffers implements IMeshBuffers {
     readonly positions: number[] = [];
+    readonly normals: number[] = [];
     readonly textureCoordinates: number[] = [];
     readonly colors: number[] = [];
     readonly extrusionAxis: number[] = [];
@@ -735,7 +736,8 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
         if (
             (isFillTechnique(technique) ||
                 isSolidLineTechnique(technique) ||
-                isDashedLineTechnique(technique)) &&
+                isDashedLineTechnique(technique) ||
+                isExtrudedPolygonTechnique(technique)) &&
             this.m_enableElevationOverlay
         ) {
             return TextureCoordinateType.TileSpace;
@@ -865,6 +867,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
 
         const {
             positions,
+            normals,
             textureCoordinates,
             colors,
             extrusionAxis,
@@ -1087,7 +1090,9 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                         if (texCoordType !== undefined) {
                             textureCoordinates.push(vertices[i + 2], vertices[i + 3]);
                         }
-
+                        if (this.m_enableElevationOverlay) {
+                            normals.push(...tempVertNormal.toArray());
+                        }
                         if (isExtruded) {
                             positions.push(
                                 tmpV3.x + tempRoofDisp.x,
@@ -1104,6 +1109,9 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                             );
                             if (texCoordType !== undefined) {
                                 textureCoordinates.push(vertices[i + 2], vertices[i + 3]);
+                            }
+                            if (this.m_enableElevationOverlay) {
+                                normals.push(...tempVertNormal.toArray());
                             }
                             if (extrudedPolygonTechnique.vertexColors === true) {
                                 colors.push(color.r, color.g, color.b, color.r, color.g, color.b);
@@ -1253,6 +1261,22 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                 ],
                 groups: meshBuffers.groups
             };
+
+            if (meshBuffers.normals.length > 0) {
+                const normals = new Float32Array(meshBuffers.normals);
+                assert(
+                    normals.length === positionElements.length,
+                    "length of normals buffer is different than the length of the " +
+                        "position buffer"
+                );
+
+                geometry.vertexAttributes.push({
+                    name: "normal",
+                    buffer: normals.buffer as ArrayBuffer,
+                    itemCount: 3,
+                    type: "float"
+                });
+            }
 
             if (meshBuffers.colors.length > 0) {
                 const colors = new Float32Array(meshBuffers.colors);
