@@ -45,7 +45,7 @@ export type PriorityListGroupMap<T extends PriorityListElement> = Map<number, Pr
  */
 export class GroupedPriorityList<T extends PriorityListElement> {
     readonly groups: PriorityListGroupMap<T> = new Map();
-
+    private m_sortedGroups: Array<PriorityListGroup<T>> | undefined;
     /**
      * Add an element to the `GroupedPriorityList`. Selects group based on the elements priority.
      *
@@ -73,6 +73,9 @@ export class GroupedPriorityList<T extends PriorityListElement> {
                 if (group.elements.length === 0) {
                     const normalizedPriority = Math.floor(element.priority);
                     this.groups.delete(normalizedPriority);
+                    if (this.m_sortedGroups) {
+                        this.m_sortedGroups = [];
+                    }
                 }
                 return true;
             }
@@ -85,6 +88,9 @@ export class GroupedPriorityList<T extends PriorityListElement> {
      */
     clear(): void {
         this.groups.clear();
+        if (this.m_sortedGroups) {
+            this.m_sortedGroups = [];
+        }
     }
 
     /**
@@ -97,6 +103,9 @@ export class GroupedPriorityList<T extends PriorityListElement> {
             const group = this.findGroup(otherGroup[1].priority);
             if (group === undefined) {
                 this.groups.set(Math.floor(otherGroup[1].priority), otherGroup[1].clone());
+                if (this.m_sortedGroups) {
+                    this.m_sortedGroups = [];
+                }
                 continue;
             }
             group.elements = group.elements.concat(otherGroup[1].elements);
@@ -108,15 +117,21 @@ export class GroupedPriorityList<T extends PriorityListElement> {
      * Return a sorted list of [[PriorityListGroup]]s.
      */
     get sortedGroups(): Array<PriorityListGroup<T>> {
-        const groups: Array<PriorityListGroup<T>> = [];
-        for (const priorityList of this.groups) {
-            groups.push(priorityList[1]);
+        if (this.m_sortedGroups && this.m_sortedGroups.length > 0) {
+            return this.m_sortedGroups;
         }
 
-        groups.sort((a: PriorityListGroup<T>, b: PriorityListGroup<T>) => {
+        if (!this.m_sortedGroups) {
+            this.m_sortedGroups = [];
+        }
+        for (const priorityList of this.groups) {
+            this.m_sortedGroups.push(priorityList[1]);
+        }
+
+        this.m_sortedGroups.sort((a: PriorityListGroup<T>, b: PriorityListGroup<T>) => {
             return b.priority - a.priority;
         });
-        return groups;
+        return this.m_sortedGroups;
     }
 
     /**
@@ -164,6 +179,9 @@ export class GroupedPriorityList<T extends PriorityListElement> {
             const normalizedPriority = Math.floor(priority);
             group = new PriorityListGroup<T>(normalizedPriority);
             this.groups.set(normalizedPriority, group);
+            if (this.m_sortedGroups) {
+                this.m_sortedGroups = [];
+            }
         }
 
         return group;
