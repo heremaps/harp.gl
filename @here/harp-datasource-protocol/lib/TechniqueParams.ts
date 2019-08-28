@@ -1109,10 +1109,6 @@ export interface TextTechniqueParams extends BaseTechniqueParams {
      */
     label?: string;
     /**
-     * The name of the property containing the text.
-     */
-    textLabel?: string;
-    /**
      * If `true`, the abbreviation (field `name:short`) of the elements is used as text.
      */
     useAbbreviation?: boolean;
