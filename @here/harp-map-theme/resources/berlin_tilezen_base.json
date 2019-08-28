@@ -1202,7 +1202,6 @@
                     "color": "#000000",
                     "backgroundColor": "#FFFFFF",
                     "backgroundOpacity": 0.5,
-                    "textLabel": "kind_detail",
                     "size": 16,
                     "priority": 13,
                     "fadeNear": 0.8,
