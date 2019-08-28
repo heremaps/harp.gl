@@ -56,6 +56,12 @@ export class PhasedTileGeometryManager extends TileGeometryManagerBase {
             ? this.updateSomeTiles(tiles)
             : this.updateAllTilesTogether(tiles);
 
+        if (this.m_tileUpdateCallback) {
+            for (const tile of tiles) {
+                this.m_tileUpdateCallback(tile);
+            }
+        }
+
         // updateTileObjectVisibility() has always to be called.
         needUpdate = this.updateTileObjectVisibility(tiles) || needUpdate;
 
@@ -85,7 +91,6 @@ export class PhasedTileGeometryManager extends TileGeometryManagerBase {
         for (const tile of tiles) {
             const phasedGeometryLoader = tile.tileGeometryLoader as PhasedTileGeometryLoader;
 
-            let limitReached = false;
             if (phasedGeometryLoader !== undefined) {
                 if (
                     phasedGeometryLoader.update(
@@ -98,14 +103,8 @@ export class PhasedTileGeometryManager extends TileGeometryManagerBase {
                         this.m_maxUpdatedTilePerFrame > 0 &&
                         numTilesUpdated >= this.m_maxUpdatedTilePerFrame
                     ) {
-                        limitReached = true;
+                        break;
                     }
-                }
-                if (this.m_tileUpdateCallback) {
-                    this.m_tileUpdateCallback(tile);
-                }
-                if (limitReached) {
-                    break;
                 }
             }
         }
@@ -160,9 +159,6 @@ export class PhasedTileGeometryManager extends TileGeometryManagerBase {
                     )
                 ) {
                     needUpdate = true;
-                }
-                if (this.m_tileUpdateCallback) {
-                    this.m_tileUpdateCallback(tile);
                 }
             }
         }
