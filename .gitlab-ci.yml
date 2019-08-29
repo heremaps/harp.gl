@@ -2,6 +2,8 @@ stages:
   - build
   - test
 
+image: node:latest
+
 test:
     stage: test
     script:
@@ -18,7 +20,6 @@ test:
 
 build:
     stage: build
-    image: node:latest
     script:
         - echo Building project $CI_PROJECT_PATH
         - git clone https://github.com/heremaps/harp.gl.git coresdk
