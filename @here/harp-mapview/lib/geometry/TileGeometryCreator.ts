@@ -61,10 +61,9 @@ import {
     VerticalAlignment,
     WrappingMode
 } from "@here/harp-text-canvas";
-import { getOptionValue } from "@here/harp-utils";
+import { getOptionValue, LoggerManager } from "@here/harp-utils";
 import * as THREE from "three";
 
-import { logger } from "@here/harp-datasource-protocol/index-decoder";
 import { AnimatedExtrusionTileHandler } from "../AnimatedExtrusionHandler";
 import { ColorCache } from "../ColorCache";
 import { createMaterial, getBufferAttribute, getObjectConstructor } from "../DecodedTileHelpers";
@@ -80,6 +79,8 @@ import { DEFAULT_TEXT_DISTANCE_SCALE } from "../text/TextElementsRenderer";
 import { computeStyleCacheId } from "../text/TextStyleCache";
 import { Tile, TileFeatureData } from "../Tile";
 import { TileGeometryLoader } from "./TileGeometryLoader";
+
+const logger = LoggerManager.instance.create("TileGeometryCreator");
 
 /**
  * The SORT_WEIGHT_PATH_LENGTH constants control how the priority of the labels are computed based

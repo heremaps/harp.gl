@@ -15,8 +15,11 @@ import {
     WorkerServiceProtocol
 } from "@here/harp-datasource-protocol";
 import { Projection, TileKey } from "@here/harp-geoutils";
+import { LoggerManager } from "@here/harp-utils";
 
 import { ConcurrentWorkerSet } from "./ConcurrentWorkerSet";
+
+const logger = LoggerManager.instance.create("WorkerBasedDecoder");
 
 /**
  * Identifier of next decoder worker-service. Used to ensure uniqueness of service ids of decoders
@@ -76,15 +79,19 @@ export class WorkerBasedDecoder implements ITileDecoder {
     async connect(): Promise<void> {
         await this.workerSet.connect(WorkerServiceProtocol.WORKER_SERVICE_MANAGER_SERVICE_ID);
         if (!this.m_serviceCreated) {
-            await this.workerSet.broadcastRequest(
-                WorkerServiceProtocol.WORKER_SERVICE_MANAGER_SERVICE_ID,
-                {
-                    type: WorkerServiceProtocol.Requests.CreateService,
-                    targetServiceType: this.decoderServiceType,
-                    targetServiceId: this.serviceId
-                }
-            );
-            this.m_serviceCreated = true;
+            try {
+                await this.workerSet.broadcastRequest(
+                    WorkerServiceProtocol.WORKER_SERVICE_MANAGER_SERVICE_ID,
+                    {
+                        type: WorkerServiceProtocol.Requests.CreateService,
+                        targetServiceType: this.decoderServiceType,
+                        targetServiceId: this.serviceId
+                    }
+                );
+                this.m_serviceCreated = true;
+            } catch (e) {
+                logger.error(e);
+            }
         }
     }
 

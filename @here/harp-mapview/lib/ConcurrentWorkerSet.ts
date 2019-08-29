@@ -309,11 +309,11 @@ export class ConcurrentWorkerSet {
         let resolver: ((error?: any, response?: any) => void) | undefined;
 
         const promise = new Promise<Res>((resolve, reject) => {
-            resolver = (error, response) => {
+            resolver = (error?: Error, response?: Res) => {
                 this.m_requests.delete(messageId);
 
                 if (error !== undefined) {
-                    reject(error instanceof Error ? error : new Error(error.toString()));
+                    reject(error);
                 } else {
                     resolve(response as Res);
                 }
@@ -363,11 +363,11 @@ export class ConcurrentWorkerSet {
 
             let resolver: ((error?: any, response?: any) => void) | undefined;
             const promise = new Promise<Res>((resolve, reject) => {
-                resolver = (error, response) => {
+                resolver = (error: Error, response: Res) => {
                     this.m_requests.delete(messageId);
 
                     if (error !== undefined) {
-                        reject(new Error(error.toString()));
+                        reject(error);
                     } else {
                         resolve(response as Res);
                     }
