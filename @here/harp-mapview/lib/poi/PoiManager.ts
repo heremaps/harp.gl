@@ -578,6 +578,8 @@ export class PoiManager {
                 ? technique.distanceScale
                 : DEFAULT_TEXT_DISTANCE_SCALE;
 
+        textElement.isPointLabel = true;
+
         return textElement;
     }
 
