@@ -36,7 +36,7 @@ import {
 import { IndexedTechnique, Technique } from "./Techniques";
 import { isReference, Style, StyleDeclaration, StyleSelector, StyleSet } from "./Theme";
 
-export const logger = LoggerManager.instance.create("StyleSetEvaluator");
+const logger = LoggerManager.instance.create("StyleSetEvaluator");
 
 interface StyleInternalParams {
     /**
