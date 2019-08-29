@@ -575,6 +575,8 @@ export class TileGeometryCreator {
                         textElement.userData = text.objInfos[i];
                     }
 
+                    textElement.isPointLabel = true;
+
                     tile.addTextElement(textElement);
                 }
             }

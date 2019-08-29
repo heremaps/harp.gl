@@ -143,6 +143,13 @@ const OVERLOAD_RENDER_TIME_LIMIT = 10;
  */
 const MIN_AVERAGE_CHAR_WIDTH = 5;
 
+/**
+ * Label distance threshold. Point labels with the same name that are closer in world space than
+ * this value are treated as the same label. Valid within a single datasource. Used to identify
+ * duplicate labels in overlapping tiles.
+ */
+const LABEL_DIFFERENT_THRESHOLD_SQUARED = 4;
+
 // Development flag: Enable debug print.
 const PRINT_LABEL_DEBUG_INFO: boolean = false;
 
@@ -158,7 +165,7 @@ const tempScreenPosition = new THREE.Vector2();
 const tempPoiScreenPosition = new THREE.Vector2();
 
 class TileTextElements {
-    constructor(readonly tile: Tile, readonly textElements: TextElement[]) {}
+    constructor(readonly tile: Tile, readonly textElements: Array<TextElement | undefined>) {}
 }
 
 class TextElementLists {
@@ -870,17 +877,13 @@ export class TextElementsRenderer {
 
     private sortTextElements(textElements: TextElement[], maxViewDistance: number) {
         const distancePriorityFactor = 0.1;
-        const indexPriorityFactor = 0.01 * (1 / textElements.length);
 
         // Compute the sortPriority once for all elements, because the computation is done more
         // than once per element. Also, make sorting stable by taking the index into the array into
         // account, this is required to get repeatable results for testing.
-        for (let i = 0; i < textElements.length; i++) {
-            const textElement = textElements[i];
-
+        for (const textElement of textElements) {
             textElement.sortPriority =
                 textElement.priority +
-                i * indexPriorityFactor +
                 distancePriorityFactor -
                 distancePriorityFactor * (textElement.currentViewDistance! / maxViewDistance);
         }
@@ -997,23 +1000,93 @@ export class TextElementsRenderer {
             }
         }
 
+        // Determine which of the two labels were rendered last. This allows to keep the render
+        // state for fading.
+        const latestTextElement = (a: TextElement, b: TextElement): TextElement => {
+            if (a.textRenderState === undefined || a.textRenderState!.lastFrameNumber < 0) {
+                return b;
+            }
+            if (b.textRenderState === undefined || b.textRenderState!.lastFrameNumber < 0) {
+                return a;
+            }
+
+            return a.textRenderState!.lastFrameNumber > b.textRenderState!.lastFrameNumber ? a : b;
+        };
+
+        // Remove the duplicate point labels from this group's labels using the pointLabelCache to
+        // identify the duplicates.
+        const removeDuplicates = (groupElements: TextElement[]): Array<TextElement | undefined> => {
+            const uniqueGroupLabels: Array<TextElement | undefined> = [];
+
+            for (const textElement of groupElements) {
+                if (textElement.isPointLabel === true) {
+                    // Point labels may have duplicates (as can path labels), Identify them
+                    // and keep the one we already display.
+                    const duplicateLabelObj = pointLabelCache.get(textElement.text);
+                    if (duplicateLabelObj !== undefined) {
+                        const duplicateLabelList = duplicateLabelObj.list;
+                        const duplicateLabelIndex = duplicateLabelObj.listIndex;
+                        const duplicateLabel = duplicateLabelList[duplicateLabelIndex];
+                        if (
+                            duplicateLabel !== undefined &&
+                            textElement.position.distanceToSquared(duplicateLabel.position) <
+                                LABEL_DIFFERENT_THRESHOLD_SQUARED
+                        ) {
+                            if (latestTextElement(textElement, duplicateLabel) === textElement) {
+                                // Keep the label which was rendered last, otherwise the new
+                                // label may replace a previous label, which may lead to
+                                // flickering (because of different render state). We have
+                                // remove the label from the other list
+                                duplicateLabelList[duplicateLabelIndex] = undefined;
+
+                                pointLabelCache.set(textElement.text, {
+                                    list: uniqueGroupLabels,
+                                    listIndex: uniqueGroupLabels.length
+                                });
+                                uniqueGroupLabels.push(textElement);
+                            }
+                        }
+                    } else {
+                        pointLabelCache.set(textElement.text, {
+                            list: uniqueGroupLabels,
+                            listIndex: uniqueGroupLabels.length
+                        });
+                        uniqueGroupLabels.push(textElement);
+                    }
+                } else {
+                    uniqueGroupLabels.push(textElement);
+                }
+            }
+
+            return uniqueGroupLabels;
+        };
+
         const groupedPriorityLists: Map<number, TextElementLists> = new Map();
+
+        // Cache for point labels which may have duplicates in same tile or in neighboring tiles.
+        const pointLabelCache: Map<
+            string,
+            { list: Array<TextElement | undefined>; listIndex: number }
+        > = new Map();
 
         for (const tile of tilesToRender) {
             for (const group of tile.textElementGroups.groups.values()) {
                 if (group.elements.length === 0) {
                     continue;
                 }
+
+                const uniqueGroupLabels = removeDuplicates(group.elements);
+
                 const foundGroup = groupedPriorityLists.get(group.priority);
                 if (foundGroup === undefined) {
                     groupedPriorityLists.set(
                         group.priority,
                         new TextElementLists(group.priority, [
-                            new TileTextElements(tile, group.elements)
+                            new TileTextElements(tile, uniqueGroupLabels)
                         ])
                     );
                 } else {
-                    foundGroup.textElementLists.push(new TileTextElements(tile, group.elements));
+                    foundGroup.textElementLists.push(new TileTextElements(tile, uniqueGroupLabels));
                 }
             }
         }
@@ -1068,7 +1141,7 @@ export class TextElementsRenderer {
             const tile = tileTextElements.tile;
             const worldOffsetX = this.m_mapView.projection.worldExtent(0, 0).max.x * tile.offset;
             for (const textElement of tileTextElements.textElements) {
-                if (!textElement.visible) {
+                if (textElement === undefined || !textElement.visible) {
                     continue;
                 }
 
@@ -1454,12 +1527,6 @@ export class TextElementsRenderer {
                 }
             }
             if (textElement.loadingState !== LoadingState.Initialized) {
-                if (
-                    secondChanceTextElements !== undefined &&
-                    secondChanceTextElements.length < numSecondChanceLabels
-                ) {
-                    secondChanceTextElements.push(textElement);
-                }
                 continue;
             }
 
@@ -1637,7 +1704,8 @@ export class TextElementsRenderer {
                         poiInfo.iconIsOptional !== false);
 
                 // Render the label's text...
-                if (doRenderText && textElement.text !== "") {
+                // textRenderState is always defined at this point.
+                if (textRenderState !== undefined && doRenderText && textElement.text !== "") {
                     // Adjust the label positioning to match its bounding box.
                     tempPosition.x = tempScreenPosition.x;
                     tempPosition.y = tempScreenPosition.y;
@@ -1670,10 +1738,8 @@ export class TextElementsRenderer {
                         pointLabel.poiInfo !== undefined &&
                         pointLabel.poiInfo.textIsOptional === true;
 
-                    const textIsFadingIn =
-                        textRenderState !== undefined && textRenderState.isFadingIn();
-                    const textIsFadingOut =
-                        textRenderState !== undefined && textRenderState.isFadingOut();
+                    const textIsFadingIn = textRenderState.isFadingIn();
+                    const textIsFadingOut = textRenderState.isFadingOut();
                     const textSpaceAvailable = !this.m_screenCollisions.isAllocated(tempBox2D);
                     const textVisible =
                         pointLabel.textMayOverlap ||
@@ -1706,7 +1772,7 @@ export class TextElementsRenderer {
                         ) {
                             let textFading = false;
                             if (
-                                !iconRenderState.isFadingOut() &&
+                                !textRenderState.isFadingOut() &&
                                 textSpaceAvailable &&
                                 iconSpaceAvailable
                             ) {
@@ -1716,19 +1782,15 @@ export class TextElementsRenderer {
                                     time,
                                     true
                                 );
-                            } else if (textRenderState !== undefined) {
-                                if (textRenderState.isFading()) {
-                                    this.updateFading(textRenderState, time);
-                                    textFading = true;
-                                }
+                            } else if (textRenderState.isFading()) {
+                                this.updateFading(textRenderState, time);
+                                textFading = true;
                             }
+
                             fadeAnimationRunning =
                                 fadeAnimationRunning || textIsFadingOut || textFading;
 
-                            const opacity =
-                                textRenderState !== undefined
-                                    ? textRenderState.opacity
-                                    : iconRenderState.opacity;
+                            const opacity = textRenderState.opacity;
 
                             tempBufferAdditionParams.layer = pointLabel.renderOrder;
                             tempBufferAdditionParams.position = tempPosition;
@@ -1736,7 +1798,8 @@ export class TextElementsRenderer {
                             tempBufferAdditionParams.opacity =
                                 opacity * distanceFadeFactor * textElement.renderStyle!.opacity;
                             tempBufferAdditionParams.backgroundOpacity =
-                                tempBufferAdditionParams.opacity *
+                                opacity *
+                                distanceFadeFactor *
                                 textElement.renderStyle!.backgroundOpacity;
                             tempBufferAdditionParams.pickingData = textElement.userData
                                 ? textElement

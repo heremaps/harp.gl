@@ -351,6 +351,11 @@ export class TextElement {
     userData?: any;
 
     /**
+     * Is `true` if is a point label.
+     */
+    isPointLabel?: boolean;
+
+    /**
      * If specified, determines the render order between `TextElement`s. The number different
      * renderOrders should be as small as possible, because every specific `renderOrder` may result
      * in one or more draw calls.
