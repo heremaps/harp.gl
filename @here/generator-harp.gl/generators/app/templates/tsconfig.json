@@ -1,8 +1,7 @@
 {
     "compilerOptions": {
         "module": "commonjs",
-        "target": "es6",
-        "lib": ["es2015", "es2015.promise", "dom"],
+        "target": "es2017",
         "sourceMap": true
     },
     "exclude": ["node_modules", "dist"]
