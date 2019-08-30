@@ -7,6 +7,7 @@
 import { EarthConstants, MathUtils, Projection, ProjectionType } from "@here/harp-geoutils";
 import { assert } from "@here/harp-utils";
 import * as THREE from "three";
+import { MapViewUtils } from "./Utils";
 
 const epsilon = 0.000001;
 
@@ -139,11 +140,6 @@ export class InterpolatedClipPlanesEvaluator implements ClipPlanesEvaluator {
  * modifying camera pitch (tilt) angle. Suitable only top view camera modes.
  */
 export class AltitudeBasedClipPlanesEvaluator implements ClipPlanesEvaluator {
-    /**
-     * Gives fast look up for ground normal in case of planar projections.
-     */
-    protected static readonly GROUND_NORMAL_INV_PLANAR_PROJ = new THREE.Vector3(0, 0, -1);
-
     /**
      * Helper for reducing number of objects created at runtime.
      */
@@ -424,6 +420,11 @@ export class AltitudeBasedClipPlanesEvaluator implements ClipPlanesEvaluator {
  * between camera __look at__ vector and the ground surface normal.
  */
 export class TiltBasedClipPlanesEvaluator extends AltitudeBasedClipPlanesEvaluator {
+    /**
+     * Helper [[THREE.Plane]] instance to speed up calculations (limits allocations required).
+     */
+    protected m_tmpPlane = new THREE.Plane();
+
     evaluateClipPlanes(camera: THREE.Camera, projection: Projection): ViewRanges {
         // Different algorithms are used for spherical and planar projections.
         if (projection.type === ProjectionType.Spherical) {
@@ -436,27 +437,15 @@ export class TiltBasedClipPlanesEvaluator extends AltitudeBasedClipPlanesEvaluat
     }
 
     /**
-     * Return camera tilt angle (in degrees).
-     *
-     * Tilt is the angle between camera __look at__ (forward) vector and ground normal.
-     * @note It may depend on the projection type (in extended version).
-     * @param camera
-     * @param projection
-     * @returns angle in radians.
-     */
-    protected getCameraTiltAngle(camera: THREE.Camera, projection: Projection): number {
-        const lookAt: THREE.Vector3 = new THREE.Vector3();
-        camera.getWorldDirection(lookAt);
-        return lookAt.angleTo(this.getGroundNormalInv(camera, projection));
-    }
-
-    /**
      * Calculate the camera distance to the ground in direction of look at vector.
      * This is not equivalent to camera altitute cause value will change according to look at
      * direction. It simply measures the distance of intersection point between ray from
      * camera and ground level, yet without taking into account terrain elevation nor buildings.
      * @param camera
      * @param projection
+     * @note Use with extreme care cause due to optimizations the internal temporary vectors
+     * are used (m_tmpVectors[0], m_tmpVectors[1]). Thoose should not be used in outlining
+     * function scope (calle).
      */
     protected getCameraLookAtDistance(camera: THREE.Camera, projection: Projection): number {
         assert(projection.type !== ProjectionType.Spherical);
@@ -466,27 +455,14 @@ export class TiltBasedClipPlanesEvaluator extends AltitudeBasedClipPlanesEvaluat
         // groundDistance = altitude / cos(tiltAngle)
         // where:
         // cos(tiltAngle) = dot(lookAt, eyeInverse)
-        const lookAt: THREE.Vector3 = new THREE.Vector3();
+        const lookAt: THREE.Vector3 = this.m_tmpVectors[0];
         camera.getWorldDirection(lookAt).normalize();
-        let cosTiltAngle = lookAt.dot(TiltBasedClipPlanesEvaluator.GROUND_NORMAL_INV_PLANAR_PROJ);
+        const normal: THREE.Vector3 = this.m_tmpVectors[1];
+        projection.surfaceNormal(camera.position, normal);
+        normal.negate();
+        let cosTiltAngle = lookAt.dot(normal);
         cosTiltAngle = cosTiltAngle === 0 ? epsilon : cosTiltAngle;
         return this.getCameraAltitude(camera, projection) / cosTiltAngle;
-    }
-
-    /**
-     * Return normal to the ground surface directly above camera position.
-     * @param projection
-     */
-    protected getGroundNormalInv(camera: THREE.Camera, projection: Projection): THREE.Vector3 {
-        // Position on the ground for surface normal calculation does not matter for
-        // any planar projections, so we may simplify calculus by returning const vector:
-        if (projection.type !== ProjectionType.Spherical) {
-            return TiltBasedClipPlanesEvaluator.GROUND_NORMAL_INV_PLANAR_PROJ;
-        } else {
-            const normal = new THREE.Vector3();
-            projection.surfaceNormal(camera.position, normal);
-            return normal.negate();
-        }
     }
 
     /**
@@ -552,7 +528,7 @@ export class TiltBasedClipPlanesEvaluator extends AltitudeBasedClipPlanesEvaluat
         // D1->E1 = C1->E1 - C1->D1
 
         const cameraAltitude = this.getCameraAltitude(camera, projection);
-        const cameraPitch = this.getCameraTiltAngle(camera, projection);
+        const cameraTilt = MapViewUtils.getCameraTiltAngle(camera, projection);
         // Angle between z and c2, note, the fov is vertical, otherwise we would need to
         // translate it using aspect ratio:
         // let aspect = camera.aspect > 1 ? camera.aspect : 1 / camera.aspect;
@@ -560,11 +536,11 @@ export class TiltBasedClipPlanesEvaluator extends AltitudeBasedClipPlanesEvaluat
         // Half fov angle in radians
         const halfFovAngleRad = MathUtils.degToRad((camera.fov * aspect) / 2);
         // Angle between z and c2
-        const biggerAngleRad = cameraPitch + halfFovAngleRad;
+        const biggerAngleRad = cameraTilt + halfFovAngleRad;
         // Angle between z and c1
-        const smallerAngleRad = cameraPitch - halfFovAngleRad;
+        const smallerAngleRad = cameraTilt - halfFovAngleRad;
         // Length C1->E1
-        const projectionEyeVector = Math.tan(cameraPitch) * cameraAltitude;
+        const projectionEyeVector = Math.tan(cameraTilt) * cameraAltitude;
 
         // Length C1->D2
         const projectionHighEdge = Math.tan(biggerAngleRad) * cameraAltitude;
@@ -584,7 +560,7 @@ export class TiltBasedClipPlanesEvaluator extends AltitudeBasedClipPlanesEvaluat
     private evaluatePlanarProj(camera: THREE.Camera, projection: Projection): ViewRanges {
         assert(projection.type !== ProjectionType.Spherical);
         const clipPlanes = { ...this.minimumViewRange };
-        const cameraTilt = this.getCameraTiltAngle(camera, projection);
+        const cameraTilt = MapViewUtils.getCameraTiltAngle(camera, projection);
         const lookAtDist = this.getCameraLookAtDistance(camera, projection);
         // Generally near/far planes are set to keep look at distance, then
         // margins are applied. Here margins (min/max elevations) are meant to be
@@ -715,7 +691,7 @@ export class TiltBasedClipPlanesEvaluator extends AltitudeBasedClipPlanesEvaluat
 
         // This of course may be simplified by moving calculus entirelly to camera space,
         // because far plane is indeed defined in that space anyway:
-        const farPlane = new THREE.Plane().setFromCoplanarPoints(tdrx, tdry, tdrx2);
+        const farPlane = this.m_tmpPlane.setFromCoplanarPoints(tdrx, tdry, tdrx2);
         clipPlanes.far = farPlane.constant;
 
         // Finally apply the constraints.

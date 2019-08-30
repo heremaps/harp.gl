@@ -78,16 +78,16 @@ interface UniformsType {
 
 /**
  * Translates a linear distance value [0..1], where 1 is the distance to the far plane, into
- * [0..cameraFar].
+ * [0..maxVisibilityRange].
  *
  * Copy from MapViewUtils, since it cannot be accessed here because of circular dependencies.
  *
  * @param distance Distance from the camera (range: [0, 1]).
- * @param camera Camera applying the perspective projection.
+ * @param maxVisibilityRange maximum visibility range - distance from camera. It may be simply
+ * camera far plane distance or custom value provided.
  */
-function cameraToWorldDistance(distance: number, camera: THREE.Camera): number {
-    const perspCam = camera as THREE.PerspectiveCamera;
-    return distance * perspCam.far;
+function cameraToWorldDistance(distance: number, maxVisibilityRange: number): number {
+    return distance * maxVisibilityRange;
 }
 
 /**
@@ -383,6 +383,7 @@ export namespace FadingFeature {
      */
     export function addRenderHelper(
         object: THREE.Object3D,
+        maxVisibility: number,
         fadeNear: number | undefined,
         fadeFar: number | undefined,
         forceMaterialToTransparent: boolean,
@@ -412,12 +413,12 @@ export namespace FadingFeature {
                 fadingMaterial.fadeNear =
                     fadeNear === undefined
                         ? FadingFeature.DEFAULT_FADE_NEAR
-                        : cameraToWorldDistance(fadeNear, camera);
+                        : cameraToWorldDistance(fadeNear, maxVisibility);
 
                 fadingMaterial.fadeFar =
                     fadeFar === undefined
                         ? FadingFeature.DEFAULT_FADE_FAR
-                        : cameraToWorldDistance(fadeFar, camera);
+                        : cameraToWorldDistance(fadeFar, maxVisibility);
 
                 if (updateUniforms) {
                     const properties = renderer.properties.get(material);
