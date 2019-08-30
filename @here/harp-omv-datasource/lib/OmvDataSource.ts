@@ -4,12 +4,18 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GeometryType, ITileDecoder, OptionsMap, StyleSet } from "@here/harp-datasource-protocol";
+import {
+    GeometryType,
+    ITileDecoder,
+    OptionsMap,
+    StyleSet,
+    WorkerServiceProtocol
+} from "@here/harp-datasource-protocol";
 import { TileKey, webMercatorTilingScheme } from "@here/harp-geoutils";
 import { LineGroup } from "@here/harp-lines";
 import { CopyrightInfo } from "@here/harp-mapview";
 import { DataProvider, TileDataSource, TileFactory } from "@here/harp-mapview-decoder";
-import { getOptionValue } from "@here/harp-utils";
+import { getOptionValue, LoggerManager } from "@here/harp-utils";
 import {
     FeatureModifierId,
     OMV_TILE_DECODER_SERVICE_TYPE,
@@ -18,6 +24,8 @@ import {
 } from "./OmvDecoderDefs";
 import { OmvRestClient, OmvRestClientParameters } from "./OmvRestClient";
 import { OmvTile } from "./OmvTile";
+
+const logger = LoggerManager.instance.create("OmvDataSource");
 
 export interface LinesGeometry {
     type: GeometryType;
@@ -182,6 +190,8 @@ function getDataProvider(params: OmvWithRestClientParams | OmvWithCustomDataProv
 export type OmvWithRestClientParams = OmvRestClientParameters & OmvDataSourceParameters;
 export type OmvWithCustomDataProvider = OmvDataSourceParameters & { dataProvider: DataProvider };
 
+let missingOmvDecoderServiceInfoEmitted: boolean = false;
+
 export class OmvDataSource extends TileDataSource<OmvTile> {
     private readonly m_decoderOptions: OmvDecoderOptions;
 
@@ -213,6 +223,24 @@ export class OmvDataSource extends TileDataSource<OmvTile> {
             storageLevelOffset: getOptionValue(m_params.storageLevelOffset, -1),
             enableElevationOverlay: this.m_params.enableElevationOverlay === true
         };
+    }
+
+    async connect() {
+        try {
+            await super.connect();
+        } catch (error) {
+            if (
+                WorkerServiceProtocol.isUnknownServiceError(error) &&
+                !missingOmvDecoderServiceInfoEmitted
+            ) {
+                logger.info(
+                    "Unable to create decoder service in worker. Use " +
+                        " 'OmvTileDecoderService.start();' in decoder script."
+                );
+                missingOmvDecoderServiceInfoEmitted = true;
+            }
+            throw error;
+        }
     }
 
     /**

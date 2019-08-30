@@ -4,11 +4,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GeoJson, ITiler } from "@here/harp-datasource-protocol";
+import { GeoJson, ITiler, WorkerServiceProtocol } from "@here/harp-datasource-protocol";
 import "@here/harp-fetch";
 import { TileKey } from "@here/harp-geoutils";
 import { ConcurrentTilerFacade } from "@here/harp-mapview";
 import { DataProvider } from "@here/harp-mapview-decoder";
+import { LoggerManager } from "@here/harp-utils";
+
+const logger = LoggerManager.instance.create("GeoJsonDataProvider");
 
 export interface GeoJsonDataProviderOptions {
     /**
@@ -24,6 +27,8 @@ export interface GeoJsonDataProviderOptions {
      */
     tiler?: ITiler;
 }
+
+let missingTilerServiceInfoEmitted: boolean = false;
 
 /**
  * GeoJson [[DataProvider]]. Automatically handles tiling and simplification of static GeoJson.
@@ -51,7 +56,22 @@ export class GeoJsonDataProvider implements DataProvider {
     }
 
     async connect(): Promise<void> {
-        await this.m_tiler.connect();
+        try {
+            await this.m_tiler.connect();
+        } catch (error) {
+            if (
+                WorkerServiceProtocol.isUnknownServiceError(error) &&
+                !missingTilerServiceInfoEmitted
+            ) {
+                logger.info(
+                    "Unable to start GeoJson tiler service in worker. Use " +
+                        " 'OmvTilerService.start();' in decoder script."
+                );
+                missingTilerServiceInfoEmitted = true;
+            }
+            throw error;
+        }
+
         this.m_tiler.registerIndex(this.name, this.input).then(() => {
             this.m_registered = true;
         });

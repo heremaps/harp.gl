@@ -11,10 +11,7 @@ import {
     WorkerTilerProtocol
 } from "@here/harp-datasource-protocol";
 import { TileKey } from "@here/harp-geoutils";
-import { LoggerManager } from "@here/harp-utils";
 import { ConcurrentWorkerSet } from "./ConcurrentWorkerSet";
-
-const logger = LoggerManager.instance.create("WorkerBasedTiler");
 
 /**
  * Identifier of next tiler worker-service. Used to ensure uniqueness of service ids of tilers
@@ -74,19 +71,16 @@ export class WorkerBasedTiler implements ITiler {
     async connect(): Promise<void> {
         await this.workerSet.connect(WorkerServiceProtocol.WORKER_SERVICE_MANAGER_SERVICE_ID);
         if (!this.m_serviceCreated) {
-            try {
-                await this.workerSet.broadcastRequest(
-                    WorkerServiceProtocol.WORKER_SERVICE_MANAGER_SERVICE_ID,
-                    {
-                        type: WorkerServiceProtocol.Requests.CreateService,
-                        targetServiceType: this.tilerServiceType,
-                        targetServiceId: this.serviceId
-                    }
-                );
-                this.m_serviceCreated = true;
-            } catch (e) {
-                logger.error(e);
-            }
+            await this.workerSet.broadcastRequest(
+                WorkerServiceProtocol.WORKER_SERVICE_MANAGER_SERVICE_ID,
+                {
+                    type: WorkerServiceProtocol.Requests.CreateService,
+                    targetServiceType: this.tilerServiceType,
+                    targetServiceId: this.serviceId
+                }
+            );
+
+            this.m_serviceCreated = true;
         }
     }
 

@@ -6,7 +6,7 @@
 
 import "@here/harp-fetch";
 
-import { LoggerManager } from "@here/harp-utils";
+import { getUrlOrigin, LoggerManager } from "@here/harp-utils";
 import { isWorkerBootstrapRequest, WorkerBootstrapResponse } from "./WorkerBootstrapDefs";
 
 const logger = LoggerManager.instance.create("WorkerLoader");
@@ -19,12 +19,18 @@ const logger = LoggerManager.instance.create("WorkerLoader");
 export class WorkerLoader {
     static directlyFallbackToBlobBasedLoading: boolean = false;
     static sourceLoaderCache = new Map<string, Promise<string>>();
-
     static dependencyUrlMapping: { [name: string]: string } = {};
+
     /**
      * Starts worker by first attempting load from `scriptUrl` using native `Worker` constructor.
-     * Then waits (using [[waitWorkerInitialized]]) for its successful initialization. In case of
-     * error falls back to [[startWorkerBlob]].
+     * Then waits (using [[waitWorkerInitialized]]) for first message that indicates successful
+     * initialization.
+     * If `scriptUrl`'s origin is different than `baseUrl`, then in case of error falls back to
+     * [[startWorkerBlob]].
+     *
+     * We must resolve/reject promise at some time, so it is expected that any sane application will
+     * be able to load worker code in some amount of time.
+     * By default, this method timeouts after 10 seconds (configurable using `timeout` argument).
      *
      * This method is needed as browsers in general forbid to load worker if it's not on 'same
      * origin' regardless of Content-Security-Policy.
@@ -65,19 +71,32 @@ export class WorkerLoader {
      *   (https://developer.mozilla.org/docs/Web/HTTP/Headers/Content-Security-Policy/worker-src)
      *
      * @param scriptUrl web worker script URL
+     * @param timeout timeout in milliseconds, in which worker should set initial message
+     *    (default 10 seconds)
      */
-    static startWorker(scriptUrl: string): Promise<Worker> {
+    static startWorker(scriptUrl: string, timeout: number = 10000): Promise<Worker> {
         if (scriptUrl.startsWith("blob:")) {
-            return this.startWorkerImmediately(scriptUrl);
+            return this.startWorkerImmediately(scriptUrl, timeout);
         }
 
         if (this.directlyFallbackToBlobBasedLoading) {
-            return this.startWorkerBlob(scriptUrl);
+            return this.startWorkerBlob(scriptUrl, timeout);
         }
-        return this.startWorkerImmediately(scriptUrl).catch(error => {
-            logger.log("#startWorker: worker construction failed, attempting load with blob");
-            this.directlyFallbackToBlobBasedLoading = true;
-            return WorkerLoader.startWorkerBlob(scriptUrl);
+        return this.startWorkerImmediately(scriptUrl, timeout).catch(error => {
+            if (typeof window !== "undefined") {
+                const pageUrl = window.location.href;
+                const fullScriptUrl = new URL(scriptUrl, pageUrl).href;
+                if (getUrlOrigin(fullScriptUrl) === getUrlOrigin(pageUrl)) {
+                    throw error;
+                }
+                logger.log(
+                    "#startWorker: cross-origin worker construction failed, trying load with blob"
+                );
+                this.directlyFallbackToBlobBasedLoading = true;
+                return WorkerLoader.startWorkerBlob(scriptUrl, timeout);
+            } else {
+                throw error;
+            }
         });
     }
 
@@ -87,10 +106,10 @@ export class WorkerLoader {
      *
      * @param scriptUrl web worker script URL
      */
-    static startWorkerImmediately(scriptUrl: string): Promise<Worker> {
+    static startWorkerImmediately(scriptUrl: string, timeout: number): Promise<Worker> {
         try {
             const worker = new Worker(scriptUrl);
-            return this.waitWorkerInitialized(worker);
+            return this.waitWorkerInitialized(worker, timeout);
         } catch (error) {
             return Promise.reject(error);
         }
@@ -103,9 +122,9 @@ export class WorkerLoader {
      *
      * @param scriptUrl web worker script URL
      */
-    static startWorkerBlob(scriptUrl: string): Promise<Worker> {
+    static startWorkerBlob(scriptUrl: string, timeout: number): Promise<Worker> {
         return this.fetchScriptSourceToBlobUrl(scriptUrl).then(blobUrl => {
-            return this.startWorkerImmediately(blobUrl);
+            return this.startWorkerImmediately(blobUrl, timeout);
         });
     }
 
@@ -153,10 +172,14 @@ export class WorkerLoader {
      * `dispatchEvent`, so application code can also consume it as confirmation of successful
      * worker initialization.
      *
+     * We must resolve/reject promise at some time, so it is expected that any sane application will
+     * be able to load worker code in some amount of time.
+     *
      * @param worker [[Worker]] instance to be checked
+     * @param timeout timeout in milliseconds, in which worker should set initial message
      * @returns `Promise` that resolves to `worker` on success
      */
-    static waitWorkerInitialized(worker: Worker): Promise<Worker> {
+    static waitWorkerInitialized(worker: Worker, timeout: number): Promise<Worker> {
         return new Promise<Worker>((resolve, reject) => {
             const firstMessageCallback = (event: MessageEvent) => {
                 const message = event.data;
@@ -166,6 +189,7 @@ export class WorkerLoader {
                     for (const dependency of dependencies) {
                         const resolved = this.dependencyUrlMapping[dependency];
                         if (!resolved) {
+                            cleanup();
                             reject(
                                 new Error(
                                     `#waitWorkerInitialized: Unable to resolve '${dependency}'` +
@@ -184,9 +208,7 @@ export class WorkerLoader {
                     return;
                 }
 
-                worker.removeEventListener("message", firstMessageCallback);
-                worker.removeEventListener("error", errorCallback);
-
+                cleanup();
                 resolve(worker);
 
                 // We've just consumed first message from worker before client has any chance to
@@ -197,14 +219,30 @@ export class WorkerLoader {
                 }, 0);
             };
             const errorCallback = (error: ErrorEvent) => {
+                cleanup();
                 // Error events do not carry any useful information on tested browsers, so we assume
                 // that any error before 'firstMessageCallback' as failed Worker initialization.
+                let message = "Error during worker initialization";
+                if (error.message) {
+                    message = message + `: ${error.message}`;
+                }
+                if (typeof error.filename === "string" && typeof error.lineno === "number") {
+                    message = message + ` in ${error.filename}:${error.lineno}`;
+                }
+                reject(new Error(message));
+            };
+            const cleanup = () => {
+                clearTimeout(timerId);
                 worker.removeEventListener("message", firstMessageCallback);
                 worker.removeEventListener("error", errorCallback);
-                reject(new Error("#waitWorkerInitialized: Error event before first message."));
             };
-            worker.addEventListener("message", firstMessageCallback);
+
             worker.addEventListener("error", errorCallback);
+            worker.addEventListener("message", firstMessageCallback);
+            const timerId = setTimeout(() => {
+                cleanup();
+                reject(new Error("Timeout exceeded when waiting for first message from worker."));
+            }, timeout);
         });
     }
 }

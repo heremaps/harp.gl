@@ -115,9 +115,9 @@ export interface LimitedWorkerScope {
  */
 export function willExecuteWorkerScript(
     workerConstructorStub: any,
-    workerScript: (self: LimitedWorkerScope) => void
+    workerScript: (self: LimitedWorkerScope, scriptUrl: string) => void
 ) {
-    workerConstructorStub.callsFake(function(this: FakeWorkerData) {
+    workerConstructorStub.callsFake(function(this: FakeWorkerData, scriptUrl: string) {
         const intListeners: ListenerMap = {
             message: new MessageQueue(),
             error: new MessageQueue()
@@ -144,7 +144,7 @@ export function willExecuteWorkerScript(
         const workerStartScript = () => {
             FakeWorkerSelf.fakeSelf(workerSelf);
             try {
-                workerScript(workerSelf);
+                workerScript(workerSelf, scriptUrl);
                 FakeWorkerSelf.restoreSelf();
             } catch (error) {
                 FakeWorkerSelf.restoreSelf();
