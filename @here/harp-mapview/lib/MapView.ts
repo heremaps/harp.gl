@@ -26,7 +26,13 @@ import * as THREE from "three";
 import { AnimatedExtrusionHandler } from "./AnimatedExtrusionHandler";
 import { BackgroundDataSource } from "./BackgroundDataSource";
 import { CameraMovementDetector } from "./CameraMovementDetector";
-import { ClipPlanesEvaluator, defaultClipPlanesEvaluator } from "./ClipPlanesEvaluator";
+import {
+    ClipPlanesEvaluator,
+    defaultClipPlanesEvaluator,
+    TiltBasedClipPlanesEvaluator,
+    AltitudeBasedClipPlanesEvaluator,
+    ElevationBasedClipPlanesEvaluator
+} from "./ClipPlanesEvaluator";
 import { IMapAntialiasSettings, IMapRenderingManager, MapRenderingManager } from "./composing";
 import { ConcurrentDecoderFacade } from "./ConcurrentDecoderFacade";
 import { CopyrightInfo } from "./CopyrightInfo";
@@ -2470,12 +2476,16 @@ export class MapView extends THREE.EventDispatcher {
 
         // TBD: Update renderList only any of its params (camera, etc...) has changed.
         if (!this.lockVisibleTileSet) {
-            this.m_visibleTiles.updateRenderList(
+            const elevationRange = this.m_visibleTiles.updateRenderList(
                 this.storageLevel,
                 Math.floor(this.zoomLevel),
                 this.getEnabledTileDataSources(),
                 this.m_elevationRangeSource
             );
+            if (this.clipPlanesEvaluator instanceof ElevationBasedClipPlanesEvaluator) {
+                this.clipPlanesEvaluator.minElevation = elevationRange.minElevation;
+                this.clipPlanesEvaluator.maxElevation = elevationRange.maxElevation;
+            }
         }
 
         if (gatherStatistics) {

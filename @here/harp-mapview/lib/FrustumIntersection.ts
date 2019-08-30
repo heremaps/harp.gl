@@ -5,7 +5,14 @@
  */
 
 import { OrientedBox3 } from "@here/harp-geometry";
-import { MathUtils, Projection, ProjectionType, TileKey, TilingScheme } from "@here/harp-geoutils";
+import {
+    EarthConstants,
+    MathUtils,
+    Projection,
+    ProjectionType,
+    TileKey,
+    TilingScheme
+} from "@here/harp-geoutils";
 import { assert } from "@here/harp-utils";
 import * as THREE from "three";
 import { CalculationStatus, ElevationRangeSource } from "./ElevationRangeSource";
@@ -43,6 +50,14 @@ namespace FrustumIntersection {
          * approximation.
          */
         calculationFinal: boolean;
+        /**
+         * Minium elevation of tiles intersecting the frustum.
+         */
+        minElevation: number;
+        /**
+         * Maximum eleveation of intersecting tiles.
+         */
+        maxElevation: number;
     }
 }
 
@@ -67,11 +82,20 @@ export class FrustumIntersection {
     }
 
     /**
+     * Return camera used for generating frustum.
+     */
+    get camera(): THREE.PerspectiveCamera {
+        return this.m_camera;
+    }
+
+    /**
      * Updates the frustum to match the current camera setup.
      */
-    updateFrustum() {
+    updateFrustum(projectionMatrixOveride?: THREE.Matrix4) {
         this.m_viewProjectionMatrix.multiplyMatrices(
-            this.m_camera.projectionMatrix,
+            projectionMatrixOveride !== undefined
+                ? projectionMatrixOveride
+                : this.m_camera.projectionMatrix,
             this.m_camera.matrixWorldInverse
         );
 
@@ -98,6 +122,10 @@ export class FrustumIntersection {
     ): FrustumIntersection.Result {
         this.m_tileKeyEntries.clear();
         let calculationFinal = true;
+        // Set min/max elevation to defaults - maximum posible depression and terrain
+        // height on planet Earth.
+        let minElevation: number = 0; //EarthConstants.MIN_ELEVATION;
+        let maxElevation: number = 0; //EarthConstants.MAX_ELEVATION;
 
         for (const item of this.m_rootTileKeys) {
             this.m_tileKeyEntries.set(
@@ -109,6 +137,13 @@ export class FrustumIntersection {
         const useElevationRangeSource: boolean =
             elevationRangeSource !== undefined &&
             elevationRangeSource.getTilingScheme() === tilingScheme;
+
+        // When elevation range source is used prepare min/max values for extraction.
+        if (useElevationRangeSource) {
+            //[minElevation, maxElevation] = [maxElevation, minElevation];
+            minElevation = EarthConstants.MAX_ELEVATION;
+            maxElevation = EarthConstants.MIN_ELEVATION;
+        }
 
         const tileBounds = new THREE.Box3();
         const workList = [...this.m_rootTileKeys];
@@ -146,7 +181,10 @@ export class FrustumIntersection {
                     const range = elevationRangeSource!.getElevationRange(childTileKey);
                     geoBox.southWest.altitude = range.minElevation;
                     geoBox.northEast.altitude = range.maxElevation;
-
+                    if (childTileKey.level >= maxTileLevel) {
+                        minElevation = Math.min(range.minElevation, minElevation);
+                        maxElevation = Math.max(range.maxElevation, maxElevation);
+                    }
                     calculationFinal =
                         calculationFinal &&
                         range.calculationStatus === CalculationStatus.FinalPrecise;
@@ -165,6 +203,7 @@ export class FrustumIntersection {
                     subTileArea = this.computeSubTileArea(tileBounds);
                 }
 
+                // TODO: Consider putting min/max elevation to TileKeyEntry
                 if (subTileArea > 0) {
                     const subTileEntry = new TileKeyEntry(childTileKey, subTileArea, offset);
                     this.m_tileKeyEntries.set(tileKeyAndOffset, subTileEntry);
@@ -172,7 +211,12 @@ export class FrustumIntersection {
                 }
             }
         }
-        return { tileKeyEntries: this.m_tileKeyEntries, calculationFinal };
+        return {
+            tileKeyEntries: this.m_tileKeyEntries,
+            calculationFinal,
+            minElevation,
+            maxElevation
+        };
     }
 
     // Computes the rough screen area of the supplied box.

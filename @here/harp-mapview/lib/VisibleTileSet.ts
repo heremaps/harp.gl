@@ -3,15 +3,16 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-import { Projection, TileKey, TilingScheme } from "@here/harp-geoutils";
+import { EarthConstants, Projection, TileKey, TilingScheme } from "@here/harp-geoutils";
 import { LRUCache } from "@here/harp-lrucache";
+import THREE = require("three");
 import { ClipPlanesEvaluator } from "./ClipPlanesEvaluator";
 import { DataSource } from "./DataSource";
 import { ElevationRangeSource } from "./ElevationRangeSource";
 import { FrustumIntersection, TileKeyEntry } from "./FrustumIntersection";
 import { TileGeometryManager } from "./geometry/TileGeometryManager";
 import { Tile } from "./Tile";
-import { TileOffsetUtils } from "./Utils";
+import { MapViewUtils, TileOffsetUtils } from "./Utils";
 
 /**
  * Way the memory consumption of a tile is computed. Either in number of tiles, or in MegaBytes. If
@@ -259,7 +260,7 @@ export class VisibleTileSet {
         zoomLevel: number,
         dataSources: DataSource[],
         elevationRangeSource?: ElevationRangeSource
-    ) {
+    ): { minElevation: number; maxElevation: number } {
         let allVisibleTilesLoaded: boolean = true;
 
         const visibleTileKeysResult = this.getVisibleTileKeysForDataSources(
@@ -326,6 +327,8 @@ export class VisibleTileSet {
                 tile.visibleArea = tileEntry.area;
             }
 
+            // NOTE: It could be also good place to measure max/min elevation withing the actually
+            // visible titles, not only potential candidates
             this.m_tileGeometryManager.updateTiles(actuallyVisibleTiles);
 
             this.dataSourceTileList.push({
@@ -362,6 +365,10 @@ export class VisibleTileSet {
                 cache.tileCache.shrinkToCapacity();
             }
         });
+        return {
+            minElevation: visibleTileKeysResult.minElevation,
+            maxElevation: visibleTileKeysResult.maxElevation
+        };
     }
 
     getTile(dataSource: DataSource, tileKey: TileKey, offset: number = 0): Tile | undefined {
@@ -692,12 +699,15 @@ export class VisibleTileSet {
     ): {
         tileKeys: Array<{ dataSource: DataSource; visibleTileKeys: TileKeyEntry[] }>;
         allBoundingBoxesFinal: boolean;
+        minElevation: number;
+        maxElevation: number;
     } {
         const tileKeys = Array<{ dataSource: DataSource; visibleTileKeys: TileKeyEntry[] }>();
         let allBoundingBoxesFinal: boolean = true;
-
+        let minElevation: number = 0;
+        let maxElevation: number = 0;
         if (dataSources.length === 0) {
-            return { tileKeys, allBoundingBoxesFinal };
+            return { tileKeys, allBoundingBoxesFinal, minElevation, maxElevation };
         }
 
         const dataSourceBuckets = new Map<TilingScheme, DataSource[]>();
@@ -711,7 +721,22 @@ export class VisibleTileSet {
             }
         });
 
-        this.m_frustumIntersection.updateFrustum();
+        // If elevation is to be taken into account create extended frustum:
+        // (near ~0, far: maxVisibilityRange) that allows to consider tiles that
+        // are far below ground plane and high enough to intersect the frustum.
+        if (elevationRangeSource !== undefined) {
+            // TODO: Check how it shoould be set, and if not overriden by some cycle of below loop.
+            minElevation = EarthConstants.MAX_ELEVATION;
+            maxElevation = EarthConstants.MIN_ELEVATION;
+            const fp = MapViewUtils.getCameraFrustumPlanes(this.m_frustumIntersection.camera);
+            fp.near = 0.001; // TODO: Min near
+            fp.far = fp.far * 2; // TODO: max visibility range
+            const projectionMatrix = new THREE.Matrix4();
+            projectionMatrix.makePerspective(fp.left, fp.right, fp.bottom, fp.top, fp.near, fp.far);
+            this.m_frustumIntersection.updateFrustum(projectionMatrix);
+        } else {
+            this.m_frustumIntersection.updateFrustum();
+        }
 
         // For each bucket of data sources with same tiling scheme, calculate frustum intersection
         // once using the maximum display level.
@@ -726,6 +751,8 @@ export class VisibleTileSet {
             );
 
             allBoundingBoxesFinal = allBoundingBoxesFinal && result.calculationFinal;
+            minElevation = Math.min(result.minElevation, minElevation);
+            maxElevation = Math.max(result.maxElevation, maxElevation);
 
             for (const dataSource of bucket) {
                 const visibleTileKeys: TileKeyEntry[] = [];
@@ -742,6 +769,6 @@ export class VisibleTileSet {
             }
         }
 
-        return { tileKeys, allBoundingBoxesFinal };
+        return { tileKeys, allBoundingBoxesFinal, minElevation, maxElevation };
     }
 }
