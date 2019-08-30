@@ -11,11 +11,11 @@ import { MapEnv, StyleSetEvaluator } from "@here/harp-datasource-protocol/index-
 import {
     GeoCoordinates,
     MathUtils,
-    MercatorProjection,
+    MercatorConstants,
     polarTilingScheme,
     TileKey,
     TilingScheme,
-    TransverseMercatorProjection
+    TransverseMercatorUtils
 } from "@here/harp-geoutils";
 
 import { DataSource } from "./DataSource";
@@ -60,7 +60,7 @@ export interface PolarTileDataSourceOptions {
  */
 export class PolarTileDataSource extends DataSource {
     private m_tilingScheme: TilingScheme = polarTilingScheme;
-    private m_maxLatitude = MathUtils.radToDeg(MercatorProjection.MAXIMUM_LATITUDE);
+    private m_maxLatitude = MathUtils.radToDeg(MercatorConstants.MAXIMUM_LATITUDE);
     private m_geometryLevelOffset: number;
 
     private m_styleSetEvaluator?: StyleSetEvaluator;
@@ -183,7 +183,7 @@ export class PolarTileDataSource extends DataSource {
             return;
         }
 
-        const srcProjection = this.m_tilingScheme.projection as TransverseMercatorProjection;
+        const srcProjection = this.m_tilingScheme.projection;
         const dstProjection = this.projection;
 
         const maxLat = this.m_maxLatitude;
@@ -214,7 +214,7 @@ export class PolarTileDataSource extends DataSource {
             const centerY = (box.min.y + box.max.y) / 2;
             const center = srcProjection.unprojectPoint(new THREE.Vector3(centerX, centerY, 0));
 
-            srcProjection.alignLongitude(points, center);
+            TransverseMercatorUtils.alignLongitude(points, center);
 
             const nearest = lats.indexOf(isNorthPole ? lmax : lmin);
             for (let i = 0; i < nearest; i++) {
