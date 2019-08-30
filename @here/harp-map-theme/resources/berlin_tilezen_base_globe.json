@@ -1,5 +1,15 @@
 {
     "extends": "berlin_tilezen_base.json",
+    "definitions": {
+        "northPoleColor": {
+            "type": "color",
+            "value": "#436981"
+        },
+        "southPoleColor": {
+            "type": "color",
+            "value": "#87959a"
+        }
+    },
     "sky": {
         "type": "cubemap",
         "positiveX": "Sky_px.png",
@@ -43,5 +53,27 @@
                 "z": 1
             }
         }
-    ]
+    ],
+    "styles": {
+        "polar": [
+            {
+                "description": "North pole",
+                "when": ["==", ["get", "kind"], "north_pole"],
+                "technique": "fill",
+                "attr": {
+                    "color": ["ref", "northPoleColor"]
+                },
+                "renderOrder": 5
+            },
+            {
+                "description": "South pole",
+                "when": ["==", ["get", "kind"], "south_pole"],
+                "technique": "fill",
+                "attr": {
+                    "color": ["ref", "southPoleColor"]
+                },
+                "renderOrder": 5
+            }
+        ]
+    }
 }

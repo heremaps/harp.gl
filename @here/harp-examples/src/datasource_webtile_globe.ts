@@ -34,7 +34,19 @@ export namespace WebTileDataSourceGlobeExample {
 
         const map = new MapView({
             canvas,
-            theme: "resources/berlin_tilezen_base_globe.json",
+            theme: {
+                extends: "resources/berlin_tilezen_base_globe.json",
+                definitions: {
+                    northPoleColor: {
+                        type: "color",
+                        value: "#99cefe"
+                    },
+                    southPoleColor: {
+                        type: "color",
+                        value: "#f8fbfb"
+                    }
+                }
+            },
             projection: sphereProjection
         });
 

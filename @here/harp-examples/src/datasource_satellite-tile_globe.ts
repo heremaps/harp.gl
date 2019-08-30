@@ -34,7 +34,19 @@ export namespace SatelliteTileDataSourceGlobeExample {
 
         const map = new MapView({
             canvas,
-            theme: "resources/berlin_tilezen_base_globe.json",
+            theme: {
+                extends: "resources/berlin_tilezen_base_globe.json",
+                definitions: {
+                    northPoleColor: {
+                        type: "color",
+                        value: "#11304b"
+                    },
+                    southPoleColor: {
+                        type: "color",
+                        value: "#ffffff"
+                    }
+                }
+            },
             projection: sphereProjection
         });
 
