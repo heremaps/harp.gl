@@ -70,6 +70,9 @@ export namespace WorkerServiceProtocol {
     /**
      * This message is sent by the main thread to [[WorkerServiceManager]] to dynamically create a
      * new service.
+     *
+     * May throw `UnknownServiceError` if service of given type is not registered in
+     * [[WorkerServiceManager]], see [[isUnknownServiceError]].
      */
     export interface CreateServiceRequest extends ServiceRequest {
         type: Requests.CreateService;
@@ -85,6 +88,13 @@ export namespace WorkerServiceProtocol {
          * The newly created service instance will be available under this id.
          */
         targetServiceId: string;
+    }
+
+    /**
+     * Test if `error` thrown by [[CreateServiceRequest]] was caused by unknown type of service.
+     */
+    export function isUnknownServiceError(error: Error): boolean {
+        return /unknown targetServiceType requested: /.test(error.message);
     }
 
     /**

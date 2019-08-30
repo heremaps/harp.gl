@@ -185,7 +185,6 @@ export class TileDataSource<TileType extends Tile> extends DataSource {
 
     async connect() {
         await Promise.all([this.m_options.dataProvider.connect(), this.m_decoder.connect()]);
-
         this.m_isReady = true;
     }
 

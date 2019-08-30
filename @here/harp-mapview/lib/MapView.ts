@@ -1693,6 +1693,10 @@ export class MapView extends THREE.EventDispatcher {
                 this.update();
             })
             .catch(error => {
+                logger.error(
+                    `Failed to connect to datasource ${dataSource.name}: ${error.message}`
+                );
+
                 this.m_failedDataSources.add(dataSource.name);
                 this.dispatchEvent({
                     type: MapViewEventNames.DataSourceConnect,

@@ -8,7 +8,7 @@
  * Message sent by web worker that requests to resolve actual
  * URLs of it's dependencies.
  *
- * Main thread is expected
+ * Main thread is expected.
  */
 export interface WorkerBootstrapRequest {
     type: "worker-bootstrap-request";

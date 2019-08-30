@@ -8,7 +8,7 @@ import {
     WorkerDecoderProtocol,
     WorkerServiceProtocol
 } from "@here/harp-datasource-protocol";
-import { stubGlobalConstructor, willEventually } from "@here/harp-test-utils";
+import { assertRejected, stubGlobalConstructor, willEventually } from "@here/harp-test-utils";
 import { Logger, LogLevel, WorkerChannel, WORKERCHANNEL_MSG_TYPE } from "@here/harp-utils";
 import { assert } from "chai";
 import * as sinon from "sinon";
@@ -75,6 +75,55 @@ describe("ConcurrentWorkerSet", function() {
         assert.equal(workerConstructorStub.callCount, 3);
         assert.isAtLeast(workerConstructorStub.prototype.addEventListener.callCount, 3);
         assert(workerConstructorStub.alwaysCalledWith("./foo.js"));
+    });
+
+    it("#connect throws if any of workers fail in initialization context.", async function() {
+        // Arrange
+        const workerConstructorStub = stubGlobalConstructor(sandbox, "Worker");
+
+        let count = 0;
+        willExecuteWorkerScript(workerConstructorStub, self => {
+            if (count++ === 1) {
+                throw new Error("fooBar");
+            }
+            self.postMessage(isInitializedMessage);
+        });
+
+        const victim = new ConcurrentWorkerSet({ scriptUrl: "./foo.js", workerCount: 4 });
+
+        await assertRejected(
+            victim.connect("service-id"),
+            /Error during worker initialization: .*fooBar/
+        );
+    });
+
+    it("#connect throws if any of Worker fail directly.", async function() {
+        // Arrange
+        const workerConstructorStub = stubGlobalConstructor(sandbox, "Worker");
+
+        workerConstructorStub.callsFake(() => {
+            throw new Error("failed to load script: someError");
+        });
+
+        const victim = new ConcurrentWorkerSet({ scriptUrl: "./foo.js" });
+
+        await assertRejected(victim.connect("service-id"), /failed to load script: someError/);
+    });
+
+    it("#connect throws if any of will not send any message.", async function() {
+        // Arrange
+        const workerConstructorStub = stubGlobalConstructor(sandbox, "Worker");
+
+        workerConstructorStub.callsFake(() => {
+            // no message!
+        });
+
+        const victim = new ConcurrentWorkerSet({
+            scriptUrl: "./foo.js",
+            workerConnectionTimeout: 5
+        });
+
+        await assertRejected(victim.connect("service-id"), /timeout/i);
     });
 
     it("#add/removeReference: terminates workers when reference counts == 0", async function() {

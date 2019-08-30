@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { assert } from "chai";
 import * as sinon from "sinon";
 
 /**
@@ -139,6 +140,29 @@ export function willEventually<T = void>(test: () => T): Promise<T> {
         }
         setTimeout(iteration, 1);
     });
+}
+
+/**
+ * Assert that promise is rejected.
+ *
+ * Check that promise `v` (passed directly or result of function) is eventually rejected with error
+ * that matches `errorMessagePattern`.
+ */
+export async function assertRejected(
+    v: Promise<any> | (() => Promise<any>),
+    errorMessagePattern: string | RegExp
+) {
+    let r: any;
+    try {
+        r = await Promise.resolve(typeof v === "function" ? v() : v);
+    } catch (error) {
+        if (typeof errorMessagePattern === "string") {
+            errorMessagePattern = new RegExp(errorMessagePattern);
+        }
+        assert.match(error.message, errorMessagePattern);
+        return;
+    }
+    assert.fail(`expected exception that matches ${errorMessagePattern}, but received '${r}'`);
 }
 
 export interface EventSource<T> {

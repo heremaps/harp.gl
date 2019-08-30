@@ -46,6 +46,13 @@ export interface ConcurrentWorkerSetOptions {
      * Defaults to CLAMP(`navigator.hardwareConcurrency` - 1, 1, 4) or [[DEFAULT_WORKER_COUNT]].
      */
     workerCount?: number;
+
+    /**
+     * Timeout in milliseconds, in which each worker should set initial message.
+     *
+     * @default 10 seconds, see [[DEFAULT_WORKER_INITIALIZATION_TIMEOUT]]
+     */
+    workerConnectionTimeout?: number;
 }
 
 /**
@@ -70,6 +77,13 @@ interface WorkerRequestEntry {
  * The default number of Web Workers to use if `navigator.hardwareConcurrency` is unavailable.
  */
 const DEFAULT_WORKER_COUNT = 4;
+
+/**
+ * The default timeout for first message from worker.
+ *
+ * @see [[WorkerLoader.startWorker]]
+ */
+export const DEFAULT_WORKER_INITIALIZATION_TIMEOUT = 10000;
 
 /**
  * A set of concurrent Web Workers. Acts as a Communication Peer for [[WorkerService]] instances
@@ -177,9 +191,13 @@ export class ConcurrentWorkerSet {
 
         // Initialize the workers. The workers now have an ID to identify specific workers and
         // handle their busy state.
+        const timeout = getOptionValue(
+            this.m_options.workerConnectionTimeout,
+            DEFAULT_WORKER_INITIALIZATION_TIMEOUT
+        );
         for (let workerId = 0; workerId < this.m_workerCount; ++workerId) {
-            const workerPromise = WorkerLoader.startWorker(this.m_options.scriptUrl)
-                .then(worker => {
+            const workerPromise = WorkerLoader.startWorker(this.m_options.scriptUrl, timeout).then(
+                worker => {
                     const listener = (evt: Event): void => {
                         this.onWorkerMessage(workerId, evt as MessageEvent);
                     };
@@ -191,11 +209,8 @@ export class ConcurrentWorkerSet {
                         worker,
                         listener
                     };
-                })
-                .catch(error => {
-                    logger.error(`failed to load worker ${workerId}: ${error}`);
-                    return undefined;
-                });
+                }
+            );
             this.m_workerPromises.push(workerPromise);
         }
         this.m_stopped = false;
@@ -256,11 +271,13 @@ export class ConcurrentWorkerSet {
      * it has started successfully. This method resolves when all workers in a set have
      * `service` initialized.
      *
+     * Promise is rejected if any of worker fails to start.
+     *
      * @param serviceId The service identifier.
      */
-    connect(serviceId: string): Promise<void> {
+    async connect(serviceId: string): Promise<void> {
         this.ensureStarted();
-
+        await Promise.all(this.m_workerPromises);
         return this.getReadyPromise(serviceId).promise as Promise<void>;
     }
 
