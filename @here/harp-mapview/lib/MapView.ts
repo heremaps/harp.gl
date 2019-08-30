@@ -41,6 +41,7 @@ import { MapViewFog } from "./MapViewFog";
 import { PickHandler, PickResult } from "./PickHandler";
 import { PoiManager } from "./poi/PoiManager";
 import { PoiTableManager } from "./poi/PoiTableManager";
+import { PolarTileDataSource } from "./PolarTileDataSource";
 import { ScreenCollisions, ScreenCollisionsDebug } from "./ScreenCollisions";
 import { ScreenProjector } from "./ScreenProjector";
 import { SkyBackground } from "./SkyBackground";
@@ -147,6 +148,11 @@ const FALLBACK_FRAME_RATE = 30;
  * Zoom level to request terrain tiles for getting the height of the camera above terrain.
  */
 const TERRAIN_ZOOM_LEVEL = 4;
+
+/**
+ * Style set used by [[PolarTileDataSource]] by default.
+ */
+const DEFAULT_POLAR_STYLE_SET_NAME = "polar";
 
 /**
  * The type of `RenderEvent`.
@@ -547,6 +553,22 @@ export interface MapViewOptions {
     backgroundTilingScheme?: TilingScheme;
 
     /**
+     * Should be the [[PolarTileDataSource]] used on spherical projection.
+     */
+    enablePolarDataSource?: boolean;
+
+    /**
+     * The name of the [[StyleSet]] used by [[PolarTileDataSource]] to evaluate for the decoding.
+     */
+    polarStyleSetName?: string;
+
+    /**
+     * Storage level offset of regular tiles from reference datasource to align
+     * [[PolarTileDataSource]] tiles to.
+     */
+    polarGeometryLevelOffset?: number;
+
+    /**
      * @hidden
      * Disable all fading animations for debugging and performance measurement.
      */
@@ -698,6 +720,8 @@ export class MapView extends THREE.EventDispatcher {
     private readonly m_connectedDataSources = new Set<string>();
     private readonly m_failedDataSources = new Set<string>();
     private m_backgroundDataSource?: BackgroundDataSource;
+    private m_polarDataSource?: PolarTileDataSource;
+    private m_enablePolarDataSource: boolean = true;
 
     // gestures
     private readonly m_raycaster = new THREE.Raycaster();
@@ -811,6 +835,10 @@ export class MapView extends THREE.EventDispatcher {
         if (options.quadTreeSearchDistanceDown !== undefined) {
             this.m_visibleTileSetOptions.quadTreeSearchDistanceDown =
                 options.quadTreeSearchDistanceDown;
+        }
+
+        if (options.enablePolarDataSource !== undefined) {
+            this.m_enablePolarDataSource = options.enablePolarDataSource;
         }
 
         this.m_pixelRatio = options.pixelRatio;
@@ -933,6 +961,20 @@ export class MapView extends THREE.EventDispatcher {
 
         this.m_backgroundDataSource = new BackgroundDataSource();
         this.addDataSource(this.m_backgroundDataSource);
+
+        if (this.m_enablePolarDataSource) {
+            const styleSetName =
+                options.polarStyleSetName !== undefined
+                    ? options.polarStyleSetName
+                    : DEFAULT_POLAR_STYLE_SET_NAME;
+
+            this.m_polarDataSource = new PolarTileDataSource({
+                styleSetName,
+                geometryLevelOffset: options.polarGeometryLevelOffset
+            });
+
+            this.updatePolarDataSource();
+        }
 
         if (options.backgroundTilingScheme !== undefined) {
             this.m_backgroundDataSource.setTilingScheme(options.backgroundTilingScheme);
@@ -1397,6 +1439,7 @@ export class MapView extends THREE.EventDispatcher {
         // camera's position is based on the projected geo center.
         const geoCenter = this.geoCenter;
         this.m_visibleTileSetOptions.projection = projection;
+        this.updatePolarDataSource();
         this.clearTileCache();
         // We reset the theme, this has the affect of ensuring all caches are cleared.
         this.theme = this.theme;
@@ -2288,6 +2331,26 @@ export class MapView extends THREE.EventDispatcher {
      */
     get elevationProvider(): ElevationProvider | undefined {
         return this.m_elevationProvider;
+    }
+
+    /**
+     * Plug-in PolarTileDataSource for spherical projection and plug-out otherwise
+     */
+    private updatePolarDataSource() {
+        const dataSource = this.m_polarDataSource;
+        if (this.m_enablePolarDataSource === true && dataSource !== undefined) {
+            const twinDataSource = this.getDataSourceByName(dataSource.name);
+
+            if (this.projection.type === ProjectionType.Spherical) {
+                if(twinDataSource === undefined) {
+                    this.addDataSource(dataSource);
+                }
+            } else {
+                if(twinDataSource !== undefined) {
+                    this.removeDataSource(dataSource);
+                }
+            }
+        }
     }
 
     /**

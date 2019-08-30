@@ -20,8 +20,9 @@ import { Projection, ProjectionType } from "./Projection";
  * http://mathworld.wolfram.com/MercatorProjection.html
  *
  */
-export class TransverseMercatorProjection extends Projection {
-    static POLE_RADIUS: number = 90 - 85.05112877980659;
+class TransverseMercatorProjection extends Projection {
+    static POLE_EDGE: number = 1.4844222297453323;
+    static POLE_RADIUS: number = 90 - MathUtils.radToDeg(TransverseMercatorProjection.POLE_EDGE);
     static POLE_RADIUS_SQ: number = Math.pow(TransverseMercatorProjection.POLE_RADIUS, 2);
 
     /**
@@ -151,7 +152,7 @@ export class TransverseMercatorProjection extends Projection {
             new GeoCoordinates(north, west)
         ];
 
-        this.alignLatitude(points, points[0]);
+        TransverseMercatorUtils.alignLatitude(points, points[0]);
 
         const projected = points.map(p => this.projectPoint(p));
         const vx = projected.map(p => p.x);
@@ -258,7 +259,7 @@ export class TransverseMercatorProjection extends Projection {
         }
 
         const geoPoints = pointsToCheck.map(p => this.unprojectPoint(p));
-        this.alignLongitude(geoPoints, geoPoints[0]);
+        TransverseMercatorUtils.alignLongitude(geoPoints, geoPoints[0]);
 
         const latitudes = geoPoints.map(g => g.latitude);
         const longitudes = geoPoints.filter(g => Math.abs(g.latitude) < 90).map(g => g.longitude);
@@ -303,7 +304,9 @@ export class TransverseMercatorProjection extends Projection {
         }
         return normal;
     }
+}
 
+export class TransverseMercatorUtils {
     /**
      * There are two regions on projected space that have same geo coordinates,
      * it's the entire lines   { x: [0..1], y: 0 } and { x: [0..1], y: 1 }
@@ -311,7 +314,7 @@ export class TransverseMercatorProjection extends Projection {
      * and should be aligned somehow to fall into first or second region
      * to make proper bounding boxes, tile bounds, etc.
      */
-    alignLatitude(points: GeoCoordinatesLike[], referencePoint: GeoCoordinatesLike): void {
+    static alignLatitude(points: GeoCoordinatesLike[], referencePoint: GeoCoordinatesLike): void {
         const EPSILON = 1e-9;
 
         for (const point of points) {
@@ -327,7 +330,7 @@ export class TransverseMercatorProjection extends Projection {
      * that represent longitude edge where -180 and +180 met.
      * Points falling in this regions should be aligned to get proper boxes etc.
      */
-    alignLongitude(points: GeoCoordinatesLike[], referencePoint: GeoCoordinatesLike): void {
+    static alignLongitude(points: GeoCoordinatesLike[], referencePoint: GeoCoordinatesLike): void {
         const bad = referencePoint.longitude < 0 ? 180 : -180;
         const good = referencePoint.longitude < 0 ? -180 : 180;
 

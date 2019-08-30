@@ -15,9 +15,7 @@ import { Vector3Like } from "../math/Vector3Like";
 import { EarthConstants } from "./EarthConstants";
 import { Projection, ProjectionType } from "./Projection";
 
-export class MercatorProjection extends Projection {
-    static MAXIMUM_LATITUDE: number = 1.4844222297453323;
-
+class MercatorProjection extends Projection {
     protected static clamp(val: number, min: number, max: number): number {
         return Math.min(Math.max(min, val), max);
     }
@@ -25,8 +23,8 @@ export class MercatorProjection extends Projection {
     protected static latitudeClamp(latitude: number): number {
         return MercatorProjection.clamp(
             latitude,
-            -MercatorProjection.MAXIMUM_LATITUDE,
-            MercatorProjection.MAXIMUM_LATITUDE
+            -MercatorConstants.MAXIMUM_LATITUDE,
+            MercatorConstants.MAXIMUM_LATITUDE
         );
     }
 
@@ -215,8 +213,6 @@ export class MercatorProjection extends Projection {
 }
 
 class WebMercatorProjection extends MercatorProjection {
-    static readonly MAXIMUM_LATITUDE: number = 1.4844222297453323;
-
     projectPoint<WorldCoordinates extends Vector3Like>(
         geoPointLike: GeoCoordinatesLike,
         result?: WorldCoordinates
@@ -312,6 +308,11 @@ class WebMercatorProjection extends MercatorProjection {
         MathUtils.newVector3(0, 0, -1, result.zAxis);
         return result;
     }
+}
+
+export class MercatorConstants {
+    // Math.atan(Math.sinh(Math.PI))
+    static readonly MAXIMUM_LATITUDE: number = 1.4844222297453323;
 }
 
 /**
