@@ -2343,11 +2343,11 @@ export class MapView extends THREE.EventDispatcher {
             const twinDataSource = this.getDataSourceByName(dataSource.name);
 
             if (this.projection.type === ProjectionType.Spherical) {
-                if(twinDataSource === undefined) {
+                if (twinDataSource === undefined) {
                     this.addDataSource(dataSource);
                 }
             } else {
-                if(twinDataSource !== undefined) {
+                if (twinDataSource !== undefined) {
                     this.removeDataSource(dataSource);
                 }
             }
