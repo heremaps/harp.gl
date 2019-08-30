@@ -2511,7 +2511,7 @@ export class MapView extends THREE.EventDispatcher {
 
             // Increment the counters for all data sources.
             renderList.forEach(({ zoomLevel, renderedTiles, visibleTiles, numTilesLoading }) => {
-                currentFrameEvent!.addValue("renderCount.numTilesRendered", renderedTiles.length);
+                currentFrameEvent!.addValue("renderCount.numTilesRendered", renderedTiles.size);
                 currentFrameEvent!.addValue("renderCount.numTilesVisible", visibleTiles.length);
                 currentFrameEvent!.addValue("renderCount.numTilesLoading", numTilesLoading);
             });
@@ -2920,7 +2920,7 @@ export class MapView extends THREE.EventDispatcher {
     private getRenderedTilesCopyrightInfo(): CopyrightInfo[] {
         let result: CopyrightInfo[] = [];
         for (const tileList of this.m_visibleTiles.dataSourceTileList) {
-            for (const tile of tileList.renderedTiles) {
+            for (const tile of tileList.renderedTiles.values()) {
                 const tileCopyrightInfo = tile.copyrightInfo;
                 if (tileCopyrightInfo === undefined || tileCopyrightInfo.length === 0) {
                     continue;
