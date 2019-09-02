@@ -53,6 +53,12 @@ export interface PolarTileDataSourceOptions {
      * Default is -1.
      */
     geometryLevelOffset?: number;
+
+    /**
+     * Enable debug display for generated tiles.
+     * Default is false.
+     */
+    debugTiles?: boolean;
 }
 
 /**
@@ -62,6 +68,7 @@ export class PolarTileDataSource extends DataSource {
     private m_tilingScheme: TilingScheme = polarTilingScheme;
     private m_maxLatitude = MathUtils.radToDeg(MercatorConstants.MAXIMUM_LATITUDE);
     private m_geometryLevelOffset: number;
+    private m_debugTiles: boolean;
 
     private m_styleSetEvaluator?: StyleSetEvaluator;
     private m_northPoleMaterial?: THREE.Material;
@@ -72,12 +79,14 @@ export class PolarTileDataSource extends DataSource {
         styleSetName,
         minZoomLevel,
         maxZoomLevel,
-        storageLevelOffset = -1,
-        geometryLevelOffset = -1
+        storageLevelOffset = -2,
+        geometryLevelOffset = -1,
+        debugTiles = false
     }: PolarTileDataSourceOptions) {
         super(name, styleSetName, minZoomLevel, maxZoomLevel, storageLevelOffset);
 
         this.m_geometryLevelOffset = geometryLevelOffset;
+        this.m_debugTiles = debugTiles;
         this.cacheable = false;
     }
 
@@ -196,30 +205,61 @@ export class PolarTileDataSource extends DataSource {
         const pTR = srcProjection.unprojectPoint(new THREE.Vector3(box.max.x, box.max.y, 0));
         const pTL = srcProjection.unprojectPoint(new THREE.Vector3(box.min.x, box.max.y, 0));
 
-        // ccw for north, cw for south
-        const points = isNorthPole ? [pBL, pBR, pTR, pTL] : [pBL, pTL, pTR, pBR];
+        let points: GeoCoordinates[];
+        let needsGeometryCut = false;
 
-        const lats = points.map(p => p.latitude);
-        const lmax = Math.max(...lats);
-        const lmin = Math.min(...lats);
+        // special case where tile contains half of the hemisphere
+        if (tile.tileKey.level === 1) {
+            const isLeftHalf = box.min.x === 0;
 
-        const isAllPointsOut = isNorthPole ? lmax < poleLat : lmin > poleLat;
-        if (isAllPointsOut) {
-            return;
+            const poleX = isLeftHalf ? box.max.x : box.min.x;
+            const poleY = (box.max.y + box.min.y) / 2;
+            const pPole = srcProjection.unprojectPoint(new THREE.Vector3(poleX, poleY, 0));
+
+            // coordinates are not used, needed for right position
+            const pXX = isLeftHalf ? pBL : pBR;
+
+            points = isNorthPole
+                ? isLeftHalf
+                    ? [pPole, pTR, pXX, pBR]
+                    : [pPole, pBL, pXX, pTL]
+                : isLeftHalf
+                ? [pPole, pBR, pXX, pTR]
+                : [pPole, pTL, pXX, pBL];
+
+            needsGeometryCut = true;
+        } else {
+            // ccw for north, cw for south
+            points = isNorthPole ? [pBL, pBR, pTR, pTL] : [pBL, pTL, pTR, pBR];
+
+            const lats = points.map(p => p.latitude);
+            const lmax = Math.max(...lats);
+            const lmin = Math.min(...lats);
+
+            const isAllPointsOut = isNorthPole ? lmax < poleLat : lmin > poleLat;
+            if (isAllPointsOut) {
+                return;
+            }
+
+            const isSomePointsOut = isNorthPole ? lmin < poleLat : lmax > poleLat;
+            needsGeometryCut = isSomePointsOut;
+
+            if (needsGeometryCut) {
+                const nearest = lats.indexOf(isNorthPole ? lmax : lmin);
+                if (nearest !== 0) {
+                    for (let i = 0; i < nearest; i++) {
+                        points.push(points.shift() as GeoCoordinates);
+                    }
+                }
+            }
         }
 
-        const isSomePointsOut = isNorthPole ? lmin < poleLat : lmax > poleLat;
-        if (isSomePointsOut) {
+        if (needsGeometryCut) {
             const centerX = (box.min.x + box.max.x) / 2;
             const centerY = (box.min.y + box.max.y) / 2;
             const center = srcProjection.unprojectPoint(new THREE.Vector3(centerX, centerY, 0));
 
             TransverseMercatorUtils.alignLongitude(points, center);
-
-            const nearest = lats.indexOf(isNorthPole ? lmax : lmin);
-            for (let i = 0; i < nearest; i++) {
-                points.push(points.shift() as GeoCoordinates);
-            }
 
             // points aligned as follows:
             // a - nearest to the pole, always in
@@ -282,6 +322,15 @@ export class PolarTileDataSource extends DataSource {
             dataSource: this.name,
             tileKey: tile.tileKey
         };
+
+        if (this.m_debugTiles) {
+            const color = Math.round(Math.abs(Math.sin(11 * tile.tileKey.mortonCode())) * 0xffffff);
+            mesh.material = new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.5 });
+
+            tile.objects.push(
+                new THREE.Mesh(geometry, new THREE.MeshBasicMaterial({ color, wireframe: true }))
+            );
+        }
 
         tile.objects.push(mesh);
     }
