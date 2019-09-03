@@ -117,6 +117,8 @@ const logger = LoggerManager.instance.create("MapView");
 const DEFAULT_FONT_CATALOG = "./resources/fonts/Default_FontCatalog.json";
 const DEFAULT_CLEAR_COLOR = 0xefe9e1;
 const DEFAULT_FOV_CALCULATION: FovCalculation = { type: "dynamic", fov: 40 };
+const DEFAULT_CAM_NEAR_PLANE = 0.1;
+const DEFAULT_CAM_FAR_PLANE = 4000000;
 const MAX_FIELD_OF_VIEW = 140;
 const MIN_FIELD_OF_VIEW = 10;
 
@@ -639,6 +641,7 @@ export class MapView extends THREE.EventDispatcher {
 
     private m_focalLength: number;
     private m_lookAtDistance: number;
+    private m_maxVisibility: number;
     private m_pointOfView?: THREE.PerspectiveCamera;
 
     private m_pixelToWorld?: number;
@@ -861,12 +864,13 @@ export class MapView extends THREE.EventDispatcher {
         this.m_camera = new THREE.PerspectiveCamera(
             this.m_options.fovCalculation.fov,
             aspect,
-            0.1,
-            4000000
+            DEFAULT_CAM_NEAR_PLANE,
+            DEFAULT_CAM_FAR_PLANE
         );
         this.m_camera.up.set(0, 0, 1);
         this.m_lookAtDistance = 0;
         this.m_focalLength = 0;
+        this.m_maxVisibility = DEFAULT_CAM_FAR_PLANE;
         this.m_scene.add(this.m_camera); // ensure the camera is added to the scene.
         this.m_screenProjector = new ScreenProjector(this.m_camera);
 
@@ -1401,6 +1405,17 @@ export class MapView extends THREE.EventDispatcher {
      */
     get lookAtDistance(): number {
         return this.m_lookAtDistance;
+    }
+
+    /**
+     * The maximum visibility range that may be achieved with current camera settings.
+     * @note Visibility is directly related to camera [[ClipPlaneEvaluator]] used and determines
+     * the maximum possible distance of camera far clipping plane regardless of tilt, but may change
+     * whenever zoom level changes. Distance is meassured in world units which may be approximately
+     * euqal to meters, but this depends on the distortion related to projection type used.
+     */
+    get maxVisibility(): number {
+        return this.m_maxVisibility;
     }
 
     /**
@@ -2247,6 +2262,7 @@ export class MapView extends THREE.EventDispatcher {
         );
         this.m_camera.near = clipPlanes.near;
         this.m_camera.far = clipPlanes.far;
+        this.m_maxVisibility = clipPlanes.maximum;
 
         this.m_camera.updateProjectionMatrix();
         this.m_camera.updateMatrixWorld(false);

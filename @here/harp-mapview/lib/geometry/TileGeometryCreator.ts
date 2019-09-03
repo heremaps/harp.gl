@@ -598,6 +598,7 @@ export class TileGeometryCreator {
         const dataSource = tile.dataSource;
         const displayZoomLevel = Math.floor(mapView.zoomLevel);
         const objects = tile.objects;
+        const maxVisibility: number = mapView.maxVisibility;
 
         for (const srcGeometry of decodedTile.geometries) {
             const groups = srcGeometry.groups;
@@ -790,6 +791,7 @@ export class TileGeometryCreator {
                     const fadingParams = this.getFadingParams(displayZoomLevel, technique);
                     FadingFeature.addRenderHelper(
                         object,
+                        maxVisibility,
                         fadingParams.fadeNear,
                         fadingParams.fadeFar,
                         false,
@@ -810,6 +812,7 @@ export class TileGeometryCreator {
                     const fadingParams = this.getFadingParams(displayZoomLevel, technique);
                     FadingFeature.addRenderHelper(
                         object,
+                        maxVisibility,
                         fadingParams.fadeNear,
                         fadingParams.fadeFar,
                         true,
@@ -878,6 +881,7 @@ export class TileGeometryCreator {
 
                         FadingFeature.addRenderHelper(
                             object,
+                            maxVisibility,
                             fadingParams.fadeNear,
                             fadingParams.fadeFar,
                             true,
@@ -912,6 +916,7 @@ export class TileGeometryCreator {
                         const fadingParams = this.getFadingParams(displayZoomLevel, technique);
                         FadingFeature.addRenderHelper(
                             object,
+                            maxVisibility,
                             fadingParams.fadeNear,
                             fadingParams.fadeFar,
                             true,
@@ -1055,6 +1060,7 @@ export class TileGeometryCreator {
 
                     FadingFeature.addRenderHelper(
                         edgeObj,
+                        maxVisibility,
                         fadingParams.lineFadeNear,
                         fadingParams.lineFadeFar,
                         false,
@@ -1133,6 +1139,7 @@ export class TileGeometryCreator {
 
                     FadingFeature.addRenderHelper(
                         outlineObj,
+                        maxVisibility,
                         fadingParams.lineFadeNear,
                         fadingParams.lineFadeFar,
                         true,
@@ -1176,6 +1183,7 @@ export class TileGeometryCreator {
                     const fadingParams = this.getFadingParams(displayZoomLevel, technique);
                     FadingFeature.addRenderHelper(
                         outlineObj,
+                        maxVisibility,
                         fadingParams.fadeNear,
                         fadingParams.fadeFar,
                         true,
