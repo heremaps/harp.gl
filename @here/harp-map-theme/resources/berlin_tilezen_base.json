@@ -49,6 +49,16 @@
                 "zoomLevels": [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14],
                 "values": [2000, 1400, 1000, 500, 220, 90, 50, 30, 20, 15, 10, 5, 2]
             }
+        },
+
+        "roadsFadeNear": {
+            "type": "number",
+            "value": 0.85
+        },
+
+        "roadsFadeFar": {
+            "type": "number",
+            "value": 0.95
         }
     },
     "sky": {
@@ -322,8 +332,8 @@
                         "zoomLevels": [5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16, 18],
                         "values": [3500, 2300, 1600, 1200, 700, 400, 215, 120, 65, 45, 15, 9]
                     },
-                    "fadeNear": 0.8,
-                    "fadeFar": 0.9,
+                    "fadeNear": ["ref", "roadsFadeNear"],
+                    "fadeFar": ["ref", "roadsFadeFar"],
                     "clipping": false
                 },
                 "renderOrder": 10.3
@@ -344,8 +354,8 @@
                         "zoomLevels": [5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16, 18],
                         "values": [3500, 2300, 1600, 850, 510, 300, 160, 95, 52, 35, 13, 8]
                     },
-                    "fadeNear": 0.8,
-                    "fadeFar": 0.9,
+                    "fadeNear": ["ref", "roadsFadeNear"],
+                    "fadeFar": ["ref", "roadsFadeFar"],
                     "clipping": false
                 },
                 "renderOrder": 15.6,
@@ -373,8 +383,8 @@
                         "zoomLevels": [12, 13, 14, 16, 18],
                         "values": [60, 25, 18, 9, 7]
                     },
-                    "fadeNear": 0.8,
-                    "fadeFar": 0.9,
+                    "fadeNear": ["ref", "roadsFadeNear"],
+                    "fadeFar": ["ref", "roadsFadeFar"],
                     "clipping": false
                 },
                 "renderOrder": 15.5,
@@ -567,8 +577,8 @@
                         "zoomLevels": [8, 9, 10, 11, 12, 13, 14, 16, 18],
                         "values": [950, 600, 320, 170, 90, 45, 35, 11, 8]
                     },
-                    "fadeNear": 0.8,
-                    "fadeFar": 0.9,
+                    "fadeNear": ["ref", "roadsFadeNear"],
+                    "fadeFar": ["ref", "roadsFadeFar"],
                     "clipping": false
                 },
                 "renderOrder": 10.3
@@ -589,8 +599,8 @@
                         "zoomLevels": [8, 9, 10, 11, 12, 13, 14, 16, 18],
                         "values": [650, 400, 220, 120, 65, 35, 27, 9, 7]
                     },
-                    "fadeNear": 0.8,
-                    "fadeFar": 0.9,
+                    "fadeNear": ["ref", "roadsFadeNear"],
+                    "fadeFar": ["ref", "roadsFadeFar"],
                     "clipping": false
                 },
                 "renderOrder": 15.5,
@@ -612,8 +622,8 @@
                         "zoomLevels": [5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16, 18],
                         "values": [2500, 1500, 1100, 950, 600, 320, 170, 90, 45, 35, 11, 8]
                     },
-                    "fadeNear": 0.8,
-                    "fadeFar": 0.9,
+                    "fadeNear": ["ref", "roadsFadeNear"],
+                    "fadeFar": ["ref", "roadsFadeFar"],
                     "clipping": false
                 },
                 "renderOrder": 10.3
@@ -634,8 +644,8 @@
                         "zoomLevels": [5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16, 18],
                         "values": [2500, 1500, 1100, 650, 400, 220, 120, 65, 35, 27, 9, 7]
                     },
-                    "fadeNear": 0.8,
-                    "fadeFar": 0.9,
+                    "fadeNear": ["ref", "roadsFadeNear"],
+                    "fadeFar": ["ref", "roadsFadeFar"],
                     "clipping": false
                 },
                 "renderOrder": 15.5,
@@ -833,8 +843,8 @@
                         "zoomLevels": [10, 11, 12, 13, 14, 16, 18],
                         "values": [250, 130, 70, 35, 30, 9, 7]
                     },
-                    "fadeNear": 0.8,
-                    "fadeFar": 0.9,
+                    "fadeNear": ["ref", "roadsFadeNear"],
+                    "fadeFar": ["ref", "roadsFadeFar"],
                     "clipping": false
                 },
                 "renderOrder": 15.4,
@@ -1027,8 +1037,8 @@
                         "zoomLevels": [11, 12, 13, 14, 16, 18],
                         "values": [110, 60, 33, 23, 7.5, 6]
                     },
-                    "fadeNear": 0.8,
-                    "fadeFar": 0.9,
+                    "fadeNear": ["ref", "roadsFadeNear"],
+                    "fadeFar": ["ref", "roadsFadeFar"],
                     "clipping": false
                 },
                 "renderOrder": 10.3
@@ -1049,8 +1059,8 @@
                         "zoomLevels": [11, 12, 13, 14, 16, 18],
                         "values": [70, 40, 25, 18, 6, 5]
                     },
-                    "fadeNear": 0.8,
-                    "fadeFar": 0.9,
+                    "fadeNear": ["ref", "roadsFadeNear"],
+                    "fadeFar": ["ref", "roadsFadeFar"],
                     "clipping": false
                 },
                 "renderOrder": 15.3,
@@ -1077,8 +1087,8 @@
                         "zoomLevels": [13, 14, 16, 18],
                         "values": [20, 18, 6, 5]
                     },
-                    "fadeNear": 0.8,
-                    "fadeFar": 0.9,
+                    "fadeNear": ["ref", "roadsFadeNear"],
+                    "fadeFar": ["ref", "roadsFadeFar"],
                     "clipping": false
                 },
                 "renderOrder": 10.3
@@ -1104,8 +1114,8 @@
                         "zoomLevels": [13, 14, 16, 18],
                         "values": [20, 14, 4.5, 4]
                     },
-                    "fadeNear": 0.8,
-                    "fadeFar": 0.9,
+                    "fadeNear": ["ref", "roadsFadeNear"],
+                    "fadeFar": ["ref", "roadsFadeFar"],
                     "clipping": false
                 },
                 "renderOrder": 15.2
@@ -1151,8 +1161,8 @@
                         "zoomLevels": [13, 14, 16, 18],
                         "values": [13, 9, 4.5, 3.5]
                     },
-                    "fadeNear": 0.8,
-                    "fadeFar": 0.9,
+                    "fadeNear": ["ref", "roadsFadeNear"],
+                    "fadeFar": ["ref", "roadsFadeFar"],
                     "clipping": false
                 },
                 "renderOrder": 10.3
@@ -1173,8 +1183,8 @@
                         "zoomLevels": [13, 14, 16, 18],
                         "values": [13, 9, 3.5, 2.5]
                     },
-                    "fadeNear": 0.8,
-                    "fadeFar": 0.9,
+                    "fadeNear": ["ref", "roadsFadeNear"],
+                    "fadeFar": ["ref", "roadsFadeFar"],
                     "clipping": false
                 },
                 "renderOrder": 15.1
@@ -1247,8 +1257,8 @@
                         "zoomLevels": [5, 6, 7, 8, 9, 10, 11, 12, 13, 14],
                         "values": [320, 160, 80, 40, 15, 9, 6, 3, 1.5, 1]
                     },
-                    "fadeNear": 0.8,
-                    "fadeFar": 0.9
+                    "fadeNear": ["ref", "roadsFadeNear"],
+                    "fadeFar": ["ref", "roadsFadeFar"]
                 },
                 "renderOrder": 10,
                 "final": true
@@ -1265,8 +1275,8 @@
                 "attr": {
                     "color": "#A8ABA8",
                     "lineWidth": 5,
-                    "fadeNear": 0.8,
-                    "fadeFar": 0.9,
+                    "fadeNear": ["ref", "roadsFadeNear"],
+                    "fadeFar": ["ref", "roadsFadeFar"],
                     "clipping": false
                 },
                 "renderOrder": 10,

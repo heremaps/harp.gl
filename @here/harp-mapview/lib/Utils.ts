@@ -23,7 +23,6 @@ const MINIMUM_ATTRIBUTE_SIZE_ESTIMATION = 56;
 
 // Caching those for performance reasons.
 const groundNormalPlanarProj = new THREE.Vector3(0, 0, 1);
-const groundNormalInvPlanarProj = groundNormalPlanarProj.clone().negate();
 const groundPlane = new THREE.Plane(groundNormalPlanarProj.clone());
 const groundSphere = new THREE.Sphere(undefined, EarthConstants.EQUATORIAL_RADIUS);
 const cameraZPosition = new THREE.Vector3(0, 0, 0);
@@ -348,36 +347,35 @@ export namespace MapViewUtils {
         camera: THREE.Camera,
         projection: geoUtils.Projection
     ): number {
-        // Note using different temporary vector then internal function used.
+        // Note using different temporary vectors.
         const lookAt: THREE.Vector3 = tmpVectors[0];
         camera.getWorldDirection(lookAt);
-        return lookAt.angleTo(getGroundNormalInv(camera.position, projection));
+        return lookAt.angleTo(getGroundNormalInv(camera.position, projection, tmpVectors[1]));
     }
 
     /**
-     * Return normal to the ground surface directly above camera position.
-     *
-     * @note Function is not exposed cause it returns internal temporary vectors that
-     * can not be modified. Use with care and clone the result if required.
+     * Return normal to the ground surface (looking down) directly above camera position.
      *
      * @param position The position above the ground for which normal is calculated.
      * @param projection The projection used to transform geo coordinates to world space.
+     * @param result The pre-allocated vector for storing result value, if it is
+     * undefined function will allocate new vector and return it as result.
+     * @returns inverted ground normal copied to [[result]] vector or newly allocated
+     * if result is undefined.
      */
     function getGroundNormalInv(
         position: THREE.Vector3,
-        projection: geoUtils.Projection
+        projection: geoUtils.Projection,
+        result?: THREE.Vector3
     ): THREE.Vector3 {
-        // Position on the ground for surface normal calculation does not matter for
-        // any planar projections, so we may simplify calculus by returning const vector:
-        if (projection.type === geoUtils.ProjectionType.Planar) {
-            return groundNormalInvPlanarProj;
-        } else {
-            // Note using different vector then caller, otherwise vector data could be
-            // silently modified.
-            const normal: THREE.Vector3 = tmpVectors[1];
-            projection.surfaceNormal(position, normal);
-            return normal.negate();
+        // We can't simply return [0,0,1] for planar projections because WebMercatorProjection
+        // has ground normal inverted - as opposed to other planar projections, so use of
+        // the projection interface is encouraged to acquire ground normal.
+        if (result === undefined) {
+            result = new THREE.Vector3();
         }
+        projection.surfaceNormal(position, result);
+        return result.negate();
     }
 
     /**
