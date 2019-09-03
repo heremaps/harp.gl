@@ -297,9 +297,22 @@ describe("ExprEvaluator", function() {
             assert.equal(JSON.stringify(expr), JSON.stringify(Expr.fromJSON(expr)));
             assert.equal(evaluate(expr), 1);
         });
+
+        it("parse", function() {
+            assert.throw(() => Expr.fromJSON(["match"]), "not enough arguments");
+            assert.throw(() => Expr.fromJSON(["match", ["get", "x"]]), "not enough arguments");
+            assert.throw(
+                () => Expr.fromJSON(["match", ["get", "x"], "value1"]),
+                "not enough arguments"
+            );
+            assert.throw(
+                () => Expr.fromJSON(["match", ["get", "x"], "value1", "result1"]),
+                "fallback is missing in 'match' expression"
+            );
+        });
     });
 
-    describe("Operator 'match'", function() {
+    describe("Operator 'case'", function() {
         it("evaluate", function() {
             assert.equal(evaluate(["case", true, 123, 321]), 123);
             assert.equal(evaluate(["case", false, 123, 321]), 321);
@@ -326,9 +339,32 @@ describe("ExprEvaluator", function() {
                 123,
                 ["==", ["get", "someText"], "some text"],
                 444,
-                321
+                321 // fallback
             ];
             assert.equal(JSON.stringify(expr), JSON.stringify(Expr.fromJSON(expr)));
+        });
+
+        it("parse", function() {
+            assert.throw(() => Expr.fromJSON(["case"]), "not enough arguments");
+
+            assert.throw(() => Expr.fromJSON(["case", ["get", "x"]]), "not enough arguments");
+
+            assert.throw(
+                () => Expr.fromJSON(["case", ["get", "x"], "result1"]),
+                "fallback is missing in 'case' expression"
+            );
+
+            assert.throw(
+                () =>
+                    Expr.fromJSON([
+                        "case",
+                        ["get", "x"],
+                        "result1", // if x returns result1
+                        ["get", "y"],
+                        "result2" // if y returns result2
+                    ]),
+                "fallback is missing in 'case' expression"
+            );
         });
     });
 });

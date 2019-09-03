@@ -116,11 +116,22 @@ export class ExprPool implements ExprVisitor<Expr, void> {
     }
 
     visitMatchExpr(expr: MatchExpr, context: void): Expr {
-        return expr;
+        const value = expr.value.accept(this, context);
+        const branches: typeof expr.branches = expr.branches.map(([label, body]) => [
+            label,
+            body.accept(this, context)
+        ]);
+        const fallback = expr.fallback.accept(this, context);
+        return new MatchExpr(value, branches, fallback);
     }
 
     visitCaseExpr(expr: CaseExpr, context: void): Expr {
-        return expr;
+        const branches: typeof expr.branches = expr.branches.map(([condition, body]) => [
+            condition.accept(this, context),
+            body.accept(this, context)
+        ]);
+        const fallback = expr.fallback.accept(this, context);
+        return new CaseExpr(branches, fallback);
     }
 
     visitCallExpr(expr: CallExpr, context: void): Expr {
