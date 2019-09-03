@@ -2264,7 +2264,7 @@ export class TextElementsRenderer {
     }
 
     private renderTileList(
-        visibleTiles: Tile[],
+        visibleTiles: Map<number, Tile>,
         time: number,
         frameNumber: number,
         zoomLevel: number,
@@ -2272,13 +2272,13 @@ export class TextElementsRenderer {
         renderedTextElements?: TextElement[],
         secondChanceTextElements?: TextElement[]
     ) {
-        if (this.m_textRenderers.length === 0 || visibleTiles.length === 0) {
+        if (this.m_textRenderers.length === 0 || visibleTiles.size === 0) {
             return;
         }
 
         const consideredTextElements = new GroupedPriorityList<TextElement>();
 
-        for (const tile of visibleTiles) {
+        for (const tile of visibleTiles.values()) {
             consideredTextElements.merge(tile.placedTextElements);
         }
 
@@ -2322,7 +2322,7 @@ export class TextElementsRenderer {
         let numTextElementsInScene = 0;
 
         renderList.forEach(renderListEntry => {
-            for (const tile of renderListEntry.renderedTiles) {
+            for (const tile of renderListEntry.renderedTiles.values()) {
                 numTextElementsInScene += tile.textElementGroups.count();
                 numTextElementsInScene += tile.userTextElements.length;
             }

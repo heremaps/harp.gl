@@ -3,8 +3,15 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-import { Projection, TileKey, TilingScheme } from "@here/harp-geoutils";
+import {
+    GeoCoordinates,
+    Projection,
+    TileKey,
+    TileKeyUtils,
+    TilingScheme
+} from "@here/harp-geoutils";
 import { LRUCache } from "@here/harp-lrucache";
+import { assert } from "@here/harp-utils";
 import { ClipPlanesEvaluator } from "./ClipPlanesEvaluator";
 import { DataSource } from "./DataSource";
 import { ElevationRangeSource } from "./ElevationRangeSource";
@@ -155,10 +162,11 @@ export interface DataSourceTileList {
     visibleTiles: Tile[];
 
     /**
-     * List of tiles that will be rendered. This includes tiles that are not in the
-     * [[visibleTiles]] list but that are used as fallbacks b/c they are still in the cache.
+     * Map of tiles that will be rendered, key is the the combination of tile key and offset, see
+     * [[getKeyForTileKeyAndOffset]]. This includes tiles that are not in the [[visibleTiles]]
+     * list but that are used as fallbacks b/c they are still in the cache.
      */
-    renderedTiles: Tile[];
+    renderedTiles: Map<number, Tile>;
 }
 
 /**
@@ -335,7 +343,7 @@ export class VisibleTileSet {
                 allVisibleTileLoaded: allDataSourceTilesLoaded,
                 numTilesLoading,
                 visibleTiles: actuallyVisibleTiles,
-                renderedTiles: actuallyVisibleTiles
+                renderedTiles: new Map<number, Tile>()
             });
             allVisibleTilesLoaded = allVisibleTilesLoaded && allDataSourceTilesLoaded;
         }
@@ -364,40 +372,133 @@ export class VisibleTileSet {
         });
     }
 
+    /**
+     * Gets the tile corresponding to the given data source, key and offset, creating it if
+     * necessary.
+     *
+     * @param dataSource The data source the tile belongs to.
+     * @param tileKey The key identifying the tile.
+     * @param offset Tile offset.
+     * @return The tile if it was found or created, undefined otherwise.
+     */
     getTile(dataSource: DataSource, tileKey: TileKey, offset: number = 0): Tile | undefined {
-        function updateTile(tileToUpdate?: Tile) {
-            if (tileToUpdate === undefined) {
-                return;
-            }
-            // Keep the tile from being removed from the cache.
-            tileToUpdate.frameNumLastRequested = dataSource.mapView.frameNumber;
+        const cacheOnly = false;
+        return this.getTileImpl(dataSource, tileKey, offset, cacheOnly);
+    }
+
+    /**
+     * Gets the tile corresponding to the given data source, key and offset from the cache.
+     *
+     * @param dataSource The data source the tile belongs to.
+     * @param tileKey The key identifying the tile.
+     * @param offset Tile offset.
+     * @return The tile if found in cache, undefined otherwise.
+     */
+    getCachedTile(dataSource: DataSource, tileKey: TileKey, offset: number = 0): Tile | undefined {
+        assert(dataSource.cacheable);
+        const cacheOnly = true;
+        return this.getTileImpl(dataSource, tileKey, offset, cacheOnly);
+    }
+
+    /**
+     * Gets the tile corresponding to the given data source, key and offset from the rendered tiles.
+     *
+     * @param dataSource The data source the tile belongs to.
+     * @param tileKey The key identifying the tile.
+     * @param offset Tile offset.
+     * @return The tile if found among the rendered tiles, undefined otherwise.
+     */
+    getRenderedTile(
+        dataSource: DataSource,
+        tileKey: TileKey,
+        offset: number = 0
+    ): Tile | undefined {
+        const dataSourceVisibleTileList = this.dataSourceTileList.find(list => {
+            return list.dataSource === dataSource;
+        });
+
+        if (dataSourceVisibleTileList === undefined) {
+            return undefined;
         }
 
-        if (!dataSource.cacheable) {
-            const resultTile = dataSource.getTile(tileKey);
-            updateTile(resultTile);
-            return resultTile;
+        return dataSourceVisibleTileList.renderedTiles.get(
+            TileOffsetUtils.getKeyForTileKeyAndOffset(tileKey, offset)
+        );
+    }
+
+    /**
+     * Gets the tile corresponding to the given data source and location from the rendered tiles.
+     *
+     * @param dataSource The data source the tile belongs to.
+     * @param geoPoint The geolocation included within the tile.
+     * @return The tile if found among the rendered tiles, undefined otherwise.
+     */
+    getRenderedTileAtLocation(
+        dataSource: DataSource,
+        geoPoint: GeoCoordinates,
+        offset: number = 0
+    ): Tile | undefined {
+        const dataSourceVisibleTileList = this.dataSourceTileList.find(list => {
+            return list.dataSource === dataSource;
+        });
+
+        if (dataSourceVisibleTileList === undefined) {
+            return undefined;
         }
 
-        const { tileCache } = this.getOrCreateCache(dataSource);
+        const tilingScheme = dataSource.getTilingScheme();
+        const visibleLevel = dataSourceVisibleTileList.zoomLevel;
+        const visibleTileKey = tilingScheme.getTileKey(geoPoint, visibleLevel);
 
-        const tileKeyMortonCode = TileOffsetUtils.getKeyForTileKeyAndOffset(tileKey, offset);
-        let tile = tileCache.get(tileKeyMortonCode);
+        if (!visibleTileKey) {
+            return undefined;
+        }
 
-        if (tile !== undefined && tile.offset === offset) {
-            updateTile(tile);
+        let tile = dataSourceVisibleTileList.renderedTiles.get(
+            TileOffsetUtils.getKeyForTileKeyAndOffset(visibleTileKey, offset)
+        );
+
+        if (tile !== undefined) {
             return tile;
         }
 
-        tile = dataSource.getTile(tileKey);
+        const { searchLevelsUp, searchLevelsDown } = this.getCacheSearchLevels(
+            dataSource,
+            visibleLevel
+        );
 
-        if (tile !== undefined) {
-            tile.offset = offset;
-            updateTile(tile);
-            tileCache.set(tileKeyMortonCode, tile);
-            this.m_tileGeometryManager.initTile(tile);
+        let parentTileKey = visibleTileKey;
+        for (let levelOffset = 1; levelOffset <= searchLevelsUp; ++levelOffset) {
+            parentTileKey = parentTileKey.parent();
+
+            tile = dataSourceVisibleTileList.renderedTiles.get(
+                TileOffsetUtils.getKeyForTileKeyAndOffset(parentTileKey, offset)
+            );
+            if (tile !== undefined) {
+                return tile;
+            }
         }
-        return tile;
+
+        const worldPoint = tilingScheme.projection.projectPoint(geoPoint);
+
+        for (let levelOffset = 1; levelOffset <= searchLevelsDown; ++levelOffset) {
+            const childLevel = visibleLevel + levelOffset;
+            const childTileKey = TileKeyUtils.worldCoordinatesToTileKey(
+                tilingScheme,
+                worldPoint,
+                childLevel
+            );
+            if (childTileKey) {
+                tile = dataSourceVisibleTileList.renderedTiles.get(
+                    TileOffsetUtils.getKeyForTileKeyAndOffset(childTileKey, offset)
+                );
+
+                if (tile !== undefined) {
+                    return tile;
+                }
+            }
+        }
+        return undefined;
     }
 
     /**
@@ -497,6 +598,22 @@ export class VisibleTileSet {
         }
     }
 
+    private getCacheSearchLevels(
+        dataSource: DataSource,
+        visibleLevel: number
+    ): { searchLevelsUp: number; searchLevelsDown: number } {
+        const searchLevelsUp = Math.min(
+            this.options.quadTreeSearchDistanceUp,
+            Math.max(0, visibleLevel - dataSource.minZoomLevel)
+        );
+        const searchLevelsDown = Math.min(
+            this.options.quadTreeSearchDistanceDown,
+            Math.max(0, dataSource.maxZoomLevel - visibleLevel)
+        );
+
+        return { searchLevelsUp, searchLevelsDown };
+    }
+
     /**
      * Search cache to replace visible but yet empty tiles with already loaded siblings in nearby
      * zoom levels.
@@ -509,37 +626,34 @@ export class VisibleTileSet {
             const dataSource = renderListEntry.dataSource;
             const tilingScheme = dataSource.getTilingScheme();
             const displayZoomLevel = renderListEntry.zoomLevel;
-            const renderedTiles: Map<number, Tile> = new Map<number, Tile>();
+            const renderedTiles = renderListEntry.renderedTiles;
             const checkedTiles: Set<number> = new Set<number>();
 
             // Direction in quad tree to search: up -> shallower levels, down -> deeper levels.
             enum SearchDirection {
+                NONE,
                 UP,
                 DOWN,
                 BOTH
             }
             const tileCache = this.m_dataSourceCache.get(dataSource.name);
-            if (tileCache === undefined) {
-                return;
+            let defaultSearchDirection = SearchDirection.NONE;
+
+            if (tileCache !== undefined) {
+                const { searchLevelsUp, searchLevelsDown } = this.getCacheSearchLevels(
+                    dataSource,
+                    displayZoomLevel
+                );
+
+                defaultSearchDirection =
+                    searchLevelsDown > 0 && searchLevelsUp > 0
+                        ? SearchDirection.BOTH
+                        : searchLevelsDown > 0
+                        ? SearchDirection.DOWN
+                        : searchLevelsUp > 0
+                        ? SearchDirection.UP
+                        : SearchDirection.NONE;
             }
-
-            const cacheSearchUp =
-                this.options.quadTreeSearchDistanceUp > 0 &&
-                displayZoomLevel > dataSource.minZoomLevel;
-            const cacheSearchDown =
-                this.options.quadTreeSearchDistanceDown > 0 &&
-                displayZoomLevel < dataSource.maxZoomLevel;
-
-            if (!cacheSearchDown && !cacheSearchUp) {
-                return;
-            }
-
-            const defaultSearchDirection =
-                cacheSearchDown && cacheSearchUp
-                    ? SearchDirection.BOTH
-                    : cacheSearchDown
-                    ? SearchDirection.DOWN
-                    : SearchDirection.UP;
 
             let incompleteTiles: Map<number, SearchDirection> = new Map();
 
@@ -548,7 +662,7 @@ export class VisibleTileSet {
                     tile.tileKey,
                     tile.offset
                 );
-                if (tile.hasGeometry) {
+                if (tile.hasGeometry || defaultSearchDirection === SearchDirection.NONE) {
                     renderedTiles.set(tileCode, tile);
                 } else {
                     // if dataSource supports cache and it was existing before this render
@@ -561,6 +675,8 @@ export class VisibleTileSet {
                 // short circuit, nothing to be done
                 return;
             }
+
+            assert(tileCache !== undefined);
 
             // iterate over incomplete (not loaded tiles)
             // and find their parents or children that are in cache that can be rendered temporarily
@@ -577,7 +693,7 @@ export class VisibleTileSet {
 
                         if (!checkedTiles.has(parentCode) && !renderedTiles.get(parentCode)) {
                             checkedTiles.add(parentCode);
-                            const parentTile = tileCache.get(parentCode);
+                            const parentTile = tileCache!.get(parentCode);
                             if (parentTile !== undefined && parentTile.hasGeometry) {
                                 // parentTile has geometry, so can be reused as fallback
                                 renderedTiles.set(parentCode, parentTile);
@@ -616,7 +732,7 @@ export class VisibleTileSet {
                                 offset
                             );
                             checkedTiles.add(childTileCode);
-                            const childTile = tileCache.get(childTileCode);
+                            const childTile = tileCache!.get(childTileCode);
 
                             if (childTile !== undefined && childTile.hasGeometry) {
                                 // childTile has geometry, so can be reused as fallback
@@ -633,9 +749,52 @@ export class VisibleTileSet {
                 });
                 incompleteTiles = nextLevelCandidates;
             }
-
-            renderListEntry.renderedTiles = Array.from(renderedTiles.values());
         });
+    }
+
+    private getTileImpl(
+        dataSource: DataSource,
+        tileKey: TileKey,
+        offset: number,
+        cacheOnly: boolean
+    ): Tile | undefined {
+        function updateTile(tileToUpdate?: Tile) {
+            if (tileToUpdate === undefined) {
+                return;
+            }
+            // Keep the tile from being removed from the cache.
+            tileToUpdate.frameNumLastRequested = dataSource.mapView.frameNumber;
+        }
+
+        if (!dataSource.cacheable && !cacheOnly) {
+            const resultTile = dataSource.getTile(tileKey);
+            updateTile(resultTile);
+            return resultTile;
+        }
+
+        const { tileCache } = this.getOrCreateCache(dataSource);
+
+        const tileKeyMortonCode = TileOffsetUtils.getKeyForTileKeyAndOffset(tileKey, offset);
+        let tile = tileCache.get(tileKeyMortonCode);
+
+        if (tile !== undefined && tile.offset === offset) {
+            updateTile(tile);
+            return tile;
+        }
+
+        if (cacheOnly) {
+            return undefined;
+        }
+
+        tile = dataSource.getTile(tileKey);
+
+        if (tile !== undefined) {
+            tile.offset = offset;
+            updateTile(tile);
+            tileCache.set(tileKeyMortonCode, tile);
+            this.m_tileGeometryManager.initTile(tile);
+        }
+        return tile;
     }
 
     private getOrCreateCache(dataSource: DataSource): DataSourceCache {

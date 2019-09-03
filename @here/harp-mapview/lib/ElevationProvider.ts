@@ -13,8 +13,7 @@ export interface ElevationProvider {
      *
      * @param geoPoint geo position to query height for.
      * @param level Optional data level that should be used for getting the elevation.
-     *              If undefined the deepest available tile that contains the geoPoint will be
-     *              used.
+     *              If undefined, the view's visible tile containing the point will be used.
      * @returns The height at geoPoint or undefined if no tile was found that covers the geoPoint.
      */
     getHeight(geoPoint: GeoCoordinates, level?: number): number | undefined;

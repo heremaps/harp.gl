@@ -96,10 +96,10 @@ export interface TileGeometryManager {
     /**
      * Return all [[GeometryKind]]s that are contained in the tiles.
      *
-     * @param {Tile[]} tiles The
+     * @param {IterableIterator<Tile>} tiles The
      * @returns {GeometryKindSet}
      */
-    getAvailableKinds(tiles: Tile[]): GeometryKindSet;
+    getAvailableKinds(tiles: IterableIterator<Tile>): GeometryKindSet;
 
     /**
      * Sets a callback that will be called for every updated tile on [[updateTiles]].
@@ -218,7 +218,7 @@ export abstract class TileGeometryManagerBase implements TileGeometryManager {
         }
     }
 
-    getAvailableKinds(tiles: Tile[]): GeometryKindSet {
+    getAvailableKinds(tiles: IterableIterator<Tile>): GeometryKindSet {
         const visibleKinds: GeometryKindSet = new GeometryKindSet();
         for (const tile of tiles) {
             const geometryLoader = tile.tileGeometryLoader as TileGeometryLoader;

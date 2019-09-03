@@ -7,6 +7,7 @@
 import { GeoBox } from "../coordinates/GeoBox";
 import { GeoCoordinates } from "../coordinates/GeoCoordinates";
 import { GeoCoordinatesLike } from "../coordinates/GeoCoordinatesLike";
+import { Vector3Like } from "../math/Vector3Like";
 import { TileKey } from "./TileKey";
 import { TilingScheme } from "./TilingScheme";
 
@@ -17,9 +18,18 @@ export class TileKeyUtils {
         level: number
     ): TileKey | null {
         const projection = tilingScheme.projection;
-        const subdivisionScheme = tilingScheme.subdivisionScheme;
-
         const worldPoint = projection.projectPoint(geoPoint);
+
+        return this.worldCoordinatesToTileKey(tilingScheme, worldPoint, level);
+    }
+
+    static worldCoordinatesToTileKey(
+        tilingScheme: TilingScheme,
+        worldPoint: Vector3Like,
+        level: number
+    ): TileKey | null {
+        const projection = tilingScheme.projection;
+        const subdivisionScheme = tilingScheme.subdivisionScheme;
 
         const cx = subdivisionScheme.getLevelDimensionX(level);
         const cy = subdivisionScheme.getLevelDimensionY(level);

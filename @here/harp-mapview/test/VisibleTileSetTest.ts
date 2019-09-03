@@ -13,6 +13,7 @@ import { FrustumIntersection } from "../lib/FrustumIntersection";
 import { SimpleTileGeometryManager } from "../lib/geometry/TileGeometryManager";
 import { MapView, MapViewDefaults } from "../lib/MapView";
 import { Tile } from "../lib/Tile";
+import { TileOffsetUtils } from "../lib/Utils";
 import { VisibleTileSet } from "../lib/VisibleTileSet";
 import { FakeOmvDataSource } from "./FakeOmvDataSource";
 
@@ -101,7 +102,7 @@ describe("VisibleTileSet", function() {
         assert.equal(visibleTiles[1].tileKey.mortonCode(), 371506850);
 
         const renderedTiles = dataSourceTileList[0].renderedTiles;
-        assert.equal(renderedTiles.length, 0);
+        assert.equal(renderedTiles.size, 0);
     });
 
     it("#updateRenderList properly culls panorama of Berlin center", function() {
@@ -135,7 +136,7 @@ describe("VisibleTileSet", function() {
         assert.equal(visibleTiles[4].tileKey.mortonCode(), 371506827);
 
         const renderedTiles = dataSourceTileList[0].renderedTiles;
-        assert.equal(renderedTiles.length, 0);
+        assert.equal(renderedTiles.size, 0);
     });
 
     it("#updateRenderList properly finds parent loaded tiles in Berlin center", function() {
@@ -146,13 +147,12 @@ describe("VisibleTileSet", function() {
 
         // same as first found code few lines below
         const parentCode = TileKey.parentMortonCode(371506851);
+        const parentTileKey = TileKey.fromMortonCode(parentCode);
+        const parentKey = TileOffsetUtils.getKeyForTileKeyAndOffset(parentTileKey, 0);
 
         // fake MapView to think that it has already loaded
         // parent of both found tiles
-        const parentTile = fixture.vts.getTile(
-            fixture.ds[0],
-            TileKey.fromMortonCode(parentCode)
-        ) as Tile;
+        const parentTile = fixture.vts.getTile(fixture.ds[0], parentTileKey) as Tile;
         assert.exists(parentTile);
         parentTile.forceHasGeometry(true);
 
@@ -167,8 +167,9 @@ describe("VisibleTileSet", function() {
 
         // some tiles are visible ^^^, but the parent is actually rendered
         const renderedTiles = dataSourceTileList[0].renderedTiles;
-        assert.equal(renderedTiles.length, 1);
-        assert.equal(renderedTiles[0].tileKey.mortonCode(), parentCode);
+        assert.equal(renderedTiles.size, 1);
+        assert(renderedTiles.has(parentKey));
+        assert.equal(renderedTiles.get(parentKey)!.tileKey.mortonCode(), parentCode);
     });
 
     it("#markTilesDirty properly handles cached & visible tiles", async function() {
