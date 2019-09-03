@@ -90,6 +90,12 @@ export abstract class Expr {
                 return new ContainsExpr(this.fromJSON(node[1]), elements);
 
             case "match": {
+                if (node.length < 4) {
+                    throw new Error("not enough arguments");
+                }
+                if (!(node.length % 2)) {
+                    throw new Error("fallback is missing in 'match' expression");
+                }
                 const value = this.fromJSON(node[1]);
                 const conditions: Array<[MatchLabel, Expr]> = [];
                 for (let i = 2; i < node.length - 1; i += 2) {
@@ -111,6 +117,12 @@ export abstract class Expr {
             }
 
             case "case": {
+                if (node.length < 3) {
+                    throw new Error("not enough arguments");
+                }
+                if (node.length % 2) {
+                    throw new Error("fallback is missing in 'case' expression");
+                }
                 const branches: Array<[Expr, Expr]> = [];
                 for (let i = 1; i < node.length - 1; i += 2) {
                     const condition = this.fromJSON(node[i]);

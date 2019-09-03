@@ -7,6 +7,7 @@
 import {
     BooleanLiteralExpr,
     CallExpr,
+    CaseExpr,
     ContainsExpr,
     Env,
     Expr,
@@ -17,8 +18,7 @@ import {
     NumberLiteralExpr,
     StringLiteralExpr,
     Value,
-    VarExpr,
-    CaseExpr
+    VarExpr
 } from "./Expr";
 
 import { CastOperators } from "./operators/CastOperators";
@@ -113,7 +113,7 @@ export class ExprEvaluator implements ExprVisitor<Value, ExprEvaluatorContext> {
     visitMatchExpr(match: MatchExpr, context: ExprEvaluatorContext): Value {
         const r = context.evaluate(match.value);
         for (const [label, body] of match.branches) {
-            if (Array.isArray(label) && label.includes(r as any)) {
+            if (Array.isArray(label) && (label as any[]).includes(r)) {
                 return context.evaluate(body);
             } else if (label === r) {
                 return context.evaluate(body);
