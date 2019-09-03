@@ -28,7 +28,50 @@ import { OmvDecodedTileEmitter } from "../lib/OmvDecodedTileEmitter";
 import { OmvDecoder } from "../lib/OmvDecoder";
 import { world2tile } from "../lib/OmvUtils";
 
+class OmvDecodedTileEmitterTest extends OmvDecodedTileEmitter {
+    splitJaggyLinesTest(
+        lines: number[][],
+        minEstimatedLabelLengthSqr: number,
+        maxCornerAngle: number
+    ): number[][] {
+        return this.splitJaggyLines(lines, minEstimatedLabelLengthSqr, maxCornerAngle);
+    }
+}
+
 describe("OmvDecodedTileEmitter", function() {
+    function createTileEmitter(): {
+        tileEmitter: OmvDecodedTileEmitterTest;
+        styleSetEvaluator: StyleSetEvaluator;
+    } {
+        const tileKey = TileKey.fromRowColumnLevel(0, 0, 1);
+        const projection = mercatorProjection;
+        const tileSizeOnScreen = 100;
+
+        const decodeInfo = new OmvDecoder.DecodeInfo(projection, tileKey, tileSizeOnScreen);
+
+        const styleSet: StyleSet = [
+            {
+                when: "1",
+                technique: "standard",
+                attr: {
+                    textureCoordinateType: TextureCoordinateType.TileSpace
+                }
+            }
+        ];
+
+        const styleSetEvaluator = new StyleSetEvaluator(styleSet);
+
+        const tileEmitter = new OmvDecodedTileEmitterTest(
+            decodeInfo,
+            styleSetEvaluator,
+            false,
+            false,
+            false
+        );
+
+        return { tileEmitter, styleSetEvaluator };
+    }
+
     function checkVertexAttribute(
         geometry: Geometry,
         index: number,
@@ -75,25 +118,7 @@ describe("OmvDecodedTileEmitter", function() {
             }
         ];
 
-        const styleSet: StyleSet = [
-            {
-                when: "1",
-                technique: "standard",
-                attr: {
-                    textureCoordinateType: TextureCoordinateType.TileSpace
-                }
-            }
-        ];
-
-        const styleSetEvaluator = new StyleSetEvaluator(styleSet);
-
-        const tileEmitter = new OmvDecodedTileEmitter(
-            decodeInfo,
-            styleSetEvaluator,
-            false,
-            false,
-            false
-        );
+        const { tileEmitter, styleSetEvaluator } = createTileEmitter();
 
         const mockEnv = new MapEnv({ layer: "mock-layer" });
         const matchedTechniques = styleSetEvaluator.getMatchingTechniques(mockEnv);
@@ -141,5 +166,46 @@ describe("OmvDecodedTileEmitter", function() {
 
         assert.closeTo(texCoords[6], 0, eps);
         assert.closeTo(texCoords[7], 1, eps);
+    });
+
+    it("Test splitJaggyLines for short paths", function() {
+        const { tileEmitter } = createTileEmitter();
+
+        const lines = [[0, 0, 0, 1, 1, 0]];
+
+        const splitLines = tileEmitter.splitJaggyLinesTest(lines, 5, 10);
+        assert.equal(splitLines.length, 0, "Line segment too short");
+    });
+
+    it("Test splitJaggyLines for multiple short paths", function() {
+        const { tileEmitter } = createTileEmitter();
+
+        const lines = [[0, 0, 0, 1, 0, 0, 1, 1, 0, 10, 10, 0, 20, 20, 0]];
+
+        const splitLines = tileEmitter.splitJaggyLinesTest(lines, 25, Math.PI / 8);
+        assert.equal(splitLines.length, 1, "One segment out of three segments is too short");
+        assert.equal(splitLines[0].length, 9);
+        assert.equal(splitLines[0][0], 1);
+        assert.equal(splitLines[0][3], 10);
+        assert.equal(splitLines[0][6], 20);
+    });
+
+    it("Test splitJaggyLines for path with sharp angle", function() {
+        const { tileEmitter } = createTileEmitter();
+
+        const lines = [[0, 0, 0, 10, 10, 0, 20, 0, 0]];
+
+        const splitLines = tileEmitter.splitJaggyLinesTest(lines, 25, Math.PI / 8);
+        assert.equal(
+            splitLines.length,
+            2,
+            "One segment is split at sharp corner into two segments"
+        );
+        assert.equal(splitLines[0].length, 6);
+        assert.equal(splitLines[1].length, 6);
+        assert.equal(splitLines[0][0], 0);
+        assert.equal(splitLines[0][3], 10);
+        assert.equal(splitLines[1][0], 10);
+        assert.equal(splitLines[1][3], 20);
     });
 });
