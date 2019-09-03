@@ -23,10 +23,8 @@
         "url": "https://here.com"
     },
     "license": "Apache-2.0",
-    "dependencies": {
-        "@here/harp-datasource-protocol": "^0.10.0"
-    },
     "devDependencies": {
+        "@here/harp-datasource-protocol": "^0.10.0",
         "@here/harp-atlas-tools": "^0.1.1",
         "@here/harp-fontcatalog": "^0.1.1",
         "@here/harp-test-utils": "^0.10.0",
