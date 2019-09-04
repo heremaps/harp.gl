@@ -6,6 +6,8 @@
 import {
     DecodedTile,
     GeometryType,
+    InterpolatedProperty,
+    StyleLength,
     Technique,
     TextPathGeometry
 } from "@here/harp-datasource-protocol";
@@ -135,7 +137,7 @@ export interface RoadIntersectionData {
     /**
      * An array of widths of the roads. The lists of IDs and widths have the same size.
      */
-    widths: number[];
+    widths: Array<StyleLength | InterpolatedProperty<StyleLength>>;
 
     /**
      * An array of 2D numbers that make up the road geometry.

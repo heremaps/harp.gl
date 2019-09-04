@@ -9,12 +9,10 @@ import {
     getPropertyValue,
     LineTechnique,
     SolidLineTechnique,
-    Technique
+    StyleLength
 } from "@here/harp-datasource-protocol";
-import { SolidLineMaterial } from "@here/harp-materials";
 import { assert, LoggerManager, Math2D } from "@here/harp-utils";
 import * as THREE from "three";
-import { MapView } from "./MapView";
 import { PickObjectType, PickResult } from "./PickHandler";
 import { RoadIntersectionData, Tile } from "./Tile";
 
@@ -39,7 +37,6 @@ interface CustomLineTechnique extends LineTechnique {
  * their geometry is generated in the vertex shader.
  */
 export class RoadPicker {
-    constructor(private m_mapView: MapView) {}
     /**
      * Registers a tile with the `RoadPicker`. This function extracts line data from the [[Tile]],
      * but only if the tile has the necessary [[ExtendedTileInfo]] that allows for road features to
@@ -60,14 +57,15 @@ export class RoadPicker {
             return undefined;
         }
 
-        const widths: number[] = [];
+        const widths: RoadIntersectionData["widths"] = [];
         widths.length = lineFeatures.numFeatures;
-        const level = tile.tileKey.level;
 
         for (let i = 0; i < lineFeatures.numFeatures; i++) {
-            const technique = extendedTileInfo.techniqueCatalog[lineFeatures.techniqueIndex[i]];
-            const width = this.getLineWidthInWorldUnit(technique, level);
-            widths[i] = width !== undefined ? Math.max(1, width) : 1;
+            const technique = extendedTileInfo.techniqueCatalog[
+                lineFeatures.techniqueIndex[i]
+            ] as SolidLineTechnique;
+            widths[i] =
+                technique.lineWidth !== undefined ? (technique.lineWidth as StyleLength) : 1.0;
         }
         const objInfos = extendedTileInfo.lineGroup.userData;
 
@@ -146,7 +144,11 @@ export class RoadPicker {
             let startX = positions[featureStart];
             let startY = positions[featureStart + 1];
 
-            const lineWidthSqr = widths[i] * widths[i];
+            const width = Math.max(
+                1,
+                getPropertyValue(widths[i], tile.dataSource.mapView.zoomLevel) * 0.5
+            );
+            const lineWidthSqr = width * width;
 
             let closestDistSqr = Number.MAX_VALUE;
 
@@ -190,22 +192,6 @@ export class RoadPicker {
     ) {
         if (objInfos !== undefined && objInfos.length > 0) {
             roadPickResult.userData = { ...objInfos[index] };
-        }
-    }
-
-    private getLineWidthInWorldUnit(technique: Technique, level: number): number | undefined {
-        const solidLineTech = technique as SolidLineTechnique;
-
-        if (solidLineTech.metricUnit === "Pixel") {
-            const lineWidth =
-                getPropertyValue(solidLineTech.lineWidth, level, this.m_mapView.pixelToWorld) * 0.5;
-
-            return lineWidth !== undefined
-                ? (lineWidth as number)
-                : SolidLineMaterial.DEFAULT_WIDTH;
-        } else {
-            const lineTechnique = technique as LineTechnique;
-            return getPropertyValue(lineTechnique.lineWidth, level);
         }
     }
 }

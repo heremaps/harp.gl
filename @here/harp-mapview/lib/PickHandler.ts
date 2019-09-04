@@ -110,7 +110,7 @@ export class PickHandler {
         public enableRoadPicking = true
     ) {
         if (enableRoadPicking) {
-            this.m_roadPicker = new RoadPicker(mapView);
+            this.m_roadPicker = new RoadPicker();
         }
     }
 
