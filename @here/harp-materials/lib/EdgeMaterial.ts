@@ -16,6 +16,8 @@ import {
 } from "./MapMeshMaterials";
 
 const vertexSource: string = `
+#define EDGE_DEPTH_OFFSET 0.00005
+
 attribute vec3 position;
 attribute vec4 color;
 
@@ -61,6 +63,7 @@ void main() {
     vec4 mvPosition = modelViewMatrix * vec4( transformed, 1.0 );
 
     gl_Position = projectionMatrix * mvPosition;
+    gl_Position.z -= EDGE_DEPTH_OFFSET * gl_Position.w;
 
     #ifdef USE_FADING
     #include <fading_vertex>
