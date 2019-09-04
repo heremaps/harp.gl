@@ -7,11 +7,10 @@
 import {
     ExtendedTileInfo,
     getPropertyValue,
+    isInterpolatedProperty,
     LineTechnique,
-    SolidLineTechnique,
-    Technique
+    SolidLineTechnique
 } from "@here/harp-datasource-protocol";
-import { SolidLineMaterial } from "@here/harp-materials";
 import { assert, LoggerManager, Math2D } from "@here/harp-utils";
 import * as THREE from "three";
 import { MapView } from "./MapView";
@@ -60,14 +59,38 @@ export class RoadPicker {
             return undefined;
         }
 
-        const widths: number[] = [];
+        const widths: RoadIntersectionData["widths"] = [];
         widths.length = lineFeatures.numFeatures;
-        const level = tile.tileKey.level;
 
+        const mapView = this.m_mapView;
         for (let i = 0; i < lineFeatures.numFeatures; i++) {
-            const technique = extendedTileInfo.techniqueCatalog[lineFeatures.techniqueIndex[i]];
-            const width = this.getLineWidthInWorldUnit(technique, level);
-            widths[i] = width !== undefined ? Math.max(1, width) : 1;
+            const technique = extendedTileInfo.techniqueCatalog[
+                lineFeatures.techniqueIndex[i]
+            ] as SolidLineTechnique;
+
+            const isDynamic =
+                technique.metricUnit === "Pixel" ||
+                isInterpolatedProperty(technique.lineWidth) ||
+                typeof technique.lineWidth === "string";
+
+            widths[i] =
+                technique.lineWidth !== undefined
+                    ? isDynamic
+                        ? () => {
+                              const unitFactor =
+                                  technique.metricUnit === "Pixel" ? mapView.pixelToWorld : 1.0;
+                              return (
+                                  getPropertyValue(
+                                      technique.lineWidth,
+                                      mapView.zoomLevel,
+                                      mapView.pixelToWorld
+                                  ) *
+                                  unitFactor *
+                                  0.5
+                              );
+                          }
+                        : (technique.lineWidth as number)
+                    : 1.0;
         }
         const objInfos = extendedTileInfo.lineGroup.userData;
 
@@ -146,7 +169,12 @@ export class RoadPicker {
             let startX = positions[featureStart];
             let startY = positions[featureStart + 1];
 
-            const lineWidthSqr = widths[i] * widths[i];
+            const widthEntry = widths[i];
+            const actualWidth = Math.max(
+                1,
+                typeof widthEntry === "function" ? widthEntry() : widthEntry
+            );
+            const lineWidthSqr = actualWidth * actualWidth;
 
             let closestDistSqr = Number.MAX_VALUE;
 
@@ -190,22 +218,6 @@ export class RoadPicker {
     ) {
         if (objInfos !== undefined && objInfos.length > 0) {
             roadPickResult.userData = { ...objInfos[index] };
-        }
-    }
-
-    private getLineWidthInWorldUnit(technique: Technique, level: number): number | undefined {
-        const solidLineTech = technique as SolidLineTechnique;
-
-        if (solidLineTech.metricUnit === "Pixel") {
-            const lineWidth =
-                getPropertyValue(solidLineTech.lineWidth, level, this.m_mapView.pixelToWorld) * 0.5;
-
-            return lineWidth !== undefined
-                ? (lineWidth as number)
-                : SolidLineMaterial.DEFAULT_WIDTH;
-        } else {
-            const lineTechnique = technique as LineTechnique;
-            return getPropertyValue(lineTechnique.lineWidth, level);
         }
     }
 }
