@@ -113,8 +113,10 @@ export class InterpolatedClipPlanesEvaluator implements ClipPlanesEvaluator {
             const p = this.m_tmpVectors[0].copy(camera.position);
             p.addScaledVector(fwdRot, Math.sqrt(d * d - r * r));
             farPlane = p.sub(camera.position).dot(fwd);
-            const bias = 2000; // TODO: generalize.
-            nearPlane = Math.max(this.nearMin, projection.groundDistance(camera.position) - bias);
+            nearPlane = Math.max(
+                this.nearMin,
+                projection.groundDistance(camera.position) * this.nearMultiplier
+            );
         } else if (projection.type === ProjectionType.Planar) {
             const groundDistance = projection.groundDistance(camera.position);
             nearPlane = Math.max(this.nearMin, groundDistance * this.nearMultiplier);
