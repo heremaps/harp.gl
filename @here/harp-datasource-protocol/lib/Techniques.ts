@@ -25,14 +25,14 @@ import {
     TextureCoordinateType
 } from "./TechniqueParams";
 
-import { Expr, JsonExpr } from "./Expr";
-import { InterpolatedProperty, InterpolatedPropertyDefinition } from "./InterpolatedPropertyDefs";
+import { MakeTechnique } from "./DynamicTechniqueAttr";
 import {
     AttrScope,
     mergeTechniqueDescriptor,
     TechniqueDescriptor,
     TechniqueDescriptorRegistry
 } from "./TechniqueDescriptor";
+
 /**
  * Names of the supported texture properties.
  */
@@ -46,25 +46,6 @@ export const TEXTURE_PROPERTY_KEYS = [
     "metalnessMap",
     "bumpMap"
 ];
-
-// TODO: Can be removed, when all when interpolators are implemented as [[Expr]]s
-export type RemoveInterpolatedPropDef<T> = (T | InterpolatedPropertyDefinition<any>) extends T
-    ? Exclude<T, InterpolatedPropertyDefinition<any>>
-    : T;
-export type RemoveJsonExpr<T> = (T | JsonExpr) extends T ? Exclude<T, JsonExpr> : T;
-
-/**
- * Make runtime representation of technique attributes from JSON-compatible typings.
- *
- * Translates
- *  - InterpolatedPropertyDefinition -> InterpolatedProperty
- *  - JsonExpr -> Expr
- */
-export type MakeTechniqueAttrs<T> = {
-    [P in keyof T]: (T[P] | JsonExpr) extends T[P]
-        ? RemoveInterpolatedPropDef<RemoveJsonExpr<T[P]>> | Expr | InterpolatedProperty<number>
-        : T[P];
-};
 
 export const techniqueDescriptors: TechniqueDescriptorRegistry = {};
 
@@ -96,7 +77,7 @@ export const pointTechniquePropTypes = mergeTechniqueDescriptor<PointTechniquePa
 /**
  * Runtime representation of [[SquaresStyle]] as parsed by [[StyleSetEvaluator]].
  */
-export interface SquaresTechnique extends MakeTechniqueAttrs<PointTechniqueParams> {
+export interface SquaresTechnique extends MakeTechnique<PointTechniqueParams> {
     name: "squares";
 }
 
@@ -109,7 +90,7 @@ techniqueDescriptors.squares = squaresTechniquePropTypes;
 /**
  * Runtime representation of [[CirclesStyle]] as parsed by [[StyleSetEvaluator]].
  */
-export interface CirclesTechnique extends MakeTechniqueAttrs<PointTechniqueParams> {
+export interface CirclesTechnique extends MakeTechnique<PointTechniqueParams> {
     name: "circles";
 }
 
@@ -122,14 +103,14 @@ techniqueDescriptors.circles = circlesTechniquePropTypes;
 /**
  * Runtime representation of [[PoiStyle]] as parsed by [[StyleSetEvaluator]].
  */
-export interface PoiTechnique extends MakeTechniqueAttrs<MarkerTechniqueParams> {
+export interface PoiTechnique extends MakeTechnique<MarkerTechniqueParams> {
     name: "labeled-icon";
 }
 
 /**
  * Runtime representation of [[LineMarkerStyle]] as parsed by [[StyleSetEvaluator]].
  */
-export interface LineMarkerTechnique extends MakeTechniqueAttrs<MarkerTechniqueParams> {
+export interface LineMarkerTechnique extends MakeTechnique<MarkerTechniqueParams> {
     name: "line-marker";
 }
 
@@ -203,7 +184,7 @@ techniqueDescriptors["labeled-icon"] = lineMarkerTechniquePropTypes;
 /**
  * Runtime representation of [[SegmentsStyle]] as parsed by [[StyleSetEvaluator]].
  */
-export interface SegmentsTechnique extends MakeTechniqueAttrs<SegmentsTechniqueParams> {
+export interface SegmentsTechnique extends MakeTechnique<SegmentsTechniqueParams> {
     name: "segments";
 }
 
@@ -221,7 +202,7 @@ const polygonalTechniqueDescriptor: TechniqueDescriptor<PolygonalTechniqueParams
  * Runtime representation of [[BasicExtrudedLineStyle]] as parsed by [[StyleSetEvaluator]].
  */
 export interface BasicExtrudedLineTechnique
-    extends MakeTechniqueAttrs<BasicExtrudedLineTechniqueParams> {
+    extends MakeTechnique<BasicExtrudedLineTechniqueParams> {
     name: "extruded-line";
 }
 
@@ -229,14 +210,14 @@ export interface BasicExtrudedLineTechnique
  * Runtime representation of [[StandardExtrudedLineStyle]] as parsed by [[StyleSetEvaluator]].
  */
 export interface StandardExtrudedLineTechnique
-    extends MakeTechniqueAttrs<StandardExtrudedLineTechniqueParams> {
+    extends MakeTechnique<StandardExtrudedLineTechniqueParams> {
     name: "extruded-line";
 }
 
 /**
  * Runtime representation of [[SolidLineStyle]] as parsed by [[StyleSetEvaluator]].
  */
-export interface SolidLineTechnique extends MakeTechniqueAttrs<SolidLineTechniqueParams> {
+export interface SolidLineTechnique extends MakeTechnique<SolidLineTechniqueParams> {
     name: "solid-line";
 }
 
@@ -261,7 +242,7 @@ techniqueDescriptors["solid-line"] = solidLineTechniqueDescriptor;
 /**
  * Runtime representation of [[DashedLineStyle]] as parsed by [[StyleSetEvaluator]].
  */
-export interface DashedLineTechnique extends MakeTechniqueAttrs<DashedLineTechniqueParams> {
+export interface DashedLineTechnique extends MakeTechnique<DashedLineTechniqueParams> {
     name: "dashed-line";
 }
 
@@ -286,7 +267,7 @@ techniqueDescriptors["dashed-line"] = dashedLineTechniqueDescriptor;
 /**
  * Runtime representation of [[LineStyle]] as parsed by [[StyleSetEvaluator]].
  */
-export interface LineTechnique extends MakeTechniqueAttrs<LineTechniqueParams> {
+export interface LineTechnique extends MakeTechnique<LineTechniqueParams> {
     name: "line";
 }
 
@@ -308,7 +289,7 @@ techniqueDescriptors.line = lineTechniqueDescriptor;
 /**
  * Runtime representation of [[FillStyle]] as parsed by [[StyleSetEvaluator]].
  */
-export interface FillTechnique extends MakeTechniqueAttrs<FillTechniqueParams> {
+export interface FillTechnique extends MakeTechnique<FillTechniqueParams> {
     name: "fill";
 }
 
@@ -329,7 +310,7 @@ techniqueDescriptors.fill = fillTechniqueDescriptor;
 /**
  * Technique used to render a mesh geometry.
  */
-export interface StandardTechnique extends MakeTechniqueAttrs<StandardTechniqueParams> {
+export interface StandardTechnique extends MakeTechnique<StandardTechniqueParams> {
     name: "standard";
 }
 const standardTechniqueDescriptor = mergeTechniqueDescriptor<StandardTechnique>(
@@ -372,8 +353,7 @@ techniqueDescriptors.standard = standardTechniqueDescriptor;
 /**
  * Runtime representation of [[ExtrudedPolygonStyle]] as parsed by [[StyleSetEvaluator]].
  */
-export interface ExtrudedPolygonTechnique
-    extends MakeTechniqueAttrs<ExtrudedPolygonTechniqueParams> {
+export interface ExtrudedPolygonTechnique extends MakeTechnique<ExtrudedPolygonTechniqueParams> {
     name: "extruded-polygon";
 }
 
@@ -408,7 +388,7 @@ techniqueDescriptors["extruded-polygon"] = extrudedPolygonTechniqueDescriptor;
 /**
  * Runtime representation of [[TextStyle]] as parsed by [[StyleSetEvaluator]].
  */
-export interface TextTechnique extends MakeTechniqueAttrs<TextTechniqueParams> {
+export interface TextTechnique extends MakeTechnique<TextTechniqueParams> {
     name: "text";
 }
 
@@ -455,7 +435,7 @@ const textTechniqueDescriptor = mergeTechniqueDescriptor<TextTechnique>(
 );
 techniqueDescriptors.text = textTechniqueDescriptor;
 
-export interface ShaderTechnique extends MakeTechniqueAttrs<ShaderTechniqueParams> {
+export interface ShaderTechnique extends MakeTechnique<ShaderTechniqueParams> {
     /**
      * Name of technique. Is used in the theme file.
      */
@@ -477,7 +457,7 @@ techniqueDescriptors.shader = shaderTechniqueDescriptor;
 /**
  * Technique used to render a terrain geometry with textures.
  */
-export interface TerrainTechnique extends MakeTechniqueAttrs<TerrainTechniqueParams> {
+export interface TerrainTechnique extends MakeTechnique<TerrainTechniqueParams> {
     name: "terrain";
 }
 

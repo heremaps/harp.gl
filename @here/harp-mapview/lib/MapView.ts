@@ -23,6 +23,7 @@ import {
 import { assert, getOptionValue, LoggerManager, PerformanceTimer } from "@here/harp-utils";
 import * as THREE from "three";
 
+import { SceneState } from "@here/harp-datasource-protocol/lib/DynamicTechniqueAttr";
 import { AnimatedExtrusionHandler } from "./AnimatedExtrusionHandler";
 import { BackgroundDataSource } from "./BackgroundDataSource";
 import { CameraMovementDetector } from "./CameraMovementDetector";
@@ -732,6 +733,7 @@ export class MapView extends THREE.EventDispatcher {
     private m_lastTileIds: string = "";
     private m_languages: string[] | undefined;
     private m_copyrightInfo: CopyrightInfo[] = [];
+    private m_sceneState = new MapViewSceneState(this);
 
     private m_animatedExtrusionHandler: AnimatedExtrusionHandler;
 
@@ -2280,6 +2282,10 @@ export class MapView extends THREE.EventDispatcher {
         return this.m_elevationProvider;
     }
 
+    get sceneState(): SceneState {
+        return this.m_sceneState;
+    }
+
     /**
      * Updates the camera and the projections and resets the screen collisions,
      * note, setupCamera must be called before this is called.
@@ -2458,6 +2464,7 @@ export class MapView extends THREE.EventDispatcher {
             return;
         }
         ++this.m_frameNumber;
+        this.m_sceneState.time = time;
 
         const stats = PerformanceStatistics.instance;
         const gatherStatistics: boolean = stats.enabled;
@@ -3156,5 +3163,23 @@ export class MapView extends THREE.EventDispatcher {
         } else {
             return { width: clientWidth, height: clientHeight };
         }
+    }
+}
+
+export class MapViewSceneState implements SceneState {
+    time: number = 0;
+    constructor(readonly mapView: MapView) {}
+
+    get frameNumber(): number {
+        return this.mapView.frameNumber;
+    }
+    get zoomLevel(): number {
+        return this.mapView.zoomLevel;
+    }
+    get pixelToMeters(): number {
+        return this.mapView.pixelToWorld;
+    }
+    get maxVisibility(): number {
+        return this.mapView.maxVisibility;
     }
 }

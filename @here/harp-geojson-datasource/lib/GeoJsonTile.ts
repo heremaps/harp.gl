@@ -216,7 +216,7 @@ export class GeoJsonTile extends Tile {
             path,
             tileGeometryCreator.getRenderStyle(this, technique),
             tileGeometryCreator.getLayoutStyle(this, technique),
-            getPropertyValue(priority, this.mapView.zoomLevel),
+            getPropertyValue(priority, this.mapView.sceneState),
             xOffset,
             yOffset,
             featureId
@@ -303,7 +303,7 @@ export class GeoJsonTile extends Tile {
             position,
             tileGeometryCreator.getRenderStyle(this, technique),
             tileGeometryCreator.getLayoutStyle(this, technique),
-            getPropertyValue(priority, this.mapView.zoomLevel),
+            getPropertyValue(priority, this.mapView.sceneState),
             xOffset,
             yOffset,
             featureId
@@ -385,7 +385,7 @@ export class GeoJsonTile extends Tile {
             position,
             tileGeometryCreator.getRenderStyle(this, technique),
             tileGeometryCreator.getLayoutStyle(this, technique),
-            getPropertyValue(priority, this.mapView.zoomLevel),
+            getPropertyValue(priority, this.mapView.sceneState),
             xOffset,
             yOffset,
             featureId

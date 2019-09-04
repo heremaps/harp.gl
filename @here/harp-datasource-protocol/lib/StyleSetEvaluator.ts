@@ -6,6 +6,7 @@
 
 import { LoggerManager } from "@here/harp-utils";
 
+import { DecodedTechnique, makeDecodedTechnique } from "./DecodedTechnique";
 import {
     BooleanLiteralExpr,
     CallExpr,
@@ -360,7 +361,7 @@ export class StyleSetEvaluator {
     /**
      * Get the (current) array of techniques that have been created during decoding.
      */
-    get decodedTechniques(): IndexedTechnique[] {
+    get decodedTechniques(): DecodedTechnique[] {
         return this.m_techniques.map(makeDecodedTechnique);
     }
 
@@ -496,6 +497,7 @@ export class StyleSetEvaluator {
                         `${style._styleSetIndex}`,
                         []
                     ) as IndexedTechnique;
+                    technique._key = "";
                 }
                 result.push(technique as IndexedTechnique);
             }
@@ -542,6 +544,8 @@ export class StyleSetEvaluator {
                         break;
                     case AttrScope.TechniqueGeometry:
                     case AttrScope.TechniqueRendering:
+                        // TODO: check if this is render-time attr
+
                         dynamicTechniqueAttributes.push([attrName, expr]);
                         break;
                 }
@@ -552,10 +556,10 @@ export class StyleSetEvaluator {
                 }
                 switch (attrScope) {
                     case AttrScope.FeatureGeometry:
+                    case AttrScope.TechniqueGeometry:
                         dynamicFeatureAttributes.push([attrName, interpolatedProperty]);
                         break;
                     case AttrScope.TechniqueRendering:
-                    case AttrScope.TechniqueGeometry:
                         dynamicForwardedAttributes.push([attrName, interpolatedProperty]);
                         break;
                 }
@@ -632,10 +636,6 @@ export class StyleSetEvaluator {
 
         if (style._dynamicForwaredAttributes !== undefined) {
             for (const [attrName, attrValue] of style._dynamicForwaredAttributes) {
-                if (attrValue instanceof Expr) {
-                    // TODO: We don't support `Expr` instances in main thread yet.
-                    continue;
-                }
                 technique[attrName] = attrValue;
             }
         }
@@ -646,24 +646,4 @@ export class StyleSetEvaluator {
         this.m_techniques.push(technique as IndexedTechnique);
         return technique as IndexedTechnique;
     }
-}
-
-/**
- * Create transferable representation of dynamic technique.
- *
- * As for now, we remove all `Expr` as they are not supported on other side.
- */
-export function makeDecodedTechnique(technique: IndexedTechnique): IndexedTechnique {
-    const result: Partial<IndexedTechnique> = {};
-    for (const attrName in technique) {
-        if (!technique.hasOwnProperty(attrName)) {
-            continue;
-        }
-        const attrValue: any = (technique as any)[attrName];
-        if (attrValue instanceof Expr) {
-            continue;
-        }
-        (result as any)[attrName] = attrValue;
-    }
-    return (result as any) as IndexedTechnique;
 }

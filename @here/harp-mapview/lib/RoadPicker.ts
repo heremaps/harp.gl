@@ -146,7 +146,7 @@ export class RoadPicker {
 
             const width = Math.max(
                 1,
-                getPropertyValue(widths[i], tile.dataSource.mapView.zoomLevel) * 0.5
+                getPropertyValue(widths[i], tile.dataSource.mapView.sceneState) * 0.5
             );
             const lineWidthSqr = width * width;
 

@@ -491,14 +491,13 @@ export class PoiManager {
     ): TextElement {
         const priority = technique.priority !== undefined ? technique.priority : 0;
         const positions = Array.isArray(x) ? (x as THREE.Vector3[]) : new THREE.Vector3(x, y, z);
-        const displayZoomLevel = this.mapView.zoomLevel;
         const fadeNear =
             technique.fadeNear !== undefined
-                ? getPropertyValue(technique.fadeNear, displayZoomLevel)
+                ? getPropertyValue(technique.fadeNear, this.mapView.sceneState)
                 : technique.fadeNear;
         const fadeFar =
             technique.fadeFar !== undefined
-                ? getPropertyValue(technique.fadeFar, displayZoomLevel)
+                ? getPropertyValue(technique.fadeFar, this.mapView.sceneState)
                 : technique.fadeFar;
 
         const textElement: TextElement = new TextElement(
@@ -506,7 +505,7 @@ export class PoiManager {
             positions,
             this.getRenderStyle(tile.dataSource.name, technique),
             this.getLayoutStyle(tile.dataSource.name, technique),
-            getPropertyValue(priority, displayZoomLevel),
+            getPropertyValue(priority, this.mapView.sceneState),
             technique.xOffset !== undefined ? technique.xOffset : 0.0,
             technique.yOffset !== undefined ? technique.yOffset : 0.0,
             featureId,
@@ -592,17 +591,18 @@ export class PoiManager {
         const cacheId = computeStyleCacheId(dataSourceName, technique, Math.floor(zoomLevel));
         let renderStyle = mapView.textRenderStyleCache.get(cacheId);
         if (renderStyle === undefined) {
+            const frozenSceneState = {
+                ...mapView.sceneState,
+                zoomLevel: Math.floor(mapView.zoomLevel)
+            };
             const defaultRenderParams = mapView.textElementsRenderer!.defaultStyle.renderParams;
 
             if (technique.color !== undefined) {
-                const hexColor = getPropertyValue(technique.color, Math.floor(zoomLevel));
+                const hexColor = getPropertyValue(technique.color, frozenSceneState);
                 this.m_colorMap.set(cacheId, ColorCache.instance.getColor(hexColor));
             }
             if (technique.backgroundColor !== undefined) {
-                const hexBgColor = getPropertyValue(
-                    technique.backgroundColor,
-                    Math.floor(zoomLevel)
-                );
+                const hexBgColor = getPropertyValue(technique.backgroundColor, frozenSceneState);
                 this.m_colorMap.set(cacheId + "_bg", ColorCache.instance.getColor(hexBgColor));
             }
 
@@ -612,11 +612,11 @@ export class PoiManager {
                     unit: FontUnit.Pixel,
                     size:
                         technique.size !== undefined
-                            ? getPropertyValue(technique.size, Math.floor(zoomLevel))
+                            ? getPropertyValue(technique.size, frozenSceneState)
                             : defaultRenderParams.fontSize!.size,
                     backgroundSize:
                         technique.backgroundSize !== undefined
-                            ? getPropertyValue(technique.backgroundSize, Math.floor(zoomLevel))
+                            ? getPropertyValue(technique.backgroundSize, frozenSceneState)
                             : defaultRenderParams.fontSize!.backgroundSize
                 },
                 fontStyle:
@@ -640,14 +640,14 @@ export class PoiManager {
                 ),
                 opacity:
                     technique.opacity !== undefined
-                        ? getPropertyValue(technique.opacity, Math.floor(zoomLevel))
+                        ? getPropertyValue(technique.opacity, frozenSceneState)
                         : defaultRenderParams.opacity,
                 backgroundOpacity:
                     technique.backgroundOpacity !== undefined
-                        ? getPropertyValue(technique.backgroundOpacity, Math.floor(zoomLevel))
+                        ? getPropertyValue(technique.backgroundOpacity, frozenSceneState)
                         : technique.backgroundColor !== undefined &&
                           (technique.backgroundSize !== undefined &&
-                              getPropertyValue(technique.backgroundSize, Math.floor(zoomLevel)) > 0)
+                              getPropertyValue(technique.backgroundSize, frozenSceneState) > 0)
                         ? 1.0 // make label opaque when backgroundColor and backgroundSize are set
                         : defaultRenderParams.backgroundOpacity
             };

@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { SceneState } from "./DynamicTechniqueAttr";
 import { Expr, MapEnv, Value, ValueMap } from "./Expr";
 import { getPropertyValue, isInterpolatedProperty } from "./InterpolatedProperty";
 import { InterpolatedProperty } from "./InterpolatedPropertyDefs";
@@ -75,7 +76,9 @@ export class FeatureEnv implements MapEnv {
         if (attrValue instanceof Expr) {
             evaluated = attrValue.evaluate(this, this.cachedExprResults);
         } else if (isInterpolatedProperty(attrValue)) {
-            evaluated = getPropertyValue(attrValue, this.storageLevel);
+            evaluated = getPropertyValue(attrValue, ({
+                zoomLevel: this.storageLevel
+            } as unknown) as SceneState);
         } else {
             evaluated = (attrValue as unknown) as Value;
         }

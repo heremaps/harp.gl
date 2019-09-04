@@ -18,6 +18,8 @@ import {
     TEXTURE_PROPERTY_KEYS,
     TextureProperties
 } from "@here/harp-datasource-protocol";
+import { SceneState } from "@here/harp-datasource-protocol/lib/DynamicTechniqueAttr";
+import { Expr } from "@here/harp-datasource-protocol/lib/Expr";
 import {
     CirclePointsMaterial,
     DashedLineMaterial,
@@ -55,9 +57,9 @@ export interface MaterialOptions {
     technique: Technique;
 
     /**
-     * The active zoom level at material creation for zoom-dependent properties.
+     * The current scene state for scene-state dependent properties.
      */
-    level?: number;
+    sceneState?: SceneState;
 
     /**
      * Properties to skip.
@@ -228,7 +230,7 @@ export function createMaterial(
             }
         });
     } else {
-        applyTechniqueToMaterial(technique, material, options.level, options.skipExtraProps);
+        applyTechniqueToMaterial(technique, material, options.sceneState, options.skipExtraProps);
     }
 
     return material;
@@ -439,7 +441,7 @@ export function getMaterialConstructor(technique: Technique): MaterialConstructo
 export function applyTechniqueToMaterial(
     technique: Technique,
     material: THREE.Material,
-    level?: number,
+    sceneState?: SceneState,
     skipExtraProps?: string[]
 ) {
     Object.getOwnPropertyNames(technique).forEach(propertyName => {
@@ -457,8 +459,11 @@ export function applyTechniqueToMaterial(
         if (typeof m[prop] === "undefined") {
             return;
         }
-        if (level !== undefined && isInterpolatedProperty<number>(value)) {
-            value = getPropertyValue(value, level);
+        if (
+            sceneState !== undefined &&
+            (isInterpolatedProperty<number>(value) || value instanceof Expr)
+        ) {
+            value = getPropertyValue(value, sceneState);
         }
         if (m[prop] instanceof THREE.Color) {
             m[prop].set(value);

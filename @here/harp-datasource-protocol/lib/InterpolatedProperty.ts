@@ -7,6 +7,7 @@
 import { Color, CubicInterpolant, DiscreteInterpolant, LinearInterpolant } from "three";
 
 import { LoggerManager } from "@here/harp-utils";
+import { SceneState, SceneStateEnv } from "./DynamicTechniqueAttr";
 import { ExponentialInterpolant } from "./ExponentialInterpolant";
 import { Expr, Value } from "./Expr";
 import {
@@ -87,11 +88,15 @@ export function isInterpolatedProperty<T>(p: any): p is InterpolatedProperty<T> 
  */
 export function getPropertyValue<T>(
     property: Value | Expr | InterpolatedProperty<T> | undefined,
-    level: number,
-    pixelToMeters: number = 1.0
+    sceneState: SceneState
 ): number {
-    if (isInterpolatedPropertyDefinition<T>(property)) {
-        throw new Error("Cannot interpolate a InterpolatedPropertyDefinition.");
+    if (property instanceof Expr) {
+        // NOTE about 'as number'.
+        //
+        // Typing of this function was broken since introduction of color-interpolation. It
+        // will be fixed in follow-up PR, where getPropertyValue will dissapear completly
+        // as its interface is flawed.
+        return property.evaluate(new SceneStateEnv(sceneState)) as number;
     } else if (!isInterpolatedProperty(property)) {
         if (typeof property !== "string") {
             return (property as unknown) as number;
@@ -106,7 +111,7 @@ export function getPropertyValue<T>(
                 case StringEncodedNumeralType.Meters:
                     return matchedFormat.decoder(property)[0];
                 case StringEncodedNumeralType.Pixels:
-                    return matchedFormat.decoder(property)[0] * pixelToMeters;
+                    return matchedFormat.decoder(property)[0] * sceneState.pixelToMeters;
                 case StringEncodedNumeralType.Hex:
                 case StringEncodedNumeralType.RGB:
                 case StringEncodedNumeralType.HSL:
@@ -120,14 +125,18 @@ export function getPropertyValue<T>(
         switch (property._stringEncodedNumeralType) {
             case StringEncodedNumeralType.Meters:
             case StringEncodedNumeralType.Pixels:
-                return getInterpolatedLength(property, level, pixelToMeters);
+                return getInterpolatedLength(
+                    property,
+                    sceneState.zoomLevel,
+                    sceneState.pixelToMeters
+                );
             case StringEncodedNumeralType.Hex:
             case StringEncodedNumeralType.RGB:
             case StringEncodedNumeralType.HSL:
-                return getInterpolatedColor(property, level);
+                return getInterpolatedColor(property, sceneState.zoomLevel);
         }
     }
-    return getInterpolatedLength(property, level, pixelToMeters);
+    return getInterpolatedLength(property, sceneState.zoomLevel, sceneState.pixelToMeters);
 }
 
 function getInterpolatedLength(
