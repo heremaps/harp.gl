@@ -32,7 +32,7 @@ function checkImports() {
 
     for (const packageJsonFile of packageJsonFiles) {
         const moduleName = "@here/" + packageJsonFile.split(path.sep).slice(-2, -1)[0];
-        packageConfigs[moduleName] = require(packageJsonFile);
+        packageConfigs[moduleName] = JSON.parse(fs.readFileSync(packageJsonFile, "utf-8"));
     }
 
     // recursively gets all direct and indirect dependencies
@@ -247,6 +247,7 @@ function checkImports() {
 }
 
 describe("ImportCheck", function() {
+    this.timeout(4000);
     it("Uses correct imports", function() {
         assert.deepEqual(checkImports(), []);
     });
