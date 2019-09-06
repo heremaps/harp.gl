@@ -36,7 +36,7 @@ export interface ILineGeometry {
  * If desired, the world positions can be converted to [[GeoCoordinates]] using the
  * [[Projection.unprojectPoint]], for example:
  *
- * ```typescript:
+ * ```typescript
  *        convert(geometry: ILineGeometry): GeoCoordinates[] {
  *            const projection = webMercatorTilingScheme.projection;
  *

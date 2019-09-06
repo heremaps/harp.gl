@@ -9,3 +9,4 @@ export * from "./lib/Extruder";
 export * from "./lib/IMeshBuffers";
 export * from "./lib/Outliner";
 export * from "./lib/Expr";
+export * from "./lib/ThreeBufferUtils";
