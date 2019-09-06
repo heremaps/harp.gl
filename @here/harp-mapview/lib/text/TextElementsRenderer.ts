@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import { LineMarkerTechnique, TextStyleDefinition, Theme } from "@here/harp-datasource-protocol";
-import { ProjectionType } from "@here/harp-geoutils";
+import { MathUtils as MathGeoUtils, ProjectionType } from "@here/harp-geoutils";
 import {
     AdditionParameters,
     DEFAULT_TEXT_CANVAS_LAYER,
@@ -149,6 +149,12 @@ const MIN_AVERAGE_CHAR_WIDTH = 5;
  * duplicate labels in overlapping tiles.
  */
 const LABEL_DIFFERENT_THRESHOLD_SQUARED = 4;
+
+/**
+ * Label path maximum bend angle. Paths would been splitted at too curved bends
+ * and longest straight piece would pass as label path.
+ */
+const LABEL_PATH_MAXIMUM_ANGLE = 20;
 
 // Development flag: Enable debug print.
 const PRINT_LABEL_DEBUG_INFO: boolean = false;
@@ -1472,7 +1478,14 @@ export class TextElementsRenderer {
                     }
                     continue;
                 }
-                screenPoints = screenPointsResult;
+
+                screenPoints = this.findLongestStraightPath(
+                    screenPointsResult,
+                    LABEL_PATH_MAXIMUM_ANGLE
+                );
+                if (screenPoints.length < 2) {
+                    continue;
+                }
             }
 
             // Trigger the glyph load if needed.
@@ -2195,6 +2208,70 @@ export class TextElementsRenderer {
         }
 
         return numRenderedTextElements;
+    }
+
+    private findLongestStraightPath(points: THREE.Vector2[], angle: number): THREE.Vector2[] {
+        const ra = MathGeoUtils.degToRad(angle);
+        const targetDeltaX = Math.cos(ra) - 1;
+        const targetDeltaY = Math.sin(ra) - 0;
+        const targetLenSq = targetDeltaX * targetDeltaX + targetDeltaY * targetDeltaY;
+
+        let longestStart = -1;
+        let longestEnd = -1;
+        let longestDist = 0;
+
+        let currentStart = 0;
+        let currentDist = 0;
+
+        for (let i = 1; i < points.length - 1; i++) {
+            const a = points[i - 1];
+            const b = points[i];
+            const c = points[i + 1];
+
+            const prevDeltaX = b.x - a.x;
+            const prevDeltaY = b.y - a.y;
+            const prevLength = Math.sqrt(prevDeltaX * prevDeltaX + prevDeltaY * prevDeltaY);
+            const prevLenInverse = 1 / prevLength;
+            const prevNormalX = prevDeltaX * prevLenInverse;
+            const prevNormalY = prevDeltaY * prevLenInverse;
+
+            const nextDeltaX = c.x - b.x;
+            const nextDeltaY = c.y - b.y;
+            const nextLength = Math.sqrt(nextDeltaX * nextDeltaX + nextDeltaY * nextDeltaY);
+            const nextLenInverse = 1 / nextLength;
+            const nextNormalX = nextDeltaX * nextLenInverse;
+            const nextNormalY = nextDeltaY * nextLenInverse;
+
+            const currDeltaX = nextNormalX - prevNormalX;
+            const currDeltaY = nextNormalY - prevNormalY;
+            const currLenSq = currDeltaX * currDeltaX + currDeltaY * currDeltaY;
+            const isStraight = currLenSq < targetLenSq;
+
+            currentDist += prevLength;
+
+            if (!isStraight) {
+                if (currentDist > longestDist) {
+                    longestDist = currentDist;
+                    longestStart = currentStart;
+                    longestEnd = i;
+                }
+
+                currentStart = i;
+                currentDist = 0;
+            } else if (i === points.length - 2) {
+                currentDist += nextLength;
+                if (currentDist > longestDist) {
+                    longestDist = currentDist;
+                    longestEnd = points.length - 1;
+                }
+            }
+        }
+
+        if (currentStart === 0) {
+            return points;
+        } else {
+            return points.slice(longestStart, longestEnd + 1);
+        }
     }
 
     private checkForSmallLabels(textElement: TextElement): THREE.Vector2[] | undefined {
