@@ -37,6 +37,7 @@ We can group the examples by several categories, looking at what kind of feature
 1. [OSM MVT Data](./src/datasource_xyzmvt.ts) with our default map style.
 1. [Webtiles with the mercator projection](./src/datasource_webtile.ts) and [with globe](datasource_webtile_globe.ts).
 1. [User based map features (lines and points)](./src/datasource_features_lines+points.ts) using the [featuresDataSource](../harp-features-datasource/README.md). Polygons are also demonstrated [here](./src/datasource_features_polygons.ts)
+1. [Advanced custom data source](./src/datasource_custom.ts) demonstrating the implementation of a custom data source that uses the harp.gl styling engine, offloads CPU intense work to web-workers and uses three.js to create objects.
 
 ### Rendering
 

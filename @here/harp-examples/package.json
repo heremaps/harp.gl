@@ -31,6 +31,7 @@
         "@here/harp-features-datasource": "^0.10.0",
         "@here/harp-geojson-datasource": "^0.10.0",
         "@here/harp-geoutils": "^0.10.0",
+        "@here/harp-lines": "^0.10.0",
         "@here/harp-lrucache": "^0.10.0",
         "@here/harp-map-controls": "^0.10.0",
         "@here/harp-map-theme": "^0.10.0",
