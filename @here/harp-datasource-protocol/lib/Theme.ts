@@ -278,6 +278,11 @@ export interface StyleSelector {
     when: string | JsonExpr;
 
     /**
+     * The layer containing the carto features processed by this style rule.
+     */
+    layer?: string;
+
+    /**
      * Array of substyles.
      */
     styles?: StyleDeclaration[];

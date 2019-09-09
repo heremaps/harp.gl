@@ -236,4 +236,65 @@ describe("StyleSetEvaluator", function() {
             assert.deepEqual(techniquesTileA[0], techniquesTileC[1]);
         });
     });
+
+    it("Filter techniques by layer", function() {
+        const styleSet: StyleSet = [
+            {
+                when: [
+                    "all",
+                    ["==", ["get", "$layer"], "buildings"],
+                    ["==", ["get", "$geometryType"], "polygon"]
+                ],
+                technique: "extruded-polygon"
+            },
+            {
+                layer: "buildings",
+                when: ["all", ["==", ["get", "$geometryType"], "polygon"]],
+                technique: "text"
+            },
+
+            {
+                layer: "buildings",
+                when: [
+                    "all",
+                    ["==", ["get", "$layer"], "buildings"],
+                    ["==", ["get", "$geometryType"], "polygon"]
+                ],
+                technique: "solid-line"
+            },
+
+            {
+                layer: "buildings",
+                when: ["all", ["==", ["get", "$layer"], "buildings"]],
+                technique: "fill"
+            },
+
+            {
+                layer: "water",
+                when: ["all", ["==", ["get", "$layer"], "buildings"]],
+                technique: "fill"
+            },
+
+            {
+                when: [
+                    "all",
+                    ["==", ["get", "$layer"], "water"],
+                    ["==", ["get", "$geometryType"], "polygon"]
+                ],
+                technique: "solid-line"
+            }
+        ];
+
+        const ev = new StyleSetEvaluator(styleSet);
+
+        const techniques = ev.getMatchingTechniques(
+            new MapEnv({ $layer: "buildings", $geometryType: "polygon" })
+        );
+
+        assert.equal(techniques.length, 4);
+        assert.equal(techniques[0].name, "extruded-polygon");
+        assert.equal(techniques[1].name, "text");
+        assert.equal(techniques[2].name, "solid-line");
+        assert.equal(techniques[3].name, "fill");
+    });
 });
