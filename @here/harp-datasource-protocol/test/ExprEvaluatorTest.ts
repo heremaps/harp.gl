@@ -367,4 +367,27 @@ describe("ExprEvaluator", function() {
             );
         });
     });
+
+    describe("Operator 'literal'", function() {
+        it("evaluate", function() {
+            assert.isTrue(evaluate(["==", ["typeof", ["literal", { x: 10, y: 20 }]], "object"]));
+            assert.isTrue(evaluate(["==", ["typeof", ["literal", [10, 20, 30]]], "object"]));
+            assert.isTrue(evaluate(["==", ["typeof", ["literal", ["x", "y", "z"]]], "object"]));
+
+            assert.equal(evaluate(["length", ["literal", ["x", "y", "z"]]]), 3);
+        });
+    });
+
+    describe("Operator 'at'", function() {
+        it("retrieve array element", function() {
+            assert.equal(evaluate(["at", 0, ["literal", ["x", "y", "z"]]]), "x");
+            assert.equal(evaluate(["at", 1, ["literal", ["x", "y", "z"]]]), "y");
+            assert.equal(evaluate(["at", 2, ["literal", ["x", "y", "z"]]]), "z");
+            assert.isNull(evaluate(["at", 3, ["literal", ["x", "y", "z"]]]));
+            assert.isNull(evaluate(["at", -1, ["literal", ["x", "y", "z"]]]));
+
+            assert.throws(() => evaluate(["at", "pos", ["literal", ["x", "y", "z"]]]));
+            assert.throws(() => evaluate(["at", "pos", "string"]));
+        });
+    });
 });
