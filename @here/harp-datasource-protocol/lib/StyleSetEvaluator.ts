@@ -18,6 +18,7 @@ import {
     MatchExpr,
     NullLiteralExpr,
     NumberLiteralExpr,
+    ObjectLiteralExpr,
     StringLiteralExpr,
     Value,
     VarExpr
@@ -89,6 +90,10 @@ class StyleConditionClassifier implements ExprVisitor<Expr | undefined, Expr | u
     }
 
     visitStringLiteralExpr(expr: StringLiteralExpr, enclosingExpr: Expr | undefined): Expr {
+        return expr;
+    }
+
+    visitObjectLiteralExpr(expr: ObjectLiteralExpr, enclosingExpr: Expr | undefined): Expr {
         return expr;
     }
 

@@ -16,11 +16,13 @@ import {
     MatchExpr,
     NullLiteralExpr,
     NumberLiteralExpr,
+    ObjectLiteralExpr,
     StringLiteralExpr,
     Value,
     VarExpr
 } from "./Expr";
 
+import { ArrayOperators } from "./operators/ArrayOperators";
 import { CastOperators } from "./operators/CastOperators";
 import { ComparisonOperators } from "./operators/ComparisonOperators";
 import { FlowOperators } from "./operators/FlowOperators";
@@ -91,6 +93,10 @@ export class ExprEvaluator implements ExprVisitor<Value, ExprEvaluatorContext> {
     }
 
     visitStringLiteralExpr(expr: StringLiteralExpr, context: ExprEvaluatorContext): Value {
+        return expr.value;
+    }
+
+    visitObjectLiteralExpr(expr: ObjectLiteralExpr, context: ExprEvaluatorContext): Value {
         return expr.value;
     }
 
@@ -192,3 +198,4 @@ ExprEvaluator.defineOperators(StringOperators);
 ExprEvaluator.defineOperators(TypeOperators);
 ExprEvaluator.defineOperators(MiscOperators);
 ExprEvaluator.defineOperators(FlowOperators);
+ExprEvaluator.defineOperators(ArrayOperators);

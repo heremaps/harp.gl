@@ -15,6 +15,7 @@ import {
     MatchExpr,
     NullLiteralExpr,
     NumberLiteralExpr,
+    ObjectLiteralExpr,
     StringLiteralExpr,
     VarExpr
 } from "./Expr";
@@ -28,6 +29,7 @@ export class ExprPool implements ExprVisitor<Expr, void> {
     private readonly m_booleanLiterals = new Map<boolean, BooleanLiteralExpr>();
     private readonly m_numberLiterals = new Map<number, NumberLiteralExpr>();
     private readonly m_stringLiterals = new Map<string, StringLiteralExpr>();
+    private readonly m_objectLiterals = new Map<object, ObjectLiteralExpr>();
     private readonly m_varExprs = new Map<string, VarExpr>();
     private readonly m_hasAttributeExprs = new Map<string, HasAttributeExpr>();
     private readonly m_inExprs = new Map<Expr, ContainsExpr[]>();
@@ -72,6 +74,15 @@ export class ExprPool implements ExprVisitor<Expr, void> {
             return e;
         }
         this.m_stringLiterals.set(expr.value, expr);
+        return expr;
+    }
+
+    visitObjectLiteralExpr(expr: ObjectLiteralExpr, context: void): Expr {
+        const e = this.m_objectLiterals.get(expr.value);
+        if (e) {
+            return e;
+        }
+        this.m_objectLiterals.set(expr.value, expr);
         return expr;
     }
 
