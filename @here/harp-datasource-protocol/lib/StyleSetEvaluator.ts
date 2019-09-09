@@ -84,12 +84,6 @@ interface StyleInternalParams {
      * @hidden
      */
     _styleSetIndex?: number;
-
-    /**
-     * Optimization: The `$layer` requested by the `when` condition of this style.
-     * @hidden
-     */
-    _layer?: string;
 }
 
 type InternalStyle = Style & StyleSelector & StyleInternalParams;
@@ -161,13 +155,13 @@ class StyleConditionClassifier implements ExprVisitor<Expr | undefined, Expr | u
             // `call` is a direct child expression of an `"all"` operator.
             const matched = this.matchVarStringComparison(call);
 
-            if (matched && this._style._layer === undefined && matched.name === "$layer") {
+            if (matched && this._style.layer === undefined && matched.name === "$layer") {
                 // found a subexpression `["==", ["get", "$layer"], "some layer name"]`
                 // enclosed in an `["all", e1...eN]` expression. Remove it from
                 // its parent expression and store the value of the expected $layer in
                 // [[StyleInternalParams]].
 
-                this._style._layer = matched.value;
+                this._style.layer = matched.value;
 
                 // return `undefined` to remove this sub expression from its parent.
                 return undefined;
@@ -435,8 +429,8 @@ export class StyleSetEvaluator {
         if (style._whenExpr) {
             if (
                 this.m_layer !== undefined &&
-                style._layer !== undefined &&
-                this.m_layer !== style._layer
+                style.layer !== undefined &&
+                this.m_layer !== style.layer
             ) {
                 // skip this rule because its requested layer is different than the
                 // layer defined in $layer variable.
