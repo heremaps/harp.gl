@@ -9,6 +9,7 @@
 
 import { assert } from "chai";
 import { Expr, MapEnv, ValueMap } from "../lib/Expr";
+import { isInterpolatedProperty } from "../lib/InterpolatedProperty";
 
 const EPSILON = 1e-8;
 
@@ -388,6 +389,75 @@ describe("ExprEvaluator", function() {
 
             assert.throws(() => evaluate(["at", "pos", ["literal", ["x", "y", "z"]]]));
             assert.throws(() => evaluate(["at", "pos", "string"]));
+        });
+    });
+
+    describe("Operator 'interpolate'", function() {
+        it("parse", function() {
+            assert.isTrue(
+                isInterpolatedProperty(
+                    evaluate(["interpolate", ["linear"], ["zoom"], 0, 0, 1, 1, 2, 2])
+                )
+            );
+
+            assert.isTrue(
+                isInterpolatedProperty(
+                    evaluate(["interpolate", ["discrete"], ["zoom"], 0, 0, 1, 1, 2, 2])
+                )
+            );
+
+            assert.isTrue(
+                isInterpolatedProperty(
+                    evaluate(["interpolate", ["exponential", 2], ["zoom"], 0, 0, 1, 1, 2, 2])
+                )
+            );
+
+            assert.throws(() => evaluate(["interpolate"]), "expected an interpolation type");
+
+            assert.throws(
+                () => evaluate(["interpolate", "linear"]),
+                "expected an interpolation type"
+            );
+
+            assert.throws(
+                () => evaluate(["interpolate", ["linear"]]),
+                "expected the input of the interpolation"
+            );
+
+            assert.throws(
+                () => evaluate(["interpolate", ["discrete"]]),
+                "expected the input of the interpolation"
+            );
+
+            assert.throws(
+                () => evaluate(["interpolate", ["cubic"]]),
+                "expected the input of the interpolation"
+            );
+
+            assert.throws(
+                () => evaluate(["interpolate", ["exponential", 2]]),
+                "expected the input of the interpolation"
+            );
+
+            assert.throws(
+                () => evaluate(["interpolate", ["exponential"]]),
+                "expected the base of the exponential interpolation"
+            );
+
+            assert.throws(
+                () => evaluate(["interpolate", ["linear"], ["time"]]),
+                "only 'zoom' is supported"
+            );
+
+            assert.throws(
+                () => evaluate(["interpolate", ["linear"], ["zoom"]]),
+                "invalid number of samples"
+            );
+
+            assert.throws(
+                () => evaluate(["interpolate", ["linear"], ["zoom"], 0, 1, 2]),
+                "invalid number of samples"
+            );
         });
     });
 });
