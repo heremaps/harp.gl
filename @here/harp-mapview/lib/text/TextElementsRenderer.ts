@@ -150,6 +150,17 @@ const MIN_AVERAGE_CHAR_WIDTH = 5;
  */
 const LABEL_DIFFERENT_THRESHOLD_SQUARED = 4;
 
+/**
+ * Measurement rope length to check against label path. Should be larger than
+ * a font size to avoid broken text.
+ */
+const LABEL_PATH_ROPE_DIST = 20;
+
+/**
+ * Maximum relation of rope length to the distance between it's ends.
+ */
+const LABEL_PATH_ROPE_COEF = 1.05;
+
 // Development flag: Enable debug print.
 const PRINT_LABEL_DEBUG_INFO: boolean = false;
 
@@ -1472,7 +1483,15 @@ export class TextElementsRenderer {
                     }
                     continue;
                 }
-                screenPoints = screenPointsResult;
+
+                screenPoints = this.findLongestStraightPath(
+                    screenPointsResult,
+                    LABEL_PATH_ROPE_DIST,
+                    LABEL_PATH_ROPE_COEF
+                );
+                if (screenPoints.length < 2) {
+                    continue;
+                }
             }
 
             // Trigger the glyph load if needed.
@@ -2195,6 +2214,111 @@ export class TextElementsRenderer {
         }
 
         return numRenderedTextElements;
+    }
+
+    private findLongestStraightPath(
+        points: THREE.Vector2[],
+        dist: number,
+        coef: number
+    ): THREE.Vector2[] {
+        let longestStart = -1;
+        let longestEnd = -1;
+        let longestDist = 0;
+
+        let currentStart = 0;
+        let currentDist = 0;
+
+        const distances = [];
+
+        const length = points.length;
+
+        // assert(coef >= 1)
+
+        let prevCut = false;
+        let prevDX = 0;
+        let prevDY = 0;
+        let prevGoodIndex = -1;
+
+        let maxD = 0;
+        let maxI = -1;
+
+        for (let ropeD = 0, ropeA = 0, ropeB = 0; ropeB < length - 1; ropeB++) {
+            const a = points[ropeA];
+            const p = points[ropeB];
+            const b = points[ropeB + 1];
+
+            const dx = b.x - p.x;
+            const dy = b.y - p.y;
+            const dl = Math.sqrt(dx * dx + dy * dy);
+
+            distances.push(dl);
+            ropeD += dl;
+
+            if (maxD < dl) {
+                maxD = dl;
+                maxI = ropeB;
+            }
+
+            const nx = dx / dl;
+            const ny = dy / dl;
+            const ex = prevDX + nx;
+            const ey = prevDY + ny;
+            const el = ex * ex + ey * ey;
+
+            let cut = 4 / el > coef * coef;
+            if (cut) {
+                prevGoodIndex = ropeB;
+            } else if (ropeA !== ropeB) {
+                const rx = b.x - a.x;
+                const ry = b.y - a.y;
+                const rl = Math.sqrt(rx * rx + ry * ry);
+
+                cut = ropeD > rl * coef;
+            }
+
+            if (cut) {
+                if (!prevCut && currentDist > longestDist) {
+                    longestDist = currentDist;
+                    longestStart = currentStart;
+                    longestEnd = ropeB;
+                }
+
+                currentDist = 0;
+            } else {
+                if (prevCut) {
+                    currentStart = Math.max(ropeA, prevGoodIndex);
+                    currentDist = 0;
+                    for (let i = currentStart; i < ropeB; i++) {
+                        currentDist += distances[i];
+                    }
+                } else {
+                    currentDist += dl;
+                }
+            }
+
+            prevDX = nx;
+            prevDY = ny;
+            prevCut = cut;
+
+            while (ropeD > dist && ropeA < ropeB) {
+                ropeD -= distances[ropeA];
+                ropeA++;
+            }
+        }
+
+        if (currentDist > longestDist) {
+            longestDist = currentDist;
+            longestStart = currentStart;
+            longestEnd = points.length - 1;
+        }
+
+        if (longestDist < maxD) {
+            longestDist = maxD;
+            longestStart = maxI;
+            longestEnd = maxI + 1;
+        }
+
+        return points.slice(longestStart, longestEnd + 1);
     }
 
     private checkForSmallLabels(textElement: TextElement): THREE.Vector2[] | undefined {
