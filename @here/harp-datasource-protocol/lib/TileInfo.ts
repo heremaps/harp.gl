@@ -7,7 +7,14 @@ import { TileKey } from "@here/harp-geoutils";
 import { assert } from "@here/harp-utils";
 
 import { Env, MapEnv, Value } from "./Expr";
-import { IndexedTechnique, Technique, TextTechnique } from "./Techniques";
+import { AttrEvaluationContext, evaluateTechniqueAttr } from "./TechniqueAttr";
+import {
+    IndexedTechnique,
+    isLineMarkerTechnique,
+    isPoiTechnique,
+    isTextTechnique,
+    Technique
+} from "./Techniques";
 
 /**
  * Defines a map tile metadata.
@@ -410,7 +417,7 @@ export namespace ExtendedTileInfo {
     }
 
     /**
-     * Determine the text string of the (OMV) feature. It implements the special handling required
+     * Determine the name of (OMV) feature. It implements the special handling required
      * to determine the text content of a feature from its tags, which are passed in as the `env`.
      *
      * @param env Environment containing the tags from the (OMV) feature.
@@ -421,8 +428,8 @@ export namespace ExtendedTileInfo {
      */
     export function getFeatureName(
         env: Env,
-        useAbbreviation: boolean,
-        useIsoCode: boolean,
+        useAbbreviation?: boolean,
+        useIsoCode?: boolean,
         languages?: string[]
     ): string | undefined {
         let name;
@@ -452,6 +459,42 @@ export namespace ExtendedTileInfo {
         }
         return undefined;
     }
+
+    /**
+     * Determine the text string of the map feature. It implements the special handling required
+     * to determine the text content of a feature from its tags, which are passed in as the `env`.
+     *
+     * @param feature Feature, including properties from the (OMV) feature.
+     * @param technique technique defining how text should be created from feature
+     * @param languages List of languages to use, for example: Specify "en" to use the tag "name_en"
+     *                  as the text of the string. Order reflects priority.
+     */
+    export function getFeatureText(
+        context: Env | AttrEvaluationContext,
+        technique: Technique,
+        languages?: string[]
+    ): string | undefined {
+        let useAbbreviation: boolean | undefined;
+        let useIsoCode: boolean | undefined;
+        const env = context instanceof Env ? context : context.env;
+        if (
+            isTextTechnique(technique) ||
+            isPoiTechnique(technique) ||
+            isLineMarkerTechnique(technique)
+        ) {
+            if (technique.text !== undefined) {
+                return evaluateTechniqueAttr(context, technique.text);
+            }
+            if (technique.label !== undefined) {
+                const name = env.lookup(technique.label);
+                return typeof name === "string" ? name : undefined;
+            }
+            useAbbreviation = technique.useAbbreviation;
+            useIsoCode = technique.useIsoCode;
+        }
+
+        return getFeatureName(env, useAbbreviation, useIsoCode, languages);
+    }
 }
 
 /**
@@ -477,11 +520,7 @@ export class ExtendedTileInfoWriter {
      * @param storeExtendedTags Pass `true` if feature data like `layer`, `class`or `type` should
      *          be stored for every feature.
      */
-    constructor(
-        readonly tileInfo: ExtendedTileInfo,
-        readonly storeExtendedTags: boolean,
-        private languages?: string[]
-    ) {}
+    constructor(readonly tileInfo: ExtendedTileInfo, readonly storeExtendedTags: boolean) {}
 
     /**
      * Adds a [[Technique]] to the catalog of techniques. Individual techniques have a `_index` file
@@ -511,6 +550,7 @@ export class ExtendedTileInfoWriter {
 
         // Keep the index to identify the original technique later.
         storedTechnique._index = technique._index;
+        storedTechnique._key = technique._key;
         storedTechnique._styleSetIndex = technique._styleSetIndex;
 
         this.techniqueIndexMap.set(technique._index, infoTileTechniqueIndex);
@@ -533,24 +573,16 @@ export class ExtendedTileInfoWriter {
      */
     addFeature(
         featureGroup: FeatureGroup,
-        technique: Technique,
         env: MapEnv,
         featureId: number | undefined,
+        featureText: string | undefined,
         infoTileTechniqueIndex: number,
         featureGroupType: FeatureGroupType
     ) {
         // compute name/label of feature
-        const textTechnique = technique as TextTechnique;
-        const textLabel = textTechnique.label;
-        const useAbbreviation = textTechnique.useAbbreviation as boolean;
-        const useIsoCode = textTechnique.useIsoCode as boolean;
-        const name =
-            typeof textLabel === "string"
-                ? env.lookup(textLabel)
-                : ExtendedTileInfo.getFeatureName(env, useAbbreviation, useIsoCode, this.languages);
         let stringIndex = -1;
-        if (name && typeof name === "string") {
-            stringIndex = this.addText(name);
+        if (featureText !== undefined && featureText.length > 0) {
+            stringIndex = this.addText(featureText);
         }
 
         // add indices into the arrays.

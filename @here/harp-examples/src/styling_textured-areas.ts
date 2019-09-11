@@ -4,7 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { isReference, TextureCoordinateType, Theme } from "@here/harp-datasource-protocol";
+import { TextureCoordinateType, Theme } from "@here/harp-datasource-protocol";
+import { isJsonExpr } from "@here/harp-datasource-protocol/lib/Expr";
 import { GeoCoordinates } from "@here/harp-geoutils";
 import { MapControls, MapControlsUI } from "@here/harp-map-controls";
 import { CopyrightElementHandler, CopyrightInfo, MapView, ThemeLoader } from "@here/harp-mapview";
@@ -73,7 +74,7 @@ West</a>.</p>`;
                 }
                 const styleSet = theme.styles[styleSetName];
                 styleSet.forEach(style => {
-                    if (isReference(style)) {
+                    if (isJsonExpr(style)) {
                         return;
                     }
                     if (style.description === "urban area") {

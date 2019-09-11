@@ -465,8 +465,8 @@ export class GeoJsonParser {
         if (featureId !== undefined) {
             featureDetails.featureId = featureId;
         }
-
         const env = new MapEnv({ type: "line", ...(featureDetails as ValueMap) });
+
         const techniques = styleSetEvaluator.getMatchingTechniques(env);
         const featureIdNumber = 0; //geojsonTile do not have an integer for the featureId. Use 0.
         if (buffer.lines.vertices.length !== buffer.lines.geojsonProperties.length) {
@@ -750,6 +750,7 @@ export class GeoJsonParser {
             return;
         }
         const tileInfoWriter = extendedTile.writer;
+
         for (const technique of techniques) {
             if (technique === undefined) {
                 continue;
@@ -769,11 +770,12 @@ export class GeoJsonParser {
 
                 currentGeoJsonIndex++;
 
+                const featureText = ExtendedTileInfo.getFeatureText(env, technique);
                 tileInfoWriter.addFeature(
                     extendedTile.info.lineGroup,
-                    technique,
                     env,
                     featureId,
+                    featureText,
                     infoTileTechniqueIndex,
                     FeatureGroupType.Line
                 );

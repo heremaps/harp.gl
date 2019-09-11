@@ -9,6 +9,7 @@
 
 import { assert } from "chai";
 import { Expr, MapEnv, ValueMap } from "../lib/Expr";
+import { isInterpolatedProperty } from "../lib/InterpolatedProperty";
 
 const EPSILON = 1e-8;
 
@@ -364,6 +365,98 @@ describe("ExprEvaluator", function() {
                         "result2" // if y returns result2
                     ]),
                 "fallback is missing in 'case' expression"
+            );
+        });
+    });
+
+    describe("Operator 'literal'", function() {
+        it("evaluate", function() {
+            assert.isTrue(evaluate(["==", ["typeof", ["literal", { x: 10, y: 20 }]], "object"]));
+            assert.isTrue(evaluate(["==", ["typeof", ["literal", [10, 20, 30]]], "object"]));
+            assert.isTrue(evaluate(["==", ["typeof", ["literal", ["x", "y", "z"]]], "object"]));
+
+            assert.equal(evaluate(["length", ["literal", ["x", "y", "z"]]]), 3);
+        });
+    });
+
+    describe("Operator 'at'", function() {
+        it("retrieve array element", function() {
+            assert.equal(evaluate(["at", 0, ["literal", ["x", "y", "z"]]]), "x");
+            assert.equal(evaluate(["at", 1, ["literal", ["x", "y", "z"]]]), "y");
+            assert.equal(evaluate(["at", 2, ["literal", ["x", "y", "z"]]]), "z");
+            assert.isNull(evaluate(["at", 3, ["literal", ["x", "y", "z"]]]));
+            assert.isNull(evaluate(["at", -1, ["literal", ["x", "y", "z"]]]));
+
+            assert.throws(() => evaluate(["at", "pos", ["literal", ["x", "y", "z"]]]));
+            assert.throws(() => evaluate(["at", "pos", "string"]));
+        });
+    });
+
+    describe("Operator 'interpolate'", function() {
+        it("parse", function() {
+            assert.isTrue(
+                isInterpolatedProperty(
+                    evaluate(["interpolate", ["linear"], ["zoom"], 0, 0, 1, 1, 2, 2])
+                )
+            );
+
+            assert.isTrue(
+                isInterpolatedProperty(
+                    evaluate(["interpolate", ["discrete"], ["zoom"], 0, 0, 1, 1, 2, 2])
+                )
+            );
+
+            assert.isTrue(
+                isInterpolatedProperty(
+                    evaluate(["interpolate", ["exponential", 2], ["zoom"], 0, 0, 1, 1, 2, 2])
+                )
+            );
+
+            assert.throws(() => evaluate(["interpolate"]), "expected an interpolation type");
+
+            assert.throws(
+                () => evaluate(["interpolate", "linear"]),
+                "expected an interpolation type"
+            );
+
+            assert.throws(
+                () => evaluate(["interpolate", ["linear"]]),
+                "expected the input of the interpolation"
+            );
+
+            assert.throws(
+                () => evaluate(["interpolate", ["discrete"]]),
+                "expected the input of the interpolation"
+            );
+
+            assert.throws(
+                () => evaluate(["interpolate", ["cubic"]]),
+                "expected the input of the interpolation"
+            );
+
+            assert.throws(
+                () => evaluate(["interpolate", ["exponential", 2]]),
+                "expected the input of the interpolation"
+            );
+
+            assert.throws(
+                () => evaluate(["interpolate", ["exponential"]]),
+                "expected the base of the exponential interpolation"
+            );
+
+            assert.throws(
+                () => evaluate(["interpolate", ["linear"], ["time"]]),
+                "only 'zoom' is supported"
+            );
+
+            assert.throws(
+                () => evaluate(["interpolate", ["linear"], ["zoom"]]),
+                "invalid number of samples"
+            );
+
+            assert.throws(
+                () => evaluate(["interpolate", ["linear"], ["zoom"], 0, 1, 2]),
+                "invalid number of samples"
             );
         });
     });

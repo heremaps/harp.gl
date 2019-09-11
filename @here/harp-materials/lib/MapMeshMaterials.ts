@@ -731,11 +731,9 @@ export class ExtrusionFeatureMixin implements ExtrusionFeature {
      * @param source The material to copy property values from.
      */
     protected copyExtrusionParameters(source: ExtrusionFeature) {
-        this.setExtrusionRatio(
-            source.extrusionRatio === undefined
-                ? AnimatedExtrusionTileHandler.DEFAULT_RATIO_MAX
-                : source.extrusionRatio
-        );
+        if (source.extrusionRatio !== undefined) {
+            this.setExtrusionRatio(source.extrusionRatio);
+        }
         return this;
     }
 }

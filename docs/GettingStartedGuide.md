@@ -79,7 +79,7 @@ format require us to use some javascript code bundler - this example will facili
 Install them into your project:
 
 ```shell
-npm install --save @here/harp-mapview @here/harp-omv-datasource @here/harp-map-theme three@0.104
+npm install --save @here/harp-mapview @here/harp-omv-datasource @here/harp-map-theme
 ```
 
 You have installed 3 key components needed to render basic map:
@@ -88,7 +88,14 @@ You have installed 3 key components needed to render basic map:
 -   `@here/harp-omv-datasource` - tile provider based on OMV/MVT vector tile format
 -   `@here/harp-map-theme` - default theme and font resources required to render map in OMV/tilezen
     scheme
--   `three` - Three.js - a mandatory dependency of `harp.gl`
+
+Since Three.js is a peer dependency of harp.gl it has to be installed as well. To get the version
+that you should install you can use npm view.
+
+```shell
+THREE=`npm view @here/harp-mapview peerDependencies.three`
+npm install --save three@$THREE
+```
 
 ### Decoder bundle
 

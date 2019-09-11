@@ -15,12 +15,19 @@ export interface ExprVisitor<Result, Context> {
     visitBooleanLiteralExpr(expr: BooleanLiteralExpr, context: Context): Result;
     visitNumberLiteralExpr(expr: NumberLiteralExpr, context: Context): Result;
     visitStringLiteralExpr(expr: StringLiteralExpr, context: Context): Result;
+    visitObjectLiteralExpr(expr: ObjectLiteralExpr, context: Context): Result;
     visitVarExpr(expr: VarExpr, context: Context): Result;
     visitHasAttributeExpr(expr: HasAttributeExpr, context: Context): Result;
     visitContainsExpr(expr: ContainsExpr, context: Context): Result;
     visitCallExpr(expr: CallExpr, context: Context): Result;
     visitMatchExpr(expr: MatchExpr, context: Context): Result;
     visitCaseExpr(expr: CaseExpr, context: Context): Result;
+}
+
+export type JsonExpr = unknown[];
+
+export function isJsonExpr(v: any): v is JsonExpr {
+    return Array.isArray(v) && v.length > 0 && typeof v[0] === "string";
 }
 
 /**
@@ -88,6 +95,12 @@ export abstract class Expr {
                     }
                 });
                 return new ContainsExpr(this.fromJSON(node[1]), elements);
+
+            case "literal":
+                if (typeof node[1] !== "object") {
+                    throw new Error("expected an object or array literal");
+                }
+                return new ObjectLiteralExpr(node[1]);
 
             case "match": {
                 if (node.length < 4) {
@@ -186,7 +199,7 @@ export type BinaryOp = RelationalOp | EqualityOp;
 /**
  * @hidden
  */
-export type Value = null | boolean | number | string;
+export type Value = null | boolean | number | string | object;
 
 /**
  * @hidden
@@ -330,6 +343,24 @@ export class StringLiteralExpr extends Expr {
 }
 
 /**
+ * Object literal expression.
+ * @hidden
+ */
+export class ObjectLiteralExpr extends Expr {
+    constructor(readonly value: object) {
+        super();
+    }
+
+    get isArrayLiteral() {
+        return Array.isArray(this.value);
+    }
+
+    accept<Result, Context>(visitor: ExprVisitor<Result, Context>, context: Context): Result {
+        return visitor.visitObjectLiteralExpr(this, context);
+    }
+}
+
+/**
  * A has expression with an attribute, for example `has(ref)`.
  * @hidden
  */
@@ -426,6 +457,10 @@ class ExprSerializer implements ExprVisitor<unknown, void> {
 
     visitStringLiteralExpr(expr: StringLiteralExpr, context: void): unknown {
         return expr.value;
+    }
+
+    visitObjectLiteralExpr(expr: ObjectLiteralExpr, context: void): unknown {
+        return ["literal", expr.value];
     }
 
     visitVarExpr(expr: VarExpr, context: void): unknown {

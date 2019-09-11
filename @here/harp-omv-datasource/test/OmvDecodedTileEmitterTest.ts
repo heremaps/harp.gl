@@ -120,13 +120,18 @@ describe("OmvDecodedTileEmitter", function() {
 
         const { tileEmitter, styleSetEvaluator } = createTileEmitter();
 
-        const mockEnv = new MapEnv({ layer: "mock-layer" });
-        const matchedTechniques = styleSetEvaluator.getMatchingTechniques(mockEnv);
+        const storageLevel = 10;
+        const mockContext = {
+            env: new MapEnv({ layer: "mock-layer" }),
+            storageLevel
+        };
+
+        const matchedTechniques = styleSetEvaluator.getMatchingTechniques(mockContext.env);
         tileEmitter.processPolygonFeature(
             "mock-layer",
             4096,
             polygons,
-            mockEnv,
+            mockContext,
             matchedTechniques,
             undefined
         );

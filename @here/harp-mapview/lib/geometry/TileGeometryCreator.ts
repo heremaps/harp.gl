@@ -29,6 +29,7 @@ import {
     isTerrainTechnique,
     isTextTechnique,
     LineMarkerTechnique,
+    MakeTechniqueAttrs,
     needsVertexNormals,
     PoiTechnique,
     SolidLineTechnique,
@@ -690,17 +691,6 @@ export class TileGeometryCreator {
                         lineMaterial.defines.USE_COLOR = 1;
                     }
                 }
-                // Add polygon offset to the extruded buildings and to the fill area to avoid depth
-                // problems when rendering edges.
-                const hasExtrudedOutlines: boolean =
-                    isExtrudedPolygonTechnique(technique) && srcGeometry.edgeIndex !== undefined;
-                const hasFillOutlines: boolean =
-                    isFillTechnique(technique) && srcGeometry.edgeIndex !== undefined;
-                if (hasExtrudedOutlines || hasFillOutlines) {
-                    material.polygonOffset = true;
-                    material.polygonOffsetFactor = 0.75;
-                    material.polygonOffsetUnits = 4.0;
-                }
 
                 // Add the solid line outlines as a separate object.
                 const hasSolidLinesOutlines: boolean =
@@ -710,7 +700,7 @@ export class TileGeometryCreator {
 
                 object.frustumCulled = false;
 
-                object.renderOrder = technique.renderOrder;
+                object.renderOrder = technique.renderOrder!;
 
                 if (group.renderOrderOffset !== undefined) {
                     object.renderOrder += group.renderOrderOffset;
@@ -955,7 +945,7 @@ export class TileGeometryCreator {
                 objects.push(object);
 
                 // Add the extruded building edges as a separate geometry.
-                if (hasExtrudedOutlines) {
+                if (isExtrudedPolygonTechnique(technique) && srcGeometry.edgeIndex !== undefined) {
                     const edgeGeometry = new THREE.BufferGeometry();
                     edgeGeometry.addAttribute("position", bufferGeometry.getAttribute("position"));
 
@@ -1057,7 +1047,8 @@ export class TileGeometryCreator {
                 }
 
                 // Add the fill area edges as a separate geometry.
-                if (hasFillOutlines) {
+
+                if (isFillTechnique(technique) && srcGeometry.edgeIndex !== undefined) {
                     const outlineGeometry = new THREE.BufferGeometry();
                     outlineGeometry.addAttribute(
                         "position",
@@ -1569,7 +1560,7 @@ export class TileGeometryCreator {
      */
     private getFadingParams(
         displayZoomLevel: number,
-        technique: BaseTechniqueParams
+        technique: MakeTechniqueAttrs<BaseTechniqueParams>
     ): FadingParameters {
         const fadeNear =
             technique.fadeNear !== undefined

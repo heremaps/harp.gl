@@ -16,14 +16,18 @@ import {
     MatchExpr,
     NullLiteralExpr,
     NumberLiteralExpr,
+    ObjectLiteralExpr,
     StringLiteralExpr,
     Value,
     VarExpr
 } from "./Expr";
 
+import { ArrayOperators } from "./operators/ArrayOperators";
 import { CastOperators } from "./operators/CastOperators";
+import { ColorOperators } from "./operators/ColorOperators";
 import { ComparisonOperators } from "./operators/ComparisonOperators";
 import { FlowOperators } from "./operators/FlowOperators";
+import { InterpolationOperators } from "./operators/InterpolationOperators";
 import { MathOperators } from "./operators/MathOperators";
 import { MiscOperators } from "./operators/MiscOperators";
 import { StringOperators } from "./operators/StringOperators";
@@ -91,6 +95,10 @@ export class ExprEvaluator implements ExprVisitor<Value, ExprEvaluatorContext> {
     }
 
     visitStringLiteralExpr(expr: StringLiteralExpr, context: ExprEvaluatorContext): Value {
+        return expr.value;
+    }
+
+    visitObjectLiteralExpr(expr: ObjectLiteralExpr, context: ExprEvaluatorContext): Value {
         return expr.value;
     }
 
@@ -189,6 +197,9 @@ ExprEvaluator.defineOperators(CastOperators);
 ExprEvaluator.defineOperators(ComparisonOperators);
 ExprEvaluator.defineOperators(MathOperators);
 ExprEvaluator.defineOperators(StringOperators);
+ExprEvaluator.defineOperators(ColorOperators);
 ExprEvaluator.defineOperators(TypeOperators);
 ExprEvaluator.defineOperators(MiscOperators);
 ExprEvaluator.defineOperators(FlowOperators);
+ExprEvaluator.defineOperators(ArrayOperators);
+ExprEvaluator.defineOperators(InterpolationOperators);

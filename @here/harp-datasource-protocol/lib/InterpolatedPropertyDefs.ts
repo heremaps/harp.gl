@@ -34,8 +34,6 @@ export interface InterpolatedPropertyDefinition<T> {
     exponent?: number;
 }
 
-export type MaybeInterpolatedProperty<T> = T | InterpolatedPropertyDefinition<T>;
-
 /**
  * Property which value is interpolated across different zoom levels.
  */

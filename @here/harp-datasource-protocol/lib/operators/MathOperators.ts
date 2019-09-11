@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { MathUtils } from "@here/harp-geoutils";
 import { Expr } from "../Expr";
 import { ExprEvaluatorContext, OperatorDescriptorMap } from "../ExprEvaluator";
 
@@ -191,6 +192,27 @@ const operators = {
     min: {
         call: (context: ExprEvaluatorContext, args: Expr[]) => {
             return Math.min(...args.map(v => Number(context.evaluate(v))));
+        }
+    },
+
+    /**
+     * Clamp numeric value to given range, inclusive.
+     *
+     * Synopsis:
+     * ```
+     * ["clamp", v: number, min: number, max: number]`
+     * ```
+     */
+    clamp: {
+        call: (context: ExprEvaluatorContext, args: Expr[]) => {
+            const v = context.evaluate(args[0]);
+            const min = context.evaluate(args[1]);
+            const max = context.evaluate(args[2]);
+
+            if (typeof v !== "number" || typeof min !== "number" || typeof max !== "number") {
+                throw new Error(`invalid operands '${v}', ${min}, ${max} for operator 'clamp'`);
+            }
+            return MathUtils.clamp(v, min, max);
         }
     },
 

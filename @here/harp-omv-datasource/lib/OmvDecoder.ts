@@ -3,6 +3,7 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
+
 import {
     DecodedTile,
     ExtendedTileInfo,
@@ -10,10 +11,9 @@ import {
     IndexedTechnique,
     OptionsMap,
     StyleSet,
-    Technique,
     TileInfo
 } from "@here/harp-datasource-protocol";
-import { Env, MapEnv, StyleSetEvaluator } from "@here/harp-datasource-protocol/index-decoder";
+import { MapEnv, StyleSetEvaluator } from "@here/harp-datasource-protocol/index-decoder";
 import { OrientedBox3 } from "@here/harp-geometry";
 import {
     GeoBox,
@@ -30,6 +30,8 @@ import {
 import { LoggerManager, PerformanceTimer } from "@here/harp-utils";
 import * as THREE from "three";
 
+// tslint:disable-next-line:max-line-length
+import { AttrEvaluationContext } from "@here/harp-datasource-protocol/lib/TechniqueAttr";
 import { IGeometryProcessor, ILineGeometry, IPolygonGeometry } from "./IGeometryProcessor";
 import { OmvProtobufDataAdapter } from "./OmvData";
 import {
@@ -91,8 +93,8 @@ export interface IOmvEmitter {
         layer: string,
         extents: number,
         geometry: THREE.Vector2[],
-        env: MapEnv,
-        techniques: Technique[],
+        context: AttrEvaluationContext,
+        techniques: IndexedTechnique[],
         featureId: number | undefined
     ): void;
 
@@ -100,8 +102,8 @@ export interface IOmvEmitter {
         layer: string,
         extents: number,
         feature: ILineGeometry[],
-        env: MapEnv,
-        techniques: Technique[],
+        context: AttrEvaluationContext,
+        techniques: IndexedTechnique[],
         featureId: number | undefined
     ): void;
 
@@ -109,8 +111,8 @@ export interface IOmvEmitter {
         layer: string,
         extents: number,
         feature: IPolygonGeometry[],
-        env: MapEnv,
-        techniques: Technique[],
+        context: AttrEvaluationContext,
+        techniques: IndexedTechnique[],
         featureId: number | undefined
     ): void;
 }
@@ -258,6 +260,11 @@ export class OmvDecoder implements IGeometryProcessor {
             }
             return;
         }
+        const context = {
+            env,
+            storageLevel,
+            cachedExprResults: this.m_styleSetEvaluator.expressionEvaluatorCache
+        };
 
         const featureId = env.lookup("$id") as number | undefined;
 
@@ -266,7 +273,7 @@ export class OmvDecoder implements IGeometryProcessor {
                 layer,
                 extents,
                 geometry,
-                env,
+                context,
                 techniques,
                 featureId
             );
@@ -276,7 +283,7 @@ export class OmvDecoder implements IGeometryProcessor {
                 layer,
                 extents,
                 geometry,
-                env,
+                context,
                 techniques,
                 featureId
             );
@@ -312,6 +319,11 @@ export class OmvDecoder implements IGeometryProcessor {
             return;
         }
 
+        const context = {
+            env,
+            storageLevel,
+            cachedExprResults: this.m_styleSetEvaluator.expressionEvaluatorCache
+        };
         const featureId = env.lookup("$id") as number | undefined;
 
         if (this.m_decodedTileEmitter) {
@@ -319,7 +331,7 @@ export class OmvDecoder implements IGeometryProcessor {
                 layer,
                 extents,
                 geometry,
-                env,
+                context,
                 techniques,
                 featureId
             );
@@ -329,7 +341,7 @@ export class OmvDecoder implements IGeometryProcessor {
                 layer,
                 extents,
                 geometry,
-                env,
+                context,
                 techniques,
                 featureId
             );
@@ -365,13 +377,19 @@ export class OmvDecoder implements IGeometryProcessor {
             return;
         }
 
+        const context = {
+            env,
+            storageLevel,
+            cachedExprResults: this.m_styleSetEvaluator.expressionEvaluatorCache
+        };
         const featureId = env.lookup("$id") as number | undefined;
+
         if (this.m_decodedTileEmitter) {
             this.m_decodedTileEmitter.processPolygonFeature(
                 layer,
                 extents,
                 geometry,
-                env,
+                context,
                 techniques,
                 featureId
             );
@@ -381,7 +399,7 @@ export class OmvDecoder implements IGeometryProcessor {
                 layer,
                 extents,
                 geometry,
-                env,
+                context,
                 techniques,
                 featureId
             );
@@ -486,40 +504,6 @@ export namespace OmvDecoder {
         get sourceProjection(): Projection {
             return this.tilingScheme.projection;
         }
-    }
-
-    export function getFeatureName(
-        env: Env,
-        useAbbreviation: boolean,
-        useIsoCode: boolean,
-        languages?: string[]
-    ): string | undefined {
-        let name;
-        if (useAbbreviation) {
-            const abbreviation = env.lookup(`name:short`);
-            if (typeof abbreviation === "string" && abbreviation.length > 0) {
-                return abbreviation;
-            }
-        }
-        if (useIsoCode) {
-            const isoCode = env.lookup(`iso_code`);
-            if (typeof isoCode === "string" && isoCode.length > 0) {
-                return isoCode;
-            }
-        }
-        if (languages !== undefined) {
-            for (const language of languages) {
-                name = env.lookup(`name:${language}`) || env.lookup(`name_${language}`);
-                if (typeof name === "string" && name.length > 0) {
-                    return name;
-                }
-            }
-        }
-        name = env.lookup("name");
-        if (typeof name === "string") {
-            return name;
-        }
-        return undefined;
     }
 }
 
