@@ -72,8 +72,8 @@ with `theme` loaded from `unpkg.com` CDN.
  * `Refused to create a worker from 'blob:http://...' because it violates the following Content
     Security Policy ...`
 
-    As noed above, if `harp.js` and `harp-decoders.js` is loaded from other domain (like CDN), we try
-    to load script into `Blob` and then execute worker from blb-url. For this mechanism to work, your
+    As noted above, if `harp.js` and `harp-decoders.js` is loaded from other domain (like CDN), we try
+    to load script into `Blob` and then execute worker from blob-url. For this mechanism to work, your
     CSP policy for `worker-src` and/or `child-src` should allow `blob:` origin. `blob:` origin is
     enabled by default, but if for some reason it's not the case, you can re-enable it with
     following snippet:
