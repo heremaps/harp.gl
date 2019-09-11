@@ -1239,7 +1239,6 @@ export class MapView extends THREE.EventDispatcher {
         this.m_tileDataSources.forEach((dataSource: DataSource) => {
             dataSource.setLanguages(this.m_languages);
         });
-        this.clearTileCache();
         this.update();
     }
 
