@@ -15,50 +15,62 @@ You can use this engine to:
 -   Design your maps modularly, where you can swap out modules and data providers as required.
 
 With that in mind, we have included some modules that let's you get started with some simple web applications
-that can display a map using our default style. You can get results like the one shown below:
+that can display a map using our default style. You can get results like the ones shown below:
 
-![New York City rendered with our default style](docs/nyc.jpg)
+![Various renderings using harp.gl](docs/composite.jpg)
 
 ## Getting started with harp.gl
 
 You can consume the harp.gl api with two different methods:
 
-* linking a simple bundle as a `<script>` tag in your html
-* installing a set of node modules from npm
+-   linking a simple bundle as a `<script>` tag in your html
+-   installing a set of node modules from npm
 
 If you want to learn more about the applications you can create, please check the [Getting Started Guide](docs/GettingStartedGuide.md).
 
 ### Simple bundle
 
 Add `three.js` and `harp.gl` to your html and create a canvas with an id `map`:
+
 ```html
 <html>
-   <head>
-      <style>
-         body, html { border: 0; margin: 0; padding: 0; }
-         #map { height: 100vh; width: 100vw; }
-      </style>
-      <script src="https://unpkg.com/three/build/three.min.js"></script>
-      <script src="https://unpkg.com/@here/harp.gl/dist/harp.js"></script>
-   </head>
-   <body>
-      <canvas id="map"></canvas>
-      <script src="index.js"></script>
-   </body>
+    <head>
+        <style>
+            body,
+            html {
+                border: 0;
+                margin: 0;
+                padding: 0;
+            }
+            #map {
+                height: 100vh;
+                width: 100vw;
+            }
+        </style>
+        <script src="https://unpkg.com/three/build/three.min.js"></script>
+        <script src="https://unpkg.com/@here/harp.gl/dist/harp.js"></script>
+    </head>
+    <body>
+        <canvas id="map"></canvas>
+        <script src="index.js"></script>
+    </body>
 </html>
 ```
+
 Initialize the map:
+
 ```javascript
 const map = new harp.MapView({
-   canvas: document.getElementById("map"),
-   theme: "https://unpkg.com/@here/harp-map-theme@latest/resources/berlin_tilezen_night_reduced.json",
+    canvas: document.getElementById("map"),
+    theme:
+        "https://unpkg.com/@here/harp-map-theme@latest/resources/berlin_tilezen_night_reduced.json"
 });
 const controls = new harp.MapControls(map);
 const omvDataSource = new harp.OmvDataSource({
-   baseUrl: "https://xyz.api.here.com/tiles/herebase.02",
-   apiFormat: harp.APIFormat.XYZOMV,
-   styleSetName: "tilezen",
-   authenticationCode: "YOUR-XYZ-TOKEN",
+    baseUrl: "https://xyz.api.here.com/tiles/herebase.02",
+    apiFormat: harp.APIFormat.XYZOMV,
+    styleSetName: "tilezen",
+    authenticationCode: "YOUR-XYZ-TOKEN"
 });
 map.addDataSource(omvDataSource);
 ```
