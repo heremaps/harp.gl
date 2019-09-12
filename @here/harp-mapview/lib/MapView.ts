@@ -703,6 +703,7 @@ export class MapView extends THREE.EventDispatcher {
     private readonly m_visibleTileSetOptions: VisibleTileSetOptions;
 
     private m_theme: Theme = {};
+    private m_themeIsLoading: boolean = false;
 
     private m_previousFrameTimeStamp?: number;
     private m_firstFrameRendered = false;
@@ -1135,12 +1136,15 @@ export class MapView extends THREE.EventDispatcher {
      */
     set theme(theme: Theme) {
         if (!ThemeLoader.isThemeLoaded(theme)) {
+            this.m_themeIsLoading = true;
             // If theme is not yet loaded, let's set theme asynchronously
             ThemeLoader.load(theme)
                 .then(loadedTheme => {
+                    this.m_themeIsLoading = false;
                     this.theme = loadedTheme;
                 })
                 .catch(error => {
+                    this.m_themeIsLoading = false;
                     logger.error(`failed to set theme: ${error}`, error);
                 });
             return;
@@ -2630,6 +2634,7 @@ export class MapView extends THREE.EventDispatcher {
 
         if (
             !this.m_firstFrameComplete &&
+            !this.m_themeIsLoading &&
             this.m_visibleTiles.allVisibleTilesLoaded &&
             this.m_connectedDataSources.size + this.m_failedDataSources.size ===
                 this.m_tileDataSources.length &&
@@ -2637,8 +2642,9 @@ export class MapView extends THREE.EventDispatcher {
             !this.animating &&
             !this.cameraIsMoving &&
             !this.m_animatedExtrusionHandler.isAnimating &&
-            this.m_textElementsRenderer !== undefined &&
-            !this.m_textElementsRenderer.loading &&
+            (this.m_textElementsRenderer !== undefined
+                ? !this.m_textElementsRenderer.loading
+                : true) &&
             this.m_poiTableManager.finishedLoading
         ) {
             this.m_firstFrameComplete = true;
@@ -2741,12 +2747,20 @@ export class MapView extends THREE.EventDispatcher {
             return;
         }
 
+        this.m_themeIsLoading = true;
         Promise.resolve<string | Theme>(this.m_options.theme)
             .then(theme => ThemeLoader.load(theme))
             .then(theme => {
+                this.m_themeIsLoading = false;
                 this.theme = theme;
                 THEME_LOADED_EVENT.time = Date.now();
                 this.dispatchEvent(THEME_LOADED_EVENT);
+            })
+            .catch(error => {
+                this.m_themeIsLoading = false;
+                const themeName =
+                    typeof this.m_options.theme === "string" ? ` from ${this.m_options.theme}` : "";
+                logger.error(`Failed to load theme${themeName}: ${error}`, error);
             });
     }
 
@@ -3034,7 +3048,7 @@ export class MapView extends THREE.EventDispatcher {
      * Gradually initialize & update TextRenderer as assets arrive.
      */
     private updateTextRenderer() {
-        if (this.m_theme.textStyles === undefined) {
+        if (this.m_theme.fontCatalogs === undefined) {
             return;
         }
         if (this.m_textElementsRenderer === undefined) {
