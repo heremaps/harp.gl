@@ -462,6 +462,7 @@ export function applyTechniqueToMaterial(
         }
         if (m[prop] instanceof THREE.Color) {
             m[prop].set(value);
+            m[prop] = m[prop]; // Trigger setter
         } else {
             m[prop] = value;
         }
