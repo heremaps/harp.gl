@@ -17,7 +17,7 @@ You can use this engine to:
 With that in mind, we have included some modules that let's you get started with some simple web applications
 that can display a map using our default style. You can get results like the one shown below:
 
-![New York City rendered with our default style](docs/nyc.jpg)
+![New York City rendered with our default style](docs/nyc.gif)
 
 ## Getting started with harp.gl
 
