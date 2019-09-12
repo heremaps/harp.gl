@@ -59,7 +59,7 @@ with `theme` loaded from `unpkg.com` CDN.
   To overcome this issue, we attempt to load `harp-decoders.js` by converting it to `Blob`. This
   requires, that CSP policy of your page allows loading workers from `blob:` URLs.
 
-# Troublshooting
+# Troubleshooting
 
  * `harp.js: Unable to determine location of three(.min).js`
 
