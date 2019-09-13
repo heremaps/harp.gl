@@ -869,6 +869,12 @@ export interface SolidLineTechniqueParams extends BaseTechniqueParams, Polygonal
      */
     color: DynamicProperty<StyleColor>;
     /**
+     * Color of a line outline in hexadecimal or CSS-style notation,
+     * for example: `"#e4e9ec"`, `"#fff"`, `"rgb(255, 0, 0)"`, or `"hsl(35, 11%, 88%)"`.
+     * @format color-hex
+     */
+    outlineColor?: DynamicProperty<StyleColor>;
+    /**
      * Set to `true` if line should appear transparent. Rendering transparent lines may come with a
      * slight performance impact.
      */
@@ -888,6 +894,10 @@ export interface SolidLineTechniqueParams extends BaseTechniqueParams, Polygonal
      * Width of a line in `metricUnit` for different zoom levels.
      */
     lineWidth: DynamicProperty<StyleLength>;
+    /**
+     * Outline width of a line in `metricUnit`s for different zoom levels.
+     */
+    outlineWidth?: DynamicProperty<StyleLength>;
     /**
      * Clip the line outside the tile if `true`.
      */
@@ -919,6 +929,18 @@ export interface DashedLineTechniqueParams extends BaseTechniqueParams, Polygona
      */
     color: DynamicProperty<StyleColor>;
     /**
+     * Color of a line dashes in hexadecimal or CSS-style notation,
+     * for example: `"#e4e9ec"`, `"#fff"`, `"rgb(255, 0, 0)"`, or `"hsl(35, 11%, 88%)"`.
+     * @format color-hex
+     */
+    dashColor?: DynamicProperty<StyleColor>;
+    /**
+     * Color of a line outline in hexadecimal or CSS-style notation,
+     * for example: `"#e4e9ec"`, `"#fff"`, `"rgb(255, 0, 0)"`, or `"hsl(35, 11%, 88%)"`.
+     * @format color-hex
+     */
+    outlineColor?: DynamicProperty<StyleColor>;
+    /**
      * Set to `true` if line should appear transparent. Rendering transparent lines may come with a
      * slight performance impact.
      */
@@ -937,6 +959,10 @@ export interface DashedLineTechniqueParams extends BaseTechniqueParams, Polygona
      * Width of a line in `metricUnit`s for different zoom levels.
      */
     lineWidth: DynamicProperty<StyleLength>;
+    /**
+     * Outline width of a line in `metricUnit`s for different zoom levels.
+     */
+    outlineWidth?: DynamicProperty<StyleLength>;
     /**
      * Length of a line in meters for different zoom levels.
      */

@@ -773,6 +773,15 @@ export class TileGeometryCreator {
                                 unitFactor *
                                 0.5;
 
+                            if (technique.outlineWidth !== undefined) {
+                                lineMaterial.outlineWidth =
+                                    getPropertyValue(
+                                        technique.outlineWidth,
+                                        mapView.zoomLevel,
+                                        mapView.pixelToWorld
+                                    ) * unitFactor;
+                            }
+
                             // Do the same for dashSize and gapSize for dashed lines.
                             if (isDashedLineTechnique(technique)) {
                                 const dashedLineMaterial = lineMaterial as DashedLineMaterial;
