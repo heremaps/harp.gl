@@ -40,7 +40,7 @@ export interface ThemeLoadOptions {
     /**
      * Whether to resolve `ref` expressions in `definition` and `styles` elements.
      *
-     * @default `true`
+     * @default `false`, as datasources resolve definitions in [[StyleSetEvaluator]].
      */
     resolveDefinitions?: boolean;
 
@@ -112,7 +112,7 @@ export class ThemeLoader {
 
         theme = this.resolveUrls(theme);
 
-        const resolveDefinitions = getOptionValue<boolean>(options.resolveDefinitions, true);
+        const resolveDefinitions = getOptionValue<boolean>(options.resolveDefinitions, false);
         theme = await ThemeLoader.resolveBaseTheme(theme, options);
         if (resolveDefinitions) {
             const contextLoader = new ContextLogger(

@@ -17,6 +17,7 @@ import {
     HasAttributeExpr,
     isJsonExpr,
     JsonExpr,
+    LiteralExpr,
     MatchExpr,
     NullLiteralExpr,
     NumberLiteralExpr,
@@ -33,7 +34,16 @@ import {
 import { InterpolatedProperty } from "./InterpolatedPropertyDefs";
 import { AttrScope, mergeTechniqueDescriptor, TechniquePropNames } from "./TechniqueDescriptor";
 import { IndexedTechnique, Technique, techniqueDescriptors } from "./Techniques";
-import { LineStyle, Style, StyleDeclaration, StyleSelector, StyleSet } from "./Theme";
+import {
+    Definitions,
+    isActualSelectorDefinition,
+    isJsonExprReference,
+    LineStyle,
+    Style,
+    StyleDeclaration,
+    StyleSelector,
+    StyleSet
+} from "./Theme";
 
 const logger = LoggerManager.instance.create("StyleSetEvaluator");
 
@@ -245,26 +255,51 @@ export class StyleSetEvaluator {
     private readonly m_styleConditionClassifier = new StyleConditionClassifier();
     private m_layer: string | undefined;
     private m_geometryType: string | undefined;
+    private m_definitions?: Definitions;
+    private m_definitionExprCache?: Map<string, Expr>;
 
-    constructor(styleSet: StyleSet) {
+    constructor(styleSet: StyleSet, definitions?: Definitions) {
         let techniqueRenderOrder = 0;
         let styleSetIndex = 0;
+        this.m_definitions = definitions;
+        if (definitions !== undefined) {
+            this.m_definitionExprCache = new Map();
+        }
 
-        const cloneStyle = (style: StyleDeclaration): StyleDeclaration | undefined => {
+        const resolveStyleReferences = (style: StyleDeclaration): StyleDeclaration | undefined => {
             if (isJsonExpr(style)) {
-                return undefined;
+                if (!isJsonExprReference(style)) {
+                    throw new Error(
+                        "invalid expression in this context, only 'ref's are supported"
+                    );
+                }
+                // expand and instantiate references to style definitions.
+                const definitionName = style[1];
+                const def = definitions && definitions[definitionName];
+
+                if (!def) {
+                    throw new Error(`invalid reference '${definitionName}' - not found`);
+                }
+                if (!isActualSelectorDefinition(def)) {
+                    throw new Error(
+                        `invalid reference '${definitionName}' - expected style definition`
+                    );
+                }
+
+                // instantiate the style
+                return resolveStyleReferences(def);
             }
             return {
                 ...style,
                 styles:
                     style.styles !== undefined
                         ? (style.styles
-                              .map(subStyle => cloneStyle(subStyle))
+                              .map(subStyle => resolveStyleReferences(subStyle))
                               .filter(subStyle => subStyle !== undefined) as StyleSet)
                         : undefined
             };
         };
-        styleSet = styleSet.map(style => cloneStyle(style) as StyleDeclaration);
+        styleSet = styleSet.map(style => resolveStyleReferences(style) as StyleDeclaration);
         const computeDefaultRenderOrder = (style: InternalStyle): void => {
             if (style.renderOrderBiasGroup !== undefined) {
                 const renderOrderBiasGroupOrder = style.renderOrderBiasGroup
@@ -425,7 +460,7 @@ export class StyleSetEvaluator {
         if (style.when !== undefined) {
             try {
                 style._whenExpr = Array.isArray(style.when)
-                    ? Expr.fromJSON(style.when)
+                    ? Expr.fromJSON(style.when, this.m_definitions, this.m_definitionExprCache)
                     : Expr.parse(style.when);
 
                 // search for usages of '$layer' and any other
@@ -584,7 +619,17 @@ export class StyleSetEvaluator {
             ];
 
             if (isJsonExpr(attrValue)) {
-                const expr = Expr.fromJSON(attrValue).intern(this.m_exprPool);
+                const expr = Expr.fromJSON(
+                    attrValue,
+                    this.m_definitions,
+                    this.m_definitionExprCache
+                ).intern(this.m_exprPool);
+                if (expr instanceof LiteralExpr) {
+                    // Shortcut for literal expressions, so they are not taken into account when
+                    // trying to instantiate technique variants.
+                    targetStaticAttributes.push([attrName, expr.value]);
+                    return;
+                }
                 switch (attrScope) {
                     case AttrScope.FeatureGeometry:
                         dynamicFeatureAttributes.push([attrName, expr]);

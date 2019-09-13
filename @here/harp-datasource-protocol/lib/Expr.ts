@@ -62,7 +62,7 @@ export abstract class Expr {
      *
      * If `definitions` are defined, then references (`['ref', name]`) are resolved.
      *
-     * Paass `definitionExprCache` to reuse `Expr` instances created from definitions across
+     * Pass `definitionExprCache` to reuse `Expr` instances created from definitions across
      * many `fromJSON` calls.
      *
      * @param node expression in JSON format to parse
@@ -83,10 +83,10 @@ export abstract class Expr {
                   }
                 : undefined;
 
-        return Expr.fromJSONInt(node, referenceResolverState);
+        return Expr.parseNode(node, referenceResolverState);
     }
 
-    private static fromJSONInt(
+    private static parseNode(
         node: unknown,
         referenceResolverState: ReferenceResolverState | undefined
     ): Expr {
@@ -130,7 +130,7 @@ export abstract class Expr {
 
             case "has":
                 if (node[2] !== undefined) {
-                    return Expr.makeCallExpr(op, node);
+                    return Expr.makeCallExpr(op, node, referenceResolverState);
                 }
                 if (typeof node[1] !== "string") {
                     throw new Error(`expected the name of an attribute`);
@@ -150,10 +150,7 @@ export abstract class Expr {
                         throw new Error("expected an array of constant values");
                     }
                 });
-                return new ContainsExpr(
-                    this.fromJSONInt(node[1], referenceResolverState),
-                    elements
-                );
+                return new ContainsExpr(this.parseNode(node[1], referenceResolverState), elements);
 
             case "literal":
                 if (typeof node[1] !== "object") {
@@ -168,7 +165,7 @@ export abstract class Expr {
                 if (!(node.length % 2)) {
                     throw new Error("fallback is missing in 'match' expression");
                 }
-                const value = this.fromJSONInt(node[1], referenceResolverState);
+                const value = this.parseNode(node[1], referenceResolverState);
                 const conditions: Array<[MatchLabel, Expr]> = [];
                 for (let i = 2; i < node.length - 1; i += 2) {
                     const label = node[i];
@@ -181,10 +178,10 @@ export abstract class Expr {
                     ) {
                         throw new Error(`parse error ${JSON.stringify(label)}`);
                     }
-                    const expr = this.fromJSONInt(node[i + 1], referenceResolverState);
+                    const expr = this.parseNode(node[i + 1], referenceResolverState);
                     conditions.push([label, expr]);
                 }
-                const fallback = this.fromJSONInt(node[node.length - 1], referenceResolverState);
+                const fallback = this.parseNode(node[node.length - 1], referenceResolverState);
                 return new MatchExpr(value, conditions, fallback);
             }
 
@@ -197,14 +194,11 @@ export abstract class Expr {
                 }
                 const branches: Array<[Expr, Expr]> = [];
                 for (let i = 1; i < node.length - 1; i += 2) {
-                    const condition = this.fromJSONInt(node[i], referenceResolverState);
-                    const expr = this.fromJSONInt(node[i + 1], referenceResolverState);
+                    const condition = this.parseNode(node[i], referenceResolverState);
+                    const expr = this.parseNode(node[i + 1], referenceResolverState);
                     branches.push([condition, expr]);
                 }
-                const caseFallback = this.fromJSONInt(
-                    node[node.length - 1],
-                    referenceResolverState
-                );
+                const caseFallback = this.parseNode(node[node.length - 1], referenceResolverState);
                 return new CaseExpr(branches, caseFallback);
             }
 
@@ -220,7 +214,7 @@ export abstract class Expr {
     ): Expr {
         return new CallExpr(
             op,
-            node.slice(1).map(childExpr => this.fromJSONInt(childExpr, referenceResolverState))
+            node.slice(1).map(childExpr => this.parseNode(childExpr, referenceResolverState))
         );
     }
 
@@ -250,13 +244,12 @@ export abstract class Expr {
             definitionEntry = definitionEntry.value;
         }
         let result: Expr;
-
         if (isValueDefinition(definitionEntry)) {
             result = Expr.fromJSON(definitionEntry.value);
         } else if (isJsonExpr(definitionEntry)) {
             referenceResolverState.lockedNames.add(name);
             try {
-                result = Expr.fromJSONInt(definitionEntry, referenceResolverState);
+                result = Expr.parseNode(definitionEntry, referenceResolverState);
             } finally {
                 referenceResolverState.lockedNames.delete(name);
             }
@@ -400,12 +393,17 @@ export class VarExpr extends Expr {
     }
 }
 
+export abstract class LiteralExpr extends Expr {
+    abstract get value(): Value;
+}
+
 /**
  * Null literal expression.
  * @hidden
  */
 export class NullLiteralExpr extends Expr {
     static instance = new NullLiteralExpr();
+    readonly value = null;
 
     protected constructor() {
         super();
@@ -420,7 +418,7 @@ export class NullLiteralExpr extends Expr {
  * Boolean literal expression.
  * @hidden
  */
-export class BooleanLiteralExpr extends Expr {
+export class BooleanLiteralExpr extends LiteralExpr {
     constructor(readonly value: boolean) {
         super();
     }
@@ -434,7 +432,7 @@ export class BooleanLiteralExpr extends Expr {
  * Number literal expression.
  * @hidden
  */
-export class NumberLiteralExpr extends Expr {
+export class NumberLiteralExpr extends LiteralExpr {
     constructor(readonly value: number) {
         super();
     }
@@ -448,7 +446,7 @@ export class NumberLiteralExpr extends Expr {
  * String literal expression.
  * @hidden
  */
-export class StringLiteralExpr extends Expr {
+export class StringLiteralExpr extends LiteralExpr {
     constructor(readonly value: string) {
         super();
     }
@@ -462,7 +460,7 @@ export class StringLiteralExpr extends Expr {
  * Object literal expression.
  * @hidden
  */
-export class ObjectLiteralExpr extends Expr {
+export class ObjectLiteralExpr extends LiteralExpr {
     constructor(readonly value: object) {
         super();
     }

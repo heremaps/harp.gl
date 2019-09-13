@@ -3,7 +3,7 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-import { StyleSet } from "@here/harp-datasource-protocol";
+import { Definitions, StyleSet, Theme } from "@here/harp-datasource-protocol";
 import { Projection, TileKey, TilingScheme } from "@here/harp-geoutils";
 import { assert } from "@here/harp-utils";
 import * as THREE from "three";
@@ -112,17 +112,13 @@ export abstract class DataSource extends THREE.EventDispatcher {
 
     /**
      * Sets the name of the [[StyleSet]] to use for the decoding. If this [[DataSource]] is already
-     * attached to a [[MapView]], this setter then looks for a [[StyleSet]] with this name and
-     * applies it.
+     * attached to a [[MapView]], this setter then reapplies [[StyleSet]] with this name found in
+     * [[MapView]]s theme.
      */
     set styleSetName(styleSetName: string | undefined) {
         this.m_styleSetName = styleSetName;
-        if (
-            this.m_mapView !== undefined &&
-            styleSetName !== undefined &&
-            this.m_mapView.theme.styles !== undefined
-        ) {
-            this.setStyleSet(this.m_mapView.theme.styles[styleSetName]);
+        if (this.m_mapView !== undefined && styleSetName !== undefined) {
+            this.setTheme(this.m_mapView.theme);
         }
     }
 
@@ -209,13 +205,26 @@ export abstract class DataSource extends THREE.EventDispatcher {
     /**
      * Invoked by [[MapView]] to notify when the [[Theme]] has been changed.
      *
-     * If `DataSource` depends on a theme, it must update its tiles' geometry.
+     * If `DataSource` depends on a `styleSet` or `languages`, it must update its tiles' geometry.
+     *
+     * @deprecated, Use [[setTheme]].
      *
      * @param styleSet The new theme that [[MapView]] uses.
      * @param languages An optional list of languages for the `DataSource`.
      */
     // tslint:disable-next-line:no-unused-variable
-    setStyleSet(styleSet?: StyleSet, languages?: string[]): void {
+    setStyleSet(styleSet?: StyleSet, definitions?: Definitions, languages?: string[]): void {
+        // to be overwritten by subclasses
+    }
+
+    /**
+     * Invoked by [[MapView]] to apply new [[Theme]].
+     *
+     * If `DataSource` depends on a `styleSet` or `languages`, it must update its tiles' geometry.
+     *
+     * @param languages
+     */
+    setTheme(theme: Theme, languages?: string[]): void {
         // to be overwritten by subclasses
     }
 

@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { Theme } from "@here/harp-datasource-protocol";
 import { TileKey, TilingScheme, webMercatorTilingScheme } from "@here/harp-geoutils";
 import { DataSource } from "./DataSource";
 import { TileGeometryCreator } from "./geometry/TileGeometryCreator";
@@ -45,6 +46,10 @@ export class BackgroundDataSource extends DataSource {
             this.storageLevelOffset = storageLevelOffset;
             this.mapView.clearTileCache(this.name);
         }
+    }
+
+    setTheme(theme: Theme, languages?: string[]) {
+        this.mapView.clearTileCache(this.name);
     }
 
     setTilingScheme(tilingScheme?: TilingScheme) {

@@ -174,7 +174,7 @@ describe("ThemeLoader", function() {
         });
     });
 
-    describe("#load support for inheritance and definitions", function() {
+    describe("#load support for inheritance and optional reference resolving", function() {
         const baseThemeUrl = getTestResourceUrl(
             "@here/harp-mapview",
             "test/resources/baseTheme.json"
@@ -212,7 +212,7 @@ describe("ThemeLoader", function() {
             }
         ];
         it("loads theme from actual URL and resolves definitions", async function() {
-            const result = await ThemeLoader.load(baseThemeUrl);
+            const result = await ThemeLoader.load(baseThemeUrl, { resolveDefinitions: true });
             assert.exists(result);
             assert.exists(result.styles!.tilezen);
             assert.deepEqual(result.styles!.tilezen, expectedBaseStyleSet);
@@ -223,26 +223,32 @@ describe("ThemeLoader", function() {
                 "@here/harp-mapview",
                 "test/resources/inheritedStyleBasic.json"
             );
-            const result = await ThemeLoader.load(inheritedThemeUrl);
+            const result = await ThemeLoader.load(inheritedThemeUrl, { resolveDefinitions: true });
             assert.exists(result);
             assert.exists(result.styles!.tilezen);
             assert.deepEqual(result.styles!.tilezen, expectedOverridenStyleSet);
         });
 
         it("empty inherited theme just loads base", async function() {
-            const result = await ThemeLoader.load({ extends: baseThemeUrl });
+            const result = await ThemeLoader.load(
+                { extends: baseThemeUrl },
+                { resolveDefinitions: true }
+            );
             assert.exists(result);
             assert.exists(result.styles!.tilezen);
             assert.deepEqual(result.styles!.tilezen, expectedBaseStyleSet);
         });
 
         it("supports local definitions override", async function() {
-            const result = await ThemeLoader.load({
-                extends: baseThemeUrl,
-                definitions: {
-                    roadColor: { type: "color", value: "#fff" }
-                }
-            });
+            const result = await ThemeLoader.load(
+                {
+                    extends: baseThemeUrl,
+                    definitions: {
+                        roadColor: { type: "color", value: "#fff" }
+                    }
+                },
+                { resolveDefinitions: true }
+            );
             assert.exists(result);
             assert.exists(result.styles!.tilezen);
             assert.deepEqual(result.styles!.tilezen, expectedOverridenStyleSet);
@@ -274,7 +280,7 @@ describe("ThemeLoader", function() {
                         tilezen: [["ref", "roadStyle"], ["ref", "badStyleRef"]]
                     }
                 },
-                { logger: loggerMock }
+                { logger: loggerMock, resolveDefinitions: true }
             );
 
             // Check that invalid style was removed from SS

@@ -6,6 +6,7 @@
 
 import {
     DecodedTile,
+    Definitions,
     ExtendedTileInfo,
     GeometryKind,
     IndexedTechnique,
@@ -622,8 +623,13 @@ export class OmvTileDecoder extends ThemedTileDecoder {
         return Promise.resolve(tileInfo);
     }
 
-    configure(styleSet: StyleSet, languages?: string[], options?: OptionsMap): void {
-        super.configure(styleSet, languages, options);
+    configure(
+        styleSet: StyleSet,
+        definitions?: Definitions,
+        languages?: string[],
+        options?: OptionsMap
+    ): void {
+        super.configure(styleSet, definitions, languages, options);
 
         if (options) {
             const omvOptions = options as OmvDecoderOptions;
