@@ -209,8 +209,6 @@ export namespace GeoJsonStylingGame {
             styleSet.push(activeRegionStyle);
         }
         geoJsonDataSource.setStyleSet(styleSet);
-        mapView.clearTileCache("geojson");
-        mapView.update();
     }
     // end:harp_gl_gamestyleset.ts
 

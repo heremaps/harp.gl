@@ -158,10 +158,6 @@ export class TileDataSource<TileType extends Tile> extends DataSource {
             );
         }
 
-        this.m_decoder.configure(undefined, undefined, {
-            storageLevelOffset: this.m_options.storageLevelOffset
-        });
-
         this.useGeometryLoader = true;
         this.cacheable = true;
         this.m_tileLoaderCache = new LRUCache<number, TileLoader>(this.getCacheCount());
@@ -186,6 +182,10 @@ export class TileDataSource<TileType extends Tile> extends DataSource {
     async connect() {
         await Promise.all([this.m_options.dataProvider.connect(), this.m_decoder.connect()]);
         this.m_isReady = true;
+
+        this.m_decoder.configure(undefined, undefined, {
+            storageLevelOffset: this.m_options.storageLevelOffset
+        });
     }
 
     setStyleSet(styleSet?: StyleSet, languages?: string[]): void {

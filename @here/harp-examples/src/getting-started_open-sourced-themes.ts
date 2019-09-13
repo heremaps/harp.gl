@@ -81,7 +81,6 @@ export namespace ThemesExample {
                     return response.json();
                 })
                 .then((theme: any) => {
-                    mapView.clearTileCache();
                     mapView.theme = theme;
                 });
         })
