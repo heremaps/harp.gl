@@ -5,6 +5,7 @@
  */
 import {
     DecodedTile,
+    Definitions,
     getProjectionName,
     ITileDecoder,
     OptionsMap,
@@ -156,11 +157,17 @@ export class WorkerBasedDecoder implements ITileDecoder {
      * @param languages new list of languages
      * @param options   new options, undefined options are not changed
      */
-    configure(styleSet?: StyleSet, languages?: string[], options?: OptionsMap): void {
+    configure(
+        styleSet?: StyleSet,
+        definitions?: Definitions,
+        languages?: string[],
+        options?: OptionsMap
+    ): void {
         const message: WorkerDecoderProtocol.ConfigurationMessage = {
             service: this.serviceId,
             type: WorkerDecoderProtocol.DecoderMessageName.Configuration,
             styleSet,
+            definitions,
             options,
             languages
         };

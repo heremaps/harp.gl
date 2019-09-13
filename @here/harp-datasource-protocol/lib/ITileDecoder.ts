@@ -6,7 +6,7 @@
 import { Projection, TileKey } from "@here/harp-geoutils";
 
 import { DecodedTile } from "./DecodedTile";
-import { StyleSet } from "./Theme";
+import { Definitions, StyleSet } from "./Theme";
 import { TileInfo } from "./TileInfo";
 import { OptionsMap, RequestController } from "./WorkerDecoderProtocol";
 
@@ -58,10 +58,16 @@ export interface ITileDecoder {
      * Non-existing (`undefined`) options (including styleSet) are not changed.
      *
      * @param styleSet optional, new style set.
+     * @param definitions optional, definitions used to resolve references in `styleSet`
      * @param languages optional, language list
      * @param options optional, new options - shape is specific for each decoder
      */
-    configure(styleSet?: StyleSet, languages?: string[], options?: OptionsMap): void;
+    configure(
+        styleSet?: StyleSet,
+        definitions?: Definitions,
+        languages?: string[],
+        options?: OptionsMap
+    ): void;
 
     /**
      * Free all resources associated with this decoder.

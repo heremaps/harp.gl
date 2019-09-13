@@ -4,7 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { ITileDecoder, StyleSet, TileInfo } from "@here/harp-datasource-protocol";
+import {
+    Definitions,
+    ITileDecoder,
+    StyleSet,
+    Theme,
+    TileInfo
+} from "@here/harp-datasource-protocol";
 import { TileKey, TilingScheme } from "@here/harp-geoutils";
 import {
     ConcurrentDecoderFacade,
@@ -183,15 +189,22 @@ export class TileDataSource<TileType extends Tile> extends DataSource {
         await Promise.all([this.m_options.dataProvider.connect(), this.m_decoder.connect()]);
         this.m_isReady = true;
 
-        this.m_decoder.configure(undefined, undefined, {
+        this.m_decoder.configure(undefined, undefined, undefined, {
             storageLevelOffset: this.m_options.storageLevelOffset
         });
     }
 
-    setStyleSet(styleSet?: StyleSet, languages?: string[]): void {
-        this.m_tileLoaderCache.clear();
-        this.m_decoder.configure(styleSet, languages);
+    setStyleSet(styleSet?: StyleSet, definitions?: Definitions, languages?: string[]): void {
+        this.m_decoder.configure(styleSet, definitions, languages);
         this.mapView.markTilesDirty(this);
+    }
+
+    setTheme(theme: Theme, languages?: string[]): void {
+        const styleSet =
+            (this.styleSetName !== undefined && theme.styles && theme.styles[this.styleSetName]) ||
+            [];
+
+        this.setStyleSet(styleSet, theme.definitions, languages);
     }
 
     clearCache() {

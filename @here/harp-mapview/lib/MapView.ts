@@ -1189,17 +1189,14 @@ export class MapView extends THREE.EventDispatcher {
         if (this.m_theme.styles === undefined) {
             this.m_theme.styles = {};
         }
+        if (this.m_backgroundDataSource) {
+            this.m_backgroundDataSource.setTheme(this.m_theme);
+        }
+        this.m_theme.styles = theme.styles || {};
+        this.m_theme.definitions = theme.definitions;
 
-        if (theme.styles !== undefined) {
-            for (const styleSetName in theme.styles) {
-                if (theme.styles[styleSetName] !== undefined) {
-                    const styleSet = theme.styles[styleSetName];
-                    this.getDataSourcesByStyleSetName(styleSetName).forEach(ds =>
-                        ds.setStyleSet(styleSet)
-                    );
-                    this.m_theme.styles[styleSetName] = styleSet;
-                }
-            }
+        for (const dataSource of this.m_tileDataSources) {
+            dataSource.setTheme(this.m_theme);
         }
         this.dispatchEvent(THEME_LOADED_EVENT);
         this.update();
@@ -1686,10 +1683,7 @@ export class MapView extends THREE.EventDispatcher {
                     this.update();
                 });
 
-                if (this.m_theme.styles !== undefined && dataSource.styleSetName !== undefined) {
-                    const styleSet = this.m_theme.styles[dataSource.styleSetName];
-                    dataSource.setStyleSet(styleSet, this.m_languages);
-                }
+                dataSource.setTheme(this.m_theme);
 
                 this.m_connectedDataSources.add(dataSource.name);
 

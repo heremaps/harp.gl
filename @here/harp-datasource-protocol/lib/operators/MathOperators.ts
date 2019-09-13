@@ -29,7 +29,6 @@ const operators = {
             const a = context.evaluate(args[0]);
             const b = context.evaluate(args[1]);
             if (typeof a !== "number" || typeof b !== "number") {
-                // tslint:disable-next-line: max-line-length
                 throw new Error(
                     `invalid operands '${typeof a}' and '${typeof b}' for operator '-'`
                 );

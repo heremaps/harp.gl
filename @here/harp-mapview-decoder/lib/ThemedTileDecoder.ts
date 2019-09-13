@@ -6,6 +6,7 @@
 
 import {
     DecodedTile,
+    Definitions,
     ITileDecoder,
     OptionsMap,
     StyleSet,
@@ -52,11 +53,16 @@ export abstract class ThemedTileDecoder implements ITileDecoder {
     ): Promise<TileInfo | undefined> {
         return Promise.resolve(undefined);
     }
-
     // tslint:disable:no-unused-variable
-    configure(styleSet?: StyleSet, languages?: string[], options?: OptionsMap): void {
+
+    configure(
+        styleSet?: StyleSet,
+        definitions?: Definitions,
+        languages?: string[],
+        options?: OptionsMap
+    ): void {
         if (styleSet !== undefined) {
-            this.m_styleSetEvaluator = new StyleSetEvaluator(styleSet);
+            this.m_styleSetEvaluator = new StyleSetEvaluator(styleSet, definitions);
         }
         if (languages !== undefined) {
             this.languages = languages;

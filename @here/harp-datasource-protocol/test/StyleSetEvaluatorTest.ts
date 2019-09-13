@@ -10,8 +10,8 @@
 import { assert } from "chai";
 import { MapEnv } from "../lib/Expr";
 import { StyleSetEvaluator } from "../lib/StyleSetEvaluator";
-import { isSolidLineTechnique, SolidLineTechnique } from "../lib/Techniques";
-import { StyleSet } from "../lib/Theme";
+import { FillTechnique, isSolidLineTechnique, SolidLineTechnique } from "../lib/Techniques";
+import { Definitions, StyleDeclaration, StyleSet } from "../lib/Theme";
 
 describe("StyleSetEvaluator", function() {
     const basicStyleSetAutoOrder: StyleSet = [
@@ -164,6 +164,7 @@ describe("StyleSetEvaluator", function() {
             {
                 technique: "solid-line",
                 when: "kind == 'park'",
+                renderOrder: ["get", "area"],
                 attr: {
                     lineWidth: ["get", "area"],
                     color: "#00aa00",
@@ -189,11 +190,12 @@ describe("StyleSetEvaluator", function() {
             assert.isTrue(isSolidLineTechnique(r1[0]));
             assert.equal((r1[0] as SolidLineTechnique).clipping, false);
             assert.equal((r1[0] as SolidLineTechnique).lineWidth, 2);
-            assert.equal(ev.techniques.length, 2);
+            assert.equal(r1[0].renderOrder, 2);
 
             assert.isTrue(isSolidLineTechnique(r2[0]));
             assert.equal((r2[0] as SolidLineTechnique).clipping, true);
             assert.equal((r2[0] as SolidLineTechnique).lineWidth, 3);
+            assert.equal(r2[0].renderOrder, 3);
         });
 
         it("generates stable technique cache key", function() {
@@ -234,6 +236,59 @@ describe("StyleSetEvaluator", function() {
             assert.deepEqual(techniquesTileA[1], techniquesTileC[0]);
             assert.deepEqual(techniquesTileA[2], techniquesTileB[0]);
             assert.deepEqual(techniquesTileA[0], techniquesTileC[1]);
+        });
+    });
+    describe('definitions / "ref" operator support', function() {
+        const sampleStyleDeclaration: StyleDeclaration = {
+            technique: "fill",
+            when: ["ref", "expr"],
+            attr: { lineWidth: ["ref", "number"] }
+        };
+        const sampleDefinitions: Definitions = {
+            expr: { type: "selector", value: ["==", ["get", "kind"], "park"] },
+            number: { type: "number", value: 123 }
+        };
+        it("resolves references in style declaration attributes", function() {
+            const sse = new StyleSetEvaluator([sampleStyleDeclaration], sampleDefinitions);
+            const techniques = sse.getMatchingTechniques(new MapEnv({ kind: "park" }));
+
+            assert.equal(techniques.length, 1);
+            assert.deepNestedInclude(techniques[0], {
+                name: "fill",
+                lineWidth: 123,
+                renderOrder: 0
+            });
+        });
+        it("resolves style declaration references", function() {
+            const sse = new StyleSetEvaluator([["ref", "style"]], {
+                ...sampleDefinitions,
+                style: sampleStyleDeclaration
+            });
+            const techniques = sse.getMatchingTechniques(new MapEnv({ kind: "park" }));
+
+            assert.equal(techniques.length, 1);
+            assert.deepNestedInclude(techniques[0], {
+                name: "fill",
+                lineWidth: 123,
+                renderOrder: 0
+            });
+        });
+        it("reuses very same instances of objects from definition table", function() {
+            const styleReferencingObject: StyleDeclaration = {
+                technique: "fill",
+                when: ["ref", "expr"],
+                attr: { lineWidth: ["ref", "number"], color: ["ref", "bigObject"] }
+            };
+            const bigObject = {};
+            const definitions: Definitions = {
+                ...sampleDefinitions,
+                bigObject: ["literal", bigObject]
+            };
+            const sse = new StyleSetEvaluator([styleReferencingObject], definitions);
+
+            const techniques = sse.getMatchingTechniques(new MapEnv({ kind: "park" }));
+            assert.equal(techniques.length, 1);
+            assert.strictEqual((techniques[0] as FillTechnique).color as any, bigObject);
         });
     });
 
