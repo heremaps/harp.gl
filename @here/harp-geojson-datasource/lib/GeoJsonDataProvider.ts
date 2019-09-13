@@ -72,9 +72,8 @@ export class GeoJsonDataProvider implements DataProvider {
             throw error;
         }
 
-        this.m_tiler.registerIndex(this.name, this.input).then(() => {
-            this.m_registered = true;
-        });
+        await this.m_tiler.registerIndex(this.name, this.input);
+        this.m_registered = true;
     }
 
     updateInput(input: URL | GeoJson) {
