@@ -1,0 +1,79 @@
+name: CI (Windows)
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - '*'
+
+jobs:
+  test:
+    name: Test on node ${{ matrix.node_version }} and ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        node_version: [10, 11, 12]
+        os: [windows-latest]
+
+    steps:
+
+    - name: Reset git settings
+      # Global git config on windows has autocrlf enabled.
+      # This breaks lot of checks, including tslint.
+      run: git config --global core.autocrlf false
+    - uses: actions/checkout@v1
+    - name: Use Node.js ${{ matrix.node_version }}
+      uses: actions/setup-node@v1
+      with:
+        version: ${{ matrix.node_version }}
+    - name: Install dependencies
+      shell: bash
+      run: |
+        set -ex
+        # This is arbitrary version that happens to be installed in github CI env atm.
+        # As for now `chromedriver` supports only exact version, so this version have to be
+        # updated with Github CI windows infra.
+        #
+        # See
+        #  https://help.github.com/en/articles/software-in-virtual-environments-for-github-actions#windows-server-2019
+        #  https://github.com/giggio/node-chromedriver - explanation
+        #  https://sites.google.com/a/chromium.org/chromedriver/downloads - available versions
+        export CHROMEDRIVER_VERSION=75.0.3770.140
+        yarn
+    - name: Pretest
+      run: |
+        set -ex
+        npx ts-mocha -r tsconfig-paths/register ./test/*.ts
+        yarn run tslint
+        npx prettier -l '**/*.ts' '**/*.tsx' '**/*.json'
+      shell: bash
+    - name: Test on Node.js
+      run: npx ts-mocha -r tsconfig-paths/register ./@here/*/test/*.ts
+      shell: bash
+    - name: Build test bundle
+      run: yarn run build-tests
+      shell: bash
+    - name: Tests on Chrome
+      run: |
+        export PATH=`pwd`:$PATH
+        cp node_modules/chromedriver/lib/chromedriver/chromedriver.exe .
+        yarn test-browser --headless-chrome
+      shell: bash
+    - name: Tests on Firefox
+      run: |
+        export PATH=`pwd`:$PATH
+        cp node_modules/geckodriver/geckodriver.exe .
+        yarn test-browser --headless-firefox
+      shell: bash
+    - name: Build examples
+      run: yarn run build-examples
+      shell: bash
+    - name: Build harp.js
+      run: yarn run build-bundle
+      shell: bash
+    #  typedoc doesn't work on windows -> https://github.com/unstubbable/typedoc-plugin-monorepo/pull/1
+    # - name: Generate doc
+    #   run: yarn run typedoc
+    #   shell: bash
