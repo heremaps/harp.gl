@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { StyleDeclaration, StyleSet } from "@here/harp-datasource-protocol";
+import { StyleDeclaration, StyleSet, Theme } from "@here/harp-datasource-protocol";
 import { GeoJsonDataProvider } from "@here/harp-geojson-datasource";
 import { GeoCoordinates } from "@here/harp-geoutils";
 import { MapControls, MapControlsUI } from "@here/harp-map-controls";
@@ -63,11 +63,11 @@ export namespace GeoJsonHeatmapExample {
     /**
      * Creates a new MapView for the HTMLCanvasElement of the given id.
      */
-    function initializeBaseMap(id: string): MapView {
+    function initializeBaseMap(id: string, theme: Theme): MapView {
         const canvas = document.getElementById(id) as HTMLCanvasElement;
         const mapView = new MapView({
             canvas,
-            theme: "resources/berlin_tilezen_night_reduced.json"
+            theme
         });
 
         mapView.lookAt(new GeoCoordinates(42, 14), 2000000, 40, -70);
@@ -103,14 +103,6 @@ export namespace GeoJsonHeatmapExample {
 
         return mapView;
     }
-
-    // snippet:geojson_heatmap2.ts
-    const densityStyleSet: StyleSet = generateHeatStyleSet({
-        property: "density",
-        thresholds: [50, 100, 150, 200, 250, 300, 350, 400, 450],
-        color: "#ff6600"
-    });
-    // end:geojson_heatmap2.ts
 
     /**
      * A generator for a heatmap-like [[StyleSet]].
@@ -158,7 +150,23 @@ export namespace GeoJsonHeatmapExample {
         return styleSet;
     }
 
-    const baseMap = initializeBaseMap("mapCanvas");
+    // snippet:geojson_heatmap2.ts
+    const densityStyleSet: StyleSet = generateHeatStyleSet({
+        property: "density",
+        thresholds: [50, 100, 150, 200, 250, 300, 350, 400, 450],
+        color: "#ff6600"
+    });
+    // end:geojson_heatmap2.ts
+
+    // snippet:geojson_heatmap3.ts
+    const customTheme = {
+        extends: "resources/berlin_tilezen_night_reduced.json",
+        styles: {
+            geojson: densityStyleSet
+        }
+    };
+    // end:geojson_heatmap3.ts
+    const baseMap = initializeBaseMap("mapCanvas", customTheme);
 
     const geoJsonDataProvider = new GeoJsonDataProvider(
         "italy",
@@ -166,16 +174,9 @@ export namespace GeoJsonHeatmapExample {
     );
     const geoJsonDataSource = new OmvDataSource({
         dataProvider: geoJsonDataProvider,
-        name: "geojson",
         styleSetName: "geojson"
     });
-    baseMap.addDataSource(geoJsonDataSource).then(() => {
-        // snippet:geojson_heatmap3.ts
-        geoJsonDataSource.setStyleSet(densityStyleSet);
-        // end:geojson_heatmap3.ts
-    });
-
-    baseMap.update();
+    baseMap.addDataSource(geoJsonDataSource);
 
     const infoElement = document.getElementById("info") as HTMLParagraphElement;
     infoElement.innerHTML =
