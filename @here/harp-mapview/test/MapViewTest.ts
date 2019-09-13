@@ -41,7 +41,7 @@ describe("MapView", function() {
     let addEventListenerSpy: sinon.SinonStub;
     let removeEventListenerSpy: sinon.SinonStub;
     let canvas: HTMLCanvasElement;
-    let mapView: MapView;
+    let mapView: MapView | undefined;
 
     beforeEach(function() {
         sandbox = sinon.createSandbox();
@@ -64,10 +64,13 @@ describe("MapView", function() {
             addEventListener: addEventListenerSpy,
             removeEventListener: removeEventListenerSpy
         } as unknown) as HTMLCanvasElement;
-        mapView = new MapView({ canvas });
     });
 
     afterEach(function() {
+        if (mapView !== undefined) {
+            mapView.dispose();
+            mapView = undefined;
+        }
         sandbox.restore();
         if (inNodeContext) {
             delete global.window;
@@ -85,6 +88,7 @@ describe("MapView", function() {
         rotationSpy = sinon.spy(MapViewUtils, "setRotation");
         zoomSpy = sinon.spy(MapViewUtils, "zoomOnTargetPosition");
 
+        mapView = new MapView({ canvas });
         mapView.setCameraGeolocationAndZoom(coords, 18, 10, 20);
 
         expect(zoomSpy.calledOnce).to.be.true;
@@ -96,6 +100,7 @@ describe("MapView", function() {
     });
 
     it("Correctly sets event listeners and handlers webgl context restored", function() {
+        mapView = new MapView({ canvas });
         const updateSpy = sinon.spy(mapView, "update");
 
         expect(addEventListenerSpy.callCount).to.be.equal(2);
@@ -139,6 +144,8 @@ describe("MapView", function() {
     });
 
     it("Correctly sets and removes event listeners by API", function() {
+        mapView = new MapView({ canvas });
+
         const restoreStub = sinon.stub();
         const lostStub = sinon.stub();
 
@@ -162,6 +169,7 @@ describe("MapView", function() {
     it("supports #dispose", async function() {
         const dataSource = new FakeOmvDataSource();
         const dataSourceDisposeStub = sinon.stub(dataSource, "dispose");
+        mapView = new MapView({ canvas });
         mapView.addDataSource(dataSource);
         await dataSource.connect();
 
@@ -256,6 +264,7 @@ describe("MapView", function() {
     });
 
     it("returns the fog through #fog getter", function() {
+        mapView = new MapView({ canvas });
         expect(mapView.fog instanceof MapViewFog).to.equal(true);
     });
 
@@ -272,6 +281,7 @@ describe("MapView", function() {
             for (let y = -100; y <= 100; y += 100) {
                 mapView = new MapView({ canvas: (customCanvas as any) as HTMLCanvasElement });
                 const resultA = mapView.getScreenPosition(mapView.getGeoCoordinatesAt(x, y)!);
+                mapView.dispose();
 
                 customCanvas.pixelRatio = 2;
                 mapView = new MapView({ canvas: (customCanvas as any) as HTMLCanvasElement });
@@ -288,14 +298,18 @@ describe("MapView", function() {
     it("updates background storage level offset", async function() {
         if (inNodeContext) {
             global.requestAnimationFrame = (callback: FrameRequestCallback) => {
-                setTimeout(() => {
+                return setTimeout(() => {
                     // avoid camera movement events, needed setup is not done.
-                    mapView.cameraMovementDetector.clear(mapView);
+                    if (mapView !== undefined) {
+                        mapView.cameraMovementDetector.clear(mapView);
+                    }
                     callback(0);
                     return 0;
                 }, 0);
             };
-            global.cancelAnimationFrame = () => {};
+            global.cancelAnimationFrame = (id: number) => {
+                clearTimeout(id);
+            };
         }
         mapView = new MapView({ canvas });
         mapView.theme = {};

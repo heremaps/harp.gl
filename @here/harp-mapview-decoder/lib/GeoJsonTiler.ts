@@ -8,7 +8,9 @@ import { GeoJson, ITiler } from "@here/harp-datasource-protocol";
 import { TileKey } from "@here/harp-geoutils";
 
 // tslint:disable-next-line:no-var-requires
-const geojsonvt = require("geojson-vt");
+const geojsonvtExport = require("geojson-vt");
+// to be able to run tests on nodejs
+const geojsonvt = geojsonvtExport.default || geojsonvtExport;
 
 interface GeoJsonVtIndex {
     getTile(level: number, column: number, row: number): any;
@@ -51,7 +53,7 @@ export class GeoJsonTiler implements ITiler {
 
         this.indexes.set(
             indexId,
-            geojsonvt.default(input, {
+            geojsonvt(input, {
                 maxZoom: 20, // max zoom to preserve detail on
                 indexMaxZoom: 5, // max zoom in the tile index
                 indexMaxPoints: 100000, // max number of points per tile in the tile index
