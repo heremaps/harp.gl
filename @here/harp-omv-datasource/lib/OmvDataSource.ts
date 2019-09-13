@@ -241,17 +241,7 @@ export class OmvDataSource extends TileDataSource<OmvTile> {
             }
             throw error;
         }
-    }
-
-    /**
-     * Set a theme for the data source instance.
-     * @param styleSet The [[Theme]] to be added.
-     */
-    setStyleSet(styleSet?: StyleSet, languages?: string[]): void {
-        if (styleSet === undefined) {
-            return;
-        }
-        this.configureDecoder(styleSet, languages, this.m_decoderOptions);
+        this.configureDecoder(undefined, undefined, this.m_decoderOptions);
     }
 
     /**
@@ -303,7 +293,7 @@ export class OmvDataSource extends TileDataSource<OmvTile> {
 
     setLanguages(languages?: string[]): void {
         if (languages !== undefined) {
-            this.configureDecoder(undefined, languages, undefined);
+            this.configureDecoder(undefined, languages);
         }
     }
 

@@ -141,7 +141,6 @@ export class FeaturesDataSource extends OmvDataSource {
     private update() {
         (this.dataProvider() as GeoJsonDataProvider).updateInput(this.m_featureCollection);
         this.mapView.markTilesDirty(this);
-        this.mapView.clearTileCache(this.name);
     }
 
     private emptyGeojson(): FeatureCollection {
