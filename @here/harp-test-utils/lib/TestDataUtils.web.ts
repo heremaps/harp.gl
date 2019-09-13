@@ -6,10 +6,6 @@
 
 // @here:check-imports:environment:node
 
-import { LoggerManager } from "@here/harp-utils";
-
-const logger = LoggerManager.instance.create("TestDataUtils");
-
 declare const TEST_RESOURCES_DIR: string | undefined;
 
 /**
@@ -89,7 +85,6 @@ export function loadTestResourceWeb(
     type: "arraybuffer" | "text" | "json"
 ): Promise<any> {
     const url = getTestResourceUrl(module, fileName);
-    logger.log("loadTestResourceWeb, url: ", url);
 
     return fetch(url).then(response => {
         if (!response.ok) {

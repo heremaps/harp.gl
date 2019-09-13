@@ -26,7 +26,6 @@
     },
     "devDependencies": {
         "@here/harp-fetch": "^0.3.6",
-        "@here/harp-utils": "^0.10.0",
         "@types/chai": "^4.0.4",
         "@types/mocha": "^5.2.7",
         "@types/node": "^12.0.8",

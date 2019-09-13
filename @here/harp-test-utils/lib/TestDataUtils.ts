@@ -29,7 +29,14 @@ export const testResourcesRoot =
  */
 export function getTestResourceUrl(module: string, fileName: string) {
     const modulePath = path.dirname(require.resolve(module + "/package.json"));
-    return path.join(testResourcesRoot, modulePath, fileName);
+    const resultPath = path.join(testResourcesRoot, modulePath, fileName);
+    if (resultPath.indexOf("\\") !== -1) {
+        // node-fetch on windows, needs proper URL
+        return "file://" + resultPath.replace(/\\/g, "/");
+    } else {
+        // node-fetch on unix is ok with just a absolute file path
+        return resultPath;
+    }
 }
 
 /**
