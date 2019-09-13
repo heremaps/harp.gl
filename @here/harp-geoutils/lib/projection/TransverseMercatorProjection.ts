@@ -21,10 +21,6 @@ import { Projection, ProjectionType } from "./Projection";
  *
  */
 class TransverseMercatorProjection extends Projection {
-    static POLE_EDGE: number = 1.4844222297453323;
-    static POLE_RADIUS: number = 90 - MathUtils.radToDeg(TransverseMercatorProjection.POLE_EDGE);
-    static POLE_RADIUS_SQ: number = Math.pow(TransverseMercatorProjection.POLE_RADIUS, 2);
-
     /**
      * Like in regular Mercator projection, there are two points on sphere
      * with radius about 5 degrees, that is out of projected space.
@@ -43,27 +39,25 @@ class TransverseMercatorProjection extends Projection {
         const lat = geoPoint.latitude;
         const lon = geoPoint.longitude;
 
-        const r = TransverseMercatorProjection.POLE_RADIUS;
-        const rsq = TransverseMercatorProjection.POLE_RADIUS_SQ;
+        const r = TransverseMercatorUtils.POLE_RADIUS;
+        const rsq = TransverseMercatorUtils.POLE_RADIUS_SQ;
 
-        const dx0 = lon - 90;
-        const dy0 = lat - 0;
-        const ds0 = dx0 * dx0 + dy0 * dy0;
-        if (ds0 < rsq) {
-            const dist = Math.sqrt(ds0);
-            const scale = (r - dist) / dist;
-            const dx = dx0 === 0 && dy0 === 0 ? -r : dx0;
-            return new GeoCoordinates(lat + dy0 * scale, lon + dx * scale);
+        const nearestQuarter = Math.round(lon / 90);
+        const deltaLon = nearestQuarter * 90 - lon;
+        if (nearestQuarter % 2 === 0 || Math.abs(deltaLon) > r) {
+            return geoPoint;
         }
 
-        const dx1 = lon - -90;
-        const dy1 = lat - 0;
-        const ds1 = dx1 * dx1 + dy1 * dy1;
-        if (ds1 < rsq) {
-            const dist = Math.sqrt(ds1);
-            const scale = (r - dist) / dist;
-            const dx = dx1 === 0 && dy1 === 0 ? r : dx1;
-            return new GeoCoordinates(lat + dy1 * scale, lon + dx * scale);
+        const deltaLat = lat - 0;
+        const distanceToPoleSq = deltaLon * deltaLon + deltaLat * deltaLat;
+        if (distanceToPoleSq < rsq) {
+            const distanceToPole = Math.sqrt(distanceToPoleSq);
+            const scale = (r - distanceToPole) / distanceToPole;
+            // const quarter = ((nearestQuarter % 4) + 4) % 4;
+            // const dir = quarter === 1 ? -1 : quarter === 3 ? 1 : 0;
+            const dir = 1;
+            const offsetLon = deltaLon === 0 && deltaLat === 0 ? r * dir : deltaLon;
+            return new GeoCoordinates(lat + deltaLat * scale, lon + offsetLon * scale);
         }
 
         return geoPoint;
@@ -109,30 +103,37 @@ class TransverseMercatorProjection extends Projection {
         }
 
         const clamped = TransverseMercatorProjection.clampGeoPoint(geoPoint, this.unitScale);
+        const normalLon = clamped.longitude / 360 + 0.5;
+        const offset = normalLon === 1 ? 0 : Math.floor(normalLon);
         const phi = MathUtils.degToRad(clamped.latitude);
-        const lambda = MathUtils.degToRad(clamped.longitude);
+        const lambda = MathUtils.degToRad(clamped.longitude - offset * 360) - this.m_lambda0;
 
-        const B = Math.cos(phi) * Math.sin(lambda - this.m_lambda0);
+        const B = Math.cos(phi) * Math.sin(lambda);
         // result.x = 1/2 * Math.log((1 + B) / (1 - B));
         result.x = Math.atanh(B);
-        result.y = Math.atan2(Math.tan(phi), Math.cos(lambda - this.m_lambda0)) - this.m_phi0;
+        result.y = Math.atan2(Math.tan(phi), Math.cos(lambda)) - this.m_phi0;
 
-        result.x = (result.x / (Math.PI * 2) + 0.5) * this.unitScale;
-        result.y = (result.y / (Math.PI * 2) + 0.5) * this.unitScale;
+        const outScale = 0.5 / Math.PI;
+        result.x = this.unitScale * (MathUtils.clamp(result.x * outScale + 0.5, 0, 1) + offset);
+        result.y = this.unitScale * MathUtils.clamp(result.y * outScale + 0.5, 0, 1);
 
         result.z = geoPoint.altitude || 0;
         return result;
     }
 
     unprojectPoint(worldPoint: Vector3Like): GeoCoordinates {
-        const x = (worldPoint.x / this.unitScale - 0.5) * Math.PI * 2;
-        const y = (worldPoint.y / this.unitScale - 0.5) * Math.PI * 2;
+        const tau = Math.PI * 2;
+        const nx = worldPoint.x / this.unitScale;
+        const ny = worldPoint.y / this.unitScale;
+        const offset = nx === 1 ? 0 : Math.floor(nx);
+        const x = tau * (nx - 0.5 - offset);
+        const y = tau * (ny - 0.5);
         const z = worldPoint.z || 0;
 
         const D = y + this.m_phi0;
 
         const phi = Math.asin(Math.sin(D) / Math.cosh(x));
-        const lambda = this.m_lambda0 + Math.atan2(Math.sinh(x), Math.cos(D));
+        const lambda = this.m_lambda0 + Math.atan2(Math.sinh(x), Math.cos(D)) + offset * tau;
 
         const geoPoint = GeoCoordinates.fromRadians(phi, lambda, z);
         return geoPoint;
@@ -144,7 +145,7 @@ class TransverseMercatorProjection extends Projection {
     ): WorldBoundingBox {
         const { north, south, east, west } = geoBox;
 
-        const points = [
+        const pointsToCheck = [
             geoBox.center,
             geoBox.northEast,
             geoBox.southWest,
@@ -152,9 +153,36 @@ class TransverseMercatorProjection extends Projection {
             new GeoCoordinates(north, west)
         ];
 
-        TransverseMercatorUtils.alignLatitude(points, points[0]);
+        const E = TransverseMercatorUtils.POLE_EDGE_DEG;
 
-        const projected = points.map(p => this.projectPoint(p));
+        const containsWestCut = west < -90 && east > -90;
+        const containsEastCut = west < 90 && east > 90;
+        const containsCenterX = west < 0 && east > 0;
+        const containsCenterY = west < E && east > -E && north > 0 && south < 0;
+
+        if (containsWestCut) {
+            pointsToCheck.push(new GeoCoordinates(north, -90));
+            pointsToCheck.push(new GeoCoordinates(south, -90));
+        }
+
+        if (containsEastCut) {
+            pointsToCheck.push(new GeoCoordinates(north, 90));
+            pointsToCheck.push(new GeoCoordinates(south, 90));
+        }
+
+        if (containsCenterX) {
+            pointsToCheck.push(new GeoCoordinates(north, 0));
+            pointsToCheck.push(new GeoCoordinates(south, 0));
+        }
+
+        if (containsCenterY) {
+            pointsToCheck.push(new GeoCoordinates(0, west));
+            pointsToCheck.push(new GeoCoordinates(0, east));
+        }
+
+        TransverseMercatorUtils.alignLatitude(pointsToCheck, pointsToCheck[0]);
+
+        const projected = pointsToCheck.map(p => this.projectPoint(p));
         const vx = projected.map(p => p.x);
         const vy = projected.map(p => p.y);
         const vz = projected.map(p => p.z);
@@ -181,11 +209,11 @@ class TransverseMercatorProjection extends Projection {
             MathUtils.newVector3(0, 1, 0, result.yAxis);
             MathUtils.newVector3(0, 0, 1, result.zAxis);
             result.position.x = (minX + maxX) / 2;
-            result.position.y = (minX + maxX) / 2;
-            result.position.z = (minX + maxX) / 2;
+            result.position.y = (minY + maxY) / 2;
+            result.position.z = (minZ + maxZ) / 2;
             result.extents.x = (maxX - minX) / 2;
-            result.extents.y = (maxX - minX) / 2;
-            result.extents.z = (maxX - minX) / 2;
+            result.extents.y = (maxY - minY) / 2;
+            result.extents.z = (maxZ - minZ) / 2;
         } else {
             throw new Error("invalid bounding box");
         }
@@ -307,6 +335,11 @@ class TransverseMercatorProjection extends Projection {
 }
 
 export class TransverseMercatorUtils {
+    static POLE_EDGE: number = 1.4844222297453323;
+    static POLE_EDGE_DEG: number = MathUtils.radToDeg(TransverseMercatorUtils.POLE_EDGE);
+    static POLE_RADIUS: number = 90 - TransverseMercatorUtils.POLE_EDGE_DEG;
+    static POLE_RADIUS_SQ: number = Math.pow(TransverseMercatorUtils.POLE_RADIUS, 2);
+
     /**
      * There are two regions on projected space that have same geo coordinates,
      * it's the entire lines   { x: [0..1], y: 0 } and { x: [0..1], y: 1 }

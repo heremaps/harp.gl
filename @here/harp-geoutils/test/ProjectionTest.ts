@@ -19,6 +19,7 @@ import { sphereProjection } from "../lib/projection/SphereProjection";
 import { transverseMercatorProjection } from "../lib/projection/TransverseMercatorProjection";
 import { hereTilingScheme } from "../lib/tiling/HereTilingScheme";
 import { mercatorTilingScheme } from "../lib/tiling/MercatorTilingScheme";
+import { polarTilingScheme } from "../lib/tiling/PolarTilingScheme";
 import { TileKey } from "../lib/tiling/TileKey";
 import { webMercatorTilingScheme } from "../lib/tiling/WebMercatorTilingScheme";
 
@@ -270,8 +271,8 @@ describe("Mercator", function() {
 describe("TransverseMercator", function() {
     it("project", function() {
         const coords = new GeoCoordinates(52.504951, 13.371806, 100);
-        const projected = mercatorProjection.projectPoint(coords);
-        const unprojected = mercatorProjection.unprojectPoint(projected);
+        const projected = transverseMercatorProjection.projectPoint(coords);
+        const unprojected = transverseMercatorProjection.unprojectPoint(projected);
 
         assert.approximately(coords.latitudeInRadians, unprojected.latitudeInRadians, EPSILON);
         assert.approximately(coords.longitudeInRadians, unprojected.longitudeInRadians, EPSILON);
@@ -279,8 +280,8 @@ describe("TransverseMercator", function() {
     });
     it("project outside normal range", function() {
         const coords = new GeoCoordinates(52.504951, 373.371806);
-        const projected = mercatorProjection.projectPoint(coords);
-        const unprojected = mercatorProjection.unprojectPoint(projected);
+        const projected = transverseMercatorProjection.projectPoint(coords);
+        const unprojected = transverseMercatorProjection.unprojectPoint(projected);
 
         assert.approximately(coords.latitudeInRadians, unprojected.latitudeInRadians, EPSILON);
         assert.approximately(coords.longitudeInRadians, unprojected.longitudeInRadians, EPSILON);
@@ -288,8 +289,8 @@ describe("TransverseMercator", function() {
 
     it("project not normalized", function() {
         const coords = new GeoCoordinates(52.504951, 373.371806);
-        const projected = mercatorProjection.projectPoint(coords, undefined);
-        const unprojected = mercatorProjection.unprojectPoint(projected);
+        const projected = transverseMercatorProjection.projectPoint(coords, undefined);
+        const unprojected = transverseMercatorProjection.unprojectPoint(projected);
 
         assert.approximately(coords.latitudeInRadians, unprojected.latitudeInRadians, EPSILON);
         assert.approximately(coords.longitudeInRadians, unprojected.longitudeInRadians, EPSILON);
@@ -297,9 +298,9 @@ describe("TransverseMercator", function() {
 
     it("projectBox", function() {
         const tileKey = TileKey.fromRowColumnLevel(0, 0, 0);
-        const box = mercatorTilingScheme.getGeoBox(tileKey);
-        const projectedBox = mercatorProjection.projectBox(box);
-        const unprojectedBox = mercatorProjection.unprojectBox(projectedBox);
+        const box = polarTilingScheme.getGeoBox(tileKey);
+        const projectedBox = transverseMercatorProjection.projectBox(box);
+        const unprojectedBox = transverseMercatorProjection.unprojectBox(projectedBox);
 
         assert.approximately(
             box.southWest.latitudeInRadians,
@@ -325,7 +326,7 @@ describe("TransverseMercator", function() {
 });
 
 describe("Reprojection", function() {
-    const ml = (Math.atan(Math.sinh(Math.PI)) * 180) / Math.PI;
+    const ml = MathUtils.radToDeg(Math.atan(Math.sinh(Math.PI)));
 
     const geoPoints: GeoCoordinates[] = [
         new GeoCoordinates(52.504951, 13.371806, 12),
