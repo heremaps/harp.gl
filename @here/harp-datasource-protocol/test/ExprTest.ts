@@ -8,13 +8,19 @@
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
 import { assert } from "chai";
-import { Env, Expr, MapEnv, Value, ValueMap } from "../lib/Expr";
+import { Env, Expr, JsonExpr, MapEnv, Value, ValueMap } from "../lib/Expr";
+import { Definitions } from "../lib/Theme";
 
-function evaluate(expr: string, env?: Env | ValueMap): Value {
+function evaluate(expr: string | JsonExpr | Expr, env?: Env | ValueMap): Value {
     if (typeof env === "object" && !(env instanceof Env)) {
         env = new MapEnv(env);
     }
-    return Expr.parse(expr).evaluate(env || new Env());
+    return (expr instanceof Expr
+        ? expr
+        : typeof expr === "string"
+        ? Expr.parse(expr)
+        : Expr.fromJSON(expr)
+    ).evaluate(env || new Env());
 }
 
 describe("Expr", function() {
@@ -44,6 +50,85 @@ describe("Expr", function() {
             assert.equal(evaluate("'x' in ['y','x','z']"), true);
             assert.throw(() => evaluate("1 in [1,2,(3)]"));
             assert.throw(() => evaluate("1 in [1,'x',(3)]"));
+        });
+    });
+
+    describe("#fromJson", function() {
+        describe("ref operator support", function() {
+            const baseDefinitions: Definitions = {
+                color: { type: "color", value: "#ff0" },
+                number: { type: "number", value: 123 }
+            };
+            it("supports literal references", function() {
+                assert.equal(evaluate(Expr.fromJSON(["ref", "color"], baseDefinitions)), "#ff0");
+                assert.equal(evaluate(Expr.fromJSON(["ref", "number"], baseDefinitions)), 123);
+            });
+            it("throws on missing definitions", function() {
+                assert.throws(() => {
+                    Expr.fromJSON(["ref", "badRef"], baseDefinitions);
+                }, /definition 'badRef' not found/);
+            });
+            it("supports basic expression references", function() {
+                const definitions: Definitions = {
+                    basicExpr: { type: "selector", value: ["+", 2, 3] }
+                };
+                assert.equal(evaluate(Expr.fromJSON(["ref", "basicExpr"], definitions)), 5);
+            });
+            it("supports embedded basic embedded references", function() {
+                const definitions: Definitions = {
+                    ...baseDefinitions,
+                    refConstantExpr: { type: "selector", value: ["+", 2, ["ref", "number"]] }
+                };
+                assert.equal(evaluate(Expr.fromJSON(["ref", "refConstantExpr"], definitions)), 125);
+            });
+            it("supports complex embedded references", function() {
+                const definitions: Definitions = {
+                    number: { type: "number", value: 1 },
+                    refConstantExpr: { type: "selector", value: ["+", 1, ["ref", "number"]] },
+                    refExpr1: {
+                        // 1 + 1+ 2 -> 6
+                        type: "selector",
+                        value: ["+", ["ref", "number"], ["ref", "number"], ["ref", "refExpr2"]]
+                    },
+                    refExpr2: {
+                        // 2*2 -> 4
+                        type: "selector",
+                        value: ["*", ["ref", "refConstantExpr"], ["ref", "refConstantExpr"]]
+                    },
+                    refTopExpr: {
+                        // 6 - 4 -> 2
+                        type: "selector",
+                        value: ["-", ["ref", "refExpr1"], ["ref", "refExpr2"]]
+                    }
+                };
+                assert.equal(evaluate(Expr.fromJSON(["ref", "refExpr1"], definitions)), 6);
+                assert.equal(evaluate(Expr.fromJSON(["ref", "refExpr2"], definitions)), 4);
+                assert.equal(evaluate(Expr.fromJSON(["ref", "refTopExpr"], definitions)), 2);
+            });
+            it("rejects circular references", function() {
+                const definitions: Definitions = {
+                    refSelfReference: {
+                        // 2
+                        type: "selector",
+                        value: ["+", 33, ["ref", "refSelfReference"]]
+                    },
+                    refExprFoo: {
+                        // 1
+                        type: "selector",
+                        value: ["*", 44, ["ref", "refTopBar"]]
+                    },
+                    refTopBar: {
+                        type: "selector",
+                        value: ["-", 55, ["ref", "refExprFoo"]]
+                    }
+                };
+                assert.throws(() => {
+                    Expr.fromJSON(["ref", "refSelfReference"], definitions);
+                }, /circular/);
+                assert.throws(() => {
+                    Expr.fromJSON(["ref", "refTopBar"], definitions);
+                }, /circular referene to 'refTopBar'/);
+            });
         });
     });
 });

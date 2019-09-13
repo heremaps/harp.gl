@@ -7,6 +7,7 @@
 import { ExprEvaluator, ExprEvaluatorContext, OperatorDescriptor } from "./ExprEvaluator";
 import { ExprParser } from "./ExprParser";
 import { ExprPool } from "./ExprPool";
+import { Definitions, isSelectorDefinition, isValueDefinition } from "./Theme";
 
 const exprEvaluator = new ExprEvaluator();
 
@@ -31,6 +32,15 @@ export function isJsonExpr(v: any): v is JsonExpr {
 }
 
 /**
+ * Internal state needed by [[Expr.fromJSON]] to resolve `"ref"` expressions.
+ * @hidden
+ */
+interface ReferenceResolverState {
+    definitions: Definitions;
+    lockedNames: Set<string>;
+}
+
+/**
  * Abstract class defining a shape of a [[Theme]]'s expression
  */
 export abstract class Expr {
@@ -46,9 +56,24 @@ export abstract class Expr {
         return expr;
     }
 
-    static fromJSON(node: unknown): Expr {
+    static fromJSON(node: unknown, definitions?: Definitions) {
+        const referenceResolverState: ReferenceResolverState | undefined =
+            definitions !== undefined
+                ? {
+                      definitions,
+                      lockedNames: new Set()
+                  }
+                : undefined;
+
+        return Expr.fromJSONInt(node, referenceResolverState);
+    }
+
+    private static fromJSONInt(
+        node: unknown,
+        referenceResolverState: ReferenceResolverState | undefined
+    ): Expr {
         if (Array.isArray(node)) {
-            return Expr.parseCall(node);
+            return Expr.parseCall(node, referenceResolverState);
         } else if (node === null) {
             return NullLiteralExpr.instance;
         } else if (typeof node === "boolean") {
@@ -61,7 +86,7 @@ export abstract class Expr {
         throw new Error("failed to create expression");
     }
 
-    private static parseCall(node: any[]): Expr {
+    private static parseCall(node: any[], referenceResolverState?: ReferenceResolverState): Expr {
         const op = node[0];
 
         if (typeof op !== "string") {
@@ -75,12 +100,15 @@ export abstract class Expr {
 
             case "get":
                 if (node[2] !== undefined) {
-                    return Expr.makeCallExpr(op, node);
+                    return Expr.makeCallExpr(op, node, referenceResolverState);
                 }
                 if (typeof node[1] !== "string") {
                     throw new Error(`expected the name of an attribute`);
                 }
                 return new VarExpr(node[1]);
+
+            case "ref":
+                return this.resolveReference(node, referenceResolverState);
 
             case "has":
                 if (node[2] !== undefined) {
@@ -104,7 +132,10 @@ export abstract class Expr {
                         throw new Error("expected an array of constant values");
                     }
                 });
-                return new ContainsExpr(this.fromJSON(node[1]), elements);
+                return new ContainsExpr(
+                    this.fromJSONInt(node[1], referenceResolverState),
+                    elements
+                );
 
             case "literal":
                 if (typeof node[1] !== "object") {
@@ -119,7 +150,7 @@ export abstract class Expr {
                 if (!(node.length % 2)) {
                     throw new Error("fallback is missing in 'match' expression");
                 }
-                const value = this.fromJSON(node[1]);
+                const value = this.fromJSONInt(node[1], referenceResolverState);
                 const conditions: Array<[MatchLabel, Expr]> = [];
                 for (let i = 2; i < node.length - 1; i += 2) {
                     const label = node[i];
@@ -132,10 +163,10 @@ export abstract class Expr {
                     ) {
                         throw new Error(`parse error ${JSON.stringify(label)}`);
                     }
-                    const expr = this.fromJSON(node[i + 1]);
+                    const expr = this.fromJSONInt(node[i + 1], referenceResolverState);
                     conditions.push([label, expr]);
                 }
-                const fallback = this.fromJSON(node[node.length - 1]);
+                const fallback = this.fromJSONInt(node[node.length - 1], referenceResolverState);
                 return new MatchExpr(value, conditions, fallback);
             }
 
@@ -148,21 +179,66 @@ export abstract class Expr {
                 }
                 const branches: Array<[Expr, Expr]> = [];
                 for (let i = 1; i < node.length - 1; i += 2) {
-                    const condition = this.fromJSON(node[i]);
-                    const expr = this.fromJSON(node[i + 1]);
+                    const condition = this.fromJSONInt(node[i], referenceResolverState);
+                    const expr = this.fromJSONInt(node[i + 1], referenceResolverState);
                     branches.push([condition, expr]);
                 }
-                const caseFallback = this.fromJSON(node[node.length - 1]);
+                const caseFallback = this.fromJSONInt(
+                    node[node.length - 1],
+                    referenceResolverState
+                );
                 return new CaseExpr(branches, caseFallback);
             }
 
             default:
-                return this.makeCallExpr(op, node);
+                return this.makeCallExpr(op, node, referenceResolverState);
         } // switch
     }
 
-    private static makeCallExpr(op: string, node: any[]): Expr {
-        return new CallExpr(op, node.slice(1).map(childExpr => this.fromJSON(childExpr)));
+    private static makeCallExpr(
+        op: string,
+        node: any[],
+        referenceResolverState?: ReferenceResolverState
+    ): Expr {
+        return new CallExpr(
+            op,
+            node.slice(1).map(childExpr => this.fromJSONInt(childExpr, referenceResolverState))
+        );
+    }
+
+    private static resolveReference(node: any[], referenceResolverState?: ReferenceResolverState) {
+        if (typeof node[1] !== "string") {
+            throw new Error(`expected the name of an attribute`);
+        }
+        if (referenceResolverState === undefined) {
+            throw new Error(`ref used with no definitions`);
+        }
+        const name = node[1] as string;
+
+        if (referenceResolverState.lockedNames.has(name)) {
+            throw new Error(`circular referene to '${name}'`);
+        }
+
+        if (!(name in referenceResolverState.definitions)) {
+            throw new Error(`definition '${name}' not found`);
+        }
+
+        let definitionEntry = referenceResolverState.definitions[name] as any;
+        if (isSelectorDefinition(definitionEntry)) {
+            definitionEntry = definitionEntry.value;
+        }
+        if (isValueDefinition(definitionEntry)) {
+            return Expr.fromJSON(definitionEntry.value);
+        } else if (isJsonExpr(definitionEntry)) {
+            referenceResolverState.lockedNames.add(name);
+            try {
+                return Expr.fromJSONInt(definitionEntry, referenceResolverState);
+            } finally {
+                referenceResolverState.lockedNames.delete(name);
+            }
+        } else {
+            throw new Error(`unsupported definition ${name}`);
+        }
     }
 
     /**
