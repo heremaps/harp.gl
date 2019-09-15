@@ -38,6 +38,7 @@ export function isJsonExpr(v: any): v is JsonExpr {
 interface ReferenceResolverState {
     definitions: Definitions;
     lockedNames: Set<string>;
+    cache: Map<string, Expr>;
 }
 
 /**
@@ -56,12 +57,29 @@ export abstract class Expr {
         return expr;
     }
 
-    static fromJSON(node: unknown, definitions?: Definitions) {
+    /**
+     * Parse expression in JSON form.
+     *
+     * If `definitions` are defined, then references (`['ref', name]`) are resolved.
+     *
+     * Paass `definitionExprCache` to reuse `Expr` instances created from definitions across
+     * many `fromJSON` calls.
+     *
+     * @param node expression in JSON format to parse
+     * @param definitions optional set of definitions needed definition resolved by `ref` operator
+     * @param definitionExprCache optional cache of `Expr` instances derived from `definitions`
+     */
+    static fromJSON(
+        node: unknown,
+        definitions?: Definitions,
+        definitionExprCache?: Map<string, Expr>
+    ) {
         const referenceResolverState: ReferenceResolverState | undefined =
             definitions !== undefined
                 ? {
                       definitions,
-                      lockedNames: new Set()
+                      lockedNames: new Set(),
+                      cache: definitionExprCache || new Map<string, Expr>()
                   }
                 : undefined;
 
@@ -223,22 +241,30 @@ export abstract class Expr {
             throw new Error(`definition '${name}' not found`);
         }
 
+        const cachedEntry = referenceResolverState.cache.get(name);
+        if (cachedEntry !== undefined) {
+            return cachedEntry;
+        }
         let definitionEntry = referenceResolverState.definitions[name] as any;
         if (isSelectorDefinition(definitionEntry)) {
             definitionEntry = definitionEntry.value;
         }
+        let result: Expr;
+
         if (isValueDefinition(definitionEntry)) {
-            return Expr.fromJSON(definitionEntry.value);
+            result = Expr.fromJSON(definitionEntry.value);
         } else if (isJsonExpr(definitionEntry)) {
             referenceResolverState.lockedNames.add(name);
             try {
-                return Expr.fromJSONInt(definitionEntry, referenceResolverState);
+                result = Expr.fromJSONInt(definitionEntry, referenceResolverState);
             } finally {
                 referenceResolverState.lockedNames.delete(name);
             }
         } else {
             throw new Error(`unsupported definition ${name}`);
         }
+        referenceResolverState.cache.set(name, result);
+        return result;
     }
 
     /**

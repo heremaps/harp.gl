@@ -8,7 +8,7 @@
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
 import { assert } from "chai";
-import { Env, Expr, JsonExpr, MapEnv, Value, ValueMap } from "../lib/Expr";
+import { CallExpr, Env, Expr, JsonExpr, MapEnv, Value, ValueMap } from "../lib/Expr";
 import { Definitions } from "../lib/Theme";
 
 function evaluate(expr: string | JsonExpr | Expr, env?: Env | ValueMap): Value {
@@ -128,6 +128,39 @@ describe("Expr", function() {
                 assert.throws(() => {
                     Expr.fromJSON(["ref", "refTopBar"], definitions);
                 }, /circular referene to 'refTopBar'/);
+            });
+            it("reuses Expr instances created from same definition", function() {
+                const definitions: Definitions = {
+                    foo: {
+                        type: "selector",
+                        value: ["+", 4, 4]
+                    },
+                    topExpr: {
+                        type: "selector",
+                        value: ["+", ["ref", "foo"], ["ref", "foo"]]
+                    }
+                };
+                const expr = Expr.fromJSON(["ref", "topExpr"], definitions);
+                assert.instanceOf(expr, CallExpr);
+                const callExpr = expr as CallExpr;
+                assert.equal(callExpr.children.length, 2);
+
+                // Assert that both children of both exprs refer to exactly same expr instance.
+                assert.strictEqual(callExpr.children[0], callExpr.children[1]);
+            });
+            it("uses definitionExprCache across calls", function() {
+                const definitions: Definitions = {
+                    foo: {
+                        type: "selector",
+                        value: ["+", 4, 4]
+                    }
+                };
+                const exprCache = new Map<string, Expr>();
+                const expr1 = Expr.fromJSON(["ref", "foo"], definitions, exprCache);
+                const expr2 = Expr.fromJSON(["ref", "foo"], definitions, exprCache);
+
+                // Assert results of `fromJSON` refer to exactly same expr instance.
+                assert.strictEqual(expr1, expr2);
             });
         });
     });
