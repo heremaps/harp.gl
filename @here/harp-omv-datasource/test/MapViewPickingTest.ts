@@ -53,7 +53,7 @@ async function displayLocation(mapView: MapView, location: GeoCoordinates) {
     });
 }
 
-describe("MapView Picking", async function() {
+describe.skip("MapView Picking", async function() {
     const inNodeContext = typeof window === "undefined";
     const tileKey = new TileKey(0, 0, 0);
 
