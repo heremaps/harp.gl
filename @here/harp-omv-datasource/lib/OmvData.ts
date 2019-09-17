@@ -357,6 +357,8 @@ function asGeometryType(feature: com.mapbox.pb.Tile.IFeature | undefined): OmvGe
  * to geometries for the given [[IGeometryProcessor]].
  */
 export class OmvProtobufDataAdapter implements OmvDataAdapter, OmvVisitor {
+    id = "omv-protobuf";
+
     private readonly m_geometryCommands = new GeometryCommands();
     private readonly m_processor: IGeometryProcessor;
     private readonly m_logger?: ILogger;

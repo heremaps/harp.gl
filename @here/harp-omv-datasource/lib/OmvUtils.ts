@@ -7,6 +7,7 @@ import { EarthConstants, webMercatorProjection } from "@here/harp-geoutils";
 import * as THREE from "three";
 
 import { OmvDecoder } from "./OmvDecoder";
+import { VTJsonDataAdapterId } from "./VTJsonDataAdapter";
 
 /**
  * @hidden
@@ -22,8 +23,12 @@ export function isArrayBufferLike(data: any): data is ArrayBufferLike {
 /**
  * @hidden
  */
-export function lat2tile(lat: number, zoom: number): number {
-    return Math.floor(
+export function lat2tile(
+    lat: number,
+    zoom: number,
+    func: (x: number) => number = Math.floor
+): number {
+    return func(
         ((1 -
             Math.log(Math.tan((lat * Math.PI) / 180) + 1 / Math.cos((lat * Math.PI) / 180)) /
                 Math.PI) /
@@ -53,7 +58,11 @@ export function tile2world(
     const { north, west } = decodeInfo.geoBox;
     const N = Math.log2(extents);
     const scale = Math.pow(2, decodeInfo.tileKey.level + N);
-    const top = lat2tile(north, decodeInfo.tileKey.level + N);
+    const top = lat2tile(
+        north,
+        decodeInfo.tileKey.level + N,
+        decodeInfo.adapterId === VTJsonDataAdapterId ? Math.round : Math.floor
+    );
     const left = ((west + 180) / 360) * scale;
     const R = EarthConstants.EQUATORIAL_CIRCUMFERENCE;
 
@@ -76,7 +85,11 @@ export function world2tile(
     const { north, west } = decodeInfo.geoBox;
     const N = Math.log2(extents);
     const scale = Math.pow(2, decodeInfo.tileKey.level + N);
-    const top = lat2tile(north, decodeInfo.tileKey.level + N);
+    const top = lat2tile(
+        north,
+        decodeInfo.tileKey.level + N,
+        decodeInfo.adapterId === VTJsonDataAdapterId ? Math.round : Math.floor
+    );
     const left = ((west + 180) / 360) * scale;
     const R = EarthConstants.EQUATORIAL_CIRCUMFERENCE;
 

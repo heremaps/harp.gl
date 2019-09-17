@@ -123,6 +123,11 @@ export interface IOmvEmitter {
  */
 export interface OmvDataAdapter {
     /**
+     * OmvDataAdapter's id.
+     */
+    id: string;
+
+    /**
      * Checks if the given data can be processed by this OmvDataAdapter.
      *
      * @param data The raw data to adapt.
@@ -174,8 +179,27 @@ export class OmvDecoder implements IGeometryProcessor {
      * @returns A [[DecodedTile]]
      */
     getDecodedTile(tileKey: TileKey, data: ArrayBufferLike | {}): DecodedTile {
+        let dataAdapter;
+        for (const adapter of this.m_dataAdapters.values()) {
+            if (adapter.canProcess(data)) {
+                dataAdapter = adapter;
+                break;
+            }
+        }
+        if (dataAdapter === undefined) {
+            return {
+                techniques: [],
+                geometries: []
+            };
+        }
+
         const tileSizeOnScreen = this.estimatedTileSizeOnScreen();
-        const decodeInfo = new OmvDecoder.DecodeInfo(this.m_projection, tileKey, tileSizeOnScreen);
+        const decodeInfo = new OmvDecoder.DecodeInfo(
+            dataAdapter.id,
+            this.m_projection,
+            tileKey,
+            tileSizeOnScreen
+        );
 
         this.m_decodedTileEmitter = new OmvDecodedTileEmitter(
             decodeInfo,
@@ -185,7 +209,6 @@ export class OmvDecoder implements IGeometryProcessor {
             this.m_enableElevationOverlay,
             this.m_languages
         );
-
         if (this.m_createTileInfo) {
             const storeExtendedTags = true;
             this.m_infoTileEmitter = new OmvTileInfoEmitter(
@@ -195,12 +218,8 @@ export class OmvDecoder implements IGeometryProcessor {
                 this.m_gatherRoadSegments
             );
         }
-        for (const adapter of this.m_dataAdapters.values()) {
-            if (adapter.canProcess(data)) {
-                adapter.process(data, tileKey, decodeInfo.geoBox);
-                break;
-            }
-        }
+
+        dataAdapter.process(data, tileKey, decodeInfo.geoBox);
         const decodedTile = this.m_decodedTileEmitter.getDecodedTile();
 
         if (this.m_createTileInfo) {
@@ -211,8 +230,24 @@ export class OmvDecoder implements IGeometryProcessor {
     }
 
     getTileInfo(tileKey: TileKey, data: ArrayBufferLike | {}): ExtendedTileInfo {
+        let dataAdapter;
+        for (const adapter of this.m_dataAdapters.values()) {
+            if (adapter.canProcess(data)) {
+                dataAdapter = adapter;
+                break;
+            }
+        }
+        if (dataAdapter === undefined) {
+            return new ExtendedTileInfo(tileKey, false);
+        }
+
         const tileSizeOnScreen = this.estimatedTileSizeOnScreen();
-        const decodeInfo = new OmvDecoder.DecodeInfo(this.m_projection, tileKey, tileSizeOnScreen);
+        const decodeInfo = new OmvDecoder.DecodeInfo(
+            dataAdapter.id,
+            this.m_projection,
+            tileKey,
+            tileSizeOnScreen
+        );
 
         const storeExtendedTags = true;
         this.m_infoTileEmitter = new OmvTileInfoEmitter(
@@ -469,11 +504,13 @@ export namespace OmvDecoder {
         /**
          * Constructs a new [[DecodeInfo]].
          *
+         * @param adapterId The id of the [[OmvDataAdapter]] used for decoding.
          * @param targetProjection The [[Projection]]
          * @param tileKey The [[TileKey]] of the Tile to decode.
          * @param tileSizeOnScreen The estimated size of the Tile in pixels.
          */
         constructor(
+            readonly adapterId: string,
             readonly targetProjection: Projection,
             readonly tileKey: TileKey,
             readonly tileSizeOnScreen: number

@@ -54,7 +54,6 @@ export class OmvTileInfoEmitter implements IOmvEmitter {
         featureId: number | undefined
     ): void {
         const tileInfoWriter = this.m_tileInfoWriter;
-
         const tmpV = new THREE.Vector3();
 
         for (const technique of techniques) {

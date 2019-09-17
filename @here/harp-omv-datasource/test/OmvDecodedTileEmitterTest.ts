@@ -47,7 +47,7 @@ describe("OmvDecodedTileEmitter", function() {
         const projection = mercatorProjection;
         const tileSizeOnScreen = 100;
 
-        const decodeInfo = new OmvDecoder.DecodeInfo(projection, tileKey, tileSizeOnScreen);
+        const decodeInfo = new OmvDecoder.DecodeInfo("test", projection, tileKey, tileSizeOnScreen);
 
         const styleSet: StyleSet = [
             {
@@ -95,7 +95,7 @@ describe("OmvDecodedTileEmitter", function() {
         const projection = mercatorProjection;
         const tileSizeOnScreen = 100;
 
-        const decodeInfo = new OmvDecoder.DecodeInfo(projection, tileKey, tileSizeOnScreen);
+        const decodeInfo = new OmvDecoder.DecodeInfo("test", projection, tileKey, tileSizeOnScreen);
 
         const geoBox = decodeInfo.geoBox;
 
