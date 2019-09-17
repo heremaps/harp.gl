@@ -14,7 +14,7 @@ import { Vector3Like } from "../math/Vector3Like";
 import { EarthConstants } from "./EarthConstants";
 import { Projection, ProjectionType } from "./Projection";
 
-const DEG2RAD = Math.PI / 180;
+import * as THREE from "three";
 
 class EquirectangularProjection extends Projection {
     static geoToWorldScale: number = 1.0 / (2.0 * Math.PI);
@@ -62,11 +62,11 @@ class EquirectangularProjection extends Projection {
             result = { x: 0, y: 0, z: 0 } as WorldCoordinates;
         }
         result.x =
-            (geoPoint.longitude * DEG2RAD + Math.PI) *
+            (THREE.Math.degToRad(geoPoint.longitude) + Math.PI) *
             EquirectangularProjection.geoToWorldScale *
             this.unitScale;
         result.y =
-            (geoPoint.latitude * DEG2RAD + Math.PI * 0.5) *
+            (THREE.Math.degToRad(geoPoint.latitude) + Math.PI * 0.5) *
             EquirectangularProjection.geoToWorldScale *
             this.unitScale;
         result.z = geoPoint.altitude || 0;

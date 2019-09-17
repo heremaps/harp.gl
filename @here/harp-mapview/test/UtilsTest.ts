@@ -7,7 +7,7 @@
 // tslint:disable:only-arrow-functions
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
-import { GeoCoordinates, MathUtils, mercatorProjection, TileKey } from "@here/harp-geoutils";
+import { GeoCoordinates, mercatorProjection, TileKey } from "@here/harp-geoutils";
 import { expect } from "chai";
 import * as THREE from "three";
 import { MapView } from "../lib/MapView";
@@ -105,11 +105,11 @@ describe("map-view#Utils", function() {
 
     it("calculates horizontal and vertical fov", function() {
         const vFov = 60;
-        const hFov = MathUtils.radToDeg(
-            MapViewUtils.calculateHorizontalFovByVerticalFov(MathUtils.degToRad(vFov), 0.9)
+        const hFov = THREE.Math.radToDeg(
+            MapViewUtils.calculateHorizontalFovByVerticalFov(THREE.Math.degToRad(vFov), 0.9)
         );
-        const calculatedVFov = MathUtils.radToDeg(
-            MapViewUtils.calculateVerticalFovByHorizontalFov(MathUtils.degToRad(hFov), 0.9)
+        const calculatedVFov = THREE.Math.radToDeg(
+            MapViewUtils.calculateVerticalFovByHorizontalFov(THREE.Math.degToRad(hFov), 0.9)
         );
         expect(vFov).to.be.closeTo(calculatedVFov, 0.00000000001);
     });

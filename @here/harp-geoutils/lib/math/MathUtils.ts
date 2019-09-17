@@ -7,12 +7,12 @@
 import { Box3Like } from "./Box3Like";
 import { Vector3Like } from "./Vector3Like";
 
-const DEG2RAD = Math.PI / 180;
-const RAD2DEG = 180 / Math.PI;
+import * as THREE from "three";
 
 export namespace MathUtils {
     /**
      * Creates a new empty bounding box.
+     * @deprecated
      */
     export function newEmptyBox3(): Box3Like {
         return {
@@ -68,20 +68,18 @@ export namespace MathUtils {
      *
      * @param degrees Value in degrees.
      * @returns Value in radians.
+     * @deprecated
      */
-    export function degToRad(degrees: number) {
-        return degrees * DEG2RAD;
-    }
+    export const degToRad = THREE.Math.degToRad;
 
     /**
      * Converts an angle measured in radians to an equivalent value in degrees.
      *
      * @param degrees Value in radians.
      * @returns Value in degrees.
+     * @deprecated
      */
-    export function radToDeg(radians: number): number {
-        return radians * RAD2DEG;
-    }
+    export const radToDeg = THREE.Math.radToDeg;
 
     /**
      * Ensures that input value fits in a given range.
@@ -90,10 +88,9 @@ export namespace MathUtils {
      * @param min Minimum value.
      * @param max Maximum value.
      * @returns Clamped value.
+     * @deprecated
      */
-    export function clamp(value: number, min: number, max: number): number {
-        return value < min ? min : value > max ? max : value;
-    }
+    export const clamp = THREE.Math.clamp;
 
     /**
      * Normalize angle in degrees to range `[0, 360)`.

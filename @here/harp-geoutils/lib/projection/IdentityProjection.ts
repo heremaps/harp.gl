@@ -13,7 +13,7 @@ import { isOrientedBox3Like, OrientedBox3Like } from "../math/OrientedBox3Like";
 import { Vector3Like } from "../math/Vector3Like";
 import { Projection, ProjectionType } from "./Projection";
 
-const DEG2RAD = Math.PI / 180;
+import * as THREE from "three";
 
 class IdentityProjection extends Projection {
     readonly type: ProjectionType = ProjectionType.Planar;
@@ -47,8 +47,8 @@ class IdentityProjection extends Projection {
             // tslint:disable-next-line:no-object-literal-type-assertion
             result = { x: 0, y: 0, z: 0 } as WorldCoordinates;
         }
-        result.x = geoPoint.longitude * DEG2RAD;
-        result.y = geoPoint.latitude * DEG2RAD;
+        result.x = THREE.Math.degToRad(geoPoint.longitude);
+        result.y = THREE.Math.degToRad(geoPoint.latitude);
         result.z = geoPoint.altitude || 0;
         return result;
     }

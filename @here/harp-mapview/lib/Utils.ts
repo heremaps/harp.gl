@@ -275,8 +275,8 @@ export namespace MapViewUtils {
      * @param pitch Pitch in degrees.
      */
     export function setRotation(mapView: MapView, yaw: number, pitch: number) {
-        yawQuaternion.setFromAxisAngle(yawAxis, geoUtils.MathUtils.degToRad(yaw));
-        pitchQuaternion.setFromAxisAngle(pitchAxis, geoUtils.MathUtils.degToRad(pitch));
+        yawQuaternion.setFromAxisAngle(yawAxis, THREE.Math.degToRad(yaw));
+        pitchQuaternion.setFromAxisAngle(pitchAxis, THREE.Math.degToRad(pitch));
 
         yawQuaternion.multiply(pitchQuaternion);
         mapView.camera.quaternion.copy(yawQuaternion);
@@ -423,7 +423,7 @@ export namespace MapViewUtils {
      */
     export function calculateZoomLevelFromDistance(distance: number, mapView: MapView): number {
         const tileSize = (256 * distance) / mapView.focalLength;
-        return geoUtils.MathUtils.clamp(
+        return THREE.Math.clamp(
             Math.log2(EarthConstants.EQUATORIAL_CIRCUMFERENCE / tileSize),
             mapView.minZoomLevel,
             mapView.maxZoomLevel
@@ -498,7 +498,7 @@ export namespace MapViewUtils {
      * @param height Height of canvas in pixels.
      */
     export function calculateFovByFocalLength(focalLength: number, height: number): number {
-        return geoUtils.MathUtils.radToDeg(2 * Math.atan(height / 2 / focalLength));
+        return THREE.Math.radToDeg(2 * Math.atan(height / 2 / focalLength));
     }
 
     /**

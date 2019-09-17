@@ -9,11 +9,12 @@ import {
     IWorkerChannelMessage,
     LoggerManager,
     LogLevel,
-    MathUtils,
     WORKERCHANNEL_MSG_TYPE
 } from "@here/harp-utils";
 
 import { WorkerLoader } from "./workers/WorkerLoader";
+
+import * as THREE from "three";
 
 const logger = LoggerManager.instance.create("ConcurrentWorkerSet");
 
@@ -184,7 +185,7 @@ export class ConcurrentWorkerSet {
             this.m_options.workerCount,
             typeof navigator !== "undefined" && navigator.hardwareConcurrency !== undefined
                 ? // We need to have at least one worker
-                  MathUtils.clamp(navigator.hardwareConcurrency - 1, 1, 4)
+                  THREE.Math.clamp(navigator.hardwareConcurrency - 1, 1, 4)
                 : undefined,
             DEFAULT_WORKER_COUNT
         );

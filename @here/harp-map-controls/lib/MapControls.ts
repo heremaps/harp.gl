@@ -365,12 +365,12 @@ export class MapControls extends THREE.EventDispatcher {
         //yaw
         let yawAngle = yawPitchRoll.yaw;
         if (this.rotateEnabled) {
-            yawAngle -= geoUtils.MathUtils.degToRad(deltaYaw);
+            yawAngle -= THREE.Math.degToRad(deltaYaw);
         }
         yawQuaternion.setFromAxisAngle(yawAxis, yawAngle);
 
         //pitch
-        const deltaPitchRadians = geoUtils.MathUtils.degToRad(deltaPitch);
+        const deltaPitchRadians = THREE.Math.degToRad(deltaPitch);
         const pitchAngle = this.constrainPitchAngle(yawPitchRoll.pitch, deltaPitchRadians);
         pitchQuaternion.setFromAxisAngle(pitchAxis, pitchAngle);
 
@@ -388,9 +388,9 @@ export class MapControls extends THREE.EventDispatcher {
             this.mapView.projection.type
         );
         return {
-            yaw: geoUtils.MathUtils.radToDeg(ypr.yaw),
-            pitch: geoUtils.MathUtils.radToDeg(ypr.pitch),
-            roll: geoUtils.MathUtils.radToDeg(ypr.roll)
+            yaw: THREE.Math.radToDeg(ypr.yaw),
+            pitch: THREE.Math.radToDeg(ypr.pitch),
+            roll: THREE.Math.radToDeg(ypr.roll)
         };
     }
 
@@ -563,14 +563,14 @@ export class MapControls extends THREE.EventDispatcher {
      * @param angle Angle in degrees.
      */
     set maxPitchAngle(angle: number) {
-        this.m_maxPitchAngle = geoUtils.MathUtils.degToRad(angle);
+        this.m_maxPitchAngle = THREE.Math.degToRad(angle);
     }
 
     /**
      * Get the camera max pitch angle in degrees.
      */
     get maxPitchAngle(): number {
-        return geoUtils.MathUtils.radToDeg(this.m_maxPitchAngle);
+        return THREE.Math.radToDeg(this.m_maxPitchAngle);
     }
 
     /**
@@ -579,14 +579,14 @@ export class MapControls extends THREE.EventDispatcher {
      * @param angle Angle in degrees.
      */
     set minPitchAngle(angle: number) {
-        this.m_minPitchAngle = geoUtils.MathUtils.degToRad(angle);
+        this.m_minPitchAngle = THREE.Math.degToRad(angle);
     }
 
     /**
      * Get the camera min pitch angle in degrees.
      */
     get minPitchAngle(): number {
-        return geoUtils.MathUtils.radToDeg(this.m_minPitchAngle);
+        return THREE.Math.radToDeg(this.m_minPitchAngle);
     }
 
     /**
@@ -686,10 +686,7 @@ export class MapControls extends THREE.EventDispatcher {
         const oldCameraDistance = this.mapView.camera.position.z / Math.cos(initialPitch);
         const newHeight = Math.cos(this.currentPitch) * oldCameraDistance;
 
-        this.orbitFocusPoint(
-            newHeight - this.camera.position.z,
-            geoUtils.MathUtils.radToDeg(deltaAngle)
-        );
+        this.orbitFocusPoint(newHeight - this.camera.position.z, THREE.Math.radToDeg(deltaAngle));
 
         this.updateMapView();
     }
@@ -1209,7 +1206,7 @@ export class MapControls extends THREE.EventDispatcher {
             if (this.mapView.projection.type === geoUtils.ProjectionType.Planar) {
                 const deltaRotation =
                     this.m_touchState.currentRotation - this.m_touchState.initialRotation;
-                this.rotate(geoUtils.MathUtils.radToDeg(deltaRotation));
+                this.rotate(THREE.Math.radToDeg(deltaRotation));
                 const pinchDistance = this.calculatePinchDistanceInWorldSpace();
                 this.moveAlongTheViewDirection(pinchDistance);
             } else if (this.mapView.projection.type === geoUtils.ProjectionType.Spherical) {
@@ -1369,7 +1366,7 @@ export class MapControls extends THREE.EventDispatcher {
     }
 
     private constrainPitchAngle(pitchAngle: number, deltaPitch: number): number {
-        const tmpPitchAngle = geoUtils.MathUtils.clamp(
+        const tmpPitchAngle = THREE.Math.clamp(
             pitchAngle + deltaPitch,
             this.m_minPitchAngle,
             this.m_maxPitchAngle
@@ -1419,7 +1416,7 @@ export class MapControls extends THREE.EventDispatcher {
             );
 
             //calculate the pitch
-            const deltaPitchRadians = geoUtils.MathUtils.degToRad(deltaAlt);
+            const deltaPitchRadians = THREE.Math.degToRad(deltaAlt);
             const pitchAngle = this.constrainPitchAngle(yawPitchRoll.pitch, deltaPitchRadians);
             newPitchQuaternion.setFromAxisAngle(pitchAxis, pitchAngle);
 

@@ -6,8 +6,7 @@
 
 import { GeoCoordinatesLike } from "./GeoCoordinatesLike";
 
-const RAD2DEG = 180.0 / Math.PI;
-const DEG2RAD = Math.PI / 180.0;
+import * as THREE from "three";
 
 /**
  * `GeoCoordinates` is used to represent geo positions.
@@ -32,7 +31,11 @@ export class GeoCoordinates implements GeoCoordinatesLike {
      * @param altitude Altitude in meters.
      */
     static fromRadians(latitude: number, longitude: number, altitude?: number): GeoCoordinates {
-        return new GeoCoordinates(latitude * RAD2DEG, longitude * RAD2DEG, altitude);
+        return new GeoCoordinates(
+            THREE.Math.radToDeg(latitude),
+            THREE.Math.radToDeg(longitude),
+            altitude
+        );
     }
 
     /**
@@ -48,14 +51,14 @@ export class GeoCoordinates implements GeoCoordinatesLike {
      * Returns the latitude in radians.
      */
     get latitudeInRadians(): number {
-        return this.latitude * DEG2RAD;
+        return THREE.Math.degToRad(this.latitude);
     }
 
     /**
      * Returns the longitude in radians.
      */
     get longitudeInRadians(): number {
-        return this.longitude * DEG2RAD;
+        return THREE.Math.degToRad(this.longitude);
     }
 
     /**

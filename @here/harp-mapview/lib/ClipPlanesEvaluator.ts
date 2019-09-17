@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { EarthConstants, MathUtils, Projection, ProjectionType } from "@here/harp-geoutils";
+import { EarthConstants, Projection, ProjectionType } from "@here/harp-geoutils";
 import { assert } from "@here/harp-utils";
 import * as THREE from "three";
 import { MapViewUtils } from "./Utils";
@@ -536,7 +536,7 @@ export class TiltBasedClipPlanesEvaluator extends AltitudeBasedClipPlanesEvaluat
         // let aspect = camera.aspect > 1 ? camera.aspect : 1 / camera.aspect;
         const aspect = 1;
         // Half fov angle in radians
-        const halfFovAngleRad = MathUtils.degToRad((camera.fov * aspect) / 2);
+        const halfFovAngleRad = THREE.Math.degToRad((camera.fov * aspect) / 2);
         // Angle between z and c2
         const biggerAngleRad = cameraTilt + halfFovAngleRad;
         // Angle between z and c1
