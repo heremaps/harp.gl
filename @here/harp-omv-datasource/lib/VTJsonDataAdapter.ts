@@ -61,10 +61,17 @@ interface VTJsonTileInterface {
 }
 
 /**
+ * [[OmvDataAdapter]] id for [[VTJsonDataAdapter]].
+ */
+export const VTJsonDataAdapterId: string = "vt-json";
+
+/**
  * The class [[VTJsonDataAdapter]] converts VT-json data to geometries for the given
  * [[IGeometryProcessor]].
  */
 export class VTJsonDataAdapter implements OmvDataAdapter {
+    id = VTJsonDataAdapterId;
+
     constructor(
         readonly m_processor: IGeometryProcessor,
         private m_dataFilter?: OmvFeatureFilter,

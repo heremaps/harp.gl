@@ -307,7 +307,6 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
         featureId: number | undefined
     ): void {
         const env = context.env;
-
         this.processFeatureCommon(env);
 
         const lines: number[][] = [];
@@ -554,7 +553,6 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
         featureId: number | undefined
     ): void {
         const env = context.env;
-
         this.processFeatureCommon(env);
 
         techniques.forEach(technique => {
