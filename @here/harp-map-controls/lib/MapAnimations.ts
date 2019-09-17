@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GeoCoordinates, GeoCoordinatesLike, MathUtils } from "@here/harp-geoutils";
+import { GeoCoordinates, GeoCoordinatesLike } from "@here/harp-geoutils";
 import { EventNames, MapControls } from "./MapControls";
 
 import { MapView } from "@here/harp-mapview";
@@ -315,7 +315,7 @@ export class CameraRotationAnimation extends CameraAnimation {
             .onUpdate(({ rotation }) => {
                 this.m_lastRotationValue = rotation;
 
-                rotZ.setFromEuler(new THREE.Euler(0, 0, MathUtils.degToRad(rotation)));
+                rotZ.setFromEuler(new THREE.Euler(0, 0, THREE.Math.degToRad(rotation)));
 
                 if (this.m_userCamerRotation !== undefined) {
                     rotZ.multiply(this.m_userCamerRotation);

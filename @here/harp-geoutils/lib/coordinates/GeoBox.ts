@@ -6,7 +6,7 @@
 
 import { GeoCoordinates } from "./GeoCoordinates";
 
-const DEG2RAD = Math.PI / 180;
+import * as THREE from "three";
 
 /**
  * `GeoBox` is used to represent a bounding box in geo coordinates.
@@ -109,14 +109,14 @@ export class GeoBox {
      * Returns the latitude span in radians.
      */
     get latitudeSpanInRadians(): number {
-        return this.latitudeSpan * DEG2RAD;
+        return THREE.Math.degToRad(this.latitudeSpan);
     }
 
     /**
      * Returns the longitude span in radians.
      */
     get longitudeSpanInRadians(): number {
-        return this.longitudeSpan * DEG2RAD;
+        return THREE.Math.degToRad(this.longitudeSpan);
     }
 
     /**

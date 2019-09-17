@@ -16,6 +16,8 @@ import { EarthConstants } from "./EarthConstants";
 import { mercatorProjection, webMercatorProjection } from "./MercatorProjection";
 import { Projection, ProjectionType } from "./Projection";
 
+import * as THREE from "three";
+
 /**
  * Transforms the given vector using the provided basis.
  */
@@ -47,7 +49,7 @@ function apply(
 function getLongitudeQuadrant(longitude: number) {
     const oneOverPI = 1 / Math.PI;
     const quadrantIndex = Math.floor(2 * (longitude * oneOverPI + 1));
-    return MathUtils.clamp(quadrantIndex, 0, 4);
+    return THREE.Math.clamp(quadrantIndex, 0, 4);
 }
 
 function lengthOfVector3(worldPoint: Vector3Like): number {
@@ -70,8 +72,8 @@ function makeBox3<Bounds extends Box3Like>(
 ): Bounds {
     const halfEquatorialRadius = (unitScale + (geoBox.maxAltitude || 0)) * 0.5;
 
-    const minLongitude = MathUtils.degToRad(geoBox.west);
-    const maxLongitude = MathUtils.degToRad(geoBox.east);
+    const minLongitude = THREE.Math.degToRad(geoBox.west);
+    const maxLongitude = THREE.Math.degToRad(geoBox.east);
 
     const minLongitudeQuadrant = getLongitudeQuadrant(minLongitude);
     const maxLongitudeQuadrant = getLongitudeQuadrant(maxLongitude);
@@ -112,8 +114,8 @@ function makeBox3<Bounds extends Box3Like>(
     const yExtent = (yMax - yMin) * halfEquatorialRadius;
 
     // Calculate Z boundaries.
-    const minLatitude = MathUtils.degToRad(geoBox.south);
-    const maxLatutide = MathUtils.degToRad(geoBox.north);
+    const minLatitude = THREE.Math.degToRad(geoBox.south);
+    const maxLatutide = THREE.Math.degToRad(geoBox.north);
 
     const zMax = Math.sin(maxLatutide);
     const zMin = Math.sin(minLatitude);
@@ -143,8 +145,8 @@ function project<WorldCoordinates extends Vector3Like>(
     unitScale: number
 ): typeof worldpoint {
     const radius = unitScale + (geoPoint.altitude || 0);
-    const latitude = MathUtils.degToRad(geoPoint.latitude);
-    const longitude = MathUtils.degToRad(geoPoint.longitude);
+    const latitude = THREE.Math.degToRad(geoPoint.latitude);
+    const longitude = THREE.Math.degToRad(geoPoint.longitude);
     const cosLatitude = Math.cos(latitude);
     worldpoint.x = radius * cosLatitude * Math.cos(longitude);
     worldpoint.y = radius * cosLatitude * Math.sin(longitude);
@@ -224,18 +226,18 @@ class SphereProjection extends Projection {
             const { south, west, north, east, center: mid } = geoBox;
             const midX = mid.longitude;
             const midY = mid.latitude;
-            const cosSouth = Math.cos(MathUtils.degToRad(south));
-            const sinSouth = Math.sin(MathUtils.degToRad(south));
-            const cosWest = Math.cos(MathUtils.degToRad(west));
-            const sinWest = Math.sin(MathUtils.degToRad(west));
-            const cosNorth = Math.cos(MathUtils.degToRad(north));
-            const sinNorth = Math.sin(MathUtils.degToRad(north));
-            const cosEast = Math.cos(MathUtils.degToRad(east));
-            const sinEast = Math.sin(MathUtils.degToRad(east));
-            const cosMidX = Math.cos(MathUtils.degToRad(midX));
-            const sinMidX = Math.sin(MathUtils.degToRad(midX));
-            const cosMidY = Math.cos(MathUtils.degToRad(midY));
-            const sinMidY = Math.sin(MathUtils.degToRad(midY));
+            const cosSouth = Math.cos(THREE.Math.degToRad(south));
+            const sinSouth = Math.sin(THREE.Math.degToRad(south));
+            const cosWest = Math.cos(THREE.Math.degToRad(west));
+            const sinWest = Math.sin(THREE.Math.degToRad(west));
+            const cosNorth = Math.cos(THREE.Math.degToRad(north));
+            const sinNorth = Math.sin(THREE.Math.degToRad(north));
+            const cosEast = Math.cos(THREE.Math.degToRad(east));
+            const sinEast = Math.sin(THREE.Math.degToRad(east));
+            const cosMidX = Math.cos(THREE.Math.degToRad(midX));
+            const sinMidX = Math.sin(THREE.Math.degToRad(midX));
+            const cosMidY = Math.cos(THREE.Math.degToRad(midY));
+            const sinMidY = Math.sin(THREE.Math.degToRad(midY));
 
             // Build the orientation of the OBB using the normal vector and its partial derivates.
 
@@ -388,8 +390,8 @@ class SphereProjection extends Projection {
     }
 
     localTangentSpace(geoPoint: GeoCoordinatesLike, result: TransformLike): TransformLike {
-        const latitude = MathUtils.degToRad(geoPoint.latitude);
-        const longitude = MathUtils.degToRad(geoPoint.longitude);
+        const latitude = THREE.Math.degToRad(geoPoint.latitude);
+        const longitude = THREE.Math.degToRad(geoPoint.longitude);
 
         const cosLongitude = Math.cos(longitude);
         const sinLongitude = Math.sin(longitude);

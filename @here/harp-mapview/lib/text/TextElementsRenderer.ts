@@ -1376,7 +1376,7 @@ export class TextElementsRenderer {
             if (fadeFar > fadeNear) {
                 distanceFadeValue =
                     1.0 -
-                    MathUtils.clamp(
+                    THREE.Math.clamp(
                         (textDistance / cameraFar - fadeNear) / (fadeFar - fadeNear),
                         0.0,
                         1.0
@@ -2466,7 +2466,7 @@ export class TextElementsRenderer {
         } else {
             renderState.value = fadingTime / renderState.fadingTime;
 
-            renderState.opacity = MathUtils.clamp(
+            renderState.opacity = THREE.Math.clamp(
                 MathUtils.smootherStep(startValue, endValue, renderState.value),
                 0,
                 1

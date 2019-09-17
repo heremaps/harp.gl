@@ -5,7 +5,7 @@
  */
 
 import { DebugTileDataSource } from "@here/harp-debug-datasource";
-import { GeoCoordinates, MathUtils, webMercatorTilingScheme } from "@here/harp-geoutils";
+import { GeoCoordinates, webMercatorTilingScheme } from "@here/harp-geoutils";
 import { MapControls } from "@here/harp-map-controls";
 import {
     CopyrightElementHandler,
@@ -158,13 +158,13 @@ export namespace FreeCameraAppDebuggingToolExample {
                     this.mapView.projection.type
                 );
                 ypr.pitch = Math.max(
-                    Math.min(ypr.pitch, MathUtils.degToRad(this.mapControls.maxPitchAngle)),
+                    Math.min(ypr.pitch, THREE.Math.degToRad(this.mapControls.maxPitchAngle)),
                     0
                 );
                 // Finally apply rotation from transformation gizmo.
                 this.mapControls.setRotation(
-                    MathUtils.radToDeg(ypr.yaw),
-                    MathUtils.radToDeg(ypr.pitch)
+                    THREE.Math.radToDeg(ypr.yaw),
+                    THREE.Math.radToDeg(ypr.pitch)
                 );
                 // Reset RTE camera orientation according to constraints applied.
                 cameraRelativeToEye.copy(this.mapView.camera);

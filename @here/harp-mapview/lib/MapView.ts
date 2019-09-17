@@ -14,7 +14,6 @@ import {
 import {
     EarthConstants,
     GeoCoordinates,
-    MathUtils,
     mercatorProjection,
     Projection,
     ProjectionType,
@@ -873,7 +872,7 @@ export class MapView extends THREE.EventDispatcher {
             this.m_options.fovCalculation === undefined
                 ? DEFAULT_FOV_CALCULATION
                 : this.m_options.fovCalculation;
-        this.m_options.fovCalculation.fov = MathUtils.clamp(
+        this.m_options.fovCalculation.fov = THREE.Math.clamp(
             this.m_options.fovCalculation!.fov,
             MIN_FIELD_OF_VIEW,
             MAX_FIELD_OF_VIEW
@@ -3111,16 +3110,16 @@ export class MapView extends THREE.EventDispatcher {
     };
 
     private limitFov(fov: number, aspect: number): number {
-        fov = MathUtils.clamp(fov, MIN_FIELD_OF_VIEW, MAX_FIELD_OF_VIEW);
+        fov = THREE.Math.clamp(fov, MIN_FIELD_OF_VIEW, MAX_FIELD_OF_VIEW);
 
-        let hFov = MathUtils.radToDeg(
-            MapViewUtils.calculateHorizontalFovByVerticalFov(MathUtils.degToRad(fov), aspect)
+        let hFov = THREE.Math.radToDeg(
+            MapViewUtils.calculateHorizontalFovByVerticalFov(THREE.Math.degToRad(fov), aspect)
         );
 
         if (hFov > MAX_FIELD_OF_VIEW || hFov < MIN_FIELD_OF_VIEW) {
-            hFov = MathUtils.clamp(hFov, MIN_FIELD_OF_VIEW, MAX_FIELD_OF_VIEW);
-            fov = MathUtils.radToDeg(
-                MapViewUtils.calculateVerticalFovByHorizontalFov(MathUtils.degToRad(hFov), aspect)
+            hFov = THREE.Math.clamp(hFov, MIN_FIELD_OF_VIEW, MAX_FIELD_OF_VIEW);
+            fov = THREE.Math.radToDeg(
+                MapViewUtils.calculateVerticalFovByHorizontalFov(THREE.Math.degToRad(hFov), aspect)
             );
         }
         return fov as number;
@@ -3154,7 +3153,7 @@ export class MapView extends THREE.EventDispatcher {
     private calculateFocalLength(height: number) {
         assert(this.m_options.fovCalculation !== undefined);
         this.m_focalLength = MapViewUtils.calculateFocalLengthByVerticalFov(
-            MathUtils.degToRad(this.m_options.fovCalculation!.fov),
+            THREE.Math.degToRad(this.m_options.fovCalculation!.fov),
             height
         );
     }

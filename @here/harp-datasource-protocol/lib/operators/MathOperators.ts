@@ -4,9 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { MathUtils } from "@here/harp-geoutils";
 import { Expr } from "../Expr";
 import { ExprEvaluatorContext, OperatorDescriptorMap } from "../ExprEvaluator";
+
+import * as THREE from "three";
 
 const operators = {
     "^": {
@@ -212,7 +213,7 @@ const operators = {
             if (typeof v !== "number" || typeof min !== "number" || typeof max !== "number") {
                 throw new Error(`invalid operands '${v}', ${min}, ${max} for operator 'clamp'`);
             }
-            return MathUtils.clamp(v, min, max);
+            return THREE.Math.clamp(v, min, max);
         }
     },
 
