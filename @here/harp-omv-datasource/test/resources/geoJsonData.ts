@@ -64,18 +64,19 @@ export const GEOJSON_DATA: FeatureCollection = {
 };
 
 export const THEME: Theme = {
-    defaultTextStyle: {
-        name: "defaultTextStyle",
-        color: "#6D7477",
-        fontCatalogName: "fira"
-    },
-    textStyles: [],
-    fontCatalogs: [
-        {
-            name: "fira",
-            url: "fonts/Default_FontCatalog.json"
-        }
-    ],
+    // INFO: Commented out until text renderer refactor (Travis ci build fails).
+    // defaultTextStyle: {
+    //     name: "defaultTextStyle",
+    //     color: "#6D7477",
+    //     fontCatalogName: "fira"
+    // },
+    // textStyles: [],
+    // fontCatalogs: [
+    //     {
+    //         name: "fira",
+    //         url: "fonts/Default_FontCatalog.json"
+    //     }
+    // ],
     styles: {
         geojson: [
             {
