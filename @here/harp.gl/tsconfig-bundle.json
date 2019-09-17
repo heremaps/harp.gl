@@ -1,0 +1,10 @@
+{
+    "extends": "./tsconfig.json",
+    "compilerOptions": {
+        "emitDeclarationOnly": true,
+        "declaration": true,
+        "declarationDir": "dist/types"
+    },
+    "files": ["lib/index.ts", "lib/DecoderBootstrap.ts"],
+    "include": ["../../@here/*/index*.ts", "../../@here/*/lib/**/*.ts"]
+}

@@ -13,11 +13,13 @@
     ],
     "main": "dist/harp.js",
     "scripts": {
-        "prepare": "webpack && NODE_ENV=production webpack",
+        "prepare": "webpack && NODE_ENV=production webpack -p && yarn build-typings",
+        "build-typings": "tsc -p tsconfig-bundle.json && ts-node ./scripts/resolve-absolute-imports.ts dist/types/",
         "profile-min": "NODE_ENV=production webpack --profile --json > webpack-stats-production.json",
         "profile-dev": "webpack --profile --json > webpack-stats-dev.json",
         "test": "true"
     },
+    "typings": "dist/types/harp.gl/lib/",
     "repository": {
         "type": "git",
         "url": "https://github.com/heremaps/harp.gl.git"
@@ -46,7 +48,10 @@
         "@here/harp-text-canvas": "^0.10.0",
         "@here/harp-utils": "^0.10.0",
         "@here/harp-webtile-datasource": "^0.10.0",
+        "@types/glob": "^7.1.1",
+        "glob": "^7.1.4",
         "ts-loader": "^6.0.3",
+        "ts-node": "^8.4.1",
         "typescript": "^3.5.2",
         "webpack": "^4.34.0",
         "webpack-cli": "^3.3.4",
