@@ -34,6 +34,43 @@ float joinDist(vec2 segment, vec2 texcoord) {
     return d;
 }
 `,
+    round_edges_and_add_caps: `
+float roundEdgesAndAddCaps(in vec2 segment, in vec2 uv, in float lineEnds) {
+
+    float dist = 0.0;
+
+    #if defined(CAPS_NONE)
+        if (lineEnds > -0.1) {
+            dist = max((lineEnds + 0.1) / 0.1, abs(uv.y));
+        } else {
+            dist = joinDist(segment, uv);
+        }
+    #elif defined(CAPS_SQUARE)
+        if (lineEnds > 0.0) {
+            dist = max(abs(uv.y), lineEnds);
+        } else {
+            dist = joinDist(segment, uv);
+        }
+    #elif defined(CAPS_TRIANGLE_OUT)
+        if (lineEnds > 0.0) {
+            dist = (abs(uv.y)) + lineEnds;
+        } else {
+            dist = joinDist(segment, uv);
+        }
+    #elif defined(CAPS_TRIANGLE_IN)
+        if (lineEnds > 0.0) {
+            float y = abs(uv.y);
+            dist = max(y, (lineEnds-y) + lineEnds);
+        } else {
+            dist = joinDist(segment, uv);
+        }
+    #else
+        dist = joinDist(vSegment, vExtrusionCoord);
+    #endif
+
+    return dist;
+}
+`,
     tile_clip_func: `
 void tileClip(vec2 tilePos, vec2 tileSize) {
     if (tileSize.x > 0.0 && (tilePos.x < -tileSize.x / 2.0 || tilePos.x > tileSize.x / 2.0))

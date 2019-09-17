@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { LineCaps } from "@here/harp-datasource-protocol";
 import * as THREE from "three";
-
 import {
     DisplacementFeature,
     DisplacementFeatureParameters,
@@ -14,10 +14,18 @@ import {
 } from "./MapMeshMaterials";
 import linesShaderChunk from "./ShaderChunks/LinesChunks";
 
+export const LineCapsDefinitions: { [key in LineCaps]: string } = {
+    Square: "CAPS_SQUARE",
+    Round: "CAPS_ROUND",
+    None: "CAPS_NONE",
+    TriangleIn: "CAPS_TRIANGLE_IN",
+    TriangleOut: "CAPS_TRIANGLE_OUT"
+};
+
 const vertexSource: string = `
 #define SEGMENT_OFFSET 0.1
 
-attribute vec2 extrusionCoord;
+attribute vec3 extrusionCoord;
 attribute vec3 position;
 attribute vec4 bitangent;
 attribute vec3 tangent;
@@ -37,6 +45,7 @@ varying vec2 vExtrusionCoord;
 varying vec2 vSegment;
 varying float vResultLineWidth;
 varying vec3 vPosition;
+varying float vLength;
 
 #if USE_COLOR
 attribute vec3 color;
@@ -53,10 +62,11 @@ varying vec3 vColor;
 
 void main() {
     vResultLineWidth = lineWidth + outlineWidth;
-    vSegment = abs(extrusionCoord) - SEGMENT_OFFSET;
+    vSegment = abs(extrusionCoord.xy) - SEGMENT_OFFSET;
+    vLength = extrusionCoord.z;
 
     vec3 pos = position;
-    vec2 extrusionDir = sign(extrusionCoord);
+    vec2 extrusionDir = sign(extrusionCoord.xy);
 
     extrudeLine(vSegment, bitangent, tangent, vResultLineWidth, pos, extrusionDir);
 
@@ -102,12 +112,14 @@ varying vec2 vExtrusionCoord;
 varying vec2 vSegment;
 varying float vResultLineWidth;
 varying vec3 vPosition;
+varying float vLength;
 
 #if USE_COLOR
 varying vec3 vColor;
 #endif
 
 #include <join_dist_func>
+#include <round_edges_and_add_caps>
 #include <tile_clip_func>
 
 #ifdef USE_FADING
@@ -120,11 +132,13 @@ void main() {
     float alpha = opacity;
     vec3 outputDiffuse = diffuse;
 
+    float lineEnds = max(vExtrusionCoord.x - vLength,- vExtrusionCoord.x);
+
     #if TILE_CLIP
     tileClip(vPosition.xy, tileSize);
     #endif
 
-    float pointDist = joinDist(vSegment, vExtrusionCoord);
+    float pointDist = roundEdgesAndAddCaps(vSegment, vExtrusionCoord, lineEnds);
     float dist = pointDist - vResultLineWidth;
     float width = fwidth(dist);
     alpha *= (1.0 - smoothstep(-width, width, dist));
