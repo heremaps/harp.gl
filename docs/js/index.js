@@ -2,9 +2,9 @@ const s3Base = "https://www.harp.gl/docs/";
 
 //Update initial links to s3 base
 document.querySelector(".examples-link").href = s3Base + "master/examples/";
-document.querySelector(".examples-nav").href = s3Base + "master/examples/";
 document.querySelector(".docs-link").href = s3Base + "master/doc/";
 document.getElementById("docs-nav").href = s3Base + "master/doc/";
+document.getElementById("examples-nav").href = s3Base + "master/examples/";
 document.getElementById("docs-nav-mobile").href = s3Base + "master/doc/";
 
 const releases = [
@@ -81,3 +81,6 @@ map.addEventListener(harp.MapViewEventNames.Render, () =>
 );
 window.addEventListener("resize", () => map.resize(window.innerWidth, window.innerHeight));
 map.beginAnimation();
+
+//Update year
+document.getElementById('year').innerText = new Date().getFullYear()
