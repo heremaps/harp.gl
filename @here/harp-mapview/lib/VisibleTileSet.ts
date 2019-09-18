@@ -404,6 +404,12 @@ export class VisibleTileSet {
                 maxElevation = Math.max(maxElevation, tile.maxElevation);
             });
         });
+        // We process buildings elevation yet (via ElevationRangeSource or either way), so correct
+        // the highest elevation to account for highest possible building.
+        maxElevation =
+            maxElevation < EarthConstants.MAX_ELEVATION - EarthConstants.MAX_BUILDING_HEIGHT
+                ? maxElevation + EarthConstants.MAX_BUILDING_HEIGHT
+                : maxElevation;
         // Update elevation ranges stored.
         if (
             minElevation !== this.m_elevationRange.minElevation ||
