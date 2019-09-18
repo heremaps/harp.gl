@@ -14,9 +14,9 @@ import {
     TileInfo
 } from "@here/harp-datasource-protocol";
 import { MapEnv, StyleSetEvaluator } from "@here/harp-datasource-protocol/index-decoder";
-import { OrientedBox3 } from "@here/harp-geometry";
 import {
     GeoBox,
+    OrientedBox3,
     Projection,
     TileKey,
     TilingScheme,

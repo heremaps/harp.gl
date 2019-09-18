@@ -4,11 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { OrientedBox3 } from "@here/harp-geometry";
 import {
     equirectangularProjection,
     mercatorProjection,
     normalizedEquirectangularProjection,
+    OrientedBox3,
     Projection,
     sphereProjection,
     webMercatorProjection

@@ -9,11 +9,10 @@ import {
     Technique,
     TextPathGeometry
 } from "@here/harp-datasource-protocol";
-import { GeoBox, Projection, TileKey } from "@here/harp-geoutils";
+import { GeoBox, OrientedBox3, Projection, TileKey } from "@here/harp-geoutils";
 import { assert, CachedResource, GroupedPriorityList, LoggerManager } from "@here/harp-utils";
 import * as THREE from "three";
 
-import { OrientedBox3 } from "@here/harp-geometry";
 import { AnimatedExtrusionTileHandler } from "./AnimatedExtrusionHandler";
 import { CopyrightInfo } from "./CopyrightInfo";
 import { DataSource } from "./DataSource";
