@@ -16,4 +16,7 @@ export class EarthConstants {
 
     /** The highest point on earth (Mt. Everest) in meters. */
     static MAX_ELEVATION: number = 8848.0;
+
+    /** The highest artificial structure (building) on earth, Burj Khalifa tower in Dubai */
+    static MAX_BUILDING_HEIGHT: number = 828;
 }
