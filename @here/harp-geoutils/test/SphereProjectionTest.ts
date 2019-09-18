@@ -8,29 +8,17 @@
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
 import { assert } from "chai";
+import { Vector3 } from "three";
 import { GeoBox } from "../lib/coordinates/GeoBox";
 import { GeoCoordinates } from "../lib/coordinates/GeoCoordinates";
 import { GeoCoordinatesLike } from "../lib/coordinates/GeoCoordinatesLike";
-import { OrientedBox3Like } from "../lib/math/OrientedBox3Like";
+import { OrientedBox3 } from "../lib/math/OrientedBox3";
 import { Vector3Like } from "../lib/math/Vector3Like";
 import { EarthConstants } from "../lib/projection/EarthConstants";
 import { sphereProjection } from "../lib/projection/SphereProjection";
 import { webMercatorTilingScheme } from "../lib/tiling/WebMercatorTilingScheme";
 
 const epsilon = 0.000001;
-
-function contains(obb: OrientedBox3Like, point: Vector3Like) {
-    const dx = point.x - obb.position.x;
-    const dy = point.y - obb.position.y;
-    const dz = point.z - obb.position.z;
-    const x = Math.abs(dx * obb.xAxis.x + dy * obb.xAxis.y + dz * obb.xAxis.z);
-    const y = Math.abs(dx * obb.yAxis.x + dy * obb.yAxis.y + dz * obb.yAxis.z);
-    const z = Math.abs(dx * obb.zAxis.x + dy * obb.zAxis.y + dz * obb.zAxis.z);
-    if (x > obb.extents.x || y > obb.extents.y || z > obb.extents.z) {
-        return false;
-    }
-    return true;
-}
 
 describe("SphereProjection", function() {
     const samples: Array<[GeoCoordinatesLike, Vector3Like]> = [
@@ -71,13 +59,7 @@ describe("SphereProjection", function() {
             position: { x: 0, y: 0, z: 0 }
         };
 
-        const obb = {
-            xAxis: { x: 0, y: 0, z: 0 },
-            yAxis: { x: 0, y: 0, z: 0 },
-            zAxis: { x: 0, y: 0, z: 0 },
-            position: { x: 0, y: 0, z: 0 },
-            extents: { x: 0, y: 0, z: 0 }
-        };
+        const obb = new OrientedBox3();
 
         const geoPoint = new GeoCoordinates(40.702, -74.01154);
         const tileKey = webMercatorTilingScheme.getTileKey(geoPoint, 6)!;
@@ -125,12 +107,7 @@ describe("SphereProjection", function() {
     });
 
     (function() {
-        const position = { x: 0, y: 0, z: 0 };
-        const xAxis = { x: 1, y: 0, z: 0 };
-        const yAxis = { x: 0, y: 1, z: 0 };
-        const zAxis = { x: 0, y: 0, z: 1 };
-        const extents = { x: 0, y: 0, z: 0 };
-        const worldBox = { position, xAxis, yAxis, zAxis, extents };
+        const worldBox = new OrientedBox3();
 
         const southEastLow = new GeoCoordinates(-10, -10, -10);
 
@@ -161,27 +138,24 @@ describe("SphereProjection", function() {
         insidePoints.forEach(geoPoint => {
             // tslint:disable-next-line: max-line-length
             it(`ProjectBox contains ${geoPoint.latitude}, ${geoPoint.longitude}, ${geoPoint.altitude}`, function() {
-                const p = sphereProjection.projectPoint(geoPoint);
-                assert.isTrue(contains(worldBox, p));
+                const p = new Vector3();
+                sphereProjection.projectPoint(geoPoint, p);
+                assert.isTrue(worldBox.contains(p));
             });
         });
 
         outsidePoints.forEach(geoPoint => {
             // tslint:disable-next-line: max-line-length
             it(`ProjectBox !contains ${geoPoint.latitude}, ${geoPoint.longitude}, ${geoPoint.altitude}`, function() {
-                const p = sphereProjection.projectPoint(geoPoint);
-                assert.isFalse(contains(worldBox, p));
+                const p = new Vector3();
+                sphereProjection.projectPoint(geoPoint, p);
+                assert.isFalse(worldBox.contains(p));
             });
         });
     })();
 
     (function() {
-        const position = { x: 0, y: 0, z: 0 };
-        const xAxis = { x: 1, y: 0, z: 0 };
-        const yAxis = { x: 0, y: 1, z: 0 };
-        const zAxis = { x: 0, y: 0, z: 1 };
-        const extents = { x: 0, y: 0, z: 0 };
-        const worldBox = { position, xAxis, yAxis, zAxis, extents };
+        const worldBox = new OrientedBox3();
 
         const southEastLow = new GeoCoordinates(40, -170, -10);
 
@@ -202,16 +176,18 @@ describe("SphereProjection", function() {
         insidePoints.forEach(geoPoint => {
             // tslint:disable-next-line: max-line-length
             it(`ProjectBigBox contains ${geoPoint.latitude}, ${geoPoint.longitude}, ${geoPoint.altitude}`, function() {
-                const p = sphereProjection.projectPoint(geoPoint);
-                assert.isTrue(contains(worldBox, p));
+                const p = new Vector3();
+                sphereProjection.projectPoint(geoPoint, p);
+                assert.isTrue(worldBox.contains(p));
             });
         });
 
         outsidePoints.forEach(geoPoint => {
             // tslint:disable-next-line: max-line-length
             it(`ProjectBigBox !contains ${geoPoint.latitude}, ${geoPoint.longitude}, ${geoPoint.altitude}`, function() {
-                const p = sphereProjection.projectPoint(geoPoint);
-                assert.isFalse(contains(worldBox, p));
+                const p = new Vector3();
+                sphereProjection.projectPoint(geoPoint, p);
+                assert.isFalse(worldBox.contains(p));
             });
         });
     })();

@@ -8,18 +8,16 @@
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
 import { assert } from "chai";
-import { OrientedBox3 } from "../lib/OrientedBox3";
 
 import * as THREE from "three";
 
-import {
-    EarthConstants,
-    GeoCoordinates,
-    sphereProjection,
-    TileKey,
-    TilingScheme,
-    webMercatorTilingScheme
-} from "@here/harp-geoutils";
+import { GeoCoordinates } from "../lib/coordinates/GeoCoordinates";
+import { OrientedBox3 } from "../lib/math/OrientedBox3";
+import { EarthConstants } from "../lib/projection/EarthConstants";
+import { sphereProjection } from "../lib/projection/SphereProjection";
+import { TileKey } from "../lib/tiling/TileKey";
+import { TilingScheme } from "../lib/tiling/TilingScheme";
+import { webMercatorTilingScheme } from "../lib/tiling/WebMercatorTilingScheme";
 
 /**
  * Visits the tile tree.

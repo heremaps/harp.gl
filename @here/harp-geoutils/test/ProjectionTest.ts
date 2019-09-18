@@ -9,7 +9,7 @@ import { GeoBox } from "../lib/coordinates/GeoBox";
 import { GeoCoordinates } from "../lib/coordinates/GeoCoordinates";
 import { Box3Like } from "../lib/math/Box3Like";
 import { MathUtils } from "../lib/math/MathUtils";
-import { OrientedBox3Like } from "../lib/math/OrientedBox3Like";
+import { OrientedBox3 } from "../lib/math/OrientedBox3";
 import { Vector3Like } from "../lib/math/Vector3Like";
 import { equirectangularProjection } from "../lib/projection/EquirectangularProjection";
 import { identityProjection } from "../lib/projection/IdentityProjection";
@@ -134,13 +134,7 @@ describe("WebMercator", function() {
     it("projectBoxFlipsY OBB", function() {
         // This test ensures that the project box function of the web mercator
         // projection correctly inverts the y axis.
-        const obb: OrientedBox3Like = {
-            position: MathUtils.newVector3(0, 0, 0),
-            extents: MathUtils.newVector3(0, 0, 0),
-            xAxis: MathUtils.newVector3(0, 0, 0),
-            yAxis: MathUtils.newVector3(0, 0, 0),
-            zAxis: MathUtils.newVector3(0, 0, 0)
-        };
+        const obb = new OrientedBox3();
         const geoCoord = new GeoCoordinates(53, 13);
         const tileKey = webMercatorTilingScheme.getTileKey(geoCoord, 10);
         assert.isNotNull(tileKey);
