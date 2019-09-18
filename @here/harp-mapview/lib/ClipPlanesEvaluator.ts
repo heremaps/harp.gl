@@ -665,6 +665,18 @@ export class TiltBasedClipPlanesEvaluator extends AltitudeBasedClipPlanesEvaluat
         // Near plance calculus is pretty straightforward and does not depent on camera tilt:
         const cameraAltitude = this.getCameraAltitude(camera, projection);
         viewRanges.near = cameraAltitude - this.maxElevation;
+        if (camera instanceof THREE.PerspectiveCamera) {
+            // Now we need to account for camera tilt and frustum volume, so the longest
+            // frustum edge does not instersects with sphere, it takes the worst case
+            // scenario regardless of camera tilt, so may be improved little bit with more
+            // sophisticated algorithm.
+            // Note, the fov is vertical, otherwise we would need to
+            // translate it using aspect ratio:
+            // let aspect = camera.aspect > 1 ? camera.aspect : 1 / camera.aspect;
+            const aspect = 1.0;
+            const halfFovAngle = THREE.Math.degToRad((camera.fov / 2) * aspect);
+            viewRanges.near *= Math.cos(halfFovAngle);
+        }
         // For far plane we need to find tangent to sphere which gives the maximum
         // visible distance with regards to sphere curvature and camera position.
         const worldOrigin = new THREE.Vector3(0, 0, 0);
@@ -743,7 +755,7 @@ export class TiltBasedClipPlanesEvaluator extends AltitudeBasedClipPlanesEvaluat
         // p2 = camera.position + tdry
         // p3 = camera.position + tdrx2
         // const farPlane = new THREE.Plane().setFromCoplanarPoints(p1, p2, p3);
-        // clipPlanes.far = farPlane.distanceToPoint(camera.position);
+        // viewRanges.far = farPlane.distanceToPoint(camera.position);
 
         // This of course may be simplified by moving calculus entirelly to camera space,
         // because far plane is indeed defined in that space anyway:
