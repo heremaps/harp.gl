@@ -53,7 +53,7 @@ async function displayLocation(mapView: MapView, location: GeoCoordinates) {
     });
 }
 
-describe.skip("MapView Picking", async function() {
+describe("MapView Picking", async function() {
     const inNodeContext = typeof window === "undefined";
     const tileKey = new TileKey(0, 0, 0);
 
@@ -301,7 +301,8 @@ describe.skip("MapView Picking", async function() {
     });
 
     // emulate a real pick in browser
-    it("Pick point", async () => {
+    // INFO: Disabled until text renderer refactor (Travis ci build fails).
+    it.skip("Pick point", async () => {
         const POINT_DATA = GEOJSON_DATA.features[2];
         const coordinates = ((POINT_DATA.geometry as any).coordinates as any) as number[];
         const pointLocation = new GeoCoordinates(coordinates[1], coordinates[0]);
