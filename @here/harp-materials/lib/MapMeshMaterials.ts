@@ -625,6 +625,11 @@ export namespace ExtrusionFeature {
             "extrusion_pars_fragment"
         );
 
+        shader.fragmentShader = shader.fragmentShader.replace(
+            "#include <normal_fragment_begin>",
+            "#include <extrusion_normal_fragment_begin>"
+        );
+
         shader.fragmentShader = insertShaderInclude(
             shader.fragmentShader,
             "fog_fragment",

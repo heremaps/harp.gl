@@ -23,6 +23,7 @@ attribute vec4 color;
 
 uniform mat4 modelViewMatrix;
 uniform mat4 projectionMatrix;
+uniform mat3 normalMatrix;
 uniform vec3 edgeColor;
 uniform float edgeColorMix;
 
