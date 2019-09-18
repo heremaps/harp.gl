@@ -31,3 +31,4 @@ export * from "./lib/math/Box3Like";
 export * from "./lib/math/OrientedBox3Like";
 export * from "./lib/math/MathUtils";
 export * from "./lib/math/TransformLike";
+export * from "./lib/math/OrientedBox3";
