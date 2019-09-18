@@ -73,6 +73,6 @@ export class GeoJsonTiler implements ITiler {
         if (index === undefined) {
             throw new Error("Tile not found");
         }
-        return index.getTile(tileKey.level, tileKey.column, tileKey.row);
+        return index.getTile(tileKey.level, tileKey.column, tileKey.row) || {};
     }
 }
