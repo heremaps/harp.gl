@@ -12,8 +12,7 @@ import {
 } from "@here/harp-datasource-protocol";
 
 import { StyleSetEvaluator } from "@here/harp-datasource-protocol/index-decoder";
-import { OrientedBox3 } from "@here/harp-geometry";
-import { Projection, TileKey, webMercatorTilingScheme } from "@here/harp-geoutils";
+import { OrientedBox3, Projection, TileKey, webMercatorTilingScheme } from "@here/harp-geoutils";
 import { ThemedTileDecoder, WorkerServiceManager } from "@here/harp-mapview-decoder/index-worker";
 import { TileDecoderService } from "@here/harp-mapview-decoder/lib/TileDecoderService";
 import { LoggerManager } from "@here/harp-utils";

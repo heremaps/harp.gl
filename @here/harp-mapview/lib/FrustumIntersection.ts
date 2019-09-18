@@ -4,8 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { OrientedBox3 } from "@here/harp-geometry";
-import { Projection, ProjectionType, TileKey, TilingScheme } from "@here/harp-geoutils";
+import {
+    OrientedBox3,
+    Projection,
+    ProjectionType,
+    TileKey,
+    TilingScheme
+} from "@here/harp-geoutils";
 import { assert } from "@here/harp-utils";
 import * as THREE from "three";
 import { CalculationStatus, ElevationRangeSource } from "./ElevationRangeSource";
