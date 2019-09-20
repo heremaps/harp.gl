@@ -78,6 +78,7 @@ describe("VisibleTileSet", function() {
         camera.updateMatrixWorld(false);
     }
 
+    // TODO: Update for new interface of updateRenderList
     function updateRenderList(zoomLevel: number, storageLevel: number) {
         const intersectionCount = fixture.vts.updateRenderList(zoomLevel, storageLevel, fixture.ds);
         return { tileList: fixture.vts.dataSourceTileList, intersectionCount };

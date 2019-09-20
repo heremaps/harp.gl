@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import {
+    EarthConstants,
     GeoCoordinates,
     Projection,
     TileKey,
@@ -12,13 +13,18 @@ import {
 } from "@here/harp-geoutils";
 import { LRUCache } from "@here/harp-lrucache";
 import { assert } from "@here/harp-utils";
-import { ClipPlanesEvaluator } from "./ClipPlanesEvaluator";
+import THREE = require("three");
+import {
+    ClipPlanesEvaluator,
+    ElevationBasedClipPlanesEvaluator,
+    ViewRanges
+} from "./ClipPlanesEvaluator";
 import { DataSource } from "./DataSource";
-import { ElevationRangeSource } from "./ElevationRangeSource";
+import { CalculationStatus, ElevationRange, ElevationRangeSource } from "./ElevationRangeSource";
 import { FrustumIntersection, TileKeyEntry } from "./FrustumIntersection";
 import { TileGeometryManager } from "./geometry/TileGeometryManager";
 import { Tile } from "./Tile";
-import { TileOffsetUtils } from "./Utils";
+import { MapViewUtils, TileOffsetUtils } from "./Utils";
 
 /**
  * Way the memory consumption of a tile is computed. Either in number of tiles, or in MegaBytes. If
@@ -187,6 +193,13 @@ export class VisibleTileSet {
     options: VisibleTileSetOptions;
 
     private readonly m_dataSourceCache = new Map<string, DataSourceCache>();
+    private readonly m_projectionMatrixOverride = new THREE.Matrix4();
+    private m_viewRange: ViewRanges = { near: 0.1, far: Infinity, minimum: 0.1, maximum: Infinity };
+    private m_elevationRange: ElevationRange = {
+        minElevation: 0,
+        maxElevation: 0,
+        calculationStatus: CalculationStatus.PendingApproximate
+    };
 
     private m_ResourceComputationType: ResourceComputationType =
         ResourceComputationType.EstimationInMb;
@@ -255,19 +268,28 @@ export class VisibleTileSet {
         });
     }
 
+    updateClipPlanes(): ViewRanges {
+        this.m_viewRange = this.options.clipPlanesEvaluator.evaluateClipPlanes(
+            this.m_frustumIntersection.camera,
+            this.m_frustumIntersection.projection
+        );
+        return this.m_viewRange;
+    }
+
     /**
      * Calculates a new set of visible tiles.
      * @param storageLevel The camera storage level, see [[MapView.storageLevel]].
      * @param zoomLevel The camera zoom level.
      * @param dataSources The data sources for which the visible tiles will be calculated.
      * @param elevationRangeSource Source of elevation range data if any.
+     * @returns view ranges and their status since last update (changed or not).
      */
     updateRenderList(
         storageLevel: number,
         zoomLevel: number,
         dataSources: DataSource[],
         elevationRangeSource?: ElevationRangeSource
-    ) {
+    ): { viewRanges: ViewRanges; viewRangesChanged: boolean } {
         let allVisibleTilesLoaded: boolean = true;
 
         const visibleTileKeysResult = this.getVisibleTileKeysForDataSources(
@@ -327,11 +349,13 @@ export class VisibleTileSet {
                         tile.frameNumVisible = dataSource.mapView.frameNumber;
                     }
                 }
-                actuallyVisibleTiles.push(tile);
-
                 // Update the visible area of the tile. This is used for those tiles that are
                 // currently loaded and are waiting to be decoded to sort the jobs by area.
                 tile.visibleArea = tileEntry.area;
+                tile.minElevation = tileEntry.minElevation;
+                tile.maxElevation = tileEntry.maxElevation;
+
+                actuallyVisibleTiles.push(tile);
             }
 
             this.m_tileGeometryManager.updateTiles(actuallyVisibleTiles);
@@ -363,13 +387,50 @@ export class VisibleTileSet {
             }
         });
 
+        let minElevation = EarthConstants.MAX_ELEVATION;
+        let maxElevation = EarthConstants.MIN_ELEVATION;
         this.dataSourceTileList.forEach(renderListEntry => {
             const dataSource = renderListEntry.dataSource;
             const cache = this.m_dataSourceCache.get(dataSource.name);
             if (cache !== undefined) {
                 cache.tileCache.shrinkToCapacity();
             }
+            // Calculate min/max elevation from every data source tiles,
+            // datasources without elevationRangeSource will contribute to
+            // values with zero levels for both elevations.
+            const tiles = renderListEntry.visibleTiles;
+            tiles.forEach(tile => {
+                minElevation = Math.min(minElevation, tile.minElevation);
+                maxElevation = Math.max(maxElevation, tile.maxElevation);
+            });
         });
+        // Update elevation ranges stored.
+        if (
+            minElevation !== this.m_elevationRange.minElevation ||
+            maxElevation !== this.m_elevationRange.maxElevation
+        ) {
+            this.m_elevationRange.minElevation = minElevation;
+            this.m_elevationRange.maxElevation = maxElevation;
+        }
+        this.m_elevationRange.calculationStatus = visibleTileKeysResult.allBoundingBoxesFinal
+            ? CalculationStatus.FinalPrecise
+            : CalculationStatus.PendingApproximate;
+
+        // If clip planes evaluator depends on the tiles elevation re-calculate
+        // frustum planes and update the camera near/far plane distances.
+        const clipPlanesEvaluator = this.options.clipPlanesEvaluator;
+        let viewRangesChanged: boolean = false;
+        if (clipPlanesEvaluator instanceof ElevationBasedClipPlanesEvaluator) {
+            clipPlanesEvaluator.minElevation = minElevation;
+            clipPlanesEvaluator.maxElevation = maxElevation;
+            const viewRanges = this.updateClipPlanes();
+            viewRangesChanged = viewRanges === this.m_viewRange;
+            this.m_viewRange = viewRanges;
+        }
+        return {
+            viewRanges: this.m_viewRange,
+            viewRangesChanged
+        };
     }
 
     /**
@@ -787,7 +848,7 @@ export class VisibleTileSet {
         }
 
         tile = dataSource.getTile(tileKey);
-
+        // TODO: Update all tile information including area, min/max elevation from TileKeyEntry
         if (tile !== undefined) {
             tile.offset = offset;
             updateTile(tile);
@@ -870,7 +931,25 @@ export class VisibleTileSet {
             }
         });
 
-        this.m_frustumIntersection.updateFrustum();
+        // If elevation is to be taken into account create extended frustum:
+        // (near ~0, far: maxVisibilityRange) that allows to consider tiles that
+        // are far below ground plane and high enough to intersect the frustum.
+        if (elevationRangeSource !== undefined) {
+            const fp = MapViewUtils.getCameraFrustumPlanes(this.m_frustumIntersection.camera);
+            fp.near = this.m_viewRange.minimum;
+            fp.far = this.m_viewRange.maximum;
+            this.m_projectionMatrixOverride.makePerspective(
+                fp.left,
+                fp.right,
+                fp.bottom,
+                fp.top,
+                fp.near,
+                fp.far
+            );
+            this.m_frustumIntersection.updateFrustum(this.m_projectionMatrixOverride);
+        } else {
+            this.m_frustumIntersection.updateFrustum();
+        }
 
         // For each bucket of data sources with same tiling scheme, calculate frustum intersection
         // once using the maximum display level.

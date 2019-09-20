@@ -354,6 +354,44 @@ export namespace MapViewUtils {
     }
 
     /**
+     * Get perspective camera frustum planes distances.
+     * @return all plane distances in helper object.
+     */
+    export function getCameraFrustumPlanes(
+        camera: THREE.PerspectiveCamera
+    ): { left: number; right: number; top: number; bottom: number; near: number; far: number } {
+        const near = camera.near;
+        const far = camera.far;
+        let top = (near * Math.tan(THREE.Math.degToRad(0.5 * camera.fov))) / camera.zoom;
+        let height = 2 * top;
+        let width = camera.aspect * height;
+        let left = -0.5 * width;
+
+        const view = camera.view;
+        if (view !== null && view.enabled) {
+            const fullWidth = view.fullWidth;
+            const fullHeight = view.fullHeight;
+
+            left += (view.offsetX * width) / fullWidth;
+            top -= (view.offsetY * height) / fullHeight;
+            width *= view.width / fullWidth;
+            height *= view.height / fullHeight;
+        }
+
+        // Correct by skew factor
+        left += camera.filmOffset !== 0 ? (near * camera.filmOffset) / camera.getFilmWidth() : 0;
+
+        return {
+            left,
+            right: left + width,
+            top,
+            bottom: top - height,
+            near,
+            far
+        };
+    }
+
+    /**
      * Return normal to the ground surface (looking down) directly above camera position.
      *
      * @param position The position above the ground for which normal is calculated.
