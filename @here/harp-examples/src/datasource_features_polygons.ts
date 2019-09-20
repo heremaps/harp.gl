@@ -13,7 +13,7 @@ import {
 import { GeoCoordinates, sphereProjection } from "@here/harp-geoutils";
 import { MapControls } from "@here/harp-map-controls";
 import { CopyrightInfo, MapView } from "@here/harp-mapview";
-import { AltitudeBasedClipPlanesEvaluator } from "@here/harp-mapview/lib/ClipPlanesEvaluator";
+import { TopViewClipPlanesEvaluator } from "@here/harp-mapview/lib/ClipPlanesEvaluator";
 import { APIFormat, OmvDataSource } from "@here/harp-omv-datasource";
 import * as THREE from "three";
 import { accessToken } from "../config";
@@ -282,7 +282,7 @@ export namespace PolygonsFeaturesExample {
             canvas,
             theme: "resources/berlin_tilezen_night_reduced.json",
             projection: sphereProjection,
-            clipPlanesEvaluator: new AltitudeBasedClipPlanesEvaluator(300000)
+            clipPlanesEvaluator: new TopViewClipPlanesEvaluator(300000)
         });
         mapView.setCameraGeolocationAndZoom(new GeoCoordinates(20, 30), 3.9);
         mapView.renderLabels = false;
