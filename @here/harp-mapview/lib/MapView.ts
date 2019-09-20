@@ -25,7 +25,7 @@ import * as THREE from "three";
 import { AnimatedExtrusionHandler } from "./AnimatedExtrusionHandler";
 import { BackgroundDataSource } from "./BackgroundDataSource";
 import { CameraMovementDetector } from "./CameraMovementDetector";
-import { ClipPlanesEvaluator, defaultClipPlanesEvaluator } from "./ClipPlanesEvaluator";
+import { ClipPlanesEvaluator, defaultClipPlanesEvaluator, ViewRanges } from "./ClipPlanesEvaluator";
 import { IMapAntialiasSettings, IMapRenderingManager, MapRenderingManager } from "./composing";
 import { ConcurrentDecoderFacade } from "./ConcurrentDecoderFacade";
 import { CopyrightInfo } from "./CopyrightInfo";
@@ -2291,20 +2291,22 @@ export class MapView extends THREE.EventDispatcher {
     /**
      * Updates the camera and the projections and resets the screen collisions,
      * note, setupCamera must be called before this is called.
+     * @param viewRanges optional parameter that supplies new view ranges, most importantly
+     * near/far clipping planes distance. If parameter is not provided view ranges will be
+     * calculated from [[ClipPlaneEvaluator]] used in [[VisibleTileSet]].
      */
-    private updateCameras() {
+    private updateCameras(viewRanges?: ViewRanges) {
         const { width, height } = this.m_renderer.getSize(tmpVector);
         this.m_camera.aspect =
             this.m_forceCameraAspect !== undefined ? this.m_forceCameraAspect : width / height;
         this.setFovOnCamera(this.m_options.fovCalculation!, height);
 
-        const clipPlanes = this.m_visibleTileSetOptions.clipPlanesEvaluator.evaluateClipPlanes(
-            this.m_camera,
-            this.projection
-        );
-        this.m_camera.near = clipPlanes.near;
-        this.m_camera.far = clipPlanes.far;
-        this.m_maxVisibility = clipPlanes.maximum;
+        if (viewRanges === undefined) {
+            viewRanges = this.m_visibleTiles.updateClipPlanes();
+        }
+        this.m_camera.near = viewRanges.near;
+        this.m_camera.far = viewRanges.far;
+        this.m_maxVisibility = viewRanges.maximum;
 
         this.m_camera.updateProjectionMatrix();
         this.m_camera.updateMatrixWorld(false);
@@ -2337,7 +2339,7 @@ export class MapView extends THREE.EventDispatcher {
         const zoomLevelDistance = cameraPosZ / Math.cos(Math.min(cameraPitch, Math.PI / 3));
 
         this.m_zoomLevel = MapViewUtils.calculateZoomLevelFromDistance(zoomLevelDistance, this);
-        this.m_fog.update(this.m_camera, this.projection, clipPlanes.maximum);
+        this.m_fog.update(this.m_camera, this.projection, viewRanges.maximum);
     }
 
     /**
@@ -2525,12 +2527,17 @@ export class MapView extends THREE.EventDispatcher {
 
         // TBD: Update renderList only any of its params (camera, etc...) has changed.
         if (!this.lockVisibleTileSet) {
-            this.m_visibleTiles.updateRenderList(
+            const viewRangesStatus = this.m_visibleTiles.updateRenderList(
                 this.storageLevel,
                 Math.floor(this.zoomLevel),
                 this.getEnabledTileDataSources(),
                 this.m_elevationRangeSource
             );
+            // View ranges has changed due to features (with elevation) that affects clip planes
+            // positioning, update cameras with new clip planes positions.
+            if (viewRangesStatus.viewRangesChanged) {
+                this.updateCameras(viewRangesStatus.viewRanges);
+            }
         }
 
         if (gatherStatistics) {

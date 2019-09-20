@@ -20,7 +20,13 @@ import { MapViewUtils, TileOffsetUtils } from "./Utils";
  * don't require it.
  */
 export class TileKeyEntry {
-    constructor(public tileKey: TileKey, public area: number, public offset: number = 0) {}
+    constructor(
+        public tileKey: TileKey,
+        public area: number,
+        public offset: number = 0,
+        public minElevation: number = 0,
+        public maxElevation: number = 0
+    ) {}
 }
 
 function getGeoBox(tilingScheme: TilingScheme, childTileKey: TileKey, offset: number) {
@@ -67,11 +73,27 @@ export class FrustumIntersection {
     }
 
     /**
+     * Return camera used for generating frustum.
+     */
+    get camera(): THREE.PerspectiveCamera {
+        return this.m_camera;
+    }
+
+    /**
+     * Return projection used to convert geo coordinates to world coordinates.
+     */
+    get projection(): Projection {
+        return this.m_projection;
+    }
+
+    /**
      * Updates the frustum to match the current camera setup.
      */
-    updateFrustum() {
+    updateFrustum(projectionMatrixOveride?: THREE.Matrix4) {
         this.m_viewProjectionMatrix.multiplyMatrices(
-            this.m_camera.projectionMatrix,
+            projectionMatrixOveride !== undefined
+                ? projectionMatrixOveride
+                : this.m_camera.projectionMatrix,
             this.m_camera.matrixWorldInverse
         );
 
@@ -102,7 +124,13 @@ export class FrustumIntersection {
         for (const item of this.m_rootTileKeys) {
             this.m_tileKeyEntries.set(
                 TileOffsetUtils.getKeyForTileKeyAndOffset(item.tileKey, item.offset),
-                new TileKeyEntry(item.tileKey, Infinity, item.offset)
+                new TileKeyEntry(
+                    item.tileKey,
+                    Infinity,
+                    item.offset,
+                    item.minElevation,
+                    item.maxElevation
+                )
             );
         }
 
@@ -142,11 +170,14 @@ export class FrustumIntersection {
 
                 const geoBox = getGeoBox(tilingScheme, childTileKey, offset);
 
+                // For tiles without elevation range source, default 0 (getGeoBox always
+                // returns box with altitude min/max equal to zero) will be propagated as
+                // min and max elevation, these tiles most probably contains features that
+                // lays directly on the gorund surface.
                 if (useElevationRangeSource) {
                     const range = elevationRangeSource!.getElevationRange(childTileKey);
                     geoBox.southWest.altitude = range.minElevation;
                     geoBox.northEast.altitude = range.maxElevation;
-
                     calculationFinal =
                         calculationFinal &&
                         range.calculationStatus === CalculationStatus.FinalPrecise;
@@ -154,7 +185,9 @@ export class FrustumIntersection {
 
                 let subTileArea = 0;
 
-                if (this.m_projection.type === ProjectionType.Spherical) {
+                const obbIntersections: boolean =
+                    this.m_projection.type === ProjectionType.Spherical;
+                if (obbIntersections) {
                     const obb = new OrientedBox3();
                     this.m_projection.projectBox(geoBox, obb);
                     if (obb.intersects(this.m_frustum)) {
@@ -166,7 +199,13 @@ export class FrustumIntersection {
                 }
 
                 if (subTileArea > 0) {
-                    const subTileEntry = new TileKeyEntry(childTileKey, subTileArea, offset);
+                    const subTileEntry = new TileKeyEntry(
+                        childTileKey,
+                        subTileArea,
+                        offset,
+                        geoBox.southWest.altitude, // minElevation
+                        geoBox.northEast.altitude // maxElevation
+                    );
                     this.m_tileKeyEntries.set(tileKeyAndOffset, subTileEntry);
                     workList.push(subTileEntry);
                 }
@@ -229,7 +268,7 @@ export class FrustumIntersection {
         const tileWrappingEnabled = this.m_projection.type === ProjectionType.Planar;
 
         if (!tileWrappingEnabled || !this.m_tileWrappingEnabled) {
-            this.m_rootTileKeys.push(new TileKeyEntry(rootTileKey, 0));
+            this.m_rootTileKeys.push(new TileKeyEntry(rootTileKey, 0, 0, 0));
             return;
         }
 
@@ -306,7 +345,7 @@ export class FrustumIntersection {
             offset <= offsetRange + startOffset;
             offset++
         ) {
-            this.m_rootTileKeys.push(new TileKeyEntry(rootTileKey, 0, offset));
+            this.m_rootTileKeys.push(new TileKeyEntry(rootTileKey, 0, offset, 0, 0));
         }
     }
 }

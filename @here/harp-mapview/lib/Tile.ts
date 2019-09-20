@@ -373,6 +373,8 @@ export class Tile implements CachedResource {
     private m_textElementsChanged: boolean = false;
 
     private m_visibleArea: number = 0;
+    private m_minElevation: number = 0;
+    private m_maxElevation: number = 0;
 
     private m_resourceInfo: TileResourceInfo | undefined;
 
@@ -633,6 +635,30 @@ export class Tile implements CachedResource {
         if (this.tileLoader !== undefined) {
             this.tileLoader.updatePriority(area);
         }
+    }
+
+    /**
+     * Estimated tile's minimum elevation above the sea level.
+     * @note Negative values indicates depressions.
+     */
+    get minElevation(): number {
+        return this.m_minElevation;
+    }
+
+    set minElevation(elevation: number) {
+        this.m_minElevation = elevation;
+    }
+
+    /**
+     * Estimated maximum elevation above the sea level that may be found on tile.
+     * @note Negative values indicates depressions.
+     */
+    get maxElevation(): number {
+        return this.m_maxElevation;
+    }
+
+    set maxElevation(elevation: number) {
+        this.m_maxElevation = elevation;
     }
 
     /**
