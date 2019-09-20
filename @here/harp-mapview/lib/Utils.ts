@@ -333,7 +333,7 @@ export namespace MapViewUtils {
     }
 
     /**
-     * Return camera tilt angle (in degrees).
+     * Return camera tilt angle (in radians).
      *
      * Tilt is the angle between camera __look at__ (forward) vector and ground normal.
      *

@@ -517,135 +517,150 @@ export class TiltViewClipPlanesEvaluator extends TopViewClipPlanesEvaluator {
     }
 
     /**
-     * Calculate the lengths of frustum intersection with the ground plane.
-     * This evaluates (vertical in camera space) distances between eye vector
-     * ground intersection and bottom/top frustum planes.
+     * Calculate the lengths of frustum planes intersection with the ground plane.
+     * This evaluates distances between eye vector (or eye plane in orthographic projection) and
+     * ground intersections of top and bottom frustum planes.
      * @note This method assumes the world surface (ground) to be flat and
      * works only with planar projections.
      */
     protected getFrustumGroundIntersectionDist(
-        camera: THREE.PerspectiveCamera,
+        camera: THREE.Camera,
         projection: Projection
     ): { top: number; bottom: number } {
         assert(projection.type !== ProjectionType.Spherical);
-        // This algorithm computes the length of frustum intersection with a flat ground surface,
-        // splitting the entire intersection into two sections, one for part above eye vector and
-        // another below.
+        // This algorithm computes the length of frustum planes before intersecting with a flat
+        // ground surface. Entire computation is split over two projections method and performed
+        // for top and bottom plane, with addition of terrain (ground) elevation which is taken
+        // into account.
         // The following diagram may help explain the algorithm below.
         //   🎥
         //   C
         //   |\
         //   |.\ .
-        //   | . \  .
+        //   | . \  . t
         // z |  .  \   .c2
-        //   |  c1.  \e    .
+        //   |  c1.  \e ___. max elev
         //   |     .   \      .
         //___|a___D1.____\E1_____.D2______ g
-        //   C1      .     \   .
+        //   C1      .     \ __. min elev
         //            .      \.E2
-        //             .    .
+        //          b  .    .
         //              . .
         //               .
         // Where:
         // - C gives the camera position.
         // - z is the height of the camera above the ground.
+        // - z1 == z2 == z, for perspective camera all planes origin its the same
         // - a is a right angle.
         // - e is the look at vector of the camera.
-        // - c1 and c2 are the frustum planes of the camera.
+        // - t and b are the frustum planes of the camera (top and bottom respectivelly).
         // - angle between c1 to c2 is the fov.
+        // - c1, c2 - vectors from camera to the ground along frustum planes.
         // - angles between c1 and e or e and c2 splits fov on equal halfs.
         // - d1 and d2 are the intersection points of the frustum with the world/ground plane.
-        // - angle between z and e is the tilt/pitch of the camera.
+        // - angle between z and e is the pitch of the camera.
+        // - angle between g and e is the tilt angle.
         // - g is the ground/world surface
         //
-        // The goal is to find planar intersections of frustum with ground plane.
-        // This are the distances from E1->D2 and D1->E1, and thoose are a longitude values,
-        // that describes the length of frustum intersection with a ground (world) plane.
-        // Please note that: E1>D2 >= E1->D1 (because we can't have a negative tilt).
-        // To find E1->D2, we use the right triangle C, C1, D2 and subtract distance from C1->D2
-        // with C1->E1.
-        // C1->D2 is found using the angle between z and c2 edges from the camera, this angle
-        // (between C1, C and E1) equals the tilt + half of the fov angle and thus using simple
-        // trigonometry, we may say:
-        // tan(tilt + fov/2) = C1->D2 / z,
-        // C1->D2 = tan(tilt + fov/2) * z.
-        // C1->E1 just need the tilt and trigonometry to compute, result is:
-        // C1->E1 = tan(tilt) * z.
-        // then E1->D2 is expressed with:
-        // E1->D2 = C1->D2 - C1->E1
-        // For computing D1->E1, we may use similar formulas, firstly calculate C1->D1:
-        // C1->D1 = tan(tilt - fov/2) * z
-        // and then D1->E1:
-        // D1->E1 = C1->E1 - C1->D1
-
+        // The goal is to find distance for top/bottom planes intersections of frustum with ground
+        // plane.
+        // This are the distances from C->D1 and C->D2, and are described as
+        // c1 and c2. Then we may compensate/correct those distances with actual
+        // ground elevations, which is done by simply offseting camera altitude, as it is
+        // opposite to elevating ground level.
+        const halfPiLimit = Math.PI / 2 - epsilon;
         const cameraAltitude = this.getCameraAltitude(camera, projection);
         const cameraTilt = MapViewUtils.getCameraTiltAngle(camera, projection);
-        // Angle between z and c2, note, the fov is vertical, otherwise we would need to
-        // translate it using aspect ratio:
-        // let aspect = camera.aspect > 1 ? camera.aspect : 1 / camera.aspect;
-        const aspect = 1;
-        // Half fov angle in radians
-        const halfFovAngleRad = THREE.Math.degToRad((camera.fov * aspect) / 2);
         // Angle between z and c2
-        const biggerAngleRad = cameraTilt + halfFovAngleRad;
+        let topAngleRad: number;
         // Angle between z and c1
-        const smallerAngleRad = cameraTilt - halfFovAngleRad;
-        // Length C1->E1
-        const projectionEyeVector = Math.tan(cameraTilt) * cameraAltitude;
+        let bottomAngleRad: number;
+        // Bottom plane origin altitude
+        let z1: number;
+        // Top plane origin altitude
+        let z2: number;
+        // For perspective projection:
+        if (camera.type === "PerspectiveCamera") {
+            const cam = camera as THREE.PerspectiveCamera;
+            // Angle between z and c2, note, the fov is vertical, otherwise we would need to
+            // translate it using aspect ratio:
+            // let aspect = camera.aspect > 1 ? camera.aspect : 1 / camera.aspect;
+            const aspect = 1;
+            // Half fov angle in radians
+            const halfFovAngle = THREE.Math.degToRad((cam.fov * aspect) / 2);
+            topAngleRad = THREE.Math.clamp(cameraTilt + halfFovAngle, -halfPiLimit, halfPiLimit);
+            bottomAngleRad = THREE.Math.clamp(cameraTilt - halfFovAngle, -halfPiLimit, halfPiLimit);
+            z1 = z2 = cameraAltitude;
+        }
+        // For orthographic projection:
+        else {
+            const cam = camera as THREE.OrthographicCamera;
+            // For orthogonal camera projections we may simply ignore FOV and use 0 for FOV
+            // the top/bottom planes are simply parallel to the eye vector:
+            topAngleRad = bottomAngleRad = cameraTilt;
+            // Although the ray origin is not always the same (eye position) as for
+            // the perspective projections, thus we need to compensate for otrho-cube
+            // dimensions:
+            // sin(tilt) = zc2 / top
+            // sin(tilt) = zc1 / bottom
+            // zc2 = sin(tilt) * top
+            // zc1 = sin(tilt) * bottom
+            const sinBeta = Math.sin(cameraTilt);
+            z2 = cameraAltitude + sinBeta * cam.top;
+            z1 = cameraAltitude - sinBeta * cam.bottom;
+        }
+        // Distance along the top plane to the ground - c2
+        // cos(topAngle) = (z2 - minElev) / |c2|
+        // |c2| = (z2 - minElev) / cos(topAngle)
+        const topDist = (z2 - this.minElevation) / Math.cos(topAngleRad);
+        // Distance along the bottom plane to the ground - c1
+        // cos(bottomAngle) = (z - minElev) / |c1|
+        // |c1| = (z - minElev) / cos(bottomAngle)
+        const bottomDist = (z1 - this.maxElevation) / Math.cos(bottomAngleRad);
 
-        // Length C1->D2
-        const projectionHighEdge = Math.tan(biggerAngleRad) * cameraAltitude;
-        // Length E1->D2
-        const projectionRightSide = projectionHighEdge - projectionEyeVector;
-
-        // Length of C1->D1
-        const projectionLowEdge = Math.tan(smallerAngleRad) * cameraAltitude;
-        // Length D1->E1
-        const projectionLeftSide = projectionEyeVector - projectionLowEdge;
         return {
-            top: projectionRightSide,
-            bottom: projectionLeftSide
+            top: Math.max(topDist, 0),
+            bottom: Math.max(bottomDist, 0)
         };
     }
 
     private evaluatePlanarProj(camera: THREE.Camera, projection: Projection): ViewRanges {
         assert(projection.type !== ProjectionType.Spherical);
         const viewRanges = { ...this.minimumViewRange };
-        const cameraTilt = MapViewUtils.getCameraTiltAngle(camera, projection);
-        const lookAtDist = this.getCameraLookAtDistance(camera, projection);
-        // Generally near/far planes are set to keep look at distance, then
-        // margins are applied. Here margins (min/max elevations) are meant to be
-        // defined as distance along the ground normal vector thus during camera
-        // tilt they need to be projected on the eye vector:
-        // actualMargin = margin / groundNormal.dot(eyeVec)
-        // Assuming that tilt angle defined relative to actual ground normal, we have:
-        let cameraEyeDotGround = Math.cos(cameraTilt);
-        cameraEyeDotGround = cameraEyeDotGround === 0 ? epsilon : cameraEyeDotGround;
-        viewRanges.near = lookAtDist - this.maxElevation / cameraEyeDotGround;
-        viewRanges.far = lookAtDist - this.minElevation / cameraEyeDotGround;
 
-        // Correct cliping planse distance for the top/bottom frustum planes (edges).
-        // If we deal with perspective camera type, this step would not be required
-        // for orthographic projections.
+        // Generally near/far planes are set to keep top/bottom planes intersection distance.
+        // Then elevations margins are applied. Here margins (min/max elevations) are meant to
+        // be defined as distance along the ground normal vector thus during camera
+        // tilt they may affect near/far planes positions differently.
+        const planesDist = this.getFrustumGroundIntersectionDist(camera, projection);
+
+        // Project cliping plane distances for the top/bottom frustum planes (edges), but
+        // only if we deal with perspective camera type, this step is not required
+        // for orthographic projections, cause all clip planes are parallel to eye vector.
         if (camera.type === "PerspectiveCamera") {
-            const frustumGroundProj = this.getFrustumGroundIntersectionDist(
-                camera as THREE.PerspectiveCamera,
-                projection
-            );
-            // Looking on the graph presented in getFrustumGroundIntersectionDist() method
-            // we may, calculate far plane extension required in order to preserve look at
-            // based distance at any tilt angle for frustum edges, the formulas are
-            // presented below:
-            // cos(90 - tilt) = farPlaneExt / frustumIntersectTop
-            // farPlaneExt = cos(90 - tilt) * frustumIntersectTop
-            const tiltAngleRestCos = Math.cos(Math.PI / 2 - cameraTilt);
-            viewRanges.far += frustumGroundProj.top * tiltAngleRestCos;
-            // Similar formulas may be derived for near plane distance:
-            // cos(90 - tilt) = nearPlaneExt / frustumIntersectBottom
-            // nearPlaneExt = frustumIntersectBottom * cos(90 - tilt)
-            viewRanges.near -= frustumGroundProj.bottom * tiltAngleRestCos;
+            const cam = camera as THREE.PerspectiveCamera;
+            // Angle between z and c2, note, the fov is vertical, otherwise we would need to
+            // translate it using aspect ratio:
+            // let aspect = camera.aspect > 1 ? camera.aspect : 1 / camera.aspect;
+            const aspect = 1;
+            // Half fov angle in radians
+            const halfFovAngle = THREE.Math.degToRad((cam.fov * aspect) / 2);
+            const cosHalfFov = Math.cos(halfFovAngle);
+            // cos(halfFov) = near / bottomDist
+            // near = cos(halfFov) * bottomDist
+            viewRanges.near = planesDist.bottom * cosHalfFov;
+            // cos(halfFov) = far / topDist
+            // far = cos(halfFov) * topDist
+            viewRanges.far = planesDist.top * cosHalfFov;
         }
+        // Orthographic camera projection.
+        else {
+            viewRanges.near = planesDist.bottom;
+            viewRanges.far = planesDist.top;
+        }
+
         // Clamp values to constraints.
+        const lookAtDist = this.getCameraLookAtDistance(camera, projection);
         const farMax = lookAtDist * this.farMaxRatio;
         viewRanges.near = Math.max(viewRanges.near - this.nearFarMargin / 2, this.nearMin);
         viewRanges.far = Math.min(viewRanges.far, farMax);
