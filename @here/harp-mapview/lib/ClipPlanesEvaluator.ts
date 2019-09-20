@@ -78,13 +78,13 @@ export interface ClipPlanesEvaluator {
  * At general ground distance to camera along the surface normal is used as reference point for
  * planes evaluation, where near plane distance is set as fraction of this distance refered as
  * [[nearMultiplier]]. Far plane equation has its own multiplier - [[nearFarMultiplier]],
- * which is applied to near plane and offset finally applied.
+ * which is applied to near plane and offset giving finally far plane distance.
  * This evaluator supports both planar and spherical projections, although it's behaviour is
  * slightly different in each case. General algorithm sets near plane between camera and
  * ground level, while far plane is just calculated using scale and bias approach with far offset
  * and multiplier.
  * @deprecated Class contains the legacy (first and original) clip planes evaluation method, which
- * is widelly used in examples.
+ * is widelly used in examples thus is still kept for backward compatibility and comparisons.
  */
 export class InterpolatedClipPlanesEvaluator implements ClipPlanesEvaluator {
     readonly farMin: number;
@@ -239,7 +239,7 @@ export abstract class ElevationBasedClipPlanesEvaluator implements ClipPlanesEva
  * modifying camera pitch (tilt) angle. In simple words it is suitable only for top view camera
  * settings.
  */
-export class AltitudeBasedClipPlanesEvaluator extends ElevationBasedClipPlanesEvaluator {
+export class TopViewClipPlanesEvaluator extends ElevationBasedClipPlanesEvaluator {
     /**
      * Helper for reducing number of objects created at runtime.
      */
@@ -279,7 +279,7 @@ export class AltitudeBasedClipPlanesEvaluator extends ElevationBasedClipPlanesEv
      * @note You may treat [[minElevation]] and [[maxElevation]] parameters as the maximum and
      * minimum renderable elevation respectivelly along the surface normal, when camera is
      * constantly looking downwards (top-down view). If you need [[ClipPlanesEvaluator]] for
-     * cameras that support tilt or yaw please use [[TiltBasedClipPlanesEvaluator]].
+     * cameras that support tilt or yaw please use [[TiltViewClipPlanesEvaluator]].
      * @note [[nearFarMaxRatio]] does not limit far plane when spherical projection is in use,
      * the algorithm used there estimates distance to point on tangent where line from camera
      * touches the sphere horizont and there is no reason to clamp it.
@@ -470,7 +470,7 @@ export class AltitudeBasedClipPlanesEvaluator extends ElevationBasedClipPlanesEv
  * This evaluator provides support for camera with varying tilt (pitch) angle, the angle
  * between camera __look at__ vector and the ground surface normal.
  */
-export class TiltBasedClipPlanesEvaluator extends AltitudeBasedClipPlanesEvaluator {
+export class TiltViewClipPlanesEvaluator extends TopViewClipPlanesEvaluator {
     /**
      * Helper [[THREE.Plane]] instance to speed up calculations (limits allocations required).
      */
@@ -693,7 +693,7 @@ export class TiltBasedClipPlanesEvaluator extends AltitudeBasedClipPlanesEvaluat
         // Extend the far plane by the margin along the shpere normal (radius).
         // In order to calculate far plane distance we need to find sphere tangent
         // line that passes thru camera position, method explanation may be found in
-        // AltitudeBasedClipPlanesEvaluator.evaluateDistanceSphericalProj() method.
+        // TopViewClipPlanesEvaluator.evaluateDistanceSphericalProj() method.
         const r = EarthConstants.EQUATORIAL_RADIUS;
         const d = cameraToOrigin.length();
         const dNorm = this.m_tmpVectors[2].copy(cameraToOrigin).multiplyScalar(1 / d);
@@ -722,7 +722,7 @@ export class TiltBasedClipPlanesEvaluator extends AltitudeBasedClipPlanesEvaluat
         else {
             // Here the length of the tangent is extended with 'te' vector that allows to see
             // elevated geometry beyond the tangent (horizon line), see
-            // AltitudeBasedClipPlanesEvaluator for explanations.
+            // TopViewClipPlanesEvaluator for explanations.
             // t_d = d_norm * |t + te|,
             // where:
             // |t| = cos(alpha) * |d|
