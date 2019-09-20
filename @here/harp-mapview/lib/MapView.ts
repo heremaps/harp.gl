@@ -910,9 +910,9 @@ export class MapView extends THREE.EventDispatcher {
         );
 
         this.m_tileGeometryManager =
-            this.m_options.enablePhasedLoading === false
-                ? new SimpleTileGeometryManager(this)
-                : new PhasedTileGeometryManager(this);
+            this.m_options.enablePhasedLoading === true
+                ? new PhasedTileGeometryManager(this)
+                : new SimpleTileGeometryManager(this);
 
         this.m_visibleTiles = new VisibleTileSet(
             new FrustumIntersection(
