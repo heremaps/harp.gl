@@ -1120,8 +1120,8 @@ export class TextElementsRenderer {
     }
 
     private getMaxDistance(farDistanceLimitRatio: number): number {
-        const farDistance = this.m_mapView.camera.far;
-        const maxDistance = farDistance * farDistanceLimitRatio;
+        const maxFarDistance = this.m_mapView.viewRanges.maximum;
+        const maxDistance = maxFarDistance * farDistanceLimitRatio;
         return maxDistance;
     }
 
@@ -1366,7 +1366,7 @@ export class TextElementsRenderer {
         return factor;
     }
 
-    private getDistanceFadingFactor(label: TextElement, cameraFar: number): number {
+    private getDistanceFadingFactor(label: TextElement, maxVisibilityDist: number): number {
         let distanceFadeValue = 1.0;
         const textDistance = label.currentViewDistance;
 
@@ -1377,7 +1377,7 @@ export class TextElementsRenderer {
                 distanceFadeValue =
                     1.0 -
                     THREE.Math.clamp(
-                        (textDistance / cameraFar - fadeNear) / (fadeFar - fadeNear),
+                        (textDistance / maxVisibilityDist - fadeNear) / (fadeFar - fadeNear),
                         0.0,
                         1.0
                     );
@@ -1418,7 +1418,7 @@ export class TextElementsRenderer {
         const poiTextMaxDistance = this.getMaxDistance(this.m_maxDistanceRatioForPoiLabels!);
 
         const cameraIsMoving = this.m_mapView.cameraIsMoving;
-        const cameraFar = this.m_mapView.camera.far;
+        const maxVisibilityDist = this.m_mapView.viewRanges.maximum;
 
         // Keep track if we need to call another update() on MapView.
         let fadeAnimationRunning = false;
@@ -1590,7 +1590,8 @@ export class TextElementsRenderer {
                 if (textDistance !== undefined) {
                     if (
                         pointLabel.fadeFar !== undefined &&
-                        (pointLabel.fadeFar <= 0.0 || pointLabel.fadeFar * cameraFar < textDistance)
+                        (pointLabel.fadeFar <= 0.0 ||
+                            pointLabel.fadeFar * maxVisibilityDist < textDistance)
                     ) {
                         // The label is farther away than fadeFar value, which means it is totally
                         // transparent.
@@ -1601,7 +1602,10 @@ export class TextElementsRenderer {
                     distanceScaleFactor = this.getDistanceScalingFactor(pointLabel, textDistance);
                     textScale *= distanceScaleFactor;
                 }
-                const distanceFadeFactor = this.getDistanceFadingFactor(pointLabel, cameraFar);
+                const distanceFadeFactor = this.getDistanceFadingFactor(
+                    pointLabel,
+                    maxVisibilityDist
+                );
 
                 // Check if there is need to check for screen space for the label's icon.
                 const poiInfo = pointLabel.poiInfo;
@@ -2036,7 +2040,7 @@ export class TextElementsRenderer {
                 if (
                     pathLabel.fadeFar !== undefined &&
                     (pathLabel.fadeFar <= 0.0 ||
-                        pathLabel.fadeFar * cameraFar < pathLabel.renderDistance)
+                        pathLabel.fadeFar * maxVisibilityDist < pathLabel.renderDistance)
                 ) {
                     // The label is farther away than fadeFar value, which means it is totally
                     // transparent
@@ -2130,7 +2134,10 @@ export class TextElementsRenderer {
 
                 const prevOpacity = textCanvas.textRenderStyle.opacity;
                 const prevBgOpacity = textCanvas.textRenderStyle.backgroundOpacity;
-                const distanceFadeFactor = this.getDistanceFadingFactor(pathLabel, cameraFar);
+                const distanceFadeFactor = this.getDistanceFadingFactor(
+                    pathLabel,
+                    maxVisibilityDist
+                );
                 textCanvas.textRenderStyle.opacity = opacity * distanceFadeFactor;
                 textCanvas.textRenderStyle.backgroundOpacity =
                     textCanvas.textRenderStyle.opacity * textElement.renderStyle!.backgroundOpacity;
@@ -2288,7 +2295,7 @@ export class TextElementsRenderer {
         for (const elementGroup of consideredTextElements.sortedGroups) {
             const textElementsInGroup = elementGroup.elements;
 
-            this.sortTextElements(textElementsInGroup, this.m_mapView.camera.far);
+            this.sortTextElements(textElementsInGroup, this.m_mapView.viewRanges.maximum);
 
             numRenderedTextElements += this.renderTextElements(
                 textElementsInGroup,

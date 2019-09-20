@@ -10,6 +10,7 @@ import { insertShaderInclude } from "./Utils";
 
 import * as THREE from "three";
 
+import { ViewRanges } from "../../harp-mapview/lib/ClipPlanesEvaluator";
 import extrusionShaderChunk from "./ShaderChunks/ExtrusionChunks";
 import fadingShaderChunk from "./ShaderChunks/FadingChunks";
 
@@ -83,11 +84,11 @@ interface UniformsType {
  * Copy from MapViewUtils, since it cannot be accessed here because of circular dependencies.
  *
  * @param distance Distance from the camera (range: [0, 1]).
- * @param maxVisibilityRange maximum visibility range - distance from camera. It may be simply
- * camera far plane distance or custom value provided.
+ * @param visibilityRange object describiing maximum and minimum visibility range - distances
+ * from camera at which objects won't be rendered anymore.
  */
-function cameraToWorldDistance(distance: number, maxVisibilityRange: number): number {
-    return distance * maxVisibilityRange;
+function cameraToWorldDistance(distance: number, visibilityRange: ViewRanges): number {
+    return distance * visibilityRange.maximum;
 }
 
 /**
@@ -371,6 +372,8 @@ export namespace FadingFeature {
      * fade distance value is less than 1.
      *
      * @param object [[THREE.Object3D]] to prepare for rendering.
+     * @param viewRanges The visibility ranges (clip planes and maxiumum visible distance) for
+     * actual camera setup.
      * @param fadeNear The fadeNear value to set in the material.
      * @param fadeFar The fadeFar value to set in the material.
      * @param forceMaterialToTransparent If `true`, the material will be forced to render with
@@ -383,7 +386,7 @@ export namespace FadingFeature {
      */
     export function addRenderHelper(
         object: THREE.Object3D,
-        maxVisibility: number,
+        viewRanges: ViewRanges,
         fadeNear: number | undefined,
         fadeFar: number | undefined,
         forceMaterialToTransparent: boolean,
@@ -413,12 +416,12 @@ export namespace FadingFeature {
                 fadingMaterial.fadeNear =
                     fadeNear === undefined
                         ? FadingFeature.DEFAULT_FADE_NEAR
-                        : cameraToWorldDistance(fadeNear, maxVisibility);
+                        : cameraToWorldDistance(fadeNear, viewRanges);
 
                 fadingMaterial.fadeFar =
                     fadeFar === undefined
                         ? FadingFeature.DEFAULT_FADE_FAR
-                        : cameraToWorldDistance(fadeFar, maxVisibility);
+                        : cameraToWorldDistance(fadeFar, viewRanges);
 
                 if (updateUniforms) {
                     const properties = renderer.properties.get(material);

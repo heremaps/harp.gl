@@ -659,7 +659,12 @@ export class MapView extends THREE.EventDispatcher {
 
     private m_focalLength: number;
     private m_lookAtDistance: number;
-    private m_maxVisibility: number;
+    private readonly m_viewRanges: ViewRanges = {
+        near: DEFAULT_CAM_NEAR_PLANE,
+        far: DEFAULT_CAM_FAR_PLANE,
+        minimum: DEFAULT_CAM_NEAR_PLANE,
+        maximum: DEFAULT_CAM_FAR_PLANE
+    };
     private m_pointOfView?: THREE.PerspectiveCamera;
 
     private m_pixelToWorld?: number;
@@ -889,7 +894,6 @@ export class MapView extends THREE.EventDispatcher {
         this.m_camera.up.set(0, 0, 1);
         this.m_lookAtDistance = 0;
         this.m_focalLength = 0;
-        this.m_maxVisibility = DEFAULT_CAM_FAR_PLANE;
         this.m_scene.add(this.m_camera); // ensure the camera is added to the scene.
         this.m_screenProjector = new ScreenProjector(this.m_camera);
 
@@ -1431,14 +1435,18 @@ export class MapView extends THREE.EventDispatcher {
     }
 
     /**
-     * The maximum visibility range that may be achieved with current camera settings.
+     * Get object describing frustum planes distances and min/max visibility range for actual
+     * camera setup.
+     * Near and far plance distance are self explanatory while minimum and maximum visibility range
+     * describes the extreme near/far planes distances that may be achieved with current camera
+     * settings, meaning at current zoom level (ground distance) and any possible orientation.
      * @note Visibility is directly related to camera [[ClipPlaneEvaluator]] used and determines
      * the maximum possible distance of camera far clipping plane regardless of tilt, but may change
      * whenever zoom level changes. Distance is meassured in world units which may be approximately
      * euqal to meters, but this depends on the distortion related to projection type used.
      */
-    get maxVisibility(): number {
-        return this.m_maxVisibility;
+    get viewRanges(): ViewRanges {
+        return this.m_viewRanges;
     }
 
     /**
@@ -2295,12 +2303,15 @@ export class MapView extends THREE.EventDispatcher {
             this.m_forceCameraAspect !== undefined ? this.m_forceCameraAspect : width / height;
         this.setFovOnCamera(this.m_options.fovCalculation!, height);
 
-        if (viewRanges === undefined) {
-            viewRanges = this.m_visibleTiles.updateClipPlanes();
-        }
-        this.m_camera.near = viewRanges.near;
-        this.m_camera.far = viewRanges.far;
-        this.m_maxVisibility = viewRanges.maximum;
+        // Copy all properties from new view ranges to our readonly object.
+        // This allows to keep all view ranges references valid and keeps up-to-date
+        // information within them. Works the same as copping all properties one-by-one.
+        Object.assign(
+            this.m_viewRanges,
+            viewRanges === undefined ? this.m_visibleTiles.updateClipPlanes() : viewRanges
+        );
+        this.m_camera.near = this.m_viewRanges.near;
+        this.m_camera.far = this.m_viewRanges.far;
 
         this.m_camera.updateProjectionMatrix();
         this.m_camera.updateMatrixWorld(false);
@@ -2333,7 +2344,7 @@ export class MapView extends THREE.EventDispatcher {
         const zoomLevelDistance = cameraPosZ / Math.cos(Math.min(cameraPitch, Math.PI / 3));
 
         this.m_zoomLevel = MapViewUtils.calculateZoomLevelFromDistance(zoomLevelDistance, this);
-        this.m_fog.update(this.m_camera, this.projection, viewRanges.maximum);
+        this.m_fog.update(this.m_camera, this.projection, this.m_viewRanges.maximum);
     }
 
     /**
