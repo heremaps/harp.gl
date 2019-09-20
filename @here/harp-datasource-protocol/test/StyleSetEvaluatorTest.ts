@@ -297,4 +297,66 @@ describe("StyleSetEvaluator", function() {
         assert.equal(techniques[2].name, "solid-line");
         assert.equal(techniques[3].name, "fill");
     });
+
+    it("Filter techniques by layer and geometryType", function() {
+        const styleSet: StyleSet = [
+            {
+                when: [
+                    "all",
+                    ["==", ["get", "$layer"], "buildings"],
+                    ["==", ["get", "$geometryType"], "polygon"]
+                ],
+                technique: "extruded-polygon"
+            },
+            {
+                when: [
+                    "all",
+                    ["==", ["get", "$layer"], "buildings"],
+                    ["==", ["get", "$geometryType"], "line"]
+                ],
+                technique: "solid-line"
+            },
+            {
+                when: [
+                    "all",
+                    ["==", ["get", "$layer"], "buildings"],
+                    ["==", ["get", "$geometryType"], "point"]
+                ],
+                technique: "circles"
+            }
+        ];
+
+        const layer = "buildings";
+        const geometryType = "polygon";
+
+        const env = new MapEnv({ $layer: layer, $geometryType: geometryType });
+
+        const styleSetEvaluator = new StyleSetEvaluator(styleSet);
+
+        const techniques = styleSetEvaluator.getMatchingTechniques(env);
+
+        const techniquesFilteredByLayer = styleSetEvaluator.getMatchingTechniques(env, layer);
+
+        const techniquesFilteredByLayerAndGeometryType = styleSetEvaluator.getMatchingTechniques(
+            env,
+            layer,
+            geometryType
+        );
+
+        const techniquesFilteredByGeometryType = styleSetEvaluator.getMatchingTechniques(
+            env,
+            undefined,
+            geometryType
+        );
+
+        assert.equal(techniques.length, 1);
+        assert.equal(techniquesFilteredByLayer.length, 1);
+        assert.equal(techniquesFilteredByLayerAndGeometryType.length, 1);
+        assert.equal(techniquesFilteredByGeometryType.length, 1);
+
+        assert.equal(techniques[0].name, "extruded-polygon");
+        assert.equal(techniquesFilteredByLayer[0].name, "extruded-polygon");
+        assert.equal(techniquesFilteredByLayerAndGeometryType[0].name, "extruded-polygon");
+        assert.equal(techniquesFilteredByGeometryType[0].name, "extruded-polygon");
+    });
 });

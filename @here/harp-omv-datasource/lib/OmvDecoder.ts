@@ -282,7 +282,7 @@ export class OmvDecoder implements IGeometryProcessor {
         }
 
         const techniques = this.applyKindFilter(
-            this.m_styleSetEvaluator.getMatchingTechniques(env),
+            this.m_styleSetEvaluator.getMatchingTechniques(env, layer, "point"),
             GeometryKind.Label
         );
 
@@ -340,7 +340,7 @@ export class OmvDecoder implements IGeometryProcessor {
         }
 
         const techniques = this.applyKindFilter(
-            this.m_styleSetEvaluator.getMatchingTechniques(env),
+            this.m_styleSetEvaluator.getMatchingTechniques(env, layer, "line"),
             GeometryKind.Line
         );
 
@@ -398,7 +398,7 @@ export class OmvDecoder implements IGeometryProcessor {
         }
 
         const techniques = this.applyKindFilter(
-            this.m_styleSetEvaluator.getMatchingTechniques(env),
+            this.m_styleSetEvaluator.getMatchingTechniques(env, layer, "polygon"),
             GeometryKind.Area
         );
 
