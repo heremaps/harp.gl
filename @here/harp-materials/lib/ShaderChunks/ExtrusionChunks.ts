@@ -21,10 +21,9 @@ vExtrusionAxis = vec4(normalMatrix * extrusionAxis.xyz, extrusionAxis.w);
     extrusion_normal_fragment_begin: `
 #ifdef FLAT_SHADED
     vec3 normal = vec3(0.0);
-    if (vExtrusionAxis.w > 0.999999) {
+    if (vExtrusionAxis.w > 0.999999 && length(vExtrusionAxis.xyz) > 0.000001) {
         normal = normalize(vExtrusionAxis.xyz);
-    }
-    else  {
+    } else  {
         // Workaround for Adreno/Nexus5 not able able to do dFdx( vViewPosition ) ...
         vec3 fdx = vec3(dFdx(vViewPosition.x), dFdx(vViewPosition.y), dFdx(vViewPosition.z));
         vec3 fdy = vec3(dFdy(vViewPosition.x), dFdy(vViewPosition.y), dFdy(vViewPosition.z));
