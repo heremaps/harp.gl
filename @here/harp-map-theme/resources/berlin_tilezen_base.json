@@ -75,7 +75,7 @@
 
         "roadsFadeNear": {
             "type": "number",
-            "value": 0.85
+            "value": 0.9
         },
 
         "roadsFadeFar": {
