@@ -122,8 +122,8 @@ West</a>.</p>`;
             canvas,
             theme: themePromise.then(modifyTheme)
         });
-        const NY = new GeoCoordinates(40.705, -74.01);
-        map.lookAt(NY, 3000, 30);
+        const BE = new GeoCoordinates(52.494011, 13.35685);
+        map.lookAt(BE, 500, 50, 80);
 
         CopyrightElementHandler.install("copyrightNotice", map);
 

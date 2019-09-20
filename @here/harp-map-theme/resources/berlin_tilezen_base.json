@@ -40,7 +40,7 @@
             "when": ["ref", "extrudedBuildingsCondition"],
             "attr": {
                 "height": ["get", "height"],
-                "color": ["ref", "defaultBuildingColor"],
+                "color": "#707070",
                 "opacity": 0.9,
                 "roughness": 1,
                 "metalness": 0.8,
