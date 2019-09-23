@@ -125,6 +125,29 @@ describe("ExprEvaluator", function() {
         });
     });
 
+    describe("Operator '!has'", function() {
+        Object.getOwnPropertyNames(defaultEnv).forEach(property => {
+            it(`has property '${property}'`, function() {
+                assert.isFalse(evaluate(["!has", property]));
+            });
+        });
+
+        it("Ensure builtin symbols are not accessible", function() {
+            assert.isTrue(evaluate(["!has", "has"]));
+            assert.isTrue(evaluate(["!has", "get"]));
+            assert.isTrue(evaluate(["!has", "length"]));
+        });
+
+        it("Object access", function() {
+            const object = { x: 1, y: 2, z: 3, k: "point" };
+            assert.isFalse(evaluate(["!has", "x", ["literal", object]]));
+            assert.isFalse(evaluate(["!has", "y", ["literal", object]]));
+            assert.isFalse(evaluate(["!has", "z", ["literal", object]]));
+            assert.isFalse(evaluate(["!has", "k", ["literal", object]]));
+            assert.isTrue(evaluate(["!has", "w", ["literal", object]]));
+        });
+    });
+
     describe("Operator 'length'", function() {
         it("evaluate", function() {
             assert.strictEqual(evaluate(["length", "ciao"]), 4);
@@ -158,6 +181,18 @@ describe("ExprEvaluator", function() {
             assert.isTrue(evaluate(["in", ["get", "emptyText"], [defaultEnv.emptyText]]));
 
             assert.throw(() => evaluate(["in", ["get", "someText"]]));
+        });
+    });
+
+    describe("Operator '!in'", function() {
+        it("evaluate", function() {
+            assert.isFalse(evaluate(["!in", "x", ["x"]]));
+            assert.isTrue(evaluate(["!in", "x", ["y"]]));
+
+            assert.isFalse(evaluate(["!in", ["get", "someText"], [defaultEnv.someText]]));
+            assert.isFalse(evaluate(["!in", ["get", "emptyText"], [defaultEnv.emptyText]]));
+
+            assert.throw(() => evaluate(["!in", ["get", "someText"]]));
         });
     });
 
