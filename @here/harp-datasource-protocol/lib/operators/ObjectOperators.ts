@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Expr, StringLiteralExpr } from "../Expr";
+import { Expr } from "../Expr";
 
 import { ExprEvaluatorContext, OperatorDescriptorMap } from "../ExprEvaluator";
 
@@ -16,16 +16,16 @@ enum LookupMode {
 }
 
 function lookupMember(context: ExprEvaluatorContext, args: Expr[], lookupMode: LookupMode) {
-    const memberName = args[0];
+    const memberName = context.evaluate(args[0]);
 
-    if (!(memberName instanceof StringLiteralExpr)) {
+    if (typeof memberName !== "string") {
         throw new Error(`expected the name of an attribute`);
     }
 
     const object = context.evaluate(args[1]) as any;
 
-    if (object && typeof object === "object" && hasOwnProperty.call(object, memberName.value)) {
-        return lookupMode === LookupMode.get ? object[memberName.value] : true;
+    if (object && typeof object === "object" && hasOwnProperty.call(object, memberName)) {
+        return lookupMode === LookupMode.get ? object[memberName] : true;
     }
 
     return lookupMode === LookupMode.get ? null : false;
