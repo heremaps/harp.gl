@@ -7,6 +7,7 @@ import { TileKey } from "@here/harp-geoutils";
 import { assert } from "@here/harp-utils";
 
 import { Env, MapEnv, Value } from "./Expr";
+import { makeDecodedTechnique } from "./StyleSetEvaluator";
 import { AttrEvaluationContext, evaluateTechniqueAttr } from "./TechniqueAttr";
 import {
     IndexedTechnique,
@@ -536,26 +537,12 @@ export class ExtendedTileInfoWriter {
             return infoTileTechniqueIndex;
         }
 
+        const decodedTechnique = makeDecodedTechnique(technique);
+
         infoTileTechniqueIndex = this.tileInfo.techniqueCatalog.length;
+        this.techniqueIndexMap.set(decodedTechnique._index, infoTileTechniqueIndex);
+        this.tileInfo.techniqueCatalog.push(decodedTechnique);
 
-        // add a new technique. Select the subset of features that should be stored (e.g., _index is
-        // not)
-        const storedTechnique = {} as any;
-
-        Object.getOwnPropertyNames(technique).forEach(property => {
-            if (!property.startsWith("_")) {
-                storedTechnique[property] = (technique as any)[property];
-            }
-        });
-
-        // Keep the index to identify the original technique later.
-        storedTechnique._index = technique._index;
-        storedTechnique._key = technique._key;
-        storedTechnique._styleSetIndex = technique._styleSetIndex;
-
-        this.techniqueIndexMap.set(technique._index, infoTileTechniqueIndex);
-
-        this.tileInfo.techniqueCatalog.push(storedTechnique);
         return infoTileTechniqueIndex;
     }
 
