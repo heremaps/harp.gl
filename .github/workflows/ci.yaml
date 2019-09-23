@@ -1,4 +1,4 @@
-name: CI (Windows)
+name: CI
 
 on:
   push:
@@ -15,20 +15,24 @@ jobs:
     strategy:
       matrix:
         node_version: [10, 11, 12]
-        os: [windows-latest]
+        os: [ubuntu-latest,macOS-latest,windows-latest]
 
     steps:
-
-    - name: Reset git settings
+    - name: Reset git settings (Windows)
       # Global git config on windows has autocrlf enabled.
       # This breaks lot of checks, including tslint.
       run: git config --global core.autocrlf false
+      if: matrix.os == 'windows-latest'
     - uses: actions/checkout@v1
     - name: Use Node.js ${{ matrix.node_version }}
       uses: actions/setup-node@v1
       with:
         version: ${{ matrix.node_version }}
     - name: Install dependencies
+      run: |
+        npm install -g chromedriver geckodriver
+      if: matrix.os != 'windows-latest'
+    - name: Install dependencies (Windows)
       shell: bash
       run: |
         set -ex
@@ -41,13 +45,14 @@ jobs:
         #  https://github.com/giggio/node-chromedriver - explanation
         #  https://sites.google.com/a/chromium.org/chromedriver/downloads - available versions
         export CHROMEDRIVER_VERSION=75.0.3770.140
-        yarn
+      if: matrix.os == 'windows-latest'
     - name: Pretest
       run: |
         set -ex
+        yarn
         npx ts-mocha -r tsconfig-paths/register ./test/*.ts
         yarn run tslint
-        npx prettier -l '**/*.ts' '**/*.tsx' '**/*.json'
+        yarn run prettier
       shell: bash
     - name: Test on Node.js
       run: npx ts-mocha -r tsconfig-paths/register ./@here/*/test/*.ts
@@ -55,25 +60,47 @@ jobs:
     - name: Build test bundle
       run: yarn run build-tests
       shell: bash
-    - name: Tests on Chrome
+    - name: Tests on Chrome (Windows)
       run: |
         export PATH=`pwd`:$PATH
         cp node_modules/chromedriver/lib/chromedriver/chromedriver.exe .
         yarn test-browser --headless-chrome
       shell: bash
-    - name: Tests on Firefox
+      if: matrix.os == 'windows-latest'
+    - name: Tests on Chrome (Linux)
+      run: |
+        set -ex
+        yarn
+        google-chrome --version
+        whereis google-chrome
+        yarn test-browser --headless-chrome
+      shell: bash
+      if: matrix.os == 'ubuntu-latest'
+    - name: Tests on Firefox (Windows)
       run: |
         export PATH=`pwd`:$PATH
         cp node_modules/geckodriver/geckodriver.exe .
         yarn test-browser --headless-firefox
+      if: matrix.os == 'windows-latest'
+    - name: Tests on Firefox (Linux)
+      run: |
+        set -ex
+        firefox --version
+        whereis firefox
+        yarn test-browser --headless-firefox
       shell: bash
+      if: matrix.os == 'ubuntu-latest'
     - name: Build examples
       run: yarn run build-examples
       shell: bash
-    - name: Build harp.js
+    - name: Build bundle
       run: yarn run build-bundle
       shell: bash
-    #  typedoc doesn't work on windows -> https://github.com/unstubbable/typedoc-plugin-monorepo/pull/1
-    # - name: Generate doc
-    #   run: yarn run typedoc
-    #   shell: bash
+    - name: Generate doc
+      run: yarn run typedoc
+      shell: bash
+      #  typedoc doesn't work on windows -> https://github.com/unstubbable/typedoc-plugin-monorepo/pull/1
+      if: matrix.os != 'windows-latest'
+
+
+
