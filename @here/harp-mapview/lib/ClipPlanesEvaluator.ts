@@ -261,9 +261,9 @@ export class TopViewClipPlanesEvaluator extends ElevationBasedClipPlanesEvaluato
      * and far planes to avoid flickering.
      * @param maxElevation defines near plane offset from the ground in the surface normal
      * direction, positive values allows to render elevated terrain features (mountains,
-     * buildings).
+     * buildings). Defaults to Burj Khalifa building height.
      * @param minElevation defines far plane offset from the ground surface, negative values moves
-     * far plane below the ground level (use it to render depressions).
+     * far plane below the ground level (use it to render depressions). Default zero - sea level.
      * @param nearMin minimum allowable near plane distance from camera, must be bigger then zero.
      * @param nearFarMargin minimum distance between near and far plane, have to be significantly
      * bigger then zero (especially if [[maxElevation]], [[minElevation]] are equal), otherwise you
@@ -285,8 +285,8 @@ export class TopViewClipPlanesEvaluator extends ElevationBasedClipPlanesEvaluato
      * touches the sphere horizont and there is no reason to clamp it.
      */
     constructor(
-        maxElevation: number = EarthConstants.MAX_ELEVATION,
-        minElevation: number = EarthConstants.MIN_ELEVATION,
+        maxElevation: number = EarthConstants.MAX_BUILDING_HEIGHT,
+        minElevation: number = 0,
         readonly nearMin: number = 0.1,
         readonly nearFarMargin: number = 10.0,
         readonly farMaxRatio = 1.8

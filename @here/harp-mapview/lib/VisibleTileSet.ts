@@ -426,7 +426,10 @@ export class VisibleTileSet {
         // frustum planes and update the camera near/far plane distances.
         const clipPlanesEvaluator = this.options.clipPlanesEvaluator;
         let viewRangesChanged: boolean = false;
-        if (clipPlanesEvaluator instanceof ElevationBasedClipPlanesEvaluator) {
+        if (
+            elevationRangeSource !== undefined &&
+            clipPlanesEvaluator instanceof ElevationBasedClipPlanesEvaluator
+        ) {
             clipPlanesEvaluator.minElevation = minElevation;
             clipPlanesEvaluator.maxElevation = maxElevation;
             const viewRanges = this.updateClipPlanes();
