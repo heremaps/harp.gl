@@ -368,85 +368,125 @@ export class TopViewClipPlanesEvaluator extends ElevationBasedClipPlanesEvaluato
         let nearPlane: number = this.nearMin;
         let farPlane: number = this.nearMin * this.farMaxRatio;
 
-        // This solution computes near and far plane for a set up where
-        // the camera is looking at the center of the scene.
-
-        //         , - ~ ~ ~ - ,
-        //     , '               ' ,        E
-        //   ,           .           ,    . ' far + elev
-        //  ,            .   r + e   , '   /
-        // ,             .     ,  '    ,  /
-        // ,             . O '         , / te
-        // ,             | .           ,/
-        //  ,            |   .  r     ,/
-        //   ,           |      .    ,
-        //     ,         |        , '_____ far
-        //       ' -_, _ | _ ,  ' / T
-        //     near      |      /
-        //               |    / t
-        //             d |  /
-        //               |/
-        //               C
-
         // The near plane calculus is quite straight forward and works the same as for planar
         // projections. We simply search for the closest point of the ground just above
         // the camera, then we apply margin (elevation) to it along the sphere surface normal:
         const cameraAltitude = this.getCameraAltitude(camera, projection);
         nearPlane = cameraAltitude - this.maxElevation;
 
-        // The far plane distance calculus requires finding the sphere tangent line that is
-        // co-linear with (goes thru) camera position, such tangent creates right angle
-        // with sphere diameter where it touches its surface (point T). Given that sphere is
-        // always at world orgin and camera orbits around it we have:
-        // angle(OTC) = 90
-        // sin(OCT) = sin(alpha) = r / d
-        // alpha = asin(r / d)
+        // Far plane calculation requires different approaches depending from camera projection:
+        // - perspective
+        // - orthographic
+
         const r = EarthConstants.EQUATORIAL_RADIUS;
         let d = camera.position.length();
         d = d === 0 ? epsilon : d;
-        const alpha = Math.asin(r / d);
-        // The distance to tangent point may be described as:
-        // t = sqrt(d^2 - r^2)
-        const t = Math.sqrt(d * d - r * r);
-        // Because we would like to see elevated geometry that may be visible beyond the tangent
-        // point on ground surface, we need to extend viewing distance along the tangent line
-        // by te (see graph above). Knowing that OTE forms right angle, we have:
-        // (r+e)^2 = r^2 + te^2
-        // te = sqrt((r+e)^2 - r^2)
-        // This reduces to:
-        // te = sqrt(r^2 + 2*r*e + e^2 - r^2)
-        // te = sqrt(2*r*e + e^2)
-        // There may be situations when maximum elevation still remains below sea level (< 0) or
-        // it is neglible, in such cases tangent extension (te) is not required.
-        const te =
-            this.maxElevation < epsilon
-                ? 0
-                : Math.sqrt(2 * r * this.maxElevation + this.maxElevation * this.maxElevation);
+        if (camera.type === "PerspectiveCamera") {
+            // This solution computes near and far plane for a set up where
+            // the camera is looking at the center of the scene.
 
-        // Next step is to project CT vector onto camera eye (forward) vector to get maximum
-        // camera far plane distance. Point on sphere beyond that point won't be visible anyway
-        // unless they are above the ground surface. For such cases [[this.maxElevation]] applies,
-        // thus we project entire CE vector of length equal: t + te.
+            //         , - ~ ~ ~ - ,
+            //     , '               ' ,        E
+            //   ,           .           ,    . ' far + elev
+            //  ,            .   r + e   , '   /
+            // ,             .     ,  '    ,  /
+            // ,             . O '         , / te
+            // ,             | .           ,/
+            //  ,            |   .  r     ,/
+            //   ,           |      .    ,
+            //     ,         |        , '_____ far
+            //       ' -_, _ | _ ,  ' / T
+            //     near      |      /
+            //               |    / t
+            //             d |  /
+            //               |/
+            //               C
 
-        // Extract camera X, Y, Z orientation axes into tmp vectors array.
-        camera.matrixWorld.extractBasis(
-            this.m_tmpVectors[0],
-            this.m_tmpVectors[1],
-            this.m_tmpVectors[2]
-        );
-        // Setup quaternion (based on X axis) for angle between tangent and camera eye.
-        this.m_tmpQuaternion.setFromAxisAngle(this.m_tmpVectors[0], alpha);
-        // Aquire camera (eye) forward vector from Z axis reversed (keep it in tmpVectors[2]).
-        const cameraFwdVec = this.m_tmpVectors[2].negate();
-        // Apply quaternion to forward vector, creating tangent vector (store in tmpVectors[1]).
-        const tangentVec = this.m_tmpVectors[1]
-            .copy(cameraFwdVec)
-            .applyQuaternion(this.m_tmpQuaternion);
-        // Give it a proper length
-        tangentVec.multiplyScalar(t + te);
-        // Calculate tanget projection onto camera eye vector, giving far plane distance.
-        farPlane = tangentVec.dot(cameraFwdVec);
+            // The far plane distance calculus requires finding the sphere tangent line that is
+            // co-linear with (goes thru) camera position, such tangent creates right angle
+            // with sphere diameter where it touches its surface (point T). Given that sphere is
+            // always at world orgin and camera orbits around it we have:
+            // angle(OTC) = 90
+            // sin(OCT) = sin(alpha) = r / d
+            // alpha = asin(r / d)
+            const alpha = Math.asin(r / d);
+            // The distance to tangent point may be described as:
+            // t = sqrt(d^2 - r^2)
+            const t = Math.sqrt(d * d - r * r);
+            // Because we would like to see elevated geometry that may be visible beyond the tangent
+            // point on ground surface, we need to extend viewing distance along the tangent line
+            // by te (see graph above). Knowing that OTE forms right angle, we have:
+            // (r+e)^2 = r^2 + te^2
+            // te = sqrt((r+e)^2 - r^2)
+            // This reduces to:
+            // te = sqrt(r^2 + 2*r*e + e^2 - r^2)
+            // te = sqrt(2*r*e + e^2)
+            // There may be situations when maximum elevation still remains below sea level (< 0) or
+            // it is neglible, in such cases tangent extension (te) is not required.
+            const te =
+                this.maxElevation < epsilon
+                    ? 0
+                    : Math.sqrt(2 * r * this.maxElevation + this.maxElevation * this.maxElevation);
 
+            // Next step is to project CT vector onto camera eye (forward) vector to get maximum
+            // camera far plane distance. Point on sphere beyond that point won't be visible anyway
+            // unless they are above the ground surface. For such cases [[this.maxElevation]]
+            // applies, thus we project entire CE vector of length equal: t + te.
+
+            // Extract camera X, Y, Z orientation axes into tmp vectors array.
+            camera.matrixWorld.extractBasis(
+                this.m_tmpVectors[0],
+                this.m_tmpVectors[1],
+                this.m_tmpVectors[2]
+            );
+            // Setup quaternion (based on X axis) for angle between tangent and camera eye.
+            this.m_tmpQuaternion.setFromAxisAngle(this.m_tmpVectors[0], alpha);
+            // Aquire camera (eye) forward vector from Z axis reversed (keep it in tmpVectors[2]).
+            const cameraFwdVec = this.m_tmpVectors[2].negate();
+            // Apply quaternion to forward vector, creating tangent vector (store in tmpVectors[1]).
+            const tangentVec = this.m_tmpVectors[1]
+                .copy(cameraFwdVec)
+                .applyQuaternion(this.m_tmpQuaternion);
+            // Give it a proper length
+            tangentVec.multiplyScalar(t + te);
+            // Calculate tanget projection onto camera eye vector, giving far plane distance.
+            farPlane = tangentVec.dot(cameraFwdVec);
+        }
+        // Orthographic camera projection
+        else {
+            //         , - ~ ~ ~ - ,
+            //     , '               ' ,     E
+            //   ,            .--------- ,-.'- far + elev
+            // | ,            .   r + e , `, |
+            // |,             .     , '     ,| te
+            // |,             . O '.........,|..
+            // |,             |        r    ,|  far
+            // | ,            |            , |
+            // |  ,           |           ,  | t
+            // |    ,         |        , '   |
+            // |      ' -_, _ | _ ,  '       |
+            // |    near      | \/___________| near - elev
+            // |              |              |
+            // |            d |              |
+            // |              |              |
+            //                C
+
+            // The distance to tangent point may be described as:
+            const t = d;
+            // Tangent extension due to terrain elevation behind the horizon may be calculated
+            // based on the right triangle:
+            // (r+maxElev)^2 = r^2 + te^2
+            // te = sqrt((r+maxElev)^2 - r^2)
+            // although we may not calculate it if elevation is neglible:
+            const te =
+                this.maxElevation < epsilon
+                    ? 0
+                    : Math.sqrt(r + this.maxElevation) * (r + this.maxElevation) - r * r;
+            // Now far plane distance is constituted with:
+            farPlane = t + te;
+            // Both near and far planes distances are directly applied to frustum, because tangents'
+            // lines are parallel to camera look at vector.
+        }
         // Apply the constraints.
         nearPlane = Math.max(nearPlane - this.nearFarMargin / 2, this.nearMin);
         // In extreme cases the largest depression assumed may be further then tangent
