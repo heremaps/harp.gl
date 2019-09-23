@@ -69,6 +69,10 @@ export abstract class Expr {
         }
 
         switch (op) {
+            case "!has":
+            case "!in":
+                return new CallExpr("!", [this.parseCall([op.slice(1), ...node.slice(1)])]);
+
             case "get":
                 if (node[2] !== undefined) {
                     return Expr.makeCallExpr(op, node);
