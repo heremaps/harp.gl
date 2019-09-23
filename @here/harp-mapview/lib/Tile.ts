@@ -589,6 +589,13 @@ export class Tile implements CachedResource {
     }
 
     /**
+     * Returns true if the `Tile` has any text elements to render.
+     */
+    hasTextElements(): boolean {
+        return this.m_textElementGroups.count() > 0 || this.m_userTextElements.length > 0;
+    }
+
+    /**
      * Called by [[VisibleTileSet]] to mark that [[Tile]] is visible and it should prepare its road
      * geometry for picking.
      */

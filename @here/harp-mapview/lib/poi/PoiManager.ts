@@ -590,9 +590,19 @@ export class PoiManager {
         const mapView = this.mapView;
         const zoomLevel = mapView.zoomLevel;
         const cacheId = computeStyleCacheId(dataSourceName, technique, Math.floor(zoomLevel));
+        const renderer = this.mapView.textElementsRenderer;
         let renderStyle = mapView.textRenderStyleCache.get(cacheId);
         if (renderStyle === undefined) {
-            const defaultRenderParams = mapView.textElementsRenderer!.defaultStyle.renderParams;
+            const defaultRenderParams =
+                renderer !== undefined
+                    ? renderer.defaultStyle.renderParams
+                    : {
+                          fontSize: {
+                              unit: FontUnit.Pixel,
+                              size: 32,
+                              backgroundSize: 8
+                          }
+                      };
 
             if (technique.color !== undefined) {
                 const hexColor = getPropertyValue(technique.color, Math.floor(zoomLevel));
@@ -676,10 +686,11 @@ export class PoiManager {
             technique,
             Math.floor(this.mapView.zoomLevel)
         );
+        const renderer = this.mapView.textElementsRenderer;
         let layoutStyle = this.mapView.textLayoutStyleCache.get(cacheId);
         if (layoutStyle === undefined) {
-            const defaultLayoutParams = this.mapView.textElementsRenderer!.defaultStyle
-                .layoutParams;
+            const defaultLayoutParams =
+                renderer !== undefined ? renderer.defaultStyle.layoutParams : {};
 
             const layoutParams = {
                 tracking: getOptionValue(technique.tracking, defaultLayoutParams.tracking),
