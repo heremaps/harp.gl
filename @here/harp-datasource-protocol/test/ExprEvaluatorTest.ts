@@ -79,6 +79,8 @@ describe("ExprEvaluator", function() {
             assert.strictEqual(evaluate(["get", "z", ["literal", object]]), object.z);
             assert.strictEqual(evaluate(["get", "k", ["literal", object]]), object.k);
             assert.strictEqual(evaluate(["get", "w", ["literal", object]]), null);
+
+            assert.strictEqual(evaluate(["get", ["string", "k"], ["literal", object]]), object.k);
         });
 
         it("Serialize object access", function() {
