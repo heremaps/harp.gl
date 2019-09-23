@@ -57,6 +57,16 @@ export interface ViewRanges {
 
 export interface ClipPlanesEvaluator {
     /**
+     * Minimum elevation to be rendered, values beneath the sea level are negative.
+     */
+    minElevation: number;
+
+    /**
+     * Set maximum elevation to be rendered, values above sea level are possitive.
+     */
+    maxElevation: number;
+
+    /**
      * Compute near and far clipping planes distance.
      *
      * Evaluation method should be called on every frame  and camera clip planes updated.
@@ -106,6 +116,22 @@ export class InterpolatedClipPlanesEvaluator implements ClipPlanesEvaluator {
         assert(nearFarMultiplier >= 0);
         assert(farOffset >= 0);
         this.farMin = nearMin * nearFarMultiplier + farOffset;
+    }
+
+    // tslint:disable-next-line: no-empty
+    set minElevation(elevation: number) {}
+
+    get minElevation(): number {
+        // This evaluator does not support elevation so its always set to 0.
+        return 0;
+    }
+
+    // tslint:disable-next-line: no-empty
+    set maxElevation(elevation: number) {}
+
+    get maxElevation(): number {
+        // This evaluator does not support elevation so its always set to 0.
+        return 0;
     }
 
     evaluateClipPlanes(camera: THREE.Camera, projection: Projection): ViewRanges {
@@ -174,8 +200,10 @@ export abstract class ElevationBasedClipPlanesEvaluator implements ClipPlanesEva
     }
 
     abstract evaluateClipPlanes(camera: THREE.Camera, projection: Projection): ViewRanges;
+
     /**
      * Set maximum elevation above sea level to be rendered.
+     *
      * @param elevation the elevation (altitude) value in world units (meters).
      * @note If you set this exactly to the maximum rendered feature height (altitude above
      * the sea, you may notice some flickering or even polygons disappearing related to rounding
@@ -201,6 +229,7 @@ export abstract class ElevationBasedClipPlanesEvaluator implements ClipPlanesEva
 
     /**
      * Set minimum elevation to be rendered, values beneath the sea level are negative.
+     *
      * @param elevation the minimum elevation (depression) in world units (meters).
      * @note If you set this parameter to zero you may not see any features rendered if they are
      * just below the sea level more then half of [[nearFarMargin]] assumed. Similarly if set to
@@ -303,14 +332,6 @@ export class TopViewClipPlanesEvaluator extends ElevationBasedClipPlanesEvaluato
         };
     }
 
-    /**
-     * Get minimum view range that is possible to achieve with current evaluator settings.
-     * @note This value will not change after evaluator is constructed.
-     */
-    get minimumViewRange(): ViewRanges {
-        return this.m_minimumViewRange;
-    }
-
     evaluateClipPlanes(camera: THREE.Camera, projection: Projection): ViewRanges {
         if (projection.type === ProjectionType.Spherical) {
             return this.evaluateDistanceSphericalProj(camera, projection);
@@ -319,6 +340,14 @@ export class TopViewClipPlanesEvaluator extends ElevationBasedClipPlanesEvaluato
         }
         assert(false, "Unsuported projection type");
         return { ...this.minimumViewRange };
+    }
+
+    /**
+     * Get minimum view range that is possible to achieve with current evaluator settings.
+     * @note This value will not change after evaluator is constructed.
+     */
+    protected get minimumViewRange(): ViewRanges {
+        return this.m_minimumViewRange;
     }
 
     /**
@@ -860,6 +889,22 @@ export class FixedClipPlanesEvaluator implements ClipPlanesEvaluator {
 
     set farPlane(fixedFar: number) {
         this.invalidatePlanes(this.m_nearPlane, fixedFar);
+    }
+
+    // tslint:disable-next-line: no-empty
+    set minElevation(elevation: number) {}
+
+    get minElevation(): number {
+        // This evaluator does not support elevation so its always set to 0.
+        return 0;
+    }
+
+    // tslint:disable-next-line: no-empty
+    set maxElevation(elevation: number) {}
+
+    get maxElevation(): number {
+        // This evaluator does not support elevation so its always set to 0.
+        return 0;
     }
 
     evaluateClipPlanes(camera: THREE.Camera, projection: Projection): ViewRanges {

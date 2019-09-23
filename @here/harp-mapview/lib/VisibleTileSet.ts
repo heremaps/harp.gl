@@ -14,11 +14,7 @@ import {
 import { LRUCache } from "@here/harp-lrucache";
 import { assert } from "@here/harp-utils";
 import THREE = require("three");
-import {
-    ClipPlanesEvaluator,
-    ElevationBasedClipPlanesEvaluator,
-    ViewRanges
-} from "./ClipPlanesEvaluator";
+import { ClipPlanesEvaluator, ViewRanges } from "./ClipPlanesEvaluator";
 import { DataSource } from "./DataSource";
 import { CalculationStatus, ElevationRange, ElevationRangeSource } from "./ElevationRangeSource";
 import { FrustumIntersection, TileKeyEntry } from "./FrustumIntersection";
@@ -268,6 +264,9 @@ export class VisibleTileSet {
         });
     }
 
+    /**
+     * Evaluate frustum near/far clip planes and visibility ranges.
+     */
     updateClipPlanes(): ViewRanges {
         this.m_viewRange = this.options.clipPlanesEvaluator.evaluateClipPlanes(
             this.m_frustumIntersection.camera,
@@ -426,10 +425,7 @@ export class VisibleTileSet {
         // frustum planes and update the camera near/far plane distances.
         const clipPlanesEvaluator = this.options.clipPlanesEvaluator;
         let viewRangesChanged: boolean = false;
-        if (
-            elevationRangeSource !== undefined &&
-            clipPlanesEvaluator instanceof ElevationBasedClipPlanesEvaluator
-        ) {
+        if (elevationRangeSource !== undefined) {
             clipPlanesEvaluator.minElevation = minElevation;
             clipPlanesEvaluator.maxElevation = maxElevation;
             const viewRanges = this.updateClipPlanes();
