@@ -1238,14 +1238,12 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                                 tmpV3.z + tempRoofDisp.z
                             );
                             extrusionAxis.push(
+                                0,
+                                0,
+                                0,
                                 tempRoofDisp.x - tempFootDisp.x,
                                 tempRoofDisp.y - tempFootDisp.y,
-                                tempRoofDisp.z - tempFootDisp.z,
-                                0.0,
-                                tempRoofDisp.x - tempFootDisp.x,
-                                tempRoofDisp.y - tempFootDisp.y,
-                                tempRoofDisp.z - tempFootDisp.z,
-                                1.0
+                                tempRoofDisp.z - tempFootDisp.z
                             );
                             if (texCoordType !== undefined) {
                                 textureCoordinates.push(vertices[i + 2], vertices[i + 3]);
@@ -1455,7 +1453,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
             if (meshBuffers.extrusionAxis.length > 0) {
                 const extrusionAxis = new Float32Array(meshBuffers.extrusionAxis);
                 assert(
-                    extrusionAxis.length / 4 === positionElements.length / 3,
+                    extrusionAxis.length === positionElements.length,
                     "length of extrusionAxis buffer is different than the length of the " +
                         "position buffer"
                 );
@@ -1463,7 +1461,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                 geometry.vertexAttributes.push({
                     name: "extrusionAxis",
                     buffer: extrusionAxis.buffer as ArrayBuffer,
-                    itemCount: 4,
+                    itemCount: 3,
                     type: "float"
                 });
             }
