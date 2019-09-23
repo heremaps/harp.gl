@@ -528,7 +528,7 @@ export interface MapViewOptions {
      * Enable phased loading. If `false`, the geometry on a [[Tile]] is always being created in a
      * single step, instead of (potentially) over multiple frames to smoothen animations.
      *
-     * @default `true`
+     * @default `false`
      */
     enablePhasedLoading?: boolean;
 
