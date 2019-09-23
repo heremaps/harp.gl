@@ -30,6 +30,7 @@ import { FlowOperators } from "./operators/FlowOperators";
 import { InterpolationOperators } from "./operators/InterpolationOperators";
 import { MathOperators } from "./operators/MathOperators";
 import { MiscOperators } from "./operators/MiscOperators";
+import { ObjectOperators } from "./operators/ObjectOperators";
 import { StringOperators } from "./operators/StringOperators";
 import { TypeOperators } from "./operators/TypeOperators";
 
@@ -203,3 +204,4 @@ ExprEvaluator.defineOperators(MiscOperators);
 ExprEvaluator.defineOperators(FlowOperators);
 ExprEvaluator.defineOperators(ArrayOperators);
 ExprEvaluator.defineOperators(InterpolationOperators);
+ExprEvaluator.defineOperators(ObjectOperators);

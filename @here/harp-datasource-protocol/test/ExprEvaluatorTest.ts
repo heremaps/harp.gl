@@ -70,6 +70,26 @@ describe("ExprEvaluator", function() {
             assert.strictEqual(evaluate(["get", "get"]), null);
             assert.strictEqual(evaluate(["get", "length"]), null);
         });
+
+        it("Object access", function() {
+            const object = { x: 1, y: 2, z: 3, k: "point" };
+            assert.strictEqual(evaluate(["literal", object]), object);
+            assert.strictEqual(evaluate(["get", "x", ["literal", object]]), object.x);
+            assert.strictEqual(evaluate(["get", "y", ["literal", object]]), object.y);
+            assert.strictEqual(evaluate(["get", "z", ["literal", object]]), object.z);
+            assert.strictEqual(evaluate(["get", "k", ["literal", object]]), object.k);
+            assert.strictEqual(evaluate(["get", "w", ["literal", object]]), null);
+        });
+
+        it("Serialize object access", function() {
+            const expr = ["get", "x", ["literal", { x: 1 }]];
+            assert.equal(JSON.stringify(expr), JSON.stringify(Expr.fromJSON(expr)));
+        });
+
+        it("Serialize access", function() {
+            const expr = ["get", "x"];
+            assert.equal(JSON.stringify(expr), JSON.stringify(Expr.fromJSON(expr)));
+        });
     });
 
     describe("Operator 'has'", function() {
@@ -83,6 +103,25 @@ describe("ExprEvaluator", function() {
             assert.isFalse(evaluate(["has", "has"]));
             assert.isFalse(evaluate(["has", "get"]));
             assert.isFalse(evaluate(["has", "length"]));
+        });
+
+        it("Object access", function() {
+            const object = { x: 1, y: 2, z: 3, k: "point" };
+            assert.isTrue(evaluate(["has", "x", ["literal", object]]));
+            assert.isTrue(evaluate(["has", "y", ["literal", object]]));
+            assert.isTrue(evaluate(["has", "z", ["literal", object]]));
+            assert.isTrue(evaluate(["has", "k", ["literal", object]]));
+            assert.isFalse(evaluate(["has", "w", ["literal", object]]));
+        });
+
+        it("Serialize object access", function() {
+            const expr = ["has", "x", ["literal", { x: 1 }]];
+            assert.equal(JSON.stringify(expr), JSON.stringify(Expr.fromJSON(expr)));
+        });
+
+        it("Serialize access", function() {
+            const expr = ["has", "x"];
+            assert.equal(JSON.stringify(expr), JSON.stringify(Expr.fromJSON(expr)));
         });
     });
 

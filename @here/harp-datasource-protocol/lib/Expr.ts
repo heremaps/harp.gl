@@ -70,12 +70,18 @@ export abstract class Expr {
 
         switch (op) {
             case "get":
+                if (node[2] !== undefined) {
+                    return Expr.makeCallExpr(op, node);
+                }
                 if (typeof node[1] !== "string") {
                     throw new Error(`expected the name of an attribute`);
                 }
                 return new VarExpr(node[1]);
 
             case "has":
+                if (node[2] !== undefined) {
+                    return Expr.makeCallExpr(op, node);
+                }
                 if (typeof node[1] !== "string") {
                     throw new Error(`expected the name of an attribute`);
                 }
@@ -147,8 +153,12 @@ export abstract class Expr {
             }
 
             default:
-                return new CallExpr(op, node.slice(1).map(childExpr => this.fromJSON(childExpr)));
+                return this.makeCallExpr(op, node);
         } // switch
+    }
+
+    private static makeCallExpr(op: string, node: any[]): Expr {
+        return new CallExpr(op, node.slice(1).map(childExpr => this.fromJSON(childExpr)));
     }
 
     /**
