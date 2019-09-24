@@ -150,7 +150,7 @@ export class PolarTileDataSource extends DataSource {
     }
 
     shouldSubdivide(zoomLevel: number, tileKey: TileKey): boolean {
-        if (zoomLevel < tileKey.level) {
+        if (zoomLevel <= tileKey.level) {
             return false;
         }
 
@@ -169,6 +169,14 @@ export class PolarTileDataSource extends DataSource {
         this.createTileGeometry(tile);
 
         return tile;
+    }
+
+    get geometryLevelOffset(): number {
+        return this.m_geometryLevelOffset;
+    }
+
+    set geometryLevelOffset(geometryLevelOffset: number) {
+        this.m_geometryLevelOffset = geometryLevelOffset;
     }
 
     private intersectEdge(latitude: number, a: GeoCoordinates, b: GeoCoordinates): GeoCoordinates {

@@ -554,17 +554,20 @@ export interface MapViewOptions {
 
     /**
      * Should be the [[PolarTileDataSource]] used on spherical projection.
+     * Default is `true`.
      */
     enablePolarDataSource?: boolean;
 
     /**
      * The name of the [[StyleSet]] used by [[PolarTileDataSource]] to evaluate for the decoding.
+     * Default is `"polar"`.
      */
     polarStyleSetName?: string;
 
     /**
      * Storage level offset of regular tiles from reference datasource to align
      * [[PolarTileDataSource]] tiles to.
+     * Default is `-1`.
      */
     polarGeometryLevelOffset?: number;
 
