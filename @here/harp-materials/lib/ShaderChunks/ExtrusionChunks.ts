@@ -20,16 +20,18 @@ vExtrusionAxis = vec4(normalMatrix * extrusionAxis.xyz, extrusionAxis.w);
     // on the extrusion factor (1.0 = ceiling, 0.0 = footprint).
     extrusion_normal_fragment_begin: `
 #ifdef FLAT_SHADED
-    vec3 normal = vec3(0.0);
-    if (vExtrusionAxis.w > 0.999999) {
-        normal = normalize(vExtrusionAxis.xyz);
+    // Flattened this divergent path to prevent undefined behaviour in the following derivatives
+    // functions. For more info:
+    // http://www.aclockworkberry.com/shader-derivative-functions/#Derivatives_and_branches
+
+    // Workaround for Adreno/Nexus5 not able able to do dFdx( vViewPosition ) ...
+    vec3 fdx = vec3(dFdx(vViewPosition.x), dFdx(vViewPosition.y), dFdx(vViewPosition.z));
+    vec3 fdy = vec3(dFdy(vViewPosition.x), dFdy(vViewPosition.y), dFdy(vViewPosition.z));
+    vec3 normal = cross( fdx, fdy );
+    if (vExtrusionAxis.w >= 1.0) {
+        normal = vExtrusionAxis.xyz;
     }
-    else  {
-        // Workaround for Adreno/Nexus5 not able able to do dFdx( vViewPosition ) ...
-        vec3 fdx = vec3(dFdx(vViewPosition.x), dFdx(vViewPosition.y), dFdx(vViewPosition.z));
-        vec3 fdy = vec3(dFdy(vViewPosition.x), dFdy(vViewPosition.y), dFdy(vViewPosition.z));
-        normal = normalize( cross( fdx, fdy ) );
-    }
+    normal = normalize(normal);
 #else
 	vec3 normal = normalize( vNormal );
 	#ifdef DOUBLE_SIDED
