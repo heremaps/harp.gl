@@ -19,7 +19,7 @@ import {
     ProjectionType,
     TilingScheme
 } from "@here/harp-geoutils";
-import { assert, getOptionValue, LoggerManager, PerformanceTimer } from "@here/harp-utils";
+import { assert, getOptionValue, LoggerManager, Math2D, PerformanceTimer } from "@here/harp-utils";
 import * as THREE from "three";
 
 import { AnimatedExtrusionHandler } from "./AnimatedExtrusionHandler";
@@ -767,7 +767,7 @@ export class MapView extends THREE.EventDispatcher {
     private m_lastTileIds: string = "";
     private m_languages: string[] | undefined;
     private m_copyrightInfo: CopyrightInfo[] = [];
-
+    private m_screenSpaceBoxes: Math2D.Box[] = [];
     private m_animatedExtrusionHandler: AnimatedExtrusionHandler;
 
     /**
@@ -2346,6 +2346,17 @@ export class MapView extends THREE.EventDispatcher {
     }
 
     /**
+     * Allows the user to block some areas of the screen.
+     * @note To clear, simply pass in an empty array.
+     * @param screenSpaceBoxes Boxes that are in pseudo screen space, i.e. the center of the screen
+     * is at 0,0, whilst the left top point is -width/2, -height/2 and the bottom right is width/2
+     * and height/2.
+     */
+    setScreenSpaceBoxes(screenSpaceBoxes: Math2D.Box[]) {
+        this.m_screenSpaceBoxes = screenSpaceBoxes;
+    }
+
+    /**
      * Public access to [[MapViewFog]] allowing to toggle it by setting its `enabled` property.
      */
     get fog(): MapViewFog {
@@ -2877,6 +2888,7 @@ export class MapView extends THREE.EventDispatcher {
         // they are handled first. They will be rendered after the normal map objects and
         // TextElements
         this.m_textElementsRenderer.reset();
+        this.m_textElementsRenderer.prepopulateScreen(this.m_screenSpaceBoxes);
         this.m_textElementsRenderer.renderUserTextElements(time, this.m_frameNumber);
         this.m_textElementsRenderer.renderAllTileText(time, this.m_frameNumber);
         this.m_textElementsRenderer.renderOverlay(this.m_overlayTextElements);

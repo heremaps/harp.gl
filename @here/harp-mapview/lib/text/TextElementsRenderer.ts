@@ -604,6 +604,12 @@ export class TextElementsRenderer {
         return memoryUsage;
     }
 
+    prepopulateScreen(boxes: Math2D.Box[]) {
+        for (const box of boxes) {
+            this.m_screenCollisions.allocate(box);
+        }
+    }
+
     private initializeDefaultAssets(): void {
         // Initialize default font catalog.
         if (
