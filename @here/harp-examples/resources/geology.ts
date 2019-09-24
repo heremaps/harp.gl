@@ -6,7 +6,14 @@
 export const faults = {
     trenches: {
         "Ryukyu Trench": [[137, 33], [133, 31], [131, 29], [127, 25]],
-        "Japan and Kurile Trench": [[16959], [164, 57], [163, 54], [156, 48], [144, 41], [143, 39]],
+        "Japan and Kurile Trench": [
+            [169, 59],
+            [164, 57],
+            [163, 54],
+            [156, 48],
+            [144, 41],
+            [143, 39]
+        ],
         "Izu-Ogazawara Trench": [[143, 39], [141, 33]],
         "Mariane Trench": [
             [141, 33],
