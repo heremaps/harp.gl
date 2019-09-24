@@ -47,10 +47,6 @@ import { COUNTRIES } from "../resources/countries";
  * and leaving mechanism, that adds and removes datasources.
  */
 export namespace PolygonsFeaturesExample {
-    // snippet:harp_demo_features_polygons_0.ts
-    const map = createBaseMap();
-    // end:harp_demo_features_polygons_0.ts
-
     const EU = getEuropeMemberStatesPerYear();
     const steps = Object.keys(EU.steps);
     const stepsNumber = steps.length;
@@ -62,6 +58,10 @@ export namespace PolygonsFeaturesExample {
         color: "#77ccff"
     });
     // end:harp_demo_features_polygons_1.ts
+
+    // snippet:harp_demo_features_polygons_0.ts
+    const map = createBaseMap();
+    // end:harp_demo_features_polygons_0.ts
 
     const addPromises: Array<Promise<void>> = [];
 
@@ -111,15 +111,14 @@ export namespace PolygonsFeaturesExample {
                 });
                 features.push(feature);
             }
-            const featuresDataSource = new FeaturesDataSource();
-            featuresDataSource.maxGeometryHeight = 300000;
-
+            const featuresDataSource = new FeaturesDataSource({
+                name: `member-states-${j}`,
+                styleSetName: "geojson",
+                features,
+                maxGeometryHeight: 300000
+            });
             const addPromise = map.addDataSource(featuresDataSource);
             addPromises.push(addPromise);
-            addPromise.then(() => {
-                featuresDataSource.setStyleSet(styleSet);
-                featuresDataSource.add(...features);
-            });
             datasources.push(featuresDataSource);
             // end:harp_demo_features_polygons_2.ts
         }
@@ -295,6 +294,7 @@ export namespace PolygonsFeaturesExample {
                     }
                 },
                 styles: {
+                    geojson: styleSet,
                     polar: [
                         {
                             description: "North pole",
@@ -329,6 +329,7 @@ export namespace PolygonsFeaturesExample {
         window.addEventListener("resize", () => mapView.resize(innerWidth, innerHeight));
 
         const baseMap = new OmvDataSource({
+            name: "basemap",
             baseUrl: "https://xyz.api.here.com/tiles/herebase.02",
             apiFormat: APIFormat.XYZOMV,
             styleSetName: "tilezen",
