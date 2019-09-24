@@ -6,7 +6,7 @@
 
 import * as THREE from "three";
 
-import { Definitions, StyleSet } from "@here/harp-datasource-protocol";
+import { Definitions, StyleSet, Theme } from "@here/harp-datasource-protocol";
 import { MapEnv, StyleSetEvaluator } from "@here/harp-datasource-protocol/index-decoder";
 import {
     GeoCoordinates,
@@ -129,6 +129,14 @@ export class PolarTileDataSource extends DataSource {
         }
 
         this.mapView.markTilesDirty(this);
+    }
+
+    setTheme(theme: Theme, languages?: string[]): void {
+        const styleSet =
+            (this.styleSetName !== undefined && theme.styles && theme.styles[this.styleSetName]) ||
+            [];
+
+        this.setStyleSet(styleSet, theme.definitions, languages);
     }
 
     shouldRender(zoomLevel: number, tileKey: TileKey): boolean {
