@@ -35,30 +35,35 @@ float joinDist(vec2 segment, vec2 texcoord) {
 }
 `,
     round_edges_and_add_caps: `
-float roundEdgesAndAddCaps(in vec2 segment, in vec2 uv, in float lineEnds) {
+float roundEdgesAndAddCaps(
+        in vec2 uv,
+        in vec2 segment,
+        in float lineEnds,
+        in float vExtrusionStrength
+    ) {
 
     float dist = 0.0;
 
     #if defined(CAPS_NONE)
-        if (lineEnds > -0.1) {
+        if (lineEnds > -0.1 && vExtrusionStrength < 1.0) {
             dist = max((lineEnds + 0.1) / 0.1, abs(uv.y));
         } else {
             dist = joinDist(segment, uv);
         }
     #elif defined(CAPS_SQUARE)
-        if (lineEnds > 0.0) {
+        if (lineEnds > 0.0 && vExtrusionStrength < 1.0) {
             dist = max(abs(uv.y), lineEnds);
         } else {
             dist = joinDist(segment, uv);
         }
     #elif defined(CAPS_TRIANGLE_OUT)
-        if (lineEnds > 0.0) {
+        if (lineEnds > 0.0 && vExtrusionStrength < 1.0) {
             dist = (abs(uv.y)) + lineEnds;
         } else {
             dist = joinDist(segment, uv);
         }
     #elif defined(CAPS_TRIANGLE_IN)
-        if (lineEnds > 0.0) {
+        if (lineEnds > 0.0 && vExtrusionStrength < 1.0) {
             float y = abs(uv.y);
             dist = max(y, (lineEnds-y) + lineEnds);
         } else {

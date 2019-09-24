@@ -22,6 +22,17 @@ export const LineCapsDefinitions: { [key in LineCaps]: string } = {
     TriangleOut: "CAPS_TRIANGLE_OUT"
 };
 
+/**
+ * The vLength contains the actual line length, it's needed for the creation of line caps by
+ * detecting line ends. `vLength == vExtrusionCoord.x + lineWidth * 2`
+ */
+/**
+ * The vExtrusionStrength relies on the edges of the lines. Represents how far the current point was
+ * extruded on the edges because of the current angle. Needed for preventing line caps artifacts on
+ * sharp line edges. For example, on sharp edges, some vertices can be extruded much further than
+ * the full line length.
+ */
+
 const vertexSource: string = `
 #define SEGMENT_OFFSET 0.1
 
@@ -46,6 +57,7 @@ varying vec2 vSegment;
 varying float vResultLineWidth;
 varying vec3 vPosition;
 varying float vLength;
+varying float vExtrusionStrength;
 
 #if USE_COLOR
 attribute vec3 color;
@@ -67,6 +79,7 @@ void main() {
 
     vec3 pos = position;
     vec2 extrusionDir = sign(extrusionCoord.xy);
+    vExtrusionStrength = extrusionDir.y * tan(bitangent.w / 2.0);
 
     extrudeLine(vSegment, bitangent, tangent, vResultLineWidth, pos, extrusionDir);
 
@@ -113,6 +126,7 @@ varying vec2 vSegment;
 varying float vResultLineWidth;
 varying vec3 vPosition;
 varying float vLength;
+varying float vExtrusionStrength;
 
 #if USE_COLOR
 varying vec3 vColor;
@@ -138,7 +152,7 @@ void main() {
     tileClip(vPosition.xy, tileSize);
     #endif
 
-    float pointDist = roundEdgesAndAddCaps(vSegment, vExtrusionCoord, lineEnds);
+    float pointDist = roundEdgesAndAddCaps(vSegment, vExtrusionCoord, lineEnds, vExtrusionStrength);
     float dist = pointDist - vResultLineWidth;
     float width = fwidth(dist);
     alpha *= (1.0 - smoothstep(-width, width, dist));
@@ -242,6 +256,12 @@ export interface SolidLineMaterialParameters
      * Line opacity.
      */
     opacity?: number;
+
+    /**
+     * Describes line caps type (`"None"`, `"Round"`, `"Square"`, `"TriangleOut"`, `"TriangleIn"`).
+     * Default is `"Round"`.
+     */
+    caps?: LineCaps;
 }
 
 /**
@@ -351,6 +371,9 @@ export class SolidLineMaterial extends THREE.RawShaderMaterial
             }
             if (params.displacementMap !== undefined) {
                 this.displacementMap = params.displacementMap;
+            }
+            if (params.caps !== undefined && LineCapsDefinitions.hasOwnProperty(params.caps)) {
+                defines[LineCapsDefinitions[params.caps]] = 1;
             }
             this.fog = hasFog;
         }
