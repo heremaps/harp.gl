@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { StyleSet } from "@here/harp-datasource-protocol";
+import { StyleSet, Theme } from "@here/harp-datasource-protocol";
 import { FeaturesDataSource } from "@here/harp-features-datasource";
 import { GeoCoordinates } from "@here/harp-geoutils";
 import { MapControls, MapControlsUI } from "@here/harp-map-controls";
@@ -19,15 +19,20 @@ import { accessToken, copyrightInfo } from "../config";
  */
 export namespace GeoJsonExample {
     const editorWidth = "550px";
-    const map = createBaseMap();
+    const customTheme: Theme = {
+        extends: "resources/berlin_tilezen_night_reduced.json",
+        styles: {
+            geojson: getStyleSet()
+        }
+    };
+
+    const map = createBaseMap(customTheme);
 
     setUpFilePicker();
     setUpEditor();
 
-    const featuresDataSource = new FeaturesDataSource();
-    map.addDataSource(featuresDataSource).then(() => {
-        featuresDataSource.setStyleSet(getStyleSet());
-    });
+    const featuresDataSource = new FeaturesDataSource({ styleSetName: "geojson" });
+    map.addDataSource(featuresDataSource);
 
     function setUpEditor() {
         const editorInput = document.querySelector("#editor textarea") as HTMLTextAreaElement;
@@ -76,7 +81,7 @@ export namespace GeoJsonExample {
                 renderOrder: 10002,
                 attr: {
                     size: 10,
-                    color: "5ad"
+                    color: "#5ad"
                 }
             },
             {
@@ -136,13 +141,13 @@ export namespace GeoJsonExample {
         );
     }
 
-    function createBaseMap(): MapView {
+    function createBaseMap(theme: Theme): MapView {
         document.body.innerHTML += getExampleHTML();
 
         const canvas = document.getElementById("mapCanvas") as HTMLCanvasElement;
         const mapView = new MapView({
             canvas,
-            theme: "resources/berlin_tilezen_night_reduced.json"
+            theme
         });
         mapView.renderLabels = false;
         mapView.setCameraGeolocationAndZoom(new GeoCoordinates(30, 0), 2);

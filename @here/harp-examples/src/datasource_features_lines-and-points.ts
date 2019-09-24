@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { StyleSet } from "@here/harp-datasource-protocol";
+import { StyleSet, Theme } from "@here/harp-datasource-protocol";
 import {
     FeaturesDataSource,
     MapViewFeature,
@@ -22,7 +22,10 @@ import { faults, hotspots } from "../resources/geology";
  * This example illustrates how to add user lines and points in [[MapView]]. As custom features,
  * they are handled through a [[FeaturesDataSource]].
  *
- * First we create a base map. For more details, check the `hello` example.
+ * First we create a base map, but with customized theme which derives from default, but adds
+ * custom [[StyleSet]] - `myStyleSet` - which will be used by datasource with our features.
+ *
+ * For more details, check the `hello` example.
  * ```typescript
  * [[include:harp_demo_features_linespoints_0.ts]]
  * ```
@@ -39,7 +42,8 @@ import { faults, hotspots } from "../resources/geology";
  * ```
  *
  * Then we use the general [[DataSource]] mechanism: the [[FeaturesDataSource]] is created, added
- * to [[MapView]], the [[MapViewFeature]]s are added to it, and we apply the [[StyleSet]] we desire:
+ * to [[MapView]], the [[MapViewFeature]]s are added to it, and we specify [[StyleSet]] name set
+ * previously in map theme.
  * ```typescript
  * [[include:harp_demo_features_linespoints_3.ts]]
  * ```
@@ -51,16 +55,58 @@ import { faults, hotspots } from "../resources/geology";
  */
 export namespace LinesPointsFeaturesExample {
     // snippet:harp_demo_features_linespoints_0.ts
-    const map = createBaseMap();
+    const customizedTheme: Theme = {
+        extends: "resources/berlin_tilezen_day_reduced.json",
+        sky: {
+            type: "gradient",
+            topColor: "#898470",
+            bottomColor: "#898470",
+            groundColor: "#898470"
+        },
+        definitions: {
+            northPoleColor: {
+                type: "color",
+                value: "#B1AC9C"
+            },
+            southPoleColor: {
+                type: "color",
+                value: "#c3bdae"
+            }
+        },
+        styles: {
+            myStyleSet: getStyleSet(),
+            polar: [
+                {
+                    description: "North pole",
+                    when: ["==", ["get", "kind"], "north_pole"],
+                    technique: "fill",
+                    attr: {
+                        color: ["ref", "northPoleColor"]
+                    },
+                    renderOrder: 5
+                },
+                {
+                    description: "South pole",
+                    when: ["==", ["get", "kind"], "south_pole"],
+                    technique: "fill",
+                    attr: {
+                        color: ["ref", "southPoleColor"]
+                    },
+                    renderOrder: 5
+                }
+            ]
+        }
+    };
+    const map = createBaseMap(customizedTheme);
     // end:harp_demo_features_linespoints_0.ts
 
     // snippet:harp_demo_features_linespoints_3.ts
-    const featuresDataSource = new FeaturesDataSource();
-    map.addDataSource(featuresDataSource).then(() => {
-        const features = getFeatures(faults);
-        const styleSet = getStyleSet();
-        featuresDataSource.add(...features).setStyleSet(styleSet);
+    const featuresDataSource = new FeaturesDataSource({
+        name: "geojson",
+        styleSetName: "myStyleSet",
+        features: getFeatures(faults)
     });
+    map.addDataSource(featuresDataSource);
     // end:harp_demo_features_linespoints_3.ts
 
     function getFeatures(features: {
@@ -158,54 +204,14 @@ export namespace LinesPointsFeaturesExample {
         ];
     }
 
-    function createBaseMap(): MapView {
+    function createBaseMap(theme: Theme): MapView {
         document.body.innerHTML += getExampleHTML();
 
         const canvas = document.getElementById("mapCanvas") as HTMLCanvasElement;
         const mapView = new MapView({
             canvas,
             projection: sphereProjection,
-            theme: {
-                extends: "resources/berlin_tilezen_day_reduced.json",
-                sky: {
-                    type: "gradient",
-                    topColor: "#898470",
-                    bottomColor: "#898470",
-                    groundColor: "#898470"
-                },
-                definitions: {
-                    northPoleColor: {
-                        type: "color",
-                        value: "#B1AC9C"
-                    },
-                    southPoleColor: {
-                        type: "color",
-                        value: "#c3bdae"
-                    }
-                },
-                styles: {
-                    polar: [
-                        {
-                            description: "North pole",
-                            when: ["==", ["get", "kind"], "north_pole"],
-                            technique: "fill",
-                            attr: {
-                                color: ["ref", "northPoleColor"]
-                            },
-                            renderOrder: 5
-                        },
-                        {
-                            description: "South pole",
-                            when: ["==", ["get", "kind"], "south_pole"],
-                            technique: "fill",
-                            attr: {
-                                color: ["ref", "southPoleColor"]
-                            },
-                            renderOrder: 5
-                        }
-                    ]
-                }
-            }
+            theme
         });
         mapView.setCameraGeolocationAndZoom(new GeoCoordinates(10, -270), 3.5);
 
@@ -216,6 +222,7 @@ export namespace LinesPointsFeaturesExample {
         window.addEventListener("resize", () => mapView.resize(innerWidth, innerHeight));
 
         const baseMap = new OmvDataSource({
+            name: "basemap",
             baseUrl: "https://xyz.api.here.com/tiles/herebase.02",
             apiFormat: APIFormat.XYZOMV,
             styleSetName: "tilezen",
