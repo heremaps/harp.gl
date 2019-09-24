@@ -36,8 +36,8 @@ float joinDist(vec2 segment, vec2 texcoord) {
 `,
     round_edges_and_add_caps: `
 float roundEdgesAndAddCaps(
-        in vec2 uv,
         in vec2 segment,
+        in vec2 uv,
         in float lineEnds,
         in float vExtrusionStrength
     ) {
@@ -70,7 +70,7 @@ float roundEdgesAndAddCaps(
             dist = joinDist(segment, uv);
         }
     #else
-        dist = joinDist(vSegment, vExtrusionCoord);
+        dist = joinDist(segment, uv);
     #endif
 
     return dist;
