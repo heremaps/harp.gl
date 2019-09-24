@@ -83,6 +83,12 @@ const tempP1 = new THREE.Vector2();
 const tempPreviousTangent = new THREE.Vector2();
 
 /**
+ * Height buildings take whenever no height-data is present. Used to avoid z-fighting and other
+ * graphics artifacts.
+ */
+const MIN_BUILDING_HEIGHT = 1e-19;
+
+/**
  * Minimum number of pixels per character. Used during estimation if there is enough screen space
  * available to render a text. Based on the estimated screen size of a tile.
  */
@@ -110,6 +116,7 @@ const MAX_CORNER_ANGLE = Math.PI / 8;
  * Used to identify an invalid (or better: unused) array index.
  */
 const INVALID_ARRAY_INDEX = -1;
+
 // for tilezen by default extrude all buildings even those without height data
 class MeshBuffers implements IMeshBuffers {
     readonly positions: number[] = [];
@@ -980,6 +987,12 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
         if (floorHeight === undefined) {
             const featureMinHeight = context.env.lookup("min_height") as number;
             floorHeight = featureMinHeight !== undefined && !isFilled ? featureMinHeight : 0;
+        }
+
+        // Prevent that extruded buildings are completely flat (can introduce errors in normal
+        // computation and extrusion).
+        if (height === floorHeight) {
+            height += MIN_BUILDING_HEIGHT;
         }
 
         const styleSetConstantHeight = getOptionValue(
