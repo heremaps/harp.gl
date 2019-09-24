@@ -358,7 +358,7 @@ export abstract class DataSource extends THREE.EventDispatcher {
      * checked for collisions.
      */
     shouldSubdivide(zoomLevel: number, tileKey: TileKey): boolean {
-        return tileKey.level < zoomLevel;
+        return tileKey.level <= zoomLevel;
     }
 
     /**
