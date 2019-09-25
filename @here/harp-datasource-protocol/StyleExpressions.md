@@ -21,7 +21,7 @@ Returns `true` if any sub expression evaluates to `true`.
 
 ## none
 
-Returns `true` if no sub expressions evaluate to `true`.
+Returns `true` if no sub expression evaluates to `true`.
 
 ```javascript
 ["none", expr...]
@@ -247,7 +247,7 @@ Creates interpolation.
    stepN, valueN,
 ]
 
-["discrete", ["linear"], ["zoom"],
+["interpolate", ["discrete"], ["zoom"],
    step1, value1,
    ...
    stepN, valueN,
