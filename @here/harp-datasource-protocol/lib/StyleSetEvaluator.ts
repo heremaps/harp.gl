@@ -627,19 +627,22 @@ export class StyleSetEvaluator {
                 if (expr instanceof LiteralExpr) {
                     // Shortcut for literal expressions, so they are not taken into account when
                     // trying to instantiate technique variants.
-                    targetStaticAttributes.push([attrName, expr.value]);
+                    attrValue = expr.value;
+                } else {
+                    switch (attrScope) {
+                        case AttrScope.FeatureGeometry:
+                            dynamicFeatureAttributes.push([attrName, expr]);
+                            break;
+                        case AttrScope.TechniqueGeometry:
+                        case AttrScope.TechniqueRendering:
+                            dynamicTechniqueAttributes.push([attrName, expr]);
+                            break;
+                    }
                     return;
                 }
-                switch (attrScope) {
-                    case AttrScope.FeatureGeometry:
-                        dynamicFeatureAttributes.push([attrName, expr]);
-                        break;
-                    case AttrScope.TechniqueGeometry:
-                    case AttrScope.TechniqueRendering:
-                        dynamicTechniqueAttributes.push([attrName, expr]);
-                        break;
-                }
-            } else if (isInterpolatedPropertyDefinition(attrValue)) {
+            }
+
+            if (isInterpolatedPropertyDefinition(attrValue)) {
                 const interpolatedProperty = createInterpolatedProperty(attrValue);
                 if (!interpolatedProperty) {
                     return;

@@ -200,7 +200,7 @@ export interface StringValueDefinition extends BaseValueDefinition {
     /**
      * The value of the definition.
      */
-    value: string;
+    value: DynamicProperty<string>;
 }
 
 /**

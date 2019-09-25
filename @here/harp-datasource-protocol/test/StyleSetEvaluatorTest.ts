@@ -9,6 +9,8 @@
 
 import { assert } from "chai";
 import { MapEnv } from "../lib/Expr";
+import { createInterpolatedProperty } from "../lib/InterpolatedProperty";
+import { InterpolatedPropertyDefinition } from "../lib/InterpolatedPropertyDefs";
 import { StyleSetEvaluator } from "../lib/StyleSetEvaluator";
 import { FillTechnique, isSolidLineTechnique, SolidLineTechnique } from "../lib/Techniques";
 import { Definitions, StyleDeclaration, StyleSet } from "../lib/Theme";
@@ -242,20 +244,31 @@ describe("StyleSetEvaluator", function() {
         const sampleStyleDeclaration: StyleDeclaration = {
             technique: "fill",
             when: ["ref", "expr"],
-            attr: { lineWidth: ["ref", "number"] }
+            attr: { lineWidth: ["ref", "number"], color: ["ref", "interpolator"] }
+        };
+        const interpolator: InterpolatedPropertyDefinition<string> = {
+            interpolation: "Linear",
+            zoomLevels: [2, 3],
+            values: ["#faa", "#afa"]
         };
         const sampleDefinitions: Definitions = {
             expr: { type: "selector", value: ["==", ["get", "kind"], "park"] },
-            number: { type: "number", value: 123 }
+            number: { type: "number", value: 123 },
+            interpolator: {
+                type: "color",
+                value: interpolator
+            }
         };
         it("resolves references in style declaration attributes", function() {
             const sse = new StyleSetEvaluator([sampleStyleDeclaration], sampleDefinitions);
             const techniques = sse.getMatchingTechniques(new MapEnv({ kind: "park" }));
 
+            const expectedInterpolator = createInterpolatedProperty(interpolator);
             assert.equal(techniques.length, 1);
             assert.deepNestedInclude(techniques[0], {
                 name: "fill",
                 lineWidth: 123,
+                color: expectedInterpolator,
                 renderOrder: 0
             });
         });
