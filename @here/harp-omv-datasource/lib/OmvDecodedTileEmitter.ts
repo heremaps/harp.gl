@@ -86,7 +86,7 @@ const tempPreviousTangent = new THREE.Vector2();
  * Height buildings take whenever no height-data is present. Used to avoid z-fighting and other
  * graphics artifacts.
  */
-const MIN_BUILDING_HEIGHT = 1e-19;
+const MIN_BUILDING_HEIGHT = 1e-18;
 
 /**
  * Minimum number of pixels per character. Used during estimation if there is enough screen space
