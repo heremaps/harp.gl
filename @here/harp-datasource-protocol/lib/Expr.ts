@@ -7,6 +7,7 @@
 import { ExprEvaluator, ExprEvaluatorContext, OperatorDescriptor } from "./ExprEvaluator";
 import { ExprParser } from "./ExprParser";
 import { ExprPool } from "./ExprPool";
+import { isInterpolatedPropertyDefinition } from "./InterpolatedProperty";
 import { Definitions, isSelectorDefinition, isValueDefinition } from "./Theme";
 
 const exprEvaluator = new ExprEvaluator();
@@ -101,7 +102,7 @@ export abstract class Expr {
         } else if (typeof node === "string") {
             return new StringLiteralExpr(node);
         }
-        throw new Error("failed to create expression");
+        throw new Error(`failed to create expression from: ${JSON.stringify(node)}`);
     }
 
     private static parseCall(node: any[], referenceResolverState?: ReferenceResolverState): Expr {
@@ -245,8 +246,15 @@ export abstract class Expr {
         }
         let result: Expr;
         if (isValueDefinition(definitionEntry)) {
-            result = Expr.fromJSON(definitionEntry.value);
-        } else if (isJsonExpr(definitionEntry)) {
+            if (isInterpolatedPropertyDefinition(definitionEntry.value)) {
+                return new ObjectLiteralExpr(definitionEntry.value);
+            } else if (isJsonExpr(definitionEntry.value)) {
+                definitionEntry = definitionEntry.value;
+            } else {
+                return Expr.fromJSON(definitionEntry.value);
+            }
+        }
+        if (isJsonExpr(definitionEntry)) {
             referenceResolverState.lockedNames.add(name);
             try {
                 result = Expr.parseNode(definitionEntry, referenceResolverState);
