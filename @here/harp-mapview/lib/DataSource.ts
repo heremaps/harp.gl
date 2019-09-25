@@ -218,9 +218,10 @@ export abstract class DataSource extends THREE.EventDispatcher {
     }
 
     /**
-     * Invoked by [[MapView]] to apply new [[Theme]].
+     * Apply the [[Theme]] to this data source.
      *
-     * If `DataSource` depends on a `styleSet` or `languages`, it must update its tiles' geometry.
+     * If `DataSource` depends on a `styleSet` defined by this theme or `languages`, it must update
+     * its tiles' geometry.
      *
      * @param languages
      */

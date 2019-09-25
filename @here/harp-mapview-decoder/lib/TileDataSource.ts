@@ -199,12 +199,21 @@ export class TileDataSource<TileType extends Tile> extends DataSource {
         this.mapView.markTilesDirty(this);
     }
 
+    /**
+     * Apply the [[Theme]] to this data source.
+     *
+     * Applies new [[StyleSet]] and definitions from theme only if matching styleset (see
+     * `styleSetName` property) is found in `theme`.
+     */
     setTheme(theme: Theme, languages?: string[]): void {
         const styleSet =
-            (this.styleSetName !== undefined && theme.styles && theme.styles[this.styleSetName]) ||
-            [];
+            this.styleSetName !== undefined && theme.styles
+                ? theme.styles[this.styleSetName]
+                : undefined;
 
-        this.setStyleSet(styleSet, theme.definitions, languages);
+        if (styleSet !== undefined) {
+            this.setStyleSet(styleSet, theme.definitions, languages);
+        }
     }
 
     clearCache() {
