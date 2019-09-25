@@ -9,8 +9,9 @@ import * as THREE from "three";
 import { debugContext } from "./DebugContext";
 
 declare const require: any;
+
 // tslint:disable-next-line:no-var-requires
-const RTree = require("rtree");
+const RBush = require("rbush");
 
 const logger = LoggerManager.instance.create("ScreenCollissions");
 
@@ -35,12 +36,9 @@ export class ScreenCollisions {
     readonly screenBounds = new Math2D.Box();
 
     /** Tree of allocated bounds. */
-    protected rtree = new RTree();
 
-    /**
-     * An array of temporary variables used when converting boxes to reduce allocations.
-     */
-    private m_returnArray: Math2D.Box[] = [];
+    private rtree = new RBush();
+
     /**
      * Constructs a new ScreenCollisions object.
      */
@@ -52,7 +50,7 @@ export class ScreenCollisions {
      * Resets the list of allocated screen bounds.
      */
     reset() {
-        this.rtree = new RTree();
+        this.rtree.clear();
     }
 
     /**
@@ -72,7 +70,13 @@ export class ScreenCollisions {
      * @param bounds The bounding box in world coordinates.
      */
     allocate(bounds: Math2D.Box): void {
-        this.rtree.insert(bounds, null);
+        const bbox = {
+            minX: bounds.x,
+            minY: bounds.y,
+            maxX: bounds.x + bounds.w,
+            maxY: bounds.y + bounds.h
+        };
+        this.rtree.insert(bbox);
     }
 
     /**
@@ -81,10 +85,15 @@ export class ScreenCollisions {
      * @param bounds The bounding box in world coordinates.
      */
     isAllocated(bounds: Math2D.Box): boolean {
+        const bbox = {
+            minX: bounds.x,
+            minY: bounds.y,
+            maxX: bounds.x + bounds.w,
+            maxY: bounds.y + bounds.h
+        };
+
         // Re-use array to reduce allocations.
-        this.m_returnArray.length = 0;
-        this.m_returnArray = this.rtree.search(bounds, undefined, this.m_returnArray);
-        return this.m_returnArray.length !== 0;
+        return this.rtree.collides(bbox);
     }
 
     /**
