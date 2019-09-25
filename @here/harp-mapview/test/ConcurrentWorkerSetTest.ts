@@ -356,7 +356,7 @@ describe("ConcurrentWorkerSet", function() {
                     type: WorkerServiceProtocol.ServiceMessageName.Response,
                     service: message.service,
                     messageId: message.messageId,
-                    error: "some error" as any
+                    errorMessage: "some error"
                 };
                 self.postMessage(responseMessage);
             };

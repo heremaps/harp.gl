@@ -494,8 +494,12 @@ export class ConcurrentWorkerSet {
             } else {
                 logger.error(`[${this.m_options.scriptUrl}]: onWorkerMessage: invalid workerId`);
             }
-            if (response.error !== undefined) {
-                entry.resolver(new Error(response.error.toString()));
+            if (response.errorMessage !== undefined) {
+                const error = new Error(response.errorMessage);
+                if (response.errorStack !== undefined) {
+                    error.stack = response.errorStack;
+                }
+                entry.resolver(error);
             } else {
                 entry.resolver(undefined, response.response);
             }
