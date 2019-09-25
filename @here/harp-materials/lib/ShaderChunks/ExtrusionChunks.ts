@@ -28,7 +28,7 @@ vExtrusionAxis = vec4(normalMatrix * extrusionAxis.xyz, extrusionAxis.w);
     vec3 fdx = vec3(dFdx(vViewPosition.x), dFdx(vViewPosition.y), dFdx(vViewPosition.z));
     vec3 fdy = vec3(dFdy(vViewPosition.x), dFdy(vViewPosition.y), dFdy(vViewPosition.z));
     vec3 normal = cross( fdx, fdy );
-    if (vExtrusionAxis.w >= 1.0) {
+    if (vExtrusionAxis.w > 0.999999) {
         normal = vExtrusionAxis.xyz;
     }
     normal = normalize(normal);
