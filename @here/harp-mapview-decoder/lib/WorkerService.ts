@@ -144,7 +144,8 @@ export abstract class WorkerService {
                             service: this.serviceId,
                             type: WorkerServiceProtocol.ServiceMessageName.Response,
                             messageId: request.messageId,
-                            error: error.toString()
+                            errorMessage: error.toString(),
+                            errorStack: error.stack
                         });
                     });
             } else {
@@ -204,7 +205,7 @@ export abstract class WorkerService {
                 service: this.serviceId,
                 type: WorkerServiceProtocol.ServiceMessageName.Response,
                 messageId: requestEntry.messageId,
-                error: "cancelled" as any
+                errorMessage: "cancelled"
             });
         });
     }

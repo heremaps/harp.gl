@@ -144,7 +144,8 @@ export namespace WorkerServiceProtocol {
     export interface ResponseMessage extends ServiceMessage {
         type: ServiceMessageName.Response;
         messageId: number;
-        error?: object;
+        errorMessage?: string;
+        errorStack?: string;
         response?: object;
     }
 
