@@ -853,10 +853,7 @@ export class MapView extends THREE.EventDispatcher {
         // Initialization of the renderer
         this.m_renderer = new THREE.WebGLRenderer({
             canvas: this.canvas,
-            antialias:
-                this.m_options.enableNativeWebglAntialias === undefined
-                    ? this.pixelRatio < 2.0
-                    : this.m_options.enableNativeWebglAntialias,
+            antialias: this.nativeWebglAntialiasEnabled,
             alpha: this.m_options.alpha,
             preserveDrawingBuffer: this.m_options.preserveDrawingBuffer === true,
             powerPreference:
@@ -1595,9 +1592,13 @@ export class MapView extends THREE.EventDispatcher {
 
     /**
      * Returns `true` if the native WebGL antialiasing is enabled.
+     *
+     * @default `true` for `pixelRatio` < `2.0`, `false` otherwise.
      */
     get nativeWebglAntialiasEnabled(): boolean {
-        return this.m_options.enableNativeWebglAntialias !== false;
+        return this.m_options.enableNativeWebglAntialias === undefined
+            ? this.pixelRatio < 2.0
+            : this.m_options.enableNativeWebglAntialias;
     }
 
     /**
