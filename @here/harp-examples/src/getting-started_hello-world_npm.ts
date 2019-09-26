@@ -88,7 +88,7 @@ export namespace HelloWorldExample {
         // snippet:harp_gl_hello_world_example_look_at.ts
         // Look at New York.
         const NY = new GeoCoordinates(40.707, -74.01);
-        map.lookAt(NY, 4000, 50, -20);
+        map.lookAt(NY, 3200, 50, -20);
         // end:harp_gl_hello_world_example_look_at.ts
 
         // Add an UI.

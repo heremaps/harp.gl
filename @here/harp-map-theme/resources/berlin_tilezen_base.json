@@ -9,6 +9,7 @@
             "type": "selector",
             "value": [
                 "all",
+                [">=", ["get", "$level"], 15],
                 ["==", ["get", "$layer"], "buildings"],
                 ["==", ["get", "$geometryType"], "polygon"]
             ]
@@ -328,7 +329,7 @@
                 "description": "primary-road-shield-2, level > 10",
                 "when": [
                     "all",
-                    ["==", ["get", "$layer"], "roads"],
+                    ["==", ["get", "$layer"], "road_labels"],
                     ["==", ["get", "kind"], "major_road"],
                     ["==", ["get", "kind_detail"], "primary"],
                     ["has", "ref"],
@@ -362,7 +363,7 @@
                 "description": "primary-road-shield-3, level > 10",
                 "when": [
                     "all",
-                    ["==", ["get", "$layer"], "roads"],
+                    ["==", ["get", "$layer"], "road_labels"],
                     ["==", ["get", "kind"], "major_road"],
                     ["==", ["get", "kind_detail"], "primary"],
                     ["has", "ref"],
@@ -396,7 +397,7 @@
                 "description": "primary-road-shield-4, level > 10",
                 "when": [
                     "all",
-                    ["==", ["get", "$layer"], "roads"],
+                    ["==", ["get", "$layer"], "road_labels"],
                     ["==", ["get", "kind"], "major_road"],
                     ["==", ["get", "kind_detail"], "primary"],
                     ["has", "ref"],
@@ -430,7 +431,7 @@
                 "description": "primary-road-shield-5, level > 10",
                 "when": [
                     "all",
-                    ["==", ["get", "$layer"], "roads"],
+                    ["==", ["get", "$layer"], "road_labels"],
                     ["==", ["get", "kind"], "major_road"],
                     ["==", ["get", "kind_detail"], "primary"],
                     ["has", "ref"],
@@ -464,7 +465,7 @@
                 "description": "primary-road-shield-5+, level > 10",
                 "when": [
                     "all",
-                    ["==", ["get", "$layer"], "roads"],
+                    ["==", ["get", "$layer"], "road_labels"],
                     ["==", ["get", "kind"], "major_road"],
                     ["==", ["get", "kind_detail"], "primary"],
                     ["has", "ref"],
@@ -540,6 +541,26 @@
                 "final": true
             },
             {
+                "description": "primary - labels",
+                "when": [
+                    "all",
+                    ["==", ["get", "$layer"], "road_labels"],
+                    ["==", ["get", "kind"], "major_road"],
+                    ["in", ["get", "kind_detail"], ["primary"]]
+                ],
+                "technique": "text",
+                "attr": {
+                    "color": "#000000",
+                    "backgroundColor": "#FFFFFF",
+                    "backgroundOpacity": 0.5,
+                    "size": 16,
+                    "priority": 16,
+                    "fadeNear": 0.8,
+                    "fadeFar": 0.9
+                },
+                "renderOrder": 12
+            },
+            {
                 "description": "highway-trunk-outline",
                 "when": [
                     "all",
@@ -588,7 +609,7 @@
                 "description": "secondary-road-shield, level > 11",
                 "when": [
                     "all",
-                    ["==", ["get", "$layer"], "roads"],
+                    ["==", ["get", "$layer"], "road_labels"],
                     ["==", ["get", "kind"], "major_road"],
                     ["==", ["get", "kind_detail"], "secondary"],
                     ["has", "ref"],
@@ -652,10 +673,30 @@
                 "final": true
             },
             {
+                "description": "secondary - labels",
+                "when": [
+                    "all",
+                    ["==", ["get", "$layer"], "road_labels"],
+                    ["==", ["get", "kind"], "major_road"],
+                    ["==", ["get", "kind_detail"], "secondary"]
+                ],
+                "technique": "text",
+                "attr": {
+                    "color": "#000000",
+                    "backgroundColor": "#FFFFFF",
+                    "backgroundOpacity": 0.5,
+                    "size": 16,
+                    "priority": 15,
+                    "fadeNear": 0.8,
+                    "fadeFar": 0.9
+                },
+                "renderOrder": 12
+            },
+            {
                 "description": "tertiary-road-shield, level > 13",
                 "when": [
                     "all",
-                    ["==", ["get", "$layer"], "roads"],
+                    ["==", ["get", "$layer"], "road_labels"],
                     ["==", ["get", "kind"], "major_road"],
                     ["==", ["get", "kind_detail"], "tertiary"],
                     ["has", "ref"],
@@ -734,9 +775,30 @@
                 "final": true
             },
             {
+                "description": "tertiary - labels",
+                "when": [
+                    "all",
+                    ["==", ["get", "$layer"], "road_labels"],
+                    ["==", ["get", "kind"], "major_road"],
+                    ["in", ["get", "kind_detail"], ["tertiary"]]
+                ],
+                "technique": "text",
+                "attr": {
+                    "color": "#000000",
+                    "backgroundColor": "#FFFFFF",
+                    "backgroundOpacity": 0.5,
+                    "size": 16,
+                    "priority": 14,
+                    "fadeNear": 0.8,
+                    "fadeFar": 0.9
+                },
+                "renderOrder": 12
+            },
+            {
                 "description": "residential - background",
                 "when": [
                     "all",
+                    [">=", ["get", "$level"], 13],
                     ["==", ["get", "$layer"], "roads"],
                     ["==", ["get", "kind"], "minor_road"],
                     [
@@ -764,6 +826,7 @@
                 "description": "residential - foreground",
                 "when": [
                     "all",
+                    [">=", ["get", "$level"], 13],
                     ["==", ["get", "$layer"], "roads"],
                     ["==", ["get", "kind"], "minor_road"],
                     [
@@ -791,7 +854,8 @@
                 "description": "residential - labels",
                 "when": [
                     "all",
-                    ["==", ["get", "$layer"], "roads"],
+                    [">=", ["get", "$level"], 13],
+                    ["==", ["get", "$layer"], "road_labels"],
                     ["==", ["get", "kind"], "minor_road"],
                     [
                         "any",
@@ -816,6 +880,7 @@
                 "description": "pedestrian - background",
                 "when": [
                     "all",
+                    [">=", ["get", "$level"], 14],
                     ["==", ["get", "$layer"], "roads"],
                     ["==", ["get", "kind"], "path"],
                     ["in", ["get", "kind_detail"], ["pedestrian", "footway"]]
@@ -838,6 +903,7 @@
                 "description": "pedestrian - foreground",
                 "when": [
                     "all",
+                    [">=", ["get", "$level"], 14],
                     ["==", ["get", "$layer"], "roads"],
                     ["==", ["get", "kind"], "path"],
                     ["in", ["get", "kind_detail"], ["pedestrian", "footway"]]
@@ -860,7 +926,8 @@
                 "description": "pedestrian - labels",
                 "when": [
                     "all",
-                    ["==", ["get", "$layer"], "roads"],
+                    [">=", ["get", "$level"], 14],
+                    ["==", ["get", "$layer"], "road_labels"],
                     ["==", ["get", "kind"], "path"],
                     ["in", ["get", "kind_detail"], ["pedestrian", "footway"]]
                 ],
