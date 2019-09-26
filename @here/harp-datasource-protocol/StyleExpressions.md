@@ -27,6 +27,15 @@ Returns `true` if no sub expression evaluates to `true`.
 ["none", expr...]
 ```
 
+## geometry-type
+
+Returns a `string` representing the geometry type of the current feature.
+The supported primitive types are: `Point`, `LineString`, and `Polygon`.
+
+```javascript
+["geometry-type"]
+```
+
 ## ref
 
 References a value definition.
