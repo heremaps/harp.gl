@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import { LineMarkerTechnique, TextStyleDefinition, Theme } from "@here/harp-datasource-protocol";
-import { ProjectionType } from "@here/harp-geoutils";
+import { MathUtils as MathGeoUtils, ProjectionType } from "@here/harp-geoutils";
 import {
     AdditionParameters,
     DEFAULT_TEXT_CANVAS_LAYER,
@@ -149,6 +149,12 @@ const MIN_AVERAGE_CHAR_WIDTH = 5;
  * duplicate labels in overlapping tiles.
  */
 const LABEL_DIFFERENT_THRESHOLD_SQUARED = 4;
+
+/**
+ * Label path maximum bend angle in degrees. Label would be dropped if the path contains
+ * bends with angle more than specified.
+ */
+const LABEL_PATH_MAXIMUM_ANGLE = 20;
 
 // Development flag: Enable debug print.
 const PRINT_LABEL_DEBUG_INFO: boolean = false;
@@ -1464,7 +1470,7 @@ export class TextElementsRenderer {
 
             // For paths, check if the label may fit.
             if (isPathLabel) {
-                const screenPointsResult = this.checkForSmallLabels(textElement);
+                const screenPointsResult = this.checkForSmallAndBentLabels(textElement);
                 if (screenPointsResult === undefined) {
                     numNotVisible++;
                     if (textElement.dbgPathTooSmall === true) {
@@ -2204,15 +2210,21 @@ export class TextElementsRenderer {
         return numRenderedTextElements;
     }
 
-    private checkForSmallLabels(textElement: TextElement): THREE.Vector2[] | undefined {
+    private checkForSmallAndBentLabels(textElement: TextElement): THREE.Vector2[] | undefined {
         let indexOfFirstVisibleScreenPoint = -1;
         // Get the screen points that define the label's segments and create a path with
         // them.
         const screenPoints: THREE.Vector2[] = [];
-        let minX = Number.MAX_SAFE_INTEGER;
-        let maxX = Number.MIN_SAFE_INTEGER;
-        let minY = Number.MAX_SAFE_INTEGER;
-        let maxY = Number.MIN_SAFE_INTEGER;
+
+        // save the distance between direction of angle (cos(a), sin(a) and zero (1, 0)
+        // to compare against distance of normalized tri-point angle
+        // and save on Math.atan2
+        const angle = MathGeoUtils.degToRad(LABEL_PATH_MAXIMUM_ANGLE);
+        const targetDeltaX = Math.cos(angle) - 1;
+        const targetDeltaY = Math.sin(angle) - 0;
+        const targetLenSq = targetDeltaX * targetDeltaX + targetDeltaY * targetDeltaY;
+
+        let pathLength = 0;
         for (const pt of textElement.path!) {
             tempPosition.copy(pt).add(textElement.tileCenter!);
             const screenPoint = this.m_screenProjector.project(tempPosition, tempScreenPosition);
@@ -2221,27 +2233,50 @@ export class TextElementsRenderer {
             }
             screenPoints.push(tempScreenPosition.clone());
 
-            if (screenPoint.x < minX) {
-                minX = screenPoint.x;
-            }
-            if (screenPoint.x > maxX) {
-                maxX = screenPoint.x;
-            }
-            if (screenPoint.y < minY) {
-                minY = screenPoint.y;
-            }
-            if (screenPoint.y > maxY) {
-                maxY = screenPoint.y;
-            }
+            const i = screenPoints.length - 1;
 
             if (indexOfFirstVisibleScreenPoint < 0) {
-                const firstIndex = screenPoints.findIndex(p2 => {
-                    return this.m_screenCollisions.screenBounds.contains(p2.x, p2.y);
-                });
-
-                if (firstIndex >= 0) {
-                    indexOfFirstVisibleScreenPoint = firstIndex;
+                if (this.m_screenCollisions.screenBounds.contains(screenPoint.x, screenPoint.y)) {
+                    indexOfFirstVisibleScreenPoint = i;
                 }
+            }
+
+            if (i < 1) {
+                continue;
+            }
+
+            const pointA = screenPoint;
+            const pointB = screenPoints[i - 1];
+
+            const nextDeltaX = pointA.x - pointB.x;
+            const nextDeltaY = pointA.y - pointB.y;
+            const nextLength = Math.sqrt(nextDeltaX * nextDeltaX + nextDeltaY * nextDeltaY);
+            const nextLenInverse = 1 / nextLength;
+            const nextNormalX = nextDeltaX * nextLenInverse;
+            const nextNormalY = nextDeltaY * nextLenInverse;
+
+            pathLength += nextLength;
+
+            if (i < 2) {
+                continue;
+            }
+
+            const pointC = screenPoints[i - 2];
+
+            const prevDeltaX = pointB.x - pointC.x;
+            const prevDeltaY = pointB.y - pointC.y;
+            const prevLength = Math.sqrt(prevDeltaX * prevDeltaX + prevDeltaY * prevDeltaY);
+            const prevLenInverse = 1 / prevLength;
+            const prevNormalX = prevDeltaX * prevLenInverse;
+            const prevNormalY = prevDeltaY * prevLenInverse;
+
+            const currDeltaX = nextNormalX - prevNormalX;
+            const currDeltaY = nextNormalY - prevNormalY;
+            const currLenSq = currDeltaX * currDeltaX + currDeltaY * currDeltaY;
+            const isStraight = currLenSq < targetLenSq;
+
+            if (!isStraight) {
+                return undefined;
             }
         }
 
@@ -2259,10 +2294,7 @@ export class TextElementsRenderer {
         // Check/guess if the screen box can hold a string of that length. It is important
         // to guess that value without measuring the font first to save time.
         const minScreenSpace = textElement.text.length * MIN_AVERAGE_CHAR_WIDTH;
-        if (
-            (maxX - minX) * (maxX - minX) + (maxY - minY) * (maxY - minY) <
-            minScreenSpace * minScreenSpace
-        ) {
+        if (pathLength < minScreenSpace) {
             textElement.dbgPathTooSmall = true;
             return undefined;
         }
