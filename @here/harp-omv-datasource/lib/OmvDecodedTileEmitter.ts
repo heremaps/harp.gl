@@ -327,6 +327,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
         let computeTexCoords: TexCoordsFunction | undefined;
         let texCoordinateType: TextureCoordinateType | undefined;
 
+        // Check if any of the techniques needs texture coordinates
         for (const technique of techniques) {
             if (technique === undefined) {
                 continue;
@@ -336,7 +337,8 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                 texCoordinateType = this.getTextureCoordinateType(technique);
             } else {
                 // Support generation of only one type of texture coordinates.
-                assert(texCoordinateType === this.getTextureCoordinateType(technique));
+                const otherTexCoordType = this.getTextureCoordinateType(technique);
+                assert(otherTexCoordType === undefined || texCoordinateType === otherTexCoordType);
             }
         }
 
