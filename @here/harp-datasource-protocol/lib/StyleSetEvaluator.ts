@@ -527,10 +527,17 @@ export class StyleSetEvaluator {
                 return false;
             }
 
-            if (!style._whenExpr.evaluate(env, this.m_cachedResults)) {
-                // Stop processing this styling rule. The `when` condition
-                // associated with the current `style` evaluates to false so
-                // no techinque defined by this style should be applied.
+            try {
+                if (!style._whenExpr.evaluate(env, this.m_cachedResults)) {
+                    // Stop processing this styling rule. The `when` condition
+                    // associated with the current `style` evaluates to false so
+                    // no techinque defined by this style should be applied.
+                    return false;
+                }
+            } catch (error) {
+                logger.error(
+                    `failed to evaluate expression '${JSON.stringify(style.when)}': ${error}`
+                );
                 return false;
             }
         }
@@ -699,9 +706,15 @@ export class StyleSetEvaluator {
         if (style._dynamicTechniqueAttributes === undefined) {
             return [];
         }
+
         return style._dynamicTechniqueAttributes.map(([attrName, attrExpr]) => {
-            const evaluatedValue = attrExpr.evaluate(env, this.m_cachedResults);
-            return [attrName, evaluatedValue];
+            try {
+                const evaluatedValue = attrExpr.evaluate(env, this.m_cachedResults);
+                return [attrName, evaluatedValue];
+            } catch (error) {
+                logger.error(`failed to evaluate expression '${attrExpr.toJSON()}': ${error}`);
+                return [attrName, null];
+            }
         });
     }
 
@@ -714,11 +727,15 @@ export class StyleSetEvaluator {
         technique.name = style.technique;
         if (style._staticAttributes !== undefined) {
             for (const [attrName, attrValue] of style._staticAttributes) {
-                technique[attrName] = attrValue;
+                if (attrValue !== null) {
+                    technique[attrName] = attrValue;
+                }
             }
         }
         for (const [attrName, attrValue] of dynamicAttrs) {
-            technique[attrName] = attrValue;
+            if (attrValue !== null) {
+                technique[attrName] = attrValue;
+            }
         }
 
         if (style._dynamicFeatureAttributes !== undefined) {
