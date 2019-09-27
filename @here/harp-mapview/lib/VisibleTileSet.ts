@@ -730,7 +730,12 @@ export class VisibleTileSet {
                 );
                 if (tile.hasGeometry || defaultSearchDirection === SearchDirection.NONE) {
                     renderedTiles.set(tileCode, tile);
-                } else {
+                }
+                if (
+                    tile.tileGeometryLoader !== undefined &&
+                    !tile.tileGeometryLoader.isFinished &&
+                    defaultSearchDirection !== SearchDirection.NONE
+                ) {
                     // if dataSource supports cache and it was existing before this render
                     // then enable searching for loaded tiles in cache
                     incompleteTiles.set(tileCode, defaultSearchDirection);
@@ -763,6 +768,9 @@ export class VisibleTileSet {
                             if (parentTile !== undefined && parentTile.hasGeometry) {
                                 // parentTile has geometry, so can be reused as fallback
                                 renderedTiles.set(parentCode, parentTile);
+                                parentTile.tileGeometryLoader!.setCorrespondingTile(
+                                    renderedTiles.get(tileKeyCode)
+                                );
                                 return;
                             }
 
@@ -803,6 +811,9 @@ export class VisibleTileSet {
                             if (childTile !== undefined && childTile.hasGeometry) {
                                 // childTile has geometry, so can be reused as fallback
                                 renderedTiles.set(childTileCode, childTile);
+                                childTile.tileGeometryLoader!.setCorrespondingTile(
+                                    renderedTiles.get(tileKeyCode)
+                                );
                                 continue;
                             }
 

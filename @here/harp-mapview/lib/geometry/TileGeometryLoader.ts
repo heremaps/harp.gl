@@ -63,6 +63,8 @@ export interface TileGeometryLoader {
         disabledKinds: GeometryKindSet | undefined
     ): void;
 
+    setCorrespondingTile(tile: Tile | undefined): void;
+
     /**
      * Dispose of any resources.
      */
@@ -175,6 +177,16 @@ export class SimpleTileGeometryLoader implements TileGeometryLoader {
 
     get allGeometryLoaded(): boolean {
         return this.m_isFinished;
+    }
+
+    setCorrespondingTile(tile: Tile | undefined): void {
+        if (tile !== undefined) {
+            const tileGeometryLoader = tile.tileGeometryLoader;
+
+            if (tileGeometryLoader !== undefined) {
+                this.update(undefined, tileGeometryLoader.availableGeometryKinds);
+            }
+        }
     }
 
     /**

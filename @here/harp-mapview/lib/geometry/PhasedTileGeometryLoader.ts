@@ -105,6 +105,16 @@ export class PhasedTileGeometryLoader implements TileGeometryLoader {
         return this.currentPhase >= this.m_loadPhaseDefinitions.length;
     }
 
+    setCorrespondingTile(tile: Tile | undefined): void {
+        if (tile !== undefined) {
+            const tileGeometryLoader = tile.tileGeometryLoader as PhasedTileGeometryLoader;
+
+            if (tileGeometryLoader !== undefined) {
+                this.update(undefined, tileGeometryLoader.availableGeometryKinds);
+            }
+        }
+    }
+
     /**
      * Set the [[DecodedTile]] of the tile. Is called after the decoded tile has been loaded, and
      * prepares its content for later processing in the 'updateXXX' methods.

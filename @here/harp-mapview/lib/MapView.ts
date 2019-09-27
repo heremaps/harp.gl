@@ -534,7 +534,7 @@ export interface MapViewOptions {
      * Enable phased loading. If `false`, the geometry on a [[Tile]] is always being created in a
      * single step, instead of (potentially) over multiple frames to smoothen animations.
      *
-     * @default `false`
+     * @default `true`
      */
     enablePhasedLoading?: boolean;
 
@@ -943,9 +943,9 @@ export class MapView extends THREE.EventDispatcher {
         );
 
         this.m_tileGeometryManager =
-            this.m_options.enablePhasedLoading === true
-                ? new PhasedTileGeometryManager(this)
-                : new SimpleTileGeometryManager(this);
+            this.m_options.enablePhasedLoading === false
+                ? new SimpleTileGeometryManager(this)
+                : new PhasedTileGeometryManager(this);
 
         this.m_visibleTiles = new VisibleTileSet(
             new FrustumIntersection(

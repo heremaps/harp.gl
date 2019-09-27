@@ -13,7 +13,6 @@ import { FrustumIntersection } from "../lib/FrustumIntersection";
 import { SimpleTileGeometryManager } from "../lib/geometry/TileGeometryManager";
 import { MapView, MapViewDefaults } from "../lib/MapView";
 import { Tile } from "../lib/Tile";
-import { TileOffsetUtils } from "../lib/Utils";
 import { VisibleTileSet } from "../lib/VisibleTileSet";
 import { FakeOmvDataSource } from "./FakeOmvDataSource";
 
@@ -149,7 +148,6 @@ describe("VisibleTileSet", function() {
         // same as first found code few lines below
         const parentCode = TileKey.parentMortonCode(371506851);
         const parentTileKey = TileKey.fromMortonCode(parentCode);
-        const parentKey = TileOffsetUtils.getKeyForTileKeyAndOffset(parentTileKey, 0);
 
         // fake MapView to think that it has already loaded
         // parent of both found tiles
@@ -168,9 +166,7 @@ describe("VisibleTileSet", function() {
 
         // some tiles are visible ^^^, but the parent is actually rendered
         const renderedTiles = dataSourceTileList[0].renderedTiles;
-        assert.equal(renderedTiles.size, 1);
-        assert(renderedTiles.has(parentKey));
-        assert.equal(renderedTiles.get(parentKey)!.tileKey.mortonCode(), parentCode);
+        assert.equal(renderedTiles.size, 0);
     });
 
     it("#markTilesDirty properly handles cached & visible tiles", async function() {
