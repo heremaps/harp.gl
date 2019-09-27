@@ -4,9 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { LoggerManager } from "@here/harp-utils";
 import { Env, Expr, MapEnv, Value } from "./Expr";
 import { getPropertyValue, isInterpolatedProperty } from "./InterpolatedProperty";
 import { InterpolatedProperty } from "./InterpolatedPropertyDefs";
+
+const logger = LoggerManager.instance.create("TechniqueAttr");
 
 export interface AttrEvaluationContext {
     /**
@@ -59,10 +62,15 @@ export function evaluateTechniqueAttr<T = Value>(
 
     let evaluated: Value | undefined;
     if (attrValue instanceof Expr) {
-        evaluated = attrValue.evaluate(
-            env,
-            !(context instanceof Env) ? context.cachedExprResults : undefined
-        );
+        try {
+            evaluated = attrValue.evaluate(
+                env,
+                !(context instanceof Env) ? context.cachedExprResults : undefined
+            );
+        } catch (error) {
+            logger.error(`failed to evaluate expression '${JSON.stringify(attrValue)}': ${error}`);
+            evaluated = undefined;
+        }
     } else if (isInterpolatedProperty(attrValue)) {
         const storageLevel =
             context instanceof Env ? (context.lookup("$level") as number) : context.storageLevel;
@@ -70,7 +78,7 @@ export function evaluateTechniqueAttr<T = Value>(
     } else {
         evaluated = (attrValue as unknown) as Value;
     }
-    if (evaluated === undefined) {
+    if (evaluated === undefined || evaluated === null) {
         return defaultValue;
     } else {
         return (evaluated as unknown) as T;
