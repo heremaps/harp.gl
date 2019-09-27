@@ -1,6 +1,6 @@
 # harp.gl [![Build Status](https://travis-ci.com/heremaps/harp.gl.svg?branch=master)](https://travis-ci.com/heremaps/harp.gl)
 
-`harp.gl` is an _experimental and work in progress_ open-source 3D map rendering engine.
+`harp.gl` is an _experimental and work in progress_ open-source 3D map rendering engine written in [TypeScript](https://github.com/microsoft/TypeScript).
 
 ### [harp.gl site](https://heremaps.github.io/harp.gl/)
 
