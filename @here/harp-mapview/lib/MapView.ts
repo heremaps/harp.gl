@@ -42,7 +42,7 @@ import { PickHandler, PickResult } from "./PickHandler";
 import { PoiManager } from "./poi/PoiManager";
 import { PoiTableManager } from "./poi/PoiTableManager";
 import { PolarTileDataSource } from "./PolarTileDataSource";
-import { ScreenCollisions, ScreenCollisionsDebug } from "./ScreenCollisions";
+import { LineWithBound, ScreenCollisions, ScreenCollisionsDebug } from "./ScreenCollisions";
 import { ScreenProjector } from "./ScreenProjector";
 import { SkyBackground } from "./SkyBackground";
 import { FrameStats, PerformanceStatistics } from "./Statistics";
@@ -768,6 +768,7 @@ export class MapView extends THREE.EventDispatcher {
     private m_languages: string[] | undefined;
     private m_copyrightInfo: CopyrightInfo[] = [];
     private m_screenSpaceBoxes: Math2D.Box[] = [];
+    private m_screenSpaceLines: LineWithBound[] = [];
     private m_animatedExtrusionHandler: AnimatedExtrusionHandler;
 
     /**
@@ -2356,6 +2357,9 @@ export class MapView extends THREE.EventDispatcher {
         this.m_screenSpaceBoxes = screenSpaceBoxes;
     }
 
+    setScreenSpaceLines(screenSpaceLines: LineWithBound[]) {
+        this.m_screenSpaceLines = screenSpaceLines;
+    }
     /**
      * Public access to [[MapViewFog]] allowing to toggle it by setting its `enabled` property.
      */
@@ -2889,6 +2893,7 @@ export class MapView extends THREE.EventDispatcher {
         // TextElements
         this.m_textElementsRenderer.reset();
         this.m_textElementsRenderer.prepopulateScreen(this.m_screenSpaceBoxes);
+        this.m_textElementsRenderer.prepopulateScreenWithLines(this.m_screenSpaceLines);
         this.m_textElementsRenderer.renderUserTextElements(time, this.m_frameNumber);
         this.m_textElementsRenderer.renderAllTileText(time, this.m_frameNumber);
         this.m_textElementsRenderer.renderOverlay(this.m_overlayTextElements);

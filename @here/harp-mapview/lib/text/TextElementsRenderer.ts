@@ -39,7 +39,7 @@ import { debugContext } from "../DebugContext";
 import { MapView } from "../MapView";
 import { PickObjectType, PickResult } from "../PickHandler";
 import { PoiRenderer } from "../poi/PoiRenderer";
-import { ScreenCollisions } from "../ScreenCollisions";
+import { LineWithBound, ScreenCollisions } from "../ScreenCollisions";
 import { ScreenProjector } from "../ScreenProjector";
 import { Tile } from "../Tile";
 import { MapViewUtils } from "../Utils";
@@ -607,6 +607,12 @@ export class TextElementsRenderer {
     prepopulateScreen(boxes: Math2D.Box[]) {
         for (const box of boxes) {
             this.m_screenCollisions.allocate(box);
+        }
+    }
+
+    prepopulateScreenWithLines(lines: LineWithBound[]) {
+        for (const line of lines) {
+            this.m_screenCollisions.allocateIBox(line);
         }
     }
 

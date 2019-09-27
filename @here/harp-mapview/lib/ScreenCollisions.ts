@@ -5,6 +5,8 @@
  */
 
 import { LoggerManager, Math2D } from "@here/harp-utils";
+/// <reference path="line-intersect.d.ts" />
+import { checkIntersection, /*colinearPointWithinSegment*/ } from "line-intersect";
 import * as THREE from "three";
 import { debugContext } from "./DebugContext";
 
@@ -15,6 +17,22 @@ const RBush = require("rbush");
 
 const logger = LoggerManager.instance.create("ScreenCollissions");
 
+export interface IBox {
+    minX: number;
+    minY: number;
+    maxX: number;
+    maxY: number;
+    type: string;
+}
+
+export interface LineWithBound extends IBox {
+    minX: number;
+    minY: number;
+    maxX: number;
+    maxY: number;
+    type: string;
+    line: THREE.Line3;
+}
 /**
  * @hidden
  */
@@ -74,9 +92,14 @@ export class ScreenCollisions {
             minX: bounds.x,
             minY: bounds.y,
             maxX: bounds.x + bounds.w,
-            maxY: bounds.y + bounds.h
+            maxY: bounds.y + bounds.h,
+            type: "box"
         };
         this.rtree.insert(bbox);
+    }
+
+    allocateIBox(bounds: IBox): void {
+        this.rtree.insert(bounds);
     }
 
     /**
@@ -85,15 +108,87 @@ export class ScreenCollisions {
      * @param bounds The bounding box in world coordinates.
      */
     isAllocated(bounds: Math2D.Box): boolean {
-        const bbox = {
+        const bbox: IBox = {
             minX: bounds.x,
             minY: bounds.y,
             maxX: bounds.x + bounds.w,
-            maxY: bounds.y + bounds.h
+            maxY: bounds.y + bounds.h,
+            type: "box"
         };
 
-        // Re-use array to reduce allocations.
-        return this.rtree.collides(bbox);
+        const results = this.rtree.search(bbox);
+        for (const result of results) {
+            switch (result.type) {
+                case "box":
+                    return true;
+                case "line": {
+                    const boundedLine = result as LineWithBound;
+                    const line = boundedLine.line;
+
+                    // Test left side
+                    let intersectionResult = checkIntersection(
+                        line.start.x,
+                        line.start.y,
+                        line.end.x,
+                        line.end.y,
+                        bbox.minX,
+                        bbox.minY,
+                        bbox.minX,
+                        bbox.maxY
+                    );
+                    if (intersectionResult.type === "intersecting") {
+                        return true;
+                    }
+
+                    // Test right side
+                    intersectionResult = checkIntersection(
+                        line.start.x,
+                        line.start.y,
+                        line.end.x,
+                        line.end.y,
+                        bbox.maxX,
+                        bbox.minY,
+                        bbox.maxX,
+                        bbox.maxY
+                    );
+                    if (intersectionResult.type === "intersecting") {
+                        return true;
+                    }
+
+                    // Test top
+                    intersectionResult = checkIntersection(
+                        line.start.x,
+                        line.start.y,
+                        line.end.x,
+                        line.end.y,
+                        bbox.minX,
+                        bbox.maxY,
+                        bbox.maxX,
+                        bbox.maxY
+                    );
+                    if (intersectionResult.type === "intersecting") {
+                        return true;
+                    }
+
+                    // Test bottom
+                    intersectionResult = checkIntersection(
+                        line.start.x,
+                        line.start.y,
+                        line.end.x,
+                        line.end.y,
+                        bbox.minX,
+                        bbox.minY,
+                        bbox.maxX,
+                        bbox.minY
+                    );
+                    if (intersectionResult.type === "intersecting") {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -192,6 +287,22 @@ export class ScreenCollisionsDebug extends ScreenCollisions {
                 this.screenBounds.y + this.screenBounds.h - bounds.y - 1,
                 bounds.w,
                 -bounds.h
+            );
+        }
+    }
+
+    allocateIBox(bounds: IBox): void {
+        super.allocateIBox(bounds);
+
+        this.m_numAllocations++;
+
+        if (this.m_renderingEnabled && this.m_renderContext !== null) {
+            this.m_renderContext.strokeStyle = "#aa2222";
+            this.m_renderContext.strokeRect(
+                bounds.minX - this.screenBounds.x,
+                this.screenBounds.y + this.screenBounds.h - bounds.minY - 1,
+                bounds.maxX - bounds.minX,
+                -(bounds.maxY - bounds.minY)
             );
         }
     }
