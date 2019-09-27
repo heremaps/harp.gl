@@ -16,6 +16,11 @@ import { MapMeshStandardMaterial } from "@here/harp-materials";
 export const DEPTH_PRE_PASS_STENCIL_MASK = 0x01;
 
 /**
+ * Render order offset for the depth pre-pass to ensure that it's rendered first.
+ */
+const DEPTH_PRE_PASS_RENDER_ORDER_OFFSET = 1e-6;
+
+/**
  * Check if technique requires (and not disables) use of depth prepass.
  *
  * Depth prepass is enabled if correct opacity is specified (in range `(0,1)`) _and_ not explicitly
@@ -66,14 +71,8 @@ export function createDepthPrePassMaterial(baseMaterial: THREE.Material): THREE.
  * support the depth prepass. This method is usable only if the material of this mesh has an
  * opacity value in the range `(0,1)`.
  *
- * About render order: the DepthPrePass object that is created has the same `renderOrder` as
- * the original mesh. The proper sort orders of both the depth and the color pass objects are
- * guaranteed by ThreeJS's handling of transparent objects, which renders them after opaque
- * objects:
- *   - since the depth prepass object is never transparent, it is rendered first
- *   - since the color pass object is transparent, it is rendered second
- *
- * @see [Material.transparent in ThreeJS's doc](https://threejs.org/docs/#api/harp-materials/Material.transparent).
+ * The DepthPrePass object is created wis a slightly smaller `renderOrder` as the original mesh
+ * to ensure that it's rendered first.
  *
  * @param mesh original mesh
  * @returns `Mesh` depth pre pass
@@ -120,7 +119,7 @@ export function createDepthPrePassMesh(mesh: THREE.Mesh): THREE.Mesh {
             : createDepthPrePassMaterial(mesh.material);
 
     const depthPassMesh = new THREE.Mesh(depthPassGeometry, depthPassMaterial);
-    depthPassMesh.renderOrder = mesh.renderOrder;
+    depthPassMesh.renderOrder = mesh.renderOrder - DEPTH_PRE_PASS_RENDER_ORDER_OFFSET;
 
     return depthPassMesh;
 }
