@@ -1,9 +1,6 @@
 # harp.gl
 
-| Builds |
-| :----- |
-| [![Travis CI](https://travis-ci.com/heremaps/harp.gl.svg?branch=master)](https://travis-ci.com/heremaps/harp.gl) |
-| [![Github Actions](https://img.shields.io/endpoint.svg?url=https%3A%2F%2Factions-badge.atrox.dev%2Fheremaps%2Fharp.gl%2Fbadge%3Fref%3Dmaster&style=flat)](https://actions-badge.atrox.dev/heremaps/harp.gl/goto?ref=master) |
+[![Travis CI](https://travis-ci.com/heremaps/harp.gl.svg?branch=master)](https://travis-ci.com/heremaps/harp.gl) [![Github Actions](https://img.shields.io/endpoint.svg?url=https%3A%2F%2Factions-badge.atrox.dev%2Fheremaps%2Fharp.gl%2Fbadge%3Fref%3Dmaster&style=flat)](https://actions-badge.atrox.dev/heremaps/harp.gl/goto?ref=master)
 
 `harp.gl` is an _experimental and work in progress_ open-source 3D map rendering engine written in [TypeScript](https://github.com/microsoft/TypeScript).
 
