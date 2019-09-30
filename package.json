@@ -32,7 +32,7 @@
         "webpack-dev-server": "^3.7.2"
     },
     "scripts": {
-        "test": "ts-mocha -r tsconfig-paths/register ./test/*.ts ./@here/*/test/*.ts",
+        "test": "ts-mocha ./test/*.ts ./@here/*/test/*.ts",
         "start": "ts-node ./scripts/credentials.ts -- . && webpack-dev-server -d --config @here/harp-examples/webpack.config.js",
         "build": "npm run build-bundle && npm run build-examples",
         "build-examples": "ts-node ./scripts/credentials.ts -- dist/examples && webpack -d --config @here/harp-examples/webpack.config.js",

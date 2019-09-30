@@ -15,6 +15,8 @@ import { StyleSetEvaluator } from "../lib/StyleSetEvaluator";
 import { FillTechnique, isSolidLineTechnique, SolidLineTechnique } from "../lib/Techniques";
 import { Definitions, StyleDeclaration, StyleSet } from "../lib/Theme";
 
+import { measureThroughputSync } from "@here/harp-test-utils";
+
 describe("StyleSetEvaluator", function() {
     const basicStyleSetAutoOrder: StyleSet = [
         {
@@ -426,5 +428,82 @@ describe("StyleSetEvaluator", function() {
         assert.equal(techniquesFilteredByLayer[0].name, "extruded-polygon");
         assert.equal(techniquesFilteredByLayerAndGeometryType[0].name, "extruded-polygon");
         assert.equal(techniquesFilteredByGeometryType[0].name, "extruded-polygon");
+    });
+
+    describe("#performance", function() {
+        /**
+         * This test checks that rule "at end" of styleset, is matched with more or less the same
+         * speed that rule "at beginning" of styleset because, SSE is expected to
+         * prefilter processed ruleset by "layer/geometryType" as most of expressions contain these.
+         */
+        describe("#getMatchingTechniques", function() {
+            let sampleStyleSet: StyleSet;
+            before(async () => {
+                sampleStyleSet = [];
+                for (const layer of ["roads", "transit", "water", "earth", "poi", "landuse"]) {
+                    for (const geometryType of ["polygon", "line", "point"]) {
+                        for (const kind of ["foo", "bar", "baz", "spam", "eggs"]) {
+                            sampleStyleSet.push({
+                                when: [
+                                    "all",
+                                    ["==", ["get", "$layer"], layer],
+                                    ["==", ["get", "$geometryType"], geometryType],
+                                    ["==", ["get", "kind"], kind]
+                                ],
+                                technique: "extruded-polygon",
+                                attr: {
+                                    height: 100
+                                }
+                            });
+                        }
+                    }
+                }
+            });
+            const myRule: StyleDeclaration = {
+                when: [
+                    "all",
+                    ["==", ["get", "$layer"], "buildings"],
+                    ["==", ["get", "$geometryType"], "polygon"]
+                ],
+                technique: "extruded-polygon",
+                attr: {
+                    height: 100
+                },
+                final: true
+            };
+            const env = new MapEnv({
+                $layer: "buildings",
+                $level: 14,
+                $geometryType: "polygon",
+                id: 1234567,
+                height: 33
+            });
+
+            it("getMatchingTechniques x1000 - rule at start", function() {
+                this.timeout(2000);
+                const sse = new StyleSetEvaluator([myRule, ...sampleStyleSet]);
+
+                measureThroughputSync("StyleSetEvaluator#getMatchingTechniques-begin", 500, () => {
+                    for (let i = 0; i < 1000; i++) {
+                        sse.getMatchingTechniques(env, "buildings");
+                        // don't know why asserts are so sloooow!
+                        //assert.strictEqual(t.length, 1);
+                        //assert.strictEqual(t[0].name, "extruded-polygon");
+                    }
+                });
+            });
+            it("getMatchingTechniques x1000 speed - rule at end", function() {
+                this.timeout(2000);
+                const sse = new StyleSetEvaluator([...sampleStyleSet, myRule]);
+                measureThroughputSync("StyleSetEvaluator#getMatchingTechniques-end", 500, () => {
+                    for (let i = 0; i < 1000; i++) {
+                        sse.getMatchingTechniques(env, "buildings");
+                        // don't know why asserts are so sloooow!
+                        //assert.strictEqual(t.length, 1);
+                        //assert.strictEqual(t[0].name, "extruded-polygon");
+                    }
+                });
+            });
+        });
     });
 });
