@@ -253,6 +253,7 @@ export class StyleSetEvaluator {
     private readonly m_exprPool = new ExprPool();
     private readonly m_cachedResults = new Map<Expr, Value>();
     private readonly m_styleConditionClassifier = new StyleConditionClassifier();
+    private readonly m_subStyleSetCache = new Map<string, InternalStyle[]>();
     private m_layer: string | undefined;
     private m_geometryType: string | undefined;
     private m_definitions?: Definitions;
@@ -381,6 +382,11 @@ export class StyleSetEvaluator {
         const currentGeometryType =
             geometryType !== undefined ? geometryType : env.lookup("$geometryType");
 
+        const searchedStyleSet = this.getOptimizedStyleSet(
+            currentLayer as string,
+            currentGeometryType as string
+        );
+
         // set the requested $layer as the current layer.
         const previousLayer = this.changeLayer(
             typeof currentLayer === "string" ? currentLayer : undefined
@@ -390,7 +396,7 @@ export class StyleSetEvaluator {
             typeof currentGeometryType === "string" ? currentGeometryType : undefined
         );
 
-        for (const currStyle of this.styleSet) {
+        for (const currStyle of searchedStyleSet) {
             if (styleStack.length !== 0) {
                 this.changeLayer(previousLayer); // restore the layer
                 this.changeGeometryType(previousGeometryType); // restore the geometryType
@@ -444,6 +450,52 @@ export class StyleSetEvaluator {
         return savedGeometryType;
     }
 
+    private getOptimizedStyleSet(
+        layer: string | undefined,
+        geometryType: string | undefined
+    ): InternalStyle[] {
+        let subStyleSetKey: string;
+
+        if (layer !== undefined) {
+            // tslint:disable-next-line:prefer-conditional-expression
+            if (geometryType !== undefined) {
+                subStyleSetKey = `${layer}:${geometryType}`;
+            } else {
+                subStyleSetKey = `${layer}:`;
+            }
+        } else {
+            if (geometryType !== undefined) {
+                subStyleSetKey = `:${geometryType}`;
+            } else {
+                return this.styleSet;
+            }
+        }
+
+        let optimizedStyleSet = this.m_subStyleSetCache.get(subStyleSetKey);
+        if (optimizedStyleSet !== undefined) {
+            return optimizedStyleSet;
+        }
+        optimizedStyleSet = this.createPreFilteredStyleSet(layer, geometryType);
+        this.m_subStyleSetCache.set(subStyleSetKey, optimizedStyleSet);
+        return optimizedStyleSet;
+    }
+
+    private createPreFilteredStyleSet(layer: string | undefined, geometryType: string | undefined) {
+        return this.styleSet.filter(style => {
+            if (layer !== undefined && style.layer !== undefined && style.layer !== layer) {
+                return false;
+            }
+            if (
+                geometryType !== undefined &&
+                style._geometryType !== undefined &&
+                style._geometryType !== geometryType
+            ) {
+                return false;
+            }
+            return true;
+        });
+    }
+
     /**
      * Compile the `when` conditions found when traversting the styling rules.
      */
@@ -470,6 +522,10 @@ export class StyleSetEvaluator {
 
                 if (style._whenExpr !== undefined) {
                     style._whenExpr = style._whenExpr.intern(this.m_exprPool);
+                }
+
+                if (style.layer !== undefined || style._geometryType !== undefined) {
+                    this.getOptimizedStyleSet(style.layer, style._geometryType);
                 }
             } catch (err) {
                 logger.log(
@@ -506,27 +562,22 @@ export class StyleSetEvaluator {
         style: InternalStyle,
         result: Technique[]
     ): boolean {
+        if (
+            this.m_layer !== undefined &&
+            style.layer !== undefined &&
+            style.layer !== this.m_layer
+        ) {
+            return false;
+        }
+        if (
+            this.m_geometryType !== undefined &&
+            style._geometryType !== undefined &&
+            style._geometryType !== this.m_geometryType
+        ) {
+            return false;
+        }
+
         if (style._whenExpr) {
-            if (
-                this.m_layer !== undefined &&
-                style.layer !== undefined &&
-                this.m_layer !== style.layer
-            ) {
-                // skip this rule because its requested layer is different than the
-                // layer defined in $layer variable.
-                return false;
-            }
-
-            if (
-                this.m_geometryType !== undefined &&
-                style._geometryType !== undefined &&
-                this.m_geometryType !== style._geometryType
-            ) {
-                // skip this rule because its requested geometryType is different than the
-                // layer defined in $geometryType variable.
-                return false;
-            }
-
             try {
                 if (!style._whenExpr.evaluate(env, this.m_cachedResults)) {
                     // Stop processing this styling rule. The `when` condition
