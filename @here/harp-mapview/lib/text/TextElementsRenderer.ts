@@ -606,26 +606,29 @@ export class TextElementsRenderer {
 
     /**
      * Fills the screen with boxes which should block other labels.
+     * @note These boxes have highest priority, so will block all labels.
      * @param boxes Boxes in screen space which reject other labels.
      */
     prepopulateScreen(boxes: Math2D.Box[]) {
         for (const box of boxes) {
-            this.m_screenCollisions.allocate(box);
+            this.m_screenCollisions.allocateScreenSpace(box);
         }
     }
 
     /**
      * Fills the screen with lines which should block other labels.
+     * @note These boxes have highest priority, so will block all labels.
      * @param lines Lines in screen space which reject other labels.
      */
     prepopulateScreenWithLines(lines: LineWithBound[]) {
         for (const line of lines) {
-            this.m_screenCollisions.allocateIBox(line);
+            this.m_screenCollisions.allocateIBox(line, true);
         }
     }
 
     /**
      * Fills the screen with lines projected from world space, see [[Tile.blockingElements]].
+     * @note These boxes have highest priority, so will block all other labels.
      */
     prepopulateScreenWithBlockingElements() {
         const renderList = this.m_mapView.visibleTileSet.dataSourceTileList;
@@ -641,8 +644,8 @@ export class TextElementsRenderer {
                     let startLinePoint = pathBlockingElement.points[0];
                     for (let i = 1; i < pathBlockingElement.points.length; i++) {
                         const endLinePoint = pathBlockingElement.points[i];
-                        this.m_screenProjector.project3(startLinePoint, startLinePointProj);
-                        this.m_screenProjector.project3(endLinePoint, endLinePointProj);
+                        this.m_screenProjector.projectAndShift(startLinePoint, startLinePointProj);
+                        this.m_screenProjector.projectAndShift(endLinePoint, endLinePointProj);
                         startLinePoint = endLinePoint;
                         const lineWithBound: LineWithBound = {
                             minX: Math.min(startLinePointProj.x, endLinePointProj.x),
@@ -655,7 +658,8 @@ export class TextElementsRenderer {
                                 endLinePointProj.clone()
                             )
                         };
-                        this.m_screenCollisions.allocateIBox(lineWithBound);
+                        // False, because the coordinates are in
+                        this.m_screenCollisions.allocateIBox(lineWithBound, true);
                     }
                 }
             }

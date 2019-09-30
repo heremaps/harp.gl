@@ -62,20 +62,26 @@ export class ScreenProjector {
     /**
      * Apply current projectionViewMatrix of the camera to project the source vector into
      * screen coordinates. Similar to project, however the z component is also returned (in
-     * range (-1,1))
+     * range (-1,1)).
+     *
+     * @note This also shifts from to screen coordinates.
      *
      * @param {(THREE.Vector3)} source The source vector to project.
      * @param {THREE.Vector3} target The target vector.
      * @returns {THREE.Vector3} The projected vector (the parameter 'target') or undefined if
      * outside the near / far plane.
      */
-    project3(
+    projectAndShift(
         source: THREE.Vector3,
         target: THREE.Vector3 = new THREE.Vector3()
     ): THREE.Vector3 | undefined {
         const p = this.projectVector(source, ScreenProjector.tempV3);
         if (p.z > -1 && p.z < 1) {
-            target.set((p.x * this.m_width) / 2, (p.y * this.m_height) / 2, p.z);
+            target.set(
+                ((p.x + 1.0) / 2) * this.m_width,
+                (1.0 - (p.y + 1.0) / 2) * this.m_height,
+                p.z
+            );
             return target;
         }
         return undefined;

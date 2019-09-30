@@ -18,10 +18,10 @@ import { CopyrightInfo } from "./CopyrightInfo";
 import { DataSource } from "./DataSource";
 import { TileGeometryLoader } from "./geometry/TileGeometryLoader";
 import { MapView } from "./MapView";
+import { PathBlockingElement } from "./PathBlockingElement";
 import { PerformanceStatistics } from "./Statistics";
 import { TextElement } from "./text/TextElement";
 import { MapViewUtils } from "./Utils";
-import { PathBlockingElement } from "./PathBlockingElement";
 
 const logger = LoggerManager.instance.create("Tile");
 

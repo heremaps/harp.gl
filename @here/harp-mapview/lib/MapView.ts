@@ -2349,17 +2349,20 @@ export class MapView extends THREE.EventDispatcher {
     /**
      * Allows the user to block some areas of the screen.
      * @note To clear, simply pass in an empty array.
-     * @param screenSpaceBoxes Boxes that are in pseudo screen space, i.e. the center of the screen
-     * is at 0,0, whilst the left top point is -width/2, -height/2 and the bottom right is width/2
-     * and height/2.
+     * @param screenSpaceBoxes Boxes that are in screen space.
      */
-    setScreenSpaceBoxes(screenSpaceBoxes: Math2D.Box[]) {
+    setLabelAvoidanceWithBoxes(screenSpaceBoxes: Math2D.Box[]) {
         this.m_screenSpaceBoxes = screenSpaceBoxes;
     }
 
-    setScreenSpaceLines(screenSpaceLines: LineWithBound[]) {
+    /**
+     * Allows the user to block some area of the screen.
+     * @note To clear, simply pass in an empty array.
+     */
+    setLabelAvoidanceWithLines(screenSpaceLines: LineWithBound[]) {
         this.m_screenSpaceLines = screenSpaceLines;
     }
+
     /**
      * Public access to [[MapViewFog]] allowing to toggle it by setting its `enabled` property.
      */
@@ -2894,7 +2897,7 @@ export class MapView extends THREE.EventDispatcher {
         this.m_textElementsRenderer.reset();
         this.m_textElementsRenderer.prepopulateScreen(this.m_screenSpaceBoxes);
         this.m_textElementsRenderer.prepopulateScreenWithLines(this.m_screenSpaceLines);
-        this.m_textElementsRenderer.prepopulateScreenWithBlockingElements()
+        this.m_textElementsRenderer.prepopulateScreenWithBlockingElements();
         this.m_textElementsRenderer.renderUserTextElements(time, this.m_frameNumber);
         this.m_textElementsRenderer.renderAllTileText(time, this.m_frameNumber);
         this.m_textElementsRenderer.renderOverlay(this.m_overlayTextElements);
