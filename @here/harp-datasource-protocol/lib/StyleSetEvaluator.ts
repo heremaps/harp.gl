@@ -415,6 +415,25 @@ export class StyleSetEvaluator {
     }
 
     /**
+     * Check if `styleSet` contains any rule related to `layer`.
+     *
+     * @param layer name of layer
+     */
+    wantsLayer(layer: string): boolean {
+        return this.getOptimizedStyleSet(layer, undefined).length > 0;
+    }
+
+    /**
+     * Check if `styleSet` contains any rule related to particular `[layer, geometryType]` pair.
+     *
+     * @param layer name of layer
+     * @param geometryType type of layer - `point`, `line` or `polygon`
+     */
+    wantsFeature(layer: string, geometryType?: string): boolean {
+        return this.getOptimizedStyleSet(layer, geometryType).length > 0;
+    }
+
+    /**
      * Get the expression evaluation cache, for further feature processing.
      *
      * This object is valid until next `getMatchingTechniques` call.
