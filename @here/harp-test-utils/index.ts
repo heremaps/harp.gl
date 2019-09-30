@@ -6,3 +6,4 @@
 
 export * from "./lib/TestDataUtils";
 export * from "./lib/TestUtils";
+export * from "./lib/ProfileHelper";
