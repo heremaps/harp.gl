@@ -29,6 +29,7 @@
         "@here/harp-utils": "^0.10.0"
     },
     "devDependencies": {
+        "@here/harp-test-utils": "^0.10.0",
         "@types/chai": "^4.1.2",
         "@types/mocha": "^5.2.7",
         "chai": "^4.0.2",
