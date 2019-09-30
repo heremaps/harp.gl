@@ -15,7 +15,7 @@ import {
 } from "@here/harp-text-canvas";
 import * as THREE from "three";
 
-import { TileGeometryCreator } from "../../harp-mapview/lib/geometry/TileGeometryCreator";
+import { TileGeometryCreator } from "@here/harp-mapview/lib/geometry/TileGeometryCreator";
 import { OmvTile } from "./OmvTile";
 
 const debugMaterial = new THREE.LineBasicMaterial({

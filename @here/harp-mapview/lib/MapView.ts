@@ -22,10 +22,11 @@ import {
 import { assert, getOptionValue, LoggerManager, Math2D, PerformanceTimer } from "@here/harp-utils";
 import * as THREE from "three";
 
+import { ViewRanges } from "@here/harp-datasource-protocol/lib/ViewRanges";
 import { AnimatedExtrusionHandler } from "./AnimatedExtrusionHandler";
 import { BackgroundDataSource } from "./BackgroundDataSource";
 import { CameraMovementDetector } from "./CameraMovementDetector";
-import { ClipPlanesEvaluator, defaultClipPlanesEvaluator, ViewRanges } from "./ClipPlanesEvaluator";
+import { ClipPlanesEvaluator, defaultClipPlanesEvaluator } from "./ClipPlanesEvaluator";
 import { IMapAntialiasSettings, IMapRenderingManager, MapRenderingManager } from "./composing";
 import { ConcurrentDecoderFacade } from "./ConcurrentDecoderFacade";
 import { CopyrightInfo } from "./CopyrightInfo";

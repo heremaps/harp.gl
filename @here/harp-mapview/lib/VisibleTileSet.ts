@@ -3,6 +3,7 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
+import { ViewRanges } from "@here/harp-datasource-protocol/lib/ViewRanges";
 import {
     EarthConstants,
     GeoCoordinates,
@@ -14,7 +15,7 @@ import {
 import { LRUCache } from "@here/harp-lrucache";
 import { assert } from "@here/harp-utils";
 import THREE = require("three");
-import { ClipPlanesEvaluator, ViewRanges } from "./ClipPlanesEvaluator";
+import { ClipPlanesEvaluator } from "./ClipPlanesEvaluator";
 import { DataSource } from "./DataSource";
 import { CalculationStatus, ElevationRange, ElevationRangeSource } from "./ElevationRangeSource";
 import { FrustumIntersection, TileKeyEntry } from "./FrustumIntersection";
