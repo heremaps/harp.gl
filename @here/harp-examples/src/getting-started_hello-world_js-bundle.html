@@ -73,7 +73,7 @@
             harp.CopyrightElementHandler.install("copyrightNotice", map);
 
             const mapControls = new harp.MapControls(map);
-            mapControls.maxPitchAngle = 50;
+            mapControls.maxTiltAngle = 50;
             const NY = new harp.GeoCoordinates(40.707, -74.01);
             map.lookAt(NY, 4000, 50);
 
@@ -93,7 +93,6 @@
                 link: "https://legal.here.com/terms"
             };
             const copyrights = [hereCopyrightInfo];
-
 
             const omvDataSource = new harp.OmvDataSource({
                 baseUrl: "https://xyz.api.here.com/tiles/herebase.02",

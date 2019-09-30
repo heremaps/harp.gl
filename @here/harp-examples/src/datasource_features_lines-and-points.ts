@@ -11,7 +11,7 @@ import {
     MapViewLineFeature,
     MapViewMultiPointFeature
 } from "@here/harp-features-datasource";
-import { GeoCoordinates } from "@here/harp-geoutils";
+import { GeoCoordinates, sphereProjection } from "@here/harp-geoutils";
 import { MapControls, MapControlsUI } from "@here/harp-map-controls";
 import { CopyrightInfo, MapView } from "@here/harp-mapview";
 import { APIFormat, OmvDataSource } from "@here/harp-omv-datasource";
@@ -164,9 +164,50 @@ export namespace LinesPointsFeaturesExample {
         const canvas = document.getElementById("mapCanvas") as HTMLCanvasElement;
         const mapView = new MapView({
             canvas,
-            theme: "resources/berlin_tilezen_day_reduced.json"
+            projection: sphereProjection,
+            theme: {
+                extends: "resources/berlin_tilezen_day_reduced.json",
+                sky: {
+                    type: "gradient",
+                    topColor: "#898470",
+                    bottomColor: "#898470",
+                    groundColor: "#898470"
+                },
+                definitions: {
+                    northPoleColor: {
+                        type: "color",
+                        value: "#B1AC9C"
+                    },
+                    southPoleColor: {
+                        type: "color",
+                        value: "#c3bdae"
+                    }
+                },
+                styles: {
+                    polar: [
+                        {
+                            description: "North pole",
+                            when: ["==", ["get", "kind"], "north_pole"],
+                            technique: "fill",
+                            attr: {
+                                color: ["ref", "northPoleColor"]
+                            },
+                            renderOrder: 5
+                        },
+                        {
+                            description: "South pole",
+                            when: ["==", ["get", "kind"], "south_pole"],
+                            technique: "fill",
+                            attr: {
+                                color: ["ref", "southPoleColor"]
+                            },
+                            renderOrder: 5
+                        }
+                    ]
+                }
+            }
         });
-        mapView.setCameraGeolocationAndZoom(new GeoCoordinates(10, -150), 2.6);
+        mapView.setCameraGeolocationAndZoom(new GeoCoordinates(10, -270), 3.5);
 
         const controls = new MapControls(mapView);
         const ui = new MapControlsUI(controls);

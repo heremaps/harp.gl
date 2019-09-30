@@ -79,7 +79,7 @@ export namespace HelloCustomThemeExample {
 
         // Instantiate the default map controls, allowing the user to pan around freely.
         const mapControls = new MapControls(map);
-        mapControls.maxPitchAngle = 50;
+        mapControls.maxTiltAngle = 50;
 
         // Look at New York.
         const NY = new GeoCoordinates(40.707, -74.01);

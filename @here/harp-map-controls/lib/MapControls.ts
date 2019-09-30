@@ -48,30 +48,10 @@ const MAPCONTROL_EVENT_END_INTERACTION: THREE.Event = {
 } as any;
 
 /**
- * Yaw rotation as quaternion. Declared as a const to avoid object re-creation across frames.
+ * Cached ThreeJS instances for realtime maths.
  */
-const yawQuaternion = new THREE.Quaternion();
-/**
- * Pitch rotation as quaternion. Declared as a const to avoid object re-creation across frames.
- */
-const pitchQuaternion = new THREE.Quaternion();
-
-/**
- * The yaw axis around which we rotate when we change the yaw.
- * This axis is fixed and is the -Z axis `(0,0,1)`.
- */
-const yawAxis = new THREE.Vector3(0, 0, 1);
-/**
- * The pitch axis which we use to rotate around when we change the pitch.
- * The axis is fix and is the +X axis `(1,0,0)`.
- */
-const pitchAxis = new THREE.Vector3(1, 0, 0);
-
-/**
- * The number of the steps for which, when pitching the camera, the delta altitude is scaled until
- * it reaches the minimum camera height.
- */
-const MAX_DELTA_ALTITUDE_STEPS = 10;
+const vector1 = new THREE.Vector3();
+const vector2 = new THREE.Vector3();
 
 /**
  * The number of user's inputs to consider for panning inertia, to reduce erratic inputs.
@@ -79,9 +59,9 @@ const MAX_DELTA_ALTITUDE_STEPS = 10;
 const USER_INPUTS_TO_CONSIDER = 5;
 
 /**
- * The default maximum for the camera pitch. This value avoids seeing the horizon.
+ * The default maximum for the camera tilt. This value avoids seeing the horizon.
  */
-const DEFAULT_MAX_PITCH_ANGLE = Math.PI / 4;
+const DEFAULT_MAX_TILT_ANGLE = Math.PI / 4;
 
 /**
  * Epsilon value to rule out when a number can be considered 0.
@@ -150,8 +130,7 @@ export class MapControls extends THREE.EventDispatcher {
     enabled = true;
 
     /**
-     * Set to `true` to enable orbiting and Pitch axis rotation through this map control, `false` to
-     * disable orbiting and Pitch axis rotation.
+     * Set to `true` to enable orbiting and tilting through these controls, `false` otherwise.
      */
     tiltEnabled = true;
 
@@ -182,7 +161,7 @@ export class MapControls extends THREE.EventDispatcher {
     tiltToggleDuration = 0.5;
 
     /**
-     * Camera pitch target when tilting it from the UI button.
+     * Camera tilt to the target when tilting from the `toggleTilt` public method.
      */
     tiltAngle = Math.PI / 4;
 
@@ -274,12 +253,12 @@ export class MapControls extends THREE.EventDispatcher {
     private m_currentZoom?: number;
 
     private m_tiltIsAnimated: boolean = false;
-    private m_pitchRequested?: number = undefined;
+    private m_tiltRequested?: number = undefined;
     private m_tiltAnimationTime: number = 0;
     private m_tiltAnimationStartTime: number = 0;
-    private m_startPitch: number = 0;
-    private m_targetedPitch?: number;
-    private m_currentPitch?: number;
+    private m_startTilt: number = 0;
+    private m_targetedTilt?: number;
+    private m_currentTilt?: number;
 
     private m_tiltState?: TiltState;
     private m_state: State = State.NONE;
@@ -293,14 +272,9 @@ export class MapControls extends THREE.EventDispatcher {
     private m_isDoubleTap: boolean = false;
 
     /**
-     * Determines the minimum angle the camera can pitch to. It is defined in radians.
+     * Determines the maximum angle the camera can tilt to. It is defined in radians.
      */
-    private m_minPitchAngle = 0;
-
-    /**
-     * Determines the maximum angle the camera can pitch to. It is defined in radians.
-     */
-    private m_maxPitchAngle = DEFAULT_MAX_PITCH_ANGLE;
+    private m_maxTiltAngle = DEFAULT_MAX_TILT_ANGLE;
 
     private m_cleanupMouseEventListeners?: () => void;
 
@@ -345,7 +319,8 @@ export class MapControls extends THREE.EventDispatcher {
     };
 
     /**
-     * Rotates the camera by the given delta yaw and delta pitch.
+     * Rotates the camera by the given delta yaw and delta pitch. The pitch will be clamped to the
+     * maximum possible tilt to the new target, and under the horizon in sphere projection.
      *
      * @param deltaYaw Delta yaw in degrees.
      * @param deltaPitch Delta pitch in degrees.
@@ -354,39 +329,47 @@ export class MapControls extends THREE.EventDispatcher {
         if (this.inertiaEnabled && this.m_zoomIsAnimated) {
             this.stopZoom();
         }
-        if (this.mapView.projection.type !== geoUtils.ProjectionType.Planar) {
+
+        // 1. Apply yaw: rotate around the vertical axis.
+        this.mapView.camera.rotateOnWorldAxis(
+            this.mapView.projection.type === geoUtils.ProjectionType.Spherical
+                ? vector1.copy(this.camera.position).normalize()
+                : vector1.set(0, 0, 1),
+            geoUtils.MathUtils.degToRad(-deltaYaw)
+        );
+        this.mapView.camera.updateMatrixWorld();
+
+        // 2. Apply pitch: rotate around the camera's local X axis.
+        if (deltaPitch === 0) {
             return;
         }
-        const yawPitchRoll = MapViewUtils.extractYawPitchRoll(
-            this.camera.quaternion,
-            this.mapView.projection.type
+        const pitch = MapViewUtils.extractYawPitchRoll(this.camera, this.mapView.projection.type)
+            .pitch;
+        // `maxTiltAngle` is equivalent to a `maxPitchAngle` in flat projections.
+        let newPitch = THREE.Math.clamp(
+            pitch + THREE.Math.degToRad(deltaPitch),
+            0,
+            this.m_maxTiltAngle
         );
-
-        //yaw
-        let yawAngle = yawPitchRoll.yaw;
-        if (this.rotateEnabled) {
-            yawAngle -= THREE.Math.degToRad(deltaYaw);
+        // In sphere projection, the value of a maximum pitch is smaller than the value of the
+        // maximum tilt, as the curvature of the surface adds up to it.
+        if (this.mapView.projection.type === geoUtils.ProjectionType.Spherical) {
+            // Deduce max pitch from max tilt. To this end the sine law of triangles is used below.
+            const maxPitch = Math.asin(
+                (geoUtils.EarthConstants.EQUATORIAL_RADIUS *
+                    Math.sin(Math.PI - this.m_maxTiltAngle)) /
+                    this.camera.position.length()
+            );
+            newPitch = Math.min(newPitch, maxPitch);
         }
-        yawQuaternion.setFromAxisAngle(yawAxis, yawAngle);
-
-        //pitch
-        const deltaPitchRadians = THREE.Math.degToRad(deltaPitch);
-        const pitchAngle = this.constrainPitchAngle(yawPitchRoll.pitch, deltaPitchRadians);
-        pitchQuaternion.setFromAxisAngle(pitchAxis, pitchAngle);
-
-        yawQuaternion.multiply(pitchQuaternion);
-        this.mapView.camera.quaternion.copy(yawQuaternion);
-        this.mapView.camera.matrixWorldNeedsUpdate = true;
+        this.mapView.camera.rotateX(newPitch - pitch);
     }
 
     /**
      * Current viewing angles yaw/pitch/roll in degrees.
      */
     get yawPitchRoll(): MapViewUtils.YawPitchRoll {
-        const ypr = MapViewUtils.extractYawPitchRoll(
-            this.camera.quaternion,
-            this.mapView.projection.type
-        );
+        const ypr = MapViewUtils.extractYawPitchRoll(this.camera, this.mapView.projection.type);
         return {
             yaw: THREE.Math.radToDeg(ypr.yaw),
             pitch: THREE.Math.radToDeg(ypr.pitch),
@@ -394,54 +377,17 @@ export class MapControls extends THREE.EventDispatcher {
         };
     }
 
-    /*
-     * Orbits the camera around the focus point of the camera. The `deltaAzimuth` and
-     * `deltaAltitude` are offsets in degrees to the current azimuth and altitude of the current
-     * orbit.
+    /**
+     * Orbits the camera around the target point at the center of the screen.
      *
      * @param deltaAzimuth Delta azimuth in degrees.
-     * @param deltaAltitude Delta altitude in degrees.
+     * @param deltaTilt Delta tilt in degrees.
      */
-    orbitFocusPoint(deltaAzimuth: number, deltaAltitude: number) {
-        if (this.mapView.projection.type === geoUtils.ProjectionType.Spherical) {
-            return;
-        }
+    orbitFocusPoint(deltaAzimuth: number, deltaTilt: number) {
         if (this.inertiaEnabled && this.m_zoomIsAnimated) {
             this.stopZoom();
         }
-
-        this.mapView.camera.getWorldDirection(this.m_currentViewDirection);
-        const currentAzimuthAltitude = utils.directionToAzimuthAltitude(
-            this.m_currentViewDirection
-        );
-
-        const topElevation =
-            (1.0 / Math.sin(currentAzimuthAltitude.altitude)) * this.mapView.camera.position.z;
-        const focusPointInWorldPosition = MapViewUtils.rayCastWorldCoordinates(this.mapView, 0, 0);
-
-        const deltaAltitudeConstrained = this.getMinDelta(deltaAltitude);
-
-        this.rotate(deltaAzimuth, deltaAltitudeConstrained);
-
-        this.mapView.camera.getWorldDirection(this.m_currentViewDirection);
-        const newAzimuthAltitude = utils.directionToAzimuthAltitude(this.m_currentViewDirection);
-
-        const newElevation = Math.sin(newAzimuthAltitude.altitude) * topElevation;
-        this.mapView.camera.position.z = newElevation;
-        const newFocusPointInWorldPosition = MapViewUtils.rayCastWorldCoordinates(
-            this.mapView,
-            0,
-            0
-        );
-
-        if (!focusPointInWorldPosition || !newFocusPointInWorldPosition) {
-            // We do this to trigger an update in all cases.
-            this.updateMapView();
-            return;
-        }
-
-        const diff = focusPointInWorldPosition.sub(newFocusPointInWorldPosition);
-        MapViewUtils.panCameraAboveFlatMap(this.mapView, diff.x, diff.y);
+        MapViewUtils.orbitFocusPoint(this.mapView, deltaAzimuth, deltaTilt, this.m_maxTiltAngle);
     }
 
     /**
@@ -452,9 +398,58 @@ export class MapControls extends THREE.EventDispatcher {
      * @param amount Amount to move along the view direction in meters.
      */
     moveAlongTheViewDirection(amount: number) {
-        this.mapView.camera.getWorldDirection(this.m_currentViewDirection);
+        if (amount === 0) {
+            return;
+        }
+        this.camera.getWorldDirection(this.m_currentViewDirection);
+        const maxDistance = MapViewUtils.calculateDistanceToGroundFromZoomLevel(
+            this.mapView,
+            this.mapView.minZoomLevel
+        );
+        const minDistance = MapViewUtils.calculateDistanceToGroundFromZoomLevel(
+            this.mapView,
+            this.mapView.maxZoomLevel
+        );
         this.m_currentViewDirection.multiplyScalar(amount);
-        this.mapView.camera.position.z += this.m_currentViewDirection.z;
+        if (this.mapView.projection.type === geoUtils.ProjectionType.Planar) {
+            this.camera.position.z += this.m_currentViewDirection.z;
+            this.camera.position.z = Math.max(
+                minDistance,
+                Math.min(maxDistance, this.camera.position.z)
+            );
+        } else if (this.mapView.projection.type === geoUtils.ProjectionType.Spherical) {
+            const zOnVertical =
+                Math.cos(this.camera.position.angleTo(this.m_currentViewDirection)) *
+                this.m_currentViewDirection.length();
+            this.camera.position.setLength(
+                Math.max(
+                    minDistance + geoUtils.EarthConstants.EQUATORIAL_RADIUS,
+                    Math.min(
+                        maxDistance + geoUtils.EarthConstants.EQUATORIAL_RADIUS,
+                        this.camera.position.length() + zOnVertical
+                    )
+                )
+            );
+        }
+
+        // In sphere, we may have to also orbit the camera around the position located at the
+        // center of the screen, in order to limit the tilt to `maxTiltAngle`, as we change
+        // this tilt by changing the camera's height above.
+        if (
+            this.mapView.projection.type === geoUtils.ProjectionType.Spherical &&
+            this.m_maxTiltAngle !== undefined
+        ) {
+            const centerScreenTarget = MapViewUtils.rayCastWorldCoordinates(this.mapView, 0, 0);
+            if (centerScreenTarget !== null) {
+                vector1.copy(this.mapView.camera.position).sub(centerScreenTarget);
+                const tilt = centerScreenTarget.angleTo(vector1);
+                const deltaTilt = tilt - this.m_maxTiltAngle;
+                if (deltaTilt > 0) {
+                    MapViewUtils.orbitFocusPoint(this.mapView, 0, deltaTilt, this.m_maxTiltAngle);
+                }
+            }
+        }
+
         this.updateMapView();
         this.mapView.addEventListener(
             MapViewEventNames.AfterRender,
@@ -491,7 +486,8 @@ export class MapControls extends THREE.EventDispatcher {
             this.mapView,
             targetPositionOnScreenXinNDC,
             targetPositionOnScreenYinNDC,
-            zoomLevel
+            zoomLevel,
+            this.m_maxTiltAngle
         );
     }
 
@@ -529,12 +525,12 @@ export class MapControls extends THREE.EventDispatcher {
     }
 
     /**
-     * Toggles the camera pitch between 0 (looking down) and the value at `this.tiltAngle`.
+     * Toggles the camera tilt between 0 (looking down) and the value at `this.tiltAngle`.
      */
     toggleTilt(): void {
-        this.m_startPitch = this.currentPitch;
-        const aimTilt = this.m_startPitch < EPSILON || this.m_tiltState === TiltState.Down;
-        this.m_pitchRequested = aimTilt ? this.tiltAngle : 0;
+        this.m_startTilt = this.currentTilt;
+        const aimTilt = this.m_startTilt < EPSILON;
+        this.m_tiltRequested = aimTilt ? this.tiltAngle : 0;
         this.m_tiltState = aimTilt ? TiltState.Tilted : TiltState.Down;
         this.m_tiltAnimationStartTime = performance.now();
         this.tilt();
@@ -558,35 +554,21 @@ export class MapControls extends THREE.EventDispatcher {
     }
 
     /**
-     * Set camera max pitch angle.
+     * Set camera max tilt angle. The value is clamped between 0 and 90 degrees. In sphere
+     * projection, at runtime, the value is also clamped so that the camera does not look above the
+     * horizon.
      *
      * @param angle Angle in degrees.
      */
-    set maxPitchAngle(angle: number) {
-        this.m_maxPitchAngle = THREE.Math.degToRad(angle);
+    set maxTiltAngle(angle: number) {
+        this.m_maxTiltAngle = Math.max(0, Math.min(90, THREE.Math.degToRad(angle)));
     }
 
     /**
-     * Get the camera max pitch angle in degrees.
+     * Get the camera max tilt angle in degrees.
      */
-    get maxPitchAngle(): number {
-        return THREE.Math.radToDeg(this.m_maxPitchAngle);
-    }
-
-    /**
-     * Set camera min pitch angle.
-     *
-     * @param angle Angle in degrees.
-     */
-    set minPitchAngle(angle: number) {
-        this.m_minPitchAngle = THREE.Math.degToRad(angle);
-    }
-
-    /**
-     * Get the camera min pitch angle in degrees.
-     */
-    get minPitchAngle(): number {
-        return THREE.Math.radToDeg(this.m_minPitchAngle);
+    get maxTiltAngle(): number {
+        return THREE.Math.radToDeg(this.m_maxTiltAngle);
     }
 
     /**
@@ -603,7 +585,7 @@ export class MapControls extends THREE.EventDispatcher {
     get tiltState(): TiltState {
         if (this.m_tiltState === undefined) {
             this.m_tiltState =
-                this.currentPitch < EPSILON || this.m_tiltState === TiltState.Down
+                this.currentTilt < EPSILON || this.m_tiltState === TiltState.Down
                     ? TiltState.Tilted
                     : TiltState.Down;
         }
@@ -618,27 +600,53 @@ export class MapControls extends THREE.EventDispatcher {
         return this.m_currentZoom !== undefined ? this.m_currentZoom : this.mapView.zoomLevel;
     }
 
-    private set currentPitch(pitch: number) {
-        this.m_currentPitch = pitch;
+    private set currentTilt(tilt: number) {
+        this.m_currentTilt = tilt;
     }
 
-    private get currentPitch(): number {
-        return MapViewUtils.extractYawPitchRoll(
-            this.camera.quaternion,
-            this.mapView.projection.type
-        ).pitch;
+    private get currentTilt(): number {
+        switch (this.mapView.projection.type) {
+            case geoUtils.ProjectionType.Planar:
+                return MapViewUtils.extractYawPitchRoll(this.camera, this.mapView.projection.type)
+                    .pitch;
+            case geoUtils.ProjectionType.Spherical:
+                const focusPointInWorldPosition = MapViewUtils.rayCastWorldCoordinates(
+                    this.mapView,
+                    0,
+                    0
+                );
+                if (!focusPointInWorldPosition) {
+                    throw new Error("MapControls does not support a view pointing in the void.");
+                }
+
+                const distance = this.camera.position.distanceTo(focusPointInWorldPosition);
+
+                // Find the Z axis of the tangent space.
+                vector2.copy(focusPointInWorldPosition).normalize();
+
+                // Store the projected camera position on the tangent "ground" of the target in
+                // `vector1`.
+                vector1.copy(this.camera.position).projectOnPlane(vector2);
+
+                // Compute camera altitude in tangent space.
+                vector1.add(focusPointInWorldPosition);
+                const cameraAltitude = this.camera.position.distanceTo(vector1);
+                vector1.sub(focusPointInWorldPosition);
+                return Math.acos(Math.min(1, cameraAltitude / distance));
+        }
     }
 
-    private get targetedPitch(): number {
-        return this.m_targetedPitch === undefined
-            ? this.m_currentPitch === undefined
-                ? this.currentPitch
-                : this.m_currentPitch
-            : this.m_targetedPitch;
+    private get targetedTilt(): number {
+        return this.m_targetedTilt === undefined
+            ? this.m_currentTilt === undefined
+                ? this.currentTilt
+                : this.m_currentTilt
+            : this.m_targetedTilt;
     }
 
     private assignZoomAfterTouchZoomRender() {
         this.m_currentZoom = this.mapView.zoomLevel;
+        this.m_targetedZoom = this.mapView.zoomLevel;
         this.mapView.removeEventListener(
             MapViewEventNames.AfterRender,
             this.assignZoomAfterTouchZoomRender
@@ -646,12 +654,9 @@ export class MapControls extends THREE.EventDispatcher {
     }
 
     private tilt() {
-        if (this.m_pitchRequested !== undefined) {
-            this.m_targetedPitch = Math.max(
-                Math.min(this.m_pitchRequested, this.maxPitchAngle),
-                this.m_minPitchAngle
-            );
-            this.m_pitchRequested = undefined;
+        if (this.m_tiltRequested !== undefined) {
+            this.m_targetedTilt = Math.max(Math.min(this.m_tiltRequested, this.maxTiltAngle), 0);
+            this.m_tiltRequested = undefined;
         }
 
         if (this.inertiaEnabled) {
@@ -673,18 +678,18 @@ export class MapControls extends THREE.EventDispatcher {
             }
         }
 
-        this.m_currentPitch = this.inertiaEnabled
+        this.m_currentTilt = this.inertiaEnabled
             ? this.easeOutCubic(
-                  this.m_startPitch,
-                  this.targetedPitch,
+                  this.m_startTilt,
+                  this.targetedTilt,
                   Math.min(1, this.m_tiltAnimationTime / this.tiltToggleDuration)
               )
-            : this.targetedPitch;
+            : this.targetedTilt;
 
-        const initialPitch = this.currentPitch;
-        const deltaAngle = this.m_currentPitch - initialPitch;
-        const oldCameraDistance = this.mapView.camera.position.z / Math.cos(initialPitch);
-        const newHeight = Math.cos(this.currentPitch) * oldCameraDistance;
+        const initialTilt = this.currentTilt;
+        const deltaAngle = this.m_currentTilt - initialTilt;
+        const oldCameraDistance = this.mapView.camera.position.z / Math.cos(initialTilt);
+        const newHeight = Math.cos(this.currentTilt) * oldCameraDistance;
 
         this.orbitFocusPoint(newHeight - this.camera.position.z, THREE.Math.radToDeg(deltaAngle));
 
@@ -694,7 +699,7 @@ export class MapControls extends THREE.EventDispatcher {
     private stopTilt() {
         this.mapView.removeEventListener(MapViewEventNames.AfterRender, this.tilt);
         this.m_tiltIsAnimated = false;
-        this.m_targetedPitch = this.m_currentPitch = undefined;
+        this.m_targetedTilt = this.m_currentTilt = undefined;
     }
 
     private easeOutCubic(startValue: number, endValue: number, time: number): number {
@@ -741,7 +746,8 @@ export class MapControls extends THREE.EventDispatcher {
             this.mapView,
             this.m_zoomTargetNormalizedCoordinates.x,
             this.m_zoomTargetNormalizedCoordinates.y,
-            this.currentZoom
+            this.currentZoom,
+            this.m_maxTiltAngle
         );
 
         this.updateMapView();
@@ -838,7 +844,7 @@ export class MapControls extends THREE.EventDispatcher {
                 this.m_panDistanceFrameDelta.y
             );
         } else if (this.mapView.projection.type === geoUtils.ProjectionType.Spherical) {
-            MapViewUtils.rotateCameraAroundGlobe(
+            MapViewUtils.panCameraAroundGlobe(
                 this.mapView,
                 this.m_lastRotateGlobeFromVector,
                 this.m_tmpVector3
@@ -1026,19 +1032,42 @@ export class MapControls extends THREE.EventDispatcher {
      * `-PI` and `PI`.
      */
     private calculateAngleFromTouchPointsInWorldspace(): number {
-        if (this.m_touchState.touches.length < 2) {
+        if (
+            this.m_touchState.touches.length < 2 ||
+            this.m_touchState.touches[1].currentWorldPosition.length() === 0 ||
+            this.m_touchState.touches[0].currentWorldPosition.length() === 0
+        ) {
             return 0;
         }
+        if (this.mapView.projection.type === geoUtils.ProjectionType.Planar) {
+            const x =
+                this.m_touchState.touches[1].currentWorldPosition.x -
+                this.m_touchState.touches[0].currentWorldPosition.x;
 
-        const x =
-            this.m_touchState.touches[1].currentWorldPosition.x -
-            this.m_touchState.touches[0].currentWorldPosition.x;
+            const y =
+                this.m_touchState.touches[1].currentWorldPosition.y -
+                this.m_touchState.touches[0].currentWorldPosition.y;
 
-        const y =
-            this.m_touchState.touches[1].currentWorldPosition.y -
-            this.m_touchState.touches[0].currentWorldPosition.y;
-
-        return Math.atan2(y, x);
+            return Math.atan2(y, x);
+        } else {
+            const avPoint = new THREE.Vector3()
+                .addVectors(
+                    this.m_touchState.touches[1].currentWorldPosition,
+                    this.m_touchState.touches[0].currentWorldPosition
+                )
+                .normalize();
+            const p1 = this.m_touchState.touches[1].currentWorldPosition
+                .clone()
+                .projectOnPlane(avPoint)
+                .normalize();
+            const north = new THREE.Vector3(0, 1, 0).projectOnPlane(avPoint).normalize();
+            let angle = north.angleTo(p1);
+            const cross = p1.cross(north);
+            if (cross.dot(avPoint) > 0) {
+                angle = -angle;
+            }
+            return angle;
+        }
     }
 
     /**
@@ -1049,40 +1078,23 @@ export class MapControls extends THREE.EventDispatcher {
         if (this.m_touchState.touches.length < 2) {
             return 0;
         }
-        if (this.mapView.projection.type === geoUtils.ProjectionType.Planar) {
-            const previousDistance = this.m_tmpVector3
-                .subVectors(
-                    this.m_touchState.touches[0].initialWorldPosition,
-                    this.m_touchState.touches[1].initialWorldPosition
-                )
-                .length();
+        const previousDistance = this.m_tmpVector3
+            .subVectors(
+                this.m_touchState.touches[0].initialWorldPosition,
+                this.m_touchState.touches[1].initialWorldPosition
+            )
+            .length();
 
-            const currentDistance = this.m_tmpVector3
-                .subVectors(
-                    this.m_touchState.touches[0].currentWorldPosition,
-                    this.m_touchState.touches[1].currentWorldPosition
-                )
-                .length();
-            return currentDistance - previousDistance;
-        } else if (this.mapView.projection.type === geoUtils.ProjectionType.Spherical) {
-            const previousDistance = this.m_tmpVector2
-                .subVectors(
-                    this.m_touchState.touches[0].lastTouchPoint,
-                    this.m_touchState.touches[1].lastTouchPoint
-                )
-                .length();
-            const currentDistance = this.m_tmpVector2
-                .subVectors(
-                    this.m_touchState.touches[0].currentTouchPoint,
-                    this.m_touchState.touches[1].currentTouchPoint
-                )
-                .length();
-            return currentDistance - previousDistance;
-        }
-        return 0;
+        const currentDistance = this.m_tmpVector3
+            .subVectors(
+                this.m_touchState.touches[0].currentWorldPosition,
+                this.m_touchState.touches[1].currentWorldPosition
+            )
+            .length();
+        return currentDistance - previousDistance;
     }
 
-    private convertTouchPoint(touch: Touch, oldTouchState?: TouchState): TouchState | null {
+    private convertTouchPoint(touch: Touch, oldTouchState?: TouchState): TouchState | undefined {
         const newTouchPoint = new THREE.Vector2(touch.pageX, touch.pageY);
 
         if (oldTouchState !== undefined) {
@@ -1093,10 +1105,22 @@ export class MapControls extends THREE.EventDispatcher {
                 newTouchPoint.x,
                 newTouchPoint.y
             );
-            if (vectors === undefined) {
-                return null;
+            const toWorld = vectors === undefined ? new THREE.Vector3() : vectors.toWorld;
+            // Unless the user is tilting, considering a finger losing the surface as a touchEnd
+            // event. Inertia will get triggered.
+            if (
+                toWorld.length() === 0 &&
+                !(this.m_touchState.touches.length === 3 && this.tiltEnabled)
+            ) {
+                this.setTouchState([] as any);
+                this.m_state = State.NONE;
+                this.dispatchEvent(MAPCONTROL_EVENT_END_INTERACTION);
+                return;
             }
-            const { toWorld } = vectors;
+            if (this.m_state !== State.TOUCH) {
+                this.dispatchEvent(MAPCONTROL_EVENT_BEGIN_INTERACTION);
+            }
+            this.m_state = State.TOUCH;
             return {
                 currentTouchPoint: newTouchPoint,
                 lastTouchPoint: newTouchPoint,
@@ -1111,10 +1135,23 @@ export class MapControls extends THREE.EventDispatcher {
                 width,
                 height
             );
-            const toWorld = MapViewUtils.rayCastWorldCoordinates(this.mapView, to.x, to.y);
-            if (toWorld === null) {
-                return null;
+            const result = MapViewUtils.rayCastWorldCoordinates(this.mapView, to.x, to.y);
+            const toWorld = result === null ? new THREE.Vector3() : result;
+            // Unless the user is tilting, considering a finger losing the surface as a touchEnd
+            // event. Inertia will get triggered.
+            if (
+                toWorld.length() === 0 &&
+                !(this.m_touchState.touches.length === 3 && this.tiltEnabled)
+            ) {
+                this.setTouchState([] as any);
+                this.m_state = State.NONE;
+                this.dispatchEvent(MAPCONTROL_EVENT_END_INTERACTION);
+                return;
             }
+            if (this.m_state !== State.TOUCH) {
+                this.dispatchEvent(MAPCONTROL_EVENT_BEGIN_INTERACTION);
+            }
+            this.m_state = State.TOUCH;
             return {
                 currentTouchPoint: newTouchPoint,
                 lastTouchPoint: newTouchPoint,
@@ -1131,7 +1168,7 @@ export class MapControls extends THREE.EventDispatcher {
         // tslint:disable-next-line:prefer-for-of
         for (let i = 0; i < touches.length; ++i) {
             const touchState = this.convertTouchPoint(touches[i]);
-            if (touchState) {
+            if (touchState !== undefined) {
                 this.m_touchState.touches.push(touchState);
             }
         }
@@ -1151,7 +1188,7 @@ export class MapControls extends THREE.EventDispatcher {
         for (let i = 0; i < length; ++i) {
             const oldTouchState = this.m_touchState.touches[i];
             const newTouchState = this.convertTouchPoint(touches[i], oldTouchState);
-            if (newTouchState !== null) {
+            if (newTouchState !== undefined && oldTouchState !== undefined) {
                 newTouchState.initialWorldPosition = oldTouchState.initialWorldPosition;
                 newTouchState.lastTouchPoint = oldTouchState.currentTouchPoint;
                 this.m_touchState.touches[i] = newTouchState;
@@ -1195,7 +1232,7 @@ export class MapControls extends THREE.EventDispatcher {
         this.updateTouches(event.touches);
         this.updateTouchState();
 
-        if (this.m_touchState.touches.length <= 2) {
+        if (this.m_touchState.touches.length <= 2 && this.m_touchState.touches[0] !== undefined) {
             this.panFromTo(
                 this.m_touchState.touches[0].initialWorldPosition,
                 this.m_touchState.touches[0].currentWorldPosition
@@ -1203,36 +1240,28 @@ export class MapControls extends THREE.EventDispatcher {
         }
 
         if (this.m_touchState.touches.length === 2) {
-            if (this.mapView.projection.type === geoUtils.ProjectionType.Planar) {
-                const deltaRotation =
-                    this.m_touchState.currentRotation - this.m_touchState.initialRotation;
-                this.rotate(THREE.Math.radToDeg(deltaRotation));
-                const pinchDistance = this.calculatePinchDistanceInWorldSpace();
-                this.moveAlongTheViewDirection(pinchDistance);
-            } else if (this.mapView.projection.type === geoUtils.ProjectionType.Spherical) {
-                // TODO: HARP-6597: Implement yaw rotation for globe, use `moveAlongViewDirection`
-                // in both Planar and Spherical.
-                const pinchDistance = this.calculatePinchDistanceInWorldSpace();
-                this.setZoomLevel(this.currentZoom + pinchDistance * 0.01);
+            const pinchDistance = this.calculatePinchDistanceInWorldSpace();
+            if (Math.abs(pinchDistance) < EPSILON) {
+                return;
             }
+            const deltaRotation =
+                this.m_touchState.currentRotation - this.m_touchState.initialRotation;
+            this.rotate(THREE.Math.radToDeg(deltaRotation));
+            this.moveAlongTheViewDirection(pinchDistance);
         }
 
         // Tilting
         if (this.m_touchState.touches.length === 3 && this.tiltEnabled) {
-            if (this.mapView.projection.type === geoUtils.ProjectionType.Planar) {
-                const firstTouch = this.m_touchState.touches[0];
-                const diff = this.m_tmpVector2.subVectors(
-                    firstTouch.currentTouchPoint,
-                    firstTouch.lastTouchPoint
-                );
+            const firstTouch = this.m_touchState.touches[0];
+            const diff = this.m_tmpVector2.subVectors(
+                firstTouch.currentTouchPoint,
+                firstTouch.lastTouchPoint
+            );
 
-                this.orbitFocusPoint(
-                    this.orbitingTouchDeltaFactor * diff.x,
-                    -this.orbitingTouchDeltaFactor * diff.y
-                );
-            } else if (this.mapView.projection.type === geoUtils.ProjectionType.Spherical) {
-                // TODO: HARP-6023: Support tilting in globe.
-            }
+            this.orbitFocusPoint(
+                this.orbitingTouchDeltaFactor * diff.x,
+                -this.orbitingTouchDeltaFactor * diff.y
+            );
         }
 
         this.m_zoomAnimationStartTime = performance.now();
@@ -1363,83 +1392,5 @@ export class MapControls extends THREE.EventDispatcher {
         }
 
         this.handlePan();
-    }
-
-    private constrainPitchAngle(pitchAngle: number, deltaPitch: number): number {
-        const tmpPitchAngle = THREE.Math.clamp(
-            pitchAngle + deltaPitch,
-            this.m_minPitchAngle,
-            this.m_maxPitchAngle
-        );
-        if (
-            this.tiltEnabled &&
-            tmpPitchAngle <= this.m_maxPitchAngle &&
-            tmpPitchAngle >= this.m_minPitchAngle
-        ) {
-            pitchAngle = tmpPitchAngle;
-        }
-        return pitchAngle;
-    }
-
-    /**
-     * This method approximates the minimum delta altitude by attempts. It has been preferred over a
-     * solution where the minimum delta is calculated adding the new delta to the current delta,
-     * because that solution would not have worked with terrains.
-     */
-    private getMinDelta(deltaAltitude: number): number {
-        // Do not even start to calculate a delta if the camera is already under the minimum height.
-        if (this.mapView.camera.position.z < this.minCameraHeight && deltaAltitude > 0) {
-            return 0;
-        }
-
-        const checkMinCamHeight = (deltaAlt: number, camera: THREE.PerspectiveCamera) => {
-            const cameraPos = camera.position;
-            const cameraQuat = camera.quaternion;
-            const newPitchQuaternion = new THREE.Quaternion();
-            const viewDirection = new THREE.Vector3();
-            const mockCamera = new THREE.Object3D();
-            mockCamera.position.set(cameraPos.x, cameraPos.y, cameraPos.z);
-            mockCamera.quaternion.set(cameraQuat.x, cameraQuat.y, cameraQuat.z, cameraQuat.w);
-
-            // save the current direction of the camera in viewDirection
-            mockCamera.getWorldDirection(viewDirection);
-
-            //calculate the new azimuth and altitude
-            const currentAzimuthAltitude = utils.directionToAzimuthAltitude(viewDirection);
-            const topElevation =
-                (1.0 / Math.sin(currentAzimuthAltitude.altitude)) * mockCamera.position.z;
-
-            // get the current quaternion from the camera
-            const yawPitchRoll = MapViewUtils.extractYawPitchRoll(
-                this.camera.quaternion,
-                this.mapView.projection.type
-            );
-
-            //calculate the pitch
-            const deltaPitchRadians = THREE.Math.degToRad(deltaAlt);
-            const pitchAngle = this.constrainPitchAngle(yawPitchRoll.pitch, deltaPitchRadians);
-            newPitchQuaternion.setFromAxisAngle(pitchAxis, pitchAngle);
-
-            // update the camera and the viewDirection vector
-            mockCamera.quaternion.copy(newPitchQuaternion);
-            mockCamera.matrixWorldNeedsUpdate = true;
-            mockCamera.getWorldDirection(viewDirection);
-
-            // use the viewDirection to get the height
-            const newAzimuthAltitude = utils.directionToAzimuthAltitude(viewDirection);
-            const newElevation = Math.sin(newAzimuthAltitude.altitude) * topElevation;
-            return newElevation;
-        };
-
-        let constrainedDeltaAltitude = deltaAltitude;
-        for (let i = 0; i < MAX_DELTA_ALTITUDE_STEPS; i++) {
-            const cameraHeight = checkMinCamHeight(constrainedDeltaAltitude, this.mapView.camera);
-            if (cameraHeight < this.minCameraHeight) {
-                constrainedDeltaAltitude *= 0.5;
-            } else {
-                return constrainedDeltaAltitude;
-            }
-        }
-        return constrainedDeltaAltitude;
     }
 }

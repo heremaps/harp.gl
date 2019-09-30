@@ -20,7 +20,7 @@ import * as THREE from "three";
 import { accessToken } from "../config";
 
 // Import the gesture handlers from the three.js additional libraries.
-// The controls are not in common.js they explictly require a
+// The controls are not in common.js they explicitly require a
 // global instance of THREE and they must be imported only for their
 // side effect.
 import "three/examples/js/controls/TrackballControls";
@@ -152,13 +152,13 @@ export namespace FreeCameraAppDebuggingToolExample {
             const applyTransformControls = () => {
                 // Apply helper camera offset to main (map view) camera.
                 this.mapView.camera.position.add(cameraRelativeToEye.position);
-                // Make sure that pitch limit contraint is preserved
+                // Make sure that the pitch limit constraint is preserved
                 const ypr = MapViewUtils.extractYawPitchRoll(
-                    cameraRelativeToEye.quaternion,
+                    cameraRelativeToEye,
                     this.mapView.projection.type
                 );
                 ypr.pitch = Math.max(
-                    Math.min(ypr.pitch, THREE.Math.degToRad(this.mapControls.maxPitchAngle)),
+                    Math.min(ypr.pitch, THREE.Math.degToRad(this.mapControls.maxTiltAngle)),
                     0
                 );
                 // Finally apply rotation from transformation gizmo.

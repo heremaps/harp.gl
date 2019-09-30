@@ -17,8 +17,8 @@ export namespace GlobeExample {
 
         const mapView = new MapView({
             canvas,
-            theme: "resources/berlin_tilezen_base_globe.json",
-            projection: sphereProjection
+            projection: sphereProjection,
+            theme: "resources/berlin_tilezen_base_globe.json"
         });
 
         CopyrightElementHandler.install("copyrightNotice", mapView);
@@ -59,7 +59,8 @@ export namespace GlobeExample {
         const ui = new MapControlsUI(mapControls);
         map.canvas.parentElement!.appendChild(ui.domElement);
 
-        map.setCameraGeolocationAndZoom(new GeoCoordinates(40.6935, -74.009), 4);
+        const NY = new GeoCoordinates(40.71, -74.007);
+        map.setCameraGeolocationAndZoom(NY, 3.2);
     }
 
     main();
