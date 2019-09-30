@@ -9,7 +9,6 @@ import { LoggerManager, Math2D } from "@here/harp-utils";
 import { checkIntersection /*colinearPointWithinSegment*/ } from "line-intersect";
 import * as THREE from "three";
 import { debugContext } from "./DebugContext";
-import { isBox3Like } from "@here/harp-geoutils";
 
 declare const require: any;
 
@@ -26,12 +25,16 @@ export interface IBox {
     type: string;
 }
 
+export interface CollisionBox extends IBox {
+    type: "box";
+}
+
 export interface LineWithBound extends IBox {
     minX: number;
     minY: number;
     maxX: number;
     maxY: number;
-    type: string;
+    type: "line";
     line: THREE.Line3;
 }
 /**
@@ -136,7 +139,7 @@ export class ScreenCollisions {
      * @param bounds The bounding box in world coordinates.
      */
     isAllocated(bounds: Math2D.Box): boolean {
-        const bbox: IBox = {
+        const bbox: CollisionBox = {
             minX: bounds.x,
             minY: bounds.y,
             maxX: bounds.x + bounds.w,
@@ -234,7 +237,9 @@ export class ScreenCollisions {
     }
 
     /**
-     * Transfer from screen space to screen bounds space
+     * Transfer from screen space to screen bounds space. Screen bounds space is the result of the
+     * [[ScreenProjector.project]] method. I.e. it is the NDC space multiplied by the width /
+     * height.
      * @param bounds Bounds in screen space.
      * @param type Type required to return IBox
      */
