@@ -21,6 +21,7 @@ import { MapView } from "./MapView";
 import { PerformanceStatistics } from "./Statistics";
 import { TextElement } from "./text/TextElement";
 import { MapViewUtils } from "./Utils";
+import { PathBlockingElement } from "./PathBlockingElement";
 
 const logger = LoggerManager.instance.create("Tile");
 
@@ -363,6 +364,9 @@ export class Tile implements CachedResource {
         TextElement
     > = new GroupedPriorityList<TextElement>();
 
+    // Blocks other labels from showing.
+    private readonly m_pathBlockingElements: PathBlockingElement[] = [];
+
     // All visible [[TextElement]]s.
     private readonly m_placedTextElements: GroupedPriorityList<
         TextElement
@@ -554,6 +558,16 @@ export class Tile implements CachedResource {
     }
 
     /**
+     * Adds a [[PathBlockingElement]] to this `Tile`. This path has the highest priority and blocks
+     * all other labels. There maybe in future a use case to give it a priority, but as that isn't
+     * yet required, it is left to be implemented later if required.
+     * @param blockingElement Element which should block all other labels.
+     */
+    addBlockingElement(blockingElement: PathBlockingElement) {
+        this.m_pathBlockingElements.push(blockingElement);
+    }
+
+    /**
      * Removes a [[TextElement]] from this `Tile`. For the element to be removed successfully, the
      * priority of the [[TextElement]] has to be equal to its priority when it was added.
      *
@@ -593,6 +607,13 @@ export class Tile implements CachedResource {
      */
     hasTextElements(): boolean {
         return this.m_textElementGroups.count() > 0 || this.m_userTextElements.length > 0;
+    }
+
+    /**
+     * Get the current blocking elements.
+     */
+    get blockingElements(): PathBlockingElement[] {
+        return this.m_pathBlockingElements;
     }
 
     /**
@@ -947,6 +968,7 @@ export class Tile implements CachedResource {
         }
 
         this.placedTextElements.clear();
+        this.m_pathBlockingElements.splice(0);
         this.textElementGroups.clear();
         this.userTextElements.length = 0;
         this.invalidateResourceInfo();

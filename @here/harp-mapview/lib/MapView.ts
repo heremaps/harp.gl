@@ -2894,6 +2894,7 @@ export class MapView extends THREE.EventDispatcher {
         this.m_textElementsRenderer.reset();
         this.m_textElementsRenderer.prepopulateScreen(this.m_screenSpaceBoxes);
         this.m_textElementsRenderer.prepopulateScreenWithLines(this.m_screenSpaceLines);
+        this.m_textElementsRenderer.prepopulateScreenWithBlockingElements()
         this.m_textElementsRenderer.renderUserTextElements(time, this.m_frameNumber);
         this.m_textElementsRenderer.renderAllTileText(time, this.m_frameNumber);
         this.m_textElementsRenderer.renderOverlay(this.m_overlayTextElements);

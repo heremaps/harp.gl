@@ -604,16 +604,62 @@ export class TextElementsRenderer {
         return memoryUsage;
     }
 
+    /**
+     * Fills the screen with boxes which should block other labels.
+     * @param boxes Boxes in screen space which reject other labels.
+     */
     prepopulateScreen(boxes: Math2D.Box[]) {
         for (const box of boxes) {
             this.m_screenCollisions.allocate(box);
         }
     }
 
+    /**
+     * Fills the screen with lines which should block other labels.
+     * @param lines Lines in screen space which reject other labels.
+     */
     prepopulateScreenWithLines(lines: LineWithBound[]) {
         for (const line of lines) {
             this.m_screenCollisions.allocateIBox(line);
         }
+    }
+
+    /**
+     * Fills the screen with lines projected from world space, see [[Tile.blockingElements]].
+     */
+    prepopulateScreenWithBlockingElements() {
+        const renderList = this.m_mapView.visibleTileSet.dataSourceTileList;
+        renderList.forEach(renderListEntry => {
+            const startLinePointProj = new THREE.Vector3();
+            const endLinePointProj = new THREE.Vector3();
+            for (const tile of renderListEntry.visibleTiles) {
+                for (const pathBlockingElement of tile.blockingElements) {
+                    if (pathBlockingElement.points.length < 2) {
+                        continue;
+                    }
+                    // Project to screen and store it in the ScreenCollisions.
+                    let startLinePoint = pathBlockingElement.points[0];
+                    for (let i = 1; i < pathBlockingElement.points.length; i++) {
+                        const endLinePoint = pathBlockingElement.points[i];
+                        this.m_screenProjector.project3(startLinePoint, startLinePointProj);
+                        this.m_screenProjector.project3(endLinePoint, endLinePointProj);
+                        startLinePoint = endLinePoint;
+                        const lineWithBound: LineWithBound = {
+                            minX: Math.min(startLinePointProj.x, endLinePointProj.x),
+                            maxX: Math.max(startLinePointProj.x, endLinePointProj.x),
+                            minY: Math.min(startLinePointProj.y, endLinePointProj.y),
+                            maxY: Math.max(startLinePointProj.y, endLinePointProj.y),
+                            type: "line",
+                            line: new THREE.Line3(
+                                startLinePointProj.clone(),
+                                endLinePointProj.clone()
+                            )
+                        };
+                        this.m_screenCollisions.allocateIBox(lineWithBound);
+                    }
+                }
+            }
+        });
     }
 
     private initializeDefaultAssets(): void {
