@@ -6,6 +6,7 @@ To begin with `harp.gl`, we provide a few starting points:
 - [Create simple app](#yeoman) using Yeoman
 - [Integrate `harp.gl` into your existing Webpack based project](#integrate)
 - [Look at examples](#examples)
+- [Don't forget the credentials](#credentials)
 
 ## <a name="simple"></a> Import harp.gl with simple bundle
 
@@ -235,7 +236,7 @@ and `app_code`, that you can do directly from your Developer Dashboard, see a st
 [here](https://www.here.xyz/getting-started/).
 
 For XYZ Vector Tiles, you need an `access_token` that you can generate yourself from the
-[Token Manager](https://xyz.api.here.com/token-ui/).
+[Token Manager](https://xyz.api.here.com/token-ui/). You can see a step-by-step guide [here](https://www.here.xyz/api/getting-token/).
 
 These credentials need to be passed to the Service in order to retrieve tiles, please see the
 examples to check how it is done.
