@@ -36,6 +36,7 @@ import { AttrEvaluationContext } from "@here/harp-datasource-protocol/lib/Techni
 import { IGeometryProcessor, ILineGeometry, IPolygonGeometry } from "./IGeometryProcessor";
 import { OmvProtobufDataAdapter } from "./OmvData";
 import {
+    ComposedDataFilter,
     OmvFeatureFilter,
     OmvFeatureModifier,
     OmvGenericFeatureFilter,
@@ -50,6 +51,7 @@ import {
 } from "./OmvDecoderDefs";
 import { OmvTileInfoEmitter } from "./OmvTileInfoEmitter";
 import { OmvTomTomFeatureModifier } from "./OmvTomTomFeatureModifier";
+import { StyleSetDataFilter } from "./StyleSetDataFilter";
 import { VTJsonDataAdapter } from "./VTJsonDataAdapter";
 
 const logger = LoggerManager.instance.create("OmvDecoder", { enabled: false });
@@ -166,9 +168,13 @@ export class OmvDecoder implements IGeometryProcessor {
         private readonly m_enableElevationOverlay = false,
         private readonly m_languages?: string[]
     ) {
+        const styleSetDataFilter = new StyleSetDataFilter(m_styleSetEvaluator);
+        const dataPreFilter = m_dataFilter
+            ? new ComposedDataFilter([styleSetDataFilter, m_dataFilter])
+            : styleSetDataFilter;
         // Register the default adapters.
-        this.m_dataAdapters.push(new OmvProtobufDataAdapter(this, m_dataFilter, logger));
-        this.m_dataAdapters.push(new VTJsonDataAdapter(this, m_dataFilter, logger));
+        this.m_dataAdapters.push(new OmvProtobufDataAdapter(this, dataPreFilter, logger));
+        this.m_dataAdapters.push(new VTJsonDataAdapter(this, dataPreFilter, logger));
     }
 
     get storageLevelOffset() {
