@@ -164,17 +164,8 @@ export class AnimatedExtrusionHandler {
  * Implements animated extrusion effect for the extruded objects in the [[Tile]]
  */
 export class AnimatedExtrusionTileHandler {
-    /**
-     * Minimum ratio value for extrusion effect
-     */
-    static DEFAULT_RATIO_MIN: number = 0.001;
-    /**
-     * Maximum ratio value for extrusion effect
-     */
-    static DEFAULT_RATIO_MAX: number = 1;
-
     private m_extrudedObjects: THREE.Object3D[] = [];
-    private m_animatedExtrusionRatio: number = AnimatedExtrusionTileHandler.DEFAULT_RATIO_MAX;
+    private m_animatedExtrusionRatio: number = ExtrusionFeature.DEFAULT_RATIO_MAX;
     private m_animatedExtrusionState: AnimatedExtrusionState = AnimatedExtrusionState.None;
     private m_animatedExtrusionStartTime: number | undefined = undefined;
     private m_mapView: MapView;
@@ -364,8 +355,8 @@ export class AnimatedExtrusionTileHandler {
         );
 
         this.extrusionRatio = MathUtils.easeInOutCubic(
-            AnimatedExtrusionTileHandler.DEFAULT_RATIO_MIN,
-            AnimatedExtrusionTileHandler.DEFAULT_RATIO_MAX,
+            ExtrusionFeature.DEFAULT_RATIO_MIN,
+            ExtrusionFeature.DEFAULT_RATIO_MAX,
             timeProgress / this.m_animatedExtrusionDuration
         );
 

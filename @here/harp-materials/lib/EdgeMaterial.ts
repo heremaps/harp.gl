@@ -6,7 +6,6 @@
 
 import * as THREE from "three";
 
-import { AnimatedExtrusionTileHandler } from "../../harp-mapview/lib/AnimatedExtrusionHandler";
 import {
     DisplacementFeature,
     DisplacementFeatureParameters,
@@ -145,7 +144,7 @@ export class EdgeMaterial extends THREE.RawShaderMaterial
                 edgeColorMix: new THREE.Uniform(EdgeMaterial.DEFAULT_COLOR_MIX),
                 fadeNear: new THREE.Uniform(FadingFeature.DEFAULT_FADE_NEAR),
                 fadeFar: new THREE.Uniform(FadingFeature.DEFAULT_FADE_FAR),
-                extrusionRatio: new THREE.Uniform(AnimatedExtrusionTileHandler.DEFAULT_RATIO_MIN),
+                extrusionRatio: new THREE.Uniform(ExtrusionFeature.DEFAULT_RATIO_MIN),
                 displacementMap: new THREE.Uniform(
                     hasDisplacementMap ? params!.displacementMap : new THREE.Texture()
                 )
@@ -232,8 +231,7 @@ export class EdgeMaterial extends THREE.RawShaderMaterial
     }
     set extrusionRatio(value: number) {
         this.uniforms.extrusionRatio.value = value;
-        const doExtrusion =
-            value !== undefined && value >= AnimatedExtrusionTileHandler.DEFAULT_RATIO_MIN;
+        const doExtrusion = value !== undefined && value >= ExtrusionFeature.DEFAULT_RATIO_MIN;
         if (doExtrusion) {
             this.needsUpdate = this.needsUpdate || this.defines.USE_EXTRUSION === undefined;
             this.defines.USE_EXTRUSION = "";
