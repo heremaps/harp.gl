@@ -305,6 +305,99 @@ describe("StyleSetEvaluator", function() {
         });
     });
 
+    describe("#wantsLayer", function() {
+        it("ignores all layers for empty styleset", function() {
+            const ss = new StyleSetEvaluator([]);
+            assert.isFalse(ss.wantsLayer("foo"));
+            assert.isFalse(ss.wantsLayer("bar"));
+        });
+
+        it("wants all layers if layer predicate is missing from at least one style", function() {
+            const ss = new StyleSetEvaluator([
+                {
+                    when: ["==", ["get", "foo"], "bar"],
+                    technique: "fill"
+                }
+            ]);
+            assert.isTrue(ss.wantsLayer("foo"));
+            assert.isTrue(ss.wantsLayer("bar"));
+        });
+        it("supports both layer and layer predicate", function() {
+            const ss = new StyleSetEvaluator([
+                {
+                    layer: "foo",
+                    when: ["==", ["get", "foo"], "bar"],
+                    technique: "fill"
+                },
+                {
+                    when: ["all", ["==", ["get", "$layer"], "bar"]],
+                    technique: "fill"
+                }
+            ]);
+            assert.isTrue(ss.wantsLayer("foo"));
+            assert.isTrue(ss.wantsLayer("bar"));
+            assert.isFalse(ss.wantsLayer("baz"));
+        });
+    });
+
+    describe("#wantsFeature", function() {
+        it("ignores all layers for empty styleset", function() {
+            const ss = new StyleSetEvaluator([]);
+            assert.isFalse(ss.wantsFeature("foo", "point"));
+            assert.isFalse(ss.wantsFeature("bar", "polygon"));
+            assert.isFalse(ss.wantsFeature("baz", "line"));
+        });
+
+        it("wants all features if predicate is missing from at least one style", function() {
+            const ss = new StyleSetEvaluator([
+                {
+                    when: ["==", ["get", "foo"], "bar"],
+                    technique: "fill"
+                }
+            ]);
+            assert.isTrue(ss.wantsFeature("foo", "point"));
+            assert.isTrue(ss.wantsFeature("bar", "polygon"));
+            assert.isTrue(ss.wantsFeature("baz", "line"));
+        });
+
+        it("supports ignores all but selected layer/geometry ", function() {
+            const ss = new StyleSetEvaluator([
+                {
+                    when: [
+                        "all",
+                        ["==", ["get", "$layer"], "bar"],
+                        ["==", ["get", "$geometryType"], "polygon"]
+                    ],
+                    technique: "fill"
+                }
+            ]);
+            assert.isTrue(ss.wantsLayer("bar"));
+            assert.isTrue(ss.wantsFeature("bar", "polygon"));
+            assert.isFalse(ss.wantsFeature("bar", "line"));
+            assert.isFalse(ss.wantsFeature("bar", "point"));
+
+            assert.isFalse(ss.wantsLayer("foo"));
+            assert.isFalse(ss.wantsFeature("foo", "polygon"));
+        });
+
+        it("works also only with geometryType predicate ", function() {
+            const ss = new StyleSetEvaluator([
+                {
+                    when: ["all", ["==", ["get", "$geometryType"], "polygon"]],
+                    technique: "fill"
+                }
+            ]);
+            // should return true for any layer
+            assert.isTrue(ss.wantsLayer("bar"));
+            assert.isTrue(ss.wantsLayer("baz"));
+
+            // but should return false only for "polygons" in any layer
+            assert.isTrue(ss.wantsFeature("bar", "polygon"));
+            assert.isFalse(ss.wantsFeature("bar", "line"));
+            assert.isFalse(ss.wantsFeature("bar", "point"));
+        });
+    });
+
     it("Filter techniques by layer", function() {
         const styleSet: StyleSet = [
             {
@@ -364,6 +457,14 @@ describe("StyleSetEvaluator", function() {
         assert.equal(techniques[1].name, "text");
         assert.equal(techniques[2].name, "solid-line");
         assert.equal(techniques[3].name, "fill");
+
+        // additional cross-checks for wantsLayer/Feature
+        assert.isTrue(ev.wantsLayer("buildings"));
+        assert.isTrue(ev.wantsLayer("water"));
+        assert.isFalse(ev.wantsLayer("foobar"));
+
+        assert.isTrue(ev.wantsFeature("buildings", "polygon"));
+        assert.isTrue(ev.wantsFeature("buildings", "line"));
     });
 
     it("Filter techniques by layer and geometryType", function() {
@@ -426,5 +527,13 @@ describe("StyleSetEvaluator", function() {
         assert.equal(techniquesFilteredByLayer[0].name, "extruded-polygon");
         assert.equal(techniquesFilteredByLayerAndGeometryType[0].name, "extruded-polygon");
         assert.equal(techniquesFilteredByGeometryType[0].name, "extruded-polygon");
+
+        // additional cross-checks for wantsLayer/Feature
+        assert.isTrue(styleSetEvaluator.wantsLayer("buildings"));
+        assert.isFalse(styleSetEvaluator.wantsLayer("water"));
+
+        assert.isTrue(styleSetEvaluator.wantsFeature("buildings", "polygon"));
+        assert.isTrue(styleSetEvaluator.wantsFeature("buildings", "line"));
+        assert.isFalse(styleSetEvaluator.wantsFeature("buildings", "foobar"));
     });
 });
