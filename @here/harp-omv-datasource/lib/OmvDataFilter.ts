@@ -681,6 +681,51 @@ export class OmvGenericFeatureFilter implements OmvFeatureFilter {
 }
 
 /**
+ * An [[OmvFeatureFilter]] implementation that delegates all filter decision
+ * returning `true` for any predicate if all delegates return `true`.
+ */
+export class ComposedDataFilter implements OmvFeatureFilter {
+    constructor(readonly filters: OmvFeatureFilter[]) {}
+
+    get hasKindFilter() {
+        return this.filters.reduce<boolean>(
+            (result, filter) => result && filter.hasKindFilter,
+            true
+        );
+    }
+
+    wantsLayer(layer: string, level: number): boolean {
+        return this.filters.reduce<boolean>(
+            (result, filter) => result && filter.wantsLayer(layer, level),
+            true
+        );
+    }
+    wantsPointFeature(layer: string, geometryType: OmvGeometryType, level: number): boolean {
+        return this.filters.reduce<boolean>(
+            (result, filter) => result && filter.wantsPointFeature(layer, geometryType, level),
+            true
+        );
+    }
+    wantsLineFeature(layer: string, geometryType: OmvGeometryType, level: number): boolean {
+        return this.filters.reduce<boolean>(
+            (result, filter) => result && filter.wantsLineFeature(layer, geometryType, level),
+            true
+        );
+    }
+    wantsPolygonFeature(layer: string, geometryType: OmvGeometryType, level: number): boolean {
+        return this.filters.reduce<boolean>(
+            (result, filter) => result && filter.wantsPolygonFeature(layer, geometryType, level),
+            true
+        );
+    }
+    wantsKind(kind: string | string[]): boolean {
+        return this.filters.reduce<boolean>(
+            (result, filter) => result && filter.wantsKind(kind),
+            true
+        );
+    }
+}
+/**
  * `OmvFeatureModifier` implementation that uses a `OmvFeatureFilterDescription` to filter
  * `TileData` features before they are completely decoded.
  *
