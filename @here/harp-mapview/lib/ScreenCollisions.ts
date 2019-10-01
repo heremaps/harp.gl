@@ -30,10 +30,6 @@ export interface CollisionBox extends IBox {
 }
 
 export interface LineWithBound extends IBox {
-    minX: number;
-    minY: number;
-    maxX: number;
-    maxY: number;
     type: "line";
     line: THREE.Line3;
 }
@@ -154,70 +150,7 @@ export class ScreenCollisions {
                     return true;
                 case "line": {
                     const boundedLine = result as LineWithBound;
-                    const line = boundedLine.line;
-                    // Transform line from screen space to screenBounds space.
-                    const lineStartXTransformed = line.start.x + this.screenBounds.x;
-                    const lineStartYTransformed = this.screenBounds.h / 2 - line.start.y;
-                    const lineEndXTransformed = line.end.x + this.screenBounds.x;
-                    const lineEndYTransformed = this.screenBounds.h / 2 - line.end.y;
-
-                    // Test left side
-                    let intersectionResult = checkIntersection(
-                        lineStartXTransformed,
-                        lineStartYTransformed,
-                        lineEndXTransformed,
-                        lineEndYTransformed,
-                        bbox.minX,
-                        bbox.minY,
-                        bbox.minX,
-                        bbox.maxY
-                    );
-                    if (intersectionResult.type === "intersecting") {
-                        return true;
-                    }
-
-                    // Test right side
-                    intersectionResult = checkIntersection(
-                        lineStartXTransformed,
-                        lineStartYTransformed,
-                        lineEndXTransformed,
-                        lineEndYTransformed,
-                        bbox.maxX,
-                        bbox.minY,
-                        bbox.maxX,
-                        bbox.maxY
-                    );
-                    if (intersectionResult.type === "intersecting") {
-                        return true;
-                    }
-
-                    // Test top
-                    intersectionResult = checkIntersection(
-                        lineStartXTransformed,
-                        lineStartYTransformed,
-                        lineEndXTransformed,
-                        lineEndYTransformed,
-                        bbox.minX,
-                        bbox.maxY,
-                        bbox.maxX,
-                        bbox.maxY
-                    );
-                    if (intersectionResult.type === "intersecting") {
-                        return true;
-                    }
-
-                    // Test bottom
-                    intersectionResult = checkIntersection(
-                        lineStartXTransformed,
-                        lineStartYTransformed,
-                        lineEndXTransformed,
-                        lineEndYTransformed,
-                        bbox.minX,
-                        bbox.minY,
-                        bbox.maxX,
-                        bbox.minY
-                    );
-                    if (intersectionResult.type === "intersecting") {
+                    if (this.intersectsLine(bbox, boundedLine)) {
                         return true;
                     }
                 }
@@ -234,6 +167,76 @@ export class ScreenCollisions {
      */
     isVisible(bounds: Math2D.Box): boolean {
         return this.screenBounds.intersects(bounds);
+    }
+
+    private intersectsLine(bbox: CollisionBox, boundedLine: LineWithBound): boolean {
+        const line = boundedLine.line;
+        // Transform line from screen space to screenBounds space.
+        const lineStartXTransformed = line.start.x + this.screenBounds.x;
+        const lineStartYTransformed = this.screenBounds.h / 2 - line.start.y;
+        const lineEndXTransformed = line.end.x + this.screenBounds.x;
+        const lineEndYTransformed = this.screenBounds.h / 2 - line.end.y;
+
+        // Test left side
+        let intersectionResult = checkIntersection(
+            lineStartXTransformed,
+            lineStartYTransformed,
+            lineEndXTransformed,
+            lineEndYTransformed,
+            bbox.minX,
+            bbox.minY,
+            bbox.minX,
+            bbox.maxY
+        );
+        if (intersectionResult.type === "intersecting") {
+            return true;
+        }
+
+        // Test right side
+        intersectionResult = checkIntersection(
+            lineStartXTransformed,
+            lineStartYTransformed,
+            lineEndXTransformed,
+            lineEndYTransformed,
+            bbox.maxX,
+            bbox.minY,
+            bbox.maxX,
+            bbox.maxY
+        );
+        if (intersectionResult.type === "intersecting") {
+            return true;
+        }
+
+        // Test top
+        intersectionResult = checkIntersection(
+            lineStartXTransformed,
+            lineStartYTransformed,
+            lineEndXTransformed,
+            lineEndYTransformed,
+            bbox.minX,
+            bbox.maxY,
+            bbox.maxX,
+            bbox.maxY
+        );
+        if (intersectionResult.type === "intersecting") {
+            return true;
+        }
+
+        // Test bottom
+        intersectionResult = checkIntersection(
+            lineStartXTransformed,
+            lineStartYTransformed,
+            lineEndXTransformed,
+            lineEndYTransformed,
+            bbox.minX,
+            bbox.minY,
+            bbox.maxX,
+            bbox.minY
+        );
+        if (intersectionResult.type === "intersecting") {
+            return true;
+        }
+        return false;
     }
 
     /**
