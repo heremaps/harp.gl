@@ -2416,12 +2416,18 @@ export class MapView extends THREE.EventDispatcher {
             this.m_forceCameraAspect !== undefined ? this.m_forceCameraAspect : width / height;
         this.setFovOnCamera(this.m_options.fovCalculation!, height);
 
+        // When calculating clip planes account for the highest building on the earth,
+        // multipling its height by projection scalling factor. This approach assumes
+        // constantHeight property of extruded polygon technique is set as default false,
+        // otherwise the near plane margins will be bigger then required, but still correct.
+        const projectionScale = this.projection.getScaleFactor(this.camera.position);
+        const maxHeight = EarthConstants.MAX_BUILDING_HEIGHT * projectionScale;
         // Copy all properties from new view ranges to our readonly object.
         // This allows to keep all view ranges references valid and keeps up-to-date
         // information within them. Works the same as copping all properties one-by-one.
         Object.assign(
             this.m_viewRanges,
-            viewRanges === undefined ? this.m_visibleTiles.updateClipPlanes() : viewRanges
+            viewRanges === undefined ? this.m_visibleTiles.updateClipPlanes(maxHeight) : viewRanges
         );
         this.m_camera.near = this.m_viewRanges.near;
         this.m_camera.far = this.m_viewRanges.far;
