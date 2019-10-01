@@ -964,16 +964,10 @@ export class TextElementsRenderer {
         const sortedGroups: TextElementLists[] = [];
         this.createSortedGroupsForSorting(tileDataSource, storageLevel, sortedTiles, sortedGroups);
 
-        const textElementGroups: TextElement[][] = [];
-
         let numTextElementsPlaced = 0;
 
         for (const textElementLists of sortedGroups) {
-            this.selectTextElementsToPlaceByDistance(
-                zoomLevel,
-                textElementLists,
-                textElementGroups
-            );
+            this.selectTextElementsToPlaceByDistance(zoomLevel, textElementLists);
 
             // The value of placementStartTime is set if this.overloaded is true.
             if (placementStartTime !== undefined) {
@@ -1154,8 +1148,7 @@ export class TextElementsRenderer {
 
     private selectTextElementsToPlaceByDistance(
         zoomLevel: number,
-        textElementLists: TextElementLists,
-        textElementGroups: TextElement[][]
+        textElementLists: TextElementLists
     ) {
         const farDistanceLimitRatio = Math.max(
             this.m_maxDistanceRatioForTextLabels!,
@@ -1163,7 +1156,6 @@ export class TextElementsRenderer {
         );
         const maxDistance = this.getMaxDistance(farDistanceLimitRatio);
 
-        const textElementGroup: TextElement[] = [];
         for (const tileTextElements of textElementLists.textElementLists) {
             const tile = tileTextElements.tile;
             const worldOffsetX = this.m_mapView.projection.worldExtent(0, 0).max.x * tile.offset;
@@ -1235,7 +1227,6 @@ export class TextElementsRenderer {
                 }
             }
         }
-        textElementGroups.push(textElementGroup);
     }
 
     private renderOverlayTextElements(textElements: TextElement[]) {
@@ -1624,79 +1615,12 @@ export class TextElementsRenderer {
             const textIsOptional: boolean =
                 pointLabel.poiInfo !== undefined && pointLabel.poiInfo.textIsOptional === true;
 
-            const textIsFadingIn = textRenderState.isFadingIn();
-            const textIsFadingOut = textRenderState.isFadingOut();
-            const textSpaceAvailable = !this.m_screenCollisions.isAllocated(tempBox2D);
-            const textVisible =
-                pointLabel.textMayOverlap ||
-                textSpaceAvailable ||
-                textIsFadingIn ||
-                textIsFadingOut;
-
-            if (textVisible) {
-                // Compute the TextBufferObject when we know we're gonna render this label.
-                if (pointLabel.textBufferObject === undefined) {
-                    pointLabel.textBufferObject = textCanvas.createTextBufferObject(
-                        pointLabel.glyphs!
-                    );
-                }
-
-                // Allocate collision info if needed.
-                if (!textIsFadingOut && pointLabel.textReservesSpace) {
-                    this.m_screenCollisions.allocate(tempBox2D);
-                }
-
-                // Do not actually render (just allocate space) if camera is moving and
-                // renderTextDuringMovements is not true.
-                if (
-                    (textIsFadingIn ||
-                        textIsFadingOut ||
-                        !mapViewState.cameraIsMoving ||
-                        (poiInfo === undefined || poiInfo.renderTextDuringMovements === true)) &&
-                    !iconRenderState.isFadedOut()
-                ) {
-                    let textFading = false;
-                    if (
-                        !textRenderState.isFadingOut() &&
-                        textSpaceAvailable &&
-                        iconSpaceAvailable
-                    ) {
-                        textFading = this.checkStartFadeIn(
-                            textRenderState,
-                            mapViewState.frameNumber,
-                            mapViewState.time,
-                            true
-                        );
-                    } else if (textRenderState.isFading()) {
-                        this.updateFading(textRenderState, mapViewState.time);
-                        textFading = true;
-                    }
-
-                    stats.fadeAnimationRunning =
-                        stats.fadeAnimationRunning || textIsFadingOut || textFading;
-
-                    const opacity = textRenderState.opacity;
-
-                    temp.bufferAdditionParams.layer = pointLabel.renderOrder;
-                    temp.bufferAdditionParams.position = tempPosition;
-                    temp.bufferAdditionParams.scale = textScale;
-                    temp.bufferAdditionParams.opacity =
-                        opacity * distanceFadeFactor * pointLabel.renderStyle!.opacity;
-                    temp.bufferAdditionParams.backgroundOpacity =
-                        opacity * distanceFadeFactor * pointLabel.renderStyle!.backgroundOpacity;
-                    temp.bufferAdditionParams.pickingData = pointLabel.userData
-                        ? pointLabel
-                        : undefined;
-                    textCanvas.addTextBufferObject(
-                        pointLabel.textBufferObject!,
-                        temp.bufferAdditionParams
-                    );
-                }
-                stats.numRenderedPoiTexts++;
-            }
+            const textSpaceAvailable =
+                pointLabel.textMayOverlap || !this.m_screenCollisions.isAllocated(tempBox2D);
+            const textDisplaced = !textSpaceAvailable && !textRenderState.isFading();
 
             // If the text is not visible nor optional, we won't render the icon neither.
-            else if (!renderIcon || !textIsOptional) {
+            if (textDisplaced && (!renderIcon || !textIsOptional)) {
                 if (pointLabel.poiInfo === undefined || iconRenderState.isVisible()) {
                     if (pointLabel.poiInfo !== undefined) {
                         this.startFadeOut(
@@ -1727,13 +1651,80 @@ export class TextElementsRenderer {
                 }
             }
             // If the label is currently visible, fade it out.
-            else if (textRenderState !== undefined && textRenderState.isVisible()) {
+            else if (
+                textDisplaced &&
+                textRenderState !== undefined &&
+                textRenderState.isVisible()
+            ) {
                 const iconStartedFadeOut = this.checkStartFadeOut(
                     textRenderState,
                     mapViewState.frameNumber,
                     mapViewState.time
                 );
                 stats.fadeAnimationRunning = stats.fadeAnimationRunning || iconStartedFadeOut;
+            }
+
+            const textNeedsDraw = textSpaceAvailable || textRenderState.isFading();
+
+            if (textNeedsDraw) {
+                // Compute the TextBufferObject when we know we're gonna render this label.
+                if (pointLabel.textBufferObject === undefined) {
+                    pointLabel.textBufferObject = textCanvas.createTextBufferObject(
+                        pointLabel.glyphs!
+                    );
+                }
+
+                // Allocate collision info if needed.
+                if (!textRenderState.isFadingOut() && pointLabel.textReservesSpace) {
+                    this.m_screenCollisions.allocate(tempBox2D);
+                }
+
+                // Do not actually render (just allocate space) if camera is moving and
+                // renderTextDuringMovements is not true.
+                if (
+                    (textRenderState.isFading() ||
+                        !mapViewState.cameraIsMoving ||
+                        (poiInfo === undefined || poiInfo.renderTextDuringMovements === true)) &&
+                    !iconRenderState.isFadedOut()
+                ) {
+                    let textFading = false;
+                    if (
+                        !textRenderState.isFadingOut() &&
+                        textSpaceAvailable &&
+                        iconSpaceAvailable
+                    ) {
+                        textFading = this.checkStartFadeIn(
+                            textRenderState,
+                            mapViewState.frameNumber,
+                            mapViewState.time,
+                            true
+                        );
+                    } else if (textRenderState.isFading()) {
+                        this.updateFading(textRenderState, mapViewState.time);
+                        textFading = true;
+                    }
+
+                    stats.fadeAnimationRunning =
+                        stats.fadeAnimationRunning || textRenderState.isFadingOut() || textFading;
+
+                    const opacity = textRenderState.opacity;
+
+                    temp.bufferAdditionParams.layer = pointLabel.renderOrder;
+                    temp.bufferAdditionParams.position = tempPosition;
+                    temp.bufferAdditionParams.scale = textScale;
+                    temp.bufferAdditionParams.opacity =
+                        opacity * distanceFadeFactor * pointLabel.renderStyle!.opacity;
+                    temp.bufferAdditionParams.backgroundOpacity =
+                        opacity * distanceFadeFactor * pointLabel.renderStyle!.backgroundOpacity;
+                    temp.bufferAdditionParams.pickingData = pointLabel.userData
+                        ? pointLabel
+                        : undefined;
+                    textCanvas.addTextBufferObject(
+                        pointLabel.textBufferObject!,
+                        temp.bufferAdditionParams
+                    );
+                }
+                stats.numRenderedPoiTexts++;
             }
         }
         // ... and render the icon (if any).
