@@ -6,6 +6,7 @@
 
 import { Env, MapEnv, Value, ValueMap } from "@here/harp-datasource-protocol/index-decoder";
 import { TileKey } from "@here/harp-geoutils";
+import { countCall } from "@here/harp-test-utils";
 import { ILogger } from "@here/harp-utils";
 import * as Long from "long";
 import { Vector2 } from "three";
@@ -98,6 +99,7 @@ export function visitOmv(vectorTile: com.mapbox.pb.Tile, visitor: OmvVisitor) {
  * @hidden
  */
 export function visitOmvLayer(layer: com.mapbox.pb.Tile.ILayer, visitor: OmvVisitor) {
+    countCall("visitOmvLayer");
     if (!visitor.visitLayer || visitor.visitLayer(layer)) {
         if (layer.features) {
             for (const feature of layer.features) {
@@ -290,11 +292,11 @@ function decodeFeatureId(
 function readAttributes(
     layer: com.mapbox.pb.Tile.ILayer,
     feature: com.mapbox.pb.Tile.IFeature,
-    defaultAttributes: ValueMap = {}
+    defaultAttributes: ValueMap
 ): ValueMap {
     const attrs = new FeatureAttributes();
 
-    const attributes: ValueMap = defaultAttributes || {};
+    const attributes: ValueMap = defaultAttributes;
 
     attrs.accept(layer, feature, {
         visitAttribute: (name, value) => {

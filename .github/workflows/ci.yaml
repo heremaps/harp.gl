@@ -55,7 +55,7 @@ jobs:
         yarn run prettier
       shell: bash
     - name: Test on Node.js
-      run: npx ts-mocha -r tsconfig-paths/register ./@here/*/test/*.ts
+      run: npx ts-mocha -r tsconfig-paths/register ./@here/*/test/*.ts  ./test/integration-tests/**/*.ts
       shell: bash
     - name: Build test bundle
       run: yarn run build-tests

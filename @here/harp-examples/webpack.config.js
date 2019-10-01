@@ -11,6 +11,7 @@ const HtmlWebpackPlugin = require("html-webpack-plugin");
 const CopyWebpackPlugin = require("copy-webpack-plugin");
 
 const prepareOnly = process.env["PREPARE_ONLY"] === "true";
+const exampleFilter = process.env["FILTER_EXAMPLE"];
 
 const harpMapThemePath = path.dirname(require.resolve("@here/harp-map-theme/package.json"));
 const harpFontResourcesPath = path.dirname(require.resolve("@here/harp-fontcatalog/package.json"));
@@ -107,7 +108,7 @@ const htmlEntries = glob.sync(path.join(__dirname, "./src/*.html")).reduce((resu
 function filterExamples(pattern) {
     function filterEntries(entries) {
         Object.keys(entries).forEach(entryName => {
-            if (entryName.indexOf(pattern) == -1) {
+            if (!entryName.match(new RegExp(pattern))) {
                 delete entries[entryName];
             }
         });
@@ -116,9 +117,13 @@ function filterExamples(pattern) {
     filterEntries(htmlEntries);
 }
 
-// Uncomment and adapt to filter built examples and speed up the build significantly
 //
-//filterExamples("hello");
+// Usage example:
+//    FILTER_EXAMPLE=hello yarn serve-examples
+//
+if (exampleFilter) {
+    filterExamples(exampleFilter);
+}
 
 const browserConfig = merge(commonConfig, {
     entry: webpackEntries,

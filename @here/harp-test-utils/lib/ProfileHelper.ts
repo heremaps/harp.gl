@@ -9,6 +9,8 @@
  *
  * Somehow, it appears that `process.hrtime()` has better real resolution
  * than `performance.now()`, or i can't into math ;)
+ *
+ * @returns function that gets current time in milliseconds
  */
 function getNowFunc() {
     if (typeof process !== "undefined" && typeof process.hrtime === "function") {
@@ -27,17 +29,10 @@ function getNowFunc() {
     };
 }
 
-const getCurrentTime = getNowFunc();
-
-let measurePerformanceResults: Array<{
-    name: string;
-    min: number;
-    sum: number;
-    avg: number;
-    med: number;
-    med95: number;
-    repeats: number;
-}> = [];
+/**
+ * Get current time in milliseconds.
+ */
+export const getCurrentTime = getNowFunc();
 
 /**
  * Measure time performance of code.
@@ -74,23 +69,36 @@ export function measurePerformanceSync(name: string, repeats: number, test: () =
     }
 
     // warmup
-    for (let i = 0; i < repeats; i++) {
+    for (let i = 0; i < repeats / 2; i++) {
         test();
     }
 
     // actual test
-    let sum = 0;
     const samples = new Array(repeats);
-    repeats = Math.ceil(repeats);
-    let min = Number.MAX_VALUE;
     for (let i = 0; i < repeats; i++) {
         const sampleStart = getCurrentTime();
         test();
         const sampleEnd = getCurrentTime();
         const sample = sampleEnd - sampleStart;
+        samples[i] = sample;
+    }
+
+    const entry = { name, ...calculateStats(samples) };
+    measurePerformanceResults.push(entry);
+    return entry;
+}
+
+export function addPerformanceResultsSample(name: string, time: number) {
+    measurePerformanceSamples.push({ name, time });
+}
+
+export function calculateStats(samples: number[]) {
+    const repeats = samples.length;
+    let sum = 0;
+    let min = Number.MAX_VALUE;
+    for (const sample of samples) {
         sum += sample;
         min = Math.min(sample, min);
-        samples[i] = sample;
     }
     const avg = sum / repeats;
 
@@ -101,7 +109,7 @@ export function measurePerformanceSync(name: string, repeats: number, test: () =
     const mid95 = Math.floor(samples.length * 0.95);
     const med95 = samples[mid95];
 
-    measurePerformanceResults.push({ name, min, sum, avg, med, med95, repeats });
+    return { min, sum, avg, med, med95, repeats };
 }
 
 /**
@@ -141,38 +149,27 @@ export function measureThroughputSync(name: string, testDuration: number, test: 
     let now = getCurrentTime();
 
     // warmup
-    const warmUpTimeout = now + testDuration;
+    const warmUpTimeout = now + testDuration / 2;
     while (now < warmUpTimeout) {
         test();
         now = getCurrentTime();
     }
 
     // actual test
-    let sum = 0;
     const samples: number[] = [];
-    let min = Number.MAX_VALUE;
     const testStart = getCurrentTime();
-    let repeats = 0;
     const testTimeout = testStart + testDuration;
     while (now < testTimeout) {
         const sampleStart = getCurrentTime();
         test();
         const sampleEnd = (now = getCurrentTime());
         const sample = sampleEnd - sampleStart;
-        sum += sample;
-        min = Math.min(sample, min);
         samples.push(sample);
-        repeats++;
     }
-    const avg = sum / repeats;
-    samples.sort();
-    const middle = (repeats - 1) / 2;
-    const med = (samples[Math.floor(middle)] + samples[Math.ceil(middle)]) / 2;
 
-    const mid95 = Math.floor(samples.length * 0.95);
-    const med95 = samples[mid95];
-
-    measurePerformanceResults.push({ name, min, sum, avg, med, med95, repeats });
+    const entry = { name, ...calculateStats(samples) };
+    measurePerformanceResults.push(entry);
+    return entry;
 }
 
 /**
@@ -186,22 +183,63 @@ export function measureThroughputSync(name: string, testDuration: number, test: 
  * In `Mocha` runtime it is called automatically in global `after` callback.
  */
 export function reportPerformanceAndReset() {
-    for (const result of measurePerformanceResults) {
+    const mergedSamplesMap = measurePerformanceSamples.reduce((results, sample) => {
+        let sampleArray = results.get(sample.name);
+        if (sampleArray === undefined) {
+            sampleArray = [];
+            results.set(sample.name, sampleArray);
+        }
+        sampleArray.push(sample.time);
+        return results;
+    }, new Map<string, number[]>());
+
+    const mergedSamplesResults = Array.from(mergedSamplesMap.entries()).map(entry => {
+        const [name, samples] = entry;
+        return { name, ...calculateStats(samples) };
+    });
+
+    for (const result of [...measurePerformanceResults, ...mergedSamplesResults]) {
         const { name, min, sum, avg, med, med95, repeats } = result;
 
         // TODO: maybe dump them to some JSON
         // tslint:disable-next-line:no-console
         console.log(
-            `#performance ${name}: min=${min} med=${med} med95=${med95} avg=${avg} sum=${sum} ` +
+            `#performance ${name}: min=${min.toPrecision(5)} med=${med.toPrecision(
+                5
+            )} med95=${med95.toPrecision(5)} avg=${avg.toPrecision(5)} sum=${sum.toPrecision(5)} ` +
                 `rounds=${repeats} throughput=${Math.round(repeats / (sum / 1000))}/s`
         );
     }
+    measurePerformanceSamples = [];
     measurePerformanceResults = [];
 }
 
-let occurenceResults: {
-    [name: string]: number;
-} = {};
+/**
+ * Report call.
+ *
+ * Convenience utility to be used temporarily in development to confirm expectations about number
+ * of calls when measuring performance.
+ *
+ * Call counts are logged after all tests (if in Mocha environment). See
+ * [[reportCallCountsAndReset]].
+ *
+ * Usage:
+ *
+ *     class Foo {
+ *         push() {
+ *             countCall("Foo#bar")
+ *         }
+ *     }
+ *
+ * It reports following after all tests:
+ *
+ *     #countCall: Foo#push called=123
+ */
+export function countCall(name: string, delta = 1) {
+    let current = occurenceResults.get(name) || 0;
+    current += delta;
+    occurenceResults.set(name, current);
+}
 
 /**
  * Count function/method calls decorator.
@@ -249,7 +287,7 @@ export function countCalls(): any {
 
     if (fun !== undefined) {
         // classic functional composition
-        // const foo = countOccurences(function foo() { })
+        // const foo = countCalls(function foo() { })
         return function(this: any, ...args: any[]) {
             countCall(name);
             return fun!.call(this, args);
@@ -270,31 +308,6 @@ export function countCalls(): any {
 }
 
 /**
- * Report call.
- *
- * Convenience utility to be used temporarily in development to confirm expectations about number
- * of calls when measuring performance.
- *
- * Call counts are logged after all tests (if in Mocha environment). See
- * [[reportCallCountsAndReset]].
- *
- * Usage:
- *
- *     class Foo {
- *         push() {
- *             countCall("Foo#bar")
- *         }
- *     }
- *
- * It reports following after all tests:
- *
- *     #countCall: Foo#push called=123
- */
-export function countCall(name: string) {
-    occurenceResults[name] = (occurenceResults[name] || 0) + 1;
-}
-
-/**
  * Report and reset [[countCall]] results.
  *
  * Designed to be called after round of tests. Shows counters from all [[countCall]] calls.
@@ -304,18 +317,32 @@ export function countCall(name: string) {
  * In `Mocha` runtime it is called automatically in global `after` callback.
  */
 export function reportCallCountsAndReset() {
-    for (const name in occurenceResults) {
-        if (occurenceResults.hasOwnProperty(name)) {
-            const calledCount = occurenceResults[name];
-            // tslint:disable-next-line:no-console
-            console.log(`#countCall ${name}: called=${calledCount}`);
-        }
-    }
-    occurenceResults = {};
+    occurenceResults.forEach((value, name) => {
+        // tslint:disable-next-line:no-console
+        console.log(`#countCall ${name}: called=${value}`);
+    });
+    occurenceResults.clear();
 }
 
+const occurenceResults = new Map<string, number>();
+
+let measurePerformanceResults: Array<{
+    name: string;
+    min: number;
+    sum: number;
+    avg: number;
+    med: number;
+    med95: number;
+    repeats: number;
+}> = [];
+
+let measurePerformanceSamples: Array<{
+    name: string;
+    time: number;
+}> = [];
+
 //
-// in Mocha environment log all profile results after all tests
+// in Mocha environment log all profile results after each test
 //
 if (typeof after === "function") {
     afterEach(() => {

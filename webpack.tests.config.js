@@ -39,7 +39,7 @@ const browserTestsConfig = {
         ]
     },
     entry: {
-        test: glob.sync("@here/*/test/**/*.ts")
+        test: glob.sync("{test/integration-tests,@here/*/test}/**/*.ts")
     },
     output: {
         path: path.join(__dirname, "dist/test"),

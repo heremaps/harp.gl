@@ -778,6 +778,9 @@ export class MapView extends THREE.EventDispatcher {
     constructor(options: MapViewOptions) {
         super();
 
+        // This is what you do when you don't believe your tools :/
+        // tslint:disable-next-line:no-console
+        console.log("github/HARP-7366-tinkering");
         // make a copy to avoid unwanted changes to the original options.
         this.m_options = { ...options };
 

@@ -6,6 +6,7 @@
 
 import { LoggerManager } from "@here/harp-utils";
 
+import { countCall } from "@here/harp-test-utils";
 import {
     BooleanLiteralExpr,
     CallExpr,
@@ -259,7 +260,10 @@ export class StyleSetEvaluator {
     private m_definitions?: Definitions;
     private m_definitionExprCache?: Map<string, Expr>;
 
-    constructor(styleSet: StyleSet, definitions?: Definitions) {
+    constructor(styleSet: StyleSet, definitions?: Definitions, readonly optimize?: boolean) {
+        if (this.optimize === undefined) {
+            this.optimize = true;
+        }
         let techniqueRenderOrder = 0;
         let styleSetIndex = 0;
         this.m_definitions = definitions;
@@ -382,10 +386,10 @@ export class StyleSetEvaluator {
         const currentGeometryType =
             geometryType !== undefined ? geometryType : env.lookup("$geometryType");
 
-        const subStyleSet = this.getOptimizedStyleSet(
-            currentLayer as string,
-            currentGeometryType as string
-        );
+        const searchedStyleSet = this.optimize
+            ? this.getOptimizedStyleSet(currentLayer as string, currentGeometryType as string)
+            : this.styleSet;
+
         // set the requested $layer as the current layer.
         const previousLayer = this.changeLayer(
             typeof currentLayer === "string" ? currentLayer : undefined
@@ -395,7 +399,7 @@ export class StyleSetEvaluator {
             typeof currentGeometryType === "string" ? currentGeometryType : undefined
         );
 
-        for (const currStyle of subStyleSet) {
+        for (const currStyle of searchedStyleSet) {
             if (styleStack.length !== 0) {
                 this.changeLayer(previousLayer); // restore the layer
                 this.changeGeometryType(previousGeometryType); // restore the geometryType
@@ -472,26 +476,33 @@ export class StyleSetEvaluator {
         layer: string | undefined,
         geometryType: string | undefined
     ): InternalStyle[] {
-        if (layer === undefined && geometryType === undefined) {
+        let subStyleSetKey: string;
+        if (this.optimize === false) {
             return this.styleSet;
         }
 
-        const subStyleSetKey =
-            layer !== undefined
-                ? geometryType !== undefined
-                    ? `${layer}:${geometryType}`
-                    : `${layer}:`
-                : geometryType !== undefined
-                ? `:${geometryType}`
-                : `:`;
-
-        let subStyleSet = this.m_subStyleSetCache.get(subStyleSetKey);
-        if (subStyleSet !== undefined) {
-            return subStyleSet;
+        if (layer !== undefined) {
+            // tslint:disable-next-line:prefer-conditional-expression
+            if (geometryType !== undefined) {
+                subStyleSetKey = `${layer}:${geometryType}`;
+            } else {
+                subStyleSetKey = `${layer}:`;
+            }
+        } else {
+            if (geometryType !== undefined) {
+                subStyleSetKey = `:${geometryType}`;
+            } else {
+                return this.styleSet;
+            }
         }
-        subStyleSet = this.createPreFilteredStyleSet(layer, geometryType);
-        this.m_subStyleSetCache.set(subStyleSetKey, subStyleSet);
-        return subStyleSet;
+
+        let optimizedStyleSet = this.m_subStyleSetCache.get(subStyleSetKey);
+        if (optimizedStyleSet !== undefined) {
+            return optimizedStyleSet;
+        }
+        optimizedStyleSet = this.createPreFilteredStyleSet(layer, geometryType);
+        this.m_subStyleSetCache.set(subStyleSetKey, optimizedStyleSet);
+        return optimizedStyleSet;
     }
 
     private createPreFilteredStyleSet(layer: string | undefined, geometryType: string | undefined) {
@@ -537,6 +548,13 @@ export class StyleSetEvaluator {
                 if (style._whenExpr !== undefined) {
                     style._whenExpr = style._whenExpr.intern(this.m_exprPool);
                 }
+
+                if (
+                    this.optimize &&
+                    (style.layer !== undefined || style._geometryType !== undefined)
+                ) {
+                    this.getOptimizedStyleSet(style.layer, style._geometryType);
+                }
             } catch (err) {
                 logger.log(
                     "failed to evaluate expression",
@@ -572,6 +590,25 @@ export class StyleSetEvaluator {
         style: InternalStyle,
         result: Technique[]
     ): boolean {
+        countCall(`SSE#processStyle@${styleStack.length}`);
+        // not sure if we can have shortcut here
+        if (!this.optimize || true) {
+            if (
+                this.m_layer !== undefined &&
+                style.layer !== undefined &&
+                style.layer !== this.m_layer
+            ) {
+                return false;
+            }
+            if (
+                this.m_geometryType !== undefined &&
+                style._geometryType !== undefined &&
+                style._geometryType !== this.m_geometryType
+            ) {
+                return false;
+            }
+        }
+
         if (style._whenExpr) {
             try {
                 if (!style._whenExpr.evaluate(env, this.m_cachedResults)) {

@@ -28,7 +28,7 @@ jobs:
         yarn run tslint
         yarn run prettier
         yarn run build-tests
-        npx ts-mocha -r tsconfig-paths/register ./@here/*/test/*.ts
+        npx ts-mocha -r tsconfig-paths/register ./@here/*/test/*.ts ./test/integration-tests/**/*.ts
         yarn test-browser --headless-firefox
         yarn test-browser --headless-chrome
         #./scripts/test-npm-packages.sh

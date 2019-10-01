@@ -283,7 +283,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                     featureIds.push(featureId);
                     objInfos.push(env.entries);
                 }
-                if (isPoiTechnique) {
+                if (wantsPoi) {
                     if (imageTexture === undefined) {
                         imageTextures.push(INVALID_ARRAY_INDEX);
                     } else {
@@ -536,8 +536,8 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                 groups.push({ start, count, technique: techniqueIndex, featureId });
             } else {
                 logger.warn(
-                    `OmvDecodedTileEmitter#processLineFeature: Invalid line technique
-                     ${techniqueName} for layer: ${env.entries.$layer} `
+                    `OmvDecodedTileEmitter#processLineFeature: Invalid line technique ` +
+                        `${techniqueName} for layer: ${env.entries.$layer} `
                 );
             }
         }

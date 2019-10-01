@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { countCall } from "@here/harp-test-utils";
 import { ExprEvaluator, ExprEvaluatorContext, OperatorDescriptor } from "./ExprEvaluator";
 import { ExprParser } from "./ExprParser";
 import { ExprPool } from "./ExprPool";
@@ -275,6 +276,7 @@ export abstract class Expr {
      * @param cache A cache of previously computed results.
      */
     evaluate(env: Env, cache?: Map<Expr, Value>): Value | never {
+        countCall("Expr#evaluate");
         return this.accept(exprEvaluator, new ExprEvaluatorContext(exprEvaluator, env, cache));
     }
 
