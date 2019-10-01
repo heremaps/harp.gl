@@ -151,8 +151,11 @@ export class LineTypesetter implements Typesetter {
             // Check if should break the current line.
             if (
                 isNewLine ||
-                (this.m_currentParams.textLayoutStyle.wrappingMode !== WrappingMode.None &&
-                    lineCurrX > this.m_currentParams.textLayoutStyle.lineWidth)
+                (this.m_currentParams.textLayoutStyle.wrappingMode === WrappingMode.Character &&
+                    lineCurrX > this.m_currentParams.textLayoutStyle.lineWidth) ||
+                (this.m_currentParams.textLayoutStyle.wrappingMode === WrappingMode.Word &&
+                    lineCurrX > this.m_currentParams.textLayoutStyle.lineWidth &&
+                    wordWrapX !== lineStartX)
             ) {
                 // Perform wrapping.
                 if (this.m_currentParams.textLayoutStyle.wrappingMode !== WrappingMode.None) {

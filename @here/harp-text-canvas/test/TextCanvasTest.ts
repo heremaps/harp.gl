@@ -9,7 +9,14 @@ import * as sinon from "sinon";
 import * as THREE from "three";
 
 import { getTestResourceUrl } from "@here/harp-test-utils";
-import { DefaultTextStyle, FontCatalog, GlyphData, TextCanvas, TextRenderStyle } from "../index";
+import {
+    DefaultTextStyle,
+    FontCatalog,
+    GlyphData,
+    TextCanvas,
+    TextRenderStyle,
+    WrappingMode
+} from "../index";
 
 async function loadTexture(url: string): Promise<THREE.Texture> {
     return new Promise(resolve => {
@@ -194,62 +201,62 @@ describe("TextCanvas", () => {
         assert.strictEqual(bounds.min.y, -2.5);
         assert.strictEqual(bounds.max.x, 89.5);
         assert.strictEqual(bounds.max.y, 14.0);
-
+        // "H"
         assert.strictEqual(individualBounds[0].min.x, -0.5);
         assert.strictEqual(individualBounds[0].min.y, -2.0);
         assert.strictEqual(individualBounds[0].max.x, 11.0);
         assert.strictEqual(individualBounds[0].max.y, 13.0);
-
+        // "e"
         assert.strictEqual(individualBounds[1].min.x, 10.0);
         assert.strictEqual(individualBounds[1].min.y, -2.5);
         assert.strictEqual(individualBounds[1].max.x, 21.0);
         assert.strictEqual(individualBounds[1].max.y, 10.5);
-
+        // "l"
         assert.strictEqual(individualBounds[2].min.x, 19.0);
         assert.strictEqual(individualBounds[2].min.y, -2.0);
         assert.strictEqual(individualBounds[2].max.x, 26.0);
         assert.strictEqual(individualBounds[2].max.y, 14.0);
-
+        // "l"
         assert.strictEqual(individualBounds[3].min.x, 23.5);
         assert.strictEqual(individualBounds[3].min.y, -2.0);
         assert.strictEqual(individualBounds[3].max.x, 30.5);
         assert.strictEqual(individualBounds[3].max.y, 14.0);
-
+        // "o"
         assert.strictEqual(individualBounds[4].min.x, 27.5);
         assert.strictEqual(individualBounds[4].min.y, -2.5);
         assert.strictEqual(individualBounds[4].max.x, 39.0);
         assert.strictEqual(individualBounds[4].max.y, 10.5);
-
+        // " "
         assert.strictEqual(individualBounds[5].min.x, 36.0);
         assert.strictEqual(individualBounds[5].min.y, 2.0);
         assert.strictEqual(individualBounds[5].max.x, 36.0);
         assert.strictEqual(individualBounds[5].max.y, 2.0);
-
+        // "W"
         assert.strictEqual(individualBounds[6].min.x, 40.5);
         assert.strictEqual(individualBounds[6].min.y, -2.0);
         assert.strictEqual(individualBounds[6].max.x, 57.0);
         assert.strictEqual(individualBounds[6].max.y, 13.0);
-
+        // "o"
         assert.strictEqual(individualBounds[7].min.x, 54.0);
         assert.strictEqual(individualBounds[7].min.y, -2.5);
         assert.strictEqual(individualBounds[7].max.x, 65.5);
         assert.strictEqual(individualBounds[7].max.y, 10.5);
-
+        // "r"
         assert.strictEqual(individualBounds[8].min.x, 64.0);
         assert.strictEqual(individualBounds[8].min.y, -2.0);
         assert.strictEqual(individualBounds[8].max.x, 72.5);
         assert.strictEqual(individualBounds[8].max.y, 10.5);
-
+        // "l"
         assert.strictEqual(individualBounds[9].min.x, 70.0);
         assert.strictEqual(individualBounds[9].min.y, -2.0);
         assert.strictEqual(individualBounds[9].max.x, 77.0);
         assert.strictEqual(individualBounds[9].max.y, 14.0);
-
+        // "d"
         assert.strictEqual(individualBounds[10].min.x, 74.0);
         assert.strictEqual(individualBounds[10].min.y, -2.0);
         assert.strictEqual(individualBounds[10].max.x, 85.0);
         assert.strictEqual(individualBounds[10].max.y, 14.0);
-
+        // "!"
         assert.strictEqual(individualBounds[11].min.x, 83.5);
         assert.strictEqual(individualBounds[11].min.y, -2.0);
         assert.strictEqual(individualBounds[11].max.x, 89.5);
@@ -266,6 +273,76 @@ describe("TextCanvas", () => {
     it("Is cleared.", () => {
         textCanvas.clear();
         assert.strictEqual(textCanvas.getLayer(0)!.storage.drawCount, 0.0);
+    });
+    it("Word wrapping mode test", () => {
+        const charBounds: THREE.Box2[] = [];
+        textCanvas.textLayoutStyle.wrappingMode = WrappingMode.Word;
+        // Set the line with 2 letters. The first word should stay on the first line completely.
+        textCanvas.textLayoutStyle.lineWidth = 20;
+        textCanvas.measureText(textSample, bounds, {
+            outputCharacterBounds: charBounds
+        });
+        // box
+        assert.strictEqual(bounds.min.x, -1.5);
+        assert.strictEqual(bounds.min.y, -21.5);
+        assert.strictEqual(bounds.max.x, 47.5);
+        assert.strictEqual(bounds.max.y, 14);
+
+        // "H"
+        assert.strictEqual(charBounds[0].min.x, -0.5);
+        assert.strictEqual(charBounds[0].min.y, -2);
+        assert.strictEqual(charBounds[0].max.x, 11);
+        assert.strictEqual(charBounds[0].max.y, 13);
+        // "e"
+        assert.strictEqual(charBounds[1].min.x, 10);
+        assert.strictEqual(charBounds[1].min.y, -2.5);
+        assert.strictEqual(charBounds[1].max.x, 21);
+        assert.strictEqual(charBounds[1].max.y, 10.5);
+        // "l"
+        assert.strictEqual(charBounds[2].min.x, 19);
+        assert.strictEqual(charBounds[2].min.y, -2);
+        assert.strictEqual(charBounds[2].max.x, 26);
+        assert.strictEqual(charBounds[2].max.y, 14);
+        // "l"
+        assert.strictEqual(charBounds[3].min.x, 23.5);
+        assert.strictEqual(charBounds[3].min.y, -2);
+        assert.strictEqual(charBounds[3].max.x, 30.5);
+        assert.strictEqual(charBounds[3].max.y, 14);
+        // "o"
+        assert.strictEqual(charBounds[4].min.x, 27.5);
+        assert.strictEqual(charBounds[4].min.y, -2.5);
+        assert.strictEqual(charBounds[4].max.x, 39);
+        assert.strictEqual(charBounds[4].max.y, 10.5);
+        // "W"
+        assert.strictEqual(charBounds[5].min.x, -1.5);
+        assert.strictEqual(charBounds[5].min.y, -21);
+        assert.strictEqual(charBounds[5].max.x, 15);
+        assert.strictEqual(charBounds[5].max.y, -6);
+        // "o"
+        assert.strictEqual(charBounds[6].min.x, 12);
+        assert.strictEqual(charBounds[6].min.y, -21.5);
+        assert.strictEqual(charBounds[6].max.x, 23.5);
+        assert.strictEqual(charBounds[6].max.y, -8.5);
+        // "r"
+        assert.strictEqual(charBounds[7].min.x, 22);
+        assert.strictEqual(charBounds[7].min.y, -21);
+        assert.strictEqual(charBounds[7].max.x, 30.5);
+        assert.strictEqual(charBounds[7].max.y, -8.5);
+        // "l"
+        assert.strictEqual(charBounds[8].min.x, 28);
+        assert.strictEqual(charBounds[8].min.y, -21);
+        assert.strictEqual(charBounds[8].max.x, 35);
+        assert.strictEqual(charBounds[8].max.y, -5);
+        // "d"
+        assert.strictEqual(charBounds[9].min.x, 32);
+        assert.strictEqual(charBounds[9].min.y, -21);
+        assert.strictEqual(charBounds[9].max.x, 43);
+        assert.strictEqual(charBounds[9].max.y, -5);
+        // "!"
+        assert.strictEqual(charBounds[10].min.x, 41.5);
+        assert.strictEqual(charBounds[10].min.y, -21);
+        assert.strictEqual(charBounds[10].max.x, 47.5);
+        assert.strictEqual(charBounds[10].max.y, -6);
     });
     it("Fails when adding too many characters.", () => {
         let resultA = true;
