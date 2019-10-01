@@ -470,8 +470,7 @@ export class VisibleTileSet {
             this.options.clipPlanesEvaluator.minElevation = minElevation;
         }
         this.m_viewRange = this.options.clipPlanesEvaluator.evaluateClipPlanes(
-            this.m_frustumIntersection.camera,
-            this.m_frustumIntersection.projection
+            this.m_frustumIntersection.mapView
         );
         return this.m_viewRange;
     }

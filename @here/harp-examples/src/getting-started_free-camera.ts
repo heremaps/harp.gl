@@ -153,16 +153,14 @@ export namespace FreeCameraAppDebuggingToolExample {
                 // Apply helper camera offset to main (map view) camera.
                 this.mapView.camera.position.add(cameraRelativeToEye.position);
                 // Make sure that the pitch limit constraint is preserved
-                const ypr = MapViewUtils.extractYawPitchRoll(
-                    cameraRelativeToEye,
-                    this.mapView.projection.type
-                );
+                const ypr = MapViewUtils.extractAttitude(this.mapView, cameraRelativeToEye);
                 ypr.pitch = Math.max(
                     Math.min(ypr.pitch, THREE.Math.degToRad(this.mapControls.maxTiltAngle)),
                     0
                 );
                 // Finally apply rotation from transformation gizmo.
-                this.mapControls.setRotation(
+                MapViewUtils.setRotation(
+                    this.mapView,
                     THREE.Math.radToDeg(ypr.yaw),
                     THREE.Math.radToDeg(ypr.pitch)
                 );

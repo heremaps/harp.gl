@@ -423,10 +423,9 @@ export namespace TiledGeoJsonTechniquesExample {
 
         mapView.renderLabels = false;
         mapView.geoCenter = new GeoCoordinates(28.595, 77.22, 0);
-        mapView.setCameraGeolocationAndZoom(mapView.geoCenter, 15.2);
+        mapView.setCameraGeolocationAndZoom(mapView.geoCenter, 15.2, 0, 28);
 
         const controls = new MapControls(mapView);
-        controls.setRotation(0, 28);
 
         // Add an UI.
         const ui = new MapControlsUI(controls);

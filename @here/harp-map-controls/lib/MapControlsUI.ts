@@ -4,7 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { MapViewEventNames } from "@here/harp-mapview";
+import { MapViewEventNames, MapViewUtils } from "@here/harp-mapview";
+import * as THREE from "three";
 import { MapControls } from "./MapControls";
 
 /**
@@ -79,13 +80,21 @@ export class MapControlsUI {
 
         const zoomInButton = document.createElement("button");
         zoomInButton.innerText = "+";
+        zoomInButton.id = "harp-gl_controls_zoom-in";
 
         const zoomOutButton = document.createElement("button");
         zoomOutButton.innerText = "-";
+        zoomOutButton.id = "harp-gl_controls_zoom-out";
 
         const tiltButton = document.createElement("button");
         tiltButton.innerText = "3D";
-        tiltButton.id = "tiltButtonUi";
+        tiltButton.id = "harp-gl_controls_tilt-button-ui";
+
+        const compassButton = document.createElement("button");
+        compassButton.id = "harp-gl_controls-button_compass";
+        const compass = document.createElement("span");
+        compass.id = "harp-gl_controls_compass";
+        compassButton.appendChild(compass);
 
         // Optional zoom level displaying
         if (options.zoomLevel === "show") {
@@ -119,11 +128,12 @@ export class MapControlsUI {
         }
 
         this.domElement.appendChild(zoomInButton);
-        this.domElement.appendChild(tiltButton);
         if (this.m_zoomLevelElement !== null) {
             this.domElement.appendChild(this.m_zoomLevelElement);
         }
         this.domElement.appendChild(zoomOutButton);
+        this.domElement.appendChild(compassButton);
+        this.domElement.appendChild(tiltButton);
 
         zoomInButton.addEventListener("click", event => {
             const zoomLevel = controls.zoomLevelTargeted + controls.zoomLevelDeltaOnControl;
@@ -136,20 +146,28 @@ export class MapControlsUI {
         tiltButton.addEventListener("click", event => {
             controls.toggleTilt();
         });
+        compassButton.addEventListener("click", event => {
+            controls.pointToNorth();
+        });
+        controls.mapView.addEventListener(MapViewEventNames.AfterRender, () => {
+            compass.style.transform = `rotate(${THREE.Math.radToDeg(
+                MapViewUtils.extractAttitude(controls.mapView, controls.mapView.camera).yaw
+            )}deg)`;
+        });
 
         this.domElement.className = "harp-gl_controls";
 
-        zoomInButton.className = zoomOutButton.className = tiltButton.className =
-            "harp-gl_controls-button";
+        zoomInButton.className = zoomOutButton.className = "harp-gl_controls-button";
+        tiltButton.className = compassButton.className = "harp-gl_controls-button";
 
         if (this.m_zoomLevelElement !== null) {
-            this.m_zoomLevelElement.className = "harp-gl_controls-zoom";
+            this.m_zoomLevelElement.className = "harp-gl_controls_zoom-level";
         }
 
         if (options.disableDefaultStyle !== true) {
             this.initStyle();
             this.domElement.style.cssText =
-                "position: absolute; right: 10px; top: 50%; margin-top: -70px;";
+                "position: absolute; right: 5px; top: 50%; margin-top: -85px;";
         }
 
         return this;
@@ -188,7 +206,7 @@ export class MapControlsUI {
                 font-size: 22px;
                 font-weight: bold;
                 outline: none;
-                margin: 5px;
+                margin:0;
                 border: none;
                 color: rgba(255, 255, 255, 0.8);
                 cursor: pointer;
@@ -197,15 +215,29 @@ export class MapControlsUI {
                 transition: all 0.1s;
                 padding: 0 0 1px 1px;
                 user-select: none;
+                position:relative;
             }
-            #tiltButtonUi {
+            #harp-gl_controls_tilt-button-ui {
                font-size: 16px;
             }
             .harp-gl_controls-button:active {
                 background-color: #37afaa;
                 color: #eee;
             }
-            .harp-gl_controls-zoom {
+            .harp-gl_controls-button:focus {
+                outline:none;
+            }
+            #harp-gl_controls_zoom-in{
+                margin-bottom:0;
+                border-bottom-right-radius:0;
+                border-bottom-left-radius:0;
+            }
+            #harp-gl_controls_zoom-out{
+                margin-top:1px;
+                border-top-right-radius:0;
+                border-top-left-radius:0;
+            }
+            .harp-gl_controls_zoom-level {
                 display: block;
                 background-color: #fff;
                 width: 40px;
@@ -213,25 +245,57 @@ export class MapControlsUI {
                 font-size: 12px;
                 font-weight: bold;
                 outline: none;
-                margin: 5px;
                 border: none;
                 color: #555;
+                margin-left:5px;
                 opacity: 0.87;
-                border-radius: 4px;
                 box-shadow: 0px 0px 4px #aaa;
                 padding: 2px 0 0;
                 text-align: center;
                 user-select: text;
             }
-            input.harp-gl_controls-zoom::-webkit-outer-spin-button,
-            input.harp-gl_controls-zoom::-webkit-inner-spin-button {
+            input.harp-gl_controls_zoom-level::-webkit-outer-spin-button,
+            input.harp-gl_controls_zoom-level::-webkit-inner-spin-button {
                 /* display: none; <- Crashes Chrome on hover */
                 -webkit-appearance: none;
                 margin: 0; /* <-- Apparently some margin are still there even though it's hidden */
             }
-            input.harp-gl_controls-zoom[type=number] {
+            input.harp-gl_controls_zoom-level[type=number] {
                 -moz-appearance:textfield; /* Firefox */
-            }`)
+            }
+            #harp-gl_controls-button_compass{
+                margin: 5px 0;
+            }
+            #harp-gl_controls_compass{
+                pointer-events:none;
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                margin:0
+            }
+            #harp-gl_controls_compass::after{
+                content: " ";
+                position:absolute;
+                left:50%;
+                margin-left:-3px;
+                top:50%;
+                margin-top: -18px;
+                border:solid 3px rgba(0,0,0,0);
+                border-bottom:solid 15px #a34f2e;
+            }
+            #harp-gl_controls_compass::before{
+                content: " ";
+                position:absolute;
+                left:50%;
+                margin-left:-3px;
+                top:50%;
+                margin-top:0px;
+                border:solid 3px rgba(0,0,0,0);
+                border-top:solid 15px #eee;
+            }
+            `)
         );
         document.head.appendChild(style);
     }

@@ -18,7 +18,8 @@ const cameraMock = {
     rotation: {
         z: 0
     },
-    quaternion: new THREE.Quaternion()
+    quaternion: new THREE.Quaternion(),
+    matrixWorld: new THREE.Matrix4()
 };
 
 describe("map-view#Utils", function() {
