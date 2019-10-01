@@ -267,7 +267,13 @@ export class VisibleTileSet {
     /**
      * Evaluate frustum near/far clip planes and visibility ranges.
      */
-    updateClipPlanes(): ViewRanges {
+    updateClipPlanes(maxElevation?: number, minElevation?: number): ViewRanges {
+        if (maxElevation !== undefined) {
+            this.options.clipPlanesEvaluator.maxElevation = maxElevation;
+        }
+        if (minElevation !== undefined) {
+            this.options.clipPlanesEvaluator.minElevation = minElevation;
+        }
         this.m_viewRange = this.options.clipPlanesEvaluator.evaluateClipPlanes(
             this.m_frustumIntersection.camera,
             this.m_frustumIntersection.projection
@@ -405,9 +411,13 @@ export class VisibleTileSet {
         });
         // We process buildings elevation yet (via ElevationRangeSource or either way), so correct
         // the highest elevation to account for highest possible building.
+        const projectionScale = this.m_frustumIntersection.projection.getScaleFactor(
+            this.m_frustumIntersection.camera.position
+        );
+        const maxBuildingHeight = EarthConstants.MAX_BUILDING_HEIGHT * projectionScale;
         maxElevation =
-            maxElevation < EarthConstants.MAX_ELEVATION - EarthConstants.MAX_BUILDING_HEIGHT
-                ? maxElevation + EarthConstants.MAX_BUILDING_HEIGHT
+            maxElevation < EarthConstants.MAX_ELEVATION - maxBuildingHeight
+                ? maxElevation + maxBuildingHeight
                 : maxElevation;
         // Update elevation ranges stored.
         if (
@@ -423,12 +433,9 @@ export class VisibleTileSet {
 
         // If clip planes evaluator depends on the tiles elevation re-calculate
         // frustum planes and update the camera near/far plane distances.
-        const clipPlanesEvaluator = this.options.clipPlanesEvaluator;
         let viewRangesChanged: boolean = false;
         if (elevationRangeSource !== undefined) {
-            clipPlanesEvaluator.minElevation = minElevation;
-            clipPlanesEvaluator.maxElevation = maxElevation;
-            const viewRanges = this.updateClipPlanes();
+            const viewRanges = this.updateClipPlanes(maxElevation, minElevation);
             viewRangesChanged = viewRanges === this.m_viewRange;
             this.m_viewRange = viewRanges;
         }
