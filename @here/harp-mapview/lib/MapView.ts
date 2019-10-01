@@ -2350,6 +2350,7 @@ export class MapView extends THREE.EventDispatcher {
      * Allows the user to block some areas of the screen.
      * @note To clear, simply pass in an empty array.
      * @param screenSpaceBoxes Boxes that are in screen space.
+     * @deprecated
      */
     setLabelAvoidanceWithBoxes(screenSpaceBoxes: Math2D.Box[]) {
         this.m_screenSpaceBoxes = screenSpaceBoxes;
@@ -2358,6 +2359,7 @@ export class MapView extends THREE.EventDispatcher {
     /**
      * Allows the user to block some area of the screen.
      * @note To clear, simply pass in an empty array.
+     * @deprecated
      */
     setLabelAvoidanceWithLines(screenSpaceLines: LineWithBound[]) {
         this.m_screenSpaceLines = screenSpaceLines;
