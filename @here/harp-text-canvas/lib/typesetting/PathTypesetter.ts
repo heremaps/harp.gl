@@ -6,6 +6,7 @@
 
 import * as THREE from "three";
 
+import { MathUtils } from "@here/harp-utils";
 import { QUAD_VERTEX_MEMORY_FOOTPRINT } from "../rendering/TextGeometry";
 import { FontStyle, FontVariant } from "../rendering/TextStyle";
 import { TypesettingUtils } from "../utils/TypesettingUtils";
@@ -232,6 +233,7 @@ export class PathTypesetter implements Typesetter {
         const individualBounds = this.m_currentParams!.individualBounds;
         const vertexBuffer = this.m_currentParams!.vertexBuffer;
         const path = this.m_currentParams!.path;
+        const pathOverflow = this.m_currentParams!.pathOverflow;
 
         const defaultGlyphRotation = textRenderStyle.rotation;
         const normalDisplacement =
@@ -243,6 +245,12 @@ export class PathTypesetter implements Typesetter {
         // memory might not match the order on glyphs on scree).
         const start = direction === UnicodeUtils.Direction.LTR ? startIdx : endIdx;
         const end = direction === UnicodeUtils.Direction.LTR ? endIdx : startIdx;
+        const points = [];
+        const glyphs = [];
+
+        let firstAngle = 0;
+        let prevAngle = 0;
+        const angleDelta = [0];
         for (
             let i = start;
             direction === UnicodeUtils.Direction.RTL ? i >= end : i <= end;
@@ -280,6 +288,81 @@ export class PathTypesetter implements Typesetter {
                 i = weakRunStart;
                 continue;
             }
+
+            // Update the current interpolated path position and angle.
+            const textPoint = path.getPoint(this.m_tempPathOffset);
+            if (textPoint === null && pathOverflow === false) {
+                return false;
+            }
+
+            const tangent = path.getTangent(this.m_tempPathOffset);
+            const angle = Math.atan2(tangent.y, tangent.x);
+
+            if (i === 0) {
+                firstAngle = angle;
+            } else {
+                angleDelta.push(MathUtils.circleDistance(angle - prevAngle));
+            }
+
+            prevAngle = angle;
+
+            points.push(textPoint);
+            glyphs.push(glyphData);
+
+            const glyphFont = glyphData.font;
+            const glyphFontMetrics = glyphFont.metrics;
+            const isSmallCaps = this.m_tempSmallCaps
+                ? smallCapsArray![i] && textRenderStyle.fontVariant === FontVariant.SmallCaps
+                : false;
+            const smallCapsScale = isSmallCaps
+                ? glyphFontMetrics.xHeight / glyphFontMetrics.capHeight
+                : 1.0;
+            const glyphScale = this.m_tempScale * smallCapsScale;
+
+            // Advance the current position and proceed to next glyph in the run.
+            this.m_tempPathOffset +=
+                ((glyphData.advanceX + textLayoutStyle.tracking) * glyphScale) /
+                this.m_tempPathLength;
+        }
+
+        const e = points.length - 1;
+
+        const v1 = new THREE.Vector2();
+        const v2 = new THREE.Vector2();
+
+        let currentAngle = firstAngle;
+        for (let i = 0; i < glyphs.length; i++) {
+            const glyphData = glyphs[i];
+            const textPoint = points[i];
+
+            const a0 = angleDelta[i - 2 < 0 ? -(i - 2) - 1 : i - 2];
+            const a1 = angleDelta[i - 1 < 0 ? -(i - 1) - 1 : i - 1];
+            const a2 = angleDelta[i];
+            const a3 = angleDelta[i + 1 > e ? 2 * e + 1 - (i + 1) : i + 1];
+            const a4 = angleDelta[i + 2 > e ? 2 * e + 1 - (i + 2) : i + 2];
+
+            const angleDeltaAvg = (a0 + a1 + a2 + a3 + a4) / 5;
+
+            currentAngle += angleDeltaAvg;
+
+            const normal = new THREE.Vector2(-Math.sin(currentAngle), Math.cos(currentAngle));
+
+            const pb = textPoint;
+            const pa = points[i - 1] || pb;
+            const pc = points[i + 1] || pb;
+
+            v1.subVectors(pb, pa);
+            v2.subVectors(pc, pa);
+
+            const offset = v2
+                .multiplyScalar(v2.dot(v1) / v2.dot(v2))
+                .add(pa)
+                .sub(pb)
+                .dot(normal);
+
+            normal.multiplyScalar(normalDisplacement + offset);
+            this.m_tempPathPosition.set(normal.x + textPoint.x, normal.y + textPoint.y, position.z);
+            textRenderStyle.rotation = defaultGlyphRotation + currentAngle;
 
             // Compute various rendering parameters for this glyph.
             const glyphFont = glyphData.font;
@@ -320,19 +403,6 @@ export class PathTypesetter implements Typesetter {
                 glyphFontMetrics.base -
                 glyphFontMetrics.distanceRange * 0.5;
 
-            // Update the current interpolated path position and angle.
-            const textPoint = path.getPoint(this.m_tempPathOffset);
-            if (textPoint === null) {
-                return this.m_currentParams!.pathOverflow;
-            }
-            const tangent = path.getTangent(this.m_tempPathOffset);
-            const normal = new THREE.Vector2(-tangent.y, tangent.x).multiplyScalar(
-                normalDisplacement
-            );
-            const angle = Math.atan2(tangent.y, tangent.x);
-            this.m_tempPathPosition.set(normal.x + textPoint.x, normal.y + textPoint.y, position.z);
-            textRenderStyle.rotation = defaultGlyphRotation + angle;
-
             // Compute the glyphs transformation matrix and apply to all corners of a glyph.
             TypesettingUtils.computeGlyphTransform(
                 this.m_tempTransform,
@@ -342,20 +412,21 @@ export class PathTypesetter implements Typesetter {
                 textRenderStyle.rotation
             );
             for (let j = 0; j < 4; ++j) {
+                const corner = this.m_tempCorners[j];
                 const glyphVertexPosition = glyphData.positions[j];
                 const horizontalOffset =
                     isItalicEmulated && j > 1
                         ? TypesettingUtils.OBLIQUE_OFFSET * glyphFontMetrics.size
                         : 0.0;
-                this.m_tempCorners[j].set(
+                corner.set(
                     glyphVertexPosition.x + horizontalOffset,
                     glyphVertexPosition.y - verticalOffset,
                     glyphVertexPosition.z
                 );
-                this.m_tempCorners[j].applyMatrix3(this.m_tempTransform);
+                corner.applyMatrix3(this.m_tempTransform);
 
-                this.m_tempCorners[j].x -= position.x;
-                this.m_tempCorners[j].y -= position.y;
+                corner.x -= position.x;
+                corner.y -= position.y;
             }
 
             // Depending on the typesetting options, add the computed glyph to the TextGeometry or
@@ -397,11 +468,6 @@ export class PathTypesetter implements Typesetter {
 
             // Restore the original glyph rotation.
             textRenderStyle.rotation = defaultGlyphRotation;
-
-            // Advance the current position and proceed to next glyph in the run.
-            this.m_tempPathOffset +=
-                ((glyphData.advanceX + textLayoutStyle.tracking) * glyphScale) /
-                this.m_tempPathLength;
         }
 
         return true;

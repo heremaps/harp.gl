@@ -163,4 +163,18 @@ export namespace MathUtils {
             time < 0.5 ? 4 * time * time * time : (time - 1) * (2 * time - 2) * (2 * time - 2) + 1;
         return startValue + (endValue - startValue) * timeValue;
     }
+
+    /**
+     * Returns shortest distance around the circle
+     *
+     * @param distance
+     */
+    export function circleDistance(distance: number): number {
+        const pi = Math.PI;
+        const abs = Math.abs(distance);
+
+        return abs < pi
+            ? distance
+            : distance - 2 * pi * Math.ceil(Math.floor(abs / pi) / 2) * (distance < 0 ? -1 : 1);
+    }
 }
