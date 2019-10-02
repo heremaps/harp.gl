@@ -53,6 +53,8 @@ export interface DecodedTile {
  */
 export interface TextPathGeometry {
     path: number[];
+    // The path length is specific to text path, as a means of prioritizing longer lines over
+    // shorter lines for text placement.
     pathLengthSqr: number;
     text: string;
     technique: number;

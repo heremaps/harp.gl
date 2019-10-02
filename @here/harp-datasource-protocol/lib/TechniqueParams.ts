@@ -928,6 +928,11 @@ export interface SolidLineTechniqueParams extends BaseTechniqueParams, Polygonal
      * Default is `"Round"`.
      */
     caps?: LineCaps;
+
+    /**
+     * Whether the given line rejects other screen space labels.
+     */
+    rejectLabels?: boolean;
 }
 
 /**

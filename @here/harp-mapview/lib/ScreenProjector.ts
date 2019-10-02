@@ -64,7 +64,7 @@ export class ScreenProjector {
      * screen coordinates. Similar to project, however the z component is also returned (in
      * range (-1,1)).
      *
-     * @note This also shifts from to screen coordinates.
+     * @note This also shifts & flips to screen coordinates.
      *
      * @param {(THREE.Vector3)} source The source vector to project.
      * @param {THREE.Vector3} target The target vector.

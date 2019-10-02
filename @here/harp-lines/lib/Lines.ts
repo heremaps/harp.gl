@@ -366,7 +366,8 @@ export class LineGroup {
     constructor(
         readonly hasNormalsAndUvs: boolean = false,
         readonly highPrecision: boolean = false,
-        readonly isSimple: boolean = false
+        readonly isSimple: boolean = false,
+        readonly rejectLabels: boolean = false
     ) {
         this.m_geometry = new LineGeometry();
     }

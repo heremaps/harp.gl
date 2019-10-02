@@ -633,37 +633,88 @@ export class TextElementsRenderer {
     prepopulateScreenWithBlockingElements() {
         const renderList = this.m_mapView.visibleTileSet.dataSourceTileList;
         renderList.forEach(renderListEntry => {
+            const startLinePoint = new THREE.Vector3();
+            const endLinePoint = new THREE.Vector3();
             const startLinePointProj = new THREE.Vector3();
             const endLinePointProj = new THREE.Vector3();
             for (const tile of renderListEntry.visibleTiles) {
-                for (const pathBlockingElement of tile.blockingElements) {
-                    if (pathBlockingElement.points.length < 2) {
+                for (const obj of tile.objects) {
+                    const isLabelBlockingLine =
+                        obj instanceof THREE.Mesh && obj.userData.rejectLabels === true;
+                    if (!isLabelBlockingLine) {
                         continue;
                     }
-                    // Project to screen and store it in the ScreenCollisions.
-                    let startLinePoint = pathBlockingElement.points[0];
-                    for (let i = 1; i < pathBlockingElement.points.length; i++) {
-                        const endLinePoint = pathBlockingElement.points[i];
-                        this.m_screenProjector.projectAndShift(startLinePoint, startLinePointProj);
-                        this.m_screenProjector.projectAndShift(endLinePoint, endLinePointProj);
-                        startLinePoint = endLinePoint;
-                        const lineWithBound: LineWithBound = {
-                            minX: Math.min(startLinePointProj.x, endLinePointProj.x),
-                            maxX: Math.max(startLinePointProj.x, endLinePointProj.x),
-                            minY: Math.min(startLinePointProj.y, endLinePointProj.y),
-                            maxY: Math.max(startLinePointProj.y, endLinePointProj.y),
-                            type: "line",
-                            line: new THREE.Line3(
-                                startLinePointProj.clone(),
-                                endLinePointProj.clone()
-                            )
-                        };
-                        // False, because the coordinates are in
-                        this.m_screenCollisions.allocateIBox(lineWithBound, true);
+                    const mesh = obj as THREE.Mesh;
+                    const bufferGeometry = mesh.geometry as THREE.BufferGeometry;
+                    const indexBuffer = bufferGeometry.index;
+                    const interleavedBufferAttributes = bufferGeometry.attributes
+                        .position as THREE.InterleavedBufferAttribute;
+                    // Iterate over each line (represented by a triangle pair), we increment by 6
+                    // because there are 6 indices per quad.
+                    for (let i = 0; i < indexBuffer.count; i += 6) {
+                        this.getWorldSpacePoint(
+                            indexBuffer.array[i] * interleavedBufferAttributes.data.stride,
+                            interleavedBufferAttributes.data.array,
+                            startLinePoint
+                        );
+                        // Most often, the start of the next line segment is the same as the
+                        // previous line segment, so we can skip the expensive projection, but we
+                        // can't guarantee this (there may be jumps in the line (i.e. there is no
+                        // guarantee that it is continuous (the internal decoder splits jagged lines
+                        // for example))).
+                        if (startLinePoint.equals(endLinePoint) && i !== 0) {
+                            startLinePointProj.copy(endLinePointProj);
+                        } else {
+                            this.projectLocalTileToScreenSpace(
+                                tile,
+                                startLinePoint,
+                                startLinePointProj
+                            );
+                        }
+                        this.getWorldSpacePoint(
+                            indexBuffer.array[i + 3] * interleavedBufferAttributes.data.stride,
+                            interleavedBufferAttributes.data.array,
+                            endLinePoint
+                        );
+                        this.projectLocalTileToScreenSpace(tile, endLinePoint, endLinePointProj);
+                        this.addLineToScreen(startLinePointProj, endLinePointProj);
                     }
                 }
             }
         });
+    }
+
+    // Projects the point in local tile space to screen coordinates.
+    private projectLocalTileToScreenSpace(tile: Tile, point: THREE.Vector3, result: THREE.Vector3) {
+        point.add(tile.center);
+        this.m_screenProjector.projectAndShift(point, result);
+    }
+
+    // Appends a line based on the start and end positions in screen space
+    private addLineToScreen(startLinePointProj: THREE.Vector3, endLinePointProj: THREE.Vector3) {
+        const lineWithBound: LineWithBound = {
+            minX: Math.min(startLinePointProj.x, endLinePointProj.x),
+            maxX: Math.max(startLinePointProj.x, endLinePointProj.x),
+            minY: Math.min(startLinePointProj.y, endLinePointProj.y),
+            maxY: Math.max(startLinePointProj.y, endLinePointProj.y),
+            type: "line",
+            line: new THREE.Line3(startLinePointProj.clone(), endLinePointProj.clone())
+        };
+        this.m_screenCollisions.allocateIBox(lineWithBound, true);
+    }
+
+    // Extracts the world space point from the index buffer and sets it to the worldPoint.
+    private getWorldSpacePoint(
+        indexOffset: number,
+        indexBuffer: ArrayLike<number>,
+        worldPoint: THREE.Vector3
+    ) {
+        // These offsets correspond to the way the data is put together, search for
+        // LINE_VERTEX_ATTRIBUTES in Lines.ts, 3-5 is the position.
+        const x = indexBuffer[indexOffset + 3];
+        const y = indexBuffer[indexOffset + 4];
+        const z = indexBuffer[indexOffset + 5];
+        worldPoint.set(x, y, z);
     }
 
     private initializeDefaultAssets(): void {

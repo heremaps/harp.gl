@@ -209,9 +209,12 @@ export class TileGeometryCreator {
         const filter = (technique: Technique): boolean => {
             return technique.enabled !== false;
         };
-
         this.createObjects(tile, decodedTile, filter);
 
+        this.preparePois(tile, decodedTile);
+
+        // TextElements do not get their geometry created by Tile, but are managed on a
+        // higher level.
         const textFilter = (technique: Technique): boolean => {
             if (
                 !isPoiTechnique(technique) &&
@@ -222,11 +225,6 @@ export class TileGeometryCreator {
             }
             return filter(technique);
         };
-
-        this.preparePois(tile, decodedTile);
-
-        // TextElements do not get their geometry created by Tile, but are managed on a
-        // higher level.
         this.createTextElements(tile, decodedTile, textFilter);
     }
 
@@ -1565,7 +1563,9 @@ export class TileGeometryCreator {
             };
             object.userData = tileDisplacementMap;
         } else {
-            object.userData = srcGeometry.objInfos;
+            for (const item of srcGeometry.objInfos) {
+                Object.assign(object.userData, item);
+            }
         }
     }
 

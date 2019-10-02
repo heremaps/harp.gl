@@ -368,18 +368,17 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
             const techniqueName = technique.name;
 
             if (
-                techniqueName === "line" ||
-                techniqueName === "solid-line" ||
-                techniqueName === "dashed-line"
+                isLineTechnique(technique) ||
+                isSolidLineTechnique(technique) ||
+                isDashedLineTechnique(technique)
             ) {
-                const lineGeometry =
-                    techniqueName === "line"
-                        ? this.m_simpleLines
-                        : techniqueName === "solid-line"
-                        ? this.m_solidLines
-                        : this.m_dashedLines;
+                const lineGeometry = isLineTechnique(technique)
+                    ? this.m_simpleLines
+                    : isSolidLineTechnique(technique)
+                    ? this.m_solidLines
+                    : this.m_dashedLines;
 
-                const lineType = techniqueName === "line" ? LineType.Simple : LineType.Complex;
+                const lineType = isLineTechnique(technique) ? LineType.Simple : LineType.Complex;
 
                 this.applyLineTechnique(
                     lineGeometry,
@@ -440,11 +439,11 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                     if (text === undefined) {
                         continue;
                     }
-                    for (const aLine of validLines) {
-                        const pathLengthSqr = Math2D.computeSquaredLineLength(aLine);
+                    for (const path of validLines) {
+                        const pathLengthSqr = Math2D.computeSquaredLineLength(path);
                         this.m_textPathGeometries.push({
                             technique: techniqueIndex,
-                            path: aLine,
+                            path,
                             pathLengthSqr,
                             text: String(text),
                             featureId,
@@ -584,10 +583,6 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
             const isExtruded = isExtrudedPolygonTechnique(technique);
             const isFilled = isFillTechnique(technique);
 
-            const isLine =
-                isSolidLineTechnique(technique) ||
-                isDashedLineTechnique(technique) ||
-                isLineTechnique(technique);
             const isPolygon = isExtruded || isFilled || isStandardTechnique(technique);
             const computeTexCoords = this.getComputeTexCoordsFunc(technique);
             const vertexStride = computeTexCoords !== undefined ? 4 : 2;
@@ -612,6 +607,10 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                 polygons.push(rings);
             }
 
+            const isLine =
+                isSolidLineTechnique(technique) ||
+                isDashedLineTechnique(technique) ||
+                isLineTechnique(technique);
             if (isPolygon) {
                 this.applyPolygonTechnique(
                     polygons,
@@ -900,7 +899,16 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
         });
         const hasNormalsAndUvs = uvs !== undefined;
         if (lineGroupGeometries === undefined) {
-            lineGroup = new LineGroup(hasNormalsAndUvs, undefined, lineType === LineType.Simple);
+            const rejectLabels =
+                isSolidLineTechnique(technique) && technique.rejectLabels !== undefined
+                    ? technique.rejectLabels
+                    : false;
+            lineGroup = new LineGroup(
+                hasNormalsAndUvs,
+                undefined,
+                lineType === LineType.Simple,
+                rejectLabels
+            );
             const aLine: LinesGeometry = {
                 type: lineType === LineType.Complex ? GeometryType.SolidLine : GeometryType.Line,
                 technique: techniqueIndex,
@@ -1539,7 +1547,8 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                 },
                 interleavedVertexAttributes: [attr],
                 groups: [{ start: 0, count: indices.length, technique, renderOrderOffset }],
-                vertexAttributes: []
+                vertexAttributes: [],
+                objInfos: [{ rejectLabels: linesGeometry.lines.rejectLabels }]
             };
 
             if (this.m_gatherFeatureIds) {
