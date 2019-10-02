@@ -24,7 +24,7 @@ function toBox2D(bounds: THREE.Box2): Math2D.Box {
     return tempGlyphBox2D;
 }
 
-describe("ScreenCollisions", function () {
+describe("ScreenCollisions", function() {
     it("line intersection test box at center", function() {
         const sc = new ScreenCollisions();
         sc.update(100, 100);
