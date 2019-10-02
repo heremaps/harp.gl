@@ -355,8 +355,9 @@ export interface BaseStyle {
     description?: string;
 
     /**
-     * Technique name. Must be one of `"line"`, `"fill"`, `"solid-line"`, `"dashed-line"`,
-     * `"extruded-line"`, `"extruded-polygon"`, `"text"`, or `"none"`.
+     * Technique name. See the classes extending from this class to determine what possible
+     * techniques are possible, includes `"line"`, `"fill"`, `"solid-line"`, `"dashed-line"`,
+     * `"extruded-line"`, `"extruded-polygon"`, `"text"`, `"none"`.
      */
     technique?: string;
 
