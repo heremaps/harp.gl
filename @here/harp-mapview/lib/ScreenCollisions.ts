@@ -5,8 +5,6 @@
  */
 
 import { LoggerManager, Math2D } from "@here/harp-utils";
-/// <reference path="line-intersect.d.ts" />
-import { checkIntersection /*colinearPointWithinSegment*/ } from "line-intersect";
 import * as THREE from "three";
 import { debugContext } from "./DebugContext";
 
@@ -177,66 +175,34 @@ export class ScreenCollisions {
         const lineEndXTransformed = line.end.x + this.screenBounds.x;
         const lineEndYTransformed = this.screenBounds.h / 2 - line.end.y;
 
-        // Test left side
-        let intersectionResult = checkIntersection(
-            lineStartXTransformed,
-            lineStartYTransformed,
-            lineEndXTransformed,
-            lineEndYTransformed,
-            bbox.minX,
-            bbox.minY,
-            bbox.minX,
-            bbox.maxY
-        );
-        if (intersectionResult.type === "intersecting") {
-            return true;
-        }
+        // Note, these aren't normalized, but it doesn't matter, we are just interested
+        // in the sign.
+        const lineXDiffTransformed = lineEndXTransformed - lineStartXTransformed;
 
-        // Test right side
-        intersectionResult = checkIntersection(
-            lineStartXTransformed,
-            lineStartYTransformed,
-            lineEndXTransformed,
-            lineEndYTransformed,
-            bbox.maxX,
-            bbox.minY,
-            bbox.maxX,
-            bbox.maxY
-        );
-        if (intersectionResult.type === "intersecting") {
-            return true;
-        }
+        // Sign of bottom left, bottom right, top left and top right corners.
+        let signBL: number;
+        let signBR: number;
+        let signTL: number;
+        let signTR: number;
+        if (lineXDiffTransformed !== 0) {
+            const lineYDiffTransformed = lineEndYTransformed - lineStartYTransformed;
+            const normalX = lineYDiffTransformed;
+            const normalY = -lineXDiffTransformed;
+            const D =
+                lineStartYTransformed -
+                (lineYDiffTransformed / lineXDiffTransformed) * lineStartXTransformed;
 
-        // Test top
-        intersectionResult = checkIntersection(
-            lineStartXTransformed,
-            lineStartYTransformed,
-            lineEndXTransformed,
-            lineEndYTransformed,
-            bbox.minX,
-            bbox.maxY,
-            bbox.maxX,
-            bbox.maxY
-        );
-        if (intersectionResult.type === "intersecting") {
-            return true;
+            signBL = Math.sign(bbox.minX * normalX + (bbox.minY - D) * normalY);
+            signBR = Math.sign(bbox.maxX * normalX + (bbox.minY - D) * normalY);
+            signTL = Math.sign(bbox.minX * normalX + (bbox.maxY - D) * normalY);
+            signTR = Math.sign(bbox.maxX * normalX + (bbox.maxY - D) * normalY);
+        } else {
+            signBL = Math.sign(bbox.minX - lineStartXTransformed);
+            signBR = Math.sign(bbox.maxX - lineStartXTransformed);
+            signTL = Math.sign(bbox.minX - lineStartXTransformed);
+            signTR = Math.sign(bbox.maxX - lineStartXTransformed);
         }
-
-        // Test bottom
-        intersectionResult = checkIntersection(
-            lineStartXTransformed,
-            lineStartYTransformed,
-            lineEndXTransformed,
-            lineEndYTransformed,
-            bbox.minX,
-            bbox.minY,
-            bbox.maxX,
-            bbox.minY
-        );
-        if (intersectionResult.type === "intersecting") {
-            return true;
-        }
-        return false;
+        return signBL !== signBR || signBL !== signTL || signBL !== signTR;
     }
 
     /**

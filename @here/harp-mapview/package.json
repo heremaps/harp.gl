@@ -41,7 +41,6 @@
         "@here/harp-materials": "^0.10.0",
         "@here/harp-text-canvas": "^0.10.0",
         "@here/harp-utils": "^0.10.0",
-        "line-intersect": "^2.2.1",
         "rbush": "^3.0.1"
     },
     "devDependencies": {
