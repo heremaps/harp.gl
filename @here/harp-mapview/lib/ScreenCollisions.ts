@@ -15,6 +15,22 @@ const RBush = require("rbush");
 
 const logger = LoggerManager.instance.create("ScreenCollissions");
 
+export interface IBox {
+    minX: number;
+    minY: number;
+    maxX: number;
+    maxY: number;
+    type: string;
+}
+
+export interface CollisionBox extends IBox {
+    type: "box";
+}
+
+export interface LineWithBound extends IBox {
+    type: "line";
+    line: THREE.Line3;
+}
 /**
  * @hidden
  */
@@ -67,16 +83,48 @@ export class ScreenCollisions {
     /**
      * Marks the region of the screen intersecting with the given bounding box as allocated.
      *
-     * @param bounds The bounding box in world coordinates.
+     * @param bounds The bounding box in NDC scaled coordinates (i.e. top left is -width/2,
+     * -height/2)
      */
     allocate(bounds: Math2D.Box): void {
         const bbox = {
             minX: bounds.x,
             minY: bounds.y,
             maxX: bounds.x + bounds.w,
-            maxY: bounds.y + bounds.h
+            maxY: bounds.y + bounds.h,
+            type: "box"
         };
         this.rtree.insert(bbox);
+    }
+
+    /**
+     * Marks the region of the screen intersecting with the given bounding box as allocated.
+     *
+     * @param bounds The bounding box in screen coordinates.
+     */
+    allocateScreenSpace(bounds: Math2D.Box): void {
+        const shiftedBounds = this.toScreenBoundsSpace(bounds, "box");
+        this.rtree.insert(shiftedBounds);
+    }
+
+    /**
+     * Marks a region of the screen intersecting with the given IBox as allocated.
+     *
+     * @param bounds The bounding box in screen coordinates.
+     * @param isScreenSpace Whether the supplied IBox is in screen coordinates, i.e. 0,0 is top
+     * left, and width,height is bottom right, or NDC Scaled coordiantes, i.e. -width/2, -height/2
+     * is bottom left and width/2 and height/2 is top right (i.e. flipped).
+     */
+    allocateIBox(bounds: IBox, isScreenSpace: boolean): void {
+        const box = {};
+        // Make sure to copy across any extra things.
+        Object.assign(box, bounds);
+        // Copy across the NDC scaled space values required for the rtree
+        if (isScreenSpace) {
+            Object.assign(box, this.toScreenBoundsSpaceFromIBox(bounds));
+        }
+        // Convert box from screen space to screenBounds space
+        this.rtree.insert(box);
     }
 
     /**
@@ -85,15 +133,29 @@ export class ScreenCollisions {
      * @param bounds The bounding box in world coordinates.
      */
     isAllocated(bounds: Math2D.Box): boolean {
-        const bbox = {
+        const bbox: CollisionBox = {
             minX: bounds.x,
             minY: bounds.y,
             maxX: bounds.x + bounds.w,
-            maxY: bounds.y + bounds.h
+            maxY: bounds.y + bounds.h,
+            type: "box"
         };
 
-        // Re-use array to reduce allocations.
-        return this.rtree.collides(bbox);
+        const results = this.rtree.search(bbox);
+        for (const result of results) {
+            switch (result.type) {
+                case "box":
+                    return true;
+                case "line": {
+                    const boundedLine = result as LineWithBound;
+                    if (this.intersectsLine(bbox, boundedLine)) {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -103,6 +165,81 @@ export class ScreenCollisions {
      */
     isVisible(bounds: Math2D.Box): boolean {
         return this.screenBounds.intersects(bounds);
+    }
+
+    /**
+     * Computes the intersection between the supplied CollisionBox and the LineWithBound.
+     * @note The [[CollisionBox]] is in Screen Bounds space, whereas the line must be
+     * in Screen Coordinate space
+     * @deprecated Because this is meant just for testing.
+     */
+    intersectsLine(bbox: CollisionBox, boundedLine: LineWithBound): boolean {
+        const line = boundedLine.line;
+        // Transform line from screen space to screenBounds space.
+        const lineStartXTransformed = line.start.x + this.screenBounds.x;
+        const lineStartYTransformed = this.screenBounds.h / 2 - line.start.y;
+        const lineEndXTransformed = line.end.x + this.screenBounds.x;
+        const lineEndYTransformed = this.screenBounds.h / 2 - line.end.y;
+
+        // Note, these aren't normalized, but it doesn't matter, we are just interested
+        // in the sign.
+        const lineXDiffTransformed = lineEndXTransformed - lineStartXTransformed;
+
+        // Sign of bottom left, bottom right, top left and top right corners.
+        let signBL: number;
+        let signBR: number;
+        let signTL: number;
+        let signTR: number;
+        if (lineXDiffTransformed !== 0) {
+            const lineYDiffTransformed = lineEndYTransformed - lineStartYTransformed;
+            const normalX = lineYDiffTransformed;
+            const normalY = -lineXDiffTransformed;
+            const D =
+                lineStartYTransformed -
+                (lineYDiffTransformed / lineXDiffTransformed) * lineStartXTransformed;
+
+            signBL = Math.sign(bbox.minX * normalX + (bbox.minY - D) * normalY);
+            signBR = Math.sign(bbox.maxX * normalX + (bbox.minY - D) * normalY);
+            signTL = Math.sign(bbox.minX * normalX + (bbox.maxY - D) * normalY);
+            signTR = Math.sign(bbox.maxX * normalX + (bbox.maxY - D) * normalY);
+        } else {
+            signBL = Math.sign(bbox.minX - lineStartXTransformed);
+            signBR = Math.sign(bbox.maxX - lineStartXTransformed);
+            signTL = Math.sign(bbox.minX - lineStartXTransformed);
+            signTR = Math.sign(bbox.maxX - lineStartXTransformed);
+        }
+        return signBL !== signBR || signBL !== signTL || signBL !== signTR;
+    }
+
+    /**
+     * Transfer from screen space to screen bounds space. Screen bounds space is the result of the
+     * [[ScreenProjector.project]] method. I.e. it is the NDC space multiplied by the width /
+     * height.
+     * @param bounds Bounds in screen space.
+     * @param type Type required to return IBox
+     */
+    private toScreenBoundsSpace(bounds: Math2D.Box, type: string): IBox {
+        return {
+            minX: bounds.x + this.screenBounds.x,
+            minY: this.screenBounds.h / 2 - bounds.y - bounds.h,
+            maxX: bounds.x + bounds.w + this.screenBounds.x,
+            maxY: this.screenBounds.h / 2 - bounds.y,
+            type
+        };
+    }
+
+    /**
+     * Transfer from screen space to screen bounds space for IBox
+     * @param bounds Bounds in screen space
+     */
+    private toScreenBoundsSpaceFromIBox(bounds: IBox): IBox {
+        return {
+            minX: bounds.minX + this.screenBounds.x,
+            minY: this.screenBounds.h / 2 - bounds.maxY,
+            maxX: bounds.maxX + this.screenBounds.x,
+            maxY: this.screenBounds.h / 2 - bounds.minY,
+            type: bounds.type
+        };
     }
 }
 
@@ -193,6 +330,46 @@ export class ScreenCollisionsDebug extends ScreenCollisions {
                 bounds.w,
                 -bounds.h
             );
+        }
+    }
+
+    /**
+     * Marks the region of the screen intersecting with the given bounding box as allocated.
+     *
+     * @param bounds The bounding box in screen coordinates.
+     */
+    allocateScreenSpace(bounds: Math2D.Box): void {
+        super.allocateScreenSpace(bounds);
+
+        this.m_numAllocations++;
+        if (this.m_renderingEnabled && this.m_renderContext !== null) {
+            this.m_renderContext.strokeStyle = "#6666ff";
+            this.m_renderContext.strokeRect(bounds.x, bounds.y, bounds.w, bounds.h);
+        }
+    }
+
+    allocateIBox(bounds: IBox, isScreenSpace: boolean): void {
+        super.allocateIBox(bounds, isScreenSpace);
+
+        this.m_numAllocations++;
+
+        if (this.m_renderingEnabled && this.m_renderContext !== null) {
+            this.m_renderContext.strokeStyle = "#aa2222";
+            if (isScreenSpace) {
+                this.m_renderContext.strokeRect(
+                    bounds.minX,
+                    bounds.minY,
+                    bounds.maxX - bounds.minX,
+                    bounds.maxY - bounds.minY
+                );
+            } else {
+                this.m_renderContext.strokeRect(
+                    bounds.minX - this.screenBounds.x,
+                    this.screenBounds.y + this.screenBounds.h - bounds.minY - 1,
+                    bounds.maxX - bounds.minX,
+                    -(bounds.maxY - bounds.minY)
+                );
+            }
         }
     }
 

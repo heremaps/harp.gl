@@ -19,7 +19,7 @@ import {
     ProjectionType,
     TilingScheme
 } from "@here/harp-geoutils";
-import { assert, getOptionValue, LoggerManager, PerformanceTimer } from "@here/harp-utils";
+import { assert, getOptionValue, LoggerManager, Math2D, PerformanceTimer } from "@here/harp-utils";
 import * as THREE from "three";
 
 import { AnimatedExtrusionHandler } from "./AnimatedExtrusionHandler";
@@ -42,7 +42,7 @@ import { PickHandler, PickResult } from "./PickHandler";
 import { PoiManager } from "./poi/PoiManager";
 import { PoiTableManager } from "./poi/PoiTableManager";
 import { PolarTileDataSource } from "./PolarTileDataSource";
-import { ScreenCollisions, ScreenCollisionsDebug } from "./ScreenCollisions";
+import { LineWithBound, ScreenCollisions, ScreenCollisionsDebug } from "./ScreenCollisions";
 import { ScreenProjector } from "./ScreenProjector";
 import { SkyBackground } from "./SkyBackground";
 import { FrameStats, PerformanceStatistics } from "./Statistics";
@@ -767,7 +767,8 @@ export class MapView extends THREE.EventDispatcher {
     private m_lastTileIds: string = "";
     private m_languages: string[] | undefined;
     private m_copyrightInfo: CopyrightInfo[] = [];
-
+    private m_screenSpaceBoxes: Math2D.Box[] = [];
+    private m_screenSpaceLines: LineWithBound[] = [];
     private m_animatedExtrusionHandler: AnimatedExtrusionHandler;
 
     /**
@@ -2346,6 +2347,25 @@ export class MapView extends THREE.EventDispatcher {
     }
 
     /**
+     * Allows the user to block some areas of the screen.
+     * @note To clear, simply pass in an empty array.
+     * @param screenSpaceBoxes Boxes that are in screen space.
+     * @deprecated
+     */
+    setLabelAvoidanceWithBoxes(screenSpaceBoxes: Math2D.Box[]) {
+        this.m_screenSpaceBoxes = screenSpaceBoxes;
+    }
+
+    /**
+     * Allows the user to block some area of the screen.
+     * @note To clear, simply pass in an empty array.
+     * @deprecated
+     */
+    setLabelAvoidanceWithLines(screenSpaceLines: LineWithBound[]) {
+        this.m_screenSpaceLines = screenSpaceLines;
+    }
+
+    /**
      * Public access to [[MapViewFog]] allowing to toggle it by setting its `enabled` property.
      */
     get fog(): MapViewFog {
@@ -2877,6 +2897,9 @@ export class MapView extends THREE.EventDispatcher {
         // they are handled first. They will be rendered after the normal map objects and
         // TextElements
         this.m_textElementsRenderer.reset();
+        this.m_textElementsRenderer.prepopulateScreen(this.m_screenSpaceBoxes);
+        this.m_textElementsRenderer.prepopulateScreenWithLines(this.m_screenSpaceLines);
+        this.m_textElementsRenderer.prepopulateScreenWithBlockingElements();
         this.m_textElementsRenderer.renderUserTextElements(time, this.m_frameNumber);
         this.m_textElementsRenderer.renderAllTileText(time, this.m_frameNumber);
         this.m_textElementsRenderer.renderOverlay(this.m_overlayTextElements);

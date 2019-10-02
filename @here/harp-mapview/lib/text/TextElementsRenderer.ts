@@ -39,7 +39,7 @@ import { debugContext } from "../DebugContext";
 import { MapView } from "../MapView";
 import { PickObjectType, PickResult } from "../PickHandler";
 import { PoiRenderer } from "../poi/PoiRenderer";
-import { ScreenCollisions } from "../ScreenCollisions";
+import { LineWithBound, ScreenCollisions } from "../ScreenCollisions";
 import { ScreenProjector } from "../ScreenProjector";
 import { Tile } from "../Tile";
 import { MapViewUtils } from "../Utils";
@@ -602,6 +602,68 @@ export class TextElementsRenderer {
         }
 
         return memoryUsage;
+    }
+
+    /**
+     * Fills the screen with boxes which should block other labels.
+     * @note These boxes have highest priority, so will block all labels.
+     * @param boxes Boxes in screen space which reject other labels.
+     */
+    prepopulateScreen(boxes: Math2D.Box[]) {
+        for (const box of boxes) {
+            this.m_screenCollisions.allocateScreenSpace(box);
+        }
+    }
+
+    /**
+     * Fills the screen with lines which should block other labels.
+     * @note These boxes have highest priority, so will block all labels.
+     * @param lines Lines in screen space which reject other labels.
+     */
+    prepopulateScreenWithLines(lines: LineWithBound[]) {
+        for (const line of lines) {
+            this.m_screenCollisions.allocateIBox(line, true);
+        }
+    }
+
+    /**
+     * Fills the screen with lines projected from world space, see [[Tile.blockingElements]].
+     * @note These boxes have highest priority, so will block all other labels.
+     */
+    prepopulateScreenWithBlockingElements() {
+        const renderList = this.m_mapView.visibleTileSet.dataSourceTileList;
+        renderList.forEach(renderListEntry => {
+            const startLinePointProj = new THREE.Vector3();
+            const endLinePointProj = new THREE.Vector3();
+            for (const tile of renderListEntry.visibleTiles) {
+                for (const pathBlockingElement of tile.blockingElements) {
+                    if (pathBlockingElement.points.length < 2) {
+                        continue;
+                    }
+                    // Project to screen and store it in the ScreenCollisions.
+                    let startLinePoint = pathBlockingElement.points[0];
+                    for (let i = 1; i < pathBlockingElement.points.length; i++) {
+                        const endLinePoint = pathBlockingElement.points[i];
+                        this.m_screenProjector.projectAndShift(startLinePoint, startLinePointProj);
+                        this.m_screenProjector.projectAndShift(endLinePoint, endLinePointProj);
+                        startLinePoint = endLinePoint;
+                        const lineWithBound: LineWithBound = {
+                            minX: Math.min(startLinePointProj.x, endLinePointProj.x),
+                            maxX: Math.max(startLinePointProj.x, endLinePointProj.x),
+                            minY: Math.min(startLinePointProj.y, endLinePointProj.y),
+                            maxY: Math.max(startLinePointProj.y, endLinePointProj.y),
+                            type: "line",
+                            line: new THREE.Line3(
+                                startLinePointProj.clone(),
+                                endLinePointProj.clone()
+                            )
+                        };
+                        // False, because the coordinates are in
+                        this.m_screenCollisions.allocateIBox(lineWithBound, true);
+                    }
+                }
+            }
+        });
     }
 
     private initializeDefaultAssets(): void {

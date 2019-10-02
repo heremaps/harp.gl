@@ -9,7 +9,7 @@
 
 import { Math2D } from "@here/harp-utils";
 
-import { ScreenCollisions } from "../lib/ScreenCollisions";
+import { LineWithBound, ScreenCollisions } from "../lib/ScreenCollisions";
 
 import { assert } from "chai";
 import * as THREE from "three";
@@ -25,6 +25,106 @@ function toBox2D(bounds: THREE.Box2): Math2D.Box {
 }
 
 describe("ScreenCollisions", function() {
+    it("line intersection test box at center", function() {
+        const sc = new ScreenCollisions();
+        sc.update(100, 100);
+
+        const line: LineWithBound = {
+            minX: 50,
+            minY: 40,
+            maxX: 51,
+            maxY: 61,
+            type: "line",
+            line: new THREE.Line3(new THREE.Vector3(50, 40, 1), new THREE.Vector3(51, 61, 1))
+        };
+        // Box around the center, in screen bounds space
+        const intersectsLineWithBoxAtCenter = sc.intersectsLine(
+            {
+                minX: -10,
+                minY: -10,
+                maxX: 10,
+                maxY: 10,
+                type: "box"
+            },
+            line
+        );
+        assert.isTrue(intersectsLineWithBoxAtCenter);
+    });
+    it("line intersection test box shifted right", function() {
+        const sc = new ScreenCollisions();
+        sc.update(100, 100);
+        const line: LineWithBound = {
+            minX: 50,
+            minY: 40,
+            maxX: 51,
+            maxY: 61,
+            type: "line",
+            line: new THREE.Line3(new THREE.Vector3(50, 40, 1), new THREE.Vector3(51, 61, 1))
+        };
+
+        // Box around shifted right, in screen bounds space
+        const intersectsLineWithShiftedBox = sc.intersectsLine(
+            {
+                minX: 10,
+                minY: -10,
+                maxX: 20,
+                maxY: 10,
+                type: "box"
+            },
+            line
+        );
+        assert.isFalse(intersectsLineWithShiftedBox);
+    });
+    it("line intersection test line pure vertical", function() {
+        const sc = new ScreenCollisions();
+        sc.update(100, 100);
+        const line: LineWithBound = {
+            minX: 50,
+            minY: 40,
+            maxX: 50,
+            maxY: 61,
+            type: "line",
+            line: new THREE.Line3(new THREE.Vector3(50, 40, 1), new THREE.Vector3(50, 61, 1))
+        };
+
+        // Box around center, in screen bounds space
+        const intersectsLineWithShiftedBox = sc.intersectsLine(
+            {
+                minX: -10,
+                minY: -10,
+                maxX: 10,
+                maxY: 10,
+                type: "box"
+            },
+            line
+        );
+        assert.isTrue(intersectsLineWithShiftedBox);
+    });
+    it("line intersection test line pure horizontal", function() {
+        const sc = new ScreenCollisions();
+        sc.update(100, 100);
+        const line: LineWithBound = {
+            minX: 50,
+            minY: 50,
+            maxX: 60,
+            maxY: 50,
+            type: "line",
+            line: new THREE.Line3(new THREE.Vector3(50, 40, 1), new THREE.Vector3(60, 40, 1))
+        };
+
+        // Box around center, in screen bounds space
+        const intersectsLineWithShiftedBox = sc.intersectsLine(
+            {
+                minX: -10,
+                minY: -10,
+                maxX: 10,
+                maxY: 10,
+                type: "box"
+            },
+            line
+        );
+        assert.isTrue(intersectsLineWithShiftedBox);
+    });
     it("properlys handle collision in test space", function() {
         const sc = new ScreenCollisions();
         sc.update(1608, 822);
