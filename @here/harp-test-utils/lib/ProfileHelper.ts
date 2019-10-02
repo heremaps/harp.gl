@@ -345,7 +345,7 @@ let measurePerformanceSamples: Array<{
 // in Mocha environment log all profile results after each test
 //
 if (typeof after === "function") {
-    afterEach(() => {
+    after(() => {
         reportPerformanceAndReset();
         reportCallCountsAndReset();
     });
