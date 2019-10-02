@@ -3,7 +3,8 @@
     "version": "1.0.0",
     "description": "Core render components of harp.gl, an open-source 3D map rendering engine.",
     "workspaces": [
-        "@here/*"
+        "@here/*",
+        "test/performance"
     ],
     "devDependencies": {
         "@strictsoftware/typedoc-plugin-monorepo": "^0.2.1",
@@ -36,6 +37,7 @@
         "pre-test": "yarn run code-pre-tests --forbid-only && yarn run prettier && yarn run tslint",
         "code-pre-tests": "ts-mocha --no-timeouts ./test/*.ts",
         "test": "ts-mocha ./@here/*/test/*.ts",
+        "performance-test-node": "ts-mocha ./test/performance/**/*.ts",
         "cov-test": "nyc mocha -r ts-node/register ./@here/*/test/*.ts",
         "cov-report-html": "nyc report --reporter=html",
         "start": "ts-node ./scripts/credentials.ts -- . && webpack-dev-server -d --config @here/harp-examples/webpack.config.js",
