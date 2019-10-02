@@ -39,7 +39,8 @@ const browserTestsConfig = {
         ]
     },
     entry: {
-        test: glob.sync("@here/*/test/**/*.ts")
+        test: glob.sync("@here/*/test/**/*.ts"),
+        "performance-test": glob.sync("test/performance/**/*.ts")
     },
     output: {
         path: path.join(__dirname, "dist/test"),
@@ -53,6 +54,7 @@ const browserTestsConfig = {
         }),
         new CopyWebpackPlugin([
             path.join(__dirname, "test/index.html"),
+            path.join(__dirname, "test/performance.html"),
             require.resolve("three/build/three.min.js"),
             require.resolve("mocha/mocha.js"),
             require.resolve("mocha/mocha.css"),
@@ -73,6 +75,7 @@ const browserTestsConfig = {
     externals: [
         {
             fs: "undefined",
+            perf_hooks: "undefined",
             three: "THREE",
             typestring: "undefined"
         },
