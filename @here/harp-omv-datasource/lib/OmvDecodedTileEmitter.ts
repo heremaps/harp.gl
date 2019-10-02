@@ -368,18 +368,17 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
             const techniqueName = technique.name;
 
             if (
-                techniqueName === "line" ||
-                techniqueName === "solid-line" ||
-                techniqueName === "dashed-line"
+                isLineTechnique(technique) ||
+                isSolidLineTechnique(technique) ||
+                isDashedLineTechnique(technique)
             ) {
-                const lineGeometry =
-                    techniqueName === "line"
-                        ? this.m_simpleLines
-                        : techniqueName === "solid-line"
-                        ? this.m_solidLines
-                        : this.m_dashedLines;
+                const lineGeometry = isLineTechnique(technique)
+                    ? this.m_simpleLines
+                    : isSolidLineTechnique(technique)
+                    ? this.m_solidLines
+                    : this.m_dashedLines;
 
-                const lineType = techniqueName === "line" ? LineType.Simple : LineType.Complex;
+                const lineType = isLineTechnique(technique) ? LineType.Simple : LineType.Complex;
 
                 this.applyLineTechnique(
                     lineGeometry,
@@ -584,10 +583,6 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
             const isExtruded = isExtrudedPolygonTechnique(technique);
             const isFilled = isFillTechnique(technique);
 
-            const isLine =
-                isSolidLineTechnique(technique) ||
-                isDashedLineTechnique(technique) ||
-                isLineTechnique(technique);
             const isPolygon = isExtruded || isFilled || isStandardTechnique(technique);
             const computeTexCoords = this.getComputeTexCoordsFunc(technique);
             const vertexStride = computeTexCoords !== undefined ? 4 : 2;
@@ -612,6 +607,10 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                 polygons.push(rings);
             }
 
+            const isLine =
+                isSolidLineTechnique(technique) ||
+                isDashedLineTechnique(technique) ||
+                isLineTechnique(technique);
             if (isPolygon) {
                 this.applyPolygonTechnique(
                     polygons,
