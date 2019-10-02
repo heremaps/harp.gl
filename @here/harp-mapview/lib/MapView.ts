@@ -1866,11 +1866,6 @@ export class MapView extends THREE.EventDispatcher {
         tiltDeg: number = 0,
         azimuthDeg: number = 0
     ): void {
-        if (this.projection.type === ProjectionType.Spherical) {
-            // For globe, the rotation is computed in the tangent space of the geoCenter (in a
-            // "flat sphere" without altitude).
-            this.geoCenter = new GeoCoordinates(target.latitude, target.longitude);
-        }
         const limitedTilt = Math.min(89, tiltDeg);
         MapViewUtils.setRotation(this, -azimuthDeg, tiltDeg);
         this.geoCenter = MapViewUtils.getCameraCoordinatesFromTargetCoordinates(
