@@ -167,7 +167,13 @@ export class ScreenCollisions {
         return this.screenBounds.intersects(bounds);
     }
 
-    private intersectsLine(bbox: CollisionBox, boundedLine: LineWithBound): boolean {
+    /**
+     * Computes the intersection between the supplied CollisionBox and the LineWithBound.
+     * @note The [[CollisionBox]] is in Screen Bounds space, whereas the line must be
+     * in Screen Coordinate space
+     * @deprecated Because this is meant just for testing.
+     */
+    intersectsLine(bbox: CollisionBox, boundedLine: LineWithBound): boolean {
         const line = boundedLine.line;
         // Transform line from screen space to screenBounds space.
         const lineStartXTransformed = line.start.x + this.screenBounds.x;
