@@ -20,6 +20,7 @@ import {
     isExtrudedLineTechnique,
     isExtrudedPolygonTechnique,
     isFillTechnique,
+    isLabelRejectionLineTechnique,
     isLineMarkerTechnique,
     isLineTechnique,
     isPoiTechnique,
@@ -27,6 +28,7 @@ import {
     isStandardTechnique,
     isTextTechnique,
     LineMarkerTechnique,
+    PathGeometry,
     PoiGeometry,
     PoiTechnique,
     StyleColor,
@@ -178,6 +180,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
     private readonly m_geometries: Geometry[] = [];
     private readonly m_textGeometries: TextGeometry[] = [];
     private readonly m_textPathGeometries: TextPathGeometry[] = [];
+    private readonly m_linePathGeometries: PathGeometry[] = [];
     private readonly m_poiGeometries: PoiGeometry[] = [];
     private readonly m_simpleLines: LinesGeometry[] = [];
     private readonly m_solidLines: LinesGeometry[] = [];
@@ -439,11 +442,11 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                     if (text === undefined) {
                         continue;
                     }
-                    for (const aLine of validLines) {
-                        const pathLengthSqr = Math2D.computeSquaredLineLength(aLine);
+                    for (const path of validLines) {
+                        const pathLengthSqr = Math2D.computeSquaredLineLength(path);
                         this.m_textPathGeometries.push({
                             technique: techniqueIndex,
-                            path: aLine,
+                            path,
                             pathLengthSqr,
                             text: String(text),
                             featureId,
@@ -489,6 +492,12 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                             objInfos: this.m_gatherFeatureIds ? [env.entries] : undefined
                         });
                     }
+                }
+            } else if (isLabelRejectionLineTechnique(technique)) {
+                for (const path of lines) {
+                    this.m_linePathGeometries.push({
+                        path
+                    });
                 }
             } else if (isExtrudedLineTechnique(technique)) {
                 const meshBuffers = this.findOrCreateMeshBuffers(
@@ -718,6 +727,9 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
         }
         if (this.m_textPathGeometries.length > 0) {
             decodedTile.textPathGeometries = this.m_textPathGeometries;
+        }
+        if (this.m_linePathGeometries.length > 0) {
+            decodedTile.pathGeometries = this.m_linePathGeometries;
         }
         if (this.m_sources.length !== 0) {
             decodedTile.copyrightHolderIds = this.m_sources;

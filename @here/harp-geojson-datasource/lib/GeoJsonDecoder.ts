@@ -141,6 +141,9 @@ class GeoJsonDecoder {
             tile.textPathGeometries = geometries.textPathGeometries;
         }
 
+        // HARP-7419: TODO, support tile.pathGeometries, not currently needed, but may be needed
+        // in future.
+
         return tile;
     }
 

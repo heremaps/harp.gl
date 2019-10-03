@@ -24,6 +24,7 @@ import { TileInfo } from "./TileInfo";
 export interface DecodedTile {
     techniques: Technique[];
     geometries: Geometry[];
+    pathGeometries?: PathGeometry[];
     textPathGeometries?: TextPathGeometry[];
     textGeometries?: TextGeometry[]; // ### deprecate
     poiGeometries?: PoiGeometry[];
@@ -49,10 +50,18 @@ export interface DecodedTile {
 }
 
 /**
+ * This object keeps the path of the geometry. The path is in local tile space.
+ */
+export interface PathGeometry {
+    path: number[];
+}
+
+/**
  * This object keeps textual data together with metadata to place it on the map.
  */
-export interface TextPathGeometry {
-    path: number[];
+export interface TextPathGeometry extends PathGeometry {
+    // The path length is specific to text path, as a means of prioritizing longer lines over
+    // shorter lines for text placement.
     pathLengthSqr: number;
     text: string;
     technique: number;

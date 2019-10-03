@@ -76,6 +76,7 @@ import {
 } from "../DepthPrePass";
 import { DisplacementMap, TileDisplacementMap } from "../DisplacementMap";
 import { MapViewPoints } from "../MapViewPoints";
+import { PathBlockingElement } from "../PathBlockingElement";
 import { TextElement } from "../text/TextElement";
 import { DEFAULT_TEXT_DISTANCE_SCALE } from "../text/TextElementsRenderer";
 import { computeStyleCacheId } from "../text/TextStyleCache";
@@ -207,9 +208,12 @@ export class TileGeometryCreator {
         const filter = (technique: Technique): boolean => {
             return technique.enabled !== false;
         };
-
         this.createObjects(tile, decodedTile, filter);
 
+        this.preparePois(tile, decodedTile);
+
+        // TextElements do not get their geometry created by Tile, but are managed on a
+        // higher level.
         const textFilter = (technique: Technique): boolean => {
             if (
                 !isPoiTechnique(technique) &&
@@ -220,12 +224,30 @@ export class TileGeometryCreator {
             }
             return filter(technique);
         };
-
-        this.preparePois(tile, decodedTile);
-
-        // TextElements do not get their geometry created by Tile, but are managed on a
-        // higher level.
         this.createTextElements(tile, decodedTile, textFilter);
+
+        this.createLabelRejectionElements(tile, decodedTile);
+    }
+
+    createLabelRejectionElements(tile: Tile, decodedTile: DecodedTile) {
+        if (decodedTile.pathGeometries === undefined) {
+            return;
+        }
+        const path: THREE.Vector3[] = [];
+        const point = new THREE.Vector3();
+        for (const flatpath of decodedTile.pathGeometries) {
+            for (let i = 0; i < flatpath.path.length; i += 3) {
+                point.set(flatpath.path[i], flatpath.path[i + 1], flatpath.path[i + 2]);
+                // Move to world coordinates, the accuracy isn't important, because we don't need to
+                // worry about z flickering (the path is not rendered). This also makes the code
+                // projecting to screen space in
+                // [[TextElementsRenderer.prepopulateScreenWithBlockingElements]] simpler because
+                // the shift before projection to NDC isn't required.
+                point.add(tile.center);
+                path.push(point);
+            }
+            tile.addBlockingElement(new PathBlockingElement(path));
+        }
     }
 
     /**
