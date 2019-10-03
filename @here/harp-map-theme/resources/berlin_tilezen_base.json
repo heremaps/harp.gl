@@ -1100,7 +1100,7 @@
             ["ref", "waterPolygons"],
             {
                 "description": "water",
-                "when": ["==", ["get", "$layer"], "water"],
+                "when": ["all", ["==", ["get", "$layer"], "water"]],
                 "technique": "text",
                 "attr": {
                     "color": "#012337",
