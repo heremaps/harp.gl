@@ -270,6 +270,67 @@ export interface TextElementIndex {
     elementIndex: number;
 }
 
+export function calculateStats(samples: number[]) {
+    const repeats = samples.length;
+    let sum = 0;
+    let min = Number.MAX_VALUE;
+    for (const sample of samples) {
+        sum += sample;
+        min = Math.min(sample, min);
+    }
+    const avg = sum / repeats;
+
+    samples.sort();
+    const middle = (repeats - 1) / 2;
+    const med = (samples[Math.floor(middle)] + samples[Math.ceil(middle)]) / 2;
+
+    const mid95 = Math.floor(samples.length * 0.95);
+    const med95 = samples[mid95];
+
+    return { min, sum, avg, med, med95, repeats };
+}
+
+function debounce(func: any, wait: number, immediate?: boolean) {
+    let timeout: any;
+    return () => {
+        const args = arguments;
+        const later = () => {
+            timeout = null;
+            if (!immediate) {
+                func.apply(undefined, args);
+            }
+        };
+        const callNow = immediate && !timeout;
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+        if (callNow) {
+            func.apply(undefined, args);
+        }
+    };
+}
+
+function dumpStats(name: string, samples: number[]) {
+    const { min, sum, avg, med, med95, repeats } = calculateStats(samples);
+    // tslint:disable-next-line:no-console
+    console.log(
+        `#perf ${name}: min=${min.toPrecision(5)} med=${med.toPrecision(
+            5
+        )} med95=${med95.toPrecision(5)} avg=${avg.toPrecision(5)} sum=${sum.toPrecision(5)} ` +
+            `rounds=${repeats} throughput=${(repeats / (sum / 1000)).toPrecision(2)}/s`
+    );
+}
+let currentSamples: number[] = [];
+const allSamples: number[] = [];
+let n=1;
+const logDecodeTime = debounce(() => {
+    // tslint:disable-next-line:no-console
+    allSamples.push(...currentSamples);
+
+    dumpStats(`decoded chunk ${n++}`, currentSamples);
+    dumpStats("decoded lifetime", allSamples);
+    currentSamples = [];
+}, 2000);
+
 /**
  * The class that holds the tiled data for a [[DataSource]].
  */
@@ -987,6 +1048,11 @@ export class Tile implements CachedResource {
         if (stats.enabled && decodedTile.decodeTime !== undefined) {
             stats.currentFrame.addValue("decode.decodingTime", decodedTile.decodeTime);
             stats.currentFrame.addValue("decode.decodedTiles", 1);
+
+            // tslint:disable-next-line:no-console
+            console.log("#perf decoded tile", this.tileKey.mortonCode(), decodedTile.decodeTime);
+            currentSamples.push(decodedTile.decodeTime);
+            logDecodeTime();
         }
     }
 

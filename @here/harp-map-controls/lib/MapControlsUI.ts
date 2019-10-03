@@ -134,7 +134,9 @@ export class MapControlsUI {
             controls.setZoomLevel(zoomLevel);
         });
         tiltButton.addEventListener("click", event => {
-            controls.toggleTilt();
+            //controls.toggleTilt();
+            // TODO: remove.
+            this.controls.mapView.clearTileCache();
         });
 
         this.domElement.className = "harp-gl_controls";
