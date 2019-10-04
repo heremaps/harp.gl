@@ -7,7 +7,7 @@
     ],
     "devDependencies": {
         "@strictsoftware/typedoc-plugin-monorepo": "^0.2.1",
-        "@types/chai": "^4.1.3",
+        "@types/chai": "^4.2.2",
         "@types/fs-extra": "^8.0.0",
         "chai": "^4.2.0",
         "chromedriver": "^76.0.1",
@@ -19,6 +19,7 @@
         "mkpath": "^1.0.0",
         "mocha": "^6.1.4",
         "mocha-webdriver-runner": "^0.5.3",
+        "nyc": "^14.1.1",
         "prettier": "^1.18.2",
         "serve-handler": "^6.0.1",
         "three": "^0.108.0",
@@ -32,9 +33,11 @@
         "webpack-dev-server": "^3.7.2"
     },
     "scripts": {
-        "pre-test": "yarn run code-pre-tests && yarn run prettier && yarn run tslint",
-        "code-pre-tests": "ts-mocha --forbid-only --no-timeouts ./test/*.ts",
-        "test": "ts-mocha --forbid-only ./@here/*/test/*.ts",
+        "pre-test": "yarn run code-pre-tests --forbid-only && yarn run prettier && yarn run tslint",
+        "code-pre-tests": "ts-mocha --no-timeouts ./test/*.ts",
+        "test": "ts-mocha ./@here/*/test/*.ts",
+        "cov-test": "nyc mocha -r ts-node/register ./@here/*/test/*.ts",
+        "cov-report-html": "nyc report --reporter=html",
         "start": "ts-node ./scripts/credentials.ts -- . && webpack-dev-server -d --config @here/harp-examples/webpack.config.js",
         "build": "npm run build-bundle && npm run build-examples",
         "build-examples": "ts-node ./scripts/credentials.ts -- dist/examples && webpack -d --config @here/harp-examples/webpack.config.js",
