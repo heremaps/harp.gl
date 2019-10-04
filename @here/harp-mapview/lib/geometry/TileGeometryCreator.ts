@@ -244,7 +244,7 @@ export class TileGeometryCreator {
                 // [[TextElementsRenderer.prepopulateScreenWithBlockingElements]] simpler because
                 // the shift before projection to NDC isn't required.
                 point.add(tile.center);
-                path.push(point);
+                path.push(point.clone());
             }
             tile.addBlockingElement(new PathBlockingElement(path));
         }
