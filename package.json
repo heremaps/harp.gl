@@ -32,7 +32,9 @@
         "webpack-dev-server": "^3.7.2"
     },
     "scripts": {
-        "test": "ts-mocha -r tsconfig-paths/register ./test/*.ts ./@here/*/test/*.ts",
+        "pre-test": "yarn run code-pre-tests && yarn run prettier && yarn run tslint",
+        "code-pre-tests": "ts-mocha --forbid-only --no-timeouts ./test/*.ts",
+        "test": "ts-mocha --forbid-only ./@here/*/test/*.ts",
         "start": "ts-node ./scripts/credentials.ts -- . && webpack-dev-server -d --config @here/harp-examples/webpack.config.js",
         "build": "npm run build-bundle && npm run build-examples",
         "build-examples": "ts-node ./scripts/credentials.ts -- dist/examples && webpack -d --config @here/harp-examples/webpack.config.js",
