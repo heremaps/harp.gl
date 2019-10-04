@@ -34,10 +34,23 @@ jobs:
       run: yarn run pre-test
       shell: bash
     - name: Test on Node.js
-      run: yarn test
+      run: |
+        yarn cov-test --forbid-only
       shell: bash
+    - name: Generate coverage report
+      run: |
+        yarn cov-report-html
+      shell: bash
+    - name: Save Coverage Report (Linux)
+      uses: actions/upload-artifact@master
+      with:
+        name: coverage-report
+        path: coverage
+      if: matrix.os == 'ubuntu-latest'
     - name: Build test bundle
-      run: yarn run build-tests
+      run: |
+        set -ex
+        yarn run build-tests
       shell: bash
     - name: Tests on Chrome (Windows)
       run: |
@@ -80,6 +93,4 @@ jobs:
       shell: bash
       #  typedoc doesn't work on windows -> https://github.com/unstubbable/typedoc-plugin-monorepo/pull/1
       if: matrix.os != 'windows-latest'
-
-
 

@@ -25,7 +25,7 @@ jobs:
       script: |
         set -ex
         yarn pre-test
-        yarn test
+        yarn test --forbid-only
         yarn build-tests
         yarn test-browser --headless-firefox
         yarn test-browser --headless-chrome
