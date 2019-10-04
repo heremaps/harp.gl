@@ -17,4 +17,5 @@ export * from "./lib/ObjectUtils";
 export * from "./lib/OptionsUtils";
 export * from "./lib/UrlResolver";
 export * from "./lib/UrlUtils";
+export * from "./lib/UrlPlatformUtils";
 export * from "./lib/Functions";
