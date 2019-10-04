@@ -20,7 +20,6 @@ const license = `/*
 `;
 
 describe("LicenseHeaderCheck", function() {
-    this.timeout(4000);
     let sourceFiles: string[];
 
     before(function() {

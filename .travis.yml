@@ -24,11 +24,9 @@ jobs:
     - name: "Test"
       script: |
         set -ex
-        npx ts-mocha -r tsconfig-paths/register ./test/*.ts
-        yarn run tslint
-        yarn run prettier
-        yarn run build-tests
-        npx ts-mocha -r tsconfig-paths/register ./@here/*/test/*.ts
+        yarn pre-test
+        yarn test
+        yarn build-tests
         yarn test-browser --headless-firefox
         yarn test-browser --headless-chrome
         #./scripts/test-npm-packages.sh

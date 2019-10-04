@@ -29,33 +29,12 @@ jobs:
       with:
         version: ${{ matrix.node_version }}
     - name: Install dependencies
-      run: |
-        npm install -g chromedriver geckodriver
-      if: matrix.os != 'windows-latest'
-    - name: Install dependencies (Windows)
-      shell: bash
-      run: |
-        set -ex
-        # This is arbitrary version that happens to be installed in github CI env atm.
-        # As for now `chromedriver` supports only exact version, so this version have to be
-        # updated with Github CI windows infra.
-        #
-        # See
-        #  https://help.github.com/en/articles/software-in-virtual-environments-for-github-actions#windows-server-2019
-        #  https://github.com/giggio/node-chromedriver - explanation
-        #  https://sites.google.com/a/chromium.org/chromedriver/downloads - available versions
-        export CHROMEDRIVER_VERSION=75.0.3770.140
-      if: matrix.os == 'windows-latest'
+      run: yarn
     - name: Pretest
-      run: |
-        set -ex
-        yarn
-        npx ts-mocha -r tsconfig-paths/register ./test/*.ts
-        yarn run tslint
-        yarn run prettier
+      run: yarn run pre-test
       shell: bash
     - name: Test on Node.js
-      run: npx ts-mocha -r tsconfig-paths/register ./@here/*/test/*.ts
+      run: yarn test
       shell: bash
     - name: Build test bundle
       run: yarn run build-tests

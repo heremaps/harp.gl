@@ -247,7 +247,6 @@ function checkImports() {
 }
 
 describe("ImportCheck", function() {
-    this.timeout(4000);
     it("Uses correct imports", function() {
         assert.deepEqual(checkImports(), []);
     });
