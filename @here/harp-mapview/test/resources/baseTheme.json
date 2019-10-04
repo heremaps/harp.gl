@@ -20,6 +20,12 @@
             }
         }
     },
+    "fontCatalogs": [
+        {
+            "name": "fira",
+            "url": "fonts/Default_FontCatalog.json"
+        }
+    ],
     "styles": {
         "tilezen": [["ref", "primaryRoadFillStyle"]]
     }

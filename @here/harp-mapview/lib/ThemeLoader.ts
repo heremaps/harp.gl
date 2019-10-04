@@ -20,6 +20,7 @@ import {
     composeUrlResolvers,
     ContextLogger,
     defaultUrlResolver,
+    getAppBaseUrl,
     getOptionValue,
     IContextLogger,
     ISimpleChannel,
@@ -101,7 +102,12 @@ export class ThemeLoader {
                 throw new Error(`ThemeLoader#load: cannot load theme: ${response.statusText}`);
             }
             theme = (await response.json()) as Theme;
-            theme.url = themeUrl;
+            theme.url = resolveReferenceUrl(getAppBaseUrl(), themeUrl);
+            theme = this.resolveUrls(theme);
+        } else if (theme.url === undefined) {
+            // assume that theme url is same as baseUrl
+            theme.url = getAppBaseUrl();
+            theme = this.resolveUrls(theme);
         }
 
         if (theme === null || theme === undefined) {
@@ -109,8 +115,6 @@ export class ThemeLoader {
         }
         theme = theme as Theme;
         // Remember the URL where the theme has been loaded from.
-
-        theme = this.resolveUrls(theme);
 
         const resolveDefinitions = getOptionValue<boolean>(options.resolveDefinitions, false);
         theme = await ThemeLoader.resolveBaseTheme(theme, options);
@@ -237,7 +241,6 @@ export class ThemeLoader {
      *
      * This method mutates original `theme` instance.
      */
-
     static resolveThemeReferences(theme: Theme, contextLogger: IContextLogger): Theme {
         if (theme.definitions !== undefined) {
             contextLogger.pushAttr("definitions");
