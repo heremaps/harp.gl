@@ -233,9 +233,9 @@ export class TileGeometryCreator {
         if (decodedTile.pathGeometries === undefined) {
             return;
         }
-        const path: THREE.Vector3[] = [];
         const point = new THREE.Vector3();
         for (const flatpath of decodedTile.pathGeometries) {
+            const path: THREE.Vector3[] = [];
             for (let i = 0; i < flatpath.path.length; i += 3) {
                 point.set(flatpath.path[i], flatpath.path[i + 1], flatpath.path[i + 2]);
                 // Move to world coordinates, the accuracy isn't important, because we don't need to
