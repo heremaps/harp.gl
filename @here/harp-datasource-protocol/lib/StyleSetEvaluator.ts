@@ -560,40 +560,51 @@ export class StyleSetEvaluator {
         }
         // we found a technique!
         if (style.technique !== "none") {
-            this.checkStyleDynamicAttributes(style, styleStack);
-
-            if (style._dynamicTechniques !== undefined) {
-                const dynamicAttributes = this.evaluateTechniqueProperties(style, env);
-                const dynamicAttrKey = dynamicAttributes
-                    .map(([attrName, attrValue]) => {
-                        if (attrValue === undefined) {
-                            return "U";
-                        } else {
-                            return JSON.stringify(attrValue);
-                        }
-                    })
-                    .join(":");
-                const key = `${style._styleSetIndex!}:${dynamicAttrKey}`;
-                let technique = style._dynamicTechniques!.get(key);
-                if (technique === undefined) {
-                    technique = this.createTechnique(style, key, dynamicAttributes);
-                    style._dynamicTechniques!.set(key, technique);
-                }
-                result.push(technique);
-            } else {
-                let technique = style._staticTechnique;
-                if (technique === undefined) {
-                    style._staticTechnique = technique = this.createTechnique(
-                        style,
-                        `${style._styleSetIndex}`,
-                        []
-                    ) as IndexedTechnique;
-                }
-                result.push(technique as IndexedTechnique);
-            }
+            result.push(this.getTechniqueForStyleMatch(env, styleStack, style));
         }
         // stop processing if "final" is set
         return style.final === true;
+    }
+
+    private getTechniqueForStyleMatch(env: Env, styleStack: InternalStyle[], style: InternalStyle) {
+        this.checkStyleDynamicAttributes(style, styleStack);
+
+        if (style._dynamicTechniques !== undefined) {
+            const dynamicAttributes = this.evaluateTechniqueProperties(style, env);
+            const key = this.getDynamicTechniqueKey(style, dynamicAttributes);
+            let technique = style._dynamicTechniques!.get(key);
+            if (technique === undefined) {
+                technique = this.createTechnique(style, key, dynamicAttributes);
+                style._dynamicTechniques!.set(key, technique);
+            }
+            return technique;
+        } else {
+            let technique = style._staticTechnique;
+            if (technique === undefined) {
+                style._staticTechnique = technique = this.createTechnique(
+                    style,
+                    `${style._styleSetIndex}`,
+                    []
+                ) as IndexedTechnique;
+            }
+            return technique;
+        }
+    }
+
+    private getDynamicTechniqueKey(
+        style: InternalStyle,
+        dynamicAttributes: Array<[string, Value]>
+    ) {
+        const dynamicAttrKey = dynamicAttributes
+            .map(([attrName, attrValue]) => {
+                if (attrValue === undefined) {
+                    return "U";
+                } else {
+                    return JSON.stringify(attrValue);
+                }
+            })
+            .join(":");
+        return `${style._styleSetIndex!}:${dynamicAttrKey}`;
     }
 
     private checkStyleDynamicAttributes(style: InternalStyle, styleStack: InternalStyle[]) {
