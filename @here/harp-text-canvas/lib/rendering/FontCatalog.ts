@@ -137,13 +137,13 @@ export class FontCatalog {
         return fontCatalogInfo;
     }
 
-    private static loadTexture(url: string): Promise<THREE.Texture> {
+    static async loadTexture(url: string): Promise<THREE.Texture> {
         return new Promise(resolve => {
             new THREE.TextureLoader().load(url, resolve);
         }) as Promise<THREE.Texture>;
     }
 
-    private static async loadJSON(url: string): Promise<any> {
+    static async loadJSON(url: string): Promise<any> {
         const response = await fetch(url);
         if (!response.ok) {
             throw new Error(`${url} Status Text:  ${response.statusText}`);
