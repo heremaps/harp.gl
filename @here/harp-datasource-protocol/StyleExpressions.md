@@ -245,21 +245,35 @@ Creates interpolation.
 
 ```javascript
 ["interpolate", ["linear"], ["zoom"],
-   step1, value1,
+   stop1, value1,
    ...
-   stepN, valueN,
+   stopN, valueN,
 ]
 
 ["interpolate", ["exponential", base], ["zoom"],
-   step1, value1,
+   stop1, value1,
    ...
-   stepN, valueN,
+   stopN, valueN,
 ]
 
 ["interpolate", ["discrete"], ["zoom"],
-   step1, value1,
+   stop1, value1,
    ...
-   stepN, valueN,
+   stop, valueN,
+]
+```
+
+## step
+
+Evaluates the given piecewise function. Returns `defaultValue` if
+`input` is less than the first stop. Otherwise returns the value
+associated with the `stop` that is greater than or equal to `input`.
+
+```javascript
+["step", input, defaultValue
+   stop1, value1,
+   ...
+   stopN, valueN,
 ]
 ```
 

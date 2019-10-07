@@ -9,6 +9,52 @@ import { ExprEvaluatorContext, OperatorDescriptorMap } from "../ExprEvaluator";
 import { createInterpolatedProperty } from "../InterpolatedProperty";
 import { InterpolatedPropertyDefinition } from "../InterpolatedPropertyDefs";
 
+/**
+ * Evaluates the given piecewise function.
+ */
+function step(context: ExprEvaluatorContext, args: Expr[]) {
+    const value = context.evaluate(args[0]) as number;
+
+    if (typeof value !== "number") {
+        throw new Error(`the input of a 'step' operator must have type 'number'`);
+    }
+
+    if (args.length < 3 || args.length % 2) {
+        throw new Error("not enough arguments");
+    }
+
+    let first = 1;
+    let last = args.length / 2 - 1;
+
+    while (first < last) {
+        // tslint:disable-next-line: no-bitwise
+        const mid = (first + last) >>> 1;
+        const stop = args[mid * 2];
+
+        if (!(stop instanceof NumberLiteralExpr)) {
+            throw new Error("expected a numeric literal");
+        }
+
+        if (value < stop.value) {
+            last = mid - 1;
+        } else if (value > stop.value) {
+            first = mid + 1;
+        } else {
+            last = mid;
+        }
+    }
+
+    const result = args[first * 2];
+
+    if (!(result instanceof NumberLiteralExpr)) {
+        throw new Error("expected a numeric literal");
+    }
+
+    const index = result.value <= value ? first : first - 1;
+
+    return context.evaluate(args[index * 2 + 1]);
+}
+
 const operators = {
     zoom: {
         call: (context: ExprEvaluatorContext, args: Expr[]): Value => {
@@ -70,11 +116,11 @@ const operators = {
             const values: any[] = [];
 
             for (let i = 0; i < samples.length; i += 2) {
-                const step = samples[i];
-                if (!(step instanceof NumberLiteralExpr)) {
+                const stop = samples[i];
+                if (!(stop instanceof NumberLiteralExpr)) {
                     throw new Error("expected a numeric literal");
                 }
-                zoomLevels.push(step.value);
+                zoomLevels.push(stop.value);
                 values.push(context.evaluate(samples[i + 1]));
             }
 
@@ -90,6 +136,58 @@ const operators = {
             }
 
             return result;
+        }
+    },
+    step: {
+        call: (context: ExprEvaluatorContext, args: Expr[]): Value => {
+            if (args[0] === undefined) {
+                throw new Error("expected the input of the 'step' operator");
+            }
+
+            const input = args[0];
+
+            if (
+                context.scope === ExprScope.Value &&
+                input instanceof CallExpr &&
+                input.op === "zoom"
+            ) {
+                if (args.length < 3 || args.length % 2) {
+                    throw new Error("not enough arguments");
+                }
+
+                // Implement dynamic zoom-dependent 'step' for attribute
+                // values using 'discrete' interpolations. This is needed
+                // because (currently) the only dynamic values supported
+                // by `MapView` are interpolations.
+                const zoomLevels: number[] = [];
+                const values: any[] = [];
+
+                zoomLevels.push(Number.MIN_SAFE_INTEGER);
+                values.push(context.evaluate(args[1]));
+
+                for (let i = 2; i < args.length; i += 2) {
+                    const stop = args[i];
+                    if (!(stop instanceof NumberLiteralExpr)) {
+                        throw new Error("expected a numeric literal");
+                    }
+                    zoomLevels.push(stop.value);
+                    values.push(context.evaluate(args[i + 1]));
+                }
+
+                const interpolation = createInterpolatedProperty({
+                    interpolation: "Discrete",
+                    zoomLevels,
+                    values
+                });
+
+                if (interpolation === undefined) {
+                    throw new Error("failed to create interpolator");
+                }
+
+                return interpolation;
+            }
+
+            return step(context, args);
         }
     }
 };

@@ -9,7 +9,8 @@
 
 import { assert } from "chai";
 import { Expr, ExprScope, MapEnv, ValueMap } from "../lib/Expr";
-import { isInterpolatedProperty } from "../lib/InterpolatedProperty";
+import { getPropertyValue, isInterpolatedProperty } from "../lib/InterpolatedProperty";
+import { InterpolatedProperty, InterpolationMode } from "../lib/InterpolatedPropertyDefs";
 
 const EPSILON = 1e-8;
 
@@ -552,5 +553,205 @@ describe("ExprEvaluator", function() {
 
             assert.strictEqual(evaluate(["zoom"], { $zoom: 10 }, ExprScope.Condition), 10);
         });
+    });
+
+    describe("Operator 'step'", function() {
+        it("parse", function() {
+            assert.throws(() => evaluate(["step"]), "expected the input of the 'step' operator");
+
+            assert.throws(
+                () => evaluate(["step"], {}, ExprScope.Condition),
+                "expected the input of the 'step' operator"
+            );
+
+            assert.throws(
+                () => evaluate(["step", ["get", "x"]], { x: "text" }, ExprScope.Condition),
+                "the input of a 'step' operator must have type 'number'"
+            );
+
+            assert.throws(
+                () => evaluate(["step", ["get", "x"]], { x: 1 }, ExprScope.Condition),
+                "not enough arguments"
+            );
+
+            assert.throws(
+                () =>
+                    evaluate(
+                        [
+                            "step",
+                            ["get", "x"],
+                            false, // default value
+                            10 // first step
+                            // error, missing value for first step
+                        ],
+                        { x: 10 },
+                        ExprScope.Condition
+                    ),
+                "not enough arguments"
+            );
+
+            assert.throws(
+                () =>
+                    evaluate(
+                        [
+                            "step",
+                            ["get", "x"],
+                            false, // default value
+                            10, // first step
+                            true,
+                            15 // second step
+                            // error, missing value for second step
+                        ],
+                        { x: 10 },
+                        ExprScope.Condition
+                    ),
+                "not enough arguments"
+            );
+        });
+
+        it("condition", function() {
+            assert.isFalse(
+                evaluate(
+                    ["step", ["zoom"], false, 13, true],
+                    {
+                        $zoom: 0
+                    },
+                    ExprScope.Condition
+                )
+            );
+
+            assert.isTrue(
+                evaluate(
+                    ["step", ["zoom"], false, 13, true],
+                    {
+                        $zoom: 13
+                    },
+                    ExprScope.Condition
+                )
+            );
+
+            for (let level = 0; level < 5; ++level) {
+                assert.strictEqual(
+                    evaluate(
+                        ["step", ["zoom"], "default", 5, "a", 10, "b"],
+                        {
+                            $zoom: level
+                        },
+                        ExprScope.Condition
+                    ),
+                    "default"
+                );
+            }
+
+            for (let level = 5; level < 10; ++level) {
+                assert.strictEqual(
+                    evaluate(
+                        ["step", ["zoom"], "default", 5, "a", 10, "b"],
+                        {
+                            $zoom: level
+                        },
+                        ExprScope.Condition
+                    ),
+                    "a"
+                );
+            }
+
+            for (let level = 10; level < 20; ++level) {
+                assert.strictEqual(
+                    evaluate(
+                        ["step", ["zoom"], "default", 5, "a", 10, "b"],
+                        {
+                            $zoom: level
+                        },
+                        ExprScope.Condition
+                    ),
+                    "b"
+                );
+            }
+        });
+
+        it("dynamic interpolation (without step 0)", function() {
+            const interpolation: InterpolatedProperty<string> = evaluate([
+                "step",
+                ["zoom"],
+                "#ff0000",
+                13,
+                "#000000"
+            ]) as any;
+            assert.isTrue(isInterpolatedProperty(interpolation));
+            assert.strictEqual(interpolation.interpolationMode, InterpolationMode.Discrete);
+            for (let i = 0; i < 13; ++i) {
+                assert.strictEqual(getPropertyValue(interpolation, i), 0xff0000);
+            }
+            for (let i = 13; i < 20; ++i) {
+                assert.strictEqual(getPropertyValue(interpolation, i), 0x000000);
+            }
+        });
+
+        it("dynamic interpolation (with step 0)", function() {
+            const interpolation: InterpolatedProperty<string> = evaluate([
+                "step",
+                ["zoom"],
+                "#ff0000",
+                0,
+                "#00ff00",
+                13,
+                "#000000"
+            ]) as any;
+            assert.isTrue(isInterpolatedProperty(interpolation));
+            assert.strictEqual(interpolation.interpolationMode, InterpolationMode.Discrete);
+
+            assert.strictEqual(getPropertyValue(interpolation, -1), 0xff0000);
+
+            for (let i = 0; i < 13; ++i) {
+                assert.strictEqual(getPropertyValue(interpolation, i), 0x00ff00);
+            }
+            for (let i = 13; i < 20; ++i) {
+                assert.strictEqual(getPropertyValue(interpolation, i), 0x000000);
+            }
+        });
+
+        for (const scope of [ExprScope.Value, ExprScope.Condition]) {
+            it(`selection for scope '${ExprScope[scope]}'`, function() {
+                for (let i = 0; i < 5; ++i) {
+                    assert.strictEqual(
+                        evaluate(
+                            ["step", ["get", "i"], "default", 5, "a", 10, "b"],
+                            {
+                                i
+                            },
+                            ExprScope.Condition
+                        ),
+                        "default"
+                    );
+                }
+
+                for (let i = 5; i < 10; ++i) {
+                    assert.strictEqual(
+                        evaluate(
+                            ["step", ["get", "i"], "default", 5, "a", 10, "b"],
+                            {
+                                i
+                            },
+                            ExprScope.Condition
+                        ),
+                        "a"
+                    );
+                }
+
+                for (let i = 10; i < 20; ++i) {
+                    assert.strictEqual(
+                        evaluate(
+                            ["step", ["get", "i"], "default", 5, "a", 10, "b"],
+                            {
+                                i
+                            },
+                            ExprScope.Condition
+                        ),
+                        "b"
+                    );
+                }
+            });
+        }
     });
 });
