@@ -728,7 +728,6 @@ export class MapView extends THREE.EventDispatcher {
     private m_textElementsRendererTimer?: any;
     private m_textRenderStyleCache = new TextRenderStyleCache();
     private m_textLayoutStyleCache = new TextLayoutStyleCache();
-    private m_overlayTextElements?: TextElement[] = [];
 
     private m_forceCameraAspect: number | undefined = undefined;
 
@@ -1124,7 +1123,7 @@ export class MapView extends THREE.EventDispatcher {
         this.updateLighting();
 
         if (this.m_textElementsRenderer !== undefined) {
-            this.m_textElementsRenderer.placeAllTileLabels();
+            this.m_textElementsRenderer.invalidatePlacement();
         }
         this.updateSkyBackground();
         this.update();
@@ -1854,11 +1853,8 @@ export class MapView extends THREE.EventDispatcher {
      * @param textElements Array of [[TextElement]] to be added.
      */
     addOverlayText(textElements: TextElement[]): void {
-        if (this.m_overlayTextElements !== undefined) {
-            this.m_overlayTextElements = this.m_overlayTextElements.concat(textElements);
-        }
         this.createTextRendererIfNeeded();
-        this.m_textElementsRenderer!.placeAllTileLabels();
+        this.m_textElementsRenderer!.addOverlayText(textElements);
         this.update();
     }
 
@@ -1868,7 +1864,9 @@ export class MapView extends THREE.EventDispatcher {
      * @param textElements Array of [[TextElement]] to be added.
      */
     clearOverlayText(): void {
-        this.m_overlayTextElements = [];
+        if (this.m_textElementsRenderer !== undefined) {
+            this.m_textElementsRenderer.clearOverlayText();
+        }
     }
 
     /**
@@ -2696,19 +2694,16 @@ export class MapView extends THREE.EventDispatcher {
 
         const renderList = this.m_visibleTiles.dataSourceTileList;
 
-        const hasTextRenderer = this.m_textElementsRenderer !== undefined;
+        let createTextRenderer = this.renderLabels && this.m_textElementsRenderer === undefined;
 
-        let hasTextToRender =
-            this.m_overlayTextElements !== undefined && this.m_overlayTextElements.length > 0;
         // no need to check everything if we're not going to create text renderer.
-        let needsTileCheck = !hasTextToRender && !hasTextRenderer && this.renderLabels;
         renderList.forEach(({ zoomLevel, renderedTiles }) => {
             renderedTiles.forEach(tile => {
                 this.renderTileObjects(tile, zoomLevel);
 
-                if (needsTileCheck && tile.hasTextElements()) {
-                    needsTileCheck = false;
-                    hasTextToRender = true;
+                if (createTextRenderer && tile.hasTextElements()) {
+                    this.enqueueTextRendererCreation();
+                    createTextRenderer = false;
                 }
                 //We know that rendered tiles are visible (in the view frustum), so we update the
                 //frame number, note we don't do this for the visibleTiles because some may still be
@@ -2718,10 +2713,6 @@ export class MapView extends THREE.EventDispatcher {
                 tile.frameNumLastVisible = this.m_frameNumber;
             });
         });
-
-        if (hasTextToRender && !hasTextRenderer && this.renderLabels) {
-            this.enqueueTextRendererCreation();
-        }
 
         // Check if this is the time to place the labels for the first time. Pretty much everything
         // should have been loaded, and no animation should be running.
@@ -2745,7 +2736,7 @@ export class MapView extends THREE.EventDispatcher {
                 if (textElementRendererFinished) {
                     // Placement of text shall be done now. This may change the loading state of the
                     // TextElementsRenderer and the animation state of MapView.
-                    this.m_textElementsRenderer!.placeAllTileLabels();
+                    this.m_textElementsRenderer!.invalidatePlacement();
                 }
                 this.m_initialTextPlacementDone = true;
             }
@@ -2920,19 +2911,9 @@ export class MapView extends THREE.EventDispatcher {
             return;
         }
 
-        if (this.checkIfTextElementsChanged() || this.checkIfTilesChanged()) {
-            this.m_textElementsRenderer.placeAllTileLabels();
-        }
-
-        // User TextElements have the priority when it comes to reserving screen space, so
-        // they are handled first. They will be rendered after the normal map objects and
-        // TextElements
-        this.m_textElementsRenderer.reset();
-        this.m_textElementsRenderer.prepopulateScreenWithBlockingElements();
-        this.m_textElementsRenderer.renderUserTextElements(time, this.m_frameNumber);
-        this.m_textElementsRenderer.renderAllTileText(time, this.m_frameNumber);
-        this.m_textElementsRenderer.renderOverlay(this.m_overlayTextElements);
-        this.m_textElementsRenderer.update();
+        const textElementsChanged: boolean =
+            this.checkIfTextElementsChanged() || this.checkIfTilesChanged();
+        this.m_textElementsRenderer.render(textElementsChanged, time, this.m_frameNumber);
     }
 
     private finishRenderTextElements() {

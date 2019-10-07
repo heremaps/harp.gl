@@ -415,7 +415,6 @@ export class TileGeometryCreator {
                     technique.fadeFar !== undefined
                         ? getPropertyValue(technique.fadeFar, displayZoomLevel)
                         : technique.fadeFar;
-
                 const textElement = new TextElement(
                     ContextualArabicConverter.instance.convert(textPath.text),
                     path,
@@ -531,8 +530,6 @@ export class TileGeometryCreator {
                         // Get the userData for text element picking.
                         textElement.userData = text.objInfos[i];
                     }
-
-                    textElement.isPointLabel = true;
 
                     tile.addTextElement(textElement);
                 }

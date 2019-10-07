@@ -4,7 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { assert } from "@here/harp-utils";
 import { DEFAULT_FADE_TIME, FadingState, RenderState } from "./RenderState";
+import { TextElement } from "./TextElement";
+import { TextElementGroupState } from "./TextElementGroupState";
 import { TextElementType } from "./TextElementType";
 
 /**
@@ -15,7 +18,13 @@ export class TextElementState {
      * @hidden
      * Used during label placement to reserve space from front to back.
      */
-    m_viewDistance?: number;
+    private m_viewDistance: number | undefined;
+
+    /**
+     * @hidden
+     * Used during sorting.
+     */
+    private m_sortPriority?: number;
 
     /**
      * @hidden
@@ -24,30 +33,40 @@ export class TextElementState {
      * for text part and icon, there is no separate array of [[RenderState]]s for the text parts
      * of the line markers.
      */
-    m_iconRenderStates?: RenderState | RenderState[];
+    private m_iconRenderStates?: RenderState | RenderState[];
 
     /**
      * @hidden
      * Used during rendering.
      */
-    m_textRenderState?: RenderState;
+    private m_textRenderState?: RenderState;
+
+    constructor(
+        private readonly m_textElement: TextElement,
+        groupState: TextElementGroupState,
+        viewDistance: number | undefined,
+        disableFading: boolean
+    ) {
+        if (viewDistance !== undefined) {
+            this.initialize(groupState, viewDistance, disableFading);
+        }
+    }
 
     /**
-     * Initializes the state.
-     * @param textElementType The text element type.
-     * @param disableFading True if fading is disabled, false otherwise.
-     * @param textElementPointCount Number of points the text element has.
+     * @param groupState The state of the group to which this element belongs.
+     * @param viewDistance Current distance of the element to the view center.
+     * @param disableFading `True` if fading is currently disabled, `false` otherwise.
      */
-    initialize(
-        textElementType: TextElementType,
-        disableFading: boolean,
-        textElementPointCount: number = 1
-    ) {
+    initialize(groupState: TextElementGroupState, viewDistance: number, disableFading: boolean) {
+        assert(this.m_textRenderState === undefined);
+        assert(this.m_iconRenderStates === undefined);
+
+        this.setViewDistance(viewDistance, groupState);
         const fadingTime = disableFading === true ? 0 : DEFAULT_FADE_TIME;
 
-        if (textElementType === TextElementType.LineMarker) {
+        if (this.m_textElement.type === TextElementType.LineMarker) {
             this.m_iconRenderStates = new Array<RenderState>();
-            for (let i = 0; i < textElementPointCount; ++i) {
+            for (const _point of this.m_textElement.path!) {
                 const iconRenderStates = this.m_iconRenderStates as RenderState[];
                 const renderState = new RenderState();
                 renderState.state = FadingState.FadingIn;
@@ -60,7 +79,7 @@ export class TextElementState {
         this.m_textRenderState = new RenderState();
         this.m_textRenderState.fadingTime = fadingTime;
 
-        if (textElementType === TextElementType.PoiLabel) {
+        if (this.m_textElement.type === TextElementType.PoiLabel) {
             this.m_iconRenderStates = new RenderState();
             this.m_iconRenderStates.fadingTime = fadingTime;
         }
@@ -71,11 +90,50 @@ export class TextElementState {
     }
 
     /**
-     * Clears the state.
+     * @returns `true` if any component of the element is visible, `false` otherwise.
      */
-    clear() {
-        this.m_iconRenderStates = undefined;
-        this.m_textRenderState = undefined;
+    get visible(): boolean {
+        if (this.m_textRenderState !== undefined && this.m_textRenderState.isVisible()) {
+            return true;
+        }
+
+        const iconRenderState = this.iconRenderState;
+        if (iconRenderState !== undefined && iconRenderState.isVisible()) {
+            return true;
+        }
+
+        const iconRenderStates = this.iconRenderStates;
+        if (iconRenderStates === undefined) {
+            return false;
+        }
+
+        for (const state of iconRenderStates) {
+            if (state.isVisible()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Resets the element to an initialized state.
+     */
+    reset() {
+        if (this.m_textRenderState !== undefined) {
+            this.m_textRenderState.reset();
+        }
+
+        if (this.iconRenderState) {
+            (this.m_iconRenderStates as RenderState).reset();
+        } else if (this.m_iconRenderStates !== undefined) {
+            for (const renderState of this.m_iconRenderStates as RenderState[]) {
+                renderState.reset();
+            }
+        }
+    }
+
+    get element() {
+        return this.m_textElement;
     }
 
     /**
@@ -86,8 +144,57 @@ export class TextElementState {
         return this.m_viewDistance;
     }
 
-    set viewDistance(distance: number | undefined) {
-        this.m_viewDistance = distance;
+    /**
+     * Sets the distance of the element to the current view center.
+     * @param viewDistance The new view distance to set. If `undefined`, element is considered to
+     * be out of view.
+     * @param groupState The state of the group the element belongs to.
+     */
+    setViewDistance(viewDistance: number | undefined, groupState: TextElementGroupState) {
+        if (viewDistance === this.m_viewDistance) {
+            return;
+        }
+        this.m_viewDistance = viewDistance;
+        if (this.m_viewDistance !== undefined) {
+            groupState.invalidateSorting();
+        }
+    }
+
+    /**
+     * Return the last distance that has been computed for sorting during placement. This may not be
+     * the actual distance if the camera is moving, as the distance is computed only during
+     * placement. If the property `alwaysOnTop` is true, the value returned is always `0`.
+     *
+     * @returns 0 or negative distance to camera.
+     */
+    get renderDistance(): number {
+        return this.m_textElement.alwaysOnTop === true
+            ? 0
+            : this.m_viewDistance !== undefined
+            ? -this.m_viewDistance
+            : 0;
+    }
+
+    get sortPriority() {
+        return this.m_sortPriority;
+    }
+
+    /**
+     * Calculates the current element priority based on its static priority modified to take into
+     * account its view distance.
+     * @param maxViewDistance Maximum distance from the view center that a visible element may have.
+     */
+    computeSortPriority(maxViewDistance: number) {
+        const distancePriorityFactor = 0.1;
+
+        if (this.viewDistance === undefined) {
+            this.m_sortPriority = this.m_textElement.priority;
+        } else {
+            this.m_sortPriority =
+                this.m_textElement.priority +
+                distancePriorityFactor -
+                distancePriorityFactor * (this.viewDistance / maxViewDistance);
+        }
     }
 
     /**
@@ -121,5 +228,30 @@ export class TextElementState {
         return this.m_iconRenderStates instanceof RenderState
             ? undefined
             : (this.m_iconRenderStates as RenderState[]);
+    }
+
+    /**
+     * @returns True if any element visible after fading.
+     */
+    updateFading(time: number) {
+        let visible = false;
+
+        if (this.m_textRenderState !== undefined) {
+            this.m_textRenderState.updateFading(time);
+            visible = this.m_textRenderState.isVisible();
+        }
+
+        if (this.iconRenderState !== undefined) {
+            const iconRenderState = this.m_iconRenderStates as RenderState;
+            iconRenderState.updateFading(time);
+            visible = visible || iconRenderState.isVisible();
+        } else if (this.iconRenderStates !== undefined) {
+            for (const renderState of this.m_iconRenderStates as RenderState[]) {
+                renderState.updateFading(time);
+                visible = visible || renderState.isVisible();
+            }
+        }
+
+        return visible;
     }
 }

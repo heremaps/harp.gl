@@ -10,7 +10,7 @@ import {
     TextPathGeometry
 } from "@here/harp-datasource-protocol";
 import { GeoBox, OrientedBox3, Projection, TileKey } from "@here/harp-geoutils";
-import { assert, CachedResource, GroupedPriorityList, LoggerManager } from "@here/harp-utils";
+import { assert, CachedResource, LoggerManager } from "@here/harp-utils";
 import * as THREE from "three";
 
 import { AnimatedExtrusionTileHandler } from "./AnimatedExtrusionHandler";
@@ -21,6 +21,8 @@ import { MapView } from "./MapView";
 import { PathBlockingElement } from "./PathBlockingElement";
 import { PerformanceStatistics } from "./Statistics";
 import { TextElement } from "./text/TextElement";
+import { TextElementGroup } from "./text/TextElementGroup";
+import { TextElementGroupPriorityList } from "./text/TextElementGroupPriorityList";
 import { MapViewUtils } from "./Utils";
 
 const logger = LoggerManager.instance.create("Tile");
@@ -343,22 +345,18 @@ export class Tile implements CachedResource {
     private m_decodedTile?: DecodedTile;
     private m_tileGeometryLoader?: TileGeometryLoader;
 
-    // Used for [[TextElement]]s which the developer defines.
-    private readonly m_userTextElements: TextElement[] = [];
+    // TODO: Delay construction of text element groups until first text element is added.
+
+    // Used for [[TextElement]]s which the developer defines. Group created with maximum priority
+    // so that user text elements are placed before others.
+    private readonly m_userTextElements = new TextElementGroup(Number.MAX_SAFE_INTEGER);
 
     // Used for [[TextElement]]s that are stored in the data, and that are placed explicitly,
     // fading in and out.
-    private readonly m_textElementGroups: GroupedPriorityList<
-        TextElement
-    > = new GroupedPriorityList<TextElement>();
+    private readonly m_textElementGroups = new TextElementGroupPriorityList();
 
     // Blocks other labels from showing.
     private readonly m_pathBlockingElements: PathBlockingElement[] = [];
-
-    // All visible [[TextElement]]s.
-    private readonly m_placedTextElements: GroupedPriorityList<
-        TextElement
-    > = new GroupedPriorityList<TextElement>();
 
     // If `true`, the text content of the [[Tile]] changed.
     private m_textElementsChanged: boolean = false;
@@ -439,14 +437,6 @@ export class Tile implements CachedResource {
         return this.m_localTangentSpace;
     }
 
-    /**
-     * Get the currently visible [[TextElement]]s of this `Tile`. This list is continuously
-     * modified, and is not designed to be used to store developer-defined [[TextElements]].
-     */
-    get placedTextElements(): GroupedPriorityList<TextElement> {
-        return this.m_placedTextElements;
-    }
-
     /*
      * The size of this Tile in system memory.
      */
@@ -498,7 +488,7 @@ export class Tile implements CachedResource {
      * Gets the list of developer-defined [[TextElement]] in this `Tile`. This list is always
      * rendered first.
      */
-    get userTextElements(): TextElement[] {
+    get userTextElements(): TextElementGroup {
         return this.m_userTextElements;
     }
 
@@ -509,7 +499,7 @@ export class Tile implements CachedResource {
      * @param textElement The Text element to add.
      */
     addUserTextElement(textElement: TextElement) {
-        this.m_userTextElements.push(textElement);
+        this.m_userTextElements.elements.push(textElement);
         this.textElementsChanged = true;
     }
 
@@ -520,9 +510,9 @@ export class Tile implements CachedResource {
      * @returns `true` if the element has been removed successfully; `false` otherwise.
      */
     removeUserTextElement(textElement: TextElement): boolean {
-        const foundIndex = this.m_userTextElements.indexOf(textElement);
+        const foundIndex = this.m_userTextElements.elements.indexOf(textElement);
         if (foundIndex >= 0) {
-            this.m_userTextElements.splice(foundIndex, 1);
+            this.m_userTextElements.elements.splice(foundIndex, 1);
             this.textElementsChanged = true;
             return true;
         }
@@ -574,7 +564,7 @@ export class Tile implements CachedResource {
      * Gets the current [[GroupedPriorityList]] which contains a list of all [[TextElement]]s to be
      * selected and placed for rendering.
      */
-    get textElementGroups(): GroupedPriorityList<TextElement> {
+    get textElementGroups(): TextElementGroupPriorityList {
         return this.m_textElementGroups;
     }
 
@@ -594,7 +584,7 @@ export class Tile implements CachedResource {
      * Returns true if the `Tile` has any text elements to render.
      */
     hasTextElements(): boolean {
-        return this.m_textElementGroups.count() > 0 || this.m_userTextElements.length > 0;
+        return this.m_textElementGroups.count() > 0 || this.m_userTextElements.elements.length > 0;
     }
 
     /**
@@ -977,10 +967,9 @@ export class Tile implements CachedResource {
      * Removes all [[TextElement]] from the tile.
      */
     clearTextElements() {
-        this.placedTextElements.clear();
         this.m_pathBlockingElements.splice(0);
         this.textElementGroups.clear();
-        this.userTextElements.length = 0;
+        this.userTextElements.elements.length = 0;
         this.textElementsChanged = true;
     }
 
@@ -1000,7 +989,7 @@ export class Tile implements CachedResource {
             this.m_tileGeometryLoader = undefined;
         }
         this.clear();
-        this.userTextElements.length = 0;
+        this.userTextElements.elements.length = 0;
         this.m_disposed = true;
         // Ensure that tile is removable from tile cache.
         this.frameNumLastRequested = 0;
@@ -1030,7 +1019,7 @@ export class Tile implements CachedResource {
         for (const group of this.textElementGroups.groups) {
             numTextElements += group[1].elements.length;
         }
-        numUserTextElements = this.userTextElements.length;
+        numUserTextElements = this.userTextElements.elements.length;
 
         // 216 was the shallow size of a single TextElement last time it has been checked, 312 bytes
         // was the minimum retained size of a TextElement that was not being rendered. If a

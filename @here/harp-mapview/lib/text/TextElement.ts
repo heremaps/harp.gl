@@ -27,7 +27,6 @@ import * as THREE from "three";
 
 import { ImageItem } from "../image/Image";
 import { PickResult } from "../PickHandler";
-import { TextElementState } from "./TextElementState";
 import { TextElementType } from "./TextElementType";
 
 /**
@@ -249,7 +248,7 @@ export class TextElement {
     /**
      * Is `true` if is a point label.
      */
-    isPointLabel?: boolean;
+    isPointLabel: boolean;
 
     /**
      * If specified, determines the render order between `TextElement`s. The number different
@@ -280,21 +279,9 @@ export class TextElement {
 
     /**
      * @hidden
-     * Used during sorting.
-     */
-    sortPriority?: number = 0;
-
-    /**
-     * @hidden
      * Used during rendering.
      */
     loadingState?: LoadingState;
-
-    /**
-     * @hidden
-     * Used during rendering.
-     */
-    m_renderState: TextElementState;
 
     /**
      * @hidden
@@ -385,12 +372,12 @@ export class TextElement {
             this.layoutStyle = layoutParams;
         }
 
-        this.m_renderState = new TextElementState();
+        this.isPointLabel = points instanceof THREE.Vector3;
     }
 
     /**
-     * The position of this text element in world coordinates or the first point of the path used to
-     * render a curved text.
+     * The relative position of this text element to the tile center in world coordinates or the
+     * first point of the path used to render a curved text.
      */
     get position(): THREE.Vector3 {
         if (this.points instanceof Array) {
@@ -401,7 +388,8 @@ export class TextElement {
     }
 
     /**
-     * The list of points in world coordinates used to render the text along a path or `undefined`.
+     * The list of points in world coordinates (relative to the tile center) used to render the
+     * text along a path or `undefined`.
      */
     get path(): THREE.Vector3[] | undefined {
         if (this.points instanceof Array) {
@@ -477,25 +465,6 @@ export class TextElement {
         }
 
         return TextElementType.PathLabel;
-    }
-
-    get renderState(): TextElementState {
-        return this.m_renderState;
-    }
-
-    /**
-     * Return the last distance that has been computed for sorting during placement. This may not be
-     * the actual distance if the camera is moving, as the distance is computed only during
-     * placement. If the property `alwaysOnTop` is true, the value returned is always `0`.
-     *
-     * @returns 0 or negative distance to camera.
-     */
-    get renderDistance(): number {
-        return this.alwaysOnTop === true
-            ? 0
-            : this.m_renderState.viewDistance !== undefined
-            ? -this.m_renderState.viewDistance
-            : 0;
     }
 
     /**
