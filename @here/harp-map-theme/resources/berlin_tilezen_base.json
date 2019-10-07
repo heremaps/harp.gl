@@ -221,7 +221,7 @@
                     ["==", ["get", "kind"], "highway"],
                     ["==", ["get", "kind_detail"], "motorway"],
                     ["has", "ref"],
-                    [">", ["get", "$level"], 7]
+                    [">", ["zoom"], 8]
                 ],
                 "technique": "line-marker",
                 "attr": {
@@ -325,7 +325,7 @@
                 "final": true
             },
             {
-                "description": "primary-road-shield-2, level > 10",
+                "description": "primary-road-shield-2, zoom > 11",
                 "when": [
                     "all",
                     ["==", ["get", "$layer"], "roads"],
@@ -333,7 +333,7 @@
                     ["==", ["get", "kind_detail"], "primary"],
                     ["has", "ref"],
                     ["==", ["length", ["get", "ref"]], 2],
-                    [">", ["get", "$level"], 10]
+                    [">", ["zoom"], 11]
                 ],
                 "technique": "line-marker",
                 "attr": {
@@ -359,7 +359,7 @@
                 }
             },
             {
-                "description": "primary-road-shield-3, level > 10",
+                "description": "primary-road-shield-3, zoom > 11",
                 "when": [
                     "all",
                     ["==", ["get", "$layer"], "roads"],
@@ -367,7 +367,7 @@
                     ["==", ["get", "kind_detail"], "primary"],
                     ["has", "ref"],
                     ["==", ["length", ["get", "ref"]], 3],
-                    [">", ["get", "$level"], 10]
+                    [">", ["zoom"], 11]
                 ],
                 "technique": "line-marker",
                 "attr": {
@@ -393,7 +393,7 @@
                 }
             },
             {
-                "description": "primary-road-shield-4, level > 10",
+                "description": "primary-road-shield-4, zoom > 11",
                 "when": [
                     "all",
                     ["==", ["get", "$layer"], "roads"],
@@ -401,7 +401,7 @@
                     ["==", ["get", "kind_detail"], "primary"],
                     ["has", "ref"],
                     ["==", ["length", ["get", "ref"]], 4],
-                    [">", ["get", "$level"], 10]
+                    [">", ["zoom"], 11]
                 ],
                 "technique": "line-marker",
                 "attr": {
@@ -427,7 +427,7 @@
                 }
             },
             {
-                "description": "primary-road-shield-5, level > 10",
+                "description": "primary-road-shield-5, zoom > 11",
                 "when": [
                     "all",
                     ["==", ["get", "$layer"], "roads"],
@@ -435,7 +435,7 @@
                     ["==", ["get", "kind_detail"], "primary"],
                     ["has", "ref"],
                     ["==", ["length", ["get", "ref"]], 5],
-                    [">", ["get", "$level"], 10]
+                    [">", ["zoom"], 11]
                 ],
                 "technique": "line-marker",
                 "attr": {
@@ -461,7 +461,7 @@
                 }
             },
             {
-                "description": "primary-road-shield-5+, level > 10",
+                "description": "primary-road-shield-5+, zoom > 11",
                 "when": [
                     "all",
                     ["==", ["get", "$layer"], "roads"],
@@ -469,7 +469,7 @@
                     ["==", ["get", "kind_detail"], "primary"],
                     ["has", "ref"],
                     [">", ["length", ["get", "ref"]], 5],
-                    [">", ["get", "$level"], 10]
+                    [">", ["zoom"], 11]
                 ],
                 "technique": "line-marker",
                 "attr": {
@@ -585,14 +585,14 @@
                 "final": true
             },
             {
-                "description": "secondary-road-shield, level > 11",
+                "description": "secondary-road-shield, zoom > 12",
                 "when": [
                     "all",
                     ["==", ["get", "$layer"], "roads"],
                     ["==", ["get", "kind"], "major_road"],
                     ["==", ["get", "kind_detail"], "secondary"],
                     ["has", "ref"],
-                    [">", ["get", "$level"], 11]
+                    [">", ["zoom"], 12]
                 ],
                 "technique": "line-marker",
                 "attr": {
@@ -652,14 +652,14 @@
                 "final": true
             },
             {
-                "description": "tertiary-road-shield, level > 13",
+                "description": "tertiary-road-shield, zoom > 14",
                 "when": [
                     "all",
                     ["==", ["get", "$layer"], "roads"],
                     ["==", ["get", "kind"], "major_road"],
                     ["==", ["get", "kind_detail"], "tertiary"],
                     ["has", "ref"],
-                    [">", ["get", "$level"], 13]
+                    [">", ["zoom"], 14]
                 ],
                 "technique": "line-marker",
                 "attr": {

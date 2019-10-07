@@ -13,6 +13,7 @@ import {
     ContainsExpr,
     Env,
     Expr,
+    ExprScope,
     ExprVisitor,
     HasAttributeExpr,
     isJsonExpr,
@@ -528,7 +529,7 @@ export class StyleSetEvaluator {
             }
 
             try {
-                if (!style._whenExpr.evaluate(env, this.m_cachedResults)) {
+                if (!style._whenExpr.evaluate(env, ExprScope.Condition, this.m_cachedResults)) {
                     // Stop processing this styling rule. The `when` condition
                     // associated with the current `style` evaluates to false so
                     // no techinque defined by this style should be applied.
@@ -709,7 +710,11 @@ export class StyleSetEvaluator {
 
         return style._dynamicTechniqueAttributes.map(([attrName, attrExpr]) => {
             try {
-                const evaluatedValue = attrExpr.evaluate(env, this.m_cachedResults);
+                const evaluatedValue = attrExpr.evaluate(
+                    env,
+                    ExprScope.Value,
+                    this.m_cachedResults
+                );
                 return [attrName, evaluatedValue];
             } catch (error) {
                 logger.error(`failed to evaluate expression '${attrExpr.toJSON()}': ${error}`);

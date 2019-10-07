@@ -43,6 +43,21 @@ interface ReferenceResolverState {
 }
 
 /**
+ * The evaluation scope of an [[Expr]].
+ */
+export enum ExprScope {
+    /**
+     * The scope of an [[Expr]] used as value of an attribute.
+     */
+    Value,
+
+    /**
+     * The scope of an [[Expr]] used in a [[Technique]] `when` condition.
+     */
+    Condition
+}
+
+/**
  * Abstract class defining a shape of a [[Theme]]'s expression
  */
 export abstract class Expr {
@@ -272,10 +287,18 @@ export abstract class Expr {
      * Evaluate an expression returning a [[Value]] object.
      *
      * @param env The [[Env]] used to lookup symbols.
+     * @param scope The evaluation scope. Defaults to [[ExprScope.Value]].
      * @param cache A cache of previously computed results.
      */
-    evaluate(env: Env, cache?: Map<Expr, Value>): Value | never {
-        return this.accept(exprEvaluator, new ExprEvaluatorContext(exprEvaluator, env, cache));
+    evaluate(
+        env: Env,
+        scope: ExprScope = ExprScope.Value,
+        cache?: Map<Expr, Value>
+    ): Value | never {
+        return this.accept(
+            exprEvaluator,
+            new ExprEvaluatorContext(exprEvaluator, env, scope, cache)
+        );
     }
 
     /**

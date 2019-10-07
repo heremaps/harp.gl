@@ -171,6 +171,10 @@ export class OmvDecoder implements IGeometryProcessor {
         this.m_dataAdapters.push(new VTJsonDataAdapter(this, m_dataFilter, logger));
     }
 
+    get storageLevelOffset() {
+        return this.m_storageLevelOffset;
+    }
+
     /**
      * Given a tile and a protobuffer, it returns a decoded tile and it creates the geometries that
      * belong to it.
@@ -299,6 +303,7 @@ export class OmvDecoder implements IGeometryProcessor {
         const context = {
             env,
             storageLevel,
+            zoomLevel: this.getZoomLevel(storageLevel),
             cachedExprResults: this.m_styleSetEvaluator.expressionEvaluatorCache
         };
 
@@ -358,6 +363,7 @@ export class OmvDecoder implements IGeometryProcessor {
         const context = {
             env,
             storageLevel,
+            zoomLevel: this.getZoomLevel(storageLevel),
             cachedExprResults: this.m_styleSetEvaluator.expressionEvaluatorCache
         };
         const featureId = env.lookup("$id") as number | undefined;
@@ -416,6 +422,7 @@ export class OmvDecoder implements IGeometryProcessor {
         const context = {
             env,
             storageLevel,
+            zoomLevel: this.getZoomLevel(storageLevel),
             cachedExprResults: this.m_styleSetEvaluator.expressionEvaluatorCache
         };
         const featureId = env.lookup("$id") as number | undefined;
@@ -451,6 +458,10 @@ export class OmvDecoder implements IGeometryProcessor {
     protected estimatedTileSizeOnScreen(): number {
         const tileSizeOnScreen = 256 * Math.pow(2, -this.m_storageLevelOffset);
         return tileSizeOnScreen;
+    }
+
+    private getZoomLevel(storageLevel: number) {
+        return Math.max(0, storageLevel - (this.m_storageLevelOffset || 0));
     }
 
     private applyKindFilter(

@@ -123,7 +123,8 @@ describe("OmvDecodedTileEmitter", function() {
         const storageLevel = 10;
         const mockContext = {
             env: new MapEnv({ layer: "mock-layer" }),
-            storageLevel
+            storageLevel,
+            zoomLevel: storageLevel
         };
 
         const matchedTechniques = styleSetEvaluator.getMatchingTechniques(mockContext.env);

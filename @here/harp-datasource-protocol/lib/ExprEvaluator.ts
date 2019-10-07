@@ -11,6 +11,7 @@ import {
     ContainsExpr,
     Env,
     Expr,
+    ExprScope,
     ExprVisitor,
     HasAttributeExpr,
     MatchExpr,
@@ -52,6 +53,7 @@ export class ExprEvaluatorContext {
     constructor(
         readonly evaluator: ExprEvaluator,
         readonly env: Env,
+        readonly scope: ExprScope,
         readonly cache?: Map<Expr, Value>
     ) {}
 
