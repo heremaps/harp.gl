@@ -8,7 +8,7 @@
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
 import { assert } from "chai";
-import { Expr, MapEnv, ValueMap } from "../lib/Expr";
+import { Expr, ExprScope, MapEnv, ValueMap } from "../lib/Expr";
 import { isInterpolatedProperty } from "../lib/InterpolatedProperty";
 
 const EPSILON = 1e-8;
@@ -24,9 +24,13 @@ describe("ExprEvaluator", function() {
         two: 2
     };
 
-    function evaluate(expr: unknown, values: ValueMap = defaultEnv) {
+    function evaluate(
+        expr: unknown,
+        values: ValueMap = defaultEnv,
+        scope: ExprScope = ExprScope.Value
+    ) {
         const env = new MapEnv(values);
-        return Expr.fromJSON(expr).evaluate(env);
+        return Expr.fromJSON(expr).evaluate(env, scope);
     }
 
     describe("Operator 'all'", function() {
@@ -534,6 +538,19 @@ describe("ExprEvaluator", function() {
                 () => evaluate(["interpolate", ["linear"], ["zoom"], 0, 1, 2]),
                 "invalid number of samples"
             );
+        });
+    });
+
+    describe("Operator 'zoom'", function() {
+        it("evaluate", function() {
+            assert.throw(() => evaluate(["zoom"]), "invalid usage of the 'zoom' operator");
+
+            assert.throw(
+                () => evaluate(["zoom"], { $zoom: 10 }),
+                "invalid usage of the 'zoom' operator"
+            );
+
+            assert.strictEqual(evaluate(["zoom"], { $zoom: 10 }, ExprScope.Condition), 10);
         });
     });
 });

@@ -5,7 +5,7 @@
  */
 
 import { LoggerManager } from "@here/harp-utils";
-import { Env, Expr, MapEnv, Value } from "./Expr";
+import { Env, Expr, ExprScope, MapEnv, Value } from "./Expr";
 import { getPropertyValue, isInterpolatedProperty } from "./InterpolatedProperty";
 import { InterpolatedProperty } from "./InterpolatedPropertyDefs";
 
@@ -23,6 +23,13 @@ export interface AttrEvaluationContext {
      * To be removed, when interpolators will be based on [[Expr]].
      */
     storageLevel: number;
+
+    /**
+     * Zoom level of tile containing this feature.
+     *
+     * To be removed, when interpolators will be based on [[Expr]].
+     */
+    zoomLevel: number;
 
     /**
      * Optional, cache of expression results.
@@ -65,6 +72,7 @@ export function evaluateTechniqueAttr<T = Value>(
         try {
             evaluated = attrValue.evaluate(
                 env,
+                ExprScope.Value,
                 !(context instanceof Env) ? context.cachedExprResults : undefined
             );
         } catch (error) {
@@ -73,7 +81,7 @@ export function evaluateTechniqueAttr<T = Value>(
         }
     } else if (isInterpolatedProperty(attrValue)) {
         const storageLevel =
-            context instanceof Env ? (context.lookup("$level") as number) : context.storageLevel;
+            context instanceof Env ? (context.lookup("$zoom") as number) : context.zoomLevel;
         evaluated = getPropertyValue(attrValue, storageLevel);
     } else {
         evaluated = (attrValue as unknown) as Value;

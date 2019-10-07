@@ -4,12 +4,26 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { CallExpr, Expr, NumberLiteralExpr, Value } from "../Expr";
+import { CallExpr, Expr, ExprScope, NumberLiteralExpr, Value } from "../Expr";
 import { ExprEvaluatorContext, OperatorDescriptorMap } from "../ExprEvaluator";
 import { createInterpolatedProperty } from "../InterpolatedProperty";
 import { InterpolatedPropertyDefinition } from "../InterpolatedPropertyDefs";
 
 const operators = {
+    zoom: {
+        call: (context: ExprEvaluatorContext, args: Expr[]): Value => {
+            if (context.scope === ExprScope.Condition) {
+                const zoom = context.env.lookup("$zoom")!;
+                if (zoom !== undefined) {
+                    return zoom;
+                }
+                throw new Error("failed to get the zoom level.");
+            }
+            // direct usages of 'zoom' outside technique filter conditions
+            // and interpolations are not allowed.
+            throw new Error("invalid usage of the 'zoom' operator.");
+        }
+    },
     interpolate: {
         call: (context: ExprEvaluatorContext, args: Expr[]): Value => {
             const interpolatorType = args[0];

@@ -311,12 +311,14 @@ function createFeatureEnv(
     feature: com.mapbox.pb.Tile.IFeature,
     geometryType: string,
     storageLevel: number,
+    storageLevelOffset?: number,
     logger?: ILogger,
     parent?: Env
 ): MapEnv {
     const attributes: ValueMap = {
         $layer: layer.name,
         $level: storageLevel,
+        $zoom: Math.max(0, storageLevel - (storageLevelOffset || 0)),
         $geometryType: geometryType
     };
 
@@ -472,7 +474,14 @@ export class OmvProtobufDataAdapter implements OmvDataAdapter, OmvVisitor {
             return;
         }
 
-        const env = createFeatureEnv(this.m_layer, feature, "point", storageLevel, this.m_logger);
+        const env = createFeatureEnv(
+            this.m_layer,
+            feature,
+            "point",
+            storageLevel,
+            this.m_processor.storageLevelOffset,
+            this.m_logger
+        );
 
         this.m_processor.processPointFeature(layerName, layerExtents, geometry, env, storageLevel);
     }
@@ -516,7 +525,14 @@ export class OmvProtobufDataAdapter implements OmvDataAdapter, OmvVisitor {
             return;
         }
 
-        const env = createFeatureEnv(this.m_layer, feature, "line", storageLevel, this.m_logger);
+        const env = createFeatureEnv(
+            this.m_layer,
+            feature,
+            "line",
+            storageLevel,
+            this.m_processor.storageLevelOffset,
+            this.m_logger
+        );
 
         this.m_processor.processLineFeature(layerName, layerExtents, geometry, env, storageLevel);
     }
@@ -566,7 +582,14 @@ export class OmvProtobufDataAdapter implements OmvDataAdapter, OmvVisitor {
             return;
         }
 
-        const env = createFeatureEnv(this.m_layer, feature, "polygon", storageLevel, this.m_logger);
+        const env = createFeatureEnv(
+            this.m_layer,
+            feature,
+            "polygon",
+            storageLevel,
+            this.m_processor.storageLevelOffset,
+            this.m_logger
+        );
 
         this.m_processor.processPolygonFeature(
             layerName,
