@@ -666,6 +666,227 @@ export class TextElementsRenderer {
         });
     }
 
+    renderTextElements(
+        textElements: TextElement[],
+        time: number,
+        frameNumber: number,
+        zoomLevel: number,
+        renderedTextElements?: TextElement[],
+        secondChanceTextElements?: TextElement[]
+    ): number {
+        if (this.m_textRenderers.length === 0) {
+            return 0;
+        }
+
+        const currentlyRenderingPlacedElements = renderedTextElements === undefined;
+
+        const printInfo = textElements.length > 5000;
+
+        const mapViewState: MapViewState = {
+            cameraIsMoving: this.m_mapView.cameraIsMoving,
+            maxVisibilityDist: this.m_mapView.viewRanges.maximum,
+            zoomLevel,
+            frameNumber,
+            time
+        };
+
+        const stats: Statistics = {
+            numNotVisible: 0,
+            numPathTooSmall: 0,
+            numCannotAdd: 0,
+            numRenderedPoiIcons: 0,
+            numRenderedPoiTexts: 0,
+            numPoiTextsInvisible: 0,
+            numRenderedTextElements: 0,
+            fadeAnimationRunning: false
+        };
+
+        const maxNumRenderedLabels = this.m_maxNumVisibleLabels!;
+        const shieldGroups: number[][] = [];
+
+        const temp: TempParams = {
+            additionParams: {},
+            poiMeasurementParams: {},
+            measurementParams: {},
+            bufferAdditionParams: {}
+        };
+        const tileGeometryManager = this.m_mapView.tileGeometryManager;
+        const hiddenKinds =
+            tileGeometryManager !== undefined ? tileGeometryManager.hiddenGeometryKinds : undefined;
+
+        // Place text elements one by one.
+        for (const textElement of textElements) {
+            if (
+                !currentlyRenderingPlacedElements &&
+                maxNumRenderedLabels >= 0 &&
+                stats.numRenderedTextElements >= maxNumRenderedLabels
+            ) {
+                break;
+            }
+
+            // Get the TextElementStyle.
+            const textElementStyle = this.getTextElementStyle(textElement.style);
+            const textCanvas = textElementStyle.textCanvas;
+            const poiRenderer = textElementStyle.poiRenderer;
+            if (textCanvas === undefined || poiRenderer === undefined) {
+                continue;
+            }
+
+            // Check if the label should be hidden.
+            if (
+                hiddenKinds !== undefined &&
+                textElement.kind !== undefined &&
+                hiddenKinds.hasOrIntersects(textElement.kind)
+            ) {
+                continue;
+            }
+
+            const isPathLabel = textElement.path !== undefined && !textElement.isLineMarker;
+            let screenPoints: THREE.Vector2[];
+
+            // For paths, check if the label may fit.
+            if (isPathLabel) {
+                const screenPointsResult = this.checkForSmallLabels(textElement);
+                if (screenPointsResult === undefined) {
+                    stats.numNotVisible++;
+                    if (textElement.dbgPathTooSmall === true) {
+                        stats.numPathTooSmall++;
+                    }
+                    continue;
+                }
+                screenPoints = screenPointsResult;
+            }
+
+            // Trigger the glyph load if needed.
+            if (textElement.loadingState === undefined) {
+                textElement.loadingState = LoadingState.Requested;
+
+                if (textElement.renderStyle === undefined) {
+                    textElement.renderStyle = new TextRenderStyle({
+                        ...textElementStyle.renderParams,
+                        ...textElement.renderParams
+                    });
+                }
+                if (textElement.layoutStyle === undefined) {
+                    textElement.layoutStyle = new TextLayoutStyle({
+                        ...textElementStyle.layoutParams,
+                        ...textElement.layoutParams
+                    });
+                }
+
+                if (textElement.text === "") {
+                    textElement.loadingState = LoadingState.Loaded;
+                } else {
+                    textCanvas.fontCatalog
+                        .loadCharset(textElement.text, textElement.renderStyle)
+                        .then(() => {
+                            textElement.loadingState = LoadingState.Loaded;
+                            this.m_mapView.update();
+                        });
+                }
+            }
+            if (textElement.loadingState === LoadingState.Loaded) {
+                if (this.m_initializedTextElementCount < MAX_INITIALIZED_TEXT_ELEMENTS_PER_FRAME) {
+                    textCanvas.textRenderStyle = textElement.renderStyle!;
+                    textCanvas.textLayoutStyle = textElement.layoutStyle!;
+                    textElement.glyphCaseArray = [];
+                    textElement.glyphs = textCanvas.fontCatalog.getGlyphs(
+                        textElement.text,
+                        textCanvas.textRenderStyle,
+                        textElement.glyphCaseArray
+                    );
+                    if (!isPathLabel) {
+                        textElement.bounds = new THREE.Box2();
+                        temp.poiMeasurementParams.letterCaseArray = textElement.glyphCaseArray!;
+                        textCanvas.measureText(
+                            textElement.glyphs!,
+                            textElement.bounds,
+                            temp.poiMeasurementParams
+                        );
+                    }
+                    textElement.loadingState = LoadingState.Initialized;
+                    ++this.m_initializedTextElementCount;
+                }
+            }
+            if (textElement.loadingState !== LoadingState.Initialized) {
+                continue;
+            }
+
+            const layer = textCanvas.getLayer(textElement.renderOrder || DEFAULT_TEXT_CANVAS_LAYER);
+
+            // Move onto the next TextElement if we cannot continue adding glyphs to this layer.
+            if (layer !== undefined) {
+                if (layer.storage.drawCount + textElement.glyphs!.length > layer.storage.capacity) {
+                    ++stats.numCannotAdd;
+                    continue;
+                }
+            }
+
+            // Set the current style for the canvas.
+            textCanvas.textRenderStyle = textElement.renderStyle!;
+            textCanvas.textLayoutStyle = textElement.layoutStyle!;
+
+            // Render a POI...
+            if (textElement.path === undefined) {
+                this.addPoiLabel(
+                    textElement,
+                    poiRenderer,
+                    textCanvas,
+                    stats,
+                    mapViewState,
+                    temp,
+                    renderedTextElements,
+                    secondChanceTextElements
+                );
+            }
+            // ... a line marker...
+            else if (textElement.isLineMarker) {
+                this.addLineMarkerLabel(
+                    textElement,
+                    poiRenderer,
+                    shieldGroups,
+                    textCanvas,
+                    stats,
+                    mapViewState,
+                    temp,
+                    renderedTextElements,
+                    secondChanceTextElements
+                );
+            }
+            // ... or a path label.
+            else if (isPathLabel) {
+                this.addPathLabel(
+                    textElement,
+                    screenPoints!,
+                    poiRenderer,
+                    textCanvas,
+                    stats,
+                    mapViewState,
+                    temp,
+                    renderedTextElements,
+                    secondChanceTextElements
+                );
+            }
+        }
+
+        if (PRINT_LABEL_DEBUG_INFO && printInfo) {
+            logger.log("textElements.length", textElements.length);
+            logger.log("numRenderedTextElements", stats.numRenderedTextElements);
+            logger.log("numRenderedPoiIcons", stats.numRenderedPoiIcons);
+            logger.log("numRenderedPoiTexts", stats.numRenderedPoiTexts);
+            logger.log("numPoiTextsInvisible", stats.numPoiTextsInvisible);
+            logger.log("numNotVisible", stats.numNotVisible);
+            logger.log("numPathTooSmall", stats.numPathTooSmall);
+            logger.log("numCannotAdd", stats.numCannotAdd);
+        }
+
+        if (!this.m_mapView.disableFading && stats.fadeAnimationRunning) {
+            this.m_mapView.update();
+        }
+
+        return stats.numRenderedTextElements;
+    }
+
     private initializeDefaultAssets(): void {
         // Initialize default font catalog.
         if (
@@ -2162,227 +2383,6 @@ export class TextElementsRenderer {
         textCanvas.textRenderStyle.opacity = prevOpacity;
         textCanvas.textRenderStyle.backgroundOpacity = prevBgOpacity;
         return true;
-    }
-
-    private renderTextElements(
-        textElements: TextElement[],
-        time: number,
-        frameNumber: number,
-        zoomLevel: number,
-        renderedTextElements?: TextElement[],
-        secondChanceTextElements?: TextElement[]
-    ): number {
-        if (this.m_textRenderers.length === 0) {
-            return 0;
-        }
-
-        const currentlyRenderingPlacedElements = renderedTextElements === undefined;
-
-        const printInfo = textElements.length > 5000;
-
-        const mapViewState: MapViewState = {
-            cameraIsMoving: this.m_mapView.cameraIsMoving,
-            maxVisibilityDist: this.m_mapView.viewRanges.maximum,
-            zoomLevel,
-            frameNumber,
-            time
-        };
-
-        const stats: Statistics = {
-            numNotVisible: 0,
-            numPathTooSmall: 0,
-            numCannotAdd: 0,
-            numRenderedPoiIcons: 0,
-            numRenderedPoiTexts: 0,
-            numPoiTextsInvisible: 0,
-            numRenderedTextElements: 0,
-            fadeAnimationRunning: false
-        };
-
-        const maxNumRenderedLabels = this.m_maxNumVisibleLabels!;
-        const shieldGroups: number[][] = [];
-
-        const temp: TempParams = {
-            additionParams: {},
-            poiMeasurementParams: {},
-            measurementParams: {},
-            bufferAdditionParams: {}
-        };
-        const tileGeometryManager = this.m_mapView.tileGeometryManager;
-        const hiddenKinds =
-            tileGeometryManager !== undefined ? tileGeometryManager.hiddenGeometryKinds : undefined;
-
-        // Place text elements one by one.
-        for (const textElement of textElements) {
-            if (
-                !currentlyRenderingPlacedElements &&
-                maxNumRenderedLabels >= 0 &&
-                stats.numRenderedTextElements >= maxNumRenderedLabels
-            ) {
-                break;
-            }
-
-            // Get the TextElementStyle.
-            const textElementStyle = this.getTextElementStyle(textElement.style);
-            const textCanvas = textElementStyle.textCanvas;
-            const poiRenderer = textElementStyle.poiRenderer;
-            if (textCanvas === undefined || poiRenderer === undefined) {
-                continue;
-            }
-
-            // Check if the label should be hidden.
-            if (
-                hiddenKinds !== undefined &&
-                textElement.kind !== undefined &&
-                hiddenKinds.hasOrIntersects(textElement.kind)
-            ) {
-                continue;
-            }
-
-            const isPathLabel = textElement.path !== undefined && !textElement.isLineMarker;
-            let screenPoints: THREE.Vector2[];
-
-            // For paths, check if the label may fit.
-            if (isPathLabel) {
-                const screenPointsResult = this.checkForSmallLabels(textElement);
-                if (screenPointsResult === undefined) {
-                    stats.numNotVisible++;
-                    if (textElement.dbgPathTooSmall === true) {
-                        stats.numPathTooSmall++;
-                    }
-                    continue;
-                }
-                screenPoints = screenPointsResult;
-            }
-
-            // Trigger the glyph load if needed.
-            if (textElement.loadingState === undefined) {
-                textElement.loadingState = LoadingState.Requested;
-
-                if (textElement.renderStyle === undefined) {
-                    textElement.renderStyle = new TextRenderStyle({
-                        ...textElementStyle.renderParams,
-                        ...textElement.renderParams
-                    });
-                }
-                if (textElement.layoutStyle === undefined) {
-                    textElement.layoutStyle = new TextLayoutStyle({
-                        ...textElementStyle.layoutParams,
-                        ...textElement.layoutParams
-                    });
-                }
-
-                if (textElement.text === "") {
-                    textElement.loadingState = LoadingState.Loaded;
-                } else {
-                    textCanvas.fontCatalog
-                        .loadCharset(textElement.text, textElement.renderStyle)
-                        .then(() => {
-                            textElement.loadingState = LoadingState.Loaded;
-                            this.m_mapView.update();
-                        });
-                }
-            }
-            if (textElement.loadingState === LoadingState.Loaded) {
-                if (this.m_initializedTextElementCount < MAX_INITIALIZED_TEXT_ELEMENTS_PER_FRAME) {
-                    textCanvas.textRenderStyle = textElement.renderStyle!;
-                    textCanvas.textLayoutStyle = textElement.layoutStyle!;
-                    textElement.glyphCaseArray = [];
-                    textElement.glyphs = textCanvas.fontCatalog.getGlyphs(
-                        textElement.text,
-                        textCanvas.textRenderStyle,
-                        textElement.glyphCaseArray
-                    );
-                    if (!isPathLabel) {
-                        textElement.bounds = new THREE.Box2();
-                        temp.poiMeasurementParams.letterCaseArray = textElement.glyphCaseArray!;
-                        textCanvas.measureText(
-                            textElement.glyphs!,
-                            textElement.bounds,
-                            temp.poiMeasurementParams
-                        );
-                    }
-                    textElement.loadingState = LoadingState.Initialized;
-                    ++this.m_initializedTextElementCount;
-                }
-            }
-            if (textElement.loadingState !== LoadingState.Initialized) {
-                continue;
-            }
-
-            const layer = textCanvas.getLayer(textElement.renderOrder || DEFAULT_TEXT_CANVAS_LAYER);
-
-            // Move onto the next TextElement if we cannot continue adding glyphs to this layer.
-            if (layer !== undefined) {
-                if (layer.storage.drawCount + textElement.glyphs!.length > layer.storage.capacity) {
-                    ++stats.numCannotAdd;
-                    continue;
-                }
-            }
-
-            // Set the current style for the canvas.
-            textCanvas.textRenderStyle = textElement.renderStyle!;
-            textCanvas.textLayoutStyle = textElement.layoutStyle!;
-
-            // Render a POI...
-            if (textElement.path === undefined) {
-                this.addPoiLabel(
-                    textElement,
-                    poiRenderer,
-                    textCanvas,
-                    stats,
-                    mapViewState,
-                    temp,
-                    renderedTextElements,
-                    secondChanceTextElements
-                );
-            }
-            // ... a line marker...
-            else if (textElement.isLineMarker) {
-                this.addLineMarkerLabel(
-                    textElement,
-                    poiRenderer,
-                    shieldGroups,
-                    textCanvas,
-                    stats,
-                    mapViewState,
-                    temp,
-                    renderedTextElements,
-                    secondChanceTextElements
-                );
-            }
-            // ... or a path label.
-            else if (isPathLabel) {
-                this.addPathLabel(
-                    textElement,
-                    screenPoints!,
-                    poiRenderer,
-                    textCanvas,
-                    stats,
-                    mapViewState,
-                    temp,
-                    renderedTextElements,
-                    secondChanceTextElements
-                );
-            }
-        }
-
-        if (PRINT_LABEL_DEBUG_INFO && printInfo) {
-            logger.log("textElements.length", textElements.length);
-            logger.log("numRenderedTextElements", stats.numRenderedTextElements);
-            logger.log("numRenderedPoiIcons", stats.numRenderedPoiIcons);
-            logger.log("numRenderedPoiTexts", stats.numRenderedPoiTexts);
-            logger.log("numPoiTextsInvisible", stats.numPoiTextsInvisible);
-            logger.log("numNotVisible", stats.numNotVisible);
-            logger.log("numPathTooSmall", stats.numPathTooSmall);
-            logger.log("numCannotAdd", stats.numCannotAdd);
-        }
-
-        if (!this.m_mapView.disableFading && stats.fadeAnimationRunning) {
-            this.m_mapView.update();
-        }
-
-        return stats.numRenderedTextElements;
     }
 
     private checkForSmallLabels(textElement: TextElement): THREE.Vector2[] | undefined {
