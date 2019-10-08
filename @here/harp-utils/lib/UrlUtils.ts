@@ -70,7 +70,11 @@ export function baseUrl(url: string | undefined) {
     if (url === undefined) {
         return "./";
     }
-    const idx = url.lastIndexOf("/");
+    let idx = url.indexOf("?");
+    if (idx !== -1) {
+        url = url.slice(0, idx);
+    }
+    idx = url.lastIndexOf("/");
     if (idx === -1) {
         return "./";
     } else {
