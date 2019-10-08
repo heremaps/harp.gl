@@ -214,10 +214,16 @@ class PoiRenderBuffer {
      * Render a POI image at the specified location.
      *
      * @param poiInfo PoiInfo containing information for rendering the POI icon.
+     * @param textElement The owning [[TextElement]].
      * @param screenBox Box to render icon into in 2D coordinates.
      * @param opacity Opacity of icon to allow fade in/out.
      */
-    addPoi(poiInfo: PoiInfo, screenBox: Math2D.Box, opacity: number): number {
+    addPoi(
+        poiInfo: PoiInfo,
+        textElement: TextElement,
+        screenBox: Math2D.Box,
+        opacity: number
+    ): number {
         const batchIndex = this.registerPoi(poiInfo);
         assert(batchIndex >= 0);
         if (batchIndex < 0) {
@@ -235,8 +241,8 @@ class PoiRenderBuffer {
             poiInfo.uvBox!,
             this.batches[batchIndex].color,
             opacity,
-            poiInfo.textElement.renderDistance,
-            poiInfo.textElement
+            textElement.renderDistance,
+            textElement
         );
 
         return batchIndex;
@@ -410,6 +416,7 @@ export class PoiRenderer {
      * Render the icon.
      *
      * @param poiInfo PoiInfo containing information for rendering the POI icon.
+     * @param textElement The owning [[TextElement]].
      * @param screenPosition Position on screen (2D):
      * @param screenCollisions Object handling the collision checks for screen-aligned 2D boxes.
      * @param scale Scaling factor to apply to text and icon.
@@ -418,6 +425,7 @@ export class PoiRenderer {
      */
     renderPoi(
         poiInfo: PoiInfo,
+        textElement: TextElement,
         screenPosition: THREE.Vector2,
         screenCollisions: ScreenCollisions,
         scale: number,
@@ -431,7 +439,7 @@ export class PoiRenderer {
                 screenCollisions.allocate(this.m_tempScreenBox);
             }
 
-            this.m_renderBuffer.addPoi(poiInfo, this.m_tempScreenBox, opacity);
+            this.m_renderBuffer.addPoi(poiInfo, textElement, this.m_tempScreenBox, opacity);
         }
     }
 

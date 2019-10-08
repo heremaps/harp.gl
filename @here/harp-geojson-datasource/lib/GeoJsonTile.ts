@@ -436,7 +436,6 @@ export class GeoJsonTile extends Tile {
         textElement.poiInfo = {
             technique,
             imageTextureName,
-            textElement,
             textIsOptional,
             iconIsOptional,
             renderTextDuringMovements,

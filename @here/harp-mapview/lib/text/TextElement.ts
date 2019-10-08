@@ -112,11 +112,6 @@ export interface PoiInfo {
     featureId?: number;
 
     /**
-     * Reference back to owning [[TextElement]].
-     */
-    textElement: TextElement;
-
-    /**
      * @hidden
      * If false, text will not be rendered during camera movements. Defaults to `true`;
      */

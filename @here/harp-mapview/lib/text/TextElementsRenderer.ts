@@ -1809,6 +1809,7 @@ export class TextElementsRenderer {
 
             poiRenderer.renderPoi(
                 poiInfo,
+                pointLabel,
                 tempPoiScreenPosition,
                 this.m_screenCollisions,
                 distanceScaleFactor,

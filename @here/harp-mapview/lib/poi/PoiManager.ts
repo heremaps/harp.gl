@@ -548,7 +548,6 @@ export class PoiManager {
                 poiTableName,
                 poiName,
                 shieldGroupIndex,
-                textElement,
                 textIsOptional,
                 iconIsOptional,
                 renderTextDuringMovements,
