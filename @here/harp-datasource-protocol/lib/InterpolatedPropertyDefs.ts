@@ -46,12 +46,12 @@ export interface InterpolatedProperty<T> {
     /**
      * Zoom level keys array.
      */
-    zoomLevels: ArrayLike<number>;
+    zoomLevels: Float32Array;
 
     /**
      * Property values array.
      */
-    values: ArrayLike<any>;
+    values: Float32Array;
 
     /**
      * Exponent used in interpolation. Only valid with `Exponential` [[InterpolationMode]].

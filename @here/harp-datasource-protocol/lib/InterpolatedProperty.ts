@@ -45,12 +45,11 @@ export function isInterpolatedPropertyDefinition<T>(
     p: any
 ): p is InterpolatedPropertyDefinition<T> {
     if (
-        p &&
-        p.interpolationMode === undefined &&
-        Array.isArray(p.values) &&
+        p !== undefined &&
+        p.values instanceof Array &&
         p.values.length > 0 &&
         p.values[0] !== undefined &&
-        Array.isArray(p.zoomLevels) &&
+        p.zoomLevels instanceof Array &&
         p.zoomLevels.length > 0 &&
         p.zoomLevels[0] !== undefined &&
         p.values.length === p.zoomLevels.length
@@ -78,7 +77,7 @@ export function isInterpolatedProperty<T>(p: any): p is InterpolatedProperty<T> 
 }
 
 /**
- * Get the value of the specified property at the given zoom level.
+ * Get the value of the specified property at the given zoom level, represented as a `number` value.
  *
  * @param property Property of a technique.
  * @param level Display level the property should be rendered at.
@@ -90,12 +89,12 @@ export function getPropertyValue<T>(
     property: Value | Expr | InterpolatedProperty<T> | undefined,
     level: number,
     pixelToMeters: number = 1.0
-): any {
+): number {
     if (isInterpolatedPropertyDefinition<T>(property)) {
         throw new Error("Cannot interpolate a InterpolatedPropertyDefinition.");
     } else if (!isInterpolatedProperty(property)) {
         if (typeof property !== "string") {
-            return property;
+            return (property as unknown) as number;
         } else {
             const matchedFormat = StringEncodedNumeralFormats.find(format =>
                 format.regExp.test(property)
@@ -205,37 +204,32 @@ export function createInterpolatedProperty(
     prop: InterpolatedPropertyDefinition<unknown>
 ): InterpolatedProperty<unknown> | undefined {
     removeDuplicatePropertyValues(prop);
-
-    const interpolationMode =
-        prop.interpolation !== undefined
-            ? InterpolationMode[prop.interpolation]
-            : InterpolationMode.Discrete;
-
-    const zoomLevels = prop.zoomLevels;
-
-    if (interpolationMode === InterpolationMode.Discrete) {
-        return {
-            interpolationMode,
-            zoomLevels,
-            values: prop.values
-        };
-    }
-
+    const propKeys = new Float32Array(prop.zoomLevels);
+    let propValues;
+    let maskValues;
     const firstValue = prop.values[0];
     switch (typeof firstValue) {
         default:
         case "number":
+            propValues = new Float32Array((prop.values as any[]) as number[]);
             return {
-                interpolationMode,
-                zoomLevels,
-                values: prop.values,
+                interpolationMode:
+                    prop.interpolation !== undefined
+                        ? InterpolationMode[prop.interpolation]
+                        : InterpolationMode.Discrete,
+                zoomLevels: propKeys,
+                values: propValues,
                 exponent: prop.exponent
             };
         case "boolean":
+            propValues = new Float32Array(prop.values.length);
+            for (let i = 0; i < prop.values.length; ++i) {
+                propValues[i] = ((prop.values[i] as unknown) as boolean) ? 1 : 0;
+            }
             return {
-                interpolationMode,
-                zoomLevels,
-                values: prop.values.map(value => Number(value)),
+                interpolationMode: InterpolationMode.Discrete,
+                zoomLevels: propKeys,
+                values: propValues,
                 exponent: prop.exponent
             };
         case "string":
@@ -248,8 +242,8 @@ export function createInterpolatedProperty(
                 logger.error(`No StringEncodedNumeralFormat matched ${firstValue}.`);
                 return undefined;
             }
-            const propValues = new Float32Array(prop.values.length * matchedFormat.size);
-            const maskValues = new Float32Array(prop.values.length);
+            propValues = new Float32Array(prop.values.length * matchedFormat.size);
+            maskValues = new Float32Array(prop.values.length);
             needsMask = procesStringEnocodedNumeralInterpolatedProperty(
                 matchedFormat,
                 prop as InterpolatedPropertyDefinition<string>,
@@ -258,8 +252,11 @@ export function createInterpolatedProperty(
             );
 
             return {
-                interpolationMode,
-                zoomLevels,
+                interpolationMode:
+                    prop.interpolation !== undefined
+                        ? InterpolationMode[prop.interpolation]
+                        : InterpolationMode.Discrete,
+                zoomLevels: propKeys,
                 values: propValues,
                 exponent: prop.exponent,
                 _stringEncodedNumeralType: matchedFormat.type,
