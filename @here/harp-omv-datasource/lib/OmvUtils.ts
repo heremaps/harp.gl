@@ -80,7 +80,7 @@ export function world2tile(
     decodeInfo: OmvDecoder.DecodeInfo,
     position: THREE.Vector2,
     flipY: boolean = false,
-    target: THREE.Vector2 = new THREE.Vector2()
+    target: THREE.Vector2
 ): THREE.Vector2 {
     const { north, west } = decodeInfo.geoBox;
     const N = Math.log2(extents);
@@ -99,6 +99,8 @@ export function world2tile(
     );
 }
 
+const tempWorldPos = new THREE.Vector2();
+
 export function webMercatorTile2TargetWorld(
     extents: number,
     decodeInfo: OmvDecoder.DecodeInfo,
@@ -106,7 +108,7 @@ export function webMercatorTile2TargetWorld(
     target: THREE.Vector3,
     flipY: boolean = false
 ) {
-    const worldPos = tile2world(extents, decodeInfo, position, flipY);
+    const worldPos = tile2world(extents, decodeInfo, position, flipY, tempWorldPos);
     target.set(worldPos.x, worldPos.y, 0);
     decodeInfo.targetProjection
         .reprojectPoint(webMercatorProjection, target, target)
