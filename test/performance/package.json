@@ -9,12 +9,14 @@
     "devDependencies": {
         "@here/harp-datasource-protocol": "^0.10.0",
         "@here/harp-geoutils": "^0.10.0",
+        "@here/harp-lines": "^0.10.0",
         "@here/harp-omv-datasource": "^0.10.0",
         "@here/harp-mapview": "^0.10.0",
         "@here/harp-test-utils": "^0.10.0",
         "@here/harp-examples": "^0.10.0",
         "@types/chai": "^4.2.2",
-        "chai": "^4.2.0"
+        "chai": "^4.2.0",
+        "three": "^0.108.0"
     },
     "license": "Apache-2.0"
 }
