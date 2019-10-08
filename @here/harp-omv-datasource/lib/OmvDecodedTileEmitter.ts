@@ -76,6 +76,7 @@ const tempFootDisp = new THREE.Vector3();
 const tempRoofDisp = new THREE.Vector3();
 
 const tmpV2 = new THREE.Vector2();
+const tmpV2r = new THREE.Vector2();
 const tmpV3 = new THREE.Vector3();
 
 const tempP0 = new THREE.Vector2();
@@ -1187,7 +1188,8 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                                 extents,
                                 this.m_decodeInfo,
                                 tmpV2.set(posAttr.array[i], posAttr.array[i + 1]),
-                                true
+                                true,
+                                tmpV2r
                             );
                             vertices.push(tilePos.x, tilePos.y);
                             if (texCoordType !== undefined) {
