@@ -161,6 +161,8 @@ export function createLineGeometry(
         isClosed = isClosed && polyline[j] === polyline[polyline.length - 3 + j];
     }
 
+    const tmpVertices: number[] = [];
+
     const addVertexPair = (
         i: number,
         T1: number,
@@ -168,47 +170,58 @@ export function createLineGeometry(
         segment: number,
         extrusionCoord: number
     ) => {
-        for (let v = -1; v <= 1; v += 2) {
-            // Store the segment and extrusionCoord attributes.
-            geometry.vertices.push(segment, extrusionCoord * v, lineLength);
+        tmpVertices.length = 0;
 
-            // Store the position attribute (component-dependant).
-            for (let j = 0; j < 3; ++j) {
-                if (!highPrecision) {
-                    geometry.vertices.push(polyline[i * 3 + j]);
-                } else {
-                    const highComp = Math.fround(polyline[i * 3 + j]);
-                    const lowComp = polyline[i * 3 + j] - highComp;
-                    geometry.vertices.push(highComp, lowComp);
-                }
-                tmpNormal.setComponent(j, polyline[i * 3 + j]);
-            }
+        // Store the segment and extrusionCoord attributes.
+        geometry.vertices.push(segment, extrusionCoord * -1, lineLength);
+        tmpVertices.push(segment, extrusionCoord * 1, lineLength);
 
-            // Store the bitangent attribute (component-dependant).
-            for (let j = 0; j < 3; ++j) {
-                tmpTangent0.setComponent(j, tangents[T1 + j]);
-                tmpTangent1.setComponent(j, tangents[T2 + j]);
+        // Store the position attribute (component-dependant).
+        for (let j = 0; j < 3; ++j) {
+            if (!highPrecision) {
+                geometry.vertices.push(polyline[i * 3 + j]);
+                tmpVertices.push(polyline[i * 3 + j]);
+            } else {
+                const highComp = Math.fround(polyline[i * 3 + j]);
+                const lowComp = polyline[i * 3 + j] - highComp;
+                geometry.vertices.push(highComp, lowComp);
+                tmpVertices.push(highComp, lowComp);
             }
-            geometry.vertices.push(...tmpTangent0.normalize().toArray());
-            const angle = computeBitangent(
-                isFlat ? tmpNormal.set(0, 0, 1) : tmpNormal.add(center).normalize(),
-                tmpTangent0,
-                tmpTangent1.normalize(),
-                tmpBitangent
-            );
-            geometry.vertices.push(...tmpBitangent.toArray(), angle);
+            tmpNormal.setComponent(j, polyline[i * 3 + j]);
+        }
 
-            if (hasTexCoords) {
-                // uvs
-                geometry.vertices.push(uvs![i * 2], uvs![i * 2 + 1]);
-                // normals
-                geometry.vertices.push(...tmpNormal.toArray());
-            }
+        // Store the bitangent attribute (component-dependant).
+        for (let j = 0; j < 3; ++j) {
+            tmpTangent0.setComponent(j, tangents[T1 + j]);
+            tmpTangent1.setComponent(j, tangents[T2 + j]);
+        }
+        tmpTangent0.normalize();
+        geometry.vertices.push(tmpTangent0.x, tmpTangent0.y, tmpTangent0.z);
+        tmpVertices.push(tmpTangent0.x, tmpTangent0.y, tmpTangent0.z);
+        const angle = computeBitangent(
+            isFlat ? tmpNormal.set(0, 0, 1) : tmpNormal.add(center).normalize(),
+            tmpTangent0,
+            tmpTangent1.normalize(),
+            tmpBitangent
+        );
+        geometry.vertices.push(tmpBitangent.x, tmpBitangent.y, tmpBitangent.z, angle);
+        tmpVertices.push(tmpBitangent.x, tmpBitangent.y, tmpBitangent.z, angle);
 
-            // Add vertex colors (if supplied).
-            if (vertexColors) {
-                geometry.vertexColors.push(colors![i * 3], colors![i * 3 + 1], colors![i * 3 + 2]);
-            }
+        if (hasTexCoords) {
+            // uvs
+            geometry.vertices.push(uvs![i * 2], uvs![i * 2 + 1]);
+            tmpVertices.push(uvs![i * 2], uvs![i * 2 + 1]);
+            // normals
+            geometry.vertices.push(tmpNormal.x, tmpNormal.y, tmpNormal.z);
+            tmpVertices.push(tmpNormal.x, tmpNormal.y, tmpNormal.z);
+        }
+
+        geometry.vertices.push(...tmpVertices);
+
+        // Add vertex colors (if supplied).
+        if (vertexColors) {
+            geometry.vertexColors.push(colors![i * 3], colors![i * 3 + 1], colors![i * 3 + 2]);
+            geometry.vertexColors.push(colors![i * 3], colors![i * 3 + 1], colors![i * 3 + 2]);
         }
     };
 
