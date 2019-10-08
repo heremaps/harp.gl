@@ -325,7 +325,7 @@ export class OmvDataSource extends TileDataSource<OmvTile> {
         languages?: string[],
         options?: OptionsMap
     ) {
-        this.m_tileLoaderCache.clear();
+        this.clearCache();
         this.decoder.configure(styleSet, definitions, languages, options);
         this.mapView.markTilesDirty(this);
     }
