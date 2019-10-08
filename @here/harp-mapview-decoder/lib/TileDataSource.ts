@@ -167,6 +167,10 @@ export class TileDataSource<TileType extends Tile> extends DataSource {
         this.useGeometryLoader = true;
         this.cacheable = true;
         this.m_tileLoaderCache = new LRUCache<number, TileLoader>(this.getCacheCount());
+        this.m_tileLoaderCache.evictionCallback = (_, tileLoader) => {
+            // Cancel any pending downloads as early as possible.
+            tileLoader.cancel();
+        };
     }
 
     dispose() {
@@ -217,7 +221,7 @@ export class TileDataSource<TileType extends Tile> extends DataSource {
     }
 
     clearCache() {
-        this.m_tileLoaderCache.clear();
+        this.m_tileLoaderCache.evictAll();
     }
 
     /**
