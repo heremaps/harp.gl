@@ -66,10 +66,15 @@ export class LRUCache<Key, Value> {
     private m_sizeFunction: (v: Value) => number;
 
     /**
-     * Creates a new instance of `LRUCache`. The optional sizeFunction can be used
-     * fine tune the size required to cache that item.
+     * Creates a new instance of `LRUCache`.
      *
-     * @param cacheCapacity The maximum number of entries to store in the cache.
+     * The optional [[sizeFunction]] can be used to fine tune the memory consumption of all cached
+     * elements, thus [[cacheCapacity]] means then memory used (in MBs). Otherwise, if
+     * [[sizeFunction]] is not specified, the [[cacheCapacity]] accounts for the maximum
+     * number of elements stored.
+     *
+     * @param cacheCapacity Number used to configure the maximum cache size, may express
+     * number of entries or memory consumed in megabytes depending on [[sizeFunction]].
      * @param sizeFunction A function determining the size per element.
      */
     constructor(cacheCapacity: number, sizeFunction: (v: Value) => number = () => 1) {
@@ -106,8 +111,9 @@ export class LRUCache<Key, Value> {
     }
 
     /**
-     * Returns the maximum capacity of the cache, i.e. the maximum number of elements this cache can
-     * contain.
+     * Returns the maximum capacity of the cache, i.e. the maximum number of elements this cache
+     * can contain or the total amount of memory that may be consumed by cache if element size
+     * function was specified in cache c-tor.
      *
      * @returns The capacity of the cache.
      */
