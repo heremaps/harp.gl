@@ -4,6 +4,6 @@ doc/
 test-npm-packages-app/
 .vscode/
 .DS_Store
-
+.nyc_output/
 
 credentials.js
