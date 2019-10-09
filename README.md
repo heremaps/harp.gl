@@ -161,6 +161,44 @@ npx mocha-webdriver-runner http://localhost:8081/ --chrome
 npx mocha-webdriver-runner http://localhost:8081/ --headless-firefox
 ```
 
+### Run performance tests in Node.js environment
+
+As for now, there is no baseline for performance tests results, so before examining performance one
+have to establish baseline:
+
+Performance test steps
+
+1) Establish baseline results.
+
+```
+$ git checkout master
+PROFILEHELPER_COMMAND=baseline yarn performance-test-node # create baseline of measurements for your particular platform
+```
+
+> Note, that performance test suite is very limited, so it is highly possible that you
+> have to write new dedicated performance test for code that is about to be optimized.
+> See `tests/performance` for examples.
+
+2) Go back to your branch, change stuff and
+
+3) Rerun tests with your changes
+
+```
+yarn performance-test-node --grep lines # assuming you're playing with lines
+```
+
+4) Examine output:
+
+```
+...
+
+performance createLineGeometry segments=2
+  min=0.0014ms (-2.44% vs 0.0014ms) sum=999.16ms (0% vs 999.12ms) repeats=499568.00 (-6.47% vs 534131.00) throughput=499988.43/s (-6.47% vs 534600.13/s)
+  avg=0.002ms (6.92% vs 0.0019ms) med=0.0015ms (0.2% vs 0.0015ms) med95=0.0031ms (17.6% vs 0.0026ms)
+  gcTime=39.6195ms (-3.39% vs 41.011ms) sumNoGc=959.54ms (0.15% vs 958.11ms) throughputNoGc=520633.00/s (-6.61% vs 557461.83/s)
+```
+
+
 ### Generate documentation
 
 Run:
