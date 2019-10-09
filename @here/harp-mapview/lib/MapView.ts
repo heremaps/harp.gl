@@ -1810,7 +1810,7 @@ export class MapView extends THREE.EventDispatcher {
         }
         dataSource.detach(this);
 
-        this.m_visibleTiles.removeDataSource(dataSource.name);
+        this.m_visibleTiles.removeDataSource(dataSource);
         this.m_tileDataSources.splice(dsIndex, 1);
         this.m_connectedDataSources.delete(dataSource.name);
         this.m_failedDataSources.delete(dataSource.name);
@@ -2247,14 +2247,14 @@ export class MapView extends THREE.EventDispatcher {
      * @param dataSourceName The name of the [[DataSource]].
      */
     clearTileCache(dataSourceName?: string) {
-        this.m_visibleTiles.clearTileCache(dataSourceName);
-
         if (dataSourceName !== undefined) {
             const dataSource = this.getDataSourceByName(dataSourceName);
             if (dataSource) {
+                this.m_visibleTiles.clearTileCache(dataSource);
                 dataSource.clearCache();
             }
         } else {
+            this.m_visibleTiles.clearTileCache();
             this.m_tileDataSources.forEach(dataSource => dataSource.clearCache());
         }
 
