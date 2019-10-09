@@ -89,6 +89,7 @@ function checkImports() {
         let env = "browser";
         const relativePath = path.relative(__dirname + "/../@here", sourceFile);
         const moduleName = "@here/" + relativePath.split(path.sep)[0];
+        const modulePath = path.resolve(__dirname + "/../", moduleName);
 
         const environmentMatch = environmentRE.exec(contents);
         if (environmentMatch) {
@@ -155,12 +156,9 @@ function checkImports() {
                     importedModule
                 );
 
-                if (
-                    path.dirname(resolvedImportedModule) === path.resolve(__dirname + "/../@here")
-                ) {
-                    const importedModuleName = importedModule.split("/").slice(-1)[0];
+                if (!path.dirname(resolvedImportedModule).startsWith(modulePath)) {
                     errors.push(
-                        `Error: the module @here/${importedModuleName} is imported via a relative path in ${moduleName}`
+                        `Error: the module ${importedModule} is imported via a relative path in ${sourceFile}`
                     );
                 }
             }
