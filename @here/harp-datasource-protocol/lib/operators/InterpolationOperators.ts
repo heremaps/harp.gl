@@ -13,14 +13,19 @@ import { InterpolatedPropertyDefinition } from "../InterpolatedPropertyDefs";
  * Evaluates the given piecewise function.
  */
 function step(context: ExprEvaluatorContext, args: Expr[]) {
+    if (args.length < 3 || args.length % 2) {
+        throw new Error("not enough arguments");
+    }
+
     const value = context.evaluate(args[0]) as number;
+
+    if (value === null) {
+        // returns the default value of step.
+        return context.evaluate(args[1]);
+    }
 
     if (typeof value !== "number") {
         throw new Error(`the input of a 'step' operator must have type 'number'`);
-    }
-
-    if (args.length < 3 || args.length % 2) {
-        throw new Error("not enough arguments");
     }
 
     let first = 1;
