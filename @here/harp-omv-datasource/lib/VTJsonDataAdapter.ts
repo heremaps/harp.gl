@@ -108,12 +108,12 @@ export class VTJsonDataAdapter implements OmvDataAdapter {
     process(tile: VTJsonTileInterface, tileKey: TileKey, geoBox: GeoBox) {
         for (const feature of tile.features) {
             const env = new MapEnv({
-                ...feature.tags,
                 $layer: tile.layer,
                 $geometryType: this.convertGeometryType(feature.type),
                 $level: tileKey.level,
                 $zoom: Math.max(0, tileKey.level - (this.m_processor.storageLevelOffset || 0)),
-                id: feature.id
+                $id: feature.id,
+                ...feature.tags
             });
 
             switch (feature.type) {

@@ -62,7 +62,7 @@ export class GeoJsonTiler implements ITiler {
                 buffer: 0, // tile buffer on each side
                 lineMetrics: false, // whether to calculate line metrics
                 promoteId: null, // name of a feature property to be promoted to feature.id
-                generateId: false, // whether to generate feature ids. Cannot be used with promoteId
+                generateId: true, // whether to generate feature ids. Cannot be used with promoteId
                 debug: 0 // logging level (0, 1 or 2)
             })
         );
@@ -73,6 +73,10 @@ export class GeoJsonTiler implements ITiler {
         if (index === undefined) {
             throw new Error("Tile not found");
         }
-        return index.getTile(tileKey.level, tileKey.column, tileKey.row) || {};
+        const tile = index.getTile(tileKey.level, tileKey.column, tileKey.row);
+        if (tile !== null) {
+            tile.layer = indexId;
+        }
+        return tile || {};
     }
 }
