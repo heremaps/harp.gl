@@ -8,10 +8,10 @@
 
 import { assert } from "chai";
 
-import { getProjection, Theme } from "@here/harp-datasource-protocol";
+import { Theme } from "@here/harp-datasource-protocol";
 import { StyleSetEvaluator } from "@here/harp-datasource-protocol/index-decoder";
 import { accessToken } from "@here/harp-examples/config";
-import { TileKey } from "@here/harp-geoutils";
+import { sphereProjection, TileKey, webMercatorProjection } from "@here/harp-geoutils";
 import { ThemeLoader } from "@here/harp-mapview";
 import { APIFormat, OmvRestClient, OmvRestClientParameters } from "@here/harp-omv-datasource";
 import { OmvDecoder } from "@here/harp-omv-datasource/lib/OmvDecoder";
@@ -63,7 +63,6 @@ export function createOMVDecoderPerformanceTest(
         let omvTiles: Array<[TileKey, ArrayBuffer]>;
         let theme: Theme;
 
-        const counterName = `OMVDecoderPerformanceTest-${name}`;
         before(async function() {
             this.timeout(10000);
             const omvDataProvider = new OmvRestClient(options.omvRestClientOptions);
@@ -84,9 +83,31 @@ export function createOMVDecoderPerformanceTest(
             assert.isArray(theme.styles![styleSetName]);
         });
 
-        it(`measure decode time`, async () => {
+        it(`measure decode time - webMercator`, async () => {
+            const counterName = `OMVDecoderPerformanceTest-${name} webMercator`;
             this.timeout(0);
-            const projection = getProjection("mercator");
+
+            const projection = webMercatorProjection;
+
+            const styleSetEvaluator = new StyleSetEvaluator(
+                theme.styles![styleSetName],
+                theme.definitions
+            );
+
+            await measurePerformanceSync(counterName, repeats, function() {
+                for (const [tileKey, tileData] of omvTiles) {
+                    const decoder = new OmvDecoder(projection, styleSetEvaluator, false);
+                    decoder.getDecodedTile(tileKey, tileData);
+                }
+            });
+        });
+
+        it(`measure decode time - sphereProjection`, async () => {
+            this.timeout(0);
+
+            const counterName = `OMVDecoderPerformanceTest-${name} sphere`;
+
+            const projection = sphereProjection;
 
             const styleSetEvaluator = new StyleSetEvaluator(
                 theme.styles![styleSetName],
