@@ -566,7 +566,7 @@ describe("ExprEvaluator", function() {
 
             assert.throws(
                 () => evaluate(["step", ["get", "x"]], { x: "text" }, ExprScope.Condition),
-                "the input of a 'step' operator must have type 'number'"
+                "not enough arguments"
             );
 
             assert.throws(
@@ -753,5 +753,14 @@ describe("ExprEvaluator", function() {
                 }
             });
         }
+
+        it("default value of a step", function() {
+            assert.strictEqual(
+                evaluate(["step", ["get", "x"], "default value", 0, "value"], {
+                    x: null
+                }),
+                "default value"
+            );
+        });
     });
 });
