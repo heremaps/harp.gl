@@ -46,11 +46,6 @@ export interface VisibleTileSetOptions {
     clipPlanesEvaluator: ClipPlanesEvaluator;
 
     /**
-     * Limit of tiles that can be visible per datasource.
-     */
-    maxVisibleDataSourceTiles: number;
-
-    /**
      * In addition to the simple frustum culling also do additional checks with [[MapTileCuller]].
      */
     extendedFrustumCulling: boolean;
@@ -232,22 +227,6 @@ export class VisibleTileSet {
     }
 
     /**
-     * Retrieves maximum number of visible tiles.
-     */
-    getNumberOfVisibleTiles() {
-        return this.options.maxVisibleDataSourceTiles;
-    }
-
-    /**
-     * Sets maximum number of visible tiles.
-     *
-     * @param size size of visible tiles array
-     */
-    setNumberOfVisibleTiles(size: number) {
-        this.options.maxVisibleDataSourceTiles = size;
-    }
-
-    /**
      * The way the cache usage is computed, either based on size in MB (mega bytes) or in number of
      * tiles.
      */
@@ -326,13 +305,7 @@ export class VisibleTileSet {
             let numTilesLoading = 0;
             // Create actual tiles only for the allowed number of visible tiles
             const displayZoomLevel = dataSource.getDisplayZoomLevel(zoomLevel);
-            for (
-                let i = 0;
-                i < visibleTileKeys.length &&
-                actuallyVisibleTiles.length < this.options.maxVisibleDataSourceTiles;
-                i++
-            ) {
-                const tileEntry = visibleTileKeys[i];
+            for (const tileEntry of visibleTileKeys) {
                 if (!dataSource.shouldRender(displayZoomLevel, tileEntry.tileKey)) {
                     continue;
                 }

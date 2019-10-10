@@ -343,13 +343,6 @@ export interface MapViewOptions {
     extendedFrustumCulling?: boolean;
 
     /**
-     * The maximum number of tiles rendered from one data source at a time.
-     *
-     * @default See [[MapViewDefaults.maxVisibleDataSourceTiles]].
-     */
-    maxVisibleDataSourceTiles?: number;
-
-    /**
      * Size of a tile cache for one data source.
      *
      * @default See [[MapViewDefaults.tileCacheSize]].
@@ -608,7 +601,6 @@ export const MapViewDefaults = {
     projection: mercatorProjection,
     clipPlanesEvaluator: defaultClipPlanesEvaluator,
 
-    maxVisibleDataSourceTiles: 120,
     extendedFrustumCulling: true,
 
     tileCacheSize: 200,
@@ -818,11 +810,6 @@ export class MapView extends THREE.EventDispatcher {
 
         if (options.extendedFrustumCulling !== undefined) {
             this.m_visibleTileSetOptions.extendedFrustumCulling = options.extendedFrustumCulling;
-        }
-
-        if (options.maxVisibleDataSourceTiles !== undefined) {
-            this.m_visibleTileSetOptions.maxVisibleDataSourceTiles =
-                options.maxVisibleDataSourceTiles;
         }
 
         if (options.tileCacheSize !== undefined) {
@@ -1090,21 +1077,30 @@ export class MapView extends THREE.EventDispatcher {
 
     /**
      * Returns the cache size.
+     *
+     * @see setCacheSize.
      */
     getCacheSize(): number {
         return this.m_visibleTiles.getDataSourceCacheSize();
     }
 
     /**
-     * Sets the cache size in number of tiles.
+     * Sets the cache size as number of tiles or memory consumed in total.
+     *
+     * The meaning of cache size depends on [[resourceComputationType]], if its set to
+     * [[ResourceComputationType.EstimationInMb]] then cache size is measured in megabytes,
+     * otherwise - [[ResourceComputationType.NumberOfTiles]] accounts simply for number of tiles
+     * cached. This function also allows to set new strategy for [[resourceComputationType]] via
+     * optional parameter.
      *
      * @param size The cache size in tiles.
-     * @param numVisibleTiles The number of tiles visible, which is size/2 by default.
+     * @param rct The optional parameter that defines how cache size is measured.
      */
-    setCacheSize(size: number, numVisibleTiles?: number): void {
+    setCacheSize(size: number, rct?: ResourceComputationType): void {
+        if (rct !== undefined) {
+            this.m_visibleTiles.resourceComputationType = rct;
+        }
         this.m_visibleTiles.setDataSourceCacheSize(size);
-        numVisibleTiles = numVisibleTiles !== undefined ? numVisibleTiles : size / 2;
-        this.m_visibleTiles.setNumberOfVisibleTiles(Math.floor(numVisibleTiles));
         this.updateImages();
         this.updateLighting();
 
