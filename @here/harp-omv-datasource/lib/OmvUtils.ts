@@ -45,6 +45,32 @@ export function tile2lat(y: number, level: number): number {
     return (180 / Math.PI) * Math.atan(0.5 * (Math.exp(n) - Math.exp(-n)));
 }
 
+export interface WorldTileProjectionCookie {
+    extents: number;
+    top: number;
+    left: number;
+    scale: number;
+}
+
+export function createWorldTileTransformationCookie(
+    extents: number,
+    decodeInfo: OmvDecoder.DecodeInfo
+) {
+    const { north, west } = decodeInfo.geoBox;
+    const N = Math.log2(extents);
+    const scale = Math.pow(2, decodeInfo.tileKey.level + N);
+    return {
+        extents,
+        scale,
+        top: lat2tile(
+            north,
+            decodeInfo.tileKey.level + N,
+            decodeInfo.adapterId === VTJsonDataAdapterId ? Math.round : Math.floor
+        ),
+        left: ((west + 180) / 360) * scale
+    };
+}
+
 /**
  * @hidden
  */
@@ -53,17 +79,19 @@ export function tile2world(
     decodeInfo: OmvDecoder.DecodeInfo,
     position: THREE.Vector2,
     flipY: boolean = false,
-    target: THREE.Vector2 = new THREE.Vector2()
+    target: THREE.Vector2
 ): THREE.Vector2 {
-    const { north, west } = decodeInfo.geoBox;
-    const N = Math.log2(extents);
-    const scale = Math.pow(2, decodeInfo.tileKey.level + N);
-    const top = lat2tile(
-        north,
-        decodeInfo.tileKey.level + N,
-        decodeInfo.adapterId === VTJsonDataAdapterId ? Math.round : Math.floor
-    );
-    const left = ((west + 180) / 360) * scale;
+    if (
+        decodeInfo.worldTileProjectionCookie === undefined ||
+        decodeInfo.worldTileProjectionCookie.extents !== extents
+    ) {
+        decodeInfo.worldTileProjectionCookie = createWorldTileTransformationCookie(
+            extents,
+            decodeInfo
+        );
+    }
+
+    const { top, left, scale } = decodeInfo.worldTileProjectionCookie;
     const R = EarthConstants.EQUATORIAL_CIRCUMFERENCE;
 
     return target.set(
@@ -82,15 +110,16 @@ export function world2tile(
     flipY: boolean = false,
     target: THREE.Vector2
 ): THREE.Vector2 {
-    const { north, west } = decodeInfo.geoBox;
-    const N = Math.log2(extents);
-    const scale = Math.pow(2, decodeInfo.tileKey.level + N);
-    const top = lat2tile(
-        north,
-        decodeInfo.tileKey.level + N,
-        decodeInfo.adapterId === VTJsonDataAdapterId ? Math.round : Math.floor
-    );
-    const left = ((west + 180) / 360) * scale;
+    if (
+        decodeInfo.worldTileProjectionCookie === undefined ||
+        decodeInfo.worldTileProjectionCookie.extents !== extents
+    ) {
+        decodeInfo.worldTileProjectionCookie = createWorldTileTransformationCookie(
+            extents,
+            decodeInfo
+        );
+    }
+    const { top, left, scale } = decodeInfo.worldTileProjectionCookie;
     const R = EarthConstants.EQUATORIAL_CIRCUMFERENCE;
 
     return target.set(
