@@ -26,6 +26,92 @@ export interface ExprVisitor<Result, Context> {
     visitCaseExpr(expr: CaseExpr, context: Context): Result;
 }
 
+/**
+ * The dependencies of an [[Expr]].
+ */
+export class ExprDependencies {
+    /**
+     * The properties needed to evaluate the [[Expr]].
+     */
+    readonly properties = new Set<string>();
+
+    /**
+     * `true` if the [[Expr]] depends on zoom level. Default is `false`.
+     */
+    zoom?: boolean;
+}
+
+class ComputeExprDependencies implements ExprVisitor<void, ExprDependencies> {
+    static instance = new ComputeExprDependencies();
+
+    /**
+     * Gets the dependencies of an [[Expr]].
+     *
+     * @param expr The [[Expr]] to process.
+     * @param scope The evaluation scope. Defaults to [[ExprScope.Value]].
+     * @param dependencies The output [[Set]] of dependency names.
+     */
+    static of(expr: Expr) {
+        const dependencies = new ExprDependencies();
+        expr.accept(this.instance, dependencies);
+        return dependencies;
+    }
+
+    visitNullLiteralExpr(expr: NullLiteralExpr, context: ExprDependencies): void {
+        // nothing to do
+    }
+
+    visitBooleanLiteralExpr(expr: BooleanLiteralExpr, context: ExprDependencies): void {
+        // nothing to do
+    }
+
+    visitNumberLiteralExpr(expr: NumberLiteralExpr, context: ExprDependencies): void {
+        // nothing to do
+    }
+
+    visitStringLiteralExpr(expr: StringLiteralExpr, context: ExprDependencies): void {
+        // nothing to do
+    }
+
+    visitObjectLiteralExpr(expr: ObjectLiteralExpr, context: ExprDependencies): void {
+        // nothing to do
+    }
+
+    visitVarExpr(expr: VarExpr, context: ExprDependencies): void {
+        context.properties.add(expr.name);
+    }
+
+    visitHasAttributeExpr(expr: HasAttributeExpr, context: ExprDependencies): void {
+        context.properties.add(expr.name);
+    }
+
+    visitContainsExpr(expr: ContainsExpr, context: ExprDependencies): void {
+        expr.value.accept(this, context);
+    }
+
+    visitCallExpr(expr: CallExpr, context: ExprDependencies): void {
+        if (expr.op === "zoom" && expr.children.length === 0) {
+            context.zoom = true;
+        } else {
+            expr.children.forEach(childExpr => childExpr.accept(this, context));
+        }
+    }
+
+    visitMatchExpr(expr: MatchExpr, context: ExprDependencies): void {
+        expr.value.accept(this, context);
+        expr.branches.forEach(([_, branch]) => branch.accept(this, context));
+        expr.fallback.accept(this, context);
+    }
+
+    visitCaseExpr(expr: CaseExpr, context: ExprDependencies): void {
+        expr.branches.forEach(([condition, branch]) => {
+            condition.accept(this, context);
+            branch.accept(this, context);
+        });
+        expr.fallback.accept(this, context);
+    }
+}
+
 export type JsonExpr = unknown[];
 
 export function isJsonExpr(v: any): v is JsonExpr {
@@ -299,6 +385,13 @@ export abstract class Expr {
             exprEvaluator,
             new ExprEvaluatorContext(exprEvaluator, env, scope, cache)
         );
+    }
+
+    /**
+     * Gets the dependencies of this [[Expr]].
+     */
+    dependencies(): ExprDependencies {
+        return ComputeExprDependencies.of(this);
     }
 
     /**
