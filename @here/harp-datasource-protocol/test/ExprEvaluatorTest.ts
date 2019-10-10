@@ -34,6 +34,14 @@ describe("ExprEvaluator", function() {
         return Expr.fromJSON(expr).evaluate(env, scope);
     }
 
+    function dependencies(json: unknown) {
+        const deps = Expr.fromJSON(json).dependencies();
+        return {
+            properties: Array.from(deps.properties).sort(),
+            zoom: deps.zoom || false
+        };
+    }
+
     describe("Operator 'all'", function() {
         it("evaluate", function() {
             assert.isTrue(
@@ -762,5 +770,41 @@ describe("ExprEvaluator", function() {
                 "default value"
             );
         });
+    });
+
+    it("Dependencies", function() {
+        assert.deepEqual(dependencies(true), { properties: [], zoom: false });
+        assert.deepEqual(dependencies(["get", "x"]), { properties: ["x"], zoom: false });
+        assert.deepEqual(dependencies(["has", "x"]), { properties: ["x"], zoom: false });
+
+        assert.deepEqual(
+            dependencies(["interpolate", ["exponential", 2], ["zoom"], 0, 0, 1, 1, ["get", "max"]]),
+            { properties: ["max"], zoom: true }
+        );
+
+        assert.deepEqual(dependencies(["step", ["zoom"], "default", 5, "a", 10, "b"]), {
+            properties: [],
+            zoom: true
+        });
+
+        assert.deepEqual(dependencies(["match", ["get", "two"], [0, 1], false, 2, true, false]), {
+            properties: ["two"],
+            zoom: false
+        });
+
+        assert.deepEqual(
+            dependencies([
+                "case",
+                ["get", "x"],
+                "result1",
+                ["step", ["zoom"], "default", 5, "a", 10, "b"],
+                "result2",
+                ["get", "fallback-value"]
+            ]),
+            {
+                properties: ["fallback-value", "x"],
+                zoom: true
+            }
+        );
     });
 });
