@@ -133,6 +133,7 @@ export async function measurePerformanceSync(name: string, repeats: number, test
     for (let i = 0; i < repeats / 2; i++) {
         test();
     }
+    await sleepPromised(2);
 
     // actual test
     const samples = new Array(repeats);
@@ -193,6 +194,7 @@ export async function measureThroughputSync(name: string, testDuration: number, 
         test();
         now = getCurrentTime();
     }
+    await sleepPromised(2);
 
     // actual test
     const samples: number[] = [];
@@ -514,6 +516,12 @@ function loadBaseLineIfAvailable() {
         console.log(`#performance loading baseline from ${baselineFileName}`);
         return JSON.parse(fs.readFileSync(baselineFileName, "utf-8"));
     }
+}
+
+function sleepPromised(time: number = 1): Promise<void> {
+    return new Promise(resolve => {
+        setTimeout(resolve, time);
+    });
 }
 
 /**
