@@ -51,6 +51,7 @@ import {
 } from "./OmvDecoderDefs";
 import { OmvTileInfoEmitter } from "./OmvTileInfoEmitter";
 import { OmvTomTomFeatureModifier } from "./OmvTomTomFeatureModifier";
+import { WorldTileProjectionCookie } from "./OmvUtils";
 import { StyleSetDataFilter } from "./StyleSetDataFilter";
 import { VTJsonDataAdapter } from "./VTJsonDataAdapter";
 
@@ -518,6 +519,8 @@ export namespace OmvDecoder {
          * @deprecated
          */
         readonly projectedTileBounds = new THREE.Box3();
+
+        worldTileProjectionCookie?: WorldTileProjectionCookie;
 
         /**
          * Constructs a new [[DecodeInfo]].

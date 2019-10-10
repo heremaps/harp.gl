@@ -865,7 +865,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
               }
             : texCoordType === TextureCoordinateType.EquirectangularSpace
             ? (tilePos: THREE.Vector2, extents: number) => {
-                  const worldPos = tile2world(extents, this.m_decodeInfo, tilePos);
+                  const worldPos = tile2world(extents, this.m_decodeInfo, tilePos, false, tmpV2r);
                   const { x: u, y: v } = normalizedEquirectangularProjection.reprojectPoint(
                       webMercatorProjection,
                       new THREE.Vector3(worldPos.x, worldPos.y, 0)
@@ -1144,7 +1144,8 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                                 extents,
                                 this.m_decodeInfo,
                                 tmpV2.set(vertices[i], vertices[i + 1]),
-                                true
+                                true,
+                                tmpV2r
                             );
                             positionArray.push(worldPos.x, worldPos.y, 0);
                             if (texCoordType !== undefined) {
