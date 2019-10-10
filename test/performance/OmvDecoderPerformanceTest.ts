@@ -9,11 +9,17 @@
 import { assert } from "chai";
 
 import { Theme } from "@here/harp-datasource-protocol";
-import { StyleSetEvaluator } from "@here/harp-datasource-protocol/index-decoder";
+import { MapEnv, StyleSetEvaluator } from "@here/harp-datasource-protocol/index-decoder";
 import { accessToken } from "@here/harp-examples/config";
 import { sphereProjection, TileKey, webMercatorProjection } from "@here/harp-geoutils";
 import { ThemeLoader } from "@here/harp-mapview";
 import { APIFormat, OmvRestClient, OmvRestClientParameters } from "@here/harp-omv-datasource";
+import {
+    IGeometryProcessor,
+    ILineGeometry,
+    IPolygonGeometry
+} from "@here/harp-omv-datasource/lib/IGeometryProcessor";
+import { OmvProtobufDataAdapter } from "@here/harp-omv-datasource/lib/OmvData";
 import { OmvDecoder } from "@here/harp-omv-datasource/lib/OmvDecoder";
 import { getTestResourceUrl } from "@here/harp-test-utils/index.web";
 import { measurePerformanceSync } from "@here/harp-test-utils/lib/ProfileHelper";
@@ -81,6 +87,53 @@ export function createOMVDecoderPerformanceTest(
             theme = await ThemeLoader.load(options.theme);
             assert.isObject(theme.styles);
             assert.isArray(theme.styles![styleSetName]);
+        });
+
+        it(`measure feature matching time`, async () => {
+            const counterName = `OMVDecoderPerformanceTest-${name} styleMatchOnly`;
+            this.timeout(0);
+
+            const styleSetEvaluator = new StyleSetEvaluator(
+                theme.styles![styleSetName],
+                theme.definitions
+            );
+
+            const geometryProcessor: IGeometryProcessor = {
+                storageLevelOffset: 0,
+
+                processPointFeature(
+                    layerName: string,
+                    layerExtents: number,
+                    geometry: THREE.Vector2[],
+                    env: MapEnv
+                ) {
+                    styleSetEvaluator.getMatchingTechniques(env, layerName, "point");
+                },
+                processLineFeature(
+                    layerName: string,
+                    layerExtents: number,
+                    geometry: ILineGeometry[],
+                    env: MapEnv
+                ) {
+                    styleSetEvaluator.getMatchingTechniques(env, layerName, "line");
+                },
+
+                processPolygonFeature(
+                    layerName: string,
+                    layerExtents: number,
+                    geometry: IPolygonGeometry[],
+                    env: MapEnv
+                ) {
+                    styleSetEvaluator.getMatchingTechniques(env, layerName, "polygon");
+                }
+            };
+
+            await measurePerformanceSync(counterName, repeats, function() {
+                for (const [tileKey, tileData] of omvTiles) {
+                    const decoder = new OmvProtobufDataAdapter(geometryProcessor, undefined);
+                    decoder.process(tileData, tileKey);
+                }
+            });
         });
 
         it(`measure decode time - webMercator`, async () => {
