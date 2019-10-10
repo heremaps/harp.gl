@@ -429,7 +429,7 @@ export function reportPerformanceEntryWithBaseline(
                 ),
                 calculateThroughPutPerSeconds(
                     baseseLineStats.repeats,
-                    currentStats.sum - baseseLineStats.gcTime
+                    baseseLineStats.sum - baseseLineStats.gcTime
                 ),
                 "/s"
             )
