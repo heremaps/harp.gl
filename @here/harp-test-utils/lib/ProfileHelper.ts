@@ -25,6 +25,7 @@ export interface PerformanceTestStats {
     avg: number;
     med: number;
     med95: number;
+    sd: number;
     repeats: number;
     gcTime?: number;
 }
@@ -84,8 +85,9 @@ export function calculateStats(samples: number[], gcTime?: number): PerformanceT
 
     const mid95 = Math.floor(samples.length * 0.95);
     const med95 = samples[mid95];
+    const sd = Math.sqrt(samples.reduce((r, sample) => r + (sample - avg) ** 2, 0) / (repeats - 1));
 
-    return { min, sum, gcTime, avg, med, med95, repeats };
+    return { min, sum, gcTime, avg, med, med95, sd, repeats };
 }
 
 /**
@@ -351,6 +353,7 @@ export function reportPerformanceEntry(entry: PerformanceTestResultEntry) {
     console.log(`  ${tagsToString(mainTags)}`);
     const averages = {
         avg: readableNum(stats.avg),
+        sd: readableNum(stats.sd),
         med: readableNum(stats.med),
         med95: readableNum(stats.med95)
     };
@@ -404,6 +407,7 @@ export function reportPerformanceEntryWithBaseline(
     };
     const averages = {
         avg: compare(currentStats.avg, baseseLineStats.avg),
+        sd: compare(currentStats.sd, baseseLineStats.sd, ""),
         med: compare(currentStats.med, baseseLineStats.med),
         med95: compare(currentStats.med95, baseseLineStats.med95)
     };
