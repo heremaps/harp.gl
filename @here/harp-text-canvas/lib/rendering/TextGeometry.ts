@@ -137,6 +137,8 @@ export class TextGeometry {
         this.m_bgMesh = new THREE.Mesh(this.m_geometry, backgroundMaterial);
         this.m_mesh.renderOrder = Number.MAX_SAFE_INTEGER;
         this.m_bgMesh.renderOrder = Number.MAX_SAFE_INTEGER - 1;
+        this.m_mesh.frustumCulled = false;
+        this.m_bgMesh.frustumCulled = false;
         this.scene.add(this.m_bgMesh, this.m_mesh);
     }
 
@@ -549,6 +551,8 @@ export class TextGeometry {
         this.m_bgMesh = new THREE.Mesh(this.m_geometry, this.m_bgMesh.material);
         this.m_mesh.renderOrder = Number.MAX_SAFE_INTEGER;
         this.m_bgMesh.renderOrder = Number.MAX_SAFE_INTEGER - 1;
+        this.m_mesh.frustumCulled = false;
+        this.m_bgMesh.frustumCulled = false;
         this.scene.add(this.m_bgMesh, this.m_mesh);
     }
 }

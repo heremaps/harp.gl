@@ -2865,6 +2865,7 @@ export class MapView extends THREE.EventDispatcher {
                 if (tile.localTangentSpace) {
                     object.setRotationFromMatrix(tile.boundingBox.getRotationMatrix());
                 }
+                object.frustumCulled = false;
                 this.m_mapTilesRoot.add(object);
             }
         }

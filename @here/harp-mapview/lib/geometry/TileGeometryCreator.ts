@@ -705,9 +705,6 @@ export class TileGeometryCreator {
                     isSolidLineTechnique(technique) && technique.secondaryWidth !== undefined;
 
                 const object = new ObjectCtor(bufferGeometry, material);
-
-                object.frustumCulled = false;
-
                 object.renderOrder = technique.renderOrder!;
 
                 if (group.renderOrderOffset !== undefined) {
