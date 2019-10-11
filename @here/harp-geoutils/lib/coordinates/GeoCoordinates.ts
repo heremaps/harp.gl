@@ -5,6 +5,8 @@
  */
 
 import { GeoCoordinatesLike } from "./GeoCoordinatesLike";
+import { GeoPointLike } from "./GeoPointLike";
+import { LatLngLike } from "./LatLngLike";
 
 import * as THREE from "three";
 
@@ -36,6 +38,38 @@ export class GeoCoordinates implements GeoCoordinatesLike {
             THREE.Math.radToDeg(longitude),
             altitude
         );
+    }
+
+    /**
+     * Creates a [[GeoCoordinates]] from a [[LatLngLike]] literal.
+     * ```typescript
+     * const center = { lat: 53.3, lng: 13.4 };
+     * mapView.geoCenter = GeoCoordinates.fromLatLng(center);
+     * ```
+     * @param latLng A [[LatLngLike]] object literal.
+     */
+    static fromLatLng(latLng: LatLngLike) {
+        return new GeoCoordinates(latLng.lat, latLng.lng);
+    }
+
+    /**
+     * Creates a [[GeoCoordinates]] from a [[GeoPointLike]] tuple.
+     *
+     * Example:
+     * ```typescript
+     * mapView.geoCenter = GeoCoordinates.fromGeoPoint([longitude, latitude]);
+     *
+     * let geoCoords: number[] = ...;
+     *
+     * if (isGeoPointLike(geoCoords)) {
+     *     const p = GeoCoordinates.fromGeoPoint(geoCoords);
+     * }
+     * ```
+     * @param geoPoint An [[Array]] of at least two elements following the order
+     * longitude, latitude, altitude.
+     */
+    static fromGeoPoint(geoPoint: GeoPointLike): GeoCoordinates {
+        return new GeoCoordinates(geoPoint[1], geoPoint[0], geoPoint[2]);
     }
 
     /**
@@ -76,6 +110,20 @@ export class GeoCoordinates implements GeoCoordinatesLike {
     get longitudeInDegrees(): number {
         return this.longitude;
     } // compat api
+
+    /**
+     * The latitude in the degrees.
+     */
+    get lat() {
+        return this.latitude;
+    }
+
+    /**
+     * The longitude in the degrees.
+     */
+    get lng() {
+        return this.longitude;
+    }
 
     /**
      * Returns `true` if this `GeoCoordinates` is valid; returns `false` otherwise.
@@ -157,5 +205,21 @@ export class GeoCoordinates implements GeoCoordinatesLike {
      */
     clone(): GeoCoordinates {
         return new GeoCoordinates(this.latitude, this.longitude, this.altitude);
+    }
+
+    /**
+     * Returns this [[GeoCoordinates]] as [[LatLngLike]] literal.
+     */
+    toLatLng(): LatLngLike {
+        return { lat: this.latitude, lng: this.longitude };
+    }
+
+    /**
+     * Converts this [[GeoCoordinates]] to a [[GeoPointLike]].
+     */
+    toGeoPoint(): GeoPointLike {
+        return this.altitude !== undefined
+            ? [this.longitude, this.latitude, this.altitude]
+            : [this.longitude, this.latitude];
     }
 }
