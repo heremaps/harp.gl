@@ -1618,7 +1618,8 @@
                 "when": [
                     "all",
                     ["==", ["get", "$layer"], "buildings"],
-                    ["==", ["get", "$geometryType"], "polygon"]
+                    ["==", ["get", "$geometryType"], "polygon"],
+                    [">", ["zoom"], 15]
                 ],
                 "technique": "extruded-polygon",
                 "attr": {
@@ -1645,9 +1646,9 @@
                 "when": [
                     "all",
                     ["==", ["get", "$layer"], "buildings"],
-                    ["==", ["get", "kind"], "address"],
                     ["==", ["get", "$geometryType"], "point"],
-                    ["get", "label_placement"]
+                    ["==", ["get", "kind"], "address"],
+                    [">", ["zoom"], 15]
                 ],
                 "technique": "text",
                 "attr": {
