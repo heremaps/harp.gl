@@ -40,7 +40,7 @@ export namespace EffectsAllExample {
         const mapControls = new MapControls(mapView);
         mapControls.maxTiltAngle = 60;
         const NY = new GeoCoordinates(40.707, -74.01);
-        mapView.lookAt(NY, 4000, 50);
+        mapView.lookAt(NY, 3500, 50);
 
         const ui = new MapControlsUI(mapControls);
         canvas.parentElement!.appendChild(ui.domElement);

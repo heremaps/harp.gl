@@ -83,7 +83,7 @@ export namespace HelloCustomThemeExample {
 
         // Look at New York.
         const NY = new GeoCoordinates(40.707, -74.01);
-        map.lookAt(NY, 4000, 50, -20);
+        map.lookAt(NY, 3500, 50, -20);
 
         // Add an UI.
         const ui = new MapControlsUI(mapControls);
