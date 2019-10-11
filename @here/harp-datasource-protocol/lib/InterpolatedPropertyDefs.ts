@@ -51,7 +51,7 @@ export interface InterpolatedProperty<T> {
     /**
      * Property values array.
      */
-    values: Float32Array;
+    values: ArrayLike<any>;
 
     /**
      * Exponent used in interpolation. Only valid with `Exponential` [[InterpolationMode]].

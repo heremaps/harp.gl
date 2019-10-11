@@ -82,7 +82,7 @@ export function evaluateTechniqueAttr<T = Value>(
     } else if (isInterpolatedProperty(attrValue)) {
         const storageLevel =
             context instanceof Env ? (context.lookup("$zoom") as number) : context.zoomLevel;
-        evaluated = getPropertyValue(attrValue, storageLevel);
+        evaluated = getPropertyValue(attrValue, storageLevel) as any;
     } else {
         evaluated = (attrValue as unknown) as Value;
     }
