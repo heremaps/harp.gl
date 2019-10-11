@@ -9,6 +9,7 @@
 
 import { assert } from "chai";
 import { GeoCoordinates } from "../lib/coordinates/GeoCoordinates";
+import { GeoPointLike, isGeoPointLike } from "../lib/coordinates/GeoPointLike";
 
 describe("GeoCoordinates", function() {
     const tests = [
@@ -32,6 +33,44 @@ describe("GeoCoordinates", function() {
         { args: [361, -4534, 50], expected: [1, 146, 50] },
         { args: [361, 4534, 50], expected: [1, -146, 50] }
     ];
+
+    it("API compatibility", function() {
+        tests.forEach(sample => {
+            const [latitude, longitude, altitude] = sample.args; // decomposed input
+
+            const geoPoint = new GeoCoordinates(latitude, longitude, altitude);
+
+            const geoPointLiteral: GeoPointLike = [longitude, latitude, altitude];
+
+            assert.isTrue(isGeoPointLike(geoPointLiteral));
+
+            const geoJsonCoords = GeoCoordinates.fromGeoPoint(geoPointLiteral);
+
+            assert.strictEqual(geoPoint.latitude, geoJsonCoords.latitude);
+            assert.strictEqual(geoPoint.longitude, geoJsonCoords.longitude);
+            assert.strictEqual(geoPoint.altitude, geoJsonCoords.altitude);
+
+            if (altitude === undefined) {
+                assert.deepEqual(geoPoint.toGeoPoint(), [longitude, latitude]);
+            } else {
+                assert.deepEqual(geoPoint.toGeoPoint(), [longitude, latitude, altitude]);
+            }
+
+            const latLngLiteral = { lat: latitude, lng: longitude };
+
+            const latLngCoords = GeoCoordinates.fromLatLng(latLngLiteral);
+
+            assert.strictEqual(geoPoint.latitude, latLngCoords.latitude);
+            assert.strictEqual(geoPoint.longitude, latLngCoords.longitude);
+            assert.isUndefined(latLngCoords.altitude);
+
+            assert.deepEqual(geoPoint.toLatLng(), { lat: latitude, lng: longitude });
+
+            const { lat, lng } = geoPoint;
+            assert.strictEqual(geoPoint.lat, lat);
+            assert.strictEqual(geoPoint.lng, lng);
+        });
+    });
 
     tests.forEach(function(test) {
         it(
