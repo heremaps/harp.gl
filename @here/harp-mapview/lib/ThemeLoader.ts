@@ -17,14 +17,15 @@ import {
 } from "@here/harp-datasource-protocol/lib/Theme";
 import {
     cloneDeep,
-    composeUrlResolvers,
+    composeUriResolvers,
     ContextLogger,
-    defaultUrlResolver,
     getAppBaseUrl,
     getOptionValue,
     IContextLogger,
     ISimpleChannel,
-    resolveReferenceUrl
+    RelativeUriResolver,
+    resolveReferenceUri,
+    UriResolver
 } from "@here/harp-utils";
 import { SKY_CUBEMAP_FACE_COUNT, SkyCubemapFaceId } from "./SkyCubemapTexture";
 
@@ -69,6 +70,11 @@ export interface ThemeLoadOptions {
      * If not specified, [[ThemeLoader.load]] will log to `console`.
      */
     logger?: ISimpleChannel;
+
+    /**
+     * Resolve asset `URI`s referenced in `Theme` assets using this resolver.
+     */
+    uriResolver?: UriResolver;
 }
 
 /**
@@ -85,8 +91,11 @@ export class ThemeLoader {
      *  -  `ref` - resolves all `ref` instances to their values defined in `definitions` section
      *     of theme (see [[resolveThemeReferences]])
      *
-     * Relative URLs of reference resources are resolved to full URL using the document's base URL
+     * Relative URIs of reference resources are resolved to full URL using the document's base URL
      * (see [[resolveUrls]]).
+     *
+     * Custom URIs (of theme itself and of resources referenced by theme) may be resolved with by
+     * providing [[UriResolver]] using [[ThemeLoadOptions.uriResolver]] option.
      *
      * @param theme [[Theme]] instance or theme URL to the theme.
      * @param options Optional, a [[ThemeLoadOptions]] objects containing any custom settings for
@@ -95,19 +104,20 @@ export class ThemeLoader {
     static async load(theme: string | Theme, options?: ThemeLoadOptions): Promise<Theme> {
         options = options || {};
         if (typeof theme === "string") {
-            const themeUrl = defaultUrlResolver(theme);
+            const uriResolver = options.uriResolver;
+            const themeUrl = uriResolver !== undefined ? uriResolver.resolveUri(theme) : theme;
 
             const response = await fetch(themeUrl, { signal: options.signal });
             if (!response.ok) {
                 throw new Error(`ThemeLoader#load: cannot load theme: ${response.statusText}`);
             }
             theme = (await response.json()) as Theme;
-            theme.url = resolveReferenceUrl(getAppBaseUrl(), themeUrl);
-            theme = this.resolveUrls(theme);
+            theme.url = resolveReferenceUri(getAppBaseUrl(), themeUrl);
+            theme = this.resolveUrls(theme, uriResolver);
         } else if (theme.url === undefined) {
             // assume that theme url is same as baseUrl
             theme.url = getAppBaseUrl();
-            theme = this.resolveUrls(theme);
+            theme = this.resolveUrls(theme, options.uriResolver);
         }
 
         if (theme === null || theme === undefined) {
@@ -158,25 +168,25 @@ export class ThemeLoader {
      *
      * @param theme The [[Theme]] to resolve.
      */
-    static resolveUrls(theme: Theme): Theme {
-        // Ensure that all resources referenced in theme by relative URLs are in fact relative to
+    static resolveUrls(theme: Theme, uriResolver?: UriResolver): Theme {
+        // Ensure that all resources referenced in theme by relative URIs are in fact relative to
         // theme.
         if (theme.url === undefined) {
             return theme;
         }
 
-        const childUrlResolver = composeUrlResolvers(
-            (childUrl: string) => resolveReferenceUrl(theme.url, childUrl),
-            defaultUrlResolver
+        const childUrlResolver = composeUriResolvers(
+            new RelativeUriResolver(theme.url),
+            uriResolver
         );
 
         if (theme.extends) {
             if (typeof theme.extends === "string") {
-                theme.extends = childUrlResolver(theme.extends);
+                theme.extends = childUrlResolver.resolveUri(theme.extends);
             } else {
                 if (theme.extends.url === undefined) {
                     theme.extends.url = theme.url;
-                    theme.extends = this.resolveUrls(theme.extends);
+                    theme.extends = this.resolveUrls(theme.extends, uriResolver);
                 }
             }
         }
@@ -185,28 +195,28 @@ export class ThemeLoader {
             for (let i = 0; i < SKY_CUBEMAP_FACE_COUNT; ++i) {
                 const faceUrl: string | undefined = (theme.sky as any)[SkyCubemapFaceId[i]];
                 if (faceUrl !== undefined) {
-                    (theme.sky as any)[SkyCubemapFaceId[i]] = childUrlResolver(faceUrl);
+                    (theme.sky as any)[SkyCubemapFaceId[i]] = childUrlResolver.resolveUri(faceUrl);
                 }
             }
         }
         if (theme.images) {
             for (const name of Object.keys(theme.images)) {
                 const image = theme.images[name];
-                image.url = childUrlResolver(image.url);
+                image.url = childUrlResolver.resolveUri(image.url);
 
                 if (image.atlas !== undefined) {
-                    image.atlas = childUrlResolver(image.atlas);
+                    image.atlas = childUrlResolver.resolveUri(image.atlas);
                 }
             }
         }
         if (theme.fontCatalogs) {
             for (const font of theme.fontCatalogs) {
-                font.url = childUrlResolver(font.url);
+                font.url = childUrlResolver.resolveUri(font.url);
             }
         }
         if (theme.poiTables) {
             for (const poiTable of theme.poiTables) {
-                poiTable.url = childUrlResolver(poiTable.url);
+                poiTable.url = childUrlResolver.resolveUri(poiTable.url);
             }
         }
 
@@ -224,9 +234,9 @@ export class ThemeLoader {
                         texturePropertyName => {
                             const textureProperty = (style.attr! as any)[texturePropertyName];
                             if (textureProperty && typeof textureProperty === "string") {
-                                (style.attr! as any)[texturePropertyName] = childUrlResolver(
-                                    textureProperty
-                                );
+                                (style.attr! as any)[
+                                    texturePropertyName
+                                ] = childUrlResolver.resolveUri(textureProperty);
                             }
                         }
                     );
