@@ -665,11 +665,14 @@ export namespace MapViewUtils {
      */
     export function calculateZoomLevelFromDistance(distance: number, mapView: MapView): number {
         const tileSize = (256 * distance) / mapView.focalLength;
-        return THREE.Math.clamp(
+        const zoomLevel = THREE.Math.clamp(
             Math.log2(EarthConstants.EQUATORIAL_CIRCUMFERENCE / tileSize),
             mapView.minZoomLevel,
             mapView.maxZoomLevel
         );
+        // Round to avoid modify the zoom level without distance change, with the imprecision
+        // introduced by raycasting.
+        return Math.round(zoomLevel * 10e15) / 10e15;
     }
 
     /**
