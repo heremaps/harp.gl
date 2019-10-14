@@ -30,12 +30,12 @@ describe("ScreenCollisions", function() {
         sc.update(100, 100);
 
         const line: LineWithBound = {
-            minX: 50,
-            minY: 40,
-            maxX: 51,
-            maxY: 61,
+            minX: 0,
+            minY: -10,
+            maxX: 1,
+            maxY: 11,
             type: "line",
-            line: new THREE.Line3(new THREE.Vector3(50, 40, 1), new THREE.Vector3(51, 61, 1))
+            line: new THREE.Line3(new THREE.Vector3(0, -10, 1), new THREE.Vector3(1, 11, 1))
         };
         // Box around the center, in screen bounds space
         const intersectsLineWithBoxAtCenter = sc.intersectsLine(
@@ -54,12 +54,12 @@ describe("ScreenCollisions", function() {
         const sc = new ScreenCollisions();
         sc.update(100, 100);
         const line: LineWithBound = {
-            minX: 50,
-            minY: 40,
-            maxX: 51,
-            maxY: 61,
+            minX: 0,
+            minY: -10,
+            maxX: 1,
+            maxY: 11,
             type: "line",
-            line: new THREE.Line3(new THREE.Vector3(50, 40, 1), new THREE.Vector3(51, 61, 1))
+            line: new THREE.Line3(new THREE.Vector3(0, -10, 1), new THREE.Vector3(1, 11, 1))
         };
 
         // Box around shifted right, in screen bounds space
@@ -79,12 +79,12 @@ describe("ScreenCollisions", function() {
         const sc = new ScreenCollisions();
         sc.update(100, 100);
         const line: LineWithBound = {
-            minX: 50,
-            minY: 40,
-            maxX: 50,
-            maxY: 61,
+            minX: 0,
+            minY: -10,
+            maxX: 0,
+            maxY: 11,
             type: "line",
-            line: new THREE.Line3(new THREE.Vector3(50, 40, 1), new THREE.Vector3(50, 61, 1))
+            line: new THREE.Line3(new THREE.Vector3(0, -10, 1), new THREE.Vector3(0, 11, 1))
         };
 
         // Box around center, in screen bounds space
@@ -104,12 +104,12 @@ describe("ScreenCollisions", function() {
         const sc = new ScreenCollisions();
         sc.update(100, 100);
         const line: LineWithBound = {
-            minX: 50,
-            minY: 50,
-            maxX: 60,
-            maxY: 50,
+            minX: 0,
+            minY: 0,
+            maxX: 10,
+            maxY: 0,
             type: "line",
-            line: new THREE.Line3(new THREE.Vector3(50, 40, 1), new THREE.Vector3(60, 40, 1))
+            line: new THREE.Line3(new THREE.Vector3(0, 0, 1), new THREE.Vector3(10, 0, 1))
         };
 
         // Box around center, in screen bounds space

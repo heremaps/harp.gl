@@ -238,11 +238,7 @@ export class TileGeometryCreator {
             const path: THREE.Vector3[] = [];
             for (let i = 0; i < flatpath.path.length; i += 3) {
                 point.set(flatpath.path[i], flatpath.path[i + 1], flatpath.path[i + 2]);
-                // Move to world coordinates, the accuracy isn't important, because we don't need to
-                // worry about z flickering (the path is not rendered). This also makes the code
-                // projecting to screen space in
-                // [[TextElementsRenderer.prepopulateScreenWithBlockingElements]] simpler because
-                // the shift before projection to NDC isn't required.
+                // Move to world coordinates
                 point.add(tile.center);
                 path.push(point.clone());
             }
