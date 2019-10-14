@@ -8,46 +8,46 @@
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
 import { assert } from "chai";
-import { baseUrl, getUrlOrigin, resolveReferenceUrl } from "../lib/UrlUtils";
+import { baseUrl, getUrlOrigin, resolveReferenceUri } from "../lib/UrlUtils";
 
 describe("UrlUtils", function() {
     describe("#resolveReferenceUrl", function() {
         it("correctly resolves relative child URL", function() {
             assert.equal(
-                resolveReferenceUrl("https://bar.com:999/foo", "bar.js"),
+                resolveReferenceUri("https://bar.com:999/foo", "bar.js"),
                 "https://bar.com:999/bar.js"
             );
             assert.equal(
-                resolveReferenceUrl("https://bar.com/foo/", "bar.js"),
+                resolveReferenceUri("https://bar.com/foo/", "bar.js"),
                 "https://bar.com/foo/bar.js"
             );
         });
         it("correctly resolves origin-absolute URLs", function() {
             assert.equal(
-                resolveReferenceUrl("https://user@bar.com/foo/day.json", "/bar.js"),
+                resolveReferenceUri("https://user@bar.com/foo/day.json", "/bar.js"),
                 "https://user@bar.com/bar.js"
             );
         });
         it("handles file: scheme", function() {
-            assert.equal(resolveReferenceUrl("file://foo/", "bar.js"), "file://foo/bar.js");
-            assert.equal(resolveReferenceUrl("file://foo/", "/bar.js"), "file:///bar.js");
+            assert.equal(resolveReferenceUri("file://foo/", "bar.js"), "file://foo/bar.js");
+            assert.equal(resolveReferenceUri("file://foo/", "/bar.js"), "file:///bar.js");
         });
         it("handles relative parent URL", function() {
             assert.equal(
-                resolveReferenceUrl("resources/day.json", "font.json"),
+                resolveReferenceUri("resources/day.json", "font.json"),
                 "resources/font.json"
             );
             assert.equal(
-                resolveReferenceUrl("/resources/day.json", "font.json"),
+                resolveReferenceUri("/resources/day.json", "font.json"),
                 "/resources/font.json"
             );
         });
         it("returns absolute URLs unchanged", function() {
             assert.equal(
-                resolveReferenceUrl("https://spam.com", "https://bar.com/foo"),
+                resolveReferenceUri("https://spam.com", "https://bar.com/foo"),
                 "https://bar.com/foo"
             );
-            assert.equal(resolveReferenceUrl("https://bar.com", "//bar.com/foo"), "//bar.com/foo");
+            assert.equal(resolveReferenceUri("https://bar.com", "//bar.com/foo"), "//bar.com/foo");
         });
     });
 
