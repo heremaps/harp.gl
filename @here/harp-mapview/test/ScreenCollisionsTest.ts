@@ -9,7 +9,7 @@
 
 import { Math2D } from "@here/harp-utils";
 
-import { LineWithBound, ScreenCollisions } from "../lib/ScreenCollisions";
+import { IBox, LineWithBound, ScreenCollisions } from "../lib/ScreenCollisions";
 
 import { assert } from "chai";
 import * as THREE from "three";
@@ -124,6 +124,30 @@ describe("ScreenCollisions", function() {
             line
         );
         assert.isTrue(intersectsLineWithShiftedBox);
+    });
+    it("test allocate multiple boxes", function() {
+        const sc = new ScreenCollisions();
+        sc.update(100, 100);
+        const boxes: IBox[] = [];
+        for (let i = 0; i < 100; i++) {
+            boxes.push({
+                minX: i,
+                minY: i,
+                maxX: i + 1,
+                maxY: i + 1,
+                type: "box"
+            });
+        }
+        sc.allocateIBoxes(boxes);
+        assert.isTrue(
+            sc.isAllocated({
+                minX: 0,
+                minY: 0,
+                maxX: 10,
+                maxY: 10,
+                type: "box"
+            })
+        );
     });
     it("properlys handle collision in test space", function() {
         const sc = new ScreenCollisions();

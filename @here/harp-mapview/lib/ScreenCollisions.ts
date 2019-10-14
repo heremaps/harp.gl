@@ -112,23 +112,16 @@ export class ScreenCollisions {
      *
      * @param bounds The bounding box in world coordinates.
      */
-    isAllocated(bounds: Math2D.Box): boolean {
-        const bbox: CollisionBox = {
-            minX: bounds.x,
-            minY: bounds.y,
-            maxX: bounds.x + bounds.w,
-            maxY: bounds.y + bounds.h,
-            type: "box"
-        };
-
-        const results = this.rtree.search(bbox);
+    isAllocated(bounds: Math2D.Box | CollisionBox): boolean {
+        const collisionBox = bounds instanceof Math2D.Box ? this.toCollisionBox(bounds) : bounds;
+        const results = this.rtree.search(collisionBox);
         for (const result of results) {
             switch (result.type) {
                 case "box":
                     return true;
                 case "line": {
                     const boundedLine = result as LineWithBound;
-                    if (this.intersectsLine(bbox, boundedLine)) {
+                    if (this.intersectsLine(collisionBox, boundedLine)) {
                         return true;
                     }
                 }
@@ -182,6 +175,16 @@ export class ScreenCollisions {
             signTR = Math.sign(bbox.maxX - line.start.x);
         }
         return signBL !== signBR || signBL !== signTL || signBL !== signTR;
+    }
+
+    private toCollisionBox(bounds: Math2D.Box): CollisionBox {
+        return {
+            minX: bounds.x,
+            minY: bounds.y,
+            maxX: bounds.x + bounds.w,
+            maxY: bounds.y + bounds.h,
+            type: "box"
+        };
     }
 }
 

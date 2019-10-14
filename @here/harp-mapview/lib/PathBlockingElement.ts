@@ -17,8 +17,15 @@ import * as THREE from "three";
  */
 
 export class PathBlockingElement {
-    // We allocate the memory here to avoid allocating each frame
+    /**
+     * Note, lines is only used as a performance improvement and contains no useful information.
+     */
     readonly lines: THREE.Line3[];
+
+    /**
+     * Constructs a path from a list of points.
+     * @param points Points in world coordinates.
+     */
     constructor(readonly points: THREE.Vector3[]) {
         this.lines = new Array<THREE.Line3>(points.length >= 2 ? points.length - 1 : 0);
         for (let i = 0; i < this.lines.length; i++) {
