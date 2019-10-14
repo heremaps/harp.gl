@@ -1062,7 +1062,7 @@ export class VisibleTileSet {
                 dataSourceCache.deleteByKey(key);
                 tile.dispose();
             }
-        });
+        }, renderListEntry.dataSource);
     }
 
     // Computes the visible tile keys for each supplied datasource.
