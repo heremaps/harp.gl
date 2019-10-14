@@ -24,7 +24,13 @@ import {
     Theme
 } from "@here/harp-datasource-protocol";
 import { getTestResourceUrl } from "@here/harp-test-utils";
-import { cloneDeep, ContextLogger, getAppBaseUrl, resolveReferenceUrl } from "@here/harp-utils";
+import {
+    cloneDeep,
+    ContextLogger,
+    getAppBaseUrl,
+    resolveReferenceUri,
+    UriResolver
+} from "@here/harp-utils";
 import { ThemeLoader } from "../lib/ThemeLoader";
 
 function makeUrlRelative(baseUrl: string, url: string) {
@@ -58,7 +64,7 @@ describe("ThemeLoader", function() {
             const relativeToAppUrl = makeUrlRelative(appBaseUrl, sampleThemeUrl);
 
             const result = await ThemeLoader.load(relativeToAppUrl);
-            assert.equal(result.url, resolveReferenceUrl(appBaseUrl, relativeToAppUrl));
+            assert.equal(result.url, resolveReferenceUri(appBaseUrl, relativeToAppUrl));
         });
 
         it("resolves absolute url of theme loaded from relative url", async function() {
@@ -66,16 +72,16 @@ describe("ThemeLoader", function() {
             const relativeToAppUrl = makeUrlRelative(appBaseUrl, sampleThemeUrl);
 
             const result = await ThemeLoader.load(relativeToAppUrl);
-            assert.equal(result.url, resolveReferenceUrl(appBaseUrl, relativeToAppUrl));
+            assert.equal(result.url, resolveReferenceUri(appBaseUrl, relativeToAppUrl));
         });
 
         it("resolves urls of resources embedded in theme", async function() {
-            const absoluteSampleThemeUrl = resolveReferenceUrl(appBaseUrl, sampleThemeUrl);
+            const absoluteSampleThemeUrl = resolveReferenceUri(appBaseUrl, sampleThemeUrl);
 
             const result = await ThemeLoader.load(absoluteSampleThemeUrl);
             assert.equal(result.url, absoluteSampleThemeUrl);
 
-            const expectedFontCatalogUrl = resolveReferenceUrl(
+            const expectedFontCatalogUrl = resolveReferenceUri(
                 absoluteSampleThemeUrl,
                 "fonts/Default_FontCatalog.json"
             );
@@ -92,6 +98,42 @@ describe("ThemeLoader", function() {
             const secondLoadResult = await ThemeLoader.load(firstLoadResult);
 
             assert.deepEqual(firstResultCopy, secondLoadResult);
+        });
+
+        it("obeys `uriResolver` option", async function() {
+            // new PrefixMapUriResolver({
+            //     "fonts://fira": "ACTUAL_FONT_LOCATION",
+            //     "icons://": "ACTUAL_ICONS_LOCATION"
+            // });
+            const uriResolver: UriResolver = {
+                resolveUri(uri) {
+                    return "resolved!" + uri;
+                }
+            };
+            const r = await ThemeLoader.load(
+                {
+                    fontCatalogs: [
+                        {
+                            url: "fonts://fira",
+                            name: "fira"
+                        }
+                    ],
+                    images: {
+                        icons_day_maki: {
+                            url: "icons://maki_icons.png",
+                            preload: true,
+                            atlas: "icons://icons/maki_icons.json"
+                        }
+                    }
+                },
+                {
+                    uriResolver
+                }
+            );
+
+            assert.equal(r.fontCatalogs![0].url, "resolved!fonts://fira");
+            assert.equal(r.images!.icons_day_maki.url, "resolved!icons://maki_icons.png");
+            assert.equal(r.images!.icons_day_maki.atlas, "resolved!icons://icons/maki_icons.json");
         });
     });
     describe("#resolveStyleSet", function() {
