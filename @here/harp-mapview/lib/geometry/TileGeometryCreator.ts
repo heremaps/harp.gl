@@ -204,8 +204,6 @@ export class TileGeometryCreator {
      * @param decodedTile The decodedTile containing the actual tile map data.
      */
     createAllGeometries(tile: Tile, decodedTile: DecodedTile) {
-        tile.clear();
-
         const filter = (technique: Technique): boolean => {
             return technique.enabled !== false;
         };

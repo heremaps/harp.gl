@@ -207,6 +207,7 @@ export class PhasedTileGeometryLoader implements TileGeometryLoader {
                 enabledKinds,
                 disabledKinds
             );
+            tile.clear();
         }
 
         if (decodedTile === undefined || currentPhase >= this.numberOfPhases) {
