@@ -9,7 +9,7 @@
 
 import { Math2D } from "@here/harp-utils";
 
-import { IBox, LineWithBound, ScreenCollisions } from "../lib/ScreenCollisions";
+import { CollisionBox, IBox, LineWithBound, ScreenCollisions } from "../lib/ScreenCollisions";
 
 import { assert } from "chai";
 import * as THREE from "three";
@@ -37,7 +37,7 @@ describe("ScreenCollisions", function() {
             type: "line",
             line: new THREE.Line3(new THREE.Vector3(0, -10, 1), new THREE.Vector3(1, 11, 1))
         };
-        // Box around the center, in screen bounds space
+        // Box around the center
         const intersectsLineWithBoxAtCenter = sc.intersectsLine(
             {
                 minX: -10,
@@ -62,7 +62,7 @@ describe("ScreenCollisions", function() {
             line: new THREE.Line3(new THREE.Vector3(0, -10, 1), new THREE.Vector3(1, 11, 1))
         };
 
-        // Box around shifted right, in screen bounds space
+        // Box around shifted right
         const intersectsLineWithShiftedBox = sc.intersectsLine(
             {
                 minX: 10,
@@ -87,7 +87,7 @@ describe("ScreenCollisions", function() {
             line: new THREE.Line3(new THREE.Vector3(0, -10, 1), new THREE.Vector3(0, 11, 1))
         };
 
-        // Box around center, in screen bounds space
+        // Box around center
         const intersectsLineWithShiftedBox = sc.intersectsLine(
             {
                 minX: -10,
@@ -112,18 +112,61 @@ describe("ScreenCollisions", function() {
             line: new THREE.Line3(new THREE.Vector3(0, 0, 1), new THREE.Vector3(10, 0, 1))
         };
 
-        // Box around center, in screen bounds space
-        const intersectsLineWithShiftedBox = sc.intersectsLine(
-            {
-                minX: -10,
-                minY: -10,
-                maxX: 10,
-                maxY: 10,
-                type: "box"
-            },
-            line
-        );
+        // Box around center
+        const box: CollisionBox = {
+            minX: -10,
+            minY: -10,
+            maxX: 10,
+            maxY: 10,
+            type: "box"
+        };
+        const intersectsLineWithShiftedBox = sc.intersectsLine(box, line);
         assert.isTrue(intersectsLineWithShiftedBox);
+    });
+    it("line intersection test via isAllocated method", function() {
+        const sc = new ScreenCollisions();
+        sc.update(100, 100);
+        const line: LineWithBound = {
+            minX: 0,
+            minY: -21,
+            maxX: 21,
+            maxY: 0,
+            type: "line",
+            line: new THREE.Line3(new THREE.Vector3(0, -20, 1), new THREE.Vector3(20, 0, 1))
+        };
+        sc.allocateIBoxes([line]);
+
+        const box: CollisionBox = {
+            minX: -10,
+            minY: -10,
+            maxX: 10,
+            maxY: 10,
+            type: "box"
+        };
+        assert.isTrue(sc.isAllocated(box));
+    });
+    it("line intersection test fail via isAllocated method", function() {
+        const sc = new ScreenCollisions();
+        sc.update(100, 100);
+        const line: LineWithBound = {
+            minX: 0,
+            minY: -21,
+            maxX: 21,
+            maxY: 0,
+            type: "line",
+            line: new THREE.Line3(new THREE.Vector3(0, -21, 1), new THREE.Vector3(21, 0, 1))
+        };
+        sc.allocateIBoxes([line]);
+
+        const box: CollisionBox = {
+            minX: -10,
+            minY: -10,
+            maxX: 10,
+            maxY: 10,
+            type: "box"
+        };
+        // The boxes overlap, but the lines don't intersect, so check this returns false.
+        assert.isFalse(sc.isAllocated(box));
     });
     it("test allocate multiple boxes", function() {
         const sc = new ScreenCollisions();
