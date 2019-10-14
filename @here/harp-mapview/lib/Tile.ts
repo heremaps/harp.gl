@@ -37,15 +37,6 @@ interface DisposableObject {
     material?: THREE.Material[] | THREE.Material;
 }
 
-function decodedTileHasGeometry(decodedTile: DecodedTile) {
-    return (
-        decodedTile.geometries.length ||
-        (decodedTile.poiGeometries !== undefined && decodedTile.poiGeometries.length) ||
-        (decodedTile.textGeometries !== undefined && decodedTile.textGeometries.length) ||
-        (decodedTile.textPathGeometries !== undefined && decodedTile.textPathGeometries.length)
-    );
-}
-
 /**
  * An interface for optional feature data that is saved in a `THREE.Object3D`'s `userData`
  * property.
@@ -79,14 +70,6 @@ export interface TileFeatureData {
  */
 const MINIMUM_SMALL_OBJECT_SIZE_ESTIMATION = 16;
 const MINIMUM_OBJECT_SIZE_ESTIMATION = 100;
-
-/**
- * A default empty [[DecodedTile]], for tiles that must be rendered but do not have any objects.
- */
-const defaultEmptyDecodedTile: DecodedTile = {
-    techniques: [],
-    geometries: []
-};
 
 /**
  * Compute the memory footprint of `TileFeatureData`.
@@ -702,15 +685,33 @@ export class Tile implements CachedResource {
      * @param decodedTile The decoded tile to set.
      */
     set decodedTile(decodedTile: DecodedTile | undefined) {
-        if (decodedTile && decodedTileHasGeometry(decodedTile)) {
-            if (decodedTile.copyrightHolderIds !== undefined) {
-                this.copyrightInfo = decodedTile.copyrightHolderIds.map(id => ({ id }));
-            }
-            this.setDecodedTile(decodedTile);
-        } else {
-            // empty tiles are traditionally ignored and don't need decode
+        this.m_decodedTile = decodedTile;
+        this.invalidateResourceInfo();
+
+        if (decodedTile === undefined) {
+            return;
+        }
+
+        if (decodedTile.geometries.length === 0) {
             this.forceHasGeometry(true);
         }
+
+        if (decodedTile.boundingBox !== undefined) {
+            // If the decoder provides a more accurate bounding box than the one we computed from
+            // the flat geo box we take it instead.
+            this.boundingBox.copy(decodedTile.boundingBox);
+        }
+
+        const stats = PerformanceStatistics.instance;
+        if (stats.enabled && decodedTile.decodeTime !== undefined) {
+            stats.currentFrame.addValue("decode.decodingTime", decodedTile.decodeTime);
+            stats.currentFrame.addValue("decode.decodedTiles", 1);
+        }
+
+        if (decodedTile.copyrightHolderIds !== undefined) {
+            this.copyrightInfo = decodedTile.copyrightHolderIds.map(id => ({ id }));
+        }
+
         this.dataSource.requestUpdate();
     }
 
@@ -827,9 +828,6 @@ export class Tile implements CachedResource {
      * @param value A new value for the [[hasGeometry]] flag.
      */
     forceHasGeometry(value: boolean | undefined) {
-        if (value === true) {
-            this.setDecodedTile(defaultEmptyDecodedTile);
-        }
         this.m_forceHasGeometry = value;
     }
 
@@ -994,23 +992,6 @@ export class Tile implements CachedResource {
         // Ensure that tile is removable from tile cache.
         this.frameNumLastRequested = 0;
     }
-
-    private setDecodedTile(decodedTile: DecodedTile) {
-        this.m_decodedTile = decodedTile;
-        if (this.m_decodedTile.boundingBox !== undefined) {
-            // If the decoder provides a more accurate bounding box than the one we computed from
-            // the flat geo box we take it instead.
-            this.boundingBox.copy(this.m_decodedTile.boundingBox);
-        }
-        this.invalidateResourceInfo();
-
-        const stats = PerformanceStatistics.instance;
-        if (stats.enabled && decodedTile.decodeTime !== undefined) {
-            stats.currentFrame.addValue("decode.decodingTime", decodedTile.decodeTime);
-            stats.currentFrame.addValue("decode.decodedTiles", 1);
-        }
-    }
-
     private computeResourceInfo(): void {
         let heapSize = 0;
         let num3dObjects = 0;
