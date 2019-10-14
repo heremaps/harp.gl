@@ -869,7 +869,6 @@ export class Tile implements CachedResource {
         tileLoader
             .loadAndDecode()
             .then(tileLoaderState => {
-                this.clear();
                 assert(tileLoaderState === TileLoaderState.Ready);
                 const decodedTile = tileLoader.decodedTile;
                 this.decodedTile = decodedTile;

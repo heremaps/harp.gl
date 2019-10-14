@@ -283,6 +283,7 @@ export class SimpleTileGeometryLoader implements TileGeometryLoader {
 
             const geometryCreator = TileGeometryCreator.instance;
 
+            tile.clear();
             geometryCreator.initDecodedTile(decodedTile, enabledKinds, disabledKinds);
 
             geometryCreator.createAllGeometries(tile, decodedTile);
