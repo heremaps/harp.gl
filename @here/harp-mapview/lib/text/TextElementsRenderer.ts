@@ -619,12 +619,15 @@ export class TextElementsRenderer {
                     if (pathBlockingElement.points.length < 2) {
                         continue;
                     }
-                    let startLinePoint = pathBlockingElement.points[0];
+                    this.m_screenProjector.project3(
+                        pathBlockingElement.points[0],
+                        startLinePointProj
+                    );
                     for (let i = 1; i < pathBlockingElement.points.length; i++) {
-                        const endLinePoint = pathBlockingElement.points[i];
-                        this.m_screenProjector.project3(startLinePoint, startLinePointProj);
-                        this.m_screenProjector.project3(endLinePoint, endLinePointProj);
-                        startLinePoint = endLinePoint;
+                        this.m_screenProjector.project3(
+                            pathBlockingElement.points[i],
+                            endLinePointProj
+                        );
                         const line = pathBlockingElement.lines[i - 1];
                         line.start.copy(startLinePointProj);
                         line.end.copy(endLinePointProj);
@@ -637,6 +640,7 @@ export class TextElementsRenderer {
                             line
                         };
                         boxes.push(lineWithBound);
+                        startLinePointProj.copy(endLinePointProj);
                     }
                 }
             }
