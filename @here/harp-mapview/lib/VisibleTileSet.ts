@@ -79,6 +79,8 @@ export interface VisibleTileSetOptions {
 
 const MB_FACTOR = 1.0 / (1024.0 * 1024.0);
 
+type TileCacheId = string;
+
 /**
  * Wrapper for LRU cache that encapsulates tiles caching for any [[DataSource]] used.
  *
@@ -91,11 +93,27 @@ const MB_FACTOR = 1.0 / (1024.0 * 1024.0);
  * name, but implementation could be improved to omit this limitation.
  */
 class DataSourceCache {
-    static getKey(tileCode: number, dataSource: DataSource): string {
-        return `${dataSource.name}_${tileCode}`;
+    /**
+     * Creates unique tile key for caching based on morton code, tile offset and its data source.
+     *
+     * @param mortonCode The tile morton code.
+     * @param offset The tile offset.
+     * @param dataSource The [[DataSource]] from which tile was loaded.
+     */
+    static getKey(mortonCode: number, offset: number, dataSource: DataSource): TileCacheId {
+        return `${dataSource.name}_${mortonCode}_${offset}`;
     }
 
-    private readonly m_tileCache: LRUCache<string, Tile>;
+    /**
+     * Create unique tile identifier for caching, based on tile object passed in.
+     *
+     * @param tile The tile for which key is generated.
+     */
+    static getKeyForTile(tile: Tile): TileCacheId {
+        return DataSourceCache.getKey(tile.tileKey.mortonCode(), tile.offset, tile.dataSource);
+    }
+
+    private readonly m_tileCache: LRUCache<TileCacheId, Tile>;
     private readonly m_disposedTiles: Tile[] = [];
     private m_resourceComputationType: ResourceComputationType;
 
@@ -190,22 +208,24 @@ class DataSourceCache {
     /**
      * Get tile cached or __undefined__ if tile is not yet in cache.
      *
-     * @param tileCode En unique tile code (its morton code).
+     * @param mortonCode En unique tile morton code.
+     * @param offset Tile offset.
      * @param dataSource A [[DataSource]] the tile comes from.
      */
-    get(tileCode: number, dataSource: DataSource): Tile | undefined {
-        return this.m_tileCache.get(DataSourceCache.getKey(tileCode, dataSource));
+    get(mortonCode: number, offset: number, dataSource: DataSource): Tile | undefined {
+        return this.m_tileCache.get(DataSourceCache.getKey(mortonCode, offset, dataSource));
     }
 
     /**
      * Add new tile to the cache.
      *
-     * @param tileCode En unique tile code (morton code).
-     * @param tile The tile reference.
+     * @param mortonCode En unique tile code (morton code).
+     * @param offset The tile offset.
      * @param dataSource A [[DataSource]] the tile comes from.
+     * @param tile The tile reference.
      */
-    set(tileCode: number, tile: Tile, dataSource: DataSource) {
-        this.m_tileCache.set(DataSourceCache.getKey(tileCode, dataSource), tile);
+    set(mortonCode: number, offset: number, dataSource: DataSource, tile: Tile) {
+        this.m_tileCache.set(DataSourceCache.getKey(mortonCode, offset, dataSource), tile);
     }
 
     /**
@@ -215,8 +235,7 @@ class DataSourceCache {
      * @param tile The tile reference to be removed from cache.
      */
     delete(tile: Tile) {
-        const tileCode = TileOffsetUtils.getKeyForTileKeyAndOffset(tile.tileKey, tile.offset);
-        const tileKey = DataSourceCache.getKey(tileCode, tile.dataSource);
+        const tileKey = DataSourceCache.getKeyForTile(tile);
         this.deleteByKey(tileKey);
     }
 
@@ -229,7 +248,7 @@ class DataSourceCache {
      * @see DataSourceCache.getKey.
      * @param tileKey The unique tile identifier.
      */
-    deleteByKey(tileKey: string) {
+    deleteByKey(tileKey: TileCacheId) {
         this.m_tileCache.delete(tileKey);
     }
 
@@ -268,7 +287,7 @@ class DataSourceCache {
      *
      * @param selector The callback used to determine if tile should be evicted.
      */
-    evictSelected(selector: (tile: Tile, key: string) => boolean) {
+    evictSelected(selector: (tile: Tile, key: TileCacheId) => boolean) {
         this.m_tileCache.evictSelected(selector);
     }
 
@@ -280,8 +299,8 @@ class DataSourceCache {
      * @param callback The function to be called for each visited tile.
      * @param inDataSource The optional [[DataSource]] to which tiles should belong.
      */
-    forEach(callback: (tile: Tile, key: string) => void, inDataSource?: DataSource): void {
-        this.m_tileCache.forEach((entry: Tile, key: string) => {
+    forEach(callback: (tile: Tile, key: TileCacheId) => void, inDataSource?: DataSource): void {
+        this.m_tileCache.forEach((entry: Tile, key: TileCacheId) => {
             if (inDataSource === undefined || entry.dataSource === inDataSource) {
                 callback(entry, key);
             }
@@ -574,7 +593,7 @@ export class VisibleTileSet {
         let maxElevation = EarthConstants.MIN_ELEVATION;
         this.dataSourceTileList.forEach(renderListEntry => {
             // Calculate min/max elevation from every data source tiles,
-            // datasources without elevationRangeSource will contribute to
+            // data sources without elevationRangeSource will contribute to
             // values with zero levels for both elevations.
             const tiles = renderListEntry.visibleTiles;
             tiles.forEach(tile => {
@@ -931,16 +950,19 @@ export class VisibleTileSet {
 
                         if (!checkedTiles.has(parentCode) && !renderedTiles.get(parentCode)) {
                             checkedTiles.add(parentCode);
-                            const parentTile = tileCache.get(parentCode, dataSource);
+
+                            const {
+                                offset,
+                                mortonCode
+                            } = TileOffsetUtils.extractOffsetAndMortonKeyFromKey(parentCode);
+
+                            const parentTile = tileCache.get(mortonCode, offset, dataSource);
                             if (parentTile !== undefined && parentTile.hasGeometry) {
                                 // parentTile has geometry, so can be reused as fallback
                                 renderedTiles.set(parentCode, parentTile);
                                 return;
                             }
 
-                            const { mortonCode } = TileOffsetUtils.extractOffsetAndMortonKeyFromKey(
-                                parentCode
-                            );
                             const parentTileKey = parentTile
                                 ? parentTile.tileKey
                                 : TileKey.fromMortonCode(mortonCode);
@@ -970,7 +992,11 @@ export class VisibleTileSet {
                                 offset
                             );
                             checkedTiles.add(childTileCode);
-                            const childTile = tileCache.get(childTileCode, dataSource);
+                            const childTile = tileCache.get(
+                                childTileKey.mortonCode(),
+                                offset,
+                                dataSource
+                            );
 
                             if (childTile !== undefined && childTile.hasGeometry) {
                                 // childTile has geometry, so can be reused as fallback
@@ -1011,8 +1037,7 @@ export class VisibleTileSet {
         }
 
         const tileCache = this.m_dataSourceCache;
-        const tileKeyMortonCode = TileOffsetUtils.getKeyForTileKeyAndOffset(tileKey, offset);
-        let tile = tileCache.get(tileKeyMortonCode, dataSource);
+        let tile = tileCache.get(tileKey.mortonCode(), offset, dataSource);
 
         if (tile !== undefined && tile.offset === offset) {
             updateTile(tile);
@@ -1028,7 +1053,7 @@ export class VisibleTileSet {
         if (tile !== undefined) {
             tile.offset = offset;
             updateTile(tile);
-            tileCache.set(tileKeyMortonCode, tile, dataSource);
+            tileCache.set(tileKey.mortonCode(), offset, dataSource, tile);
             this.m_tileGeometryManager.initTile(tile);
         }
         return tile;
@@ -1036,11 +1061,10 @@ export class VisibleTileSet {
 
     private markDataSourceTilesDirty(renderListEntry: DataSourceTileList) {
         const dataSourceCache = this.m_dataSourceCache;
-        const retainedTiles: Set<string> = new Set();
+        const retainedTiles: Set<TileCacheId> = new Set();
 
         function markTileDirty(tile: Tile, tileGeometryManager: TileGeometryManager) {
-            const tileCode = TileOffsetUtils.getKeyForTileKeyAndOffset(tile.tileKey, tile.offset);
-            const tileKey = DataSourceCache.getKey(tileCode, tile.dataSource);
+            const tileKey = DataSourceCache.getKeyForTile(tile);
             if (!retainedTiles.has(tileKey)) {
                 retainedTiles.add(tileKey);
                 if (tile.tileGeometryLoader !== undefined) {
@@ -1065,7 +1089,7 @@ export class VisibleTileSet {
         }, renderListEntry.dataSource);
     }
 
-    // Computes the visible tile keys for each supplied datasource.
+    // Computes the visible tile keys for each supplied data source.
     private getVisibleTileKeysForDataSources(
         zoomLevel: number,
         dataSources: DataSource[],
