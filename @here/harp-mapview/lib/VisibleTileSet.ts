@@ -417,18 +417,18 @@ export class VisibleTileSet {
     }
 
     /**
-     * Retrieves maximum number of visible tiles.
+     * Retrieves maximum number of visible tiles per data source.
      */
-    getNumberOfVisibleTiles() {
+    get maxVisibleDataSourceTiles() {
         return this.options.maxVisibleDataSourceTiles;
     }
 
     /**
-     * Sets maximum number of visible tiles.
+     * Sets maximum number of visible tiles per data source.
      *
-     * @param size size of visible tiles array
+     * @param size maximum number of tiles rendered.
      */
-    setNumberOfVisibleTiles(size: number) {
+    set maxVisibleDataSourceTiles(size: number) {
         this.options.maxVisibleDataSourceTiles = size;
     }
 
@@ -517,7 +517,7 @@ export class VisibleTileSet {
             for (
                 let i = 0;
                 i < visibleTileKeys.length &&
-                actuallyVisibleTiles.length < this.options.maxVisibleDataSourceTiles;
+                actuallyVisibleTiles.length < this.maxVisibleDataSourceTiles;
                 i++
             ) {
                 const tileEntry = visibleTileKeys[i];
