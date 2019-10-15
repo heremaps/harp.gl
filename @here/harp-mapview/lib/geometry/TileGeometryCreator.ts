@@ -234,15 +234,13 @@ export class TileGeometryCreator {
             return;
         }
         const point = new THREE.Vector3();
-        for (const flatpath of decodedTile.pathGeometries) {
-            const path: THREE.Vector3[] = [];
-            for (let i = 0; i < flatpath.path.length; i += 3) {
-                point.set(flatpath.path[i], flatpath.path[i + 1], flatpath.path[i + 2]);
-                // Move to world coordinates
-                point.add(tile.center);
-                path.push(point.clone());
+        for (const path of decodedTile.pathGeometries) {
+            const vector3path: THREE.Vector3[] = [];
+            for (let i = 0; i < path.path.length; i += 3) {
+                point.set(path.path[i], path.path[i + 1], path.path[i + 2]);
+                vector3path.push(point.clone());
             }
-            tile.addBlockingElement(new PathBlockingElement(path));
+            tile.addBlockingElement(new PathBlockingElement(vector3path));
         }
     }
 
