@@ -216,6 +216,12 @@ export interface OmvRestClientParameters {
      * @deprecated Please use [[authenticationCode]].
      */
     getBearerToken?: () => Promise<string>;
+
+    /**
+     * Array of query parameters to be appended at the end of the url.
+     * It is empty by default.
+     */
+    urlParams?: { [key: string]: string };
 }
 
 /**
@@ -223,12 +229,14 @@ export interface OmvRestClientParameters {
  */
 export class OmvRestClient implements DataProvider {
     private readonly downloadManager: TransferManager;
+    private readonly urlParams: { [key: string]: string };
 
     constructor(readonly params: OmvRestClientParameters) {
         this.downloadManager =
             params.downloadManager === undefined
                 ? TransferManager.instance()
                 : params.downloadManager;
+        this.urlParams = params.urlParams === undefined ? {} : params.urlParams;
     }
 
     /** Overriding abstract method, in this case doing nothing. */
@@ -280,6 +288,7 @@ export class OmvRestClient implements DataProvider {
         const authenticationCode = await this.getActualAuthenticationCode();
 
         tileUrl = this.applyAuthCode(tileUrl, init, authenticationCode);
+        tileUrl = this.addQueryParams(tileUrl, this.urlParams);
 
         if (this.params.apiFormat === APIFormat.XYZJson) {
             return this.downloadManager.downloadJson(tileUrl, init);
@@ -354,8 +363,10 @@ export class OmvRestClient implements DataProvider {
             const authType = authMethod.name || "Bearer";
             (init.headers as Headers).append("Authorization", `${authType} ${authenticationCode}`);
         } else if (authMethod.method === AuthenticationMethod.QueryString) {
-            const attrName = authMethod.name || "access_token";
-            url = this.addQueryParams(url, [[attrName, authenticationCode]]);
+            const attrName: string = authMethod.name || "access_token";
+            const authParams: { [key: string]: string } = {};
+            authParams[attrName] = authenticationCode;
+            url = this.addQueryParams(url, authParams);
         }
         return url;
     }
@@ -395,15 +406,16 @@ export class OmvRestClient implements DataProvider {
         return this.params.baseUrl + path;
     }
 
-    private addQueryParams(url: string, queryParams: Array<[string, string]>): string {
+    private addQueryParams(url: string, queryParams: { [key: string]: string }): string {
         let queryString = "";
         let concatinator = url.indexOf("?") !== -1 ? "&" : "?";
-        for (const param of queryParams) {
-            queryString += concatinator + param[0] + "=" + param[1];
+        Object.getOwnPropertyNames(queryParams).forEach(property => {
+            const prop = property as keyof (typeof queryParams);
+            queryString += concatinator + prop + "=" + queryParams[prop];
             if (concatinator === "?") {
                 concatinator = "&";
             }
-        }
+        });
         return url + queryString;
     }
 }

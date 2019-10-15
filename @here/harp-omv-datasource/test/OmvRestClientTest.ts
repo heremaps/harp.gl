@@ -130,4 +130,54 @@ describe("OmvRestClient", function() {
             assert.equal(downloadRequestInit.headers.get("authorization"), "Bearer 12345");
         }
     });
+
+    it("bearer auth token with custom query params", async function() {
+        const restClient = new OmvRestClient({
+            baseUrl: "https://some.base.url",
+            apiFormat: APIFormat.HereV1,
+            downloadManager: mockDownloadManager,
+            authenticationMethod: AuthenticationTypeBearer,
+            authenticationCode: async () => "12345",
+            urlParams: {
+                first: "abc",
+                second: "xyz"
+            }
+        });
+        await restClient.getTile(new TileKey(1, 2, 3));
+        assert.equal(
+            downloadSpy.args[0][0],
+            "https://some.base.url/3/2/1/omv?first=abc&second=xyz"
+        );
+        const downloadRequestInit = downloadSpy.args[0][1] as RequestInit;
+        assert.exists(downloadRequestInit);
+        assert.exists(downloadRequestInit.headers);
+        if (
+            downloadRequestInit.headers !== undefined &&
+            downloadRequestInit.headers instanceof Headers
+        ) {
+            assert.equal(downloadRequestInit.headers.get("authorization"), "Bearer 12345");
+        }
+    });
+
+    it("query param auth with custom query param", async function() {
+        const restClient = new OmvRestClient({
+            baseUrl: "https://some.base.url",
+            apiFormat: APIFormat.HereV1,
+            downloadManager: mockDownloadManager,
+            authenticationMethod: {
+                method: AuthenticationMethod.QueryString,
+                name: "customKey"
+            },
+            urlParams: {
+                first: "abc",
+                second: "xyz"
+            },
+            authenticationCode: async () => "12345"
+        });
+        await restClient.getTile(new TileKey(1, 2, 3));
+        assert.equal(
+            downloadSpy.args[0][0],
+            "https://some.base.url/3/2/1/omv?customKey=12345&first=abc&second=xyz"
+        );
+    });
 });
