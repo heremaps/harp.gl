@@ -180,7 +180,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
     private readonly m_geometries: Geometry[] = [];
     private readonly m_textGeometries: TextGeometry[] = [];
     private readonly m_textPathGeometries: TextPathGeometry[] = [];
-    private readonly m_linePathGeometries: PathGeometry[] = [];
+    private readonly m_pathGeometries: PathGeometry[] = [];
     private readonly m_poiGeometries: PoiGeometry[] = [];
     private readonly m_simpleLines: LinesGeometry[] = [];
     private readonly m_solidLines: LinesGeometry[] = [];
@@ -502,7 +502,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                         point.add(this.m_decodeInfo.center);
                         worldPath.push(point.x, point.y, point.z);
                     }
-                    this.m_linePathGeometries.push({
+                    this.m_pathGeometries.push({
                         path: worldPath
                     });
                 }
@@ -735,8 +735,8 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
         if (this.m_textPathGeometries.length > 0) {
             decodedTile.textPathGeometries = this.m_textPathGeometries;
         }
-        if (this.m_linePathGeometries.length > 0) {
-            decodedTile.pathGeometries = this.m_linePathGeometries;
+        if (this.m_pathGeometries.length > 0) {
+            decodedTile.pathGeometries = this.m_pathGeometries;
         }
         if (this.m_sources.length !== 0) {
             decodedTile.copyrightHolderIds = this.m_sources;
