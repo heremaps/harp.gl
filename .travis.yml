@@ -24,6 +24,10 @@ jobs:
   include:
     - name: "Test"
       script: |
+	echo $AWS_ACCESS_KEY_ID
+	echo $AWS_SECRET_ACCESS_KEY
+	echo $GITHUB_TOKEN
+	echo $NPM_TOKEN
         set -ex
         yarn pre-test
         yarn cov-test --forbid-only
