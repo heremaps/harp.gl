@@ -1,0 +1,141 @@
+<html>
+
+    <head>
+        <title>harp.gl</title>
+        <link href="https://fonts.googleapis.com/css?family=Fira+Sans:400,500,600&display=swap"
+            rel="stylesheet">
+        <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+        <meta name="viewport" content="width=device-width,initial-scale=1">
+        <link rel="stylesheet" type="text/css" href="css/index.css">
+        <link rel="shortcut icon" href="resources/favicon.ico">
+        <script src="js/credentials.js"></script>
+        <script src="https://unpkg.com/three@0.108.0/build/three.min.js"></script>
+        <script src="https://unpkg.com/@here/harp.gl/dist/harp.js"></script>
+
+        <meta name="twitter:card" content="summary" />
+        <meta name="twitter:site" content="@here" />
+        <meta name="twitter:title" content="harp.gl" />
+        <meta name="twitter:description" content="3d web map rendering engine" />
+        <meta name="twitter:image" content="https://www.harp.gl/resources/background.png" />
+
+        <meta property="og:url" content="https://www.harp.gl" />
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content="harp.gl" />
+        <meta property="og:description" content="3d web map rendering engine" />
+        <meta property="og:image" content="https://www.harp.gl/resources/background.png" />
+    </head>
+
+    <body>
+        <header>
+            <canvas id="map"></canvas>
+            <div class="container header-container">
+                <nav>
+                    <div class="logo"></div>
+                    <div>
+                        <a id="docs-nav-mobile" href="https://www.harp.gl/docs"
+                            class="nav-item">Docs</a>
+                        <a id="docs-nav" href="https://www.harp.gl/docs"
+                            class="nav-item">Documentation</a>
+                        <a id="examples-nav" href="http://www.harp.gl/examples" 
+                            class="nav-item">Examples</a>
+                        <a id="tutorial-nav" href="https://developer.here.com/tutorials/harpgl"
+                            class="nav-item">Tutorial</a>
+                        <a href="https://github.com/heremaps/harp.gl" class="nav-item">GitHub</a>
+                    </div>
+                </nav>
+                <div class="header-content">
+                    <div class="header-title">
+                        harp.gl
+                    </div>
+                    <div class="header-desc">
+                        3d web map rendering engine
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="container">
+            <div class="features">
+                <div class="feature">
+                    <i class="material-icons">computer</i>
+                    <h2>
+                        Web first
+                    </h2>
+                    <div class="subtitle">
+                        harp.gl is built on modern web technologies like WebGL and three.js.
+                    </div>
+                </div>
+
+                <div class="feature">
+                    <i class="material-icons">code</i>
+                    <h2>
+                        Open source
+                    </h2>
+                    <div class="subtitle">
+                        harp.gl is developed with the community in mind. Feature suggestion or bug
+                        report? Let us know on GitHub.
+                    </div>
+                </div>
+
+                <div class="feature">
+                    <i class="material-icons">public</i>
+                    <h2>
+                        Flexible
+                    </h2>
+                    <div class="subtitle">
+                        Add any type of datasource such as GeoJSON, vector and raster tiles, or
+                        custom objects to the map.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="links">
+            <div class="container">
+                <div class="links-grid">
+                    <div>
+                        <h1 class="gradient">Documentation</h1>
+                        <p class="description">
+                            Learn how to use the harp.gl api, including information about the
+                            different modules, classes, and methods.
+                        </p>
+                        <a target="_blank" class="button-link docs-link" href="">
+                            Documentation
+                        </a>
+                    </div>
+                    <div>
+                        <h1 class="gradient">Examples</h1>
+                        <p class="description">
+                            Explore and play around with different live examples of harp.gl in
+                            action.
+                        </p>
+                        <a target="_blank" class="button-link examples-link" href="">
+                            Examples
+                        </a>
+                    </div>
+                    <div>
+                        <p>Select the target release:</p>
+                        <select name="versions"></select>
+                        <p>Please note that latest includes bleeding edge changes. For a more stable
+                            build, try the most recent release.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <footer>
+            <div class="container footer">
+                <div>
+                    <h1 class="footer-title">harp.gl</h2>
+                </div>
+                <div>
+                    <span>
+                        &copy; 2017-<span id="year"></span> <a target="_blank"
+                            href="https://here.com">HERE</a>
+                    </span>
+                </div>
+            </div>
+        </footer>
+        <script src="js/index.js"></script>
+    </body>
+
+</html>
