@@ -108,6 +108,26 @@
   dependencies:
     "@here/harp-fontcatalog-generator" "^0.1.2"
 
+"@here/olp-sdk-dataservice-api@0.9.0":
+  version "0.9.0"
+  resolved "https://registry.yarnpkg.com/@here/olp-sdk-dataservice-api/-/olp-sdk-dataservice-api-0.9.0.tgz#61c8cef5c060c36ee81a8e4daedd1d20ea0a237a"
+  integrity sha512-9VC0X36SIB+PW5/T500DVLK2CbowwypdRIiAnpOi2FepgZe+i9XXS5Fe6c31d1OKwtK3h45GVnjklPgVfHFE1g==
+
+"@here/olp-sdk-dataservice-read@^0.9.0":
+  version "0.9.1"
+  resolved "https://registry.yarnpkg.com/@here/olp-sdk-dataservice-read/-/olp-sdk-dataservice-read-0.9.1.tgz#98a2cef36598ba5d5afe90e331035d5fb77a6b08"
+  integrity sha512-8QrmFxguSiCZwNxS1JcU0iuFxnmU8Tls+uaO8yZQiWTFbRNbXAHu73v9rwbY/HFFlFQXQrKRUO9mzvYXsvKVrA==
+  dependencies:
+    "@here/olp-sdk-dataservice-api" "0.9.0"
+    "@here/olp-sdk-fetch" "0.9.0"
+
+"@here/olp-sdk-fetch@0.9.0":
+  version "0.9.0"
+  resolved "https://registry.yarnpkg.com/@here/olp-sdk-fetch/-/olp-sdk-fetch-0.9.0.tgz#ec0a1ef5e5886ae2d96cd76134ab318eefa6e4da"
+  integrity sha512-5Gp55omZ+AedNxLI71zMZfloOKsN5pGah3+I1sc7/onA+XztxvGf/hX+RV+dqrOrQQfrn5iCa1VFjAbxliM5fA==
+  dependencies:
+    node-fetch "2.2.0"
+
 "@jimp/bmp@^0.6.8":
   version "0.6.8"
   resolved "https://registry.yarnpkg.com/@jimp/bmp/-/bmp-0.6.8.tgz#8abbfd9e26ba17a47fab311059ea9f7dd82005b6"
@@ -5421,6 +5441,11 @@ node-environment-flags@1.0.5:
     object.getownpropertydescriptors "^2.0.3"
     semver "^5.7.0"
 
+node-fetch@2.2.0:
+  version "2.2.0"
+  resolved "https://registry.yarnpkg.com/node-fetch/-/node-fetch-2.2.0.tgz#4ee79bde909262f9775f731e3656d0db55ced5b5"
+  integrity sha512-OayFWziIxiHY8bCUyLX6sTpDH8Jsbp4FfYd1j1f7vZyfgkcOnAyM4oQR16f8a0s7Gl/viMGRey8eScYk4V4EZA==
+
 node-fetch@^2.2.0:
   version "2.6.0"
   resolved "https://registry.yarnpkg.com/node-fetch/-/node-fetch-2.6.0.tgz#e633456386d4aa55863f676a7ab0daa8fdecb0fd"
@@ -6858,11 +6883,6 @@ ripemd160@^2.0.0, ripemd160@^2.0.1:
   dependencies:
     hash-base "^3.0.0"
     inherits "^2.0.1"
-
-rtree@^1.4.2:
-  version "1.4.2"
-  resolved "https://registry.yarnpkg.com/rtree/-/rtree-1.4.2.tgz#8b8c588c58a1f87fea5da2d497ae3b2c5e4bb32e"
-  integrity sha1-i4xYjFih+H/qXaLUl647LF5Lsy4=
 
 run-async@^2.0.0, run-async@^2.2.0:
   version "2.3.0"

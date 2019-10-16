@@ -15,14 +15,10 @@ import {
     TilingScheme,
     webMercatorTilingScheme
 } from "@here/harp-geoutils";
-import { CopyrightInfo, DataSource, Tile } from "@here/harp-mapview";
+import { CopyrightInfo, DataSource, Tile, UrlCopyrightProvider } from "@here/harp-mapview";
 import { getOptionValue, LoggerManager } from "@here/harp-utils";
 
 const logger = LoggerManager.instance.create("MapView");
-
-declare const require: any;
-// tslint:disable-next-line:no-var-requires
-const RTree = require("rtree");
 
 const textureLoader = new THREE.TextureLoader();
 textureLoader.crossOrigin = ""; // empty assignment required to support CORS
@@ -163,50 +159,6 @@ const WEBTILE_LANGUAGE_DICTIONARY: { [s: string]: string } = {
 };
 
 /**
- * Schema of Map Tile API `copyright` endpoint JSON response.
- *
- * @see https://developer.here.com/documentation/map-tile/topics/resource-copyright.html
- */
-interface AreaCopyrightInfo {
-    /**
-     * Minimum zoom level for the specified copyright label.
-     */
-    minLevel?: number;
-
-    /**
-     * Maximum zoom level for the specified copyright label.
-     */
-    maxLevel?: number;
-
-    /**
-     * Copyright text to display after the copyright symbol on the map.
-     */
-    label: string;
-
-    /**
-     * Verbose copyright text of the label to display by mouse over label or info menu entry.
-     */
-    alt?: string;
-
-    /**
-     * The bounding boxes define areas where specific copyrights are valid. A bounding box is
-     * defined by bottom (latitude), left (longitude) and top (latitude), right (longitude).
-     *
-     * The default copyright has no boxes element and covers all other areas.
-     */
-    boxes?: Array<[number, number, number, number]>;
-}
-
-/**
- * Schema of Map Tile API `copyright` endpoint JSON response.
- *
- * @see https://developer.here.com/documentation/map-tile/topics/resource-copyright.html
- */
-interface CopyrightCoverageResponse {
-    [scheme: string]: AreaCopyrightInfo[];
-}
-
-/**
  * Map Tile request params.
  *
  * @see https://developer.here.com/documentation/map-tile/topics/request-constructing.html
@@ -243,12 +195,6 @@ interface MapTileParams {
      */
     scheme?: string;
 }
-
-const hereCopyrightInfo: CopyrightInfo = {
-    id: "here.com",
-    year: new Date().getFullYear(),
-    label: "HERE"
-};
 
 /**
  * Instances of `WebTileDataSource` can be used to add Web Tile to [[MapView]].
@@ -295,7 +241,17 @@ export class WebTileDataSource extends DataSource {
     private m_ppi: WebTileDataSource.ppiValue;
     private m_tileBaseAddress: string;
     private m_languages?: string[];
-    private m_cachedCopyrightResponse?: Promise<AreaCopyrightInfo[]>;
+
+    /** Copyright provider instance. */
+    private m_copyrightProvider: UrlCopyrightProvider;
+
+    /** Predefined fixed HERE copyright info. */
+    private readonly HERE_COPYRIGHT_INFO: CopyrightInfo = {
+        id: "here.com",
+        year: new Date().getFullYear(),
+        label: "HERE",
+        link: "https://legal.here.com/terms"
+    };
 
     /**
      * Constructs a new `WebTileDataSource`.
@@ -321,6 +277,17 @@ export class WebTileDataSource extends DataSource {
         ) {
             throw new Error("Requested combination of scheme satellite.day and ppi is not valid");
         }
+
+        const mapTileParams = this.parseBaseUrl(this.m_tileBaseAddress);
+        const baseHostName = mapTileParams.baseUrl;
+        const mapId = getOptionValue(mapTileParams.mapVersion, "newest");
+        const scheme = mapTileParams.scheme || "normal.day";
+        const baseScheme = scheme.split(".")[0] || "normal";
+        const { appId, appCode } = this.m_options;
+        const url =
+            `https://1.${baseHostName}/maptile/2.1/copyright/${mapId}` +
+            `?output=json&app_id=${appId}&app_code=${appCode}`;
+        this.m_copyrightProvider = new UrlCopyrightProvider(url, baseScheme);
     }
 
     shouldPreloadTiles(): boolean {
@@ -484,90 +451,10 @@ export class WebTileDataSource extends DataSource {
     }
 
     private async getTileCopyright(tile: Tile): Promise<CopyrightInfo[]> {
-        // NOTE:
-        // For some reason Map Tile copyright endpoint doesn't return HERE as copyright holder, so
-        // add it statically.
-        //
-        // (https://developer.here.com/documentation/map-tile/topics/resource-copyright.html)
-        const result: CopyrightInfo[] = [hereCopyrightInfo];
-
         if (this.m_options.gatherCopyrightInfo === false) {
-            return result;
+            return [this.HERE_COPYRIGHT_INFO];
         }
-        const rtree = await this.getCopyrightCoverageData();
-        const tileBounds = {
-            x: Math.min(tile.geoBox.west, tile.geoBox.east),
-            y: Math.min(tile.geoBox.south, tile.geoBox.north),
-            h: Math.abs(tile.geoBox.longitudeSpan),
-            w: Math.abs(tile.geoBox.latitudeSpan)
-        };
-        const matchingEntries: AreaCopyrightInfo[] | null | undefined = rtree.search(tileBounds);
-        const tileLevel = tile.tileKey.level;
-        if (!matchingEntries) {
-            return result;
-        }
-        for (const entry of matchingEntries) {
-            const minLevel = getOptionValue(entry.minLevel, 0);
-            const maxLevel = getOptionValue(entry.maxLevel, Infinity);
-
-            if (tileLevel >= minLevel && tileLevel <= maxLevel) {
-                result.push({
-                    id: entry.label
-                });
-            }
-        }
-        return result;
-    }
-
-    private getCopyrightCoverageData(): Promise<any> {
-        const cachedResponse = this.m_cachedCopyrightResponse;
-        if (cachedResponse !== undefined) {
-            return cachedResponse;
-        }
-
-        const mapTileParams = this.parseBaseUrl(this.m_tileBaseAddress);
-        const baseHostName = mapTileParams.baseUrl;
-        const mapId = getOptionValue(mapTileParams.mapVersion, "newest");
-        const scheme = mapTileParams.scheme || "normal.day";
-        const baseScheme = scheme.split(".")[0] || "normal";
-        const { appId, appCode } = this.m_options;
-        const url =
-            `https://1.${baseHostName}/maptile/2.1/copyright/${mapId}` +
-            `?output=json&app_id=${appId}&app_code=${appCode}`;
-
-        this.m_cachedCopyrightResponse = fetch(url)
-            .then(response => response.json())
-            .then((responseJson: CopyrightCoverageResponse) => {
-                const entries = responseJson[baseScheme] || [];
-                const tree = new RTree();
-                if (!entries) {
-                    return tree;
-                }
-                for (const entry of entries) {
-                    if (!entry.boxes) {
-                        const wholeWorld = {
-                            x: -180,
-                            y: -90,
-                            w: 360,
-                            h: 180
-                        };
-                        tree.insert(wholeWorld, entry);
-                    } else {
-                        for (const box of entry.boxes) {
-                            const [bottom, left, top, right] = box;
-                            const bounds = {
-                                x: Math.min(left, right),
-                                y: Math.min(bottom, top),
-                                w: Math.abs(left - right),
-                                h: Math.abs(top - bottom)
-                            };
-                            tree.insert(bounds, entry);
-                        }
-                    }
-                }
-                return tree;
-            });
-        return this.m_cachedCopyrightResponse;
+        return this.m_copyrightProvider.getCopyrights(tile.geoBox, tile.tileKey.level);
     }
 
     private mapIsoLanguageToWebTile(languages: string[]): void {

@@ -28,8 +28,7 @@
         "@here/harp-geoutils": "^0.10.0",
         "@here/harp-lrucache": "^0.10.0",
         "@here/harp-mapview": "^0.10.0",
-        "@here/harp-utils": "^0.10.0",
-        "rtree": "^1.4.2"
+        "@here/harp-utils": "^0.10.0"
     },
     "devDependencies": {
         "@types/chai": "^4.1.2",

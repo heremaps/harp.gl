@@ -12,11 +12,11 @@ import {
 } from "@here/harp-features-datasource";
 import { GeoCoordinates, sphereProjection } from "@here/harp-geoutils";
 import { MapControls, MapControlsUI } from "@here/harp-map-controls";
-import { CopyrightInfo, MapView } from "@here/harp-mapview";
+import { MapView } from "@here/harp-mapview";
 import { TopViewClipPlanesEvaluator } from "@here/harp-mapview/lib/ClipPlanesEvaluator";
 import { APIFormat, OmvDataSource } from "@here/harp-omv-datasource";
 import * as THREE from "three";
-import { accessToken } from "../config";
+import { accessToken, copyrightInfo } from "../config";
 import { COUNTRIES } from "../resources/countries";
 
 /**
@@ -329,21 +329,13 @@ export namespace PolygonsFeaturesExample {
 
         window.addEventListener("resize", () => mapView.resize(innerWidth, innerHeight));
 
-        const hereCopyrightInfo: CopyrightInfo = {
-            id: "here.com",
-            year: new Date().getFullYear(),
-            label: "HERE",
-            link: "https://legal.here.com/terms"
-        };
-        const copyrights: CopyrightInfo[] = [hereCopyrightInfo];
-
         const baseMap = new OmvDataSource({
             baseUrl: "https://xyz.api.here.com/tiles/herebase.02",
             apiFormat: APIFormat.XYZOMV,
             styleSetName: "tilezen",
             maxZoomLevel: 17,
             authenticationCode: accessToken,
-            copyrightInfo: copyrights
+            copyrightInfo
         });
         mapView.addDataSource(baseMap);
 

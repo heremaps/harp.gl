@@ -41,6 +41,7 @@
         "@here/harp-mapview": "^0.10.0",
         "@here/harp-mapview-decoder": "^0.10.0",
         "@here/harp-materials": "^0.10.0",
+        "@here/harp-olp-utils": "^0.10.0",
         "@here/harp-omv-datasource": "^0.10.0",
         "@here/harp-test-utils": "^0.10.0",
         "@here/harp-text-canvas": "^0.10.0",

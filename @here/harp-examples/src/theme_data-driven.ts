@@ -6,9 +6,9 @@
 
 import { GeoCoordinates } from "@here/harp-geoutils";
 import { MapControls, MapControlsUI } from "@here/harp-map-controls";
-import { CopyrightElementHandler, CopyrightInfo, MapView } from "@here/harp-mapview";
+import { CopyrightElementHandler, MapView } from "@here/harp-mapview";
 import { APIFormat, OmvDataSource } from "@here/harp-omv-datasource";
-import { accessToken } from "../config";
+import { accessToken, copyrightInfo } from "../config";
 
 export namespace DataDrivenThemeExample {
     function initializeMapView(id: string): MapView {
@@ -71,22 +71,13 @@ export namespace DataDrivenThemeExample {
     function main() {
         const map = initializeMapView("mapCanvas");
 
-        const hereCopyrightInfo: CopyrightInfo = {
-            id: "here.com",
-            year: new Date().getFullYear(),
-            label: "HERE",
-            link: "https://legal.here.com/terms"
-        };
-
-        const copyrights: CopyrightInfo[] = [hereCopyrightInfo];
-
         const omvDataSource = new OmvDataSource({
             baseUrl: "https://xyz.api.here.com/tiles/osmbase/512/all",
             apiFormat: APIFormat.XYZMVT,
             styleSetName: "tilezen",
             maxZoomLevel: 17,
             authenticationCode: accessToken,
-            copyrightInfo: copyrights
+            copyrightInfo
         });
 
         const mapControls = MapControls.create(map);
