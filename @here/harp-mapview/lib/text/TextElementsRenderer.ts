@@ -1959,14 +1959,19 @@ export class TextElementsRenderer {
                         stats.fadeAnimationRunning || textIsFadingOut || textFading;
 
                     const opacity = textRenderState.opacity;
+                    const backgroundIsVisible =
+                        pointLabel.renderStyle!.backgroundOpacity > 0 &&
+                        textCanvas.textRenderStyle.fontSize.backgroundSize > 0;
 
                     temp.bufferAdditionParams.layer = pointLabel.renderOrder;
                     temp.bufferAdditionParams.position = tempPosition;
                     temp.bufferAdditionParams.scale = textScale;
                     temp.bufferAdditionParams.opacity =
                         opacity * distanceFadeFactor * pointLabel.renderStyle!.opacity;
-                    temp.bufferAdditionParams.backgroundOpacity =
-                        opacity * distanceFadeFactor * pointLabel.renderStyle!.backgroundOpacity;
+                    temp.bufferAdditionParams.backgroundOpacity = backgroundIsVisible
+                        ? temp.bufferAdditionParams.opacity *
+                          pointLabel.renderStyle!.backgroundOpacity
+                        : 0.0;
                     temp.bufferAdditionParams.pickingData = pointLabel.userData
                         ? pointLabel
                         : undefined;
