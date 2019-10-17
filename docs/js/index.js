@@ -10,7 +10,8 @@ document.getElementById("docs-nav-mobile").href = s3Base + "master/doc/";
 const releases = [
     {
         date: "latest",
-        hash: "master"
+        hash: "master",
+        version: "latest-dev"
     }
 ];
 const dropdown = document.querySelector("select[name=versions]");
@@ -21,24 +22,25 @@ fetch("https://www.harp.gl/releases.json")
         releases.push(...res);
         releases.forEach(release => {
             const option = document.createElement("option");
-            option.innerText = release.date;
+            option.innerText = release.version;
             dropdown.appendChild(option);
         });
 
         dropdown.onchange = () => {
             const selected = dropdown.querySelector("option:checked");
-            const hash = releases.filter(x => x.date === selected.innerText)[0].hash;
-            const date = releases.filter(x => x.date === selected.innerText)[0].date;
+            const release = releases.find(x => x.version === selected.innerText);
+            const hash = release.hash;
+            const version = release.version;
 
             //Update examples button and link
             document.querySelector(".examples-link").href = s3Base + hash + "/examples/";
             document.querySelector(".examples-link").innerText =
-                "Examples" + (date !== "master" ? ` (${date})` : "");
+                "Examples" + (hash !== "master" ? ` (${version})` : "");
 
             //Update docs button and link
             document.querySelector(".docs-link").href = s3Base + hash + "/doc/";
             document.querySelector(".docs-link").innerText =
-                "Documentation" + (date !== "master" ? ` (${date})` : "");
+                "Documentation" + (hash !== "master" ? ` (${version})` : "");
         };
     })
     .catch(() => {
@@ -83,4 +85,4 @@ window.addEventListener("resize", () => map.resize(window.innerWidth, window.inn
 map.beginAnimation();
 
 //Update year
-document.getElementById('year').innerText = new Date().getFullYear()
+document.getElementById("year").innerText = new Date().getFullYear();

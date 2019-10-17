@@ -21,6 +21,7 @@
         "mkpath": "^1.0.0",
         "mocha": "^6.1.4",
         "mocha-webdriver-runner": "^0.5.3",
+        "node-fetch": "^2.2.0",
         "nyc": "^14.1.1",
         "prettier": "^1.19.1",
         "serve-handler": "^6.0.1",
@@ -53,7 +54,8 @@
         "tslint:fix": "tslint --fix --project tsconfig.json",
         "prettier": "prettier -l \"**/*.ts\" \"**/*.tsx\" \"**/*.json\"",
         "prettier:fix": "prettier --write \"**/*.ts\" \"**/*.tsx\" \"**/*.json\"",
-        "postinstall": "ts-node ./scripts/postinstall.ts"
+        "postinstall": "ts-node ./scripts/postinstall.ts",
+        "prepare-doc-deploy": "ts-node ./scripts/prepare_doc_deploy.ts"
     },
     "engines": {
         "node": ">=10.5.0",

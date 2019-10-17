@@ -37,7 +37,7 @@ jobs:
         set -ex
         yarn run build
         yarn run typedoc
-      before_deploy: ./scripts/prepare_doc_deploy.sh
+      before_deploy: yarn prepare_doc_deploy
       deploy:
         - provider: script
           script: ./scripts/publish-packages.sh
