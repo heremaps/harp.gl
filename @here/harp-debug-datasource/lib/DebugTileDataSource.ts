@@ -94,7 +94,9 @@ export class DebugTile extends Tile {
             });
         }
 
-        const text = `(${tileKey.row}, ${tileKey.column}, ${tileKey.level})`;
+        const text = `${tileKey.mortonCode()} (${tileKey.row}, ${tileKey.column}, ${
+            tileKey.level
+        })`;
 
         const textElement = new TextElement(
             text,
