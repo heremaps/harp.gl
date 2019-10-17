@@ -113,7 +113,7 @@ export class ExprEvaluator implements ExprVisitor<Value, ExprEvaluatorContext> {
     visitContainsExpr(expr: ContainsExpr, context: ExprEvaluatorContext): Value {
         const value = expr.value.accept(this, context);
 
-        const result = expr.elements.includes(value);
+        const result = expr.elements.includes(value as any);
 
         if (context.cache !== undefined) {
             context.cache.set(expr, result);

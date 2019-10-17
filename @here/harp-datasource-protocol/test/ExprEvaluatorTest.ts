@@ -8,7 +8,7 @@
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
 import { assert } from "chai";
-import { Expr, ExprScope, MapEnv, ValueMap } from "../lib/Expr";
+import { Expr, ExprScope, JsonValue, MapEnv, ValueMap } from "../lib/Expr";
 import { getPropertyValue, isInterpolatedProperty } from "../lib/InterpolatedProperty";
 import { InterpolatedProperty, InterpolationMode } from "../lib/InterpolatedPropertyDefs";
 
@@ -26,7 +26,7 @@ describe("ExprEvaluator", function() {
     };
 
     function evaluate(
-        expr: unknown,
+        expr: JsonValue,
         values: ValueMap = defaultEnv,
         scope: ExprScope = ExprScope.Value
     ) {
@@ -34,7 +34,7 @@ describe("ExprEvaluator", function() {
         return Expr.fromJSON(expr).evaluate(env, scope);
     }
 
-    function dependencies(json: unknown) {
+    function dependencies(json: JsonValue) {
         const deps = Expr.fromJSON(json).dependencies();
         return {
             properties: Array.from(deps.properties).sort(),
@@ -398,6 +398,10 @@ describe("ExprEvaluator", function() {
             assert.throw(
                 () => Expr.fromJSON(["match", ["get", "x"], "value1", "result1"]),
                 "fallback is missing in 'match' expression"
+            );
+            assert.throw(
+                () => Expr.fromJSON(["match", ["get", "x"], [0, "value1"], "result1", "fallback"]),
+                "'[0,\"value1\"]' is not a valid label for 'match'"
             );
         });
     });
