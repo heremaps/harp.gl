@@ -241,90 +241,122 @@ export abstract class Expr {
             case "!in":
                 return new CallExpr("!", [this.parseCall([op.slice(1), ...node.slice(1)])]);
 
-            case "get": {
-                if (node[2] !== undefined) {
-                    return Expr.makeCallExpr(op, node, referenceResolverState);
-                }
-                const name = node[1];
-                if (typeof name !== "string") {
-                    throw new Error(`expected the name of an attribute`);
-                }
-                return new VarExpr(name);
-            }
-
             case "ref":
-                return this.resolveReference(node, referenceResolverState);
+                return Expr.resolveReference(node, referenceResolverState);
 
-            case "has": {
-                if (node[2] !== undefined) {
-                    return Expr.makeCallExpr(op, node, referenceResolverState);
-                }
-                const name = node[1];
-                if (typeof name !== "string") {
-                    throw new Error(`expected the name of an attribute`);
-                }
-                return new HasAttributeExpr(name);
-            }
+            case "get":
+                return Expr.parseGetExpr(node, referenceResolverState);
+
+            case "has":
+                return Expr.parseHasExpr(node, referenceResolverState);
 
             case "in":
-                const elements = node[2];
-                if (!ContainsExpr.isValidElementsArray(elements)) {
-                    // tslint:disable-next-line: max-line-length
-                    throw new Error(`'${op}' expects an array of number or string literals`);
-                }
-                return new ContainsExpr(this.parseNode(node[1], referenceResolverState), elements);
+                return Expr.parseInExpr(node, referenceResolverState);
 
-            case "literal": {
-                const obj = node[1];
-                if (obj === null || typeof obj !== "object") {
-                    throw new Error("expected an object or array literal");
-                }
-                return new ObjectLiteralExpr(obj);
-            }
+            case "literal":
+                return Expr.parseLiteralExpr(node);
 
-            case "match": {
-                if (node.length < 4) {
-                    throw new Error("not enough arguments");
-                }
-                if (!(node.length % 2)) {
-                    throw new Error("fallback is missing in 'match' expression");
-                }
-                const value = this.parseNode(node[1], referenceResolverState);
-                const conditions: Array<[MatchLabel, Expr]> = [];
-                for (let i = 2; i < node.length - 1; i += 2) {
-                    const label = node[i];
-                    if (!MatchExpr.isValidMatchLabel(label)) {
-                        throw new Error(
-                            `'${JSON.stringify(label)}' is not a valid label for 'match'`
-                        );
-                    }
-                    const expr = this.parseNode(node[i + 1], referenceResolverState);
-                    conditions.push([label, expr]);
-                }
-                const fallback = this.parseNode(node[node.length - 1], referenceResolverState);
-                return new MatchExpr(value, conditions, fallback);
-            }
+            case "match":
+                return Expr.parseMatchExpr(node, referenceResolverState);
 
-            case "case": {
-                if (node.length < 3) {
-                    throw new Error("not enough arguments");
-                }
-                if (node.length % 2) {
-                    throw new Error("fallback is missing in 'case' expression");
-                }
-                const branches: Array<[Expr, Expr]> = [];
-                for (let i = 1; i < node.length - 1; i += 2) {
-                    const condition = this.parseNode(node[i], referenceResolverState);
-                    const expr = this.parseNode(node[i + 1], referenceResolverState);
-                    branches.push([condition, expr]);
-                }
-                const caseFallback = this.parseNode(node[node.length - 1], referenceResolverState);
-                return new CaseExpr(branches, caseFallback);
-            }
+            case "case":
+                return Expr.parseCaseExpr(node, referenceResolverState);
 
             default:
                 return this.makeCallExpr(op, node, referenceResolverState);
         } // switch
+    }
+
+    private static parseGetExpr(
+        node: JsonArray,
+        referenceResolverState: ReferenceResolverState | undefined
+    ) {
+        if (node[2] !== undefined) {
+            return Expr.makeCallExpr("get", node, referenceResolverState);
+        }
+        const name = node[1];
+        if (typeof name !== "string") {
+            throw new Error(`expected the name of an attribute`);
+        }
+        return new VarExpr(name);
+    }
+
+    private static parseHasExpr(
+        node: JsonArray,
+        referenceResolverState: ReferenceResolverState | undefined
+    ) {
+        if (node[2] !== undefined) {
+            return Expr.makeCallExpr("has", node, referenceResolverState);
+        }
+        const name = node[1];
+        if (typeof name !== "string") {
+            throw new Error(`expected the name of an attribute`);
+        }
+        return new HasAttributeExpr(name);
+    }
+
+    private static parseInExpr(
+        node: JsonArray,
+        referenceResolverState: ReferenceResolverState | undefined
+    ) {
+        const elements = node[2];
+        if (!ContainsExpr.isValidElementsArray(elements)) {
+            // tslint:disable-next-line: max-line-length
+            throw new Error(`'in' expects an array of number or string literals`);
+        }
+        return new ContainsExpr(this.parseNode(node[1], referenceResolverState), elements);
+    }
+
+    private static parseLiteralExpr(node: JsonArray) {
+        const obj = node[1];
+        if (obj === null || typeof obj !== "object") {
+            throw new Error("expected an object or array literal");
+        }
+        return new ObjectLiteralExpr(obj);
+    }
+
+    private static parseMatchExpr(
+        node: JsonArray,
+        referenceResolverState: ReferenceResolverState | undefined
+    ) {
+        if (node.length < 4) {
+            throw new Error("not enough arguments");
+        }
+        if (!(node.length % 2)) {
+            throw new Error("fallback is missing in 'match' expression");
+        }
+        const value = this.parseNode(node[1], referenceResolverState);
+        const conditions: Array<[MatchLabel, Expr]> = [];
+        for (let i = 2; i < node.length - 1; i += 2) {
+            const label = node[i];
+            if (!MatchExpr.isValidMatchLabel(label)) {
+                throw new Error(`'${JSON.stringify(label)}' is not a valid label for 'match'`);
+            }
+            const expr = this.parseNode(node[i + 1], referenceResolverState);
+            conditions.push([label, expr]);
+        }
+        const fallback = this.parseNode(node[node.length - 1], referenceResolverState);
+        return new MatchExpr(value, conditions, fallback);
+    }
+
+    private static parseCaseExpr(
+        node: JsonArray,
+        referenceResolverState: ReferenceResolverState | undefined
+    ) {
+        if (node.length < 3) {
+            throw new Error("not enough arguments");
+        }
+        if (node.length % 2) {
+            throw new Error("fallback is missing in 'case' expression");
+        }
+        const branches: Array<[Expr, Expr]> = [];
+        for (let i = 1; i < node.length - 1; i += 2) {
+            const condition = this.parseNode(node[i], referenceResolverState);
+            const expr = this.parseNode(node[i + 1], referenceResolverState);
+            branches.push([condition, expr]);
+        }
+        const caseFallback = this.parseNode(node[node.length - 1], referenceResolverState);
+        return new CaseExpr(branches, caseFallback);
     }
 
     private static makeCallExpr(
