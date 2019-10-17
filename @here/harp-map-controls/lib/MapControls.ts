@@ -48,12 +48,6 @@ const MAPCONTROL_EVENT_END_INTERACTION: THREE.Event = {
 } as any;
 
 /**
- * Cached ThreeJS instances for realtime maths.
- */
-const vector1 = new THREE.Vector3();
-const vector2 = new THREE.Vector3();
-
-/**
  * The number of user's inputs to consider for panning inertia, to reduce erratic inputs.
  */
 const USER_INPUTS_TO_CONSIDER = 5;
@@ -166,6 +160,12 @@ export class MapControls extends THREE.EventDispatcher {
     tiltAngle = Math.PI / 4;
 
     /**
+     * Duration of the animation to reset the camera to looking north, in seconds. Independent of
+     * inertia.
+     */
+    northResetAnimationDuration = 1.5;
+
+    /**
      * Determines the zoom level delta for single mouse wheel movement. So after each mouse wheel
      * movement the current zoom level will be added or subtracted by this value. The default value
      * is `0.2` - this means that every 5th mouse wheel movement you will cross a zoom level.
@@ -223,6 +223,7 @@ export class MapControls extends THREE.EventDispatcher {
 
     private m_needsRenderLastFrame: boolean = true;
 
+    // Internal variables for animating panning (planar + spherical panning).
     private m_panIsAnimated: boolean = false;
     private m_panDistanceFrameDelta: THREE.Vector3 = new THREE.Vector3();
     private m_panAnimationTime: number = 0;
@@ -243,6 +244,7 @@ export class MapControls extends THREE.EventDispatcher {
     ];
     private m_currentPanDistanceOrAngleIndex: number = 0;
 
+    // Internal variables for animating zoom.
     private m_zoomIsAnimated: boolean = false;
     private m_zoomDeltaRequested: number = 0;
     private m_zoomTargetNormalizedCoordinates: THREE.Vector2 = new THREE.Vector2();
@@ -252,6 +254,7 @@ export class MapControls extends THREE.EventDispatcher {
     private m_targetedZoom?: number;
     private m_currentZoom?: number;
 
+    // Internal variables for animating tilt.
     private m_tiltIsAnimated: boolean = false;
     private m_tiltRequested?: number = undefined;
     private m_tiltAnimationTime: number = 0;
@@ -266,10 +269,19 @@ export class MapControls extends THREE.EventDispatcher {
     private m_tmpVector2: THREE.Vector2 = new THREE.Vector2();
     private m_tmpVector3: THREE.Vector3 = new THREE.Vector3();
 
+    // Internal variables for animating double tap.
     private m_tapStartTime: number = 0;
     private m_lastSingleTapTime: number = 0;
     private m_fingerMoved: boolean = false;
     private m_isDoubleTap: boolean = false;
+
+    // Internal variables for animating the movement resetting the north.
+    private m_resetNorthStartTime: number = 0;
+    private m_resetNorthIsAnimated: boolean = false;
+    private m_resetNorthAnimationDuration: number = 0;
+    private m_currentAzimuth: number = 0;
+    private m_lastAzimuth: number = 0;
+    private m_startAzimuth: number = 0;
 
     /**
      * Determines the maximum angle the camera can tilt to. It is defined in radians.
@@ -305,6 +317,7 @@ export class MapControls extends THREE.EventDispatcher {
         this.handleZoom = this.handleZoom.bind(this);
         this.handlePan = this.handlePan.bind(this);
         this.tilt = this.tilt.bind(this);
+        this.resetNorth = this.resetNorth.bind(this);
         this.assignZoomAfterTouchZoomRender = this.assignZoomAfterTouchZoomRender.bind(this);
     }
 
@@ -319,75 +332,15 @@ export class MapControls extends THREE.EventDispatcher {
     };
 
     /**
-     * Rotates the camera by the given delta yaw and delta pitch. The pitch will be clamped to the
-     * maximum possible tilt to the new target, and under the horizon in sphere projection.
-     *
-     * @param deltaYaw Delta yaw in degrees.
-     * @param deltaPitch Delta pitch in degrees.
-     */
-    rotate(deltaYaw: number, deltaPitch: number = 0) {
-        if (this.inertiaEnabled && this.m_zoomIsAnimated) {
-            this.stopZoom();
-        }
-
-        // 1. Apply yaw: rotate around the vertical axis.
-        this.mapView.camera.rotateOnWorldAxis(
-            this.mapView.projection.type === geoUtils.ProjectionType.Spherical
-                ? vector1.copy(this.camera.position).normalize()
-                : vector1.set(0, 0, 1),
-            geoUtils.MathUtils.degToRad(-deltaYaw)
-        );
-        this.mapView.camera.updateMatrixWorld();
-
-        // 2. Apply pitch: rotate around the camera's local X axis.
-        if (deltaPitch === 0) {
-            return;
-        }
-        const pitch = MapViewUtils.extractYawPitchRoll(this.camera, this.mapView.projection.type)
-            .pitch;
-        // `maxTiltAngle` is equivalent to a `maxPitchAngle` in flat projections.
-        let newPitch = THREE.Math.clamp(
-            pitch + THREE.Math.degToRad(deltaPitch),
-            0,
-            this.m_maxTiltAngle
-        );
-        // In sphere projection, the value of a maximum pitch is smaller than the value of the
-        // maximum tilt, as the curvature of the surface adds up to it.
-        if (this.mapView.projection.type === geoUtils.ProjectionType.Spherical) {
-            // Deduce max pitch from max tilt. To this end the sine law of triangles is used below.
-            const maxPitch = Math.asin(
-                (geoUtils.EarthConstants.EQUATORIAL_RADIUS *
-                    Math.sin(Math.PI - this.m_maxTiltAngle)) /
-                    this.camera.position.length()
-            );
-            newPitch = Math.min(newPitch, maxPitch);
-        }
-        this.mapView.camera.rotateX(newPitch - pitch);
-    }
-
-    /**
      * Current viewing angles yaw/pitch/roll in degrees.
      */
-    get yawPitchRoll(): MapViewUtils.YawPitchRoll {
-        const ypr = MapViewUtils.extractYawPitchRoll(this.camera, this.mapView.projection.type);
+    get attitude(): MapViewUtils.Attitude {
+        const attitude = MapViewUtils.extractAttitude(this.mapView, this.camera);
         return {
-            yaw: THREE.Math.radToDeg(ypr.yaw),
-            pitch: THREE.Math.radToDeg(ypr.pitch),
-            roll: THREE.Math.radToDeg(ypr.roll)
+            yaw: THREE.Math.radToDeg(attitude.yaw),
+            pitch: THREE.Math.radToDeg(attitude.pitch),
+            roll: THREE.Math.radToDeg(attitude.roll)
         };
-    }
-
-    /**
-     * Orbits the camera around the target point at the center of the screen.
-     *
-     * @param deltaAzimuth Delta azimuth in degrees.
-     * @param deltaTilt Delta tilt in degrees.
-     */
-    orbitFocusPoint(deltaAzimuth: number, deltaTilt: number) {
-        if (this.inertiaEnabled && this.m_zoomIsAnimated) {
-            this.stopZoom();
-        }
-        MapViewUtils.orbitFocusPoint(this.mapView, deltaAzimuth, deltaTilt, this.m_maxTiltAngle);
     }
 
     /**
@@ -441,8 +394,11 @@ export class MapControls extends THREE.EventDispatcher {
         ) {
             const centerScreenTarget = MapViewUtils.rayCastWorldCoordinates(this.mapView, 0, 0);
             if (centerScreenTarget !== null) {
-                vector1.copy(this.mapView.camera.position).sub(centerScreenTarget);
-                const tilt = centerScreenTarget.angleTo(vector1);
+                const tilt = MapViewUtils.extractSphericalCoordinatesFromLocation(
+                    this.mapView,
+                    this.camera,
+                    this.mapView.projection.unprojectPoint(centerScreenTarget)
+                ).tilt;
                 const deltaTilt = tilt - this.m_maxTiltAngle;
                 if (deltaTilt > 0) {
                     MapViewUtils.orbitFocusPoint(this.mapView, 0, deltaTilt, this.m_maxTiltAngle);
@@ -458,16 +414,34 @@ export class MapControls extends THREE.EventDispatcher {
     }
 
     /**
-     * Sets the rotation of the camera according to yaw and pitch in degrees.
-     *
-     * **Note:** `yaw == 0 && pitch == 0` will north up the map and you will look downwards onto the
-     * map.
-     *
-     * @param yaw Yaw in degrees.
-     * @param pitch Pitch in degrees.
+     * Reset the camera to looking north, in an orbiting movement around the target point instead
+     * of changing the yaw (which would be the camera rotating on itself).
      */
-    setRotation(yaw: number, pitch: number): void {
-        MapViewUtils.setRotation(this.mapView, yaw, pitch);
+    pointToNorth() {
+        const target = MapViewUtils.rayCastWorldCoordinates(this.mapView, 0, 0);
+        if (target === null) {
+            throw new Error("MapView does not support a view pointing in the void.");
+        }
+        this.m_startAzimuth =
+            Math.PI +
+            MapViewUtils.extractSphericalCoordinatesFromLocation(
+                this.mapView,
+                this.camera,
+                this.mapView.projection.unprojectPoint(target)
+            ).azimuth;
+        // Wrap between -PI and PI.
+        this.m_startAzimuth = Math.atan2(
+            Math.sin(this.m_startAzimuth),
+            Math.cos(this.m_startAzimuth)
+        );
+        if (this.m_startAzimuth === 0) {
+            return;
+        }
+        this.stopExistingAnimations();
+        this.m_resetNorthAnimationDuration = this.northResetAnimationDuration;
+        this.m_currentAzimuth = this.m_startAzimuth;
+        this.m_resetNorthStartTime = performance.now();
+        this.resetNorth();
     }
 
     /**
@@ -511,8 +485,7 @@ export class MapControls extends THREE.EventDispatcher {
         this.m_startZoom = this.currentZoom;
         this.m_zoomDeltaRequested = zoomLevel - this.zoomLevelTargeted;
 
-        // Cancel panning so the point of origin of the zoom is maintained.
-        this.stopPan();
+        this.stopExistingAnimations();
 
         // Assign the new animation start time.
         this.m_zoomAnimationStartTime = performance.now();
@@ -528,6 +501,7 @@ export class MapControls extends THREE.EventDispatcher {
      * Toggles the camera tilt between 0 (looking down) and the value at `this.tiltAngle`.
      */
     toggleTilt(): void {
+        this.stopExistingAnimations();
         this.m_startTilt = this.currentTilt;
         const aimTilt = this.m_startTilt < EPSILON;
         this.m_tiltRequested = aimTilt ? this.tiltAngle : 0;
@@ -605,35 +579,15 @@ export class MapControls extends THREE.EventDispatcher {
     }
 
     private get currentTilt(): number {
-        switch (this.mapView.projection.type) {
-            case geoUtils.ProjectionType.Planar:
-                return MapViewUtils.extractYawPitchRoll(this.camera, this.mapView.projection.type)
-                    .pitch;
-            case geoUtils.ProjectionType.Spherical:
-                const focusPointInWorldPosition = MapViewUtils.rayCastWorldCoordinates(
-                    this.mapView,
-                    0,
-                    0
-                );
-                if (!focusPointInWorldPosition) {
-                    throw new Error("MapControls does not support a view pointing in the void.");
-                }
-
-                const distance = this.camera.position.distanceTo(focusPointInWorldPosition);
-
-                // Find the Z axis of the tangent space.
-                vector2.copy(focusPointInWorldPosition).normalize();
-
-                // Store the projected camera position on the tangent "ground" of the target in
-                // `vector1`.
-                vector1.copy(this.camera.position).projectOnPlane(vector2);
-
-                // Compute camera altitude in tangent space.
-                vector1.add(focusPointInWorldPosition);
-                const cameraAltitude = this.camera.position.distanceTo(vector1);
-                vector1.sub(focusPointInWorldPosition);
-                return Math.acos(Math.min(1, cameraAltitude / distance));
+        const target = MapViewUtils.rayCastWorldCoordinates(this.mapView, 0, 0);
+        if (target === null) {
+            throw new Error("MapView does not support a view pointing in the void.");
         }
+        return MapViewUtils.extractSphericalCoordinatesFromLocation(
+            this.mapView,
+            this.camera,
+            this.mapView.projection.unprojectPoint(target)
+        ).tilt;
     }
 
     private get targetedTilt(): number {
@@ -651,6 +605,56 @@ export class MapControls extends THREE.EventDispatcher {
             MapViewEventNames.AfterRender,
             this.assignZoomAfterTouchZoomRender
         );
+    }
+
+    private stopExistingAnimations() {
+        this.stopResetNorth();
+        this.stopZoom();
+        this.stopPan();
+        this.stopTilt();
+    }
+
+    private resetNorth() {
+        const currentTime = performance.now();
+        const animationTime = (currentTime - this.m_resetNorthStartTime) / 1000;
+        if (this.inertiaEnabled) {
+            if (!this.m_resetNorthIsAnimated) {
+                this.m_resetNorthIsAnimated = true;
+                this.mapView.addEventListener(MapViewEventNames.AfterRender, this.resetNorth);
+            }
+            const resetNorthFinished = animationTime > this.m_resetNorthAnimationDuration;
+            if (resetNorthFinished) {
+                if (this.m_needsRenderLastFrame) {
+                    this.m_needsRenderLastFrame = false;
+                    this.stopResetNorth();
+                }
+            } else {
+                this.m_needsRenderLastFrame = true;
+            }
+        }
+        this.m_lastAzimuth = this.m_currentAzimuth;
+        this.m_currentAzimuth = this.inertiaEnabled
+            ? this.easeOutCubic(
+                  this.m_startAzimuth,
+                  0,
+                  Math.min(1, animationTime / this.m_resetNorthAnimationDuration)
+              )
+            : 0;
+
+        const deltaAzimuth = this.m_currentAzimuth - this.m_lastAzimuth;
+
+        MapViewUtils.orbitFocusPoint(
+            this.mapView,
+            THREE.Math.radToDeg(deltaAzimuth),
+            0,
+            this.m_maxTiltAngle
+        );
+        this.updateMapView();
+    }
+
+    private stopResetNorth() {
+        this.mapView.removeEventListener(MapViewEventNames.AfterRender, this.resetNorth);
+        this.m_resetNorthIsAnimated = false;
     }
 
     private tilt() {
@@ -691,8 +695,12 @@ export class MapControls extends THREE.EventDispatcher {
         const oldCameraDistance = this.mapView.camera.position.z / Math.cos(initialTilt);
         const newHeight = Math.cos(this.currentTilt) * oldCameraDistance;
 
-        this.orbitFocusPoint(newHeight - this.camera.position.z, THREE.Math.radToDeg(deltaAngle));
-
+        MapViewUtils.orbitFocusPoint(
+            this.mapView,
+            newHeight - this.camera.position.z,
+            THREE.Math.radToDeg(deltaAngle),
+            this.m_maxTiltAngle
+        );
         this.updateMapView();
     }
 
@@ -970,14 +978,20 @@ export class MapControls extends THREE.EventDispatcher {
             const { fromWorld, toWorld } = vectors;
             this.panFromTo(fromWorld, toWorld);
         } else if (this.m_state === State.ROTATE) {
-            this.rotate(
+            this.stopExistingAnimations();
+            MapViewUtils.rotate(
+                this.mapView,
                 -this.rotationMouseDeltaFactor * this.m_mouseDelta.x,
-                this.rotationMouseDeltaFactor * this.m_mouseDelta.y
+                this.rotationMouseDeltaFactor * this.m_mouseDelta.y,
+                this.m_maxTiltAngle
             );
         } else if (this.m_state === State.ORBIT) {
-            this.orbitFocusPoint(
+            this.stopExistingAnimations();
+            MapViewUtils.orbitFocusPoint(
+                this.mapView,
                 this.orbitingMouseDeltaFactor * this.m_mouseDelta.x,
-                -this.orbitingMouseDeltaFactor * this.m_mouseDelta.y
+                -this.orbitingMouseDeltaFactor * this.m_mouseDelta.y,
+                this.m_maxTiltAngle
             );
         }
 
@@ -1246,7 +1260,8 @@ export class MapControls extends THREE.EventDispatcher {
             }
             const deltaRotation =
                 this.m_touchState.currentRotation - this.m_touchState.initialRotation;
-            this.rotate(THREE.Math.radToDeg(deltaRotation));
+            this.stopExistingAnimations();
+            MapViewUtils.rotate(this.mapView, THREE.Math.radToDeg(deltaRotation));
             this.moveAlongTheViewDirection(pinchDistance);
         }
 
@@ -1257,10 +1272,12 @@ export class MapControls extends THREE.EventDispatcher {
                 firstTouch.currentTouchPoint,
                 firstTouch.lastTouchPoint
             );
-
-            this.orbitFocusPoint(
+            this.stopExistingAnimations();
+            MapViewUtils.orbitFocusPoint(
+                this.mapView,
                 this.orbitingTouchDeltaFactor * diff.x,
-                -this.orbitingTouchDeltaFactor * diff.y
+                -this.orbitingTouchDeltaFactor * diff.y,
+                this.m_maxTiltAngle
             );
         }
 
@@ -1372,8 +1389,7 @@ export class MapControls extends THREE.EventDispatcher {
     }
 
     private panFromTo(fromWorld: THREE.Vector3, toWorld: THREE.Vector3): void {
-        // Cancel zoom inertia if a panning is triggered, so that the mouse location is kept.
-        this.stopZoom();
+        this.stopExistingAnimations();
 
         // Assign the new animation start time.
         this.m_panAnimationStartTime = performance.now();

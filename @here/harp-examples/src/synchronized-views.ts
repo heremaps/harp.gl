@@ -6,7 +6,7 @@
 
 import { GeoCoordinates } from "@here/harp-geoutils";
 import { MapControls, MapControlsUI } from "@here/harp-map-controls";
-import { CopyrightElementHandler, CopyrightInfo, MapView } from "@here/harp-mapview";
+import { CopyrightElementHandler, CopyrightInfo, MapView, MapViewUtils } from "@here/harp-mapview";
 import { APIFormat, OmvDataSource } from "@here/harp-omv-datasource";
 import { accessToken } from "../config";
 
@@ -252,8 +252,8 @@ export namespace TripleViewExample {
      */
     // snippet:harp_gl_multiview_tripleView_3.ts
     export const syncMapViews = (srcView: ViewControlPair, destView: ViewControlPair) => {
-        const ypr = srcView.mapControls.yawPitchRoll;
-        destView.mapControls.setRotation(ypr.yaw, ypr.pitch);
+        const ypr = srcView.mapControls.attitude;
+        MapViewUtils.setRotation(destView.mapView, ypr.yaw, ypr.pitch);
         destView.mapView.camera.position.copy(srcView.mapView.camera.position);
         destView.mapControls.cameraHeight = srcView.mapControls.cameraHeight;
         destView.mapView.camera.aspect = numberOfSyncXViews;

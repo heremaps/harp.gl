@@ -189,8 +189,10 @@ const CONTEXT_LOST_EVENT: RenderEvent = { type: MapViewEventNames.ContextLost } 
 const CONTEXT_RESTORED_EVENT: RenderEvent = { type: MapViewEventNames.ContextRestored } as any;
 const COPYRIGHT_CHANGED_EVENT: RenderEvent = { type: MapViewEventNames.CopyrightChanged } as any;
 
-const vector2 = new THREE.Vector2();
-const vector3 = new THREE.Vector3();
+const cache = {
+    vector2: [new THREE.Vector2()],
+    vector3: [new THREE.Vector3()]
+};
 
 /**
  * Specifies how the FOV (Field of View) should be calculated.
@@ -953,7 +955,7 @@ export class MapView extends THREE.EventDispatcher {
         this.m_visibleTiles = new VisibleTileSet(
             new FrustumIntersection(
                 this.m_camera,
-                this.m_visibleTileSetOptions.projection,
+                this,
                 this.m_visibleTileSetOptions.extendedFrustumCulling,
                 this.m_tileWrappingEnabled
             ),
@@ -1454,9 +1456,9 @@ export class MapView extends THREE.EventDispatcher {
         }
         const targetCoordinates = this.projection.unprojectPoint(target);
         const targetDistance = this.camera.position.distanceTo(target);
-        const yawPitchRoll = MapViewUtils.extractYawPitchRoll(this.camera, this.projection.type);
-        const pitchDeg = THREE.Math.radToDeg(yawPitchRoll.pitch);
-        const yawDeg = THREE.Math.radToDeg(yawPitchRoll.yaw);
+        const attitude = MapViewUtils.extractAttitude(this, this.camera);
+        const pitchDeg = THREE.Math.radToDeg(attitude.pitch);
+        const yawDeg = THREE.Math.radToDeg(attitude.yaw);
 
         this.m_visibleTileSetOptions.projection = projection;
         this.updatePolarDataSource();
@@ -1464,7 +1466,7 @@ export class MapView extends THREE.EventDispatcher {
         this.m_visibleTiles = new VisibleTileSet(
             new FrustumIntersection(
                 this.m_camera,
-                this.m_visibleTileSetOptions.projection,
+                this,
                 this.m_visibleTileSetOptions.extendedFrustumCulling,
                 this.m_tileWrappingEnabled
             ),
@@ -1642,6 +1644,11 @@ export class MapView extends THREE.EventDispatcher {
     get zoomLevel(): number {
         return this.m_zoomLevel;
     }
+    set zoomLevel(zoomLevel: number) {
+        this.m_zoomLevel = THREE.Math.clamp(zoomLevel, this.m_minZoomLevel, this.m_maxZoomLevel);
+        MapViewUtils.zoomOnTargetPosition(this, 0, 0, this.m_zoomLevel);
+        this.update();
+    }
 
     /**
      * Returns the storage level for the given camera setup.
@@ -1697,7 +1704,7 @@ export class MapView extends THREE.EventDispatcher {
      */
     setFovCalculation(fovCalculation: FovCalculation) {
         this.m_options.fovCalculation = fovCalculation;
-        this.calculateFocalLength(this.m_renderer.getSize(vector2).height);
+        this.calculateFocalLength(this.m_renderer.getSize(cache.vector2[0]).height);
         this.updateCameras();
     }
 
@@ -1869,7 +1876,12 @@ export class MapView extends THREE.EventDispatcher {
         azimuthDeg: number = 0
     ): void {
         const limitedTilt = Math.min(89, tiltDeg);
-        MapViewUtils.setRotation(this, -azimuthDeg, tiltDeg);
+        // MapViewUtils#setRotation uses pitch, not tilt, which is different in sphere projection.
+        // But in sphere, in the tangent space of the target of the camera, pitch = tilt. So, put
+        // the camera on the target, so the tilt can be passed to setRotation as a pitch.
+        this.geoCenter = target;
+        MapViewUtils.setRotation(this, -azimuthDeg, limitedTilt);
+        // Then deduce the actual geoCenter.
         this.geoCenter = MapViewUtils.getCameraCoordinatesFromTargetCoordinates(
             target,
             distance,
@@ -1877,6 +1889,7 @@ export class MapView extends THREE.EventDispatcher {
             limitedTilt,
             this
         );
+        // Then set the camera's altitude.
         const pitchRad = THREE.Math.degToRad(limitedTilt);
         const altitude = Math.cos(pitchRad) * distance;
         if (this.projection.type === ProjectionType.Planar) {
@@ -2071,8 +2084,8 @@ export class MapView extends THREE.EventDispatcher {
      * `undefined`.
      */
     getScreenPosition(geoPos: GeoCoordinates): THREE.Vector2 | undefined {
-        this.projection.projectPoint(geoPos, vector3);
-        const p = this.m_screenProjector.project(vector3);
+        this.projection.projectPoint(geoPos, cache.vector3[0]);
+        const p = this.m_screenProjector.project(cache.vector3[0]);
         if (p !== undefined) {
             const { width, height } = this.getCanvasClientSize();
             p.x = p.x + width / 2;
@@ -2108,8 +2121,8 @@ export class MapView extends THREE.EventDispatcher {
     getWorldPositionAt(x: number, y: number): THREE.Vector3 | null {
         this.m_raycaster.setFromCamera(this.getNormalizedScreenCoordinates(x, y), this.m_camera);
         return this.projection.type === ProjectionType.Spherical
-            ? this.m_raycaster.ray.intersectSphere(this.m_sphere, vector3)
-            : this.m_raycaster.ray.intersectPlane(this.m_plane, vector3);
+            ? this.m_raycaster.ray.intersectSphere(this.m_sphere, cache.vector3[0])
+            : this.m_raycaster.ray.intersectPlane(this.m_plane, cache.vector3[0]);
     }
 
     /**
@@ -2427,7 +2440,7 @@ export class MapView extends THREE.EventDispatcher {
      * calculated from [[ClipPlaneEvaluator]] used in [[VisibleTileSet]].
      */
     private updateCameras(viewRanges?: ViewRanges) {
-        const { width, height } = this.m_renderer.getSize(vector2);
+        const { width, height } = this.m_renderer.getSize(cache.vector2[0]);
         this.m_camera.aspect =
             this.m_forceCameraAspect !== undefined ? this.m_forceCameraAspect : width / height;
         this.setFovOnCamera(this.m_options.fovCalculation!, height);
@@ -2469,8 +2482,7 @@ export class MapView extends THREE.EventDispatcher {
 
         this.m_pixelToWorld = undefined;
 
-        const cameraPitch = MapViewUtils.extractYawPitchRoll(this.m_camera, this.projection.type)
-            .pitch;
+        const cameraPitch = MapViewUtils.extractAttitude(this, this.m_camera).pitch;
         const cameraPosZ = this.getCameraHeightAboveTerrain(TERRAIN_ZOOM_LEVEL);
 
         const target = MapViewUtils.rayCastWorldCoordinates(this, 0, 0);
@@ -2478,7 +2490,7 @@ export class MapView extends THREE.EventDispatcher {
             this.m_lookAtDistance = target.sub(this.camera.position).length();
             const zoomLevelDistance = cameraPosZ / Math.cos(Math.min(cameraPitch, Math.PI / 3));
             this.m_zoomLevel = MapViewUtils.calculateZoomLevelFromDistance(zoomLevelDistance, this);
-            this.m_fog.update(this.m_camera, this.projection, this.m_viewRanges.maximum);
+            this.m_fog.update(this, this.m_viewRanges.maximum);
         }
     }
 
@@ -2738,10 +2750,7 @@ export class MapView extends THREE.EventDispatcher {
         }
 
         if (this.m_movementDetector.checkCameraMoved(this, time)) {
-            const { yaw, pitch, roll } = MapViewUtils.extractYawPitchRoll(
-                this.camera,
-                this.projection.type
-            );
+            const { yaw, pitch, roll } = MapViewUtils.extractAttitude(this, this.camera);
             const { latitude, longitude, altitude } = this.geoCenter;
             this.dispatchEvent({
                 type: MapViewEventNames.CameraPositionChanged,
@@ -2953,7 +2962,7 @@ export class MapView extends THREE.EventDispatcher {
         this.m_visibleTiles = new VisibleTileSet(
             new FrustumIntersection(
                 this.m_camera,
-                this.m_visibleTileSetOptions.projection,
+                this,
                 this.m_visibleTileSetOptions.extendedFrustumCulling,
                 this.m_tileWrappingEnabled
             ),

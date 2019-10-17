@@ -3,7 +3,7 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-import { hereTilingScheme, TileKey } from "@here/harp-geoutils";
+import { hereTilingScheme, mercatorProjection, Projection, TileKey } from "@here/harp-geoutils";
 import { assert, expect } from "chai";
 import * as sinon from "sinon";
 import * as THREE from "three";
@@ -23,6 +23,9 @@ import { FakeOmvDataSource } from "./FakeOmvDataSource";
 class FakeMapView {
     get frameNumber(): number {
         return 0;
+    }
+    get projection(): Projection {
+        return mercatorProjection;
     }
 }
 
@@ -44,7 +47,7 @@ class Fixture {
         this.ds[0].attach(this.mapView);
         this.frustumIntersection = new FrustumIntersection(
             this.camera,
-            MapViewDefaults.projection,
+            this.mapView,
             MapViewDefaults.extendedFrustumCulling,
             params.tileWrappingEnabled
         );

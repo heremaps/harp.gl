@@ -16,6 +16,7 @@ import * as THREE from "three";
 import { DataSource } from "./DataSource";
 import { CalculationStatus, ElevationRangeSource } from "./ElevationRangeSource";
 import { MapTileCuller } from "./MapTileCuller";
+import { MapView } from "./MapView";
 import { MapViewUtils, TileOffsetUtils } from "./Utils";
 
 /**
@@ -71,7 +72,7 @@ export class FrustumIntersection {
 
     constructor(
         private readonly m_camera: THREE.PerspectiveCamera,
-        private readonly m_projection: Projection,
+        readonly mapView: MapView,
         private readonly m_extendedFrustumCulling: boolean,
         private readonly m_tileWrappingEnabled: boolean
     ) {
@@ -89,16 +90,16 @@ export class FrustumIntersection {
      * Return projection used to convert geo coordinates to world coordinates.
      */
     get projection(): Projection {
-        return this.m_projection;
+        return this.mapView.projection;
     }
 
     /**
      * Updates the frustum to match the current camera setup.
      */
-    updateFrustum(projectionMatrixOveride?: THREE.Matrix4) {
+    updateFrustum(projectionMatrixOverride?: THREE.Matrix4) {
         this.m_viewProjectionMatrix.multiplyMatrices(
-            projectionMatrixOveride !== undefined
-                ? projectionMatrixOveride
+            projectionMatrixOverride !== undefined
+                ? projectionMatrixOverride
                 : this.m_camera.projectionMatrix,
             this.m_camera.matrixWorldInverse
         );
@@ -186,7 +187,7 @@ export class FrustumIntersection {
                 // For tiles without elevation range source, default 0 (getGeoBox always
                 // returns box with altitude min/max equal to zero) will be propagated as
                 // min and max elevation, these tiles most probably contains features that
-                // lays directly on the gorund surface.
+                // lays directly on the ground surface.
                 if (useElevationRangeSource) {
                     const range = elevationRangeSource!.getElevationRange(childTileKey);
                     geoBox.southWest.altitude = range.minElevation;
@@ -199,15 +200,15 @@ export class FrustumIntersection {
                 let subTileArea = 0;
 
                 const obbIntersections: boolean =
-                    this.m_projection.type === ProjectionType.Spherical;
+                    this.mapView.projection.type === ProjectionType.Spherical;
                 if (obbIntersections) {
                     const obb = new OrientedBox3();
-                    this.m_projection.projectBox(geoBox, obb);
+                    this.mapView.projection.projectBox(geoBox, obb);
                     if (obb.intersects(this.m_frustum)) {
                         subTileArea = 1;
                     }
                 } else {
-                    this.m_projection.projectBox(geoBox, tileBounds);
+                    this.mapView.projection.projectBox(geoBox, tileBounds);
                     subTileArea = this.computeSubTileArea(tileBounds);
                 }
 
@@ -278,14 +279,14 @@ export class FrustumIntersection {
     private computeRequiredInitialRootTileKeys(worldCenter: THREE.Vector3) {
         this.m_rootTileKeys = [];
         const rootTileKey = TileKey.fromRowColumnLevel(0, 0, 0);
-        const tileWrappingEnabled = this.m_projection.type === ProjectionType.Planar;
+        const tileWrappingEnabled = this.mapView.projection.type === ProjectionType.Planar;
 
         if (!tileWrappingEnabled || !this.m_tileWrappingEnabled) {
             this.m_rootTileKeys.push(new TileKeyEntry(rootTileKey, 0, 0, 0));
             return;
         }
 
-        const worldGeoPoint = this.m_projection.unprojectPoint(worldCenter);
+        const worldGeoPoint = this.mapView.projection.unprojectPoint(worldCenter);
         const startOffset = Math.round(worldGeoPoint.longitude / 360.0);
 
         // This algorithm computes the number of offsets we need to test. The following diagram may
@@ -321,7 +322,7 @@ export class FrustumIntersection {
         // a->e needs just the tilt and trigonometry to compute, result is: (tan(a->e) * z).
 
         const camera = this.m_camera;
-        const cameraPitch = MapViewUtils.extractYawPitchRoll(camera, this.m_projection.type).pitch;
+        const cameraPitch = MapViewUtils.extractAttitude(this.mapView, camera).pitch;
         // Ensure that the aspect is >= 1.
         const aspect = camera.aspect > 1 ? camera.aspect : 1 / camera.aspect;
         // Angle between a->d2, note, the fov is vertical, hence we translate to horizontal.
@@ -337,7 +338,7 @@ export class FrustumIntersection {
             worldCenter.y,
             worldCenter.z
         );
-        const worldLeftGeoPoint = this.m_projection.unprojectPoint(worldLeftPoint);
+        const worldLeftGeoPoint = this.mapView.projection.unprojectPoint(worldLeftPoint);
         // We multiply by SQRT2 because we need to account for a rotated view (in which case there
         // are more tiles that can be seen).
         const offsetRange = THREE.Math.clamp(

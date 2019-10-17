@@ -21,7 +21,7 @@ const DEFAULT_THROTTLING_TIMEOUT = 300;
  * callbacks.
  */
 export class CameraMovementDetector {
-    private m_lastYawPitchRoll?: MapViewUtils.YawPitchRoll;
+    private m_lastAttitude?: MapViewUtils.Attitude;
     private m_lastCameraPos = new Vector3();
     private m_newCameraPos = new Vector3();
     private m_cameraMovedLastFrame: boolean | undefined;
@@ -55,22 +55,19 @@ export class CameraMovementDetector {
      * @param mapView [[Mapview]]'s position and camera are checked for modifications.
      */
     checkCameraMoved(mapView: MapView, now: number): boolean {
-        const newYawPitchRoll = MapViewUtils.extractYawPitchRoll(
-            mapView.camera,
-            mapView.projection.type
-        );
+        const newAttitude = MapViewUtils.extractAttitude(mapView, mapView.camera);
         const newCameraPos = mapView.camera.getWorldPosition(this.m_newCameraPos);
 
         const cameraMoved =
-            this.m_lastYawPitchRoll === undefined ||
+            this.m_lastAttitude === undefined ||
             !this.m_lastCameraPos.equals(newCameraPos) ||
-            newYawPitchRoll.yaw !== this.m_lastYawPitchRoll.yaw ||
-            newYawPitchRoll.pitch !== this.m_lastYawPitchRoll.pitch ||
-            newYawPitchRoll.roll !== this.m_lastYawPitchRoll.roll;
+            newAttitude.yaw !== this.m_lastAttitude.yaw ||
+            newAttitude.pitch !== this.m_lastAttitude.pitch ||
+            newAttitude.roll !== this.m_lastAttitude.roll;
 
         if (cameraMoved) {
             this.m_lastCameraPos.copy(newCameraPos);
-            this.m_lastYawPitchRoll = newYawPitchRoll;
+            this.m_lastAttitude = newAttitude;
         }
 
         if (cameraMoved !== this.m_cameraMovedLastFrame) {
@@ -96,11 +93,8 @@ export class CameraMovementDetector {
         const newCameraPos = mapView.camera.getWorldPosition(this.m_newCameraPos);
         this.m_lastCameraPos.set(newCameraPos.x, newCameraPos.y, newCameraPos.z);
 
-        const newYawPitchRoll = MapViewUtils.extractYawPitchRoll(
-            mapView.camera,
-            mapView.projection.type
-        );
-        this.m_lastYawPitchRoll = newYawPitchRoll;
+        const newAttitude = MapViewUtils.extractAttitude(mapView, mapView.camera);
+        this.m_lastAttitude = newAttitude;
     }
 
     /**
