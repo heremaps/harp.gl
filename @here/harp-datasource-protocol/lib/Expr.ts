@@ -112,7 +112,27 @@ class ComputeExprDependencies implements ExprVisitor<void, ExprDependencies> {
     }
 }
 
-export type JsonExpr = unknown[];
+/**
+ * A type represeting JSON values.
+ */
+export type JsonValue = null | boolean | number | string | JsonObject | JsonArray;
+
+/**
+ * A type representing JSON arrays.
+ */
+export interface JsonArray extends Array<JsonValue> {}
+
+/**
+ * A type representing JSON objects.
+ */
+export interface JsonObject {
+    [name: string]: JsonValue;
+}
+
+/**
+ * The JSON representation of an [[Expr]] object.
+ */
+export type JsonExpr = JsonArray;
 
 export function isJsonExpr(v: any): v is JsonExpr {
     return Array.isArray(v) && v.length > 0 && typeof v[0] === "string";
@@ -172,7 +192,7 @@ export abstract class Expr {
      * @param definitionExprCache optional cache of `Expr` instances derived from `definitions`
      */
     static fromJSON(
-        node: unknown,
+        node: JsonValue,
         definitions?: Definitions,
         definitionExprCache?: Map<string, Expr>
     ) {
@@ -189,7 +209,7 @@ export abstract class Expr {
     }
 
     private static parseNode(
-        node: unknown,
+        node: JsonValue,
         referenceResolverState: ReferenceResolverState | undefined
     ): Expr {
         if (Array.isArray(node)) {
@@ -206,7 +226,10 @@ export abstract class Expr {
         throw new Error(`failed to create expression from: ${JSON.stringify(node)}`);
     }
 
-    private static parseCall(node: any[], referenceResolverState?: ReferenceResolverState): Expr {
+    private static parseCall(
+        node: JsonArray,
+        referenceResolverState?: ReferenceResolverState
+    ): Expr {
         const op = node[0];
 
         if (typeof op !== "string") {
@@ -218,47 +241,46 @@ export abstract class Expr {
             case "!in":
                 return new CallExpr("!", [this.parseCall([op.slice(1), ...node.slice(1)])]);
 
-            case "get":
+            case "get": {
                 if (node[2] !== undefined) {
                     return Expr.makeCallExpr(op, node, referenceResolverState);
                 }
-                if (typeof node[1] !== "string") {
+                const name = node[1];
+                if (typeof name !== "string") {
                     throw new Error(`expected the name of an attribute`);
                 }
-                return new VarExpr(node[1]);
+                return new VarExpr(name);
+            }
 
             case "ref":
                 return this.resolveReference(node, referenceResolverState);
 
-            case "has":
+            case "has": {
                 if (node[2] !== undefined) {
                     return Expr.makeCallExpr(op, node, referenceResolverState);
                 }
-                if (typeof node[1] !== "string") {
+                const name = node[1];
+                if (typeof name !== "string") {
                     throw new Error(`expected the name of an attribute`);
                 }
-                return new HasAttributeExpr(node[1]);
+                return new HasAttributeExpr(name);
+            }
 
             case "in":
                 const elements = node[2];
-                if (!Array.isArray(elements)) {
+                if (!ContainsExpr.isValidElementsArray(elements)) {
                     // tslint:disable-next-line: max-line-length
-                    throw new Error(
-                        `'${op}' expects an expression followed by an array of literals`
-                    );
+                    throw new Error(`'${op}' expects an array of number or string literals`);
                 }
-                elements.forEach(element => {
-                    if (typeof element === "object" || typeof element === "function") {
-                        throw new Error("expected an array of constant values");
-                    }
-                });
                 return new ContainsExpr(this.parseNode(node[1], referenceResolverState), elements);
 
-            case "literal":
-                if (typeof node[1] !== "object") {
+            case "literal": {
+                const obj = node[1];
+                if (obj === null || typeof obj !== "object") {
                     throw new Error("expected an object or array literal");
                 }
-                return new ObjectLiteralExpr(node[1]);
+                return new ObjectLiteralExpr(obj);
+            }
 
             case "match": {
                 if (node.length < 4) {
@@ -271,14 +293,10 @@ export abstract class Expr {
                 const conditions: Array<[MatchLabel, Expr]> = [];
                 for (let i = 2; i < node.length - 1; i += 2) {
                     const label = node[i];
-                    if (
-                        !(
-                            typeof label === "number" ||
-                            typeof label === "string" ||
-                            Array.isArray(label)
-                        )
-                    ) {
-                        throw new Error(`parse error ${JSON.stringify(label)}`);
+                    if (!MatchExpr.isValidMatchLabel(label)) {
+                        throw new Error(
+                            `'${JSON.stringify(label)}' is not a valid label for 'match'`
+                        );
                     }
                     const expr = this.parseNode(node[i + 1], referenceResolverState);
                     conditions.push([label, expr]);
@@ -404,7 +422,7 @@ export abstract class Expr {
         return pool.add(this);
     }
 
-    toJSON(): unknown {
+    toJSON(): JsonValue {
         return new ExprSerializer().serialize(this);
     }
 
@@ -617,7 +635,21 @@ export class HasAttributeExpr extends Expr {
  * @hidden
  */
 export class ContainsExpr extends Expr {
-    constructor(readonly value: Expr, readonly elements: Value[]) {
+    static isValidElementsArray(elements: JsonValue): elements is Array<number | string> {
+        if (!Array.isArray(elements) || elements.length === 0) {
+            return false;
+        }
+
+        const elementTy = typeof elements[0];
+
+        if (elementTy === "number" || elementTy === "string") {
+            return elements.every(element => typeof element === elementTy);
+        }
+
+        return false;
+    }
+
+    constructor(readonly value: Expr, readonly elements: Array<number | string>) {
         super();
     }
 
@@ -647,6 +679,30 @@ type MatchLabel = number | string | number[] | string[];
  * @hidden
  */
 export class MatchExpr extends Expr {
+    /**
+     * Tests if the given JSON node is a valid label for the `"match"` operator.
+     *
+     * @param node A JSON value.
+     */
+    static isValidMatchLabel(node: JsonValue): node is MatchLabel {
+        switch (typeof node) {
+            case "number":
+            case "string":
+                return true;
+            case "object":
+                if (!Array.isArray(node) || node.length === 0) {
+                    return false;
+                }
+                const elementTy = typeof node[0];
+                if (elementTy === "number" || elementTy === "string") {
+                    return node.every(t => typeof t === elementTy);
+                }
+                return false;
+            default:
+                return false;
+        } // switch
+    }
+
     constructor(
         readonly value: Expr,
         readonly branches: Array<[MatchLabel, Expr]>,
@@ -676,57 +732,57 @@ export class CaseExpr extends Expr {
 /**
  * @hidden
  */
-class ExprSerializer implements ExprVisitor<unknown, void> {
-    serialize(expr: Expr): unknown {
+class ExprSerializer implements ExprVisitor<JsonValue, void> {
+    serialize(expr: Expr): JsonValue {
         return expr.accept(this, undefined);
     }
 
-    visitNullLiteralExpr(expr: NullLiteralExpr, context: void): unknown {
+    visitNullLiteralExpr(expr: NullLiteralExpr, context: void): JsonValue {
         return null;
     }
 
-    visitBooleanLiteralExpr(expr: BooleanLiteralExpr, context: void): unknown {
+    visitBooleanLiteralExpr(expr: BooleanLiteralExpr, context: void): JsonValue {
         return expr.value;
     }
 
-    visitNumberLiteralExpr(expr: NumberLiteralExpr, context: void): unknown {
+    visitNumberLiteralExpr(expr: NumberLiteralExpr, context: void): JsonValue {
         return expr.value;
     }
 
-    visitStringLiteralExpr(expr: StringLiteralExpr, context: void): unknown {
+    visitStringLiteralExpr(expr: StringLiteralExpr, context: void): JsonValue {
         return expr.value;
     }
 
-    visitObjectLiteralExpr(expr: ObjectLiteralExpr, context: void): unknown {
-        return ["literal", expr.value];
+    visitObjectLiteralExpr(expr: ObjectLiteralExpr, context: void): JsonValue {
+        return ["literal", expr.value as JsonObject];
     }
 
-    visitVarExpr(expr: VarExpr, context: void): unknown {
+    visitVarExpr(expr: VarExpr, context: void): JsonValue {
         return ["get", expr.name];
     }
 
-    visitHasAttributeExpr(expr: HasAttributeExpr, context: void): unknown {
+    visitHasAttributeExpr(expr: HasAttributeExpr, context: void): JsonValue {
         return ["has", expr.name];
     }
 
-    visitContainsExpr(expr: ContainsExpr, context: void): unknown {
+    visitContainsExpr(expr: ContainsExpr, context: void): JsonValue {
         return ["in", this.serialize(expr.value), expr.elements];
     }
 
-    visitCallExpr(expr: CallExpr, context: void): unknown {
+    visitCallExpr(expr: CallExpr, context: void): JsonValue {
         return [expr.op, ...expr.children.map(childExpr => this.serialize(childExpr))];
     }
 
-    visitMatchExpr(expr: MatchExpr, context: void): unknown {
-        const branches: unknown[] = [];
+    visitMatchExpr(expr: MatchExpr, context: void): JsonValue {
+        const branches: JsonValue[] = [];
         for (const [label, body] of expr.branches) {
             branches.push(label, this.serialize(body));
         }
         return ["match", this.serialize(expr.value), ...branches, this.serialize(expr.fallback)];
     }
 
-    visitCaseExpr(expr: CaseExpr, context: void): unknown {
-        const branches: unknown[] = [];
+    visitCaseExpr(expr: CaseExpr, context: void): JsonValue {
+        const branches: JsonValue[] = [];
         for (const [condition, body] of expr.branches) {
             branches.push(this.serialize(condition), this.serialize(body));
         }
