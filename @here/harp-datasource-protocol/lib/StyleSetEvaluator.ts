@@ -310,118 +310,21 @@ class OptimizedSubSetKey {
 export class StyleSetEvaluator {
     readonly styleSet: InternalStyle[];
 
-    private readonly m_renderOrderBiasGroups: Map<string, number> = new Map();
     private readonly m_techniques: IndexedTechnique[] = [];
     private readonly m_exprPool = new ExprPool();
     private readonly m_cachedResults = new Map<Expr, Value>();
     private readonly m_styleConditionClassifier = new StyleConditionClassifier();
     private readonly m_subStyleSetCache = new Map<string, InternalStyle[]>();
+    private readonly m_definitions?: Definitions;
+    private readonly m_definitionExprCache = new Map<string, Expr>();
+    private readonly m_tmpOptimizedSubSetKey: OptimizedSubSetKey = new OptimizedSubSetKey();
     private m_layer: string | undefined;
     private m_geometryType: string | undefined;
-    private m_definitions?: Definitions;
-    private m_definitionExprCache?: Map<string, Expr>;
-    private m_tmpOptimizedSubSetKey: OptimizedSubSetKey = new OptimizedSubSetKey();
 
     constructor(styleSet: StyleSet, definitions?: Definitions) {
-        let techniqueRenderOrder = 0;
-        let styleSetIndex = 0;
         this.m_definitions = definitions;
-        if (definitions !== undefined) {
-            this.m_definitionExprCache = new Map();
-        }
-
-        const resolveStyleReferences = (style: StyleDeclaration): StyleDeclaration | undefined => {
-            if (isJsonExpr(style)) {
-                if (!isJsonExprReference(style)) {
-                    throw new Error(
-                        "invalid expression in this context, only 'ref's are supported"
-                    );
-                }
-                // expand and instantiate references to style definitions.
-                const definitionName = style[1];
-                const def = definitions && definitions[definitionName];
-
-                if (!def) {
-                    throw new Error(`invalid reference '${definitionName}' - not found`);
-                }
-                if (!isActualSelectorDefinition(def)) {
-                    throw new Error(
-                        `invalid reference '${definitionName}' - expected style definition`
-                    );
-                }
-
-                // instantiate the style
-                return resolveStyleReferences(def);
-            }
-            return {
-                ...style,
-                styles:
-                    style.styles !== undefined
-                        ? (style.styles
-                              .map(subStyle => resolveStyleReferences(subStyle))
-                              .filter(subStyle => subStyle !== undefined) as StyleSet)
-                        : undefined
-            };
-        };
-        styleSet = styleSet.map(style => resolveStyleReferences(style) as StyleDeclaration);
-        const computeDefaultRenderOrder = (style: InternalStyle): void => {
-            if (style.renderOrderBiasGroup !== undefined) {
-                const renderOrderBiasGroupOrder = style.renderOrderBiasGroup
-                    ? this.m_renderOrderBiasGroups.get(style.renderOrderBiasGroup)
-                    : undefined;
-                if (
-                    style.renderOrderBiasRange !== undefined &&
-                    renderOrderBiasGroupOrder === undefined
-                ) {
-                    if (style.renderOrder !== undefined) {
-                        logger.warn(
-                            "WARN: style.renderOrder will be overridden if " +
-                                "renderOrderBiasGroup is set:",
-                            style
-                        );
-                    }
-                    const [minRange, maxRange] = style.renderOrderBiasRange;
-                    style.renderOrder =
-                        minRange < 0
-                            ? techniqueRenderOrder + Math.abs(minRange)
-                            : techniqueRenderOrder;
-                    techniqueRenderOrder += Math.abs(minRange) + maxRange;
-                    if (style.renderOrderBiasGroup) {
-                        this.m_renderOrderBiasGroups.set(
-                            style.renderOrderBiasGroup,
-                            style.renderOrder
-                        );
-                    }
-                    techniqueRenderOrder++;
-                } else if (renderOrderBiasGroupOrder) {
-                    if (style.renderOrder !== undefined) {
-                        logger.warn(
-                            "WARN: style.renderOrder will be overridden if " +
-                                "renderOrderBiasGroup is set:",
-                            style
-                        );
-                    }
-                    style.renderOrder = renderOrderBiasGroupOrder;
-                }
-            }
-            // search through child styles
-            if (style.styles !== undefined) {
-                for (const currStyle of style.styles) {
-                    computeDefaultRenderOrder(currStyle as InternalStyle);
-                }
-            } else {
-                (style as InternalStyle)._styleSetIndex = styleSetIndex++;
-                if (style.technique !== undefined && style.renderOrder === undefined) {
-                    style.renderOrder = techniqueRenderOrder++;
-                }
-            }
-        };
-
-        for (const style of styleSet) {
-            computeDefaultRenderOrder(style as InternalStyle);
-        }
-
-        this.styleSet = styleSet as InternalStyle[];
+        this.styleSet = resolveReferences(styleSet, definitions);
+        computeDefaultRenderOrder(this.styleSet);
         this.compileStyleSet();
     }
 
@@ -906,6 +809,107 @@ export class StyleSetEvaluator {
         this.m_techniques.push(technique as IndexedTechnique);
         return technique as IndexedTechnique;
     }
+}
+
+interface ComputeDefaultRenderOrderState {
+    techniqueRenderOrder: number;
+    styleSetIndex: number;
+    renderOrderBiasGroups: Map<string, number>;
+}
+
+function computeDefaultRenderOrder(styleSet: InternalStyle[]) {
+    const options = {
+        techniqueRenderOrder: 0,
+        styleSetIndex: 0,
+        renderOrderBiasGroups: new Map()
+    };
+    for (const style of styleSet) {
+        computeStyleDefaultRenderOrder(style, options);
+    }
+}
+
+function computeStyleDefaultRenderOrder(
+    style: InternalStyle,
+    state: ComputeDefaultRenderOrderState
+) {
+    if (style.renderOrderBiasGroup !== undefined) {
+        const renderOrderBiasGroupOrder = style.renderOrderBiasGroup
+            ? state.renderOrderBiasGroups.get(style.renderOrderBiasGroup)
+            : undefined;
+        if (style.renderOrderBiasRange !== undefined && renderOrderBiasGroupOrder === undefined) {
+            if (style.renderOrder !== undefined) {
+                logger.warn(
+                    "WARN: style.renderOrder will be overridden if " +
+                        "renderOrderBiasGroup is set:",
+                    style
+                );
+            }
+            const [minRange, maxRange] = style.renderOrderBiasRange;
+            style.renderOrder =
+                minRange < 0
+                    ? state.techniqueRenderOrder + Math.abs(minRange)
+                    : state.techniqueRenderOrder;
+            state.techniqueRenderOrder += Math.abs(minRange) + maxRange;
+            if (style.renderOrderBiasGroup) {
+                state.renderOrderBiasGroups.set(style.renderOrderBiasGroup, style.renderOrder);
+            }
+            state.techniqueRenderOrder++;
+        } else if (renderOrderBiasGroupOrder) {
+            if (style.renderOrder !== undefined) {
+                logger.warn(
+                    "WARN: style.renderOrder will be overridden if " +
+                        "renderOrderBiasGroup is set:",
+                    style
+                );
+            }
+            style.renderOrder = renderOrderBiasGroupOrder;
+        }
+    }
+    // search through child styles
+    if (style.styles !== undefined) {
+        for (const currStyle of style.styles) {
+            computeStyleDefaultRenderOrder(currStyle as InternalStyle, state);
+        }
+    } else {
+        style._styleSetIndex = state.styleSetIndex++;
+        if (style.technique !== undefined && style.renderOrder === undefined) {
+            style.renderOrder = state.techniqueRenderOrder++;
+        }
+    }
+}
+
+function resolveReferences(styleSet: StyleDeclaration[], definitions: Definitions | undefined) {
+    return styleSet.map(style => resolveStyleReferences(style, definitions));
+}
+
+function resolveStyleReferences(
+    style: StyleDeclaration,
+    definitions: Definitions | undefined
+): InternalStyle {
+    if (isJsonExpr(style)) {
+        if (!isJsonExprReference(style)) {
+            throw new Error("invalid expression in this context, only 'ref's are supported");
+        }
+        // expand and instantiate references to style definitions.
+        const definitionName = style[1];
+        const def = definitions && definitions[definitionName];
+        if (!def) {
+            throw new Error(`invalid reference '${definitionName}' - not found`);
+        }
+        if (!isActualSelectorDefinition(def)) {
+            throw new Error(`invalid reference '${definitionName}' - expected style definition`);
+        }
+        // instantiate the style
+        return resolveStyleReferences(def, definitions);
+    }
+
+    const styles =
+        style.styles &&
+        (style.styles
+            .map(subStyle => resolveStyleReferences(subStyle, definitions))
+            .filter(subStyle => subStyle !== undefined) as StyleSet);
+
+    return { ...style, styles };
 }
 
 /**
