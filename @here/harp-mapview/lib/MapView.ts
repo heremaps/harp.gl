@@ -745,6 +745,7 @@ export class MapView extends THREE.EventDispatcher {
     private m_previousFrameTimeStamp?: number;
     private m_firstFrameRendered = false;
     private m_firstFrameComplete = false;
+    private m_initialTextPlacementDone = false;
     private m_previousRequestAnimationTime?: number;
     private m_targetRequestAnimationTime?: number;
     private m_frameTimeIndex: number = 0;
@@ -1109,7 +1110,7 @@ export class MapView extends THREE.EventDispatcher {
         this.updateImages();
         this.updateLighting();
 
-        if (this.m_textElementsRenderer) {
+        if (this.m_textElementsRenderer !== undefined) {
             this.m_textElementsRenderer.placeAllTileLabels();
         }
         this.updateSkyBackground();
@@ -1506,13 +1507,13 @@ export class MapView extends THREE.EventDispatcher {
     /**
      * Get object describing frustum planes distances and min/max visibility range for actual
      * camera setup.
-     * Near and far plance distance are self explanatory while minimum and maximum visibility range
+     * Near and far plane distance are self explanatory while minimum and maximum visibility range
      * describes the extreme near/far planes distances that may be achieved with current camera
      * settings, meaning at current zoom level (ground distance) and any possible orientation.
      * @note Visibility is directly related to camera [[ClipPlaneEvaluator]] used and determines
      * the maximum possible distance of camera far clipping plane regardless of tilt, but may change
-     * whenever zoom level changes. Distance is meassured in world units which may be approximately
-     * euqal to meters, but this depends on the distortion related to projection type used.
+     * whenever zoom level changes. Distance is measured in world units which may be approximately
+     * equal to meters, but this depends on the distortion related to projection type used.
      */
     get viewRanges(): ViewRanges {
         return this.m_viewRanges;
@@ -1980,7 +1981,12 @@ export class MapView extends THREE.EventDispatcher {
      * Returns `true` if the current frame will immediately be followed by another frame.
      */
     get isDynamicFrame(): boolean {
-        return this.cameraIsMoving || this.animating || this.m_updatePending;
+        return (
+            this.cameraIsMoving ||
+            this.animating ||
+            this.m_updatePending ||
+            this.m_animatedExtrusionHandler.isAnimating
+        );
     }
 
     /**
@@ -2425,7 +2431,7 @@ export class MapView extends THREE.EventDispatcher {
         this.setFovOnCamera(this.m_options.fovCalculation!, height);
 
         // When calculating clip planes account for the highest building on the earth,
-        // multipling its height by projection scalling factor. This approach assumes
+        // multiplying its height by projection scaling factor. This approach assumes
         // constantHeight property of extruded polygon technique is set as default false,
         // otherwise the near plane margins will be bigger then required, but still correct.
         const projectionScale = this.projection.getScaleFactor(this.camera.position);
@@ -2704,6 +2710,37 @@ export class MapView extends THREE.EventDispatcher {
             this.enqueueTextRendererCreation();
         }
 
+        // Check if this is the time to place the labels for the first time. Pretty much everything
+        // should have been loaded, and no animation should be running.
+        if (
+            !this.m_initialTextPlacementDone &&
+            !this.m_firstFrameComplete &&
+            !this.isDynamicFrame &&
+            !this.m_initialTextPlacementDone &&
+            !this.m_themeIsLoading &&
+            this.m_poiTableManager.finishedLoading &&
+            this.m_visibleTiles.allVisibleTilesLoaded &&
+            this.m_connectedDataSources.size + this.m_failedDataSources.size ===
+                this.m_tileDataSources.length
+        ) {
+            const textElementRendererFinished =
+                this.m_textElementsRenderer !== undefined &&
+                this.m_textElementsRenderer.ready &&
+                !this.m_textElementsRenderer.loading;
+
+            if (!this.textElementsRendererRequested || textElementRendererFinished) {
+                if (textElementRendererFinished) {
+                    // Placement of text shall be done now. This may change the loading state of the
+                    // TextElementsRenderer and the animation state of MapView.
+                    this.m_textElementsRenderer!.placeAllTileLabels();
+                }
+                this.m_initialTextPlacementDone = true;
+            }
+            // Either render the labels after placing them, or wait for the TextElementsRenderer to
+            // be created (delayed creation).
+            this.update();
+        }
+
         this.m_mapAnchors.children.forEach((childObject: MapAnchor) => {
             if (childObject.geoPosition === undefined) {
                 return;
@@ -2787,31 +2824,6 @@ export class MapView extends THREE.EventDispatcher {
             this.dispatchEvent(FIRST_FRAME_EVENT);
         }
 
-        if (
-            !this.m_firstFrameComplete &&
-            !this.m_themeIsLoading &&
-            this.m_visibleTiles.allVisibleTilesLoaded &&
-            this.m_connectedDataSources.size + this.m_failedDataSources.size ===
-                this.m_tileDataSources.length &&
-            !this.m_updatePending &&
-            !this.animating &&
-            !this.cameraIsMoving &&
-            !this.m_animatedExtrusionHandler.isAnimating &&
-            (this.m_textElementsRenderer !== undefined
-                ? !this.m_textElementsRenderer.loading
-                : true) &&
-            this.m_poiTableManager.finishedLoading
-        ) {
-            this.m_firstFrameComplete = true;
-
-            if (gatherStatistics) {
-                stats.appResults.set("firstFrameComplete", time);
-            }
-
-            FRAME_COMPLETE_EVENT.time = time;
-            this.dispatchEvent(FRAME_COMPLETE_EVENT);
-        }
-
         this.m_visibleTiles.disposePendingTiles();
 
         this.m_drawing = false;
@@ -2838,6 +2850,27 @@ export class MapView extends THREE.EventDispatcher {
 
         DID_RENDER_EVENT.time = time;
         this.dispatchEvent(DID_RENDER_EVENT);
+
+        // After completely rendering this frame, it is checked if this frame was the first complete
+        // frame, with no more tiles, geometry and labels waiting to be added, and no animation
+        // running. The initial placement of text in this render call may have changed the loading
+        // state of the TextElementsRenderer, so this has to be checked again.
+        if (
+            !this.m_firstFrameComplete &&
+            this.m_initialTextPlacementDone &&
+            !this.isDynamicFrame &&
+            (this.m_textElementsRenderer === undefined ||
+                (this.m_textElementsRenderer.ready && !this.m_textElementsRenderer.loading))
+        ) {
+            this.m_firstFrameComplete = true;
+
+            if (gatherStatistics) {
+                stats.appResults.set("firstFrameComplete", time);
+            }
+
+            FRAME_COMPLETE_EVENT.time = time;
+            this.dispatchEvent(FRAME_COMPLETE_EVENT);
+        }
     }
 
     private renderTileObjects(tile: Tile, zoomLevel: number) {
@@ -2869,6 +2902,7 @@ export class MapView extends THREE.EventDispatcher {
         if (
             this.m_textElementsRenderer === undefined ||
             !this.m_textElementsRenderer.ready ||
+            this.m_textElementsRenderer.loading ||
             debugCameraActive
         ) {
             return;
@@ -3242,6 +3276,14 @@ export class MapView extends THREE.EventDispatcher {
                 this.createTextRendererIfNeeded();
             }, 0);
         }
+    }
+
+    /**
+     * @hidden
+     * Is `true` if the [[TextElementsRenderer]] is soon to be created.
+     */
+    private get textElementsRendererRequested(): boolean {
+        return this.m_textElementsRendererTimer !== undefined;
     }
 
     private resetTextRenderer(): void {
