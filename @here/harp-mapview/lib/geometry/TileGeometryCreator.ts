@@ -1126,7 +1126,7 @@ export class TileGeometryCreator {
                     const outlineColor = ColorCache.instance.getColor(
                         outlineTechnique.secondaryColor !== undefined
                             ? getPropertyValue(outlineTechnique.secondaryColor!, displayZoomLevel)
-                            : "0x000000"
+                            : 0x000000
                     );
                     outlineMaterial.uniforms.diffuse.value = outlineColor;
                     if (outlineTechnique.secondaryCaps !== undefined) {
@@ -1169,14 +1169,27 @@ export class TileGeometryCreator {
                             }
 
                             if (outlineTechnique.secondaryWidth !== undefined) {
-                                lineMaterial.lineWidth =
-                                    getPropertyValue(
-                                        outlineTechnique.secondaryWidth!,
-                                        mapView.zoomLevel,
-                                        mapView.pixelToWorld
-                                    ) *
-                                    unitFactor *
-                                    0.5;
+                                const techniqueLineWidth = getPropertyValue(
+                                    outlineTechnique.lineWidth!,
+                                    mapView.zoomLevel,
+                                    mapView.pixelToWorld
+                                );
+                                const techniqueSecondaryWidth = getPropertyValue(
+                                    outlineTechnique.secondaryWidth!,
+                                    mapView.zoomLevel,
+                                    mapView.pixelToWorld
+                                );
+                                const techniqueOpacity = getPropertyValue(
+                                    outlineTechnique.opacity,
+                                    mapView.zoomLevel
+                                );
+                                // hide outline when it's equal or smaller then line to avoid subpixel contour
+                                const lineWidth =
+                                    techniqueSecondaryWidth <= techniqueLineWidth &&
+                                    (techniqueOpacity === undefined || techniqueOpacity === 1)
+                                        ? 0
+                                        : techniqueSecondaryWidth;
+                                lineMaterial.lineWidth = lineWidth * unitFactor * 0.5;
                             }
                         }
                     );
