@@ -661,12 +661,12 @@ export class PoiRenderer {
         // By default, iconScaleV should be equal to iconScaleH, whatever is set in the style.
         const screenWidth = getPropertyValue(technique.screenWidth, zoomLevel);
         if (screenWidth !== undefined) {
-            iconScaleV = iconScaleH = screenWidth / imageWidth;
+            iconScaleV = iconScaleH = screenWidth / iconWidth;
         }
 
         const screenHeight = getPropertyValue(technique.screenHeight, zoomLevel);
         if (screenHeight !== undefined) {
-            iconScaleV = screenHeight / imageHeight;
+            iconScaleV = screenHeight / iconHeight;
             if (screenWidth !== undefined) {
                 iconScaleH = iconScaleV;
             }
