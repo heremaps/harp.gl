@@ -100,7 +100,7 @@ export function getPropertyValue<T>(
                 format.regExp.test(property)
             );
             if (matchedFormat === undefined) {
-                throw new Error(`No StringEncodedNumeralFormat matched ${property}.`);
+                return property;
             }
             switch (matchedFormat.type) {
                 case StringEncodedNumeralType.Meters:
