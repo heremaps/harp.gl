@@ -300,8 +300,8 @@ describe("@here-geojson-datasource", () => {
         }
 
         const canvas = {
-            width: 0,
-            height: 0,
+            clientWidth: 400,
+            clientHeight: 300,
             addEventListener: () => {},
             removeEventListener: () => {}
         };
