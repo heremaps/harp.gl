@@ -11,6 +11,7 @@ import {
     OrientedBox3,
     Projection,
     sphereProjection,
+    Vector3Like,
     webMercatorProjection
 } from "@here/harp-geoutils";
 import { Technique } from "./Techniques";
@@ -54,7 +55,7 @@ export interface DecodedTile {
  * use case, so could be either world or local tile space.
  */
 export interface PathGeometry {
-    path: THREE.Vector3[];
+    path: Vector3Like[];
 }
 
 /**

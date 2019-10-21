@@ -54,6 +54,7 @@ import * as THREE from "three";
 import {
     normalizedEquirectangularProjection,
     ProjectionType,
+    Vector3Like,
     webMercatorProjection
 } from "@here/harp-geoutils";
 
@@ -496,11 +497,11 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
             } else if (isLabelRejectionLineTechnique(technique)) {
                 const point = new THREE.Vector3();
                 for (const path of lines) {
-                    const worldPath: THREE.Vector3[] = [];
+                    const worldPath: Vector3Like[] = [];
                     for (let i = 0; i < path.length; i += 3) {
                         point.set(path[i], path[i + 1], path[i + 2]);
                         point.add(this.m_decodeInfo.center);
-                        worldPath.push(point.clone());
+                        worldPath.push(point.clone() as Vector3Like);
                     }
                     this.m_pathGeometries.push({
                         path: worldPath

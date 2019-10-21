@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { Vector3Like } from "@here/harp-geoutils";
 import * as THREE from "three";
 
 /**
@@ -69,7 +70,7 @@ export class ScreenProjector {
      * outside the near / far plane.
      */
     project3(
-        source: THREE.Vector3,
+        source: THREE.Vector3 | Vector3Like,
         target: THREE.Vector3 = new THREE.Vector3()
     ): THREE.Vector3 | undefined {
         const p = this.projectVector(source, ScreenProjector.tempV3);
@@ -88,7 +89,10 @@ export class ScreenProjector {
      * @param {THREE.Vector3} target The target vector.
      * @returns {THREE.Vector3} The projected vector (the parameter 'target').
      */
-    projectVector(source: THREE.Vector3 | THREE.Vector4, target: THREE.Vector3): THREE.Vector3 {
+    projectVector(
+        source: THREE.Vector3 | THREE.Vector4 | Vector3Like,
+        target: THREE.Vector3
+    ): THREE.Vector3 {
         target.set(source.x, source.y, source.z).project(this.m_camera);
         return target;
     }
