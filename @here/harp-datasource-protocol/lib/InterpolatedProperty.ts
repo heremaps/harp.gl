@@ -24,7 +24,6 @@ import {
     StringEncodedPixels,
     StringEncodedRGB
 } from "./StringEncodedNumeral";
-import { StyleColor, StyleLength } from "./TechniqueParams";
 
 const logger = LoggerManager.instance.create("InterpolatedProperty");
 
@@ -63,7 +62,7 @@ export function isInterpolatedPropertyDefinition<T>(
 /**
  * Type guard to check if an object is an instance of `InterpolatedProperty`.
  */
-export function isInterpolatedProperty<T>(p: any): p is InterpolatedProperty<T> {
+export function isInterpolatedProperty(p: any): p is InterpolatedProperty {
     if (
         p !== undefined &&
         p.interpolationMode !== undefined &&
@@ -87,7 +86,7 @@ export function isInterpolatedProperty<T>(p: any): p is InterpolatedProperty<T> 
  *
  */
 export function getPropertyValue<T>(
-    property: Value | Expr | InterpolatedProperty<T> | undefined,
+    property: Value | Expr | InterpolatedProperty | undefined,
     level: number,
     pixelToMeters: number = 1.0
 ): any {
@@ -132,7 +131,7 @@ export function getPropertyValue<T>(
 }
 
 function getInterpolatedLength(
-    property: InterpolatedProperty<StyleLength>,
+    property: InterpolatedProperty,
     level: number,
     pixelToMeters: number
 ): number {
@@ -173,7 +172,7 @@ function getInterpolatedLength(
     }
 }
 
-function getInterpolatedColor(property: InterpolatedProperty<StyleColor>, level: number): number {
+function getInterpolatedColor(property: InterpolatedProperty, level: number): number {
     const nChannels = property.values.length / property.zoomLevels.length;
     const interpolant = new interpolants[property.interpolationMode](
         property.zoomLevels,
@@ -203,7 +202,7 @@ function getInterpolatedColor(property: InterpolatedProperty<StyleColor>, level:
  */
 export function createInterpolatedProperty(
     prop: InterpolatedPropertyDefinition<unknown>
-): InterpolatedProperty<unknown> | undefined {
+): InterpolatedProperty | undefined {
     removeDuplicatePropertyValues(prop);
 
     const interpolationMode =

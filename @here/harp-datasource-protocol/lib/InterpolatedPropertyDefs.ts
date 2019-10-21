@@ -37,7 +37,7 @@ export interface InterpolatedPropertyDefinition<T> {
 /**
  * Property which value is interpolated across different zoom levels.
  */
-export interface InterpolatedProperty<T> {
+export interface InterpolatedProperty {
     /**
      * Interpolation mode that should be used for this property.
      */

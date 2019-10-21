@@ -62,7 +62,7 @@ export type RemoveJsonExpr<T> = (T | JsonExpr) extends T ? Exclude<T, JsonExpr> 
  */
 export type MakeTechniqueAttrs<T> = {
     [P in keyof T]: (T[P] | JsonExpr) extends T[P]
-        ? RemoveInterpolatedPropDef<RemoveJsonExpr<T[P]>> | Expr | InterpolatedProperty<number>
+        ? RemoveInterpolatedPropDef<RemoveJsonExpr<T[P]>> | Expr | InterpolatedProperty
         : T[P];
 };
 

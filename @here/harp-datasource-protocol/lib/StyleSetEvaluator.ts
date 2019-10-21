@@ -56,7 +56,7 @@ interface StyleInternalParams {
      */
     _whenExpr?: Expr;
 
-    _staticAttributes?: Array<[string, Value | InterpolatedProperty<unknown>]>;
+    _staticAttributes?: Array<[string, Value | InterpolatedProperty]>;
 
     /**
      * These attributes are used to instantiate Technique variants.
@@ -72,7 +72,7 @@ interface StyleInternalParams {
      *
      * @see [[TechniqueAttrScope.Feature]]
      */
-    _dynamicFeatureAttributes?: Array<[string, Expr | InterpolatedProperty<unknown>]>;
+    _dynamicFeatureAttributes?: Array<[string, Expr | InterpolatedProperty]>;
 
     /**
      * These attributes are forwarded as serialized by decoder to main thread, so they are resolved
@@ -82,7 +82,7 @@ interface StyleInternalParams {
      *  - interpolants from [[TechiqueDescriptor.techniquePropNames]]
      *  - expressions [[TechniqueDescriptor.dynamicPropNames]] (Future)
      */
-    _dynamicForwaredAttributes?: Array<[string, Expr | InterpolatedProperty<unknown>]>;
+    _dynamicForwaredAttributes?: Array<[string, Expr | InterpolatedProperty]>;
     _dynamicTechniques?: Map<string, IndexedTechnique>;
 
     /**

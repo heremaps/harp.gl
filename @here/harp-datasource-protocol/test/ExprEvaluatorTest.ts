@@ -683,7 +683,7 @@ describe("ExprEvaluator", function() {
         });
 
         it("dynamic interpolation (without step 0)", function() {
-            const interpolation: InterpolatedProperty<string> = evaluate([
+            const interpolation: InterpolatedProperty = evaluate([
                 "step",
                 ["zoom"],
                 "#ff0000",
@@ -701,7 +701,7 @@ describe("ExprEvaluator", function() {
         });
 
         it("dynamic interpolation (with step 0)", function() {
-            const interpolation: InterpolatedProperty<string> = evaluate([
+            const interpolation: InterpolatedProperty = evaluate([
                 "step",
                 ["zoom"],
                 "#ff0000",

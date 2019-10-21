@@ -14,26 +14,26 @@ import { StringEncodedNumeralType } from "../lib/StringEncodedNumeral";
 
 const levels = new Float32Array([0, 5, 10]);
 
-const numberProperty: InterpolatedProperty<number> = {
+const numberProperty: InterpolatedProperty = {
     interpolationMode: InterpolationMode.Discrete,
     zoomLevels: levels,
     values: [0, 100, 500]
 };
 
-const booleanProperty: InterpolatedProperty<boolean> = {
+const booleanProperty: InterpolatedProperty = {
     interpolationMode: InterpolationMode.Discrete,
     zoomLevels: levels,
     values: [true, false, true]
 };
 
-const colorProperty: InterpolatedProperty<number> = {
+const colorProperty: InterpolatedProperty = {
     interpolationMode: InterpolationMode.Discrete,
     zoomLevels: levels,
     values: [0, 1, 0.5, 120 / 360, 1, 0.5, 240 / 360, 1, 0.5],
     _stringEncodedNumeralType: StringEncodedNumeralType.Hex
 };
 
-const enumProperty: InterpolatedProperty<string> = {
+const enumProperty: InterpolatedProperty = {
     interpolationMode: InterpolationMode.Discrete,
     zoomLevels: levels,
     values: ["Enum0", "Enum1", "Enum2"]
