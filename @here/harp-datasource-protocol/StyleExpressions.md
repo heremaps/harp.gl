@@ -142,7 +142,7 @@ Returns the given object or array.
 
 ## rgb
 
-Creates a `color` from the RGB components.
+Creates a `color` from the RGB components. The components must be integers between 0 and 255.
 
 ```javascript
 ["rgb", number, number, number]

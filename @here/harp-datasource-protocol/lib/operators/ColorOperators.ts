@@ -14,11 +14,22 @@ const tmpColor = new THREE.Color();
 const operators = {
     rgb: {
         call: (context: ExprEvaluatorContext, args: Expr[]) => {
-            const r = Number(context.evaluate(args[0]));
-            const g = Number(context.evaluate(args[1]));
-            const b = Number(context.evaluate(args[2]));
-            tmpColor.setRGB(r, g, b);
-            return "#" + tmpColor.getHexString();
+            const r = context.evaluate(args[0]);
+            const g = context.evaluate(args[1]);
+            const b = context.evaluate(args[2]);
+            if (typeof r === "number" && typeof g === "number" && typeof b === "number") {
+                return (
+                    "#" +
+                    tmpColor
+                        .setRGB(
+                            THREE.Math.clamp(r, 0, 255) / 255,
+                            THREE.Math.clamp(g, 0, 255) / 255,
+                            THREE.Math.clamp(b, 0, 255) / 255
+                        )
+                        .getHexString()
+                );
+            }
+            throw new Error(`unknown color 'rgb(${r},${g},${b})'`);
         }
     },
     hsl: {

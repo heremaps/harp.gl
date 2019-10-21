@@ -832,4 +832,35 @@ describe("ExprEvaluator", function() {
             );
         });
     });
+
+    describe("Operator 'rgb'", function() {
+        it("call", function() {
+            assert.strictEqual(
+                new THREE.Color(evaluate(["rgb", 255, 0, 0]) as string).getHexString(),
+                new THREE.Color("rgb(255, 0, 0)").getHexString()
+            );
+
+            assert.strictEqual(
+                new THREE.Color(evaluate(["rgb", 255, 255, 0]) as string).getHexString(),
+                new THREE.Color("rgb(255, 255, 0)").getHexString()
+            );
+
+            assert.strictEqual(
+                new THREE.Color(evaluate(["rgb", 255, 255, 255]) as string).getHexString(),
+                new THREE.Color("rgb(255, 255, 255)").getHexString()
+            );
+
+            assert.strictEqual(
+                new THREE.Color(evaluate(["rgb", 300, 300, 300]) as string).getHexString(),
+                new THREE.Color("rgb(300, 300, 300)").getHexString()
+            );
+
+            assert.strictEqual(
+                new THREE.Color(evaluate(["rgb", 127, 127, 127]) as string).getHexString(),
+                new THREE.Color("rgb(127, 127, 127)").getHexString()
+            );
+
+            assert.throw(() => evaluate(["rgb", "a", 40, 50]), "unknown color 'rgb(a,40,50)'");
+        });
+    });
 });
