@@ -20,6 +20,24 @@ const operators = {
             tmpColor.setRGB(r, g, b);
             return "#" + tmpColor.getHexString();
         }
+    },
+    hsl: {
+        call: (context: ExprEvaluatorContext, args: Expr[]) => {
+            const h = context.evaluate(args[0]);
+            const s = context.evaluate(args[1]);
+            const l = context.evaluate(args[2]);
+            if (
+                typeof h === "number" &&
+                typeof s === "number" &&
+                typeof l === "number" &&
+                h >= 0 &&
+                s >= 0 &&
+                l >= 0
+            ) {
+                return `hsl(${h},${Math.round(s)}%,${Math.round(l)}%)`;
+            }
+            throw new Error(`unknown color 'hsl(${h},${s}%,${l}%)'`);
+        }
     }
 };
 
