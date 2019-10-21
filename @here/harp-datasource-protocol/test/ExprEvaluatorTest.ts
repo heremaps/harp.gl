@@ -12,6 +12,8 @@ import { Expr, ExprScope, JsonValue, MapEnv, ValueMap } from "../lib/Expr";
 import { getPropertyValue, isInterpolatedProperty } from "../lib/InterpolatedProperty";
 import { InterpolatedProperty, InterpolationMode } from "../lib/InterpolatedPropertyDefs";
 
+import * as THREE from "three";
+
 const EPSILON = 1e-8;
 
 describe("ExprEvaluator", function() {
@@ -810,5 +812,24 @@ describe("ExprEvaluator", function() {
                 zoom: true
             }
         );
+    });
+
+    describe("Operator 'hsl'", function() {
+        it("call", function() {
+            assert.strictEqual(
+                new THREE.Color(evaluate(["hsl", 20, 100, 50]) as string).getHexString(),
+                new THREE.Color("hsl(20, 100%, 50%)").getHexString()
+            );
+
+            assert.strictEqual(
+                new THREE.Color(evaluate(["hsl", 370, 100, 50]) as string).getHexString(),
+                new THREE.Color("hsl(370, 100%, 50%)").getHexString()
+            );
+
+            assert.throw(
+                () => evaluate(["hsl", 10.3, -40, 50]),
+                "unknown color 'hsl(10.3,-40%,50%)'"
+            );
+        });
     });
 });

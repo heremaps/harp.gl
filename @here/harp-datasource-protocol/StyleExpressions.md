@@ -148,6 +148,18 @@ Creates a `color` from the RGB components.
 ["rgb", number, number, number]
 ```
 
+## hsl
+
+Creates a `color` from the HSL components:
+
+  — hue value in degrees
+  — saturation value between 0 and 100
+  — lightness value between 0 and 100
+
+```javascript
+["hsl", number, number, number]
+```
+
 ## !
 
 Returns `false` if its value can be converted to `true`; otherwise, returns `true`.
