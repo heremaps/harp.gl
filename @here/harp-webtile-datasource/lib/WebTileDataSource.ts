@@ -28,6 +28,17 @@ const textureLoader = new THREE.TextureLoader();
 textureLoader.crossOrigin = ""; // empty assignment required to support CORS
 
 /**
+ * An interface for the rendering options that can be passed to the [[WebTileDataSource]].
+ */
+export interface WebTileRenderingOptions {
+    /**
+     * Opacity of the rendered images.
+     * @default 1.0
+     */
+    opacity?: number;
+}
+
+/**
  * An interface for the type of parameters that can be passed to the [[WebTileDataSource]].
  */
 export interface WebTileDataSourceParameters {
@@ -105,6 +116,11 @@ export interface WebTileDataSourceParameters {
      * @default `true`
      */
     gatherCopyrightInfo?: boolean;
+
+    /**
+     * Options affecting the rendering of the web tiles.
+     */
+    renderingOptions?: WebTileRenderingOptions;
 }
 
 /**
@@ -410,10 +426,16 @@ export class WebTileDataSource extends DataSource {
                 }
                 posAttr.needsUpdate = true;
 
+                const opacity =
+                    this.m_options.renderingOptions !== undefined
+                        ? this.m_options.renderingOptions.opacity
+                        : undefined;
                 const material = new THREE.MeshBasicMaterial({
                     map: texture,
                     depthTest: false,
-                    depthWrite: false
+                    depthWrite: false,
+                    opacity,
+                    transparent: opacity !== undefined && opacity < 1.0 ? true : false
                 });
 
                 const mesh = new THREE.Mesh(g, material);
