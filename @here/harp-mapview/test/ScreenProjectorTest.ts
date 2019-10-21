@@ -9,7 +9,7 @@ import { ScreenProjector } from "../lib/ScreenProjector";
 import { assert } from "chai";
 import * as THREE from "three";
 
-describe("screen projector test", () => {
+describe("ScreenProjector test", () => {
     it("project3", () => {
         const camera = new THREE.PerspectiveCamera(45, 1, 1, 10);
         const sp = new ScreenProjector(camera);

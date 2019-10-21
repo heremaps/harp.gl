@@ -50,7 +50,8 @@ export interface DecodedTile {
 }
 
 /**
- * This object keeps the path of the geometry. The path is in local tile space.
+ * This object keeps the path of the geometry. Space of the path depends on the
+ * use case, so could be either world or local tile space.
  */
 export interface PathGeometry {
     path: number[];
