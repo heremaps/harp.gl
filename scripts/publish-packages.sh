@@ -6,4 +6,4 @@
 #
 
 echo '//registry.npmjs.org/:_authToken=${NPM_TOKEN}' > ~/.npmrc
-npx lerna publish -y from-git
+npx lerna publish -y from-git --pre-dist-tag alpha
