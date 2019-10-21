@@ -13,6 +13,7 @@ import {
 } from "@here/harp-geoutils";
 import { assert } from "chai";
 import * as sinon from "sinon";
+import * as THREE from "three";
 import { DataSource } from "../lib/DataSource";
 import { TileGeometryCreator } from "../lib/geometry/TileGeometryCreator";
 import { Tile } from "../lib/Tile";
@@ -40,7 +41,7 @@ describe("TileGeometryCreator", () => {
         );
 
         const decodedTile: DecodedTile = {
-            pathGeometries: [{ path: [1, 1, 1, 2, 2, 2] }],
+            pathGeometries: [{ path: [new THREE.Vector3(1, 1, 1), new THREE.Vector3(2, 2, 2)] }],
             geometries: [],
             techniques: []
         };

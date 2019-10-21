@@ -233,14 +233,8 @@ export class TileGeometryCreator {
         if (decodedTile.pathGeometries === undefined) {
             return;
         }
-        const point = new THREE.Vector3();
         for (const path of decodedTile.pathGeometries) {
-            const vector3path: THREE.Vector3[] = [];
-            for (let i = 0; i < path.path.length; i += 3) {
-                point.set(path.path[i], path.path[i + 1], path.path[i + 2]);
-                vector3path.push(point.clone());
-            }
-            tile.addBlockingElement(new PathBlockingElement(vector3path));
+            tile.addBlockingElement(new PathBlockingElement(path.path));
         }
     }
 

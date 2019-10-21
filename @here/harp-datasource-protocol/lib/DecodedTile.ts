@@ -54,15 +54,14 @@ export interface DecodedTile {
  * use case, so could be either world or local tile space.
  */
 export interface PathGeometry {
-    path: number[];
+    path: THREE.Vector3[];
 }
 
 /**
  * This object keeps textual data together with metadata to place it on the map.
  */
-export interface TextPathGeometry extends PathGeometry {
-    // The path length is specific to text path, as a means of prioritizing longer lines over
-    // shorter lines for text placement.
+export interface TextPathGeometry {
+    path: number[];
     pathLengthSqr: number;
     text: string;
     technique: number;
