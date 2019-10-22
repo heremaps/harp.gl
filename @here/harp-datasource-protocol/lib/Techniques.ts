@@ -481,6 +481,10 @@ export interface TerrainTechnique extends MakeTechniqueAttrs<TerrainTechniquePar
     name: "terrain";
 }
 
+export interface LabelRejectionLineTechnique extends MakeTechniqueAttrs<BaseTechniqueParams> {
+    name: "label-rejection-line";
+}
+
 /**
  * Possible techniques that can be used to draw a geometry on the map.
  */
@@ -500,7 +504,8 @@ export type Technique =
     | StandardExtrudedLineTechnique
     | ExtrudedPolygonTechnique
     | ShaderTechnique
-    | TextTechnique;
+    | TextTechnique
+    | LabelRejectionLineTechnique;
 
 /**
  * Additional params used for optimized usage of `Techniques`.
@@ -658,6 +663,12 @@ export function isTextTechnique(technique: Technique): technique is TextTechniqu
  */
 export function isShaderTechnique(technique: Technique): technique is ShaderTechnique {
     return technique.name === "shader";
+}
+
+export function isLabelRejectionLineTechnique(
+    technique: Technique
+): technique is LabelRejectionLineTechnique {
+    return technique.name === "label-rejection-line";
 }
 
 /**

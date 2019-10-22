@@ -76,6 +76,7 @@ import {
 } from "../DepthPrePass";
 import { DisplacementMap, TileDisplacementMap } from "../DisplacementMap";
 import { MapViewPoints } from "../MapViewPoints";
+import { PathBlockingElement } from "../PathBlockingElement";
 import { TextElement } from "../text/TextElement";
 import { DEFAULT_TEXT_DISTANCE_SCALE } from "../text/TextElementsRenderer";
 import { computeStyleCacheId } from "../text/TextStyleCache";
@@ -207,9 +208,12 @@ export class TileGeometryCreator {
         const filter = (technique: Technique): boolean => {
             return technique.enabled !== false;
         };
-
         this.createObjects(tile, decodedTile, filter);
 
+        this.preparePois(tile, decodedTile);
+
+        // TextElements do not get their geometry created by Tile, but are managed on a
+        // higher level.
         const textFilter = (technique: Technique): boolean => {
             if (
                 !isPoiTechnique(technique) &&
@@ -220,12 +224,18 @@ export class TileGeometryCreator {
             }
             return filter(technique);
         };
-
-        this.preparePois(tile, decodedTile);
-
-        // TextElements do not get their geometry created by Tile, but are managed on a
-        // higher level.
         this.createTextElements(tile, decodedTile, textFilter);
+
+        this.createLabelRejectionElements(tile, decodedTile);
+    }
+
+    createLabelRejectionElements(tile: Tile, decodedTile: DecodedTile) {
+        if (decodedTile.pathGeometries === undefined) {
+            return;
+        }
+        for (const path of decodedTile.pathGeometries) {
+            tile.addBlockingElement(new PathBlockingElement(path.path));
+        }
     }
 
     /**

@@ -161,6 +161,13 @@ export class GeoJsonTile extends Tile {
                 }
             }
         }
+
+        // HARP-7419: TODO, support tile.pathGeometries, not currently needed, but may be needed
+        // in future, should be simple, something like
+        /*if(decodedTile.pathGeometries) {
+            tile.addBlockingElement...
+        }
+        */
     }
 
     /**

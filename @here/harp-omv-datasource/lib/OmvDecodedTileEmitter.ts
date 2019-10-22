@@ -20,6 +20,7 @@ import {
     isExtrudedLineTechnique,
     isExtrudedPolygonTechnique,
     isFillTechnique,
+    isLabelRejectionLineTechnique,
     isLineMarkerTechnique,
     isLineTechnique,
     isPoiTechnique,
@@ -27,6 +28,7 @@ import {
     isStandardTechnique,
     isTextTechnique,
     LineMarkerTechnique,
+    PathGeometry,
     PoiGeometry,
     PoiTechnique,
     StyleColor,
@@ -52,6 +54,7 @@ import * as THREE from "three";
 import {
     normalizedEquirectangularProjection,
     ProjectionType,
+    Vector3Like,
     webMercatorProjection
 } from "@here/harp-geoutils";
 
@@ -178,6 +181,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
     private readonly m_geometries: Geometry[] = [];
     private readonly m_textGeometries: TextGeometry[] = [];
     private readonly m_textPathGeometries: TextPathGeometry[] = [];
+    private readonly m_pathGeometries: PathGeometry[] = [];
     private readonly m_poiGeometries: PoiGeometry[] = [];
     private readonly m_simpleLines: LinesGeometry[] = [];
     private readonly m_solidLines: LinesGeometry[] = [];
@@ -368,18 +372,17 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
             const techniqueName = technique.name;
 
             if (
-                techniqueName === "line" ||
-                techniqueName === "solid-line" ||
-                techniqueName === "dashed-line"
+                isLineTechnique(technique) ||
+                isSolidLineTechnique(technique) ||
+                isDashedLineTechnique(technique)
             ) {
-                const lineGeometry =
-                    techniqueName === "line"
-                        ? this.m_simpleLines
-                        : techniqueName === "solid-line"
-                        ? this.m_solidLines
-                        : this.m_dashedLines;
+                const lineGeometry = isLineTechnique(technique)
+                    ? this.m_simpleLines
+                    : isSolidLineTechnique(technique)
+                    ? this.m_solidLines
+                    : this.m_dashedLines;
 
-                const lineType = techniqueName === "line" ? LineType.Simple : LineType.Complex;
+                const lineType = isLineTechnique(technique) ? LineType.Simple : LineType.Complex;
 
                 this.applyLineTechnique(
                     lineGeometry,
@@ -440,11 +443,11 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                     if (text === undefined) {
                         continue;
                     }
-                    for (const aLine of validLines) {
-                        const pathLengthSqr = Math2D.computeSquaredLineLength(aLine);
+                    for (const path of validLines) {
+                        const pathLengthSqr = Math2D.computeSquaredLineLength(path);
                         this.m_textPathGeometries.push({
                             technique: techniqueIndex,
-                            path: aLine,
+                            path,
                             pathLengthSqr,
                             text: String(text),
                             featureId,
@@ -490,6 +493,19 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                             objInfos: this.m_gatherFeatureIds ? [env.entries] : undefined
                         });
                     }
+                }
+            } else if (isLabelRejectionLineTechnique(technique)) {
+                const point = new THREE.Vector3();
+                for (const path of lines) {
+                    const worldPath: Vector3Like[] = [];
+                    for (let i = 0; i < path.length; i += 3) {
+                        point.set(path[i], path[i + 1], path[i + 2]);
+                        point.add(this.m_decodeInfo.center);
+                        worldPath.push(point.clone() as Vector3Like);
+                    }
+                    this.m_pathGeometries.push({
+                        path: worldPath
+                    });
                 }
             } else if (isExtrudedLineTechnique(technique)) {
                 const meshBuffers = this.findOrCreateMeshBuffers(
@@ -584,10 +600,6 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
             const isExtruded = isExtrudedPolygonTechnique(technique);
             const isFilled = isFillTechnique(technique);
 
-            const isLine =
-                isSolidLineTechnique(technique) ||
-                isDashedLineTechnique(technique) ||
-                isLineTechnique(technique);
             const isPolygon = isExtruded || isFilled || isStandardTechnique(technique);
             const computeTexCoords = this.getComputeTexCoordsFunc(technique);
             const vertexStride = computeTexCoords !== undefined ? 4 : 2;
@@ -612,6 +624,10 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                 polygons.push(rings);
             }
 
+            const isLine =
+                isSolidLineTechnique(technique) ||
+                isDashedLineTechnique(technique) ||
+                isLineTechnique(technique);
             if (isPolygon) {
                 this.applyPolygonTechnique(
                     polygons,
@@ -719,6 +735,9 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
         }
         if (this.m_textPathGeometries.length > 0) {
             decodedTile.textPathGeometries = this.m_textPathGeometries;
+        }
+        if (this.m_pathGeometries.length > 0) {
+            decodedTile.pathGeometries = this.m_pathGeometries;
         }
         if (this.m_sources.length !== 0) {
             decodedTile.copyrightHolderIds = this.m_sources;

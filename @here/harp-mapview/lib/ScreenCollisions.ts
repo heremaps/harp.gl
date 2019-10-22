@@ -98,33 +98,13 @@ export class ScreenCollisions {
     }
 
     /**
-     * Marks the region of the screen intersecting with the given bounding box as allocated.
+     * Inserts the given bounds into the rtree.
      *
-     * @param bounds The bounding box in screen coordinates.
+     * @param bounds The bounding boxes (the bounding boxes must be in the space returned from the
+     * ScreenProjector.project method).
      */
-    allocateScreenSpace(bounds: Math2D.Box): void {
-        const shiftedBounds = this.toScreenBoundsSpace(bounds, "box");
-        this.rtree.insert(shiftedBounds);
-    }
-
-    /**
-     * Marks a region of the screen intersecting with the given IBox as allocated.
-     *
-     * @param bounds The bounding box in screen coordinates.
-     * @param isScreenSpace Whether the supplied IBox is in screen coordinates, i.e. 0,0 is top
-     * left, and width,height is bottom right, or NDC Scaled coordiantes, i.e. -width/2, -height/2
-     * is bottom left and width/2 and height/2 is top right (i.e. flipped).
-     */
-    allocateIBox(bounds: IBox, isScreenSpace: boolean): void {
-        const box = {};
-        // Make sure to copy across any extra things.
-        Object.assign(box, bounds);
-        // Copy across the NDC scaled space values required for the rtree
-        if (isScreenSpace) {
-            Object.assign(box, this.toScreenBoundsSpaceFromIBox(bounds));
-        }
-        // Convert box from screen space to screenBounds space
-        this.rtree.insert(box);
+    allocateIBoxes(bounds: IBox[]) {
+        this.rtree.load(bounds);
     }
 
     /**
@@ -132,23 +112,16 @@ export class ScreenCollisions {
      *
      * @param bounds The bounding box in world coordinates.
      */
-    isAllocated(bounds: Math2D.Box): boolean {
-        const bbox: CollisionBox = {
-            minX: bounds.x,
-            minY: bounds.y,
-            maxX: bounds.x + bounds.w,
-            maxY: bounds.y + bounds.h,
-            type: "box"
-        };
-
-        const results = this.rtree.search(bbox);
+    isAllocated(bounds: Math2D.Box | CollisionBox): boolean {
+        const collisionBox = bounds instanceof Math2D.Box ? this.toCollisionBox(bounds) : bounds;
+        const results = this.rtree.search(collisionBox);
         for (const result of results) {
             switch (result.type) {
                 case "box":
                     return true;
                 case "line": {
                     const boundedLine = result as LineWithBound;
-                    if (this.intersectsLine(bbox, boundedLine)) {
+                    if (this.intersectsLine(collisionBox, boundedLine)) {
                         return true;
                     }
                 }
@@ -175,15 +148,10 @@ export class ScreenCollisions {
      */
     intersectsLine(bbox: CollisionBox, boundedLine: LineWithBound): boolean {
         const line = boundedLine.line;
-        // Transform line from screen space to screenBounds space.
-        const lineStartXTransformed = line.start.x + this.screenBounds.x;
-        const lineStartYTransformed = this.screenBounds.h / 2 - line.start.y;
-        const lineEndXTransformed = line.end.x + this.screenBounds.x;
-        const lineEndYTransformed = this.screenBounds.h / 2 - line.end.y;
 
         // Note, these aren't normalized, but it doesn't matter, we are just interested
         // in the sign.
-        const lineXDiffTransformed = lineEndXTransformed - lineStartXTransformed;
+        const lineXDiffTransformed = line.end.x - line.start.x;
 
         // Sign of bottom left, bottom right, top left and top right corners.
         let signBL: number;
@@ -191,54 +159,31 @@ export class ScreenCollisions {
         let signTL: number;
         let signTR: number;
         if (lineXDiffTransformed !== 0) {
-            const lineYDiffTransformed = lineEndYTransformed - lineStartYTransformed;
+            const lineYDiffTransformed = line.end.y - line.start.y;
             const normalX = lineYDiffTransformed;
             const normalY = -lineXDiffTransformed;
-            const D =
-                lineStartYTransformed -
-                (lineYDiffTransformed / lineXDiffTransformed) * lineStartXTransformed;
+            const D = line.start.y - (lineYDiffTransformed / lineXDiffTransformed) * line.start.x;
 
             signBL = Math.sign(bbox.minX * normalX + (bbox.minY - D) * normalY);
             signBR = Math.sign(bbox.maxX * normalX + (bbox.minY - D) * normalY);
             signTL = Math.sign(bbox.minX * normalX + (bbox.maxY - D) * normalY);
             signTR = Math.sign(bbox.maxX * normalX + (bbox.maxY - D) * normalY);
         } else {
-            signBL = Math.sign(bbox.minX - lineStartXTransformed);
-            signBR = Math.sign(bbox.maxX - lineStartXTransformed);
-            signTL = Math.sign(bbox.minX - lineStartXTransformed);
-            signTR = Math.sign(bbox.maxX - lineStartXTransformed);
+            signBL = Math.sign(bbox.minX - line.start.x);
+            signBR = Math.sign(bbox.maxX - line.start.x);
+            signTL = Math.sign(bbox.minX - line.start.x);
+            signTR = Math.sign(bbox.maxX - line.start.x);
         }
         return signBL !== signBR || signBL !== signTL || signBL !== signTR;
     }
 
-    /**
-     * Transfer from screen space to screen bounds space. Screen bounds space is the result of the
-     * [[ScreenProjector.project]] method. I.e. it is the NDC space multiplied by the width /
-     * height.
-     * @param bounds Bounds in screen space.
-     * @param type Type required to return IBox
-     */
-    private toScreenBoundsSpace(bounds: Math2D.Box, type: string): IBox {
+    private toCollisionBox(bounds: Math2D.Box): CollisionBox {
         return {
-            minX: bounds.x + this.screenBounds.x,
-            minY: this.screenBounds.h / 2 - bounds.y - bounds.h,
-            maxX: bounds.x + bounds.w + this.screenBounds.x,
-            maxY: this.screenBounds.h / 2 - bounds.y,
-            type
-        };
-    }
-
-    /**
-     * Transfer from screen space to screen bounds space for IBox
-     * @param bounds Bounds in screen space
-     */
-    private toScreenBoundsSpaceFromIBox(bounds: IBox): IBox {
-        return {
-            minX: bounds.minX + this.screenBounds.x,
-            minY: this.screenBounds.h / 2 - bounds.maxY,
-            maxX: bounds.maxX + this.screenBounds.x,
-            maxY: this.screenBounds.h / 2 - bounds.minY,
-            type: bounds.type
+            minX: bounds.x,
+            minY: bounds.y,
+            maxX: bounds.x + bounds.w,
+            maxY: bounds.y + bounds.h,
+            type: "box"
         };
     }
 }
@@ -333,36 +278,12 @@ export class ScreenCollisionsDebug extends ScreenCollisions {
         }
     }
 
-    /**
-     * Marks the region of the screen intersecting with the given bounding box as allocated.
-     *
-     * @param bounds The bounding box in screen coordinates.
-     */
-    allocateScreenSpace(bounds: Math2D.Box): void {
-        super.allocateScreenSpace(bounds);
+    allocateIBoxes(boundsArray: IBox[]) {
+        for (const bounds of boundsArray) {
+            this.m_numAllocations++;
 
-        this.m_numAllocations++;
-        if (this.m_renderingEnabled && this.m_renderContext !== null) {
-            this.m_renderContext.strokeStyle = "#6666ff";
-            this.m_renderContext.strokeRect(bounds.x, bounds.y, bounds.w, bounds.h);
-        }
-    }
-
-    allocateIBox(bounds: IBox, isScreenSpace: boolean): void {
-        super.allocateIBox(bounds, isScreenSpace);
-
-        this.m_numAllocations++;
-
-        if (this.m_renderingEnabled && this.m_renderContext !== null) {
-            this.m_renderContext.strokeStyle = "#aa2222";
-            if (isScreenSpace) {
-                this.m_renderContext.strokeRect(
-                    bounds.minX,
-                    bounds.minY,
-                    bounds.maxX - bounds.minX,
-                    bounds.maxY - bounds.minY
-                );
-            } else {
+            if (this.m_renderingEnabled && this.m_renderContext !== null) {
+                this.m_renderContext.strokeStyle = "#aa2222";
                 this.m_renderContext.strokeRect(
                     bounds.minX - this.screenBounds.x,
                     this.screenBounds.y + this.screenBounds.h - bounds.minY - 1,
@@ -371,6 +292,7 @@ export class ScreenCollisionsDebug extends ScreenCollisions {
                 );
             }
         }
+        super.allocateIBoxes(boundsArray);
     }
 
     /**
