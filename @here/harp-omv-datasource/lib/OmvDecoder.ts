@@ -198,7 +198,7 @@ export class OmvDecoder implements IGeometryProcessor {
                 break;
             }
         }
-        if (dataAdapter === undefined) {
+            if (dataAdapter === undefined) {
             return {
                 techniques: [],
                 geometries: []

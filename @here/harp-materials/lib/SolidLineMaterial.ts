@@ -58,6 +58,7 @@ varying float vResultLineWidth;
 varying vec3 vPosition;
 varying float vLength;
 varying float vExtrusionStrength;
+varying float vLololo;
 
 #if USE_COLOR
 attribute vec3 color;
@@ -80,6 +81,9 @@ void main() {
     vec3 pos = position;
     vec2 extrusionDir = sign(extrusionCoord.xy);
     vExtrusionStrength = extrusionDir.y * tan(bitangent.w / 2.0);
+
+    // float vLololo = vLength + extrusionDir.x * vResultLineWidth;
+
 
     extrudeLine(vSegment, bitangent, tangent, vResultLineWidth, pos, extrusionDir);
 
@@ -127,6 +131,7 @@ varying float vResultLineWidth;
 varying vec3 vPosition;
 varying float vLength;
 varying float vExtrusionStrength;
+varying float vLololo;
 
 #if USE_COLOR
 varying vec3 vColor;
@@ -149,7 +154,7 @@ void main() {
     float lineEnds = max(vExtrusionCoord.x - vLength,- vExtrusionCoord.x);
 
     #if TILE_CLIP
-    tileClip(vPosition.xy, tileSize);
+    // tileClip(vPosition.xy, tileSize);
     #endif
 
     float pointDist = roundEdgesAndAddCaps(vSegment, vExtrusionCoord, lineEnds, vExtrusionStrength);
@@ -158,11 +163,19 @@ void main() {
     alpha *= (1.0 - smoothstep(-width, width, dist));
 
     #if DASHED_LINE
-    float halfSegment = (dashSize + gapSize) / dashSize * 0.5;
-    float segmentDist = mod(vExtrusionCoord.x, dashSize + gapSize) / dashSize;
+    float dSegment = dashSize + gapSize;
+    float fullLength = vLength ;
+    float correction = (fullLength / dSegment) / ceil(fullLength / dSegment);
+    float cDashSize = dashSize * correction;
+    float cGapSize = gapSize * correction;
+
+    float halfSegment = (cDashSize + cGapSize) / cDashSize * 0.5;
+    float segmentDist = mod(vExtrusionCoord.x + ((cDashSize + cGapSize) *0.5) , cDashSize + cGapSize) / cDashSize;
     float dashDist = 0.5 - distance(segmentDist, halfSegment);
     float dashWidth = fwidth(dashDist);
     float dashedBlendFactor = 1.0 - smoothstep(-dashWidth, dashWidth, dashDist);
+
+
 
     #if USE_DASH_COLOR
     outputDiffuse = mix(diffuse, dashColor, dashedBlendFactor);
@@ -200,7 +213,7 @@ void main() {
     #if USE_COLOR
     gl_FragColor = vec4( outputDiffuse * vColor, alpha );
     #else
-    gl_FragColor = vec4( outputDiffuse, alpha );
+    gl_FragColor = vec4( outputDiffuse,  alpha );
     #endif
 
     #include <fog_fragment>
