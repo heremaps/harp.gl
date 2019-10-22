@@ -1779,7 +1779,11 @@ export class TextElementsRenderer {
                 poiInfo.iconMaxZoomLevel
             );
 
-        if (renderIcon && poiInfo !== undefined && poiRenderer.prepareRender(pointLabel)) {
+        if (
+            renderIcon &&
+            poiInfo !== undefined &&
+            poiRenderer.prepareRender(pointLabel, mapViewState.zoomLevel)
+        ) {
             if (poiInfo.isValid === false) {
                 return false;
             }
@@ -1789,6 +1793,7 @@ export class TextElementsRenderer {
                 tempPoiScreenPosition,
                 distanceScaleFactor,
                 this.m_screenCollisions,
+                mapViewState.zoomLevel,
                 tempBox2D
             );
 
@@ -2034,7 +2039,8 @@ export class TextElementsRenderer {
                 this.m_screenCollisions,
                 distanceScaleFactor,
                 poiInfo.reserveSpace !== false,
-                iconRenderState.opacity * distanceFadeFactor
+                iconRenderState.opacity * distanceFadeFactor,
+                mapViewState.zoomLevel
             );
 
             iconRenderState.lastFrameNumber = mapViewState.frameNumber;
@@ -2111,7 +2117,7 @@ export class TextElementsRenderer {
         if (
             lineMarkerLabel.path === undefined ||
             lineMarkerLabel.path.length === 0 ||
-            !poiRenderer.prepareRender(lineMarkerLabel)
+            !poiRenderer.prepareRender(lineMarkerLabel, mapViewState.zoomLevel)
         ) {
             return;
         }

@@ -548,19 +548,19 @@ export interface MarkerTechniqueParams extends BaseTechniqueParams {
     /**
      * Horizontal offset (to the right) in screen pixels.
      */
-    xOffset?: number;
+    xOffset?: DynamicProperty<number>;
     /**
      * Vertical offset (up) in screen pixels.
      */
-    yOffset?: number;
+    yOffset?: DynamicProperty<number>;
     /**
      * Horizontal offset (to the right) in screen pixels.
      */
-    iconXOffset?: number;
+    iconXOffset?: DynamicProperty<number>;
     /**
      * Vertical offset (up) in screen pixels.
      */
-    iconYOffset?: number;
+    iconYOffset?: DynamicProperty<number>;
     /**
      * Scaling factor of icon.
      */
@@ -568,11 +568,11 @@ export interface MarkerTechniqueParams extends BaseTechniqueParams {
     /**
      * Vertical height in pixels, controls vertical scaling. Overrides `iconScale`.
      */
-    screenHeight?: number;
+    screenHeight?: DynamicProperty<number>;
     /**
      * Horizontal height in pixels, controls horizontal scaling. Overrides `iconScale`.
      */
-    screenWidth?: number;
+    screenWidth?: DynamicProperty<number>;
     /**
      * Name of the POI table which should be used for this POI.
      */
@@ -682,11 +682,11 @@ export interface MarkerTechniqueParams extends BaseTechniqueParams {
     /**
      * Text position regarding the baseline.
      */
-    hAlignment?: "Left" | "Center" | "Right";
+    hAlignment?: DynamicProperty<"Left" | "Center" | "Right">;
     /**
      * Text position inside a line.
      */
-    vAlignment?: "Above" | "Center" | "Below";
+    vAlignment?: DynamicProperty<"Above" | "Center" | "Below">;
 }
 
 export interface LineTechniqueParams extends BaseTechniqueParams {
