@@ -82,7 +82,7 @@ interface StyleInternalParams {
      *  - interpolants from [[TechiqueDescriptor.techniquePropNames]]
      *  - expressions [[TechniqueDescriptor.dynamicPropNames]] (Future)
      */
-    _dynamicForwaredAttributes?: Array<[string, Expr | InterpolatedProperty]>;
+    _dynamicForwardedAttributes?: Array<[string, Expr | InterpolatedProperty]>;
     _dynamicTechniques?: Map<string, IndexedTechnique>;
 
     /**
@@ -647,12 +647,12 @@ export class StyleSetEvaluator {
 
         style._dynamicTechniqueAttributes = [];
         style._dynamicFeatureAttributes = [];
-        style._dynamicForwaredAttributes = [];
+        style._dynamicForwardedAttributes = [];
         style._staticAttributes = [];
 
         const dynamicFeatureAttributes = style._dynamicFeatureAttributes;
         const dynamicTechniqueAttributes = style._dynamicTechniqueAttributes;
-        const dynamicForwardedAttributes = style._dynamicForwaredAttributes;
+        const dynamicForwardedAttributes = style._dynamicForwardedAttributes;
         const targetStaticAttributes = style._staticAttributes;
 
         const techniqueDescriptor =
@@ -793,8 +793,8 @@ export class StyleSetEvaluator {
             }
         }
 
-        if (style._dynamicForwaredAttributes !== undefined) {
-            for (const [attrName, attrValue] of style._dynamicForwaredAttributes) {
+        if (style._dynamicForwardedAttributes !== undefined) {
+            for (const [attrName, attrValue] of style._dynamicForwardedAttributes) {
                 if (attrValue instanceof Expr) {
                     // TODO: We don't support `Expr` instances in main thread yet.
                     continue;
