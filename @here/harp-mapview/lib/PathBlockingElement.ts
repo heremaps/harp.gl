@@ -19,18 +19,22 @@ import * as THREE from "three";
 
 export class PathBlockingElement {
     /**
-     * Note, lines is only used as a performance improvement and contains no useful information.
+     * Note, [[screenSpaceLines]] is only used as a performance improvement and contains no
+     * useful information. They are used to contain the screen space coordinates of the
+     * points. By allocating the space here, we avoid per frame allocations, see
+     * [[TextElementsRenderer.prepopulateScreenWithBlockingElements]].
      */
-    readonly lines: THREE.Line3[];
+    readonly screenSpaceLines: THREE.Line3[];
 
     /**
      * Constructs a path from a list of points.
+     * Pre allocates the [[screenSpaceLines]] used to render.
      * @param points Points in world coordinates.
      */
     constructor(readonly points: Vector3Like[]) {
-        this.lines = new Array<THREE.Line3>(points.length >= 2 ? points.length - 1 : 0);
-        for (let i = 0; i < this.lines.length; i++) {
-            this.lines[i] = new THREE.Line3(new THREE.Vector3(), new THREE.Vector3());
+        this.screenSpaceLines = new Array<THREE.Line3>(points.length >= 2 ? points.length - 1 : 0);
+        for (let i = 0; i < this.screenSpaceLines.length; i++) {
+            this.screenSpaceLines[i] = new THREE.Line3(new THREE.Vector3(), new THREE.Vector3());
         }
     }
 }

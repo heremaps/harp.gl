@@ -628,7 +628,7 @@ export class TextElementsRenderer {
                             pathBlockingElement.points[i],
                             endLinePointProj
                         );
-                        const line = pathBlockingElement.lines[i - 1];
+                        const line = pathBlockingElement.screenSpaceLines[i - 1];
                         line.start.copy(startLinePointProj);
                         line.end.copy(endLinePointProj);
                         const lineWithBound: LineWithBound = {
