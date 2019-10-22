@@ -149,7 +149,7 @@ void main() {
     float lineEnds = max(vExtrusionCoord.x - vLength,- vExtrusionCoord.x);
 
     #if TILE_CLIP
-    tileClip(vPosition.xy, tileSize);
+    // tileClip(vPosition.xy, tileSize);
     #endif
 
     float pointDist = roundEdgesAndAddCaps(vSegment, vExtrusionCoord, lineEnds, vExtrusionStrength);

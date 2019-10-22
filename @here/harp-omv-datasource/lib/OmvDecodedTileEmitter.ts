@@ -118,6 +118,150 @@ const MAX_CORNER_ANGLE = Math.PI / 8;
  */
 const INVALID_ARRAY_INDEX = -1;
 
+type Vector3 = THREE.Vector3;
+const SMALL_NUM = 0.00000001;
+
+interface Segment {
+    P0: Vector3;
+    P1: Vector3;
+}
+
+function perp(u: Vector3, v: Vector3) {
+    return u.x * v.y - u.y * v.x;
+}
+
+// The intersection algorithm is taken from http://geomalgorithms.com/a05-_intersect-1.html
+// inSegment(): determine if a point is inside a segment
+//    Input:  a point P, and a collinear segment S
+//    Return: 1 = P is inside S
+//            0 = P is  not inside S
+// int
+function inSegment(P: Vector3, S: Segment) {
+    if (S.P0.x !== S.P1.x) {
+        // S is not  vertical
+        if (S.P0.x <= P.x && P.x <= S.P1.x) {
+            return 1;
+        }
+        if (S.P0.x >= P.x && P.x >= S.P1.x) {
+            return 1;
+        }
+    } else {
+        // S is vertical, so test y  coordinate
+        if (S.P0.y <= P.y && P.y <= S.P1.y) {
+            return 1;
+        }
+        if (S.P0.y >= P.y && P.y >= S.P1.y) {
+            return 1;
+        }
+    }
+    return 0;
+}
+//===================================================================
+
+// intersect2D_2Segments(): find the 2D intersection of 2 finite segments
+//    Input:  two finite segments S1 and S2
+//    Output: *I0 = intersect point (when it exists)
+//            *I1 =  endpoint of intersect segment [I0,I1] (when it exists)
+//    Return: 0=disjoint (no intersect)
+//            1=intersect  in unique point I0
+//            2=overlap  in segment from I0 to I1
+// int
+function intersect2D_2Segments(S1: Segment, S2: Segment, I0: Vector3, I1: Vector3) {
+    const u = S1.P1.clone().sub(S1.P0);
+    const v = S2.P1.clone().sub(S2.P0);
+    const w = S1.P0.clone().sub(S2.P0);
+    const D = perp(u, v);
+
+    // test if  they are parallel (includes either being a point)
+    if (Math.abs(D) < SMALL_NUM) {
+        // S1 and S2 are parallel
+        if (perp(u, w) !== 0 || perp(v, w) !== 0) {
+            return 0; // they are NOT collinear
+        }
+        // they are collinear or degenerate
+        // check if they are degenerate  points
+        const du = u.dot(u);
+        const dv = v.dot(v);
+        if (du === 0 && dv === 0) {
+            // both segments are points
+            if (S1.P0 !== S2.P0) {
+                // they are distinct  points
+                return 0;
+            }
+            I0.copy(S1.P0); // they are the same point
+            return 1;
+        }
+        if (du === 0) {
+            // S1 is a single point
+            if (inSegment(S1.P0, S2) === 0) {
+                // but is not in S2
+                return 0;
+            }
+            I0.copy(S1.P0);
+            return 1;
+        }
+        if (dv === 0) {
+            // S2 a single point
+            if (inSegment(S2.P0, S1) === 0) {
+                // but is not in S1
+                return 0;
+            }
+            I0.copy(S2.P0);
+            return 1;
+        }
+        // they are collinear segments - get  overlap (or not)
+        let t0: number;
+        let t1: number; // endpoints of S1 in eqn for S2
+        const w2 = S1.P1.clone().sub(S2.P0);
+        if (v.x !== 0) {
+            t0 = w.x / v.x;
+            t1 = w2.x / v.x;
+        } else {
+            t0 = w.y / v.y;
+            t1 = w2.y / v.y;
+        }
+        if (t0 > t1) {
+            // must have t0 smaller than t1
+            const t = t0;
+            t0 = t1;
+            t1 = t; // swap if not
+        }
+        if (t0 > 1 || t1 < 0) {
+            return 0; // NO overlap
+        }
+        t0 = t0 < 0 ? 0 : t0; // clip to min 0
+        t1 = t1 > 1 ? 1 : t1; // clip to max 1
+        if (t0 === t1) {
+            // intersect is a point
+            I0.copy(S2.P0.clone().add(v.clone().multiplyScalar(t0)));
+            return 1;
+        }
+
+        // they overlap in a valid subsegment
+        I0.copy(S2.P0.clone().add(v.clone().multiplyScalar(t0)));
+        I1.copy(S2.P0.clone().add(v.clone().multiplyScalar(t1)));
+        return 2;
+    }
+
+    // the segments are skew and may intersect in a point
+    // get the intersect parameter for S1
+    const sI = perp(v, w) / D;
+    if (sI < 0 || sI > 1) {
+        // no intersect with S1
+        return 0;
+    }
+
+    // get the intersect parameter for S2
+    const tI = perp(u, w) / D;
+    if (tI < 0 || tI > 1) {
+        // no intersect with S2
+        return 0;
+    }
+
+    I0.copy(S1.P0.clone().add(u.clone().multiplyScalar(sI))); // compute S1 intersect point
+    return 1;
+}
+
 // for tilezen by default extrude all buildings even those without height data
 class MeshBuffers implements IMeshBuffers {
     readonly positions: number[] = [];
@@ -343,17 +487,96 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
             }
         }
 
+        const xBounds = projectedTileBounds.clone();
+        xBounds.max.sub(this.m_decodeInfo.center);
+        xBounds.min.sub(this.m_decodeInfo.center);
+
+        const segments: Segment[] = [
+            { P0: xBounds.min, P1: new THREE.Vector3(xBounds.min.x, xBounds.max.y) },
+            { P0: new THREE.Vector3(xBounds.min.x, xBounds.max.y), P1: xBounds.max },
+            { P0: xBounds.max, P1: new THREE.Vector3(xBounds.max.x, xBounds.min.y) },
+            { P0: new THREE.Vector3(xBounds.max.x, xBounds.min.y), P1: xBounds.min }
+        ];
+
+        const addPoint = (
+            pos: THREE.Vector2,
+            worldPos: THREE.Vector3,
+            line: number[],
+            lineUvs: number[]
+        ) => {
+            line.push(worldPos.x, worldPos.y, worldPos.z);
+            if (computeTexCoords) {
+                const { u, v } = computeTexCoords(pos, extents);
+                lineUvs.push(u, v);
+            }
+        };
+
         for (const polyline of geometry) {
             const line: number[] = [];
             const lineUvs: number[] = [];
-            polyline.positions.forEach(pos => {
-                webMercatorTile2TargetWorld(extents, this.m_decodeInfo, pos, tmpV3);
-                line.push(tmpV3.x, tmpV3.y, tmpV3.z);
-                if (computeTexCoords) {
-                    const { u, v } = computeTexCoords(pos, extents);
-                    lineUvs.push(u, v);
-                }
+            const positions = polyline.positions.map(pos => {
+                const posWorld = new THREE.Vector3();
+                webMercatorTile2TargetWorld(extents, this.m_decodeInfo, pos, posWorld);
+                const intersects =
+                    posWorld.x < xBounds.max.x &&
+                    posWorld.x > xBounds.min.x &&
+                    posWorld.y < xBounds.max.y &&
+                    posWorld.y > xBounds.min.y;
+                return { pos, posWorld, intersects };
             });
+
+            const iterations = positions.length - 1;
+            for (let i = 0; i < iterations; i++) {
+                const currentPos = positions[i];
+                const nextPos = positions[i + 1];
+
+                if (currentPos.intersects === false && nextPos.intersects === false) {
+                    // continue
+                    const a = new THREE.Vector3();
+                    const b = new THREE.Vector3();
+                    for (const segment of segments) {
+                        const result = intersect2D_2Segments(
+                            { P0: currentPos.posWorld, P1: nextPos.posWorld },
+                            segment,
+                            a,
+                            b
+                        );
+                        if (result === 1) {
+                            addPoint((a.clone() as any) as THREE.Vector2, a.clone(), line, lineUvs);
+                        }
+                    }
+                } else if (currentPos.intersects === true && nextPos.intersects === true) {
+                    if (i === 0) {
+                        addPoint(currentPos.pos, currentPos.posWorld, line, lineUvs);
+                    }
+                    addPoint(nextPos.pos, nextPos.posWorld, line, lineUvs);
+                } else if (currentPos.intersects !== nextPos.intersects) {
+                    if (i === 0 && currentPos.intersects) {
+                        addPoint(currentPos.pos, currentPos.posWorld, line, lineUvs);
+                    }
+
+                    const a = new THREE.Vector3();
+                    const b = new THREE.Vector3();
+                    for (const segment of segments) {
+                        const result = intersect2D_2Segments(
+                            { P0: currentPos.posWorld, P1: nextPos.posWorld },
+                            segment,
+                            a,
+                            b
+                        );
+                        if (result === 1) {
+                            addPoint((a.clone() as any) as THREE.Vector2, a.clone(), line, lineUvs);
+                        } else if (result === 2) {
+                            logger.warn("unhandled!");
+                        }
+                    }
+                    if (nextPos.intersects) {
+                        addPoint(nextPos.pos, nextPos.posWorld, line, lineUvs);
+                    }
+                } else {
+                    throw new Error("NEVER");
+                }
+            }
             lines.push(line);
             uvs.push(lineUvs);
         }
