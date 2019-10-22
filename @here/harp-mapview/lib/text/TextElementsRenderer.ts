@@ -3,28 +3,21 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-import { LineMarkerTechnique, TextStyleDefinition, Theme } from "@here/harp-datasource-protocol";
+import { LineMarkerTechnique, Theme } from "@here/harp-datasource-protocol";
 import {
     AdditionParameters,
     DEFAULT_TEXT_CANVAS_LAYER,
     FontCatalog,
-    FontStyle,
-    FontUnit,
-    FontVariant,
     HorizontalAlignment,
     MeasurementParameters,
     TextBufferAdditionParameters,
     TextCanvas,
-    TextLayoutParameters,
     TextLayoutStyle,
-    TextRenderParameters,
     TextRenderStyle,
-    VerticalAlignment,
-    WrappingMode
+    VerticalAlignment
 } from "@here/harp-text-canvas";
 import {
     assert,
-    getOptionValue,
     LoggerManager,
     LogLevel,
     Math2D,
@@ -33,7 +26,6 @@ import {
 } from "@here/harp-utils";
 import * as THREE from "three";
 
-import { ColorCache } from "../ColorCache";
 import { DataSource } from "../DataSource";
 import { debugContext } from "../DebugContext";
 import { MapView } from "../MapView";
@@ -47,25 +39,18 @@ import { checkReadyForPlacement, computeViewDistance, getMaxViewDistance } from 
 import { PlacementStats } from "./PlacementStats";
 import { FadingState, RenderState } from "./RenderState";
 import { SimpleLineCurve, SimplePath } from "./SimplePath";
+import { TextCanvasRenderer } from "./TextCanvasRenderer";
 import { LoadingState, TextElement, TextPickResult } from "./TextElement";
 import { TextElementGroup } from "./TextElementGroup";
 import { TextElementFilter, TextElementGroupState } from "./TextElementGroupState";
 import { TextElementState } from "./TextElementState";
 import { TextElementStateCache } from "./TextElementStateCache";
-import { DEFAULT_TEXT_STYLE_CACHE_ID } from "./TextStyleCache";
+import { DEFAULT_FONT_CATALOG_NAME, TextStyleCache } from "./TextStyleCache";
 import { UpdateStats } from "./UpdateStats";
 
-const DEFAULT_STYLE_NAME = "default";
-const DEFAULT_FONT_CATALOG_NAME = "default";
 const MAX_INITIALIZED_TEXT_ELEMENTS_PER_FRAME = Infinity;
 const MIN_GLYPH_COUNT = 1024;
 const MAX_GLYPH_COUNT = 32768;
-
-interface TextCanvasRenderer {
-    fontCatalog: string;
-    textCanvas: TextCanvas;
-    poiRenderer: PoiRenderer;
-}
 
 interface MapViewState {
     cameraIsMoving: boolean;
@@ -87,18 +72,6 @@ interface TempParams {
 enum Pass {
     PersistentLabels,
     NewLabels
-}
-
-/**
- * [[TextElementsRenderer]] representation of a [[Theme]]'s TextStyle.
- */
-export interface TextElementStyle {
-    name: string;
-    fontCatalog: string;
-    renderParams: TextRenderParameters;
-    layoutParams: TextLayoutParameters;
-    textCanvas?: TextCanvas;
-    poiRenderer?: PoiRenderer;
 }
 
 /**
@@ -213,6 +186,12 @@ class TextElementLists {
     }
 }
 
+enum InitState {
+    Uninitialized,
+    Initializing,
+    Initialized
+}
+
 function isPlacementTimeExceeded(startTime: number | undefined): boolean {
     // startTime is set in overload mode.
     if (startTime === undefined || OVERLOAD_PLACE_TIME_LIMIT <= 0) {
@@ -233,16 +212,11 @@ function isPlacementTimeExceeded(startTime: number | undefined): boolean {
  * Internal class to manage all text rendering.
  */
 export class TextElementsRenderer {
+    private m_initState: InitState = InitState.Uninitialized;
     private m_initializedTextElementCount = 0;
 
+    private m_textStyleCache: TextStyleCache;
     private m_textRenderers: TextCanvasRenderer[] = [];
-    private m_textStyles: Map<string, TextElementStyle> = new Map();
-    private m_defaultStyle: TextElementStyle = {
-        name: DEFAULT_STYLE_NAME,
-        fontCatalog: DEFAULT_FONT_CATALOG_NAME,
-        renderParams: this.m_mapView.textRenderStyleCache.get(DEFAULT_TEXT_STYLE_CACHE_ID)!.params,
-        layoutParams: this.m_mapView.textLayoutStyleCache.get(DEFAULT_TEXT_STYLE_CACHE_ID)!.params
-    };
 
     private m_overlayTextElements?: TextElement[];
 
@@ -299,6 +273,8 @@ export class TextElementsRenderer {
         private m_maxDistanceRatioForTextLabels: number | undefined,
         private m_maxDistanceRatioForPoiLabels: number | undefined
     ) {
+        this.m_textStyleCache = new TextStyleCache(this.m_theme);
+
         if (this.m_minNumGlyphs === undefined) {
             this.m_minNumGlyphs = MIN_GLYPH_COUNT;
         }
@@ -325,9 +301,10 @@ export class TextElementsRenderer {
         if (this.m_maxDistanceRatioForPoiLabels === undefined) {
             this.m_maxDistanceRatioForPoiLabels = DEFAULT_MAX_DISTANCE_RATIO_FOR_LABELS;
         }
+    }
 
-        this.initializeDefaultAssets();
-        this.initializeTextCanvases();
+    get styleCache() {
+        return this.m_textStyleCache;
     }
 
     /**
@@ -336,6 +313,10 @@ export class TextElementsRenderer {
      * @param camera Orthographic camera to use.
      */
     renderText(camera: THREE.OrthographicCamera) {
+        if (!this.initialized) {
+            return;
+        }
+
         const debugGlyphs = debugContext.getValue("DEBUG_GLYPHS");
         if (
             debugGlyphs !== undefined &&
@@ -347,27 +328,6 @@ export class TextElementsRenderer {
         }
         for (const textRenderer of this.m_textRenderers) {
             textRenderer.textCanvas.render(camera);
-        }
-    }
-
-    /**
-     * Reset internal state at the beginning of a frame.
-     */
-    reset() {
-        this.m_screenCollisions.reset();
-        for (const textRenderer of this.m_textRenderers) {
-            textRenderer.textCanvas.clear();
-            textRenderer.poiRenderer.reset();
-        }
-        this.m_initializedTextElementCount = 0;
-    }
-
-    /**
-     * Update state at the end of a frame.
-     */
-    updateTextRenderers() {
-        for (const textRenderer of this.m_textRenderers) {
-            textRenderer.poiRenderer.update();
         }
     }
 
@@ -393,13 +353,6 @@ export class TextElementsRenderer {
     }
 
     /**
-     * Default [[TextElementStyle]] used to render [[TextElement]]s.
-     */
-    get defaultStyle(): TextElementStyle {
-        return this.m_defaultStyle;
-    }
-
-    /**
      * Is `true` if number of [[TextElement]]s in visible tiles is larger than the recommended
      * number `OVERLOAD_LABEL_LIMIT`.
      */
@@ -411,11 +364,23 @@ export class TextElementsRenderer {
      * Places text elements for the current frame.
      * @param tileTextElementsChanged Indicates whether there's been any change in the text elements
      * to place since the last call to this method (last frame).
+     * @param tilesChanged Indicates whether there's been any change in the tiles rendered since the
+     * last call to this method (last frame).
      * @param time Current frame time.
      * @param frameNumber Current frame number.
      */
-    placeText(tileTextElementsChanged: boolean, time: number, frameNumber: number) {
-        const updateTextElements = this.m_cacheInvalidated || tileTextElementsChanged;
+    placeText(
+        tileTextElementsChanged: boolean,
+        tilesChanged: boolean,
+        time: number,
+        frameNumber: number
+    ) {
+        if (!this.initialize(tileTextElementsChanged)) {
+            return;
+        }
+
+        const updateTextElements =
+            this.m_cacheInvalidated || tileTextElementsChanged || tilesChanged;
 
         logger.debug(
             `FRAME: ${this.m_mapView.frameNumber}, ZOOM LEVEL: ${this.m_mapView.zoomLevel}`
@@ -431,7 +396,7 @@ export class TextElementsRenderer {
         this.reset();
         this.prepopulateScreenWithBlockingElements();
         this.placeTextElements(time, frameNumber);
-        this.placeOverlay();
+        this.placeOverlayTextElements();
         this.updateTextRenderers();
     }
 
@@ -468,20 +433,6 @@ export class TextElementsRenderer {
 
     get overlayText(): TextElement[] | undefined {
         return this.m_overlayTextElements;
-    }
-
-    /**
-     * Place the [[TextElement]]s that are not part of the scene, but the overlay. Useful if a UI
-     * with text or just plain information in the canvas itself should be presented to the user,
-     * instead of using an HTML layer.
-     *
-     */
-    placeOverlay() {
-        if (this.m_overlayTextElements === undefined || this.m_overlayTextElements.length === 0) {
-            return;
-        }
-
-        this.placeOverlayTextElements();
     }
 
     /**
@@ -545,29 +496,6 @@ export class TextElementsRenderer {
     }
 
     /**
-     * Retrieves a [[TextElementStyle]] for [[Theme]]'s [[TextStyle]] id.
-     */
-    getTextElementStyle(styleId?: string): TextElementStyle {
-        let result;
-        if (styleId === undefined) {
-            result = this.m_defaultStyle;
-        } else {
-            result = this.m_textStyles.get(styleId);
-            if (result === undefined) {
-                result = this.m_defaultStyle;
-            }
-        }
-        return result;
-    }
-
-    /**
-     * `true` if font catalogs are ready, that means all font catalogs are initialized.
-     */
-    get ready(): boolean {
-        return this.m_catalogsLoading === 0 && this.m_textRenderers.length > 0;
-    }
-
-    /**
      * `true` if any resource used by any `FontCatalog` is still loading.
      */
     get loading(): boolean {
@@ -605,11 +533,57 @@ export class TextElementsRenderer {
         return memoryUsage;
     }
 
+    get initialized(): boolean {
+        return this.m_initState === InitState.Initialized;
+    }
+
+    get initializing(): boolean {
+        return this.m_initState === InitState.Initializing;
+    }
+
+    /**
+     * Initializes the text renderer once there's any text element available for rendering.
+     * @param textElementsAvailable Indicates whether there's any text element to be rendered.
+     * @returns Whether the text renderer is initialized.
+     */
+    private initialize(textElementsAvailable: boolean): boolean {
+        if (this.m_initState === InitState.Uninitialized && textElementsAvailable) {
+            this.m_initState = InitState.Initializing;
+            this.invalidateCache(); // Force cache update after initialization.
+            this.initializeDefaultAssets();
+            this.initializeTextCanvases().then(() => {
+                this.m_initState = InitState.Initialized;
+            });
+        }
+        return this.m_initState === InitState.Initialized;
+    }
+
+    /**
+     * Reset internal state at the beginning of a frame.
+     */
+    private reset() {
+        this.m_screenCollisions.reset();
+        for (const textRenderer of this.m_textRenderers) {
+            textRenderer.textCanvas.clear();
+            textRenderer.poiRenderer.reset();
+        }
+        this.m_initializedTextElementCount = 0;
+    }
+
+    /**
+     * Update state at the end of a frame.
+     */
+    private updateTextRenderers() {
+        for (const textRenderer of this.m_textRenderers) {
+            textRenderer.poiRenderer.update();
+        }
+    }
+
     /**
      * Fills the screen with lines projected from world space, see [[Tile.blockingElements]].
      * @note These boxes have highest priority, so will block all other labels.
      */
-    prepopulateScreenWithBlockingElements() {
+    private prepopulateScreenWithBlockingElements() {
         const renderList = this.m_mapView.visibleTileSet.dataSourceTileList;
         const boxes: IBox[] = [];
         renderList.forEach(renderListEntry => {
@@ -719,7 +693,7 @@ export class TextElementsRenderer {
             const textElement = textElementState.element;
 
             // Get the TextElementStyle.
-            const textElementStyle = this.getTextElementStyle(textElement.style);
+            const textElementStyle = this.m_textStyleCache.getTextElementStyle(textElement.style);
             const textCanvas = textElementStyle.textCanvas;
             const poiRenderer = textElementStyle.poiRenderer;
             if (textCanvas === undefined || poiRenderer === undefined) {
@@ -896,98 +870,10 @@ export class TextElementsRenderer {
             }
         }
 
-        // Initialize default text style.
-        if (this.m_theme.textStyles === undefined) {
-            this.m_theme.textStyles = [];
-        }
-        const styles = this.m_theme.textStyles;
-
-        const themedDefaultStyle = styles.find(style => style.name === DEFAULT_STYLE_NAME);
-        if (themedDefaultStyle !== undefined) {
-            this.m_defaultStyle = this.createTextElementStyle(
-                themedDefaultStyle,
-                DEFAULT_STYLE_NAME
-            );
-        } else if (this.m_theme.defaultTextStyle !== undefined) {
-            this.m_defaultStyle = this.createTextElementStyle(
-                this.m_theme.defaultTextStyle,
-                DEFAULT_STYLE_NAME
-            );
-        } else if (styles.length > 0) {
-            this.m_defaultStyle = this.createTextElementStyle(styles[0], DEFAULT_STYLE_NAME);
-        }
-        this.m_defaultStyle.fontCatalog = defaultFontCatalogName!;
+        this.m_textStyleCache.initializeDefaultTextElementStyle(defaultFontCatalogName!);
     }
 
-    private createTextElementStyle(
-        style: TextStyleDefinition,
-        styleName: string
-    ): TextElementStyle {
-        return {
-            name: styleName,
-            fontCatalog: getOptionValue(style.fontCatalogName, DEFAULT_FONT_CATALOG_NAME),
-            renderParams: {
-                fontName: style.fontName,
-                fontSize: {
-                    unit: FontUnit.Pixel,
-                    size: 32,
-                    backgroundSize: style.backgroundSize || 8
-                },
-                fontStyle:
-                    style.fontStyle === "Regular" ||
-                    style.fontStyle === "Bold" ||
-                    style.fontStyle === "Italic" ||
-                    style.fontStyle === "BoldItalic"
-                        ? FontStyle[style.fontStyle]
-                        : undefined,
-                fontVariant:
-                    style.fontVariant === "Regular" ||
-                    style.fontVariant === "AllCaps" ||
-                    style.fontVariant === "SmallCaps"
-                        ? FontVariant[style.fontVariant]
-                        : undefined,
-                rotation: style.rotation,
-                color:
-                    style.color !== undefined
-                        ? ColorCache.instance.getColor(style.color)
-                        : undefined,
-                backgroundColor:
-                    style.backgroundColor !== undefined
-                        ? ColorCache.instance.getColor(style.backgroundColor)
-                        : undefined,
-                opacity: style.opacity,
-                backgroundOpacity: style.backgroundOpacity
-            },
-            layoutParams: {
-                tracking: style.tracking,
-                leading: style.leading,
-                maxLines: style.maxLines,
-                lineWidth: style.lineWidth,
-                canvasRotation: style.canvasRotation,
-                lineRotation: style.lineRotation,
-                wrappingMode:
-                    style.wrappingMode === "None" ||
-                    style.wrappingMode === "Character" ||
-                    style.wrappingMode === "Word"
-                        ? WrappingMode[style.wrappingMode]
-                        : WrappingMode.Word,
-                verticalAlignment:
-                    style.vAlignment === "Above" ||
-                    style.vAlignment === "Center" ||
-                    style.vAlignment === "Below"
-                        ? VerticalAlignment[style.vAlignment]
-                        : VerticalAlignment.Center,
-                horizontalAlignment:
-                    style.hAlignment === "Left" ||
-                    style.hAlignment === "Center" ||
-                    style.hAlignment === "Right"
-                        ? HorizontalAlignment[style.hAlignment]
-                        : HorizontalAlignment.Center
-            }
-        };
-    }
-
-    private initializeTextCanvases(): void {
+    private async initializeTextCanvases(): Promise<void> {
         const promises: Array<Promise<void>> = [];
         this.m_theme.fontCatalogs!.forEach(fontCatalogConfig => {
             this.m_catalogsLoading += 1;
@@ -1015,8 +901,21 @@ export class TextElementsRenderer {
             promises.push(fontCatalogPromise);
         });
 
-        Promise.all(promises).then(() => {
-            this.initializeTextElementStyles();
+        return Promise.all(promises).then(() => {
+            // Find the default TextCanvas and PoiRenderer.
+            let defaultTextCanvas: TextCanvas | undefined;
+            this.m_textRenderers.forEach(textRenderer => {
+                if (defaultTextCanvas === undefined) {
+                    defaultTextCanvas = textRenderer.textCanvas;
+                }
+            });
+            const defaultPoiRenderer = new PoiRenderer(this.m_mapView, defaultTextCanvas!);
+
+            this.m_textStyleCache.initializeTextElementStyles(
+                defaultPoiRenderer,
+                defaultTextCanvas!,
+                this.m_textRenderers
+            );
 
             const defaultFontCatalog = this.m_textRenderers[0].textCanvas.fontCatalog;
 
@@ -1064,80 +963,6 @@ export class TextElementsRenderer {
 
             this.m_mapView.update();
         });
-    }
-
-    private initializeTextElementStyles() {
-        // Find the default TextCanvas and PoiRenderer.
-        let defaultTextCanvas: TextCanvas | undefined;
-        this.m_textRenderers.forEach(textRenderer => {
-            if (defaultTextCanvas === undefined) {
-                defaultTextCanvas = textRenderer.textCanvas;
-            }
-        });
-        const defaultPoiRenderer = new PoiRenderer(this.m_mapView, defaultTextCanvas!);
-
-        // Initialize default text style.
-        if (this.m_defaultStyle.fontCatalog !== undefined) {
-            const styledTextRenderer = this.m_textRenderers.find(
-                textRenderer => textRenderer.fontCatalog === this.m_defaultStyle.fontCatalog
-            );
-            this.m_defaultStyle.textCanvas =
-                styledTextRenderer !== undefined ? styledTextRenderer.textCanvas : undefined;
-            this.m_defaultStyle.poiRenderer =
-                styledTextRenderer !== undefined ? styledTextRenderer.poiRenderer : undefined;
-        }
-        if (this.m_defaultStyle.textCanvas === undefined) {
-            if (this.m_defaultStyle.fontCatalog !== undefined) {
-                logger.warn(
-                    `FontCatalog '${this.m_defaultStyle.fontCatalog}' set in TextStyle '${
-                        this.m_defaultStyle.name
-                    }' not found, using default fontCatalog(${
-                        defaultTextCanvas!.fontCatalog.name
-                    }).`
-                );
-            }
-            this.m_defaultStyle.textCanvas = defaultTextCanvas;
-            this.m_defaultStyle.poiRenderer = defaultPoiRenderer;
-        }
-
-        // Initialize theme text styles.
-        this.m_theme.textStyles!.forEach(element => {
-            this.m_textStyles.set(
-                element.name!,
-                this.createTextElementStyle(element, element.name!)
-            );
-        });
-        // tslint:disable-next-line:no-unused-variable
-        for (const [name, style] of this.m_textStyles) {
-            if (style.textCanvas === undefined) {
-                if (style.fontCatalog !== undefined) {
-                    const styledTextRenderer = this.m_textRenderers.find(
-                        textRenderer => textRenderer.fontCatalog === style.fontCatalog
-                    );
-                    style.textCanvas =
-                        styledTextRenderer !== undefined
-                            ? styledTextRenderer.textCanvas
-                            : undefined;
-                    style.poiRenderer =
-                        styledTextRenderer !== undefined
-                            ? styledTextRenderer.poiRenderer
-                            : undefined;
-                }
-                if (style.textCanvas === undefined) {
-                    if (style.fontCatalog !== undefined) {
-                        logger.warn(
-                            `FontCatalog '${style.fontCatalog}' set in TextStyle '${
-                                style.name
-                            }' not found, using default fontCatalog(${
-                                defaultTextCanvas!.fontCatalog.name
-                            }).`
-                        );
-                    }
-                    style.textCanvas = defaultTextCanvas;
-                    style.poiRenderer = defaultPoiRenderer;
-                }
-            }
-        }
     }
 
     /**
@@ -1471,6 +1296,10 @@ export class TextElementsRenderer {
     }
 
     private placeOverlayTextElements() {
+        if (this.m_overlayTextElements === undefined || this.m_overlayTextElements.length === 0) {
+            return;
+        }
+
         const screenSize = this.m_mapView.renderer.getSize(this.m_tmpVector);
         const screenXOrigin = -screenSize.width / 2.0;
         const screenYOrigin = screenSize.height / 2.0;
@@ -1481,7 +1310,7 @@ export class TextElementsRenderer {
         // Place text elements one by one.
         for (const textElement of this.m_overlayTextElements!) {
             // Get the TextElementStyle.
-            const textElementStyle = this.getTextElementStyle(textElement.style);
+            const textElementStyle = this.m_textStyleCache.getTextElementStyle(textElement.style);
             const textCanvas = textElementStyle.textCanvas;
             if (textCanvas === undefined) {
                 continue;

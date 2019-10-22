@@ -28,16 +28,13 @@ import {
     isSquaresTechnique,
     isTerrainTechnique,
     isTextTechnique,
-    LineMarkerTechnique,
     MakeTechniqueAttrs,
     needsVertexNormals,
-    PoiTechnique,
     SolidLineTechnique,
     StandardExtrudedLineTechnique,
     Technique,
     TerrainTechnique,
-    TextPathGeometry,
-    TextTechnique
+    TextPathGeometry
 } from "@here/harp-datasource-protocol";
 // tslint:disable:max-line-length
 import { SphericalGeometrySubdivisionModifier } from "@here/harp-geometry/lib/SphericalGeometrySubdivisionModifier";
@@ -52,18 +49,8 @@ import {
     MapMeshStandardMaterial,
     SolidLineMaterial
 } from "@here/harp-materials";
-import {
-    ContextualArabicConverter,
-    FontStyle,
-    FontUnit,
-    FontVariant,
-    HorizontalAlignment,
-    TextLayoutStyle,
-    TextRenderStyle,
-    VerticalAlignment,
-    WrappingMode
-} from "@here/harp-text-canvas";
-import { getOptionValue, LoggerManager } from "@here/harp-utils";
+import { ContextualArabicConverter } from "@here/harp-text-canvas";
+import { LoggerManager } from "@here/harp-utils";
 import * as THREE from "three";
 
 import { AnimatedExtrusionTileHandler } from "../AnimatedExtrusionHandler";
@@ -79,7 +66,6 @@ import { MapViewPoints } from "../MapViewPoints";
 import { PathBlockingElement } from "../PathBlockingElement";
 import { TextElement } from "../text/TextElement";
 import { DEFAULT_TEXT_DISTANCE_SCALE } from "../text/TextElementsRenderer";
-import { computeStyleCacheId } from "../text/TextStyleCache";
 import { Tile, TileFeatureData } from "../Tile";
 import { TileGeometryLoader } from "./TileGeometryLoader";
 
@@ -120,11 +106,6 @@ export interface PolygonFadingParameters extends FadingParameters {
  * Support class to create geometry for a [[Tile]] from a [[DecodedTile]].
  */
 export class TileGeometryCreator {
-    /**
-     * Cache for named colors.
-     */
-    private static m_colorMap: Map<string, THREE.Color> = new Map();
-
     private static m_instance: TileGeometryCreator;
 
     /**
@@ -355,6 +336,7 @@ export class TileGeometryCreator {
         textFilter?: (technique: Technique) => boolean
     ) {
         const mapView = tile.mapView;
+        const textElementsRenderer = mapView.textElementsRenderer;
         const displayZoomLevel = Math.floor(mapView.zoomLevel);
         if (decodedTile.textPathGeometries !== undefined) {
             const textPathGeometries = this.prepareTextPaths(
@@ -418,8 +400,8 @@ export class TileGeometryCreator {
                 const textElement = new TextElement(
                     ContextualArabicConverter.instance.convert(textPath.text),
                     path,
-                    this.getRenderStyle(tile, technique),
-                    this.getLayoutStyle(tile, technique),
+                    textElementsRenderer.styleCache.getRenderStyle(tile, technique),
+                    textElementsRenderer.styleCache.getLayoutStyle(tile, technique),
                     priority,
                     technique.xOffset !== undefined ? technique.xOffset : 0.0,
                     technique.yOffset !== undefined ? technique.yOffset : 0.0,
@@ -502,8 +484,8 @@ export class TileGeometryCreator {
                     const textElement = new TextElement(
                         ContextualArabicConverter.instance.convert(label!),
                         new THREE.Vector3(x, y, z),
-                        this.getRenderStyle(tile, technique),
-                        this.getLayoutStyle(tile, technique),
+                        textElementsRenderer.styleCache.getRenderStyle(tile, technique),
+                        textElementsRenderer.styleCache.getLayoutStyle(tile, technique),
                         priority,
                         technique.xOffset || 0.0,
                         technique.yOffset || 0.0,
@@ -1208,185 +1190,6 @@ export class TileGeometryCreator {
         if (decodedTile.poiGeometries !== undefined) {
             tile.mapView.poiManager.addPois(tile, decodedTile);
         }
-    }
-
-    /**
-     * Gets the appropriate [[TextRenderStyle]] to use for a label. Depends heavily on the label's
-     * [[Technique]] and the current zoomLevel.
-     *
-     * @param technique Label's technique.
-     * @param techniqueIdx Label's technique index.
-     */
-    getRenderStyle(
-        tile: Tile,
-        technique: TextTechnique | PoiTechnique | LineMarkerTechnique
-    ): TextRenderStyle {
-        const mapView = tile.mapView;
-        const dataSource = tile.dataSource;
-        const zoomLevel = mapView.zoomLevel;
-
-        const cacheId = computeStyleCacheId(dataSource.name, technique, Math.floor(zoomLevel));
-        let renderStyle = mapView.textRenderStyleCache.get(cacheId);
-        if (renderStyle === undefined) {
-            const defaultRenderParams =
-                mapView.textElementsRenderer !== undefined
-                    ? mapView.textElementsRenderer.defaultStyle.renderParams
-                    : {
-                          fontSize: {
-                              unit: FontUnit.Pixel,
-                              size: 32,
-                              backgroundSize: 8
-                          }
-                      };
-
-            if (technique.color !== undefined) {
-                const hexColor = getPropertyValue(technique.color, Math.floor(zoomLevel));
-                TileGeometryCreator.m_colorMap.set(cacheId, ColorCache.instance.getColor(hexColor));
-            }
-            if (technique.backgroundColor !== undefined) {
-                const hexBgColor = getPropertyValue(
-                    technique.backgroundColor,
-                    Math.floor(zoomLevel)
-                );
-                TileGeometryCreator.m_colorMap.set(
-                    cacheId + "_bg",
-                    ColorCache.instance.getColor(hexBgColor)
-                );
-            }
-
-            const renderParams = {
-                fontName: getOptionValue(technique.fontName, defaultRenderParams.fontName),
-                fontSize: {
-                    unit: FontUnit.Pixel,
-                    size:
-                        technique.size !== undefined
-                            ? getPropertyValue(technique.size, Math.floor(zoomLevel))
-                            : defaultRenderParams.fontSize!.size,
-                    backgroundSize:
-                        technique.backgroundSize !== undefined
-                            ? getPropertyValue(technique.backgroundSize, Math.floor(zoomLevel))
-                            : defaultRenderParams.fontSize!.backgroundSize
-                },
-                fontStyle:
-                    technique.fontStyle === "Regular" ||
-                    technique.fontStyle === "Bold" ||
-                    technique.fontStyle === "Italic" ||
-                    technique.fontStyle === "BoldItalic"
-                        ? FontStyle[technique.fontStyle]
-                        : defaultRenderParams.fontStyle,
-                fontVariant:
-                    technique.fontVariant === "Regular" ||
-                    technique.fontVariant === "AllCaps" ||
-                    technique.fontVariant === "SmallCaps"
-                        ? FontVariant[technique.fontVariant]
-                        : defaultRenderParams.fontVariant,
-                rotation: getOptionValue(technique.rotation, defaultRenderParams.rotation),
-                color: getOptionValue(
-                    TileGeometryCreator.m_colorMap.get(cacheId),
-                    defaultRenderParams.color
-                ),
-                backgroundColor: getOptionValue(
-                    TileGeometryCreator.m_colorMap.get(cacheId + "_bg"),
-                    defaultRenderParams.backgroundColor
-                ),
-                opacity:
-                    technique.opacity !== undefined
-                        ? getPropertyValue(technique.opacity, Math.floor(zoomLevel))
-                        : defaultRenderParams.opacity,
-                backgroundOpacity:
-                    technique.backgroundOpacity !== undefined
-                        ? getPropertyValue(technique.backgroundOpacity, Math.floor(zoomLevel))
-                        : technique.backgroundColor !== undefined &&
-                          technique.backgroundSize !== undefined &&
-                          getPropertyValue(technique.backgroundSize, Math.floor(zoomLevel)) > 0
-                        ? 1.0 // make label opaque when backgroundColor and backgroundSize are set
-                        : defaultRenderParams.backgroundOpacity
-            };
-
-            const themeRenderParams =
-                mapView.textElementsRenderer !== undefined
-                    ? mapView.textElementsRenderer!.getTextElementStyle(technique.style)
-                          .renderParams
-                    : {};
-            renderStyle = new TextRenderStyle({
-                ...themeRenderParams,
-                ...renderParams
-            });
-            mapView.textRenderStyleCache.set(cacheId, renderStyle);
-        }
-
-        return renderStyle;
-    }
-
-    /**
-     * Gets the appropriate [[TextRenderStyle]] to use for a label. Depends heavily on the label's
-     * [[Technique]] and the current zoomLevel.
-     *
-     * @param tile The [[Tile]] to process.
-     * @param technique Label's technique.
-     */
-    getLayoutStyle(
-        tile: Tile,
-        technique: TextTechnique | PoiTechnique | LineMarkerTechnique
-    ): TextLayoutStyle {
-        const mapView = tile.mapView;
-        const dataSource = tile.dataSource;
-        const zoomLevel = mapView.zoomLevel;
-
-        const cacheId = computeStyleCacheId(dataSource.name, technique, Math.floor(zoomLevel));
-        let layoutStyle = mapView.textLayoutStyleCache.get(cacheId);
-        if (layoutStyle === undefined) {
-            const defaultLayoutParams =
-                mapView.textElementsRenderer !== undefined
-                    ? mapView.textElementsRenderer.defaultStyle.layoutParams
-                    : {};
-
-            const layoutParams = {
-                tracking: getOptionValue(technique.tracking, defaultLayoutParams.tracking),
-                leading: getOptionValue(technique.leading, defaultLayoutParams.leading),
-                maxLines: getOptionValue(technique.maxLines, defaultLayoutParams.maxLines),
-                lineWidth: getOptionValue(technique.lineWidth, defaultLayoutParams.lineWidth),
-                canvasRotation: getOptionValue(
-                    technique.canvasRotation,
-                    defaultLayoutParams.canvasRotation
-                ),
-                lineRotation: getOptionValue(
-                    technique.lineRotation,
-                    defaultLayoutParams.lineRotation
-                ),
-                wrappingMode:
-                    technique.wrappingMode === "None" ||
-                    technique.wrappingMode === "Character" ||
-                    technique.wrappingMode === "Word"
-                        ? WrappingMode[technique.wrappingMode]
-                        : defaultLayoutParams.wrappingMode,
-                horizontalAlignment:
-                    technique.hAlignment === "Left" ||
-                    technique.hAlignment === "Center" ||
-                    technique.hAlignment === "Right"
-                        ? HorizontalAlignment[technique.hAlignment]
-                        : defaultLayoutParams.horizontalAlignment,
-                verticalAlignment:
-                    technique.vAlignment === "Above" ||
-                    technique.vAlignment === "Center" ||
-                    technique.vAlignment === "Below"
-                        ? VerticalAlignment[technique.vAlignment]
-                        : defaultLayoutParams.verticalAlignment
-            };
-
-            const themeLayoutParams =
-                mapView.textElementsRenderer !== undefined
-                    ? mapView.textElementsRenderer!.getTextElementStyle(technique.style)
-                          .layoutParams
-                    : {};
-            layoutStyle = new TextLayoutStyle({
-                ...themeLayoutParams,
-                ...layoutParams
-            });
-            mapView.textLayoutStyleCache.set(cacheId, layoutStyle);
-        }
-
-        return layoutStyle;
     }
 
     /**
