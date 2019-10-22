@@ -30,6 +30,7 @@ import {
 import { ExprPool } from "./ExprPool";
 import {
     createInterpolatedProperty,
+    isInterpolatedProperty,
     isInterpolatedPropertyDefinition
 } from "./InterpolatedProperty";
 import { InterpolatedProperty } from "./InterpolatedPropertyDefs";
@@ -318,6 +319,7 @@ export class StyleSetEvaluator {
     private readonly m_definitions?: Definitions;
     private readonly m_definitionExprCache = new Map<string, Expr>();
     private readonly m_tmpOptimizedSubSetKey: OptimizedSubSetKey = new OptimizedSubSetKey();
+    private readonly m_emptyEnv = new Env();
     private m_layer: string | undefined;
     private m_geometryType: string | undefined;
 
@@ -660,7 +662,7 @@ export class StyleSetEvaluator {
 
         const processAttribute = (
             attrName: TechniquePropNames<Technique>,
-            attrValue: Value | JsonExpr | undefined
+            attrValue: Value | JsonExpr | InterpolatedProperty | undefined
         ) => {
             if (attrValue === undefined) {
                 return;
@@ -676,39 +678,43 @@ export class StyleSetEvaluator {
                     this.m_definitions,
                     this.m_definitionExprCache
                 ).intern(this.m_exprPool);
+
                 if (expr instanceof LiteralExpr) {
                     // Shortcut for literal expressions, so they are not taken into account when
                     // trying to instantiate technique variants.
                     attrValue = expr.value;
                 } else {
-                    switch (attrScope) {
-                        case AttrScope.FeatureGeometry:
-                            dynamicFeatureAttributes.push([attrName, expr]);
-                            break;
-                        case AttrScope.TechniqueGeometry:
-                        case AttrScope.TechniqueRendering:
-                            dynamicTechniqueAttributes.push([attrName, expr]);
-                            break;
+                    const deps = expr.dependencies();
+
+                    // tslint:disable-next-line: prefer-conditional-expression
+                    if (deps.properties.size === 0) {
+                        // no data-dependencies detected.
+                        attrValue = expr.evaluate(this.m_emptyEnv);
+                    } else {
+                        attrValue = expr;
                     }
-                    return;
                 }
             }
 
             if (isInterpolatedPropertyDefinition(attrValue)) {
-                const interpolatedProperty = createInterpolatedProperty(attrValue);
-                if (!interpolatedProperty) {
-                    return;
-                }
+                attrValue = createInterpolatedProperty(attrValue);
+            }
+
+            if (isInterpolatedProperty(attrValue) || attrValue instanceof Expr) {
                 switch (attrScope) {
                     case AttrScope.FeatureGeometry:
-                        dynamicFeatureAttributes.push([attrName, interpolatedProperty]);
+                        dynamicFeatureAttributes.push([attrName, attrValue]);
                         break;
                     case AttrScope.TechniqueRendering:
                     case AttrScope.TechniqueGeometry:
-                        dynamicForwardedAttributes.push([attrName, interpolatedProperty]);
+                        if (attrValue instanceof Expr) {
+                            dynamicTechniqueAttributes.push([attrName, attrValue]);
+                        } else {
+                            dynamicForwardedAttributes.push([attrName, attrValue]);
+                        }
                         break;
                 }
-            } else {
+            } else if (attrValue !== undefined && attrValue !== null) {
                 targetStaticAttributes.push([attrName, attrValue]);
             }
         };
