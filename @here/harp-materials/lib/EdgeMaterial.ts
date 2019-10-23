@@ -63,10 +63,33 @@ void main() {
     vec4 mvPosition = modelViewMatrix * vec4( transformed, 1.0 );
 
     gl_Position = projectionMatrix * mvPosition;
-    gl_Position.z -= EDGE_DEPTH_OFFSET * gl_Position.w;
-
+    // Here gl_Position contains clip space coordinates, before
+    // perspective division (1 / w), if we add offset multiplied by
+    // homogenous coordinate w, we actually move each point in NDC space
+    // exactly at EDGE_DEPTH_OFFSET, which may be too much for certain
+    // frustum settings. Setting near plane above >= 1 improves situation
+    // a little bit, due to higher accuracy (in depth buffer) moved further
+    // from camera, but the problem is clearly visible on clipping edges
+    // where lines are clipped differently then geometry.
+    //float depthOffset = EDGE_DEPTH_OFFSET * abs(gl_Position.w);
+    // We may NOT offset all edges blindly:
+    //gl_Position.z -= depthOffset;
+    // This could promote some lines from being clipped to being rendered,
+    // thus we need to do clipping pre-check:
+    //if (abs(gl_Position.z / gl_Position.w) < 1.0) {
+    //    gl_Position.z -= depthOffset;
+    //}
+    // It seems most reasonable to just optimize frustum planes (near/far)
+    // distance and use depth offset directly on z:
+    //if (abs(gl_Position.z / gl_Position.w) < 1.0) {
+    //    gl_Position.z -= EDGE_DEPTH_OFFSET * gl_Position.w;
+    //}
+    // Optimize the above by using step function - offset only those edges
+    // which z coordinate in clip space is between: -inf < z < 1
+    float depthOffset = step(-1.0, -gl_Position.z / gl_Position.w) * EDGE_DEPTH_OFFSET;
+    gl_Position.z -= depthOffset;
     #ifdef USE_FADING
-    #include <fading_vertex>
+    //#include <fading_vertex>
     #endif
 }`;
 
@@ -86,14 +109,14 @@ varying vec3 vColor;
 
 void main() {
     float alphaValue = 1.0;
-    gl_FragColor = vec4(vColor, alphaValue);
+    gl_FragColor = vec4(1., 0., 0., 1.);//vec4(vColor, alphaValue);
 
     #ifdef USE_EXTRUSION
     #include <extrusion_fragment>
     #endif
 
     #ifdef USE_FADING
-    #include <fading_fragment>
+    //#include <fading_fragment>
     #endif
 }`;
 

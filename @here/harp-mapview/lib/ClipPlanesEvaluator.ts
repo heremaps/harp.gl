@@ -273,7 +273,7 @@ export class TopViewClipPlanesEvaluator extends ElevationBasedClipPlanesEvaluato
     constructor(
         maxElevation: number = EarthConstants.MAX_BUILDING_HEIGHT,
         minElevation: number = 0,
-        readonly nearMin: number = 0.1,
+        readonly nearMin: number = 1.0,
         readonly nearFarMargin: number = 10.0,
         readonly farMaxRatio = 1.8
     ) {
