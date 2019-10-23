@@ -52,13 +52,9 @@ uniform float outlineWidth;
 uniform sampler2D displacementMap;
 #endif
 
-varying vec2 vExtrusionCoord;
-varying vec2 vSegment;
-varying float vResultLineWidth;
 varying vec3 vPosition;
-varying float vLength;
-varying float vExtrusionStrength;
-
+varying vec3 vRange;
+varying vec4 vCoords;
 #if USE_COLOR
 attribute vec3 color;
 varying vec3 vColor;
@@ -73,27 +69,34 @@ varying vec3 vColor;
 #include <extrude_line_vert_func>
 
 void main() {
-    vResultLineWidth = lineWidth + outlineWidth;
-    vSegment = abs(extrusionCoord.xy) - SEGMENT_OFFSET;
-    vLength = extrusionCoord.z;
-
-    vec3 pos = position;
+    // Calculate the vertex position inside the line (segment) and extrusion direction and factor.
+    float linePos = mix(
+        abs(extrusionCoord.x) - SEGMENT_OFFSET,
+        abs(extrusionCoord.y) - SEGMENT_OFFSET,
+        sign(extrusionCoord.x) / 2.0 + 0.5);
     vec2 extrusionDir = sign(extrusionCoord.xy);
-    vExtrusionStrength = extrusionDir.y * tan(bitangent.w / 2.0);
+    float extrusionFactor = extrusionDir.y * tan(bitangent.w / 2.0);
 
-    extrudeLine(vSegment, bitangent, tangent, vResultLineWidth, pos, extrusionDir);
+    // Calculate the extruded vertex position (and scale the extrusion direction).
+    vec3 pos = extrudeLine(
+        position, linePos, lineWidth + outlineWidth, bitangent, tangent, extrusionDir);
 
+    // Store the normalized extrusion coordinates in vCoords (with their ranges in vRange).
+    vRange = vec3(extrusionCoord.z, lineWidth, extrusionFactor);
+    vCoords = vec4(extrusionDir / vRange.xy, (abs(extrusionCoord.xy) - SEGMENT_OFFSET) / vRange.x);
+
+    // Transform position.
     #ifdef USE_DISPLACEMENTMAP
     pos += normalize( normal ) * texture2D( displacementMap, uv ).x;
     #endif
-
-    vPosition = pos;
-    vExtrusionCoord = vec2(extrusionDir.x, extrusionDir.y * vResultLineWidth);
-
     vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
     gl_Position = projectionMatrix * mvPosition;
 
+    // Pass extruded position to fragment shader.
+    vPosition = pos;
+
     #if USE_COLOR
+    // Pass vertex color to fragment shader.
     vColor = color;
     #endif
 
@@ -121,18 +124,13 @@ uniform float gapSize;
 uniform vec3 dashColor;
 #endif
 
-varying vec2 vExtrusionCoord;
-varying vec2 vSegment;
-varying float vResultLineWidth;
 varying vec3 vPosition;
-varying float vLength;
-varying float vExtrusionStrength;
-
+varying vec3 vRange;
+varying vec4 vCoords;
 #if USE_COLOR
 varying vec3 vColor;
 #endif
 
-#include <join_dist_func>
 #include <round_edges_and_add_caps>
 #include <tile_clip_func>
 
@@ -146,42 +144,52 @@ void main() {
     float alpha = opacity;
     vec3 outputDiffuse = diffuse;
 
-    float lineEnds = max(vExtrusionCoord.x - vLength,- vExtrusionCoord.x);
-
     #if TILE_CLIP
     tileClip(vPosition.xy, tileSize);
     #endif
 
-    float pointDist = roundEdgesAndAddCaps(vSegment, vExtrusionCoord, lineEnds, vExtrusionStrength);
-    float dist = pointDist - vResultLineWidth;
-    float width = fwidth(dist);
-    alpha *= (1.0 - smoothstep(-width, width, dist));
+    // Calculate distance to center (0.0: lineCenter, 1.0: lineEdge).
+    float distToCenter = roundEdgesAndAddCaps(vCoords, vRange);
+    // Calculate distance to edge (-1.0: lineCenter, 0.0: lineEdge).
+    float distToEdge = distToCenter - (lineWidth + outlineWidth) / lineWidth;
+
+    // Decrease the line opacity by the distToEdge, making the transition steeper when the slope
+    // of distToChange increases (i.e. the line is further away).
+    float width = fwidth(distToEdge);
+    alpha *= (1.0 - smoothstep(-width, width, distToEdge));
 
     #if DASHED_LINE
-    float halfSegment = (dashSize + gapSize) / dashSize * 0.5;
-    float segmentDist = mod(vExtrusionCoord.x, dashSize + gapSize) / dashSize;
-    float dashDist = 0.5 - distance(segmentDist, halfSegment);
-    float dashWidth = fwidth(dashDist);
-    float dashedBlendFactor = 1.0 - smoothstep(-dashWidth, dashWidth, dashDist);
+    // Compute the distance to the dash origin (0.0: dashOrigin, 1.0: dashEnd, (d+g)/d: gapEnd).
+    float d = dashSize / vRange.x;
+    float g = gapSize / vRange.x;
+    float distToDashOrigin = mod(vCoords.x, d + g) / d;
+
+    // Compute distance to dash edge (0.5: dashCenter, 0.0: dashEdge) and compute the
+    // dashBlendFactor similarly on how we did it for the line opacity.
+    float distToDashEdge = 0.5 - distance(distToDashOrigin, (d + g) / d * 0.5);
+    float dashWidth = fwidth(distToDashEdge);
+    float dashBlendFactor = 1.0 - smoothstep(-dashWidth, dashWidth, distToDashEdge);
 
     #if USE_DASH_COLOR
-    outputDiffuse = mix(diffuse, dashColor, dashedBlendFactor);
+    outputDiffuse = mix(diffuse, dashColor, dashBlendFactor);
     #endif
     #endif
 
     #ifdef USE_OUTLINE
-    float outlineDist = pointDist - lineWidth;
-    float outlineFWidth = fwidth(outlineDist);
-    float outlineBlendFactor = smoothstep(-outlineFWidth, outlineFWidth, outlineDist);
+    // Calculate distance to outline (0.0: lineEdge, outlineWidth/lineWidth: outlineEdge) and
+    // compute the outlineBlendFactor (used to mix line and outline colors).
+    float distToOutline = distToCenter - 1.0;
+    float outlineWidth = fwidth(distToOutline);
+    float outlineBlendFactor = smoothstep(-outlineWidth, outlineWidth, distToOutline);
 
+    // Mix the colors using the different computed factors.
     #if DASHED_LINE && USE_DASH_COLOR == 0
-    float colorBlendFactor = smoothstep(-1.0, 1.0, dashedBlendFactor - outlineBlendFactor);
-
+    float colorBlendFactor = smoothstep(-1.0, 1.0, dashBlendFactor - outlineBlendFactor);
     outputDiffuse = mix(
       mix(
         mix(outlineColor, diffuse, colorBlendFactor),
         outputDiffuse,
-        dashedBlendFactor
+        dashBlendFactor
       ),
       outlineColor,
       outlineBlendFactor
@@ -191,10 +199,11 @@ void main() {
     #endif
     #endif
 
+    // Multiply the alpha by the dashBlendFactor.
     #if DASHED_LINE && defined(USE_OUTLINE) && USE_DASH_COLOR == 0
-    alpha *= clamp(dashedBlendFactor + outlineBlendFactor, 0.0, 1.0);
+    alpha *= clamp(dashBlendFactor + outlineBlendFactor, 0.0, 1.0);
     #elif DASHED_LINE && USE_DASH_COLOR == 0
-    alpha *= 1.0 - dashedBlendFactor;
+    alpha *= 1.0 - dashBlendFactor;
     #endif
 
     #if USE_COLOR
