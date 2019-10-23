@@ -67,7 +67,7 @@ export class InterpolatedClipPlanesEvaluator implements ClipPlanesEvaluator {
         readonly nearMin: number = 0.1,
         readonly nearMultiplier: number = 0.1,
         readonly nearFarMultiplier = 50.0,
-        readonly farOffset = 200.0
+        readonly farOffset = 200000.0
     ) {
         assert(nearMin > 0);
         assert(nearFarMultiplier >= 0);
@@ -115,7 +115,7 @@ export class InterpolatedClipPlanesEvaluator implements ClipPlanesEvaluator {
             // Store camera position tmpVectors[0] and reference it with p.
             const p = this.m_tmpVectors[0].copy(camera.position);
             p.addScaledVector(fwdRot, Math.sqrt(d * d - r * r));
-            farPlane = p.sub(camera.position).dot(fwd);
+            farPlane = p.sub(camera.position).dot(fwd) + EarthConstants.EQUATORIAL_RADIUS;
             nearPlane = Math.max(
                 this.nearMin,
                 projection.groundDistance(camera.position) * this.nearMultiplier

@@ -914,6 +914,14 @@ export interface TextStyleDefinition {
 }
 
 /**
+ * Interface that defines a procedural atmosphere overlay effect.
+ */
+export interface Atmosphere {
+    /** Altitude at which atmosphere vanishes completely */
+    maxAltitude: number;
+}
+
+/**
  * Interface that defines a procedural gradient sky.
  */
 export interface GradientSky {

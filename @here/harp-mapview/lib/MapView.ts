@@ -77,6 +77,10 @@ export type MapAnchor<T extends THREE.Object3D = THREE.Object3D> = T & {
      * The position of this [[MapObject]] in [[GeoCoordinates]].
      */
     geoPosition?: GeoCoordinates;
+    /**
+     * The position of this [[MapObject]] in [[WorldCoordinates]]
+     */
+    worldPosition?: THREE.Vector3;
 };
 
 export enum MapViewEventNames {
@@ -2409,11 +2413,11 @@ export class MapView extends THREE.EventDispatcher {
 
             if (this.projection.type === ProjectionType.Spherical) {
                 if (twinDataSource === undefined) {
-                    this.addDataSource(dataSource);
+                    //this.addDataSource(dataSource);
                 }
             } else {
                 if (twinDataSource !== undefined) {
-                    this.removeDataSource(dataSource);
+                    //this.removeDataSource(dataSource);
                 }
             }
         }
@@ -2714,11 +2718,18 @@ export class MapView extends THREE.EventDispatcher {
         }
 
         this.m_mapAnchors.children.forEach((childObject: MapAnchor) => {
-            if (childObject.geoPosition === undefined) {
+            if (childObject.geoPosition !== undefined) {
+                this.projection.projectPoint(childObject.geoPosition, childObject.position);
+                childObject.position.sub(this.camera.position);
+            }
+            else if (childObject.worldPosition !== undefined) {
+                const wp = childObject.worldPosition;
+                childObject.position.set(wp.x, wp.y, wp.z);
+                childObject.position.sub(this.camera.position);
+            }
+            else {
                 return;
             }
-            this.projection.projectPoint(childObject.geoPosition, childObject.position);
-            childObject.position.sub(this.camera.position);
         });
 
         this.m_animatedExtrusionHandler.zoom = this.m_zoomLevel;
