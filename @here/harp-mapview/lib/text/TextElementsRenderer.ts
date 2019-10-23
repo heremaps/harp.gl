@@ -43,14 +43,16 @@ import { TextCanvasRenderer } from "./TextCanvasRenderer";
 import { LoadingState, TextElement, TextPickResult } from "./TextElement";
 import { TextElementGroup } from "./TextElementGroup";
 import { TextElementFilter, TextElementGroupState } from "./TextElementGroupState";
+import {
+    initializeDefaultOptions,
+    TextElementsRendererOptions
+} from "./TextElementsRendererOptions";
 import { TextElementState } from "./TextElementState";
 import { TextElementStateCache } from "./TextElementStateCache";
 import { DEFAULT_FONT_CATALOG_NAME, TextStyleCache } from "./TextStyleCache";
 import { UpdateStats } from "./UpdateStats";
 
 const MAX_INITIALIZED_TEXT_ELEMENTS_PER_FRAME = Infinity;
-const MIN_GLYPH_COUNT = 1024;
-const MAX_GLYPH_COUNT = 32768;
 
 interface MapViewState {
     cameraIsMoving: boolean;
@@ -75,38 +77,10 @@ enum Pass {
 }
 
 /**
- * Default number of labels/POIs rendered in the scene
- */
-const DEFAULT_MAX_NUM_RENDERED_TEXT_ELEMENTS = 500;
-
-/**
  * Default distance scale. Will be applied if distanceScale is not defined in the technique.
  * Defines the scale that will be applied to labeled icons (icon and text) in the distance.
  */
 export const DEFAULT_TEXT_DISTANCE_SCALE = 0.5;
-
-/**
- * Number of elements that are put into second queue. This second chance queue is used to render
- * TextElements that have not been on screen before. This is a quick source for elements that can
- * appear when the camera moves a bit, before new elements are placed.
- */
-const DEFAULT_MAX_NUM_SECOND_CHANCE_ELEMENTS = 300;
-
-/**
- * Maximum distance for text labels expressed as a ratio of distance to from the camera (0) to the
- * far plane (1.0). May be synchronized with fog value ?
- */
-const DEFAULT_MAX_DISTANCE_RATIO_FOR_LABELS = 0.99;
-
-/**
- * Minimum scaling factor that may be applied to labels when their are distant from focus point.
- */
-const DEFAULT_LABEL_DISTANCE_SCALE_MIN = 0.7;
-
-/**
- * Maximum scaling factor that may be applied to labels due to their distance from focus point.
- */
-const DEFAULT_LABEL_DISTANCE_SCALE_MAX = 1.5;
 
 /**
  * Maximum number of recommended labels. If more labels are encountered, the "overloaded" mode is
@@ -192,6 +166,8 @@ enum InitState {
     Initialized
 }
 
+export type ViewUpdateCallback = () => void;
+
 function isPlacementTimeExceeded(startTime: number | undefined): boolean {
     // startTime is set in overload mode.
     if (startTime === undefined || OVERLOAD_PLACE_TIME_LIMIT <= 0) {
@@ -214,8 +190,9 @@ function isPlacementTimeExceeded(startTime: number | undefined): boolean {
 export class TextElementsRenderer {
     private m_initState: InitState = InitState.Uninitialized;
     private m_initializedTextElementCount = 0;
+    private readonly m_options: TextElementsRendererOptions;
 
-    private m_textStyleCache: TextStyleCache;
+    private readonly m_textStyleCache: TextStyleCache;
     private m_textRenderers: TextCanvasRenderer[] = [];
 
     private m_overlayTextElements?: TextElement[];
@@ -229,7 +206,7 @@ export class TextElementsRenderer {
     private m_cacheInvalidated: boolean = false;
     private m_catalogsLoading: number = 0;
 
-    private m_textElementStateCache: TextElementStateCache = new TextElementStateCache();
+    private readonly m_textElementStateCache: TextElementStateCache = new TextElementStateCache();
 
     /**
      * Create the `TextElementsRenderer` which selects which labels should be placed on screen as
@@ -237,70 +214,38 @@ export class TextElementsRenderer {
      * [[TextElement]]s every frame.
      *
      * @param m_mapView MapView to render into
+     * @param m_viewUpdateCallback To be called whenever the view needs to be updated.
      * @param m_screenCollisions General 2D screen occlusion management, may be shared between
      *     instances.
      * @param m_screenProjector Projects 3D coordinates into screen space.
-     * @param m_minNumGlyphs Minimum number of glyphs (per-layer). Controls the size of internal
-     * buffers.
-     * @param m_maxNumGlyphs Maximum number of glyphs (per-layer). Controls the size of internal
-     * buffers.
      * @param m_theme Theme defining  text styles.
-     * @param m_maxNumVisibleLabels Maximum number of visible [[TextElement]]s.
-     * @param m_numSecondChanceLabels Number of [[TextElement]] that will be rendered again.
-     * @param m_maxDistanceRatioForTextLabels Maximum distance for pure [[TextElement]], at which
-     *          it should still be rendered, expressed as a fraction of the distance between
-     *          the near and far plane [0, 1.0]. Defaults to
-     *          [[DEFAULT_MAX_DISTANCE_RATIO_FOR_LABELS]].
-     * @param m_maxDistanceRatioForPoiLabels Maximum distance for [[TextElement]] with icon,
-     *          expressed as a fraction of the distance between the near and far plane [0, 1.0].
-     *          Defaults to [[DEFAULT_MAX_DISTANCE_RATIO_FOR_LABELS]].
-     * @param m_labelDistanceScaleMin Minimum scale factor that may be applied to [[TextElement]]s
-     *          due to its disctance from focus point. Defaults to `0.7`.
-     * @param m_labelDistanceScaleMax Maximum scale factor that may be applied to [[TextElement]]s
-     *          due to its distance from focus point. Defaults to `1.5`.
+     * @param options Configuration options for the text renderer. See
+     * [[TextElementsRendererOptions]].
      */
     constructor(
         private m_mapView: MapView,
+        private m_viewUpdateCallback: ViewUpdateCallback,
         private m_screenCollisions: ScreenCollisions,
         private m_screenProjector: ScreenProjector,
-        private m_minNumGlyphs: number | undefined,
-        private m_maxNumGlyphs: number | undefined,
         private m_theme: Theme,
-        private m_maxNumVisibleLabels: number | undefined,
-        private m_numSecondChanceLabels: number | undefined,
-        private m_labelDistanceScaleMin: number | undefined,
-        private m_labelDistanceScaleMax: number | undefined,
-        private m_maxDistanceRatioForTextLabels: number | undefined,
-        private m_maxDistanceRatioForPoiLabels: number | undefined
+        options: TextElementsRendererOptions
     ) {
         this.m_textStyleCache = new TextStyleCache(this.m_theme);
 
-        if (this.m_minNumGlyphs === undefined) {
-            this.m_minNumGlyphs = MIN_GLYPH_COUNT;
-        }
-        if (this.m_maxNumGlyphs === undefined) {
-            this.m_maxNumGlyphs = MAX_GLYPH_COUNT;
-        }
-        if (this.m_maxNumVisibleLabels === undefined) {
-            this.m_maxNumVisibleLabels = DEFAULT_MAX_NUM_RENDERED_TEXT_ELEMENTS;
-        }
-        // TODO: HARP-7648. Unused so far. Use it to limit the number of new labels that are tested
-        // for rendering on frames with no new label splacement.
-        if (this.m_numSecondChanceLabels === undefined) {
-            this.m_numSecondChanceLabels = DEFAULT_MAX_NUM_SECOND_CHANCE_ELEMENTS;
-        }
-        if (this.m_labelDistanceScaleMin === undefined) {
-            this.m_labelDistanceScaleMin = DEFAULT_LABEL_DISTANCE_SCALE_MIN;
-        }
-        if (this.m_labelDistanceScaleMax === undefined) {
-            this.m_labelDistanceScaleMax = DEFAULT_LABEL_DISTANCE_SCALE_MAX;
-        }
-        if (this.m_maxDistanceRatioForTextLabels === undefined) {
-            this.m_maxDistanceRatioForTextLabels = DEFAULT_MAX_DISTANCE_RATIO_FOR_LABELS;
-        }
-        if (this.m_maxDistanceRatioForPoiLabels === undefined) {
-            this.m_maxDistanceRatioForPoiLabels = DEFAULT_MAX_DISTANCE_RATIO_FOR_LABELS;
-        }
+        this.m_options = { ...options };
+        initializeDefaultOptions(this.m_options);
+    }
+
+    /**
+     * Disable all fading animations (for debugging and performance measurement). Defaults to
+     * `false`.
+     */
+    set disableFading(disable: boolean) {
+        this.m_options.disableFading = disable;
+    }
+
+    get disableFading(): boolean {
+        return this.m_options.disableFading === true;
     }
 
     get styleCache() {
@@ -756,7 +701,7 @@ export class TextElementsRenderer {
                         .loadCharset(textElement.text, textElement.renderStyle)
                         .then(() => {
                             textElement.loadingState = LoadingState.Loaded;
-                            this.m_mapView.update();
+                            this.m_viewUpdateCallback();
                         });
                 }
             }
@@ -851,7 +796,7 @@ export class TextElementsRenderer {
             this.m_theme.fontCatalogs = [
                 {
                     name: DEFAULT_FONT_CATALOG_NAME,
-                    url: this.m_mapView.defaultFontCatalog
+                    url: this.m_options.fontCatalog!
                 }
             ];
         }
@@ -883,8 +828,8 @@ export class TextElementsRenderer {
                     const loadedTextCanvas = new TextCanvas({
                         renderer: this.m_mapView.renderer,
                         fontCatalog: loadedFontCatalog,
-                        minGlyphCount: this.m_minNumGlyphs!,
-                        maxGlyphCount: this.m_maxNumGlyphs!
+                        minGlyphCount: this.m_options.minNumGlyphs!,
+                        maxGlyphCount: this.m_options.maxNumGlyphs!
                     });
 
                     this.m_textRenderers.push({
@@ -962,7 +907,7 @@ export class TextElementsRenderer {
                     this.m_debugGlyphTextureCacheWireMesh
                 );
 
-            this.m_mapView.update();
+            this.m_viewUpdateCallback();
         });
     }
 
@@ -1176,8 +1121,8 @@ export class TextElementsRenderer {
 
     private selectTextElementsToUpdateByDistance(textElementLists: TextElementLists) {
         const farDistanceLimitRatio = Math.max(
-            this.m_maxDistanceRatioForTextLabels!,
-            this.m_maxDistanceRatioForPoiLabels!
+            this.m_options.maxDistanceRatioForTextLabels!,
+            this.m_options.maxDistanceRatioForPoiLabels!
         );
         const maxViewDistance = getMaxViewDistance(this.m_mapView, farDistanceLimitRatio);
 
@@ -1219,7 +1164,7 @@ export class TextElementsRenderer {
             return;
         }
 
-        const maxNumPlacedTextElements = this.m_maxNumVisibleLabels!;
+        const maxNumPlacedTextElements = this.m_options.maxNumVisibleLabels!;
 
         // TODO: HARP-7648. Potential performance improvement. Place persistent labels + rejected
         // candidates from previous frame if there's been no placement in this one.
@@ -1271,8 +1216,8 @@ export class TextElementsRenderer {
             placementStats.log();
         }
 
-        if (!this.m_mapView.disableFading && mapViewState.fadeAnimationRunning) {
-            this.m_mapView.update();
+        if (!this.m_options.disableFading && mapViewState.fadeAnimationRunning) {
+            this.m_viewUpdateCallback();
         }
     }
 
@@ -1287,7 +1232,7 @@ export class TextElementsRenderer {
                 !this.placeTextElementGroup(
                     groupStates[i],
                     mapViewState,
-                    this.m_maxNumVisibleLabels!,
+                    this.m_options.maxNumVisibleLabels!,
                     Pass.NewLabels
                 )
             ) {
@@ -1344,7 +1289,7 @@ export class TextElementsRenderer {
                         .loadCharset(textElement.text, textElement.renderStyle)
                         .then(() => {
                             textElement.loadingState = LoadingState.Loaded;
-                            this.m_mapView.update();
+                            this.m_viewUpdateCallback();
                         });
                 }
             }
@@ -1446,8 +1391,8 @@ export class TextElementsRenderer {
         // distance affects the final scaling of label.
         factor = 1.0 + (factor - 1.0) * label.distanceScale;
         // Preserve the constraints
-        factor = Math.max(factor, this.m_labelDistanceScaleMin!);
-        factor = Math.min(factor, this.m_labelDistanceScaleMax!);
+        factor = Math.max(factor, this.m_options.labelDistanceScaleMin!);
+        factor = Math.min(factor, this.m_options.labelDistanceScaleMax!);
         return factor;
     }
 
@@ -1490,7 +1435,7 @@ export class TextElementsRenderer {
         const iconRenderState: RenderState = labelState.iconRenderState!;
         const poiTextMaxDistance = getMaxViewDistance(
             this.m_mapView,
-            this.m_maxDistanceRatioForPoiLabels!
+            this.m_options.maxDistanceRatioForPoiLabels!
         );
 
         // Find the label's original position.
@@ -1974,7 +1919,7 @@ export class TextElementsRenderer {
         // TODO: HARP-7649. Add fade out transitions for path labels.
         const textMaxDistance = getMaxViewDistance(
             this.m_mapView,
-            this.m_maxDistanceRatioForTextLabels!
+            this.m_options.maxDistanceRatioForTextLabels!
         );
         const pathLabel = labelState.element;
 

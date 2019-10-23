@@ -55,7 +55,8 @@ import { ScreenProjector } from "./ScreenProjector";
 import { SkyBackground } from "./SkyBackground";
 import { FrameStats, PerformanceStatistics } from "./Statistics";
 import { TextElement } from "./text/TextElement";
-import { TextElementsRenderer } from "./text/TextElementsRenderer";
+import { TextElementsRenderer, ViewUpdateCallback } from "./text/TextElementsRenderer";
+import { TextElementsRendererOptions } from "./text/TextElementsRendererOptions";
 import { createLight } from "./ThemeHelpers";
 import { ThemeLoader } from "./ThemeLoader";
 import { Tile } from "./Tile";
@@ -127,7 +128,6 @@ export enum MapViewEventNames {
 }
 
 const logger = LoggerManager.instance.create("MapView");
-const DEFAULT_FONT_CATALOG = "./resources/fonts/Default_FontCatalog.json";
 const DEFAULT_CLEAR_COLOR = 0xefe9e1;
 const DEFAULT_FOV_CALCULATION: FovCalculation = { type: "dynamic", fov: 40 };
 const DEFAULT_CAM_NEAR_PLANE = 0.1;
@@ -257,7 +257,7 @@ export enum MapViewPowerPreference {
 /**
  * User configuration for the [[MapView]].
  */
-export interface MapViewOptions {
+export interface MapViewOptions extends TextElementsRendererOptions {
     /**
      * The canvas element used to render the scene.
      */
@@ -281,11 +281,6 @@ export interface MapViewOptions {
      * the custom antialiasing is enabled.
      */
     customAntialiasSettings?: IMapAntialiasSettings;
-
-    /**
-     * The path to the font catalog file. Default is `./resources/fonts/Default_FontCatalog.json`.
-     */
-    fontCatalog?: string;
 
     /**
      * `Projection` used by the `MapView`.
@@ -459,66 +454,6 @@ export interface MapViewOptions {
     collisionDebugCanvas?: HTMLCanvasElement;
 
     /**
-     * Optional initial number of glyphs (characters) for labels. In situations with limited,
-     * available memory, decreasing this number may be beneficial.
-     *
-     * @default `1024`
-     */
-    minNumGlyphs?: number;
-
-    /**
-     * Optional limit of number of glyphs (characters) for labels. In situations with limited,
-     * available memory, decreasing this number may be beneficial.
-     *
-     * @default `32768`
-     */
-    maxNumGlyphs?: number;
-
-    /**
-     * Limits the number of [[DataSource]] labels visible, such as road names and POIs.
-     * On small devices, you can reduce this number to to increase performance.
-     * @default `500`.
-     */
-    maxNumVisibleLabels?: number;
-
-    /**
-     * The number of [[TextElement]]s that the [[TextElementsRenderer]] tries to render even
-     * if they were not visible during placement. This property only applies to [[TextElement]]s
-     * that were culled by the frustum; useful for map movements and animations.
-     * @default `300`.
-     */
-    numSecondChanceLabels?: number;
-
-    /**
-     * The maximum distance for [[TextElement]] to be rendered, expressed as a fraction of
-     * the distance between the near and far plane [0, 1.0].
-     * @default `0.99`.
-     */
-    maxDistanceRatioForTextLabels?: number;
-
-    /**
-     * The maximum distance for [[TextElement]] with icons to be rendered,
-     * expressed as a fraction of the distance
-     * between the near and far plane [0, 1.0].
-     * @default `0.99`.
-     */
-    maxDistanceRatioForPoiLabels?: number;
-
-    /**
-     * The minimum scaling factor that may be applied to [[TextElement]]s due to their distance.
-     * If not defined the default value specified in [[TextElementsRenderer]] will be used.
-     * @default `0.7`.
-     */
-    labelDistanceScaleMin?: number;
-
-    /**
-     * The maximum scaling factor that may be applied to [[TextElement]]s due to their distance.
-     * If not defined the default value specified in [[TextElementsRenderer]] will be used.
-     * @default `1.5`.
-     */
-    labelDistanceScaleMax?: number;
-
-    /**
      * Maximum timeout, in milliseconds, before a [[MOVEMENT_FINISHED_EVENT]] is sent after the
      * latest frame with a camera movement. The default is 300ms.
      */
@@ -616,12 +551,6 @@ export interface MapViewOptions {
     polarGeometryLevelOffset?: number;
 
     /**
-     * @hidden
-     * Disable all fading animations for debugging and performance measurement.
-     */
-    disableFading?: boolean;
-
-    /**
      * Hint for the WebGL implementation on which power mode to prefer.
      */
     powerPreference?: MapViewPowerPreference;
@@ -669,11 +598,6 @@ export const MapViewDefaults = {
  * linked to datasources.
  */
 export class MapView extends THREE.EventDispatcher {
-    /**
-     * The string of the default font catalog to use for labelling.
-     */
-    defaultFontCatalog: string = DEFAULT_FONT_CATALOG;
-
     dumpNext = false;
 
     /**
@@ -829,10 +753,6 @@ export class MapView extends THREE.EventDispatcher {
 
         if (this.m_options.minCameraHeight !== undefined) {
             this.m_minCameraHeight = this.m_options.minCameraHeight;
-        }
-
-        if (this.m_options.fontCatalog !== undefined) {
-            this.defaultFontCatalog = this.m_options.fontCatalog;
         }
 
         if (this.m_options.decoderUrl !== undefined) {
@@ -1357,11 +1277,11 @@ export class MapView extends THREE.EventDispatcher {
      * `false`.
      */
     set disableFading(disable: boolean) {
-        this.m_options.disableFading = disable;
+        this.m_textElementsRenderer.disableFading = disable;
     }
 
     get disableFading(): boolean {
-        return this.m_options.disableFading === true;
+        return this.m_textElementsRenderer.disableFading;
     }
 
     /**
@@ -3240,19 +3160,17 @@ export class MapView extends THREE.EventDispatcher {
     }
 
     private createTextRenderer(): TextElementsRenderer {
+        const updateCallback: ViewUpdateCallback = () => {
+            this.update();
+        };
+
         return new TextElementsRenderer(
             this,
+            updateCallback,
             this.m_screenCollisions,
             this.m_screenProjector,
-            this.m_options.minNumGlyphs,
-            this.m_options.maxNumGlyphs,
             this.m_theme,
-            this.m_options.maxNumVisibleLabels,
-            this.m_options.numSecondChanceLabels,
-            this.m_options.labelDistanceScaleMin,
-            this.m_options.labelDistanceScaleMax,
-            this.m_options.maxDistanceRatioForTextLabels,
-            this.m_options.maxDistanceRatioForPoiLabels
+            this.m_options
         );
     }
 
