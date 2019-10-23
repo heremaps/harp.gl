@@ -1762,7 +1762,7 @@ export class TextElementsRenderer {
         let iconSpaceAvailable = true;
 
         // Check if icon should be rendered at this zoomLevel
-        const renderIcon =
+        let renderIcon =
             poiInfo === undefined ||
             MathUtils.isClamped(
                 mapViewState.zoomLevel,
@@ -1981,6 +1981,7 @@ export class TextElementsRenderer {
 
             // If the text is not visible nor optional, we won't render the icon neither.
             else if (!renderIcon || !textIsOptional) {
+                renderIcon = false;
                 if (pointLabel.poiInfo === undefined || iconRenderState.isVisible()) {
                     if (pointLabel.poiInfo !== undefined) {
                         this.startFadeOut(
