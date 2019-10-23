@@ -35,6 +35,9 @@ export function getWebGLRendererStub(sandbox: sinon.SinonSandbox, clearColorStub
         clear: () => undefined,
         render: () => undefined,
         dispose: () => undefined,
-        info: { autoReset: true, reset: () => undefined }
+        info: { autoReset: true, reset: () => undefined },
+        getRenderTarget: () => undefined,
+        // tslint:disable-next-line: no-empty
+        setRenderTarget: (rt: any) => {}
     };
 }

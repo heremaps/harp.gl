@@ -2595,6 +2595,460 @@
                 },
                 "renderOrder": 100
             }
+        ],
+        "tilezen_labels": [
+            {
+                "description": "country_pop_>10000000",
+                "when": [
+                    "all",
+                    ["==", ["get", "$layer"], "places"],
+                    ["in", ["get", "kind"], ["country"]],
+                    ["has", "population"],
+                    [">", ["get", "population"], 10000000]
+                ],
+                "technique": "text",
+                "attr": {
+                    "priority": 100,
+                    "size": [
+                        "interpolate",
+                        ["linear"],
+                        ["zoom"],
+                        1,
+                        11.2,
+                        2,
+                        12.8,
+                        3,
+                        19.2,
+                        4,
+                        22.4,
+                        5,
+                        25.6
+                    ],
+                    "color": "#3F1821",
+                    "backgroundColor": "#FFFFFF",
+                    "backgroundOpacity": 0.5,
+                    "fontVariant": "SmallCaps",
+                    "opacity": 0.8,
+                    "textFadeTime": 0.75,
+                    "fadeNear": 0.8,
+                    "fadeFar": 0.9
+                },
+                "final": true
+            },
+            {
+                "description": "country_pop_>1000000",
+                "when": [
+                    "all",
+                    ["==", ["get", "$layer"], "places"],
+                    ["in", ["get", "kind"], ["country"]],
+                    ["has", "population"],
+                    [">", ["get", "population"], 1000000]
+                ],
+                "technique": "text",
+                "attr": {
+                    "priority": 100,
+                    "size": [
+                        "interpolate",
+                        ["linear"],
+                        ["zoom"],
+                        1,
+                        8,
+                        2,
+                        9.6,
+                        3,
+                        12.8,
+                        4,
+                        16,
+                        5,
+                        19.2
+                    ],
+                    "color": "#3F1821",
+                    "backgroundColor": "#FFFFFF",
+                    "backgroundOpacity": 0.5,
+                    "fontVariant": "SmallCaps",
+                    "opacity": 0.8,
+                    "textFadeTime": 0.75,
+                    "fadeNear": 0.8,
+                    "fadeFar": 0.9
+                },
+                "final": true
+            },
+            {
+                "description": "country",
+                "when": [
+                    "all",
+                    ["==", ["get", "$layer"], "places"],
+                    ["in", ["get", "kind"], ["country"]]
+                ],
+                "technique": "text",
+                "attr": {
+                    "priority": 90,
+                    "size": [
+                        "interpolate",
+                        ["linear"],
+                        ["zoom"],
+                        1,
+                        6.4,
+                        2,
+                        11.2,
+                        3,
+                        9.6,
+                        4,
+                        12.8,
+                        5,
+                        16
+                    ],
+                    "color": "#3F1922",
+                    "backgroundColor": "#FFFFFF",
+                    "backgroundOpacity": 0.5,
+                    "fontVariant": "SmallCaps",
+                    "opacity": 0.8,
+                    "textFadeTime": 0.75,
+                    "fadeNear": 0.8,
+                    "fadeFar": 0.9
+                },
+                "final": true
+            },
+            {
+                "description": "locality_pop_>10000000",
+                "when": [
+                    "all",
+                    ["==", ["get", "$layer"], "places"],
+                    ["==", ["get", "kind"], "locality"],
+                    [
+                        "any",
+                        [">", ["number", ["get", "population"], 0], 10000000],
+                        ["has", "country_capital"]
+                    ]
+                ],
+                "technique": "text",
+                "attr": {
+                    "fontStyle": "Bold",
+                    "priority": 61,
+                    "size": [
+                        "interpolate",
+                        ["linear"],
+                        ["zoom"],
+                        1,
+                        9.6,
+                        2,
+                        11.2,
+                        3,
+                        12.8,
+                        4,
+                        14.4,
+                        5,
+                        16,
+                        6,
+                        19.2,
+                        7,
+                        22.4,
+                        8,
+                        25.6,
+                        9,
+                        28.8,
+                        10,
+                        32
+                    ],
+                    "color": "#090A0B",
+                    "backgroundColor": "#FFFFFF",
+                    "backgroundOpacity": 0.5,
+                    "textFadeTime": 0.75,
+                    "fadeNear": 0.8,
+                    "fadeFar": 0.9
+                },
+                "final": true
+            },
+            {
+                "description": "locality_pop_>10000000",
+                "when": [
+                    "all",
+                    ["==", ["get", "$layer"], "places"],
+                    ["==", ["get", "kind"], "locality"],
+                    [
+                        "any",
+                        [">", ["number", ["get", "population"], 0], 10000000],
+                        ["has", "country_capital"]
+                    ]
+                ],
+                "technique": "text",
+                "attr": {
+                    "priority": 61,
+                    "size": [
+                        "interpolate",
+                        ["linear"],
+                        ["zoom"],
+                        1,
+                        9.6,
+                        2,
+                        11.2,
+                        3,
+                        12.8,
+                        4,
+                        14.4,
+                        5,
+                        16,
+                        6,
+                        19.2,
+                        7,
+                        22.4,
+                        8,
+                        25.6,
+                        9,
+                        28.8,
+                        10,
+                        32
+                    ],
+                    "color": "#090A0B",
+                    "backgroundColor": "#FFFFFF",
+                    "backgroundOpacity": 0.5,
+                    "textFadeTime": 0.75,
+                    "fadeNear": 0.8,
+                    "fadeFar": 0.9
+                },
+                "final": true
+            },
+            {
+                "description": "locality_pop_>1000000",
+                "when": [
+                    "all",
+                    ["==", ["get", "$layer"], "places"],
+                    ["==", ["get", "kind"], "locality"],
+                    [
+                        "any",
+                        [">", ["number", ["get", "population"], 0], 1000000],
+                        ["has", "region_capital"]
+                    ]
+                ],
+                "technique": "text",
+                "attr": {
+                    "priority": 60,
+                    "size": [
+                        "interpolate",
+                        ["linear"],
+                        ["zoom"],
+                        2,
+                        9.6,
+                        3,
+                        11.2,
+                        4,
+                        12.8,
+                        5,
+                        14.4,
+                        6,
+                        16,
+                        7,
+                        19.2,
+                        8,
+                        22.4,
+                        9,
+                        25.6,
+                        10,
+                        28.8,
+                        11,
+                        32
+                    ],
+                    "color": "#090A0B",
+                    "backgroundColor": "#FFFFFF",
+                    "backgroundOpacity": 0.5,
+                    "textFadeTime": 0.75,
+                    "fadeNear": 0.8,
+                    "fadeFar": 0.9
+                },
+                "final": true
+            },
+            {
+                "description": "locality_pop_>400000",
+                "when": [
+                    "all",
+                    ["==", ["get", "$layer"], "places"],
+                    ["==", ["get", "kind"], "locality"],
+                    ["has", "population"],
+                    [">", ["get", "population"], 400000]
+                ],
+                "technique": "text",
+                "attr": {
+                    "priority": 59,
+                    "size": [
+                        "interpolate",
+                        ["linear"],
+                        ["zoom"],
+                        4,
+                        11.2,
+                        5,
+                        12.8,
+                        6,
+                        16,
+                        7,
+                        19.2,
+                        8,
+                        22.4,
+                        9,
+                        24,
+                        10,
+                        25.6,
+                        11,
+                        27.2
+                    ],
+                    "color": "#090A0B",
+                    "backgroundColor": "#FFFFFF",
+                    "backgroundOpacity": 0.5,
+                    "textFadeTime": 0.75,
+                    "fadeNear": 0.8,
+                    "fadeFar": 0.9
+                },
+                "final": true
+            },
+            {
+                "description": "locality_pop_>100000",
+                "when": [
+                    "all",
+                    ["==", ["get", "$layer"], "places"],
+                    ["==", ["get", "kind"], "locality"],
+                    ["has", "population"],
+                    [">", ["get", "population"], 100000]
+                ],
+                "technique": "text",
+                "attr": {
+                    "priority": 58,
+                    "size": [
+                        "interpolate",
+                        ["linear"],
+                        ["zoom"],
+                        4,
+                        9.6,
+                        5,
+                        11.2,
+                        6,
+                        12.8,
+                        7,
+                        16,
+                        8,
+                        19.2,
+                        9,
+                        20.8,
+                        10,
+                        22.4,
+                        11,
+                        24,
+                        12,
+                        25.6
+                    ],
+                    "color": "#090A0B",
+                    "backgroundColor": "#FFFFFF",
+                    "backgroundOpacity": 0.5,
+                    "textFadeTime": 0.75,
+                    "fadeNear": 0.8,
+                    "fadeFar": 0.9
+                },
+                "final": true
+            },
+            {
+                "description": "locality_pop_>50000",
+                "when": [
+                    "all",
+                    ["==", ["get", "$layer"], "places"],
+                    ["==", ["get", "kind"], "locality"],
+                    ["has", "population"],
+                    [">", ["get", "population"], 50000]
+                ],
+                "technique": "text",
+                "attr": {
+                    "priority": 57,
+                    "size": [
+                        "interpolate",
+                        ["linear"],
+                        ["zoom"],
+                        10,
+                        16,
+                        11,
+                        19.2,
+                        12,
+                        22.4,
+                        13,
+                        24
+                    ],
+                    "color": "#090A0B",
+                    "backgroundColor": "#FFFFFF",
+                    "backgroundOpacity": 0.5,
+                    "textFadeTime": 0.75,
+                    "fadeNear": 0.8,
+                    "fadeFar": 0.9
+                },
+                "final": true
+            },
+            {
+                "description": "locality_pop_>10000",
+                "when": [
+                    "all",
+                    ["==", ["get", "$layer"], "places"],
+                    ["==", ["get", "kind"], "locality"],
+                    ["has", "population"],
+                    [">", ["get", "population"], 10000]
+                ],
+                "technique": "text",
+                "attr": {
+                    "priority": 56,
+                    "size": [
+                        "interpolate",
+                        ["linear"],
+                        ["zoom"],
+                        11,
+                        16,
+                        12,
+                        17.6,
+                        13,
+                        19.2,
+                        14,
+                        20.8,
+                        15,
+                        22.4
+                    ],
+                    "color": "#090A0B",
+                    "backgroundColor": "#FFFFFF",
+                    "backgroundOpacity": 0.5,
+                    "textFadeTime": 0.75,
+                    "fadeNear": 0.8,
+                    "fadeFar": 0.9
+                },
+                "final": true
+            },
+            {
+                "description": "locality_pop_<=10000",
+                "when": [
+                    "all",
+                    ["==", ["get", "$layer"], "places"],
+                    ["==", ["get", "kind"], "locality"],
+                    ["has", "population"],
+                    ["<=", ["get", "population"], 10000]
+                ],
+                "technique": "text",
+                "attr": {
+                    "priority": 50,
+                    "size": [
+                        "interpolate",
+                        ["linear"],
+                        ["zoom"],
+                        11,
+                        12.8,
+                        12,
+                        14.4,
+                        13,
+                        16,
+                        14,
+                        17.6,
+                        15,
+                        19.2
+                    ],
+                    "color": "#090A0B",
+                    "backgroundColor": "#FFFFFF",
+                    "backgroundOpacity": 0.5,
+                    "textFadeTime": 0.75,
+                    "fadeNear": 0.8,
+                    "fadeFar": 0.9
+                },
+                "final": true
+            }
         ]
     }
 }

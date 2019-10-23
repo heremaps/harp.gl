@@ -89,7 +89,7 @@ export class FontCatalog {
      * @returns `FontCatalog` Promise.
      */
     static async load(path: string, maxCodePointCount: number): Promise<FontCatalog> {
-        const url = new URL(path, window.location.href);
+        const url = new URL(path, window.location.href !== "" ? window.location.href : undefined);
         const fontCatalog = await FontCatalog.loadJSON(url.href);
 
         const replacementDirUrl = new URL(`${fontCatalog.name}${REPLACEMENT_PATH}`, url);
