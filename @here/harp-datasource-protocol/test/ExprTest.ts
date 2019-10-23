@@ -143,10 +143,10 @@ describe("Expr", function() {
                 const expr = Expr.fromJSON(["ref", "topExpr"], definitions);
                 assert.instanceOf(expr, CallExpr);
                 const callExpr = expr as CallExpr;
-                assert.equal(callExpr.children.length, 2);
+                assert.equal(callExpr.args.length, 2);
 
                 // Assert that both children of both exprs refer to exactly same expr instance.
-                assert.strictEqual(callExpr.children[0], callExpr.children[1]);
+                assert.strictEqual(callExpr.args[0], callExpr.args[1]);
             });
             it("uses definitionExprCache across calls", function() {
                 const definitions: Definitions = {

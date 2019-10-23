@@ -6,17 +6,17 @@
 
 import * as THREE from "three";
 
-import { Expr } from "../Expr";
+import { CallExpr } from "../Expr";
 
 import { ExprEvaluatorContext, OperatorDescriptorMap } from "../ExprEvaluator";
 
 const tmpColor = new THREE.Color();
 const operators = {
     rgb: {
-        call: (context: ExprEvaluatorContext, args: Expr[]) => {
-            const r = context.evaluate(args[0]);
-            const g = context.evaluate(args[1]);
-            const b = context.evaluate(args[2]);
+        call: (context: ExprEvaluatorContext, call: CallExpr) => {
+            const r = context.evaluate(call.args[0]);
+            const g = context.evaluate(call.args[1]);
+            const b = context.evaluate(call.args[2]);
             if (typeof r === "number" && typeof g === "number" && typeof b === "number") {
                 return (
                     "#" +
@@ -33,10 +33,10 @@ const operators = {
         }
     },
     hsl: {
-        call: (context: ExprEvaluatorContext, args: Expr[]) => {
-            const h = context.evaluate(args[0]);
-            const s = context.evaluate(args[1]);
-            const l = context.evaluate(args[2]);
+        call: (context: ExprEvaluatorContext, call: CallExpr) => {
+            const h = context.evaluate(call.args[0]);
+            const s = context.evaluate(call.args[1]);
+            const l = context.evaluate(call.args[2]);
             if (
                 typeof h === "number" &&
                 typeof s === "number" &&

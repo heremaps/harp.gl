@@ -4,32 +4,32 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Expr } from "../Expr";
+import { CallExpr } from "../Expr";
 import { ExprEvaluatorContext, OperatorDescriptorMap } from "../ExprEvaluator";
 
 const operators = {
     concat: {
-        call: (context: ExprEvaluatorContext, args: Expr[]) => {
-            return "".concat(...args.map(a => String(context.evaluate(a))));
+        call: (context: ExprEvaluatorContext, call: CallExpr) => {
+            return "".concat(...call.args.map(a => String(context.evaluate(a))));
         }
     },
 
     downcase: {
-        call: (context: ExprEvaluatorContext, args: Expr[]) => {
-            return String(context.evaluate(args[0])).toLocaleLowerCase();
+        call: (context: ExprEvaluatorContext, call: CallExpr) => {
+            return String(context.evaluate(call.args[0])).toLocaleLowerCase();
         }
     },
 
     upcase: {
-        call: (context: ExprEvaluatorContext, args: Expr[]) => {
-            return String(context.evaluate(args[0])).toLocaleUpperCase();
+        call: (context: ExprEvaluatorContext, call: CallExpr) => {
+            return String(context.evaluate(call.args[0])).toLocaleUpperCase();
         }
     },
 
     "~=": {
-        call: (context: ExprEvaluatorContext, args: Expr[]) => {
-            const left = context.evaluate(args[0]);
-            const right = context.evaluate(args[1]);
+        call: (context: ExprEvaluatorContext, call: CallExpr) => {
+            const left = context.evaluate(call.args[0]);
+            const right = context.evaluate(call.args[1]);
             if (typeof left === "string" && typeof right === "string") {
                 return left.indexOf(right) !== -1;
             }
@@ -38,9 +38,9 @@ const operators = {
     },
 
     "^=": {
-        call: (context: ExprEvaluatorContext, args: Expr[]) => {
-            const left = context.evaluate(args[0]);
-            const right = context.evaluate(args[1]);
+        call: (context: ExprEvaluatorContext, call: CallExpr) => {
+            const left = context.evaluate(call.args[0]);
+            const right = context.evaluate(call.args[1]);
             if (typeof left === "string" && typeof right === "string") {
                 return left.startsWith(right);
             }
@@ -49,9 +49,9 @@ const operators = {
     },
 
     "$=": {
-        call: (context: ExprEvaluatorContext, args: Expr[]) => {
-            const left = context.evaluate(args[0]);
-            const right = context.evaluate(args[1]);
+        call: (context: ExprEvaluatorContext, call: CallExpr) => {
+            const left = context.evaluate(call.args[0]);
+            const right = context.evaluate(call.args[1]);
             if (typeof left === "string" && typeof right === "string") {
                 return left.endsWith(right);
             }

@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Expr } from "../Expr";
+import { CallExpr, Expr } from "../Expr";
 
 import { ExprEvaluatorContext, OperatorDescriptorMap } from "../ExprEvaluator";
 
@@ -33,13 +33,13 @@ function lookupMember(context: ExprEvaluatorContext, args: Expr[], lookupMode: L
 
 const operators = {
     get: {
-        call: (context: ExprEvaluatorContext, args: Expr[]) =>
-            lookupMember(context, args, LookupMode.get)
+        call: (context: ExprEvaluatorContext, call: CallExpr) =>
+            lookupMember(context, call.args, LookupMode.get)
     },
 
     has: {
-        call: (context: ExprEvaluatorContext, args: Expr[]) =>
-            lookupMember(context, args, LookupMode.has)
+        call: (context: ExprEvaluatorContext, call: CallExpr) =>
+            lookupMember(context, call.args, LookupMode.has)
     }
 };
 
