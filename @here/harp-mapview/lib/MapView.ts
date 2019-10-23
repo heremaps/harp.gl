@@ -55,6 +55,7 @@ import { ThemeLoader } from "./ThemeLoader";
 import { Tile } from "./Tile";
 import { MapViewUtils } from "./Utils";
 import { ResourceComputationType, VisibleTileSet, VisibleTileSetOptions } from "./VisibleTileSet";
+import { Watermark } from "./Watermark";
 
 declare const process: any;
 
@@ -602,6 +603,11 @@ export interface MapViewOptions {
      * @default false.
      */
     synchronousRendering?: boolean;
+
+    /**
+     * URL to watermark logo to be displayed in bottom left corner.
+     */
+    watermark?: string;
 }
 
 /**
@@ -703,6 +709,7 @@ export class MapView extends THREE.EventDispatcher {
     private readonly m_fog: MapViewFog = new MapViewFog(this.m_scene);
     private readonly m_mapTilesRoot = new THREE.Object3D();
     private readonly m_mapAnchors = new THREE.Object3D();
+    private m_watermark: Watermark | undefined;
 
     private m_animationCount: number = 0;
     private m_animationFrameHandle: number | undefined;
@@ -847,6 +854,10 @@ export class MapView extends THREE.EventDispatcher {
 
         if (options.enablePolarDataSource !== undefined) {
             this.m_enablePolarDataSource = options.enablePolarDataSource;
+        }
+
+        if (options.watermark !== undefined) {
+            this.m_watermark = new Watermark(options.watermark);
         }
 
         this.m_pixelRatio = options.pixelRatio;
@@ -2807,6 +2818,10 @@ export class MapView extends THREE.EventDispatcher {
 
         if (this.renderLabels) {
             this.finishRenderTextElements();
+        }
+
+        if (this.m_watermark !== undefined) {
+            this.m_watermark.render(this.m_renderer, this.m_screenCamera);
         }
 
         if (gatherStatistics) {

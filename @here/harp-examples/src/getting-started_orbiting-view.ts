@@ -13,7 +13,7 @@ import {
 } from "@here/harp-mapview";
 import { APIFormat, OmvDataSource } from "@here/harp-omv-datasource";
 import { GUI } from "dat.gui";
-import { accessToken } from "../config";
+import { accessToken, watermarkLogo } from "../config";
 
 /**
  * In this example we simply use the `lookAt` method to make the camera orbit around a geolocation.
@@ -60,7 +60,8 @@ export namespace CameraOrbitExample {
         const mapView = new MapView({
             canvas,
             projection: sphereProjection,
-            theme: "resources/berlin_tilezen_base_globe.json"
+            theme: "resources/berlin_tilezen_base_globe.json",
+            watermark: URL.createObjectURL(new Blob([watermarkLogo], { type: "image/svg+xml" }))
         });
         canvas.addEventListener("contextmenu", e => e.preventDefault());
 

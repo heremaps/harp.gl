@@ -8,7 +8,7 @@ import { GeoCoordinates } from "@here/harp-geoutils";
 import { MapControls, MapControlsUI } from "@here/harp-map-controls";
 import { CopyrightElementHandler, CopyrightInfo, MapView } from "@here/harp-mapview";
 import { APIFormat, OmvDataSource } from "@here/harp-omv-datasource";
-import { accessToken } from "../config";
+import { accessToken, watermarkLogo } from "../config";
 
 export namespace DataDrivenThemeExample {
     function initializeMapView(id: string): MapView {
@@ -54,7 +54,8 @@ export namespace DataDrivenThemeExample {
                     ]
                 }
             },
-            disableFading: true
+            disableFading: true,
+            watermark: URL.createObjectURL(new Blob([watermarkLogo], { type: "image/svg+xml" }))
         });
 
         CopyrightElementHandler.install("copyrightNotice", mapView);

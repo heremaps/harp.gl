@@ -8,7 +8,7 @@ import { GeoCoordinates } from "@here/harp-geoutils";
 import { MapControls, MapControlsUI } from "@here/harp-map-controls";
 import { CopyrightElementHandler, CopyrightInfo, MapView } from "@here/harp-mapview";
 import { APIFormat, OmvDataSource } from "@here/harp-omv-datasource";
-import { accessToken } from "../config";
+import { accessToken, watermarkLogo } from "../config";
 
 /**
  * This example shows how to customize builtin `Berlin` theme using [Theme] `definition` mechanism.
@@ -72,7 +72,8 @@ export namespace HelloCustomThemeExample {
                         }
                     }
                 }
-            }
+            },
+            watermark: URL.createObjectURL(new Blob([watermarkLogo], { type: "image/svg+xml" }))
         });
 
         CopyrightElementHandler.install("copyrightNotice", map);

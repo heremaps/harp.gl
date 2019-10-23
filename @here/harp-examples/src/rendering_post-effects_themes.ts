@@ -9,7 +9,7 @@ import { MapControls, MapControlsUI } from "@here/harp-map-controls";
 import { CopyrightElementHandler, CopyrightInfo, MapView } from "@here/harp-mapview";
 import { APIFormat, OmvDataSource } from "@here/harp-omv-datasource";
 import { GUI } from "dat.gui";
-import { accessToken } from "../config";
+import { accessToken, watermarkLogo } from "../config";
 
 /**
  * Example showing how to use separate post effects JSON files to configure the rendering through
@@ -21,7 +21,8 @@ export namespace EffectsExample {
 
         const mapView = new MapView({
             canvas,
-            theme: "resources/berlin_tilezen_base.json"
+            theme: "resources/berlin_tilezen_base.json",
+            watermark: URL.createObjectURL(new Blob([watermarkLogo], { type: "image/svg+xml" }))
         });
 
         CopyrightElementHandler.install("copyrightNotice", mapView);

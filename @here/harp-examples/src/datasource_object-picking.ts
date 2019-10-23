@@ -7,7 +7,7 @@
 import { MapControls, MapControlsUI } from "@here/harp-map-controls";
 import { CopyrightElementHandler, CopyrightInfo, MapView, PickResult } from "@here/harp-mapview";
 import { APIFormat, OmvDataSource } from "@here/harp-omv-datasource";
-import { accessToken } from "../config";
+import { accessToken, watermarkLogo } from "../config";
 
 /**
  * This example showcases how picking works.
@@ -99,7 +99,8 @@ export namespace PickingExample {
         const mapView = new MapView({
             canvas,
             theme: "resources/berlin_tilezen_base.json",
-            enableRoadPicking: true
+            enableRoadPicking: true,
+            watermark: URL.createObjectURL(new Blob([watermarkLogo], { type: "image/svg+xml" }))
         });
 
         CopyrightElementHandler.install("copyrightNotice", mapView);

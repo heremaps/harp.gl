@@ -8,7 +8,7 @@ import { GeoCoordinates } from "@here/harp-geoutils";
 import { MapControls, MapControlsUI } from "@here/harp-map-controls";
 import { CopyrightElementHandler, CopyrightInfo, MapView } from "@here/harp-mapview";
 import { APIFormat, OmvDataSource } from "@here/harp-omv-datasource";
-import { accessToken } from "../config";
+import { accessToken, watermarkLogo } from "../config";
 
 /**
  * MapView initialization sequence enables setting all the necessary elements on a map  and returns
@@ -73,7 +73,8 @@ export namespace HelloWorldExample {
         // snippet:harp_gl_hello_world_example_1.ts
         const map = new MapView({
             canvas,
-            theme: "resources/berlin_tilezen_base.json"
+            theme: "resources/berlin_tilezen_base.json",
+            watermark: URL.createObjectURL(new Blob([watermarkLogo], { type: "image/svg+xml" }))
         });
         // end:harp_gl_hello_world_example_1.ts
 

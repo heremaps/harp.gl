@@ -8,7 +8,7 @@ import { GeoCoordinates, sphereProjection } from "@here/harp-geoutils";
 import { MapControls, MapControlsUI } from "@here/harp-map-controls";
 import { CopyrightElementHandler, CopyrightInfo, MapView } from "@here/harp-mapview";
 import { APIFormat, OmvDataSource } from "@here/harp-omv-datasource";
-import { accessToken } from "../config";
+import { accessToken, watermarkLogo } from "../config";
 
 export namespace GlobeExample {
     // Create a new MapView for the HTMLCanvasElement of the given id.
@@ -18,7 +18,8 @@ export namespace GlobeExample {
         const mapView = new MapView({
             canvas,
             projection: sphereProjection,
-            theme: "resources/berlin_tilezen_base_globe.json"
+            theme: "resources/berlin_tilezen_base_globe.json",
+            watermark: URL.createObjectURL(new Blob([watermarkLogo], { type: "image/svg+xml" }))
         });
 
         CopyrightElementHandler.install("copyrightNotice", mapView);

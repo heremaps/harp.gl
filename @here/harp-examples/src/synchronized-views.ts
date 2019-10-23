@@ -8,7 +8,7 @@ import { GeoCoordinates } from "@here/harp-geoutils";
 import { MapControls, MapControlsUI } from "@here/harp-map-controls";
 import { CopyrightElementHandler, CopyrightInfo, MapView, MapViewUtils } from "@here/harp-mapview";
 import { APIFormat, OmvDataSource } from "@here/harp-omv-datasource";
-import { accessToken } from "../config";
+import { accessToken, watermarkLogo } from "../config";
 
 /**
  * An example showing triple map view build with 3 [[MapView]]s each with a different theme and/or
@@ -161,7 +161,8 @@ export namespace TripleViewExample {
         const mapView = new MapView({
             canvas,
             theme: theme !== undefined ? theme : defaultTheme,
-            decoderUrl
+            decoderUrl,
+            watermark: URL.createObjectURL(new Blob([watermarkLogo], { type: "image/svg+xml" }))
         });
         CopyrightElementHandler.install("copyrightNotice", mapView);
 

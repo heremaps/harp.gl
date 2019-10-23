@@ -10,7 +10,7 @@ import { GeoCoordinates } from "@here/harp-geoutils";
 import { MapControls, MapControlsUI } from "@here/harp-map-controls";
 import { CopyrightElementHandler, CopyrightInfo, MapView } from "@here/harp-mapview";
 import { APIFormat, OmvDataSource } from "@here/harp-omv-datasource";
-import { accessToken } from "../config";
+import { accessToken, watermarkLogo } from "../config";
 
 /**
  * In this example we avail ourselves of the [[FeaturesDataSource]] and its `setFromGeoJson` method
@@ -142,7 +142,8 @@ export namespace GeoJsonExample {
         const canvas = document.getElementById("mapCanvas") as HTMLCanvasElement;
         const mapView = new MapView({
             canvas,
-            theme: "resources/berlin_tilezen_night_reduced.json"
+            theme: "resources/berlin_tilezen_night_reduced.json",
+            watermark: URL.createObjectURL(new Blob([watermarkLogo], { type: "image/svg+xml" }))
         });
         mapView.renderLabels = false;
         mapView.setCameraGeolocationAndZoom(new GeoCoordinates(30, 0), 2);

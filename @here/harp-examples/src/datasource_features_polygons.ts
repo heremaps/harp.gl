@@ -16,7 +16,7 @@ import { CopyrightInfo, MapView } from "@here/harp-mapview";
 import { TopViewClipPlanesEvaluator } from "@here/harp-mapview/lib/ClipPlanesEvaluator";
 import { APIFormat, OmvDataSource } from "@here/harp-omv-datasource";
 import * as THREE from "three";
-import { accessToken } from "../config";
+import { accessToken, watermarkLogo } from "../config";
 import { COUNTRIES } from "../resources/countries";
 
 /**
@@ -316,7 +316,8 @@ export namespace PolygonsFeaturesExample {
                         }
                     ]
                 }
-            }
+            },
+            watermark: URL.createObjectURL(new Blob([watermarkLogo], { type: "image/svg+xml" }))
         });
         mapView.setCameraGeolocationAndZoom(new GeoCoordinates(30, 10), 3.2);
         mapView.renderLabels = false;

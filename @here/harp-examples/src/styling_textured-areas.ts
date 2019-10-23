@@ -10,7 +10,7 @@ import { GeoCoordinates } from "@here/harp-geoutils";
 import { MapControls, MapControlsUI } from "@here/harp-map-controls";
 import { CopyrightElementHandler, CopyrightInfo, MapView, ThemeLoader } from "@here/harp-mapview";
 import { APIFormat, OmvDataSource } from "@here/harp-omv-datasource";
-import { accessToken } from "../config";
+import { accessToken, watermarkLogo } from "../config";
 
 export namespace HelloWorldTexturedExample {
     function main() {
@@ -120,7 +120,8 @@ West</a>.</p>`;
         );
         const map = new MapView({
             canvas,
-            theme: themePromise.then(modifyTheme)
+            theme: themePromise.then(modifyTheme),
+            watermark: URL.createObjectURL(new Blob([watermarkLogo], { type: "image/svg+xml" }))
         });
         const NY = new GeoCoordinates(40.705, -74.01);
         map.lookAt(NY, 3000, 30);

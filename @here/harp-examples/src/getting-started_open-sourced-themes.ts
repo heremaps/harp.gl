@@ -9,7 +9,7 @@ import { MapControls, MapControlsUI } from "@here/harp-map-controls";
 import { CopyrightElementHandler, CopyrightInfo, MapView } from "@here/harp-mapview";
 import { APIFormat, OmvDataSource } from "@here/harp-omv-datasource";
 import { GUI } from "dat.gui";
-import { accessToken } from "../config";
+import { accessToken, watermarkLogo } from "../config";
 
 /**
  * This example copies the base example and adds a GUI allowing to switch between all the open-
@@ -20,7 +20,8 @@ export namespace ThemesExample {
         const canvas = document.getElementById("mapCanvas") as HTMLCanvasElement;
         const map = new MapView({
             canvas,
-            theme: "resources/berlin_tilezen_base.json"
+            theme: "resources/berlin_tilezen_base.json",
+            watermark: URL.createObjectURL(new Blob([watermarkLogo], { type: "image/svg+xml" }))
         });
 
         CopyrightElementHandler.install("copyrightNotice", map);

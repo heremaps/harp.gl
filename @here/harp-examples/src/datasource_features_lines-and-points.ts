@@ -15,7 +15,7 @@ import { GeoCoordinates, sphereProjection } from "@here/harp-geoutils";
 import { MapControls, MapControlsUI } from "@here/harp-map-controls";
 import { CopyrightInfo, MapView } from "@here/harp-mapview";
 import { APIFormat, OmvDataSource } from "@here/harp-omv-datasource";
-import { accessToken } from "../config";
+import { accessToken, watermarkLogo } from "../config";
 import { faults, hotspots } from "../resources/geology";
 
 /**
@@ -205,7 +205,8 @@ export namespace LinesPointsFeaturesExample {
                         }
                     ]
                 }
-            }
+            },
+            watermark: URL.createObjectURL(new Blob([watermarkLogo], { type: "image/svg+xml" }))
         });
         mapView.setCameraGeolocationAndZoom(new GeoCoordinates(10, -270), 3.5);
 

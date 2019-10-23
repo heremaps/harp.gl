@@ -11,7 +11,7 @@ import { MapControls, MapControlsUI } from "@here/harp-map-controls";
 import { CopyrightInfo, MapView } from "@here/harp-mapview";
 import { APIFormat, OmvDataSource } from "@here/harp-omv-datasource";
 import * as THREE from "three";
-import { accessToken } from "../config";
+import { accessToken, watermarkLogo } from "../config";
 
 /**
  * This example demonstrates how to generate a heatmap-like [[StyleSet]] for a GeoJson. To do so,
@@ -67,7 +67,8 @@ export namespace GeoJsonHeatmapExample {
         const canvas = document.getElementById(id) as HTMLCanvasElement;
         const mapView = new MapView({
             canvas,
-            theme
+            theme,
+            watermark: URL.createObjectURL(new Blob([watermarkLogo], { type: "image/svg+xml" }))
         });
 
         mapView.lookAt(new GeoCoordinates(42, 14), 2000000, 40, -70);

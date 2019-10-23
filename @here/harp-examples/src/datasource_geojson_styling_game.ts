@@ -15,7 +15,7 @@ import { GeoJsonDataProvider } from "@here/harp-geojson-datasource";
 import { GeoCoordinates } from "@here/harp-geoutils";
 import { CopyrightElementHandler, CopyrightInfo, MapView } from "@here/harp-mapview";
 import { APIFormat, OmvDataSource } from "@here/harp-omv-datasource";
-import { accessToken } from "../config";
+import { accessToken, watermarkLogo } from "../config";
 import * as geojson from "../resources/italy.json";
 
 /**
@@ -84,7 +84,8 @@ export namespace GeoJsonStylingGame {
     // snippet:harp_gl_initmapview.ts
     const mapView = new MapView({
         canvas: document.getElementById("mapCanvas") as HTMLCanvasElement,
-        theme: "resources/berlin_tilezen_night_reduced.json"
+        theme: "resources/berlin_tilezen_night_reduced.json",
+        watermark: URL.createObjectURL(new Blob([watermarkLogo], { type: "image/svg+xml" }))
     });
     CopyrightElementHandler.install("copyrightNotice", mapView);
     mapView.setCameraGeolocationAndZoom(new GeoCoordinates(42.2, 12.5), 5.9);

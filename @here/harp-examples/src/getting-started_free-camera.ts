@@ -17,7 +17,7 @@ import {
 } from "@here/harp-mapview";
 import { APIFormat, OmvDataSource } from "@here/harp-omv-datasource";
 import * as THREE from "three";
-import { accessToken } from "../config";
+import { accessToken, watermarkLogo } from "../config";
 
 // Import the gesture handlers from the three.js additional libraries.
 // The controls are not in common.js they explicitly require a
@@ -68,7 +68,10 @@ export namespace FreeCameraAppDebuggingToolExample {
 
         // creates a new MapView for the HTMLCanvasElement of the given id
         constructor(readonly options: FreeCameraAppOptions) {
-            this.mapView = new MapView(options);
+            this.mapView = new MapView({
+                ...options,
+                watermark: URL.createObjectURL(new Blob([watermarkLogo], { type: "image/svg+xml" }))
+            });
             this.mapView.fog.enabled = false;
 
             this.mapControls = new MapControls(this.mapView);

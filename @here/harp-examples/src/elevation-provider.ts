@@ -20,7 +20,7 @@ import {
 } from "@here/harp-mapview";
 import { APIFormat, OmvDataSource } from "@here/harp-omv-datasource";
 import * as THREE from "three";
-import { accessToken } from "../config";
+import { accessToken, watermarkLogo } from "../config";
 
 // Dummy implementation.
 class DummyElevationRangeSource implements ElevationRangeSource {
@@ -121,7 +121,8 @@ export namespace ElevationProviderExample {
         const canvas = document.getElementById(id) as HTMLCanvasElement;
         const map = new MapView({
             canvas,
-            theme: "resources/berlin_tilezen_base.json"
+            theme: "resources/berlin_tilezen_base.json",
+            watermark: URL.createObjectURL(new Blob([watermarkLogo], { type: "image/svg+xml" }))
         });
 
         CopyrightElementHandler.install("copyrightNotice", map);

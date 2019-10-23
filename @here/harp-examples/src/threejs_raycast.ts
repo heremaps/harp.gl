@@ -14,7 +14,7 @@ import {
 } from "@here/harp-mapview";
 import { APIFormat, OmvDataSource } from "@here/harp-omv-datasource";
 import * as THREE from "three";
-import { accessToken } from "../config";
+import { accessToken, watermarkLogo } from "../config";
 
 /**
  * This example shows how we can pick the scene and add a [three.js](https://threejs.org/) object.
@@ -53,7 +53,8 @@ export namespace ThreejsRaycast {
         const canvas = document.getElementById(id) as HTMLCanvasElement;
         const map = new MapView({
             canvas,
-            theme: "resources/berlin_tilezen_base.json"
+            theme: "resources/berlin_tilezen_base.json",
+            watermark: URL.createObjectURL(new Blob([watermarkLogo], { type: "image/svg+xml" }))
         });
 
         CopyrightElementHandler.install("copyrightNotice", map);

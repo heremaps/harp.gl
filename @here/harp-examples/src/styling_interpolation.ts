@@ -10,7 +10,7 @@ import { GeoCoordinates } from "@here/harp-geoutils";
 import { MapControls, MapControlsUI } from "@here/harp-map-controls";
 import { CopyrightInfo, MapView } from "@here/harp-mapview";
 import { APIFormat, OmvDataSource } from "@here/harp-omv-datasource";
-import { accessToken } from "../config";
+import { accessToken, watermarkLogo } from "../config";
 
 /**
  * This example showcases interpolated [[MapView]] techniques.
@@ -418,7 +418,8 @@ export namespace TiledGeoJsonTechniquesExample {
         const canvas = document.getElementById(id) as HTMLCanvasElement;
         const mapView = new MapView({
             canvas,
-            theme
+            theme,
+            watermark: URL.createObjectURL(new Blob([watermarkLogo], { type: "image/svg+xml" }))
         });
 
         mapView.renderLabels = false;
