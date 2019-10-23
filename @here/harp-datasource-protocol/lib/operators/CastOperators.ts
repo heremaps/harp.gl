@@ -4,25 +4,25 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Expr } from "../Expr";
+import { CallExpr } from "../Expr";
 import { ExprEvaluatorContext, OperatorDescriptorMap } from "../ExprEvaluator";
 
 const operators = {
     "to-boolean": {
-        call: (context: ExprEvaluatorContext, args: Expr[]) => {
-            return Boolean(context.evaluate(args[0]));
+        call: (context: ExprEvaluatorContext, call: CallExpr) => {
+            return Boolean(context.evaluate(call.args[0]));
         }
     },
 
     "to-string": {
-        call: (context: ExprEvaluatorContext, args: Expr[]) => {
-            return String(context.evaluate(args[0]));
+        call: (context: ExprEvaluatorContext, call: CallExpr) => {
+            return String(context.evaluate(call.args[0]));
         }
     },
 
     "to-number": {
-        call: (context: ExprEvaluatorContext, args: Expr[]) => {
-            for (const arg of args) {
+        call: (context: ExprEvaluatorContext, call: CallExpr) => {
+            for (const arg of call.args) {
                 const value = Number(context.evaluate(arg));
                 if (!isNaN(value)) {
                     return value;

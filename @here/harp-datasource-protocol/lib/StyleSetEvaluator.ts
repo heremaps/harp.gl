@@ -169,7 +169,7 @@ class StyleConditionClassifier implements ExprVisitor<Expr | undefined, Expr | u
             // processing of an `["all", e1, e2, ... eN]` expression. In this case
             // search for expressions matching comparison of `$layer` and string literals
             // in the sub expressions.
-            const children = call.children
+            const children = call.args
                 .map(childExpr => childExpr.accept(this, call))
                 .filter(childExpr => childExpr !== undefined) as Expr[];
 
@@ -217,8 +217,8 @@ class StyleConditionClassifier implements ExprVisitor<Expr | undefined, Expr | u
      */
     private matchVarStringComparison(call: CallExpr) {
         if (call.op === "==") {
-            const left = call.children[0];
-            const right = call.children[1];
+            const left = call.args[0];
+            const right = call.args[1];
 
             if (left instanceof VarExpr && right instanceof StringLiteralExpr) {
                 return { name: left.name, value: right.value };

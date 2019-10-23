@@ -93,10 +93,10 @@ class ComputeExprDependencies implements ExprVisitor<void, ExprDependencies> {
     }
 
     visitCallExpr(expr: CallExpr, context: ExprDependencies): void {
-        if (expr.op === "zoom" && expr.children.length === 0) {
+        if (expr.op === "zoom" && expr.args.length === 0) {
             context.zoom = true;
         } else {
-            expr.children.forEach(childExpr => childExpr.accept(this, context));
+            expr.args.forEach(childExpr => childExpr.accept(this, context));
         }
     }
 
@@ -625,8 +625,16 @@ export class ContainsExpr extends Expr {
 export class CallExpr extends Expr {
     descriptor?: OperatorDescriptor;
 
-    constructor(readonly op: string, readonly children: Expr[]) {
+    constructor(readonly op: string, readonly args: Expr[]) {
         super();
+    }
+
+    /**
+     * Returns the child nodes of this [[Expr]].
+     * @deprecated
+     */
+    get children() {
+        return this.args;
     }
 
     accept<Result, Context>(visitor: ExprVisitor<Result, Context>, context: Context): Result {
@@ -731,7 +739,7 @@ class ExprSerializer implements ExprVisitor<JsonValue, void> {
     }
 
     visitCallExpr(expr: CallExpr, context: void): JsonValue {
-        return [expr.op, ...expr.children.map(childExpr => this.serialize(childExpr))];
+        return [expr.op, ...expr.args.map(childExpr => this.serialize(childExpr))];
     }
 
     visitMatchExpr(expr: MatchExpr, context: void): JsonValue {

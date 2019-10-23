@@ -4,12 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Expr } from "../Expr";
+import { CallExpr } from "../Expr";
 import { ExprEvaluatorContext, OperatorDescriptorMap } from "../ExprEvaluator";
 
 const operators = {
     at: {
-        call: (context: ExprEvaluatorContext, args: Expr[]) => {
+        call: (context: ExprEvaluatorContext, call: CallExpr) => {
+            const args = call.args;
             const index = context.evaluate(args[0]);
             if (typeof index !== "number") {
                 throw new Error(`expected the index of the element to retrieve`);

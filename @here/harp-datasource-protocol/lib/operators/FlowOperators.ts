@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Expr } from "../Expr";
+import { CallExpr, Expr } from "../Expr";
 import { ExprEvaluatorContext, OperatorDescriptorMap } from "../ExprEvaluator";
 
 function conditionalCast(context: ExprEvaluatorContext, type: string, args: Expr[]) {
@@ -26,20 +26,20 @@ function conditionalCast(context: ExprEvaluatorContext, type: string, args: Expr
 
 const operators = {
     boolean: {
-        call: (context: ExprEvaluatorContext, args: Expr[]) => {
-            return conditionalCast(context, "boolean", args);
+        call: (context: ExprEvaluatorContext, call: CallExpr) => {
+            return conditionalCast(context, "boolean", call.args);
         }
     },
 
     number: {
-        call: (context: ExprEvaluatorContext, args: Expr[]) => {
-            return conditionalCast(context, "number", args);
+        call: (context: ExprEvaluatorContext, call: CallExpr) => {
+            return conditionalCast(context, "number", call.args);
         }
     },
 
     string: {
-        call: (context: ExprEvaluatorContext, args: Expr[]) => {
-            return conditionalCast(context, "string", args);
+        call: (context: ExprEvaluatorContext, call: CallExpr) => {
+            return conditionalCast(context, "string", call.args);
         }
     }
 };

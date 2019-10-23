@@ -147,7 +147,7 @@ export class ExprPool implements ExprVisitor<Expr, void> {
 
     visitCallExpr(expr: CallExpr, context: void): Expr {
         // rewrite the actual arguments
-        const expressions = expr.children.map(childExpr => childExpr.accept(this, context));
+        const expressions = expr.args.map(childExpr => childExpr.accept(this, context));
         // ensure we have a valid set of interned expressions for the calls
         if (!this.m_callExprs.has(expr.op)) {
             this.m_callExprs.set(expr.op, []);
@@ -156,17 +156,17 @@ export class ExprPool implements ExprVisitor<Expr, void> {
         const calls = this.m_callExprs.get(expr.op)!;
         for (const call of calls) {
             // check the number of arguments
-            if (call.children.length !== expressions.length) {
+            if (call.args.length !== expressions.length) {
                 continue;
             }
             // find the index of the first mismatch.
             let index = 0;
-            for (; index < call.children.length; ++index) {
-                if (call.children[index] !== expressions[index]) {
+            for (; index < call.args.length; ++index) {
+                if (call.args[index] !== expressions[index]) {
                     break;
                 }
             }
-            if (index === call.children.length) {
+            if (index === call.args.length) {
                 // no mismatch found, return the 'interned' call.
                 return call;
             }

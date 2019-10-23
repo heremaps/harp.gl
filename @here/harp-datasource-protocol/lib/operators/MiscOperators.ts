@@ -4,13 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Expr } from "../Expr";
+import { CallExpr } from "../Expr";
 import { ExprEvaluatorContext, OperatorDescriptorMap } from "../ExprEvaluator";
 
 const operators = {
     length: {
-        call: (context: ExprEvaluatorContext, args: Expr[]) => {
-            const value = context.evaluate(args[0]);
+        call: (context: ExprEvaluatorContext, call: CallExpr) => {
+            const value = context.evaluate(call.args[0]);
             if (Array.isArray(value) || typeof value === "string") {
                 return value.length;
             }
@@ -18,8 +18,8 @@ const operators = {
         }
     },
     coalesce: {
-        call: (context: ExprEvaluatorContext, args: Expr[]) => {
-            for (const childExpr of args) {
+        call: (context: ExprEvaluatorContext, call: CallExpr) => {
+            for (const childExpr of call.args) {
                 const value = context.evaluate(childExpr);
                 if (value !== null) {
                     return value;
