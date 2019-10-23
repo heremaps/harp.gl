@@ -18,7 +18,6 @@ import {
     HasAttributeExpr,
     isJsonExpr,
     JsonExpr,
-    LiteralExpr,
     MatchExpr,
     NullLiteralExpr,
     NumberLiteralExpr,
@@ -28,12 +27,11 @@ import {
     VarExpr
 } from "./Expr";
 import { ExprPool } from "./ExprPool";
+import { isInterpolatedProperty, isInterpolatedPropertyDefinition } from "./InterpolatedProperty";
 import {
-    createInterpolatedProperty,
-    isInterpolatedProperty,
-    isInterpolatedPropertyDefinition
-} from "./InterpolatedProperty";
-import { InterpolatedProperty } from "./InterpolatedPropertyDefs";
+    InterpolatedProperty,
+    interpolatedPropertyDefinitionToJsonExpr
+} from "./InterpolatedPropertyDefs";
 import { AttrScope, mergeTechniqueDescriptor, TechniquePropNames } from "./TechniqueDescriptor";
 import { IndexedTechnique, Technique, techniqueDescriptors } from "./Techniques";
 import {
@@ -673,31 +671,25 @@ export class StyleSetEvaluator {
             ];
 
             if (isJsonExpr(attrValue)) {
-                const expr = Expr.fromJSON(
+                attrValue = Expr.fromJSON(
                     attrValue,
                     this.m_definitions,
                     this.m_definitionExprCache
                 ).intern(this.m_exprPool);
-
-                if (expr instanceof LiteralExpr) {
-                    // Shortcut for literal expressions, so they are not taken into account when
-                    // trying to instantiate technique variants.
-                    attrValue = expr.value;
-                } else {
-                    const deps = expr.dependencies();
-
-                    // tslint:disable-next-line: prefer-conditional-expression
-                    if (deps.properties.size === 0) {
-                        // no data-dependencies detected.
-                        attrValue = expr.evaluate(this.m_emptyEnv);
-                    } else {
-                        attrValue = expr;
-                    }
-                }
+            } else if (isInterpolatedPropertyDefinition(attrValue)) {
+                // found a property using an object-like interpolation definition.
+                attrValue = Expr.fromJSON(
+                    interpolatedPropertyDefinitionToJsonExpr(attrValue)
+                ).intern(this.m_exprPool);
             }
 
-            if (isInterpolatedPropertyDefinition(attrValue)) {
-                attrValue = createInterpolatedProperty(attrValue);
+            if (attrValue instanceof Expr) {
+                const deps = attrValue.dependencies();
+
+                if (deps.properties.size === 0) {
+                    // no data-dependencies detected.
+                    attrValue = attrValue.evaluate(this.m_emptyEnv);
+                }
             }
 
             if (isInterpolatedProperty(attrValue) || attrValue instanceof Expr) {

@@ -8,6 +8,7 @@ import { ExprEvaluator, ExprEvaluatorContext, OperatorDescriptor } from "./ExprE
 import { ExprParser } from "./ExprParser";
 import { ExprPool } from "./ExprPool";
 import { isInterpolatedPropertyDefinition } from "./InterpolatedProperty";
+import { interpolatedPropertyDefinitionToJsonExpr } from "./InterpolatedPropertyDefs";
 import { Definitions, isSelectorDefinition, isValueDefinition } from "./Theme";
 
 const exprEvaluator = new ExprEvaluator();
@@ -398,7 +399,11 @@ export abstract class Expr {
         let result: Expr;
         if (isValueDefinition(definitionEntry)) {
             if (isInterpolatedPropertyDefinition(definitionEntry.value)) {
-                return new ObjectLiteralExpr(definitionEntry.value);
+                // found a reference to an interpolation using
+                // the deprecated object-like syntax.
+                return Expr.fromJSON(
+                    interpolatedPropertyDefinitionToJsonExpr(definitionEntry.value)
+                );
             } else if (isJsonExpr(definitionEntry.value)) {
                 definitionEntry = definitionEntry.value;
             } else {
