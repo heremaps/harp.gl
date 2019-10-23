@@ -6,71 +6,62 @@
 
 export default {
     extrude_line_vert_func: `
-void extrudeLine(vec2 segment, vec4 bt, vec3 t, float lineWidth, inout vec3 pos, inout vec2 uv) {
-    float uu = uv.x / 2.0 + 0.5;
-    float ss = mix(segment.x, segment.y, uu);
-
-    float angle = bt.w;
-    vec3 dir = bt.xyz;
+vec3 extrudeLine(
+        in vec3 vertexPosition,
+        in float linePosition,
+        in float lineWidth,
+        in vec4 bitangent,
+        in vec3 tangent,
+        inout vec2 uv
+    ) {
+    vec3 result = vertexPosition;
+    // Retrieve the angle between this segment and the previous one (stored in the bitangent w
+    // component).
+    float angle = bitangent.w;
+    // Extrude according to the angle between segments to properly render narrow joints...
     if (angle != 0.0) {
-        pos += uv.y * lineWidth * dir / cos(angle / 2.0);
-        uv.x = ss + uv.x * lineWidth * uv.y * tan(angle / 2.0);
+        result += uv.y * lineWidth * bitangent.xyz / cos(angle / 2.0);
+        uv.x = linePosition + uv.x * lineWidth * uv.y * tan(angle / 2.0);
     }
+    // ... or extrude in a simple manner for segments that keep the same direction.
     else {
-        pos += uv.y * lineWidth * dir + uv.x * lineWidth * t;
-        uv.x = ss + uv.x * lineWidth;
+        result += uv.y * lineWidth * bitangent.xyz + uv.x * lineWidth * tangent;
+        uv.x = linePosition + uv.x * lineWidth;
     }
-}
-`,
-    join_dist_func: `
-float joinDist(vec2 segment, vec2 texcoord) {
-    float d = abs(texcoord.y);
-    float dx = texcoord.x;
-    if (dx < segment.x) {
-        d = max(d, length(texcoord - vec2(segment.x, 0.0)));
-    } else if (dx > segment.y) {
-        d = max(d, length(texcoord - vec2(segment.y, 0.0)));
-    }
-    return d;
+    uv.y *= lineWidth;
+    return result;
 }
 `,
     round_edges_and_add_caps: `
-float roundEdgesAndAddCaps(
-        in vec2 segment,
-        in vec2 uv,
-        in float lineEnds,
-        in float vExtrusionStrength
-    ) {
+float roundEdgesAndAddCaps(in vec4 coords, in vec3 range) {
+    // Compute the line's width to length ratio.
+    float widthRatio = range.y / range.x;
 
-    float dist = 0.0;
+    // Compute the inner segment distance (same for all cap mode).
+    float dist = abs(coords.y);
+    float segmentBeginMask = clamp(ceil(coords.z - coords.x), 0.0, 1.0);
+    float segmentEndMask = clamp(ceil(coords.x - coords.w), 0.0, 1.0);
+    dist = max(dist, segmentBeginMask * length(vec2((coords.x - coords.z) / widthRatio, coords.y)));
+    dist = max(dist, segmentEndMask * length(vec2((coords.x - coords.w) / widthRatio, coords.y)));
 
+    #if !defined(CAPS_ROUND)
+    // Compute the caps mask.
+    float capRangeMask = clamp(1.0 - ceil(range.z - 1.0), 0.0, 1.0);
+    float beginCapMask = clamp(ceil(0.0 - coords.x), 0.0, 1.0);
+    float endCapMask = clamp(ceil(coords.x - 1.0), 0.0, 1.0);
+    float capMask = capRangeMask * max(beginCapMask, endCapMask);
+
+    // Compute the outer segment distance (specific for each cap mode).
+    float capDist = max(coords.x - 1.0, -coords.x) / widthRatio;
     #if defined(CAPS_NONE)
-        if (lineEnds > -0.1 && vExtrusionStrength < 1.0) {
-            dist = max((lineEnds + 0.1) / 0.1, abs(uv.y));
-        } else {
-            dist = joinDist(segment, uv);
-        }
+    dist = mix(dist, max(abs(coords.y), (capDist + 0.1) / 0.1), capMask);
     #elif defined(CAPS_SQUARE)
-        if (lineEnds > 0.0 && vExtrusionStrength < 1.0) {
-            dist = max(abs(uv.y), lineEnds);
-        } else {
-            dist = joinDist(segment, uv);
-        }
+    dist = mix(dist, max(abs(coords.y), capDist), capMask);
     #elif defined(CAPS_TRIANGLE_OUT)
-        if (lineEnds > 0.0 && vExtrusionStrength < 1.0) {
-            dist = (abs(uv.y)) + lineEnds;
-        } else {
-            dist = joinDist(segment, uv);
-        }
+    dist = mix(dist, abs(coords.y) + capDist, capMask);
     #elif defined(CAPS_TRIANGLE_IN)
-        if (lineEnds > 0.0 && vExtrusionStrength < 1.0) {
-            float y = abs(uv.y);
-            dist = max(y, (lineEnds-y) + lineEnds);
-        } else {
-            dist = joinDist(segment, uv);
-        }
-    #else
-        dist = joinDist(segment, uv);
+    dist = mix(dist, max(abs(coords.y), (capDist - abs(coords.y)) + capDist), capMask);
+    #endif
     #endif
 
     return dist;
