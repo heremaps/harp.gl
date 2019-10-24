@@ -1,0 +1,50 @@
+{
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "type": "Feature",
+            "properties": {
+                "name": "triangle",
+                "color": "#f00000"
+            },
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [[[13.75, 53.2], [14.25, 53.2], [14, 53.5], [13.75, 53.2]]]
+            }
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "name": "pentagon",
+                "height": 10000,
+                "color": "#f0f000"
+            },
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [14.5, 53.2],
+                        [14.8, 53.2],
+                        [14.8, 53.5],
+                        [14.5, 53.5],
+                        [14.65, 53.35],
+                        [14.5, 53.2]
+                    ]
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "name": "rectangle",
+                "height": 5000
+            },
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [[15.0, 53.2], [15.4, 53.2], [15.4, 53.5], [15.0, 53.5], [15.0, 53.2]]
+                ]
+            }
+        }
+    ]
+}

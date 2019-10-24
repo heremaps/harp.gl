@@ -18,6 +18,16 @@ const harpDataSourceProtocolPath = path.dirname(
 );
 const harpFontResourcesPath = path.dirname(require.resolve("@here/harp-fontcatalog/package.json"));
 
+const allTests = [
+    ...glob.sync("@here/*/test/**/*.ts"),
+    ...glob.sync("./test/performance/**/*.ts"),
+    ...glob.sync("./test/rendering/*.ts"),
+];
+
+const unitTests = allTests.filter(name => (name.indexOf("/rendering") === -1 && name.indexOf("/performance/") === -1));
+const performanceTests = allTests.filter(name => name.indexOf("/performance/") > -1);
+const renderingTests = allTests.filter(name => name.indexOf("/rendering/") > -1);
+
 const browserTestsConfig = {
     devtool: "source-map",
     resolve: {
@@ -39,8 +49,9 @@ const browserTestsConfig = {
         ]
     },
     entry: {
-        test: glob.sync("@here/*/test/**/*.ts"),
-        "performance-test": glob.sync("test/performance/**/*.ts")
+        test: unitTests,
+        "performance-test": performanceTests,
+        "rendering-test": renderingTests
     },
     output: {
         path: path.join(__dirname, "dist/test"),
@@ -54,6 +65,7 @@ const browserTestsConfig = {
         }),
         new CopyWebpackPlugin([
             path.join(__dirname, "test/index.html"),
+            path.join(__dirname, "test/rendering.html"),
             path.join(__dirname, "test/performance.html"),
             require.resolve("three/build/three.min.js"),
             require.resolve("mocha/mocha.js"),
@@ -69,6 +81,11 @@ const browserTestsConfig = {
             {
                 from: path.join(harpFontResourcesPath, "resources"),
                 to: "@here/harp-fontcatalog/resources"
+            },
+            {
+                from: "./test/resources/",
+                to: "dist/resources",
+                toType: "dir"
             }
         ])
     ],

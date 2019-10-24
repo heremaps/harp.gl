@@ -4,7 +4,8 @@
     "description": "Core render components of harp.gl, an open-source 3D map rendering engine.",
     "workspaces": [
         "@here/*",
-        "test/performance"
+        "test/performance",
+        "test/rendering"
     ],
     "devDependencies": {
         "@strictsoftware/typedoc-plugin-monorepo": "^0.2.1",
