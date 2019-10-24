@@ -107,7 +107,7 @@ export namespace PickingExample {
         const controls = new MapControls(mapView);
 
         // Add an UI.
-        const ui = new MapControlsUI(controls);
+        const ui = new MapControlsUI(controls, { zoomLevel: "input" });
         canvas.parentElement!.appendChild(ui.domElement);
 
         window.addEventListener("resize", () => {

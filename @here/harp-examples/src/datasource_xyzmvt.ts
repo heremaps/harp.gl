@@ -84,7 +84,7 @@ export namespace DatasourceXYZMVTExample {
         // snippet:harp_gl_datasource_xyzmvt_example_2.ts
         const mapControls = new MapControls(map);
         mapControls.maxTiltAngle = 50;
-        const ui = new MapControlsUI(mapControls);
+        const ui = new MapControlsUI(mapControls, { zoomLevel: "input" });
         canvas.parentElement!.appendChild(ui.domElement);
         const NY = new GeoCoordinates(40.707, -74.01);
         map.lookAt(NY, 4000, 50);
