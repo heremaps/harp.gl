@@ -6,3 +6,5 @@
 
 export * from "./lib/TestDataUtils";
 export * from "./lib/TestUtils";
+export * from "./lib/rendering/FeedbackCli";
+export * from "./lib/rendering/FeedbackServer";
