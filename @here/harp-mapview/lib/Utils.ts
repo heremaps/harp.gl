@@ -3,11 +3,19 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-import * as geoUtils from "@here/harp-geoutils";
+
+import * as THREE from "three";
+
+import {
+    GeoCoordinates,
+    MathUtils,
+    Projection,
+    ProjectionType,
+    TileKey
+} from "@here/harp-geoutils";
 import { EarthConstants } from "@here/harp-geoutils/lib/projection/EarthConstants";
 import { MapMeshBasicMaterial, MapMeshStandardMaterial } from "@here/harp-materials";
 import { assert, LoggerManager } from "@here/harp-utils";
-import * as THREE from "three";
 import { MapView } from "./MapView";
 import { getFeatureDataSize, TileFeatureData } from "./Tile";
 
@@ -42,7 +50,15 @@ const tangentSpace = {
 const cache = {
     quaternions: [new THREE.Quaternion(), new THREE.Quaternion()],
     vector3: [new THREE.Vector3(), new THREE.Vector3()],
-    matrix4: [new THREE.Matrix4(), new THREE.Matrix4()]
+    matrix4: [new THREE.Matrix4(), new THREE.Matrix4()],
+    transforms: [
+        {
+            xAxis: new THREE.Vector3(),
+            yAxis: new THREE.Vector3(),
+            zAxis: new THREE.Vector3(),
+            position: new THREE.Vector3()
+        }
+    ]
 };
 
 export namespace MapViewUtils {
@@ -101,16 +117,16 @@ export namespace MapViewUtils {
         const zoomDistance = calculateDistanceToGroundFromZoomLevel(mapView, zoomLevel);
 
         // Set the cameras height according to the given zoom level.
-        if (mapView.projection.type === geoUtils.ProjectionType.Planar) {
+        if (mapView.projection.type === ProjectionType.Planar) {
             mapView.camera.position.setZ(zoomDistance);
-        } else if (mapView.projection.type === geoUtils.ProjectionType.Spherical) {
+        } else if (mapView.projection.type === ProjectionType.Spherical) {
             mapView.camera.position.setLength(EarthConstants.EQUATORIAL_RADIUS + zoomDistance);
         }
 
         // In sphere, we may have to also orbit the camera around the position located at the
         // center of the screen, in order to limit the tilt to `maxTiltAngle`, as we change
         // this tilt by changing the camera's height above.
-        if (mapView.projection.type === geoUtils.ProjectionType.Spherical) {
+        if (mapView.projection.type === ProjectionType.Spherical) {
             const centerScreenTarget = rayCastWorldCoordinates(mapView, 0, 0);
             if (centerScreenTarget !== null) {
                 const tilt = extractSphericalCoordinatesFromLocation(
@@ -136,12 +152,12 @@ export namespace MapViewUtils {
             return;
         }
 
-        if (mapView.projection.type === geoUtils.ProjectionType.Planar) {
+        if (mapView.projection.type === ProjectionType.Planar) {
             // Calculate the difference and pan the map to maintain the map relative to the target
             // position.
             targetPosition.sub(newTargetPosition);
             panCameraAboveFlatMap(mapView, targetPosition.x, targetPosition.y);
-        } else if (mapView.projection.type === geoUtils.ProjectionType.Spherical) {
+        } else if (mapView.projection.type === ProjectionType.Spherical) {
             panCameraAroundGlobe(mapView, targetPosition, newTargetPosition);
         }
     }
@@ -193,33 +209,35 @@ export namespace MapViewUtils {
      * @param distance Distance to the target in meters.
      * @param yawDeg Camera yaw in degrees.
      * @param pitchDeg Camera pitch in degrees.
-     * @param mapView Active MapView, needed to get the camera fov and map projection.
+     * @param projection Active MapView, needed to get the camera fov and map projection.
+     * @param result Optional output vector.
+     * @returns Camera position in world space.
      */
-    export function getCameraCoordinatesFromTargetCoordinates(
-        targetCoordinates: geoUtils.GeoCoordinates,
+    export function getCameraPositionFromTargetCoordinates(
+        targetCoordinates: GeoCoordinates,
         distance: number,
         yawDeg: number,
         pitchDeg: number,
-        mapView: MapView
-    ): geoUtils.GeoCoordinates {
+        projection: Projection,
+        result: THREE.Vector3 = new THREE.Vector3()
+    ): THREE.Vector3 {
         const pitchRad = THREE.Math.degToRad(pitchDeg);
+        const altitude = Math.cos(pitchRad) * distance;
         const yawRad = THREE.Math.degToRad(yawDeg);
-        mapView.projection.projectPoint(targetCoordinates, cache.vector3[1]);
+        projection.projectPoint(targetCoordinates, result);
         const groundDistance = distance * Math.sin(pitchRad);
-        if (mapView.projection.type === geoUtils.ProjectionType.Planar) {
-            cache.vector3[1].set(
-                cache.vector3[1].x + Math.sin(yawRad) * groundDistance,
-                cache.vector3[1].y - Math.cos(yawRad) * groundDistance,
-                0
-            );
-        } else if (mapView.projection.type === geoUtils.ProjectionType.Spherical) {
+        if (projection.type === ProjectionType.Planar) {
+            result.x = result.x + Math.sin(yawRad) * groundDistance;
+            result.y = result.y - Math.cos(yawRad) * groundDistance;
+            result.z = altitude;
+        } else if (projection.type === ProjectionType.Spherical) {
             // In globe yaw and pitch are understood to be in tangent space. The approach below is
             // to find the Z and Y tangent space axes, then rotate Y around Z by the given yaw, and
             // set its new length (groundDistance). Finally the up vector's length is set to the
             // camera height and added to the transformed Y above.
 
             // Get the Z axis in tangent space: it is the normalized position vector of the target.
-            tangentSpace.z.copy(cache.vector3[1]).normalize();
+            tangentSpace.z.copy(result).normalize();
 
             // Get the Y axis (north axis in tangent space):
             tangentSpace.y
@@ -239,11 +257,37 @@ export namespace MapViewUtils {
             // previous computation to get the projection of the camera on the ground, then add
             // the height of the camera in the tangent space.
             const height = distance * Math.cos(pitchRad);
-            cache.vector3[1].add(tangentSpace.y).add(tangentSpace.z.setLength(height));
+            result.add(tangentSpace.y).add(tangentSpace.z.setLength(height));
+
+            const a = EarthConstants.EQUATORIAL_RADIUS + altitude;
+            const b = Math.sin(pitchRad) * distance;
+            const cameraHeight = Math.sqrt(a * a + b * b);
+            result.setLength(cameraHeight);
         }
 
-        // Convert back to GeoCoordinates and return result.
-        return mapView.projection.unprojectPoint(cache.vector3[1]);
+        return result;
+    }
+
+    /**
+     * @deprecated use getCameraPositionFromTargetCoordinates instead
+     */
+    export function getCameraCoordinatesFromTargetCoordinates(
+        targetCoordinates: GeoCoordinates,
+        distance: number,
+        yawDeg: number,
+        pitchDeg: number,
+        mapView: MapView
+    ): GeoCoordinates {
+        return mapView.projection.unprojectPoint(
+            getCameraPositionFromTargetCoordinates(
+                targetCoordinates,
+                distance,
+                yawDeg,
+                pitchDeg,
+                mapView.projection,
+                cache.vector3[1]
+            )
+        );
     }
 
     /**
@@ -286,7 +330,7 @@ export namespace MapViewUtils {
 
         const worldPosition = new THREE.Vector3();
         const result =
-            mapView.projection.type === geoUtils.ProjectionType.Planar
+            mapView.projection.type === ProjectionType.Planar
                 ? rayCaster.ray.intersectPlane(groundPlane, worldPosition)
                 : rayCaster.ray.intersectSphere(groundSphere, worldPosition);
         groundPlane.constant = 0;
@@ -349,10 +393,10 @@ export namespace MapViewUtils {
     ) {
         // 1. Apply yaw: rotate around the vertical axis.
         mapView.camera.rotateOnWorldAxis(
-            mapView.projection.type === geoUtils.ProjectionType.Spherical
+            mapView.projection.type === ProjectionType.Spherical
                 ? cache.vector3[0].copy(mapView.camera.position).normalize()
                 : cache.vector3[0].set(0, 0, 1),
-            geoUtils.MathUtils.degToRad(-deltaYawDeg)
+            MathUtils.degToRad(-deltaYawDeg)
         );
         mapView.camera.updateMatrixWorld();
 
@@ -369,15 +413,55 @@ export namespace MapViewUtils {
         );
         // In sphere projection, the value of a maximum pitch is smaller than the value of the
         // maximum tilt, as the curvature of the surface adds up to it.
-        if (mapView.projection.type === geoUtils.ProjectionType.Spherical) {
+        if (mapView.projection.type === ProjectionType.Spherical) {
             // Deduce max pitch from max tilt. To this end the sine law of triangles is used below.
             const maxPitch = Math.asin(
-                (geoUtils.EarthConstants.EQUATORIAL_RADIUS * Math.sin(Math.PI - maxTiltAngleRad)) /
+                (EarthConstants.EQUATORIAL_RADIUS * Math.sin(Math.PI - maxTiltAngleRad)) /
                     mapView.camera.position.length()
             );
             newPitch = Math.min(newPitch, maxPitch);
         }
         mapView.camera.rotateX(newPitch - pitch);
+    }
+
+    /**
+     * Computes the rotation of the camera according to yaw and pitch in degrees. The computations
+     * hinge on the current `projection` and `target`, because yaw and pitch are defined in
+     * tangent space of the target point.
+     *
+     * **Note:** `yaw == 0 && pitch == 0` will north up the map and you will look downwards onto the
+     * map.
+     *
+     * @param projection Current projection.
+     * @param target The camera target.
+     * @param yawDeg Yaw in degrees, counter-clockwise (as opposed to azimuth), starting north.
+     * @param pitchDeg Pitch in degrees.
+     */
+    export function getCameraRotationAtTarget(
+        projection: Projection,
+        target: GeoCoordinates,
+        yawDeg: number,
+        pitchDeg: number,
+        result: THREE.Quaternion = new THREE.Quaternion()
+    ): THREE.Quaternion {
+        const transform = cache.transforms[0];
+        projection.localTangentSpace(target, transform);
+
+        cache.matrix4[0].makeBasis(transform.xAxis, transform.yAxis, transform.zAxis);
+        result.setFromRotationMatrix(cache.matrix4[0]);
+
+        cache.quaternions[0].setFromAxisAngle(
+            cache.vector3[1].set(0, 0, 1),
+            THREE.Math.degToRad(yawDeg)
+        );
+        cache.quaternions[1].setFromAxisAngle(
+            cache.vector3[1].set(1, 0, 0),
+            THREE.Math.degToRad(pitchDeg)
+        );
+
+        result.multiply(cache.quaternions[0]);
+        result.multiply(cache.quaternions[1]);
+        return result;
     }
 
     /**
@@ -393,35 +477,13 @@ export namespace MapViewUtils {
      * @param pitchDeg Pitch in degrees.
      */
     export function setRotation(mapView: MapView, yawDeg: number, pitchDeg: number) {
-        const transform = {
-            xAxis: space.x,
-            yAxis: space.y,
-            zAxis: space.z,
-            position: cache.vector3[0]
-        };
-        mapView.projection.localTangentSpace(mapView.geoCenter, transform);
-
-        // `cache.matrix4[1]` thereafter is the transform matrix,
-        // `cache.matrix4[0]` the rotation matrix.
-        cache.matrix4[1].makeBasis(transform.xAxis, transform.yAxis, transform.zAxis);
-        cache.matrix4[1].setPosition(
-            transform.position.x,
-            transform.position.y,
-            transform.position.z
+        getCameraRotationAtTarget(
+            mapView.projection,
+            mapView.geoCenter,
+            yawDeg,
+            pitchDeg,
+            mapView.camera.quaternion
         );
-        cache.quaternions[0].setFromAxisAngle(
-            cache.vector3[1].set(0, 0, 1),
-            THREE.Math.degToRad(yawDeg)
-        );
-        cache.quaternions[1].setFromAxisAngle(
-            cache.vector3[1].set(1, 0, 0),
-            THREE.Math.degToRad(pitchDeg)
-        );
-        cache.quaternions[0].multiply(cache.quaternions[1]);
-        cache.matrix4[0].makeRotationFromQuaternion(cache.quaternions[0]);
-        cache.matrix4[1].multiply(cache.matrix4[0]);
-        mapView.camera.setRotationFromMatrix(cache.matrix4[1]);
-        mapView.camera.position.setFromMatrixPosition(cache.matrix4[1]);
         mapView.camera.updateMatrixWorld(true);
     }
 
@@ -502,7 +564,7 @@ export namespace MapViewUtils {
     export function extractSphericalCoordinatesFromLocation(
         mapView: MapView,
         object: THREE.Object3D,
-        location: geoUtils.GeoCoordinates
+        location: GeoCoordinates
     ): { azimuth: number; tilt: number } {
         mapView.projection.localTangentSpace(location, {
             xAxis: tangentSpace.x,
@@ -594,7 +656,7 @@ export namespace MapViewUtils {
         mapView: MapView,
         pointOnScreenXinNDC: number,
         pointOnScreenYinNDC: number
-    ): geoUtils.GeoCoordinates | null {
+    ): GeoCoordinates | null {
         const worldCoordinates = rayCastWorldCoordinates(
             mapView,
             pointOnScreenXinNDC,
@@ -1109,7 +1171,7 @@ export namespace TileOffsetUtils {
      *      enough space to store 16 unique tiles in a single view.
      */
     export function getKeyForTileKeyAndOffset(
-        tileKey: geoUtils.TileKey,
+        tileKey: TileKey,
         offset: number,
         bitshift: number = 4
     ) {
@@ -1156,9 +1218,7 @@ export namespace TileOffsetUtils {
      */
     export function getParentKeyFromKey(calculatedKey: number, bitshift: number = 4) {
         const { offset, mortonCode } = extractOffsetAndMortonKeyFromKey(calculatedKey, bitshift);
-        const parentTileKey = geoUtils.TileKey.fromMortonCode(
-            geoUtils.TileKey.parentMortonCode(mortonCode)
-        );
+        const parentTileKey = TileKey.fromMortonCode(TileKey.parentMortonCode(mortonCode));
         return getKeyForTileKeyAndOffset(parentTileKey, offset, bitshift);
     }
 

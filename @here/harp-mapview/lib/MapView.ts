@@ -1877,28 +1877,23 @@ export class MapView extends THREE.EventDispatcher {
         const limitedTilt = Math.min(89, tiltDeg);
         // MapViewUtils#setRotation uses pitch, not tilt, which is different in sphere projection.
         // But in sphere, in the tangent space of the target of the camera, pitch = tilt. So, put
-        // the camera on the target, so the tilt can be passed to setRotation as a pitch.
-        this.geoCenter = target;
-        MapViewUtils.setRotation(this, -azimuthDeg, limitedTilt);
-        // Then deduce the actual geoCenter.
-        this.geoCenter = MapViewUtils.getCameraCoordinatesFromTargetCoordinates(
+        // the camera on the target, so the tilt can be passed to getRotation as a pitch.
+        MapViewUtils.getCameraRotationAtTarget(
+            this.projection,
+            target,
+            -azimuthDeg,
+            limitedTilt,
+            this.camera.quaternion
+        );
+        MapViewUtils.getCameraPositionFromTargetCoordinates(
             target,
             distance,
             -azimuthDeg,
             limitedTilt,
-            this
+            this.projection,
+            this.camera.position
         );
-        // Then set the camera's altitude.
-        const pitchRad = THREE.Math.degToRad(limitedTilt);
-        const altitude = Math.cos(pitchRad) * distance;
-        if (this.projection.type === ProjectionType.Planar) {
-            this.camera.position.setZ(altitude);
-        } else if (this.projection.type === ProjectionType.Spherical) {
-            const a = EarthConstants.EQUATORIAL_RADIUS + altitude;
-            const b = Math.sin(pitchRad) * distance;
-            const cameraHeight = Math.sqrt(a * a + b * b);
-            this.camera.position.setLength(cameraHeight);
-        }
+        this.camera.updateMatrixWorld(true);
     }
 
     /**
