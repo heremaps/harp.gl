@@ -186,6 +186,7 @@ const tempBox2D = new Math2D.Box();
 
 const tempPosition = new THREE.Vector3();
 const tempScreenPosition = new THREE.Vector2();
+const tempScreenPoints: THREE.Vector2[] = [];
 const tempPoiScreenPosition = new THREE.Vector2();
 
 class TileTextElements {
@@ -733,14 +734,12 @@ export class TextElementsRenderer {
             }
 
             const isPathLabel = textElement.isPathLabel;
-            let screenPoints: THREE.Vector2[];
 
             // For paths, check if the label may fit.
             if (isPathLabel) {
                 // TODO: HARP-7648. checkForSmallLabels takes a large part of text placement time.
                 // Try to make it faster or execute cheaper rejection tests before.
-                const screenPointsResult = this.checkForSmallLabels(textElement);
-                if (screenPointsResult === undefined) {
+                if (!this.checkForSmallLabels(textElement, tempScreenPoints)) {
                     if (placementStats) {
                         placementStats.numNotVisible++;
                     }
@@ -752,7 +751,6 @@ export class TextElementsRenderer {
                     textElementState.reset();
                     continue;
                 }
-                screenPoints = screenPointsResult;
             }
 
             // Trigger the glyph load if needed.
@@ -855,7 +853,7 @@ export class TextElementsRenderer {
                 this.addPathLabel(
                     textElementState,
                     groupState,
-                    screenPoints!,
+                    tempScreenPoints,
                     textCanvas,
                     mapViewState,
                     temp
@@ -2295,45 +2293,25 @@ export class TextElementsRenderer {
         return true;
     }
 
-    private checkForSmallLabels(textElement: TextElement): THREE.Vector2[] | undefined {
-        let indexOfFirstVisibleScreenPoint = -1;
+    private checkForSmallLabels(textElement: TextElement, screenPoints: THREE.Vector2[]): boolean {
         // Get the screen points that define the label's segments and create a path with
         // them.
-        const screenPoints: THREE.Vector2[] = [];
-        let minX = Number.MAX_SAFE_INTEGER;
-        let maxX = Number.MIN_SAFE_INTEGER;
-        let minY = Number.MAX_SAFE_INTEGER;
-        let maxY = Number.MIN_SAFE_INTEGER;
+        screenPoints.length = 0;
+        let anyPointVisible = false;
+
         for (const pt of textElement.path!) {
             tempPosition.copy(pt).add(textElement.tileCenter!);
-            const screenPoint = this.m_screenProjector.project(tempPosition, tempScreenPosition);
+
+            // Skip invisible points at the beginning of the path.
+            const screenPoint = anyPointVisible
+                ? this.m_screenProjector.project(tempPosition, tempScreenPosition)
+                : this.m_screenProjector.projectOnScreen(tempPosition, tempScreenPosition);
             if (screenPoint === undefined) {
                 continue;
             }
+            anyPointVisible = true;
+
             screenPoints.push(tempScreenPosition.clone());
-
-            if (screenPoint.x < minX) {
-                minX = screenPoint.x;
-            }
-            if (screenPoint.x > maxX) {
-                maxX = screenPoint.x;
-            }
-            if (screenPoint.y < minY) {
-                minY = screenPoint.y;
-            }
-            if (screenPoint.y > maxY) {
-                maxY = screenPoint.y;
-            }
-
-            if (indexOfFirstVisibleScreenPoint < 0) {
-                const firstIndex = screenPoints.findIndex(p2 => {
-                    return this.m_screenCollisions.screenBounds.contains(p2.x, p2.y);
-                });
-
-                if (firstIndex >= 0) {
-                    indexOfFirstVisibleScreenPoint = firstIndex;
-                }
-            }
         }
 
         // TODO: (HARP-3515)
@@ -2343,22 +2321,23 @@ export class TextElementsRenderer {
         //      the visible part of the path.
 
         // If not a single point is visible, skip the path
-        if (indexOfFirstVisibleScreenPoint === -1) {
-            return undefined;
+        if (!anyPointVisible) {
+            return false;
         }
 
         // Check/guess if the screen box can hold a string of that length. It is important
         // to guess that value without measuring the font first to save time.
         const minScreenSpace = textElement.text.length * MIN_AVERAGE_CHAR_WIDTH;
-        if (
-            (maxX - minX) * (maxX - minX) + (maxY - minY) * (maxY - minY) <
-            minScreenSpace * minScreenSpace
-        ) {
+
+        tempBox.setFromPoints(screenPoints);
+        const boxDiagonalSq = tempBox.max.sub(tempBox.min).lengthSq();
+
+        if (boxDiagonalSq < minScreenSpace * minScreenSpace) {
             textElement.dbgPathTooSmall = true;
-            return undefined;
+            return false;
         }
 
-        return screenPoints;
+        return true;
     }
 
     private checkIfOverloaded(): boolean {

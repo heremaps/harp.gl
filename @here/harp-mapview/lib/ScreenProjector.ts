@@ -8,6 +8,14 @@ import { Vector3Like } from "@here/harp-geoutils";
 import * as THREE from "three";
 
 /**
+ * Determines whether a position in NDC (Normalized Device Coordinates) is inside the screen.
+ * @param ndc The position to check.
+ */
+function isOnScreen(ndc: THREE.Vector3) {
+    return ndc.z > -1 && ndc.z < 1 && ndc.x >= -1 && ndc.x <= 1 && ndc.y >= -1 && ndc.y <= 1;
+}
+
+/**
  * @hidden
  * Handles the projection of world coordinates to screen coordinates.
  */
@@ -54,8 +62,27 @@ export class ScreenProjector {
     ): THREE.Vector2 | undefined {
         const p = this.projectVector(source, ScreenProjector.tempV3);
         if (p.z > -1 && p.z < 1) {
-            target.set((p.x * this.m_width) / 2, (p.y * this.m_height) / 2);
-            return target;
+            return this.ndcToScreen(p, target);
+        }
+        return undefined;
+    }
+
+    /**
+     * Apply current projectionViewMatrix of the camera to project the source vector into
+     * screen coordinates.
+     *
+     * @param {(Vector3Like)} source The source vector to project.
+     * @param {THREE.Vector2} target The target vector.
+     * @returns {THREE.Vector2} The projected vector (the parameter 'target') or undefined if
+     * outside the screen.
+     */
+    projectOnScreen(
+        source: Vector3Like,
+        target: THREE.Vector2 = new THREE.Vector2()
+    ): THREE.Vector2 | undefined {
+        const p = this.projectVector(source, ScreenProjector.tempV3);
+        if (isOnScreen(p)) {
+            return this.ndcToScreen(p, target);
         }
         return undefined;
     }
@@ -101,10 +128,7 @@ export class ScreenProjector {
      */
     onScreen(source: Vector3Like): boolean {
         const p = this.projectVector(source, ScreenProjector.tempV3);
-        if (p.z > -1 && p.z < 1) {
-            return p.x >= -1 && p.x <= 1 && p.y >= -1 && p.y <= 1;
-        }
-        return false;
+        return isOnScreen(p);
     }
 
     /**
@@ -118,5 +142,9 @@ export class ScreenProjector {
         this.m_camera = camera;
         this.m_width = width;
         this.m_height = height;
+    }
+
+    private ndcToScreen(ndc: THREE.Vector3, screenCoords: THREE.Vector2): THREE.Vector2 {
+        return screenCoords.set((ndc.x * this.m_width) / 2, (ndc.y * this.m_height) / 2);
     }
 }
