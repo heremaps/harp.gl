@@ -115,7 +115,6 @@ describe("MapControls", function() {
         });
         mapControls.m_touchState.touches = { length: 5 };
         sandbox.stub(mapControls, "updateTouches");
-        sandbox.stub(mapControls, "updateTouchState");
         sandbox.stub(mapControls, "dispatchEvent");
 
         expect(updateStub.callCount).to.be.equal(0);
