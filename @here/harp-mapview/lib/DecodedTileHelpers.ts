@@ -462,6 +462,9 @@ export function applyTechniqueToMaterial(
         if (level !== undefined && isInterpolatedProperty(value)) {
             value = getPropertyValue(value, level);
         }
+
+        // tslint:disable-next-line:no-console
+        console.log("X", prop, m[prop], typeof m[prop], value, m[prop] instanceof THREE.Color);
         if (m[prop] instanceof THREE.Color) {
             m[prop].set(value);
             m[prop] = m[prop]; // Trigger setter

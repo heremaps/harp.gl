@@ -29,12 +29,17 @@ jobs:
       with:
         node-version: ${{ matrix.node_version }}
     - name: Install dependencies
-      run: yarn
+      run: |
+        yarn
+        yarn list
     - name: Pretest
       run: yarn run pre-test
       shell: bash
     - name: Test on Node.js
       run: |
+        node -p 'process.cwd()'
+        node -p 'const path = require("path"); path.normalize(process.cwd())'
+        cd `echo $PWD | tr A-Z a-z`
         yarn cov-test --forbid-only
       shell: bash
     - name: Generate coverage report
@@ -73,6 +78,7 @@ jobs:
         export PATH=`pwd`:$PATH
         cp node_modules/geckodriver/geckodriver.exe .
         yarn test-browser --headless-firefox
+      shell: bash
       if: matrix.os == 'windows-latest'
     - name: Tests on Firefox (Linux)
       run: |

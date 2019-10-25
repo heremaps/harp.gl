@@ -124,6 +124,8 @@ describe("PolarTileDataSource", function() {
             }
             const mat = material as any;
             if (mat.color !== undefined) {
+                // tslint:disable-next-line:no-console
+                console.log("X", typeof mat.color, mat.color);
                 assert.equal("#" + mat.color.getHexString(), color);
             }
         }
