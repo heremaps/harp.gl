@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GeoCoordinates, sphereProjection } from "@here/harp-geoutils";
+import { sphereProjection } from "@here/harp-geoutils";
 import { MapControls, MapControlsUI } from "@here/harp-map-controls";
 import { CopyrightElementHandler, MapView } from "@here/harp-mapview";
 import { APIFormat, OmvDataSource } from "@here/harp-omv-datasource";
@@ -49,9 +49,6 @@ export namespace GlobeExample {
         const mapControls = new MapControls(map);
         const ui = new MapControlsUI(mapControls, { zoomLevel: "input" });
         map.canvas.parentElement!.appendChild(ui.domElement);
-
-        const NY = new GeoCoordinates(40.71, -74.007);
-        map.setCameraGeolocationAndZoom(NY, 3.2);
     }
 
     main();

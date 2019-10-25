@@ -2919,7 +2919,7 @@ export class MapView extends THREE.EventDispatcher {
     private setupCamera() {
         const { width, height } = this.getCanvasClientSize();
 
-        const defaultGeoCenter = new GeoCoordinates(52.518611, 13.376111, 3000);
+        const defaultGeoCenter = new GeoCoordinates(25, 0, 30000000);
 
         this.projection.projectPoint(defaultGeoCenter, this.m_camera.position);
 

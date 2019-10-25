@@ -10,7 +10,7 @@ import {
     MapViewFeature,
     MapViewMultiPolygonFeature
 } from "@here/harp-features-datasource";
-import { GeoCoordinates, sphereProjection } from "@here/harp-geoutils";
+import { sphereProjection } from "@here/harp-geoutils";
 import { MapControls, MapControlsUI } from "@here/harp-map-controls";
 import { MapView } from "@here/harp-mapview";
 import { TopViewClipPlanesEvaluator } from "@here/harp-mapview/lib/ClipPlanesEvaluator";
@@ -318,7 +318,6 @@ export namespace PolygonsFeaturesExample {
                 }
             }
         });
-        mapView.setCameraGeolocationAndZoom(new GeoCoordinates(30, 10), 3.2);
         mapView.renderLabels = false;
 
         const controls = new MapControls(mapView);
