@@ -31,13 +31,19 @@ import { DataSource } from "../DataSource";
 import { debugContext } from "../DebugContext";
 import { MapView } from "../MapView";
 import { PickObjectType, PickResult } from "../PickHandler";
+import { PoiManager } from "../poi/PoiManager";
 import { PoiRenderer } from "../poi/PoiRenderer";
 import { IBox, LineWithBound, ScreenCollisions } from "../ScreenCollisions";
 import { ScreenProjector } from "../ScreenProjector";
 import { Tile } from "../Tile";
 import { MapViewUtils } from "../Utils";
 import { DataSourceTileList } from "../VisibleTileSet";
-import { checkReadyForPlacement, computeViewDistance, getMaxViewDistance } from "./Placement";
+import {
+    checkReadyForPlacement,
+    computeViewDistance,
+    getMaxViewDistance,
+    PrePlacementResult
+} from "./Placement";
 import { PlacementStats } from "./PlacementStats";
 import { FadingState, RenderState } from "./RenderState";
 import { SimpleLineCurve, SimplePath } from "./SimplePath";
@@ -230,8 +236,10 @@ export class TextElementsRenderer {
      *
      * @param m_mapView MapView to render into
      * @param m_viewState State of the view for which this renderer will draw text.
-     * @param m_renderer The THREE.js `WebGLRenderer` used by the text renderer.
+     * @param m_viewCamera Camera used by the view for which this renderer will draw text.
      * @param m_viewUpdateCallback To be called whenever the view needs to be updated.
+     * @param m_renderer The THREE.js `WebGLRenderer` used by the text renderer.
+     * @param m_poiManager To prepare pois for rendering.
      * @param m_screenCollisions General 2D screen occlusion management, may be shared between
      *     instances.
      * @param m_screenProjector Projects 3D coordinates into screen space.
@@ -242,8 +250,10 @@ export class TextElementsRenderer {
     constructor(
         private m_mapView: MapView,
         private m_viewState: ViewState,
-        private m_renderer: THREE.WebGLRenderer,
+        private m_viewCamera: THREE.Camera,
         private m_viewUpdateCallback: ViewUpdateCallback,
+        private m_renderer: THREE.WebGLRenderer,
+        private m_poiManager: PoiManager,
         private m_screenCollisions: ScreenCollisions,
         private m_screenProjector: ScreenProjector,
         private m_theme: Theme,
@@ -950,7 +960,6 @@ export class TextElementsRenderer {
         this.checkIfOverloaded(dataSourceTileList);
 
         // Used with tile offset to compute the x coordinate offset for tiles.
-        const worldMaxX = projection.worldExtent(0, 0).max.x;
         const updateStartTime =
             this.overloaded && this.m_viewState.isDynamic ? PerformanceTimer.now() : undefined;
 
@@ -967,7 +976,7 @@ export class TextElementsRenderer {
                 tileList.dataSource,
                 tileList.storageLevel,
                 Array.from(tileList.renderedTiles.values()),
-                worldMaxX,
+                projection,
                 updateStartTime
             );
         });
@@ -981,7 +990,7 @@ export class TextElementsRenderer {
         tileDataSource: DataSource,
         storageLevel: number,
         visibleTiles: Tile[],
-        worldMaxX: number,
+        projection: Projection,
         updateStartTime: number | undefined
     ) {
         if (updateStats) {
@@ -996,7 +1005,7 @@ export class TextElementsRenderer {
 
         // Prepare user text elements.
         for (const tile of sortedTiles) {
-            this.prepareTextElementGroup(tile.userTextElements, tile, worldMaxX);
+            this.prepareTextElementGroup(tile.userTextElements, tile, projection);
         }
 
         const sortedGroups: TextElementLists[] = [];
@@ -1005,7 +1014,7 @@ export class TextElementsRenderer {
         let numTextElementsUpdated = 0;
 
         for (const textElementLists of sortedGroups) {
-            this.selectTextElementsToUpdateByDistance(textElementLists, worldMaxX);
+            this.selectTextElementsToUpdateByDistance(textElementLists, projection);
 
             // The value of updateStartTime is set if this.overloaded is true.
             if (updateStartTime !== undefined) {
@@ -1033,28 +1042,38 @@ export class TextElementsRenderer {
     private prepareTextElementGroup(
         textElementGroup: TextElementGroup,
         tile: Tile,
-        worldMaxX: number,
+        projection: Projection,
         maxViewDistance?: number
     ) {
         if (textElementGroup.elements.length === 0) {
             return;
         }
 
-        const worldOffsetX = worldMaxX * tile.offset;
+        const worldOffsetX = projection.worldExtent(0, 0).max.x * tile.offset;
 
         const textElementSelection: TextElementFilter = (
             textElement: TextElement,
             lastFrameNumber?: number
         ): number | undefined => {
-            const { result, viewDistance } = checkReadyForPlacement(
+            let { result, viewDistance } = checkReadyForPlacement(
                 textElement,
                 tile,
                 worldOffsetX,
-                this.m_mapView,
-                this.m_textElementStateCache,
-                maxViewDistance,
-                lastFrameNumber
+                this.m_viewState,
+                this.m_viewCamera,
+                this.m_poiManager,
+                projection.type,
+                maxViewDistance
             );
+
+            if (
+                result === PrePlacementResult.Ok &&
+                !this.m_textElementStateCache.deduplicateElement(textElement, lastFrameNumber)
+            ) {
+                result = PrePlacementResult.Duplicate;
+                viewDistance = undefined;
+            }
+
             if (updateStats) {
                 updateStats.totalLabels++;
                 updateStats.results[result]++;
@@ -1143,19 +1162,19 @@ export class TextElementsRenderer {
 
     private selectTextElementsToUpdateByDistance(
         textElementLists: TextElementLists,
-        worldMaxX: number
+        projection: Projection
     ) {
         const farDistanceLimitRatio = Math.max(
             this.m_options.maxDistanceRatioForTextLabels!,
             this.m_options.maxDistanceRatioForPoiLabels!
         );
-        const maxViewDistance = getMaxViewDistance(this.m_mapView, farDistanceLimitRatio);
+        const maxViewDistance = getMaxViewDistance(this.m_viewState, farDistanceLimitRatio);
 
         for (const tileTextElements of textElementLists.lists) {
             this.prepareTextElementGroup(
                 tileTextElements.group,
                 tileTextElements.tile,
-                worldMaxX,
+                projection,
                 maxViewDistance
             );
         }
@@ -1454,7 +1473,7 @@ export class TextElementsRenderer {
         const textRenderState: RenderState = labelState.textRenderState!;
         const iconRenderState: RenderState = labelState.iconRenderState!;
         const poiTextMaxDistance = getMaxViewDistance(
-            this.m_mapView,
+            this.m_viewState,
             this.m_options.maxDistanceRatioForPoiLabels!
         );
 
@@ -1951,7 +1970,7 @@ export class TextElementsRenderer {
     ): boolean {
         // TODO: HARP-7649. Add fade out transitions for path labels.
         const textMaxDistance = getMaxViewDistance(
-            this.m_mapView,
+            this.m_viewState,
             this.m_options.maxDistanceRatioForTextLabels!
         );
         const pathLabel = labelState.element;

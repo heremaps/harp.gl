@@ -3165,8 +3165,10 @@ export class MapView extends THREE.EventDispatcher {
         return new TextElementsRenderer(
             this,
             new MapViewState(this, this.checkIfTilesChanged.bind(this)),
-            this.renderer,
+            this.m_camera,
             updateCallback,
+            this.renderer,
+            this.m_poiManager,
             this.m_screenCollisions,
             this.m_screenProjector,
             this.m_theme,
