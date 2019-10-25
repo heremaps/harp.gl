@@ -3226,7 +3226,10 @@ export class MapView extends THREE.EventDispatcher {
         this.poiTableManager.clear();
 
         // Add the POI tables defined in the theme.
-        this.poiTableManager.loadPoiTables(this.m_theme as Theme);
+        this.poiTableManager
+            .loadPoiTables(this.m_theme as Theme)
+            .then(() => this.update())
+            .catch(() => this.update());
     }
 
     private setupStats(enable: boolean) {
