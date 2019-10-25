@@ -7,10 +7,10 @@
 import { ProjectionType } from "@here/harp-geoutils";
 import { MathUtils } from "@here/harp-utils";
 import * as THREE from "three";
-import { MapView } from "../MapView";
+import { PoiManager } from "../poi/PoiManager";
 import { Tile } from "../Tile";
 import { TextElement } from "./TextElement";
-import { TextElementStateCache } from "./TextElementStateCache";
+import { ViewState } from "./ViewState";
 
 /**
  * Functions related to text element placement.
@@ -28,13 +28,15 @@ const tempTextElementPosition = new THREE.Vector3(0, 0, 0);
  * `undefined`.
  */
 function checkViewDistance(
+    worldCenter: THREE.Vector3,
     textElement: TextElement,
-    mapView: MapView,
+    projectionType: ProjectionType,
+    camera: THREE.Camera,
     maxViewDistance: number
 ): number | undefined {
-    const textDistance = computeViewDistance(mapView.worldCenter, textElement);
+    const textDistance = computeViewDistance(worldCenter, textElement);
 
-    if (mapView.projection.type !== ProjectionType.Spherical) {
+    if (projectionType !== ProjectionType.Spherical) {
         return textDistance <= maxViewDistance ? textDistance : undefined;
     }
 
@@ -42,7 +44,7 @@ function checkViewDistance(
     tempTextElementPosition.copy(textElement.position).add(textElement.tileCenter!);
     tempTextElementPosition.normalize();
     const cameraDir = new THREE.Vector3();
-    mapView.camera.getWorldDirection(cameraDir);
+    camera.getWorldDirection(cameraDir);
 
     // TODO: Revisit, why is this angle check needed and where does the constant -0.6 come from?
     return tempTextElementPosition.dot(cameraDir) < -0.6 && textDistance <= maxViewDistance
@@ -81,12 +83,12 @@ export function computeViewDistance(refPosition: THREE.Vector3, textElement: Tex
 /**
  * Computes the maximum view distance for text elements as a ratio of the given view's maximum far
  * plane distance.
- * @param mapView The view for which the maximum view distance will be calculated.
+ * @param viewState The view for which the maximum view distance will be calculated.
  * @param farDistanceLimitRatio The ratio to apply to the maximum far plane distance.
  * @returns Maximum view distance.
  */
-export function getMaxViewDistance(mapView: MapView, farDistanceLimitRatio: number): number {
-    return mapView.viewRanges.maximum * farDistanceLimitRatio;
+export function getMaxViewDistance(viewState: ViewState, farDistanceLimitRatio: number): number {
+    return viewState.maxVisibilityDist * farDistanceLimitRatio;
 }
 
 /**
@@ -107,11 +109,12 @@ export enum PrePlacementResult {
  * @param textElement The Text element to check.
  * @param tile The tile to which the text element belongs.
  * @param worldOffsetX The tile's X offset.
- * @param mapView The view where the text element is meant to be placed.
- * @param textElementCache The text element cache, needed to deduplicate text elements.
+ * @param viewState The view for which the text element will be placed.
+ * @param viewCamera The view's camera.
+ * @param m_poiManager To prepare pois for rendering.
+ * @param projectionType The projection type currently used from geo to world space.
  * @param [maxViewDistance] If specified, text elements farther than this max distance will be
  * rejected.
- * @param [lastFrameNumber] Last frame number when the text element was placed (if any).
  * @returns An object with the result code and the text element view distance
  * ( or `undefined` of the checks failed) as second.
  */
@@ -119,10 +122,11 @@ export function checkReadyForPlacement(
     textElement: TextElement,
     tile: Tile,
     worldOffsetX: number,
-    mapView: MapView,
-    textElementCache: TextElementStateCache,
-    maxViewDistance?: number,
-    lastFrameNumber?: number
+    viewState: ViewState,
+    viewCamera: THREE.Camera,
+    poiManager: PoiManager,
+    projectionType: ProjectionType,
+    maxViewDistance?: number
 ): { result: PrePlacementResult; viewDistance: number | undefined } {
     let viewDistance: number | undefined;
 
@@ -132,7 +136,7 @@ export function checkReadyForPlacement(
 
     // If a PoiTable is specified in the technique, the table is required to be
     // loaded before the POI can be rendered.
-    if (!mapView.poiManager.updatePoiFromPoiTable(textElement)) {
+    if (!poiManager.updatePoiFromPoiTable(textElement)) {
         // PoiTable has not been loaded, but is required to determine
         // visibility.
         return { result: PrePlacementResult.NotReady, viewDistance };
@@ -142,7 +146,11 @@ export function checkReadyForPlacement(
     // updatePoiFromPoiTable, since that function may change those values.
     if (
         !textElement.visible ||
-        !MathUtils.isClamped(mapView.zoomLevel, textElement.minZoomLevel, textElement.maxZoomLevel)
+        !MathUtils.isClamped(
+            viewState.zoomLevel,
+            textElement.minZoomLevel,
+            textElement.maxZoomLevel
+        )
     ) {
         return { result: PrePlacementResult.Invisible, viewDistance };
     }
@@ -159,16 +167,17 @@ export function checkReadyForPlacement(
 
     viewDistance =
         maxViewDistance === undefined
-            ? computeViewDistance(mapView.worldCenter, textElement)
-            : checkViewDistance(textElement, mapView, maxViewDistance);
+            ? computeViewDistance(viewState.worldCenter, textElement)
+            : checkViewDistance(
+                  viewState.worldCenter,
+                  textElement,
+                  projectionType,
+                  viewCamera,
+                  maxViewDistance
+              );
 
     if (viewDistance === undefined) {
         return { result: PrePlacementResult.TooFar, viewDistance };
-    }
-
-    if (!textElementCache.deduplicateElement(textElement, lastFrameNumber)) {
-        viewDistance = undefined;
-        return { result: PrePlacementResult.Duplicate, viewDistance };
     }
 
     return { result: PrePlacementResult.Ok, viewDistance };
