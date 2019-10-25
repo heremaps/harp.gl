@@ -27,10 +27,10 @@ import * as THREE from "three";
 import { Projection } from "@here/harp-geoutils";
 import { DataSource } from "../DataSource";
 import { debugContext } from "../DebugContext";
-import { MapView } from "../MapView";
 import { PickObjectType, PickResult } from "../PickHandler";
 import { PoiManager } from "../poi/PoiManager";
 import { PoiRenderer } from "../poi/PoiRenderer";
+import { PoiRendererFactory } from "../poi/PoiRendererFactory";
 import { IBox, LineWithBound, ScreenCollisions } from "../ScreenCollisions";
 import { ScreenProjector } from "../ScreenProjector";
 import { Tile } from "../Tile";
@@ -46,6 +46,7 @@ import {
 import { PlacementStats } from "./PlacementStats";
 import { RenderState } from "./RenderState";
 import { SimpleLineCurve, SimplePath } from "./SimplePath";
+import { TextCanvasFactory } from "./TextCanvasFactory";
 import { TextCanvasRenderer } from "./TextCanvasRenderer";
 import { LoadingState, poiIsRenderable, TextElement, TextPickResult } from "./TextElement";
 import { TextElementGroup } from "./TextElementGroup";
@@ -236,28 +237,28 @@ export class TextElementsRenderer {
      * a preprocessing step, which is not done every frame, and also renders the placed
      * [[TextElement]]s every frame.
      *
-     * @param m_mapView MapView to render into
      * @param m_viewState State of the view for which this renderer will draw text.
      * @param m_viewCamera Camera used by the view for which this renderer will draw text.
      * @param m_viewUpdateCallback To be called whenever the view needs to be updated.
-     * @param m_renderer The THREE.js `WebGLRenderer` used by the text renderer.
-     * @param m_poiManager To prepare pois for rendering.
      * @param m_screenCollisions General 2D screen occlusion management, may be shared between
      *     instances.
      * @param m_screenProjector Projects 3D coordinates into screen space.
+     * @param m_textCanvasFactory To create TextCanvas instances.
+     * @param m_poiRendererFactory To create PoiRenderer instances.
+     * @param m_poiManager To prepare pois for rendering.
      * @param m_theme Theme defining  text styles.
      * @param options Configuration options for the text renderer. See
      * [[TextElementsRendererOptions]].
      */
     constructor(
-        private m_mapView: MapView,
         private m_viewState: ViewState,
         private m_viewCamera: THREE.Camera,
         private m_viewUpdateCallback: ViewUpdateCallback,
-        private m_renderer: THREE.WebGLRenderer,
-        private m_poiManager: PoiManager,
         private m_screenCollisions: ScreenCollisions,
         private m_screenProjector: ScreenProjector,
+        private m_textCanvasFactory: TextCanvasFactory,
+        private m_poiManager: PoiManager,
+        private m_poiRendererFactory: PoiRendererFactory,
         private m_theme: Theme,
         options: TextElementsRendererOptions
     ) {
@@ -265,6 +266,11 @@ export class TextElementsRenderer {
 
         this.m_options = { ...options };
         initializeDefaultOptions(this.m_options);
+
+        this.m_textCanvasFactory.setGlyphCountLimits(
+            this.m_options.minNumGlyphs!,
+            this.m_options.maxNumGlyphs!
+        );
     }
 
     /**
@@ -861,17 +867,14 @@ export class TextElementsRenderer {
             this.m_catalogsLoading += 1;
             const fontCatalogPromise: Promise<void> = FontCatalog.load(fontCatalogConfig.url, 1024)
                 .then((loadedFontCatalog: FontCatalog) => {
-                    const loadedTextCanvas = new TextCanvas({
-                        renderer: this.m_renderer,
-                        fontCatalog: loadedFontCatalog,
-                        minGlyphCount: this.m_options.minNumGlyphs!,
-                        maxGlyphCount: this.m_options.maxNumGlyphs!
-                    });
+                    const loadedTextCanvas = this.m_textCanvasFactory.createTextCanvas(
+                        loadedFontCatalog
+                    );
 
                     this.m_textRenderers.push({
                         fontCatalog: fontCatalogConfig.name,
                         textCanvas: loadedTextCanvas,
-                        poiRenderer: new PoiRenderer(this.m_mapView, loadedTextCanvas)
+                        poiRenderer: this.m_poiRendererFactory.createPoiRenderer(loadedTextCanvas)
                     });
                 })
                 .catch((error: Error) => {
@@ -891,7 +894,9 @@ export class TextElementsRenderer {
                     defaultTextCanvas = textRenderer.textCanvas;
                 }
             });
-            const defaultPoiRenderer = new PoiRenderer(this.m_mapView, defaultTextCanvas!);
+            const defaultPoiRenderer = this.m_poiRendererFactory.createPoiRenderer(
+                defaultTextCanvas!
+            );
 
             this.m_textStyleCache.initializeTextElementStyles(
                 defaultPoiRenderer,
@@ -1285,7 +1290,10 @@ export class TextElementsRenderer {
             return;
         }
 
-        const screenSize = this.m_renderer.getSize(this.m_tmpVector);
+        const screenSize = this.m_tmpVector.set(
+            this.m_screenProjector.width,
+            this.m_screenProjector.height
+        );
         const screenXOrigin = -screenSize.width / 2.0;
         const screenYOrigin = screenSize.height / 2.0;
 
