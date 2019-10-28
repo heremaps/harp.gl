@@ -229,7 +229,7 @@ export namespace MapViewUtils {
         if (projection.type === ProjectionType.Planar) {
             result.x = result.x + Math.sin(yawRad) * groundDistance;
             result.y = result.y - Math.cos(yawRad) * groundDistance;
-            result.z = altitude;
+            result.z = result.z + altitude;
         } else if (projection.type === ProjectionType.Spherical) {
             // In globe yaw and pitch are understood to be in tangent space. The approach below is
             // to find the Z and Y tangent space axes, then rotate Y around Z by the given yaw, and
