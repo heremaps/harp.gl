@@ -1,0 +1,40 @@
+{
+    "name": "@here/harp-olp-utils",
+    "version": "0.10.0",
+    "description": "HERE OLP utilities",
+    "main": "index.js",
+    "scripts": {
+        "build": "tsc",
+        "test": "cross-env mocha --require source-map-support/register $EXTRA_MOCHA_ARGS ./test/*.js",
+        "prepare": "cross-env tsc --sourceMap false $EXTRA_TSC_ARGS"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/heremaps/harp.gl.git",
+        "directory": "@here/harp-olp-utils"
+    },
+    "author": {
+        "name": "HERE Europe B.V.",
+        "url": "https://here.com"
+    },
+    "license": "Apache-2.0",
+    "dependencies": {
+        "@here/harp-mapview": "^0.10.0",
+        "@here/olp-sdk-dataservice-read": "^0.9.0"
+    },
+    "devDependencies": {
+        "@here/harp-test-utils": "^0.10.0",
+        "@types/chai": "^4.1.2",
+        "@types/mocha": "^5.2.7",
+        "@types/node": "^12.0.8",
+        "@types/sinon": "^7.0.13",
+        "chai": "^4.1.2",
+        "cross-env": "^5.2.0",
+        "sinon": "^7.1.1",
+        "source-map-support": "^0.5.3",
+        "typescript": "^3.5.2"
+    },
+    "publishConfig": {
+        "access": "public"
+    }
+}

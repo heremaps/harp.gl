@@ -6,9 +6,9 @@
 
 import { GeoCoordinates } from "@here/harp-geoutils";
 import { MapControls, MapControlsUI } from "@here/harp-map-controls";
-import { CopyrightElementHandler, CopyrightInfo, MapView } from "@here/harp-mapview";
+import { CopyrightElementHandler, MapView } from "@here/harp-mapview";
 import { APIFormat, OmvDataSource } from "@here/harp-omv-datasource";
-import { accessToken } from "../config";
+import { accessToken, copyrightInfo } from "../config";
 
 /**
  * MapView initialization sequence enables setting all the necessary elements on a map  and returns
@@ -111,14 +111,6 @@ export namespace HelloWorldExample {
     }
 
     function addOmvDataSource(map: MapView) {
-        const hereCopyrightInfo: CopyrightInfo = {
-            id: "here.com",
-            year: new Date().getFullYear(),
-            label: "HERE",
-            link: "https://legal.here.com/terms"
-        };
-        const copyrights: CopyrightInfo[] = [hereCopyrightInfo];
-
         // snippet:harp_gl_hello_world_example_4.ts
         const omvDataSource = new OmvDataSource({
             baseUrl: "https://xyz.api.here.com/tiles/herebase.02",
@@ -126,7 +118,7 @@ export namespace HelloWorldExample {
             styleSetName: "tilezen",
             maxZoomLevel: 17,
             authenticationCode: accessToken,
-            copyrightInfo: copyrights
+            copyrightInfo
         });
         // end:harp_gl_hello_world_example_4.ts
 

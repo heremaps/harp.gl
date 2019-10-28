@@ -8,9 +8,9 @@ import { Theme } from "@here/harp-datasource-protocol";
 // import { GeoJsonDataProvider } from "@here/harp-geojson-datasource";
 import { GeoCoordinates } from "@here/harp-geoutils";
 import { MapControls, MapControlsUI } from "@here/harp-map-controls";
-import { CopyrightInfo, MapView } from "@here/harp-mapview";
+import { MapView } from "@here/harp-mapview";
 import { APIFormat, OmvDataSource } from "@here/harp-omv-datasource";
-import { accessToken } from "../config";
+import { accessToken, copyrightInfo } from "../config";
 
 /**
  * This example showcases interpolated [[MapView]] techniques.
@@ -442,20 +442,13 @@ export namespace TiledGeoJsonTechniquesExample {
             }
         });
 
-        const hereCopyrightInfo: CopyrightInfo = {
-            id: "here.com",
-            year: new Date().getFullYear(),
-            label: "HERE",
-            link: "https://legal.here.com/terms"
-        };
-        const copyrights: CopyrightInfo[] = [hereCopyrightInfo];
         const baseMapDataSource = new OmvDataSource({
             baseUrl: "https://xyz.api.here.com/tiles/herebase.02",
             apiFormat: APIFormat.XYZOMV,
             styleSetName: "tilezen",
             maxZoomLevel: 16,
             authenticationCode: accessToken,
-            copyrightInfo: copyrights
+            copyrightInfo
         });
 
         mapView.addDataSource(baseMapDataSource).then(() => {

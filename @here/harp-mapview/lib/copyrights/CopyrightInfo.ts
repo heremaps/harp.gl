@@ -43,7 +43,7 @@ export interface CopyrightInfo {
     label?: string;
 
     /**
-     * Optional URL pointing to futher copyright information.
+     * Optional URL pointing to further copyright information.
      */
     link?: string;
 

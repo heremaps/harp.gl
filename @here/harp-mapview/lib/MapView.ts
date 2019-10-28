@@ -29,7 +29,7 @@ import { CameraMovementDetector } from "./CameraMovementDetector";
 import { ClipPlanesEvaluator, defaultClipPlanesEvaluator } from "./ClipPlanesEvaluator";
 import { IMapAntialiasSettings, IMapRenderingManager, MapRenderingManager } from "./composing";
 import { ConcurrentDecoderFacade } from "./ConcurrentDecoderFacade";
-import { CopyrightInfo } from "./CopyrightInfo";
+import { CopyrightInfo } from "./copyrights/CopyrightInfo";
 import { DataSource } from "./DataSource";
 import { ElevationProvider } from "./ElevationProvider";
 import { ElevationRangeSource } from "./ElevationRangeSource";

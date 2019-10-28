@@ -5,9 +5,9 @@
  */
 
 import { MapControls, MapControlsUI } from "@here/harp-map-controls";
-import { CopyrightElementHandler, CopyrightInfo, MapView, PickResult } from "@here/harp-mapview";
+import { CopyrightElementHandler, MapView, PickResult } from "@here/harp-mapview";
 import { APIFormat, OmvDataSource } from "@here/harp-omv-datasource";
-import { accessToken } from "../config";
+import { accessToken, copyrightInfo } from "../config";
 
 /**
  * This example showcases how picking works.
@@ -120,14 +120,6 @@ export namespace PickingExample {
         });
         // end:datasource_object_picking_1.ts
 
-        const hereCopyrightInfo: CopyrightInfo = {
-            id: "here.com",
-            year: new Date().getFullYear(),
-            label: "HERE",
-            link: "https://legal.here.com/terms"
-        };
-        const copyrights: CopyrightInfo[] = [hereCopyrightInfo];
-
         const omvDataSource = new OmvDataSource({
             baseUrl: "https://xyz.api.here.com/tiles/herebase.02",
             apiFormat: APIFormat.XYZOMV,
@@ -136,7 +128,7 @@ export namespace PickingExample {
             authenticationCode: accessToken,
             gatherFeatureIds: true,
             createTileInfo: true,
-            copyrightInfo: copyrights
+            copyrightInfo
         });
 
         await mapView.addDataSource(omvDataSource);

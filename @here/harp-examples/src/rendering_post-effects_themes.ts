@@ -6,10 +6,10 @@
 
 import { GeoCoordinates } from "@here/harp-geoutils";
 import { MapControls, MapControlsUI } from "@here/harp-map-controls";
-import { CopyrightElementHandler, CopyrightInfo, MapView } from "@here/harp-mapview";
+import { CopyrightElementHandler, MapView } from "@here/harp-mapview";
 import { APIFormat, OmvDataSource } from "@here/harp-omv-datasource";
 import { GUI } from "dat.gui";
-import { accessToken } from "../config";
+import { accessToken, copyrightInfo } from "../config";
 
 /**
  * Example showing how to use separate post effects JSON files to configure the rendering through
@@ -45,21 +45,13 @@ export namespace EffectsExample {
 
     const map = initializeMapView("mapCanvas");
 
-    const hereCopyrightInfo: CopyrightInfo = {
-        id: "here.com",
-        year: new Date().getFullYear(),
-        label: "HERE",
-        link: "https://legal.here.com/terms"
-    };
-    const copyrights: CopyrightInfo[] = [hereCopyrightInfo];
-
     const omvDataSource = new OmvDataSource({
         baseUrl: "https://xyz.api.here.com/tiles/herebase.02",
         apiFormat: APIFormat.XYZOMV,
         styleSetName: "tilezen",
         maxZoomLevel: 17,
         authenticationCode: accessToken,
-        copyrightInfo: copyrights
+        copyrightInfo
     });
     map.addDataSource(omvDataSource);
 

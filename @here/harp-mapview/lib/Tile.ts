@@ -14,7 +14,7 @@ import { assert, CachedResource, GroupedPriorityList, LoggerManager } from "@her
 import * as THREE from "three";
 
 import { AnimatedExtrusionTileHandler } from "./AnimatedExtrusionHandler";
-import { CopyrightInfo } from "./CopyrightInfo";
+import { CopyrightInfo } from "./copyrights/CopyrightInfo";
 import { DataSource } from "./DataSource";
 import { TileGeometryLoader } from "./geometry/TileGeometryLoader";
 import { MapView } from "./MapView";

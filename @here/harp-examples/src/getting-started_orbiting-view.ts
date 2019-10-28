@@ -5,15 +5,10 @@
  */
 
 import { GeoCoordinates, mercatorProjection, sphereProjection } from "@here/harp-geoutils";
-import {
-    CopyrightElementHandler,
-    CopyrightInfo,
-    MapView,
-    MapViewEventNames
-} from "@here/harp-mapview";
+import { CopyrightElementHandler, MapView, MapViewEventNames } from "@here/harp-mapview";
 import { APIFormat, OmvDataSource } from "@here/harp-omv-datasource";
 import { GUI } from "dat.gui";
-import { accessToken } from "../config";
+import { accessToken, copyrightInfo } from "../config";
 
 /**
  * In this example we simply use the `lookAt` method to make the camera orbit around a geolocation.
@@ -72,21 +67,13 @@ export namespace CameraOrbitExample {
             mapView.resize(window.innerWidth, window.innerHeight);
         });
 
-        const hereCopyrightInfo: CopyrightInfo = {
-            id: "here.com",
-            year: new Date().getFullYear(),
-            label: "HERE",
-            link: "https://legal.here.com/terms"
-        };
-        const copyrights: CopyrightInfo[] = [hereCopyrightInfo];
-
         const omvDataSource = new OmvDataSource({
             baseUrl: "https://xyz.api.here.com/tiles/herebase.02",
             apiFormat: APIFormat.XYZOMV,
             styleSetName: "tilezen",
             maxZoomLevel: 17,
             authenticationCode: accessToken,
-            copyrightInfo: copyrights
+            copyrightInfo
         });
         mapView.addDataSource(omvDataSource);
 

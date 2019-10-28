@@ -9,7 +9,6 @@ import { GeoCoordinates, webMercatorTilingScheme } from "@here/harp-geoutils";
 import { MapControls } from "@here/harp-map-controls";
 import {
     CopyrightElementHandler,
-    CopyrightInfo,
     MapView,
     MapViewEventNames,
     MapViewOptions,
@@ -17,7 +16,7 @@ import {
 } from "@here/harp-mapview";
 import { APIFormat, OmvDataSource } from "@here/harp-omv-datasource";
 import * as THREE from "three";
-import { accessToken } from "../config";
+import { accessToken, copyrightInfo } from "../config";
 
 // Import the gesture handlers from the three.js additional libraries.
 // The controls are not in common.js they explicitly require a
@@ -97,21 +96,13 @@ export namespace FreeCameraAppDebuggingToolExample {
          * user is seeing (`V`).
          */
         start() {
-            const hereCopyrightInfo: CopyrightInfo = {
-                id: "here.com",
-                year: new Date().getFullYear(),
-                label: "HERE",
-                link: "https://legal.here.com/terms"
-            };
-            const copyrights: CopyrightInfo[] = [hereCopyrightInfo];
-
             const omvDataSource = new OmvDataSource({
                 baseUrl: "https://xyz.api.here.com/tiles/herebase.02",
                 apiFormat: APIFormat.XYZOMV,
                 styleSetName: "tilezen",
                 maxZoomLevel: 17,
                 authenticationCode: accessToken,
-                copyrightInfo: copyrights
+                copyrightInfo
             });
 
             const debugTileDataSource = new DebugTileDataSource(webMercatorTilingScheme);
