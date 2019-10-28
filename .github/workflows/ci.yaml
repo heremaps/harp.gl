@@ -35,6 +35,15 @@ jobs:
       shell: bash
     - name: Test on Node.js
       run: |
+        pwd
+        node -p 'process.cwd()'
+        node -p 'const path = require("path"); path.normalize(process.cwd())'
+        node -p 'require.resolve("three")'
+        cd `echo $PWD | tr A-Z a-z`
+        pwd
+        node -p 'process.cwd()'
+        node -p 'const path = require("path"); path.normalize(process.cwd())'
+        node -p 'require.resolve("three")'
         yarn cov-test --forbid-only
       shell: bash
     - name: Generate coverage report
@@ -73,6 +82,7 @@ jobs:
         export PATH=`pwd`:$PATH
         cp node_modules/geckodriver/geckodriver.exe .
         yarn test-browser --headless-firefox
+      shell: bash
       if: matrix.os == 'windows-latest'
     - name: Tests on Firefox (Linux)
       run: |
