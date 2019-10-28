@@ -503,8 +503,8 @@ export class PoiRenderer {
         const width = poiInfo.computedWidth! * scale;
         const height = poiInfo.computedHeight! * scale;
         const technique = poiInfo.technique;
-        const iconXOffset = getPropertyValue(technique.xOffset, zoomLevel);
-        const iconYOffset = getPropertyValue(technique.yOffset, zoomLevel);
+        const iconXOffset = getPropertyValue(technique.iconXOffset, zoomLevel);
+        const iconYOffset = getPropertyValue(technique.iconYOffset, zoomLevel);
 
         const centerX = screenPosition.x + (typeof iconXOffset === "number" ? iconXOffset : 0);
         const centerY = screenPosition.y + (typeof iconXOffset === "number" ? iconYOffset : 0);
