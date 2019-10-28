@@ -45,6 +45,7 @@
         "@tweenjs/tween.js": "^17.4.0",
         "@types/dat.gui": "^0.7.1",
         "@types/highlight.js": "^9.12.2",
+        "@types/leaflet": "^1.5.5",
         "@types/long": "^4.0.0",
         "@types/tween.js": "^17.2.0",
         "copy-webpack-plugin": "^5.0.3",
@@ -71,5 +72,8 @@
     },
     "publishConfig": {
         "access": "public"
+    },
+    "dependencies": {
+        "leaflet": "^1.5.1"
     }
 }
