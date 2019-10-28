@@ -41,7 +41,7 @@ export namespace WebTileDataSourceExample {
         const controls = new MapControls(map);
 
         // Add an UI.
-        const ui = new MapControlsUI(controls);
+        const ui = new MapControlsUI(controls, { zoomLevel: "input" });
         canvas.parentElement!.appendChild(ui.domElement);
 
         CopyrightElementHandler.install("copyrightNotice", map);

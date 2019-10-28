@@ -53,7 +53,7 @@ export namespace WebTileDataSourceGlobeExample {
         // instantiate the default map controls, allowing the user to pan around freely.
         const mapControls = new MapControls(map);
 
-        const ui = new MapControlsUI(mapControls);
+        const ui = new MapControlsUI(mapControls, { zoomLevel: "input" });
         map.canvas.parentElement!.appendChild(ui.domElement);
 
         CopyrightElementHandler.install("copyrightNotice", map);

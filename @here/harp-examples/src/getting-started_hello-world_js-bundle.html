@@ -77,7 +77,7 @@
             const NY = new harp.GeoCoordinates(40.707, -74.01);
             map.lookAt(NY, 4000, 50);
 
-            const ui = new harp.MapControlsUI(mapControls);
+            const ui = new harp.MapControlsUI(mapControls, { zoomLevel: "input" });
             canvas.parentElement.appendChild(ui.domElement);
 
             map.resize(window.innerWidth, window.innerHeight);

@@ -92,7 +92,7 @@ export namespace HelloWorldExample {
         // end:harp_gl_hello_world_example_look_at.ts
 
         // Add an UI.
-        const ui = new MapControlsUI(mapControls);
+        const ui = new MapControlsUI(mapControls, { zoomLevel: "input" });
         canvas.parentElement!.appendChild(ui.domElement);
 
         // snippet:harp_gl_hello_world_example_3.ts

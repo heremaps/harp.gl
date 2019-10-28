@@ -56,7 +56,7 @@ export namespace GlobeExample {
         map.addDataSource(omvDataSource);
 
         const mapControls = new MapControls(map);
-        const ui = new MapControlsUI(mapControls);
+        const ui = new MapControlsUI(mapControls, { zoomLevel: "input" });
         map.canvas.parentElement!.appendChild(ui.domElement);
 
         const NY = new GeoCoordinates(40.71, -74.007);

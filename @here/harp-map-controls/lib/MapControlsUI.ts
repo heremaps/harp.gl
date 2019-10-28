@@ -247,7 +247,6 @@ export class MapControlsUI {
                 outline: none;
                 border: none;
                 color: #555;
-                margin-left:5px;
                 opacity: 0.87;
                 box-shadow: 0px 0px 4px #aaa;
                 padding: 2px 0 0;
