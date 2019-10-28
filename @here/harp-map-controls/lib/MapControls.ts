@@ -1045,43 +1045,39 @@ export class MapControls extends THREE.EventDispatcher {
      * against the X axis in world space on the map. The resulting angle is in radians and between
      * `-PI` and `PI`.
      */
-    private calculateAngleFromTouchPointsInWorldspace(): number {
+    private updateCurrentRotation() {
         if (
             this.m_touchState.touches.length < 2 ||
             this.m_touchState.touches[1].currentWorldPosition.length() === 0 ||
             this.m_touchState.touches[0].currentWorldPosition.length() === 0
         ) {
-            return 0;
+            return;
         }
+        let x = 0;
+        let y = 0;
         if (this.mapView.projection.type === geoUtils.ProjectionType.Planar) {
-            const x =
+            // Planar uses world space coordinates to return the angle of the vector between the two
+            // fingers' locations from the north direction.
+            x =
                 this.m_touchState.touches[1].currentWorldPosition.x -
                 this.m_touchState.touches[0].currentWorldPosition.x;
-
-            const y =
+            y =
                 this.m_touchState.touches[1].currentWorldPosition.y -
                 this.m_touchState.touches[0].currentWorldPosition.y;
-
-            return Math.atan2(y, x);
-        } else {
-            const avPoint = new THREE.Vector3()
-                .addVectors(
-                    this.m_touchState.touches[1].currentWorldPosition,
-                    this.m_touchState.touches[0].currentWorldPosition
-                )
-                .normalize();
-            const p1 = this.m_touchState.touches[1].currentWorldPosition
-                .clone()
-                .projectOnPlane(avPoint)
-                .normalize();
-            const north = new THREE.Vector3(0, 1, 0).projectOnPlane(avPoint).normalize();
-            let angle = north.angleTo(p1);
-            const cross = p1.cross(north);
-            if (cross.dot(avPoint) > 0) {
-                angle = -angle;
-            }
-            return angle;
+        } else if (this.mapView.projection.type === geoUtils.ProjectionType.Spherical) {
+            // Globe uses screen space coordinates, as the 3d coordinate system cannot define a
+            // reference rotation scalar for the vector between the two fingers' locations.
+            x =
+                this.m_touchState.touches[1].currentTouchPoint.x -
+                this.m_touchState.touches[0].currentTouchPoint.x;
+            // Below the subtraction is inverted, because the Y coordinate in screen space in HTML
+            // has its origin at the top and increases downwards.
+            y =
+                this.m_touchState.touches[0].currentTouchPoint.y -
+                this.m_touchState.touches[1].currentTouchPoint.y;
+            this.m_touchState.initialRotation = this.m_touchState.currentRotation;
         }
+        this.m_touchState.currentRotation = Math.atan2(y, x);
     }
 
     /**
@@ -1188,13 +1184,9 @@ export class MapControls extends THREE.EventDispatcher {
         }
 
         if (this.m_touchState.touches.length !== 0) {
-            this.updateTouchState();
+            this.updateCurrentRotation();
             this.m_touchState.initialRotation = this.m_touchState.currentRotation;
         }
-    }
-
-    private updateTouchState() {
-        this.m_touchState.currentRotation = this.calculateAngleFromTouchPointsInWorldspace();
     }
 
     private updateTouches(touches: TouchList) {
@@ -1244,7 +1236,6 @@ export class MapControls extends THREE.EventDispatcher {
 
         this.m_fingerMoved = true;
         this.updateTouches(event.touches);
-        this.updateTouchState();
 
         if (this.m_touchState.touches.length <= 2 && this.m_touchState.touches[0] !== undefined) {
             this.panFromTo(
@@ -1258,6 +1249,7 @@ export class MapControls extends THREE.EventDispatcher {
             if (Math.abs(pinchDistance) < EPSILON) {
                 return;
             }
+            this.updateCurrentRotation();
             const deltaRotation =
                 this.m_touchState.currentRotation - this.m_touchState.initialRotation;
             this.stopExistingAnimations();
