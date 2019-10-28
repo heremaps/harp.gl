@@ -149,7 +149,6 @@ export class TextLayoutStyleCache {
     }
 }
 
-export const DEFAULT_FONT_CATALOG_NAME = "default";
 const DEFAULT_STYLE_NAME = "default";
 
 /**
@@ -175,7 +174,7 @@ export class TextStyleCache {
     private m_textStyles: Map<string, TextElementStyle> = new Map();
     private m_defaultStyle: TextElementStyle = {
         name: DEFAULT_STYLE_NAME,
-        fontCatalog: DEFAULT_FONT_CATALOG_NAME,
+        fontCatalog: "",
         renderParams: this.m_textRenderStyleCache.get(DEFAULT_TEXT_STYLE_CACHE_ID)!.params,
         layoutParams: this.m_textLayoutStyleCache.get(DEFAULT_TEXT_STYLE_CACHE_ID)!.params
     };
