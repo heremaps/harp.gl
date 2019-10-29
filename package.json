@@ -23,7 +23,7 @@
         "nyc": "^14.1.1",
         "prettier": "^1.18.2",
         "serve-handler": "^6.0.1",
-        "three": "^0.108.0",
+        "three": "^0.109.0",
         "ts-mocha": "^6.0.0",
         "tslint": "^5.17.0",
         "tslint-config-prettier": "^1.18.0",

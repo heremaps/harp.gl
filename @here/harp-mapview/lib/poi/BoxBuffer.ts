@@ -557,7 +557,7 @@ export class BoxBuffer {
         if (this.positionAttribute !== undefined && this.positionAttribute.array.length > 0) {
             const positionAttributeCount = this.positionAttribute.count;
             newPositionArray.set(this.positionAttribute.array);
-            this.positionAttribute.setArray(newPositionArray);
+            this.positionAttribute.array = newPositionArray;
             this.positionAttribute.count = positionAttributeCount;
         } else {
             this.positionAttribute = new THREE.BufferAttribute(
@@ -575,7 +575,7 @@ export class BoxBuffer {
         if (this.colorAttribute !== undefined) {
             const colorAttributeCount = this.colorAttribute.count;
             newColorArray.set(this.colorAttribute.array);
-            this.colorAttribute.setArray(newColorArray);
+            this.colorAttribute.array = newColorArray;
             this.colorAttribute.count = colorAttributeCount;
         } else {
             this.colorAttribute = new THREE.BufferAttribute(
@@ -594,7 +594,7 @@ export class BoxBuffer {
         if (this.uvAttribute !== undefined) {
             const uvAttributeCount = this.uvAttribute.count;
             newUvArray.set(this.uvAttribute.array);
-            this.uvAttribute.setArray(newUvArray);
+            this.uvAttribute.array = newUvArray;
             this.uvAttribute.count = uvAttributeCount;
         } else {
             this.uvAttribute = new THREE.BufferAttribute(newUvArray, NUM_UV_VALUES_PER_VERTEX);
@@ -612,7 +612,7 @@ export class BoxBuffer {
         if (this.indexAttribute !== undefined) {
             const indexAttributeCount = this.indexAttribute.count;
             newIndexArray.set(this.indexAttribute.array);
-            this.indexAttribute.setArray(newIndexArray);
+            this.indexAttribute.array = newIndexArray;
             this.indexAttribute.count = indexAttributeCount;
         } else {
             this.indexAttribute = new THREE.BufferAttribute(
