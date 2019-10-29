@@ -177,6 +177,8 @@ export interface OmvDecoderOptions {
     featureModifierId?: FeatureModifierId;
 
     enableElevationOverlay?: boolean;
+
+    enableLineClipping?: boolean;
 }
 
 /**

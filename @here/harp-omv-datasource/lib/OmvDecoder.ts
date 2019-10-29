@@ -167,6 +167,7 @@ export class OmvDecoder implements IGeometryProcessor {
         private readonly m_skipShortLabels = true,
         private readonly m_storageLevelOffset = 0,
         private readonly m_enableElevationOverlay = false,
+        private readonly m_enableLineClipping = true,
         private readonly m_languages?: string[]
     ) {
         const styleSetDataFilter = new StyleSetDataFilter(m_styleSetEvaluator);
@@ -221,6 +222,7 @@ export class OmvDecoder implements IGeometryProcessor {
             this.m_gatherFeatureAttributes,
             this.m_skipShortLabels,
             this.m_enableElevationOverlay,
+            this.m_enableLineClipping,
             this.m_languages
         );
         if (this.m_createTileInfo) {
@@ -578,6 +580,7 @@ export class OmvTileDecoder extends ThemedTileDecoder {
     private m_gatherRoadSegments: boolean = false;
     private m_skipShortLabels: boolean = true;
     private m_enableElevationOverlay: boolean = false;
+    private m_enableLineClipping: boolean = true;
 
     /** @override */
     connect(): Promise<void> {
@@ -605,6 +608,7 @@ export class OmvTileDecoder extends ThemedTileDecoder {
             this.m_skipShortLabels,
             this.m_storageLevelOffset,
             this.m_enableElevationOverlay,
+            this.m_enableLineClipping,
             this.languages
         );
 
@@ -640,6 +644,7 @@ export class OmvTileDecoder extends ThemedTileDecoder {
             this.m_skipShortLabels,
             this.m_storageLevelOffset,
             this.m_enableElevationOverlay,
+            this.m_enableLineClipping,
             this.languages
         );
 
@@ -685,6 +690,9 @@ export class OmvTileDecoder extends ThemedTileDecoder {
 
             if (omvOptions.gatherFeatureAttributes !== undefined) {
                 this.m_gatherFeatureAttributes = omvOptions.gatherFeatureAttributes === true;
+            }
+            if (omvOptions.enableLineClipping !== undefined) {
+                this.m_enableLineClipping = omvOptions.enableLineClipping === true;
             }
             if (omvOptions.createTileInfo !== undefined) {
                 this.m_createTileInfo = omvOptions.createTileInfo === true;

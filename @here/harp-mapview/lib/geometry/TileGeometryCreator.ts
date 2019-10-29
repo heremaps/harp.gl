@@ -685,17 +685,8 @@ export class TileGeometryCreator {
                 bufferGeometry.addGroup(start, count);
 
                 if (isSolidLineTechnique(technique)) {
-                    // TODO: Unify access to shader defines via SolidLineMaterial setters
-                    assert(!isHighPrecisionLineMaterial(material));
-                    const lineMaterial = material as SolidLineMaterial;
-                    if (
-                        technique.clipping !== false &&
-                        tile.projection.type === ProjectionType.Planar
-                    ) {
-                        tile.boundingBox.getSize(tmpVector3);
-                        tmpVector2.set(tmpVector3.x, tmpVector3.y);
-                        lineMaterial.clipTileSize = tmpVector2;
-                    }
+                    const lineMaterial = material as THREE.RawShaderMaterial;
+                    lineMaterial.uniforms.opacity.value = material.opacity;
 
                     if (bufferGeometry.getAttribute("color")) {
                         setShaderMaterialDefine(lineMaterial, "USE_COLOR", true);

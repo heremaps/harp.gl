@@ -78,6 +78,16 @@ import { SphericalGeometrySubdivisionModifier } from "@here/harp-geometry/lib/Sp
 import { ExtrusionFeatureDefs } from "@here/harp-materials/lib/MapMeshMaterialsDefs";
 import { clipPolygon } from "./clipPolygon";
 
+const { LineSegmentsIntersection } = Math2D;
+interface Segment2 {
+    P0: THREE.Vector2;
+    P1: THREE.Vector2;
+}
+
+type UntiledLine = number[] & {
+    lineDist: number;
+};
+
 const logger = LoggerManager.instance.create("OmvDecodedTileEmitter");
 
 const tempTileOrigin = new THREE.Vector3();
@@ -199,6 +209,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
         private readonly m_gatherFeatureAttributes: boolean,
         private readonly m_skipShortLabels: boolean,
         private readonly m_enableElevationOverlay: boolean,
+        private readonly m_enableLineClipping: boolean = true,
         private readonly m_languages?: string[]
     ) {}
 
@@ -358,56 +369,31 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
             }
         }
 
-        for (const polyline of geometry) {
-            // Compute the world position of the untiled line and its distance to the origin of the
-            // line to properly join lines.
-            const untiledLine: number[] = [];
-            let lineDist = 0;
-            if (hasUntiledLines) {
-                this.m_decodeInfo.targetProjection.projectPoint(
-                    polyline.untiledPositions![0],
-                    tmpV3r
-                );
-                polyline.untiledPositions!.forEach(pos => {
-                    // Calculate the distance to the next unnormalized point.
-                    this.m_decodeInfo.targetProjection.projectPoint(pos, tmpV3);
-                    lineDist += tmpV3.distanceTo(tmpV3r);
-                    tmpV3r.copy(tmpV3);
-
-                    // Pushed the normalized point for line matching.
-                    this.m_decodeInfo.targetProjection.projectPoint(pos.normalized(), tmpV3);
-                    untiledLine.push(tmpV3.x, tmpV3.y, tmpV3.z, lineDist);
-                });
-            }
-
-            const localLine: number[] = [];
-            const worldLine: number[] = [];
-            const lineUvs: number[] = [];
-            const lineOffsets: number[] = [];
-            polyline.positions.forEach(pos => {
-                webMercatorTile2TargetWorld(extents, this.m_decodeInfo, pos, tmpV3);
-                worldLine.push(tmpV3.x, tmpV3.y, tmpV3.z);
-
-                if (computeTexCoords) {
-                    const { u, v } = computeTexCoords(pos, extents);
-                    lineUvs.push(u, v);
-                }
-                if (hasUntiledLines) {
-                    // Find where in the [0...1] range relative to the line our current vertex lies.
-                    const offset = this.findRelativePositionInLine(tmpV3, untiledLine) / lineDist;
-                    lineOffsets.push(offset);
-                }
-                tmpV3.sub(this.m_decodeInfo.center);
-                localLine.push(tmpV3.x, tmpV3.y, tmpV3.z);
-            });
-            localLines.push(localLine);
-            worldLines.push(worldLine);
-            uvs.push(lineUvs);
-            offsets.push(lineOffsets);
+        if (this.m_enableLineClipping) {
+            this.transformAndCutLines(
+                localLines,
+                worldLines,
+                uvs,
+                offsets,
+                geometry,
+                extents,
+                hasUntiledLines,
+                computeTexCoords
+            );
+        } else {
+            this.transformLines(
+                localLines,
+                worldLines,
+                uvs,
+                offsets,
+                geometry,
+                extents,
+                hasUntiledLines,
+                computeTexCoords
+            );
         }
 
         const wantCircle = this.m_decodeInfo.tileKey.level >= 11;
-
         for (const technique of techniques) {
             if (technique === undefined) {
                 continue;
@@ -1808,6 +1794,247 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
             currRingVertex = maxRingVertex + 1;
             firstRingVertex = undefined;
         }
+    }
+
+    private computeUntiledLine(polyline: ILineGeometry, hasUntiledLines: boolean) {
+        // Compute the world position of the untiled line and its distance to the origin of the
+        // line to properly join lines.
+        const untiledLine = ([] as unknown) as UntiledLine;
+        untiledLine.lineDist = 0;
+        if (hasUntiledLines && polyline.untiledPositions) {
+            this.m_decodeInfo.targetProjection.projectPoint(polyline.untiledPositions[0], tmpV3r);
+            polyline.untiledPositions.forEach(pos => {
+                // Calculate the distance to the next unnormalized point.
+                this.m_decodeInfo.targetProjection.projectPoint(pos, tmpV3);
+                untiledLine.lineDist += tmpV3.distanceTo(tmpV3r);
+                tmpV3r.copy(tmpV3);
+
+                // Pushed the normalized point for line matching.
+                this.m_decodeInfo.targetProjection.projectPoint(pos.normalized(), tmpV3);
+                untiledLine.push(tmpV3.x, tmpV3.y, tmpV3.z, untiledLine.lineDist);
+            });
+        }
+
+        return untiledLine;
+    }
+
+    private transformLines(
+        localLines: number[][],
+        worldLines: number[][],
+        uvs: number[][],
+        offsets: number[][],
+        geometry: ILineGeometry[],
+        extents: number,
+        hasUntiledLines: boolean,
+        computeTexCoords?: TexCoordsFunction
+    ) {
+        for (const polyline of geometry) {
+            // Compute the world position of the untiled line and its distance to the origin of the
+            // line to properly join lines.
+            const localLine: number[] = [];
+            const worldLine: number[] = [];
+            const lineUvs: number[] = [];
+            const lineOffsets: number[] = [];
+            const untiledLine = this.computeUntiledLine(polyline, hasUntiledLines);
+
+            polyline.positions.forEach(pos =>
+                this.addPoint(
+                    pos,
+                    localLine,
+                    worldLine,
+                    lineUvs,
+                    lineOffsets,
+                    untiledLine,
+                    extents,
+                    hasUntiledLines,
+                    computeTexCoords
+                )
+            );
+            localLines.push(localLine);
+            worldLines.push(worldLine);
+            uvs.push(lineUvs);
+            offsets.push(lineOffsets);
+        }
+    }
+
+    private transformAndCutLines(
+        localLines: number[][],
+        worldLines: number[][],
+        uvs: number[][],
+        offsets: number[][],
+        geometry: ILineGeometry[],
+        extents: number,
+        hasUntiledLines: boolean,
+        computeTexCoords?: TexCoordsFunction
+    ) {
+        const intersectionPoint = new THREE.Vector2();
+        const segments: Segment2[] = [
+            { P0: new THREE.Vector2(0.0, 0.0), P1: new THREE.Vector2(0.0, extents) },
+            { P0: new THREE.Vector2(0.0, extents), P1: new THREE.Vector2(extents, extents) },
+            { P0: new THREE.Vector2(extents, extents), P1: new THREE.Vector2(extents, 0.0) },
+            { P0: new THREE.Vector2(extents, 0.0), P1: new THREE.Vector2(0.0, 0.0) }
+        ];
+
+        const intersect = (
+            localLine: number[],
+            worldLine: number[],
+            lineUvs: number[],
+            lineOffsets: number[],
+            untiledLine: UntiledLine,
+            currentPos: THREE.Vector2,
+            nextPos: THREE.Vector2
+        ) => {
+            for (const segment of segments) {
+                const isIntersect = LineSegmentsIntersection(
+                    segment.P0,
+                    segment.P1,
+                    currentPos,
+                    nextPos,
+                    intersectionPoint
+                );
+                if (isIntersect) {
+                    this.addPoint(
+                        intersectionPoint,
+                        localLine,
+                        worldLine,
+                        lineUvs,
+                        lineOffsets,
+                        untiledLine,
+                        extents,
+                        hasUntiledLines,
+                        computeTexCoords
+                    );
+                }
+            }
+        };
+
+        geometry.forEach(polyline => {
+            const { positions } = polyline;
+            const localLine: number[] = [];
+            const worldLine: number[] = [];
+            const lineUvs: number[] = [];
+            const lineOffsets: number[] = [];
+            const untiledLine = this.computeUntiledLine(polyline, hasUntiledLines);
+
+            const pointsInside = positions.map(
+                pos => pos.x < extents && pos.x > 0.0 && pos.y < extents && pos.y > 0.0
+            );
+
+            const iterations = positions.length - 1;
+            for (let i = 0; i < iterations; i++) {
+                const currentPosIntersects = pointsInside[i];
+                const nextPosPosIntersects = pointsInside[i + 1];
+                const currentPos = positions[i];
+                const nextPos = positions[i + 1];
+
+                if (currentPosIntersects === false && nextPosPosIntersects === false) {
+                    intersect(
+                        localLine,
+                        worldLine,
+                        lineUvs,
+                        lineOffsets,
+                        untiledLine,
+                        currentPos,
+                        nextPos
+                    );
+                } else if (currentPosIntersects === true && nextPosPosIntersects === true) {
+                    if (i === 0) {
+                        this.addPoint(
+                            currentPos,
+                            localLine,
+                            worldLine,
+                            lineUvs,
+                            lineOffsets,
+                            untiledLine,
+                            extents,
+                            hasUntiledLines,
+                            computeTexCoords
+                        );
+                    }
+                    this.addPoint(
+                        nextPos,
+                        localLine,
+                        worldLine,
+                        lineUvs,
+                        lineOffsets,
+                        untiledLine,
+                        extents,
+                        hasUntiledLines,
+                        computeTexCoords
+                    );
+                } else if (currentPosIntersects !== nextPosPosIntersects) {
+                    if (i === 0 && currentPosIntersects) {
+                        this.addPoint(
+                            currentPos,
+                            localLine,
+                            worldLine,
+                            lineUvs,
+                            lineOffsets,
+                            untiledLine,
+                            extents,
+                            hasUntiledLines,
+                            computeTexCoords
+                        );
+                    }
+                    intersect(
+                        localLine,
+                        worldLine,
+                        lineUvs,
+                        lineOffsets,
+                        untiledLine,
+                        currentPos,
+                        nextPos
+                    );
+                    if (nextPosPosIntersects) {
+                        this.addPoint(
+                            nextPos,
+                            localLine,
+                            worldLine,
+                            lineUvs,
+                            lineOffsets,
+                            untiledLine,
+                            extents,
+                            hasUntiledLines,
+                            computeTexCoords
+                        );
+                    }
+                } else {
+                    throw new Error("NEVER");
+                }
+            }
+            localLines.push(localLine);
+            worldLines.push(worldLine);
+            uvs.push(lineUvs);
+            offsets.push(lineOffsets);
+        });
+    }
+
+    private addPoint(
+        pos: THREE.Vector2,
+        localLine: number[],
+        worldLine: number[],
+        lineUvs: number[],
+        lineOffsets: number[],
+        untiledLine: UntiledLine,
+        extents: number,
+        hasUntiledLines: boolean,
+        computeTexCoords?: TexCoordsFunction
+    ) {
+        webMercatorTile2TargetWorld(extents, this.m_decodeInfo, pos, tmpV3);
+        worldLine.push(tmpV3.x, tmpV3.y, tmpV3.z);
+
+        if (computeTexCoords) {
+            const { u, v } = computeTexCoords(pos, extents);
+            lineUvs.push(u, v);
+        }
+        if (hasUntiledLines) {
+            // Find where in the [0...1] range relative to the line our current vertex lies.
+            const offset =
+                this.findRelativePositionInLine(tmpV3, untiledLine) / untiledLine.lineDist;
+            lineOffsets.push(offset);
+        }
+        tmpV3.sub(this.m_decodeInfo.center);
+        localLine.push(tmpV3.x, tmpV3.y, tmpV3.z);
     }
 
     private findRelativePositionInLine(p: THREE.Vector3, line: number[]): number {

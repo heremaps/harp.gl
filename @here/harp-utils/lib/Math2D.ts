@@ -4,6 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+interface Vector2 {
+    x: number;
+    y: number;
+}
+
 export namespace Math2D {
     /**
      * Alternative 2D box object with less memory impact (four numbers instead of two min/max
@@ -143,5 +148,31 @@ export namespace Math2D {
         let t = ((px - l0x) * (l1x - l0x) + (py - l0y) * (l1y - l0y)) / lineLengthSuared;
         t = Math.max(0, Math.min(1, t));
         return distSquared(px, py, l0x + t * (l1x - l0x), l0y + t * (l1y - l0y));
+    }
+
+    export function LineSegmentsIntersection(
+        p1: Vector2,
+        p2: Vector2,
+        p3: Vector2,
+        p4: Vector2,
+        intersection: Vector2
+    ) {
+        const d = (p2.x - p1.x) * (p4.y - p3.y) - (p2.y - p1.y) * (p4.x - p3.x);
+
+        if (d === 0.0) {
+            return false;
+        }
+
+        const u = ((p3.x - p1.x) * (p4.y - p3.y) - (p3.y - p1.y) * (p4.x - p3.x)) / d;
+        const v = ((p3.x - p1.x) * (p2.y - p1.y) - (p3.y - p1.y) * (p2.x - p1.x)) / d;
+
+        if (u < 0.0 || u > 1.0 || v < 0.0 || v > 1.0) {
+            return false;
+        }
+
+        intersection.x = p1.x + u * (p2.x - p1.x);
+        intersection.y = p1.y + u * (p2.y - p1.y);
+
+        return true;
     }
 }

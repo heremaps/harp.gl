@@ -64,6 +64,8 @@ uniform mat4 projectionMatrix;
 uniform float lineWidth;
 uniform float outlineWidth;
 uniform vec2 drawRange;
+uniform float dashSize;
+uniform float gapSize;
 
 #ifdef USE_DISPLACEMENTMAP
 uniform sampler2D displacementMap;
@@ -72,6 +74,11 @@ uniform sampler2D displacementMap;
 varying vec3 vPosition;
 varying vec3 vRange;
 varying vec4 vCoords;
+
+#ifdef USE_DASHED_LINE
+varying vec3 vDashParams;
+#endif
+
 #ifdef USE_COLOR
 attribute vec3 color;
 varying vec3 vColor;
@@ -125,6 +132,15 @@ void main() {
     // Pass extruded position to fragment shader.
     vPosition = pos;
 
+    #ifdef USE_DASHED_LINE
+    // Compute the distance to the dash origin (0.0: dashOrigin, 1.0: dashEnd, (d+g)/d: gapEnd).
+    float dSegment = dashSize + gapSize;
+    float correction = (extrusionCoord.z / dSegment) / ceil(extrusionCoord.z / dSegment);
+    float d = dashSize / extrusionCoord.z * correction;
+    float g = gapSize / extrusionCoord.z * correction;
+    vDashParams = vec3(d, g, (d + g) / d * 0.5);
+    #endif
+
     #ifdef USE_COLOR
     // Pass vertex color to fragment shader.
     vColor = color;
@@ -146,7 +162,6 @@ uniform vec3 outlineColor;
 uniform float opacity;
 uniform float lineWidth;
 uniform float outlineWidth;
-uniform vec2 tileSize;
 uniform vec2 drawRange;
 
 #ifdef USE_DASHED_LINE
@@ -158,12 +173,16 @@ uniform vec3 dashColor;
 varying vec3 vPosition;
 varying vec3 vRange;
 varying vec4 vCoords;
+
+#ifdef USE_DASHED_LINE
+varying vec3 vDashParams;
+#endif
+
 #ifdef USE_COLOR
 varying vec3 vColor;
 #endif
 
 #include <round_edges_and_add_caps>
-#include <tile_clip_func>
 
 #ifdef USE_FADING
 #include <fading_pars_fragment>
@@ -174,10 +193,6 @@ varying vec3 vColor;
 void main() {
     float alpha = opacity;
     vec3 outputDiffuse = diffuse;
-
-    #ifdef USE_TILE_CLIP
-    tileClip(vPosition.xy, tileSize);
-    #endif
 
     // Calculate distance to center (0.0: lineCenter, 1.0: lineEdge).
     float distToCenter = roundEdgesAndAddCaps(vCoords, vRange);
@@ -195,11 +210,15 @@ void main() {
     float g = gapSize / vRange.x;
     float distToDashOrigin = mod(vCoords.x, d + g) / d;
 
+    float segmentDist = mod(
+        vCoords.x + ((vDashParams.x + vDashParams.y) *0.5) , vDashParams.x + vDashParams.y
+    ) / vDashParams.x;
+
     // Compute distance to dash edge (0.5: dashCenter, 0.0: dashEdge) and compute the
     // dashBlendFactor similarly on how we did it for the line opacity.
-    float distToDashEdge = 0.5 - distance(distToDashOrigin, (d + g) / d * 0.5);
-    float dashWidth = fwidth(distToDashEdge);
-    float dashBlendFactor = 1.0 - smoothstep(-dashWidth, dashWidth, distToDashEdge);
+    float dashDist = 0.5 - distance(segmentDist, vDashParams.z);
+    float dashWidth = fwidth(dashDist);
+    float dashBlendFactor = 1.0 - smoothstep(-dashWidth, dashWidth, dashDist);
 
     #ifdef USE_DASH_COLOR
     outputDiffuse = mix(diffuse, dashColor, dashBlendFactor);
@@ -404,7 +423,6 @@ export class SolidLineMaterial extends THREE.RawShaderMaterial
                     lineWidth: new THREE.Uniform(SolidLineMaterial.DEFAULT_WIDTH),
                     outlineWidth: new THREE.Uniform(SolidLineMaterial.DEFAULT_OUTLINE_WIDTH),
                     opacity: new THREE.Uniform(SolidLineMaterial.DEFAULT_OPACITY),
-                    tileSize: new THREE.Uniform(new THREE.Vector2()),
                     fadeNear: new THREE.Uniform(FadingFeature.DEFAULT_FADE_NEAR),
                     fadeFar: new THREE.Uniform(FadingFeature.DEFAULT_FADE_FAR),
                     displacementMap: new THREE.Uniform(

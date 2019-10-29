@@ -181,6 +181,8 @@ export interface OmvDataSourceParameters {
      * Default is true (i.e. if not defined it is taken to be true)
      */
     addGroundPlane?: boolean;
+
+    enableLineClipping?: boolean;
 }
 
 /**
@@ -238,7 +240,8 @@ export class OmvDataSource extends TileDataSource<OmvTile> {
             featureModifierId: this.m_params.featureModifierId,
             skipShortLabels: this.m_params.skipShortLabels,
             storageLevelOffset: getOptionValue(m_params.storageLevelOffset, -1),
-            enableElevationOverlay: this.m_params.enableElevationOverlay === true
+            enableElevationOverlay: this.m_params.enableElevationOverlay === true,
+            enableLineClipping: this.m_params.enableLineClipping === false ? false : true
         };
 
         this.maxGeometryHeight = getOptionValue(

@@ -84,14 +84,6 @@ float roundEdgesAndAddCaps(in vec4 coords, in vec3 range) {
     return dist;
 }
 `,
-    tile_clip_func: `
-void tileClip(vec2 tilePos, vec2 tileSize) {
-    if (tileSize.x > 0.0 && (tilePos.x < -tileSize.x / 2.0 || tilePos.x > tileSize.x / 2.0))
-        discard;
-    if (tileSize.y > 0.0 && (tilePos.y < -tileSize.y / 2.0 || tilePos.y > tileSize.y / 2.0))
-        discard;
-}
-`,
     high_precision_vert_func: `
 vec3 subtractDblEyePos( const in vec3 pos ) {
     vec3 t1 = positionLow - u_eyepos_lowpart;
