@@ -933,6 +933,16 @@ export interface SolidLineTechniqueParams extends BaseTechniqueParams, Polygonal
      * Default is `"Round"`.
      */
     secondaryCaps?: LineCaps;
+    /**
+     * Describes the starting drawing position for the line (in the range [0...1]).
+     * Default is `0.0`.
+     */
+    drawRangeStart?: number;
+    /**
+     * Describes the ending drawing position for the line (in the range [0...1]).
+     * Default is `1.0`.
+     */
+    drawRangeEnd?: number;
 }
 
 /**

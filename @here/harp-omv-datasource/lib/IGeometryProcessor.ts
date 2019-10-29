@@ -5,6 +5,7 @@
  */
 
 import { MapEnv } from "@here/harp-datasource-protocol/index-decoder";
+import { GeoCoordinates } from "@here/harp-geoutils";
 import { Vector2 } from "three";
 
 /**
@@ -25,6 +26,11 @@ export interface ILineGeometry {
      * The positions of this [[ILineGeometry]] projected in local webMercator space.
      */
     readonly positions: Vector2[];
+
+    /**
+     * The positions of the original/untiled [[ILineGeometry]] in [[GeoCoordinates]].
+     */
+    readonly untiledPositions?: GeoCoordinates[];
 }
 
 /**
