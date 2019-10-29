@@ -396,7 +396,7 @@ export class WebTileDataSource extends DataSource {
                 const opacity =
                     this.m_options.renderingOptions !== undefined
                         ? this.m_options.renderingOptions.opacity
-                        : undefined;
+                        : 1;
                 const material = new THREE.MeshBasicMaterial({
                     map: texture,
                     depthTest: false,
