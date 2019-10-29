@@ -14,7 +14,7 @@ import {
     StyleSet,
     TileInfo
 } from "@here/harp-datasource-protocol";
-import { MapEnv, StyleSetEvaluator } from "@here/harp-datasource-protocol/index-decoder";
+import { Env, StyleSetEvaluator } from "@here/harp-datasource-protocol/index-decoder";
 import {
     GeoBox,
     OrientedBox3,
@@ -33,8 +33,9 @@ import * as THREE from "three";
 
 // tslint:disable-next-line:max-line-length
 import { AttrEvaluationContext } from "@here/harp-datasource-protocol/lib/TechniqueAttr";
+import { IEnvironmentProcessor } from "./IEnvironmentProcessor";
 import { IGeometryProcessor, ILineGeometry, IPolygonGeometry } from "./IGeometryProcessor";
-import { OmvProtobufDataAdapter } from "./OmvData";
+import { OmvLocalEnvironmentProcessor, OmvProtobufDataAdapter } from "./OmvData";
 import {
     ComposedDataFilter,
     OmvFeatureFilter,
@@ -154,6 +155,7 @@ export class OmvDecoder implements IGeometryProcessor {
     private m_decodedTileEmitter: OmvDecodedTileEmitter | undefined;
     private m_infoTileEmitter: OmvTileInfoEmitter | undefined;
     private readonly m_dataAdapters: OmvDataAdapter[] = [];
+    private readonly m_envProcessor: IEnvironmentProcessor;
 
     constructor(
         private readonly m_projection: Projection,
@@ -167,14 +169,29 @@ export class OmvDecoder implements IGeometryProcessor {
         private readonly m_skipShortLabels = true,
         private readonly m_storageLevelOffset = 0,
         private readonly m_enableElevationOverlay = false,
-        private readonly m_languages?: string[]
+        private readonly m_languages?: string[],
+        politicalView?: string
     ) {
         const styleSetDataFilter = new StyleSetDataFilter(m_styleSetEvaluator);
         const dataPreFilter = m_dataFilter
             ? new ComposedDataFilter([styleSetDataFilter, m_dataFilter])
             : styleSetDataFilter;
+        // Create feature environment processor, it may be re-configured on decoder configure call
+        const localEnvProcessor = new OmvLocalEnvironmentProcessor();
+        // TODO: Later on it is possible to localize features names using the Env interface.
+        //if (m_languages !== undefined && m_languages!.length > 0) {
+        //    localEnvProcessor.setLocale("name", m_languages[0]);
+        //}
+        // Setup localization (point of view) for kind attribute
+        if (politicalView !== undefined && politicalView.length > 0) {
+            localEnvProcessor.setLocale("kind", politicalView);
+        }
+        this.m_envProcessor = localEnvProcessor;
+
         // Register the default adapters.
-        this.m_dataAdapters.push(new OmvProtobufDataAdapter(this, dataPreFilter, logger));
+        this.m_dataAdapters.push(
+            new OmvProtobufDataAdapter(this, this.m_envProcessor, dataPreFilter, logger)
+        );
         this.m_dataAdapters.push(new VTJsonDataAdapter(this, dataPreFilter, logger));
     }
 
@@ -283,7 +300,7 @@ export class OmvDecoder implements IGeometryProcessor {
         layer: string,
         extents: number,
         geometry: THREE.Vector2[],
-        env: MapEnv,
+        env: Env,
         storageLevel: number
     ): void {
         if (
@@ -342,7 +359,7 @@ export class OmvDecoder implements IGeometryProcessor {
         layer: string,
         extents: number,
         geometry: ILineGeometry[],
-        env: MapEnv,
+        env: Env,
         storageLevel: number
     ): void {
         if (
@@ -401,7 +418,7 @@ export class OmvDecoder implements IGeometryProcessor {
         layer: string,
         extents: number,
         geometry: IPolygonGeometry[],
-        env: MapEnv,
+        env: Env,
         storageLevel: number
     ): void {
         if (
@@ -599,7 +616,8 @@ export class OmvTileDecoder extends ThemedTileDecoder {
             this.m_skipShortLabels,
             this.m_storageLevelOffset,
             this.m_enableElevationOverlay,
-            this.languages
+            this.languages,
+            this.politicalView
         );
 
         const decodedTile = decoder.getDecodedTile(tileKey, data);
@@ -633,7 +651,8 @@ export class OmvTileDecoder extends ThemedTileDecoder {
             this.m_skipShortLabels,
             this.m_storageLevelOffset,
             this.m_enableElevationOverlay,
-            this.languages
+            this.languages,
+            this.politicalView
         );
 
         const tileInfo = decoder.getTileInfo(tileKey, data);
@@ -647,9 +666,10 @@ export class OmvTileDecoder extends ThemedTileDecoder {
         styleSet: StyleSet,
         definitions?: Definitions,
         languages?: string[],
+        politicalView?: string,
         options?: OptionsMap
     ): void {
-        super.configure(styleSet, definitions, languages, options);
+        super.configure(styleSet, definitions, languages, politicalView, options);
 
         if (options) {
             const omvOptions = options as OmvDecoderOptions;
@@ -690,9 +710,6 @@ export class OmvTileDecoder extends ThemedTileDecoder {
             if (omvOptions.enableElevationOverlay !== undefined) {
                 this.m_enableElevationOverlay = omvOptions.enableElevationOverlay;
             }
-        }
-        if (languages !== undefined) {
-            this.languages = languages;
         }
     }
 

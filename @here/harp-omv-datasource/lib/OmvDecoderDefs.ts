@@ -12,7 +12,11 @@ export enum FeatureModifierId {
     /**
      * Identifier to use the OmvTomTomFeatureModifier in the OmvDecoder.
      */
-    tomTom
+    tomTom,
+    /**
+     * Identifies modifier used to support different political points of view.
+     */
+    pointOfView
 }
 
 /**
@@ -175,6 +179,12 @@ export interface OmvDecoderOptions {
      * used.
      */
     featureModifierId?: FeatureModifierId;
+
+    /**
+     * Country code in ISO 3166-1 alpha-2 format defining optional point of view to be used.
+     * Set to __undefined__ if you want to revert to default point of view.
+     */
+    politicalView?: string;
 
     enableElevationOverlay?: boolean;
 }

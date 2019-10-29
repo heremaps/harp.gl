@@ -161,6 +161,7 @@ export class WorkerBasedDecoder implements ITileDecoder {
         styleSet?: StyleSet,
         definitions?: Definitions,
         languages?: string[],
+        politicalView?: string,
         options?: OptionsMap
     ): void {
         const message: WorkerDecoderProtocol.ConfigurationMessage = {
@@ -169,7 +170,8 @@ export class WorkerBasedDecoder implements ITileDecoder {
             styleSet,
             definitions,
             options,
-            languages
+            languages,
+            politicalView
         };
 
         this.workerSet.broadcastMessage(message);

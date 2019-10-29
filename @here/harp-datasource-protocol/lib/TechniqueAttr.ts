@@ -5,7 +5,7 @@
  */
 
 import { LoggerManager } from "@here/harp-utils";
-import { Env, Expr, ExprScope, MapEnv, Value } from "./Expr";
+import { Env, Expr, ExprScope, Value } from "./Expr";
 import { getPropertyValue, isInterpolatedProperty } from "./InterpolatedProperty";
 import { InterpolatedProperty } from "./InterpolatedPropertyDefs";
 
@@ -15,7 +15,7 @@ export interface AttrEvaluationContext {
     /**
      * Expression evaluation environment containing variable bindings.
      */
-    env: MapEnv;
+    env: Env;
 
     /**
      * Storage level of tile containing this feature.

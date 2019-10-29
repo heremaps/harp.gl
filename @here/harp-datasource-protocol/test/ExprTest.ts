@@ -20,7 +20,7 @@ function evaluate(expr: string | JsonExpr | Expr, env?: Env | ValueMap): Value {
         : typeof expr === "string"
         ? Expr.parse(expr)
         : Expr.fromJSON(expr)
-    ).evaluate(env || new Env());
+    ).evaluate(env || new Env({}));
 }
 
 describe("Expr", function() {

@@ -60,12 +60,14 @@ export interface ITileDecoder {
      * @param styleSet optional, new style set.
      * @param definitions optional, definitions used to resolve references in `styleSet`
      * @param languages optional, language list
+     * @param politicalView optional, political point of view (country code in ISO 3166-1 alfa-2)
      * @param options optional, new options - shape is specific for each decoder
      */
     configure(
         styleSet?: StyleSet,
         definitions?: Definitions,
         languages?: string[],
+        politicalView?: string,
         options?: OptionsMap
     ): void;
 

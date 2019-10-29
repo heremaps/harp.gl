@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { MapEnv } from "@here/harp-datasource-protocol/index-decoder";
+import { Env } from "@here/harp-datasource-protocol/index-decoder";
 import { LoggerManager } from "@here/harp-utils";
 import { OmvGenericFeatureModifier } from "./OmvDataFilter";
 import { OmvFeatureFilterDescription, OmvFilterDescription } from "./OmvDecoderDefs";
@@ -17,7 +17,7 @@ const DEFAULT_BUILDING_MIN_HEIGHT = "2";
 const DEFAULT_BUILDING_HEIGHT = "20";
 
 /**
- * Modifies the MapEnv of the TomTom Vector Tiles to be similar to the OMV format, so that the same
+ * Modifies the Env of the TomTom Vector Tiles to be similar to the OMV format, so that the same
  * theme files can be used.
  */
 export class OmvTomTomFeatureModifier extends OmvGenericFeatureModifier {
@@ -29,7 +29,7 @@ export class OmvTomTomFeatureModifier extends OmvGenericFeatureModifier {
         itemsToProcess: OmvFilterDescription[],
         itemsToIgnore: OmvFilterDescription[],
         layer: string,
-        env: MapEnv,
+        env: Env,
         defaultResult: boolean
     ): boolean {
         this.rewriteEnvironment(layer, env);
@@ -46,7 +46,7 @@ export class OmvTomTomFeatureModifier extends OmvGenericFeatureModifier {
      * @param layer
      * @param env
      */
-    private rewriteEnvironment(layer: string, env: MapEnv) {
+    private rewriteEnvironment(layer: string, env: Env) {
         // Rewriting landuse layers
         if (this.isWood(layer)) {
             this.updateEnvironment(env, "landuse", "wood");
@@ -125,7 +125,7 @@ export class OmvTomTomFeatureModifier extends OmvGenericFeatureModifier {
     }
 
     private updateEnvironment(
-        env: MapEnv,
+        env: Env,
         layer: string,
         newClass?: string,
         structure?: string

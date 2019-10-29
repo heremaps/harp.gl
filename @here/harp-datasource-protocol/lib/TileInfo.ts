@@ -6,7 +6,7 @@
 import { TileKey } from "@here/harp-geoutils";
 import { assert } from "@here/harp-utils";
 
-import { Env, MapEnv, Value } from "./Expr";
+import { Env, Value } from "./Expr";
 import { makeDecodedTechnique } from "./StyleSetEvaluator";
 import { AttrEvaluationContext, evaluateTechniqueAttr } from "./TechniqueAttr";
 import {
@@ -560,7 +560,7 @@ export class ExtendedTileInfoWriter {
      */
     addFeature(
         featureGroup: FeatureGroup,
-        env: MapEnv,
+        env: Env,
         featureId: number | undefined,
         featureText: string | undefined,
         infoTileTechniqueIndex: number,

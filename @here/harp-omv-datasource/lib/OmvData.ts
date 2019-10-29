@@ -4,11 +4,19 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Env, MapEnv, Value, ValueMap } from "@here/harp-datasource-protocol/index-decoder";
+import {
+    Env,
+    LocaleMap,
+    MapEnv,
+    MapLocalEnv,
+    Value,
+    ValueMap
+} from "@here/harp-datasource-protocol/index-decoder";
 import { TileKey } from "@here/harp-geoutils";
 import { ILogger } from "@here/harp-utils";
 import * as Long from "long";
 import { Vector2 } from "three";
+import { IEnvironmentProcessor } from "./IEnvironmentProcessor";
 import { IGeometryProcessor, ILineGeometry, IPolygonGeometry } from "./IGeometryProcessor";
 import { OmvFeatureFilter } from "./OmvDataFilter";
 import { OmvDataAdapter } from "./OmvDecoder";
@@ -306,15 +314,14 @@ function readAttributes(
     return attributes;
 }
 
-function createFeatureEnv(
+function getFeatureAttributes(
     layer: com.mapbox.pb.Tile.ILayer,
     feature: com.mapbox.pb.Tile.IFeature,
     geometryType: string,
     storageLevel: number,
     storageLevelOffset?: number,
-    logger?: ILogger,
-    parent?: Env
-): MapEnv {
+    logger?: ILogger
+): ValueMap {
     const attributes: ValueMap = {
         $layer: layer.name,
         $level: storageLevel,
@@ -332,7 +339,7 @@ function createFeatureEnv(
 
     readAttributes(layer, feature, attributes);
 
-    return new MapEnv(attributes, parent);
+    return attributes;
 }
 
 function asGeometryType(feature: com.mapbox.pb.Tile.IFeature | undefined): OmvGeometryType {
@@ -354,6 +361,50 @@ function asGeometryType(feature: com.mapbox.pb.Tile.IFeature | undefined): OmvGe
     } // switch
 }
 
+export class OmvGenericEnvironmentProcessor implements IEnvironmentProcessor {
+    createFeatureEnvironment(attributes: ValueMap, parent?: Env | undefined): Env {
+        return new MapEnv(attributes, parent);
+    }
+}
+
+export class OmvLocalEnvironmentProcessor implements IEnvironmentProcessor {
+    /**
+     * Map that contains localized properties names with requested localization (country code).
+     */
+    private readonly m_locale: LocaleMap;
+
+    constructor() {
+        this.m_locale = new Map<string, string>();
+    }
+
+    /**
+     * Setup environment to prioritize localized properties before generic ones.
+     *
+     * @note Some map features may have properties defined in _localized_ and _generic_
+     * version. The _localized_ attribute may hold for example name of the place in
+     * country specific language, but it may be also the variable property that is
+     * specific only for certain country point of view.
+     * For example some country borders may be disputed by general community, while totally
+     * accepted or claimed by some certain countries, depending on their political point of
+     * view.
+     * @see [ISO_3166-1_alfa-2|https://pl.wikipedia.org/wiki/ISO_3166-1_alfa-2] for more
+     * info about supported country codes.
+     * @param propertyName The name of property to be localized.
+     * @param countryCode The country code in ISO 3166-1 alfa-2 format (two letters).
+     */
+    setLocale(propertyName: string, countryCode: string): void {
+        // TODO: Hold compound property in form `${name}:${country}`,
+        // which may greatly improve performance - no string object
+        // creation at each lookup.
+        this.m_locale.set(propertyName, countryCode);
+    }
+
+    createFeatureEnvironment(attributes: ValueMap, parent?: Env | undefined): Env {
+        // Create feature environment (attributes) map using shared locale settings.
+        return new MapLocalEnv(attributes, parent, this.m_locale);
+    }
+}
+
 /**
  * The class [[OmvProtobufDataAdapter]] converts OMV protobuf geo data
  * to geometries for the given [[IGeometryProcessor]].
@@ -363,6 +414,7 @@ export class OmvProtobufDataAdapter implements OmvDataAdapter, OmvVisitor {
 
     private readonly m_geometryCommands = new GeometryCommands();
     private readonly m_processor: IGeometryProcessor;
+    private readonly m_envProcessor: IEnvironmentProcessor;
     private readonly m_logger?: ILogger;
     private m_dataFilter?: OmvFeatureFilter;
 
@@ -376,8 +428,14 @@ export class OmvProtobufDataAdapter implements OmvDataAdapter, OmvVisitor {
      * @param dataFilter The [[OmvFeatureFilter]] used to filter features.
      * @param logger The [[ILogger]] used to log diagnostic messages.
      */
-    constructor(processor: IGeometryProcessor, dataFilter?: OmvFeatureFilter, logger?: ILogger) {
+    constructor(
+        processor: IGeometryProcessor,
+        envProcessor: IEnvironmentProcessor,
+        dataFilter?: OmvFeatureFilter,
+        logger?: ILogger
+    ) {
         this.m_processor = processor;
+        this.m_envProcessor = envProcessor;
         this.m_dataFilter = dataFilter;
         this.m_logger = logger;
     }
@@ -474,7 +532,7 @@ export class OmvProtobufDataAdapter implements OmvDataAdapter, OmvVisitor {
             return;
         }
 
-        const env = createFeatureEnv(
+        const attribs = getFeatureAttributes(
             this.m_layer,
             feature,
             "point",
@@ -483,6 +541,7 @@ export class OmvProtobufDataAdapter implements OmvDataAdapter, OmvVisitor {
             this.m_logger
         );
 
+        const env = this.m_envProcessor.createFeatureEnvironment(attribs);
         this.m_processor.processPointFeature(layerName, layerExtents, geometry, env, storageLevel);
     }
 
@@ -525,7 +584,7 @@ export class OmvProtobufDataAdapter implements OmvDataAdapter, OmvVisitor {
             return;
         }
 
-        const env = createFeatureEnv(
+        const attribs = getFeatureAttributes(
             this.m_layer,
             feature,
             "line",
@@ -533,7 +592,7 @@ export class OmvProtobufDataAdapter implements OmvDataAdapter, OmvVisitor {
             this.m_processor.storageLevelOffset,
             this.m_logger
         );
-
+        const env = this.m_envProcessor.createFeatureEnvironment(attribs);
         this.m_processor.processLineFeature(layerName, layerExtents, geometry, env, storageLevel);
     }
 
@@ -582,7 +641,7 @@ export class OmvProtobufDataAdapter implements OmvDataAdapter, OmvVisitor {
             return;
         }
 
-        const env = createFeatureEnv(
+        const attribs = getFeatureAttributes(
             this.m_layer,
             feature,
             "polygon",
@@ -591,6 +650,7 @@ export class OmvProtobufDataAdapter implements OmvDataAdapter, OmvVisitor {
             this.m_logger
         );
 
+        const env = this.m_envProcessor.createFeatureEnvironment(attribs);
         this.m_processor.processPolygonFeature(
             layerName,
             layerExtents,

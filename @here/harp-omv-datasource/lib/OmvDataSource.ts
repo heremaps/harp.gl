@@ -140,10 +140,20 @@ export interface OmvDataSourceParameters {
 
     /**
      * Identifier used to choose OmvFeatureModifier, if undefined [[OmvGenericFeatureModifier]] is
-     * used. This parameter gets applied to the decoder used in the [[OmvDataSource]] which might
+     * used only if [[politicalView]] is undefined, otherwise [[OmvPointOfViewFeatureModifier]] will
+     * be used.
+     * This parameter gets applied to the decoder used in the [[OmvDataSource]] which might
      * be shared between various [[OmvDataSource]]s.
      */
     featureModifierId?: FeatureModifierId;
+
+    /**
+     * Expresses specific country point of view that is used when rendering disputed features,
+     * like borders, names, etc. If undefined "defacto" or most widely accepted political view
+     * will be presented.
+     * @see featureModifierId
+     */
+    politicalView?: string;
 
     /**
      * Optional, default copyright information of tiles provided by this data source.
@@ -225,6 +235,7 @@ export class OmvDataSource extends TileDataSource<OmvTile> {
             createTileInfo: this.m_params.createTileInfo === true,
             gatherRoadSegments: this.m_params.gatherRoadSegments === true,
             featureModifierId: this.m_params.featureModifierId,
+            politicalView: this.m_params.politicalView,
             skipShortLabels: this.m_params.skipShortLabels,
             storageLevelOffset: getOptionValue(m_params.storageLevelOffset, -1),
             enableElevationOverlay: this.m_params.enableElevationOverlay === true
@@ -247,7 +258,7 @@ export class OmvDataSource extends TileDataSource<OmvTile> {
             }
             throw error;
         }
-        this.configureDecoder(undefined, undefined, undefined, this.m_decoderOptions);
+        this.configureDecoder(undefined, undefined, undefined, undefined, this.m_decoderOptions);
     }
 
     /**
@@ -255,7 +266,7 @@ export class OmvDataSource extends TileDataSource<OmvTile> {
      * Will be applied to the decoder, which might be shared with other omv datasources.
      */
     removeDataFilter(): void {
-        this.configureDecoder(undefined, undefined, undefined, {
+        this.configureDecoder(undefined, undefined, undefined, undefined, {
             filterDescription: null
         });
     }
@@ -271,7 +282,7 @@ export class OmvDataSource extends TileDataSource<OmvTile> {
         this.m_decoderOptions.filterDescription =
             filterDescription !== null ? filterDescription : undefined;
 
-        this.configureDecoder(undefined, undefined, undefined, {
+        this.configureDecoder(undefined, undefined, undefined, undefined, {
             filterDescription
         });
     }
@@ -303,6 +314,13 @@ export class OmvDataSource extends TileDataSource<OmvTile> {
         }
     }
 
+    setPoliticalView(pointOfView?: string): void {
+        if (this.m_decoderOptions.politicalView !== pointOfView) {
+            this.m_decoderOptions.politicalView = pointOfView;
+            this.configureDecoder(undefined, undefined, undefined, pointOfView);
+        }
+    }
+
     get storageLevelOffset() {
         return super.storageLevelOffset;
     }
@@ -310,7 +328,7 @@ export class OmvDataSource extends TileDataSource<OmvTile> {
     set storageLevelOffset(levelOffset: number) {
         super.storageLevelOffset = levelOffset;
         this.m_decoderOptions.storageLevelOffset = this.storageLevelOffset;
-        this.configureDecoder(undefined, undefined, undefined, {
+        this.configureDecoder(undefined, undefined, undefined, undefined, {
             storageLevelOffset: this.storageLevelOffset
         });
     }
@@ -318,7 +336,7 @@ export class OmvDataSource extends TileDataSource<OmvTile> {
     setEnableElevationOverlay(enable: boolean) {
         if (this.m_decoderOptions.enableElevationOverlay !== enable) {
             this.m_decoderOptions.enableElevationOverlay = enable;
-            this.configureDecoder(undefined, undefined, undefined, {
+            this.configureDecoder(undefined, undefined, undefined, undefined, {
                 enableElevationOverlay: enable
             });
         }
@@ -328,10 +346,11 @@ export class OmvDataSource extends TileDataSource<OmvTile> {
         styleSet?: StyleSet,
         definitions?: Definitions,
         languages?: string[],
+        politicalView?: string,
         options?: OptionsMap
     ) {
         this.clearCache();
-        this.decoder.configure(styleSet, definitions, languages, options);
+        this.decoder.configure(styleSet, definitions, languages, politicalView, options);
         this.mapView.markTilesDirty(this);
     }
 }

@@ -1088,7 +1088,7 @@ export interface ExtrudedPolygonTechniqueParams extends StandardTechniqueParams 
 
     /**
      * Default color used if feature doesn't provide color attribute
-     * and [[MapEnv]] did not return it too.
+     * and [[Env]] did not return it too.
      * @format color-hex
      */
     defaultColor?: DynamicProperty<StyleColor>;

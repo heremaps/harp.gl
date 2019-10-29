@@ -317,7 +317,7 @@ export class StyleSetEvaluator {
     private readonly m_definitions?: Definitions;
     private readonly m_definitionExprCache = new Map<string, Expr>();
     private readonly m_tmpOptimizedSubSetKey: OptimizedSubSetKey = new OptimizedSubSetKey();
-    private readonly m_emptyEnv = new Env();
+    private readonly m_emptyEnv = new Env({});
     private m_layer: string | undefined;
     private m_geometryType: string | undefined;
 

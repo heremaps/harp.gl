@@ -198,7 +198,7 @@ export class TileDataSource<TileType extends Tile> extends DataSource {
         await Promise.all([this.m_options.dataProvider.connect(), this.m_decoder.connect()]);
         this.m_isReady = true;
 
-        this.m_decoder.configure(undefined, undefined, undefined, {
+        this.m_decoder.configure(undefined, undefined, undefined, undefined, {
             storageLevelOffset: this.m_options.storageLevelOffset
         });
     }

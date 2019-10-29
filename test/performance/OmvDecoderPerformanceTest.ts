@@ -9,11 +9,17 @@
 import { assert } from "chai";
 
 import { Theme } from "@here/harp-datasource-protocol";
-import { MapEnv, StyleSetEvaluator } from "@here/harp-datasource-protocol/index-decoder";
+import {
+    Env,
+    MapEnv,
+    StyleSetEvaluator,
+    ValueMap
+} from "@here/harp-datasource-protocol/index-decoder";
 import { accessToken } from "@here/harp-examples/config";
 import { sphereProjection, TileKey, webMercatorProjection } from "@here/harp-geoutils";
 import { ThemeLoader } from "@here/harp-mapview";
 import { APIFormat, OmvRestClient, OmvRestClientParameters } from "@here/harp-omv-datasource";
+import { IEnvironmentProcessor } from "@here/harp-omv-datasource/lib/IEnvironmentProcessor";
 import {
     IGeometryProcessor,
     ILineGeometry,
@@ -128,9 +134,19 @@ export function createOMVDecoderPerformanceTest(
                 }
             };
 
+            const environmentProcessor: IEnvironmentProcessor = {
+                createFeatureEnvironment(attributes: ValueMap, parent?: Env): Env {
+                    return new MapEnv(attributes, parent);
+                }
+            };
+
             await measurePerformanceSync(counterName, repeats, function() {
                 for (const [tileKey, tileData] of omvTiles) {
-                    const decoder = new OmvProtobufDataAdapter(geometryProcessor, undefined);
+                    const decoder = new OmvProtobufDataAdapter(
+                        geometryProcessor,
+                        environmentProcessor,
+                        undefined
+                    );
                     decoder.process(tileData, tileKey);
                 }
             });

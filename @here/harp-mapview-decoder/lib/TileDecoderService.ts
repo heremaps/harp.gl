@@ -141,6 +141,7 @@ export class TileDecoderService extends WorkerService {
             message.styleSet,
             message.definitions,
             message.languages,
+            message.politicalView,
             message.options
         );
     }
