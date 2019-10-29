@@ -892,9 +892,3 @@ export class FixedClipPlanesEvaluator implements ClipPlanesEvaluator {
         this.m_farPlane = farDist;
     }
 }
-
-/**
- * Default [[ClipPlanesEvaluator]] calculates near plane based on ground distance.
- */
-// tslint:disable-next-line: max-line-length
-export const defaultClipPlanesEvaluator: ClipPlanesEvaluator = new InterpolatedClipPlanesEvaluator();

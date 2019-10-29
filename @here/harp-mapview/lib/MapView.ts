@@ -26,7 +26,7 @@ import { ViewRanges } from "@here/harp-datasource-protocol/lib/ViewRanges";
 import { AnimatedExtrusionHandler } from "./AnimatedExtrusionHandler";
 import { BackgroundDataSource } from "./BackgroundDataSource";
 import { CameraMovementDetector } from "./CameraMovementDetector";
-import { ClipPlanesEvaluator, defaultClipPlanesEvaluator } from "./ClipPlanesEvaluator";
+import { ClipPlanesEvaluator, TiltViewClipPlanesEvaluator } from "./ClipPlanesEvaluator";
 import { IMapAntialiasSettings, IMapRenderingManager, MapRenderingManager } from "./composing";
 import { ConcurrentDecoderFacade } from "./ConcurrentDecoderFacade";
 import { CopyrightInfo } from "./copyrights/CopyrightInfo";
@@ -331,9 +331,9 @@ export interface MapViewOptions {
 
     /**
      * User-defined camera clipping planes distance evaluator.
-     * If not defined, [[DefaultClipPlanesEvaluator]] will be used by [[MapView]].
+     * If not defined, [[TiltViewClipPlanesEvaluator]] will be used by [[MapView]].
      *
-     * @default See [[MapViewDefaults.clipPlanesEvaluator]]
+     * @default [[TiltViewClipPlanesEvaluator]]
      */
     clipPlanesEvaluator?: ClipPlanesEvaluator;
 
@@ -609,7 +609,6 @@ export interface MapViewOptions {
  */
 export const MapViewDefaults = {
     projection: mercatorProjection,
-    clipPlanesEvaluator: defaultClipPlanesEvaluator,
 
     maxVisibleDataSourceTiles: 120,
     extendedFrustumCulling: true,
@@ -807,14 +806,16 @@ export class MapView extends THREE.EventDispatcher {
             ConcurrentDecoderFacade.defaultWorkerCount = this.m_options.decoderCount;
         }
 
-        this.m_visibleTileSetOptions = { ...MapViewDefaults };
+        this.m_visibleTileSetOptions = {
+            ...MapViewDefaults,
+            clipPlanesEvaluator:
+                options.clipPlanesEvaluator !== undefined
+                    ? options.clipPlanesEvaluator
+                    : new TiltViewClipPlanesEvaluator()
+        };
 
         if (options.projection !== undefined) {
             this.m_visibleTileSetOptions.projection = options.projection;
-        }
-
-        if (options.clipPlanesEvaluator !== undefined) {
-            this.m_visibleTileSetOptions.clipPlanesEvaluator = options.clipPlanesEvaluator;
         }
 
         if (options.extendedFrustumCulling !== undefined) {

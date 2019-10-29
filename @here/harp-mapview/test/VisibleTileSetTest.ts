@@ -8,6 +8,7 @@ import { assert, expect } from "chai";
 import * as sinon from "sinon";
 import * as THREE from "three";
 
+import { TiltViewClipPlanesEvaluator } from "../lib/ClipPlanesEvaluator";
 import { DataSource } from "../lib/DataSource";
 import { FrustumIntersection } from "../lib/FrustumIntersection";
 import { SimpleTileGeometryManager } from "../lib/geometry/TileGeometryManager";
@@ -51,11 +52,10 @@ class Fixture {
             MapViewDefaults.extendedFrustumCulling,
             params.tileWrappingEnabled
         );
-        this.vts = new VisibleTileSet(
-            this.frustumIntersection,
-            this.tileGeometryManager,
-            MapViewDefaults
-        );
+        this.vts = new VisibleTileSet(this.frustumIntersection, this.tileGeometryManager, {
+            ...MapViewDefaults,
+            clipPlanesEvaluator: new TiltViewClipPlanesEvaluator()
+        });
     }
 
     addDataSource(dataSource: DataSource) {
