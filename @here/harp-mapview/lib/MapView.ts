@@ -2897,7 +2897,6 @@ export class MapView extends THREE.EventDispatcher {
         if (
             this.m_textElementsRenderer === undefined ||
             !this.m_textElementsRenderer.ready ||
-            this.m_textElementsRenderer.loading ||
             debugCameraActive
         ) {
             return;
