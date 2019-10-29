@@ -54,8 +54,7 @@
                 "fadeNear": 0.9,
                 "fadeFar": 1,
                 "lineFadeNear": -0.75,
-                "lineFadeFar": 1,
-                "animateExtrusion": ["step", ["zoom"], false, 15, true]
+                "lineFadeFar": 1
             },
             "renderOrder": 2000
         },
