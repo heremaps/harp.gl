@@ -47,6 +47,7 @@ uniform mat4 modelViewMatrix;
 uniform mat4 projectionMatrix;
 uniform float lineWidth;
 uniform float outlineWidth;
+uniform vec2 drawRange;
 
 #ifdef USE_DISPLACEMENTMAP
 uniform sampler2D displacementMap;
@@ -69,11 +70,12 @@ varying vec3 vColor;
 #include <extrude_line_vert_func>
 
 void main() {
+    // Calculate the segment.
+    vec2 segment = abs(extrusionCoord.xy) - SEGMENT_OFFSET;
+    float segmentPos = sign(extrusionCoord.x) / 2.0 + 0.5;
+
     // Calculate the vertex position inside the line (segment) and extrusion direction and factor.
-    float linePos = mix(
-        abs(extrusionCoord.x) - SEGMENT_OFFSET,
-        abs(extrusionCoord.y) - SEGMENT_OFFSET,
-        sign(extrusionCoord.x) / 2.0 + 0.5);
+    float linePos = mix(segment.x, segment.y, segmentPos);
     vec2 extrusionDir = sign(extrusionCoord.xy);
     float extrusionFactor = extrusionDir.y * tan(bitangent.w / 2.0);
 
@@ -83,7 +85,19 @@ void main() {
 
     // Store the normalized extrusion coordinates in vCoords (with their ranges in vRange).
     vRange = vec3(extrusionCoord.z, lineWidth, extrusionFactor);
-    vCoords = vec4(extrusionDir / vRange.xy, (abs(extrusionCoord.xy) - SEGMENT_OFFSET) / vRange.x);
+    vCoords = vec4(extrusionDir / vRange.xy, segment / vRange.x);
+
+    // Adjust the segment to fit the drawRange.
+    float capDist = (lineWidth + outlineWidth) / extrusionCoord.z;
+    if ((vCoords.w + capDist) < drawRange.x || (vCoords.z - capDist) > drawRange.y) {
+        vCoords.zw += 1.0;
+    }
+    if (vCoords.z < drawRange.x) {
+        vCoords.zw += vec2(drawRange.x - vCoords.z, 0.0);
+    }
+    if (vCoords.w > drawRange.y) {
+        vCoords.zw -= vec2(0.0, vCoords.w - drawRange.y);
+    }
 
     // Transform position.
     #ifdef USE_DISPLACEMENTMAP
@@ -117,6 +131,7 @@ uniform float opacity;
 uniform float lineWidth;
 uniform float outlineWidth;
 uniform vec2 tileSize;
+uniform vec2 drawRange;
 
 #if DASHED_LINE
 uniform float dashSize;
@@ -271,6 +286,18 @@ export interface SolidLineMaterialParameters
      * Default is `"Round"`.
      */
     caps?: LineCaps;
+
+    /**
+     * Describes the starting drawing position for the line (in the range [0...1]).
+     * Default is `0.0`.
+     */
+    drawRangeStart?: number;
+
+    /**
+     * Describes the ending drawing position for the line (in the range [0...1]).
+     * Default is `1.0`.
+     */
+    drawRangeEnd?: number;
 }
 
 /**
@@ -282,6 +309,8 @@ export class SolidLineMaterial extends THREE.RawShaderMaterial
     static DEFAULT_WIDTH: number = 1.0;
     static DEFAULT_OUTLINE_WIDTH: number = 0.0;
     static DEFAULT_OPACITY: number = 1.0;
+    static DEFAULT_DRAW_RANGE_START: number = 0.0;
+    static DEFAULT_DRAW_RANGE_END: number = 1.0;
 
     /**
      * Constructs a new `SolidLineMaterial`.
@@ -340,6 +369,12 @@ export class SolidLineMaterial extends THREE.RawShaderMaterial
                     fadeFar: new THREE.Uniform(FadingFeature.DEFAULT_FADE_FAR),
                     displacementMap: new THREE.Uniform(
                         hasDisplacementMap ? params!.displacementMap : new THREE.Texture()
+                    ),
+                    drawRange: new THREE.Uniform(
+                        new THREE.Vector2(
+                            SolidLineMaterial.DEFAULT_DRAW_RANGE_START,
+                            SolidLineMaterial.DEFAULT_DRAW_RANGE_END
+                        )
                     )
                 },
                 // We need the fog uniforms available when we use `updateFog` as the internal
@@ -388,6 +423,12 @@ export class SolidLineMaterial extends THREE.RawShaderMaterial
             }
             if (params.caps !== undefined) {
                 this.caps = params.caps;
+            }
+            if (params.drawRangeStart !== undefined) {
+                this.drawRangeStart = params.drawRangeStart;
+            }
+            if (params.drawRangeEnd !== undefined) {
+                this.drawRangeEnd = params.drawRangeEnd;
             }
             this.fog = hasFog;
         }
@@ -529,5 +570,19 @@ export class SolidLineMaterial extends THREE.RawShaderMaterial
         this.defines.CAPS_TRIANGLE_IN = 0;
         this.defines.CAPS_TRIANGLE_OUT = 0;
         this.defines[LineCapsDefinitions[value]] = 1;
+    }
+
+    get drawRangeStart(): number {
+        return this.uniforms.drawRange.value.x as number;
+    }
+    set drawRangeStart(value: number) {
+        this.uniforms.drawRange.value.x = value;
+    }
+
+    get drawRangeEnd(): number {
+        return this.uniforms.drawRange.value.y as number;
+    }
+    set drawRangeEnd(value: number) {
+        this.uniforms.drawRange.value.y = value;
     }
 }

@@ -81,10 +81,18 @@ const tempRoofDisp = new THREE.Vector3();
 const tmpV2 = new THREE.Vector2();
 const tmpV2r = new THREE.Vector2();
 const tmpV3 = new THREE.Vector3();
+const tmpV3r = new THREE.Vector3();
 
 const tempP0 = new THREE.Vector2();
 const tempP1 = new THREE.Vector2();
 const tempPreviousTangent = new THREE.Vector2();
+
+const tmpPointA = new THREE.Vector3();
+const tmpPointB = new THREE.Vector3();
+const tmpPointC = new THREE.Vector3();
+const tmpPointD = new THREE.Vector3();
+const tmpPointE = new THREE.Vector3();
+const tmpLine = new THREE.Line3();
 
 /**
  * Height buildings take whenever no height-data is present. Used to avoid z-fighting and other
@@ -324,6 +332,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
 
         const lines: number[][] = [];
         const uvs: number[][] = [];
+        const offsets: number[][] = [];
         const { projectedTileBounds } = this.m_decodeInfo;
 
         const tileWidth = projectedTileBounds.max.x - projectedTileBounds.min.x;
@@ -332,6 +341,8 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
 
         let computeTexCoords: TexCoordsFunction | undefined;
         let texCoordinateType: TextureCoordinateType | undefined;
+
+        const hasUntiledLines = geometry[0].untiledPositions !== undefined;
 
         // Check if any of the techniques needs texture coordinates
         for (const technique of techniques) {
@@ -349,8 +360,30 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
         }
 
         for (const polyline of geometry) {
+            // Compute the world position of the untiled line and its distance to the origin of the
+            // line to properly join lines.
+            const untiledLine: number[] = [];
+            let lineDist = 0;
+            if (hasUntiledLines) {
+                this.m_decodeInfo.targetProjection.projectPoint(
+                    polyline.untiledPositions![0],
+                    tmpV3r
+                );
+                polyline.untiledPositions!.forEach(pos => {
+                    // Calculate the distance to the next unnormalized point.
+                    this.m_decodeInfo.targetProjection.projectPoint(pos, tmpV3);
+                    lineDist += tmpV3.distanceTo(tmpV3r);
+                    tmpV3r.copy(tmpV3);
+
+                    // Pushed the normalized point for line matching.
+                    this.m_decodeInfo.targetProjection.projectPoint(pos.normalized(), tmpV3);
+                    untiledLine.push(tmpV3.x, tmpV3.y, tmpV3.z, lineDist);
+                });
+            }
+
             const line: number[] = [];
             const lineUvs: number[] = [];
+            const lineOffsets: number[] = [];
             polyline.positions.forEach(pos => {
                 webMercatorTile2TargetWorld(extents, this.m_decodeInfo, pos, tmpV3);
                 line.push(tmpV3.x, tmpV3.y, tmpV3.z);
@@ -358,9 +391,18 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                     const { u, v } = computeTexCoords(pos, extents);
                     lineUvs.push(u, v);
                 }
+                if (hasUntiledLines) {
+                    // Convert from local to world space.
+                    tmpV3.add(this.m_decodeInfo.center);
+
+                    // Find where in the [0...1] range relative to the line our current vertex lies.
+                    const offset = this.findRelativePositionInLine(tmpV3, untiledLine) / lineDist;
+                    lineOffsets.push(offset);
+                }
             });
             lines.push(line);
             uvs.push(lineUvs);
+            offsets.push(lineOffsets);
         }
 
         const wantCircle = this.m_decodeInfo.tileKey.level >= 11;
@@ -394,7 +436,8 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                     featureId,
                     lines,
                     context,
-                    this.getTextureCoordinateType(technique) ? uvs : undefined
+                    this.getTextureCoordinateType(technique) ? uvs : undefined,
+                    hasUntiledLines ? offsets : undefined
                 );
             } else if (
                 isTextTechnique(technique) ||
@@ -905,7 +948,8 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
         featureId: number | undefined,
         lines: number[][],
         context: AttrEvaluationContext,
-        uvs?: number[][]
+        uvs?: number[][],
+        offsets?: number[][]
     ): void {
         const renderOrderOffset = evaluateTechniqueAttr<number>(
             context,
@@ -958,7 +1002,13 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
         }
         let i = 0;
         lines.forEach(aLine => {
-            lineGroup.add(this.m_decodeInfo.center, aLine, uvs ? uvs[i++] : undefined);
+            lineGroup.add(
+                this.m_decodeInfo.center,
+                aLine,
+                offsets ? offsets[i] : undefined,
+                uvs ? uvs[i] : undefined
+            );
+            i++;
         });
     }
 
@@ -1770,5 +1820,30 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
             currRingVertex = maxRingVertex + 1;
             firstRingVertex = undefined;
         }
+    }
+
+    private findRelativePositionInLine(p: THREE.Vector3, line: number[]): number {
+        let lineDist = Infinity;
+        let lineOffset = 0;
+        for (let i = 0; i < line.length; i += 4) {
+            // Find the closest point C in segment AB to point P.
+            tmpLine.set(
+                tmpPointA.set(line[i], line[i + 1], line[i + 2]),
+                tmpPointB.set(line[i + 4], line[i + 5], line[i + 6])
+            );
+            tmpLine.closestPointToPoint(p, true, tmpPointC);
+
+            // If P is in AB (or really close), save A as anchor point and C (to estimate distance
+            // from segment origin).
+            const dist = tmpPointC.distanceTo(p);
+            if (dist < lineDist) {
+                tmpPointD.copy(tmpPointC);
+                tmpPointE.copy(tmpPointA);
+                lineDist = dist;
+                lineOffset = line[i + 3];
+            }
+        }
+        // Return the relative position of P inside the line.
+        return lineOffset + tmpPointD.distanceTo(tmpPointE);
     }
 }

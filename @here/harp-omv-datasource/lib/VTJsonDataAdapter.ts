@@ -4,8 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { MapEnv, ValueMap } from "@here/harp-datasource-protocol/index-decoder";
-import { GeoBox, TileKey } from "@here/harp-geoutils";
+import {
+    FeatureGeometry,
+    GeometryCollection,
+    MapEnv,
+    ValueMap
+} from "@here/harp-datasource-protocol/index-decoder";
+import { GeoBox, GeoCoordinates, TileKey } from "@here/harp-geoutils";
 import { ILogger } from "@here/harp-utils";
 import { Vector2 } from "three";
 import { IGeometryProcessor, ILineGeometry, IPolygonGeometry } from "./IGeometryProcessor";
@@ -26,6 +31,7 @@ enum VTJsonGeometryType {
 
 interface VTJsonFeatureInterface {
     geometry: VTJsonPosition[] | VTJsonPosition[][];
+    originalGeometry: FeatureGeometry | GeometryCollection;
     id: string;
     tags: ValueMap;
     type: VTJsonGeometryType;
@@ -135,8 +141,24 @@ export class VTJsonDataAdapter implements OmvDataAdapter {
                     break;
                 }
                 case VTJsonGeometryType.LineString: {
+                    let untiledPositions: GeoCoordinates[] | undefined;
+                    if (feature.originalGeometry.type === "LineString") {
+                        untiledPositions = [];
+                        for (const [x, y] of feature.originalGeometry.coordinates) {
+                            untiledPositions.push(new GeoCoordinates(y, x));
+                        }
+                    } else if (feature.originalGeometry.type === "MultiLineString") {
+                        untiledPositions = [];
+                        for (const lineGeometry of feature.originalGeometry
+                            .coordinates as VTJsonPosition[][]) {
+                            for (const [x, y] of lineGeometry) {
+                                untiledPositions.push(new GeoCoordinates(y, x));
+                            }
+                        }
+                    }
+
                     for (const lineGeometry of feature.geometry as VTJsonPosition[][]) {
-                        const line: ILineGeometry = { positions: [] };
+                        const line: ILineGeometry = { positions: [], untiledPositions };
                         for (const [x, y] of lineGeometry) {
                             const position = new Vector2(x, y);
                             line.positions.push(position);

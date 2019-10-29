@@ -33,26 +33,28 @@ interface VertexDescriptor {
  * Declares all the vertex attributes used for rendering a line using the [[SolidLineMaterial]].
  */
 
-/** Optional normal and uv coordinates. */
-const NORMAL_UV_VERTEX_ATTRIBUTES: VertexDescriptor = {
-    attributes: [
-        { name: "uv", itemSize: 2, offset: 13 },
-        { name: "normal", itemSize: 3, offset: 15 }
-    ],
-    stride: 5
-};
-
 /** Base line vertex attributes. */
 const LINE_VERTEX_ATTRIBUTES: VertexDescriptor = {
-    // The "extrusionCoord" its a vec3. Represents UV coordinates + line length for the third
-    // component.
     attributes: [
+        // The "extrusionCoord" is a vec4 which represents:
+        // xy: Extrusion coordinates
+        // sign(xy): Extrusion direction
+        // z: Line length
         { name: "extrusionCoord", itemSize: 3, offset: 0 },
         { name: "position", itemSize: 3, offset: 3 },
         { name: "tangent", itemSize: 3, offset: 6 },
         { name: "bitangent", itemSize: 4, offset: 9 }
     ],
     stride: 13
+};
+
+/** Optional normal and uv coordinates. */
+const NORMAL_UV_VERTEX_ATTRIBUTES: VertexDescriptor = {
+    attributes: [
+        { name: "uv", itemSize: 2, offset: LINE_VERTEX_ATTRIBUTES.stride },
+        { name: "normal", itemSize: 3, offset: LINE_VERTEX_ATTRIBUTES.stride + 2 }
+    ],
+    stride: 5
 };
 
 /** Base line vertex attributes plus normals and uv coordinates. */
@@ -107,6 +109,7 @@ function getVertexDescriptor(hasNormalsAndUvs: boolean, highPrecision: boolean):
  *
  * @param center Center of the polyline.
  * @param polyline Array of `numbers` describing a polyline.
+ * @param offsets Array of `numbers` representing line segment offsets.
  * @param uvs Array of `numbers` representing texture coordinates.
  * @param colors Array of `numbers` describing a polyline's colors.
  * @param geometry [[LineGeometry]] object used to store the vertex and index attributes.
@@ -115,6 +118,7 @@ function getVertexDescriptor(hasNormalsAndUvs: boolean, highPrecision: boolean):
 export function createLineGeometry(
     center: THREE.Vector3,
     polyline: ArrayLike<number>,
+    offsets?: ArrayLike<number>,
     uvs?: ArrayLike<number>,
     colors?: ArrayLike<number>,
     geometry = new LineGeometry(),
@@ -131,9 +135,11 @@ export function createLineGeometry(
     const tangents = new Array<number>(polyline.length - 3);
     const baseVertex = geometry.vertices.length / stride;
 
+    const hasSegmentOffsets = offsets !== undefined && offsets.length > 0;
     const hasTexCoords = uvs !== undefined && uvs.length > 0;
     const vertexColors = colors !== undefined && colors.length && polyline.length;
 
+    assert(!hasSegmentOffsets || offsets!.length === pointCount);
     assert(!hasTexCoords || uvs!.length / 2 === pointCount);
     assert(!vertexColors || colors!.length === polyline.length);
 
@@ -153,7 +159,18 @@ export function createLineGeometry(
         sum = sum + len;
         segments[i + 1] = sum;
     }
-    const lineLength = segments[segments.length - 1];
+
+    const lineCoverage = hasSegmentOffsets
+        ? Math.abs(offsets![offsets!.length - 1] - offsets![0])
+        : 1.0;
+    const lineLength = segments[segments.length - 1] / lineCoverage;
+
+    // Override the segments if offsets are explicitly provided.
+    if (hasSegmentOffsets) {
+        for (let i = 0; i < pointCount; ++i) {
+            segments[i] = offsets![i] * lineLength + SEGMENT_OFFSET;
+        }
+    }
 
     // Check if we're working with a closed line.
     let isClosed = true;
@@ -385,18 +402,28 @@ export class LineGroup {
      *
      * @param center World center of the provided points.
      * @param points Sequence of (x,y,z) coordinates.
+     * @param offsets Sequence of line segment offsets.
      * @param uvs Sequence of (u,v) texture coordinates.
      * @param colors Sequence of (r,g,b) color components.
      */
     add(
         center: THREE.Vector3,
         points: ArrayLike<number>,
+        offsets?: ArrayLike<number>,
         uvs?: ArrayLike<number>,
         colors?: ArrayLike<number>
     ): this {
         if (!this.isSimple) {
             assert(!this.hasNormalsAndUvs || uvs !== undefined);
-            createLineGeometry(center, points, uvs, colors, this.m_geometry, this.highPrecision);
+            createLineGeometry(
+                center,
+                points,
+                offsets,
+                uvs,
+                colors,
+                this.m_geometry,
+                this.highPrecision
+            );
         } else {
             createSimpleLineGeometry(points, colors, this.m_geometry);
         }

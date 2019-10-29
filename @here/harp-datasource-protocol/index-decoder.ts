@@ -10,3 +10,4 @@ export * from "./lib/IMeshBuffers";
 export * from "./lib/Outliner";
 export * from "./lib/Expr";
 export * from "./lib/ThreeBufferUtils";
+export * from "./lib/GeoJsonDataType";

@@ -46,13 +46,13 @@ float roundEdgesAndAddCaps(in vec4 coords, in vec3 range) {
 
     #if !CAPS_ROUND
     // Compute the caps mask.
-    float capRangeMask = clamp(1.0 - ceil(range.z - 1.0), 0.0, 1.0);
-    float beginCapMask = clamp(ceil(0.0 - coords.x), 0.0, 1.0);
-    float endCapMask = clamp(ceil(coords.x - 1.0), 0.0, 1.0);
+    float capRangeMask = clamp(1.0 - ceil(range.z - drawRange.y), 0.0, 1.0);
+    float beginCapMask = clamp(ceil(drawRange.x - coords.x), 0.0, 1.0);
+    float endCapMask = clamp(ceil(coords.x - drawRange.y), 0.0, 1.0);
     float capMask = capRangeMask * max(beginCapMask, endCapMask);
 
     // Compute the outer segment distance (specific for each cap mode).
-    float capDist = max(coords.x - 1.0, -coords.x) / widthRatio;
+    float capDist = max(coords.x - drawRange.y, drawRange.x - coords.x) / widthRatio;
     #if CAPS_NONE
     dist = mix(dist, max(abs(coords.y), (capDist + 0.1) / 0.1), capMask);
     #elif CAPS_SQUARE
