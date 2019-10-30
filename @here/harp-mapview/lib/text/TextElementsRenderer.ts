@@ -1513,14 +1513,14 @@ export class TextElementsRenderer {
             renderIcon && poiRenderer.prepareRender(pointLabel, this.m_viewState.zoomLevel);
 
         if (iconReady) {
-            const iconIsVisible = poiRenderer.computeScreenBox(
-                poiInfo!,
-                tempPoiScreenPosition,
-                distanceScaleFactor,
-                this.m_screenCollisions,
-                this.m_viewState.zoomLevel,
-                tempBox2D
-            );
+            const iconIsVisible =
+                poiRenderer.computeIconScreenBox(
+                    poiInfo!,
+                    tempPoiScreenPosition,
+                    distanceScaleFactor,
+                    this.m_viewState.zoomLevel,
+                    tempBox2D
+                ) && this.m_screenCollisions.isVisible(tempBox2D);
 
             // If the icon is prepared and valid, but just not visible, try again next time.
             if (!iconIsVisible) {
@@ -1534,10 +1534,7 @@ export class TextElementsRenderer {
             }
 
             if (groupState.visited) {
-                iconSpaceAvailable = poiRenderer.isSpaceAvailable(
-                    this.m_screenCollisions,
-                    tempBox2D
-                );
+                iconSpaceAvailable = !this.m_screenCollisions.isAllocated(tempBox2D);
 
                 // Reserve screen space if necessary, return false if failed:
                 if (
