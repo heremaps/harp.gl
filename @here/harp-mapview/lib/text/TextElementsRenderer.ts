@@ -59,7 +59,7 @@ import {
 import { TextElementState } from "./TextElementState";
 import { TextElementStateCache } from "./TextElementStateCache";
 import { TextElementType } from "./TextElementType";
-import { TextStyleCache } from "./TextStyleCache";
+import { TextElementStyle, TextStyleCache } from "./TextStyleCache";
 import { UpdateStats } from "./UpdateStats";
 import { ViewState } from "./ViewState";
 
@@ -169,12 +169,6 @@ class TextElementLists {
     }
 }
 
-enum InitState {
-    Uninitialized,
-    Initializing,
-    Initialized
-}
-
 function checkIfTextElementsChanged(dataSourceTileList: DataSourceTileList[]) {
     let textElementsChanged = false;
 
@@ -212,7 +206,10 @@ function isPlacementTimeExceeded(startTime: number | undefined): boolean {
  * Internal class to manage all text rendering.
  */
 export class TextElementsRenderer {
-    private m_initState: InitState = InitState.Uninitialized;
+    private m_initialized: boolean = false;
+    private m_initPromise: Promise<void> | undefined;
+    private m_glyphLoadingCount: number = 0;
+    private m_loadPromise: Promise<any> | undefined;
     private m_initializedTextElementCount = 0;
     private readonly m_options: TextElementsRendererOptions;
 
@@ -485,11 +482,19 @@ export class TextElementsRenderer {
      * `true` if any resource used by any `FontCatalog` is still loading.
      */
     get loading(): boolean {
-        let isLoading = this.m_fontCatalogLoader.loading;
-        for (const textRenderer of this.m_textRenderers) {
-            isLoading = isLoading || textRenderer.textCanvas.fontCatalog.isLoading;
+        return this.m_fontCatalogLoader.loading || this.m_glyphLoadingCount > 0;
+    }
+
+    /**
+     * Waits till all pending resources from any `FontCatalog` are loaded.
+     */
+    async waitLoaded(): Promise<void> {
+        this.waitInitialized();
+
+        if (this.m_loadPromise !== undefined) {
+            await this.m_loadPromise;
         }
-        return isLoading;
+        return;
     }
 
     /**
@@ -520,11 +525,27 @@ export class TextElementsRenderer {
     }
 
     get initialized(): boolean {
-        return this.m_initState === InitState.Initialized;
+        return this.m_initialized;
     }
 
     get initializing(): boolean {
-        return this.m_initState === InitState.Initializing;
+        return this.m_initPromise !== undefined;
+    }
+
+    /**
+     * Waits until initialization is done.
+     * @returns Promise resolved to true if initialization was done, false otherwise.
+     */
+    async waitInitialized(): Promise<boolean> {
+        if (this.initialized) {
+            return true;
+        }
+
+        if (this.m_initPromise === undefined) {
+            return false;
+        }
+        await this.m_initPromise;
+        return true;
     }
 
     /**
@@ -533,15 +554,16 @@ export class TextElementsRenderer {
      * @returns Whether the text renderer is initialized.
      */
     private initialize(textElementsAvailable: boolean): boolean {
-        if (this.m_initState === InitState.Uninitialized && textElementsAvailable) {
-            this.m_initState = InitState.Initializing;
-            this.invalidateCache(); // Force cache update after initialization.
+        if (!this.initialized && !this.initializing && textElementsAvailable) {
             this.initializeDefaultAssets();
-            this.initializeTextCanvases().then(() => {
-                this.m_initState = InitState.Initialized;
+            this.m_initPromise = this.initializeTextCanvases().then(() => {
+                this.m_initialized = true;
+                this.m_initPromise = undefined;
+                this.invalidateCache(); // Force cache update after initialization.
+                this.m_viewUpdateCallback();
             });
         }
-        return this.m_initState === InitState.Initialized;
+        return this.initialized;
     }
 
     /**
@@ -713,61 +735,7 @@ export class TextElementsRenderer {
                 }
             }
 
-            // Trigger the glyph load if needed.
-            if (textElement.loadingState === undefined) {
-                textElement.loadingState = LoadingState.Requested;
-
-                if (textElement.renderStyle === undefined) {
-                    textElement.renderStyle = new TextRenderStyle({
-                        ...textElementStyle.renderParams,
-                        ...textElement.renderParams
-                    });
-                }
-                if (textElement.layoutStyle === undefined) {
-                    textElement.layoutStyle = new TextLayoutStyle({
-                        ...textElementStyle.layoutParams,
-                        ...textElement.layoutParams
-                    });
-                }
-
-                if (textElement.text === "") {
-                    textElement.loadingState = LoadingState.Loaded;
-                } else {
-                    textCanvas.fontCatalog
-                        .loadCharset(textElement.text, textElement.renderStyle)
-                        .then(() => {
-                            textElement.loadingState = LoadingState.Loaded;
-                            // Ensure that text elements that were loading glyphs get a chance
-                            // to be rendered if there's no text element updates in the next frames.
-                            this.m_forceNewLabelsPass = true;
-                            this.m_viewUpdateCallback();
-                        });
-                }
-            }
-            if (textElement.loadingState === LoadingState.Loaded) {
-                if (this.m_initializedTextElementCount < MAX_INITIALIZED_TEXT_ELEMENTS_PER_FRAME) {
-                    textCanvas.textRenderStyle = textElement.renderStyle!;
-                    textCanvas.textLayoutStyle = textElement.layoutStyle!;
-                    textElement.glyphCaseArray = [];
-                    textElement.glyphs = textCanvas.fontCatalog.getGlyphs(
-                        textElement.text,
-                        textCanvas.textRenderStyle,
-                        textElement.glyphCaseArray
-                    );
-                    if (!isPathLabel) {
-                        textElement.bounds = new THREE.Box2();
-                        temp.poiMeasurementParams.letterCaseArray = textElement.glyphCaseArray!;
-                        textCanvas.measureText(
-                            textElement.glyphs!,
-                            textElement.bounds,
-                            temp.poiMeasurementParams
-                        );
-                    }
-                    textElement.loadingState = LoadingState.Initialized;
-                    ++this.m_initializedTextElementCount;
-                }
-            }
-            if (textElement.loadingState !== LoadingState.Initialized) {
+            if (!this.initializeGlyphs(textElement, textElementStyle, temp)) {
                 continue;
             }
 
@@ -824,6 +792,85 @@ export class TextElementsRenderer {
         return true;
     }
 
+    private initializeGlyphs(
+        textElement: TextElement,
+        textElementStyle: TextElementStyle,
+        tempParams: TempParams
+    ): boolean {
+        // Trigger the glyph load if needed.
+        if (textElement.loadingState === LoadingState.Initialized) {
+            return true;
+        }
+
+        assert(textElementStyle.textCanvas !== undefined);
+        const textCanvas = textElementStyle.textCanvas!;
+
+        if (textElement.loadingState === undefined) {
+            textElement.loadingState = LoadingState.Requested;
+
+            if (textElement.renderStyle === undefined) {
+                textElement.renderStyle = new TextRenderStyle({
+                    ...textElementStyle.renderParams,
+                    ...textElement.renderParams
+                });
+            }
+            if (textElement.layoutStyle === undefined) {
+                textElement.layoutStyle = new TextLayoutStyle({
+                    ...textElementStyle.layoutParams,
+                    ...textElement.layoutParams
+                });
+            }
+
+            if (textElement.text === "") {
+                textElement.loadingState = LoadingState.Loaded;
+            } else {
+                const newLoadPromise = textCanvas.fontCatalog
+                    .loadCharset(textElement.text, textElement.renderStyle)
+                    .then(() => {
+                        --this.m_glyphLoadingCount;
+                        textElement.loadingState = LoadingState.Loaded;
+                        // Ensure that text elements still loading glyphs get a chance to
+                        // be rendered if there's no text element updates in the next frames.
+                        this.m_forceNewLabelsPass = true;
+                        this.m_viewUpdateCallback();
+                    });
+                if (this.m_glyphLoadingCount === 0) {
+                    this.m_loadPromise = undefined;
+                }
+                ++this.m_glyphLoadingCount;
+
+                this.m_loadPromise =
+                    this.m_loadPromise === undefined
+                        ? newLoadPromise
+                        : Promise.all([this.m_loadPromise, newLoadPromise]);
+            }
+        }
+        if (textElement.loadingState === LoadingState.Loaded) {
+            if (this.m_initializedTextElementCount < MAX_INITIALIZED_TEXT_ELEMENTS_PER_FRAME) {
+                textCanvas.textRenderStyle = textElement.renderStyle!;
+                textCanvas.textLayoutStyle = textElement.layoutStyle!;
+                textElement.glyphCaseArray = [];
+                textElement.glyphs = textCanvas.fontCatalog.getGlyphs(
+                    textElement.text,
+                    textCanvas.textRenderStyle,
+                    textElement.glyphCaseArray
+                );
+                if (textElement.type !== TextElementType.PathLabel) {
+                    textElement.bounds = new THREE.Box2();
+                    tempParams.poiMeasurementParams.letterCaseArray = textElement.glyphCaseArray!;
+                    textCanvas.measureText(
+                        textElement.glyphs!,
+                        textElement.bounds,
+                        tempParams.poiMeasurementParams
+                    );
+                }
+                textElement.loadingState = LoadingState.Initialized;
+                ++this.m_initializedTextElementCount;
+            }
+        }
+        return textElement.loadingState === LoadingState.Initialized;
+    }
+
     private initializeDefaultAssets(): void {
         const defaultFontCatalogName = this.m_fontCatalogLoader.initialize(
             this.m_options.fontCatalog!
@@ -859,8 +906,6 @@ export class TextElementsRenderer {
                 defaultTextCanvas!,
                 this.m_textRenderers
             );
-
-            this.m_viewUpdateCallback();
         });
     }
 
