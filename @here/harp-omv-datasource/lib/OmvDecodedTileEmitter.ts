@@ -1281,9 +1281,9 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                                 tmpV3.z + tempRoofDisp.z
                             );
                             extrusionAxis.push(
-                                tempRoofDisp.x - tempFootDisp.x,
-                                tempRoofDisp.y - tempFootDisp.y,
-                                tempRoofDisp.z - tempFootDisp.z,
+                                0.0,
+                                0.0,
+                                0.0,
                                 0.0,
                                 tempRoofDisp.x - tempFootDisp.x,
                                 tempRoofDisp.y - tempFootDisp.y,
