@@ -12,7 +12,10 @@ uniform float extrusionRatio;
 varying vec4 vExtrusionAxis;
 `,
     extrusion_vertex: `
-transformed = transformed - extrusionAxis.xyz + extrusionAxis.xyz * extrusionRatio;
+// animate only if the point is above the ground
+if(dot(position,vec3(extrusionAxis))>0.0){
+    transformed = transformed + extrusionAxis.xyz * (extrusionRatio - 1.0);
+}
 vExtrusionAxis = vec4(normalMatrix * extrusionAxis.xyz, extrusionAxis.w);
 `,
     // Modified version of THREE <normal_fragment_begin> shader chunk which, for flat shaded

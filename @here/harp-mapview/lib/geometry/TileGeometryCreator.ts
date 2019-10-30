@@ -1507,8 +1507,7 @@ export class TileGeometryCreator {
         // TODO cache the material HARP-4207
         const material = new MapMeshBasicMaterial({
             color: colorHex,
-            visible: isVisible,
-            depthWrite: false
+            visible: isVisible
         });
         const plane = new THREE.Mesh(geometry, material);
         plane.position.copy(planeCenter);
