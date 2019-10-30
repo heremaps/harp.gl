@@ -297,7 +297,12 @@ export class SolidLineMaterial extends THREE.RawShaderMaterial
             DASHED_LINE: 0,
             TILE_CLIP: 0,
             USE_COLOR: 0,
-            USE_DASH_COLOR: 0
+            USE_DASH_COLOR: 0,
+            CAPS_SQUARE: 0,
+            CAPS_ROUND: 1,
+            CAPS_NONE: 0,
+            CAPS_TRIANGLE_IN: 0,
+            CAPS_TRIANGLE_OUT: 0
         };
 
         const hasFog = params !== undefined && params.fog === true;
@@ -381,8 +386,8 @@ export class SolidLineMaterial extends THREE.RawShaderMaterial
             if (params.displacementMap !== undefined) {
                 this.displacementMap = params.displacementMap;
             }
-            if (params.caps !== undefined && LineCapsDefinitions.hasOwnProperty(params.caps)) {
-                defines[LineCapsDefinitions[params.caps]] = 1;
+            if (params.caps !== undefined) {
+                this.caps = params.caps;
             }
             this.fog = hasFog;
         }
@@ -499,5 +504,30 @@ export class SolidLineMaterial extends THREE.RawShaderMaterial
             delete this.defines.USE_DISPLACEMENTMAP;
         }
         this.needsUpdate = true;
+    }
+
+    get caps(): LineCaps {
+        let result: LineCaps = "Round";
+        if (this.defines.CAPS_SQUARE === 1) {
+            result = "Square";
+        } else if (this.defines.CAPS_NONE === 1) {
+            result = "None";
+        } else if (this.defines.CAPS_ROUND === 1) {
+            result = "Round";
+        } else if (this.defines.CAPS_TRIANGLE_IN === 1) {
+            result = "TriangleIn";
+        } else if (this.defines.CAPS_TRIANGLE_OUT === 1) {
+            result = "TriangleOut";
+        }
+        return result;
+    }
+
+    set caps(value: LineCaps) {
+        this.defines.CAPS_SQUARE = 0;
+        this.defines.CAPS_ROUND = 0;
+        this.defines.CAPS_NONE = 0;
+        this.defines.CAPS_TRIANGLE_IN = 0;
+        this.defines.CAPS_TRIANGLE_OUT = 0;
+        this.defines[LineCapsDefinitions[value]] = 1;
     }
 }
