@@ -1132,6 +1132,9 @@ export class TileGeometryCreator {
                             : "0x000000"
                     );
                     outlineMaterial.uniforms.diffuse.value = outlineColor;
+                    if (outlineTechnique.secondaryCaps !== undefined) {
+                        outlineMaterial.caps = outlineTechnique.secondaryCaps;
+                    }
                     const outlineObj = new ObjectCtor(bufferGeometry, outlineMaterial);
 
                     outlineObj.renderOrder =

@@ -909,6 +909,11 @@ export interface SolidLineTechniqueParams extends BaseTechniqueParams, Polygonal
      */
     clipping?: boolean;
     /**
+     * Describes line caps type (`"None"`, `"Round"`, `"Square"`, `"TriangleOut"`, `"TriangleIn"`).
+     * Default is `"Round"`.
+     */
+    caps?: LineCaps;
+    /**
      * Color of secondary line geometry in hexadecimal or CSS-style notation, for example:
      * `"#e4e9ec"`, `"#fff"`, `"rgb(255, 0, 0)"`, or `"hsl(35, 11%, 88%)"`.
      * @format color-hex
@@ -922,12 +927,12 @@ export interface SolidLineTechniqueParams extends BaseTechniqueParams, Polygonal
      * The render order of the secondary line geometry object created using this technique.
      */
     secondaryRenderOrder?: number;
-
     /**
-     * Describes line caps type (`"None"`, `"Round"`, `"Square"`, `"TriangleOut"`, `"TriangleIn"`).
+     * Describes secondary line caps type (`"None"`, `"Round"`, `"Square"`, `"TriangleOut"`,
+     * `"TriangleIn"`).
      * Default is `"Round"`.
      */
-    caps?: LineCaps;
+    secondaryCaps?: LineCaps;
 }
 
 /**

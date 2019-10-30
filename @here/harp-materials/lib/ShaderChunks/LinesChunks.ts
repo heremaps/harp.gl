@@ -44,7 +44,7 @@ float roundEdgesAndAddCaps(in vec4 coords, in vec3 range) {
     dist = max(dist, segmentBeginMask * length(vec2((coords.x - coords.z) / widthRatio, coords.y)));
     dist = max(dist, segmentEndMask * length(vec2((coords.x - coords.w) / widthRatio, coords.y)));
 
-    #if !defined(CAPS_ROUND)
+    #if !CAPS_ROUND
     // Compute the caps mask.
     float capRangeMask = clamp(1.0 - ceil(range.z - 1.0), 0.0, 1.0);
     float beginCapMask = clamp(ceil(0.0 - coords.x), 0.0, 1.0);
@@ -53,13 +53,13 @@ float roundEdgesAndAddCaps(in vec4 coords, in vec3 range) {
 
     // Compute the outer segment distance (specific for each cap mode).
     float capDist = max(coords.x - 1.0, -coords.x) / widthRatio;
-    #if defined(CAPS_NONE)
+    #if CAPS_NONE
     dist = mix(dist, max(abs(coords.y), (capDist + 0.1) / 0.1), capMask);
-    #elif defined(CAPS_SQUARE)
+    #elif CAPS_SQUARE
     dist = mix(dist, max(abs(coords.y), capDist), capMask);
-    #elif defined(CAPS_TRIANGLE_OUT)
+    #elif CAPS_TRIANGLE_OUT
     dist = mix(dist, abs(coords.y) + capDist, capMask);
-    #elif defined(CAPS_TRIANGLE_IN)
+    #elif CAPS_TRIANGLE_IN
     dist = mix(dist, max(abs(coords.y), (capDist - abs(coords.y)) + capDist), capMask);
     #endif
     #endif
