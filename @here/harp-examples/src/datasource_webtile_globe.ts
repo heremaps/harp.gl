@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GeoCoordinates, sphereProjection } from "@here/harp-geoutils";
+import { sphereProjection } from "@here/harp-geoutils";
 import { MapControls, MapControlsUI } from "@here/harp-map-controls";
 import { CopyrightElementHandler, MapView } from "@here/harp-mapview";
 import { WebTileDataSource } from "@here/harp-webtile-datasource";
@@ -79,8 +79,6 @@ export namespace WebTileDataSourceGlobeExample {
             ppi: WebTileDataSource.ppiValue.ppi320
         });
         // end:harp_gl_datasource_webtile_globe_1.ts
-
-        mapView.setCameraGeolocationAndZoom(new GeoCoordinates(40.702, -74.01154), 3.6);
 
         // snippet:harp_gl_datasource_webtile_globe_2.ts
         mapView.addDataSource(webTileDataSource);
