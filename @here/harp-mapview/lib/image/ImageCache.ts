@@ -217,26 +217,21 @@ export class ImageCache {
         const imageLoader = new THREE.ImageLoader();
 
         imageItem.loadingPromise = new Promise(resolve => {
-            logger.log(`Loading image: ${imageItem.url}`);
             imageLoader.load(
                 imageItem.url,
                 image => {
-                    logger.log(`... finished loading image: ${imageItem.url}`);
                     this.renderImage(imageItem, image)
                         .then(() => {
                             imageItem.loadingPromise = undefined;
                             resolve(imageItem);
                         })
                         .catch(ex => {
-                            logger.error(`... loading image failed: ${imageItem.url} : ${ex}`);
                             resolve(undefined);
                         });
                 },
                 // Loading events no longer supported
                 undefined,
                 errorEvent => {
-                    logger.error(`... loading image failed: ${imageItem.url} : ${errorEvent}`);
-
                     imageItem.loadingPromise = undefined;
                     resolve(undefined);
                 }
@@ -273,19 +268,14 @@ export class ImageCache {
                     premultiplyAlpha: "default",
                     imageOrientation: "flipY"
                 };
-
-                logger.log(`Creating bitmap image: ${imageItem.url}`);
                 createImageBitmap(image, 0, 0, image.width, image.height, options)
                     .then(imageBitmap => {
-                        logger.log(`... finished creating bitmap image: ${imageItem.url}`);
-
                         imageItem.loadingPromise = undefined;
                         imageItem.imageData = imageBitmap;
                         imageItem.loaded = true;
                         resolve(imageBitmap);
                     })
                     .catch(ex => {
-                        logger.error(`... loading image failed: ${imageItem.url} : ${ex}`);
                         resolve(undefined);
                     });
             } else {

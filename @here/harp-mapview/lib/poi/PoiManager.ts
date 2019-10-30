@@ -181,9 +181,6 @@ export class PoiManager {
                 }
 
                 try {
-                    logger.log(
-                        `addTextureAtlas: Loading textureAtlas '${atlas}' for image '${imageName}'`
-                    );
                     for (const textureName of Object.getOwnPropertyNames(jsonAtlas)) {
                         const imageTextureDef = jsonAtlas[textureName] as ImageTextureDef;
 
