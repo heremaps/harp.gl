@@ -369,7 +369,9 @@ export class FontCatalog {
         );
         const glyphPromises: Array<Promise<GlyphData>> = [];
         for (const char of charset) {
-            const codePoint = char.codePointAt(0)!;
+            let codePoint = char.codePointAt(0)!;
+            codePoint = this.avoidGeorgianExtended(codePoint);
+
             const font = this.getFont(codePoint, fontName);
             const fontHash = `${font.name}_${fontStyle}`;
             const glyphHash = `${fontHash}_${codePoint}`;
@@ -459,7 +461,9 @@ export class FontCatalog {
         for (const character of input) {
             const transformedCharacter = shouldTransform ? character.toUpperCase() : character;
             for (const char of transformedCharacter) {
-                const codePoint = char.codePointAt(0)!;
+                let codePoint = char.codePointAt(0)!;
+                codePoint = this.avoidGeorgianExtended(codePoint);
+
                 const font = this.getFont(codePoint, fontName);
                 const glyphData = this.getGlyph(codePoint, font, fontStyle);
                 if (glyphData !== undefined) {
@@ -622,5 +626,19 @@ export class FontCatalog {
                 break;
         }
         return `${this.url}/${this.name}${fontStylePath}${font.name!}`;
+    }
+
+    // The Georgian Extended Unicode Block (https://en.wikipedia.org/wiki/Georgian_Extended), used
+    // for representing Georgian Mtavruli(capitalized Georgian glyphs) is not that widely adopted
+    // yet, and not many fonts support it.To avoid rendering replacementGlyphs whenever we could be
+    // rendering Georgian Mkhedruli (regular Georgian glyphs), we can detect the Mtavruli glyphs and
+    // convert them to MKhedruli.
+    // More info: https://github.com/harfbuzz/harfbuzz/issues/1104
+    private avoidGeorgianExtended(codePoint: number): number {
+        return codePoint >= 7312 && codePoint <= 7359
+            ? String.fromCodePoint(codePoint)
+                  .toLowerCase()
+                  .codePointAt(0)!
+            : codePoint;
     }
 }
