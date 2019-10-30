@@ -362,46 +362,6 @@ export class PoiRenderer {
     }
 
     /**
-     * Compute screen box for icon. It is required that `prepareRender` has been successfully called
-     * before `isSpaceAvailable` may be called.
-     *
-     * @param poiInfo PoiInfo containing information for rendering the POI icon.
-     * @param screenPosition Position on screen (2D).
-     * @param scale Scale to apply to icon.
-     * @param screenCollisions Object handling the collision checks for screen-aligned 2D boxes.
-     *
-     * @returns `True` if box is visible on screen.
-     */
-    computeScreenBox(
-        poiInfo: PoiInfo,
-        screenPosition: THREE.Vector2,
-        scale: number,
-        screenCollisions: ScreenCollisions,
-        zoomLevel: number,
-        tempScreenBox: Math2D.Box
-    ): boolean {
-        if (!this.computeIconScreenBox(poiInfo, screenPosition, scale, zoomLevel, tempScreenBox)) {
-            return false;
-        }
-        return screenCollisions.isVisible(tempScreenBox);
-    }
-
-    /**
-     * Check if the space for the icon is available. It is required that `prepareRender` has been
-     * successfully called before `isSpaceAvailable` may be called.
-     *
-     * @param poiInfo PoiInfo containing information for rendering the POI icon.
-     * @param screenPosition Position on screen (2D).
-     * @param scale Scale to apply to icon.
-     * @param screenCollisions Object handling the collision checks for screen-aligned 2D boxes.
-     *
-     * @returns `True` if the space is not already allocated by another object (text label or POI)
-     */
-    isSpaceAvailable(screenCollisions: ScreenCollisions, tempScreenBox: Math2D.Box): boolean {
-        return !screenCollisions.isAllocated(tempScreenBox);
-    }
-
-    /**
      * Reset all batches, removing all content from the [[PoiRenderBuffer]]es. Called at the
      * beginning of a frame before the POIs are placed.
      */
@@ -480,9 +440,18 @@ export class PoiRenderer {
     }
 
     /**
-     * Compute the screen rectangle from the screen position.
+     * Compute screen box for icon. It is required that `prepareRender` has been successfully called
+     * before `computeScreenBox` may be called.
+     *
+     * @param poiInfo PoiInfo containing information for rendering the POI icon.
+     * @param screenPosition Position on screen (2D).
+     * @param scale Scale to apply to icon.
+     * @param zoomLevel Current zoom level.
+     * @param screenBox The computed screen box for the icon.
+     *
+     * @returns `True` if box is visible on screen.
      */
-    private computeIconScreenBox(
+    computeIconScreenBox(
         poiInfo: PoiInfo,
         screenPosition: THREE.Vector2,
         scale: number,
