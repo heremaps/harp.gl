@@ -145,7 +145,7 @@ export function setDepthPrePassStencil(depthMesh: THREE.Mesh, colorMesh: THREE.M
     depthMaterial.stencilZPass = THREE.ReplaceStencilOp;
     depthMaterial.stencilFunc = THREE.AlwaysStencilFunc;
     depthMaterial.stencilRef = 0xff;
-    depthMaterial.stencilMask = DEPTH_PRE_PASS_STENCIL_MASK;
+    (depthMaterial as any).stencilFuncMask = DEPTH_PRE_PASS_STENCIL_MASK;
 
     // Set up color mesh stencil logic.
     // Only write color for pixels with the depth pre-pass stencil bit set. Also, once a pixel is
@@ -158,5 +158,5 @@ export function setDepthPrePassStencil(depthMesh: THREE.Mesh, colorMesh: THREE.M
     colorMaterial.stencilZPass = THREE.ZeroStencilOp;
     colorMaterial.stencilFunc = THREE.EqualStencilFunc;
     colorMaterial.stencilRef = 0xff;
-    colorMaterial.stencilMask = DEPTH_PRE_PASS_STENCIL_MASK;
+    (colorMaterial as any).stencilFuncMask = DEPTH_PRE_PASS_STENCIL_MASK;
 }
