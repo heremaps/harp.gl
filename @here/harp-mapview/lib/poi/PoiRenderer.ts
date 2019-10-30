@@ -507,7 +507,7 @@ export class PoiRenderer {
         const iconYOffset = getPropertyValue(technique.iconYOffset, zoomLevel);
 
         const centerX = screenPosition.x + (typeof iconXOffset === "number" ? iconXOffset : 0);
-        const centerY = screenPosition.y + (typeof iconXOffset === "number" ? iconYOffset : 0);
+        const centerY = screenPosition.y + (typeof iconYOffset === "number" ? iconYOffset : 0);
 
         screenBox.x = centerX - width / 2;
         screenBox.y = centerY - height / 2;
