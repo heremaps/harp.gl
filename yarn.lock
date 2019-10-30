@@ -101,10 +101,10 @@
     msdf-bmfont-xml "^2.4.2"
     unicode-range-json "^1.0.1"
 
-"@here/harp-fontcatalog@^0.1.1":
-  version "0.1.1"
-  resolved "https://registry.yarnpkg.com/@here/harp-fontcatalog/-/harp-fontcatalog-0.1.1.tgz#eb079db00e684e339c7d548bbeb67ea4d7725e5b"
-  integrity sha512-NvEJb21p2Q3BQgnMssFnDhbG7fvLC6olUuZ+w9vgIjl6D1Yx30zadcLBi2ZMEgWV4Bgw8D7G5vNpHMwhsUOeNQ==
+"@here/harp-fontcatalog@^0.1.2":
+  version "0.1.2"
+  resolved "https://registry.yarnpkg.com/@here/harp-fontcatalog/-/harp-fontcatalog-0.1.2.tgz#b8a316fa3036909b235608fd29b030a05571842b"
+  integrity sha512-+Wd8ogYWQ7r0T7Hmta8gBkvKdKbnNqKbHBiP4JFnFeYDVTnbi+Da23TjkfOvE2Wz5gWmPgWVhMiuIfzI9tn9pA==
   dependencies:
     "@here/harp-fontcatalog-generator" "^0.1.2"
 
