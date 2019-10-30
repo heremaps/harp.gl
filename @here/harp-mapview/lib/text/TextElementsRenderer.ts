@@ -301,15 +301,8 @@ export class TextElementsRenderer {
             return;
         }
 
-        const debugGlyphs = debugContext.getValue("DEBUG_GLYPHS");
-        if (
-            debugGlyphs !== undefined &&
-            this.m_debugGlyphTextureCacheMesh !== undefined &&
-            this.m_debugGlyphTextureCacheWireMesh !== undefined
-        ) {
-            this.m_debugGlyphTextureCacheMesh.visible = debugGlyphs;
-            this.m_debugGlyphTextureCacheWireMesh.visible = debugGlyphs;
-        }
+        this.updateGlyphDebugMesh();
+
         for (const textRenderer of this.m_textRenderers) {
             textRenderer.textCanvas.render(camera);
         }
@@ -867,52 +860,70 @@ export class TextElementsRenderer {
                 this.m_textRenderers
             );
 
-            const defaultFontCatalog = this.m_textRenderers[0].textCanvas.fontCatalog;
-
-            // Initialize glyph-debugging mesh.
-            const planeGeometry = new THREE.PlaneGeometry(
-                defaultFontCatalog.textureSize.width / 2.5,
-                defaultFontCatalog.textureSize.height / 2.5,
-                defaultFontCatalog.textureSize.width / defaultFontCatalog.maxWidth,
-                defaultFontCatalog.textureSize.height / defaultFontCatalog.maxHeight
-            );
-            const material = new THREE.MeshBasicMaterial({
-                transparent: true,
-                depthWrite: false,
-                depthTest: false,
-                map: defaultFontCatalog.texture
-            });
-            this.m_debugGlyphTextureCacheMesh = new THREE.Mesh(planeGeometry, material);
-            this.m_debugGlyphTextureCacheMesh.renderOrder = 10000;
-            this.m_debugGlyphTextureCacheMesh.visible = false;
-
-            this.m_debugGlyphTextureCacheMesh.name = "glyphDebug";
-
-            const wireframe = new THREE.WireframeGeometry(planeGeometry);
-            const wireframeMaterial = new THREE.LineBasicMaterial({
-                transparent: true,
-                color: 0x999999,
-                depthWrite: false,
-                depthTest: false
-            });
-            this.m_debugGlyphTextureCacheWireMesh = new THREE.LineSegments(
-                wireframe,
-                wireframeMaterial
-            );
-            this.m_debugGlyphTextureCacheWireMesh.renderOrder = 9999;
-            this.m_debugGlyphTextureCacheWireMesh.visible = false;
-
-            this.m_debugGlyphTextureCacheWireMesh.name = "glyphDebug";
-
-            this.m_textRenderers[0].textCanvas
-                .getLayer(DEFAULT_TEXT_CANVAS_LAYER)!
-                .storage.scene.add(
-                    this.m_debugGlyphTextureCacheMesh,
-                    this.m_debugGlyphTextureCacheWireMesh
-                );
-
             this.m_viewUpdateCallback();
         });
+    }
+
+    private updateGlyphDebugMesh() {
+        const debugGlyphs = debugContext.getValue("DEBUG_GLYPHS");
+        if (debugGlyphs === undefined) {
+            return;
+        }
+
+        if (debugGlyphs && this.m_debugGlyphTextureCacheMesh === undefined) {
+            this.initializeGlyphDebugMesh();
+        }
+        assert(this.m_debugGlyphTextureCacheMesh !== undefined);
+        assert(this.m_debugGlyphTextureCacheWireMesh !== undefined);
+
+        this.m_debugGlyphTextureCacheMesh!.visible = debugGlyphs;
+        this.m_debugGlyphTextureCacheWireMesh!.visible = debugGlyphs;
+    }
+
+    private initializeGlyphDebugMesh() {
+        const defaultFontCatalog = this.m_textRenderers[0].textCanvas.fontCatalog;
+
+        // Initialize glyph-debugging mesh.
+        const planeGeometry = new THREE.PlaneGeometry(
+            defaultFontCatalog.textureSize.width / 2.5,
+            defaultFontCatalog.textureSize.height / 2.5,
+            defaultFontCatalog.textureSize.width / defaultFontCatalog.maxWidth,
+            defaultFontCatalog.textureSize.height / defaultFontCatalog.maxHeight
+        );
+        const material = new THREE.MeshBasicMaterial({
+            transparent: true,
+            depthWrite: false,
+            depthTest: false,
+            map: defaultFontCatalog.texture
+        });
+        this.m_debugGlyphTextureCacheMesh = new THREE.Mesh(planeGeometry, material);
+        this.m_debugGlyphTextureCacheMesh.renderOrder = 10000;
+        this.m_debugGlyphTextureCacheMesh.visible = false;
+
+        this.m_debugGlyphTextureCacheMesh.name = "glyphDebug";
+
+        const wireframe = new THREE.WireframeGeometry(planeGeometry);
+        const wireframeMaterial = new THREE.LineBasicMaterial({
+            transparent: true,
+            color: 0x999999,
+            depthWrite: false,
+            depthTest: false
+        });
+        this.m_debugGlyphTextureCacheWireMesh = new THREE.LineSegments(
+            wireframe,
+            wireframeMaterial
+        );
+        this.m_debugGlyphTextureCacheWireMesh.renderOrder = 9999;
+        this.m_debugGlyphTextureCacheWireMesh.visible = false;
+
+        this.m_debugGlyphTextureCacheWireMesh.name = "glyphDebug";
+
+        this.m_textRenderers[0].textCanvas
+            .getLayer(DEFAULT_TEXT_CANVAS_LAYER)!
+            .storage.scene.add(
+                this.m_debugGlyphTextureCacheMesh,
+                this.m_debugGlyphTextureCacheWireMesh
+            );
     }
 
     /**
