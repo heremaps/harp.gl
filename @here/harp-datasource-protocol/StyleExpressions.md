@@ -251,6 +251,15 @@ Returns the first `value` that does not evaluates to `null`.
 ["coalesce", value...]
 ```
 
+## ppi
+
+Gets the `ppi` of the current device. If the `ppi` is not available
+the default value `72` is returned.
+
+```javascript
+["ppi"]
+```
+
 ## interpolate
 
 Creates interpolation.

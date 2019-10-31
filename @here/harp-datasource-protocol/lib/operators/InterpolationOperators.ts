@@ -61,6 +61,15 @@ function step(context: ExprEvaluatorContext, args: Expr[]) {
 }
 
 const operators = {
+    ppi: {
+        call: (context: ExprEvaluatorContext, call: CallExpr) => {
+            const ppi = context.env.lookup("$ppi");
+            if (typeof ppi === "number") {
+                return ppi;
+            }
+            return 72;
+        }
+    },
     zoom: {
         call: (context: ExprEvaluatorContext, call: CallExpr): Value => {
             if (context.scope === ExprScope.Condition) {
