@@ -97,11 +97,7 @@ export class TextElementGroupState {
                 : undefined;
             const textDistance = filter(elementState.element, lastFrameNumber);
 
-            if (elementState.initialized) {
-                elementState.setViewDistance(textDistance, this);
-            } else if (textDistance !== undefined) {
-                elementState.initialize(this, textDistance, disableFading);
-            }
+            elementState.update(this, textDistance, disableFading);
         }
     }
 

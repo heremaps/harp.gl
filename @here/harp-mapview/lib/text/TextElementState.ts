@@ -52,39 +52,6 @@ export class TextElementState {
         }
     }
 
-    /**
-     * @param groupState The state of the group to which this element belongs.
-     * @param viewDistance Current distance of the element to the view center.
-     * @param disableFading `True` if fading is currently disabled, `false` otherwise.
-     */
-    initialize(groupState: TextElementGroupState, viewDistance: number, disableFading: boolean) {
-        assert(this.m_textRenderState === undefined);
-        assert(this.m_iconRenderStates === undefined);
-
-        this.setViewDistance(viewDistance, groupState);
-        const fadingTime = disableFading === true ? 0 : DEFAULT_FADE_TIME;
-
-        if (this.m_textElement.type === TextElementType.LineMarker) {
-            this.m_iconRenderStates = new Array<RenderState>();
-            for (const _point of this.m_textElement.path!) {
-                const iconRenderStates = this.m_iconRenderStates as RenderState[];
-                const renderState = new RenderState();
-                renderState.state = FadingState.FadingIn;
-                renderState.fadingTime = fadingTime;
-                iconRenderStates.push(renderState);
-            }
-            return;
-        }
-
-        this.m_textRenderState = new RenderState();
-        this.m_textRenderState.fadingTime = fadingTime;
-
-        if (this.m_textElement.type === TextElementType.PoiLabel) {
-            this.m_iconRenderStates = new RenderState();
-            this.m_iconRenderStates.fadingTime = fadingTime;
-        }
-    }
-
     get initialized(): boolean {
         return this.m_textRenderState !== undefined || this.m_iconRenderStates !== undefined;
     }
@@ -142,6 +109,25 @@ export class TextElementState {
      */
     get viewDistance(): number | undefined {
         return this.m_viewDistance;
+    }
+
+    /**
+     * Updates the text element state.
+     * @param groupState  The state of the group the element belongs to.
+     * @param viewDistance The new view distance to set. If `undefined`, element is considered to
+     * be out of view.
+     * @param disableFading `True` if fading is currently disabled, `false` otherwise.
+     */
+    update(
+        groupState: TextElementGroupState,
+        viewDistance: number | undefined,
+        disableFading: boolean
+    ) {
+        if (this.initialized) {
+            this.setViewDistance(viewDistance, groupState);
+        } else if (viewDistance !== undefined) {
+            this.initialize(groupState, viewDistance, disableFading);
+        }
     }
 
     /**
@@ -253,5 +239,42 @@ export class TextElementState {
         }
 
         return visible;
+    }
+
+    /**
+     * @param groupState The state of the group to which this element belongs.
+     * @param viewDistance Current distance of the element to the view center.
+     * @param disableFading `True` if fading is currently disabled, `false` otherwise.
+     */
+    private initialize(
+        groupState: TextElementGroupState,
+        viewDistance: number,
+        disableFading: boolean
+    ) {
+        assert(this.m_textRenderState === undefined);
+        assert(this.m_iconRenderStates === undefined);
+
+        this.setViewDistance(viewDistance, groupState);
+        const fadingTime = disableFading === true ? 0 : DEFAULT_FADE_TIME;
+
+        if (this.m_textElement.type === TextElementType.LineMarker) {
+            this.m_iconRenderStates = new Array<RenderState>();
+            for (const _point of this.m_textElement.path!) {
+                const iconRenderStates = this.m_iconRenderStates as RenderState[];
+                const renderState = new RenderState();
+                renderState.state = FadingState.FadingIn;
+                renderState.fadingTime = fadingTime;
+                iconRenderStates.push(renderState);
+            }
+            return;
+        }
+
+        this.m_textRenderState = new RenderState();
+        this.m_textRenderState.fadingTime = fadingTime;
+
+        if (this.m_textElement.type === TextElementType.PoiLabel) {
+            this.m_iconRenderStates = new RenderState();
+            this.m_iconRenderStates.fadingTime = fadingTime;
+        }
     }
 }
