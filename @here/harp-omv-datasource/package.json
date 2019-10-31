@@ -58,10 +58,10 @@
         "mocha": "^6.1.4",
         "sinon": "^7.1.1",
         "source-map-support": "^0.5.2",
-        "typescript": "^3.5.2"
+        "typescript": "^3.6.4"
     },
     "peerDependencies": {
-        "three": "^0.109.0"
+        "three": "^0.110.0"
     },
     "publishConfig": {
         "access": "public"

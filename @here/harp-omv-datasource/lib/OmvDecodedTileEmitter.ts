@@ -1179,16 +1179,16 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                             new Float32Array(positionArray),
                             3
                         );
-                        geom.addAttribute("position", posAttr);
+                        geom.setAttribute("position", posAttr);
                         let uvAttr: THREE.BufferAttribute | undefined;
                         if (texCoordType !== undefined) {
                             uvAttr = new THREE.BufferAttribute(new Float32Array(uvArray), 2);
-                            geom.addAttribute("uv", uvAttr);
+                            geom.setAttribute("uv", uvAttr);
                         }
                         const edgeAttr = new THREE.BufferAttribute(new Float32Array(edgeArray), 1);
-                        geom.addAttribute("edge", edgeAttr);
+                        geom.setAttribute("edge", edgeAttr);
                         const wallAttr = new THREE.BufferAttribute(new Float32Array(wallArray), 1);
-                        geom.addAttribute("wall", edgeAttr);
+                        geom.setAttribute("wall", edgeAttr);
                         const indexAttr = new THREE.BufferAttribute(new Uint32Array(triangles), 1);
                         geom.setIndex(indexAttr);
 

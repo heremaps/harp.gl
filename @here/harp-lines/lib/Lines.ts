@@ -320,12 +320,12 @@ export class LineGroup {
         isSimple = false
     ): THREE.BufferGeometry {
         if (isSimple) {
-            geometry.addAttribute(
+            geometry.setAttribute(
                 "position",
                 new THREE.BufferAttribute(new Float32Array(vertices), 3)
             );
             if (colors.length === vertices.length) {
-                geometry.addAttribute(
+                geometry.setAttribute(
                     "color",
                     new THREE.BufferAttribute(new Float32Array(colors), 3)
                 );
@@ -346,10 +346,10 @@ export class LineGroup {
                     descr.offset,
                     false
                 );
-                geometry.addAttribute(descr.name, attribute);
+                geometry.setAttribute(descr.name, attribute);
             });
             if (colors.length === vertices.length) {
-                geometry.addAttribute(
+                geometry.setAttribute(
                     "color",
                     new THREE.BufferAttribute(new Float32Array(colors), 3)
                 );

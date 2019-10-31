@@ -36,13 +36,13 @@
         "cross-env": "^5.2.0",
         "mocha": "^6.1.4",
         "source-map-support": "^0.5.2",
-        "three": "^0.109.0",
+        "three": "^0.110.0",
         "ts-json-schema-generator": "^0.47.0",
-        "typescript": "^3.5.2",
+        "typescript": "^3.6.4",
         "typestring": "^2.9.2"
     },
     "peerDependencies": {
-        "three": "^0.109.0"
+        "three": "^0.110.0"
     },
     "publishConfig": {
         "access": "public"
