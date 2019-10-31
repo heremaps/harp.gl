@@ -63,6 +63,11 @@ export abstract class DataSource extends THREE.EventDispatcher {
     private m_maxZoomLevel: number = 20;
 
     /**
+     * Current value of [[maxGeometryHeight]] property.
+     */
+    private m_maxGeometryHeight = 0;
+
+    /**
      * Storage level offset applied to this `DataSource`.
      */
     private m_storageLevelOffset: number = 0;
@@ -291,6 +296,20 @@ export abstract class DataSource extends THREE.EventDispatcher {
 
     set maxZoomLevel(level: number) {
         this.m_maxZoomLevel = level;
+    }
+
+    /**
+     * Maximum geometry height above ground level this `DataSource` can produce.
+     *
+     * Used in first stage of frustum culling before [[Tile.maxGeometryHeight]] data is available.
+     *
+     * @default 0.
+     */
+    get maxGeometryHeight() {
+        return this.m_maxGeometryHeight;
+    }
+    set maxGeometryHeight(value: number) {
+        this.m_maxGeometryHeight = value;
     }
 
     /**

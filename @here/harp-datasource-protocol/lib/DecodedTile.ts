@@ -30,6 +30,7 @@ export interface DecodedTile {
     textGeometries?: TextGeometry[]; // ### deprecate
     poiGeometries?: PoiGeometry[];
     tileInfo?: TileInfo;
+    maxGeometryHeight?: number;
     decodeTime?: number; // time used to decode (in ms)
 
     /**

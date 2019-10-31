@@ -5,7 +5,6 @@
  */
 import { ViewRanges } from "@here/harp-datasource-protocol/lib/ViewRanges";
 import {
-    EarthConstants,
     GeoCoordinates,
     Projection,
     TileKey,
@@ -13,11 +12,11 @@ import {
     TilingScheme
 } from "@here/harp-geoutils";
 import { LRUCache } from "@here/harp-lrucache";
-import { assert } from "@here/harp-utils";
+import { assert, MathUtils } from "@here/harp-utils";
 import THREE = require("three");
 import { ClipPlanesEvaluator } from "./ClipPlanesEvaluator";
 import { DataSource } from "./DataSource";
-import { CalculationStatus, ElevationRange, ElevationRangeSource } from "./ElevationRangeSource";
+import { ElevationRangeSource } from "./ElevationRangeSource";
 import { FrustumIntersection, TileKeyEntry } from "./FrustumIntersection";
 import { TileGeometryManager } from "./geometry/TileGeometryManager";
 import { Tile } from "./Tile";
@@ -373,11 +372,6 @@ export class VisibleTileSet {
     private readonly m_projectionMatrixOverride = new THREE.Matrix4();
     private m_dataSourceCache: DataSourceCache;
     private m_viewRange: ViewRanges = { near: 0.1, far: Infinity, minimum: 0.1, maximum: Infinity };
-    private m_elevationRange: ElevationRange = {
-        minElevation: 0,
-        maxElevation: 0,
-        calculationStatus: CalculationStatus.PendingApproximate
-    };
 
     private m_resourceComputationType: ResourceComputationType =
         ResourceComputationType.EstimationInMb;
@@ -588,50 +582,37 @@ export class VisibleTileSet {
 
         this.m_dataSourceCache.shrinkToCapacity();
 
-        let minElevation = EarthConstants.MAX_ELEVATION;
-        let maxElevation = EarthConstants.MIN_ELEVATION;
+        let minElevation: number | undefined;
+        let maxElevation: number | undefined;
         this.dataSourceTileList.forEach(renderListEntry => {
             // Calculate min/max elevation from every data source tiles,
             // data sources without elevationRangeSource will contribute to
             // values with zero levels for both elevations.
             const tiles = renderListEntry.visibleTiles;
             tiles.forEach(tile => {
-                minElevation = Math.min(minElevation, tile.minElevation);
-                maxElevation = Math.max(maxElevation, tile.maxElevation);
+                minElevation = MathUtils.min2(minElevation, tile.minElevation);
+                maxElevation = MathUtils.max2(
+                    maxElevation,
+                    tile.maxElevation + tile.maxGeometryHeight
+                );
             });
         });
-        // We process buildings elevation yet (via ElevationRangeSource or either way), so correct
-        // the highest elevation to account for highest possible building.
-        const projectionScale = this.m_frustumIntersection.projection.getScaleFactor(
-            this.m_frustumIntersection.camera.position
-        );
-        const maxBuildingHeight = EarthConstants.MAX_BUILDING_HEIGHT * projectionScale;
-        maxElevation =
-            maxElevation < EarthConstants.MAX_ELEVATION - maxBuildingHeight
-                ? maxElevation + maxBuildingHeight
-                : maxElevation;
-        // Update elevation ranges stored.
-        if (
-            minElevation !== this.m_elevationRange.minElevation ||
-            maxElevation !== this.m_elevationRange.maxElevation
-        ) {
-            this.m_elevationRange.minElevation = minElevation;
-            this.m_elevationRange.maxElevation = maxElevation;
-        }
-        this.m_elevationRange.calculationStatus = visibleTileKeysResult.allBoundingBoxesFinal
-            ? CalculationStatus.FinalPrecise
-            : CalculationStatus.PendingApproximate;
 
+        if (minElevation === undefined) {
+            minElevation = 0;
+        }
+        if (maxElevation === undefined) {
+            maxElevation = 0;
+        }
         // If clip planes evaluator depends on the tiles elevation re-calculate
         // frustum planes and update the camera near/far plane distances.
         let viewRangesChanged: boolean = false;
-        if (elevationRangeSource !== undefined) {
-            const viewRanges = this.updateClipPlanes(maxElevation, minElevation);
-            viewRangesChanged = viewRanges === this.m_viewRange;
-            this.m_viewRange = viewRanges;
-        }
+        const oldViewRanges = this.m_viewRange;
+        const newViewRanges = this.updateClipPlanes(maxElevation, minElevation);
+        viewRangesChanged = viewRangesEqual(newViewRanges, oldViewRanges) === false;
+
         return {
-            viewRanges: this.m_viewRange,
+            viewRanges: newViewRanges,
             viewRangesChanged
         };
     }
@@ -1172,4 +1153,10 @@ export class VisibleTileSet {
 
         return { tileKeys, allBoundingBoxesFinal };
     }
+}
+
+function viewRangesEqual(a: ViewRanges, b: ViewRanges) {
+    return (
+        a.far === b.far && a.maximum === b.maximum && a.minimum === b.minimum && a.near === b.near
+    );
 }

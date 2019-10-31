@@ -2442,13 +2442,18 @@ export class MapView extends THREE.EventDispatcher {
         // constantHeight property of extruded polygon technique is set as default false,
         // otherwise the near plane margins will be bigger then required, but still correct.
         const projectionScale = this.projection.getScaleFactor(this.camera.position);
-        const maxHeight = EarthConstants.MAX_BUILDING_HEIGHT * projectionScale;
+        const maxGeometryHeightScaled =
+            projectionScale *
+            this.m_tileDataSources.reduce((r, ds) => Math.max(r, ds.maxGeometryHeight), 0);
+
         // Copy all properties from new view ranges to our readonly object.
         // This allows to keep all view ranges references valid and keeps up-to-date
         // information within them. Works the same as copping all properties one-by-one.
         Object.assign(
             this.m_viewRanges,
-            viewRanges === undefined ? this.m_visibleTiles.updateClipPlanes(maxHeight) : viewRanges
+            viewRanges === undefined
+                ? this.m_visibleTiles.updateClipPlanes(maxGeometryHeightScaled)
+                : viewRanges
         );
         this.m_camera.near = this.m_viewRanges.near;
         this.m_camera.far = this.m_viewRanges.far;

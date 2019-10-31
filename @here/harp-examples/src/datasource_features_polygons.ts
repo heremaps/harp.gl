@@ -13,7 +13,7 @@ import {
 import { sphereProjection } from "@here/harp-geoutils";
 import { MapControls, MapControlsUI } from "@here/harp-map-controls";
 import { MapView } from "@here/harp-mapview";
-import { TopViewClipPlanesEvaluator } from "@here/harp-mapview/lib/ClipPlanesEvaluator";
+import { TiltViewClipPlanesEvaluator } from "@here/harp-mapview/lib/ClipPlanesEvaluator";
 import { APIFormat, OmvDataSource } from "@here/harp-omv-datasource";
 import * as THREE from "three";
 import { accessToken, copyrightInfo } from "../config";
@@ -281,7 +281,7 @@ export namespace PolygonsFeaturesExample {
         const mapView = new MapView({
             canvas,
             projection: sphereProjection,
-            clipPlanesEvaluator: new TopViewClipPlanesEvaluator(300000),
+            clipPlanesEvaluator: new TiltViewClipPlanesEvaluator(),
             theme: {
                 extends: "resources/berlin_tilezen_night_reduced.json",
                 definitions: {
