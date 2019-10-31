@@ -13,7 +13,6 @@ import {
 import { sphereProjection } from "@here/harp-geoutils";
 import { MapControls, MapControlsUI } from "@here/harp-map-controls";
 import { MapView } from "@here/harp-mapview";
-import { TiltViewClipPlanesEvaluator } from "@here/harp-mapview/lib/ClipPlanesEvaluator";
 import { APIFormat, OmvDataSource } from "@here/harp-omv-datasource";
 import * as THREE from "three";
 import { accessToken, copyrightInfo } from "../config";
@@ -113,6 +112,8 @@ export namespace PolygonsFeaturesExample {
                 features.push(feature);
             }
             const featuresDataSource = new FeaturesDataSource();
+            featuresDataSource.maxGeometryHeight = 300000;
+
             const addPromise = map.addDataSource(featuresDataSource);
             addPromises.push(addPromise);
             addPromise.then(() => {
@@ -281,7 +282,6 @@ export namespace PolygonsFeaturesExample {
         const mapView = new MapView({
             canvas,
             projection: sphereProjection,
-            clipPlanesEvaluator: new TiltViewClipPlanesEvaluator(),
             theme: {
                 extends: "resources/berlin_tilezen_night_reduced.json",
                 definitions: {
