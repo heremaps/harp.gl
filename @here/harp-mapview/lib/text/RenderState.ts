@@ -5,7 +5,7 @@
  */
 
 import { MathUtils } from "@here/harp-utils";
-import THREE = require("three");
+import * as THREE from "three";
 
 /**
  * State of fading.
