@@ -1228,7 +1228,7 @@ export class TextElementsRenderer {
             textElement: TextElement,
             lastFrameNumber?: number
         ): number | undefined => {
-            const [result, viewDistance] = checkReadyForPlacement(
+            const { result, viewDistance } = checkReadyForPlacement(
                 textElement,
                 tile,
                 worldOffsetX,

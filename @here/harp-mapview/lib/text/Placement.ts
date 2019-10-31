@@ -111,7 +111,7 @@ export enum PrePlacementResult {
  * @param [maxViewDistance] If specified, text elements farther than this max distance will be
  * rejected.
  * @param [lastFrameNumber] Last frame number when the text element was placed (if any).
- * @returns A tuple with the result code as first element, and the text element view distance
+ * @returns An object with the result code and the text element view distance
  * ( or `undefined` of the checks failed) as second.
  */
 export function checkReadyForPlacement(
@@ -122,9 +122,11 @@ export function checkReadyForPlacement(
     textElementCache: TextElementStateCache,
     maxViewDistance?: number,
     lastFrameNumber?: number
-): [PrePlacementResult, number | undefined] {
+): { result: PrePlacementResult; viewDistance: number | undefined } {
+    let viewDistance: number | undefined;
+
     if (!textElement.visible) {
-        return [PrePlacementResult.Invisible, undefined];
+        return { result: PrePlacementResult.Invisible, viewDistance };
     }
 
     // If a PoiTable is specified in the technique, the table is required to be
@@ -132,14 +134,14 @@ export function checkReadyForPlacement(
     if (!mapView.poiManager.updatePoiFromPoiTable(textElement)) {
         // PoiTable has not been loaded, but is required to determine
         // visibility.
-        return [PrePlacementResult.NotReady, undefined];
+        return { result: PrePlacementResult.NotReady, viewDistance };
     }
 
     if (
         !textElement.visible ||
         !MathUtils.isClamped(mapView.zoomLevel, textElement.minZoomLevel, textElement.maxZoomLevel)
     ) {
-        return [PrePlacementResult.Invisible, undefined];
+        return { result: PrePlacementResult.Invisible, viewDistance };
     }
 
     if (textElement.tileCenter === undefined) {
@@ -152,18 +154,19 @@ export function checkReadyForPlacement(
         textElement.tileCenter.set(tile.center.x + worldOffsetX, tile.center.y, tile.center.z);
     }
 
-    const viewDistance =
+    viewDistance =
         maxViewDistance === undefined
             ? computeViewDistance(mapView.worldCenter, textElement)
             : checkViewDistance(textElement, mapView, maxViewDistance);
 
     if (viewDistance === undefined) {
-        return [PrePlacementResult.TooFar, undefined];
+        return { result: PrePlacementResult.TooFar, viewDistance };
     }
 
     if (!textElementCache.deduplicateElement(textElement, lastFrameNumber)) {
-        return [PrePlacementResult.Duplicate, undefined];
+        viewDistance = undefined;
+        return { result: PrePlacementResult.Duplicate, viewDistance };
     }
 
-    return [PrePlacementResult.Ok, viewDistance];
+    return { result: PrePlacementResult.Ok, viewDistance };
 }
