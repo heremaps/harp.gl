@@ -227,7 +227,7 @@ export class PoiTable {
         this.startLoading();
 
         try {
-            logger.log(`load: Loading POI table '${poiTableUrl}' for table '${this.name}'`);
+            logger.debug(`load: Loading POI table '${poiTableUrl}' for table '${this.name}'`);
 
             if (jsonPoiTable.poiList !== undefined && Array.isArray(jsonPoiTable.poiList)) {
                 for (const tableEntry of jsonPoiTable.poiList) {

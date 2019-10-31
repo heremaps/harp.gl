@@ -113,6 +113,7 @@ describe("LoggerManager", function() {
 
     describe("Check channel compliancy", function() {
         const sandbox = sinon.createSandbox();
+        LoggerManager.instance.setLogLevelForAll(LogLevel.Trace);
 
         it("Check channels logging abilities", function() {
             // Arrange

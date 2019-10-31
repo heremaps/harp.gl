@@ -217,11 +217,11 @@ export class ImageCache {
         const imageLoader = new THREE.ImageLoader();
 
         imageItem.loadingPromise = new Promise(resolve => {
-            logger.log(`Loading image: ${imageItem.url}`);
+            logger.debug(`Loading image: ${imageItem.url}`);
             imageLoader.load(
                 imageItem.url,
                 image => {
-                    logger.log(`... finished loading image: ${imageItem.url}`);
+                    logger.debug(`... finished loading image: ${imageItem.url}`);
                     this.renderImage(imageItem, image)
                         .then(() => {
                             imageItem.loadingPromise = undefined;
@@ -274,10 +274,10 @@ export class ImageCache {
                     imageOrientation: "flipY"
                 };
 
-                logger.log(`Creating bitmap image: ${imageItem.url}`);
+                logger.debug(`Creating bitmap image: ${imageItem.url}`);
                 createImageBitmap(image, 0, 0, image.width, image.height, options)
                     .then(imageBitmap => {
-                        logger.log(`... finished creating bitmap image: ${imageItem.url}`);
+                        logger.debug(`... finished creating bitmap image: ${imageItem.url}`);
 
                         imageItem.loadingPromise = undefined;
                         imageItem.imageData = imageBitmap;
@@ -310,7 +310,7 @@ export class ImageCache {
 
                     const context = canvas.getContext("2d");
                     if (context !== null) {
-                        logger.log(
+                        logger.debug(
                             // tslint:disable-next-line: max-line-length
                             `... finished creating bitmap image in canvas: ${imageItem.url} ${image}`
                         );

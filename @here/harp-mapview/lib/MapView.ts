@@ -19,7 +19,13 @@ import {
     ProjectionType,
     TilingScheme
 } from "@here/harp-geoutils";
-import { assert, getOptionValue, LoggerManager, PerformanceTimer } from "@here/harp-utils";
+import {
+    assert,
+    getOptionValue,
+    LoggerManager,
+    LogLevel,
+    PerformanceTimer
+} from "@here/harp-utils";
 import * as THREE from "three";
 
 import { ViewRanges } from "@here/harp-datasource-protocol/lib/ViewRanges";
@@ -58,9 +64,15 @@ import { ResourceComputationType, VisibleTileSet, VisibleTileSetOptions } from "
 
 declare const process: any;
 
-// cache value, because access to process.env.NODE_ENV is SLOW!
+// Cache value, because access to process.env.NODE_ENV is SLOW!
 const isProduction = process.env.NODE_ENV === "production";
-
+if (isProduction) {
+    // In production: silence logging below error.
+    LoggerManager.instance.setLogLevelForAll(LogLevel.Error);
+} else {
+    // In dev: silence logging below log (silences "debug" and "trace" levels).
+    LoggerManager.instance.setLogLevelForAll(LogLevel.Log);
+}
 /**
  * An interface describing [[THREE.Object3D]]s anchored on given [[GeoCoordinates]].
  *
@@ -3047,7 +3059,7 @@ export class MapView extends THREE.EventDispatcher {
             theme.lights.forEach((lightDescription: Light) => {
                 const light = createLight(lightDescription);
                 if (!light) {
-                    logger.log(
+                    logger.warn(
                         // tslint:disable-next-line: max-line-length
                         `MapView: failed to create light ${lightDescription.name} of type ${lightDescription.type}`
                     );
@@ -3296,7 +3308,7 @@ export class MapView extends THREE.EventDispatcher {
      */
     private onWebGLContextLost = (event: Event) => {
         this.dispatchEvent(CONTEXT_LOST_EVENT);
-        logger.log("WebGL context lost", event);
+        logger.warn("WebGL context lost", event);
     };
 
     /**
@@ -3314,7 +3326,7 @@ export class MapView extends THREE.EventDispatcher {
             }
             this.update();
         }
-        logger.log("WebGL context restored", event);
+        logger.warn("WebGL context restored", event);
     };
 
     private limitFov(fov: number, aspect: number): number {
