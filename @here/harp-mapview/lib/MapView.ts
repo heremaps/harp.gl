@@ -2734,7 +2734,7 @@ export class MapView extends THREE.EventDispatcher {
 
             if (!this.textElementsRendererRequested || textElementRendererFinished) {
                 if (textElementRendererFinished) {
-                    // Placement of text shall be done now. This may change the loading state of the
+                    // Force label placement in this frame. This may change the loading state of the
                     // TextElementsRenderer and the animation state of MapView.
                     this.m_textElementsRenderer!.invalidatePlacement();
                 }

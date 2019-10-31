@@ -51,31 +51,6 @@ export class TextElementStateCache {
     private readonly m_textMap = new Map<string, TextMapValue[]>();
 
     /**
-     * Gets the state corresponding to a given text element group.
-     * @param textElementGroup The group of which the state will be obtained.
-     * @returns The group state if cached, otherwise `undefined`.
-     */
-    get(textElementGroup: TextElementGroup): TextElementGroupState | undefined {
-        const groupState = this.m_referenceMap.get(textElementGroup);
-
-        if (groupState !== undefined) {
-            groupState.visited = true;
-        }
-        return groupState;
-    }
-
-    /**
-     * Sets a specified state for a given text element group.
-     * @param textElementGroup  The group of which the state will be set.
-     * @param textElementGroupState The state to set for the group.
-     */
-    set(textElementGroup: TextElementGroup, textElementGroupState: TextElementGroupState) {
-        assert(textElementGroup.elements.length > 0);
-        this.m_referenceMap.set(textElementGroup, textElementGroupState);
-        this.m_sortedGroupStates = undefined;
-    }
-
-    /**
      * Gets the state corresponding to a given text element group or sets a newly created state if
      * not found.
      * @param textElementGroup The group of which the state will be obtained.
@@ -222,5 +197,30 @@ export class TextElementStateCache {
         }
 
         return false;
+    }
+
+    /**
+     * Gets the state corresponding to a given text element group.
+     * @param textElementGroup The group of which the state will be obtained.
+     * @returns The group state if cached, otherwise `undefined`.
+     */
+    private get(textElementGroup: TextElementGroup): TextElementGroupState | undefined {
+        const groupState = this.m_referenceMap.get(textElementGroup);
+
+        if (groupState !== undefined) {
+            groupState.visited = true;
+        }
+        return groupState;
+    }
+
+    /**
+     * Sets a specified state for a given text element group.
+     * @param textElementGroup  The group of which the state will be set.
+     * @param textElementGroupState The state to set for the group.
+     */
+    private set(textElementGroup: TextElementGroup, textElementGroupState: TextElementGroupState) {
+        assert(textElementGroup.elements.length > 0);
+        this.m_referenceMap.set(textElementGroup, textElementGroupState);
+        this.m_sortedGroupStates = undefined;
     }
 }

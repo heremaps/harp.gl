@@ -51,8 +51,8 @@ function checkViewDistance(
 
 /**
  * Computes the distance of the specified text element to the given position.
- * @param textElement The textElement of which the view distance will be checked.
  * @param refPosition The world coordinates used a reference position to calculate the distance.
+ * @param textElement The textElement of which the view distance will be checked.
  * @returns The text element view distance.
  * `undefined`.
  */
@@ -111,7 +111,6 @@ export enum PrePlacementResult {
  * @param [maxViewDistance] If specified, text elements farther than this max distance will be
  * rejected.
  * @param [lastFrameNumber] Last frame number when the text element was placed (if any).
- * @param [stats] If specified, it'll be used to accumulate statistics about the applied tests.
  * @returns A tuple with the result code as first element, and the text element view distance
  * ( or `undefined` of the checks failed) as second.
  */

@@ -376,8 +376,8 @@ export class TextElement {
     }
 
     /**
-     * The relative position of this text element to the tile center in world coordinates or the
-     * first point of the path used to render a curved text.
+     * The text element position or the first point of the path used to render a curved text, both
+     * in local tile space.
      */
     get position(): THREE.Vector3 {
         if (this.points instanceof Array) {
@@ -388,8 +388,7 @@ export class TextElement {
     }
 
     /**
-     * The list of points in world coordinates (relative to the tile center) used to render the
-     * text along a path or `undefined`.
+     * The list of points in local tile space used to render the text along a path or `undefined`.
      */
     get path(): THREE.Vector3[] | undefined {
         if (this.points instanceof Array) {

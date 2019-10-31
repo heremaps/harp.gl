@@ -21,7 +21,8 @@ export type TextElementFilter = (
 ) => number | undefined;
 
 /**
- * `TextElementGroupState` keeps the state of a text element group while it's being rendered.
+ * `TextElementGroupState` keeps the state of a text element group and each element in it while
+ * they're being rendered.
  */
 export class TextElementGroupState {
     // Sorted list of element states belonging to the group state. It does NOT have the same order
@@ -113,12 +114,11 @@ export class TextElementGroupState {
         this.m_needsSorting = true;
     }
 
-    // NOTE: Text element states are sorted by priority/camera distance, so they order
-    // does not match with the text elements in the group!.
-
     /**
      * Returns element states sorted by their sort priority,
      * @see [[TextElementState.computeSortPriority]].
+     * NOTE: Text element states are sorted by priority/camera distance, so they order does not
+     * match with the text elements in the group!.
      * @param maxViewDistance Maximum distance from the view center that a visible element may have.
      * @returns Array of sorted element states.
      */
