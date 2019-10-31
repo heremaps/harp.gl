@@ -8,6 +8,7 @@ import { assert, expect } from "chai";
 import * as sinon from "sinon";
 import * as THREE from "three";
 
+import { createDefaultClipPlanesEvaluator } from "../lib/ClipPlanesEvaluator";
 import { DataSource } from "../lib/DataSource";
 import { FrustumIntersection } from "../lib/FrustumIntersection";
 import { SimpleTileGeometryManager } from "../lib/geometry/TileGeometryManager";
@@ -43,6 +44,7 @@ class Fixture {
         this.camera = new THREE.PerspectiveCamera();
         this.ds = [new FakeOmvDataSource()];
         this.mapView = new FakeMapView() as MapView;
+        (this.mapView as any).camera = this.camera;
         this.tileGeometryManager = new SimpleTileGeometryManager(this.mapView);
         this.ds[0].attach(this.mapView);
         this.frustumIntersection = new FrustumIntersection(
@@ -51,11 +53,10 @@ class Fixture {
             MapViewDefaults.extendedFrustumCulling,
             params.tileWrappingEnabled
         );
-        this.vts = new VisibleTileSet(
-            this.frustumIntersection,
-            this.tileGeometryManager,
-            MapViewDefaults
-        );
+        this.vts = new VisibleTileSet(this.frustumIntersection, this.tileGeometryManager, {
+            ...MapViewDefaults,
+            clipPlanesEvaluator: createDefaultClipPlanesEvaluator()
+        });
     }
 
     addDataSource(dataSource: DataSource) {

@@ -908,7 +908,9 @@ export class FixedClipPlanesEvaluator implements ClipPlanesEvaluator {
 }
 
 /**
- * Default [[ClipPlanesEvaluator]] calculates near plane based on ground distance.
+ * Factory function that creates default [[ClipPlanesEvaluator]] that calculates near plane based
+ * on ground distance and camera orientation.
+ *
+ * Creates [[TiltViewClipPlanesEvaluator]].
  */
-// tslint:disable-next-line: max-line-length
-export const defaultClipPlanesEvaluator: ClipPlanesEvaluator = new InterpolatedClipPlanesEvaluator();
+export const createDefaultClipPlanesEvaluator = () => new TiltViewClipPlanesEvaluator();
