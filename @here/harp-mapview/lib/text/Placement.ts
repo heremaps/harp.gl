@@ -16,7 +16,7 @@ import { TextElementStateCache } from "./TextElementStateCache";
  * Functions related to text element placement.
  */
 
-const tempPoiPosition = new THREE.Vector3(0, 0, 0);
+const tempTextElementPosition = new THREE.Vector3(0, 0, 0);
 
 /**
  * Checks whether the distance of the specified text element to the center of the given view is
@@ -39,12 +39,13 @@ function checkViewDistance(
     }
 
     // Spherical projection
-    tempPoiPosition.copy(textElement.position).add(textElement.tileCenter!);
-    tempPoiPosition.normalize();
+    tempTextElementPosition.copy(textElement.position).add(textElement.tileCenter!);
+    tempTextElementPosition.normalize();
     const cameraDir = new THREE.Vector3();
     mapView.camera.getWorldDirection(cameraDir);
 
-    return tempPoiPosition.dot(cameraDir) < -0.6 && textDistance <= maxViewDistance
+    // TODO: Revisit, why is this angle check needed and where does the constant -0.6 come from?
+    return tempTextElementPosition.dot(cameraDir) < -0.6 && textDistance <= maxViewDistance
         ? textDistance
         : undefined;
 }
@@ -60,18 +61,18 @@ export function computeViewDistance(refPosition: THREE.Vector3, textElement: Tex
     let viewDistance: number;
 
     if (Array.isArray(textElement.points) && textElement.points.length > 1) {
-        tempPoiPosition.copy(textElement.points[0]).add(textElement.tileCenter!);
-        const viewDistance0 = refPosition.distanceTo(tempPoiPosition);
+        tempTextElementPosition.copy(textElement.points[0]).add(textElement.tileCenter!);
+        const viewDistance0 = refPosition.distanceTo(tempTextElementPosition);
 
-        tempPoiPosition
+        tempTextElementPosition
             .copy(textElement.points[textElement.points.length - 1])
             .add(textElement.tileCenter!);
-        const viewDistance1 = refPosition.distanceTo(tempPoiPosition);
+        const viewDistance1 = refPosition.distanceTo(tempTextElementPosition);
 
         viewDistance = Math.min(viewDistance0, viewDistance1);
     } else {
-        tempPoiPosition.copy(textElement.position).add(textElement.tileCenter!);
-        viewDistance = refPosition.distanceTo(tempPoiPosition);
+        tempTextElementPosition.copy(textElement.position).add(textElement.tileCenter!);
+        viewDistance = refPosition.distanceTo(tempTextElementPosition);
     }
 
     return viewDistance;
