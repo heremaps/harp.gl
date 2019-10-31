@@ -188,6 +188,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
     private readonly m_dashedLines: LinesGeometry[] = [];
 
     private readonly m_sources: string[] = [];
+    private m_maxGeometryHeight: number = 0;
 
     constructor(
         private readonly m_decodeInfo: OmvDecoder.DecodeInfo,
@@ -742,6 +743,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
         if (this.m_sources.length !== 0) {
             decodedTile.copyrightHolderIds = this.m_sources;
         }
+        decodedTile.maxGeometryHeight = this.m_maxGeometryHeight;
         return decodedTile;
     }
 
@@ -1247,6 +1249,10 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                                 tempVertOrigin
                             );
                         }
+                        this.m_maxGeometryHeight = Math.max(
+                            this.m_maxGeometryHeight,
+                            scaleFactor * height
+                        );
 
                         if (isSpherical) {
                             tempVertNormal

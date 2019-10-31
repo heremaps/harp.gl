@@ -3,3 +3,5 @@
 @here/harp-map-theme/resources/fonts/
 @here/harp-text-canvas/resources/fonts/
 dist/
+.nyc_output/
+coverage/

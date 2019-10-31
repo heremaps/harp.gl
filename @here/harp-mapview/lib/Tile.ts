@@ -280,6 +280,11 @@ export class Tile implements CachedResource {
     readonly boundingBox = new OrientedBox3();
 
     /**
+     * Maximum height of geometry on this tile above ground level.
+     */
+    maxGeometryHeight: number = 0;
+
+    /**
      * A record of road data that cannot be intersected with THREE.JS, because the geometry is
      * created in the vertex shader.
      */
@@ -660,7 +665,7 @@ export class Tile implements CachedResource {
     }
 
     /**
-     * Estimated maximum elevation above the sea level that may be found on tile.
+     * Estimated maximum ground elevation above the sea level that may be found on tile.
      * @note Negative values indicates depressions.
      */
     get maxElevation(): number {

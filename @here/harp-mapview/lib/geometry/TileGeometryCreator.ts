@@ -208,6 +208,10 @@ export class TileGeometryCreator {
         const filter = (technique: Technique): boolean => {
             return technique.enabled !== false;
         };
+
+        if (decodedTile.maxGeometryHeight !== undefined) {
+            tile.maxGeometryHeight = decodedTile.maxGeometryHeight;
+        }
         this.createObjects(tile, decodedTile, filter);
 
         this.preparePois(tile, decodedTile);

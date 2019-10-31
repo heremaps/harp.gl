@@ -12,7 +12,7 @@ import {
     StyleSet,
     WorkerServiceProtocol
 } from "@here/harp-datasource-protocol";
-import { TileKey, webMercatorTilingScheme } from "@here/harp-geoutils";
+import { EarthConstants, TileKey, webMercatorTilingScheme } from "@here/harp-geoutils";
 import { LineGroup } from "@here/harp-lines";
 import { CopyrightInfo, CopyrightProvider } from "@here/harp-mapview";
 import { DataProvider, TileDataSource, TileFactory } from "@here/harp-mapview-decoder";
@@ -167,6 +167,15 @@ export interface OmvDataSourceParameters {
     maxZoomLevel?: number;
 
     /**
+     * Maximum geometry height above groud level this `OmvDataSource` can produce.
+     *
+     * Used in first stage of frustum culling before [[Tile.maxGeometryHeight]] data is available.
+     *
+     * @default [[EarthConstants.MAX_BUILDING_HEIGHT]].
+     */
+    maxGeometryHeight?: number;
+
+    /**
      * Optional storage level offset for [[Tile]]s. Default is -1.
      */
     storageLevelOffset?: number;
@@ -229,6 +238,11 @@ export class OmvDataSource extends TileDataSource<OmvTile> {
             storageLevelOffset: getOptionValue(m_params.storageLevelOffset, -1),
             enableElevationOverlay: this.m_params.enableElevationOverlay === true
         };
+
+        this.maxGeometryHeight = getOptionValue(
+            m_params.maxGeometryHeight,
+            EarthConstants.MAX_BUILDING_HEIGHT
+        );
     }
 
     async connect() {
