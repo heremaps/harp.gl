@@ -7743,10 +7743,10 @@ textextensions@^2.4.0:
   resolved "https://registry.yarnpkg.com/textextensions/-/textextensions-2.5.0.tgz#e21d3831dafa37513dd80666dff541414e314293"
   integrity sha512-1IkVr355eHcomgK7fgj1Xsokturx6L5S2JRT5WcRdA6v5shk9sxWuO/w/VbpQexwkXJMQIa/j1dBi3oo7+HhcA==
 
-three@^0.109.0:
-  version "0.109.0"
-  resolved "https://registry.yarnpkg.com/three/-/three-0.109.0.tgz#611c9ef860d10bd107695cead6c6abcd2422e5fd"
-  integrity sha512-XT99T3Hvgh2CEvwPdHYEunNE+clLK6KiT1U8En7YOgIqTUw4MrLeIc8zxQAJ6wbP8hhJaY5+Cff3jwBPpBa0gA==
+three@^0.110.0:
+  version "0.110.0"
+  resolved "https://registry.yarnpkg.com/three/-/three-0.110.0.tgz#8719591de1336269113ee79f4268ba247b2324f8"
+  integrity sha512-wlurH8XBO9Sd5VIw8nBa+taLR20kqaI4e9FiuMh6tqK8eOS2q2R+ZoUyufbyDTVTHhs8GiTbv0r2CMLkwerFJg==
 
 throttleit@^1.0.0:
   version "1.0.0"
@@ -8081,10 +8081,10 @@ typescript@3.5.x, typescript@~3.5.2:
   resolved "https://registry.yarnpkg.com/typescript/-/typescript-3.5.3.tgz#c830f657f93f1ea846819e929092f5fe5983e977"
   integrity sha512-ACzBtm/PhXBDId6a6sDJfroT2pOWt/oOnk4/dElG5G33ZL776N3Y6/6bKZJBFpd+b05F3Ct9qDjMeJmRWtE2/g==
 
-typescript@^3.4.1, typescript@^3.5.2:
-  version "3.6.3"
-  resolved "https://registry.yarnpkg.com/typescript/-/typescript-3.6.3.tgz#fea942fabb20f7e1ca7164ff626f1a9f3f70b4da"
-  integrity sha512-N7bceJL1CtRQ2RiG0AQME13ksR7DiuQh/QehubYcghzv20tnh+MQnQIuJddTmsbqYj+dztchykemz0zFzlvdQw==
+typescript@^3.6.4:
+  version "3.6.4"
+  resolved "https://registry.yarnpkg.com/typescript/-/typescript-3.6.4.tgz#b18752bb3792bc1a0281335f7f6ebf1bbfc5b91d"
+  integrity sha512-unoCll1+l+YK4i4F8f22TaNVPRHcD9PA3yCuZ8g5e0qGqlVlJ/8FSateOLLSagn+Yg5+ZwuPkL8LFUc0Jcvksg==
 
 typestring@^2.9.2:
   version "2.9.2"

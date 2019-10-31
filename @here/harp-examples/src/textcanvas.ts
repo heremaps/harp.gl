@@ -192,9 +192,9 @@ export namespace TextCanvasDynamicExample {
             new Float32Array(32 * 4 * characterCount),
             4
         );
-        boundsVertexBuffer.setDynamic(true);
+        boundsVertexBuffer.setUsage(THREE.DynamicDrawUsage);
         boundsGeometry = new THREE.BufferGeometry();
-        boundsGeometry.addAttribute("position", boundsVertexBuffer);
+        boundsGeometry.setAttribute("position", boundsVertexBuffer);
         boundsObject = new THREE.Line(
             boundsGeometry,
             new THREE.LineBasicMaterial({

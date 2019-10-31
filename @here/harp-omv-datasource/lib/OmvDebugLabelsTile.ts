@@ -216,7 +216,7 @@ export class OmvDebugLabelsTile extends OmvTile {
             if (lineIndices.length > 0) {
                 lineGeometry.addGroup(0, lineIndices.length, 0);
 
-                lineGeometry.addAttribute(
+                lineGeometry.setAttribute(
                     "position",
                     new THREE.BufferAttribute(new Float32Array(linePositions), 3)
                 );
@@ -230,7 +230,7 @@ export class OmvDebugLabelsTile extends OmvTile {
             if (redPointIndices.length > 0) {
                 redPointGeometry.addGroup(0, redPointIndices.length, 0);
 
-                redPointGeometry.addAttribute(
+                redPointGeometry.setAttribute(
                     "position",
                     new THREE.BufferAttribute(new Float32Array(redPointPositions), 3)
                 );
@@ -246,7 +246,7 @@ export class OmvDebugLabelsTile extends OmvTile {
             if (blackPointIndices.length > 0) {
                 blackPointGeometry.addGroup(0, blackPointIndices.length, 0);
 
-                blackPointGeometry.addAttribute(
+                blackPointGeometry.setAttribute(
                     "position",
                     new THREE.BufferAttribute(new Float32Array(blackPointPositions), 3)
                 );

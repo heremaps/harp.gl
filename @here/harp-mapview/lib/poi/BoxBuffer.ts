@@ -465,9 +465,9 @@ export class BoxBuffer {
             this.resizeBuffer(newSize);
         }
 
-        this.geometry.addAttribute("position", this.positionAttribute!);
-        this.geometry.addAttribute("color", this.colorAttribute!);
-        this.geometry.addAttribute("uv", this.uvAttribute!);
+        this.geometry.setAttribute("position", this.positionAttribute!);
+        this.geometry.setAttribute("color", this.colorAttribute!);
+        this.geometry.setAttribute("uv", this.uvAttribute!);
         this.geometry.setIndex(this.indexAttribute!);
         this.geometry.addGroup(0, this.indexAttribute!.count);
 
@@ -565,7 +565,7 @@ export class BoxBuffer {
                 NUM_POSITION_VALUES_PER_VERTEX
             );
             this.positionAttribute.count = 0;
-            this.positionAttribute.setDynamic(true);
+            this.positionAttribute.setUsage(THREE.DynamicDrawUsage);
         }
 
         const newColorArray = new Uint8Array(
@@ -584,7 +584,7 @@ export class BoxBuffer {
                 true
             );
             this.colorAttribute.count = 0;
-            this.colorAttribute.setDynamic(true);
+            this.colorAttribute.setUsage(THREE.DynamicDrawUsage);
         }
 
         const newUvArray = new Float32Array(
@@ -599,7 +599,7 @@ export class BoxBuffer {
         } else {
             this.uvAttribute = new THREE.BufferAttribute(newUvArray, NUM_UV_VALUES_PER_VERTEX);
             this.uvAttribute.count = 0;
-            this.uvAttribute.setDynamic(true);
+            this.uvAttribute.setUsage(THREE.DynamicDrawUsage);
         }
 
         const numIndexValues = newSize * NUM_INDICES_PER_ELEMENT * NUM_INDEX_VALUES_PER_VERTEX;
@@ -620,7 +620,7 @@ export class BoxBuffer {
                 NUM_INDEX_VALUES_PER_VERTEX
             );
             this.indexAttribute.count = 0;
-            this.indexAttribute.setDynamic(true);
+            this.indexAttribute.setUsage(THREE.DynamicDrawUsage);
         }
 
         this.m_size = newSize;

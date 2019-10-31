@@ -90,18 +90,18 @@ export function createDepthPrePassMesh(mesh: THREE.Mesh): THREE.Mesh {
     }
 
     const depthPassGeometry = new THREE.BufferGeometry();
-    depthPassGeometry.addAttribute("position", positionAttribute);
+    depthPassGeometry.setAttribute("position", positionAttribute);
     const uvAttribute = originalGeometry.getAttribute("uv");
     if (uvAttribute) {
-        depthPassGeometry.addAttribute("uv", uvAttribute);
+        depthPassGeometry.setAttribute("uv", uvAttribute);
     }
     const normalAttribute = originalGeometry.getAttribute("normal");
     if (normalAttribute) {
-        depthPassGeometry.addAttribute("normal", normalAttribute);
+        depthPassGeometry.setAttribute("normal", normalAttribute);
     }
     const extrusionAxisAttribute = originalGeometry.getAttribute("extrusionAxis");
     if (extrusionAxisAttribute) {
-        depthPassGeometry.addAttribute("extrusionAxis", extrusionAxisAttribute);
+        depthPassGeometry.setAttribute("extrusionAxis", extrusionAxisAttribute);
     }
 
     if (originalGeometry.index) {

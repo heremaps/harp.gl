@@ -367,12 +367,12 @@ export class WebTileDataSource extends DataSource {
                     ]),
                     3
                 );
-                g.addAttribute("position", posAttr);
+                g.setAttribute("position", posAttr);
                 const uvAttr = new THREE.BufferAttribute(
                     new Float32Array([0, 0, 1, 0, 0, 1, 1, 1]),
                     2
                 );
-                g.addAttribute("uv", uvAttr);
+                g.setAttribute("uv", uvAttr);
                 g.setIndex(new THREE.BufferAttribute(new Uint16Array([0, 1, 2, 2, 1, 3]), 1));
 
                 if (shouldSubdivide) {
