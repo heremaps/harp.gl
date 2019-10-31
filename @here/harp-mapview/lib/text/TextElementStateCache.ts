@@ -98,20 +98,12 @@ export class TextElementStateCache {
     }
 
     /**
-     * Clears the visited flag of all cached group states.
-     */
-    clearVisited() {
-        for (const groupState of this.m_referenceMap.values()) {
-            groupState.visited = false;
-        }
-    }
-
-    /**
      * Updates state of all cached groups, discarding those that are not needed anymore.
      * @param time The current time.
+     * @param clearVisited `True` to clear visited flag in group states.
      * @param disableFading `True` if fading is currently disabled, `false` otherwise.
      */
-    update(time: number, disableFading: boolean) {
+    update(time: number, clearVisited: boolean, disableFading: boolean) {
         for (const [key, groupState] of this.m_referenceMap.entries()) {
             const visible = groupState.updateFading(time, disableFading);
             const keep: boolean = visible || groupState.visited;
@@ -119,6 +111,8 @@ export class TextElementStateCache {
             if (!keep) {
                 this.m_referenceMap.delete(key);
                 this.m_sortedGroupStates = undefined;
+            } else if (clearVisited) {
+                groupState.visited = false;
             }
         }
         this.m_textMap.clear();

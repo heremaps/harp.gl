@@ -364,11 +364,10 @@ export class TextElementsRenderer {
     /**
      * Update state at the end of a frame.
      */
-    update(time: number, labelsPlaced: boolean) {
+    updateTextRenderers() {
         for (const textRenderer of this.m_textRenderers) {
             textRenderer.poiRenderer.update();
         }
-        this.m_textElementStateCache.update(time, this.m_mapView.disableFading);
     }
 
     /**
@@ -420,6 +419,10 @@ export class TextElementsRenderer {
         logger.debug(
             `FRAME: ${this.m_mapView.frameNumber}, ZOOM LEVEL: ${this.m_mapView.zoomLevel}`
         );
+
+        const clearVisitedGroups = updateTextElements;
+        this.m_textElementStateCache.update(time, clearVisitedGroups, this.m_mapView.disableFading);
+
         if (updateTextElements) {
             this.updateTextElements();
         }
@@ -428,7 +431,7 @@ export class TextElementsRenderer {
         this.prepopulateScreenWithBlockingElements();
         this.placeTextElements(time, frameNumber);
         this.placeOverlay();
-        this.update(time, updateTextElements);
+        this.updateTextRenderers();
     }
 
     /**
@@ -1150,8 +1153,6 @@ export class TextElementsRenderer {
         }
 
         this.m_cacheInvalidated = false;
-
-        this.m_textElementStateCache.clearVisited();
 
         const renderList = this.m_mapView.visibleTileSet.dataSourceTileList;
 
