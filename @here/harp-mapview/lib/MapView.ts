@@ -1123,7 +1123,7 @@ export class MapView extends THREE.EventDispatcher {
         this.updateLighting();
 
         if (this.m_textElementsRenderer !== undefined) {
-            this.m_textElementsRenderer.invalidatePlacement();
+            this.m_textElementsRenderer.invalidateCache();
         }
         this.updateSkyBackground();
         this.update();
@@ -2736,7 +2736,7 @@ export class MapView extends THREE.EventDispatcher {
                 if (textElementRendererFinished) {
                     // Force label placement in this frame. This may change the loading state of the
                     // TextElementsRenderer and the animation state of MapView.
-                    this.m_textElementsRenderer!.invalidatePlacement();
+                    this.m_textElementsRenderer!.invalidateCache();
                 }
                 this.m_initialTextPlacementDone = true;
             }
@@ -2913,7 +2913,7 @@ export class MapView extends THREE.EventDispatcher {
 
         const textElementsChanged: boolean =
             this.checkIfTextElementsChanged() || this.checkIfTilesChanged();
-        this.m_textElementsRenderer.render(textElementsChanged, time, this.m_frameNumber);
+        this.m_textElementsRenderer.placeText(textElementsChanged, time, this.m_frameNumber);
     }
 
     private finishRenderTextElements() {

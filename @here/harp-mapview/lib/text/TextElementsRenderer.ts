@@ -46,7 +46,6 @@ import { MapViewUtils } from "../Utils";
 import { checkReadyForPlacement, computeViewDistance, getMaxViewDistance } from "./Placement";
 import { PlacementStats } from "./PlacementStats";
 import { FadingState, RenderState } from "./RenderState";
-import { RenderStats } from "./RenderStats";
 import { SimpleLineCurve, SimplePath } from "./SimplePath";
 import { LoadingState, TextElement, TextPickResult } from "./TextElement";
 import { TextElementGroup } from "./TextElementGroup";
@@ -54,6 +53,7 @@ import { TextElementFilter, TextElementGroupState } from "./TextElementGroupStat
 import { TextElementState } from "./TextElementState";
 import { TextElementStateCache } from "./TextElementStateCache";
 import { DEFAULT_TEXT_STYLE_CACHE_ID } from "./TextStyleCache";
+import { UpdateStats } from "./UpdateStats";
 
 const DEFAULT_STYLE_NAME = "default";
 const DEFAULT_FONT_CATALOG_NAME = "default";
@@ -146,10 +146,10 @@ const OVERLOAD_LABEL_LIMIT = 20000;
 /**
  * If "overloaded" is `true`:
  *
- * Default number of labels/POIs placed in the scene. They are rendered only if they fit. If the
+ * Default number of labels/POIs updated in a frame. They are rendered only if they fit. If the
  * camera is not moving, it is ignored. See [[TextElementsRenderer.isDynamicFrame]].
  */
-const OVERLOAD_PLACED_LABEL_LIMIT = 100;
+const OVERLOAD_UPDATED_LABEL_LIMIT = 100;
 
 /**
  * If "overloaded" is `true`:
@@ -157,7 +157,7 @@ const OVERLOAD_PLACED_LABEL_LIMIT = 100;
  * Maximum time in milliseconds available for placement. If value is <= 0, or if the camera is not
  * moving, it is ignored. See [[TextElementsRenderer.isDynamicFrame]].
  */
-const OVERLOAD_PLACEMENT_TIME_LIMIT = 5;
+const OVERLOAD_UPDATE_TIME_LIMIT = 5;
 
 /**
  * If "overloaded" is `true`:
@@ -165,7 +165,7 @@ const OVERLOAD_PLACEMENT_TIME_LIMIT = 5;
  * Maximum time in milliseconds available for rendering. If value is <= 0, or if the camera is not
  * moving, it is ignored. See [[TextElementsRenderer.isDynamicFrame]].
  */
-const OVERLOAD_RENDER_TIME_LIMIT = 10;
+const OVERLOAD_PLACE_TIME_LIMIT = 10;
 
 /**
  * Minimum number of pixels per character. Used during estimation if there is enough screen space
@@ -177,8 +177,8 @@ const logger = LoggerManager.instance.create("TextElementsRenderer", { level: Lo
 
 // Development flag: Enable debug print.
 const PRINT_LABEL_DEBUG_INFO: boolean = false;
+const updateStats = PRINT_LABEL_DEBUG_INFO ? new UpdateStats(logger) : undefined;
 const placementStats = PRINT_LABEL_DEBUG_INFO ? new PlacementStats(logger) : undefined;
-const renderStats = PRINT_LABEL_DEBUG_INFO ? new RenderStats(logger) : undefined;
 
 const tempBox = new THREE.Box2();
 const tempBoxes: THREE.Box2[] = [];
@@ -237,7 +237,7 @@ export class TextElementsRenderer {
 
     private m_tmpVector = new THREE.Vector2();
     private m_overloaded: boolean = false;
-    private m_placementNeeded: boolean = false;
+    private m_cacheInvalidated: boolean = false;
     private m_catalogsLoading: number = 0;
 
     private m_textElementStateCache: TextElementStateCache = new TextElementStateCache();
@@ -358,10 +358,10 @@ export class TextElementsRenderer {
     }
 
     /**
-     * Forces placement in the next call to [[render]].
+     * Forces update of text elements in the next call to [[placeText]].
      */
-    invalidatePlacement() {
-        this.m_placementNeeded = true;
+    invalidateCache() {
+        this.m_cacheInvalidated = true;
     }
 
     /**
@@ -375,7 +375,7 @@ export class TextElementsRenderer {
      * Notify `TextElementsRenderer` that the camera has finished its movement.
      */
     movementFinished() {
-        this.invalidatePlacement();
+        this.invalidateCache();
     }
 
     /**
@@ -394,27 +394,27 @@ export class TextElementsRenderer {
     }
 
     /**
-     * Renders text elements for the current frame.
+     * Places text elements for the current frame.
      * @param tileTextElementsChanged Indicates whether there's been any change in the text elements
-     * to render since the last call to this method (last frame).
+     * to place since the last call to this method (last frame).
      * @param time Current frame time.
      * @param frameNumber Current frame number.
      */
-    render(tileTextElementsChanged: boolean, time: number, frameNumber: number) {
-        const doPlacement = this.m_placementNeeded || tileTextElementsChanged;
+    placeText(tileTextElementsChanged: boolean, time: number, frameNumber: number) {
+        const updateTextElements = this.m_cacheInvalidated || tileTextElementsChanged;
 
         logger.debug(
             `FRAME: ${this.m_mapView.frameNumber}, ZOOM LEVEL: ${this.m_mapView.zoomLevel}`
         );
-        if (doPlacement) {
-            this.placeTextElements();
+        if (updateTextElements) {
+            this.updateTextElements();
         }
 
         this.reset();
         this.prepopulateScreenWithBlockingElements();
-        this.renderTextElements(time, frameNumber);
-        this.renderOverlay();
-        this.update(time, doPlacement);
+        this.placeTextElements(time, frameNumber);
+        this.placeOverlay();
+        this.update(time, updateTextElements);
     }
 
     /**
@@ -449,17 +449,17 @@ export class TextElementsRenderer {
     }
 
     /**
-     * Render the [[TextElement]]s that are not part of the scene, but the overlay. Useful if a UI
+     * Place the [[TextElement]]s that are not part of the scene, but the overlay. Useful if a UI
      * with text or just plain information in the canvas itself should be presented to the user,
      * instead of using an HTML layer.
      *
      */
-    renderOverlay() {
+    placeOverlay() {
         if (this.m_overlayTextElements === undefined || this.m_overlayTextElements.length === 0) {
             return;
         }
 
-        this.renderOverlayTextElements();
+        this.placeOverlayTextElements();
     }
 
     /**
@@ -627,11 +627,11 @@ export class TextElementsRenderer {
         this.m_screenCollisions.allocateIBoxes(boxes);
     }
 
-    private renderTextElementGroup(
+    private placeTextElementGroup(
         textElementStates: TextElementState[],
         groupState: TextElementGroupState,
         mapViewState: MapViewState,
-        maxNumRenderedLabels: number,
+        maxNumPlacedLabels: number,
         pass: Pass
     ) {
         if (this.m_textRenderers.length === 0) {
@@ -653,29 +653,29 @@ export class TextElementsRenderer {
 
         for (const textElementState of textElementStates) {
             if (pass === Pass.PersistentLabels) {
-                if (renderStats) {
-                    ++renderStats.total;
+                if (placementStats) {
+                    ++placementStats.total;
                 }
             }
             if (
-                maxNumRenderedLabels >= 0 &&
-                mapViewState.numRenderedTextElements >= maxNumRenderedLabels
+                maxNumPlacedLabels >= 0 &&
+                mapViewState.numRenderedTextElements >= maxNumPlacedLabels
             ) {
-                logger.debug("Render label limit exceeded.");
+                logger.debug("Placement label limit exceeded.");
                 break;
             }
 
             // Skip all labels that are not initialized (didn't pass early placement tests)
             // or don't belong to this pass.
             if (!textElementState.initialized) {
-                if (renderStats) {
-                    ++renderStats.uninitialized;
+                if (placementStats) {
+                    ++placementStats.uninitialized;
                 }
                 continue;
             }
             if (textElementState.viewDistance === undefined) {
-                if (renderStats) {
-                    ++renderStats.tooFar;
+                if (placementStats) {
+                    ++placementStats.tooFar;
                 }
                 continue;
             }
@@ -694,7 +694,7 @@ export class TextElementsRenderer {
             const textCanvas = textElementStyle.textCanvas;
             const poiRenderer = textElementStyle.poiRenderer;
             if (textCanvas === undefined || poiRenderer === undefined) {
-                logger.warn("Text canvas or poi rendered not ready.");
+                logger.warn("Text canvas or poi renderer not ready.");
                 continue;
             }
 
@@ -717,12 +717,12 @@ export class TextElementsRenderer {
                 // Try to make it faster or execute cheaper rejection tests before.
                 const screenPointsResult = this.checkForSmallLabels(textElement);
                 if (screenPointsResult === undefined) {
-                    if (renderStats) {
-                        renderStats.numNotVisible++;
+                    if (placementStats) {
+                        placementStats.numNotVisible++;
                     }
                     if (textElement.dbgPathTooSmall === true) {
-                        if (renderStats) {
-                            renderStats.numPathTooSmall++;
+                        if (placementStats) {
+                            placementStats.numPathTooSmall++;
                         }
                     }
                     textElementState.reset();
@@ -791,8 +791,8 @@ export class TextElementsRenderer {
             // Move onto the next TextElement if we cannot continue adding glyphs to this layer.
             if (layer !== undefined) {
                 if (layer.storage.drawCount + textElement.glyphs!.length > layer.storage.capacity) {
-                    if (renderStats) {
-                        ++renderStats.numCannotAdd;
+                    if (placementStats) {
+                        ++placementStats.numCannotAdd;
                     }
                     logger.warn("layer glyph storage capacity exceeded.");
                     continue;
@@ -803,7 +803,7 @@ export class TextElementsRenderer {
             textCanvas.textRenderStyle = textElement.renderStyle!;
             textCanvas.textLayoutStyle = textElement.layoutStyle!;
 
-            // Render a POI...
+            // Place a POI...
             if (textElement.isPoiLabel) {
                 this.addPoiLabel(
                     textElementState,
@@ -1114,21 +1114,21 @@ export class TextElementsRenderer {
     }
 
     /**
-     * Visit all visible tiles and place their text labels and POI icons. The placement of
+     * Visit all visible tiles and add/ their text elements to cache. The update of
      * [[TextElement]]s is a time consuming process, and cannot be done every frame, but should only
      * be done when the camera moved (a lot) of whenever the set of visible tiles change.
      *
-     * The actually rendered [[TextElement]]s are stored internally until the next placement is done
+     * The actually rendered [[TextElement]]s are stored internally until the next update is done
      * to speed up rendering when no camera movement was detected.
      */
-    private placeTextElements() {
-        logger.debug("Placement");
+    private updateTextElements() {
+        logger.debug("updateTextElements");
 
-        if (placementStats) {
-            placementStats.clear();
+        if (updateStats) {
+            updateStats.clear();
         }
 
-        this.m_placementNeeded = false;
+        this.m_cacheInvalidated = false;
 
         this.m_textElementStateCache.clearVisited();
 
@@ -1136,11 +1136,11 @@ export class TextElementsRenderer {
 
         this.checkIfOverloaded();
 
-        const placementStartTime =
+        const updateStartTime =
             this.overloaded && this.m_mapView.isDynamicFrame ? PerformanceTimer.now() : undefined;
 
         // TODO: HARP-7648. Skip all data sources that won't contain text.
-        // TODO: HARP-7651. Higher priority labels should be placed before lower priority ones
+        // TODO: HARP-7651. Higher priority labels should be updated before lower priority ones
         // across all data sources.
         // TODO: HARP-7373. Use rendered tiles (tiles currently rendered to cover the view,
         // including fallbacks if necessary) instead of visible tiles (target tiles that might not
@@ -1148,27 +1148,27 @@ export class TextElementsRenderer {
         // Otherwise labels persistent when crossing a zoom level boundary will flicker (fade out
         // and back in) due to the delay in decoding the visible tiles.
         renderList.forEach(tileList => {
-            this.placeTextElementsFromSource(
+            this.updateTextElementsFromSource(
                 tileList.dataSource,
                 tileList.storageLevel,
                 tileList.visibleTiles,
-                placementStartTime
+                updateStartTime
             );
         });
 
-        if (placementStats) {
-            placementStats.log();
+        if (updateStats) {
+            updateStats.log();
         }
     }
 
-    private placeTextElementsFromSource(
+    private updateTextElementsFromSource(
         tileDataSource: DataSource,
         storageLevel: number,
         visibleTiles: Tile[],
-        placementStartTime: number | undefined
+        updateStartTime: number | undefined
     ) {
-        if (placementStats) {
-            placementStats.tiles += visibleTiles.length;
+        if (updateStats) {
+            updateStats.tiles += visibleTiles.length;
         }
         const sortedTiles = visibleTiles;
 
@@ -1185,28 +1185,28 @@ export class TextElementsRenderer {
         const sortedGroups: TextElementLists[] = [];
         this.createSortedGroupsForSorting(tileDataSource, storageLevel, sortedTiles, sortedGroups);
 
-        let numTextElementsPlaced = 0;
+        let numTextElementsUpdated = 0;
 
         for (const textElementLists of sortedGroups) {
-            this.selectTextElementsToPlaceByDistance(textElementLists);
+            this.selectTextElementsToUpdateByDistance(textElementLists);
 
-            // The value of placementStartTime is set if this.overloaded is true.
-            if (placementStartTime !== undefined) {
+            // The value of updateStartTime is set if this.overloaded is true.
+            if (updateStartTime !== undefined) {
                 // If overloaded and all time is used up, exit early.
-                if (OVERLOAD_PLACEMENT_TIME_LIMIT > 0) {
+                if (OVERLOAD_UPDATE_TIME_LIMIT > 0) {
                     const endTime = PerformanceTimer.now();
-                    const elapsedTime = endTime - placementStartTime;
-                    if (elapsedTime > OVERLOAD_PLACEMENT_TIME_LIMIT) {
-                        logger.debug("Placement time limit exceeded.");
+                    const elapsedTime = endTime - updateStartTime;
+                    if (elapsedTime > OVERLOAD_UPDATE_TIME_LIMIT) {
+                        logger.debug("Update time limit exceeded.");
                         break;
                     }
                 }
 
-                // Try not to place too many elements. They will be checked for visibility each
+                // Try not to update too many elements. They will be checked for visibility each
                 // frame.
-                numTextElementsPlaced += textElementLists.count();
-                if (numTextElementsPlaced >= OVERLOAD_PLACED_LABEL_LIMIT) {
-                    logger.debug("Placement label limit exceeded.");
+                numTextElementsUpdated += textElementLists.count();
+                if (numTextElementsUpdated >= OVERLOAD_UPDATED_LABEL_LIMIT) {
+                    logger.debug("Update label limit exceeded.");
                     break;
                 }
             }
@@ -1237,9 +1237,9 @@ export class TextElementsRenderer {
                 maxViewDistance,
                 lastFrameNumber
             );
-            if (placementStats) {
-                placementStats.totalLabels++;
-                placementStats.results[result]++;
+            if (updateStats) {
+                updateStats.totalLabels++;
+                updateStats.results[result]++;
             }
             return viewDistance;
         };
@@ -1249,10 +1249,10 @@ export class TextElementsRenderer {
             textElementSelection
         );
 
-        if (placementStats) {
-            ++placementStats.totalGroups;
+        if (updateStats) {
+            ++updateStats.totalGroups;
             if (!found) {
-                ++placementStats.newGroups;
+                ++updateStats.newGroups;
             }
         }
     }
@@ -1323,7 +1323,7 @@ export class TextElementsRenderer {
         }
     }
 
-    private selectTextElementsToPlaceByDistance(textElementLists: TextElementLists) {
+    private selectTextElementsToUpdateByDistance(textElementLists: TextElementLists) {
         const farDistanceLimitRatio = Math.max(
             this.m_maxDistanceRatioForTextLabels!,
             this.m_maxDistanceRatioForPoiLabels!
@@ -1340,12 +1340,12 @@ export class TextElementsRenderer {
     }
 
     /**
-     * Re-render the previously placed [[TextElement]]s.
+     * Place cached [[TextElement]]s.
      *
      * @param time Current time for animations.
      * @param frameNumber Integer number incremented every frame.
      */
-    private renderTextElements(time: number, frameNumber: number) {
+    private placeTextElements(time: number, frameNumber: number) {
         const mapViewState: MapViewState = {
             cameraIsMoving: this.m_mapView.cameraIsMoving,
             maxVisibilityDist: this.m_mapView.viewRanges.maximum,
@@ -1356,11 +1356,11 @@ export class TextElementsRenderer {
             fadeAnimationRunning: false
         };
 
-        const renderStartTime =
+        const placeStartTime =
             this.overloaded && this.m_mapView.isDynamicFrame ? PerformanceTimer.now() : undefined;
 
-        if (renderStats) {
-            renderStats.clear();
+        if (placementStats) {
+            placementStats.clear();
         }
 
         if (this.m_textRenderers.length === 0) {
@@ -1372,14 +1372,14 @@ export class TextElementsRenderer {
             return;
         }
 
-        // TODO: HARP-7648. Potential performance improvement. Render persistent labels + rejected
+        // TODO: HARP-7648. Potential performance improvement. Place persistent labels + rejected
         // candidates from previous frame if there's been no placement in this one.
-        this.renderPass(Pass.PersistentLabels, mapViewState, renderStartTime);
-        this.renderPass(Pass.NewLabels, mapViewState, renderStartTime);
+        this.placementPass(Pass.PersistentLabels, mapViewState, placeStartTime);
+        this.placementPass(Pass.NewLabels, mapViewState, placeStartTime);
 
-        if (renderStats) {
-            renderStats.numRenderedTextElements = mapViewState.numRenderedTextElements;
-            renderStats.log();
+        if (placementStats) {
+            placementStats.numRenderedTextElements = mapViewState.numRenderedTextElements;
+            placementStats.log();
         }
 
         if (!this.m_mapView.disableFading && mapViewState.fadeAnimationRunning) {
@@ -1387,7 +1387,7 @@ export class TextElementsRenderer {
         }
     }
 
-    private renderOverlayTextElements() {
+    private placeOverlayTextElements() {
         if (this.m_textRenderers.length === 0) {
             return;
         }
@@ -1625,8 +1625,8 @@ export class TextElementsRenderer {
             ) {
                 // The label is farther away than fadeFar value, which means it is totally
                 // transparent.
-                if (renderStats) {
-                    ++renderStats.tooFar;
+                if (placementStats) {
+                    ++placementStats.tooFar;
                 }
                 return false;
             }
@@ -1656,8 +1656,8 @@ export class TextElementsRenderer {
 
         if (renderIcon && poiRenderer.prepareRender(pointLabel, mapViewState.zoomLevel)) {
             if (poiInfo!.isValid === false) {
-                if (renderStats) {
-                    ++renderStats.numNotVisible;
+                if (placementStats) {
+                    ++placementStats.numNotVisible;
                 }
                 return false;
             }
@@ -1683,8 +1683,8 @@ export class TextElementsRenderer {
                     !iconSpaceAvailable
                 ) {
                     if (!iconRenderState.isVisible()) {
-                        if (renderStats) {
-                            ++renderStats.numNotVisible;
+                        if (placementStats) {
+                            ++placementStats.numNotVisible;
                         }
                         return false;
                     } else if (!(poiInfo!.mayOverlap === true) && !iconRenderState.isFadingOut()) {
@@ -1711,8 +1711,8 @@ export class TextElementsRenderer {
                 // Forced making it un-current.
                 iconRenderState.lastFrameNumber = -1;
 
-                if (renderStats) {
-                    ++renderStats.numNotVisible;
+                if (placementStats) {
+                    ++placementStats.numNotVisible;
                 }
                 return false;
             }
@@ -1760,8 +1760,8 @@ export class TextElementsRenderer {
 
             // Check the text visibility.
             if (!this.m_screenCollisions.isVisible(tempBox2D)) {
-                if (renderStats) {
-                    renderStats.numPoiTextsInvisible++;
+                if (placementStats) {
+                    placementStats.numPoiTextsInvisible++;
                 }
                 labelState.reset();
                 return false;
@@ -1842,8 +1842,8 @@ export class TextElementsRenderer {
                         temp.bufferAdditionParams
                     );
                 }
-                if (renderStats) {
-                    renderStats.numRenderedPoiTexts++;
+                if (placementStats) {
+                    placementStats.numRenderedPoiTexts++;
                 }
             } else if (!renderIcon || !textIsOptional) {
                 // If the text is not visible nor optional, we won't render the icon neither.
@@ -1862,8 +1862,8 @@ export class TextElementsRenderer {
                             mapViewState.fadeAnimationRunning || iconStartedFadeOut;
                     }
                 } else {
-                    if (renderStats) {
-                        renderStats.numPoiTextsInvisible++;
+                    if (placementStats) {
+                        placementStats.numPoiTextsInvisible++;
                     }
                     return false;
                 }
@@ -1900,8 +1900,8 @@ export class TextElementsRenderer {
 
             iconRenderState.lastFrameNumber = mapViewState.frameNumber;
 
-            if (renderStats) {
-                renderStats.numRenderedPoiIcons++;
+            if (placementStats) {
+                placementStats.numRenderedPoiIcons++;
             }
         }
         mapViewState.numRenderedTextElements++;
@@ -2072,8 +2072,8 @@ export class TextElementsRenderer {
                 labelState.viewDistance < textMaxDistance
             )
         ) {
-            if (renderStats) {
-                ++renderStats.tooFar;
+            if (placementStats) {
+                ++placementStats.tooFar;
             }
             labelState.reset();
             return false;
@@ -2086,8 +2086,8 @@ export class TextElementsRenderer {
         ) {
             // The label is farther away than fadeFar value, which means it is totally
             // transparent
-            if (renderStats) {
-                ++renderStats.tooFar;
+            if (placementStats) {
+                ++placementStats.tooFar;
             }
             labelState.reset();
             return false;
@@ -2146,8 +2146,8 @@ export class TextElementsRenderer {
         // in the middle as a function.
         if (!textCanvas.measureText(pathLabel.glyphs!, tempBox, temp.measurementParams)) {
             textCanvas.textRenderStyle.fontSize.size = prevSize;
-            if (renderStats) {
-                ++renderStats.numNotVisible;
+            if (placementStats) {
+                ++placementStats.numNotVisible;
             }
             labelState.reset();
             return false;
@@ -2164,8 +2164,8 @@ export class TextElementsRenderer {
                 (!pathLabel.textMayOverlap && this.m_screenCollisions.isAllocated(tempBox2D))
             ) {
                 textCanvas.textRenderStyle.fontSize.size = prevSize;
-                if (renderStats) {
-                    ++renderStats.numNotVisible;
+                if (placementStats) {
+                    ++placementStats.numNotVisible;
                 }
                 return false;
             }
@@ -2292,27 +2292,27 @@ export class TextElementsRenderer {
         return screenPoints;
     }
 
-    private renderPass(
+    private placementPass(
         pass: Pass,
         mapViewState: MapViewState,
-        renderStartTime: number | undefined
+        placeStartTime: number | undefined
     ) {
-        const maxNumRenderedTextElements = this.m_maxNumVisibleLabels!;
+        const maxNumPlacedTextElements = this.m_maxNumVisibleLabels!;
 
-        logger.debug("Render pass ", pass);
+        logger.debug("Placement pass ", pass);
 
         if (
-            maxNumRenderedTextElements >= 0 &&
-            mapViewState.numRenderedTextElements >= maxNumRenderedTextElements
+            maxNumPlacedTextElements >= 0 &&
+            mapViewState.numRenderedTextElements >= maxNumPlacedTextElements
         ) {
-            logger.debug("Render label limit exceeded.");
+            logger.debug("Placed label limit exceeded.");
             return;
         }
 
         for (const textElementGroupState of this.m_textElementStateCache.sortedGroupStates) {
             if (textElementGroupState.needsSorting) {
-                if (renderStats) {
-                    ++renderStats.resortedGroups;
+                if (placementStats) {
+                    ++placementStats.resortedGroups;
                 }
             }
             const sortedElementStates = textElementGroupState.sortedTextElementStates(
@@ -2320,25 +2320,25 @@ export class TextElementsRenderer {
             );
 
             if (pass === Pass.PersistentLabels) {
-                if (renderStats) {
-                    ++renderStats.totalGroups;
+                if (placementStats) {
+                    ++placementStats.totalGroups;
                 }
             }
 
-            this.renderTextElementGroup(
+            this.placeTextElementGroup(
                 sortedElementStates,
                 textElementGroupState,
                 mapViewState,
-                maxNumRenderedTextElements,
+                maxNumPlacedTextElements,
                 pass
             );
 
-            // renderStartTime is set if this.overloaded is true
-            if (renderStartTime !== undefined && OVERLOAD_RENDER_TIME_LIMIT > 0) {
+            // placeStartTime is set if this.overloaded is true
+            if (placeStartTime !== undefined && OVERLOAD_PLACE_TIME_LIMIT > 0) {
                 const endTime = PerformanceTimer.now();
-                const elapsedTime = endTime - renderStartTime;
-                if (elapsedTime > OVERLOAD_RENDER_TIME_LIMIT) {
-                    logger.debug("Render time limit exceeded.");
+                const elapsedTime = endTime - placeStartTime;
+                if (elapsedTime > OVERLOAD_PLACE_TIME_LIMIT) {
+                    logger.debug("Placement time limit exceeded.");
                     return;
                 }
             }
