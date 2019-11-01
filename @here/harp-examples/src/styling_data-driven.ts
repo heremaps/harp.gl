@@ -11,6 +11,29 @@ import { APIFormat, OmvDataSource } from "@here/harp-omv-datasource";
 import { accessToken, copyrightInfo } from "../config";
 
 export namespace DataDrivenThemeExample {
+    document.body.innerHTML +=
+        `
+        <style>
+            #mapCanvas {
+              top: 0;
+            }
+            #info{
+                color: #fff;
+                width: 80%;
+                left: 50%;
+                position: relative;
+                margin: 10px 0 0 -40%;
+                font-size: 15px;
+            }
+            @media screen and (max-width: 700px) {
+                #info{
+                    font-size:11px;
+                }
+            }
+        </style>
+        <p id=info>This example shows how to utilize the data from the styles.<br/>` +
+        `Here the population of a country is displayed below its name.</p>
+    `;
     function initializeMapView(id: string): MapView {
         const canvas = document.getElementById(id) as HTMLCanvasElement;
 

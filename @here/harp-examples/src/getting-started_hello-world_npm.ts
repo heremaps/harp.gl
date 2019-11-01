@@ -89,6 +89,7 @@ export namespace HelloWorldExample {
         // Look at New York.
         const NY = new GeoCoordinates(40.707, -74.01);
         map.lookAt(NY, 3500, 50, -20);
+        map.zoomLevel = 16.1;
         // end:harp_gl_hello_world_example_look_at.ts
 
         // Add an UI.

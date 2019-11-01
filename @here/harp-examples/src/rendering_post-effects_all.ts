@@ -39,8 +39,9 @@ export namespace EffectsAllExample {
 
         const mapControls = new MapControls(mapView);
         mapControls.maxTiltAngle = 60;
-        const NY = new GeoCoordinates(40.707, -74.01);
-        mapView.lookAt(NY, 3500, 50);
+        const HK = new GeoCoordinates(22.3057586, 114.1661475);
+        mapView.lookAt(HK, 3500, 60, -30);
+        mapView.zoomLevel = 16.1;
 
         const ui = new MapControlsUI(mapControls);
         canvas.parentElement!.appendChild(ui.domElement);

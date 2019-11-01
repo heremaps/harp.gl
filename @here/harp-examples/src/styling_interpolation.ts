@@ -21,7 +21,21 @@ export namespace TiledGeoJsonTechniquesExample {
             #mapCanvas {
               top: 0;
             }
+            #info{
+                color: #fff;
+                width: 80%;
+                left: 50%;
+                position: relative;
+                margin: 10px 0 0 -40%;
+                font-size: 15px;
+            }
+            @media screen and (max-width: 700px) {
+                #info{
+                    font-size:11px;
+                }
+            }
         </style>
+        <p id=info>Zoom in and out to smoothly transition between themes.</p>
     `;
 
     const theme: Theme = {

@@ -61,10 +61,12 @@ export namespace ThreejsCameraAnimation {
 <br>
 Tap our use left/right keys to change location`;
 
-    message.style.position = "absolute";
-    message.style.cssFloat = "right";
-    message.style.top = "10px";
-    message.style.right = "10px";
+    message.style.cssText = `color: #000;
+                width: 80%;
+                left: 50%;
+                position: relative;
+                margin-left: -40%;
+                font-size: 15px;`;
     document.body.appendChild(message);
 
     function startTransition(mapView: MapView, location: Location) {

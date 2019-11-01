@@ -6,7 +6,6 @@
 
 import { StyleSet } from "@here/harp-datasource-protocol";
 import { FeaturesDataSource } from "@here/harp-features-datasource";
-import { GeoCoordinates } from "@here/harp-geoutils";
 import { MapControls, MapControlsUI } from "@here/harp-map-controls";
 import { CopyrightElementHandler, MapView } from "@here/harp-mapview";
 import { APIFormat, OmvDataSource } from "@here/harp-omv-datasource";
@@ -145,24 +144,24 @@ export namespace GeoJsonExample {
             theme: "resources/berlin_tilezen_night_reduced.json"
         });
         mapView.renderLabels = false;
-        mapView.setCameraGeolocationAndZoom(new GeoCoordinates(30, 0), 2);
 
         CopyrightElementHandler.install("copyrightNotice", mapView);
 
         const controls = new MapControls(mapView);
         const ui = new MapControlsUI(controls);
-        const editorWidthNumber = Math.min(parseInt(editorWidth, undefined), innerWidth * 0.4);
-        ui.domElement.style.right = editorWidthNumber + 10 + "px";
+        const width =
+            innerWidth <= 450 ? 0 : Math.min(parseInt(editorWidth, undefined), innerWidth * 0.4);
+        ui.domElement.style.right = width + 10 + "px";
         canvas.parentElement!.appendChild(ui.domElement);
 
         window.addEventListener("resize", () => {
-            const width =
+            const _width =
                 innerWidth <= 450
                     ? 0
                     : Math.min(parseInt(editorWidth, undefined), innerWidth * 0.4);
             canvas.className = "full";
-            ui.domElement.style.right = width + 10 + "px";
-            mapView.resize(innerWidth - width, innerHeight);
+            ui.domElement.style.right = _width + 10 + "px";
+            mapView.resize(innerWidth - _width, innerHeight);
         });
 
         const baseMap = new OmvDataSource({
@@ -275,7 +274,7 @@ export namespace GeoJsonExample {
                 }
             </style>
             <div id=editor>
-                <button>Update</button>
+                <button style="left:5px;position:absolute;">Update</button>
                 <textarea></textarea>
             </div>
 
