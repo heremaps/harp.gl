@@ -138,6 +138,8 @@ export function checkReadyForPlacement(
         return { result: PrePlacementResult.NotReady, viewDistance };
     }
 
+    // Text element visibility and zoom level ranges must be checked after calling
+    // updatePoiFromPoiTable, since that function may change those values.
     if (
         !textElement.visible ||
         !MathUtils.isClamped(mapView.zoomLevel, textElement.minZoomLevel, textElement.maxZoomLevel)

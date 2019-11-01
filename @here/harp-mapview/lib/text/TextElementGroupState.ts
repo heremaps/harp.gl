@@ -73,6 +73,7 @@ export class TextElementGroupState {
     }
 
     /**
+     * Updates the fading state of all text elements within the group to the specified time.
      * @returns True if any element visible after fading.
      */
     updateFading(time: number): boolean {

@@ -40,8 +40,8 @@ function isNewTextElementLatest(newValue: TextMapValue, cachedValue: TextMapValu
 }
 
 /**
- * Caches the state of text elements and element groups currently rendered, including their fading
- * state and text deduplication information.
+ * Caches the state of text element groups currently rendered as well as the text element states
+ * belonging to them, including their fading state and text deduplication information.
  */
 export class TextElementStateCache {
     private readonly m_referenceMap = new Map<TextElementGroup, TextElementGroupState>();
@@ -52,12 +52,13 @@ export class TextElementStateCache {
 
     /**
      * Gets the state corresponding to a given text element group or sets a newly created state if
-     * not found.
+     * not found. It updates the states of the text elements belonging to the group using the
+     * specified parameters.
      * @param textElementGroup The group of which the state will be obtained.
-     * @param textElementFilter Filter used if a new state is created,
+     * @param textElementFilter Filter used to decide if a text element must be initialized,
      * @see [[TextElementGroupState]] construction.
-     * @param disableFading Used if a new state is created, @see [[TextElementGroupState]]
-     * construction.
+     * @param disableFading Sets or updates the fading behaviour or text elements,
+     * @see [[TextElementGroupState]] construction.
      * @returns Tuple with the group state as first element and a boolean indicating whether the
      * state was found in cache (`true`) or newly created (`false`) as second element.
      */
