@@ -69,6 +69,9 @@ export namespace FreeCameraAppDebuggingToolExample {
         constructor(readonly options: FreeCameraAppOptions) {
             this.mapView = new MapView(options);
             this.mapView.fog.enabled = false;
+            // Set the view over Geneva.
+            const startLocation = new GeoCoordinates(46.207, 6.147);
+            this.mapView.lookAt(startLocation, 2000);
 
             this.mapControls = new MapControls(this.mapView);
             this.mapControls.enabled = false;
@@ -280,14 +283,12 @@ Press 'V' to change the scene point of view<br>`;
         document.body.appendChild(message);
 
         const canvas = document.getElementById("mapCanvas") as HTMLCanvasElement;
-        const geoCenter = new GeoCoordinates(52.518611, 13.376111);
 
         // snippet:harp_gl_freecamera_app_0.ts
         const app = new FreeCameraApp({
             decoderUrl: "./decoder.bundle.js",
             canvas,
-            theme: "./resources/berlin_tilezen_base.json",
-            geoCenter
+            theme: "./resources/berlin_tilezen_base.json"
         });
 
         app.start();
