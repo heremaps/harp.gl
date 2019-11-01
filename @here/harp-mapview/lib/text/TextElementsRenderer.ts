@@ -212,6 +212,20 @@ class TextElementLists {
     }
 }
 
+function isPlacementTimeExceeded(startTime: number | undefined): boolean {
+    // startTime is set in overload mode.
+    if (startTime === undefined || OVERLOAD_PLACE_TIME_LIMIT <= 0) {
+        return false;
+    }
+    const endTime = PerformanceTimer.now();
+    const elapsedTime = endTime - startTime;
+    if (elapsedTime > OVERLOAD_PLACE_TIME_LIMIT) {
+        logger.debug("Placement time limit exceeded.");
+        return true;
+    }
+    return false;
+}
+
 /**
  * @hidden
  *
@@ -628,7 +642,6 @@ export class TextElementsRenderer {
     }
 
     private placeTextElementGroup(
-        textElementStates: TextElementState[],
         groupState: TextElementGroupState,
         mapViewState: MapViewState,
         maxNumPlacedLabels: number,
@@ -638,6 +651,10 @@ export class TextElementsRenderer {
             logger.warn("No text renderers initialized.");
             return;
         }
+
+        const textElementStates = groupState.sortedTextElementStates(
+            this.m_mapView.viewRanges.maximum
+        );
 
         const shieldGroups: number[][] = [];
 
@@ -1263,7 +1280,7 @@ export class TextElementsRenderer {
         sortedTiles: Tile[],
         sortedGroups: TextElementLists[]
     ) {
-        if (this.m_textRenderers.length === 0 || sortedTiles.length === 0) {
+        if (sortedTiles.length === 0) {
             return;
         }
 
@@ -1363,19 +1380,53 @@ export class TextElementsRenderer {
             placementStats.clear();
         }
 
-        if (this.m_textRenderers.length === 0) {
-            logger.warn("No text renderers initialized.");
-            return;
-        }
         if (this.m_textElementStateCache.size === 0) {
             logger.debug("Text element cache empty.");
             return;
         }
 
+        const maxNumPlacedTextElements = this.m_maxNumVisibleLabels!;
+
         // TODO: HARP-7648. Potential performance improvement. Place persistent labels + rejected
         // candidates from previous frame if there's been no placement in this one.
-        this.placementPass(Pass.PersistentLabels, mapViewState, placeStartTime);
-        this.placementPass(Pass.NewLabels, mapViewState, placeStartTime);
+        const groupStates = this.m_textElementStateCache.sortedGroupStates;
+        let currentPriority: number = groupStates[0].priority;
+        let currentPriorityBegin: number = 0;
+
+        for (let i = 0; i < groupStates.length; ++i) {
+            const textElementGroupState = groupStates[i];
+            if (placementStats) {
+                ++placementStats.totalGroups;
+                if (textElementGroupState.needsSorting) {
+                    ++placementStats.resortedGroups;
+                }
+            }
+
+            const newPriority = textElementGroupState.priority;
+            if (currentPriority !== newPriority) {
+                // Place all new labels of the previous priority before placing the persistent
+                // labels of this priority.
+                this.placeNewTextElements(currentPriorityBegin, i, mapViewState);
+                if (isPlacementTimeExceeded(placeStartTime)) {
+                    break;
+                }
+                currentPriority = newPriority;
+                currentPriorityBegin = i;
+            }
+            this.placeTextElementGroup(
+                textElementGroupState,
+                mapViewState,
+                maxNumPlacedTextElements,
+                Pass.PersistentLabels
+            );
+
+            if (isPlacementTimeExceeded(placeStartTime)) {
+                break;
+            }
+        }
+
+        // Place new text elements of the last priority.
+        this.placeNewTextElements(currentPriorityBegin, groupStates.length, mapViewState);
 
         if (placementStats) {
             placementStats.numRenderedTextElements = mapViewState.numRenderedTextElements;
@@ -1387,11 +1438,23 @@ export class TextElementsRenderer {
         }
     }
 
-    private placeOverlayTextElements() {
-        if (this.m_textRenderers.length === 0) {
-            return;
+    private placeNewTextElements(
+        beginGroupIndex: number,
+        endGroupIndex: number,
+        mapViewState: MapViewState
+    ) {
+        const groupStates = this.m_textElementStateCache.sortedGroupStates;
+        for (let i = beginGroupIndex; i < endGroupIndex; ++i) {
+            this.placeTextElementGroup(
+                groupStates[i],
+                mapViewState,
+                this.m_maxNumVisibleLabels!,
+                Pass.NewLabels
+            );
         }
+    }
 
+    private placeOverlayTextElements() {
         const screenSize = this.m_mapView.renderer.getSize(this.m_tmpVector);
         const screenXOrigin = -screenSize.width / 2.0;
         const screenYOrigin = screenSize.height / 2.0;
@@ -2290,59 +2353,6 @@ export class TextElementsRenderer {
         }
 
         return screenPoints;
-    }
-
-    private placementPass(
-        pass: Pass,
-        mapViewState: MapViewState,
-        placeStartTime: number | undefined
-    ) {
-        const maxNumPlacedTextElements = this.m_maxNumVisibleLabels!;
-
-        logger.debug("Placement pass ", pass);
-
-        if (
-            maxNumPlacedTextElements >= 0 &&
-            mapViewState.numRenderedTextElements >= maxNumPlacedTextElements
-        ) {
-            logger.debug("Placed label limit exceeded.");
-            return;
-        }
-
-        for (const textElementGroupState of this.m_textElementStateCache.sortedGroupStates) {
-            if (textElementGroupState.needsSorting) {
-                if (placementStats) {
-                    ++placementStats.resortedGroups;
-                }
-            }
-            const sortedElementStates = textElementGroupState.sortedTextElementStates(
-                this.m_mapView.viewRanges.maximum
-            );
-
-            if (pass === Pass.PersistentLabels) {
-                if (placementStats) {
-                    ++placementStats.totalGroups;
-                }
-            }
-
-            this.placeTextElementGroup(
-                sortedElementStates,
-                textElementGroupState,
-                mapViewState,
-                maxNumPlacedTextElements,
-                pass
-            );
-
-            // placeStartTime is set if this.overloaded is true
-            if (placeStartTime !== undefined && OVERLOAD_PLACE_TIME_LIMIT > 0) {
-                const endTime = PerformanceTimer.now();
-                const elapsedTime = endTime - placeStartTime;
-                if (elapsedTime > OVERLOAD_PLACE_TIME_LIMIT) {
-                    logger.debug("Placement time limit exceeded.");
-                    return;
-                }
-            }
-        }
     }
 
     private checkIfOverloaded(): boolean {

@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { assert } from "@here/harp-utils";
 import { TextElement } from "./TextElement";
 import { TextElementGroup } from "./TextElementGroup";
 import { TextElementState } from "./TextElementState";
@@ -37,6 +38,7 @@ export class TextElementGroupState {
      * @param filter Function used to do early rejection. @see [[TextElementFilter]].
      */
     constructor(readonly group: TextElementGroup, filter: TextElementFilter) {
+        assert(group.elements.length > 0);
         const length = group.elements.length;
         this.m_textElementStates = new Array(length);
         this.m_visited = true;
@@ -65,6 +67,13 @@ export class TextElementGroupState {
 
     set visited(visited: boolean) {
         this.m_visited = visited;
+    }
+
+    /**
+     * @returns the priority of the text elements in the group.
+     */
+    get priority() {
+        return this.m_textElementStates[0].element.priority;
     }
 
     /**
