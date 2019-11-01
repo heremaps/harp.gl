@@ -1937,8 +1937,8 @@ export class MapView extends THREE.EventDispatcher {
             const maxPitchDegWithCurvature = THREE.Math.radToDeg(maxPitchRadWithCurvature);
             limitedPitch = Math.min(limitedPitch, maxPitchDegWithCurvature);
         }
-        MapViewUtils.setRotation(this, yawDeg, limitedPitch);
         MapViewUtils.zoomOnTargetPosition(this, 0, 0, zoomLevel);
+        MapViewUtils.setRotation(this, yawDeg, limitedPitch);
         this.update();
     }
 

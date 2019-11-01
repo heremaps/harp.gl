@@ -484,7 +484,6 @@ export namespace MapViewUtils {
             pitchDeg,
             mapView.camera.quaternion
         );
-        mapView.camera.updateMatrixWorld(true);
     }
 
     /**
