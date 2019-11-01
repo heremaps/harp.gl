@@ -112,10 +112,8 @@ export class TextElementGroupState {
     }
 
     /**
-     * Returns element states sorted by their sort priority,
-     * @see [[TextElementState.computeSortPriority]].
-     * NOTE: Text element states are sorted by priority/camera distance, so they order does not
-     * match with the text elements in the group!.
+     * Returns text element states sorted by view distance.
+     * NOTE: The order does not match with the text elements in the group!.
      * @param maxViewDistance Maximum distance from the view center that a visible element may have.
      * @returns Array of sorted element states.
      */
@@ -124,17 +122,22 @@ export class TextElementGroupState {
             return this.m_textElementStates;
         }
 
-        // Compute the sortPriority once for all elements, because the computation is done more
-        // than once per element. Also, make sorting stable by taking the index into the array into
-        // account, this is required to get repeatable results for testing.
-
-        for (const textElementState of this.m_textElementStates) {
-            textElementState.computeSortPriority(maxViewDistance);
-        }
-
-        // Do the actual sort based on sortPriority
+        // Do the actual sort based on view distance.
         this.m_textElementStates.sort((a: TextElementState, b: TextElementState) => {
-            return b.sortPriority! - a.sortPriority!;
+            // Move elements with undefined view distance to the end.
+            if (a.viewDistance === b.viewDistance) {
+                return 0;
+            }
+            if (a.viewDistance === undefined) {
+                return 1;
+            }
+
+            if (b.viewDistance === undefined) {
+                return -1;
+            }
+
+            // Both elements have valid view distances.
+            return a.viewDistance - b.viewDistance;
         });
         this.m_needsSorting = false;
 

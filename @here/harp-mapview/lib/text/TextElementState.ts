@@ -22,12 +22,6 @@ export class TextElementState {
 
     /**
      * @hidden
-     * Used during sorting.
-     */
-    private m_sortPriority?: number;
-
-    /**
-     * @hidden
      * Used during rendering. The array type is used for line markers only, which have a points
      * array and multiple icon positions to render. Since line markers use the same renderState
      * for text part and icon, there is no separate array of [[RenderState]]s for the text parts
@@ -153,28 +147,6 @@ export class TextElementState {
             : this.m_viewDistance !== undefined
             ? -this.m_viewDistance
             : 0;
-    }
-
-    get sortPriority() {
-        return this.m_sortPriority;
-    }
-
-    /**
-     * Calculates the current element priority based on its static priority modified to take into
-     * account its view distance.
-     * @param maxViewDistance Maximum distance from the view center that a visible element may have.
-     */
-    computeSortPriority(maxViewDistance: number) {
-        const distancePriorityFactor = 0.1;
-
-        if (this.viewDistance === undefined) {
-            this.m_sortPriority = this.m_textElement.priority;
-        } else {
-            this.m_sortPriority =
-                this.m_textElement.priority +
-                distancePriorityFactor -
-                distancePriorityFactor * (this.viewDistance / maxViewDistance);
-        }
     }
 
     /**
