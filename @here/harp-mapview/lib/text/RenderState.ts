@@ -39,15 +39,13 @@ export class RenderState {
      * @param opacity Computed opacity depending on value.
      * @param lastFrameNumber Latest frame the elements was rendered, allows to detect some less
      *                        obvious states, like popping up after being hidden.
-     * @param fadingTime Time used to fade in or out.
      */
     constructor(
         public state = FadingState.Undefined,
         public value = 0.0,
         public startTime = 0,
         public opacity = 1.0,
-        public lastFrameNumber = Number.MIN_SAFE_INTEGER,
-        public fadingTime: number = DEFAULT_FADE_TIME
+        public lastFrameNumber = Number.MIN_SAFE_INTEGER
     ) {}
 
     /**
@@ -183,7 +181,7 @@ export class RenderState {
             // The fadeout is not complete: compute the virtual fadingStartTime in the past, to get
             // a correct end time:
             this.value = 1.0 - this.value;
-            this.startTime = time - this.value * this.fadingTime;
+            this.startTime = time - this.value * DEFAULT_FADE_TIME;
         } else {
             this.startTime = time;
             this.value = 0.0;
@@ -213,7 +211,7 @@ export class RenderState {
         if (this.state === FadingState.FadingIn) {
             // The fade-in is not complete: compute the virtual fadingStartTime in the past, to get
             // a correct end time:
-            this.startTime = time - this.value * this.fadingTime;
+            this.startTime = time - this.value * DEFAULT_FADE_TIME;
             this.value = 1.0 - this.value;
         } else {
             this.startTime = time;
@@ -230,8 +228,9 @@ export class RenderState {
      * It does nothing if [[isFading]] !== `true`.
      *
      * @param time Current time.
+     * @param disableFading `true` if fading is disabled, `false` otherwise.
      */
-    updateFading(time: number) {
+    updateFading(time: number, disableFading: boolean) {
         if (this.state !== FadingState.FadingIn && this.state !== FadingState.FadingOut) {
             return;
         }
@@ -244,7 +243,7 @@ export class RenderState {
         const startValue = this.state === FadingState.FadingIn ? 0 : 1;
         const endValue = this.state === FadingState.FadingIn ? 1 : 0;
 
-        if (fadingTime >= this.fadingTime) {
+        if (disableFading || fadingTime >= DEFAULT_FADE_TIME) {
             this.value = 1.0;
             this.opacity = endValue;
             this.state =
@@ -252,7 +251,7 @@ export class RenderState {
         } else {
             // TODO: HARP-7648. Do this once for all labels (calculate the last frame value
             // increment).
-            this.value = fadingTime / this.fadingTime;
+            this.value = fadingTime / DEFAULT_FADE_TIME;
 
             this.opacity = THREE.Math.clamp(
                 MathUtils.smootherStep(startValue, endValue, this.value),

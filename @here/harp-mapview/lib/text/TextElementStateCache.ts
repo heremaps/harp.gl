@@ -57,25 +57,22 @@ export class TextElementStateCache {
      * @param textElementGroup The group of which the state will be obtained.
      * @param textElementFilter Filter used to decide if a text element must be initialized,
      * @see [[TextElementGroupState]] construction.
-     * @param disableFading Sets or updates the fading behaviour or text elements,
-     * @see [[TextElementGroupState]] construction.
      * @returns Tuple with the group state as first element and a boolean indicating whether the
      * state was found in cache (`true`) or newly created (`false`) as second element.
      */
     getOrSet(
         textElementGroup: TextElementGroup,
-        textElementFilter: TextElementFilter,
-        disableFading: boolean
+        textElementFilter: TextElementFilter
     ): [TextElementGroupState, boolean] {
         let groupState = this.get(textElementGroup);
 
         if (groupState !== undefined) {
             assert(groupState.size === textElementGroup.elements.length);
-            groupState.updateElements(textElementFilter, disableFading);
+            groupState.updateElements(textElementFilter);
             return [groupState, true];
         }
 
-        groupState = new TextElementGroupState(textElementGroup, textElementFilter, disableFading);
+        groupState = new TextElementGroupState(textElementGroup, textElementFilter);
         this.set(textElementGroup, groupState);
 
         return [groupState, false];
@@ -112,10 +109,11 @@ export class TextElementStateCache {
     /**
      * Updates state of all cached groups, discarding those that are not needed anymore.
      * @param time The current time.
+     * @param disableFading `True` if fading is currently disabled, `false` otherwise.
      */
-    update(time: number) {
+    update(time: number, disableFading: boolean) {
         for (const [key, groupState] of this.m_referenceMap.entries()) {
-            const visible = groupState.updateFading(time);
+            const visible = groupState.updateFading(time, disableFading);
             const keep: boolean = visible || groupState.visited;
 
             if (!keep) {

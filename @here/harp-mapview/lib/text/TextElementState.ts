@@ -5,7 +5,7 @@
  */
 
 import { assert } from "@here/harp-utils";
-import { DEFAULT_FADE_TIME, FadingState, RenderState } from "./RenderState";
+import { FadingState, RenderState } from "./RenderState";
 import { TextElement } from "./TextElement";
 import { TextElementGroupState } from "./TextElementGroupState";
 import { TextElementType } from "./TextElementType";
@@ -44,11 +44,10 @@ export class TextElementState {
     constructor(
         private readonly m_textElement: TextElement,
         groupState: TextElementGroupState,
-        viewDistance: number | undefined,
-        disableFading: boolean
+        viewDistance: number | undefined
     ) {
         if (viewDistance !== undefined) {
-            this.initialize(groupState, viewDistance, disableFading);
+            this.initialize(groupState, viewDistance);
         }
     }
 
@@ -116,17 +115,12 @@ export class TextElementState {
      * @param groupState  The state of the group the element belongs to.
      * @param viewDistance The new view distance to set. If `undefined`, element is considered to
      * be out of view.
-     * @param disableFading `True` if fading is currently disabled, `false` otherwise.
      */
-    update(
-        groupState: TextElementGroupState,
-        viewDistance: number | undefined,
-        disableFading: boolean
-    ) {
+    update(groupState: TextElementGroupState, viewDistance: number | undefined) {
         if (this.initialized) {
             this.setViewDistance(viewDistance, groupState);
         } else if (viewDistance !== undefined) {
-            this.initialize(groupState, viewDistance, disableFading);
+            this.initialize(groupState, viewDistance);
         }
     }
 
@@ -219,21 +213,21 @@ export class TextElementState {
     /**
      * @returns True if any element visible after fading.
      */
-    updateFading(time: number) {
+    updateFading(time: number, disableFading: boolean) {
         let visible = false;
 
         if (this.m_textRenderState !== undefined) {
-            this.m_textRenderState.updateFading(time);
+            this.m_textRenderState.updateFading(time, disableFading);
             visible = this.m_textRenderState.isVisible();
         }
 
         if (this.iconRenderState !== undefined) {
             const iconRenderState = this.m_iconRenderStates as RenderState;
-            iconRenderState.updateFading(time);
+            iconRenderState.updateFading(time, disableFading);
             visible = visible || iconRenderState.isVisible();
         } else if (this.iconRenderStates !== undefined) {
             for (const renderState of this.m_iconRenderStates as RenderState[]) {
-                renderState.updateFading(time);
+                renderState.updateFading(time, disableFading);
                 visible = visible || renderState.isVisible();
             }
         }
@@ -244,18 +238,12 @@ export class TextElementState {
     /**
      * @param groupState The state of the group to which this element belongs.
      * @param viewDistance Current distance of the element to the view center.
-     * @param disableFading `True` if fading is currently disabled, `false` otherwise.
      */
-    private initialize(
-        groupState: TextElementGroupState,
-        viewDistance: number,
-        disableFading: boolean
-    ) {
+    private initialize(groupState: TextElementGroupState, viewDistance: number) {
         assert(this.m_textRenderState === undefined);
         assert(this.m_iconRenderStates === undefined);
 
         this.setViewDistance(viewDistance, groupState);
-        const fadingTime = disableFading === true ? 0 : DEFAULT_FADE_TIME;
 
         if (this.m_textElement.type === TextElementType.LineMarker) {
             this.m_iconRenderStates = new Array<RenderState>();
@@ -263,18 +251,15 @@ export class TextElementState {
                 const iconRenderStates = this.m_iconRenderStates as RenderState[];
                 const renderState = new RenderState();
                 renderState.state = FadingState.FadingIn;
-                renderState.fadingTime = fadingTime;
                 iconRenderStates.push(renderState);
             }
             return;
         }
 
         this.m_textRenderState = new RenderState();
-        this.m_textRenderState.fadingTime = fadingTime;
 
         if (this.m_textElement.type === TextElementType.PoiLabel) {
             this.m_iconRenderStates = new RenderState();
-            this.m_iconRenderStates.fadingTime = fadingTime;
         }
     }
 }

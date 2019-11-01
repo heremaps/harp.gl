@@ -35,13 +35,8 @@ export class TextElementGroupState {
      * Creates the state for specified group.
      * @param group The group of which the state will be created.
      * @param filter Function used to do early rejection. @see [[TextElementFilter]].
-     * @param disableFading `true` if fading is disabled, `false` otherwise.
      */
-    constructor(
-        readonly group: TextElementGroup,
-        filter: TextElementFilter,
-        disableFading: boolean
-    ) {
+    constructor(readonly group: TextElementGroup, filter: TextElementFilter) {
         const length = group.elements.length;
         this.m_textElementStates = new Array(length);
         this.m_visited = true;
@@ -55,7 +50,7 @@ export class TextElementGroupState {
             const textElement = group.elements[i];
             const textDistance = filter(textElement);
 
-            const state = new TextElementState(textElement, this, textDistance, disableFading);
+            const state = new TextElementState(textElement, this, textDistance);
             this.m_textElementStates[i] = state;
         }
     }
@@ -74,13 +69,15 @@ export class TextElementGroupState {
 
     /**
      * Updates the fading state of all text elements within the group to the specified time.
+     * @param time The time to which the fading state will be updated.
+     * @param disableFading `true` if fading is disabled, `false` otherwise.
      * @returns True if any element visible after fading.
      */
-    updateFading(time: number): boolean {
+    updateFading(time: number, disableFading: boolean): boolean {
         let groupVisible = false;
         for (const elementState of this.m_textElementStates) {
             if (elementState !== undefined) {
-                const elementVisible = elementState.updateFading(time);
+                const elementVisible = elementState.updateFading(time, disableFading);
                 groupVisible = groupVisible || elementVisible;
             }
         }
@@ -90,16 +87,15 @@ export class TextElementGroupState {
     /**
      * Updates the states of elements within the group.
      * @param filter Function used to do early rejection. @see [[TextElementFilter]].
-     * @param disableFading `true` if fading is disabled, `false` otherwise.
      */
-    updateElements(filter: TextElementFilter, disableFading: boolean) {
+    updateElements(filter: TextElementFilter) {
         for (const elementState of this.m_textElementStates) {
             const lastFrameNumber = elementState.initialized
                 ? elementState.textRenderState!.lastFrameNumber
                 : undefined;
             const textDistance = filter(elementState.element, lastFrameNumber);
 
-            elementState.update(this, textDistance, disableFading);
+            elementState.update(this, textDistance);
         }
     }
 

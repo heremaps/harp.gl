@@ -354,7 +354,7 @@ export class TextElementsRenderer {
         for (const textRenderer of this.m_textRenderers) {
             textRenderer.poiRenderer.update();
         }
-        this.m_textElementStateCache.update(time);
+        this.m_textElementStateCache.update(time, this.m_mapView.disableFading);
     }
 
     /**
@@ -1246,8 +1246,7 @@ export class TextElementsRenderer {
 
         const [, found] = this.m_textElementStateCache.getOrSet(
             textElementGroup,
-            textElementSelection,
-            this.m_mapView.disableFading
+            textElementSelection
         );
 
         if (placementStats) {
