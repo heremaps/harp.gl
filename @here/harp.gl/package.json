@@ -31,6 +31,7 @@
         "three": "^0.110.0"
     },
     "devDependencies": {
+        "@here/harp-debug-datasource": "^0.10.0",
         "@here/harp-datasource-protocol": "^0.10.0",
         "@here/harp-features-datasource": "^0.10.0",
         "@here/harp-geojson-datasource": "^0.10.0",

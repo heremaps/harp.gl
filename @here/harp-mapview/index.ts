@@ -6,6 +6,7 @@
 
 export * from "./lib/AnimatedExtrusionHandler";
 export * from "./lib/CameraMovementDetector";
+export * from "./lib/ClipPlanesEvaluator";
 export * from "./lib/ColorCache";
 export * from "./lib/composing";
 export * from "./lib/ConcurrentDecoderFacade";
