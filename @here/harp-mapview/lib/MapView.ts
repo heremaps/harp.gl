@@ -3299,6 +3299,9 @@ export class MapView extends THREE.EventDispatcher {
         if (this.m_textElementsRenderer !== undefined) {
             this.m_textElementsRenderer = undefined;
         }
+        if (this.m_textElementsRendererTimer !== undefined) {
+            clearTimeout(this.m_textElementsRendererTimer);
+        }
     }
 
     /**

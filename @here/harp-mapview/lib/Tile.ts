@@ -964,11 +964,19 @@ export class Tile implements CachedResource {
             this.m_animatedExtrusionTileHandler.dispose();
         }
 
+        this.clearTextElements();
+        this.invalidateResourceInfo();
+    }
+
+    /**
+     * Removes all [[TextElement]] from the tile.
+     */
+    clearTextElements() {
         this.placedTextElements.clear();
         this.m_pathBlockingElements.splice(0);
         this.textElementGroups.clear();
         this.userTextElements.length = 0;
-        this.invalidateResourceInfo();
+        this.textElementsChanged = true;
     }
 
     /**

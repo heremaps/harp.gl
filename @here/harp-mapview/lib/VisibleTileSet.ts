@@ -1069,6 +1069,11 @@ export class VisibleTileSet {
                 if (tile.tileGeometryLoader !== undefined) {
                     tile.tileGeometryLoader.reset();
                 }
+
+                // Prevent label rendering issues when the style set is changing. Prevent Text
+                // element rendering that depends on cleaned font catalog data.
+                tile.clearTextElements();
+
                 tile.load();
             }
         }
