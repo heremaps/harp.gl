@@ -71,6 +71,11 @@ export interface InterpolatedProperty {
      * [[StringEncodedNumeral]]s.
      */
     _stringEncodedNumeralDynamicMask?: Float32Array;
+
+    _lastValue?: any;
+
+    _lastZoomLevel?: number;
+    _lastPixel2Meters?: number;
 }
 
 /**

@@ -90,6 +90,37 @@ export function getPropertyValue<T>(
     level: number,
     pixelToMeters: number = 1.0
 ): any {
+    if (isInterpolatedProperty(property)) {
+        if (
+            property._lastValue !== undefined &&
+            level === property._lastZoomLevel &&
+            pixelToMeters === property._lastPixel2Meters
+        ) {
+            return property._lastValue;
+        }
+        const actualValue = getPropertyValueInt(property, level, pixelToMeters);
+        property._lastValue = actualValue;
+        property._lastZoomLevel = level;
+        property._lastPixel2Meters = pixelToMeters;
+        return actualValue;
+    }
+    return getPropertyValueInt(property, level, pixelToMeters);
+}
+
+/**
+ * Get the value of the specified property at the given zoom level.
+ *
+ * @param property Property of a technique.
+ * @param level Display level the property should be rendered at.
+ * @param pixelToMeters Optional pixels to meters conversion factor (needed for proper
+ * interpolation of `length` values).
+ *
+ */
+function getPropertyValueInt<T>(
+    property: Value | Expr | InterpolatedProperty | undefined,
+    level: number,
+    pixelToMeters: number = 1.0
+): any {
     if (isInterpolatedPropertyDefinition<T>(property)) {
         throw new Error("Cannot interpolate a InterpolatedPropertyDefinition.");
     } else if (!isInterpolatedProperty(property)) {
