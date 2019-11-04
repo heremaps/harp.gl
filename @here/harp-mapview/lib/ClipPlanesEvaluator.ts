@@ -251,10 +251,10 @@ export class TopViewClipPlanesEvaluator extends ElevationBasedClipPlanesEvaluato
      * @param minElevation defines far plane offset from the ground surface, negative values moves
      * far plane below the ground level (use it to render depressions). Default zero - sea level.
      * @param nearMin minimum allowable near plane distance from camera, must be bigger then zero.
-     * @param nearFarMarginRatio minimum distance between near and far plane, as a ratio of near
-     * plane distance, it have to be significantly bigger then zero (especially if [[maxElevation]],
-     * [[minElevation]] are equal), otherwise you may notice flickering during rendering, or even
-     * render empty scene if frustum planes are almost equal.
+     * @param nearFarMarginRatio minimum distance between near and far plane, as a ratio of average
+     * near/far plane distance, it have to be significantly bigger then zero (especially if
+     * [[maxElevation]] and [[minElevation]] are equal), otherwise you may notice flickering when
+     * rendering, or even render empty scene if frustum planes are almost equal.
      * @param farMaxRatio maximum ratio between ground and far plane distance, allows to limit
      * viewing distance at overall. Have to be bigger then 1.0.
      * @note Keep in mind that this evaluator does not evaluate terrain (or building) elevation
@@ -274,7 +274,7 @@ export class TopViewClipPlanesEvaluator extends ElevationBasedClipPlanesEvaluato
         maxElevation: number = EarthConstants.MAX_BUILDING_HEIGHT,
         minElevation: number = 0,
         readonly nearMin: number = 1.0,
-        readonly nearFarMarginRatio: number = 0.01,
+        readonly nearFarMarginRatio: number = 0.05,
         readonly farMaxRatio = 1.8
     ) {
         super(maxElevation, minElevation);
@@ -333,9 +333,11 @@ export class TopViewClipPlanesEvaluator extends ElevationBasedClipPlanesEvaluato
         farPlane = groundDistance - this.minElevation;
 
         // Apply the constraints.
-        const nearFarMargin = this.nearFarMarginRatio * nearPlane;
-        nearPlane = Math.max(nearPlane - nearFarMargin / 2, this.nearMin);
+        nearPlane = Math.max(nearPlane, this.nearMin);
         farPlane = Math.min(farPlane, farMax);
+        // Apply margins
+        const nearFarMargin = (this.nearFarMarginRatio * (nearPlane + farPlane)) / 2;
+        nearPlane = Math.max(nearPlane - nearFarMargin / 2, this.nearMin);
         farPlane = Math.max(farPlane + nearFarMargin / 2, nearPlane + nearFarMargin);
 
         const viewRanges: ViewRanges = {
@@ -475,12 +477,15 @@ export class TopViewClipPlanesEvaluator extends ElevationBasedClipPlanesEvaluato
             // Both near and far planes distances are directly applied to frustum, because tangents'
             // lines are parallel to camera look at vector.
         }
-        // Apply the constraints.
-        const nearFarMargin = this.nearFarMarginRatio * nearPlane;
-        nearPlane = Math.max(nearPlane - nearFarMargin / 2, this.nearMin);
         // In extreme cases the largest depression assumed may be further then tangent
         // based far plane distance, take it into account
-        farPlane = Math.max(farPlane, cameraAltitude - this.minElevation);
+        const farMin = cameraAltitude - this.minElevation;
+        // Apply the constraints.
+        nearPlane = Math.max(nearPlane, this.nearMin);
+        farPlane = Math.max(farPlane, farMin);
+        // Apply margins
+        const nearFarMargin = (this.nearFarMarginRatio * (nearPlane + farPlane)) / 2;
+        nearPlane = Math.max(nearPlane - nearFarMargin / 2, this.nearMin);
         farPlane = Math.max(farPlane + nearFarMargin / 2, nearPlane + nearFarMargin);
 
         const viewRanges: ViewRanges = {
@@ -698,9 +703,11 @@ export class TiltViewClipPlanesEvaluator extends TopViewClipPlanesEvaluator {
         // Clamp values to constraints.
         const lookAtDist = this.getCameraLookAtDistance(mapView.camera, mapView.projection);
         const farMax = lookAtDist * this.farMaxRatio;
-        const nearFarMargin = this.nearFarMarginRatio * viewRanges.near;
-        viewRanges.near = Math.max(viewRanges.near - nearFarMargin / 2, this.nearMin);
+        viewRanges.near = Math.max(viewRanges.near, this.nearMin);
         viewRanges.far = Math.min(viewRanges.far, farMax);
+        // Apply margins
+        const nearFarMargin = (this.nearFarMarginRatio * (viewRanges.near + viewRanges.far)) / 2;
+        viewRanges.near = Math.max(viewRanges.near - nearFarMargin / 2, this.nearMin);
         viewRanges.far = Math.max(
             viewRanges.far + nearFarMargin / 2,
             viewRanges.near + nearFarMargin
@@ -813,13 +820,15 @@ export class TiltViewClipPlanesEvaluator extends TopViewClipPlanesEvaluator {
         // because far plane is indeed defined in that space anyway:
         const farPlane = this.m_tmpPlane.setFromCoplanarPoints(tdrx, tdry, tdrx2);
         viewRanges.far = farPlane.constant;
-
-        // Finally apply the constraints.
-        const nearFarMargin = this.nearFarMarginRatio * viewRanges.near;
-        viewRanges.near = Math.max(viewRanges.near - nearFarMargin / 2, this.nearMin);
         // Take into account largest depression assumed, that may be further then
         // tangent based far plane distance.
-        viewRanges.far = Math.max(viewRanges.far, cameraAltitude - this.minElevation);
+        const farMin = cameraAltitude - this.minElevation;
+        // Finally apply the constraints.
+        viewRanges.near = Math.max(viewRanges.near, this.nearMin);
+        viewRanges.far = Math.max(viewRanges.far, farMin);
+        // Apply margins
+        const nearFarMargin = (this.nearFarMarginRatio * (viewRanges.near + viewRanges.far)) / 2;
+        viewRanges.near = Math.max(viewRanges.near - nearFarMargin / 2, this.nearMin);
         viewRanges.far = Math.max(
             viewRanges.far + nearFarMargin / 2,
             viewRanges.near + nearFarMargin
