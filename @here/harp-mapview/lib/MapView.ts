@@ -1759,6 +1759,7 @@ export class MapView extends THREE.EventDispatcher {
         }
 
         dataSource.attach(this);
+        dataSource.setEnableElevationOverlay(this.m_elevationProvider !== undefined);
         this.m_tileDataSources.push(dataSource);
 
         if (this.m_backgroundDataSource) {
