@@ -76,6 +76,7 @@
             mapControls.maxTiltAngle = 50;
             const NY = new harp.GeoCoordinates(40.707, -74.01);
             map.lookAt(NY, 3500, 50);
+            map.zoomLevel = 16.1;
 
             const ui = new harp.MapControlsUI(mapControls, { zoomLevel: "input" });
             canvas.parentElement.appendChild(ui.domElement);

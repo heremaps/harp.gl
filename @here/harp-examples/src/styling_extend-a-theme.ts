@@ -49,6 +49,30 @@ import { accessToken, copyrightInfo } from "../config";
  */
 
 export namespace HelloCustomThemeExample {
+    document.body.innerHTML +=
+        `
+    <style>
+        #mapCanvas {
+          top: 0;
+        }
+        #info{
+            color: #fff;
+            width: 80%;
+            left: 50%;
+            position: relative;
+            margin: 10px 0 0 -40%;
+            font-size: 15px;
+        }
+        @media screen and (max-width: 700px) {
+            #info{
+                font-size:11px;
+            }
+        }
+    </style>
+    <p id=info>This example shows the theme extension mechanism: the styles for the parks ` +
+        `and the buildings are overwritten from an original theme to make them respectively green` +
+        ` and brown.< /p>
+`;
     // Create a new MapView for the HTMLCanvasElement of the given id.
     function initializeMapView(id: string): MapView {
         const canvas = document.getElementById(id) as HTMLCanvasElement;
@@ -84,6 +108,7 @@ export namespace HelloCustomThemeExample {
         // Look at New York.
         const rome = new GeoCoordinates(41.9005332, 12.494249);
         map.lookAt(rome, 3000, 50, 200);
+        map.zoomLevel = 16.1;
 
         // Add an UI.
         const ui = new MapControlsUI(mapControls);

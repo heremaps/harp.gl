@@ -41,6 +41,7 @@ export namespace EffectsAllExample {
         mapControls.maxTiltAngle = 60;
         const singapour = new GeoCoordinates(1.2893999, 103.8537169);
         mapView.lookAt(singapour, 3500, 60, 240);
+        mapView.zoomLevel = 16.1;
 
         const ui = new MapControlsUI(mapControls);
         canvas.parentElement!.appendChild(ui.domElement);
