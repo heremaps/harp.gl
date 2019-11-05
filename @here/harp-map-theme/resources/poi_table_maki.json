@@ -250,6 +250,19 @@
         },
         {
             "name": "Named Intersection-Chowk",
+            "altNames": ["chowk"],
+            "visible": false,
+            "stackMode": "yes"
+        },
+        {
+            "name": "Historical",
+            "altNames": ["historical"],
+            "visible": false,
+            "stackMode": "yes"
+        },
+        {
+            "name": "Hamlet",
+            "altNames": ["hamlet"],
             "visible": false,
             "stackMode": "yes"
         },
@@ -1300,6 +1313,7 @@
         },
         {
             "name": "Psychiatric Institute",
+            "altNames": ["asylum"],
             "visible": false,
             "stackMode": "yes"
         },
