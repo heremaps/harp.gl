@@ -3284,7 +3284,12 @@ export class MapView extends THREE.EventDispatcher {
 
     private resetTextRenderer(): void {
         if (this.m_textElementsRenderer !== undefined) {
+            const overlayText = this.m_textElementsRenderer.overlayText;
             this.m_textElementsRenderer = undefined;
+            this.createTextRendererIfNeeded();
+            if (overlayText !== undefined) {
+                this.m_textElementsRenderer!.addOverlayText(overlayText);
+            }
         }
         if (this.m_textElementsRendererTimer !== undefined) {
             clearTimeout(this.m_textElementsRendererTimer);

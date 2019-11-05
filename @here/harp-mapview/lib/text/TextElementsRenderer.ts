@@ -462,6 +462,10 @@ export class TextElementsRenderer {
         return this.m_overlayTextElements !== undefined && this.m_overlayTextElements.length > 0;
     }
 
+    get overlayText(): TextElement[] | undefined {
+        return this.m_overlayTextElements;
+    }
+
     /**
      * Place the [[TextElement]]s that are not part of the scene, but the overlay. Useful if a UI
      * with text or just plain information in the canvas itself should be presented to the user,
