@@ -31,11 +31,11 @@ export namespace CameraOrbitExample {
     // end:harp_gl_camera_orbit_example_0.ts
 
     // snippet:harp_gl_camera_orbit_example_1.ts
-    const options = { tilt: 45, distance: 2500, globe: true };
-    const NY = new GeoCoordinates(40.707, -74.012);
+    const options = { tilt: 25, distance: 2500, globe: true };
+    const dubai = new GeoCoordinates(25.19705, 55.27419);
     let azimuth = 0;
     map.addEventListener(MapViewEventNames.AfterRender, () => {
-        map.lookAt(NY, options.distance, options.tilt, (azimuth = (azimuth + 0.1) % 360));
+        map.lookAt(dubai, options.distance, options.tilt, (azimuth = (azimuth + 0.1) % 360));
         map.update();
         updateHTML();
     });
@@ -83,7 +83,7 @@ export namespace CameraOrbitExample {
     function updateHTML() {
         const infoElement = document.getElementById("info") as HTMLParagraphElement;
         infoElement.innerHTML =
-            `This view is set through the lookAt method: map.lookAt(NY, ` +
+            `This view is set through the lookAt method: map.lookAt(dubai, ` +
             `${options.distance.toFixed(0)}, ${options.tilt.toFixed(1)}, ${azimuth.toFixed(1)});`;
     }
 

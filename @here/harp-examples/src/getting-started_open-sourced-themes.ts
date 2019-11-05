@@ -28,8 +28,8 @@ export namespace ThemesExample {
         const mapControls = new MapControls(map);
         mapControls.maxTiltAngle = 50;
 
-        const NY = new GeoCoordinates(40.707, -74.01);
-        map.lookAt(NY, 3500, 50);
+        const moscow = new GeoCoordinates(55.7525631, 37.6234006);
+        map.lookAt(moscow, 3500, 50, 300);
 
         const ui = new MapControlsUI(mapControls);
         canvas.parentElement!.appendChild(ui.domElement);
