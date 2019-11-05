@@ -26,7 +26,7 @@ import { MapViewUtils } from "../lib/Utils";
 import { waitForEvent } from "@here/harp-test-utils";
 import { FontCatalog } from "@here/harp-text-canvas";
 import { BackgroundDataSource } from "../lib/BackgroundDataSource";
-import { FakeOmvDataSource } from "./FakeOmvDataSource";
+import { FakeVectorTileDataSource } from "./FakeVectorTileDataSource";
 
 declare const global: any;
 
@@ -173,7 +173,7 @@ describe("MapView", function() {
     });
 
     it("supports #dispose", async function() {
-        const dataSource = new FakeOmvDataSource();
+        const dataSource = new FakeVectorTileDataSource();
         const dataSourceDisposeStub = sinon.stub(dataSource, "dispose");
         mapView = new MapView({ canvas });
         mapView.addDataSource(dataSource);
@@ -322,7 +322,7 @@ describe("MapView", function() {
         mapView = new MapView({ canvas });
         mapView.theme = {};
 
-        const dataSource = new FakeOmvDataSource();
+        const dataSource = new FakeVectorTileDataSource();
 
         await mapView.addDataSource(dataSource);
 

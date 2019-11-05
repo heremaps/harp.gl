@@ -18,6 +18,7 @@ import {
 } from "../index";
 
 import { MapEnv, Value } from "@here/harp-datasource-protocol/index-decoder";
+import { VectorTileGeometryType } from "@here/harp-vectortile-datasource";
 import { assert } from "chai";
 
 /**
@@ -125,7 +126,7 @@ describe("OmvFeatureFilterDescriptionBuilder", function() {
         filterBuilder.processLayer("road");
         filterBuilder.processLine({
             layer: "road",
-            geomType: OmvGeometryType.LINESTRING,
+            geomType: VectorTileGeometryType.LINESTRING,
             featureClass: "street"
         });
 

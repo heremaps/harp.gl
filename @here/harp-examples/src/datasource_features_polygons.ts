@@ -13,7 +13,7 @@ import {
 import { GeoCoordinates, sphereProjection } from "@here/harp-geoutils";
 import { MapControls, MapControlsUI } from "@here/harp-map-controls";
 import { MapView } from "@here/harp-mapview";
-import { APIFormat, OmvDataSource } from "@here/harp-omv-datasource";
+import { APIFormat, VectorTileDataSource } from "@here/harp-vectortile-datasource";
 import * as THREE from "three";
 import { accessToken, copyrightInfo } from "../config";
 import { COUNTRIES } from "../resources/countries";
@@ -330,7 +330,7 @@ export namespace PolygonsFeaturesExample {
 
         window.addEventListener("resize", () => mapView.resize(innerWidth, innerHeight));
 
-        const baseMap = new OmvDataSource({
+        const baseMap = new VectorTileDataSource({
             name: "basemap",
             baseUrl: "https://xyz.api.here.com/tiles/herebase.02",
             apiFormat: APIFormat.XYZOMV,

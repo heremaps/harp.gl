@@ -9,14 +9,14 @@
 
 import { MapEnv } from "@here/harp-datasource-protocol/index-decoder";
 import { assert } from "chai";
-import { OmvFeatureFilterDescriptionBuilder } from "../lib/OmvDataFilter";
-import { OmvFeatureFilterDescription } from "../lib/OmvDecoderDefs";
 import { OmvTomTomFeatureModifier } from "../lib/OmvTomTomFeatureModifier";
+import { VectorTileFeatureFilterDescriptionBuilder } from "../lib/VectorTileDataFilter";
+import { VectorTileFeatureFilterDescription } from "../lib/VectorTileDecoderDefs";
 
 export class OmvTomTomModifierMock extends OmvTomTomFeatureModifier {
-    private m_description: OmvFeatureFilterDescription;
+    private m_description: VectorTileFeatureFilterDescription;
 
-    constructor(description: OmvFeatureFilterDescription) {
+    constructor(description: VectorTileFeatureFilterDescription) {
         super(description);
         this.m_description = description;
     }
@@ -37,7 +37,7 @@ describe("OmvTomTomFeatureModifier", function() {
     let tomTomFeatureModifier: OmvTomTomModifierMock;
 
     before(function() {
-        const filterBuilder = new OmvFeatureFilterDescriptionBuilder();
+        const filterBuilder = new VectorTileFeatureFilterDescriptionBuilder();
         const filterDescription = filterBuilder.createDescription();
         tomTomFeatureModifier = new OmvTomTomModifierMock(filterDescription);
     });

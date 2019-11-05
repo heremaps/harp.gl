@@ -7,7 +7,7 @@
 import { Theme } from "@here/harp-datasource-protocol";
 import { MapControls } from "@here/harp-map-controls";
 import { CopyrightElementHandler, MapView } from "@here/harp-mapview";
-import { APIFormat, OmvDataSource } from "@here/harp-omv-datasource";
+import { APIFormat, VectorTileDataSource } from "@here/harp-vectortile-datasource";
 
 const defaultTheme = "resources/berlin_tilezen_base.json";
 
@@ -46,14 +46,14 @@ export class View {
                 }
             ]);
 
-        const omvDataSource = new OmvDataSource({
+        const baseMap = new VectorTileDataSource({
             baseUrl: "https://xyz.api.here.com/tiles/herebase.02",
             apiFormat: APIFormat.XYZOMV,
             styleSetName: "tilezen",
             maxZoomLevel: 17,
             authenticationCode: "<%= access_token %>"
         });
-        mapView.addDataSource(omvDataSource);
+        mapView.addDataSource(baseMap);
 
         MapControls.create(mapView);
 

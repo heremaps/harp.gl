@@ -34,9 +34,9 @@ export interface ILineGeometry {
 }
 
 /**
- * The [[IGeometryProcessor]] is used to process geometry features encoded in OMV tiles.
+ * The [[IGeometryProcessor]] is used to process geometry features encoded in vector tiles.
  *
- * [[OmvDecoder]] will pass to the processing methods of the concrete implementations
+ * [[VectorDecoder]] will pass to the processing methods of the concrete implementations
  * of this interface, sequences of geometries projected in the local space of the OMV
  * [[TilingScheme]] that is always defined to be an instance of [[webMercatorTilingScheme]].
  * If desired, the world positions can be converted to [[GeoCoordinates]] using the
@@ -54,7 +54,7 @@ export interface ILineGeometry {
  * ```
  *
  * The methods of concrete implementations of [[IGeometryProcessor]] are called to process point,
- * line and polygon geometries, see [[OmvDecoder]].
+ * line and polygon geometries, see [[VectorDecoder]].
  */
 export interface IGeometryProcessor {
     /**

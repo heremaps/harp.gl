@@ -346,7 +346,8 @@ export class TextElement {
      *              overrides.
      * @param xOffset Optional X offset of this `TextElement` in screen coordinates.
      * @param yOffset Optional Y offset of this `TextElement` in screen coordinates.
-     * @param featureId Optional number to identify feature (originated from `OmvDataSource`).
+     * @param featureId Optional number to identify feature (originated from
+     *              `VectorTileDataSource`).
      * @param fadeNear Distance to the camera (0.0 = camera position, 1.0 = farPlane) at which the
      *              label starts fading out (opacity decreases).
      * @param fadeFar Distance to the camera (0.0 = camera position, 1.0 = farPlane) at which the

@@ -15,7 +15,7 @@ if (!(window as any).THREE) {
 }
 
 export * from "@here/harp-mapview";
-export * from "@here/harp-omv-datasource";
+export * from "@here/harp-vectortile-datasource";
 export * from "@here/harp-debug-datasource";
 export * from "@here/harp-geojson-datasource";
 export * from "@here/harp-features-datasource";

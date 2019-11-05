@@ -46,7 +46,7 @@ describeOnlyNode("Theme typings test", function() {
 
         const ProperTheme = {
             styles: {
-                omv: [
+                "vector-tile": [
                     {
                         when: "kind_detail == 'pier' || landuse_kind == 'pier'",
                         technique: "solid-line",
@@ -72,7 +72,7 @@ describeOnlyNode("Theme typings test", function() {
 
         const ImproperTheme = {
             styles: {
-                omv: [
+                "vector-tile": [
                     {
                         NOT_when: "bar",
                         NOT_technique: "foo",

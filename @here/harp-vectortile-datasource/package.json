@@ -1,0 +1,69 @@
+{
+    "name": "@here/harp-vectortile-datasource",
+    "version": "0.11.0",
+    "description": "HERE Vector Tile Data source",
+    "main": "index.js",
+    "typings": "index",
+    "worker": {
+        "name": "@here/harp-vectortile-datasource-worker",
+        "main": "index-worker.js"
+    },
+    "directories": {
+        "test": "test"
+    },
+    "scripts": {
+        "build": "tsc",
+        "test": "cross-env mocha --require source-map-support/register $EXTRA_MOCHA_ARGS ./test/VTTest.js",
+        "gen-decoder": "pbjs -t static-module -w commonjs --no-encode --no-verify --no-create lib/proto/vector_tile.proto -o lib/proto/vector_tile.js && pbts lib/proto/vector_tile.js -o lib/proto/vector_tile.d.ts",
+        "prepare": "cross-env tsc --sourceMap false $EXTRA_TSC_ARGS"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/heremaps/harp.gl.git",
+        "directory": "@here/harp-vectortile-datasource"
+    },
+    "author": {
+        "name": "HERE Europe B.V.",
+        "url": "https://here.com"
+    },
+    "license": "Apache-2.0",
+    "dependencies": {
+        "@here/harp-datasource-protocol": "^0.11.0",
+        "@here/harp-geometry": "^0.11.0",
+        "@here/harp-geoutils": "^0.11.0",
+        "@here/harp-lines": "^0.11.0",
+        "@here/harp-lrucache": "^0.11.0",
+        "@here/harp-mapview": "^0.11.0",
+        "@here/harp-mapview-decoder": "^0.11.0",
+        "@here/harp-text-canvas": "^0.11.0",
+        "@here/harp-transfer-manager": "^0.11.0",
+        "@here/harp-utils": "^0.11.0",
+        "earcut": "^2.1.3",
+        "long": "^4.0.0",
+        "protobufjs": "^6.8.4"
+    },
+    "devDependencies": {
+        "@here/harp-fetch": "^0.11.0",
+        "@here/harp-geojson-datasource": "^0.11.0",
+        "@here/harp-test-utils": "^0.11.0",
+        "@types/chai": "^4.1.2",
+        "@types/earcut": "^2.1.0",
+        "@types/long": "^4.0.0",
+        "@types/mocha": "^5.2.7",
+        "@types/node": "^12.0.8",
+        "@types/sinon": "^7.0.13",
+        "chai": "^4.0.2",
+        "copyfiles": "^2.0.0",
+        "cross-env": "^5.2.0",
+        "mocha": "^6.1.4",
+        "sinon": "^7.1.1",
+        "source-map-support": "^0.5.2",
+        "typescript": "^3.6.4"
+    },
+    "peerDependencies": {
+        "three": "^0.110.0"
+    },
+    "publishConfig": {
+        "access": "public"
+    }
+}

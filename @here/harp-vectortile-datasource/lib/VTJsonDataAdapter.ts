@@ -14,9 +14,9 @@ import { GeoBox, GeoCoordinates, TileKey } from "@here/harp-geoutils";
 import { ILogger } from "@here/harp-utils";
 import { Vector2 } from "three";
 import { IGeometryProcessor, ILineGeometry, IPolygonGeometry } from "./IGeometryProcessor";
-import { OmvFeatureFilter } from "./OmvDataFilter";
-import { OmvDataAdapter } from "./OmvDecoder";
-import { isArrayBufferLike } from "./OmvUtils";
+import { VectorTileFeatureFilter } from "./VectorTileDataFilter";
+import { VectorTileDataAdapter } from "./VectorTileDecoder";
+import { isArrayBufferLike } from "./VectorTileUtils";
 
 const VT_JSON_EXTENTS = 4096;
 
@@ -75,20 +75,20 @@ export const VTJsonDataAdapterId: string = "vt-json";
  * The class [[VTJsonDataAdapter]] converts VT-json data to geometries for the given
  * [[IGeometryProcessor]].
  */
-export class VTJsonDataAdapter implements OmvDataAdapter {
+export class VTJsonDataAdapter implements VectorTileDataAdapter {
     id = VTJsonDataAdapterId;
 
     constructor(
         readonly m_processor: IGeometryProcessor,
-        private m_dataFilter?: OmvFeatureFilter,
+        private m_dataFilter?: VectorTileFeatureFilter,
         readonly m_logger?: ILogger
     ) {}
 
-    get dataFilter(): OmvFeatureFilter | undefined {
+    get dataFilter(): VectorTileFeatureFilter | undefined {
         return this.m_dataFilter;
     }
 
-    set dataFilter(dataFilter: OmvFeatureFilter | undefined) {
+    set dataFilter(dataFilter: VectorTileFeatureFilter | undefined) {
         this.m_dataFilter = dataFilter;
     }
 

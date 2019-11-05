@@ -7,7 +7,7 @@
 import { GeoCoordinates } from "@here/harp-geoutils";
 import { LongPressHandler, MapControls, MapControlsUI } from "@here/harp-map-controls";
 import { CopyrightElementHandler, MapView, MapViewEventNames } from "@here/harp-mapview";
-import { APIFormat, OmvDataSource } from "@here/harp-omv-datasource";
+import { APIFormat, VectorTileDataSource } from "@here/harp-vectortile-datasource";
 import * as THREE from "three";
 import { accessToken, copyrightInfo } from "../config";
 
@@ -139,7 +139,7 @@ export namespace ThreejsRaycast {
 
     const mapView = initializeMapView("mapCanvas");
 
-    const omvDataSource = new OmvDataSource({
+    const baseMapData = new VectorTileDataSource({
         baseUrl: "https://xyz.api.here.com/tiles/herebase.02",
         apiFormat: APIFormat.XYZOMV,
         styleSetName: "tilezen",
@@ -148,5 +148,5 @@ export namespace ThreejsRaycast {
         copyrightInfo
     });
 
-    mapView.addDataSource(omvDataSource);
+    mapView.addDataSource(baseMapData);
 }

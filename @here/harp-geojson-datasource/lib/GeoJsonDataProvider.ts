@@ -52,7 +52,7 @@ export class GeoJsonDataProvider implements DataProvider {
     ) {
         this.m_tiler =
             (options && options.tiler) ||
-            ConcurrentTilerFacade.getTiler("omv-tiler", options && options.workerTilerUrl);
+            ConcurrentTilerFacade.getTiler("vector-tiler", options && options.workerTilerUrl);
     }
 
     async connect(): Promise<void> {
@@ -65,7 +65,7 @@ export class GeoJsonDataProvider implements DataProvider {
             ) {
                 logger.info(
                     "Unable to start GeoJson tiler service in worker. Use " +
-                        " 'OmvTilerService.start();' in decoder script."
+                        " 'VectorTilerService.start();' in decoder script."
                 );
                 missingTilerServiceInfoEmitted = true;
             }

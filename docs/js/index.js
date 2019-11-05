@@ -65,13 +65,13 @@ const map = new harp.MapView({
 map.resize(window.innerWidth, window.innerHeight);
 window.onresize = () => map.resize(window.innerWidth, window.innerHeight);
 
-const omvDataSource = new harp.OmvDataSource({
+const mapData = new harp.VectorTileDataSource({
     baseUrl: "https://xyz.api.here.com/tiles/herebase.02",
     apiFormat: harp.APIFormat.XYZOMV,
     styleSetName: "tilezen",
     authenticationCode: token
 });
-map.addDataSource(omvDataSource);
+map.addDataSource(mapData);
 
 const options = { tilt: 45, distance: 1500 };
 const NY = new harp.GeoCoordinates(42.361145, -71.057083);
@@ -83,4 +83,4 @@ window.addEventListener("resize", () => map.resize(window.innerWidth, window.inn
 map.beginAnimation();
 
 //Update year
-document.getElementById('year').innerText = new Date().getFullYear()
+document.getElementById("year").innerText = new Date().getFullYear();

@@ -7,7 +7,7 @@
 import { GeoCoordinates } from "@here/harp-geoutils";
 import { MapControls, MapControlsUI } from "@here/harp-map-controls";
 import { CopyrightElementHandler, MapView } from "@here/harp-mapview";
-import { APIFormat, OmvDataSource } from "@here/harp-omv-datasource";
+import { APIFormat, VectorTileDataSource } from "@here/harp-vectortile-datasource";
 import { GUI } from "dat.gui";
 import { accessToken, copyrightInfo } from "../config";
 
@@ -46,7 +46,7 @@ export namespace EffectsExample {
 
     const map = initializeMapView("mapCanvas");
 
-    const omvDataSource = new OmvDataSource({
+    const mapData = new VectorTileDataSource({
         baseUrl: "https://xyz.api.here.com/tiles/herebase.02",
         apiFormat: APIFormat.XYZOMV,
         styleSetName: "tilezen",
@@ -54,7 +54,7 @@ export namespace EffectsExample {
         authenticationCode: accessToken,
         copyrightInfo
     });
-    map.addDataSource(omvDataSource);
+    map.addDataSource(mapData);
 
     const gui = new GUI({ width: 300 });
     const options = {

@@ -21,6 +21,7 @@ packages="\
     @here/harp-mapview-decoder \
     @here/harp-materials \
     @here/harp-omv-datasource \
+    @here/harp-vectortile-datasource \
     @here/harp-text-canvas \
     @here/harp-transfer-manager \
     @here/harp-utils"

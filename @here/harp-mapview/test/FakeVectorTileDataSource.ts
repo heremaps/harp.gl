@@ -14,9 +14,9 @@ import {
 import { DataSource } from "../lib/DataSource";
 import { Tile } from "../lib/Tile";
 
-export class FakeOmvDataSource extends DataSource {
+export class FakeVectorTileDataSource extends DataSource {
     constructor() {
-        super("omv");
+        super("vector-tile");
         this.cacheable = true;
     }
 

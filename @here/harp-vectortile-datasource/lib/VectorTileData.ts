@@ -10,11 +10,11 @@ import { ILogger } from "@here/harp-utils";
 import * as Long from "long";
 import { Vector2 } from "three";
 import { IGeometryProcessor, ILineGeometry, IPolygonGeometry } from "./IGeometryProcessor";
-import { OmvFeatureFilter } from "./OmvDataFilter";
-import { OmvDataAdapter } from "./OmvDecoder";
-import { OmvGeometryType } from "./OmvDecoderDefs";
-import { isArrayBufferLike } from "./OmvUtils";
 import { com } from "./proto/vector_tile";
+import { VectorTileFeatureFilter } from "./VectorTileDataFilter";
+import { VectorTileDataAdapter } from "./VectorTileDecoder";
+import { VectorTileGeometryType } from "./VectorTileDecoderDefs";
+import { isArrayBufferLike } from "./VectorTileUtils";
 
 /**
  * @hidden
@@ -68,7 +68,7 @@ export function isClosePathCommand(command: GeometryCommand): command is Positio
 /**
  * @hidden
  */
-export interface OmvVisitor {
+export interface VectorTileVisitor {
     visitLayer?(layer: com.mapbox.pb.Tile.ILayer): boolean;
     endVisitLayer?(layer: com.mapbox.pb.Tile.ILayer): void;
     visitPointFeature?(feature: com.mapbox.pb.Tile.IFeature): void;
@@ -79,14 +79,14 @@ export interface OmvVisitor {
 /**
  * @hidden
  */
-export function visitOmv(vectorTile: com.mapbox.pb.Tile, visitor: OmvVisitor) {
+export function visitVectorTile(vectorTile: com.mapbox.pb.Tile, visitor: VectorTileVisitor) {
     if (!vectorTile.layers) {
         return;
     }
 
     for (const layer of vectorTile.layers) {
         if (!visitor.visitLayer || visitor.visitLayer(layer)) {
-            visitOmvLayer(layer, visitor);
+            visitVectorTileLayer(layer, visitor);
         }
         if (visitor.endVisitLayer) {
             visitor.endVisitLayer(layer);
@@ -97,7 +97,7 @@ export function visitOmv(vectorTile: com.mapbox.pb.Tile, visitor: OmvVisitor) {
 /**
  * @hidden
  */
-export function visitOmvLayer(layer: com.mapbox.pb.Tile.ILayer, visitor: OmvVisitor) {
+export function visitVectorTileLayer(layer: com.mapbox.pb.Tile.ILayer, visitor: VectorTileVisitor) {
     if (!visitor.visitLayer || visitor.visitLayer(layer)) {
         if (layer.features) {
             for (const feature of layer.features) {
@@ -246,7 +246,7 @@ function simplifiedValue(value: com.mapbox.pb.Tile.IValue): Value {
             const v = value[category as keyof com.mapbox.pb.Tile.IValue];
 
             if (v === undefined) {
-                throw new Error("unpexted undefined value");
+                throw new Error("unexpected undefined value");
             }
 
             return Long.isLong(v) ? (v as any).toNumber() : v;
@@ -335,69 +335,73 @@ function createFeatureEnv(
     return new MapEnv(attributes, parent);
 }
 
-function asGeometryType(feature: com.mapbox.pb.Tile.IFeature | undefined): OmvGeometryType {
+function asGeometryType(feature: com.mapbox.pb.Tile.IFeature | undefined): VectorTileGeometryType {
     if (feature === undefined) {
-        return OmvGeometryType.UNKNOWN;
+        return VectorTileGeometryType.UNKNOWN;
     }
 
     switch (feature.type) {
         case com.mapbox.pb.Tile.GeomType.UNKNOWN:
-            return OmvGeometryType.UNKNOWN;
+            return VectorTileGeometryType.UNKNOWN;
         case com.mapbox.pb.Tile.GeomType.POINT:
-            return OmvGeometryType.POINT;
+            return VectorTileGeometryType.POINT;
         case com.mapbox.pb.Tile.GeomType.LINESTRING:
-            return OmvGeometryType.LINESTRING;
+            return VectorTileGeometryType.LINESTRING;
         case com.mapbox.pb.Tile.GeomType.POLYGON:
-            return OmvGeometryType.POLYGON;
+            return VectorTileGeometryType.POLYGON;
         default:
-            return OmvGeometryType.UNKNOWN;
+            return VectorTileGeometryType.UNKNOWN;
     } // switch
 }
 
 /**
- * The class [[OmvProtobufDataAdapter]] converts OMV protobuf geo data
+ * The class [[VectorTileProtobufDataAdapter]] converts vector tile protobuf geo data
  * to geometries for the given [[IGeometryProcessor]].
  */
-export class OmvProtobufDataAdapter implements OmvDataAdapter, OmvVisitor {
-    id = "omv-protobuf";
+export class VectorTileProtobufDataAdapter implements VectorTileDataAdapter, VectorTileVisitor {
+    id = "vector-protobuf";
 
     private readonly m_geometryCommands = new GeometryCommands();
     private readonly m_processor: IGeometryProcessor;
     private readonly m_logger?: ILogger;
-    private m_dataFilter?: OmvFeatureFilter;
+    private m_dataFilter?: VectorTileFeatureFilter;
 
     private m_tileKey!: TileKey;
     private m_layer!: com.mapbox.pb.Tile.ILayer;
 
     /**
-     * Constructs a new [[OmvProtobufDataAdapter]].
+     * Constructs a new [[VectorTileProtobufDataAdapter]].
      *
      * @param processor The [[IGeometryProcessor]] used to process the data.
-     * @param dataFilter The [[OmvFeatureFilter]] used to filter features.
+     * @param dataFilter The [[VectorTileFeatureFilter]] used to filter features.
      * @param logger The [[ILogger]] used to log diagnostic messages.
      */
-    constructor(processor: IGeometryProcessor, dataFilter?: OmvFeatureFilter, logger?: ILogger) {
+    constructor(
+        processor: IGeometryProcessor,
+        dataFilter?: VectorTileFeatureFilter,
+        logger?: ILogger
+    ) {
         this.m_processor = processor;
         this.m_dataFilter = dataFilter;
         this.m_logger = logger;
     }
 
     /**
-     * The [[OmvFeatureFilter]] used to filter features.
+     * The [[VectorTileFeatureFilter]] used to filter features.
      */
-    get dataFilter(): OmvFeatureFilter | undefined {
+    get dataFilter(): VectorTileFeatureFilter | undefined {
         return this.m_dataFilter;
     }
 
     /**
-     * The [[OmvFeatureFilter]] used to filter features.
+     * The [[VectorTileFeatureFilter]] used to filter features.
      */
-    set dataFilter(dataFilter: OmvFeatureFilter | undefined) {
+    set dataFilter(dataFilter: VectorTileFeatureFilter | undefined) {
         this.m_dataFilter = dataFilter;
     }
 
     /**
-     * Checks that the given data can be processed by this [[OmvProtobufDataAdapter]].
+     * Checks that the given data can be processed by this [[VectorTileProtobufDataAdapter]].
      */
     canProcess(data: ArrayBufferLike | {}): boolean {
         return isArrayBufferLike(data);
@@ -415,13 +419,13 @@ export class OmvProtobufDataAdapter implements OmvDataAdapter, OmvVisitor {
 
         this.m_tileKey = tileKey;
 
-        visitOmv(proto, this);
+        visitVectorTile(proto, this);
     }
 
     /**
-     * Visits the OMV layer.
+     * Visits the layer of the [[VectorTile]].
      *
-     * @param layer The OMV layer to process.
+     * @param layer The layer to process.
      */
     visitLayer(layer: com.mapbox.pb.Tile.ILayer): boolean {
         this.m_layer = layer;
@@ -442,7 +446,7 @@ export class OmvProtobufDataAdapter implements OmvDataAdapter, OmvVisitor {
     /**
      * Visits point features.
      *
-     * @param feature The OMV point features to process.
+     * @param feature The point feature to process.
      */
     visitPointFeature(feature: com.mapbox.pb.Tile.IFeature): void {
         if (feature.geometry === undefined) {

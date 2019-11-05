@@ -9,7 +9,7 @@ import { Theme } from "@here/harp-datasource-protocol";
 import { GeoCoordinates } from "@here/harp-geoutils";
 import { MapControls, MapControlsUI } from "@here/harp-map-controls";
 import { MapView } from "@here/harp-mapview";
-import { APIFormat, OmvDataSource } from "@here/harp-omv-datasource";
+import { APIFormat, VectorTileDataSource } from "@here/harp-vectortile-datasource";
 import { accessToken, copyrightInfo } from "../config";
 
 /**
@@ -454,7 +454,7 @@ export namespace TiledGeoJsonTechniquesExample {
             }
         });
 
-        const baseMapDataSource = new OmvDataSource({
+        const baseMapDataSource = new VectorTileDataSource({
             baseUrl: "https://xyz.api.here.com/tiles/herebase.02",
             apiFormat: APIFormat.XYZOMV,
             styleSetName: "tilezen",

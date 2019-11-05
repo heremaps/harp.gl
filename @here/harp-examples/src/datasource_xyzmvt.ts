@@ -6,7 +6,7 @@
 
 import { MapControls, MapControlsUI } from "@here/harp-map-controls";
 import { CopyrightElementHandler, MapView } from "@here/harp-mapview";
-import { APIFormat, OmvDataSource } from "@here/harp-omv-datasource";
+import { APIFormat, VectorTileDataSource } from "@here/harp-vectortile-datasource";
 import { accessToken } from "../config";
 
 /**
@@ -43,7 +43,7 @@ import { accessToken } from "../config";
  * [[include:harp_gl_datasource_xyzmvt_example_3.ts]]
  * ```
  * At the end of the initialization a [[MapView]] object is returned. To show map tiles an exemplary
- * datasource is used, [[OmvDataSource]]:
+ * datasource is used, [[VectorTileDataSource]]:
  *
  * ```typescript
  * [[include:harp_gl_datasource_xyzmvt_example_4.ts]]
@@ -103,7 +103,7 @@ export namespace DatasourceXYZMVTExample {
     const mapView = initializeMapView("mapCanvas");
 
     // snippet:harp_gl_datasource_xyzmvt_example_4.ts
-    const omvDataSource = new OmvDataSource({
+    const mapData = new VectorTileDataSource({
         baseUrl: "https://xyz.api.here.com/tiles/osmbase/256/all",
         apiFormat: APIFormat.XYZMVT,
         styleSetName: "tilezen",
@@ -113,6 +113,6 @@ export namespace DatasourceXYZMVTExample {
     // end:harp_gl_datasource_xyzmvt_example_4.ts
 
     // snippet:harp_gl_datasource_xyzmvt_example_5.ts
-    mapView.addDataSource(omvDataSource);
+    mapView.addDataSource(mapData);
     // end:harp_gl_datasource_xyzmvt_example_5.ts
 }

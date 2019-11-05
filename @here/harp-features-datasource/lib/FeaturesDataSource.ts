@@ -12,8 +12,11 @@ import {
 } from "@here/harp-datasource-protocol";
 import { GeoJsonDataProvider, GeoJsonDataProviderOptions } from "@here/harp-geojson-datasource";
 import { MapView } from "@here/harp-mapview";
-import { OmvDataSource, OmvDataSourceParameters } from "@here/harp-omv-datasource";
 import { LoggerManager } from "@here/harp-utils";
+import {
+    VectorTileDataSource,
+    VectorTileDataSourceParameters
+} from "@here/harp-vectortile-datasource";
 import { MapViewFeature } from "./Features";
 
 const logger = LoggerManager.instance.create("FeaturesDataSource");
@@ -28,7 +31,7 @@ const DEFAULT_GEOJSON: FeatureCollection = {
  * Options for [[FeaturesDataSource]].
  */
 export interface FeatureDataSourceOptions
-    extends OmvDataSourceParameters,
+    extends VectorTileDataSourceParameters,
         GeoJsonDataProviderOptions {
     /**
      * Initial set of features for new instance of [[FeaturesDataSource]].
@@ -48,7 +51,7 @@ export interface FeatureDataSourceOptions
 /**
  * [[DataSource]] implementation to use for the addition of custom features.
  */
-export class FeaturesDataSource extends OmvDataSource {
+export class FeaturesDataSource extends VectorTileDataSource {
     private m_isAttached = false;
     private m_featureCollection: FeatureCollection = this.emptyGeojson();
 

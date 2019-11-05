@@ -12,7 +12,7 @@
         "@here/harp-geoutils": "^0.11.0",
         "@here/harp-lines": "^0.11.0",
         "@here/harp-mapview": "^0.11.0",
-        "@here/harp-omv-datasource": "^0.11.0",
+        "@here/harp-vectortile-datasource": "^0.11.0",
         "@here/harp-test-utils": "^0.11.0",
         "@types/chai": "^4.2.2",
         "chai": "^4.2.0",

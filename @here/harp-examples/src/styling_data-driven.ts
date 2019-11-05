@@ -7,7 +7,7 @@
 import { GeoCoordinates } from "@here/harp-geoutils";
 import { MapControls, MapControlsUI } from "@here/harp-map-controls";
 import { CopyrightElementHandler, MapView } from "@here/harp-mapview";
-import { OmvDataSource } from "@here/harp-omv-datasource";
+import { VectorTileDataSource } from "@here/harp-vectortile-datasource";
 import { accessToken, copyrightInfo } from "../config";
 
 export namespace DataDrivenThemeExample {
@@ -93,7 +93,7 @@ export namespace DataDrivenThemeExample {
     function main() {
         const map = initializeMapView("mapCanvas");
 
-        const omvDataSource = new OmvDataSource({
+        const baseMapData = new VectorTileDataSource({
             url: "https://xyz.api.here.com/tiles/osmbase/512/all/{z}/{x}/{y}.mvt",
             urlParams: {
                 access_token: accessToken
@@ -109,7 +109,7 @@ export namespace DataDrivenThemeExample {
         map.canvas.parentElement!.appendChild(ui.domElement);
 
         map.setCameraGeolocationAndZoom(new GeoCoordinates(50.443041, 11.4229649), 5);
-        map.addDataSource(omvDataSource);
+        map.addDataSource(baseMapData);
     }
 
     main();

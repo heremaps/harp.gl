@@ -5,19 +5,19 @@
  */
 
 import { StyleSetEvaluator } from "@here/harp-datasource-protocol/index-decoder";
-import { OmvFeatureFilter } from "./OmvDataFilter";
+import { VectorTileFeatureFilter } from "./VectorTileDataFilter";
 
 /**
- * An [[OmvFeatureFilter]] implementation that queries [[StyleSetEvaluator]]
+ * An [[VectorTileFeatureFilter]] implementation that queries [[StyleSetEvaluator]]
  * if given layers/features should be processed.
  *
- * Used in [[OmvDecoder]] to skip processing of layers/features that doesn't
+ * Used in [[VectorTileDecoder]] to skip processing of layers/features that doesn't
  * have associated rules in style.
  *
  * @see [[StyleSetEvaluator.wantsFeature]]
  * @see [[StyleSetEvaluator.wantsLayer]]
  */
-export class StyleSetDataFilter implements OmvFeatureFilter {
+export class StyleSetDataFilter implements VectorTileFeatureFilter {
     hasKindFilter: boolean = false;
 
     constructor(readonly styleSetEvaluator: StyleSetEvaluator) {}

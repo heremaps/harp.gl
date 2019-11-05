@@ -7,7 +7,7 @@
 import { GeoCoordinates } from "@here/harp-geoutils";
 import { MapControls, MapControlsUI } from "@here/harp-map-controls";
 import { CopyrightElementHandler, MapView } from "@here/harp-mapview";
-import { APIFormat, OmvDataSource } from "@here/harp-omv-datasource";
+import { APIFormat, VectorTileDataSource } from "@here/harp-vectortile-datasource";
 import { accessToken, copyrightInfo } from "../config";
 
 /**
@@ -122,13 +122,13 @@ export namespace HelloCustomThemeExample {
             map.resize(window.innerWidth, window.innerHeight);
         });
 
-        addOmvDataSource(map);
+        addMapData(map);
 
         return map;
     }
 
-    function addOmvDataSource(map: MapView) {
-        const omvDataSource = new OmvDataSource({
+    function addMapData(map: MapView) {
+        const mapData = new VectorTileDataSource({
             baseUrl: "https://xyz.api.here.com/tiles/herebase.02",
             apiFormat: APIFormat.XYZOMV,
             styleSetName: "tilezen",
@@ -137,7 +137,7 @@ export namespace HelloCustomThemeExample {
             copyrightInfo
         });
 
-        map.addDataSource(omvDataSource);
+        map.addDataSource(mapData);
 
         return map;
     }

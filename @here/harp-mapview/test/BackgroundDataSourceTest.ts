@@ -12,19 +12,19 @@ import { expect } from "chai";
 import * as sinon from "sinon";
 import { BackgroundDataSource } from "../lib/BackgroundDataSource";
 import { MapView } from "../lib/MapView";
-import { FakeOmvDataSource } from "./FakeOmvDataSource";
+import { FakeVectorTileDataSource } from "./FakeVectorTileDataSource";
 
 describe("BackgroundDataSource", function() {
     describe("#updateStorageLevelOffset()", function() {
-        let fakeDataSource1: FakeOmvDataSource;
-        let fakeDataSource2: FakeOmvDataSource;
-        let fakeDataSource3: FakeOmvDataSource;
+        let fakeDataSource1: FakeVectorTileDataSource;
+        let fakeDataSource2: FakeVectorTileDataSource;
+        let fakeDataSource3: FakeVectorTileDataSource;
         let backgroundDataSource: BackgroundDataSource;
         let mapViewStub: sinon.SinonStubbedInstance<MapView>;
         beforeEach(function() {
-            fakeDataSource1 = new FakeOmvDataSource();
-            fakeDataSource2 = new FakeOmvDataSource();
-            fakeDataSource3 = new FakeOmvDataSource();
+            fakeDataSource1 = new FakeVectorTileDataSource();
+            fakeDataSource2 = new FakeVectorTileDataSource();
+            fakeDataSource3 = new FakeVectorTileDataSource();
             sinon.replace(fakeDataSource1, "getTilingScheme", sinon.fake.returns(hereTilingScheme));
             sinon.replace(
                 fakeDataSource2,

@@ -6,18 +6,19 @@
 
 import { MapControls, MapControlsUI } from "@here/harp-map-controls";
 import { CopyrightElementHandler, MapView, PickResult } from "@here/harp-mapview";
-import { APIFormat, OmvDataSource } from "@here/harp-omv-datasource";
+import { APIFormat, VectorTileDataSource } from "@here/harp-vectortile-datasource";
 import { accessToken, copyrightInfo } from "../config";
 
 /**
  * This example showcases how picking works.
  *
  * To enable line picking set `enableRoadPicking: true` in [[MapViewOptions]] and set
- * `createTileInfo: true` in [[OmvWithRestClientParams]] or in [[OmvWithCustomDataProvider]].
+ * `createTileInfo: true` in [[VectorTileWithRestClientParams]] or in
+ * [[VectorTileWithCustomDataProvider]].
  * To enable polygon picking set `gatherFeatureIds: true` in
- * [[OmvWithRestClientParams]] or in [[OmvWithCustomDataProvider]].
+ * [[VectorTileWithRestClientParams]] or in [[VectorTileWithCustomDataProvider]].
  * To enable text element picking set `gatherFeatureIds: true` in
- * [[OmvWithRestClientParams]] or in [[OmvWithCustomDataProvider]].
+ * [[VectorTileWithRestClientParams]] or in [[VectorTileWithCustomDataProvider]].
  *
  * Now, let's write an event that fires when the user clicks the map canvas:
  * ```typescript
@@ -134,7 +135,7 @@ export namespace PickingExample {
         });
         // end:datasource_object_picking_1.ts
 
-        const omvDataSource = new OmvDataSource({
+        const mapData = new VectorTileDataSource({
             baseUrl: "https://xyz.api.here.com/tiles/herebase.02",
             apiFormat: APIFormat.XYZOMV,
             styleSetName: "tilezen",
@@ -145,7 +146,7 @@ export namespace PickingExample {
             copyrightInfo
         });
 
-        await mapView.addDataSource(omvDataSource);
+        await mapView.addDataSource(mapData);
 
         mapView.update();
     }

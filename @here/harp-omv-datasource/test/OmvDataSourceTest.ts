@@ -10,8 +10,9 @@
 import "@here/harp-fetch";
 import { TileKey } from "@here/harp-geoutils";
 import { DataProvider } from "@here/harp-mapview-decoder";
+import { VectorTileRestClient } from "@here/harp-vectortile-datasource";
 import { assert } from "chai";
-import { APIFormat, AuthenticationTypeAccessToken, OmvDataSource, OmvRestClient } from "../index";
+import { APIFormat, AuthenticationTypeAccessToken, OmvDataSource } from "../index";
 import { OmvTileDecoder } from "../index-worker";
 
 class MockDataProvider implements DataProvider {
@@ -53,9 +54,9 @@ describe("DataProviders", function() {
             authenticationMethod: AuthenticationTypeAccessToken
         });
         const provider = omvDataSource.dataProvider();
-        assert.instanceOf(provider, OmvRestClient);
+        assert.instanceOf(provider, VectorTileRestClient);
 
-        const omvRestClientProvider = provider as OmvRestClient;
+        const omvRestClientProvider = provider as VectorTileRestClient;
         assert.equal(
             omvRestClientProvider.params.baseUrl,
             "https://a.tiles.mapbox.com/v4/mapbox.mapbox-streets-v7"

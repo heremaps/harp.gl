@@ -2,57 +2,68 @@
 
 To begin with `harp.gl`, we provide a few starting points:
 
-- [Import harp.gl with simple bundle](#simple)
-- [Create simple app](#yeoman) using Yeoman
-- [Integrate `harp.gl` into your existing Webpack based project](#integrate)
-- [Look at examples](#examples)
-- [Don't forget the credentials](#credentials)
+-   [Import harp.gl with simple bundle](#simple)
+-   [Create simple app](#yeoman) using Yeoman
+-   [Integrate `harp.gl` into your existing Webpack based project](#integrate)
+-   [Look at examples](#examples)
+-   [Don't forget the credentials](#credentials)
 
 ## <a name="simple"></a> Import harp.gl with simple bundle
 
 Add `three.js` and `harp.gl` to your html and create a canvas with an id `map`:
+
 ```html
 <html>
-   <head>
-      <style>
-         body, html { border: 0; margin: 0; padding: 0; }
-         #map { height: 100vh; width: 100vw; }
-      </style>
-      <script src="https://unpkg.com/three/build/three.min.js"></script>
-      <script src="https://unpkg.com/@here/harp.gl/dist/harp.js"></script>
-   </head>
-   <body>
-      <canvas id="map"></canvas>
-      <script src="index.js"></script>
-   </body>
+    <head>
+        <style>
+            body,
+            html {
+                border: 0;
+                margin: 0;
+                padding: 0;
+            }
+            #map {
+                height: 100vh;
+                width: 100vw;
+            }
+        </style>
+        <script src="https://unpkg.com/three/build/three.min.js"></script>
+        <script src="https://unpkg.com/@here/harp.gl/dist/harp.js"></script>
+    </head>
+    <body>
+        <canvas id="map"></canvas>
+        <script src="index.js"></script>
+    </body>
 </html>
 ```
+
 Initialize the map:
+
 ```javascript
 const map = new harp.MapView({
-   canvas: document.getElementById("map"),
-   theme: "https://unpkg.com/@here/harp-map-theme@latest/resources/berlin_tilezen_night_reduced.json",
+    canvas: document.getElementById("map"),
+    theme:
+        "https://unpkg.com/@here/harp-map-theme@latest/resources/berlin_tilezen_night_reduced.json"
 });
 const controls = new harp.MapControls(map);
 
 window.onresize = () => map.resize(window.innerWidth, window.innerHeight);
 
 map.setCameraGeolocationAndZoom(
-   new harp.GeoCoordinates(37.773972, -122.431297), //San Francisco
-   13
+    new harp.GeoCoordinates(37.773972, -122.431297), //San Francisco
+    13
 );
 
-const omvDataSource = new harp.OmvDataSource({
-   baseUrl: "https://xyz.api.here.com/tiles/herebase.02",
-   apiFormat: harp.APIFormat.XYZOMV,
-   styleSetName: "tilezen",
-   authenticationCode: "YOUR-XYZ-TOKEN",
+const mapData = new harp.VectorTileDataSource({
+    baseUrl: "https://xyz.api.here.com/tiles/herebase.02",
+    apiFormat: harp.APIFormat.XYZOMV,
+    styleSetName: "tilezen",
+    authenticationCode: "YOUR-XYZ-TOKEN"
 });
-map.addDataSource(omvDataSource);
+map.addDataSource(mapData);
 ```
 
 You need to [obtain authentication code](#credentials) to replace 'YOUR-XYZ-TOKEN'.
-
 
 For more information on the simple bundle, please visit the [@here/harp.gl module](../@here/harp.gl) directory.
 
@@ -72,21 +83,21 @@ npx -p yo -p @here/generator-harp.gl yo @here/harp.gl
 
 ### Introduction
 
-`harp.gl` is distributed as `CommonJS` modules conatined in `npm` packages. Modules in `CommonJS`
-format require us to use some javascript code bundler - this example will faciliate `webpack`.
+`harp.gl` is distributed as `CommonJS` modules concatenated in `npm` packages. Modules in `CommonJS`
+format require us to use some javascript code bundler - this example will facilitate `webpack`.
 
 ### Installation
 
 Install them into your project:
 
 ```shell
-npm install --save @here/harp-mapview @here/harp-omv-datasource @here/harp-map-theme
+npm install --save @here/harp-mapview @here/harp-vectortile-datasource @here/harp-map-theme
 ```
 
 You have installed 3 key components needed to render basic map:
 
 -   `@here/harp-mapview` - map renderer itself
--   `@here/harp-omv-datasource` - tile provider based on OMV/MVT vector tile format
+-   `@here/harp-vectortile-datasource` - tile provider based on MVT/GeoJSON vector tile format
 -   `@here/harp-map-theme` - default theme and font resources required to render map in OMV/tilezen
     scheme
 
@@ -125,9 +136,9 @@ return [appConfig, harpGlDecodersConfig];
 The `./harp-gl-decoders.js` needs to initialize decoding service:
 
 ```javascript
-import { OmvTileDecoderService } from "@here/harp-omv-datasource/index-worker";
+import { VectorTileDecoderService } from "@here/harp-vectortile-datasource/index-worker";
 
-OmvTileDecoderService.start();
+VectorTileDecoderService.start();
 ```
 
 ### Create DOM container
@@ -183,13 +194,17 @@ mapView.resize(mapCanvas.clientWidth, mapCanvas.clientHeight);
 ### Attach data source
 
 Last step is adding some
-[`OmvDataSource`](https://heremaps.github.io/harp.gl/doc/classes/_here_harp_omv_datasource.omvdatasource.html)
+[`VectorTileDataSource`](https://heremaps.github.io/harp.gl/doc/classes/_here_harp_vectortile_datasource.vectortiledatasource.html)
 to our `MapView` instance:
 
 ```javascript
-import { APIFormat, AuthenticationTypeMapboxV4, OmvDataSource } from "@here/harp-omv-datasource";
+import {
+    APIFormat,
+    AuthenticationTypeMapboxV4,
+    VectorTileDataSource
+} from "@here/harp-vectortile-datasource";
 
-const dataSource = new OmvDataSource({
+const dataSource = new VectorTileDataSource({
     baseUrl: "https://xyz.api.here.com/tiles/herebase.02",
     apiFormat: APIFormat.XYZOMV,
     styleSetName: "tilezen",

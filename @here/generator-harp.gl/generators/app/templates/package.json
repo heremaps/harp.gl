@@ -15,7 +15,7 @@
         "@here/harp-fontcatalog": "^0.1.2",
         "@here/harp-mapview": "^0.11.0",
         "@here/harp-mapview-decoder": "^0.11.0",
-        "@here/harp-omv-datasource": "^0.11.0",
+        "@here/harp-vectortile-datasource": "^0.11.0",
         "three": "^0.110.0"
     },
     "devDependencies": {

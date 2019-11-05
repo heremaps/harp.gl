@@ -5,7 +5,7 @@
  */
 import { GeoCoordinates } from "@here/harp-geoutils";
 import { CopyrightElementHandler, MapView, MapViewEventNames } from "@here/harp-mapview";
-import { APIFormat, OmvDataSource } from "@here/harp-omv-datasource";
+import { APIFormat, VectorTileDataSource } from "@here/harp-vectortile-datasource";
 import THREE = require("three");
 import { accessToken } from "../config";
 
@@ -63,13 +63,13 @@ export namespace SynchronousRendering {
             map.resize(window.innerWidth, window.innerHeight);
         });
 
-        const omvDataSource = new OmvDataSource({
+        const mapData = new VectorTileDataSource({
             baseUrl: "https://xyz.api.here.com/tiles/herebase.02",
             apiFormat: APIFormat.XYZOMV,
             styleSetName: "tilezen",
             authenticationCode: accessToken
         });
-        map.addDataSource(omvDataSource);
+        map.addDataSource(mapData);
 
         return map;
     }

@@ -22,7 +22,7 @@
         "@here/harp-datasource-protocol": "^0.11.0",
         "@here/harp-geojson-datasource": "^0.11.0",
         "@here/harp-mapview": "^0.11.0",
-        "@here/harp-omv-datasource": "^0.11.0",
+        "@here/harp-vectortile-datasource": "^0.11.0",
         "@here/harp-utils": "^0.11.0"
     },
     "devDependencies": {

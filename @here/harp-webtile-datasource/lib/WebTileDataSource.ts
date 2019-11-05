@@ -207,7 +207,7 @@ interface MapTileParams {
  *     appCode: <appCode>
  * });
  * ```
- * @see [[DataSource]], [[OmvDataSource]].
+ * @see [[DataSource]]
  */
 export class WebTileDataSource extends DataSource {
     /**

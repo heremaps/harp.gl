@@ -7,7 +7,7 @@
 import { GeoCoordinates } from "@here/harp-geoutils";
 import { MapControls, MapControlsUI } from "@here/harp-map-controls";
 import { CopyrightElementHandler, MapView } from "@here/harp-mapview";
-import { OmvDataSource } from "@here/harp-omv-datasource";
+import { VectorTileDataSource } from "@here/harp-vectortile-datasource";
 import { accessToken, copyrightInfo } from "../config";
 
 /**
@@ -50,7 +50,7 @@ import { accessToken, copyrightInfo } from "../config";
  * [[include:harp_gl_hello_world_example_3.ts]]
  * ```
  * At the end of the initialization a [[MapView]] object is returned. To show map tiles an exemplary
- * datasource is used, [[OmvDataSource]]:
+ * datasource is used, [[VectorTileDataSource]]:
  *
  * ```typescript
  * [[include:harp_gl_hello_world_example_4.ts]]
@@ -106,14 +106,14 @@ export namespace HelloWorldExample {
         });
         // end:harp_gl_hello_world_example_3.ts
 
-        addOmvDataSource(map);
+        addBaseMap(map);
 
         return map;
     }
 
-    function addOmvDataSource(map: MapView) {
+    function addBaseMap(map: MapView) {
         // snippet:harp_gl_hello_world_example_4.ts
-        const omvDataSource = new OmvDataSource({
+        const mapData = new VectorTileDataSource({
             url: "https://xyz.api.here.com/tiles/herebase.02/{z}/{x}/{y}/omv",
             styleSetName: "tilezen",
             maxZoomLevel: 17,
@@ -125,7 +125,7 @@ export namespace HelloWorldExample {
         // end:harp_gl_hello_world_example_4.ts
 
         // snippet:harp_gl_hello_world_example_5.ts
-        map.addDataSource(omvDataSource);
+        map.addDataSource(mapData);
         // end:harp_gl_hello_world_example_5.ts
 
         return map;

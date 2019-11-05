@@ -15,15 +15,15 @@ import * as THREE from "three";
 
 import { AttrEvaluationContext } from "@here/harp-datasource-protocol/lib/TechniqueAttr";
 import { ILineGeometry, IPolygonGeometry } from "./IGeometryProcessor";
-import { IOmvEmitter, OmvDecoder, Ring } from "./OmvDecoder";
-import { webMercatorTile2TargetWorld } from "./OmvUtils";
+import { IVectorTileEmitter, Ring, VectorDecoder } from "./VectorTileDecoder";
+import { webMercatorTile2TargetWorld } from "./VectorTileUtils";
 
-export class OmvTileInfoEmitter implements IOmvEmitter {
+export class VectorTileInfoEmitter implements IVectorTileEmitter {
     private readonly m_tileInfo: ExtendedTileInfo;
     private readonly m_tileInfoWriter: ExtendedTileInfoWriter;
 
     /**
-     * Create OmvTileInfoEmitter object
+     * Create VectorTileInfoEmitter object
      *
      * @param m_decodeInfo
      * @param m_styleSetEvaluator
@@ -31,7 +31,7 @@ export class OmvTileInfoEmitter implements IOmvEmitter {
      * @param m_gatherRoadSegments
      */
     constructor(
-        private readonly m_decodeInfo: OmvDecoder.DecodeInfo,
+        private readonly m_decodeInfo: VectorDecoder.DecodeInfo,
         // tslint:disable-next-line:no-unused-variable
         private readonly m_styleSetEvaluator: StyleSetEvaluator,
         private readonly m_storeExtendedTags: boolean,
@@ -156,7 +156,7 @@ export class OmvTileInfoEmitter implements IOmvEmitter {
     ): void {
         if (techniques.length === 0) {
             throw new Error(
-                "OmvTileInfoEmitter#processPolygonFeature: Internal error - No technique index"
+                "VectorTileInfoEmitter#processPolygonFeature: Internal error - No technique index"
             );
         }
 

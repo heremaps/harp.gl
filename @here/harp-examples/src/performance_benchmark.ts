@@ -871,7 +871,7 @@ export namespace PerformanceBenchmark {
     async function init() {
         mapViewApp = await PerformanceUtils.initializeMapView(
             "mapCanvas",
-            ["OMV"],
+            ["VTDS"],
             decoderCount,
             phasedLoading,
             powerPreferenceMap.get(powerPreference === undefined ? "Default" : powerPreference)

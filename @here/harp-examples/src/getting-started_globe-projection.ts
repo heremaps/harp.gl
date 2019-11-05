@@ -7,7 +7,7 @@
 import { sphereProjection } from "@here/harp-geoutils";
 import { MapControls, MapControlsUI } from "@here/harp-map-controls";
 import { CopyrightElementHandler, MapView } from "@here/harp-mapview";
-import { APIFormat, OmvDataSource } from "@here/harp-omv-datasource";
+import { APIFormat, VectorTileDataSource } from "@here/harp-vectortile-datasource";
 import { accessToken, copyrightInfo } from "../config";
 
 export namespace GlobeExample {
@@ -35,7 +35,7 @@ export namespace GlobeExample {
     function main() {
         const map = initializeMapView("mapCanvas");
 
-        const omvDataSource = new OmvDataSource({
+        const mapData = new VectorTileDataSource({
             baseUrl: "https://xyz.api.here.com/tiles/herebase.02",
             apiFormat: APIFormat.XYZOMV,
             styleSetName: "tilezen",
@@ -44,7 +44,7 @@ export namespace GlobeExample {
             copyrightInfo
         });
 
-        map.addDataSource(omvDataSource);
+        map.addDataSource(mapData);
 
         const mapControls = new MapControls(map);
         const ui = new MapControlsUI(mapControls, { zoomLevel: "input" });

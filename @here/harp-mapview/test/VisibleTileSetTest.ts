@@ -16,7 +16,7 @@ import { MapView, MapViewDefaults } from "../lib/MapView";
 import { Tile } from "../lib/Tile";
 import { TileOffsetUtils } from "../lib/Utils";
 import { VisibleTileSet } from "../lib/VisibleTileSet";
-import { FakeOmvDataSource } from "./FakeOmvDataSource";
+import { FakeVectorTileDataSource } from "./FakeVectorTileDataSource";
 
 // tslint:disable:only-arrow-functions
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
@@ -42,7 +42,7 @@ class Fixture {
     constructor(params: { tileWrappingEnabled: boolean } = { tileWrappingEnabled: false }) {
         this.worldCenter = new THREE.Vector3();
         this.camera = new THREE.PerspectiveCamera();
-        this.ds = [new FakeOmvDataSource()];
+        this.ds = [new FakeVectorTileDataSource()];
         this.mapView = new FakeMapView() as MapView;
         (this.mapView as any).camera = this.camera;
         this.tileGeometryManager = new SimpleTileGeometryManager(this.mapView);
@@ -223,7 +223,7 @@ describe("VisibleTileSet", function() {
         const zoomLevel = 15;
         const storageLevel = 14;
 
-        const secondDataSource = new FakeOmvDataSource();
+        const secondDataSource = new FakeVectorTileDataSource();
         fixture.addDataSource(secondDataSource);
 
         const intersectionSpy = sinon.spy(fixture.frustumIntersection, "compute");
@@ -267,7 +267,7 @@ describe("VisibleTileSet", function() {
         const zoomLevel = 15;
         const storageLevel = 14;
 
-        const secondDataSource = new FakeOmvDataSource();
+        const secondDataSource = new FakeVectorTileDataSource();
         fixture.addDataSource(secondDataSource);
         const result = updateRenderList(zoomLevel, storageLevel).tileList;
         assert.equal(result[0].visibleTiles.length, 5);
@@ -292,7 +292,7 @@ describe("VisibleTileSet", function() {
         const zoomLevel = 15;
         const storageLevel = 14;
 
-        const secondDataSource = new FakeOmvDataSource();
+        const secondDataSource = new FakeVectorTileDataSource();
         fixture.addDataSource(secondDataSource);
         const result = updateRenderList(zoomLevel, storageLevel).tileList;
         assert.equal(result[0].visibleTiles.length, 16);

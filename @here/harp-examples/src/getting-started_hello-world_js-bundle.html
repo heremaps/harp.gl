@@ -95,7 +95,7 @@
             };
             const copyrights = [hereCopyrightInfo];
 
-            const omvDataSource = new harp.OmvDataSource({
+            const mapData = new harp.VectorTileDataSource({
                 baseUrl: "https://xyz.api.here.com/tiles/herebase.02",
                 apiFormat: harp.APIFormat.XYZOMV,
                 styleSetName: "tilezen",
@@ -104,7 +104,7 @@
                 copyrightInfo: copyrights
             });
 
-            map.addDataSource(omvDataSource);
+            map.addDataSource(mapData);
         </script>
     </body>
 </html>

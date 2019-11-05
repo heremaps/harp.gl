@@ -59,9 +59,9 @@ import {
 } from "@here/harp-geoutils";
 
 import { ILineGeometry, IPolygonGeometry } from "./IGeometryProcessor";
-import { LinesGeometry } from "./OmvDataSource";
-import { IOmvEmitter, OmvDecoder, Ring } from "./OmvDecoder";
-import { tile2world, webMercatorTile2TargetWorld, world2tile } from "./OmvUtils";
+import { LinesGeometry } from "./VectorTileDataSource";
+import { IVectorTileEmitter, Ring, VectorDecoder } from "./VectorTileDecoder";
+import { tile2world, webMercatorTile2TargetWorld, world2tile } from "./VectorTileUtils";
 
 import {
     AttrEvaluationContext,
@@ -70,7 +70,7 @@ import {
 // tslint:disable-next-line:max-line-length
 import { SphericalGeometrySubdivisionModifier } from "@here/harp-geometry/lib/SphericalGeometrySubdivisionModifier";
 
-const logger = LoggerManager.instance.create("OmvDecodedTileEmitter");
+const logger = LoggerManager.instance.create("DecodedVectorTileEmitter");
 
 const tempTileOrigin = new THREE.Vector3();
 const tempVertOrigin = new THREE.Vector3();
@@ -182,7 +182,7 @@ export enum LineType {
 type TexCoordsFunction = (tilePos: THREE.Vector2, tileExtents: number) => { u: number; v: number };
 const tmpColor = new THREE.Color();
 
-export class OmvDecodedTileEmitter implements IOmvEmitter {
+export class DecodedVectorTileEmitter implements IVectorTileEmitter {
     // mapping from style index to mesh buffers
     private readonly m_meshBuffers = new Map<number, MeshBuffers>();
 
@@ -199,7 +199,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
     private m_maxGeometryHeight: number = 0;
 
     constructor(
-        private readonly m_decodeInfo: OmvDecoder.DecodeInfo,
+        private readonly m_decodeInfo: VectorDecoder.DecodeInfo,
         private readonly m_styleSetEvaluator: StyleSetEvaluator,
         private readonly m_gatherFeatureIds: boolean,
         private readonly m_skipShortLabels: boolean,
@@ -597,7 +597,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                 groups.push({ start, count, technique: techniqueIndex, featureId });
             } else {
                 logger.warn(
-                    `OmvDecodedTileEmitter#processLineFeature: Invalid line technique
+                    `DecodedVectorTileEmitter#processLineFeature: Invalid line technique
                      ${techniqueName} for layer: ${env.entries.$layer} `
                 );
             }
@@ -634,7 +634,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
 
             if (techniqueIndex === undefined) {
                 throw new Error(
-                    "OmvDecodedTileEmitter#processPolygonFeature: " +
+                    "DecodedVectorTileEmitter#processPolygonFeature: " +
                         "Internal error - No technique index"
                 );
             }

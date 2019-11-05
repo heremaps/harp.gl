@@ -23,12 +23,12 @@ import {
 } from "@here/harp-geoutils";
 import { assert } from "chai";
 import { Vector2, Vector3 } from "three";
+import { DecodedVectorTileEmitter } from "../lib/DecodedVectorTileEmitter";
 import { IPolygonGeometry } from "../lib/IGeometryProcessor";
-import { OmvDecodedTileEmitter } from "../lib/OmvDecodedTileEmitter";
-import { OmvDecoder } from "../lib/OmvDecoder";
-import { world2tile } from "../lib/OmvUtils";
+import { VectorDecoder } from "../lib/VectorTileDecoder";
+import { world2tile } from "../lib/VectorTileUtils";
 
-class OmvDecodedTileEmitterTest extends OmvDecodedTileEmitter {
+class DecodedVectorTileEmitterTest extends DecodedVectorTileEmitter {
     splitJaggyLinesTest(
         lines: number[][],
         minEstimatedLabelLengthSqr: number,
@@ -38,16 +38,21 @@ class OmvDecodedTileEmitterTest extends OmvDecodedTileEmitter {
     }
 }
 
-describe("OmvDecodedTileEmitter", function() {
+describe("DecodedVectorTileEmitter", function() {
     function createTileEmitter(): {
-        tileEmitter: OmvDecodedTileEmitterTest;
+        tileEmitter: DecodedVectorTileEmitterTest;
         styleSetEvaluator: StyleSetEvaluator;
     } {
         const tileKey = TileKey.fromRowColumnLevel(0, 0, 1);
         const projection = mercatorProjection;
         const tileSizeOnScreen = 100;
 
-        const decodeInfo = new OmvDecoder.DecodeInfo("test", projection, tileKey, tileSizeOnScreen);
+        const decodeInfo = new VectorDecoder.DecodeInfo(
+            "test",
+            projection,
+            tileKey,
+            tileSizeOnScreen
+        );
 
         const styleSet: StyleSet = [
             {
@@ -61,7 +66,7 @@ describe("OmvDecodedTileEmitter", function() {
 
         const styleSetEvaluator = new StyleSetEvaluator(styleSet);
 
-        const tileEmitter = new OmvDecodedTileEmitterTest(
+        const tileEmitter = new DecodedVectorTileEmitterTest(
             decodeInfo,
             styleSetEvaluator,
             false,
@@ -95,7 +100,12 @@ describe("OmvDecodedTileEmitter", function() {
         const projection = mercatorProjection;
         const tileSizeOnScreen = 100;
 
-        const decodeInfo = new OmvDecoder.DecodeInfo("test", projection, tileKey, tileSizeOnScreen);
+        const decodeInfo = new VectorDecoder.DecodeInfo(
+            "test",
+            projection,
+            tileKey,
+            tileSizeOnScreen
+        );
 
         const geoBox = decodeInfo.geoBox;
 

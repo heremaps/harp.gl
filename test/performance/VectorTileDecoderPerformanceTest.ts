@@ -13,18 +13,22 @@ import { MapEnv, StyleSetEvaluator } from "@here/harp-datasource-protocol/index-
 import { accessToken } from "@here/harp-examples/config";
 import { sphereProjection, TileKey, webMercatorProjection } from "@here/harp-geoutils";
 import { ThemeLoader } from "@here/harp-mapview";
-import { APIFormat, OmvRestClient, OmvRestClientParameters } from "@here/harp-omv-datasource";
+import { getTestResourceUrl } from "@here/harp-test-utils/index.web";
+import { measurePerformanceSync } from "@here/harp-test-utils/lib/ProfileHelper";
+import {
+    APIFormat,
+    VectorTileRestClient,
+    VectorTileRestClientParameters
+} from "@here/harp-vectortile-datasource";
 import {
     IGeometryProcessor,
     ILineGeometry,
     IPolygonGeometry
-} from "@here/harp-omv-datasource/lib/IGeometryProcessor";
-import { OmvProtobufDataAdapter } from "@here/harp-omv-datasource/lib/OmvData";
-import { OmvDecoder } from "@here/harp-omv-datasource/lib/OmvDecoder";
-import { getTestResourceUrl } from "@here/harp-test-utils/index.web";
-import { measurePerformanceSync } from "@here/harp-test-utils/lib/ProfileHelper";
+} from "@here/harp-vectortile-datasource/lib/IGeometryProcessor";
+import { VectorTileProtobufDataAdapter } from "@here/harp-vectortile-datasource/lib/VectorTileData";
+import { VectorDecoder } from "@here/harp-vectortile-datasource/lib/VectorTileDecoder";
 
-export interface OMVDecoderPerformanceTestOptions {
+export interface VectortileDecoderPerformanceTestOptions {
     /**
      *
      */
@@ -47,38 +51,38 @@ export interface OMVDecoderPerformanceTestOptions {
     tiles: number[];
 
     /**
-     * Requires settings for [[OmvRestClient]] to download tiles.
+     * Requires settings for [[VectorTileRestClient]] to download tiles.
      */
-    omvRestClientOptions: OmvRestClientParameters;
+    vectorTileRestClientOptions: VectorTileRestClientParameters;
 }
 
 /**
- * Create tests that downloads some OMV tiles from real datasource, then decodes them using
+ * Create tests that downloads some vector tiles from real datasource, then decodes them using
  * particular style.
  *
- * @see OMVDecoderPerformanceTestOptions
+ * @see VectorTileDecoderPerformanceTestOptions
  */
-export function createOMVDecoderPerformanceTest(
+export function createVectorTileDecoderPerformanceTest(
     name: string,
-    options: OMVDecoderPerformanceTestOptions
+    options: VectortileDecoderPerformanceTestOptions
 ) {
     const repeats = options.repeats || 10;
     const styleSetName = options.styleSetName || "tilezen";
-    describe(`OMVDecoderPerformanceTest - ${name}`, function() {
+    describe(`VectorTileDecoderPerformanceTest - ${name}`, function() {
         this.timeout(0);
-        let omvTiles: Array<[TileKey, ArrayBuffer]>;
+        let vectorTiles: Array<[TileKey, ArrayBuffer]>;
         let theme: Theme;
 
         before(async function() {
             this.timeout(10000);
-            const omvDataProvider = new OmvRestClient(options.omvRestClientOptions);
+            const vtDataProvider = new VectorTileRestClient(options.vectorTileRestClientOptions);
 
-            await omvDataProvider.connect();
-            assert(omvDataProvider.ready());
-            omvTiles = await Promise.all(
+            await vtDataProvider.connect();
+            assert(vtDataProvider.ready());
+            vectorTiles = await Promise.all(
                 options.tiles.map(async mortonCode => {
                     const tileKey = TileKey.fromMortonCode(mortonCode);
-                    const tile = await omvDataProvider.getTile(tileKey);
+                    const tile = await vtDataProvider.getTile(tileKey);
                     assert(tile instanceof ArrayBuffer);
                     return [tileKey, tile as ArrayBuffer] as [TileKey, ArrayBuffer];
                 })
@@ -90,7 +94,7 @@ export function createOMVDecoderPerformanceTest(
         });
 
         it(`measure feature matching time`, async () => {
-            const counterName = `OMVDecoderPerformanceTest-${name} styleMatchOnly`;
+            const counterName = `VectorTileDecoderPerformanceTest-${name} styleMatchOnly`;
             this.timeout(0);
 
             const styleSetEvaluator = new StyleSetEvaluator(
@@ -129,15 +133,15 @@ export function createOMVDecoderPerformanceTest(
             };
 
             await measurePerformanceSync(counterName, repeats, function() {
-                for (const [tileKey, tileData] of omvTiles) {
-                    const decoder = new OmvProtobufDataAdapter(geometryProcessor, undefined);
+                for (const [tileKey, tileData] of vectorTiles) {
+                    const decoder = new VectorTileProtobufDataAdapter(geometryProcessor, undefined);
                     decoder.process(tileData, tileKey);
                 }
             });
         });
 
         it(`measure decode time - webMercator`, async () => {
-            const counterName = `OMVDecoderPerformanceTest-${name} webMercator`;
+            const counterName = `VectorTileDecoderPerformanceTest-${name} webMercator`;
             this.timeout(0);
 
             const projection = webMercatorProjection;
@@ -148,8 +152,8 @@ export function createOMVDecoderPerformanceTest(
             );
 
             await measurePerformanceSync(counterName, repeats, function() {
-                for (const [tileKey, tileData] of omvTiles) {
-                    const decoder = new OmvDecoder(projection, styleSetEvaluator, false);
+                for (const [tileKey, tileData] of vectorTiles) {
+                    const decoder = new VectorDecoder(projection, styleSetEvaluator, false);
                     decoder.getDecodedTile(tileKey, tileData);
                 }
             });
@@ -158,7 +162,7 @@ export function createOMVDecoderPerformanceTest(
         it(`measure decode time - sphereProjection`, async () => {
             this.timeout(0);
 
-            const counterName = `OMVDecoderPerformanceTest-${name} sphere`;
+            const counterName = `VectorTileDecoderPerformanceTest-${name} sphere`;
 
             const projection = sphereProjection;
 
@@ -168,8 +172,8 @@ export function createOMVDecoderPerformanceTest(
             );
 
             await measurePerformanceSync(counterName, repeats, function() {
-                for (const [tileKey, tileData] of omvTiles) {
-                    const decoder = new OmvDecoder(projection, styleSetEvaluator, false);
+                for (const [tileKey, tileData] of vectorTiles) {
+                    const decoder = new VectorDecoder(projection, styleSetEvaluator, false);
                     decoder.getDecodedTile(tileKey, tileData);
                 }
             });
@@ -179,20 +183,20 @@ export function createOMVDecoderPerformanceTest(
 
 const BERLIN_CENTER_TILES = [371506851, 371506850, 371506849, 371506848];
 
-createOMVDecoderPerformanceTest("theme=berlin tiles=4 region=berlin data=herebase", {
+createVectorTileDecoderPerformanceTest("theme=berlin tiles=4 region=berlin data=herebase", {
     theme: getTestResourceUrl("@here/harp-map-theme", "resources/berlin_tilezen_base.json"),
     tiles: BERLIN_CENTER_TILES,
-    omvRestClientOptions: {
+    vectorTileRestClientOptions: {
         baseUrl: "https://xyz.api.here.com/tiles/herebase.02",
         apiFormat: APIFormat.XYZOMV,
         authenticationCode: accessToken
     }
 });
 
-createOMVDecoderPerformanceTest("theme=berlin tiles=4 region=berlin data=osmbase", {
+createVectorTileDecoderPerformanceTest("theme=berlin tiles=4 region=berlin data=osmbase", {
     theme: getTestResourceUrl("@here/harp-map-theme", "resources/berlin_tilezen_base.json"),
     tiles: BERLIN_CENTER_TILES,
-    omvRestClientOptions: {
+    vectorTileRestClientOptions: {
         baseUrl: "https://xyz.api.here.com/tiles/osmbase/256/all",
         apiFormat: APIFormat.XYZMVT,
         authenticationCode: accessToken
@@ -213,20 +217,20 @@ const NEW_YORK_TILES = [
     327438824
 ];
 
-createOMVDecoderPerformanceTest("theme=berlin tiles=10 region=ny data=herebase", {
+createVectorTileDecoderPerformanceTest("theme=berlin tiles=10 region=ny data=herebase", {
     theme: getTestResourceUrl("@here/harp-map-theme", "resources/berlin_tilezen_base.json"),
     tiles: NEW_YORK_TILES,
-    omvRestClientOptions: {
+    vectorTileRestClientOptions: {
         baseUrl: "https://xyz.api.here.com/tiles/herebase.02",
         apiFormat: APIFormat.XYZOMV,
         authenticationCode: accessToken
     }
 });
 
-createOMVDecoderPerformanceTest("theme=berlin tiles=10 region=ny data=osmbase", {
+createVectorTileDecoderPerformanceTest("theme=berlin tiles=10 region=ny data=osmbase", {
     theme: getTestResourceUrl("@here/harp-map-theme", "resources/berlin_tilezen_base.json"),
     tiles: NEW_YORK_TILES,
-    omvRestClientOptions: {
+    vectorTileRestClientOptions: {
         baseUrl: "https://xyz.api.here.com/tiles/osmbase/256/all",
         apiFormat: APIFormat.XYZMVT,
         authenticationCode: accessToken

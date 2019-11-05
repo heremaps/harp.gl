@@ -14,7 +14,7 @@ import {
     MapViewOptions,
     MapViewUtils
 } from "@here/harp-mapview";
-import { APIFormat, OmvDataSource } from "@here/harp-omv-datasource";
+import { APIFormat, VectorTileDataSource } from "@here/harp-vectortile-datasource";
 import * as THREE from "three";
 import { accessToken, copyrightInfo } from "../config";
 
@@ -93,13 +93,13 @@ export namespace FreeCameraAppDebuggingToolExample {
         }
 
         /**
-         * Attaches the [[OmvDataSource]] and [[DebugTileDataSource]] to the map as well as
+         * Attaches the [[VectorTileDataSource]] and [[DebugTileDataSource]] to the map as well as
          * initializes the debug view (making the: `R`, `T` and `V` keys modify the camera's current
-         * rotation (`R`), translation/postion (`T`) and changing the camera view to the one the
+         * rotation (`R`), translation/position (`T`) and changing the camera view to the one the
          * user is seeing (`V`).
          */
         start() {
-            const omvDataSource = new OmvDataSource({
+            const mapData = new VectorTileDataSource({
                 baseUrl: "https://xyz.api.here.com/tiles/herebase.02",
                 apiFormat: APIFormat.XYZOMV,
                 styleSetName: "tilezen",
@@ -110,7 +110,7 @@ export namespace FreeCameraAppDebuggingToolExample {
 
             const debugTileDataSource = new DebugTileDataSource(webMercatorTilingScheme);
 
-            this.mapView.addDataSource(omvDataSource);
+            this.mapView.addDataSource(mapData);
             this.mapView.addDataSource(debugTileDataSource);
 
             this.initializeDebugView();

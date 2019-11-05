@@ -71,19 +71,19 @@ export class FeatureGroup {
 
     /**
      * Optional indices into [[ExtendedTileInfo]].layerCatalog. Only available if
-     * [[OmvFeatureGroup]] has been constructed with `storeExtendedTags` set to `true`.
+     * [[VectorTileFeatureGroup]] has been constructed with `storeExtendedTags` set to `true`.
      */
     layerIndex?: number[];
 
     /**
      * Optional indices into [[ExtendedTileInfo]].classCatalog. Only available if
-     * [[OmvFeatureGroup]] has been constructed with `storeExtendedTags` set to `true`.
+     * [[VectorTileFeatureGroup]] has been constructed with `storeExtendedTags` set to `true`.
      */
     classIndex?: number[];
 
     /**
-     * Optional indices into [[ExtendedTileInfo]].typeCatalog. Only available if [[OmvFeatureGroup]]
-     * has been constructed with `storeExtendedTags` set to `true`.
+     * Optional indices into [[ExtendedTileInfo]].typeCatalog. Only available if
+     * [[VectorTileFeatureGroup]] has been constructed with `storeExtendedTags` set to `true`.
      */
     typeIndex?: number[];
 
@@ -201,7 +201,7 @@ export class PolygonFeatureGroup extends FeatureGroup {
     innerRingIsOuterContour: number[];
 
     /**
-     * Indices into [[OmvFeatureGroup]]`.positions`. One index for every ring.
+     * Indices into [[VectorTileFeatureGroup]]`.positions`. One index for every ring.
      *
      * Number of inner rings is computed by either:
      *
@@ -242,7 +242,7 @@ export class PolygonFeatureGroup extends FeatureGroup {
 }
 
 /**
- * Class to hold infos from [[OmvTile]]s. Optimized for fast serialization when being passed from
+ * Class to hold infos from [[VectorTile]]s. Optimized for fast serialization when being passed from
  * webworker to main thread. No methods, since the object is being passed across "process
  * boundaries" to the web worker.
  *

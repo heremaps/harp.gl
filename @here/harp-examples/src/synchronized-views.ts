@@ -7,7 +7,7 @@
 import { GeoCoordinates } from "@here/harp-geoutils";
 import { MapControls, MapControlsUI } from "@here/harp-map-controls";
 import { CopyrightElementHandler, CopyrightInfo, MapView, MapViewUtils } from "@here/harp-mapview";
-import { APIFormat, OmvDataSource } from "@here/harp-omv-datasource";
+import { APIFormat, VectorTileDataSource } from "@here/harp-vectortile-datasource";
 import { accessToken } from "../config";
 
 /**
@@ -149,14 +149,14 @@ export namespace TripleViewExample {
         copyrightInfo: copyrights
     };
     const dataSources = {
-        omvDataSource1: new OmvDataSource(xyzDataSourceParams),
-        omvDataSource2: new OmvDataSource(xyzDataSourceParams),
-        omvDataSource3: new OmvDataSource(xyzDataSourceParams)
+        vtDataSource1: new VectorTileDataSource(xyzDataSourceParams),
+        vtDataSource2: new VectorTileDataSource(xyzDataSourceParams),
+        vtDataSource3: new VectorTileDataSource(xyzDataSourceParams)
     };
 
-    mapViews.view1.mapView.addDataSource(dataSources.omvDataSource1);
-    mapViews.view2.mapView.addDataSource(dataSources.omvDataSource2);
-    mapViews.view3.mapView.addDataSource(dataSources.omvDataSource3);
+    mapViews.view1.mapView.addDataSource(dataSources.vtDataSource1);
+    mapViews.view2.mapView.addDataSource(dataSources.vtDataSource2);
+    mapViews.view3.mapView.addDataSource(dataSources.vtDataSource3);
     // end:harp_gl_multiview_tripleView_2.ts
 
     const syncMapViews = (srcView: ViewControlPair, destView: ViewControlPair) => {
