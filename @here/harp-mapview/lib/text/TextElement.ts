@@ -282,18 +282,6 @@ export class TextElement {
 
     /**
      * @hidden
-     * Text rendering style.
-     */
-    renderStyle?: TextRenderStyle;
-
-    /**
-     * @hidden
-     * Text rendering style.
-     */
-    layoutStyle?: TextLayoutStyle;
-
-    /**
-     * @hidden
      * Array storing the style [[GlyphData]] for this `TextElement` to speed up label placement in
      * [[TextElementsRenderer]]. Valid after `loadingState` is `Initialized`.
      */
@@ -330,6 +318,10 @@ export class TextElement {
     type: TextElementType;
 
     private m_poiInfo?: PoiInfo;
+
+    private m_renderStyle?: TextRenderStyle;
+
+    private m_layoutStyle?: TextLayoutStyle;
 
     /**
      * Creates a new `TextElement`.
@@ -439,6 +431,36 @@ export class TextElement {
             const poiRenderOrder = this.renderOrder !== undefined ? this.renderOrder : 0;
             poiInfo.renderOrder = poiRenderOrder;
         }
+    }
+
+    /**
+     * @returns The style used to render this text element, undefined if not set yet.
+     */
+    get renderStyle(): TextRenderStyle | undefined {
+        return this.m_renderStyle;
+    }
+
+    /**
+     * Sets style used for text rendering.
+     * @param style The style to use.
+     */
+    set renderStyle(style: TextRenderStyle | undefined) {
+        this.m_renderStyle = style;
+    }
+
+    /**
+     * @returns The style used to layout this text element, undefined if not set yet.
+     */
+    get layoutStyle(): TextLayoutStyle | undefined {
+        return this.m_layoutStyle;
+    }
+
+    /**
+     * Sets the style used for text layout.
+     * @param style The style to use.
+     */
+    set layoutStyle(style: TextLayoutStyle | undefined) {
+        this.m_layoutStyle = style;
     }
 
     /**
