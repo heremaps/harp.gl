@@ -62,7 +62,7 @@ export type RemoveJsonExpr<T> = (T | JsonExpr) extends T ? Exclude<T, JsonExpr> 
  */
 export type MakeTechniqueAttrs<T> = {
     [P in keyof T]: (T[P] | JsonExpr) extends T[P]
-        ? RemoveInterpolatedPropDef<RemoveJsonExpr<T[P]>> | Expr | InterpolatedProperty<number>
+        ? RemoveInterpolatedPropDef<RemoveJsonExpr<T[P]>> | Expr | InterpolatedProperty
         : T[P];
 };
 
@@ -95,6 +95,7 @@ export const pointTechniquePropTypes = mergeTechniqueDescriptor<PointTechniquePa
 
 /**
  * Runtime representation of [[SquaresStyle]] as parsed by [[StyleSetEvaluator]].
+ * For technique parameters see [[PointTechniqueParams]].
  */
 export interface SquaresTechnique extends MakeTechniqueAttrs<PointTechniqueParams> {
     name: "squares";
@@ -108,6 +109,7 @@ techniqueDescriptors.squares = squaresTechniquePropTypes;
 
 /**
  * Runtime representation of [[CirclesStyle]] as parsed by [[StyleSetEvaluator]].
+ * For technique parameters see [[PointTechniqueParams]].
  */
 export interface CirclesTechnique extends MakeTechniqueAttrs<PointTechniqueParams> {
     name: "circles";
@@ -121,6 +123,7 @@ techniqueDescriptors.circles = circlesTechniquePropTypes;
 
 /**
  * Runtime representation of [[PoiStyle]] as parsed by [[StyleSetEvaluator]].
+ * For technique parameters see [[MarkerTechniqueParams]].
  */
 export interface PoiTechnique extends MakeTechniqueAttrs<MarkerTechniqueParams> {
     name: "labeled-icon";
@@ -128,6 +131,7 @@ export interface PoiTechnique extends MakeTechniqueAttrs<MarkerTechniqueParams> 
 
 /**
  * Runtime representation of [[LineMarkerStyle]] as parsed by [[StyleSetEvaluator]].
+ * For technique parameters see [[MarkerTechniqueParams]].
  */
 export interface LineMarkerTechnique extends MakeTechniqueAttrs<MarkerTechniqueParams> {
     name: "line-marker";
@@ -202,6 +206,7 @@ techniqueDescriptors["labeled-icon"] = lineMarkerTechniquePropTypes;
 
 /**
  * Runtime representation of [[SegmentsStyle]] as parsed by [[StyleSetEvaluator]].
+ * For technique parameters see [[SegmentsTechniqueParams]].
  */
 export interface SegmentsTechnique extends MakeTechniqueAttrs<SegmentsTechniqueParams> {
     name: "segments";
@@ -219,6 +224,7 @@ const polygonalTechniqueDescriptor: TechniqueDescriptor<PolygonalTechniqueParams
 };
 /**
  * Runtime representation of [[BasicExtrudedLineStyle]] as parsed by [[StyleSetEvaluator]].
+ * For technique parameters see [[BasicExtrudedLineTechniqueParams]].
  */
 export interface BasicExtrudedLineTechnique
     extends MakeTechniqueAttrs<BasicExtrudedLineTechniqueParams> {
@@ -227,6 +233,7 @@ export interface BasicExtrudedLineTechnique
 
 /**
  * Runtime representation of [[StandardExtrudedLineStyle]] as parsed by [[StyleSetEvaluator]].
+ * For technique parameters see [[StandardExtrudedLineTechniqueParams]].
  */
 export interface StandardExtrudedLineTechnique
     extends MakeTechniqueAttrs<StandardExtrudedLineTechniqueParams> {
@@ -235,6 +242,7 @@ export interface StandardExtrudedLineTechnique
 
 /**
  * Runtime representation of [[SolidLineStyle]] as parsed by [[StyleSetEvaluator]].
+ * For technique parameters see [[SolidLineTechniqueParams]].
  */
 export interface SolidLineTechnique extends MakeTechniqueAttrs<SolidLineTechniqueParams> {
     name: "solid-line";
@@ -260,6 +268,7 @@ techniqueDescriptors["solid-line"] = solidLineTechniqueDescriptor;
 
 /**
  * Runtime representation of [[DashedLineStyle]] as parsed by [[StyleSetEvaluator]].
+ * For technique parameters see [[DashedLineTechniqueParams]].
  */
 export interface DashedLineTechnique extends MakeTechniqueAttrs<DashedLineTechniqueParams> {
     name: "dashed-line";
@@ -285,6 +294,7 @@ techniqueDescriptors["dashed-line"] = dashedLineTechniqueDescriptor;
 
 /**
  * Runtime representation of [[LineStyle]] as parsed by [[StyleSetEvaluator]].
+ * For technique parameters see [[LineTechniqueParams]].
  */
 export interface LineTechnique extends MakeTechniqueAttrs<LineTechniqueParams> {
     name: "line";
@@ -307,6 +317,7 @@ techniqueDescriptors.line = lineTechniqueDescriptor;
 
 /**
  * Runtime representation of [[FillStyle]] as parsed by [[StyleSetEvaluator]].
+ * For technique parameters see [[FillTechniqueParams]].
  */
 export interface FillTechnique extends MakeTechniqueAttrs<FillTechniqueParams> {
     name: "fill";
@@ -328,6 +339,7 @@ techniqueDescriptors.fill = fillTechniqueDescriptor;
 
 /**
  * Technique used to render a mesh geometry.
+ * For technique parameters see [[StandardTechniqueParams]].
  */
 export interface StandardTechnique extends MakeTechniqueAttrs<StandardTechniqueParams> {
     name: "standard";
@@ -371,6 +383,7 @@ techniqueDescriptors.standard = standardTechniqueDescriptor;
 
 /**
  * Runtime representation of [[ExtrudedPolygonStyle]] as parsed by [[StyleSetEvaluator]].
+ * For technique parameters see [[ExtrudedPolygonTechniqueParams]].
  */
 export interface ExtrudedPolygonTechnique
     extends MakeTechniqueAttrs<ExtrudedPolygonTechniqueParams> {
@@ -407,6 +420,7 @@ const extrudedPolygonTechniqueDescriptor = mergeTechniqueDescriptor<ExtrudedPoly
 techniqueDescriptors["extruded-polygon"] = extrudedPolygonTechniqueDescriptor;
 /**
  * Runtime representation of [[TextStyle]] as parsed by [[StyleSetEvaluator]].
+ * For technique parameters see [[TextTechniqueParams]].
  */
 export interface TextTechnique extends MakeTechniqueAttrs<TextTechniqueParams> {
     name: "text";
@@ -455,10 +469,11 @@ const textTechniqueDescriptor = mergeTechniqueDescriptor<TextTechnique>(
 );
 techniqueDescriptors.text = textTechniqueDescriptor;
 
+/**
+ * Special technique for user-defined shaders.
+ * For technique parameters see [[ShaderTechniqueParams]].
+ */
 export interface ShaderTechnique extends MakeTechniqueAttrs<ShaderTechniqueParams> {
-    /**
-     * Name of technique. Is used in the theme file.
-     */
     name: "shader";
 }
 
@@ -476,9 +491,18 @@ techniqueDescriptors.shader = shaderTechniqueDescriptor;
 
 /**
  * Technique used to render a terrain geometry with textures.
+ * For technique parameters see [[TerrainTechniqueParams]].
  */
 export interface TerrainTechnique extends MakeTechniqueAttrs<TerrainTechniqueParams> {
     name: "terrain";
+}
+
+/**
+ * Technique to avoid label rendering on top of certain line geometries.
+ * For technique parameters see [[BaseTechniqueParams]].
+ */
+export interface LabelRejectionLineTechnique extends MakeTechniqueAttrs<BaseTechniqueParams> {
+    name: "label-rejection-line";
 }
 
 /**
@@ -500,7 +524,8 @@ export type Technique =
     | StandardExtrudedLineTechnique
     | ExtrudedPolygonTechnique
     | ShaderTechnique
-    | TextTechnique;
+    | TextTechnique
+    | LabelRejectionLineTechnique;
 
 /**
  * Additional params used for optimized usage of `Techniques`.
@@ -658,6 +683,12 @@ export function isTextTechnique(technique: Technique): technique is TextTechniqu
  */
 export function isShaderTechnique(technique: Technique): technique is ShaderTechnique {
     return technique.name === "shader";
+}
+
+export function isLabelRejectionLineTechnique(
+    technique: Technique
+): technique is LabelRejectionLineTechnique {
+    return technique.name === "label-rejection-line";
 }
 
 /**

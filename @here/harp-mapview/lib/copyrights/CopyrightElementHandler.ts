@@ -5,8 +5,8 @@
  */
 
 import { getOptionValue } from "@here/harp-utils";
+import { MapView, MapViewEventNames } from "../MapView";
 import { CopyrightInfo } from "./CopyrightInfo";
-import { MapView, MapViewEventNames } from "./MapView";
 
 /**
  * Helper class that maintains up-to-date [[MapView]] copyright information in DOM element.
@@ -16,9 +16,9 @@ import { MapView, MapViewEventNames } from "./MapView";
  *     // HTML snippet
  *     <div id="copyrightNotice" style="position:absolute; right:0; bottom:0; z-index:100"></div>
  *
- *     // Javascript
+ *     // JavaScript
  *     const mapView = new MapView({ ... });
- *     CopyrightElementHandler.attach("copyrightNotice", mapView);
+ *     CopyrightElementHandler.install("copyrightNotice", mapView);
  */
 export class CopyrightElementHandler {
     /**
@@ -50,15 +50,16 @@ export class CopyrightElementHandler {
      * Note: Generally, the static [[install]] method can be used to create and attach a new
      * `CopyrightElementHandler` to a [[MapView]]
      *
-     * @param elementId HTML DOM element or a HTML DOM element id
+     * @param element HTML DOM element or a HTML DOM element id
      * @param mapView optional, [[attach]] to this [[MapView]] instance
      */
     constructor(element: string | HTMLElement, mapView?: MapView) {
         if (typeof element === "string") {
-            this.m_element = document.getElementById(element)!;
-            if (!this.m_element) {
-                throw new Error(`CopyrightElementHandler: unable to find DOM element ${element}`);
+            const htmlElement = document.getElementById(element);
+            if (!htmlElement) {
+                throw new Error(`CopyrightElementHandler: unable to find DOM element #${element}`);
             }
+            this.m_element = htmlElement;
         } else {
             this.m_element = element;
         }

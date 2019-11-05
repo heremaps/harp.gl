@@ -12,9 +12,9 @@ import {
     StyleSet,
     WorkerServiceProtocol
 } from "@here/harp-datasource-protocol";
-import { TileKey, webMercatorTilingScheme } from "@here/harp-geoutils";
+import { EarthConstants, TileKey, webMercatorTilingScheme } from "@here/harp-geoutils";
 import { LineGroup } from "@here/harp-lines";
-import { CopyrightInfo } from "@here/harp-mapview";
+import { CopyrightInfo, CopyrightProvider } from "@here/harp-mapview";
 import { DataProvider, TileDataSource, TileFactory } from "@here/harp-mapview-decoder";
 import { getOptionValue, LoggerManager } from "@here/harp-utils";
 import {
@@ -147,10 +147,14 @@ export interface OmvDataSourceParameters {
 
     /**
      * Optional, default copyright information of tiles provided by this data source.
-     *
      * Implementation should provide this information from the source data if possible.
      */
     copyrightInfo?: CopyrightInfo[];
+
+    /**
+     * Optional copyright info provider for tiles provided by this data source.
+     */
+    copyrightProvider?: CopyrightProvider;
 
     /**
      * Optional minimum zoom level (storage level) for [[Tile]]s. Default is 1.
@@ -161,6 +165,15 @@ export interface OmvDataSourceParameters {
      * Optional maximum zoom level (storage level) for [[Tile]]s. Default is 14.
      */
     maxZoomLevel?: number;
+
+    /**
+     * Maximum geometry height above groud level this `OmvDataSource` can produce.
+     *
+     * Used in first stage of frustum culling before [[Tile.maxGeometryHeight]] data is available.
+     *
+     * @default [[EarthConstants.MAX_BUILDING_HEIGHT]].
+     */
+    maxGeometryHeight?: number;
 
     /**
      * Optional storage level offset for [[Tile]]s. Default is -1.
@@ -206,6 +219,7 @@ export class OmvDataSource extends TileDataSource<OmvTile> {
             decoder: m_params.decoder,
             concurrentDecoderScriptUrl: m_params.concurrentDecoderScriptUrl,
             copyrightInfo: m_params.copyrightInfo,
+            copyrightProvider: m_params.copyrightProvider,
             minZoomLevel: getOptionValue(m_params.minZoomLevel, 1),
             maxZoomLevel: getOptionValue(m_params.maxZoomLevel, 14),
             storageLevelOffset: getOptionValue(m_params.storageLevelOffset, -1)
@@ -224,6 +238,11 @@ export class OmvDataSource extends TileDataSource<OmvTile> {
             storageLevelOffset: getOptionValue(m_params.storageLevelOffset, -1),
             enableElevationOverlay: this.m_params.enableElevationOverlay === true
         };
+
+        this.maxGeometryHeight = getOptionValue(
+            m_params.maxGeometryHeight,
+            EarthConstants.MAX_BUILDING_HEIGHT
+        );
     }
 
     async connect() {

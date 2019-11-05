@@ -8,23 +8,15 @@ import { TextureCoordinateType, Theme } from "@here/harp-datasource-protocol";
 import { isJsonExpr } from "@here/harp-datasource-protocol/lib/Expr";
 import { GeoCoordinates } from "@here/harp-geoutils";
 import { MapControls, MapControlsUI } from "@here/harp-map-controls";
-import { CopyrightElementHandler, CopyrightInfo, MapView, ThemeLoader } from "@here/harp-mapview";
+import { CopyrightElementHandler, MapView, ThemeLoader } from "@here/harp-mapview";
 import { APIFormat, OmvDataSource } from "@here/harp-omv-datasource";
-import { accessToken } from "../config";
+import { accessToken, copyrightInfo } from "../config";
 
 export namespace HelloWorldTexturedExample {
     function main() {
-        addTextureCoypright();
+        addTextureCopyright();
 
         const mapView = initializeMapView("mapCanvas");
-
-        const hereCopyrightInfo: CopyrightInfo = {
-            id: "here.com",
-            year: new Date().getFullYear(),
-            label: "HERE",
-            link: "https://legal.here.com/terms"
-        };
-        const copyrights: CopyrightInfo[] = [hereCopyrightInfo];
 
         const omvDataSource = new OmvDataSource({
             baseUrl: "https://xyz.api.here.com/tiles/herebase.02",
@@ -32,13 +24,13 @@ export namespace HelloWorldTexturedExample {
             styleSetName: "tilezen",
             maxZoomLevel: 17,
             authenticationCode: accessToken,
-            copyrightInfo: copyrights
+            copyrightInfo
         });
 
         mapView.addDataSource(omvDataSource);
     }
 
-    function addTextureCoypright() {
+    function addTextureCopyright() {
         document.body.innerHTML += `
 <style>
     #mapCanvas {

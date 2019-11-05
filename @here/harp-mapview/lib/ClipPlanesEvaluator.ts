@@ -8,6 +8,7 @@ import { ViewRanges } from "@here/harp-datasource-protocol/lib/ViewRanges";
 import { EarthConstants, Projection, ProjectionType } from "@here/harp-geoutils";
 import { assert } from "@here/harp-utils";
 import * as THREE from "three";
+import { MapView } from "./MapView";
 import { MapViewUtils } from "./Utils";
 
 const epsilon = 0.000001;
@@ -19,7 +20,7 @@ export interface ClipPlanesEvaluator {
     minElevation: number;
 
     /**
-     * Set maximum elevation to be rendered, values above sea level are possitive.
+     * Set maximum elevation to be rendered, values above sea level are positive.
      */
     maxElevation: number;
 
@@ -30,28 +31,27 @@ export interface ClipPlanesEvaluator {
      * This is related to evaluator implementation and its input data, that may suddenly change
      * such as camera position or angle, projection type or so.
      * Some evaluators may not depend on all or even any of input objects, but to preserve
-     * compatibility with any evaluator type it is strongly reccomended to update on every frame.
-     * @param camera The [[THREE.Camera]] object used in scene which clipping planes are evaluated.
-     * @param projection The current [[Projection]] method.
+     * compatibility with any evaluator type it is strongly recommended to update on every frame.
+     * @param mapView The [[MapView]] in use.
      * @note Camera clipping planes aren't automatically updated via #evaluateClipPlanes()
      * call, user should do it manually if needed.
      */
-    evaluateClipPlanes(camera: THREE.Camera, projection: Projection): ViewRanges;
+    evaluateClipPlanes(mapView: MapView): ViewRanges;
 }
 
 /**
  * Simplest camera clip planes evaluator, interpolates near/far planes based on ground distance.
  *
  * At general ground distance to camera along the surface normal is used as reference point for
- * planes evaluation, where near plane distance is set as fraction of this distance refered as
+ * planes evaluation, where near plane distance is set as fraction of this distance refereed as
  * [[nearMultiplier]]. Far plane equation has its own multiplier - [[nearFarMultiplier]],
  * which is applied to near plane and offset giving finally far plane distance.
- * This evaluator supports both planar and spherical projections, although it's behaviour is
+ * This evaluator supports both planar and spherical projections, although it's behavior is
  * slightly different in each case. General algorithm sets near plane between camera and
  * ground level, while far plane is just calculated using scale and bias approach with far offset
  * and multiplier.
  * @deprecated Class contains the legacy (first and original) clip planes evaluation method, which
- * is widelly used in examples thus is still kept for backward compatibility and comparisons.
+ * is widely used in examples thus is still kept for backward compatibility and comparisons.
  */
 export class InterpolatedClipPlanesEvaluator implements ClipPlanesEvaluator {
     readonly farMin: number;
@@ -91,42 +91,42 @@ export class InterpolatedClipPlanesEvaluator implements ClipPlanesEvaluator {
         return 0;
     }
 
-    evaluateClipPlanes(camera: THREE.Camera, projection: Projection): ViewRanges {
+    evaluateClipPlanes(mapView: MapView): ViewRanges {
         let nearPlane: number = this.nearMin;
         let farPlane: number = this.farMin;
-        if (projection.type === ProjectionType.Spherical) {
+        if (mapView.projection.type === ProjectionType.Spherical) {
             // near and far plane for a set up where
             // the camera is looking at the center of the scene.
             const r = EarthConstants.EQUATORIAL_RADIUS;
-            const d = camera.position.length();
+            const d = mapView.camera.position.length();
             const alpha = Math.asin(r / d);
             // Extract X, Y, Z axes into tmp vectors array.
-            camera.matrixWorld.extractBasis(
+            mapView.camera.matrixWorld.extractBasis(
                 this.m_tmpVectors[0],
                 this.m_tmpVectors[1],
                 this.m_tmpVectors[2]
             );
             // Setup quaternion based on X axis.
             this.m_tmpQuaternion.setFromAxisAngle(this.m_tmpVectors[0], alpha);
-            // Aquire forward vector based on Z axis reversed (keep it in tmpVectors[2]).
+            // Acquire forward vector based on Z axis reversed (keep it in tmpVectors[2]).
             const fwd = this.m_tmpVectors[2].negate();
             // Apply quaternion rotation to forward vector, store it in tmpVectors[1].
             const fwdRot = this.m_tmpVectors[1].copy(fwd).applyQuaternion(this.m_tmpQuaternion);
             // Store camera position tmpVectors[0] and reference it with p.
-            const p = this.m_tmpVectors[0].copy(camera.position);
+            const p = this.m_tmpVectors[0].copy(mapView.camera.position);
             p.addScaledVector(fwdRot, Math.sqrt(d * d - r * r));
-            farPlane = p.sub(camera.position).dot(fwd);
+            farPlane = p.sub(mapView.camera.position).dot(fwd);
             nearPlane = Math.max(
                 this.nearMin,
-                projection.groundDistance(camera.position) * this.nearMultiplier
+                mapView.projection.groundDistance(mapView.camera.position) * this.nearMultiplier
             );
-        } else if (projection.type === ProjectionType.Planar) {
-            const groundDistance = projection.groundDistance(camera.position);
+        } else if (mapView.projection.type === ProjectionType.Planar) {
+            const groundDistance = mapView.projection.groundDistance(mapView.camera.position);
             nearPlane = Math.max(this.nearMin, groundDistance * this.nearMultiplier);
             // Will be already clamped to minFar due to clamping above.
             farPlane = nearPlane * this.nearFarMultiplier + this.farOffset;
         } else {
-            assert(false, "Unsuported projection type");
+            assert(false, "Unsupported projection type");
         }
 
         const viewRanges: ViewRanges = {
@@ -156,7 +156,7 @@ export abstract class ElevationBasedClipPlanesEvaluator implements ClipPlanesEva
         this.m_maxElevation = maxElevation;
     }
 
-    abstract evaluateClipPlanes(camera: THREE.Camera, projection: Projection): ViewRanges;
+    abstract evaluateClipPlanes(mapView: MapView): ViewRanges;
 
     /**
      * Set maximum elevation above sea level to be rendered.
@@ -168,7 +168,7 @@ export abstract class ElevationBasedClipPlanesEvaluator implements ClipPlanesEva
      * bit offset to your assumed maximum elevation.
      * @note Reasonable values are in between (-DeadSeeDepression, MtEverestHeight>, both values
      * are defined in [[EarthConstant]] as [[EarthConstant.MIN_ELEVATION]] and
-     * [[EarthConstant.MAX_ELEVATION]] respectivelly.
+     * [[EarthConstant.MAX_ELEVATION]] respectively.
      * @see minElevation for more information about precision and rounding errors.
      */
     set maxElevation(elevation: number) {
@@ -191,7 +191,7 @@ export abstract class ElevationBasedClipPlanesEvaluator implements ClipPlanesEva
      * @note If you set this parameter to zero you may not see any features rendered if they are
      * just below the sea level more then half of [[nearFarMargin]] assumed. Similarly if set to
      * -100m and rendered features lays exactly in such depression, you may notice that problem.
-     * The errors ussually come from projection precision loss and depth buffer nature (significant
+     * The errors usually come from projection precision loss and depth buffer nature (significant
      * precision loss closer to far plane). Thus is such cases either increase the margin (if you
      * are sure features are just at this elevation, or setup bigger offset for [[minElevation]].
      * Reasonable values are between <-DeadSeaDepression, MtEverestHeight), where the first denotes
@@ -216,7 +216,7 @@ export abstract class ElevationBasedClipPlanesEvaluator implements ClipPlanesEva
 /**
  * Top view, clip planes evaluator that computes view ranges based on ground distance and elevation.
  *
- * This evaluator supports both planar and spherical projections, although it behaviour is
+ * This evaluator supports both planar and spherical projections, although it behavior is
  * slightly different in each case. General algorithm sets near plane and far plane close
  * to ground level, but taking into account maximum and minimum elevation of features on the ground.
  *
@@ -251,10 +251,10 @@ export class TopViewClipPlanesEvaluator extends ElevationBasedClipPlanesEvaluato
      * @param minElevation defines far plane offset from the ground surface, negative values moves
      * far plane below the ground level (use it to render depressions). Default zero - sea level.
      * @param nearMin minimum allowable near plane distance from camera, must be bigger then zero.
-     * @param nearFarMargin minimum distance between near and far plane, have to be significantly
-     * bigger then zero (especially if [[maxElevation]], [[minElevation]] are equal), otherwise you
-     * may notice flickering during rendering, or even render empty scene if frustum planes are
-     * almost equal.
+     * @param nearFarMarginRatio minimum distance between near and far plane, as a ratio of average
+     * near/far plane distance, it have to be significantly bigger then zero (especially if
+     * [[maxElevation]] and [[minElevation]] are equal), otherwise you may notice flickering when
+     * rendering, or even render empty scene if frustum planes are almost equal.
      * @param farMaxRatio maximum ratio between ground and far plane distance, allows to limit
      * viewing distance at overall. Have to be bigger then 1.0.
      * @note Keep in mind that this evaluator does not evaluate terrain (or building) elevation
@@ -263,24 +263,25 @@ export class TopViewClipPlanesEvaluator extends ElevationBasedClipPlanesEvaluato
      * repeating [[evaluatePlanes]] step, if your camera is moving you need to evaluate planes
      * anyway.
      * @note You may treat [[minElevation]] and [[maxElevation]] parameters as the maximum and
-     * minimum renderable elevation respectivelly along the surface normal, when camera is
+     * minimum renderable elevation respectively along the surface normal, when camera is
      * constantly looking downwards (top-down view). If you need [[ClipPlanesEvaluator]] for
      * cameras that support tilt or yaw please use [[TiltViewClipPlanesEvaluator]].
      * @note [[nearFarMaxRatio]] does not limit far plane when spherical projection is in use,
      * the algorithm used there estimates distance to point on tangent where line from camera
-     * touches the sphere horizont and there is no reason to clamp it.
+     * touches the sphere horizon and there is no reason to clamp it.
      */
     constructor(
         maxElevation: number = EarthConstants.MAX_BUILDING_HEIGHT,
         minElevation: number = 0,
-        readonly nearMin: number = 0.1,
-        readonly nearFarMargin: number = 10.0,
+        readonly nearMin: number = 1.0,
+        readonly nearFarMarginRatio: number = 0.05,
         readonly farMaxRatio = 1.8
     ) {
         super(maxElevation, minElevation);
         assert(nearMin > 0);
-        assert(nearFarMargin > epsilon);
+        assert(nearFarMarginRatio > epsilon);
         assert(farMaxRatio > 1.0);
+        const nearFarMargin = nearFarMarginRatio * nearMin;
         this.m_minimumViewRange = {
             near: nearMin,
             far: nearMin + nearFarMargin,
@@ -289,13 +290,13 @@ export class TopViewClipPlanesEvaluator extends ElevationBasedClipPlanesEvaluato
         };
     }
 
-    evaluateClipPlanes(camera: THREE.Camera, projection: Projection): ViewRanges {
-        if (projection.type === ProjectionType.Spherical) {
-            return this.evaluateDistanceSphericalProj(camera, projection);
-        } else if (projection.type === ProjectionType.Planar) {
-            return this.evaluateDistancePlanarProj(camera, projection);
+    evaluateClipPlanes(mapView: MapView): ViewRanges {
+        if (mapView.projection.type === ProjectionType.Spherical) {
+            return this.evaluateDistanceSphericalProj(mapView.camera, mapView.projection);
+        } else if (mapView.projection.type === ProjectionType.Planar) {
+            return this.evaluateDistancePlanarProj(mapView.camera, mapView.projection);
         }
-        assert(false, "Unsuported projection type");
+        assert(false, "Unsupported projection type");
         return { ...this.minimumViewRange };
     }
 
@@ -308,7 +309,7 @@ export class TopViewClipPlanesEvaluator extends ElevationBasedClipPlanesEvaluato
     }
 
     /**
-     * Calculate camera altitute (closest distance) to ground level in world units.
+     * Calculate camera altitude (closest distance) to ground level in world units.
      * @param camera
      * @param projection
      */
@@ -332,9 +333,12 @@ export class TopViewClipPlanesEvaluator extends ElevationBasedClipPlanesEvaluato
         farPlane = groundDistance - this.minElevation;
 
         // Apply the constraints.
-        nearPlane = Math.max(nearPlane - this.nearFarMargin / 2, this.nearMin);
+        nearPlane = Math.max(nearPlane, this.nearMin);
         farPlane = Math.min(farPlane, farMax);
-        farPlane = Math.max(farPlane + this.nearFarMargin / 2, nearPlane + this.nearFarMargin);
+        // Apply margins
+        const nearFarMargin = (this.nearFarMarginRatio * (nearPlane + farPlane)) / 2;
+        nearPlane = Math.max(nearPlane - nearFarMargin / 2, this.nearMin);
+        farPlane = Math.max(farPlane + nearFarMargin / 2, nearPlane + nearFarMargin);
 
         const viewRanges: ViewRanges = {
             near: nearPlane,
@@ -391,7 +395,7 @@ export class TopViewClipPlanesEvaluator extends ElevationBasedClipPlanesEvaluato
             // The far plane distance calculus requires finding the sphere tangent line that is
             // co-linear with (goes thru) camera position, such tangent creates right angle
             // with sphere diameter where it touches its surface (point T). Given that sphere is
-            // always at world orgin and camera orbits around it we have:
+            // always at world origin and camera orbits around it we have:
             // angle(OTC) = 90
             // sin(OCT) = sin(alpha) = r / d
             // alpha = asin(r / d)
@@ -408,7 +412,7 @@ export class TopViewClipPlanesEvaluator extends ElevationBasedClipPlanesEvaluato
             // te = sqrt(r^2 + 2*r*e + e^2 - r^2)
             // te = sqrt(2*r*e + e^2)
             // There may be situations when maximum elevation still remains below sea level (< 0) or
-            // it is neglible, in such cases tangent extension (te) is not required.
+            // it is negligible, in such cases tangent extension (te) is not required.
             const te =
                 this.maxElevation < epsilon
                     ? 0
@@ -427,7 +431,7 @@ export class TopViewClipPlanesEvaluator extends ElevationBasedClipPlanesEvaluato
             );
             // Setup quaternion (based on X axis) for angle between tangent and camera eye.
             this.m_tmpQuaternion.setFromAxisAngle(this.m_tmpVectors[0], alpha);
-            // Aquire camera (eye) forward vector from Z axis reversed (keep it in tmpVectors[2]).
+            // Acquire camera (eye) forward vector from Z axis reversed (keep it in tmpVectors[2]).
             const cameraFwdVec = this.m_tmpVectors[2].negate();
             // Apply quaternion to forward vector, creating tangent vector (store in tmpVectors[1]).
             const tangentVec = this.m_tmpVectors[1]
@@ -435,7 +439,7 @@ export class TopViewClipPlanesEvaluator extends ElevationBasedClipPlanesEvaluato
                 .applyQuaternion(this.m_tmpQuaternion);
             // Give it a proper length
             tangentVec.multiplyScalar(t + te);
-            // Calculate tanget projection onto camera eye vector, giving far plane distance.
+            // Calculate tangent projection onto camera eye vector, giving far plane distance.
             farPlane = tangentVec.dot(cameraFwdVec);
         }
         // Orthographic camera projection
@@ -463,7 +467,7 @@ export class TopViewClipPlanesEvaluator extends ElevationBasedClipPlanesEvaluato
             // based on the right triangle:
             // (r+maxElev)^2 = r^2 + te^2
             // te = sqrt((r+maxElev)^2 - r^2)
-            // although we may not calculate it if elevation is neglible:
+            // although we may not calculate it if elevation is negligible:
             const te =
                 this.maxElevation < epsilon
                     ? 0
@@ -473,12 +477,16 @@ export class TopViewClipPlanesEvaluator extends ElevationBasedClipPlanesEvaluato
             // Both near and far planes distances are directly applied to frustum, because tangents'
             // lines are parallel to camera look at vector.
         }
-        // Apply the constraints.
-        nearPlane = Math.max(nearPlane - this.nearFarMargin / 2, this.nearMin);
         // In extreme cases the largest depression assumed may be further then tangent
         // based far plane distance, take it into account
-        farPlane = Math.max(farPlane, cameraAltitude - this.minElevation);
-        farPlane = Math.max(farPlane + this.nearFarMargin / 2, nearPlane + this.nearFarMargin);
+        const farMin = cameraAltitude - this.minElevation;
+        // Apply the constraints.
+        nearPlane = Math.max(nearPlane, this.nearMin);
+        farPlane = Math.max(farPlane, farMin);
+        // Apply margins
+        const nearFarMargin = (this.nearFarMarginRatio * (nearPlane + farPlane)) / 2;
+        nearPlane = Math.max(nearPlane - nearFarMargin / 2, this.nearMin);
+        farPlane = Math.max(farPlane + nearFarMargin / 2, nearPlane + nearFarMargin);
 
         const viewRanges: ViewRanges = {
             near: nearPlane,
@@ -502,27 +510,27 @@ export class TiltViewClipPlanesEvaluator extends TopViewClipPlanesEvaluator {
      */
     protected m_tmpPlane = new THREE.Plane();
 
-    evaluateClipPlanes(camera: THREE.Camera, projection: Projection): ViewRanges {
+    evaluateClipPlanes(mapView: MapView): ViewRanges {
         // Different algorithms are used for spherical and planar projections.
-        if (projection.type === ProjectionType.Spherical) {
-            return this.evaluateSphericalProj(camera, projection);
-        } else if (projection.type === ProjectionType.Planar) {
-            return this.evaluatePlanarProj(camera, projection);
+        if (mapView.projection.type === ProjectionType.Spherical) {
+            return this.evaluateSphericalProj(mapView.camera, mapView.projection);
+        } else if (mapView.projection.type === ProjectionType.Planar) {
+            return this.evaluatePlanarProj(mapView);
         }
-        assert(false, "Unsuported projection type");
+        assert(false, "Unsupported projection type");
         return { ...this.minimumViewRange };
     }
 
     /**
      * Calculate the camera distance to the ground in direction of look at vector.
-     * This is not equivalent to camera altitute cause value will change according to look at
+     * This is not equivalent to camera altitude cause value will change according to look at
      * direction. It simply measures the distance of intersection point between ray from
      * camera and ground level, yet without taking into account terrain elevation nor buildings.
      * @param camera
      * @param projection
      * @note Use with extreme care cause due to optimizations the internal temporary vectors
-     * are used (m_tmpVectors[0], m_tmpVectors[1]). Thoose should not be used in outlining
-     * function scope (calle).
+     * are used (m_tmpVectors[0], m_tmpVectors[1]). Those should not be used in outlining
+     * function scope (caller).
      */
     protected getCameraLookAtDistance(camera: THREE.Camera, projection: Projection): number {
         assert(projection.type !== ProjectionType.Spherical);
@@ -548,12 +556,11 @@ export class TiltViewClipPlanesEvaluator extends TopViewClipPlanesEvaluator {
      * ground intersections of top and bottom frustum planes.
      * @note This method assumes the world surface (ground) to be flat and
      * works only with planar projections.
+     *
+     * @param mapView The [[MapView]] instance in use.
      */
-    protected getFrustumGroundIntersectionDist(
-        camera: THREE.Camera,
-        projection: Projection
-    ): { top: number; bottom: number } {
-        assert(projection.type !== ProjectionType.Spherical);
+    protected getFrustumGroundIntersectionDist(mapView: MapView): { top: number; bottom: number } {
+        assert(mapView.projection.type !== ProjectionType.Spherical);
         // This algorithm computes the length of frustum planes before intersecting with a flat
         // ground surface. Entire computation is split over two projections method and performed
         // for top and bottom plane, with addition of terrain (ground) elevation which is taken
@@ -579,10 +586,10 @@ export class TiltViewClipPlanesEvaluator extends TopViewClipPlanesEvaluator {
         // - z1 == z2 == z, for perspective camera all planes origin its the same
         // - a is a right angle.
         // - e is the look at vector of the camera.
-        // - t and b are the frustum planes of the camera (top and bottom respectivelly).
+        // - t and b are the frustum planes of the camera (top and bottom respectively).
         // - angle between c1 to c2 is the fov.
         // - c1, c2 - vectors from camera to the ground along frustum planes.
-        // - angles between c1 and e or e and c2 splits fov on equal halfs.
+        // - angles between c1 and e or e and c2 splits fov on equal halves.
         // - d1 and d2 are the intersection points of the frustum with the world/ground plane.
         // - angle between z and e is the pitch of the camera.
         // - angle between g and e is the tilt angle.
@@ -592,11 +599,19 @@ export class TiltViewClipPlanesEvaluator extends TopViewClipPlanesEvaluator {
         // plane.
         // This are the distances from C->D1 and C->D2, and are described as
         // c1 and c2. Then we may compensate/correct those distances with actual
-        // ground elevations, which is done by simply offseting camera altitude, as it is
+        // ground elevations, which is done by simply offsetting camera altitude, as it is
         // opposite to elevating ground level.
         const halfPiLimit = Math.PI / 2 - epsilon;
-        const cameraAltitude = this.getCameraAltitude(camera, projection);
-        const cameraTilt = MapViewUtils.getCameraTiltAngle(camera, projection);
+        const cameraAltitude = this.getCameraAltitude(mapView.camera, mapView.projection);
+        const target = MapViewUtils.rayCastWorldCoordinates(mapView, 0, 0);
+        if (target === null) {
+            throw new Error("MapView does not support a view pointing in the void.");
+        }
+        const cameraTilt = MapViewUtils.extractSphericalCoordinatesFromLocation(
+            mapView,
+            mapView.camera,
+            mapView.projection.unprojectPoint(target)
+        ).tilt;
         // Angle between z and c2
         let topAngleRad: number;
         // Angle between z and c1
@@ -606,8 +621,8 @@ export class TiltViewClipPlanesEvaluator extends TopViewClipPlanesEvaluator {
         // Top plane origin altitude
         let z2: number;
         // For perspective projection:
-        if (camera.type === "PerspectiveCamera") {
-            const cam = camera as THREE.PerspectiveCamera;
+        if (mapView.camera.type === "PerspectiveCamera") {
+            const cam = mapView.camera as THREE.PerspectiveCamera;
             // Angle between z and c2, note, the fov is vertical, otherwise we would need to
             // translate it using aspect ratio:
             // let aspect = camera.aspect > 1 ? camera.aspect : 1 / camera.aspect;
@@ -620,12 +635,12 @@ export class TiltViewClipPlanesEvaluator extends TopViewClipPlanesEvaluator {
         }
         // For orthographic projection:
         else {
-            const cam = camera as THREE.OrthographicCamera;
+            const cam = (mapView.camera as any) as THREE.OrthographicCamera;
             // For orthogonal camera projections we may simply ignore FOV and use 0 for FOV
             // the top/bottom planes are simply parallel to the eye vector:
             topAngleRad = bottomAngleRad = cameraTilt;
             // Although the ray origin is not always the same (eye position) as for
-            // the perspective projections, thus we need to compensate for otrho-cube
+            // the perspective projections, thus we need to compensate for ortho-cube
             // dimensions:
             // sin(tilt) = zc2 / top
             // sin(tilt) = zc1 / bottom
@@ -650,21 +665,21 @@ export class TiltViewClipPlanesEvaluator extends TopViewClipPlanesEvaluator {
         };
     }
 
-    private evaluatePlanarProj(camera: THREE.Camera, projection: Projection): ViewRanges {
-        assert(projection.type !== ProjectionType.Spherical);
+    private evaluatePlanarProj(mapView: MapView): ViewRanges {
+        assert(mapView.projection.type !== ProjectionType.Spherical);
         const viewRanges = { ...this.minimumViewRange };
 
         // Generally near/far planes are set to keep top/bottom planes intersection distance.
         // Then elevations margins are applied. Here margins (min/max elevations) are meant to
         // be defined as distance along the ground normal vector thus during camera
         // tilt they may affect near/far planes positions differently.
-        const planesDist = this.getFrustumGroundIntersectionDist(camera, projection);
+        const planesDist = this.getFrustumGroundIntersectionDist(mapView);
 
-        // Project cliping plane distances for the top/bottom frustum planes (edges), but
+        // Project clipping plane distances for the top/bottom frustum planes (edges), but
         // only if we deal with perspective camera type, this step is not required
         // for orthographic projections, cause all clip planes are parallel to eye vector.
-        if (camera.type === "PerspectiveCamera") {
-            const cam = camera as THREE.PerspectiveCamera;
+        if (mapView.camera.type === "PerspectiveCamera") {
+            const cam = mapView.camera as THREE.PerspectiveCamera;
             // Angle between z and c2, note, the fov is vertical, otherwise we would need to
             // translate it using aspect ratio:
             // let aspect = camera.aspect > 1 ? camera.aspect : 1 / camera.aspect;
@@ -686,13 +701,16 @@ export class TiltViewClipPlanesEvaluator extends TopViewClipPlanesEvaluator {
         }
 
         // Clamp values to constraints.
-        const lookAtDist = this.getCameraLookAtDistance(camera, projection);
+        const lookAtDist = this.getCameraLookAtDistance(mapView.camera, mapView.projection);
         const farMax = lookAtDist * this.farMaxRatio;
-        viewRanges.near = Math.max(viewRanges.near - this.nearFarMargin / 2, this.nearMin);
+        viewRanges.near = Math.max(viewRanges.near, this.nearMin);
         viewRanges.far = Math.min(viewRanges.far, farMax);
+        // Apply margins
+        const nearFarMargin = (this.nearFarMarginRatio * (viewRanges.near + viewRanges.far)) / 2;
+        viewRanges.near = Math.max(viewRanges.near - nearFarMargin / 2, this.nearMin);
         viewRanges.far = Math.max(
-            viewRanges.far + this.nearFarMargin / 2,
-            viewRanges.near + this.nearFarMargin
+            viewRanges.far + nearFarMargin / 2,
+            viewRanges.near + nearFarMargin
         );
         viewRanges.minimum = this.nearMin;
         viewRanges.maximum = farMax;
@@ -703,12 +721,12 @@ export class TiltViewClipPlanesEvaluator extends TopViewClipPlanesEvaluator {
         assert(projection.type === ProjectionType.Spherical);
         const viewRanges = { ...this.minimumViewRange };
 
-        // Near plance calculus is pretty straightforward and does not depent on camera tilt:
+        // Near plane calculus is pretty straightforward and does not depend on camera tilt:
         const cameraAltitude = this.getCameraAltitude(camera, projection);
         viewRanges.near = cameraAltitude - this.maxElevation;
         if (camera instanceof THREE.PerspectiveCamera) {
             // Now we need to account for camera tilt and frustum volume, so the longest
-            // frustum edge does not instersects with sphere, it takes the worst case
+            // frustum edge does not intersects with sphere, it takes the worst case
             // scenario regardless of camera tilt, so may be improved little bit with more
             // sophisticated algorithm.
             // Note, the fov is vertical, otherwise we would need to
@@ -731,7 +749,7 @@ export class TiltViewClipPlanesEvaluator extends TopViewClipPlanesEvaluator {
         );
         const xaxis = this.m_tmpVectors[0];
         const yaxis = this.m_tmpVectors[1];
-        // Extend the far plane by the margin along the shpere normal (radius).
+        // Extend the far plane by the margin along the sphere normal (radius).
         // In order to calculate far plane distance we need to find sphere tangent
         // line that passes thru camera position, method explanation may be found in
         // TopViewClipPlanesEvaluator.evaluateDistanceSphericalProj() method.
@@ -746,7 +764,7 @@ export class TiltViewClipPlanesEvaluator extends TopViewClipPlanesEvaluator {
         // Apply tangent vector length onto camera to origin vector.
         let td: THREE.Vector3;
         // There may be situations when maximum elevation remains below sea level (< 0), or
-        // is neglible, in such cases simply apply tangent distance to camera to origin vector.
+        // is negligible, in such cases simply apply tangent distance to camera to origin vector.
         if (this.maxElevation < epsilon) {
             // This may be calculated by several methods, firstly:
             // t_d = d_norm * |t|,
@@ -756,7 +774,7 @@ export class TiltViewClipPlanesEvaluator extends TopViewClipPlanesEvaluator {
             // By simplifying t_d equation with the second condition, we get:
             // t_d = d_norm * cos(alpha) * |d|, where d = d_norm * |d|
             // t_d = d * cos(alpha)
-            // Cause cameraToOrigin is no longer needed re-use it to calulate td.
+            // Cause cameraToOrigin is no longer needed re-use it to calculate td.
             td = cameraToOrigin.multiplyScalar(cosAlpha);
         }
         // Second case takes into account the elevation above the ground.
@@ -772,7 +790,7 @@ export class TiltViewClipPlanesEvaluator extends TopViewClipPlanesEvaluator {
             // |te| = sqrt(2*r*e + e^2)
             const t = cosAlpha * d;
             const te = Math.sqrt(2 * r * this.maxElevation - this.maxElevation * this.maxElevation);
-            // Re-use prealocated vector.
+            // Re-use pre-allocated vector.
             td = cameraToOrigin.copy(dNorm).multiplyScalar(t + te);
         }
         // For tangent, oriented in the direction to origin, we then apply
@@ -790,7 +808,7 @@ export class TiltViewClipPlanesEvaluator extends TopViewClipPlanesEvaluator {
         const tdrx2 = td.applyQuaternion(rx2);
 
         // Rotated tangents are then added to camera position thus defining far plane
-        // position and orientation - it is enough to have three cooplanar points to
+        // position and orientation - it is enough to have three co-planar points to
         // define the plane.
         // p1 = camera.position + tdrx
         // p2 = camera.position + tdry
@@ -798,19 +816,22 @@ export class TiltViewClipPlanesEvaluator extends TopViewClipPlanesEvaluator {
         // const farPlane = new THREE.Plane().setFromCoplanarPoints(p1, p2, p3);
         // viewRanges.far = farPlane.distanceToPoint(camera.position);
 
-        // This of course may be simplified by moving calculus entirelly to camera space,
+        // This of course may be simplified by moving calculus entirely to camera space,
         // because far plane is indeed defined in that space anyway:
         const farPlane = this.m_tmpPlane.setFromCoplanarPoints(tdrx, tdry, tdrx2);
         viewRanges.far = farPlane.constant;
-
-        // Finally apply the constraints.
-        viewRanges.near = Math.max(viewRanges.near - this.nearFarMargin / 2, this.nearMin);
         // Take into account largest depression assumed, that may be further then
         // tangent based far plane distance.
-        viewRanges.far = Math.max(viewRanges.far, cameraAltitude - this.minElevation);
+        const farMin = cameraAltitude - this.minElevation;
+        // Finally apply the constraints.
+        viewRanges.near = Math.max(viewRanges.near, this.nearMin);
+        viewRanges.far = Math.max(viewRanges.far, farMin);
+        // Apply margins
+        const nearFarMargin = (this.nearFarMarginRatio * (viewRanges.near + viewRanges.far)) / 2;
+        viewRanges.near = Math.max(viewRanges.near - nearFarMargin / 2, this.nearMin);
         viewRanges.far = Math.max(
-            viewRanges.far + this.nearFarMargin / 2,
-            viewRanges.near + this.nearFarMargin
+            viewRanges.far + nearFarMargin / 2,
+            viewRanges.near + nearFarMargin
         );
         viewRanges.minimum = this.nearMin;
         viewRanges.maximum = viewRanges.far;
@@ -864,7 +885,7 @@ export class FixedClipPlanesEvaluator implements ClipPlanesEvaluator {
         return 0;
     }
 
-    evaluateClipPlanes(camera: THREE.Camera, projection: Projection): ViewRanges {
+    evaluateClipPlanes(mapView: MapView): ViewRanges {
         // We do not need to perform actual evaluation cause results are precomputed and
         // kept stable until somebody changes the properties.
         const viewRanges: ViewRanges = {
@@ -887,7 +908,9 @@ export class FixedClipPlanesEvaluator implements ClipPlanesEvaluator {
 }
 
 /**
- * Default [[ClipPlanesEvaluator]] calculates near plane based on ground distance.
+ * Factory function that creates default [[ClipPlanesEvaluator]] that calculates near plane based
+ * on ground distance and camera orientation.
+ *
+ * Creates [[TiltViewClipPlanesEvaluator]].
  */
-// tslint:disable-next-line: max-line-length
-export const defaultClipPlanesEvaluator: ClipPlanesEvaluator = new InterpolatedClipPlanesEvaluator();
+export const createDefaultClipPlanesEvaluator = () => new TiltViewClipPlanesEvaluator();

@@ -27,6 +27,8 @@ import * as THREE from "three";
 
 import { ImageItem } from "../image/Image";
 import { PickResult } from "../PickHandler";
+import { TextElementState } from "./TextElementState";
+import { TextElementType } from "./TextElementType";
 
 /**
  * Additional information for an icon that is to be rendered along with a [[TextElement]].
@@ -181,118 +183,12 @@ export interface TextPickResult extends PickResult {
 }
 
 /**
- * State of fading.
- */
-export enum FadingState {
-    Undefined = 0,
-    FadingIn = 1,
-    FadedIn = 2,
-    FadingOut = -1,
-    FadedOut = -2
-}
-
-/**
  * State of loading.
  */
 export enum LoadingState {
     Requested,
     Loaded,
     Initialized
-}
-
-/**
- * Time to fade in/fade out the labels in milliseconds.
- */
-export const DEFAULT_FADE_TIME = 800;
-
-/**
- * State of rendering of the icon and text part of the `TextElement`. Mainly for fading the elements
- * in and out, to compute the opacity.
- *
- * @hidden
- */
-export class RenderState {
-    /**
-     * Create a `RenderState`.
-     *
-     * @param state Fading state.
-     * @param value Current fading value [0..1].
-     * @param startTime Time stamp the fading started.
-     * @param opacity Computed opacity depending on value.
-     * @param lastFrameNumber Latest frame the elements was rendered, allows to detect some less
-     *                        obvious states, like popping up after being hidden.
-     * @param fadingTime Time used to fade in or out.
-     */
-    constructor(
-        public state = FadingState.Undefined,
-        public value = 0.0,
-        public startTime = 0,
-        public opacity = 1.0,
-        public lastFrameNumber = Number.MIN_SAFE_INTEGER,
-        public fadingTime: number = DEFAULT_FADE_TIME
-    ) {}
-
-    /**
-     * Reset existing `RenderState` to appear like a fresh state.
-     */
-    reset() {
-        this.state = FadingState.Undefined;
-        this.value = 0.0;
-        this.startTime = 0.0;
-        this.opacity = 1.0;
-        this.lastFrameNumber = Number.MIN_SAFE_INTEGER;
-    }
-
-    /**
-     * @returns `true` if element is either fading in or fading out.
-     */
-    isFading(): boolean {
-        const fading = this.state === FadingState.FadingIn || this.state === FadingState.FadingOut;
-        return fading;
-    }
-
-    /**
-     * @returns `true` if element is fading in.
-     */
-    isFadingIn(): boolean {
-        const fadingIn = this.state === FadingState.FadingIn;
-        return fadingIn;
-    }
-
-    /**
-     * @returns `true` if element is fading out.
-     */
-    isFadingOut(): boolean {
-        const fadingOut = this.state === FadingState.FadingOut;
-        return fadingOut;
-    }
-
-    /**
-     * @returns `true` if element is done with fading in.
-     */
-    isFadedIn(): boolean {
-        const fadedIn = this.state === FadingState.FadedIn;
-        return fadedIn;
-    }
-
-    /**
-     * @returns `true` if element is done with fading out.
-     */
-    isFadedOut(): boolean {
-        const fadedOut = this.state === FadingState.FadedOut;
-        return fadedOut;
-    }
-
-    /**
-     * @returns `true` if element is either faded in, is fading in or is fading out.
-     */
-    isVisible(): boolean {
-        const visible =
-            this.state === FadingState.FadingIn ||
-            this.state === FadingState.FadedIn ||
-            this.state === FadingState.FadingOut;
-        return visible;
-    }
 }
 
 /**
@@ -384,12 +280,6 @@ export class TextElement {
 
     /**
      * @hidden
-     * Used during label placement to reserve space from front to back.
-     */
-    currentViewDistance?: number;
-
-    /**
-     * @hidden
      * Used during sorting.
      */
     sortPriority?: number = 0;
@@ -404,21 +294,7 @@ export class TextElement {
      * @hidden
      * Used during rendering.
      */
-    iconRenderState?: RenderState;
-
-    /**
-     * @hidden
-     * Used during rendering.
-     */
-    textRenderState?: RenderState;
-
-    /**
-     * @hidden
-     * Used during rendering. Used for line markers only, which have a points array and multiple
-     * icon positions to render. Since line markers use the same renderState for text part and icon,
-     * there is no separate array of [[RenderState]]s for the text parts of the line markers.
-     */
-    iconRenderStates?: RenderState[];
+    m_renderState: TextElementState;
 
     /**
      * @hidden
@@ -508,6 +384,8 @@ export class TextElement {
         if (layoutParams instanceof TextLayoutStyle) {
             this.layoutStyle = layoutParams;
         }
+
+        this.m_renderState = new TextElementState();
     }
 
     /**
@@ -572,6 +450,40 @@ export class TextElement {
     }
 
     /**
+     * Determine if the `TextElement` is a path label.
+     * @returns `true` if this `TextElement` is a path label.
+     */
+    get isPathLabel(): boolean {
+        return this.path !== undefined && !this.isLineMarker;
+    }
+
+    /**
+     * Determine if the `TextElement` is a poi label.
+     * @returns `true` if this `TextElement` is a poi label.
+     */
+    get isPoiLabel(): boolean {
+        return this.path === undefined;
+    }
+
+    /**
+     * Determine the type of `TextElement`.
+     * @returns This `TextElement` type.
+     */
+    get type(): TextElementType {
+        if (this.isPoiLabel) {
+            return TextElementType.PoiLabel;
+        } else if (this.isLineMarker) {
+            return TextElementType.LineMarker;
+        }
+
+        return TextElementType.PathLabel;
+    }
+
+    get renderState(): TextElementState {
+        return this.m_renderState;
+    }
+
+    /**
      * Return the last distance that has been computed for sorting during placement. This may not be
      * the actual distance if the camera is moving, as the distance is computed only during
      * placement. If the property `alwaysOnTop` is true, the value returned is always `0`.
@@ -581,8 +493,8 @@ export class TextElement {
     get renderDistance(): number {
         return this.alwaysOnTop === true
             ? 0
-            : this.currentViewDistance !== undefined
-            ? -this.currentViewDistance
+            : this.m_renderState.viewDistance !== undefined
+            ? -this.m_renderState.viewDistance
             : 0;
     }
 

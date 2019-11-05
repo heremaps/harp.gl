@@ -308,6 +308,10 @@ export class SimpleTileGeometryLoader implements TileGeometryLoader {
                         ? decodedTile.textPathGeometries.length
                         : 0
                 );
+                currentFrame.addValue(
+                    "geometryCount.numPathGeometries",
+                    decodedTile.pathGeometries !== undefined ? decodedTile.pathGeometries.length : 0
+                );
                 currentFrame.addMessage(
                     // tslint:disable-next-line: max-line-length
                     `Decoded tile: ${tile.dataSource.name} # lvl=${tile.tileKey.level} col=${tile.tileKey.column} row=${tile.tileKey.row}`

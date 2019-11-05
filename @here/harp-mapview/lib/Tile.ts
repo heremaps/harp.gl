@@ -14,7 +14,7 @@ import { assert, CachedResource, GroupedPriorityList, LoggerManager } from "@her
 import * as THREE from "three";
 
 import { AnimatedExtrusionTileHandler } from "./AnimatedExtrusionHandler";
-import { CopyrightInfo } from "./CopyrightInfo";
+import { CopyrightInfo } from "./copyrights/CopyrightInfo";
 import { DataSource } from "./DataSource";
 import { TileGeometryLoader } from "./geometry/TileGeometryLoader";
 import { MapView } from "./MapView";
@@ -278,6 +278,11 @@ export class Tile implements CachedResource {
      * The bounding box of this `Tile` in world coordinates.
      */
     readonly boundingBox = new OrientedBox3();
+
+    /**
+     * Maximum height of geometry on this tile above ground level.
+     */
+    maxGeometryHeight: number = 0;
 
     /**
      * A record of road data that cannot be intersected with THREE.JS, because the geometry is
@@ -660,7 +665,7 @@ export class Tile implements CachedResource {
     }
 
     /**
-     * Estimated maximum elevation above the sea level that may be found on tile.
+     * Estimated maximum ground elevation above the sea level that may be found on tile.
      * @note Negative values indicates depressions.
      */
     get maxElevation(): number {
@@ -964,11 +969,19 @@ export class Tile implements CachedResource {
             this.m_animatedExtrusionTileHandler.dispose();
         }
 
+        this.clearTextElements();
+        this.invalidateResourceInfo();
+    }
+
+    /**
+     * Removes all [[TextElement]] from the tile.
+     */
+    clearTextElements() {
         this.placedTextElements.clear();
         this.m_pathBlockingElements.splice(0);
         this.textElementGroups.clear();
         this.userTextElements.length = 0;
-        this.invalidateResourceInfo();
+        this.textElementsChanged = true;
     }
 
     /**

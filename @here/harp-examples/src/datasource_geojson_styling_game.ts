@@ -13,9 +13,9 @@ import {
 } from "@here/harp-datasource-protocol";
 import { GeoJsonDataProvider } from "@here/harp-geojson-datasource";
 import { GeoCoordinates } from "@here/harp-geoutils";
-import { CopyrightElementHandler, CopyrightInfo, MapView } from "@here/harp-mapview";
+import { CopyrightElementHandler, MapView } from "@here/harp-mapview";
 import { APIFormat, OmvDataSource } from "@here/harp-omv-datasource";
-import { accessToken } from "../config";
+import { accessToken, copyrightInfo } from "../config";
 import * as geojson from "../resources/italy.json";
 
 /**
@@ -93,20 +93,13 @@ export namespace GeoJsonStylingGame {
         mapView.resize(window.innerWidth, window.innerHeight);
     });
     mapView.canvas.addEventListener("contextmenu", e => e.preventDefault());
-    const hereCopyrightInfo: CopyrightInfo = {
-        id: "here.com",
-        year: new Date().getFullYear(),
-        label: "HERE",
-        link: "https://legal.here.com/terms"
-    };
-    const copyrights: CopyrightInfo[] = [hereCopyrightInfo];
     const baseMap = new OmvDataSource({
         baseUrl: "https://xyz.api.here.com/tiles/herebase.02",
         apiFormat: APIFormat.XYZOMV,
         styleSetName: "tilezen",
         maxZoomLevel: 17,
         authenticationCode: accessToken,
-        copyrightInfo: copyrights
+        copyrightInfo
     });
     mapView.addDataSource(baseMap);
     // end:harp_gl_initmapview.ts

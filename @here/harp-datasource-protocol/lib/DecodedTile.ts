@@ -11,6 +11,7 @@ import {
     OrientedBox3,
     Projection,
     sphereProjection,
+    Vector3Like,
     webMercatorProjection
 } from "@here/harp-geoutils";
 import { Technique } from "./Techniques";
@@ -24,10 +25,12 @@ import { TileInfo } from "./TileInfo";
 export interface DecodedTile {
     techniques: Technique[];
     geometries: Geometry[];
+    pathGeometries?: PathGeometry[];
     textPathGeometries?: TextPathGeometry[];
     textGeometries?: TextGeometry[]; // ### deprecate
     poiGeometries?: PoiGeometry[];
     tileInfo?: TileInfo;
+    maxGeometryHeight?: number;
     decodeTime?: number; // time used to decode (in ms)
 
     /**
@@ -46,6 +49,14 @@ export interface DecodedTile {
      * @see [[CopyrightInfo]]
      */
     copyrightHolderIds?: string[];
+}
+
+/**
+ * This object keeps the path of the geometry. Space of the path depends on the
+ * use case, so could be either world or local tile space.
+ */
+export interface PathGeometry {
+    path: Vector3Like[];
 }
 
 /**

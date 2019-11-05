@@ -46,7 +46,7 @@ export interface AttrEvaluationContext {
  */
 export function evaluateTechniqueAttr<T = Value>(
     context: Env | AttrEvaluationContext,
-    attrValue: T | Expr | InterpolatedProperty<T> | undefined
+    attrValue: T | Expr | InterpolatedProperty | undefined
 ): T | undefined;
 
 /**
@@ -56,13 +56,13 @@ export function evaluateTechniqueAttr<T = Value>(
  */
 export function evaluateTechniqueAttr<T = Value>(
     context: Env | AttrEvaluationContext,
-    attrValue: T | Expr | InterpolatedProperty<T> | undefined,
+    attrValue: T | Expr | InterpolatedProperty | undefined,
     defaultValue: T
 ): T;
 
 export function evaluateTechniqueAttr<T = Value>(
     context: Env | AttrEvaluationContext,
-    attrValue: T | Expr | InterpolatedProperty<T> | undefined,
+    attrValue: T | Expr | InterpolatedProperty | undefined,
     defaultValue?: T
 ): T | undefined {
     const env = context instanceof Env ? context : context.env;

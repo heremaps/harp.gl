@@ -37,7 +37,7 @@ import { StringOperators } from "./operators/StringOperators";
 import { TypeOperators } from "./operators/TypeOperators";
 
 export interface OperatorDescriptor {
-    call: (context: ExprEvaluatorContext, args: Expr[]) => Value;
+    call: (context: ExprEvaluatorContext, call: CallExpr) => Value;
 }
 
 export interface OperatorDescriptorMap {
@@ -113,7 +113,7 @@ export class ExprEvaluator implements ExprVisitor<Value, ExprEvaluatorContext> {
     visitContainsExpr(expr: ContainsExpr, context: ExprEvaluatorContext): Value {
         const value = expr.value.accept(this, context);
 
-        const result = expr.elements.includes(value);
+        const result = expr.elements.includes(value as any);
 
         if (context.cache !== undefined) {
             context.cache.set(expr, result);
@@ -146,7 +146,7 @@ export class ExprEvaluator implements ExprVisitor<Value, ExprEvaluatorContext> {
     visitCallExpr(expr: CallExpr, context: ExprEvaluatorContext): Value {
         switch (expr.op) {
             case "all":
-                for (const childExpr of expr.children) {
+                for (const childExpr of expr.args) {
                     if (!childExpr.accept(this, context)) {
                         return false;
                     }
@@ -154,7 +154,7 @@ export class ExprEvaluator implements ExprVisitor<Value, ExprEvaluatorContext> {
                 return true;
 
             case "any":
-                for (const childExpr of expr.children) {
+                for (const childExpr of expr.args) {
                     if (childExpr.accept(this, context)) {
                         return true;
                     }
@@ -162,7 +162,7 @@ export class ExprEvaluator implements ExprVisitor<Value, ExprEvaluatorContext> {
                 return false;
 
             case "none":
-                for (const childExpr of expr.children) {
+                for (const childExpr of expr.args) {
                     if (childExpr.accept(this, context)) {
                         return false;
                     }
@@ -182,7 +182,7 @@ export class ExprEvaluator implements ExprVisitor<Value, ExprEvaluatorContext> {
                 if (descriptor) {
                     expr.descriptor = descriptor;
 
-                    const result = descriptor.call(context, expr.children);
+                    const result = descriptor.call(context, expr);
 
                     if (context.cache) {
                         context.cache.set(expr, result);

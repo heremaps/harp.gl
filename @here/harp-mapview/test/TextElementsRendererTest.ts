@@ -25,7 +25,8 @@ import * as THREE from "three";
 import { MapView } from "../lib/MapView";
 import { ScreenCollisions } from "../lib/ScreenCollisions";
 import { ScreenProjector } from "../lib/ScreenProjector";
-import { DEFAULT_FADE_TIME, TextElement } from "../lib/text/TextElement";
+import { DEFAULT_FADE_TIME } from "../lib/text/RenderState";
+import { TextElement } from "../lib/text/TextElement";
 import { TextElementsRenderer } from "../lib/text/TextElementsRenderer";
 import { TextLayoutStyleCache, TextRenderStyleCache } from "../lib/text/TextStyleCache";
 import { MapViewUtils } from "../lib/Utils";
@@ -221,9 +222,11 @@ describe("TextElementsRenderer", function() {
 
         expect(numRenderedTextElements).to.be.equal(1);
         expect(renderedTextElements.length).to.be.equal(1);
-        expect(renderedTextElements[0].textRenderState!.startTime).to.be.equal(startTime);
-        expect(renderedTextElements[0].textRenderState!.opacity).to.be.equal(0);
-        assert(renderedTextElements[0].textRenderState!.isFadingIn());
+        expect(renderedTextElements[0].renderState.textRenderState!.startTime).to.be.equal(
+            startTime
+        );
+        expect(renderedTextElements[0].renderState.textRenderState!.opacity).to.be.equal(0);
+        assert(renderedTextElements[0].renderState.textRenderState!.isFadingIn());
 
         // Second frame. Label should be semi-transparent and fading in.
         renderedTextElements.splice(0);
@@ -238,12 +241,12 @@ describe("TextElementsRenderer", function() {
 
         expect(numRenderedTextElements).to.be.equal(1);
         expect(renderedTextElements.length).to.be.equal(1);
-        expect(renderedTextElements[0].textRenderState!.opacity)
+        expect(renderedTextElements[0].renderState.textRenderState!.opacity)
             .to.be.greaterThan(0)
             .to.be.lessThan(1);
-        assert(renderedTextElements[0].textRenderState!.isFadingIn());
+        assert(renderedTextElements[0].renderState.textRenderState!.isFadingIn());
 
-        const lastOpacity = renderedTextElements[0].textRenderState!.opacity;
+        const lastOpacity = renderedTextElements[0].renderState.textRenderState!.opacity;
 
         // Third frame. Label should be semi-transparent and still fading in.
         renderedTextElements.splice(0);
@@ -257,10 +260,10 @@ describe("TextElementsRenderer", function() {
         );
         expect(numRenderedTextElements).to.be.equal(1);
         expect(renderedTextElements.length).to.be.equal(1);
-        expect(renderedTextElements[0].textRenderState!.opacity)
+        expect(renderedTextElements[0].renderState.textRenderState!.opacity)
             .to.be.greaterThan(lastOpacity)
             .to.be.lessThan(1);
-        assert(renderedTextElements[0].textRenderState!.isFadingIn());
+        assert(renderedTextElements[0].renderState.textRenderState!.isFadingIn());
 
         // Forth frame. Label should be visible and fading should be finished.
         renderedTextElements.splice(0);
@@ -275,8 +278,8 @@ describe("TextElementsRenderer", function() {
 
         expect(numRenderedTextElements).to.be.equal(1);
         expect(renderedTextElements.length).to.be.equal(1);
-        expect(renderedTextElements[0].textRenderState!.opacity).to.be.equal(1);
-        assert(renderedTextElements[0].textRenderState!.isFadedIn());
+        expect(renderedTextElements[0].renderState.textRenderState!.opacity).to.be.equal(1);
+        assert(renderedTextElements[0].renderState.textRenderState!.isFadedIn());
 
         return Promise.resolve();
     });

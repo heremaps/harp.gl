@@ -15,7 +15,7 @@ import {
 } from "./MapMeshMaterials";
 
 const vertexSource: string = `
-#define EDGE_DEPTH_OFFSET 0.00005
+#define EDGE_DEPTH_OFFSET 0.0001
 
 attribute vec3 position;
 attribute vec4 color;
@@ -63,7 +63,12 @@ void main() {
     vec4 mvPosition = modelViewMatrix * vec4( transformed, 1.0 );
 
     gl_Position = projectionMatrix * mvPosition;
-    gl_Position.z -= EDGE_DEPTH_OFFSET * gl_Position.w;
+    // After projection gl_Position contains clip space coordinates of each vertex
+    // before perspective division (1 / w), thus only vertexes with -w < z < w should
+    // be displayed and offset. We offset only those edges which z coordinate in NDC
+    // space is between: -inf < z < 1
+    float depthOffset = step(-1.0, -gl_Position.z / gl_Position.w) * EDGE_DEPTH_OFFSET;
+    gl_Position.z -= depthOffset;
 
     #ifdef USE_FADING
     #include <fading_vertex>

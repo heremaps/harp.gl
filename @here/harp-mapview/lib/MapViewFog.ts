@@ -5,10 +5,10 @@
  */
 
 import { Theme } from "@here/harp-datasource-protocol";
-import { Projection } from "@here/harp-geoutils";
 import { HighPrecisionLineMaterial, SolidLineMaterial } from "@here/harp-materials";
 import { assert, MathUtils } from "@here/harp-utils";
 import * as THREE from "three";
+import { MapView } from "./MapView";
 import { MapViewUtils } from "./Utils";
 
 /**
@@ -85,24 +85,20 @@ export class MapViewFog {
      *
      * @param camera An instance of a `THREE.Camera` with a `far` property.
      */
-    update(
-        camera: THREE.PerspectiveCamera | THREE.OrthographicCamera,
-        projection: Projection,
-        viewDistance?: number
-    ) {
+    update(mapView: MapView, viewDistance?: number) {
         if (
             this.m_scene.fog !== null &&
             this.m_cachedTheme !== undefined &&
             this.m_cachedTheme.fog &&
             this.m_cachedTheme.fog.startRatio !== undefined &&
-            (camera.far !== undefined || viewDistance !== undefined)
+            (mapView.camera.far !== undefined || viewDistance !== undefined)
         ) {
             // If maximum visibility range is available use it instead of camera.far distance,
             // this makes fog independent from dynamic camera planes and keeps consistent
             // distance based "melting" (fog) effect during a tilt.
-            const viewRange = viewDistance !== undefined ? viewDistance : camera.far;
+            const viewRange = viewDistance !== undefined ? viewDistance : mapView.camera.far;
             // TODO: We may move below constants to theme Fog definition
-            // Density of the fog when viewing straight along the horizont line.
+            // Density of the fog when viewing straight along the horizon line.
             const horizontalDensity = 1.0;
             // Theoretical density of the fog when viewing straight from top to down.
             const verticalDensity = 0.0;
@@ -112,12 +108,24 @@ export class MapViewFog {
             // The fraction of maximum viewing range at which fog fully covers geometry.
             const endRatio = 1.0;
             assert(startRatio <= endRatio);
-            const t = Math.abs(Math.cos(MapViewUtils.getCameraTiltAngle(camera, projection)));
+            const target = MapViewUtils.rayCastWorldCoordinates(mapView, 0, 0);
+            if (target === null) {
+                throw new Error("MapView does not support a view pointing in the void.");
+            }
+            const t = Math.abs(
+                Math.cos(
+                    MapViewUtils.extractSphericalCoordinatesFromLocation(
+                        mapView,
+                        mapView.camera,
+                        mapView.projection.unprojectPoint(target)
+                    ).tilt
+                )
+            );
             const density = MathUtils.smoothStep(horizontalDensity, verticalDensity, t);
             this.m_fog.near = MathUtils.lerp(viewRange * startRatio, viewRange, 1.0 - density);
             this.m_fog.far = MathUtils.lerp(viewRange * endRatio, viewRange, density);
-            this.m_fog.near = Math.min(this.m_fog.near, camera.far);
-            this.m_fog.far = Math.min(this.m_fog.far, camera.far);
+            this.m_fog.near = Math.min(this.m_fog.near, mapView.camera.far);
+            this.m_fog.far = Math.min(this.m_fog.far, mapView.camera.far);
         }
     }
 

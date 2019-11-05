@@ -4,13 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Expr } from "../Expr";
+import { CallExpr } from "../Expr";
 
 import { ExprEvaluatorContext, OperatorDescriptorMap } from "../ExprEvaluator";
 
 const operators = {
     "geometry-type": {
-        call: (context: ExprEvaluatorContext, args: Expr[]) => {
+        call: (context: ExprEvaluatorContext, call: CallExpr) => {
             const geometryType = context.env.lookup("$geometryType");
             switch (geometryType) {
                 case "point":

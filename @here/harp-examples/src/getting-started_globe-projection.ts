@@ -4,11 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GeoCoordinates, sphereProjection } from "@here/harp-geoutils";
+import { sphereProjection } from "@here/harp-geoutils";
 import { MapControls, MapControlsUI } from "@here/harp-map-controls";
-import { CopyrightElementHandler, CopyrightInfo, MapView } from "@here/harp-mapview";
+import { CopyrightElementHandler, MapView } from "@here/harp-mapview";
 import { APIFormat, OmvDataSource } from "@here/harp-omv-datasource";
-import { accessToken } from "../config";
+import { accessToken, copyrightInfo } from "../config";
 
 export namespace GlobeExample {
     // Create a new MapView for the HTMLCanvasElement of the given id.
@@ -35,32 +35,20 @@ export namespace GlobeExample {
     function main() {
         const map = initializeMapView("mapCanvas");
 
-        const hereCopyrightInfo: CopyrightInfo = {
-            id: "here.com",
-            year: new Date().getFullYear(),
-            label: "HERE",
-            link: "https://legal.here.com/terms"
-        };
-
-        const copyrights: CopyrightInfo[] = [hereCopyrightInfo];
-
         const omvDataSource = new OmvDataSource({
             baseUrl: "https://xyz.api.here.com/tiles/herebase.02",
             apiFormat: APIFormat.XYZOMV,
             styleSetName: "tilezen",
             maxZoomLevel: 17,
             authenticationCode: accessToken,
-            copyrightInfo: copyrights
+            copyrightInfo
         });
 
         map.addDataSource(omvDataSource);
 
         const mapControls = new MapControls(map);
-        const ui = new MapControlsUI(mapControls);
+        const ui = new MapControlsUI(mapControls, { zoomLevel: "input" });
         map.canvas.parentElement!.appendChild(ui.domElement);
-
-        const NY = new GeoCoordinates(40.71, -74.007);
-        map.setCameraGeolocationAndZoom(NY, 3.2);
     }
 
     main();

@@ -28,8 +28,7 @@
         "@here/harp-geoutils": "^0.11.0-alpha.0",
         "@here/harp-lrucache": "^0.11.0-alpha.0",
         "@here/harp-mapview": "^0.11.0-alpha.0",
-        "@here/harp-utils": "^0.11.0-alpha.0",
-        "rtree": "^1.4.2"
+        "@here/harp-utils": "^0.11.0-alpha.0"
     },
     "devDependencies": {
         "@types/chai": "^4.1.2",
@@ -39,10 +38,10 @@
         "cross-env": "^5.2.0",
         "mocha": "^6.1.4",
         "source-map-support": "^0.5.2",
-        "typescript": "^3.5.2"
+        "typescript": "^3.6.4"
     },
     "peerDependencies": {
-        "three": "^0.108.0"
+        "three": "^0.110.0"
     },
     "publishConfig": {
         "access": "public"

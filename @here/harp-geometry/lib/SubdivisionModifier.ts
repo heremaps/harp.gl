@@ -153,18 +153,21 @@ export abstract class SubdivisionModifier {
             }
         }
 
-        positionAttr.setArray(new Float32Array(position));
+        positionAttr.array = new Float32Array(position);
+        positionAttr.count = position.length / positionAttr.itemSize;
         positionAttr.needsUpdate = true;
 
         geometry.setIndex(newIndices);
 
         if (uv !== undefined) {
-            uvAttr.setArray(new Float32Array(uv));
+            uvAttr.array = new Float32Array(uv);
+            uvAttr.count = uv.length / uvAttr.itemSize;
             uvAttr.needsUpdate = true;
         }
 
         if (edge !== undefined) {
-            edgeAttr.setArray(new Float32Array(edge));
+            edgeAttr.array = new Float32Array(edge);
+            edgeAttr.count = edge.length / edgeAttr.itemSize;
             edgeAttr.needsUpdate = true;
         }
 

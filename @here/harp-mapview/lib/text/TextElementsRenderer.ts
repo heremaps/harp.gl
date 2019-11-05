@@ -39,12 +39,14 @@ import { debugContext } from "../DebugContext";
 import { MapView } from "../MapView";
 import { PickObjectType, PickResult } from "../PickHandler";
 import { PoiRenderer } from "../poi/PoiRenderer";
-import { LineWithBound, ScreenCollisions } from "../ScreenCollisions";
+import { IBox, LineWithBound, ScreenCollisions } from "../ScreenCollisions";
 import { ScreenProjector } from "../ScreenProjector";
 import { Tile } from "../Tile";
 import { MapViewUtils } from "../Utils";
+import { FadingState, RenderState } from "./RenderState";
 import { SimpleLineCurve, SimplePath } from "./SimplePath";
-import { FadingState, LoadingState, RenderState, TextElement, TextPickResult } from "./TextElement";
+import { LoadingState, TextElement, TextPickResult } from "./TextElement";
+import { TextElementType } from "./TextElementType";
 import { DEFAULT_TEXT_STYLE_CACHE_ID } from "./TextStyleCache";
 
 const DEFAULT_STYLE_NAME = "default";
@@ -574,12 +576,10 @@ export class TextElementsRenderer {
             for (const tile of renderListEntry.visibleTiles) {
                 // Reset the render states, handle them as if they were just added to the tile.
                 tile.userTextElements.forEach(textElement => {
-                    textElement.iconRenderState = undefined;
-                    textElement.textRenderState = undefined;
+                    textElement.renderState.clear();
                 });
                 tile.textElementGroups.forEach(textElement => {
-                    textElement.iconRenderState = undefined;
-                    textElement.textRenderState = undefined;
+                    textElement.renderState.clear();
                 });
             }
         });
@@ -605,33 +605,12 @@ export class TextElementsRenderer {
     }
 
     /**
-     * Fills the screen with boxes which should block other labels.
-     * @note These boxes have highest priority, so will block all labels.
-     * @param boxes Boxes in screen space which reject other labels.
-     */
-    prepopulateScreen(boxes: Math2D.Box[]) {
-        for (const box of boxes) {
-            this.m_screenCollisions.allocateScreenSpace(box);
-        }
-    }
-
-    /**
-     * Fills the screen with lines which should block other labels.
-     * @note These boxes have highest priority, so will block all labels.
-     * @param lines Lines in screen space which reject other labels.
-     */
-    prepopulateScreenWithLines(lines: LineWithBound[]) {
-        for (const line of lines) {
-            this.m_screenCollisions.allocateIBox(line, true);
-        }
-    }
-
-    /**
      * Fills the screen with lines projected from world space, see [[Tile.blockingElements]].
      * @note These boxes have highest priority, so will block all other labels.
      */
     prepopulateScreenWithBlockingElements() {
         const renderList = this.m_mapView.visibleTileSet.dataSourceTileList;
+        const boxes: IBox[] = [];
         renderList.forEach(renderListEntry => {
             const startLinePointProj = new THREE.Vector3();
             const endLinePointProj = new THREE.Vector3();
@@ -640,30 +619,33 @@ export class TextElementsRenderer {
                     if (pathBlockingElement.points.length < 2) {
                         continue;
                     }
-                    // Project to screen and store it in the ScreenCollisions.
-                    let startLinePoint = pathBlockingElement.points[0];
+                    this.m_screenProjector.project3(
+                        pathBlockingElement.points[0],
+                        startLinePointProj
+                    );
                     for (let i = 1; i < pathBlockingElement.points.length; i++) {
-                        const endLinePoint = pathBlockingElement.points[i];
-                        this.m_screenProjector.projectAndShift(startLinePoint, startLinePointProj);
-                        this.m_screenProjector.projectAndShift(endLinePoint, endLinePointProj);
-                        startLinePoint = endLinePoint;
+                        this.m_screenProjector.project3(
+                            pathBlockingElement.points[i],
+                            endLinePointProj
+                        );
+                        const line = pathBlockingElement.screenSpaceLines[i - 1];
+                        line.start.copy(startLinePointProj);
+                        line.end.copy(endLinePointProj);
                         const lineWithBound: LineWithBound = {
                             minX: Math.min(startLinePointProj.x, endLinePointProj.x),
                             maxX: Math.max(startLinePointProj.x, endLinePointProj.x),
                             minY: Math.min(startLinePointProj.y, endLinePointProj.y),
                             maxY: Math.max(startLinePointProj.y, endLinePointProj.y),
                             type: "line",
-                            line: new THREE.Line3(
-                                startLinePointProj.clone(),
-                                endLinePointProj.clone()
-                            )
+                            line
                         };
-                        // False, because the coordinates are in
-                        this.m_screenCollisions.allocateIBox(lineWithBound, true);
+                        boxes.push(lineWithBound);
+                        startLinePointProj.copy(endLinePointProj);
                     }
                 }
             }
         });
+        this.m_screenCollisions.allocateIBoxes(boxes);
     }
 
     renderTextElements(
@@ -741,7 +723,7 @@ export class TextElementsRenderer {
                 continue;
             }
 
-            const isPathLabel = textElement.path !== undefined && !textElement.isLineMarker;
+            const isPathLabel = textElement.isPathLabel;
             let screenPoints: THREE.Vector2[];
 
             // For paths, check if the label may fit.
@@ -827,7 +809,7 @@ export class TextElementsRenderer {
             textCanvas.textLayoutStyle = textElement.layoutStyle!;
 
             // Render a POI...
-            if (textElement.path === undefined) {
+            if (textElement.isPoiLabel) {
                 this.addPoiLabel(
                     textElement,
                     poiRenderer,
@@ -1181,7 +1163,7 @@ export class TextElementsRenderer {
             viewDistance = worldCenter.distanceTo(tempPoiPosition);
         }
 
-        textElement.currentViewDistance = viewDistance;
+        textElement.renderState!.viewDistance = viewDistance;
         return viewDistance;
     }
 
@@ -1195,7 +1177,7 @@ export class TextElementsRenderer {
             textElement.sortPriority =
                 textElement.priority +
                 distancePriorityFactor -
-                distancePriorityFactor * (textElement.currentViewDistance! / maxViewDistance);
+                distancePriorityFactor * (textElement.renderState.viewDistance! / maxViewDistance);
         }
 
         // Do the actual sort based on sortPriority
@@ -1310,17 +1292,26 @@ export class TextElementsRenderer {
             }
         }
 
-        // Determine which of the two labels were rendered last. This allows to keep the render
-        // state for fading.
-        const latestTextElement = (a: TextElement, b: TextElement): TextElement => {
-            if (a.textRenderState === undefined || a.textRenderState!.lastFrameNumber < 0) {
-                return b;
+        // Returns true if left hand side text element was renderer more recently. This allows to
+        // keep the render state for fading.
+        const isLhsElementLatest = (lhs: TextElement, rhs: TextElement): boolean => {
+            if (
+                lhs.renderState.textRenderState === undefined ||
+                lhs.renderState.textRenderState.lastFrameNumber < 0
+            ) {
+                return false;
             }
-            if (b.textRenderState === undefined || b.textRenderState!.lastFrameNumber < 0) {
-                return a;
+            if (
+                rhs.renderState.textRenderState === undefined ||
+                rhs.renderState.textRenderState.lastFrameNumber < 0
+            ) {
+                return true;
             }
 
-            return a.textRenderState!.lastFrameNumber > b.textRenderState!.lastFrameNumber ? a : b;
+            return (
+                lhs.renderState.textRenderState.lastFrameNumber >
+                rhs.renderState.textRenderState.lastFrameNumber
+            );
         };
 
         // Remove the duplicate point labels from this group's labels using the pointLabelCache to
@@ -1342,7 +1333,7 @@ export class TextElementsRenderer {
                             textElement.position.distanceToSquared(duplicateLabel.position) <
                                 LABEL_DIFFERENT_THRESHOLD_SQUARED
                         ) {
-                            if (latestTextElement(textElement, duplicateLabel) === textElement) {
+                            if (isLhsElementLatest(textElement, duplicateLabel)) {
                                 // Keep the label which was rendered last, otherwise the new
                                 // label may replace a previous label, which may lead to
                                 // flickering (because of different render state). We have
@@ -1678,7 +1669,7 @@ export class TextElementsRenderer {
 
     private getDistanceFadingFactor(label: TextElement, maxVisibilityDist: number): number {
         let distanceFadeValue = 1.0;
-        const textDistance = label.currentViewDistance;
+        const textDistance = label.renderState.viewDistance;
 
         if (textDistance !== undefined && label.fadeFar !== undefined && label.fadeFar > 0.0) {
             const fadeNear = label.fadeNear === undefined ? 0.0 : label.fadeNear;
@@ -1756,7 +1747,7 @@ export class TextElementsRenderer {
                 // transparent.
                 return false;
             }
-            pointLabel.currentViewDistance = textDistance;
+            pointLabel.renderState.viewDistance = textDistance;
 
             distanceScaleFactor = this.getDistanceScalingFactor(pointLabel, textDistance);
             textScale *= distanceScaleFactor;
@@ -1771,7 +1762,7 @@ export class TextElementsRenderer {
         let iconSpaceAvailable = true;
 
         // Check if icon should be rendered at this zoomLevel
-        const renderIcon =
+        let renderIcon =
             poiInfo === undefined ||
             MathUtils.isClamped(
                 mapViewState.zoomLevel,
@@ -1779,7 +1770,11 @@ export class TextElementsRenderer {
                 poiInfo.iconMaxZoomLevel
             );
 
-        if (renderIcon && poiInfo !== undefined && poiRenderer.prepareRender(pointLabel)) {
+        if (
+            renderIcon &&
+            poiInfo !== undefined &&
+            poiRenderer.prepareRender(pointLabel, mapViewState.zoomLevel)
+        ) {
             if (poiInfo.isValid === false) {
                 return false;
             }
@@ -1789,6 +1784,7 @@ export class TextElementsRenderer {
                 tempPoiScreenPosition,
                 distanceScaleFactor,
                 this.m_screenCollisions,
+                mapViewState.zoomLevel,
                 tempBox2D
             );
 
@@ -1868,8 +1864,8 @@ export class TextElementsRenderer {
             renderText &&
             // Do not render if the distance is too great and distance shouldn't be ignored.
             (pointLabel.ignoreDistance === true ||
-                (pointLabel.currentViewDistance === undefined ||
-                    pointLabel.currentViewDistance < poiTextMaxDistance)) &&
+                (pointLabel.renderState.viewDistance === undefined ||
+                    pointLabel.renderState.viewDistance < poiTextMaxDistance)) &&
             // Do not render text if POI cannot be rendered and is not optional.
             (poiInfo === undefined || poiInfo.isValid === true || poiInfo.iconIsOptional !== false);
 
@@ -1959,14 +1955,19 @@ export class TextElementsRenderer {
                         stats.fadeAnimationRunning || textIsFadingOut || textFading;
 
                     const opacity = textRenderState.opacity;
+                    const backgroundIsVisible =
+                        pointLabel.renderStyle!.backgroundOpacity > 0 &&
+                        textCanvas.textRenderStyle.fontSize.backgroundSize > 0;
 
                     temp.bufferAdditionParams.layer = pointLabel.renderOrder;
                     temp.bufferAdditionParams.position = tempPosition;
                     temp.bufferAdditionParams.scale = textScale;
                     temp.bufferAdditionParams.opacity =
                         opacity * distanceFadeFactor * pointLabel.renderStyle!.opacity;
-                    temp.bufferAdditionParams.backgroundOpacity =
-                        opacity * distanceFadeFactor * pointLabel.renderStyle!.backgroundOpacity;
+                    temp.bufferAdditionParams.backgroundOpacity = backgroundIsVisible
+                        ? temp.bufferAdditionParams.opacity *
+                          pointLabel.renderStyle!.backgroundOpacity
+                        : 0.0;
                     temp.bufferAdditionParams.pickingData = pointLabel.userData
                         ? pointLabel
                         : undefined;
@@ -1980,6 +1981,7 @@ export class TextElementsRenderer {
 
             // If the text is not visible nor optional, we won't render the icon neither.
             else if (!renderIcon || !textIsOptional) {
+                renderIcon = false;
                 if (pointLabel.poiInfo === undefined || iconRenderState.isVisible()) {
                     if (pointLabel.poiInfo !== undefined) {
                         this.startFadeOut(
@@ -2034,7 +2036,8 @@ export class TextElementsRenderer {
                 this.m_screenCollisions,
                 distanceScaleFactor,
                 poiInfo.reserveSpace !== false,
-                iconRenderState.opacity * distanceFadeFactor
+                iconRenderState.opacity * distanceFadeFactor,
+                mapViewState.zoomLevel
             );
 
             iconRenderState.lastFrameNumber = mapViewState.frameNumber;
@@ -2066,22 +2069,18 @@ export class TextElementsRenderer {
         // Only process labels frustum-clipped labels
         if (this.m_screenProjector.project(tempPosition, tempScreenPosition) !== undefined) {
             // Initialize the POI's icon and text render states (fading).
-            if (poiLabel.iconRenderState === undefined) {
-                poiLabel.iconRenderState = new RenderState();
-                poiLabel.textRenderState = new RenderState();
-
-                if (this.m_mapView.disableFading) {
-                    // Force fadingTime to zero to keep it from fading in and out.
-                    poiLabel.iconRenderState.fadingTime = 0;
-                    poiLabel.textRenderState.fadingTime = 0;
-                }
+            if (poiLabel.renderState.initialized === false) {
+                poiLabel.renderState.initialize(
+                    TextElementType.PoiLabel,
+                    this.m_mapView.disableFading
+                );
             }
 
             // Add this POI as a point label.
             this.addPointLabel(
                 poiLabel,
-                poiLabel.iconRenderState,
-                poiLabel.textRenderState,
+                poiLabel.renderState!.iconRenderState!,
+                poiLabel.renderState!.textRenderState,
                 tempPosition,
                 tempScreenPosition,
                 poiRenderer,
@@ -2111,7 +2110,7 @@ export class TextElementsRenderer {
         if (
             lineMarkerLabel.path === undefined ||
             lineMarkerLabel.path.length === 0 ||
-            !poiRenderer.prepareRender(lineMarkerLabel)
+            !poiRenderer.prepareRender(lineMarkerLabel, mapViewState.zoomLevel)
         ) {
             return;
         }
@@ -2127,15 +2126,12 @@ export class TextElementsRenderer {
         }
 
         // Create an individual render state for every individual point of the lineMarker.
-        if (lineMarkerLabel.iconRenderStates === undefined) {
-            const renderStates = new Array<RenderState>();
-            lineMarkerLabel.path.forEach(() => {
-                const renderState = new RenderState();
-                renderState.state = FadingState.FadingIn;
-                renderState.fadingTime = this.m_mapView.disableFading ? 0 : renderState.fadingTime;
-                renderStates.push(renderState);
-            });
-            lineMarkerLabel.iconRenderStates = renderStates;
+        if (lineMarkerLabel.renderState.initialized === false) {
+            lineMarkerLabel.renderState.initialize(
+                TextElementType.LineMarker,
+                this.m_mapView.disableFading,
+                lineMarkerLabel.path.length
+            );
         }
 
         const lineTechnique = poiInfo.technique as LineMarkerTechnique;
@@ -2176,7 +2172,7 @@ export class TextElementsRenderer {
                         if (
                             this.addPointLabel(
                                 lineMarkerLabel,
-                                lineMarkerLabel.iconRenderStates![i],
+                                lineMarkerLabel.renderState.iconRenderStates![i],
                                 undefined,
                                 tempPosition,
                                 tempScreenPosition,
@@ -2209,7 +2205,7 @@ export class TextElementsRenderer {
                 ) {
                     this.addPointLabel(
                         lineMarkerLabel,
-                        lineMarkerLabel.iconRenderStates![i],
+                        lineMarkerLabel.renderState.iconRenderStates![i],
                         undefined,
                         tempPosition,
                         tempScreenPosition,
@@ -2242,8 +2238,8 @@ export class TextElementsRenderer {
         if (
             !(
                 pathLabel.ignoreDistance === true ||
-                pathLabel.currentViewDistance === undefined ||
-                pathLabel.currentViewDistance < textMaxDistance
+                pathLabel.renderState.viewDistance === undefined ||
+                pathLabel.renderState.viewDistance < textMaxDistance
             )
         ) {
             return false;
@@ -2318,31 +2314,32 @@ export class TextElementsRenderer {
 
         // Fade-in after skipping rendering during movement.
         // NOTE: Shouldn't this only happen once we know the label is gonna be visible?
-        if (pathLabel.textRenderState === undefined) {
-            pathLabel.textRenderState = new RenderState();
-            pathLabel.textRenderState.fadingTime = this.m_mapView.disableFading
-                ? 0
-                : pathLabel.textRenderState.fadingTime;
+        if (pathLabel.renderState.initialized === false) {
+            pathLabel.renderState.initialize(
+                TextElementType.PathLabel,
+                this.m_mapView.disableFading
+            );
         }
         if (
-            pathLabel.textRenderState.state === FadingState.Undefined ||
-            pathLabel.textRenderState.lastFrameNumber < mapViewState.frameNumber - 1
+            pathLabel.renderState.textRenderState!.state === FadingState.Undefined ||
+            pathLabel.renderState.textRenderState!.lastFrameNumber < mapViewState.frameNumber - 1
         ) {
             this.startFadeIn(
-                pathLabel.textRenderState,
+                pathLabel.renderState.textRenderState!,
                 mapViewState.frameNumber,
                 mapViewState.time
             );
         }
         const startedFadeIn = this.checkStartFadeIn(
-            pathLabel.textRenderState,
+            pathLabel.renderState.textRenderState,
             mapViewState.frameNumber,
             mapViewState.time
         );
 
         stats.fadeAnimationRunning = stats.fadeAnimationRunning || startedFadeIn;
-        if (pathLabel.textRenderState.isFading()) {
-            opacity = pathLabel.textRenderState.opacity * pathLabel.renderStyle!.opacity;
+        if (pathLabel.renderState.textRenderState!.isFading()) {
+            opacity =
+                pathLabel.renderState.textRenderState!.opacity * pathLabel.renderStyle!.opacity;
         }
 
         const prevOpacity = textCanvas.textRenderStyle.opacity;

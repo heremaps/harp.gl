@@ -77,7 +77,7 @@ interface WorkerRequestEntry {
 /**
  * The default number of Web Workers to use if `navigator.hardwareConcurrency` is unavailable.
  */
-const DEFAULT_WORKER_COUNT = 4;
+const DEFAULT_WORKER_COUNT = 2;
 
 /**
  * The default timeout for first message from worker.
@@ -185,7 +185,7 @@ export class ConcurrentWorkerSet {
             this.m_options.workerCount,
             typeof navigator !== "undefined" && navigator.hardwareConcurrency !== undefined
                 ? // We need to have at least one worker
-                  THREE.Math.clamp(navigator.hardwareConcurrency - 1, 1, 4)
+                  THREE.Math.clamp(navigator.hardwareConcurrency - 1, 1, 2)
                 : undefined,
             DEFAULT_WORKER_COUNT
         );

@@ -6,9 +6,9 @@
 
 import { GeoCoordinates } from "@here/harp-geoutils";
 import { MapControls, MapControlsUI } from "@here/harp-map-controls";
-import { CopyrightElementHandler, CopyrightInfo, MapView } from "@here/harp-mapview";
+import { CopyrightElementHandler, MapView } from "@here/harp-mapview";
 import { APIFormat, OmvDataSource } from "@here/harp-omv-datasource";
-import { accessToken } from "../config";
+import { accessToken, copyrightInfo } from "../config";
 
 /**
  * This example shows how to customize builtin `Berlin` theme using [Theme] `definition` mechanism.
@@ -83,7 +83,7 @@ export namespace HelloCustomThemeExample {
 
         // Look at New York.
         const NY = new GeoCoordinates(40.707, -74.01);
-        map.lookAt(NY, 4000, 50, -20);
+        map.lookAt(NY, 3500, 50, -20);
 
         // Add an UI.
         const ui = new MapControlsUI(mapControls);
@@ -103,21 +103,13 @@ export namespace HelloCustomThemeExample {
     }
 
     function addOmvDataSource(map: MapView) {
-        const hereCopyrightInfo: CopyrightInfo = {
-            id: "here.com",
-            year: new Date().getFullYear(),
-            label: "HERE",
-            link: "https://legal.here.com/terms"
-        };
-        const copyrights: CopyrightInfo[] = [hereCopyrightInfo];
-
         const omvDataSource = new OmvDataSource({
             baseUrl: "https://xyz.api.here.com/tiles/herebase.02",
             apiFormat: APIFormat.XYZOMV,
             styleSetName: "tilezen",
             maxZoomLevel: 17,
             authenticationCode: accessToken,
-            copyrightInfo: copyrights
+            copyrightInfo
         });
 
         map.addDataSource(omvDataSource);

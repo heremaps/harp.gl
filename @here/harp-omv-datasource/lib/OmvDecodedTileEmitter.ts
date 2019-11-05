@@ -20,6 +20,7 @@ import {
     isExtrudedLineTechnique,
     isExtrudedPolygonTechnique,
     isFillTechnique,
+    isLabelRejectionLineTechnique,
     isLineMarkerTechnique,
     isLineTechnique,
     isPoiTechnique,
@@ -27,6 +28,7 @@ import {
     isStandardTechnique,
     isTextTechnique,
     LineMarkerTechnique,
+    PathGeometry,
     PoiGeometry,
     PoiTechnique,
     StyleColor,
@@ -52,6 +54,7 @@ import * as THREE from "three";
 import {
     normalizedEquirectangularProjection,
     ProjectionType,
+    Vector3Like,
     webMercatorProjection
 } from "@here/harp-geoutils";
 
@@ -178,12 +181,14 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
     private readonly m_geometries: Geometry[] = [];
     private readonly m_textGeometries: TextGeometry[] = [];
     private readonly m_textPathGeometries: TextPathGeometry[] = [];
+    private readonly m_pathGeometries: PathGeometry[] = [];
     private readonly m_poiGeometries: PoiGeometry[] = [];
     private readonly m_simpleLines: LinesGeometry[] = [];
     private readonly m_solidLines: LinesGeometry[] = [];
     private readonly m_dashedLines: LinesGeometry[] = [];
 
     private readonly m_sources: string[] = [];
+    private m_maxGeometryHeight: number = 0;
 
     constructor(
         private readonly m_decodeInfo: OmvDecoder.DecodeInfo,
@@ -368,18 +373,17 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
             const techniqueName = technique.name;
 
             if (
-                techniqueName === "line" ||
-                techniqueName === "solid-line" ||
-                techniqueName === "dashed-line"
+                isLineTechnique(technique) ||
+                isSolidLineTechnique(technique) ||
+                isDashedLineTechnique(technique)
             ) {
-                const lineGeometry =
-                    techniqueName === "line"
-                        ? this.m_simpleLines
-                        : techniqueName === "solid-line"
-                        ? this.m_solidLines
-                        : this.m_dashedLines;
+                const lineGeometry = isLineTechnique(technique)
+                    ? this.m_simpleLines
+                    : isSolidLineTechnique(technique)
+                    ? this.m_solidLines
+                    : this.m_dashedLines;
 
-                const lineType = techniqueName === "line" ? LineType.Simple : LineType.Complex;
+                const lineType = isLineTechnique(technique) ? LineType.Simple : LineType.Complex;
 
                 this.applyLineTechnique(
                     lineGeometry,
@@ -440,11 +444,11 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                     if (text === undefined) {
                         continue;
                     }
-                    for (const aLine of validLines) {
-                        const pathLengthSqr = Math2D.computeSquaredLineLength(aLine);
+                    for (const path of validLines) {
+                        const pathLengthSqr = Math2D.computeSquaredLineLength(path);
                         this.m_textPathGeometries.push({
                             technique: techniqueIndex,
-                            path: aLine,
+                            path,
                             pathLengthSqr,
                             text: String(text),
                             featureId,
@@ -490,6 +494,19 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                             objInfos: this.m_gatherFeatureIds ? [env.entries] : undefined
                         });
                     }
+                }
+            } else if (isLabelRejectionLineTechnique(technique)) {
+                const point = new THREE.Vector3();
+                for (const path of lines) {
+                    const worldPath: Vector3Like[] = [];
+                    for (let i = 0; i < path.length; i += 3) {
+                        point.set(path[i], path[i + 1], path[i + 2]);
+                        point.add(this.m_decodeInfo.center);
+                        worldPath.push(point.clone() as Vector3Like);
+                    }
+                    this.m_pathGeometries.push({
+                        path: worldPath
+                    });
                 }
             } else if (isExtrudedLineTechnique(technique)) {
                 const meshBuffers = this.findOrCreateMeshBuffers(
@@ -584,10 +601,6 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
             const isExtruded = isExtrudedPolygonTechnique(technique);
             const isFilled = isFillTechnique(technique);
 
-            const isLine =
-                isSolidLineTechnique(technique) ||
-                isDashedLineTechnique(technique) ||
-                isLineTechnique(technique);
             const isPolygon = isExtruded || isFilled || isStandardTechnique(technique);
             const computeTexCoords = this.getComputeTexCoordsFunc(technique);
             const vertexStride = computeTexCoords !== undefined ? 4 : 2;
@@ -612,6 +625,10 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                 polygons.push(rings);
             }
 
+            const isLine =
+                isSolidLineTechnique(technique) ||
+                isDashedLineTechnique(technique) ||
+                isLineTechnique(technique);
             if (isPolygon) {
                 this.applyPolygonTechnique(
                     polygons,
@@ -720,9 +737,13 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
         if (this.m_textPathGeometries.length > 0) {
             decodedTile.textPathGeometries = this.m_textPathGeometries;
         }
+        if (this.m_pathGeometries.length > 0) {
+            decodedTile.pathGeometries = this.m_pathGeometries;
+        }
         if (this.m_sources.length !== 0) {
             decodedTile.copyrightHolderIds = this.m_sources;
         }
+        decodedTile.maxGeometryHeight = this.m_maxGeometryHeight;
         return decodedTile;
     }
 
@@ -865,7 +886,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
               }
             : texCoordType === TextureCoordinateType.EquirectangularSpace
             ? (tilePos: THREE.Vector2, extents: number) => {
-                  const worldPos = tile2world(extents, this.m_decodeInfo, tilePos);
+                  const worldPos = tile2world(extents, this.m_decodeInfo, tilePos, false, tmpV2r);
                   const { x: u, y: v } = normalizedEquirectangularProjection.reprojectPoint(
                       webMercatorProjection,
                       new THREE.Vector3(worldPos.x, worldPos.y, 0)
@@ -1144,7 +1165,8 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                                 extents,
                                 this.m_decodeInfo,
                                 tmpV2.set(vertices[i], vertices[i + 1]),
-                                true
+                                true,
+                                tmpV2r
                             );
                             positionArray.push(worldPos.x, worldPos.y, 0);
                             if (texCoordType !== undefined) {
@@ -1159,16 +1181,16 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                             new Float32Array(positionArray),
                             3
                         );
-                        geom.addAttribute("position", posAttr);
+                        geom.setAttribute("position", posAttr);
                         let uvAttr: THREE.BufferAttribute | undefined;
                         if (texCoordType !== undefined) {
                             uvAttr = new THREE.BufferAttribute(new Float32Array(uvArray), 2);
-                            geom.addAttribute("uv", uvAttr);
+                            geom.setAttribute("uv", uvAttr);
                         }
                         const edgeAttr = new THREE.BufferAttribute(new Float32Array(edgeArray), 1);
-                        geom.addAttribute("edge", edgeAttr);
+                        geom.setAttribute("edge", edgeAttr);
                         const wallAttr = new THREE.BufferAttribute(new Float32Array(wallArray), 1);
-                        geom.addAttribute("wall", edgeAttr);
+                        geom.setAttribute("wall", edgeAttr);
                         const indexAttr = new THREE.BufferAttribute(new Uint32Array(triangles), 1);
                         geom.setIndex(indexAttr);
 
@@ -1227,6 +1249,10 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                                 tempVertOrigin
                             );
                         }
+                        this.m_maxGeometryHeight = Math.max(
+                            this.m_maxGeometryHeight,
+                            scaleFactor * height
+                        );
 
                         if (isSpherical) {
                             tempVertNormal

@@ -9,7 +9,6 @@ import { GeoCoordinates, webMercatorTilingScheme } from "@here/harp-geoutils";
 import { MapControls } from "@here/harp-map-controls";
 import {
     CopyrightElementHandler,
-    CopyrightInfo,
     MapView,
     MapViewEventNames,
     MapViewOptions,
@@ -17,7 +16,7 @@ import {
 } from "@here/harp-mapview";
 import { APIFormat, OmvDataSource } from "@here/harp-omv-datasource";
 import * as THREE from "three";
-import { accessToken } from "../config";
+import { accessToken, copyrightInfo } from "../config";
 
 // Import the gesture handlers from the three.js additional libraries.
 // The controls are not in common.js they explicitly require a
@@ -70,6 +69,9 @@ export namespace FreeCameraAppDebuggingToolExample {
         constructor(readonly options: FreeCameraAppOptions) {
             this.mapView = new MapView(options);
             this.mapView.fog.enabled = false;
+            // Set the view over Geneva.
+            const startLocation = new GeoCoordinates(46.207, 6.147);
+            this.mapView.lookAt(startLocation, 2000);
 
             this.mapControls = new MapControls(this.mapView);
             this.mapControls.enabled = false;
@@ -97,21 +99,13 @@ export namespace FreeCameraAppDebuggingToolExample {
          * user is seeing (`V`).
          */
         start() {
-            const hereCopyrightInfo: CopyrightInfo = {
-                id: "here.com",
-                year: new Date().getFullYear(),
-                label: "HERE",
-                link: "https://legal.here.com/terms"
-            };
-            const copyrights: CopyrightInfo[] = [hereCopyrightInfo];
-
             const omvDataSource = new OmvDataSource({
                 baseUrl: "https://xyz.api.here.com/tiles/herebase.02",
                 apiFormat: APIFormat.XYZOMV,
                 styleSetName: "tilezen",
                 maxZoomLevel: 17,
                 authenticationCode: accessToken,
-                copyrightInfo: copyrights
+                copyrightInfo
             });
 
             const debugTileDataSource = new DebugTileDataSource(webMercatorTilingScheme);
@@ -153,16 +147,14 @@ export namespace FreeCameraAppDebuggingToolExample {
                 // Apply helper camera offset to main (map view) camera.
                 this.mapView.camera.position.add(cameraRelativeToEye.position);
                 // Make sure that the pitch limit constraint is preserved
-                const ypr = MapViewUtils.extractYawPitchRoll(
-                    cameraRelativeToEye,
-                    this.mapView.projection.type
-                );
+                const ypr = MapViewUtils.extractAttitude(this.mapView, cameraRelativeToEye);
                 ypr.pitch = Math.max(
                     Math.min(ypr.pitch, THREE.Math.degToRad(this.mapControls.maxTiltAngle)),
                     0
                 );
                 // Finally apply rotation from transformation gizmo.
-                this.mapControls.setRotation(
+                MapViewUtils.setRotation(
+                    this.mapView,
                     THREE.Math.radToDeg(ypr.yaw),
                     THREE.Math.radToDeg(ypr.pitch)
                 );
@@ -291,14 +283,12 @@ Press 'V' to change the scene point of view<br>`;
         document.body.appendChild(message);
 
         const canvas = document.getElementById("mapCanvas") as HTMLCanvasElement;
-        const geoCenter = new GeoCoordinates(52.518611, 13.376111);
 
         // snippet:harp_gl_freecamera_app_0.ts
         const app = new FreeCameraApp({
             decoderUrl: "./decoder.bundle.js",
             canvas,
-            theme: "./resources/berlin_tilezen_base.json",
-            geoCenter
+            theme: "./resources/berlin_tilezen_base.json"
         });
 
         app.start();

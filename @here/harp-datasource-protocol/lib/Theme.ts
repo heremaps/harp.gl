@@ -7,6 +7,7 @@
 import { Vector3Like } from "@here/harp-geoutils/lib/math/Vector3Like";
 import { JsonExpr } from "./Expr";
 import {
+    BaseTechniqueParams,
     BasicExtrudedLineTechniqueParams,
     DashedLineTechniqueParams,
     DynamicProperty,
@@ -355,8 +356,9 @@ export interface BaseStyle {
     description?: string;
 
     /**
-     * Technique name. Must be one of `"line"`, `"fill"`, `"solid-line"`, `"dashed-line"`,
-     * `"extruded-line"`, `"extruded-polygon"`, `"text"`, or `"none"`.
+     * Technique name. See the classes extending from this class to determine what possible
+     * techniques are possible, includes `"line"`, `"fill"`, `"solid-line"`, `"dashed-line"`,
+     * `"extruded-line"`, `"extruded-polygon"`, `"text"`, `"none"`.
      */
     technique?: string;
 
@@ -640,6 +642,7 @@ export type AllStyles =
     | LineStyle
     | SegmentsStyle
     | SolidLineStyle
+    | LabelRejectionLineStyle
     | DashedLineStyle
     | FillStyle
     | StandardStyle
@@ -759,6 +762,11 @@ export interface SolidLineStyle extends BaseStyle {
 export interface DashedLineStyle extends BaseStyle {
     technique: "dashed-line";
     attr?: Attr<DashedLineTechniqueParams>;
+}
+
+export interface LabelRejectionLineStyle extends BaseStyle {
+    technique: "label-rejection-line";
+    attr?: Attr<BaseTechniqueParams>;
 }
 
 export interface FillStyle extends BaseStyle {

@@ -6,10 +6,10 @@
 
 import { GeoCoordinates } from "@here/harp-geoutils";
 import { MapControls, MapControlsUI } from "@here/harp-map-controls";
-import { CopyrightElementHandler, CopyrightInfo, MapView } from "@here/harp-mapview";
+import { CopyrightElementHandler, MapView } from "@here/harp-mapview";
 import { APIFormat, OmvDataSource } from "@here/harp-omv-datasource";
 import { GUI } from "dat.gui";
-import { accessToken } from "../config";
+import { accessToken, copyrightInfo } from "../config";
 
 /**
  * This example copies the base example and adds a GUI allowing to switch between all the open-
@@ -29,7 +29,7 @@ export namespace ThemesExample {
         mapControls.maxTiltAngle = 50;
 
         const NY = new GeoCoordinates(40.707, -74.01);
-        map.lookAt(NY, 5000, 50);
+        map.lookAt(NY, 3500, 50);
 
         const ui = new MapControlsUI(mapControls);
         canvas.parentElement!.appendChild(ui.domElement);
@@ -45,21 +45,13 @@ export namespace ThemesExample {
 
     const mapView = initializeMapView();
 
-    const hereCopyrightInfo: CopyrightInfo = {
-        id: "here.com",
-        year: new Date().getFullYear(),
-        label: "HERE",
-        link: "https://legal.here.com/terms"
-    };
-    const copyrights: CopyrightInfo[] = [hereCopyrightInfo];
-
     const omvDataSource = new OmvDataSource({
         baseUrl: "https://xyz.api.here.com/tiles/herebase.02",
         apiFormat: APIFormat.XYZOMV,
         styleSetName: "tilezen",
         maxZoomLevel: 17,
         authenticationCode: accessToken,
-        copyrightInfo: copyrights
+        copyrightInfo
     });
 
     mapView.addDataSource(omvDataSource);

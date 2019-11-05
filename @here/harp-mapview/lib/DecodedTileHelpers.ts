@@ -345,6 +345,7 @@ export function getObjectConstructor(technique: Technique): ObjectConstructor | 
         case "text":
         case "labeled-icon":
         case "line-marker":
+        case "label-rejection-line":
             return undefined;
     }
 }
@@ -416,6 +417,7 @@ export function getMaterialConstructor(technique: Technique): MaterialConstructo
         case "text":
         case "labeled-icon":
         case "line-marker":
+        case "label-rejection-line":
             return undefined;
     }
 }
@@ -457,7 +459,7 @@ export function applyTechniqueToMaterial(
         if (typeof m[prop] === "undefined") {
             return;
         }
-        if (level !== undefined && isInterpolatedProperty<number>(value)) {
+        if (level !== undefined && isInterpolatedProperty(value)) {
             value = getPropertyValue(value, level);
         }
         if (m[prop] instanceof THREE.Color) {

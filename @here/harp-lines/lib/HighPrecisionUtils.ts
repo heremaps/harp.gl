@@ -292,8 +292,8 @@ export namespace HighPrecisionUtils {
     ): number {
         const attributes = createAttributes(positions);
 
-        object.bufferGeometry.addAttribute("position", attributes.positionHigh);
-        object.bufferGeometry.addAttribute("positionLow", attributes.positionLow);
+        object.bufferGeometry.setAttribute("position", attributes.positionHigh);
+        object.bufferGeometry.setAttribute("positionLow", attributes.positionLow);
 
         return attributes.positionHigh.itemSize;
     }
@@ -355,8 +355,8 @@ export namespace HighPrecisionUtils {
         const positionAttribute = new InterleavedBufferAttribute(buffer, 3, 0, false);
         const positionLowAttribute = new InterleavedBufferAttribute(buffer, 3, 3, false);
 
-        hpLineGeometry.addAttribute("position", positionAttribute);
-        hpLineGeometry.addAttribute("positionLow", positionLowAttribute);
+        hpLineGeometry.setAttribute("position", positionAttribute);
+        hpLineGeometry.setAttribute("positionLow", positionLowAttribute);
         hpLineGeometry.setIndex(new BufferAttribute(new Uint32Array(indices), 1));
 
         const hpSolidMaterial = new HighPrecisionLineMaterial(params);

@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GeoCoordinates } from "@here/harp-geoutils";
 import { MapControls, MapControlsUI } from "@here/harp-map-controls";
 import { CopyrightElementHandler, MapView } from "@here/harp-mapview";
 import { WebTileDataSource } from "@here/harp-webtile-datasource";
@@ -41,7 +40,7 @@ export namespace SatelliteDataSourceExample {
         const controls = new MapControls(map);
 
         // Add an UI.
-        const ui = new MapControlsUI(controls);
+        const ui = new MapControlsUI(controls, { zoomLevel: "input" });
         canvas.parentElement!.appendChild(ui.domElement);
 
         CopyrightElementHandler.install("copyrightNotice", map);
@@ -66,9 +65,6 @@ export namespace SatelliteDataSourceExample {
         tileBaseAddress: WebTileDataSource.TILE_AERIAL_SATELLITE
     });
     // end:harp_gl_datasource_satellitetile_1.ts
-
-    const NY = new GeoCoordinates(40.707, -74.01);
-    mapView.lookAt(NY, 4000, 40);
 
     // snippet:harp_gl_datasource_satellitetile_2.ts
     mapView.addDataSource(webTileDataSource);

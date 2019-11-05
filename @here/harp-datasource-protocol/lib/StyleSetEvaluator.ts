@@ -18,7 +18,6 @@ import {
     HasAttributeExpr,
     isJsonExpr,
     JsonExpr,
-    LiteralExpr,
     MatchExpr,
     NullLiteralExpr,
     NumberLiteralExpr,
@@ -28,11 +27,11 @@ import {
     VarExpr
 } from "./Expr";
 import { ExprPool } from "./ExprPool";
+import { isInterpolatedProperty, isInterpolatedPropertyDefinition } from "./InterpolatedProperty";
 import {
-    createInterpolatedProperty,
-    isInterpolatedPropertyDefinition
-} from "./InterpolatedProperty";
-import { InterpolatedProperty } from "./InterpolatedPropertyDefs";
+    InterpolatedProperty,
+    interpolatedPropertyDefinitionToJsonExpr
+} from "./InterpolatedPropertyDefs";
 import { AttrScope, mergeTechniqueDescriptor, TechniquePropNames } from "./TechniqueDescriptor";
 import { IndexedTechnique, Technique, techniqueDescriptors } from "./Techniques";
 import {
@@ -56,7 +55,7 @@ interface StyleInternalParams {
      */
     _whenExpr?: Expr;
 
-    _staticAttributes?: Array<[string, Value | InterpolatedProperty<unknown>]>;
+    _staticAttributes?: Array<[string, Value | InterpolatedProperty]>;
 
     /**
      * These attributes are used to instantiate Technique variants.
@@ -72,7 +71,7 @@ interface StyleInternalParams {
      *
      * @see [[TechniqueAttrScope.Feature]]
      */
-    _dynamicFeatureAttributes?: Array<[string, Expr | InterpolatedProperty<unknown>]>;
+    _dynamicFeatureAttributes?: Array<[string, Expr | InterpolatedProperty]>;
 
     /**
      * These attributes are forwarded as serialized by decoder to main thread, so they are resolved
@@ -82,7 +81,7 @@ interface StyleInternalParams {
      *  - interpolants from [[TechiqueDescriptor.techniquePropNames]]
      *  - expressions [[TechniqueDescriptor.dynamicPropNames]] (Future)
      */
-    _dynamicForwaredAttributes?: Array<[string, Expr | InterpolatedProperty<unknown>]>;
+    _dynamicForwardedAttributes?: Array<[string, Expr | InterpolatedProperty]>;
     _dynamicTechniques?: Map<string, IndexedTechnique>;
 
     /**
@@ -168,7 +167,7 @@ class StyleConditionClassifier implements ExprVisitor<Expr | undefined, Expr | u
             // processing of an `["all", e1, e2, ... eN]` expression. In this case
             // search for expressions matching comparison of `$layer` and string literals
             // in the sub expressions.
-            const children = call.children
+            const children = call.args
                 .map(childExpr => childExpr.accept(this, call))
                 .filter(childExpr => childExpr !== undefined) as Expr[];
 
@@ -216,8 +215,8 @@ class StyleConditionClassifier implements ExprVisitor<Expr | undefined, Expr | u
      */
     private matchVarStringComparison(call: CallExpr) {
         if (call.op === "==") {
-            const left = call.children[0];
-            const right = call.children[1];
+            const left = call.args[0];
+            const right = call.args[1];
 
             if (left instanceof VarExpr && right instanceof StringLiteralExpr) {
                 return { name: left.name, value: right.value };
@@ -310,118 +309,22 @@ class OptimizedSubSetKey {
 export class StyleSetEvaluator {
     readonly styleSet: InternalStyle[];
 
-    private readonly m_renderOrderBiasGroups: Map<string, number> = new Map();
     private readonly m_techniques: IndexedTechnique[] = [];
     private readonly m_exprPool = new ExprPool();
     private readonly m_cachedResults = new Map<Expr, Value>();
     private readonly m_styleConditionClassifier = new StyleConditionClassifier();
     private readonly m_subStyleSetCache = new Map<string, InternalStyle[]>();
+    private readonly m_definitions?: Definitions;
+    private readonly m_definitionExprCache = new Map<string, Expr>();
+    private readonly m_tmpOptimizedSubSetKey: OptimizedSubSetKey = new OptimizedSubSetKey();
+    private readonly m_emptyEnv = new Env();
     private m_layer: string | undefined;
     private m_geometryType: string | undefined;
-    private m_definitions?: Definitions;
-    private m_definitionExprCache?: Map<string, Expr>;
-    private m_tmpOptimizedSubSetKey: OptimizedSubSetKey = new OptimizedSubSetKey();
 
     constructor(styleSet: StyleSet, definitions?: Definitions) {
-        let techniqueRenderOrder = 0;
-        let styleSetIndex = 0;
         this.m_definitions = definitions;
-        if (definitions !== undefined) {
-            this.m_definitionExprCache = new Map();
-        }
-
-        const resolveStyleReferences = (style: StyleDeclaration): StyleDeclaration | undefined => {
-            if (isJsonExpr(style)) {
-                if (!isJsonExprReference(style)) {
-                    throw new Error(
-                        "invalid expression in this context, only 'ref's are supported"
-                    );
-                }
-                // expand and instantiate references to style definitions.
-                const definitionName = style[1];
-                const def = definitions && definitions[definitionName];
-
-                if (!def) {
-                    throw new Error(`invalid reference '${definitionName}' - not found`);
-                }
-                if (!isActualSelectorDefinition(def)) {
-                    throw new Error(
-                        `invalid reference '${definitionName}' - expected style definition`
-                    );
-                }
-
-                // instantiate the style
-                return resolveStyleReferences(def);
-            }
-            return {
-                ...style,
-                styles:
-                    style.styles !== undefined
-                        ? (style.styles
-                              .map(subStyle => resolveStyleReferences(subStyle))
-                              .filter(subStyle => subStyle !== undefined) as StyleSet)
-                        : undefined
-            };
-        };
-        styleSet = styleSet.map(style => resolveStyleReferences(style) as StyleDeclaration);
-        const computeDefaultRenderOrder = (style: InternalStyle): void => {
-            if (style.renderOrderBiasGroup !== undefined) {
-                const renderOrderBiasGroupOrder = style.renderOrderBiasGroup
-                    ? this.m_renderOrderBiasGroups.get(style.renderOrderBiasGroup)
-                    : undefined;
-                if (
-                    style.renderOrderBiasRange !== undefined &&
-                    renderOrderBiasGroupOrder === undefined
-                ) {
-                    if (style.renderOrder !== undefined) {
-                        logger.warn(
-                            "WARN: style.renderOrder will be overridden if " +
-                                "renderOrderBiasGroup is set:",
-                            style
-                        );
-                    }
-                    const [minRange, maxRange] = style.renderOrderBiasRange;
-                    style.renderOrder =
-                        minRange < 0
-                            ? techniqueRenderOrder + Math.abs(minRange)
-                            : techniqueRenderOrder;
-                    techniqueRenderOrder += Math.abs(minRange) + maxRange;
-                    if (style.renderOrderBiasGroup) {
-                        this.m_renderOrderBiasGroups.set(
-                            style.renderOrderBiasGroup,
-                            style.renderOrder
-                        );
-                    }
-                    techniqueRenderOrder++;
-                } else if (renderOrderBiasGroupOrder) {
-                    if (style.renderOrder !== undefined) {
-                        logger.warn(
-                            "WARN: style.renderOrder will be overridden if " +
-                                "renderOrderBiasGroup is set:",
-                            style
-                        );
-                    }
-                    style.renderOrder = renderOrderBiasGroupOrder;
-                }
-            }
-            // search through child styles
-            if (style.styles !== undefined) {
-                for (const currStyle of style.styles) {
-                    computeDefaultRenderOrder(currStyle as InternalStyle);
-                }
-            } else {
-                (style as InternalStyle)._styleSetIndex = styleSetIndex++;
-                if (style.technique !== undefined && style.renderOrder === undefined) {
-                    style.renderOrder = techniqueRenderOrder++;
-                }
-            }
-        };
-
-        for (const style of styleSet) {
-            computeDefaultRenderOrder(style as InternalStyle);
-        }
-
-        this.styleSet = styleSet as InternalStyle[];
+        this.styleSet = resolveReferences(styleSet, definitions);
+        computeDefaultRenderOrder(this.styleSet);
         this.compileStyleSet();
     }
 
@@ -744,12 +647,12 @@ export class StyleSetEvaluator {
 
         style._dynamicTechniqueAttributes = [];
         style._dynamicFeatureAttributes = [];
-        style._dynamicForwaredAttributes = [];
+        style._dynamicForwardedAttributes = [];
         style._staticAttributes = [];
 
         const dynamicFeatureAttributes = style._dynamicFeatureAttributes;
         const dynamicTechniqueAttributes = style._dynamicTechniqueAttributes;
-        const dynamicForwardedAttributes = style._dynamicForwaredAttributes;
+        const dynamicForwardedAttributes = style._dynamicForwardedAttributes;
         const targetStaticAttributes = style._staticAttributes;
 
         const techniqueDescriptor =
@@ -757,7 +660,7 @@ export class StyleSetEvaluator {
 
         const processAttribute = (
             attrName: TechniquePropNames<Technique>,
-            attrValue: Value | JsonExpr | undefined
+            attrValue: Value | JsonExpr | InterpolatedProperty | undefined
         ) => {
             if (attrValue === undefined) {
                 return;
@@ -768,44 +671,42 @@ export class StyleSetEvaluator {
             ];
 
             if (isJsonExpr(attrValue)) {
-                const expr = Expr.fromJSON(
+                attrValue = Expr.fromJSON(
                     attrValue,
                     this.m_definitions,
                     this.m_definitionExprCache
                 ).intern(this.m_exprPool);
-                if (expr instanceof LiteralExpr) {
-                    // Shortcut for literal expressions, so they are not taken into account when
-                    // trying to instantiate technique variants.
-                    attrValue = expr.value;
-                } else {
-                    switch (attrScope) {
-                        case AttrScope.FeatureGeometry:
-                            dynamicFeatureAttributes.push([attrName, expr]);
-                            break;
-                        case AttrScope.TechniqueGeometry:
-                        case AttrScope.TechniqueRendering:
-                            dynamicTechniqueAttributes.push([attrName, expr]);
-                            break;
-                    }
-                    return;
+            } else if (isInterpolatedPropertyDefinition(attrValue)) {
+                // found a property using an object-like interpolation definition.
+                attrValue = Expr.fromJSON(
+                    interpolatedPropertyDefinitionToJsonExpr(attrValue)
+                ).intern(this.m_exprPool);
+            }
+
+            if (attrValue instanceof Expr) {
+                const deps = attrValue.dependencies();
+
+                if (deps.properties.size === 0) {
+                    // no data-dependencies detected.
+                    attrValue = attrValue.evaluate(this.m_emptyEnv);
                 }
             }
 
-            if (isInterpolatedPropertyDefinition(attrValue)) {
-                const interpolatedProperty = createInterpolatedProperty(attrValue);
-                if (!interpolatedProperty) {
-                    return;
-                }
+            if (isInterpolatedProperty(attrValue) || attrValue instanceof Expr) {
                 switch (attrScope) {
                     case AttrScope.FeatureGeometry:
-                        dynamicFeatureAttributes.push([attrName, interpolatedProperty]);
+                        dynamicFeatureAttributes.push([attrName, attrValue]);
                         break;
                     case AttrScope.TechniqueRendering:
                     case AttrScope.TechniqueGeometry:
-                        dynamicForwardedAttributes.push([attrName, interpolatedProperty]);
+                        if (attrValue instanceof Expr) {
+                            dynamicTechniqueAttributes.push([attrName, attrValue]);
+                        } else {
+                            dynamicForwardedAttributes.push([attrName, attrValue]);
+                        }
                         break;
                 }
-            } else {
+            } else if (attrValue !== undefined && attrValue !== null) {
                 targetStaticAttributes.push([attrName, attrValue]);
             }
         };
@@ -890,8 +791,8 @@ export class StyleSetEvaluator {
             }
         }
 
-        if (style._dynamicForwaredAttributes !== undefined) {
-            for (const [attrName, attrValue] of style._dynamicForwaredAttributes) {
+        if (style._dynamicForwardedAttributes !== undefined) {
+            for (const [attrName, attrValue] of style._dynamicForwardedAttributes) {
                 if (attrValue instanceof Expr) {
                     // TODO: We don't support `Expr` instances in main thread yet.
                     continue;
@@ -906,6 +807,107 @@ export class StyleSetEvaluator {
         this.m_techniques.push(technique as IndexedTechnique);
         return technique as IndexedTechnique;
     }
+}
+
+interface ComputeDefaultRenderOrderState {
+    techniqueRenderOrder: number;
+    styleSetIndex: number;
+    renderOrderBiasGroups: Map<string, number>;
+}
+
+function computeDefaultRenderOrder(styleSet: InternalStyle[]) {
+    const options = {
+        techniqueRenderOrder: 0,
+        styleSetIndex: 0,
+        renderOrderBiasGroups: new Map()
+    };
+    for (const style of styleSet) {
+        computeStyleDefaultRenderOrder(style, options);
+    }
+}
+
+function computeStyleDefaultRenderOrder(
+    style: InternalStyle,
+    state: ComputeDefaultRenderOrderState
+) {
+    if (style.renderOrderBiasGroup !== undefined) {
+        const renderOrderBiasGroupOrder = style.renderOrderBiasGroup
+            ? state.renderOrderBiasGroups.get(style.renderOrderBiasGroup)
+            : undefined;
+        if (style.renderOrderBiasRange !== undefined && renderOrderBiasGroupOrder === undefined) {
+            if (style.renderOrder !== undefined) {
+                logger.warn(
+                    "WARN: style.renderOrder will be overridden if " +
+                        "renderOrderBiasGroup is set:",
+                    style
+                );
+            }
+            const [minRange, maxRange] = style.renderOrderBiasRange;
+            style.renderOrder =
+                minRange < 0
+                    ? state.techniqueRenderOrder + Math.abs(minRange)
+                    : state.techniqueRenderOrder;
+            state.techniqueRenderOrder += Math.abs(minRange) + maxRange;
+            if (style.renderOrderBiasGroup) {
+                state.renderOrderBiasGroups.set(style.renderOrderBiasGroup, style.renderOrder);
+            }
+            state.techniqueRenderOrder++;
+        } else if (renderOrderBiasGroupOrder) {
+            if (style.renderOrder !== undefined) {
+                logger.warn(
+                    "WARN: style.renderOrder will be overridden if " +
+                        "renderOrderBiasGroup is set:",
+                    style
+                );
+            }
+            style.renderOrder = renderOrderBiasGroupOrder;
+        }
+    }
+    // search through child styles
+    if (style.styles !== undefined) {
+        for (const currStyle of style.styles) {
+            computeStyleDefaultRenderOrder(currStyle as InternalStyle, state);
+        }
+    } else {
+        style._styleSetIndex = state.styleSetIndex++;
+        if (style.technique !== undefined && style.renderOrder === undefined) {
+            style.renderOrder = state.techniqueRenderOrder++;
+        }
+    }
+}
+
+function resolveReferences(styleSet: StyleDeclaration[], definitions: Definitions | undefined) {
+    return styleSet.map(style => resolveStyleReferences(style, definitions));
+}
+
+function resolveStyleReferences(
+    style: StyleDeclaration,
+    definitions: Definitions | undefined
+): InternalStyle {
+    if (isJsonExpr(style)) {
+        if (!isJsonExprReference(style)) {
+            throw new Error("invalid expression in this context, only 'ref's are supported");
+        }
+        // expand and instantiate references to style definitions.
+        const definitionName = style[1];
+        const def = definitions && definitions[definitionName];
+        if (!def) {
+            throw new Error(`invalid reference '${definitionName}' - not found`);
+        }
+        if (!isActualSelectorDefinition(def)) {
+            throw new Error(`invalid reference '${definitionName}' - expected style definition`);
+        }
+        // instantiate the style
+        return resolveStyleReferences(def, definitions);
+    }
+
+    const styles =
+        style.styles &&
+        (style.styles
+            .map(subStyle => resolveStyleReferences(subStyle, definitions))
+            .filter(subStyle => subStyle !== undefined) as StyleSet);
+
+    return { ...style, styles };
 }
 
 /**

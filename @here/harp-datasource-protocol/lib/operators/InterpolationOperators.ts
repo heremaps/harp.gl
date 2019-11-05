@@ -62,7 +62,7 @@ function step(context: ExprEvaluatorContext, args: Expr[]) {
 
 const operators = {
     zoom: {
-        call: (context: ExprEvaluatorContext, args: Expr[]): Value => {
+        call: (context: ExprEvaluatorContext, call: CallExpr): Value => {
             if (context.scope === ExprScope.Condition) {
                 const zoom = context.env.lookup("$zoom")!;
                 if (zoom !== undefined) {
@@ -76,10 +76,10 @@ const operators = {
         }
     },
     interpolate: {
-        call: (context: ExprEvaluatorContext, args: Expr[]): Value => {
-            const interpolatorType = args[0];
-            const input = args[1];
-            const samples = args.slice(2);
+        call: (context: ExprEvaluatorContext, call: CallExpr): Value => {
+            const interpolatorType = call.args[0];
+            const input = call.args[1];
+            const samples = call.args.slice(2);
 
             if (!(interpolatorType instanceof CallExpr)) {
                 throw new Error("expected an interpolation type");
@@ -96,7 +96,7 @@ const operators = {
                 interpolation = "Cubic";
             } else if (interpolatorType.op === "exponential") {
                 interpolation = "Exponential";
-                const base = interpolatorType.children[0];
+                const base = interpolatorType.args[0];
                 if (!(base instanceof NumberLiteralExpr)) {
                     throw new Error("expected the base of the exponential interpolation");
                 }
@@ -144,19 +144,19 @@ const operators = {
         }
     },
     step: {
-        call: (context: ExprEvaluatorContext, args: Expr[]): Value => {
-            if (args[0] === undefined) {
+        call: (context: ExprEvaluatorContext, call: CallExpr): Value => {
+            if (call.args[0] === undefined) {
                 throw new Error("expected the input of the 'step' operator");
             }
 
-            const input = args[0];
+            const input = call.args[0];
 
             if (
                 context.scope === ExprScope.Value &&
                 input instanceof CallExpr &&
                 input.op === "zoom"
             ) {
-                if (args.length < 3 || args.length % 2) {
+                if (call.args.length < 3 || call.args.length % 2) {
                     throw new Error("not enough arguments");
                 }
 
@@ -168,15 +168,15 @@ const operators = {
                 const values: any[] = [];
 
                 zoomLevels.push(Number.MIN_SAFE_INTEGER);
-                values.push(context.evaluate(args[1]));
+                values.push(context.evaluate(call.args[1]));
 
-                for (let i = 2; i < args.length; i += 2) {
-                    const stop = args[i];
+                for (let i = 2; i < call.args.length; i += 2) {
+                    const stop = call.args[i];
                     if (!(stop instanceof NumberLiteralExpr)) {
                         throw new Error("expected a numeric literal");
                     }
                     zoomLevels.push(stop.value);
-                    values.push(context.evaluate(args[i + 1]));
+                    values.push(context.evaluate(call.args[i + 1]));
                 }
 
                 const interpolation = createInterpolatedProperty({
@@ -192,7 +192,7 @@ const operators = {
                 return interpolation;
             }
 
-            return step(context, args);
+            return step(context, call.args);
         }
     }
 };

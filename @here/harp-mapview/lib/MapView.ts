@@ -19,17 +19,23 @@ import {
     ProjectionType,
     TilingScheme
 } from "@here/harp-geoutils";
-import { assert, getOptionValue, LoggerManager, Math2D, PerformanceTimer } from "@here/harp-utils";
+import {
+    assert,
+    getOptionValue,
+    LoggerManager,
+    LogLevel,
+    PerformanceTimer
+} from "@here/harp-utils";
 import * as THREE from "three";
 
 import { ViewRanges } from "@here/harp-datasource-protocol/lib/ViewRanges";
 import { AnimatedExtrusionHandler } from "./AnimatedExtrusionHandler";
 import { BackgroundDataSource } from "./BackgroundDataSource";
 import { CameraMovementDetector } from "./CameraMovementDetector";
-import { ClipPlanesEvaluator, defaultClipPlanesEvaluator } from "./ClipPlanesEvaluator";
+import { ClipPlanesEvaluator, createDefaultClipPlanesEvaluator } from "./ClipPlanesEvaluator";
 import { IMapAntialiasSettings, IMapRenderingManager, MapRenderingManager } from "./composing";
 import { ConcurrentDecoderFacade } from "./ConcurrentDecoderFacade";
-import { CopyrightInfo } from "./CopyrightInfo";
+import { CopyrightInfo } from "./copyrights/CopyrightInfo";
 import { DataSource } from "./DataSource";
 import { ElevationProvider } from "./ElevationProvider";
 import { ElevationRangeSource } from "./ElevationRangeSource";
@@ -43,7 +49,7 @@ import { PickHandler, PickResult } from "./PickHandler";
 import { PoiManager } from "./poi/PoiManager";
 import { PoiTableManager } from "./poi/PoiTableManager";
 import { PolarTileDataSource } from "./PolarTileDataSource";
-import { LineWithBound, ScreenCollisions, ScreenCollisionsDebug } from "./ScreenCollisions";
+import { ScreenCollisions, ScreenCollisionsDebug } from "./ScreenCollisions";
 import { ScreenProjector } from "./ScreenProjector";
 import { SkyBackground } from "./SkyBackground";
 import { FrameStats, PerformanceStatistics } from "./Statistics";
@@ -58,9 +64,15 @@ import { ResourceComputationType, VisibleTileSet, VisibleTileSetOptions } from "
 
 declare const process: any;
 
-// cache value, because access to process.env.NODE_ENV is SLOW!
+// Cache value, because access to process.env.NODE_ENV is SLOW!
 const isProduction = process.env.NODE_ENV === "production";
-
+if (isProduction) {
+    // In production: silence logging below error.
+    LoggerManager.instance.setLogLevelForAll(LogLevel.Error);
+} else {
+    // In dev: silence logging below log (silences "debug" and "trace" levels).
+    LoggerManager.instance.setLogLevelForAll(LogLevel.Log);
+}
 /**
  * An interface describing [[THREE.Object3D]]s anchored on given [[GeoCoordinates]].
  *
@@ -189,8 +201,10 @@ const CONTEXT_LOST_EVENT: RenderEvent = { type: MapViewEventNames.ContextLost } 
 const CONTEXT_RESTORED_EVENT: RenderEvent = { type: MapViewEventNames.ContextRestored } as any;
 const COPYRIGHT_CHANGED_EVENT: RenderEvent = { type: MapViewEventNames.CopyrightChanged } as any;
 
-const vector2 = new THREE.Vector2();
-const vector3 = new THREE.Vector3();
+const cache = {
+    vector2: [new THREE.Vector2()],
+    vector3: [new THREE.Vector3()]
+};
 
 /**
  * Specifies how the FOV (Field of View) should be calculated.
@@ -291,7 +305,7 @@ export interface MapViewOptions {
 
     /**
      * The number of Web Workers used to decode data. The default is
-     * CLAMP(`navigator.hardwareConcurrency` - 1, 1, 4).
+     * CLAMP(`navigator.hardwareConcurrency` - 1, 1, 2).
      */
     decoderCount?: number;
 
@@ -329,9 +343,9 @@ export interface MapViewOptions {
 
     /**
      * User-defined camera clipping planes distance evaluator.
-     * If not defined, [[DefaultClipPlanesEvaluator]] will be used by [[MapView]].
+     * If not defined, [[TiltViewClipPlanesEvaluator]] will be used by [[MapView]].
      *
-     * @default See [[MapViewDefaults.clipPlanesEvaluator]]
+     * @default [[TiltViewClipPlanesEvaluator]]
      */
     clipPlanesEvaluator?: ClipPlanesEvaluator;
 
@@ -607,7 +621,6 @@ export interface MapViewOptions {
  */
 export const MapViewDefaults = {
     projection: mercatorProjection,
-    clipPlanesEvaluator: defaultClipPlanesEvaluator,
 
     maxVisibleDataSourceTiles: 120,
     extendedFrustumCulling: true,
@@ -743,6 +756,7 @@ export class MapView extends THREE.EventDispatcher {
     private m_previousFrameTimeStamp?: number;
     private m_firstFrameRendered = false;
     private m_firstFrameComplete = false;
+    private m_initialTextPlacementDone = false;
     private m_previousRequestAnimationTime?: number;
     private m_targetRequestAnimationTime?: number;
     private m_frameTimeIndex: number = 0;
@@ -768,8 +782,6 @@ export class MapView extends THREE.EventDispatcher {
     private m_lastTileIds: string = "";
     private m_languages: string[] | undefined;
     private m_copyrightInfo: CopyrightInfo[] = [];
-    private m_screenSpaceBoxes: Math2D.Box[] = [];
-    private m_screenSpaceLines: LineWithBound[] = [];
     private m_animatedExtrusionHandler: AnimatedExtrusionHandler;
 
     /**
@@ -807,14 +819,16 @@ export class MapView extends THREE.EventDispatcher {
             ConcurrentDecoderFacade.defaultWorkerCount = this.m_options.decoderCount;
         }
 
-        this.m_visibleTileSetOptions = { ...MapViewDefaults };
+        this.m_visibleTileSetOptions = {
+            ...MapViewDefaults,
+            clipPlanesEvaluator:
+                options.clipPlanesEvaluator !== undefined
+                    ? options.clipPlanesEvaluator
+                    : createDefaultClipPlanesEvaluator()
+        };
 
         if (options.projection !== undefined) {
             this.m_visibleTileSetOptions.projection = options.projection;
-        }
-
-        if (options.clipPlanesEvaluator !== undefined) {
-            this.m_visibleTileSetOptions.clipPlanesEvaluator = options.clipPlanesEvaluator;
         }
 
         if (options.extendedFrustumCulling !== undefined) {
@@ -953,7 +967,7 @@ export class MapView extends THREE.EventDispatcher {
         this.m_visibleTiles = new VisibleTileSet(
             new FrustumIntersection(
                 this.m_camera,
-                this.m_visibleTileSetOptions.projection,
+                this,
                 this.m_visibleTileSetOptions.extendedFrustumCulling,
                 this.m_tileWrappingEnabled
             ),
@@ -1109,7 +1123,7 @@ export class MapView extends THREE.EventDispatcher {
         this.updateImages();
         this.updateLighting();
 
-        if (this.m_textElementsRenderer) {
+        if (this.m_textElementsRenderer !== undefined) {
             this.m_textElementsRenderer.placeAllTileLabels();
         }
         this.updateSkyBackground();
@@ -1454,9 +1468,9 @@ export class MapView extends THREE.EventDispatcher {
         }
         const targetCoordinates = this.projection.unprojectPoint(target);
         const targetDistance = this.camera.position.distanceTo(target);
-        const yawPitchRoll = MapViewUtils.extractYawPitchRoll(this.camera, this.projection.type);
-        const pitchDeg = THREE.Math.radToDeg(yawPitchRoll.pitch);
-        const yawDeg = THREE.Math.radToDeg(yawPitchRoll.yaw);
+        const attitude = MapViewUtils.extractAttitude(this, this.camera);
+        const pitchDeg = THREE.Math.radToDeg(attitude.pitch);
+        const yawDeg = THREE.Math.radToDeg(attitude.yaw);
 
         this.m_visibleTileSetOptions.projection = projection;
         this.updatePolarDataSource();
@@ -1464,7 +1478,7 @@ export class MapView extends THREE.EventDispatcher {
         this.m_visibleTiles = new VisibleTileSet(
             new FrustumIntersection(
                 this.m_camera,
-                this.m_visibleTileSetOptions.projection,
+                this,
                 this.m_visibleTileSetOptions.extendedFrustumCulling,
                 this.m_tileWrappingEnabled
             ),
@@ -1506,13 +1520,13 @@ export class MapView extends THREE.EventDispatcher {
     /**
      * Get object describing frustum planes distances and min/max visibility range for actual
      * camera setup.
-     * Near and far plance distance are self explanatory while minimum and maximum visibility range
+     * Near and far plane distance are self explanatory while minimum and maximum visibility range
      * describes the extreme near/far planes distances that may be achieved with current camera
      * settings, meaning at current zoom level (ground distance) and any possible orientation.
      * @note Visibility is directly related to camera [[ClipPlaneEvaluator]] used and determines
      * the maximum possible distance of camera far clipping plane regardless of tilt, but may change
-     * whenever zoom level changes. Distance is meassured in world units which may be approximately
-     * euqal to meters, but this depends on the distortion related to projection type used.
+     * whenever zoom level changes. Distance is measured in world units which may be approximately
+     * equal to meters, but this depends on the distortion related to projection type used.
      */
     get viewRanges(): ViewRanges {
         return this.m_viewRanges;
@@ -1642,6 +1656,11 @@ export class MapView extends THREE.EventDispatcher {
     get zoomLevel(): number {
         return this.m_zoomLevel;
     }
+    set zoomLevel(zoomLevel: number) {
+        this.m_zoomLevel = THREE.Math.clamp(zoomLevel, this.m_minZoomLevel, this.m_maxZoomLevel);
+        MapViewUtils.zoomOnTargetPosition(this, 0, 0, this.m_zoomLevel);
+        this.update();
+    }
 
     /**
      * Returns the storage level for the given camera setup.
@@ -1697,7 +1716,7 @@ export class MapView extends THREE.EventDispatcher {
      */
     setFovCalculation(fovCalculation: FovCalculation) {
         this.m_options.fovCalculation = fovCalculation;
-        this.calculateFocalLength(this.m_renderer.getSize(vector2).height);
+        this.calculateFocalLength(this.m_renderer.getSize(cache.vector2[0]).height);
         this.updateCameras();
     }
 
@@ -1869,24 +1888,25 @@ export class MapView extends THREE.EventDispatcher {
         azimuthDeg: number = 0
     ): void {
         const limitedTilt = Math.min(89, tiltDeg);
-        MapViewUtils.setRotation(this, -azimuthDeg, tiltDeg);
-        this.geoCenter = MapViewUtils.getCameraCoordinatesFromTargetCoordinates(
+        // MapViewUtils#setRotation uses pitch, not tilt, which is different in sphere projection.
+        // But in sphere, in the tangent space of the target of the camera, pitch = tilt. So, put
+        // the camera on the target, so the tilt can be passed to getRotation as a pitch.
+        MapViewUtils.getCameraRotationAtTarget(
+            this.projection,
+            target,
+            -azimuthDeg,
+            limitedTilt,
+            this.camera.quaternion
+        );
+        MapViewUtils.getCameraPositionFromTargetCoordinates(
             target,
             distance,
             -azimuthDeg,
             limitedTilt,
-            this
+            this.projection,
+            this.camera.position
         );
-        const pitchRad = THREE.Math.degToRad(limitedTilt);
-        const altitude = Math.cos(pitchRad) * distance;
-        if (this.projection.type === ProjectionType.Planar) {
-            this.camera.position.setZ(altitude);
-        } else if (this.projection.type === ProjectionType.Spherical) {
-            const a = EarthConstants.EQUATORIAL_RADIUS + altitude;
-            const b = Math.sin(pitchRad) * distance;
-            const cameraHeight = Math.sqrt(a * a + b * b);
-            this.camera.position.setLength(cameraHeight);
-        }
+        this.camera.updateMatrixWorld(true);
     }
 
     /**
@@ -1918,8 +1938,8 @@ export class MapView extends THREE.EventDispatcher {
             const maxPitchDegWithCurvature = THREE.Math.radToDeg(maxPitchRadWithCurvature);
             limitedPitch = Math.min(limitedPitch, maxPitchDegWithCurvature);
         }
-        MapViewUtils.setRotation(this, yawDeg, limitedPitch);
         MapViewUtils.zoomOnTargetPosition(this, 0, 0, zoomLevel);
+        MapViewUtils.setRotation(this, yawDeg, limitedPitch);
         this.update();
     }
 
@@ -1969,7 +1989,12 @@ export class MapView extends THREE.EventDispatcher {
      * Returns `true` if the current frame will immediately be followed by another frame.
      */
     get isDynamicFrame(): boolean {
-        return this.cameraIsMoving || this.animating || this.m_updatePending;
+        return (
+            this.cameraIsMoving ||
+            this.animating ||
+            this.m_updatePending ||
+            this.m_animatedExtrusionHandler.isAnimating
+        );
     }
 
     /**
@@ -2071,8 +2096,8 @@ export class MapView extends THREE.EventDispatcher {
      * `undefined`.
      */
     getScreenPosition(geoPos: GeoCoordinates): THREE.Vector2 | undefined {
-        this.projection.projectPoint(geoPos, vector3);
-        const p = this.m_screenProjector.project(vector3);
+        this.projection.projectPoint(geoPos, cache.vector3[0]);
+        const p = this.m_screenProjector.project(cache.vector3[0]);
         if (p !== undefined) {
             const { width, height } = this.getCanvasClientSize();
             p.x = p.x + width / 2;
@@ -2108,8 +2133,8 @@ export class MapView extends THREE.EventDispatcher {
     getWorldPositionAt(x: number, y: number): THREE.Vector3 | null {
         this.m_raycaster.setFromCamera(this.getNormalizedScreenCoordinates(x, y), this.m_camera);
         return this.projection.type === ProjectionType.Spherical
-            ? this.m_raycaster.ray.intersectSphere(this.m_sphere, vector3)
-            : this.m_raycaster.ray.intersectPlane(this.m_plane, vector3);
+            ? this.m_raycaster.ray.intersectSphere(this.m_sphere, cache.vector3[0])
+            : this.m_raycaster.ray.intersectPlane(this.m_plane, cache.vector3[0]);
     }
 
     /**
@@ -2343,25 +2368,6 @@ export class MapView extends THREE.EventDispatcher {
     }
 
     /**
-     * Allows the user to block some areas of the screen.
-     * @note To clear, simply pass in an empty array.
-     * @param screenSpaceBoxes Boxes that are in screen space.
-     * @deprecated
-     */
-    setLabelAvoidanceWithBoxes(screenSpaceBoxes: Math2D.Box[]) {
-        this.m_screenSpaceBoxes = screenSpaceBoxes;
-    }
-
-    /**
-     * Allows the user to block some area of the screen.
-     * @note To clear, simply pass in an empty array.
-     * @deprecated
-     */
-    setLabelAvoidanceWithLines(screenSpaceLines: LineWithBound[]) {
-        this.m_screenSpaceLines = screenSpaceLines;
-    }
-
-    /**
      * Public access to [[MapViewFog]] allowing to toggle it by setting its `enabled` property.
      */
     get fog(): MapViewFog {
@@ -2427,23 +2433,28 @@ export class MapView extends THREE.EventDispatcher {
      * calculated from [[ClipPlaneEvaluator]] used in [[VisibleTileSet]].
      */
     private updateCameras(viewRanges?: ViewRanges) {
-        const { width, height } = this.m_renderer.getSize(vector2);
+        const { width, height } = this.m_renderer.getSize(cache.vector2[0]);
         this.m_camera.aspect =
             this.m_forceCameraAspect !== undefined ? this.m_forceCameraAspect : width / height;
         this.setFovOnCamera(this.m_options.fovCalculation!, height);
 
         // When calculating clip planes account for the highest building on the earth,
-        // multipling its height by projection scalling factor. This approach assumes
+        // multiplying its height by projection scaling factor. This approach assumes
         // constantHeight property of extruded polygon technique is set as default false,
         // otherwise the near plane margins will be bigger then required, but still correct.
         const projectionScale = this.projection.getScaleFactor(this.camera.position);
-        const maxHeight = EarthConstants.MAX_BUILDING_HEIGHT * projectionScale;
+        const maxGeometryHeightScaled =
+            projectionScale *
+            this.m_tileDataSources.reduce((r, ds) => Math.max(r, ds.maxGeometryHeight), 0);
+
         // Copy all properties from new view ranges to our readonly object.
         // This allows to keep all view ranges references valid and keeps up-to-date
         // information within them. Works the same as copping all properties one-by-one.
         Object.assign(
             this.m_viewRanges,
-            viewRanges === undefined ? this.m_visibleTiles.updateClipPlanes(maxHeight) : viewRanges
+            viewRanges === undefined
+                ? this.m_visibleTiles.updateClipPlanes(maxGeometryHeightScaled)
+                : viewRanges
         );
         this.m_camera.near = this.m_viewRanges.near;
         this.m_camera.far = this.m_viewRanges.far;
@@ -2469,8 +2480,7 @@ export class MapView extends THREE.EventDispatcher {
 
         this.m_pixelToWorld = undefined;
 
-        const cameraPitch = MapViewUtils.extractYawPitchRoll(this.m_camera, this.projection.type)
-            .pitch;
+        const cameraPitch = MapViewUtils.extractAttitude(this, this.m_camera).pitch;
         const cameraPosZ = this.getCameraHeightAboveTerrain(TERRAIN_ZOOM_LEVEL);
 
         const target = MapViewUtils.rayCastWorldCoordinates(this, 0, 0);
@@ -2478,7 +2488,7 @@ export class MapView extends THREE.EventDispatcher {
             this.m_lookAtDistance = target.sub(this.camera.position).length();
             const zoomLevelDistance = cameraPosZ / Math.cos(Math.min(cameraPitch, Math.PI / 3));
             this.m_zoomLevel = MapViewUtils.calculateZoomLevelFromDistance(zoomLevelDistance, this);
-            this.m_fog.update(this.m_camera, this.projection, this.m_viewRanges.maximum);
+            this.m_fog.update(this, this.m_viewRanges.maximum);
         }
     }
 
@@ -2713,6 +2723,37 @@ export class MapView extends THREE.EventDispatcher {
             this.enqueueTextRendererCreation();
         }
 
+        // Check if this is the time to place the labels for the first time. Pretty much everything
+        // should have been loaded, and no animation should be running.
+        if (
+            !this.m_initialTextPlacementDone &&
+            !this.m_firstFrameComplete &&
+            !this.isDynamicFrame &&
+            !this.m_initialTextPlacementDone &&
+            !this.m_themeIsLoading &&
+            this.m_poiTableManager.finishedLoading &&
+            this.m_visibleTiles.allVisibleTilesLoaded &&
+            this.m_connectedDataSources.size + this.m_failedDataSources.size ===
+                this.m_tileDataSources.length
+        ) {
+            const textElementRendererFinished =
+                this.m_textElementsRenderer !== undefined &&
+                this.m_textElementsRenderer.ready &&
+                !this.m_textElementsRenderer.loading;
+
+            if (!this.textElementsRendererRequested || textElementRendererFinished) {
+                if (textElementRendererFinished) {
+                    // Placement of text shall be done now. This may change the loading state of the
+                    // TextElementsRenderer and the animation state of MapView.
+                    this.m_textElementsRenderer!.placeAllTileLabels();
+                }
+                this.m_initialTextPlacementDone = true;
+            }
+            // Either render the labels after placing them, or wait for the TextElementsRenderer to
+            // be created (delayed creation).
+            this.update();
+        }
+
         this.m_mapAnchors.children.forEach((childObject: MapAnchor) => {
             if (childObject.geoPosition === undefined) {
                 return;
@@ -2738,10 +2779,7 @@ export class MapView extends THREE.EventDispatcher {
         }
 
         if (this.m_movementDetector.checkCameraMoved(this, time)) {
-            const { yaw, pitch, roll } = MapViewUtils.extractYawPitchRoll(
-                this.camera,
-                this.projection.type
-            );
+            const { yaw, pitch, roll } = MapViewUtils.extractAttitude(this, this.camera);
             const { latitude, longitude, altitude } = this.geoCenter;
             this.dispatchEvent({
                 type: MapViewEventNames.CameraPositionChanged,
@@ -2799,31 +2837,6 @@ export class MapView extends THREE.EventDispatcher {
             this.dispatchEvent(FIRST_FRAME_EVENT);
         }
 
-        if (
-            !this.m_firstFrameComplete &&
-            !this.m_themeIsLoading &&
-            this.m_visibleTiles.allVisibleTilesLoaded &&
-            this.m_connectedDataSources.size + this.m_failedDataSources.size ===
-                this.m_tileDataSources.length &&
-            !this.m_updatePending &&
-            !this.animating &&
-            !this.cameraIsMoving &&
-            !this.m_animatedExtrusionHandler.isAnimating &&
-            (this.m_textElementsRenderer !== undefined
-                ? !this.m_textElementsRenderer.loading
-                : true) &&
-            this.m_poiTableManager.finishedLoading
-        ) {
-            this.m_firstFrameComplete = true;
-
-            if (gatherStatistics) {
-                stats.appResults.set("firstFrameComplete", time);
-            }
-
-            FRAME_COMPLETE_EVENT.time = time;
-            this.dispatchEvent(FRAME_COMPLETE_EVENT);
-        }
-
         this.m_visibleTiles.disposePendingTiles();
 
         this.m_drawing = false;
@@ -2850,6 +2863,27 @@ export class MapView extends THREE.EventDispatcher {
 
         DID_RENDER_EVENT.time = time;
         this.dispatchEvent(DID_RENDER_EVENT);
+
+        // After completely rendering this frame, it is checked if this frame was the first complete
+        // frame, with no more tiles, geometry and labels waiting to be added, and no animation
+        // running. The initial placement of text in this render call may have changed the loading
+        // state of the TextElementsRenderer, so this has to be checked again.
+        if (
+            !this.m_firstFrameComplete &&
+            this.m_initialTextPlacementDone &&
+            !this.isDynamicFrame &&
+            (this.m_textElementsRenderer === undefined ||
+                (this.m_textElementsRenderer.ready && !this.m_textElementsRenderer.loading))
+        ) {
+            this.m_firstFrameComplete = true;
+
+            if (gatherStatistics) {
+                stats.appResults.set("firstFrameComplete", time);
+            }
+
+            FRAME_COMPLETE_EVENT.time = time;
+            this.dispatchEvent(FRAME_COMPLETE_EVENT);
+        }
     }
 
     private renderTileObjects(tile: Tile, zoomLevel: number) {
@@ -2894,8 +2928,6 @@ export class MapView extends THREE.EventDispatcher {
         // they are handled first. They will be rendered after the normal map objects and
         // TextElements
         this.m_textElementsRenderer.reset();
-        this.m_textElementsRenderer.prepopulateScreen(this.m_screenSpaceBoxes);
-        this.m_textElementsRenderer.prepopulateScreenWithLines(this.m_screenSpaceLines);
         this.m_textElementsRenderer.prepopulateScreenWithBlockingElements();
         this.m_textElementsRenderer.renderUserTextElements(time, this.m_frameNumber);
         this.m_textElementsRenderer.renderAllTileText(time, this.m_frameNumber);
@@ -2908,7 +2940,7 @@ export class MapView extends THREE.EventDispatcher {
 
         if (canRenderTextElements && this.m_textElementsRenderer !== undefined) {
             // copy far value from scene camera, as the distance to the POIs matter now.
-            this.m_screenCamera.far = this.m_camera.far;
+            this.m_screenCamera.far = this.m_viewRanges.maximum;
             this.m_textElementsRenderer.renderText(this.m_screenCamera);
         }
     }
@@ -2938,7 +2970,7 @@ export class MapView extends THREE.EventDispatcher {
     private setupCamera() {
         const { width, height } = this.getCanvasClientSize();
 
-        const defaultGeoCenter = new GeoCoordinates(52.518611, 13.376111, 3000);
+        const defaultGeoCenter = new GeoCoordinates(25, 0, 30000000);
 
         this.projection.projectPoint(defaultGeoCenter, this.m_camera.position);
 
@@ -2953,7 +2985,7 @@ export class MapView extends THREE.EventDispatcher {
         this.m_visibleTiles = new VisibleTileSet(
             new FrustumIntersection(
                 this.m_camera,
-                this.m_visibleTileSetOptions.projection,
+                this,
                 this.m_visibleTileSetOptions.extendedFrustumCulling,
                 this.m_tileWrappingEnabled
             ),
@@ -3033,7 +3065,7 @@ export class MapView extends THREE.EventDispatcher {
             theme.lights.forEach((lightDescription: Light) => {
                 const light = createLight(lightDescription);
                 if (!light) {
-                    logger.log(
+                    logger.warn(
                         // tslint:disable-next-line: max-line-length
                         `MapView: failed to create light ${lightDescription.name} of type ${lightDescription.type}`
                     );
@@ -3206,7 +3238,10 @@ export class MapView extends THREE.EventDispatcher {
         this.poiTableManager.clear();
 
         // Add the POI tables defined in the theme.
-        this.poiTableManager.loadPoiTables(this.m_theme as Theme);
+        this.poiTableManager
+            .loadPoiTables(this.m_theme as Theme)
+            .then(() => this.update())
+            .catch(() => this.update());
     }
 
     private setupStats(enable: boolean) {
@@ -3258,9 +3293,20 @@ export class MapView extends THREE.EventDispatcher {
         }
     }
 
+    /**
+     * @hidden
+     * Is `true` if the [[TextElementsRenderer]] is soon to be created.
+     */
+    private get textElementsRendererRequested(): boolean {
+        return this.m_textElementsRendererTimer !== undefined;
+    }
+
     private resetTextRenderer(): void {
         if (this.m_textElementsRenderer !== undefined) {
             this.m_textElementsRenderer = undefined;
+        }
+        if (this.m_textElementsRendererTimer !== undefined) {
+            clearTimeout(this.m_textElementsRendererTimer);
         }
     }
 
@@ -3271,7 +3317,7 @@ export class MapView extends THREE.EventDispatcher {
      */
     private onWebGLContextLost = (event: Event) => {
         this.dispatchEvent(CONTEXT_LOST_EVENT);
-        logger.log("WebGL context lost", event);
+        logger.warn("WebGL context lost", event);
     };
 
     /**
@@ -3289,7 +3335,7 @@ export class MapView extends THREE.EventDispatcher {
             }
             this.update();
         }
-        logger.log("WebGL context restored", event);
+        logger.warn("WebGL context restored", event);
     };
 
     private limitFov(fov: number, aspect: number): number {

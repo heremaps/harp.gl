@@ -465,9 +465,9 @@ export class BoxBuffer {
             this.resizeBuffer(newSize);
         }
 
-        this.geometry.addAttribute("position", this.positionAttribute!);
-        this.geometry.addAttribute("color", this.colorAttribute!);
-        this.geometry.addAttribute("uv", this.uvAttribute!);
+        this.geometry.setAttribute("position", this.positionAttribute!);
+        this.geometry.setAttribute("color", this.colorAttribute!);
+        this.geometry.setAttribute("uv", this.uvAttribute!);
         this.geometry.setIndex(this.indexAttribute!);
         this.geometry.addGroup(0, this.indexAttribute!.count);
 
@@ -557,7 +557,7 @@ export class BoxBuffer {
         if (this.positionAttribute !== undefined && this.positionAttribute.array.length > 0) {
             const positionAttributeCount = this.positionAttribute.count;
             newPositionArray.set(this.positionAttribute.array);
-            this.positionAttribute.setArray(newPositionArray);
+            this.positionAttribute.array = newPositionArray;
             this.positionAttribute.count = positionAttributeCount;
         } else {
             this.positionAttribute = new THREE.BufferAttribute(
@@ -565,7 +565,7 @@ export class BoxBuffer {
                 NUM_POSITION_VALUES_PER_VERTEX
             );
             this.positionAttribute.count = 0;
-            this.positionAttribute.setDynamic(true);
+            this.positionAttribute.setUsage(THREE.DynamicDrawUsage);
         }
 
         const newColorArray = new Uint8Array(
@@ -575,7 +575,7 @@ export class BoxBuffer {
         if (this.colorAttribute !== undefined) {
             const colorAttributeCount = this.colorAttribute.count;
             newColorArray.set(this.colorAttribute.array);
-            this.colorAttribute.setArray(newColorArray);
+            this.colorAttribute.array = newColorArray;
             this.colorAttribute.count = colorAttributeCount;
         } else {
             this.colorAttribute = new THREE.BufferAttribute(
@@ -584,7 +584,7 @@ export class BoxBuffer {
                 true
             );
             this.colorAttribute.count = 0;
-            this.colorAttribute.setDynamic(true);
+            this.colorAttribute.setUsage(THREE.DynamicDrawUsage);
         }
 
         const newUvArray = new Float32Array(
@@ -594,12 +594,12 @@ export class BoxBuffer {
         if (this.uvAttribute !== undefined) {
             const uvAttributeCount = this.uvAttribute.count;
             newUvArray.set(this.uvAttribute.array);
-            this.uvAttribute.setArray(newUvArray);
+            this.uvAttribute.array = newUvArray;
             this.uvAttribute.count = uvAttributeCount;
         } else {
             this.uvAttribute = new THREE.BufferAttribute(newUvArray, NUM_UV_VALUES_PER_VERTEX);
             this.uvAttribute.count = 0;
-            this.uvAttribute.setDynamic(true);
+            this.uvAttribute.setUsage(THREE.DynamicDrawUsage);
         }
 
         const numIndexValues = newSize * NUM_INDICES_PER_ELEMENT * NUM_INDEX_VALUES_PER_VERTEX;
@@ -612,7 +612,7 @@ export class BoxBuffer {
         if (this.indexAttribute !== undefined) {
             const indexAttributeCount = this.indexAttribute.count;
             newIndexArray.set(this.indexAttribute.array);
-            this.indexAttribute.setArray(newIndexArray);
+            this.indexAttribute.array = newIndexArray;
             this.indexAttribute.count = indexAttributeCount;
         } else {
             this.indexAttribute = new THREE.BufferAttribute(
@@ -620,7 +620,7 @@ export class BoxBuffer {
                 NUM_INDEX_VALUES_PER_VERTEX
             );
             this.indexAttribute.count = 0;
-            this.indexAttribute.setDynamic(true);
+            this.indexAttribute.setUsage(THREE.DynamicDrawUsage);
         }
 
         this.m_size = newSize;

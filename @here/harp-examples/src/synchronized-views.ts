@@ -6,7 +6,7 @@
 
 import { GeoCoordinates } from "@here/harp-geoutils";
 import { MapControls, MapControlsUI } from "@here/harp-map-controls";
-import { CopyrightElementHandler, CopyrightInfo, MapView } from "@here/harp-mapview";
+import { CopyrightElementHandler, CopyrightInfo, MapView, MapViewUtils } from "@here/harp-mapview";
 import { APIFormat, OmvDataSource } from "@here/harp-omv-datasource";
 import { accessToken } from "../config";
 
@@ -32,96 +32,18 @@ import { accessToken } from "../config";
 
 export namespace TripleViewExample {
     // inject HTML code to page to show additional map canvases and position them side-by-side
-    document.body.innerHTML += `
+    document.body.innerHTML += getExampleHTML();
 
-<style>
-    .themeName {
-        font-weight: bold;
-        padding: 1em;
-        position: absolute
-        margin-bottom: 0.5em;
-        margin: 0 auto;
-        width: 33%;
-        text-align:center;
-        text-transform:uppercase;
-        font-family: 'Fira Sans', sans-serif;
-    }
-
-    .titleRow
-    {
-        display: table;
-        table-layout: fixed;
-        width: 100%;
-    }
-
-    #mapTheme1,#mapTheme2,#mapTheme3 {
-        background: hsl(218, 17%, 18%);
-        color: hsl(218, 17%, 85%);
-        display: table-cell;
-        left: 66%;
-    }
-
-    #mapCanvas {
-        border: 0px;
-        height: 100%;
-        left: 0;
-        overflow: hidden;
-        position: absolute;
-        width: calc(100%/3);
-        z-index: -1
-    }
-
-    #mapCanvas2 {
-        border: 0px;
-        height: 100%;
-        left: 33.3%;
-        overflow: hidden;
-        position: absolute;
-        width: calc(100%/3);
-        z-index: -1
-    }
-
-    #mapCanvas3 {
-        border: 0px;
-        height: 100%;
-        left: 66.6%;
-        overflow: hidden;
-        position: absolute;
-        width: calc(100%/3);
-        z-index: -1
-    }
-
-</style>
-
-<canvas id="mapCanvas2"></canvas>
-<canvas id="mapCanvas3"></canvas>
-<div class="titleRow">
-    <div class="themeName" id="mapTheme1">
-        Base theme
-    </div>
-    <div class="themeName" id="mapTheme2">
-        Night reduced theme
-    </div>
-    <div class="themeName" id="mapTheme3">
-        Day reduced theme
-    </div>
-</div>
-`;
-
-    const defaultTheme = "./resources/berlin_tilezen_day_reduced.json";
     const numberOfSyncXViews = 3;
     // Adjust CSS to see more then 1 row in Y axis
     const numberOfSyncYViews = 1;
 
-    /**
-     * A pair of MapView and MapController.
-     */
-    export interface ViewControlPair {
+    interface ViewControlPair {
         mapView: MapView;
         mapControls: MapControls;
     }
 
-    export function setupSyncViewsGrid(mapView: MapView, gridPosX: number, gridPosY: number) {
+    function setupSyncViewsGrid(mapView: MapView, gridPosX: number, gridPosY: number) {
         const winW = window.innerWidth;
         const winH = window.innerHeight;
         const chunkW = window.innerWidth / numberOfSyncXViews;
@@ -129,38 +51,33 @@ export namespace TripleViewExample {
         // force camera aspect
         mapView.forceCameraAspect = winW / winH;
         // resize the mapView to maximum
-        mapView.resize(chunkW, chunkH);
-
-        // let the camera float over the map, looking straight down
-        mapView.camera.setViewOffset(
-            winW,
-            winH,
-            gridPosX * chunkW,
-            gridPosY * chunkH,
-            chunkW,
-            chunkH
-        );
+        if (gridPosX !== 1) {
+            mapView.resize(chunkW, chunkH);
+            mapView.camera.setViewOffset(
+                winW,
+                winH,
+                gridPosX * chunkW,
+                gridPosY * chunkH,
+                chunkW,
+                chunkH
+            );
+        } else {
+            mapView.resize(winW, winH);
+        }
     }
 
-    /**
-     * Creates the pair of MapView and MapControllers required to sync the views.
-     *
-     * @param id ID of HTML canvas element
-     * @param theme URL of theme to load
-     * @param decoderUrl URL of decoder bundle
-     */
-    export function initMapView(
+    function initMapView(
         id: string,
         gridPositionX: number,
         gridPositionY: number,
-        theme?: string,
-        decoderUrl?: string
+        theme: string,
+        decoderUrl: string
     ): ViewControlPair {
         const canvas = document.getElementById(id) as HTMLCanvasElement;
 
         const mapView = new MapView({
             canvas,
-            theme: theme !== undefined ? theme : defaultTheme,
+            theme,
             decoderUrl
         });
         CopyrightElementHandler.install("copyrightNotice", mapView);
@@ -242,18 +159,9 @@ export namespace TripleViewExample {
     mapViews.view3.mapView.addDataSource(dataSources.omvDataSource3);
     // end:harp_gl_multiview_tripleView_2.ts
 
-    /**
-     * A function that copies the position and orientation of one MapView/MapControl to the others.
-     *
-     * @param srcView Source with MapView with current location and MapControl with current camera
-     *                  position and orientation
-     * @param destView Destination MapView synced to current location; MapControl synced to current
-     *                  position and orientation
-     */
-    // snippet:harp_gl_multiview_tripleView_3.ts
-    export const syncMapViews = (srcView: ViewControlPair, destView: ViewControlPair) => {
-        const ypr = srcView.mapControls.yawPitchRoll;
-        destView.mapControls.setRotation(ypr.yaw, ypr.pitch);
+    const syncMapViews = (srcView: ViewControlPair, destView: ViewControlPair) => {
+        const ypr = srcView.mapControls.attitude;
+        MapViewUtils.setRotation(destView.mapView, ypr.yaw, ypr.pitch);
         destView.mapView.camera.position.copy(srcView.mapView.camera.position);
         destView.mapControls.cameraHeight = srcView.mapControls.cameraHeight;
         destView.mapView.camera.aspect = numberOfSyncXViews;
@@ -263,18 +171,88 @@ export namespace TripleViewExample {
         destView.mapView.update();
     };
 
-    const views = [mapViews.view1, mapViews.view2, mapViews.view3];
-
-    // sync camera of each view to other views changes.
-    views.forEach((v: ViewControlPair, index: number) => {
-        const otherViews = views.slice();
-        otherViews.splice(index, 1);
-        // tslint:disable-next-line:no-unused-variable
-        otherViews.forEach((otherView: ViewControlPair, indexTemp: number) => {
-            v.mapControls.addEventListener("update", (): void => {
-                syncMapViews(views[index], otherViews[indexTemp]);
-            });
-        });
+    mapViews.view2.mapControls.addEventListener("update", () => {
+        syncMapViews(mapViews.view2, mapViews.view1);
+        syncMapViews(mapViews.view2, mapViews.view3);
     });
     // end:harp_gl_multiview_tripleView_3.ts
+
+    function getExampleHTML() {
+        return `
+            <style>
+                .themeName {
+                    font-weight: bold;
+                    padding: 1em;
+                    position: absolute
+                    margin-bottom: 0.5em;
+                    margin: 0 auto;
+                    width: 33%;
+                    text-align:center;
+                    text-transform:uppercase;
+                    font-family: 'Fira Sans', sans-serif;
+                }
+
+                .titleRow
+                {
+                    display: table;
+                    table-layout: fixed;
+                    width: 100%;
+                }
+
+                #mapTheme1,#mapTheme2,#mapTheme3 {
+                    background: hsl(218, 17%, 18%);
+                    color: hsl(218, 17%, 85%);
+                    display: table-cell;
+                    left: 66%;
+                }
+
+                #mapCanvas {
+                    border: 0px;
+                    height: 100%;
+                    left: 0;
+                    overflow: hidden;
+                    position: absolute;
+                    pointer-events:none;
+                    width: calc(100%/3);
+                    z-index: -1
+                }
+
+                #mapCanvas2 {
+                    border: 0px;
+                    height: 100%;
+                    left: 0;
+                    overflow: hidden;
+                    position: absolute;
+                    width: 100%;
+                    z-index: -2
+                }
+
+                #mapCanvas3 {
+                    border: 0px;
+                    height: 100%;
+                    left: 66.6%;
+                    pointer-events:none;
+                    overflow: hidden;
+                    position: absolute;
+                    width: calc(100%/3);
+                    z-index: -1
+                }
+
+            </style>
+
+            <canvas id="mapCanvas2"></canvas>
+            <canvas id="mapCanvas3"></canvas>
+            <div class="titleRow">
+                <div class="themeName" id="mapTheme1">
+                    Base theme
+                </div>
+                <div class="themeName" id="mapTheme2">
+                    Night reduced theme
+                </div>
+                <div class="themeName" id="mapTheme3">
+                    Day reduced theme
+                </div>
+            </div>
+        `;
+    }
 }

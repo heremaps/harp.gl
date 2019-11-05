@@ -6,15 +6,10 @@
 
 import { GeoCoordinates } from "@here/harp-geoutils";
 import { LongPressHandler, MapControls, MapControlsUI } from "@here/harp-map-controls";
-import {
-    CopyrightElementHandler,
-    CopyrightInfo,
-    MapView,
-    MapViewEventNames
-} from "@here/harp-mapview";
+import { CopyrightElementHandler, MapView, MapViewEventNames } from "@here/harp-mapview";
 import { APIFormat, OmvDataSource } from "@here/harp-omv-datasource";
 import * as THREE from "three";
-import { accessToken } from "../config";
+import { accessToken, copyrightInfo } from "../config";
 
 /**
  * This example shows how we can pick the scene and add a [three.js](https://threejs.org/) object.
@@ -130,21 +125,13 @@ export namespace ThreejsRaycast {
 
     const mapView = initializeMapView("mapCanvas");
 
-    const hereCopyrightInfo: CopyrightInfo = {
-        id: "here.com",
-        year: new Date().getFullYear(),
-        label: "HERE",
-        link: "https://legal.here.com/terms"
-    };
-    const copyrights: CopyrightInfo[] = [hereCopyrightInfo];
-
     const omvDataSource = new OmvDataSource({
         baseUrl: "https://xyz.api.here.com/tiles/herebase.02",
         apiFormat: APIFormat.XYZOMV,
         styleSetName: "tilezen",
         maxZoomLevel: 17,
         authenticationCode: accessToken,
-        copyrightInfo: copyrights
+        copyrightInfo
     });
 
     mapView.addDataSource(omvDataSource);

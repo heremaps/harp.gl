@@ -181,7 +181,7 @@ export class PoiManager {
                 }
 
                 try {
-                    logger.log(
+                    logger.debug(
                         `addTextureAtlas: Loading textureAtlas '${atlas}' for image '${imageName}'`
                     );
                     for (const textureName of Object.getOwnPropertyNames(jsonAtlas)) {
@@ -491,6 +491,10 @@ export class PoiManager {
     ): TextElement {
         const priority = technique.priority !== undefined ? technique.priority : 0;
         const positions = Array.isArray(x) ? (x as THREE.Vector3[]) : new THREE.Vector3(x, y, z);
+
+        // The current zoomlevel of mapview. Since this method is called for all tiles in the
+        // VisibleTileSet we can be sure that the current zoomlevel matches the zoomlevel where
+        // the tile should be shown.
         const displayZoomLevel = this.mapView.zoomLevel;
         const fadeNear =
             technique.fadeNear !== undefined
@@ -501,14 +505,17 @@ export class PoiManager {
                 ? getPropertyValue(technique.fadeFar, displayZoomLevel)
                 : technique.fadeFar;
 
+        const xOffset = getPropertyValue(technique.xOffset, displayZoomLevel);
+        const yOffset = getPropertyValue(technique.yOffset, displayZoomLevel);
+
         const textElement: TextElement = new TextElement(
             ContextualArabicConverter.instance.convert(text),
             positions,
             this.getRenderStyle(tile.dataSource.name, technique),
             this.getLayoutStyle(tile.dataSource.name, technique),
             getPropertyValue(priority, displayZoomLevel),
-            technique.xOffset !== undefined ? technique.xOffset : 0.0,
-            technique.yOffset !== undefined ? technique.yOffset : 0.0,
+            xOffset !== undefined ? xOffset : 0.0,
+            yOffset !== undefined ? yOffset : 0.0,
             featureId,
             technique.style,
             fadeNear,
@@ -681,16 +688,30 @@ export class PoiManager {
         dataSourceName: string,
         technique: PoiTechnique | LineMarkerTechnique
     ): TextLayoutStyle {
-        const cacheId = computeStyleCacheId(
-            dataSourceName,
-            technique,
-            Math.floor(this.mapView.zoomLevel)
-        );
+        const floorZoomLevel = Math.floor(this.mapView.zoomLevel);
+        const cacheId = computeStyleCacheId(dataSourceName, technique, floorZoomLevel);
         const renderer = this.mapView.textElementsRenderer;
         let layoutStyle = this.mapView.textLayoutStyleCache.get(cacheId);
         if (layoutStyle === undefined) {
             const defaultLayoutParams =
                 renderer !== undefined ? renderer.defaultStyle.layoutParams : {};
+
+            const hAlignment = getPropertyValue(technique.hAlignment, floorZoomLevel) as (
+                | string
+                | undefined);
+            const vAlignment = getPropertyValue(technique.vAlignment, floorZoomLevel) as (
+                | string
+                | undefined);
+
+            const horizontalAlignment: HorizontalAlignment | undefined =
+                hAlignment === "Left" || hAlignment === "Center" || hAlignment === "Right"
+                    ? HorizontalAlignment[hAlignment]
+                    : defaultLayoutParams.horizontalAlignment;
+
+            const verticalAlignment: VerticalAlignment | undefined =
+                vAlignment === "Above" || vAlignment === "Center" || vAlignment === "Below"
+                    ? VerticalAlignment[vAlignment]
+                    : defaultLayoutParams.verticalAlignment;
 
             const layoutParams = {
                 tracking: getOptionValue(technique.tracking, defaultLayoutParams.tracking),
@@ -711,18 +732,8 @@ export class PoiManager {
                     technique.wrappingMode === "Word"
                         ? WrappingMode[technique.wrappingMode]
                         : defaultLayoutParams.wrappingMode,
-                horizontalAlignment:
-                    technique.hAlignment === "Left" ||
-                    technique.hAlignment === "Center" ||
-                    technique.hAlignment === "Right"
-                        ? HorizontalAlignment[technique.hAlignment]
-                        : defaultLayoutParams.horizontalAlignment,
-                verticalAlignment:
-                    technique.vAlignment === "Above" ||
-                    technique.vAlignment === "Center" ||
-                    technique.vAlignment === "Below"
-                        ? VerticalAlignment[technique.vAlignment]
-                        : defaultLayoutParams.verticalAlignment
+                horizontalAlignment,
+                verticalAlignment
             };
 
             const themeLayoutParams =

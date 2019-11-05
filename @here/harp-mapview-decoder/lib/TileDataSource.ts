@@ -12,15 +12,15 @@ import {
     TileInfo
 } from "@here/harp-datasource-protocol";
 import { TileKey, TilingScheme } from "@here/harp-geoutils";
+import { LRUCache } from "@here/harp-lrucache";
 import {
     ConcurrentDecoderFacade,
     CopyrightInfo,
+    CopyrightProvider,
     DataSource,
     Tile,
     TileLoaderState
 } from "@here/harp-mapview";
-
-import { LRUCache } from "@here/harp-lrucache";
 import { LoggerManager } from "@here/harp-utils";
 import { DataProvider } from "./DataProvider";
 import { TileInfoLoader, TileLoader } from "./TileLoader";
@@ -73,10 +73,15 @@ export interface TileDataSourceOptions {
 
     /**
      * Optional, default copyright information of tiles provided by this data source.
-     *
      * Implementation should provide this information from the source data if possible.
      */
     copyrightInfo?: CopyrightInfo[];
+
+    /**
+     * Optional copyright info provider for tiles provided by this data source. Copyrights from
+     * provider are concatenated with default ones from `copyrightInfo`.
+     */
+    copyrightProvider?: CopyrightProvider;
 
     /**
      * Optional minimum zoom level (storage level) for [[Tile]]s. Default is 1.
@@ -163,7 +168,6 @@ export class TileDataSource<TileType extends Tile> extends DataSource {
                     `concurrentDecoderServiceName`
             );
         }
-
         this.useGeometryLoader = true;
         this.cacheable = true;
         this.m_tileLoaderCache = new LRUCache<number, TileLoader>(this.getCacheCount());
@@ -237,7 +241,9 @@ export class TileDataSource<TileType extends Tile> extends DataSource {
 
     /**
      * Create a [[Tile]] and start the asynchronous download of the tile content. The [[Tile]] will
-     * be empty, but the download and decoding will be scheduled immediately.
+     * be empty, but the download and decoding will be scheduled immediately. [[Tile]] instance is
+     * initialized with default copyrights, concatenated with copyrights from copyright provider of
+     * this data source.
      *
      * @param tileKey Quadtree address of the requested tile.
      */
@@ -258,6 +264,17 @@ export class TileDataSource<TileType extends Tile> extends DataSource {
             );
             tile.tileLoader = newTileLoader;
             tile.copyrightInfo = this.m_options.copyrightInfo;
+            if (this.m_options.copyrightProvider !== undefined) {
+                this.m_options.copyrightProvider
+                    .getCopyrights(tile.geoBox, tileKey.level)
+                    .then(copyrightInfo => {
+                        tile.copyrightInfo =
+                            tile.copyrightInfo === undefined
+                                ? copyrightInfo
+                                : [...tile.copyrightInfo, ...copyrightInfo];
+                        this.requestUpdate();
+                    });
+            }
 
             // We don't cache tiles with level 4 and above, at this level, there are 16 (2^4) tiles
             // horizontally, given the assumption that the zoom level assumes the tile should be 256

@@ -76,6 +76,7 @@ import {
 } from "../DepthPrePass";
 import { DisplacementMap, TileDisplacementMap } from "../DisplacementMap";
 import { MapViewPoints } from "../MapViewPoints";
+import { PathBlockingElement } from "../PathBlockingElement";
 import { TextElement } from "../text/TextElement";
 import { DEFAULT_TEXT_DISTANCE_SCALE } from "../text/TextElementsRenderer";
 import { computeStyleCacheId } from "../text/TextStyleCache";
@@ -208,8 +209,15 @@ export class TileGeometryCreator {
             return technique.enabled !== false;
         };
 
+        if (decodedTile.maxGeometryHeight !== undefined) {
+            tile.maxGeometryHeight = decodedTile.maxGeometryHeight;
+        }
         this.createObjects(tile, decodedTile, filter);
 
+        this.preparePois(tile, decodedTile);
+
+        // TextElements do not get their geometry created by Tile, but are managed on a
+        // higher level.
         const textFilter = (technique: Technique): boolean => {
             if (
                 !isPoiTechnique(technique) &&
@@ -220,12 +228,18 @@ export class TileGeometryCreator {
             }
             return filter(technique);
         };
-
-        this.preparePois(tile, decodedTile);
-
-        // TextElements do not get their geometry created by Tile, but are managed on a
-        // higher level.
         this.createTextElements(tile, decodedTile, textFilter);
+
+        this.createLabelRejectionElements(tile, decodedTile);
+    }
+
+    createLabelRejectionElements(tile: Tile, decodedTile: DecodedTile) {
+        if (decodedTile.pathGeometries === undefined) {
+            return;
+        }
+        for (const path of decodedTile.pathGeometries) {
+            tile.addBlockingElement(new PathBlockingElement(path.path));
+        }
     }
 
     /**
@@ -621,7 +635,7 @@ export class TileGeometryCreator {
 
                 srcGeometry.vertexAttributes.forEach((vertexAttribute: BufferAttribute) => {
                     const buffer = getBufferAttribute(vertexAttribute);
-                    bufferGeometry.addAttribute(vertexAttribute.name, buffer);
+                    bufferGeometry.setAttribute(vertexAttribute.name, buffer);
                 });
 
                 if (srcGeometry.interleavedVertexAttributes !== undefined) {
@@ -653,7 +667,7 @@ export class TileGeometryCreator {
                                         interleavedAttr.offset,
                                         false
                                     );
-                                    bufferGeometry.addAttribute(interleavedAttr.name, attribute);
+                                    bufferGeometry.setAttribute(interleavedAttr.name, attribute);
                                 }
                             );
                         }
@@ -959,26 +973,26 @@ export class TileGeometryCreator {
                 // Add the extruded building edges as a separate geometry.
                 if (isExtrudedPolygonTechnique(technique) && srcGeometry.edgeIndex !== undefined) {
                     const edgeGeometry = new THREE.BufferGeometry();
-                    edgeGeometry.addAttribute("position", bufferGeometry.getAttribute("position"));
+                    edgeGeometry.setAttribute("position", bufferGeometry.getAttribute("position"));
 
                     const colorAttribute = bufferGeometry.getAttribute("color");
                     if (colorAttribute !== undefined) {
-                        edgeGeometry.addAttribute("color", colorAttribute);
+                        edgeGeometry.setAttribute("color", colorAttribute);
                     }
 
                     const extrusionAttribute = bufferGeometry.getAttribute("extrusionAxis");
                     if (extrusionAttribute !== undefined) {
-                        edgeGeometry.addAttribute("extrusionAxis", extrusionAttribute);
+                        edgeGeometry.setAttribute("extrusionAxis", extrusionAttribute);
                     }
 
                     const normalAttribute = bufferGeometry.getAttribute("normal");
                     if (normalAttribute !== undefined) {
-                        edgeGeometry.addAttribute("normal", normalAttribute);
+                        edgeGeometry.setAttribute("normal", normalAttribute);
                     }
 
                     const uvAttribute = bufferGeometry.getAttribute("uv");
                     if (uvAttribute !== undefined) {
-                        edgeGeometry.addAttribute("uv", uvAttribute);
+                        edgeGeometry.setAttribute("uv", uvAttribute);
                     }
 
                     edgeGeometry.setIndex(
@@ -1062,7 +1076,7 @@ export class TileGeometryCreator {
 
                 if (isFillTechnique(technique) && srcGeometry.edgeIndex !== undefined) {
                     const outlineGeometry = new THREE.BufferGeometry();
-                    outlineGeometry.addAttribute(
+                    outlineGeometry.setAttribute(
                         "position",
                         bufferGeometry.getAttribute("position")
                     );
@@ -1394,7 +1408,7 @@ export class TileGeometryCreator {
                 ]),
                 3
             );
-            g.addAttribute("position", posAttr);
+            g.setAttribute("position", posAttr);
             g.setIndex(new THREE.BufferAttribute(new Uint16Array([0, 1, 2, 2, 1, 3]), 1));
             const modifier = new SphericalGeometrySubdivisionModifier(
                 THREE.Math.degToRad(10),

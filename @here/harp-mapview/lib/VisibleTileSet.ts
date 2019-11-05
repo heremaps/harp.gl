@@ -5,7 +5,6 @@
  */
 import { ViewRanges } from "@here/harp-datasource-protocol/lib/ViewRanges";
 import {
-    EarthConstants,
     GeoCoordinates,
     Projection,
     TileKey,
@@ -13,11 +12,11 @@ import {
     TilingScheme
 } from "@here/harp-geoutils";
 import { LRUCache } from "@here/harp-lrucache";
-import { assert } from "@here/harp-utils";
+import { assert, MathUtils } from "@here/harp-utils";
 import THREE = require("three");
 import { ClipPlanesEvaluator } from "./ClipPlanesEvaluator";
 import { DataSource } from "./DataSource";
-import { CalculationStatus, ElevationRange, ElevationRangeSource } from "./ElevationRangeSource";
+import { ElevationRangeSource } from "./ElevationRangeSource";
 import { FrustumIntersection, TileKeyEntry } from "./FrustumIntersection";
 import { TileGeometryManager } from "./geometry/TileGeometryManager";
 import { Tile } from "./Tile";
@@ -79,6 +78,8 @@ export interface VisibleTileSetOptions {
 
 const MB_FACTOR = 1.0 / (1024.0 * 1024.0);
 
+type TileCacheId = string;
+
 /**
  * Wrapper for LRU cache that encapsulates tiles caching for any [[DataSource]] used.
  *
@@ -91,11 +92,27 @@ const MB_FACTOR = 1.0 / (1024.0 * 1024.0);
  * name, but implementation could be improved to omit this limitation.
  */
 class DataSourceCache {
-    static getKey(tileCode: number, dataSource: DataSource): string {
-        return `${dataSource.name}_${tileCode}`;
+    /**
+     * Creates unique tile key for caching based on morton code, tile offset and its data source.
+     *
+     * @param mortonCode The tile morton code.
+     * @param offset The tile offset.
+     * @param dataSource The [[DataSource]] from which tile was loaded.
+     */
+    static getKey(mortonCode: number, offset: number, dataSource: DataSource): TileCacheId {
+        return `${dataSource.name}_${mortonCode}_${offset}`;
     }
 
-    private readonly m_tileCache: LRUCache<string, Tile>;
+    /**
+     * Create unique tile identifier for caching, based on tile object passed in.
+     *
+     * @param tile The tile for which key is generated.
+     */
+    static getKeyForTile(tile: Tile): TileCacheId {
+        return DataSourceCache.getKey(tile.tileKey.mortonCode(), tile.offset, tile.dataSource);
+    }
+
+    private readonly m_tileCache: LRUCache<TileCacheId, Tile>;
     private readonly m_disposedTiles: Tile[] = [];
     private m_resourceComputationType: ResourceComputationType;
 
@@ -190,22 +207,24 @@ class DataSourceCache {
     /**
      * Get tile cached or __undefined__ if tile is not yet in cache.
      *
-     * @param tileCode En unique tile code (its morton code).
+     * @param mortonCode En unique tile morton code.
+     * @param offset Tile offset.
      * @param dataSource A [[DataSource]] the tile comes from.
      */
-    get(tileCode: number, dataSource: DataSource): Tile | undefined {
-        return this.m_tileCache.get(DataSourceCache.getKey(tileCode, dataSource));
+    get(mortonCode: number, offset: number, dataSource: DataSource): Tile | undefined {
+        return this.m_tileCache.get(DataSourceCache.getKey(mortonCode, offset, dataSource));
     }
 
     /**
      * Add new tile to the cache.
      *
-     * @param tileCode En unique tile code (morton code).
-     * @param tile The tile reference.
+     * @param mortonCode En unique tile code (morton code).
+     * @param offset The tile offset.
      * @param dataSource A [[DataSource]] the tile comes from.
+     * @param tile The tile reference.
      */
-    set(tileCode: number, tile: Tile, dataSource: DataSource) {
-        this.m_tileCache.set(DataSourceCache.getKey(tileCode, dataSource), tile);
+    set(mortonCode: number, offset: number, dataSource: DataSource, tile: Tile) {
+        this.m_tileCache.set(DataSourceCache.getKey(mortonCode, offset, dataSource), tile);
     }
 
     /**
@@ -215,8 +234,7 @@ class DataSourceCache {
      * @param tile The tile reference to be removed from cache.
      */
     delete(tile: Tile) {
-        const tileCode = TileOffsetUtils.getKeyForTileKeyAndOffset(tile.tileKey, tile.offset);
-        const tileKey = DataSourceCache.getKey(tileCode, tile.dataSource);
+        const tileKey = DataSourceCache.getKeyForTile(tile);
         this.deleteByKey(tileKey);
     }
 
@@ -229,7 +247,7 @@ class DataSourceCache {
      * @see DataSourceCache.getKey.
      * @param tileKey The unique tile identifier.
      */
-    deleteByKey(tileKey: string) {
+    deleteByKey(tileKey: TileCacheId) {
         this.m_tileCache.delete(tileKey);
     }
 
@@ -268,7 +286,7 @@ class DataSourceCache {
      *
      * @param selector The callback used to determine if tile should be evicted.
      */
-    evictSelected(selector: (tile: Tile, key: string) => boolean) {
+    evictSelected(selector: (tile: Tile, key: TileCacheId) => boolean) {
         this.m_tileCache.evictSelected(selector);
     }
 
@@ -280,8 +298,8 @@ class DataSourceCache {
      * @param callback The function to be called for each visited tile.
      * @param inDataSource The optional [[DataSource]] to which tiles should belong.
      */
-    forEach(callback: (tile: Tile, key: string) => void, inDataSource?: DataSource): void {
-        this.m_tileCache.forEach((entry: Tile, key: string) => {
+    forEach(callback: (tile: Tile, key: TileCacheId) => void, inDataSource?: DataSource): void {
+        this.m_tileCache.forEach((entry: Tile, key: TileCacheId) => {
             if (inDataSource === undefined || entry.dataSource === inDataSource) {
                 callback(entry, key);
             }
@@ -354,11 +372,6 @@ export class VisibleTileSet {
     private readonly m_projectionMatrixOverride = new THREE.Matrix4();
     private m_dataSourceCache: DataSourceCache;
     private m_viewRange: ViewRanges = { near: 0.1, far: Infinity, minimum: 0.1, maximum: Infinity };
-    private m_elevationRange: ElevationRange = {
-        minElevation: 0,
-        maxElevation: 0,
-        calculationStatus: CalculationStatus.PendingApproximate
-    };
 
     private m_resourceComputationType: ResourceComputationType =
         ResourceComputationType.EstimationInMb;
@@ -451,8 +464,7 @@ export class VisibleTileSet {
             this.options.clipPlanesEvaluator.minElevation = minElevation;
         }
         this.m_viewRange = this.options.clipPlanesEvaluator.evaluateClipPlanes(
-            this.m_frustumIntersection.camera,
-            this.m_frustumIntersection.projection
+            this.m_frustumIntersection.mapView
         );
         return this.m_viewRange;
     }
@@ -570,50 +582,37 @@ export class VisibleTileSet {
 
         this.m_dataSourceCache.shrinkToCapacity();
 
-        let minElevation = EarthConstants.MAX_ELEVATION;
-        let maxElevation = EarthConstants.MIN_ELEVATION;
+        let minElevation: number | undefined;
+        let maxElevation: number | undefined;
         this.dataSourceTileList.forEach(renderListEntry => {
             // Calculate min/max elevation from every data source tiles,
-            // datasources without elevationRangeSource will contribute to
+            // data sources without elevationRangeSource will contribute to
             // values with zero levels for both elevations.
             const tiles = renderListEntry.visibleTiles;
             tiles.forEach(tile => {
-                minElevation = Math.min(minElevation, tile.minElevation);
-                maxElevation = Math.max(maxElevation, tile.maxElevation);
+                minElevation = MathUtils.min2(minElevation, tile.minElevation);
+                maxElevation = MathUtils.max2(
+                    maxElevation,
+                    tile.maxElevation + tile.maxGeometryHeight
+                );
             });
         });
-        // We process buildings elevation yet (via ElevationRangeSource or either way), so correct
-        // the highest elevation to account for highest possible building.
-        const projectionScale = this.m_frustumIntersection.projection.getScaleFactor(
-            this.m_frustumIntersection.camera.position
-        );
-        const maxBuildingHeight = EarthConstants.MAX_BUILDING_HEIGHT * projectionScale;
-        maxElevation =
-            maxElevation < EarthConstants.MAX_ELEVATION - maxBuildingHeight
-                ? maxElevation + maxBuildingHeight
-                : maxElevation;
-        // Update elevation ranges stored.
-        if (
-            minElevation !== this.m_elevationRange.minElevation ||
-            maxElevation !== this.m_elevationRange.maxElevation
-        ) {
-            this.m_elevationRange.minElevation = minElevation;
-            this.m_elevationRange.maxElevation = maxElevation;
-        }
-        this.m_elevationRange.calculationStatus = visibleTileKeysResult.allBoundingBoxesFinal
-            ? CalculationStatus.FinalPrecise
-            : CalculationStatus.PendingApproximate;
 
+        if (minElevation === undefined) {
+            minElevation = 0;
+        }
+        if (maxElevation === undefined) {
+            maxElevation = 0;
+        }
         // If clip planes evaluator depends on the tiles elevation re-calculate
         // frustum planes and update the camera near/far plane distances.
         let viewRangesChanged: boolean = false;
-        if (elevationRangeSource !== undefined) {
-            const viewRanges = this.updateClipPlanes(maxElevation, minElevation);
-            viewRangesChanged = viewRanges === this.m_viewRange;
-            this.m_viewRange = viewRanges;
-        }
+        const oldViewRanges = this.m_viewRange;
+        const newViewRanges = this.updateClipPlanes(maxElevation, minElevation);
+        viewRangesChanged = viewRangesEqual(newViewRanges, oldViewRanges) === false;
+
         return {
-            viewRanges: this.m_viewRange,
+            viewRanges: newViewRanges,
             viewRangesChanged
         };
     }
@@ -931,16 +930,19 @@ export class VisibleTileSet {
 
                         if (!checkedTiles.has(parentCode) && !renderedTiles.get(parentCode)) {
                             checkedTiles.add(parentCode);
-                            const parentTile = tileCache.get(parentCode, dataSource);
+
+                            const {
+                                offset,
+                                mortonCode
+                            } = TileOffsetUtils.extractOffsetAndMortonKeyFromKey(parentCode);
+
+                            const parentTile = tileCache.get(mortonCode, offset, dataSource);
                             if (parentTile !== undefined && parentTile.hasGeometry) {
                                 // parentTile has geometry, so can be reused as fallback
                                 renderedTiles.set(parentCode, parentTile);
                                 return;
                             }
 
-                            const { mortonCode } = TileOffsetUtils.extractOffsetAndMortonKeyFromKey(
-                                parentCode
-                            );
                             const parentTileKey = parentTile
                                 ? parentTile.tileKey
                                 : TileKey.fromMortonCode(mortonCode);
@@ -970,7 +972,11 @@ export class VisibleTileSet {
                                 offset
                             );
                             checkedTiles.add(childTileCode);
-                            const childTile = tileCache.get(childTileCode, dataSource);
+                            const childTile = tileCache.get(
+                                childTileKey.mortonCode(),
+                                offset,
+                                dataSource
+                            );
 
                             if (childTile !== undefined && childTile.hasGeometry) {
                                 // childTile has geometry, so can be reused as fallback
@@ -1011,8 +1017,7 @@ export class VisibleTileSet {
         }
 
         const tileCache = this.m_dataSourceCache;
-        const tileKeyMortonCode = TileOffsetUtils.getKeyForTileKeyAndOffset(tileKey, offset);
-        let tile = tileCache.get(tileKeyMortonCode, dataSource);
+        let tile = tileCache.get(tileKey.mortonCode(), offset, dataSource);
 
         if (tile !== undefined && tile.offset === offset) {
             updateTile(tile);
@@ -1028,7 +1033,7 @@ export class VisibleTileSet {
         if (tile !== undefined) {
             tile.offset = offset;
             updateTile(tile);
-            tileCache.set(tileKeyMortonCode, tile, dataSource);
+            tileCache.set(tileKey.mortonCode(), offset, dataSource, tile);
             this.m_tileGeometryManager.initTile(tile);
         }
         return tile;
@@ -1036,16 +1041,20 @@ export class VisibleTileSet {
 
     private markDataSourceTilesDirty(renderListEntry: DataSourceTileList) {
         const dataSourceCache = this.m_dataSourceCache;
-        const retainedTiles: Set<string> = new Set();
+        const retainedTiles: Set<TileCacheId> = new Set();
 
         function markTileDirty(tile: Tile, tileGeometryManager: TileGeometryManager) {
-            const tileCode = TileOffsetUtils.getKeyForTileKeyAndOffset(tile.tileKey, tile.offset);
-            const tileKey = DataSourceCache.getKey(tileCode, tile.dataSource);
+            const tileKey = DataSourceCache.getKeyForTile(tile);
             if (!retainedTiles.has(tileKey)) {
                 retainedTiles.add(tileKey);
                 if (tile.tileGeometryLoader !== undefined) {
                     tile.tileGeometryLoader.reset();
                 }
+
+                // Prevent label rendering issues when the style set is changing. Prevent Text
+                // element rendering that depends on cleaned font catalog data.
+                tile.clearTextElements();
+
                 tile.load();
             }
         }
@@ -1065,7 +1074,7 @@ export class VisibleTileSet {
         }, renderListEntry.dataSource);
     }
 
-    // Computes the visible tile keys for each supplied datasource.
+    // Computes the visible tile keys for each supplied data source.
     private getVisibleTileKeysForDataSources(
         zoomLevel: number,
         dataSources: DataSource[],
@@ -1144,4 +1153,10 @@ export class VisibleTileSet {
 
         return { tileKeys, allBoundingBoxesFinal };
     }
+}
+
+function viewRangesEqual(a: ViewRanges, b: ViewRanges) {
+    return (
+        a.far === b.far && a.maximum === b.maximum && a.minimum === b.minimum && a.near === b.near
+    );
 }

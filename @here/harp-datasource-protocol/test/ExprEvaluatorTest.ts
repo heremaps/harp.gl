@@ -8,9 +8,11 @@
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
 import { assert } from "chai";
-import { Expr, ExprScope, MapEnv, ValueMap } from "../lib/Expr";
+import { Expr, ExprScope, JsonValue, MapEnv, ValueMap } from "../lib/Expr";
 import { getPropertyValue, isInterpolatedProperty } from "../lib/InterpolatedProperty";
 import { InterpolatedProperty, InterpolationMode } from "../lib/InterpolatedPropertyDefs";
+
+import * as THREE from "three";
 
 const EPSILON = 1e-8;
 
@@ -26,7 +28,7 @@ describe("ExprEvaluator", function() {
     };
 
     function evaluate(
-        expr: unknown,
+        expr: JsonValue,
         values: ValueMap = defaultEnv,
         scope: ExprScope = ExprScope.Value
     ) {
@@ -34,7 +36,7 @@ describe("ExprEvaluator", function() {
         return Expr.fromJSON(expr).evaluate(env, scope);
     }
 
-    function dependencies(json: unknown) {
+    function dependencies(json: JsonValue) {
         const deps = Expr.fromJSON(json).dependencies();
         return {
             properties: Array.from(deps.properties).sort(),
@@ -399,6 +401,10 @@ describe("ExprEvaluator", function() {
                 () => Expr.fromJSON(["match", ["get", "x"], "value1", "result1"]),
                 "fallback is missing in 'match' expression"
             );
+            assert.throw(
+                () => Expr.fromJSON(["match", ["get", "x"], [0, "value1"], "result1", "fallback"]),
+                "'[0,\"value1\"]' is not a valid label for 'match'"
+            );
         });
     });
 
@@ -679,7 +685,7 @@ describe("ExprEvaluator", function() {
         });
 
         it("dynamic interpolation (without step 0)", function() {
-            const interpolation: InterpolatedProperty<string> = evaluate([
+            const interpolation: InterpolatedProperty = evaluate([
                 "step",
                 ["zoom"],
                 "#ff0000",
@@ -697,7 +703,7 @@ describe("ExprEvaluator", function() {
         });
 
         it("dynamic interpolation (with step 0)", function() {
-            const interpolation: InterpolatedProperty<string> = evaluate([
+            const interpolation: InterpolatedProperty = evaluate([
                 "step",
                 ["zoom"],
                 "#ff0000",
@@ -806,5 +812,55 @@ describe("ExprEvaluator", function() {
                 zoom: true
             }
         );
+    });
+
+    describe("Operator 'hsl'", function() {
+        it("call", function() {
+            assert.strictEqual(
+                new THREE.Color(evaluate(["hsl", 20, 100, 50]) as string).getHexString(),
+                new THREE.Color("hsl(20, 100%, 50%)").getHexString()
+            );
+
+            assert.strictEqual(
+                new THREE.Color(evaluate(["hsl", 370, 100, 50]) as string).getHexString(),
+                new THREE.Color("hsl(370, 100%, 50%)").getHexString()
+            );
+
+            assert.throw(
+                () => evaluate(["hsl", 10.3, -40, 50]),
+                "unknown color 'hsl(10.3,-40%,50%)'"
+            );
+        });
+    });
+
+    describe("Operator 'rgb'", function() {
+        it("call", function() {
+            assert.strictEqual(
+                new THREE.Color(evaluate(["rgb", 255, 0, 0]) as string).getHexString(),
+                new THREE.Color("rgb(255, 0, 0)").getHexString()
+            );
+
+            assert.strictEqual(
+                new THREE.Color(evaluate(["rgb", 255, 255, 0]) as string).getHexString(),
+                new THREE.Color("rgb(255, 255, 0)").getHexString()
+            );
+
+            assert.strictEqual(
+                new THREE.Color(evaluate(["rgb", 255, 255, 255]) as string).getHexString(),
+                new THREE.Color("rgb(255, 255, 255)").getHexString()
+            );
+
+            assert.strictEqual(
+                new THREE.Color(evaluate(["rgb", 300, 300, 300]) as string).getHexString(),
+                new THREE.Color("rgb(300, 300, 300)").getHexString()
+            );
+
+            assert.strictEqual(
+                new THREE.Color(evaluate(["rgb", 127, 127, 127]) as string).getHexString(),
+                new THREE.Color("rgb(127, 127, 127)").getHexString()
+            );
+
+            assert.throw(() => evaluate(["rgb", "a", 40, 50]), "unknown color 'rgb(a,40,50)'");
+        });
     });
 });

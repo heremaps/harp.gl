@@ -126,7 +126,7 @@ export class GeoJsonTile extends Tile {
      *
      * @param decodedTile The decoded tile received by the [[GeoJsonDecoder]].
      */
-    createTextElements(decodedTile: DecodedTile) {
+    createTextElements(decodedTile: DecodedTile, zoomLevel: number) {
         const tileGeometryCreator = TileGeometryCreator.instance;
 
         if (decodedTile.poiGeometries !== undefined) {
@@ -134,7 +134,7 @@ export class GeoJsonTile extends Tile {
                 const techniqueIndex = geometry.technique!;
                 const technique = decodedTile.techniques[techniqueIndex];
                 if (isPoiTechnique(technique)) {
-                    this.addPois(tileGeometryCreator, geometry, technique);
+                    this.addPois(tileGeometryCreator, geometry, technique, zoomLevel);
                 }
             }
         }
@@ -161,6 +161,13 @@ export class GeoJsonTile extends Tile {
                 }
             }
         }
+
+        // HARP-7419: TODO, support tile.pathGeometries, not currently needed, but may be needed
+        // in future, should be simple, something like
+        /*if(decodedTile.pathGeometries) {
+            tile.addBlockingElement...
+        }
+        */
     }
 
     /**
@@ -338,7 +345,8 @@ export class GeoJsonTile extends Tile {
     private addPois(
         tileGeometryCreator: TileGeometryCreator,
         geometry: GeoJsonPoiGeometry,
-        technique: PoiTechnique
+        technique: PoiTechnique,
+        zoomLevel: number
     ) {
         const attribute = getBufferAttribute(geometry.positions);
 
@@ -352,7 +360,7 @@ export class GeoJsonTile extends Tile {
             );
             const properties =
                 geometry.objInfos !== undefined ? geometry.objInfos[index] : undefined;
-            this.addPoi(tileGeometryCreator, currentVertexCache, technique, properties);
+            this.addPoi(tileGeometryCreator, currentVertexCache, technique, zoomLevel, properties);
         }
     }
 
@@ -368,15 +376,14 @@ export class GeoJsonTile extends Tile {
         tileGeometryCreator: TileGeometryCreator,
         position: THREE.Vector3,
         technique: PoiTechnique,
+        zoomLevel: number,
         geojsonProperties?: {}
     ) {
         const label = DEFAULT_LABELED_ICON.label;
         const priority =
             technique.priority === undefined ? DEFAULT_LABELED_ICON.priority : technique.priority;
-        const xOffset =
-            technique.xOffset === undefined ? DEFAULT_LABELED_ICON.xOffset : technique.xOffset;
-        const yOffset =
-            technique.yOffset === undefined ? DEFAULT_LABELED_ICON.yOffset : technique.yOffset;
+        const xOffset = getPropertyValue(technique.xOffset, zoomLevel);
+        const yOffset = getPropertyValue(technique.yOffset, zoomLevel);
 
         const featureId = DEFAULT_LABELED_ICON.featureId;
 
@@ -386,8 +393,8 @@ export class GeoJsonTile extends Tile {
             tileGeometryCreator.getRenderStyle(this, technique),
             tileGeometryCreator.getLayoutStyle(this, technique),
             getPropertyValue(priority, this.mapView.zoomLevel),
-            xOffset,
-            yOffset,
+            xOffset === undefined ? DEFAULT_LABELED_ICON.xOffset : xOffset,
+            yOffset === undefined ? DEFAULT_LABELED_ICON.yOffset : yOffset,
             featureId
         );
 

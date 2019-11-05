@@ -19,6 +19,7 @@ import { WorkerChannel } from "./WorkerChannel";
 export class LoggerManagerImpl implements ILoggerManager {
     channel: IChannel;
     private readonly m_loggers: ILogger[] = [];
+    private m_levelSetForAll?: LogLevel;
 
     constructor() {
         this.channel =
@@ -35,7 +36,13 @@ export class LoggerManagerImpl implements ILoggerManager {
         return this.m_loggers.find(logger => logger.name === name);
     }
 
-    create(loggerName: string, options?: LoggerOptions): ILogger {
+    create(loggerName: string, options: LoggerOptions = {}): ILogger {
+        if (
+            this.m_levelSetForAll !== undefined &&
+            (options.level === undefined || options.level < this.m_levelSetForAll)
+        ) {
+            options.level = this.m_levelSetForAll;
+        }
         const logger = new Logger(loggerName, this.channel, options);
         this.m_loggers.push(logger);
         return logger;
@@ -74,6 +81,7 @@ export class LoggerManagerImpl implements ILoggerManager {
     }
 
     setLogLevelForAll(level: LogLevel) {
+        this.m_levelSetForAll = level;
         for (const logger of this.m_loggers) {
             logger.level = level;
         }
