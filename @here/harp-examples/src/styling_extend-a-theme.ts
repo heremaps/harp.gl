@@ -82,8 +82,8 @@ export namespace HelloCustomThemeExample {
         mapControls.maxTiltAngle = 50;
 
         // Look at New York.
-        const NY = new GeoCoordinates(40.707, -74.01);
-        map.lookAt(NY, 3500, 50, -20);
+        const rome = new GeoCoordinates(41.9005332, 12.494249);
+        map.lookAt(rome, 3000, 50, 200);
 
         // Add an UI.
         const ui = new MapControlsUI(mapControls);
