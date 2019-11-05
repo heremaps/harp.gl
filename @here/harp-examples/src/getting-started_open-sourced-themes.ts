@@ -30,6 +30,7 @@ export namespace ThemesExample {
 
         const moscow = new GeoCoordinates(55.7525631, 37.6234006);
         map.lookAt(moscow, 3500, 50, 300);
+        map.zoomLevel = 16.1;
 
         const ui = new MapControlsUI(mapControls);
         canvas.parentElement!.appendChild(ui.domElement);

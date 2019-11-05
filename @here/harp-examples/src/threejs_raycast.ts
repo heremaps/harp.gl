@@ -30,7 +30,7 @@ import { accessToken, copyrightInfo } from "../config";
  * [[ThreejsAddSimpleObject]] example.
  */
 export namespace ThreejsRaycast {
-    const scale = 10;
+    const scale = 100;
     const geometry = new THREE.BoxGeometry(1 * scale, 1 * scale, 1 * scale);
     const material = new THREE.MeshStandardMaterial({
         color: 0x00ff00fe
@@ -114,14 +114,28 @@ export namespace ThreejsRaycast {
         return map;
     }
 
-    const message = document.createElement("div");
-    message.innerHTML = `Long click to add a 10m^3 pink box under the mouse cursor location.`;
-
-    message.style.position = "absolute";
-    message.style.cssFloat = "right";
-    message.style.top = "10px";
-    message.style.right = "10px";
-    document.body.appendChild(message);
+    document.body.innerHTML +=
+        `<style>
+            #mapCanvas{
+                top:0;
+            }
+            #info{
+                color: #000;
+                width: 80%;
+                left: 50%;
+                position: relative;
+                margin: 10px 0 0 -40%;
+                font-size: 15px;
+            }
+            @media screen and (max-width: 700px) {
+                #info{
+                    font-size:11px;
+                }
+            }
+        </style>
+        <p id=info>Long click to add a pink box under the mouse cursor, with respect of ` +
+        `buildings' height.</p>
+    `;
 
     const mapView = initializeMapView("mapCanvas");
 

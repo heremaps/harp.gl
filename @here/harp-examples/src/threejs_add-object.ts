@@ -54,6 +54,7 @@ export namespace ThreejsAddSimpleObject {
     // Create a new MapView for the HTMLCanvasElement of the given id.
     function addMouseEventListener(mapView: MapView) {
         const canvas = mapView.canvas;
+        mapView.zoomLevel = 15.5;
 
         // tslint:disable:no-unused-expression
         new LongPressHandler(canvas, event => {
@@ -79,12 +80,16 @@ export namespace ThreejsAddSimpleObject {
     }
 
     const message = document.createElement("div");
-    message.innerHTML = `Long click to add a ${scale}m wide cube to scene.`;
+    message.innerHTML = `Long click to add a ${scale}m wide cube to the scene.`;
+    message.style.cssText = `
+        color: #000;
+        width: 80%;
+        left: 50%;
+        position: relative;
+        margin-left: -40%;
+        font-size: 15px;
+    `;
 
-    message.style.position = "absolute";
-    message.style.cssFloat = "right";
-    message.style.top = "10px";
-    message.style.right = "10px";
     document.body.appendChild(message);
 
     addMouseEventListener(HelloWorldExample.mapView);

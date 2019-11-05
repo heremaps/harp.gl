@@ -91,9 +91,9 @@ export namespace TripleViewExample {
             canvas.parentElement!.appendChild(ui.domElement);
         }
 
-        // center the camera somewhere around Berlin geo locations
         const frankfurt = new GeoCoordinates(50.1125867, 8.6720831);
         mapView.lookAt(frankfurt, 1000, 45, 200);
+        mapView.zoomLevel = 16.2;
 
         setupSyncViewsGrid(mapView, gridPositionX, gridPositionY);
         // react on resize events
