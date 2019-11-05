@@ -1,6 +1,6 @@
 {
     "name": "@here/harp-utils",
-    "version": "0.11.0-alpha.0",
+    "version": "0.11.0",
     "description": "Provides utilities: logging, debugging.",
     "main": "index.js",
     "scripts": {
@@ -19,7 +19,7 @@
     },
     "license": "Apache-2.0",
     "devDependencies": {
-        "@here/harp-test-utils": "^0.11.0-alpha.0",
+        "@here/harp-test-utils": "^0.11.0",
         "@types/chai": "^4.1.2",
         "@types/mocha": "^5.2.7",
         "@types/node": "^12.0.8",
