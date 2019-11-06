@@ -7,7 +7,7 @@
 import { GeoCoordinates } from "@here/harp-geoutils";
 import { MapControls, MapControlsUI } from "@here/harp-map-controls";
 import { CopyrightElementHandler, MapView } from "@here/harp-mapview";
-import { APIFormat, OmvDataSource } from "@here/harp-omv-datasource";
+import { OmvDataSource } from "@here/harp-omv-datasource";
 import { accessToken, copyrightInfo } from "../config";
 
 /**
@@ -114,11 +114,12 @@ export namespace HelloWorldExample {
     function addOmvDataSource(map: MapView) {
         // snippet:harp_gl_hello_world_example_4.ts
         const omvDataSource = new OmvDataSource({
-            baseUrl: "https://xyz.api.here.com/tiles/herebase.02",
-            apiFormat: APIFormat.XYZOMV,
+            url: "https://xyz.api.here.com/tiles/herebase.02/{z}/{x}/{y}/omv",
             styleSetName: "tilezen",
             maxZoomLevel: 17,
-            authenticationCode: accessToken,
+            urlParams: {
+                access_token: accessToken
+            },
             copyrightInfo
         });
         // end:harp_gl_hello_world_example_4.ts

@@ -165,6 +165,7 @@ export const AuthenticationTypeTomTomV1: AuthenticationMethodInfo = {
     method: AuthenticationMethod.QueryString,
     name: "key"
 };
+
 export const AuthenticationTypeAccessToken: AuthenticationMethodInfo = {
     method: AuthenticationMethod.QueryString,
     name: "access_token"
@@ -172,10 +173,47 @@ export const AuthenticationTypeAccessToken: AuthenticationMethodInfo = {
 
 export interface OmvRestClientParameters {
     /**
+     * `URL` pattern used to fetch tile files.
+     *
+     * `URL` with special keywords replaced to retrieve specific tile:
+     *  - `{z}` - zoom level of tile, @see [[TileKey.level]]
+     *  - `{x}` - horizontal coordinate of tile (column number), @see [[TileKey.column]]
+     *  - `{y}` - vertical coordinate of Tile (row number), @see [[TileKey.row]]
+     *
+     * Examples of `url` patterns:
+     * ```
+     *   https://my-base-url.com/vector-tiles/{z}/{x}/{y}.mvt
+     *   https://xyz.api.here.com/tiles/herebase.02/{z}/{x}/{y}/omv
+     *   https://xyz.api.here.com/tiles/osmbase/512/all/{z}/{x}/{y}.mvt
+     * ```
+     *
+     * Note: To add authentication headers and/or query params, use [[authMethod]], [[urlParams]]
+     * properties or embed token directly in `url`.
+     *
+     * Complete examples:
+     * ```
+     * // XYZ OSM with authentication using query param
+     * {
+     *     url: "https://xyz.api.here.com/tiles/osmbase/512/all/{z}/{x}/{y}.mvt",
+     *     urlParams: {
+     *           access_token: accessToken
+     *     },
+     * }
+     * // HERE Vector Tile with authentication using bearer token retrieved by callback
+     * {
+     *     url: "https://vector.hereapi.com/v2/vectortiles/base/mc/{z}/{x}/{y}/omv",
+     *     authenticationMethod: AuthenticationTypeBearer,
+     *     authenticationCode: () => getBearerToken()
+     * }
+     * ```
+     */
+    url?: string;
+
+    /**
      * The base URL of the REST Tile Service.
      * @see [[APIFormat]] for the definition of `baseUrl`.
      */
-    baseUrl: string;
+    baseUrl?: string;
 
     /**
      * Authentication code used for the different APIs.
@@ -375,6 +413,12 @@ export class OmvRestClient implements DataProvider {
      * Get actual tile URL depending on configured API format.
      */
     private dataUrl(tileKey: TileKey): string {
+        if (this.params.url !== undefined) {
+            return this.params.url
+                .replace("{x}", String(tileKey.column))
+                .replace("{y}", String(tileKey.row))
+                .replace("{z}", String(tileKey.level));
+        }
         let path = [`/${tileKey.level}`, tileKey.column, tileKey.row].join(
             this.params.apiFormat === APIFormat.XYZSpace ? "_" : "/"
         );
