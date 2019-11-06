@@ -7,10 +7,10 @@
 import {
     ExtendedTileInfo,
     getPropertyValue,
-    isInterpolatedProperty,
     LineTechnique,
     SolidLineTechnique
 } from "@here/harp-datasource-protocol";
+import { Expr } from "@here/harp-datasource-protocol/lib/Expr";
 import { assert, LoggerManager, Math2D } from "@here/harp-utils";
 import * as THREE from "three";
 import { MapView } from "./MapView";
@@ -70,7 +70,7 @@ export class RoadPicker {
 
             const isDynamic =
                 technique.metricUnit === "Pixel" ||
-                isInterpolatedProperty(technique.lineWidth) ||
+                Expr.isExpr(technique.lineWidth) ||
                 typeof technique.lineWidth === "string";
 
             widths[i] =
