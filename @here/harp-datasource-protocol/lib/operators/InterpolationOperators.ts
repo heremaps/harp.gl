@@ -4,18 +4,23 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { CallExpr, Expr, ExprScope, NumberLiteralExpr, Value } from "../Expr";
+import { CallExpr, ExprScope, LiteralExpr, NumberLiteralExpr, Value } from "../Expr";
 import { ExprEvaluatorContext, OperatorDescriptorMap } from "../ExprEvaluator";
 import { createInterpolatedProperty, getPropertyValue } from "../InterpolatedProperty";
-import { InterpolatedPropertyDefinition } from "../InterpolatedPropertyDefs";
+import { InterpolatedProperty, InterpolatedPropertyDefinition } from "../InterpolatedPropertyDefs";
+
+type InterpolateCallExpr = CallExpr & {
+    _mode?: InterpolatedPropertyDefinition<any>["interpolation"];
+    _exponent?: number;
+    _stops?: number[];
+    _interpolatedProperty?: InterpolatedProperty;
+};
 
 /**
  * Evaluates the given piecewise function.
  */
-function step(context: ExprEvaluatorContext, args: Expr[]) {
-    if (args.length < 3 || args.length % 2) {
-        throw new Error("not enough arguments");
-    }
+function step(context: ExprEvaluatorContext, call: CallExpr) {
+    const { args } = call;
 
     const value = context.evaluate(args[0]) as number;
 
@@ -34,15 +39,11 @@ function step(context: ExprEvaluatorContext, args: Expr[]) {
     while (first < last) {
         // tslint:disable-next-line: no-bitwise
         const mid = (first + last) >>> 1;
-        const stop = args[mid * 2];
+        const stop = (args[mid * 2] as NumberLiteralExpr).value;
 
-        if (!(stop instanceof NumberLiteralExpr)) {
-            throw new Error("expected a numeric literal");
-        }
-
-        if (value < stop.value) {
+        if (value < stop) {
             last = mid - 1;
-        } else if (value > stop.value) {
+        } else if (value > stop) {
             first = mid + 1;
         } else {
             last = mid;
@@ -60,139 +61,298 @@ function step(context: ExprEvaluatorContext, args: Expr[]) {
     return context.evaluate(args[index * 2 + 1]);
 }
 
+/**
+ * Prepare and validate the "interpolate" call.
+ *
+ * @param call An [[Expr]] representing an "interpolate" call.
+ * @hidden
+ */
+function prepareInterpolateCallExpr(call: InterpolateCallExpr) {
+    if (call._interpolatedProperty || call._mode !== undefined) {
+        return;
+    }
+
+    const interpolatorType = call.args[0];
+
+    if (!(interpolatorType instanceof CallExpr)) {
+        throw new Error("expected an interpolation type");
+    }
+
+    let mode: InterpolatedPropertyDefinition<any>["interpolation"];
+    let exponent: number | undefined;
+
+    if (interpolatorType.op === "linear") {
+        mode = "Linear";
+    } else if (interpolatorType.op === "discrete") {
+        mode = "Discrete";
+    } else if (interpolatorType.op === "cubic") {
+        mode = "Cubic";
+    } else if (interpolatorType.op === "exponential") {
+        mode = "Exponential";
+        const base = interpolatorType.args[0];
+        if (!(base instanceof NumberLiteralExpr)) {
+            throw new Error("expected the base of the exponential interpolation");
+        }
+        exponent = base.value;
+    } else {
+        throw new Error("unrecognized interpolation type");
+    }
+
+    const input = call.args[1];
+
+    if (!(input instanceof CallExpr)) {
+        throw new Error("expected the input of the interpolation");
+    }
+
+    if (input.op !== "zoom") {
+        throw new Error("only 'zoom' is supported");
+    }
+
+    if (call.args.length === 2 || call.args.length % 2) {
+        throw new Error("invalid number of samples");
+    }
+
+    const stops: number[] = [];
+    const values: Value[] = [];
+
+    let isConstantInterpolation = true;
+
+    for (let i = 2; i < call.args.length; i += 2) {
+        const stop = call.args[i];
+
+        if (!(stop instanceof NumberLiteralExpr)) {
+            throw new Error("expected a numeric literal");
+        }
+
+        stops.push(stop.value);
+
+        if (isConstantInterpolation) {
+            const value = call.args[i + 1];
+
+            if (value instanceof LiteralExpr) {
+                values.push(value.value);
+            } else {
+                isConstantInterpolation = false;
+            }
+        }
+    }
+
+    if (isConstantInterpolation) {
+        const result = createInterpolatedProperty({
+            interpolation: mode,
+            exponent,
+            zoomLevels: stops,
+            values
+        });
+
+        if (!result) {
+            throw new Error("failed to create interpolation");
+        }
+
+        call._interpolatedProperty = result;
+    } else {
+        call._mode = mode;
+        call._exponent = exponent;
+        call._stops = stops;
+    }
+}
+
+type StepCallExpr = CallExpr & {
+    /**
+     * `true` if the input of `step` call is `["zoom"], otherwise false.
+     */
+    _inputIsZoom?: boolean;
+
+    /**
+     * The stops when the a constant [[InterpolatedProperty]] cannot be
+     * created for this `["step"]` call.
+     */
+    _stops?: number[];
+
+    /**
+     * The [[InterpolatedProperty]] representing this `step` call,
+     * otherwise `undefined` if an interpolated property cannot
+     * be created at parsing time (e.g. one if the value of the step is not a literal).
+     */
+    _interpolatedProperty?: InterpolatedProperty;
+};
+
+/**
+ * Classify the given `step` call.
+ *
+ * This function checks the input of the `step` and ensures that the stops
+ * are literals.
+ *
+ * @param call A call to `["step", ...]`.
+ * @hidden
+ */
+function classifyStepCallExpr(call: StepCallExpr) {
+    if (call._inputIsZoom !== undefined) {
+        // nothing to do, the `call` was already classified.
+        return;
+    }
+
+    if (call.args[0] === undefined) {
+        throw new Error("expected the input of the 'step' operator");
+    }
+
+    if (call.args.length < 3 || call.args.length % 2) {
+        throw new Error("not enough arguments");
+    }
+
+    const input = call.args[0];
+
+    // tslint:disable-next-line: prefer-conditional-expression
+    if (input instanceof CallExpr && input.op === "zoom") {
+        call._inputIsZoom = true;
+    } else {
+        call._inputIsZoom = false;
+    }
+
+    // check that the stops are literals.
+    for (let i = 2; i < call.args.length; i += 2) {
+        const stop = call.args[i];
+        if (!(stop instanceof NumberLiteralExpr)) {
+            throw new Error("expected a numeric literal");
+        }
+    }
+}
+
+/**
+ * Prepares the given call for the dynamic exception.
+ * This method collects the stops and
+ *
+ * @param call A call to `["step", ...]`.
+ * @hidden
+ */
+function prepareStepCallExpr(call: StepCallExpr) {
+    if (call._stops || call._interpolatedProperty) {
+        // nothing to do, the `call` was already prepared for execution.
+        return;
+    }
+
+    // collect the stops of the step call.
+    const stops: number[] = [Number.MIN_SAFE_INTEGER];
+
+    for (let i = 2; i < call.args.length; i += 2) {
+        const stop = call.args[i] as NumberLiteralExpr;
+        stops.push(stop.value);
+    }
+
+    // collect the values of the step call.
+    const values: Value[] = [];
+    let hasConstantValues = true;
+
+    for (let i = 1; hasConstantValues && i < call.args.length; i += 2) {
+        const literal = call.args[i];
+        if (literal instanceof LiteralExpr) {
+            values.push(literal.value);
+        } else {
+            hasConstantValues = false;
+        }
+    }
+
+    if (hasConstantValues) {
+        // all the values of this zoom-based `step` are constant,
+        // create an interpolated property and store it together
+        // with the call.
+        const interpolatedProperty = createInterpolatedProperty({
+            interpolation: "Discrete",
+            zoomLevels: stops,
+            values
+        });
+
+        if (interpolatedProperty === undefined) {
+            throw new Error("failed to create interpolator");
+        }
+
+        call._interpolatedProperty = interpolatedProperty;
+    } else {
+        // the values the `["step"]` call are not constants,
+        // cache the `zoomLevels` to avoid recreating input `Array`
+        // when instantiating a new [[InterpolatedProperty]].
+        call._stops = stops;
+    }
+}
+
 const operators = {
     interpolate: {
         isDynamicOperator: (call: CallExpr): boolean => {
             return call.args[1] && call.args[1].isDynamic();
         },
-        call: (context: ExprEvaluatorContext, call: CallExpr): Value => {
-            const interpolatorType = call.args[0];
-            const input = call.args[1];
-            const samples = call.args.slice(2);
+        call: (context: ExprEvaluatorContext, call: InterpolateCallExpr): Value => {
+            prepareInterpolateCallExpr(call);
 
-            if (!(interpolatorType instanceof CallExpr)) {
-                throw new Error("expected an interpolation type");
+            if (context.scope !== ExprScope.Dynamic) {
+                return call;
             }
 
-            let interpolation: InterpolatedPropertyDefinition<any>["interpolation"];
-            let exponent: number | undefined;
+            let interpolatedProperty = call._interpolatedProperty;
 
-            if (interpolatorType.op === "linear") {
-                interpolation = "Linear";
-            } else if (interpolatorType.op === "discrete") {
-                interpolation = "Discrete";
-            } else if (interpolatorType.op === "cubic") {
-                interpolation = "Cubic";
-            } else if (interpolatorType.op === "exponential") {
-                interpolation = "Exponential";
-                const base = interpolatorType.args[0];
-                if (!(base instanceof NumberLiteralExpr)) {
-                    throw new Error("expected the base of the exponential interpolation");
+            if (!interpolatedProperty) {
+                const values: Value[] = [];
+
+                for (let i = 2; i < call.args.length; i += 2) {
+                    const value = context.evaluate(call.args[i + 1]);
+                    values.push(value);
                 }
-                exponent = base.value;
-            } else {
-                throw new Error("unrecognized interpolation type");
-            }
 
-            if (!(input instanceof CallExpr)) {
-                throw new Error("expected the input of the interpolation");
-            }
+                interpolatedProperty = createInterpolatedProperty({
+                    interpolation: call._mode!,
+                    exponent: call._exponent,
+                    zoomLevels: call._stops!,
+                    values
+                });
 
-            if (input.op !== "zoom") {
-                throw new Error("only 'zoom' is supported");
-            }
-
-            if (samples.length === 0 || samples.length % 2) {
-                throw new Error("invalid number of samples");
-            }
-
-            const zoomLevels: any[] = [];
-            const values: any[] = [];
-
-            for (let i = 0; i < samples.length; i += 2) {
-                const stop = samples[i];
-                if (!(stop instanceof NumberLiteralExpr)) {
-                    throw new Error("expected a numeric literal");
+                if (interpolatedProperty === undefined) {
+                    throw new Error("failed to create interpolator");
                 }
-                zoomLevels.push(stop.value);
-                values.push(context.evaluate(samples[i + 1]));
             }
 
-            const result = createInterpolatedProperty({
-                interpolation,
-                zoomLevels,
-                values,
-                exponent
-            });
-
-            if (result === undefined) {
-                throw new Error("failed to create interpolator");
-            }
-
-            if (context.scope === ExprScope.Dynamic) {
-                return getPropertyValue(result, context.env);
-            }
-
-            return result;
+            return getPropertyValue(interpolatedProperty, context.env);
         }
     },
     step: {
         isDynamicOperator: (call: CallExpr): boolean => {
             return call.args[0] && call.args[0].isDynamic();
         },
-        call: (context: ExprEvaluatorContext, call: CallExpr): Value => {
-            if (call.args[0] === undefined) {
-                throw new Error("expected the input of the 'step' operator");
+        call: (context: ExprEvaluatorContext, call: StepCallExpr): Value => {
+            classifyStepCallExpr(call);
+
+            if (context.scope === ExprScope.Value) {
+                return call;
             }
 
-            const input = call.args[0];
+            if (context.scope === ExprScope.Condition || call._inputIsZoom === false) {
+                return step(context, call);
+            }
 
-            if (
-                (context.scope === ExprScope.Value || context.scope === ExprScope.Dynamic) &&
-                input instanceof CallExpr &&
-                input.op === "zoom"
-            ) {
-                if (call.args.length < 3 || call.args.length % 2) {
-                    throw new Error("not enough arguments");
+            prepareStepCallExpr(call);
+
+            let interpolatedProperty = call._interpolatedProperty;
+
+            if (!interpolatedProperty) {
+                // the values of the interpolation are not literals,
+                // evaluate the sub expressions and combine them
+                // with the constant stops computed when preparing this call.
+                const values: Value[] = [];
+                for (let i = 1; i < call.args.length; i += 2) {
+                    const value = context.evaluate(call.args[i]);
+                    values.push(value);
                 }
 
-                // Implement dynamic zoom-dependent 'step' for attribute
-                // values using 'discrete' interpolations. This is needed
-                // because (currently) the only dynamic values supported
-                // by `MapView` are interpolations.
-                const zoomLevels: number[] = [];
-                const values: any[] = [];
-
-                zoomLevels.push(Number.MIN_SAFE_INTEGER);
-                values.push(context.evaluate(call.args[1]));
-
-                for (let i = 2; i < call.args.length; i += 2) {
-                    const stop = call.args[i];
-                    if (!(stop instanceof NumberLiteralExpr)) {
-                        throw new Error("expected a numeric literal");
-                    }
-                    zoomLevels.push(stop.value);
-                    values.push(context.evaluate(call.args[i + 1]));
-                }
-
-                const interpolation = createInterpolatedProperty({
+                interpolatedProperty = createInterpolatedProperty({
                     interpolation: "Discrete",
-                    zoomLevels,
+                    zoomLevels: call._stops!,
                     values
                 });
 
-                if (interpolation === undefined) {
+                if (interpolatedProperty === undefined) {
                     throw new Error("failed to create interpolator");
                 }
-
-                if (context.scope === ExprScope.Dynamic) {
-                    return getPropertyValue(interpolation, context.env);
-                }
-
-                return interpolation;
             }
 
-            return step(context, call.args);
+            return getPropertyValue(interpolatedProperty, context.env);
         }
     }
 };

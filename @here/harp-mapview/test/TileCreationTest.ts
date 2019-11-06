@@ -26,7 +26,8 @@ describe("Tile Creation", function() {
             },
             renderOrder: 0
         };
-        const shaderMaterial = createMaterial({ technique });
+        const level = 14;
+        const shaderMaterial = createMaterial({ technique, level });
         assert.isTrue(
             shaderMaterial instanceof THREE.ShaderMaterial,
             "expected a THREE.ShaderMaterial"
