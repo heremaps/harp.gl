@@ -1715,6 +1715,7 @@ export class TextElementsRenderer {
         // Check if icon should be rendered at this zoomLevel
         let renderIcon =
             poiInfo !== undefined &&
+            groupState.visited &&
             MathUtils.isClamped(
                 mapViewState.zoomLevel,
                 poiInfo.iconMinZoomLevel,
