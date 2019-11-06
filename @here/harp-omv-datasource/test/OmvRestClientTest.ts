@@ -46,6 +46,30 @@ describe("OmvRestClient", function() {
         downloadSpy.restore();
     });
 
+    it("supports url pattern", async function() {
+        const restClient = new OmvRestClient({
+            url: "https://some.base.url/somepath/{z}/{x}/{y}/omv",
+            downloadManager: mockDownloadManager
+        });
+        await restClient.getTile(new TileKey(1, 2, 3));
+        assert.equal(downloadSpy.args[0][0], "https://some.base.url/somepath/3/2/1/omv");
+    });
+
+    it("supports url pattern and custom `urlParams`", async function() {
+        const restClient = new OmvRestClient({
+            url: "https://some.base.url/somepath/{z}/{x}/{y}.mvt",
+            urlParams: {
+                token: "1234567890abcdefg"
+            },
+            downloadManager: mockDownloadManager
+        });
+        await restClient.getTile(new TileKey(1, 2, 3));
+        assert.equal(
+            downloadSpy.args[0][0],
+            "https://some.base.url/somepath/3/2/1.mvt?token=1234567890abcdefg"
+        );
+    });
+
     it("generates proper Url with HEREV1 Format", async function() {
         const restClient = new OmvRestClient({
             baseUrl: "https://some.base.url",

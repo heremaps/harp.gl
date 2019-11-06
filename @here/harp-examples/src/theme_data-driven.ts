@@ -7,7 +7,7 @@
 import { GeoCoordinates } from "@here/harp-geoutils";
 import { MapControls, MapControlsUI } from "@here/harp-map-controls";
 import { CopyrightElementHandler, MapView } from "@here/harp-mapview";
-import { APIFormat, OmvDataSource } from "@here/harp-omv-datasource";
+import { OmvDataSource } from "@here/harp-omv-datasource";
 import { accessToken, copyrightInfo } from "../config";
 
 export namespace DataDrivenThemeExample {
@@ -94,11 +94,12 @@ export namespace DataDrivenThemeExample {
         const map = initializeMapView("mapCanvas");
 
         const omvDataSource = new OmvDataSource({
-            baseUrl: "https://xyz.api.here.com/tiles/osmbase/512/all",
-            apiFormat: APIFormat.XYZMVT,
+            url: "https://xyz.api.here.com/tiles/osmbase/512/all/{z}/{x}/{y}.mvt",
+            urlParams: {
+                access_token: accessToken
+            },
             styleSetName: "tilezen",
             maxZoomLevel: 17,
-            authenticationCode: accessToken,
             copyrightInfo
         });
 

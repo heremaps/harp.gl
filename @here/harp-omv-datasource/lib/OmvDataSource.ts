@@ -194,10 +194,13 @@ export interface OmvDataSourceParameters {
 function getDataProvider(params: OmvWithRestClientParams | OmvWithCustomDataProvider) {
     if ((params as OmvWithCustomDataProvider).dataProvider) {
         return (params as OmvWithCustomDataProvider).dataProvider;
-    } else if ((params as OmvWithRestClientParams).baseUrl) {
+    } else if (
+        (params as OmvWithRestClientParams).baseUrl ||
+        (params as OmvWithRestClientParams).url
+    ) {
         return new OmvRestClient(params as OmvRestClientParameters);
     } else {
-        throw new Error("OmvDataSource: missing baseUrl or dataProvider params");
+        throw new Error("OmvDataSource: missing url, baseUrl or dataProvider params");
     }
 }
 
