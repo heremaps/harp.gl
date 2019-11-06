@@ -9,8 +9,7 @@
 
 import { assert } from "chai";
 import { Expr, ExprScope, JsonValue, MapEnv, ValueMap } from "../lib/Expr";
-import { getPropertyValue, isInterpolatedProperty } from "../lib/InterpolatedProperty";
-import { InterpolatedProperty, InterpolationMode } from "../lib/InterpolatedPropertyDefs";
+import { getPropertyValue } from "../lib/InterpolatedProperty";
 
 import * as THREE from "three";
 
@@ -489,22 +488,12 @@ describe("ExprEvaluator", function() {
 
     describe("Operator 'interpolate'", function() {
         it("parse", function() {
-            assert.isTrue(
-                isInterpolatedProperty(
-                    evaluate(["interpolate", ["linear"], ["zoom"], 0, 0, 1, 1, 2, 2])
-                )
-            );
+            assert.isNotNull(evaluate(["interpolate", ["linear"], ["zoom"], 0, 0, 1, 1, 2, 2]));
 
-            assert.isTrue(
-                isInterpolatedProperty(
-                    evaluate(["interpolate", ["discrete"], ["zoom"], 0, 0, 1, 1, 2, 2])
-                )
-            );
+            assert.isNotNull(evaluate(["interpolate", ["discrete"], ["zoom"], 0, 0, 1, 1, 2, 2]));
 
-            assert.isTrue(
-                isInterpolatedProperty(
-                    evaluate(["interpolate", ["exponential", 2], ["zoom"], 0, 0, 1, 1, 2, 2])
-                )
+            assert.isNotNull(
+                evaluate(["interpolate", ["exponential", 2], ["zoom"], 0, 0, 1, 1, 2, 2])
             );
 
             assert.throws(() => evaluate(["interpolate"]), "expected an interpolation type");
@@ -685,25 +674,23 @@ describe("ExprEvaluator", function() {
         });
 
         it("dynamic interpolation (without step 0)", function() {
-            const interpolation: InterpolatedProperty = evaluate([
-                "step",
-                ["zoom"],
-                "#ff0000",
-                13,
-                "#000000"
-            ]) as any;
-            assert.isTrue(isInterpolatedProperty(interpolation));
-            assert.strictEqual(interpolation.interpolationMode, InterpolationMode.Discrete);
-            for (let i = 0; i < 13; ++i) {
-                assert.strictEqual(getPropertyValue(interpolation, i), 0xff0000);
+            const interpolation = evaluate(["step", ["zoom"], "#ff0000", 13, "#000000"]);
+            for (let zoom = 0; zoom < 13; ++zoom) {
+                assert.strictEqual(
+                    getPropertyValue(interpolation, zoom),
+                    getPropertyValue("#ff0000", zoom)
+                );
             }
-            for (let i = 13; i < 20; ++i) {
-                assert.strictEqual(getPropertyValue(interpolation, i), 0x000000);
+            for (let zoom = 13; zoom < 20; ++zoom) {
+                assert.strictEqual(
+                    getPropertyValue(interpolation, zoom),
+                    getPropertyValue("#000000", zoom)
+                );
             }
         });
 
         it("dynamic interpolation (with step 0)", function() {
-            const interpolation: InterpolatedProperty = evaluate([
+            const interpolation = evaluate([
                 "step",
                 ["zoom"],
                 "#ff0000",
@@ -711,17 +698,24 @@ describe("ExprEvaluator", function() {
                 "#00ff00",
                 13,
                 "#000000"
-            ]) as any;
-            assert.isTrue(isInterpolatedProperty(interpolation));
-            assert.strictEqual(interpolation.interpolationMode, InterpolationMode.Discrete);
+            ]);
 
-            assert.strictEqual(getPropertyValue(interpolation, -1), 0xff0000);
+            assert.strictEqual(
+                getPropertyValue(interpolation, -1),
+                getPropertyValue("#ff0000", -1)
+            );
 
-            for (let i = 0; i < 13; ++i) {
-                assert.strictEqual(getPropertyValue(interpolation, i), 0x00ff00);
+            for (let zoom = 0; zoom < 13; ++zoom) {
+                assert.strictEqual(
+                    getPropertyValue(interpolation, zoom),
+                    getPropertyValue("#00ff00", zoom)
+                );
             }
-            for (let i = 13; i < 20; ++i) {
-                assert.strictEqual(getPropertyValue(interpolation, i), 0x000000);
+            for (let zoom = 13; zoom < 20; ++zoom) {
+                assert.strictEqual(
+                    getPropertyValue(interpolation, zoom),
+                    getPropertyValue("#000000", zoom)
+                );
             }
         });
 
@@ -770,9 +764,13 @@ describe("ExprEvaluator", function() {
 
         it("default value of a step", function() {
             assert.strictEqual(
-                evaluate(["step", ["get", "x"], "default value", 0, "value"], {
-                    x: null
-                }),
+                evaluate(
+                    ["step", ["get", "x"], "default value", 0, "value"],
+                    {
+                        x: null
+                    },
+                    ExprScope.Dynamic
+                ),
                 "default value"
             );
         });

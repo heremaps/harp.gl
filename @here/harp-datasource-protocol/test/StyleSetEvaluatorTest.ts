@@ -9,8 +9,10 @@
 
 import { assert } from "chai";
 import { MapEnv } from "../lib/Expr";
-import { createInterpolatedProperty } from "../lib/InterpolatedProperty";
-import { InterpolatedPropertyDefinition } from "../lib/InterpolatedPropertyDefs";
+import {
+    InterpolatedPropertyDefinition,
+    interpolatedPropertyDefinitionToJsonExpr
+} from "../lib/InterpolatedPropertyDefs";
 import { StyleSetEvaluator } from "../lib/StyleSetEvaluator";
 import { FillTechnique, isSolidLineTechnique, SolidLineTechnique } from "../lib/Techniques";
 import { Definitions, StyleDeclaration, StyleSet } from "../lib/Theme";
@@ -263,12 +265,11 @@ describe("StyleSetEvaluator", function() {
             const sse = new StyleSetEvaluator([sampleStyleDeclaration], sampleDefinitions);
             const techniques = sse.getMatchingTechniques(new MapEnv({ kind: "park" }));
 
-            const expectedInterpolator = createInterpolatedProperty(interpolator);
             assert.equal(techniques.length, 1);
             assert.deepNestedInclude(techniques[0], {
                 name: "fill",
                 lineWidth: 123,
-                color: expectedInterpolator,
+                color: interpolatedPropertyDefinitionToJsonExpr(interpolator),
                 renderOrder: 0
             });
         });

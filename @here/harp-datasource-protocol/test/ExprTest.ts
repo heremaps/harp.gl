@@ -15,7 +15,7 @@ function evaluate(expr: string | JsonExpr | Expr, env?: Env | ValueMap): Value {
     if (typeof env === "object" && !(env instanceof Env)) {
         env = new MapEnv(env);
     }
-    return (expr instanceof Expr
+    return (Expr.isExpr(expr)
         ? expr
         : typeof expr === "string"
         ? Expr.parse(expr)

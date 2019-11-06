@@ -27,11 +27,8 @@ import {
     VarExpr
 } from "./Expr";
 import { ExprPool } from "./ExprPool";
-import { isInterpolatedProperty, isInterpolatedPropertyDefinition } from "./InterpolatedProperty";
-import {
-    InterpolatedProperty,
-    interpolatedPropertyDefinitionToJsonExpr
-} from "./InterpolatedPropertyDefs";
+import { isInterpolatedPropertyDefinition } from "./InterpolatedProperty";
+import { interpolatedPropertyDefinitionToJsonExpr } from "./InterpolatedPropertyDefs";
 import { AttrScope, mergeTechniqueDescriptor, TechniquePropNames } from "./TechniqueDescriptor";
 import { IndexedTechnique, Technique, techniqueDescriptors } from "./Techniques";
 import {
@@ -55,7 +52,7 @@ interface StyleInternalParams {
      */
     _whenExpr?: Expr;
 
-    _staticAttributes?: Array<[string, Value | InterpolatedProperty]>;
+    _staticAttributes?: Array<[string, Value]>;
 
     /**
      * These attributes are used to instantiate Technique variants.
@@ -71,7 +68,7 @@ interface StyleInternalParams {
      *
      * @see [[TechniqueAttrScope.Feature]]
      */
-    _dynamicFeatureAttributes?: Array<[string, Expr | InterpolatedProperty]>;
+    _dynamicFeatureAttributes?: Array<[string, Expr]>;
 
     /**
      * These attributes are forwarded as serialized by decoder to main thread, so they are resolved
@@ -81,7 +78,7 @@ interface StyleInternalParams {
      *  - interpolants from [[TechiqueDescriptor.techniquePropNames]]
      *  - expressions [[TechniqueDescriptor.dynamicPropNames]] (Future)
      */
-    _dynamicForwardedAttributes?: Array<[string, Expr | InterpolatedProperty]>;
+    _dynamicForwardedAttributes?: Array<[string, Expr]>;
     _dynamicTechniques?: Map<string, IndexedTechnique>;
 
     /**
@@ -660,15 +657,11 @@ export class StyleSetEvaluator {
 
         const processAttribute = (
             attrName: TechniquePropNames<Technique>,
-            attrValue: Value | JsonExpr | InterpolatedProperty | undefined
+            attrValue: Value | JsonExpr | undefined
         ) => {
             if (attrValue === undefined) {
                 return;
             }
-
-            const attrScope: AttrScope | undefined = (techniqueDescriptor.attrScopes as any)[
-                attrName as any
-            ];
 
             if (isJsonExpr(attrValue)) {
                 attrValue = Expr.fromJSON(
@@ -683,26 +676,39 @@ export class StyleSetEvaluator {
                 ).intern(this.m_exprPool);
             }
 
-            if (attrValue instanceof Expr) {
+            if (Expr.isExpr(attrValue)) {
                 const deps = attrValue.dependencies();
 
-                if (deps.properties.size === 0) {
+                if (!deps.zoom && deps.properties.size === 0) {
                     // no data-dependencies detected.
                     attrValue = attrValue.evaluate(this.m_emptyEnv);
                 }
             }
 
-            if (isInterpolatedProperty(attrValue) || attrValue instanceof Expr) {
+            if (Expr.isExpr(attrValue)) {
+                let attrScope: AttrScope | undefined = (techniqueDescriptor.attrScopes as any)[
+                    attrName as any
+                ];
+
+                if (attrScope === undefined) {
+                    // Use [[AttrScope.TechniqueGeometry]] as default scope for the attribute.
+                    attrScope = AttrScope.TechniqueGeometry;
+                }
+
+                const deps = attrValue.dependencies();
+
                 switch (attrScope) {
                     case AttrScope.FeatureGeometry:
                         dynamicFeatureAttributes.push([attrName, attrValue]);
                         break;
-                    case AttrScope.TechniqueRendering:
                     case AttrScope.TechniqueGeometry:
-                        if (attrValue instanceof Expr) {
-                            dynamicTechniqueAttributes.push([attrName, attrValue]);
-                        } else {
+                        dynamicTechniqueAttributes.push([attrName, attrValue]);
+                        break;
+                    case AttrScope.TechniqueRendering:
+                        if (deps.properties.size === 0) {
                             dynamicForwardedAttributes.push([attrName, attrValue]);
+                        } else {
+                            dynamicTechniqueAttributes.push([attrName, attrValue]);
                         }
                         break;
                 }
@@ -754,7 +760,7 @@ export class StyleSetEvaluator {
             try {
                 const evaluatedValue = attrExpr.evaluate(
                     env,
-                    ExprScope.Value,
+                    ExprScope.Dynamic,
                     this.m_cachedResults
                 );
                 return [attrName, evaluatedValue];
@@ -793,11 +799,12 @@ export class StyleSetEvaluator {
 
         if (style._dynamicForwardedAttributes !== undefined) {
             for (const [attrName, attrValue] of style._dynamicForwardedAttributes) {
-                if (attrValue instanceof Expr) {
-                    // TODO: We don't support `Expr` instances in main thread yet.
-                    continue;
+                // tslint:disable-next-line: prefer-conditional-expression
+                if (Expr.isExpr(attrValue)) {
+                    technique[attrName] = attrValue.toJSON();
+                } else {
+                    technique[attrName] = attrValue;
                 }
-                technique[attrName] = attrValue;
             }
         }
 
@@ -921,9 +928,9 @@ export function makeDecodedTechnique(technique: IndexedTechnique): IndexedTechni
         if (!technique.hasOwnProperty(attrName)) {
             continue;
         }
-        const attrValue: any = (technique as any)[attrName];
-        if (attrValue instanceof Expr) {
-            continue;
+        let attrValue: any = (technique as any)[attrName];
+        if (Expr.isExpr(attrValue)) {
+            attrValue = attrValue.toJSON();
         }
         (result as any)[attrName] = attrValue;
     }

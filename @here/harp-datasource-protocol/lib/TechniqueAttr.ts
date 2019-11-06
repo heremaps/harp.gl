@@ -68,11 +68,11 @@ export function evaluateTechniqueAttr<T = Value>(
     const env = context instanceof Env ? context : context.env;
 
     let evaluated: Value | undefined;
-    if (attrValue instanceof Expr) {
+    if (Expr.isExpr(attrValue)) {
         try {
             evaluated = attrValue.evaluate(
                 env,
-                ExprScope.Value,
+                ExprScope.Dynamic,
                 !(context instanceof Env) ? context.cachedExprResults : undefined
             );
         } catch (error) {

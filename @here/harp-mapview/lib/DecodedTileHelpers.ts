@@ -19,6 +19,7 @@ import {
     TEXTURE_PROPERTY_KEYS,
     TextureProperties
 } from "@here/harp-datasource-protocol";
+import { Expr } from "@here/harp-datasource-protocol/lib/Expr";
 import {
     CirclePointsMaterial,
     HighPrecisionLineMaterial,
@@ -57,7 +58,7 @@ export interface MaterialOptions {
     /**
      * The active zoom level at material creation for zoom-dependent properties.
      */
-    level?: number;
+    level: number;
 
     /**
      * Properties to skip.
@@ -434,7 +435,7 @@ export function getMaterialConstructor(technique: Technique): MaterialConstructo
 export function applyTechniqueToMaterial(
     technique: Technique,
     material: THREE.Material,
-    level?: number,
+    level: number,
     skipExtraProps?: string[]
 ) {
     Object.getOwnPropertyNames(technique).forEach(propertyName => {
@@ -452,7 +453,7 @@ export function applyTechniqueToMaterial(
             return;
         }
         let value = technique[prop];
-        if (level !== undefined && isInterpolatedProperty(value)) {
+        if (isInterpolatedProperty(value) || Expr.isExpr(value)) {
             value = getPropertyValue(value, level);
         }
         applyTechniquePropertyToMaterial(material, prop, value);

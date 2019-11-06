@@ -18,7 +18,6 @@ import {
     isExtrudedLineTechnique,
     isExtrudedPolygonTechnique,
     isFillTechnique,
-    isInterpolatedProperty,
     isLineMarkerTechnique,
     isLineTechnique,
     isPoiTechnique,
@@ -51,6 +50,7 @@ import { ContextualArabicConverter } from "@here/harp-text-canvas";
 import { chainCallbacks, LoggerManager } from "@here/harp-utils";
 import * as THREE from "three";
 
+import { Expr, isJsonExpr } from "@here/harp-datasource-protocol/lib/Expr";
 import { AnimatedExtrusionTileHandler } from "../AnimatedExtrusionHandler";
 import { ColorCache } from "../ColorCache";
 import { createMaterial, getBufferAttribute, getObjectConstructor } from "../DecodedTileHelpers";
@@ -180,6 +180,24 @@ export class TileGeometryCreator {
                 group.createdOffsets = [];
             }
         }
+
+        // compile the dynamic expressions.
+        decodedTile.techniques.forEach((technique: any) => {
+            for (const propertyName in technique) {
+                if (!technique.hasOwnProperty(propertyName)) {
+                    continue;
+                }
+                const value = technique[propertyName];
+                if (isJsonExpr(value) && propertyName !== "kind") {
+                    // "kind" is reserved.
+                    try {
+                        technique[propertyName] = Expr.fromJSON(value);
+                    } catch (error) {
+                        logger.error("#initDecodedTile: Failed to compile expression:", error);
+                    }
+                }
+            }
+        });
     }
 
     /**
@@ -777,7 +795,7 @@ export class TileGeometryCreator {
                     isLineTechnique(technique) ||
                     (isSegmentsTechnique(technique) &&
                         technique.color !== undefined &&
-                        isInterpolatedProperty(technique.color))
+                        Expr.isExpr(technique.color))
                 ) {
                     const fadingParams = this.getFadingParams(displayZoomLevel, technique);
                     FadingFeature.addRenderHelper(
@@ -865,10 +883,7 @@ export class TileGeometryCreator {
                 if (isExtrudedLineTechnique(technique)) {
                     // extruded lines are normal meshes, and need transparency only when fading or
                     // dynamic properties is defined.
-                    if (
-                        technique.fadeFar !== undefined ||
-                        isInterpolatedProperty(technique.color)
-                    ) {
+                    if (technique.fadeFar !== undefined || Expr.isExpr(technique.color)) {
                         const fadingParams = this.getFadingParams(
                             displayZoomLevel,
                             technique as StandardExtrudedLineTechnique
@@ -881,7 +896,7 @@ export class TileGeometryCreator {
                             fadingParams.fadeFar,
                             true,
                             true,
-                            technique.color !== undefined && isInterpolatedProperty(technique.color)
+                            technique.color !== undefined && Expr.isExpr(technique.color)
                                 ? (renderer, mat) => {
                                       const extrudedMaterial = mat as
                                           | MapMeshStandardMaterial
@@ -903,10 +918,8 @@ export class TileGeometryCreator {
                     // filled polygons are normal meshes, and need transparency only when fading or
                     // dynamic properties is defined.
                     const hasDynamicColor =
-                        (technique.color !== undefined &&
-                            isInterpolatedProperty(technique.color)) ||
-                        (isExtrudedPolygonTechnique(technique) &&
-                            isInterpolatedProperty(technique.emissive));
+                        (technique.color !== undefined && Expr.isExpr(technique.color)) ||
+                        (isExtrudedPolygonTechnique(technique) && Expr.isExpr(technique.emissive));
                     if (technique.fadeFar !== undefined || hasDynamicColor) {
                         const fadingParams = this.getFadingParams(displayZoomLevel, technique);
                         FadingFeature.addRenderHelper(
@@ -1063,7 +1076,7 @@ export class TileGeometryCreator {
                         false,
                         false,
                         extrudedPolygonTechnique.lineColor !== undefined &&
-                            isInterpolatedProperty(extrudedPolygonTechnique.lineColor)
+                            Expr.isExpr(extrudedPolygonTechnique.lineColor)
                             ? (renderer, mat) => {
                                   edgeMaterial.color.set(
                                       getPropertyValue(
@@ -1143,7 +1156,7 @@ export class TileGeometryCreator {
                         true,
                         false,
                         fillTechnique.lineColor !== undefined &&
-                            isInterpolatedProperty(fillTechnique.lineColor)
+                            Expr.isExpr(fillTechnique.lineColor)
                             ? (renderer, mat) => {
                                   const edgeMaterial = mat as EdgeMaterial;
                                   edgeMaterial.color.set(
