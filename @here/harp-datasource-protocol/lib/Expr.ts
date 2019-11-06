@@ -164,13 +164,27 @@ export enum ExprScope {
     /**
      * The scope of an [[Expr]] used in a [[Technique]] `when` condition.
      */
-    Condition
+    Condition,
+
+    /**
+     * The scope of an [[Expr]] used as dynamic property attribute value.
+     */
+    Dynamic
 }
 
 /**
  * Abstract class defining a shape of a [[Theme]]'s expression
  */
 export abstract class Expr {
+    /**
+     * Tests of given value is an [[Expr]].
+     *
+     * @param value The object to test.
+     */
+    static isExpr(value: any): value is Expr {
+        return value instanceof Expr;
+    }
+
     /**
      * Creates an expression from the given `code`.
      *

@@ -932,4 +932,19 @@ describe("ExprEvaluator", function() {
             );
         });
     });
+
+    describe("getPropertyValue", function() {
+        const env = new MapEnv({
+            $zoom: 14,
+            $pixelsToMeters: 2,
+            time: 1
+        });
+
+        it("evaluate", function() {
+            assert.strictEqual(
+                getPropertyValue(Expr.fromJSON(["rgb", 255, 0, ["*", ["get", "time"], 255]]), env),
+                "#ff00ff"
+            );
+        });
+    });
 });
