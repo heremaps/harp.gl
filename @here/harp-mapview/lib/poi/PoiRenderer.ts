@@ -215,9 +215,10 @@ class PoiRenderBuffer {
      *
      * @param poiInfo PoiInfo containing information for rendering the POI icon.
      * @param screenBox Box to render icon into in 2D coordinates.
+     * @param viewDistance Box's distance to camera.
      * @param opacity Opacity of icon to allow fade in/out.
      */
-    addPoi(poiInfo: PoiInfo, screenBox: Math2D.Box, opacity: number): number {
+    addPoi(poiInfo: PoiInfo, screenBox: Math2D.Box, viewDistance: number, opacity: number): number {
         const batchIndex = this.registerPoi(poiInfo);
         assert(batchIndex >= 0);
         if (batchIndex < 0) {
@@ -235,7 +236,7 @@ class PoiRenderBuffer {
             poiInfo.uvBox!,
             this.batches[batchIndex].color,
             opacity,
-            poiInfo.textElement.renderDistance,
+            viewDistance,
             poiInfo.textElement
         );
 
@@ -414,6 +415,7 @@ export class PoiRenderer {
      * @param poiInfo PoiInfo containing information for rendering the POI icon.
      * @param screenPosition Position on screen (2D):
      * @param screenCollisions Object handling the collision checks for screen-aligned 2D boxes.
+     * @param viewDistance Box's distance to camera.
      * @param scale Scaling factor to apply to text and icon.
      * @param allocateScreenSpace If `true` screen space will be allocated for the icon.
      * @param opacity Opacity of icon to allow fade in/out.
@@ -422,6 +424,7 @@ export class PoiRenderer {
         poiInfo: PoiInfo,
         screenPosition: THREE.Vector2,
         screenCollisions: ScreenCollisions,
+        viewDistance: number,
         scale: number,
         allocateScreenSpace: boolean,
         opacity: number,
@@ -442,7 +445,7 @@ export class PoiRenderer {
                 screenCollisions.allocate(this.m_tempScreenBox);
             }
 
-            this.m_renderBuffer.addPoi(poiInfo, this.m_tempScreenBox, opacity);
+            this.m_renderBuffer.addPoi(poiInfo, this.m_tempScreenBox, viewDistance, opacity);
         }
     }
 
@@ -533,8 +536,6 @@ export class PoiRenderer {
 
         if (poiInfo.poiTableName !== undefined) {
             if (this.mapView.poiManager.updatePoiFromPoiTable(pointLabel)) {
-                // Remove poiTableName to mark this POI as processed.
-                poiInfo.poiTableName = undefined;
                 if (!pointLabel.visible) {
                     // PoiTable set this POI to not visible.
                     return;

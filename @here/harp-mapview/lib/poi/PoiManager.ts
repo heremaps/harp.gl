@@ -278,6 +278,9 @@ export class PoiManager {
             return false;
         }
 
+        // Remove poiTableName to mark this POI as processed.
+        poiInfo.poiTableName = undefined;
+
         // PoiTable not found or can not be loaded.
         if (poiTable === undefined || !poiTable.loadedOk) {
             PoiManager.notifyMissingPoiTable(poiTableName, poiTable);
@@ -504,7 +507,6 @@ export class PoiManager {
             technique.fadeFar !== undefined
                 ? getPropertyValue(technique.fadeFar, displayZoomLevel)
                 : technique.fadeFar;
-
         const xOffset = getPropertyValue(technique.xOffset, displayZoomLevel);
         const yOffset = getPropertyValue(technique.yOffset, displayZoomLevel);
 
@@ -522,6 +524,7 @@ export class PoiManager {
             fadeFar
         );
 
+        textElement.isPointLabel = true;
         textElement.mayOverlap = technique.textMayOverlap === true;
         textElement.reserveSpace = technique.textReserveSpace !== false;
         textElement.alwaysOnTop = technique.alwaysOnTop === true;
@@ -584,8 +587,6 @@ export class PoiManager {
             technique.distanceScale !== undefined
                 ? technique.distanceScale
                 : DEFAULT_TEXT_DISTANCE_SCALE;
-
-        textElement.isPointLabel = true;
 
         return textElement;
     }

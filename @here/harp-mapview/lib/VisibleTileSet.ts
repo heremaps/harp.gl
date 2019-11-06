@@ -13,7 +13,7 @@ import {
 } from "@here/harp-geoutils";
 import { LRUCache } from "@here/harp-lrucache";
 import { assert, MathUtils } from "@here/harp-utils";
-import THREE = require("three");
+import * as THREE from "three";
 import { ClipPlanesEvaluator } from "./ClipPlanesEvaluator";
 import { DataSource } from "./DataSource";
 import { ElevationRangeSource } from "./ElevationRangeSource";
