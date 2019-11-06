@@ -12,7 +12,7 @@ uniform float extrusionRatio;
 varying vec4 vExtrusionAxis;
 `,
     extrusion_vertex: `
-transformed = transformed - extrusionAxis.xyz + extrusionAxis.xyz * extrusionRatio;
+transformed = transformed + extrusionAxis.xyz * (extrusionRatio - 1.0);
 vExtrusionAxis = vec4(normalMatrix * extrusionAxis.xyz, extrusionAxis.w);
 `,
     // Modified version of THREE <normal_fragment_begin> shader chunk which, for flat shaded
