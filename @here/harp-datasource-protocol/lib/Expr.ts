@@ -502,6 +502,26 @@ export class VarExpr extends Expr {
 }
 
 export abstract class LiteralExpr extends Expr {
+    /**
+     * Create a [[LiteralExpr]] from the given value.
+     *
+     * @param value A constant value.
+     */
+    static fromValue(value: Value): Expr {
+        switch (typeof value) {
+            case "boolean":
+                return new BooleanLiteralExpr(value);
+            case "number":
+                return new NumberLiteralExpr(value);
+            case "string":
+                return new StringLiteralExpr(value);
+            case "object":
+                return value === null ? NullLiteralExpr.instance : new ObjectLiteralExpr(value);
+            default:
+                throw new Error(`failed to create a literal from '${value}'`);
+        } // switch
+    }
+
     abstract get value(): Value;
 }
 

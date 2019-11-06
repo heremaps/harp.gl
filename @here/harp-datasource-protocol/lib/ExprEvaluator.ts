@@ -14,6 +14,7 @@ import {
     ExprScope,
     ExprVisitor,
     HasAttributeExpr,
+    LiteralExpr,
     MatchExpr,
     NullLiteralExpr,
     NumberLiteralExpr,
@@ -50,6 +51,8 @@ const operatorDescriptors = new Map<string, OperatorDescriptor>();
  * @hidden
  */
 export class ExprEvaluatorContext {
+    private m_partialEvaluation = false;
+
     constructor(
         readonly evaluator: ExprEvaluator,
         readonly env: Env,
@@ -57,11 +60,56 @@ export class ExprEvaluatorContext {
         readonly cache?: Map<Expr, Value>
     ) {}
 
+    /**
+     * `true` if the this context is used to partially evaluate expressions.
+     */
+    get partialEvaluation() {
+        return this.m_partialEvaluation;
+    }
+
+    /**
+     * Evaluate the given expression.
+     *
+     * @param expr The [[Expr]] to evaluate.
+     */
     evaluate(expr: Expr | undefined) {
         if (expr !== undefined) {
             return expr.accept(this.evaluator, this);
         }
         throw new Error("Failed to evaluate expression");
+    }
+
+    /**
+     * Partially evaluate the given expression.
+     *
+     * @param expr The [[Expr]] to evaluate.
+     */
+    partiallyEvaluate(expr: Expr | undefined): Expr {
+        if (expr === undefined) {
+            throw new Error("Failed to evaluate expression");
+        }
+
+        const previousEvaluationMode = this.m_partialEvaluation;
+
+        this.m_partialEvaluation = true;
+
+        try {
+            const value = expr.accept(this.evaluator, this);
+
+            this.m_partialEvaluation = previousEvaluationMode;
+
+            if (value instanceof Expr) {
+                return value;
+            }
+
+            return LiteralExpr.fromValue(value);
+        } catch (error) {
+            // rethrow the exception
+            throw error;
+        } finally {
+            // reset the evaluation mode.
+            this.m_partialEvaluation = previousEvaluationMode;
+        }
     }
 }
 
