@@ -22,7 +22,8 @@ import {
     StringEncodedNumeralFormats,
     StringEncodedNumeralType,
     StringEncodedPixels,
-    StringEncodedRGB
+    StringEncodedRGB,
+    StringEncodedRGBA
 } from "./StringEncodedNumeral";
 
 const logger = LoggerManager.instance.create("InterpolatedProperty");
@@ -109,6 +110,7 @@ export function getPropertyValue<T>(
                     return matchedFormat.decoder(property)[0] * pixelToMeters;
                 case StringEncodedNumeralType.Hex:
                 case StringEncodedNumeralType.RGB:
+                case StringEncodedNumeralType.RGBA:
                 case StringEncodedNumeralType.HSL:
                     const hslValues = matchedFormat.decoder(property);
                     return tmpColor.setHSL(hslValues[0], hslValues[1], hslValues[2]).getHex();
@@ -123,6 +125,7 @@ export function getPropertyValue<T>(
                 return getInterpolatedLength(property, level, pixelToMeters);
             case StringEncodedNumeralType.Hex:
             case StringEncodedNumeralType.RGB:
+            case StringEncodedNumeralType.RGBA:
             case StringEncodedNumeralType.HSL:
                 return getInterpolatedColor(property, level);
         }
@@ -275,7 +278,7 @@ function removeDuplicatePropertyValues<T>(p: InterpolatedPropertyDefinition<T>) 
     }
 }
 
-const colorFormats = [StringEncodedHSL, StringEncodedHex, StringEncodedRGB];
+const colorFormats = [StringEncodedHSL, StringEncodedHex, StringEncodedRGB, StringEncodedRGBA];
 const worldSizeFormats = [StringEncodedMeters, StringEncodedPixels];
 
 function procesStringEnocodedNumeralInterpolatedProperty(

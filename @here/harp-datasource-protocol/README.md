@@ -300,4 +300,4 @@ Most common properties include:
 - `renderOrder`: which enables to define the render order of the objects created using a particular
  technique.
 - `color`: color in hexadecimal or CSS-style notation, for example: `"#e4e9ec"`, `"#fff"`,
- `"rgb(255, 0, 0)"`, or `"hsl(35, 11%, 88%)"`.
+ `"rgb(255, 0, 0)"`, `"rgba(127, 127, 127, 1.0)"`, or `"hsl(35, 11%, 88%)"`.

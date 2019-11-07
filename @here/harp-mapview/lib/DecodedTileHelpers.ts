@@ -220,12 +220,7 @@ export function createMaterial(
                 // skip reserved property names
                 return;
             }
-            const m = material as any;
-            if (m[prop] instanceof THREE.Color) {
-                m[prop].set(params[prop]);
-            } else {
-                m[prop] = params[prop];
-            }
+            applyTechniquePropertyToMaterial(material, prop, params[prop]);
         });
     } else {
         applyTechniqueToMaterial(technique, material, options.level, options.skipExtraProps);
@@ -455,20 +450,40 @@ export function applyTechniqueToMaterial(
         }
         const prop = propertyName as keyof (typeof technique);
         const m = material as any;
-        let value = technique[prop];
         if (typeof m[prop] === "undefined") {
             return;
         }
+        let value = technique[prop];
         if (level !== undefined && isInterpolatedProperty(value)) {
             value = getPropertyValue(value, level);
         }
-        if (m[prop] instanceof THREE.Color) {
-            m[prop].set(value);
-            m[prop] = m[prop]; // Trigger setter
-        } else {
-            m[prop] = value;
-        }
+        applyTechniquePropertyToMaterial(material, prop, value);
     });
+}
+
+/**
+ * Apply single and generic technique property to corresponding material parameter.
+ *
+ * @note Special handling for material parameters of `THREE.Color` type is provided thus it
+ * does not provide constructor that would take [[string]] or [[number]] values.
+ *
+ * @param material target material
+ * @param prop material parameter name (or index)
+ * @param value corresponding technique property value which is applied.
+ */
+function applyTechniquePropertyToMaterial(
+    material: THREE.Material,
+    prop: string | number,
+    value: any
+) {
+    const m = material as any;
+    if (m[prop] instanceof THREE.Color) {
+        m[prop].set(value);
+        // Trigger setter notifying change
+        m[prop] = m[prop];
+    } else {
+        m[prop] = value;
+    }
 }
 
 function getTextureBuffer(
