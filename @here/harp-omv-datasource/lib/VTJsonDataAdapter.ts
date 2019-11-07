@@ -118,6 +118,7 @@ export class VTJsonDataAdapter implements OmvDataAdapter {
                 $geometryType: this.convertGeometryType(feature.type),
                 $level: tileKey.level,
                 $zoom: Math.max(0, tileKey.level - (this.m_processor.storageLevelOffset || 0)),
+                $ppi: this.m_processor.ppi || 72,
                 $id: feature.id,
                 ...feature.tags
             });

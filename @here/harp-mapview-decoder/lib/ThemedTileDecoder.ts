@@ -24,6 +24,7 @@ import { Projection, TileKey } from "@here/harp-geoutils";
  */
 export abstract class ThemedTileDecoder implements ITileDecoder {
     languages?: string[];
+    ppi: number = 72;
     m_storageLevelOffset: number = 0;
 
     protected m_styleSetEvaluator?: StyleSetEvaluator;
@@ -59,6 +60,7 @@ export abstract class ThemedTileDecoder implements ITileDecoder {
         styleSet?: StyleSet,
         definitions?: Definitions,
         languages?: string[],
+        ppi?: number,
         options?: OptionsMap
     ): void {
         if (styleSet !== undefined) {
@@ -66,6 +68,9 @@ export abstract class ThemedTileDecoder implements ITileDecoder {
         }
         if (languages !== undefined) {
             this.languages = languages;
+        }
+        if (ppi !== undefined) {
+            this.ppi = ppi;
         }
         if (options !== undefined && options.storageLevelOffset !== undefined) {
             this.m_storageLevelOffset = options.storageLevelOffset;

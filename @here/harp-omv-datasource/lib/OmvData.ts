@@ -312,6 +312,7 @@ function createFeatureEnv(
     geometryType: string,
     storageLevel: number,
     storageLevelOffset?: number,
+    ppi?: number,
     logger?: ILogger,
     parent?: Env
 ): MapEnv {
@@ -319,6 +320,7 @@ function createFeatureEnv(
         $layer: layer.name,
         $level: storageLevel,
         $zoom: Math.max(0, storageLevel - (storageLevelOffset || 0)),
+        $ppi: ppi || 72,
         $geometryType: geometryType
     };
 
@@ -480,6 +482,7 @@ export class OmvProtobufDataAdapter implements OmvDataAdapter, OmvVisitor {
             "point",
             storageLevel,
             this.m_processor.storageLevelOffset,
+            this.m_processor.ppi,
             this.m_logger
         );
 
@@ -531,6 +534,7 @@ export class OmvProtobufDataAdapter implements OmvDataAdapter, OmvVisitor {
             "line",
             storageLevel,
             this.m_processor.storageLevelOffset,
+            this.m_processor.ppi,
             this.m_logger
         );
 
@@ -588,6 +592,7 @@ export class OmvProtobufDataAdapter implements OmvDataAdapter, OmvVisitor {
             "polygon",
             storageLevel,
             this.m_processor.storageLevelOffset,
+            this.m_processor.ppi,
             this.m_logger
         );
 

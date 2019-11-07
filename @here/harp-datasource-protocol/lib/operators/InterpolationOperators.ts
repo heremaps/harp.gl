@@ -67,7 +67,7 @@ const operators = {
             if (typeof ppi === "number") {
                 return ppi;
             }
-            return 72;
+            throw new Error("failed to get the ppi.");
         }
     },
     zoom: {

@@ -245,6 +245,15 @@ export abstract class DataSource extends THREE.EventDispatcher {
     }
 
     /**
+     * Used to configure the ppi used by the `DataSource`.
+     *
+     * @param ppi Pixel-per-inch.
+     */
+    setPPI(ppi?: number): void {
+        // to be overloaded by subclasses
+    }
+
+    /**
      * This method is called when [[MapView]] needs to visualize or preload the content of a
      * [[TileKey]].
      *

@@ -63,6 +63,11 @@ export interface IGeometryProcessor {
     storageLevelOffset?: number;
 
     /**
+     * The pixels-per-inch of the target display.
+     */
+    ppi?: number;
+
+    /**
      * Process a sequence of point features.
      *
      * The points are represented as local webMercator coordinates.

@@ -167,6 +167,7 @@ export class OmvDecoder implements IGeometryProcessor {
         private readonly m_skipShortLabels = true,
         private readonly m_storageLevelOffset = 0,
         private readonly m_enableElevationOverlay = false,
+        private readonly m_ppi = 72,
         private readonly m_languages?: string[]
     ) {
         const styleSetDataFilter = new StyleSetDataFilter(m_styleSetEvaluator);
@@ -180,6 +181,10 @@ export class OmvDecoder implements IGeometryProcessor {
 
     get storageLevelOffset() {
         return this.m_storageLevelOffset;
+    }
+
+    get ppi() {
+        return this.m_ppi;
     }
 
     /**
@@ -599,6 +604,7 @@ export class OmvTileDecoder extends ThemedTileDecoder {
             this.m_skipShortLabels,
             this.m_storageLevelOffset,
             this.m_enableElevationOverlay,
+            this.ppi,
             this.languages
         );
 
@@ -633,6 +639,7 @@ export class OmvTileDecoder extends ThemedTileDecoder {
             this.m_skipShortLabels,
             this.m_storageLevelOffset,
             this.m_enableElevationOverlay,
+            this.ppi,
             this.languages
         );
 
@@ -647,9 +654,10 @@ export class OmvTileDecoder extends ThemedTileDecoder {
         styleSet: StyleSet,
         definitions?: Definitions,
         languages?: string[],
+        ppi?: number,
         options?: OptionsMap
     ): void {
-        super.configure(styleSet, definitions, languages, options);
+        super.configure(styleSet, definitions, languages, ppi, options);
 
         if (options) {
             const omvOptions = options as OmvDecoderOptions;

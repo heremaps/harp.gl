@@ -154,13 +154,16 @@ export class WorkerBasedDecoder implements ITileDecoder {
      * Broadcasts [[ConfigurationMessage]] to all [[TileDecoderService]]s running in worker pool.
      *
      * @param styleSet  new [[StyleSet]], undefined means no change
+     * @param definitions new definitions used to resolve references in `styleSet`
      * @param languages new list of languages
+     * @param ppi new pixels-per-inch setting
      * @param options   new options, undefined options are not changed
      */
     configure(
         styleSet?: StyleSet,
         definitions?: Definitions,
         languages?: string[],
+        ppi?: number,
         options?: OptionsMap
     ): void {
         const message: WorkerDecoderProtocol.ConfigurationMessage = {

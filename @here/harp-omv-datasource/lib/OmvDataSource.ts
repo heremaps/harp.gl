@@ -264,7 +264,7 @@ export class OmvDataSource extends TileDataSource<OmvTile> {
             }
             throw error;
         }
-        this.configureDecoder(undefined, undefined, undefined, this.m_decoderOptions);
+        this.configureDecoder(undefined, undefined, undefined, undefined, this.m_decoderOptions);
     }
 
     /**
@@ -272,7 +272,7 @@ export class OmvDataSource extends TileDataSource<OmvTile> {
      * Will be applied to the decoder, which might be shared with other omv datasources.
      */
     removeDataFilter(): void {
-        this.configureDecoder(undefined, undefined, undefined, {
+        this.configureDecoder(undefined, undefined, undefined, undefined, {
             filterDescription: null
         });
     }
@@ -288,7 +288,7 @@ export class OmvDataSource extends TileDataSource<OmvTile> {
         this.m_decoderOptions.filterDescription =
             filterDescription !== null ? filterDescription : undefined;
 
-        this.configureDecoder(undefined, undefined, undefined, {
+        this.configureDecoder(undefined, undefined, undefined, undefined, {
             filterDescription
         });
     }
@@ -320,6 +320,12 @@ export class OmvDataSource extends TileDataSource<OmvTile> {
         }
     }
 
+    setPPI(ppi?: number): void {
+        if (ppi !== undefined) {
+            this.configureDecoder(undefined, undefined, undefined, ppi, undefined);
+        }
+    }
+
     get storageLevelOffset() {
         return super.storageLevelOffset;
     }
@@ -327,7 +333,7 @@ export class OmvDataSource extends TileDataSource<OmvTile> {
     set storageLevelOffset(levelOffset: number) {
         super.storageLevelOffset = levelOffset;
         this.m_decoderOptions.storageLevelOffset = this.storageLevelOffset;
-        this.configureDecoder(undefined, undefined, undefined, {
+        this.configureDecoder(undefined, undefined, undefined, undefined, {
             storageLevelOffset: this.storageLevelOffset
         });
     }
@@ -335,7 +341,7 @@ export class OmvDataSource extends TileDataSource<OmvTile> {
     setEnableElevationOverlay(enable: boolean) {
         if (this.m_decoderOptions.enableElevationOverlay !== enable) {
             this.m_decoderOptions.enableElevationOverlay = enable;
-            this.configureDecoder(undefined, undefined, undefined, {
+            this.configureDecoder(undefined, undefined, undefined, undefined, {
                 enableElevationOverlay: enable
             });
         }
@@ -345,10 +351,11 @@ export class OmvDataSource extends TileDataSource<OmvTile> {
         styleSet?: StyleSet,
         definitions?: Definitions,
         languages?: string[],
+        ppi?: number,
         options?: OptionsMap
     ) {
         this.clearCache();
-        this.decoder.configure(styleSet, definitions, languages, options);
+        this.decoder.configure(styleSet, definitions, languages, ppi, options);
         this.mapView.markTilesDirty(this);
     }
 }

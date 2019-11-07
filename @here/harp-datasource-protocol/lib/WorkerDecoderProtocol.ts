@@ -75,6 +75,7 @@ export namespace WorkerDecoderProtocol {
         definitions?: Definitions;
         options?: OptionsMap;
         languages?: string[];
+        ppi?: number;
     }
 
     /**

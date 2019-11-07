@@ -60,12 +60,14 @@ export interface ITileDecoder {
      * @param styleSet optional, new style set.
      * @param definitions optional, definitions used to resolve references in `styleSet`
      * @param languages optional, language list
+     * @param ppi optional, pixels-per-inch
      * @param options optional, new options - shape is specific for each decoder
      */
     configure(
         styleSet?: StyleSet,
         definitions?: Definitions,
         languages?: string[],
+        ppi?: number,
         options?: OptionsMap
     ): void;
 

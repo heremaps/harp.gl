@@ -508,6 +508,12 @@ export interface MapViewOptions {
     languages?: string[];
 
     /**
+     * Expected PPI (pixels-per-inch) of the target display.
+     * @default `7`
+     */
+    ppi?: number;
+
+    /**
      * Set fixed pixel ratio for rendering. Useful when rendering on high resolution displays with
      * low performance GPUs that may be fill-rate limited.
      * @default `window.devicePixelRatio`
@@ -633,7 +639,8 @@ export const MapViewDefaults = {
     pixelRatio:
         typeof window !== "undefined" && window.devicePixelRatio !== undefined
             ? window.devicePixelRatio
-            : 1.0
+            : 1.0,
+    ppi: 72
 };
 
 /**
@@ -709,6 +716,7 @@ export class MapView extends THREE.EventDispatcher {
 
     private m_pixelToWorld?: number;
     private m_pixelRatio?: number;
+    private m_ppi?: number;
 
     private readonly m_scene: THREE.Scene = new THREE.Scene();
     private readonly m_fog: MapViewFog = new MapViewFog(this.m_scene);
@@ -862,6 +870,7 @@ export class MapView extends THREE.EventDispatcher {
         }
 
         this.m_pixelRatio = options.pixelRatio;
+        this.m_ppi = options.ppi;
 
         if (options.maxFps !== undefined) {
             this.m_maxFps = Math.max(0, options.maxFps);
@@ -2031,15 +2040,6 @@ export class MapView extends THREE.EventDispatcher {
         return 1.0 / this.pixelToWorld;
     }
 
-    get pixelRatio(): number {
-        if (this.m_pixelRatio !== undefined) {
-            return this.m_pixelRatio;
-        }
-        return typeof window !== "undefined" && window.devicePixelRatio !== undefined
-            ? window.devicePixelRatio
-            : 1.0;
-    }
-
     /**
      * PixelRatio in the WebGlRenderer. May contain values > 1.0 for high resolution screens
      * (HiDPI).
@@ -2053,11 +2053,41 @@ export class MapView extends THREE.EventDispatcher {
      *
      * @memberof MapView
      */
+    get pixelRatio(): number {
+        if (this.m_pixelRatio !== undefined) {
+            return this.m_pixelRatio;
+        }
+        return typeof window !== "undefined" && window.devicePixelRatio !== undefined
+            ? window.devicePixelRatio
+            : 1.0;
+    }
+
     set pixelRatio(pixelRatio: number) {
         this.m_pixelRatio = pixelRatio;
         if (this.renderer.getPixelRatio() !== this.pixelRatio) {
             this.renderer.setPixelRatio(this.pixelRatio);
         }
+    }
+
+    /**
+     * Expected pixels-per-inch of the target display.
+     *
+     * @note This value varies from platform to platform on browsers (usually 96 or 76), but we
+     * assume a default value of `72`. Don't use this for pixel-perfect calculations, but as a
+     * method to control the internal scaling of objects in display.
+     *
+     * @memberof MapView
+     */
+    set ppi(ppi: number | undefined) {
+        this.m_ppi = ppi;
+        this.m_tileDataSources.forEach((dataSource: DataSource) => {
+            dataSource.setPPI(this.m_ppi);
+        });
+        this.update();
+    }
+
+    get ppi(): number | undefined {
+        return this.m_ppi;
     }
 
     /**
