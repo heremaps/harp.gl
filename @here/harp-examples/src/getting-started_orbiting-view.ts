@@ -5,7 +5,12 @@
  */
 
 import { GeoCoordinates, mercatorProjection, sphereProjection } from "@here/harp-geoutils";
-import { CopyrightElementHandler, MapView, MapViewEventNames } from "@here/harp-mapview";
+import {
+    CopyrightElementHandler,
+    MapView,
+    MapViewEventNames,
+    MapViewUtils
+} from "@here/harp-mapview";
 import { APIFormat, OmvDataSource } from "@here/harp-omv-datasource";
 import { GUI } from "dat.gui";
 import { accessToken, copyrightInfo } from "../config";
@@ -30,8 +35,12 @@ export namespace CameraOrbitExample {
     const map = createBaseMap();
     // end:harp_gl_camera_orbit_example_0.ts
 
+    // Be sure to see the buildings when starting the example: a zoom level does not translate into
+    // the same distance depending on the viewport's height.
+    const minDistanceForBuildings =
+        Math.ceil(MapViewUtils.calculateDistanceToGroundFromZoomLevel(map, 16.0)) - 500;
     // snippet:harp_gl_camera_orbit_example_1.ts
-    const options = { tilt: 25, distance: 2500, globe: true };
+    const options = { tilt: 25, distance: minDistanceForBuildings, globe: true };
     const dubai = new GeoCoordinates(25.19705, 55.27419);
     let azimuth = 0;
     map.addEventListener(MapViewEventNames.AfterRender, () => {
@@ -43,7 +52,7 @@ export namespace CameraOrbitExample {
 
     const gui = new GUI({ width: 300 });
     gui.add(options, "tilt", 0, 80, 0.1);
-    gui.add(options, "distance", 300, 30000, 1);
+    gui.add(options, "distance", 300, 60000, 1);
     gui.add(options, "globe").onChange(() => {
         map.projection = options.globe ? sphereProjection : mercatorProjection;
     });
