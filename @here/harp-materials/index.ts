@@ -7,7 +7,6 @@
 export * from "./lib/CopyMaterial";
 export * from "./lib/SepiaShader";
 export * from "./lib/VignetteShader";
-export * from "./lib/DashedLineMaterial";
 export * from "./lib/EdgeMaterial";
 export * from "./lib/MapMeshMaterials";
 export * from "./lib/HighPrecisionLineMaterial";

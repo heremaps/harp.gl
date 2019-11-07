@@ -16,7 +16,6 @@ import {
     Group,
     IndexedTechnique,
     InterleavedBufferAttribute,
-    isDashedLineTechnique,
     isExtrudedLineTechnique,
     isExtrudedPolygonTechnique,
     isFillTechnique,
@@ -193,7 +192,6 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
     private readonly m_poiGeometries: PoiGeometry[] = [];
     private readonly m_simpleLines: LinesGeometry[] = [];
     private readonly m_solidLines: LinesGeometry[] = [];
-    private readonly m_dashedLines: LinesGeometry[] = [];
 
     private readonly m_sources: string[] = [];
     private m_maxGeometryHeight: number = 0;
@@ -414,16 +412,10 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
             const techniqueIndex = technique._index;
             const techniqueName = technique.name;
 
-            if (
-                isLineTechnique(technique) ||
-                isSolidLineTechnique(technique) ||
-                isDashedLineTechnique(technique)
-            ) {
+            if (isLineTechnique(technique) || isSolidLineTechnique(technique)) {
                 const lineGeometry = isLineTechnique(technique)
                     ? this.m_simpleLines
-                    : isSolidLineTechnique(technique)
-                    ? this.m_solidLines
-                    : this.m_dashedLines;
+                    : this.m_solidLines;
 
                 const lineType = isLineTechnique(technique) ? LineType.Simple : LineType.Complex;
 
@@ -668,10 +660,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                 polygons.push(rings);
             }
 
-            const isLine =
-                isSolidLineTechnique(technique) ||
-                isDashedLineTechnique(technique) ||
-                isLineTechnique(technique);
+            const isLine = isSolidLineTechnique(technique) || isLineTechnique(technique);
             if (isPolygon) {
                 this.applyPolygonTechnique(
                     polygons,
@@ -683,11 +672,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                 );
             } else if (isLine) {
                 const lineGeometry =
-                    technique.name === "line"
-                        ? this.m_simpleLines
-                        : technique.name === "solid-line"
-                        ? this.m_solidLines
-                        : this.m_dashedLines;
+                    technique.name === "line" ? this.m_simpleLines : this.m_solidLines;
 
                 const lineType = technique.name === "line" ? LineType.Simple : LineType.Complex;
 
@@ -764,7 +749,6 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
         this.createGeometries();
         this.processSimpleLines(this.m_simpleLines);
         this.processLines(this.m_solidLines);
-        this.processLines(this.m_dashedLines);
 
         const decodedTile: DecodedTile = {
             techniques: this.m_styleSetEvaluator.decodedTechniques,
@@ -907,7 +891,6 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
         if (
             (isFillTechnique(technique) ||
                 isSolidLineTechnique(technique) ||
-                isDashedLineTechnique(technique) ||
                 isExtrudedPolygonTechnique(technique)) &&
             this.m_enableElevationOverlay
         ) {

@@ -943,53 +943,12 @@ export interface SolidLineTechniqueParams extends BaseTechniqueParams, Polygonal
      * Default is `1.0`.
      */
     drawRangeEnd?: number;
-}
-
-/**
- * Declares a a geometry as a dashed line.
- */
-export interface DashedLineTechniqueParams extends BaseTechniqueParams, PolygonalTechniqueParams {
-    /**
-     * Color of a line in hexadecimal or CSS-style notation, for example: `"#e4e9ec"`, `"#fff"`,
-     * `"rgb(255, 0, 0)"`, or `"hsl(35, 11%, 88%)"`.
-     * @format color-hex
-     */
-    color: DynamicProperty<StyleColor>;
     /**
      * Color of a line dashes in hexadecimal or CSS-style notation,
      * for example: `"#e4e9ec"`, `"#fff"`, `"rgb(255, 0, 0)"`, or `"hsl(35, 11%, 88%)"`.
      * @format color-hex
      */
     dashColor?: DynamicProperty<StyleColor>;
-    /**
-     * Color of a line outline in hexadecimal or CSS-style notation,
-     * for example: `"#e4e9ec"`, `"#fff"`, `"rgb(255, 0, 0)"`, or `"hsl(35, 11%, 88%)"`.
-     * @format color-hex
-     */
-    outlineColor?: DynamicProperty<StyleColor>;
-    /**
-     * Set to `true` if line should appear transparent. Rendering transparent lines may come with a
-     * slight performance impact.
-     */
-    transparent?: boolean;
-    /**
-     * For transparent lines, set a value between `0.0` for fully transparent, to `1.0` for fully
-     * opaque.
-     */
-    opacity?: DynamicProperty<number>;
-    // TODO: Make pixel units default.
-    /**
-     * Units in which different size properties are specified. Either `Meter` (default) or `Pixel`.
-     */
-    metricUnit?: "Meter" | "Pixel";
-    /**
-     * Width of a line in `metricUnit`s for different zoom levels.
-     */
-    lineWidth: DynamicProperty<StyleLength>;
-    /**
-     * Outline width of a line in `metricUnit`s for different zoom levels.
-     */
-    outlineWidth?: DynamicProperty<StyleLength>;
     /**
      * Length of a line in meters for different zoom levels.
      */
@@ -998,16 +957,6 @@ export interface DashedLineTechniqueParams extends BaseTechniqueParams, Polygona
      * Size of a gap between lines in meters for different zoom levels.
      */
     gapSize?: DynamicProperty<StyleLength>;
-    /**
-     * Clip the line outside the tile if `true`.
-     */
-    clipping?: boolean;
-
-    /**
-     * Describes line caps type (`"None"`, `"Round"`, `"Square"`, `"TriangleOut"`, `"TriangleIn"`).
-     * Default is `"Round"`.
-     */
-    caps?: LineCaps;
 }
 
 /**

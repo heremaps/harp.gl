@@ -13,7 +13,6 @@ import {
     GeoJson,
     IndexedTechnique,
     isCirclesTechnique,
-    isDashedLineTechnique,
     isFillTechnique,
     isPoiTechnique,
     isSolidLineTechnique,
@@ -274,18 +273,6 @@ export class GeoJsonParser {
                             buffers.textPathGeometryBuffer,
                             feature.properties
                         );
-                    } else if (isDashedLineTechnique(technique)) {
-                        this.processDashedLines(
-                            extendedTile,
-                            [feature.geometry.coordinates],
-                            center,
-                            projection,
-                            techniqueIndex,
-                            styleSetEvaluator,
-                            buffers.geometryBuffer,
-                            feature.id,
-                            feature.properties
-                        );
                     }
                 }
                 break;
@@ -473,65 +460,6 @@ export class GeoJsonParser {
             logger.log("The amount of lines and the amount of geo properties has to be the same");
             return;
         }
-        this.addTileInfo(
-            extendedTile,
-            techniques,
-            buffer.lines.vertices,
-            featureIdNumber,
-            env,
-            buffer.lines.geojsonProperties
-        );
-    }
-
-    private static processDashedLines(
-        extendedTile: ExtendedTile,
-        lines: number[][][],
-        center: THREE.Vector3,
-        projection: Projection,
-        techniqueIndex: number,
-        styleSetEvaluator: StyleSetEvaluator,
-        geometryBuffer: Map<number, GeometryData>,
-        featureId?: string,
-        geojsonProperties?: {}
-    ): void {
-        const buffer = this.findOrCreateGeometryBuffer(techniqueIndex, geometryBuffer);
-        buffer.type = "dashed-line";
-
-        for (const line of lines) {
-            buffer.lines.geojsonProperties.push(geojsonProperties);
-            const vertices: number[] = [];
-            for (const point of line) {
-                if (point === null || point[0] === null || point[0] === undefined) {
-                    return;
-                }
-                this.m_cached_geoCoord.latitude = point[1];
-                this.m_cached_geoCoord.longitude = point[0];
-                projection
-                    .projectPoint(this.m_cached_geoCoord, this.m_cached_worldCoord)
-                    .sub(center);
-                vertices.push(
-                    this.m_cached_worldCoord.x,
-                    this.m_cached_worldCoord.y,
-                    this.m_cached_worldCoord.z
-                );
-            }
-
-            buffer.lines.vertices.push(vertices);
-        }
-
-        const featureDetails: FeatureDetails = {};
-        if (featureId !== undefined) {
-            featureDetails.featureId = featureId;
-        }
-
-        const env = new MapEnv({ type: "line", ...(featureDetails as ValueMap) });
-        const techniques = styleSetEvaluator.getMatchingTechniques(env);
-        const featureIdNumber = 0; //geojsonTile do not have an integer for the featureId. Use 0.
-        if (buffer.lines.vertices.length !== buffer.lines.geojsonProperties.length) {
-            logger.log("The amount of lines and the amount of geo properties has to be the same");
-            return;
-        }
-
         this.addTileInfo(
             extendedTile,
             techniques,

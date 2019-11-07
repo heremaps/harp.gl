@@ -15,7 +15,7 @@ The supported techniques that can be used to draw on the map are:
 
 -   Points: [[PoiTechnique]], [[SquaresTechnique]], [[CirclesTechnique]]
 -   Text: [[TextTechnique]]
--   Lines: [[LineMarkerTechnique]], [[LineTechnique]], [[SolidLineTechnique]], [[DashedLineTechnique]]
+-   Lines: [[LineMarkerTechnique]], [[LineTechnique]], [[SolidLineTechnique]]
 -   Segments: [[SegmentsTechnique]]
 -   Fill: [[FillTechnique]]
 -   Extruded: [[BasicExtrudedLineTechnique]], [[StandardExtrudedLineTechnique]], [[ExtrudedPolygonTechnique]]

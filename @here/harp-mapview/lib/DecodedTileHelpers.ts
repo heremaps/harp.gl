@@ -20,7 +20,6 @@ import {
 } from "@here/harp-datasource-protocol";
 import {
     CirclePointsMaterial,
-    DashedLineMaterial,
     HighPrecisionLineMaterial,
     MapMeshBasicMaterial,
     MapMeshStandardMaterial,
@@ -304,8 +303,8 @@ export function getObjectConstructor(technique: Technique): ObjectConstructor | 
         case "terrain":
         case "extruded-polygon":
         case "fill":
-        case "solid-line":
         case "dashed-line":
+        case "solid-line":
             return THREE.Mesh as ObjectConstructor;
 
         case "circles":
@@ -387,11 +386,9 @@ export function getMaterialConstructor(technique: Technique): MaterialConstructo
         case "extruded-polygon":
             return MapMeshStandardMaterial;
 
+        case "dashed-line":
         case "solid-line":
             return SolidLineMaterial;
-
-        case "dashed-line":
-            return DashedLineMaterial;
 
         case "fill":
             return MapMeshBasicMaterial;

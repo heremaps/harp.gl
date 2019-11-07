@@ -298,6 +298,21 @@ export interface SolidLineMaterialParameters
      * Default is `1.0`.
      */
     drawRangeEnd?: number;
+
+    /**
+     * Line dashes color.
+     */
+    dashColor?: number | string;
+
+    /**
+     * Size of the dashed segments.
+     */
+    dashSize?: number;
+
+    /**
+     * Size of the gaps between dashed segments.
+     */
+    gapSize?: number;
 }
 
 /**
@@ -311,6 +326,8 @@ export class SolidLineMaterial extends THREE.RawShaderMaterial
     static DEFAULT_OPACITY: number = 1.0;
     static DEFAULT_DRAW_RANGE_START: number = 0.0;
     static DEFAULT_DRAW_RANGE_END: number = 1.0;
+    static DEFAULT_DASH_SIZE: number = 1.0;
+    static DEFAULT_GAP_SIZE: number = 1.0;
 
     /**
      * Constructs a new `SolidLineMaterial`.
@@ -375,7 +392,9 @@ export class SolidLineMaterial extends THREE.RawShaderMaterial
                             SolidLineMaterial.DEFAULT_DRAW_RANGE_START,
                             SolidLineMaterial.DEFAULT_DRAW_RANGE_END
                         )
-                    )
+                    ),
+                    dashSize: new THREE.Uniform(SolidLineMaterial.DEFAULT_DASH_SIZE),
+                    gapSize: new THREE.Uniform(SolidLineMaterial.DEFAULT_GAP_SIZE)
                 },
                 // We need the fog uniforms available when we use `updateFog` as the internal
                 // recompilation cannot add or remove uniforms.
@@ -430,6 +449,16 @@ export class SolidLineMaterial extends THREE.RawShaderMaterial
             if (params.drawRangeEnd !== undefined) {
                 this.drawRangeEnd = params.drawRangeEnd;
             }
+            if (params.dashColor !== undefined) {
+                this.dashColor.set(params.dashColor as any);
+                this.defines.USE_DASH_COLOR = 1.0;
+            }
+            if (params.dashSize !== undefined) {
+                this.dashSize = params.dashSize;
+            }
+            if (params.gapSize !== undefined) {
+                this.gapSize = params.gapSize;
+            }
             this.fog = hasFog;
         }
     }
@@ -482,6 +511,9 @@ export class SolidLineMaterial extends THREE.RawShaderMaterial
         this.uniforms.diffuse.value = value;
     }
 
+    /**
+     * Outline color.
+     */
     get outlineColor(): THREE.Color {
         return this.uniforms.outlineColor.value as THREE.Color;
     }
@@ -490,63 +522,61 @@ export class SolidLineMaterial extends THREE.RawShaderMaterial
     }
 
     /**
+     * Dash color.
+     */
+    get dashColor(): THREE.Color {
+        return this.uniforms.dashColor.value as THREE.Color;
+    }
+    set dashColor(value: THREE.Color) {
+        this.uniforms.dashColor.value = value;
+        this.defines.USE_DASH_COLOR = 1.0;
+    }
+
+    /**
      * Line width.
      */
     get lineWidth(): number {
         return this.uniforms.lineWidth.value as number;
     }
-
     set lineWidth(value: number) {
         this.uniforms.lineWidth.value = value;
     }
 
+    /**
+     * Outline width.
+     */
     get outlineWidth(): number {
         return this.uniforms.outlineWidth.value as number;
     }
-
     set outlineWidth(value: number) {
         this.uniforms.outlineWidth.value = value;
         this.updateOutline(value > 0);
     }
 
-    get fadeNear(): number {
-        return this.uniforms.fadeNear.value as number;
+    /**
+     * Size of the dashed segments.
+     */
+    get dashSize(): number {
+        return this.uniforms.dashSize.value as number;
+    }
+    set dashSize(value: number) {
+        this.uniforms.dashSize.value = value;
     }
 
-    set fadeNear(value: number) {
-        this.uniforms.fadeNear.value = value;
+    /**
+     * Size of the gaps between dashed segments.
+     */
+    get gapSize(): number {
+        return this.uniforms.gapSize.value as number;
+    }
+    set gapSize(value: number) {
+        this.uniforms.gapSize.value = value;
+        this.defines.DASHED_LINE = this.gapSize > 0.0 ? 1 : 0;
     }
 
-    get fadeFar(): number {
-        return this.uniforms.fadeFar.value as number;
-    }
-
-    set fadeFar(value: number) {
-        const fadeFar = this.uniforms.fadeFar.value;
-        this.uniforms.fadeFar.value = value;
-        const doFade = fadeFar !== undefined && fadeFar > 0.0;
-        if (doFade) {
-            this.defines.USE_FADING = "";
-        } else {
-            delete this.defines.USE_FADING;
-        }
-    }
-
-    get displacementMap(): THREE.Texture | undefined {
-        return this.uniforms.displacementMap.value;
-    }
-
-    set displacementMap(map: THREE.Texture | undefined) {
-        this.uniforms.displacementMap.value = map;
-        if (map !== undefined) {
-            this.uniforms.displacementMap.value.needsUpdate = true;
-            this.defines.USE_DISPLACEMENTMAP = "";
-        } else {
-            delete this.defines.USE_DISPLACEMENTMAP;
-        }
-        this.needsUpdate = true;
-    }
-
+    /**
+     * Caps mode.
+     */
     get caps(): LineCaps {
         let result: LineCaps = "Round";
         if (this.defines.CAPS_SQUARE === 1) {
@@ -562,7 +592,6 @@ export class SolidLineMaterial extends THREE.RawShaderMaterial
         }
         return result;
     }
-
     set caps(value: LineCaps) {
         this.defines.CAPS_SQUARE = 0;
         this.defines.CAPS_ROUND = 0;
@@ -570,6 +599,41 @@ export class SolidLineMaterial extends THREE.RawShaderMaterial
         this.defines.CAPS_TRIANGLE_IN = 0;
         this.defines.CAPS_TRIANGLE_OUT = 0;
         this.defines[LineCapsDefinitions[value]] = 1;
+    }
+
+    get fadeNear(): number {
+        return this.uniforms.fadeNear.value as number;
+    }
+    set fadeNear(value: number) {
+        this.uniforms.fadeNear.value = value;
+    }
+
+    get fadeFar(): number {
+        return this.uniforms.fadeFar.value as number;
+    }
+    set fadeFar(value: number) {
+        const fadeFar = this.uniforms.fadeFar.value;
+        this.uniforms.fadeFar.value = value;
+        const doFade = fadeFar !== undefined && fadeFar > 0.0;
+        if (doFade) {
+            this.defines.USE_FADING = "";
+        } else {
+            delete this.defines.USE_FADING;
+        }
+    }
+
+    get displacementMap(): THREE.Texture | undefined {
+        return this.uniforms.displacementMap.value;
+    }
+    set displacementMap(map: THREE.Texture | undefined) {
+        this.uniforms.displacementMap.value = map;
+        if (map !== undefined) {
+            this.uniforms.displacementMap.value.needsUpdate = true;
+            this.defines.USE_DISPLACEMENTMAP = "";
+        } else {
+            delete this.defines.USE_DISPLACEMENTMAP;
+        }
+        this.needsUpdate = true;
     }
 
     get drawRangeStart(): number {
