@@ -12,7 +12,7 @@ import {
     SolidLineMaterial,
     SolidLineMaterialParameters
 } from "@here/harp-materials";
-import { ImageBasedTestHelper } from "@here/harp-test-utils";
+import { RenderingTestHelper } from "@here/harp-test-utils";
 import * as THREE from "three";
 import { createLineGeometry, LineGroup } from "../../lib/Lines";
 
@@ -284,7 +284,7 @@ describe("Rendering lines: ", function() {
         webglRenderer.setClearColor(0x000000, 0.0);
 
         webglRenderer.render(scene, camera);
-        const ibct = new ImageBasedTestHelper(context, { module: "webglrenderer" });
+        const ibct = new RenderingTestHelper(context, { module: "webglrenderer" });
         await ibct.assertCanvasMatchesReference(canvas, `${name}`);
     }
 

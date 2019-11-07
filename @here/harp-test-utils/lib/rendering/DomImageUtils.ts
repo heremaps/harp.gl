@@ -6,7 +6,7 @@
 
 import { LoggerManager } from "@here/harp-utils";
 import * as THREE from "three";
-import { TestOptions } from "./ImageBasedTestHelper";
+import { TestOptions } from "./RenderingTestHelper";
 
 declare const require: any;
 // tslint:disable-next-line:no-var-requires

@@ -5,9 +5,9 @@
  */
 
 import { createImgElement } from "./DomImageUtils";
-import { getWebGlInfo } from "./ImageBasedTestHelper";
 import { ImageComparisonResult, TestImageProps } from "./Interface";
 import { installMagnifier } from "./Magnifier";
+import { getWebGlInfo } from "./RenderingTestHelper";
 
 /**
  * Reports IBCT test results as simple table attached to end of `document.body`.

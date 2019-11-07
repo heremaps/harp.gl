@@ -11,9 +11,9 @@ import * as program from "commander";
 import * as fs from "fs";
 
 import { LoggerManager } from "@here/harp-utils";
-import { getOutputImagePath, loadSavedResults } from "./FeedbackCommon";
 import { genHtmlReport } from "./HtmlReport";
 import { ImageTestResultLocal } from "./Interface";
+import { getOutputImagePath, loadSavedResults } from "./RenderingTestResultCommon";
 
 const logger = LoggerManager.instance.create("ibctFeedbackServer");
 
@@ -50,7 +50,7 @@ async function genConsoleReport(results: ImageTestResultLocal[]): Promise<boolea
     });
     return !someTestsFailed;
 }
-let baseResultsPath = "test/ibct-results";
+let baseResultsPath = "test/rendering-test-results";
 
 async function main() {
     program.usage("[options] COMMAND").option(
