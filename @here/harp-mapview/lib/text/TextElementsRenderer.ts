@@ -1460,7 +1460,6 @@ export class TextElementsRenderer {
     }
 
     private addPointLabel(
-        pointLabel: TextElement,
         labelState: TextElementState,
         groupState: TextElementGroupState,
         position: THREE.Vector3,
@@ -1468,14 +1467,20 @@ export class TextElementsRenderer {
         poiRenderer: PoiRenderer,
         textCanvas: TextCanvas,
         renderParams: RenderParams,
-        temp: TempParams
+        temp: TempParams,
+        iconIndex?: number
     ): boolean {
-        const textRenderState: RenderState = labelState.textRenderState!;
-        const iconRenderState: RenderState = labelState.iconRenderState!;
+        const pointLabel: TextElement = labelState.element;
+        const textRenderState: RenderState | undefined = labelState.textRenderState;
+        const iconRenderState: RenderState =
+            iconIndex !== undefined
+                ? labelState.iconRenderStates![iconIndex]
+                : labelState.iconRenderState!;
         const poiTextMaxDistance = getMaxViewDistance(
             this.m_viewState,
             this.m_options.maxDistanceRatioForPoiLabels!
         );
+        const hasText = textRenderState !== undefined && pointLabel.text !== "";
 
         // Find the label's original position.
         tempScreenPosition.x = tempPoiScreenPosition.x = screenPosition.x;
@@ -1600,8 +1605,8 @@ export class TextElementsRenderer {
                             this.m_viewState.frameNumber,
                             renderParams.time
                         );
-                        if (textRenderState.isVisible()) {
-                            textRenderState.startFadeOut(
+                        if (hasText && textRenderState!.isVisible()) {
+                            textRenderState!.startFadeOut(
                                 this.m_viewState.frameNumber,
                                 renderParams.time
                             );
@@ -1627,13 +1632,14 @@ export class TextElementsRenderer {
 
         // Check if label should be rendered at this zoomLevel
         const renderText =
-            poiInfo === undefined ||
-            this.m_viewState.zoomLevel === undefined ||
-            MathUtils.isClamped(
-                this.m_viewState.zoomLevel,
-                poiInfo.iconMinZoomLevel,
-                poiInfo.iconMaxZoomLevel
-            );
+            hasText &&
+            (poiInfo === undefined ||
+                this.m_viewState.zoomLevel === undefined ||
+                MathUtils.isClamped(
+                    this.m_viewState.zoomLevel,
+                    poiInfo.iconMinZoomLevel,
+                    poiInfo.iconMaxZoomLevel
+                ));
 
         // Check if we should render the label's text.
         const doRenderText =
@@ -1648,7 +1654,7 @@ export class TextElementsRenderer {
 
         // Render the label's text...
         // textRenderState is always defined at this point.
-        if (doRenderText && pointLabel.text !== "") {
+        if (doRenderText) {
             // Adjust the label positioning to match its bounding box.
             tempPosition.x = tempScreenPosition.x;
             tempPosition.y = tempScreenPosition.y;
@@ -1677,8 +1683,8 @@ export class TextElementsRenderer {
             const textIsOptional: boolean =
                 pointLabel.poiInfo !== undefined && pointLabel.poiInfo.textIsOptional === true;
 
-            const textIsFadingIn = textRenderState.isFadingIn();
-            const textIsFadingOut = textRenderState.isFadingOut();
+            const textIsFadingIn = textRenderState!.isFadingIn();
+            const textIsFadingOut = textRenderState!.isFadingOut();
             const textSpaceAvailable = !this.m_screenCollisions.isAllocated(tempBox2D);
             const textVisible =
                 groupState.visited &&
@@ -1712,23 +1718,23 @@ export class TextElementsRenderer {
                 ) {
                     let textFading = false;
                     if (
-                        !textRenderState.isFadingOut() &&
+                        !textRenderState!.isFadingOut() &&
                         textSpaceAvailable &&
                         iconSpaceAvailable
                     ) {
-                        textFading = textRenderState.checkStartFadeIn(
+                        textFading = textRenderState!.checkStartFadeIn(
                             this.m_viewState.frameNumber,
                             renderParams.time,
                             true
                         );
                     } else {
-                        textFading = textRenderState.isFading();
+                        textFading = textRenderState!.isFading();
                     }
 
                     renderParams.fadeAnimationRunning =
                         renderParams.fadeAnimationRunning || textIsFadingOut || textFading;
 
-                    const opacity = textRenderState.opacity;
+                    const opacity = textRenderState!.opacity;
                     const backgroundIsVisible =
                         pointLabel.renderStyle!.backgroundOpacity > 0 &&
                         textCanvas.textRenderStyle.fontSize.backgroundSize > 0;
@@ -1764,8 +1770,8 @@ export class TextElementsRenderer {
                             renderParams.time
                         );
                     }
-                    if (textRenderState.isVisible()) {
-                        const iconStartedFadeOut = textRenderState.checkStartFadeOut(
+                    if (textRenderState!.isVisible()) {
+                        const iconStartedFadeOut = textRenderState!.checkStartFadeOut(
                             this.m_viewState.frameNumber,
                             renderParams.time
                         );
@@ -1780,8 +1786,8 @@ export class TextElementsRenderer {
                 }
             }
             // If the label is currently visible, fade it out.
-            else if (textRenderState.isVisible()) {
-                const iconStartedFadeOut = textRenderState.checkStartFadeOut(
+            else if (textRenderState!.isVisible()) {
+                const iconStartedFadeOut = textRenderState!.checkStartFadeOut(
                     this.m_viewState.frameNumber,
                     renderParams.time
                 );
@@ -1838,7 +1844,6 @@ export class TextElementsRenderer {
         }
         // Add this POI as a point label.
         return this.addPointLabel(
-            poiLabel,
             labelState,
             groupState,
             tempPosition,
@@ -1889,7 +1894,9 @@ export class TextElementsRenderer {
 
         // Process markers (with shield groups).
         if (minDistanceSqr > 0 && shieldGroup !== undefined) {
-            for (const point of lineMarkerLabel.path) {
+            const path = lineMarkerLabel.path;
+            for (let pointIndex = 0; pointIndex < path.length; ++pointIndex) {
+                const point = path[pointIndex];
                 // Calculate the world position of this label.
                 tempPosition.copy(point).add(lineMarkerLabel.tileCenter!);
 
@@ -1917,7 +1924,6 @@ export class TextElementsRenderer {
                     if (!tooClose) {
                         if (
                             this.addPointLabel(
-                                lineMarkerLabel,
                                 labelState,
                                 groupState,
                                 tempPosition,
@@ -1925,7 +1931,8 @@ export class TextElementsRenderer {
                                 poiRenderer,
                                 textCanvas,
                                 renderParams,
-                                temp
+                                temp,
+                                pointIndex
                             )
                         ) {
                             shieldGroup.push(tempScreenPosition.x, tempScreenPosition.y);
@@ -1936,7 +1943,9 @@ export class TextElementsRenderer {
         }
         // Process markers (without shield groups).
         else {
-            for (const point of lineMarkerLabel.path) {
+            const path = lineMarkerLabel.path;
+            for (let pointIndex = 0; pointIndex < path.length; ++pointIndex) {
+                const point = path[pointIndex];
                 // Calculate the world position of this label.
                 tempPosition.copy(point).add(lineMarkerLabel.tileCenter!);
 
@@ -1945,7 +1954,6 @@ export class TextElementsRenderer {
                     this.m_screenProjector.project(tempPosition, tempScreenPosition) !== undefined
                 ) {
                     this.addPointLabel(
-                        lineMarkerLabel,
                         labelState,
                         groupState,
                         tempPosition,
@@ -1953,7 +1961,8 @@ export class TextElementsRenderer {
                         poiRenderer,
                         textCanvas,
                         renderParams,
-                        temp
+                        temp,
+                        pointIndex
                     );
                 }
             }
