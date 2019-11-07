@@ -15,9 +15,9 @@ import * as serveStatic from "serve-static";
 import * as util from "util";
 
 import { LoggerManager } from "@here/harp-utils";
-import { getOutputImagePath, loadSavedResults } from "./FeedbackCommon";
 import { genHtmlReport } from "./HtmlReport";
 import { ImageTestResultLocal, ImageTestResultRequest } from "./Interface";
+import { getOutputImagePath, loadSavedResults } from "./RenderingTestResultCommon";
 
 const logger = LoggerManager.instance.create("ibctFeedbackServer");
 const writeFile = util.promisify(fs.writeFile);

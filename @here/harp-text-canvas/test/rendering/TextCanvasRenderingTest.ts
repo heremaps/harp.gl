@@ -10,7 +10,7 @@
 import * as THREE from "three";
 
 import { MathUtils } from "@here/harp-geoutils";
-import { ImageBasedTestHelper } from "@here/harp-test-utils";
+import { RenderingTestHelper } from "@here/harp-test-utils";
 import {
     FontCatalog,
     FontUnit,
@@ -62,7 +62,7 @@ describe("TextCanvas", function() {
             16
         );
 
-        const ibct = new ImageBasedTestHelper(params.test, { module: "text-canvas" });
+        const ibct = new RenderingTestHelper(params.test, { module: "text-canvas" });
         await testFun();
         await ibct.assertCanvasMatchesReference(canvas, params.testName);
     }

@@ -9,12 +9,12 @@ import { LoggerManager } from "@here/harp-utils";
 import { imageDataToDataUrl } from "./DomImageUtils";
 import { ImageComparisonResult, ImageTestResultRequest, TestImageProps } from "./Interface";
 
-const logger = LoggerManager.instance.create("FeedbackServerReporter");
+const logger = LoggerManager.instance.create("RenderingTestResultReporter");
 
 /**
  * Rpoerts IBCT test images to `FeedbackServer`.
  */
-export class FeedbackServerReporter {
+export class RenderingTestResultReporter {
     constructor(readonly backendUrl: string) {}
 
     reportImageComparisonResult(

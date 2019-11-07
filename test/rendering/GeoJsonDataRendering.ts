@@ -14,7 +14,7 @@ import { MapView, MapViewEventNames } from "@here/harp-mapview";
 import { GeoJsonTiler } from "@here/harp-mapview-decoder/index-worker";
 import { OmvDataSource } from "@here/harp-omv-datasource";
 import { OmvTileDecoder } from "@here/harp-omv-datasource/lib/OmvDecoder";
-import { ImageBasedTestHelper, waitForEvent } from "@here/harp-test-utils";
+import { RenderingTestHelper, waitForEvent } from "@here/harp-test-utils";
 import { mergeWithOptions } from "@here/harp-utils";
 
 describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", function() {
@@ -44,7 +44,7 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
     }
 
     async function geoJsonTest(options: GeoJsoTestOptions) {
-        const ibct = new ImageBasedTestHelper(options.mochaTest, { module: "mapview" });
+        const ibct = new RenderingTestHelper(options.mochaTest, { module: "mapview" });
         const canvas = document.createElement("canvas");
         canvas.width = 400;
         canvas.height = 300;

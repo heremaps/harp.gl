@@ -14,11 +14,11 @@ import { LoggerManager } from "@here/harp-utils";
 import { DomReporter } from "./DomReporter";
 
 import { canvasToImageData, compareImages, loadImageData } from "./DomImageUtils";
-import { FeedbackServerReporter } from "./FeedbackServerReporter";
-import { getReferenceImageUrl } from "./ImageLocator";
 import { Reporter, TestImageProps } from "./Interface";
+import { getReferenceImageUrl } from "./ReferenceImageLocator";
+import { RenderingTestResultReporter } from "./RenderingTestResultReporter";
 
-const logger = LoggerManager.instance.create("ImageBasedTestHelper");
+const logger = LoggerManager.instance.create("RenderingTestHelper");
 
 /**
  * Specifies how sensitive image comparison should be
@@ -102,7 +102,7 @@ export function getPlatform(): string {
 }
 
 const domReporter = new DomReporter();
-const feedbackServerReporter = new FeedbackServerReporter("");
+const feedbackServerReporter = new RenderingTestResultReporter("");
 
 let ibctReporter: Reporter = {
     reportImageComparisonResult() {
@@ -119,7 +119,7 @@ export function setGlobalReporter(reporter: Reporter) {
     ibctReporter = reporter;
 }
 
-export class ImageBasedTestHelper {
+export class RenderingTestHelper {
     /**
      * Load image data using cache.
      */
@@ -190,7 +190,7 @@ export class ImageBasedTestHelper {
 
         let referenceImageData: ImageData | undefined;
         try {
-            referenceImageData = await ImageBasedTestHelper.cachedLoadImageData(referenceImageUrl);
+            referenceImageData = await RenderingTestHelper.cachedLoadImageData(referenceImageUrl);
         } catch (error) {
             logger.log(`[ERROR[ Reference image ${name} not found. Please update reference data`);
             ibctReporter.reportImageComparisonResult(imageProps, actualImage, false);

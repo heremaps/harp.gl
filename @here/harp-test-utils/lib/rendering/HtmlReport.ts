@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { getOutputImagePath } from "./FeedbackCommon";
 import { ImageTestResultLocal } from "./Interface";
+import { getOutputImagePath } from "./RenderingTestResultCommon";
 
 export interface HtmlReportOptions {
     title?: string;
