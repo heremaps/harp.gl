@@ -35,7 +35,7 @@ export namespace TiledGeoJsonTechniquesExample {
                 }
             }
         </style>
-        <p id=info>Zoom in and out to smoothly transition between themes.</p>
+        <p id=info>Zoom in and out to smoothly transition between styles.</p>
     `;
 
     const theme: Theme = {
@@ -435,9 +435,7 @@ export namespace TiledGeoJsonTechniquesExample {
             theme
         });
 
-        mapView.renderLabels = false;
-        mapView.geoCenter = new GeoCoordinates(28.595, 77.22, 0);
-        mapView.setCameraGeolocationAndZoom(mapView.geoCenter, 15.2, 0, 28);
+        mapView.setCameraGeolocationAndZoom(new GeoCoordinates(28.595, 77.22, 0), 15.2, 0, 28);
 
         const controls = new MapControls(mapView);
 
