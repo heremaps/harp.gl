@@ -12,7 +12,8 @@
         "watch": "tsc -w",
         "generateAtlas": "ts-node src/cli-atlas-generator.ts",
         "generateSprites": "ts-node src/cli-sprites-generator.ts",
-        "test": "yarn build && yarn generateAtlas"
+        "test": "yarn build && yarn generateAtlas",
+        "prepare": "cross-env tsc --sourceMap false $EXTRA_TSC_ARGS"
     },
     "repository": {
         "type": "git",
