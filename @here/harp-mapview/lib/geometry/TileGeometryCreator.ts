@@ -15,7 +15,6 @@ import {
     getArrayConstructor,
     getPropertyValue,
     isCirclesTechnique,
-    isDashedLineTechnique,
     isExtrudedLineTechnique,
     isExtrudedPolygonTechnique,
     isFillTechnique,
@@ -40,7 +39,6 @@ import {
 import { SphericalGeometrySubdivisionModifier } from "@here/harp-geometry/lib/SphericalGeometrySubdivisionModifier";
 import { EarthConstants, GeoCoordinates, ProjectionType } from "@here/harp-geoutils";
 import {
-    DashedLineMaterial,
     EdgeMaterial,
     EdgeMaterialParameters,
     FadingFeature,
@@ -663,7 +661,7 @@ export class TileGeometryCreator {
 
                 bufferGeometry.addGroup(start, count);
 
-                if (isSolidLineTechnique(technique) || isDashedLineTechnique(technique)) {
+                if (isSolidLineTechnique(technique)) {
                     const lineMaterial = material as THREE.RawShaderMaterial;
                     lineMaterial.uniforms.opacity.value = material.opacity;
 
@@ -740,7 +738,7 @@ export class TileGeometryCreator {
                 // Lines renderOrder fix: Render them as transparent objects, but make sure they end
                 // up in the opaque rendering queue (by disabling transparency onAfterRender, and
                 // enabling it onBeforeRender).
-                if (isSolidLineTechnique(technique) || isDashedLineTechnique(technique)) {
+                if (isSolidLineTechnique(technique)) {
                     const fadingParams = this.getFadingParams(displayZoomLevel, technique);
                     FadingFeature.addRenderHelper(
                         object,
@@ -778,31 +776,26 @@ export class TileGeometryCreator {
                                     ) * unitFactor;
                             }
 
-                            // Do the same for dashSize and gapSize for dashed lines.
-                            if (isDashedLineTechnique(technique)) {
-                                const dashedLineMaterial = lineMaterial as DashedLineMaterial;
+                            if (technique.dashSize !== undefined) {
+                                lineMaterial.dashSize =
+                                    getPropertyValue(
+                                        technique.dashSize,
+                                        mapView.zoomLevel,
+                                        mapView.pixelToWorld
+                                    ) *
+                                    unitFactor *
+                                    0.5;
+                            }
 
-                                if (technique.dashSize !== undefined) {
-                                    dashedLineMaterial.dashSize =
-                                        getPropertyValue(
-                                            technique.dashSize,
-                                            mapView.zoomLevel,
-                                            mapView.pixelToWorld
-                                        ) *
-                                        unitFactor *
-                                        0.5;
-                                }
-
-                                if (technique.gapSize !== undefined) {
-                                    dashedLineMaterial.gapSize =
-                                        getPropertyValue(
-                                            technique.gapSize,
-                                            mapView.zoomLevel,
-                                            mapView.pixelToWorld
-                                        ) *
-                                        unitFactor *
-                                        0.5;
-                                }
+                            if (technique.gapSize !== undefined) {
+                                lineMaterial.gapSize =
+                                    getPropertyValue(
+                                        technique.gapSize,
+                                        mapView.zoomLevel,
+                                        mapView.pixelToWorld
+                                    ) *
+                                    unitFactor *
+                                    0.5;
                             }
                         }
                     );
@@ -1340,8 +1333,8 @@ export class TileGeometryCreator {
     /**
      * Pass the feature data on to the object, so it can be used in picking
      * `MapView.intersectMapObjects()`. Do not pass the feature data if the technique is a
-     * dashed-line or a solid-line, because the line picking functionality for the lines is not
-     * object based, but tile based.
+     * solid-line, because the line picking functionality for the lines is not object based, but
+     * tile based.
      *
      * @param srcGeometry The original [[Geometry]].
      * @param technique The corresponding [[Technique]].
@@ -1352,8 +1345,7 @@ export class TileGeometryCreator {
             ((srcGeometry.featureIds !== undefined && srcGeometry.featureIds.length > 0) ||
                 isCirclesTechnique(technique) ||
                 isSquaresTechnique(technique)) &&
-            !isSolidLineTechnique(technique) &&
-            !isDashedLineTechnique(technique)
+            !isSolidLineTechnique(technique)
         ) {
             const featureData: TileFeatureData = {
                 geometryType: srcGeometry.type,

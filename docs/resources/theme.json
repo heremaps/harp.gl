@@ -283,7 +283,7 @@
             {
                 "description": "ferry",
                 "when": "$layer == 'roads' && ((kind != 'rail') && kind in ['ferry'])",
-                "technique": "dashed-line",
+                "technique": "solid-line",
                 "attr": {
                     "clipping": false,
                     "color": "#484A4C",
@@ -428,7 +428,7 @@
             {
                 "description": "Railway+S-Bahn dashes",
                 "when": "$layer == 'roads' && (((($geometryType ^= 'line') && (kind == 'rail')) && kind_detail in ['rail','light_rail','tram']) && !(is_tunnel))",
-                "technique": "dashed-line",
+                "technique": "solid-line",
                 "attr": {
                     "color": "#7B7E81",
                     "xclipping": false,
@@ -454,7 +454,7 @@
             {
                 "description": "Railway+S-Bahn dashes",
                 "when": "$layer == 'roads' && (((($geometryType ^= 'line') && (kind == 'rail')) && kind_detail in ['rail','light_rail','tram']) && is_tunnel)",
-                "technique": "dashed-line",
+                "technique": "solid-line",
                 "attr": {
                     "color": "#454648",
                     "xclipping": false,
@@ -558,7 +558,7 @@
             {
                 "description": "disputed border line",
                 "when": "$layer ^= 'boundaries' && (($geometryType ^= 'line') && (kind in ['disputed','indefinite','indeterminate','lease_limit','line_of_control','overlay_limit']))",
-                "technique": "dashed-line",
+                "technique": "solid-line",
                 "attr": {
                     "color": "#2E3234",
                     "secondaryColor": "#373A3C",

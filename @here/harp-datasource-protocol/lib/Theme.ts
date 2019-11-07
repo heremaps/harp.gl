@@ -9,7 +9,6 @@ import { JsonExpr } from "./Expr";
 import {
     BaseTechniqueParams,
     BasicExtrudedLineTechniqueParams,
-    DashedLineTechniqueParams,
     DynamicProperty,
     ExtrudedPolygonTechniqueParams,
     FillTechniqueParams,
@@ -357,8 +356,8 @@ export interface BaseStyle {
 
     /**
      * Technique name. See the classes extending from this class to determine what possible
-     * techniques are possible, includes `"line"`, `"fill"`, `"solid-line"`, `"dashed-line"`,
-     * `"extruded-line"`, `"extruded-polygon"`, `"text"`, `"none"`.
+     * techniques are possible, includes `"line"`, `"fill"`, `"solid-line"`, `"extruded-line"`,
+     * `"extruded-polygon"`, `"text"`, `"none"`.
      */
     technique?: string;
 
@@ -447,7 +446,7 @@ export interface BaseStyle {
  *         "label": "New dashed-line",
  *         "description": "Add a new 'dashed-line' Styling Rule",
  *         "body": {
- *             "technique": "dashed-line",
+ *             "technique": "solid-line",
  *             "when": "$1",
  *             "attr": {
  *                 "color": "#${2:fff}",
@@ -643,7 +642,6 @@ export type AllStyles =
     | SegmentsStyle
     | SolidLineStyle
     | LabelRejectionLineStyle
-    | DashedLineStyle
     | FillStyle
     | StandardStyle
     | BasicExtrudedLineStyle
@@ -754,14 +752,9 @@ export interface SegmentsStyle extends BaseStyle {
 }
 
 export interface SolidLineStyle extends BaseStyle {
-    technique: "solid-line";
+    technique: "solid-line" | "dashed-line";
     secondaryRenderOrder?: number;
     attr?: Attr<SolidLineTechniqueParams>;
-}
-
-export interface DashedLineStyle extends BaseStyle {
-    technique: "dashed-line";
-    attr?: Attr<DashedLineTechniqueParams>;
 }
 
 export interface LabelRejectionLineStyle extends BaseStyle {

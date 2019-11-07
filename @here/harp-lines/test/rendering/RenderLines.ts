@@ -6,12 +6,7 @@
 
 // tslint:disable:only-arrow-functions
 
-import {
-    DashedLineMaterial,
-    DashedLineMaterialParameters,
-    SolidLineMaterial,
-    SolidLineMaterialParameters
-} from "@here/harp-materials";
+import { SolidLineMaterial, SolidLineMaterialParameters } from "@here/harp-materials";
 import { RenderingTestHelper } from "@here/harp-test-utils";
 import * as THREE from "three";
 import { createLineGeometry, LineGroup } from "../../lib/Lines";
@@ -209,8 +204,7 @@ describe("Rendering lines: ", function() {
         config: TestLineParams[],
         context: Mocha.ITestCallbackContext,
         name: string,
-        type: "solid" | "dashed",
-        lineStyle: SolidLineMaterialParameters | DashedLineMaterialParameters,
+        lineStyle: SolidLineMaterialParameters,
         camera?: THREE.Camera
     ) {
         const canvas = document.createElement("canvas");
@@ -246,10 +240,7 @@ describe("Rendering lines: ", function() {
                     uvs.push(test.points[i] / cellSize + 0.5, test.points[i + 1] / cellSize + 0.5);
                 }
             }
-            const material =
-                type === "solid"
-                    ? new SolidLineMaterial(lineParams)
-                    : new DashedLineMaterial(lineParams);
+            const material = new SolidLineMaterial(lineParams);
             const lineGeometry = createLineGeometry(
                 new THREE.Vector3(),
                 test.points,
@@ -290,7 +281,7 @@ describe("Rendering lines: ", function() {
 
     it("renders solid lines - lineWidth: 1", async function() {
         const lineStyle = { lineWidth: 1, color: "#FFF" };
-        await renderLines(linesConfig, this, "solid-lines-1px", "solid", lineStyle);
+        await renderLines(linesConfig, this, "solid-lines-1px", lineStyle);
     });
 
     it("renders undisplaced solid lines - perspective camera", async function() {
@@ -302,14 +293,7 @@ describe("Rendering lines: ", function() {
             lineWidth: 1,
             color: "#FFF"
         };
-        await renderLines(
-            config,
-            this,
-            "undisplaced-solid-lines-persective",
-            "solid",
-            lineStyle,
-            camera
-        );
+        await renderLines(config, this, "undisplaced-solid-lines-persective", lineStyle, camera);
     });
 
     it("renders displaced solid lines - perspective camera", async function() {
@@ -323,24 +307,17 @@ describe("Rendering lines: ", function() {
             color: "#FFF",
             displacementMap
         };
-        await renderLines(
-            config,
-            this,
-            "displaced-solid-lines-persective",
-            "solid",
-            lineStyle,
-            camera
-        );
+        await renderLines(config, this, "displaced-solid-lines-persective", lineStyle, camera);
     });
 
     it("renders solid lines - lineWidth: 20", async function() {
         const lineStyle = { lineWidth: 20, color: "#FFF" };
-        await renderLines(linesConfig, this, "solid-lines-20px", "solid", lineStyle);
+        await renderLines(linesConfig, this, "solid-lines-20px", lineStyle);
     });
 
     it("renders solid lines with outline - outlineWidth: 5", async function() {
         const lineStyle = { lineWidth: 10, color: "#F00", outlineWidth: 5, outlineColor: "#0F0" };
-        await renderLines(linesConfig, this, "solid-lines-outline", "solid", lineStyle);
+        await renderLines(linesConfig, this, "solid-lines-outline", lineStyle);
     });
 
     it("renders dashed lines with outline - outlineWidth: 3, dashSize: 4", async function() {
@@ -353,7 +330,7 @@ describe("Rendering lines: ", function() {
             outlineWidth: 3,
             outlineColor: "#0F0"
         };
-        await renderLines(linesConfig, this, "dashed-lines-outline", "dashed", lineStyle);
+        await renderLines(linesConfig, this, "dashed-lines-outline", lineStyle);
     });
 
     it("renders dashed lines with outline - transparent", async function() {
@@ -365,12 +342,12 @@ describe("Rendering lines: ", function() {
             outlineWidth: 3,
             outlineColor: "#0F0"
         };
-        await renderLines(linesConfig, this, "dashed-lines-outline-alpha", "dashed", lineStyle);
+        await renderLines(linesConfig, this, "dashed-lines-outline-alpha", lineStyle);
     });
 
     it("renders dashed lines - lineWidth: 1, gapSize: 2, dashSize: 2", async function() {
         const lineStyle = { lineWidth: 1, color: "#FFF", gapSize: 2, dashSize: 2 };
-        await renderLines(linesConfig, this, "dashed-lines-1px", "dashed", lineStyle);
+        await renderLines(linesConfig, this, "dashed-lines-1px", lineStyle);
     });
 
     it("renders dashed lines with dashColor: #F00", async function() {
@@ -381,23 +358,17 @@ describe("Rendering lines: ", function() {
             dashSize: 2,
             dashColor: "#0F0"
         };
-        await renderLines(linesConfig, this, "dashed-lines-color", "dashed", lineStyle);
+        await renderLines(linesConfig, this, "dashed-lines-color", lineStyle);
     });
 
     it("renders dashed lines - lineWidth: 20,gapSize: 2, dashSize: 2", async function() {
         const lineStyle = { lineWidth: 20, color: "#FFF", gapSize: 2, dashSize: 2 };
-        await renderLines(linesConfig, this, "dashed-lines-20px", "dashed", lineStyle);
+        await renderLines(linesConfig, this, "dashed-lines-20px", lineStyle);
     });
 
     it("renders solid lines - overdraw check", async function() {
         const lineStyle = { lineWidth: 20, color: "#FFF", opacity: 0.5, transparent: true };
-        await renderLines(
-            checkOverDrawLines,
-            this,
-            "solid-lines-overdraw-20px",
-            "solid",
-            lineStyle
-        );
+        await renderLines(checkOverDrawLines, this, "solid-lines-overdraw-20px", lineStyle);
     });
 
     it("renders dashed lines - overdraw check", async function() {
@@ -409,13 +380,7 @@ describe("Rendering lines: ", function() {
             gapSize: 2,
             dashSize: 2
         };
-        await renderLines(
-            checkOverDrawLines,
-            this,
-            "dashed-lines-overdraw-20px",
-            "dashed",
-            lineStyle
-        );
+        await renderLines(checkOverDrawLines, this, "dashed-lines-overdraw-20px", lineStyle);
     });
 
     it("renders solid lines - caps check round", async function() {
@@ -430,7 +395,6 @@ describe("Rendering lines: ", function() {
             linesConfig,
             this,
             "solid-lines-caps-round-20px",
-            "solid",
             lineStyle as SolidLineMaterialParameters
         );
     });
@@ -447,7 +411,6 @@ describe("Rendering lines: ", function() {
             linesConfig,
             this,
             "solid-lines-caps-none-20px",
-            "solid",
             lineStyle as SolidLineMaterialParameters
         );
     });
@@ -464,7 +427,6 @@ describe("Rendering lines: ", function() {
             linesConfig,
             this,
             "solid-lines-caps-square-20px",
-            "solid",
             lineStyle as SolidLineMaterialParameters
         );
     });
@@ -481,7 +443,6 @@ describe("Rendering lines: ", function() {
             linesConfig,
             this,
             "solid-lines-caps-triangle-out-20px",
-            "solid",
             lineStyle as SolidLineMaterialParameters
         );
     });
@@ -498,7 +459,6 @@ describe("Rendering lines: ", function() {
             linesConfig,
             this,
             "solid-lines-caps-triangle-in-20px",
-            "solid",
             lineStyle as SolidLineMaterialParameters
         );
     });

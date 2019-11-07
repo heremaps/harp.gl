@@ -7,7 +7,6 @@ import {
     DecodedTile,
     GeometryKind,
     GeometryKindSet,
-    isDashedLineTechnique,
     isExtrudedLineTechnique,
     isExtrudedPolygonTechnique,
     isFillTechnique,
@@ -125,7 +124,6 @@ export namespace TileGeometryLoader {
                 geometryKind = GeometryKind.Area;
             } else if (
                 isLineTechnique(technique) ||
-                isDashedLineTechnique(technique) ||
                 isSolidLineTechnique(technique) ||
                 isSegmentsTechnique(technique) ||
                 isExtrudedLineTechnique(technique)

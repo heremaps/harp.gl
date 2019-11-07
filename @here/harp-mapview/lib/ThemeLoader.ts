@@ -124,7 +124,8 @@ export class ThemeLoader {
             throw new Error("ThemeLoader#load: loaded resource is not valid JSON");
         }
         theme = theme as Theme;
-        // Remember the URL where the theme has been loaded from.
+
+        ThemeLoader.checkTechniqueSupport(theme);
 
         const resolveDefinitions = getOptionValue<boolean>(options.resolveDefinitions, false);
         theme = await ThemeLoader.resolveBaseTheme(theme, options);
@@ -244,6 +245,27 @@ export class ThemeLoader {
             }
         }
         return theme;
+    }
+
+    static checkTechniqueSupport(theme: Theme) {
+        if (theme.styles !== undefined) {
+            for (const styleSetName in theme.styles) {
+                if (!theme.styles.hasOwnProperty(styleSetName)) {
+                    continue;
+                }
+                for (const style of theme.styles[styleSetName]) {
+                    switch ((style as any).technique) {
+                        case "dashed-line":
+                            // tslint:disable-next-line
+                            console.warn(
+                                `Using deprecated "dashed-line" technique. Use "solid-line" technique instead`
+                            );
+                        default:
+                            break;
+                    }
+                }
+            }
+        }
     }
 
     /**

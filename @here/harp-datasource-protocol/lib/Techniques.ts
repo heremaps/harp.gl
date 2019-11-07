@@ -7,7 +7,6 @@
 import {
     BaseTechniqueParams,
     BasicExtrudedLineTechniqueParams,
-    DashedLineTechniqueParams,
     ExtrudedPolygonTechniqueParams,
     FillTechniqueParams,
     isTextureBuffer,
@@ -245,7 +244,7 @@ export interface StandardExtrudedLineTechnique
  * For technique parameters see [[SolidLineTechniqueParams]].
  */
 export interface SolidLineTechnique extends MakeTechniqueAttrs<SolidLineTechniqueParams> {
-    name: "solid-line";
+    name: "solid-line" | "dashed-line";
 }
 
 export const solidLineTechniqueDescriptor = mergeTechniqueDescriptor<SolidLineTechnique>(
@@ -260,37 +259,15 @@ export const solidLineTechniqueDescriptor = mergeTechniqueDescriptor<SolidLineTe
             transparent: AttrScope.TechniqueRendering,
             lineWidth: AttrScope.TechniqueRendering,
             secondaryWidth: AttrScope.TechniqueRendering,
-            secondaryColor: AttrScope.TechniqueRendering
-        }
-    }
-);
-techniqueDescriptors["solid-line"] = solidLineTechniqueDescriptor;
-
-/**
- * Runtime representation of [[DashedLineStyle]] as parsed by [[StyleSetEvaluator]].
- * For technique parameters see [[DashedLineTechniqueParams]].
- */
-export interface DashedLineTechnique extends MakeTechniqueAttrs<DashedLineTechniqueParams> {
-    name: "dashed-line";
-}
-
-export const dashedLineTechniqueDescriptor = mergeTechniqueDescriptor<DashedLineTechnique>(
-    baseTechniqueParamsDescriptor,
-    polygonalTechniqueDescriptor,
-    {
-        attrScopes: {
-            color: AttrScope.TechniqueRendering,
-            clipping: AttrScope.TechniqueGeometry,
-            opacity: AttrScope.TechniqueRendering,
-            transparent: AttrScope.TechniqueRendering,
-            lineWidth: AttrScope.TechniqueRendering,
+            secondaryColor: AttrScope.TechniqueRendering,
             dashSize: AttrScope.TechniqueRendering,
             gapSize: AttrScope.TechniqueRendering
         }
     }
 );
-
-techniqueDescriptors["dashed-line"] = dashedLineTechniqueDescriptor;
+techniqueDescriptors["solid-line"] = solidLineTechniqueDescriptor;
+// TODO: Remove deprecated "dashed-line" support in future releases.
+techniqueDescriptors["dashed-line"] = solidLineTechniqueDescriptor;
 
 /**
  * Runtime representation of [[LineStyle]] as parsed by [[StyleSetEvaluator]].
@@ -516,7 +493,6 @@ export type Technique =
     | LineTechnique
     | SegmentsTechnique
     | SolidLineTechnique
-    | DashedLineTechnique
     | FillTechnique
     | StandardTechnique
     | TerrainTechnique
@@ -586,13 +562,6 @@ export function isLineMarkerTechnique(technique: Technique): technique is LineMa
 }
 
 /**
- * Type guard to check if an object is an instance of [[DashedLineTechnique]].
- */
-export function isDashedLineTechnique(technique: Technique): technique is DashedLineTechnique {
-    return technique.name === "dashed-line";
-}
-
-/**
  * Type guard to check if an object is an instance of [[LineTechnique]].
  */
 export function isLineTechnique(technique: Technique): technique is LineTechnique {
@@ -603,7 +572,7 @@ export function isLineTechnique(technique: Technique): technique is LineTechniqu
  * Type guard to check if an object is an instance of [[SolidLineTechnique]].
  */
 export function isSolidLineTechnique(technique: Technique): technique is SolidLineTechnique {
-    return technique.name === "solid-line";
+    return technique.name === "solid-line" || technique.name === "dashed-line";
 }
 
 /**
