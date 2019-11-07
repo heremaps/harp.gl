@@ -148,6 +148,21 @@ Creates a `color` from the RGB components. The components must be integers betwe
 ["rgb", number, number, number]
 ```
 
+## rgba
+
+Creates a `color` from the RGBA components. The color channels (R, G, B) must be defined as
+integers between 0 and 255, while last component - alpha - holds floating point value between
+0.0 and 1.0 inclusively.
+
+```javascript
+["rgba", number, number, number, number]
+```
+
+> NOTE:
+>
+> Currently alpha channel value is silently ignored, thus full support for defining opacity with
+**rgba** expression needs to be implemented.
+
 ## hsl
 
 Creates a `color` from the HSL components:

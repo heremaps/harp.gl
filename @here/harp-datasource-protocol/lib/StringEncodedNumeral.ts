@@ -16,6 +16,7 @@ export enum StringEncodedNumeralType {
     Pixels,
     Hex,
     RGB,
+    RGBA,
     HSL
 }
 
@@ -73,6 +74,25 @@ export const StringEncodedRGB: StringEncodedNumeralFormat = {
         return [tmpHSL.h, tmpHSL.s, tmpHSL.l];
     }
 };
+export const StringEncodedRGBA: StringEncodedNumeralFormat = {
+    type: StringEncodedNumeralType.RGBA,
+    size: 3,
+    // tslint:disable-next-line:max-line-length
+    regExp: /rgba\((?:([0-9]{1,2}|1[0-9]{1,2}|2[0-4][0-9]|25[0-5]), ?)(?:([0-9]{1,2}|1[0-9]{1,2}|2[0-4][0-9]|25[0-5]), ?)(?:([0-9]{1,2}|1[0-9]{1,2}|2[0-4][0-9]|25[0-5]), ?)(?:(0(?:\.[0-9]+)?|1(?:\.0+)?))\)/,
+    decoder: (encodedValue: string) => {
+        const channels = StringEncodedRGBA.regExp.exec(encodedValue)!;
+        // For now we simply ignore alpha channel value.
+        // TODO: To be resolved with HARP-7517
+        tmpColor
+            .setRGB(
+                parseInt(channels[1], 10) / 255,
+                parseInt(channels[2], 10) / 255,
+                parseInt(channels[3], 10) / 255
+            )
+            .getHSL(tmpHSL);
+        return [tmpHSL.h, tmpHSL.s, tmpHSL.l];
+    }
+};
 export const StringEncodedHSL: StringEncodedNumeralFormat = {
     type: StringEncodedNumeralType.HSL,
     size: 3,
@@ -97,5 +117,6 @@ export const StringEncodedNumeralFormats: StringEncodedNumeralFormat[] = [
     StringEncodedPixels,
     StringEncodedHex,
     StringEncodedRGB,
+    StringEncodedRGBA,
     StringEncodedHSL
 ];

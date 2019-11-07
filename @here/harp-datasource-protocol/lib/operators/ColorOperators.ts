@@ -7,27 +7,46 @@
 import * as THREE from "three";
 
 import { CallExpr } from "../Expr";
-
 import { ExprEvaluatorContext, OperatorDescriptorMap } from "../ExprEvaluator";
 
 const tmpColor = new THREE.Color();
 const operators = {
+    rgba: {
+        call: (context: ExprEvaluatorContext, call: CallExpr) => {
+            const r = context.evaluate(call.args[0]);
+            const g = context.evaluate(call.args[1]);
+            const b = context.evaluate(call.args[2]);
+            const a = context.evaluate(call.args[3]);
+            if (
+                typeof r === "number" &&
+                typeof g === "number" &&
+                typeof b === "number" &&
+                typeof a === "number" &&
+                r >= 0 &&
+                g >= 0 &&
+                b >= 0 &&
+                a >= 0 &&
+                a <= 1
+            ) {
+                return rgbaToString(r, g, b, a);
+            }
+            throw new Error(`unknown color 'rgba(${r},${g},${b},${a})'`);
+        }
+    },
     rgb: {
         call: (context: ExprEvaluatorContext, call: CallExpr) => {
             const r = context.evaluate(call.args[0]);
             const g = context.evaluate(call.args[1]);
             const b = context.evaluate(call.args[2]);
-            if (typeof r === "number" && typeof g === "number" && typeof b === "number") {
-                return (
-                    "#" +
-                    tmpColor
-                        .setRGB(
-                            THREE.Math.clamp(r, 0, 255) / 255,
-                            THREE.Math.clamp(g, 0, 255) / 255,
-                            THREE.Math.clamp(b, 0, 255) / 255
-                        )
-                        .getHexString()
-                );
+            if (
+                typeof r === "number" &&
+                typeof g === "number" &&
+                typeof b === "number" &&
+                r >= 0 &&
+                g >= 0 &&
+                b >= 0
+            ) {
+                return rgbaToString(r, g, b);
             }
             throw new Error(`unknown color 'rgb(${r},${g},${b})'`);
         }
@@ -45,12 +64,31 @@ const operators = {
                 s >= 0 &&
                 l >= 0
             ) {
-                return `hsl(${h},${Math.round(s)}%,${Math.round(l)}%)`;
+                return hslToString(h, s, l);
             }
             throw new Error(`unknown color 'hsl(${h},${s}%,${l}%)'`);
         }
     }
 };
+
+function rgbaToString(r: number, g: number, b: number, a?: number): string {
+    // For now we simply ignore alpha component from rgba(...) expressions.
+    // TODO: To be resolved with HARP-7517.
+    return (
+        "#" +
+        tmpColor
+            .setRGB(
+                THREE.Math.clamp(r, 0, 255) / 255,
+                THREE.Math.clamp(g, 0, 255) / 255,
+                THREE.Math.clamp(b, 0, 255) / 255
+            )
+            .getHexString()
+    );
+}
+
+function hslToString(h: number, s: number, l: number): string {
+    return `hsl(${h},${Math.round(s)}%,${Math.round(l)}%)`;
+}
 
 export const ColorOperators: OperatorDescriptorMap = operators;
 export type ColorOperatorNames = keyof typeof operators;

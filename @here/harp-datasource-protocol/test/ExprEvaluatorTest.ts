@@ -860,7 +860,76 @@ describe("ExprEvaluator", function() {
                 new THREE.Color("rgb(127, 127, 127)").getHexString()
             );
 
+            assert.throw(() => evaluate(["rgb", -20, 40, 50]), "unknown color 'rgb(-20,40,50)'");
             assert.throw(() => evaluate(["rgb", "a", 40, 50]), "unknown color 'rgb(a,40,50)'");
+        });
+    });
+
+    describe("Operator 'rgba'", function() {
+        it("call", function() {
+            assert.strictEqual(
+                new THREE.Color(evaluate(["rgba", 0, 0, 0, 1.0]) as string).getHexString(),
+                new THREE.Color("rgb(0, 0, 0)").getHexString()
+            );
+
+            assert.strictEqual(
+                new THREE.Color(evaluate(["rgba", 255, 0, 0, 1]) as string).getHexString(),
+                new THREE.Color("rgb(255, 0, 0)").getHexString()
+            );
+
+            assert.strictEqual(
+                new THREE.Color(evaluate(["rgba", 255, 255, 0, 1]) as string).getHexString(),
+                new THREE.Color("rgb(255, 255, 0)").getHexString()
+            );
+
+            assert.strictEqual(
+                new THREE.Color(evaluate(["rgba", 255, 255, 255, 1]) as string).getHexString(),
+                new THREE.Color("rgb(255, 255, 255)").getHexString()
+            );
+
+            assert.strictEqual(
+                new THREE.Color(evaluate(["rgba", 127, 127, 127, 1]) as string).getHexString(),
+                new THREE.Color("rgb(127, 127, 127)").getHexString()
+            );
+
+            assert.strictEqual(
+                new THREE.Color(evaluate(["rgba", 500, 500, 500, 1]) as string).getHexString(),
+                new THREE.Color("rgb(500, 500, 500)").getHexString()
+            );
+
+            // Still equal - ignores alpha.
+            // Some assumptions will change after fully implementing HARP-7517
+            assert.strictEqual(
+                evaluate(["rgba", 255, 0, 0, 0.5]) as string,
+                evaluate(["rgba", 255, 0, 0, 0.6]) as string
+            );
+
+            assert.strictEqual(
+                new THREE.Color(evaluate(["rgba", 255, 255, 255, 0.5]) as string).getHexString(),
+                new THREE.Color("rgb(255, 255, 255)").getHexString()
+            );
+
+            // Bad statements.
+            assert.throw(
+                () => evaluate(["rgba", -20, 40, 50, 1]),
+                "unknown color 'rgba(-20,40,50,1)'"
+            );
+            assert.throw(
+                () => evaluate(["rgba", 20, 40, 50, -1]),
+                "unknown color 'rgba(20,40,50,-1)'"
+            );
+            assert.throw(
+                () => evaluate(["rgba", 20, 40, 50, "a"]),
+                "unknown color 'rgba(20,40,50,a)'"
+            );
+            assert.throw(
+                () => evaluate(["rgba", 20, 40, 50, 1.1]),
+                "unknown color 'rgba(20,40,50,1.1)'"
+            );
+            assert.throw(
+                () => evaluate(["rgba", 20, 40, 50, 2]),
+                "unknown color 'rgba(20,40,50,2)'"
+            );
         });
     });
 });
