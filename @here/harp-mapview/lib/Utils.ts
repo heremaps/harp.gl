@@ -166,13 +166,13 @@ export namespace MapViewUtils {
      * Orbits the camera around the focus point of the camera.
      *
      * @param mapView The [[MapView]] instance to manipulate.
-     * @param deltaAzimuthDeg Delta azimuth in degrees.
+     * @param deltaHeadingDeg Delta heading in degrees.
      * @param deltaTiltDeg Delta tilt in degrees.
      * @param maxTiltAngleRad The maximum tilt between the camera and its target in radian.
      */
     export function orbitFocusPoint(
         mapView: MapView,
-        deltaAzimuthDeg: number,
+        deltaHeadingDeg: number,
         deltaTiltDeg: number,
         maxTiltAngleRad = Math.PI / 2
     ) {
@@ -197,7 +197,7 @@ export namespace MapViewUtils {
             targetCoordinates,
             target.distanceTo(mapView.camera.position),
             tiltDeg,
-            THREE.Math.radToDeg(sphericalCoordinates.azimuth + Math.PI) + deltaAzimuthDeg
+            THREE.Math.radToDeg(sphericalCoordinates.heading + Math.PI) + deltaHeadingDeg
         );
     }
 
@@ -434,7 +434,7 @@ export namespace MapViewUtils {
      *
      * @param projection Current projection.
      * @param target The camera target.
-     * @param yawDeg Yaw in degrees, counter-clockwise (as opposed to azimuth), starting north.
+     * @param yawDeg Yaw in degrees, counter-clockwise (as opposed to heading), starting north.
      * @param pitchDeg Pitch in degrees.
      */
     export function getCameraRotationAtTarget(
@@ -473,7 +473,7 @@ export namespace MapViewUtils {
      * map.
      *
      * @param mapView Instance of MapView.
-     * @param yawDeg Yaw in degrees, counter-clockwise (as opposed to azimuth), starting north.
+     * @param yawDeg Yaw in degrees, counter-clockwise (as opposed to heading), starting north.
      * @param pitchDeg Pitch in degrees.
      */
     export function setRotation(mapView: MapView, yawDeg: number, pitchDeg: number) {
@@ -488,7 +488,7 @@ export namespace MapViewUtils {
 
     /**
      * Extracts yaw, pitch, and roll rotation in radians.
-     * - Yaw : Rotation around the vertical axis, counter-clockwise (as opposed to azimuth),
+     * - Yaw : Rotation around the vertical axis, counter-clockwise (as opposed to heading),
      * starting north.
      * - Pitch :Rotation around the horizontal axis.
      * - Roll : Rotation around the view axis.
@@ -564,7 +564,7 @@ export namespace MapViewUtils {
         mapView: MapView,
         object: THREE.Object3D,
         location: GeoCoordinates
-    ): { azimuth: number; tilt: number } {
+    ): { heading: number; tilt: number } {
         mapView.projection.localTangentSpace(location, {
             xAxis: tangentSpace.x,
             yAxis: tangentSpace.y,
@@ -573,7 +573,7 @@ export namespace MapViewUtils {
         });
 
         let tilt = 0;
-        let azimuth = 0;
+        let heading = 0;
 
         // Get point to object vector in `cache.vector3[1]` and deduce `tilt` from the angle with
         // tangent Z.
@@ -582,25 +582,25 @@ export namespace MapViewUtils {
             .sub(cache.vector3[0])
             .normalize();
         if (cache.vector3[1].dot(tangentSpace.z) > 1 - 1e-5) {
-            // Top down view: the azimuth of the object would be opposite the yaw, and clockwise.
-            azimuth = Math.PI - extractAttitude(mapView, object).yaw;
+            // Top down view: the heading of the object would be opposite the yaw, and clockwise.
+            heading = Math.PI - extractAttitude(mapView, object).yaw;
             // Wrap between -PI and PI.
-            azimuth = Math.atan2(Math.sin(azimuth), Math.cos(azimuth));
+            heading = Math.atan2(Math.sin(heading), Math.cos(heading));
             tilt = 0;
-            return { tilt, azimuth };
+            return { tilt, heading };
         }
         tilt = cache.vector3[1].angleTo(tangentSpace.z);
-        // Tilted view: the azimuth is the direction of the object from the origin.
+        // Tilted view: the heading is the direction of the object from the origin.
         cache.vector3[1]
             .copy(object.position)
             .sub(cache.vector3[0])
             .projectOnPlane(tangentSpace.z)
             .normalize();
-        azimuth = cache.vector3[1].angleTo(tangentSpace.y);
+        heading = cache.vector3[1].angleTo(tangentSpace.y);
         if (cache.vector3[1].cross(tangentSpace.y).dot(tangentSpace.z) < 0) {
-            azimuth = -azimuth;
+            heading = -heading;
         }
-        return { tilt, azimuth };
+        return { tilt, heading };
     }
 
     /**

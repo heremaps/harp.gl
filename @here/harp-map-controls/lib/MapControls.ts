@@ -83,7 +83,7 @@ const MAX_TAP_DURATION = 120;
  *  - One finger = Panning the map.
  *  - Two fingers = Scale, rotate and panning the map.
  *  - Three fingers = Orbiting the map. Up down movements influences the current orbit altitude.
- *    Left/right changes the azimuth.
+ *    Left/right changes the heading.
  */
 export class MapControls extends THREE.EventDispatcher {
     /**
@@ -279,9 +279,9 @@ export class MapControls extends THREE.EventDispatcher {
     private m_resetNorthStartTime: number = 0;
     private m_resetNorthIsAnimated: boolean = false;
     private m_resetNorthAnimationDuration: number = 0;
-    private m_currentAzimuth: number = 0;
-    private m_lastAzimuth: number = 0;
-    private m_startAzimuth: number = 0;
+    private m_currentHeading: number = 0;
+    private m_lastHeading: number = 0;
+    private m_startHeading: number = 0;
 
     /**
      * Determines the maximum angle the camera can tilt to. It is defined in radians.
@@ -422,24 +422,24 @@ export class MapControls extends THREE.EventDispatcher {
         if (target === null) {
             throw new Error("MapView does not support a view pointing in the void.");
         }
-        this.m_startAzimuth =
+        this.m_startHeading =
             Math.PI +
             MapViewUtils.extractSphericalCoordinatesFromLocation(
                 this.mapView,
                 this.camera,
                 this.mapView.projection.unprojectPoint(target)
-            ).azimuth;
+            ).heading;
         // Wrap between -PI and PI.
-        this.m_startAzimuth = Math.atan2(
-            Math.sin(this.m_startAzimuth),
-            Math.cos(this.m_startAzimuth)
+        this.m_startHeading = Math.atan2(
+            Math.sin(this.m_startHeading),
+            Math.cos(this.m_startHeading)
         );
-        if (this.m_startAzimuth === 0) {
+        if (this.m_startHeading === 0) {
             return;
         }
         this.stopExistingAnimations();
         this.m_resetNorthAnimationDuration = this.northResetAnimationDuration;
-        this.m_currentAzimuth = this.m_startAzimuth;
+        this.m_currentHeading = this.m_startHeading;
         this.m_resetNorthStartTime = performance.now();
         this.resetNorth();
     }
@@ -632,20 +632,20 @@ export class MapControls extends THREE.EventDispatcher {
                 this.m_needsRenderLastFrame = true;
             }
         }
-        this.m_lastAzimuth = this.m_currentAzimuth;
-        this.m_currentAzimuth = this.inertiaEnabled
+        this.m_lastHeading = this.m_currentHeading;
+        this.m_currentHeading = this.inertiaEnabled
             ? this.easeOutCubic(
-                  this.m_startAzimuth,
+                  this.m_startHeading,
                   0,
                   Math.min(1, animationTime / this.m_resetNorthAnimationDuration)
               )
             : 0;
 
-        const deltaAzimuth = this.m_currentAzimuth - this.m_lastAzimuth;
+        const deltaHeading = this.m_currentHeading - this.m_lastHeading;
 
         MapViewUtils.orbitFocusPoint(
             this.mapView,
-            THREE.Math.radToDeg(deltaAzimuth),
+            THREE.Math.radToDeg(deltaHeading),
             0,
             this.m_maxTiltAngle
         );
@@ -903,7 +903,7 @@ export class MapControls extends THREE.EventDispatcher {
 
     private updateMapView() {
         this.dispatchEvent(MAPCONTROL_EVENT);
-        this.mapView.update();
+        this.mapView.updateCamera();
     }
 
     private mouseDoubleClick(e: MouseEvent) {

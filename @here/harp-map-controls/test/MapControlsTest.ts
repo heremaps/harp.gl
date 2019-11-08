@@ -97,7 +97,7 @@ describe("MapControls", function() {
         //@ts-ignore
         const mapControls = new MapControls({
             renderer: { domElement: { addEventListener: sandbox.stub() } as any } as any,
-            update: updateStub
+            updateCamera: updateStub
         });
         sandbox.stub(mapControls, "dispatchEvent");
 
@@ -111,7 +111,7 @@ describe("MapControls", function() {
         //@ts-ignore
         const mapControls = new MapControls({
             renderer: { domElement: { addEventListener: sandbox.stub() } as any } as any,
-            update: updateStub
+            updateCamera: updateStub
         });
         mapControls.m_touchState.touches = { length: 5 };
         sandbox.stub(mapControls, "updateTouches");

@@ -25,7 +25,7 @@ export namespace ThreejsCameraAnimation {
     interface Location {
         target: GeoCoordinates;
         tilt: number;
-        azimuth: number;
+        heading: number;
         distance: number;
     }
 
@@ -35,21 +35,21 @@ export namespace ThreejsCameraAnimation {
             // HERE Berlin
             target: new GeoCoordinates(52.5308419, 13.3850719),
             tilt: 0,
-            azimuth: 0,
+            heading: 0,
             distance: 1000
         },
         {
             // Museumsinsel Berlin
             target: new GeoCoordinates(52.5169285, 13.4010829),
             tilt: 45,
-            azimuth: 45,
+            heading: 45,
             distance: 300
         },
         {
             // TV-Tower Berlin
             target: new GeoCoordinates(52.520836, 13.409401, 300),
             tilt: 45,
-            azimuth: 180,
+            heading: 180,
             distance: 500
         }
     ];
@@ -77,7 +77,7 @@ Tap our use left/right keys to change location`;
         const targetPosition = MapViewUtils.getCameraPositionFromTargetCoordinates(
             location.target,
             location.distance,
-            location.azimuth,
+            location.heading,
             location.tilt,
             mapView.projection
         );
@@ -85,7 +85,7 @@ Tap our use left/right keys to change location`;
         const targetQuaternion = MapViewUtils.getCameraRotationAtTarget(
             mapView.projection,
             location.target,
-            location.azimuth,
+            location.heading,
             location.tilt
         );
 

@@ -28,20 +28,20 @@ export function calculateNormalizedDeviceCoordinates(
 }
 
 /**
- * Returns the direction vector that is described by the given azimuth and altitude.
+ * Returns the direction vector that is described by the given heading and altitude.
  *
- * @param azimuth Azimuth in radians.
+ * @param heading Heading in radians.
  * @param altitude Altitude in radians.
  */
-export function azimuthAltitudeToDirection(azimuth: number, altitude: number): Vector3 {
-    azimuth = azimuth;
+export function headingAltitudeToDirection(heading: number, altitude: number): Vector3 {
+    heading = heading;
     altitude = altitude;
     //Shamelessly copied from Jan ;)
     const result = new Vector3();
     const cosAltitude = Math.cos(altitude);
 
-    result.setX(Math.sin(azimuth) * cosAltitude);
-    result.setY(Math.cos(azimuth) * cosAltitude);
+    result.setX(Math.sin(heading) * cosAltitude);
+    result.setY(Math.cos(heading) * cosAltitude);
     result.setZ(Math.sin(altitude));
 
     return result;

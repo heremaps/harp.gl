@@ -31,7 +31,7 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
         longitude: number;
         distance: number;
         tilt: number;
-        azimuth: number;
+        heading: number;
     }
 
     interface GeoJsoTestOptions {
@@ -61,7 +61,7 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
             longitude: 14.6,
             distance: 200000,
             tilt: 0,
-            azimuth: 0
+            heading: 0
         };
 
         const lookAt = mergeWithOptions(defaultLookAt, options.lookAt);
@@ -70,7 +70,7 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
             new GeoCoordinates(lookAt.latitute, lookAt.longitude),
             lookAt.distance,
             lookAt.tilt,
-            lookAt.azimuth
+            lookAt.heading
         );
         // Shutdown errors cause by firefox bug
         mapView.renderer.getContext().getShaderInfoLog = (x: any) => {
@@ -143,7 +143,7 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
             geoJson: "../dist/resources/basic_polygon.json",
             lookAt: {
                 tilt: 45,
-                azimuth: 30
+                heading: 30
             }
         });
     });
@@ -172,7 +172,7 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
             geoJson: "../dist/resources/basic_polygon.json",
             lookAt: {
                 tilt: 45,
-                azimuth: 30
+                heading: 30
             }
         });
     });
@@ -203,7 +203,7 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
             geoJson: "../dist/resources/basic_polygon.json",
             lookAt: {
                 tilt: 45,
-                azimuth: 30
+                heading: 30
             }
         });
     });

@@ -75,9 +75,9 @@ map.addDataSource(omvDataSource);
 
 const options = { tilt: 45, distance: 1500 };
 const NY = new harp.GeoCoordinates(42.361145, -71.057083);
-let azimuth = 300;
+let heading = 300;
 map.addEventListener(harp.MapViewEventNames.Render, () =>
-    map.lookAt(NY, options.distance, options.tilt, (azimuth += 0.1))
+    map.lookAt(NY, options.distance, options.tilt, (heading += 0.1))
 );
 window.addEventListener("resize", () => map.resize(window.innerWidth, window.innerHeight));
 map.beginAnimation();
