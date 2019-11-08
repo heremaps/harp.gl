@@ -28,6 +28,7 @@ import {
 } from "@here/harp-materials";
 import { LoggerManager } from "@here/harp-utils";
 import * as THREE from "three";
+import { ColorUtils } from "./ColorUtils";
 import { Circles, Squares } from "./MapViewPoints";
 import { toPixelFormat, toTextureDataType, toTextureFilter, toWrappingMode } from "./ThemeHelpers";
 
@@ -227,6 +228,29 @@ export function createMaterial(
     }
 
     return material;
+}
+
+function applyTechniquePropertyToMaterial(
+    material: THREE.Material,
+    prop: string | number,
+    value: any
+) {
+    const m = material as any;
+    if (m[prop] instanceof THREE.Color) {
+        const { rgb, a } = ColorUtils.getRGBAndAlpha(value);
+        if (a !== 255) {
+            m.transparent = true;
+            m.opacity = a / 255;
+        } else {
+            m.transparent = false;
+            m.opacity = 1;
+        }
+        m[prop].setHex(rgb);
+        m[prop] = m[prop]; // Trigger setter
+    }
+    else {
+        m[prop] = value;
+    }
 }
 
 /**
@@ -457,33 +481,42 @@ export function applyTechniqueToMaterial(
         if (level !== undefined && isInterpolatedProperty(value)) {
             value = getPropertyValue(value, level);
         }
-        applyTechniquePropertyToMaterial(material, prop, value);
-    });
-}
+        // Technique holds little more information then material, but
+        // each property of material (m[prop]) should have its counterpart
+        // in technique, thus properties of materials should be copied from there.
+        // - m[prop] - property value hold in material
+        // - technique[prop] = value, property value kept in technique
+        // handle color differently because we have no assignment operator
 
-/**
- * Apply single and generic technique property to corresponding material parameter.
- *
- * @note Special handling for material parameters of `THREE.Color` type is provided thus it
- * does not provide constructor that would take [[string]] or [[number]] values.
- *
- * @param material target material
- * @param prop material parameter name (or index)
- * @param value corresponding technique property value which is applied.
- */
-function applyTechniquePropertyToMaterial(
-    material: THREE.Material,
-    prop: string | number,
-    value: any
-) {
-    const m = material as any;
-    if (m[prop] instanceof THREE.Color) {
-        m[prop].set(value);
-        // Trigger setter notifying change
-        m[prop] = m[prop];
-    } else {
-        m[prop] = value;
-    }
+        if (m[prop] instanceof THREE.Color) {
+            if (typeof value === "string" || typeof value === "number") {
+                const { rgb, a } = ColorUtils.getRGBAndAlpha(value);
+                // The mechanism of setting transparency and opacity is strictly related to
+                // the layout of technique parameters, because the color is before them in
+                // the object layout therefore `opacity` and `transparent` properties may be
+                // still overridden if defined in technique parameters.
+                if (a !== 255) {
+                    m.transparent = true;
+                    m.opacity = a / 255;
+                }
+                else {
+                    m.transparent = false;
+                    m.opacity = 1;
+                }
+                m[prop].setHex(rgb);
+                m[prop] = m[prop]; // Trigger setter
+            } else {
+                //throw new Error(`Unrecognized color value: '${value}'`);
+                console.log("Strange prop name: ", prop, "material_val: ", m[prop], "technique val: ", value);
+                m[prop].set(value);
+                m[prop] = m[prop];
+            }
+        } else {
+            m[prop] = value;
+        }
+
+       //applyTechniquePropertyToMaterial(material, prop, value);
+    });
 }
 
 function getTextureBuffer(

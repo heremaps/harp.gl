@@ -670,6 +670,7 @@ export class StyleSetEvaluator {
                 attrName as any
             ];
 
+            // First evaluation style (not values)
             if (isJsonExpr(attrValue)) {
                 attrValue = Expr.fromJSON(
                     attrValue,
@@ -757,6 +758,7 @@ export class StyleSetEvaluator {
                     ExprScope.Value,
                     this.m_cachedResults
                 );
+                // NOTE: Here comes the evaluation of dynamic expression
                 return [attrName, evaluatedValue];
             } catch (error) {
                 logger.error(`failed to evaluate expression '${attrExpr.toJSON()}': ${error}`);

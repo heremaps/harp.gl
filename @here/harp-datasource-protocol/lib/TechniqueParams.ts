@@ -6,6 +6,7 @@
 
 import { JsonExpr } from "./Expr";
 import { InterpolatedPropertyDefinition } from "./InterpolatedPropertyDefs";
+import { techniqueDescriptors } from "./Techniques";
 
 /**
  * Available line caps types(`"None"`, `"Round"`, `"Square"`, `"TriangleOut"`, `"TriangleIn"`).
@@ -103,10 +104,13 @@ export type DynamicProperty<T> = T | JsonExpr | InterpolatedPropertyDefinition<T
 export type StyleLength = string | number;
 
 /**
- * Description of colors inside a style. Supports hex values as well as CSS hex, rgb and hsl values
- * (i.e. `0xffffff`, `#f00fab`, `#aaa`, `rgb(255, 0 120)`, `hsl(360, 100%, 100%)`, etc.).
+ * Description of colors inside a style. Supports hex values as well as CSS hex, rgba, rgb and hsl
+ * values (i.e. `0xaaffffff`, `0xffffff`, `#f00fab`, `#aaa`, `rgba(255, 0, 255, 50)`,
+ * `rgb(255, 0 120)`, `hsl(360, 100%, 100%)`, etc.).
  */
 export type StyleColor = string | number;
+
+export type StyleBaseColor = string | number;
 
 /**
  * A set of [[GeometryKind]]s.
@@ -230,12 +234,15 @@ export enum TextureCoordinateType {
  */
 export interface StandardTechniqueParams extends BaseTechniqueParams {
     /**
-     * Color of the feature in hexadecimal or CSS-style notation, for example: `"#e4e9ec"`,
-     * `"#fff"`, `"rgb(255, 0, 0)"`, or `"hsl(35, 11%, 88%)"`.
+     * Color of the feature in hexadecimal or CSS-style notation, for example: `"#55ffe9ec"`
+     * `"#e4e9ec"`, `"#fff"`, `"rgb(55, 255, 0, 0)"`, `"rgb(255, 0, 0)"`, or `"hsl(35, 11%, 88%)"`.
+     *
+     * If color has alpha value smaller that 255 then `transparent` and `opacity` materials
+     * properties are set according to [[THREE.Material]] documentation.
      * See https://threejs.org/docs/#api/en/materials/MeshStandardMaterial.color.
      * @format color-hex
      */
-    color?: DynamicProperty<StyleColor>;
+    color?: DynamicProperty<StyleBaseColor>;
     /**
      * A value of `true` creates a wireframe geometry. (May not be supported with all techniques).
      * See https://threejs.org/docs/#api/en/materials/MeshStandardMaterial.wireframe.
@@ -275,12 +282,19 @@ export interface StandardTechniqueParams extends BaseTechniqueParams {
      * Set to 'true' if line should appear transparent. Rendering transparent lines may come with a
      * slight performance impact.
      * See https://threejs.org/docs/#api/en/materials/Material.transparent.
+     *
+     * @note The value of this material property is automatically set when you specify [[color]]
+     * property (according to alpha color channel), but when you specify it you may override
+     * material transparency set based on color alpha.
      */
     transparent?: boolean;
     /**
      * For transparent lines, set a value between 0.0 for totally transparent, to 1.0 for totally
      * opaque.
      * See https://threejs.org/docs/#api/en/materials/Material.opacity.
+     *
+     * @note This value is automatically set when you specify [[color]] property and according to
+     * alpha color channel, but you may still override transparency using this parameter.
      */
     opacity?: DynamicProperty<number>;
     /**
@@ -424,6 +438,7 @@ export enum PoiStackMode {
 /**
  * Technique that describes icons with labels. Used in [[PoiTechnique]] and [[LineMarkerTechnique]]
  * (for road shields).
+ * TODO: Support for RGBA colors
  */
 export interface MarkerTechniqueParams extends BaseTechniqueParams {
     /**
@@ -866,6 +881,7 @@ export interface StandardExtrudedLineTechniqueParams
 
 /**
  * Declares a a geometry as a solid line.
+ * TODO: Support for RGBA colors
  */
 export interface SolidLineTechniqueParams extends BaseTechniqueParams, PolygonalTechniqueParams {
     /**
@@ -947,6 +963,7 @@ export interface SolidLineTechniqueParams extends BaseTechniqueParams, Polygonal
 
 /**
  * Declares a a geometry as a dashed line.
+ * TODO: Support for RGBA colors
  */
 export interface DashedLineTechniqueParams extends BaseTechniqueParams, PolygonalTechniqueParams {
     /**
@@ -1042,6 +1059,7 @@ export interface FillTechniqueParams extends BaseTechniqueParams, PolygonalTechn
 
 /**
  * Technique used to draw a geometry as an extruded polygon, for example extruded buildings.
+ * TODO: Support for RGBA colors
  */
 export interface ExtrudedPolygonTechniqueParams extends StandardTechniqueParams {
     /**
@@ -1152,6 +1170,7 @@ export interface ShaderTechniqueMaterialParameters {
 /**
  * Special technique for user-defined shaders. See
  * https://threejs.org/docs/#api/harp-materials/ShaderMaterial for details.
+ * TODO: Support for RGBA colors
  */
 export interface ShaderTechniqueParams extends BaseTechniqueParams {
     /**
@@ -1170,6 +1189,7 @@ export interface ShaderTechniqueParams extends BaseTechniqueParams {
  * Technique used to render a terrain geometry with a texture.
  * When using this technique, the datasource will produce texture coordinates in
  * local tile space (i.e. [0,0] at south-west and [1,1] at north-east tile corner).
+ * TODO: Support for RGBA colors
  */
 export interface TerrainTechniqueParams extends StandardTechniqueParams {
     /**
@@ -1192,6 +1212,7 @@ export interface TerrainTechniqueParams extends StandardTechniqueParams {
 
 /**
  * Render geometry as a text.
+ * TODO: Support for RGBA colors
  */
 export interface TextTechniqueParams extends BaseTechniqueParams {
     /**

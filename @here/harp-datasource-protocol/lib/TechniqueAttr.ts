@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { LoggerManager } from "@here/harp-utils";
+import { LoggerManager, assert } from "@here/harp-utils";
 import { Env, Expr, ExprScope, MapEnv, Value } from "./Expr";
 import { getPropertyValue, isInterpolatedProperty } from "./InterpolatedProperty";
 import { InterpolatedProperty } from "./InterpolatedPropertyDefs";
@@ -60,6 +60,7 @@ export function evaluateTechniqueAttr<T = Value>(
     defaultValue: T
 ): T;
 
+// Used by __decoder__ to evaluate attributes
 export function evaluateTechniqueAttr<T = Value>(
     context: Env | AttrEvaluationContext,
     attrValue: T | Expr | InterpolatedProperty | undefined,
@@ -68,6 +69,7 @@ export function evaluateTechniqueAttr<T = Value>(
     const env = context instanceof Env ? context : context.env;
 
     let evaluated: Value | undefined;
+    // Expressions like: ["rgba", ...] are evaluated here:
     if (attrValue instanceof Expr) {
         try {
             evaluated = attrValue.evaluate(
@@ -83,7 +85,12 @@ export function evaluateTechniqueAttr<T = Value>(
         const storageLevel =
             context instanceof Env ? (context.lookup("$zoom") as number) : context.zoomLevel;
         evaluated = getPropertyValue(attrValue, storageLevel) as any;
+    } else if (typeof attrValue === "string" && attrValue.startsWith("#")) {
+        // Here we deal with color coded in hex
+        evaluated = "#ff" + attrValue.substr(1);
+        assert(false, "Found some other attribute: " + JSON.stringify(attrValue));
     } else {
+        // All other (simple) attributes goes here (string, number, etc)
         evaluated = (attrValue as unknown) as Value;
     }
     if (evaluated === undefined || evaluated === null) {

@@ -50,16 +50,16 @@ export const StringEncodedPixels: StringEncodedNumeralFormat = {
 };
 export const StringEncodedHex: StringEncodedNumeralFormat = {
     type: StringEncodedNumeralType.Hex,
-    size: 3,
+    size: 4,
     regExp: /#([0-9A-Fa-f]{1,2})([0-9A-Fa-f]{1,2})([0-9A-Fa-f]{1,2})/,
     decoder: (encodedValue: string) => {
         tmpColor.set(encodedValue).getHSL(tmpHSL);
-        return [tmpHSL.h, tmpHSL.s, tmpHSL.l];
+        return [tmpHSL.h, tmpHSL.s, tmpHSL.l, 1.0];
     }
 };
 export const StringEncodedRGB: StringEncodedNumeralFormat = {
     type: StringEncodedNumeralType.RGB,
-    size: 3,
+    size: 4,
     // tslint:disable-next-line:max-line-length
     regExp: /rgb\((?:([0-9]{1,2}|1[0-9]{1,2}|2[0-4][0-9]|25[0-5]), ?)(?:([0-9]{1,2}|1[0-9]{1,2}|2[0-4][0-9]|25[0-5]), ?)(?:([0-9]{1,2}|1[0-9]{1,2}|2[0-4][0-9]|25[0-5]))\)/,
     decoder: (encodedValue: string) => {
@@ -71,7 +71,7 @@ export const StringEncodedRGB: StringEncodedNumeralFormat = {
                 parseInt(channels[3], 10) / 255
             )
             .getHSL(tmpHSL);
-        return [tmpHSL.h, tmpHSL.s, tmpHSL.l];
+        return [tmpHSL.h, tmpHSL.s, tmpHSL.l, 1.0];
     }
 };
 export const StringEncodedRGBA: StringEncodedNumeralFormat = {
@@ -95,7 +95,7 @@ export const StringEncodedRGBA: StringEncodedNumeralFormat = {
 };
 export const StringEncodedHSL: StringEncodedNumeralFormat = {
     type: StringEncodedNumeralType.HSL,
-    size: 3,
+    size: 4,
     // tslint:disable-next-line:max-line-length
     regExp: /hsl\(((?:[0-9]|[1-9][0-9]|1[0-9]{1,2}|2[0-9]{1,2}|3[0-5][0-9]|360)), ?(?:([0-9]|[1-9][0-9]|100)%), ?(?:([0-9]|[1-9][0-9]|100)%)\)/,
     decoder: (encodedValue: string) => {
@@ -103,7 +103,8 @@ export const StringEncodedHSL: StringEncodedNumeralFormat = {
         return [
             parseInt(channels[1], 10) / 360,
             parseInt(channels[2], 10) / 100,
-            parseInt(channels[3], 10) / 100
+            parseInt(channels[3], 10) / 100,
+            1.0 // alpha
         ];
     }
 };

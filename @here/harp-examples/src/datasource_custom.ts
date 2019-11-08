@@ -207,7 +207,7 @@ export namespace CustomDatasourceExample {
                         when: ["==", ["get", "layer"], "mesh-layer"],
                         technique: "standard",
                         attr: {
-                            color: "#0000ff",
+                            color: ["rgba", 0, 255, 0, 0.1],
                             depthTest: true
                         }
                     }

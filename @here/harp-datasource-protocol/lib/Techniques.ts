@@ -213,6 +213,7 @@ export interface SegmentsTechnique extends MakeTechniqueAttrs<SegmentsTechniqueP
 }
 
 const polygonalTechniqueDescriptor: TechniqueDescriptor<PolygonalTechniqueParams> = {
+    attrTransparencyColor : "color",
     attrScopes: {
         polygonOffset: AttrScope.TechniqueRendering,
         polygonOffsetFactor: AttrScope.TechniqueRendering,

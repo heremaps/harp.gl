@@ -7,6 +7,7 @@
 import { Color, CubicInterpolant, DiscreteInterpolant, LinearInterpolant } from "three";
 
 import { LoggerManager } from "@here/harp-utils";
+import { ColorUtils } from "../../harp-mapview/lib/ColorUtils";
 import { ExponentialInterpolant } from "./ExponentialInterpolant";
 import { Expr, Value } from "./Expr";
 import {
@@ -93,14 +94,17 @@ export function getPropertyValue<T>(
 ): any {
     if (isInterpolatedPropertyDefinition<T>(property)) {
         throw new Error("Cannot interpolate a InterpolatedPropertyDefinition.");
+    // Not interpolated property
     } else if (!isInterpolatedProperty(property)) {
         if (typeof property !== "string") {
+            // Property in numeric or array, etc. format
             return property;
         } else {
             const matchedFormat = StringEncodedNumeralFormats.find(format =>
                 format.regExp.test(property)
             );
             if (matchedFormat === undefined) {
+                // Property coded in simple string not matching any StringEncodedNumeralFormats
                 return property;
             }
             switch (matchedFormat.type) {
@@ -112,12 +116,14 @@ export function getPropertyValue<T>(
                 case StringEncodedNumeralType.RGB:
                 case StringEncodedNumeralType.RGBA:
                 case StringEncodedNumeralType.HSL:
-                    const hslValues = matchedFormat.decoder(property);
-                    return tmpColor.setHSL(hslValues[0], hslValues[1], hslValues[2]).getHex();
+                    const hslaValues = matchedFormat.decoder(property);
+                    tmpColor.setHSL(hslaValues[0], hslaValues[1], hslaValues[2]);
+                    return ColorUtils.getARGBFromColorAndOpacity(tmpColor, hslaValues[3]);
                 default:
                     return matchedFormat.decoder(property)[0];
             }
         }
+    // Interpolated property
     } else if (property._stringEncodedNumeralType !== undefined) {
         switch (property._stringEncodedNumeralType) {
             case StringEncodedNumeralType.Meters:
@@ -190,13 +196,12 @@ function getInterpolatedColor(property: InterpolatedProperty, level: number): nu
     }
     interpolant.evaluate(level);
 
-    return tmpColor
-        .setHSL(
-            interpolant.resultBuffer[0],
-            interpolant.resultBuffer[1],
-            interpolant.resultBuffer[2]
-        )
-        .getHex();
+    tmpColor.setHSL(
+        interpolant.resultBuffer[0],
+        interpolant.resultBuffer[1],
+        interpolant.resultBuffer[2]
+    );
+    return ColorUtils.getARGBFromColorAndOpacity(tmpColor, interpolant.resultBuffer[3]);
 }
 
 /**

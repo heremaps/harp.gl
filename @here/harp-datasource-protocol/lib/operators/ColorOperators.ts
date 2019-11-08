@@ -9,6 +9,26 @@ import * as THREE from "three";
 import { CallExpr } from "../Expr";
 import { ExprEvaluatorContext, OperatorDescriptorMap } from "../ExprEvaluator";
 
+function rgbaFloat2Color(r: number, g: number, b: number, a?: number) : number {
+    r = THREE.Math.clamp(r, 0.0, 1.0);
+    g = THREE.Math.clamp(g, 0.0, 1.0);
+    b = THREE.Math.clamp(b, 0.0, 1.0);
+    a = a === undefined ? 1.0 : THREE.Math.clamp(a, 0.0, 1.0);
+
+    // tslint:disable-next-line: no-bitwise
+    return ((a * 255) << 24) ^ ((r * 255 ) << 16) ^ ((g * 255 ) << 8) ^ ((b * 255 ) << 0);
+}
+
+function rgbaInt2Color(r: number, g: number, b: number, a?: number) : number {
+    r = THREE.Math.clamp(r, 0, 255);
+    g = THREE.Math.clamp(g, 0, 255);
+    b = THREE.Math.clamp(b, 0, 255);
+    a = a === undefined ? 255 : THREE.Math.clamp(a, 0, 255);
+
+    // tslint:disable-next-line: no-bitwise
+    return (a << 24) ^ (r << 16) ^ (g << 8) ^ (b << 0);
+}
+
 const tmpColor = new THREE.Color();
 const operators = {
     rgba: {
