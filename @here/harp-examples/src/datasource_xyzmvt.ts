@@ -83,7 +83,7 @@ export namespace DatasourceXYZMVTExample {
         // snippet:harp_gl_datasource_xyzmvt_example_2.ts
         const mapControls = new MapControls(map);
         mapControls.maxTiltAngle = 50;
-        const ui = new MapControlsUI(mapControls, { zoomLevel: "input" });
+        const ui = new MapControlsUI(mapControls, { zoomLevel: "input", projectionSwitch: true });
         canvas.parentElement!.appendChild(ui.domElement);
         // end:harp_gl_datasource_xyzmvt_example_2.ts
 

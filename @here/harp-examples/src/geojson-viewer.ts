@@ -153,7 +153,7 @@ export namespace GeoJsonExample {
         CopyrightElementHandler.install("copyrightNotice", mapView);
 
         const controls = new MapControls(mapView);
-        const ui = new MapControlsUI(controls);
+        const ui = new MapControlsUI(controls, { projectionSwitch: true });
         const width =
             innerWidth <= 450 ? 0 : Math.min(parseInt(editorWidth, undefined), innerWidth * 0.4);
         ui.domElement.style.right = width + 10 + "px";

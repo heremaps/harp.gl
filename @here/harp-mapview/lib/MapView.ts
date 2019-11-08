@@ -1469,7 +1469,7 @@ export class MapView extends THREE.EventDispatcher {
         const targetDistance = this.camera.position.distanceTo(target);
         const attitude = MapViewUtils.extractAttitude(this, this.camera);
         const pitchDeg = THREE.Math.radToDeg(attitude.pitch);
-        const yawDeg = THREE.Math.radToDeg(attitude.yaw);
+        const azimuthDeg = -THREE.Math.radToDeg(attitude.yaw);
 
         this.m_visibleTileSetOptions.projection = projection;
         this.updatePolarDataSource();
@@ -1485,7 +1485,7 @@ export class MapView extends THREE.EventDispatcher {
             this.m_visibleTileSetOptions
         );
 
-        this.lookAt(targetCoordinates, targetDistance, pitchDeg, yawDeg);
+        this.lookAt(targetCoordinates, targetDistance, pitchDeg, azimuthDeg);
     }
 
     /**

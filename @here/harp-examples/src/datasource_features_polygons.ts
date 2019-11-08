@@ -325,7 +325,7 @@ export namespace PolygonsFeaturesExample {
         controls.maxTiltAngle = 50;
         controls.maxZoomLevel = 6;
 
-        const ui = new MapControlsUI(controls);
+        const ui = new MapControlsUI(controls, { projectionSwitch: true });
         canvas.parentElement!.appendChild(ui.domElement);
 
         window.addEventListener("resize", () => mapView.resize(innerWidth, innerHeight));
