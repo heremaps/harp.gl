@@ -940,6 +940,20 @@ export class VisibleTileSet {
                             if (parentTile !== undefined && parentTile.hasGeometry) {
                                 // parentTile has geometry, so can be reused as fallback
                                 renderedTiles.set(parentCode, parentTile);
+
+                                // If falling back to the parent, then remove any children
+                                // of this parent that may be rendered. They may be able to
+                                // be rendered, but the parent will overlap the children.`
+                                for (const childTileKey of tilingScheme.getSubTileKeys(
+                                    parentTile.tileKey
+                                )) {
+                                    renderedTiles.delete(
+                                        TileOffsetUtils.getKeyForTileKeyAndOffset(
+                                            childTileKey,
+                                            offset
+                                        )
+                                    );
+                                }
                                 return;
                             }
 
