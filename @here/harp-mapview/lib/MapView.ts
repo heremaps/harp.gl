@@ -15,6 +15,7 @@ import {
 import {
     EarthConstants,
     GeoCoordinates,
+    GeoCoordLike,
     mercatorProjection,
     Projection,
     ProjectionType,
@@ -578,6 +579,35 @@ export interface MapViewOptions extends TextElementsRendererOptions {
      * @default false.
      */
     synchronousRendering?: boolean;
+
+    /**
+     * Set initial camera target in geo coordinates.
+     *
+     * Longitude values outside of -180 and +180 are acceptable.
+     * @default new GeoCoordinates(25, 0)
+     */
+    target?: GeoCoordLike;
+
+    /**
+     * Set initial zoom level.
+     *
+     * @default 12
+     */
+    zoomLevel?: number;
+
+    /**
+     * Set initial camera azimuth in degrees.
+     *
+     * @default 0
+     */
+    azimuth?: number;
+
+    /**
+     * Set initial camera tilt in degrees.
+     *
+     * @default 0
+     */
+    tilt?: number;
 }
 
 /**
@@ -597,7 +627,12 @@ export const MapViewDefaults = {
     pixelRatio:
         typeof window !== "undefined" && window.devicePixelRatio !== undefined
             ? window.devicePixelRatio
-            : 1.0
+            : 1.0,
+    geoCenter: new GeoCoordinates(25, 0, 30000000),
+    target: new GeoCoordinates(25, 0),
+    zoomLevel: 5,
+    tilt: 0,
+    azimuth: 0
 };
 
 /**
@@ -901,7 +936,8 @@ export class MapView extends THREE.EventDispatcher {
         this.m_scene.add(this.m_camera); // ensure the camera is added to the scene.
         this.m_screenProjector = new ScreenProjector(this.m_camera);
 
-        this.setupCamera();
+        // setup camera with initial position
+        this.setupCamera(options);
 
         this.m_movementDetector = new CameraMovementDetector(
             this.m_options.movementThrottleTimeout,
@@ -2909,10 +2945,10 @@ export class MapView extends THREE.EventDispatcher {
             });
     }
 
-    private setupCamera() {
+    private setupCamera(options: MapViewOptions) {
         const { width, height } = this.getCanvasClientSize();
 
-        const defaultGeoCenter = new GeoCoordinates(25, 0, 30000000);
+        const defaultGeoCenter = MapViewDefaults.geoCenter;
 
         this.projection.projectPoint(defaultGeoCenter, this.m_camera.position);
 
@@ -2935,13 +2971,26 @@ export class MapView extends THREE.EventDispatcher {
             this.m_visibleTileSetOptions
         );
 
+        this.setInitialCameraPosition(options);
+
         // ### move & customize
         this.resize(width, height);
 
-        this.geoCenter = defaultGeoCenter;
-
         this.m_screenCamera.position.z = 1;
         this.m_screenCamera.near = 0;
+    }
+
+    private setInitialCameraPosition(options: MapViewOptions) {
+        const target = GeoCoordinates.fromObject(
+            getOptionValue(options.target, MapViewDefaults.target)
+        );
+        target.altitude = 0; // ensure that look at target has height of 0
+        const zoomLevel = getOptionValue(options.zoomLevel, MapViewDefaults.zoomLevel);
+        const tilt = getOptionValue(options.tilt, MapViewDefaults.tilt);
+        const azimuth = getOptionValue(options.azimuth, MapViewDefaults.azimuth);
+
+        this.lookAt(target, 300000, tilt, azimuth);
+        this.zoomLevel = zoomLevel;
     }
 
     private updateSkyBackground() {

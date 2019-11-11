@@ -4,11 +4,16 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GeoCoordinatesLike } from "./GeoCoordinatesLike";
-import { GeoPointLike } from "./GeoPointLike";
-import { LatLngLike } from "./LatLngLike";
+import { GeoCoordinatesLike, isGeoCoordinatesLike } from "./GeoCoordinatesLike";
+import { GeoPointLike, isGeoPointLike } from "./GeoPointLike";
+import { isLatLngLike, LatLngLike } from "./LatLngLike";
 
 import * as THREE from "three";
+
+/**
+ * Represents an object in different geo coordinate formats
+ */
+export type GeoCoordLike = GeoPointLike | GeoCoordinatesLike | LatLngLike;
 
 /**
  * `GeoCoordinates` is used to represent geo positions.
@@ -70,6 +75,36 @@ export class GeoCoordinates implements GeoCoordinatesLike {
      */
     static fromGeoPoint(geoPoint: GeoPointLike): GeoCoordinates {
         return new GeoCoordinates(geoPoint[1], geoPoint[0], geoPoint[2]);
+    }
+
+    /**
+     * Creates a [[GeoCoordinates]] from different types of geo coordinate objects.
+     *
+     * Example:
+     * ```typescript
+     * const fromGeoPointLike = GeoCoordinates.fromObject([longitude, latitude]);
+     * const fromGeoCoordinateLike = GeoCoordinates.fromObject({ longitude, latitude });
+     * const fromGeoCoordinate = GeoCoordinates.fromObject(new GeoCoordinates(latitude, longitude));
+     * const fromLatLngLike = GeoCoordinates.fromObject({ lat: latitude , lng: longitude });
+     * ```
+     *
+     * @param geoPoint Either [[GeoPointLike]], [[GeoCoordinatesLike]]
+     * or [[LatLngLike]] object literal.
+     */
+    static fromObject(geoPoint: GeoCoordLike): GeoCoordinates {
+        if (isGeoPointLike(geoPoint)) {
+            return GeoCoordinates.fromGeoPoint(geoPoint);
+        } else if (isGeoCoordinatesLike(geoPoint)) {
+            return GeoCoordinates.fromDegrees(
+                geoPoint.latitude,
+                geoPoint.longitude,
+                geoPoint.altitude
+            );
+        } else if (isLatLngLike(geoPoint)) {
+            return GeoCoordinates.fromDegrees(geoPoint.lat, geoPoint.lng);
+        }
+
+        throw new Error("Invalid input coordinate format.");
     }
 
     /**

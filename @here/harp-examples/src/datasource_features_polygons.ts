@@ -316,10 +316,11 @@ export namespace PolygonsFeaturesExample {
                         }
                     ]
                 }
-            }
+            },
+            target: new GeoCoordinates(40, 15),
+            zoomLevel: 3.2
         });
         mapView.renderLabels = false;
-        mapView.setCameraGeolocationAndZoom(new GeoCoordinates(40, 15), 3.2);
 
         const controls = new MapControls(mapView);
         controls.maxTiltAngle = 50;

@@ -71,9 +71,15 @@ export namespace HelloWorldExample {
         // end:harp_gl_hello_world_example_0.ts
 
         // snippet:harp_gl_hello_world_example_1.ts
+        // Look at New York.
+        const NY = new GeoCoordinates(40.707, -74.01);
         const map = new MapView({
             canvas,
-            theme: "resources/berlin_tilezen_base.json"
+            theme: "resources/berlin_tilezen_base.json",
+            target: NY,
+            tilt: 50,
+            azimuth: -20,
+            zoomLevel: 16.1
         });
         // end:harp_gl_hello_world_example_1.ts
 
@@ -84,13 +90,6 @@ export namespace HelloWorldExample {
         const mapControls = new MapControls(map);
         mapControls.maxTiltAngle = 50;
         // end:harp_gl_hello_world_example_map_controls.ts
-
-        // snippet:harp_gl_hello_world_example_look_at.ts
-        // Look at New York.
-        const NY = new GeoCoordinates(40.707, -74.01);
-        map.lookAt(NY, 3500, 50, -20);
-        map.zoomLevel = 16.1;
-        // end:harp_gl_hello_world_example_look_at.ts
 
         // Add an UI.
         const ui = new MapControlsUI(mapControls, { zoomLevel: "input" });

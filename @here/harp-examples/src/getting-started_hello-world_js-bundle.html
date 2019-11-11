@@ -62,21 +62,24 @@
         <script>
             const canvas = document.getElementById("mapCanvas");
 
+            // Look at New York.
+            const NY = new harp.GeoCoordinates(40.707, -74.01);
             const map = new harp.MapView({
                 canvas,
                 // This, is relative URL only to make example work in CI environment.
                 // Clients, may use CDN url like:
                 //   https://unpkg.com/@here/harp-map-theme/resources/berlin_tilezen_base.json
-                theme: "resources/berlin_tilezen_base.json"
+                theme: "resources/berlin_tilezen_base.json",
+                target: NY,
+                tilt: 50,
+                azimuth: -20,
+                zoomLevel: 16.1
             });
 
             harp.CopyrightElementHandler.install("copyrightNotice", map);
 
             const mapControls = new harp.MapControls(map);
             mapControls.maxTiltAngle = 50;
-            const NY = new harp.GeoCoordinates(40.707, -74.01);
-            map.lookAt(NY, 3500, 50);
-            map.zoomLevel = 16.1;
 
             const ui = new harp.MapControlsUI(mapControls, { zoomLevel: "input" });
             canvas.parentElement.appendChild(ui.domElement);

@@ -84,10 +84,11 @@ export namespace GeoJsonStylingGame {
     // snippet:harp_gl_initmapview.ts
     const mapView = new MapView({
         canvas: document.getElementById("mapCanvas") as HTMLCanvasElement,
-        theme: "resources/berlin_tilezen_night_reduced.json"
+        theme: "resources/berlin_tilezen_night_reduced.json",
+        target: new GeoCoordinates(42.2, 12.5),
+        zoomLevel: 5.9
     });
     CopyrightElementHandler.install("copyrightNotice", mapView);
-    mapView.setCameraGeolocationAndZoom(new GeoCoordinates(42.2, 12.5), 5.9);
     mapView.resize(window.innerWidth, window.innerHeight);
     window.addEventListener("resize", () => {
         mapView.resize(window.innerWidth, window.innerHeight);
