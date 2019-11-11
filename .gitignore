@@ -5,5 +5,6 @@ test-npm-packages-app/
 .vscode/
 .DS_Store
 .nyc_output/
+rendering-test-results/
 
 credentials.js

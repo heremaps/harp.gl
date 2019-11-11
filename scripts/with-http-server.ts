@@ -35,6 +35,10 @@ if (command.length < 1) {
 const dir = path.resolve(process.cwd(), commander.opts().dir);
 
 const app = express();
+
+/**
+ * Add modules as middleware(s) to existing express app instance
+ */
 for (const modulePath of modulesToLoad) {
     try {
         // tslint:disable-next-line:no-var-requires
@@ -65,7 +69,7 @@ server.listen(port, () => {
     const cmdArgs = command;
     console.error(`with-http-server: Running ${cmdFile} ${cmdArgs.join(" ")}`);
     const child = child_process.spawn(cmdFile!, cmdArgs, {
-        shell: true,
+        shell: false,
         stdio: "inherit"
     });
 
