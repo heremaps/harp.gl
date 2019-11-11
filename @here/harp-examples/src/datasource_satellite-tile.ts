@@ -33,14 +33,14 @@ export namespace SatelliteDataSourceExample {
 
         const map = new MapView({
             canvas,
-            theme: "resources/berlin_tilezen_base.json"
+            theme: "resources/berlin_tilezen_base_globe.json"
         });
 
         // instantiate the default map controls, allowing the user to pan around freely.
         const controls = new MapControls(map);
 
         // Add an UI.
-        const ui = new MapControlsUI(controls, { zoomLevel: "input" });
+        const ui = new MapControlsUI(controls, { zoomLevel: "input", projectionSwitch: true });
         canvas.parentElement!.appendChild(ui.domElement);
 
         CopyrightElementHandler.install("copyrightNotice", map);

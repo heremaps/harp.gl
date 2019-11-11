@@ -32,7 +32,7 @@ export namespace ThemesExample {
         map.lookAt(moscow, 3500, 50, 300);
         map.zoomLevel = 16.1;
 
-        const ui = new MapControlsUI(mapControls);
+        const ui = new MapControlsUI(mapControls, { zoomLevel: "input", projectionSwitch: true });
         canvas.parentElement!.appendChild(ui.domElement);
 
         map.resize(window.innerWidth, window.innerHeight);

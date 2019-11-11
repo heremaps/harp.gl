@@ -216,7 +216,7 @@ export namespace LinesPointsFeaturesExample {
         mapView.setCameraGeolocationAndZoom(new GeoCoordinates(10, -270), 3.5);
 
         const controls = new MapControls(mapView);
-        const ui = new MapControlsUI(controls);
+        const ui = new MapControlsUI(controls, { projectionSwitch: true });
         canvas.parentElement!.appendChild(ui.domElement);
 
         window.addEventListener("resize", () => mapView.resize(innerWidth, innerHeight));
