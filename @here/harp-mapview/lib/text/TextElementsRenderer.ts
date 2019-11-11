@@ -2353,11 +2353,12 @@ export class TextElementsRenderer {
                 numTextElementsInScene += tile.userTextElements.elements.length;
             }
         });
-        this.m_overloaded = numTextElementsInScene > OVERLOAD_LABEL_LIMIT;
+        const newOverloaded = numTextElementsInScene > OVERLOAD_LABEL_LIMIT;
 
-        if (this.m_overloaded) {
-            logger.log("Overloaded Mode enabled.");
+        if (newOverloaded && !this.m_overloaded) {
+            logger.debug("Overloaded Mode enabled.");
         }
+        this.m_overloaded = newOverloaded;
         return this.m_overloaded;
     }
 }
