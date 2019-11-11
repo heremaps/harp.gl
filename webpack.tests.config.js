@@ -103,6 +103,16 @@ const browserTestsConfig = {
     performance: {
         hints: false
     },
+    devServer: {
+        before: function(app) {
+            require("ts-node/register");
+
+            const RenderingTestResultServer = require("./@here/harp-test-utils/lib/rendering/RenderingTestResultServer");
+            const basePath = "./rendering-test-results/";
+            RenderingTestResultServer.installMiddleware(app, basePath);
+        },
+        contentBase: "./test/"
+    },
     stats: {
         all: false,
         timings: true,

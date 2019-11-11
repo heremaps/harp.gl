@@ -19,11 +19,11 @@ import { genHtmlReport } from "./HtmlReport";
 import { ImageTestResultLocal, ImageTestResultRequest } from "./Interface";
 import { getOutputImagePath, loadSavedResults } from "./RenderingTestResultCommon";
 
-const logger = LoggerManager.instance.create("ibctFeedbackServer");
+const logger = LoggerManager.instance.create("RenderingTestResultServer");
 const writeFile = util.promisify(fs.writeFile);
 const promisedMkpath = util.promisify(mkpath) as any;
 
-let outputBasePath = "./ibct-results";
+let outputBasePath = "./rendering-test-results";
 
 /**
  * Parse `base64`-encoded `data-uri` string and present result as tuple of:
@@ -137,18 +137,25 @@ export async function getIbctReport(req: express.Request, res: express.Response)
     }
 }
 
+export function getReferenceImage(req: express.Request, res: express.Response) {
+    const imageProps = req.query;
+    const relPath = getOutputImagePath({ ...imageProps, extra: ".reference" }, outputBasePath);
+
+    res.sendFile(path.resolve(process.cwd(), relPath));
+}
+
 /**
- * Install Ibct Feedback Server in `express.Router`.
+ * Install RenderingTestResultServer in `express.Router`.
  *
  * Example usage i.e `webpack-dev-server` configuration in `webpack.config.js`:
  *
  *     devServer: {
  *       before: function(app) {
  *         require('ts-node/register'); // so we can load typescript seamlessly
- *         const IbctFeedbackServer = require(
- *          "coresdk/@here/harp-test-utils/lib/rendering/FeedbackServer"
+ *         const RenderingTestResultServer = require(
+ *          "coresdk/@here/harp-test-utils/lib/rendering/RenderingTestResultServer"
  *         );
- *         IbctFeedbackServer.installMiddleware(app);
+ *         RenderingTestResultServer.installMiddleware(app);
  *       }
  *     }
  */
@@ -158,9 +165,11 @@ export function installMiddleware(app: express.Router, basePath: string) {
     });
 
     outputBasePath = basePath;
+
     const jsonParser = bodyParser.json({ limit: 1024 * 1024 * 16 });
     app.get("/ibct-report", jsonParser, getIbctReport);
     app.post("/ibct-feedback", jsonParser, postIbctFeedback);
+    app.get("/reference-image", getReferenceImage);
 
     logger.info("serving IBCT report at /ibct-report endpoint");
     logger.info("accepting IBCT results at /ibct-feedback endpoint");
@@ -197,12 +206,14 @@ export function expressMiddleware(
 export default expressMiddleware;
 
 /**
- * Start `FeedbackServer` as simple, standalone HTTP server which
+ * Start `RenderingTestResultServer` as simple, standalone HTTP server which
  * * supports /ibct-feedback endpoint
  * * servers files from `process.cwd()`
  */
 export function startStandaloneServer(host: string, port: number) {
     const app = express();
+    logger.log("start standaloneServer: ", outputBasePath);
+
     installMiddleware(app, outputBasePath);
     app.use(serveStatic(".", { index: ["index.html"] }));
     app.listen(port, host, () => {

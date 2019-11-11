@@ -15,7 +15,7 @@ import { genHtmlReport } from "./HtmlReport";
 import { ImageTestResultLocal } from "./Interface";
 import { getOutputImagePath, loadSavedResults } from "./RenderingTestResultCommon";
 
-const logger = LoggerManager.instance.create("ibctFeedbackServer");
+const logger = LoggerManager.instance.create("RenderingTestResultCli");
 
 let createMissingReferences: boolean = true;
 let forceApprovals: boolean = false;
@@ -50,7 +50,7 @@ async function genConsoleReport(results: ImageTestResultLocal[]): Promise<boolea
     });
     return !someTestsFailed;
 }
-let baseResultsPath = "test/rendering-test-results";
+let baseResultsPath = "rendering-test-results";
 
 async function main() {
     program.usage("[options] COMMAND").option(

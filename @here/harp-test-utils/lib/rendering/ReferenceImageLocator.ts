@@ -22,18 +22,18 @@ export function getReferenceImageUrl(imageProps: TestImageProps) {
 /**
  * Default reference image resolver URL of reference image.
  *
- * Relative to `baseUrl` of test runner page, which is usually `test/ibct/runner.html`,
+ * Relative to `baseUrl` of test runner page, which is usually `test/rendering.html`,
  * so relative to `mapsdk/test`.
  */
 export function defaultReferenceImageResolver(imageProps: TestImageProps) {
     if (imageProps.name && imageProps.module) {
-        const baseUrl = "../ibct-results/";
+        const queryString = Object.keys(imageProps)
+            .map(key => {
+                return `${encodeURIComponent(key)}=${encodeURIComponent(imageProps[key])}`;
+            })
+            .join("&");
 
-        const platform = getOverride("IBCT_REFERENCE_PLATFORM", imageProps.platform || "");
-        const platformPart = platform === "" ? "" : `${platform}/`;
-        const modulePart = imageProps.module ? imageProps.module + "-" : "";
-        const extra = imageProps.extra || "";
-        return `${baseUrl}${platformPart}${modulePart}${imageProps.name}${extra}.png`;
+        return `/reference-image?${queryString}`;
     } else {
         throw new Error("unsupported test images props");
     }
