@@ -5,3 +5,4 @@
  */
 
 export * from "./lib/OlpCopyrightProvider";
+export * from "./lib/OlpDataProvider";
