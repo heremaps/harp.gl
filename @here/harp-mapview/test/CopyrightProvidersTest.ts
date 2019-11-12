@@ -60,14 +60,20 @@ describe("CopyrightProviders", function() {
                             maxLevel: 20,
                             label: "label 1",
                             alt: "alt 1",
-                            boxes: [[0, 0, 10, 10], [10, 10, 20, 20]]
+                            boxes: [
+                                [0, 0, 10, 10],
+                                [10, 10, 20, 20]
+                            ]
                         },
                         {
                             minLevel: 10,
                             maxLevel: 20,
                             label: "label 2",
                             alt: "alt 2",
-                            boxes: [[-10, -10, 0, 0], [-20, -20, -10, -10]]
+                            boxes: [
+                                [-10, -10, 0, 0],
+                                [-20, -20, -10, -10]
+                            ]
                         },
                         {
                             minLevel: 1,

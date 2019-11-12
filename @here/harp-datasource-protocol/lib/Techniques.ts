@@ -48,10 +48,10 @@ export const TEXTURE_PROPERTY_KEYS = [
 ];
 
 // TODO: Can be removed, when all when interpolators are implemented as [[Expr]]s
-export type RemoveInterpolatedPropDef<T> = (T | InterpolatedPropertyDefinition<any>) extends T
+export type RemoveInterpolatedPropDef<T> = T | InterpolatedPropertyDefinition<any> extends T
     ? Exclude<T, InterpolatedPropertyDefinition<any>>
     : T;
-export type RemoveJsonExpr<T> = (T | JsonExpr) extends T ? Exclude<T, JsonExpr> : T;
+export type RemoveJsonExpr<T> = T | JsonExpr extends T ? Exclude<T, JsonExpr> : T;
 
 /**
  * Make runtime representation of technique attributes from JSON-compatible typings.
@@ -61,7 +61,7 @@ export type RemoveJsonExpr<T> = (T | JsonExpr) extends T ? Exclude<T, JsonExpr> 
  *  - JsonExpr -> Expr
  */
 export type MakeTechniqueAttrs<T> = {
-    [P in keyof T]: (T[P] | JsonExpr) extends T[P]
+    [P in keyof T]: T[P] | JsonExpr extends T[P]
         ? RemoveInterpolatedPropDef<RemoveJsonExpr<T[P]>> | Expr | InterpolatedProperty
         : T[P];
 };

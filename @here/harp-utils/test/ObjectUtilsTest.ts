@@ -35,7 +35,10 @@ describe("ObjectUtils", function() {
         it("basic arrray support", function() {
             basicDeepEqualAssertion([]);
             basicDeepEqualAssertion([1, "2"]);
-            basicDeepEqualAssertion([[1, 2], [2, 3]]);
+            basicDeepEqualAssertion([
+                [1, 2],
+                [2, 3]
+            ]);
             basicDeepEqualAssertion([1, "2"]);
 
             basicDeepEqualAssertion([null]);

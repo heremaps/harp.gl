@@ -26,7 +26,7 @@
         "@here/harp-geoutils": "^0.11.0",
         "@here/harp-mapview": "^0.11.0",
         "@here/harp-utils": "^0.11.0",
-        "@tweenjs/tween.js": "^17.4.0",
+        "@tweenjs/tween.js": "^18.4.2",
         "@types/tween.js": "^17.2.0"
     },
     "devDependencies": {
@@ -35,12 +35,12 @@
         "@types/node": "^12.0.8",
         "@types/sinon": "^7.0.13",
         "chai": "^4.0.2",
-        "cross-env": "^5.2.0",
+        "cross-env": "^6.0.3",
         "mocha": "^6.1.4",
         "sinon": "^7.1.1",
         "source-map-support": "^0.5.2",
         "three": "^0.110.0",
-        "typescript": "^3.6.4"
+        "typescript": "^3.7.2"
     },
     "peerDependencies": {
         "three": "^0.110.0"

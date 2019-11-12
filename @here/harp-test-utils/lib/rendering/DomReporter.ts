@@ -34,13 +34,10 @@ export class DomReporter {
         const mismatchedPixels = comparisonResult ? `: ${comparisonResult.mismatchedPixels}` : "";
 
         const imageTitle = Object.keys(imageProps)
-            .reduce(
-                (r, key) => {
-                    r.push(`${key}=${imageProps[key]}`);
-                    return r;
-                },
-                [] as string[]
-            )
+            .reduce((r, key) => {
+                r.push(`${key}=${imageProps[key]}`);
+                return r;
+            }, [] as string[])
             .join(" / ");
         document.body.appendChild(
             document.createTextNode(`IBCT ${imageTitle}: ${mismatchedPixels}`)

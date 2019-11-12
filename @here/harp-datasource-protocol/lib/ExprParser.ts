@@ -474,7 +474,10 @@ export class ExprParser {
                     elements.push(this.parseLiteral());
                 }
                 this.yyexpect(Token.RBracket);
-                expr = new ContainsExpr(expr, elements.map(literal => literal.value));
+                expr = new ContainsExpr(
+                    expr,
+                    elements.map(literal => literal.value)
+                );
             } else {
                 const op = getRelationalOp(this.lex.token());
                 if (op === undefined) {

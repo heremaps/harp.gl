@@ -198,7 +198,7 @@ export class AnimatedExtrusionTileHandler {
         this.m_animatedExtrusionRatio = value;
 
         this.m_extrudedObjects.forEach(object => {
-            const material = (object as (THREE.Mesh | THREE.LineSegments))
+            const material = (object as THREE.Mesh | THREE.LineSegments)
                 .material as ExtrusionFeature;
             material.extrusionRatio = this.m_animatedExtrusionRatio;
         });

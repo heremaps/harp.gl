@@ -138,6 +138,9 @@ describe("TileKeyUtils", function() {
         const expectedResult = [371506848, 371506849, 371506850, 371506851];
 
         const result = TileKeyUtils.geoRectangleToTileKeys(webMercatorTilingScheme, geoBox, 14);
-        assert.sameMembers(result.map(tk => tk.mortonCode()), expectedResult);
+        assert.sameMembers(
+            result.map(tk => tk.mortonCode()),
+            expectedResult
+        );
     });
 });

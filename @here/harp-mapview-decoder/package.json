@@ -40,11 +40,11 @@
         "@types/mocha": "^5.2.7",
         "@types/sinon": "^7.0.13",
         "chai": "^4.0.2",
-        "cross-env": "^5.2.0",
+        "cross-env": "^6.0.3",
         "mocha": "^6.1.4",
         "sinon": "^7.1.1",
         "source-map-support": "^0.5.2",
-        "typescript": "^3.6.4"
+        "typescript": "^3.7.2"
     },
     "publishConfig": {
         "access": "public"

@@ -35,7 +35,7 @@
         "ajv": "^6.10.2",
         "chai": "^4.0.2",
         "copyfiles": "^2.0.0",
-        "cross-env": "^5.2.0",
+        "cross-env": "^6.0.3",
         "github-download": "^0.5.0",
         "mkpath": "^1.0.0",
         "mocha": "^6.1.4",
@@ -43,7 +43,7 @@
         "source-map-support": "^0.5.2",
         "tmp": "^0.1.0",
         "ts-node": "^8.3.0",
-        "typescript": "^3.6.4"
+        "typescript": "^3.7.2"
     },
     "publishConfig": {
         "access": "public"

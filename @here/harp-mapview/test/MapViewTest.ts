@@ -49,7 +49,7 @@ describe("MapView", function() {
         webGlStub = sandbox
             .stub(THREE, "WebGLRenderer")
             .returns(TestUtils.getWebGLRendererStub(sandbox, clearColorStub));
-        fontStub = sandbox.stub(FontCatalog, "load").returns(new Promise(() => {}));
+        fontStub = sandbox.stub(FontCatalog, "load").returns(new Promise(() => {})) as any;
         if (inNodeContext) {
             const theGlobal: any = global;
             theGlobal.window = { window: { devicePixelRatio: 10 } };
@@ -88,11 +88,8 @@ describe("MapView", function() {
     //
     it.skip("Correctly sets geolocation and zoom", function() {
         const coords: GeoCoordinates = new GeoCoordinates(52.5145, 13.3501);
-        let rotationSpy: sinon.SinonSpy;
-        let zoomSpy: sinon.SinonSpy;
-
-        rotationSpy = sinon.spy(MapViewUtils, "setRotation");
-        zoomSpy = sinon.spy(MapViewUtils, "zoomOnTargetPosition");
+        const rotationSpy = sinon.spy(MapViewUtils, "setRotation");
+        const zoomSpy = sinon.spy(MapViewUtils, "zoomOnTargetPosition");
 
         mapView = new MapView({ canvas });
         mapView.setCameraGeolocationAndZoom(coords, 18, 10, 20);
