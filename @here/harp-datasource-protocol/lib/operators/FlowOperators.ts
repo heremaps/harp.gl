@@ -25,6 +25,39 @@ function conditionalCast(context: ExprEvaluatorContext, type: string, args: Expr
 }
 
 const operators = {
+    all: {
+        call: (context: ExprEvaluatorContext, call: CallExpr) => {
+            for (const childExpr of call.args) {
+                if (!context.evaluate(childExpr)) {
+                    return false;
+                }
+            }
+            return true;
+        }
+    },
+
+    any: {
+        call: (context: ExprEvaluatorContext, call: CallExpr) => {
+            for (const childExpr of call.args) {
+                if (context.evaluate(childExpr)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+    },
+
+    none: {
+        call: (context: ExprEvaluatorContext, call: CallExpr) => {
+            for (const childExpr of call.args) {
+                if (context.evaluate(childExpr)) {
+                    return false;
+                }
+            }
+            return true;
+        }
+    },
+
     boolean: {
         call: (context: ExprEvaluatorContext, call: CallExpr) => {
             return conditionalCast(context, "boolean", call.args);
