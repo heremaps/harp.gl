@@ -75,6 +75,15 @@ import { ThemeLoader } from "./ThemeLoader";
 import { Tile, TileFeatureData, TileObject } from "./Tile";
 import { MapViewUtils } from "./Utils";
 import { ResourceComputationType, VisibleTileSet, VisibleTileSetOptions } from "./VisibleTileSet";
+import {
+    BasicShadowMap,
+    PCFShadowMap,
+    PCFSoftShadowMap,
+    VSMShadowMap,
+    OrthographicCamera,
+    DirectionalLight,
+    Color
+} from "three";
 
 declare const process: any;
 
@@ -620,6 +629,13 @@ export interface MapViewOptions extends TextElementsRendererOptions {
      * @default undefined
      */
     enableMixedLod?: boolean;
+
+    /**
+     * Enable shadows in the map. Shadows will only be casted on features that use the "standard"
+     * or "extruded-polygon" technique in the map theme.
+     * @default false
+     */
+    enableShadows?: boolean;
 }
 
 /**
@@ -978,7 +994,8 @@ export class MapView extends THREE.EventDispatcher {
 
         this.m_animatedExtrusionHandler = new AnimatedExtrusionHandler(this);
 
-        this.m_backgroundDataSource = new BackgroundDataSource();
+        this.m_backgroundDataSource = new BackgroundDataSource(this.shadowsEnabled);
+        this.m_backgroundDataSource.color.set(this.clearColor);
         this.addDataSource(this.m_backgroundDataSource);
 
         if (this.m_enablePolarDataSource) {
@@ -1252,6 +1269,9 @@ export class MapView extends THREE.EventDispatcher {
         // Clear color.
         this.m_theme.clearColor = theme.clearColor;
         this.renderer.setClearColor(new THREE.Color(theme.clearColor));
+        if (this.m_backgroundDataSource !== undefined && theme.clearColor !== undefined) {
+            this.m_backgroundDataSource.color.set(theme.clearColor);
+        }
 
         // Images.
         this.m_theme.images = theme.images;
@@ -2504,6 +2524,10 @@ export class MapView extends THREE.EventDispatcher {
         return this.m_elevationProvider;
     }
 
+    get shadowsEnabled(): boolean {
+        return this.m_options.enableShadows === true ? true : false;
+    }
+
     /**
      * Plug-in PolarTileDataSource for spherical projection and plug-out otherwise
      */
@@ -3275,6 +3299,31 @@ export class MapView extends THREE.EventDispatcher {
                     return;
                 }
                 this.m_scene.add(light);
+                if ((light as any).isDirectionalLight) {
+                    const helper = new THREE.DirectionalLightHelper(
+                        light as DirectionalLight,
+                        50000
+                    );
+                    this.m_scene.add(helper);
+
+                    const cameraHelper = new THREE.CameraHelper(light.shadow.camera);
+                    this.m_scene.add(cameraHelper);
+                }
+                if (light.castShadow) {
+                    light.shadow.bias = 0.00001;
+                    light.shadow.mapSize.width = 1024;
+                    light.shadow.mapSize.height = 1024;
+                    Object.assign(light.shadow.camera, {
+                        top: 5000,
+                        left: -5000,
+                        right: 5000,
+                        bottom: -5000,
+                        far: 5000,
+                        near: 1
+                    });
+                    this.renderer.shadowMap.enabled = true;
+                    this.renderer.shadowMap.type = PCFSoftShadowMap;
+                }
                 this.m_createdLights!.push(light);
             });
         }

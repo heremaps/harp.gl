@@ -133,6 +133,9 @@ export function createDepthPrePassMesh(mesh: THREE.Mesh): THREE.Mesh {
         mesh.material instanceof Array
             ? mesh.material.map(createDepthPrePassMaterial)
             : createDepthPrePassMaterial(mesh.material);
+    // if (!(depthPassMaterial instanceof Array)) {
+    //     mesh.customDepthMaterial = depthPassMaterial;
+    // }
 
     const depthPassMesh = new THREE.Mesh(depthPassGeometry, depthPassMaterial);
     depthPassMesh.renderOrder = mesh.renderOrder - DEPTH_PRE_PASS_RENDER_ORDER_OFFSET;
