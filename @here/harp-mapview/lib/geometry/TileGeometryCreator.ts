@@ -210,6 +210,13 @@ export class TileGeometryCreator {
         this.createTextElements(tile, decodedTile, textFilter);
 
         this.createLabelRejectionElements(tile, decodedTile);
+
+        if (tile.dataSource.addGroundPlane) {
+            // The ground plane is required for when we change the zoom back and we fall back to the
+            // parent, in that case we reduce the renderOrder of the parent tile and this ground place
+            // ensures that parent doesn't come through.
+            TileGeometryCreator.instance.addGroundPlane(tile, -10000);
+        }
     }
 
     createLabelRejectionElements(tile: Tile, decodedTile: DecodedTile) {
@@ -1188,7 +1195,7 @@ export class TileGeometryCreator {
     /**
      * Creates and add a background plane for the tile.
      */
-    addGroundPlane(tile: Tile) {
+    addGroundPlane(tile: Tile, renderOrder: number) {
         const mapView = tile.mapView;
         const dataSource = tile.dataSource;
         const projection = tile.projection;
@@ -1241,13 +1248,20 @@ export class TileGeometryCreator {
                 depthWrite: true
             });
             const mesh = new THREE.Mesh(g, material);
-            mesh.renderOrder = Number.MIN_SAFE_INTEGER;
+            mesh.renderOrder = renderOrder;
             this.registerTileObject(tile, mesh, GeometryKind.Background);
             tile.objects.push(mesh);
         } else {
             // Add a ground plane to the tile.
             tile.boundingBox.getSize(tmpV);
-            const groundPlane = this.createPlane(tmpV.x, tmpV.y, tile.center, color, true);
+            const groundPlane = this.createPlane(
+                tmpV.x,
+                tmpV.y,
+                tile.center,
+                color,
+                true,
+                renderOrder
+            );
 
             this.registerTileObject(tile, groundPlane, GeometryKind.Background);
             tile.objects.push(groundPlane);
@@ -1314,7 +1328,8 @@ export class TileGeometryCreator {
         height: number,
         planeCenter: THREE.Vector3,
         colorHex: number,
-        isVisible: boolean
+        isVisible: boolean,
+        renderOrder: number
     ): THREE.Mesh {
         const geometry = new THREE.PlaneGeometry(width, height, 1);
         // TODO cache the material HARP-4207
@@ -1326,7 +1341,7 @@ export class TileGeometryCreator {
         const plane = new THREE.Mesh(geometry, material);
         plane.position.copy(planeCenter);
         // Render before everything else
-        plane.renderOrder = Number.MIN_SAFE_INTEGER;
+        plane.renderOrder = renderOrder;
         return plane;
     }
 

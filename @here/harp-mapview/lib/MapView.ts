@@ -134,6 +134,8 @@ const DEFAULT_CAM_NEAR_PLANE = 0.1;
 const DEFAULT_CAM_FAR_PLANE = 4000000;
 const MAX_FIELD_OF_VIEW = 140;
 const MIN_FIELD_OF_VIEW = 10;
+// All objects in fallback tiles are reduced by this amount.
+const FALLBACK_RENDER_ORDER_OFFSET = 20000;
 
 const DEFAULT_MIN_ZOOM_LEVEL = 1;
 
@@ -2816,6 +2818,18 @@ export class MapView extends THREE.EventDispatcher {
                     object.setRotationFromMatrix(tile.boundingBox.getRotationMatrix());
                 }
                 object.frustumCulled = false;
+                if (object.backupRenderOrder === undefined) {
+                    object.backupRenderOrder = object.renderOrder;
+                }
+                // All objects in a fallback tile must be shifted, such that their renderOrder is
+                // less than the groundPlane that each neighbouring Tile has (it has a renderOrder
+                // of -10000, see addGroundPlane in TileGeometryCreator), only then can we be sure
+                // that nothing of the parent will be rendered on top of the children, as such, we
+                // shift using the FALLBACK_RENDER_ORDER_OFFSET.
+                object.renderOrder = tile.isFallback
+                    ? object.backupRenderOrder - FALLBACK_RENDER_ORDER_OFFSET
+                    : object.backupRenderOrder;
+
                 this.m_mapTilesRoot.add(object);
             }
         }
