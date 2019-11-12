@@ -615,7 +615,7 @@ export class TextElementsRenderer {
         renderList.forEach(renderListEntry => {
             const startLinePointProj = new THREE.Vector3();
             const endLinePointProj = new THREE.Vector3();
-            for (const tile of renderListEntry.visibleTiles) {
+            for (const tile of renderListEntry.renderedTiles.values()) {
                 for (const pathBlockingElement of tile.blockingElements) {
                     if (pathBlockingElement.points.length < 2) {
                         continue;
@@ -1171,7 +1171,7 @@ export class TextElementsRenderer {
             this.updateTextElementsFromSource(
                 tileList.dataSource,
                 tileList.storageLevel,
-                tileList.visibleTiles,
+                Array.from(tileList.renderedTiles.values()),
                 updateStartTime
             );
         });
