@@ -649,15 +649,19 @@ export class TextElementsRenderer {
         this.m_screenCollisions.allocateIBoxes(boxes);
     }
 
+    /**
+     * @returns True if whole group was processed for placement,
+     * false otherwise (e.g. placement limit reached).
+     */
     private placeTextElementGroup(
         groupState: TextElementGroupState,
         mapViewState: MapViewState,
         maxNumPlacedLabels: number,
         pass: Pass
-    ) {
+    ): boolean {
         if (this.m_textRenderers.length === 0) {
             logger.warn("No text renderers initialized.");
-            return;
+            return false;
         }
 
         const textElementStates = groupState.sortedTextElementStates(
@@ -687,7 +691,7 @@ export class TextElementsRenderer {
                 mapViewState.numRenderedTextElements >= maxNumPlacedLabels
             ) {
                 logger.debug("Placement label limit exceeded.");
-                break;
+                return false;
             }
 
             // Skip all labels that are not initialized (didn't pass early placement tests)
@@ -860,6 +864,7 @@ export class TextElementsRenderer {
                 );
             }
         }
+        return true;
     }
 
     private initializeDefaultAssets(): void {
@@ -1416,12 +1421,16 @@ export class TextElementsRenderer {
                 currentPriority = newPriority;
                 currentPriorityBegin = i;
             }
-            this.placeTextElementGroup(
-                textElementGroupState,
-                mapViewState,
-                maxNumPlacedTextElements,
-                Pass.PersistentLabels
-            );
+            if (
+                !this.placeTextElementGroup(
+                    textElementGroupState,
+                    mapViewState,
+                    maxNumPlacedTextElements,
+                    Pass.PersistentLabels
+                )
+            ) {
+                break;
+            }
 
             if (isPlacementTimeExceeded(placeStartTime)) {
                 break;
@@ -1448,12 +1457,16 @@ export class TextElementsRenderer {
     ) {
         const groupStates = this.m_textElementStateCache.sortedGroupStates;
         for (let i = beginGroupIndex; i < endGroupIndex; ++i) {
-            this.placeTextElementGroup(
-                groupStates[i],
-                mapViewState,
-                this.m_maxNumVisibleLabels!,
-                Pass.NewLabels
-            );
+            if (
+                !this.placeTextElementGroup(
+                    groupStates[i],
+                    mapViewState,
+                    this.m_maxNumVisibleLabels!,
+                    Pass.NewLabels
+                )
+            ) {
+                break;
+            }
         }
     }
 
