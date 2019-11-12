@@ -192,56 +192,28 @@ export class ExprEvaluator implements ExprVisitor<Value, ExprEvaluatorContext> {
     }
 
     visitCallExpr(expr: CallExpr, context: ExprEvaluatorContext): Value {
-        switch (expr.op) {
-            case "all":
-                for (const childExpr of expr.args) {
-                    if (!childExpr.accept(this, context)) {
-                        return false;
-                    }
-                }
-                return true;
-
-            case "any":
-                for (const childExpr of expr.args) {
-                    if (childExpr.accept(this, context)) {
-                        return true;
-                    }
-                }
-                return false;
-
-            case "none":
-                for (const childExpr of expr.args) {
-                    if (childExpr.accept(this, context)) {
-                        return false;
-                    }
-                }
-                return true;
-
-            default: {
-                if (context.cache !== undefined) {
-                    const v = context.cache.get(expr);
-                    if (v !== undefined) {
-                        return v;
-                    }
-                }
-
-                const descriptor = expr.descriptor || operatorDescriptors.get(expr.op);
-
-                if (descriptor) {
-                    expr.descriptor = descriptor;
-
-                    const result = descriptor.call(context, expr);
-
-                    if (context.cache) {
-                        context.cache.set(expr, result);
-                    }
-
-                    return result;
-                }
-
-                throw new Error(`undefined operator '${expr.op}`);
+        if (context.cache !== undefined) {
+            const v = context.cache.get(expr);
+            if (v !== undefined) {
+                return v;
             }
-        } // switch
+        }
+
+        const descriptor = expr.descriptor || operatorDescriptors.get(expr.op);
+
+        if (descriptor) {
+            expr.descriptor = descriptor;
+
+            const result = descriptor.call(context, expr);
+
+            if (context.cache) {
+                context.cache.set(expr, result);
+            }
+
+            return result;
+        }
+
+        throw new Error(`undefined operator '${expr.op}`);
     }
 }
 
