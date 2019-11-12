@@ -27,6 +27,7 @@ import {
     isSegmentsTechnique,
     isSolidLineTechnique,
     isSquaresTechnique,
+    isStandardTechnique,
     isTerrainTechnique,
     isTextTechnique,
     MakeTechniqueAttrs,
@@ -220,6 +221,11 @@ export class TileGeometryCreator {
 
         // HARP-7899, disable ground plane for globe
         if (tile.dataSource.addGroundPlane && tile.projection.type === ProjectionType.Planar) {
+            const material = this.createGroundPlaneMaterial(
+                new THREE.Color(tile.mapView.clearColor),
+                tile.mapView.shadowsEnabled
+            );
+
             // The ground plane is required for when we change the zoom back and we fall back to the
             // parent, in that case we reduce the renderOrder of the parent tile and this ground
             // place ensures that parent doesn't come through. This value must be above the
@@ -228,7 +234,11 @@ export class TileGeometryCreator {
             // concretely, we assume all objects are rendered with a renderOrder between 0 and
             // FALLBACK_RENDER_ORDER_OFFSET / 2, i.e. 10000. The ground plane is put at -10000, and
             // the fallback tiles have their renderOrder set between -20000 and -10000
-            TileGeometryCreator.instance.addGroundPlane(tile, -FALLBACK_RENDER_ORDER_OFFSET / 2);
+            TileGeometryCreator.instance.addGroundPlane(
+                tile,
+                -FALLBACK_RENDER_ORDER_OFFSET / 2,
+                material
+            );
         }
     }
 
@@ -829,6 +839,14 @@ export class TileGeometryCreator {
 
                 this.addUserData(tile, srcGeometry, technique, object);
 
+                if (mapView.shadowsEnabled) {
+                    if (isExtrudedPolygonTechnique(technique)) {
+                        object.castShadow = true;
+                        object.receiveShadow = true;
+                    } else if (isStandardTechnique(technique)) {
+                        object.receiveShadow = true;
+                    }
+                }
                 if (isExtrudedPolygonTechnique(technique) || isFillTechnique(technique)) {
                     // filled polygons are normal meshes, and need transparency only when fading or
                     // dynamic properties is defined.
@@ -1282,16 +1300,7 @@ export class TileGeometryCreator {
      * @param tile Tile
      * @param renderOrder Render order of the tile
      */
-    addGroundPlane(tile: Tile, renderOrder: number) {
-        const mapView = tile.mapView;
-        const depthWrite = mapView.projection.type === ProjectionType.Spherical;
-        const color = mapView.clearColor;
-
-        const material = new MapMeshBasicMaterial({
-            color,
-            visible: true,
-            depthWrite
-        });
+    addGroundPlane(tile: Tile, renderOrder: number, material: THREE.Material) {
         const mesh = this.createGroundPlane(tile, material, false);
         mesh.renderOrder = renderOrder;
         this.registerTileObject(tile, mesh, GeometryKind.Background);
@@ -1367,6 +1376,23 @@ export class TileGeometryCreator {
         });
     }
 
+    private createGroundPlaneMaterial(color: THREE.Color, shadowsEnabled: boolean): THREE.Material {
+        if (shadowsEnabled) {
+            return new MapMeshStandardMaterial({
+                color,
+                visible: true,
+                depthWrite: true,
+                roughness: 1.0
+            });
+        } else {
+            return new MapMeshBasicMaterial({
+                color,
+                visible: true,
+                depthWrite: true
+            });
+        }
+    }
+
     private setupTerrainMaterial(
         technique: TerrainTechnique,
         material: THREE.Material,
@@ -1412,6 +1438,36 @@ export class TileGeometryCreator {
         (material as MapMeshStandardMaterial).displacementMap!.needsUpdate = true;
     }
 
+<<<<<<< HEAD
+=======
+    /**
+     * Create a simple flat plane for a [[Tile]].
+     *
+     * @param {number} width Width of plane.
+     * @param {number} height Height of plane.
+     * @param {THREE.Vector3} planeCenter Center of plane.
+     * @param {THREE.Material} material Material of the plane mesh.
+     * @param {boolean} isVisible `True` to make the mesh visible.
+     * @returns {THREE.Mesh} The created plane.
+     */
+    private createPlane(
+        width: number,
+        height: number,
+        planeCenter: THREE.Vector3,
+        renderOrder: number,
+        material: THREE.Material
+    ): THREE.Mesh {
+        const geometry = new THREE.PlaneGeometry(width, height, 1);
+        const plane = new THREE.Mesh(geometry, material);
+        plane.receiveShadow = true;
+        plane.castShadow = false;
+        plane.position.copy(planeCenter);
+        // Render before everything else
+        plane.renderOrder = renderOrder;
+        return plane;
+    }
+
+>>>>>>> WIP: Enable shadows in the map
     private addUserData(
         tile: Tile,
         srcGeometry: Geometry,
