@@ -200,7 +200,7 @@ let missingOmvDecoderServiceInfoEmitted: boolean = false;
 export class OmvDataSource extends TileDataSource<OmvTile> {
     private readonly m_decoderOptions: OmvDecoderOptions;
 
-    constructor(private m_params: OmvWithRestClientParams | OmvWithCustomDataProvider) {
+    constructor(protected m_params: OmvWithRestClientParams | OmvWithCustomDataProvider) {
         super(m_params.tileFactory || new TileFactory(OmvTile), {
             styleSetName: m_params.styleSetName || "omv",
             name: m_params.name,
