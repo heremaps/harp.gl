@@ -454,7 +454,7 @@ export class OmvRestClient implements DataProvider {
         let queryString = "";
         let concatinator = url.indexOf("?") !== -1 ? "&" : "?";
         Object.getOwnPropertyNames(queryParams).forEach(property => {
-            const prop = property as keyof (typeof queryParams);
+            const prop = property as keyof typeof queryParams;
             queryString += concatinator + prop + "=" + queryParams[prop];
             if (concatinator === "?") {
                 concatinator = "&";

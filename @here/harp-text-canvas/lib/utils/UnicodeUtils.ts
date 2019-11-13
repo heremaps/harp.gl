@@ -43,7 +43,11 @@ export namespace UnicodeUtils {
      * Range of Unicode code points considered as `NewLine`.
      * https://en.wikipedia.org/wiki/Newline#Unicode
      */
-    export const newLineRanges = [[0x000a, 0x000d], [0x0085, 0x0085], [0x2028, 0x2029]];
+    export const newLineRanges = [
+        [0x000a, 0x000d],
+        [0x0085, 0x0085],
+        [0x2028, 0x2029]
+    ];
 
     /**
      * Checks if a character should be considered as a new line.
@@ -65,7 +69,10 @@ export namespace UnicodeUtils {
      * Range of Unicode code points considered as non-printable.
      * https://en.wikipedia.org/wiki/Unicode_control_characters
      */
-    export const nonPrintableRanges = [[0x0000, 0x001f], [0x007f, 0x009f]];
+    export const nonPrintableRanges = [
+        [0x0000, 0x001f],
+        [0x007f, 0x009f]
+    ];
 
     /**
      * Checks if a character's can be printed (rendered).
@@ -137,7 +144,11 @@ export namespace UnicodeUtils {
      * https://en.wikipedia.org/wiki/Basic_Latin_(Unicode_block)#Table_of_characters
      * https://en.wikipedia.org/wiki/Arabic_(Unicode_block)#Block
      */
-    export const weakBidirectionalRanges = [[0x0030, 0x0039], [0x0660, 0x0669], [0x06f0, 0x06f9]];
+    export const weakBidirectionalRanges = [
+        [0x0030, 0x0039],
+        [0x0660, 0x0669],
+        [0x06f0, 0x06f9]
+    ];
 
     /**
      * Returns the Unicode's character direction.

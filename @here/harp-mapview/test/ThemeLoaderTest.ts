@@ -155,7 +155,7 @@ describe("ThemeLoader", function() {
             const roadStyle = r.find(s => s.description === "roads")!;
             assert.exists(roadStyle);
             assert.equal(roadStyle.technique, "solid-line");
-            const roadStyleCasted = (roadStyle as any) as (SolidLineStyle & StyleSelector);
+            const roadStyleCasted = (roadStyle as any) as SolidLineStyle & StyleSelector;
             assert.equal(roadStyleCasted.description, "roads");
             assert.deepEqual(
                 roadStyleCasted.when,
@@ -193,7 +193,7 @@ describe("ThemeLoader", function() {
             assert.exists(roadStyle);
             assert.equal(roadStyle.technique, "solid-line");
 
-            const roadStyleCasted = (roadStyle as any) as (SolidLineStyle & StyleSelector);
+            const roadStyleCasted = (roadStyle as any) as SolidLineStyle & StyleSelector;
 
             assert.deepEqual(roadStyleCasted.when, [
                 "all",
@@ -348,7 +348,10 @@ describe("ThemeLoader", function() {
                         }
                     },
                     styles: {
-                        tilezen: [["ref", "roadStyle"], ["ref", "badStyleRef"]]
+                        tilezen: [
+                            ["ref", "roadStyle"],
+                            ["ref", "badStyleRef"]
+                        ]
                     }
                 },
                 { logger: loggerMock, resolveDefinitions: true }

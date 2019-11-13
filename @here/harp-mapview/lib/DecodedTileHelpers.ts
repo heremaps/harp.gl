@@ -215,7 +215,7 @@ export function createMaterial(
         // The shader technique takes the argument from its `params' member.
         const params = technique.params as { [key: string]: any };
         Object.getOwnPropertyNames(params).forEach(property => {
-            const prop = property as keyof (typeof params);
+            const prop = property as keyof typeof params;
             if (prop === "name") {
                 // skip reserved property names
                 return;
@@ -448,7 +448,7 @@ export function applyTechniqueToMaterial(
         ) {
             return;
         }
-        const prop = propertyName as keyof (typeof technique);
+        const prop = propertyName as keyof typeof technique;
         const m = material as any;
         if (typeof m[prop] === "undefined") {
             return;

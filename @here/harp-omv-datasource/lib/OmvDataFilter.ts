@@ -568,12 +568,14 @@ export class OmvGenericFeatureFilter implements OmvFeatureFilter {
 
     constructor(private description: OmvFeatureFilterDescription) {
         if (this.description.kindsToProcess.length > 0) {
-            this.enabledKinds = new GeometryKindSet(this.description
-                .kindsToProcess as GeometryKind[]);
+            this.enabledKinds = new GeometryKindSet(
+                this.description.kindsToProcess as GeometryKind[]
+            );
         }
         if (this.description.kindsToIgnore.length > 0) {
-            this.disabledKinds = new GeometryKindSet(this.description
-                .kindsToIgnore as GeometryKind[]);
+            this.disabledKinds = new GeometryKindSet(
+                this.description.kindsToIgnore as GeometryKind[]
+            );
         }
     }
 
