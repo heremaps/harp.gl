@@ -1801,8 +1801,8 @@ export class TextElementsRenderer {
             renderText &&
             // Do not render if the distance is too great and distance shouldn't be ignored.
             (pointLabel.ignoreDistance === true ||
-                (labelState.viewDistance === undefined ||
-                    labelState.viewDistance < poiTextMaxDistance)) &&
+                labelState.viewDistance === undefined ||
+                labelState.viewDistance < poiTextMaxDistance) &&
             // Do not render text if POI cannot be rendered and is not optional.
             (poiInfo === undefined || poiInfo.isValid === true || poiInfo.iconIsOptional !== false);
 
@@ -1866,7 +1866,8 @@ export class TextElementsRenderer {
                     (textIsFadingIn ||
                         textIsFadingOut ||
                         !mapViewState.cameraIsMoving ||
-                        (poiInfo === undefined || poiInfo.renderTextDuringMovements === true)) &&
+                        poiInfo === undefined ||
+                        poiInfo.renderTextDuringMovements === true) &&
                     !iconRenderState.isFadedOut()
                 ) {
                     let textFading = false;

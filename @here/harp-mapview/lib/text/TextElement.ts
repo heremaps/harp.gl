@@ -432,7 +432,8 @@ export class TextElement {
     get isLineMarker(): boolean {
         return (
             this.points !== undefined &&
-            (this.m_poiInfo !== undefined && isLineMarkerTechnique(this.m_poiInfo.technique))
+            this.m_poiInfo !== undefined &&
+            isLineMarkerTechnique(this.m_poiInfo.technique)
         );
     }
 

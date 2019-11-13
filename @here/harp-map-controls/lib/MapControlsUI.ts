@@ -86,7 +86,8 @@ export class MapControlsUI {
                 !event ||
                 !event.target ||
                 !(event.target as any).contains ||
-                (event.target === input || (event.target as HTMLElement).contains(input))
+                event.target === input ||
+                (event.target as HTMLElement).contains(input)
             ) {
                 return;
             }

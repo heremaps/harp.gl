@@ -53,7 +53,10 @@ const TEST_JSON: GeoJson = {
             type: "Feature",
             geometry: {
                 type: "LineString",
-                coordinates: [[1, 2], [3, 4]]
+                coordinates: [
+                    [1, 2],
+                    [3, 4]
+                ]
             },
             properties: {
                 name: "blablabla"
@@ -64,8 +67,16 @@ const TEST_JSON: GeoJson = {
             geometry: {
                 type: "Polygon",
                 coordinates: [
-                    [[1, 0], [3, 4], [5, 0]], // Main shape.
-                    [[2, 1], [3, 2], [4, 1]] // Hole to test hole support.
+                    [
+                        [1, 0],
+                        [3, 4],
+                        [5, 0]
+                    ], // Main shape.
+                    [
+                        [2, 1],
+                        [3, 2],
+                        [4, 1]
+                    ] // Hole to test hole support.
                 ]
             },
             properties: {

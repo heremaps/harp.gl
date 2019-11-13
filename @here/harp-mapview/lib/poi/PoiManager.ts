@@ -664,8 +664,8 @@ export class PoiManager {
                     technique.backgroundOpacity !== undefined
                         ? getPropertyValue(technique.backgroundOpacity, Math.floor(zoomLevel))
                         : technique.backgroundColor !== undefined &&
-                          (technique.backgroundSize !== undefined &&
-                              getPropertyValue(technique.backgroundSize, Math.floor(zoomLevel)) > 0)
+                          technique.backgroundSize !== undefined &&
+                          getPropertyValue(technique.backgroundSize, Math.floor(zoomLevel)) > 0
                         ? 1.0 // make label opaque when backgroundColor and backgroundSize are set
                         : defaultRenderParams.backgroundOpacity
             };
@@ -697,12 +697,12 @@ export class PoiManager {
             const defaultLayoutParams =
                 renderer !== undefined ? renderer.defaultStyle.layoutParams : {};
 
-            const hAlignment = getPropertyValue(technique.hAlignment, floorZoomLevel) as (
+            const hAlignment = getPropertyValue(technique.hAlignment, floorZoomLevel) as
                 | string
-                | undefined);
-            const vAlignment = getPropertyValue(technique.vAlignment, floorZoomLevel) as (
+                | undefined;
+            const vAlignment = getPropertyValue(technique.vAlignment, floorZoomLevel) as
                 | string
-                | undefined);
+                | undefined;
 
             const horizontalAlignment: HorizontalAlignment | undefined =
                 hAlignment === "Left" || hAlignment === "Center" || hAlignment === "Right"

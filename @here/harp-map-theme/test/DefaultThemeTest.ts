@@ -110,13 +110,13 @@ describe("Berlin Theme", function() {
                             assert(isJsonExprReference(style));
                             assert.isDefined(theme.definitions);
                             const refName = style[1] as string;
-                            style = theme.definitions![refName] as (Style & StyleSelector);
+                            style = theme.definitions![refName] as Style & StyleSelector;
                             assert.isDefined(style, `invalid reference: ${style}`);
                         }
                         const location = `${styleSetName}[${i}]`;
                         if (typeof style.when === "string") {
                             assert.doesNotThrow(() =>
-                                Expr.parse((style as (Style & StyleSelector)).when as string)
+                                Expr.parse((style as Style & StyleSelector).when as string)
                             );
                         } else {
                             assertExprValid(style.when, theme.definitions, `${location}.when`);
