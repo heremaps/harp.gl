@@ -166,6 +166,36 @@ export function installMiddleware(app: express.Router, basePath: string) {
     logger.info("accepting IBCT results at /ibct-feedback endpoint");
 }
 
+function createExpressRouter(): express.Router {
+    const router = express.Router();
+    installMiddleware(router, outputBasePath);
+    return router;
+}
+
+let expressRouter: express.Router | undefined;
+
+export function expressMiddleware(
+    req: express.Request,
+    res: express.Response,
+    next: express.NextFunction
+) {
+    if (expressRouter === undefined) {
+        expressRouter = createExpressRouter();
+    }
+    return expressRouter(req, res, next);
+}
+
+/**
+ * Default export is `express` middleware function.
+ *
+ * Usage
+ * ```
+ * import RenderTestResultServer from "..."
+ * app.use(RenderTestResultServer);
+ * ```
+ */
+export default expressMiddleware;
+
 /**
  * Start `FeedbackServer` as simple, standalone HTTP server which
  * * supports /ibct-feedback endpoint
