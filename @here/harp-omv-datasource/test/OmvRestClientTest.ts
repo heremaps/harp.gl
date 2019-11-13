@@ -39,7 +39,7 @@ describe("OmvRestClient", function() {
     let downloadSpy: sinon.SinonSpy;
 
     beforeEach(function() {
-        downloadSpy = sinon.spy(mockDownloadManager, "download");
+        downloadSpy = (sinon.spy(mockDownloadManager, "download") as any) as sinon.SinonSpy;
     });
 
     afterEach(function() {
