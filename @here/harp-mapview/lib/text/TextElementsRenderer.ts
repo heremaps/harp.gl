@@ -1714,7 +1714,6 @@ export class TextElementsRenderer {
         // Check if icon should be rendered at this zoomLevel
         let renderIcon =
             poiInfo !== undefined &&
-            groupState.visited &&
             MathUtils.isClamped(
                 mapViewState.zoomLevel,
                 poiInfo.iconMinZoomLevel,
@@ -1738,7 +1737,18 @@ export class TextElementsRenderer {
                 tempBox2D
             );
 
-            if (iconIsVisible) {
+            // If the icon is prepared and valid, but just not visible, try again next time.
+            if (!iconIsVisible) {
+                // Forced making it un-current.
+                iconRenderState.lastFrameNumber = -1;
+
+                if (placementStats) {
+                    ++placementStats.numNotVisible;
+                }
+                return false;
+            }
+
+            if (groupState.visited) {
                 iconSpaceAvailable = poiRenderer.isSpaceAvailable(
                     this.m_screenCollisions,
                     tempBox2D
@@ -1772,16 +1782,9 @@ export class TextElementsRenderer {
                         iconRenderState.startFadeIn(mapViewState.frameNumber, mapViewState.time);
                     }
                 }
-            }
-            // If the icon is prepared and valid, but just not visible, try again next time.
-            else {
-                // Forced making it un-current.
-                iconRenderState.lastFrameNumber = -1;
-
-                if (placementStats) {
-                    ++placementStats.numNotVisible;
-                }
-                return false;
+            } else if (iconRenderState.isVisible()) {
+                iconRenderState.startFadeOut(mapViewState.frameNumber, mapViewState.time);
+                iconRenderState.lastFrameNumber = mapViewState.frameNumber;
             }
         }
 
