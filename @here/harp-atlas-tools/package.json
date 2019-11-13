@@ -48,7 +48,7 @@
     },
     "devDependencies": {
         "ts-node": "^8.3.0",
-        "typescript": "^3.6.4"
+        "typescript": "^3.7.2"
     },
     "publishConfig": {
         "access": "public"
