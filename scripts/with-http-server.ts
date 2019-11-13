@@ -9,18 +9,20 @@ declare const require: any;
 
 // tslint:disable:no-console
 
-// tslint:disable-next-line:no-var-requires
-const handler = require("serve-handler");
 import * as child_process from "child_process";
 import * as commander from "commander";
+import * as express from "express";
 import * as http from "http";
 import * as path from "path";
 
-// tslint:disable-next-line:no-var-requires
-
+const modulesToLoad: string[] = [];
+function addLoadedModule(val: string) {
+    modulesToLoad.push(val);
+}
 commander
     .usage("[options] COMMAND")
     .option("-p, --port <PORT>", "change port number", 8000)
+    .option("-r, --require <MODULE>", "load module as middleware", addLoadedModule)
     .option("-C, --dir <DIR>", "serve files from DIR", process.cwd());
 
 commander.parse(process.argv);
@@ -31,16 +33,29 @@ if (command.length < 1) {
 }
 
 const dir = path.resolve(process.cwd(), commander.opts().dir);
-const server = http.createServer((request, response) => {
-    if (request.url === "/") {
-        request.url = "/index.html";
+
+const app = express();
+for (const modulePath of modulesToLoad) {
+    try {
+        // tslint:disable-next-line:no-var-requires
+        const module = require(modulePath);
+        const middleware =
+            typeof module === "function"
+                ? module
+                : typeof module.default === "function"
+                ? module.default
+                : undefined;
+        if (!middleware) {
+            throw new Error("module is not express middleware");
+        }
+        app.use(middleware);
+    } catch (error) {
+        console.error(`with-http-server: failed to load module '${modulePath}': ${error}`, error);
+        process.exit(2);
     }
-    const serveHandlerOptions = {
-        cleanUrls: false,
-        public: dir
-    };
-    return handler(request, response, serveHandlerOptions);
-});
+}
+app.use(express.static(dir));
+const server = http.createServer(app);
 
 const port: number = commander.opts().port || 8000;
 
