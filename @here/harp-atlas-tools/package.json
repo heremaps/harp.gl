@@ -37,7 +37,7 @@
     ],
     "dependencies": {
         "@types/mkpath": "^0.1.29",
-        "commander": "^2.20.0",
+        "commander": "^4.0.1",
         "glob": "^7.1.4",
         "jimp": "^0.2.28",
         "mkpath": "^1.0.0",
