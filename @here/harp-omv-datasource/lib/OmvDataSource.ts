@@ -70,18 +70,6 @@ export interface OmvDataSourceParameters {
     layerName?: string;
 
     /**
-     * Proxy URL to use.
-     * @see [[HypeDataProviderOptions]].
-     */
-    proxyDataUrl?: string;
-
-    /**
-     * Version of the catalog to obtain. If not specified, the latest available catalog is fetched.
-     * @see [[HypeDataProviderOptions]].
-     */
-    catalogVersion?: number;
-
-    /**
      * If set to `true`, features that have no technique in the theme will be printed to the console
      * (can be excessive!).
      */
