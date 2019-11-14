@@ -77,13 +77,28 @@ export namespace ThreeBufferUtils {
             vertexAttribute.name = name;
             vertexAttributes.push(vertexAttribute);
         }
-        const index = fromThreeBufferAttribute(bufferGeometry.index);
+        const index =
+            bufferGeometry.index !== null
+                ? fromThreeBufferAttribute(bufferGeometry.index)
+                : undefined;
+
+        let count = 0;
+        if (index !== undefined) {
+            count = bufferGeometry.index.count;
+        } else {
+            // If there is no index buffer, try to deduce the count from the position attribute.
+            const posAttr = bufferGeometry.attributes.position as ThreeBufferAttribute;
+            if (posAttr === undefined) {
+                throw new Error("Missing position attibute to deduce item count");
+            }
+            count = posAttr.count;
+        }
 
         return {
             type: GeometryType.Unspecified,
             vertexAttributes,
             index,
-            groups: [{ start: 0, count: bufferGeometry.index.count, technique: techniqueIndex }]
+            groups: [{ start: 0, count, technique: techniqueIndex }]
         };
     }
 }
