@@ -860,6 +860,7 @@ export class MapView extends THREE.EventDispatcher {
                     : this.m_options.powerPreference
         });
         this.m_renderer.autoClear = false;
+        this.m_renderer.localClippingEnabled = true;
 
         // This is a bit of a misnomer, this is required for the clipping planes
         // to be enabled, and they are in world space, see:

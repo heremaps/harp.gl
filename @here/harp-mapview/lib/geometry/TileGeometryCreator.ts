@@ -48,7 +48,7 @@ import {
     SolidLineMaterial
 } from "@here/harp-materials";
 import { ContextualArabicConverter } from "@here/harp-text-canvas";
-import { chainCallbacks, LoggerManager } from "@here/harp-utils";
+import { LoggerManager } from "@here/harp-utils";
 import * as THREE from "three";
 
 import { AnimatedExtrusionTileHandler } from "../AnimatedExtrusionHandler";
@@ -60,7 +60,7 @@ import {
     setDepthPrePassStencil
 } from "../DepthPrePass";
 import { DisplacementMap, TileDisplacementMap } from "../DisplacementMap";
-import { FALLBACK_RENDER_ORDER_OFFSET } from "../MapView";
+import { FALLBACK_RENDER_ORDER_OFFSET, MapView } from "../MapView";
 import { MapViewPoints } from "../MapViewPoints";
 import { PathBlockingElement } from "../PathBlockingElement";
 import { TextElement } from "../text/TextElement";
@@ -106,13 +106,21 @@ export interface PolygonFadingParameters extends FadingParameters {
  */
 export class TileGeometryCreator {
     private static m_instance: TileGeometryCreator;
+
     // These are used for clipping the geometry so that the overlapping geometry is removed.
-    private clippingPlanes = [
-        new THREE.Plane(new THREE.Vector3(-1, 0, 0), 0),
-        new THREE.Plane(new THREE.Vector3(1, 0, 0), 0),
-        new THREE.Plane(new THREE.Vector3(0, -1, 0), 0),
-        new THREE.Plane(new THREE.Vector3(0, 1, 0), 0)
-    ];
+    private eastPoint = new THREE.Vector3();
+    private westPoint = new THREE.Vector3();
+    private northPoint = new THREE.Vector3();
+    private southPoint = new THREE.Vector3();
+    private northEastPoint = new THREE.Vector3();
+    private southWestPoint = new THREE.Vector3();
+    private northWestPoint = new THREE.Vector3();
+    private southEastPoint = new THREE.Vector3();
+    private tilePosition = new THREE.Vector3();
+    private tileRightPosition = new THREE.Vector3();
+    private tileLeftPosition = new THREE.Vector3();
+    private tileTopPosition = new THREE.Vector3();
+    private tileBottomPosition = new THREE.Vector3();
 
     /**
      * The `instance` of the `TileGeometryCreator`.
@@ -725,49 +733,9 @@ export class TileGeometryCreator {
                     object.userData.geometryId = srcGeometry.uuid;
                 }
 
+                // Add clipping planes for fill technique objects.
                 if (isFillTechnique(technique)) {
-                    object.onBeforeRender = chainCallbacks(
-                        object.onBeforeRender,
-                        (_renderer, _scene, _camera, _geometry, _material) => {
-                            if (_material.clippingPlanes === null) {
-                                _material.clippingPlanes = this.clippingPlanes;
-                                // TODO: Add clipping for Spherical projection.
-                            }
-                            if (mapView.projection.type === ProjectionType.Planar) {
-                                const worldOffsetX =
-                                    mapView.projection.worldExtent(0, 0).max.x * tile.offset;
-                                // This prevents aliasing issues in the pixel shader.
-                                const expandFactor = 1.01;
-                                const planes = _material.clippingPlanes;
-                                const rightConstant =
-                                    tile.center.x -
-                                    mapView.worldCenter.x +
-                                    tile.boundingBox.extents.x * expandFactor +
-                                    worldOffsetX;
-
-                                planes[0].constant = rightConstant;
-
-                                const leftConstant =
-                                    tile.center.x -
-                                    mapView.worldCenter.x -
-                                    tile.boundingBox.extents.x * expandFactor +
-                                    worldOffsetX;
-                                planes[1].constant = -leftConstant;
-
-                                const topConstant =
-                                    tile.center.y -
-                                    mapView.worldCenter.y +
-                                    tile.boundingBox.extents.y * expandFactor;
-                                planes[2].constant = topConstant;
-
-                                const bottomConstant =
-                                    tile.center.y -
-                                    mapView.worldCenter.y -
-                                    tile.boundingBox.extents.y * expandFactor;
-                                planes[3].constant = -bottomConstant;
-                            }
-                        }
-                    );
+                    this.addClippingPlanes(object, tile, mapView);
                 }
 
                 if (
@@ -1536,6 +1504,133 @@ export class TileGeometryCreator {
             fadeFar,
             lineFadeNear,
             lineFadeFar
+        };
+    }
+
+    private addClippingPlanes(object: THREE.Object3D, tile: Tile, mapView: MapView) {
+        // Compute the four clipping planes (right, left, top and bottom) normal and distance,
+        // based on the projection type.
+        const rightPlaneNormal = new THREE.Vector3();
+        const leftPlaneNormal = new THREE.Vector3();
+        const topPlaneNormal = new THREE.Vector3();
+        const bottomPlaneNormal = new THREE.Vector3();
+        const rightPlaneDistance = new THREE.Vector3();
+        const leftPlaneDistance = new THREE.Vector3();
+        const topPlaneDistance = new THREE.Vector3();
+        const bottomDistance = new THREE.Vector3();
+
+        // If Planar, set the XY aligned planes and set them at the extents distance.
+        if (tile.projection.type === ProjectionType.Planar) {
+            rightPlaneNormal.set(-1, 0, 0);
+            leftPlaneNormal.set(1, 0, 0);
+            topPlaneNormal.set(0, -1, 0);
+            bottomPlaneNormal.set(0, 1, 0);
+            rightPlaneDistance.copy(leftPlaneNormal).multiplyScalar(tile.boundingBox.extents.x);
+            leftPlaneDistance.copy(rightPlaneNormal).multiplyScalar(tile.boundingBox.extents.x);
+            topPlaneDistance.copy(bottomPlaneNormal).multiplyScalar(tile.boundingBox.extents.y);
+            bottomDistance.copy(topPlaneNormal).multiplyScalar(tile.boundingBox.extents.y);
+        }
+        // If Spherical, we need to compute the planes which intersection cut the earth on the shape
+        // of our tile. We cannot use the tiles' tangent-space-aligned boundingBoxes since they
+        // overlap.
+        else {
+            // Compute the world position of all the relevant tile points we will use to compute
+            // the clipping planes' plane equations.
+            tile.projection.projectPoint(
+                new GeoCoordinates(tile.geoBox.center.latitude, tile.geoBox.east),
+                this.eastPoint
+            );
+            tile.projection.projectPoint(
+                new GeoCoordinates(tile.geoBox.center.latitude, tile.geoBox.west),
+                this.westPoint
+            );
+            tile.projection.projectPoint(
+                new GeoCoordinates(tile.geoBox.north, tile.geoBox.center.longitude),
+                this.northPoint
+            );
+            tile.projection.projectPoint(
+                new GeoCoordinates(tile.geoBox.south, tile.geoBox.center.longitude),
+                this.southPoint
+            );
+            tile.projection.projectPoint(tile.geoBox.northEast, this.northEastPoint);
+            tile.projection.projectPoint(tile.geoBox.southWest, this.southWestPoint);
+            tile.projection.projectPoint(
+                new GeoCoordinates(tile.geoBox.north, tile.geoBox.west),
+                this.northWestPoint
+            );
+            tile.projection.projectPoint(
+                new GeoCoordinates(tile.geoBox.south, tile.geoBox.east),
+                this.southEastPoint
+            );
+
+            // Set the plane distance to the difference between the plane's center and the tile's
+            // center in world space.
+            rightPlaneDistance.copy(this.eastPoint).sub(tile.center);
+            leftPlaneDistance.copy(this.westPoint).sub(tile.center);
+            topPlaneDistance.copy(this.northPoint).sub(tile.center);
+            bottomDistance.copy(this.southPoint).sub(tile.center);
+
+            // Compute the plane equation from the three relevant coplanar points for each plane (in
+            // counter-clockwise order), and extract their normals.
+            rightPlaneNormal.copy(
+                new THREE.Plane().setFromCoplanarPoints(
+                    this.southEastPoint,
+                    this.eastPoint,
+                    this.northEastPoint
+                ).normal
+            );
+            leftPlaneNormal.copy(
+                new THREE.Plane().setFromCoplanarPoints(
+                    this.northWestPoint,
+                    this.westPoint,
+                    this.southWestPoint
+                ).normal
+            );
+            topPlaneNormal.copy(
+                new THREE.Plane().setFromCoplanarPoints(
+                    this.northEastPoint,
+                    this.northPoint,
+                    this.northWestPoint
+                ).normal
+            );
+            bottomPlaneNormal.copy(
+                new THREE.Plane().setFromCoplanarPoints(
+                    this.southWestPoint,
+                    this.southPoint,
+                    this.southEastPoint
+                ).normal
+            );
+        }
+
+        // Setup the object onBeforeRender callback to update the clippingPlanes at runtime.
+        object.onBeforeRender = (_renderer, _scene, _camera, _geometry, _material) => {
+            if (_material.clippingPlanes === null) {
+                _material.clippingPlanes = [
+                    new THREE.Plane(rightPlaneNormal, 0),
+                    new THREE.Plane(leftPlaneNormal, 0),
+                    new THREE.Plane(topPlaneNormal, 0),
+                    new THREE.Plane(bottomPlaneNormal, 0)
+                ];
+            }
+
+            // Transform the tile position to be relative to the camera (worldCenter).
+            this.tilePosition.copy(tile.center);
+            this.tilePosition.x += tile.projection.worldExtent(0, 0).max.x * tile.offset;
+            this.tilePosition.sub(mapView.worldCenter);
+
+            // Translate the clipping planes to the new tile camera-relative position.
+            _material.clippingPlanes[0] = new THREE.Plane(rightPlaneNormal, 0).translate(
+                this.tileRightPosition.copy(this.tilePosition).add(rightPlaneDistance)
+            );
+            _material.clippingPlanes[1] = new THREE.Plane(leftPlaneNormal, 0).translate(
+                this.tileLeftPosition.copy(this.tilePosition).add(leftPlaneDistance)
+            );
+            _material.clippingPlanes[2] = new THREE.Plane(topPlaneNormal, 0).translate(
+                this.tileTopPosition.copy(this.tilePosition).add(topPlaneDistance)
+            );
+            _material.clippingPlanes[3] = new THREE.Plane(bottomPlaneNormal, 0).translate(
+                this.tileBottomPosition.copy(this.tilePosition).add(bottomDistance)
+            );
         };
     }
 }
