@@ -65,11 +65,6 @@ export interface OmvDataSourceParameters {
     styleSetName?: string;
 
     /**
-     * Custom layer name to be rendered.
-     */
-    layerName?: string;
-
-    /**
      * If set to `true`, features that have no technique in the theme will be printed to the console
      * (can be excessive!).
      */
