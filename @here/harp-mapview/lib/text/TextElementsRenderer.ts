@@ -375,7 +375,8 @@ export class TextElementsRenderer {
         time: number,
         frameNumber: number
     ) {
-        if (!this.initialize(tileTextElementsChanged)) {
+        const textElementsAvailable = this.hasOverlayText() || tileTextElementsChanged;
+        if (!this.initialize(textElementsAvailable)) {
             return;
         }
 
