@@ -42,7 +42,7 @@
         "@here/harp-text-canvas": "^0.11.0",
         "@here/harp-utils": "^0.11.0",
         "@here/harp-webtile-datasource": "^0.11.0",
-        "@tweenjs/tween.js": "^18.4.2",
+        "@tweenjs/tween.js": "^17.4.0",
         "@types/dat.gui": "^0.7.1",
         "@types/highlight.js": "^9.12.2",
         "@types/long": "^4.0.0",
