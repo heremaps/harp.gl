@@ -1556,7 +1556,7 @@ export class TextElementsRenderer {
 
         // Check if there is need to check for screen space for the label's icon.
         const poiInfo = pointLabel.poiInfo;
-        let iconSpaceAvailable = true;
+        let iconRejected = false;
 
         // Check if icon should be rendered at this zoomLevel
         const renderIcon =
@@ -1583,8 +1583,7 @@ export class TextElementsRenderer {
 
             // If the icon is prepared and valid, but just not visible, try again next time.
             if (!iconIsVisible) {
-                // Forced making it un-current.
-                iconRenderState.lastFrameNumber = -1;
+                iconRenderState.reset();
 
                 if (placementStats) {
                     ++placementStats.numNotVisible;
@@ -1592,35 +1591,18 @@ export class TextElementsRenderer {
                 return false;
             }
 
+            iconRejected = true;
             if (groupState.visited) {
-                iconSpaceAvailable = !this.m_screenCollisions.isAllocated(tempBox2D);
+                const iconSpaceAvailable =
+                    poiInfo!.mayOverlap === true || !this.m_screenCollisions.isAllocated(tempBox2D);
 
-                // Reserve screen space if necessary, return false if failed:
-                if (
-                    // Check if free screen space is available:
-                    !iconSpaceAvailable
-                ) {
-                    if (!iconRenderState.isVisible()) {
-                        if (placementStats) {
-                            ++placementStats.numNotVisible;
-                        }
-                        return false;
-                    } else if (!(poiInfo!.mayOverlap === true) && !iconRenderState.isFadingOut()) {
-                        iconRenderState.startFadeOut(
-                            this.m_viewState.frameNumber,
-                            renderParams.time
-                        );
-                        if (hasText && textRenderState!.isVisible()) {
-                            textRenderState!.startFadeOut(
-                                this.m_viewState.frameNumber,
-                                renderParams.time
-                            );
-                        }
+                if (!iconSpaceAvailable && !iconRenderState.isVisible()) {
+                    if (placementStats) {
+                        ++placementStats.numNotVisible;
                     }
+                    return false;
                 }
-            } else if (iconRenderState.isVisible()) {
-                iconRenderState.startFadeOut(this.m_viewState.frameNumber, renderParams.time);
-                iconRenderState.lastFrameNumber = this.m_viewState.frameNumber;
+                iconRejected = !iconSpaceAvailable;
             }
         } else if (renderIcon && poiInfo!.isValid !== false) {
             // Ensure that text elements still loading icons get a chance to be rendered if
@@ -1683,9 +1665,13 @@ export class TextElementsRenderer {
             const textIsOptional: boolean =
                 pointLabel.poiInfo !== undefined && pointLabel.poiInfo.textIsOptional === true;
 
-            const textSpaceAvailable =
-                pointLabel.textMayOverlap || !this.m_screenCollisions.isAllocated(tempBox2D);
-            const textRejected = !groupState.visited || !textSpaceAvailable;
+            let textRejected = true;
+            if (!iconRejected) {
+                textRejected =
+                    !groupState.visited ||
+                    (!pointLabel.textMayOverlap && this.m_screenCollisions.isAllocated(tempBox2D));
+                iconRejected = textRejected && !textIsOptional;
+            }
 
             if (textRejected && !labelState.visible) {
                 if (placementStats) {
@@ -1694,38 +1680,13 @@ export class TextElementsRenderer {
                 return false;
             }
 
-            const textWillFadeOut =
-                textRejected && textRenderState!.isVisible() && !textRenderState!.isFadingOut();
-
-            if (textWillFadeOut) {
-                const textStartedFadeOut = textRenderState!.checkStartFadeOut(
-                    this.m_viewState.frameNumber,
-                    renderParams.time
-                );
-                renderParams.fadeAnimationRunning =
-                    renderParams.fadeAnimationRunning || textStartedFadeOut;
-            }
-
             if (textRejected) {
-                const iconWillFadeOut = !renderIcon || !textIsOptional;
-
-                if (iconWillFadeOut) {
-                    iconRenderState.startFadeOut(this.m_viewState.frameNumber, renderParams.time);
-                    iconRenderState.lastFrameNumber = this.m_viewState.frameNumber;
-                }
+                textRenderState!.startFadeOut(renderParams.time);
             }
 
-            const textNeedsDraw = textSpaceAvailable || textRenderState!.isFading();
+            const textNeedsDraw = !textRejected || textRenderState!.isFading();
 
             if (textNeedsDraw) {
-                // Compute the TextBufferObject when we know we're gonna render this label.
-                if (pointLabel.textBufferObject === undefined) {
-                    pointLabel.textBufferObject = textCanvas.createTextBufferObject(
-                        pointLabel.glyphs!
-                    );
-                }
-
-                // Allocate collision info if needed.
                 if (pointLabel.textReservesSpace) {
                     this.m_screenCollisions.allocate(tempBox2D);
                 }
@@ -1739,76 +1700,75 @@ export class TextElementsRenderer {
                         poiInfo.renderTextDuringMovements === true) &&
                     !iconRenderState.isFadedOut()
                 ) {
-                    let textFading = false;
-                    if (
-                        !textRenderState!.isFadingOut() &&
-                        textSpaceAvailable &&
-                        iconSpaceAvailable
-                    ) {
-                        textFading = textRenderState!.checkStartFadeIn(
-                            this.m_viewState.frameNumber,
-                            renderParams.time,
-                            true
-                        );
-                    } else {
-                        textFading = textRenderState!.isFading();
+                    if (!textRejected) {
+                        textRenderState!.startFadeIn(renderParams.time);
                     }
-
                     renderParams.fadeAnimationRunning =
-                        renderParams.fadeAnimationRunning ||
-                        textRenderState!.isFadingOut() ||
-                        textFading;
+                        renderParams.fadeAnimationRunning || textRenderState!.isFading();
+                    const opacity =
+                        textRenderState!.opacity *
+                        distanceFadeFactor *
+                        pointLabel.renderStyle!.opacity;
+                    if (opacity > 0) {
+                        // Compute the TextBufferObject when we know we're gonna render this label.
+                        if (pointLabel.textBufferObject === undefined) {
+                            pointLabel.textBufferObject = textCanvas.createTextBufferObject(
+                                pointLabel.glyphs!
+                            );
+                        }
+                        const backgroundIsVisible =
+                            pointLabel.renderStyle!.backgroundOpacity > 0 &&
+                            textCanvas.textRenderStyle.fontSize.backgroundSize > 0;
 
-                    const opacity = textRenderState!.opacity;
-                    const backgroundIsVisible =
-                        pointLabel.renderStyle!.backgroundOpacity > 0 &&
-                        textCanvas.textRenderStyle.fontSize.backgroundSize > 0;
-
-                    temp.bufferAdditionParams.layer = pointLabel.renderOrder;
-                    temp.bufferAdditionParams.position = tempPosition;
-                    temp.bufferAdditionParams.scale = textScale;
-                    temp.bufferAdditionParams.opacity =
-                        opacity * distanceFadeFactor * pointLabel.renderStyle!.opacity;
-                    temp.bufferAdditionParams.backgroundOpacity = backgroundIsVisible
-                        ? temp.bufferAdditionParams.opacity *
-                          pointLabel.renderStyle!.backgroundOpacity
-                        : 0.0;
-                    temp.bufferAdditionParams.pickingData = pointLabel.userData
-                        ? pointLabel
-                        : undefined;
-                    textCanvas.addTextBufferObject(
-                        pointLabel.textBufferObject!,
-                        temp.bufferAdditionParams
-                    );
-                }
-                if (placementStats) {
-                    placementStats.numRenderedPoiTexts++;
+                        temp.bufferAdditionParams.layer = pointLabel.renderOrder;
+                        temp.bufferAdditionParams.position = tempPosition;
+                        temp.bufferAdditionParams.scale = textScale;
+                        temp.bufferAdditionParams.opacity = opacity;
+                        temp.bufferAdditionParams.backgroundOpacity = backgroundIsVisible
+                            ? temp.bufferAdditionParams.opacity *
+                              pointLabel.renderStyle!.backgroundOpacity
+                            : 0.0;
+                        temp.bufferAdditionParams.pickingData = pointLabel.userData
+                            ? pointLabel
+                            : undefined;
+                        textCanvas.addTextBufferObject(
+                            pointLabel.textBufferObject!,
+                            temp.bufferAdditionParams
+                        );
+                        if (placementStats) {
+                            placementStats.numRenderedPoiTexts++;
+                        }
+                    }
                 }
             }
         }
         // ... and render the icon (if any).
-        if (renderIcon && poiIsRenderable(poiInfo!)) {
-            const iconStartedFadeIn = iconRenderState.checkStartFadeIn(
-                this.m_viewState.frameNumber,
-                renderParams.time
-            );
+        if (iconReady) {
+            if (iconRejected) {
+                iconRenderState!.startFadeOut(renderParams.time);
+            } else {
+                iconRenderState!.startFadeIn(renderParams.time);
+            }
+
             renderParams.fadeAnimationRunning =
-                renderParams.fadeAnimationRunning || iconStartedFadeIn;
-            poiRenderer.renderPoi(
-                poiInfo!,
-                tempPoiScreenPosition,
-                this.m_screenCollisions,
-                labelState.renderDistance,
-                distanceScaleFactor,
-                poiInfo!.reserveSpace !== false,
-                iconRenderState.opacity * distanceFadeFactor,
-                this.m_viewState.zoomLevel
-            );
+                renderParams.fadeAnimationRunning || iconRenderState!.isFading();
 
-            iconRenderState.lastFrameNumber = this.m_viewState.frameNumber;
+            const opacity = iconRenderState.opacity * distanceFadeFactor;
+            if (opacity > 0) {
+                poiRenderer.renderPoi(
+                    poiInfo!,
+                    tempPoiScreenPosition,
+                    this.m_screenCollisions,
+                    labelState.renderDistance,
+                    distanceScaleFactor,
+                    poiInfo!.reserveSpace !== false,
+                    iconRenderState.opacity * distanceFadeFactor,
+                    this.m_viewState.zoomLevel
+                );
 
-            if (placementStats) {
-                placementStats.numRenderedPoiIcons++;
+                if (placementStats) {
+                    placementStats.numRenderedPoiIcons++;
+                }
             }
         }
         renderParams.numRenderedTextElements++;
@@ -2068,8 +2028,7 @@ export class TextElementsRenderer {
             }
         }
 
-        labelState.textRenderState!.startFadeIn(this.m_viewState.frameNumber, renderParams.time);
-        labelState.textRenderState!.lastFrameNumber = this.m_viewState.frameNumber;
+        labelState.textRenderState!.startFadeIn(renderParams.time);
 
         if (labelState.textRenderState!.isFading()) {
             opacity = labelState.textRenderState!.opacity * pathLabel.renderStyle!.opacity;
