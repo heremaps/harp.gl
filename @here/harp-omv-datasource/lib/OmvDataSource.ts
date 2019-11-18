@@ -167,6 +167,13 @@ export interface OmvDataSourceParameters {
      * Indicates whether overlay on elevation is enabled. Defaults to `false`.
      */
     enableElevationOverlay?: boolean;
+
+    /**
+     * Indicates whether to add a ground plane to cover the tile completely. This is necessary for
+     * the fallback logic, such that the parent fall back tiles don't overlap the children tiles.
+     * Default is true (i.e. if not defined it is taken to be true)
+     */
+    addGroundPlane?: boolean;
 }
 
 /**
@@ -212,7 +219,8 @@ export class OmvDataSource extends TileDataSource<OmvTile> {
         });
 
         this.cacheable = true;
-        this.addGroundPlane = true;
+        this.addGroundPlane =
+            m_params.addGroundPlane === undefined || m_params.addGroundPlane === true;
 
         this.m_decoderOptions = {
             showMissingTechniques: this.m_params.showMissingTechniques === true,

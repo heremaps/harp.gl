@@ -211,7 +211,8 @@ export class TileGeometryCreator {
 
         this.createLabelRejectionElements(tile, decodedTile);
 
-        if (tile.dataSource.addGroundPlane) {
+        // HARP-7899, disable ground plane for globe
+        if (tile.dataSource.addGroundPlane && tile.projection.type === ProjectionType.Planar) {
             // The ground plane is required for when we change the zoom back and we fall back to the
             // parent, in that case we reduce the renderOrder of the parent tile and this ground place
             // ensures that parent doesn't come through.
