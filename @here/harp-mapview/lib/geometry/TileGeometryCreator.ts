@@ -60,6 +60,7 @@ import {
     setDepthPrePassStencil
 } from "../DepthPrePass";
 import { DisplacementMap, TileDisplacementMap } from "../DisplacementMap";
+import { FALLBACK_RENDER_ORDER_OFFSET } from "../MapView";
 import { MapViewPoints } from "../MapViewPoints";
 import { PathBlockingElement } from "../PathBlockingElement";
 import { TextElement } from "../text/TextElement";
@@ -214,9 +215,11 @@ export class TileGeometryCreator {
         // HARP-7899, disable ground plane for globe
         if (tile.dataSource.addGroundPlane && tile.projection.type === ProjectionType.Planar) {
             // The ground plane is required for when we change the zoom back and we fall back to the
-            // parent, in that case we reduce the renderOrder of the parent tile and this ground place
-            // ensures that parent doesn't come through.
-            TileGeometryCreator.instance.addGroundPlane(tile, -10000);
+            // parent, in that case we reduce the renderOrder of the parent tile and this ground
+            // place ensures that parent doesn't come through. This value must be above the
+            // renderOrder of all objects in the fallback tile, otherwise there won't be a proper
+            // covering of the parent tile by the children, hence dividing by 2.
+            TileGeometryCreator.instance.addGroundPlane(tile, -FALLBACK_RENDER_ORDER_OFFSET / 2);
         }
     }
 

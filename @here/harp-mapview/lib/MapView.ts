@@ -135,7 +135,7 @@ const DEFAULT_CAM_FAR_PLANE = 4000000;
 const MAX_FIELD_OF_VIEW = 140;
 const MIN_FIELD_OF_VIEW = 10;
 // All objects in fallback tiles are reduced by this amount.
-const FALLBACK_RENDER_ORDER_OFFSET = 20000;
+export const FALLBACK_RENDER_ORDER_OFFSET = 20000;
 
 const DEFAULT_MIN_ZOOM_LEVEL = 1;
 
