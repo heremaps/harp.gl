@@ -218,11 +218,13 @@ export class GeoJsonTile extends Tile {
 
         const featureId = DEFAULT_LABELED_ICON.featureId;
 
+        const styleCache = this.mapView.textElementsRenderer.styleCache;
+
         const textElement = new TextElement(
             ContextualArabicConverter.instance.convert(text),
             path,
-            tileGeometryCreator.getRenderStyle(this, technique),
-            tileGeometryCreator.getLayoutStyle(this, technique),
+            styleCache.getRenderStyle(this, technique),
+            styleCache.getLayoutStyle(this, technique),
             getPropertyValue(priority, this.mapView.zoomLevel),
             xOffset,
             yOffset,
@@ -305,11 +307,12 @@ export class GeoJsonTile extends Tile {
 
         const featureId = DEFAULT_LABELED_ICON.featureId;
 
+        const styleCache = this.mapView.textElementsRenderer.styleCache;
         const textElement = new TextElement(
             ContextualArabicConverter.instance.convert(text),
             position,
-            tileGeometryCreator.getRenderStyle(this, technique),
-            tileGeometryCreator.getLayoutStyle(this, technique),
+            styleCache.getRenderStyle(this, technique),
+            styleCache.getLayoutStyle(this, technique),
             getPropertyValue(priority, this.mapView.zoomLevel),
             xOffset,
             yOffset,
@@ -387,11 +390,12 @@ export class GeoJsonTile extends Tile {
 
         const featureId = DEFAULT_LABELED_ICON.featureId;
 
+        const styleCache = this.mapView.textElementsRenderer.styleCache;
         const textElement = new TextElement(
             ContextualArabicConverter.instance.convert(label),
             position,
-            tileGeometryCreator.getRenderStyle(this, technique),
-            tileGeometryCreator.getLayoutStyle(this, technique),
+            styleCache.getRenderStyle(this, technique),
+            styleCache.getLayoutStyle(this, technique),
             getPropertyValue(priority, this.mapView.zoomLevel),
             xOffset === undefined ? DEFAULT_LABELED_ICON.xOffset : xOffset,
             yOffset === undefined ? DEFAULT_LABELED_ICON.yOffset : yOffset,

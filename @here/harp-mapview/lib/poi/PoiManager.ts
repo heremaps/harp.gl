@@ -15,24 +15,12 @@ import {
     PoiGeometry,
     PoiTechnique
 } from "@here/harp-datasource-protocol";
-import {
-    ContextualArabicConverter,
-    FontStyle,
-    FontUnit,
-    FontVariant,
-    HorizontalAlignment,
-    TextLayoutStyle,
-    TextRenderStyle,
-    VerticalAlignment,
-    WrappingMode
-} from "@here/harp-text-canvas";
-import { assert, assertExists, getOptionValue, LoggerManager } from "@here/harp-utils";
+import { ContextualArabicConverter } from "@here/harp-text-canvas";
+import { assert, assertExists, LoggerManager } from "@here/harp-utils";
 import * as THREE from "three";
-import { ColorCache } from "../ColorCache";
 import { MapView } from "../MapView";
 import { TextElement } from "../text/TextElement";
 import { DEFAULT_TEXT_DISTANCE_SCALE } from "../text/TextElementsRenderer";
-import { computeStyleCacheId } from "../text/TextStyleCache";
 import { Tile } from "../Tile";
 import { PoiTable } from "./PoiTableManager";
 
@@ -103,7 +91,6 @@ export class PoiManager {
 
     private m_imageTextures: Map<string, ImageTexture> = new Map();
     private m_poiShieldGroups: Map<string, number> = new Map();
-    private m_colorMap: Map<string, THREE.Color> = new Map();
 
     /**
      * The constructor of the `PoiManager`.
@@ -492,6 +479,7 @@ export class PoiManager {
         z: number | undefined,
         userData?: {}
     ): TextElement {
+        const textElementsRenderer = this.mapView.textElementsRenderer;
         const priority = technique.priority !== undefined ? technique.priority : 0;
         const positions = Array.isArray(x) ? (x as THREE.Vector3[]) : new THREE.Vector3(x, y, z);
 
@@ -513,8 +501,8 @@ export class PoiManager {
         const textElement: TextElement = new TextElement(
             ContextualArabicConverter.instance.convert(text),
             positions,
-            this.getRenderStyle(tile.dataSource.name, technique),
-            this.getLayoutStyle(tile.dataSource.name, technique),
+            textElementsRenderer.styleCache.getRenderStyle(tile, technique),
+            textElementsRenderer.styleCache.getLayoutStyle(tile, technique),
             getPropertyValue(priority, displayZoomLevel),
             xOffset !== undefined ? xOffset : 0.0,
             yOffset !== undefined ? yOffset : 0.0,
@@ -589,166 +577,5 @@ export class PoiManager {
                 : DEFAULT_TEXT_DISTANCE_SCALE;
 
         return textElement;
-    }
-
-    private getRenderStyle(
-        dataSourceName: string,
-        technique: PoiTechnique | LineMarkerTechnique
-    ): TextRenderStyle {
-        const mapView = this.mapView;
-        const zoomLevel = mapView.zoomLevel;
-        const cacheId = computeStyleCacheId(dataSourceName, technique, Math.floor(zoomLevel));
-        const renderer = this.mapView.textElementsRenderer;
-        let renderStyle = mapView.textRenderStyleCache.get(cacheId);
-        if (renderStyle === undefined) {
-            const defaultRenderParams =
-                renderer !== undefined
-                    ? renderer.defaultStyle.renderParams
-                    : {
-                          fontSize: {
-                              unit: FontUnit.Pixel,
-                              size: 32,
-                              backgroundSize: 8
-                          }
-                      };
-
-            if (technique.color !== undefined) {
-                const hexColor = getPropertyValue(technique.color, Math.floor(zoomLevel));
-                this.m_colorMap.set(cacheId, ColorCache.instance.getColor(hexColor));
-            }
-            if (technique.backgroundColor !== undefined) {
-                const hexBgColor = getPropertyValue(
-                    technique.backgroundColor,
-                    Math.floor(zoomLevel)
-                );
-                this.m_colorMap.set(cacheId + "_bg", ColorCache.instance.getColor(hexBgColor));
-            }
-
-            const renderParams = {
-                fontName: getOptionValue(technique.fontName, defaultRenderParams.fontName),
-                fontSize: {
-                    unit: FontUnit.Pixel,
-                    size:
-                        technique.size !== undefined
-                            ? getPropertyValue(technique.size, Math.floor(zoomLevel))
-                            : defaultRenderParams.fontSize!.size,
-                    backgroundSize:
-                        technique.backgroundSize !== undefined
-                            ? getPropertyValue(technique.backgroundSize, Math.floor(zoomLevel))
-                            : defaultRenderParams.fontSize!.backgroundSize
-                },
-                fontStyle:
-                    technique.fontStyle === "Regular" ||
-                    technique.fontStyle === "Bold" ||
-                    technique.fontStyle === "Italic" ||
-                    technique.fontStyle === "BoldItalic"
-                        ? FontStyle[technique.fontStyle]
-                        : defaultRenderParams.fontStyle,
-                fontVariant:
-                    technique.fontVariant === "Regular" ||
-                    technique.fontVariant === "AllCaps" ||
-                    technique.fontVariant === "SmallCaps"
-                        ? FontVariant[technique.fontVariant]
-                        : defaultRenderParams.fontVariant,
-                rotation: getOptionValue(technique.rotation, defaultRenderParams.rotation),
-                color: getOptionValue(this.m_colorMap.get(cacheId), defaultRenderParams.color),
-                backgroundColor: getOptionValue(
-                    this.m_colorMap.get(cacheId + "_bg"),
-                    defaultRenderParams.backgroundColor
-                ),
-                opacity:
-                    technique.opacity !== undefined
-                        ? getPropertyValue(technique.opacity, Math.floor(zoomLevel))
-                        : defaultRenderParams.opacity,
-                backgroundOpacity:
-                    technique.backgroundOpacity !== undefined
-                        ? getPropertyValue(technique.backgroundOpacity, Math.floor(zoomLevel))
-                        : technique.backgroundColor !== undefined &&
-                          technique.backgroundSize !== undefined &&
-                          getPropertyValue(technique.backgroundSize, Math.floor(zoomLevel)) > 0
-                        ? 1.0 // make label opaque when backgroundColor and backgroundSize are set
-                        : defaultRenderParams.backgroundOpacity
-            };
-
-            const themeRenderParams =
-                mapView.textElementsRenderer !== undefined
-                    ? mapView.textElementsRenderer!.getTextElementStyle(technique.style)
-                          .renderParams
-                    : {};
-            renderStyle = new TextRenderStyle({
-                ...themeRenderParams,
-                ...renderParams
-            });
-            mapView.textRenderStyleCache.set(cacheId, renderStyle);
-        }
-
-        return renderStyle;
-    }
-
-    private getLayoutStyle(
-        dataSourceName: string,
-        technique: PoiTechnique | LineMarkerTechnique
-    ): TextLayoutStyle {
-        const floorZoomLevel = Math.floor(this.mapView.zoomLevel);
-        const cacheId = computeStyleCacheId(dataSourceName, technique, floorZoomLevel);
-        const renderer = this.mapView.textElementsRenderer;
-        let layoutStyle = this.mapView.textLayoutStyleCache.get(cacheId);
-        if (layoutStyle === undefined) {
-            const defaultLayoutParams =
-                renderer !== undefined ? renderer.defaultStyle.layoutParams : {};
-
-            const hAlignment = getPropertyValue(technique.hAlignment, floorZoomLevel) as
-                | string
-                | undefined;
-            const vAlignment = getPropertyValue(technique.vAlignment, floorZoomLevel) as
-                | string
-                | undefined;
-
-            const horizontalAlignment: HorizontalAlignment | undefined =
-                hAlignment === "Left" || hAlignment === "Center" || hAlignment === "Right"
-                    ? HorizontalAlignment[hAlignment]
-                    : defaultLayoutParams.horizontalAlignment;
-
-            const verticalAlignment: VerticalAlignment | undefined =
-                vAlignment === "Above" || vAlignment === "Center" || vAlignment === "Below"
-                    ? VerticalAlignment[vAlignment]
-                    : defaultLayoutParams.verticalAlignment;
-
-            const layoutParams = {
-                tracking: getOptionValue(technique.tracking, defaultLayoutParams.tracking),
-                leading: getOptionValue(technique.leading, defaultLayoutParams.leading),
-                maxLines: getOptionValue(technique.maxLines, defaultLayoutParams.maxLines),
-                lineWidth: getOptionValue(technique.lineWidth, defaultLayoutParams.lineWidth),
-                canvasRotation: getOptionValue(
-                    technique.canvasRotation,
-                    defaultLayoutParams.canvasRotation
-                ),
-                lineRotation: getOptionValue(
-                    technique.lineRotation,
-                    defaultLayoutParams.lineRotation
-                ),
-                wrappingMode:
-                    technique.wrappingMode === "None" ||
-                    technique.wrappingMode === "Character" ||
-                    technique.wrappingMode === "Word"
-                        ? WrappingMode[technique.wrappingMode]
-                        : defaultLayoutParams.wrappingMode,
-                horizontalAlignment,
-                verticalAlignment
-            };
-
-            const themeLayoutParams =
-                this.mapView.textElementsRenderer !== undefined
-                    ? this.mapView.textElementsRenderer!.getTextElementStyle(technique.style)
-                          .layoutParams
-                    : {};
-            layoutStyle = new TextLayoutStyle({
-                ...themeLayoutParams,
-                ...layoutParams
-            });
-            this.mapView.textLayoutStyleCache.set(cacheId, layoutStyle);
-        }
-
-        return layoutStyle;
     }
 }

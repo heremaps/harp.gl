@@ -967,10 +967,10 @@ export class Tile implements CachedResource {
      * Removes all [[TextElement]] from the tile.
      */
     clearTextElements() {
+        this.textElementsChanged = this.hasTextElements();
         this.m_pathBlockingElements.splice(0);
         this.textElementGroups.clear();
         this.userTextElements.elements.length = 0;
-        this.textElementsChanged = true;
     }
 
     /**
