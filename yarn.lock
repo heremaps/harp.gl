@@ -487,10 +487,10 @@
     highlight.js "^9.15.6"
     marked "^0.6.1"
 
-"@tweenjs/tween.js@^18.4.2":
-  version "18.4.2"
-  resolved "https://registry.yarnpkg.com/@tweenjs/tween.js/-/tween.js-18.4.2.tgz#1c008c2325f300db40f0db2a6b05d3295e0a5ac5"
-  integrity sha512-HQLguhuQoPEqz42u/MnznakBe038WWAFKwC0qNgvzEetZjOLvafh1bTdUhQ1JZapR/hKV5cuCa8mC0Y4rRuoeg==
+"@tweenjs/tween.js@^17.4.0":
+  version "17.4.0"
+  resolved "https://registry.yarnpkg.com/@tweenjs/tween.js/-/tween.js-17.4.0.tgz#2e9ab3f2111906b30dfe1ef3259a9781dd211d35"
+  integrity sha512-J3fzl1F6wvh8KXVVcIuHN12xi1ZDcPA/0Vix+ZcJYwZWVHUwfIqfvzYXXEw7ybeev6477KCTt9fKydU+ajUqcg==
 
 "@types/ajv@^1.0.0":
   version "1.0.0"
