@@ -37,6 +37,7 @@ const interpolants = [
 ];
 
 const tmpColor = new Color();
+const tmpHsl = { h: 0, s: 0, l: 0 };
 
 /**
  * Checks if a property is interpolated.
@@ -165,8 +166,8 @@ export function getPropertyValue(
                 case StringEncodedNumeralType.RGB:
                 case StringEncodedNumeralType.RGBA:
                 case StringEncodedNumeralType.HSL:
-                    const hslValues = matchedFormat.decoder(property);
-                    return tmpColor.setHSL(hslValues[0], hslValues[1], hslValues[2]).getHex();
+                    const rgbChannels = matchedFormat.decoder(property);
+                    return tmpColor.setRGB(rgbChannels[0], rgbChannels[1], rgbChannels[2]).getHex();
                 default:
                     return matchedFormat.decoder(property)[0];
             }
@@ -175,7 +176,7 @@ export function getPropertyValue(
         switch (property._stringEncodedNumeralType) {
             case StringEncodedNumeralType.Meters:
             case StringEncodedNumeralType.Pixels:
-                return getInterpolatedLength(property, level, pixelToMeters);
+                return getInterpolatedMetric(property, level, pixelToMeters);
             case StringEncodedNumeralType.Hex:
             case StringEncodedNumeralType.RGB:
             case StringEncodedNumeralType.RGBA:
@@ -183,10 +184,10 @@ export function getPropertyValue(
                 return getInterpolatedColor(property, level);
         }
     }
-    return getInterpolatedLength(property, level, pixelToMeters);
+    return getInterpolatedMetric(property, level, pixelToMeters);
 }
 
-function getInterpolatedLength(
+function getInterpolatedMetric(
     property: InterpolatedProperty,
     level: number,
     pixelToMeters: number
@@ -243,6 +244,7 @@ function getInterpolatedColor(property: InterpolatedProperty, level: number): nu
     }
     interpolant.evaluate(level);
 
+    // Colors are always interpolated in HSL space.
     return tmpColor
         .setHSL(
             interpolant.resultBuffer[0],
@@ -348,11 +350,10 @@ function procesStringEnocodedNumeralInterpolatedProperty(
     maskValues: Float32Array
 ): boolean {
     let needsMask = false;
-    const allowedValueFormats =
+    const isMetricFormat =
         baseFormat.type === StringEncodedNumeralType.Meters ||
-        baseFormat.type === StringEncodedNumeralType.Pixels
-            ? worldSizeFormats
-            : colorFormats;
+        baseFormat.type === StringEncodedNumeralType.Pixels;
+    const allowedValueFormats = isMetricFormat ? worldSizeFormats : colorFormats;
 
     for (let valueIdx = 0; valueIdx < prop.values.length; ++valueIdx) {
         for (const valueFormat of allowedValueFormats) {
@@ -367,6 +368,14 @@ function procesStringEnocodedNumeralInterpolatedProperty(
             }
 
             const result = valueFormat.decoder(value);
+            // Convert RGB color to HSL space for interpolation
+            if (!isMetricFormat) {
+                tmpColor.setRGB(result[0], result[1], result[2]);
+                tmpColor.getHSL(tmpHsl);
+                result[0] = tmpHsl.h;
+                result[1] = tmpHsl.s;
+                result[2] = tmpHsl.l;
+            }
             for (let i = 0; i < result.length; ++i) {
                 propValues[valueIdx * valueFormat.size + i] = result[i];
             }
