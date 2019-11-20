@@ -255,11 +255,12 @@ export class ThemeLoader {
                 }
                 for (const style of theme.styles[styleSetName]) {
                     switch ((style as any).technique) {
-                        case "dashed-line":
-                            // tslint:disable-next-line
+                        // TODO: Re-enable this once "dashed-line" is deprecated.
+                        /* case "dashed-line":
                             console.warn(
-                                `Using deprecated "dashed-line" technique. Use "solid-line" technique instead`
-                            );
+                                `Using deprecated "dashed-line" technique.
+                                Use "solid-line" technique instead`
+                            ); */
                         default:
                             break;
                     }
