@@ -6,7 +6,6 @@
 import { Color } from "three";
 
 const tmpColor = new Color();
-const tmpHSL = { h: 0, s: 0, l: 0 };
 
 /**
  * Enumeration of supported string encoded numerals.
@@ -29,6 +28,7 @@ export interface StringEncodedNumeralFormat {
     size: number;
     regExp: RegExp;
     mask?: number;
+    // TODO: Add target/output array as parameter to minimize arrays creation.
     decoder: (encodedValue: string) => number[];
 }
 export const StringEncodedMeters: StringEncodedNumeralFormat = {
@@ -53,8 +53,8 @@ export const StringEncodedHex: StringEncodedNumeralFormat = {
     size: 3,
     regExp: /#([0-9A-Fa-f]{1,2})([0-9A-Fa-f]{1,2})([0-9A-Fa-f]{1,2})/,
     decoder: (encodedValue: string) => {
-        tmpColor.set(encodedValue).getHSL(tmpHSL);
-        return [tmpHSL.h, tmpHSL.s, tmpHSL.l];
+        tmpColor.set(encodedValue);
+        return [tmpColor.r, tmpColor.g, tmpColor.b];
     }
 };
 export const StringEncodedRGB: StringEncodedNumeralFormat = {
@@ -64,14 +64,12 @@ export const StringEncodedRGB: StringEncodedNumeralFormat = {
     regExp: /rgb\((?:([0-9]{1,2}|1[0-9]{1,2}|2[0-4][0-9]|25[0-5]), ?)(?:([0-9]{1,2}|1[0-9]{1,2}|2[0-4][0-9]|25[0-5]), ?)(?:([0-9]{1,2}|1[0-9]{1,2}|2[0-4][0-9]|25[0-5]))\)/,
     decoder: (encodedValue: string) => {
         const channels = StringEncodedRGB.regExp.exec(encodedValue)!;
-        tmpColor
-            .setRGB(
-                parseInt(channels[1], 10) / 255,
-                parseInt(channels[2], 10) / 255,
-                parseInt(channels[3], 10) / 255
-            )
-            .getHSL(tmpHSL);
-        return [tmpHSL.h, tmpHSL.s, tmpHSL.l];
+        tmpColor.setRGB(
+            parseInt(channels[1], 10) / 255,
+            parseInt(channels[2], 10) / 255,
+            parseInt(channels[3], 10) / 255
+        );
+        return [tmpColor.r, tmpColor.g, tmpColor.b];
     }
 };
 export const StringEncodedRGBA: StringEncodedNumeralFormat = {
@@ -83,14 +81,12 @@ export const StringEncodedRGBA: StringEncodedNumeralFormat = {
         const channels = StringEncodedRGBA.regExp.exec(encodedValue)!;
         // For now we simply ignore alpha channel value.
         // TODO: To be resolved with HARP-7517
-        tmpColor
-            .setRGB(
-                parseInt(channels[1], 10) / 255,
-                parseInt(channels[2], 10) / 255,
-                parseInt(channels[3], 10) / 255
-            )
-            .getHSL(tmpHSL);
-        return [tmpHSL.h, tmpHSL.s, tmpHSL.l];
+        tmpColor.setRGB(
+            parseInt(channels[1], 10) / 255,
+            parseInt(channels[2], 10) / 255,
+            parseInt(channels[3], 10) / 255
+        );
+        return [tmpColor.r, tmpColor.g, tmpColor.b];
     }
 };
 export const StringEncodedHSL: StringEncodedNumeralFormat = {
@@ -100,11 +96,12 @@ export const StringEncodedHSL: StringEncodedNumeralFormat = {
     regExp: /hsl\(((?:[0-9]|[1-9][0-9]|1[0-9]{1,2}|2[0-9]{1,2}|3[0-5][0-9]|360)), ?(?:([0-9]|[1-9][0-9]|100)%), ?(?:([0-9]|[1-9][0-9]|100)%)\)/,
     decoder: (encodedValue: string) => {
         const channels = StringEncodedHSL.regExp.exec(encodedValue)!;
-        return [
+        tmpColor.setHSL(
             parseInt(channels[1], 10) / 360,
             parseInt(channels[2], 10) / 100,
             parseInt(channels[3], 10) / 100
-        ];
+        );
+        return [tmpColor.r, tmpColor.g, tmpColor.b];
     }
 };
 
