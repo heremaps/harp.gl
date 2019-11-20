@@ -37,7 +37,13 @@ export function getBundleScriptUrl(): string | undefined | null {
     }
 
     const currentScript = document.currentScript as HTMLScriptElement | null;
-    const baseScriptUrl = currentScript ? currentScript.src : getScriptUrl(BUNDLE_SCRIPT_BASENAME);
+    const baseScriptUrl =
+        currentScript !== null &&
+        typeof currentScript.src === "string" &&
+        (currentScript.src.endsWith(BUNDLE_SCRIPT_BASENAME + ".js") ||
+            currentScript.src.endsWith(BUNDLE_SCRIPT_BASENAME + ".min.js"))
+            ? currentScript.src
+            : getScriptUrl(BUNDLE_SCRIPT_BASENAME);
 
     if (baseScriptUrl) {
         bundleScriptUrl = baseScriptUrl;
@@ -177,5 +183,6 @@ function installDefaultDecoderUrlHook() {
  * @hidden
  */
 export function mapBundleMain() {
+    getBundleScriptUrl();
     installDefaultDecoderUrlHook();
 }
