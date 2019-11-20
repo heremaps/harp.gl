@@ -718,30 +718,33 @@ export class TileGeometryCreator {
                             if (_material.clippingPlanes === null) {
                                 _material.clippingPlanes = this.clippingPlanes;
                                 // TODO: Add clipping for Spherical projection.
-                            } else if (mapView.projection.type === ProjectionType.Planar) {
+                            }
+                            if (mapView.projection.type === ProjectionType.Planar) {
+                                // This prevents 1 pixel errors in the IBCT
+                                const expandFactor = 1.001;
                                 const planes = _material.clippingPlanes;
                                 const rightConstant =
                                     tile.center.x -
                                     mapView.worldCenter.x +
-                                    tile.boundingBox.extents.x;
+                                    tile.boundingBox.extents.x * expandFactor;
                                 planes[0].constant = rightConstant;
 
                                 const leftConstant =
                                     tile.center.x -
                                     mapView.worldCenter.x -
-                                    tile.boundingBox.extents.x;
+                                    tile.boundingBox.extents.x * expandFactor;
                                 planes[1].constant = -leftConstant;
 
                                 const topConstant =
                                     tile.center.y -
                                     mapView.worldCenter.y +
-                                    tile.boundingBox.extents.y;
+                                    tile.boundingBox.extents.y * expandFactor;
                                 planes[2].constant = topConstant;
 
                                 const bottomConstant =
                                     tile.center.y -
                                     mapView.worldCenter.y -
-                                    tile.boundingBox.extents.y;
+                                    tile.boundingBox.extents.y * expandFactor;
                                 planes[3].constant = -bottomConstant;
                             }
                         }
