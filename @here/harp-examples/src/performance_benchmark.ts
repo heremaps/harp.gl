@@ -85,8 +85,8 @@ function getPowerPreference(str: string): string | undefined {
 function updateUrlOptions() {
     const numDecodersOptionValueStr =
         decoderCount !== undefined ? decoderCount.toFixed(0) : undefined;
-    // Default is "on", so it will not be written to the URL.
-    const phasedLoadingOptionValueStr = phasedLoading === false ? "off" : undefined;
+    // Default is "off", so it will not be written to the URL.
+    const phasedLoadingOptionValueStr = phasedLoading === true ? "on" : undefined;
 
     let searchStr = "";
 
@@ -782,7 +782,7 @@ export namespace PerformanceBenchmark {
                     updateUrlOptions();
                 }
             })
-            .setValue(phasedLoading !== false);
+            .setValue(phasedLoading === true);
 
         benchmarksFolder
             .add(guiOptions, "PixelRatio", guiOptions.PixelRatio)
