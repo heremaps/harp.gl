@@ -44,6 +44,61 @@
                 font-size: 0.8em;
                 font-weight: normal;
             }
+
+            #memory-info-box {
+                position: absolute;
+                bottom: 5px;
+                left: 350px;
+                padding: 5px;
+                background: #faa;
+                width: 323px;
+                font-size: 9px;
+                border-left: solid 10px #fff;
+                opacity: 0.8;
+                transition: bottom 0.2s ease;
+            }
+
+            #memory-info-box table {
+                height: 46px;
+                table-layout: fixed;
+            }
+
+            #memory-info-box.minimized {
+                bottom: -213px;
+            }
+
+            #memory-info-box hr {
+                margin: 0;
+            }
+
+            #memory-info-box th {
+                font-weight: bold;
+            }
+            #memory-info-box span.heavy {
+                font-size: 12px;
+                font-weight: bold;
+            }
+
+            #memory-info-box td {
+                white-space: nowrap;
+                overflow: hidden;
+                padding-left: 10px;
+                padding-right: 10px;
+            }
+
+            #memory-info-handle {
+                position: absolute;
+                top: -25px;
+                right: 0;
+            }
+
+            #memory-info-handle span {
+                padding: 19px 19px 19px 19px;
+                box-sizing: border-box;
+                background: #faa;
+                cursor: pointer;
+            }
+
         </style>
     </head>
 
@@ -52,5 +107,6 @@
         <canvas id="mapCanvas"></canvas>
         <div id="app"></div>
         <div id="copyrightNotice"></div>
+        <div id="memory-info"></div>
     </body>
 </html>

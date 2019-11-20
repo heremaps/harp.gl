@@ -6,6 +6,7 @@
 
 import { sphereProjection } from "@here/harp-geoutils";
 import { MapControls, MapControlsUI } from "@here/harp-map-controls";
+import { MemoryInfo } from "@here/mapview-demo/src/MemoryInfo"
 import { CopyrightElementHandler, MapView } from "@here/harp-mapview";
 import { APIFormat, OmvDataSource } from "@here/harp-omv-datasource";
 import { accessToken, copyrightInfo } from "../config";
@@ -22,6 +23,10 @@ export namespace GlobeExample {
         });
 
         CopyrightElementHandler.install("copyrightNotice", mapView);
+
+        const memoryInfo = new MemoryInfo(mapView);
+
+        memoryInfo.updateMemoryInfo();
 
         mapView.resize(window.innerWidth, window.innerHeight);
 

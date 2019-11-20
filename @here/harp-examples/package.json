@@ -37,6 +37,7 @@
         "@here/harp-map-theme": "^0.11.0",
         "@here/harp-mapview": "^0.11.0",
         "@here/harp-mapview-decoder": "^0.11.0",
+        "@here/harp-mapview-demo": "^0.11.0",
         "@here/harp-materials": "^0.11.0",
         "@here/harp-omv-datasource": "^0.11.0",
         "@here/harp-text-canvas": "^0.11.0",
