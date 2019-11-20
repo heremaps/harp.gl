@@ -67,6 +67,7 @@ export namespace SynchronousRendering {
             baseUrl: "https://xyz.api.here.com/tiles/herebase.02",
             apiFormat: APIFormat.XYZOMV,
             styleSetName: "tilezen",
+            maxZoomLevel: 17,
             authenticationCode: accessToken
         });
         map.addDataSource(omvDataSource);
@@ -146,7 +147,7 @@ export namespace SynchronousRendering {
 
     const state = {
         geoPos: new GeoCoordinates(40.707, -74.01, 0),
-        zoomLevel: 15.5,
+        zoomLevel: 16,
         yawDeg: 0,
         pitchDeg: 35
     };
