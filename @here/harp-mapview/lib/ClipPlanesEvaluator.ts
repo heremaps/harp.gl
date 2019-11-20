@@ -51,7 +51,7 @@ export interface ClipPlanesEvaluator {
  * ground level, while far plane is just calculated using scale and bias approach with far offset
  * and multiplier.
  * @deprecated Class contains the legacy (first and original) clip planes evaluation method, which
- * is widely used in examples thus is still kept for backward compatibility and comparisons.
+ * is widelly used in examples thus is still kept for backward compatibility and comparisons.
  */
 export class InterpolatedClipPlanesEvaluator implements ClipPlanesEvaluator {
     readonly farMin: number;
@@ -92,16 +92,18 @@ export class InterpolatedClipPlanesEvaluator implements ClipPlanesEvaluator {
     }
 
     evaluateClipPlanes(mapView: MapView): ViewRanges {
+        const camera = mapView.camera;
+        const projection = mapView.projection;
         let nearPlane: number = this.nearMin;
         let farPlane: number = this.farMin;
-        if (mapView.projection.type === ProjectionType.Spherical) {
+        if (projection.type === ProjectionType.Spherical) {
             // near and far plane for a set up where
             // the camera is looking at the center of the scene.
             const r = EarthConstants.EQUATORIAL_RADIUS;
-            const d = mapView.camera.position.length();
+            const d = camera.position.length();
             const alpha = Math.asin(r / d);
             // Extract X, Y, Z axes into tmp vectors array.
-            mapView.camera.matrixWorld.extractBasis(
+            camera.matrixWorld.extractBasis(
                 this.m_tmpVectors[0],
                 this.m_tmpVectors[1],
                 this.m_tmpVectors[2]
@@ -113,15 +115,15 @@ export class InterpolatedClipPlanesEvaluator implements ClipPlanesEvaluator {
             // Apply quaternion rotation to forward vector, store it in tmpVectors[1].
             const fwdRot = this.m_tmpVectors[1].copy(fwd).applyQuaternion(this.m_tmpQuaternion);
             // Store camera position tmpVectors[0] and reference it with p.
-            const p = this.m_tmpVectors[0].copy(mapView.camera.position);
+            const p = this.m_tmpVectors[0].copy(camera.position);
             p.addScaledVector(fwdRot, Math.sqrt(d * d - r * r));
-            farPlane = p.sub(mapView.camera.position).dot(fwd);
+            farPlane = p.sub(camera.position).dot(fwd);
             nearPlane = Math.max(
                 this.nearMin,
-                mapView.projection.groundDistance(mapView.camera.position) * this.nearMultiplier
+                projection.groundDistance(camera.position) * this.nearMultiplier
             );
-        } else if (mapView.projection.type === ProjectionType.Planar) {
-            const groundDistance = mapView.projection.groundDistance(mapView.camera.position);
+        } else if (projection.type === ProjectionType.Planar) {
+            const groundDistance = projection.groundDistance(camera.position);
             nearPlane = Math.max(this.nearMin, groundDistance * this.nearMultiplier);
             // Will be already clamped to minFar due to clamping above.
             farPlane = nearPlane * this.nearFarMultiplier + this.farOffset;
@@ -189,7 +191,7 @@ export abstract class ElevationBasedClipPlanesEvaluator implements ClipPlanesEva
      *
      * @param elevation the minimum elevation (depression) in world units (meters).
      * @note If you set this parameter to zero you may not see any features rendered if they are
-     * just below the sea level more then half of [[nearFarMargin]] assumed. Similarly if set to
+     * just below the sea level more than half of [[nearFarMargin]] assumed. Similarly if set to
      * -100m and rendered features lays exactly in such depression, you may notice that problem.
      * The errors usually come from projection precision loss and depth buffer nature (significant
      * precision loss closer to far plane). Thus is such cases either increase the margin (if you
@@ -201,7 +203,7 @@ export abstract class ElevationBasedClipPlanesEvaluator implements ClipPlanesEva
      */
     set minElevation(elevation: number) {
         this.m_minElevation = elevation;
-        // Max elevation should be at least equal or bigger then min elevation.
+        // Max elevation should be at least equal or bigger than min elevation.
         this.m_maxElevation = Math.max(elevation, this.m_maxElevation);
     }
 
@@ -250,13 +252,13 @@ export class TopViewClipPlanesEvaluator extends ElevationBasedClipPlanesEvaluato
      * buildings). Defaults to Burj Khalifa building height.
      * @param minElevation defines far plane offset from the ground surface, negative values moves
      * far plane below the ground level (use it to render depressions). Default zero - sea level.
-     * @param nearMin minimum allowable near plane distance from camera, must be bigger then zero.
+     * @param nearMin minimum allowable near plane distance from camera, must be bigger than zero.
      * @param nearFarMarginRatio minimum distance between near and far plane, as a ratio of average
-     * near/far plane distance, it have to be significantly bigger then zero (especially if
+     * near/far plane distance, it have to be significantly bigger than zero (especially if
      * [[maxElevation]] and [[minElevation]] are equal), otherwise you may notice flickering when
      * rendering, or even render empty scene if frustum planes are almost equal.
      * @param farMaxRatio maximum ratio between ground and far plane distance, allows to limit
-     * viewing distance at overall. Have to be bigger then 1.0.
+     * viewing distance at overall. Have to be bigger than 1.0.
      * @note Keep in mind that this evaluator does not evaluate terrain (or building) elevation
      * automatically, to keep such features rendered (between frustum planes) use [[minElevation]],
      * [[maxElevation]] constraints. You may change this parameters at any time, but it requires
@@ -375,109 +377,34 @@ export class TopViewClipPlanesEvaluator extends ElevationBasedClipPlanesEvaluato
             // This solution computes near and far plane for a set up where
             // the camera is looking at the center of the scene.
 
-            //         , - ~ ~ ~ - ,
-            //     , '               ' ,        E
-            //   ,           .           ,    . ' far + elev
-            //  ,            .   r + e   , '   /
-            // ,             .     ,  '    ,  /
-            // ,             . O '         , / te
-            // ,             | .           ,/
-            //  ,            |   .  r     ,/
-            //   ,           |      .    ,
-            //     ,         |        , '_____ far
-            //       ' -_, _ | _ ,  ' / T
-            //     near      |      /
-            //               |    / t
-            //             d |  /
-            //               |/
-            //               C
-
             // The far plane distance calculus requires finding the sphere tangent line that is
             // co-linear with (goes thru) camera position, such tangent creates right angle
             // with sphere diameter where it touches its surface (point T). Given that sphere is
-            // always at world origin and camera orbits around it we have:
+            // always at world origin and camera orbits around it we have (see
+            // #getTangentBasedFarPlane):
             // angle(OTC) = 90
             // sin(OCT) = sin(alpha) = r / d
             // alpha = asin(r / d)
             const alpha = Math.asin(r / d);
-            // The distance to tangent point may be described as:
-            // t = sqrt(d^2 - r^2)
-            const t = Math.sqrt(d * d - r * r);
-            // Because we would like to see elevated geometry that may be visible beyond the tangent
-            // point on ground surface, we need to extend viewing distance along the tangent line
-            // by te (see graph above). Knowing that OTE forms right angle, we have:
-            // (r+e)^2 = r^2 + te^2
-            // te = sqrt((r+e)^2 - r^2)
-            // This reduces to:
-            // te = sqrt(r^2 + 2*r*e + e^2 - r^2)
-            // te = sqrt(2*r*e + e^2)
-            // There may be situations when maximum elevation still remains below sea level (< 0) or
-            // it is negligible, in such cases tangent extension (te) is not required.
-            const te =
-                this.maxElevation < epsilon
-                    ? 0
-                    : Math.sqrt(2 * r * this.maxElevation + this.maxElevation * this.maxElevation);
+            // If alpha it bigger than half fov angle, our visibility limit is set by tangent
+            // line, otherwise we need to find top (or right) plane intersection with sphere,
+            // which is definitely closer than the tangent point mentioned above.
+            const cam = camera as THREE.PerspectiveCamera;
+            // Take fov directly if it is vertical, otherwise we translate it using aspect ratio:
+            const aspect = cam.aspect > 1 ? cam.aspect : 1 / cam.aspect;
+            const halfFovAngle = THREE.Math.degToRad((cam.fov * aspect) / 2);
 
-            // Next step is to project CT vector onto camera eye (forward) vector to get maximum
-            // camera far plane distance. Point on sphere beyond that point won't be visible anyway
-            // unless they are above the ground surface. For such cases [[this.maxElevation]]
-            // applies, thus we project entire CE vector of length equal: t + te.
-
-            // Extract camera X, Y, Z orientation axes into tmp vectors array.
-            camera.matrixWorld.extractBasis(
-                this.m_tmpVectors[0],
-                this.m_tmpVectors[1],
-                this.m_tmpVectors[2]
-            );
-            // Setup quaternion (based on X axis) for angle between tangent and camera eye.
-            this.m_tmpQuaternion.setFromAxisAngle(this.m_tmpVectors[0], alpha);
-            // Acquire camera (eye) forward vector from Z axis reversed (keep it in tmpVectors[2]).
-            const cameraFwdVec = this.m_tmpVectors[2].negate();
-            // Apply quaternion to forward vector, creating tangent vector (store in tmpVectors[1]).
-            const tangentVec = this.m_tmpVectors[1]
-                .copy(cameraFwdVec)
-                .applyQuaternion(this.m_tmpQuaternion);
-            // Give it a proper length
-            tangentVec.multiplyScalar(t + te);
-            // Calculate tangent projection onto camera eye vector, giving far plane distance.
-            farPlane = tangentVec.dot(cameraFwdVec);
+            farPlane =
+                halfFovAngle > alpha
+                    ? this.getTangentBasedFarPlane(cam, d, r, alpha)
+                    : this.getFovBasedFarPlane(cam, d, r, 2 * halfFovAngle, projection);
         }
         // Orthographic camera projection
         else {
-            //         , - ~ ~ ~ - ,
-            //     , '               ' ,     E
-            //   ,            .--------- ,-.'- far + elev
-            // | ,            .   r + e , `, |
-            // |,             .     , '     ,| te
-            // |,             . O '.........,|..
-            // |,             |        r    ,|  far
-            // | ,            |            , |
-            // |  ,           |           ,  | t
-            // |    ,         |        , '   |
-            // |      ' -_, _ | _ ,  '       |
-            // |    near      | \/___________| near - elev
-            // |              |              |
-            // |            d |              |
-            // |              |              |
-            //                C
-
-            // The distance to tangent point may be described as:
-            const t = d;
-            // Tangent extension due to terrain elevation behind the horizon may be calculated
-            // based on the right triangle:
-            // (r+maxElev)^2 = r^2 + te^2
-            // te = sqrt((r+maxElev)^2 - r^2)
-            // although we may not calculate it if elevation is negligible:
-            const te =
-                this.maxElevation < epsilon
-                    ? 0
-                    : Math.sqrt(r + this.maxElevation) * (r + this.maxElevation) - r * r;
-            // Now far plane distance is constituted with:
-            farPlane = t + te;
-            // Both near and far planes distances are directly applied to frustum, because tangents'
-            // lines are parallel to camera look at vector.
+            farPlane = this.getOrthoBasedFarPlane(d, r);
         }
-        // In extreme cases the largest depression assumed may be further then tangent
+
+        // In extreme cases the largest depression assumed may be further than tangent
         // based far plane distance, take it into account
         const farMin = cameraAltitude - this.minElevation;
         // Apply the constraints.
@@ -495,6 +422,188 @@ export class TopViewClipPlanesEvaluator extends ElevationBasedClipPlanesEvaluato
             maximum: farPlane
         };
         return viewRanges;
+    }
+
+    private getTangentBasedFarPlane(
+        camera: THREE.PerspectiveCamera,
+        d: number,
+        r: number,
+        alpha: number
+    ): number {
+        // Find tangent point intersection distance
+        //         , - ~ ~ ~ - ,
+        //     , '               ' ,        E
+        //   ,           .           ,    . ' far + elev
+        //  ,            .   r + e   , '   /
+        // ,             .     ,  '    ,  /
+        // ,             . O '         , / te
+        // ,             | .           ,/
+        //  ,            |   .  r     ,/
+        //   ,           |      .    ,
+        //     ,         |        , '_____ far
+        //       ' -_, _ | _ ,  ' / T
+        //     near      |      /
+        //               |    / t
+        //             d |  /
+        //               |/
+        //               C
+        // The distance to tangent point may be described as:
+        // t = sqrt(d^2 - r^2)
+        const t = Math.sqrt(d * d - r * r);
+        // Because we would like to see elevated geometry that may be visible beyond
+        // the tangent point on ground surface, we need to extend viewing distance along
+        // the tangent line by te (see graph above). Knowing that OTE forms right angle,
+        // we have:
+        // (r+e)^2 = r^2 + te^2
+        // te = sqrt((r+e)^2 - r^2)
+        // This reduces to:
+        // te = sqrt(r^2 + 2*r*e + e^2 - r^2)
+        // te = sqrt(2*r*e + e^2)
+        // There may be situations when maximum elevation still remains below sea level
+        // (elevation < 0) or it is negligible (elevation ~ epsilon), in such cases tangent
+        // extension (te) is not required.
+        const te =
+            this.maxElevation < epsilon
+                ? 0
+                : Math.sqrt(2 * r * this.maxElevation + this.maxElevation * this.maxElevation);
+
+        // Next step is to project CT vector onto camera eye (forward) vector to get maximum
+        // camera far plane distance. Point on sphere beyond that point won't be visible
+        // anyway unless they are above the ground surface.
+        // For such cases [[this.maxElevation]] applies, thus we project entire CE
+        // vector of length equal: t + te.
+
+        // Extract camera X, Y, Z orientation axes into tmp vectors array.
+        camera.matrixWorld.extractBasis(
+            this.m_tmpVectors[0],
+            this.m_tmpVectors[1],
+            this.m_tmpVectors[2]
+        );
+        // Setup quaternion (based on X axis) for angle between tangent and camera eye.
+        this.m_tmpQuaternion.setFromAxisAngle(this.m_tmpVectors[0], alpha);
+        // Acquire camera (eye) forward vector from Z axis reversed (keep in tmpVectors[2]).
+        const cameraFwdVec = this.m_tmpVectors[2].negate();
+        // Apply quaternion to forward vector, creating tangent vector (in tmpVectors[1]).
+        const tangentVec = this.m_tmpVectors[1]
+            .copy(cameraFwdVec)
+            .applyQuaternion(this.m_tmpQuaternion);
+        // Give it a proper length
+        tangentVec.multiplyScalar(t + te);
+        // Calculate tangent projection onto camera eye vector, giving far plane distance.
+        return tangentVec.dot(cameraFwdVec);
+    }
+
+    private getFovBasedFarPlane(
+        camera: THREE.PerspectiveCamera,
+        d: number,
+        r: number,
+        fovAngle: number,
+        projection: Projection
+    ) {
+        // Find intersection point that is closer to tangent point.
+        //
+        //         , - ~ ~ ~ - ,
+        //     , '               ' ,
+        //   ,           .           ,
+        //  ,            .     r     ,' T1
+        // ,             .     ,  '  / ,
+        // ,             . O.'  a   /  ,
+        // ,             | .  `  . /   ,
+        //  ,            |   .  r / TA,
+        //   ,           |    .  /   ,
+        //     ,         |     ./  ,'_____ far
+        //       ' -_, _ | _ , /' T0
+        //     near      |    /
+        //               |   / t
+        //             d | /
+        //               |/
+        //               C
+        //
+        // See:
+        // tslint:disable-next-line: max-line-length
+        // https://www.scratchapixel.com/lessons/3d-basic-rendering/minimal-ray-tracer-rendering-simple-shapes/ray-sphere-intersection
+
+        // Vector from camera to world center
+        const dVec = camera.position;
+        // Extract camera X, Y, Z orientation axes into tmp vectors array.
+        camera.matrixWorld.extractBasis(
+            this.m_tmpVectors[0],
+            this.m_tmpVectors[1],
+            this.m_tmpVectors[2]
+        );
+        // Setup quaternion (X axis based) for angle between frustum plane and camera eye.
+        this.m_tmpQuaternion.setFromAxisAngle(this.m_tmpVectors[0], fovAngle / 2);
+        // Acquire camera (eye) forward vector from Z axis (keep it in tmpVectors[2]).
+        const cameraFwdVec = this.m_tmpVectors[2];
+        // Apply quaternion to forward vector, creating intersection vector, which is
+        // parallel to top or right frustum plane (depending on the aspect ratio).
+        const tVec = this.m_tmpVectors[1].copy(cameraFwdVec).applyQuaternion(this.m_tmpQuaternion);
+        // Calculate camera to origin vector projection onto frustum plane (top or right).
+        // This gives us the length of CTA segment:
+        const cta = dVec.dot(tVec);
+        // If it is negative, it means that the dVec and the tVec points in
+        // opposite directions - there is no intersection - or intersection could
+        // potentially be behind the intersection ray's origin (camera position).
+        if (cta < 0) {
+            // Intersection points are behind camera, camera looks in wrong direction.
+            const groundDistance = this.getCameraAltitude(camera, projection);
+            // Setup far plane to maximum distance.
+            return groundDistance * this.farMaxRatio;
+        }
+        // Knowing the length of |CTA| we just need to subtract the length of |T0TA|
+        // segment from it to get far plane distance.
+        // In order to calculate |T0TA| we firstly need to use use Pythagorean theorem to
+        // find length of |OTA| = a. Here we use the right triangle formed by O-C-TA points:
+        // |OC|^2 = |CTA|^2 + |OTA|^2, where |OTA| = a, |OC| = d, |CTA| = cta
+        // a^2 = d^2 - cta^2
+        const a2 = dVec.dot(dVec) - cta * cta;
+        // Note that if a is greater than sphere radius the ray misses the sphere and
+        // thus there is no intersection at all.
+        const r2 = r * r;
+        assert(a2 <= r2, "Please use this evaluator only for top view camera poses.");
+        // Now to find the length of |T0TA| == |T1TA| we use the second right triangle
+        // formed by O-T0-TA points. Of course we know that |T0TA| segment length is
+        // equal to |T1TA|, and |OT0| segment is simply sphere radius.
+        // In order to find |T0TA| length we again use Pythagorean theorem, which says:
+        // |OT0|^2 = |OTA|^2 + |T0TA|^2, where |OTO| = r, |OTA| = a
+        // |T0TA|^2 = r^2 - a^2
+        const tota = Math.sqrt(r2 - a2);
+        // Finally our far plane (intersection point) is defined as:
+        return cta - tota;
+    }
+
+    private getOrthoBasedFarPlane(d: number, r: number): number {
+        //         , - ~ ~ ~ - ,
+        //     , '               ' ,     E
+        //   ,            .--------- ,-.'- far + elev
+        // | ,            .   r + e , `, |
+        // |,             .     , '     ,| te
+        // |,             . O '.........,|..
+        // |,             |        r    ,|  far
+        // | ,            |            , |
+        // |  ,           |           ,  | t
+        // |    ,         |        , '   |
+        // |      ' -_, _ | _ ,  '       |
+        // |    near      | \/___________| near - elev
+        // |              |              |
+        // |            d |              |
+        // |              |              |
+        //                C
+        // The distance to tangent point may be described as:
+        const t = d;
+        // Tangent extension due to terrain elevation behind the horizon may be calculated
+        // based on the right triangle:
+        // (r+maxElev)^2 = r^2 + te^2
+        // te = sqrt((r+maxElev)^2 - r^2)
+        // although we may not calculate it if elevation is negligible:
+        const te =
+            this.maxElevation < epsilon
+                ? 0
+                : Math.sqrt(r + this.maxElevation) * (r + this.maxElevation) - r * r;
+        // Both near and far planes distances are directly applied to frustum, because tangents'
+        // lines are parallel to camera look at vector.
+        // Now far plane distance is constituted with:
+        return t + te;
     }
 }
 
@@ -561,6 +670,8 @@ export class TiltViewClipPlanesEvaluator extends TopViewClipPlanesEvaluator {
      */
     protected getFrustumGroundIntersectionDist(mapView: MapView): { top: number; bottom: number } {
         assert(mapView.projection.type !== ProjectionType.Spherical);
+        const camera = mapView.camera;
+        const projection = mapView.projection;
         // This algorithm computes the length of frustum planes before intersecting with a flat
         // ground surface. Entire computation is split over two projections method and performed
         // for top and bottom plane, with addition of terrain (ground) elevation which is taken
@@ -602,15 +713,15 @@ export class TiltViewClipPlanesEvaluator extends TopViewClipPlanesEvaluator {
         // ground elevations, which is done by simply offsetting camera altitude, as it is
         // opposite to elevating ground level.
         const halfPiLimit = Math.PI / 2 - epsilon;
-        const cameraAltitude = this.getCameraAltitude(mapView.camera, mapView.projection);
+        const cameraAltitude = this.getCameraAltitude(camera, projection);
         const target = MapViewUtils.rayCastWorldCoordinates(mapView, 0, 0);
         if (target === null) {
             throw new Error("MapView does not support a view pointing in the void.");
         }
         const cameraTilt = MapViewUtils.extractSphericalCoordinatesFromLocation(
             mapView,
-            mapView.camera,
-            mapView.projection.unprojectPoint(target)
+            camera,
+            projection.unprojectPoint(target)
         ).tilt;
         // Angle between z and c2
         let topAngleRad: number;
@@ -621,8 +732,8 @@ export class TiltViewClipPlanesEvaluator extends TopViewClipPlanesEvaluator {
         // Top plane origin altitude
         let z2: number;
         // For perspective projection:
-        if (mapView.camera.type === "PerspectiveCamera") {
-            const cam = mapView.camera as THREE.PerspectiveCamera;
+        if (camera.type === "PerspectiveCamera") {
+            const cam = (camera as any) as THREE.PerspectiveCamera;
             // Angle between z and c2, note, the fov is vertical, otherwise we would need to
             // translate it using aspect ratio:
             // let aspect = camera.aspect > 1 ? camera.aspect : 1 / camera.aspect;
@@ -635,7 +746,7 @@ export class TiltViewClipPlanesEvaluator extends TopViewClipPlanesEvaluator {
         }
         // For orthographic projection:
         else {
-            const cam = (mapView.camera as any) as THREE.OrthographicCamera;
+            const cam = (camera as any) as THREE.OrthographicCamera;
             // For orthogonal camera projections we may simply ignore FOV and use 0 for FOV
             // the top/bottom planes are simply parallel to the eye vector:
             topAngleRad = bottomAngleRad = cameraTilt;
@@ -674,12 +785,13 @@ export class TiltViewClipPlanesEvaluator extends TopViewClipPlanesEvaluator {
         // be defined as distance along the ground normal vector thus during camera
         // tilt they may affect near/far planes positions differently.
         const planesDist = this.getFrustumGroundIntersectionDist(mapView);
-
+        const camera = mapView.camera;
+        const projection = mapView.projection;
         // Project clipping plane distances for the top/bottom frustum planes (edges), but
         // only if we deal with perspective camera type, this step is not required
         // for orthographic projections, cause all clip planes are parallel to eye vector.
-        if (mapView.camera.type === "PerspectiveCamera") {
-            const cam = mapView.camera as THREE.PerspectiveCamera;
+        if (camera.type === "PerspectiveCamera") {
+            const cam = camera as THREE.PerspectiveCamera;
             // Angle between z and c2, note, the fov is vertical, otherwise we would need to
             // translate it using aspect ratio:
             // let aspect = camera.aspect > 1 ? camera.aspect : 1 / camera.aspect;
@@ -701,7 +813,7 @@ export class TiltViewClipPlanesEvaluator extends TopViewClipPlanesEvaluator {
         }
 
         // Clamp values to constraints.
-        const lookAtDist = this.getCameraLookAtDistance(mapView.camera, mapView.projection);
+        const lookAtDist = this.getCameraLookAtDistance(camera, projection);
         const farMax = lookAtDist * this.farMaxRatio;
         viewRanges.near = Math.max(viewRanges.near, this.nearMin);
         viewRanges.far = Math.min(viewRanges.far, farMax);
@@ -785,9 +897,7 @@ export class TiltViewClipPlanesEvaluator extends TopViewClipPlanesEvaluator {
             // t_d = d_norm * |t + te|,
             // where:
             // |t| = cos(alpha) * |d|
-            // |te| = sqrt((r+e)^2 - r^2)
-            // Which reduces to:
-            // |te| = sqrt(2*r*e + e^2)
+            // |te| = sqrt((r+e)^2 - r^2) = sqrt(2*r*e + e^2)
             const t = cosAlpha * d;
             const te = Math.sqrt(2 * r * this.maxElevation - this.maxElevation * this.maxElevation);
             // Re-use pre-allocated vector.
@@ -820,7 +930,7 @@ export class TiltViewClipPlanesEvaluator extends TopViewClipPlanesEvaluator {
         // because far plane is indeed defined in that space anyway:
         const farPlane = this.m_tmpPlane.setFromCoplanarPoints(tdrx, tdry, tdrx2);
         viewRanges.far = farPlane.constant;
-        // Take into account largest depression assumed, that may be further then
+        // Take into account largest depression assumed, that may be further than
         // tangent based far plane distance.
         const farMin = cameraAltitude - this.minElevation;
         // Finally apply the constraints.
