@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Color, CubicInterpolant, DiscreteInterpolant, LinearInterpolant } from "three";
+import * as THREE from "three";
 
 import { LoggerManager } from "@here/harp-utils";
 import { Env, MapEnv } from "./Env";
@@ -30,13 +30,13 @@ import {
 const logger = LoggerManager.instance.create("InterpolatedProperty");
 
 const interpolants = [
-    DiscreteInterpolant,
-    LinearInterpolant,
-    CubicInterpolant,
+    THREE.DiscreteInterpolant,
+    THREE.LinearInterpolant,
+    THREE.CubicInterpolant,
     ExponentialInterpolant
 ];
 
-const tmpColor = new Color();
+const tmpColor = new THREE.Color();
 
 /**
  * Checks if a property is interpolated.
@@ -79,7 +79,7 @@ export function isInterpolatedProperty(p: any): p is InterpolatedProperty {
 }
 
 /**
- * A temp [[Env]] containing the argments passed to `getPropertyValue`.
+ * A temp [[Env]] containing the arguments passed to `getPropertyValue`.
  *
  * [[dynamicPropertiesTempEnv]] is used when `getPropertyValue` is
  * invoked with explicit values for `zoom` and `pixelToMeters` instead
@@ -165,8 +165,10 @@ export function getPropertyValue(
                 case StringEncodedNumeralType.RGB:
                 case StringEncodedNumeralType.RGBA:
                 case StringEncodedNumeralType.HSL:
-                    const hslValues = matchedFormat.decoder(property);
-                    return tmpColor.setHSL(hslValues[0], hslValues[1], hslValues[2]).getHex();
+                    const colorChannels = matchedFormat.decoder(property);
+                    return tmpColor
+                        .setRGB(colorChannels[0], colorChannels[1], colorChannels[2])
+                        .getHex();
                 default:
                     return matchedFormat.decoder(property)[0];
             }
@@ -243,11 +245,13 @@ function getInterpolatedColor(property: InterpolatedProperty, level: number): nu
     }
     interpolant.evaluate(level);
 
+    // Color.setRGB() does not clamp the values which may be out of
+    // color channels boundaries after interpolation.
     return tmpColor
-        .setHSL(
-            interpolant.resultBuffer[0],
-            interpolant.resultBuffer[1],
-            interpolant.resultBuffer[2]
+        .setRGB(
+            THREE.Math.clamp(interpolant.resultBuffer[0], 0, 1),
+            THREE.Math.clamp(interpolant.resultBuffer[1], 0, 1),
+            THREE.Math.clamp(interpolant.resultBuffer[2], 0, 1)
         )
         .getHex();
 }

@@ -29,7 +29,8 @@ const booleanProperty: InterpolatedProperty = {
 const colorProperty: InterpolatedProperty = {
     interpolationMode: InterpolationMode.Discrete,
     zoomLevels: levels,
-    values: [0, 1, 0.5, 120 / 360, 1, 0.5, 240 / 360, 1, 0.5],
+    // [r0, g0, b0, r1, g1, b1, ...]
+    values: [1, 0, 0, 0, 1, 0, 0, 0, 1],
     _stringEncodedNumeralType: StringEncodedNumeralType.Hex
 };
 
@@ -87,9 +88,11 @@ describe("Interpolation", function() {
 
         assert.equal(getPropertyValue(colorProperty, -Infinity), 0xff0000);
         assert.equal(getPropertyValue(colorProperty, 0), 0xff0000);
-        assert.equal(getPropertyValue(colorProperty, 2.5), 0xfeff00);
+        // rgb: [ 0.5, 0.5, 0 ]
+        assert.equal(getPropertyValue(colorProperty, 2.5), 0x7f7f00);
         assert.equal(getPropertyValue(colorProperty, 5), 0x00ff00);
-        assert.equal(getPropertyValue(colorProperty, 7.5), 0x00feff);
+        // rgb: [ 0, 0.5, 0.5 ]
+        assert.equal(getPropertyValue(colorProperty, 7.5), 0x007f7f);
         assert.equal(getPropertyValue(colorProperty, 10), 0x0000ff);
         assert.equal(getPropertyValue(colorProperty, Infinity), 0x0000ff);
     });
@@ -107,9 +110,11 @@ describe("Interpolation", function() {
 
         assert.equal(getPropertyValue(colorProperty, -Infinity), 0xff0000);
         assert.equal(getPropertyValue(colorProperty, 0), 0xff0000);
-        assert.equal(getPropertyValue(colorProperty, 2.5), 0xfeff00);
+        // rgb: [ 0.4375, 0.625, 0 ]
+        assert.equal(getPropertyValue(colorProperty, 2.5), 0x6f9f00);
         assert.equal(getPropertyValue(colorProperty, 5), 0x00ff00);
-        assert.equal(getPropertyValue(colorProperty, 7.5), 0x00feff);
+        // rgb: [ 0, 0.625, 0.4375 ]
+        assert.equal(getPropertyValue(colorProperty, 7.5), 0x009f6f);
         assert.equal(getPropertyValue(colorProperty, 10), 0x0000ff);
         assert.equal(getPropertyValue(colorProperty, Infinity), 0x0000ff);
     });
@@ -127,9 +132,11 @@ describe("Interpolation", function() {
 
         assert.equal(getPropertyValue(colorProperty, -Infinity), 0xff0000);
         assert.equal(getPropertyValue(colorProperty, 0), 0xff0000);
-        assert.equal(getPropertyValue(colorProperty, 2.5), 0xff7f00);
+        // rgb: [ 0.75, 0.25, 0 ]
+        assert.equal(getPropertyValue(colorProperty, 2.5), 0xbf3f00);
         assert.equal(getPropertyValue(colorProperty, 5), 0x00ff00);
-        assert.equal(getPropertyValue(colorProperty, 7.5), 0x00ff7f);
+        // rgb: [ 0, 0.75, 0.25 ]
+        assert.equal(getPropertyValue(colorProperty, 7.5), 0x00bf3f);
         assert.equal(getPropertyValue(colorProperty, 10), 0x0000ff);
         assert.equal(getPropertyValue(colorProperty, Infinity), 0x0000ff);
     });
