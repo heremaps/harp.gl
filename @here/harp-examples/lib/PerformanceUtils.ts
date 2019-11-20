@@ -106,13 +106,12 @@ export namespace PerformanceUtils {
             decoderCount,
             theme: theme.resource,
             enableStatistics: true,
-            enablePhasedLoading: phasedLoading !== false,
+            enablePhasedLoading: phasedLoading === true,
             collisionDebugCanvas: canvasOverlay,
             powerPreference
         });
 
-        mapView.camera.position.set(0, 0, 800);
-        mapView.geoCenter = new GeoCoordinates(52.518611, 13.376111, 0);
+        mapView.lookAt(new GeoCoordinates(52.518611, 13.376111), 8000, 0, 0);
 
         const mapControls = MapControls.create(mapView);
 
@@ -278,9 +277,7 @@ export namespace PerformanceUtils {
         if (cameraHeight === undefined) {
             cameraHeight = mapView.camera.position.z;
         }
-        mapView.geoCenter = new GeoCoordinates(lat, long, 0);
-        mapView.camera.position.setZ(cameraHeight);
-        mapView.camera.matrixWorldNeedsUpdate = true;
+        mapView.lookAt(new GeoCoordinates(lat, long), cameraHeight);
 
         if (force === true) {
             await delay(0);
