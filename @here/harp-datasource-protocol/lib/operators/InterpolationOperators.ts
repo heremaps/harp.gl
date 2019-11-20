@@ -6,7 +6,7 @@
 
 import { CallExpr, Expr, ExprScope, NumberLiteralExpr, Value } from "../Expr";
 import { ExprEvaluatorContext, OperatorDescriptorMap } from "../ExprEvaluator";
-import { createInterpolatedProperty } from "../InterpolatedProperty";
+import { createInterpolatedProperty, getPropertyValue } from "../InterpolatedProperty";
 import { InterpolatedPropertyDefinition } from "../InterpolatedPropertyDefs";
 
 /**
@@ -149,6 +149,10 @@ const operators = {
                 throw new Error("failed to create interpolator");
             }
 
+            if (context.scope === ExprScope.Dynamic) {
+                return getPropertyValue(result, context.env);
+            }
+
             return result;
         }
     },
@@ -161,7 +165,7 @@ const operators = {
             const input = call.args[0];
 
             if (
-                context.scope === ExprScope.Value &&
+                (context.scope === ExprScope.Value || context.scope === ExprScope.Dynamic) &&
                 input instanceof CallExpr &&
                 input.op === "zoom"
             ) {
@@ -196,6 +200,10 @@ const operators = {
 
                 if (interpolation === undefined) {
                     throw new Error("failed to create interpolator");
+                }
+
+                if (context.scope === ExprScope.Dynamic) {
+                    return getPropertyValue(interpolation, context.env);
                 }
 
                 return interpolation;

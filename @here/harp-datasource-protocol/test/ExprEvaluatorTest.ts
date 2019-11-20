@@ -934,16 +934,61 @@ describe("ExprEvaluator", function() {
     });
 
     describe("getPropertyValue", function() {
-        const env = new MapEnv({
-            $zoom: 14,
-            $pixelsToMeters: 2,
-            time: 1
-        });
+        const env = new MapEnv(
+            {
+                $zoom: 14,
+                $pixelToMeters: 2,
+                time: 1
+            },
+            new MapEnv(defaultEnv)
+        );
 
         it("evaluate", function() {
             assert.strictEqual(
                 getPropertyValue(Expr.fromJSON(["rgb", 255, 0, ["*", ["get", "time"], 255]]), env),
                 "#ff00ff"
+            );
+
+            assert.strictEqual(
+                getPropertyValue(
+                    Expr.fromJSON(["step", ["zoom"], ["get", "one"], 14, ["get", "two"]]),
+                    env
+                ),
+                2
+            );
+
+            assert.strictEqual(
+                getPropertyValue(Expr.fromJSON(["step", ["zoom"], "10px", 14, "20px"]), env),
+                40
+            );
+
+            assert.strictEqual(
+                getPropertyValue(Expr.fromJSON(["step", ["zoom"], "10px", 15, "20px"]), env),
+                20
+            );
+
+            assert.strictEqual(
+                getPropertyValue(
+                    Expr.fromJSON([
+                        "interpolate",
+                        ["linear"],
+                        ["zoom"],
+                        0,
+                        0,
+                        20,
+                        ["*", ["get", "two"], 10]
+                    ]),
+                    env
+                ),
+                14
+            );
+
+            assert.strictEqual(
+                getPropertyValue(
+                    Expr.fromJSON(["interpolate", ["linear"], ["zoom"], 1, "1px", 20, "20px"]),
+                    env
+                ),
+                28
             );
         });
     });
