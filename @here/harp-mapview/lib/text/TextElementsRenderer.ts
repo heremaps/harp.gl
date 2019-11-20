@@ -954,6 +954,7 @@ export class TextElementsRenderer {
 
         this.checkIfOverloaded(dataSourceTileList);
 
+        // Used with tile offset to compute the x coordinate offset for tiles.
         const worldMaxX = projection.worldExtent(0, 0).max.x;
         const updateStartTime =
             this.overloaded && this.m_viewState.isDynamic ? PerformanceTimer.now() : undefined;
@@ -1215,7 +1216,7 @@ export class TextElementsRenderer {
             if (
                 !this.placeTextElementGroup(
                     textElementGroupState,
-                    mapViewState,
+                    renderParams,
                     maxNumPlacedTextElements,
                     Pass.PersistentLabels
                 )
@@ -1251,7 +1252,7 @@ export class TextElementsRenderer {
             if (
                 !this.placeTextElementGroup(
                     groupStates[i],
-                    mapViewState,
+                    renderParams,
                     this.m_options.maxNumVisibleLabels!,
                     Pass.NewLabels
                 )

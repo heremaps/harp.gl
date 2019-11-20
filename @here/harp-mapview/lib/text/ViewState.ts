@@ -15,7 +15,7 @@ export interface ViewState {
     maxVisibilityDist: number; // Maximum far plane distance.
     zoomLevel: number; // View's zoom level.
     frameNumber: number; // Current frame number.
-    lookAtDistance: number; // Distance to the lookAt pooint.
+    lookAtDistance: number; // Distance to the lookAt point.
     isDynamic: boolean; // Whether a new frame for the view is already requested.
     hiddenGeometryKinds: GeometryKindSet | undefined; // Kinds of geometries that are disabled.
 }
