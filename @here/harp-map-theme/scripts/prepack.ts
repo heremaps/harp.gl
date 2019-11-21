@@ -9,7 +9,7 @@ import * as path from "path";
 
 // tslint:disable:no-console
 
-function onCopyError(err: Error) {
+function onCopyError(err: Error[] | null) {
     if (err === null) {
         return;
     }
