@@ -17,6 +17,6 @@ export interface ViewState {
     frameNumber: number; // Current frame number.
     lookAtDistance: number; // Distance to the lookAt point.
     isDynamic: boolean; // Whether a new frame for the view is already requested.
-    hiddenGeometryKinds: GeometryKindSet | undefined; // Kinds of geometries that are disabled.
+    hiddenGeometryKinds?: GeometryKindSet; // Kinds of geometries that are disabled.
     renderedTilesChanged: boolean; // True if rendered tiles changed since previous frame.
 }
