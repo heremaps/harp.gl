@@ -54,6 +54,7 @@ import { ScreenCollisions, ScreenCollisionsDebug } from "./ScreenCollisions";
 import { ScreenProjector } from "./ScreenProjector";
 import { SkyBackground } from "./SkyBackground";
 import { FrameStats, PerformanceStatistics } from "./Statistics";
+import { MapViewState } from "./text/MapViewState";
 import { TextElement } from "./text/TextElement";
 import { TextElementsRenderer, ViewUpdateCallback } from "./text/TextElementsRenderer";
 import { TextElementsRendererOptions } from "./text/TextElementsRendererOptions";
@@ -2847,10 +2848,9 @@ export class MapView extends THREE.EventDispatcher {
         }
 
         this.m_textElementsRenderer.placeText(
-            this.checkIfTextElementsChanged(),
-            this.checkIfTilesChanged(),
-            time,
-            this.m_frameNumber
+            this.m_visibleTiles.dataSourceTileList,
+            this.projection,
+            time
         );
     }
 
@@ -3022,27 +3022,6 @@ export class MapView extends THREE.EventDispatcher {
     }
 
     /**
-     * Check if the `textElementsChanged` flag in any tile has been set to `true`. If any flag was
-     * `true`, this function returns `true`, and resets the flag in all tiles to `false`.
-     */
-    private checkIfTextElementsChanged() {
-        const renderList = this.m_visibleTiles.dataSourceTileList;
-
-        let textElementsChanged = false;
-
-        renderList.forEach(({ renderedTiles }) => {
-            renderedTiles.forEach(tile => {
-                if (tile.textElementsChanged) {
-                    tile.textElementsChanged = false;
-                    textElementsChanged = true;
-                }
-            });
-        });
-
-        return textElementsChanged;
-    }
-
-    /**
      * Check if the set of visible tiles changed since the last frame.
      *
      * May be called multiple times per frame.
@@ -3180,6 +3159,8 @@ export class MapView extends THREE.EventDispatcher {
 
         return new TextElementsRenderer(
             this,
+            new MapViewState(this, this.checkIfTilesChanged.bind(this)),
+            this.renderer,
             updateCallback,
             this.m_screenCollisions,
             this.m_screenProjector,
