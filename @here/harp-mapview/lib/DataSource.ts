@@ -43,6 +43,14 @@ export abstract class DataSource extends THREE.EventDispatcher {
     name: string;
 
     /**
+     * Whether the datasource should have a ground plane (this plane covers the tile entirely and
+     * has the minimum possible renderOrder), this can be required in some cases when fallback
+     * parent tiles need to be covered by the children, otherwise the content will overlap.
+     * Default is false
+     */
+    addGroundPlane: boolean = false;
+
+    /**
      * The [[MapView]] instance holding a reference to this `DataSource`.
      */
     private m_mapView?: MapView;
