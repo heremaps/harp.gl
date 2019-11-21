@@ -14,6 +14,7 @@ import {
     isStandardTechnique,
     isTerrainTechnique,
     isTextureBuffer,
+    parseStringEncodedColor,
     Technique,
     TEXTURE_PROPERTY_KEYS,
     TextureProperties
@@ -475,6 +476,12 @@ function applyTechniquePropertyToMaterial(
 ) {
     const m = material as any;
     if (m[prop] instanceof THREE.Color) {
+        if (typeof value === "string") {
+            value = parseStringEncodedColor(value);
+            if (value === undefined) {
+                throw new Error(`Unsupported color format: '${value}'`);
+            }
+        }
         m[prop].set(value);
         // Trigger setter notifying change
         m[prop] = m[prop];
