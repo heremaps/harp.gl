@@ -421,6 +421,22 @@ export namespace PerformanceBenchmark {
         finishTest();
     }
 
+    async function flyoverNYZl17() {
+        startTest("FlyOver", "NewYork Zl17");
+        latestResult = await PerformanceUtils.measureFlyoverSpline(
+            mapViewApp,
+            "Flyover_NewYork_Zl17",
+            PerformanceTestData.NEW_YORK_FLYOVER_ZL17,
+            flyoverNumFrames,
+            false,
+            use2D,
+            showLabels,
+            flyoverNumRuns,
+            checkIfCancelled
+        );
+        finishTest();
+    }
+
     async function flyoverNyLoaded() {
         startTest("FlyOver (All frames loaded)", "NewYork");
         latestResult = await PerformanceUtils.measureFlyoverSpline(
@@ -672,6 +688,9 @@ export namespace PerformanceBenchmark {
             FlyOverNY: () => {
                 flyoverNY();
             },
+            FlyOverNYZl17: () => {
+                flyoverNYZl17();
+            },
             FlyOverNYLoaded: () => {
                 flyoverNyLoaded();
             },
@@ -847,6 +866,7 @@ export namespace PerformanceBenchmark {
         flyOversFolder.add(guiOptions, "ZoomInOutParis");
         flyOversFolder.add(guiOptions, "ZoomInOutParis2");
         flyOversFolder.add(guiOptions, "FlyOverNY");
+        flyOversFolder.add(guiOptions, "FlyOverNYZl17");
         flyOversFolder.add(guiOptions, "FlyOverNYLoaded");
         flyOversFolder.add(guiOptions, "FlyOverParis");
         flyOversFolder.add(guiOptions, "FlyOverParisLoaded");
