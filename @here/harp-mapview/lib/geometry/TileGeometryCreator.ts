@@ -218,7 +218,10 @@ export class TileGeometryCreator {
             // parent, in that case we reduce the renderOrder of the parent tile and this ground
             // place ensures that parent doesn't come through. This value must be above the
             // renderOrder of all objects in the fallback tile, otherwise there won't be a proper
-            // covering of the parent tile by the children, hence dividing by 2.
+            // covering of the parent tile by the children, hence dividing by 2. To put a bit more
+            // concretely, we assume all objects are rendered with a renderOrder between 0 and
+            // FALLBACK_RENDER_ORDER_OFFSET / 2, i.e. 10000. The ground plane is put at -10000, and
+            // the fallback tiles have their renderOrder set between -20000 and -10000
             TileGeometryCreator.instance.addGroundPlane(tile, -FALLBACK_RENDER_ORDER_OFFSET / 2);
         }
     }
