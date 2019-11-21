@@ -12,7 +12,10 @@ import { ViewState } from "./ViewState";
  * View state obtained from a MapView instance.
  */
 export class MapViewState implements ViewState {
-    constructor(private readonly m_mapView: MapView) {}
+    constructor(
+        private readonly m_mapView: MapView,
+        private readonly m_renderedTilesChangeCheck: () => boolean
+    ) {}
 
     get worldCenter(): THREE.Vector3 {
         return this.m_mapView.worldCenter;
@@ -39,5 +42,9 @@ export class MapViewState implements ViewState {
         return this.m_mapView.tileGeometryManager === undefined
             ? undefined
             : this.m_mapView.tileGeometryManager.hiddenGeometryKinds;
+    }
+
+    get renderedTilesChanged(): boolean {
+        return this.m_renderedTilesChangeCheck();
     }
 }

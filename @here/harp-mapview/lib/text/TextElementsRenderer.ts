@@ -329,15 +329,8 @@ export class TextElementsRenderer {
      * @param dataSourceTileList List of tiles to be rendered for each data source.
      * @param projection The view's projection.
      * @param time Current frame time.
-     * @param tilesChanged Indicates whether there's been any change in the tiles rendered since the
-     * last call to this method (last frame).
      */
-    placeText(
-        dataSourceTileList: DataSourceTileList[],
-        projection: Projection,
-        time: number,
-        tilesChanged: boolean
-    ) {
+    placeText(dataSourceTileList: DataSourceTileList[], projection: Projection, time: number) {
         const tileTextElementsChanged = checkIfTextElementsChanged(dataSourceTileList);
 
         const textElementsAvailable = this.hasOverlayText() || tileTextElementsChanged;
@@ -346,7 +339,9 @@ export class TextElementsRenderer {
         }
 
         const updateTextElements =
-            this.m_cacheInvalidated || tileTextElementsChanged || tilesChanged;
+            this.m_cacheInvalidated ||
+            tileTextElementsChanged ||
+            this.m_viewState.renderedTilesChanged;
 
         logger.debug(
             `FRAME: ${this.m_viewState.frameNumber}, ZOOM LEVEL: ${this.m_viewState.zoomLevel}`

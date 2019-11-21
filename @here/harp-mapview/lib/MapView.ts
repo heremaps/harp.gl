@@ -2836,8 +2836,7 @@ export class MapView extends THREE.EventDispatcher {
         this.m_textElementsRenderer.placeText(
             this.m_visibleTiles.dataSourceTileList,
             this.projection,
-            time,
-            this.checkIfTilesChanged()
+            time
         );
     }
 
@@ -3146,7 +3145,7 @@ export class MapView extends THREE.EventDispatcher {
 
         return new TextElementsRenderer(
             this,
-            new MapViewState(this),
+            new MapViewState(this, this.checkIfTilesChanged.bind(this)),
             this.renderer,
             updateCallback,
             this.m_screenCollisions,
