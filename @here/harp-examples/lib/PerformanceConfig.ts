@@ -78,6 +78,22 @@ export namespace PerformanceTestData {
         numberOfDrawPoints: 1000
     };
 
+    export const NEW_YORK_FLYOVER_ZL17 = {
+        controlPoints: [
+            40.706346,
+            -74.010112,
+            40.760026,
+            -73.968245,
+            40.796438,
+            -73.940555,
+            40.85468,
+            -73.931703
+        ],
+        zoomLevels: [17.1, 17.1, 17.1, 17.1],
+        tilts: [0, 0, 0, 0],
+        numberOfDrawPoints: 1000
+    };
+
     export const NEW_YORK_ZOOM = {
         lat: 40.71455,
         long: -74.00714,
