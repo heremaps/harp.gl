@@ -853,6 +853,42 @@ export namespace MapViewUtils {
         return size;
     }
 
+    /**
+     * Check if tiles or other content is currently being loaded.
+     *
+     * This method can be removed once HARP-7932 is implemented.
+     *
+     * @returns `true` if MapView has visible tiles or other content that is being loaded.
+     */
+    export function mapViewIsLoading(mapView: MapView) {
+        let numTilesLoading = 0;
+
+        for (const tileList of mapView.visibleTileSet.dataSourceTileList) {
+            numTilesLoading += tileList.numTilesLoading;
+
+            for (const tile of tileList.visibleTiles) {
+                if (tile.tileLoader !== undefined && !tile.tileLoader.isFinished) {
+                    numTilesLoading++;
+                }
+                if (tile.tileGeometryLoader !== undefined && !tile.tileGeometryLoader.isFinished) {
+                    numTilesLoading++;
+                }
+            }
+        }
+        let isLoading = numTilesLoading > 0;
+
+        if (mapView.textElementsRenderer !== undefined) {
+            isLoading = isLoading || mapView.textElementsRenderer.loading;
+        }
+
+        isLoading =
+            isLoading ||
+            !mapView.poiTableManager.finishedLoading ||
+            !mapView.visibleTileSet.allVisibleTilesLoaded;
+
+        return isLoading;
+    }
+
     function estimateTextureSize(
         texture: THREE.Texture | null,
         objectSize: MemoryUsage,

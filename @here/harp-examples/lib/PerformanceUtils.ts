@@ -228,40 +228,6 @@ export namespace PerformanceUtils {
         );
     }
 
-    /**
-     * Check if tiles or other content is currently being loaded.
-     *
-     * @returns `true` if MapView has visible tiles or other content that is being loaded.
-     */
-    function mapViewIsLoading(mapViewApp: MapViewApp) {
-        let numTilesLoading = 0;
-
-        for (const tileList of mapViewApp.mapView.visibleTileSet.dataSourceTileList) {
-            numTilesLoading += tileList.numTilesLoading;
-
-            for (const tile of tileList.visibleTiles) {
-                if (tile.tileLoader !== undefined && !tile.tileLoader.isFinished) {
-                    numTilesLoading++;
-                }
-                if (tile.tileGeometryLoader !== undefined && !tile.tileGeometryLoader.isFinished) {
-                    numTilesLoading++;
-                }
-            }
-        }
-        let isLoading = numTilesLoading > 0;
-
-        if (mapViewApp.mapView.textElementsRenderer !== undefined) {
-            isLoading = isLoading || mapViewApp.mapView.textElementsRenderer.loading;
-        }
-
-        isLoading =
-            isLoading ||
-            !mapViewApp.mapView.poiTableManager.finishedLoading ||
-            !mapViewApp.mapView.visibleTileSet.allVisibleTilesLoaded;
-
-        return isLoading;
-    }
-
     export function delay(ms: number) {
         return new Promise(resolve => setTimeout(resolve, ms));
     }
@@ -340,7 +306,8 @@ export namespace PerformanceUtils {
             waitForFinish !== true || numFrames >= 1 ? StatisticsMode.All : StatisticsMode.None
         );
 
-        const isFinished = waitForFinish !== true || !mapViewIsLoading(mapViewApp);
+        const isFinished =
+            waitForFinish !== true || !MapViewUtils.mapViewIsLoading(mapViewApp.mapView);
 
         if (numFrames > 1 || !isFinished) {
             return new Promise<FrameResults>((resolve, reject) => {
@@ -651,7 +618,7 @@ export namespace PerformanceUtils {
                     resolve(undefined);
                 }
 
-                if (waitForFrameLoaded && mapViewIsLoading(mapViewApp)) {
+                if (waitForFrameLoaded && MapViewUtils.mapViewIsLoading(mapViewApp.mapView)) {
                     mapViewApp.mapView.update();
                 } else if (currentFrameNumber >= locations.length) {
                     mapView.removeEventListener(MapViewEventNames.AfterRender, renderCallback);
@@ -708,7 +675,10 @@ export namespace PerformanceUtils {
 
         return new Promise<void>((resolve, reject) => {
             const renderCallback = () => {
-                if (mapViewApp.mapView.isDynamicFrame || mapViewIsLoading(mapViewApp)) {
+                if (
+                    mapViewApp.mapView.isDynamicFrame ||
+                    MapViewUtils.mapViewIsLoading(mapViewApp.mapView)
+                ) {
                     mapViewApp.mapView.update();
                 } else {
                     mapView.removeEventListener(MapViewEventNames.AfterRender, renderCallback);
