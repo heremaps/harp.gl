@@ -29,28 +29,24 @@ function overlayObject(object: TileObject, displacementMap: THREE.DataTexture): 
     }
 }
 
-const worldCoords = new THREE.Vector3();
-
 /**
  * Overlays the specified coordinates on top of elevation data if available.
  *
- * @param tileCoords World coordinates relative to the `tile` center.
+ * @param worldCoords World coordinates to overlay.
  * @param elevationProvider Used to get elevation data.
  * @param tile The tile to which the coordinates are relative.
  */
 function overlayPosition(
-    tileCoords: THREE.Vector3,
+    worldCoords: THREE.Vector3,
     elevationProvider: ElevationProvider,
     tile: Tile
 ) {
-    worldCoords.copy(tileCoords).add(tile.center);
     const geoCoords = tile.mapView.projection.unprojectPoint(worldCoords);
     const height = elevationProvider.getHeight(geoCoords);
 
     if (height !== undefined) {
         geoCoords.altitude = height;
         tile.mapView.projection.projectPoint(geoCoords, worldCoords);
-        tileCoords.copy(worldCoords).sub(tile.center);
     }
 }
 
@@ -64,8 +60,13 @@ function overlayPosition(
 function overlayTextElement(
     textElement: TextElement,
     elevationProvider: ElevationProvider,
-    tile: Tile
+    tile: Tile,
+    tileCenter: THREE.Vector3
 ) {
+    if (!textElement.inWorldSpace) {
+        textElement.computeWorldCoordinates(tileCenter);
+    }
+
     // TODO: Move calculation of text element geoCoordinates to decoder.
     if (textElement.path === undefined) {
         overlayPosition(textElement.position, elevationProvider, tile);
@@ -129,10 +130,13 @@ export function overlayOnElevation(tile: Tile): void {
     let { groupIndex, elementIndex } = tile.nextTextElementToOverlay;
     let textElementsCount = 0;
 
+    const tileCenter = tile.center.clone();
+    tileCenter.x += tile.projection.worldExtent(0, 0).max.x * tile.offset;
+
     while (groupIndex < groups.length) {
         const group = groups[groupIndex];
         while (textElementsCount < textElementsPerFrame && elementIndex < group.elements.length) {
-            overlayTextElement(group.elements[elementIndex], elevationProvider, tile);
+            overlayTextElement(group.elements[elementIndex], elevationProvider, tile, tileCenter);
             elementIndex++;
             textElementsCount++;
         }

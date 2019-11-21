@@ -664,6 +664,7 @@ export class TextElementsRenderer {
             }
 
             const textElement = textElementState.element;
+            assert(textElement.inWorldSpace);
 
             // Get the TextElementStyle.
             const textElementStyle = this.m_textStyleCache.getTextElementStyle(textElement.style);
@@ -1838,19 +1839,17 @@ export class TextElementsRenderer {
         temp: TempParams
     ): boolean {
         const poiLabel = labelState.element;
-
-        // Calculate the world position of this label.
-        tempPosition.copy(poiLabel.position).add(poiLabel.tileCenter!);
+        const worldPosition = poiLabel.points as THREE.Vector3;
 
         // Only process labels frustum-clipped labels
-        if (this.m_screenProjector.project(tempPosition, tempScreenPosition) === undefined) {
+        if (this.m_screenProjector.project(worldPosition, tempScreenPosition) === undefined) {
             return false;
         }
         // Add this POI as a point label.
         return this.addPointLabel(
             labelState,
             groupState,
-            tempPosition,
+            worldPosition,
             tempScreenPosition,
             poiRenderer,
             textCanvas,
@@ -1901,13 +1900,8 @@ export class TextElementsRenderer {
             const path = lineMarkerLabel.path;
             for (let pointIndex = 0; pointIndex < path.length; ++pointIndex) {
                 const point = path[pointIndex];
-                // Calculate the world position of this label.
-                tempPosition.copy(point).add(lineMarkerLabel.tileCenter!);
-
                 // Only process labels frustum-clipped labels
-                if (
-                    this.m_screenProjector.project(tempPosition, tempScreenPosition) !== undefined
-                ) {
+                if (this.m_screenProjector.project(point, tempScreenPosition) !== undefined) {
                     // Find a suitable location for the lineMarker to be placed at.
                     let tooClose = false;
                     for (let j = 0; j < shieldGroup.length; j += 2) {
@@ -1930,7 +1924,7 @@ export class TextElementsRenderer {
                             this.addPointLabel(
                                 labelState,
                                 groupState,
-                                tempPosition,
+                                point,
                                 tempScreenPosition,
                                 poiRenderer,
                                 textCanvas,
@@ -1950,17 +1944,12 @@ export class TextElementsRenderer {
             const path = lineMarkerLabel.path;
             for (let pointIndex = 0; pointIndex < path.length; ++pointIndex) {
                 const point = path[pointIndex];
-                // Calculate the world position of this label.
-                tempPosition.copy(point).add(lineMarkerLabel.tileCenter!);
-
                 // Only process labels frustum-clipped labels
-                if (
-                    this.m_screenProjector.project(tempPosition, tempScreenPosition) !== undefined
-                ) {
+                if (this.m_screenProjector.project(point, tempScreenPosition) !== undefined) {
                     this.addPointLabel(
                         labelState,
                         groupState,
-                        tempPosition,
+                        point,
                         tempScreenPosition,
                         poiRenderer,
                         textCanvas,
@@ -2164,12 +2153,10 @@ export class TextElementsRenderer {
         let anyPointVisible = false;
 
         for (const pt of textElement.path!) {
-            tempPosition.copy(pt).add(textElement.tileCenter!);
-
             // Skip invisible points at the beginning of the path.
             const screenPoint = anyPointVisible
-                ? this.m_screenProjector.project(tempPosition, tempScreenPosition)
-                : this.m_screenProjector.projectOnScreen(tempPosition, tempScreenPosition);
+                ? this.m_screenProjector.project(pt, tempScreenPosition)
+                : this.m_screenProjector.projectOnScreen(pt, tempScreenPosition);
             if (screenPoint === undefined) {
                 continue;
             }

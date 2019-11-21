@@ -154,18 +154,13 @@ export class TextElementStateCache {
             return true;
         }
 
+        assert(element.inWorldSpace);
+
         // Other labels found with the same text. Check if they're near enough to be considered
         // duplicates.
         const duplicateIndex = cachedEntries.findIndex(cachedEntry => {
-            let elementPosition = element.position;
-            let cachedElementPosition = cachedEntry.element.position;
-
-            if (!element.tileCenter!.equals(cachedEntry.element.tileCenter!)) {
-                elementPosition = elementPosition.clone().add(element.tileCenter!);
-                cachedElementPosition = cachedElementPosition
-                    .clone()
-                    .add(cachedEntry.element.tileCenter!);
-            }
+            const elementPosition = element.points as THREE.Vector3;
+            const cachedElementPosition = cachedEntry.element.position;
 
             return (
                 elementPosition.distanceToSquared(cachedElementPosition) <

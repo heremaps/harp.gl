@@ -21,7 +21,7 @@ import {
     TextRenderParameters,
     TextRenderStyle
 } from "@here/harp-text-canvas";
-import { Math2D, MathUtils } from "@here/harp-utils";
+import { assert, Math2D, MathUtils } from "@here/harp-utils";
 
 import * as THREE from "three";
 
@@ -273,12 +273,6 @@ export class TextElement {
 
     /**
      * @hidden
-     * Used during label placement for optimization.
-     */
-    tileCenter?: THREE.Vector3;
-
-    /**
-     * @hidden
      * Used during rendering.
      */
     loadingState?: LoadingState;
@@ -333,11 +327,17 @@ export class TextElement {
     private m_poiInfo?: PoiInfo;
 
     /**
+     * @hidden
+     * If `true`, the text element coordinates are in world space, otherwise in local tile space.
+     * see [[computeWorldCoordinates]].
+     */
+    private m_inWorldSpace: boolean = false;
+
+    /**
      * Creates a new `TextElement`.
      *
      * @param text The text to display.
-     * @param points The position in world coordinates or a list of points in world coordinates for
-     *              a curved text.
+     * @param points The position or a list of points for a curved text, both in local tile space.
      * @param renderParams `TextElement` text rendering parameters.
      * @param layoutParams `TextElement` text layout parameters.
      * @param priority The priority of the `TextElement. Elements with the highest priority get
@@ -395,6 +395,30 @@ export class TextElement {
             return this.points;
         }
         return undefined;
+    }
+
+    /**
+     * Transforms text element coordinates from local tile space to world space.
+     */
+    computeWorldCoordinates(tileCenter: THREE.Vector3) {
+        assert(!this.m_inWorldSpace);
+
+        if (this.points instanceof Array) {
+            for (const point of this.points) {
+                point.add(tileCenter);
+            }
+        } else {
+            this.points.add(tileCenter);
+        }
+        this.m_inWorldSpace = true;
+    }
+
+    /**
+     * @returns True if the text element points are in world space, false if they are in local tile
+     * space.
+     */
+    get inWorldSpace(): boolean {
+        return this.m_inWorldSpace;
     }
 
     /**
