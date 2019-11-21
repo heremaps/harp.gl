@@ -16,15 +16,12 @@ import {
     InterpolationMode
 } from "./InterpolatedPropertyDefs";
 import {
-    StringEncodedHex,
-    StringEncodedHSL,
-    StringEncodedMeters,
+    parseStringEncodedNumeral,
+    StringEncodedColorFormats,
+    StringEncodedMetricFormats,
     StringEncodedNumeralFormat,
     StringEncodedNumeralFormats,
-    StringEncodedNumeralType,
-    StringEncodedPixels,
-    StringEncodedRGB,
-    StringEncodedRGBA
+    StringEncodedNumeralType
 } from "./StringEncodedNumeral";
 
 const logger = LoggerManager.instance.create("InterpolatedProperty");
@@ -150,28 +147,8 @@ export function getPropertyValue(
         if (typeof property !== "string") {
             return property;
         } else {
-            const matchedFormat = StringEncodedNumeralFormats.find(format =>
-                format.regExp.test(property)
-            );
-            if (matchedFormat === undefined) {
-                return property;
-            }
-            switch (matchedFormat.type) {
-                case StringEncodedNumeralType.Meters:
-                    return matchedFormat.decoder(property)[0];
-                case StringEncodedNumeralType.Pixels:
-                    return matchedFormat.decoder(property)[0] * pixelToMeters;
-                case StringEncodedNumeralType.Hex:
-                case StringEncodedNumeralType.RGB:
-                case StringEncodedNumeralType.RGBA:
-                case StringEncodedNumeralType.HSL:
-                    const colorChannels = matchedFormat.decoder(property);
-                    return tmpColor
-                        .setRGB(colorChannels[0], colorChannels[1], colorChannels[2])
-                        .getHex();
-                default:
-                    return matchedFormat.decoder(property)[0];
-            }
+            const value = parseStringEncodedNumeral(property, pixelToMeters);
+            return value !== undefined ? value : property;
         }
     } else if (property._stringEncodedNumeralType !== undefined) {
         switch (property._stringEncodedNumeralType) {
@@ -342,9 +319,6 @@ function removeDuplicatePropertyValues<T>(p: InterpolatedPropertyDefinition<T>) 
     }
 }
 
-const colorFormats = [StringEncodedHSL, StringEncodedHex, StringEncodedRGB, StringEncodedRGBA];
-const worldSizeFormats = [StringEncodedMeters, StringEncodedPixels];
-
 function procesStringEnocodedNumeralInterpolatedProperty(
     baseFormat: StringEncodedNumeralFormat,
     prop: InterpolatedPropertyDefinition<string>,
@@ -355,8 +329,8 @@ function procesStringEnocodedNumeralInterpolatedProperty(
     const allowedValueFormats =
         baseFormat.type === StringEncodedNumeralType.Meters ||
         baseFormat.type === StringEncodedNumeralType.Pixels
-            ? worldSizeFormats
-            : colorFormats;
+            ? StringEncodedMetricFormats
+            : StringEncodedColorFormats;
 
     for (let valueIdx = 0; valueIdx < prop.values.length; ++valueIdx) {
         for (const valueFormat of allowedValueFormats) {
