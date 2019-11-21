@@ -147,7 +147,7 @@ export class FileSystem {
     static getFilesListWithExtensions(directoryPath: string, fileExtensions: string[]): string[] {
         const files: string[] = fileSystem.readdirSync(directoryPath);
         const filesFiltered = files.filter(fileName => {
-            for (const fileExt in fileExtensions) {
+            for (const fileExt of fileExtensions) {
                 if (fileName.toLowerCase().endsWith(fileExt)) {
                     return true;
                 }
