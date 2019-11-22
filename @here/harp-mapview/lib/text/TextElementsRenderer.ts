@@ -8,13 +8,11 @@ import {
     AdditionParameters,
     DEFAULT_TEXT_CANVAS_LAYER,
     FontCatalog,
-    HorizontalAlignment,
     MeasurementParameters,
     TextBufferAdditionParameters,
     TextCanvas,
     TextLayoutStyle,
-    TextRenderStyle,
-    VerticalAlignment
+    TextRenderStyle
 } from "@here/harp-text-canvas";
 import {
     assert,
@@ -227,6 +225,7 @@ export class TextElementsRenderer {
     private m_tmpVector = new THREE.Vector2();
     private m_overloaded: boolean = false;
     private m_cacheInvalidated: boolean = false;
+    private m_forceNewLabelsPass: boolean = false;
     private m_catalogsLoading: number = 0;
 
     private readonly m_textElementStateCache: TextElementStateCache = new TextElementStateCache();
@@ -360,7 +359,7 @@ export class TextElementsRenderer {
         );
 
         const clearVisitedGroups = updateTextElements;
-        this.m_textElementStateCache.update(
+        const anyTextGroupEvicted = this.m_textElementStateCache.update(
             time,
             clearVisitedGroups,
             this.m_options.disableFading!
@@ -372,7 +371,8 @@ export class TextElementsRenderer {
 
         this.reset();
         this.prepopulateScreenWithBlockingElements(dataSourceTileList);
-        this.placeTextElements(time);
+        const placeNewTextElements = updateTextElements || anyTextGroupEvicted;
+        this.placeTextElements(time, placeNewTextElements);
         this.placeOverlayTextElements();
         this.updateTextRenderers();
     }
@@ -730,6 +730,9 @@ export class TextElementsRenderer {
                         .loadCharset(textElement.text, textElement.renderStyle)
                         .then(() => {
                             textElement.loadingState = LoadingState.Loaded;
+                            // Ensure that text elements that were loading glyphs get a chance
+                            // to be rendered if there's no text element updates in the next frames.
+                            this.m_forceNewLabelsPass = true;
                             this.m_viewUpdateCallback();
                         });
                 }
@@ -1171,7 +1174,7 @@ export class TextElementsRenderer {
         }
     }
 
-    private placeTextElements(time: number) {
+    private placeTextElements(time: number, placeNewTextElements: boolean) {
         const renderParams: RenderParams = {
             numRenderedTextElements: 0,
             fadeAnimationRunning: false,
@@ -1190,6 +1193,13 @@ export class TextElementsRenderer {
             return;
         }
 
+        const placeNew = this.m_forceNewLabelsPass || placeNewTextElements;
+        if (this.m_forceNewLabelsPass) {
+            if (!placeNewTextElements) {
+                logger.debug("Force new label pass");
+            }
+            this.m_forceNewLabelsPass = false;
+        }
         const maxNumPlacedTextElements = this.m_options.maxNumVisibleLabels!;
 
         // TODO: HARP-7648. Potential performance improvement. Place persistent labels + rejected
@@ -1208,7 +1218,7 @@ export class TextElementsRenderer {
             }
 
             const newPriority = textElementGroupState.priority;
-            if (currentPriority !== newPriority) {
+            if (placeNew && currentPriority !== newPriority) {
                 // Place all new labels of the previous priority before placing the persistent
                 // labels of this priority.
                 this.placeNewTextElements(currentPriorityBegin, i, renderParams);
@@ -1234,8 +1244,10 @@ export class TextElementsRenderer {
             }
         }
 
-        // Place new text elements of the last priority.
-        this.placeNewTextElements(currentPriorityBegin, groupStates.length, renderParams);
+        if (placeNew) {
+            // Place new text elements of the last priority.
+            this.placeNewTextElements(currentPriorityBegin, groupStates.length, renderParams);
+        }
 
         if (placementStats) {
             placementStats.numRenderedTextElements = renderParams.numRenderedTextElements;
@@ -1527,7 +1539,10 @@ export class TextElementsRenderer {
             ) &&
             poiInfo!.isValid !== false;
 
-        if (renderIcon && poiRenderer.prepareRender(pointLabel, this.m_viewState.zoomLevel)) {
+        const iconReady =
+            renderIcon && poiRenderer.prepareRender(pointLabel, this.m_viewState.zoomLevel);
+
+        if (iconReady) {
             const iconIsVisible = poiRenderer.computeScreenBox(
                 poiInfo!,
                 tempPoiScreenPosition,
@@ -1592,6 +1607,10 @@ export class TextElementsRenderer {
                 iconRenderState.startFadeOut(this.m_viewState.frameNumber, renderParams.time);
                 iconRenderState.lastFrameNumber = this.m_viewState.frameNumber;
             }
+        } else if (renderIcon && poiInfo!.isValid !== false) {
+            // Ensure that text elements still loading icons get a chance to be rendered if
+            // there's no text element updates in the next frames.
+            this.m_forceNewLabelsPass = true;
         }
 
         // Check if label should be rendered at this zoomLevel
