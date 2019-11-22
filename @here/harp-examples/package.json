@@ -15,7 +15,7 @@
     "scripts": {
         "test": "exit 0",
         "prebuild": "node scripts/postinstall.js",
-        "build": "webpack",
+        "build": "webpack -p",
         "start": "webpack-dev-server",
         "publish-html": "node scripts/publish-html.js",
         "prepare": "node scripts/postinstall.js && cross-env PREPARE_ONLY=true webpack -p"
