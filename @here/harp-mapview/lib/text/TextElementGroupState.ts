@@ -5,21 +5,15 @@
  */
 
 import { assert } from "@here/harp-utils";
-import { TextElement } from "./TextElement";
 import { TextElementGroup } from "./TextElementGroup";
 import { TextElementState } from "./TextElementState";
 
 /**
  * Type of functions used to do early rejection of elements during group state creation or update.
- * @param textElement The text element to check.
- * @param lastFrameNumber Last frame the element was processed for rendering if available, otherwise
- * `undefined`.
+ * @param textElementState The state of the text element to check.
  * @returns `undefined` if element was rejected, otherwise its current view distance.
  */
-export type TextElementFilter = (
-    textElement: TextElement,
-    lastFrameNumber?: number
-) => number | undefined;
+export type TextElementFilter = (textElementState: TextElementState) => number | undefined;
 
 /**
  * `TextElementGroupState` keeps the state of a text element group and each element in it while
@@ -50,9 +44,9 @@ export class TextElementGroupState {
         //    primitive field in the label state.
         for (let i = 0; i < length; ++i) {
             const textElement = group.elements[i];
-            const textDistance = filter(textElement);
-
-            const state = new TextElementState(textElement, this, textDistance);
+            const state = new TextElementState(textElement);
+            const textDistance = filter(state);
+            state.update(this, textDistance);
             this.m_textElementStates[i] = state;
         }
     }
@@ -99,11 +93,7 @@ export class TextElementGroupState {
      */
     updateElements(filter: TextElementFilter) {
         for (const elementState of this.m_textElementStates) {
-            const lastFrameNumber = elementState.initialized
-                ? elementState.textRenderState!.lastFrameNumber
-                : undefined;
-            const textDistance = filter(elementState.element, lastFrameNumber);
-
+            const textDistance = filter(elementState);
             elementState.update(this, textDistance);
         }
     }

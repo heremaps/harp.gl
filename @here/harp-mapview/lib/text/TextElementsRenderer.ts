@@ -1049,11 +1049,10 @@ export class TextElementsRenderer {
         }
 
         const textElementSelection: TextElementFilter = (
-            textElement: TextElement,
-            lastFrameNumber?: number
+            textElementState: TextElementState
         ): number | undefined => {
             let { result, viewDistance } = checkReadyForPlacement(
-                textElement,
+                textElementState.element,
                 this.m_viewState,
                 this.m_viewCamera,
                 this.m_poiManager,
@@ -1063,7 +1062,7 @@ export class TextElementsRenderer {
 
             if (
                 result === PrePlacementResult.Ok &&
-                !this.m_textElementStateCache.deduplicateElement(textElement, lastFrameNumber)
+                !this.m_textElementStateCache.deduplicateElement(textElementState)
             ) {
                 result = PrePlacementResult.Duplicate;
                 viewDistance = undefined;
