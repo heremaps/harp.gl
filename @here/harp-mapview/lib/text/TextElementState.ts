@@ -121,9 +121,6 @@ export class TextElementState {
             return;
         }
         this.m_viewDistance = viewDistance;
-        if (this.m_viewDistance !== undefined) {
-            groupState.invalidateSorting();
-        }
     }
 
     /**
