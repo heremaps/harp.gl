@@ -20,11 +20,8 @@ export type TextElementFilter = (textElementState: TextElementState) => number |
  * they're being rendered.
  */
 export class TextElementGroupState {
-    // Sorted list of element states belonging to the group state. It does NOT have the same order
-    // as their elements in the group.
     private m_textElementStates: TextElementState[];
     private m_visited: boolean = false;
-    private m_needsSorting: boolean = false;
 
     /**
      * Creates the state for specified group.
@@ -102,44 +99,11 @@ export class TextElementGroupState {
         return this.m_textElementStates.length;
     }
 
-    get needsSorting(): boolean {
-        return this.m_needsSorting;
-    }
-
-    invalidateSorting() {
-        this.m_needsSorting = true;
-    }
-
     /**
-     * Returns text element states sorted by view distance.
-     * NOTE: The order does not match with the text elements in the group!.
-     * @param maxViewDistance Maximum distance from the view center that a visible element may have.
-     * @returns Array of sorted element states.
+     * Returns text element states.
+     * @returns Array of element states.
      */
-    sortedTextElementStates(maxViewDistance: number): TextElementState[] {
-        if (!this.m_needsSorting) {
-            return this.m_textElementStates;
-        }
-
-        // Do the actual sort based on view distance.
-        this.m_textElementStates.sort((a: TextElementState, b: TextElementState) => {
-            // Move elements with undefined view distance to the end.
-            if (a.viewDistance === b.viewDistance) {
-                return 0;
-            }
-            if (a.viewDistance === undefined) {
-                return 1;
-            }
-
-            if (b.viewDistance === undefined) {
-                return -1;
-            }
-
-            // Both elements have valid view distances.
-            return a.viewDistance - b.viewDistance;
-        });
-        this.m_needsSorting = false;
-
+    get textElementStates(): TextElementState[] {
         return this.m_textElementStates;
     }
 }
