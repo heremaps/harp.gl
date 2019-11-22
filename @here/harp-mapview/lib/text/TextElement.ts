@@ -8,7 +8,6 @@ import {
     GeometryKind,
     GeometryKindSet,
     ImageTexture,
-    isLineMarkerTechnique,
     LineMarkerTechnique,
     PoiStackMode,
     PoiTechnique
@@ -255,11 +254,6 @@ export class TextElement {
     userData?: any;
 
     /**
-     * Is `true` if is a point label.
-     */
-    isPointLabel: boolean;
-
-    /**
      * If specified, determines the render order between `TextElement`s. The number different
      * renderOrders should be as small as possible, because every specific `renderOrder` may result
      * in one or more draw calls.
@@ -333,6 +327,8 @@ export class TextElement {
      */
     dbgPathTooSmall?: boolean;
 
+    type: TextElementType;
+
     private m_poiInfo?: PoiInfo;
 
     /**
@@ -374,7 +370,8 @@ export class TextElement {
             this.layoutStyle = layoutParams;
         }
 
-        this.isPointLabel = points instanceof THREE.Vector3;
+        this.type =
+            points instanceof THREE.Vector3 ? TextElementType.PoiLabel : TextElementType.PathLabel;
     }
 
     /**
@@ -427,49 +424,6 @@ export class TextElement {
     }
 
     /**
-     * Determine if the `TextElement` is a line marker.
-     *
-     * @returns `true` if this `TextElement` is a line marker.
-     */
-    get isLineMarker(): boolean {
-        return (
-            this.points !== undefined &&
-            this.m_poiInfo !== undefined &&
-            isLineMarkerTechnique(this.m_poiInfo.technique)
-        );
-    }
-
-    /**
-     * Determine if the `TextElement` is a path label.
-     * @returns `true` if this `TextElement` is a path label.
-     */
-    get isPathLabel(): boolean {
-        return this.path !== undefined && !this.isLineMarker;
-    }
-
-    /**
-     * Determine if the `TextElement` is a poi label.
-     * @returns `true` if this `TextElement` is a poi label.
-     */
-    get isPoiLabel(): boolean {
-        return this.path === undefined;
-    }
-
-    /**
-     * Determine the type of `TextElement`.
-     * @returns This `TextElement` type.
-     */
-    get type(): TextElementType {
-        if (this.isPoiLabel) {
-            return TextElementType.PoiLabel;
-        } else if (this.isLineMarker) {
-            return TextElementType.LineMarker;
-        }
-
-        return TextElementType.PathLabel;
-    }
-
-    /**
      * Contains additional information about icon to be rendered along with text.
      */
     get poiInfo(): PoiInfo | undefined {
@@ -479,6 +433,9 @@ export class TextElement {
     set poiInfo(poiInfo: PoiInfo | undefined) {
         this.m_poiInfo = poiInfo;
         if (poiInfo !== undefined) {
+            if (this.path !== undefined) {
+                this.type = TextElementType.LineMarker;
+            }
             const poiRenderOrder = this.renderOrder !== undefined ? this.renderOrder : 0;
             poiInfo.renderOrder = poiRenderOrder;
         }

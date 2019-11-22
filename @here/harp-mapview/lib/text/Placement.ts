@@ -10,6 +10,7 @@ import { assert, MathUtils } from "@here/harp-utils";
 import * as THREE from "three";
 import { PoiManager } from "../poi/PoiManager";
 import { poiIsRenderable, TextElement } from "./TextElement";
+import { TextElementType } from "./TextElementType";
 import { ViewState } from "./ViewState";
 
 /**
@@ -176,7 +177,7 @@ export function computePointTextOffset(
     textElement: TextElement,
     offset: THREE.Vector2 = new THREE.Vector2()
 ): THREE.Vector2 {
-    assert(textElement.isPointLabel);
+    assert(textElement.type === TextElementType.PoiLabel);
     assert(textElement.layoutStyle !== undefined);
     assert(textElement.bounds !== undefined);
 
