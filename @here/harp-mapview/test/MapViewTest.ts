@@ -34,10 +34,6 @@ describe("MapView", function() {
     const inNodeContext = typeof window === "undefined";
     let sandbox: sinon.SinonSandbox;
     let clearColorStub: sinon.SinonStub;
-    // tslint:disable-next-line:no-unused-variable
-    let webGlStub: sinon.SinonStub;
-    // tslint:disable-next-line:no-unused-variable
-    let fontStub: sinon.SinonStub;
     let addEventListenerSpy: sinon.SinonStub;
     let removeEventListenerSpy: sinon.SinonStub;
     let canvas: HTMLCanvasElement;
@@ -46,10 +42,12 @@ describe("MapView", function() {
     beforeEach(function() {
         sandbox = sinon.createSandbox();
         clearColorStub = sandbox.stub();
-        webGlStub = sandbox
+        // tslint:disable-next-line:no-unused-variable
+        const webGlStub = sandbox
             .stub(THREE, "WebGLRenderer")
             .returns(TestUtils.getWebGLRendererStub(sandbox, clearColorStub));
-        fontStub = sandbox.stub(FontCatalog, "load").returns(new Promise(() => {}));
+        // tslint:disable-next-line:no-unused-variable
+        const fontStub = sandbox.stub(FontCatalog, "load").returns(new Promise(() => {}));
         if (inNodeContext) {
             const theGlobal: any = global;
             theGlobal.window = { window: { devicePixelRatio: 10 } };
@@ -88,11 +86,9 @@ describe("MapView", function() {
     //
     it.skip("Correctly sets geolocation and zoom", function() {
         const coords: GeoCoordinates = new GeoCoordinates(52.5145, 13.3501);
-        let rotationSpy: sinon.SinonSpy;
-        let zoomSpy: sinon.SinonSpy;
 
-        rotationSpy = sinon.spy(MapViewUtils, "setRotation");
-        zoomSpy = sinon.spy(MapViewUtils, "zoomOnTargetPosition");
+        const rotationSpy = sinon.spy(MapViewUtils, "setRotation");
+        const zoomSpy = sinon.spy(MapViewUtils, "zoomOnTargetPosition");
 
         mapView = new MapView({ canvas });
         mapView.setCameraGeolocationAndZoom(coords, 18, 10, 20);
