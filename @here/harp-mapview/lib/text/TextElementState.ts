@@ -5,7 +5,7 @@
  */
 
 import { assert } from "@here/harp-utils";
-import { FadingState, RenderState } from "./RenderState";
+import { RenderState } from "./RenderState";
 import { TextElement } from "./TextElement";
 import { TextElementGroupState } from "./TextElementGroupState";
 import { TextElementType } from "./TextElementType";
@@ -35,7 +35,7 @@ export class TextElementState {
      */
     private m_textRenderState?: RenderState;
 
-    constructor(private readonly m_textElement: TextElement) {}
+    constructor(readonly element: TextElement) {}
 
     get initialized(): boolean {
         return this.m_textRenderState !== undefined || this.m_iconRenderStates !== undefined;
@@ -84,10 +84,6 @@ export class TextElementState {
         }
     }
 
-    get element() {
-        return this.m_textElement;
-    }
-
     /**
      * Returns the last computed distance of the text element to the camera.
      * @returns Distance to camera.
@@ -131,7 +127,7 @@ export class TextElementState {
      * @returns 0 or negative distance to camera.
      */
     get renderDistance(): number {
-        return this.m_textElement.alwaysOnTop === true
+        return this.element.alwaysOnTop === true
             ? 0
             : this.m_viewDistance !== undefined
             ? -this.m_viewDistance
@@ -178,18 +174,15 @@ export class TextElementState {
         let visible = false;
 
         if (this.m_textRenderState !== undefined) {
-            this.m_textRenderState.updateFading(time, disableFading);
-            visible = this.m_textRenderState.isVisible();
+            visible = this.m_textRenderState.updateFading(time, disableFading);
         }
 
         if (this.iconRenderState !== undefined) {
             const iconRenderState = this.m_iconRenderStates as RenderState;
-            iconRenderState.updateFading(time, disableFading);
-            visible = visible || iconRenderState.isVisible();
+            visible = iconRenderState.updateFading(time, disableFading) || visible;
         } else if (this.iconRenderStates !== undefined) {
             for (const renderState of this.m_iconRenderStates as RenderState[]) {
-                renderState.updateFading(time, disableFading);
-                visible = visible || renderState.isVisible();
+                visible = renderState.updateFading(time, disableFading) || visible;
             }
         }
 
@@ -206,12 +199,11 @@ export class TextElementState {
 
         this.setViewDistance(viewDistance, groupState);
 
-        if (this.m_textElement.type === TextElementType.LineMarker) {
+        if (this.element.type === TextElementType.LineMarker) {
             this.m_iconRenderStates = new Array<RenderState>();
-            for (const _point of this.m_textElement.path!) {
+            for (const _point of this.element.points as THREE.Vector3[]) {
                 const iconRenderStates = this.m_iconRenderStates as RenderState[];
                 const renderState = new RenderState();
-                renderState.state = FadingState.FadingIn;
                 iconRenderStates.push(renderState);
             }
             return;
@@ -219,7 +211,7 @@ export class TextElementState {
 
         this.m_textRenderState = new RenderState();
 
-        if (this.m_textElement.type === TextElementType.PoiLabel) {
+        if (this.element.type === TextElementType.PoiLabel) {
             this.m_iconRenderStates = new RenderState();
         }
     }

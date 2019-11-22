@@ -8,6 +8,7 @@ import { assert } from "@here/harp-utils";
 import { TextElementGroup } from "./TextElementGroup";
 import { TextElementFilter, TextElementGroupState } from "./TextElementGroupState";
 import { TextElementState } from "./TextElementState";
+import { TextElementType } from "./TextElementType";
 
 /**
  * Label distance threshold squared in meters. Point labels with the same name that are closer in
@@ -117,7 +118,7 @@ export class TextElementStateCache {
     deduplicateElement(elementState: TextElementState): boolean {
         const element = elementState.element;
 
-        if (!element.isPointLabel) {
+        if (element.type !== TextElementType.PoiLabel) {
             return true;
         }
 
@@ -138,7 +139,7 @@ export class TextElementStateCache {
         const elementPosition = element.points as THREE.Vector3;
         let duplicateIndex: number = -1;
         for (let i = 0; i < entryCount; ++i) {
-            const cachedElementPosition = cachedEntries[i].element.position;
+            const cachedElementPosition = cachedEntries[i].element.points as THREE.Vector3;
 
             if (
                 elementPosition.distanceToSquared(cachedElementPosition) <
