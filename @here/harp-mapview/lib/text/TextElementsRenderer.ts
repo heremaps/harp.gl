@@ -1472,10 +1472,14 @@ export class TextElementsRenderer {
     ): boolean {
         const pointLabel: TextElement = labelState.element;
         const textRenderState: RenderState | undefined = labelState.textRenderState;
+
+        assert(iconIndex === undefined || labelState.iconRenderStates !== undefined);
         const iconRenderState: RenderState =
             iconIndex !== undefined
                 ? labelState.iconRenderStates![iconIndex]
                 : labelState.iconRenderState!;
+        assert(iconRenderState !== undefined);
+
         const poiTextMaxDistance = getMaxViewDistance(
             this.m_viewState,
             this.m_options.maxDistanceRatioForPoiLabels!
