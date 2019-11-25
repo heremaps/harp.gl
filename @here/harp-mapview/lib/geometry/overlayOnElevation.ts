@@ -60,13 +60,8 @@ function overlayPosition(
 function overlayTextElement(
     textElement: TextElement,
     elevationProvider: ElevationProvider,
-    tile: Tile,
-    tileCenter: THREE.Vector3
+    tile: Tile
 ) {
-    if (!textElement.inWorldSpace) {
-        textElement.computeWorldCoordinates(tileCenter);
-    }
-
     // TODO: Move calculation of text element geoCoordinates to decoder.
     if (textElement.path === undefined) {
         overlayPosition(textElement.position, elevationProvider, tile);
@@ -130,13 +125,10 @@ export function overlayOnElevation(tile: Tile): void {
     let { groupIndex, elementIndex } = tile.nextTextElementToOverlay;
     let textElementsCount = 0;
 
-    const tileCenter = tile.center.clone();
-    tileCenter.x += tile.projection.worldExtent(0, 0).max.x * tile.offset;
-
     while (groupIndex < groups.length) {
         const group = groups[groupIndex];
         while (textElementsCount < textElementsPerFrame && elementIndex < group.elements.length) {
-            overlayTextElement(group.elements[elementIndex], elevationProvider, tile, tileCenter);
+            overlayTextElement(group.elements[elementIndex], elevationProvider, tile);
             elementIndex++;
             textElementsCount++;
         }

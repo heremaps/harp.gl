@@ -5,10 +5,9 @@
  */
 
 import { ProjectionType } from "@here/harp-geoutils";
-import { assert, MathUtils } from "@here/harp-utils";
+import { MathUtils } from "@here/harp-utils";
 import * as THREE from "three";
 import { PoiManager } from "../poi/PoiManager";
-import { Tile } from "../Tile";
 import { TextElement } from "./TextElement";
 import { ViewState } from "./ViewState";
 
@@ -63,8 +62,6 @@ function checkViewDistance(
 export function computeViewDistance(refPosition: THREE.Vector3, textElement: TextElement): number {
     let viewDistance: number;
 
-    assert(textElement.inWorldSpace);
-
     if (Array.isArray(textElement.points) && textElement.points.length > 1) {
         const viewDistance0 = refPosition.distanceTo(textElement.points[0]);
         const viewDistance1 = refPosition.distanceTo(
@@ -106,8 +103,6 @@ export enum PrePlacementResult {
  * Applies early rejection tests for a given text element meant to avoid trying to place labels
  * that are not visible, not ready, duplicates etc...
  * @param textElement The Text element to check.
- * @param tile The tile to which the text element belongs.
- * @param worldOffsetX The tile's X offset.
  * @param viewState The view for which the text element will be placed.
  * @param viewCamera The view's camera.
  * @param m_poiManager To prepare pois for rendering.
@@ -119,8 +114,6 @@ export enum PrePlacementResult {
  */
 export function checkReadyForPlacement(
     textElement: TextElement,
-    tile: Tile,
-    worldOffsetX: number,
     viewState: ViewState,
     viewCamera: THREE.Camera,
     poiManager: PoiManager,
@@ -152,11 +145,6 @@ export function checkReadyForPlacement(
         )
     ) {
         return { result: PrePlacementResult.Invisible, viewDistance };
-    }
-
-    if (!textElement.inWorldSpace) {
-        tmpPosition.set(tile.center.x + worldOffsetX, tile.center.y, tile.center.z);
-        textElement.computeWorldCoordinates(tmpPosition);
     }
 
     viewDistance =

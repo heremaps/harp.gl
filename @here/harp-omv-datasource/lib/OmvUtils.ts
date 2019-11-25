@@ -139,7 +139,16 @@ export function webMercatorTile2TargetWorld(
 ) {
     const worldPos = tile2world(extents, decodeInfo, position, flipY, tempWorldPos);
     target.set(worldPos.x, worldPos.y, 0);
-    decodeInfo.targetProjection
-        .reprojectPoint(webMercatorProjection, target, target)
-        .sub(decodeInfo.center);
+    decodeInfo.targetProjection.reprojectPoint(webMercatorProjection, target, target);
+}
+
+export function webMercatorTile2TargetTile(
+    extents: number,
+    decodeInfo: OmvDecoder.DecodeInfo,
+    position: THREE.Vector2,
+    target: THREE.Vector3,
+    flipY: boolean = false
+) {
+    webMercatorTile2TargetWorld(extents, decodeInfo, position, target, flipY);
+    target.sub(decodeInfo.center);
 }

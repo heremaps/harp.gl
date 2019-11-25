@@ -1003,6 +1003,16 @@ export class Tile implements CachedResource {
         // Ensure that tile is removable from tile cache.
         this.frameNumLastRequested = 0;
     }
+
+    /**
+     * Computes the offset in the x world coordinates corresponding to this tile, based on
+     * its [[offset]].
+     * @returns The x offset.
+     */
+    computeWorldOffsetX(): number {
+        return this.projection.worldExtent(0, 0).max.x * this.offset;
+    }
+
     private computeResourceInfo(): void {
         let heapSize = 0;
         let num3dObjects = 0;

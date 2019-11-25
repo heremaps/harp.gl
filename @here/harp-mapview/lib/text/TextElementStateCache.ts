@@ -154,8 +154,6 @@ export class TextElementStateCache {
             return true;
         }
 
-        assert(element.inWorldSpace);
-
         // Other labels found with the same text. Check if they're near enough to be considered
         // duplicates.
         const duplicateIndex = cachedEntries.findIndex(cachedEntry => {

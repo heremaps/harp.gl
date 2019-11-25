@@ -664,7 +664,6 @@ export class TextElementsRenderer {
             }
 
             const textElement = textElementState.element;
-            assert(textElement.inWorldSpace);
 
             // Get the TextElementStyle.
             const textElementStyle = this.m_textStyleCache.getTextElementStyle(textElement.style);
@@ -1006,7 +1005,7 @@ export class TextElementsRenderer {
 
         // Prepare user text elements.
         for (const tile of sortedTiles) {
-            this.prepareTextElementGroup(tile.userTextElements, tile, projection);
+            this.prepareTextElementGroup(tile.userTextElements, projection);
         }
 
         const sortedGroups: TextElementLists[] = [];
@@ -1042,7 +1041,6 @@ export class TextElementsRenderer {
 
     private prepareTextElementGroup(
         textElementGroup: TextElementGroup,
-        tile: Tile,
         projection: Projection,
         maxViewDistance?: number
     ) {
@@ -1050,16 +1048,12 @@ export class TextElementsRenderer {
             return;
         }
 
-        const worldOffsetX = projection.worldExtent(0, 0).max.x * tile.offset;
-
         const textElementSelection: TextElementFilter = (
             textElement: TextElement,
             lastFrameNumber?: number
         ): number | undefined => {
             let { result, viewDistance } = checkReadyForPlacement(
                 textElement,
-                tile,
-                worldOffsetX,
                 this.m_viewState,
                 this.m_viewCamera,
                 this.m_poiManager,
@@ -1172,12 +1166,7 @@ export class TextElementsRenderer {
         const maxViewDistance = getMaxViewDistance(this.m_viewState, farDistanceLimitRatio);
 
         for (const tileTextElements of textElementLists.lists) {
-            this.prepareTextElementGroup(
-                tileTextElements.group,
-                tileTextElements.tile,
-                projection,
-                maxViewDistance
-            );
+            this.prepareTextElementGroup(tileTextElements.group, projection, maxViewDistance);
         }
     }
 

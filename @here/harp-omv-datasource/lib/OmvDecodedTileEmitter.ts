@@ -60,7 +60,12 @@ import {
 import { ILineGeometry, IPolygonGeometry } from "./IGeometryProcessor";
 import { LinesGeometry } from "./OmvDataSource";
 import { IOmvEmitter, OmvDecoder, Ring } from "./OmvDecoder";
-import { tile2world, webMercatorTile2TargetWorld, world2tile } from "./OmvUtils";
+import {
+    tile2world,
+    webMercatorTile2TargetTile,
+    webMercatorTile2TargetWorld,
+    world2tile
+} from "./OmvUtils";
 
 import {
     AttrEvaluationContext,
@@ -328,7 +333,8 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
         const env = context.env;
         this.processFeatureCommon(env);
 
-        const lines: number[][] = [];
+        const localLines: number[][] = []; // lines in target tile space.
+        const worldLines: number[][] = []; // lines in world space.
         const uvs: number[][] = [];
         const offsets: number[][] = [];
         const { projectedTileBounds } = this.m_decodeInfo;
@@ -379,26 +385,28 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                 });
             }
 
-            const line: number[] = [];
+            const localLine: number[] = [];
+            const worldLine: number[] = [];
             const lineUvs: number[] = [];
             const lineOffsets: number[] = [];
             polyline.positions.forEach(pos => {
                 webMercatorTile2TargetWorld(extents, this.m_decodeInfo, pos, tmpV3);
-                line.push(tmpV3.x, tmpV3.y, tmpV3.z);
+                worldLine.push(tmpV3.x, tmpV3.y, tmpV3.z);
+
                 if (computeTexCoords) {
                     const { u, v } = computeTexCoords(pos, extents);
                     lineUvs.push(u, v);
                 }
                 if (hasUntiledLines) {
-                    // Convert from local to world space.
-                    tmpV3.add(this.m_decodeInfo.center);
-
                     // Find where in the [0...1] range relative to the line our current vertex lies.
                     const offset = this.findRelativePositionInLine(tmpV3, untiledLine) / lineDist;
                     lineOffsets.push(offset);
                 }
+                tmpV3.sub(this.m_decodeInfo.center);
+                localLine.push(tmpV3.x, tmpV3.y, tmpV3.z);
             });
-            lines.push(line);
+            localLines.push(localLine);
+            worldLines.push(worldLine);
             uvs.push(lineUvs);
             offsets.push(lineOffsets);
         }
@@ -426,7 +434,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                     this.m_gatherFeatureIds,
                     lineType,
                     featureId,
-                    lines,
+                    localLines,
                     context,
                     this.getTextureCoordinateType(technique) ? uvs : undefined,
                     hasUntiledLines ? offsets : undefined
@@ -463,12 +471,12 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                         minEstimatedLabelLength * minEstimatedLabelLength;
 
                     validLines = this.splitJaggyLines(
-                        lines,
+                        worldLines,
                         minEstimatedLabelLengthSqr,
                         MAX_CORNER_ANGLE
                     );
                 } else {
-                    validLines = lines;
+                    validLines = worldLines;
                 }
 
                 if (validLines.length === 0) {
@@ -531,13 +539,10 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                     }
                 }
             } else if (isLabelRejectionLineTechnique(technique)) {
-                const point = new THREE.Vector3();
-                for (const path of lines) {
+                for (const path of worldLines) {
                     const worldPath: Vector3Like[] = [];
                     for (let i = 0; i < path.length; i += 3) {
-                        point.set(path[i], path[i + 1], path[i + 2]);
-                        point.add(this.m_decodeInfo.center);
-                        worldPath.push(point.clone() as Vector3Like);
+                        worldPath.push(new THREE.Vector3().fromArray(path, i) as Vector3Like);
                     }
                     this.m_pathGeometries.push({
                         path: worldPath
@@ -575,7 +580,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
 
                 const addCircle = wantCircle && techniqueCaps === "Circle";
 
-                lines.forEach(aLine => {
+                localLines.forEach(aLine => {
                     triangulateLine(aLine, lineWidth, positions, indices, addCircle);
 
                     if (this.m_gatherFeatureIds) {
@@ -699,7 +704,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                                 lines.push(line);
                                 line = [];
                             } else if (isOutline && line.length === 0) {
-                                webMercatorTile2TargetWorld(
+                                webMercatorTile2TargetTile(
                                     extents,
                                     this.m_decodeInfo,
                                     tmpV2.set(currX, currY),
@@ -708,7 +713,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                                 line.push(tmpV3.x, tmpV3.y, tmpV3.z);
                             }
                             if (isOutline) {
-                                webMercatorTile2TargetWorld(
+                                webMercatorTile2TargetTile(
                                     extents,
                                     this.m_decodeInfo,
                                     tmpV2.set(nextX, nextY),
@@ -1263,7 +1268,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
 
                     // Assemble the vertex buffer.
                     for (let i = 0; i < vertices.length; i += vertexStride) {
-                        webMercatorTile2TargetWorld(
+                        webMercatorTile2TargetTile(
                             extents,
                             this.m_decodeInfo,
                             tmpV2.set(vertices[i], vertices[i + 1]),

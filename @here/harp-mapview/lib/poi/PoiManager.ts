@@ -110,6 +110,7 @@ export class PoiManager {
      */
     addPois(tile: Tile, decodedTile: DecodedTile): void {
         const poiGeometries = assertExists(decodedTile.poiGeometries);
+        const worldOffsetX = tile.computeWorldOffsetX();
 
         for (const poiGeometry of poiGeometries) {
             assert(poiGeometry.technique !== undefined);
@@ -135,9 +136,9 @@ export class PoiManager {
             );
 
             if (isLineMarkerTechnique(technique) && positions.count > 0) {
-                this.addLineMarker(tile, poiGeometry, technique, positions);
+                this.addLineMarker(tile, poiGeometry, technique, positions, worldOffsetX);
             } else if (isPoiTechnique(technique)) {
-                this.addPoi(tile, poiGeometry, technique, techniqueIndex, positions);
+                this.addPoi(tile, poiGeometry, technique, positions, worldOffsetX);
             }
         }
     }
@@ -332,7 +333,8 @@ export class PoiManager {
         tile: Tile,
         poiGeometry: PoiGeometry,
         technique: LineMarkerTechnique,
-        positions: THREE.BufferAttribute
+        positions: THREE.BufferAttribute,
+        worldOffsetX: number
     ) {
         let imageTextureName: string | undefined =
             technique.imageTexture !== undefined
@@ -366,7 +368,7 @@ export class PoiManager {
 
         const positionArray: THREE.Vector3[] = [];
         for (let i = 0; i < positions.count; i += 3) {
-            const x = positions.getX(i);
+            const x = positions.getX(i) + worldOffsetX;
             const y = positions.getY(i);
             const z = positions.getZ(i);
             positionArray.push(new THREE.Vector3(x, y, z));
@@ -400,8 +402,8 @@ export class PoiManager {
         tile: Tile,
         poiGeometry: PoiGeometry,
         technique: PoiTechnique,
-        techniqueIdx: number,
-        positions: THREE.BufferAttribute
+        positions: THREE.BufferAttribute,
+        worldOffsetX: number
     ) {
         if (poiGeometry.stringCatalog === undefined) {
             return;
@@ -417,7 +419,7 @@ export class PoiManager {
         let poiName = poiTechnique.poiName;
 
         for (let i = 0; i < positions.count; ++i) {
-            const x = positions.getX(i);
+            const x = positions.getX(i) + worldOffsetX;
             const y = positions.getY(i);
             const z = positions.getZ(i);
 
