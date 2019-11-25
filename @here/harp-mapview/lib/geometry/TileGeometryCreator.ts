@@ -963,8 +963,10 @@ export class TileGeometryCreator {
                     isExtrudedPolygonTechnique(technique) &&
                     animatedExtrusionHandler !== undefined
                 ) {
-                    let animateExtrusionValue = technique.animateExtrusion;
-
+                    let animateExtrusionValue = getPropertyValue(
+                        technique.animateExtrusion,
+                        displayZoomLevel
+                    );
                     if (animateExtrusionValue !== undefined) {
                         animateExtrusionValue =
                             typeof animateExtrusionValue === "boolean"
