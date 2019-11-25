@@ -5,10 +5,11 @@
  */
 
 import { ProjectionType } from "@here/harp-geoutils";
-import { MathUtils } from "@here/harp-utils";
+import { HorizontalAlignment, VerticalAlignment } from "@here/harp-text-canvas";
+import { assert, MathUtils } from "@here/harp-utils";
 import * as THREE from "three";
 import { PoiManager } from "../poi/PoiManager";
-import { TextElement } from "./TextElement";
+import { poiIsRenderable, TextElement } from "./TextElement";
 import { ViewState } from "./ViewState";
 
 /**
@@ -163,4 +164,52 @@ export function checkReadyForPlacement(
     }
 
     return { result: PrePlacementResult.Ok, viewDistance };
+}
+
+/**
+ * Computes the offset for a point text accordingly to text alignment (and icon, if any).
+ * @param textElement The text element of which the offset will computed. It must be a point
+ * label with [[layoutStyle]] and [[bounds]] already computed.
+ * @param offset The offset result.
+ */
+export function computePointTextOffset(
+    textElement: TextElement,
+    offset: THREE.Vector2 = new THREE.Vector2()
+): THREE.Vector2 {
+    assert(textElement.isPointLabel);
+    assert(textElement.layoutStyle !== undefined);
+    assert(textElement.bounds !== undefined);
+
+    const hAlign = textElement.layoutStyle!.horizontalAlignment;
+    const vAlign = textElement.layoutStyle!.verticalAlignment;
+
+    switch (hAlign) {
+        case HorizontalAlignment.Right:
+            offset.x = -textElement.xOffset;
+            break;
+        default:
+            offset.x = textElement.xOffset;
+            break;
+    }
+
+    switch (vAlign) {
+        case VerticalAlignment.Below:
+            offset.y = -textElement.yOffset;
+            break;
+        case VerticalAlignment.Above:
+            offset.y = textElement.yOffset - textElement.bounds!.min.y;
+            break;
+        default:
+            offset.y = textElement.yOffset;
+            break;
+    }
+
+    if (textElement.poiInfo !== undefined && poiIsRenderable(textElement.poiInfo)) {
+        assert(textElement.poiInfo.computedWidth !== undefined);
+        assert(textElement.poiInfo.computedHeight !== undefined);
+
+        offset.x += textElement.poiInfo.computedWidth! * (0.5 + hAlign);
+        offset.y += textElement.poiInfo.computedHeight! * (0.5 + vAlign);
+    }
+    return offset;
 }

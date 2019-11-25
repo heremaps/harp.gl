@@ -174,6 +174,15 @@ export interface PoiInfo {
     renderOrder?: number;
 }
 
+/**
+ * Return 'true' if the POI has been successfully prepared for rendering.
+ *
+ * @param poiInfo PoiInfo containing information for rendering the POI icon.
+ */
+export function poiIsRenderable(poiInfo: PoiInfo): boolean {
+    return poiInfo.poiRenderBatch !== undefined;
+}
+
 export interface TextPickResult extends PickResult {
     /**
      * Text of the picked [[TextElement]]
@@ -351,8 +360,8 @@ export class TextElement {
         readonly renderParams: TextRenderParameters | TextRenderStyle,
         readonly layoutParams: TextLayoutParameters | TextLayoutStyle,
         public priority = 0,
-        public xOffset?: number,
-        public yOffset?: number,
+        public xOffset: number = 0,
+        public yOffset: number = 0,
         public featureId?: number,
         public style?: string,
         public fadeNear?: number,

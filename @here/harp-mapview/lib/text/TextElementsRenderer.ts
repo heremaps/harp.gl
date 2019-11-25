@@ -40,6 +40,7 @@ import { MapViewUtils } from "../Utils";
 import { DataSourceTileList } from "../VisibleTileSet";
 import {
     checkReadyForPlacement,
+    computePointTextOffset,
     computeViewDistance,
     getMaxViewDistance,
     PrePlacementResult
@@ -48,7 +49,7 @@ import { PlacementStats } from "./PlacementStats";
 import { FadingState, RenderState } from "./RenderState";
 import { SimpleLineCurve, SimplePath } from "./SimplePath";
 import { TextCanvasRenderer } from "./TextCanvasRenderer";
-import { LoadingState, TextElement, TextPickResult } from "./TextElement";
+import { LoadingState, poiIsRenderable, TextElement, TextPickResult } from "./TextElement";
 import { TextElementGroup } from "./TextElementGroup";
 import { TextElementFilter, TextElementGroupState } from "./TextElementGroupState";
 import {
@@ -141,6 +142,7 @@ const tempPosition = new THREE.Vector3();
 const tempScreenPosition = new THREE.Vector2();
 const tempScreenPoints: THREE.Vector2[] = [];
 const tempPoiScreenPosition = new THREE.Vector2();
+const tempTextOffset = new THREE.Vector2();
 
 class TileTextElements {
     constructor(readonly tile: Tile, readonly group: TextElementGroup) {}
@@ -1479,31 +1481,6 @@ export class TextElementsRenderer {
         tempScreenPosition.x = tempPoiScreenPosition.x = screenPosition.x;
         tempScreenPosition.y = tempPoiScreenPosition.y = screenPosition.y;
 
-        // Offset the label accordingly to alignment (and POI, if any).
-        let xOffset =
-            (pointLabel.xOffset || 0.0) *
-            (pointLabel.layoutStyle!.horizontalAlignment === HorizontalAlignment.Right
-                ? -1.0
-                : 1.0);
-        let yOffset =
-            (pointLabel.yOffset || 0.0) *
-            (pointLabel.layoutStyle!.verticalAlignment === VerticalAlignment.Below ? -1.0 : 1.0);
-        if (pointLabel.poiInfo !== undefined) {
-            xOffset +=
-                pointLabel.poiInfo.computedWidth! *
-                (0.5 + pointLabel.layoutStyle!.horizontalAlignment);
-            yOffset +=
-                pointLabel.poiInfo.computedHeight! *
-                (0.5 + pointLabel.layoutStyle!.verticalAlignment);
-        }
-        tempScreenPosition.x += xOffset;
-        tempScreenPosition.y += yOffset;
-        // If we try to place text above their current position, we need to compensate for
-        // its bounding box height.
-        if (pointLabel.layoutStyle!.verticalAlignment === VerticalAlignment.Above) {
-            tempScreenPosition.y += -pointLabel.bounds!.min.y;
-        }
-
         // Scale the text depending on the label's distance to the camera.
         let textScale = 1.0;
         let distanceScaleFactor = 1.0;
@@ -1547,16 +1524,10 @@ export class TextElementsRenderer {
                 this.m_viewState.zoomLevel,
                 poiInfo.iconMinZoomLevel,
                 poiInfo.iconMaxZoomLevel
-            );
+            ) &&
+            poiInfo!.isValid !== false;
 
         if (renderIcon && poiRenderer.prepareRender(pointLabel, this.m_viewState.zoomLevel)) {
-            if (poiInfo!.isValid === false) {
-                if (placementStats) {
-                    ++placementStats.numNotVisible;
-                }
-                return false;
-            }
-
             const iconIsVisible = poiRenderer.computeScreenBox(
                 poiInfo!,
                 tempPoiScreenPosition,
@@ -1648,6 +1619,8 @@ export class TextElementsRenderer {
         // Render the label's text...
         // textRenderState is always defined at this point.
         if (doRenderText) {
+            tempScreenPosition.add(computePointTextOffset(pointLabel, tempTextOffset));
+
             // Adjust the label positioning to match its bounding box.
             tempPosition.x = tempScreenPosition.x;
             tempPosition.y = tempScreenPosition.y;
@@ -1789,7 +1762,7 @@ export class TextElementsRenderer {
             }
         }
         // ... and render the icon (if any).
-        if (renderIcon && poiRenderer.poiIsRenderable(poiInfo!)) {
+        if (renderIcon && poiIsRenderable(poiInfo!)) {
             const iconStartedFadeIn = iconRenderState.checkStartFadeIn(
                 this.m_viewState.frameNumber,
                 renderParams.time
