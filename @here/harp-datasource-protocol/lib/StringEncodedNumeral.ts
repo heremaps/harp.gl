@@ -34,7 +34,7 @@ export interface StringEncodedNumeralFormat {
 const StringEncodedMeters: StringEncodedNumeralFormat = {
     type: StringEncodedNumeralType.Meters,
     size: 1,
-    regExp: /((?=\.\d|\d)(?:\d+)?(?:\.?\d*))m/,
+    regExp: /^((?=\.\d|\d)(?:\d+)?(?:\.?\d*))m$/,
     decoder: (encodedValue: string) => {
         return [Number(StringEncodedMeters.regExp.exec(encodedValue)![1])];
     }
@@ -43,7 +43,7 @@ const StringEncodedPixels: StringEncodedNumeralFormat = {
     type: StringEncodedNumeralType.Pixels,
     size: 1,
     mask: 1.0,
-    regExp: /((?=\.\d|\d)(?:\d+)?(?:\.?\d*))px/,
+    regExp: /^((?=\.\d|\d)(?:\d+)?(?:\.?\d*))px$/,
     decoder: (encodedValue: string) => {
         return [Number(StringEncodedPixels.regExp.exec(encodedValue)![1])];
     }
@@ -51,7 +51,7 @@ const StringEncodedPixels: StringEncodedNumeralFormat = {
 const StringEncodedHex: StringEncodedNumeralFormat = {
     type: StringEncodedNumeralType.Hex,
     size: 3,
-    regExp: /\#([0-9A-Fa-f]{1,8})/,
+    regExp: /^\#((?:[0-9A-Fa-f][0-9A-Fa-f]){3,4}|[0-9A-Fa-f]{3,4})$/,
     decoder: (encodedValue: string) => {
         const match = StringEncodedHex.regExp.exec(encodedValue)!;
         const hex = match[1];
@@ -73,6 +73,7 @@ const StringEncodedHex: StringEncodedNumeralFormat = {
                 parseInt(hex.charAt(4) + hex.charAt(5), 16) / 255
             );
         } else {
+            // Impossible for given reg-exp
             throw new Error(`unsupported hex color '${encodedValue}'`);
         }
         return [tmpColor.r, tmpColor.g, tmpColor.b];
@@ -82,7 +83,7 @@ const StringEncodedRGB: StringEncodedNumeralFormat = {
     type: StringEncodedNumeralType.RGB,
     size: 3,
     // tslint:disable-next-line:max-line-length
-    regExp: /rgb\((?:([0-9]{1,2}|1[0-9]{1,2}|2[0-4][0-9]|25[0-5]), ?)(?:([0-9]{1,2}|1[0-9]{1,2}|2[0-4][0-9]|25[0-5]), ?)(?:([0-9]{1,2}|1[0-9]{1,2}|2[0-4][0-9]|25[0-5]))\)/,
+    regExp: /^rgb\( ?(?:([0-9]{1,2}|1[0-9]{1,2}|2[0-4][0-9]|25[0-5]), ?)(?:([0-9]{1,2}|1[0-9]{1,2}|2[0-4][0-9]|25[0-5]), ?)(?:([0-9]{1,2}|1[0-9]{1,2}|2[0-4][0-9]|25[0-5])) ?\)$/,
     decoder: (encodedValue: string) => {
         const channels = StringEncodedRGB.regExp.exec(encodedValue)!;
         tmpColor.setRGB(
@@ -97,7 +98,7 @@ const StringEncodedRGBA: StringEncodedNumeralFormat = {
     type: StringEncodedNumeralType.RGBA,
     size: 3,
     // tslint:disable-next-line:max-line-length
-    regExp: /rgba\((?:([0-9]{1,2}|1[0-9]{1,2}|2[0-4][0-9]|25[0-5]), ?)(?:([0-9]{1,2}|1[0-9]{1,2}|2[0-4][0-9]|25[0-5]), ?)(?:([0-9]{1,2}|1[0-9]{1,2}|2[0-4][0-9]|25[0-5]), ?)(?:(0(?:\.[0-9]+)?|1(?:\.0+)?))\)/,
+    regExp: /^rgba\( ?(?:([0-9]{1,2}|1[0-9]{1,2}|2[0-4][0-9]|25[0-5]), ?)(?:([0-9]{1,2}|1[0-9]{1,2}|2[0-4][0-9]|25[0-5]), ?)(?:([0-9]{1,2}|1[0-9]{1,2}|2[0-4][0-9]|25[0-5]), ?)(?:(0(?:\.[0-9]+)?|1(?:\.0+)?)) ?\)$/,
     decoder: (encodedValue: string) => {
         const channels = StringEncodedRGBA.regExp.exec(encodedValue)!;
         // For now we simply ignore alpha channel value.
@@ -114,7 +115,7 @@ const StringEncodedHSL: StringEncodedNumeralFormat = {
     type: StringEncodedNumeralType.HSL,
     size: 3,
     // tslint:disable-next-line:max-line-length
-    regExp: /hsl\(((?:[0-9]|[1-9][0-9]|1[0-9]{1,2}|2[0-9]{1,2}|3[0-5][0-9]|360)), ?(?:([0-9]|[1-9][0-9]|100)%), ?(?:([0-9]|[1-9][0-9]|100)%)\)/,
+    regExp: /^hsl\( ?((?:[0-9]|[1-9][0-9]|1[0-9]{1,2}|2[0-9]{1,2}|3[0-5][0-9]|360)), ?(?:([0-9]|[1-9][0-9]|100)%), ?(?:([0-9]|[1-9][0-9]|100)%) ?\)$/,
     decoder: (encodedValue: string) => {
         const channels = StringEncodedHSL.regExp.exec(encodedValue)!;
         tmpColor.setHSL(
