@@ -71,7 +71,7 @@ export class BackgroundDataSource extends DataSource {
         const tile = new Tile(this, tileKey);
         tile.forceHasGeometry(true);
         tile.removeDecodedTile(); // Skip geometry loading.
-        TileGeometryCreator.instance.addGroundPlane(tile, Number.MIN_SAFE_INTEGER);
+        TileGeometryCreator.instance.addGroundPlane(tile);
 
         return tile;
     }
