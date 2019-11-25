@@ -118,6 +118,7 @@ export class OmvDebugLabelsTile extends OmvTile {
 
             let baseVertex = 0;
             const pointScale = this.mapView.pixelToWorld;
+            const worldOffsetX = this.computeWorldOffsetX();
 
             for (const textPath of this.preparedTextPaths) {
                 const technique = decodedTile.techniques[textPath.technique];
@@ -183,7 +184,7 @@ export class OmvDebugLabelsTile extends OmvTile {
                                         : Number(pathIndex).toString();
                                 const labelElement = new TextElement(
                                     ContextualArabicConverter.instance.convert(label),
-                                    new THREE.Vector3(x, y, z),
+                                    new THREE.Vector3(x + worldOffsetX, y, z),
                                     textRenderStyle,
                                     textLayoutStyle,
                                     getPropertyValue(technique.priority || 0, zoomLevel),

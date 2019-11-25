@@ -16,7 +16,7 @@ import * as THREE from "three";
 import { AttrEvaluationContext } from "@here/harp-datasource-protocol/lib/TechniqueAttr";
 import { ILineGeometry, IPolygonGeometry } from "./IGeometryProcessor";
 import { IOmvEmitter, OmvDecoder, Ring } from "./OmvDecoder";
-import { webMercatorTile2TargetWorld } from "./OmvUtils";
+import { webMercatorTile2TargetTile } from "./OmvUtils";
 
 export class OmvTileInfoEmitter implements IOmvEmitter {
     private readonly m_tileInfo: ExtendedTileInfo;
@@ -68,7 +68,7 @@ export class OmvTileInfoEmitter implements IOmvEmitter {
                 this.m_languages
             );
             for (const pos of geometry) {
-                webMercatorTile2TargetWorld(extents, this.m_decodeInfo, pos, tmpV);
+                webMercatorTile2TargetTile(extents, this.m_decodeInfo, pos, tmpV);
                 tileInfoWriter.addFeature(
                     this.m_tileInfo.pointGroup,
                     context.env,
@@ -100,7 +100,7 @@ export class OmvTileInfoEmitter implements IOmvEmitter {
         for (const polyline of geometry) {
             const line: number[] = [];
             for (const pos of polyline.positions) {
-                webMercatorTile2TargetWorld(extents, this.m_decodeInfo, pos, tmpV);
+                webMercatorTile2TargetTile(extents, this.m_decodeInfo, pos, tmpV);
                 line.push(tmpV.x, tmpV.y);
             }
             lines.push(line);
@@ -171,7 +171,7 @@ export class OmvTileInfoEmitter implements IOmvEmitter {
             for (const outline of polygon.rings) {
                 const contour: number[] = [];
                 for (const pos of outline) {
-                    webMercatorTile2TargetWorld(extents, this.m_decodeInfo, pos, tmpV);
+                    webMercatorTile2TargetTile(extents, this.m_decodeInfo, pos, tmpV);
                     contour.push(tmpV.x, tmpV.y, tmpV.z);
                 }
                 rings.push(new Ring(extents, 3, contour));

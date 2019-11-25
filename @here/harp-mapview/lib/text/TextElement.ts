@@ -273,12 +273,6 @@ export class TextElement {
 
     /**
      * @hidden
-     * Used during label placement for optimization.
-     */
-    tileCenter?: THREE.Vector3;
-
-    /**
-     * @hidden
      * Used during rendering.
      */
     loadingState?: LoadingState;
@@ -336,8 +330,7 @@ export class TextElement {
      * Creates a new `TextElement`.
      *
      * @param text The text to display.
-     * @param points The position in world coordinates or a list of points in world coordinates for
-     *              a curved text.
+     * @param points The position or a list of points for a curved text, both in local tile space.
      * @param renderParams `TextElement` text rendering parameters.
      * @param layoutParams `TextElement` text layout parameters.
      * @param priority The priority of the `TextElement. Elements with the highest priority get

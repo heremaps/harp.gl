@@ -2811,7 +2811,7 @@ export class MapView extends THREE.EventDispatcher {
     }
 
     private renderTileObjects(tile: Tile, zoomLevel: number) {
-        const worldOffsetX = this.projection.worldExtent(0, 0).max.x * tile.offset;
+        const worldOffsetX = tile.computeWorldOffsetX();
         if (tile.willRender(zoomLevel)) {
             for (const object of tile.objects) {
                 object.position.copy(tile.center);

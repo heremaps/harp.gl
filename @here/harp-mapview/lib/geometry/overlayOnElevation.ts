@@ -29,28 +29,24 @@ function overlayObject(object: TileObject, displacementMap: THREE.DataTexture): 
     }
 }
 
-const worldCoords = new THREE.Vector3();
-
 /**
  * Overlays the specified coordinates on top of elevation data if available.
  *
- * @param tileCoords World coordinates relative to the `tile` center.
+ * @param worldCoords World coordinates to overlay.
  * @param elevationProvider Used to get elevation data.
  * @param tile The tile to which the coordinates are relative.
  */
 function overlayPosition(
-    tileCoords: THREE.Vector3,
+    worldCoords: THREE.Vector3,
     elevationProvider: ElevationProvider,
     tile: Tile
 ) {
-    worldCoords.copy(tileCoords).add(tile.center);
     const geoCoords = tile.mapView.projection.unprojectPoint(worldCoords);
     const height = elevationProvider.getHeight(geoCoords);
 
     if (height !== undefined) {
         geoCoords.altitude = height;
         tile.mapView.projection.projectPoint(geoCoords, worldCoords);
-        tileCoords.copy(worldCoords).sub(tile.center);
     }
 }
 
