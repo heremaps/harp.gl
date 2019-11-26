@@ -60,7 +60,6 @@ import {
     setDepthPrePassStencil
 } from "../DepthPrePass";
 import { DisplacementMap, TileDisplacementMap } from "../DisplacementMap";
-import { FALLBACK_RENDER_ORDER_OFFSET } from "../MapView";
 import { MapViewPoints } from "../MapViewPoints";
 import { PathBlockingElement } from "../PathBlockingElement";
 import { TextElement } from "../text/TextElement";
@@ -211,19 +210,6 @@ export class TileGeometryCreator {
         this.createTextElements(tile, decodedTile, textFilter);
 
         this.createLabelRejectionElements(tile, decodedTile);
-
-        // HARP-7899, disable ground plane for globe
-        if (tile.dataSource.addGroundPlane && tile.projection.type === ProjectionType.Planar) {
-            // The ground plane is required for when we change the zoom back and we fall back to the
-            // parent, in that case we reduce the renderOrder of the parent tile and this ground
-            // place ensures that parent doesn't come through. This value must be above the
-            // renderOrder of all objects in the fallback tile, otherwise there won't be a proper
-            // covering of the parent tile by the children, hence dividing by 2. To put a bit more
-            // concretely, we assume all objects are rendered with a renderOrder between 0 and
-            // FALLBACK_RENDER_ORDER_OFFSET / 2, i.e. 10000. The ground plane is put at -10000, and
-            // the fallback tiles have their renderOrder set between -20000 and -10000
-            TileGeometryCreator.instance.addGroundPlane(tile, -FALLBACK_RENDER_ORDER_OFFSET / 2);
-        }
     }
 
     createLabelRejectionElements(tile: Tile, decodedTile: DecodedTile) {
@@ -1204,7 +1190,7 @@ export class TileGeometryCreator {
     /**
      * Creates and add a background plane for the tile.
      */
-    addGroundPlane(tile: Tile, renderOrder: number) {
+    addGroundPlane(tile: Tile) {
         const mapView = tile.mapView;
         const dataSource = tile.dataSource;
         const projection = tile.projection;
@@ -1257,20 +1243,13 @@ export class TileGeometryCreator {
                 depthWrite: true
             });
             const mesh = new THREE.Mesh(g, material);
-            mesh.renderOrder = renderOrder;
+            mesh.renderOrder = Number.MIN_SAFE_INTEGER;
             this.registerTileObject(tile, mesh, GeometryKind.Background);
             tile.objects.push(mesh);
         } else {
             // Add a ground plane to the tile.
             tile.boundingBox.getSize(tmpV);
-            const groundPlane = this.createPlane(
-                tmpV.x,
-                tmpV.y,
-                tile.center,
-                color,
-                true,
-                renderOrder
-            );
+            const groundPlane = this.createPlane(tmpV.x, tmpV.y, tile.center, color, true);
 
             this.registerTileObject(tile, groundPlane, GeometryKind.Background);
             tile.objects.push(groundPlane);
@@ -1337,8 +1316,7 @@ export class TileGeometryCreator {
         height: number,
         planeCenter: THREE.Vector3,
         colorHex: number,
-        isVisible: boolean,
-        renderOrder: number
+        isVisible: boolean
     ): THREE.Mesh {
         const geometry = new THREE.PlaneGeometry(width, height, 1);
         // TODO cache the material HARP-4207
@@ -1350,7 +1328,7 @@ export class TileGeometryCreator {
         const plane = new THREE.Mesh(geometry, material);
         plane.position.copy(planeCenter);
         // Render before everything else
-        plane.renderOrder = renderOrder;
+        plane.renderOrder = Number.MIN_SAFE_INTEGER;
         return plane;
     }
 

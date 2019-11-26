@@ -901,7 +901,6 @@ export class VisibleTileSet {
                     tile.tileKey,
                     tile.offset
                 );
-                tile.isFallback = false;
                 if (tile.hasGeometry || defaultSearchDirection === SearchDirection.NONE) {
                     renderedTiles.set(tileCode, tile);
                 } else {
@@ -941,7 +940,6 @@ export class VisibleTileSet {
                             if (parentTile !== undefined && parentTile.hasGeometry) {
                                 // parentTile has geometry, so can be reused as fallback
                                 renderedTiles.set(parentCode, parentTile);
-                                parentTile.isFallback = true;
                                 return;
                             }
 
@@ -983,7 +981,6 @@ export class VisibleTileSet {
                             if (childTile !== undefined && childTile.hasGeometry) {
                                 // childTile has geometry, so can be reused as fallback
                                 renderedTiles.set(childTileCode, childTile);
-                                childTile.isFallback = true;
                                 continue;
                             }
 
