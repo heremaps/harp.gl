@@ -3,6 +3,7 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
+import { assert } from "@here/harp-utils";
 import { Color } from "three";
 
 const tmpColor = new Color();
@@ -24,19 +25,19 @@ export enum StringEncodedNumeralType {
  * evaluation.
  */
 export interface StringEncodedNumeralFormat {
-    type: StringEncodedNumeralType;
-    size: number;
-    regExp: RegExp;
+    readonly type: StringEncodedNumeralType;
+    readonly size: number;
+    readonly regExp: RegExp;
     mask?: number;
-    // TODO: Add target/output array as parameter to minimize arrays creation.
-    decoder: (encodedValue: string) => number[];
+    decoder: (encodedValue: string, target: number[]) => boolean;
 }
 const StringEncodedMeters: StringEncodedNumeralFormat = {
     type: StringEncodedNumeralType.Meters,
     size: 1,
     regExp: /^((?=\.\d|\d)(?:\d+)?(?:\.?\d*))m$/,
-    decoder: (encodedValue: string) => {
-        return [Number(StringEncodedMeters.regExp.exec(encodedValue)![1])];
+    decoder: (encodedValue: string, target: number[]) => {
+        const match = StringEncodedMeters.regExp.exec(encodedValue);
+        return match ? (target[0] = Number(match[1])) !== undefined : false;
     }
 };
 const StringEncodedPixels: StringEncodedNumeralFormat = {
@@ -44,39 +45,45 @@ const StringEncodedPixels: StringEncodedNumeralFormat = {
     size: 1,
     mask: 1.0,
     regExp: /^((?=\.\d|\d)(?:\d+)?(?:\.?\d*))px$/,
-    decoder: (encodedValue: string) => {
-        return [Number(StringEncodedPixels.regExp.exec(encodedValue)![1])];
+    decoder: (encodedValue: string, target: number[]) => {
+        const match = StringEncodedPixels.regExp.exec(encodedValue);
+        if (match === null) {
+            return false;
+        }
+        target[0] = Number(match[1]);
+        return true;
     }
 };
 const StringEncodedHex: StringEncodedNumeralFormat = {
     type: StringEncodedNumeralType.Hex,
     size: 3,
     regExp: /^\#((?:[0-9A-Fa-f][0-9A-Fa-f]){3,4}|[0-9A-Fa-f]{3,4})$/,
-    decoder: (encodedValue: string) => {
-        const match = StringEncodedHex.regExp.exec(encodedValue)!;
+    decoder: (encodedValue: string, target: number[]) => {
+        const match = StringEncodedHex.regExp.exec(encodedValue);
+        if (match === null) {
+            return false;
+        }
         const hex = match[1];
         const size = hex.length;
+        // Only few sizes are possible for given reg-exp.
+        assert(
+            size === 3 || size === 4 || size === 6 || size === 8,
+            `Matched incorrect hex format: ${encodedValue}`
+        );
         // Note that we simply ignore alpha channel value.
         // TODO: To be resolved with HARP-7517
         if (size === 3 || size === 4) {
             // #RGB or #RGBA
-            tmpColor.setRGB(
-                parseInt(hex.charAt(0) + hex.charAt(0), 16) / 255,
-                parseInt(hex.charAt(1) + hex.charAt(1), 16) / 255,
-                parseInt(hex.charAt(2) + hex.charAt(2), 16) / 255
-            );
+            target[0] = parseInt(hex.charAt(0) + hex.charAt(0), 16) / 255;
+            target[1] = parseInt(hex.charAt(1) + hex.charAt(1), 16) / 255;
+            target[2] = parseInt(hex.charAt(2) + hex.charAt(2), 16) / 255;
         } else if (size === 6 || size === 8) {
             // #RRGGBB or #RRGGBBAA
-            tmpColor.setRGB(
-                parseInt(hex.charAt(0) + hex.charAt(1), 16) / 255,
-                parseInt(hex.charAt(2) + hex.charAt(3), 16) / 255,
-                parseInt(hex.charAt(4) + hex.charAt(5), 16) / 255
-            );
-        } else {
-            // Impossible for given reg-exp
-            throw new Error(`unsupported hex color '${encodedValue}'`);
+            target[0] = parseInt(hex.charAt(0) + hex.charAt(1), 16) / 255;
+            target[1] = parseInt(hex.charAt(2) + hex.charAt(3), 16) / 255;
+            target[2] = parseInt(hex.charAt(4) + hex.charAt(5), 16) / 255;
         }
-        return [tmpColor.r, tmpColor.g, tmpColor.b];
+        return true;
     }
 };
 const StringEncodedRGB: StringEncodedNumeralFormat = {
@@ -84,14 +91,15 @@ const StringEncodedRGB: StringEncodedNumeralFormat = {
     size: 3,
     // tslint:disable-next-line:max-line-length
     regExp: /^rgb\( ?(?:([0-9]{1,2}|1[0-9]{1,2}|2[0-4][0-9]|25[0-5]), ?)(?:([0-9]{1,2}|1[0-9]{1,2}|2[0-4][0-9]|25[0-5]), ?)(?:([0-9]{1,2}|1[0-9]{1,2}|2[0-4][0-9]|25[0-5])) ?\)$/,
-    decoder: (encodedValue: string) => {
-        const channels = StringEncodedRGB.regExp.exec(encodedValue)!;
-        tmpColor.setRGB(
-            parseInt(channels[1], 10) / 255,
-            parseInt(channels[2], 10) / 255,
-            parseInt(channels[3], 10) / 255
-        );
-        return [tmpColor.r, tmpColor.g, tmpColor.b];
+    decoder: (encodedValue: string, target: number[]) => {
+        const channels = StringEncodedRGB.regExp.exec(encodedValue);
+        if (channels === null) {
+            return false;
+        }
+        target[0] = parseInt(channels[1], 10) / 255;
+        target[1] = parseInt(channels[2], 10) / 255;
+        target[2] = parseInt(channels[3], 10) / 255;
+        return true;
     }
 };
 const StringEncodedRGBA: StringEncodedNumeralFormat = {
@@ -99,16 +107,17 @@ const StringEncodedRGBA: StringEncodedNumeralFormat = {
     size: 3,
     // tslint:disable-next-line:max-line-length
     regExp: /^rgba\( ?(?:([0-9]{1,2}|1[0-9]{1,2}|2[0-4][0-9]|25[0-5]), ?)(?:([0-9]{1,2}|1[0-9]{1,2}|2[0-4][0-9]|25[0-5]), ?)(?:([0-9]{1,2}|1[0-9]{1,2}|2[0-4][0-9]|25[0-5]), ?)(?:(0(?:\.[0-9]+)?|1(?:\.0+)?)) ?\)$/,
-    decoder: (encodedValue: string) => {
-        const channels = StringEncodedRGBA.regExp.exec(encodedValue)!;
+    decoder: (encodedValue: string, target: number[]) => {
+        const channels = StringEncodedRGBA.regExp.exec(encodedValue);
+        if (channels === null) {
+            return false;
+        }
         // For now we simply ignore alpha channel value.
         // TODO: To be resolved with HARP-7517
-        tmpColor.setRGB(
-            parseInt(channels[1], 10) / 255,
-            parseInt(channels[2], 10) / 255,
-            parseInt(channels[3], 10) / 255
-        );
-        return [tmpColor.r, tmpColor.g, tmpColor.b];
+        target[0] = parseInt(channels[1], 10) / 255;
+        target[1] = parseInt(channels[2], 10) / 255;
+        target[2] = parseInt(channels[3], 10) / 255;
+        return true;
     }
 };
 const StringEncodedHSL: StringEncodedNumeralFormat = {
@@ -116,14 +125,20 @@ const StringEncodedHSL: StringEncodedNumeralFormat = {
     size: 3,
     // tslint:disable-next-line:max-line-length
     regExp: /^hsl\( ?((?:[0-9]|[1-9][0-9]|1[0-9]{1,2}|2[0-9]{1,2}|3[0-5][0-9]|360)), ?(?:([0-9]|[1-9][0-9]|100)%), ?(?:([0-9]|[1-9][0-9]|100)%) ?\)$/,
-    decoder: (encodedValue: string) => {
-        const channels = StringEncodedHSL.regExp.exec(encodedValue)!;
+    decoder: (encodedValue: string, target: number[]) => {
+        const channels = StringEncodedHSL.regExp.exec(encodedValue);
+        if (channels === null) {
+            return false;
+        }
         tmpColor.setHSL(
             parseInt(channels[1], 10) / 360,
             parseInt(channels[2], 10) / 100,
             parseInt(channels[3], 10) / 100
         );
-        return [tmpColor.r, tmpColor.g, tmpColor.b];
+        target[0] = tmpColor.r;
+        target[1] = tmpColor.g;
+        target[2] = tmpColor.b;
+        return true;
     }
 };
 
@@ -135,6 +150,11 @@ export const StringEncodedMetricFormats: StringEncodedNumeralFormat[] = [
     StringEncodedPixels
 ];
 
+const StringEncodedMetricFormatMaxSize = StringEncodedMetricFormats.reduce(
+    (a, b) => Math.max(a, b.size),
+    0
+);
+
 /**
  * Array of all supported [[StringEncodedNumeralFormat]]s describing color data.
  */
@@ -145,6 +165,11 @@ export const StringEncodedColorFormats: StringEncodedNumeralFormat[] = [
     StringEncodedHSL
 ];
 
+const StringEncodedColorFormatMaxSize = StringEncodedColorFormats.reduce(
+    (a, b) => Math.max(a, b.size),
+    0
+);
+
 /**
  * Array of supported [[StringEncodedNumeralFormat]]s (intended to be indexed with
  * [[StringEncodedNumeralType]] enum).
@@ -153,6 +178,13 @@ export const StringEncodedNumeralFormats: StringEncodedNumeralFormat[] = [
     ...StringEncodedMetricFormats,
     ...StringEncodedColorFormats
 ];
+
+export const StringEncodedNumeralFormatMaxSize = Math.max(
+    StringEncodedColorFormatMaxSize,
+    StringEncodedMetricFormatMaxSize
+);
+
+const tmpBuffer: number[] = new Array(StringEncodedNumeralFormatMaxSize);
 
 /**
  * Parse string encoded numeral values using all known [[StringEncodedNumeralFormats]].
@@ -166,24 +198,32 @@ export function parseStringEncodedNumeral(
     numeral: string,
     pixelToMeters: number = 1.0
 ): number | undefined {
-    const matchedFormat = StringEncodedNumeralFormats.find(format => format.regExp.test(numeral));
-    if (matchedFormat === undefined) {
-        return undefined;
-    }
-    switch (matchedFormat.type) {
-        case StringEncodedNumeralType.Meters:
-            return matchedFormat.decoder(numeral)[0];
-        case StringEncodedNumeralType.Pixels:
-            return matchedFormat.decoder(numeral)[0] * pixelToMeters;
-        case StringEncodedNumeralType.Hex:
-        case StringEncodedNumeralType.RGB:
-        case StringEncodedNumeralType.RGBA:
-        case StringEncodedNumeralType.HSL:
-            const rgbValues = matchedFormat.decoder(numeral);
-            return tmpColor.setRGB(rgbValues[0], rgbValues[1], rgbValues[2]).getHex();
-        default:
-            return matchedFormat.decoder(numeral)[0];
-    }
+    let result: number | undefined;
+    const formatMatch = (format: StringEncodedNumeralFormat) => {
+        if (format.decoder(numeral, tmpBuffer)) {
+            switch (format.type) {
+                case StringEncodedNumeralType.Meters:
+                    result = tmpBuffer[0];
+                    break;
+                case StringEncodedNumeralType.Pixels:
+                    result = tmpBuffer[0] * pixelToMeters;
+                    break;
+                case StringEncodedNumeralType.Hex:
+                case StringEncodedNumeralType.RGB:
+                case StringEncodedNumeralType.RGBA:
+                case StringEncodedNumeralType.HSL:
+                    result = tmpColor.setRGB(tmpBuffer[0], tmpBuffer[1], tmpBuffer[2]).getHex();
+                    break;
+                default:
+                    result = tmpBuffer[0];
+                    break;
+            }
+            return true;
+        }
+        return false;
+    };
+    StringEncodedNumeralFormats.some(formatMatch);
+    return result;
 }
 
 /**
@@ -194,7 +234,7 @@ export function parseStringEncodedNumeral(
  * the expression provided in [[color]].
  */
 export function parseStringEncodedColor(color: string): number | undefined {
-    const matchedFormat = StringEncodedColorFormats.find(format => format.regExp.test(color));
+    const matchedFormat = matchFormat(StringEncodedColorFormats, color, tmpBuffer);
     if (matchedFormat === undefined) {
         return undefined;
     }
@@ -203,9 +243,18 @@ export function parseStringEncodedColor(color: string): number | undefined {
         case StringEncodedNumeralType.RGB:
         case StringEncodedNumeralType.RGBA:
         case StringEncodedNumeralType.HSL:
-            const rgbValues = matchedFormat.decoder(color);
-            return tmpColor.setRGB(rgbValues[0], rgbValues[1], rgbValues[2]).getHex();
+            return tmpColor.setRGB(tmpBuffer[0], tmpBuffer[1], tmpBuffer[2]).getHex();
         default:
-            return matchedFormat.decoder(color)[0];
+            return tmpBuffer[0];
     }
+}
+
+function matchFormat(
+    formats: StringEncodedNumeralFormat[],
+    numeral: string,
+    result: number[]
+): StringEncodedNumeralFormat | undefined {
+    return formats.find(format => {
+        return format.decoder(numeral, result) ? true : false;
+    });
 }
