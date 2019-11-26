@@ -727,7 +727,10 @@ export class TileGeometryCreator {
                     object.userData.geometryId = srcGeometry.uuid;
                 }
 
-                if (isFillTechnique(technique)) {
+                if (
+                    isFillTechnique(technique) &&
+                    mapView.projection.type === ProjectionType.Planar
+                ) {
                     object.onBeforeRender = chainCallbacks(
                         object.onBeforeRender,
                         (_renderer, _scene, _camera, _geometry, _material) => {
@@ -735,39 +738,38 @@ export class TileGeometryCreator {
                                 _material.clippingPlanes = this.clippingPlanes;
                                 // TODO: Add clipping for Spherical projection.
                             }
-                            if (mapView.projection.type === ProjectionType.Planar) {
-                                const worldOffsetX =
-                                    mapView.projection.worldExtent(0, 0).max.x * tile.offset;
-                                // This prevents aliasing issues in the pixel shader.
-                                const expandFactor = 1.01;
-                                const planes = _material.clippingPlanes;
-                                const rightConstant =
-                                    tile.center.x -
-                                    mapView.worldCenter.x +
-                                    tile.boundingBox.extents.x * expandFactor +
-                                    worldOffsetX;
+                            const worldOffsetX =
+                                mapView.projection.worldExtent(0, 0).max.x * tile.offset;
+                            // This prevents aliasing issues in the pixel shader, there are artifacts
+                            // at low zoom levels, so we increase the factor by 10 to 1%.
+                            const expandFactor = mapView.zoomLevel <= 2 ? 1.01 : 1.001;
+                            const planes = _material.clippingPlanes;
+                            const rightConstant =
+                                tile.center.x -
+                                mapView.worldCenter.x +
+                                tile.boundingBox.extents.x * expandFactor +
+                                worldOffsetX;
 
-                                planes[0].constant = rightConstant;
+                            planes[0].constant = rightConstant;
 
-                                const leftConstant =
-                                    tile.center.x -
-                                    mapView.worldCenter.x -
-                                    tile.boundingBox.extents.x * expandFactor +
-                                    worldOffsetX;
-                                planes[1].constant = -leftConstant;
+                            const leftConstant =
+                                tile.center.x -
+                                mapView.worldCenter.x -
+                                tile.boundingBox.extents.x * expandFactor +
+                                worldOffsetX;
+                            planes[1].constant = -leftConstant;
 
-                                const topConstant =
-                                    tile.center.y -
-                                    mapView.worldCenter.y +
-                                    tile.boundingBox.extents.y * expandFactor;
-                                planes[2].constant = topConstant;
+                            const topConstant =
+                                tile.center.y -
+                                mapView.worldCenter.y +
+                                tile.boundingBox.extents.y * expandFactor;
+                            planes[2].constant = topConstant;
 
-                                const bottomConstant =
-                                    tile.center.y -
-                                    mapView.worldCenter.y -
-                                    tile.boundingBox.extents.y * expandFactor;
-                                planes[3].constant = -bottomConstant;
-                            }
+                            const bottomConstant =
+                                tile.center.y -
+                                mapView.worldCenter.y -
+                                tile.boundingBox.extents.y * expandFactor;
+                            planes[3].constant = -bottomConstant;
                         }
                     );
                 }
