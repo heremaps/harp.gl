@@ -861,11 +861,6 @@ export class MapView extends THREE.EventDispatcher {
         });
         this.m_renderer.autoClear = false;
 
-        // This is a bit of a misnomer, this is required for the clipping planes
-        // to be enabled, and they are in world space, see:
-        // https://threejs.org/docs/#api/en/materials/Material.clippingPlanes
-        this.m_renderer.localClippingEnabled = true;
-
         // This is detailed at https://threejs.org/docs/#api/renderers/WebGLRenderer.info
         // When using several WebGLRenderer#render calls per frame, it is the only way to get
         // correct rendering data from ThreeJS.

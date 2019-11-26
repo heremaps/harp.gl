@@ -48,7 +48,7 @@ import {
     SolidLineMaterial
 } from "@here/harp-materials";
 import { ContextualArabicConverter } from "@here/harp-text-canvas";
-import { chainCallbacks, LoggerManager } from "@here/harp-utils";
+import { LoggerManager } from "@here/harp-utils";
 import * as THREE from "three";
 
 import { AnimatedExtrusionTileHandler } from "../AnimatedExtrusionHandler";
@@ -106,13 +106,6 @@ export interface PolygonFadingParameters extends FadingParameters {
  */
 export class TileGeometryCreator {
     private static m_instance: TileGeometryCreator;
-    // These are used for clipping the geometry so that the overlapping geometry is removed.
-    private clippingPlanes = [
-        new THREE.Plane(new THREE.Vector3(-1, 0, 0), 0),
-        new THREE.Plane(new THREE.Vector3(1, 0, 0), 0),
-        new THREE.Plane(new THREE.Vector3(0, -1, 0), 0),
-        new THREE.Plane(new THREE.Vector3(0, 1, 0), 0)
-    ];
 
     /**
      * The `instance` of the `TileGeometryCreator`.
@@ -723,46 +716,6 @@ export class TileGeometryCreator {
 
                 if (srcGeometry.uuid !== undefined) {
                     object.userData.geometryId = srcGeometry.uuid;
-                }
-
-                if (isFillTechnique(technique)) {
-                    object.onBeforeRender = chainCallbacks(
-                        object.onBeforeRender,
-                        (_renderer, _scene, _camera, _geometry, _material) => {
-                            if (_material.clippingPlanes === null) {
-                                _material.clippingPlanes = this.clippingPlanes;
-                                // TODO: Add clipping for Spherical projection.
-                            }
-                            if (mapView.projection.type === ProjectionType.Planar) {
-                                // This prevents 1 pixel errors in the IBCT
-                                const expandFactor = 1.001;
-                                const planes = _material.clippingPlanes;
-                                const rightConstant =
-                                    tile.center.x -
-                                    mapView.worldCenter.x +
-                                    tile.boundingBox.extents.x * expandFactor;
-                                planes[0].constant = rightConstant;
-
-                                const leftConstant =
-                                    tile.center.x -
-                                    mapView.worldCenter.x -
-                                    tile.boundingBox.extents.x * expandFactor;
-                                planes[1].constant = -leftConstant;
-
-                                const topConstant =
-                                    tile.center.y -
-                                    mapView.worldCenter.y +
-                                    tile.boundingBox.extents.y * expandFactor;
-                                planes[2].constant = topConstant;
-
-                                const bottomConstant =
-                                    tile.center.y -
-                                    mapView.worldCenter.y -
-                                    tile.boundingBox.extents.y * expandFactor;
-                                planes[3].constant = -bottomConstant;
-                            }
-                        }
-                    );
                 }
 
                 if (
