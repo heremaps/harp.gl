@@ -734,19 +734,24 @@ export class TileGeometryCreator {
                                 // TODO: Add clipping for Spherical projection.
                             }
                             if (mapView.projection.type === ProjectionType.Planar) {
-                                // This prevents 1 pixel errors in the IBCT
-                                const expandFactor = 1.001;
+                                const worldOffsetX =
+                                    mapView.projection.worldExtent(0, 0).max.x * tile.offset;
+                                // This prevents aliasing issues in the pixel shader.
+                                const expandFactor = 1.01;
                                 const planes = _material.clippingPlanes;
                                 const rightConstant =
                                     tile.center.x -
                                     mapView.worldCenter.x +
-                                    tile.boundingBox.extents.x * expandFactor;
+                                    tile.boundingBox.extents.x * expandFactor +
+                                    worldOffsetX;
+
                                 planes[0].constant = rightConstant;
 
                                 const leftConstant =
                                     tile.center.x -
                                     mapView.worldCenter.x -
-                                    tile.boundingBox.extents.x * expandFactor;
+                                    tile.boundingBox.extents.x * expandFactor +
+                                    worldOffsetX;
                                 planes[1].constant = -leftConstant;
 
                                 const topConstant =
