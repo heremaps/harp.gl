@@ -1005,7 +1005,7 @@ export class TextElementsRenderer {
 
         // Prepare user text elements.
         for (const tile of sortedTiles) {
-            this.prepareTextElementGroup(tile.userTextElements, tile, projection);
+            this.prepareTextElementGroup(tile.userTextElements, projection);
         }
 
         const sortedGroups: TextElementLists[] = [];
@@ -1041,7 +1041,6 @@ export class TextElementsRenderer {
 
     private prepareTextElementGroup(
         textElementGroup: TextElementGroup,
-        tile: Tile,
         projection: Projection,
         maxViewDistance?: number
     ) {
@@ -1049,16 +1048,12 @@ export class TextElementsRenderer {
             return;
         }
 
-        const worldOffsetX = projection.worldExtent(0, 0).max.x * tile.offset;
-
         const textElementSelection: TextElementFilter = (
             textElement: TextElement,
             lastFrameNumber?: number
         ): number | undefined => {
             let { result, viewDistance } = checkReadyForPlacement(
                 textElement,
-                tile,
-                worldOffsetX,
                 this.m_viewState,
                 this.m_viewCamera,
                 this.m_poiManager,
@@ -1171,12 +1166,7 @@ export class TextElementsRenderer {
         const maxViewDistance = getMaxViewDistance(this.m_viewState, farDistanceLimitRatio);
 
         for (const tileTextElements of textElementLists.lists) {
-            this.prepareTextElementGroup(
-                tileTextElements.group,
-                tileTextElements.tile,
-                projection,
-                maxViewDistance
-            );
+            this.prepareTextElementGroup(tileTextElements.group, projection, maxViewDistance);
         }
     }
 
@@ -1838,19 +1828,17 @@ export class TextElementsRenderer {
         temp: TempParams
     ): boolean {
         const poiLabel = labelState.element;
-
-        // Calculate the world position of this label.
-        tempPosition.copy(poiLabel.position).add(poiLabel.tileCenter!);
+        const worldPosition = poiLabel.points as THREE.Vector3;
 
         // Only process labels frustum-clipped labels
-        if (this.m_screenProjector.project(tempPosition, tempScreenPosition) === undefined) {
+        if (this.m_screenProjector.project(worldPosition, tempScreenPosition) === undefined) {
             return false;
         }
         // Add this POI as a point label.
         return this.addPointLabel(
             labelState,
             groupState,
-            tempPosition,
+            worldPosition,
             tempScreenPosition,
             poiRenderer,
             textCanvas,
@@ -1901,13 +1889,8 @@ export class TextElementsRenderer {
             const path = lineMarkerLabel.path;
             for (let pointIndex = 0; pointIndex < path.length; ++pointIndex) {
                 const point = path[pointIndex];
-                // Calculate the world position of this label.
-                tempPosition.copy(point).add(lineMarkerLabel.tileCenter!);
-
                 // Only process labels frustum-clipped labels
-                if (
-                    this.m_screenProjector.project(tempPosition, tempScreenPosition) !== undefined
-                ) {
+                if (this.m_screenProjector.project(point, tempScreenPosition) !== undefined) {
                     // Find a suitable location for the lineMarker to be placed at.
                     let tooClose = false;
                     for (let j = 0; j < shieldGroup.length; j += 2) {
@@ -1930,7 +1913,7 @@ export class TextElementsRenderer {
                             this.addPointLabel(
                                 labelState,
                                 groupState,
-                                tempPosition,
+                                point,
                                 tempScreenPosition,
                                 poiRenderer,
                                 textCanvas,
@@ -1950,17 +1933,12 @@ export class TextElementsRenderer {
             const path = lineMarkerLabel.path;
             for (let pointIndex = 0; pointIndex < path.length; ++pointIndex) {
                 const point = path[pointIndex];
-                // Calculate the world position of this label.
-                tempPosition.copy(point).add(lineMarkerLabel.tileCenter!);
-
                 // Only process labels frustum-clipped labels
-                if (
-                    this.m_screenProjector.project(tempPosition, tempScreenPosition) !== undefined
-                ) {
+                if (this.m_screenProjector.project(point, tempScreenPosition) !== undefined) {
                     this.addPointLabel(
                         labelState,
                         groupState,
-                        tempPosition,
+                        point,
                         tempScreenPosition,
                         poiRenderer,
                         textCanvas,
@@ -2164,12 +2142,10 @@ export class TextElementsRenderer {
         let anyPointVisible = false;
 
         for (const pt of textElement.path!) {
-            tempPosition.copy(pt).add(textElement.tileCenter!);
-
             // Skip invisible points at the beginning of the path.
             const screenPoint = anyPointVisible
-                ? this.m_screenProjector.project(tempPosition, tempScreenPosition)
-                : this.m_screenProjector.projectOnScreen(tempPosition, tempScreenPosition);
+                ? this.m_screenProjector.project(pt, tempScreenPosition)
+                : this.m_screenProjector.projectOnScreen(pt, tempScreenPosition);
             if (screenPoint === undefined) {
                 continue;
             }

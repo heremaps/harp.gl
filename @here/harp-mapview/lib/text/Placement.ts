@@ -8,7 +8,6 @@ import { ProjectionType } from "@here/harp-geoutils";
 import { MathUtils } from "@here/harp-utils";
 import * as THREE from "three";
 import { PoiManager } from "../poi/PoiManager";
-import { Tile } from "../Tile";
 import { TextElement } from "./TextElement";
 import { ViewState } from "./ViewState";
 
@@ -16,12 +15,14 @@ import { ViewState } from "./ViewState";
  * Functions related to text element placement.
  */
 
-const tempTextElementPosition = new THREE.Vector3(0, 0, 0);
+const tmpPosition = new THREE.Vector3(0, 0, 0);
+const tmpCameraDir = new THREE.Vector3(0, 0, 0);
 
 /**
  * Checks whether the distance of the specified text element to the center of the given view is
  * lower than a maximum threshold.
- * @param textElement The textElement of which the view distance will be checked.
+ * @param textElement The textElement of which the view distance will be checked, with coordinates
+ * in world space.
  * @param mapView The view that will be used as reference to calculate the distance.
  * @param maxViewDistance The maximum distance value.
  * @returns The text element view distance if it's lower than the maximum value, otherwise
@@ -41,13 +42,11 @@ function checkViewDistance(
     }
 
     // Spherical projection
-    tempTextElementPosition.copy(textElement.position).add(textElement.tileCenter!);
-    tempTextElementPosition.normalize();
-    const cameraDir = new THREE.Vector3();
-    camera.getWorldDirection(cameraDir);
+    tmpPosition.copy(textElement.position).normalize();
+    camera.getWorldDirection(tmpCameraDir);
 
     // TODO: Revisit, why is this angle check needed and where does the constant -0.6 come from?
-    return tempTextElementPosition.dot(cameraDir) < -0.6 && textDistance <= maxViewDistance
+    return tmpPosition.dot(tmpCameraDir) < -0.6 && textDistance <= maxViewDistance
         ? textDistance
         : undefined;
 }
@@ -55,7 +54,8 @@ function checkViewDistance(
 /**
  * Computes the distance of the specified text element to the given position.
  * @param refPosition The world coordinates used a reference position to calculate the distance.
- * @param textElement The textElement of which the view distance will be checked.
+ * @param textElement The textElement of which the view distance will be checked. It must have
+ * coordinates in world space.
  * @returns The text element view distance.
  * `undefined`.
  */
@@ -63,18 +63,14 @@ export function computeViewDistance(refPosition: THREE.Vector3, textElement: Tex
     let viewDistance: number;
 
     if (Array.isArray(textElement.points) && textElement.points.length > 1) {
-        tempTextElementPosition.copy(textElement.points[0]).add(textElement.tileCenter!);
-        const viewDistance0 = refPosition.distanceTo(tempTextElementPosition);
-
-        tempTextElementPosition
-            .copy(textElement.points[textElement.points.length - 1])
-            .add(textElement.tileCenter!);
-        const viewDistance1 = refPosition.distanceTo(tempTextElementPosition);
+        const viewDistance0 = refPosition.distanceTo(textElement.points[0]);
+        const viewDistance1 = refPosition.distanceTo(
+            textElement.points[textElement.points.length - 1]
+        );
 
         viewDistance = Math.min(viewDistance0, viewDistance1);
     } else {
-        tempTextElementPosition.copy(textElement.position).add(textElement.tileCenter!);
-        viewDistance = refPosition.distanceTo(tempTextElementPosition);
+        viewDistance = refPosition.distanceTo(textElement.points as THREE.Vector3);
     }
 
     return viewDistance;
@@ -107,8 +103,6 @@ export enum PrePlacementResult {
  * Applies early rejection tests for a given text element meant to avoid trying to place labels
  * that are not visible, not ready, duplicates etc...
  * @param textElement The Text element to check.
- * @param tile The tile to which the text element belongs.
- * @param worldOffsetX The tile's X offset.
  * @param viewState The view for which the text element will be placed.
  * @param viewCamera The view's camera.
  * @param m_poiManager To prepare pois for rendering.
@@ -120,8 +114,6 @@ export enum PrePlacementResult {
  */
 export function checkReadyForPlacement(
     textElement: TextElement,
-    tile: Tile,
-    worldOffsetX: number,
     viewState: ViewState,
     viewCamera: THREE.Camera,
     poiManager: PoiManager,
@@ -153,16 +145,6 @@ export function checkReadyForPlacement(
         )
     ) {
         return { result: PrePlacementResult.Invisible, viewDistance };
-    }
-
-    if (textElement.tileCenter === undefined) {
-        textElement.tileCenter = new THREE.Vector3(
-            tile.center.x + worldOffsetX,
-            tile.center.y,
-            tile.center.z
-        );
-    } else {
-        textElement.tileCenter.set(tile.center.x + worldOffsetX, tile.center.y, tile.center.z);
     }
 
     viewDistance =

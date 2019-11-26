@@ -357,6 +357,8 @@ export class TileGeometryCreator {
         const mapView = tile.mapView;
         const textElementsRenderer = mapView.textElementsRenderer;
         const displayZoomLevel = Math.floor(mapView.zoomLevel);
+        const worldOffsetX = tile.computeWorldOffsetX();
+
         if (decodedTile.textPathGeometries !== undefined) {
             const textPathGeometries = this.prepareTextPaths(
                 decodedTile.textPathGeometries,
@@ -393,7 +395,7 @@ export class TileGeometryCreator {
                 for (let i = 0; i < textPath.path.length; i += 3) {
                     path.push(
                         new THREE.Vector3(
-                            textPath.path[i],
+                            textPath.path[i] + worldOffsetX,
                             textPath.path[i + 1],
                             textPath.path[i + 2]
                         )
@@ -491,7 +493,7 @@ export class TileGeometryCreator {
                         : technique.fadeFar;
 
                 for (let i = 0; i < numPositions; ++i) {
-                    const x = positions.getX(i);
+                    const x = positions.getX(i) + worldOffsetX;
                     const y = positions.getY(i);
                     const z = positions.getZ(i);
                     const label = text.stringCatalog[text.texts[i]];
