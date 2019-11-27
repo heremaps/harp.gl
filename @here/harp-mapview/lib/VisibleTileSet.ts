@@ -901,7 +901,7 @@ export class VisibleTileSet {
                     tile.tileKey,
                     tile.offset
                 );
-                tile.isFallback = false;
+                tile.levelOffset = 0;
                 if (tile.hasGeometry || defaultSearchDirection === SearchDirection.NONE) {
                     renderedTiles.set(tileCode, tile);
                 } else {
@@ -938,20 +938,20 @@ export class VisibleTileSet {
                             } = TileOffsetUtils.extractOffsetAndMortonKeyFromKey(parentCode);
 
                             const parentTile = tileCache.get(mortonCode, offset, dataSource);
-                            if (parentTile !== undefined && parentTile.hasGeometry) {
-                                // parentTile has geometry, so can be reused as fallback
-                                renderedTiles.set(parentCode, parentTile);
-                                parentTile.isFallback = true;
-                                return;
-                            }
-
                             const parentTileKey = parentTile
                                 ? parentTile.tileKey
                                 : TileKey.fromMortonCode(mortonCode);
+                            const nextLevelDiff = Math.abs(displayZoomLevel - parentTileKey.level);
+                            if (parentTile !== undefined && parentTile.hasGeometry) {
+                                // parentTile has geometry, so can be reused as fallback
+                                renderedTiles.set(parentCode, parentTile);
+                                // We want to have parent tiles as -ve, hence the minus.
+                                parentTile.levelOffset = -nextLevelDiff;
+                                return;
+                            }
 
                             // if parentTile is missing or incomplete, try at max 3 levels up from
                             // current display level
-                            const nextLevelDiff = Math.abs(displayZoomLevel - parentTileKey.level);
                             if (nextLevelDiff < this.options.quadTreeSearchDistanceUp) {
                                 nextLevelCandidates.set(parentCode, SearchDirection.UP);
                             }
@@ -980,14 +980,14 @@ export class VisibleTileSet {
                                 dataSource
                             );
 
+                            const nextLevelDiff = Math.abs(childTileKey.level - displayZoomLevel);
                             if (childTile !== undefined && childTile.hasGeometry) {
                                 // childTile has geometry, so can be reused as fallback
                                 renderedTiles.set(childTileCode, childTile);
-                                childTile.isFallback = true;
+                                childTile.levelOffset = nextLevelDiff;
                                 continue;
                             }
 
-                            const nextLevelDiff = Math.abs(childTileKey.level - displayZoomLevel);
                             if (nextLevelDiff < this.options.quadTreeSearchDistanceDown) {
                                 nextLevelCandidates.set(childTileCode, SearchDirection.DOWN);
                             }

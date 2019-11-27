@@ -2832,9 +2832,8 @@ export class MapView extends THREE.EventDispatcher {
                 // of -10000, see addGroundPlane in TileGeometryCreator), only then can we be sure
                 // that nothing of the parent will be rendered on top of the children, as such, we
                 // shift using the FALLBACK_RENDER_ORDER_OFFSET.
-                object.renderOrder = tile.isFallback
-                    ? object._backupRenderOrder - FALLBACK_RENDER_ORDER_OFFSET
-                    : object._backupRenderOrder;
+                object.renderOrder =
+                    object._backupRenderOrder + FALLBACK_RENDER_ORDER_OFFSET * tile.levelOffset;
 
                 this.m_mapTilesRoot.add(object);
             }
