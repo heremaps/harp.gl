@@ -588,7 +588,7 @@ export class VisibleTileSet {
             // Calculate min/max elevation from every data source tiles,
             // data sources without elevationRangeSource will contribute to
             // values with zero levels for both elevations.
-            const tiles = renderListEntry.visibleTiles;
+            const tiles = renderListEntry.renderedTiles;
             tiles.forEach(tile => {
                 minElevation = MathUtils.min2(minElevation, tile.minElevation);
                 maxElevation = MathUtils.max2(
