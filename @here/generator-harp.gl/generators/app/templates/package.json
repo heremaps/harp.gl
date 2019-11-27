@@ -8,25 +8,5 @@
         "start": "webpack-dev-server"
     },
     "author": "",
-    "private": true,
-    "dependencies": {
-        "@here/harp-map-controls": "^0.11.0",
-        "@here/harp-map-theme": "^0.11.0",
-        "@here/harp-fontcatalog": "^0.1.2",
-        "@here/harp-mapview": "^0.11.0",
-        "@here/harp-mapview-decoder": "^0.11.0",
-        "@here/harp-omv-datasource": "^0.11.0",
-        "three": "^0.110.0"
-    },
-    "devDependencies": {
-        "@types/node": "^12.0.8",
-        "@types/tween.js": "^17.2.0",
-        "copy-webpack-plugin": "^5.0.3",
-        "html-webpack-plugin": "^3.2.0",
-        "ts-loader": "^5.3.0",
-        "typescript": "^3.4.1",
-        "webpack": "^4.30.0",
-        "webpack-cli": "^3.3.2",
-        "webpack-dev-server": "^3.3.1"
-    }
+    "private": true
 }
