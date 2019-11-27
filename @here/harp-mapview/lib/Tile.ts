@@ -341,7 +341,17 @@ export class Tile implements CachedResource {
      * Prepared text geometries optimized for display.
      */
     preparedTextPaths: TextPathGeometry[] | undefined;
-    isFallback: boolean = false;
+
+    /**
+     * @hidden
+     *
+     * Used to tell if the Tile is used temporarily as a fallback tile.
+     *
+     * levelOffset is in in the range [-quadTreeSearchDistanceUp,
+     * quadTreeSearchDistanceDown], where these values come from the
+     * [[VisibleTileSetOptions]]
+     */
+    levelOffset: number = 0;
 
     private m_disposed: boolean = false;
     private m_localTangentSpace = false;
