@@ -5,9 +5,9 @@
  */
 
 import { assert } from "@here/harp-utils";
-import { TextElement } from "./TextElement";
 import { TextElementGroup } from "./TextElementGroup";
 import { TextElementFilter, TextElementGroupState } from "./TextElementGroupState";
+import { TextElementState } from "./TextElementState";
 
 /**
  * Label distance threshold squared in meters. Point labels with the same name that are closer in
@@ -15,29 +15,6 @@ import { TextElementFilter, TextElementGroupState } from "./TextElementGroupStat
  * Used to identify duplicate labels in overlapping tiles.
  */
 const MAX_LABEL_DUPLICATE_DIST_SQ = 100;
-
-interface TextMapValue {
-    element: TextElement;
-    lastFrameNumber?: number;
-}
-
-/**
- * Determine if the new text duplicate was rendered most recently than the cached one. This allows
- * to keep the render state for fading.
- * @param newValue New duplicate (not yet cached).
- * @param cachedValue Cached duplicate.
- * @returns Whether the new duplicate was rendered more recently than the cached one.
- */
-function isNewTextElementLatest(newValue: TextMapValue, cachedValue: TextMapValue): boolean {
-    if (newValue.lastFrameNumber === undefined || newValue.lastFrameNumber < 0) {
-        return false;
-    }
-    if (cachedValue.lastFrameNumber === undefined || cachedValue.lastFrameNumber < 0) {
-        return true;
-    }
-
-    return newValue.lastFrameNumber > cachedValue.lastFrameNumber;
-}
 
 /**
  * Caches the state of text element groups currently rendered as well as the text element states
@@ -48,7 +25,7 @@ export class TextElementStateCache {
     private m_sortedGroupStates: TextElementGroupState[] | undefined;
 
     // Cache for point labels which may have duplicates in same tile or in neighboring tiles.
-    private readonly m_textMap = new Map<string, TextMapValue[]>();
+    private readonly m_textMap = new Map<string, TextElementState[]>();
 
     /**
      * Gets the state corresponding to a given text element group or sets a newly created state if
@@ -133,15 +110,12 @@ export class TextElementStateCache {
      * @returns True if it's the remaining element after deduplication, false if it's been marked
      * as duplicate.
      */
-    deduplicateElement(element: TextElement, lastFrameNumber: number | undefined): boolean {
+    deduplicateElement(elementState: TextElementState): boolean {
+        const element = elementState.element;
+
         if (!element.isPointLabel) {
             return true;
         }
-
-        const currentEntry = {
-            element,
-            lastFrameNumber
-        };
 
         // Point labels may have duplicates (as can path labels), Identify them
         // and keep the one we already display.
@@ -150,34 +124,39 @@ export class TextElementStateCache {
 
         if (cachedEntries === undefined) {
             // No labels found with the same text.
-            this.m_textMap.set(element.text, [currentEntry]);
+            this.m_textMap.set(element.text, [elementState]);
             return true;
         }
 
         // Other labels found with the same text. Check if they're near enough to be considered
         // duplicates.
-        const duplicateIndex = cachedEntries.findIndex(cachedEntry => {
-            const elementPosition = element.points as THREE.Vector3;
-            const cachedElementPosition = cachedEntry.element.position;
+        const entryCount = cachedEntries.length;
+        const elementPosition = element.points as THREE.Vector3;
+        let duplicateIndex: number = -1;
+        for (let i = 0; i < entryCount; ++i) {
+            const cachedElementPosition = cachedEntries[i].element.position;
 
-            return (
+            if (
                 elementPosition.distanceToSquared(cachedElementPosition) <
                 MAX_LABEL_DUPLICATE_DIST_SQ
-            );
-        });
+            ) {
+                duplicateIndex = i;
+                break;
+            }
+        }
 
         if (duplicateIndex === -1) {
             // No duplicate found.
-            cachedEntries.push(currentEntry);
+            cachedEntries.push(elementState);
             return true;
         }
 
-        // Duplicate found, check which label is fresher (was rendered more recently).
+        // Duplicate found, check whether there's a label already visible and keep that one.
         const cachedDuplicate = cachedEntries[duplicateIndex];
 
-        if (isNewTextElementLatest(currentEntry, cachedDuplicate)) {
-            // Current label is a fresher duplicate, substitute the cached label.
-            cachedEntries[duplicateIndex] = currentEntry;
+        if (!cachedDuplicate.visible && elementState.visible) {
+            // New label is visible, substitute the cached label.
+            cachedEntries[duplicateIndex] = elementState;
 
             return true;
         }

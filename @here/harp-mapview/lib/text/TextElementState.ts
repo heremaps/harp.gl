@@ -35,15 +35,7 @@ export class TextElementState {
      */
     private m_textRenderState?: RenderState;
 
-    constructor(
-        private readonly m_textElement: TextElement,
-        groupState: TextElementGroupState,
-        viewDistance: number | undefined
-    ) {
-        if (viewDistance !== undefined) {
-            this.initialize(groupState, viewDistance);
-        }
-    }
+    constructor(private readonly m_textElement: TextElement) {}
 
     get initialized(): boolean {
         return this.m_textRenderState !== undefined || this.m_iconRenderStates !== undefined;
