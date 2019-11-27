@@ -131,9 +131,9 @@ export class TextElementStateCache {
         // Other labels found with the same text. Check if they're near enough to be considered
         // duplicates.
         const entryCount = cachedEntries.length;
+        const elementPosition = element.points as THREE.Vector3;
         let duplicateIndex: number = -1;
         for (let i = 0; i < entryCount; ++i) {
-            const elementPosition = element.points as THREE.Vector3;
             const cachedElementPosition = cachedEntries[i].element.position;
 
             if (
