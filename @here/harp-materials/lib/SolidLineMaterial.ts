@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { LineCaps } from "@here/harp-datasource-protocol";
+import { LineCaps, LineDashes } from "@here/harp-datasource-protocol";
 import * as THREE from "three";
 import {
     DisplacementFeature,
@@ -36,6 +36,28 @@ const DefinesLineCapsMapping: { [key: number]: LineCaps } = Object.keys(
     r[defineValue] = defineKey;
     return r;
 }, ({} as any) as { [key: number]: LineCaps });
+
+export enum LineDashesModes {
+    DASHES_NONE = 0,
+    DASHES_SQUARE,
+    DASHES_ROUND,
+    DASHES_DIAMOND
+}
+
+const LineDashesDefinesMapping: { [key in LineDashes]: number } = {
+    Square: LineDashesModes.DASHES_SQUARE,
+    Round: LineDashesModes.DASHES_ROUND,
+    Diamond: LineDashesModes.DASHES_DIAMOND
+};
+
+const DefinesLineDashesMapping: { [key: number]: LineDashes } = Object.keys(
+    LineDashesDefinesMapping
+).reduce((r, lineDashesName) => {
+    const defineKey = lineDashesName as keyof typeof LineDashesDefinesMapping;
+    const defineValue: number = LineDashesDefinesMapping[defineKey];
+    r[defineValue] = defineKey;
+    return r;
+}, ({} as any) as { [key: number]: LineDashes });
 
 /**
  * The vLength contains the actual line length, it's needed for the creation of line caps by
@@ -198,6 +220,11 @@ void main() {
     // Compute distance to dash edge (0.5: dashCenter, 0.0: dashEdge) and compute the
     // dashBlendFactor similarly on how we did it for the line opacity.
     float distToDashEdge = 0.5 - distance(distToDashOrigin, (d + g) / d * 0.5);
+    #if DASHES_MODE == DASHES_ROUND
+    distToDashEdge = 0.5 - distance(vec2(distToCenter * 0.5, distToDashEdge), vec2(0.0, 0.5));
+    #elif DASHES_MODE == DASHES_DIAMOND
+    distToDashEdge -= distToCenter * 0.5;
+    #endif
     float dashWidth = fwidth(distToDashEdge);
     float dashBlendFactor = 1.0 - smoothstep(-dashWidth, dashWidth, distToDashEdge);
 
@@ -316,6 +343,12 @@ export interface SolidLineMaterialParameters
      * Default is `1.0`.
      */
     drawRangeEnd?: number;
+
+    /**
+     * Describes line dash type (`"Round"`, `"Square"`, `"Diamond"`).
+     * Default is `"Square"`.
+     */
+    dashes?: LineDashes;
 
     /**
      * Line dashes color.
@@ -482,6 +515,9 @@ export class SolidLineMaterial extends THREE.RawShaderMaterial
             if (params.drawRangeEnd !== undefined) {
                 this.drawRangeEnd = params.drawRangeEnd;
             }
+            if (params.dashes !== undefined) {
+                this.dashes = params.dashes;
+            }
             if (params.dashColor !== undefined) {
                 tmpColor.set(params.dashColor as any);
                 this.dashColor = tmpColor;
@@ -510,7 +546,7 @@ export class SolidLineMaterial extends THREE.RawShaderMaterial
     set fog(enable: boolean) {
         this.m_fog = enable;
         // Function may be called from THREE.js cause we override setter,
-        // in this case defines are not yet initalized and require late invalidation in
+        // in this case defines are not yet initialized and require late invalidation in
         // SolidLineMaterial c-tor.
         if (this.defines !== undefined) {
             setShaderMaterialDefine(this, "USE_FOG", enable);
@@ -655,6 +691,26 @@ export class SolidLineMaterial extends THREE.RawShaderMaterial
         // correctness and if we provide string to define mapping.
         if (LineCapsDefinesMapping.hasOwnProperty(value)) {
             setShaderMaterialDefine(this, "CAPS_MODE", LineCapsDefinesMapping[value]);
+        }
+    }
+
+    /**
+     * Dashes mode.
+     */
+    get dashes(): LineDashes {
+        let result: LineDashes = "Square";
+        const dashesMode = getShaderMaterialDefine(this, "DASHES_MODE");
+        // Sanity check if material define is numerical and has direct mapping to LineDashes)) {
+        if (typeof dashesMode === "number" && DefinesLineDashesMapping.hasOwnProperty(dashesMode)) {
+            result = DefinesLineDashesMapping[dashesMode];
+        }
+        return result;
+    }
+    set dashes(value: LineDashes) {
+        // Line dashes mode may be set directly from theme, thus we need to check value
+        // correctness and if we provide string to define mapping.
+        if (LineCapsDefinesMapping.hasOwnProperty(value)) {
+            setShaderMaterialDefine(this, "DASHES_MODE", LineDashesDefinesMapping[value]);
         }
     }
 
