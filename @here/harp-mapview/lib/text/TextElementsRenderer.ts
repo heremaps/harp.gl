@@ -357,16 +357,17 @@ export class TextElementsRenderer {
             `FRAME: ${this.m_viewState.frameNumber}, ZOOM LEVEL: ${this.m_viewState.zoomLevel}`
         );
 
-        const clearVisitedGroups = updateTextElements;
-        const anyTextGroupEvicted = this.m_textElementStateCache.update(
-            time,
-            clearVisitedGroups,
-            this.m_options.disableFading!
-        );
-
         if (updateTextElements) {
+            this.m_textElementStateCache.clearVisited();
             this.updateTextElements(dataSourceTileList, projection);
         }
+        const findReplacements = updateTextElements;
+        const anyTextGroupEvicted = this.m_textElementStateCache.update(
+            time,
+            this.m_options.disableFading!,
+            findReplacements,
+            this.m_viewState.zoomLevel
+        );
 
         this.reset();
         this.prepopulateScreenWithBlockingElements(dataSourceTileList);
@@ -871,7 +872,11 @@ export class TextElementsRenderer {
                 ++this.m_initializedTextElementCount;
             }
         }
-        return textElement.loadingState === LoadingState.Initialized;
+        // Return true as soon as a text element has some glyphs assigned so that it's rendered.
+        // The glyphs may be either the final ones or some temporal glyphs inherited from a
+        // predecessor as part of the text element replacement process.
+        // See TextElementState.replace().
+        return textElement.glyphs !== undefined;
     }
 
     private initializeDefaultAssets(): void {
@@ -991,6 +996,7 @@ export class TextElementsRenderer {
             updateStats.clear();
         }
 
+        this.m_textElementStateCache.clearTextCache();
         this.m_cacheInvalidated = false;
 
         this.checkIfOverloaded(dataSourceTileList);
@@ -1098,7 +1104,10 @@ export class TextElementsRenderer {
 
             if (
                 result === PrePlacementResult.Ok &&
-                !this.m_textElementStateCache.deduplicateElement(textElementState)
+                !this.m_textElementStateCache.deduplicateElement(
+                    this.m_viewState.zoomLevel,
+                    textElementState
+                )
             ) {
                 result = PrePlacementResult.Duplicate;
                 viewDistance = undefined;
