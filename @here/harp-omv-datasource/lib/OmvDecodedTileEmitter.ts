@@ -293,7 +293,11 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
 
                 // Always store the position, otherwise the following POIs will be
                 // misplaced.
-                webMercatorTile2TargetWorld(extents, this.m_decodeInfo, pos, tmpV3);
+                if (shouldCreateTextGeometries) {
+                    webMercatorTile2TargetWorld(extents, this.m_decodeInfo, pos, tmpV3);
+                } else {
+                    webMercatorTile2TargetTile(extents, this.m_decodeInfo, pos, tmpV3);
+                }
                 positions.push(tmpV3.x, tmpV3.y, tmpV3.z);
 
                 if (this.m_gatherFeatureIds) {
