@@ -754,7 +754,7 @@ export class TileGeometryCreator {
                 ) {
                     object.onBeforeRender = chainCallbacks(
                         object.onBeforeRender,
-                        (_renderer, _scene, _camera, _geometry, _material) => {
+                        (_renderer, _scene, _camera, _geometry, _material, _group) => {
                             if (_material.clippingPlanes === null) {
                                 _material.clippingPlanes = this.clippingPlanes;
                                 // TODO: Add clipping for Spherical projection.
