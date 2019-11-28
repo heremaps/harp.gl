@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { LineCaps } from "@here/harp-datasource-protocol";
+import { LineCaps, LineDashes } from "@here/harp-datasource-protocol";
 import * as THREE from "three";
 import {
     DisplacementFeature,
@@ -20,6 +20,12 @@ export const LineCapsDefinitions: { [key in LineCaps]: string } = {
     None: "CAPS_NONE",
     TriangleIn: "CAPS_TRIANGLE_IN",
     TriangleOut: "CAPS_TRIANGLE_OUT"
+};
+
+export const LineDashesDefinitions: { [key in LineDashes]: string } = {
+    Square: "DASHES_SQUARE",
+    Round: "DASHES_ROUND",
+    Diamond: "DASHES_DIAMOND"
 };
 
 /**
@@ -182,6 +188,11 @@ void main() {
     // Compute distance to dash edge (0.5: dashCenter, 0.0: dashEdge) and compute the
     // dashBlendFactor similarly on how we did it for the line opacity.
     float distToDashEdge = 0.5 - distance(distToDashOrigin, (d + g) / d * 0.5);
+    #if DASHES_ROUND
+    distToDashEdge = 0.5 - distance(vec2(distToCenter * 0.5, distToDashEdge), vec2(0.0, 0.5));
+    #elif DASHES_DIAMOND
+    distToDashEdge -= distToCenter * 0.5;
+    #endif
     float dashWidth = fwidth(distToDashEdge);
     float dashBlendFactor = 1.0 - smoothstep(-dashWidth, dashWidth, distToDashEdge);
 
@@ -300,6 +311,12 @@ export interface SolidLineMaterialParameters
     drawRangeEnd?: number;
 
     /**
+     * Describes line dash type (`"Round"`, `"Square"`, `"Diamond"`).
+     * Default is `"Square"`.
+     */
+    dashes?: LineDashes;
+
+    /**
      * Line dashes color.
      */
     dashColor?: number | string;
@@ -348,7 +365,10 @@ export class SolidLineMaterial extends THREE.RawShaderMaterial
             CAPS_ROUND: 1,
             CAPS_NONE: 0,
             CAPS_TRIANGLE_IN: 0,
-            CAPS_TRIANGLE_OUT: 0
+            CAPS_TRIANGLE_OUT: 0,
+            DASHES_SQUARE: 1,
+            DASHES_ROUND: 0,
+            DASHES_DIAMOND: 0
         };
 
         const hasFog = params !== undefined && params.fog === true;
@@ -448,6 +468,9 @@ export class SolidLineMaterial extends THREE.RawShaderMaterial
             }
             if (params.drawRangeEnd !== undefined) {
                 this.drawRangeEnd = params.drawRangeEnd;
+            }
+            if (params.dashes !== undefined) {
+                this.dashes = params.dashes;
             }
             if (params.dashColor !== undefined) {
                 this.dashColor.set(params.dashColor as any);
@@ -599,6 +622,25 @@ export class SolidLineMaterial extends THREE.RawShaderMaterial
         this.defines.CAPS_TRIANGLE_IN = 0;
         this.defines.CAPS_TRIANGLE_OUT = 0;
         this.defines[LineCapsDefinitions[value]] = 1;
+    }
+
+    /**
+     * Dashes mode.
+     */
+    get dashes(): LineDashes {
+        let result: LineDashes = "Square";
+        if (this.defines.DASHES_ROUND === 1) {
+            result = "Round";
+        } else if (this.defines.DASHES_DIAMOND === 1) {
+            result = "Diamond";
+        }
+        return result;
+    }
+    set dashes(value: LineDashes) {
+        this.defines.DASHES_SQUARE = 0;
+        this.defines.DASHES_ROUND = 0;
+        this.defines.DASHES_DIAMOND = 0;
+        this.defines[LineDashesDefinitions[value]] = 1;
     }
 
     get fadeNear(): number {

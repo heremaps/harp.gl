@@ -14,6 +14,12 @@ import { InterpolatedPropertyDefinition } from "./InterpolatedPropertyDefs";
 export type LineCaps = "Square" | "Round" | "None" | "TriangleOut" | "TriangleIn";
 
 /**
+ * Available line dash types(`"Round"`, `"Square"`, `"Diamond"`).
+ * Default is `"Square"`.
+ */
+export type LineDashes = "Square" | "Round" | "Diamond";
+
+/**
  * The kind of geometry is used to
  *
  * a) Group objects together, allowing the group to be hidden or displayed.
@@ -943,6 +949,11 @@ export interface SolidLineTechniqueParams extends BaseTechniqueParams, Polygonal
      * Default is `1.0`.
      */
     drawRangeEnd?: number;
+    /**
+     * Describes line dash type (`"Round"`, `"Square"`, `"Diamond"`).
+     * Default is `"Square"`.
+     */
+    dashes?: LineDashes;
     /**
      * Color of a line dashes in hexadecimal or CSS-style notation,
      * for example: `"#e4e9ec"`, `"#fff"`, `"rgb(255, 0, 0)"`, or `"hsl(35, 11%, 88%)"`.
