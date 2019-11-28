@@ -1,6 +1,6 @@
 {
     "name": "@here/harp-datasource-protocol",
-    "version": "0.11.0",
+    "version": "0.11.1",
     "description": "Components used for the decoding and styling of data that is used by the Datasources.",
     "main": "index.js",
     "typings": "index",
@@ -26,7 +26,7 @@
     "dependencies": {
         "@here/harp-geometry": "^0.11.0",
         "@here/harp-geoutils": "^0.11.0",
-        "@here/harp-utils": "^0.11.0"
+        "@here/harp-utils": "^0.11.1"
     },
     "devDependencies": {
         "@here/harp-test-utils": "^0.11.0",
