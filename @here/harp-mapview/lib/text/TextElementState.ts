@@ -85,6 +85,22 @@ export class TextElementState {
     }
 
     /**
+     * Replaces given text element, inheriting its current state.
+     * The predecessor text element state is erased.
+     * @param predecessor Text element state to be replaced.
+     */
+    replace(predecessor: TextElementState) {
+        this.m_textRenderState = predecessor.m_textRenderState;
+        this.m_iconRenderStates = predecessor.m_iconRenderStates;
+        predecessor.m_textRenderState = undefined;
+        predecessor.m_iconRenderStates = undefined;
+
+        // Use the predecessor glyphs and bounds until proper ones are computed.
+        this.element.glyphs = predecessor.element.glyphs;
+        this.element.bounds = predecessor.element.bounds;
+    }
+
+    /**
      * Returns the last computed distance of the text element to the camera.
      * @returns Distance to camera.
      */

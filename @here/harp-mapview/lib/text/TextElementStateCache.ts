@@ -11,11 +11,32 @@ import { TextElementState } from "./TextElementState";
 import { TextElementType } from "./TextElementType";
 
 /**
- * Label distance threshold squared in meters. Point labels with the same name that are closer in
- * world space than this value are treated as the same label. Valid within a single datasource.
- * Used to identify duplicate labels in overlapping tiles.
+ * Label distance tolerance squared in meters. Point labels with the same name that are closer in
+ * world space than this value are treated as the same label. Used to identify duplicate labels in
+ * overlapping tiles and label replacements at different storage levels.
  */
-const MAX_LABEL_DUPLICATE_DIST_SQ = 100;
+function getDedupSqDistTolerance(zoomLevel: number) {
+    // Defining here a minimum tolerance of 10m at zoom level 13 or higher.
+    const minSqTol = 100;
+    const minSqTolLevel = 13;
+    const maxLevelDelta = 4;
+    const levelDelta = Math.min(
+        maxLevelDelta,
+        minSqTolLevel - Math.min(minSqTolLevel, Math.floor(zoomLevel))
+    );
+    // Distance tolerance computed applying a factor over an arbitrary minimum tolerance for a
+    // chosen zoom level. The factor is an exponential function on zoom level delta wrt minimum
+    // tolerance zoom level.
+    // error = sqrt(sqError) = sqrt(minSqError* 2^(4d)) = minError*2^(2d)
+
+    //tslint:disable-next-line: no-bitwise
+    return minSqTol << (levelDelta << 2);
+}
+
+const tmpCachedDuplicate: { entries: TextElementState[]; index: number } = {
+    entries: [],
+    index: -1
+};
 
 /**
  * Caches the state of text element groups currently rendered as well as the text element states
@@ -78,26 +99,46 @@ export class TextElementStateCache {
     /**
      * Updates state of all cached groups, discarding those that are not needed anymore.
      * @param time The current time.
-     * @param clearVisited `True` to clear visited flag in group states.
      * @param disableFading `True` if fading is currently disabled, `false` otherwise.
+     * @param findReplacements `True` to replace each visible unvisited text element with a
+     * visited duplicate.
+     * @param zoomLevel Current zoom level.
      * @returns `True` if any textElementGroup was evicted from cache, false otherwise.
      */
-    update(time: number, clearVisited: boolean, disableFading: boolean) {
+    update(time: number, disableFading: boolean, findReplacements: boolean, zoomLevel: number) {
+        const replaceCallback = findReplacements
+            ? this.replaceElement.bind(this, zoomLevel)
+            : undefined;
+
         let anyEviction = false;
         for (const [key, groupState] of this.m_referenceMap.entries()) {
-            const visible = groupState.updateFading(time, disableFading);
+            const visible = groupState.updateFading(
+                time,
+                disableFading,
+                groupState.visited ? undefined : replaceCallback
+            );
             const keep: boolean = visible || groupState.visited;
 
             if (!keep) {
                 this.m_referenceMap.delete(key);
                 this.m_sortedGroupStates = undefined;
                 anyEviction = true;
-            } else if (clearVisited) {
-                groupState.visited = false;
             }
         }
-        this.m_textMap.clear();
         return anyEviction;
+    }
+
+    /**
+     * Clears visited state for all text element groups in cache.
+     */
+    clearVisited() {
+        for (const groupState of this.m_referenceMap.values()) {
+            groupState.visited = false;
+        }
+    }
+
+    clearTextCache() {
+        this.m_textMap.clear();
     }
 
     /**
@@ -112,62 +153,69 @@ export class TextElementStateCache {
     /**
      * Removes duplicates for a given text element.
      *
+     * @param zoomLevel Current zoom level.
+     * @param elementState State of the text element to deduplicate.
      * @returns True if it's the remaining element after deduplication, false if it's been marked
      * as duplicate.
      */
-    deduplicateElement(elementState: TextElementState): boolean {
+    deduplicateElement(zoomLevel: number, elementState: TextElementState): boolean {
         const element = elementState.element;
 
         if (element.type !== TextElementType.PoiLabel) {
             return true;
         }
 
-        // Point labels may have duplicates (as can path labels), Identify them
-        // and keep the one we already display.
+        const cacheResult = this.findDuplicate(elementState, zoomLevel);
 
-        const cachedEntries = this.m_textMap.get(element.text);
-
-        if (cachedEntries === undefined) {
-            // No labels found with the same text.
+        if (cacheResult === undefined) {
+            // Text not found so far, add this element to cache.
             this.m_textMap.set(element.text, [elementState]);
             return true;
         }
 
-        // Other labels found with the same text. Check if they're near enough to be considered
-        // duplicates.
-        const entryCount = cachedEntries.length;
-        const elementPosition = element.points as THREE.Vector3;
-        let duplicateIndex: number = -1;
-        for (let i = 0; i < entryCount; ++i) {
-            const cachedElementPosition = cachedEntries[i].element.points as THREE.Vector3;
-
-            if (
-                elementPosition.distanceToSquared(cachedElementPosition) <
-                MAX_LABEL_DUPLICATE_DIST_SQ
-            ) {
-                duplicateIndex = i;
-                break;
-            }
-        }
-
-        if (duplicateIndex === -1) {
-            // No duplicate found.
-            cachedEntries.push(elementState);
+        if (cacheResult.index === -1) {
+            // No duplicate found among elements with same text,add this one to cache.
+            cacheResult.entries.push(elementState);
             return true;
         }
 
         // Duplicate found, check whether there's a label already visible and keep that one.
-        const cachedDuplicate = cachedEntries[duplicateIndex];
+        const cachedDuplicate = cacheResult.entries[cacheResult.index];
 
         if (!cachedDuplicate.visible && elementState.visible) {
             // New label is visible, substitute the cached label.
-            cachedEntries[duplicateIndex] = elementState;
-
+            cacheResult.entries[cacheResult.index] = elementState;
             cachedDuplicate.reset();
             return true;
         }
 
         return false;
+    }
+
+    /**
+     * Replaces a visible unvisited text element with a visited duplicate.
+     * @param zoomLevel Current zoom level.
+     * @param elementState State of the text element to deduplicate.
+     */
+    replaceElement(zoomLevel: number, elementState: TextElementState): void {
+        assert(elementState.visible);
+        const element = elementState.element;
+
+        if (element.type !== TextElementType.PoiLabel) {
+            return;
+        }
+
+        const cacheResult = this.findDuplicate(elementState, zoomLevel);
+
+        if (cacheResult === undefined || cacheResult.index === -1) {
+            // No replacement found;
+            return;
+        }
+
+        const replacement = cacheResult.entries[cacheResult.index];
+        assert(!replacement.visible);
+
+        replacement.replace(elementState);
     }
 
     /**
@@ -193,5 +241,44 @@ export class TextElementStateCache {
         assert(textElementGroup.elements.length > 0);
         this.m_referenceMap.set(textElementGroup, textElementGroupState);
         this.m_sortedGroupStates = undefined;
+    }
+
+    private findDuplicate(
+        elementState: TextElementState,
+        zoomLevel: number
+    ): { entries: TextElementState[]; index: number } | undefined {
+        const element = elementState.element;
+
+        // Point labels may have duplicates (as can path labels), Identify them
+        // and keep the one we already display.
+
+        const cachedEntries = this.m_textMap.get(element.text);
+
+        if (cachedEntries === undefined) {
+            // No labels found with the same text.
+            return undefined;
+        }
+
+        const maxSqDistError = getDedupSqDistTolerance(zoomLevel);
+
+        // Other labels found with the same text. Check if they're near enough to be considered
+        // duplicates.
+        const entryCount = cachedEntries.length;
+        const elementPosition = element.points as THREE.Vector3;
+        let duplicateIndex: number = -1;
+        for (let i = 0; i < entryCount; ++i) {
+            const cachedEntry = cachedEntries[i];
+            const cachedElementPosition = cachedEntry.element.points as THREE.Vector3;
+
+            const distSq = elementPosition.distanceToSquared(cachedElementPosition);
+            if (distSq < maxSqDistError) {
+                duplicateIndex = i;
+                break;
+            }
+        }
+
+        tmpCachedDuplicate.entries = cachedEntries;
+        tmpCachedDuplicate.index = duplicateIndex;
+        return tmpCachedDuplicate;
     }
 }
