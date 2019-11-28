@@ -2137,7 +2137,7 @@
                     ["==", ["get", "$layer"], "buildings"],
                     ["==", ["get", "$geometryType"], "point"],
                     ["==", ["get", "kind"], "address"],
-                    [">", ["zoom"], 15]
+                    [">", ["zoom"], 17]
                 ],
                 "technique": "text",
                 "attr": {
@@ -2145,7 +2145,7 @@
                     "label": "addr_housenumber",
                     "size": 14.4,
                     "opacity": 0.6,
-                    "minZoomLevel": 17,
+                    "minZoomLevel": 18,
                     "lineWidth": 1,
                     "fadeNear": 0.9,
                     "fadeFar": 1

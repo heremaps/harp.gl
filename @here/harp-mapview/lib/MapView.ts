@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import {
+    GeometryKind,
     GradientSky,
     ImageTexture,
     Light,
@@ -24,7 +25,8 @@ import {
     getOptionValue,
     LoggerManager,
     LogLevel,
-    PerformanceTimer
+    PerformanceTimer,
+    UriResolver
 } from "@here/harp-utils";
 import * as THREE from "three";
 
@@ -134,6 +136,8 @@ const DEFAULT_CAM_NEAR_PLANE = 0.1;
 const DEFAULT_CAM_FAR_PLANE = 4000000;
 const MAX_FIELD_OF_VIEW = 140;
 const MIN_FIELD_OF_VIEW = 10;
+// All objects in fallback tiles are reduced by this amount.
+export const FALLBACK_RENDER_ORDER_OFFSET = 20000;
 
 const DEFAULT_MIN_ZOOM_LEVEL = 1;
 
@@ -298,7 +302,7 @@ export interface MapViewOptions {
      * The URL of the script that the decoder worker runs. The default URL is
      * `./decoder.bundle.js`.
      *
-     * Relative URLs are resolved to full URL using the document's base URL
+     * Relative URIs are resolved to full URL using the document's base URL
      * (see: https://www.w3.org/TR/WD-html40-970917/htmlweb.html#h-5.1.2).
      */
     decoderUrl?: string;
@@ -313,7 +317,7 @@ export interface MapViewOptions {
      * The [[Theme]] used by Mapview.
      *
      * This Theme can be one of the following:
-     *  - `string` : the URL of the theme file used to style this map
+     *  - `string` : the URI of the theme file used to style this map
      *  - `Theme` : the `Theme` object already loaded
      *  - `Promise<Theme>` : the future `Theme` object
      *  - `undefined` : the theme is not yet set up, but can be set later. Rendering waits until
@@ -321,10 +325,38 @@ export interface MapViewOptions {
      *
      * **Note:** Layers that use a theme do not render any content until that theme is available.
      *
-     * Relative URLs are resolved to full URL using the document's base URL
+     * Relative URIs are resolved to full URL using the document's base URL
      * (see: https://www.w3.org/TR/WD-html40-970917/htmlweb.html#h-5.1.2).
+     *
+     * Custom URIs (of theme itself and of resources referenced by theme) may be resolved with help
+     * of [[uriResolver]].
+     *
+     * @see [[ThemeLoader.load]] for details how theme is loaded
      */
     theme?: string | Theme | Promise<Theme>;
+
+    /**
+     * Resolve `URI` referenced in `MapView` assets using this resolver.
+     *
+     * Use, to support application/deployment specific `URI`s into actual `URLs` that can be loaded
+     * with `fetch`.
+     *
+     * Example:
+     * ```
+     * uriResolver: new PrefixMapUriResolver({
+     *     "local://poiMasterList": "/assets/poiMasterList.json",
+     *        // will match only 'local//:poiMasterList' and
+     *        // resolve to `/assets/poiMasterList.json`
+     *     "local://icons/": "/assets/icons/"
+     *        // will match only 'local//:icons/ANYPATH' (and similar) and
+     *        // resolve to `/assets/icons/ANYPATH`
+     * })
+     * ```
+     *
+     * @see [[UriResolver]]
+     * @See [[PrefixMapUriResolver]]
+     */
+    uriResolver?: UriResolver;
 
     /**
      * The minimum zoom level; default is `1`.
@@ -751,6 +783,7 @@ export class MapView extends THREE.EventDispatcher {
     private readonly m_visibleTileSetOptions: VisibleTileSetOptions;
 
     private m_theme: Theme = {};
+    private m_uriResolver?: UriResolver;
     private m_themeIsLoading: boolean = false;
 
     private m_previousFrameTimeStamp?: number;
@@ -795,6 +828,8 @@ export class MapView extends THREE.EventDispatcher {
         // make a copy to avoid unwanted changes to the original options.
         this.m_options = { ...options };
 
+        this.m_uriResolver = this.m_options.uriResolver;
+
         if (this.m_options.minZoomLevel !== undefined) {
             this.m_minZoomLevel = this.m_options.minZoomLevel;
         }
@@ -812,7 +847,9 @@ export class MapView extends THREE.EventDispatcher {
         }
 
         if (this.m_options.decoderUrl !== undefined) {
-            ConcurrentDecoderFacade.defaultScriptUrl = this.m_options.decoderUrl;
+            ConcurrentDecoderFacade.defaultScriptUrl = this.m_uriResolver
+                ? this.m_uriResolver.resolveUri(this.m_options.decoderUrl)
+                : this.m_options.decoderUrl;
         }
 
         if (this.m_options.decoderCount !== undefined) {
@@ -911,6 +948,11 @@ export class MapView extends THREE.EventDispatcher {
                     : this.m_options.powerPreference
         });
         this.m_renderer.autoClear = false;
+
+        // This is a bit of a misnomer, this is required for the clipping planes
+        // to be enabled, and they are in world space, see:
+        // https://threejs.org/docs/#api/en/materials/Material.clippingPlanes
+        this.m_renderer.localClippingEnabled = true;
 
         // This is detailed at https://threejs.org/docs/#api/renderers/WebGLRenderer.info
         // When using several WebGLRenderer#render calls per frame, it is the only way to get
@@ -1215,7 +1257,7 @@ export class MapView extends THREE.EventDispatcher {
         if (!ThemeLoader.isThemeLoaded(theme)) {
             this.m_themeIsLoading = true;
             // If theme is not yet loaded, let's set theme asynchronously
-            ThemeLoader.load(theme)
+            ThemeLoader.load(theme, { uriResolver: this.m_uriResolver })
                 .then(loadedTheme => {
                     this.m_themeIsLoading = false;
                     this.theme = loadedTheme;
@@ -1272,6 +1314,14 @@ export class MapView extends THREE.EventDispatcher {
         }
         this.dispatchEvent(THEME_LOADED_EVENT);
         this.update();
+    }
+
+    /**
+     * [[UriResolver]] used to resolve application/deployment specific `URI`s into actual `URLs`
+     * that can be loaded with `fetch`.
+     */
+    get uriResolver(): UriResolver | undefined {
+        return this.m_uriResolver;
     }
 
     /**
@@ -2900,6 +2950,27 @@ export class MapView extends THREE.EventDispatcher {
                     object.setRotationFromMatrix(tile.boundingBox.getRotationMatrix());
                 }
                 object.frustumCulled = false;
+                if (object._backupRenderOrder === undefined) {
+                    object._backupRenderOrder = object.renderOrder;
+                }
+
+                const isBuilding =
+                    object.userData !== undefined &&
+                    object.userData.kind !== undefined &&
+                    (object.userData.kind as GeometryKind[]).includes(GeometryKind.Building);
+                if (!isBuilding && tile.levelOffset < 0) {
+                    // When falling back to a parent tile (i.e. tile.levelOffset < 0) there will
+                    // be overlaps with the already loaded tiles. Therefore all (flat) objects
+                    // in a fallback tile must be shifted, such that their renderOrder is less
+                    // than the groundPlane that each neighbouring Tile has (it has a renderOrder
+                    // of -10000, see addGroundPlane in TileGeometryCreator), only then can we be
+                    // sure that nothing of the parent will be rendered on top of the children,
+                    // as such, we shift using the FALLBACK_RENDER_ORDER_OFFSET.
+                    // This does not apply to buildings b/c they are 3d and the overlaps
+                    // are resolved with a depth prepass.
+                    object.renderOrder =
+                        object._backupRenderOrder + FALLBACK_RENDER_ORDER_OFFSET * tile.levelOffset;
+                }
                 this.m_mapTilesRoot.add(object);
             }
         }
@@ -2952,7 +3023,7 @@ export class MapView extends THREE.EventDispatcher {
 
         this.m_themeIsLoading = true;
         Promise.resolve<string | Theme>(this.m_options.theme)
-            .then(theme => ThemeLoader.load(theme))
+            .then(theme => ThemeLoader.load(theme, { uriResolver: this.m_uriResolver }))
             .then(theme => {
                 this.m_themeIsLoading = false;
                 this.theme = theme;

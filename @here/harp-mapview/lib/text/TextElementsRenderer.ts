@@ -429,31 +429,19 @@ export class TextElementsRenderer {
 
         this.checkIfOverloaded();
 
-        if (this.m_lastRenderedTextElements.length === 0) {
-            const renderStartTime =
-                this.overloaded && this.m_mapView.isDynamicFrame
-                    ? PerformanceTimer.now()
-                    : undefined;
+        const renderStartTime =
+            this.overloaded && this.m_mapView.isDynamicFrame ? PerformanceTimer.now() : undefined;
 
-            // Nothing has been rendered before, process the list of placed labels in all tiles.
-            renderList.forEach(renderListEntry => {
-                this.renderTileList(
-                    renderListEntry.renderedTiles,
-                    time,
-                    frameNumber,
-                    zoomLevel,
-                    renderStartTime,
-                    this.m_lastRenderedTextElements,
-                    this.m_secondChanceTextElements
-                );
-            });
-        } else {
-            //TODO: Avoid list allocation
-            const allRenderableTextElements = this.m_lastRenderedTextElements.concat(
-                this.m_secondChanceTextElements
+        // Nothing has been rendered before, process the list of placed labels in all tiles.
+        renderList.forEach(renderListEntry => {
+            this.renderTileList(
+                renderListEntry.renderedTiles,
+                time,
+                frameNumber,
+                zoomLevel,
+                renderStartTime
             );
-            this.renderTextElements(allRenderableTextElements, time, frameNumber, zoomLevel);
-        }
+        });
     }
 
     /**
@@ -660,7 +648,7 @@ export class TextElementsRenderer {
             return 0;
         }
 
-        const currentlyRenderingPlacedElements = renderedTextElements === undefined;
+        const currentlyRenderingPlacedElements = false;
 
         const printInfo = textElements.length > 5000;
 
@@ -1864,8 +1852,8 @@ export class TextElementsRenderer {
             renderText &&
             // Do not render if the distance is too great and distance shouldn't be ignored.
             (pointLabel.ignoreDistance === true ||
-                (pointLabel.renderState.viewDistance === undefined ||
-                    pointLabel.renderState.viewDistance < poiTextMaxDistance)) &&
+                pointLabel.renderState.viewDistance === undefined ||
+                pointLabel.renderState.viewDistance < poiTextMaxDistance) &&
             // Do not render text if POI cannot be rendered and is not optional.
             (poiInfo === undefined || poiInfo.isValid === true || poiInfo.iconIsOptional !== false);
 
@@ -1931,7 +1919,8 @@ export class TextElementsRenderer {
                     (textIsFadingIn ||
                         textIsFadingOut ||
                         !mapViewState.cameraIsMoving ||
-                        (poiInfo === undefined || poiInfo.renderTextDuringMovements === true)) &&
+                        poiInfo === undefined ||
+                        poiInfo.renderTextDuringMovements === true) &&
                     !iconRenderState.isFadedOut()
                 ) {
                     let textFading = false;

@@ -289,7 +289,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                     featureIds.push(featureId);
                     objInfos.push(env.entries);
                 }
-                if (isPoiTechnique) {
+                if (wantsPoi) {
                     if (imageTexture === undefined) {
                         imageTextures.push(INVALID_ARRAY_INDEX);
                     } else {

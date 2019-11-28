@@ -85,8 +85,8 @@ function getPowerPreference(str: string): string | undefined {
 function updateUrlOptions() {
     const numDecodersOptionValueStr =
         decoderCount !== undefined ? decoderCount.toFixed(0) : undefined;
-    // Default is "on", so it will not be written to the URL.
-    const phasedLoadingOptionValueStr = phasedLoading === false ? "off" : undefined;
+    // Default is "off", so it will not be written to the URL.
+    const phasedLoadingOptionValueStr = phasedLoading === true ? "on" : undefined;
 
     let searchStr = "";
 
@@ -421,6 +421,22 @@ export namespace PerformanceBenchmark {
         finishTest();
     }
 
+    async function flyoverNYZl17() {
+        startTest("FlyOver", "NewYork Zl17");
+        latestResult = await PerformanceUtils.measureFlyoverSpline(
+            mapViewApp,
+            "Flyover_NewYork_Zl17",
+            PerformanceTestData.NEW_YORK_FLYOVER_ZL17,
+            flyoverNumFrames,
+            false,
+            use2D,
+            showLabels,
+            flyoverNumRuns,
+            checkIfCancelled
+        );
+        finishTest();
+    }
+
     async function flyoverNyLoaded() {
         startTest("FlyOver (All frames loaded)", "NewYork");
         latestResult = await PerformanceUtils.measureFlyoverSpline(
@@ -672,6 +688,9 @@ export namespace PerformanceBenchmark {
             FlyOverNY: () => {
                 flyoverNY();
             },
+            FlyOverNYZl17: () => {
+                flyoverNYZl17();
+            },
             FlyOverNYLoaded: () => {
                 flyoverNyLoaded();
             },
@@ -782,7 +801,7 @@ export namespace PerformanceBenchmark {
                     updateUrlOptions();
                 }
             })
-            .setValue(phasedLoading !== false);
+            .setValue(phasedLoading === true);
 
         benchmarksFolder
             .add(guiOptions, "PixelRatio", guiOptions.PixelRatio)
@@ -847,6 +866,7 @@ export namespace PerformanceBenchmark {
         flyOversFolder.add(guiOptions, "ZoomInOutParis");
         flyOversFolder.add(guiOptions, "ZoomInOutParis2");
         flyOversFolder.add(guiOptions, "FlyOverNY");
+        flyOversFolder.add(guiOptions, "FlyOverNYZl17");
         flyOversFolder.add(guiOptions, "FlyOverNYLoaded");
         flyOversFolder.add(guiOptions, "FlyOverParis");
         flyOversFolder.add(guiOptions, "FlyOverParisLoaded");

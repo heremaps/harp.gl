@@ -19,12 +19,6 @@ npx -p yo -p @here/generator-harp.gl yo @here/harp.gl
 > package name 3dmap-example name:
 ```
 This command will generate complete, clean project based on Node.js, Webpack, Typescript.
-Begin with
-
-```shell
-npm install
-```
-
 Set you access token in `View.ts`:
 
 ```typescript

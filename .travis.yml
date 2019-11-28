@@ -30,8 +30,8 @@ jobs:
         yarn build-tests
         yarn test-browser --headless-firefox
         yarn test-browser --headless-chrome
-        #./scripts/test-npm-packages.sh
-        #git status # just in case test-npm-packages leaves some garbage
+        ./scripts/test-npm-packages.sh
+        git status # just in case test-npm-packages leaves some garbage
     - name: "Build & Deploy"
       script: |
         set -ex

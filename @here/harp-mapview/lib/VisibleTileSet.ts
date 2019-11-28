@@ -588,7 +588,7 @@ export class VisibleTileSet {
             // Calculate min/max elevation from every data source tiles,
             // data sources without elevationRangeSource will contribute to
             // values with zero levels for both elevations.
-            const tiles = renderListEntry.visibleTiles;
+            const tiles = renderListEntry.renderedTiles;
             tiles.forEach(tile => {
                 minElevation = MathUtils.min2(minElevation, tile.minElevation);
                 maxElevation = MathUtils.max2(
@@ -901,6 +901,7 @@ export class VisibleTileSet {
                     tile.tileKey,
                     tile.offset
                 );
+                tile.levelOffset = 0;
                 if (tile.hasGeometry || defaultSearchDirection === SearchDirection.NONE) {
                     renderedTiles.set(tileCode, tile);
                 } else {
@@ -937,19 +938,20 @@ export class VisibleTileSet {
                             } = TileOffsetUtils.extractOffsetAndMortonKeyFromKey(parentCode);
 
                             const parentTile = tileCache.get(mortonCode, offset, dataSource);
-                            if (parentTile !== undefined && parentTile.hasGeometry) {
-                                // parentTile has geometry, so can be reused as fallback
-                                renderedTiles.set(parentCode, parentTile);
-                                return;
-                            }
-
                             const parentTileKey = parentTile
                                 ? parentTile.tileKey
                                 : TileKey.fromMortonCode(mortonCode);
+                            const nextLevelDiff = Math.abs(displayZoomLevel - parentTileKey.level);
+                            if (parentTile !== undefined && parentTile.hasGeometry) {
+                                // parentTile has geometry, so can be reused as fallback
+                                renderedTiles.set(parentCode, parentTile);
+                                // We want to have parent tiles as -ve, hence the minus.
+                                parentTile.levelOffset = -nextLevelDiff;
+                                return;
+                            }
 
                             // if parentTile is missing or incomplete, try at max 3 levels up from
                             // current display level
-                            const nextLevelDiff = Math.abs(displayZoomLevel - parentTileKey.level);
                             if (nextLevelDiff < this.options.quadTreeSearchDistanceUp) {
                                 nextLevelCandidates.set(parentCode, SearchDirection.UP);
                             }
@@ -978,13 +980,14 @@ export class VisibleTileSet {
                                 dataSource
                             );
 
+                            const nextLevelDiff = Math.abs(childTileKey.level - displayZoomLevel);
                             if (childTile !== undefined && childTile.hasGeometry) {
                                 // childTile has geometry, so can be reused as fallback
                                 renderedTiles.set(childTileCode, childTile);
+                                childTile.levelOffset = nextLevelDiff;
                                 continue;
                             }
 
-                            const nextLevelDiff = Math.abs(childTileKey.level - displayZoomLevel);
                             if (nextLevelDiff < this.options.quadTreeSearchDistanceDown) {
                                 nextLevelCandidates.set(childTileCode, SearchDirection.DOWN);
                             }

@@ -5,14 +5,14 @@
  */
 
 /**
- * Resolve URL of referenced object.
+ * Resolve URI of referenced object w.r.t parent URI.
  *
- * Resolves `childUrl` as it would be loaded from location specified by `parentUrl`.
+ * Resolves `childUri` as it would be loaded from location specified by `parentUri`.
  *
- * If `childUrl` is absolute, then it is returned unchanged.
- * If `childUrl` is origin-absolute path, then only origin path is taken from `parentUrl`.
+ * If `childUri` is absolute, then it is returned unchanged.
+ * If `childUri` is origin-absolute path, then only origin path is taken from `parentUri`.
  *
- * See [[baseUrl]] for reference how base URL of `parentUrl` is determined.
+ * See [[baseUri]] for reference how base URL of `parentUri` is determined.
  *
  * Examples:
  *
@@ -28,22 +28,22 @@
  *     // origin-absolute URL, takes only origin from parent
  *     https://foo.com/themes/day.json + /fonts/foo.json -> https://foo.com/fonts/foo.json
  *
- * @param parentUrl URL of parent resource
- * @param childUrl URL of child as referenced from parent resource
+ * @param parentUri URI of parent resource
+ * @param childUri URI of child as referenced from parent resource
  * @return `childUrl` as if anchored in location of `parentUrl`
  */
-export function resolveReferenceUrl(parentUrl: string | undefined, childUrl: string): string {
-    if (absoluteUrlWithOriginRe.test(childUrl)) {
-        return childUrl;
-    } else if (childUrl.startsWith("/")) {
-        const origin = getUrlOrigin(parentUrl);
-        return origin + childUrl;
+export function resolveReferenceUri(parentUri: string | undefined, childUri: string): string {
+    if (absoluteUrlWithOriginRe.test(childUri)) {
+        return childUri;
+    } else if (childUri.startsWith("/")) {
+        const origin = getUrlOrigin(parentUri);
+        return origin + childUri;
     } else {
-        if (childUrl.startsWith("./")) {
-            childUrl = childUrl.substr(2);
+        if (childUri.startsWith("./")) {
+            childUri = childUri.substr(2);
         }
-        const parentBaseUrl = baseUrl(parentUrl);
-        return parentBaseUrl + childUrl;
+        const parentBaseUrl = baseUrl(parentUri);
+        return parentBaseUrl + childUri;
     }
 }
 

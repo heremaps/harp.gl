@@ -10,12 +10,7 @@ import {
     PoiTableRef,
     Theme
 } from "@here/harp-datasource-protocol";
-import {
-    composeUrlResolvers,
-    defaultUrlResolver,
-    LoggerManager,
-    resolveReferenceUrl
-} from "@here/harp-utils";
+import { LoggerManager } from "@here/harp-utils";
 
 import { MapView } from "../MapView";
 
@@ -327,17 +322,6 @@ export class PoiTableManager {
                 // Gather promises to signal the success of having loaded them all
                 const loadPromises: Array<Promise<boolean>> = new Array();
 
-                // Ensure that all resources referenced in theme by relative URLs are in fact
-                // relative to theme.
-                const themeUrl = theme.url;
-                const childUrlResolver =
-                    themeUrl === undefined
-                        ? undefined
-                        : composeUrlResolvers(
-                              (childUrl: string) => resolveReferenceUrl(themeUrl, childUrl),
-                              defaultUrlResolver
-                          );
-
                 theme.poiTables.forEach((poiTableRef: PoiTableRef) => {
                     if (
                         poiTableRef !== undefined &&
@@ -350,11 +334,7 @@ export class PoiTableManager {
                         );
                         if (poiTableRef.url !== undefined && typeof poiTableRef.url === "string") {
                             this.addTable(poiTable);
-                            const tableUrl =
-                                childUrlResolver === undefined
-                                    ? poiTableRef.url
-                                    : childUrlResolver(poiTableRef.url);
-                            loadPromises.push(poiTable.load(tableUrl));
+                            loadPromises.push(poiTable.load(poiTableRef.url));
                         } else {
                             logger.error(`POI table definition has no valid url: ${poiTableRef}`);
                         }

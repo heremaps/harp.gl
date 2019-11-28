@@ -6,12 +6,12 @@
 
 import { ConcurrentDecoderFacade, ConcurrentTilerFacade } from "@here/harp-mapview";
 import { WorkerLoader } from "@here/harp-mapview/lib/workers/WorkerLoader";
-import { baseUrl, setDefaultUrlResolver } from "@here/harp-utils";
+import { baseUrl, UriResolver } from "@here/harp-utils";
 
 /**
  * Default decoder url for bundled map component.
  */
-export const DEFAULT_DECODER_SCRIPT_URL = "harp.gl:harp-decoders.js";
+export const DEFAULT_DECODER_SCRIPT_URL = "harp.js-bundle://harp-decoders.js";
 
 /**
  * Basename of map bundle script - used by [[getBundleScriptUrl]] as fallback, when
@@ -37,7 +37,13 @@ export function getBundleScriptUrl(): string | undefined | null {
     }
 
     const currentScript = document.currentScript as HTMLScriptElement | null;
-    const baseScriptUrl = currentScript ? currentScript.src : getScriptUrl(BUNDLE_SCRIPT_BASENAME);
+    const baseScriptUrl =
+        currentScript !== null &&
+        typeof currentScript.src === "string" &&
+        (currentScript.src.endsWith(BUNDLE_SCRIPT_BASENAME + ".js") ||
+            currentScript.src.endsWith(BUNDLE_SCRIPT_BASENAME + ".min.js"))
+            ? currentScript.src
+            : getScriptUrl(BUNDLE_SCRIPT_BASENAME);
 
     if (baseScriptUrl) {
         bundleScriptUrl = baseScriptUrl;
@@ -77,7 +83,7 @@ export function getScriptUrl(name: string): string | undefined | null {
     }
 }
 
-const HARP_GL_BUNDLED_ASSETS_PREFIX = "harp.gl:";
+const HARP_GL_BUNDLED_ASSETS_PREFIX = "harp.js-bundle://";
 
 /**
  * Resolve URLs with support for `harp.gl` bundle specific URLs.
@@ -86,23 +92,26 @@ const HARP_GL_BUNDLED_ASSETS_PREFIX = "harp.gl:";
  *
  * @hidden
  */
-export function resolveBundledResourceUrl(url: string) {
-    if (url.startsWith(HARP_GL_BUNDLED_ASSETS_PREFIX)) {
-        const bundleSriptUrl = getBundleScriptUrl();
-        if (bundleSriptUrl === null || bundleSriptUrl === undefined) {
-            throw new Error(
-                `harp.js: cannot resolve ${url} because 'harp.gl' base url is not set.`
-            );
-        } else {
-            url = url.substring(HARP_GL_BUNDLED_ASSETS_PREFIX.length);
-            if (url.startsWith("/")) {
-                url = url.substring(1);
+export class BundledUriResolver implements UriResolver {
+    resolveUri(uri: string) {
+        if (uri.startsWith(HARP_GL_BUNDLED_ASSETS_PREFIX)) {
+            const bundleSriptUrl = getBundleScriptUrl();
+            if (bundleSriptUrl === null || bundleSriptUrl === undefined) {
+                throw new Error(
+                    `harp.js: cannot resolve ${uri} because 'harp.gl' base url is not set.`
+                );
+            } else {
+                uri = uri.substring(HARP_GL_BUNDLED_ASSETS_PREFIX.length);
+                if (uri.startsWith("/")) {
+                    uri = uri.substring(1);
+                }
+                return baseUrl(bundleSriptUrl) + uri;
             }
-            return baseUrl(bundleSriptUrl) + url;
         }
+        return uri;
     }
-    return url;
 }
+const bundledUriResolver = new BundledUriResolver();
 
 const getActualDecoderScriptUrl = () => {
     const baseScriptUrl = getBundleScriptUrl();
@@ -124,7 +133,7 @@ const getActualDecoderScriptUrl = () => {
     const decoderScriptName = !isMinified
         ? DEFAULT_DECODER_SCRIPT_URL
         : DEFAULT_DECODER_SCRIPT_URL.replace(".js$", ".min.js");
-    return resolveBundledResourceUrl(decoderScriptName);
+    return bundledUriResolver.resolveUri(decoderScriptName);
 };
 
 /**
@@ -174,9 +183,6 @@ function installDefaultDecoderUrlHook() {
  * @hidden
  */
 export function mapBundleMain() {
-    const mapBundleUrl = getBundleScriptUrl();
-    if (mapBundleUrl !== null && mapBundleUrl !== undefined) {
-        setDefaultUrlResolver(resolveBundledResourceUrl);
-    }
+    getBundleScriptUrl();
     installDefaultDecoderUrlHook();
 }

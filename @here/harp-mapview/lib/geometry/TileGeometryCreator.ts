@@ -63,7 +63,7 @@ import {
     VerticalAlignment,
     WrappingMode
 } from "@here/harp-text-canvas";
-import { getOptionValue, LoggerManager } from "@here/harp-utils";
+import { chainCallbacks, getOptionValue, LoggerManager } from "@here/harp-utils";
 import * as THREE from "three";
 
 import { AnimatedExtrusionTileHandler } from "../AnimatedExtrusionHandler";
@@ -75,6 +75,7 @@ import {
     setDepthPrePassStencil
 } from "../DepthPrePass";
 import { DisplacementMap, TileDisplacementMap } from "../DisplacementMap";
+import { FALLBACK_RENDER_ORDER_OFFSET } from "../MapView";
 import { MapViewPoints } from "../MapViewPoints";
 import { PathBlockingElement } from "../PathBlockingElement";
 import { TextElement } from "../text/TextElement";
@@ -126,6 +127,13 @@ export class TileGeometryCreator {
     private static m_colorMap: Map<string, THREE.Color> = new Map();
 
     private static m_instance: TileGeometryCreator;
+    // These are used for clipping the geometry so that the overlapping geometry is removed.
+    private clippingPlanes = [
+        new THREE.Plane(new THREE.Vector3(-1, 0, 0), 0),
+        new THREE.Plane(new THREE.Vector3(1, 0, 0), 0),
+        new THREE.Plane(new THREE.Vector3(0, -1, 0), 0),
+        new THREE.Plane(new THREE.Vector3(0, 1, 0), 0)
+    ];
 
     /**
      * The `instance` of the `TileGeometryCreator`.
@@ -231,6 +239,19 @@ export class TileGeometryCreator {
         this.createTextElements(tile, decodedTile, textFilter);
 
         this.createLabelRejectionElements(tile, decodedTile);
+
+        // HARP-7899, disable ground plane for globe
+        if (tile.dataSource.addGroundPlane && tile.projection.type === ProjectionType.Planar) {
+            // The ground plane is required for when we change the zoom back and we fall back to the
+            // parent, in that case we reduce the renderOrder of the parent tile and this ground
+            // place ensures that parent doesn't come through. This value must be above the
+            // renderOrder of all objects in the fallback tile, otherwise there won't be a proper
+            // covering of the parent tile by the children, hence dividing by 2. To put a bit more
+            // concretely, we assume all objects are rendered with a renderOrder between 0 and
+            // FALLBACK_RENDER_ORDER_OFFSET / 2, i.e. 10000. The ground plane is put at -10000, and
+            // the fallback tiles have their renderOrder set between -20000 and -10000
+            TileGeometryCreator.instance.addGroundPlane(tile, -FALLBACK_RENDER_ORDER_OFFSET / 2);
+        }
     }
 
     createLabelRejectionElements(tile: Tile, decodedTile: DecodedTile) {
@@ -725,6 +746,53 @@ export class TileGeometryCreator {
 
                 if (srcGeometry.uuid !== undefined) {
                     object.userData.geometryId = srcGeometry.uuid;
+                }
+
+                if (
+                    isFillTechnique(technique) &&
+                    mapView.projection.type === ProjectionType.Planar
+                ) {
+                    object.onBeforeRender = chainCallbacks(
+                        object.onBeforeRender,
+                        (_renderer, _scene, _camera, _geometry, _material, _group) => {
+                            if (_material.clippingPlanes === null) {
+                                _material.clippingPlanes = this.clippingPlanes;
+                                // TODO: Add clipping for Spherical projection.
+                            }
+                            const worldOffsetX =
+                                mapView.projection.worldExtent(0, 0).max.x * tile.offset;
+                            // This prevents aliasing issues in the pixel shader, there are artifacts
+                            // at low zoom levels, so we increase the factor by 10 to 1%.
+                            const expandFactor = mapView.zoomLevel <= 2 ? 1.01 : 1.001;
+                            const planes = _material.clippingPlanes;
+                            const rightConstant =
+                                tile.center.x -
+                                mapView.worldCenter.x +
+                                tile.boundingBox.extents.x * expandFactor +
+                                worldOffsetX;
+
+                            planes[0].constant = rightConstant;
+
+                            const leftConstant =
+                                tile.center.x -
+                                mapView.worldCenter.x -
+                                tile.boundingBox.extents.x * expandFactor +
+                                worldOffsetX;
+                            planes[1].constant = -leftConstant;
+
+                            const topConstant =
+                                tile.center.y -
+                                mapView.worldCenter.y +
+                                tile.boundingBox.extents.y * expandFactor;
+                            planes[2].constant = topConstant;
+
+                            const bottomConstant =
+                                tile.center.y -
+                                mapView.worldCenter.y -
+                                tile.boundingBox.extents.y * expandFactor;
+                            planes[3].constant = -bottomConstant;
+                        }
+                    );
                 }
 
                 if (
@@ -1379,7 +1447,7 @@ export class TileGeometryCreator {
     /**
      * Creates and add a background plane for the tile.
      */
-    addGroundPlane(tile: Tile) {
+    addGroundPlane(tile: Tile, renderOrder: number) {
         const mapView = tile.mapView;
         const dataSource = tile.dataSource;
         const projection = tile.projection;
@@ -1432,13 +1500,20 @@ export class TileGeometryCreator {
                 depthWrite: true
             });
             const mesh = new THREE.Mesh(g, material);
-            mesh.renderOrder = Number.MIN_SAFE_INTEGER;
+            mesh.renderOrder = renderOrder;
             this.registerTileObject(tile, mesh, GeometryKind.Background);
             tile.objects.push(mesh);
         } else {
             // Add a ground plane to the tile.
             tile.boundingBox.getSize(tmpV);
-            const groundPlane = this.createPlane(tmpV.x, tmpV.y, tile.center, color, true);
+            const groundPlane = this.createPlane(
+                tmpV.x,
+                tmpV.y,
+                tile.center,
+                color,
+                true,
+                renderOrder
+            );
 
             this.registerTileObject(tile, groundPlane, GeometryKind.Background);
             tile.objects.push(groundPlane);
@@ -1505,7 +1580,8 @@ export class TileGeometryCreator {
         height: number,
         planeCenter: THREE.Vector3,
         colorHex: number,
-        isVisible: boolean
+        isVisible: boolean,
+        renderOrder: number
     ): THREE.Mesh {
         const geometry = new THREE.PlaneGeometry(width, height, 1);
         // TODO cache the material HARP-4207
@@ -1517,7 +1593,7 @@ export class TileGeometryCreator {
         const plane = new THREE.Mesh(geometry, material);
         plane.position.copy(planeCenter);
         // Render before everything else
-        plane.renderOrder = Number.MIN_SAFE_INTEGER;
+        plane.renderOrder = renderOrder;
         return plane;
     }
 
