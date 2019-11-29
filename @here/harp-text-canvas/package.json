@@ -1,6 +1,6 @@
 {
     "name": "@here/harp-text-canvas",
-    "version": "0.11.0",
+    "version": "0.11.1",
     "description": "SDF based text rendering for TypeScript",
     "main": "index.js",
     "typings": "index",
@@ -20,7 +20,7 @@
     },
     "license": "Apache-2.0",
     "dependencies": {
-        "@here/harp-lrucache": "^0.11.0"
+        "@here/harp-lrucache": "^0.11.1"
     },
     "devDependencies": {
         "@here/harp-test-utils": "^0.11.0",
