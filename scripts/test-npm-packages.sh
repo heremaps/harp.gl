@@ -44,14 +44,10 @@ for package in $packages ; do
     ( cd $package && npm pack )
 done
 
-mkdir -p test-npm-packages-app
-cd test-npm-packages-app
-
 # generate test app
-rm -rf node_modules package-lock.json
-if [ ! -f package.json ] ; then
-    yes "" | npx yo ../@here/generator-harp.gl/generators/app/
-fi
+rm -rf harp.gl-example
+yes "" | npm init @here/harp.gl-app
+cd harp.gl-example
 
 set +x
 for package in $packages ; do

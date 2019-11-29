@@ -1,0 +1,51 @@
+{
+    "name": "@here/create-harp.gl-app",
+    "version": "0.11.1",
+    "description": "Create harp.gl projects",
+    "main": "src/index.js",
+    "bin": {
+        "create-harp.gl-app": "src/index.js"
+    },
+    "files": [
+        "src/index.js"
+    ],
+    "scripts": {
+        "test": "mocha $EXTRA_MOCHA_ARGS ./test/*.js"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/heremaps/harp.gl.git",
+        "directory": "@here/create-harp.gl-app"
+    },
+    "author": {
+        "name": "HERE Europe B.V.",
+        "url": "https://here.com"
+    },
+    "license": "Apache-2.0",
+    "keywords": [
+        "map",
+        "map-renderer",
+        "vector-tiles",
+        "geojson",
+        "typescript",
+        "webgl",
+        "harpgl"
+    ],
+    "engines": {
+        "node": ">=8.0.0",
+        "npm": ">=6.1.0"
+    },
+    "dependencies": {
+        "ansi-bold": "^0.1.1",
+        "global-dirs": "^1.0.0",
+        "import-from": "^3.0.0",
+        "inquirer": "^7.0.0",
+        "log-symbols": "^3.0.0"
+    },
+    "devDependencies": {
+        "mocha": "^6.1.4"
+    },
+    "publishConfig": {
+        "access": "public"
+    }
+}
