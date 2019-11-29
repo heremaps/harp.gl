@@ -8,7 +8,7 @@
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
 import { assert } from "chai";
-import { MapEnv } from "../lib/Expr";
+import { MapEnv, ValueMap } from "../lib/Expr";
 import { createInterpolatedProperty } from "../lib/InterpolatedProperty";
 import { InterpolatedPropertyDefinition } from "../lib/InterpolatedPropertyDefs";
 import { StyleSetEvaluator } from "../lib/StyleSetEvaluator";
@@ -510,5 +510,67 @@ describe("StyleSetEvaluator", function() {
         assert.isTrue(styleSetEvaluator.wantsFeature("buildings", "polygon"));
         assert.isTrue(styleSetEvaluator.wantsFeature("buildings", "line"));
         assert.isFalse(styleSetEvaluator.wantsFeature("buildings", "foobar"));
+    });
+
+    it("Filter techniques by zoom level", function() {
+        function getMatchingTechniques(props: ValueMap, styleSet: StyleDeclaration[]) {
+            return new StyleSetEvaluator(styleSet).getMatchingTechniques(new MapEnv(props));
+        }
+
+        const defaultProperties = {
+            $layer: "buildings",
+            $geometryType: "polygon"
+        };
+
+        assert.isNotEmpty(
+            getMatchingTechniques({ ...defaultProperties, $zoom: 15 }, [
+                {
+                    when: ["==", ["geometry-type"], "Polygon"],
+                    technique: "extruded-polygon"
+                }
+            ])
+        );
+
+        assert.isNotEmpty(
+            getMatchingTechniques({ ...defaultProperties, $zoom: 15 }, [
+                {
+                    when: ["==", ["geometry-type"], "Polygon"],
+                    technique: "extruded-polygon",
+                    minZoomLevel: 14,
+                    maxZoomLevel: 15
+                }
+            ])
+        );
+
+        assert.isNotEmpty(
+            getMatchingTechniques({ ...defaultProperties, $zoom: 15 }, [
+                {
+                    when: ["==", ["geometry-type"], "Polygon"],
+                    technique: "extruded-polygon",
+                    minZoomLevel: 15,
+                    maxZoomLevel: 15
+                }
+            ])
+        );
+
+        assert.isEmpty(
+            getMatchingTechniques({ ...defaultProperties, $zoom: 15 }, [
+                {
+                    when: ["==", ["geometry-type"], "Polygon"],
+                    technique: "extruded-polygon",
+                    minZoomLevel: 16
+                }
+            ])
+        );
+
+        assert.isEmpty(
+            getMatchingTechniques({ ...defaultProperties, $zoom: 15 }, [
+                {
+                    when: ["==", ["geometry-type"], "Polygon"],
+                    technique: "extruded-polygon",
+                    maxZoomLevel: 14
+                }
+            ])
+        );
     });
 });

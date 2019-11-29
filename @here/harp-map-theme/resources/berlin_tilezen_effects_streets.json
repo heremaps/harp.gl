@@ -2056,10 +2056,10 @@
                 "when": [
                     "all",
                     ["==", ["get", "$layer"], "buildings"],
-                    ["==", ["get", "$geometryType"], "polygon"],
-                    [">", ["zoom"], 15]
+                    ["==", ["get", "$geometryType"], "polygon"]
                 ],
                 "technique": "extruded-polygon",
+                "minZoomLevel": 16,
                 "attr": {
                     "color": "#494B4C",
                     "opacity": 0.85,
@@ -2086,10 +2086,10 @@
                     "all",
                     ["==", ["get", "$layer"], "buildings"],
                     ["==", ["get", "$geometryType"], "point"],
-                    ["==", ["get", "kind"], "address"],
-                    [">", ["zoom"], 17]
+                    ["==", ["get", "kind"], "address"]
                 ],
                 "technique": "text",
+                "minZoomLevel": 18,
                 "attr": {
                     "color": "#131313",
                     "label": "addr_housenumber",
