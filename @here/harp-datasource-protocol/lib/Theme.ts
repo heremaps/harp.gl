@@ -283,11 +283,6 @@ export interface StyleSelector {
     layer?: string;
 
     /**
-     * Array of substyles.
-     */
-    styles?: StyleDeclaration[];
-
-    /**
      * Optional. If `true`, no more matching styles will be evaluated.
      */
     final?: boolean;
