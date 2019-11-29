@@ -136,31 +136,6 @@ describe("StyleSetEvaluator", function() {
         assert.equal(parsedStyles[2].renderOrder, 1);
     });
 
-    it("supports renderOrderGroups", function() {
-        const styleSetWithRenderOrderBiasGroups: StyleSet = [
-            {
-                description: "first",
-                technique: "fill",
-                renderOrderBiasGroup: "bar",
-                renderOrderBiasRange: [0, 1000],
-                when: "kind == 'bar'",
-                attr: { color: "yellow" }
-            },
-            {
-                description: "second",
-                technique: "fill",
-                renderOrderBiasGroup: "park",
-                renderOrderBiasRange: [0, 100],
-                when: "kind == 'park'",
-                attr: { color: "green" }
-            }
-        ];
-        const ev = new StyleSetEvaluator(styleSetWithRenderOrderBiasGroups);
-
-        const parsedStyles = ev.styleSet;
-        assert.equal(parsedStyles[0].renderOrder, 0);
-        assert.equal(parsedStyles[1].renderOrder, 1001);
-    });
     describe("dynamic technique atribute support", function() {
         const testStyle: StyleSet = [
             {

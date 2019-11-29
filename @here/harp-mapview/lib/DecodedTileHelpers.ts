@@ -348,15 +348,7 @@ export function getObjectConstructor(technique: Technique): ObjectConstructor | 
 /**
  * Non material properties of [[BaseTechnique]]
  */
-export const BASE_TECHNIQUE_NON_MATERIAL_PROPS = [
-    "name",
-    "id",
-    "renderOrder",
-    "renderOrderBiasProperty",
-    "renderOrderBiasGroup",
-    "renderOrderBiasRange",
-    "transient"
-];
+export const BASE_TECHNIQUE_NON_MATERIAL_PROPS = ["name", "id", "renderOrder", "transient"];
 
 /**
  * Generic material type constructor.

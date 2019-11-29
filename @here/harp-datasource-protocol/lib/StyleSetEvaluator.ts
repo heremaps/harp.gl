@@ -682,7 +682,6 @@ export class StyleSetEvaluator {
         };
 
         processAttribute("renderOrder", style.renderOrder);
-        processAttribute("renderOrderOffset", style.renderOrderOffset);
 
         // TODO: What the heck is that !?
         processAttribute("label", style.labelProperty);
@@ -772,63 +771,14 @@ export class StyleSetEvaluator {
     }
 }
 
-interface ComputeDefaultRenderOrderState {
-    techniqueRenderOrder: number;
-    styleSetIndex: number;
-    renderOrderBiasGroups: Map<string, number>;
-}
-
 function computeDefaultRenderOrder(styleSet: InternalStyle[]) {
-    const options = {
-        techniqueRenderOrder: 0,
-        styleSetIndex: 0,
-        renderOrderBiasGroups: new Map()
-    };
+    let techniqueRenderOrder = 0;
+    let styleSetIndex = 0;
     for (const style of styleSet) {
-        computeStyleDefaultRenderOrder(style, options);
-    }
-}
-
-function computeStyleDefaultRenderOrder(
-    style: InternalStyle,
-    state: ComputeDefaultRenderOrderState
-) {
-    if (style.renderOrderBiasGroup !== undefined) {
-        const renderOrderBiasGroupOrder = style.renderOrderBiasGroup
-            ? state.renderOrderBiasGroups.get(style.renderOrderBiasGroup)
-            : undefined;
-        if (style.renderOrderBiasRange !== undefined && renderOrderBiasGroupOrder === undefined) {
-            if (style.renderOrder !== undefined) {
-                logger.warn(
-                    "WARN: style.renderOrder will be overridden if " +
-                        "renderOrderBiasGroup is set:",
-                    style
-                );
-            }
-            const [minRange, maxRange] = style.renderOrderBiasRange;
-            style.renderOrder =
-                minRange < 0
-                    ? state.techniqueRenderOrder + Math.abs(minRange)
-                    : state.techniqueRenderOrder;
-            state.techniqueRenderOrder += Math.abs(minRange) + maxRange;
-            if (style.renderOrderBiasGroup) {
-                state.renderOrderBiasGroups.set(style.renderOrderBiasGroup, style.renderOrder);
-            }
-            state.techniqueRenderOrder++;
-        } else if (renderOrderBiasGroupOrder) {
-            if (style.renderOrder !== undefined) {
-                logger.warn(
-                    "WARN: style.renderOrder will be overridden if " +
-                        "renderOrderBiasGroup is set:",
-                    style
-                );
-            }
-            style.renderOrder = renderOrderBiasGroupOrder;
+        style._styleSetIndex = styleSetIndex++;
+        if (style.technique !== undefined && style.renderOrder === undefined) {
+            style.renderOrder = techniqueRenderOrder++;
         }
-    }
-    style._styleSetIndex = state.styleSetIndex++;
-    if (style.technique !== undefined && style.renderOrder === undefined) {
-        style.renderOrder = state.techniqueRenderOrder++;
     }
 }
 

@@ -365,36 +365,6 @@ export interface BaseStyle {
     renderOrder?: number | JsonExpr;
 
     /**
-     * Offset added on top of `renderOrder` of object.
-     *
-     * May be uses to adjust final `renderOrder` without interferring with automatically assigned
-     * values.
-     *
-     * Using [[renderOrderBiasProperty]]
-     *
-     * @default 0
-     */
-    renderOrderOffset?: number | JsonExpr;
-
-    /**
-     * Property that is used to hold the z-order delta in [[renderOrderBiasRange]].
-     *
-     * @deprecated, Use `renderOrderOffset` with `["get", "<propName>"]` instead.
-     */
-    renderOrderBiasProperty?: string;
-
-    /**
-     * Minimum and maximum z-order delta values.
-     */
-    renderOrderBiasRange?: [number, number];
-
-    /**
-     * Z-order group. For example: used to set same render order for all roads
-     * to be able to use the z-order delta when drawing tunnels or bridges over or under the roads.
-     */
-    renderOrderBiasGroup?: string;
-
-    /**
      * Optional. If `true`, no IDs will be saved for the geometry this style creates. Default is
      * `false`.
      */
