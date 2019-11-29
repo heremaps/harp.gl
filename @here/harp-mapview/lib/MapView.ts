@@ -2958,19 +2958,24 @@ export class MapView extends THREE.EventDispatcher {
                     object.userData !== undefined &&
                     object.userData.kind !== undefined &&
                     (object.userData.kind as GeometryKind[]).includes(GeometryKind.Building);
-                if (!isBuilding && tile.levelOffset < 0) {
-                    // When falling back to a parent tile (i.e. tile.levelOffset < 0) there will
-                    // be overlaps with the already loaded tiles. Therefore all (flat) objects
-                    // in a fallback tile must be shifted, such that their renderOrder is less
-                    // than the groundPlane that each neighbouring Tile has (it has a renderOrder
-                    // of -10000, see addGroundPlane in TileGeometryCreator), only then can we be
-                    // sure that nothing of the parent will be rendered on top of the children,
-                    // as such, we shift using the FALLBACK_RENDER_ORDER_OFFSET.
-                    // This does not apply to buildings b/c they are 3d and the overlaps
-                    // are resolved with a depth prepass.
-                    object.renderOrder =
-                        object._backupRenderOrder + FALLBACK_RENDER_ORDER_OFFSET * tile.levelOffset;
-                }
+
+                // When falling back to a parent tile (i.e. tile.levelOffset < 0) there will
+                // be overlaps with the already loaded tiles. Therefore all (flat) objects
+                // in a fallback tile must be shifted, such that their renderOrder is less
+                // than the groundPlane that each neighbouring Tile has (it has a renderOrder
+                // of -10000, see addGroundPlane in TileGeometryCreator), only then can we be
+                // sure that nothing of the parent will be rendered on top of the children,
+                // as such, we shift using the FALLBACK_RENDER_ORDER_OFFSET.
+                // This does not apply to buildings b/c they are 3d and the overlaps
+                // are resolved with a depth prepass. Note we set this always to ensure that if
+                // the Tile is used as a fallback, and then used normally, that we have the correct
+                // renderOrder.
+                object.renderOrder =
+                    object._backupRenderOrder +
+                    (!isBuilding && tile.levelOffset < 0
+                        ? FALLBACK_RENDER_ORDER_OFFSET * tile.levelOffset
+                        : 0);
+
                 this.m_mapTilesRoot.add(object);
             }
         }
