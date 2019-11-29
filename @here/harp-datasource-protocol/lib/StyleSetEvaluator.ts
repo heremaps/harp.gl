@@ -106,7 +106,7 @@ interface StyleInternalParams {
 type InternalStyle = Style & StyleSelector & StyleInternalParams;
 
 /**
- * [[ExprClassifier]] searches for usages of `$layer` in `when` conditions
+ * [[StyleConditionClassifier]] searches for usages of `$layer` in `when` conditions
  * associated with styling rules.
  *
  * @hidden
@@ -344,7 +344,6 @@ export class StyleSetEvaluator {
         geometryType?: string | undefined
     ): IndexedTechnique[] {
         const result: IndexedTechnique[] = [];
-        const styleStack = new Array<InternalStyle>();
         this.m_cachedResults.clear();
 
         const optimizedSubSetKey = this.m_tmpOptimizedSubSetKey;
@@ -366,14 +365,7 @@ export class StyleSetEvaluator {
         );
 
         for (const currStyle of searchedStyleSet) {
-            if (styleStack.length !== 0) {
-                this.changeLayer(previousLayer); // restore the layer
-                this.changeGeometryType(previousGeometryType); // restore the geometryType
-
-                throw new Error("Internal error: style stack cleanup failed");
-            }
-
-            if (this.processStyle(env, styleStack, currStyle, result)) {
+            if (this.processStyle(env, currStyle, result)) {
                 break;
             }
         }
@@ -519,10 +511,6 @@ export class StyleSetEvaluator {
                 );
             }
         }
-
-        if (Array.isArray(style.styles)) {
-            style.styles.forEach(nestedStyle => this.compileStyle(nestedStyle as InternalStyle));
-        }
     }
 
     /**
@@ -532,19 +520,13 @@ export class StyleSetEvaluator {
      *
      * @param env The objects environment, i.e. the attributes that are relevant for its
      *            representation.
-     * @param styleStack Stack of styles containing the hierarchy of styles up to this point.
      * @param style Current style (could also be top of stack).
      * @param result The array of resulting techniques. There may be more than one technique per
      *               object, resulting in multiple graphical objects for representation.
      * @returns `true` if style has been found and processing is finished. `false` if not found, or
      *          more than one technique should be applied.
      */
-    private processStyle(
-        env: Env,
-        styleStack: InternalStyle[],
-        style: InternalStyle,
-        result: Technique[]
-    ): boolean {
+    private processStyle(env: Env, style: InternalStyle, result: Technique[]): boolean {
         if (
             this.m_layer !== undefined &&
             style.layer !== undefined &&
@@ -576,31 +558,19 @@ export class StyleSetEvaluator {
             }
         }
 
-        if (style.styles !== undefined) {
-            styleStack.push(style);
-            for (const currStyle of style.styles) {
-                if (this.processStyle(env, styleStack, currStyle as InternalStyle, result)) {
-                    styleStack.pop();
-                    return true;
-                }
-            }
-            styleStack.pop();
-            return false;
-        }
-
         if (style.technique === undefined) {
             return false;
         }
         // we found a technique!
         if (style.technique !== "none") {
-            result.push(this.getTechniqueForStyleMatch(env, styleStack, style));
+            result.push(this.getTechniqueForStyleMatch(env, style));
         }
         // stop processing if "final" is set
         return style.final === true;
     }
 
-    private getTechniqueForStyleMatch(env: Env, styleStack: InternalStyle[], style: InternalStyle) {
-        this.checkStyleDynamicAttributes(style, styleStack);
+    private getTechniqueForStyleMatch(env: Env, style: InternalStyle) {
+        this.checkStyleDynamicAttributes(style);
 
         if (style._dynamicTechniques !== undefined) {
             const dynamicAttributes = this.evaluateTechniqueProperties(style, env);
@@ -640,7 +610,7 @@ export class StyleSetEvaluator {
         return `${style._styleSetIndex!}:${dynamicAttrKey}`;
     }
 
-    private checkStyleDynamicAttributes(style: InternalStyle, styleStack: InternalStyle[]) {
+    private checkStyleDynamicAttributes(style: InternalStyle) {
         if (style._dynamicTechniqueAttributes !== undefined || style.technique === "none") {
             return;
         }
@@ -711,34 +681,27 @@ export class StyleSetEvaluator {
             }
         };
 
-        function processAttributes(style2: Style) {
-            processAttribute("renderOrder", style2.renderOrder);
-            processAttribute("renderOrderOffset", style2.renderOrderOffset);
+        processAttribute("renderOrder", style.renderOrder);
+        processAttribute("renderOrderOffset", style.renderOrderOffset);
 
-            // TODO: What the heck is that !?
-            processAttribute("label", style2.labelProperty);
+        // TODO: What the heck is that !?
+        processAttribute("label", style.labelProperty);
 
-            // line & solid-line secondaryRenderOrder should be generic attr
-            // TODO: maybe just warn and force move it to `attr` ?
-            processAttribute("secondaryRenderOrder", (style2 as LineStyle).secondaryRenderOrder);
+        // line & solid-line secondaryRenderOrder should be generic attr
+        // TODO: maybe just warn and force move it to `attr` ?
+        processAttribute("secondaryRenderOrder", (style as LineStyle).secondaryRenderOrder);
 
-            if (style2.attr !== undefined) {
-                for (const attrName in style2.attr) {
-                    if (!style2.attr.hasOwnProperty(attrName)) {
-                        continue;
-                    }
-                    processAttribute(
-                        attrName as TechniquePropNames<Technique>,
-                        (style2.attr as any)[attrName]
-                    );
+        if (style.attr !== undefined) {
+            for (const attrName in style.attr) {
+                if (!style.attr.hasOwnProperty(attrName)) {
+                    continue;
                 }
+                processAttribute(
+                    attrName as TechniquePropNames<Technique>,
+                    (style.attr as any)[attrName]
+                );
             }
         }
-
-        for (const parentStyle of styleStack) {
-            processAttributes(parentStyle);
-        }
-        processAttributes(style);
 
         if (dynamicTechniqueAttributes.length > 0) {
             style._dynamicTechniques = new Map();
@@ -863,16 +826,9 @@ function computeStyleDefaultRenderOrder(
             style.renderOrder = renderOrderBiasGroupOrder;
         }
     }
-    // search through child styles
-    if (style.styles !== undefined) {
-        for (const currStyle of style.styles) {
-            computeStyleDefaultRenderOrder(currStyle as InternalStyle, state);
-        }
-    } else {
-        style._styleSetIndex = state.styleSetIndex++;
-        if (style.technique !== undefined && style.renderOrder === undefined) {
-            style.renderOrder = state.techniqueRenderOrder++;
-        }
+    style._styleSetIndex = state.styleSetIndex++;
+    if (style.technique !== undefined && style.renderOrder === undefined) {
+        style.renderOrder = state.techniqueRenderOrder++;
     }
 }
 
@@ -901,13 +857,7 @@ function resolveStyleReferences(
         return resolveStyleReferences(def, definitions);
     }
 
-    const styles =
-        style.styles &&
-        (style.styles
-            .map(subStyle => resolveStyleReferences(subStyle, definitions))
-            .filter(subStyle => subStyle !== undefined) as StyleSet);
-
-    return { ...style, styles };
+    return { ...style };
 }
 
 /**

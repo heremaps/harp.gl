@@ -27,13 +27,6 @@ export class ThemeVisitor {
             if (visitFunc(style)) {
                 return true;
             }
-            if (style.styles !== undefined) {
-                for (const currStyle of style.styles) {
-                    if (visit(currStyle)) {
-                        return true;
-                    }
-                }
-            }
             return false;
         };
         if (this.theme.styles !== undefined) {
