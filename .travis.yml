@@ -2,6 +2,7 @@ language: node_js
 dist: bionic
 node_js:
   - "10"
+  - "12"
 cache:
   yarn: true
 
@@ -33,6 +34,7 @@ jobs:
         ./scripts/test-npm-packages.sh
         git status # just in case test-npm-packages leaves some garbage
     - name: "Build & Deploy"
+      node_js: "12"
       script: |
         set -ex
         yarn run build
