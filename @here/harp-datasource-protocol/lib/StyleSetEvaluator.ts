@@ -320,6 +320,7 @@ export class StyleSetEvaluator {
     private readonly m_emptyEnv = new Env();
     private m_layer: string | undefined;
     private m_geometryType: string | undefined;
+    private m_zoomLevel: number | undefined;
 
     constructor(styleSet: StyleSet, definitions?: Definitions) {
         this.m_definitions = definitions;
@@ -355,6 +356,8 @@ export class StyleSetEvaluator {
 
         const searchedStyleSet = this.getOptimizedStyleSet(optimizedSubSetKey);
 
+        const previousZoomLevel = this.changeZoomLevel(env.lookup("$zoom") as number | undefined);
+
         // set the requested $layer as the current layer.
         const previousLayer = this.changeLayer(
             typeof currentLayer === "string" ? currentLayer : undefined
@@ -372,6 +375,7 @@ export class StyleSetEvaluator {
 
         this.changeLayer(previousLayer); // restore the layer
         this.changeGeometryType(previousGeometryType); // restore the geometryType
+        this.changeZoomLevel(previousZoomLevel);
 
         return result;
     }
@@ -433,6 +437,12 @@ export class StyleSetEvaluator {
         const savedGeometryType = this.m_geometryType;
         this.m_geometryType = geometryType;
         return savedGeometryType;
+    }
+
+    private changeZoomLevel(zoomLevel: number | undefined) {
+        const savedZoomLevel = this.m_zoomLevel;
+        this.m_zoomLevel = zoomLevel;
+        return savedZoomLevel;
     }
 
     private getOptimizedStyleSet(subSetKey: OptimizedSubSetKey): InternalStyle[] {
@@ -527,6 +537,16 @@ export class StyleSetEvaluator {
      *          more than one technique should be applied.
      */
     private processStyle(env: Env, style: InternalStyle, result: Technique[]): boolean {
+        if (this.m_zoomLevel !== undefined) {
+            if (style.minZoomLevel !== undefined && this.m_zoomLevel < style.minZoomLevel) {
+                return false;
+            }
+
+            if (style.maxZoomLevel !== undefined && this.m_zoomLevel > style.maxZoomLevel) {
+                return false;
+            }
+        }
+
         if (
             this.m_layer !== undefined &&
             style.layer !== undefined &&

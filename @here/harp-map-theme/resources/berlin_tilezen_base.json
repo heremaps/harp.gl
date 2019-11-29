@@ -9,8 +9,7 @@
             "value": [
                 "all",
                 ["==", ["get", "$layer"], "buildings"],
-                ["==", ["get", "$geometryType"], "polygon"],
-                [">", ["zoom"], 15]
+                ["==", ["get", "$geometryType"], "polygon"]
             ]
         },
         "defaultBuildingColor": {
@@ -38,6 +37,7 @@
             "description": "extruded buildings",
             "technique": "extruded-polygon",
             "when": ["ref", "extrudedBuildingsCondition"],
+            "minZoomLevel": 16,
             "attr": {
                 "height": ["get", "height"],
                 "color": ["ref", "defaultBuildingColor"],
@@ -265,9 +265,9 @@
                     ["==", ["get", "$layer"], "roads"],
                     ["==", ["get", "kind"], "highway"],
                     ["==", ["get", "kind_detail"], "motorway"],
-                    ["has", "ref"],
-                    [">", ["zoom"], 8]
+                    ["has", "ref"]
                 ],
+                "minZoomLevel": 9,
                 "technique": "line-marker",
                 "attr": {
                     "style": "smallSign",
@@ -445,9 +445,9 @@
                     ["==", ["get", "kind"], "major_road"],
                     ["==", ["get", "kind_detail"], "primary"],
                     ["has", "ref"],
-                    ["==", ["length", ["get", "ref"]], 2],
-                    [">", ["zoom"], 11]
+                    ["==", ["length", ["get", "ref"]], 2]
                 ],
+                "minZoomLevel": 12,
                 "technique": "line-marker",
                 "attr": {
                     "label": "ref",
@@ -479,9 +479,9 @@
                     ["==", ["get", "kind"], "major_road"],
                     ["==", ["get", "kind_detail"], "primary"],
                     ["has", "ref"],
-                    ["==", ["length", ["get", "ref"]], 3],
-                    [">", ["zoom"], 11]
+                    ["==", ["length", ["get", "ref"]], 3]
                 ],
+                "minZoomLevel": 12,
                 "technique": "line-marker",
                 "attr": {
                     "label": "ref",
@@ -513,9 +513,9 @@
                     ["==", ["get", "kind"], "major_road"],
                     ["==", ["get", "kind_detail"], "primary"],
                     ["has", "ref"],
-                    ["==", ["length", ["get", "ref"]], 4],
-                    [">", ["zoom"], 11]
+                    ["==", ["length", ["get", "ref"]], 4]
                 ],
+                "minZoomLevel": 12,
                 "technique": "line-marker",
                 "attr": {
                     "label": "ref",
@@ -547,9 +547,9 @@
                     ["==", ["get", "kind"], "major_road"],
                     ["==", ["get", "kind_detail"], "primary"],
                     ["has", "ref"],
-                    ["==", ["length", ["get", "ref"]], 5],
-                    [">", ["zoom"], 11]
+                    ["==", ["length", ["get", "ref"]], 5]
                 ],
+                "minZoomLevel": 12,
                 "technique": "line-marker",
                 "attr": {
                     "label": "ref",
@@ -581,9 +581,9 @@
                     ["==", ["get", "kind"], "major_road"],
                     ["==", ["get", "kind_detail"], "primary"],
                     ["has", "ref"],
-                    [">", ["length", ["get", "ref"]], 5],
-                    [">", ["zoom"], 11]
+                    [">", ["length", ["get", "ref"]], 5]
                 ],
+                "minZoomLevel": 12,
                 "technique": "line-marker",
                 "attr": {
                     "label": "ref",
@@ -788,9 +788,9 @@
                     ["==", ["get", "$layer"], "roads"],
                     ["==", ["get", "kind"], "major_road"],
                     ["==", ["get", "kind_detail"], "secondary"],
-                    ["has", "ref"],
-                    [">", ["zoom"], 12]
+                    ["has", "ref"]
                 ],
+                "minZoomLevel": 13,
                 "technique": "line-marker",
                 "attr": {
                     "label": "ref",
@@ -883,9 +883,9 @@
                     ["==", ["get", "$layer"], "roads"],
                     ["==", ["get", "kind"], "major_road"],
                     ["==", ["get", "kind_detail"], "tertiary"],
-                    ["has", "ref"],
-                    [">", ["zoom"], 14]
+                    ["has", "ref"]
                 ],
+                "minZoomLevel": 15,
                 "technique": "line-marker",
                 "attr": {
                     "label": "ref",
@@ -2580,9 +2580,9 @@
                     "all",
                     ["==", ["get", "$layer"], "buildings"],
                     ["==", ["get", "$geometryType"], "point"],
-                    ["==", ["get", "kind"], "address"],
-                    [">", ["zoom"], "17"]
+                    ["==", ["get", "kind"], "address"]
                 ],
+                "minZoomLevel": 18,
                 "technique": "text",
                 "attr": {
                     "color": "#A9A9A9",
