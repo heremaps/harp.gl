@@ -11,6 +11,7 @@ import { expect } from "chai";
 import * as sinon from "sinon";
 
 import { GeoBox, GeoCoordinates } from "@here/harp-geoutils";
+import { getTestResourceUrl } from "@here/harp-test-utils";
 import { TransferManager } from "@here/harp-transfer-manager";
 import { CopyrightInfo } from "../lib/copyrights/CopyrightInfo";
 import { UrlCopyrightProvider } from "../lib/copyrights/UrlCopyrightProvider";
@@ -134,6 +135,36 @@ describe("CopyrightProviders", function() {
 
                 expect(copyrights).to.have.deep.members([{ id: "label 3" }]);
             });
+        });
+    });
+    describe("#UrlCopyrightProvider test parse vector tile copyright", function() {
+        const baseCopyrightUrl = getTestResourceUrl(
+            "@here/harp-mapview",
+            "test/resources/testCopyright.json"
+        );
+
+        it("loads and parses copyrights", async function() {
+            const provider = new UrlCopyrightProvider(baseCopyrightUrl, "base");
+            const geoBox = new GeoBox(
+                new GeoCoordinates(16.5943, -91.4256),
+                new GeoCoordinates(14.1492, -90.6245)
+            );
+            const copyrights = await provider.getCopyrights(geoBox, 20);
+            expect(copyrights).to.have.deep.members([{ id: "Copyright A" }]);
+        });
+
+        it("loads and parses copyrights for two layers", async function() {
+            const provider1 = new UrlCopyrightProvider(baseCopyrightUrl, "base");
+            const geoBox = new GeoBox(
+                new GeoCoordinates(16.5943, -91.4256),
+                new GeoCoordinates(14.1492, -90.6245)
+            );
+            const firstResult = await provider1.getCopyrights(geoBox, 10);
+            expect(firstResult).to.have.deep.members([{ id: "Copyright A" }]);
+            const provider2 = new UrlCopyrightProvider(baseCopyrightUrl, "core");
+            const secondResult = await provider2.getCopyrights(geoBox, 20);
+            expect(secondResult).to.have.deep.members([{ id: "Copyright A core" }]);
+            expect(firstResult).not.to.equal(secondResult);
         });
     });
 });
