@@ -2068,25 +2068,12 @@ export class TextElementsRenderer {
             }
         }
 
-        // Fade-in after skipping rendering during movement.
-        // NOTE: Shouldn't this only happen once we know the label is gonna be visible?
-        if (
-            labelState.textRenderState!.isUndefined() ||
-            labelState.textRenderState!.lastFrameNumber < this.m_viewState.frameNumber - 1
-        ) {
-            labelState.textRenderState!.startFadeIn(
-                this.m_viewState.frameNumber,
-                renderParams.time
-            );
-        }
-        const startedFadeIn = labelState.textRenderState!.checkStartFadeIn(
-            this.m_viewState.frameNumber,
-            renderParams.time
-        );
+        labelState.textRenderState!.startFadeIn(this.m_viewState.frameNumber, renderParams.time);
+        labelState.textRenderState!.lastFrameNumber = this.m_viewState.frameNumber;
 
-        renderParams.fadeAnimationRunning = renderParams.fadeAnimationRunning || startedFadeIn;
         if (labelState.textRenderState!.isFading()) {
             opacity = labelState.textRenderState!.opacity * pathLabel.renderStyle!.opacity;
+            renderParams.fadeAnimationRunning = true;
         }
 
         const prevOpacity = textCanvas.textRenderStyle.opacity;
