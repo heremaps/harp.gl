@@ -1491,7 +1491,7 @@ export class TextElementsRenderer {
                 }
                 return false;
             }
-            labelState.setViewDistance(textDistance, groupState);
+            labelState.setViewDistance(textDistance);
 
             distanceScaleFactor = this.getDistanceScalingFactor(
                 pointLabel,
@@ -1988,10 +1988,7 @@ export class TextElementsRenderer {
         }
 
         // Update the real rendering distance to have smooth fading and scaling
-        labelState.setViewDistance(
-            computeViewDistance(this.m_viewState.worldCenter, pathLabel),
-            groupState
-        );
+        labelState.setViewDistance(computeViewDistance(this.m_viewState.worldCenter, pathLabel));
         const textRenderDistance = -labelState.renderDistance;
 
         // Scale the text depending on the label's distance to the camera.

@@ -43,7 +43,7 @@ export class TextElementGroupState {
             const textElement = group.elements[i];
             const state = new TextElementState(textElement);
             const textDistance = filter(state);
-            state.update(this, textDistance);
+            state.update(textDistance);
             this.m_textElementStates[i] = state;
         }
     }
@@ -91,7 +91,7 @@ export class TextElementGroupState {
     updateElements(filter: TextElementFilter) {
         for (const elementState of this.m_textElementStates) {
             const textDistance = filter(elementState);
-            elementState.update(this, textDistance);
+            elementState.update(textDistance);
         }
     }
 

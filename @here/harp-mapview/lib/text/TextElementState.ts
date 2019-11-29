@@ -94,15 +94,14 @@ export class TextElementState {
 
     /**
      * Updates the text element state.
-     * @param groupState  The state of the group the element belongs to.
      * @param viewDistance The new view distance to set. If `undefined`, element is considered to
      * be out of view.
      */
-    update(groupState: TextElementGroupState, viewDistance: number | undefined) {
+    update(viewDistance: number | undefined) {
         if (this.initialized) {
-            this.setViewDistance(viewDistance, groupState);
+            this.setViewDistance(viewDistance);
         } else if (viewDistance !== undefined) {
-            this.initialize(groupState, viewDistance);
+            this.initialize(viewDistance);
         }
     }
 
@@ -110,9 +109,8 @@ export class TextElementState {
      * Sets the distance of the element to the current view center.
      * @param viewDistance The new view distance to set. If `undefined`, element is considered to
      * be out of view.
-     * @param groupState The state of the group the element belongs to.
      */
-    setViewDistance(viewDistance: number | undefined, groupState: TextElementGroupState) {
+    setViewDistance(viewDistance: number | undefined) {
         if (viewDistance === this.m_viewDistance) {
             return;
         }
@@ -190,14 +188,13 @@ export class TextElementState {
     }
 
     /**
-     * @param groupState The state of the group to which this element belongs.
      * @param viewDistance Current distance of the element to the view center.
      */
-    private initialize(groupState: TextElementGroupState, viewDistance: number) {
+    private initialize(viewDistance: number) {
         assert(this.m_textRenderState === undefined);
         assert(this.m_iconRenderStates === undefined);
 
-        this.setViewDistance(viewDistance, groupState);
+        this.setViewDistance(viewDistance);
 
         if (this.element.type === TextElementType.LineMarker) {
             this.m_iconRenderStates = new Array<RenderState>();
