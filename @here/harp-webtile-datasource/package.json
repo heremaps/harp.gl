@@ -1,6 +1,6 @@
 {
     "name": "@here/harp-webtile-datasource",
-    "version": "0.11.1",
+    "version": "0.11.2",
     "description": "WebTile Data source",
     "main": "index.js",
     "typings": "index",
@@ -27,7 +27,7 @@
         "@here/harp-geometry": "^0.11.0",
         "@here/harp-geoutils": "^0.11.0",
         "@here/harp-lrucache": "^0.11.1",
-        "@here/harp-mapview": "^0.11.1",
+        "@here/harp-mapview": "^0.11.2",
         "@here/harp-utils": "^0.11.1"
     },
     "devDependencies": {
