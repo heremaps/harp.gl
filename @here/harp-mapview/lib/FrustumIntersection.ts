@@ -204,9 +204,7 @@ export class FrustumIntersection {
                 if (obbIntersections) {
                     const obb = new OrientedBox3();
                     this.mapView.projection.projectBox(geoBox, obb);
-                    if (obb.intersects(this.m_frustum)) {
-                        subTileArea = 1;
-                    }
+                    subTileArea = this.computeSubTileArea(obb);
                 } else {
                     this.mapView.projection.projectBox(geoBox, tileBounds);
                     subTileArea = this.computeSubTileArea(tileBounds);
@@ -230,39 +228,109 @@ export class FrustumIntersection {
 
     // Computes the rough screen area of the supplied box.
     // TileBounds must be in world space.
-    private computeSubTileArea(tileBounds: THREE.Box3) {
-        if (
-            (!this.m_extendedFrustumCulling ||
-                this.m_mapTileCuller.frustumIntersectsTileBox(tileBounds)) &&
-            this.m_frustum.intersectsBox(tileBounds)
-        ) {
-            const contour = [
-                new THREE.Vector3(tileBounds.min.x, tileBounds.min.y, 0).applyMatrix4(
-                    this.m_viewProjectionMatrix
-                ),
-                new THREE.Vector3(tileBounds.max.x, tileBounds.min.y, 0).applyMatrix4(
-                    this.m_viewProjectionMatrix
-                ),
-                new THREE.Vector3(tileBounds.max.x, tileBounds.max.y, 0).applyMatrix4(
-                    this.m_viewProjectionMatrix
-                ),
-                new THREE.Vector3(tileBounds.min.x, tileBounds.max.y, 0).applyMatrix4(
-                    this.m_viewProjectionMatrix
-                )
-            ];
+    private computeSubTileArea(tileBounds: THREE.Box3 | OrientedBox3) {
+        if (tileBounds instanceof THREE.Box3) {
+            if (
+                (!this.m_extendedFrustumCulling ||
+                    this.m_mapTileCuller.frustumIntersectsTileBox(tileBounds)) &&
+                this.m_frustum.intersectsBox(tileBounds)
+            ) {
+                const contour = [
+                    new THREE.Vector3(tileBounds.min.x, tileBounds.min.y, 0).applyMatrix4(
+                        this.m_viewProjectionMatrix
+                    ),
+                    new THREE.Vector3(tileBounds.max.x, tileBounds.min.y, 0).applyMatrix4(
+                        this.m_viewProjectionMatrix
+                    ),
+                    new THREE.Vector3(tileBounds.max.x, tileBounds.max.y, 0).applyMatrix4(
+                        this.m_viewProjectionMatrix
+                    ),
+                    new THREE.Vector3(tileBounds.min.x, tileBounds.max.y, 0).applyMatrix4(
+                        this.m_viewProjectionMatrix
+                    )
+                ];
 
-            contour.push(contour[0]);
+                contour.push(contour[0]);
 
-            const n = contour.length;
+                const n = contour.length;
 
-            let subTileArea = 0;
-            for (let p = n - 1, q = 0; q < n; p = q++) {
-                subTileArea += contour[p].x * contour[q].y - contour[q].x * contour[p].y;
+                let subTileArea = 0;
+                for (let p = n - 1, q = 0; q < n; p = q++) {
+                    subTileArea += contour[p].x * contour[q].y - contour[q].x * contour[p].y;
+                }
+
+                return Math.abs(subTileArea * 0.5);
+            }
+            return 0;
+        } else {
+            if (!tileBounds.intersects(this.m_frustum)) {
+                return 0;
             }
 
-            return Math.abs(subTileArea * 0.5);
+            // NOTE: It maybe possible to use bounding spheres instead
+            // of bounding box as optimization
+            // // Compute rough screen area by projecting bounding sphere
+            // // to screen space
+            // // Use diagonal of box as diameter of sphere
+            // const size = tileBounds.getSize();
+            // const r = 0.5 * Math.sqrt(size.x * size.x + size.y * size.y + size.z + size.z);
+
+            // const projectedPoint = new THREE.Vector4(
+            //     tileBounds.position.x,
+            //     tileBounds.position.y,
+            //     tileBounds.position.z,
+            //     1.0
+            // ).applyMatrix4(this.m_viewProjectionMatrix);
+
+            // // Dividing by w projects sphere radius to screen space
+            // const projectedR = r / projectedPoint.w;
+            // return Math.PI * projectedR * projectedR;
+
+            // Estimate screen space area of oriented box by projecting corners to screen space
+            // and creating a screen space aligned 2D box
+            const center = tileBounds.getCenter();
+            const extents = tileBounds.extents;
+            const modelViewProjMatrix = this.m_viewProjectionMatrix
+                .clone()
+                .multiply(new THREE.Matrix4().makeTranslation(center.x, center.y, center.z))
+                .multiply(tileBounds.getRotationMatrix());
+
+            const projectedPoints = [
+                new THREE.Vector3(-extents.x, -extents.y, -extents.z).applyMatrix4(
+                    modelViewProjMatrix
+                ),
+                new THREE.Vector3(extents.x, -extents.y, -extents.z).applyMatrix4(
+                    modelViewProjMatrix
+                ),
+                new THREE.Vector3(extents.x, extents.y, -extents.z).applyMatrix4(
+                    modelViewProjMatrix
+                ),
+                new THREE.Vector3(-extents.x, extents.y, -extents.z).applyMatrix4(
+                    modelViewProjMatrix
+                ),
+                new THREE.Vector3(-extents.x, -extents.y, extents.z).applyMatrix4(
+                    modelViewProjMatrix
+                ),
+                new THREE.Vector3(extents.x, -extents.y, extents.z).applyMatrix4(
+                    modelViewProjMatrix
+                ),
+                new THREE.Vector3(extents.x, extents.y, extents.z).applyMatrix4(
+                    modelViewProjMatrix
+                ),
+                new THREE.Vector3(-extents.x, extents.y, extents.z).applyMatrix4(
+                    modelViewProjMatrix
+                )
+            ];
+            const screenBox = new THREE.Box2();
+            const tmpVector2 = new THREE.Vector2();
+            for (const point of projectedPoints) {
+                tmpVector2.set(point.x, point.y);
+                screenBox.expandByPoint(tmpVector2);
+            }
+            const size = screenBox.getSize(tmpVector2);
+
+            return size.x * size.y;
         }
-        return 0;
     }
 
     /**
