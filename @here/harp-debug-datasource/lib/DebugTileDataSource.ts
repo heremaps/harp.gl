@@ -98,6 +98,7 @@ export class DebugTile extends Tile {
             tileKey.level
         })`;
 
+        textPosition.add(this.center);
         const textElement = new TextElement(
             text,
             textPosition,
