@@ -71,26 +71,26 @@ export class TextElementGroupState {
      * Updates the fading state of all text elements within the group to the specified time.
      * @param time The time to which the fading state will be updated.
      * @param disableFading `true` if fading is disabled, `false` otherwise.
-     * @param visibleElementsCallback If provided, it will be called for every visible text element
-     * in the group.
-     * @returns True if any element visible after fading.
      */
-    updateFading(
-        time: number,
-        disableFading: boolean,
-        visibleElementsCallback?: (e: TextElementState) => void
-    ): boolean {
-        let groupVisible = false;
+    updateFading(time: number, disableFading: boolean): void {
         for (const elementState of this.m_textElementStates) {
             if (elementState !== undefined) {
-                const elementVisible = elementState.updateFading(time, disableFading);
-                groupVisible = groupVisible || elementVisible;
-                if (elementVisible && visibleElementsCallback !== undefined) {
-                    visibleElementsCallback(elementState);
-                }
+                elementState.updateFading(time, disableFading);
             }
         }
-        return groupVisible;
+    }
+
+    /**
+     * Calls the specified callback for every visible text elements in the group.
+     * @param visibleElementsCallback Functions that will be called for every visible text element
+     * in the group.
+     */
+    traverseVisibleElements(visibleElementsCallback: (e: TextElementState) => void): void {
+        for (const elementState of this.m_textElementStates) {
+            if (elementState !== undefined && elementState.visible) {
+                visibleElementsCallback(elementState);
+            }
+        }
     }
 
     /**

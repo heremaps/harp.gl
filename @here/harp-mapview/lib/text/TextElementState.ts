@@ -182,25 +182,24 @@ export class TextElementState {
     }
 
     /**
-     * @returns True if any element visible after fading.
+     * Updates the fading state to the specified time.
+     * @param time The current time.
+     * @param disableFading If `True` there will be no fading transitions, i.e., state will go
+     * directly from FadedIn to FadedOut and viceversa.
      */
-    updateFading(time: number, disableFading: boolean) {
-        let visible = false;
-
+    updateFading(time: number, disableFading: boolean): void {
         if (this.m_textRenderState !== undefined) {
-            visible = this.m_textRenderState.updateFading(time, disableFading);
+            this.m_textRenderState.updateFading(time, disableFading);
         }
 
         if (this.iconRenderState !== undefined) {
             const iconRenderState = this.m_iconRenderStates as RenderState;
-            visible = iconRenderState.updateFading(time, disableFading) || visible;
+            iconRenderState.updateFading(time, disableFading);
         } else if (this.iconRenderStates !== undefined) {
             for (const renderState of this.m_iconRenderStates as RenderState[]) {
-                visible = renderState.updateFading(time, disableFading) || visible;
+                renderState.updateFading(time, disableFading);
             }
         }
-
-        return visible;
     }
 
     /**
