@@ -371,6 +371,13 @@ export class TextElementsRenderer {
 
         this.reset();
         this.prepopulateScreenWithBlockingElements(dataSourceTileList);
+
+        // New text elements must be placed either if text elements were updated in this frame
+        // or if any text element group was evicted. The second case happens when the group is not
+        // visited anymore and all it's elements just became invisible, which means there's newly
+        // available screen space where new text elements could be placed. A common scenario where
+        // this happens is zooming in/out: text groups from the old level may still be fading out
+        // after all groups in the new level were updated.
         const placeNewTextElements = updateTextElements || anyTextGroupEvicted;
         this.placeTextElements(time, placeNewTextElements);
         this.placeOverlayTextElements();
