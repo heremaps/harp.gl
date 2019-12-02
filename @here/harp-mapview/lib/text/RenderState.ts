@@ -165,11 +165,10 @@ export class RenderState {
      *
      * @param time Current time.
      * @param disableFading `true` if fading is disabled, `false` otherwise.
-     * @returns `true` if visible after the update, false otherwise.
      */
-    updateFading(time: number, disableFading: boolean): boolean {
+    updateFading(time: number, disableFading: boolean): void {
         if (this.m_state !== FadingState.FadingIn && this.m_state !== FadingState.FadingOut) {
-            return this.m_state === FadingState.FadedIn;
+            return;
         }
 
         if (this.startTime === 0) {
@@ -185,7 +184,6 @@ export class RenderState {
             this.opacity = endValue;
             this.m_state =
                 this.m_state === FadingState.FadingIn ? FadingState.FadedIn : FadingState.FadedOut;
-            return this.m_state === FadingState.FadedIn;
         } else {
             // TODO: HARP-7648. Do this once for all labels (calculate the last frame value
             // increment).
@@ -196,8 +194,7 @@ export class RenderState {
                 0,
                 1
             );
+            assert(this.isFading());
         }
-        assert(this.isFading());
-        return true;
     }
 }

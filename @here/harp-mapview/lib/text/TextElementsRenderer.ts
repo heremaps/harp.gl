@@ -645,6 +645,9 @@ export class TextElementsRenderer {
         maxNumPlacedLabels: number,
         pass: Pass
     ): boolean {
+        // Unvisited text elements are never placed.
+        assert(groupState.visited);
+
         if (this.m_textRenderers.length === 0) {
             logger.warn("No text renderers initialized.");
             return false;
@@ -762,19 +765,11 @@ export class TextElementsRenderer {
 
             switch (elementType) {
                 case TextElementType.PoiLabel:
-                    this.addPoiLabel(
-                        textElementState,
-                        groupState,
-                        poiRenderer,
-                        textCanvas,
-                        renderParams,
-                        temp
-                    );
+                    this.addPoiLabel(textElementState, poiRenderer, textCanvas, renderParams, temp);
                     break;
                 case TextElementType.LineMarker:
                     this.addLineMarkerLabel(
                         textElementState,
-                        groupState,
                         poiRenderer,
                         shieldGroups,
                         textCanvas,
@@ -785,7 +780,6 @@ export class TextElementsRenderer {
                 case TextElementType.PathLabel:
                     this.addPathLabel(
                         textElementState,
-                        groupState,
                         tempScreenPoints,
                         textCanvas,
                         renderParams,
@@ -1502,7 +1496,6 @@ export class TextElementsRenderer {
 
     private addPointLabel(
         labelState: TextElementState,
-        groupState: TextElementGroupState,
         position: THREE.Vector3,
         screenPosition: THREE.Vector2,
         poiRenderer: PoiRenderer,
@@ -1600,19 +1593,16 @@ export class TextElementsRenderer {
                 return false;
             }
 
-            iconRejected = true;
-            if (groupState.visited) {
-                const iconSpaceAvailable =
-                    poiInfo!.mayOverlap === true || !this.m_screenCollisions.isAllocated(tempBox2D);
+            const iconSpaceAvailable =
+                poiInfo!.mayOverlap === true || !this.m_screenCollisions.isAllocated(tempBox2D);
 
-                if (!iconSpaceAvailable && !iconRenderState.isVisible()) {
-                    if (placementStats) {
-                        ++placementStats.numNotVisible;
-                    }
-                    return false;
+            if (!iconSpaceAvailable && !iconRenderState.isVisible()) {
+                if (placementStats) {
+                    ++placementStats.numNotVisible;
                 }
-                iconRejected = !iconSpaceAvailable;
+                return false;
             }
+            iconRejected = !iconSpaceAvailable;
         } else if (renderIcon && poiInfo!.isValid !== false) {
             // Ensure that text elements still loading icons get a chance to be rendered if
             // there's no text element updates in the next frames.
@@ -1677,8 +1667,7 @@ export class TextElementsRenderer {
             let textRejected = true;
             if (!iconRejected) {
                 textRejected =
-                    !groupState.visited ||
-                    (!pointLabel.textMayOverlap && this.m_screenCollisions.isAllocated(tempBox2D));
+                    !pointLabel.textMayOverlap && this.m_screenCollisions.isAllocated(tempBox2D);
                 iconRejected = textRejected && !textIsOptional;
             }
 
@@ -1795,7 +1784,6 @@ export class TextElementsRenderer {
 
     private addPoiLabel(
         labelState: TextElementState,
-        groupState: TextElementGroupState,
         poiRenderer: PoiRenderer,
         textCanvas: TextCanvas,
         renderParams: RenderParams,
@@ -1811,7 +1799,6 @@ export class TextElementsRenderer {
         // Add this POI as a point label.
         return this.addPointLabel(
             labelState,
-            groupState,
             worldPosition,
             tempScreenPosition,
             poiRenderer,
@@ -1823,7 +1810,6 @@ export class TextElementsRenderer {
 
     private addLineMarkerLabel(
         labelState: TextElementState,
-        groupState: TextElementGroupState,
         poiRenderer: PoiRenderer,
         shieldGroups: number[][],
         textCanvas: TextCanvas,
@@ -1885,7 +1871,6 @@ export class TextElementsRenderer {
                         if (
                             this.addPointLabel(
                                 labelState,
-                                groupState,
                                 point,
                                 tempScreenPosition,
                                 poiRenderer,
@@ -1909,7 +1894,6 @@ export class TextElementsRenderer {
                 if (this.m_screenProjector.project(point, tempScreenPosition) !== undefined) {
                     this.addPointLabel(
                         labelState,
-                        groupState,
                         point,
                         tempScreenPosition,
                         poiRenderer,
@@ -1925,7 +1909,6 @@ export class TextElementsRenderer {
 
     private addPathLabel(
         labelState: TextElementState,
-        groupState: TextElementGroupState,
         screenPoints: THREE.Vector2[],
         textCanvas: TextCanvas,
         renderParams: RenderParams,
@@ -1963,11 +1946,6 @@ export class TextElementsRenderer {
             if (placementStats) {
                 ++placementStats.tooFar;
             }
-            labelState.reset();
-            return false;
-        }
-
-        if (!groupState.visited) {
             labelState.reset();
             return false;
         }

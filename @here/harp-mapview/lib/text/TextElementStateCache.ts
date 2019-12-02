@@ -112,14 +112,12 @@ export class TextElementStateCache {
 
         let anyEviction = false;
         for (const [key, groupState] of this.m_referenceMap.entries()) {
-            const visible = groupState.updateFading(
-                time,
-                disableFading,
-                groupState.visited ? undefined : replaceCallback
-            );
-            const keep: boolean = visible || groupState.visited;
-
-            if (!keep) {
+            if (groupState.visited) {
+                groupState.updateFading(time, disableFading);
+            } else {
+                if (findReplacements) {
+                    groupState.traverseVisibleElements(replaceCallback!);
+                }
                 this.m_referenceMap.delete(key);
                 this.m_sortedGroupStates = undefined;
                 anyEviction = true;
