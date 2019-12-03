@@ -863,13 +863,10 @@ export class VisibleTileSet {
      * flickering by rendering already loaded tiles from upper/higher zoom levels.
      */
     private fillMissingTilesFromCache() {
-        const tileCache = this.m_dataSourceCache;
         this.dataSourceTileList.forEach(renderListEntry => {
             const dataSource = renderListEntry.dataSource;
-            const tilingScheme = dataSource.getTilingScheme();
             const displayZoomLevel = renderListEntry.zoomLevel;
             const renderedTiles = renderListEntry.renderedTiles;
-            const checkedTiles: Set<number> = new Set<number>();
 
             // Direction in quad tree to search: up -> shallower levels, down -> deeper levels.
             enum SearchDirection {
@@ -894,7 +891,7 @@ export class VisibleTileSet {
                     ? SearchDirection.UP
                     : SearchDirection.NONE;
 
-            let incompleteTiles: Map<number, SearchDirection> = new Map();
+            const incompleteTiles: Map<number, SearchDirection> = new Map();
 
             renderListEntry.visibleTiles.forEach(tile => {
                 const tileCode = TileOffsetUtils.getKeyForTileKeyAndOffset(
@@ -916,90 +913,121 @@ export class VisibleTileSet {
                 return;
             }
 
-            // iterate over incomplete (not loaded tiles)
-            // and find their parents or children that are in cache that can be rendered temporarily
-            // until tile is loaded
-            while (incompleteTiles.size !== 0) {
-                const nextLevelCandidates: Map<number, SearchDirection> = new Map();
-
-                incompleteTiles.forEach((searchDirection, tileKeyCode) => {
+            // Minor optimization for the fallback search, only check parent tiles once, otherwise
+            // the recursive algorithm checks all parent tiles multiple times.
+            const checkedTiles: Set<number> = new Set<number>();
+            // Iterate over incomplete (not loaded tiles) and find their parents or children that
+            // are in cache that can be rendered temporarily until tile is loaded. Note, we favour
+            // falling back to parent tiles rather than children.
+            for (const [tileKeyCode, searchDirection] of incompleteTiles) {
+                if (
+                    searchDirection === SearchDirection.BOTH ||
+                    searchDirection === SearchDirection.UP
+                ) {
                     if (
-                        searchDirection === SearchDirection.BOTH ||
-                        searchDirection === SearchDirection.UP
+                        this.findUp(
+                            tileKeyCode,
+                            displayZoomLevel,
+                            renderedTiles,
+                            checkedTiles,
+                            dataSource
+                        )
                     ) {
-                        const parentCode = TileOffsetUtils.getParentKeyFromKey(tileKeyCode);
-
-                        if (!checkedTiles.has(parentCode)) {
-                            checkedTiles.add(parentCode);
-
-                            const {
-                                offset,
-                                mortonCode
-                            } = TileOffsetUtils.extractOffsetAndMortonKeyFromKey(parentCode);
-
-                            const parentTile = tileCache.get(mortonCode, offset, dataSource);
-                            const parentTileKey = parentTile
-                                ? parentTile.tileKey
-                                : TileKey.fromMortonCode(mortonCode);
-                            const nextLevelDiff = Math.abs(displayZoomLevel - parentTileKey.level);
-                            if (parentTile !== undefined && parentTile.hasGeometry) {
-                                // parentTile has geometry, so can be reused as fallback
-                                renderedTiles.set(parentCode, parentTile);
-                                // We want to have parent tiles as -ve, hence the minus.
-                                parentTile.levelOffset = -nextLevelDiff;
-                                return;
-                            }
-
-                            // if parentTile is missing or incomplete, try at max 3 levels up from
-                            // current display level
-                            if (nextLevelDiff < this.options.quadTreeSearchDistanceUp) {
-                                nextLevelCandidates.set(parentCode, SearchDirection.UP);
-                            }
-                        } else if (renderedTiles.get(parentCode)) {
-                            // The parent tile already covers this, so we can skip it.
-                            return;
-                        }
+                        // Continue to next entry so we don't search down.
+                        continue;
                     }
+                }
 
-                    if (
-                        searchDirection === SearchDirection.BOTH ||
-                        searchDirection === SearchDirection.DOWN
-                    ) {
-                        const {
-                            offset,
-                            mortonCode
-                        } = TileOffsetUtils.extractOffsetAndMortonKeyFromKey(tileKeyCode);
-                        const tileKey = TileKey.fromMortonCode(mortonCode);
-
-                        for (const childTileKey of tilingScheme.getSubTileKeys(tileKey)) {
-                            const childTileCode = TileOffsetUtils.getKeyForTileKeyAndOffset(
-                                childTileKey,
-                                offset
-                            );
-                            checkedTiles.add(childTileCode);
-                            const childTile = tileCache.get(
-                                childTileKey.mortonCode(),
-                                offset,
-                                dataSource
-                            );
-
-                            const nextLevelDiff = Math.abs(childTileKey.level - displayZoomLevel);
-                            if (childTile !== undefined && childTile.hasGeometry) {
-                                // childTile has geometry, so can be reused as fallback
-                                renderedTiles.set(childTileCode, childTile);
-                                childTile.levelOffset = nextLevelDiff;
-                                continue;
-                            }
-
-                            if (nextLevelDiff < this.options.quadTreeSearchDistanceDown) {
-                                nextLevelCandidates.set(childTileCode, SearchDirection.DOWN);
-                            }
-                        }
-                    }
-                });
-                incompleteTiles = nextLevelCandidates;
+                if (
+                    searchDirection === SearchDirection.BOTH ||
+                    searchDirection === SearchDirection.DOWN
+                ) {
+                    this.findDown(tileKeyCode, displayZoomLevel, renderedTiles, dataSource);
+                }
             }
         });
+    }
+
+    private findDown(
+        tileKeyCode: number,
+        displayZoomLevel: number,
+        renderedTiles: Map<number, Tile>,
+        dataSource: DataSource
+    ) {
+        const { offset, mortonCode } = TileOffsetUtils.extractOffsetAndMortonKeyFromKey(
+            tileKeyCode
+        );
+        const tileKey = TileKey.fromMortonCode(mortonCode);
+
+        const tilingScheme = dataSource.getTilingScheme();
+        for (const childTileKey of tilingScheme.getSubTileKeys(tileKey)) {
+            const childTileCode = TileOffsetUtils.getKeyForTileKeyAndOffset(childTileKey, offset);
+            const childTile = this.m_dataSourceCache.get(
+                childTileKey.mortonCode(),
+                offset,
+                dataSource
+            );
+
+            const nextLevelDiff = Math.abs(childTileKey.level - displayZoomLevel);
+            if (childTile !== undefined && childTile.hasGeometry) {
+                // childTile has geometry, so can be reused as fallback
+                renderedTiles.set(childTileCode, childTile);
+                childTile.levelOffset = nextLevelDiff;
+                continue;
+            }
+
+            // Recurse down until the max distance is reached.
+            if (nextLevelDiff < this.options.quadTreeSearchDistanceDown) {
+                this.findDown(childTileCode, displayZoomLevel, renderedTiles, dataSource);
+            }
+        }
+    }
+
+    /**
+     * Returns true if a tile was found in the cache which is a parent
+     * @param tileKeyCode Morton code of the current tile that should be searched for.
+     * @param displayZoomLevel The current zoom level of tiles that are to be displayed.
+     * @param renderedTiles The list of tiles that are shown to the user.
+     * @param dataSource The provider of tiles.
+     */
+    private findUp(
+        tileKeyCode: number,
+        displayZoomLevel: number,
+        renderedTiles: Map<number, Tile>,
+        checkedTiles: Set<number>,
+        dataSource: DataSource
+    ): boolean {
+        const parentCode = TileOffsetUtils.getParentKeyFromKey(tileKeyCode);
+        // Check if another sibling has already added the parent.
+        if (renderedTiles.get(parentCode) !== undefined || checkedTiles.has(parentCode)) {
+            return true;
+        }
+
+        checkedTiles.add(parentCode);
+        const { offset, mortonCode } = TileOffsetUtils.extractOffsetAndMortonKeyFromKey(parentCode);
+        const parentTile = this.m_dataSourceCache.get(mortonCode, offset, dataSource);
+        const parentTileKey = parentTile ? parentTile.tileKey : TileKey.fromMortonCode(mortonCode);
+        const nextLevelDiff = Math.abs(displayZoomLevel - parentTileKey.level);
+        if (parentTile !== undefined && parentTile.hasGeometry) {
+            // parentTile has geometry, so can be reused as fallback
+            renderedTiles.set(parentCode, parentTile);
+
+            // We want to have parent tiles as -ve, hence the minus.
+            parentTile.levelOffset = -nextLevelDiff;
+            return true;
+        }
+
+        // Recurse up until the max distance is reached.
+        if (nextLevelDiff < this.options.quadTreeSearchDistanceUp) {
+            return this.findUp(
+                parentCode,
+                displayZoomLevel,
+                renderedTiles,
+                checkedTiles,
+                dataSource
+            );
+        }
+        return false;
     }
 
     private getTileImpl(
