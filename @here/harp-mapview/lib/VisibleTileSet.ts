@@ -929,7 +929,7 @@ export class VisibleTileSet {
                     ) {
                         const parentCode = TileOffsetUtils.getParentKeyFromKey(tileKeyCode);
 
-                        if (!checkedTiles.has(parentCode) && !renderedTiles.get(parentCode)) {
+                        if (!checkedTiles.has(parentCode)) {
                             checkedTiles.add(parentCode);
 
                             const {
@@ -955,6 +955,9 @@ export class VisibleTileSet {
                             if (nextLevelDiff < this.options.quadTreeSearchDistanceUp) {
                                 nextLevelCandidates.set(parentCode, SearchDirection.UP);
                             }
+                        } else if (renderedTiles.get(parentCode)) {
+                            // The parent tile already covers this, so we can skip it.
+                            return;
                         }
                     }
 
