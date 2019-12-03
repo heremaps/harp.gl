@@ -180,10 +180,10 @@ const assets = [
             return content.toString().replace("{{EXAMPLES}}", JSON.stringify(exampleDefs, true, 4));
         }
     },
-    ...[path.join(__dirname, "src")].map(srcDir => ({
-        from: path.join(srcDir, "*.{ts,tsx,html}"),
+    {
+        from: path.join(__dirname, "src", "*.{ts,tsx,html}"),
         to: "src/[name].[ext]"
-    })),
+    },
     path.join(__dirname, "index.html"),
     {
         from: path.join(__dirname, "src/*.html"),
