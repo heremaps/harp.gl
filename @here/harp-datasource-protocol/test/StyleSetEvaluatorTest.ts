@@ -572,5 +572,26 @@ describe("StyleSetEvaluator", function() {
                 }
             ])
         );
+
+        assert.isNotEmpty(
+            getMatchingTechniques({ ...defaultProperties, $zoom: 15, minLevel: 14, maxLevel: 15 }, [
+                {
+                    when: ["==", ["geometry-type"], "Polygon"],
+                    technique: "extruded-polygon",
+                    minZoomLevel: ["get", "minLevel"],
+                    maxZoomLevel: ["get", "maxLevel"]
+                }
+            ])
+        );
+
+        assert.isEmpty(
+            getMatchingTechniques({ ...defaultProperties, $zoom: 15, maxLevel: 14 }, [
+                {
+                    when: ["==", ["geometry-type"], "Polygon"],
+                    technique: "extruded-polygon",
+                    maxZoomLevel: ["get", "maxLevel"]
+                }
+            ])
+        );
     });
 });

@@ -367,12 +367,12 @@ export interface BaseStyle {
     /**
      * Minimal zoom level. If the current zoom level is smaller, the technique will not be used.
      */
-    minZoomLevel?: number;
+    minZoomLevel?: number | JsonExpr;
 
     /**
      * Maximum zoom level. If the current zoom level is larger, the technique will not be used.
      */
-    maxZoomLevel?: number;
+    maxZoomLevel?: number | JsonExpr;
 
     /**
      * Optional. If `true`, no IDs will be saved for the geometry this style creates. Default is
