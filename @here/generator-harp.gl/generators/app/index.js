@@ -16,6 +16,12 @@ module.exports = class extends Generator {
                 default: path.basename(process.cwd())
             },
             {
+                type: "list",
+                name: "language",
+                message: "language",
+                choices: ["typescript", "javascript"]
+            },
+            {
                 type: "input",
                 name: "access_token",
                 message: "access token"
@@ -26,15 +32,13 @@ module.exports = class extends Generator {
     }
 
     writing() {
-        this.fs.copyTpl(
-            [this.templatePath("*.*"), this.templatePath("scripts/*.*")],
-            this.destinationPath(""),
-            {
-                packagename: this.answers.packagename,
-                access_token: this.answers.access_token,
-                generator_version: version
-            }
-        );
+        this.fs.copyTpl([this.templatePath("*.*")], this.destinationPath(), {
+            packagename: this.answers.packagename,
+            generator_version: version
+        });
+        this.fs.copyTpl([this.templatePath(this.answers.language)], this.destinationPath(), {
+            access_token: this.answers.access_token
+        });
     }
 
     install() {
@@ -51,14 +55,20 @@ module.exports = class extends Generator {
         this.spawnCommandSync("npm", [
             "install",
             "--save-dev",
-            "@types/node",
             "copy-webpack-plugin",
             "html-webpack-plugin",
-            "ts-loader",
-            "typescript",
             "webpack",
             "webpack-cli",
             "webpack-dev-server"
         ]);
+        if (this.answers.language === "typescript") {
+            this.spawnCommandSync("npm", [
+                "install",
+                "--save-dev",
+                "@types/node",
+                "ts-loader",
+                "typescript"
+            ]);
+        }
     }
 };
