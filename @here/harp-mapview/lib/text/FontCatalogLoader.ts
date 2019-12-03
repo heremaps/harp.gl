@@ -19,11 +19,14 @@ export class FontCatalogLoader {
 
     constructor(private readonly m_theme: Theme) {}
 
+    /**
+     * Initializes font catalog loader.
+     * @param defaultFontCatalogUrl Url of the font catalog that will be used by default if the
+     * theme doesn't define any font catalog.
+     * @returns Name of the default font catalog.
+     */
     initialize(defaultFontCatalogUrl: string): string {
-        if (
-            this.m_theme.fontCatalogs === undefined ||
-            (Array.isArray(this.m_theme.fontCatalogs) && this.m_theme.fontCatalogs.length === 0)
-        ) {
+        if (this.m_theme.fontCatalogs === undefined || this.m_theme.fontCatalogs.length === 0) {
             this.m_theme.fontCatalogs = [
                 {
                     name: DEFAULT_FONT_CATALOG_NAME,
@@ -33,7 +36,8 @@ export class FontCatalogLoader {
             return DEFAULT_FONT_CATALOG_NAME;
         }
 
-        return this.m_theme.fontCatalogs[0].name;
+        const defaultFontCatalogName = this.m_theme.fontCatalogs[0].name;
+        return defaultFontCatalogName;
     }
 
     async loadCatalogs(catalogCallback: FontCatalogCallback): Promise<void[]> {
