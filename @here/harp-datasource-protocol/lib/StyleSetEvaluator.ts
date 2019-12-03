@@ -54,6 +54,8 @@ interface StyleInternalParams {
      * Optimization: Lazy creation and storage of expression in a style object.
      */
     _whenExpr?: Expr;
+    _minZoomLevelExpr?: Expr;
+    _maxZoomLevelExpr?: Expr;
 
     _staticAttributes?: Array<[string, Value | InterpolatedProperty]>;
 
@@ -512,6 +514,18 @@ export class StyleSetEvaluator {
                 if (style._whenExpr !== undefined) {
                     style._whenExpr = style._whenExpr.intern(this.m_exprPool);
                 }
+
+                if (isJsonExpr(style.minZoomLevel)) {
+                    style._minZoomLevelExpr = Expr.fromJSON(style.minZoomLevel).intern(
+                        this.m_exprPool
+                    );
+                }
+
+                if (isJsonExpr(style.maxZoomLevel)) {
+                    style._maxZoomLevelExpr = Expr.fromJSON(style.maxZoomLevel).intern(
+                        this.m_exprPool
+                    );
+                }
             } catch (err) {
                 logger.log(
                     "failed to evaluate expression",
@@ -537,14 +551,8 @@ export class StyleSetEvaluator {
      *          more than one technique should be applied.
      */
     private processStyle(env: Env, style: InternalStyle, result: Technique[]): boolean {
-        if (this.m_zoomLevel !== undefined) {
-            if (style.minZoomLevel !== undefined && this.m_zoomLevel < style.minZoomLevel) {
-                return false;
-            }
-
-            if (style.maxZoomLevel !== undefined && this.m_zoomLevel > style.maxZoomLevel) {
-                return false;
-            }
+        if (!this.checkZoomLevel(env, style)) {
+            return false;
         }
 
         if (
@@ -589,6 +597,64 @@ export class StyleSetEvaluator {
         return style.final === true;
     }
 
+    private checkZoomLevel(env: Env, style: InternalStyle): boolean {
+        const zoomLevel = this.m_zoomLevel;
+
+        if (zoomLevel !== undefined) {
+            if (style.minZoomLevel !== undefined) {
+                let minZoomLevel: Value = style.minZoomLevel;
+
+                if (style._minZoomLevelExpr) {
+                    // the constraint is defined as expression, evaluate it and
+                    // use its vlaue
+                    try {
+                        minZoomLevel = style._minZoomLevelExpr.evaluate(
+                            env,
+                            ExprScope.Condition,
+                            this.m_cachedResults
+                        );
+                    } catch (error) {
+                        logger.error(
+                            `failed to evaluate expression '${JSON.stringify(
+                                style._minZoomLevelExpr
+                            )}': ${error}`
+                        );
+                    }
+                }
+
+                if (typeof minZoomLevel === "number" && zoomLevel < minZoomLevel) {
+                    return false;
+                }
+            }
+
+            if (style.maxZoomLevel !== undefined) {
+                let maxZoomLevel: Value = style.maxZoomLevel;
+
+                if (style._maxZoomLevelExpr) {
+                    try {
+                        maxZoomLevel = style._maxZoomLevelExpr.evaluate(
+                            env,
+                            ExprScope.Condition,
+                            this.m_cachedResults
+                        );
+                    } catch (error) {
+                        logger.error(
+                            `failed to evaluate expression '${JSON.stringify(
+                                style._maxZoomLevelExpr
+                            )}': ${error}`
+                        );
+                    }
+                }
+
+                if (typeof maxZoomLevel === "number" && zoomLevel > maxZoomLevel) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
     private getTechniqueForStyleMatch(env: Env, style: InternalStyle) {
         this.checkStyleDynamicAttributes(style);
 
@@ -619,7 +685,7 @@ export class StyleSetEvaluator {
         dynamicAttributes: Array<[string, Value]>
     ) {
         const dynamicAttrKey = dynamicAttributes
-            .map(([attrName, attrValue]) => {
+            .map(([_attrName, attrValue]) => {
                 if (attrValue === undefined) {
                     return "U";
                 } else {
