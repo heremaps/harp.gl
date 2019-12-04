@@ -914,8 +914,9 @@ export class VisibleTileSet {
             }
 
             // Minor optimization for the fallback search, only check parent tiles once, otherwise
-            // the recursive algorithm checks all parent tiles multiple times.
-            const checkedTiles: Set<number> = new Set<number>();
+            // the recursive algorithm checks all parent tiles multiple times, the key is the code
+            // of the tile that is checked and the value is whether
+            const checkedTiles = new Map<number, boolean>();
             // Iterate over incomplete (not loaded tiles) and find their parents or children that
             // are in cache that can be rendered temporarily until tile is loaded. Note, we favour
             // falling back to parent tiles rather than children.
@@ -988,44 +989,58 @@ export class VisibleTileSet {
      * @param tileKeyCode Morton code of the current tile that should be searched for.
      * @param displayZoomLevel The current zoom level of tiles that are to be displayed.
      * @param renderedTiles The list of tiles that are shown to the user.
+     * @param checkedTiles Used to map a given code to a boolean which tells us if an ancestor is
+     * displayed or not.
      * @param dataSource The provider of tiles.
+     * @returns Whether a parent tile exists.
      */
     private findUp(
         tileKeyCode: number,
         displayZoomLevel: number,
         renderedTiles: Map<number, Tile>,
-        checkedTiles: Set<number>,
+        checkedTiles: Map<number, boolean>,
         dataSource: DataSource
     ): boolean {
         const parentCode = TileOffsetUtils.getParentKeyFromKey(tileKeyCode);
         // Check if another sibling has already added the parent.
-        if (renderedTiles.get(parentCode) !== undefined || checkedTiles.has(parentCode)) {
+        if (renderedTiles.get(parentCode) !== undefined) {
             return true;
+        } else if (checkedTiles.has(parentCode)) {
+            return checkedTiles.get(parentCode)!;
         }
 
-        checkedTiles.add(parentCode);
         const { offset, mortonCode } = TileOffsetUtils.extractOffsetAndMortonKeyFromKey(parentCode);
         const parentTile = this.m_dataSourceCache.get(mortonCode, offset, dataSource);
         const parentTileKey = parentTile ? parentTile.tileKey : TileKey.fromMortonCode(mortonCode);
         const nextLevelDiff = Math.abs(displayZoomLevel - parentTileKey.level);
         if (parentTile !== undefined && parentTile.hasGeometry) {
+            checkedTiles.set(parentCode, true);
             // parentTile has geometry, so can be reused as fallback
             renderedTiles.set(parentCode, parentTile);
 
             // We want to have parent tiles as -ve, hence the minus.
             parentTile.levelOffset = -nextLevelDiff;
+
             return true;
+        } else {
+            checkedTiles.set(parentCode, false);
         }
 
-        // Recurse up until the max distance is reached.
-        if (nextLevelDiff < this.options.quadTreeSearchDistanceUp) {
-            return this.findUp(
+        // Recurse up until the max distance is reached or we go to the parent of all parents.
+        if (nextLevelDiff < this.options.quadTreeSearchDistanceUp && parentTileKey.level !== 0) {
+            const foundUp = this.findUp(
                 parentCode,
                 displayZoomLevel,
                 renderedTiles,
                 checkedTiles,
                 dataSource
             );
+            // If there was a tile upstream found, then add it to the list, so we can
+            // early skip checkedTiles.
+            checkedTiles.set(parentCode, foundUp);
+            if (foundUp) {
+                return true;
+            }
         }
         return false;
     }
