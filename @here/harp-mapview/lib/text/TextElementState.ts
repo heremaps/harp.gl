@@ -7,7 +7,6 @@
 import { assert } from "@here/harp-utils";
 import { RenderState } from "./RenderState";
 import { TextElement } from "./TextElement";
-import { TextElementGroupState } from "./TextElementGroupState";
 import { TextElementType } from "./TextElementType";
 
 /**
