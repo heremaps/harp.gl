@@ -56,6 +56,7 @@ import { ScreenCollisions, ScreenCollisionsDebug } from "./ScreenCollisions";
 import { ScreenProjector } from "./ScreenProjector";
 import { SkyBackground } from "./SkyBackground";
 import { FrameStats, PerformanceStatistics } from "./Statistics";
+import { FontCatalogLoader } from "./text/FontCatalogLoader";
 import { MapViewState } from "./text/MapViewState";
 import { TextCanvasFactory } from "./text/TextCanvasFactory";
 import { TextElement } from "./text/TextElement";
@@ -3188,6 +3189,7 @@ export class MapView extends THREE.EventDispatcher {
             new TextCanvasFactory(this.m_renderer),
             this.m_poiManager,
             new PoiRendererFactory(this),
+            new FontCatalogLoader(this.m_theme),
             this.m_theme,
             this.m_options
         );

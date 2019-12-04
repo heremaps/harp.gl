@@ -36,6 +36,7 @@ import { ScreenProjector } from "../ScreenProjector";
 import { Tile } from "../Tile";
 import { MapViewUtils } from "../Utils";
 import { DataSourceTileList } from "../VisibleTileSet";
+import { FontCatalogLoader } from "./FontCatalogLoader";
 import {
     checkReadyForPlacement,
     computePointTextOffset,
@@ -58,7 +59,7 @@ import {
 import { TextElementState } from "./TextElementState";
 import { TextElementStateCache } from "./TextElementStateCache";
 import { TextElementType } from "./TextElementType";
-import { DEFAULT_FONT_CATALOG_NAME, TextStyleCache } from "./TextStyleCache";
+import { TextStyleCache } from "./TextStyleCache";
 import { UpdateStats } from "./UpdateStats";
 import { ViewState } from "./ViewState";
 
@@ -228,7 +229,6 @@ export class TextElementsRenderer {
     private m_overloaded: boolean = false;
     private m_cacheInvalidated: boolean = false;
     private m_forceNewLabelsPass: boolean = false;
-    private m_catalogsLoading: number = 0;
 
     private readonly m_textElementStateCache: TextElementStateCache = new TextElementStateCache();
 
@@ -246,6 +246,7 @@ export class TextElementsRenderer {
      * @param m_textCanvasFactory To create TextCanvas instances.
      * @param m_poiRendererFactory To create PoiRenderer instances.
      * @param m_poiManager To prepare pois for rendering.
+     * @param m_fontCatalogLoader To load font catalogs.
      * @param m_theme Theme defining  text styles.
      * @param options Configuration options for the text renderer. See
      * [[TextElementsRendererOptions]].
@@ -259,6 +260,7 @@ export class TextElementsRenderer {
         private m_textCanvasFactory: TextCanvasFactory,
         private m_poiManager: PoiManager,
         private m_poiRendererFactory: PoiRendererFactory,
+        private m_fontCatalogLoader: FontCatalogLoader,
         private m_theme: Theme,
         options: TextElementsRendererOptions
     ) {
@@ -490,7 +492,7 @@ export class TextElementsRenderer {
      * `true` if any resource used by any `FontCatalog` is still loading.
      */
     get loading(): boolean {
-        let isLoading = this.m_catalogsLoading > 0;
+        let isLoading = this.m_fontCatalogLoader.loading;
         for (const textRenderer of this.m_textRenderers) {
             isLoading = isLoading || textRenderer.textCanvas.fontCatalog.isLoading;
         }
@@ -830,63 +832,24 @@ export class TextElementsRenderer {
     }
 
     private initializeDefaultAssets(): void {
-        // Initialize default font catalog.
-        if (
-            this.m_theme.fontCatalogs === undefined ||
-            (Array.isArray(this.m_theme.fontCatalogs) && this.m_theme.fontCatalogs.length === 0)
-        ) {
-            this.m_theme.fontCatalogs = [
-                {
-                    name: DEFAULT_FONT_CATALOG_NAME,
-                    url: this.m_options.fontCatalog!
-                }
-            ];
-        }
-        const fontCatalogs = this.m_theme.fontCatalogs;
-
-        let defaultFontCatalogName: string | undefined;
-        if (fontCatalogs.length > 0) {
-            for (const fontCatalog of fontCatalogs) {
-                if (fontCatalog.name !== undefined) {
-                    defaultFontCatalogName = fontCatalog.name;
-                    break;
-                }
-            }
-            if (defaultFontCatalogName === undefined) {
-                defaultFontCatalogName = DEFAULT_FONT_CATALOG_NAME;
-                fontCatalogs[0].name = defaultFontCatalogName;
-            }
-        }
-
-        this.m_textStyleCache.initializeDefaultTextElementStyle(defaultFontCatalogName!);
+        const defaultFontCatalogName = this.m_fontCatalogLoader.initialize(
+            this.m_options.fontCatalog!
+        );
+        this.m_textStyleCache.initializeDefaultTextElementStyle(defaultFontCatalogName);
     }
 
     private async initializeTextCanvases(): Promise<void> {
-        const promises: Array<Promise<void>> = [];
-        this.m_theme.fontCatalogs!.forEach(fontCatalogConfig => {
-            this.m_catalogsLoading += 1;
-            const fontCatalogPromise: Promise<void> = FontCatalog.load(fontCatalogConfig.url, 1024)
-                .then((loadedFontCatalog: FontCatalog) => {
-                    const loadedTextCanvas = this.m_textCanvasFactory.createTextCanvas(
-                        loadedFontCatalog
-                    );
+        const catalogCallback = (name: string, catalog: FontCatalog) => {
+            const loadedTextCanvas = this.m_textCanvasFactory.createTextCanvas(catalog);
 
-                    this.m_textRenderers.push({
-                        fontCatalog: fontCatalogConfig.name,
-                        textCanvas: loadedTextCanvas,
-                        poiRenderer: this.m_poiRendererFactory.createPoiRenderer(loadedTextCanvas)
-                    });
-                })
-                .catch((error: Error) => {
-                    logger.error("Failed to load FontCatalog: ", error);
-                })
-                .finally(() => {
-                    this.m_catalogsLoading -= 1;
-                });
-            promises.push(fontCatalogPromise);
-        });
+            this.m_textRenderers.push({
+                fontCatalog: name,
+                textCanvas: loadedTextCanvas,
+                poiRenderer: this.m_poiRendererFactory.createPoiRenderer(loadedTextCanvas)
+            });
+        };
 
-        return Promise.all(promises).then(() => {
+        return this.m_fontCatalogLoader.loadCatalogs(catalogCallback).then(() => {
             // Find the default TextCanvas and PoiRenderer.
             let defaultTextCanvas: TextCanvas | undefined;
             this.m_textRenderers.forEach(textRenderer => {
