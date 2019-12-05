@@ -35,7 +35,7 @@ jobs:
     - name: "Build & Deploy"
       script: |
         set -ex
-        yarn run build
+        cross-env NODE_ENV=production yarn run build
         yarn run typedoc
       before_deploy: ./scripts/prepare_doc_deploy.sh
       deploy:
