@@ -9,7 +9,10 @@ import {
     getPropertyValue,
     isPoiTechnique,
     isTextTechnique,
+    PoiGeometry,
     PoiTechnique,
+    TextGeometry,
+    TextPathGeometry,
     TextTechnique
 } from "@here/harp-datasource-protocol";
 import {
@@ -22,11 +25,7 @@ import {
 import { TileGeometryCreator } from "@here/harp-mapview/lib/geometry/TileGeometryCreator";
 import { ContextualArabicConverter } from "@here/harp-text-canvas";
 import * as THREE from "three";
-import {
-    GeoJsonPoiGeometry,
-    GeoJsonTextGeometry,
-    GeoJsonTextPathGeometry
-} from "./GeoJsonGeometryCreator";
+
 /**
  * The data that is contained in a [[GeoJsonTileObject]].
  */
@@ -178,7 +177,7 @@ export class GeoJsonTile extends Tile {
      * @param technique Text technique.
      */
     private addTextPaths(
-        geometry: GeoJsonTextPathGeometry,
+        geometry: TextPathGeometry,
         technique: TextTechnique,
         worldOffsetX: number
     ) {
@@ -262,11 +261,7 @@ export class GeoJsonTile extends Tile {
      * @param geometry The Text geometry.
      * @param technique Text technique.
      */
-    private addTexts(
-        geometry: GeoJsonTextGeometry,
-        technique: TextTechnique,
-        worldOffsetX: number
-    ) {
+    private addTexts(geometry: TextGeometry, technique: TextTechnique, worldOffsetX: number) {
         const attribute = getBufferAttribute(geometry.positions);
 
         for (let index = 0; index < attribute.count; index++) {
@@ -344,7 +339,7 @@ export class GeoJsonTile extends Tile {
      * @param technique POI technique.
      */
     private addPois(
-        geometry: GeoJsonPoiGeometry,
+        geometry: PoiGeometry,
         technique: PoiTechnique,
         zoomLevel: number,
         worldOffsetX: number

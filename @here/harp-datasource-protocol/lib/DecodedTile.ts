@@ -14,6 +14,7 @@ import {
     Vector3Like,
     webMercatorProjection
 } from "@here/harp-geoutils";
+import { ValueMap } from "./Env";
 import { Technique } from "./Techniques";
 import { TileInfo } from "./TileInfo";
 
@@ -60,6 +61,12 @@ export interface PathGeometry {
 }
 
 /**
+ * Attributes corresponding to some decoded geometry. It may be either a map
+ * of multiple attributes or just a number with the geometry's feature id.
+ */
+export type AttributeMap = ValueMap | number;
+
+/**
  * This object keeps textual data together with metadata to place it on the map.
  */
 export interface TextPathGeometry {
@@ -67,8 +74,7 @@ export interface TextPathGeometry {
     pathLengthSqr: number;
     text: string;
     technique: number;
-    featureId?: number;
-    objInfos?: {};
+    objInfos?: AttributeMap;
 }
 
 /**
@@ -153,7 +159,7 @@ export interface Geometry {
     /**
      * Optional array of objects. It can be used to pass user data from the geometry to the mesh.
      */
-    objInfos?: Array<{} | undefined>;
+    objInfos?: AttributeMap[];
 }
 
 /**
@@ -188,9 +194,8 @@ export interface TextGeometry {
     positions: BufferAttribute;
     texts: number[];
     technique?: number;
-    featureId?: number;
     stringCatalog?: Array<string | undefined>;
-    objInfos?: Array<{} | undefined>;
+    objInfos?: AttributeMap[];
 }
 
 /**
@@ -205,9 +210,8 @@ export interface PoiGeometry {
      */
     imageTextures?: number[];
     technique?: number;
-    featureId?: number;
     stringCatalog?: Array<string | undefined>;
-    objInfos?: Array<{} | undefined>;
+    objInfos?: AttributeMap[];
 }
 
 /**
@@ -272,4 +276,15 @@ export function getProjectionName(projection: Projection): string | never {
         return "equirectangular";
     }
     throw new Error("Unknown projection");
+}
+
+/**
+ * @returns Feature id from the provided attribute map.
+ */
+export function getFeatureId(attributeMap: AttributeMap | undefined): number | undefined {
+    if (attributeMap === undefined || typeof attributeMap === "number") {
+        return attributeMap;
+    }
+
+    return attributeMap!.$id as number | undefined;
 }

@@ -5,6 +5,7 @@
  */
 
 import {
+    AttributeMap,
     BufferAttribute,
     composeTechniqueTextureName,
     DecodedTile,
@@ -163,7 +164,7 @@ class MeshBuffers implements IMeshBuffers {
      * An optional list of additional data that can be used as additional data for the object
      * picking.
      */
-    readonly objInfos: Array<{} | undefined> = [];
+    readonly objInfos: AttributeMap[] = [];
 
     constructor(readonly type: GeometryType) {}
 
@@ -498,7 +499,6 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                             path,
                             pathLengthSqr,
                             text: String(text),
-                            featureId,
                             objInfos: this.m_gatherFeatureIds ? env.entries : undefined
                         });
                     }
@@ -537,7 +537,6 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                             texts: [0],
                             stringCatalog: [text, imageTexture],
                             imageTextures: [1],
-                            featureId,
                             objInfos: this.m_gatherFeatureIds ? [env.entries] : undefined
                         });
                     }
@@ -1439,7 +1438,6 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                     },
                     texts: meshBuffers.texts,
                     technique: techniqueIdx,
-                    featureId: meshBuffers.featureIds ? meshBuffers.featureIds[0] : undefined,
                     stringCatalog: meshBuffers.stringCatalog,
                     objInfos: this.m_gatherFeatureIds ? meshBuffers.objInfos : undefined
                 });
@@ -1456,7 +1454,6 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                     },
                     texts: meshBuffers.texts,
                     technique: techniqueIdx,
-                    featureId: meshBuffers.featureIds ? meshBuffers.featureIds[0] : undefined,
                     stringCatalog: meshBuffers.stringCatalog,
                     imageTextures: meshBuffers.imageTextures,
                     objInfos: meshBuffers.objInfos

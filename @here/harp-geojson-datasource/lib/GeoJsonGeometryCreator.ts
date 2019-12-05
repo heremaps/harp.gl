@@ -5,6 +5,7 @@
  */
 
 import {
+    AttributeMap,
     GeoJson,
     Geometry,
     GeometryType,
@@ -22,42 +23,13 @@ import * as THREE from "three";
 import { ExtendedTile, GeoJsonParser, GeometryData, GeometryDataBuffers } from "./GeoJsonParser";
 
 /**
- * Geometry interface that stores the geometry type and the user data.
- */
-interface GeoJsonGeometry extends Geometry {
-    type: GeometryType;
-    objInfos?: Array<{} | undefined>;
-}
-
-/**
- * Geometry interface that stores the geometry type and the user data for a POI.
- */
-export interface GeoJsonPoiGeometry extends PoiGeometry {
-    objInfos?: Array<{} | undefined>;
-}
-
-/**
- * Geometry interface that stores the geometry type and the user data for a Text.
- */
-export interface GeoJsonTextGeometry extends TextGeometry {
-    objInfos?: Array<{} | undefined>;
-}
-
-/**
- * Geometry interface that stores the geometry type and the user data for a TextPath.
- */
-export interface GeoJsonTextPathGeometry extends TextPathGeometry {
-    objInfos?: {};
-}
-
-/**
  * Geometries bore by a [[Tile]].
  */
 export interface GeoJsonTileGeometries {
-    geometries: GeoJsonGeometry[];
-    poiGeometries: GeoJsonPoiGeometry[];
-    textGeometries: GeoJsonTextGeometry[];
-    textPathGeometries: GeoJsonTextPathGeometry[];
+    geometries: Geometry[];
+    poiGeometries: PoiGeometry[];
+    textGeometries: TextGeometry[];
+    textPathGeometries: TextPathGeometry[];
 }
 
 /**
@@ -81,7 +53,7 @@ class MeshBuffer implements IMeshBuffers {
     /**
      * Optional object containing the geojson properties defined by the end-user.
      */
-    readonly geojsonProperties: Array<{} | undefined> = [];
+    readonly geojsonProperties: AttributeMap[] = [];
 }
 
 /**
@@ -184,7 +156,7 @@ export class GeoJsonGeometryCreator {
     private static createPoiGeometry(
         geometryData: GeometryData,
         techniqueIndex: number
-    ): GeoJsonPoiGeometry {
+    ): PoiGeometry {
         return {
             positions: {
                 name: "position",
@@ -201,7 +173,7 @@ export class GeoJsonGeometryCreator {
     private static createTextGeometry(
         geometryData: GeometryData,
         techniqueIndex: number
-    ): GeoJsonTextGeometry {
+    ): TextGeometry {
         const labelProperty = geometryData.labelProperty! as string;
         const stringCatalog = geometryData.points.geojsonProperties.map((properties: any) => {
             return properties[labelProperty].toString();
@@ -232,7 +204,7 @@ export class GeoJsonGeometryCreator {
             const pathLengthSqr = Math2D.computeSquaredLineLength(path);
             const properties = geometryData.lines.geojsonProperties[i];
             const text = (properties as any)[geometryData.labelProperty!].toString();
-            const geometry: GeoJsonTextPathGeometry = {
+            const geometry: TextPathGeometry = {
                 technique: techniqueIndex,
                 path,
                 pathLengthSqr,
@@ -246,7 +218,7 @@ export class GeoJsonGeometryCreator {
     private static createPointGeometry(
         geometryData: GeometryData,
         techniqueIndex: number
-    ): GeoJsonGeometry {
+    ): Geometry {
         return {
             type: GeometryType.Point,
             vertexAttributes: [
@@ -271,7 +243,7 @@ export class GeoJsonGeometryCreator {
     private static createSolidLineGeometry(
         geometryData: GeometryData,
         techniqueIndex: number
-    ): GeoJsonGeometry {
+    ): Geometry {
         const lineCenter = new THREE.Vector3();
         const lines = new LineGroup();
         const positions = new Array<number>();
@@ -318,7 +290,7 @@ export class GeoJsonGeometryCreator {
     private static createPolygonGeometry(
         geometryData: GeometryData,
         techniqueIndex: number
-    ): GeoJsonGeometry {
+    ): Geometry {
         const meshBuffer = new MeshBuffer();
         const {
             positions,
@@ -380,7 +352,7 @@ export class GeoJsonGeometryCreator {
             });
         }
 
-        const geometry: GeoJsonGeometry = {
+        const geometry: Geometry = {
             type: GeometryType.Polygon,
             vertexAttributes: [
                 {
@@ -412,7 +384,7 @@ export class GeoJsonGeometryCreator {
         geometryData: GeometryData,
         techniqueIndex: number,
         tileWorldExtents: number
-    ): GeoJsonGeometry {
+    ): Geometry {
         const meshBuffer = new MeshBuffer();
         const { indices, featureStarts, featureIds, geojsonProperties } = meshBuffer;
 
@@ -458,7 +430,7 @@ export class GeoJsonGeometryCreator {
             geojsonProperties.push(polygon.geojsonProperties);
         }
 
-        const geometry: GeoJsonGeometry = {
+        const geometry: Geometry = {
             type: GeometryType.SolidLine,
             index: {
                 buffer: new Uint32Array(solidOutline.indices).buffer,
@@ -509,7 +481,7 @@ export class GeoJsonGeometryCreator {
     private static createSegmentsGeometry(
         geometryData: GeometryData,
         techniqueIndex: number
-    ): GeoJsonGeometry {
+    ): Geometry {
         return {
             type: GeometryType.Line,
             vertexAttributes: [

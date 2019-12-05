@@ -5,8 +5,10 @@
  */
 
 import {
+    AttributeMap,
     composeTechniqueTextureName,
     DecodedTile,
+    getFeatureId,
     getPropertyValue,
     ImageTexture,
     isLineMarkerTechnique,
@@ -342,11 +344,17 @@ export class PoiManager {
                 : undefined;
 
         let text: string = "";
-        let userData: {} | undefined;
+        let userData: AttributeMap | undefined;
+        let featureId: number | undefined;
+
         if (poiGeometry.stringCatalog !== undefined) {
             assert(poiGeometry.texts.length > 0);
             text = poiGeometry.stringCatalog[poiGeometry.texts[0]] || "";
-            userData = poiGeometry.objInfos ? poiGeometry.objInfos[0] : undefined;
+            if (poiGeometry.objInfos !== undefined) {
+                userData = poiGeometry.objInfos[0];
+                featureId = getFeatureId(userData);
+            }
+
             if (poiGeometry.imageTextures !== undefined) {
                 assert(poiGeometry.imageTextures.length > 0);
                 imageTextureName = poiGeometry.stringCatalog[poiGeometry.imageTextures[0]];
@@ -373,7 +381,6 @@ export class PoiManager {
             const z = positions.getZ(i);
             positionArray.push(new THREE.Vector3(x, y, z));
         }
-
         const textElement = this.checkCreateTextElement(
             tile,
             text,
@@ -382,7 +389,7 @@ export class PoiManager {
             undefined, // TBD for road shields
             undefined,
             shieldGroupIndex,
-            poiGeometry.featureId,
+            featureId,
             positionArray,
             undefined,
             undefined,
@@ -426,7 +433,9 @@ export class PoiManager {
             assert(poiGeometry.texts.length > i);
             let imageTextureName = techniqueTextureName;
             const text: string = poiGeometry.stringCatalog[poiGeometry.texts[i]] || "";
-            const userData = poiGeometry.objInfos ? poiGeometry.objInfos[i] : undefined;
+            const userData =
+                poiGeometry.objInfos !== undefined ? poiGeometry.objInfos[i] : undefined;
+            const featureId = getFeatureId(userData);
             if (poiGeometry.imageTextures !== undefined && poiGeometry.imageTextures[i] >= 0) {
                 assert(poiGeometry.imageTextures.length > i);
                 imageTextureName = poiGeometry.stringCatalog[poiGeometry.imageTextures[i]];
@@ -451,7 +460,7 @@ export class PoiManager {
                 poiTableName,
                 poiName,
                 0,
-                poiGeometry.featureId,
+                featureId,
                 x,
                 y,
                 z,
