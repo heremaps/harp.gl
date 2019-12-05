@@ -425,6 +425,7 @@ export class TopViewClipPlanesEvaluator extends ElevationBasedClipPlanesEvaluato
 
     /**
      * Calculate distance from a point to the tangent point of a sphere.
+     *
      * Returns zero if point is below surface or only very slightly above surface of sphere.
      * @param d Distance from point to center of sphere
      * @param r Radius of sphere
@@ -442,8 +443,9 @@ export class TopViewClipPlanesEvaluator extends ElevationBasedClipPlanesEvaluato
     }
 
     /**
-     * Calculate far plane depending on furthest visible distance from
-     * camera position. Furthest visible distance is assumed to be distance from camera to horizon
+     * Calculate far plane depending on furthest visible distance from camera position.
+     *
+     * Furthest visible distance is assumed to be distance from camera to horizon
      * plus distance from elevated geometry to horizon(so that high objects behind horizon
      * remain visible).
      * @param camera The camera of the mapview
@@ -478,25 +480,17 @@ export class TopViewClipPlanesEvaluator extends ElevationBasedClipPlanesEvaluato
 
         // Because we would like to see elevated geometry that may be visible beyond
         // the tangent point on ground surface, we need to extend viewing distance along
-        // the tangent line by te (see graph above). Knowing that OTE forms right angle,
-        // we have:
-        // (r+e)^2 = r^2 + te^2
-        // te = sqrt((r+e)^2 - r^2)
-        // This reduces to:
-        // te = sqrt(r^2 + 2*r*e + e^2 - r^2)
-        // te = sqrt(2*r*e + e^2)
-        // There may be situations when maximum elevation still remains below sea level
-        // (elevation < 0) or it is negligible (elevation ~ epsilon), in such cases tangent
-        // extension (te) is not required.
+        // the tangent line by te (see graph above).
         const te = this.getTangentDistance(r + this.maxElevation, r);
 
-        // Next step is to project CT vector onto camera eye (forward) vector to get maximum
-        // camera far plane distance. Point on sphere beyond that point won't be visible
-        // anyway unless they are above the ground surface.
-        // For such cases [[this.maxElevation]] applies, thus we project entire CE
-        // vector of length equal: t + te.
-
-        // Calculate tangent projection onto camera eye vector, giving far plane distance
+        // Next step is to project CE vector(length t + te) onto camera eye (forward) vector
+        // to get maximum camera far plane distance.
+        //
+        // Knowing that:
+        // tangentVec.dot(cameraFwdVec) = cos(alpha) * len(tangentVec) * len(cameraFwdVec).
+        // where:
+        // ||cameraFwdVec|| == 1 ^ ||tangentVec|| == t + te
+        // Formula simplifies to:
         const far = Math.cos(alpha) * (t + te);
 
         return far;
@@ -829,16 +823,16 @@ export class TiltViewClipPlanesEvaluator extends TopViewClipPlanesEvaluator {
         // Near plane calculus is pretty straightforward and does not depend on camera tilt:
         const cameraAltitude = this.getCameraAltitude(camera, projection);
         viewRanges.near = cameraAltitude - this.maxElevation;
+
+        // Take fov directly if it is vertical, otherwise we translate it using aspect ratio:
+        const aspect = camera.aspect > 1 ? camera.aspect : 1 / camera.aspect;
+        const halfFovAngle = THREE.Math.degToRad((camera.fov * aspect) / 2);
+
         if (camera instanceof THREE.PerspectiveCamera) {
             // Now we need to account for camera tilt and frustum volume, so the longest
             // frustum edge does not intersects with sphere, it takes the worst case
             // scenario regardless of camera tilt, so may be improved little bit with more
             // sophisticated algorithm.
-            // Note, the fov is vertical, otherwise we would need to
-            // translate it using aspect ratio:
-            // let aspect = camera.aspect > 1 ? camera.aspect : 1 / camera.aspect;
-            const aspect = 1.0;
-            const halfFovAngle = THREE.Math.degToRad((camera.fov / 2) * aspect);
             viewRanges.near *= Math.cos(halfFovAngle);
         }
 
@@ -852,25 +846,20 @@ export class TiltViewClipPlanesEvaluator extends TopViewClipPlanesEvaluator {
         if (camera instanceof THREE.PerspectiveCamera) {
             // Step-wise calculate angle between camera eye vector and tangent
 
-            // Calculate angle between surface normal and tangent.
+            // Calculate angle between surface normal(below camera position) and tangent.
             const alpha = Math.asin(r / d);
 
-            // Calculate angle between look at and surface normal
+            // Calculate angle between look at and surface normal(below camera position)
             const cameraPitch = this.getCameraPitch(cameraToOrigin, camera);
 
             // Calculate angle between camera eye vector and tangent.
             const modifiedAlpha = Math.abs(alpha - cameraPitch);
 
-            // Take fov directly if it is vertical, otherwise we translate it using aspect ratio:
-            const aspect = camera.aspect > 1 ? camera.aspect : 1 / camera.aspect;
-            const halfFovAngle = THREE.Math.degToRad((camera.fov * aspect) / 2);
-
-            // Use tangent based far plane if camera is tilted or
-            // horizon is within field of view
+            // Use tangent based far plane if horizon is within field of view
             farPlane =
-                cameraPitch > 0 || halfFovAngle >= modifiedAlpha
+                halfFovAngle >= modifiedAlpha
                     ? this.getTangentBasedFarPlane(camera, d, r, modifiedAlpha)
-                    : this.getFovBasedFarPlane(camera, d, r, 2 * halfFovAngle, projection);
+                    : this.getTiltedFovBasedFarPlane(d, r, halfFovAngle, cameraPitch);
         } else {
             farPlane = this.getOrthoBasedFarPlane(d, r);
         }
@@ -894,6 +883,57 @@ export class TiltViewClipPlanesEvaluator extends TopViewClipPlanesEvaluator {
         viewRanges.maximum = viewRanges.far;
 
         return viewRanges;
+    }
+
+    protected getTiltedFovBasedFarPlane(
+        d: number,
+        r: number,
+        halfFovAngle: number,
+        cameraPitch: number
+    ) {
+        // Find intersection point that is closer to tangent point.
+        //
+        //         , - ~ ~ ~ - ,
+        //     , '               ' ,
+        //   ,           .           ,
+        //  ,            .     r     ,' T1
+        // ,             .     ,  '  / ,
+        // ,             . O.'  a   /  ,
+        // ,             | .  `  . /   ,
+        //  ,            |   .  r / TA,
+        //   ,           |    .  /   ,
+        //     ,         |     ./  ,'_____ far
+        //       ' -_, _ | _ , /' T0
+        //     near      |    /
+        //               |   / t
+        //             d | /
+        //               |/
+        //               C
+        //
+        // See:
+        // tslint:disable-next-line: max-line-length
+        // https://www.scratchapixel.com/lessons/3d-basic-rendering/minimal-ray-tracer-rendering-simple-shapes/ray-sphere-intersection
+
+        // compute length of t (distance to fov intersection with sphere)
+        // with law of cosines:
+        // r² = d² + t² - 2dt * cos(alpha)
+        // solved for t:
+        // t0 = d * cos(alpha) - sqrt(d²*cos²(alpha) - d² + r²)  <-- first intersection
+        // t1 = d * cos(alpha) + sqrt(d²*cos²(alpha) - d² + r²)  <-- second intersection
+        // Use first intersection:
+        const cosAlpha = Math.cos(cameraPitch + halfFovAngle);
+        const dSqr = d * d;
+        const t = d * cosAlpha - Math.sqrt(dSqr * cosAlpha * cosAlpha - dSqr + r * r);
+
+        assert(
+            !isNaN(t),
+            "Field of view does not intersect sphere. Use tangent based far plane instead."
+        );
+
+        // project t onto camera fwd vector
+        const far = Math.cos(halfFovAngle) * t;
+
+        return far;
     }
 
     private getCameraPitch(cameraToOrigin: THREE.Vector3, camera: THREE.PerspectiveCamera) {
