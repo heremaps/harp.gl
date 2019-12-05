@@ -32,6 +32,7 @@ import {
     SolidLineTechnique,
     StandardExtrudedLineTechnique,
     Technique,
+    techniqueDescriptors,
     TerrainTechnique,
     TextPathGeometry
 } from "@here/harp-datasource-protocol";
@@ -48,9 +49,11 @@ import {
     SolidLineMaterial
 } from "@here/harp-materials";
 import { ContextualArabicConverter } from "@here/harp-text-canvas";
-import { chainCallbacks, LoggerManager } from "@here/harp-utils";
+import { assert, chainCallbacks, LoggerManager } from "@here/harp-utils";
 import * as THREE from "three";
 
+import { ColorUtils } from "@here/harp-datasource-protocol/lib/ColorUtils";
+import { Value } from "@here/harp-datasource-protocol/lib/Env";
 import { AnimatedExtrusionTileHandler } from "../AnimatedExtrusionHandler";
 import { ColorCache } from "../ColorCache";
 import { createMaterial, getBufferAttribute, getObjectConstructor } from "../DecodedTileHelpers";
@@ -798,8 +801,12 @@ export class TileGeometryCreator {
                         false,
                         (renderer, mat) => {
                             const lineMaterial = mat as THREE.LineBasicMaterial;
-                            lineMaterial.color.set(
-                                getPropertyValue(technique.color, mapView.zoomLevel)
+                            applyColorToMaterial(
+                                lineMaterial,
+                                lineMaterial.color,
+                                technique,
+                                technique.color,
+                                mapView.zoomLevel
                             );
                         }
                     );
@@ -823,8 +830,12 @@ export class TileGeometryCreator {
                                 technique.metricUnit === "Pixel" ? mapView.pixelToWorld : 1.0;
 
                             if (technique.color !== undefined) {
-                                lineMaterial.color.set(
-                                    getPropertyValue(technique.color, mapView.zoomLevel)
+                                applyColorToMaterial(
+                                    lineMaterial,
+                                    lineMaterial.color,
+                                    technique,
+                                    technique.color,
+                                    mapView.zoomLevel
                                 );
                             }
 
@@ -896,8 +907,12 @@ export class TileGeometryCreator {
                                           | MapMeshStandardMaterial
                                           | MapMeshBasicMaterial;
 
-                                      extrudedMaterial.color.set(
-                                          getPropertyValue(technique.color!, mapView.zoomLevel)
+                                      applyColorToMaterial(
+                                          extrudedMaterial,
+                                          extrudedMaterial.color,
+                                          technique,
+                                          technique.color!,
+                                          mapView.zoomLevel
                                       );
                                   }
                                 : undefined
@@ -931,8 +946,12 @@ export class TileGeometryCreator {
                                           | MapMeshBasicMaterial
                                           | MapMeshStandardMaterial;
 
-                                      polygonMaterial.color.set(
-                                          getPropertyValue(technique.color!, mapView.zoomLevel)
+                                      applyColorToMaterial(
+                                          polygonMaterial,
+                                          polygonMaterial.color,
+                                          technique,
+                                          technique.color!,
+                                          mapView.zoomLevel
                                       );
 
                                       if (
@@ -941,11 +960,12 @@ export class TileGeometryCreator {
                                       ) {
                                           const standardMat = mat as MapMeshStandardMaterial;
 
-                                          standardMat.emissive.set(
-                                              getPropertyValue(
-                                                  technique.emissive,
-                                                  mapView.zoomLevel
-                                              )
+                                          applyColorToMaterial(
+                                              standardMat,
+                                              standardMat.emissive,
+                                              technique,
+                                              technique.emissive,
+                                              mapView.zoomLevel
                                           );
                                       }
                                   }
@@ -1074,11 +1094,12 @@ export class TileGeometryCreator {
                         extrudedPolygonTechnique.lineColor !== undefined &&
                             isInterpolatedProperty(extrudedPolygonTechnique.lineColor)
                             ? (renderer, mat) => {
-                                  edgeMaterial.color.set(
-                                      getPropertyValue(
-                                          extrudedPolygonTechnique.lineColor!,
-                                          mapView.zoomLevel
-                                      )
+                                  applyColorToMaterial(
+                                      edgeMaterial,
+                                      edgeMaterial.color,
+                                      extrudedPolygonTechnique,
+                                      extrudedPolygonTechnique.lineColor!,
+                                      mapView.zoomLevel
                                   );
                               }
                             : undefined
@@ -1155,8 +1176,12 @@ export class TileGeometryCreator {
                             isInterpolatedProperty(fillTechnique.lineColor)
                             ? (renderer, mat) => {
                                   const edgeMaterial = mat as EdgeMaterial;
-                                  edgeMaterial.color.set(
-                                      getPropertyValue(fillTechnique.lineColor!, mapView.zoomLevel)
+                                  applyColorToMaterial(
+                                      edgeMaterial,
+                                      edgeMaterial.color,
+                                      fillTechnique,
+                                      fillTechnique.lineColor!,
+                                      mapView.zoomLevel
                                   );
                               }
                             : undefined
@@ -1207,11 +1232,12 @@ export class TileGeometryCreator {
                                     : 1.0;
 
                             if (outlineTechnique.secondaryColor !== undefined) {
-                                lineMaterial.color.set(
-                                    getPropertyValue(
-                                        outlineTechnique.secondaryColor,
-                                        mapView.zoomLevel
-                                    )
+                                applyColorToMaterial(
+                                    lineMaterial,
+                                    lineMaterial.color,
+                                    outlineTechnique,
+                                    outlineTechnique.secondaryColor,
+                                    mapView.zoomLevel
                                 );
                             }
 
@@ -1541,5 +1567,45 @@ export class TileGeometryCreator {
             lineFadeNear,
             lineFadeFar
         };
+    }
+}
+
+function applyColorToMaterial(
+    material: THREE.Material,
+    matColor: THREE.Color,
+    technique: Technique,
+    techColor: Value,
+    level: number,
+    pixelToMeters?: number
+) {
+    const techDescriptor = techniqueDescriptors[technique.name];
+    const value = getPropertyValue(techColor, level, pixelToMeters);
+    // Check if technique defines any transparent colors (colors that defines opacity)
+    if (
+        ColorUtils.hasAlphaInHex(value) &&
+        techDescriptor !== undefined &&
+        techDescriptor.attrTransparencyColor !== undefined
+    ) {
+        const mat = material as any;
+        const transparentColor = techDescriptor.attrTransparencyColor;
+        const { r, g, b, a } = ColorUtils.getRgbaFromHex(value);
+        // If refereed to transparency color, update material opacity and transparency
+        // mixing technique defined opacity with main color alpha channel.
+        if (mat[transparentColor] === matColor) {
+            const tech = technique as any;
+            let opacity = tech.opacity ? getPropertyValue(tech.opacity, level) * a : a;
+            opacity = THREE.Math.clamp(opacity, 0, 1);
+            let transparent = opacity !== 1.0;
+            transparent =
+                transparent ||
+                (tech.transparent ? getPropertyValue(tech.transparent, level) : false);
+            material.opacity = opacity;
+            material.transparent = transparent;
+        }
+        // Finally apply the technique color to material
+        matColor.setRGB(r, g, b);
+    } else {
+        assert(!ColorUtils.hasAlphaInHex(value));
+        matColor.setHex(value);
     }
 }

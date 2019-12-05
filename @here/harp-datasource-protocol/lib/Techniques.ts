@@ -68,6 +68,9 @@ export type MakeTechniqueAttrs<T> = {
 export const techniqueDescriptors: TechniqueDescriptorRegistry = {};
 
 export const baseTechniqueParamsDescriptor: TechniqueDescriptor<BaseTechniqueParams> = {
+    // TODO: Choose which techniques should support color with transparency.
+    // For now we chosen all, but it maybe not suitable for text or line marker techniques.
+    attrTransparencyColor: "color",
     attrScopes: {
         renderOrder: AttrScope.TechniqueGeometry,
         renderOrderOffset: AttrScope.TechniqueGeometry,
