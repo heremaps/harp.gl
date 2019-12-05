@@ -399,6 +399,18 @@ export class StyleSetEvaluator {
     }
 
     /**
+     * Reset array of techniques.
+     *
+     * Cleans technique array and indices, so it doesn't accumulate accross several decoding runs.
+     */
+    resetTechniques() {
+        for (const techinque of this.m_techniques) {
+            techinque._index = undefined!;
+        }
+        this.m_techniques.length = 0;
+    }
+
+    /**
      * Get the (current) array of techniques that have been created during decoding.
      */
     get techniques(): IndexedTechnique[] {
@@ -628,17 +640,17 @@ export class StyleSetEvaluator {
     private getTechniqueForStyleMatch(env: Env, style: InternalStyle) {
         this.checkStyleDynamicAttributes(style);
 
+        let technique: IndexedTechnique | undefined;
         if (style._dynamicTechniques !== undefined) {
             const dynamicAttributes = this.evaluateTechniqueProperties(style, env);
             const key = this.getDynamicTechniqueKey(style, dynamicAttributes);
-            let technique = style._dynamicTechniques!.get(key);
+            technique = style._dynamicTechniques!.get(key);
             if (technique === undefined) {
                 technique = this.createTechnique(style, key, dynamicAttributes);
                 style._dynamicTechniques!.set(key, technique);
             }
-            return technique;
         } else {
-            let technique = style._staticTechnique;
+            technique = style._staticTechnique;
             if (technique === undefined) {
                 style._staticTechnique = technique = this.createTechnique(
                     style,
@@ -646,8 +658,13 @@ export class StyleSetEvaluator {
                     []
                 ) as IndexedTechnique;
             }
-            return technique;
         }
+
+        if (technique._index === undefined) {
+            technique._index = this.m_techniques.length;
+            this.m_techniques.push(technique);
+        }
+        return technique;
     }
 
     private getDynamicTechniqueKey(

@@ -205,6 +205,8 @@ export class OmvDecoder implements IGeometryProcessor {
             };
         }
 
+        this.m_styleSetEvaluator.resetTechniques();
+
         const tileSizeOnScreen = this.estimatedTileSizeOnScreen();
         const decodeInfo = new OmvDecoder.DecodeInfo(
             dataAdapter.id,
@@ -252,6 +254,8 @@ export class OmvDecoder implements IGeometryProcessor {
         if (dataAdapter === undefined) {
             return new ExtendedTileInfo(tileKey, false);
         }
+
+        this.m_styleSetEvaluator.resetTechniques();
 
         const tileSizeOnScreen = this.estimatedTileSizeOnScreen();
         const decodeInfo = new OmvDecoder.DecodeInfo(
