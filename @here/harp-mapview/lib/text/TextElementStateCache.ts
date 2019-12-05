@@ -4,11 +4,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { assert } from "@here/harp-utils";
+import { assert, LoggerManager, LogLevel } from "@here/harp-utils";
+import { TextElement } from "./TextElement";
 import { TextElementGroup } from "./TextElementGroup";
 import { TextElementFilter, TextElementGroupState } from "./TextElementGroupState";
 import { TextElementState } from "./TextElementState";
 import { TextElementType } from "./TextElementType";
+
+const logger = LoggerManager.instance.create("TextElementsStateCache", { level: LogLevel.Log });
 
 /**
  * Label distance tolerance squared in meters. Point labels with the same name that are closer in
@@ -38,6 +41,10 @@ const tmpCachedDuplicate: { entries: TextElementState[]; index: number } = {
     index: -1
 };
 
+function getCacheKey(element: TextElement): string | number {
+    return element.hasFeatureId() ? element.featureId! : element.text;
+}
+
 /**
  * Caches the state of text element groups currently rendered as well as the text element states
  * belonging to them, including their fading state and text deduplication information.
@@ -47,7 +54,7 @@ export class TextElementStateCache {
     private m_sortedGroupStates: TextElementGroupState[] | undefined;
 
     // Cache for point labels which may have duplicates in same tile or in neighboring tiles.
-    private readonly m_textMap = new Map<string, TextElementState[]>();
+    private readonly m_textMap = new Map<string | number, TextElementState[]>();
 
     /**
      * Gets the state corresponding to a given text element group or sets a newly created state if
@@ -163,17 +170,20 @@ export class TextElementStateCache {
             return true;
         }
 
-        const cacheResult = this.findDuplicate(elementState, zoomLevel);
+        const cacheKey = getCacheKey(element);
+        const cacheResult = this.findDuplicate(element, cacheKey, zoomLevel);
 
         if (cacheResult === undefined) {
             // Text not found so far, add this element to cache.
-            this.m_textMap.set(element.text, [elementState]);
+            this.m_textMap.set(cacheKey, [elementState]);
             return true;
         }
 
         if (cacheResult.index === -1) {
-            // No duplicate found among elements with same text,add this one to cache.
-            cacheResult.entries.push(elementState);
+            if (!element.hasFeatureId()) {
+                // No duplicate found among elements with same text,add this one to cache.
+                cacheResult.entries.push(elementState);
+            }
             return true;
         }
 
@@ -203,7 +213,7 @@ export class TextElementStateCache {
             return;
         }
 
-        const cacheResult = this.findDuplicate(elementState, zoomLevel);
+        const cacheResult = this.findDuplicate(element, getCacheKey(element), zoomLevel);
 
         if (cacheResult === undefined || cacheResult.index === -1) {
             // No replacement found;
@@ -242,40 +252,57 @@ export class TextElementStateCache {
     }
 
     private findDuplicate(
-        elementState: TextElementState,
+        element: TextElement,
+        cacheKey: string | number,
         zoomLevel: number
     ): { entries: TextElementState[]; index: number } | undefined {
-        const element = elementState.element;
-
         // Point labels may have duplicates (as can path labels), Identify them
         // and keep the one we already display.
 
-        const cachedEntries = this.m_textMap.get(element.text);
+        const cachedEntries = this.m_textMap.get(cacheKey);
 
         if (cachedEntries === undefined) {
-            // No labels found with the same text.
+            // No labels found with the same key.
             return undefined;
         }
 
-        const maxSqDistError = getDedupSqDistTolerance(zoomLevel);
+        tmpCachedDuplicate.entries = cachedEntries;
+
+        if (element.hasFeatureId()) {
+            // Duplicate with same feature id found.
+            assert(cachedEntries.length === 1);
+            const cachedElement = cachedEntries[0].element;
+            assert(element.featureId === cachedElement.featureId);
+
+            if (cachedElement.text === element.text) {
+                tmpCachedDuplicate.index = 0;
+            } else {
+                tmpCachedDuplicate.index = -1;
+                logger.debug(
+                    `Text feature id ${element.featureId} collision between "${element.text} and \
+                     ${cachedElement.text}`
+                );
+            }
+            return tmpCachedDuplicate;
+        }
 
         // Other labels found with the same text. Check if they're near enough to be considered
         // duplicates.
+        const maxSqDistError = getDedupSqDistTolerance(zoomLevel);
         const entryCount = cachedEntries.length;
         const elementPosition = element.points as THREE.Vector3;
         let duplicateIndex: number = -1;
         for (let i = 0; i < entryCount; ++i) {
             const cachedEntry = cachedEntries[i];
             const cachedElementPosition = cachedEntry.element.points as THREE.Vector3;
+            const distSquared = elementPosition.distanceToSquared(cachedElementPosition);
 
-            const distSq = elementPosition.distanceToSquared(cachedElementPosition);
-            if (distSq < maxSqDistError) {
+            if (distSquared < maxSqDistError) {
                 duplicateIndex = i;
                 break;
             }
         }
 
-        tmpCachedDuplicate.entries = cachedEntries;
         tmpCachedDuplicate.index = duplicateIndex;
         return tmpCachedDuplicate;
     }
