@@ -110,6 +110,7 @@ class GeoJsonDecoder {
         const tileInfo = new ExtendedTileInfo(tileKey, this.m_storeExtendedTags);
         const tileInfoWriter = new ExtendedTileInfoWriter(tileInfo, this.m_storeExtendedTags);
 
+        this.m_styleSetEvaluator.resetTechniques();
         const extendedTile = {
             info: tileInfo,
             writer: tileInfoWriter
