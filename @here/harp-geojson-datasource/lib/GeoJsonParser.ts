@@ -5,6 +5,7 @@
  */
 
 import {
+    AttributeMap,
     ExtendedTileInfo,
     ExtendedTileInfoWriter,
     Feature,
@@ -40,7 +41,7 @@ const logger = LoggerManager.instance.create("GeoJsonFeatureParser");
 export interface PolygonsData {
     vertices: number[];
     holes: number[];
-    geojsonProperties?: {};
+    geojsonProperties: AttributeMap;
 }
 
 /**
@@ -48,7 +49,7 @@ export interface PolygonsData {
  */
 interface PointsData {
     vertices: number[];
-    geojsonProperties: Array<{} | undefined>;
+    geojsonProperties: AttributeMap[];
 }
 
 /**
@@ -57,7 +58,7 @@ interface PointsData {
  */
 interface LinesData {
     vertices: number[][];
-    geojsonProperties: Array<{} | undefined>;
+    geojsonProperties: AttributeMap[];
 }
 
 /**
@@ -392,7 +393,7 @@ export class GeoJsonParser {
         projection: Projection,
         techniqueIndex: number,
         geometryBuffer: Map<number, GeometryData>,
-        geojsonProperties?: {}
+        geojsonProperties: AttributeMap = {}
     ): void {
         const buffer = this.findOrCreateGeometryBuffer(techniqueIndex, geometryBuffer);
         buffer.type = "point";
@@ -421,7 +422,7 @@ export class GeoJsonParser {
         styleSetEvaluator: StyleSetEvaluator,
         geometryBuffer: Map<number, GeometryData>,
         featureId?: string,
-        geojsonProperties?: {}
+        geojsonProperties: AttributeMap = {}
     ): void {
         const buffer = this.findOrCreateGeometryBuffer(techniqueIndex, geometryBuffer);
         buffer.type = "solid-line";
@@ -477,7 +478,7 @@ export class GeoJsonParser {
         techniqueIndex: number,
         geometryBuffer: Map<number, GeometryData>,
         isPolygonOutlines: boolean,
-        geojsonProperties?: {}
+        geojsonProperties: AttributeMap = {}
     ): void {
         const buffer = this.findOrCreateGeometryBuffer(techniqueIndex, geometryBuffer);
         buffer.type = isPolygonOutlines ? "outline" : "polygon";
@@ -526,7 +527,7 @@ export class GeoJsonParser {
         techniqueIndex: number,
         labelProperty: string,
         textPathGeometryBuffer: Map<number, GeometryData>,
-        geojsonProperties?: {}
+        geojsonProperties: AttributeMap = {}
     ): void {
         const buffer = this.findOrCreateGeometryBuffer(techniqueIndex, textPathGeometryBuffer);
         buffer.type = "text-path";
@@ -559,7 +560,7 @@ export class GeoJsonParser {
         techniqueIndex: number,
         labelProperty: string,
         textGeometryBuffer: Map<number, GeometryData>,
-        geojsonProperties?: {}
+        geojsonProperties: AttributeMap = {}
     ): void {
         const buffer = this.findOrCreateGeometryBuffer(techniqueIndex, textGeometryBuffer);
         buffer.type = "point";
@@ -604,7 +605,7 @@ export class GeoJsonParser {
         techniqueIndex: number,
         labelProperty: string,
         textGeometryBuffer: Map<number, GeometryData>,
-        geojsonProperties?: {}
+        geojsonProperties: AttributeMap = {}
     ): void {
         const buffer = this.findOrCreateGeometryBuffer(techniqueIndex, textGeometryBuffer);
         buffer.type = "text";
@@ -631,7 +632,7 @@ export class GeoJsonParser {
         projection: Projection,
         techniqueIndex: number,
         poiGeometryBuffer: Map<number, GeometryData>,
-        geojsonProperties?: {}
+        geojsonProperties: AttributeMap = {}
     ): void {
         const buffer = this.findOrCreateGeometryBuffer(techniqueIndex, poiGeometryBuffer);
         buffer.type = "poi";

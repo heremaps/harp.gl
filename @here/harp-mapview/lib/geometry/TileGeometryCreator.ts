@@ -13,6 +13,7 @@ import {
     GeometryKind,
     GeometryKindSet,
     getArrayConstructor,
+    getFeatureId,
     getPropertyValue,
     isCirclesTechnique,
     isExtrudedLineTechnique,
@@ -48,7 +49,7 @@ import {
     SolidLineMaterial
 } from "@here/harp-materials";
 import { ContextualArabicConverter } from "@here/harp-text-canvas";
-import { chainCallbacks, LoggerManager } from "@here/harp-utils";
+import { assert, chainCallbacks, LoggerManager } from "@here/harp-utils";
 import * as THREE from "three";
 
 import { AnimatedExtrusionTileHandler } from "../AnimatedExtrusionHandler";
@@ -418,6 +419,8 @@ export class TileGeometryCreator {
                     technique.fadeFar !== undefined
                         ? getPropertyValue(technique.fadeFar, displayZoomLevel)
                         : technique.fadeFar;
+                const userData = textPath.objInfos;
+                const featureId = getFeatureId(userData);
                 const textElement = new TextElement(
                     ContextualArabicConverter.instance.convert(textPath.text),
                     path,
@@ -426,7 +429,7 @@ export class TileGeometryCreator {
                     priority,
                     technique.xOffset !== undefined ? technique.xOffset : 0.0,
                     technique.yOffset !== undefined ? technique.yOffset : 0.0,
-                    textPath.featureId,
+                    featureId,
                     technique.style,
                     fadeNear,
                     fadeFar
@@ -502,6 +505,9 @@ export class TileGeometryCreator {
                         continue;
                     }
 
+                    const userData = text.objInfos !== undefined ? text.objInfos[i] : undefined;
+                    const featureId = getFeatureId(userData);
+
                     const textElement = new TextElement(
                         ContextualArabicConverter.instance.convert(label!),
                         new THREE.Vector3(x, y, z),
@@ -510,7 +516,7 @@ export class TileGeometryCreator {
                         priority,
                         technique.xOffset || 0.0,
                         technique.yOffset || 0.0,
-                        text.featureId,
+                        featureId,
                         technique.style
                     );
 
@@ -529,10 +535,8 @@ export class TileGeometryCreator {
                     textElement.fadeNear = fadeNear;
                     textElement.fadeFar = fadeFar;
 
-                    if (text.objInfos !== undefined) {
-                        // Get the userData for text element picking.
-                        textElement.userData = text.objInfos[i];
-                    }
+                    // Get the userData for text element picking.
+                    textElement.userData = userData;
 
                     tile.addTextElement(textElement);
                 }
@@ -1451,7 +1455,13 @@ export class TileGeometryCreator {
         }
 
         if (isTerrainTechnique(technique)) {
-            const displacementMap = (srcGeometry.objInfos as DisplacementMap[])[0];
+            const attributeMap = srcGeometry.objInfos![0];
+            if (typeof attributeMap === "number") {
+                assert(false, "Wrong attribute map type for terrain geometry");
+                return;
+            }
+
+            const displacementMap = attributeMap.displacementMap as DisplacementMap;
             const tileDisplacementMap: TileDisplacementMap = {
                 tileKey: tile.tileKey,
                 texture: new THREE.DataTexture(
