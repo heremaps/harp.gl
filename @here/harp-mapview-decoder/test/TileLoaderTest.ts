@@ -153,7 +153,7 @@ describe("TileLoader", function() {
             return expect(loadPromise).to.eventually.be.fulfilled;
         });
 
-        it("should handle empty payloads", function () {
+        it("should handle empty payloads", function() {
             const tileLoader = new TileLoader(
                 dataSource,
                 tileKey,
@@ -207,7 +207,7 @@ describe("TileLoader", function() {
         });
     });
 
-    describe("cancel()", function () {
+    describe("cancel()", function() {
         it("should cancel running requests", function() {
             const tileLoader = new TileLoader(
                 dataSource,
@@ -227,7 +227,7 @@ describe("TileLoader", function() {
             return expect(loadPromise).to.eventually.be.rejected;
         });
 
-        it("should cancel during decoding", function () {
+        it("should cancel during decoding", function() {
             const tileLoader = new TileLoader(
                 dataSource,
                 tileKey,
