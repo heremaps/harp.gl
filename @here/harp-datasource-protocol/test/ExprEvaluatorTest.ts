@@ -829,7 +829,17 @@ describe("ExprEvaluator", function() {
             );
 
             assert.strictEqual(
+                new THREE.Color(evaluate(["hsl", 20, 100, 50]) as number).getHexString(),
+                new THREE.Color("hsl(20, 100%, 50%)").getHexString()
+            );
+
+            assert.strictEqual(
                 new THREE.Color(evaluate(["hsl", 370, 100, 50]) as string).getHexString(),
+                new THREE.Color("hsl(370, 100%, 50%)").getHexString()
+            );
+
+            assert.strictEqual(
+                new THREE.Color(evaluate(["hsl", 370, 100, 50]) as number).getHexString(),
                 new THREE.Color("hsl(370, 100%, 50%)").getHexString()
             );
 
@@ -904,13 +914,38 @@ describe("ExprEvaluator", function() {
                 new THREE.Color("rgb(500, 500, 500)").getHexString()
             );
 
-            // Still equal - ignores alpha.
-            // Some assumptions will change after fully implementing HARP-7517
-            assert.strictEqual(
+            // Difference in alpha channel should be recognizable when color is represented
+            // (stored) in internal format.
+            assert.notEqual(
                 evaluate(["rgba", 255, 0, 0, 0.5]) as string,
                 evaluate(["rgba", 255, 0, 0, 0.6]) as string
             );
 
+            // When alpha is 1.0, colors should be the same with and without alpha specified.
+            // This is the unique property of our own hex color format and applies only to it.
+            assert.strictEqual(
+                evaluate(["rgba", 0, 0, 255, 1.0]) as string,
+                evaluate(["rgb", 0, 0, 255]) as string
+            );
+
+            assert.strictEqual(
+                evaluate(["rgba", 0, 0, 0, 1.0]) as number,
+                evaluate(["rgb", 0, 0, 0]) as number
+            );
+            assert.strictEqual(
+                evaluate(["rgba", 255, 0, 0, 1.0]) as number,
+                evaluate(["rgb", 255, 0, 0]) as number
+            );
+            assert.strictEqual(
+                evaluate(["rgba", 0, 255, 0, 1.0]) as number,
+                evaluate(["rgb", 0, 255, 0]) as number
+            );
+            assert.strictEqual(
+                evaluate(["rgba", 0, 0, 255, 1.0]) as number,
+                evaluate(["rgb", 0, 0, 255]) as number
+            );
+
+            // After passing to THREE, alpha should be silently ignored.
             assert.strictEqual(
                 new THREE.Color(evaluate(["rgba", 255, 255, 255, 0.5]) as string).getHexString(),
                 new THREE.Color("rgb(255, 255, 255)").getHexString()
@@ -953,7 +988,7 @@ describe("ExprEvaluator", function() {
         it("evaluate", function() {
             assert.strictEqual(
                 getPropertyValue(Expr.fromJSON(["rgb", 255, 0, ["*", ["get", "time"], 255]]), env),
-                "#ff00ff"
+                0xff00ff
             );
 
             assert.strictEqual(

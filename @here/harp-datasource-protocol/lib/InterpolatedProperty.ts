@@ -6,7 +6,8 @@
 
 import * as THREE from "three";
 
-import { LoggerManager } from "@here/harp-utils";
+import { assert, LoggerManager } from "@here/harp-utils";
+import { ColorUtils } from "./ColorUtils";
 import { Env, MapEnv } from "./Env";
 import { ExponentialInterpolant } from "./ExponentialInterpolant";
 import { Expr, ExprScope, Value } from "./Expr";
@@ -34,7 +35,6 @@ const interpolants = [
     ExponentialInterpolant
 ];
 
-const tmpColor = new THREE.Color();
 const tmpBuffer = new Array<number>(StringEncodedNumeralFormatMaxSize);
 
 /**
@@ -70,7 +70,9 @@ export function isInterpolatedProperty(p: any): p is InterpolatedProperty {
         p.zoomLevels instanceof Float32Array &&
         p.values !== undefined &&
         p.values.length > 0 &&
-        (p.zoomLevels.length === p.values.length / 3 || p.zoomLevels.length === p.values.length)
+        (p.zoomLevels.length === p.values.length / 4 ||
+            p.zoomLevels.length === p.values.length / 3 ||
+            p.zoomLevels.length === p.values.length)
     ) {
         return true;
     }
@@ -145,18 +147,21 @@ export function getPropertyValue(
         pixelToMeters = envOrLevel.lookup("$pixelToMeters") as number;
     }
 
+    // Non-interpolated property parsing
     if (!isInterpolatedProperty(property)) {
         if (typeof property !== "string") {
+            // Property in numeric or array, etc. format
             return property;
         } else {
             const value = parseStringEncodedNumeral(property, pixelToMeters);
             return value !== undefined ? value : property;
         }
+        // Interpolated property
     } else if (property._stringEncodedNumeralType !== undefined) {
         switch (property._stringEncodedNumeralType) {
             case StringEncodedNumeralType.Meters:
             case StringEncodedNumeralType.Pixels:
-                return getInterpolatedLength(property, level, pixelToMeters);
+                return getInterpolatedMetric(property, level, pixelToMeters);
             case StringEncodedNumeralType.Hex:
             case StringEncodedNumeralType.RGB:
             case StringEncodedNumeralType.RGBA:
@@ -164,10 +169,10 @@ export function getPropertyValue(
                 return getInterpolatedColor(property, level);
         }
     }
-    return getInterpolatedLength(property, level, pixelToMeters);
+    return getInterpolatedMetric(property, level, pixelToMeters);
 }
 
-function getInterpolatedLength(
+function getInterpolatedMetric(
     property: InterpolatedProperty,
     level: number,
     pixelToMeters: number
@@ -224,15 +229,23 @@ function getInterpolatedColor(property: InterpolatedProperty, level: number): nu
     }
     interpolant.evaluate(level);
 
-    // Color.setRGB() does not clamp the values which may be out of
-    // color channels boundaries after interpolation.
-    return tmpColor
-        .setRGB(
+    assert(nChannels === 3 || nChannels === 4);
+    // ColorUtils.getHexFromRgba() does not clamp the values which may be out of
+    // color channels range (0 <= c <= 1) after interpolation.
+    if (nChannels === 4) {
+        return ColorUtils.getHexFromRgba(
+            THREE.Math.clamp(interpolant.resultBuffer[0], 0, 1),
+            THREE.Math.clamp(interpolant.resultBuffer[1], 0, 1),
+            THREE.Math.clamp(interpolant.resultBuffer[2], 0, 1),
+            THREE.Math.clamp(interpolant.resultBuffer[3], 0, 1)
+        );
+    } else {
+        return ColorUtils.getHexFromRgb(
             THREE.Math.clamp(interpolant.resultBuffer[0], 0, 1),
             THREE.Math.clamp(interpolant.resultBuffer[1], 0, 1),
             THREE.Math.clamp(interpolant.resultBuffer[2], 0, 1)
-        )
-        .getHex();
+        );
+    }
 }
 
 /**
@@ -263,6 +276,7 @@ export function createInterpolatedProperty(
                 exponent: prop.exponent
             };
         case "string":
+            // TODO: Minimize effort for pre-matching the numeral format.
             const matchedFormat = StringEncodedNumeralFormats.find(format =>
                 format.regExp.test(firstValue)
             );
