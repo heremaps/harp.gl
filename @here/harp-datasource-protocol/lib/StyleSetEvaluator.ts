@@ -353,31 +353,17 @@ export class StyleSetEvaluator {
         optimizedSubSetKey.set(layer, geometryType, env);
 
         // get the requested $layer and $geometryType, if any.
-        const currentLayer = optimizedSubSetKey.layer;
-        const currentGeometryType = optimizedSubSetKey.geometryType;
+        this.m_layer = optimizedSubSetKey.layer;
+        this.m_geometryType = optimizedSubSetKey.geometryType;
+        this.m_zoomLevel = env.lookup("$zoom") as number | undefined;
 
         const searchedStyleSet = this.getOptimizedStyleSet(optimizedSubSetKey);
-
-        const previousZoomLevel = this.changeZoomLevel(env.lookup("$zoom") as number | undefined);
-
-        // set the requested $layer as the current layer.
-        const previousLayer = this.changeLayer(
-            typeof currentLayer === "string" ? currentLayer : undefined
-        );
-
-        const previousGeometryType = this.changeGeometryType(
-            typeof currentGeometryType === "string" ? currentGeometryType : undefined
-        );
 
         for (const currStyle of searchedStyleSet) {
             if (this.processStyle(env, currStyle, result)) {
                 break;
             }
         }
-
-        this.changeLayer(previousLayer); // restore the layer
-        this.changeGeometryType(previousGeometryType); // restore the geometryType
-        this.changeZoomLevel(previousZoomLevel);
 
         return result;
     }
@@ -427,24 +413,6 @@ export class StyleSetEvaluator {
      */
     get decodedTechniques(): IndexedTechnique[] {
         return this.m_techniques.map(makeDecodedTechnique);
-    }
-
-    private changeLayer(layer: string | undefined) {
-        const savedLayer = this.m_layer;
-        this.m_layer = layer;
-        return savedLayer;
-    }
-
-    private changeGeometryType(geometryType: string | undefined) {
-        const savedGeometryType = this.m_geometryType;
-        this.m_geometryType = geometryType;
-        return savedGeometryType;
-    }
-
-    private changeZoomLevel(zoomLevel: number | undefined) {
-        const savedZoomLevel = this.m_zoomLevel;
-        this.m_zoomLevel = zoomLevel;
-        return savedZoomLevel;
     }
 
     private getOptimizedStyleSet(subSetKey: OptimizedSubSetKey): InternalStyle[] {
@@ -597,58 +565,63 @@ export class StyleSetEvaluator {
         return style.final === true;
     }
 
-    private checkZoomLevel(env: Env, style: InternalStyle): boolean {
+    private checkZoomLevel(env: Env, style: InternalStyle) {
+        if (style.minZoomLevel === undefined && style.maxZoomLevel === undefined) {
+            return true;
+        }
+
         const zoomLevel = this.m_zoomLevel;
+        if (zoomLevel === undefined) {
+            return true;
+        }
 
-        if (zoomLevel !== undefined) {
-            if (style.minZoomLevel !== undefined) {
-                let minZoomLevel: Value = style.minZoomLevel;
+        if (style.minZoomLevel !== undefined) {
+            let minZoomLevel: Value = style.minZoomLevel;
 
-                if (style._minZoomLevelExpr) {
-                    // the constraint is defined as expression, evaluate it and
-                    // use its vlaue
-                    try {
-                        minZoomLevel = style._minZoomLevelExpr.evaluate(
-                            env,
-                            ExprScope.Condition,
-                            this.m_cachedResults
-                        );
-                    } catch (error) {
-                        logger.error(
-                            `failed to evaluate expression '${JSON.stringify(
-                                style._minZoomLevelExpr
-                            )}': ${error}`
-                        );
-                    }
-                }
-
-                if (typeof minZoomLevel === "number" && zoomLevel < minZoomLevel) {
-                    return false;
+            if (style._minZoomLevelExpr) {
+                // the constraint is defined as expression, evaluate it and
+                // use its value
+                try {
+                    minZoomLevel = style._minZoomLevelExpr.evaluate(
+                        env,
+                        ExprScope.Condition,
+                        this.m_cachedResults
+                    );
+                } catch (error) {
+                    logger.error(
+                        `failed to evaluate expression '${JSON.stringify(
+                            style._minZoomLevelExpr
+                        )}': ${error}`
+                    );
                 }
             }
 
-            if (style.maxZoomLevel !== undefined) {
-                let maxZoomLevel: Value = style.maxZoomLevel;
+            if (typeof minZoomLevel === "number" && zoomLevel < minZoomLevel) {
+                return false;
+            }
+        }
 
-                if (style._maxZoomLevelExpr) {
-                    try {
-                        maxZoomLevel = style._maxZoomLevelExpr.evaluate(
-                            env,
-                            ExprScope.Condition,
-                            this.m_cachedResults
-                        );
-                    } catch (error) {
-                        logger.error(
-                            `failed to evaluate expression '${JSON.stringify(
-                                style._maxZoomLevelExpr
-                            )}': ${error}`
-                        );
-                    }
-                }
+        if (style.maxZoomLevel !== undefined) {
+            let maxZoomLevel: Value = style.maxZoomLevel;
 
-                if (typeof maxZoomLevel === "number" && zoomLevel > maxZoomLevel) {
-                    return false;
+            if (style._maxZoomLevelExpr) {
+                try {
+                    maxZoomLevel = style._maxZoomLevelExpr.evaluate(
+                        env,
+                        ExprScope.Condition,
+                        this.m_cachedResults
+                    );
+                } catch (error) {
+                    logger.error(
+                        `failed to evaluate expression '${JSON.stringify(
+                            style._maxZoomLevelExpr
+                        )}': ${error}`
+                    );
                 }
+            }
+
+            if (typeof maxZoomLevel === "number" && zoomLevel > maxZoomLevel) {
+                return false;
             }
         }
 
