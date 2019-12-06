@@ -61,29 +61,6 @@ function step(context: ExprEvaluatorContext, args: Expr[]) {
 }
 
 const operators = {
-    ppi: {
-        call: (context: ExprEvaluatorContext, call: CallExpr) => {
-            const ppi = context.env.lookup("$ppi");
-            if (typeof ppi === "number") {
-                return ppi;
-            }
-            return 72;
-        }
-    },
-    zoom: {
-        call: (context: ExprEvaluatorContext, call: CallExpr): Value => {
-            if (context.scope === ExprScope.Condition) {
-                const zoom = context.env.lookup("$zoom")!;
-                if (zoom !== undefined) {
-                    return zoom;
-                }
-                throw new Error("failed to get the zoom level.");
-            }
-            // direct usages of 'zoom' outside technique filter conditions
-            // and interpolations are not allowed.
-            throw new Error("invalid usage of the 'zoom' operator.");
-        }
-    },
     interpolate: {
         call: (context: ExprEvaluatorContext, call: CallExpr): Value => {
             const interpolatorType = call.args[0];
