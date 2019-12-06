@@ -488,13 +488,16 @@ export class TextElementsRenderer {
     /**
      * Waits till all pending resources from any `FontCatalog` are loaded.
      */
-    async waitLoaded(): Promise<void> {
-        this.waitInitialized();
-
-        if (this.m_loadPromise !== undefined) {
-            await this.m_loadPromise;
+    async waitLoaded(): Promise<boolean> {
+        const initialized = await this.waitInitialized();
+        if (!initialized) {
+            return false;
         }
-        return;
+        if (this.m_loadPromise === undefined) {
+            return false;
+        }
+        await this.m_loadPromise;
+        return true;
     }
 
     /**
