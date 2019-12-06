@@ -6,10 +6,10 @@
 
 import * as THREE from "three";
 
+import { ColorUtils } from "../ColorUtils";
 import { CallExpr } from "../Expr";
 import { ExprEvaluatorContext, OperatorDescriptorMap } from "../ExprEvaluator";
 
-const tmpColor = new THREE.Color();
 const operators = {
     rgba: {
         call: (context: ExprEvaluatorContext, call: CallExpr) => {
@@ -28,7 +28,7 @@ const operators = {
                 a >= 0 &&
                 a <= 1
             ) {
-                return rgbaToString(r, g, b, a);
+                return rgbaToHex(r, g, b, a);
             }
             throw new Error(`unknown color 'rgba(${r},${g},${b},${a})'`);
         }
@@ -46,11 +46,13 @@ const operators = {
                 g >= 0 &&
                 b >= 0
             ) {
-                return rgbaToString(r, g, b);
+                return rgbToHex(r, g, b);
             }
             throw new Error(`unknown color 'rgb(${r},${g},${b})'`);
         }
     },
+    // Hsl operator contains angle modulated to <0, 360> range, percent of
+    // saturation and lightness in <0, 100> range, i.e. hsl(360, 100, 100)
     hsl: {
         call: (context: ExprEvaluatorContext, call: CallExpr) => {
             const h = context.evaluate(call.args[0]);
@@ -64,30 +66,37 @@ const operators = {
                 s >= 0 &&
                 l >= 0
             ) {
-                return hslToString(h, s, l);
+                return hslToHex(h, s, l);
             }
             throw new Error(`unknown color 'hsl(${h},${s}%,${l}%)'`);
         }
     }
 };
 
-function rgbaToString(r: number, g: number, b: number, a?: number): string {
-    // For now we simply ignore alpha component from rgba(...) expressions.
-    // TODO: To be resolved with HARP-7517.
-    return (
-        "#" +
-        tmpColor
-            .setRGB(
-                THREE.Math.clamp(r, 0, 255) / 255,
-                THREE.Math.clamp(g, 0, 255) / 255,
-                THREE.Math.clamp(b, 0, 255) / 255
-            )
-            .getHexString()
+function rgbaToHex(r: number, g: number, b: number, a: number): number {
+    // We decode rgba color channels using custom hex format with transparency.
+    return ColorUtils.getHexFromRgba(
+        THREE.Math.clamp(r, 0, 255) / 255,
+        THREE.Math.clamp(g, 0, 255) / 255,
+        THREE.Math.clamp(b, 0, 255) / 255,
+        THREE.Math.clamp(a, 0, 1)
     );
 }
 
-function hslToString(h: number, s: number, l: number): string {
-    return `hsl(${h},${Math.round(s)}%,${Math.round(l)}%)`;
+function rgbToHex(r: number, g: number, b: number): number {
+    return ColorUtils.getHexFromRgb(
+        THREE.Math.clamp(r, 0, 255) / 255,
+        THREE.Math.clamp(g, 0, 255) / 255,
+        THREE.Math.clamp(b, 0, 255) / 255
+    );
+}
+
+function hslToHex(h: number, s: number, l: number): number {
+    return ColorUtils.getHexFromHsl(
+        THREE.Math.euclideanModulo(h, 360) / 360,
+        THREE.Math.clamp(s, 0, 100) / 100,
+        THREE.Math.clamp(l, 0, 100) / 100
+    );
 }
 
 export const ColorOperators: OperatorDescriptorMap = operators;

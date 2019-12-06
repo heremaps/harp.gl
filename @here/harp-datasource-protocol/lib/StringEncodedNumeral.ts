@@ -5,6 +5,7 @@
  */
 import { assert } from "@here/harp-utils";
 import { Color } from "three";
+import { ColorUtils } from "./ColorUtils";
 
 const tmpColor = new Color();
 
@@ -56,7 +57,7 @@ const StringEncodedPixels: StringEncodedNumeralFormat = {
 };
 const StringEncodedHex: StringEncodedNumeralFormat = {
     type: StringEncodedNumeralType.Hex,
-    size: 3,
+    size: 4,
     regExp: /^\#((?:[0-9A-Fa-f][0-9A-Fa-f]){3,4}|[0-9A-Fa-f]{3,4})$/,
     decoder: (encodedValue: string, target: number[]) => {
         const match = StringEncodedHex.regExp.exec(encodedValue);
@@ -77,11 +78,13 @@ const StringEncodedHex: StringEncodedNumeralFormat = {
             target[0] = parseInt(hex.charAt(0) + hex.charAt(0), 16) / 255;
             target[1] = parseInt(hex.charAt(1) + hex.charAt(1), 16) / 255;
             target[2] = parseInt(hex.charAt(2) + hex.charAt(2), 16) / 255;
+            target[3] = size === 4 ? parseInt(hex.charAt(3) + hex.charAt(3), 16) / 255 : 1;
         } else if (size === 6 || size === 8) {
             // #RRGGBB or #RRGGBBAA
             target[0] = parseInt(hex.charAt(0) + hex.charAt(1), 16) / 255;
             target[1] = parseInt(hex.charAt(2) + hex.charAt(3), 16) / 255;
             target[2] = parseInt(hex.charAt(4) + hex.charAt(5), 16) / 255;
+            target[3] = size === 8 ? parseInt(hex.charAt(6) + hex.charAt(7), 16) / 255 : 1;
         }
         return true;
     }
@@ -104,7 +107,7 @@ const StringEncodedRGB: StringEncodedNumeralFormat = {
 };
 const StringEncodedRGBA: StringEncodedNumeralFormat = {
     type: StringEncodedNumeralType.RGBA,
-    size: 3,
+    size: 4,
     // tslint:disable-next-line:max-line-length
     regExp: /^rgba\( ?(?:([0-9]{1,2}|1[0-9]{1,2}|2[0-4][0-9]|25[0-5]), ?)(?:([0-9]{1,2}|1[0-9]{1,2}|2[0-4][0-9]|25[0-5]), ?)(?:([0-9]{1,2}|1[0-9]{1,2}|2[0-4][0-9]|25[0-5]), ?)(?:(0(?:\.[0-9]+)?|1(?:\.0+)?)) ?\)$/,
     decoder: (encodedValue: string, target: number[]) => {
@@ -112,11 +115,10 @@ const StringEncodedRGBA: StringEncodedNumeralFormat = {
         if (channels === null) {
             return false;
         }
-        // For now we simply ignore alpha channel value.
-        // TODO: To be resolved with HARP-7517
         target[0] = parseInt(channels[1], 10) / 255;
         target[1] = parseInt(channels[2], 10) / 255;
         target[2] = parseInt(channels[3], 10) / 255;
+        target[3] = parseInt(channels[4], 10);
         return true;
     }
 };
@@ -209,10 +211,16 @@ export function parseStringEncodedNumeral(
                     result = tmpBuffer[0] * pixelToMeters;
                     break;
                 case StringEncodedNumeralType.Hex:
-                case StringEncodedNumeralType.RGB:
                 case StringEncodedNumeralType.RGBA:
+                    result = ColorUtils.getHexFromRgba(
+                        tmpBuffer[0],
+                        tmpBuffer[1],
+                        tmpBuffer[2],
+                        tmpBuffer[3]
+                    );
+                case StringEncodedNumeralType.RGB:
                 case StringEncodedNumeralType.HSL:
-                    result = tmpColor.setRGB(tmpBuffer[0], tmpBuffer[1], tmpBuffer[2]).getHex();
+                    result = ColorUtils.getHexFromRgb(tmpBuffer[0], tmpBuffer[1], tmpBuffer[2]);
                     break;
                 default:
                     result = tmpBuffer[0];
@@ -240,10 +248,16 @@ export function parseStringEncodedColor(color: string): number | undefined {
     }
     switch (matchedFormat.type) {
         case StringEncodedNumeralType.Hex:
-        case StringEncodedNumeralType.RGB:
         case StringEncodedNumeralType.RGBA:
+            return ColorUtils.getHexFromRgba(
+                tmpBuffer[0],
+                tmpBuffer[1],
+                tmpBuffer[2],
+                tmpBuffer[3]
+            );
+        case StringEncodedNumeralType.RGB:
         case StringEncodedNumeralType.HSL:
-            return tmpColor.setRGB(tmpBuffer[0], tmpBuffer[1], tmpBuffer[2]).getHex();
+            return ColorUtils.getHexFromRgb(tmpBuffer[0], tmpBuffer[1], tmpBuffer[2]);
         default:
             return tmpBuffer[0];
     }
