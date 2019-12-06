@@ -18,6 +18,9 @@ const operators = {
         }
     },
     zoom: {
+        isDynamicOperator: (): boolean => {
+            return true;
+        },
         call: (context: ExprEvaluatorContext): Value => {
             if (context.scope === ExprScope.Condition) {
                 const zoom = context.env.lookup("$zoom")!;

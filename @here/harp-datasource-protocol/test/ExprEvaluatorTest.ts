@@ -8,7 +8,16 @@
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
 import { assert } from "chai";
-import { Env, Expr, ExprScope, JsonExpr, JsonValue, MapEnv, ValueMap } from "../lib/Expr";
+import {
+    Env,
+    Expr,
+    ExprScope,
+    JsonArray,
+    JsonExpr,
+    JsonValue,
+    MapEnv,
+    ValueMap
+} from "../lib/Expr";
 import { getPropertyValue, isInterpolatedProperty } from "../lib/InterpolatedProperty";
 import { InterpolatedProperty, InterpolationMode } from "../lib/InterpolatedPropertyDefs";
 
@@ -1097,6 +1106,58 @@ describe("ExprEvaluator", function() {
             assert.deepStrictEqual(instantiate(["in", ["get", "two"], ["aa", "bb"]]), false);
 
             assert.deepStrictEqual(instantiate(["in", ["get", "y"], [123, 321]]), true);
+        });
+    });
+
+    describe("Expression Dynamic State", function() {
+        function isDynamic(expr: JsonArray) {
+            return Expr.fromJSON(expr).isDynamic();
+        }
+
+        it("expressions", function() {
+            assert.isTrue(
+                isDynamic([
+                    "match",
+                    ["get", "x"],
+                    123,
+                    ["step", ["zoom"], 0, 1, ["get", "z"]],
+                    ["step", ["zoom"], 0, 2, ["get", "y"]]
+                ])
+            );
+
+            assert.isTrue(isDynamic(["step", ["zoom"], 0, 1, ["get", "z"]]));
+            assert.isTrue(isDynamic(["interpolate", ["linear"], ["zoom"], 0, 0, 1, 1, 2, 2]));
+
+            assert.isFalse(isDynamic(["step", ["get", "y"], 0, 1, ["get", "z"]]));
+
+            assert.isFalse(isDynamic(["case", ["has", "something"], 123, 321]));
+
+            assert.isTrue(
+                isDynamic([
+                    "case",
+                    ["has", "something"],
+                    123,
+                    ["step", ["zoom"], 0, 1, ["get", "z"]]
+                ])
+            );
+
+            assert.isFalse(isDynamic(["match", ["get", "one"], 1, true, false]));
+
+            assert.isTrue(
+                isDynamic([
+                    "match",
+                    ["get", "one"],
+                    1,
+                    ["step", ["zoom"], 0, 1, ["get", "z"]],
+                    false
+                ])
+            );
+
+            assert.isTrue(isDynamic(["match", ["step", ["zoom"], 0, 1, ["get", "z"]], 1, 2, 3]));
+
+            assert.isFalse(isDynamic(["in", ["get", "two"], ["aa", "bb"]]));
+
+            assert.isTrue(isDynamic(["in", ["zoom"], [1, 2]]));
         });
     });
 });
