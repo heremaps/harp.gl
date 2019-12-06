@@ -541,7 +541,7 @@ export class TextElementsRenderer {
             return true;
         }
 
-        if (this.m_initPromise === undefined) {
+        if (!this.initializing) {
             return false;
         }
         await this.m_initPromise;
