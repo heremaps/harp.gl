@@ -62,6 +62,9 @@ function step(context: ExprEvaluatorContext, args: Expr[]) {
 
 const operators = {
     interpolate: {
+        isDynamicOperator: (call: CallExpr): boolean => {
+            return call.args[1] && call.args[1].isDynamic();
+        },
         call: (context: ExprEvaluatorContext, call: CallExpr): Value => {
             const interpolatorType = call.args[0];
             const input = call.args[1];
@@ -134,6 +137,9 @@ const operators = {
         }
     },
     step: {
+        isDynamicOperator: (call: CallExpr): boolean => {
+            return call.args[0] && call.args[0].isDynamic();
+        },
         call: (context: ExprEvaluatorContext, call: CallExpr): Value => {
             if (call.args[0] === undefined) {
                 throw new Error("expected the input of the 'step' operator");

@@ -230,6 +230,8 @@ export abstract class Expr {
         return parseNode(node, referenceResolverState);
     }
 
+    private m_isDynamic?: boolean;
+
     /**
      * Evaluate an expression returning a [[Value]] object.
      *
@@ -279,10 +281,29 @@ export abstract class Expr {
         return new ExprSerializer().serialize(this);
     }
 
+    /**
+     * Returns `true` if a dynamic execution context is required to evaluate this [[Expr]].
+     */
+    isDynamic(): boolean {
+        if (this.m_isDynamic === undefined) {
+            this.m_isDynamic = this.exprIsDynamic();
+        }
+        return this.m_isDynamic;
+    }
+
     abstract accept<Result, Context>(
         visitor: ExprVisitor<Result, Context>,
         context: Context
     ): Result;
+
+    /**
+     * Update the dynamic state of this [[Expr]].
+     *
+     * [[exprIsDynamic]] must never be called directly.
+     *
+     * @hidden
+     */
+    protected abstract exprIsDynamic(): boolean;
 }
 
 /**
@@ -312,6 +333,10 @@ export class VarExpr extends Expr {
     accept<Result, Context>(visitor: ExprVisitor<Result, Context>, context: Context): Result {
         return visitor.visitVarExpr(this, context);
     }
+
+    protected exprIsDynamic() {
+        return false;
+    }
 }
 
 export abstract class LiteralExpr extends Expr {
@@ -336,6 +361,10 @@ export abstract class LiteralExpr extends Expr {
     }
 
     abstract get value(): Value;
+
+    protected exprIsDynamic() {
+        return false;
+    }
 }
 
 /**
@@ -352,6 +381,10 @@ export class NullLiteralExpr extends LiteralExpr {
 
     accept<Result, Context>(visitor: ExprVisitor<Result, Context>, context: Context): Result {
         return visitor.visitNullLiteralExpr(this, context);
+    }
+
+    protected exprIsDynamic() {
+        return false;
     }
 }
 
@@ -427,6 +460,10 @@ export class HasAttributeExpr extends Expr {
     accept<Result, Context>(visitor: ExprVisitor<Result, Context>, context: Context): Result {
         return visitor.visitHasAttributeExpr(this, context);
     }
+
+    protected exprIsDynamic() {
+        return false;
+    }
 }
 
 /**
@@ -455,6 +492,10 @@ export class ContainsExpr extends Expr {
     accept<Result, Context>(visitor: ExprVisitor<Result, Context>, context: Context): Result {
         return visitor.visitContainsExpr(this, context);
     }
+
+    protected exprIsDynamic() {
+        return this.value.isDynamic();
+    }
 }
 
 /**
@@ -478,8 +519,21 @@ export class CallExpr extends Expr {
     accept<Result, Context>(visitor: ExprVisitor<Result, Context>, context: Context): Result {
         return visitor.visitCallExpr(this, context);
     }
+
+    protected exprIsDynamic() {
+        const descriptor = this.descriptor || ExprEvaluator.getOperator(this.op);
+
+        if (descriptor && descriptor.isDynamicOperator && descriptor.isDynamicOperator(this)) {
+            return true;
+        }
+
+        return this.args.some(e => e.isDynamic());
+    }
 }
 
+/**
+ * @hidden
+ */
 export type MatchLabel = number | string | number[] | string[];
 
 /**
@@ -521,6 +575,14 @@ export class MatchExpr extends Expr {
     accept<Result, Context>(visitor: ExprVisitor<Result, Context>, context: Context): Result {
         return visitor.visitMatchExpr(this, context);
     }
+
+    protected exprIsDynamic() {
+        return (
+            this.value.isDynamic() ||
+            this.branches.some(([_, branch]) => branch.isDynamic()) ||
+            this.fallback.isDynamic()
+        );
+    }
 }
 
 /**
@@ -533,6 +595,13 @@ export class CaseExpr extends Expr {
 
     accept<Result, Context>(visitor: ExprVisitor<Result, Context>, context: Context): Result {
         return visitor.visitCaseExpr(this, context);
+    }
+
+    protected exprIsDynamic() {
+        return (
+            this.branches.some(([cond, branch]) => cond.isDynamic() || branch.isDynamic()) ||
+            this.fallback.isDynamic()
+        );
     }
 }
 

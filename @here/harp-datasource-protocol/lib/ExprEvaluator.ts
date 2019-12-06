@@ -39,6 +39,14 @@ import { StringOperators } from "./operators/StringOperators";
 import { TypeOperators } from "./operators/TypeOperators";
 
 export interface OperatorDescriptor {
+    /**
+     * Returns `true` if this operator requires a dynamic execution context (e.g. ["zoom"]).
+     */
+    isDynamicOperator?: (call: CallExpr) => boolean;
+
+    /**
+     * Evaluates the given expression.
+     */
     call: (context: ExprEvaluatorContext, call: CallExpr) => Value;
 }
 
@@ -128,6 +136,14 @@ export class ExprEvaluator implements ExprVisitor<Value, ExprEvaluatorContext> {
         Object.getOwnPropertyNames(builtins).forEach(p => {
             this.defineOperator(p, builtins[p]);
         });
+    }
+
+    /**
+     * Returns the [[OperatorDescriptor]] for the given operator name.
+     * @hidden
+     */
+    static getOperator(op: string): OperatorDescriptor | undefined {
+        return operatorDescriptors.get(op);
     }
 
     visitVarExpr(expr: VarExpr, context: ExprEvaluatorContext): Value {
