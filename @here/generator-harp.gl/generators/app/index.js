@@ -1,4 +1,5 @@
 const Generator = require("yeoman-generator");
+const fs = require("fs");
 const path = require("path");
 const version = require("../../package.json").version;
 
@@ -42,21 +43,30 @@ module.exports = class extends Generator {
     }
 
     install() {
-        // npmInstall conflicts with running install-peerdeps, use spawnCommandSync instead
-        this.spawnCommandSync("npm", ["install", "--no-save", "install-peerdeps"]);
-        this.spawnCommandSync("npx", ["install-peerdeps", "@here/harp-mapview"]);
-        this.spawnCommandSync("npm", [
-            "install",
-            "--save",
+        const harpPackages = [
+            "@here/harp-mapview",
+            "@here/harp-datasource-protocol",
+            "@here/harp-geoutils",
             "@here/harp-map-controls",
             "@here/harp-map-theme",
-            "@here/harp-omv-datasource"
-        ]);
+            "@here/harp-omv-datasource",
+            "@here/harp-webpack-utils"
+        ];
+        // for CI testing support installing from local packages
+        const harpDependencies =
+            process.env.HARP_PACKAGE_ROOT !== undefined
+                ? harpPackages.map(p => {
+                      const root = process.env.HARP_PACKAGE_ROOT + p + path.sep;
+                      return root + fs.readdirSync(root).find(f => f.endsWith(".tgz"));
+                  })
+                : harpPackages;
+        // npmInstall conflicts with running install-peerdeps, use spawnCommandSync instead
+        this.spawnCommandSync("npm", ["install", "--no-save", "install-peerdeps"]);
+        this.spawnCommandSync("npx", ["install-peerdeps", "-o", harpDependencies[0]]);
+        this.spawnCommandSync("npm", ["install", "--save", ...harpDependencies]);
         this.spawnCommandSync("npm", [
             "install",
             "--save-dev",
-            "copy-webpack-plugin",
-            "html-webpack-plugin",
             "webpack",
             "webpack-cli",
             "webpack-dev-server"

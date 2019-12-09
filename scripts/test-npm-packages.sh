@@ -23,14 +23,17 @@ packages="\
     @here/harp-omv-datasource \
     @here/harp-text-canvas \
     @here/harp-transfer-manager \
-    @here/harp-utils"
+    @here/harp-utils \
+    @here/harp-webpack-utils"
 
 
 # ensure we have clean environment before and after test
 rootDir=`pwd`
+exampleDir=harp.gl-example
 function cleanup() {
     cd $rootDir
     rm -f @here/*/*.tgz
+    rm -fr $exampleDir
 }
 trap cleanup EXIT
 
@@ -44,19 +47,15 @@ for package in $packages ; do
     ( cd $package && npm pack )
 done
 
-# generate test app
-rm -rf harp.gl-example
-yes "" | npm init @here/harp.gl-app
-cd harp.gl-example
+# generate test app using our local packages
+yes "" | HARP_PACKAGE_ROOT="../" npm init @here/harp.gl-app
+cd $exampleDir
 
 set +x
 for package in $packages ; do
     packageArchives="$packageArchives ../$package/here-$(basename $package)-*.tgz"
 done
 set -x
-
-# install base deps
-npm install
 
 # force use of our local versions
 npm install --no-save $packageArchives
