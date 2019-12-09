@@ -61,6 +61,7 @@ jobs:
           upload-dir: docs
           region: us-east-1
           acl: public_read
+          cache_control: no-cache
           on:
             all_branches: true
             condition: $TRAVIS_BRANCH =~ ^master|release$
