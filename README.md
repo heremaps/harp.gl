@@ -67,12 +67,10 @@ map.addDataSource(omvDataSource);
 
 ### Node modules
 
-Generate a simple app using the package generator:
+Generate a simple app using the package initializer:
 
 ```shell
-mkdir 3dmap-example
-cd 3dmap-example
-npx -p yo -p @here/generator-harp.gl yo @here/harp.gl
+npm init @here/harp.gl-app
 ```
 
 ## About This Repository
