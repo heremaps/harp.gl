@@ -14,9 +14,9 @@ import { accessToken, copyrightInfo } from "../config";
  *
  * To enable line picking set `enableRoadPicking: true` in [[MapViewOptions]] and set
  * `createTileInfo: true` in [[OmvWithRestClientParams]] or in [[OmvWithCustomDataProvider]].
- * To enable polygon picking set `gatherFeatureIds: true` in
+ * To enable polygon picking set `gatherFeatureAttributes: true` in
  * [[OmvWithRestClientParams]] or in [[OmvWithCustomDataProvider]].
- * To enable text element picking set `gatherFeatureIds: true` in
+ * To enable text element picking set `gatherFeatureAttributes: true` in
  * [[OmvWithRestClientParams]] or in [[OmvWithCustomDataProvider]].
  *
  * Now, let's write an event that fires when the user clicks the map canvas:
@@ -140,7 +140,7 @@ export namespace PickingExample {
             styleSetName: "tilezen",
             maxZoomLevel: 17,
             authenticationCode: accessToken,
-            gatherFeatureIds: true,
+            gatherFeatureAttributes: true,
             createTileInfo: true,
             copyrightInfo
         });

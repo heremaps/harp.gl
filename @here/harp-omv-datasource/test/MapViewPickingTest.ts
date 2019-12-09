@@ -164,7 +164,7 @@ describe.skip("MapView Picking", async function() {
             dataProvider: geoJsonDataProvider,
             name: "geojson",
             styleSetName: "geojson",
-            gatherFeatureIds: true,
+            gatherFeatureAttributes: true,
             createTileInfo: true
         });
 

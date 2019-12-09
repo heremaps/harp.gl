@@ -14,6 +14,7 @@ import {
     FillTechnique,
     Geometry,
     GeometryType,
+    getFeatureId,
     Group,
     IndexedTechnique,
     InterleavedBufferAttribute,
@@ -199,7 +200,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
     constructor(
         private readonly m_decodeInfo: OmvDecoder.DecodeInfo,
         private readonly m_styleSetEvaluator: StyleSetEvaluator,
-        private readonly m_gatherFeatureIds: boolean,
+        private readonly m_gatherFeatureAttributes: boolean,
         private readonly m_skipShortLabels: boolean,
         private readonly m_enableElevationOverlay: boolean,
         private readonly m_languages?: string[]
@@ -294,10 +295,10 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                     webMercatorTile2TargetTile(extents, this.m_decodeInfo, pos, tmpV3);
                 }
                 positions.push(tmpV3.x, tmpV3.y, tmpV3.z);
+                objInfos.push(
+                    this.m_gatherFeatureAttributes ? env.entries : getFeatureId(env.entries)
+                );
 
-                if (this.m_gatherFeatureIds) {
-                    objInfos.push(env.entries);
-                }
                 if (wantsPoi) {
                     if (imageTexture === undefined) {
                         imageTextures.push(INVALID_ARRAY_INDEX);
@@ -491,7 +492,9 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                             path,
                             pathLengthSqr,
                             text: String(text),
-                            objInfos: this.m_gatherFeatureIds ? env.entries : undefined
+                            objInfos: this.m_gatherFeatureAttributes
+                                ? env.entries
+                                : getFeatureId(env.entries)
                         });
                     }
                 } else {
@@ -529,7 +532,9 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                             texts: [0],
                             stringCatalog: [text, imageTexture],
                             imageTextures: [1],
-                            objInfos: this.m_gatherFeatureIds ? [env.entries] : undefined
+                            objInfos: this.m_gatherFeatureAttributes
+                                ? [env.entries]
+                                : [getFeatureId(env.entries)]
                         });
                     }
                 }
@@ -570,11 +575,10 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
 
                 localLines.forEach(aLine => {
                     triangulateLine(aLine, lineWidth, positions, indices, addCircle);
-
-                    if (this.m_gatherFeatureIds) {
-                        featureStarts.push(start);
-                        objInfos.push(env.entries);
-                    }
+                    featureStarts.push(start);
+                    objInfos.push(
+                        this.m_gatherFeatureAttributes ? env.entries : getFeatureId(env.entries)
+                    );
                 });
 
                 const count = indices.length - start;
@@ -952,7 +956,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                 technique.transient,
                 false
             );
-            if (!techniqueTransient && this.m_gatherFeatureIds) {
+            if (!techniqueTransient && this.m_gatherFeatureAttributes) {
                 // if this technique is transient, do not save the featureIds with the geometry
                 aLine.objInfos = [featureAttributes];
                 aLine.featureStarts = [0];
@@ -963,7 +967,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
             lineGroup = lineGroupGeometries.lines;
 
             if (
-                this.m_gatherFeatureIds &&
+                this.m_gatherFeatureAttributes &&
                 lineGroupGeometries.objInfos &&
                 lineGroupGeometries.featureStarts
             ) {
@@ -1372,7 +1376,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                 }
             }
 
-            if (this.m_gatherFeatureIds) {
+            if (this.m_gatherFeatureAttributes) {
                 meshBuffers.objInfos.push(context.env.entries);
                 meshBuffers.featureStarts.push(startIndexCount);
             }
@@ -1420,7 +1424,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                     texts: meshBuffers.texts,
                     technique: techniqueIdx,
                     stringCatalog: meshBuffers.stringCatalog,
-                    objInfos: this.m_gatherFeatureIds ? meshBuffers.objInfos : undefined
+                    objInfos: meshBuffers.objInfos
                 });
                 return;
             }
@@ -1552,10 +1556,8 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                 };
             }
 
-            if (this.m_gatherFeatureIds) {
-                geometry.featureStarts = meshBuffers.featureStarts;
-                geometry.objInfos = meshBuffers.objInfos;
-            }
+            geometry.featureStarts = meshBuffers.featureStarts;
+            geometry.objInfos = meshBuffers.objInfos;
 
             this.m_geometries.push(geometry);
         });
@@ -1584,13 +1586,10 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                 },
                 interleavedVertexAttributes: [attr],
                 groups: [{ start: 0, count: indices.length, technique, renderOrderOffset }],
-                vertexAttributes: []
+                vertexAttributes: [],
+                featureStarts: linesGeometry.featureStarts,
+                objInfos: linesGeometry.objInfos
             };
-
-            if (this.m_gatherFeatureIds) {
-                geometry.featureStarts = linesGeometry.featureStarts;
-                geometry.objInfos = linesGeometry.objInfos;
-            }
 
             this.m_geometries.push(geometry);
         });
@@ -1618,13 +1617,11 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                     name: "index"
                 },
                 vertexAttributes: [attr],
-                groups: [{ start: 0, count: indices.length, technique, renderOrderOffset }]
+                groups: [{ start: 0, count: indices.length, technique, renderOrderOffset }],
+                featureStarts: linesGeometry.featureStarts,
+                objInfos: linesGeometry.objInfos
             };
 
-            if (this.m_gatherFeatureIds) {
-                geometry.featureStarts = linesGeometry.featureStarts;
-                geometry.objInfos = linesGeometry.objInfos;
-            }
             this.m_geometries.push(geometry);
         });
     }

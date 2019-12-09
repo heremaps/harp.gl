@@ -161,7 +161,7 @@ export class OmvDecoder implements IGeometryProcessor {
         private readonly m_showMissingTechniques: boolean,
         private readonly m_dataFilter?: OmvFeatureFilter,
         private readonly m_featureModifier?: OmvFeatureModifier,
-        private readonly m_gatherFeatureIds = true,
+        private readonly m_gatherFeatureAttributes = false,
         private readonly m_createTileInfo = false,
         private readonly m_gatherRoadSegments = false,
         private readonly m_skipShortLabels = true,
@@ -216,7 +216,7 @@ export class OmvDecoder implements IGeometryProcessor {
         this.m_decodedTileEmitter = new OmvDecodedTileEmitter(
             decodeInfo,
             this.m_styleSetEvaluator,
-            this.m_gatherFeatureIds,
+            this.m_gatherFeatureAttributes,
             this.m_skipShortLabels,
             this.m_enableElevationOverlay,
             this.m_languages
@@ -569,7 +569,7 @@ export class OmvTileDecoder extends ThemedTileDecoder {
     private m_showMissingTechniques: boolean = false;
     private m_featureFilter?: OmvFeatureFilter;
     private m_featureModifier?: OmvFeatureModifier;
-    private m_gatherFeatureIds: boolean = true;
+    private m_gatherFeatureAttributes: boolean = false;
     private m_createTileInfo: boolean = false;
     private m_gatherRoadSegments: boolean = false;
     private m_skipShortLabels: boolean = true;
@@ -593,7 +593,7 @@ export class OmvTileDecoder extends ThemedTileDecoder {
             this.m_showMissingTechniques,
             this.m_featureFilter,
             this.m_featureModifier,
-            this.m_gatherFeatureIds,
+            this.m_gatherFeatureAttributes,
             this.m_createTileInfo,
             this.m_gatherRoadSegments,
             this.m_skipShortLabels,
@@ -627,7 +627,7 @@ export class OmvTileDecoder extends ThemedTileDecoder {
             this.m_showMissingTechniques,
             this.m_featureFilter,
             this.m_featureModifier,
-            this.m_gatherFeatureIds,
+            this.m_gatherFeatureAttributes,
             this.m_createTileInfo,
             this.m_gatherRoadSegments,
             this.m_skipShortLabels,
@@ -675,8 +675,8 @@ export class OmvTileDecoder extends ThemedTileDecoder {
                 }
             }
 
-            if (omvOptions.gatherFeatureIds !== undefined) {
-                this.m_gatherFeatureIds = omvOptions.gatherFeatureIds === true;
+            if (omvOptions.gatherFeatureAttributes !== undefined) {
+                this.m_gatherFeatureAttributes = omvOptions.gatherFeatureAttributes === true;
             }
             if (omvOptions.createTileInfo !== undefined) {
                 this.m_createTileInfo = omvOptions.createTileInfo === true;

@@ -146,9 +146,9 @@ export interface OmvDecoderOptions {
     showMissingTechniques?: boolean;
 
     /**
-     * Gather feature IDs from [[OmvData]]. Defaults to true.
+     * Gather feature attributes from [[OmvData]]. Defaults to false.
      */
-    gatherFeatureIds?: boolean;
+    gatherFeatureAttributes?: boolean;
     createTileInfo?: boolean;
     gatherRoadSegments?: boolean;
 
