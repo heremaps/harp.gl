@@ -6,6 +6,7 @@
 
 import { Env, Value } from "./Env";
 import { ExprEvaluator, ExprEvaluatorContext, OperatorDescriptor } from "./ExprEvaluator";
+import { ExprInstantiator, InstantiationContext } from "./ExprInstantiator";
 import { ExprParser } from "./ExprParser";
 import { ExprPool } from "./ExprPool";
 import { isInterpolatedPropertyDefinition } from "./InterpolatedProperty";
@@ -15,6 +16,8 @@ import { Definitions, isSelectorDefinition, isValueDefinition } from "./Theme";
 export * from "./Env";
 
 const exprEvaluator = new ExprEvaluator();
+
+const exprInstantiator = new ExprInstantiator();
 
 export interface ExprVisitor<Result, Context> {
     visitNullLiteralExpr(expr: NullLiteralExpr, context: Context): Result;
@@ -246,6 +249,16 @@ export abstract class Expr {
     }
 
     /**
+     * Instantiates this [[Expr]] by resolving references to the `get` and
+     * `has` operator using the given instantiation context.
+     *
+     * @param context The [[InstantationContext]] used to resolve names.
+     */
+    instantiate(context: InstantiationContext): Expr {
+        return this.accept(exprInstantiator, context);
+    }
+
+    /**
      * Gets the dependencies of this [[Expr]].
      */
     dependencies(): ExprDependencies {
@@ -329,7 +342,7 @@ export abstract class LiteralExpr extends Expr {
  * Null literal expression.
  * @hidden
  */
-export class NullLiteralExpr extends Expr {
+export class NullLiteralExpr extends LiteralExpr {
     static instance = new NullLiteralExpr();
     readonly value = null;
 
@@ -467,7 +480,7 @@ export class CallExpr extends Expr {
     }
 }
 
-type MatchLabel = number | string | number[] | string[];
+export type MatchLabel = number | string | number[] | string[];
 
 /**
  * @hidden

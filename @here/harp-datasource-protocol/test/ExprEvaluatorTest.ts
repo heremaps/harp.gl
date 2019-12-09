@@ -8,7 +8,7 @@
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
 import { assert } from "chai";
-import { Expr, ExprScope, JsonValue, MapEnv, ValueMap } from "../lib/Expr";
+import { Env, Expr, ExprScope, JsonExpr, JsonValue, MapEnv, ValueMap } from "../lib/Expr";
 import { getPropertyValue, isInterpolatedProperty } from "../lib/InterpolatedProperty";
 import { InterpolatedProperty, InterpolationMode } from "../lib/InterpolatedPropertyDefs";
 
@@ -990,6 +990,113 @@ describe("ExprEvaluator", function() {
                 ),
                 28
             );
+        });
+    });
+
+    describe("Instantiations", function() {
+        const instantiationEnv = new MapEnv({
+            y: 123
+        });
+
+        function instantiate(
+            expr: JsonExpr,
+            env: Env = instantiationEnv,
+            preserve = new Set<string>(["z"])
+        ) {
+            return Expr.fromJSON(expr)
+                .instantiate({ env, preserve })
+                .toJSON();
+        }
+
+        it("basic", function() {
+            assert.deepStrictEqual(instantiate(["get", "x"]), null);
+            assert.deepStrictEqual(instantiate(["has", "x"]), false);
+
+            assert.deepStrictEqual(instantiate(["get", "y"]), 123);
+            assert.deepStrictEqual(instantiate(["has", "y"]), true);
+
+            assert.deepStrictEqual(instantiate(["get", "z"]), ["get", "z"]);
+            assert.deepStrictEqual(instantiate(["has", "z"]), ["has", "z"]);
+
+            assert.deepStrictEqual(instantiate(["+", ["get", "y"], 1]), ["+", 123, 1]);
+
+            assert.deepStrictEqual(instantiate(["+", ["get", "z"], 1]), ["+", ["get", "z"], 1]);
+        });
+
+        it("zoom", function() {
+            assert.deepStrictEqual(instantiate(["step", ["zoom"], ["get", "y"], 5, 10]), [
+                "step",
+                ["zoom"],
+                123,
+                5,
+                10
+            ]);
+
+            assert.deepStrictEqual(
+                instantiate(["interpolate", ["linear"], ["zoom"], 0, ["get", "y"], 5, 10]),
+                ["interpolate", ["linear"], ["zoom"], 0, 123, 5, 10]
+            );
+        });
+
+        it("nested", function() {
+            assert.deepStrictEqual(
+                instantiate(["case", ["has", "y"], ["+", ["get", "y"], 1], 321]),
+                ["+", 123, 1]
+            );
+
+            assert.deepStrictEqual(
+                instantiate(["case", ["has", "y"], ["+", ["get", "y"], 1], ["get", "y"]]),
+                ["+", 123, 1]
+            );
+
+            assert.deepStrictEqual(
+                instantiate(["case", ["has", "x"], ["+", ["get", "y"], 1], ["get", "y"]]),
+                123
+            );
+
+            assert.deepStrictEqual(
+                instantiate(["case", ["zoom"], ["+", ["get", "y"], 1], ["get", "y"]]),
+                ["case", ["zoom"], ["+", 123, 1], 123]
+            );
+
+            assert.deepStrictEqual(
+                instantiate([
+                    "match",
+                    ["get", "two"],
+                    [0, 1],
+                    ["get", "x"],
+                    2,
+                    ["get", "y"],
+                    ["get", "y"]
+                ]),
+                123
+            );
+
+            assert.deepStrictEqual(
+                instantiate([
+                    "match",
+                    ["get", "y"],
+                    123,
+                    ["step", ["zoom"], ["get", "y"], 1, ["get", "z"]],
+                    ["step", ["zoom"], 0, 2, 2]
+                ]),
+                ["step", ["zoom"], 123, 1, ["get", "z"]]
+            );
+
+            assert.deepStrictEqual(
+                instantiate([
+                    "match",
+                    ["get", "x"],
+                    123,
+                    ["step", ["zoom"], 0, 1, ["get", "z"]],
+                    ["step", ["zoom"], 0, 2, ["get", "y"]]
+                ]),
+                ["step", ["zoom"], 0, 2, 123]
+            );
+
+            assert.deepStrictEqual(instantiate(["in", ["get", "two"], ["aa", "bb"]]), false);
+
+            assert.deepStrictEqual(instantiate(["in", ["get", "y"], [123, 321]]), true);
         });
     });
 });
