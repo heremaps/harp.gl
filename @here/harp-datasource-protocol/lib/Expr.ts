@@ -190,6 +190,7 @@ export abstract class Expr {
      *
      * @param code The code to parse.
      * @returns The parsed [[Expr]].
+     * @deprecated
      */
     static parse(code: string): Expr | never {
         const parser = new ExprParser(code);
@@ -223,222 +224,7 @@ export abstract class Expr {
                   }
                 : undefined;
 
-        return Expr.parseNode(node, referenceResolverState);
-    }
-
-    private static parseNode(
-        node: JsonValue,
-        referenceResolverState: ReferenceResolverState | undefined
-    ): Expr {
-        if (Array.isArray(node)) {
-            return Expr.parseCall(node, referenceResolverState);
-        } else if (node === null) {
-            return NullLiteralExpr.instance;
-        } else if (typeof node === "boolean") {
-            return new BooleanLiteralExpr(node);
-        } else if (typeof node === "number") {
-            return new NumberLiteralExpr(node);
-        } else if (typeof node === "string") {
-            return new StringLiteralExpr(node);
-        }
-        throw new Error(`failed to create expression from: ${JSON.stringify(node)}`);
-    }
-
-    private static parseCall(
-        node: JsonArray,
-        referenceResolverState?: ReferenceResolverState
-    ): Expr {
-        const op = node[0];
-
-        if (typeof op !== "string") {
-            throw new Error("expected a builtin function name");
-        }
-
-        switch (op) {
-            case "!has":
-            case "!in":
-                return new CallExpr("!", [this.parseCall([op.slice(1), ...node.slice(1)])]);
-
-            case "ref":
-                return Expr.resolveReference(node, referenceResolverState);
-
-            case "get":
-                return Expr.parseGetExpr(node, referenceResolverState);
-
-            case "has":
-                return Expr.parseHasExpr(node, referenceResolverState);
-
-            case "in":
-                return Expr.parseInExpr(node, referenceResolverState);
-
-            case "literal":
-                return Expr.parseLiteralExpr(node);
-
-            case "match":
-                return Expr.parseMatchExpr(node, referenceResolverState);
-
-            case "case":
-                return Expr.parseCaseExpr(node, referenceResolverState);
-
-            default:
-                return this.makeCallExpr(op, node, referenceResolverState);
-        } // switch
-    }
-
-    private static parseGetExpr(
-        node: JsonArray,
-        referenceResolverState: ReferenceResolverState | undefined
-    ) {
-        if (node[2] !== undefined) {
-            return Expr.makeCallExpr("get", node, referenceResolverState);
-        }
-        const name = node[1];
-        if (typeof name !== "string") {
-            throw new Error(`expected the name of an attribute`);
-        }
-        return new VarExpr(name);
-    }
-
-    private static parseHasExpr(
-        node: JsonArray,
-        referenceResolverState: ReferenceResolverState | undefined
-    ) {
-        if (node[2] !== undefined) {
-            return Expr.makeCallExpr("has", node, referenceResolverState);
-        }
-        const name = node[1];
-        if (typeof name !== "string") {
-            throw new Error(`expected the name of an attribute`);
-        }
-        return new HasAttributeExpr(name);
-    }
-
-    private static parseInExpr(
-        node: JsonArray,
-        referenceResolverState: ReferenceResolverState | undefined
-    ) {
-        const elements = node[2];
-        if (!ContainsExpr.isValidElementsArray(elements)) {
-            // tslint:disable-next-line: max-line-length
-            throw new Error(`'in' expects an array of number or string literals`);
-        }
-        return new ContainsExpr(this.parseNode(node[1], referenceResolverState), elements);
-    }
-
-    private static parseLiteralExpr(node: JsonArray) {
-        const obj = node[1];
-        if (obj === null || typeof obj !== "object") {
-            throw new Error("expected an object or array literal");
-        }
-        return new ObjectLiteralExpr(obj);
-    }
-
-    private static parseMatchExpr(
-        node: JsonArray,
-        referenceResolverState: ReferenceResolverState | undefined
-    ) {
-        if (node.length < 4) {
-            throw new Error("not enough arguments");
-        }
-        if (!(node.length % 2)) {
-            throw new Error("fallback is missing in 'match' expression");
-        }
-        const value = this.parseNode(node[1], referenceResolverState);
-        const conditions: Array<[MatchLabel, Expr]> = [];
-        for (let i = 2; i < node.length - 1; i += 2) {
-            const label = node[i];
-            if (!MatchExpr.isValidMatchLabel(label)) {
-                throw new Error(`'${JSON.stringify(label)}' is not a valid label for 'match'`);
-            }
-            const expr = this.parseNode(node[i + 1], referenceResolverState);
-            conditions.push([label, expr]);
-        }
-        const fallback = this.parseNode(node[node.length - 1], referenceResolverState);
-        return new MatchExpr(value, conditions, fallback);
-    }
-
-    private static parseCaseExpr(
-        node: JsonArray,
-        referenceResolverState: ReferenceResolverState | undefined
-    ) {
-        if (node.length < 3) {
-            throw new Error("not enough arguments");
-        }
-        if (node.length % 2) {
-            throw new Error("fallback is missing in 'case' expression");
-        }
-        const branches: Array<[Expr, Expr]> = [];
-        for (let i = 1; i < node.length - 1; i += 2) {
-            const condition = this.parseNode(node[i], referenceResolverState);
-            const expr = this.parseNode(node[i + 1], referenceResolverState);
-            branches.push([condition, expr]);
-        }
-        const caseFallback = this.parseNode(node[node.length - 1], referenceResolverState);
-        return new CaseExpr(branches, caseFallback);
-    }
-
-    private static makeCallExpr(
-        op: string,
-        node: any[],
-        referenceResolverState?: ReferenceResolverState
-    ): Expr {
-        return new CallExpr(
-            op,
-            node.slice(1).map(childExpr => this.parseNode(childExpr, referenceResolverState))
-        );
-    }
-
-    private static resolveReference(node: any[], referenceResolverState?: ReferenceResolverState) {
-        if (typeof node[1] !== "string") {
-            throw new Error(`expected the name of an attribute`);
-        }
-        if (referenceResolverState === undefined) {
-            throw new Error(`ref used with no definitions`);
-        }
-        const name = node[1] as string;
-
-        if (referenceResolverState.lockedNames.has(name)) {
-            throw new Error(`circular referene to '${name}'`);
-        }
-
-        if (!(name in referenceResolverState.definitions)) {
-            throw new Error(`definition '${name}' not found`);
-        }
-
-        const cachedEntry = referenceResolverState.cache.get(name);
-        if (cachedEntry !== undefined) {
-            return cachedEntry;
-        }
-        let definitionEntry = referenceResolverState.definitions[name] as any;
-        if (isSelectorDefinition(definitionEntry)) {
-            definitionEntry = definitionEntry.value;
-        }
-        let result: Expr;
-        if (isValueDefinition(definitionEntry)) {
-            if (isInterpolatedPropertyDefinition(definitionEntry.value)) {
-                // found a reference to an interpolation using
-                // the deprecated object-like syntax.
-                return Expr.fromJSON(
-                    interpolatedPropertyDefinitionToJsonExpr(definitionEntry.value)
-                );
-            } else if (isJsonExpr(definitionEntry.value)) {
-                definitionEntry = definitionEntry.value;
-            } else {
-                return Expr.fromJSON(definitionEntry.value);
-            }
-        }
-        if (isJsonExpr(definitionEntry)) {
-            referenceResolverState.lockedNames.add(name);
-            try {
-                result = Expr.parseNode(definitionEntry, referenceResolverState);
-            } finally {
-                referenceResolverState.lockedNames.delete(name);
-            }
-        } else {
-            throw new Error(`unsupported definition ${name}`);
-        }
-        referenceResolverState.cache.set(name, result);
-        return result;
+        return parseNode(node, referenceResolverState);
     }
 
     /**
@@ -796,4 +582,205 @@ class ExprSerializer implements ExprVisitor<JsonValue, void> {
         }
         return ["case", ...branches, this.serialize(expr.fallback)];
     }
+}
+
+function parseNode(
+    node: JsonValue,
+    referenceResolverState: ReferenceResolverState | undefined
+): Expr {
+    if (Array.isArray(node)) {
+        return parseCall(node, referenceResolverState);
+    } else if (node === null) {
+        return NullLiteralExpr.instance;
+    } else if (typeof node === "boolean") {
+        return new BooleanLiteralExpr(node);
+    } else if (typeof node === "number") {
+        return new NumberLiteralExpr(node);
+    } else if (typeof node === "string") {
+        return new StringLiteralExpr(node);
+    }
+    throw new Error(`failed to create expression from: ${JSON.stringify(node)}`);
+}
+
+function parseCall(node: JsonArray, referenceResolverState?: ReferenceResolverState): Expr {
+    const op = node[0];
+
+    if (typeof op !== "string") {
+        throw new Error("expected a builtin function name");
+    }
+
+    switch (op) {
+        case "!has":
+        case "!in":
+            return new CallExpr("!", [parseCall([op.slice(1), ...node.slice(1)])]);
+
+        case "ref":
+            return resolveReference(node, referenceResolverState);
+
+        case "get":
+            return parseGetExpr(node, referenceResolverState);
+
+        case "has":
+            return parseHasExpr(node, referenceResolverState);
+
+        case "in":
+            return parseInExpr(node, referenceResolverState);
+
+        case "literal":
+            return parseLiteralExpr(node);
+
+        case "match":
+            return parseMatchExpr(node, referenceResolverState);
+
+        case "case":
+            return parseCaseExpr(node, referenceResolverState);
+
+        default:
+            return makeCallExpr(op, node, referenceResolverState);
+    } // switch
+}
+
+function parseGetExpr(node: JsonArray, referenceResolverState: ReferenceResolverState | undefined) {
+    if (node[2] !== undefined) {
+        return makeCallExpr("get", node, referenceResolverState);
+    }
+    const name = node[1];
+    if (typeof name !== "string") {
+        throw new Error(`expected the name of an attribute`);
+    }
+    return new VarExpr(name);
+}
+
+function parseHasExpr(node: JsonArray, referenceResolverState: ReferenceResolverState | undefined) {
+    if (node[2] !== undefined) {
+        return makeCallExpr("has", node, referenceResolverState);
+    }
+    const name = node[1];
+    if (typeof name !== "string") {
+        throw new Error(`expected the name of an attribute`);
+    }
+    return new HasAttributeExpr(name);
+}
+
+function parseInExpr(node: JsonArray, referenceResolverState: ReferenceResolverState | undefined) {
+    const elements = node[2];
+    if (!ContainsExpr.isValidElementsArray(elements)) {
+        // tslint:disable-next-line: max-line-length
+        throw new Error(`'in' expects an array of number or string literals`);
+    }
+    return new ContainsExpr(parseNode(node[1], referenceResolverState), elements);
+}
+
+function parseLiteralExpr(node: JsonArray) {
+    const obj = node[1];
+    if (obj === null || typeof obj !== "object") {
+        throw new Error("expected an object or array literal");
+    }
+    return new ObjectLiteralExpr(obj);
+}
+
+function parseMatchExpr(
+    node: JsonArray,
+    referenceResolverState: ReferenceResolverState | undefined
+) {
+    if (node.length < 4) {
+        throw new Error("not enough arguments");
+    }
+    if (!(node.length % 2)) {
+        throw new Error("fallback is missing in 'match' expression");
+    }
+    const value = parseNode(node[1], referenceResolverState);
+    const conditions: Array<[MatchLabel, Expr]> = [];
+    for (let i = 2; i < node.length - 1; i += 2) {
+        const label = node[i];
+        if (!MatchExpr.isValidMatchLabel(label)) {
+            throw new Error(`'${JSON.stringify(label)}' is not a valid label for 'match'`);
+        }
+        const expr = parseNode(node[i + 1], referenceResolverState);
+        conditions.push([label, expr]);
+    }
+    const fallback = parseNode(node[node.length - 1], referenceResolverState);
+    return new MatchExpr(value, conditions, fallback);
+}
+
+function parseCaseExpr(
+    node: JsonArray,
+    referenceResolverState: ReferenceResolverState | undefined
+) {
+    if (node.length < 3) {
+        throw new Error("not enough arguments");
+    }
+    if (node.length % 2) {
+        throw new Error("fallback is missing in 'case' expression");
+    }
+    const branches: Array<[Expr, Expr]> = [];
+    for (let i = 1; i < node.length - 1; i += 2) {
+        const condition = parseNode(node[i], referenceResolverState);
+        const expr = parseNode(node[i + 1], referenceResolverState);
+        branches.push([condition, expr]);
+    }
+    const caseFallback = parseNode(node[node.length - 1], referenceResolverState);
+    return new CaseExpr(branches, caseFallback);
+}
+
+function makeCallExpr(
+    op: string,
+    node: any[],
+    referenceResolverState?: ReferenceResolverState
+): Expr {
+    return new CallExpr(
+        op,
+        node.slice(1).map(childExpr => parseNode(childExpr, referenceResolverState))
+    );
+}
+
+function resolveReference(node: JsonArray, referenceResolverState?: ReferenceResolverState) {
+    if (typeof node[1] !== "string") {
+        throw new Error(`expected the name of an attribute`);
+    }
+    if (referenceResolverState === undefined) {
+        throw new Error(`ref used with no definitions`);
+    }
+    const name = node[1] as string;
+
+    if (referenceResolverState.lockedNames.has(name)) {
+        throw new Error(`circular referene to '${name}'`);
+    }
+
+    if (!(name in referenceResolverState.definitions)) {
+        throw new Error(`definition '${name}' not found`);
+    }
+
+    const cachedEntry = referenceResolverState.cache.get(name);
+    if (cachedEntry !== undefined) {
+        return cachedEntry;
+    }
+    let definitionEntry = referenceResolverState.definitions[name] as any;
+    if (isSelectorDefinition(definitionEntry)) {
+        definitionEntry = definitionEntry.value;
+    }
+    let result: Expr;
+    if (isValueDefinition(definitionEntry)) {
+        if (isInterpolatedPropertyDefinition(definitionEntry.value)) {
+            // found a reference to an interpolation using
+            // the deprecated object-like syntax.
+            return Expr.fromJSON(interpolatedPropertyDefinitionToJsonExpr(definitionEntry.value));
+        } else if (isJsonExpr(definitionEntry.value)) {
+            definitionEntry = definitionEntry.value;
+        } else {
+            return Expr.fromJSON(definitionEntry.value);
+        }
+    }
+    if (isJsonExpr(definitionEntry)) {
+        referenceResolverState.lockedNames.add(name);
+        try {
+            result = parseNode(definitionEntry, referenceResolverState);
+        } finally {
+            referenceResolverState.lockedNames.delete(name);
+        }
+    } else {
+        throw new Error(`unsupported definition ${name}`);
+    }
+    referenceResolverState.cache.set(name, result);
+    return result;
 }
