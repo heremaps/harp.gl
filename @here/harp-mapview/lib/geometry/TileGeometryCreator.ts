@@ -1426,21 +1426,17 @@ export class TileGeometryCreator {
      */
     private addFeatureData(srcGeometry: Geometry, technique: Technique, object: THREE.Object3D) {
         if (
-            ((srcGeometry.featureIds !== undefined && srcGeometry.featureIds.length > 0) ||
+            ((srcGeometry.objInfos !== undefined && srcGeometry.objInfos.length > 0) ||
                 isCirclesTechnique(technique) ||
                 isSquaresTechnique(technique)) &&
             !isSolidLineTechnique(technique)
         ) {
             const featureData: TileFeatureData = {
                 geometryType: srcGeometry.type,
-                ids: srcGeometry.featureIds,
-                starts: srcGeometry.featureStarts
+                starts: srcGeometry.featureStarts,
+                objInfos: srcGeometry.objInfos
             };
             object.userData.feature = featureData;
-
-            if (srcGeometry.objInfos !== undefined) {
-                object.userData.feature.objInfos = srcGeometry.objInfos;
-            }
         }
     }
 

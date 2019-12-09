@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GeometryType, Technique } from "@here/harp-datasource-protocol";
+import { GeometryType, getFeatureId, Technique } from "@here/harp-datasource-protocol";
 import * as THREE from "three";
 
 import { MapView } from "./MapView";
@@ -168,8 +168,11 @@ export class PickHandler {
 
             this.addObjInfo(featureData, intersect, pickResult);
 
-            if (featureData.ids !== undefined) {
-                const featureId = featureData.ids.length === 1 ? featureData.ids[0] : undefined;
+            if (featureData.objInfos !== undefined) {
+                const featureId =
+                    featureData.objInfos.length === 1
+                        ? getFeatureId(featureData.objInfos[0])
+                        : undefined;
                 pickResult.featureId = featureId;
             }
 

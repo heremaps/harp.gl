@@ -28,12 +28,6 @@ export interface IMeshBuffers {
     readonly edgeIndices: number[];
 
     /**
-     * Optional list of feature IDs. Currently only Number is supported, will fail if features have
-     * IDs with type Long.
-     */
-    readonly featureIds: Array<number | undefined>;
-
-    /**
      * Optional list of feature start indices. The indices point into the index attribute.
      */
     readonly featureStarts: number[];

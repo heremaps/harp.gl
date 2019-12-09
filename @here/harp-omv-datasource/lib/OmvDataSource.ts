@@ -5,6 +5,7 @@
  */
 
 import {
+    AttributeMap,
     Definitions,
     GeometryType,
     ITileDecoder,
@@ -35,10 +36,9 @@ export interface LinesGeometry {
     technique: number;
 
     /**
-     * Optional list of feature IDs. Currently only `Number` is supported, will fail if features
-     * have IDs with type `Long`.
+     * Optional array of objects. It can be used to pass user data from the geometry to the mesh.
      */
-    featureIds?: Array<number | undefined>;
+    objInfos?: AttributeMap[];
 
     /**
      * Optional list of feature start indices. The indices point into the index attribute.

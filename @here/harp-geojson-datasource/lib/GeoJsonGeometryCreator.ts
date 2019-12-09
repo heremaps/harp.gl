@@ -46,11 +46,6 @@ class MeshBuffer implements IMeshBuffers {
      */
     readonly featureStarts: number[] = [];
     /**
-     * Optional list of feature IDs. Currently only Number is supported, will fail if features have
-     * IDs with type Long.
-     */
-    readonly featureIds: Array<number | undefined> = [];
-    /**
      * Optional object containing the geojson properties defined by the end-user.
      */
     readonly geojsonProperties: AttributeMap[] = [];
@@ -292,14 +287,7 @@ export class GeoJsonGeometryCreator {
         techniqueIndex: number
     ): Geometry {
         const meshBuffer = new MeshBuffer();
-        const {
-            positions,
-            indices,
-            groups,
-            featureStarts,
-            featureIds,
-            geojsonProperties
-        } = meshBuffer;
+        const { positions, indices, groups, featureStarts, geojsonProperties } = meshBuffer;
 
         const holesVertices: number[][] = [];
 
@@ -321,9 +309,6 @@ export class GeoJsonGeometryCreator {
             }
 
             featureStarts.push(indices.length / 3);
-            // featureIds should be the id of the feature, but for geoJSON datasource we do not have
-            // it in integers, and we do not use them. Therefore, zeroes are added.
-            featureIds.push(0);
             geojsonProperties.push(polygon.geojsonProperties);
 
             for (let i = 0; i < polygon.vertices.length; i += 3) {
@@ -373,7 +358,6 @@ export class GeoJsonGeometryCreator {
                 type: "uint32"
             };
             geometry.featureStarts = meshBuffer.featureStarts;
-            geometry.featureIds = meshBuffer.featureIds;
             geometry.objInfos = meshBuffer.geojsonProperties;
         }
 
@@ -386,7 +370,7 @@ export class GeoJsonGeometryCreator {
         tileWorldExtents: number
     ): Geometry {
         const meshBuffer = new MeshBuffer();
-        const { indices, featureStarts, featureIds, geojsonProperties } = meshBuffer;
+        const { indices, featureStarts, geojsonProperties } = meshBuffer;
 
         let contour: number[];
         const holesVertices: number[][] = [];
@@ -424,9 +408,6 @@ export class GeoJsonGeometryCreator {
             }
 
             featureStarts.push(indices.length / 3);
-            // featureIds should be the id of the feature, but for geoJSON datasource we do not have
-            // it in integers, and we do not use them. Therefore, zeroes are added.
-            featureIds.push(0);
             geojsonProperties.push(polygon.geojsonProperties);
         }
 
@@ -471,7 +452,6 @@ export class GeoJsonGeometryCreator {
                 type: "uint32"
             };
             geometry.featureStarts = meshBuffer.featureStarts;
-            geometry.featureIds = meshBuffer.featureIds;
             geometry.objInfos = meshBuffer.geojsonProperties;
         }
 

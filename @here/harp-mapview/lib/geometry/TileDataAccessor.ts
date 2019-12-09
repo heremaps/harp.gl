@@ -6,7 +6,7 @@
 
 import * as THREE from "three";
 
-import { GeometryType } from "@here/harp-datasource-protocol";
+import { GeometryType, getFeatureId } from "@here/harp-datasource-protocol";
 import { assert, LoggerManager } from "@here/harp-utils";
 import { Tile, TileFeatureData } from "../Tile";
 import {
@@ -157,9 +157,9 @@ export class TileDataAccessor {
         // and the visitor wants to ignore that featureId
         if (
             featureData === undefined ||
-            (featureData.ids !== undefined &&
-                featureData.ids.length === 1 &&
-                !this.visitor.wantsFeature(featureData.ids[0]))
+            (featureData.objInfos !== undefined &&
+                featureData.objInfos.length === 1 &&
+                !this.visitor.wantsFeature(getFeatureId(featureData.objInfos[0])))
         ) {
             return;
         }
@@ -170,13 +170,12 @@ export class TileDataAccessor {
             return;
         }
 
-        assert(featureData.ids !== undefined, "featureData.ids missing");
-        assert(Array.isArray(featureData.ids), "featureData.ids is not an array");
+        assert(featureData.objInfos !== undefined, "featureData.ids missing");
         assert(featureData.starts !== undefined, "featureData.starts missing");
         assert(Array.isArray(featureData.starts), "featureData.starts is not an array");
-        if (featureData.ids !== undefined && featureData.starts !== undefined) {
+        if (featureData.objInfos !== undefined && featureData.starts !== undefined) {
             assert(
-                featureData.ids.length === featureData.starts.length,
+                featureData.objInfos.length === featureData.starts.length,
                 "featureData.ids and featureData.starts have unequal length"
             );
         }
@@ -332,18 +331,18 @@ export class TileDataAccessor {
      * @param featureData Dataset stored along with the object.
      */
     protected visitMesh(meshObject: THREE.Mesh, featureData: TileFeatureData): void {
-        const { ids, starts } = featureData;
+        const { objInfos, starts } = featureData;
         const geometryType = featureData.geometryType;
 
         // make linter happy: we already know that these both are valid
-        if (ids === undefined || starts === undefined || geometryType === undefined) {
+        if (objInfos === undefined || starts === undefined || geometryType === undefined) {
             return;
         }
 
         let geometryAccessor: IGeometryAccessor | undefined;
 
-        for (let featureIndex = 0; featureIndex < ids.length; featureIndex++) {
-            const featureId = ids[featureIndex];
+        for (let featureIndex = 0; featureIndex < objInfos.length; featureIndex++) {
+            const featureId = getFeatureId(objInfos[featureIndex]);
 
             if (!this.visitor.wantsFeature(featureId)) {
                 continue;
