@@ -58,11 +58,6 @@ export interface TileFeatureData {
     geometryType?: GeometryType;
 
     /**
-     * An optional array of feature IDs.
-     */
-    ids?: Array<number | undefined>;
-
-    /**
      * An optional array of indices into geometry where the feature starts. The lists of IDs
      * and starting indices (starts) must have the same size.
      */
@@ -87,9 +82,6 @@ const MINIMUM_OBJECT_SIZE_ESTIMATION = 100;
 export function getFeatureDataSize(featureData: TileFeatureData): number {
     let numBytes = MINIMUM_OBJECT_SIZE_ESTIMATION;
 
-    if (featureData.ids !== undefined) {
-        numBytes += featureData.ids.length * 8;
-    }
     if (featureData.starts !== undefined) {
         numBytes += featureData.starts.length * 8;
     }

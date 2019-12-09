@@ -150,12 +150,6 @@ class MeshBuffers implements IMeshBuffers {
     readonly imageTextures: number[] = [];
 
     /**
-     * Optional list of feature IDs. Currently only Number is supported, will fail if features have
-     * IDs with type Long.
-     */
-    readonly featureIds: Array<number | undefined> = [];
-
-    /**
      * Optional list of feature start indices. The indices point into the index attribute.
      */
     readonly featureStarts: number[] = [];
@@ -252,7 +246,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                 continue;
             }
 
-            const { positions, texts, featureIds, imageTextures, objInfos } = meshBuffers;
+            const { positions, texts, imageTextures, objInfos } = meshBuffers;
 
             const shouldCreateTextGeometries =
                 isTextTechnique(technique) || isPoiTechnique(technique);
@@ -302,7 +296,6 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                 positions.push(tmpV3.x, tmpV3.y, tmpV3.z);
 
                 if (this.m_gatherFeatureIds) {
-                    featureIds.push(featureId);
                     objInfos.push(env.entries);
                 }
                 if (wantsPoi) {
@@ -436,9 +429,8 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                     lineGeometry,
                     technique,
                     techniqueIndex,
-                    this.m_gatherFeatureIds,
                     lineType,
-                    featureId,
+                    env.entries,
                     localLines,
                     context,
                     this.getTextureCoordinateType(technique) ? uvs : undefined,
@@ -559,14 +551,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                 if (meshBuffers === undefined) {
                     continue;
                 }
-                const {
-                    positions,
-                    indices,
-                    groups,
-                    featureIds,
-                    featureStarts,
-                    objInfos
-                } = meshBuffers;
+                const { positions, indices, groups, featureStarts, objInfos } = meshBuffers;
                 const start = indices.length;
 
                 const lineWidth = evaluateTechniqueAttr<number>(context, technique.lineWidth);
@@ -587,7 +572,6 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                     triangulateLine(aLine, lineWidth, positions, indices, addCircle);
 
                     if (this.m_gatherFeatureIds) {
-                        featureIds.push(featureId);
                         featureStarts.push(start);
                         objInfos.push(env.entries);
                     }
@@ -737,9 +721,8 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                         lineGeometry,
                         technique,
                         techniqueIndex,
-                        this.m_gatherFeatureIds,
                         lineType,
-                        featureId,
+                        env.entries,
                         lines,
                         context
                     );
@@ -934,9 +917,8 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
         linesGeometry: LinesGeometry[],
         technique: IndexedTechnique,
         techniqueIndex: number,
-        gatherFeatureIds: boolean,
         lineType = LineType.Complex,
-        featureId: number | undefined,
+        featureAttributes: AttributeMap,
         lines: number[][],
         context: AttrEvaluationContext,
         uvs?: number[][],
@@ -970,9 +952,9 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                 technique.transient,
                 false
             );
-            if (!techniqueTransient && gatherFeatureIds) {
+            if (!techniqueTransient && this.m_gatherFeatureIds) {
                 // if this technique is transient, do not save the featureIds with the geometry
-                aLine.featureIds = [featureId];
+                aLine.objInfos = [featureAttributes];
                 aLine.featureStarts = [0];
             }
 
@@ -981,13 +963,13 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
             lineGroup = lineGroupGeometries.lines;
 
             if (
-                gatherFeatureIds &&
-                lineGroupGeometries.featureIds &&
+                this.m_gatherFeatureIds &&
+                lineGroupGeometries.objInfos &&
                 lineGroupGeometries.featureStarts
             ) {
                 // Add ID to tag the geometry, also provide the current length of the index
                 // attribute
-                lineGroupGeometries.featureIds.push(featureId);
+                lineGroupGeometries.objInfos.push(featureAttributes);
                 lineGroupGeometries.featureStarts.push(lineGroup.indices.length);
             }
         }
@@ -1392,7 +1374,6 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
 
             if (this.m_gatherFeatureIds) {
                 meshBuffers.objInfos.push(context.env.entries);
-                meshBuffers.featureIds.push(featureId);
                 meshBuffers.featureStarts.push(startIndexCount);
             }
 
@@ -1572,7 +1553,6 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
             }
 
             if (this.m_gatherFeatureIds) {
-                geometry.featureIds = meshBuffers.featureIds;
                 geometry.featureStarts = meshBuffers.featureStarts;
                 geometry.objInfos = meshBuffers.objInfos;
             }
@@ -1608,8 +1588,8 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
             };
 
             if (this.m_gatherFeatureIds) {
-                geometry.featureIds = linesGeometry.featureIds;
                 geometry.featureStarts = linesGeometry.featureStarts;
+                geometry.objInfos = linesGeometry.objInfos;
             }
 
             this.m_geometries.push(geometry);
@@ -1642,8 +1622,8 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
             };
 
             if (this.m_gatherFeatureIds) {
-                geometry.featureIds = linesGeometry.featureIds;
                 geometry.featureStarts = linesGeometry.featureStarts;
+                geometry.objInfos = linesGeometry.objInfos;
             }
             this.m_geometries.push(geometry);
         });

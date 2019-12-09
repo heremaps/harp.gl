@@ -146,12 +146,6 @@ export interface Geometry {
     uuid?: string;
 
     /**
-     * Optional list of feature IDs. Currently only `Number` is supported, will fail if features
-     * have IDs with type `Long`.
-     */
-    featureIds?: Array<number | undefined>;
-
-    /**
      * Optional list of feature start indices. The indices point into the index attribute.
      */
     featureStarts?: number[];
