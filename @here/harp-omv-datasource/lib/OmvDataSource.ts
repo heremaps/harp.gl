@@ -94,8 +94,15 @@ export interface OmvDataSourceParameters {
 
     /**
      * Gather feature IDs from `OmvData`. Defaults to `false`.
+     * @deprecated, FeatureIds are always gathered, use [[gatherFeatureAttributes]] to gather
+     * all feature attributes.
      */
     gatherFeatureIds?: boolean;
+
+    /**
+     * Gather feature attributes from `OmvData`. Defaults to `false`.
+     */
+    gatherFeatureAttributes?: boolean;
 
     /**
      * Gather road segments data from [[OmvData]]. Defaults to `false`.
@@ -225,7 +232,7 @@ export class OmvDataSource extends TileDataSource<OmvTile> {
         this.m_decoderOptions = {
             showMissingTechniques: this.m_params.showMissingTechniques === true,
             filterDescription: this.m_params.filterDescr,
-            gatherFeatureIds: this.m_params.gatherFeatureIds === true,
+            gatherFeatureAttributes: this.m_params.gatherFeatureAttributes === true,
             createTileInfo: this.m_params.createTileInfo === true,
             gatherRoadSegments: this.m_params.gatherRoadSegments === true,
             featureModifierId: this.m_params.featureModifierId,

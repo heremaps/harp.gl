@@ -114,7 +114,7 @@ export namespace GeoJsonStylingGame {
         dataProvider: geoJsonDataProvider,
         name: "geojson",
         styleSetName: "geojson",
-        gatherFeatureIds: true
+        gatherFeatureAttributes: true
     });
 
     mapView.addDataSource(geoJsonDataSource).then(() => {

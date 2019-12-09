@@ -275,10 +275,18 @@ export function getProjectionName(projection: Projection): string | never {
 /**
  * @returns Feature id from the provided attribute map.
  */
-export function getFeatureId(attributeMap: AttributeMap | undefined): number | undefined {
-    if (attributeMap === undefined || typeof attributeMap === "number") {
+export function getFeatureId(attributeMap: AttributeMap | undefined): number {
+    if (attributeMap === undefined) {
+        return 0;
+    }
+
+    if (typeof attributeMap === "number") {
         return attributeMap;
     }
 
-    return attributeMap!.$id as number | undefined;
+    if (attributeMap.hasOwnProperty("$id")) {
+        return attributeMap.$id as number;
+    }
+
+    return 0;
 }
