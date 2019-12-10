@@ -49,7 +49,7 @@ import { RenderState } from "./RenderState";
 import { SimpleLineCurve, SimplePath } from "./SimplePath";
 import { TextCanvasFactory } from "./TextCanvasFactory";
 import { TextCanvasRenderer } from "./TextCanvasRenderer";
-import { LoadingState, poiIsRenderable, TextElement, TextPickResult } from "./TextElement";
+import { LoadingState, TextElement, TextPickResult } from "./TextElement";
 import { TextElementGroup } from "./TextElementGroup";
 import { TextElementFilter, TextElementGroupState } from "./TextElementGroupState";
 import {
