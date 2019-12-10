@@ -104,6 +104,9 @@ export class TileLoader {
     loadAndDecode(): Promise<TileLoaderState> {
         switch (this.state) {
             case TileLoaderState.Loading:
+            case TileLoaderState.Loaded:
+            case TileLoaderState.Decoding:
+                // tile is already loading
                 this.countRequests++;
                 return this.donePromise!;
 
@@ -111,18 +114,9 @@ export class TileLoader {
             case TileLoaderState.Failed:
             case TileLoaderState.Initialized:
             case TileLoaderState.Canceled:
+                // restart loading
                 this.countRequests++;
-                this.ensureLoadingStarted();
-                return this.donePromise!;
-
-            case TileLoaderState.Loaded:
-                this.countRequests++;
-                this.startDecodeTile();
-                return this.donePromise!;
-
-            case TileLoaderState.Decoding:
-                this.cancelDecoding();
-                this.ensureLoadingStarted();
+                this.startLoading();
                 return this.donePromise!;
         }
     }
@@ -190,33 +184,9 @@ export class TileLoader {
     }
 
     /**
-     * Depending on state: if not loaded yet, make sure it is loading.
-     */
-    protected ensureLoadingStarted() {
-        switch (this.state) {
-            case TileLoaderState.Ready:
-            case TileLoaderState.Initialized:
-            case TileLoaderState.Canceled:
-                this.doStartLoad();
-                return;
-
-            case TileLoaderState.Loading:
-            case TileLoaderState.Loaded:
-                // we may reuse already started loading promise
-                logger.info("reusing already started load operation");
-                return;
-
-            case TileLoaderState.Decoding:
-                this.cancelDecoding();
-                this.doStartLoad();
-                return;
-        }
-    }
-
-    /**
      * Start loading. Only call if loading did not start yet.
      */
-    protected doStartLoad() {
+    protected startLoading() {
         const myLoadCancellationToken = this.loadAbortController.signal;
         this.dataProvider
             .getTile(this.tileKey, myLoadCancellationToken)

@@ -37,9 +37,11 @@
     "devDependencies": {
         "@here/harp-test-utils": "^0.11.0",
         "@types/chai": "^4.1.2",
+        "@types/chai-as-promised": "^7.1.2",
         "@types/mocha": "^5.2.7",
         "@types/sinon": "^7.0.13",
         "chai": "^4.0.2",
+        "chai-as-promised": "^7.1.1",
         "cross-env": "^6.0.3",
         "mocha": "^6.1.4",
         "sinon": "^7.1.1",
