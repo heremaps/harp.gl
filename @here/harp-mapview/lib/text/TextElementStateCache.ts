@@ -163,6 +163,7 @@ export class TextElementStateCache {
             // New label is visible, substitute the cached label.
             cachedEntries[duplicateIndex] = elementState;
 
+            cachedDuplicate.reset();
             return true;
         }
 
