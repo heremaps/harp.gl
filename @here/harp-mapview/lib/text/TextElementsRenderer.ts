@@ -1572,14 +1572,14 @@ export class TextElementsRenderer {
             renderIcon && poiRenderer.prepareRender(pointLabel, this.m_viewState.zoomLevel);
 
         if (iconReady) {
-            const iconIsVisible =
-                poiRenderer.computeIconScreenBox(
-                    poiInfo!,
-                    tempPoiScreenPosition,
-                    distanceScaleFactor,
-                    this.m_viewState.zoomLevel,
-                    tempBox2D
-                ) && this.m_screenCollisions.isVisible(tempBox2D);
+            PoiRenderer.computeIconScreenBox(
+                poiInfo!,
+                tempPoiScreenPosition,
+                distanceScaleFactor,
+                this.m_viewState.zoomLevel,
+                tempBox2D
+            );
+            const iconIsVisible = this.m_screenCollisions.isVisible(tempBox2D);
 
             // If the icon is prepared and valid, but just not visible, try again next time.
             if (!iconIsVisible) {
