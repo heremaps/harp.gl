@@ -33,16 +33,16 @@ export function poiBuilder(text: string = DEF_TEXT): TextElementBuilder {
         .withPoiInfo(new PoiInfoBuilder().withPoiTechnique());
 }
 
-export function pathTextBuilder(text: string = DEF_TEXT): TextElementBuilder {
+export function pathTextBuilder(coordScale: number, text: string = DEF_TEXT): TextElementBuilder {
     return new TextElementBuilder()
         .withText(text)
-        .withPath(DEF_PATH.map((point: THREE.Vector3) => point.clone()));
+        .withPath(DEF_PATH.map((point: THREE.Vector3) => point.clone().multiplyScalar(coordScale)));
 }
 
-export function lineMarkerBuilder(text: string = DEF_TEXT): TextElementBuilder {
+export function lineMarkerBuilder(coordScale: number, text: string = DEF_TEXT): TextElementBuilder {
     return new TextElementBuilder()
         .withText(text)
-        .withPath(DEF_PATH.map((point: THREE.Vector3) => point.clone()))
+        .withPath(DEF_PATH.map((point: THREE.Vector3) => point.clone().multiplyScalar(coordScale)))
         .withPoiInfo(new PoiInfoBuilder().withLineMarkerTechnique());
 }
 
@@ -54,6 +54,7 @@ export class TextElementBuilder {
     private m_poiInfoBuilder: PoiInfoBuilder | undefined;
     private m_xOffset: number | undefined;
     private m_yOffset: number | undefined;
+    private m_featureId: number | undefined;
 
     withPoiInfo(poiInfoBuilder: PoiInfoBuilder): TextElementBuilder {
         this.m_poiInfoBuilder = poiInfoBuilder;
@@ -99,6 +100,11 @@ export class TextElementBuilder {
         return this;
     }
 
+    withFeatureId(id: number): TextElementBuilder {
+        this.m_featureId = id;
+        return this;
+    }
+
     build(sandbox: sinon.SinonSandbox): TextElement {
         const textElement = new TextElement(
             this.m_text,
@@ -107,7 +113,8 @@ export class TextElementBuilder {
             DEF_LAYOUT_PARAMS,
             this.m_priority,
             this.m_xOffset,
-            this.m_yOffset
+            this.m_yOffset,
+            this.m_featureId
         );
         textElement.ignoreDistance = this.m_ignoreDistance;
         if (this.m_poiInfoBuilder !== undefined) {
