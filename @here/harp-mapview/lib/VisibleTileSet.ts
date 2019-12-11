@@ -915,7 +915,7 @@ export class VisibleTileSet {
 
             // Minor optimization for the fallback search, only check parent tiles once, otherwise
             // the recursive algorithm checks all parent tiles multiple times, the key is the code
-            // of the tile that is checked and the value is whether
+            // of the tile that is checked and the value is whether a parent was found or not.
             const checkedTiles = new Map<number, boolean>();
             // Iterate over incomplete (not loaded tiles) and find their parents or children that
             // are in cache that can be rendered temporarily until tile is loaded. Note, we favour
@@ -1005,8 +1005,10 @@ export class VisibleTileSet {
         // Check if another sibling has already added the parent.
         if (renderedTiles.get(parentCode) !== undefined) {
             return true;
-        } else if (checkedTiles.has(parentCode)) {
-            return checkedTiles.get(parentCode)!;
+        }
+        const exists = checkedTiles.get(parentCode)!;
+        if (exists !== undefined) {
+            return exists;
         }
 
         const { offset, mortonCode } = TileOffsetUtils.extractOffsetAndMortonKeyFromKey(parentCode);
