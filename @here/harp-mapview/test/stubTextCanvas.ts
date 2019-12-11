@@ -1,0 +1,82 @@
+/*
+ * Copyright (C) 2017-2019 HERE Europe B.V.
+ * Licensed under Apache 2.0, see full license in LICENSE
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+import {
+    FontCatalog,
+    GlyphData,
+    MeasurementParameters,
+    TextBufferObject,
+    TextCanvas
+} from "@here/harp-text-canvas";
+import * as sinon from "sinon";
+import * as THREE from "three";
+import { TextCanvasFactory } from "../lib/text/TextCanvasFactory";
+
+/**
+ * Creates a TextCanvas stub.
+ * @param sandbox Sinon sandbox to keep track of created stubs.
+ * @param fontCatalog Font catalog used by the created text canvas.
+ * @param textWidthHeight Text width and height used to compute bounds.
+ * @returns TextCanvas stub.
+ */
+export function stubTextCanvas(
+    sandbox: sinon.SinonSandbox,
+    fontCatalog: FontCatalog,
+    textWidthHeight: number
+): TextCanvas {
+    const renderer = ({} as unknown) as THREE.WebGLRenderer;
+    const textCanvas = new TextCanvas({
+        renderer,
+        fontCatalog,
+        minGlyphCount: 1,
+        maxGlyphCount: 1
+    });
+
+    sandbox.stub(textCanvas, "addText").returns(true);
+    sandbox
+        .stub(textCanvas, "measureText")
+        .callsFake(
+            (
+                _text: string | GlyphData[],
+                outputBounds: THREE.Box2,
+                params: MeasurementParameters | undefined
+            ) => {
+                // Return a box centered on origin with dimensions DEF_TEXT_WIDTH_HEIGHT
+                outputBounds.set(
+                    new THREE.Vector2(-textWidthHeight / 2, -textWidthHeight / 2),
+                    new THREE.Vector2(textWidthHeight / 2, textWidthHeight / 2)
+                );
+                // Same bbox for character bounds, as if text had a single character.
+                if (params !== undefined && params.outputCharacterBounds !== undefined) {
+                    params.outputCharacterBounds.push(outputBounds.clone());
+                }
+                return true;
+            }
+        );
+    sandbox.stub(textCanvas, "createTextBufferObject").callsFake(() => {
+        return new TextBufferObject([], new Float32Array());
+    });
+    sandbox.stub(textCanvas, "addTextBufferObject").returns(true);
+    sandbox.stub(textCanvas, "render"); // do nothing.
+
+    return textCanvas;
+}
+
+/**
+ * Stubs text canvas factory.
+ * @param sandbox Sinon sandbox to keep track of created stubs.
+ * @param textCanvas The text canvas to be returned by the factory.
+ * @returns TextCanvasFactory stub.
+ */
+export function stubTextCanvasFactory(
+    sandbox: sinon.SinonSandbox,
+    textCanvas: TextCanvas
+): TextCanvasFactory {
+    const textCanvasFactoryStub = sandbox.createStubInstance(TextCanvasFactory);
+    textCanvasFactoryStub.createTextCanvas.returns((textCanvas as unknown) as TextCanvas);
+
+    return (textCanvasFactoryStub as unknown) as TextCanvasFactory;
+}
