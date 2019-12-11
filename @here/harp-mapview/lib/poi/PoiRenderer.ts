@@ -219,12 +219,14 @@ class PoiRenderBuffer {
      * @param opacity Opacity of icon to allow fade in/out.
      */
     addPoi(poiInfo: PoiInfo, screenBox: Math2D.Box, viewDistance: number, opacity: number): number {
-        const batchIndex = this.registerPoi(poiInfo);
-        assert(batchIndex >= 0);
-        if (batchIndex < 0) {
+        const poiRegistered =
+            poiInfo.poiRenderBatch !== undefined && poiInfo.poiRenderBatch !== INVALID_RENDER_BATCH;
+        const batchIndex = poiRegistered ? poiInfo.poiRenderBatch! : this.registerPoi(poiInfo);
+        if (batchIndex === INVALID_RENDER_BATCH) {
             return INVALID_RENDER_BATCH;
         }
-
+        assert(batchIndex >= 0);
+        assert(batchIndex < this.batches.length);
         assert(poiInfo.uvBox !== undefined);
 
         if (this.batches[batchIndex].boxBuffer === undefined) {
@@ -321,6 +323,43 @@ class PoiRenderBuffer {
  * rendered.
  */
 export class PoiRenderer {
+    /**
+     * Compute screen box for icon. It is required that `prepareRender` has been successfully called
+     * before `computeScreenBox` may be called.
+     *
+     * @param poiInfo PoiInfo containing information for rendering the POI icon.
+     * @param screenPosition Position on screen (2D).
+     * @param scale Scale to apply to icon.
+     * @param zoomLevel Current zoom level.
+     * @param screenBox Box that will be used to store the result.
+     * @returns The computed screen box for the icon.
+     */
+    static computeIconScreenBox(
+        poiInfo: PoiInfo,
+        screenPosition: THREE.Vector2,
+        scale: number,
+        zoomLevel: number,
+        /* out */ screenBox: Math2D.Box = new Math2D.Box()
+    ): Math2D.Box {
+        assert(poiInfo.poiRenderBatch !== undefined);
+        assert(poiInfo.poiRenderBatch !== INVALID_RENDER_BATCH);
+
+        const width = poiInfo.computedWidth! * scale;
+        const height = poiInfo.computedHeight! * scale;
+        const technique = poiInfo.technique;
+        const iconXOffset = getPropertyValue(technique.iconXOffset, zoomLevel);
+        const iconYOffset = getPropertyValue(technique.iconYOffset, zoomLevel);
+
+        const centerX = screenPosition.x + (typeof iconXOffset === "number" ? iconXOffset : 0);
+        const centerY = screenPosition.y + (typeof iconYOffset === "number" ? iconYOffset : 0);
+
+        screenBox.x = centerX - width / 2;
+        screenBox.y = centerY - height / 2;
+        screenBox.w = width;
+        screenBox.h = height;
+
+        return screenBox;
+    }
     // keep track of the missing textures, but only warn once
     private static m_missingTextureName: Map<string, boolean> = new Map();
 
@@ -392,21 +431,19 @@ export class PoiRenderer {
     ): void {
         assert(poiInfo.poiRenderBatch !== undefined);
 
-        if (
-            this.computeIconScreenBox(
-                poiInfo,
-                screenPosition,
-                scale,
-                zoomLevel,
-                this.m_tempScreenBox
-            )
-        ) {
-            if (allocateScreenSpace) {
-                screenCollisions.allocate(this.m_tempScreenBox);
-            }
+        PoiRenderer.computeIconScreenBox(
+            poiInfo,
+            screenPosition,
+            scale,
+            zoomLevel,
+            this.m_tempScreenBox
+        );
 
-            this.m_renderBuffer.addPoi(poiInfo, this.m_tempScreenBox, viewDistance, opacity);
+        if (allocateScreenSpace) {
+            screenCollisions.allocate(this.m_tempScreenBox);
         }
+
+        this.m_renderBuffer.addPoi(poiInfo, this.m_tempScreenBox, viewDistance, opacity);
     }
 
     /**
@@ -437,46 +474,6 @@ export class PoiRenderer {
      */
     getMemoryUsage(info: MemoryUsage) {
         this.m_renderBuffer.updateMemoryUsage(info);
-    }
-
-    /**
-     * Compute screen box for icon. It is required that `prepareRender` has been successfully called
-     * before `computeScreenBox` may be called.
-     *
-     * @param poiInfo PoiInfo containing information for rendering the POI icon.
-     * @param screenPosition Position on screen (2D).
-     * @param scale Scale to apply to icon.
-     * @param zoomLevel Current zoom level.
-     * @param screenBox The computed screen box for the icon.
-     *
-     * @returns `True` if box is visible on screen.
-     */
-    computeIconScreenBox(
-        poiInfo: PoiInfo,
-        screenPosition: THREE.Vector2,
-        scale: number,
-        zoomLevel: number,
-        /* out */ screenBox: Math2D.Box
-    ): boolean {
-        assert(poiInfo.poiRenderBatch !== undefined);
-        const batch = this.m_renderBuffer.getBatch(poiInfo.poiRenderBatch!);
-        if (batch === undefined) {
-            return false;
-        }
-        const width = poiInfo.computedWidth! * scale;
-        const height = poiInfo.computedHeight! * scale;
-        const technique = poiInfo.technique;
-        const iconXOffset = getPropertyValue(technique.iconXOffset, zoomLevel);
-        const iconYOffset = getPropertyValue(technique.iconYOffset, zoomLevel);
-
-        const centerX = screenPosition.x + (typeof iconXOffset === "number" ? iconXOffset : 0);
-        const centerY = screenPosition.y + (typeof iconYOffset === "number" ? iconYOffset : 0);
-
-        screenBox.x = centerX - width / 2;
-        screenBox.y = centerY - height / 2;
-        screenBox.w = width;
-        screenBox.h = height;
-        return true;
     }
 
     /**
