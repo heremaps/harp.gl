@@ -364,6 +364,7 @@ export class TopViewClipPlanesEvaluator extends ElevationBasedClipPlanesEvaluato
         // the camera, then we apply margin (elevation) to it along the sphere surface normal:
         const cameraAltitude = this.getCameraAltitude(camera, projection);
         nearPlane = cameraAltitude - this.maxElevation;
+        let farMax = cameraAltitude * this.farMaxRatio;
 
         // Far plane calculation requires different approaches depending from camera projection:
         // - perspective
@@ -393,10 +394,12 @@ export class TopViewClipPlanesEvaluator extends ElevationBasedClipPlanesEvaluato
             const aspect = cam.aspect > 1 ? cam.aspect : 1 / cam.aspect;
             const halfFovAngle = THREE.Math.degToRad((cam.fov * aspect) / 2);
 
+            const farTangent = this.getTangentBasedFarPlane(cam, d, r, alpha);
             farPlane =
                 halfFovAngle > alpha
-                    ? this.getTangentBasedFarPlane(cam, d, r, alpha)
+                    ? farTangent
                     : this.getFovBasedFarPlane(cam, d, r, 2 * halfFovAngle, projection);
+            farMax = Math.max(farMax, farTangent);
         }
         // Orthographic camera projection
         else {
@@ -418,7 +421,7 @@ export class TopViewClipPlanesEvaluator extends ElevationBasedClipPlanesEvaluato
             near: nearPlane,
             far: farPlane,
             minimum: this.nearMin,
-            maximum: farPlane
+            maximum: farMax
         };
         return viewRanges;
     }
@@ -843,6 +846,7 @@ export class TiltViewClipPlanesEvaluator extends TopViewClipPlanesEvaluator {
         const r = EarthConstants.EQUATORIAL_RADIUS;
         const d = cameraToOrigin.length();
         let farPlane: number;
+        let farMax = mapView.lookAtDistance * this.farMaxRatio;
         if (camera instanceof THREE.PerspectiveCamera) {
             // Step-wise calculate angle between camera eye vector and tangent
 
@@ -856,10 +860,12 @@ export class TiltViewClipPlanesEvaluator extends TopViewClipPlanesEvaluator {
             const modifiedAlpha = Math.abs(alpha - cameraPitch);
 
             // Use tangent based far plane if horizon is within field of view
+            const farTangent = this.getTangentBasedFarPlane(camera, d, r, modifiedAlpha);
             farPlane =
                 halfFovAngle >= modifiedAlpha
-                    ? this.getTangentBasedFarPlane(camera, d, r, modifiedAlpha)
+                    ? farTangent
                     : this.getTiltedFovBasedFarPlane(d, r, halfFovAngle, cameraPitch);
+            farMax = Math.max(farMax, farTangent);
         } else {
             farPlane = this.getOrthoBasedFarPlane(d, r);
         }
@@ -880,7 +886,7 @@ export class TiltViewClipPlanesEvaluator extends TopViewClipPlanesEvaluator {
 
         // Set minimum and maximum view range.
         viewRanges.minimum = this.nearMin;
-        viewRanges.maximum = viewRanges.far;
+        viewRanges.maximum = farMax;
 
         return viewRanges;
     }
