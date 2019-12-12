@@ -401,7 +401,7 @@ export class SolidLineMaterial extends THREE.RawShaderMaterial
                 THREE.UniformsLib.fog
             ]),
             defines,
-            transparent: true,
+            blending: THREE.CustomBlending,
             fog: true
         };
 

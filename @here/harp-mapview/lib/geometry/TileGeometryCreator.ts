@@ -819,7 +819,7 @@ export class TileGeometryCreator {
                         viewRanges,
                         fadingParams.fadeNear,
                         fadingParams.fadeFar,
-                        true,
+                        false,
                         false,
                         (renderer, mat) => {
                             const lineMaterial = mat as SolidLineMaterial;
