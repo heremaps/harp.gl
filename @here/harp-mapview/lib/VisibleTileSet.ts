@@ -913,9 +913,12 @@ export class VisibleTileSet {
                 return;
             }
 
-            // Minor optimization for the fallback search, only check parent tiles once, otherwise
-            // the recursive algorithm checks all parent tiles multiple times, the key is the code
-            // of the tile that is checked and the value is whether a parent was found or not.
+            // Minor optimization for the fallback search, only check ancestor tiles once, otherwise
+            // the recursive algorithm checks all ancestors for all tiles, the key is the code of
+            // the tile that is checked and the value is whether a parent was found or not, if true
+            // then we know the ancestor is in the renderedTiles list and we can continue, false
+            // means we know it doesn't exist, so don't bother looking and look then to the
+            // children.
             const checkedTiles = new Map<number, boolean>();
             // Iterate over incomplete (not loaded tiles) and find their parents or children that
             // are in cache that can be rendered temporarily until tile is loaded. Note, we favour
