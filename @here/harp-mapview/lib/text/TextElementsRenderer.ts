@@ -1696,7 +1696,12 @@ export class TextElementsRenderer {
             const textNeedsDraw = !textRejected || textRenderState!.isFading();
 
             if (textNeedsDraw) {
-                if (pointLabel.textReservesSpace) {
+                // Don't allocate space for rejected text. When zooming, this allows placement of a
+                // lower priority text element that was displaced by a higher priority one (not
+                // present in the new zoom level) before an even lower priority one takes the space.
+                // Otherwise the lowest priority text will fade in and back out.
+                // TODO: Add a unit test for this scenario.
+                if (pointLabel.textReservesSpace && !textRejected) {
                     this.m_screenCollisions.allocate(tempBox2D);
                 }
 
@@ -1764,13 +1769,17 @@ export class TextElementsRenderer {
 
             const opacity = iconRenderState.opacity * distanceFadeFactor;
             if (opacity > 0) {
+                // Same as for text, don't allocate screen space for an icon that's fading out so
+                // that any label blocked by it gets a chance to be placed as soon as any other
+                // surrounding new labels.
+                const allocateSpace = poiInfo!.reserveSpace !== false && !iconRejected;
                 poiRenderer.renderPoi(
                     poiInfo!,
                     tempPoiScreenPosition,
                     this.m_screenCollisions,
                     labelState.renderDistance,
                     distanceScaleFactor,
-                    poiInfo!.reserveSpace !== false,
+                    allocateSpace,
                     iconRenderState.opacity * distanceFadeFactor,
                     this.m_viewState.zoomLevel
                 );
