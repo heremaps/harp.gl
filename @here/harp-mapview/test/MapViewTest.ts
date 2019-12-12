@@ -107,7 +107,7 @@ describe("MapView", function() {
             target: new GeoCoordinates(52.5145, 13.3501),
             zoomLevel: 18,
             tilt: 10,
-            azimuth: 20
+            heading: 20
         });
 
         expect(mapView.zoomLevel).to.equal(18);
@@ -127,7 +127,7 @@ describe("MapView", function() {
             target: new GeoCoordinates(52.5145, 13.3501),
             zoomLevel: 18,
             tilt: 10,
-            azimuth: 20
+            heading: 20
         });
 
         expect(mapView.zoomLevel).to.be.closeTo(18, 1e-10);
@@ -146,7 +146,7 @@ describe("MapView", function() {
             target: [13.3501, 52.5145],
             zoomLevel: 18,
             tilt: 10,
-            azimuth: 20
+            heading: 20
         });
 
         expect(mapView.zoomLevel).to.equal(18);
@@ -168,7 +168,7 @@ describe("MapView", function() {
             },
             zoomLevel: 18,
             tilt: 10,
-            azimuth: 20
+            heading: 20
         });
 
         expect(mapView.zoomLevel).to.equal(18);
@@ -189,7 +189,7 @@ describe("MapView", function() {
             },
             zoomLevel: 18,
             tilt: 10,
-            azimuth: 20
+            heading: 20
         });
 
         expect(mapView.zoomLevel).to.equal(18);

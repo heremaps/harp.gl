@@ -596,11 +596,11 @@ export interface MapViewOptions extends TextElementsRendererOptions {
     zoomLevel?: number;
 
     /**
-     * Set initial camera azimuth in degrees.
+     * Set initial camera heading in degrees.
      *
      * @default 0
      */
-    azimuth?: number;
+    heading?: number;
 
     /**
      * Set initial camera tilt in degrees.
@@ -632,7 +632,7 @@ export const MapViewDefaults = {
     target: new GeoCoordinates(25, 0),
     zoomLevel: 5,
     tilt: 0,
-    azimuth: 0
+    heading: 0
 };
 
 /**
@@ -1465,7 +1465,7 @@ export class MapView extends THREE.EventDispatcher {
         const targetDistance = this.camera.position.distanceTo(target);
         const attitude = MapViewUtils.extractAttitude(this, this.camera);
         const pitchDeg = THREE.Math.radToDeg(attitude.pitch);
-        const azimuthDeg = -THREE.Math.radToDeg(attitude.yaw);
+        const headingDeg = -THREE.Math.radToDeg(attitude.yaw);
 
         this.m_visibleTileSetOptions.projection = projection;
         this.updatePolarDataSource();
@@ -1481,7 +1481,7 @@ export class MapView extends THREE.EventDispatcher {
             this.m_visibleTileSetOptions
         );
 
-        this.lookAt(targetCoordinates, targetDistance, pitchDeg, azimuthDeg);
+        this.lookAt(targetCoordinates, targetDistance, pitchDeg, headingDeg);
     }
 
     /**
@@ -1865,19 +1865,19 @@ export class MapView extends THREE.EventDispatcher {
 
     /**
      * The method that sets the camera to the desired angle (`tiltDeg`) and `distance` (in meters)
-     * to the `target` location, from a certain azimuth (`azimuthAngle`).
+     * to the `target` location, from a certain heading (`headingAngle`).
      *
      * @param target The location to look at.
      * @param distance The distance of the camera to the target in meters.
      * @param tiltDeg The camera tilt angle in degrees (0 is vertical), curbed below 89deg.
-     * @param azimuthDeg The camera azimuth angle in degrees and clockwise (as opposed to yaw),
+     * @param headingDeg The camera heading angle in degrees and clockwise (as opposed to yaw),
      * starting north.
      */
     lookAt(
         target: GeoCoordinates,
         distance: number,
         tiltDeg: number = 0,
-        azimuthDeg: number = 0
+        headingDeg: number = 0
     ): void {
         const limitedTilt = Math.min(89, tiltDeg);
         // MapViewUtils#setRotation uses pitch, not tilt, which is different in sphere projection.
@@ -1886,14 +1886,14 @@ export class MapView extends THREE.EventDispatcher {
         MapViewUtils.getCameraRotationAtTarget(
             this.projection,
             target,
-            -azimuthDeg,
+            -headingDeg,
             limitedTilt,
             this.camera.quaternion
         );
         MapViewUtils.getCameraPositionFromTargetCoordinates(
             target,
             distance,
-            -azimuthDeg,
+            -headingDeg,
             limitedTilt,
             this.projection,
             this.camera.position
@@ -1909,7 +1909,7 @@ export class MapView extends THREE.EventDispatcher {
      *
      * @param geoPos Geolocation to move the camera to.
      * @param zoomLevel Desired zoom level.
-     * @param yawDeg Camera yaw in degrees, counter-clockwise (as opposed to azimuth), starting
+     * @param yawDeg Camera yaw in degrees, counter-clockwise (as opposed to heading), starting
      * north.
      * @param pitchDeg Camera pitch in degrees.
      */
@@ -2987,9 +2987,9 @@ export class MapView extends THREE.EventDispatcher {
         target.altitude = 0; // ensure that look at target has height of 0
         const zoomLevel = getOptionValue(options.zoomLevel, MapViewDefaults.zoomLevel);
         const tilt = getOptionValue(options.tilt, MapViewDefaults.tilt);
-        const azimuth = getOptionValue(options.azimuth, MapViewDefaults.azimuth);
+        const heading = getOptionValue(options.heading, MapViewDefaults.heading);
 
-        this.lookAt(target, 300000, tilt, azimuth);
+        this.lookAt(target, 300000, tilt, heading);
         this.zoomLevel = zoomLevel;
     }
 

@@ -78,7 +78,7 @@ export namespace HelloWorldExample {
             theme: "resources/berlin_tilezen_base.json",
             target: NY,
             tilt: 50,
-            azimuth: -20,
+            heading: -20,
             zoomLevel: 16.1
         });
         // end:harp_gl_hello_world_example_1.ts
