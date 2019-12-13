@@ -15,6 +15,7 @@ import {
 import {
     EarthConstants,
     GeoCoordinates,
+    GeoCoordLike,
     mercatorProjection,
     Projection,
     ProjectionType,
@@ -578,6 +579,35 @@ export interface MapViewOptions extends TextElementsRendererOptions {
      * @default false.
      */
     synchronousRendering?: boolean;
+
+    /**
+     * Set initial camera target in geo coordinates.
+     *
+     * Longitude values outside of -180 and +180 are acceptable.
+     * @default new GeoCoordinates(25, 0)
+     */
+    target?: GeoCoordLike;
+
+    /**
+     * Set initial zoom level.
+     *
+     * @default 12
+     */
+    zoomLevel?: number;
+
+    /**
+     * Set initial camera heading in degrees.
+     *
+     * @default 0
+     */
+    heading?: number;
+
+    /**
+     * Set initial camera tilt in degrees.
+     *
+     * @default 0
+     */
+    tilt?: number;
 }
 
 /**
@@ -597,7 +627,12 @@ export const MapViewDefaults = {
     pixelRatio:
         typeof window !== "undefined" && window.devicePixelRatio !== undefined
             ? window.devicePixelRatio
-            : 1.0
+            : 1.0,
+    geoCenter: new GeoCoordinates(25, 0, 30000000),
+    target: new GeoCoordinates(25, 0),
+    zoomLevel: 5,
+    tilt: 0,
+    heading: 0
 };
 
 /**
@@ -901,7 +936,8 @@ export class MapView extends THREE.EventDispatcher {
         this.m_scene.add(this.m_camera); // ensure the camera is added to the scene.
         this.m_screenProjector = new ScreenProjector(this.m_camera);
 
-        this.setupCamera();
+        // setup camera with initial position
+        this.setupCamera(options);
 
         this.m_movementDetector = new CameraMovementDetector(
             this.m_options.movementThrottleTimeout,
@@ -1429,7 +1465,7 @@ export class MapView extends THREE.EventDispatcher {
         const targetDistance = this.camera.position.distanceTo(target);
         const attitude = MapViewUtils.extractAttitude(this, this.camera);
         const pitchDeg = THREE.Math.radToDeg(attitude.pitch);
-        const azimuthDeg = -THREE.Math.radToDeg(attitude.yaw);
+        const headingDeg = -THREE.Math.radToDeg(attitude.yaw);
 
         this.m_visibleTileSetOptions.projection = projection;
         this.updatePolarDataSource();
@@ -1445,7 +1481,7 @@ export class MapView extends THREE.EventDispatcher {
             this.m_visibleTileSetOptions
         );
 
-        this.lookAt(targetCoordinates, targetDistance, pitchDeg, azimuthDeg);
+        this.lookAt(targetCoordinates, targetDistance, pitchDeg, headingDeg);
     }
 
     /**
@@ -1829,19 +1865,19 @@ export class MapView extends THREE.EventDispatcher {
 
     /**
      * The method that sets the camera to the desired angle (`tiltDeg`) and `distance` (in meters)
-     * to the `target` location, from a certain azimuth (`azimuthAngle`).
+     * to the `target` location, from a certain heading (`headingAngle`).
      *
      * @param target The location to look at.
      * @param distance The distance of the camera to the target in meters.
      * @param tiltDeg The camera tilt angle in degrees (0 is vertical), curbed below 89deg.
-     * @param azimuthDeg The camera azimuth angle in degrees and clockwise (as opposed to yaw),
+     * @param headingDeg The camera heading angle in degrees and clockwise (as opposed to yaw),
      * starting north.
      */
     lookAt(
         target: GeoCoordinates,
         distance: number,
         tiltDeg: number = 0,
-        azimuthDeg: number = 0
+        headingDeg: number = 0
     ): void {
         const limitedTilt = Math.min(89, tiltDeg);
         // MapViewUtils#setRotation uses pitch, not tilt, which is different in sphere projection.
@@ -1850,14 +1886,14 @@ export class MapView extends THREE.EventDispatcher {
         MapViewUtils.getCameraRotationAtTarget(
             this.projection,
             target,
-            -azimuthDeg,
+            -headingDeg,
             limitedTilt,
             this.camera.quaternion
         );
         MapViewUtils.getCameraPositionFromTargetCoordinates(
             target,
             distance,
-            -azimuthDeg,
+            -headingDeg,
             limitedTilt,
             this.projection,
             this.camera.position
@@ -1873,7 +1909,7 @@ export class MapView extends THREE.EventDispatcher {
      *
      * @param geoPos Geolocation to move the camera to.
      * @param zoomLevel Desired zoom level.
-     * @param yawDeg Camera yaw in degrees, counter-clockwise (as opposed to azimuth), starting
+     * @param yawDeg Camera yaw in degrees, counter-clockwise (as opposed to heading), starting
      * north.
      * @param pitchDeg Camera pitch in degrees.
      */
@@ -2909,10 +2945,10 @@ export class MapView extends THREE.EventDispatcher {
             });
     }
 
-    private setupCamera() {
+    private setupCamera(options: MapViewOptions) {
         const { width, height } = this.getCanvasClientSize();
 
-        const defaultGeoCenter = new GeoCoordinates(25, 0, 30000000);
+        const defaultGeoCenter = MapViewDefaults.geoCenter;
 
         this.projection.projectPoint(defaultGeoCenter, this.m_camera.position);
 
@@ -2935,13 +2971,26 @@ export class MapView extends THREE.EventDispatcher {
             this.m_visibleTileSetOptions
         );
 
+        this.setInitialCameraPosition(options);
+
         // ### move & customize
         this.resize(width, height);
 
-        this.geoCenter = defaultGeoCenter;
-
         this.m_screenCamera.position.z = 1;
         this.m_screenCamera.near = 0;
+    }
+
+    private setInitialCameraPosition(options: MapViewOptions) {
+        const target = GeoCoordinates.fromObject(
+            getOptionValue(options.target, MapViewDefaults.target)
+        );
+        target.altitude = 0; // ensure that look at target has height of 0
+        const zoomLevel = getOptionValue(options.zoomLevel, MapViewDefaults.zoomLevel);
+        const tilt = getOptionValue(options.tilt, MapViewDefaults.tilt);
+        const heading = getOptionValue(options.heading, MapViewDefaults.heading);
+
+        this.lookAt(target, 300000, tilt, heading);
+        this.zoomLevel = zoomLevel;
     }
 
     private updateSkyBackground() {

@@ -76,7 +76,9 @@ export namespace DataDrivenThemeExample {
                     ]
                 }
             },
-            disableFading: true
+            disableFading: true,
+            target: new GeoCoordinates(50.443041, 11.4229649),
+            zoomLevel: 5
         });
 
         CopyrightElementHandler.install("copyrightNotice", mapView);
@@ -108,7 +110,6 @@ export namespace DataDrivenThemeExample {
         const ui = new MapControlsUI(mapControls);
         map.canvas.parentElement!.appendChild(ui.domElement);
 
-        map.setCameraGeolocationAndZoom(new GeoCoordinates(50.443041, 11.4229649), 5);
         map.addDataSource(omvDataSource);
     }
 
