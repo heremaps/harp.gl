@@ -9,7 +9,6 @@ import { TextElement } from "./TextElement";
 import { TextElementGroup } from "./TextElementGroup";
 import { TextElementFilter, TextElementGroupState } from "./TextElementGroupState";
 import { TextElementState } from "./TextElementState";
-import { TextElementType } from "./TextElementType";
 
 const logger = LoggerManager.instance.create("TextElementsStateCache", { level: LogLevel.Log });
 
@@ -165,13 +164,8 @@ export class TextElementStateCache {
      */
     deduplicateElement(zoomLevel: number, elementState: TextElementState): boolean {
         const element = elementState.element;
-
-        if (element.type !== TextElementType.PoiLabel) {
-            return true;
-        }
-
         const cacheKey = getCacheKey(element);
-        const cacheResult = this.findDuplicate(element, cacheKey, zoomLevel);
+        const cacheResult = this.findDuplicate(elementState, cacheKey, zoomLevel);
 
         if (cacheResult === undefined) {
             // Text not found so far, add this element to cache.
@@ -208,12 +202,7 @@ export class TextElementStateCache {
     replaceElement(zoomLevel: number, elementState: TextElementState): void {
         assert(elementState.visible);
         const element = elementState.element;
-
-        if (element.type !== TextElementType.PoiLabel) {
-            return;
-        }
-
-        const cacheResult = this.findDuplicate(element, getCacheKey(element), zoomLevel);
+        const cacheResult = this.findDuplicate(elementState, getCacheKey(element), zoomLevel);
 
         if (cacheResult === undefined || cacheResult.index === -1) {
             // No replacement found;
@@ -252,13 +241,14 @@ export class TextElementStateCache {
     }
 
     private findDuplicate(
-        element: TextElement,
+        elementState: TextElementState,
         cacheKey: string | number,
         zoomLevel: number
     ): { entries: TextElementState[]; index: number } | undefined {
         // Point labels may have duplicates (as can path labels), Identify them
         // and keep the one we already display.
 
+        const element = elementState.element;
         const cachedEntries = this.m_textMap.get(cacheKey);
 
         if (cachedEntries === undefined) {
@@ -294,12 +284,16 @@ export class TextElementStateCache {
         // duplicates.
         const maxSqDistError = getDedupSqDistTolerance(zoomLevel);
         const entryCount = cachedEntries.length;
-        const elementPosition = element.points as THREE.Vector3;
+        const elementPosition = element.position;
+        const elementVisible = elementState.visible;
         let duplicateIndex: number = -1;
         for (let i = 0; i < entryCount; ++i) {
             const cachedEntry = cachedEntries[i];
-            const cachedElementPosition = cachedEntry.element.points as THREE.Vector3;
-            const distSquared = elementPosition.distanceToSquared(cachedElementPosition);
+            if (elementVisible && cachedEntry.visible) {
+                // Two text elements visible at the same time are always considered distinct.
+                continue;
+            }
+            const distSquared = elementPosition.distanceToSquared(cachedEntry.element.position);
 
             if (distSquared < maxSqDistError) {
                 duplicateIndex = i;
