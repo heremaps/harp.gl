@@ -375,9 +375,6 @@ export namespace FadingFeature {
      * actual camera setup.
      * @param fadeNear The fadeNear value to set in the material.
      * @param fadeFar The fadeFar value to set in the material.
-     * @param forceMaterialToTransparent If `true`, the material will be forced to render with
-     *          blending set to `true`. May be `false` if the material is known to be transparent
-     *          anyway.
      * @param updateUniforms If `true`, the fading uniforms are set. Not rquired if material is
      *          handling the uniforms already, like in a [[THREE.ShaderMaterial]].
      * @param additionalCallback If defined, this function will be called before the function will
@@ -388,7 +385,6 @@ export namespace FadingFeature {
         viewRanges: ViewRanges,
         fadeNear: number | undefined,
         fadeFar: number | undefined,
-        forceMaterialToTransparent: boolean,
         updateUniforms: boolean,
         additionalCallback?: (
             renderer: THREE.WebGLRenderer,
@@ -406,10 +402,6 @@ export namespace FadingFeature {
                 material: THREE.Material & FadingFeature,
                 group: THREE.Group
             ) => {
-                if (forceMaterialToTransparent) {
-                    //
-                    material.transparent = true;
-                }
                 const fadingMaterial = material as FadingFeature;
 
                 fadingMaterial.fadeNear =
@@ -440,12 +432,6 @@ export namespace FadingFeature {
                 }
             }
         );
-
-        if (forceMaterialToTransparent) {
-            object.onAfterRender = (renderer, scene, camera, geom, material) => {
-                material.transparent = false;
-            };
-        }
     }
 }
 

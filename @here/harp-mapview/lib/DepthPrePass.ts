@@ -7,7 +7,7 @@
 import * as THREE from "three";
 
 import { ExtrudedPolygonTechnique } from "@here/harp-datasource-protocol";
-import { MapMeshStandardMaterial } from "@here/harp-materials";
+import { enforceBlending, MapMeshStandardMaterial } from "@here/harp-materials";
 
 /**
  * Bitmask used for the depth pre-pass to prevent multiple fragments in the same screen position
@@ -51,15 +51,15 @@ export function createDepthPrePassMaterial(baseMaterial: THREE.Material): THREE.
     baseMaterial.depthWrite = false;
     baseMaterial.depthFunc = THREE.EqualDepth;
     baseMaterial.colorWrite = true;
-    baseMaterial.transparent = true;
+    enforceBlending(baseMaterial);
 
     const depthPassMaterial = baseMaterial.clone();
     depthPassMaterial.depthWrite = true;
     depthPassMaterial.depthTest = true;
     depthPassMaterial.depthFunc = THREE.LessDepth;
     depthPassMaterial.colorWrite = false;
-    depthPassMaterial.transparent = false;
     depthPassMaterial.opacity = 1.0;
+    depthPassMaterial.blending = THREE.NoBlending;
     return depthPassMaterial;
 }
 
