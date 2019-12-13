@@ -4,15 +4,16 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+export * from "./lib/CirclePointsMaterial";
 export * from "./lib/CopyMaterial";
-export * from "./lib/SepiaShader";
-export * from "./lib/VignetteShader";
 export * from "./lib/EdgeMaterial";
-export * from "./lib/MapMeshMaterials";
 export * from "./lib/HighPrecisionLineMaterial";
 export * from "./lib/HighPrecisionPointMaterial";
 export * from "./lib/IconMaterial";
-export * from "./lib/SolidLineMaterial";
-export * from "./lib/CirclePointsMaterial";
-export * from "./lib/MSAAMaterial";
 export * from "./lib/LuminosityHighPassShader";
+export * from "./lib/MapMeshMaterials";
+export * from "./lib/MSAAMaterial";
+export * from "./lib/SepiaShader";
+export * from "./lib/SolidLineMaterial";
+export * from "./lib/Utils";
+export * from "./lib/VignetteShader";
