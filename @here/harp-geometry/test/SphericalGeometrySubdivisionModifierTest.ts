@@ -51,7 +51,7 @@ describe("SphericalGeometrySubdivisionModifier", function() {
         const modifier = new SphericalGeometrySubdivisionModifier(quality);
         modifier.modify(geometry);
 
-        assert.equal(posAttr.length, 1851);
+        assert.equal(posAttr.count, 1851 / posAttr.itemSize);
 
         const a = new THREE.Vector3();
         const b = new THREE.Vector3();

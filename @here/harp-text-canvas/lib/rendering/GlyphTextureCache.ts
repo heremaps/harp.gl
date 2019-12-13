@@ -276,6 +276,9 @@ export class GlyphTextureCache {
         }
 
         if (willClearGeometry) {
+            if (this.m_clearGeometry.index === null) {
+                throw new Error("GlyphTextureCache clear geometry index is uninitialized!");
+            }
             this.m_clearPositionAttribute.needsUpdate = true;
             this.m_clearPositionAttribute.updateRange.offset = 0;
             this.m_clearPositionAttribute.updateRange.count = this.m_clearGeometryDrawCount * 8;
@@ -293,6 +296,9 @@ export class GlyphTextureCache {
         }
 
         if (willCopyGeometry) {
+            if (this.m_copyGeometry.index === null) {
+                throw new Error("GlyphTextureCache copy geometry index is uninitialized!");
+            }
             this.m_copyVertexBuffer.needsUpdate = true;
             this.m_copyVertexBuffer.updateRange.offset = 0;
             this.m_copyVertexBuffer.updateRange.count = this.m_copyGeometryDrawCount * 20;
@@ -414,6 +420,9 @@ export class GlyphTextureCache {
             );
         }
 
+        if (this.m_copyGeometry.index === null) {
+            throw new Error("GlyphTextureCache copy geometry index is uninitialized!");
+        }
         this.m_copyGeometry.index.setX(baseIndex, baseVertex);
         this.m_copyGeometry.index.setX(baseIndex + 1, baseVertex + 1);
         this.m_copyGeometry.index.setX(baseIndex + 2, baseVertex + 2);
@@ -472,6 +481,9 @@ export class GlyphTextureCache {
             );
         }
 
+        if (this.m_clearGeometry.index === null) {
+            throw new Error("GlyphTextureCache clear geometry index is uninitialized!");
+        }
         this.m_clearGeometry.index.setX(baseIndex, baseVertex);
         this.m_clearGeometry.index.setX(baseIndex + 1, baseVertex + 1);
         this.m_clearGeometry.index.setX(baseIndex + 2, baseVertex + 2);

@@ -87,9 +87,12 @@ export class BoxBufferMesh extends THREE.Mesh {
      * @returns `True` if no indices have been added to the mesh.
      */
     get isEmpty(): boolean {
-        return this.geometry !== undefined
-            ? (this.geometry as THREE.BufferGeometry).index.count === 0
-            : true;
+        if (this.geometry === undefined) {
+            return true;
+        } else {
+            const bufferGeometry = this.geometry as THREE.BufferGeometry;
+            return bufferGeometry.index === null || bufferGeometry.index.count === 0;
+        }
     }
 }
 
