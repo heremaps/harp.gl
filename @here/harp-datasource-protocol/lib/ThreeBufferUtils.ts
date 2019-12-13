@@ -84,7 +84,7 @@ export namespace ThreeBufferUtils {
 
         let count = 0;
         if (index !== undefined) {
-            count = bufferGeometry.index.count;
+            count = bufferGeometry.index === null ? 0 : bufferGeometry.index.count;
         } else {
             // If there is no index buffer, try to deduce the count from the position attribute.
             const posAttr = bufferGeometry.attributes.position as ThreeBufferAttribute;

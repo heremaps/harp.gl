@@ -389,7 +389,10 @@ export abstract class IndexedBufferedGeometryAccessor extends BufferedGeometryAc
     ) {
         super(object, geometryType, bufferGeometry);
 
-        this.indices = this.bufferGeometry.index.array as number[];
+        this.indices =
+            this.bufferGeometry.index !== null
+                ? (this.bufferGeometry.index.array as number[])
+                : ((undefined as any) as number[]);
 
         if (!this.indices) {
             logger.warn(
@@ -473,7 +476,9 @@ export class IndexedBufferedGeometryLineAccessor extends IndexedBufferedGeometry
             this.indices[i] = 0;
         }
 
-        this.bufferGeometry.index.needsUpdate = true;
+        if (this.bufferGeometry.index !== null) {
+            this.bufferGeometry.index.needsUpdate = true;
+        }
     }
 
     getVertices(): Float32Array | undefined {
