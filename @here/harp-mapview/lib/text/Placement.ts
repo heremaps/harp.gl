@@ -19,6 +19,7 @@ import { ViewState } from "./ViewState";
 
 const tmpPosition = new THREE.Vector3(0, 0, 0);
 const tmpCameraDir = new THREE.Vector3(0, 0, 0);
+const COS_TEXT_ELEMENT_FALLOFF_ANGLE = 0.5877852522924731; // Math.cos(0.3 * Math.PI)
 
 /**
  * Checks whether the distance of the specified text element to the center of the given view is
@@ -43,14 +44,16 @@ function checkViewDistance(
         return textDistance <= maxViewDistance ? textDistance : undefined;
     }
 
-    // Spherical projection
+    // For sphere projection: Filter labels that are close to the horizon
     tmpPosition.copy(textElement.position).normalize();
-    camera.getWorldDirection(tmpCameraDir);
+    camera.getWorldPosition(tmpCameraDir).normalize();
+    const cosAlpha = tmpPosition.dot(tmpCameraDir);
+    const viewDistance =
+        cosAlpha > COS_TEXT_ELEMENT_FALLOFF_ANGLE && textDistance <= maxViewDistance
+            ? textDistance
+            : undefined;
 
-    // TODO: Revisit, why is this angle check needed and where does the constant -0.6 come from?
-    return tmpPosition.dot(tmpCameraDir) < -0.6 && textDistance <= maxViewDistance
-        ? textDistance
-        : undefined;
+    return viewDistance;
 }
 
 /**
