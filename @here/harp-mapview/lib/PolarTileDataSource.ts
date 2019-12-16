@@ -205,6 +205,7 @@ export class PolarTileDataSource extends DataSource {
         const isNorthPole = north > 0 && south >= 0;
         const material = isNorthPole ? this.m_northPoleMaterial : this.m_southPoleMaterial;
         if (material === undefined) {
+            tile.forceHasGeometry(true);
             return;
         }
 
