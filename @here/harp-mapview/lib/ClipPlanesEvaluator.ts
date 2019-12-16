@@ -6,7 +6,7 @@
 
 import { ViewRanges } from "@here/harp-datasource-protocol/lib/ViewRanges";
 import { EarthConstants, Projection, ProjectionType } from "@here/harp-geoutils";
-import { assert } from "@here/harp-utils";
+import { assert, MathUtils } from "@here/harp-utils";
 import * as THREE from "three";
 import { MapView } from "./MapView";
 import { MapViewUtils } from "./Utils";
@@ -277,7 +277,7 @@ export class TopViewClipPlanesEvaluator extends ElevationBasedClipPlanesEvaluato
         minElevation: number = 0,
         readonly nearMin: number = 1.0,
         readonly nearFarMarginRatio: number = 0.05,
-        readonly farMaxRatio = 1.8
+        readonly farMaxRatio = 6.0
     ) {
         super(maxElevation, minElevation);
         assert(nearMin > 0);
@@ -364,7 +364,6 @@ export class TopViewClipPlanesEvaluator extends ElevationBasedClipPlanesEvaluato
         // the camera, then we apply margin (elevation) to it along the sphere surface normal:
         const cameraAltitude = this.getCameraAltitude(camera, projection);
         nearPlane = cameraAltitude - this.maxElevation;
-        let farMax = cameraAltitude * this.farMaxRatio;
 
         // Far plane calculation requires different approaches depending from camera projection:
         // - perspective
@@ -399,7 +398,6 @@ export class TopViewClipPlanesEvaluator extends ElevationBasedClipPlanesEvaluato
                 halfFovAngle > alpha
                     ? farTangent
                     : this.getFovBasedFarPlane(cam, d, r, 2 * halfFovAngle, projection);
-            farMax = Math.max(farMax, farTangent);
         }
         // Orthographic camera projection
         else {
@@ -409,6 +407,7 @@ export class TopViewClipPlanesEvaluator extends ElevationBasedClipPlanesEvaluato
         // In extreme cases the largest depression assumed may be further than tangent
         // based far plane distance, take it into account
         const farMin = cameraAltitude - this.minElevation;
+        const farMax = cameraAltitude * this.farMaxRatio;
         // Apply the constraints.
         nearPlane = Math.max(nearPlane, this.nearMin);
         farPlane = Math.max(farPlane, farMin);
@@ -730,8 +729,8 @@ export class TiltViewClipPlanesEvaluator extends TopViewClipPlanesEvaluator {
             const aspect = 1;
             // Half fov angle in radians
             const halfFovAngle = THREE.Math.degToRad((cam.fov * aspect) / 2);
-            topAngleRad = THREE.Math.clamp(cameraTilt + halfFovAngle, -halfPiLimit, halfPiLimit);
-            bottomAngleRad = THREE.Math.clamp(cameraTilt - halfFovAngle, -halfPiLimit, halfPiLimit);
+            topAngleRad = MathUtils.clamp(cameraTilt + halfFovAngle, -halfPiLimit, halfPiLimit);
+            bottomAngleRad = MathUtils.clamp(cameraTilt - halfFovAngle, -halfPiLimit, halfPiLimit);
             z1 = z2 = cameraAltitude;
         }
         // For orthographic projection:
@@ -806,6 +805,7 @@ export class TiltViewClipPlanesEvaluator extends TopViewClipPlanesEvaluator {
         const farMax = lookAtDist * this.farMaxRatio;
         viewRanges.near = Math.max(viewRanges.near, this.nearMin);
         viewRanges.far = Math.min(viewRanges.far, farMax);
+
         // Apply margins
         const nearFarMargin = (this.nearFarMarginRatio * (viewRanges.near + viewRanges.far)) / 2;
         viewRanges.near = Math.max(viewRanges.near - nearFarMargin / 2, this.nearMin);
@@ -815,6 +815,7 @@ export class TiltViewClipPlanesEvaluator extends TopViewClipPlanesEvaluator {
         );
         viewRanges.minimum = this.nearMin;
         viewRanges.maximum = farMax;
+
         return viewRanges;
     }
 
@@ -846,7 +847,6 @@ export class TiltViewClipPlanesEvaluator extends TopViewClipPlanesEvaluator {
         const r = EarthConstants.EQUATORIAL_RADIUS;
         const d = cameraToOrigin.length();
         let farPlane: number;
-        let farMax = mapView.lookAtDistance * this.farMaxRatio;
         if (camera instanceof THREE.PerspectiveCamera) {
             // Step-wise calculate angle between camera eye vector and tangent
 
@@ -865,7 +865,6 @@ export class TiltViewClipPlanesEvaluator extends TopViewClipPlanesEvaluator {
                 halfFovAngle >= modifiedAlpha
                     ? farTangent
                     : this.getTiltedFovBasedFarPlane(d, r, halfFovAngle, cameraPitch);
-            farMax = Math.max(farMax, farTangent);
         } else {
             farPlane = this.getOrthoBasedFarPlane(d, r);
         }
@@ -873,8 +872,9 @@ export class TiltViewClipPlanesEvaluator extends TopViewClipPlanesEvaluator {
 
         // Apply the constraints.
         const farMin = cameraAltitude - this.minElevation;
+        const farMax = mapView.lookAtDistance * this.farMaxRatio;
         viewRanges.near = Math.max(viewRanges.near, this.nearMin);
-        viewRanges.far = Math.max(viewRanges.far, farMin);
+        viewRanges.far = MathUtils.clamp(viewRanges.far, farMin, farMax);
 
         // Apply margins.
         const nearFarMargin = (this.nearFarMarginRatio * (viewRanges.near + viewRanges.far)) / 2;
@@ -946,7 +946,7 @@ export class TiltViewClipPlanesEvaluator extends TopViewClipPlanesEvaluator {
         cameraToOrigin.normalize();
         const lookAt = camera.getWorldDirection(this.m_tmpVectors[1]).normalize();
         const cosAlpha1 = cameraToOrigin.dot(lookAt);
-        const cameraPitch = Math.acos(THREE.Math.clamp(cosAlpha1, -1.0, 1.0));
+        const cameraPitch = Math.acos(MathUtils.clamp(cosAlpha1, -1.0, 1.0));
 
         return cameraPitch;
     }
