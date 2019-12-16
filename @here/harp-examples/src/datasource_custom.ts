@@ -94,6 +94,14 @@ import { CUSTOM_DECODER_SERVICE_TYPE } from "../decoder/custom_decoder_defs";
  * ```typescript
  * [[include:custom_datasource_example_custom_decoder_service_start.ts]]
  * ```
+ *
+ * If picking for lines is needed, some additional information has to be provided by the decoder and
+ * stored in the [[DecodedTile.tileInfo]].
+ * Additionally road picking needs to be enabled in the [[MapView]] options:
+ * ```typescript
+ * [[include:custom_datasource_example_enable_road_picking.ts]]
+ * ```
+ *
  **/
 
 export namespace CustomDatasourceExample {
@@ -225,8 +233,11 @@ export namespace CustomDatasourceExample {
             canvas,
             theme: customTheme(),
             // snippet:custom_datasource_example_map_view_decoder_bundle.ts
-            decoderUrl: "decoder.bundle.js"
+            decoderUrl: "decoder.bundle.js",
             // end:custom_datasource_example_map_view_decoder_bundle.ts
+            // snippet:custom_datasource_example_enable_road_picking.ts
+            enableRoadPicking: true
+            // end:custom_datasource_example_enable_road_picking.ts
         });
 
         CopyrightElementHandler.install("copyrightNotice", map);
@@ -242,6 +253,11 @@ export namespace CustomDatasourceExample {
 
         window.addEventListener("resize", () => {
             map.resize(window.innerWidth, window.innerHeight);
+        });
+
+        window.addEventListener("mouseup", (ev: MouseEvent) => {
+            const i = map.intersectMapObjects(ev.clientX, ev.clientY);
+            console.log(i);
         });
 
         // snippet:custom_datasource_example_custom_data_source_create.ts

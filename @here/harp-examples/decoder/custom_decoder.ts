@@ -8,7 +8,10 @@ import {
     DecodedTile,
     Geometry,
     GeometryType,
-    InterleavedBufferAttribute
+    InterleavedBufferAttribute,
+    ExtendedTileInfo,
+    ExtendedTileInfoWriter,
+    FeatureGroupType
 } from "@here/harp-datasource-protocol";
 import {
     MapEnv,
@@ -40,12 +43,26 @@ class CustomDecoder extends ThemedTileDecoder
         projection: Projection
     ): Promise<DecodedTile> {
         const geometries: Geometry[] = [];
-        this.processLineFeatures(data, tileKey, styleSetEvaluator, projection, geometries);
+        const tileInfo = new ExtendedTileInfo(tileKey, false);
+        const tileInfoWriter = new ExtendedTileInfoWriter(tileInfo, false);
+
+        this.processLineFeatures(
+            data,
+            tileKey,
+            styleSetEvaluator,
+            projection,
+            geometries,
+            tileInfoWriter,
+            tileInfo
+        );
         this.processMeshFeatures(tileKey, styleSetEvaluator, geometries);
+
+        tileInfoWriter.finish();
 
         const decodedTile = {
             techniques: styleSetEvaluator.techniques,
-            geometries
+            geometries,
+            tileInfo
         };
         return Promise.resolve(decodedTile);
     }
@@ -88,7 +105,9 @@ class CustomDecoder extends ThemedTileDecoder
         tileKey: TileKey,
         styleSetEvaluator: StyleSetEvaluator,
         projection: Projection,
-        geometries: Geometry[]
+        geometries: Geometry[],
+        tileInfoWriter: ExtendedTileInfoWriter,
+        tileInfo: ExtendedTileInfo
     ) {
         // Setup an environment for this "layer". This does normaly come from the data and should
         // contain all the attributes of a specific feature, so that it can be styled properly.
@@ -114,6 +133,22 @@ class CustomDecoder extends ThemedTileDecoder
 
         for (const technique of techniques) {
             geometries.push(this.createLineGeometry(lineGroup, technique._index));
+
+            const infoTileTechniqueIndex = tileInfoWriter.addTechnique(technique);
+            const featureText = ExtendedTileInfo.getFeatureText(env, technique);
+
+            // For demonstration purpose we use the tile key as feature id.
+            const featureId = tileKey.mortonCode();
+            tileInfoWriter.addFeature(
+                tileInfo.lineGroup,
+                env,
+                featureId,
+                featureText,
+                infoTileTechniqueIndex,
+                FeatureGroupType.Line
+            );
+
+            tileInfoWriter.addFeaturePoints(tileInfo.lineGroup, worldPoints);
         }
     }
 
