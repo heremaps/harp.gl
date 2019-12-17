@@ -278,7 +278,11 @@ export class TextElementStateCache {
                 tmpCachedDuplicate.index = 0;
             } else {
                 tmpCachedDuplicate.index = -1;
-                logger.debug(
+                // Labels with different text shouldn't share the same feature id. This points to
+                // an issue on the map data side. Submit a ticket to the corresponding map backend
+                // issue tracking system if available (e.g. OLPRPS project in JIRA for OMV),
+                // indicating affected labels including tile keys, texts and feature id.
+                logger.warn(
                     `Text feature id ${element.featureId} collision between "${element.text} and \
                      ${cachedElement.text}`
                 );
