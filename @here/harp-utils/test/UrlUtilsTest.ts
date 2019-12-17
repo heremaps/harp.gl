@@ -22,6 +22,16 @@ describe("UrlUtils", function() {
                 "https://bar.com/foo/bar.js"
             );
         });
+        it("ignores / after #", function() {
+            assert.equal(
+                resolveReferenceUri("https://bar.com/foo/#bar/baz", "bar.js"),
+                "https://bar.com/foo/bar.js"
+            );
+            assert.equal(
+                resolveReferenceUri("https://bar.com/#/foo/bar/baz", "bar.js"),
+                "https://bar.com/bar.js"
+            );
+        });
         it("correctly resolves origin-absolute URLs", function() {
             assert.equal(
                 resolveReferenceUri("https://user@bar.com/foo/day.json", "/bar.js"),
@@ -56,6 +66,11 @@ describe("UrlUtils", function() {
             assert.equal(baseUrl("https://foo.com/themes/a.json"), "https://foo.com/themes/");
             assert.equal(baseUrl("https://foo.com/themes"), "https://foo.com/");
             assert.equal(baseUrl("themes/day.json"), "themes/");
+        });
+        it("support #", function() {
+            assert.equal(baseUrl("https://foo.com/themes/#/foo"), "https://foo.com/themes/");
+            assert.equal(baseUrl("https://foo.com/#/themes/foo"), "https://foo.com/");
+            assert.equal(baseUrl("#foo"), "./");
         });
         it("treats trailing / as location", function() {
             assert.equal(baseUrl("https://foo.com/themes/"), "https://foo.com/themes/");
