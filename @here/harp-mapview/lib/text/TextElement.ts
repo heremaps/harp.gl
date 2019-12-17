@@ -463,6 +463,10 @@ export class TextElement {
         this.m_layoutStyle = style;
     }
 
+    hasFeatureId(): boolean {
+        return this.featureId !== undefined && this.featureId !== 0;
+    }
+
     /**
      * Update the minZoomLevel and maxZoomLevel from the values set in [[PoiInfo]].
      * Selects the smaller/larger one of the two min/max values for icon and text, because the
