@@ -64,7 +64,7 @@ export class TextElementGroupState {
      * @returns the priority of the text elements in the group.
      */
     get priority() {
-        return this.m_textElementStates[0].element.priority;
+        return this.group.priority;
     }
 
     /**

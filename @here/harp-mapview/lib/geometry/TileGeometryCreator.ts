@@ -79,19 +79,6 @@ import { TileGeometryLoader } from "./TileGeometryLoader";
 const logger = LoggerManager.instance.create("TileGeometryCreator");
 
 /**
- * The SORT_WEIGHT_PATH_LENGTH constants control how the priority of the labels are computed based
- * on the length of the label strings.
- *
- * Consequently, the [[Technique]]s priority is slightly modified while generating
- * [[TextElement]]s from the [[DecodedTile]], to get a more meaningful priority and stable results.
- */
-
-/**
- * Gives [[TextElement]]s with longer paths a higher priority.
- */
-const SORT_WEIGHT_PATH_LENGTH = 0.1;
-
-/**
  * Parameters that control fading.
  */
 export interface FadingParameters {
@@ -385,20 +372,6 @@ export class TileGeometryCreator {
                 textFilter
             );
 
-            // Compute maximum street length (squared). Longer streets should be labelled first,
-            // they have a higher chance of being placed in case the number of text elements is
-            // limited.
-            let maxPathLengthSqr = 0;
-            for (const textPath of textPathGeometries) {
-                const technique = decodedTile.techniques[textPath.technique];
-                if (technique.enabled === false || !isTextTechnique(technique)) {
-                    continue;
-                }
-                if (textPath.pathLengthSqr > maxPathLengthSqr) {
-                    maxPathLengthSqr = textPath.pathLengthSqr;
-                }
-            }
-
             for (const textPath of textPathGeometries) {
                 const technique = decodedTile.techniques[textPath.technique];
 
@@ -421,14 +394,11 @@ export class TileGeometryCreator {
                     );
                 }
 
-                // Make sorting stable and make pathLengthSqr a differentiator for placement.
+                // Make sorting stable.
                 const priority =
-                    (technique.priority !== undefined
+                    technique.priority !== undefined
                         ? getPropertyValue(technique.priority, displayZoomLevel)
-                        : 0) +
-                    (maxPathLengthSqr > 0
-                        ? (SORT_WEIGHT_PATH_LENGTH * textPath.pathLengthSqr) / maxPathLengthSqr
-                        : 0);
+                        : 0;
                 const fadeNear =
                     technique.fadeNear !== undefined
                         ? getPropertyValue(technique.fadeNear, displayZoomLevel)
