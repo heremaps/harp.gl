@@ -8,7 +8,8 @@ import { GeoCoordinates } from "@here/harp-geoutils";
 import { MapControls, MapControlsUI } from "@here/harp-map-controls";
 import { CopyrightElementHandler, MapView } from "@here/harp-mapview";
 import { OmvDataSource } from "@here/harp-omv-datasource";
-import { accessToken, copyrightInfo } from "../config";
+import { accessToken } from "../config";
+import { Mesh, BufferGeometry, Material, MeshStandardMaterial, Color } from "three";
 
 /**
  * MapView initialization sequence enables setting all the necessary elements on a map  and returns
@@ -64,6 +65,13 @@ import { accessToken, copyrightInfo } from "../config";
  *
  */
 export namespace HelloWorldExample {
+    const resetHighlightCallbacks: Array<() => void> = [];
+    function resetPreviousHighlights() {
+        resetHighlightCallbacks.forEach(fn => {
+            fn();
+        });
+    }
+
     // Create a new MapView for the HTMLCanvasElement of the given id.
     function initializeMapView(id: string): MapView {
         // snippet:harp_gl_hello_world_example_0.ts
@@ -107,19 +115,81 @@ export namespace HelloWorldExample {
 
         addOmvDataSource(map);
 
+        canvas.addEventListener("mouseup", (ev: MouseEvent) => {
+            resetPreviousHighlights();
+            const intersections = map.intersectMapObjects(ev.clientX, ev.clientY);
+            for (const i of intersections) {
+                console.log(i);
+                if (
+                    i.intersection === undefined ||
+                    i.intersection.faceIndex === undefined ||
+                    i.intersection.face === undefined ||
+                    i.intersection.face === null
+                ) {
+                    continue;
+                }
+                const face = i.intersection.face;
+                const faceIndex = i.intersection.faceIndex;
+                const obj = i.intersection.object;
+                const userData = obj.userData;
+                if (userData.dataSource !== "omv-datasource") {
+                    continue;
+                }
+                if (
+                    userData.dataSource === "omv-datasource" &&
+                    userData.kind.includes("building")
+                ) {
+                    const mesh = obj as Mesh;
+                    if (
+                        (mesh.geometry as any).isBufferGeometry !== true ||
+                        (mesh.material as any).type !== "MeshStandardMaterial"
+                    ) {
+                        continue;
+                    }
+                    const bufferGeometry = mesh.geometry as BufferGeometry;
+                    const material = mesh.material as MeshStandardMaterial;
+
+                    if (material.colorWrite === false) {
+                        continue;
+                    }
+
+                    resetHighlightCallbacks.push(() => {
+                        mesh.geometry = bufferGeometry;
+                        mesh.material = material;
+                    });
+
+                    const highlightBG = bufferGeometry.clone();
+                    highlightBG.clearGroups();
+                    highlightBG.addGroup(0, faceIndex * 3, 0);
+                    highlightBG.addGroup(faceIndex * 3, 3, 1);
+                    highlightBG.addGroup(faceIndex * 3 + 3, highlightBG.index.count, 0);
+                    mesh.geometry = highlightBG;
+
+                    const highlightMat = material.clone();
+                    highlightMat.color = new Color("#ff00ff");
+                    highlightMat.depthTest = false;
+                    mesh.material = [material, highlightMat];
+                    if (material.colorWrite === true) {
+                        break;
+                    }
+                }
+            }
+        });
+
         return map;
     }
 
     function addOmvDataSource(map: MapView) {
         // snippet:harp_gl_hello_world_example_4.ts
         const omvDataSource = new OmvDataSource({
+            name: "omv-datasource",
             url: "https://xyz.api.here.com/tiles/herebase.02/{z}/{x}/{y}/omv",
             styleSetName: "tilezen",
             maxZoomLevel: 17,
             urlParams: {
                 access_token: accessToken
             },
-            copyrightInfo
+            gatherFeatureIds: true
         });
         // end:harp_gl_hello_world_example_4.ts
 
