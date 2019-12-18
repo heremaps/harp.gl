@@ -111,6 +111,9 @@ export function createMaterial(
 
     if (isExtrudedPolygonTechnique(technique)) {
         material.flatShading = true;
+        if (technique.vertexColor !== undefined) {
+            (material as THREE.MeshStandardMaterial).vertexColors = THREE.VertexColors;
+        }
     }
 
     material.depthTest = isExtrudedPolygonTechnique(technique) && technique.depthTest !== false;

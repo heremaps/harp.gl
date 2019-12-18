@@ -196,7 +196,7 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
         });
     });
 
-    it("renders extruded polygons with height and color", async function() {
+    it("DEPRECATED: renders extruded polygons with height and color", async function() {
         this.timeout(5000);
 
         const ourStyle: StyleSet = [
@@ -204,8 +204,8 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
                 when: ["==", ["get", "$geometryType"], "polygon"],
                 technique: "extruded-polygon",
                 attr: {
-                    vertexColors: true,
                     color: ["string", ["get", "color"], "#5050f0"],
+                    vertexColors: true,
                     lineWidth: 1,
                     lineColor: "#172023",
                     lineColorMix: 0.6
@@ -215,7 +215,63 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
 
         await geoJsonTest({
             mochaTest: this,
-            testImageName: "geojson-extruded-polygon-with-height-color",
+            testImageName: "geojson-extruded-polygon-with-height-color-deprecated",
+            theme: { lights, styles: { geojson: ourStyle } },
+            geoJson: "../dist/resources/basic_polygon.json",
+            lookAt: {
+                tilt: 45,
+                azimuth: 30
+            }
+        });
+    });
+
+    it("renders extruded polygons with height and vertex color", async function() {
+        this.timeout(5000);
+
+        const ourStyle: StyleSet = [
+            {
+                when: ["==", ["get", "$geometryType"], "polygon"],
+                technique: "extruded-polygon",
+                attr: {
+                    vertexColor: ["string", ["get", "color"], "#5050f0"],
+                    lineWidth: 1,
+                    lineColor: "#172023",
+                    lineColorMix: 0.6
+                }
+            }
+        ];
+
+        await geoJsonTest({
+            mochaTest: this,
+            testImageName: "geojson-extruded-polygon-with-height-vertex-color",
+            theme: { lights, styles: { geojson: ourStyle } },
+            geoJson: "../dist/resources/basic_polygon.json",
+            lookAt: {
+                tilt: 45,
+                azimuth: 30
+            }
+        });
+    });
+    it("renders extruded polygons with height, vertex color and uniform color", async function() {
+        this.timeout(5000);
+
+        const ourStyle: StyleSet = [
+            {
+                when: ["==", ["get", "$geometryType"], "polygon"],
+                technique: "extruded-polygon",
+                attr: {
+                    color: "#aabbcc",
+                    vertexColor: ["string", ["get", "color"], "#5050f0"],
+                    lineWidth: 1,
+                    lineColor: "#172023",
+                    lineColorMix: 0.6
+                }
+            }
+        ];
+
+        await geoJsonTest({
+            mochaTest: this,
+            testImageName: "geojson-extruded-polygon-with-height-uniform-vertex-color",
             theme: { lights, styles: { geojson: ourStyle } },
             geoJson: "../dist/resources/basic_polygon.json",
             lookAt: {

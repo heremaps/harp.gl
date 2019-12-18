@@ -245,8 +245,16 @@ export interface StandardTechniqueParams extends BaseTechniqueParams {
      * If `vertexColors` is `true`, every vertex has color information, which is interpolated
      * between vertices.
      * See https://threejs.org/docs/#api/en/materials/Material.vertexColors.
+     * @deprecated Use vertexColor instead
      */
     vertexColors?: boolean;
+
+    /**
+     * If `vertexColor` is defined, every vertex has color information, which is interpolated
+     * between vertices. The `vertexColors` attribute of the `Material` will be set to true.
+     * See https://threejs.org/docs/#api/en/materials/Material.vertexColors.
+     */
+    vertexColor?: StyleColor;
     /**
      * How rough the material appears. `0.0` means a smooth mirror reflection. `1.0` means fully
      * diffuse. Default is `0.5`.

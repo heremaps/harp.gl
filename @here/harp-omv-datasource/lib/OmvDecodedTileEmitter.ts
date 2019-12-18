@@ -18,6 +18,7 @@ import {
     Group,
     IndexedTechnique,
     InterleavedBufferAttribute,
+    InterpolatedProperty,
     isExtrudedLineTechnique,
     isExtrudedPolygonTechnique,
     isFillTechnique,
@@ -42,6 +43,7 @@ import {
 } from "@here/harp-datasource-protocol";
 import {
     Env,
+    Expr,
     IMeshBuffers,
     StyleSetEvaluator,
     Value
@@ -1077,28 +1079,13 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
 
         let color: THREE.Color | undefined;
         if (isExtrudedPolygonTechnique(technique)) {
-            if (getOptionValue(technique.vertexColors, false)) {
-                let colorValue = evaluateTechniqueAttr<StyleColor>(context, technique.color);
-                if (colorValue === undefined) {
-                    const featureColor = context.env.lookup("color");
-                    if (this.isColorStringValid(featureColor)) {
-                        colorValue = String(featureColor);
-                    }
-                }
-                if (colorValue === undefined) {
-                    colorValue = evaluateTechniqueAttr<number | string>(
-                        context,
-                        technique.defaultColor,
-                        0x000000
-                    );
-                }
+            if (technique.vertexColor) {
+                color = this.evaluateVertexColor(context, technique, technique.vertexColor);
+            }
+            if (getOptionValue(technique.vertexColors, false) === true) {
+                logger.warn("vertexColors is deprecated. Use vertexColor instead.");
 
-                if (colorValue === undefined) {
-                    colorValue = 0x000000;
-                }
-                tmpColor.set(colorValue as any);
-
-                color = tmpColor;
+                color = this.evaluateVertexColor(context, technique, technique.color);
             }
         }
 
@@ -1391,6 +1378,32 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                 });
             }
         }
+    }
+
+    private evaluateVertexColor(
+        context: AttrEvaluationContext,
+        technique: ExtrudedPolygonTechnique,
+        attribute: StyleColor | Expr | InterpolatedProperty | undefined
+    ) {
+        let colorValue = evaluateTechniqueAttr<StyleColor>(context, attribute);
+        if (colorValue === undefined) {
+            const featureColor = context.env.lookup("color");
+            if (this.isColorStringValid(featureColor)) {
+                colorValue = String(featureColor);
+            }
+        }
+        if (colorValue === undefined) {
+            colorValue = evaluateTechniqueAttr<number | string>(
+                context,
+                technique.defaultColor,
+                0x000000
+            );
+        }
+        if (colorValue === undefined) {
+            colorValue = 0x000000;
+        }
+        tmpColor.set(colorValue as any);
+        return tmpColor;
     }
 
     private createGeometries() {
