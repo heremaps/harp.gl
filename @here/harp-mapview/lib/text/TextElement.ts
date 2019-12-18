@@ -315,6 +315,8 @@ export class TextElement {
      */
     dbgPathTooSmall?: boolean;
 
+    pathLengthSqr?: number;
+
     type: TextElementType;
 
     private m_poiInfo?: PoiInfo;
