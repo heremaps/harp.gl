@@ -37,7 +37,7 @@ jobs:
         set -ex
         cross-env NODE_ENV=production yarn run build
         yarn run typedoc
-      before_deploy: yarn prepare_doc_deploy
+      before_deploy: yarn prepare-doc-deploy
       deploy:
         - provider: script
           script: ./scripts/publish-packages.sh
