@@ -68,7 +68,7 @@ const commonConfig = {
     },
     output: {
         path: path.join(process.cwd(), "dist/examples"),
-        filename: "[name].bundle.js"
+        filename: "[name].[contenthash].bundle.js"
     },
     performance: {
         hints: false
@@ -88,6 +88,9 @@ const decoderConfig = merge(commonConfig, {
     target: "webworker",
     entry: {
         decoder: "./decoder/decoder.ts"
+    },
+    output: {
+        filename: "[name].bundle.js"
     }
 });
 
@@ -125,9 +128,6 @@ function filterExamples(pattern) {
 
 const browserConfig = merge(commonConfig, {
     entry: webpackEntries,
-    output: {
-        filename: "[name]_bundle.js"
-    },
     optimization: {
         splitChunks: {
             chunks: "all",
@@ -140,13 +140,15 @@ const browserConfig = merge(commonConfig, {
 const exampleBrowserConfig = merge(commonConfig, {
     entry: {
         "example-browser": "./example-browser.ts"
-    }
+    },
+    plugins: [new HtmlWebpackPlugin({ template: "index.html" })]
 });
 
 const codeBrowserConfig = merge(commonConfig, {
     entry: {
         codebrowser: "./codebrowser.ts"
-    }
+    },
+    plugins: [new HtmlWebpackPlugin({ template: "codebrowser.html", filename: `codebrowser.html` })]
 });
 
 browserConfig.plugins = Object.keys(browserConfig.entry).map(
@@ -184,12 +186,10 @@ const assets = [
         from: path.join(__dirname, "src", "*.{ts,tsx,html}"),
         to: "src/[name].[ext]"
     },
-    path.join(__dirname, "index.html"),
     {
         from: path.join(__dirname, "src/*.html"),
         to: "[name].[ext]"
     },
-    path.join(__dirname, "codebrowser.html"),
     { from: path.join(__dirname, "resources"), to: "resources", toType: "dir" },
     { from: path.join(harpMapThemePath, "resources"), to: "resources", toType: "dir" },
     {
@@ -199,7 +199,10 @@ const assets = [
     },
     require.resolve("three/build/three.min.js"),
     {
-        from: resolveOptional(`@here/harp.gl/dist/harp${harpBundleSuffix}.js`, "bundle examples require `yarn build-bundle`"),
+        from: resolveOptional(
+            `@here/harp.gl/dist/harp${harpBundleSuffix}.js`,
+            "bundle examples require `yarn build-bundle`"
+        ),
         to: "harp.js"
     },
     {
