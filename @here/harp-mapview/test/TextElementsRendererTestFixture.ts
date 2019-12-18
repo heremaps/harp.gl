@@ -93,6 +93,7 @@ export class TestFixture {
     private readonly tileLists: DataSourceTileList[] = [];
     private readonly m_poiRendererStub: sinon.SinonStubbedInstance<PoiRenderer>;
     private readonly m_renderPoiSpy: sinon.SinonSpy;
+    private readonly m_addTextSpy: sinon.SinonSpy;
     private readonly m_dataSource: FakeOmvDataSource = new FakeOmvDataSource();
     private readonly m_screenProjector: ScreenProjector;
     private readonly m_camera: THREE.PerspectiveCamera = new THREE.PerspectiveCamera();
@@ -110,6 +111,7 @@ export class TestFixture {
         this.m_screenCollisions.update(SCREEN_WIDTH, SCREEN_HEIGHT);
         this.m_viewState = createViewState(new THREE.Vector3());
         this.m_renderPoiSpy = sandbox.spy();
+        this.m_addTextSpy = sandbox.spy();
         this.m_poiRendererStub = stubPoiRenderer(this.sandbox, this.m_renderPoiSpy);
         this.m_screenProjector = createScreenProjector();
     }
@@ -139,7 +141,12 @@ export class TestFixture {
             labelDistanceScaleMax: 1
         };
         const fontCatalog = stubFontCatalog(this.sandbox);
-        this.m_textCanvasStub = stubTextCanvas(this.sandbox, fontCatalog, DEF_TEXT_WIDTH_HEIGHT);
+        this.m_textCanvasStub = stubTextCanvas(
+            this.sandbox,
+            fontCatalog,
+            DEF_TEXT_WIDTH_HEIGHT,
+            this.m_addTextSpy
+        );
         const dummyUpdateCall = () => {};
         this.m_textRenderer = new TextElementsRenderer(
             this.m_viewState,
@@ -392,7 +399,7 @@ export class TestFixture {
 
     private checkIconNotRendered(textElement: TextElement, positionIndex?: number) {
         const screenCoords = this.computeScreenCoordinates(textElement, positionIndex);
-        expect(
+        assert(
             this.m_renderPoiSpy.neverCalledWith(
                 sinon.match.same(textElement.poiInfo),
                 sinon.match
@@ -438,12 +445,9 @@ export class TestFixture {
         textElement: TextElement,
         opacityMatcher: OpacityMatcher | undefined
     ): number {
-        const addTextStub = this.m_textCanvasStub!.addText as sinon.SinonStub;
-        const addTextSpy = addTextStub.withArgs(
-            sinon.match.same(textElement.glyphs),
-            sinon.match.any,
-            sinon.match.any
-        );
+        const addTextSpy = this.m_addTextSpy.withArgs(sinon.match.same(textElement));
+        expect(textElement.renderStyle, this.getErrorHeading(textElement) + "render style not set")
+            .exist;
         const opacitySpy = Object.getOwnPropertyDescriptor(textElement.renderStyle, "opacity")!
             .set! as sinon.SinonSpy;
         assert(opacitySpy.called, this.getErrorHeading(textElement) + "opacity not set");
@@ -463,12 +467,8 @@ export class TestFixture {
 
     private checkPathTextNotRendered(textElement: TextElement) {
         const addTextStub = this.m_textCanvasStub!.addText as sinon.SinonStub;
-        expect(
-            addTextStub.neverCalledWith(
-                sinon.match.same(textElement.glyphs),
-                sinon.match.any,
-                sinon.match.any
-            ),
+        assert(
+            addTextStub.neverCalledWith(sinon.match.same(textElement)),
             this.getErrorHeading(textElement) + "path text was rendered."
         );
     }
