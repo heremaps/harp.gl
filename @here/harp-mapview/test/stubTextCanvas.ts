@@ -5,6 +5,7 @@
  */
 
 import {
+    AdditionParameters,
     FontCatalog,
     GlyphData,
     MeasurementParameters,
@@ -25,7 +26,8 @@ import { TextCanvasFactory } from "../lib/text/TextCanvasFactory";
 export function stubTextCanvas(
     sandbox: sinon.SinonSandbox,
     fontCatalog: FontCatalog,
-    textWidthHeight: number
+    textWidthHeight: number,
+    addTextSpy: sinon.SinonSpy
 ): TextCanvas {
     const renderer = ({} as unknown) as THREE.WebGLRenderer;
     const textCanvas = new TextCanvas({
@@ -35,7 +37,23 @@ export function stubTextCanvas(
         maxGlyphCount: 1
     });
 
-    sandbox.stub(textCanvas, "addText").returns(true);
+    // Workaround to capture the value of params.pickingData on the time of the call,
+    // otherwise it's lost afterwards since the same parameter object is reused between calls.
+    sandbox
+        .stub(textCanvas, "addText")
+        .callsFake(
+            (
+                _text: string | GlyphData[],
+                _position: THREE.Vector3,
+                params?: AdditionParameters
+            ) => {
+                if (params !== undefined) {
+                    addTextSpy(params.pickingData);
+                }
+                return true;
+            }
+        );
+
     sandbox
         .stub(textCanvas, "measureText")
         .callsFake(

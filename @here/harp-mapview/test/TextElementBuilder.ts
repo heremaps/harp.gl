@@ -55,6 +55,8 @@ export class TextElementBuilder {
     private m_xOffset: number | undefined;
     private m_yOffset: number | undefined;
     private m_featureId: number | undefined;
+    private m_pathLengthSqr: number | undefined;
+    private m_userData: any;
 
     withPoiInfo(poiInfoBuilder: PoiInfoBuilder): TextElementBuilder {
         this.m_poiInfoBuilder = poiInfoBuilder;
@@ -105,6 +107,16 @@ export class TextElementBuilder {
         return this;
     }
 
+    withUserData(data: any): TextElementBuilder {
+        this.m_userData = data;
+        return this;
+    }
+
+    withPathLengthSqr(lengthSqr: number): TextElementBuilder {
+        this.m_pathLengthSqr = lengthSqr;
+        return this;
+    }
+
     build(sandbox: sinon.SinonSandbox): TextElement {
         const textElement = new TextElement(
             this.m_text,
@@ -120,6 +132,8 @@ export class TextElementBuilder {
         if (this.m_poiInfoBuilder !== undefined) {
             textElement.poiInfo = this.m_poiInfoBuilder.build(textElement);
         }
+        textElement.userData = this.m_userData;
+        textElement.pathLengthSqr = this.m_pathLengthSqr;
         // Stub render style setter, so that a spy is installed on the style opacity
         // whenever it's called.
         const renderStyleProperty = Object.getOwnPropertyDescriptor(

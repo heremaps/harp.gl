@@ -9,9 +9,11 @@
 
 import { assert, expect } from "chai";
 import * as sinon from "sinon";
+import * as THREE from "three";
 import { TextElement } from "../lib/text/TextElement";
 import { PoiInfoBuilder } from "./PoiInfoBuilder";
 import {
+    DEF_PATH,
     lineMarkerBuilder,
     pathTextBuilder,
     poiBuilder,
@@ -376,6 +378,53 @@ const tests: TestCase[] = [
             }
         ],
         frameTimes: FADE_2_CYCLES
+    },
+    {
+        name:
+            "Longest path label with same text within distance tolerace replaces predecessor" +
+            " without fading",
+        tiles: [
+            {
+                labels: [[pathTextBuilder(WORLD_SCALE), fadeInAndFadedOut(FADE_2_CYCLES.length)]],
+                frames: firstNFrames(FADE_2_CYCLES, FADE_IN.length)
+            },
+            {
+                labels: [
+                    [
+                        pathTextBuilder(WORLD_SCALE)
+                            .withPathLengthSqr(10)
+                            .withPath(
+                                DEF_PATH.map((point: THREE.Vector3) =>
+                                    point
+                                        .clone()
+                                        .multiplyScalar(WORLD_SCALE)
+                                        .add(new THREE.Vector3(8, 0, 0))
+                                )
+                            ),
+                        fadedOut(FADE_IN.length).concat(
+                            fadedOut(FADE_2_CYCLES.length - FADE_IN.length)
+                        )
+                    ],
+                    [
+                        pathTextBuilder(WORLD_SCALE)
+                            .withPathLengthSqr(50)
+                            .withPath(
+                                DEF_PATH.map((point: THREE.Vector3) =>
+                                    point
+                                        .clone()
+                                        .multiplyScalar(WORLD_SCALE)
+                                        .add(new THREE.Vector3(0, 8, 0))
+                                )
+                            ),
+                        fadedOut(FADE_IN.length).concat(
+                            fadedIn(FADE_2_CYCLES.length - FADE_IN.length)
+                        )
+                    ]
+                ],
+                frames: not(firstNFrames(FADE_2_CYCLES, FADE_IN.length))
+            }
+        ],
+        frameTimes: FADE_2_CYCLES
     }
 ];
 
@@ -420,7 +469,11 @@ describe("TextElementsRenderer", function() {
             }
             const elements = tile.labels.map((inputElement: InputTextElement) => {
                 expect(frameStates(inputElement).length).equal(test.frameTimes.length);
-                const element = builder(inputElement).build(sandbox);
+                // Only used to identify some text elements for testing purposes.
+                const dummyUserData = {};
+                const element = builder(inputElement)
+                    .withUserData(dummyUserData)
+                    .build(sandbox);
                 elementFrameStates.push([element, frameStates(inputElement)]);
                 return element;
             });

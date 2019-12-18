@@ -1998,6 +1998,10 @@ export class TextElementsRenderer {
             renderParams.fadeAnimationRunning = true;
         }
 
+        if (labelState.textRenderState!.opacity === 0) {
+            return false;
+        }
+
         const prevOpacity = textCanvas.textRenderStyle.opacity;
         const prevBgOpacity = textCanvas.textRenderStyle.backgroundOpacity;
         const distanceFadeFactor = this.getDistanceFadingFactor(
