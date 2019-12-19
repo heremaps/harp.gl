@@ -1464,13 +1464,12 @@ export class TileGeometryCreator {
         }
 
         if (isTerrainTechnique(technique)) {
-            const attributeMap = srcGeometry.objInfos![0];
-            if (typeof attributeMap === "number") {
+            if (typeof srcGeometry.objInfos![0] === "number") {
                 assert(false, "Wrong attribute map type for terrain geometry");
                 return;
             }
 
-            const displacementMap = attributeMap.displacementMap as DisplacementMap;
+            const displacementMap = (srcGeometry.objInfos as DisplacementMap[])[0];
             const tileDisplacementMap: TileDisplacementMap = {
                 tileKey: tile.tileKey,
                 texture: new THREE.DataTexture(

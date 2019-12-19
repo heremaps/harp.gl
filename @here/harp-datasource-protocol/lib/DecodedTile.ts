@@ -14,7 +14,6 @@ import {
     Vector3Like,
     webMercatorProjection
 } from "@here/harp-geoutils";
-import { ValueMap } from "./Env";
 import { Technique } from "./Techniques";
 import { TileInfo } from "./TileInfo";
 
@@ -64,7 +63,7 @@ export interface PathGeometry {
  * Attributes corresponding to some decoded geometry. It may be either a map
  * of multiple attributes or just a number with the geometry's feature id.
  */
-export type AttributeMap = ValueMap | number;
+export type AttributeMap = {} | number;
 
 /**
  * This object keeps textual data together with metadata to place it on the map.
@@ -285,7 +284,7 @@ export function getFeatureId(attributeMap: AttributeMap | undefined): number {
     }
 
     if (attributeMap.hasOwnProperty("$id")) {
-        return attributeMap.$id as number;
+        return (attributeMap as any).$id as number;
     }
 
     return 0;
