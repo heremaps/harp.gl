@@ -7,6 +7,7 @@
 import { AreaCopyrightInfo, CopyrightCoverageProvider } from "@here/harp-mapview";
 import {
     DataRequest,
+    EnvironmentName,
     HRN,
     OlpClientSettings,
     VersionedLayerClient
@@ -44,6 +45,8 @@ export interface OlpCopyrightProviderParams {
      * Version of the catalog
      */
     version: number;
+    /** The name of environment. If omitted, environment from catalog HRN will be used. */
+    environment?: EnvironmentName;
 }
 
 const DEFAULT_LAYER = "copyright";
@@ -76,7 +79,7 @@ export class OlpCopyrightProvider extends CopyrightCoverageProvider {
             const hrn = HRN.fromString(this.m_params.hrn);
             const settings = new OlpClientSettings({
                 getToken: this.m_params.getToken,
-                environment: hrn.data.partition
+                environment: this.m_params.environment || hrn.data.partition
             });
             const client = new VersionedLayerClient(
                 hrn,
