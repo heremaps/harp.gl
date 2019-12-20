@@ -214,7 +214,6 @@ export class SimpleTileGeometryLoader implements TileGeometryLoader {
 
             this.setDecodedTile(tile.decodedTile);
             this.prepareForRender(enabledKinds, disabledKinds);
-            this.finish();
         }
     }
 
@@ -254,6 +253,7 @@ export class SimpleTileGeometryLoader implements TileGeometryLoader {
         const decodedTile = this.m_decodedTile;
         this.m_decodedTile = undefined;
         if (decodedTile === undefined || tile.disposed || !tile.isVisible) {
+            this.finish();
             return;
         }
         this.m_timeout = setTimeout(() => {
@@ -272,6 +272,7 @@ export class SimpleTileGeometryLoader implements TileGeometryLoader {
                         `Decoded tile: ${tile.dataSource.name} # lvl=${tile.tileKey.level} col=${tile.tileKey.column} row=${tile.tileKey.row} DISCARDED - invisible`
                     );
                 }
+                this.finish();
                 return;
             }
             let now = 0;
