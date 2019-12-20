@@ -11,6 +11,7 @@ import {
     GeometryCollection
 } from "@here/harp-datasource-protocol";
 import { GeoJsonDataProvider, GeoJsonDataProviderOptions } from "@here/harp-geojson-datasource";
+import { GeoBox, GeoCoordinates } from "@here/harp-geoutils";
 import { MapView } from "@here/harp-mapview";
 import { OmvDataSource, OmvDataSourceParameters } from "@here/harp-omv-datasource";
 import { LoggerManager } from "@here/harp-utils";
@@ -160,6 +161,45 @@ export class FeaturesDataSource extends OmvDataSource {
     detach(mapView: MapView): void {
         super.detach(mapView);
         this.m_isAttached = false;
+    }
+
+    /**
+     * Get [[GeoBox]] containing all the points in datasource.
+     *
+     * Returns undefined if there were no features added to this DS.
+     */
+    getGeoBox(): GeoBox | undefined {
+        let result: GeoBox | undefined;
+        const addPoint = (geoJsonCoords: number[]) => {
+            // NOTE: GeoJson coordinates are in [longitute, latitute] order!
+            const coords = new GeoCoordinates(geoJsonCoords[1], geoJsonCoords[0]);
+            if (result === undefined) {
+                result = new GeoBox(coords, coords.clone());
+            } else {
+                result.growToContain(coords);
+            }
+        };
+        for (const feature of this.m_featureCollection.features) {
+            switch (feature.geometry.type) {
+                case "Point":
+                    addPoint(feature.geometry.coordinates);
+                    break;
+                case "MultiPoint":
+                case "LineString":
+                    feature.geometry.coordinates.forEach(addPoint);
+                    break;
+                case "MultiLineString":
+                case "Polygon":
+                    feature.geometry.coordinates.forEach(segment => segment.forEach(addPoint));
+                    break;
+                case "MultiPolygon":
+                    feature.geometry.coordinates.forEach(polygon =>
+                        polygon.forEach(segment => segment.forEach(addPoint))
+                    );
+                    break;
+            }
+        }
+        return result;
     }
 
     private addFeature(feature: MapViewFeature) {
