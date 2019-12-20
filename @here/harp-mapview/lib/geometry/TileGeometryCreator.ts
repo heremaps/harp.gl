@@ -817,7 +817,6 @@ export class TileGeometryCreator {
                         fadingParams.fadeNear,
                         fadingParams.fadeFar,
                         false,
-                        false,
                         (renderer, mat) => {
                             const lineMaterial = mat as THREE.LineBasicMaterial;
                             lineMaterial.color.set(
@@ -827,9 +826,6 @@ export class TileGeometryCreator {
                     );
                 }
 
-                // Lines renderOrder fix: Render them as transparent objects, but make sure they end
-                // up in the opaque rendering queue (by disabling transparency onAfterRender, and
-                // enabling it onBeforeRender).
                 if (isSolidLineTechnique(technique)) {
                     const fadingParams = this.getFadingParams(displayZoomLevel, technique);
                     FadingFeature.addRenderHelper(
@@ -837,7 +833,6 @@ export class TileGeometryCreator {
                         viewRanges,
                         fadingParams.fadeNear,
                         fadingParams.fadeFar,
-                        true,
                         false,
                         (renderer, mat) => {
                             const lineMaterial = mat as SolidLineMaterial;
@@ -908,7 +903,6 @@ export class TileGeometryCreator {
                             fadingParams.fadeNear,
                             fadingParams.fadeFar,
                             true,
-                            true,
                             technique.color !== undefined && Expr.isExpr(technique.color)
                                 ? (renderer, mat) => {
                                       const extrudedMaterial = mat as
@@ -940,7 +934,6 @@ export class TileGeometryCreator {
                             viewRanges,
                             fadingParams.fadeNear,
                             fadingParams.fadeFar,
-                            true,
                             true,
                             hasDynamicColor
                                 ? (renderer, mat) => {
@@ -1087,7 +1080,6 @@ export class TileGeometryCreator {
                         fadingParams.lineFadeNear,
                         fadingParams.lineFadeFar,
                         false,
-                        false,
                         extrudedPolygonTechnique.lineColor !== undefined &&
                             Expr.isExpr(extrudedPolygonTechnique.lineColor)
                             ? (renderer, mat) => {
@@ -1166,7 +1158,6 @@ export class TileGeometryCreator {
                         viewRanges,
                         fadingParams.lineFadeNear,
                         fadingParams.lineFadeFar,
-                        true,
                         false,
                         fillTechnique.lineColor !== undefined &&
                             Expr.isExpr(fillTechnique.lineColor)
@@ -1213,7 +1204,6 @@ export class TileGeometryCreator {
                         viewRanges,
                         fadingParams.fadeNear,
                         fadingParams.fadeFar,
-                        true,
                         false,
                         (renderer, mat) => {
                             const lineMaterial = mat as SolidLineMaterial;

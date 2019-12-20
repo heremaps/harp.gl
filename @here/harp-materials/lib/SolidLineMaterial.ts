@@ -13,6 +13,7 @@ import {
     FadingFeatureParameters
 } from "./MapMeshMaterials";
 import linesShaderChunk from "./ShaderChunks/LinesChunks";
+import { enforceBlending } from "./Utils";
 
 export const LineCapsDefinitions: { [key in LineCaps]: string } = {
     Square: "CAPS_SQUARE",
@@ -367,7 +368,7 @@ export class SolidLineMaterial extends THREE.RawShaderMaterial
             defines.USE_OUTLINE = "";
         }
 
-        const shaderParams = {
+        const shaderParams: THREE.ShaderMaterialParameters = {
             name: "SolidLineMaterial",
             vertexShader: vertexSource,
             fragmentShader: fragmentSource,
@@ -401,9 +402,10 @@ export class SolidLineMaterial extends THREE.RawShaderMaterial
                 THREE.UniformsLib.fog
             ]),
             defines,
-            transparent: true,
             fog: true
         };
+
+        enforceBlending(shaderParams);
 
         super(shaderParams);
         this.extensions.derivatives = true;

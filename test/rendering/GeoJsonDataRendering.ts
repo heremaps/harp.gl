@@ -7,7 +7,7 @@
 // tslint:disable:only-arrow-functions
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
-import { GeoJson, StyleSet, Theme } from "@here/harp-datasource-protocol";
+import { GeoJson, Light, StyleSet, Theme } from "@here/harp-datasource-protocol";
 import { GeoJsonDataProvider } from "@here/harp-geojson-datasource";
 import { GeoCoordinates } from "@here/harp-geoutils";
 import { MapView, MapViewEventNames } from "@here/harp-mapview";
@@ -19,6 +19,25 @@ import { mergeWithOptions } from "@here/harp-utils";
 
 describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", function() {
     let mapView: MapView;
+    const lights: Light[] = [
+        {
+            type: "ambient",
+            color: "#FFFFFF",
+            name: "ambientLight",
+            intensity: 0.9
+        },
+        {
+            type: "directional",
+            color: "#FFFFFF",
+            name: "light1",
+            intensity: 0.8,
+            direction: {
+                x: 1,
+                y: 5,
+                z: 0.5
+            }
+        }
+    ];
 
     afterEach(() => {
         if (mapView !== undefined) {
@@ -105,7 +124,6 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
                 technique: "fill",
                 attr: {
                     color: "#008000",
-                    transparent: true,
                     opacity: 0.5
                 }
             }
@@ -114,7 +132,7 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
         await geoJsonTest({
             mochaTest: this,
             testImageName: "geojson-polygon-fill",
-            theme: { styles: { geojson: greenStyle } },
+            theme: { lights, styles: { geojson: greenStyle } },
             geoJson: "../dist/resources/basic_polygon.json"
         });
     });
@@ -127,8 +145,7 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
                 attr: {
                     height: 0,
                     color: "#008000",
-                    transparent: true,
-                    opacity: 0.5,
+                    opacity: 0.9,
                     lineWidth: 1,
                     lineColor: "#172023",
                     lineColorMix: 0.6
@@ -139,7 +156,10 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
         await geoJsonTest({
             mochaTest: this,
             testImageName: "geojson-extruded-polygon-flat",
-            theme: { styles: { geojson: greenStyle } },
+            theme: {
+                lights,
+                styles: { geojson: greenStyle }
+            },
             geoJson: "../dist/resources/basic_polygon.json",
             lookAt: {
                 tilt: 45,
@@ -157,7 +177,6 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
                 technique: "extruded-polygon",
                 attr: {
                     vertexColors: false,
-                    emissive: "#78858C",
                     lineWidth: 1,
                     lineColor: "#172023",
                     lineColorMix: 0.6
@@ -168,7 +187,7 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
         await geoJsonTest({
             mochaTest: this,
             testImageName: "geojson-extruded-polygon-with-height",
-            theme: { styles: { geojson: ourStyle } },
+            theme: { lights, styles: { geojson: ourStyle } },
             geoJson: "../dist/resources/basic_polygon.json",
             lookAt: {
                 tilt: 45,
@@ -187,8 +206,6 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
                 attr: {
                     vertexColors: true,
                     color: ["string", ["get", "color"], "#5050f0"],
-                    emissiveIntensity: 0.85,
-                    emissive: "#78858C",
                     lineWidth: 1,
                     lineColor: "#172023",
                     lineColorMix: 0.6
@@ -199,7 +216,7 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
         await geoJsonTest({
             mochaTest: this,
             testImageName: "geojson-extruded-polygon-with-height-color",
-            theme: { styles: { geojson: ourStyle } },
+            theme: { lights, styles: { geojson: ourStyle } },
             geoJson: "../dist/resources/basic_polygon.json",
             lookAt: {
                 tilt: 45,

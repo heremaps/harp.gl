@@ -13,6 +13,7 @@ import {
     FadingFeature,
     FadingFeatureParameters
 } from "./MapMeshMaterials";
+import { enforceBlending } from "./Utils";
 
 const vertexSource: string = `
 #define EDGE_DEPTH_OFFSET 0.0001
@@ -157,8 +158,8 @@ export class EdgeMaterial extends THREE.RawShaderMaterial
             depthWrite: false,
             defines
         };
+        enforceBlending(shaderParams);
         super(shaderParams);
-        this.transparent = true;
 
         FadingFeature.patchGlobalShaderChunks();
         ExtrusionFeature.patchGlobalShaderChunks();

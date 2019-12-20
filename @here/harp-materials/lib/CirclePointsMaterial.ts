@@ -5,6 +5,7 @@
  */
 
 import * as THREE from "three";
+import { enforceBlending } from "./Utils";
 
 const vertexShader: string = `
 uniform float size;
@@ -67,6 +68,7 @@ export class CirclePointsMaterial extends THREE.ShaderMaterial {
      */
     constructor(parameters: CirclePointsMaterialParameters = {}) {
         parameters.depthTest = false;
+        enforceBlending(parameters);
 
         super(parameters);
 
@@ -74,7 +76,6 @@ export class CirclePointsMaterial extends THREE.ShaderMaterial {
         this.type = "CirclePointsMaterial";
         this.vertexShader = vertexShader;
         this.fragmentShader = fragmentShader;
-        this.transparent = true;
 
         this.m_size = parameters.size || DEFAULT_CIRCLE_SIZE;
         this.m_color = new THREE.Color();
