@@ -74,6 +74,11 @@ const browserTestsConfig = {
             ...testResources,
             path.join(harpMapThemePath, "resources/berlin*.json"),
             {
+                from: path.join(harpMapThemePath, "resources/wests_textures"),
+                to: "resources/wests_textures",
+                toType: "dir"
+            },
+            {
                 from: path.join(harpDataSourceProtocolPath, "theme.schema.json"),
                 to: "./@here/harp-datasource-protocol",
                 toType: "dir"
