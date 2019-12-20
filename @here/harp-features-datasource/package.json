@@ -21,6 +21,7 @@
     "dependencies": {
         "@here/harp-datasource-protocol": "^0.11.1",
         "@here/harp-geojson-datasource": "^0.11.2",
+        "@here/harp-geoutils": "^0.11.0",
         "@here/harp-mapview": "^0.11.2",
         "@here/harp-omv-datasource": "^0.11.2",
         "@here/harp-utils": "^0.11.1"
