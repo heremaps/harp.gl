@@ -58,8 +58,12 @@ export class CameraMovementDetector {
         const newAttitude = MapViewUtils.extractAttitude(mapView, mapView.camera);
         const newCameraPos = mapView.camera.getWorldPosition(this.m_newCameraPos);
 
+        if (this.m_lastAttitude === undefined) {
+            this.m_lastCameraPos.copy(newCameraPos);
+            this.m_lastAttitude = newAttitude;
+            return false;
+        }
         const cameraMoved =
-            this.m_lastAttitude === undefined ||
             !this.m_lastCameraPos.equals(newCameraPos) ||
             newAttitude.yaw !== this.m_lastAttitude.yaw ||
             newAttitude.pitch !== this.m_lastAttitude.pitch ||
