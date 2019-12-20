@@ -9,11 +9,9 @@ const path = require("path");
 const glob = require("glob");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const CopyWebpackPlugin = require("copy-webpack-plugin");
+const { addHarpWebpackConfig } = require("@here/harp-webpack-utils/scripts/HarpWebpackConfig");
 
 const prepareOnly = process.env["PREPARE_ONLY"] === "true";
-
-const harpMapThemePath = path.dirname(require.resolve("@here/harp-map-theme/package.json"));
-const harpFontResourcesPath = path.dirname(require.resolve("@here/harp-fontcatalog/package.json"));
 
 const isProduction = process.env.NODE_ENV === "production";
 const harpBundleSuffix = isProduction ? ".min" : "";
@@ -32,7 +30,6 @@ function resolveOptional(path, message) {
 
 const commonConfig = {
     context: __dirname,
-    devtool: prepareOnly ? undefined : "source-map",
     externals: [
         {
             three: "THREE",
@@ -43,7 +40,6 @@ const commonConfig = {
         }
     ],
     resolve: {
-        extensions: [".webpack.js", ".web.ts", ".ts", ".tsx", ".web.js", ".js"],
         alias: {
             "react-native": "react-native-web"
         }
@@ -67,29 +63,13 @@ const commonConfig = {
         ]
     },
     output: {
-        path: path.join(process.cwd(), "dist/examples"),
-        filename: "[name].bundle.js"
-    },
-    performance: {
-        hints: false
-    },
-    stats: {
-        all: false,
-        timings: true,
-        exclude: "/resources/",
-        errors: true,
-        entrypoints: true,
-        warnings: true
-    },
-    mode: process.env.NODE_ENV || "development"
+        path: path.join(process.cwd(), "dist/examples")
+    }
 };
 
-const decoderConfig = merge(commonConfig, {
-    target: "webworker",
-    entry: {
-        decoder: "./decoder/decoder.ts"
-    }
-});
+const decoderConfig = addHarpWebpackConfig(commonConfig, {
+    decoderEntry: "./decoder/decoder.ts"
+})[1];
 
 const webpackEntries = glob
     .sync(path.join(__dirname, "./src/*.{ts,tsx}"))
@@ -123,31 +103,32 @@ function filterExamples(pattern) {
 //
 //filterExamples("hello");
 
-const browserConfig = merge(commonConfig, {
-    entry: webpackEntries,
-    output: {
-        filename: "[name]_bundle.js"
-    },
-    optimization: {
-        splitChunks: {
-            chunks: "all",
-            minSize: 1000,
-            name: "common"
+const browserConfig = addHarpWebpackConfig(
+    merge(commonConfig, {
+        optimization: {
+            splitChunks: {
+                chunks: "all",
+                minSize: 1000,
+                name: "common"
+            }
         }
+    }),
+    {
+        mainEntry: webpackEntries
     }
-});
+)[0];
 
-const exampleBrowserConfig = merge(commonConfig, {
-    entry: {
+const exampleBrowserConfig = addHarpWebpackConfig(commonConfig, {
+    mainEntry: {
         "example-browser": "./example-browser.ts"
     }
-});
+})[0];
 
-const codeBrowserConfig = merge(commonConfig, {
-    entry: {
+const codeBrowserConfig = addHarpWebpackConfig(commonConfig, {
+    mainEntry: {
         codebrowser: "./codebrowser.ts"
     }
-});
+})[0];
 
 browserConfig.plugins = Object.keys(browserConfig.entry).map(
     chunk =>
@@ -191,15 +172,12 @@ const assets = [
     },
     path.join(__dirname, "codebrowser.html"),
     { from: path.join(__dirname, "resources"), to: "resources", toType: "dir" },
-    { from: path.join(harpMapThemePath, "resources"), to: "resources", toType: "dir" },
-    {
-        from: path.join(harpFontResourcesPath, "resources"),
-        to: "resources/fonts",
-        toType: "dir"
-    },
     require.resolve("three/build/three.min.js"),
     {
-        from: resolveOptional(`@here/harp.gl/dist/harp${harpBundleSuffix}.js`, "bundle examples require `yarn build-bundle`"),
+        from: resolveOptional(
+            `@here/harp.gl/dist/harp${harpBundleSuffix}.js`,
+            "bundle examples require `yarn build-bundle`"
+        ),
         to: "harp.js"
     },
     {

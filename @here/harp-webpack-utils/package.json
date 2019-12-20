@@ -2,10 +2,6 @@
     "name": "@here/harp-webpack-utils",
     "version": "0.11.1",
     "description": "harp.gl webpack utilities",
-    "scripts": {
-        "build": "tsc",
-        "prepare": "cross-env tsc --sourceMap false $EXTRA_TSC_ARGS"
-    },
     "repository": {
         "type": "git",
         "url": "https://github.com/heremaps/harp.gl.git",
@@ -32,15 +28,6 @@
     },
     "peerDependencies": {
         "webpack": "~4.41.2"
-    },
-    "devDependencies": {
-        "@types/copy-webpack-plugin": "^5.0.0",
-        "@types/html-webpack-plugin": "^3.2.1",
-        "@types/webpack": "^4.41.0",
-        "@types/webpack-merge": "^4.1.5",
-        "cross-env": "^6.0.3",
-        "ts-node": "^8.3.0",
-        "typescript": "^3.7.2"
     },
     "publishConfig": {
         "access": "public"

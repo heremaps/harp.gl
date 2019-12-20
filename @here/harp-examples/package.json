@@ -41,6 +41,7 @@
         "@here/harp-omv-datasource": "^0.11.2",
         "@here/harp-text-canvas": "^0.11.1",
         "@here/harp-utils": "^0.11.1",
+        "@here/harp-webpack-utils": "^0.11.1",
         "@here/harp-webtile-datasource": "^0.11.2",
         "@types/dat.gui": "^0.7.1",
         "@types/highlight.js": "^9.12.2",
