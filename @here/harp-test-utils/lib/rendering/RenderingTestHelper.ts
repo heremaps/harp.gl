@@ -35,7 +35,7 @@ export interface TestOptions {
      * 0 - accepts perfect match, 1 - accepts many differences
      * Used with pixelmatch library: https://github.com/mapbox/pixelmatch
      */
-    threshold: number;
+    threshold?: number;
 }
 
 /**
