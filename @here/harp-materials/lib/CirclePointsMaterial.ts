@@ -68,9 +68,9 @@ export class CirclePointsMaterial extends THREE.ShaderMaterial {
      */
     constructor(parameters: CirclePointsMaterialParameters = {}) {
         parameters.depthTest = false;
-        enforceBlending(parameters);
 
         super(parameters);
+        enforceBlending(this);
 
         this.isCirclePointsMaterial = true;
         this.type = "CirclePointsMaterial";

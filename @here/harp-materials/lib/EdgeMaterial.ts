@@ -158,8 +158,8 @@ export class EdgeMaterial extends THREE.RawShaderMaterial
             depthWrite: false,
             defines
         };
-        enforceBlending(shaderParams);
         super(shaderParams);
+        enforceBlending(this);
 
         FadingFeature.patchGlobalShaderChunks();
         ExtrusionFeature.patchGlobalShaderChunks();

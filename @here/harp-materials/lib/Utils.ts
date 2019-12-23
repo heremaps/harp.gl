@@ -30,6 +30,13 @@ ${tabChar}#include <${insertedShaderName}>`
     return result;
 }
 
+export interface ForcedBlending {
+    /**
+     * This material has `blending` always enabled regardless of `opacity` setting.s
+     */
+    forcedBlending?: true;
+}
+
 /**
  * THREE.js is enabling blending only when transparent is `true` or when a blend mode
  * different than `NormalBlending` is set.
@@ -38,8 +45,22 @@ ${tabChar}#include <${insertedShaderName}>`
 
  * @param material `Material` that should use blending
  */
-export function enforceBlending(material: THREE.Material | THREE.ShaderMaterialParameters) {
+export function enforceBlending(
+    material: (THREE.Material | THREE.ShaderMaterialParameters) & ForcedBlending
+) {
     if (material.transparent) {
+        // Nothing to do
+        return;
+    }
+
+    enableBlending(material);
+    material.forcedBlending = true;
+}
+
+export function enableBlending(
+    material: (THREE.Material | THREE.ShaderMaterialParameters) & ForcedBlending
+) {
+    if (material.transparent || material.forcedBlending) {
         // Nothing to do
         return;
     }
@@ -56,4 +77,15 @@ export function enforceBlending(material: THREE.Material | THREE.ShaderMaterialP
         material.blendSrcAlpha = THREE.OneFactor;
         material.blendDstAlpha = THREE.OneMinusSrcAlphaFactor;
     }
+}
+
+export function disableBlending(
+    material: (THREE.Material | THREE.ShaderMaterialParameters) & ForcedBlending
+) {
+    if (material.transparent || material.forcedBlending) {
+        // Nothing to do
+        return;
+    }
+
+    material.blending = THREE.NormalBlending;
 }
