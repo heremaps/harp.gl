@@ -405,9 +405,8 @@ export class SolidLineMaterial extends THREE.RawShaderMaterial
             fog: true
         };
 
-        enforceBlending(shaderParams);
-
         super(shaderParams);
+        enforceBlending(this);
         this.extensions.derivatives = true;
 
         // Apply initial parameter values.
