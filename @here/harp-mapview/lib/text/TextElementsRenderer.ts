@@ -855,10 +855,11 @@ export class TextElementsRenderer {
                     textCanvas.textRenderStyle,
                     textElement.glyphCaseArray
                 );
+                let result = true;
                 if (textElement.type !== TextElementType.PathLabel) {
                     textElement.bounds = new THREE.Box2();
                     tempParams.poiMeasurementParams.letterCaseArray = textElement.glyphCaseArray!;
-                    textCanvas.measureText(
+                    result = textCanvas.measureText(
                         textElement.glyphs!,
                         textElement.bounds,
                         tempParams.poiMeasurementParams

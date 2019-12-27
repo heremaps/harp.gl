@@ -457,7 +457,8 @@ export class TileGeometryCreator {
                     featureId,
                     technique.style,
                     fadeNear,
-                    fadeFar
+                    fadeFar,
+                    tile.offset
                 );
                 textElement.minZoomLevel =
                     technique.minZoomLevel !== undefined
@@ -542,7 +543,10 @@ export class TileGeometryCreator {
                         technique.xOffset || 0.0,
                         technique.yOffset || 0.0,
                         featureId,
-                        technique.style
+                        technique.style,
+                        undefined,
+                        undefined,
+                        tile.offset
                     );
 
                     textElement.minZoomLevel =
