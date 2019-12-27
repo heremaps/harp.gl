@@ -6,7 +6,7 @@
 
 import { GeoCoordinates } from "@here/harp-geoutils";
 import { MapControls, MapControlsUI } from "@here/harp-map-controls";
-import { CopyrightElementHandler, MapView } from "@here/harp-mapview";
+import { CopyrightElementHandler, MapView, ThemeLoader } from "@here/harp-mapview";
 import { APIFormat, OmvDataSource } from "@here/harp-omv-datasource";
 import { GUI } from "dat.gui";
 import { accessToken, copyrightInfo } from "../config";
@@ -69,13 +69,9 @@ export namespace ThemesExample {
     };
     gui.add(options, "theme", options.theme)
         .onChange((value: string) => {
-            fetch(value)
-                .then(response => {
-                    return response.json();
-                })
-                .then((theme: any) => {
-                    mapView.theme = theme;
-                });
+            ThemeLoader.load(value).then(theme => {
+                mapView.theme = theme;
+            });
         })
         .setValue("resources/berlin_tilezen_base.json");
 }
