@@ -520,7 +520,8 @@ export class PoiManager {
             featureId,
             technique.style,
             fadeNear,
-            fadeFar
+            fadeFar,
+            tile.offset
         );
 
         textElement.mayOverlap = technique.textMayOverlap === true;

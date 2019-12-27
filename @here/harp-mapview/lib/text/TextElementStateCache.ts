@@ -174,10 +174,8 @@ export class TextElementStateCache {
         }
 
         if (cacheResult.index === -1) {
-            if (!element.hasFeatureId()) {
-                // No duplicate found among elements with same text,add this one to cache.
-                cacheResult.entries.push(elementState);
-            }
+            // No duplicate found among elements with same text,add this one to cache.
+            cacheResult.entries.push(elementState);
             return true;
         }
 
@@ -259,14 +257,17 @@ export class TextElementStateCache {
         tmpCachedDuplicate.entries = cachedEntries;
 
         if (element.hasFeatureId()) {
-            // Duplicate with same feature id found.
-            assert(cachedEntries.length === 1);
-            const cachedElement = cachedEntries[0].element;
+            // Cached entries with same feature id found, find the entry with the same tile offset.
+            tmpCachedDuplicate.index = cachedEntries.findIndex(
+                entry => entry.element.tileOffset === element.tileOffset
+            );
+            if (tmpCachedDuplicate.index === -1) {
+                return tmpCachedDuplicate;
+            }
+            const cachedElement = cachedEntries[tmpCachedDuplicate.index].element;
             assert(element.featureId === cachedElement.featureId);
 
-            if (cachedElement.text === element.text) {
-                tmpCachedDuplicate.index = 0;
-            } else {
+            if (cachedElement.text !== element.text) {
                 tmpCachedDuplicate.index = -1;
                 // Labels with different text shouldn't share the same feature id. This points to
                 // an issue on the map data side. Submit a ticket to the corresponding map backend
