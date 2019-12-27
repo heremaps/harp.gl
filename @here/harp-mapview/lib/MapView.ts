@@ -1075,6 +1075,7 @@ export class MapView extends THREE.EventDispatcher {
             dataSource.dispose();
         }
         this.m_visibleTiles.clearTileCache();
+        this.m_textElementsRenderer.clearRenderStates();
         this.m_renderer.dispose();
         this.m_imageCache.clear();
 
@@ -1470,6 +1471,7 @@ export class MapView extends THREE.EventDispatcher {
         this.m_visibleTileSetOptions.projection = projection;
         this.updatePolarDataSource();
         this.clearTileCache();
+        this.textElementsRenderer.clearRenderStates();
         this.m_visibleTiles = new VisibleTileSet(
             new FrustumIntersection(
                 this.m_camera,
