@@ -163,13 +163,11 @@ export class TextElementStateCache {
      * as duplicate.
      */
     deduplicateElement(zoomLevel: number, elementState: TextElementState): boolean {
-        const element = elementState.element;
-        const cacheKey = getCacheKey(element);
-        const cacheResult = this.findDuplicate(elementState, cacheKey, zoomLevel);
+        const cacheResult = this.findDuplicate(elementState, zoomLevel);
 
         if (cacheResult === undefined) {
             // Text not found so far, add this element to cache.
-            this.m_textMap.set(cacheKey, [elementState]);
+            this.m_textMap.set(getCacheKey(elementState.element), [elementState]);
             return true;
         }
 
@@ -199,8 +197,7 @@ export class TextElementStateCache {
      */
     replaceElement(zoomLevel: number, elementState: TextElementState): void {
         assert(elementState.visible);
-        const element = elementState.element;
-        const cacheResult = this.findDuplicate(elementState, getCacheKey(element), zoomLevel);
+        const cacheResult = this.findDuplicate(elementState, zoomLevel);
 
         if (cacheResult === undefined || cacheResult.index === -1) {
             // No replacement found;
@@ -240,14 +237,13 @@ export class TextElementStateCache {
 
     private findDuplicate(
         elementState: TextElementState,
-        cacheKey: string | number,
         zoomLevel: number
     ): { entries: TextElementState[]; index: number } | undefined {
         // Point labels may have duplicates (as can path labels), Identify them
         // and keep the one we already display.
 
         const element = elementState.element;
-        const cachedEntries = this.m_textMap.get(cacheKey);
+        const cachedEntries = this.m_textMap.get(getCacheKey(element));
 
         if (cachedEntries === undefined) {
             // No labels found with the same key.
@@ -268,7 +264,6 @@ export class TextElementStateCache {
             assert(element.featureId === cachedElement.featureId);
 
             if (cachedElement.text !== element.text) {
-                tmpCachedDuplicate.index = -1;
                 // Labels with different text shouldn't share the same feature id. This points to
                 // an issue on the map data side. Submit a ticket to the corresponding map backend
                 // issue tracking system if available (e.g. OLPRPS project in JIRA for OMV),
@@ -277,6 +272,9 @@ export class TextElementStateCache {
                     `Text feature id ${element.featureId} collision between "${element.text} and \
                      ${cachedElement.text}`
                 );
+                // Try finding duplicates using text as key.
+                element.featureId = undefined;
+                return this.findDuplicate(elementState, zoomLevel);
             }
             return tmpCachedDuplicate;
         }
