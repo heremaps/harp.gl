@@ -5,11 +5,18 @@
  */
 
 import { ProjectionType } from "@here/harp-geoutils";
-import { HorizontalAlignment, VerticalAlignment } from "@here/harp-text-canvas";
+import {
+    HorizontalAlignment,
+    MeasurementParameters,
+    TextCanvas,
+    VerticalAlignment
+} from "@here/harp-text-canvas";
 import { assert, MathUtils } from "@here/harp-utils";
 import * as THREE from "three";
 import { PoiManager } from "../poi/PoiManager";
+import { CollisionBox, DetailedCollisionBox, IBox, ScreenCollisions } from "../ScreenCollisions";
 import { poiIsRenderable, TextElement } from "./TextElement";
+import { TextElementState } from "./TextElementState";
 import { TextElementType } from "./TextElementType";
 import { ViewState } from "./ViewState";
 
@@ -216,4 +223,85 @@ export function computePointTextOffset(
         offset.y += textElement.poiInfo.computedHeight! * (0.5 + vAlign);
     }
     return offset;
+}
+
+const tmpBox = new THREE.Box2();
+const tmpBoxes: THREE.Box2[] = [];
+const tmpMeasurementParams: MeasurementParameters = {};
+const tmpCollisionBoxes: CollisionBox[] = [];
+const tmpCollisionBox = new CollisionBox();
+
+/**
+ * Places a path label along a given path on a specified text canvas.
+ * @param labelState The state of the path label to place.
+ * @param textPath The text path along which the label will be placed.
+ * @param screenPosition Position of the label in screen coordinates.
+ * @param textCanvas The text canvas where the label will be placed.
+ * @param screenCollisions Used to check collisions with other labels.
+ * @returns `true` if path label can be placed, `false` if there's a collision or is not fully
+ * visible.
+ */
+export function placePathLabel(
+    labelState: TextElementState,
+    textPath: THREE.Path,
+    screenPosition: THREE.Vector2,
+    textCanvas: TextCanvas,
+    screenCollisions: ScreenCollisions
+): boolean {
+    // Recalculate the text bounds for this path label. If measurement fails, the whole
+    // label doesn't fit the path and should be discarded.
+    tmpMeasurementParams.path = textPath;
+    tmpMeasurementParams.outputCharacterBounds = tmpBoxes;
+    tmpMeasurementParams.letterCaseArray = labelState.element.glyphCaseArray!;
+
+    // TODO: HARP-7648. TextCanvas.measureText does the placement as in TextCanvas.addText but
+    // without storing the result. If the measurement succeeds, the placement work is done
+    // twice.
+    // This could be done in one step (e.g measureAndAddText). Collision test could be injected
+    // in the middle as a function.
+    if (!textCanvas.measureText(labelState.element.glyphs!, tmpBox, tmpMeasurementParams)) {
+        return false;
+    }
+
+    // Coarse collision check.
+    tmpCollisionBox.copy(tmpBox.translate(screenPosition));
+    if (!screenCollisions.isVisible(tmpCollisionBox)) {
+        return false;
+    }
+
+    let checkGlyphCollision = false;
+    let candidateBoxes: IBox[] | undefined;
+    if (!labelState.element.textMayOverlap) {
+        candidateBoxes = screenCollisions.search(tmpCollisionBox);
+        checkGlyphCollision = candidateBoxes.length > 0;
+    }
+
+    const checkGlyphVisible = !screenCollisions.isFullyVisible(tmpCollisionBox);
+
+    // Perform per-character collision checks.
+    tmpCollisionBoxes.length = tmpBoxes.length;
+    for (let i = 0; i < tmpBoxes.length; ++i) {
+        const glyphBox = tmpBoxes[i].translate(screenPosition);
+        let collisionBox = tmpCollisionBoxes[i];
+        if (collisionBox === undefined) {
+            collisionBox = new CollisionBox(glyphBox);
+            tmpCollisionBoxes[i] = collisionBox;
+        } else {
+            collisionBox.copy(glyphBox);
+        }
+        if (
+            (checkGlyphVisible && !screenCollisions.isVisible(collisionBox)) ||
+            (checkGlyphCollision &&
+                screenCollisions.intersectsDetails(collisionBox, candidateBoxes!))
+        ) {
+            return false;
+        }
+    }
+    // Allocate collision info if needed.
+    if (labelState.element.textReservesSpace) {
+        const collisionBox = new DetailedCollisionBox(tmpCollisionBox, tmpCollisionBoxes.slice());
+        tmpCollisionBoxes.length = 0;
+        screenCollisions.allocate(collisionBox);
+    }
+    return true;
 }

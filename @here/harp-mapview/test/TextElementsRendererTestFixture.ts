@@ -99,7 +99,7 @@ export class TestFixture {
     private readonly m_theme: Theme = {};
     private m_viewState: ViewState;
     private m_options: TextElementsRendererOptions = {};
-    private m_screenCollisionsIsAllocatedStub: sinon.SinonStub | undefined;
+    private m_screenCollisionTestStub: sinon.SinonStub | undefined;
     private m_textCanvasStub: TextCanvas | undefined;
     private m_textRenderer: TextElementsRenderer | undefined;
     private m_defaultTile: Tile | undefined;
@@ -227,12 +227,12 @@ export class TestFixture {
      */
     async renderFrame(time: number, tileIndices: number[], collisionEnabled: boolean = true) {
         this.sandbox.resetHistory();
-        if (collisionEnabled && this.m_screenCollisionsIsAllocatedStub !== undefined) {
-            this.m_screenCollisionsIsAllocatedStub.restore();
-            this.m_screenCollisionsIsAllocatedStub = undefined;
-        } else if (!collisionEnabled && this.m_screenCollisionsIsAllocatedStub === undefined) {
-            this.m_screenCollisionsIsAllocatedStub = (this.sandbox
-                .stub(this.m_screenCollisions, "isAllocated")
+        if (collisionEnabled && this.m_screenCollisionTestStub !== undefined) {
+            this.m_screenCollisionTestStub.restore();
+            this.m_screenCollisionTestStub = undefined;
+        } else if (!collisionEnabled && this.m_screenCollisionTestStub === undefined) {
+            this.m_screenCollisionTestStub = (this.sandbox
+                .stub(this.m_screenCollisions, "intersectsDetails")
                 .returns(false) as unknown) as sinon.SinonStub;
         }
         if (this.textRenderer.loading) {
