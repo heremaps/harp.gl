@@ -9,7 +9,13 @@
 
 import { Math2D } from "@here/harp-utils";
 
-import { CollisionBox, IBox, LineWithBound, ScreenCollisions } from "../lib/ScreenCollisions";
+import {
+    CollisionBox,
+    DetailedCollisionBox,
+    IBox,
+    LineWithBound,
+    ScreenCollisions
+} from "../lib/ScreenCollisions";
 
 import { assert } from "chai";
 import * as THREE from "three";
@@ -34,18 +40,16 @@ describe("ScreenCollisions", function() {
             minY: -10,
             maxX: 1,
             maxY: 11,
-            type: "line",
             line: new THREE.Line3(new THREE.Vector3(0, -10, 1), new THREE.Vector3(1, 11, 1))
         };
         // Box around the center
         const intersectsLineWithBoxAtCenter = sc.intersectsLine(
-            {
+            new CollisionBox({
                 minX: -10,
                 minY: -10,
                 maxX: 10,
-                maxY: 10,
-                type: "box"
-            },
+                maxY: 10
+            }),
             line
         );
         assert.isTrue(intersectsLineWithBoxAtCenter);
@@ -58,19 +62,17 @@ describe("ScreenCollisions", function() {
             minY: -10,
             maxX: 1,
             maxY: 11,
-            type: "line",
             line: new THREE.Line3(new THREE.Vector3(0, -10, 1), new THREE.Vector3(1, 11, 1))
         };
 
         // Box around shifted right
         const intersectsLineWithShiftedBox = sc.intersectsLine(
-            {
+            new CollisionBox({
                 minX: 10,
                 minY: -10,
                 maxX: 20,
-                maxY: 10,
-                type: "box"
-            },
+                maxY: 10
+            }),
             line
         );
         assert.isFalse(intersectsLineWithShiftedBox);
@@ -83,19 +85,17 @@ describe("ScreenCollisions", function() {
             minY: -10,
             maxX: 0,
             maxY: 11,
-            type: "line",
             line: new THREE.Line3(new THREE.Vector3(0, -10, 1), new THREE.Vector3(0, 11, 1))
         };
 
         // Box around center
         const intersectsLineWithShiftedBox = sc.intersectsLine(
-            {
+            new CollisionBox({
                 minX: -10,
                 minY: -10,
                 maxX: 10,
-                maxY: 10,
-                type: "box"
-            },
+                maxY: 10
+            }),
             line
         );
         assert.isTrue(intersectsLineWithShiftedBox);
@@ -108,18 +108,16 @@ describe("ScreenCollisions", function() {
             minY: 0,
             maxX: 10,
             maxY: 0,
-            type: "line",
             line: new THREE.Line3(new THREE.Vector3(0, 0, 1), new THREE.Vector3(10, 0, 1))
         };
 
         // Box around center
-        const box: CollisionBox = {
+        const box = new CollisionBox({
             minX: -10,
             minY: -10,
             maxX: 10,
-            maxY: 10,
-            type: "box"
-        };
+            maxY: 10
+        });
         const intersectsLineWithShiftedBox = sc.intersectsLine(box, line);
         assert.isTrue(intersectsLineWithShiftedBox);
     });
@@ -131,18 +129,16 @@ describe("ScreenCollisions", function() {
             minY: -21,
             maxX: 21,
             maxY: 0,
-            type: "line",
             line: new THREE.Line3(new THREE.Vector3(0, -20, 1), new THREE.Vector3(20, 0, 1))
         };
         sc.allocateIBoxes([line]);
 
-        const box: CollisionBox = {
+        const box = new CollisionBox({
             minX: -10,
             minY: -10,
             maxX: 10,
-            maxY: 10,
-            type: "box"
-        };
+            maxY: 10
+        });
         assert.isTrue(sc.isAllocated(box));
     });
     it("line intersection test fail via isAllocated method", function() {
@@ -153,18 +149,16 @@ describe("ScreenCollisions", function() {
             minY: -21,
             maxX: 21,
             maxY: 0,
-            type: "line",
             line: new THREE.Line3(new THREE.Vector3(0, -21, 1), new THREE.Vector3(21, 0, 1))
         };
         sc.allocateIBoxes([line]);
 
-        const box: CollisionBox = {
+        const box = new CollisionBox({
             minX: -10,
             minY: -10,
             maxX: 10,
-            maxY: 10,
-            type: "box"
-        };
+            maxY: 10
+        });
         // The boxes overlap, but the lines don't intersect, so check this returns false.
         assert.isFalse(sc.isAllocated(box));
     });
@@ -177,22 +171,72 @@ describe("ScreenCollisions", function() {
                 minX: i,
                 minY: i,
                 maxX: i + 1,
-                maxY: i + 1,
-                type: "box"
+                maxY: i + 1
             });
         }
         sc.allocateIBoxes(boxes);
         assert.isTrue(
-            sc.isAllocated({
-                minX: 0,
-                minY: 0,
-                maxX: 10,
-                maxY: 10,
-                type: "box"
-            })
+            sc.isAllocated(
+                new CollisionBox({
+                    minX: 0,
+                    minY: 0,
+                    maxX: 10,
+                    maxY: 10
+                })
+            )
         );
     });
-    it("properlys handle collision in test space", function() {
+    it("intersectsDetails returns false if there's no intersections with detail boxes", function() {
+        const sc = new ScreenCollisions();
+        sc.update(100, 100);
+
+        const testBox = new CollisionBox({
+            minX: 5,
+            minY: 5,
+            maxX: 10,
+            maxY: 10
+        });
+
+        const dummyBox = { minX: 0, minY: 0, maxX: 0, maxY: 0 };
+        const detailBox = new CollisionBox({ minX: 0, minY: 0, maxX: 2, maxY: 2 });
+        assert.isFalse(
+            sc.intersectsDetails(testBox, [new DetailedCollisionBox(dummyBox, [detailBox])])
+        );
+    });
+    it("intersectsDetails returns true when there's an intersection with a detail box", function() {
+        const sc = new ScreenCollisions();
+        sc.update(100, 100);
+
+        const testBox = new CollisionBox({
+            minX: 5,
+            minY: 5,
+            maxX: 10,
+            maxY: 10
+        });
+
+        const dummyBox = { minX: 0, minY: 0, maxX: 0, maxY: 0 };
+        const detailBox = new CollisionBox({ minX: 0, minY: 0, maxX: 6, maxY: 6 });
+        assert.isTrue(
+            sc.intersectsDetails(testBox, [new DetailedCollisionBox(dummyBox, [detailBox])])
+        );
+    });
+    it("intersectsDetails returns true when a candidate does not have detail boxes", function() {
+        const sc = new ScreenCollisions();
+        sc.update(100, 100);
+
+        const testBox = new CollisionBox({
+            minX: 5,
+            minY: 5,
+            maxX: 10,
+            maxY: 10
+        });
+        assert.isTrue(
+            sc.intersectsDetails(testBox, [
+                new CollisionBox({ minX: 0, minY: 0, maxX: 0, maxY: 0 })
+            ])
+        );
+    });
+    it("properly handle collision in test space", function() {
         const sc = new ScreenCollisions();
         sc.update(1608, 822);
 
