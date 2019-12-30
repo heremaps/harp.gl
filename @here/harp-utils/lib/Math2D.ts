@@ -47,6 +47,22 @@ export namespace Math2D {
         }
 
         /**
+         * Test box for inclusion of another box.
+         *
+         * @param other Box 2 to test for inclusion.
+         */
+        containsBox(other: Box): boolean {
+            const xmax = other.x + other.w;
+            const ymax = other.y + other.h;
+            return (
+                this.contains(other.x, other.y) &&
+                this.contains(xmax, other.y) &&
+                this.contains(other.x, ymax) &&
+                this.contains(xmax, ymax)
+            );
+        }
+
+        /**
          * Test two boxes for intersection.
          *
          * @param other Box 2 to test for intersection.

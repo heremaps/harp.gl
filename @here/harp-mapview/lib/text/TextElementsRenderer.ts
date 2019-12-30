@@ -43,6 +43,7 @@ import {
     computePointTextOffset,
     computeViewDistance,
     getMaxViewDistance,
+    placePathLabel,
     PrePlacementResult
 } from "./Placement";
 import { PlacementStats } from "./PlacementStats";
@@ -74,9 +75,7 @@ interface RenderParams {
 }
 
 interface TempParams {
-    additionParams: AdditionParameters;
     poiMeasurementParams: MeasurementParameters;
-    measurementParams: MeasurementParameters;
     bufferAdditionParams: TextBufferAdditionParameters;
 }
 
@@ -137,7 +136,6 @@ const updateStats = PRINT_LABEL_DEBUG_INFO ? new UpdateStats(logger) : undefined
 const placementStats = PRINT_LABEL_DEBUG_INFO ? new PlacementStats(logger) : undefined;
 
 const tempBox = new THREE.Box2();
-const tempBoxes: THREE.Box2[] = [];
 const tempBox2D = new Math2D.Box();
 
 const tempPosition = new THREE.Vector3();
@@ -146,6 +144,7 @@ const tempScreenPoints: THREE.Vector2[] = [];
 const tempPoiScreenPosition = new THREE.Vector2();
 const tempTextOffset = new THREE.Vector2();
 const tmpTextBufferCreationParams: TextBufferCreationParameters = {};
+const tmpAdditionParams: AdditionParameters = {};
 
 class TileTextElements {
     constructor(readonly tile: Tile, readonly group: TextElementGroup) {}
@@ -625,7 +624,6 @@ export class TextElementsRenderer {
                             maxX: Math.max(startLinePointProj.x, endLinePointProj.x),
                             minY: Math.min(startLinePointProj.y, endLinePointProj.y),
                             maxY: Math.max(startLinePointProj.y, endLinePointProj.y),
-                            type: "line",
                             line
                         };
                         boxes.push(lineWithBound);
@@ -658,9 +656,7 @@ export class TextElementsRenderer {
         const shieldGroups: number[][] = [];
 
         const temp: TempParams = {
-            additionParams: {},
             poiMeasurementParams: {},
-            measurementParams: {},
             bufferAdditionParams: {}
         };
         const hiddenKinds = this.m_viewState.hiddenGeometryKinds;
@@ -780,13 +776,7 @@ export class TextElementsRenderer {
                     );
                     break;
                 case TextElementType.PathLabel:
-                    this.addPathLabel(
-                        textElementState,
-                        tempScreenPoints,
-                        textCanvas,
-                        renderParams,
-                        temp
-                    );
+                    this.addPathLabel(textElementState, tempScreenPoints, textCanvas, renderParams);
             }
         }
         return true;
@@ -1915,8 +1905,7 @@ export class TextElementsRenderer {
         labelState: TextElementState,
         screenPoints: THREE.Vector2[],
         textCanvas: TextCanvas,
-        renderParams: RenderParams,
-        temp: TempParams
+        renderParams: RenderParams
     ): boolean {
         // TODO: HARP-7649. Add fade out transitions for path labels.
         const textMaxDistance = getMaxViewDistance(
@@ -1954,10 +1943,6 @@ export class TextElementsRenderer {
             return false;
         }
 
-        // Compute values common for all glyphs in the label.
-        let textScale = textCanvas.textRenderStyle.fontSize.size / 100.0;
-        let opacity = pathLabel.renderStyle!.opacity;
-
         // Get the screen points that define the label's segments and create a path with
         // them.
         let textPath = new THREE.Path();
@@ -1984,24 +1969,18 @@ export class TextElementsRenderer {
             textRenderDistance,
             this.m_viewState.lookAtDistance
         );
-        textScale *= distanceScaleFactor;
-
-        // Scale the path label correctly.
         const prevSize = textCanvas.textRenderStyle.fontSize.size;
-        textCanvas.textRenderStyle.fontSize.size = textScale * 100;
+        textCanvas.textRenderStyle.fontSize.size *= distanceScaleFactor;
 
-        // Recalculate the text bounds for this path label. If measurement fails, the whole
-        // label doesn't fit the path and should be discarded.
-        temp.measurementParams.path = textPath;
-        temp.measurementParams.outputCharacterBounds = tempBoxes;
-        temp.measurementParams.letterCaseArray = pathLabel.glyphCaseArray!;
-
-        // TODO: HARP-7648. TextCanvas.measureText does the placement as in TextCanvas.addText but
-        // without storing the result. If the measurement succeeds, the placement work is done
-        // twice.
-        // This could be done in one step (e.g measureAndAddText). Collision test could be injected
-        // in the middle as a function.
-        if (!textCanvas.measureText(pathLabel.glyphs!, tempBox, temp.measurementParams)) {
+        if (
+            !placePathLabel(
+                labelState,
+                textPath,
+                tempScreenPosition,
+                textCanvas,
+                this.m_screenCollisions
+            )
+        ) {
             textCanvas.textRenderStyle.fontSize.size = prevSize;
             if (placementStats) {
                 ++placementStats.numNotVisible;
@@ -2010,29 +1989,12 @@ export class TextElementsRenderer {
             return false;
         }
 
-        // Perform per-character collision checks.
-        for (const charBounds of tempBoxes) {
-            tempBox2D.x = tempScreenPosition.x + charBounds.min.x;
-            tempBox2D.y = tempScreenPosition.y + charBounds.min.y;
-            tempBox2D.w = charBounds.max.x - charBounds.min.x;
-            tempBox2D.h = charBounds.max.y - charBounds.min.y;
-            if (
-                !this.m_screenCollisions.isVisible(tempBox2D) ||
-                (!pathLabel.textMayOverlap && this.m_screenCollisions.isAllocated(tempBox2D))
-            ) {
-                textCanvas.textRenderStyle.fontSize.size = prevSize;
-                if (placementStats) {
-                    ++placementStats.numNotVisible;
-                }
-                labelState.textRenderState!.reset();
-                return false;
-            }
-        }
-
         labelState.textRenderState!.startFadeIn(renderParams.time);
 
+        let opacity = pathLabel.renderStyle!.opacity;
+
         if (labelState.textRenderState!.isFading()) {
-            opacity = labelState.textRenderState!.opacity * pathLabel.renderStyle!.opacity;
+            opacity *= labelState.textRenderState!.opacity;
             renderParams.fadeAnimationRunning = true;
         }
 
@@ -2049,20 +2011,11 @@ export class TextElementsRenderer {
 
         tempPosition.z = labelState.renderDistance;
 
-        temp.additionParams.path = textPath;
-        temp.additionParams.layer = pathLabel.renderOrder;
-        temp.additionParams.letterCaseArray = pathLabel.glyphCaseArray;
-        temp.additionParams.pickingData = pathLabel.userData ? pathLabel : undefined;
-        textCanvas.addText(pathLabel.glyphs!, tempPosition, temp.additionParams);
-
-        // Allocate collision info if needed.
-        if (pathLabel.textReservesSpace) {
-            tempBox2D.x = tempScreenPosition.x + tempBox.min.x;
-            tempBox2D.y = tempScreenPosition.y + tempBox.min.y;
-            tempBox2D.w = tempBox.max.x - tempBox.min.x;
-            tempBox2D.h = tempBox.max.y - tempBox.min.y;
-            this.m_screenCollisions.allocate(tempBox2D);
-        }
+        tmpAdditionParams.path = textPath;
+        tmpAdditionParams.layer = pathLabel.renderOrder;
+        tmpAdditionParams.letterCaseArray = pathLabel.glyphCaseArray;
+        tmpAdditionParams.pickingData = pathLabel.userData ? pathLabel : undefined;
+        textCanvas.addText(pathLabel.glyphs!, tempPosition, tmpAdditionParams);
 
         renderParams.numRenderedTextElements++;
 
