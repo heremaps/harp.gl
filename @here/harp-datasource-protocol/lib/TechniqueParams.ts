@@ -654,31 +654,31 @@ export interface MarkerTechniqueParams extends BaseTechniqueParams {
     /**
      * Inter-glyph spacing (pixels). Scaled by `size`.
      */
-    tracking?: number;
+    tracking?: DynamicProperty<number>;
     /**
      * Inter-line spacing (pixels). Scaled by `size`.
      */
-    leading?: number;
+    leading?: DynamicProperty<number>;
     /**
      * Maximum number of lines for this label.
      */
-    maxLines?: number;
+    maxLines?: DynamicProperty<number>;
     /**
      * Maximum line width (pixels).
      */
-    lineWidth?: number;
+    lineWidth?: DynamicProperty<number>;
     /**
      * [[TextCanvas]] rotation (radians).
      */
-    canvasRotation?: number;
+    canvasRotation?: DynamicProperty<number>;
     /**
      * Line typesetting rotation (radians).
      */
-    lineRotation?: number;
+    lineRotation?: DynamicProperty<number>;
     /**
      * Wrapping (line-breaking) mode.
      */
-    wrappingMode?: "None" | "Character" | "Word";
+    wrappingMode?: DynamicProperty<"None" | "Character" | "Word">;
     /**
      * Text position regarding the baseline.
      */
@@ -1267,39 +1267,39 @@ export interface TextTechniqueParams extends BaseTechniqueParams {
     /**
      * Inter-glyph spacing (pixels). Scaled by `size`.
      */
-    tracking?: number;
+    tracking?: DynamicProperty<number>;
     /**
      * Inter-line spacing (pixels). Scaled by `size`.
      */
-    leading?: number;
+    leading?: DynamicProperty<number>;
     /**
      * Maximum number of lines for this label.
      */
-    maxLines?: number;
+    maxLines?: DynamicProperty<number>;
     /**
      * Maximum line width (pixels).
      */
-    lineWidth?: number;
+    lineWidth?: DynamicProperty<number>;
     /**
      * [[TextCanvas]] rotation (radians).
      */
-    canvasRotation?: number;
+    canvasRotation?: DynamicProperty<number>;
     /**
      * Line typesetting rotation (radians).
      */
-    lineRotation?: number;
+    lineRotation?: DynamicProperty<number>;
     /**
      * Wrapping (line-breaking) mode.
      */
-    wrappingMode?: "None" | "Character" | "Word";
+    wrappingMode?: DynamicProperty<"None" | "Character" | "Word">;
     /**
      * Text position regarding the baseline.
      */
-    hAlignment?: "Left" | "Center" | "Right";
+    hAlignment?: DynamicProperty<"Left" | "Center" | "Right">;
     /**
      * Text position inside a line.
      */
-    vAlignment?: "Above" | "Center" | "Below";
+    vAlignment?: DynamicProperty<"Above" | "Center" | "Below">;
 }
 
 /**
