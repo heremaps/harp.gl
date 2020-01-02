@@ -5,7 +5,7 @@
  */
 
 import { TileKey } from "@here/harp-geoutils";
-import { ExtrusionFeature } from "@here/harp-materials";
+import { ExtrusionFeature, ExtrusionFeatureDefs } from "@here/harp-materials";
 import { MathUtils } from "@here/harp-utils";
 import { MapView, MapViewEventNames, RenderEvent } from "./MapView";
 import { Tile } from "./Tile";
@@ -165,7 +165,7 @@ export class AnimatedExtrusionHandler {
  */
 export class AnimatedExtrusionTileHandler {
     private m_extrudedObjects: THREE.Object3D[] = [];
-    private m_animatedExtrusionRatio: number = ExtrusionFeature.DEFAULT_RATIO_MAX;
+    private m_animatedExtrusionRatio: number = ExtrusionFeatureDefs.DEFAULT_RATIO_MAX;
     private m_animatedExtrusionState: AnimatedExtrusionState = AnimatedExtrusionState.None;
     private m_animatedExtrusionStartTime: number | undefined = undefined;
     private m_mapView: MapView;
@@ -355,8 +355,8 @@ export class AnimatedExtrusionTileHandler {
         );
 
         this.extrusionRatio = MathUtils.easeInOutCubic(
-            ExtrusionFeature.DEFAULT_RATIO_MIN,
-            ExtrusionFeature.DEFAULT_RATIO_MAX,
+            ExtrusionFeatureDefs.DEFAULT_RATIO_MIN,
+            ExtrusionFeatureDefs.DEFAULT_RATIO_MAX,
             timeProgress / this.m_animatedExtrusionDuration
         );
 

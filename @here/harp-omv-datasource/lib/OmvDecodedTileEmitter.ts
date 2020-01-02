@@ -75,6 +75,7 @@ import {
 } from "@here/harp-datasource-protocol/lib/TechniqueAttr";
 // tslint:disable-next-line:max-line-length
 import { SphericalGeometrySubdivisionModifier } from "@here/harp-geometry/lib/SphericalGeometrySubdivisionModifier";
+import { ExtrusionFeatureDefs } from "@here/harp-materials/lib/MapMeshMaterialsDefs";
 
 const logger = LoggerManager.instance.create("OmvDecodedTileEmitter");
 
@@ -99,12 +100,6 @@ const tmpPointC = new THREE.Vector3();
 const tmpPointD = new THREE.Vector3();
 const tmpPointE = new THREE.Vector3();
 const tmpLine = new THREE.Line3();
-
-/**
- * Height buildings take whenever no height-data is present. Used to avoid z-fighting and other
- * graphics artifacts.
- */
-const MIN_BUILDING_HEIGHT = 1e-18;
 
 /**
  * Minimum number of pixels per character. Used during estimation if there is enough screen space
@@ -1042,9 +1037,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
 
         // Prevent that extruded buildings are completely flat (can introduce errors in normal
         // computation and extrusion).
-        if (height === floorHeight) {
-            height += MIN_BUILDING_HEIGHT;
-        }
+        height = Math.max(floorHeight + ExtrusionFeatureDefs.MIN_BUILDING_HEIGHT, height);
 
         const styleSetConstantHeight = getOptionValue(
             extrudedPolygonTechnique.constantHeight,

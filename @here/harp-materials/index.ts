@@ -11,6 +11,7 @@ export * from "./lib/HighPrecisionLineMaterial";
 export * from "./lib/HighPrecisionPointMaterial";
 export * from "./lib/IconMaterial";
 export * from "./lib/LuminosityHighPassShader";
+export * from "./lib/MapMeshMaterialsDefs";
 export * from "./lib/MapMeshMaterials";
 export * from "./lib/MSAAMaterial";
 export * from "./lib/SepiaShader";
