@@ -13,6 +13,7 @@ import {
     FadingFeature,
     FadingFeatureParameters
 } from "./MapMeshMaterials";
+import { ExtrusionFeatureDefs } from "./MapMeshMaterialsDefs";
 import { enforceBlending } from "./Utils";
 
 const vertexSource: string = `
@@ -150,7 +151,7 @@ export class EdgeMaterial extends THREE.RawShaderMaterial
                 edgeColorMix: new THREE.Uniform(EdgeMaterial.DEFAULT_COLOR_MIX),
                 fadeNear: new THREE.Uniform(FadingFeature.DEFAULT_FADE_NEAR),
                 fadeFar: new THREE.Uniform(FadingFeature.DEFAULT_FADE_FAR),
-                extrusionRatio: new THREE.Uniform(ExtrusionFeature.DEFAULT_RATIO_MIN),
+                extrusionRatio: new THREE.Uniform(ExtrusionFeatureDefs.DEFAULT_RATIO_MIN),
                 displacementMap: new THREE.Uniform(
                     hasDisplacementMap ? params!.displacementMap : new THREE.Texture()
                 )
@@ -252,7 +253,7 @@ export class EdgeMaterial extends THREE.RawShaderMaterial
             return;
         }
         this.uniforms.extrusionRatio.value = value;
-        const doExtrusion = value >= ExtrusionFeature.DEFAULT_RATIO_MIN;
+        const doExtrusion = value >= ExtrusionFeatureDefs.DEFAULT_RATIO_MIN;
         if (doExtrusion) {
             this.needsUpdate = this.defines.USE_EXTRUSION === undefined;
             this.defines.USE_EXTRUSION = "";

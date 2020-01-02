@@ -4,15 +4,27 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { ExtrusionFeatureDefs } from "../MapMeshMaterialsDefs";
+
+const MIN_BUILDING_HEIGHT_SQUARED =
+    ExtrusionFeatureDefs.MIN_BUILDING_HEIGHT * ExtrusionFeatureDefs.MIN_BUILDING_HEIGHT;
+
 export default {
     extrusion_pars_vertex: `
 // Extrusion axis (xyz: vector, w: factor).
 attribute vec4 extrusionAxis;
 uniform float extrusionRatio;
 varying vec4 vExtrusionAxis;
+varying float vExtrusionRatio;
+
 `,
     extrusion_vertex: `
-transformed = transformed + extrusionAxis.xyz * (extrusionRatio - 1.0);
+// Cancel extrusionRatio (meaning, force to 1) if extrusionAxisLen < MIN_BUILDING_HEIGHT.
+const float MIN_BUILDING_HEIGHT_SQUARED = ${MIN_BUILDING_HEIGHT_SQUARED};
+float extrusionAxisLenSquared = dot(extrusionAxis.xyz, extrusionAxis.xyz);
+vExtrusionRatio = max(1.0 - step(extrusionAxisLenSquared, MIN_BUILDING_HEIGHT_SQUARED), extrusionRatio);
+
+transformed = transformed + extrusionAxis.xyz * (vExtrusionRatio - 1.0);
 vExtrusionAxis = vec4(normalMatrix * extrusionAxis.xyz, extrusionAxis.w);
 `,
     // Modified version of THREE <normal_fragment_begin> shader chunk which, for flat shaded
@@ -50,10 +62,10 @@ vExtrusionAxis = vec4(normalMatrix * extrusionAxis.xyz, extrusionAxis.w);
 vec3 geometryNormal = normal;
 `,
     extrusion_pars_fragment: `
-uniform float extrusionRatio;
+varying float vExtrusionRatio;
 varying vec4 vExtrusionAxis;
 `,
     extrusion_fragment: `
-gl_FragColor.a *= smoothstep( 0.0, 0.25, extrusionRatio );
+gl_FragColor.a *= smoothstep( 0.0, 0.25, vExtrusionRatio );
 `
 };
