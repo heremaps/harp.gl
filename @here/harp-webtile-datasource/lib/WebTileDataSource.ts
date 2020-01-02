@@ -16,6 +16,7 @@ import {
     webMercatorTilingScheme
 } from "@here/harp-geoutils";
 import { CopyrightInfo, DataSource, Tile, UrlCopyrightProvider } from "@here/harp-mapview";
+import { enforceBlending } from "@here/harp-materials";
 import { getOptionValue, LoggerManager } from "@here/harp-utils";
 
 const logger = LoggerManager.instance.create("MapView");
@@ -401,9 +402,12 @@ export class WebTileDataSource extends DataSource {
                     map: texture,
                     depthTest: false,
                     depthWrite: false,
-                    opacity,
-                    transparent: opacity !== undefined && opacity < 1.0 ? true : false
+                    side: THREE.DoubleSide,
+                    opacity
                 });
+                if (opacity !== undefined && opacity < 1.0) {
+                    enforceBlending(material);
+                }
 
                 const mesh = new THREE.Mesh(g, material);
                 tile.objects.push(mesh);

@@ -433,4 +433,14 @@ describe("MapView", function() {
 
         expect(updateStorageOffsetSpy.called);
     });
+    it("zoomlevel to distance", async function() {
+        mapView = new MapView({ canvas, minZoomLevel: 0, maxZoomLevel: 30 });
+
+        for (let zoomLevel = 0; zoomLevel <= 30; ++zoomLevel) {
+            const distance = MapViewUtils.calculateDistanceFromZoomLevel(mapView, zoomLevel);
+            const zoom = MapViewUtils.calculateZoomLevelFromDistance(distance, mapView);
+
+            expect(zoom).to.be.closeTo(zoomLevel, 1e-15);
+        }
+    });
 });

@@ -6,7 +6,9 @@
 
 export class EarthConstants {
     /** The equatorial circumference in meters. */
-    static EQUATORIAL_CIRCUMFERENCE: number = 40075016.6855784861531768177614;
+    // static EQUATORIAL_CIRCUMFERENCE: number = 40075016.6855784861531768177614;
+    // Reduced precision so that we can savely do Math.pow(2, Math.log2(EQUATORIAL_CIRCUMFERENCE))
+    static EQUATORIAL_CIRCUMFERENCE: number = 40075016.68557848;
 
     /** The equatorial radius in meters. */
     static EQUATORIAL_RADIUS: number = 6378137.0;

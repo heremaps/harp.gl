@@ -108,10 +108,7 @@ export class MapViewFog {
             // The fraction of maximum viewing range at which fog fully covers geometry.
             const endRatio = 1.0;
             assert(startRatio <= endRatio);
-            const target = MapViewUtils.rayCastWorldCoordinates(mapView, 0, 0);
-            if (target === null) {
-                throw new Error("MapView does not support a view pointing in the void.");
-            }
+            const target = mapView.targetWorld;
             const t = Math.abs(
                 Math.cos(
                     MapViewUtils.extractSphericalCoordinatesFromLocation(

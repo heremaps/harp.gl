@@ -704,10 +704,7 @@ export class TiltViewClipPlanesEvaluator extends TopViewClipPlanesEvaluator {
         // opposite to elevating ground level.
         const halfPiLimit = Math.PI / 2 - epsilon;
         const cameraAltitude = this.getCameraAltitude(camera, projection);
-        const target = MapViewUtils.rayCastWorldCoordinates(mapView, 0, 0);
-        if (target === null) {
-            throw new Error("MapView does not support a view pointing in the void.");
-        }
+        const target = mapView.targetWorld;
         const cameraTilt = MapViewUtils.extractSphericalCoordinatesFromLocation(
             mapView,
             camera,

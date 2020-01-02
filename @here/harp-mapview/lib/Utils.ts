@@ -306,7 +306,8 @@ export namespace MapViewUtils {
         mapView: MapView,
         pointOnScreenXinNDC: number,
         pointOnScreenYinNDC: number,
-        elevation?: number
+        elevation?: number,
+        target?: THREE.Vector3
     ): THREE.Vector3 | null {
         const pointInNDCPosition = new THREE.Vector3(pointOnScreenXinNDC, pointOnScreenYinNDC, 0);
 
@@ -328,7 +329,7 @@ export namespace MapViewUtils {
             groundPlane.constant = -elevation;
         }
 
-        const worldPosition = new THREE.Vector3();
+        const worldPosition = target ?? new THREE.Vector3();
         const result =
             mapView.projection.type === ProjectionType.Planar
                 ? rayCaster.ray.intersectPlane(groundPlane, worldPosition)
@@ -686,6 +687,11 @@ export namespace MapViewUtils {
         return ((mapView.focalLength * tileSize) / 256) * Math.cos(cameraPitch);
     }
 
+    export function calculateDistanceFromZoomLevel(mapView: MapView, zoomLevel: number): number {
+        const tileSize = EarthConstants.EQUATORIAL_CIRCUMFERENCE / Math.pow(2, zoomLevel);
+        return (mapView.focalLength * tileSize) / 256;
+    }
+
     /**
      * Calculates the zoom level, which corresponds to the current distance from
      * camera to lookAt point.
@@ -702,15 +708,14 @@ export namespace MapViewUtils {
      * @param mapView [[MapView]] instance.
      */
     export function calculateZoomLevelFromDistance(distance: number, mapView: MapView): number {
-        const tileSize = (256 * distance) / mapView.focalLength;
+        //const tileSize = (256 * distance) / mapView.focalLength;
         const zoomLevel = THREE.Math.clamp(
-            Math.log2(EarthConstants.EQUATORIAL_CIRCUMFERENCE / tileSize),
+            Math.log2(EarthConstants.EQUATORIAL_CIRCUMFERENCE) -
+                (8 + Math.log2(distance / mapView.focalLength)),
             mapView.minZoomLevel,
             mapView.maxZoomLevel
         );
-        // Round to avoid modify the zoom level without distance change, with the imprecision
-        // introduced by raycasting.
-        return Math.round(zoomLevel * 10e15) / 10e15;
+        return zoomLevel;
     }
 
     /**

@@ -45,6 +45,7 @@ class Fixture {
         this.ds = [new FakeOmvDataSource()];
         this.mapView = new FakeMapView() as MapView;
         (this.mapView as any).camera = this.camera;
+        (this.mapView as any).targetWorld = this.worldCenter;
         this.tileGeometryManager = new SimpleTileGeometryManager(this.mapView);
         this.ds[0].attach(this.mapView);
         this.frustumIntersection = new FrustumIntersection(
@@ -69,6 +70,7 @@ describe("VisibleTileSet", function() {
     let fixture: Fixture;
 
     function setupBerlinCenterCameraFromSamples() {
+        // FIXME: worldCenter should match the camera position and not te camera target.
         fixture.worldCenter.set(21526530.20810355, 26931954.03679565, 0);
         const camera = fixture.camera;
         camera.aspect = 1.7541528239202657;
@@ -111,7 +113,7 @@ describe("VisibleTileSet", function() {
     });
 
     it("#updateRenderList properly culls panorama of Berlin center", function() {
-        fixture.worldCenter = new THREE.Vector3(21526192.124894984, 26932362.99119022, 0);
+        fixture.worldCenter.set(21526192.124894984, 26932362.99119022, 0);
         const camera = fixture.camera;
         camera.aspect = 1.7541528239202657;
         camera.far = 1941.1011265922536;
@@ -250,7 +252,7 @@ describe("VisibleTileSet", function() {
 
     it("check MapView param tileWrappingEnabled disabled", async function() {
         fixture = new Fixture({ tileWrappingEnabled: false });
-        fixture.worldCenter = new THREE.Vector3(0, 0, 0);
+        fixture.worldCenter.set(0, 0, 0);
         const camera = fixture.camera;
         camera.aspect = 1.7541528239202657;
         camera.far = 19000000;
@@ -275,7 +277,7 @@ describe("VisibleTileSet", function() {
 
     it("check MapView param tileWrappingEnabled enabled", async function() {
         fixture = new Fixture({ tileWrappingEnabled: true });
-        fixture.worldCenter = new THREE.Vector3(0, 0, 0);
+        fixture.worldCenter.set(0, 0, 0);
         const camera = fixture.camera;
         camera.aspect = 1.7541528239202657;
         camera.far = 19000000;
