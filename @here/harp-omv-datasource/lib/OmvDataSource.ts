@@ -307,7 +307,7 @@ export class OmvDataSource extends TileDataSource<OmvTile> {
         if (tileKey.level > this.maxZoomLevel) {
             return false;
         }
-        if (tileKey.level === this.maxZoomLevel && zoomLevel >= this.maxZoomLevel) {
+        if (tileKey.level <= this.maxZoomLevel && zoomLevel >= this.maxZoomLevel) {
             return true;
         }
         return super.shouldRender(zoomLevel, tileKey);

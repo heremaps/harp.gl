@@ -35,7 +35,7 @@ export class FakeOmvDataSource extends DataSource {
         if (tileKey.level > 14) {
             return false;
         }
-        if (tileKey.level === 14 && zoomLevel >= 14) {
+        if (tileKey.level <= 14 && zoomLevel >= 14) {
             return true;
         }
         return super.shouldRender(zoomLevel, tileKey);

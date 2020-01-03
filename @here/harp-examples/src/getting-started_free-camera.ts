@@ -74,6 +74,7 @@ export namespace FreeCameraAppDebuggingToolExample {
             this.mapView.lookAt(startLocation, 2000);
 
             this.mapControls = new MapControls(this.mapView);
+            this.mapControls.maxTiltAngle = 90;
             this.mapControls.enabled = false;
 
             CopyrightElementHandler.install("copyrightNotice", this.mapView);

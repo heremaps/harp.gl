@@ -373,7 +373,7 @@ export abstract class DataSource extends THREE.EventDispatcher {
      * @returns `true` if the geometries created for the given [[TileKey]] should be rendered.
      */
     shouldRender(zoomLevel: number, tileKey: TileKey): boolean {
-        return tileKey.level === zoomLevel;
+        return tileKey.level <= zoomLevel;
     }
 
     /**
