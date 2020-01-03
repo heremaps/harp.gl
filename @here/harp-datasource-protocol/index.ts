@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+export * from "./lib/ColorUtils";
+export * from "./lib/Expr";
 export * from "./lib/Techniques";
 export * from "./lib/TechniqueParams";
 export * from "./lib/Theme";

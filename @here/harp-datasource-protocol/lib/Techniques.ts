@@ -46,6 +46,11 @@ export const TEXTURE_PROPERTY_KEYS = [
     "bumpMap"
 ];
 
+/**
+ * Names of the properties controlling transparency.
+ */
+export const TRANSPARENCY_PROPERTY_KEYS = ["opacity", "transparent"];
+
 // TODO: Can be removed, when all when interpolators are implemented as [[Expr]]s
 export type RemoveInterpolatedPropDef<T> = T | InterpolatedPropertyDefinition<any> extends T
     ? Exclude<T, InterpolatedPropertyDefinition<any>>
@@ -68,6 +73,9 @@ export type MakeTechniqueAttrs<T> = {
 export const techniqueDescriptors: TechniqueDescriptorRegistry = {};
 
 export const baseTechniqueParamsDescriptor: TechniqueDescriptor<BaseTechniqueParams> = {
+    // TODO: Choose which techniques should support color with transparency.
+    // For now we chosen all, but it maybe not suitable for text or line marker techniques.
+    attrTransparencyColor: "color",
     attrScopes: {
         renderOrder: AttrScope.TechniqueGeometry,
         renderOrderOffset: AttrScope.TechniqueGeometry,

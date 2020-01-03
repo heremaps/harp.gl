@@ -5,6 +5,7 @@
  */
 
 import {
+    ColorUtils,
     getPropertyValue,
     IndexedTechniqueParams,
     LineMarkerTechnique,
@@ -29,6 +30,7 @@ import {
 } from "@here/harp-text-canvas";
 import { getOptionValue, LoggerManager } from "@here/harp-utils";
 import { ColorCache } from "../ColorCache";
+import { evaluateColorProperty } from "../DecodedTileHelpers";
 import { PoiRenderer } from "../poi/PoiRenderer";
 import { Tile } from "../Tile";
 import { TextCanvasRenderer } from "./TextCanvasRenderer";
@@ -309,15 +311,40 @@ export class TextStyleCache {
         if (renderStyle === undefined) {
             const defaultRenderParams = this.m_defaultStyle.renderParams;
 
+            let opacity = getPropertyValue(
+                getOptionValue(technique.opacity, defaultRenderParams.opacity),
+                Math.floor(zoomLevel)
+            );
+
             if (technique.color !== undefined) {
-                const hexColor = getPropertyValue(technique.color, Math.floor(zoomLevel));
+                let hexColor = evaluateColorProperty(technique.color, Math.floor(zoomLevel));
+                if (ColorUtils.hasAlphaInHex(hexColor)) {
+                    const alpha = ColorUtils.getAlphaFromHex(hexColor);
+                    opacity = opacity * alpha;
+                    hexColor = ColorUtils.removeAlphaFromHex(hexColor);
+                }
                 this.m_colorMap.set(cacheId, ColorCache.instance.getColor(hexColor));
             }
+
+            let backgroundOpacity =
+                technique.backgroundOpacity !== undefined
+                    ? getPropertyValue(technique.backgroundOpacity, Math.floor(zoomLevel))
+                    : technique.backgroundColor !== undefined &&
+                      technique.backgroundSize !== undefined &&
+                      getPropertyValue(technique.backgroundSize, Math.floor(zoomLevel)) > 0
+                    ? 1.0 // make label opaque when backgroundColor and backgroundSize are set
+                    : defaultRenderParams.backgroundOpacity;
+
             if (technique.backgroundColor !== undefined) {
-                const hexBgColor = getPropertyValue(
+                let hexBgColor = evaluateColorProperty(
                     technique.backgroundColor,
                     Math.floor(zoomLevel)
                 );
+                if (ColorUtils.hasAlphaInHex(hexBgColor)) {
+                    const alpha = ColorUtils.getAlphaFromHex(hexBgColor);
+                    backgroundOpacity = backgroundOpacity * alpha;
+                    hexBgColor = ColorUtils.removeAlphaFromHex(hexBgColor);
+                }
                 this.m_colorMap.set(cacheId + "_bg", ColorCache.instance.getColor(hexBgColor));
             }
 
@@ -353,18 +380,8 @@ export class TextStyleCache {
                     this.m_colorMap.get(cacheId + "_bg"),
                     defaultRenderParams.backgroundColor
                 ),
-                opacity:
-                    technique.opacity !== undefined
-                        ? getPropertyValue(technique.opacity, Math.floor(zoomLevel))
-                        : defaultRenderParams.opacity,
-                backgroundOpacity:
-                    technique.backgroundOpacity !== undefined
-                        ? getPropertyValue(technique.backgroundOpacity, Math.floor(zoomLevel))
-                        : technique.backgroundColor !== undefined &&
-                          technique.backgroundSize !== undefined &&
-                          getPropertyValue(technique.backgroundSize, Math.floor(zoomLevel)) > 0
-                        ? 1.0 // make label opaque when backgroundColor and backgroundSize are set
-                        : defaultRenderParams.backgroundOpacity
+                opacity,
+                backgroundOpacity
             };
 
             const themeRenderParams = this.getTextElementStyle(technique.style).renderParams;

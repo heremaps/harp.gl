@@ -14,7 +14,7 @@
         },
         "defaultBuildingColor": {
             "type": "color",
-            "value": "#EDE7E1"
+            "value": "#EDE7E1E6"
         },
         "waterColor": {
             "type": "color",
@@ -41,7 +41,6 @@
             "attr": {
                 "height": ["get", "height"],
                 "color": ["ref", "defaultBuildingColor"],
-                "opacity": 0.9,
                 "roughness": 1,
                 "metalness": 0.8,
                 "emissive": "#78858C",
