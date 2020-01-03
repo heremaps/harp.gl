@@ -7,6 +7,7 @@ import {
     BaseTechniqueParams,
     BufferAttribute,
     DecodedTile,
+    Expr,
     ExtrudedPolygonTechnique,
     FillTechnique,
     Geometry,
@@ -19,6 +20,7 @@ import {
     isExtrudedLineTechnique,
     isExtrudedPolygonTechnique,
     isFillTechnique,
+    isJsonExpr,
     isLineMarkerTechnique,
     isLineTechnique,
     isPoiTechnique,
@@ -51,10 +53,15 @@ import { ContextualArabicConverter } from "@here/harp-text-canvas";
 import { assert, chainCallbacks, LoggerManager } from "@here/harp-utils";
 import * as THREE from "three";
 
-import { Expr, isJsonExpr } from "@here/harp-datasource-protocol/lib/Expr";
 import { AnimatedExtrusionTileHandler } from "../AnimatedExtrusionHandler";
 import { ColorCache } from "../ColorCache";
-import { createMaterial, getBufferAttribute, getObjectConstructor } from "../DecodedTileHelpers";
+import {
+    applyBaseColorToMaterial,
+    applySecondaryColorToMaterial,
+    createMaterial,
+    getBufferAttribute,
+    getObjectConstructor
+} from "../DecodedTileHelpers";
 import {
     createDepthPrePassMesh,
     isRenderDepthPrePassEnabled,
@@ -819,8 +826,12 @@ export class TileGeometryCreator {
                         false,
                         (renderer, mat) => {
                             const lineMaterial = mat as THREE.LineBasicMaterial;
-                            lineMaterial.color.set(
-                                getPropertyValue(technique.color, mapView.zoomLevel)
+                            applyBaseColorToMaterial(
+                                lineMaterial,
+                                lineMaterial.color,
+                                technique,
+                                technique.color,
+                                mapView.zoomLevel
                             );
                         }
                     );
@@ -840,8 +851,12 @@ export class TileGeometryCreator {
                                 technique.metricUnit === "Pixel" ? mapView.pixelToWorld : 1.0;
 
                             if (technique.color !== undefined) {
-                                lineMaterial.color.set(
-                                    getPropertyValue(technique.color, mapView.zoomLevel)
+                                applyBaseColorToMaterial(
+                                    lineMaterial,
+                                    lineMaterial.color,
+                                    technique,
+                                    technique.color,
+                                    mapView.zoomLevel
                                 );
                             }
 
@@ -909,8 +924,12 @@ export class TileGeometryCreator {
                                           | MapMeshStandardMaterial
                                           | MapMeshBasicMaterial;
 
-                                      extrudedMaterial.color.set(
-                                          getPropertyValue(technique.color!, mapView.zoomLevel)
+                                      applyBaseColorToMaterial(
+                                          extrudedMaterial,
+                                          extrudedMaterial.color,
+                                          technique,
+                                          technique.color!,
+                                          mapView.zoomLevel
                                       );
                                   }
                                 : undefined
@@ -941,8 +960,12 @@ export class TileGeometryCreator {
                                           | MapMeshBasicMaterial
                                           | MapMeshStandardMaterial;
 
-                                      polygonMaterial.color.set(
-                                          getPropertyValue(technique.color!, mapView.zoomLevel)
+                                      applyBaseColorToMaterial(
+                                          polygonMaterial,
+                                          polygonMaterial.color,
+                                          technique,
+                                          technique.color!,
+                                          mapView.zoomLevel
                                       );
 
                                       if (
@@ -951,11 +974,10 @@ export class TileGeometryCreator {
                                       ) {
                                           const standardMat = mat as MapMeshStandardMaterial;
 
-                                          standardMat.emissive.set(
-                                              getPropertyValue(
-                                                  technique.emissive,
-                                                  mapView.zoomLevel
-                                              )
+                                          applySecondaryColorToMaterial(
+                                              standardMat.emissive,
+                                              technique.emissive,
+                                              mapView.zoomLevel
                                           );
                                       }
                                   }
@@ -1083,11 +1105,12 @@ export class TileGeometryCreator {
                         extrudedPolygonTechnique.lineColor !== undefined &&
                             Expr.isExpr(extrudedPolygonTechnique.lineColor)
                             ? (renderer, mat) => {
-                                  edgeMaterial.color.set(
-                                      getPropertyValue(
-                                          extrudedPolygonTechnique.lineColor!,
-                                          mapView.zoomLevel
-                                      )
+                                  applyBaseColorToMaterial(
+                                      edgeMaterial,
+                                      edgeMaterial.color,
+                                      extrudedPolygonTechnique,
+                                      extrudedPolygonTechnique.lineColor!,
+                                      mapView.zoomLevel
                                   );
                               }
                             : undefined
@@ -1163,8 +1186,12 @@ export class TileGeometryCreator {
                             Expr.isExpr(fillTechnique.lineColor)
                             ? (renderer, mat) => {
                                   const edgeMaterial = mat as EdgeMaterial;
-                                  edgeMaterial.color.set(
-                                      getPropertyValue(fillTechnique.lineColor!, mapView.zoomLevel)
+                                  applyBaseColorToMaterial(
+                                      edgeMaterial,
+                                      edgeMaterial.color,
+                                      fillTechnique,
+                                      fillTechnique.lineColor!,
+                                      mapView.zoomLevel
                                   );
                               }
                             : undefined
@@ -1214,11 +1241,12 @@ export class TileGeometryCreator {
                                     : 1.0;
 
                             if (outlineTechnique.secondaryColor !== undefined) {
-                                lineMaterial.color.set(
-                                    getPropertyValue(
-                                        outlineTechnique.secondaryColor,
-                                        mapView.zoomLevel
-                                    )
+                                applyBaseColorToMaterial(
+                                    lineMaterial,
+                                    lineMaterial.color,
+                                    outlineTechnique,
+                                    outlineTechnique.secondaryColor,
+                                    mapView.zoomLevel
                                 );
                             }
 

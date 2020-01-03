@@ -17,6 +17,7 @@ const SHIFT_BLUE: number = 0;
 
 // tslint:disable-next-line: no-bitwise
 const HEX_FULL_CHANNEL: number = 0xff;
+const HEX_RGB_MASK: number = 0xffffff;
 const HEX_TRGB_MASK: number = 0xffffffff;
 
 const tmpColor = new THREE.Color();
@@ -146,5 +147,17 @@ export namespace ColorUtils {
         return (
             ((HEX_FULL_CHANNEL - (hex >> SHIFT_TRANSPARENCY)) & HEX_FULL_CHANNEL) / HEX_FULL_CHANNEL
         );
+    }
+
+    /**
+     * Remove transparency info from the number coded color, makes it compatible with external libs.
+     *
+     * @see getAlphaFromHex.
+     * @param hex The number encoded color value (representable as 0xRRGGBB or 0xTTRRGGBB in hex).
+     * @returns number coded color value representable as 0xRRGGBB in hex.
+     */
+    export function removeAlphaFromHex(hex: number): number {
+        assert((hex & ~HEX_TRGB_MASK) === 0, "Wrong hex format: #" + hex.toString(16));
+        return hex & HEX_RGB_MASK;
     }
 }

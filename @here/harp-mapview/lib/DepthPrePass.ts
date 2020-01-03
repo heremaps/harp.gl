@@ -7,7 +7,9 @@
 import * as THREE from "three";
 
 import { ExtrudedPolygonTechnique } from "@here/harp-datasource-protocol";
+import { ColorUtils } from "@here/harp-datasource-protocol/lib/ColorUtils";
 import { enforceBlending, MapMeshStandardMaterial } from "@here/harp-materials";
+import { evaluateBaseColorProperty } from "./DecodedTileHelpers";
 
 /**
  * Bitmask used for the depth pre-pass to prevent multiple fragments in the same screen position
@@ -29,12 +31,25 @@ const DEPTH_PRE_PASS_RENDER_ORDER_OFFSET = 1e-6;
  * @param technique [[BaseStandardTechnique]] instance to be checked
  */
 export function isRenderDepthPrePassEnabled(technique: ExtrudedPolygonTechnique) {
-    return (
-        technique.enableDepthPrePass !== false &&
-        technique.opacity !== undefined &&
-        technique.opacity > 0 &&
-        technique.opacity < 1.0
-    );
+    // Depth pass explicitly disabled
+    if (technique.enableDepthPrePass === false) {
+        return false;
+    }
+    let transparent =
+        technique.opacity !== undefined && technique.opacity > 0.0 && technique.opacity < 1.0;
+    // If not opaque then check if transparency may be modified via alpha in base color.
+    // Otherwise we don't need to even test base color because opacity mixed with any base alpha,
+    // will always produce some transparency effect.
+    if (!transparent) {
+        // We do not support switching depth pass during alpha interpolation, ignore zoom level
+        // when calculating base color value.
+        const color = evaluateBaseColorProperty(technique);
+        if (color !== undefined) {
+            const alpha = ColorUtils.getAlphaFromHex(color);
+            transparent = alpha > 0.0 && alpha < 1.0;
+        }
+    }
+    return transparent;
 }
 
 /**

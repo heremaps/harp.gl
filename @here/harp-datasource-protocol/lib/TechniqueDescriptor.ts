@@ -53,6 +53,7 @@ export type TechniquePropScopes<T> = {
 };
 
 export interface TechniqueDescriptor<T> {
+    attrTransparencyColor?: string;
     attrScopes: TechniquePropScopes<T>;
 }
 
@@ -70,6 +71,9 @@ export function mergeTechniqueDescriptor<T>(
         attrScopes: {}
     };
     for (const descriptor of descriptors) {
+        if (descriptor.attrTransparencyColor !== undefined) {
+            result.attrTransparencyColor = descriptor.attrTransparencyColor;
+        }
         if (descriptor.attrScopes !== undefined) {
             result.attrScopes = { ...result.attrScopes, ...descriptor.attrScopes };
         }
