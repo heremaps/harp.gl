@@ -126,8 +126,8 @@ describe("VisibleTileSet", function() {
         assert.equal(dataSourceTileList[0].visibleTiles.length, 2);
 
         const visibleTiles = dataSourceTileList[0].visibleTiles;
-        assert.equal(visibleTiles[0].tileKey.mortonCode(), 371506851);
-        assert.equal(visibleTiles[1].tileKey.mortonCode(), 371506850);
+        assert.equal(visibleTiles[0].tileKey.mortonCode(), 371506850);
+        assert.equal(visibleTiles[1].tileKey.mortonCode(), 371506851);
 
         const renderedTiles = dataSourceTileList[0].renderedTiles;
         assert.equal(renderedTiles.size, 0);
@@ -190,8 +190,8 @@ describe("VisibleTileSet", function() {
         assert.equal(dataSourceTileList[0].visibleTiles.length, 2);
 
         const visibleTiles = dataSourceTileList[0].visibleTiles;
-        assert.equal(visibleTiles[0].tileKey.mortonCode(), 371506851);
-        assert.equal(visibleTiles[1].tileKey.mortonCode(), 371506850);
+        assert.equal(visibleTiles[0].tileKey.mortonCode(), 371506850);
+        assert.equal(visibleTiles[1].tileKey.mortonCode(), 371506851);
 
         // some tiles are visible ^^^, but the parent is actually rendered
         const renderedTiles = dataSourceTileList[0].renderedTiles;

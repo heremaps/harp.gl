@@ -64,7 +64,8 @@ export namespace CameraOrbitExample {
         const mapView = new MapView({
             canvas,
             projection: sphereProjection,
-            theme: "resources/berlin_tilezen_base_globe.json"
+            theme: "resources/berlin_tilezen_base_globe.json",
+            enableMixedLod: true
         });
         canvas.addEventListener("contextmenu", e => e.preventDefault());
 

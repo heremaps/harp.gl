@@ -139,7 +139,7 @@ export class PolarTileDataSource extends DataSource {
         this.setStyleSet(styleSet, theme.definitions, languages);
     }
 
-    shouldRender(zoomLevel: number, tileKey: TileKey): boolean {
+    canGetTile(zoomLevel: number, tileKey: TileKey): boolean {
         if (zoomLevel !== tileKey.level || tileKey.level < 1) {
             return false;
         }

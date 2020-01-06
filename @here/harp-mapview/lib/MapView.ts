@@ -612,7 +612,7 @@ export interface MapViewOptions extends TextElementsRendererOptions {
     /**
      * Set true to enable rendering mixed levels of detail (increases rendering performance).
      *
-     * @default true
+     * @default false
      */
     enableMixedLod?: boolean;
 }
@@ -640,7 +640,7 @@ export const MapViewDefaults = {
     zoomLevel: 5,
     tilt: 0,
     heading: 0,
-    enableMixedLod: true
+    enableMixedLod: false
 };
 
 /**
@@ -1059,6 +1059,7 @@ export class MapView extends THREE.EventDispatcher {
     set enableMixedLod(enableMixedLod: boolean) {
         this.m_enableMixedLod = enableMixedLod;
         this.m_visibleTiles = this.createVisibleTileSet();
+        this.resetTextRenderer();
         this.update();
     }
 

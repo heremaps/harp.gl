@@ -505,7 +505,7 @@ export class VisibleTileSet {
                 const minDiff = (a.distance + b.distance) * 0.001;
 
                 return Math.abs(distanceDiff) < minDiff
-                    ? b.tileKey.mortonCode() - a.tileKey.mortonCode()
+                    ? a.tileKey.mortonCode() - b.tileKey.mortonCode()
                     : distanceDiff;
             });
 
@@ -521,6 +521,7 @@ export class VisibleTileSet {
                 i++
             ) {
                 const tileEntry = visibleTileKeys[i];
+
                 const tile = this.getTile(dataSource, tileEntry.tileKey, tileEntry.offset);
                 if (tile === undefined) {
                     continue;
@@ -1173,10 +1174,8 @@ export class VisibleTileSet {
         // once using the maximum display level.
         for (const [tilingScheme, bucket] of dataSourceBuckets) {
             const zoomLevels = bucket.map(dataSource => dataSource.getDisplayZoomLevel(zoomLevel));
-            const maxDisplayLevel = Math.max(...zoomLevels);
             const result = this.m_frustumIntersection.compute(
                 tilingScheme,
-                maxDisplayLevel,
                 elevationRangeSource,
                 zoomLevels,
                 bucket
@@ -1190,7 +1189,7 @@ export class VisibleTileSet {
                 const visibleTileKeys: TileKeyEntry[] = [];
                 const displayZoomLevel = dataSource.getDisplayZoomLevel(zoomLevel);
                 for (const tileKeyEntry of result.tileKeyEntries.get(displayZoomLevel)!.values()) {
-                    if (dataSource.shouldRender(displayZoomLevel, tileKeyEntry.tileKey)) {
+                    if (dataSource.canGetTile(displayZoomLevel, tileKeyEntry.tileKey)) {
                         visibleTileKeys.push(tileKeyEntry);
                     }
                 }

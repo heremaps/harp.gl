@@ -318,7 +318,8 @@ export namespace PolygonsFeaturesExample {
                 }
             },
             target: new GeoCoordinates(40, 15),
-            zoomLevel: 3.2
+            zoomLevel: 3.2,
+            enableMixedLod: true
         });
         mapView.renderLabels = false;
 

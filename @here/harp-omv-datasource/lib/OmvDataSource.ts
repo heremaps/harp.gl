@@ -303,14 +303,14 @@ export class OmvDataSource extends TileDataSource<OmvTile> {
      * @param tileKey Level of the tile.
      * @returns `true` if the data source should be rendered.
      */
-    shouldRender(zoomLevel: number, tileKey: TileKey): boolean {
+    canGetTile(zoomLevel: number, tileKey: TileKey): boolean {
         if (tileKey.level > this.maxZoomLevel) {
             return false;
         }
         if (tileKey.level <= this.maxZoomLevel && zoomLevel >= this.maxZoomLevel) {
             return true;
         }
-        return super.shouldRender(zoomLevel, tileKey);
+        return super.canGetTile(zoomLevel, tileKey);
     }
 
     setLanguages(languages?: string[]): void {

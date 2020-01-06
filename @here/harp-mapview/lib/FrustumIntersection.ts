@@ -11,6 +11,7 @@ import {
     TileKey,
     TilingScheme
 } from "@here/harp-geoutils";
+import { assert } from "@here/harp-utils";
 import * as THREE from "three";
 import { DataSource } from "./DataSource";
 import { CalculationStatus, ElevationRangeSource } from "./ElevationRangeSource";
@@ -47,31 +48,32 @@ function getGeoBox(tilingScheme: TilingScheme, childTileKey: TileKey, offset: nu
     return geoBox;
 }
 
-namespace FrustumIntersection {
+/**
+ * Map tile keys to TileKeyEntry.
+ * Keys are a combination of morton code and tile offset,
+ * see [[TileOffsetUtils.getKeyForTileKeyAndOffset]].
+ */
+type TileKeyEntries = Map<number, TileKeyEntry>;
+
+/**
+ * Map zoom level to map of visible tile key entries
+ */
+type ZoomLevelTileKeyMap = Map<number, TileKeyEntries>;
+
+/**
+ * Result of frustum intersection
+ */
+interface IntersectionResult {
     /**
-     * Map tile keys to TileKeyEntry.
-     * Keys are a combination of morton code and tile offset,
-     * see [[TileOffsetUtils.getKeyForTileKeyAndOffset]].
+     * Tiles intersected by the frustum per zoom level.
      */
-    export type TileKeyEntries = Map<number, TileKeyEntry>;
+    readonly tileKeyEntries: ZoomLevelTileKeyMap;
 
     /**
-     * Map zoom level to map of visible tile key entries
+     * True if the intersection was calculated using precise elevation data, false if it's an
+     * approximation.
      */
-    export type ZoomLevelTileKeyMap = Map<number, TileKeyEntries>;
-
-    export interface Result {
-        /**
-         * Tiles intersected by the frustum per zoom level.
-         */
-        readonly tileKeyEntries: ZoomLevelTileKeyMap;
-
-        /**
-         * True if the intersection was calculated using precise elevation data, false if it's an
-         * approximation.
-         */
-        calculationFinal: boolean;
-    }
+    calculationFinal: boolean;
 }
 
 /**
@@ -83,7 +85,7 @@ export class FrustumIntersection {
     private readonly m_viewProjectionMatrix = new THREE.Matrix4();
     private readonly m_mapTileCuller: MapTileCuller;
     private m_rootTileKeys: TileKeyEntry[] = [];
-    private readonly m_tileKeyEntries: FrustumIntersection.ZoomLevelTileKeyMap = new Map();
+    private readonly m_tileKeyEntries: ZoomLevelTileKeyMap = new Map();
 
     constructor(
         private readonly m_camera: THREE.PerspectiveCamera,
@@ -132,25 +134,31 @@ export class FrustumIntersection {
      * Computes the tiles intersected by the updated frustum, see [[updateFrustum]].
      *
      * @param tilingScheme The tiling scheme used to generate the tiles.
-     * @param maxTileLevel The maximum tile level that will be checked for intersections.
      * @param elevationRangeSource Source of elevation range data if any.
+     * @param zoomLevels A list of zoom levels to render.
+     * @param dataSources A list of data sources to render.
      * @returns The computation result, see [[FrustumIntersection.Result]].
      */
     compute(
         tilingScheme: TilingScheme,
-        maxTileLevel: number,
         elevationRangeSource: ElevationRangeSource | undefined,
         zoomLevels: number[],
         dataSources: DataSource[]
-    ): FrustumIntersection.Result {
+    ): IntersectionResult {
         this.m_tileKeyEntries.clear();
         let calculationFinal = true;
+
+        // Chose tile zoom level depending on screen space area.
+        // Target an area of roughly 256x256 pixels in accordance to
+        // [MapViewUtils.calculateZoomLevelFromDistance].
+        assert(this.mapView.focalLength !== 0);
         const targetTileArea = Math.pow(256 / this.mapView.focalLength, 2);
         const obbIntersections = this.mapView.projection.type === ProjectionType.Spherical;
         const tileBounds = obbIntersections ? new OrientedBox3() : new THREE.Box3();
+        const uniqueZoomLevels = new Set(zoomLevels);
 
         // create tile key map per zoom level
-        for (const zoomLevel of zoomLevels) {
+        for (const zoomLevel of uniqueZoomLevels) {
             this.m_tileKeyEntries.set(zoomLevel, new Map());
         }
 
@@ -163,7 +171,7 @@ export class FrustumIntersection {
                 item.maxElevation
             );
 
-            for (const zoomLevel of zoomLevels) {
+            for (const zoomLevel of uniqueZoomLevels) {
                 const tileKeyEntries = this.m_tileKeyEntries.get(zoomLevel)!;
                 tileKeyEntries.set(
                     TileOffsetUtils.getKeyForTileKeyAndOffset(item.tileKey, item.offset),
@@ -186,9 +194,6 @@ export class FrustumIntersection {
 
             // Stop subdivision if hightest visible level is reached
             const tileKey = tileEntry.tileKey;
-            if (tileKey.level > maxTileLevel) {
-                continue;
-            }
             const subdivide = dataSources.some((ds, i) =>
                 ds.shouldSubdivide(zoomLevels[i], tileKey)
             );
@@ -207,7 +212,7 @@ export class FrustumIntersection {
             );
 
             // delete parent tile key from applicable zoom levels
-            for (const zoomLevel of zoomLevels) {
+            for (const zoomLevel of uniqueZoomLevels) {
                 if (tileKey.level >= zoomLevel) {
                     continue;
                 }
@@ -252,7 +257,7 @@ export class FrustumIntersection {
                     );
 
                     // insert sub tile entry into tile entries map per zoom level
-                    for (const zoomLevel of zoomLevels) {
+                    for (const zoomLevel of uniqueZoomLevels) {
                         if (subTileEntry.tileKey.level > zoomLevel) {
                             continue;
                         }
@@ -294,17 +299,16 @@ export class FrustumIntersection {
             };
         }
 
-        // Estimate objects screen space size with diagonal of bounds
+        // Project tile bounds center
         const center = tileBounds.getCenter(tmpVectors3[0]);
-        const size = tileBounds.getSize(tmpVectors3[1]);
-        let objectSize = 0.5 * Math.sqrt(size.x * size.x + size.y * size.y + size.z + size.z);
-
         const projectedPoint = tmpVector4
             .set(center.x, center.y, center.z, 1.0)
             .applyMatrix4(this.m_viewProjectionMatrix);
 
+        // Estimate objects screen space size with diagonal of bounds
         // Dividing by w projects object size to screen space
-        objectSize = objectSize / projectedPoint.w;
+        const size = tileBounds.getSize(tmpVectors3[1]);
+        const objectSize = (0.5 * size.length()) / projectedPoint.w;
 
         return {
             area: objectSize * objectSize,
