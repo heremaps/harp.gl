@@ -10,6 +10,7 @@ import {
     FontCatalog,
     MeasurementParameters,
     TextBufferAdditionParameters,
+    TextBufferCreationParameters,
     TextCanvas,
     TextLayoutStyle,
     TextRenderStyle
@@ -144,6 +145,7 @@ const tempScreenPosition = new THREE.Vector2();
 const tempScreenPoints: THREE.Vector2[] = [];
 const tempPoiScreenPosition = new THREE.Vector2();
 const tempTextOffset = new THREE.Vector2();
+const tmpTextBufferCreationParams: TextBufferCreationParameters = {};
 
 class TileTextElements {
     constructor(readonly tile: Tile, readonly group: TextElementGroup) {}
@@ -1714,9 +1716,11 @@ export class TextElementsRenderer {
                         pointLabel.renderStyle!.opacity;
                     if (opacity > 0) {
                         // Compute the TextBufferObject when we know we're gonna render this label.
+                        tmpTextBufferCreationParams.letterCaseArray = pointLabel.glyphCaseArray;
                         if (pointLabel.textBufferObject === undefined) {
                             pointLabel.textBufferObject = textCanvas.createTextBufferObject(
-                                pointLabel.glyphs!
+                                pointLabel.glyphs!,
+                                tmpTextBufferCreationParams
                             );
                         }
                         const backgroundIsVisible =
