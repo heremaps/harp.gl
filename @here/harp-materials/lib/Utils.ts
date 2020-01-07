@@ -44,6 +44,8 @@ export interface ForcedBlending {
  * `CustomBlending` with the same parameters as the `NormalBlending`.
 
  * @param material `Material` that should use blending
+ * @note This function should not be used in frame update after material has been passed to WebGL.
+ * In such cases use [[enableBlending]] instead.
  */
 export function enforceBlending(
     material: (THREE.Material | THREE.ShaderMaterialParameters) & ForcedBlending
@@ -57,10 +59,29 @@ export function enforceBlending(
     material.forcedBlending = true;
 }
 
+/**
+ * Enable alpha blending using THREE.CustomBlending setup.
+ *
+ * Function enables blending using one of predefined modes, for both color and alpha components:
+ * - Src: [[THREE.SrcAlphaFactor]], Dst: [[THREE.OneMinusSrcAlphaFactor]]
+ * - Src: [[THREE.OneFactor]], Dst: [[THREE.OneMinusSrcAlphaFactor]]
+ * The second blending equation is used when [[THREE.Material.premultipliedAlpha]] is enabled
+ * for this material.
+ *
+ * @param material The material or material parameters to modify.
+ * @param isUpdate Set to true if you want to notify about material change, required only if you
+ * change blend mode after material has been created and passed to WebGL, it does not have meaning
+ * when [[THREE.ShaderMaterialParameters]] are passed into function. By default set to [[false]].
+ */
 export function enableBlending(
-    material: (THREE.Material | THREE.ShaderMaterialParameters) & ForcedBlending
+    material: (THREE.Material | THREE.ShaderMaterialParameters) & ForcedBlending,
+    isUpdate: boolean = false
 ) {
-    if (material.transparent || material.forcedBlending) {
+    if (
+        material.transparent ||
+        material.forcedBlending ||
+        material.blending === THREE.CustomBlending
+    ) {
         // Nothing to do
         return;
     }
@@ -77,15 +98,36 @@ export function enableBlending(
         material.blendSrcAlpha = THREE.OneFactor;
         material.blendDstAlpha = THREE.OneMinusSrcAlphaFactor;
     }
+    if (isUpdate && material instanceof THREE.Material) {
+        material.needsUpdate = true;
+    }
 }
 
+/**
+ * Disable alpha blending using THREE.CustomBlending mode, switches to [[THREE.NormalBlending]].
+ *
+ * @see enableBlending.
+ * @param material The material or material parameters to modify.
+ * @param isUpdate Set to true if you want to notify about material change, required only if you
+ * change blend mode after material has been created (in frame update), it does not have meaning
+ * when you pass [[THREE.ShaderMaterialParameters]] into function. By default set to [[false]].
+ */
 export function disableBlending(
-    material: (THREE.Material | THREE.ShaderMaterialParameters) & ForcedBlending
+    material: (THREE.Material | THREE.ShaderMaterialParameters) & ForcedBlending,
+    isUpdate: boolean = false
 ) {
-    if (material.transparent || material.forcedBlending) {
+    if (
+        material.transparent ||
+        material.forcedBlending ||
+        material.blending === THREE.NormalBlending
+    ) {
         // Nothing to do
         return;
     }
 
     material.blending = THREE.NormalBlending;
+
+    if (isUpdate && material instanceof THREE.Material) {
+        material.needsUpdate = true;
+    }
 }
