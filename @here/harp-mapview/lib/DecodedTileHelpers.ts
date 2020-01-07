@@ -654,7 +654,7 @@ export function applyBaseColorToMaterial(
         disableBlending(material);
     }
     materialColor.setRGB(r, g, b);
-    material.needsUpdate = true;
+    //material.needsUpdate = true;
 }
 
 /**
