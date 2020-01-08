@@ -128,7 +128,7 @@ export class ThemeLoader {
         ThemeLoader.checkTechniqueSupport(theme);
 
         const resolveDefinitions = getOptionValue<boolean>(options.resolveDefinitions, false);
-        theme = await ThemeLoader.resolveBaseTheme(theme, options);
+        theme = await ThemeLoader.resolveBaseThemes(theme, options);
         if (resolveDefinitions) {
             const contextLoader = new ContextLogger(
                 options.logger || console,
@@ -182,14 +182,20 @@ export class ThemeLoader {
         );
 
         if (theme.extends) {
-            if (typeof theme.extends === "string") {
-                theme.extends = childUrlResolver.resolveUri(theme.extends);
-            } else {
-                if (theme.extends.url === undefined) {
-                    theme.extends.url = theme.url;
-                    theme.extends = this.resolveUrls(theme.extends, uriResolver);
+            theme.extends = (Array.isArray(theme.extends) ? theme.extends : [theme.extends]).map(
+                baseTheme => {
+                    if (typeof baseTheme === "string") {
+                        return childUrlResolver.resolveUri(baseTheme);
+                    } else {
+                        if (baseTheme.url !== undefined) {
+                            return baseTheme;
+                        } else {
+                            baseTheme.url = theme.url;
+                            return this.resolveUrls(baseTheme, uriResolver);
+                        }
+                    }
                 }
-            }
+            );
         }
 
         if (theme.sky && theme.sky.type === "cubemap") {
@@ -482,7 +488,7 @@ export class ThemeLoader {
      * @param options Optional, a [[ThemeLoadOptions]] objects containing any custom settings for
      *    this load request.
      */
-    static async resolveBaseTheme(theme: Theme, options?: ThemeLoadOptions): Promise<Theme> {
+    static async resolveBaseThemes(theme: Theme, options?: ThemeLoadOptions): Promise<Theme> {
         options = options || {};
         if (theme.extends === undefined) {
             return theme;
@@ -496,17 +502,24 @@ export class ThemeLoader {
             throw new Error(`maxInheritanceDepth reached when attempting to load base theme`);
         }
 
-        const baseTheme = theme.extends;
+        const baseThemes = !Array.isArray(theme.extends) ? [theme.extends] : theme.extends;
         delete theme.extends;
+        let baseThemesMerged: Theme = {};
+        for (const baseTheme of baseThemes) {
+            const actualBaseTheme = await ThemeLoader.load(baseTheme, {
+                ...options,
+                resolveDefinitions: false,
+                maxInheritanceDepth: maxInheritanceDepth - 1
+            });
 
-        const actualBaseTheme = await ThemeLoader.load(baseTheme, {
-            ...options,
-            resolveDefinitions: false,
-            maxInheritanceDepth: maxInheritanceDepth - 1
-        });
+            baseThemesMerged = ThemeLoader.mergeThemes(actualBaseTheme, baseThemesMerged);
+        }
+        return ThemeLoader.mergeThemes(theme, baseThemesMerged);
+    }
 
-        const definitions = { ...actualBaseTheme.definitions, ...theme.definitions };
-        const styles = { ...actualBaseTheme.styles, ...theme.styles };
-        return { ...actualBaseTheme, ...theme, definitions, styles };
+    static mergeThemes(theme: Theme, baseTheme: Theme): Theme {
+        const definitions = { ...baseTheme.definitions, ...theme.definitions };
+        const styles = { ...baseTheme.styles, ...theme.styles };
+        return { ...baseTheme, ...theme, definitions, styles };
     }
 }

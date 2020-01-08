@@ -34,12 +34,12 @@ export interface Theme {
     $schema?: string;
 
     /**
-     * The base `Theme` or `theme` URL to extend.
+     * The base `Theme`s or `theme` URLs to extend.
      *
-     * If used, base theme is loaded first, and then all the properties
-     * from inherited theme overwrite these defined in base theme.
+     * If used, base themes are loaded first, and then all the properties from inherited theme
+     * overwrite these defined in base theme.
      */
-    extends?: string | Theme;
+    extends?: string | Theme | Array<string | Theme>;
 
     /**
      * Actual URL the theme has been loaded from.

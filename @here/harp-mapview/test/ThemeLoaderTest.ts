@@ -247,43 +247,73 @@ describe("ThemeLoader", function() {
     });
 
     describe("#resolveBaseTheme", function() {
-        it("properly loads inherited definitions", async function() {
-            const baseTheme: Theme = {
-                definitions: {
-                    roadColor: { type: "color", value: "#f00" },
-                    primaryRoadFillLineWidth: {
-                        type: "number",
-                        value: {
-                            interpolation: "Linear",
-                            zoomLevels: [8, 9, 10, 11, 12, 13, 14, 16, 18],
-                            values: [650, 400, 220, 120, 65, 35, 27, 9, 7]
-                        }
-                    },
-                    roadStyle: {
-                        description: "roads",
-                        technique: "solid-line",
-                        when: "foo",
-                        attr: {
-                            lineWidth: ["ref", "primaryRoadFillLineWidth"],
-                            lineColor: ["ref", "roadColor"]
-                        }
+        const baseThemeRoads: Theme = {
+            definitions: {
+                roadColor: { type: "color", value: "#f00" },
+                primaryRoadFillLineWidth: {
+                    type: "number",
+                    value: {
+                        interpolation: "Linear",
+                        zoomLevels: [8, 9, 10, 11, 12, 13, 14, 16, 18],
+                        values: [650, 400, 220, 120, 65, 35, 27, 9, 7]
+                    }
+                },
+                roadStyle: {
+                    description: "roads",
+                    technique: "solid-line",
+                    when: "foo",
+                    attr: {
+                        lineWidth: ["ref", "primaryRoadFillLineWidth"],
+                        lineColor: ["ref", "roadColor"]
                     }
                 }
-            };
+            }
+        };
+        const baseThemeWater: Theme = {
+            definitions: {
+                waterColor: { type: "color", value: "#44f" }
+            }
+        };
+        it("supports single inheritance", async function() {
             const inheritedTheme: Theme = {
-                extends: baseTheme,
+                extends: baseThemeRoads,
                 definitions: {
                     roadColor: { type: "color", value: "#fff" }
                 }
             };
 
-            const result = await ThemeLoader.resolveBaseTheme(inheritedTheme);
+            const result = await ThemeLoader.resolveBaseThemes(inheritedTheme);
 
             assert.exists(result.definitions);
             assert.exists(result.definitions!.roadColor);
             assert.exists(result.definitions!.roadStyle);
             assert.deepEqual(result.definitions!.roadColor, { type: "color", value: "#fff" });
-            assert.deepEqual(result.definitions!.roadStyle, baseTheme.definitions!.roadStyle);
+            assert.deepEqual(result.definitions!.roadStyle, baseThemeRoads.definitions!.roadStyle);
+        });
+        it("supports multiple inheritance", async function() {
+            const inheritedTheme: Theme = {
+                extends: [
+                    baseThemeRoads,
+                    baseThemeWater,
+                    {
+                        definitions: {
+                            waterColor: { type: "color", value: "#0f0" }
+                        }
+                    }
+                ],
+                definitions: {
+                    roadColor: { type: "color", value: "#fff" }
+                }
+            };
+
+            const result = await ThemeLoader.resolveBaseThemes(inheritedTheme);
+
+            assert.exists(result.definitions);
+            assert.exists(result.definitions!.roadColor);
+            assert.exists(result.definitions!.roadStyle);
+            assert.deepEqual(result.definitions!.roadColor, { type: "color", value: "#fff" });
+            assert.deepEqual(result.definitions!.roadStyle, baseThemeRoads.definitions!.roadStyle);
+            assert.deepEqual(result.definitions!.waterColor, { type: "color", value: "#0f0" });
         });
     });
 
