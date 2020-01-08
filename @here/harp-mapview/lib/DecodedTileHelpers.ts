@@ -646,6 +646,7 @@ export function applyBaseColorToMaterial(
 
     opacity = THREE.Math.clamp(opacity, 0, 1);
     material.opacity = opacity;
+    materialColor.setRGB(r, g, b);
 
     const opaque = opacity >= 1.0;
     if (!opaque) {
@@ -653,8 +654,6 @@ export function applyBaseColorToMaterial(
     } else {
         disableBlending(material);
     }
-    materialColor.setRGB(r, g, b);
-    material.needsUpdate = true;
 }
 
 /**
