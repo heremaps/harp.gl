@@ -44,6 +44,8 @@ export interface ForcedBlending {
  * `CustomBlending` with the same parameters as the `NormalBlending`.
 
  * @param material `Material` that should use blending
+ * @note This function should not be used in frame update after material has been passed to WebGL.
+ * In such cases use [[enableBlending]] instead.
  */
 export function enforceBlending(
     material: (THREE.Material | THREE.ShaderMaterialParameters) & ForcedBlending
@@ -57,6 +59,18 @@ export function enforceBlending(
     material.forcedBlending = true;
 }
 
+/**
+ * Enable alpha blending using THREE.CustomBlending setup.
+ *
+ * Function enables blending using one of predefined modes, for both color and alpha components:
+ * - Src: [[THREE.SrcAlphaFactor]], Dst: [[THREE.OneMinusSrcAlphaFactor]]
+ * - Src: [[THREE.OneFactor]], Dst: [[THREE.OneMinusSrcAlphaFactor]]
+ * The second blending equation is used when [[THREE.Material.premultipliedAlpha]] is enabled
+ * for this material.
+ * @note Blending mode change does not require material update.
+ * @see THREE.Material.needsUpdate.
+ * @param material The material or material parameters to modify.
+ */
 export function enableBlending(
     material: (THREE.Material | THREE.ShaderMaterialParameters) & ForcedBlending
 ) {
@@ -79,6 +93,14 @@ export function enableBlending(
     }
 }
 
+/**
+ * Disable alpha blending using THREE.CustomBlending mode, switches to [[THREE.NormalBlending]].
+ *
+ * @note Blending mode change does not require material update.
+ * @see THREE.Material.needsUpdate.
+ * @see enableBlending.
+ * @param material The material or material parameters to modify.
+ */
 export function disableBlending(
     material: (THREE.Material | THREE.ShaderMaterialParameters) & ForcedBlending
 ) {
