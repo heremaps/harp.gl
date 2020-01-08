@@ -95,10 +95,12 @@ export class TextElementState {
         predecessor.m_textRenderState = undefined;
         predecessor.m_iconRenderStates = undefined;
 
-        // Use the predecessor glyphs, bounds and case array until proper ones are computed.
-        this.element.glyphs = predecessor.element.glyphs;
-        this.element.bounds = predecessor.element.bounds;
-        this.element.glyphCaseArray = predecessor.element.glyphCaseArray;
+        if (this.element.glyphs === undefined) {
+            // Use the predecessor glyphs, bounds and case array until proper ones are computed.
+            this.element.glyphs = predecessor.element.glyphs;
+            this.element.bounds = predecessor.element.bounds;
+            this.element.glyphCaseArray = predecessor.element.glyphCaseArray;
+        }
     }
 
     /**
