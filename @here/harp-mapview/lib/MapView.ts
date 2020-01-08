@@ -623,7 +623,7 @@ export interface MapViewOptions extends TextElementsRendererOptions {
 export const MapViewDefaults = {
     projection: mercatorProjection,
 
-    maxVisibleDataSourceTiles: 200,
+    maxVisibleDataSourceTiles: 100,
     extendedFrustumCulling: true,
 
     tileCacheSize: 200,

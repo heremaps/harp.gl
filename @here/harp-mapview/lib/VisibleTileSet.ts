@@ -502,7 +502,7 @@ export class VisibleTileSet {
                 const distanceDiff = a.distance - b.distance;
 
                 // Take care or numerical precision issues
-                const minDiff = (a.distance + b.distance) * 0.001;
+                const minDiff = (a.distance + b.distance) * 0.000001;
 
                 return Math.abs(distanceDiff) < minDiff
                     ? a.tileKey.mortonCode() - b.tileKey.mortonCode()

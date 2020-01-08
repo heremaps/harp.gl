@@ -148,11 +148,11 @@ export class FrustumIntersection {
         this.m_tileKeyEntries.clear();
         let calculationFinal = true;
 
-        // Chose tile zoom level depending on screen space area.
-        // Target an area of roughly 256x256 pixels in accordance to
-        // [MapViewUtils.calculateZoomLevelFromDistance].
-        assert(this.mapView.focalLength !== 0);
-        const targetTileArea = Math.pow(256 / this.mapView.focalLength, 2);
+        // Compute target tile area in clip space size.
+        // A tile should take up roughly 256x256 pixels on screen in accordance to
+        // the zoom level chosen by [MapViewUtils.calculateZoomLevelFromDistance].
+        assert(this.mapView.viewportHeight !== 0);
+        const targetTileArea = Math.pow(256 / this.mapView.viewportHeight, 2);
         const obbIntersections = this.mapView.projection.type === ProjectionType.Spherical;
         const tileBounds = obbIntersections ? new OrientedBox3() : new THREE.Box3();
         const uniqueZoomLevels = new Set(zoomLevels);

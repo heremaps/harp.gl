@@ -350,7 +350,7 @@ describe("VisibleTileSet", function() {
         const secondDataSource = new FakeOmvDataSource();
         fixture.addDataSource(secondDataSource);
         const result = updateRenderList(zoomLevel, storageLevel).tileList;
-        assert.equal(result[0].visibleTiles.length, 200);
+        assert.equal(result[0].visibleTiles.length, 100);
     });
 
     it("checks MapView param enableMixedLod", async function() {
@@ -382,6 +382,6 @@ describe("VisibleTileSet", function() {
         const secondDataSource = new FakeOmvDataSource();
         fixture.addDataSource(secondDataSource);
         const result = updateRenderList(zoomLevel, storageLevel).tileList;
-        assert.equal(result[0].visibleTiles.length, 84);
+        assert.equal(result[0].visibleTiles.length, 100);
     });
 });
