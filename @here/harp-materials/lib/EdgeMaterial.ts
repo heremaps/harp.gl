@@ -202,12 +202,21 @@ export class EdgeMaterial extends THREE.RawShaderMaterial
         return this.uniforms.edgeColorMix.value as number;
     }
     set colorMix(value: number) {
+        if (this.uniforms.edgeColorMix.value === value) {
+            return;
+        }
         this.uniforms.edgeColorMix.value = value;
-        this.updateColorMixFeature();
-    }
-
-    private updateColorMixFeature(): void {
-        this.defines.USE_COLOR = this.colorMix > 0.0 ? 1 : 0;
+        const doMixColor = value > 0.0;
+        if (doMixColor) {
+            // NOTE: We can not check Material.needsUpdate current value cause there is
+            // no getter for this property, setting it to true increments Material version
+            // which in turn forces invalidation.
+            this.needsUpdate = this.defines.USE_COLOR === undefined;
+            this.defines.USE_COLOR = "";
+        } else {
+            this.needsUpdate = this.defines.USE_COLOR !== undefined;
+            delete this.defines.USE_COLOR;
+        }
     }
 
     get fadeNear(): number {
@@ -221,13 +230,16 @@ export class EdgeMaterial extends THREE.RawShaderMaterial
         return this.uniforms.fadeFar.value as number;
     }
     set fadeFar(value: number) {
+        if (this.uniforms.fadeFar.value === value) {
+            return;
+        }
         this.uniforms.fadeFar.value = value;
-        const doFade = value !== undefined && value > 0.0;
+        const doFade = value > 0.0;
         if (doFade) {
-            this.needsUpdate = this.needsUpdate || this.defines.USE_FADING === undefined;
+            this.needsUpdate = this.defines.USE_FADING === undefined;
             this.defines.USE_FADING = "";
         } else {
-            this.needsUpdate = this.needsUpdate || this.defines.USE_FADING !== undefined;
+            this.needsUpdate = this.defines.USE_FADING !== undefined;
             delete this.defines.USE_FADING;
         }
     }
@@ -236,13 +248,16 @@ export class EdgeMaterial extends THREE.RawShaderMaterial
         return this.uniforms.extrusionRatio.value as number;
     }
     set extrusionRatio(value: number) {
+        if (this.uniforms.extrusionRatio.value === value) {
+            return;
+        }
         this.uniforms.extrusionRatio.value = value;
-        const doExtrusion = value !== undefined && value >= ExtrusionFeature.DEFAULT_RATIO_MIN;
+        const doExtrusion = value >= ExtrusionFeature.DEFAULT_RATIO_MIN;
         if (doExtrusion) {
-            this.needsUpdate = this.needsUpdate || this.defines.USE_EXTRUSION === undefined;
+            this.needsUpdate = this.defines.USE_EXTRUSION === undefined;
             this.defines.USE_EXTRUSION = "";
         } else {
-            this.needsUpdate = this.needsUpdate || this.defines.USE_EXTRUSION !== undefined;
+            this.needsUpdate = this.defines.USE_EXTRUSION !== undefined;
             delete this.defines.USE_EXTRUSION;
         }
     }
@@ -252,14 +267,17 @@ export class EdgeMaterial extends THREE.RawShaderMaterial
     }
 
     set displacementMap(map: THREE.Texture | undefined) {
+        if (this.uniforms.displacementMap.value === map) {
+            return;
+        }
         this.uniforms.displacementMap.value = map;
         if (map !== undefined) {
             this.uniforms.displacementMap.value.needsUpdate = true;
+            this.needsUpdate = this.defines.USE_DISPLACEMENTMAP === undefined;
             this.defines.USE_DISPLACEMENTMAP = "";
-            this.needsUpdate = this.needsUpdate || this.defines.USE_DISPLACEMENTMAP === undefined;
         } else {
+            this.needsUpdate = this.defines.USE_DISPLACEMENTMAP !== undefined;
             delete this.defines.USE_DISPLACEMENTMAP;
-            this.needsUpdate = this.needsUpdate || this.defines.USE_DISPLACEMENTMAP !== undefined;
         }
     }
 }

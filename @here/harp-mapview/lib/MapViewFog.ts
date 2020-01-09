@@ -132,7 +132,7 @@ export class MapViewFog {
     /**
      * Handles fog addition.
      */
-    add() {
+    private add() {
         // When the fog is changed, ThreeJS takes care of recompiling its built-in materials...
         this.m_scene.fog = this.m_fog;
         // ...except the `RawShaderMaterial`, on purpose, so it needs to be updated from the app.
@@ -142,7 +142,7 @@ export class MapViewFog {
     /**
      * Handles fog removal.
      */
-    remove() {
+    private remove() {
         // When the fog is changed, ThreeJS takes care of recompiling its built-in materials...
         this.m_scene.fog = null;
         // ...except the `RawShaderMaterial`, on purpose, so it needs to be updated from the app.
@@ -157,22 +157,30 @@ export class MapViewFog {
      */
     private setFogInRawShaderMaterials(enableFog: boolean) {
         this.m_scene.traverse(object => {
-            if (object instanceof THREE.Mesh) {
-                if (object.material instanceof THREE.Material) {
-                    if (
-                        object.material instanceof THREE.Material &&
-                        // HighPrecisionLineMaterial does not support fog
-                        !(object.material instanceof HighPrecisionLineMaterial)
-                    ) {
-                        if (object.material instanceof SolidLineMaterial) {
-                            const material = object.material;
-                            (material as SolidLineMaterial).updateFog(enableFog);
-                        }
-                        object.material.fog = enableFog;
-                        object.material.needsUpdate = true;
-                    }
-                }
+            if (!(object instanceof THREE.Mesh)) {
+                return;
             }
+            if (!(object.material instanceof THREE.Material)) {
+                return;
+            }
+            // HighPrecisionLineMaterial does not support fog
+            if (object.material instanceof HighPrecisionLineMaterial) {
+                return;
+            }
+            // Redundant updates (enable twice) are already checked in higher level functions.
+            if (object.material instanceof SolidLineMaterial) {
+                object.material.updateFog(enableFog);
+            }
+            // We can skip `object.material.fog === enableFog` only after applying custom material
+            // settings (by default fog is set) so the first load may be faster.
+            if (object.material.fog === enableFog) {
+                return;
+            }
+            object.material.fog = enableFog;
+            // Fog properties can't be easily changed at runtime (once the material
+            // is rendered at least once) and thus requires building of new shader
+            // program - force material update.
+            object.material.needsUpdate = true;
         });
     }
 }
