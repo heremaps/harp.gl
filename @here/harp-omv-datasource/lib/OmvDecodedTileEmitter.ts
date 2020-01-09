@@ -1242,7 +1242,10 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                             vertices.push(wallAttr.array[i / 3]);
                         }
 
-                        triangles.push(...(geom.getIndex().array as Float32Array));
+                        const geomIndex = geom.getIndex();
+                        if (geomIndex !== null) {
+                            triangles.push(...(geomIndex.array as Float32Array));
+                        }
                     }
 
                     // Add the footprint/roof vertices to the position buffer.

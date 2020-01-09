@@ -148,7 +148,9 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
                     opacity: 0.9,
                     lineWidth: 1,
                     lineColor: "#172023",
-                    lineColorMix: 0.6
+                    lineColorMix: 0.6,
+                    metalness: 0.5,
+                    roughness: 0.5
                 }
             }
         ];
@@ -179,7 +181,9 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
                     vertexColors: false,
                     lineWidth: 1,
                     lineColor: "#172023",
-                    lineColorMix: 0.6
+                    lineColorMix: 0.6,
+                    metalness: 0.5,
+                    roughness: 0.5
                 }
             }
         ];
@@ -208,7 +212,9 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
                     color: ["string", ["get", "color"], "#5050f0"],
                     lineWidth: 1,
                     lineColor: "#172023",
-                    lineColorMix: 0.6
+                    lineColorMix: 0.6,
+                    metalness: 0.5,
+                    roughness: 0.5
                 }
             }
         ];

@@ -56,7 +56,9 @@ describe("SphericalGeometrySubdivisionModifier", function() {
         const a = new THREE.Vector3();
         const b = new THREE.Vector3();
         const c = new THREE.Vector3();
-        const idxBuffer = geometry.getIndex().array;
+        const geoIndex = geometry.getIndex();
+        assert.isNotNull(geoIndex);
+        const idxBuffer = geoIndex!.array;
         for (let i = 0; i < idxBuffer.length; i += 3) {
             a.set(
                 posAttr.array[idxBuffer[i] * 3],
