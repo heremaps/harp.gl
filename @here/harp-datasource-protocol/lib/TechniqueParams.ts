@@ -249,13 +249,13 @@ export interface StandardTechniqueParams extends BaseTechniqueParams {
     vertexColors?: boolean;
     /**
      * How rough the material appears. `0.0` means a smooth mirror reflection. `1.0` means fully
-     * diffuse. Default is `0.5`.
+     * diffuse. Default is `1.0`.
      * See https://threejs.org/docs/#api/en/materials/MeshStandardMaterial.roughness.
      */
     roughness?: DynamicProperty<number>;
     /**
      * How much the material is like a metal. Nonmetallic materials such as wood or stone use `0.0`,
-     * metallic ones use `1.0`, with nothing (usually) in between. Default is `0.5`. A value between
+     * metallic ones use `1.0`, with nothing (usually) in between. Default is `0.0`. A value between
      * `0.0` and `1.0` can be used for a rusty metal look. If `metalnessMap` is also provided, both
      * values are multiplied.
      * See https://threejs.org/docs/#api/en/materials/MeshStandardMaterial.metalness.
