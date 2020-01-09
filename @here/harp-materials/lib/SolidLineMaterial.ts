@@ -471,8 +471,10 @@ export class SolidLineMaterial extends THREE.RawShaderMaterial
      */
     updateFog(enableFog: boolean) {
         if (!enableFog) {
+            this.needsUpdate = this.defines.USE_FOG !== undefined;
             delete this.defines.USE_FOG;
         } else {
+            this.needsUpdate = this.defines.USE_FOG === undefined;
             this.defines.USE_FOG = "";
         }
     }

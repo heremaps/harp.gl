@@ -101,7 +101,6 @@ export class CirclePointsMaterial extends THREE.ShaderMaterial {
     set size(size: number) {
         this.m_size = size;
         this.uniforms.size.value = size;
-        this.needsUpdate = true;
     }
 
     /**
@@ -117,6 +116,5 @@ export class CirclePointsMaterial extends THREE.ShaderMaterial {
     set color(color: string) {
         this.m_color.set(color);
         this.uniforms.diffuse.value.set(this.m_color);
-        this.needsUpdate = true;
     }
 }
