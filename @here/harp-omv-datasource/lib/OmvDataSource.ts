@@ -182,6 +182,9 @@ export interface OmvDataSourceParameters {
      */
     addGroundPlane?: boolean;
 
+    /**
+     * Clip line geometry to tile border.
+     */
     enableLineClipping?: boolean;
 }
 

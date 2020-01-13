@@ -1838,7 +1838,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
             const untiledLine = this.computeUntiledLine(polyline, hasUntiledLines);
 
             polyline.positions.forEach(pos =>
-                this.addPoint(
+                this.addLinePoint(
                     pos,
                     localLine,
                     worldLine,
@@ -1893,7 +1893,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                     intersectionPoint
                 );
                 if (isIntersect) {
-                    this.addPoint(
+                    this.addLinePoint(
                         intersectionPoint,
                         localLine,
                         worldLine,
@@ -1939,7 +1939,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                     );
                 } else if (currentPosIntersects === true && nextPosPosIntersects === true) {
                     if (i === 0) {
-                        this.addPoint(
+                        this.addLinePoint(
                             currentPos,
                             localLine,
                             worldLine,
@@ -1951,7 +1951,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                             computeTexCoords
                         );
                     }
-                    this.addPoint(
+                    this.addLinePoint(
                         nextPos,
                         localLine,
                         worldLine,
@@ -1964,7 +1964,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                     );
                 } else if (currentPosIntersects !== nextPosPosIntersects) {
                     if (i === 0 && currentPosIntersects) {
-                        this.addPoint(
+                        this.addLinePoint(
                             currentPos,
                             localLine,
                             worldLine,
@@ -1986,7 +1986,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                         nextPos
                     );
                     if (nextPosPosIntersects) {
-                        this.addPoint(
+                        this.addLinePoint(
                             nextPos,
                             localLine,
                             worldLine,
@@ -2009,7 +2009,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
         });
     }
 
-    private addPoint(
+    private addLinePoint(
         pos: THREE.Vector2,
         localLine: number[],
         worldLine: number[],

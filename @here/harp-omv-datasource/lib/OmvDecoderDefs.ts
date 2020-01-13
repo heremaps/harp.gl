@@ -178,6 +178,9 @@ export interface OmvDecoderOptions {
 
     enableElevationOverlay?: boolean;
 
+    /**
+     * Clip line geometry to tile border.
+     */
     enableLineClipping?: boolean;
 }
 
