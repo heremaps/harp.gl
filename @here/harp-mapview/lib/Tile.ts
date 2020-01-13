@@ -347,6 +347,13 @@ export class Tile implements CachedResource {
      */
     levelOffset: number = 0;
 
+    /**
+     * @hidden
+     *
+     * Background mesh used for the fallback logic.
+     */
+    backgroundPlane?: THREE.Mesh;
+
     private m_disposed: boolean = false;
     private m_localTangentSpace = false;
 
@@ -961,6 +968,7 @@ export class Tile implements CachedResource {
             disposeObject(rootObject);
         });
         this.objects.length = 0;
+        this.backgroundPlane = undefined;
 
         if (this.preparedTextPaths) {
             this.preparedTextPaths = [];
@@ -1013,6 +1021,17 @@ export class Tile implements CachedResource {
      */
     computeWorldOffsetX(): number {
         return this.projection.worldExtent(0, 0).max.x * this.offset;
+    }
+
+    /**
+     * Adds the supplied mesh to the list of three.js objects and keeps track of the mesh
+     * internally. Note, only one background mesh may be added to a Tile.
+     * @param plane
+     */
+    addBackgroundPlane(plane: THREE.Mesh) {
+        assert(this.backgroundPlane === undefined, "Only one background plane is supported");
+        this.backgroundPlane = plane;
+        this.objects.push(plane);
     }
 
     private computeResourceInfo(): void {

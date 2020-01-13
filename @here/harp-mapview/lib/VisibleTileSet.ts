@@ -899,6 +899,9 @@ export class VisibleTileSet {
                     tile.offset
                 );
                 tile.levelOffset = 0;
+                if (tile.backgroundPlane !== undefined) {
+                    tile.backgroundPlane.visible = false;
+                }
                 if (tile.hasGeometry || defaultSearchDirection === SearchDirection.NONE) {
                     renderedTiles.set(tileCode, tile);
                 } else {
@@ -913,6 +916,9 @@ export class VisibleTileSet {
                 return;
             }
 
+            // True if there is any tile which fell back and where a parent is possibly
+            // overlapping a child tile.
+            let fallBackExists = false;
             // Minor optimization for the fallback search, only check parent tiles once, otherwise
             // the recursive algorithm checks all parent tiles multiple times, the key is the code
             // of the tile that is checked and the value is whether a parent was found or not.
@@ -934,6 +940,7 @@ export class VisibleTileSet {
                             dataSource
                         )
                     ) {
+                        fallBackExists = true;
                         // Continue to next entry so we don't search down.
                         continue;
                     }
@@ -946,7 +953,45 @@ export class VisibleTileSet {
                     this.findDown(tileKeyCode, displayZoomLevel, renderedTiles, dataSource);
                 }
             }
+
+            // If we have a tile which has successfully fallen back, then we search for all tiles
+            // which aren't fallback tiles, and enable their backgroundPlane if it exists.
+            if (fallBackExists) {
+                this.updateTileOverlapVisibility(renderedTiles, checkedTiles);
+            }
         });
+    }
+
+    // Iterates all rendered tiles and sets the background mesh plane to be visible where there is a
+    // ancestor visible for the given tile and where the tile itself hasn't fallen forward (when
+    // this happens, no overlapping occurs, so such tiles can be ignored). Ancestors always cover
+    // Descendants, so we need to enable the background plane to ensure we don't overlap geometry.
+    private updateTileOverlapVisibility(
+        renderedTiles: Map<number, Tile>,
+        checkedTiles: Map<number, boolean>
+    ) {
+        for (const [tileKeyCode, tile] of renderedTiles) {
+            if (
+                tile.dataSource.addGroundPlane === false ||
+                tile.levelOffset > 0 ||
+                tile.backgroundPlane === undefined
+            ) {
+                continue;
+            }
+
+            let parentCode = TileOffsetUtils.getParentKeyFromKey(tileKeyCode);
+            let visible = false;
+            let levels = 1;
+            do {
+                visible = checkedTiles.get(parentCode) ?? false;
+                if (visible || levels++ > this.options.quadTreeSearchDistanceUp) {
+                    break;
+                }
+                parentCode = TileOffsetUtils.getParentKeyFromKey(parentCode);
+            } while (!visible);
+
+            tile.backgroundPlane.visible = visible;
+        }
     }
 
     private findDown(
