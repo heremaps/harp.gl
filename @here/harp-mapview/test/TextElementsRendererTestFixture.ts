@@ -94,6 +94,7 @@ export class TestFixture {
     private readonly m_poiRendererStub: sinon.SinonStubbedInstance<PoiRenderer>;
     private readonly m_renderPoiSpy: sinon.SinonSpy;
     private readonly m_addTextSpy: sinon.SinonSpy;
+    private readonly m_addTextBufferObjSpy: sinon.SinonSpy;
     private readonly m_dataSource: FakeOmvDataSource = new FakeOmvDataSource();
     private readonly m_screenProjector: ScreenProjector;
     private readonly m_camera: THREE.PerspectiveCamera = new THREE.PerspectiveCamera();
@@ -112,6 +113,7 @@ export class TestFixture {
         this.m_viewState = createViewState(new THREE.Vector3());
         this.m_renderPoiSpy = sandbox.spy();
         this.m_addTextSpy = sandbox.spy();
+        this.m_addTextBufferObjSpy = sandbox.spy();
         this.m_poiRendererStub = stubPoiRenderer(this.sandbox, this.m_renderPoiSpy);
         this.m_screenProjector = createScreenProjector();
     }
@@ -143,9 +145,10 @@ export class TestFixture {
         const fontCatalog = stubFontCatalog(this.sandbox);
         this.m_textCanvasStub = stubTextCanvas(
             this.sandbox,
+            this.m_addTextSpy,
+            this.m_addTextBufferObjSpy,
             fontCatalog,
-            DEF_TEXT_WIDTH_HEIGHT,
-            this.m_addTextSpy
+            DEF_TEXT_WIDTH_HEIGHT
         );
         const dummyUpdateCall = () => {};
         this.m_textRenderer = new TextElementsRenderer(
@@ -337,8 +340,7 @@ export class TestFixture {
         textElement: TextElement,
         opacityMatcher: OpacityMatcher | undefined
     ): number {
-        const addBufferObjStub = this.m_textCanvasStub!.addTextBufferObject as sinon.SinonStub;
-        const addBufferObjSpy = addBufferObjStub.withArgs(
+        const addBufferObjSpy = this.m_addTextBufferObjSpy.withArgs(
             sinon.match.same(textElement.textBufferObject),
             sinon.match.any
         );
@@ -346,15 +348,14 @@ export class TestFixture {
             addBufferObjSpy.calledOnce,
             this.getErrorHeading(textElement) + "point text was NOT rendered."
         );
-        const actualOpacity = addBufferObjSpy.firstCall.args[1].opacity;
+        const actualOpacity = addBufferObjSpy.firstCall.args[1];
         this.checkOpacity(actualOpacity, textElement, "text", opacityMatcher);
         return actualOpacity;
     }
 
     private checkPointTextNotRendered(textElement: TextElement) {
-        const addBufferObjStub = this.m_textCanvasStub!.addTextBufferObject as sinon.SinonStub;
         assert(
-            addBufferObjStub.neverCalledWith(
+            this.m_addTextBufferObjSpy.neverCalledWith(
                 sinon.match.same(textElement.textBufferObject),
                 sinon.match.any
             ),

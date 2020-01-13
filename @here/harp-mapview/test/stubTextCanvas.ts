@@ -9,6 +9,7 @@ import {
     FontCatalog,
     GlyphData,
     MeasurementParameters,
+    TextBufferAdditionParameters,
     TextBufferObject,
     TextCanvas
 } from "@here/harp-text-canvas";
@@ -19,15 +20,19 @@ import { TextCanvasFactory } from "../lib/text/TextCanvasFactory";
 /**
  * Creates a TextCanvas stub.
  * @param sandbox Sinon sandbox to keep track of created stubs.
+ * @param addTextSpy Spy that will be called when [[addText]] method is called.
+ * @param addTextBufferObjSpy Spy that will be called when [[addTextBufferObject]] method is called
+ * on the created TextCanvas stub.
  * @param fontCatalog Font catalog used by the created text canvas.
  * @param textWidthHeight Text width and height used to compute bounds.
  * @returns TextCanvas stub.
  */
 export function stubTextCanvas(
     sandbox: sinon.SinonSandbox,
+    addTextSpy: sinon.SinonSpy,
+    addTextBufferObjSpy: sinon.SinonSpy,
     fontCatalog: FontCatalog,
-    textWidthHeight: number,
-    addTextSpy: sinon.SinonSpy
+    textWidthHeight: number
 ): TextCanvas {
     const renderer = ({} as unknown) as THREE.WebGLRenderer;
     const textCanvas = new TextCanvas({
@@ -77,7 +82,18 @@ export function stubTextCanvas(
     sandbox.stub(textCanvas, "createTextBufferObject").callsFake(() => {
         return new TextBufferObject([], new Float32Array());
     });
-    sandbox.stub(textCanvas, "addTextBufferObject").returns(true);
+    // Workaround to capture the opacity on the time of the call,
+    // otherwise it's lost afterwards since the same params object is used for all calls to this
+    // method.
+    sandbox
+        .stub(textCanvas, "addTextBufferObject")
+        .callsFake((textBufferObject: TextBufferObject, params?: TextBufferAdditionParameters) => {
+            addTextBufferObjSpy(
+                textBufferObject,
+                params === undefined ? undefined : params.opacity
+            );
+            return true;
+        });
     sandbox.stub(textCanvas, "render"); // do nothing.
 
     return textCanvas;

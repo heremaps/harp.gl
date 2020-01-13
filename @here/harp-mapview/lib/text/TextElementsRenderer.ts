@@ -75,11 +75,6 @@ interface RenderParams {
     time: number;
 }
 
-interface TempParams {
-    poiMeasurementParams: MeasurementParameters;
-    bufferAdditionParams: TextBufferAdditionParameters;
-}
-
 enum Pass {
     PersistentLabels,
     NewLabels
@@ -139,6 +134,8 @@ const tempPoiScreenPosition = new THREE.Vector2();
 const tempTextOffset = new THREE.Vector2();
 const tmpTextBufferCreationParams: TextBufferCreationParameters = {};
 const tmpAdditionParams: AdditionParameters = {};
+const tmpPoiMeasurementParams: MeasurementParameters = {};
+const tmpBufferAdditionParams: TextBufferAdditionParameters = {};
 
 class TileTextElements {
     constructor(readonly tile: Tile, readonly group: TextElementGroup) {}
@@ -177,6 +174,21 @@ function checkIfTextElementsChanged(dataSourceTileList: DataSourceTileList[]) {
     });
 
     return textElementsChanged;
+}
+
+function addTextToCanvas(
+    textElement: TextElement,
+    canvas: TextCanvas,
+    screenPosition: THREE.Vector3,
+    path?: THREE.Path,
+    pathOverflow?: boolean
+) {
+    tmpAdditionParams.path = path;
+    tmpAdditionParams.pathOverflow = pathOverflow;
+    tmpAdditionParams.layer = textElement.renderOrder;
+    tmpAdditionParams.letterCaseArray = textElement.glyphCaseArray;
+    tmpAdditionParams.pickingData = textElement.userData ? textElement : undefined;
+    canvas.addText(textElement.glyphs!, screenPosition, tmpAdditionParams);
 }
 
 export type ViewUpdateCallback = () => void;
@@ -648,11 +660,6 @@ export class TextElementsRenderer {
         }
 
         const shieldGroups: number[][] = [];
-
-        const temp: TempParams = {
-            poiMeasurementParams: {},
-            bufferAdditionParams: {}
-        };
         const hiddenKinds = this.m_viewState.hiddenGeometryKinds;
 
         for (const textElementState of groupState.textElementStates) {
@@ -732,7 +739,7 @@ export class TextElementsRenderer {
                 }
             }
 
-            if (!this.initializeGlyphs(textElement, textElementStyle, temp)) {
+            if (!this.initializeGlyphs(textElement, textElementStyle)) {
                 continue;
             }
 
@@ -755,7 +762,7 @@ export class TextElementsRenderer {
 
             switch (elementType) {
                 case TextElementType.PoiLabel:
-                    this.addPoiLabel(textElementState, poiRenderer, textCanvas, renderParams, temp);
+                    this.addPoiLabel(textElementState, poiRenderer, textCanvas, renderParams);
                     break;
                 case TextElementType.LineMarker:
                     this.addLineMarkerLabel(
@@ -763,8 +770,7 @@ export class TextElementsRenderer {
                         poiRenderer,
                         shieldGroups,
                         textCanvas,
-                        renderParams,
-                        temp
+                        renderParams
                     );
                     break;
                 case TextElementType.PathLabel:
@@ -776,8 +782,7 @@ export class TextElementsRenderer {
 
     private initializeGlyphs(
         textElement: TextElement,
-        textElementStyle: TextElementStyle,
-        tempParams: TempParams
+        textElementStyle: TextElementStyle
     ): boolean {
         // Trigger the glyph load if needed.
         if (textElement.loadingState === LoadingState.Initialized) {
@@ -839,11 +844,11 @@ export class TextElementsRenderer {
                 );
                 if (textElement.type !== TextElementType.PathLabel) {
                     textElement.bounds = new THREE.Box2();
-                    tempParams.poiMeasurementParams.letterCaseArray = textElement.glyphCaseArray!;
+                    tmpPoiMeasurementParams.letterCaseArray = textElement.glyphCaseArray!;
                     textCanvas.measureText(
                         textElement.glyphs!,
                         textElement.bounds,
-                        tempParams.poiMeasurementParams
+                        tmpPoiMeasurementParams
                     );
                 }
                 textElement.loadingState = LoadingState.Initialized;
@@ -1306,9 +1311,6 @@ export class TextElementsRenderer {
         const screenXOrigin = -screenSize.width / 2.0;
         const screenYOrigin = screenSize.height / 2.0;
 
-        const tempAdditionParams: AdditionParameters = {};
-        const tempBufferAdditionParams: TextBufferAdditionParameters = {};
-
         // Place text elements one by one.
         for (const textElement of this.m_overlayTextElements!) {
             // Get the TextElementStyle.
@@ -1392,12 +1394,7 @@ export class TextElementsRenderer {
                 tempPosition.x = tempScreenPosition.x;
                 tempPosition.y = tempScreenPosition.y;
                 tempPosition.z = 0.0;
-
-                tempBufferAdditionParams.position = tempPosition;
-                tempAdditionParams.layer = textElement.renderOrder;
-                tempAdditionParams.letterCaseArray = textElement.glyphCaseArray;
-                tempAdditionParams.pickingData = textElement.userData ? textElement : undefined;
-                textCanvas.addText(textElement.glyphs!, tempPosition, tempAdditionParams);
+                addTextToCanvas(textElement, textCanvas, tempPosition);
             } else {
                 // Adjust the label positioning.
                 tempScreenPosition.x = screenXOrigin;
@@ -1422,13 +1419,7 @@ export class TextElementsRenderer {
                 for (let i = 0; i < screenPoints.length - 1; ++i) {
                     textPath.add(new THREE.LineCurve(screenPoints[i], screenPoints[i + 1]));
                 }
-
-                tempAdditionParams.path = textPath;
-                tempAdditionParams.pathOverflow = true;
-                tempAdditionParams.layer = textElement.renderOrder;
-                tempAdditionParams.letterCaseArray = textElement.glyphCaseArray;
-                tempAdditionParams.pickingData = textElement.userData ? textElement : undefined;
-                textCanvas.addText(textElement.glyphs!, tempPosition, tempAdditionParams);
+                addTextToCanvas(textElement, textCanvas, tempPosition, textPath, true);
             }
         }
     }
@@ -1485,7 +1476,6 @@ export class TextElementsRenderer {
         poiRenderer: PoiRenderer,
         textCanvas: TextCanvas,
         renderParams: RenderParams,
-        temp: TempParams,
         iconIndex?: number
     ): boolean {
         const pointLabel: TextElement = labelState.element;
@@ -1709,20 +1699,20 @@ export class TextElementsRenderer {
                             pointLabel.renderStyle!.backgroundOpacity > 0 &&
                             textCanvas.textRenderStyle.fontSize.backgroundSize > 0;
 
-                        temp.bufferAdditionParams.layer = pointLabel.renderOrder;
-                        temp.bufferAdditionParams.position = tempPosition;
-                        temp.bufferAdditionParams.scale = textScale;
-                        temp.bufferAdditionParams.opacity = opacity;
-                        temp.bufferAdditionParams.backgroundOpacity = backgroundIsVisible
-                            ? temp.bufferAdditionParams.opacity *
+                        tmpBufferAdditionParams.layer = pointLabel.renderOrder;
+                        tmpBufferAdditionParams.position = tempPosition;
+                        tmpBufferAdditionParams.scale = textScale;
+                        tmpBufferAdditionParams.opacity = opacity;
+                        tmpBufferAdditionParams.backgroundOpacity = backgroundIsVisible
+                            ? tmpBufferAdditionParams.opacity *
                               pointLabel.renderStyle!.backgroundOpacity
                             : 0.0;
-                        temp.bufferAdditionParams.pickingData = pointLabel.userData
+                        tmpBufferAdditionParams.pickingData = pointLabel.userData
                             ? pointLabel
                             : undefined;
                         textCanvas.addTextBufferObject(
                             pointLabel.textBufferObject!,
-                            temp.bufferAdditionParams
+                            tmpBufferAdditionParams
                         );
                         if (placementStats) {
                             placementStats.numRenderedPoiTexts++;
@@ -1772,8 +1762,7 @@ export class TextElementsRenderer {
         labelState: TextElementState,
         poiRenderer: PoiRenderer,
         textCanvas: TextCanvas,
-        renderParams: RenderParams,
-        temp: TempParams
+        renderParams: RenderParams
     ): boolean {
         const poiLabel = labelState.element;
         const worldPosition = poiLabel.points as THREE.Vector3;
@@ -1789,8 +1778,7 @@ export class TextElementsRenderer {
             tempScreenPosition,
             poiRenderer,
             textCanvas,
-            renderParams,
-            temp
+            renderParams
         );
     }
 
@@ -1799,8 +1787,7 @@ export class TextElementsRenderer {
         poiRenderer: PoiRenderer,
         shieldGroups: number[][],
         textCanvas: TextCanvas,
-        renderParams: RenderParams,
-        temp: TempParams
+        renderParams: RenderParams
     ): void {
         const lineMarkerLabel = labelState.element;
         const path = lineMarkerLabel.points as THREE.Vector3[];
@@ -1862,7 +1849,6 @@ export class TextElementsRenderer {
                                 poiRenderer,
                                 textCanvas,
                                 renderParams,
-                                temp,
                                 pointIndex
                             )
                         ) {
@@ -1885,7 +1871,6 @@ export class TextElementsRenderer {
                         poiRenderer,
                         textCanvas,
                         renderParams,
-                        temp,
                         pointIndex
                     );
                 }
@@ -2007,12 +1992,7 @@ export class TextElementsRenderer {
 
         tempPosition.z = labelState.renderDistance;
 
-        tmpAdditionParams.path = textPath;
-        tmpAdditionParams.layer = pathLabel.renderOrder;
-        tmpAdditionParams.letterCaseArray = pathLabel.glyphCaseArray;
-        tmpAdditionParams.pickingData = pathLabel.userData ? pathLabel : undefined;
-        textCanvas.addText(pathLabel.glyphs!, tempPosition, tmpAdditionParams);
-
+        addTextToCanvas(pathLabel, textCanvas, tempPosition, textPath);
         renderParams.numRenderedTextElements++;
 
         // Restore previous style values for text elements using the same style.
