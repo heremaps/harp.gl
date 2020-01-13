@@ -56,6 +56,7 @@ export class GeoJsonTileDecoder extends ThemedTileDecoder {
 
     /**
      *
+     *@override
      */
     connect(): Promise<void> {
         return Promise.resolve();
@@ -69,6 +70,7 @@ export class GeoJsonTileDecoder extends ThemedTileDecoder {
      * @param styleSetEvaluator The [[StyleSetEvaluator]] that reads the style and apply it to the
      *      meshes.
      * @param projection The current camera projection.
+     * @override
      */
     decodeThemedTile(
         data: GeoJson,

@@ -330,10 +330,12 @@ export class VarExpr extends Expr {
         super();
     }
 
+    /** @override */
     accept<Result, Context>(visitor: ExprVisitor<Result, Context>, context: Context): Result {
         return visitor.visitVarExpr(this, context);
     }
 
+    /** @override */
     protected exprIsDynamic() {
         return false;
     }
@@ -362,6 +364,7 @@ export abstract class LiteralExpr extends Expr {
 
     abstract get value(): Value;
 
+    /** @override */
     protected exprIsDynamic() {
         return false;
     }
@@ -373,16 +376,19 @@ export abstract class LiteralExpr extends Expr {
  */
 export class NullLiteralExpr extends LiteralExpr {
     static instance = new NullLiteralExpr();
+    /** @override */
     readonly value = null;
 
     protected constructor() {
         super();
     }
 
+    /** @override */
     accept<Result, Context>(visitor: ExprVisitor<Result, Context>, context: Context): Result {
         return visitor.visitNullLiteralExpr(this, context);
     }
 
+    /** @override */
     protected exprIsDynamic() {
         return false;
     }
@@ -397,6 +403,7 @@ export class BooleanLiteralExpr extends LiteralExpr {
         super();
     }
 
+    /** @override */
     accept<Result, Context>(visitor: ExprVisitor<Result, Context>, context: Context): Result {
         return visitor.visitBooleanLiteralExpr(this, context);
     }
@@ -411,6 +418,7 @@ export class NumberLiteralExpr extends LiteralExpr {
         super();
     }
 
+    /** @override */
     accept<Result, Context>(visitor: ExprVisitor<Result, Context>, context: Context): Result {
         return visitor.visitNumberLiteralExpr(this, context);
     }
@@ -425,6 +433,7 @@ export class StringLiteralExpr extends LiteralExpr {
         super();
     }
 
+    /** @override */
     accept<Result, Context>(visitor: ExprVisitor<Result, Context>, context: Context): Result {
         return visitor.visitStringLiteralExpr(this, context);
     }
@@ -443,6 +452,7 @@ export class ObjectLiteralExpr extends LiteralExpr {
         return Array.isArray(this.value);
     }
 
+    /** @override */
     accept<Result, Context>(visitor: ExprVisitor<Result, Context>, context: Context): Result {
         return visitor.visitObjectLiteralExpr(this, context);
     }
@@ -457,10 +467,12 @@ export class HasAttributeExpr extends Expr {
         super();
     }
 
+    /** @override */
     accept<Result, Context>(visitor: ExprVisitor<Result, Context>, context: Context): Result {
         return visitor.visitHasAttributeExpr(this, context);
     }
 
+    /** @override */
     protected exprIsDynamic() {
         return false;
     }
@@ -489,10 +501,12 @@ export class ContainsExpr extends Expr {
         super();
     }
 
+    /** @override */
     accept<Result, Context>(visitor: ExprVisitor<Result, Context>, context: Context): Result {
         return visitor.visitContainsExpr(this, context);
     }
 
+    /** @override */
     protected exprIsDynamic() {
         return this.value.isDynamic();
     }
@@ -516,10 +530,12 @@ export class CallExpr extends Expr {
         return this.args;
     }
 
+    /** @override */
     accept<Result, Context>(visitor: ExprVisitor<Result, Context>, context: Context): Result {
         return visitor.visitCallExpr(this, context);
     }
 
+    /** @override */
     protected exprIsDynamic() {
         const descriptor = this.descriptor || ExprEvaluator.getOperator(this.op);
 
@@ -572,10 +588,12 @@ export class MatchExpr extends Expr {
         super();
     }
 
+    /** @override */
     accept<Result, Context>(visitor: ExprVisitor<Result, Context>, context: Context): Result {
         return visitor.visitMatchExpr(this, context);
     }
 
+    /** @override */
     protected exprIsDynamic() {
         return (
             this.value.isDynamic() ||
@@ -593,10 +611,12 @@ export class CaseExpr extends Expr {
         super();
     }
 
+    /** @override */
     accept<Result, Context>(visitor: ExprVisitor<Result, Context>, context: Context): Result {
         return visitor.visitCaseExpr(this, context);
     }
 
+    /** @override */
     protected exprIsDynamic() {
         return (
             this.branches.some(([cond, branch]) => cond.isDynamic() || branch.isDynamic()) ||

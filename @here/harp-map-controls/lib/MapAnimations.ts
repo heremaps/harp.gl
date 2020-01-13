@@ -220,6 +220,7 @@ export class CameraRotationAnimation extends CameraAnimation {
      *
      * @param time Duration of the animation in milliseconds.
      * @param onFinished Callback that gets triggered once the animation ends.
+     * @override
      */
     start(time?: number, onFinished?: () => void): void {
         if (this.running) {
@@ -250,6 +251,7 @@ export class CameraRotationAnimation extends CameraAnimation {
 
     /**
      * Stop the animation. Can be started again (with original values only, though).
+     * @override
      */
     stop(): void {
         if (!this.running) {
@@ -413,6 +415,7 @@ export class CameraPanAnimation extends CameraAnimation {
      *
      * @param time Duration of the animation in milliseconds.
      * @param onFinished Callback that gets triggered once the animation ends.
+     * @override
      */
     start(time?: number, onFinished?: () => void): void {
         if (this.running) {
@@ -464,6 +467,7 @@ export class CameraPanAnimation extends CameraAnimation {
 
     /**
      * Stop the animation. Can be started again (with original values only, though).
+     * @override
      */
     stop(): void {
         if (!this.running) {
@@ -481,6 +485,7 @@ export class CameraPanAnimation extends CameraAnimation {
 
     /**
      * Returns `true` if the animation is being played.
+     * @override
      */
     get isRunning(): boolean {
         return this.running;

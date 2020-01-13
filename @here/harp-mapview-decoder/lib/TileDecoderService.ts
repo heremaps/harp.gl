@@ -54,6 +54,7 @@ export class TileDecoderService extends WorkerService {
      *
      * @param request Message that is either a DecodeTileRequest or a TileInfoRequest.
      * @returns A promise which resolves to a [[WorkerServiceResponse]].
+     * @override
      */
     protected handleRequest(request: any): Promise<WorkerServiceResponse> {
         if (WorkerDecoderProtocol.isDecodeTileRequest(request)) {
@@ -69,6 +70,7 @@ export class TileDecoderService extends WorkerService {
      * Handle incoming configuration message. Configuration message is passed on to decoder.
      *
      * @param request Message of type [[ConfigurationMessage]].
+     * @override
      */
     protected handleMessage(message: any) {
         if (WorkerDecoderProtocol.isConfigurationMessage(message)) {

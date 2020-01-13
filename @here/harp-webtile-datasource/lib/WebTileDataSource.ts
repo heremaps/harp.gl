@@ -290,14 +290,17 @@ export class WebTileDataSource extends DataSource {
         this.m_copyrightProvider = new UrlCopyrightProvider(url, baseScheme);
     }
 
+    /** @override */
     shouldPreloadTiles(): boolean {
         return true;
     }
 
+    /** @override */
     getTilingScheme(): TilingScheme {
         return webMercatorTilingScheme;
     }
 
+    /** @override */
     setLanguages(languages?: string[]): void {
         if (languages !== undefined) {
             this.mapIsoLanguageToWebTile(languages);
@@ -305,6 +308,7 @@ export class WebTileDataSource extends DataSource {
         }
     }
 
+    /** @override */
     getTile(tileKey: TileKey): Tile {
         const tile = new Tile(this, tileKey);
 

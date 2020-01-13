@@ -158,6 +158,7 @@ export class BloomPass extends Pass {
         }
         this.m_renderTargetBright.dispose();
     }
+    /** @override */
     setSize(width: number, height: number) {
         let resx = Math.round(width / 2);
         let resy = Math.round(height / 2);
@@ -174,6 +175,7 @@ export class BloomPass extends Pass {
             resy = Math.round(resy / 2);
         }
     }
+    /** @override */
     render(
         renderer: THREE.WebGLRenderer,
         scene: THREE.Scene,

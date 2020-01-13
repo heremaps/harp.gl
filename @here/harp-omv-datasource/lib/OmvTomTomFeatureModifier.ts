@@ -25,6 +25,7 @@ export class OmvTomTomFeatureModifier extends OmvGenericFeatureModifier {
         super(description);
     }
 
+    /** @override */
     protected doProcessFeature(
         itemsToProcess: OmvFilterDescription[],
         itemsToIgnore: OmvFilterDescription[],

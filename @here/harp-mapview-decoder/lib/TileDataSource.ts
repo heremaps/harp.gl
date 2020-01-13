@@ -177,10 +177,12 @@ export class TileDataSource<TileType extends Tile> extends DataSource {
         };
     }
 
+    /** @override */
     dispose() {
         this.decoder.dispose();
     }
 
+    /** @override */
     ready(): boolean {
         return this.m_isReady && this.m_options.dataProvider.ready();
     }
@@ -193,6 +195,7 @@ export class TileDataSource<TileType extends Tile> extends DataSource {
         return this.m_decoder;
     }
 
+    /** @override */
     async connect() {
         await Promise.all([this.m_options.dataProvider.connect(), this.m_decoder.connect()]);
         this.m_isReady = true;
@@ -202,6 +205,7 @@ export class TileDataSource<TileType extends Tile> extends DataSource {
         });
     }
 
+    /** @override */
     setStyleSet(styleSet?: StyleSet, definitions?: Definitions, languages?: string[]): void {
         this.m_decoder.configure(styleSet, definitions, languages);
         this.mapView.markTilesDirty(this);
@@ -212,6 +216,7 @@ export class TileDataSource<TileType extends Tile> extends DataSource {
      *
      * Applies new [[StyleSet]] and definitions from theme only if matching styleset (see
      * `styleSetName` property) is found in `theme`.
+     * @override
      */
     setTheme(theme: Theme, languages?: string[]): void {
         const styleSet =
@@ -224,6 +229,7 @@ export class TileDataSource<TileType extends Tile> extends DataSource {
         }
     }
 
+    /** @override */
     clearCache() {
         this.m_tileLoaderCache.evictAll();
     }
@@ -235,6 +241,7 @@ export class TileDataSource<TileType extends Tile> extends DataSource {
         return this.m_options.dataProvider;
     }
 
+    /** @override */
     getTilingScheme(): TilingScheme {
         return this.m_options.tilingScheme;
     }
@@ -246,6 +253,7 @@ export class TileDataSource<TileType extends Tile> extends DataSource {
      * this data source.
      *
      * @param tileKey Quadtree address of the requested tile.
+     * @override
      */
     getTile(tileKey: TileKey): TileType | undefined {
         const tile = this.m_tileFactory.create(this, tileKey);

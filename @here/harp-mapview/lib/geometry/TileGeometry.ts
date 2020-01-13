@@ -358,6 +358,7 @@ export class BufferedGeometryObject3dAccessor extends BufferedGeometryAccessor
         return true;
     }
 
+    /** @override */
     getVertices(): Float32Array | undefined {
         return super.getVertices();
     }
@@ -415,6 +416,7 @@ export abstract class IndexedBufferedGeometryAccessor extends BufferedGeometryAc
      * of indices.
      *
      * @returns The number of indices in the geometry.
+     * @override
      */
     getCount(): number {
         return this.indices.length;

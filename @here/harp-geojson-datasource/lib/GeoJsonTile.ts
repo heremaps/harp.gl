@@ -103,6 +103,7 @@ export class GeoJsonTile extends Tile {
      *
      * @param zoomLevel zoom level.
      * @returns always returns `true`
+     * @override
      */
     willRender(zoomLevel: number): boolean {
         if (this.m_currentZoomLevel !== zoomLevel) {

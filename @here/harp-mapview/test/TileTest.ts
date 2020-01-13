@@ -16,10 +16,12 @@ import { MapView } from "../lib/MapView";
 import { Tile } from "../lib/Tile";
 
 class TileTestStubDataSource extends DataSource {
+    /** @override */
     getTile(tileKey: TileKey) {
         return undefined;
     }
 
+    /** @override */
     getTilingScheme() {
         return webMercatorTilingScheme;
     }

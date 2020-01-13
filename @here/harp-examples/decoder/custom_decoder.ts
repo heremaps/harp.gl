@@ -29,10 +29,12 @@ export // snippet:custom_datasource_example_custom_decoder.ts
 class CustomDecoder extends ThemedTileDecoder
 // end:custom_datasource_example_custom_decoder.ts
 {
+    /** @override */
     connect() {
         return Promise.resolve();
     }
 
+    /** @override */
     decodeThemedTile(
         data: ArrayBufferLike | {},
         tileKey: TileKey,

@@ -93,6 +93,7 @@ export class RenderPass extends Pass {
         super();
     }
 
+    /** @override */
     render(
         renderer: THREE.WebGLRenderer,
         scene: THREE.Scene,
@@ -129,6 +130,7 @@ export class ShaderPass extends Pass {
         }
         this.fsQuad = new FullScreenQuad(this.material);
     }
+    /** @override */
     render(
         renderer: THREE.WebGLRenderer,
         scene: THREE.Scene,

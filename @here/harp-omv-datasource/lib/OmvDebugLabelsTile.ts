@@ -67,6 +67,7 @@ export class OmvDebugLabelsTile extends OmvTile {
         super(dataSource, tileKey);
     }
 
+    /** @override */
     loadingFinished() {
         this.addLabelDebugInfo();
     }

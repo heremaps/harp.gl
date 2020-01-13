@@ -20,17 +20,21 @@ export class FakeOmvDataSource extends DataSource {
         this.cacheable = true;
     }
 
+    /** @override */
     get projection(): Projection {
         return mercatorProjection;
     }
 
+    /** @override */
     getTilingScheme(): TilingScheme {
         return webMercatorTilingScheme;
     }
+    /** @override */
     getTile(tileKey: TileKey): Tile {
         const tile = new Tile(this, tileKey);
         return tile;
     }
+    /** @override */
     canGetTile(zoomLevel: number, tileKey: TileKey): boolean {
         if (tileKey.level > 14) {
             return false;

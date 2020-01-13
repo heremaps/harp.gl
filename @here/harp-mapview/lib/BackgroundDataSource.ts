@@ -48,6 +48,7 @@ export class BackgroundDataSource extends DataSource {
         }
     }
 
+    /** @override */
     setTheme(theme: Theme, languages?: string[]) {
         this.mapView.clearTileCache(this.name);
     }
@@ -63,10 +64,12 @@ export class BackgroundDataSource extends DataSource {
         this.mapView.clearTileCache(this.name);
     }
 
+    /** @override */
     getTilingScheme(): TilingScheme {
         return this.m_tilingScheme;
     }
 
+    /** @override */
     getTile(tileKey: TileKey): Tile | undefined {
         const tile = new Tile(this, tileKey);
         tile.forceHasGeometry(true);

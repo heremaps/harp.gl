@@ -41,6 +41,7 @@ export class PhasedTileGeometryManager extends TileGeometryManagerBase {
         super(mapView);
     }
 
+    /** @override */
     initTile(tile: Tile): void {
         if (tile.dataSource.useGeometryLoader) {
             tile.tileGeometryLoader = new PhasedTileGeometryLoader(
@@ -51,6 +52,7 @@ export class PhasedTileGeometryManager extends TileGeometryManagerBase {
         }
     }
 
+    /** @override */
     updateTiles(tiles: Tile[]): void {
         let needUpdate = this.mapView.isDynamicFrame
             ? this.updateSomeTiles(tiles)

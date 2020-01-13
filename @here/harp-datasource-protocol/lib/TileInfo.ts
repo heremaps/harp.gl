@@ -162,6 +162,7 @@ export class LineFeatureGroup extends FeatureGroup {
      */
     userData: Array<{} | undefined> = [];
 
+    /** @override */
     getNumBytes(): number {
         return (
             super.getNumBytes() +
@@ -228,6 +229,7 @@ export class PolygonFeatureGroup extends FeatureGroup {
         this.innerRingStartIndex.length = startSize;
     }
 
+    /** @override */
     getNumBytes(): number {
         return (
             super.getNumBytes() +

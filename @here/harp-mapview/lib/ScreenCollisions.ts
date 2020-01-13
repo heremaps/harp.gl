@@ -220,6 +220,7 @@ export class ScreenCollisionsDebug extends ScreenCollisions {
 
     /**
      * Resets the list of allocated bounds and clears the debug canvas.
+     * @override
      */
     reset() {
         super.reset();
@@ -236,6 +237,7 @@ export class ScreenCollisionsDebug extends ScreenCollisions {
      *
      * @param width The width of the container.
      * @param height The height of the container.
+     * @override
      */
     update(width: number, height: number) {
         if (this.m_renderingEnabled) {
@@ -261,6 +263,7 @@ export class ScreenCollisionsDebug extends ScreenCollisions {
      * Marks the region of the screen intersecting with the given bounding box as allocated.
      *
      * @param bounds the bounding box in world coordinates.
+     * @override
      */
     allocate(bounds: Math2D.Box): void {
         super.allocate(bounds);
@@ -278,6 +281,7 @@ export class ScreenCollisionsDebug extends ScreenCollisions {
         }
     }
 
+    /** @override */
     allocateIBoxes(boundsArray: IBox[]) {
         for (const bounds of boundsArray) {
             this.m_numAllocations++;
@@ -299,6 +303,7 @@ export class ScreenCollisionsDebug extends ScreenCollisions {
      * Checks if the given bounding box is already allocated.
      *
      * @param bounds The bounding box in world coordinates.
+     * @override
      */
     isAllocated(bounds: Math2D.Box): boolean {
         const isFailed = super.isAllocated(bounds);
@@ -327,6 +332,7 @@ export class ScreenCollisionsDebug extends ScreenCollisions {
      * Checks if the given screen bounds intersects with the frustum of the active camera.
      *
      * @param bounds The bounding box in world coordinates.
+     * @override
      */
     isVisible(bounds: Math2D.Box): boolean {
         const visible = super.isVisible(bounds);

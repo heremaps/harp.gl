@@ -187,6 +187,7 @@ function getPointInfo(
  * Point object that implements the raycasting of circles in screen space.
  */
 export class Circles extends MapViewPoints {
+    /** @override */
     testPoint(
         point: THREE.Vector3,
         screenPosition: THREE.Vector2,
@@ -215,6 +216,7 @@ export class Circles extends MapViewPoints {
  * Point object that implements the raycasting of squares in screen space.
  */
 export class Squares extends MapViewPoints {
+    /** @override */
     testPoint(
         point: THREE.Vector3,
         screenPosition: THREE.Vector2,
