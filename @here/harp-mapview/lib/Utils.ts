@@ -62,6 +62,7 @@ const cache = {
 };
 
 export namespace MapViewUtils {
+    export const MAX_TILT_DEG = 89;
     /**
      * The anti clockwise rotation of an object along the axes of its tangent space, with itself
      * as origin.
@@ -114,13 +115,13 @@ export namespace MapViewUtils {
             targetPositionOnScreenXinNDC,
             targetPositionOnScreenYinNDC
         );
-        const zoomDistance = calculateDistanceToGroundFromZoomLevel(mapView, zoomLevel);
+        const groundDistance = calculateDistanceToGroundFromZoomLevel(mapView, zoomLevel);
 
         // Set the cameras height according to the given zoom level.
         if (mapView.projection.type === ProjectionType.Planar) {
-            mapView.camera.position.setZ(zoomDistance);
+            mapView.camera.position.setZ(groundDistance);
         } else if (mapView.projection.type === ProjectionType.Spherical) {
-            mapView.camera.position.setLength(EarthConstants.EQUATORIAL_RADIUS + zoomDistance);
+            mapView.camera.position.setLength(EarthConstants.EQUATORIAL_RADIUS + groundDistance);
         }
 
         // In sphere, we may have to also orbit the camera around the position located at the
@@ -495,13 +496,16 @@ export namespace MapViewUtils {
      *
      * @see https://en.wikipedia.org/wiki/Conversion_between_quaternions_and_Euler_angles
      *
-     * @param mapView The [[MapView]] in use.
+     * @param options Subset of necessary [[MapView]] properties.
      * @param object The [[THREE.Object3D]] instance to extract the rotations from.
      */
-    export function extractAttitude(mapView: MapView, object: THREE.Object3D): Attitude {
+    export function extractAttitude(
+        options: { projection: Projection },
+        object: THREE.Object3D
+    ): Attitude {
         // 1. Build the matrix of the tangent space of the object.
         cache.vector3[1].setFromMatrixPosition(object.matrixWorld); // Ensure using world position.
-        mapView.projection.localTangentSpace(mapView.projection.unprojectPoint(cache.vector3[1]), {
+        options.projection.localTangentSpace(options.projection.unprojectPoint(cache.vector3[1]), {
             xAxis: tangentSpace.x,
             yAxis: tangentSpace.y,
             zAxis: tangentSpace.z,
@@ -675,15 +679,29 @@ export namespace MapViewUtils {
      * level.
      *
      * @param mapView Instance of MapView.
-     * @param zoomLevel The zoom level to get the equivalent height to.
+     * @param options Subset of necessary [[MapView]] properties.
      */
     export function calculateDistanceToGroundFromZoomLevel(
-        mapView: MapView,
+        options: { projection: Projection; focalLength: number; camera: THREE.Object3D },
         zoomLevel: number
     ): number {
-        const cameraPitch = extractAttitude(mapView, mapView.camera).pitch;
+        const cameraPitch = extractAttitude(options, options.camera).pitch;
         const tileSize = EarthConstants.EQUATORIAL_CIRCUMFERENCE / Math.pow(2, zoomLevel);
-        return ((mapView.focalLength * tileSize) / 256) * Math.cos(cameraPitch);
+        return ((options.focalLength * tileSize) / 256) * Math.cos(cameraPitch);
+    }
+
+    /**
+     * Calculates and returns the distance to the target point.
+     *
+     * @param options Necessary subset of MapView properties to compute the distance.
+     * @param zoomLevel The zoom level to get the equivalent height to.
+     */
+    export function calculateDistanceFromZoomLevel(
+        options: { focalLength: number },
+        zoomLevel: number
+    ): number {
+        const tileSize = EarthConstants.EQUATORIAL_CIRCUMFERENCE / Math.pow(2, zoomLevel);
+        return (options.focalLength * tileSize) / 256;
     }
 
     /**
@@ -698,15 +716,18 @@ export namespace MapViewUtils {
      * set the zoom level of the camera to 14, then you are able to see the whole tile in front of
      * you.
      *
+     * @param options Subset of necessary [[MapView]] properties.
      * @param distance The distance in meters, which are scene units in [[MapView]].
-     * @param mapView [[MapView]] instance.
      */
-    export function calculateZoomLevelFromDistance(distance: number, mapView: MapView): number {
-        const tileSize = (256 * distance) / mapView.focalLength;
+    export function calculateZoomLevelFromDistance(
+        options: { focalLength: number; minZoomLevel: number; maxZoomLevel: number },
+        distance: number
+    ): number {
+        const tileSize = (256 * distance) / options.focalLength;
         const zoomLevel = THREE.Math.clamp(
             Math.log2(EarthConstants.EQUATORIAL_CIRCUMFERENCE / tileSize),
-            mapView.minZoomLevel,
-            mapView.maxZoomLevel
+            options.minZoomLevel,
+            options.maxZoomLevel
         );
         // Round to avoid modify the zoom level without distance change, with the imprecision
         // introduced by raycasting.

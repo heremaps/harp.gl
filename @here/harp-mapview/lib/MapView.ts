@@ -1883,7 +1883,7 @@ export class MapView extends THREE.EventDispatcher {
         tiltDeg: number = 0,
         headingDeg: number = 0
     ): void {
-        const limitedTilt = Math.min(89, tiltDeg);
+        const limitedTilt = Math.min(MapViewUtils.MAX_TILT_DEG, tiltDeg);
         // MapViewUtils#setRotation uses pitch, not tilt, which is different in sphere projection.
         // But in sphere, in the tangent space of the target of the camera, pitch = tilt. So, put
         // the camera on the target, so the tilt can be passed to getRotation as a pitch.
@@ -2483,7 +2483,7 @@ export class MapView extends THREE.EventDispatcher {
         if (target !== null) {
             this.m_lookAtDistance = target.sub(this.camera.position).length();
             const zoomLevelDistance = cameraPosZ / Math.cos(Math.min(cameraPitch, Math.PI / 3));
-            this.m_zoomLevel = MapViewUtils.calculateZoomLevelFromDistance(zoomLevelDistance, this);
+            this.m_zoomLevel = MapViewUtils.calculateZoomLevelFromDistance(this, zoomLevelDistance);
             this.m_fog.update(this, this.m_viewRanges.maximum);
         }
     }
