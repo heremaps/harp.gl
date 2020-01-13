@@ -11,7 +11,7 @@ import {
     TextCanvas,
     VerticalAlignment
 } from "@here/harp-text-canvas";
-import { assert, MathUtils } from "@here/harp-utils";
+import { assert, Math2D, MathUtils } from "@here/harp-utils";
 import * as THREE from "three";
 import { PoiManager } from "../poi/PoiManager";
 import { CollisionBox, DetailedCollisionBox, IBox, ScreenCollisions } from "../ScreenCollisions";
@@ -190,7 +190,7 @@ export function checkReadyForPlacement(
  * label with [[layoutStyle]] and [[bounds]] already computed.
  * @param offset The offset result.
  */
-export function computePointTextOffset(
+function computePointTextOffset(
     textElement: TextElement,
     offset: THREE.Vector2 = new THREE.Vector2()
 ): THREE.Vector2 {
@@ -238,6 +238,84 @@ const tmpMeasurementParams: MeasurementParameters = {};
 const tmpCollisionBoxes: CollisionBox[] = [];
 const tmpCollisionBox = new CollisionBox();
 const tmpScreenPosition = new THREE.Vector2();
+const tmpTextOffset = new THREE.Vector2();
+const tmp2DBox = new Math2D.Box();
+const pointLabelMargin = new THREE.Vector2(4, 2);
+
+export enum PlacementResult {
+    Ok,
+    Rejected,
+    Invisible
+}
+
+/**
+ * Places a point label on a specified text canvas.
+ * @param labelState State of the point label to place.
+ * @param screenPosition Position of the label in screen coordinates.
+ * @param scale Scale factor to be applied to label dimensions.
+ * @param isRejected Whether the label is already rejected (e.g. because its icon was rejected). If
+ * `true`, text won't be checked for collision, result will be either `PlacementResult.Invisible` or
+ * `PlacementResult.Rejected`.
+ * @param textCanvas The text canvas where the label will be placed.
+ * @param screenCollisions Used to check collisions with other labels.
+ * @param outScreenPosition The final label screen position after applying any offsets.
+ * @returns `PlacementResult.Ok` if path label can be placed, `PlacementResult.Rejected` if there's
+ * a collision, `PlacementResult.Invisible` if it's not visible.
+ */
+export function placePointLabel(
+    labelState: TextElementState,
+    screenPosition: THREE.Vector2,
+    scale: number,
+    textCanvas: TextCanvas,
+    screenCollisions: ScreenCollisions,
+    isRejected: boolean,
+    outScreenPosition: THREE.Vector3
+): PlacementResult {
+    const label = labelState.element;
+
+    if (label.bounds === undefined) {
+        label.bounds = new THREE.Box2();
+        tmpMeasurementParams.outputCharacterBounds = undefined;
+        tmpMeasurementParams.path = undefined;
+        tmpMeasurementParams.pathOverflow = false;
+        tmpMeasurementParams.letterCaseArray = label.glyphCaseArray!;
+        textCanvas.measureText(label.glyphs!, label.bounds, tmpMeasurementParams);
+    }
+
+    screenPosition.add(computePointTextOffset(label, tmpTextOffset));
+    outScreenPosition.set(screenPosition.x, screenPosition.y, labelState.renderDistance);
+
+    // TODO: Make the margin configurable
+    tmpBox.copy(label.bounds!).expandByVector(pointLabelMargin);
+    tmpBox.min.multiplyScalar(scale);
+    tmpBox.max.multiplyScalar(scale);
+    tmpBox.translate(screenPosition);
+    tmp2DBox.set(
+        tmpBox.min.x,
+        tmpBox.min.y,
+        tmpBox.max.x - tmpBox.min.x,
+        tmpBox.max.y - tmpBox.min.y
+    );
+
+    // Check the text visibility.
+    if (!screenCollisions.isVisible(tmp2DBox)) {
+        return PlacementResult.Invisible;
+    }
+
+    if (isRejected || (!label.textMayOverlap && screenCollisions.isAllocated(tmp2DBox))) {
+        return labelState.visible ? PlacementResult.Rejected : PlacementResult.Invisible;
+    }
+
+    // Don't allocate space for rejected text. When zooming, this allows placement of a
+    // lower priority text element that was displaced by a higher priority one (not
+    // present in the new zoom level) before an even lower priority one takes the space.
+    // Otherwise the lowest priority text will fade in and back out.
+    // TODO: Add a unit test for this scenario.
+    if (label.textReservesSpace) {
+        screenCollisions.allocate(tmp2DBox);
+    }
+    return PlacementResult.Ok;
+}
 
 /**
  * Places a path label along a given path on a specified text canvas.
@@ -246,8 +324,8 @@ const tmpScreenPosition = new THREE.Vector2();
  * @param screenPosition Position of the label in screen coordinates.
  * @param textCanvas The text canvas where the label will be placed.
  * @param screenCollisions Used to check collisions with other labels.
- * @returns `true` if path label can be placed, `false` if there's a collision or is not fully
- * visible.
+ * @returns `PlacementResult.Ok` if path label can be placed, `PlacementResult.Rejected` if there's
+ * a collision or text doesn't fit into path, `PlacementResult.Invisible` if it's not visible.
  */
 export function placePathLabel(
     labelState: TextElementState,
@@ -255,7 +333,7 @@ export function placePathLabel(
     screenPosition: THREE.Vector2,
     textCanvas: TextCanvas,
     screenCollisions: ScreenCollisions
-): boolean {
+): PlacementResult {
     // Recalculate the text bounds for this path label. If measurement fails, the whole
     // label doesn't fit the path and should be discarded.
     tmpMeasurementParams.path = textPath;
@@ -268,13 +346,13 @@ export function placePathLabel(
     // This could be done in one step (e.g measureAndAddText). Collision test could be injected
     // in the middle as a function.
     if (!textCanvas.measureText(labelState.element.glyphs!, tmpBox, tmpMeasurementParams)) {
-        return false;
+        return PlacementResult.Rejected;
     }
 
     // Coarse collision check.
     tmpCollisionBox.copy(tmpBox.translate(screenPosition));
     if (!screenCollisions.isVisible(tmpCollisionBox)) {
-        return false;
+        return PlacementResult.Invisible;
     }
 
     let checkGlyphCollision = false;
@@ -297,12 +375,15 @@ export function placePathLabel(
         } else {
             collisionBox.copy(glyphBox);
         }
+        if (checkGlyphVisible && !screenCollisions.isVisible(collisionBox)) {
+            return PlacementResult.Invisible;
+        }
+
         if (
-            (checkGlyphVisible && !screenCollisions.isVisible(collisionBox)) ||
-            (checkGlyphCollision &&
-                screenCollisions.intersectsDetails(collisionBox, candidateBoxes!))
+            checkGlyphCollision &&
+            screenCollisions.intersectsDetails(collisionBox, candidateBoxes!)
         ) {
-            return false;
+            return PlacementResult.Rejected;
         }
     }
     // Allocate collision info if needed.
@@ -311,7 +392,7 @@ export function placePathLabel(
         tmpCollisionBoxes.length = 0;
         screenCollisions.allocate(collisionBox);
     }
-    return true;
+    return PlacementResult.Ok;
 }
 
 /**
