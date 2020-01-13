@@ -60,7 +60,7 @@ For an in depth tutorial on getting started with harp.gl, please visit the [HERE
 You can create simple `harp.gl` app using the package initializer [`@here/create-harp.gl-app`](https://github.com/heremaps/harp.gl/tree/master/%40here/create-harp.gl-app):
 
 ```shell
-npm init @here/harp.gl-app
+npm init @here/harpgl-app
 ```
 
 ## <a name="integrate"></a> Integrate `harp.gl` into your existing Webpack based project

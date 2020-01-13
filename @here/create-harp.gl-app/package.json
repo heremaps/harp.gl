@@ -4,7 +4,7 @@
     "description": "Create harp.gl projects",
     "main": "src/index.js",
     "bin": {
-        "create-harp.gl-app": "src/index.js"
+        "create-harpgl-app": "src/index.js"
     },
     "files": [
         "src/index.js"
