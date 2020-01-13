@@ -8,7 +8,6 @@ import {
     AdditionParameters,
     DEFAULT_TEXT_CANVAS_LAYER,
     FontCatalog,
-    MeasurementParameters,
     TextBufferAdditionParameters,
     TextBufferCreationParameters,
     TextCanvas,
@@ -40,11 +39,12 @@ import { DataSourceTileList } from "../VisibleTileSet";
 import { FontCatalogLoader } from "./FontCatalogLoader";
 import {
     checkReadyForPlacement,
-    computePointTextOffset,
     computeViewDistance,
     getMaxViewDistance,
     isPathLabelTooSmall,
+    PlacementResult,
     placePathLabel,
+    placePointLabel,
     PrePlacementResult
 } from "./Placement";
 import { PlacementStats } from "./PlacementStats";
@@ -131,10 +131,8 @@ const tempPosition = new THREE.Vector3();
 const tempScreenPosition = new THREE.Vector2();
 const tempScreenPoints: THREE.Vector2[] = [];
 const tempPoiScreenPosition = new THREE.Vector2();
-const tempTextOffset = new THREE.Vector2();
 const tmpTextBufferCreationParams: TextBufferCreationParameters = {};
 const tmpAdditionParams: AdditionParameters = {};
-const tmpPoiMeasurementParams: MeasurementParameters = {};
 const tmpBufferAdditionParams: TextBufferAdditionParameters = {};
 
 class TileTextElements {
@@ -837,20 +835,12 @@ export class TextElementsRenderer {
                 textCanvas.textRenderStyle = textElement.renderStyle!;
                 textCanvas.textLayoutStyle = textElement.layoutStyle!;
                 textElement.glyphCaseArray = [];
+                textElement.bounds = undefined;
                 textElement.glyphs = textCanvas.fontCatalog.getGlyphs(
                     textElement.text,
                     textCanvas.textRenderStyle,
                     textElement.glyphCaseArray
                 );
-                if (textElement.type !== TextElementType.PathLabel) {
-                    textElement.bounds = new THREE.Box2();
-                    tmpPoiMeasurementParams.letterCaseArray = textElement.glyphCaseArray!;
-                    textCanvas.measureText(
-                        textElement.glyphs!,
-                        textElement.bounds,
-                        tmpPoiMeasurementParams
-                    );
-                }
                 textElement.loadingState = LoadingState.Initialized;
                 ++this.m_initializedTextElementCount;
             }
@@ -1319,7 +1309,6 @@ export class TextElementsRenderer {
             if (textCanvas === undefined) {
                 continue;
             }
-            const layer = textCanvas.getLayer(textElement.renderOrder || DEFAULT_TEXT_CANVAS_LAYER);
 
             // Trigger the glyph load if needed.
             if (textElement.loadingState === undefined) {
@@ -1366,6 +1355,8 @@ export class TextElementsRenderer {
             if (textElement.loadingState !== LoadingState.Initialized) {
                 continue;
             }
+
+            const layer = textCanvas.getLayer(textElement.renderOrder || DEFAULT_TEXT_CANVAS_LAYER);
 
             // Move onto the next TextElement if we cannot continue adding glyphs to this layer.
             if (layer !== undefined) {
@@ -1608,26 +1599,16 @@ export class TextElementsRenderer {
         // Render the label's text...
         // textRenderState is always defined at this point.
         if (doRenderText) {
-            tempScreenPosition.add(computePointTextOffset(pointLabel, tempTextOffset));
-
-            // Adjust the label positioning to match its bounding box.
-            tempPosition.x = tempScreenPosition.x;
-            tempPosition.y = tempScreenPosition.y;
-            tempPosition.z = labelState.renderDistance;
-
-            tempBox2D.x = tempScreenPosition.x + pointLabel.bounds!.min.x * textScale;
-            tempBox2D.y = tempScreenPosition.y + pointLabel.bounds!.min.y * textScale;
-            tempBox2D.w = (pointLabel.bounds!.max.x - pointLabel.bounds!.min.x) * textScale;
-            tempBox2D.h = (pointLabel.bounds!.max.y - pointLabel.bounds!.min.y) * textScale;
-
-            // TODO: Make the margin configurable
-            tempBox2D.x -= 4 * textScale;
-            tempBox2D.y -= 2 * textScale;
-            tempBox2D.w += 8 * textScale;
-            tempBox2D.h += 4 * textScale;
-
-            // Check the text visibility.
-            if (!this.m_screenCollisions.isVisible(tempBox2D)) {
+            const placeResult = placePointLabel(
+                labelState,
+                tempScreenPosition,
+                textScale,
+                textCanvas,
+                this.m_screenCollisions,
+                iconRejected,
+                tempPosition
+            );
+            if (placeResult === PlacementResult.Invisible) {
                 if (placementStats) {
                     placementStats.numPoiTextsInvisible++;
                 }
@@ -1635,21 +1616,11 @@ export class TextElementsRenderer {
                 return false;
             }
 
-            const textIsOptional: boolean =
-                pointLabel.poiInfo !== undefined && pointLabel.poiInfo.textIsOptional === true;
-
-            let textRejected = true;
+            const textRejected = placeResult === PlacementResult.Rejected;
             if (!iconRejected) {
-                textRejected =
-                    !pointLabel.textMayOverlap && this.m_screenCollisions.isAllocated(tempBox2D);
+                const textIsOptional: boolean =
+                    pointLabel.poiInfo !== undefined && pointLabel.poiInfo.textIsOptional === true;
                 iconRejected = textRejected && !textIsOptional;
-            }
-
-            if (textRejected && !labelState.visible) {
-                if (placementStats) {
-                    placementStats.numPoiTextsInvisible++;
-                }
-                return false;
             }
 
             if (textRejected) {
@@ -1659,15 +1630,6 @@ export class TextElementsRenderer {
             const textNeedsDraw = !textRejected || textRenderState!.isFading();
 
             if (textNeedsDraw) {
-                // Don't allocate space for rejected text. When zooming, this allows placement of a
-                // lower priority text element that was displaced by a higher priority one (not
-                // present in the new zoom level) before an even lower priority one takes the space.
-                // Otherwise the lowest priority text will fade in and back out.
-                // TODO: Add a unit test for this scenario.
-                if (pointLabel.textReservesSpace && !textRejected) {
-                    this.m_screenCollisions.allocate(tempBox2D);
-                }
-
                 // Do not actually render (just allocate space) if camera is moving and
                 // renderTextDuringMovements is not true.
                 if (
@@ -1950,13 +1912,13 @@ export class TextElementsRenderer {
         textCanvas.textRenderStyle.fontSize.size *= distanceScaleFactor;
 
         if (
-            !placePathLabel(
+            placePathLabel(
                 labelState,
                 textPath,
                 tempScreenPosition,
                 textCanvas,
                 this.m_screenCollisions
-            )
+            ) !== PlacementResult.Ok
         ) {
             textCanvas.textRenderStyle.fontSize.size = prevSize;
             if (placementStats) {
