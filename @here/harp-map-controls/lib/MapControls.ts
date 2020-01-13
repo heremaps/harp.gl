@@ -356,12 +356,12 @@ export class MapControls extends THREE.EventDispatcher {
         }
         this.camera.getWorldDirection(this.m_currentViewDirection);
         const maxDistance = MapViewUtils.calculateDistanceToGroundFromZoomLevel(
-            this.mapView,
-            this.mapView.minZoomLevel
+            this.mapView.minZoomLevel,
+            this.mapView
         );
         const minDistance = MapViewUtils.calculateDistanceToGroundFromZoomLevel(
-            this.mapView,
-            this.mapView.maxZoomLevel
+            this.mapView.maxZoomLevel,
+            this.mapView
         );
         this.m_currentViewDirection.multiplyScalar(amount);
         if (this.mapView.projection.type === geoUtils.ProjectionType.Planar) {

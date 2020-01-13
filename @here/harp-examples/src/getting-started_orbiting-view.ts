@@ -38,7 +38,7 @@ export namespace CameraOrbitExample {
     // Be sure to see the buildings when starting the example: a zoom level does not translate into
     // the same distance depending on the viewport's height.
     const minDistanceForBuildings =
-        Math.ceil(MapViewUtils.calculateDistanceToGroundFromZoomLevel(map, 16.0)) - 500;
+        Math.ceil(MapViewUtils.calculateDistanceToGroundFromZoomLevel(16.0, map)) - 500;
     // snippet:harp_gl_camera_orbit_example_1.ts
     const options = { tilt: 25, distance: minDistanceForBuildings, globe: true };
     const dubai = new GeoCoordinates(25.19705, 55.27419);
