@@ -3,26 +3,30 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
+import { DecodedTile } from "@here/harp-datasource-protocol";
 import {
     hereTilingScheme,
     mercatorProjection,
+    mercatorTilingScheme,
     Projection,
     sphereProjection,
-    TileKey
+    TileKey,
+    TilingScheme,
+    webMercatorTilingScheme
 } from "@here/harp-geoutils";
 import { getOptionValue } from "@here/harp-utils";
 import { assert, expect } from "chai";
 import * as sinon from "sinon";
 import * as THREE from "three";
-
 import { createDefaultClipPlanesEvaluator } from "../lib/ClipPlanesEvaluator";
 import { DataSource } from "../lib/DataSource";
 import { FrustumIntersection } from "../lib/FrustumIntersection";
+import { TileGeometryCreator } from "../lib/geometry/TileGeometryCreator";
 import { SimpleTileGeometryManager } from "../lib/geometry/TileGeometryManager";
 import { MapView, MapViewDefaults } from "../lib/MapView";
 import { Tile } from "../lib/Tile";
 import { TileOffsetUtils } from "../lib/Utils";
-import { VisibleTileSet } from "../lib/VisibleTileSet";
+import { DataSourceTileList, VisibleTileSet } from "../lib/VisibleTileSet";
 import { FakeOmvDataSource } from "./FakeOmvDataSource";
 
 // tslint:disable:only-arrow-functions
@@ -40,6 +44,10 @@ class FakeMapView {
         // height: 1080 px
         // 1080 * 0.5 * Math.tan(THREE.MathUtils.degToRad(60) * 0.5)
         return 935.307436087;
+    }
+
+    get clearColor(): number {
+        return 0;
     }
 }
 
@@ -108,8 +116,88 @@ describe("VisibleTileSet", function() {
     // TODO: Update for new interface of updateRenderList
     function updateRenderList(zoomLevel: number, storageLevel: number) {
         const intersectionCount = fixture.vts.updateRenderList(zoomLevel, storageLevel, fixture.ds);
-        return { tileList: fixture.vts.dataSourceTileList, intersectionCount };
+        return {
+            tileList: fixture.vts.dataSourceTileList,
+            intersectionCount
+        };
     }
+
+    /**
+     * Fake [[DataSource]] which provides tiles with the ground plane geometry.
+     */
+    class FakeCoveringTileWMTS extends DataSource {
+        /** @override */
+        addGroundPlane = true;
+
+        constructor(readonly planeRenderOrder?: number) {
+            super();
+        }
+
+        /** @override */
+        getTilingScheme(): TilingScheme {
+            return webMercatorTilingScheme;
+        }
+
+        /** @override */
+        getTile(tileKey: TileKey): Tile | undefined {
+            const tile = new Tile(this, tileKey);
+            const decodedTile: DecodedTile = {
+                techniques: [],
+                geometries: []
+            };
+            TileGeometryCreator.instance.createAllGeometries(tile, decodedTile);
+            tile.backgroundPlane!.renderOrder =
+                this.planeRenderOrder ?? tile.backgroundPlane!.renderOrder;
+            return tile;
+        }
+    }
+
+    /**
+     * Fake [[DataSource]] with no backgroundPlane geometry, but which registers
+     * that it is fully covering, because its geometry fully covers the [[Tile]], an example
+     * is satellite data or terrain.
+     */
+    class FakeWebTile extends DataSource {
+        constructor(private tilingScheme?: TilingScheme) {
+            super();
+        }
+        /** @override */
+        getTilingScheme(): TilingScheme {
+            return this.tilingScheme ?? webMercatorTilingScheme;
+        }
+
+        /** @override */
+        getTile(tileKey: TileKey): Tile | undefined {
+            const tile = new Tile(this, tileKey);
+            tile.forceHasGeometry(true);
+            return tile;
+        }
+
+        /** @override */
+        isFullyCovering(): boolean {
+            return true;
+        }
+    }
+
+    // Needed for chai expect.
+    // tslint:disable: no-unused-expression
+    const compareDataSources = (
+        dstl: DataSourceTileList[],
+        dsDisposed: DataSource,
+        dsValid: DataSource
+    ) => {
+        dstl.forEach(dataSourceTileList => {
+            if (dataSourceTileList.dataSource === dsDisposed) {
+                dataSourceTileList.visibleTiles.forEach(tile => {
+                    expect(tile.disposed).is.true;
+                });
+            } else if (dataSourceTileList.dataSource === dsValid) {
+                dataSourceTileList.visibleTiles.forEach(tile => {
+                    expect(tile.disposed).is.false;
+                });
+            }
+        });
+    };
 
     beforeEach(function() {
         fixture = new Fixture();
@@ -271,8 +359,101 @@ describe("VisibleTileSet", function() {
         }
     });
 
+    /**
+     * This test shows what happens when a DataSource with a background plane is added with one that
+     * `isFullyCovering`.
+     */
+    it("two fully covering DataSources added, correct Tile is disposed", async function() {
+        setupBerlinCenterCameraFromSamples();
+
+        // These tiles will be disposed of, because a DataSource that produces [[Tiles]]s without
+        // a background plane, but where isFullyCovering is true trumps.
+        const fullyCoveringDS1 = new FakeCoveringTileWMTS();
+        const fullyCoveringDS2 = new FakeWebTile();
+        fixture.addDataSource(fullyCoveringDS1);
+        fixture.addDataSource(fullyCoveringDS2);
+
+        const zoomLevel = 15;
+        const storageLevel = 14;
+        const result = updateRenderList(zoomLevel, storageLevel);
+        compareDataSources(result.tileList, fullyCoveringDS1, fullyCoveringDS2);
+    });
+
+    it(`two fully covering DataSources added,
+        reverse order as above, correct Tile is disposed`, async function() {
+        setupBerlinCenterCameraFromSamples();
+
+        const fullyCoveringDS1 = new FakeCoveringTileWMTS();
+        const fullyCoveringDS2 = new FakeWebTile();
+        // !! Note the different order added !!
+        fixture.addDataSource(fullyCoveringDS2);
+        fixture.addDataSource(fullyCoveringDS1);
+
+        const zoomLevel = 15;
+        const storageLevel = 14;
+        const result = updateRenderList(zoomLevel, storageLevel);
+        compareDataSources(result.tileList, fullyCoveringDS1, fullyCoveringDS2);
+    });
+
+    it(`two fully covering DataSources added, different TilingScheme`, async function() {
+        setupBerlinCenterCameraFromSamples();
+
+        const fullyCoveringDS1 = new FakeWebTile(webMercatorTilingScheme);
+        const fullyCoveringDS2 = new FakeWebTile(mercatorTilingScheme);
+        fixture.addDataSource(fullyCoveringDS1);
+        fixture.addDataSource(fullyCoveringDS2);
+
+        const zoomLevel = 15;
+        const storageLevel = 14;
+        const result = updateRenderList(zoomLevel, storageLevel);
+        result.tileList.forEach(dataSourceTileList => {
+            dataSourceTileList.visibleTiles.forEach(tile => {
+                expect(tile.disposed).is.false;
+            });
+        });
+    });
+
+    /**
+     * This test shows what happens when two [[DataSource]]s with background planes are added with
+     * different renderOrders
+     */
+    it(`two fully covering DataSources added, correct Tile is disposed`, async function() {
+        setupBerlinCenterCameraFromSamples();
+
+        const fullyCoveringDS1 = new FakeCoveringTileWMTS(1);
+        const fullyCoveringDS2 = new FakeCoveringTileWMTS(2);
+        fixture.addDataSource(fullyCoveringDS1);
+        fixture.addDataSource(fullyCoveringDS2);
+
+        const zoomLevel = 15;
+        const storageLevel = 14;
+        const result = updateRenderList(zoomLevel, storageLevel);
+        compareDataSources(result.tileList, fullyCoveringDS1, fullyCoveringDS2);
+    });
+
+    /**
+     * This test shows what happens when two [[DataSource]]s with background planes are added with
+     * different renderOrders
+     */
+    it(`two fully covering DataSources added, correct Tile is disposed`, async function() {
+        setupBerlinCenterCameraFromSamples();
+
+        const fullyCoveringDS1 = new FakeCoveringTileWMTS(2);
+        const fullyCoveringDS2 = new FakeCoveringTileWMTS(1);
+        fixture.addDataSource(fullyCoveringDS1);
+        fixture.addDataSource(fullyCoveringDS2);
+
+        const zoomLevel = 15;
+        const storageLevel = 14;
+        const result = updateRenderList(zoomLevel, storageLevel);
+        compareDataSources(result.tileList, fullyCoveringDS2, fullyCoveringDS1);
+    });
+
     it("check MapView param tileWrappingEnabled disabled", async function() {
-        fixture = new Fixture({ tileWrappingEnabled: false, enableMixedLod: false });
+        fixture = new Fixture({
+            tileWrappingEnabled: false,
+            enableMixedLod: false
+        });
         fixture.worldCenter = new THREE.Vector3(0, 0, 0);
         const camera = fixture.camera;
         camera.aspect = 1.7541528239202657;
@@ -297,7 +478,10 @@ describe("VisibleTileSet", function() {
     });
 
     it("check MapView param tileWrappingEnabled enabled", async function() {
-        fixture = new Fixture({ tileWrappingEnabled: true, enableMixedLod: false });
+        fixture = new Fixture({
+            tileWrappingEnabled: true,
+            enableMixedLod: false
+        });
         fixture.worldCenter = new THREE.Vector3(0, 0, 0);
         const camera = fixture.camera;
         camera.aspect = 1.7541528239202657;

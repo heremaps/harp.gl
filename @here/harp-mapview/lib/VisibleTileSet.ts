@@ -372,6 +372,7 @@ export class VisibleTileSet {
     private readonly m_projectionMatrixOverride = new THREE.Matrix4();
     private m_dataSourceCache: DataSourceCache;
     private m_viewRange: ViewRanges = { near: 0.1, far: Infinity, minimum: 0.1, maximum: Infinity };
+    private m_coveringMap = new Map<TilingScheme, Map<number, Tile>>();
 
     private m_resourceComputationType: ResourceComputationType =
         ResourceComputationType.EstimationInMb;
@@ -491,6 +492,9 @@ export class VisibleTileSet {
             elevationRangeSource
         );
         this.dataSourceTileList = [];
+        for (const map of this.m_coveringMap.values()) {
+            map.clear();
+        }
         for (const { dataSource, visibleTileKeys } of visibleTileKeysResult.tileKeys) {
             // Sort by distance to camera, now the tiles that are further away are at the end
             // of the list.
@@ -534,6 +538,9 @@ export class VisibleTileSet {
                     numTilesLoading++;
                 } else {
                     tile.numFramesVisible++;
+                    // If this tile's data source is "covering", then remove all others from the
+                    // cache and prevent it from loading.
+                    this.checkDuplicateFullyCoveringTiles(dataSource, tile);
 
                     if (tile.frameNumVisible < 0) {
                         // Store the fist frame the tile became visible.
@@ -835,6 +842,47 @@ export class VisibleTileSet {
         // TODO: Consider using evict here!
         this.m_dataSourceCache.delete(tile);
         tile.dispose();
+    }
+
+    /**
+     * Disposes of tiles that overlap twice.
+     **/
+    private checkDuplicateFullyCoveringTiles(dataSource: DataSource, tile: Tile) {
+        if (dataSource.isFullyCovering()) {
+            const ts = dataSource.getTilingScheme();
+            let map = this.m_coveringMap.get(ts)!;
+            if (map === undefined) {
+                map = new Map<number, Tile>();
+                this.m_coveringMap.set(ts, map);
+            }
+            const key = TileOffsetUtils.getKeyForTileKeyAndOffset(tile.tileKey, tile.offset);
+            const entry = map.get(key);
+            if (entry === undefined) {
+                map.set(key, tile);
+            } else {
+                // If the entry in the map has no backgroundPlane, we treat it to have highest
+                // priority, so we dispose of the newly created tile.
+                if (entry.backgroundPlane === undefined) {
+                    tile.dispose();
+                }
+                // If the newly created tile has no backgroundPlane and the existing entry does then
+                // dispose and replace it in the cache, no backgroundPlane has higher priority.
+                else if (tile.backgroundPlane === undefined) {
+                    entry.dispose();
+                    map.set(key, tile);
+                }
+                // Both planes exist, so we replace if the new [[Tile]] has a higher renderOrder
+                else if (tile.backgroundPlane.renderOrder > entry.backgroundPlane.renderOrder) {
+                    // Dispose the Tile, but still keep it in the cache, so the Tile
+                    // isn't re-requested.
+                    entry.dispose();
+                    map.set(key, tile);
+                } else {
+                    // Existing entry has higher renderOrder, so dispose the incoming tile.
+                    tile.dispose();
+                }
+            }
+        }
     }
 
     private getCacheSearchLevels(
