@@ -31,13 +31,13 @@ export class FakeOmvDataSource extends DataSource {
         const tile = new Tile(this, tileKey);
         return tile;
     }
-    shouldRender(zoomLevel: number, tileKey: TileKey): boolean {
+    canGetTile(zoomLevel: number, tileKey: TileKey): boolean {
         if (tileKey.level > 14) {
             return false;
         }
-        if (tileKey.level === 14 && zoomLevel >= 14) {
+        if (tileKey.level <= 14 && zoomLevel >= 14) {
             return true;
         }
-        return super.shouldRender(zoomLevel, tileKey);
+        return super.canGetTile(zoomLevel, tileKey);
     }
 }

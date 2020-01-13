@@ -492,21 +492,21 @@ export class VisibleTileSet {
         );
         this.dataSourceTileList = [];
         for (const { dataSource, visibleTileKeys } of visibleTileKeysResult.tileKeys) {
-            // Sort by projected (visible) area, now the tiles that are further away are at the end
+            // Sort by distance to camera, now the tiles that are further away are at the end
             // of the list.
             //
             // Sort is unstable if distance is equal, which happens a lot when looking top-down.
             // Unstable sorting makes label placement unstable at tile borders, leading to
             // flickering.
             visibleTileKeys.sort((a: TileKeyEntry, b: TileKeyEntry) => {
-                const areaDiff = b.area - a.area;
+                const distanceDiff = a.distance - b.distance;
 
                 // Take care or numerical precision issues
-                const minDiff = (a.area + b.area) * 0.001;
+                const minDiff = (a.distance + b.distance) * 0.000001;
 
-                return Math.abs(areaDiff) < minDiff
-                    ? b.tileKey.mortonCode() - a.tileKey.mortonCode()
-                    : areaDiff;
+                return Math.abs(distanceDiff) < minDiff
+                    ? a.tileKey.mortonCode() - b.tileKey.mortonCode()
+                    : distanceDiff;
             });
 
             const actuallyVisibleTiles: Tile[] = [];
@@ -521,9 +521,7 @@ export class VisibleTileSet {
                 i++
             ) {
                 const tileEntry = visibleTileKeys[i];
-                if (!dataSource.shouldRender(displayZoomLevel, tileEntry.tileKey)) {
-                    continue;
-                }
+
                 const tile = this.getTile(dataSource, tileEntry.tileKey, tileEntry.offset);
                 if (tile === undefined) {
                     continue;
@@ -1176,10 +1174,8 @@ export class VisibleTileSet {
         // once using the maximum display level.
         for (const [tilingScheme, bucket] of dataSourceBuckets) {
             const zoomLevels = bucket.map(dataSource => dataSource.getDisplayZoomLevel(zoomLevel));
-            const maxDisplayLevel = Math.max(...zoomLevels);
             const result = this.m_frustumIntersection.compute(
                 tilingScheme,
-                maxDisplayLevel,
                 elevationRangeSource,
                 zoomLevels,
                 bucket
@@ -1188,14 +1184,13 @@ export class VisibleTileSet {
             allBoundingBoxesFinal = allBoundingBoxesFinal && result.calculationFinal;
 
             for (const dataSource of bucket) {
-                const visibleTileKeys: TileKeyEntry[] = [];
-
                 // For each data source check what tiles from the intersection should be rendered
                 // at this zoom level.
+                const visibleTileKeys: TileKeyEntry[] = [];
                 const displayZoomLevel = dataSource.getDisplayZoomLevel(zoomLevel);
-                for (const tileEntry of result.tileKeyEntries.values()) {
-                    if (dataSource.shouldRender(displayZoomLevel, tileEntry.tileKey)) {
-                        visibleTileKeys.push(tileEntry);
+                for (const tileKeyEntry of result.tileKeyEntries.get(displayZoomLevel)!.values()) {
+                    if (dataSource.canGetTile(displayZoomLevel, tileKeyEntry.tileKey)) {
+                        visibleTileKeys.push(tileKeyEntry);
                     }
                 }
                 tileKeys.push({ dataSource, visibleTileKeys });

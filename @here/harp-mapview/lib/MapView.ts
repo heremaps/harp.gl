@@ -608,6 +608,13 @@ export interface MapViewOptions extends TextElementsRendererOptions {
      * @default 0
      */
     tilt?: number;
+
+    /**
+     * Set true to enable rendering mixed levels of detail (increases rendering performance).
+     *
+     * @default false
+     */
+    enableMixedLod?: boolean;
 }
 
 /**
@@ -616,7 +623,7 @@ export interface MapViewOptions extends TextElementsRendererOptions {
 export const MapViewDefaults = {
     projection: mercatorProjection,
 
-    maxVisibleDataSourceTiles: 120,
+    maxVisibleDataSourceTiles: 100,
     extendedFrustumCulling: true,
 
     tileCacheSize: 200,
@@ -632,7 +639,8 @@ export const MapViewDefaults = {
     target: new GeoCoordinates(25, 0),
     zoomLevel: 5,
     tilt: 0,
-    heading: 0
+    heading: 0,
+    enableMixedLod: false
 };
 
 /**
@@ -771,6 +779,8 @@ export class MapView extends THREE.EventDispatcher {
     private m_languages: string[] | undefined;
     private m_copyrightInfo: CopyrightInfo[] = [];
     private m_animatedExtrusionHandler: AnimatedExtrusionHandler;
+
+    private m_enableMixedLod: boolean;
 
     /**
      * Constructs a new `MapView` with the given options or canvas element.
@@ -958,16 +968,11 @@ export class MapView extends THREE.EventDispatcher {
                 ? new PhasedTileGeometryManager(this)
                 : new SimpleTileGeometryManager(this);
 
-        this.m_visibleTiles = new VisibleTileSet(
-            new FrustumIntersection(
-                this.m_camera,
-                this,
-                this.m_visibleTileSetOptions.extendedFrustumCulling,
-                this.m_tileWrappingEnabled
-            ),
-            this.m_tileGeometryManager,
-            this.m_visibleTileSetOptions
+        this.m_enableMixedLod = getOptionValue(
+            options.enableMixedLod,
+            MapViewDefaults.enableMixedLod
         );
+        this.m_visibleTiles = this.createVisibleTileSet();
 
         this.m_animatedExtrusionHandler = new AnimatedExtrusionHandler(this);
 
@@ -1045,6 +1050,17 @@ export class MapView extends THREE.EventDispatcher {
      */
     get tileGeometryManager(): TileGeometryManager | undefined {
         return this.m_tileGeometryManager;
+    }
+
+    get enableMixedLod(): boolean {
+        return this.m_enableMixedLod;
+    }
+
+    set enableMixedLod(enableMixedLod: boolean) {
+        this.m_enableMixedLod = enableMixedLod;
+        this.m_visibleTiles = this.createVisibleTileSet();
+        this.resetTextRenderer();
+        this.update();
     }
 
     /**
@@ -1472,16 +1488,7 @@ export class MapView extends THREE.EventDispatcher {
         this.updatePolarDataSource();
         this.clearTileCache();
         this.textElementsRenderer.clearRenderStates();
-        this.m_visibleTiles = new VisibleTileSet(
-            new FrustumIntersection(
-                this.m_camera,
-                this,
-                this.m_visibleTileSetOptions.extendedFrustumCulling,
-                this.m_tileWrappingEnabled
-            ),
-            this.m_tileGeometryManager,
-            this.m_visibleTileSetOptions
-        );
+        this.m_visibleTiles = this.createVisibleTileSet();
 
         this.lookAt(targetCoordinates, targetDistance, pitchDeg, headingDeg);
     }
@@ -2961,18 +2968,7 @@ export class MapView extends THREE.EventDispatcher {
         this.m_lookAtDistance = defaultGeoCenter.altitude!;
 
         this.calculateFocalLength(height);
-
-        this.m_visibleTiles = new VisibleTileSet(
-            new FrustumIntersection(
-                this.m_camera,
-                this,
-                this.m_visibleTileSetOptions.extendedFrustumCulling,
-                this.m_tileWrappingEnabled
-            ),
-            this.m_tileGeometryManager,
-            this.m_visibleTileSetOptions
-        );
-
+        this.m_visibleTiles = this.createVisibleTileSet();
         this.setInitialCameraPosition(options);
 
         // ### move & customize
@@ -2993,6 +2989,20 @@ export class MapView extends THREE.EventDispatcher {
 
         this.lookAt(target, 300000, tilt, heading);
         this.zoomLevel = zoomLevel;
+    }
+
+    private createVisibleTileSet(): VisibleTileSet {
+        return new VisibleTileSet(
+            new FrustumIntersection(
+                this.m_camera,
+                this,
+                this.m_visibleTileSetOptions.extendedFrustumCulling,
+                this.m_tileWrappingEnabled,
+                this.m_enableMixedLod
+            ),
+            this.m_tileGeometryManager,
+            this.m_visibleTileSetOptions
+        );
     }
 
     private updateSkyBackground() {

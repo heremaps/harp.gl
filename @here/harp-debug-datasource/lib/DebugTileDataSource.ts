@@ -136,10 +136,10 @@ export class DebugTileDataSource extends DataSource {
         return tile;
     }
 
-    shouldRender(zoomLevel: number, tileKey: TileKey): boolean {
+    canGetTile(zoomLevel: number, tileKey: TileKey): boolean {
         if (tileKey.level > this.maxDbgZoomLevel) {
             return false;
         }
-        return super.shouldRender(zoomLevel, tileKey);
+        return super.canGetTile(zoomLevel, tileKey);
     }
 }

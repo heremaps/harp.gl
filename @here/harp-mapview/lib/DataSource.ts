@@ -366,14 +366,14 @@ export abstract class DataSource extends THREE.EventDispatcher {
     }
 
     /**
-     * Returns `true` if [[MapView]] should render the tile with given [[TileKey]] and zoom level.
+     * Returns `true` if [[DataSource]] can load tile with given [[TileKey]] and zoom level.
      *
      * @param zoomLevel The zoom level of the [[MapView]].
      * @param tileKey The unique identifier for a map tile.
-     * @returns `true` if the geometries created for the given [[TileKey]] should be rendered.
+     * @returns `true` if the tile for the given [[TileKey]] can be loaded.
      */
-    shouldRender(zoomLevel: number, tileKey: TileKey): boolean {
-        return tileKey.level === zoomLevel;
+    canGetTile(zoomLevel: number, tileKey: TileKey): boolean {
+        return tileKey.level <= zoomLevel;
     }
 
     /**

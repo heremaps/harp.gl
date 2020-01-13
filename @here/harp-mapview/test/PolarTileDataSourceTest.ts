@@ -44,7 +44,7 @@ describe("PolarTileDataSource", function() {
     const theme_south: StyleDeclaration[] = [south_style];
 
     describe("should", function() {
-        it("#shouldRender()", function() {
+        it("#canGetTile()", function() {
             dataSource = new PolarTileDataSource({
                 storageLevelOffset: 0
             });
@@ -58,17 +58,17 @@ describe("PolarTileDataSource", function() {
             const keyIn2 = TileKey.fromRowColumnLevel(2, 1, 2);
             const keyOut3 = TileKey.fromRowColumnLevel(3, 4, 3);
 
-            assert.isFalse(dataSource.shouldRender(0, keyIn1), msgMore);
-            assert.isFalse(dataSource.shouldRender(2, keyIn1), msgLess);
-            assert.isTrue(dataSource.shouldRender(1, keyIn1), msgCurr);
+            assert.isFalse(dataSource.canGetTile(0, keyIn1), msgMore);
+            assert.isFalse(dataSource.canGetTile(2, keyIn1), msgLess);
+            assert.isTrue(dataSource.canGetTile(1, keyIn1), msgCurr);
 
-            assert.isFalse(dataSource.shouldRender(1, keyIn2), msgMore);
-            assert.isFalse(dataSource.shouldRender(3, keyIn2), msgLess);
-            assert.isTrue(dataSource.shouldRender(2, keyIn2), msgCurr);
+            assert.isFalse(dataSource.canGetTile(1, keyIn2), msgMore);
+            assert.isFalse(dataSource.canGetTile(3, keyIn2), msgLess);
+            assert.isTrue(dataSource.canGetTile(2, keyIn2), msgCurr);
 
-            assert.isFalse(dataSource.shouldRender(2, keyOut3), msgOut);
-            assert.isFalse(dataSource.shouldRender(3, keyOut3), msgOut);
-            assert.isFalse(dataSource.shouldRender(4, keyOut3), msgOut);
+            assert.isFalse(dataSource.canGetTile(2, keyOut3), msgOut);
+            assert.isFalse(dataSource.canGetTile(3, keyOut3), msgOut);
+            assert.isFalse(dataSource.canGetTile(4, keyOut3), msgOut);
         });
 
         it("#shouldSubdivide()", function() {
@@ -233,7 +233,7 @@ describe("PolarTileDataSource", function() {
                 for (let y = 0; y < size; y++) {
                     for (let x = 0; x < size; x++) {
                         const tileKey = TileKey.fromRowColumnLevel(y, x, level);
-                        if (dataSource.shouldRender(level, tileKey) === false) {
+                        if (dataSource.canGetTile(level, tileKey) === false) {
                             continue;
                         }
                         const tile = dataSource.getTile(tileKey);

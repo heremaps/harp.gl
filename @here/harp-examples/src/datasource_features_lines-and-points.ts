@@ -213,7 +213,8 @@ export namespace LinesPointsFeaturesExample {
             projection: sphereProjection,
             theme,
             target: new GeoCoordinates(10, -270),
-            zoomLevel: 3.5
+            zoomLevel: 3.5,
+            enableMixedLod: true
         });
 
         const controls = new MapControls(mapView);

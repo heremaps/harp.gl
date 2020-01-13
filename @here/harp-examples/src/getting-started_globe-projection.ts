@@ -18,7 +18,8 @@ export namespace GlobeExample {
         const mapView = new MapView({
             canvas,
             projection: sphereProjection,
-            theme: "resources/berlin_tilezen_base_globe.json"
+            theme: "resources/berlin_tilezen_base_globe.json",
+            enableMixedLod: true
         });
 
         CopyrightElementHandler.install("copyrightNotice", mapView);
@@ -47,6 +48,7 @@ export namespace GlobeExample {
         map.addDataSource(omvDataSource);
 
         const mapControls = new MapControls(map);
+        mapControls.maxTiltAngle = 90;
         const ui = new MapControlsUI(mapControls, { zoomLevel: "input" });
         map.canvas.parentElement!.appendChild(ui.domElement);
     }
