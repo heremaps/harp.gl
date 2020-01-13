@@ -48,7 +48,7 @@ for package in $packages ; do
 done
 
 # generate test app using our local packages
-yes "" | HARP_PACKAGE_ROOT="../" npm init @here/harp.gl-app
+yes "" | HARP_PACKAGE_ROOT="../" npm init @here/harpgl-app
 cd $exampleDir
 
 set +x
