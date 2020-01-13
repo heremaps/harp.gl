@@ -418,7 +418,7 @@ export interface MapViewOptions extends TextElementsRendererOptions {
      *
      * To disable a cache search, set the value to `0`.
      *
-     * @default [[MapViewDefaults.tileLowLevelDetailFallback]]
+     * @default [[MapViewDefaults.quadTreeSearchDistanceUp]]
      */
     quadTreeSearchDistanceUp?: number;
 
@@ -431,7 +431,7 @@ export interface MapViewOptions extends TextElementsRendererOptions {
      *
      * To disable a cache search, set the value to `0`.
      *
-     * @default [[MapViewDefaults.tileHighLevelDetailFallback]]
+     * @default [[MapViewDefaults.quadTreeSeaFIX]]
      */
     quadTreeSearchDistanceDown?: number;
 
