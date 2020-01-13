@@ -43,6 +43,7 @@ import {
     computePointTextOffset,
     computeViewDistance,
     getMaxViewDistance,
+    isPathLabelTooSmall,
     placePathLabel,
     PrePlacementResult
 } from "./Placement";
@@ -122,12 +123,6 @@ const OVERLOAD_UPDATE_TIME_LIMIT = 5;
  */
 const OVERLOAD_PLACE_TIME_LIMIT = 10;
 
-/**
- * Minimum number of pixels per character. Used during estimation if there is enough screen space
- * available to render a text.
- */
-const MIN_AVERAGE_CHAR_WIDTH = 5;
-
 const logger = LoggerManager.instance.create("TextElementsRenderer", { level: LogLevel.Log });
 
 // Development flag: Enable debug print.
@@ -135,7 +130,6 @@ const PRINT_LABEL_DEBUG_INFO: boolean = false;
 const updateStats = PRINT_LABEL_DEBUG_INFO ? new UpdateStats(logger) : undefined;
 const placementStats = PRINT_LABEL_DEBUG_INFO ? new PlacementStats(logger) : undefined;
 
-const tempBox = new THREE.Box2();
 const tempBox2D = new Math2D.Box();
 
 const tempPosition = new THREE.Vector3();
@@ -724,9 +718,7 @@ export class TextElementsRenderer {
 
             // For paths, check if the label may fit.
             if (isPathLabel) {
-                // TODO: HARP-7648. checkForSmallLabels takes a large part of text placement time.
-                // Try to make it faster or execute cheaper rejection tests before.
-                if (!this.checkForSmallLabels(textElement, tempScreenPoints)) {
+                if (isPathLabelTooSmall(textElement, this.m_screenProjector, tempScreenPoints)) {
                     if (placementStats) {
                         placementStats.numNotVisible++;
                     }
@@ -2028,51 +2020,6 @@ export class TextElementsRenderer {
         textCanvas.textRenderStyle.fontSize.size = prevSize;
         textCanvas.textRenderStyle.opacity = prevOpacity;
         textCanvas.textRenderStyle.backgroundOpacity = prevBgOpacity;
-        return true;
-    }
-
-    private checkForSmallLabels(textElement: TextElement, screenPoints: THREE.Vector2[]): boolean {
-        // Get the screen points that define the label's segments and create a path with
-        // them.
-        screenPoints.length = 0;
-        let anyPointVisible = false;
-
-        for (const pt of textElement.points as THREE.Vector3[]) {
-            // Skip invisible points at the beginning of the path.
-            const screenPoint = anyPointVisible
-                ? this.m_screenProjector.project(pt, tempScreenPosition)
-                : this.m_screenProjector.projectOnScreen(pt, tempScreenPosition);
-            if (screenPoint === undefined) {
-                continue;
-            }
-            anyPointVisible = true;
-
-            screenPoints.push(tempScreenPosition.clone());
-        }
-
-        // TODO: (HARP-3515)
-        //      The rendering of a path label that contains just a single point that is not
-        //      visible is impossible, which is problematic with long paths.
-        //      Fix: Skip/clip the invisible points at beginning and end of the path to get
-        //      the visible part of the path.
-
-        // If not a single point is visible, skip the path
-        if (!anyPointVisible) {
-            return false;
-        }
-
-        // Check/guess if the screen box can hold a string of that length. It is important
-        // to guess that value without measuring the font first to save time.
-        const minScreenSpace = textElement.text.length * MIN_AVERAGE_CHAR_WIDTH;
-
-        tempBox.setFromPoints(screenPoints);
-        const boxDiagonalSq = tempBox.max.sub(tempBox.min).lengthSq();
-
-        if (boxDiagonalSq < minScreenSpace * minScreenSpace) {
-            textElement.dbgPathTooSmall = true;
-            return false;
-        }
-
         return true;
     }
 

@@ -15,10 +15,17 @@ import { assert, MathUtils } from "@here/harp-utils";
 import * as THREE from "three";
 import { PoiManager } from "../poi/PoiManager";
 import { CollisionBox, DetailedCollisionBox, IBox, ScreenCollisions } from "../ScreenCollisions";
+import { ScreenProjector } from "../ScreenProjector";
 import { poiIsRenderable, TextElement } from "./TextElement";
 import { TextElementState } from "./TextElementState";
 import { TextElementType } from "./TextElementType";
 import { ViewState } from "./ViewState";
+
+/**
+ * Minimum number of pixels per character. Used during estimation if there is enough screen space
+ * available to render a text.
+ */
+const MIN_AVERAGE_CHAR_WIDTH = 5;
 
 /**
  * Functions related to text element placement.
@@ -230,6 +237,7 @@ const tmpBoxes: THREE.Box2[] = [];
 const tmpMeasurementParams: MeasurementParameters = {};
 const tmpCollisionBoxes: CollisionBox[] = [];
 const tmpCollisionBox = new CollisionBox();
+const tmpScreenPosition = new THREE.Vector2();
 
 /**
  * Places a path label along a given path on a specified text canvas.
@@ -304,4 +312,62 @@ export function placePathLabel(
         screenCollisions.allocate(collisionBox);
     }
     return true;
+}
+
+/**
+ * Check if a given path label is too small to be rendered.
+ * @param textElement The text element to check.
+ * @param screenProjector Used to project coordinates from world to screen space.
+ * @param outScreenPoints Label path projected to screen space.
+ * @returns `true` if label is too small, `false` otherwise.
+ */
+export function isPathLabelTooSmall(
+    textElement: TextElement,
+    screenProjector: ScreenProjector,
+    outScreenPoints: THREE.Vector2[]
+): boolean {
+    assert(textElement.type === TextElementType.PathLabel);
+
+    // Get the screen points that define the label's segments and create a path with
+    // them.
+    outScreenPoints.length = 0;
+    let anyPointVisible = false;
+
+    for (const pt of textElement.points as THREE.Vector3[]) {
+        // Skip invisible points at the beginning of the path.
+        const screenPoint = anyPointVisible
+            ? screenProjector.project(pt, tmpScreenPosition)
+            : screenProjector.projectOnScreen(pt, tmpScreenPosition);
+        if (screenPoint === undefined) {
+            continue;
+        }
+        anyPointVisible = true;
+
+        outScreenPoints.push(tmpScreenPosition.clone());
+    }
+
+    // TODO: (HARP-3515)
+    //      The rendering of a path label that contains just a single point that is not
+    //      visible is impossible, which is problematic with long paths.
+    //      Fix: Skip/clip the invisible points at beginning and end of the path to get
+    //      the visible part of the path.
+
+    // If not a single point is visible, skip the path
+    if (!anyPointVisible) {
+        return true;
+    }
+
+    // Check/guess if the screen box can hold a string of that length. It is important
+    // to guess that value without measuring the font first to save time.
+    const minScreenSpace = textElement.text.length * MIN_AVERAGE_CHAR_WIDTH;
+
+    tmpBox.setFromPoints(outScreenPoints);
+    const boxDiagonalSq = tmpBox.max.sub(tmpBox.min).lengthSq();
+
+    if (boxDiagonalSq < minScreenSpace * minScreenSpace) {
+        textElement.dbgPathTooSmall = true;
+        return true;
+    }
+
+    return false;
 }
