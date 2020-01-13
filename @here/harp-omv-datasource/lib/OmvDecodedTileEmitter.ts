@@ -76,6 +76,7 @@ import {
 // tslint:disable-next-line:max-line-length
 import { SphericalGeometrySubdivisionModifier } from "@here/harp-geometry/lib/SphericalGeometrySubdivisionModifier";
 import { ExtrusionFeatureDefs } from "@here/harp-materials/lib/MapMeshMaterialsDefs";
+import { clipPolygon } from "./clipPolygon";
 
 const logger = LoggerManager.instance.create("OmvDecodedTileEmitter");
 
@@ -626,10 +627,13 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
 
             const isExtruded = isExtrudedPolygonTechnique(technique);
             const isFilled = isFillTechnique(technique);
+            const isStandard = isStandardTechnique(technique);
 
-            const isPolygon = isExtruded || isFilled || isStandardTechnique(technique);
+            const isPolygon = isExtruded || isFilled || isStandard;
             const computeTexCoords = this.getComputeTexCoordsFunc(technique);
             const vertexStride = computeTexCoords !== undefined ? 4 : 2;
+
+            let clipRing: THREE.Vector2[] | undefined;
 
             for (const polygon of geometry) {
                 const rings: Ring[] = [];
@@ -637,7 +641,25 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                 for (const outline of polygon.rings) {
                     const ringContour: number[] = [];
 
-                    for (const coord of outline) {
+                    let coords = outline;
+
+                    if (isFilled || isStandard) {
+                        if (!clipRing) {
+                            clipRing = [
+                                new THREE.Vector2(0, 0),
+                                new THREE.Vector2(extents, 0),
+                                new THREE.Vector2(extents, extents),
+                                new THREE.Vector2(0, extents)
+                            ];
+                        }
+                        coords = clipPolygon(coords, clipRing);
+                    }
+
+                    if (coords.length === 0) {
+                        continue;
+                    }
+
+                    for (const coord of coords) {
                         ringContour.push(coord.x, coord.y);
                         if (computeTexCoords !== undefined) {
                             const { u, v } = computeTexCoords(coord, extents);
@@ -646,6 +668,10 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                     }
 
                     rings.push(new Ring(extents, vertexStride, ringContour));
+                }
+
+                if (rings.length === 0) {
+                    continue;
                 }
 
                 polygons.push(rings);
