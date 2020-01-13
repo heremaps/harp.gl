@@ -579,10 +579,12 @@ export class OmvTileDecoder extends ThemedTileDecoder {
     private m_skipShortLabels: boolean = true;
     private m_enableElevationOverlay: boolean = false;
 
+    /** @override */
     connect(): Promise<void> {
         return Promise.resolve();
     }
 
+    /** @override */
     decodeThemedTile(
         data: ArrayBufferLike,
         tileKey: TileKey,
@@ -613,6 +615,7 @@ export class OmvTileDecoder extends ThemedTileDecoder {
         return Promise.resolve(decodedTile);
     }
 
+    /** @override */
     getTileInfo(
         data: ArrayBufferLike,
         tileKey: TileKey,
@@ -647,6 +650,7 @@ export class OmvTileDecoder extends ThemedTileDecoder {
         return Promise.resolve(tileInfo);
     }
 
+    /** @override */
     configure(
         styleSet: StyleSet,
         definitions?: Definitions,

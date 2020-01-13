@@ -40,6 +40,7 @@ export abstract class MapViewFeature {
 }
 
 export class MapViewLineFeature extends MapViewFeature {
+    /** @override */
     type: LineString["type"] = "LineString";
     constructor(public coordinates: LineString["coordinates"], public properties?: {}) {
         super(coordinates, properties);
@@ -47,6 +48,7 @@ export class MapViewLineFeature extends MapViewFeature {
 }
 
 export class MapViewMultiLineFeature extends MapViewFeature {
+    /** @override */
     type: MultiLineString["type"] = "MultiLineString";
     constructor(public coordinates: MultiLineString["coordinates"], public properties?: {}) {
         super(coordinates, properties);
@@ -54,6 +56,7 @@ export class MapViewMultiLineFeature extends MapViewFeature {
 }
 
 export class MapViewPolygonFeature extends MapViewFeature {
+    /** @override */
     type: Polygon["type"] = "Polygon";
     constructor(public coordinates: Polygon["coordinates"], public properties?: {}) {
         super(coordinates, properties);
@@ -61,6 +64,7 @@ export class MapViewPolygonFeature extends MapViewFeature {
 }
 
 export class MapViewMultiPolygonFeature extends MapViewFeature {
+    /** @override */
     type: MultiPolygon["type"] = "MultiPolygon";
     constructor(public coordinates: MultiPolygon["coordinates"], public properties?: {}) {
         super(coordinates, properties);
@@ -68,6 +72,7 @@ export class MapViewMultiPolygonFeature extends MapViewFeature {
 }
 
 export class MapViewPointFeature extends MapViewFeature {
+    /** @override */
     type: Point["type"] = "Point";
     constructor(public coordinates: Point["coordinates"], public properties?: {}) {
         super(coordinates, properties);
@@ -75,6 +80,7 @@ export class MapViewPointFeature extends MapViewFeature {
 }
 
 export class MapViewMultiPointFeature extends MapViewFeature {
+    /** @override */
     type: MultiPoint["type"] = "MultiPoint";
     constructor(public coordinates: MultiPoint["coordinates"], public properties?: {}) {
         super(coordinates, properties);

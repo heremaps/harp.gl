@@ -62,6 +62,7 @@ export class GeoJsonDataSource extends TileDataSource<GeoJsonTile> {
         });
     }
 
+    /** @override */
     async connect(): Promise<void> {
         await super.connect();
         await this.decoder.connect();

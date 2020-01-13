@@ -392,6 +392,7 @@ export class SampledTimer extends SimpleTimer {
 
     /**
      * Resets the timer and clears all of its historical values.
+     * @override
      */
     reset() {
         super.reset();
@@ -404,6 +405,7 @@ export class SampledTimer extends SimpleTimer {
      * Add a single measurement to the sample.
      *
      * @param val A measurement to add.
+     * @override
      */
     setValue(val: number | undefined) {
         super.setValue(val);

@@ -44,6 +44,7 @@ export class TilerService extends WorkerService {
      *
      * @param request [[WorkerTilerProtocol]] request.
      * @returns A promise which resolves to a [[WorkerServiceResponse]].
+     * @override
      */
     protected handleRequest(request: any): Promise<WorkerServiceResponse> {
         if (WorkerTilerProtocol.isRegisterIndexRequest(request)) {

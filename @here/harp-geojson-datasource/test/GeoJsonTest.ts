@@ -279,6 +279,7 @@ describe("@here-geojson-datasource", () => {
             }
         }
         class FakeGeoJsonTile extends GeoJsonTile {
+            /** @override */
             get projection(): Projection {
                 return webMercatorProjection;
             }

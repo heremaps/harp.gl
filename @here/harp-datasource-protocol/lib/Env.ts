@@ -47,6 +47,7 @@ export class MapEnv extends Env {
      * Returns property in [[Env]] by name.
      *
      * @param name Name of property.
+     * @override
      */
     lookup(name: string): Value | undefined {
         if (this.entries.hasOwnProperty(name)) {
@@ -60,6 +61,7 @@ export class MapEnv extends Env {
     /**
      * Return an object containing all properties of this environment, takes care of the parent
      * object.
+     * @override
      */
     unmap(): ValueMap {
         const obj: any = this.parent ? this.parent.unmap() : {};

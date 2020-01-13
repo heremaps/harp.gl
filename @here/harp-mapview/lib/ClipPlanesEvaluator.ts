@@ -292,6 +292,7 @@ export class TopViewClipPlanesEvaluator extends ElevationBasedClipPlanesEvaluato
         };
     }
 
+    /** @override */
     evaluateClipPlanes(mapView: MapView): ViewRanges {
         if (mapView.projection.type === ProjectionType.Spherical) {
             return this.evaluateDistanceSphericalProj(mapView);
@@ -766,6 +767,7 @@ export class TiltViewClipPlanesEvaluator extends TopViewClipPlanesEvaluator {
         };
     }
 
+    /** @override */
     protected evaluateDistancePlanarProj(mapView: MapView): ViewRanges {
         assert(mapView.projection.type !== ProjectionType.Spherical);
         const viewRanges = { ...this.minimumViewRange };
@@ -818,6 +820,7 @@ export class TiltViewClipPlanesEvaluator extends TopViewClipPlanesEvaluator {
         return viewRanges;
     }
 
+    /** @override */
     protected evaluateDistanceSphericalProj(mapView: MapView): ViewRanges {
         const { camera, projection } = mapView;
         assert(projection.type === ProjectionType.Spherical);

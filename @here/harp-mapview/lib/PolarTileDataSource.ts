@@ -90,6 +90,7 @@ export class PolarTileDataSource extends DataSource {
         this.cacheable = false;
     }
 
+    /** @override */
     dispose() {
         if (this.m_northPoleMaterial) {
             this.m_northPoleMaterial.dispose();
@@ -118,6 +119,7 @@ export class PolarTileDataSource extends DataSource {
             : undefined;
     }
 
+    /** @override */
     setStyleSet(styleSet?: StyleSet, definitions?: Definitions, languages?: string[]): void {
         this.dispose();
 
@@ -131,6 +133,7 @@ export class PolarTileDataSource extends DataSource {
         this.mapView.markTilesDirty(this);
     }
 
+    /** @override */
     setTheme(theme: Theme, languages?: string[]): void {
         const styleSet =
             (this.styleSetName !== undefined && theme.styles && theme.styles[this.styleSetName]) ||
@@ -139,6 +142,7 @@ export class PolarTileDataSource extends DataSource {
         this.setStyleSet(styleSet, theme.definitions, languages);
     }
 
+    /** @override */
     canGetTile(zoomLevel: number, tileKey: TileKey): boolean {
         if (zoomLevel !== tileKey.level || tileKey.level < 1) {
             return false;
@@ -149,6 +153,7 @@ export class PolarTileDataSource extends DataSource {
         return north > this.m_maxLatitude || south < -this.m_maxLatitude;
     }
 
+    /** @override */
     shouldSubdivide(zoomLevel: number, tileKey: TileKey): boolean {
         if (zoomLevel <= tileKey.level) {
             return false;
@@ -159,10 +164,12 @@ export class PolarTileDataSource extends DataSource {
         return north > this.m_maxLatitude || south < -this.m_maxLatitude;
     }
 
+    /** @override */
     getTilingScheme(): TilingScheme {
         return this.m_tilingScheme;
     }
 
+    /** @override */
     getTile(tileKey: TileKey): Tile {
         const tile = new Tile(this, tileKey);
 

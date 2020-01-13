@@ -23,10 +23,12 @@ const { expect } = chai;
 import { DataProvider, TileLoader } from "../index";
 
 class MockDataSource extends DataSource {
+    /** @override */
     getTilingScheme(): TilingScheme {
         return webMercatorTilingScheme;
     }
 
+    /** @override */
     getTile(tileKey: TileKey): Tile | undefined {
         return undefined;
     }

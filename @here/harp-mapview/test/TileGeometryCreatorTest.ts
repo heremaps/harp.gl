@@ -19,9 +19,11 @@ import { TileGeometryCreator } from "../lib/geometry/TileGeometryCreator";
 import { Tile } from "../lib/Tile";
 
 class MockDataSource extends DataSource {
+    /** @override */
     getTilingScheme(): TilingScheme {
         throw new Error("Method not implemented.");
     }
+    /** @override */
     getTile(tileKey: TileKey): Tile | undefined {
         throw new Error("Method not implemented.");
     }

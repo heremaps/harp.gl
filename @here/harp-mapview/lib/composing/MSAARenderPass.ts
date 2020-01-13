@@ -103,6 +103,7 @@ export class MSAARenderPass extends Pass {
      * @param camera The ThreeJS Camera instance to render the scene with.
      * @param writeBuffer A ThreeJS WebGLRenderTarget instance to render the scene to.
      * @param readBuffer A ThreeJS WebGLRenderTarget instance to render the scene.
+     * @override
      */
     render(
         renderer: THREE.WebGLRenderer,
@@ -212,6 +213,7 @@ export class MSAARenderPass extends Pass {
      *
      * @param width New width to apply to the render target.
      * @param height New height to apply to the render target.
+     * @override
      */
     setSize(width: number, height: number) {
         if (this.m_renderTarget) {

@@ -135,6 +135,7 @@ export class FeaturesDataSource extends OmvDataSource {
         this.update();
     }
 
+    /** @override */
     async connect(): Promise<void> {
         await super.connect();
         if (this.m_featureCollection.features.length > 0) {
@@ -144,6 +145,7 @@ export class FeaturesDataSource extends OmvDataSource {
     /**
      * Override [[DataSource.attach]] to know if we're really connected to [[MapView]].
      * @param mapView
+     * @override
      */
     attach(mapView: MapView): void {
         super.attach(mapView);
@@ -153,6 +155,7 @@ export class FeaturesDataSource extends OmvDataSource {
     /**
      * Override [[DataSource.detach]] to know if we're really connected to [[MapView]].
      * @param mapView
+     * @override
      */
     detach(mapView: MapView): void {
         super.detach(mapView);

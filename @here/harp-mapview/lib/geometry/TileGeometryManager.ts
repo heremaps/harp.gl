@@ -332,12 +332,14 @@ export class SimpleTileGeometryManager extends TileGeometryManagerBase {
         super(mapView);
     }
 
+    /** @override */
     initTile(tile: Tile): void {
         if (tile.dataSource.useGeometryLoader) {
             tile.tileGeometryLoader = new SimpleTileGeometryLoader(tile);
         }
     }
 
+    /** @override */
     updateTiles(tiles: Tile[]): void {
         for (const tile of tiles) {
             const geometryLoader = tile.tileGeometryLoader as TileGeometryLoader;

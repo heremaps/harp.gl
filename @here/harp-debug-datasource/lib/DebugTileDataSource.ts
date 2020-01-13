@@ -127,15 +127,18 @@ export class DebugTileDataSource extends DataSource {
         this.cacheable = true;
     }
 
+    /** @override */
     getTilingScheme(): TilingScheme {
         return this.m_tilingScheme;
     }
 
+    /** @override */
     getTile(tileKey: TileKey): DebugTile {
         const tile = new DebugTile(this, tileKey);
         return tile;
     }
 
+    /** @override */
     canGetTile(zoomLevel: number, tileKey: TileKey): boolean {
         if (tileKey.level > this.maxDbgZoomLevel) {
             return false;

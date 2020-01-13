@@ -155,8 +155,10 @@ function project<WorldCoordinates extends Vector3Like>(
 }
 
 class SphereProjection extends Projection {
+    /** @override */
     readonly type: ProjectionType = ProjectionType.Spherical;
 
+    /** @override */
     worldExtent<Bounds extends Box3Like>(
         _minElevation: number,
         maxElevation: number,
@@ -172,6 +174,7 @@ class SphereProjection extends Projection {
         return result;
     }
 
+    /** @override */
     projectPoint<WorldCoordinates extends Vector3Like>(
         geoPoint: GeoCoordinatesLike,
         result: WorldCoordinates = MathUtils.newVector3(0, 0, 0) as WorldCoordinates
@@ -179,6 +182,7 @@ class SphereProjection extends Projection {
         return project(geoPoint, result, this.unitScale);
     }
 
+    /** @override */
     unprojectPoint(point: Vector3Like): GeoCoordinates {
         const parallelRadiusSq = point.x * point.x + point.y * point.y;
         const parallelRadius = Math.sqrt(parallelRadiusSq);
@@ -197,11 +201,13 @@ class SphereProjection extends Projection {
         );
     }
 
+    /** @override */
     unprojectAltitude(point: Vector3Like): number {
         const parallelRadiusSq = point.x * point.x + point.y * point.y + point.z * point.z;
         return Math.sqrt(parallelRadiusSq) - EarthConstants.EQUATORIAL_RADIUS;
     }
 
+    /** @override */
     projectBox<Bounds extends Box3Like | OrientedBox3Like>(
         geoBox: GeoBox,
         result: Bounds = MathUtils.newEmptyBox3() as Bounds
@@ -323,18 +329,22 @@ class SphereProjection extends Projection {
         throw new Error("Invalid bounding box");
     }
 
+    /** @override */
     unprojectBox(_worldBox: Box3Like): GeoBox {
         throw new Error("Method not implemented.");
     }
 
+    /** @override */
     getScaleFactor(_worldPoint: Vector3Like): number {
         return 1;
     }
 
+    /** @override */
     groundDistance(worldPoint: Vector3Like): number {
         return lengthOfVector3(worldPoint) - this.unitScale;
     }
 
+    /** @override */
     scalePointToSurface(worldPoint: Vector3Like): Vector3Like {
         const scale = this.unitScale / (lengthOfVector3(worldPoint) || 1);
         worldPoint.x *= scale;
@@ -343,6 +353,7 @@ class SphereProjection extends Projection {
         return worldPoint;
     }
 
+    /** @override */
     surfaceNormal(worldPoint: Vector3Like, normal?: Vector3Like) {
         if (normal === undefined) {
             normal = { x: 0, y: 0, z: 0 };
@@ -354,6 +365,7 @@ class SphereProjection extends Projection {
         return normal;
     }
 
+    /** @override */
     reprojectPoint(
         sourceProjection: Projection,
         worldPos: Vector3Like,
@@ -389,6 +401,7 @@ class SphereProjection extends Projection {
         return super.reprojectPoint(sourceProjection, worldPos, result!);
     }
 
+    /** @override */
     localTangentSpace(geoPoint: GeoCoordinatesLike, result: TransformLike): TransformLike {
         const latitude = THREE.Math.degToRad(geoPoint.latitude);
         const longitude = THREE.Math.degToRad(geoPoint.longitude);

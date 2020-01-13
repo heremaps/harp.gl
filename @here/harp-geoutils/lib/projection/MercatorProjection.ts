@@ -40,12 +40,15 @@ class MercatorProjection extends Projection {
         return 2.0 * Math.atan(Math.exp(Math.PI * y)) - Math.PI * 0.5;
     }
 
+    /** @override */
     readonly type: ProjectionType = ProjectionType.Planar;
 
+    /** @override */
     getScaleFactor(worldPoint: Vector3Like): number {
         return Math.cosh(2 * Math.PI * (worldPoint.y / this.unitScale - 0.5));
     }
 
+    /** @override */
     worldExtent<WorldBoundingBox extends Box3Like>(
         minAltitude: number,
         maxAltitude: number,
@@ -63,6 +66,7 @@ class MercatorProjection extends Projection {
         return result;
     }
 
+    /** @override */
     projectPoint<WorldCoordinates extends Vector3Like>(
         geoPointLike: GeoCoordinatesLike,
         result?: WorldCoordinates
@@ -91,6 +95,7 @@ class MercatorProjection extends Projection {
         return result;
     }
 
+    /** @override */
     unprojectPoint(worldPoint: Vector3Like): GeoCoordinates {
         const geoPoint = GeoCoordinates.fromRadians(
             MercatorProjection.unprojectLatitude((worldPoint.y / this.unitScale - 0.5) * 2.0),
@@ -100,10 +105,12 @@ class MercatorProjection extends Projection {
         return geoPoint;
     }
 
+    /** @override */
     unprojectAltitude(worldPoint: Vector3Like): number {
         return worldPoint.z;
     }
 
+    /** @override */
     projectBox<WorldBoundingBox extends Box3Like | OrientedBox3Like>(
         geoBox: GeoBox,
         result?: WorldBoundingBox
@@ -155,6 +162,7 @@ class MercatorProjection extends Projection {
         return result;
     }
 
+    /** @override */
     unprojectBox(worldBox: Box3Like): GeoBox {
         const minGeo = this.unprojectPoint(worldBox.min);
         const maxGeo = this.unprojectPoint(worldBox.max);
@@ -162,15 +170,18 @@ class MercatorProjection extends Projection {
         return geoBox;
     }
 
+    /** @override */
     groundDistance(worldPoint: Vector3Like): number {
         return worldPoint.z;
     }
 
+    /** @override */
     scalePointToSurface(worldPoint: Vector3Like): Vector3Like {
         worldPoint.z = 0;
         return worldPoint;
     }
 
+    /** @override */
     surfaceNormal(_worldPoint: Vector3Like, normal?: Vector3Like) {
         if (normal === undefined) {
             normal = { x: 0, y: 0, z: 1 };
@@ -182,6 +193,7 @@ class MercatorProjection extends Projection {
         return normal;
     }
 
+    /** @override */
     reprojectPoint(
         sourceProjection: Projection,
         worldPos: Vector3Like,
@@ -213,6 +225,7 @@ class MercatorProjection extends Projection {
 }
 
 class WebMercatorProjection extends MercatorProjection {
+    /** @override */
     projectPoint<WorldCoordinates extends Vector3Like>(
         geoPointLike: GeoCoordinatesLike,
         result?: WorldCoordinates
@@ -251,6 +264,7 @@ class WebMercatorProjection extends MercatorProjection {
         return result;
     }
 
+    /** @override */
     unprojectPoint(worldPoint: Vector3Like): GeoCoordinates {
         const x = worldPoint.x / this.unitScale - 0.5;
         const y = 0.5 - worldPoint.y / this.unitScale;
@@ -261,6 +275,7 @@ class WebMercatorProjection extends MercatorProjection {
         return new GeoCoordinates(latitude, longitude, worldPoint.z);
     }
 
+    /** @override */
     projectBox<WorldBoundingBox extends Box3Like | OrientedBox3Like>(
         geoBox: GeoBox,
         result?: WorldBoundingBox
@@ -280,6 +295,7 @@ class WebMercatorProjection extends MercatorProjection {
         return r;
     }
 
+    /** @override */
     unprojectBox(worldBox: Box3Like): GeoBox {
         const minGeo = this.unprojectPoint(worldBox.min);
         const maxGeo = this.unprojectPoint(worldBox.max);
@@ -290,6 +306,7 @@ class WebMercatorProjection extends MercatorProjection {
         return geoBox;
     }
 
+    /** @override */
     surfaceNormal(_worldPoint: Vector3Like, normal?: Vector3Like) {
         if (normal === undefined) {
             normal = { x: 0, y: 0, z: -1 };
@@ -301,6 +318,7 @@ class WebMercatorProjection extends MercatorProjection {
         return normal;
     }
 
+    /** @override */
     localTangentSpace(geoPoint: GeoCoordinatesLike, result: TransformLike): TransformLike {
         this.projectPoint(geoPoint, result.position);
         MathUtils.newVector3(1, 0, 0, result.xAxis);

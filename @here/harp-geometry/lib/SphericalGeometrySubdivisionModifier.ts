@@ -25,6 +25,7 @@ export class SphericalGeometrySubdivisionModifier extends SubdivisionModifier {
         super();
     }
 
+    /** @override */
     protected shouldSplitTriangle(a: Vector3, b: Vector3, c: Vector3): number | undefined {
         const aa = sphereProjection.reprojectPoint(this.projection, a, VERTEX_POSITION_CACHE[0]);
         const bb = sphereProjection.reprojectPoint(this.projection, b, VERTEX_POSITION_CACHE[1]);

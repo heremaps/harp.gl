@@ -45,9 +45,10 @@
         "ordered-imports": true,
         "semicolon": [true, "always", "ignore-bound-class-methods"],
         "variable-name": false,
-        "no-this-assignment": [true, { "allow-destructuring": true }]
+        "no-this-assignment": [true, { "allow-destructuring": true }],
+        "explicit-override": [true, "exclude-interfaces", "new-line-after-decorators-and-tags"]
     },
-    "extends": ["tslint:latest", "tslint-config-prettier"],
+    "extends": ["tslint:latest", "tslint-config-prettier", "tslint-override"],
     "linterOptions": {
         "exclude": [
             "dist/",

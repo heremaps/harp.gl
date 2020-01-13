@@ -63,6 +63,7 @@ class TransverseMercatorProjection extends Projection {
         return geoPoint;
     }
 
+    /** @override */
     readonly type: ProjectionType = ProjectionType.Planar;
 
     private m_phi0: number = 0;
@@ -72,10 +73,12 @@ class TransverseMercatorProjection extends Projection {
         super(unitScale);
     }
 
+    /** @override */
     getScaleFactor(worldPoint: Vector3Like): number {
         return Math.cosh((worldPoint.x / this.unitScale - 0.5) * 2 * Math.PI);
     }
 
+    /** @override */
     worldExtent<WorldBoundingBox extends Box3Like>(
         minAltitude: number,
         maxAltitude: number,
@@ -93,6 +96,7 @@ class TransverseMercatorProjection extends Projection {
         return result;
     }
 
+    /** @override */
     projectPoint<WorldCoordinates extends Vector3Like>(
         geoPoint: GeoCoordinatesLike,
         result?: WorldCoordinates
@@ -121,6 +125,7 @@ class TransverseMercatorProjection extends Projection {
         return result;
     }
 
+    /** @override */
     unprojectPoint(worldPoint: Vector3Like): GeoCoordinates {
         const tau = Math.PI * 2;
         const nx = worldPoint.x / this.unitScale;
@@ -139,6 +144,7 @@ class TransverseMercatorProjection extends Projection {
         return geoPoint;
     }
 
+    /** @override */
     projectBox<WorldBoundingBox extends Box3Like | OrientedBox3Like>(
         geoBox: GeoBox,
         result?: WorldBoundingBox
@@ -238,6 +244,7 @@ class TransverseMercatorProjection extends Projection {
      *      │ dl / ul | dr / dl │
      *      └─────────|─────────┘
      *     0         0.5        1
+     *     @override
      */
     unprojectBox(worldBox: Box3Like): GeoBox {
         const s = this.unitScale;
@@ -309,19 +316,23 @@ class TransverseMercatorProjection extends Projection {
         return geoBox;
     }
 
+    /** @override */
     unprojectAltitude(worldPoint: Vector3Like): number {
         return worldPoint.z;
     }
 
+    /** @override */
     groundDistance(worldPoint: Vector3Like): number {
         return worldPoint.z;
     }
 
+    /** @override */
     scalePointToSurface(worldPoint: Vector3Like): Vector3Like {
         worldPoint.z = 0;
         return worldPoint;
     }
 
+    /** @override */
     surfaceNormal(_worldPoint: Vector3Like, normal?: Vector3Like) {
         if (normal === undefined) {
             normal = { x: 0, y: 0, z: -1 };

@@ -69,6 +69,7 @@ export class WorkerServiceManager extends WorkerService {
         this.m_factories.set(workerServiceDescriptor.serviceType, workerServiceDescriptor.factory);
     }
 
+    /** @override */
     protected handleRequest(request: any): Promise<WorkerServiceResponse> {
         if (request.type === WorkerServiceProtocol.Requests.CreateService) {
             const existingService = this.m_services.get(request.targetServiceId);
