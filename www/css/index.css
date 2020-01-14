@@ -56,9 +56,10 @@ header {
    background-size: cover;
    background-repeat: no-repeat;
    background-position: center;
+
    box-sizing: border-box;
    position: relative;
-   /* transition: .3s background-image ease-in-out; */
+   transition: .3s background-image ease-in-out;
 }
 
 .header-container {

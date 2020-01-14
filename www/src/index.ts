@@ -5,16 +5,8 @@
  */
 
 // tslint:disable-next-line:no-implicit-dependencies
-import { Theme } from "@here/harp-datasource-protocol";
-import { GeoCoordinates } from "@here/harp-geoutils";
-import { MapView, MapViewEventNames } from "@here/harp-mapview";
-import { APIFormat, OmvDataSource } from "@here/harp-omv-datasource";
-import { accessToken } from "../@here/harp-examples/config";
-
-// tslint:disable-next-line:no-var-requires
-const theme = require("./resources/theme.json");
-
-import "./css/index.css";
+import "../css/index.css";
+import { createMapViewInWorker } from "./WorkerMapViewFacade";
 
 const s3Base = "https://www.harp.gl/docs/";
 
@@ -75,41 +67,31 @@ fetch("./releases.json")
         dropdown.appendChild(option);
     });
 
-function main() {
-    const canvas = document.getElementById("map") as HTMLCanvasElement;
-    const map = new MapView({
-        canvas,
-        decoderUrl: "decoder.bundle.js",
-        theme: (theme as unknown) as Theme,
-        maxVisibleDataSourceTiles: 40,
-        tileCacheSize: 100
-    });
+async function createMapInt(canvas: HTMLCanvasElement) {
+    if (typeof canvas.transferControlToOffscreen === "function") {
+        // tslint:disable-next-line:no-console
+        console.log("#starting mapview in worker");
+        return createMapViewInWorker(canvas);
+    } else {
+        // tslint:disable-next-line:no-console
+        console.log("#starting mapview in main thread");
+        return import(/* webpackChunkName: "mapview-main" */ "./MapView").then(({ createMap }) => {
+            return createMap({ canvas });
+        });
+    }
+}
 
-    const omvDataSource = new OmvDataSource({
-        baseUrl: "https://xyz.api.here.com/tiles/herebase.02",
-        apiFormat: APIFormat.XYZOMV,
-        styleSetName: "tilezen",
-        authenticationCode: accessToken
-    });
-    map.addDataSource(omvDataSource);
+async function main() {
+    const theCanvas = document.getElementById("map") as HTMLCanvasElement;
+    const map = await createMapInt(theCanvas);
 
     map.resize(window.innerWidth, 500);
     window.addEventListener("resize", () => map.resize(window.innerWidth, 500));
 
-    const options = { tilt: 34.3, distance: 1400 };
-    const Boston = new GeoCoordinates(42.361145, -71.057083);
-    let azimuth = 135;
-    map.lookAt(Boston, options.distance, options.tilt, azimuth);
-
-    map.addEventListener(MapViewEventNames.FrameComplete, () => {
-        canvas.style.opacity = "1";
-
-        map.addEventListener(MapViewEventNames.Render, () =>
-            map.lookAt(Boston, options.distance, options.tilt, (azimuth += 0.1))
-        );
-        setTimeout(() => {
-            map.beginAnimation();
-        }, 0.5);
+    map.addEventListener("frame-complete", () => {
+        // tslint:disable-next-line:no-console
+        console.log("#FirstFrameComplete, showing canvas");
+        theCanvas.style.opacity = "1";
     });
 }
 

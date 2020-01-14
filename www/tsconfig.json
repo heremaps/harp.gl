@@ -1,9 +1,10 @@
 {
     "extends": "../tsconfig.json",
     "compilerOptions": {
-        "module": "commonjs",
-        "target": "es2017",
-        "resolveJsonModule": true
+        "module": "esnext",
+        "moduleResolution": "node",
+        "target": "esnext"
     },
+    "include": ["./src/*.ts"],
     "exclude": ["node_modules", "dist"]
 }

@@ -15,5 +15,19 @@ import { baseUrl } from "./UrlUtils";
  * * In node, it resolves to `file://${process.cwd()}`.
  */
 export function getAppBaseUrl() {
+    if (typeof window === "undefined") {
+        if (appBaseUrl !== undefined) {
+            return appBaseUrl;
+        } else {
+            throw new Error(
+                "getAppBaseUrl: no appBaseUrl defined in worker context, use setAppBaseUrl"
+            );
+        }
+    }
     return baseUrl(window.location.href);
+}
+
+let appBaseUrl: string | undefined;
+export function setAppBaseUrl(v: string) {
+    appBaseUrl = v;
 }

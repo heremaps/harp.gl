@@ -13,5 +13,10 @@
  * * In node, it resolves to `file://${process.cwd()}`.
  */
 export function getAppBaseUrl() {
-    return `file://${process.cwd()}/`;
+    return appBaseUrl !== undefined ? appBaseUrl : `file://${process.cwd()}/`;
+}
+
+let appBaseUrl: string | undefined;
+export function setAppBaseUrl(v: string) {
+    appBaseUrl = v;
 }

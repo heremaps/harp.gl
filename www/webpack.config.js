@@ -16,7 +16,9 @@ const commonConfig = {
     },
     output: {
         path: path.join(process.cwd(), "dist"),
-        filename: "[name].bundle.js"
+        filename: "[name].main.js",
+        chunkFilename: "[name].chunk.js",
+        globalObject: "(self || this)"
     },
     module: {
         rules: [
@@ -30,13 +32,27 @@ const commonConfig = {
             },
             {
                 test: /\.tsx?$/,
-                loader: "ts-loader",
                 exclude: /node_modules/,
-                options: {
-                    onlyCompileBundledFiles: true,
-                    // use the main tsconfig.json for all compilation
-                    configFile: path.resolve(__dirname, "./tsconfig.json")
-                }
+                use: [
+                    {
+                        loader: "babel-loader",
+                        options: {
+                            presets: ["@babel/preset-env"],
+                            plugins: [
+                                "@babel/plugin-syntax-dynamic-import",
+                                "@babel/plugin-proposal-nullish-coalescing-operator"
+                            ]
+                        }
+                    },
+                    {
+                        loader: "ts-loader",
+                        options: {
+                            onlyCompileBundledFiles: true,
+                            // use the main tsconfig.json for all compilation
+                            configFile: path.resolve(__dirname, "./tsconfig.json")
+                        }
+                    }
+                ]
             }
         ]
     },
@@ -47,20 +63,27 @@ const commonConfig = {
         }),
         new HardSourceWebpackPlugin()
     ],
-    externals: [
-        {
-            three: "THREE"
-        }
-    ],
     performance: {
         hints: false
     },
     mode: process.env.NODE_ENV || "development"
 };
 
+const commonPolyfills = [
+    // We need some polyfills to be injected, due to usage of restrictive @babel/preset-env usage
+    "regenerator-runtime/runtime"
+];
+
+const workerPolyfills = [
+    ...commonPolyfills,
+    // We need to this "polyfill" to load JSONP chunks in worker using `importScripts`
+    "./src/WebpackWorkerChunkPolyfill.ts"
+];
 const mainConfig = merge(commonConfig, {
     entry: {
-        index: path.resolve(__dirname, "index.ts")
+        index: [...commonPolyfills, "./src/index.ts"],
+        decoder: [...workerPolyfills, "./src/decoder.ts"],
+        "mapview-worker": [...workerPolyfills, "./src/mapview-worker.ts"]
     },
     plugins: [
         new MiniCssExtractPlugin({
@@ -68,14 +91,14 @@ const mainConfig = merge(commonConfig, {
             chunkFilename: "[id].css"
         }),
         new HtmlWebpackPlugin({
-            template: "index.html"
+            template: "index.html",
+            chunks: ["index", "harp~decoder~index~mapview-worker", "vendors~index~mapview-worker"]
         }),
         new HTMLInlineCSSWebpackPlugin(),
         new ScriptExtHtmlWebpackPlugin({
             defaultAttribute: "defer"
         }),
         new CopyWebpackPlugin([
-            require.resolve("three/build/three.min.js"),
             "_config.yml",
             {
                 from: "./docs",
@@ -105,10 +128,4 @@ const mainConfig = merge(commonConfig, {
     ]
 });
 
-const decoderConfig = merge(commonConfig, {
-    target: "webworker",
-    entry: {
-        decoder: path.resolve(__dirname, "./decoder.ts")
-    }
-});
-module.exports = [mainConfig, decoderConfig];
+module.exports = mainConfig;
