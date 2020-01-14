@@ -1,28 +1,28 @@
-<html>
-
+<!DOCTYPE html>
+<html lang="en">
     <head>
         <title>harp.gl</title>
+        <link rel="preload" href="./decoder.bundle.js" as="worker">
+        <link rel="preload" href="./index.bundle.js" as="script">
+
         <link href="https://fonts.googleapis.com/css?family=Fira+Sans:400,500,600&display=swap"
             rel="stylesheet">
-        <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/icon?family=Material+Icons&display=swap" rel="stylesheet">
         <meta name="viewport" content="width=device-width,initial-scale=1">
-        <link rel="stylesheet" type="text/css" href="css/index.css">
         <link rel="shortcut icon" href="resources/favicon.ico">
-        <script src="js/credentials.js"></script>
-        <script src="https://unpkg.com/three@0.112.1/build/three.min.js"></script>
-        <script src="https://unpkg.com/@here/harp.gl/dist/harp.js"></script>
 
+        <script src="three.min.js" defer></script>
         <meta name="twitter:card" content="summary" />
         <meta name="twitter:site" content="@here" />
         <meta name="twitter:title" content="harp.gl" />
         <meta name="twitter:description" content="3d web map rendering engine" />
-        <meta name="twitter:image" content="https://www.harp.gl/resources/background.png" />
+        <meta name="twitter:image" content="https://www.harp.gl/resources/background.jpg" />
 
         <meta property="og:url" content="https://www.harp.gl" />
         <meta property="og:type" content="website" />
         <meta property="og:title" content="harp.gl" />
         <meta property="og:description" content="3d web map rendering engine" />
-        <meta property="og:image" content="https://www.harp.gl/resources/background.png" />
+        <meta property="og:image" content="https://www.harp.gl/resources/background.jpg" />
     </head>
 
     <body>
@@ -34,9 +34,9 @@
                     <div>
                         <a id="docs-nav-mobile" href="https://www.harp.gl/docs"
                             class="nav-item">Docs</a>
-                        <a id="docs-nav" href="https://www.harp.gl/docs"
+                        <a id="docs-nav" href="docs"
                             class="nav-item">Documentation</a>
-                        <a id="examples-nav" href="http://www.harp.gl/examples"
+                        <a id="examples-nav" href="examples"
                             class="nav-item">Examples</a>
                         <a id="tutorial-nav" href="https://developer.here.com/tutorials/harpgl"
                             class="nav-item">Tutorial</a>
@@ -114,8 +114,8 @@
                         </a>
                     </div>
                     <div>
-                        <p>Select the target release:</p>
-                        <select name="versions"></select>
+                        <p><label for="versions">Select the target release</label>:</p>
+                        <select id="versions" name="versions"></select>
                         <p>Please note that latest includes bleeding edge changes. For a more stable
                             build, try the most recent release.</p>
                     </div>
@@ -135,7 +135,6 @@
                 </div>
             </div>
         </footer>
-        <script src="js/index.js"></script>
     </body>
 
 </html>

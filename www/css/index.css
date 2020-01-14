@@ -1,5 +1,5 @@
 :root {
-   --dark-text: #3f454d; 
+   --dark-text: #3f454d;
    --section-padding: 100px 0;
    --background: #1b222c;
    --gradient: linear-gradient(to bottom right,#e7e1a0,#85e0ce);
@@ -52,9 +52,10 @@ header {
    width: 100%;
    height: var(--header-height);
    background: var(--background);
-   background-image: '';
-   background-size: contain;
+   background-image: url('../resources/background.jpg');
+   background-size: cover;
    background-repeat: no-repeat;
+   background-position: center;
    box-sizing: border-box;
    position: relative;
    /* transition: .3s background-image ease-in-out; */
@@ -73,6 +74,8 @@ header {
    width: 100%;
    border: 0;
    pointer-events: none;
+   opacity: 0;
+   transition: opacity .5s ease-in-out;
 }
 
 
@@ -105,7 +108,6 @@ nav .nav-item {
    display: flex;
    justify-content: center;
    flex-direction: column;
-   z-index: 1;
 }
 
 .header-title {
@@ -159,7 +161,7 @@ nav .nav-item {
 .links {
    padding: var(--section-padding);
    background: var(--background);
-   
+
 }
 
 .links-grid {
@@ -282,9 +284,9 @@ footer {
    }
 
    #tutorial-nav {
-      display: none;
+      /* display: none; */
    }
-   
+
    nav .nav-item {
       margin-left: 10px;
       color: white;
@@ -301,7 +303,7 @@ footer {
 
    .links-grid {
       grid-template-columns: 1fr;
-   } 
+   }
 
    .footer {
       flex-direction: column;
