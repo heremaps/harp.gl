@@ -76,13 +76,7 @@ import {
 // tslint:disable-next-line:max-line-length
 import { SphericalGeometrySubdivisionModifier } from "@here/harp-geometry/lib/SphericalGeometrySubdivisionModifier";
 import { ExtrusionFeatureDefs } from "@here/harp-materials/lib/MapMeshMaterialsDefs";
-import { clipPolygon } from "./clipPolygon";
-
-const { LineSegmentsIntersection } = Math2D;
-interface Segment2 {
-    P0: THREE.Vector2;
-    P1: THREE.Vector2;
-}
+import { clipPolygon, clipPolyline } from "./GeometryClipping";
 
 type UntiledLine = number[] & {
     lineDist: number;
@@ -369,29 +363,16 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
             }
         }
 
-        if (this.m_enableLineClipping) {
-            this.transformAndCutLines(
-                localLines,
-                worldLines,
-                uvs,
-                offsets,
-                geometry,
-                extents,
-                hasUntiledLines,
-                computeTexCoords
-            );
-        } else {
-            this.transformLines(
-                localLines,
-                worldLines,
-                uvs,
-                offsets,
-                geometry,
-                extents,
-                hasUntiledLines,
-                computeTexCoords
-            );
-        }
+        this.transformLines(
+            localLines,
+            worldLines,
+            uvs,
+            offsets,
+            geometry,
+            extents,
+            hasUntiledLines,
+            computeTexCoords
+        );
 
         const wantCircle = this.m_decodeInfo.tileKey.level >= 11;
         for (const technique of techniques) {
@@ -1828,6 +1809,13 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
         hasUntiledLines: boolean,
         computeTexCoords?: TexCoordsFunction
     ) {
+        const clipShape = [
+            new THREE.Vector2(0, 0),
+            new THREE.Vector2(extents, 0),
+            new THREE.Vector2(extents, extents),
+            new THREE.Vector2(0, extents)
+        ];
+
         for (const polyline of geometry) {
             // Compute the world position of the untiled line and its distance to the origin of the
             // line to properly join lines.
@@ -1837,7 +1825,12 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
             const lineOffsets: number[] = [];
             const untiledLine = this.computeUntiledLine(polyline, hasUntiledLines);
 
-            polyline.positions.forEach(pos =>
+            let positions = polyline.positions;
+            if (this.m_enableLineClipping) {
+                positions = clipPolyline(positions, clipShape);
+            }
+
+            positions.forEach(pos =>
                 this.addLinePoint(
                     pos,
                     localLine,
@@ -1855,158 +1848,6 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
             uvs.push(lineUvs);
             offsets.push(lineOffsets);
         }
-    }
-
-    private transformAndCutLines(
-        localLines: number[][],
-        worldLines: number[][],
-        uvs: number[][],
-        offsets: number[][],
-        geometry: ILineGeometry[],
-        extents: number,
-        hasUntiledLines: boolean,
-        computeTexCoords?: TexCoordsFunction
-    ) {
-        const intersectionPoint = new THREE.Vector2();
-        const segments: Segment2[] = [
-            { P0: new THREE.Vector2(0.0, 0.0), P1: new THREE.Vector2(0.0, extents) },
-            { P0: new THREE.Vector2(0.0, extents), P1: new THREE.Vector2(extents, extents) },
-            { P0: new THREE.Vector2(extents, extents), P1: new THREE.Vector2(extents, 0.0) },
-            { P0: new THREE.Vector2(extents, 0.0), P1: new THREE.Vector2(0.0, 0.0) }
-        ];
-
-        const intersect = (
-            localLine: number[],
-            worldLine: number[],
-            lineUvs: number[],
-            lineOffsets: number[],
-            untiledLine: UntiledLine,
-            currentPos: THREE.Vector2,
-            nextPos: THREE.Vector2
-        ) => {
-            for (const segment of segments) {
-                const isIntersect = LineSegmentsIntersection(
-                    segment.P0,
-                    segment.P1,
-                    currentPos,
-                    nextPos,
-                    intersectionPoint
-                );
-                if (isIntersect) {
-                    this.addLinePoint(
-                        intersectionPoint,
-                        localLine,
-                        worldLine,
-                        lineUvs,
-                        lineOffsets,
-                        untiledLine,
-                        extents,
-                        hasUntiledLines,
-                        computeTexCoords
-                    );
-                }
-            }
-        };
-
-        geometry.forEach(polyline => {
-            const { positions } = polyline;
-            const localLine: number[] = [];
-            const worldLine: number[] = [];
-            const lineUvs: number[] = [];
-            const lineOffsets: number[] = [];
-            const untiledLine = this.computeUntiledLine(polyline, hasUntiledLines);
-
-            const pointsInside = positions.map(
-                pos => pos.x < extents && pos.x > 0.0 && pos.y < extents && pos.y > 0.0
-            );
-
-            const iterations = positions.length - 1;
-            for (let i = 0; i < iterations; i++) {
-                const currentPosIntersects = pointsInside[i];
-                const nextPosPosIntersects = pointsInside[i + 1];
-                const currentPos = positions[i];
-                const nextPos = positions[i + 1];
-
-                if (currentPosIntersects === false && nextPosPosIntersects === false) {
-                    intersect(
-                        localLine,
-                        worldLine,
-                        lineUvs,
-                        lineOffsets,
-                        untiledLine,
-                        currentPos,
-                        nextPos
-                    );
-                } else if (currentPosIntersects === true && nextPosPosIntersects === true) {
-                    if (i === 0) {
-                        this.addLinePoint(
-                            currentPos,
-                            localLine,
-                            worldLine,
-                            lineUvs,
-                            lineOffsets,
-                            untiledLine,
-                            extents,
-                            hasUntiledLines,
-                            computeTexCoords
-                        );
-                    }
-                    this.addLinePoint(
-                        nextPos,
-                        localLine,
-                        worldLine,
-                        lineUvs,
-                        lineOffsets,
-                        untiledLine,
-                        extents,
-                        hasUntiledLines,
-                        computeTexCoords
-                    );
-                } else if (currentPosIntersects !== nextPosPosIntersects) {
-                    if (i === 0 && currentPosIntersects) {
-                        this.addLinePoint(
-                            currentPos,
-                            localLine,
-                            worldLine,
-                            lineUvs,
-                            lineOffsets,
-                            untiledLine,
-                            extents,
-                            hasUntiledLines,
-                            computeTexCoords
-                        );
-                    }
-                    intersect(
-                        localLine,
-                        worldLine,
-                        lineUvs,
-                        lineOffsets,
-                        untiledLine,
-                        currentPos,
-                        nextPos
-                    );
-                    if (nextPosPosIntersects) {
-                        this.addLinePoint(
-                            nextPos,
-                            localLine,
-                            worldLine,
-                            lineUvs,
-                            lineOffsets,
-                            untiledLine,
-                            extents,
-                            hasUntiledLines,
-                            computeTexCoords
-                        );
-                    }
-                } else {
-                    throw new Error("NEVER");
-                }
-            }
-            localLines.push(localLine);
-            worldLines.push(worldLine);
-            uvs.push(lineUvs);
-            offsets.push(lineOffsets);
-        });
     }
 
     private addLinePoint(
