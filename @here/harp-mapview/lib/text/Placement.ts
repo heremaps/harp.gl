@@ -14,9 +14,11 @@ import {
 import { assert, Math2D, MathUtils } from "@here/harp-utils";
 import * as THREE from "three";
 import { PoiManager } from "../poi/PoiManager";
+import { PoiRenderer } from "../poi/PoiRenderer";
 import { CollisionBox, DetailedCollisionBox, IBox, ScreenCollisions } from "../ScreenCollisions";
 import { ScreenProjector } from "../ScreenProjector";
-import { poiIsRenderable, TextElement } from "./TextElement";
+import { RenderState } from "./RenderState";
+import { PoiInfo, poiIsRenderable, TextElement } from "./TextElement";
 import { TextElementState } from "./TextElementState";
 import { TextElementType } from "./TextElementType";
 import { ViewState } from "./ViewState";
@@ -246,6 +248,39 @@ export enum PlacementResult {
     Ok,
     Rejected,
     Invisible
+}
+
+/**
+ * Places an icon on screen.
+ * @param iconRenderState The icon state.
+ * @param poiInfo Icon information necessary to compute its dimensions.
+ * @param screenPosition Screen position of the icon.
+ * @param scaleFactor Scaling factor to apply to the icon dimensions.
+ * @param screenCollisions Used to check the icon visibility and collisions.
+ * @param zoomLevel Current zoom level.
+ * @returns `PlacementResult.Ok` if icon can be placed, `PlacementResult.Rejected` if there's
+ * a collision, `PlacementResult.Invisible` if it's not visible.
+ */
+export function placeIcon(
+    iconRenderState: RenderState,
+    poiInfo: PoiInfo,
+    screenPosition: THREE.Vector2,
+    scaleFactor: number,
+    zoomLevel: number,
+    screenCollisions: ScreenCollisions
+): PlacementResult {
+    PoiRenderer.computeIconScreenBox(poiInfo, screenPosition, scaleFactor, zoomLevel, tmp2DBox);
+    if (!screenCollisions.isVisible(tmp2DBox)) {
+        return PlacementResult.Invisible;
+    }
+
+    const iconSpaceAvailable =
+        poiInfo.mayOverlap === true || !screenCollisions.isAllocated(tmp2DBox);
+
+    if (!iconSpaceAvailable) {
+        return iconRenderState.isVisible() ? PlacementResult.Rejected : PlacementResult.Invisible;
+    }
+    return PlacementResult.Ok;
 }
 
 /**
