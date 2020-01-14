@@ -419,6 +419,9 @@ export class TextStyleCache {
             const vAlignment = getPropertyValue(technique.vAlignment, floorZoomLevel) as
                 | string
                 | undefined;
+            const wrapping = getPropertyValue(technique.wrappingMode, floorZoomLevel) as
+                | string
+                | undefined;
 
             const horizontalAlignment: HorizontalAlignment | undefined =
                 hAlignment === "Left" || hAlignment === "Center" || hAlignment === "Right"
@@ -431,23 +434,27 @@ export class TextStyleCache {
                     : defaultLayoutParams.verticalAlignment;
 
             const layoutParams = {
-                tracking: getOptionValue(technique.tracking, defaultLayoutParams.tracking),
-                leading: getOptionValue(technique.leading, defaultLayoutParams.leading),
-                maxLines: getOptionValue(technique.maxLines, defaultLayoutParams.maxLines),
-                lineWidth: getOptionValue(technique.lineWidth, defaultLayoutParams.lineWidth),
-                canvasRotation: getOptionValue(
-                    technique.canvasRotation,
-                    defaultLayoutParams.canvasRotation
-                ),
-                lineRotation: getOptionValue(
-                    technique.lineRotation,
-                    defaultLayoutParams.lineRotation
-                ),
+                tracking:
+                    getPropertyValue(technique.tracking, floorZoomLevel) ??
+                    defaultLayoutParams.tracking,
+                leading:
+                    getPropertyValue(technique.leading, floorZoomLevel) ??
+                    defaultLayoutParams.leading,
+                maxLines:
+                    getPropertyValue(technique.maxLines, floorZoomLevel) ??
+                    defaultLayoutParams.maxLines,
+                lineWidth:
+                    getPropertyValue(technique.lineWidth, floorZoomLevel) ??
+                    defaultLayoutParams.lineWidth,
+                canvasRotation:
+                    getPropertyValue(technique.canvasRotation, floorZoomLevel) ??
+                    defaultLayoutParams.canvasRotation,
+                lineRotation:
+                    getPropertyValue(technique.lineRotation, floorZoomLevel) ??
+                    defaultLayoutParams.lineRotation,
                 wrappingMode:
-                    technique.wrappingMode === "None" ||
-                    technique.wrappingMode === "Character" ||
-                    technique.wrappingMode === "Word"
-                        ? WrappingMode[technique.wrappingMode]
+                    wrapping === "None" || wrapping === "Character" || wrapping === "Word"
+                        ? WrappingMode[wrapping]
                         : defaultLayoutParams.wrappingMode,
                 horizontalAlignment,
                 verticalAlignment
