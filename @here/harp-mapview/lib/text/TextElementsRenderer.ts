@@ -45,7 +45,8 @@ import {
     PlacementResult,
     placePathLabel,
     placePointLabel,
-    PrePlacementResult
+    PrePlacementResult,
+    placeIcon
 } from "./Placement";
 import { PlacementStats } from "./PlacementStats";
 import { RenderState } from "./RenderState";
@@ -185,6 +186,98 @@ function addTextToCanvas(
     tmpAdditionParams.letterCaseArray = textElement.glyphCaseArray;
     tmpAdditionParams.pickingData = textElement.userData ? textElement : undefined;
     canvas.addText(textElement.glyphs!, screenPosition, tmpAdditionParams);
+}
+
+function addTextBufferToCanvas(
+    textElementState: TextElementState,
+    canvas: TextCanvas,
+    screenPosition: THREE.Vector3,
+    fadeFactor: number,
+    scaleFactor: number
+): boolean {
+    const textElement = textElementState.element;
+    const textRenderState = textElementState.textRenderState;
+    const opacity = textRenderState!.opacity * fadeFactor * textElement.renderStyle!.opacity;
+
+    if (opacity === 0) {
+        return false;
+    }
+
+    // Compute the TextBufferObject when we know we're gonna render this label.
+    tmpTextBufferCreationParams.letterCaseArray = textElement.glyphCaseArray;
+    if (textElement.textBufferObject === undefined) {
+        textElement.textBufferObject = canvas.createTextBufferObject(
+            textElement.glyphs!,
+            tmpTextBufferCreationParams
+        );
+    }
+    const backgroundIsVisible =
+        textElement.renderStyle!.backgroundOpacity > 0 &&
+        canvas.textRenderStyle.fontSize.backgroundSize > 0;
+
+    tmpBufferAdditionParams.layer = textElement.renderOrder;
+    tmpBufferAdditionParams.position = screenPosition;
+    tmpBufferAdditionParams.scale = scaleFactor;
+    tmpBufferAdditionParams.opacity = opacity;
+    tmpBufferAdditionParams.backgroundOpacity = backgroundIsVisible
+        ? tmpBufferAdditionParams.opacity * textElement.renderStyle!.backgroundOpacity
+        : 0.0;
+    tmpBufferAdditionParams.pickingData = textElement.userData ? textElement : undefined;
+    canvas.addTextBufferObject(textElement.textBufferObject!, tmpBufferAdditionParams);
+    return true;
+}
+
+function shouldRenderPointText(
+    labelState: TextElementState,
+    viewState: ViewState,
+    options: TextElementsRendererOptions
+): boolean {
+    const textRenderState: RenderState | undefined = labelState.textRenderState;
+    const label = labelState.element;
+    const poiInfo = label.poiInfo;
+
+    assert(label.type !== TextElementType.PathLabel);
+
+    const hasText = textRenderState !== undefined && label.text !== "";
+    if (!hasText) {
+        return false;
+    }
+
+    const visibleInZoomLevel =
+        poiInfo === undefined ||
+        viewState.zoomLevel === undefined ||
+        MathUtils.isClamped(
+            viewState.zoomLevel,
+            poiInfo.iconMinZoomLevel,
+            poiInfo.iconMaxZoomLevel
+        );
+    if (!visibleInZoomLevel) {
+        return false;
+    }
+
+    const poiTextMaxDistance = getMaxViewDistance(viewState, options.maxDistanceRatioForPoiLabels!);
+    const visibleAtDistance =
+        label.ignoreDistance === true ||
+        labelState.viewDistance === undefined ||
+        labelState.viewDistance < poiTextMaxDistance;
+    if (!visibleAtDistance) {
+        return false;
+    }
+
+    // Do not render text if POI cannot be rendered and is not optional.
+    return poiInfo === undefined || poiInfo.isValid === true || poiInfo.iconIsOptional !== false;
+}
+
+function shouldRenderPoiText(labelState: TextElementState, viewState: ViewState) {
+    // Do not actually render (just allocate space) if camera is moving and
+    // renderTextDuringMovements is not true.
+    const poiInfo = labelState.element.poiInfo;
+
+    return (
+        !viewState.cameraIsMoving ||
+        poiInfo === undefined ||
+        poiInfo.renderTextDuringMovements === true
+    );
 }
 
 export type ViewUpdateCallback = () => void;
@@ -1436,47 +1529,25 @@ export class TextElementsRenderer {
                 : labelState.iconRenderState!;
         assert(iconRenderState !== undefined);
 
-        const poiTextMaxDistance = getMaxViewDistance(
-            this.m_viewState,
-            this.m_options.maxDistanceRatioForPoiLabels!
-        );
-        const hasText = textRenderState !== undefined && pointLabel.text !== "";
-
         // Find the label's original position.
         tempScreenPosition.x = tempPoiScreenPosition.x = screenPosition.x;
         tempScreenPosition.y = tempPoiScreenPosition.y = screenPosition.y;
 
         // Scale the text depending on the label's distance to the camera.
-        let textScale = 1.0;
-        let distanceScaleFactor = 1.0;
         const textDistance = this.m_viewState.worldCenter.distanceTo(position);
-        if (textDistance !== undefined) {
-            if (
-                pointLabel.fadeFar !== undefined &&
-                (pointLabel.fadeFar <= 0.0 ||
-                    pointLabel.fadeFar * this.m_viewState.maxVisibilityDist < textDistance)
-            ) {
-                // The label is farther away than fadeFar value, which means it is totally
-                // transparent.
-                if (placementStats) {
-                    ++placementStats.tooFar;
-                }
-                return false;
+        if (
+            pointLabel.fadeFar !== undefined &&
+            (pointLabel.fadeFar <= 0.0 ||
+                pointLabel.fadeFar * this.m_viewState.maxVisibilityDist < textDistance)
+        ) {
+            // The label is farther away than fadeFar value, which means it is totally
+            // transparent.
+            if (placementStats) {
+                ++placementStats.tooFar;
             }
-            labelState.setViewDistance(textDistance);
-
-            distanceScaleFactor = this.getDistanceScalingFactor(
-                pointLabel,
-                textDistance,
-                this.m_viewState.lookAtDistance
-            );
-            textScale *= distanceScaleFactor;
+            return false;
         }
-        const distanceFadeFactor = this.getDistanceFadingFactor(
-            pointLabel,
-            labelState,
-            this.m_viewState.maxVisibilityDist
-        );
+        labelState.setViewDistance(textDistance);
 
         // Check if there is need to check for screen space for the label's icon.
         const poiInfo = pointLabel.poiInfo;
@@ -1492,21 +1563,24 @@ export class TextElementsRenderer {
             ) &&
             poiInfo!.isValid !== false;
 
+        const distanceScaleFactor = this.getDistanceScalingFactor(
+            pointLabel,
+            textDistance,
+            this.m_viewState.lookAtDistance
+        );
         const iconReady =
             renderIcon && poiRenderer.prepareRender(pointLabel, this.m_viewState.zoomLevel);
 
         if (iconReady) {
-            PoiRenderer.computeIconScreenBox(
+            const result = placeIcon(
+                iconRenderState,
                 poiInfo!,
                 tempPoiScreenPosition,
                 distanceScaleFactor,
                 this.m_viewState.zoomLevel,
-                tempBox2D
+                this.m_screenCollisions
             );
-            const iconIsVisible = this.m_screenCollisions.isVisible(tempBox2D);
-
-            // If the icon is prepared and valid, but just not visible, try again next time.
-            if (!iconIsVisible) {
+            if (result === PlacementResult.Invisible) {
                 iconRenderState.reset();
 
                 if (placementStats) {
@@ -1514,52 +1588,27 @@ export class TextElementsRenderer {
                 }
                 return false;
             }
-
-            const iconSpaceAvailable =
-                poiInfo!.mayOverlap === true || !this.m_screenCollisions.isAllocated(tempBox2D);
-
-            if (!iconSpaceAvailable && !iconRenderState.isVisible()) {
-                if (placementStats) {
-                    ++placementStats.numNotVisible;
-                }
-                return false;
-            }
-            iconRejected = !iconSpaceAvailable;
+            iconRejected = result === PlacementResult.Rejected;
         } else if (renderIcon && poiInfo!.isValid !== false) {
             // Ensure that text elements still loading icons get a chance to be rendered if
             // there's no text element updates in the next frames.
             this.m_forceNewLabelsPass = true;
         }
 
-        // Check if label should be rendered at this zoomLevel
-        const renderText =
-            hasText &&
-            (poiInfo === undefined ||
-                this.m_viewState.zoomLevel === undefined ||
-                MathUtils.isClamped(
-                    this.m_viewState.zoomLevel,
-                    poiInfo.iconMinZoomLevel,
-                    poiInfo.iconMaxZoomLevel
-                ));
-
-        // Check if we should render the label's text.
-        const doRenderText =
-            // Render if between min/max zoom level
-            renderText &&
-            // Do not render if the distance is too great and distance shouldn't be ignored.
-            (pointLabel.ignoreDistance === true ||
-                labelState.viewDistance === undefined ||
-                labelState.viewDistance < poiTextMaxDistance) &&
-            // Do not render text if POI cannot be rendered and is not optional.
-            (poiInfo === undefined || poiInfo.isValid === true || poiInfo.iconIsOptional !== false);
+        const distanceFadeFactor = this.getDistanceFadingFactor(
+            pointLabel,
+            labelState,
+            this.m_viewState.maxVisibilityDist
+        );
+        const renderText = shouldRenderPointText(labelState, this.m_viewState, this.m_options);
 
         // Render the label's text...
         // textRenderState is always defined at this point.
-        if (doRenderText) {
+        if (renderText) {
             const placeResult = placePointLabel(
                 labelState,
                 tempScreenPosition,
-                textScale,
+                distanceScaleFactor,
                 textCanvas,
                 this.m_screenCollisions,
                 iconRejected,
@@ -1584,59 +1633,27 @@ export class TextElementsRenderer {
                 textRenderState!.startFadeOut(renderParams.time);
             }
 
-            const textNeedsDraw = !textRejected || textRenderState!.isFading();
+            const textNeedsDraw =
+                (!textRejected && shouldRenderPoiText(labelState, this.m_viewState)) ||
+                textRenderState!.isFading();
 
             if (textNeedsDraw) {
-                // Do not actually render (just allocate space) if camera is moving and
-                // renderTextDuringMovements is not true.
+                if (!textRejected) {
+                    textRenderState!.startFadeIn(renderParams.time);
+                }
+                renderParams.fadeAnimationRunning =
+                    renderParams.fadeAnimationRunning || textRenderState!.isFading();
                 if (
-                    (textRenderState!.isFading() ||
-                        !this.m_viewState.cameraIsMoving ||
-                        poiInfo === undefined ||
-                        poiInfo.renderTextDuringMovements === true) &&
-                    !iconRenderState.isFadedOut()
+                    addTextBufferToCanvas(
+                        labelState,
+                        textCanvas,
+                        tempPosition,
+                        distanceFadeFactor,
+                        distanceScaleFactor
+                    ) &&
+                    placementStats
                 ) {
-                    if (!textRejected) {
-                        textRenderState!.startFadeIn(renderParams.time);
-                    }
-                    renderParams.fadeAnimationRunning =
-                        renderParams.fadeAnimationRunning || textRenderState!.isFading();
-                    const opacity =
-                        textRenderState!.opacity *
-                        distanceFadeFactor *
-                        pointLabel.renderStyle!.opacity;
-                    if (opacity > 0) {
-                        // Compute the TextBufferObject when we know we're gonna render this label.
-                        tmpTextBufferCreationParams.letterCaseArray = pointLabel.glyphCaseArray;
-                        if (pointLabel.textBufferObject === undefined) {
-                            pointLabel.textBufferObject = textCanvas.createTextBufferObject(
-                                pointLabel.glyphs!,
-                                tmpTextBufferCreationParams
-                            );
-                        }
-                        const backgroundIsVisible =
-                            pointLabel.renderStyle!.backgroundOpacity > 0 &&
-                            textCanvas.textRenderStyle.fontSize.backgroundSize > 0;
-
-                        tmpBufferAdditionParams.layer = pointLabel.renderOrder;
-                        tmpBufferAdditionParams.position = tempPosition;
-                        tmpBufferAdditionParams.scale = textScale;
-                        tmpBufferAdditionParams.opacity = opacity;
-                        tmpBufferAdditionParams.backgroundOpacity = backgroundIsVisible
-                            ? tmpBufferAdditionParams.opacity *
-                              pointLabel.renderStyle!.backgroundOpacity
-                            : 0.0;
-                        tmpBufferAdditionParams.pickingData = pointLabel.userData
-                            ? pointLabel
-                            : undefined;
-                        textCanvas.addTextBufferObject(
-                            pointLabel.textBufferObject!,
-                            tmpBufferAdditionParams
-                        );
-                        if (placementStats) {
-                            placementStats.numRenderedPoiTexts++;
-                        }
-                    }
+                    placementStats.numRenderedPoiTexts++;
                 }
             }
         }
@@ -1664,7 +1681,7 @@ export class TextElementsRenderer {
                     labelState.renderDistance,
                     distanceScaleFactor,
                     allocateSpace,
-                    iconRenderState.opacity * distanceFadeFactor,
+                    opacity,
                     this.m_viewState.zoomLevel
                 );
 
