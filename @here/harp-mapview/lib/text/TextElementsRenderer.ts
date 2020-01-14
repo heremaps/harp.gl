@@ -66,8 +66,6 @@ import { TextElementStyle, TextStyleCache } from "./TextStyleCache";
 import { UpdateStats } from "./UpdateStats";
 import { ViewState } from "./ViewState";
 
-const MAX_INITIALIZED_TEXT_ELEMENTS_PER_FRAME = Infinity;
-
 interface RenderParams {
     numRenderedTextElements: number;
     // TODO: HARP-7373. Move to update() method at the end of the frame.
@@ -215,7 +213,6 @@ export class TextElementsRenderer {
     private m_initPromise: Promise<void> | undefined;
     private m_glyphLoadingCount: number = 0;
     private m_loadPromise: Promise<any> | undefined;
-    private m_initializedTextElementCount = 0;
     private readonly m_options: TextElementsRendererOptions;
 
     private readonly m_textStyleCache: TextStyleCache;
@@ -584,7 +581,6 @@ export class TextElementsRenderer {
             textRenderer.textCanvas.clear();
             textRenderer.poiRenderer.reset();
         }
-        this.m_initializedTextElementCount = 0;
     }
 
     /**
@@ -737,7 +733,8 @@ export class TextElementsRenderer {
                 }
             }
 
-            if (!this.initializeGlyphs(textElement, textElementStyle)) {
+            const forceNewPassOnLoaded = true;
+            if (!this.initializeGlyphs(textElement, textElementStyle, forceNewPassOnLoaded)) {
                 continue;
             }
 
@@ -780,7 +777,8 @@ export class TextElementsRenderer {
 
     private initializeGlyphs(
         textElement: TextElement,
-        textElementStyle: TextElementStyle
+        textElementStyle: TextElementStyle,
+        forceNewPassOnLoaded: boolean
     ): boolean {
         // Trigger the glyph load if needed.
         if (textElement.loadingState === LoadingState.Initialized) {
@@ -816,7 +814,8 @@ export class TextElementsRenderer {
                         textElement.loadingState = LoadingState.Loaded;
                         // Ensure that text elements still loading glyphs get a chance to
                         // be rendered if there's no text element updates in the next frames.
-                        this.m_forceNewLabelsPass = true;
+                        this.m_forceNewLabelsPass =
+                            this.m_forceNewLabelsPass || forceNewPassOnLoaded;
                         this.m_viewUpdateCallback();
                     });
                 if (this.m_glyphLoadingCount === 0) {
@@ -831,19 +830,16 @@ export class TextElementsRenderer {
             }
         }
         if (textElement.loadingState === LoadingState.Loaded) {
-            if (this.m_initializedTextElementCount < MAX_INITIALIZED_TEXT_ELEMENTS_PER_FRAME) {
-                textCanvas.textRenderStyle = textElement.renderStyle!;
-                textCanvas.textLayoutStyle = textElement.layoutStyle!;
-                textElement.glyphCaseArray = [];
-                textElement.bounds = undefined;
-                textElement.glyphs = textCanvas.fontCatalog.getGlyphs(
-                    textElement.text,
-                    textCanvas.textRenderStyle,
-                    textElement.glyphCaseArray
-                );
-                textElement.loadingState = LoadingState.Initialized;
-                ++this.m_initializedTextElementCount;
-            }
+            textCanvas.textRenderStyle = textElement.renderStyle!;
+            textCanvas.textLayoutStyle = textElement.layoutStyle!;
+            textElement.glyphCaseArray = [];
+            textElement.bounds = undefined;
+            textElement.glyphs = textCanvas.fontCatalog.getGlyphs(
+                textElement.text,
+                textCanvas.textRenderStyle,
+                textElement.glyphCaseArray
+            );
+            textElement.loadingState = LoadingState.Initialized;
         }
         // Return true as soon as a text element has some glyphs assigned so that it's rendered.
         // The glyphs may be either the final ones or some temporal glyphs inherited from a
@@ -1310,48 +1306,9 @@ export class TextElementsRenderer {
                 continue;
             }
 
-            // Trigger the glyph load if needed.
-            if (textElement.loadingState === undefined) {
-                textElement.loadingState = LoadingState.Requested;
+            const forceNewPassOnLoaded = false;
+            this.initializeGlyphs(textElement, textElementStyle, forceNewPassOnLoaded);
 
-                if (textElement.renderStyle === undefined) {
-                    textElement.renderStyle = new TextRenderStyle({
-                        ...textElementStyle.renderParams,
-                        ...textElement.renderParams
-                    });
-                }
-                if (textElement.layoutStyle === undefined) {
-                    textElement.layoutStyle = new TextLayoutStyle({
-                        ...textElementStyle.layoutParams,
-                        ...textElement.layoutParams
-                    });
-                }
-
-                if (textElement.text === "") {
-                    textElement.loadingState = LoadingState.Loaded;
-                } else {
-                    textCanvas.fontCatalog
-                        .loadCharset(textElement.text, textElement.renderStyle)
-                        .then(() => {
-                            textElement.loadingState = LoadingState.Loaded;
-                            this.m_viewUpdateCallback();
-                        });
-                }
-            }
-            if (textElement.loadingState === LoadingState.Loaded) {
-                if (this.m_initializedTextElementCount < MAX_INITIALIZED_TEXT_ELEMENTS_PER_FRAME) {
-                    textCanvas.textRenderStyle = textElement.renderStyle!;
-                    textCanvas.textLayoutStyle = textElement.layoutStyle!;
-                    textElement.glyphCaseArray = [];
-                    textElement.glyphs = textCanvas.fontCatalog.getGlyphs(
-                        textElement.text,
-                        textCanvas.textRenderStyle,
-                        textElement.glyphCaseArray
-                    );
-                    textElement.loadingState = LoadingState.Initialized;
-                    ++this.m_initializedTextElementCount;
-                }
-            }
             if (textElement.loadingState !== LoadingState.Initialized) {
                 continue;
             }
