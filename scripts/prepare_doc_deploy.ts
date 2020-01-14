@@ -6,7 +6,7 @@
 
 import { execSync } from "child_process";
 import { writeFileSync } from "fs";
-import { ensureDirSync, moveSync } from "fs-extra";
+import { copySync, ensureDirSync, moveSync } from "fs-extra";
 
 // tslint:disable-next-line:no-var-requires
 const fetch = require("node-fetch");
@@ -31,14 +31,7 @@ const folderName = branch !== "master" ? commitHash : "master";
 // │   ├── releases.json (list all releases in order)
 
 ensureDirSync("dist/gh_deploy");
-moveSync("dist/index.html", "dist/gh_deploy/index.html");
-moveSync("dist/css", "dist/gh_deploy/css");
-moveSync("dist/resources", "dist/gh_deploy/resources");
-moveSync("dist/js", "dist/gh_deploy/js");
-moveSync("dist/redirect_examples", "dist/gh_deploy/examples");
-moveSync("dist/redirect_docs", "dist/gh_deploy/docs");
-
-moveSync("dist/_config.yml", "dist/gh_deploy/_config.yml");
+copySync("www/dist/", "dist/gh_deploy/");
 
 ensureDirSync(`dist/s3_deploy/${folderName}`);
 moveSync("dist/doc", `dist/s3_deploy/${folderName}/doc`);
