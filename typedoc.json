@@ -7,6 +7,7 @@
         "**/node_modules/**",
         "**/@here/harp.gl/lib/*.ts",
         "**/test/**/*.ts",
+        "**/www/**/*.ts",
         "**/dist/**/*.ts",
         "**/scripts/*.ts",
         "**/@here/generator-harp.gl/**/*.ts",

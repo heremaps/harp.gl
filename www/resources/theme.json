@@ -591,11 +591,11 @@
                     "maxSlope": 0.8799999999999999,
                     "lineWidth": 1,
                     "lineColor": "#95DFCC",
-                    "lineColorMix": 0.1,
+                    "lineColorMix": 0.3,
                     "fadeNear": 0.1,
-                    "fadeFar": 1,
-                    "lineFadeNear": 0.1,
-                    "lineFadeFar": 0.7
+                    "fadeFar": 0.25,
+                    "lineFadeNear": 0.05,
+                    "lineFadeFar": 0.25
                 },
                 "renderOrder": 2000
             }
