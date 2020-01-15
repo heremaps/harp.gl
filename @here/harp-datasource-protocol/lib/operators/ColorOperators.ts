@@ -7,10 +7,21 @@
 import * as THREE from "three";
 
 import { ColorUtils } from "../ColorUtils";
-import { CallExpr } from "../Expr";
+import { CallExpr, Value } from "../Expr";
 import { ExprEvaluatorContext, OperatorDescriptorMap } from "../ExprEvaluator";
+import { parseStringEncodedColor } from "../StringEncodedNumeral";
 
 const operators = {
+    alpha: {
+        call: (context: ExprEvaluatorContext, call: CallExpr) => {
+            let color: Value | undefined = context.evaluate(call.args[0]);
+            if (typeof color === "string") {
+                color = parseStringEncodedColor(color);
+            }
+            const alpha = typeof color === "number" ? ColorUtils.getAlphaFromHex(color) : 1;
+            return alpha;
+        }
+    },
     rgba: {
         call: (context: ExprEvaluatorContext, call: CallExpr) => {
             const r = context.evaluate(call.args[0]);
