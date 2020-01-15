@@ -1066,8 +1066,8 @@ export class PerformanceStatistics {
             }
         }
 
-        if (window !== undefined && window.performance !== undefined) {
-            const memory = (window.performance as any).memory as ChromeMemoryInfo;
+        if (typeof self !== "undefined" && self.performance !== undefined) {
+            const memory = (self.performance as any).memory as ChromeMemoryInfo;
             if (memory !== undefined) {
                 this.currentFrame.setValue("memory.totalJSHeapSize", memory.totalJSHeapSize);
                 this.currentFrame.setValue("memory.usedJSHeapSize", memory.usedJSHeapSize);
