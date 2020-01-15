@@ -400,9 +400,8 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
 
                 // Compute length of whole line and offsets of individual segments.
                 let lineLength = 0;
-                if (polyline.positions.length > 1) {
-                    const pointCount = polyline.positions.length;
-
+                const pointCount = polyline.positions.length;
+                if (pointCount > 1) {
                     let lastSegmentOffset = 0;
 
                     for (let i = 0; i < pointCount - 1; i++) {
@@ -521,9 +520,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                         "OmvDecodedTileEmitter#processLineFeature: " +
                             "Internal error - No localLineSegments"
                     );
-                }
 
-                if (hasIndividualLineSegments) {
                     this.applyLineTechnique(
                         lineGeometry,
                         technique,
@@ -1372,7 +1369,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                         const geom = new THREE.BufferGeometry();
 
                         const positionArray = [];
-                        const uconstray = [];
+                        const uvArray = [];
                         const edgeArray = [];
                         const wallArray = [];
 
@@ -1388,7 +1385,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                             );
                             positionArray.push(worldPos.x, worldPos.y, 0);
                             if (texCoordType !== undefined) {
-                                uconstray.push(vertices[i + 2], vertices[i + 3]);
+                                uvArray.push(vertices[i + 2], vertices[i + 3]);
                             }
                             edgeArray.push(vertices[i + featureStride]);
                             wallArray.push(vertices[i + featureStride + 1]);
@@ -1402,7 +1399,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                         geom.setAttribute("position", posAttr);
                         let uvAttr: THREE.BufferAttribute | undefined;
                         if (texCoordType !== undefined) {
-                            uvAttr = new THREE.BufferAttribute(new Float32Array(uconstray), 2);
+                            uvAttr = new THREE.BufferAttribute(new Float32Array(uvArray), 2);
                             geom.setAttribute("uv", uvAttr);
                         }
                         const edgeAttr = new THREE.BufferAttribute(new Float32Array(edgeArray), 1);

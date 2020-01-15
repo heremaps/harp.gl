@@ -38,8 +38,7 @@ const DefinesLineCapsMapping: { [key: number]: LineCaps } = Object.keys(
 }, ({} as any) as { [key: number]: LineCaps });
 
 export enum LineDashesModes {
-    DASHES_NONE = 0,
-    DASHES_SQUARE,
+    DASHES_SQUARE = 0,
     DASHES_ROUND,
     DASHES_DIAMOND
 }
@@ -175,6 +174,10 @@ uniform vec2 drawRange;
 uniform float dashSize;
 uniform float gapSize;
 uniform vec3 dashColor;
+
+#define DASHES_SQUARE ${LineDashesModes.DASHES_SQUARE}
+#define DASHES_ROUND ${LineDashesModes.DASHES_ROUND}
+#define DASHES_DIAMOND ${LineDashesModes.DASHES_DIAMOND}
 #endif
 
 varying vec3 vPosition;
@@ -399,7 +402,8 @@ export class SolidLineMaterial extends THREE.RawShaderMaterial
 
         // Setup default defines.
         const defines: { [key: string]: any } = {
-            CAPS_MODE: LineCapsModes.CAPS_ROUND
+            CAPS_MODE: LineCapsModes.CAPS_ROUND,
+            DASHES_MODE: LineDashesModes.DASHES_SQUARE
         };
 
         // Prepare defines based on params passed in, before super class c-tor, this ensures
@@ -688,7 +692,7 @@ export class SolidLineMaterial extends THREE.RawShaderMaterial
     }
     set caps(value: LineCaps) {
         // Line caps mode may be set directly from theme, thus we need to check value
-        // correctness and if we provide string to define mapping.
+        // for correctness and provide string to define mapping in fragment shader.
         if (LineCapsDefinesMapping.hasOwnProperty(value)) {
             setShaderMaterialDefine(this, "CAPS_MODE", LineCapsDefinesMapping[value]);
         }
@@ -700,7 +704,7 @@ export class SolidLineMaterial extends THREE.RawShaderMaterial
     get dashes(): LineDashes {
         let result: LineDashes = "Square";
         const dashesMode = getShaderMaterialDefine(this, "DASHES_MODE");
-        // Sanity check if material define is numerical and has direct mapping to LineDashes)) {
+        // Sanity check if material define is numerical and has direct mapping to LineDashes type.
         if (typeof dashesMode === "number" && DefinesLineDashesMapping.hasOwnProperty(dashesMode)) {
             result = DefinesLineDashesMapping[dashesMode];
         }
@@ -708,8 +712,8 @@ export class SolidLineMaterial extends THREE.RawShaderMaterial
     }
     set dashes(value: LineDashes) {
         // Line dashes mode may be set directly from theme, thus we need to check value
-        // correctness and if we provide string to define mapping.
-        if (LineCapsDefinesMapping.hasOwnProperty(value)) {
+        // for correctness and provide string to define mapping in fragment shader.
+        if (LineDashesDefinesMapping.hasOwnProperty(value)) {
             setShaderMaterialDefine(this, "DASHES_MODE", LineDashesDefinesMapping[value]);
         }
     }
