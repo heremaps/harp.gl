@@ -175,6 +175,14 @@ Creates a `color` from the HSL components:
 ["hsl", number, number, number]
 ```
 
+## alpha
+
+Extracts the alpha component from the given color.
+
+```javascript
+["alpha", color]
+```
+
 ## !
 
 Returns `false` if its value can be converted to `true`; otherwise, returns `true`.

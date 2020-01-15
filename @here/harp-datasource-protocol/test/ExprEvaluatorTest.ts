@@ -975,6 +975,16 @@ describe("ExprEvaluator", function() {
         });
     });
 
+    describe("Operator 'alpha'", function() {
+        const EPS = 0.01;
+        it("call", function() {
+            assert.approximately(evaluate(["alpha", ["rgba", 0, 0, 0, 0.5]]) as number, 0.5, EPS);
+            assert.approximately(evaluate(["alpha", ["rgba", 0, 0, 0, 0.2]]) as number, 0.2, EPS);
+            assert.approximately(evaluate(["alpha", "#ff000000"]) as number, 0, EPS);
+            assert.approximately(evaluate(["alpha", "#ff0000ff"]) as number, 1, EPS);
+        });
+    });
+
     describe("getPropertyValue", function() {
         const env = new MapEnv(
             {
