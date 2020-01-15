@@ -1819,34 +1819,36 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
         for (const polyline of geometry) {
             // Compute the world position of the untiled line and its distance to the origin of the
             // line to properly join lines.
-            const localLine: number[] = [];
-            const worldLine: number[] = [];
-            const lineUvs: number[] = [];
-            const lineOffsets: number[] = [];
             const untiledLine = this.computeUntiledLine(polyline, hasUntiledLines);
 
-            let positions = polyline.positions;
+            let clippedPolylines = [polyline.positions];
             if (this.m_enableLineClipping) {
-                positions = clipPolyline(positions, clipShape);
+                clippedPolylines = clipPolyline(polyline.positions, clipShape);
             }
 
-            positions.forEach(pos =>
-                this.addLinePoint(
-                    pos,
-                    localLine,
-                    worldLine,
-                    lineUvs,
-                    lineOffsets,
-                    untiledLine,
-                    extents,
-                    hasUntiledLines,
-                    computeTexCoords
-                )
-            );
-            localLines.push(localLine);
-            worldLines.push(worldLine);
-            uvs.push(lineUvs);
-            offsets.push(lineOffsets);
+            clippedPolylines.forEach(positions => {
+                const localLine: number[] = [];
+                const worldLine: number[] = [];
+                const lineUvs: number[] = [];
+                const lineOffsets: number[] = [];
+                positions.forEach(pos =>
+                    this.addLinePoint(
+                        pos,
+                        localLine,
+                        worldLine,
+                        lineUvs,
+                        lineOffsets,
+                        untiledLine,
+                        extents,
+                        hasUntiledLines,
+                        computeTexCoords
+                    )
+                );
+                localLines.push(localLine);
+                worldLines.push(worldLine);
+                uvs.push(lineUvs);
+                offsets.push(lineOffsets);
+            });
         }
     }
 

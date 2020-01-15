@@ -47,42 +47,47 @@ export function clipPolygon(polygon: Vector2[], clip: Vector2[]): Vector2[] {
  * @param clip The clip shape
  * @return New polyline that is clipped to the clip shape.
  */
-export function clipPolyline(line: Vector2[], clip: Vector2[]): Vector2[] {
+export function clipPolyline(line: Vector2[], clip: Vector2[]): Vector2[][] {
     const pointsInside = line.map(point => insideClipShape(point, clip));
 
-    const outputList: Vector2[] = [];
+    let currentLine: Vector2[] = [];
+    const outputList: Vector2[][] = [];
     for (let i = 0, end = line.length - 1; i < end; ++i) {
         const currentPoint = line[i];
         const nextPoint = line[i + 1];
         const currentPointInside = pointsInside[i];
         const nextPointInside = pointsInside[i + 1];
 
-        if (!currentPointInside && !nextPointInside) {
-            const intersectionPoints = computeLineIntersectionsWithShape(
-                currentPoint,
-                nextPoint,
-                clip
-            );
-            outputList.push(...intersectionPoints);
-        } else if (currentPointInside && nextPointInside) {
-            if (i === 0) {
-                outputList.push(currentPoint);
-            }
-            outputList.push(nextPoint);
-        } else {
-            if (i === 0 && currentPointInside) {
-                outputList.push(currentPoint);
-            }
-            const intersectionPoints = computeLineIntersectionsWithShape(
-                currentPoint,
-                nextPoint,
-                clip
-            );
-            outputList.push(...intersectionPoints);
-            if (nextPointInside) {
-                outputList.push(nextPoint);
-            }
+        // start new line if start point is not inside clip shape
+        if (!currentPointInside && currentLine.length > 0) {
+            outputList.push(currentLine);
+            currentLine = [];
         }
+
+        // add initial point of line if line was restarted
+        if (currentPointInside && currentLine.length === 0) {
+            currentLine.push(currentPoint);
+        }
+
+        // add intersection points if at least one point is outside of clip shape
+        if (!currentPointInside || !nextPointInside) {
+            const intersectionPoints = computeLineIntersectionsWithShape(
+                currentPoint,
+                nextPoint,
+                clip
+            );
+            currentLine.push(...intersectionPoints);
+        }
+
+        // add next point if inside of clip shape
+        if (nextPointInside) {
+            currentLine.push(nextPoint);
+        }
+    }
+
+    // Add last current line if it's not empty
+    if (currentLine.length > 0) {
+        outputList.push(currentLine);
     }
 
     return outputList;
@@ -156,10 +161,8 @@ function computeLineIntersectionsWithShape(a: Vector2, b: Vector2, clip: Vector2
         if (intersects(a, b, p, q)) {
             const intersectionPoint = computeIntersection(a, b, p, q);
 
-            if (result.length === 0) {
-                result.push(intersectionPoint);
-            } else if (!result.some(point => point.equals(intersectionPoint))) {
-                // Avoid duplicated intersections if edges are hit
+            // Avoid duplicated intersections if edges are hit
+            if (!result.some(point => point.equals(intersectionPoint))) {
                 result.push(intersectionPoint);
             }
         }
