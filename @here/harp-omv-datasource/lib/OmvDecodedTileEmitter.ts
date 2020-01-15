@@ -26,6 +26,7 @@ import {
     isLineTechnique,
     isPoiTechnique,
     isSolidLineTechnique,
+    isSpecialDashesLineTechnique,
     isStandardTechnique,
     isTextTechnique,
     LineMarkerTechnique,
@@ -90,6 +91,7 @@ const tmpV2 = new THREE.Vector2();
 const tmpV2r = new THREE.Vector2();
 const tmpV3 = new THREE.Vector3();
 const tmpV3r = new THREE.Vector3();
+const tmpV4 = new THREE.Vector3();
 
 const tempP0 = new THREE.Vector2();
 const tempP1 = new THREE.Vector2();
@@ -333,6 +335,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
         const uvs: number[][] = [];
         const offsets: number[][] = [];
         const { projectedTileBounds } = this.m_decodeInfo;
+        let localLineSegments: number[][]; // lines in target tile space for special dashes.
 
         const tileWidth = projectedTileBounds.max.x - projectedTileBounds.min.x;
         const tileHeight = projectedTileBounds.max.y - projectedTileBounds.min.y;
@@ -342,6 +345,10 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
         let texCoordinateType: TextureCoordinateType | undefined;
 
         const hasUntiledLines = geometry[0].untiledPositions !== undefined;
+
+        // If true, special handling for dashes is required (round and diamond shaped dashes).
+        let hasIndividualLineSegments = false;
+        let hasContinuousLineSegments = false;
 
         // Check if any of the techniques needs texture coordinates
         for (const technique of techniques) {
@@ -356,6 +363,11 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                 const otherTexCoordType = this.getTextureCoordinateType(technique);
                 assert(otherTexCoordType === undefined || texCoordinateType === otherTexCoordType);
             }
+
+            hasIndividualLineSegments =
+                hasIndividualLineSegments || isSpecialDashesLineTechnique(technique);
+
+            hasContinuousLineSegments = hasContinuousLineSegments || !hasIndividualLineSegments;
         }
 
         for (const polyline of geometry) {
@@ -369,7 +381,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                     tmpV3r
                 );
                 polyline.untiledPositions!.forEach(pos => {
-                    // Calculate the distance to the next unnormalized point.
+                    // Calculate the distance to the next un-normalized point.
                     this.m_decodeInfo.targetProjection.projectPoint(pos, tmpV3);
                     lineDist += tmpV3.distanceTo(tmpV3r);
                     tmpV3r.copy(tmpV3);
@@ -380,30 +392,111 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                 });
             }
 
-            const localLine: number[] = [];
-            const worldLine: number[] = [];
-            const lineUvs: number[] = [];
-            const lineOffsets: number[] = [];
-            polyline.positions.forEach(pos => {
-                webMercatorTile2TargetWorld(extents, this.m_decodeInfo, pos, tmpV3);
-                worldLine.push(tmpV3.x, tmpV3.y, tmpV3.z);
+            // Add continuous line as individual segments to improve special dashes by overlapping
+            // their connecting vertices. The technique/style should defined round or rectangular
+            // caps.
+            if (hasIndividualLineSegments) {
+                localLineSegments = [];
 
-                if (computeTexCoords) {
-                    const { u, v } = computeTexCoords(pos, extents);
-                    lineUvs.push(u, v);
+                // Compute length of whole line and offsets of individual segments.
+                let lineLength = 0;
+                if (polyline.positions.length > 1) {
+                    const pointCount = polyline.positions.length;
+
+                    let lastSegmentOffset = 0;
+
+                    for (let i = 0; i < pointCount - 1; i++) {
+                        const localLine: number[] = [];
+                        const worldLine: number[] = [];
+                        const lineUvs: number[] = [];
+                        const segmentOffsets: number[] = [];
+
+                        const pos1 = polyline.positions[i];
+                        const pos2 = polyline.positions[i + 1];
+                        webMercatorTile2TargetWorld(extents, this.m_decodeInfo, pos1, tmpV3);
+                        worldLine.push(tmpV3.x, tmpV3.y, tmpV3.z);
+                        webMercatorTile2TargetWorld(extents, this.m_decodeInfo, pos2, tmpV4);
+                        worldLine.push(tmpV4.x, tmpV4.y, tmpV4.z);
+
+                        if (computeTexCoords) {
+                            {
+                                const { u, v } = computeTexCoords(pos1, extents);
+                                lineUvs.push(u, v);
+                            }
+                            {
+                                const { u, v } = computeTexCoords(pos2, extents);
+                                lineUvs.push(u, v);
+                            }
+                        }
+                        if (hasUntiledLines) {
+                            // Find where in the [0...1] range relative to the line our current
+                            // vertex lies.
+                            let offset =
+                                this.findRelativePositionInLine(tmpV3, untiledLine) / lineDist;
+                            segmentOffsets.push(offset);
+                            offset = this.findRelativePositionInLine(tmpV4, untiledLine) / lineDist;
+                            segmentOffsets.push(offset);
+                        } else {
+                            segmentOffsets.push(lastSegmentOffset);
+
+                            // Compute length of segment and whole line to scale down later.
+                            const segmentLength = tmpV3.distanceTo(tmpV4);
+                            lineLength += segmentLength;
+                            lastSegmentOffset += segmentLength;
+                            segmentOffsets.push(lastSegmentOffset);
+                        }
+
+                        tmpV3.sub(this.m_decodeInfo.center);
+                        localLine.push(tmpV3.x, tmpV3.y, tmpV3.z);
+                        tmpV4.sub(this.m_decodeInfo.center);
+                        localLine.push(tmpV4.x, tmpV4.y, tmpV4.z);
+
+                        localLineSegments!.push(localLine);
+                        worldLines.push(worldLine);
+                        uvs.push(lineUvs);
+                        offsets.push(segmentOffsets);
+                    }
                 }
-                if (hasUntiledLines) {
-                    // Find where in the [0...1] range relative to the line our current vertex lies.
-                    const offset = this.findRelativePositionInLine(tmpV3, untiledLine) / lineDist;
-                    lineOffsets.push(offset);
+
+                if (!hasUntiledLines && lineLength > 0) {
+                    // Scale down each individual segment to range [0..1] for whole line.
+                    for (const segOffsets of offsets) {
+                        segOffsets.forEach((offs, index) => {
+                            segOffsets[index] = offs / lineLength;
+                        });
+                    }
                 }
-                tmpV3.sub(this.m_decodeInfo.center);
-                localLine.push(tmpV3.x, tmpV3.y, tmpV3.z);
-            });
-            localLines.push(localLine);
-            worldLines.push(worldLine);
-            uvs.push(lineUvs);
-            offsets.push(lineOffsets);
+            }
+
+            // Add continuous lines
+            if (hasContinuousLineSegments) {
+                const localLine: number[] = [];
+                const worldLine: number[] = [];
+                const lineUvs: number[] = [];
+                const lineOffsets: number[] = [];
+                polyline.positions.forEach(pos => {
+                    webMercatorTile2TargetWorld(extents, this.m_decodeInfo, pos, tmpV3);
+                    worldLine.push(tmpV3.x, tmpV3.y, tmpV3.z);
+
+                    if (computeTexCoords) {
+                        const { u, v } = computeTexCoords(pos, extents);
+                        lineUvs.push(u, v);
+                    }
+                    if (hasUntiledLines) {
+                        // Find where in the [0...1] range relative to the line our current vertex
+                        // lines.
+                        const offset =
+                            this.findRelativePositionInLine(tmpV3, untiledLine) / lineDist;
+                        lineOffsets.push(offset);
+                    }
+                    tmpV3.sub(this.m_decodeInfo.center);
+                    localLine.push(tmpV3.x, tmpV3.y, tmpV3.z);
+                });
+                localLines.push(localLine);
+                worldLines.push(worldLine);
+                uvs.push(lineUvs);
+                offsets.push(lineOffsets);
+            }
         }
 
         const wantCircle = this.m_decodeInfo.tileKey.level >= 11;
@@ -422,17 +515,40 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
 
                 const lineType = isLineTechnique(technique) ? LineType.Simple : LineType.Complex;
 
-                this.applyLineTechnique(
-                    lineGeometry,
-                    technique,
-                    techniqueIndex,
-                    lineType,
-                    env.entries,
-                    localLines,
-                    context,
-                    this.getTextureCoordinateType(technique) ? uvs : undefined,
-                    hasUntiledLines ? offsets : undefined
-                );
+                if (hasIndividualLineSegments) {
+                    assert(
+                        localLineSegments! !== undefined,
+                        "OmvDecodedTileEmitter#processLineFeature: " +
+                            "Internal error - No localLineSegments"
+                    );
+                }
+
+                if (hasIndividualLineSegments) {
+                    this.applyLineTechnique(
+                        lineGeometry,
+                        technique,
+                        techniqueIndex,
+                        lineType,
+                        env.entries,
+                        localLineSegments!,
+                        context,
+                        this.getTextureCoordinateType(technique) ? uvs : undefined,
+                        offsets
+                    );
+                }
+                if (localLines.length > 0) {
+                    this.applyLineTechnique(
+                        lineGeometry,
+                        technique,
+                        techniqueIndex,
+                        lineType,
+                        env.entries,
+                        localLines,
+                        context,
+                        this.getTextureCoordinateType(technique) ? uvs : undefined,
+                        hasUntiledLines ? offsets : undefined
+                    );
+                }
             } else if (
                 isTextTechnique(technique) ||
                 isPoiTechnique(technique) ||
@@ -693,12 +809,33 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
 
                 const lineType = technique.name === "line" ? LineType.Simple : LineType.Complex;
 
+                // Use individual line segments instead of a continuous line in special cases (round
+                // and diamond shaped dashes).
+                const needIndividualLineSegments = isSpecialDashesLineTechnique(technique);
+
                 polygons.forEach(rings => {
                     const lines: number[][] = [];
+                    const offsets: number[][] | undefined = needIndividualLineSegments
+                        ? []
+                        : undefined;
                     rings.forEach(ring => {
                         const length = ring.contour.length / ring.vertexStride;
                         let line: number[] = [];
+
+                        // Compute length of whole line and offsets of individual segments.
+                        let ringLength = 0;
+                        let lastSegmentOffset = 0;
+                        let segmentOffsets: number[] | undefined = needIndividualLineSegments
+                            ? []
+                            : undefined;
+
                         for (let i = 0; i < length; ++i) {
+                            if (needIndividualLineSegments && line.length > 0) {
+                                // Allocate a line for every segment.
+                                line = [];
+                                segmentOffsets = [];
+                            }
+
                             const nextIdx = (i + 1) % length;
                             const currX = ring.contour[i * ring.vertexStride];
                             const currY = ring.contour[i * ring.vertexStride + 1];
@@ -723,8 +860,27 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                                     tmpV3
                                 );
                                 line.push(tmpV3.x, tmpV3.y, tmpV3.z);
+
+                                if (needIndividualLineSegments) {
+                                    // Add next point as the end point of this line segment.
+                                    webMercatorTile2TargetTile(
+                                        extents,
+                                        this.m_decodeInfo,
+                                        tmpV2.set(nextX, nextY),
+                                        tmpV4
+                                    );
+                                    line.push(tmpV4.x, tmpV4.y, tmpV4.z);
+
+                                    segmentOffsets!.push(lastSegmentOffset);
+
+                                    // Compute length of segment and whole line to scale down later.
+                                    const segmentLength = tmpV3.distanceTo(tmpV4);
+                                    ringLength += segmentLength;
+                                    lastSegmentOffset += segmentLength;
+                                    segmentOffsets!.push(lastSegmentOffset);
+                                }
                             }
-                            if (isOutline) {
+                            if (isOutline && !needIndividualLineSegments) {
                                 webMercatorTile2TargetTile(
                                     extents,
                                     this.m_decodeInfo,
@@ -733,8 +889,21 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                                 );
                                 line.push(tmpV3.x, tmpV3.y, tmpV3.z);
                             }
+
+                            if (needIndividualLineSegments && line.length > 0 && ringLength > 0) {
+                                // Scale down each individual segment to range [0..1] for the whole
+                                // line.
+                                segmentOffsets!.forEach((offs, index) => {
+                                    segmentOffsets![index] = offs / ringLength;
+                                });
+
+                                // Close the line segment as a single line.
+                                lines.push(line);
+                                offsets!.push(segmentOffsets!);
+                            }
                         }
-                        if (line.length) {
+
+                        if (!needIndividualLineSegments && line.length > 0) {
                             lines.push(line);
                         }
                     });
@@ -742,6 +911,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                     if (lines.length === 0) {
                         return;
                     }
+
                     this.applyLineTechnique(
                         lineGeometry,
                         technique,
@@ -749,7 +919,9 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                         lineType,
                         env.entries,
                         lines,
-                        context
+                        context,
+                        undefined,
+                        offsets!
                     );
                 });
             }
@@ -1200,7 +1372,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                         const geom = new THREE.BufferGeometry();
 
                         const positionArray = [];
-                        const uvArray = [];
+                        const uconstray = [];
                         const edgeArray = [];
                         const wallArray = [];
 
@@ -1216,7 +1388,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                             );
                             positionArray.push(worldPos.x, worldPos.y, 0);
                             if (texCoordType !== undefined) {
-                                uvArray.push(vertices[i + 2], vertices[i + 3]);
+                                uconstray.push(vertices[i + 2], vertices[i + 3]);
                             }
                             edgeArray.push(vertices[i + featureStride]);
                             wallArray.push(vertices[i + featureStride + 1]);
@@ -1230,7 +1402,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                         geom.setAttribute("position", posAttr);
                         let uvAttr: THREE.BufferAttribute | undefined;
                         if (texCoordType !== undefined) {
-                            uvAttr = new THREE.BufferAttribute(new Float32Array(uvArray), 2);
+                            uvAttr = new THREE.BufferAttribute(new Float32Array(uconstray), 2);
                             geom.setAttribute("uv", uvAttr);
                         }
                         const edgeAttr = new THREE.BufferAttribute(new Float32Array(edgeArray), 1);
