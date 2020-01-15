@@ -799,7 +799,9 @@ export class TileGeometryCreator {
                                         technique.dashSize,
                                         mapView.zoomLevel,
                                         mapView.pixelToWorld
-                                    ) * unitFactor;
+                                    ) *
+                                    unitFactor *
+                                    0.5;
                             }
 
                             if (technique.gapSize !== undefined) {
@@ -808,7 +810,9 @@ export class TileGeometryCreator {
                                         technique.gapSize,
                                         mapView.zoomLevel,
                                         mapView.pixelToWorld
-                                    ) * unitFactor;
+                                    ) *
+                                    unitFactor *
+                                    0.5;
                             }
                         }
                     );

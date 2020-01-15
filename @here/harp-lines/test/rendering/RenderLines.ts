@@ -383,6 +383,95 @@ describe("Rendering lines: ", function() {
         await renderLines(checkOverDrawLines, this, "dashed-lines-overdraw-20px", lineStyle);
     });
 
+    it("renders dashed lines with round dashes - no outline, dashSize: 16", async function() {
+        const lineStyle = {
+            dashes: "Round",
+            lineWidth: 8,
+            color: "#F00",
+            gapSize: 16,
+            dashSize: 16,
+            dashColor: "#00F"
+        };
+        await renderLines(
+            linesConfig,
+            this,
+            "dashed-lines-round-no-outline",
+            lineStyle as SolidLineMaterialParameters
+        );
+    });
+
+    it("renders dashed lines with round dashes - outlineWidth: 3, dashSize: 16", async function() {
+        const lineStyle = {
+            dashes: "Round",
+            lineWidth: 8,
+            color: "#F00",
+            gapSize: 16,
+            dashSize: 16,
+            dashColor: "#00F",
+            outlineWidth: 3,
+            outlineColor: "#0F0"
+        };
+        await renderLines(
+            linesConfig,
+            this,
+            "dashed-lines-round-outline",
+            lineStyle as SolidLineMaterialParameters
+        );
+    });
+
+    it("renders dashed lines with diamond dashes - no outline, dashSize: 16", async function() {
+        const lineStyle = {
+            dashes: "Diamond",
+            lineWidth: 8,
+            color: "#F00",
+            gapSize: 16,
+            dashSize: 16,
+            dashColor: "#00F"
+        };
+        await renderLines(
+            linesConfig,
+            this,
+            "dashed-lines-diamond-no-outline",
+            lineStyle as SolidLineMaterialParameters
+        );
+    });
+
+    it("renders dashed lines w/ diamond dashes - outlineWidth: 3, dashSize: 16", async function() {
+        const lineStyle = {
+            dashes: "Diamond",
+            lineWidth: 8,
+            color: "#F00",
+            gapSize: 16,
+            dashSize: 16,
+            dashColor: "#00F",
+            outlineWidth: 3,
+            outlineColor: "#0F0"
+        };
+        await renderLines(
+            linesConfig,
+            this,
+            "dashed-lines-diamond-outline",
+            lineStyle as SolidLineMaterialParameters
+        );
+    });
+
+    it("renders dashed lines with stretched diamond dashes", async function() {
+        const lineStyle = {
+            dashes: "Diamond",
+            lineWidth: 8,
+            color: "#F00",
+            gapSize: 0.01,
+            dashSize: 32,
+            dashColor: "#00F"
+        };
+        await renderLines(
+            linesConfig,
+            this,
+            "dashed-lines-diamond-stretched",
+            lineStyle as SolidLineMaterialParameters
+        );
+    });
+
     it("renders solid lines - caps check round", async function() {
         const lineStyle = {
             lineWidth: 20,
