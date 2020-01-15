@@ -584,6 +584,21 @@ export function isSolidLineTechnique(technique: Technique): technique is SolidLi
 }
 
 /**
+ * Type guard to check if an object is an instance of [[SolidLineTechnique]] and is a kind that
+ * has special dashes.
+ * @note Lines with special dashes need line caps to render properly.
+ */
+export function isSpecialDashesLineTechnique(
+    technique: Technique
+): technique is SolidLineTechnique {
+    return (
+        (technique.name === "solid-line" || technique.name === "dashed-line") &&
+        technique.dashes !== undefined &&
+        technique.dashes !== "Square"
+    );
+}
+
+/**
  * Type guard to check if an object is an instance of [[SegmentsTechnique]].
  */
 export function isSegmentsTechnique(technique: Technique): technique is SegmentsTechnique {
