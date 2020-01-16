@@ -124,6 +124,10 @@ function prepareInterpolateCallExpr(call: InterpolateCallExpr) {
             throw new Error("expected a numeric literal");
         }
 
+        if (stops.length > 0 && stop.value === stops[stops.length - 1]) {
+            stops[stops.length - 1] = stop.value - 0.0000001;
+        }
+
         stops.push(stop.value);
 
         if (isConstantInterpolation) {
