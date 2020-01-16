@@ -102,7 +102,7 @@ export class TileDecoderService extends WorkerService {
                 if (
                     geom.objInfos !== undefined &&
                     geom.objInfos.length === 1 &&
-                    geom.objInfos[0] !== undefined &&
+                    typeof geom.objInfos[0] === "object" &&
                     "displacementMap" in (geom.objInfos[0] as any)
                 ) {
                     transferList.push((geom.objInfos[0] as any).displacementMap.buffer);
