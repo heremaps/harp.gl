@@ -1035,6 +1035,26 @@ describe("ExprEvaluator", function() {
         });
     });
 
+    describe("Interpolations with duplicate keys", function() {
+        // prettier-ignore
+        const interp =  Expr.fromJSON(["interpolate", ["linear"], ["zoom"],
+            0, 0,
+            4, 0,
+            4, 4,
+            5, 5,
+            6, 6
+        ]);
+
+        for (let zoom = 0; zoom < 7; zoom += 0.5) {
+            const value = getPropertyValue(interp, zoom);
+            if (zoom < 4) {
+                assert.strictEqual(value, 0);
+            } else {
+                assert.isAtLeast(value, 4);
+            }
+        }
+    });
+
     describe("Instantiations", function() {
         const instantiationEnv = new MapEnv({
             y: 123
