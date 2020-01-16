@@ -2618,7 +2618,7 @@ export class MapView extends THREE.EventDispatcher {
         const stats = PerformanceStatistics.instance;
         const gatherStatistics: boolean = stats.enabled;
 
-        const frameStartTime = time;
+        const frameStartTime = gatherStatistics ? PerformanceTimer.now() : time;
 
         RENDER_EVENT.time = time;
         this.dispatchEvent(RENDER_EVENT);
