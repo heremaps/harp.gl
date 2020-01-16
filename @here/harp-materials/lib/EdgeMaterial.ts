@@ -10,6 +10,7 @@ import {
     DisplacementFeature,
     DisplacementFeatureParameters,
     ExtrusionFeature,
+    ExtrusionFeatureParameters,
     FadingFeature,
     FadingFeatureParameters
 } from "./MapMeshMaterials";
@@ -109,7 +110,8 @@ void main() {
  */
 export interface EdgeMaterialParameters
     extends FadingFeatureParameters,
-        DisplacementFeatureParameters {
+        DisplacementFeatureParameters,
+        ExtrusionFeatureParameters {
     /**
      * Edge color.
      */
@@ -137,9 +139,16 @@ export class EdgeMaterial extends THREE.RawShaderMaterial
     constructor(params?: EdgeMaterialParameters) {
         const defines: { [key: string]: any } = {};
         const hasDisplacementMap = params !== undefined && params.displacementMap !== undefined;
-
+        const hasExtrusion =
+            params !== undefined &&
+            params.extrusionRatio !== undefined &&
+            params.extrusionRatio >= ExtrusionFeatureDefs.DEFAULT_RATIO_MIN &&
+            params.extrusionRatio < ExtrusionFeatureDefs.DEFAULT_RATIO_MAX;
         if (hasDisplacementMap) {
             defines.USE_DISPLACEMENTMAP = "";
+        }
+        if (hasExtrusion) {
+            defines.USE_EXTRUSION = "";
         }
 
         const shaderParams = {
@@ -151,7 +160,7 @@ export class EdgeMaterial extends THREE.RawShaderMaterial
                 edgeColorMix: new THREE.Uniform(EdgeMaterial.DEFAULT_COLOR_MIX),
                 fadeNear: new THREE.Uniform(FadingFeature.DEFAULT_FADE_NEAR),
                 fadeFar: new THREE.Uniform(FadingFeature.DEFAULT_FADE_FAR),
-                extrusionRatio: new THREE.Uniform(ExtrusionFeatureDefs.DEFAULT_RATIO_MIN),
+                extrusionRatio: new THREE.Uniform(ExtrusionFeatureDefs.DEFAULT_RATIO_MAX),
                 displacementMap: new THREE.Uniform(
                     hasDisplacementMap ? params!.displacementMap : new THREE.Texture()
                 )
@@ -179,9 +188,11 @@ export class EdgeMaterial extends THREE.RawShaderMaterial
             if (params.fadeFar !== undefined) {
                 this.fadeFar = params.fadeFar;
             }
-
             if (params.displacementMap !== undefined) {
                 this.displacementMap = params.displacementMap;
+            }
+            if (params.extrusionRatio !== undefined) {
+                this.extrusionRatio = params.extrusionRatio;
             }
         }
     }
@@ -253,6 +264,8 @@ export class EdgeMaterial extends THREE.RawShaderMaterial
             return;
         }
         this.uniforms.extrusionRatio.value = value;
+        // NOTE: We could also disable shader extrusion chunks when it hits
+        // ExtrusionFeatureDefs.DEFAULT_RATIO_MAX value, but this would cause shader re-compile.
         const doExtrusion = value >= ExtrusionFeatureDefs.DEFAULT_RATIO_MIN;
         if (doExtrusion) {
             this.needsUpdate = this.defines.USE_EXTRUSION === undefined;
