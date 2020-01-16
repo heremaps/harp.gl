@@ -888,6 +888,7 @@ export class FrameStatsArray {
                     `  [ min=${print(simpleStats.min)}, max=${print(simpleStats.max)}, ` +
                     `avg=${print(simpleStats.avg)}, med=${print(simpleStats.median)}, ` +
                     `med95=${print(simpleStats.median95)}, med99=${print(simpleStats.median99)}, ` +
+                    `sum=${simpleStats.avg * simpleStats.numSamples}, ` +
                     `N=${print(simpleStats.numSamples)} ]`;
             }
             logger.log(s);
