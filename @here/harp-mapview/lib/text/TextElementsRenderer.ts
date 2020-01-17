@@ -2037,6 +2037,7 @@ export class TextElementsRenderer {
         }
 
         if (labelState.textRenderState!.opacity === 0) {
+            textCanvas.textRenderStyle.fontSize.size = prevSize;
             return false;
         }
 
