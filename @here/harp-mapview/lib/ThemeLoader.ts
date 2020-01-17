@@ -177,8 +177,8 @@ export class ThemeLoader {
         }
 
         const childUrlResolver = composeUriResolvers(
-            new RelativeUriResolver(theme.url),
-            uriResolver
+            uriResolver,
+            new RelativeUriResolver(theme.url)
         );
 
         if (theme.extends) {

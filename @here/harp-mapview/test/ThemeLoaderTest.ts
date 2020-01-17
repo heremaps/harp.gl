@@ -107,7 +107,7 @@ describe("ThemeLoader", function() {
             // });
             const uriResolver: UriResolver = {
                 resolveUri(uri) {
-                    return "resolved!" + uri;
+                    return uri.replace("://", "://resolved!");
                 }
             };
             const r = await ThemeLoader.load(
@@ -131,9 +131,9 @@ describe("ThemeLoader", function() {
                 }
             );
 
-            assert.equal(r.fontCatalogs![0].url, "resolved!fonts://fira");
-            assert.equal(r.images!.icons_day_maki.url, "resolved!icons://maki_icons.png");
-            assert.equal(r.images!.icons_day_maki.atlas, "resolved!icons://icons/maki_icons.json");
+            assert.equal(r.fontCatalogs![0].url, "fonts://resolved!fira");
+            assert.equal(r.images!.icons_day_maki.url, "icons://resolved!maki_icons.png");
+            assert.equal(r.images!.icons_day_maki.atlas, "icons://resolved!icons/maki_icons.json");
         });
     });
     describe("#resolveStyleSet", function() {
