@@ -5,18 +5,15 @@
  */
 
 import { expect } from "chai";
-import { Vector2 } from "three";
+import { Box2, Vector2 } from "three";
 import { clipPolyline } from "../lib/GeometryClipping";
 
 describe("OmvClippedLines", () => {
     const extents = 4 * 1024;
 
-    const tileBounds = [
-        new Vector2(0, 0),
-        new Vector2(extents, 0),
-        new Vector2(extents, extents),
-        new Vector2(0, extents)
-    ];
+    const tileBounds = new Box2();
+    tileBounds.min.set(0, 0);
+    tileBounds.max.set(extents, extents);
 
     it("Clips line intersecting tile edges(topleft, bottomright)", () => {
         const line = [new Vector2(-100, -100), new Vector2(extents + 100, extents + 100)];

@@ -1809,12 +1809,9 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
         hasUntiledLines: boolean,
         computeTexCoords?: TexCoordsFunction
     ) {
-        const clipShape = [
-            new THREE.Vector2(0, 0),
-            new THREE.Vector2(extents, 0),
-            new THREE.Vector2(extents, extents),
-            new THREE.Vector2(0, extents)
-        ];
+        const clipShape = new THREE.Box2();
+        clipShape.min.set(0, 0);
+        clipShape.max.set(extents, extents);
 
         for (const polyline of geometry) {
             // Compute the world position of the untiled line and its distance to the origin of the

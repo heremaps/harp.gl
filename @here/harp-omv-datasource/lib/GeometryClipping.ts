@@ -4,13 +4,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Vector2 } from "three";
+import { Box2, Vector2 } from "three";
 
 const tmpBA = new Vector2();
 const tmpQP = new Vector2();
 const tmpPA = new Vector2();
 const tmpA = new Vector2();
 const tmpB = new Vector2();
+const tmpClip = [new Vector2(), new Vector2(), new Vector2(), new Vector2()];
 
 /**
  * Clip the given polygon using the Sutherland-Hodgman algorithm.
@@ -42,13 +43,13 @@ export function clipPolygon(polygon: Vector2[], clip: Vector2[]): Vector2[] {
 }
 
 /**
- * Clip given polyline to a clip shape.
+ * Clip given polyline to tile extents.
  * @param line The polyline to clip
- * @param clip The clip shape
- * @return New polyline that is clipped to the clip shape.
+ * @param extents Tile extents
+ * @return New polyline that is clipped to the tile extents.
  */
-export function clipPolyline(line: Vector2[], clip: Vector2[]): Vector2[][] {
-    const pointsInside = line.map(point => insideClipShape(point, clip));
+export function clipPolyline(line: Vector2[], extents: Box2): Vector2[][] {
+    const pointsInside = line.map(point => extents.containsPoint(point));
 
     let currentLine: Vector2[] = [];
     const outputList: Vector2[][] = [];
@@ -71,11 +72,7 @@ export function clipPolyline(line: Vector2[], clip: Vector2[]): Vector2[][] {
 
         // add intersection points if at least one point is outside of clip shape
         if (!currentPointInside || !nextPointInside) {
-            const intersectionPoints = computeLineIntersectionsWithShape(
-                currentPoint,
-                nextPoint,
-                clip
-            );
+            const intersectionPoints = computeLineIntersections(currentPoint, nextPoint, extents);
             currentLine.push(...intersectionPoints);
         }
 
@@ -146,17 +143,22 @@ function computeIntersection(
 }
 
 /**
- * Compute intersections points of a line with a clip shape.
+ * Compute intersections points of a line with tile extents.
  * @param a Start point of line
  * @param b End poin of line
- * @param clip The clip shape
- * @return A list of all intersections with the clip shape.
+ * @param extents The tile extents
+ * @return A list of all intersections with tile extents
  */
-function computeLineIntersectionsWithShape(a: Vector2, b: Vector2, clip: Vector2[]): Vector2[] {
+function computeLineIntersections(a: Vector2, b: Vector2, extents: Box2): Vector2[] {
+    tmpClip[0].set(extents.min.x, extents.min.y);
+    tmpClip[1].set(extents.max.x, extents.min.y);
+    tmpClip[2].set(extents.max.x, extents.max.y);
+    tmpClip[3].set(extents.min.x, extents.max.y);
+
     const result: Vector2[] = [];
-    for (let e = 0; e < clip.length; ++e) {
-        const p = clip[e];
-        const q = clip[(e + 1) % clip.length];
+    for (let e = 0; e < tmpClip.length; ++e) {
+        const p = tmpClip[e];
+        const q = tmpClip[(e + 1) % tmpClip.length];
 
         if (intersects(a, b, p, q)) {
             const intersectionPoint = computeIntersection(a, b, p, q);
@@ -190,23 +192,4 @@ function inside(point: Vector2, p: Vector2, q: Vector2) {
     tmpA.subVectors(q, p);
     tmpB.subVectors(point, p);
     return tmpA.cross(tmpB) > 0;
-}
-
-/**
- * Compute if a point is inside a clip shape
- * @param point Point to test
- * @param clip Clip shape
- * @return Returns true if point is inside clip shape
- */
-function insideClipShape(point: Vector2, clip: Vector2[]): boolean {
-    for (let e = 0; e < clip.length; ++e) {
-        const p = clip[e];
-        const q = clip[(e + 1) % clip.length];
-
-        if (!inside(point, p, q)) {
-            return false;
-        }
-    }
-
-    return true;
 }
