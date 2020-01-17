@@ -3,6 +3,7 @@
     "version": "0.11.1",
     "description": "Provides utilities: logging, debugging.",
     "main": "index.js",
+    "browser": "index.web.js",
     "scripts": {
         "build": "tsc",
         "test": "cross-env mocha --require source-map-support/register $EXTRA_MOCHA_ARGS ./test/*.js",

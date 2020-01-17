@@ -5,4 +5,4 @@
  */
 
 export * from "./index-common";
-export * from "./lib/UrlPlatformUtils";
+export * from "./lib/UrlPlatformUtils.web";
