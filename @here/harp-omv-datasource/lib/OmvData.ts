@@ -177,7 +177,11 @@ export interface GeometryCommandsVisitor {
  * @hidden
  */
 export class GeometryCommands {
-    accept(geometry: number[], visitor: GeometryCommandsVisitor) {
+    accept(geometry: number[] | null, visitor: GeometryCommandsVisitor) {
+        if (!geometry) {
+            return;
+        }
+
         const geometryCount = geometry.length;
 
         let currX = 0;
@@ -272,7 +276,7 @@ function decodeFeatureId(
     if (feature.id !== undefined) {
         if (typeof feature.id === "number") {
             return feature.id;
-        } else if (Long.isLong(feature.id)) {
+        } else if (feature.id !== null && Long.isLong(feature.id)) {
             if (feature.id.greaterThan(Number.MAX_SAFE_INTEGER)) {
                 if (logger !== undefined) {
                     logger.error(

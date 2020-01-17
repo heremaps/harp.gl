@@ -1,10 +1,4 @@
-/*
- * Copyright (C) 2017-2018 HERE Europe B.V.
- * Licensed under Apache 2.0, see full license in LICENSE
- * SPDX-License-Identifier: Apache-2.0
- */
-
-/*eslint-disable block-scoped-var, no-redeclare, no-control-regex, no-prototype-builtins*/
+/*eslint-disable block-scoped-var, id-length, no-control-regex, no-magic-numbers, no-prototype-builtins, no-redeclare, no-shadow, no-var, sort-vars*/
 "use strict";
 
 var $protobuf = require("protobufjs/minimal");
@@ -48,13 +42,14 @@ $root.com = (function() {
                  * Properties of a Tile.
                  * @memberof com.mapbox.pb
                  * @interface ITile
-                 * @property {Array.<com.mapbox.pb.Tile.ILayer>} [layers] Tile layers
+                 * @property {Array.<com.mapbox.pb.Tile.ILayer>|null} [layers] Tile layers
                  */
 
                 /**
                  * Constructs a new Tile.
                  * @memberof com.mapbox.pb
                  * @classdesc Represents a Tile.
+                 * @implements ITile
                  * @constructor
                  * @param {com.mapbox.pb.ITile=} [properties] Properties to set
                  */
@@ -68,7 +63,7 @@ $root.com = (function() {
 
                 /**
                  * Tile layers.
-                 * @member {Array.<com.mapbox.pb.Tile.ILayer>}layers
+                 * @member {Array.<com.mapbox.pb.Tile.ILayer>} layers
                  * @memberof com.mapbox.pb.Tile
                  * @instance
                  */
@@ -182,6 +177,7 @@ $root.com = (function() {
 
                 /**
                  * GeomType enum.
+                 * @name com.mapbox.pb.Tile.GeomType
                  * @enum {string}
                  * @property {number} UNKNOWN=0 UNKNOWN value
                  * @property {number} POINT=1 POINT value
@@ -203,19 +199,20 @@ $root.com = (function() {
                      * Properties of a Value.
                      * @memberof com.mapbox.pb.Tile
                      * @interface IValue
-                     * @property {string} [stringValue] Value stringValue
-                     * @property {number} [floatValue] Value floatValue
-                     * @property {number} [doubleValue] Value doubleValue
-                     * @property {number|Long} [intValue] Value intValue
-                     * @property {number|Long} [uintValue] Value uintValue
-                     * @property {number|Long} [sintValue] Value sintValue
-                     * @property {boolean} [boolValue] Value boolValue
+                     * @property {string|null} [stringValue] Value stringValue
+                     * @property {number|null} [floatValue] Value floatValue
+                     * @property {number|null} [doubleValue] Value doubleValue
+                     * @property {number|Long|null} [intValue] Value intValue
+                     * @property {number|Long|null} [uintValue] Value uintValue
+                     * @property {number|Long|null} [sintValue] Value sintValue
+                     * @property {boolean|null} [boolValue] Value boolValue
                      */
 
                     /**
                      * Constructs a new Value.
                      * @memberof com.mapbox.pb.Tile
                      * @classdesc Represents a Value.
+                     * @implements IValue
                      * @constructor
                      * @param {com.mapbox.pb.Tile.IValue=} [properties] Properties to set
                      */
@@ -228,7 +225,7 @@ $root.com = (function() {
 
                     /**
                      * Value stringValue.
-                     * @member {string}stringValue
+                     * @member {string} stringValue
                      * @memberof com.mapbox.pb.Tile.Value
                      * @instance
                      */
@@ -236,7 +233,7 @@ $root.com = (function() {
 
                     /**
                      * Value floatValue.
-                     * @member {number}floatValue
+                     * @member {number} floatValue
                      * @memberof com.mapbox.pb.Tile.Value
                      * @instance
                      */
@@ -244,7 +241,7 @@ $root.com = (function() {
 
                     /**
                      * Value doubleValue.
-                     * @member {number}doubleValue
+                     * @member {number} doubleValue
                      * @memberof com.mapbox.pb.Tile.Value
                      * @instance
                      */
@@ -252,7 +249,7 @@ $root.com = (function() {
 
                     /**
                      * Value intValue.
-                     * @member {number|Long}intValue
+                     * @member {number|Long} intValue
                      * @memberof com.mapbox.pb.Tile.Value
                      * @instance
                      */
@@ -260,7 +257,7 @@ $root.com = (function() {
 
                     /**
                      * Value uintValue.
-                     * @member {number|Long}uintValue
+                     * @member {number|Long} uintValue
                      * @memberof com.mapbox.pb.Tile.Value
                      * @instance
                      */
@@ -268,7 +265,7 @@ $root.com = (function() {
 
                     /**
                      * Value sintValue.
-                     * @member {number|Long}sintValue
+                     * @member {number|Long} sintValue
                      * @memberof com.mapbox.pb.Tile.Value
                      * @instance
                      */
@@ -276,7 +273,7 @@ $root.com = (function() {
 
                     /**
                      * Value boolValue.
-                     * @member {boolean}boolValue
+                     * @member {boolean} boolValue
                      * @memberof com.mapbox.pb.Tile.Value
                      * @instance
                      */
@@ -475,16 +472,17 @@ $root.com = (function() {
                      * Properties of a Feature.
                      * @memberof com.mapbox.pb.Tile
                      * @interface IFeature
-                     * @property {number|Long} [id] Feature id
-                     * @property {Array.<number>} [tags] Feature tags
-                     * @property {com.mapbox.pb.Tile.GeomType} [type] Feature type
-                     * @property {Array.<number>} [geometry] Feature geometry
+                     * @property {number|Long|null} [id] Feature id
+                     * @property {Array.<number>|null} [tags] Feature tags
+                     * @property {com.mapbox.pb.Tile.GeomType|null} [type] Feature type
+                     * @property {Array.<number>|null} [geometry] Feature geometry
                      */
 
                     /**
                      * Constructs a new Feature.
                      * @memberof com.mapbox.pb.Tile
                      * @classdesc Represents a Feature.
+                     * @implements IFeature
                      * @constructor
                      * @param {com.mapbox.pb.Tile.IFeature=} [properties] Properties to set
                      */
@@ -499,7 +497,7 @@ $root.com = (function() {
 
                     /**
                      * Feature id.
-                     * @member {number|Long}id
+                     * @member {number|Long} id
                      * @memberof com.mapbox.pb.Tile.Feature
                      * @instance
                      */
@@ -507,7 +505,7 @@ $root.com = (function() {
 
                     /**
                      * Feature tags.
-                     * @member {Array.<number>}tags
+                     * @member {Array.<number>} tags
                      * @memberof com.mapbox.pb.Tile.Feature
                      * @instance
                      */
@@ -515,7 +513,7 @@ $root.com = (function() {
 
                     /**
                      * Feature type.
-                     * @member {com.mapbox.pb.Tile.GeomType}type
+                     * @member {com.mapbox.pb.Tile.GeomType} type
                      * @memberof com.mapbox.pb.Tile.Feature
                      * @instance
                      */
@@ -523,7 +521,7 @@ $root.com = (function() {
 
                     /**
                      * Feature geometry.
-                     * @member {Array.<number>}geometry
+                     * @member {Array.<number>} geometry
                      * @memberof com.mapbox.pb.Tile.Feature
                      * @instance
                      */
@@ -720,16 +718,17 @@ $root.com = (function() {
                      * @interface ILayer
                      * @property {number} version Layer version
                      * @property {string} name Layer name
-                     * @property {Array.<com.mapbox.pb.Tile.IFeature>} [features] Layer features
-                     * @property {Array.<string>} [keys] Layer keys
-                     * @property {Array.<com.mapbox.pb.Tile.IValue>} [values] Layer values
-                     * @property {number} [extent] Layer extent
+                     * @property {Array.<com.mapbox.pb.Tile.IFeature>|null} [features] Layer features
+                     * @property {Array.<string>|null} [keys] Layer keys
+                     * @property {Array.<com.mapbox.pb.Tile.IValue>|null} [values] Layer values
+                     * @property {number|null} [extent] Layer extent
                      */
 
                     /**
                      * Constructs a new Layer.
                      * @memberof com.mapbox.pb.Tile
                      * @classdesc Represents a Layer.
+                     * @implements ILayer
                      * @constructor
                      * @param {com.mapbox.pb.Tile.ILayer=} [properties] Properties to set
                      */
@@ -745,7 +744,7 @@ $root.com = (function() {
 
                     /**
                      * Layer version.
-                     * @member {number}version
+                     * @member {number} version
                      * @memberof com.mapbox.pb.Tile.Layer
                      * @instance
                      */
@@ -753,7 +752,7 @@ $root.com = (function() {
 
                     /**
                      * Layer name.
-                     * @member {string}name
+                     * @member {string} name
                      * @memberof com.mapbox.pb.Tile.Layer
                      * @instance
                      */
@@ -761,7 +760,7 @@ $root.com = (function() {
 
                     /**
                      * Layer features.
-                     * @member {Array.<com.mapbox.pb.Tile.IFeature>}features
+                     * @member {Array.<com.mapbox.pb.Tile.IFeature>} features
                      * @memberof com.mapbox.pb.Tile.Layer
                      * @instance
                      */
@@ -769,7 +768,7 @@ $root.com = (function() {
 
                     /**
                      * Layer keys.
-                     * @member {Array.<string>}keys
+                     * @member {Array.<string>} keys
                      * @memberof com.mapbox.pb.Tile.Layer
                      * @instance
                      */
@@ -777,7 +776,7 @@ $root.com = (function() {
 
                     /**
                      * Layer values.
-                     * @member {Array.<com.mapbox.pb.Tile.IValue>}values
+                     * @member {Array.<com.mapbox.pb.Tile.IValue>} values
                      * @memberof com.mapbox.pb.Tile.Layer
                      * @instance
                      */
@@ -785,7 +784,7 @@ $root.com = (function() {
 
                     /**
                      * Layer extent.
-                     * @member {number}extent
+                     * @member {number} extent
                      * @memberof com.mapbox.pb.Tile.Layer
                      * @instance
                      */
