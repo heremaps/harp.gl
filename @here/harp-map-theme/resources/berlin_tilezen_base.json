@@ -1,25 +1,13 @@
 {
     "definitions": {
-        "parkColor": {
-            "type": "color",
-            "value": "#6C9478"
-        },
-        "extrudedBuildingsCondition": {
-            "type": "selector",
-            "value": [
-                "all",
-                ["==", ["get", "$layer"], "buildings"],
-                ["==", ["get", "$geometryType"], "polygon"]
-            ]
-        },
-        "defaultBuildingColor": {
-            "type": "color",
-            "value": "#EDE7E1E6"
-        },
-        "waterColor": {
-            "type": "color",
-            "value": "#436981"
-        },
+        "parkColor": "#6C9478",
+        "extrudedBuildingsCondition": [
+            "all",
+            ["==", ["get", "$layer"], "buildings"],
+            ["==", ["get", "$geometryType"], "polygon"]
+        ],
+        "defaultBuildingColor": "#EDE7E1E6",
+        "waterColor": "#436981",
         "waterPolygons": {
             "description": "water",
             "when": [
@@ -57,84 +45,72 @@
             },
             "renderOrder": 2000
         },
-        "countryBorderLineWidth": {
-            "type": "number",
-            "value": [
-                "interpolate",
-                ["linear"],
-                ["zoom"],
-                2,
-                2000,
-                3,
-                1400,
-                4,
-                1000,
-                5,
-                500,
-                6,
-                220,
-                7,
-                90,
-                8,
-                50,
-                9,
-                30,
-                10,
-                20,
-                11,
-                15,
-                12,
-                10,
-                13,
-                5,
-                14,
-                2
-            ]
-        },
-        "roadsFadeNear": {
-            "type": "number",
-            "value": 0.9
-        },
-        "roadsFadeFar": {
-            "type": "number",
-            "value": 0.95
-        },
-        "countryBorderOutlineWidth": {
-            "type": "number",
-            "value": [
-                "interpolate",
-                ["linear"],
-                ["zoom"],
-                1,
-                10000,
-                2,
-                8000,
-                3,
-                7000,
-                4,
-                5000,
-                5,
-                3000,
-                6,
-                2000,
-                7,
-                1000,
-                8,
-                500,
-                9,
-                250,
-                10,
-                120,
-                11,
-                80,
-                12,
-                40,
-                13,
-                20,
-                14,
-                10
-            ]
-        },
+        "countryBorderLineWidth": [
+            "interpolate",
+            ["linear"],
+            ["zoom"],
+            2,
+            2000,
+            3,
+            1400,
+            4,
+            1000,
+            5,
+            500,
+            6,
+            220,
+            7,
+            90,
+            8,
+            50,
+            9,
+            30,
+            10,
+            20,
+            11,
+            15,
+            12,
+            10,
+            13,
+            5,
+            14,
+            2
+        ],
+        "roadsFadeNear": 0.9,
+        "roadsFadeFar": 0.95,
+        "countryBorderOutlineWidth": [
+            "interpolate",
+            ["linear"],
+            ["zoom"],
+            1,
+            10000,
+            2,
+            8000,
+            3,
+            7000,
+            4,
+            5000,
+            5,
+            3000,
+            6,
+            2000,
+            7,
+            1000,
+            8,
+            500,
+            9,
+            250,
+            10,
+            120,
+            11,
+            80,
+            12,
+            40,
+            13,
+            20,
+            14,
+            10
+        ],
         "countryBorderLine": {
             "description": "country border",
             "when": [

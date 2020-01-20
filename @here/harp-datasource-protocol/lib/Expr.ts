@@ -11,7 +11,7 @@ import { ExprParser } from "./ExprParser";
 import { ExprPool } from "./ExprPool";
 import { isInterpolatedPropertyDefinition } from "./InterpolatedProperty";
 import { interpolatedPropertyDefinitionToJsonExpr } from "./InterpolatedPropertyDefs";
-import { Definitions, isSelectorDefinition, isValueDefinition } from "./Theme";
+import { Definitions, isBoxedDefinition, isLiteralDefinition } from "./Theme";
 
 export * from "./Env";
 
@@ -858,11 +858,10 @@ function resolveReference(node: JsonArray, referenceResolverState?: ReferenceRes
         return cachedEntry;
     }
     let definitionEntry = referenceResolverState.definitions[name] as any;
-    if (isSelectorDefinition(definitionEntry)) {
-        definitionEntry = definitionEntry.value;
-    }
     let result: Expr;
-    if (isValueDefinition(definitionEntry)) {
+    if (isLiteralDefinition(definitionEntry)) {
+        return Expr.fromJSON(definitionEntry);
+    } else if (isBoxedDefinition(definitionEntry)) {
         if (isInterpolatedPropertyDefinition(definitionEntry.value)) {
             // found a reference to an interpolation using
             // the deprecated object-like syntax.
@@ -873,6 +872,7 @@ function resolveReference(node: JsonArray, referenceResolverState?: ReferenceRes
             return Expr.fromJSON(definitionEntry.value);
         }
     }
+
     if (isJsonExpr(definitionEntry)) {
         referenceResolverState.lockedNames.add(name);
         try {

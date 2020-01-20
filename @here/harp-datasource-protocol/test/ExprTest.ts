@@ -56,12 +56,18 @@ describe("Expr", function() {
     describe("#fromJson", function() {
         describe("ref operator support", function() {
             const baseDefinitions: Definitions = {
-                color: { type: "color", value: "#ff0" },
-                number: { type: "number", value: 123 }
+                color: "#ff0",
+                string: { value: "abc" },
+                number: { type: "number", value: 123 },
+                number2: { value: 234 },
+                boolean: true
             };
             it("supports literal references", function() {
                 assert.equal(evaluate(Expr.fromJSON(["ref", "color"], baseDefinitions)), "#ff0");
+                assert.equal(evaluate(Expr.fromJSON(["ref", "string"], baseDefinitions)), "abc");
                 assert.equal(evaluate(Expr.fromJSON(["ref", "number"], baseDefinitions)), 123);
+                assert.equal(evaluate(Expr.fromJSON(["ref", "number2"], baseDefinitions)), 234);
+                assert.equal(evaluate(Expr.fromJSON(["ref", "boolean"], baseDefinitions)), true);
             });
             it("throws on missing definitions", function() {
                 assert.throws(() => {
@@ -70,9 +76,13 @@ describe("Expr", function() {
             });
             it("supports basic expression references", function() {
                 const definitions: Definitions = {
-                    basicExpr: { type: "selector", value: ["+", 2, 3] }
+                    literalExpr: ["+", 2, 3],
+                    boxedTypedExpr: { type: "selector", value: ["+", 3, 4] },
+                    boxedUntypedExpr: { value: ["+", 4, 5] }
                 };
-                assert.equal(evaluate(Expr.fromJSON(["ref", "basicExpr"], definitions)), 5);
+                assert.equal(evaluate(Expr.fromJSON(["ref", "literalExpr"], definitions)), 5);
+                assert.equal(evaluate(Expr.fromJSON(["ref", "boxedTypedExpr"], definitions)), 7);
+                assert.equal(evaluate(Expr.fromJSON(["ref", "boxedUntypedExpr"], definitions)), 9);
             });
             it("supports embedded basic embedded references", function() {
                 const definitions: Definitions = {
@@ -83,20 +93,12 @@ describe("Expr", function() {
             });
             it("supports complex embedded references", function() {
                 const definitions: Definitions = {
-                    number: { type: "number", value: 1 },
-                    refConstantExpr: { type: "selector", value: ["+", 1, ["ref", "number"]] },
-                    refExpr1: {
-                        // 1 + 1+ 2 -> 6
-                        type: "selector",
-                        value: ["+", ["ref", "number"], ["ref", "number"], ["ref", "refExpr2"]]
-                    },
-                    refExpr2: {
-                        // 2*2 -> 4
-                        type: "selector",
-                        value: ["*", ["ref", "refConstantExpr"], ["ref", "refConstantExpr"]]
-                    },
+                    number: 1,
+                    refConstantExpr: ["+", 1, ["ref", "number"]],
+                    refExpr1: ["+", ["ref", "number"], ["ref", "number"], ["ref", "refExpr2"]],
+                    refExpr2: ["*", ["ref", "refConstantExpr"], ["ref", "refConstantExpr"]],
                     refTopExpr: {
-                        // 6 - 4 -> 2
+                        // 6 - 4 -> 2, old syntax
                         type: "selector",
                         value: ["-", ["ref", "refExpr1"], ["ref", "refExpr2"]]
                     }

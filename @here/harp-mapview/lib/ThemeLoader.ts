@@ -4,11 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { isJsonExpr } from "@here/harp-datasource-protocol";
 import {
     Definitions,
     isActualSelectorDefinition,
+    isBoxedDefinition,
     isJsonExprReference,
-    isValueDefinition,
+    isLiteralDefinition,
     ResolvedStyleDeclaration,
     ResolvedStyleSet,
     StyleDeclaration,
@@ -456,14 +458,15 @@ export class ThemeLoader {
                     failed = true;
                     return undefined;
                 }
-                if (!isValueDefinition(def)) {
-                    contextLogger.warn(
-                        `invalid reference '${defName}' - expected value definition`
-                    );
-                    failed = true;
-                    return undefined;
+                if (isLiteralDefinition(def) || isJsonExpr(def)) {
+                    return def;
                 }
-                return def.value;
+                if (isBoxedDefinition(def)) {
+                    return def.value;
+                }
+                contextLogger.warn(`invalid reference '${defName}' - expected value definition`);
+                failed = true;
+                return undefined;
             } else if (Array.isArray(node)) {
                 const result = [...node];
                 for (let i = 1; i < result.length; ++i) {
