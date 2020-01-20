@@ -19,5 +19,5 @@
     "excludePrivate": "true",
     "excludeExternals": "true",
     "excludeNotExported": "true",
-    "external-modulemap": ".*/@here/([\\w\\-_]+)/"
+    "external-modulemap": ".*/(?:@here|docs)/(@docs/[\\w\\-_]+|[\\w\\-_]+)/"
 }
