@@ -43,6 +43,15 @@ vec3 extrudeLine(
     return result;
 }
 `,
+    clip_outline_caps: `
+float clipOutlineCaps(vec2 tilePos, vec2 tileSize) {
+    if (tileSize.x > 0.0 && (tilePos.x < -tileSize.x / 2.0 || tilePos.x > tileSize.x / 2.0))
+        return 1.0;
+    if (tileSize.y > 0.0 && (tilePos.y < -tileSize.y / 2.0 || tilePos.y > tileSize.y / 2.0))
+        return 1.0;
+    return 0.0;
+}
+`,
     round_edges_and_add_caps: `
 #define CAPS_NONE ${LineCapsModes.CAPS_NONE}
 #define CAPS_SQUARE ${LineCapsModes.CAPS_SQUARE}
@@ -61,7 +70,7 @@ float roundEdgesAndAddCaps(in vec4 coords, in vec3 range) {
     dist = max(dist, segmentBeginMask * length(vec2((coords.x - coords.z) / widthRatio, coords.y)));
     dist = max(dist, segmentEndMask * length(vec2((coords.x - coords.w) / widthRatio, coords.y)));
 
-    #if CAPS_MODE != CAPS_ROUND
+    #if CAPS_MODE != CAPS_ROUND || defined(CLIP_OUTLINE_CAPS)
     // Compute the caps mask.
     float capRangeMask = clamp(1.0 - ceil(range.z - drawRange.y), 0.0, 1.0);
     float beginCapMask = clamp(ceil(drawRange.x - coords.x), 0.0, 1.0);
@@ -79,7 +88,11 @@ float roundEdgesAndAddCaps(in vec4 coords, in vec3 range) {
     #elif CAPS_MODE == CAPS_TRIANGLE_IN
     dist = mix(dist, max(abs(coords.y), (capDist - abs(coords.y)) + capDist), capMask);
     #endif
-    #endif // CAPS_MODE != CAPS_ROUND
+    #ifdef CLIP_OUTLINE_CAPS
+    capMask *= clipOutlineCaps(vPosition.xy, tileSize);
+    dist = mix(dist, max(abs(coords.y), (capDist + 0.1) / 0.1), capMask);
+    #endif
+    #endif // CAPS_MODE != CAPS_ROUND || defined(CLIP_OUTLINE_CAPS)
 
     return dist;
 }

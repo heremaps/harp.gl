@@ -162,6 +162,7 @@ uniform vec3 outlineColor;
 uniform float opacity;
 uniform float lineWidth;
 uniform float outlineWidth;
+uniform vec2 tileSize;
 uniform vec2 drawRange;
 
 #ifdef USE_DASHED_LINE
@@ -182,6 +183,7 @@ varying vec3 vDashParams;
 varying vec3 vColor;
 #endif
 
+#include <clip_outline_caps>
 #include <round_edges_and_add_caps>
 
 #ifdef USE_FADING
@@ -196,6 +198,7 @@ void main() {
 
     // Calculate distance to center (0.0: lineCenter, 1.0: lineEdge).
     float distToCenter = roundEdgesAndAddCaps(vCoords, vRange);
+
     // Calculate distance to edge (-1.0: lineCenter, 0.0: lineEdge).
     float distToEdge = distToCenter - (lineWidth + outlineWidth) / lineWidth;
 
@@ -205,11 +208,6 @@ void main() {
     alpha *= (1.0 - smoothstep(-width, width, distToEdge));
 
     #ifdef USE_DASHED_LINE
-    // Compute the distance to the dash origin (0.0: dashOrigin, 1.0: dashEnd, (d+g)/d: gapEnd).
-    float d = dashSize / vRange.x;
-    float g = gapSize / vRange.x;
-    float distToDashOrigin = mod(vCoords.x, d + g) / d;
-
     float segmentDist = mod(
         vCoords.x + ((vDashParams.x + vDashParams.y) *0.5) , vDashParams.x + vDashParams.y
     ) / vDashParams.x;
@@ -428,6 +426,7 @@ export class SolidLineMaterial extends THREE.RawShaderMaterial
                     displacementMap: new THREE.Uniform(
                         displacementMap !== undefined ? displacementMap : new THREE.Texture()
                     ),
+                    tileSize: new THREE.Uniform(new THREE.Vector2()),
                     drawRange: new THREE.Uniform(
                         new THREE.Vector2(
                             SolidLineMaterial.DEFAULT_DRAW_RANGE_START,
@@ -556,6 +555,20 @@ export class SolidLineMaterial extends THREE.RawShaderMaterial
      */
     get outline(): boolean {
         return getShaderMaterialDefine(this, "USE_OUTLINE") === true;
+    }
+
+    /**
+     * Enable clipping of outline caps to tile border
+     */
+    get clipOutlineCaps(): boolean {
+        return this.defines.CLIP_OUTLINE_CAPS !== undefined;
+    }
+    set clipOutlineCaps(clipOutlineCaps: boolean) {
+        if (!clipOutlineCaps) {
+            delete this.defines.CLIP_OUTLINE_CAPS;
+        } else {
+            this.defines.CLIP_OUTLINE_CAPS = "";
+        }
     }
 
     /**

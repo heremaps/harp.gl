@@ -44,7 +44,6 @@ import {
     EdgeMaterial,
     EdgeMaterialParameters,
     FadingFeature,
-    isHighPrecisionLineMaterial,
     MapMeshBasicMaterial,
     MapMeshStandardMaterial,
     setShaderMaterialDefine,
@@ -78,8 +77,6 @@ import { Tile, TileFeatureData } from "../Tile";
 import { TileGeometryLoader } from "./TileGeometryLoader";
 
 const logger = LoggerManager.instance.create("TileGeometryCreator");
-const tmpVector3 = new THREE.Vector3();
-const tmpVector2 = new THREE.Vector2();
 
 /**
  * Parameters that control fading.
@@ -685,8 +682,7 @@ export class TileGeometryCreator {
                 bufferGeometry.addGroup(start, count);
 
                 if (isSolidLineTechnique(technique)) {
-                    const lineMaterial = material as THREE.RawShaderMaterial;
-                    lineMaterial.uniforms.opacity.value = material.opacity;
+                    const lineMaterial = material as SolidLineMaterial;
 
                     if (bufferGeometry.getAttribute("color")) {
                         setShaderMaterialDefine(lineMaterial, "USE_COLOR", true);
@@ -1119,6 +1115,13 @@ export class TileGeometryCreator {
                 if (hasSolidLinesOutlines) {
                     const outlineTechnique = technique as SolidLineTechnique;
                     const outlineMaterial = material.clone() as SolidLineMaterial;
+
+                    // Set outline clipping params
+                    outlineMaterial.clipOutlineCaps = true;
+                    const size = new THREE.Vector3();
+                    tile.boundingBox.getSize(size);
+                    outlineMaterial.uniforms.tileSize.value.set(size.x, size.y);
+
                     const outlineColor = ColorCache.instance.getColor(
                         outlineTechnique.secondaryColor !== undefined
                             ? getPropertyValue(outlineTechnique.secondaryColor!, displayZoomLevel)
