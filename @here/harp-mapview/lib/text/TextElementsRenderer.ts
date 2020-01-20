@@ -206,7 +206,6 @@ function isPlacementTimeExceeded(startTime: number | undefined): boolean {
 }
 
 /**
- * @hidden
  *
  * Internal class to manage all text rendering.
  */
