@@ -1052,6 +1052,11 @@ export class MapView extends THREE.EventDispatcher {
     }
 
     set enableMixedLod(enableMixedLod: boolean | undefined) {
+        // Skip unnecessary update
+        if (this.m_enableMixedLod === enableMixedLod) {
+            return;
+        }
+
         this.m_enableMixedLod = enableMixedLod;
         this.m_visibleTiles = this.createVisibleTileSet();
         this.resetTextRenderer();
