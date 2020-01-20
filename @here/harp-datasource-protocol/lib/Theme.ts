@@ -5,7 +5,8 @@
  */
 
 import { Vector3Like } from "@here/harp-geoutils/lib/math/Vector3Like";
-import { JsonExpr } from "./Expr";
+import { isJsonExpr, JsonExpr } from "./Expr";
+import { isInterpolatedPropertyDefinition } from "./InterpolatedProperty";
 import {
     BaseTechniqueParams,
     BasicExtrudedLineTechniqueParams,
@@ -109,43 +110,24 @@ export interface Theme {
 }
 
 /**
- * An array of [[Definition]]s.
+ * Checks if the given definition implements the [[BoxedDefinition]] interface.
  */
-export interface Definitions {
-    [name: string]: Definition;
-}
-
-/**
- * A value definition.
- */
-export type ValueDefinition =
-    | BooleanValueDefinition
-    | NumericValueDefinition
-    | StringValueDefinition
-    | ColorValueDefinition
-    | SelectorValueDefinition;
-
-/**
- * Checks if the given definition implements the [[ValueDefinition]] interface.
- */
-export function isValueDefinition(def: Definition): def is ValueDefinition {
-    const valueDef = def as ValueDefinition;
+export function isBoxedDefinition(def: Definition): def is BoxedDefinition {
+    const bdef = def as BoxedDefinition;
     return (
-        typeof valueDef === "object" &&
-        valueDef !== null &&
-        typeof valueDef.type === "string" &&
-        valueDef.value !== undefined
+        typeof bdef === "object" &&
+        bdef !== null &&
+        (typeof bdef.type === "string" || typeof bdef.type === "undefined") &&
+        (typeof bdef.value === "string" ||
+            typeof bdef.value === "number" ||
+            typeof bdef.value === "boolean" ||
+            isInterpolatedPropertyDefinition(bdef.value) ||
+            isJsonExpr(bdef.value))
     );
 }
 
-export function isSelectorDefinition(def: Definition): def is SelectorValueDefinition {
-    const valueDef = def as ValueDefinition;
-    return (
-        typeof valueDef === "object" &&
-        valueDef !== null &&
-        valueDef.type === "selector" &&
-        (typeof valueDef.value === "string" || Array.isArray(valueDef.value))
-    );
+export function isLiteralDefinition(def: Definition): def is LiteralValue {
+    return typeof def === "string" || typeof def === "number" || typeof def === "boolean";
 }
 
 /**
@@ -153,15 +135,35 @@ export function isSelectorDefinition(def: Definition): def is SelectorValueDefin
  */
 export interface BaseValueDefinition {
     /**
+     * The type of the definition.
+     */
+    type?: string;
+
+    /**
      * The description of the definition.
      */
     description?: string;
 }
 
 /**
- * A boolean value definition.
+ * Possible types of unboxed literal values carried by [[Definition]].
  */
-export interface BooleanValueDefinition extends BaseValueDefinition {
+export type LiteralValue = string | number | boolean;
+
+/**
+ * Boxed definition without type.
+ */
+export interface BoxedAnyDefinition extends BaseValueDefinition {
+    /**
+     * The value of the definition.
+     */
+    value: LiteralValue | JsonExpr;
+}
+
+/**
+ * A boxed boolean value definition.
+ */
+export interface BoxedBooleanDefinition extends BaseValueDefinition {
     /**
      * The type of the definition.
      */
@@ -174,9 +176,9 @@ export interface BooleanValueDefinition extends BaseValueDefinition {
 }
 
 /**
- * A numerical value definition.
+ * A boxed numerical value definition.
  */
-export interface NumericValueDefinition extends BaseValueDefinition {
+export interface BoxedNumericDefinition extends BaseValueDefinition {
     /**
      * The type of the definition.
      */
@@ -189,9 +191,9 @@ export interface NumericValueDefinition extends BaseValueDefinition {
 }
 
 /**
- * A string value definition.
+ * A boxed string value definition.
  */
-export interface StringValueDefinition extends BaseValueDefinition {
+export interface BoxedStringDefinition extends BaseValueDefinition {
     /**
      * The type of the definition.
      */
@@ -204,9 +206,9 @@ export interface StringValueDefinition extends BaseValueDefinition {
 }
 
 /**
- * A color value definition.
+ * A boxed color value definition.
  */
-export interface ColorValueDefinition extends BaseValueDefinition {
+export interface BoxedColorDefinition extends BaseValueDefinition {
     /**
      * The type of the definition.
      */
@@ -218,7 +220,10 @@ export interface ColorValueDefinition extends BaseValueDefinition {
     value: DynamicProperty<string>;
 }
 
-export interface SelectorValueDefinition extends BaseValueDefinition {
+/**
+ * A boxed selector value definition.
+ */
+export interface BoxedSelectorDefinition extends BaseValueDefinition {
     /**
      * The type of the definition.
      */
@@ -230,6 +235,29 @@ export interface SelectorValueDefinition extends BaseValueDefinition {
      * See [[BaseStyle.when]].
      */
     value: string | JsonExpr;
+}
+
+/**
+ * A boxed value definition.
+ */
+export type BoxedDefinition =
+    | BoxedAnyDefinition
+    | BoxedBooleanDefinition
+    | BoxedNumericDefinition
+    | BoxedStringDefinition
+    | BoxedColorDefinition
+    | BoxedSelectorDefinition;
+
+/**
+ * Possible values for `definitions` element of [Theme].
+ */
+export type Definition = LiteralValue | JsonExpr | BoxedDefinition | JsonExpr | StyleDeclaration;
+
+/**
+ * An array of [[Definition]]s.
+ */
+export interface Definitions {
+    [name: string]: Definition;
 }
 
 /**
@@ -634,11 +662,6 @@ export type Style = AllStyles;
 export interface Styles {
     [styleSetName: string]: StyleSet;
 }
-
-/**
- * Possible values for `definitions` element of [Theme].
- */
-export type Definition = ValueDefinition | StyleDeclaration;
 
 /**
  * A reference to a style definition.

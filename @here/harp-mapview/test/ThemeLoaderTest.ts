@@ -16,8 +16,8 @@ import * as nodeUrl from "url";
 const URL = typeof window !== "undefined" ? window.URL : nodeUrl.URL;
 
 import {
+    BoxedSelectorDefinition,
     ResolvedStyleSet,
-    SelectorValueDefinition,
     SolidLineStyle,
     StyleSelector,
     StyleSet,
@@ -140,7 +140,9 @@ describe("ThemeLoader", function() {
         it("resolves ref expression in technique attr values", async function() {
             const theme: Theme = {
                 definitions: {
-                    roadColor: { type: "color", value: "#f00" }
+                    roadColor: "#f00",
+                    roadWidth: { type: "number", value: 123 },
+                    roadOutlineWidth: { value: 33 }
                 },
                 styles: {
                     tilezen: [
@@ -149,7 +151,9 @@ describe("ThemeLoader", function() {
                             when: "kind == 'road",
                             technique: "solid-line",
                             attr: {
-                                lineColor: ["ref", "roadColor"]
+                                lineColor: ["ref", "roadColor"],
+                                lineWidth: ["ref", "roadWidth"],
+                                outlineWidth: ["ref", "roadOutlineWidth"]
                             }
                         }
                     ]
@@ -167,6 +171,8 @@ describe("ThemeLoader", function() {
             assert.equal(roadStyle.technique, "solid-line");
             const roadStyleCasted = (roadStyle as any) as SolidLineStyle;
             assert.equal(roadStyleCasted.attr!.lineColor, "#f00");
+            assert.equal(roadStyleCasted.attr!.lineWidth, 123);
+            assert.equal(roadStyleCasted.attr!.outlineWidth, 33);
         });
 
         it("resolves ref expressions in Style", async function() {
@@ -201,7 +207,7 @@ describe("ThemeLoader", function() {
             assert.equal(roadStyleCasted.description, "roads");
             assert.deepEqual(
                 roadStyleCasted.when,
-                (theme.definitions!.roadCondition as SelectorValueDefinition).value
+                (theme.definitions!.roadCondition as BoxedSelectorDefinition).value
             );
             assert.equal(roadStyleCasted.attr!.lineColor, "#f00");
         });
