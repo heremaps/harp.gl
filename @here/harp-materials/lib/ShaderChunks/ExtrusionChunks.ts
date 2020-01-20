@@ -17,12 +17,21 @@ uniform float extrusionRatio;
 varying vec4 vExtrusionAxis;
 varying float vExtrusionRatio;
 
+// max is broken on Safari for iOS
+float ios_safe_max(float x, float y) {
+    if (x < y) {
+        return y;
+    } else {
+        return x;
+    }
+}
+
 `,
     extrusion_vertex: `
 // Cancel extrusionRatio (meaning, force to 1) if extrusionAxisLen < MIN_BUILDING_HEIGHT.
 const float MIN_BUILDING_HEIGHT_SQUARED = ${MIN_BUILDING_HEIGHT_SQUARED};
 float extrusionAxisLenSquared = dot(extrusionAxis.xyz, extrusionAxis.xyz);
-vExtrusionRatio = max(1.0 - step(MIN_BUILDING_HEIGHT_SQUARED, extrusionAxisLenSquared), extrusionRatio);
+vExtrusionRatio = ios_safe_max(1.0 - step(MIN_BUILDING_HEIGHT_SQUARED, extrusionAxisLenSquared), extrusionRatio);
 
 transformed = transformed + extrusionAxis.xyz * (vExtrusionRatio - 1.0);
 vExtrusionAxis = vec4(normalMatrix * extrusionAxis.xyz, extrusionAxis.w);
