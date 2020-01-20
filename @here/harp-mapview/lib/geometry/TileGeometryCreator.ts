@@ -732,12 +732,9 @@ export class TileGeometryCreator {
                     (object as MapViewPoints).enableRayTesting = technique.enablePicking!;
                 }
 
-                if (
-                    isLineTechnique(technique) ||
-                    (isSegmentsTechnique(technique) &&
-                        technique.color !== undefined &&
-                        Expr.isExpr(technique.color))
-                ) {
+                if (isLineTechnique(technique) || isSegmentsTechnique(technique)) {
+                    const hasDynamicColor =
+                        Expr.isExpr(technique.color) || Expr.isExpr(technique.opacity);
                     const fadingParams = this.getFadingParams(displayZoomLevel, technique);
                     FadingFeature.addRenderHelper(
                         object,
@@ -745,20 +742,24 @@ export class TileGeometryCreator {
                         fadingParams.fadeNear,
                         fadingParams.fadeFar,
                         false,
-                        (renderer, mat) => {
-                            const lineMaterial = mat as THREE.LineBasicMaterial;
-                            applyBaseColorToMaterial(
-                                lineMaterial,
-                                lineMaterial.color,
-                                technique,
-                                technique.color,
-                                mapView.zoomLevel
-                            );
-                        }
+                        hasDynamicColor
+                            ? (renderer, mat) => {
+                                  const lineMaterial = mat as THREE.LineBasicMaterial;
+                                  applyBaseColorToMaterial(
+                                      lineMaterial,
+                                      lineMaterial.color,
+                                      technique,
+                                      technique.color,
+                                      mapView.zoomLevel
+                                  );
+                              }
+                            : undefined
                     );
                 }
 
                 if (isSolidLineTechnique(technique)) {
+                    const hasDynamicColor =
+                        Expr.isExpr(technique.color) || Expr.isExpr(technique.opacity);
                     const fadingParams = this.getFadingParams(displayZoomLevel, technique);
                     FadingFeature.addRenderHelper(
                         object,
@@ -771,7 +772,7 @@ export class TileGeometryCreator {
                             const unitFactor =
                                 technique.metricUnit === "Pixel" ? mapView.pixelToWorld : 1.0;
 
-                            if (technique.color !== undefined) {
+                            if (hasDynamicColor) {
                                 applyBaseColorToMaterial(
                                     lineMaterial,
                                     lineMaterial.color,
@@ -825,9 +826,11 @@ export class TileGeometryCreator {
                 }
 
                 if (isExtrudedLineTechnique(technique)) {
+                    const hasDynamicColor =
+                        Expr.isExpr(technique.color) || Expr.isExpr(technique.opacity);
                     // extruded lines are normal meshes, and need transparency only when fading or
                     // dynamic properties is defined.
-                    if (technique.fadeFar !== undefined || Expr.isExpr(technique.color)) {
+                    if (technique.fadeFar !== undefined || hasDynamicColor) {
                         const fadingParams = this.getFadingParams(
                             displayZoomLevel,
                             technique as StandardExtrudedLineTechnique
@@ -839,7 +842,7 @@ export class TileGeometryCreator {
                             fadingParams.fadeNear,
                             fadingParams.fadeFar,
                             true,
-                            technique.color !== undefined && Expr.isExpr(technique.color)
+                            hasDynamicColor
                                 ? (renderer, mat) => {
                                       const extrudedMaterial = mat as
                                           | MapMeshStandardMaterial
@@ -864,9 +867,12 @@ export class TileGeometryCreator {
                 if (isExtrudedPolygonTechnique(technique) || isFillTechnique(technique)) {
                     // filled polygons are normal meshes, and need transparency only when fading or
                     // dynamic properties is defined.
-                    const hasDynamicColor =
-                        (technique.color !== undefined && Expr.isExpr(technique.color)) ||
-                        (isExtrudedPolygonTechnique(technique) && Expr.isExpr(technique.emissive));
+                    const hasDynamicPrimaryColor =
+                        Expr.isExpr(technique.color) || Expr.isExpr(technique.opacity);
+                    const hasDynamicSecondaryColor =
+                        isExtrudedPolygonTechnique(technique) && Expr.isExpr(technique.emissive);
+                    const hasDynamicColor = hasDynamicPrimaryColor || hasDynamicSecondaryColor;
+
                     if (technique.fadeFar !== undefined || hasDynamicColor) {
                         const fadingParams = this.getFadingParams(displayZoomLevel, technique);
                         FadingFeature.addRenderHelper(
@@ -881,23 +887,26 @@ export class TileGeometryCreator {
                                           | MapMeshBasicMaterial
                                           | MapMeshStandardMaterial;
 
-                                      applyBaseColorToMaterial(
-                                          polygonMaterial,
-                                          polygonMaterial.color,
-                                          technique,
-                                          technique.color!,
-                                          mapView.zoomLevel
-                                      );
+                                      if (hasDynamicPrimaryColor) {
+                                          applyBaseColorToMaterial(
+                                              polygonMaterial,
+                                              polygonMaterial.color,
+                                              technique,
+                                              technique.color!,
+                                              mapView.zoomLevel
+                                          );
+                                      }
 
                                       if (
-                                          isExtrudedPolygonTechnique(technique) &&
-                                          technique.emissive !== undefined
+                                          hasDynamicSecondaryColor &&
+                                          // Just to omit compiler warnings
+                                          isExtrudedPolygonTechnique(technique)
                                       ) {
                                           const standardMat = mat as MapMeshStandardMaterial;
 
                                           applySecondaryColorToMaterial(
                                               standardMat.emissive,
-                                              technique.emissive,
+                                              technique.emissive!,
                                               mapView.zoomLevel
                                           );
                                       }
