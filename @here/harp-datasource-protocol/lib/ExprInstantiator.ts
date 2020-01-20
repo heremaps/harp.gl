@@ -9,8 +9,8 @@ import {
     CallExpr,
     CaseExpr,
     ContainsExpr,
-    Env,
     Expr,
+    ExprScope,
     ExprVisitor,
     HasAttributeExpr,
     LiteralExpr,
@@ -23,6 +23,8 @@ import {
     VarExpr
 } from "./Expr";
 
+import { Env } from "./Env";
+
 export interface InstantiationContext {
     /**
      * The [[Env]] used to lookup for names.
@@ -34,6 +36,8 @@ export interface InstantiationContext {
      */
     preserve?: Set<string>;
 }
+
+const emptyEnv = new Env();
 
 /**
  * @hidden
@@ -135,9 +139,9 @@ export class ExprInstantiator implements ExprVisitor<Expr, InstantiationContext>
 
         for (const [condition, branch] of expr.branches) {
             const newCondition = condition.accept(this, context);
-
-            if (newCondition instanceof LiteralExpr) {
-                if (newCondition.value) {
+            const deps = newCondition.dependencies();
+            if (!deps.zoom && deps.properties.size === 0) {
+                if (Boolean(newCondition.evaluate(emptyEnv, ExprScope.Condition))) {
                     return branch.accept(this, context);
                 }
             } else {
