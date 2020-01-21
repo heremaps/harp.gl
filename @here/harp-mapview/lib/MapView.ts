@@ -641,7 +641,8 @@ export const MapViewDefaults = {
     target: new GeoCoordinates(25, 0),
     zoomLevel: 5,
     tilt: 0,
-    heading: 0
+    heading: 0,
+    theme: {}
 };
 
 /**
@@ -1274,6 +1275,7 @@ export class MapView extends THREE.EventDispatcher {
         for (const dataSource of this.m_tileDataSources) {
             dataSource.setTheme(this.m_theme);
         }
+        THEME_LOADED_EVENT.time = Date.now();
         this.dispatchEvent(THEME_LOADED_EVENT);
         this.update();
     }
@@ -2933,18 +2935,16 @@ export class MapView extends THREE.EventDispatcher {
     }
 
     private initTheme() {
-        if (this.m_options.theme === undefined) {
-            return;
-        }
+        const theme = getOptionValue(this.m_options.theme, MapViewDefaults.theme);
 
         this.m_themeIsLoading = true;
-        Promise.resolve<string | Theme>(this.m_options.theme)
+        Promise.resolve<string | Theme>(theme)
+            // tslint:disable-next-line: no-shadowed-variable
             .then(theme => ThemeLoader.load(theme, { uriResolver: this.m_uriResolver }))
+            // tslint:disable-next-line: no-shadowed-variable
             .then(theme => {
                 this.m_themeIsLoading = false;
                 this.theme = theme;
-                THEME_LOADED_EVENT.time = Date.now();
-                this.dispatchEvent(THEME_LOADED_EVENT);
             })
             .catch(error => {
                 this.m_themeIsLoading = false;

@@ -14,8 +14,11 @@
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
 import { assert, expect } from "chai";
+import * as path from "path";
 import * as sinon from "sinon";
 import * as THREE from "three";
+import * as nodeUrl from "url";
+const URL = typeof window !== "undefined" ? window.URL : nodeUrl.URL;
 
 import { GeoCoordinates, MathUtils, sphereProjection } from "@here/harp-geoutils";
 import * as TestUtils from "@here/harp-test-utils/lib/WebGLStub";
@@ -23,12 +26,26 @@ import { MapView, MapViewEventNames } from "../lib/MapView";
 import { MapViewFog } from "../lib/MapViewFog";
 import { MapViewUtils } from "../lib/Utils";
 
-import { waitForEvent } from "@here/harp-test-utils";
+import { getTestResourceUrl, waitForEvent } from "@here/harp-test-utils";
 import { FontCatalog } from "@here/harp-text-canvas";
+import { getAppBaseUrl } from "@here/harp-utils";
 import { BackgroundDataSource } from "../lib/BackgroundDataSource";
 import { FakeOmvDataSource } from "./FakeOmvDataSource";
 
 declare const global: any;
+
+function makeUrlRelative(baseUrl: string, url: string) {
+    const baseUrlParsed = new URL(baseUrl);
+    const urlParsed = new URL(url, baseUrl);
+
+    if (urlParsed.origin !== baseUrlParsed.origin) {
+        throw new Error("getRelativeUrl: origin mismatch");
+    }
+    if (urlParsed.protocol !== baseUrlParsed.protocol) {
+        throw new Error("getRelativeUrl: protocol mismatch");
+    }
+    return path.relative(baseUrlParsed.pathname, urlParsed.pathname);
+}
 
 describe("MapView", function() {
     const inNodeContext = typeof window === "undefined";
@@ -232,6 +249,7 @@ describe("MapView", function() {
         expect(clearColorStub.getCall(1).args[0].g).to.be.equal(1);
         expect(clearColorStub.getCall(1).args[0].b).to.be.equal(1);
         expect(clearColorStub.getCall(2).calledWith(0xefe9e1)).to.be.equal(true);
+
         expect(updateSpy.callCount).to.be.equal(2);
         expect(dispatchEventSpy.callCount).to.be.equal(5);
         expect(dispatchEventSpy.getCall(0).args[0].type).to.be.equal(
@@ -432,5 +450,85 @@ describe("MapView", function() {
         await waitForEvent(mapView, MapViewEventNames.AfterRender);
 
         expect(updateStorageOffsetSpy.called);
+    });
+
+    describe("theme", function() {
+        const appBaseUrl = getAppBaseUrl();
+        const sampleThemeUrl = getTestResourceUrl(
+            "@here/harp-mapview",
+            "test/resources/baseTheme.json"
+        );
+
+        it("loads a default theme", async function() {
+            mapView = new MapView({ canvas });
+            await waitForEvent(mapView, MapViewEventNames.ThemeLoaded);
+            expect(mapView.theme).to.deep.equal({
+                clearColor: undefined,
+                defaultTextStyle: undefined,
+                definitions: undefined,
+                fog: undefined,
+                fontCatalogs: undefined,
+                imageTextures: undefined,
+                images: undefined,
+                lights: undefined,
+                poiTables: undefined,
+                sky: undefined,
+                styles: {},
+                textStyles: undefined
+            });
+        });
+
+        it("loads theme from url", async function() {
+            const relativeToAppUrl = makeUrlRelative(appBaseUrl, sampleThemeUrl);
+
+            mapView = new MapView({
+                canvas,
+                theme: relativeToAppUrl
+            });
+            await waitForEvent(mapView, MapViewEventNames.ThemeLoaded);
+
+            expect(mapView.theme.styles).to.not.be.empty;
+        });
+
+        it("allows to reset theme", async function() {
+            const relativeToAppUrl = makeUrlRelative(appBaseUrl, sampleThemeUrl);
+
+            mapView = new MapView({
+                canvas,
+                theme: relativeToAppUrl
+            });
+            await waitForEvent(mapView, MapViewEventNames.ThemeLoaded);
+
+            expect(mapView.theme).to.not.deep.equal({
+                clearColor: undefined,
+                defaultTextStyle: undefined,
+                definitions: undefined,
+                fog: undefined,
+                fontCatalogs: undefined,
+                imageTextures: undefined,
+                images: undefined,
+                lights: undefined,
+                poiTables: undefined,
+                sky: undefined,
+                styles: {},
+                textStyles: undefined
+            });
+
+            mapView.theme = {};
+            expect(mapView.theme).to.deep.equal({
+                clearColor: undefined,
+                defaultTextStyle: undefined,
+                definitions: undefined,
+                fog: undefined,
+                fontCatalogs: undefined,
+                imageTextures: undefined,
+                images: undefined,
+                lights: undefined,
+                poiTables: undefined,
+                sky: undefined,
+                styles: {},
+                textStyles: undefined
+            });
+        });
     });
 });
