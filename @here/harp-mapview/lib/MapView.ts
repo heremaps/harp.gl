@@ -611,8 +611,10 @@ export interface MapViewOptions extends TextElementsRendererOptions {
 
     /**
      * Set true to enable rendering mixed levels of detail (increases rendering performance).
+     * If not set will enable mixed levels of detail for spherical projection
+     * and disable for other projections.
      *
-     * @default false
+     * @default undefined
      */
     enableMixedLod?: boolean;
 }
@@ -639,8 +641,7 @@ export const MapViewDefaults = {
     target: new GeoCoordinates(25, 0),
     zoomLevel: 5,
     tilt: 0,
-    heading: 0,
-    enableMixedLod: false
+    heading: 0
 };
 
 /**
@@ -780,7 +781,7 @@ export class MapView extends THREE.EventDispatcher {
     private m_copyrightInfo: CopyrightInfo[] = [];
     private m_animatedExtrusionHandler: AnimatedExtrusionHandler;
 
-    private m_enableMixedLod: boolean;
+    private m_enableMixedLod: boolean | undefined;
 
     /**
      * Constructs a new `MapView` with the given options or canvas element.
@@ -963,10 +964,9 @@ export class MapView extends THREE.EventDispatcher {
                 ? new PhasedTileGeometryManager(this)
                 : new SimpleTileGeometryManager(this);
 
-        this.m_enableMixedLod = getOptionValue(
-            options.enableMixedLod,
-            MapViewDefaults.enableMixedLod
-        );
+        if (options.enableMixedLod !== undefined) {
+            this.m_enableMixedLod = options.enableMixedLod;
+        }
         this.m_visibleTiles = this.createVisibleTileSet();
 
         this.m_animatedExtrusionHandler = new AnimatedExtrusionHandler(this);
@@ -1047,11 +1047,16 @@ export class MapView extends THREE.EventDispatcher {
         return this.m_tileGeometryManager;
     }
 
-    get enableMixedLod(): boolean {
+    get enableMixedLod(): boolean | undefined {
         return this.m_enableMixedLod;
     }
 
-    set enableMixedLod(enableMixedLod: boolean) {
+    set enableMixedLod(enableMixedLod: boolean | undefined) {
+        // Skip unnecessary update
+        if (this.m_enableMixedLod === enableMixedLod) {
+            return;
+        }
+
         this.m_enableMixedLod = enableMixedLod;
         this.m_visibleTiles = this.createVisibleTileSet();
         this.resetTextRenderer();
@@ -2987,13 +2992,18 @@ export class MapView extends THREE.EventDispatcher {
     }
 
     private createVisibleTileSet(): VisibleTileSet {
+        const enableMixedLod =
+            this.m_enableMixedLod === undefined
+                ? this.projection.type === ProjectionType.Spherical
+                : this.m_enableMixedLod;
+
         return new VisibleTileSet(
             new FrustumIntersection(
                 this.m_camera,
                 this,
                 this.m_visibleTileSetOptions.extendedFrustumCulling,
                 this.m_tileWrappingEnabled,
-                this.m_enableMixedLod
+                enableMixedLod
             ),
             this.m_tileGeometryManager,
             this.m_visibleTileSetOptions
