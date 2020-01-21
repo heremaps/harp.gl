@@ -65,7 +65,7 @@ export function isInterpolatedPropertyDefinition<T>(
  */
 export function isInterpolatedProperty(p: any): p is InterpolatedProperty {
     if (
-        p !== undefined &&
+        p &&
         p.interpolationMode !== undefined &&
         p.zoomLevels instanceof Float32Array &&
         p.values !== undefined &&
