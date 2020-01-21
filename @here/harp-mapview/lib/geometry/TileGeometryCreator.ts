@@ -44,9 +44,10 @@ import {
     EdgeMaterial,
     EdgeMaterialParameters,
     FadingFeature,
-    LineCapsDefinitions,
+    isHighPrecisionLineMaterial,
     MapMeshBasicMaterial,
     MapMeshStandardMaterial,
+    setShaderMaterialDefine,
     SolidLineMaterial
 } from "@here/harp-materials";
 import { ContextualArabicConverter } from "@here/harp-text-canvas";
@@ -77,6 +78,8 @@ import { Tile, TileFeatureData } from "../Tile";
 import { TileGeometryLoader } from "./TileGeometryLoader";
 
 const logger = LoggerManager.instance.create("TileGeometryCreator");
+const tmpVector3 = new THREE.Vector3();
+const tmpVector2 = new THREE.Vector2();
 
 /**
  * Parameters that control fading.
@@ -682,30 +685,20 @@ export class TileGeometryCreator {
                 bufferGeometry.addGroup(start, count);
 
                 if (isSolidLineTechnique(technique)) {
-                    const lineMaterial = material as THREE.RawShaderMaterial;
-                    lineMaterial.uniforms.opacity.value = material.opacity;
-
+                    // TODO: Unify access to shader defines via SolidLineMaterial setters
+                    assert(!isHighPrecisionLineMaterial(material));
+                    const lineMaterial = material as SolidLineMaterial;
                     if (
                         technique.clipping !== false &&
                         tile.projection.type === ProjectionType.Planar
                     ) {
-                        const tileSize = lineMaterial.uniforms.tileSize;
-                        const size = new THREE.Vector3();
-                        tile.boundingBox.getSize(size);
-                        tileSize.value.x = size.x;
-                        tileSize.value.y = size.y;
-                        lineMaterial.defines.TILE_CLIP = 1;
+                        tile.boundingBox.getSize(tmpVector3);
+                        tmpVector2.set(tmpVector3.x, tmpVector3.y);
+                        lineMaterial.clipTileSize = tmpVector2;
                     }
 
                     if (bufferGeometry.getAttribute("color")) {
-                        lineMaterial.defines.USE_COLOR = 1;
-                    }
-
-                    if (
-                        technique.caps !== undefined &&
-                        LineCapsDefinitions.hasOwnProperty(technique.caps)
-                    ) {
-                        lineMaterial.defines[LineCapsDefinitions[technique.caps]] = 1;
+                        setShaderMaterialDefine(lineMaterial, "USE_COLOR", true);
                     }
                 }
 
@@ -1034,7 +1027,7 @@ export class TileGeometryCreator {
                         false,
                         extrudedPolygonTechnique.lineColor !== undefined &&
                             Expr.isExpr(extrudedPolygonTechnique.lineColor)
-                            ? (renderer, mat) => {
+                            ? () => {
                                   applyBaseColorToMaterial(
                                       edgeMaterial,
                                       edgeMaterial.color,

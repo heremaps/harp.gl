@@ -15,7 +15,7 @@ import {
     FadingFeatureParameters
 } from "./MapMeshMaterials";
 import { ExtrusionFeatureDefs } from "./MapMeshMaterialsDefs";
-import { enforceBlending } from "./Utils";
+import { enforceBlending, setShaderDefine, setShaderMaterialDefine } from "./Utils";
 
 const vertexSource: string = `
 #define EDGE_DEPTH_OFFSET 0.0001
@@ -145,10 +145,10 @@ export class EdgeMaterial extends THREE.RawShaderMaterial
             params.extrusionRatio >= ExtrusionFeatureDefs.DEFAULT_RATIO_MIN &&
             params.extrusionRatio < ExtrusionFeatureDefs.DEFAULT_RATIO_MAX;
         if (hasDisplacementMap) {
-            defines.USE_DISPLACEMENTMAP = "";
+            setShaderDefine(defines, "USE_DISPLACEMENTMAP", true);
         }
         if (hasExtrusion) {
-            defines.USE_EXTRUSION = "";
+            setShaderDefine(defines, "USE_EXTRUSION", true);
         }
 
         const shaderParams = {
@@ -177,6 +177,9 @@ export class EdgeMaterial extends THREE.RawShaderMaterial
         // Apply initial parameter values.
         if (params !== undefined) {
             if (params.color !== undefined) {
+                // Color may be set directly on object (omitting class setter), because we already
+                // know that is does no require any special handling nor material update
+                // (see: set color()).
                 this.color.set(params.color as any);
             }
             if (params.colorMix !== undefined) {
@@ -204,7 +207,7 @@ export class EdgeMaterial extends THREE.RawShaderMaterial
         return this.uniforms.edgeColor.value as THREE.Color;
     }
     set color(value: THREE.Color) {
-        this.uniforms.edgeColor.value = value;
+        this.uniforms.edgeColor.value.copy(value);
     }
 
     /**
@@ -218,17 +221,7 @@ export class EdgeMaterial extends THREE.RawShaderMaterial
             return;
         }
         this.uniforms.edgeColorMix.value = value;
-        const doMixColor = value > 0.0;
-        if (doMixColor) {
-            // NOTE: We can not check Material.needsUpdate current value cause there is
-            // no getter for this property, setting it to true increments Material version
-            // which in turn forces invalidation.
-            this.needsUpdate = this.defines.USE_COLOR === undefined;
-            this.defines.USE_COLOR = "";
-        } else {
-            this.needsUpdate = this.defines.USE_COLOR !== undefined;
-            delete this.defines.USE_COLOR;
-        }
+        setShaderMaterialDefine(this, "USE_COLOR", value > 0.0);
     }
 
     get fadeNear(): number {
@@ -246,14 +239,7 @@ export class EdgeMaterial extends THREE.RawShaderMaterial
             return;
         }
         this.uniforms.fadeFar.value = value;
-        const doFade = value > 0.0;
-        if (doFade) {
-            this.needsUpdate = this.defines.USE_FADING === undefined;
-            this.defines.USE_FADING = "";
-        } else {
-            this.needsUpdate = this.defines.USE_FADING !== undefined;
-            delete this.defines.USE_FADING;
-        }
+        setShaderMaterialDefine(this, "USE_FADING", value > 0.0);
     }
 
     get extrusionRatio(): number {
@@ -266,14 +252,8 @@ export class EdgeMaterial extends THREE.RawShaderMaterial
         this.uniforms.extrusionRatio.value = value;
         // NOTE: We could also disable shader extrusion chunks when it hits
         // ExtrusionFeatureDefs.DEFAULT_RATIO_MAX value, but this would cause shader re-compile.
-        const doExtrusion = value >= ExtrusionFeatureDefs.DEFAULT_RATIO_MIN;
-        if (doExtrusion) {
-            this.needsUpdate = this.defines.USE_EXTRUSION === undefined;
-            this.defines.USE_EXTRUSION = "";
-        } else {
-            this.needsUpdate = this.defines.USE_EXTRUSION !== undefined;
-            delete this.defines.USE_EXTRUSION;
-        }
+        const useExtrusion = value >= ExtrusionFeatureDefs.DEFAULT_RATIO_MIN;
+        setShaderMaterialDefine(this, "USE_EXTRUSION", useExtrusion);
     }
 
     get displacementMap(): THREE.Texture | undefined {
@@ -285,13 +265,10 @@ export class EdgeMaterial extends THREE.RawShaderMaterial
             return;
         }
         this.uniforms.displacementMap.value = map;
-        if (map !== undefined) {
+        const useDisplacementMap = map !== undefined;
+        if (useDisplacementMap) {
             this.uniforms.displacementMap.value.needsUpdate = true;
-            this.needsUpdate = this.defines.USE_DISPLACEMENTMAP === undefined;
-            this.defines.USE_DISPLACEMENTMAP = "";
-        } else {
-            this.needsUpdate = this.defines.USE_DISPLACEMENTMAP !== undefined;
-            delete this.defines.USE_DISPLACEMENTMAP;
         }
+        setShaderMaterialDefine(this, "USE_DISPLACEMENTMAP", useDisplacementMap);
     }
 }
