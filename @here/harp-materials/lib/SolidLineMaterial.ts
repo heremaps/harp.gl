@@ -149,7 +149,7 @@ uniform float outlineWidth;
 uniform vec2 tileSize;
 uniform vec2 drawRange;
 
-#if DASHED_LINE
+#ifdef USE_DASHED_LINE
 uniform float dashSize;
 uniform float gapSize;
 uniform vec3 dashColor;
@@ -175,7 +175,7 @@ void main() {
     float alpha = opacity;
     vec3 outputDiffuse = diffuse;
 
-    #if TILE_CLIP
+    #ifdef USE_TILE_CLIP
     tileClip(vPosition.xy, tileSize);
     #endif
 
@@ -189,7 +189,7 @@ void main() {
     float width = fwidth(distToEdge);
     alpha *= (1.0 - smoothstep(-width, width, distToEdge));
 
-    #if DASHED_LINE
+    #ifdef USE_DASHED_LINE
     // Compute the distance to the dash origin (0.0: dashOrigin, 1.0: dashEnd, (d+g)/d: gapEnd).
     float d = dashSize / vRange.x;
     float g = gapSize / vRange.x;
@@ -201,7 +201,7 @@ void main() {
     float dashWidth = fwidth(distToDashEdge);
     float dashBlendFactor = 1.0 - smoothstep(-dashWidth, dashWidth, distToDashEdge);
 
-    #if USE_DASH_COLOR
+    #ifdef USE_DASH_COLOR
     outputDiffuse = mix(diffuse, dashColor, dashBlendFactor);
     #endif
     #endif
@@ -214,7 +214,7 @@ void main() {
     float outlineBlendFactor = smoothstep(-outlineWidth, outlineWidth, distToOutline);
 
     // Mix the colors using the different computed factors.
-    #if DASHED_LINE && USE_DASH_COLOR == 0
+    #if defined(USE_DASHED_LINE) && !defined(USE_DASH_COLOR)
     float colorBlendFactor = smoothstep(-1.0, 1.0, dashBlendFactor - outlineBlendFactor);
     outputDiffuse = mix(
       mix(
@@ -230,11 +230,13 @@ void main() {
     #endif
     #endif
 
+    #if defined(USE_DASHED_LINE) && !defined(USE_DASH_COLOR)
     // Multiply the alpha by the dashBlendFactor.
-    #if DASHED_LINE && defined(USE_OUTLINE) && USE_DASH_COLOR == 0
+    #if defined(USE_OUTLINE)
     alpha *= clamp(dashBlendFactor + outlineBlendFactor, 0.0, 1.0);
-    #elif DASHED_LINE && USE_DASH_COLOR == 0
+    #else
     alpha *= 1.0 - dashBlendFactor;
+    #endif
     #endif
 
     #ifdef USE_COLOR
@@ -364,9 +366,6 @@ export class SolidLineMaterial extends THREE.RawShaderMaterial
 
         // Setup default defines.
         const defines: { [key: string]: any } = {
-            DASHED_LINE: 0,
-            TILE_CLIP: 0,
-            USE_DASH_COLOR: 0,
             CAPS_MODE: LineCapsModes.CAPS_ROUND
         };
 
@@ -588,7 +587,7 @@ export class SolidLineMaterial extends THREE.RawShaderMaterial
     }
     set dashColor(value: THREE.Color) {
         this.uniforms.dashColor.value.copy(value);
-        setShaderMaterialDefine(this, "USE_DASH_COLOR", 1.0);
+        setShaderMaterialDefine(this, "USE_DASH_COLOR", true);
     }
 
     /**
@@ -636,7 +635,7 @@ export class SolidLineMaterial extends THREE.RawShaderMaterial
     }
     set gapSize(value: number) {
         this.uniforms.gapSize.value = value;
-        setShaderMaterialDefine(this, "DASHED_LINE", value > 0.0 ? 1 : 0);
+        setShaderMaterialDefine(this, "USE_DASHED_LINE", value > 0.0);
     }
 
     /**
@@ -706,7 +705,7 @@ export class SolidLineMaterial extends THREE.RawShaderMaterial
     set clipTileSize(tileSize: THREE.Vector2) {
         this.uniforms.tileSize.value.copy(tileSize);
         const useTileClip = tileSize.x > 0 && tileSize.y > 0;
-        setShaderMaterialDefine(this, "TILE_CLIP", useTileClip ? 1 : 0);
+        setShaderMaterialDefine(this, "USE_TILE_CLIP", useTileClip);
     }
     get clipTileSize(): THREE.Vector2 {
         return this.uniforms.tileSize.value as THREE.Vector2;
