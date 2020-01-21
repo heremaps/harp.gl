@@ -15,4 +15,9 @@ harp.gl supports label rendering as part of the [[harp-mapview]] module, includi
 
 ## Architecture overview
 
+<a href="media://label-rendering/diagram.svg">
+    <img src="media://label-rendering/diagram.svg" alt="drawing1" title="Diagram" width="300"/>
+</a>
+
 Coming soon.
+
