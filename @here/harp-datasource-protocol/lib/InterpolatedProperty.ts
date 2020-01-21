@@ -93,6 +93,7 @@ const dynamicPropertiesTempEnv = new MapEnv({
     $pixelToMeters: 1
 });
 
+export type InternalValue = string | number | boolean | object;
 /**
  * Get the value of the specified property at the given zoom level.
  *
@@ -102,7 +103,7 @@ const dynamicPropertiesTempEnv = new MapEnv({
 export function getPropertyValue(
     property: Value | Expr | InterpolatedProperty | undefined,
     env: Env
-): any;
+): InternalValue | undefined;
 
 /**
  * Get the value of the specified property at the given zoom level.
@@ -117,13 +118,13 @@ export function getPropertyValue(
     property: Value | Expr | InterpolatedProperty | undefined,
     level: number,
     pixelToMeters?: number
-): any;
+): InternalValue | undefined;
 
 export function getPropertyValue(
     property: Value | Expr | InterpolatedProperty | undefined,
     envOrLevel: number | Env,
     pixelToMeters: number = 1.0
-): any {
+): InternalValue | undefined {
     if (Expr.isExpr(property)) {
         let env: Env;
 
@@ -135,7 +136,11 @@ export function getPropertyValue(
             env = envOrLevel;
         }
 
-        return property.evaluate(env, ExprScope.Dynamic);
+        const r = property.evaluate(env, ExprScope.Dynamic);
+        if (r === null) {
+            return undefined;
+        }
+        return r;
     }
 
     let level: number;
@@ -149,7 +154,9 @@ export function getPropertyValue(
 
     // Non-interpolated property parsing
     if (!isInterpolatedProperty(property)) {
-        if (typeof property !== "string") {
+        if (property === null) {
+            return undefined;
+        } else if (typeof property !== "string") {
             // Property in numeric or array, etc. format
             return property;
         } else {
