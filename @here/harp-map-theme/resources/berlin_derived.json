@@ -2,12 +2,12 @@
     "extends": "berlin_tilezen_base.json",
 
     "definitions": {
-        "parkColor": "red",
+        "parkColor": "#f00",
         "extrudedBuildings": {
             "technique": "fill",
             "when": ["ref", "extrudedBuildingsCondition"],
             "attr": {
-                "color": "blue"
+                "color": "#00f"
             }
         },
         "countryBorderLineWidth": [
