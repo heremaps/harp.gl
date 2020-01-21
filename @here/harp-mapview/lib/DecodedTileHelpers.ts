@@ -432,7 +432,7 @@ export function evaluateBaseColorProperty(
     zoomLevel?: number
 ): number | undefined {
     const baseColorProp = getBaseColorProp(technique);
-    if (baseColorProp !== undefined) {
+    if (baseColorProp !== undefined && baseColorProp !== null) {
         return evaluateColorProperty(baseColorProp, zoomLevel);
     }
     return undefined;
@@ -598,6 +598,9 @@ export function applySecondaryColorToMaterial(
     zoomLevel?: number
 ) {
     let value = evaluateColorProperty(techniqueColor, zoomLevel);
+    if (value === undefined) {
+        return;
+    }
 
     if (ColorUtils.hasAlphaInHex(value)) {
         logger.warn("Used RGBA value for technique color without transparency support!");
@@ -634,6 +637,9 @@ export function applyBaseColorToMaterial(
     zoomLevel?: number
 ) {
     const colorValue = evaluateColorProperty(techniqueColor, zoomLevel);
+    if (colorValue === undefined) {
+        return;
+    }
 
     const { r, g, b, a } = ColorUtils.getRgbaFromHex(colorValue);
     // Override material opacity and blending by mixing technique defined opacity
@@ -683,7 +689,7 @@ function evaluateProperty(value: any, zoomLevel?: number): any {
  * @param value the value of color property defined in technique
  * @param zoomLevel zoom level used for interpolation.
  */
-export function evaluateColorProperty(value: Value, zoomLevel?: number): number {
+export function evaluateColorProperty(value: Value, zoomLevel?: number): number | undefined {
     value = evaluateProperty(value, zoomLevel);
 
     if (typeof value === "number") {
@@ -691,13 +697,16 @@ export function evaluateColorProperty(value: Value, zoomLevel?: number): number 
     }
 
     if (typeof value === "string") {
-        const parsed = parseStringEncodedColor(value);
-        if (parsed !== undefined) {
-            return parsed;
+        const color = parseStringEncodedColor(value);
+
+        if (color === undefined) {
+            throw new Error(`Unsupported color format: '${value}'`);
         }
+
+        return color;
     }
 
-    throw new Error(`Unsupported color format: '${value}'`);
+    return undefined;
 }
 
 /**

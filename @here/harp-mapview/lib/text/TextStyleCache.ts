@@ -318,12 +318,14 @@ export class TextStyleCache {
 
             if (technique.color !== undefined) {
                 let hexColor = evaluateColorProperty(technique.color, Math.floor(zoomLevel));
-                if (ColorUtils.hasAlphaInHex(hexColor)) {
-                    const alpha = ColorUtils.getAlphaFromHex(hexColor);
-                    opacity = opacity * alpha;
-                    hexColor = ColorUtils.removeAlphaFromHex(hexColor);
+                if (hexColor !== undefined) {
+                    if (ColorUtils.hasAlphaInHex(hexColor)) {
+                        const alpha = ColorUtils.getAlphaFromHex(hexColor);
+                        opacity = opacity * alpha;
+                        hexColor = ColorUtils.removeAlphaFromHex(hexColor);
+                    }
+                    this.m_colorMap.set(cacheId, ColorCache.instance.getColor(hexColor));
                 }
-                this.m_colorMap.set(cacheId, ColorCache.instance.getColor(hexColor));
             }
 
             let backgroundOpacity =
@@ -340,12 +342,14 @@ export class TextStyleCache {
                     technique.backgroundColor,
                     Math.floor(zoomLevel)
                 );
-                if (ColorUtils.hasAlphaInHex(hexBgColor)) {
-                    const alpha = ColorUtils.getAlphaFromHex(hexBgColor);
-                    backgroundOpacity = backgroundOpacity * alpha;
-                    hexBgColor = ColorUtils.removeAlphaFromHex(hexBgColor);
+                if (hexBgColor !== undefined) {
+                    if (ColorUtils.hasAlphaInHex(hexBgColor)) {
+                        const alpha = ColorUtils.getAlphaFromHex(hexBgColor);
+                        backgroundOpacity = backgroundOpacity * alpha;
+                        hexBgColor = ColorUtils.removeAlphaFromHex(hexBgColor);
+                    }
+                    this.m_colorMap.set(cacheId + "_bg", ColorCache.instance.getColor(hexBgColor));
                 }
-                this.m_colorMap.set(cacheId + "_bg", ColorCache.instance.getColor(hexBgColor));
             }
 
             const renderParams = {
