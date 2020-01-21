@@ -5,7 +5,7 @@
  */
 
 import { Theme } from "@here/harp-datasource-protocol";
-import { HighPrecisionLineMaterial, SolidLineMaterial } from "@here/harp-materials";
+import { HighPrecisionLineMaterial } from "@here/harp-materials";
 import { assert, MathUtils } from "@here/harp-utils";
 import * as THREE from "three";
 import { MapView } from "./MapView";
@@ -167,12 +167,7 @@ export class MapViewFog {
             if (object.material instanceof HighPrecisionLineMaterial) {
                 return;
             }
-            // Redundant updates (enable twice) are already checked in higher level functions.
-            if (object.material instanceof SolidLineMaterial) {
-                object.material.updateFog(enableFog);
-            }
-            // We can skip `object.material.fog === enableFog` only after applying custom material
-            // settings (by default fog is set) so the first load may be faster.
+            // We may skip redundant updates.
             if (object.material.fog === enableFog) {
                 return;
             }
