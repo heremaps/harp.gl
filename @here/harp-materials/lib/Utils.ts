@@ -4,7 +4,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { assert } from "@here/harp-utils";
 import * as THREE from "three";
+
+/**
+ * Values for boolean shader defines
+ */
+export const DEFINE_BOOL_TRUE = "";
+export const DEFINE_BOOL_FALSE = undefined;
 
 /**
  * Insert shader includes after another shader include.
@@ -110,4 +117,121 @@ export function disableBlending(
     }
 
     material.blending = THREE.NormalBlending;
+}
+
+/**
+ * Setup material shader _define_ using two allowable semantics.
+ *
+ * Function accepts two types of values for shader preprocessor _define_:
+ * - [[boolean]], simple [[true]] or [[false]] which causes _define_ to be set with empty string,
+ * such defines may be handled in the shader using __#ifdef__ semantics:
+ * ```
+ * #ifdef SOME_DEFINE && !defined(OTHER_DEFINE)
+ * // do something
+ * #endif
+ * ```
+ *
+ * - [[number]] which sets _define_ to explicit value. You may use it to enable/disable some
+ * code or even set compile time constants affecting shaders math:
+ * ```
+ * #if SOME_DEFINE_SWITCH && OTHER_DEFINE_SWITCH == 0
+ * gl_FragColor = vec4(1, 1, 1, DEFINE_ALPHA)
+ * #endif
+ * ```
+ * @note Setting _define_ with `false` value is not the same as setting is with number value of `0`.
+ *
+ * @param material The [[THREE.ShaderMaterial]] which shader _define_ will be set.
+ * @param key Name of shader _define_ as used in shader, i.e. `USE_FOG`, `COLOR_ALPHA`, etc.
+ * @param value The value to be set as number or boolean specifying if preprocessor define
+ * should be defined or not.
+ */
+export function setShaderMaterialDefine(
+    material: THREE.ShaderMaterial,
+    key: string,
+    value: boolean | number
+) {
+    assert(
+        material.defines !== undefined,
+        "Do not use this function in ShaderMaterial derived c-tor."
+    );
+    const semanticValue = getShaderMaterialDefine(material, key);
+    const needsUpdate = value !== semanticValue;
+    // Nothing to change - early exit
+    if (!needsUpdate) {
+        return;
+    }
+    setShaderDefine(material.defines, key, value);
+    material.needsUpdate = needsUpdate;
+}
+
+/**
+ * Acquire value of [[THREE.ShaderMaterial]] GPU shader preprocessor define.
+ *
+ * The semantic used in entire engine assumes that preprocessor defines may have only binary
+ * (defined / not defined) or numerical values, this ensures consistency in the shaders and
+ * materials code.
+ * @note If _define_ with [[key]] is _undefined_ function returns [[false]], if defined but
+ * not numerical value it returns [[true]], otherwise returns number.
+ * @see setShaderMaterialDefine.
+ *
+ * @param material The material which shader defines are accessed.
+ * @param key The _define_ name (identifier).
+ * @param fallbackValue The value returned when material `defines` are not initialized yet,
+ * specified by default as [[false]], provide your own default if you expect numeric value.
+ */
+export function getShaderMaterialDefine(
+    material: THREE.ShaderMaterial,
+    key: string,
+    fallbackValue: boolean | number = false
+): boolean | number {
+    if (material.defines === undefined) {
+        return fallbackValue;
+    }
+    return getShaderDefine(material.defines, key);
+}
+
+/**
+ * Sets new value of 'define' regardless of current value set.
+ *
+ * Update `defines` map with new key and value, if key is already occupied it overrides its value.
+ * Helper function that may be used to setup [[THREE.ShaderMaterialParameters]] before
+ * material is create (i.e. in c-tor).
+ *
+ * @param defines Shader `defines` stored in key-value map.
+ * @param key The key used to identify _define_.
+ * @param value The value to be stored.
+ * @see setShaderMaterialDefine.
+ */
+export function setShaderDefine(
+    defines: { [key: string]: any },
+    key: string,
+    value: boolean | number
+) {
+    if (typeof value === "number") {
+        defines[key] = value;
+    } else if (value === true) {
+        defines[key] = DEFINE_BOOL_TRUE;
+    } else {
+        // Sets to BOOL_FALSE === undefined
+        delete defines[key];
+    }
+}
+
+/**
+ * Acquire shader 'define' value from `defines` map.
+ *
+ * If there is no value under [[key]] specified, function returns false, otherwise result is
+ * true or numeric value if there is a number stored.
+ * @param defines The `defines` map.
+ * @param key The identifier of the _define_.
+ */
+export function getShaderDefine(defines: { [key: string]: any }, key: string): boolean | number {
+    const currentValue = defines[key];
+    const semanticValue =
+        currentValue === DEFINE_BOOL_FALSE
+            ? false
+            : currentValue === DEFINE_BOOL_TRUE
+            ? true
+            : currentValue;
+    return semanticValue;
 }

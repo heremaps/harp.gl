@@ -4,6 +4,17 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+/**
+ * Lists supported line caps types/modes.
+ */
+export enum LineCapsModes {
+    CAPS_NONE = 0,
+    CAPS_SQUARE,
+    CAPS_ROUND,
+    CAPS_TRIANGLE_IN,
+    CAPS_TRIANGLE_OUT
+}
+
 export default {
     extrude_line_vert_func: `
 vec3 extrudeLine(
@@ -33,6 +44,12 @@ vec3 extrudeLine(
 }
 `,
     round_edges_and_add_caps: `
+#define CAPS_NONE ${LineCapsModes.CAPS_NONE}
+#define CAPS_SQUARE ${LineCapsModes.CAPS_SQUARE}
+#define CAPS_ROUND ${LineCapsModes.CAPS_ROUND}
+#define CAPS_TRIANGLE_IN ${LineCapsModes.CAPS_TRIANGLE_IN}
+#define CAPS_TRIANGLE_OUT ${LineCapsModes.CAPS_TRIANGLE_OUT}
+
 float roundEdgesAndAddCaps(in vec4 coords, in vec3 range) {
     // Compute the line's width to length ratio.
     float widthRatio = range.y / range.x;
@@ -44,7 +61,7 @@ float roundEdgesAndAddCaps(in vec4 coords, in vec3 range) {
     dist = max(dist, segmentBeginMask * length(vec2((coords.x - coords.z) / widthRatio, coords.y)));
     dist = max(dist, segmentEndMask * length(vec2((coords.x - coords.w) / widthRatio, coords.y)));
 
-    #if !CAPS_ROUND
+    #if CAPS_MODE != CAPS_ROUND
     // Compute the caps mask.
     float capRangeMask = clamp(1.0 - ceil(range.z - drawRange.y), 0.0, 1.0);
     float beginCapMask = clamp(ceil(drawRange.x - coords.x), 0.0, 1.0);
@@ -53,16 +70,16 @@ float roundEdgesAndAddCaps(in vec4 coords, in vec3 range) {
 
     // Compute the outer segment distance (specific for each cap mode).
     float capDist = max(coords.x - drawRange.y, drawRange.x - coords.x) / widthRatio;
-    #if CAPS_NONE
+    #if CAPS_MODE == CAPS_NONE
     dist = mix(dist, max(abs(coords.y), (capDist + 0.1) / 0.1), capMask);
-    #elif CAPS_SQUARE
+    #elif CAPS_MODE == CAPS_SQUARE
     dist = mix(dist, max(abs(coords.y), capDist), capMask);
-    #elif CAPS_TRIANGLE_OUT
+    #elif CAPS_MODE == CAPS_TRIANGLE_OUT
     dist = mix(dist, abs(coords.y) + capDist, capMask);
-    #elif CAPS_TRIANGLE_IN
+    #elif CAPS_MODE == CAPS_TRIANGLE_IN
     dist = mix(dist, max(abs(coords.y), (capDist - abs(coords.y)) + capDist), capMask);
     #endif
-    #endif
+    #endif // CAPS_MODE != CAPS_ROUND
 
     return dist;
 }

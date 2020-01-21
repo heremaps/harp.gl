@@ -123,10 +123,19 @@ export class HighPrecisionLineMaterial extends THREE.RawShaderMaterial {
         return this.uniforms.diffuse.value as THREE.Color;
     }
     set color(value: THREE.Color) {
-        this.uniforms.diffuse.value = value;
+        this.uniforms.diffuse.value.copy(value);
     }
 
     private updateTransparencyFeature() {
         this.transparent = this.opacity < 1.0 ? true : false;
     }
+}
+
+export function isHighPrecisionLineMaterial(
+    material: object | undefined
+): material is HighPrecisionLineMaterial {
+    return (
+        material !== undefined &&
+        (material as HighPrecisionLineMaterial).isHighPrecisionLineMaterial === true
+    );
 }
