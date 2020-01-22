@@ -16,6 +16,7 @@ import {
     Theme
 } from "@here/harp-datasource-protocol";
 import {
+    DefaultTextStyle,
     FontStyle,
     FontUnit,
     FontVariant,
@@ -76,6 +77,7 @@ export class TextRenderStyleCache {
                     backgroundSize: 8
                 },
                 color: ColorCache.instance.getColor("#6d7477"),
+                opacity: 1.0,
                 backgroundColor: ColorCache.instance.getColor("#f7fbfd"),
                 backgroundOpacity: 0.5
             })
@@ -105,6 +107,7 @@ export class TextRenderStyleCache {
                     backgroundSize: 8
                 },
                 color: ColorCache.instance.getColor("#6d7477"),
+                opacity: 1.0,
                 backgroundColor: ColorCache.instance.getColor("#f7fbfd"),
                 backgroundOpacity: 0.5
             })
@@ -305,19 +308,24 @@ export class TextStyleCache {
         const mapView = tile.mapView;
         const dataSource = tile.dataSource;
         const zoomLevel = mapView.zoomLevel;
+        const zoomLevelInt = Math.floor(zoomLevel);
 
-        const cacheId = computeStyleCacheId(dataSource.name, technique, Math.floor(zoomLevel));
+        const cacheId = computeStyleCacheId(dataSource.name, technique, zoomLevelInt);
         let renderStyle = this.m_textRenderStyleCache.get(cacheId);
         if (renderStyle === undefined) {
             const defaultRenderParams = this.m_defaultStyle.renderParams;
 
+            // Sets opacity to 1.0 if default and technique attribute are undefined.
+            const defaultOpacity = getOptionValue(defaultRenderParams.opacity, 1.0);
+            // Interpolate opacity but only on discreet zoom levels (step interpolation).
             let opacity = getPropertyValue(
-                getOptionValue(technique.opacity, defaultRenderParams.opacity),
-                Math.floor(zoomLevel)
+                getOptionValue(technique.opacity, defaultOpacity),
+                zoomLevelInt
             );
 
+            // Store color (RGB) in cache and multiply opacity value with the color alpha channel.
             if (technique.color !== undefined) {
-                let hexColor = evaluateColorProperty(technique.color, Math.floor(zoomLevel));
+                let hexColor = evaluateColorProperty(technique.color, zoomLevelInt);
                 if (ColorUtils.hasAlphaInHex(hexColor)) {
                     const alpha = ColorUtils.getAlphaFromHex(hexColor);
                     opacity = opacity * alpha;
@@ -326,20 +334,40 @@ export class TextStyleCache {
                 this.m_colorMap.set(cacheId, ColorCache.instance.getColor(hexColor));
             }
 
-            let backgroundOpacity =
-                technique.backgroundOpacity !== undefined
-                    ? getPropertyValue(technique.backgroundOpacity, Math.floor(zoomLevel))
-                    : technique.backgroundColor !== undefined &&
-                      technique.backgroundSize !== undefined &&
-                      getPropertyValue(technique.backgroundSize, Math.floor(zoomLevel)) > 0
-                    ? 1.0 // make label opaque when backgroundColor and backgroundSize are set
-                    : defaultRenderParams.backgroundOpacity;
+            // Sets background size to 0.0 if default and technique attribute is undefined.
+            const defaultBackgroundSize = getOptionValue(
+                defaultRenderParams.fontSize!.backgroundSize,
+                0
+            );
+            const backgroundSize = getPropertyValue(
+                getOptionValue(technique.backgroundSize, defaultBackgroundSize),
+                zoomLevelInt
+            );
 
+            const hasBackgroundDefined =
+                technique.backgroundColor !== undefined &&
+                technique.backgroundSize !== undefined &&
+                backgroundSize > 0;
+
+            // Sets background opacity to 1.0 if default and technique value is undefined while
+            // background size and color is specified, otherwise set value in default render
+            // params or 0.0 if neither set. Makes label opaque when backgroundColor and
+            // backgroundSize are set.
+            const defaultBackgroundOpacity = getOptionValue(
+                defaultRenderParams.backgroundOpacity,
+                0.0
+            );
+            let backgroundOpacity = getPropertyValue(
+                getOptionValue(
+                    technique.backgroundOpacity,
+                    hasBackgroundDefined ? 1.0 : defaultBackgroundOpacity
+                ),
+                zoomLevelInt
+            );
+
+            // Store background color (RGB) in cache and multiply backgroundOpacity by its alpha.
             if (technique.backgroundColor !== undefined) {
-                let hexBgColor = evaluateColorProperty(
-                    technique.backgroundColor,
-                    Math.floor(zoomLevel)
-                );
+                let hexBgColor = evaluateColorProperty(technique.backgroundColor, zoomLevelInt);
                 if (ColorUtils.hasAlphaInHex(hexBgColor)) {
                     const alpha = ColorUtils.getAlphaFromHex(hexBgColor);
                     backgroundOpacity = backgroundOpacity * alpha;
@@ -352,14 +380,11 @@ export class TextStyleCache {
                 fontName: getOptionValue(technique.fontName, defaultRenderParams.fontName),
                 fontSize: {
                     unit: FontUnit.Pixel,
-                    size:
-                        technique.size !== undefined
-                            ? getPropertyValue(technique.size, Math.floor(zoomLevel))
-                            : defaultRenderParams.fontSize!.size,
-                    backgroundSize:
-                        technique.backgroundSize !== undefined
-                            ? getPropertyValue(technique.backgroundSize, Math.floor(zoomLevel))
-                            : defaultRenderParams.fontSize!.backgroundSize
+                    size: getPropertyValue(
+                        getOptionValue(technique.size, defaultRenderParams.fontSize!.size),
+                        zoomLevelInt
+                    ),
+                    backgroundSize
                 },
                 fontStyle:
                     technique.fontStyle === "Regular" ||
@@ -375,10 +400,16 @@ export class TextStyleCache {
                         ? FontVariant[technique.fontVariant]
                         : defaultRenderParams.fontVariant,
                 rotation: getOptionValue(technique.rotation, defaultRenderParams.rotation),
-                color: getOptionValue(this.m_colorMap.get(cacheId), defaultRenderParams.color),
+                color: getOptionValue(
+                    this.m_colorMap.get(cacheId),
+                    getOptionValue(defaultRenderParams.color, DefaultTextStyle.DEFAULT_COLOR)
+                ),
                 backgroundColor: getOptionValue(
                     this.m_colorMap.get(cacheId + "_bg"),
-                    defaultRenderParams.backgroundColor
+                    getOptionValue(
+                        defaultRenderParams.backgroundColor,
+                        DefaultTextStyle.DEFAULT_BACKGROUND_COLOR
+                    )
                 ),
                 opacity,
                 backgroundOpacity
