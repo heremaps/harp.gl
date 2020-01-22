@@ -229,7 +229,6 @@ export interface SdfTextMaterialParameters {
 }
 
 /**
- * @hidden
  * Material designed to render transformable, high quality SDF text.
  */
 export class SdfTextMaterial extends THREE.RawShaderMaterial {

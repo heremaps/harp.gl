@@ -1,0 +1,70 @@
+sequenceDiagram
+    participant MapView
+    participant R as TextElementsRenderer
+    participant StateCache as TextElementStateCache
+    participant GroupState as TextElementGroupState
+    participant LabelState as TextElementState
+    participant TextCanvas
+    participant PoiRenderer
+    participant FontCatalog
+
+    MapView->>R: placeText(tileList)
+    opt cache invalid
+        R ->> StateCache : clearVisited()
+        Note over R: updateTextElements:
+        loop every TextElementGroup
+            R ->> StateCache: getOrSet(textElementGroup)
+            StateCache ->> GroupState: updateElements()
+            loop every TextElementState
+                GroupState ->> R: checkReadyForPlacement(textElementState)
+                R -->> StateCache: cameraDistance
+                opt cameraDistance !== undefined
+                    R ->> StateCache: deduplicateElement(textElementState)
+                    StateCache -->> R: deduplicated
+                    opt not deduplicated
+                        GroupState -->> GroupState: cameraDistance = undefined
+                    end
+                end
+                GroupState ->> LabelState: update(cameraDistance)
+            end
+        end
+    end
+    R ->> StateCache: update(time)
+    Note over R: placeTextElements:
+    R ->> StateCache: sortedGroupStates()
+    StateCache -->> R: groupStates
+    loop every priority
+        rect rgb(230, 255, 255)
+            Note over R,FontCatalog: Persistent Labels Pass:
+            loop every ready,visible and persistent TextElement
+                R ->> FontCatalog: getGlyphs(text)
+                FontCatalog -->> R: glyphData[]
+                alt  PointLabel
+                    opt placement ok
+                        R ->> TextCanvas: addTextBufferObject(textBufferObject)
+                        R ->> PoiRenderer: renderPoi(poiInfo)
+                    end
+                else  PathLabel
+                    opt placement ok
+                        R ->> TextCanvas: addText(glyphData[])
+                    end
+                else  LineMarker
+                    loop every marker
+                        opt placement ok
+                        R ->> PoiRenderer: renderPoi(poiInfo)
+                    end
+                    end
+                end
+            end
+        end
+        rect rgb(255, 200, 200)
+            Note over R,FontCatalog: New Labels Pass...
+        end
+    end
+    Note over R: overlay label placement...
+    MapView->>R: renderText(screenCamera)
+    loop every textCanvas
+        R ->> TextCanvas: render(screenCamera)
+    end
+
+

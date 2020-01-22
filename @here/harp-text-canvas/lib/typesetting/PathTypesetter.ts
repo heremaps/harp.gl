@@ -29,7 +29,6 @@ export interface PathTypesettingParameters extends TypesettingParameters {
 }
 
 /**
- * @hidden
  * [[Typesetter]] implementation that arranges glyphs alongside a specified path.
  */
 export class PathTypesetter implements Typesetter {
