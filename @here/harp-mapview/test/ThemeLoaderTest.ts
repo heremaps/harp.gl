@@ -47,6 +47,22 @@ function makeUrlRelative(baseUrl: string, url: string) {
 }
 
 describe("ThemeLoader", function() {
+    describe("#isThemeLoaded", function() {
+        it("checks for external dependencies", function() {
+            assert.isFalse(
+                ThemeLoader.isThemeLoaded({
+                    extends: ["base_theme.json"]
+                })
+            );
+            assert.isFalse(
+                ThemeLoader.isThemeLoaded({
+                    extends: "base_theme.json"
+                })
+            );
+            assert.isTrue(ThemeLoader.isThemeLoaded({}));
+        });
+    });
+
     describe("#load url handling", function() {
         const appBaseUrl = getAppBaseUrl();
         const sampleThemeUrl = getTestResourceUrl(
