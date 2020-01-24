@@ -97,29 +97,30 @@ function testHexColor() {
     assert.strictEqual(parseStringEncodedNumeral(`#00FF00`), 255 << 8);
     assert.strictEqual(parseStringEncodedNumeral(`#FF0000`), 255 << 16);
 
-    // HEX should support RGBA colors in 4 and 8 digit form, for now alpha components
-    // are silently ignored so the output will be the same as for RGB colors regardless of
-    // the alpha channel specified.
-    // TODO: Change this part after alpha component is taken into account - see HARP-7517.
+    // HEX should support RGBA colors in 4 and 8 digit form, alpha component is stored in
+    // the last octet (#RRGGBBAA or #RGBA), then the value of the octet (0-255) is inverted
+    // so we actually store transparency instead of opacity. This is to preserve compatibility
+    // with other libraries that do not support alpha channel (THREE.js). In other words
+    // #000000FF (black with full alpha) will be equal to #000000 (black no alpha).
 
     // HEX Color in #RGBA format - 4 digits
-    assert.strictEqual(parseStringEncodedNumeral(`#0000`), 0);
+    assert.strictEqual(parseStringEncodedNumeral(`#0000`), 255 << 24);
     assert.strictEqual(parseStringEncodedNumeral(`#000F`), 0);
-    assert.strictEqual(parseStringEncodedNumeral(`#00F0`), 255 << 0);
+    assert.strictEqual(parseStringEncodedNumeral(`#00F0`), (255 << 0) | (255 << 24));
     assert.strictEqual(parseStringEncodedNumeral(`#00FF`), 255 << 0);
-    assert.strictEqual(parseStringEncodedNumeral(`#0F00`), 255 << 8);
+    assert.strictEqual(parseStringEncodedNumeral(`#0F00`), (255 << 8) | (255 << 24));
     assert.strictEqual(parseStringEncodedNumeral(`#0F0F`), 255 << 8);
-    assert.strictEqual(parseStringEncodedNumeral(`#F000`), 255 << 16);
+    assert.strictEqual(parseStringEncodedNumeral(`#F000`), (255 << 16) | (255 << 24));
     assert.strictEqual(parseStringEncodedNumeral(`#F00F`), 255 << 16);
 
     // HEX Color in #RRGGBBAA format - 8 digits
-    assert.strictEqual(parseStringEncodedNumeral(`#00000000`), 0);
+    assert.strictEqual(parseStringEncodedNumeral(`#00000000`), 255 << 24);
     assert.strictEqual(parseStringEncodedNumeral(`#000000FF`), 0);
-    assert.strictEqual(parseStringEncodedNumeral(`#0000FF00`), 255 << 0);
+    assert.strictEqual(parseStringEncodedNumeral(`#0000FF00`), (255 << 0) | (255 << 24));
     assert.strictEqual(parseStringEncodedNumeral(`#0000FFFF`), 255 << 0);
-    assert.strictEqual(parseStringEncodedNumeral(`#00FF0000`), 255 << 8);
+    assert.strictEqual(parseStringEncodedNumeral(`#00FF0000`), (255 << 8) | (255 << 24));
     assert.strictEqual(parseStringEncodedNumeral(`#00FF00FF`), 255 << 8);
-    assert.strictEqual(parseStringEncodedNumeral(`#FF000000`), 255 << 16);
+    assert.strictEqual(parseStringEncodedNumeral(`#FF000000`), (255 << 16) | (255 << 24));
     assert.strictEqual(parseStringEncodedNumeral(`#FF0000FF`), 255 << 16);
 
     // Do not allow for any characters behind and after
@@ -198,30 +199,32 @@ function testRGBAColor() {
     // RGBA color literal may be written as `rgba(r,g,b,a)` expression, where each
     // color channel (r, g, b) should be discreet number between <0, 255> and alpha
     // channel value (a) is passed as floating point number in <0.0, 1.0> range.
-    // NOTE:
-    // Because alpha channel is currently ignored after decoding, the value received
-    // from decoder does not differ from the rgb(r, g, b) expressed value.
-    // TODO: This test is to be updated after HARP-7517 is solved.
-    assert.strictEqual(parseStringEncodedNumeral(`rgba(0,0,0,0.0)`), 0);
+    // Keep in mind that decoded from rgba(0, 0, 0, 1.0) equals the one from rgb(0, 0, 0),
+    // cause full alpha (1.0) will be encoded as transparency:
+    // T = 255 - (1 * 255) with 24 bits shift.
+    assert.strictEqual(parseStringEncodedNumeral(`rgba(0,0,0,0.0)`), 255 << 24);
     assert.strictEqual(parseStringEncodedNumeral(`rgba(0,0,0,1.0)`), 0);
     assert.strictEqual(parseStringEncodedNumeral(`rgba(255,0,0,1.0)`), 255 << 16);
+    assert.strictEqual(parseStringEncodedNumeral(`rgba(255,0,0,0.0)`), (255 << 16) | (255 << 24));
     assert.strictEqual(parseStringEncodedNumeral(`rgba(0,255,0,1.0)`), 255 << 8);
+    assert.strictEqual(parseStringEncodedNumeral(`rgba(0,255,0,0.0)`), (255 << 8) | (255 << 24));
     assert.strictEqual(parseStringEncodedNumeral(`rgba(0,0,255,1.0)`), 255 << 0);
+    assert.strictEqual(parseStringEncodedNumeral(`rgba(0,0,255,0.0)`), (255 << 0) | (255 << 24));
 
     // One space is allowed after opening and before closing brackets, just for reading comfort.
     assert.strictEqual(
         parseStringEncodedNumeral(`rgba( 255,255,255,0.5 )`),
-        (255 << 16) | (255 << 8) | 255
+        (128 << 24) | (255 << 16) | (255 << 8) | 255
     );
 
     // Single spaces after colons are also accepted.
     assert.strictEqual(
         parseStringEncodedNumeral(`rgba(100, 255, 100, 0.5)`),
-        (100 << 16) | (255 << 8) | 100
+        (128 << 24) | (100 << 16) | (255 << 8) | 100
     );
     assert.strictEqual(
         parseStringEncodedNumeral(`rgba( 55, 255, 55, 0.1 )`),
-        (55 << 16) | (255 << 8) | 55
+        (230 << 24) | (55 << 16) | (255 << 8) | 55
     );
 
     // Do not accept spaces before the colon.

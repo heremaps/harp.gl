@@ -118,7 +118,7 @@ const StringEncodedRGBA: StringEncodedNumeralFormat = {
         target[0] = parseInt(channels[1], 10) / 255;
         target[1] = parseInt(channels[2], 10) / 255;
         target[2] = parseInt(channels[3], 10) / 255;
-        target[3] = parseInt(channels[4], 10);
+        target[3] = parseFloat(channels[4]);
         return true;
     }
 };
@@ -218,6 +218,7 @@ export function parseStringEncodedNumeral(
                         tmpBuffer[2],
                         tmpBuffer[3]
                     );
+                    break;
                 case StringEncodedNumeralType.RGB:
                 case StringEncodedNumeralType.HSL:
                     result = ColorUtils.getHexFromRgb(tmpBuffer[0], tmpBuffer[1], tmpBuffer[2]);
