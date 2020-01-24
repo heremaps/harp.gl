@@ -22,7 +22,7 @@ varying float vExtrusionRatio;
 // Cancel extrusionRatio (meaning, force to 1) if extrusionAxisLen < MIN_BUILDING_HEIGHT.
 const float MIN_BUILDING_HEIGHT_SQUARED = ${MIN_BUILDING_HEIGHT_SQUARED};
 float extrusionAxisLenSquared = dot(extrusionAxis.xyz, extrusionAxis.xyz);
-vExtrusionRatio = max(1.0 - step(MIN_BUILDING_HEIGHT_SQUARED, extrusionAxisLenSquared), extrusionRatio);
+vExtrusionRatio = (extrusionAxisLenSquared < MIN_BUILDING_HEIGHT_SQUARED) ? 1.0 : extrusionRatio;
 
 transformed = transformed + extrusionAxis.xyz * (vExtrusionRatio - 1.0);
 vExtrusionAxis = vec4(normalMatrix * extrusionAxis.xyz, extrusionAxis.w);
