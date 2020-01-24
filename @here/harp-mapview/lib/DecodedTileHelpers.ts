@@ -13,6 +13,7 @@ import {
     isExtrudedLineTechnique,
     isExtrudedPolygonTechnique,
     isInterpolatedProperty,
+    isJsonExpr,
     isShaderTechnique,
     isStandardTechnique,
     isTerrainTechnique,
@@ -698,6 +699,28 @@ export function evaluateColorProperty(value: Value, zoomLevel?: number): number 
     }
 
     throw new Error(`Unsupported color format: '${value}'`);
+}
+
+/**
+ * Compile expressions in techniques as they were received from decoder.
+ */
+export function compileTechniques(techniques: Technique[]) {
+    techniques.forEach((technique: any) => {
+        for (const propertyName in technique) {
+            if (!technique.hasOwnProperty(propertyName)) {
+                continue;
+            }
+            const value = technique[propertyName];
+            if (isJsonExpr(value) && propertyName !== "kind") {
+                // "kind" is reserved.
+                try {
+                    technique[propertyName] = Expr.fromJSON(value);
+                } catch (error) {
+                    logger.error("#compileTechniques: Failed to compile expression:", error);
+                }
+            }
+        }
+    });
 }
 
 /**
