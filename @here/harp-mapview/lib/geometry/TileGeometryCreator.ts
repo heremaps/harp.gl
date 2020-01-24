@@ -20,7 +20,6 @@ import {
     isExtrudedLineTechnique,
     isExtrudedPolygonTechnique,
     isFillTechnique,
-    isJsonExpr,
     isLineMarkerTechnique,
     isLineTechnique,
     isPoiTechnique,
@@ -59,6 +58,7 @@ import { ColorCache } from "../ColorCache";
 import {
     applyBaseColorToMaterial,
     applySecondaryColorToMaterial,
+    compileTechniques,
     createMaterial,
     getBufferAttribute,
     getObjectConstructor
@@ -173,22 +173,7 @@ export class TileGeometryCreator {
         }
 
         // compile the dynamic expressions.
-        decodedTile.techniques.forEach((technique: any) => {
-            for (const propertyName in technique) {
-                if (!technique.hasOwnProperty(propertyName)) {
-                    continue;
-                }
-                const value = technique[propertyName];
-                if (isJsonExpr(value) && propertyName !== "kind") {
-                    // "kind" is reserved.
-                    try {
-                        technique[propertyName] = Expr.fromJSON(value);
-                    } catch (error) {
-                        logger.error("#initDecodedTile: Failed to compile expression:", error);
-                    }
-                }
-            }
-        });
+        compileTechniques(decodedTile.techniques);
     }
 
     /**
