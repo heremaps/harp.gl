@@ -85,7 +85,7 @@ export interface PickResult {
     intersection?: THREE.Intersection;
 
     /**
-     * Defined for roads only.
+     * Defined for roads or if `enableTechniqueInfo` option is enabled.
      */
     technique?: Technique;
 
@@ -107,7 +107,8 @@ export class PickHandler {
     constructor(
         readonly mapView: MapView,
         readonly camera: THREE.Camera,
-        public enableRoadPicking = true
+        public enableRoadPicking = true,
+        public enablePickTechnique = false
     ) {
         if (enableRoadPicking) {
             this.m_roadPicker = new RoadPicker(mapView);
@@ -165,6 +166,9 @@ export class PickHandler {
             }
 
             const featureData: TileFeatureData = intersect.object.userData.feature;
+            if (this.enablePickTechnique) {
+                pickResult.technique = intersect.object.userData.technique;
+            }
 
             this.addObjInfo(featureData, intersect, pickResult);
 

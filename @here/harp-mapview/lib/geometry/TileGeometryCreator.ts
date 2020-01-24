@@ -1376,6 +1376,7 @@ export class TileGeometryCreator {
                 objInfos: srcGeometry.objInfos
             };
             object.userData.feature = featureData;
+            object.userData.technique = technique;
         }
     }
 
