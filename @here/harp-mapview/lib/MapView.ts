@@ -457,6 +457,11 @@ export interface MapViewOptions extends TextElementsRendererOptions {
     enableRoadPicking?: boolean;
 
     /**
+     * Set to `true` to allow picking of technique information associated with objects.
+     */
+    enablePickTechnique?: boolean;
+
+    /**
      * An optional canvas element that renders 2D collision debug information.
      */
     collisionDebugCanvas?: HTMLCanvasElement;
@@ -886,7 +891,8 @@ export class MapView extends THREE.EventDispatcher {
         this.m_pickHandler = new PickHandler(
             this,
             this.m_rteCamera,
-            this.m_options.enableRoadPicking === true
+            this.m_options.enableRoadPicking === true,
+            this.m_options.enablePickTechnique === true
         );
 
         if (this.m_options.tileWrappingEnabled !== undefined) {
