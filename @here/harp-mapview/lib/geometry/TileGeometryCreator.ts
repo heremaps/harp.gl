@@ -839,8 +839,7 @@ export class TileGeometryCreator {
                     }
                 }
 
-                this.addFeatureData(srcGeometry, technique, object);
-                this.addGeometryObjInfos(tile, srcGeometry, technique, object);
+                this.addUserData(tile, srcGeometry, technique, object);
 
                 if (isExtrudedPolygonTechnique(technique) || isFillTechnique(technique)) {
                     // filled polygons are normal meshes, and need transparency only when fading or
@@ -1353,46 +1352,26 @@ export class TileGeometryCreator {
         return plane;
     }
 
-    /**
-     * Pass the feature data on to the object, so it can be used in picking
-     * `MapView.intersectMapObjects()`. Do not pass the feature data if the technique is a
-     * solid-line, because the line picking functionality for the lines is not object based, but
-     * tile based.
-     *
-     * @param srcGeometry The original [[Geometry]].
-     * @param technique The corresponding [[Technique]].
-     * @param object The object to pass info to.
-     */
-    private addFeatureData(srcGeometry: Geometry, technique: Technique, object: THREE.Object3D) {
-        if (
-            ((srcGeometry.objInfos !== undefined && srcGeometry.objInfos.length > 0) ||
-                isCirclesTechnique(technique) ||
-                isSquaresTechnique(technique)) &&
-            !isSolidLineTechnique(technique)
-        ) {
-            const featureData: TileFeatureData = {
-                geometryType: srcGeometry.type,
-                starts: srcGeometry.featureStarts,
-                objInfos: srcGeometry.objInfos
-            };
-            object.userData.feature = featureData;
-            object.userData.technique = technique;
-        }
-    }
-
-    private addGeometryObjInfos(
+    private addUserData(
         tile: Tile,
         srcGeometry: Geometry,
         technique: Technique,
         object: THREE.Object3D
     ) {
-        if (srcGeometry.objInfos === undefined || Object.keys(object.userData).length > 0) {
-            return;
-        }
+        const hasObjInfos = (srcGeometry.objInfos?.length ?? 0) > 0;
 
         if (isTerrainTechnique(technique)) {
+            assert(
+                Object.keys(object.userData).length === 0,
+                "Unexpected user data in terrain object"
+            );
+
             if (typeof srcGeometry.objInfos![0] === "number") {
                 assert(false, "Wrong attribute map type for terrain geometry");
+                return;
+            }
+
+            if (!hasObjInfos) {
                 return;
             }
 
@@ -1409,8 +1388,21 @@ export class TileGeometryCreator {
                 displacementMap
             };
             object.userData = tileDisplacementMap;
-        } else {
-            object.userData = srcGeometry.objInfos;
+        } else if (
+            (hasObjInfos || isCirclesTechnique(technique) || isSquaresTechnique(technique)) &&
+            !isSolidLineTechnique(technique)
+        ) {
+            // Set the feature data for picking with `MapView.intersectMapObjects()` except for
+            // solid-line which uses tile-based picking.
+            const featureData: TileFeatureData = {
+                geometryType: srcGeometry.type,
+                starts: srcGeometry.featureStarts,
+                objInfos: srcGeometry.objInfos
+            };
+            object.userData.feature = featureData;
+            object.userData.technique = technique;
+        } else if (hasObjInfos) {
+            object.userData = srcGeometry.objInfos!;
         }
     }
 
