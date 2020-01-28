@@ -110,6 +110,19 @@ export interface Theme {
 }
 
 /**
+ * A type representing HARP themes with all the styleset declarations
+ * grouped in one [[Array]].
+ *
+ * @internal This type will merge with [[Theme]].
+ */
+export type FlatTheme = Omit<Theme, "styles"> & {
+    /**
+     * The style rules used to render the map.
+     */
+    styles?: StyleSet;
+};
+
+/**
  * Checks if the given definition implements the [[BoxedDefinition]] interface.
  */
 export function isBoxedDefinition(def: Definition): def is BoxedDefinition {
@@ -251,7 +264,7 @@ export type BoxedDefinition =
 /**
  * Possible values for `definitions` element of [Theme].
  */
-export type Definition = LiteralValue | JsonExpr | BoxedDefinition | JsonExpr | StyleDeclaration;
+export type Definition = LiteralValue | JsonExpr | BoxedDefinition | StyleDeclaration;
 
 /**
  * An array of [[Definition]]s.
@@ -376,6 +389,11 @@ export interface BaseStyle {
      * Human readable description.
      */
     description?: string;
+
+    /**
+     * The style set referenced by this styling rule.
+     */
+    styleSet?: string;
 
     /**
      * Technique name. See the classes extending from this class to determine what possible
