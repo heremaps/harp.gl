@@ -7847,22 +7847,10 @@ typedoc@^0.15.0:
     typedoc-default-themes "^0.6.1"
     typescript "3.7.x"
 
-typescript@2.9.2:
-  version "2.9.2"
-  resolved "https://registry.yarnpkg.com/typescript/-/typescript-2.9.2.tgz#1cbf61d05d6b96269244eb6a3bce4bd914e0f00c"
-  integrity sha512-Gr4p6nFNaoufRIY4NMdpQRNmgxVIGMs4Fcu/ujdYk3nAZqk7supzBE9idmvfZIlH/Cuj//dvi+019qEue9lV0w==
-
 typescript@3.7.x, typescript@^3.7.2, typescript@~3.7.2:
   version "3.7.3"
   resolved "https://registry.yarnpkg.com/typescript/-/typescript-3.7.3.tgz#b36840668a16458a7025b9eabfad11b66ab85c69"
   integrity sha512-Mcr/Qk7hXqFBXMN7p7Lusj1ktCBydylfQM/FZCk5glCNQJrCUKPkMHdo9R0MTFWsC/4kPFvDS0fDPvukfCkFsw==
-
-typestring@^2.9.2:
-  version "2.9.2"
-  resolved "https://registry.yarnpkg.com/typestring/-/typestring-2.9.2.tgz#9ba055f4ff18f0343713812daea61029acd42cb8"
-  integrity sha512-n0DY3JrRpJcbcuBsjEP3MF2W9e8wZV+R6Ahg/MUuHAL/e96jp+bdFpU8vkPbtuV5kWQdT9d5CmIZbfWquEwT7Q==
-  dependencies:
-    typescript "2.9.2"
 
 ua-parser-js@^0.7.20:
   version "0.7.20"
