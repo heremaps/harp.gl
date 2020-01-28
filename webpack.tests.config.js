@@ -99,7 +99,7 @@ const browserTestsConfig = {
             fs: "undefined",
             perf_hooks: "undefined",
             three: "THREE",
-            typestring: "undefined"
+            typescript: "undefined"
         },
         function(context, request, callback) {
             return /three\.module\.js$/.test(request) ? callback(null, "THREE") : callback();

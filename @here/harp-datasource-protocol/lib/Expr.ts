@@ -381,7 +381,7 @@ export abstract class LiteralExpr extends Expr {
 export class NullLiteralExpr extends LiteralExpr {
     static instance = new NullLiteralExpr();
     /** @override */
-    readonly value = null;
+    readonly value: Value = null;
 
     protected constructor() {
         super();
