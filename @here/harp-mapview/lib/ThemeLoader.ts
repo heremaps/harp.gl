@@ -7,6 +7,7 @@
 import { isJsonExpr } from "@here/harp-datasource-protocol";
 import {
     Definitions,
+    FlatTheme,
     isActualSelectorDefinition,
     isBoxedDefinition,
     isJsonExprReference,
@@ -14,6 +15,7 @@ import {
     ResolvedStyleDeclaration,
     ResolvedStyleSet,
     StyleDeclaration,
+    Styles,
     StyleSet,
     Theme
 } from "@here/harp-datasource-protocol/lib/Theme";
@@ -103,7 +105,10 @@ export class ThemeLoader {
      * @param options Optional, a [[ThemeLoadOptions]] objects containing any custom settings for
      *    this load request.
      */
-    static async load(theme: string | Theme, options?: ThemeLoadOptions): Promise<Theme> {
+    static async load(
+        theme: string | Theme | FlatTheme,
+        options?: ThemeLoadOptions
+    ): Promise<Theme> {
         options = options || {};
         if (typeof theme === "string") {
             const uriResolver = options.uriResolver;
@@ -146,7 +151,7 @@ export class ThemeLoader {
      *
      * @param theme
      */
-    static isThemeLoaded(theme: Theme): boolean {
+    static isThemeLoaded(theme: Theme | FlatTheme): boolean {
         return theme.extends === undefined;
     }
 
@@ -171,7 +176,7 @@ export class ThemeLoader {
      *
      * @param theme The [[Theme]] to resolve.
      */
-    static resolveUrls(theme: Theme, uriResolver?: UriResolver): Theme {
+    static resolveUrls(theme: Theme | FlatTheme, uriResolver?: UriResolver): Theme {
         // Ensure that all resources referenced in theme by relative URIs are in fact relative to
         // theme.
         if (theme.url === undefined) {
@@ -227,6 +232,25 @@ export class ThemeLoader {
             for (const poiTable of theme.poiTables) {
                 poiTable.url = childUrlResolver.resolveUri(poiTable.url);
             }
+        }
+
+        if (Array.isArray(theme.styles)) {
+            // Convert the flat theme to a standard theme.
+            const styles: Styles = {};
+            theme.styles.forEach(style => {
+                if (isJsonExpr(style)) {
+                    throw new Error("invalid usage of theme reference");
+                }
+                const styleSetName = style.styleSet;
+                if (styleSetName === undefined) {
+                    throw new Error("missing reference to style set");
+                }
+                if (!styles[styleSetName]) {
+                    styles[styleSetName] = [];
+                }
+                styles[styleSetName].push(style);
+            });
+            theme.styles = styles;
         }
 
         if (theme.styles) {
@@ -522,7 +546,42 @@ export class ThemeLoader {
 
     static mergeThemes(theme: Theme, baseTheme: Theme): Theme {
         const definitions = { ...baseTheme.definitions, ...theme.definitions };
-        const styles = { ...baseTheme.styles, ...theme.styles };
+
+        let styles!: Styles;
+
+        if (baseTheme.styles && theme.styles) {
+            const currentStyleSets = Object.keys(baseTheme.styles);
+            const incomingStyleSets = Object.keys(theme.styles);
+
+            styles = {};
+
+            currentStyleSets.forEach(styleSetName => {
+                const index = incomingStyleSets.indexOf(styleSetName);
+
+                if (index !== -1) {
+                    // merge the current and incoming styleset
+                    // and add the result to `styles`.
+                    styles[styleSetName] = [
+                        ...baseTheme.styles![styleSetName],
+                        ...theme.styles![styleSetName]
+                    ];
+                    // remove the styleset from the incoming list
+                    incomingStyleSets.splice(index, 1);
+                } else {
+                    // copy the existing style set to `styles`.
+                    styles[styleSetName] = baseTheme.styles![styleSetName];
+                }
+            });
+
+            // add the remaining stylesets to styles.
+            incomingStyleSets.forEach(p => {
+                styles[p] = theme.styles![p];
+            });
+        } else if (baseTheme.styles) {
+            styles = { ...baseTheme.styles };
+        } else if (theme.styles) {
+            styles = { ...theme.styles };
+        }
         return { ...baseTheme, ...theme, definitions, styles };
     }
 }

@@ -17,6 +17,7 @@ const URL = typeof window !== "undefined" ? window.URL : nodeUrl.URL;
 
 import {
     BoxedSelectorDefinition,
+    FlatTheme,
     ResolvedStyleSet,
     SolidLineStyle,
     StyleSelector,
@@ -473,6 +474,142 @@ describe("ThemeLoader", function() {
                 )
             );
             assert.isTrue(loggerMock.warn.calledWith("styles.tilezen[1]: invalid style, ignored"));
+        });
+    });
+
+    describe("flat themes", function() {
+        it("load flat theme", async () => {
+            const flatTheme: FlatTheme = {
+                styles: [
+                    {
+                        styleSet: "tilezen",
+                        when: ["boolean", true],
+                        technique: "none"
+                    },
+                    {
+                        styleSet: "terrain",
+                        when: ["boolean", false],
+                        technique: "none"
+                    },
+                    {
+                        styleSet: "tilezen",
+                        when: ["boolean", false],
+                        technique: "solid-line",
+                        attr: {
+                            lineWidth: 2
+                        }
+                    }
+                ]
+            };
+
+            const theme = await ThemeLoader.load(flatTheme);
+
+            assert.isDefined(theme.styles);
+            assert.isArray(theme.styles!.tilezen);
+            const tilezen: ResolvedStyleSet = theme.styles!.tilezen as any;
+            assert.strictEqual(tilezen.length, 2);
+            assert.strictEqual(tilezen[0].technique, "none");
+            assert.strictEqual(tilezen[1].technique, "solid-line");
+
+            assert.isArray(theme.styles!.terrain);
+            const terrain: ResolvedStyleSet = theme.styles!.terrain as any;
+            assert.strictEqual(terrain.length, 1);
+            assert.strictEqual(terrain[0].technique, "none");
+        });
+    });
+
+    describe("merge style sets", function() {
+        it("merge themes", async () => {
+            const baseTheme: Theme = {
+                styles: {
+                    tilezen: [
+                        {
+                            when: ["boolean", true],
+                            technique: "none"
+                        }
+                    ],
+                    terrain: [
+                        {
+                            when: ["boolean", false],
+                            technique: "none"
+                        }
+                    ]
+                }
+            };
+
+            const source: Theme = {
+                extends: [baseTheme],
+                styles: {
+                    tilezen: [
+                        {
+                            when: ["boolean", false],
+                            technique: "solid-line",
+                            attr: {
+                                lineWidth: 2
+                            }
+                        }
+                    ]
+                }
+            };
+
+            const theme = await ThemeLoader.load(source);
+
+            assert.isDefined(theme.styles);
+            assert.isArray(theme.styles!.tilezen);
+            const tilezen: ResolvedStyleSet = theme.styles!.tilezen as any;
+            assert.strictEqual(tilezen.length, 2);
+            assert.strictEqual(tilezen[0].technique, "none");
+            assert.strictEqual(tilezen[1].technique, "solid-line");
+
+            assert.isArray(theme.styles!.terrain);
+            const terrain: ResolvedStyleSet = theme.styles!.terrain as any;
+            assert.strictEqual(terrain.length, 1);
+            assert.strictEqual(terrain[0].technique, "none");
+        });
+
+        it("merge flat themes", async () => {
+            const baseTheme: FlatTheme = {
+                styles: [
+                    {
+                        styleSet: "tilezen",
+                        when: ["boolean", true],
+                        technique: "none"
+                    },
+                    {
+                        styleSet: "terrain",
+                        when: ["boolean", false],
+                        technique: "none"
+                    }
+                ]
+            };
+
+            const source: FlatTheme = {
+                extends: [baseTheme],
+                styles: [
+                    {
+                        styleSet: "tilezen",
+                        when: ["boolean", false],
+                        technique: "solid-line",
+                        attr: {
+                            lineWidth: 2
+                        }
+                    }
+                ]
+            };
+
+            const theme = await ThemeLoader.load(source);
+
+            assert.isDefined(theme.styles);
+            assert.isArray(theme.styles!.tilezen);
+            const tilezen: ResolvedStyleSet = theme.styles!.tilezen as any;
+            assert.strictEqual(tilezen.length, 2);
+            assert.strictEqual(tilezen[0].technique, "none");
+            assert.strictEqual(tilezen[1].technique, "solid-line");
+
+            assert.isArray(theme.styles!.terrain);
+            const terrain: ResolvedStyleSet = theme.styles!.terrain as any;
+            assert.strictEqual(terrain.length, 1);
+            assert.strictEqual(terrain[0].technique, "none");
         });
     });
 });
