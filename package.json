@@ -63,7 +63,7 @@
         "tslint:fix": "tslint --fix --project tsconfig.json",
         "prettier": "prettier -l \"**/*.ts\" \"**/*.tsx\" \"**/*.json\"",
         "prettier:fix": "prettier --write \"**/*.ts\" \"**/*.tsx\" \"**/*.json\"",
-        "postinstall": "ts-node ./scripts/postinstall.ts",
+        "postinstall": "yarn workspace @here/harp-datasource-protocol generate-json-schema",
         "prepare-doc-deploy": "ts-node ./scripts/prepare_doc_deploy.ts"
     },
     "engines": {
