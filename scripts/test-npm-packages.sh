@@ -12,6 +12,7 @@ set -e
 packages="\
     @here/harp-datasource-protocol \
     @here/harp-fetch \
+    @here/harp-geometry \
     @here/harp-geoutils \
     @here/harp-lines \
     @here/harp-lrucache \
