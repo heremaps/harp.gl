@@ -31,13 +31,14 @@ jobs:
         yarn test-browser --headless-firefox
         yarn test-browser --headless-chrome
         ./scripts/test-npm-packages.sh
-        git status # just in case test-npm-packages leaves some garbage
+        git status # just in build leaves some garbage
     - name: "Build & Deploy"
       script: |
         set -ex
         cross-env NODE_ENV=production yarn run build
         yarn run typedoc
         cross-env NODE_ENV=production yarn run build-www
+        git status # just in build leaves some garbage
       before_deploy: yarn prepare-doc-deploy
       deploy:
         - provider: script
