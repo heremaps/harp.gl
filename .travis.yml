@@ -23,22 +23,22 @@ before_install:
 jobs:
   include:
     - name: "Test"
-      script: |
-        set -ex
-        yarn pre-test
-        yarn cov-test --forbid-only
-        yarn build-tests
-        yarn test-browser --headless-firefox
-        yarn test-browser --headless-chrome
-        ./scripts/test-npm-packages.sh
-        git status # just in case test-npm-packages leaves some garbage
+      script:
+        - yarn pre-test
+        - yarn cov-test --forbid-only
+        - yarn build-tests
+        - yarn test-browser --headless-firefox
+        - yarn test-browser --headless-chrome
+        - ./scripts/test-npm-packages.sh
+
     - name: "Build & Deploy"
-      script: |
-        set -ex
-        cross-env NODE_ENV=production yarn run build
-        yarn run typedoc
-        cross-env NODE_ENV=production yarn run build-www
-      before_deploy: yarn prepare-doc-deploy
+      script:
+        - cross-env NODE_ENV=production yarn run build
+        - yarn run typedoc
+        - cross-env NODE_ENV=production yarn run build-www
+        - yarn prepare-doc-deploy
+        # debug: lerna publish expects clean workspace
+        - ./scripts/git-check-clean-workspace.sh
       deploy:
         - provider: script
           script: ./scripts/publish-packages.sh

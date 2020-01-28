@@ -6,7 +6,7 @@
 
 import { execSync } from "child_process";
 import { writeFileSync } from "fs";
-import { copySync, ensureDirSync, moveSync } from "fs-extra";
+import { copySync, ensureDirSync, removeSync } from "fs-extra";
 
 // tslint:disable-next-line:no-var-requires
 const fetch = require("node-fetch");
@@ -30,13 +30,18 @@ const folderName = branch !== "master" ? commitHash : "master";
 // │   ├── index.html (and assets for minisite)
 // │   ├── releases.json (list all releases in order)
 
-ensureDirSync("dist/gh_deploy");
-copySync("www/dist/", "dist/gh_deploy/");
+const targetFolderGh = `dist/gh_deploy`;
+const targetFolderS3 = `dist/s3_deploy/${folderName}`;
 
-ensureDirSync(`dist/s3_deploy/${folderName}`);
-moveSync("dist/doc", `dist/s3_deploy/${folderName}/doc`);
-moveSync("dist/doc-snippets", `dist/s3_deploy/${folderName}/doc-snippets`);
-moveSync("dist/examples", `dist/s3_deploy/${folderName}/examples`);
+removeSync(targetFolderGh);
+ensureDirSync(targetFolderGh);
+copySync("www/dist/", `${targetFolderGh}/`);
+
+removeSync(targetFolderS3);
+ensureDirSync(targetFolderS3);
+copySync("dist/doc/", `${targetFolderS3}/doc`);
+copySync("dist/doc-snippets/", `${targetFolderS3}/doc-snippets/`);
+copySync("dist/examples/", `${targetFolderS3}/examples/`);
 
 // create (or update) the releases.json file containing a json object
 // listing all releases with the following format
@@ -74,7 +79,7 @@ if (branch !== "master") {
         .then((releases: Release[]) => {
             const newReleases = [newRelease, ...releases];
             writeFileSync(
-                "dist/gh_deploy/releases.json",
+                `${targetFolderGh}/releases.json`,
                 JSON.stringify(newReleases, undefined, 2)
             );
         });
