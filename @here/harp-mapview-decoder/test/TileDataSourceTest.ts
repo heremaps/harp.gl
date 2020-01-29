@@ -79,7 +79,8 @@ function createMockMapView() {
         projection: webMercatorProjection,
         // tslint:disable-next-line:no-empty
         getDataSourceByName() {},
-        statistics: new Statistics()
+        statistics: new Statistics(),
+        frameNumber: 0
     } as any) as MapView;
 }
 
@@ -214,35 +215,6 @@ describe("TileDataSource", function() {
         return { testedDataSource, mockDataProvider, mockDecoder };
     }
 
-    it("subsequent, overlapping #getTile calls share TileLoader", async function() {
-        const mockedDataSource = getDataSource();
-        const tile1 = mockedDataSource.testedDataSource.getTile(
-            TileKey.fromRowColumnLevel(0, 0, 0)
-        )!;
-        assert(tile1);
-        const spyTileSetDecodedTile1 = sinon.spy(tile1, "decodedTile", ["set"]) as any;
-
-        const tile2 = mockedDataSource.testedDataSource.getTile(
-            TileKey.fromRowColumnLevel(0, 0, 0)
-        )!;
-        assert(tile2);
-        const spyTileSetDecodedTile2 = sinon.spy(tile2, "decodedTile", ["set"]) as any;
-        // Check that we have shared the TileLoader.
-        assert.equal(tile1.tileLoader!, tile2.tileLoader);
-
-        // Waiting on the first tileloader will also cause the tile2's tile loader to be done (they
-        // are the same).
-        await tile1.tileLoader!.waitSettled();
-
-        assert.equal(mockedDataSource.mockDataProvider.getTile.callCount, 1);
-        // Check that only one tile is decoded.
-        assert.equal(mockedDataSource.mockDecoder.decodeTile.callCount, 1);
-        assert(spyTileSetDecodedTile1.set.calledWith(fakeEmptyGeometry));
-        assert(spyTileSetDecodedTile2.set.calledWith(fakeEmptyGeometry));
-        assert.equal(spyTileSetDecodedTile1.set.callCount, 1);
-        assert.equal(spyTileSetDecodedTile2.set.callCount, 1);
-    });
-
     it("subsequent, overlapping #getTile calls don't share TileLoader", async function() {
         const mockedDataSource = getDataSource();
         const tile1 = mockedDataSource.testedDataSource.getTile(
@@ -267,95 +239,6 @@ describe("TileDataSource", function() {
         assert.equal(spyTileSetDecodedTile2.set.callCount, 1);
         assert(spyTileSetDecodedTile1.set.calledWith(fakeEmptyGeometry));
         assert(spyTileSetDecodedTile2.set.calledWith(fakeEmptyGeometry));
-    });
-
-    it("cancel one TileLoader still sets decoded tile", async function() {
-        const mockedDataSource = getDataSource();
-        const tile1 = mockedDataSource.testedDataSource.getTile(
-            TileKey.fromRowColumnLevel(0, 0, 0)
-        )!;
-        assert(tile1);
-        const spyTileSetDecodedTile1 = sinon.spy(tile1, "decodedTile", ["set"]) as any;
-
-        const tile2 = mockedDataSource.testedDataSource.getTile(
-            TileKey.fromRowColumnLevel(0, 0, 0)
-        )!;
-        assert(tile2);
-        const spyTileSetDecodedTile2 = sinon.spy(tile2, "decodedTile", ["set"]) as any;
-
-        assert.equal(tile1.tileLoader!, tile2.tileLoader);
-
-        tile1.tileLoader!.cancel();
-
-        // Waiting on the first tileloader will also cause the tile2's tile loader to be done.
-        await tile1.tileLoader!.waitSettled();
-
-        // assert
-        assert.equal(mockedDataSource.mockDataProvider.getTile.callCount, 1);
-        assert.equal(mockedDataSource.mockDecoder.decodeTile.callCount, 1);
-        // Note, even though we cancelled once, the setDecodedTile method is still called, because
-        // we don't know which Tile cancelled (hence at the moment, the decoded tile is still set).
-        assert(spyTileSetDecodedTile1.set.calledWith(fakeEmptyGeometry));
-        assert(spyTileSetDecodedTile2.set.calledWith(fakeEmptyGeometry));
-        assert.equal(spyTileSetDecodedTile1.set.callCount, 1);
-        assert.equal(spyTileSetDecodedTile2.set.callCount, 1);
-    });
-
-    it("cancel both TileLoader doesn't set decoded tiles", async function() {
-        const mockedDataSource = getDataSource();
-        const tile1 = mockedDataSource.testedDataSource.getTile(
-            TileKey.fromRowColumnLevel(0, 0, 0)
-        )!;
-        assert(tile1);
-        const spyTileSetDecodedTile1 = sinon.spy(tile1, "decodedTile", ["set"]) as any;
-
-        const tile2 = mockedDataSource.testedDataSource.getTile(
-            TileKey.fromRowColumnLevel(0, 0, 0)
-        )!;
-        assert(tile2);
-        const spyTileSetDecodedTile2 = sinon.spy(tile2, "decodedTile", ["set"]) as any;
-        assert.equal(tile1.tileLoader!, tile2.tileLoader);
-
-        // Send two cancel requests (for example, both tiles have left the viewport), note because
-        // of the above equality check, these are the same, but for readability, I used tile1 and
-        // tile2.
-        tile1.tileLoader!.cancel();
-        tile2.tileLoader!.cancel();
-
-        await tile1.tileLoader!.waitSettled().catch(tileLoaderState => {
-            assert.equal(tileLoaderState, TileLoaderState.Canceled);
-        });
-
-        assert.equal(mockedDataSource.mockDataProvider.getTile.callCount, 1);
-        // Check that cancelling prevents decoding
-        assert.equal(mockedDataSource.mockDecoder.decodeTile.callCount, 0);
-        assert(spyTileSetDecodedTile1.set.notCalled);
-        assert(spyTileSetDecodedTile2.set.notCalled);
-    });
-
-    it("sync #getTile calls shares TileLoader result", async function() {
-        const mockedDataSource = getDataSource();
-        const tile1 = mockedDataSource.testedDataSource.getTile(
-            TileKey.fromRowColumnLevel(0, 0, 0)
-        )!;
-        assert(tile1);
-        const spyTileSetDecodedTile1 = sinon.spy(tile1, "decodedTile", ["set"]) as any;
-        await tile1.tileLoader!.waitSettled();
-
-        assert.equal(mockedDataSource.mockDataProvider.getTile.callCount, 1);
-        assert.equal(mockedDataSource.mockDecoder.decodeTile.callCount, 1);
-        assert(spyTileSetDecodedTile1.set.calledWith(fakeEmptyGeometry));
-        assert.equal(spyTileSetDecodedTile1.set.callCount, 1);
-
-        // The call to setDecodedTile happens immediately, because it exists, hence we can't spy on
-        // it, but can can at least check that the decodedTile exists.
-        const tile2 = mockedDataSource.testedDataSource.getTile(
-            TileKey.fromRowColumnLevel(0, 0, 0)
-        )!;
-        assert(tile2);
-        assert.exists(tile2.tileLoader);
-        assert.exists(tile2.decodedTile);
-        assert.equal(tile1.tileLoader!, tile2.tileLoader);
     });
 
     it("Empty decoded tiles are ignored", async function() {
@@ -385,5 +268,26 @@ describe("TileDataSource", function() {
 
         // assert
         assert.equal(tile.hasGeometry, true);
+    });
+
+    it("Currently used tile loaders aren't canceled", async function() {
+        const mockedDataSource = getDataSource();
+        const { testedDataSource } = mockedDataSource;
+        const numTiles = 32;
+
+        // Request more tile loaders that fit into tile loader cache
+        const tiles: Tile[] = [];
+        for (let i = 0; i < numTiles; ++i) {
+            const tile = testedDataSource.getTile(TileKey.fromMortonCode(i));
+            tiles.push(tile!);
+        }
+
+        // Check that no tile loader was canceled
+        for (const tile of tiles) {
+            assert.notEqual(tile.tileLoader!.state, TileLoaderState.Canceled);
+
+            await tile.tileLoader!.waitSettled();
+            assert(tile.tileLoader!.isFinished);
+        }
     });
 });
