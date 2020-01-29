@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { TileKey } from "@here/harp-geoutils";
+import { GeoBox, TileKey } from "@here/harp-geoutils";
 
 export interface DisplacementMap {
     xCountVertices: number;
@@ -16,4 +16,5 @@ export interface TileDisplacementMap {
     tileKey: TileKey;
     texture: THREE.DataTexture;
     displacementMap: DisplacementMap;
+    geoBox: GeoBox;
 }

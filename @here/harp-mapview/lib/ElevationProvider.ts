@@ -19,6 +19,15 @@ export interface ElevationProvider {
     getHeight(geoPoint: GeoCoordinates, level?: number): number | undefined;
 
     /**
+     * Samples elevation for a given geo point from the specified displacement map.
+     *
+     * @param geoPoint geo position to query height for.
+     * @param tileDisplacementMap Displacement map where the height will be sampled.
+     * @returns The height at geoPoint.
+     */
+    sampleHeight(geoPoint: GeoCoordinates, tileDisplacementMap: TileDisplacementMap): number;
+
+    /**
      * Cast a ray through the given screen position x, y.
      *
      * @param x The X position in css/client coordinates (without applied display ratio).

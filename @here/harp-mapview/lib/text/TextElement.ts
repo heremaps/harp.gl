@@ -281,6 +281,11 @@ export class TextElement {
     loadingState?: LoadingState;
 
     /**
+     * If set to `true` the geometry has been already overlaid on elevation.
+     */
+    elevated: boolean = false;
+
+    /**
      * @hidden
      * Array storing the style [[GlyphData]] for this `TextElement` to speed up label placement in
      * [[TextElementsRenderer]]. Valid after `loadingState` is `Initialized`.

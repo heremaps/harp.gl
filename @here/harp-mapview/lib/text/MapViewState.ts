@@ -5,6 +5,8 @@
  */
 
 import { GeometryKindSet } from "@here/harp-datasource-protocol";
+import { Projection } from "@here/harp-geoutils";
+import { ElevationProvider } from "../ElevationProvider";
 import { MapView } from "../MapView";
 import { ViewState } from "./ViewState";
 
@@ -46,5 +48,13 @@ export class MapViewState implements ViewState {
 
     get renderedTilesChanged(): boolean {
         return this.m_renderedTilesChangeCheck();
+    }
+
+    get projection(): Projection {
+        return this.m_mapView.projection;
+    }
+
+    get elevationProvider(): ElevationProvider | undefined {
+        return this.m_mapView.elevationProvider;
     }
 }

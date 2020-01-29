@@ -5,7 +5,7 @@
  */
 
 import { Theme } from "@here/harp-datasource-protocol";
-import { mercatorProjection, Projection, TileKey } from "@here/harp-geoutils";
+import { TileKey } from "@here/harp-geoutils";
 import { TextCanvas } from "@here/harp-text-canvas";
 import { assert, expect } from "chai";
 import * as sinon from "sinon";
@@ -22,10 +22,16 @@ import { Tile } from "../lib/Tile";
 import { TileOffsetUtils } from "../lib/Utils";
 import { DataSourceTileList } from "../lib/VisibleTileSet";
 import { FakeOmvDataSource } from "./FakeOmvDataSource";
+import {
+    ElevationProviderStub,
+    fakeTileDisplacementMap,
+    stubElevationProvider
+} from "./stubElevationProvider";
 import { stubFontCatalog } from "./stubFontCatalog";
 import { stubFontCatalogLoader } from "./stubFontCatalogLoader";
 import { stubPoiManager } from "./stubPoiManager";
 import { stubPoiRenderer, stubPoiRendererFactory } from "./stubPoiRenderer";
+import { stubMercatorProjection } from "./stubProjection";
 import { stubTextCanvas, stubTextCanvasFactory } from "./stubTextCanvas";
 import { FadeState } from "./TextElementsRendererTestUtils";
 
@@ -38,7 +44,7 @@ import { FadeState } from "./TextElementsRendererTestUtils";
 // tslint:disable:only-arrow-functions
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
-function createViewState(worldCenter: THREE.Vector3): ViewState {
+function createViewState(worldCenter: THREE.Vector3, sandbox: sinon.SinonSandbox): ViewState {
     return {
         worldCenter,
         cameraIsMoving: false,
@@ -49,7 +55,9 @@ function createViewState(worldCenter: THREE.Vector3): ViewState {
         lookAtDistance: 0,
         isDynamic: false,
         hiddenGeometryKinds: undefined,
-        renderedTilesChanged: false
+        renderedTilesChanged: false,
+        projection: stubMercatorProjection(sandbox),
+        elevationProvider: undefined
     };
 }
 
@@ -89,9 +97,9 @@ function createScreenProjector(): ScreenProjector {
  */
 export class TestFixture {
     private readonly m_screenCollisions: ScreenCollisions;
-    private readonly m_projection: Projection = mercatorProjection;
     private readonly tileLists: DataSourceTileList[] = [];
     private readonly m_poiRendererStub: sinon.SinonStubbedInstance<PoiRenderer>;
+    private readonly m_elevationProviderStub: ElevationProviderStub;
     private readonly m_renderPoiSpy: sinon.SinonSpy;
     private readonly m_addTextSpy: sinon.SinonSpy;
     private readonly m_addTextBufferObjSpy: sinon.SinonSpy;
@@ -110,11 +118,12 @@ export class TestFixture {
     constructor(readonly sandbox: sinon.SinonSandbox) {
         this.m_screenCollisions = new ScreenCollisions();
         this.m_screenCollisions.update(SCREEN_WIDTH, SCREEN_HEIGHT);
-        this.m_viewState = createViewState(new THREE.Vector3());
+        this.m_viewState = createViewState(new THREE.Vector3(), sandbox);
         this.m_renderPoiSpy = sandbox.spy();
         this.m_addTextSpy = sandbox.spy();
         this.m_addTextBufferObjSpy = sandbox.spy();
         this.m_poiRendererStub = stubPoiRenderer(this.sandbox, this.m_renderPoiSpy);
+        this.m_elevationProviderStub = stubElevationProvider(this.sandbox);
         this.m_screenProjector = createScreenProjector();
     }
 
@@ -136,8 +145,6 @@ export class TestFixture {
             visibleTiles: [this.m_defaultTile],
             renderedTiles: new Map([[1, this.m_defaultTile]])
         });
-        const cameraPosition = new THREE.Vector3(0, 0, 0); // center.
-        this.m_viewState = createViewState(cameraPosition);
         this.m_options = {
             labelDistanceScaleMin: 1,
             labelDistanceScaleMax: 1
@@ -166,7 +173,7 @@ export class TestFixture {
         );
         // Force renderer initialization by calling render with changed text elements.
         const time = 0;
-        this.m_textRenderer.placeText(this.tileLists, this.m_projection, time);
+        this.m_textRenderer.placeText(this.tileLists, time);
         this.clearVisibleTiles();
         return this.m_textRenderer.waitInitialized();
     }
@@ -233,9 +240,15 @@ export class TestFixture {
      * Renders text elements for a given frame.
      * @param time The time when the frame takes place.
      * @param tileIndices The indices of the tiles that will be visible in this frame.
+     * @param terrainTileIndices The indices of the terrain tiles that will be ready in this frame.
      * @param collisionEnabled Whether label collision will be enabled in this frame.
      */
-    async renderFrame(time: number, tileIndices: number[], collisionEnabled: boolean = true) {
+    async renderFrame(
+        time: number,
+        tileIndices: number[],
+        terrainTileIndices: number[],
+        collisionEnabled: boolean = true
+    ) {
         this.sandbox.resetHistory();
         if (collisionEnabled && this.m_screenCollisionTestStub !== undefined) {
             this.m_screenCollisionTestStub.restore();
@@ -252,8 +265,13 @@ export class TestFixture {
         if (tileIndices !== undefined) {
             this.m_viewState.renderedTilesChanged = this.setVisibleTiles(tileIndices);
         }
+
+        if (this.m_viewState.elevationProvider) {
+            this.setTerrainTiles(terrainTileIndices);
+        }
+
         this.m_viewState.frameNumber++;
-        this.textRenderer.placeText(this.tileLists, this.m_projection, time);
+        this.textRenderer.placeText(this.tileLists, time);
     }
 
     private get textRenderer(): TextElementsRenderer {
@@ -261,10 +279,16 @@ export class TestFixture {
         return this.m_textRenderer!;
     }
 
+    setElevationProvider(enabled: boolean) {
+        this.m_viewState.elevationProvider = enabled ? this.m_elevationProviderStub : undefined;
+    }
     private checkTextElementRendered(
         textElement: TextElement,
         opacityMatcher: OpacityMatcher | undefined
     ): number {
+        if (this.m_viewState.elevationProvider) {
+            assert(textElement.elevated, this.getErrorHeading(textElement) + " was NOT elevated.");
+        }
         switch (textElement.type) {
             case TextElementType.PoiLabel:
                 if (textElement.poiInfo !== undefined) {
@@ -314,6 +338,24 @@ export class TestFixture {
         }
         this.visibleTiles = newVisibleTiles;
         return true;
+    }
+
+    private setTerrainTiles(indices: number[]) {
+        expect(this.m_viewState.elevationProvider).not.undefined;
+        this.m_elevationProviderStub.getDisplacementMap.resetBehavior();
+        this.m_elevationProviderStub.getDisplacementMap.returns(undefined);
+
+        for (const index of indices) {
+            const tileKey = this.m_allTiles[index].tileKey;
+            this.m_elevationProviderStub.getDisplacementMap
+                .withArgs(
+                    sinon.match
+                        .has("row", tileKey.row)
+                        .and(sinon.match.has("column", tileKey.column))
+                        .and(sinon.match.has("level", tileKey.level))
+                )
+                .callsFake(fakeTileDisplacementMap);
+        }
     }
 
     private clearVisibleTiles() {

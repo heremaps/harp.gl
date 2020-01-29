@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { TileKey } from "@here/harp-geoutils";
 import { assert } from "@here/harp-utils";
 import { TextElementGroup } from "./TextElementGroup";
 import { TextElementState } from "./TextElementState";
@@ -26,9 +27,14 @@ export class TextElementGroupState {
     /**
      * Creates the state for specified group.
      * @param group The group of which the state will be created.
+     * @param tileKey The key of the tile to which this group belongs.
      * @param filter Function used to do early rejection. @see [[TextElementFilter]].
      */
-    constructor(readonly group: TextElementGroup, filter: TextElementFilter) {
+    constructor(
+        readonly group: TextElementGroup,
+        readonly tileKey: TileKey,
+        filter: TextElementFilter
+    ) {
         assert(group.elements.length > 0);
         const length = group.elements.length;
         this.m_textElementStates = new Array(length);
