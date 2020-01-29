@@ -133,4 +133,6 @@ export interface InputTile {
     labels: InputTextElement[];
     // Frames where tile will be visited (default: all)
     frames?: boolean[];
+    // Frames where corresponding terrain tile will be available (default: terrain disabled)
+    terrainFrames?: boolean[];
 }

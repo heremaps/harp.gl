@@ -383,11 +383,6 @@ export class Tile implements CachedResource {
 
     private m_animatedExtrusionTileHandler: AnimatedExtrusionTileHandler | undefined;
 
-    private m_nextTextElementToOverlay: TextElementIndex = {
-        groupIndex: 0,
-        elementIndex: 0
-    };
-
     /**
      * Creates a new [[Tile]].
      *
@@ -896,21 +891,6 @@ export class Tile implements CachedResource {
 
     set animatedExtrusionTileHandler(handler: AnimatedExtrusionTileHandler | undefined) {
         this.m_animatedExtrusionTileHandler = handler;
-    }
-
-    get allTextElementsOverlaid(): boolean {
-        return (
-            this.allGeometryLoaded &&
-            this.nextTextElementToOverlay.groupIndex >= this.m_textElementGroups.groups.size
-        );
-    }
-
-    get nextTextElementToOverlay(): TextElementIndex {
-        return this.m_nextTextElementToOverlay;
-    }
-
-    set nextTextElementToOverlay(index: TextElementIndex) {
-        this.m_nextTextElementToOverlay = index;
     }
 
     /**

@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { TileKey } from "@here/harp-geoutils";
 import { assert, LoggerManager, LogLevel } from "@here/harp-utils";
 import { TextElement } from "./TextElement";
 import { TextElementGroup } from "./TextElementGroup";
@@ -181,6 +182,7 @@ export class TextElementStateCache {
      * not found. It updates the states of the text elements belonging to the group using the
      * specified parameters.
      * @param textElementGroup The group of which the state will be obtained.
+     * @param tileKey The key of the tile to which the group belongs.
      * @param textElementFilter Filter used to decide if a text element must be initialized,
      * @see [[TextElementGroupState]] construction.
      * @returns Tuple with the group state as first element and a boolean indicating whether the
@@ -188,6 +190,7 @@ export class TextElementStateCache {
      */
     getOrSet(
         textElementGroup: TextElementGroup,
+        tileKey: TileKey,
         textElementFilter: TextElementFilter
     ): [TextElementGroupState, boolean] {
         let groupState = this.get(textElementGroup);
@@ -198,7 +201,7 @@ export class TextElementStateCache {
             return [groupState, true];
         }
 
-        groupState = new TextElementGroupState(textElementGroup, textElementFilter);
+        groupState = new TextElementGroupState(textElementGroup, tileKey, textElementFilter);
         this.set(textElementGroup, groupState);
 
         return [groupState, false];

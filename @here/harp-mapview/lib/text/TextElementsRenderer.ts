@@ -24,9 +24,10 @@ import {
 } from "@here/harp-utils";
 import * as THREE from "three";
 
-import { Projection } from "@here/harp-geoutils";
+import { TileKey } from "@here/harp-geoutils";
 import { DataSource } from "../DataSource";
 import { debugContext } from "../DebugContext";
+import { overlayTextElement } from "../geometry/overlayOnElevation";
 import { PickObjectType, PickResult } from "../PickHandler";
 import { PoiManager } from "../poi/PoiManager";
 import { PoiRenderer } from "../poi/PoiRenderer";
@@ -429,10 +430,10 @@ export class TextElementsRenderer {
     /**
      * Places text elements for the current frame.
      * @param dataSourceTileList List of tiles to be rendered for each data source.
-     * @param projection The view's projection.
      * @param time Current frame time.
+     * @param elevationProvider
      */
-    placeText(dataSourceTileList: DataSourceTileList[], projection: Projection, time: number) {
+    placeText(dataSourceTileList: DataSourceTileList[], time: number) {
         const tileTextElementsChanged = checkIfTextElementsChanged(dataSourceTileList);
 
         const textElementsAvailable = this.hasOverlayText() || tileTextElementsChanged;
@@ -451,7 +452,7 @@ export class TextElementsRenderer {
 
         if (updateTextElements) {
             this.m_textElementStateCache.clearVisited();
-            this.updateTextElements(dataSourceTileList, projection);
+            this.updateTextElements(dataSourceTileList);
         }
         const findReplacements = updateTextElements;
         const anyTextGroupEvicted = this.m_textElementStateCache.update(
@@ -745,6 +746,9 @@ export class TextElementsRenderer {
 
         const shieldGroups: number[][] = [];
         const hiddenKinds = this.m_viewState.hiddenGeometryKinds;
+        const projection = this.m_viewState.projection;
+        const elevationProvider = this.m_viewState.elevationProvider;
+        const elevationMap = elevationProvider?.getDisplacementMap(groupState.tileKey);
 
         for (const textElementState of groupState.textElementStates) {
             if (pass === Pass.PersistentLabels) {
@@ -804,6 +808,14 @@ export class TextElementsRenderer {
                 continue;
             }
 
+            if (elevationProvider !== undefined && !textElement.elevated) {
+                if (!elevationMap) {
+                    this.m_viewUpdateCallback(); // Update view until elevation is loaded.
+                    this.m_forceNewLabelsPass = true;
+                    continue;
+                }
+                overlayTextElement(textElement, elevationProvider, elevationMap, projection);
+            }
             const elementType = textElement.type;
             const isPathLabel = elementType === TextElementType.PathLabel;
 
@@ -1046,9 +1058,8 @@ export class TextElementsRenderer {
      * The actually rendered [[TextElement]]s are stored internally until the next update is done
      * to speed up rendering when no camera movement was detected.
      * @param dataSourceTileList List of tiles to be rendered for each data source.
-     * @param projection The view's projection.
      */
-    private updateTextElements(dataSourceTileList: DataSourceTileList[], projection: Projection) {
+    private updateTextElements(dataSourceTileList: DataSourceTileList[]) {
         logger.debug("updateTextElements");
 
         if (updateStats) {
@@ -1077,7 +1088,6 @@ export class TextElementsRenderer {
                 tileList.dataSource,
                 tileList.storageLevel,
                 Array.from(tileList.renderedTiles.values()),
-                projection,
                 updateStartTime
             );
         });
@@ -1091,7 +1101,6 @@ export class TextElementsRenderer {
         tileDataSource: DataSource,
         storageLevel: number,
         visibleTiles: Tile[],
-        projection: Projection,
         updateStartTime: number | undefined
     ) {
         if (updateStats) {
@@ -1106,7 +1115,7 @@ export class TextElementsRenderer {
 
         // Prepare user text elements.
         for (const tile of sortedTiles) {
-            this.prepareTextElementGroup(tile.userTextElements, projection);
+            this.prepareTextElementGroup(tile.userTextElements, tile.tileKey);
         }
 
         const sortedGroups: TextElementLists[] = [];
@@ -1115,7 +1124,7 @@ export class TextElementsRenderer {
         let numTextElementsUpdated = 0;
 
         for (const textElementLists of sortedGroups) {
-            this.selectTextElementsToUpdateByDistance(textElementLists, projection);
+            this.selectTextElementsToUpdateByDistance(textElementLists);
 
             // The value of updateStartTime is set if this.overloaded is true.
             if (updateStartTime !== undefined) {
@@ -1142,7 +1151,7 @@ export class TextElementsRenderer {
 
     private prepareTextElementGroup(
         textElementGroup: TextElementGroup,
-        projection: Projection,
+        tileKey: TileKey,
         maxViewDistance?: number
     ) {
         if (textElementGroup.elements.length === 0) {
@@ -1157,7 +1166,6 @@ export class TextElementsRenderer {
                 this.m_viewState,
                 this.m_viewCamera,
                 this.m_poiManager,
-                projection.type,
                 maxViewDistance
             );
 
@@ -1181,6 +1189,7 @@ export class TextElementsRenderer {
 
         const [, found] = this.m_textElementStateCache.getOrSet(
             textElementGroup,
+            tileKey,
             textElementSelection
         );
 
@@ -1258,10 +1267,7 @@ export class TextElementsRenderer {
         }
     }
 
-    private selectTextElementsToUpdateByDistance(
-        textElementLists: TextElementLists,
-        projection: Projection
-    ) {
+    private selectTextElementsToUpdateByDistance(textElementLists: TextElementLists) {
         const farDistanceLimitRatio = Math.max(
             this.m_options.maxDistanceRatioForTextLabels!,
             this.m_options.maxDistanceRatioForPoiLabels!
@@ -1269,7 +1275,11 @@ export class TextElementsRenderer {
         const maxViewDistance = getMaxViewDistance(this.m_viewState, farDistanceLimitRatio);
 
         for (const tileTextElements of textElementLists.lists) {
-            this.prepareTextElementGroup(tileTextElements.group, projection, maxViewDistance);
+            this.prepareTextElementGroup(
+                tileTextElements.group,
+                tileTextElements.tile.tileKey,
+                maxViewDistance
+            );
         }
     }
 

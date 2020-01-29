@@ -5,7 +5,10 @@
  */
 
 import { GeometryKind } from "@here/harp-datasource-protocol";
+import { Projection } from "@here/harp-geoutils";
+import { assert } from "@here/harp-utils";
 import * as THREE from "three";
+import { TileDisplacementMap } from "../DisplacementMap";
 import { ElevationProvider } from "../ElevationProvider";
 import { TextElement } from "../text/TextElement";
 import { Tile, TileObject } from "../Tile";
@@ -33,49 +36,80 @@ function overlayObject(object: TileObject, displacementMap: THREE.DataTexture): 
  * Overlays the specified coordinates on top of elevation data if available.
  *
  * @param worldCoords World coordinates to overlay.
- * @param elevationProvider Used to get elevation data.
- * @param tile The tile to which the coordinates are relative.
+ * @param elevationProvider Used to sample elevation data.
+ * @param displacementMap Elevation data to be sampled.
+ * @param projection Projection from geo to world space.
+ * @returns `true` if the position was successfully overlaid, `false` otherwise (e.g. elevation
+ * data not available).
  */
 function overlayPosition(
     worldCoords: THREE.Vector3,
     elevationProvider: ElevationProvider,
-    tile: Tile
-) {
-    const geoCoords = tile.mapView.projection.unprojectPoint(worldCoords);
-    const height = elevationProvider.getHeight(geoCoords);
+    displacementMap: TileDisplacementMap,
+    projection: Projection
+): boolean {
+    // TODO: Move calculation of text element geoCoordinates to decoder.
+    const geoCoords = projection.unprojectPoint(worldCoords);
 
-    if (height !== undefined) {
-        geoCoords.altitude = height;
-        tile.mapView.projection.projectPoint(geoCoords, worldCoords);
+    if (displacementMap.geoBox.contains(geoCoords)) {
+        geoCoords.altitude = elevationProvider.sampleHeight(geoCoords, displacementMap);
+    } else {
+        geoCoords.altitude = elevationProvider.getHeight(geoCoords, displacementMap.tileKey.level);
+        if (geoCoords.altitude === undefined) {
+            return false;
+        }
     }
+    projection.projectPoint(geoCoords, worldCoords);
+    return true;
+}
+
+/**
+ * Overlays the specified coordinates on top of elevation data if available.
+ *
+ * @param path World coordinates to overlay.
+ * @param elevationProvider Used to sample elevation data.
+ * @param displacementMap Elevation data to be sampled.
+ * @param projection Projection from geo to world space.
+ * @returns `true` if the position was successfully overlaid, `false` otherwise (e.g. elevation
+ * data not available).
+ */
+function overlayPath(
+    path: THREE.Vector3[],
+    elevationProvider: ElevationProvider,
+    displacementMap: TileDisplacementMap,
+    projection: Projection
+): boolean {
+    for (const position of path) {
+        if (!overlayPosition(position, elevationProvider, displacementMap, projection)) {
+            return false;
+        }
+    }
+    return true;
 }
 
 /**
  * Overlays a text element on top of elevation data if available.
  *
  * @param textElement The text element whose geometry will be overlaid.
- * @param elevationProvider Used to get elevation data.
- * @param tile The tile the text element belongs to.
+ * @param elevationProvider  Used to sample elevation data.
+ * @param displacementMap Elevation data to be sampled.
+ * @param projection Projection from geo to world space.
  */
-function overlayTextElement(
+export function overlayTextElement(
     textElement: TextElement,
     elevationProvider: ElevationProvider,
-    tile: Tile
+    displacementMap: TileDisplacementMap,
+    projection: Projection
 ) {
-    // TODO: Move calculation of text element geoCoordinates to decoder.
-    if (textElement.path === undefined) {
-        overlayPosition(textElement.position, elevationProvider, tile);
+    assert(!textElement.elevated);
+    if (!displacementMap) {
         return;
     }
 
-    for (const position of textElement.path) {
-        overlayPosition(position, elevationProvider, tile);
-    }
+    textElement.elevated = textElement.path
+        ? overlayPath(textElement.path, elevationProvider, displacementMap, projection)
+        : overlayPosition(textElement.position, elevationProvider, displacementMap, projection);
 }
-
-// Overlay of text elements within a tile is spread through this many frames to minimize the time
-// spent per frame on elevation overlay.
-const TEXT_OVERLAY_SPREAD_FRAME_COUNT = 60;
 
 /**
  * Overlays the geometry in the given tile on top of elevation data if available.
@@ -89,7 +123,7 @@ export function overlayOnElevation(tile: Tile): void {
         return;
     }
     const displacementMap = elevationProvider.getDisplacementMap(tile.tileKey);
-    if (displacementMap === undefined || tile.objects.length === 0) {
+    if (displacementMap === undefined) {
         return;
     }
 
@@ -107,40 +141,4 @@ export function overlayOnElevation(tile: Tile): void {
     for (const object of tile.objects) {
         overlayObject(object, displacementMap.texture);
     }
-
-    // TODO: Start overlaying text elements as soon as there's some text.
-    if (!tile.allGeometryLoaded) {
-        return;
-    }
-
-    if (tile.allTextElementsOverlaid) {
-        return;
-    }
-
-    const textElementsPerFrame = Math.ceil(
-        tile.textElementGroups.count() / TEXT_OVERLAY_SPREAD_FRAME_COUNT
-    );
-
-    const groups = tile.textElementGroups.sortedGroups;
-    let { groupIndex, elementIndex } = tile.nextTextElementToOverlay;
-    let textElementsCount = 0;
-
-    while (groupIndex < groups.length) {
-        const group = groups[groupIndex];
-        while (textElementsCount < textElementsPerFrame && elementIndex < group.elements.length) {
-            overlayTextElement(group.elements[elementIndex], elevationProvider, tile);
-            elementIndex++;
-            textElementsCount++;
-        }
-
-        if (elementIndex >= group.elements.length) {
-            ++groupIndex;
-            elementIndex = 0;
-        } else {
-            break;
-        }
-    }
-    tile.nextTextElementToOverlay = { groupIndex, elementIndex };
-    tile.textElementsChanged = true;
-    tile.mapView.update();
 }

@@ -1383,7 +1383,8 @@ export class TileGeometryCreator {
                     THREE.LuminanceFormat,
                     THREE.FloatType
                 ),
-                displacementMap
+                displacementMap,
+                geoBox: tile.geoBox
             };
             object.userData = tileDisplacementMap;
         } else if (isSolidLineTechnique(technique)) {

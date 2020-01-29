@@ -425,6 +425,75 @@ const tests: TestCase[] = [
             }
         ],
         frameTimes: FADE_2_CYCLES
+    },
+    // TERRAIN OVERLAY TEST CASES
+    {
+        name: "Point text only fades in when terrain is available",
+        tiles: [
+            {
+                labels: [
+                    [
+                        pointTextBuilder(),
+                        fadedOut(FADE_IN.length).concat(
+                            fadeIn(FADE_2_CYCLES.length - FADE_IN.length)
+                        )
+                    ]
+                ],
+                terrainFrames: not(firstNFrames(FADE_2_CYCLES, FADE_IN.length))
+            }
+        ],
+        frameTimes: FADE_2_CYCLES
+    },
+    {
+        name: "Poi only fades in when terrain is available",
+        tiles: [
+            {
+                labels: [
+                    [
+                        poiBuilder(),
+                        fadedOut(FADE_IN.length).concat(
+                            fadeIn(FADE_2_CYCLES.length - FADE_IN.length)
+                        )
+                    ]
+                ],
+                terrainFrames: not(firstNFrames(FADE_2_CYCLES, FADE_IN.length))
+            }
+        ],
+        frameTimes: FADE_2_CYCLES
+    },
+    {
+        name: "Line marker only fades in when terrain is available",
+        tiles: [
+            {
+                labels: [
+                    [
+                        lineMarkerBuilder(WORLD_SCALE),
+                        fadedOut(FADE_IN.length).concat(
+                            fadeIn(FADE_2_CYCLES.length - FADE_IN.length)
+                        )
+                    ]
+                ],
+                terrainFrames: not(firstNFrames(FADE_2_CYCLES, FADE_IN.length))
+            }
+        ],
+        frameTimes: FADE_2_CYCLES
+    },
+    {
+        name: "Path text only fades in when terrain is available",
+        tiles: [
+            {
+                labels: [
+                    [
+                        pathTextBuilder(WORLD_SCALE),
+                        fadedOut(FADE_IN.length).concat(
+                            fadeIn(FADE_2_CYCLES.length - FADE_IN.length)
+                        )
+                    ]
+                ],
+                terrainFrames: not(firstNFrames(FADE_2_CYCLES, FADE_IN.length))
+            }
+        ],
+        frameTimes: FADE_2_CYCLES
     }
 ];
 
@@ -460,12 +529,17 @@ describe("TextElementsRenderer", function() {
         // Array with all text elements and their corresponding expected frame states.
         const elementFrameStates = new Array<[TextElement, FadeState[]]>();
 
+        let enableElevation = false;
         const allTileIndices: number[] = [];
         // For each tile, build all its text elements and add them together with their expected
         // frame states to an array.
         test.tiles.forEach((tile: InputTile, tileIndex: number) => {
             if (tile.frames !== undefined) {
                 expect(tile.frames.length).equal(test.frameTimes.length);
+            }
+            if (tile.terrainFrames !== undefined) {
+                expect(tile.terrainFrames.length).equal(test.frameTimes.length);
+                enableElevation = true;
             }
             const elements = tile.labels.map((inputElement: InputTextElement) => {
                 expect(frameStates(inputElement).length).equal(test.frameTimes.length);
@@ -486,17 +560,30 @@ describe("TextElementsRenderer", function() {
 
         // Extra frame including all tiles to set the glyph loading state of all text elements
         // to initialized.
-        await fixture.renderFrame(INITIAL_TIME, allTileIndices);
+        await fixture.renderFrame(INITIAL_TIME, allTileIndices, []);
+        fixture.setElevationProvider(enableElevation);
+
         return { elementFrameStates, prevOpacities };
     }
 
     // Returns an array with the indices for all tiles that are visible in the specified frame.
-    function getFrameTileIndices(frameIdx: number, tiles: InputTile[]): number[] {
-        return tiles
-            .map((tile: InputTile, index: number) => {
-                return tile.frames === undefined || tile.frames[frameIdx] ? index : -1;
-            })
-            .filter(index => index >= 0);
+    function getFrameTileIndices(
+        frameIdx: number,
+        tiles: InputTile[]
+    ): { tileIdcs: number[]; terrainTileIdcs: number[] } {
+        const tileIdcs: number[] = [];
+        const terrainTileIdcs: number[] = [];
+
+        for (let i = 0; i < tiles.length; ++i) {
+            const tile = tiles[i];
+            if (!tile.frames || tile.frames[frameIdx]) {
+                tileIdcs.push(i);
+            }
+            if (tile.terrainFrames && tile.terrainFrames[frameIdx]) {
+                terrainTileIdcs.push(i);
+            }
+        }
+        return { tileIdcs, terrainTileIdcs };
     }
 
     for (const test of tests) {
@@ -504,11 +591,11 @@ describe("TextElementsRenderer", function() {
             const { elementFrameStates, prevOpacities } = await initTest(test);
 
             for (let frameIdx = 0; frameIdx < test.frameTimes.length; ++frameIdx) {
-                const frameTileIndices = getFrameTileIndices(frameIdx, test.tiles);
+                const { tileIdcs, terrainTileIdcs } = getFrameTileIndices(frameIdx, test.tiles);
                 const frameTime = test.frameTimes[frameIdx];
                 const collisionEnabled =
                     test.collisionFrames === undefined ? true : test.collisionFrames[frameIdx];
-                await fixture.renderFrame(frameTime, frameTileIndices, collisionEnabled);
+                await fixture.renderFrame(frameTime, tileIdcs, terrainTileIdcs, collisionEnabled);
 
                 let elementIdx = 0;
                 for (const [textElement, expectedStates] of elementFrameStates) {

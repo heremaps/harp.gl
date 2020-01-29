@@ -127,7 +127,6 @@ export enum PrePlacementResult {
  * @param viewState The view for which the text element will be placed.
  * @param viewCamera The view's camera.
  * @param m_poiManager To prepare pois for rendering.
- * @param projectionType The projection type currently used from geo to world space.
  * @param [maxViewDistance] If specified, text elements farther than this max distance will be
  * rejected.
  * @returns An object with the result code and the text element view distance
@@ -138,7 +137,6 @@ export function checkReadyForPlacement(
     viewState: ViewState,
     viewCamera: THREE.Camera,
     poiManager: PoiManager,
-    projectionType: ProjectionType,
     maxViewDistance?: number
 ): { result: PrePlacementResult; viewDistance: number | undefined } {
     let viewDistance: number | undefined;
@@ -174,7 +172,7 @@ export function checkReadyForPlacement(
             : checkViewDistance(
                   viewState.worldCenter,
                   textElement,
-                  projectionType,
+                  viewState.projection.type,
                   viewCamera,
                   maxViewDistance
               );
