@@ -22,9 +22,6 @@ const logger = LoggerManager.instance.create("TileLoader");
 /**
  * The [[TileLoader]] manages the different states of loading and decoding for a [[Tile]]. Used by
  * the [[TileDataSource]].
- *
- * A TileLoader supports loading for multiple tiles, this is required for the wrap around, where
- * it is possible to see the same tile multiple times.
  */
 export class TileLoader {
     /**
@@ -73,13 +70,6 @@ export class TileLoader {
     protected rejectedDonePromise?: (state: TileLoaderState) => void;
 
     /**
-     * This is a form of reference counting for the result. We keep a track of this because when
-     * cancelling, it is important to know if we can actually cancel, or if there is another Tile
-     * that needs the result.
-     */
-    private countRequests: number = 0;
-
-    /**
      * Set up loading of a single [[Tile]].
      *
      * @param dataSource The [[DataSource]] the tile belongs to.
@@ -107,7 +97,6 @@ export class TileLoader {
             case TileLoaderState.Loaded:
             case TileLoaderState.Decoding:
                 // tile is already loading
-                this.countRequests++;
                 return this.donePromise!;
 
             case TileLoaderState.Ready:
@@ -115,7 +104,6 @@ export class TileLoader {
             case TileLoaderState.Initialized:
             case TileLoaderState.Canceled:
                 // restart loading
-                this.countRequests++;
                 this.startLoading();
                 return this.donePromise!;
         }
@@ -135,15 +123,10 @@ export class TileLoader {
     }
 
     /**
-     * Cancel loading of the [[Tile]] if there is only a single request remaining. Cancellation
-     * token is notified, an internal state is cleaned up.
-     *
-     * Otherwise this just reduces the count of requests by one.
+     * Cancel loading of the [[Tile]].
+     * Cancellation token is notified, an internal state is cleaned up.
      */
     cancel() {
-        if (--this.countRequests !== 0) {
-            return;
-        }
         switch (this.state) {
             case TileLoaderState.Loading:
                 this.loadAbortController.abort();
