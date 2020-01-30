@@ -23,8 +23,8 @@ classDiagram
     PoiManager --> PoiInfo: create
     TextElementsRenderer --> ScreenCollisions
     TextElementsRenderer --> "# font catalogs" TextCanvasRenderer
-    TextCanvasRenderer --> TextCanvas
     TextCanvasRenderer --> PoiRenderer
+    TextCanvasRenderer --> TextCanvas
     PoiRenderer --> PoiInfo : render
     PoiRenderer --> PoiRenderBuffer
     PoiRenderBuffer --> "# icon textures" PoiRenderBufferBatch
@@ -61,5 +61,6 @@ classDiagram
     TextElement --> TextRenderStyle
     TextElement --> TextLayoutStyle
     TextElement --> TextStyleDefinition : by name
+
 
 

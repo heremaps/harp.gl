@@ -60,7 +60,7 @@ of a [[TextElementGroup]] that's being rendered, including the [[TextElementStat
 * [[TextStyleCache]] : Here a [[TextRenderStyle]] and a [[TextLayoutStyle]] are cached for each rendered
 [[TextElement]], containing the styling attributes extracted from the matching [[TextStyleDefinition]] from [[Theme]] and the corresponding label technique (e.g. [[TextTechnique]]).
 * [[ScreenCollisions]] Checks whether labels that are being placed on screen collide with other labels
-that are already placed. It uses and R-Tree to allocate axis-aligned bounding boxes delimiting the labels.
+that are already placed. It uses a R-Tree to allocate axis-aligned bounding boxes delimiting the labels.
 For path labels collision is checked glyph by glyph, for any other label only its coarse bounding box
 is used.
 * [[PoiRenderer]] Arranges [[PoiInfo]]s by image texture into PoiRenderBufferBatches. Each batch has a [[BoxBuffer]] where
