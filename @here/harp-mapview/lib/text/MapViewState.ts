@@ -33,7 +33,7 @@ export class MapViewState implements ViewState {
         return this.m_mapView.frameNumber;
     }
     get lookAtDistance(): number {
-        return this.m_mapView.lookAtDistance;
+        return this.m_mapView.targetDistance;
     }
     get isDynamic(): boolean {
         return this.m_mapView.isDynamicFrame;

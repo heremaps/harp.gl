@@ -704,15 +704,7 @@ export class TiltViewClipPlanesEvaluator extends TopViewClipPlanesEvaluator {
         // opposite to elevating ground level.
         const halfPiLimit = Math.PI / 2 - epsilon;
         const cameraAltitude = this.getCameraAltitude(camera, projection);
-        const target = MapViewUtils.rayCastWorldCoordinates(mapView, 0, 0);
-        if (target === null) {
-            throw new Error("MapView does not support a view pointing in the void.");
-        }
-        const cameraTilt = MapViewUtils.extractSphericalCoordinatesFromLocation(
-            mapView,
-            camera,
-            projection.unprojectPoint(target)
-        ).tilt;
+        const cameraTilt = this.getCameraTilt(mapView);
         // Angle between z and c2
         let topAngleRad: number;
         // Angle between z and c1
@@ -875,7 +867,7 @@ export class TiltViewClipPlanesEvaluator extends TopViewClipPlanesEvaluator {
 
         // Apply the constraints.
         const farMin = cameraAltitude - this.minElevation;
-        const farMax = mapView.lookAtDistance * this.farMaxRatio;
+        const farMax = mapView.targetDistance * this.farMaxRatio;
         viewRanges.near = Math.max(viewRanges.near, this.nearMin);
         viewRanges.far = MathUtils.clamp(viewRanges.far, farMin, farMax);
 
@@ -952,6 +944,10 @@ export class TiltViewClipPlanesEvaluator extends TopViewClipPlanesEvaluator {
         const cameraPitch = Math.acos(MathUtils.clamp(cosAlpha1, -1.0, 1.0));
 
         return cameraPitch;
+    }
+
+    private getCameraTilt(mapView: MapView): number {
+        return MapViewUtils.extractCameraTilt(mapView.camera, mapView.projection);
     }
 }
 
