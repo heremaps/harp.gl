@@ -5,14 +5,16 @@
  */
 
 import { ViewRanges } from "@here/harp-datasource-protocol/lib/ViewRanges";
-import { applyMixinsWithoutProperties, chainCallbacks } from "@here/harp-utils";
-import { insertShaderInclude } from "./Utils";
+import { applyMixinsWithoutProperties, assert, chainCallbacks } from "@here/harp-utils";
+import { disableBlending, enableBlending, insertShaderInclude, setShaderDefine } from "./Utils";
 
 import * as THREE from "three";
 
 import { ExtrusionFeatureDefs } from "./MapMeshMaterialsDefs";
 import extrusionShaderChunk from "./ShaderChunks/ExtrusionChunks";
 import fadingShaderChunk from "./ShaderChunks/FadingChunks";
+
+const emptyTexture = new THREE.Texture();
 
 /**
  * The MapMeshMaterials [[MapMeshBasicMaterial]] and [[MapMeshStandardMaterial]] are the standard
@@ -64,17 +66,68 @@ export interface DisplacementFeatureParameters {
  *
  * @hidden
  */
-interface UnifomType {
-    value: any;
+interface UniformsType {
+    [index: string]: THREE.IUniform;
 }
 
 /**
- * Used internally.
+ * Type of callback used internally by THREE.js for shader creation.
  *
  * @hidden
  */
-interface UniformsType {
-    [index: string]: UnifomType;
+type CompileCallback = (shader: THREE.Shader, renderer: any) => void;
+
+/**
+ * Material properties used from THREE, which may not be defined in the type.
+ */
+export interface HiddenThreeJSMaterialProperties {
+    /**
+     * Informs THREE.js to re-compile material shader (due to change in code or defines).
+     */
+    needsUpdate?: boolean;
+
+    /**
+     * Hidden ThreeJS value that is made public here. Required to add new uniforms to subclasses of
+     * [[THREE.MeshBasicMaterial]]/[[THREE.MeshStandardMaterial]], basically all materials that are
+     * not THREE.ShaderMaterial.
+     * @deprecated
+     */
+    uniformsNeedUpdate?: boolean;
+
+    /**
+     * Available in all materials in ThreeJS.
+     */
+    transparent?: boolean;
+
+    /**
+     * Used internally for material shader defines.
+     */
+    defines?: any;
+
+    /**
+     * Defines callback available in THREE.js materials.
+     *
+     * Called before shader program compilation to generate vertex & fragment shader output code.
+     */
+    onBeforeCompile?: CompileCallback;
+}
+
+interface MixinShaderProperties {
+    /**
+     * Used internally for material shader defines.
+     */
+    shaderDefines?: any;
+
+    /**
+     * Used internally for shader uniforms, holds references to material internal shader.uniforms.
+     *
+     * Holds a reference to material's internal shader uniforms map. New custom feature based
+     * uniforms are injected using this reference, but also internal THREE.js shader uniforms
+     * will be available via this map after [[Material#onBeforeCompile]] callback is run with
+     * feature enabled.
+     * @see needsUpdate
+     */
+    shaderUniforms?: UniformsType;
 }
 
 /**
@@ -84,7 +137,7 @@ interface UniformsType {
  * Copy from MapViewUtils, since it cannot be accessed here because of circular dependencies.
  *
  * @param distance Distance from the camera (range: [0, 1]).
- * @param visibilityRange object describiing maximum and minimum visibility range - distances
+ * @param visibilityRange object describing maximum and minimum visibility range - distances
  * from camera at which objects won't be rendered anymore.
  */
 function cameraToWorldDistance(distance: number, visibilityRange: ViewRanges): number {
@@ -92,35 +145,59 @@ function cameraToWorldDistance(distance: number, visibilityRange: ViewRanges): n
 }
 
 /**
- * Material properties used from THREE, which may not be defined in the type.
+ * Provides common interface from mixin to internal material defines and shader uniforms.
+ *
+ * Call this function just after [THREE.Material] is constructed, so in derived classes after
+ * super c-tor call.
+ * @param mixin The mixin that will add features to [[THREE.Material]].
+ * @param material The material that mixin feature is being applied.
  */
-export interface HiddenThreeJSMaterialProperties {
-    needsUpdate?: boolean;
+function linkMixinWithMaterial(
+    mixin: MixinShaderProperties,
+    material: HiddenThreeJSMaterialProperties
+) {
+    // Some materials (MeshBasicMaterial) have no defines property created in c-tor.
+    // In such case create it manually, such defines will be also injected to the shader
+    // via generic THREE.js code - see THREE/WebGLProgram.js.
+    if (material.defines === undefined) {
+        material.defines = {};
+    }
+    // Link internal THREE.js material defines with mixin reference.
+    // Those defines are usually created in Material c-tor, if not we have fallback above.
+    mixin.shaderDefines = material.defines;
 
-    /**
-     * Used internally for material shader defines.
-     */
-    defines?: any;
-
-    /**
-     * Hidden ThreeJS value that is made public here. Required to add new uniforms to subclasses of
-     * [[THREE.MeshBasicMaterial]]/[[THREE.MeshStandardMaterial]], basically all materials that are
-     * not THREE.ShaderMaterial.
-     */
-    uniformsNeedUpdate?: boolean;
-
-    /**
-     * Available in all materials in ThreeJS.
-     */
-    transparent?: boolean;
+    // Prepare map for holding uniforms references from the actual shader, but check if
+    // it was not already created with other mixin feature.
+    if (mixin.shaderUniforms === undefined) {
+        mixin.shaderUniforms = {};
+    }
+    // Shader uniforms may not be linked at this stage, they are injected available via Shader
+    // object in onBeforeCompile callback, see: linkMixinWithShader().
 }
 
 /**
- * Base interface for all objects that should fade in the distance. The implemntation of the actual
- * FadingFeature is done with the help of the mixon class [[FadingFeatureMixin]] and a set of
+ * Links mixin [[MixinShaderProperties.shaderUniforms]] with actual material shader uniforms.
+ *
+ * Function injects features (mixin) specific shader uniforms to material's shader, it also
+ * updates uniforms references so [[MixinShaderProperties.shaderUniforms]] will contain full
+ * uniforms map (both feature specific and internal ones).
+ * This function should be called before material's shader is pre-compiled, so the new uniforms
+ * from the mixin feature are known to shader processor. The best place to use is
+ * [[Material.onBeforeCompile]].
+ * @param mixin The mixin feature being applied to the material.
+ * @param shader The actual shader linked to the [[THREE.Material]].
+ */
+function linkMixinWithShader(mixin: MixinShaderProperties, shader: THREE.Shader) {
+    Object.assign(shader.uniforms, mixin.shaderUniforms);
+    mixin.shaderUniforms = shader.uniforms;
+}
+
+/**
+ * Base interface for all objects that should fade in the distance. The implementation of the actual
+ * FadingFeature is done with the help of the mixin class [[FadingFeatureMixin]] and a set of
  * supporting functions in the namespace of the same name.
  */
-export interface FadingFeature extends HiddenThreeJSMaterialProperties {
+export interface FadingFeature extends HiddenThreeJSMaterialProperties, MixinShaderProperties {
     /**
      * Distance to the camera (range: `[0.0, 1.0]`) from which the objects start fading out.
      */
@@ -134,11 +211,11 @@ export interface FadingFeature extends HiddenThreeJSMaterialProperties {
 }
 
 /**
- * Base interface for all objects that should have animated extrusion effect. The implemntation of
+ * Base interface for all objects that should have animated extrusion effect. The implementation of
  * the actual ExtrusionFeature is done with the help of the mixin class [[ExtrusionFeatureMixin]]
  * and a set of supporting functions in the namespace of the same name.
  */
-export interface ExtrusionFeature extends HiddenThreeJSMaterialProperties {
+export interface ExtrusionFeature extends HiddenThreeJSMaterialProperties, MixinShaderProperties {
     /**
      * Ratio of the extruded objects, where `1.0` is the default value. Minimum suggested value
      * is `0.01`
@@ -146,9 +223,20 @@ export interface ExtrusionFeature extends HiddenThreeJSMaterialProperties {
     extrusionRatio?: number;
 }
 
-export type DisplacementFeature = HiddenThreeJSMaterialProperties & DisplacementFeatureParameters;
+export type DisplacementFeature = HiddenThreeJSMaterialProperties &
+    MixinShaderProperties &
+    DisplacementFeatureParameters;
 
 export namespace DisplacementFeature {
+    /**
+     * Checks if feature is enabled (displacement map defined).
+     *
+     * @param displacementMaterial
+     */
+    export function isEnabled(displacementMaterial: DisplacementFeature) {
+        return displacementMaterial.displacementMap !== undefined;
+    }
+
     /**
      * Update the internals of the `DisplacementFeature` depending on the value of
      * [[displacementMap]].
@@ -156,16 +244,26 @@ export namespace DisplacementFeature {
      * @param displacementMaterial DisplacementFeature
      */
     export function updateDisplacementFeature(displacementMaterial: DisplacementFeature): void {
-        displacementMaterial.needsUpdate = true;
+        assert(displacementMaterial.shaderDefines !== undefined);
+        assert(displacementMaterial.shaderUniforms !== undefined);
 
-        if (displacementMaterial.defines === undefined) {
-            displacementMaterial.defines = {};
-        }
+        const useDisplacementMap = isEnabled(displacementMaterial);
+        // Whenever displacement feature state changes (between enabled/disabled) material will be
+        // re-compiled, forcing new shader chunks to be added (or removed).
+        const needsUpdate = setShaderDefine(
+            displacementMaterial.shaderDefines,
+            "USE_DISPLACEMENTMAP",
+            useDisplacementMap
+        );
+        displacementMaterial.needsUpdate = needsUpdate;
 
-        if (displacementMaterial.displacementMap !== undefined) {
-            displacementMaterial.displacementMap.needsUpdate = true;
-            // Add this define to differentiate it internally from other MeshBasicMaterial
-            displacementMaterial.defines.USE_DISPLACEMENTMAP = "";
+        // Update texture after change.
+        if (useDisplacementMap) {
+            const texture = displacementMaterial.displacementMap!;
+            texture.needsUpdate = true;
+            displacementMaterial.shaderUniforms!.displacementMap.value = texture;
+        } else if (needsUpdate) {
+            displacementMaterial.shaderUniforms!.displacementMap.value = emptyTexture;
         }
     }
 
@@ -178,22 +276,21 @@ export namespace DisplacementFeature {
      * @param shader [[THREE.WebGLShader]] containing the vertex and fragment shaders to add the
      *                  special includes to.
      */
-    export function onBeforeCompile(displacementMaterial: DisplacementFeature, shader: any) {
-        if (displacementMaterial.displacementMap === undefined) {
+    export function onBeforeCompile(
+        displacementMaterial: DisplacementFeature,
+        shader: THREE.Shader
+    ) {
+        if (!isEnabled(displacementMaterial)) {
             return;
         }
+        assert(displacementMaterial.shaderUniforms !== undefined);
+
         // The vertex and fragment shaders have been constructed dynamically. The uniforms and
         // the shader includes are now appended to them.
         //
-        // The object "defines" are not available for this material, so the fading shader chunks
-        // have the #ifdefs commented out.
-
-        // Create the uniforms for the shader (if not already existing), and add the new uniforms
-        // to it:
-        const uniforms = shader.uniforms as UniformsType;
-        uniforms.displacementMap = { value: displacementMaterial.displacementMap };
-        uniforms.displacementScale = { value: 1 };
-        uniforms.displacementBias = { value: 0 };
+        // The object "defines" are required for this material, we use one define working as a flag,
+        // which enables/disables some chunks of shader code.
+        linkMixinWithShader(displacementMaterial, shader);
 
         // Append the displacement map chunk to the vertex shader.
         shader.vertexShader = shader.vertexShader.replace(
@@ -221,6 +318,10 @@ export namespace DisplacementFeature {
 export class DisplacementFeatureMixin implements DisplacementFeature {
     needsUpdate?: boolean;
     uniformsNeedUpdate?: boolean;
+    defines?: any;
+    shaderDefines?: any;
+    shaderUniforms?: UniformsType;
+    onBeforeCompile?: CompileCallback;
     private m_displacementMap?: THREE.Texture;
 
     protected getDisplacementMap(): THREE.Texture | undefined {
@@ -228,9 +329,8 @@ export class DisplacementFeatureMixin implements DisplacementFeature {
     }
 
     protected setDisplacementMap(map: THREE.Texture | undefined) {
-        this.needsUpdate = this.needsUpdate || map !== this.m_displacementMap;
-        this.m_displacementMap = map;
-        if (this.needsUpdate) {
+        if (map !== this.m_displacementMap) {
+            this.m_displacementMap = map;
             DisplacementFeature.updateDisplacementFeature(this);
         }
     }
@@ -253,6 +353,18 @@ export class DisplacementFeatureMixin implements DisplacementFeature {
      * Apply the displacementMap value from the parameters to the respective properties.
      */
     protected applyDisplacementParameters(params?: DisplacementFeatureParameters) {
+        linkMixinWithMaterial(this, this);
+
+        assert(this.shaderDefines !== undefined);
+        assert(this.shaderUniforms !== undefined);
+
+        // Create uniforms with default values, this ensures they are always set created,
+        // so no need for checks in setters.
+        const uniforms = this.shaderUniforms!;
+        uniforms.displacementMap = new THREE.Uniform(emptyTexture);
+        uniforms.displacementScale = new THREE.Uniform(1);
+        uniforms.displacementBias = new THREE.Uniform(0);
+
         // Apply initial parameter values.
         if (params !== undefined) {
             if (params.displacementMap !== undefined) {
@@ -260,9 +372,12 @@ export class DisplacementFeatureMixin implements DisplacementFeature {
             }
         }
 
-        (this as any).onBeforeCompile = (shader: any) => {
+        this.onBeforeCompile = chainCallbacks(this.onBeforeCompile, (shader: THREE.Shader) => {
             DisplacementFeature.onBeforeCompile(this, shader);
-        };
+        });
+
+        // Require material update at least once, because of new shader chunks added.
+        this.needsUpdate = DisplacementFeature.isEnabled(this);
     }
 
     /**
@@ -284,6 +399,26 @@ export namespace FadingFeature {
     export const DEFAULT_FADE_FAR: number = -1.0;
 
     /**
+     * Checks if feature is enabled based on feature params.
+     *
+     * Fading feature will be disabled if fadeFar is undefined or fadeFar <= 0.0.
+     * This function is crucial for shader switching (chunks injection), whenever feature state
+     * changes between enabled/disabled. Current approach is to keep feature on (once enabled)
+     * whenever fading params are reasonable, even if it causes full fade in, no transparency.
+     *
+     * @param fadingMaterial FadingFeature.
+     */
+    export function isEnabled(fadingMaterial: FadingFeature) {
+        // NOTE: We could also check if full fade is not achieved, then feature could be
+        // disabled, but causing material re-compile.
+        return (
+            fadingMaterial.fadeNear !== undefined &&
+            fadingMaterial.fadeFar !== undefined &&
+            fadingMaterial.fadeFar > 0
+        );
+    }
+
+    /**
      * Patch the THREE.ShaderChunk on first call with some extra shader chunks.
      */
     export function patchGlobalShaderChunks() {
@@ -298,16 +433,43 @@ export namespace FadingFeature {
      *
      * @param fadingMaterial FadingFeature
      */
-    export function updateDistanceFadeFeature(fadingMaterial: FadingFeature): void {
-        fadingMaterial.needsUpdate = true;
+    export function updateFadingFeature(fadingMaterial: FadingFeature): void {
+        assert(fadingMaterial.shaderDefines !== undefined);
+        assert(fadingMaterial.shaderUniforms !== undefined);
 
-        if (fadingMaterial.defines === undefined) {
-            fadingMaterial.defines = {};
+        // Update entire material to add/remove shader fading chunks, this happens when we
+        // enable/disable fading after material creation. Feature is marked via dummy define, which
+        // informs about fading feature state, even if such define is not required to control
+        // feature state, it makes it easy to check for shader changes.
+        const useFading = isEnabled(fadingMaterial);
+        const needsUpdate = setShaderDefine(
+            fadingMaterial.shaderDefines,
+            "FADING_MATERIAL",
+            useFading
+        );
+        // Enable/disable entire feature with material re-compile, this will also cause
+        // new uniforms injection.
+        fadingMaterial.needsUpdate = needsUpdate;
+
+        // Check if shader uniforms references are already set in onBeforeCompile callback.
+        assert(
+            fadingMaterial.shaderUniforms!.fadeNear !== undefined &&
+                fadingMaterial.shaderUniforms!.fadeFar !== undefined
+        );
+
+        // Update shader internal uniforms only if fading is enabled.
+        if (useFading) {
+            fadingMaterial.shaderUniforms!.fadeNear.value = fadingMaterial.fadeNear;
+            fadingMaterial.shaderUniforms!.fadeFar.value = fadingMaterial.fadeFar;
+            if (needsUpdate) {
+                enableBlending(fadingMaterial as THREE.Material);
+            }
         }
-
-        if (fadingMaterial.fadeFar !== undefined && fadingMaterial.fadeFar > 0.0) {
-            // Add this define to differentiate it internally from other MeshBasicMaterial
-            fadingMaterial.defines.FADING_MATERIAL = "";
+        // Perform one time update of uniforms to defaults when feature disabled (for clarity).
+        else if (needsUpdate) {
+            fadingMaterial.shaderUniforms!.fadeNear.value = FadingFeature.DEFAULT_FADE_NEAR;
+            fadingMaterial.shaderUniforms!.fadeFar.value = FadingFeature.DEFAULT_FADE_FAR;
+            disableBlending(fadingMaterial as THREE.Material);
         }
     }
 
@@ -320,21 +482,19 @@ export namespace FadingFeature {
      * @param shader [[THREE.WebGLShader]] containing the vertex and fragment shaders to add the
      *                  special includes to.
      */
-    export function onBeforeCompile(fadingMaterial: FadingFeature, shader: any) {
-        if (fadingMaterial.fadeFar === undefined || fadingMaterial.fadeFar <= 0.0) {
+    export function onBeforeCompile(fadingMaterial: FadingFeature, shader: THREE.Shader) {
+        if (!isEnabled(fadingMaterial)) {
             return;
         }
+        assert(fadingMaterial.shaderUniforms !== undefined);
+
         // The vertex and fragment shaders have been constructed dynamically. The uniforms and
         // the shader includes are now appended to them.
         //
-        // The object "defines" are not available for this material, so the fading shader chunks
-        // have the #ifdefs commented out.
-
-        // Create the uniforms for the shader (if not already existing), and add the new uniforms
-        // to it:
-        const uniforms = shader.uniforms as UniformsType;
-        uniforms.fadeNear = { value: fadingMaterial.fadeNear };
-        uniforms.fadeFar = { value: fadingMaterial.fadeFar };
+        // The object "defines" are not required for this material, so the fading shader chunks
+        // have no #ifdef preprocessed chunks. Feature utilized one define just to denote feature
+        // attached and easy control its state, but this define may be stripped out if needed.
+        linkMixinWithShader(fadingMaterial, shader);
 
         // Append the new fading shader cod directly after the fog code. This is done by adding an
         // include directive for the fading code.
@@ -366,17 +526,17 @@ export namespace FadingFeature {
     }
 
     /**
-     * As threejs is rendering the transparent objects last (internally), regardless of their
+     * As three.js is rendering the transparent objects last (internally), regardless of their
      * renderOrder value, we set the transparent value to false in the [[onAfterRenderCall]]. In
      * [[onBeforeRender]], the function [[calculateDepthFromCameraDistance]] sets it to true if the
      * fade distance value is less than 1.
      *
      * @param object [[THREE.Object3D]] to prepare for rendering.
-     * @param viewRanges The visibility ranges (clip planes and maxiumum visible distance) for
+     * @param viewRanges The visibility ranges (clip planes and maximum visible distance) for
      * actual camera setup.
      * @param fadeNear The fadeNear value to set in the material.
      * @param fadeFar The fadeFar value to set in the material.
-     * @param updateUniforms If `true`, the fading uniforms are set. Not rquired if material is
+     * @param updateUniforms If `true`, the fading uniforms are set. Not required if material is
      *          handling the uniforms already, like in a [[THREE.ShaderMaterial]].
      * @param additionalCallback If defined, this function will be called before the function will
      *          return.
@@ -406,26 +566,14 @@ export namespace FadingFeature {
                 const fadingMaterial = material as FadingFeature;
 
                 fadingMaterial.fadeNear =
-                    fadeNear === undefined
+                    fadeNear === undefined || fadeNear === FadingFeature.DEFAULT_FADE_NEAR
                         ? FadingFeature.DEFAULT_FADE_NEAR
                         : cameraToWorldDistance(fadeNear, viewRanges);
 
                 fadingMaterial.fadeFar =
-                    fadeFar === undefined
+                    fadeFar === undefined || fadeFar === FadingFeature.DEFAULT_FADE_FAR
                         ? FadingFeature.DEFAULT_FADE_FAR
                         : cameraToWorldDistance(fadeFar, viewRanges);
-                if (updateUniforms) {
-                    const properties = renderer.properties.get(material);
-
-                    if (
-                        properties.shader !== undefined &&
-                        properties.shader.uniforms.fadeNear !== undefined
-                    ) {
-                        properties.shader.uniforms.fadeNear.value = fadingMaterial.fadeNear;
-                        properties.shader.uniforms.fadeFar.value = fadingMaterial.fadeFar;
-                        fadingMaterial.uniformsNeedUpdate = true;
-                    }
-                }
 
                 if (additionalCallback !== undefined) {
                     additionalCallback(renderer, material);
@@ -437,7 +585,7 @@ export namespace FadingFeature {
 
 /**
  * Mixin class for extended THREE materials. Adds new properties required for `fadeNear` and
- * `fadeFar`. Thre is some special handling for the fadeNear/fadeFar properties, which get some
+ * `fadeFar`. There is some special handling for the fadeNear/fadeFar properties, which get some
  * setters and getters in a way that works well with the mixin.
  *
  * @see [[Tile#addRenderHelper]]
@@ -445,6 +593,10 @@ export namespace FadingFeature {
 export class FadingFeatureMixin implements FadingFeature {
     needsUpdate?: boolean;
     uniformsNeedUpdate?: boolean;
+    defines?: any;
+    shaderDefines?: any;
+    shaderUniforms?: UniformsType;
+    onBeforeCompile?: CompileCallback;
     private m_fadeNear: number = FadingFeature.DEFAULT_FADE_NEAR;
     private m_fadeFar: number = FadingFeature.DEFAULT_FADE_FAR;
 
@@ -458,10 +610,10 @@ export class FadingFeatureMixin implements FadingFeature {
      * @see [[FadingFeature#fadeNear]]
      */
     protected setFadeNear(value: number) {
-        this.needsUpdate = this.needsUpdate || value !== this.m_fadeNear;
-        this.m_fadeNear = value;
-        if (this.needsUpdate) {
-            FadingFeature.updateDistanceFadeFeature(this);
+        const needsUpdate = value !== this.m_fadeNear;
+        if (needsUpdate) {
+            this.m_fadeNear = value;
+            FadingFeature.updateFadingFeature(this);
         }
     }
 
@@ -475,10 +627,10 @@ export class FadingFeatureMixin implements FadingFeature {
      * @see [[FadingFeature#fadeFar]]
      */
     protected setFadeFar(value: number) {
-        this.needsUpdate = this.needsUpdate || value !== this.m_fadeFar;
-        this.m_fadeFar = value;
-        if (this.needsUpdate) {
-            FadingFeature.updateDistanceFadeFeature(this);
+        const needsUpdate = value !== this.m_fadeFar;
+        if (needsUpdate) {
+            this.m_fadeFar = value;
+            FadingFeature.updateFadingFeature(this);
         }
     }
 
@@ -511,6 +663,17 @@ export class FadingFeatureMixin implements FadingFeature {
      * @param params `FadingMeshBasicMaterial` parameters.
      */
     protected applyFadingParameters(params?: FadingFeatureParameters) {
+        // Prepare maps for holding uniforms and defines references from the actual material.
+        linkMixinWithMaterial(this, this);
+
+        assert(this.shaderDefines !== undefined);
+        assert(this.shaderUniforms !== undefined);
+
+        // Create uniforms with default values, this ensures they are always set created,
+        // so no need for checks in setters.
+        this.shaderUniforms!.fadeNear = new THREE.Uniform(FadingFeature.DEFAULT_FADE_NEAR);
+        this.shaderUniforms!.fadeFar = new THREE.Uniform(FadingFeature.DEFAULT_FADE_FAR);
+
         // Apply initial parameter values.
         if (params !== undefined) {
             if (params.fadeNear !== undefined) {
@@ -521,9 +684,11 @@ export class FadingFeatureMixin implements FadingFeature {
             }
         }
 
-        (this as any).onBeforeCompile = (shader: any) => {
+        this.onBeforeCompile = chainCallbacks(this.onBeforeCompile, (shader: THREE.Shader) => {
             FadingFeature.onBeforeCompile(this, shader);
-        };
+        });
+        // Update (re-compile) shader code to include new shader chunks only if feature is enabled.
+        this.needsUpdate = FadingFeature.isEnabled(this);
     }
 
     /**
@@ -544,6 +709,18 @@ export class FadingFeatureMixin implements FadingFeature {
 
 export namespace ExtrusionFeature {
     /**
+     * Checks if feature is enabled based on [[ExtrusionFeature]] properties.
+     *
+     * @param extrusionMaterial
+     */
+    export function isEnabled(extrusionMaterial: ExtrusionFeature) {
+        return (
+            extrusionMaterial.extrusionRatio !== undefined &&
+            extrusionMaterial.extrusionRatio >= ExtrusionFeatureDefs.DEFAULT_RATIO_MIN
+        );
+    }
+
+    /**
      * Patch the THREE.ShaderChunk on first call with some extra shader chunks.
      */
     export function patchGlobalShaderChunks() {
@@ -558,18 +735,30 @@ export namespace ExtrusionFeature {
      * @param ExtrusionMaterial ExtrusionFeature
      */
     export function updateExtrusionFeature(extrusionMaterial: ExtrusionFeature): void {
-        extrusionMaterial.needsUpdate = true;
+        assert(extrusionMaterial.shaderDefines !== undefined);
+        assert(extrusionMaterial.shaderUniforms !== undefined);
 
-        if (extrusionMaterial.defines === undefined) {
-            extrusionMaterial.defines = {};
+        // Setup shader define that when changed will force material re-compile.
+        const useExtrusion = isEnabled(extrusionMaterial);
+        // Use shader define as marker if feature is enabled/disabled, this is not necessary
+        // required, but material requires update (re-compile) anyway to add/remove shader chunks.
+        const needsUpdate = setShaderDefine(
+            extrusionMaterial.shaderDefines,
+            "EXTRUSION_MATERIAL",
+            useExtrusion
+        );
+        // Enable/disable entire feature with material re-compile.
+        extrusionMaterial.needsUpdate = needsUpdate;
+
+        // Update uniform with new value
+        if (useExtrusion) {
+            extrusionMaterial.shaderUniforms!.extrusionRatio.value =
+                extrusionMaterial.extrusionRatio;
         }
-
-        if (
-            extrusionMaterial.extrusionRatio !== undefined &&
-            extrusionMaterial.extrusionRatio >= ExtrusionFeatureDefs.DEFAULT_RATIO_MIN
-        ) {
-            // Add this define to differentiate it internally from other MeshBasicMaterial
-            extrusionMaterial.defines.EXTRUSION_MATERIAL = "";
+        // Reset uniform to default, one time only, when feature is disabled (just for clarity).
+        else if (needsUpdate) {
+            extrusionMaterial.shaderUniforms!.extrusionRatio.value =
+                ExtrusionFeatureDefs.DEFAULT_RATIO_MAX;
         }
     }
 
@@ -582,17 +771,18 @@ export namespace ExtrusionFeature {
      * @param shader [[THREE.WebGLShader]] containing the vertex and fragment shaders to add the
      *                  special includes to.
      */
-    export function onBeforeCompile(extrusionMaterial: ExtrusionFeature, shader: any) {
-        if (extrusionMaterial.extrusionRatio === undefined) {
+    export function onBeforeCompile(extrusionMaterial: ExtrusionFeature, shader: THREE.Shader) {
+        if (!isEnabled(extrusionMaterial)) {
             return;
         }
-        // The vertex and fragment shaders have been constructed dynamically. The uniforms and
-        // the shader includes are now appended to them.
+        assert(extrusionMaterial.shaderUniforms !== undefined);
 
-        // Create the uniforms for the shader (if not already existing), and add the new uniforms
-        // to it:
-        const uniforms = shader.uniforms as UniformsType;
-        uniforms.extrusionRatio = { value: extrusionMaterial.extrusionRatio };
+        // The vertex and fragment shaders have been constructed dynamically. The uniforms and
+        // the shader includes are now appended to them. No defines are required to preprocess
+        // shader chunks, but we utilize one just to note the feature is enabled/disabled
+        // (easier debugging), this define may be easily stripped out or replaced with simple
+        // boolean flag.
+        linkMixinWithShader(extrusionMaterial, shader);
 
         shader.vertexShader = insertShaderInclude(
             shader.vertexShader,
@@ -625,50 +815,22 @@ export namespace ExtrusionFeature {
             true
         );
     }
-
-    /**
-     * Handles animated extrusion on each frame. Should be installed as respective
-     * Object3D.onBeforeRender of meshes which use animated extusion feature.
-     */
-    export function addRenderHelper(object: THREE.Object3D) {
-        object.onBeforeRender = chainCallbacks(
-            object.onBeforeRender,
-            ExtrusionFeature.onBeforeRender
-        );
-    }
-
-    export function onBeforeRender(
-        renderer: THREE.WebGLRenderer,
-        scene: THREE.Scene,
-        camera: THREE.Camera,
-        geometry: THREE.Geometry | THREE.BufferGeometry,
-        material: THREE.Material,
-        group: THREE.Group
-    ) {
-        const extrusionMaterial = material as ExtrusionFeature;
-        const properties = renderer.properties.get(material);
-
-        if (
-            properties.shader !== undefined &&
-            properties.shader.uniforms.extrusionRatio !== undefined
-        ) {
-            properties.shader.uniforms.extrusionRatio.value =
-                extrusionMaterial.extrusionRatio || ExtrusionFeatureDefs.DEFAULT_RATIO_MAX;
-            extrusionMaterial.uniformsNeedUpdate = true;
-        }
-    }
 }
 
 /**
  * Mixin class for extended THREE materials. Adds new properties required for `extrusionRatio`.
- * Thre is some special handling for the extrusionRatio property, which get some setters and
- * getters in a way that works well with the mixin.
  *
- * @see [[Tile#addRenderHelper]]
+ * There is some special handling for the extrusionRatio property, which is animated via
+ * [[AnimatedExtrusionHandler]] that is using [[extrusionRatio]] setter and getter to update
+ * extrusion in a way that works well with the mixin and EdgeMaterial.
  */
 export class ExtrusionFeatureMixin implements ExtrusionFeature {
     needsUpdate?: boolean;
     uniformsNeedUpdate?: boolean;
+    defines?: any;
+    shaderDefines?: any;
+    shaderUniforms?: UniformsType;
+    onBeforeCompile?: CompileCallback;
     private m_extrusion: number = ExtrusionFeatureDefs.DEFAULT_RATIO_MAX;
 
     /**
@@ -681,9 +843,9 @@ export class ExtrusionFeatureMixin implements ExtrusionFeature {
      * @see [[ExtrusionFeature#extrusion]]
      */
     protected setExtrusionRatio(value: number) {
-        this.needsUpdate = this.needsUpdate || value !== this.m_extrusion;
-        this.m_extrusion = value;
-        if (this.needsUpdate) {
+        const needsUpdate = value !== this.m_extrusion;
+        if (needsUpdate) {
+            this.m_extrusion = value;
             ExtrusionFeature.updateExtrusionFeature(this);
         }
     }
@@ -706,6 +868,18 @@ export class ExtrusionFeatureMixin implements ExtrusionFeature {
      * Apply the extrusionRatio value from the parameters to the respective properties.
      */
     protected applyExtrusionParameters(params?: ExtrusionFeatureParameters) {
+        // Prepare maps for holding uniforms and defines references from the actual material.
+        linkMixinWithMaterial(this, this);
+
+        assert(this.shaderDefines !== undefined);
+        assert(this.shaderUniforms !== undefined);
+
+        // Create uniform with default value, this ensures that it is always created,
+        // so no need for checks in setters.
+        this.shaderUniforms!.extrusionRatio = new THREE.Uniform(
+            ExtrusionFeatureDefs.DEFAULT_RATIO_MAX
+        );
+
         // Apply initial parameter values.
         if (params !== undefined) {
             if (params.extrusionRatio !== undefined) {
@@ -713,9 +887,11 @@ export class ExtrusionFeatureMixin implements ExtrusionFeature {
             }
         }
 
-        (this as any).onBeforeCompile = (shader: any) => {
+        this.onBeforeCompile = chainCallbacks(this.onBeforeCompile, (shader: THREE.Shader) => {
             ExtrusionFeature.onBeforeCompile(this, shader);
-        };
+        });
+
+        this.needsUpdate = ExtrusionFeature.isEnabled(this);
     }
 
     /**
@@ -984,3 +1160,4 @@ applyMixinsWithoutProperties(MapMeshStandardMaterial, [FadingFeatureMixin]);
 applyMixinsWithoutProperties(MapMeshBasicMaterial, [ExtrusionFeatureMixin]);
 applyMixinsWithoutProperties(MapMeshStandardMaterial, [ExtrusionFeatureMixin]);
 applyMixinsWithoutProperties(MapMeshBasicMaterial, [DisplacementFeatureMixin]);
+applyMixinsWithoutProperties(MapMeshStandardMaterial, [DisplacementFeatureMixin]);

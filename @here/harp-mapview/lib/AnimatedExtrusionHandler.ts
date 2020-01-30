@@ -180,9 +180,6 @@ export class AnimatedExtrusionTileHandler {
         this.m_animatedExtrusionHandler = this.m_mapView.animatedExtrusionHandler;
 
         extrudedObjects.forEach(extrudedObject => {
-            if (extrudedObject.materialFeature) {
-                ExtrusionFeature.addRenderHelper(extrudedObject.object);
-            }
             this.m_extrudedObjects.push(extrudedObject.object);
         });
 
