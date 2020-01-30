@@ -16,7 +16,7 @@ import {
 import { EarthConstants } from "@here/harp-geoutils/lib/projection/EarthConstants";
 import { MapMeshBasicMaterial, MapMeshStandardMaterial } from "@here/harp-materials";
 import { assert, LoggerManager } from "@here/harp-utils";
-import { MapView } from "./MapView";
+import { MapView, MAX_TILT_ANGLE } from "./MapView";
 import { getFeatureDataSize, TileFeatureData } from "./Tile";
 
 const logger = LoggerManager.instance.create("MapViewUtils");
@@ -33,6 +33,8 @@ const groundNormalPlanarProj = new THREE.Vector3(0, 0, 1);
 const groundPlane = new THREE.Plane(groundNormalPlanarProj.clone());
 const groundSphere = new THREE.Sphere(undefined, EarthConstants.EQUATORIAL_RADIUS);
 const rayCaster = new THREE.Raycaster();
+const maxTiltAngleAllowed = THREE.Math.degToRad(MAX_TILT_ANGLE);
+const epsilon = 1e-5;
 
 /**
  * Cached ThreeJS instances for realtime maths.
@@ -107,7 +109,7 @@ export namespace MapViewUtils {
         targetPositionOnScreenXinNDC: number,
         targetPositionOnScreenYinNDC: number,
         zoomLevel: number,
-        maxTiltAngle: number = Math.PI / 2
+        maxTiltAngle: number = maxTiltAngleAllowed
     ): void {
         // Get current target position in world space before we zoom.
         const targetPosition = rayCastWorldCoordinates(
@@ -128,17 +130,10 @@ export namespace MapViewUtils {
         // center of the screen, in order to limit the tilt to `maxTiltAngle`, as we change
         // this tilt by changing the camera's height above.
         if (mapView.projection.type === ProjectionType.Spherical) {
-            const centerScreenTarget = rayCastWorldCoordinates(mapView, 0, 0);
-            if (centerScreenTarget !== null) {
-                const tilt = extractSphericalCoordinatesFromLocation(
-                    mapView,
-                    mapView.camera,
-                    mapView.projection.unprojectPoint(centerScreenTarget)
-                ).tilt;
-                const deltaTilt = tilt - maxTiltAngle;
-                if (deltaTilt > 0) {
-                    orbitFocusPoint(mapView, 0, deltaTilt, maxTiltAngle);
-                }
+            const tilt = extractCameraTilt(mapView.camera, mapView.projection);
+            const deltaTilt = tilt - maxTiltAngle;
+            if (deltaTilt > 0) {
+                orbitFocusPoint(mapView, 0, deltaTilt, maxTiltAngle);
             }
         }
 
@@ -175,12 +170,9 @@ export namespace MapViewUtils {
         mapView: MapView,
         deltaAzimuthDeg: number,
         deltaTiltDeg: number,
-        maxTiltAngleRad = Math.PI / 2
+        maxTiltAngleRad = maxTiltAngleAllowed
     ) {
-        const target = rayCastWorldCoordinates(mapView, 0, 0);
-        if (target === null) {
-            throw new Error("MapView does not support a view pointing in the void");
-        }
+        const target = mapView.worldTarget;
         const targetCoordinates = mapView.projection.unprojectPoint(target);
         const sphericalCoordinates = extractSphericalCoordinatesFromLocation(
             mapView,
@@ -200,6 +192,59 @@ export namespace MapViewUtils {
             tiltDeg,
             THREE.Math.radToDeg(sphericalCoordinates.azimuth + Math.PI) + deltaAzimuthDeg
         );
+    }
+
+    /**
+     * Calculate target (focus) point geo-coordinates for given camera.
+     * @see getTargetPositionFromCamera
+     *
+     * @param camera The camera looking on target point.
+     * @param projection The geo-projection used.
+     * @param elevation Optional elevation above (or below) sea level measured in world units.
+     */
+    export function getGeoTargetFromCamera(
+        camera: THREE.Camera,
+        projection: Projection,
+        elevation?: number
+    ): GeoCoordinates | null {
+        // This function does almost the same as:
+        // rayCastGeoCoordinates(mapView, 0, 0)
+        // but in more gentle and performance wise manner
+        const targetWorldPos = getWorldTargetFromCamera(camera, projection, elevation);
+        if (targetWorldPos !== null) {
+            return projection.unprojectPoint(targetWorldPos);
+        }
+        return null;
+    }
+
+    /**
+     * Calculate target (focus) point world coordinates for given camera position and orientation.
+     * @param camera The camera looking on target point.
+     * @param projection The geo-projection used.
+     * @param elevation Optional elevation above (or below) sea level in world units.
+     */
+    export function getWorldTargetFromCamera(
+        camera: THREE.Camera,
+        projection: Projection,
+        elevation?: number
+    ): THREE.Vector3 | null {
+        const cameraPos = cache.vector3[0].copy(camera.position);
+        const cameraLookAt = camera.getWorldDirection(cache.vector3[1]);
+        rayCaster.set(cameraPos, cameraLookAt);
+        if (elevation !== undefined) {
+            groundPlane.constant -= elevation;
+            groundSphere.radius += elevation;
+        }
+        const targetWorldPos = new THREE.Vector3();
+        const result =
+            projection.type === ProjectionType.Planar
+                ? rayCaster.ray.intersectPlane(groundPlane, targetWorldPos)
+                : rayCaster.ray.intersectSphere(groundSphere, targetWorldPos);
+        if (elevation !== undefined) {
+            groundPlane.constant = 0;
+            groundSphere.radius = EarthConstants.EQUATORIAL_RADIUS;
+        }
+        return result;
     }
 
     /**
@@ -309,9 +354,12 @@ export namespace MapViewUtils {
         pointOnScreenYinNDC: number,
         elevation?: number
     ): THREE.Vector3 | null {
-        const pointInNDCPosition = new THREE.Vector3(pointOnScreenXinNDC, pointOnScreenYinNDC, 0);
-
-        cache.vector3[1].copy(mapView.camera.position);
+        const pointInNDCPosition = cache.vector3[0].set(
+            pointOnScreenXinNDC,
+            pointOnScreenYinNDC,
+            0
+        );
+        const cameraPos = cache.vector3[1].copy(mapView.camera.position);
 
         cache.matrix4[0].extractRotation(mapView.camera.matrixWorld);
 
@@ -324,9 +372,10 @@ export namespace MapViewUtils {
         // Unproject the point via the unprojection matrix.
         const pointInCameraSpace = pointInNDCPosition.applyMatrix4(cache.matrix4[1]);
         // Use the point in camera space as the vector towards this point.
-        rayCaster.set(cache.vector3[1], pointInCameraSpace.normalize());
+        rayCaster.set(cameraPos, pointInCameraSpace.normalize());
         if (elevation !== undefined) {
-            groundPlane.constant = -elevation;
+            groundPlane.constant -= elevation;
+            groundSphere.radius += elevation;
         }
 
         const worldPosition = new THREE.Vector3();
@@ -334,7 +383,11 @@ export namespace MapViewUtils {
             mapView.projection.type === ProjectionType.Planar
                 ? rayCaster.ray.intersectPlane(groundPlane, worldPosition)
                 : rayCaster.ray.intersectSphere(groundSphere, worldPosition);
-        groundPlane.constant = 0;
+
+        if (elevation !== undefined) {
+            groundPlane.constant = 0;
+            groundSphere.radius = EarthConstants.EQUATORIAL_RADIUS;
+        }
         return result;
     }
 
@@ -488,6 +541,45 @@ export namespace MapViewUtils {
     }
 
     /**
+     * Extracts current camera tilt angle in radians.
+     *
+     * @param camera The [[Camera]] in use.
+     * @param projection The [[Projection]] used to convert between geo and world coordinates.
+     */
+    export function extractCameraTilt(camera: THREE.Camera, projection: Projection): number {
+        // For planar projections the camera target point local tangent is the same
+        // at every point on the ground (ignoring terrain fluctuations), so we may
+        // simply use inverted ground normal for tilt calculation. This simplifies
+        // the more generic calculus used for spherical projections.
+        if (projection.type === ProjectionType.Planar) {
+            const lookAt: THREE.Vector3 = camera.getWorldDirection(cache.vector3[0]).normalize();
+            const normal: THREE.Vector3 = projection
+                .surfaceNormal(camera.position, cache.vector3[1])
+                .negate();
+            const cosTheta = lookAt.dot(normal);
+            return Math.acos(THREE.Math.clamp(cosTheta, -1, 1));
+        } else {
+            // Sanity check if new projection type is introduced.
+            assert(projection.type === ProjectionType.Spherical);
+            const targetGeoCoords = MapViewUtils.getGeoTargetFromCamera(camera, projection);
+            // If focus point is lost we then expose maximum allowable tilt value.
+            if (targetGeoCoords !== null) {
+                return MapViewUtils.extractTiltAngleFromLocation(
+                    projection,
+                    camera,
+                    targetGeoCoords
+                );
+            } else {
+                logger.warn(
+                    "MapView camera is pointing in the void, using maxTilt: ",
+                    maxTiltAngleAllowed
+                );
+                return maxTiltAngleAllowed;
+            }
+        }
+    }
+
+    /**
      * Extracts yaw, pitch, and roll rotation in radians.
      * - Yaw : Rotation around the vertical axis, counter-clockwise (as opposed to azimuth),
      * starting north.
@@ -524,12 +616,10 @@ export namespace MapViewUtils {
         let pitch = 0;
         let roll = 0;
 
-        const EPS = 1e-5;
-
         // Decompose rotation matrix into Z0 X Z1 Euler angles.
         const d = space.z.dot(cache.vector3[1].set(0, 0, 1));
-        if (d < 1.0 - EPS) {
-            if (d > -1.0 + EPS) {
+        if (d < 1.0 - epsilon) {
+            if (d > -1.0 + epsilon) {
                 yaw = Math.atan2(space.z.x, -space.z.y);
                 pitch = Math.acos(space.z.z);
                 roll = Math.atan2(space.x.z, space.y.z);
@@ -585,7 +675,7 @@ export namespace MapViewUtils {
             .copy(object.position)
             .sub(cache.vector3[0])
             .normalize();
-        if (cache.vector3[1].dot(tangentSpace.z) > 1 - 1e-5) {
+        if (cache.vector3[1].dot(tangentSpace.z) > 1 - epsilon) {
             // Top down view: the azimuth of the object would be opposite the yaw, and clockwise.
             azimuth = Math.PI - extractAttitude(mapView, object).yaw;
             // Wrap between -PI and PI.
@@ -605,6 +695,46 @@ export namespace MapViewUtils {
             azimuth = -azimuth;
         }
         return { tilt, azimuth };
+    }
+
+    /**
+     * Gets the tilt angle (in radians) of the object relative to the coordinates of `location`.
+     *
+     * Note: this method can be used to get the direction that an object points to, when `location`
+     * is the target of that object, by adding PI to it. Otherwise it only returns the tilt angle
+     * (in radians) of `object` in the tangent space of `location`.
+     *
+     * @param projection The [[Projection]] used when converting from geo to world coordinates.
+     * @param object The object to get the coordinates from.
+     * @param location The reference point.
+     */
+    export function extractTiltAngleFromLocation(
+        projection: Projection,
+        object: THREE.Object3D,
+        location: GeoCoordinates
+    ): number {
+        projection.localTangentSpace(location, {
+            xAxis: tangentSpace.x,
+            yAxis: tangentSpace.y,
+            zAxis: tangentSpace.z,
+            position: cache.vector3[0]
+        });
+
+        // Get point to object vector (dirVec) and compute the `tilt` as the angle with tangent Z.
+        const dirVec = cache.vector3[1].copy(object.position).sub(cache.vector3[0]);
+        const dirLen = dirVec.length();
+        if (dirLen < epsilon) {
+            logger.error("Can not calculate tilt for the zero length vector!");
+            return 0;
+        }
+        dirVec.divideScalar(dirLen);
+
+        const cosTheta = dirVec.dot(tangentSpace.z);
+        if (cosTheta > 1 - epsilon) {
+            // Top down view.
+            return 0;
+        }
+        return Math.acos(THREE.Math.clamp(cosTheta, -1, 1));
     }
 
     /**

@@ -355,34 +355,34 @@ export class MapControls extends THREE.EventDispatcher {
             return;
         }
         this.camera.getWorldDirection(this.m_currentViewDirection);
-        const maxDistance = MapViewUtils.calculateDistanceToGroundFromZoomLevel(
+        let maxDistance = MapViewUtils.calculateDistanceToGroundFromZoomLevel(
             this.mapView,
             this.mapView.minZoomLevel
         );
-        const minDistance = MapViewUtils.calculateDistanceToGroundFromZoomLevel(
+        let minDistance = MapViewUtils.calculateDistanceToGroundFromZoomLevel(
             this.mapView,
             this.mapView.maxZoomLevel
         );
         this.m_currentViewDirection.multiplyScalar(amount);
         if (this.mapView.projection.type === geoUtils.ProjectionType.Planar) {
-            this.camera.position.z += this.m_currentViewDirection.z;
-            this.camera.position.z = Math.max(
+            const distance = THREE.Math.clamp(
+                this.camera.position.z + this.m_currentViewDirection.z,
                 minDistance,
-                Math.min(maxDistance, this.camera.position.z)
+                maxDistance
             );
+            this.camera.position.z = distance;
         } else if (this.mapView.projection.type === geoUtils.ProjectionType.Spherical) {
             const zOnVertical =
                 Math.cos(this.camera.position.angleTo(this.m_currentViewDirection)) *
                 this.m_currentViewDirection.length();
-            this.camera.position.setLength(
-                Math.max(
-                    minDistance + geoUtils.EarthConstants.EQUATORIAL_RADIUS,
-                    Math.min(
-                        maxDistance + geoUtils.EarthConstants.EQUATORIAL_RADIUS,
-                        this.camera.position.length() + zOnVertical
-                    )
-                )
+            minDistance += geoUtils.EarthConstants.EQUATORIAL_RADIUS;
+            maxDistance += geoUtils.EarthConstants.EQUATORIAL_RADIUS;
+            const distance = THREE.Math.clamp(
+                this.camera.position.length() + zOnVertical,
+                minDistance,
+                maxDistance
             );
+            this.camera.position.setLength(distance);
         }
 
         // In sphere, we may have to also orbit the camera around the position located at the
@@ -392,17 +392,18 @@ export class MapControls extends THREE.EventDispatcher {
             this.mapView.projection.type === geoUtils.ProjectionType.Spherical &&
             this.m_maxTiltAngle !== undefined
         ) {
-            const centerScreenTarget = MapViewUtils.rayCastWorldCoordinates(this.mapView, 0, 0);
-            if (centerScreenTarget !== null) {
-                const tilt = MapViewUtils.extractSphericalCoordinatesFromLocation(
-                    this.mapView,
-                    this.camera,
-                    this.mapView.projection.unprojectPoint(centerScreenTarget)
-                ).tilt;
-                const deltaTilt = tilt - this.m_maxTiltAngle;
-                if (deltaTilt > 0) {
-                    MapViewUtils.orbitFocusPoint(this.mapView, 0, deltaTilt, this.m_maxTiltAngle);
-                }
+            // Use pre-calculated camera target, otherwise we could get it via:
+            // centerScreenTarget = MapViewUtils.getTargetPositionFromCamera(camera, projection)
+            // and convert to geo-coordinates via:
+            // this.mapView.projection.unprojectPoint(centerScreenTarget)
+            const tilt = MapViewUtils.extractSphericalCoordinatesFromLocation(
+                this.mapView,
+                this.camera,
+                this.mapView.target
+            ).tilt;
+            const deltaTilt = tilt - this.m_maxTiltAngle;
+            if (deltaTilt > 0) {
+                MapViewUtils.orbitFocusPoint(this.mapView, 0, deltaTilt, this.m_maxTiltAngle);
             }
         }
 
@@ -418,16 +419,15 @@ export class MapControls extends THREE.EventDispatcher {
      * of changing the yaw (which would be the camera rotating on itself).
      */
     pointToNorth() {
-        const target = MapViewUtils.rayCastWorldCoordinates(this.mapView, 0, 0);
-        if (target === null) {
-            throw new Error("MapView does not support a view pointing in the void.");
-        }
+        // Use pre-calculated target coordinates, otherwise we could call utility method to evaluate
+        // geo-coordinates here:
+        // targetGeoCoords = MapViewUtils.getTargetCoordinatesFromCamera(camera, projection)
         this.m_startAzimuth =
             Math.PI +
             MapViewUtils.extractSphericalCoordinatesFromLocation(
                 this.mapView,
                 this.camera,
-                this.mapView.projection.unprojectPoint(target)
+                this.mapView.target
             ).azimuth;
         // Wrap between -PI and PI.
         this.m_startAzimuth = Math.atan2(
@@ -579,15 +579,7 @@ export class MapControls extends THREE.EventDispatcher {
     }
 
     private get currentTilt(): number {
-        const target = MapViewUtils.rayCastWorldCoordinates(this.mapView, 0, 0);
-        if (target === null) {
-            throw new Error("MapView does not support a view pointing in the void.");
-        }
-        return MapViewUtils.extractSphericalCoordinatesFromLocation(
-            this.mapView,
-            this.camera,
-            this.mapView.projection.unprojectPoint(target)
-        ).tilt;
+        return MapViewUtils.extractCameraTilt(this.mapView.camera, this.mapView.projection);
     }
 
     private get targetedTilt(): number {
@@ -693,7 +685,7 @@ export class MapControls extends THREE.EventDispatcher {
         const initialTilt = this.currentTilt;
         const deltaAngle = this.m_currentTilt - initialTilt;
         const oldCameraDistance = this.mapView.camera.position.z / Math.cos(initialTilt);
-        const newHeight = Math.cos(this.currentTilt) * oldCameraDistance;
+        const newHeight = Math.cos(initialTilt) * oldCameraDistance;
 
         MapViewUtils.orbitFocusPoint(
             this.mapView,
