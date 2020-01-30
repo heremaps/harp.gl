@@ -144,12 +144,14 @@ export function disableBlending(
  * @param key Name of shader _define_ as used in shader, i.e. `USE_FOG`, `COLOR_ALPHA`, etc.
  * @param value The value to be set as number or boolean specifying if preprocessor define
  * should be defined or not.
+ * @returns [[true]] if material has been forced to update (re-compile) due to define changes,
+ * return [[false]] whenever define has not been changed.
  */
 export function setShaderMaterialDefine(
     material: THREE.ShaderMaterial,
     key: string,
     value: boolean | number
-) {
+): boolean {
     assert(
         material.defines !== undefined,
         "Do not use this function in ShaderMaterial derived c-tor."
@@ -158,10 +160,11 @@ export function setShaderMaterialDefine(
     const needsUpdate = value !== semanticValue;
     // Nothing to change - early exit
     if (!needsUpdate) {
-        return;
+        return false;
     }
     setShaderDefine(material.defines, key, value);
     material.needsUpdate = needsUpdate;
+    return true;
 }
 
 /**
@@ -200,21 +203,27 @@ export function getShaderMaterialDefine(
  * @param defines Shader `defines` stored in key-value map.
  * @param key The key used to identify _define_.
  * @param value The value to be stored.
+ * @returns [[true]] if define has actually changed, false is stayed the same.
  * @see setShaderMaterialDefine.
  */
 export function setShaderDefine(
     defines: { [key: string]: any },
     key: string,
     value: boolean | number
-) {
+): boolean {
+    let updated = false;
     if (typeof value === "number") {
+        updated = defines[key] !== value;
         defines[key] = value;
     } else if (value === true) {
+        updated = defines[key] !== DEFINE_BOOL_TRUE;
         defines[key] = DEFINE_BOOL_TRUE;
-    } else {
-        // Sets to BOOL_FALSE === undefined
+    } else if (value === false && defines[key] !== undefined) {
+        // Sets to DEFINE_BOOL_FALSE === undefined
         delete defines[key];
+        updated = true;
     }
+    return updated;
 }
 
 /**
