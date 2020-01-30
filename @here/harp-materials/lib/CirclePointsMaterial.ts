@@ -21,9 +21,10 @@ void main() {
 
 const fragmentShader: string = `
 uniform vec3 diffuse;
+uniform float opacity;
 
 void main() {
-    float alpha = 1.0;
+    float alpha = opacity;
 
     float radius = 0.5;
     vec2 coords = gl_PointCoord.xy - vec2(0.5);
@@ -43,9 +44,12 @@ export interface CirclePointsMaterialParameters extends THREE.ShaderMaterialPara
      * Point size.
      */
     size?: number;
-}
 
-const DEFAULT_CIRCLE_SIZE = 1;
+    /**
+     * Point color.
+     */
+    color?: THREE.Color;
+}
 
 /**
  * Material designed to render circle points. Note that it is always transparent since the circle
@@ -53,13 +57,10 @@ const DEFAULT_CIRCLE_SIZE = 1;
  * not bring.
  */
 export class CirclePointsMaterial extends THREE.ShaderMaterial {
-    isCirclePointsMaterial: true;
-    uniforms: { [uniform: string]: THREE.IUniform };
-    vertexShader: string;
-    fragmentShader: string;
+    static readonly DEFAULT_CIRCLE_SIZE = 1;
 
-    private m_size: number;
     private m_color: THREE.Color;
+    private m_opacity: number;
 
     /**
      * Constructs a new `CirclePointsMaterial`.
@@ -67,54 +68,84 @@ export class CirclePointsMaterial extends THREE.ShaderMaterial {
      * @param parameters The constructor's parameters.
      */
     constructor(parameters: CirclePointsMaterialParameters = {}) {
-        parameters.depthTest = false;
-
-        super(parameters);
-        enforceBlending(this);
-
-        this.isCirclePointsMaterial = true;
-        this.type = "CirclePointsMaterial";
-        this.vertexShader = vertexShader;
-        this.fragmentShader = fragmentShader;
-
-        this.m_size = parameters.size || DEFAULT_CIRCLE_SIZE;
-        this.m_color = new THREE.Color();
-
-        this.uniforms = {
-            diffuse: new THREE.Uniform(this.m_color),
-            size: new THREE.Uniform(this.m_size)
+        const { size, color, opacity, ...shaderParams } = parameters;
+        shaderParams.name = "CirclePointsMaterial";
+        shaderParams.vertexShader = vertexShader;
+        shaderParams.fragmentShader = fragmentShader;
+        shaderParams.uniforms = {
+            size: new THREE.Uniform(CirclePointsMaterial.DEFAULT_CIRCLE_SIZE),
+            diffuse: new THREE.Uniform(new THREE.Color()),
+            opacity: new THREE.Uniform(1.0)
+        };
+        shaderParams.depthTest = false;
+        shaderParams.extensions = {
+            ...shaderParams.extensions,
+            derivatives: true
         };
 
-        this.extensions.derivatives = true;
+        super(shaderParams);
+        // Blending needs to always be enabled to support smooth edges
+        enforceBlending(this);
+
+        this.type = "CirclePointsMaterial";
+        this.m_color = this.uniforms.diffuse.value;
+        this.m_opacity = this.uniforms.opacity.value;
+
+        if (size !== undefined) {
+            this.size = size;
+        }
+        if (color !== undefined) {
+            this.color = color;
+        }
+        if (opacity !== undefined) {
+            this.opacity = opacity;
+        }
     }
 
     /**
      * Gets the circle screen size.
      */
     get size(): number {
-        return this.m_size;
+        return this.uniforms.size.value;
     }
 
     /**
      * Sets the circle screen size.
      */
     set size(size: number) {
-        this.m_size = size;
         this.uniforms.size.value = size;
+    }
+
+    /**
+     * Get circle opacity.
+     */
+    get opacity(): number {
+        return this.m_opacity;
+    }
+
+    /**
+     * Set circle opacity.
+     */
+    set opacity(opacity: number) {
+        this.m_opacity = opacity;
+
+        // Base constructor may set opacity before uniform being created.
+        if (this.uniforms && this.uniforms.opacity) {
+            this.uniforms.opacity.value = opacity;
+        }
     }
 
     /**
      * Gets the diffuse.
      */
-    get color(): string {
-        return "#" + this.m_color.getHexString();
+    get color(): THREE.Color {
+        return this.m_color;
     }
 
     /**
      * Sets the diffuse.
      */
-    set color(color: string) {
+    set color(color: THREE.Color) {
         this.m_color.set(color);
-        this.uniforms.diffuse.value.set(this.m_color);
     }
 }
