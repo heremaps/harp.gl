@@ -101,6 +101,7 @@ function renderDiagrams() {
 
     const inputExt = ".mmd";
     const outputExt = ".svg";
+    const configFile = path.resolve(sdkDir, "puppeteer-config.json");
     const mediaOutDir = path.resolve(sdkDir, "dist/media");
 
     const sourceFiles = glob.sync(sdkDir + `/docs/@docs/**/*${inputExt}`);
@@ -109,7 +110,7 @@ function renderDiagrams() {
         const outSubDir = path.join(mediaOutDir, path.basename(path.dirname(sourceFile)));
         mkpath.sync(outSubDir);
         const outFile = path.resolve(outSubDir, path.basename(sourceFile, inputExt)) + outputExt;
-        const cmd = `npx mmdc -i ${sourceFile} -o ${outFile}`;
+        const cmd = `yarn run mmdc -p ${configFile} -i ${sourceFile} -o ${outFile}`;
         // tslint:disable-next-line:no-console
         console.log(cmd);
         execSync(cmd);
