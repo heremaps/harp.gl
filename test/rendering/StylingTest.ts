@@ -11,6 +11,7 @@ import { assert } from "chai";
 import * as THREE from "three";
 
 import {
+    CirclesStyle,
     ExtrudedPolygonStyle,
     Feature,
     FeatureCollection,
@@ -249,7 +250,7 @@ describe("MapView Styling Test", function() {
                 }
             }
         ];
-        function makePointTestCases(
+        function makePointTextTestCases(
             testCases: { [name: string]: TextTechniqueStyle["attr"] },
             options?: Partial<GeoJsonMapViewRenderingTestOptions>
         ) {
@@ -282,8 +283,42 @@ describe("MapView Styling Test", function() {
                 });
             }
         }
+        function makePointTestCases(
+            testCases: { [name: string]: CirclesStyle["attr"] },
+            options?: Partial<GeoJsonMapViewRenderingTestOptions>
+        ) {
+            // tslint:disable-next-line:forin
+            for (const testCase in testCases) {
+                const attr: CirclesStyle["attr"] = testCases[testCase]!;
+                mapViewFeaturesRenderingTest(`solid-line-styling-${testCase}`, {
+                    geoJson: {
+                        type: "FeatureCollection",
+                        features: [
+                            // tested horizontal line
+                            ...points,
+                            referenceBackground
+                        ]
+                    },
+                    theme: {
+                        ...themeTextSettings,
+                        styles: {
+                            geojson: [
+                                referenceBackroundStyle,
+                                {
+                                    when: "$geometryType == 'point'",
+                                    technique: "circles",
+                                    attr
+                                }
+                            ]
+                        }
+                    },
+                    ...options
+                });
+            }
+        }
+
         describe("text", function() {
-            makePointTestCases(
+            makePointTextTestCases(
                 {
                     "point-text-basic": { color: "#f0f", size: 16 },
                     "point-text-rgba": { color: "#f0f9", size: 16 },
@@ -293,6 +328,20 @@ describe("MapView Styling Test", function() {
                         backgroundColor: "#0008",
                         size: 16
                     }
+                },
+                {
+                    margin: 0.5
+                }
+            );
+        });
+
+        describe("circles", function() {
+            makePointTestCases(
+                {
+                    "point-circles-basic": { color: "#ca6", size: 10 },
+                    "point-circles-rgba": { color: "#ca69", size: 10 },
+                    "point-circles-rgb-opacity": { color: "#ca6", opacity: 0.5, size: 10 },
+                    "point-circles-rgba-opacity": { color: "#ca69", opacity: 0.5, size: 10 }
                 },
                 {
                     margin: 0.5
