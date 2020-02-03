@@ -177,7 +177,10 @@ describe("ThemeLoader", function() {
                 }
             };
             const contextLogger = new ContextLogger(console, "theme");
-            const r = ThemeLoader.resolveStyleSet(
+
+            // Hack to access private members with type safety
+            // tslint:disable-next-line: no-string-literal
+            const r = ThemeLoader["resolveStyleSet"](
                 theme.styles!.tilezen,
                 theme.definitions,
                 contextLogger
@@ -211,7 +214,9 @@ describe("ThemeLoader", function() {
                 }
             };
             const contextLogger = new ContextLogger(console, "test theme: ");
-            const r = ThemeLoader.resolveStyleSet(
+            // Hack to access private members with type safety
+            // tslint:disable-next-line: no-string-literal
+            const r = ThemeLoader["resolveStyleSet"](
                 theme.styles!.tilezen,
                 theme.definitions,
                 contextLogger
@@ -249,7 +254,9 @@ describe("ThemeLoader", function() {
                 }
             };
             const contextLogger = new ContextLogger(console, "test theme: ");
-            const r = ThemeLoader.resolveStyleSet(
+            // Hack to access private members with type safety
+            // tslint:disable-next-line: no-string-literal
+            const r = ThemeLoader["resolveStyleSet"](
                 theme.styles!.tilezen,
                 theme.definitions,
                 contextLogger
@@ -305,7 +312,9 @@ describe("ThemeLoader", function() {
                 }
             };
 
-            const result = await ThemeLoader.resolveBaseThemes(inheritedTheme);
+            // Hack to access private members with type safety
+            // tslint:disable-next-line: no-string-literal
+            const result = await ThemeLoader["resolveBaseThemes"](inheritedTheme);
 
             assert.exists(result.definitions);
             assert.exists(result.definitions!.roadColor);
@@ -329,7 +338,9 @@ describe("ThemeLoader", function() {
                 }
             };
 
-            const result = await ThemeLoader.resolveBaseThemes(inheritedTheme);
+            // Hack to access private members with type safety
+            // tslint:disable-next-line: no-string-literal
+            const result = await ThemeLoader["resolveBaseThemes"](inheritedTheme);
 
             assert.exists(result.definitions);
             assert.exists(result.definitions!.roadColor);
