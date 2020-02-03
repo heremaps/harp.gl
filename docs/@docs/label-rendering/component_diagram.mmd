@@ -1,0 +1,41 @@
+graph TB
+
+    subgraph harp-text-canvas
+    FontCatalog -.create.-> GlyphData
+    TextCanvas -.render.-> GlyphData
+    TextCanvas -.use.-> TextStyle["Text(Render|Layout)Style"]
+    end
+
+    subgraph harp-mapview
+    PoiManager -.create.-> PoiInfo
+    TileGeometryCreator -.fill.-> Tile
+    TileGeometryCreator -.create.-> TextElement
+    TileGeometryCreator -.call.-> PoiManager
+    Tile --> TextElement
+    TextElement --> PoiInfo
+    TextElementsRenderer -.use.-> Tile
+    TextElementsRenderer -.call.-> PoiRenderer
+    PoiRenderer -.render.-> PoiInfo
+    end
+
+    subgraph harp-datasource-protocol
+    ITileDecoder -.decode.->DecodedTile
+    Theme --> TextStyleDefinition
+    DecodedTile --> Technique["(Text|Poi|LineMarker)Technique"]
+    DecodedTile --> TextGeometry["(Text|TextPath)Geometry"]
+    end
+
+    TileGeometryCreator -.use.-> DecodedTile
+    TextElementsRenderer -.call.-> FontCatalog
+    TextElementsRenderer -.call.-> TextCanvas
+    TextElement --> GlyphData
+    TextElement --> TextStyle
+    TextStyle -.-> Technique
+    TextStyle -.-> TextStyleDefinition
+    TextElement -.-> TextGeometry
+
+
+
+
+
+

@@ -14,6 +14,7 @@
         "**/+(*Test.ts|index_node.ts|index-worker.ts|*_generated.ts|publish-npm.ts|changelog.ts|doc-snippets.ts)"
     ],
     "includes": "dist/doc-snippets",
+    "media": "dist/media",
     "readme": "README.md",
     "target": "ES6",
     "excludePrivate": "true",
