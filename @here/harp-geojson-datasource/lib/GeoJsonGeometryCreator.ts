@@ -111,7 +111,7 @@ export class GeoJsonGeometryCreator {
                 case "solid-line":
                 case "dashed-line":
                     geometries.geometries.push(
-                        this.createSolidLineGeometry(geometryData, techniqueIndex)
+                        this.createSolidLineGeometry(geometryData, techniqueIndex, projection)
                     );
                     break;
                 case "polygon":
@@ -124,7 +124,8 @@ export class GeoJsonGeometryCreator {
                         this.createPolygonOutlineGeometry(
                             geometryData,
                             techniqueIndex,
-                            tileWorldExtents
+                            tileWorldExtents,
+                            projection
                         )
                     );
                     break;
@@ -237,14 +238,15 @@ export class GeoJsonGeometryCreator {
 
     private static createSolidLineGeometry(
         geometryData: GeometryData,
-        techniqueIndex: number
+        techniqueIndex: number,
+        projection: Projection
     ): Geometry {
         const lineCenter = new THREE.Vector3();
         const lines = new LineGroup();
         const positions = new Array<number>();
 
         for (const line of geometryData.lines.vertices) {
-            lines.add(lineCenter, line);
+            lines.add(lineCenter, line, projection);
             positions.push(...line);
         }
 
@@ -367,7 +369,8 @@ export class GeoJsonGeometryCreator {
     private static createPolygonOutlineGeometry(
         geometryData: GeometryData,
         techniqueIndex: number,
-        tileWorldExtents: number
+        tileWorldExtents: number,
+        projection: Projection
     ): Geometry {
         const meshBuffer = new MeshBuffer();
         const { indices, featureStarts, geojsonProperties } = meshBuffer;
@@ -384,7 +387,7 @@ export class GeoJsonGeometryCreator {
                 : polygon.vertices;
 
             // External ring.
-            this.addOutlineVertices(contour, tileWorldExtents, solidOutline, position);
+            this.addOutlineVertices(contour, tileWorldExtents, solidOutline, position, projection);
 
             // Holes, if any.
             if (polygon.holes.length) {
@@ -402,7 +405,8 @@ export class GeoJsonGeometryCreator {
                         holesVertices[i],
                         tileWorldExtents,
                         solidOutline,
-                        position
+                        position,
+                        projection
                     );
                 }
             }
@@ -486,7 +490,8 @@ export class GeoJsonGeometryCreator {
         contour: number[],
         tileExtents: number,
         lines: LineGroup,
-        buffer: number[]
+        buffer: number[],
+        projection: Projection
     ): void {
         const lineCenter = new THREE.Vector3();
         let outline = [];
@@ -498,12 +503,12 @@ export class GeoJsonGeometryCreator {
                 (this.isOnTileBorder(contour[i + 1], tileExtents) &&
                     this.isOnTileBorder(contour[i + 4], tileExtents))
             ) {
-                lines.add(lineCenter, [...outline]);
+                lines.add(lineCenter, [...outline], projection);
                 buffer.push(...outline);
                 outline = [];
             }
         }
-        lines.add(lineCenter, [...outline]);
+        lines.add(lineCenter, [...outline], projection);
         buffer.push(...outline);
     }
 
