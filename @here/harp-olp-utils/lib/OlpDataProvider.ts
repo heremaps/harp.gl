@@ -6,11 +6,17 @@
 
 import { TileKey } from "@here/harp-geoutils";
 import { DataProvider } from "@here/harp-mapview-decoder";
+import { LoggerManager } from "@here/harp-utils";
 import {
     CatalogClient,
-    DataStoreContext,
-    VersionLayerClient
+    CatalogVersionRequest,
+    DataRequest,
+    HRN,
+    OlpClientSettings,
+    VersionedLayerClient
 } from "@here/olp-sdk-dataservice-read";
+
+const logger = LoggerManager.instance.create("OlpDataProvider");
 
 /**
  * [[OlpDataProvider]] initialization parameters.
@@ -36,7 +42,8 @@ export interface OlpDataProviderParams {
  * [[DataProvider]] implementation for OLP catalogs.
  */
 export class OlpDataProvider implements DataProvider {
-    private m_versionLayerClient: VersionLayerClient | undefined;
+    private m_versionLayerClient: VersionedLayerClient | undefined;
+    private m_catalogVersion: number = -1;
 
     constructor(readonly params: OlpDataProviderParams) {}
 
@@ -46,28 +53,28 @@ export class OlpDataProvider implements DataProvider {
      * @returns A promise which is resolved when the connection has been established.
      */
     connect(): Promise<void> {
-        const context = new DataStoreContext({
+        const settings = new OlpClientSettings({
             environment: "here",
             getToken: this.params.getToken
         });
         if (this.params.version !== undefined && this.params.version >= 0) {
-            this.m_versionLayerClient = new VersionLayerClient({
-                context,
-                hrn: this.params.hrn,
-                layerId: this.params.layerId,
-                version: this.params.version
-            });
+            this.m_versionLayerClient = new VersionedLayerClient(
+                HRN.fromString(this.params.hrn),
+                this.params.layerId,
+                settings
+            );
+            this.m_catalogVersion = this.params.version;
             return Promise.resolve();
         } else {
-            return new CatalogClient({ context, hrn: this.params.hrn })
-                .getLatestVersion()
+            return new CatalogClient(HRN.fromString(this.params.hrn), settings)
+                .getLatestVersion(new CatalogVersionRequest())
                 .then(response => {
-                    this.m_versionLayerClient = new VersionLayerClient({
-                        context,
-                        hrn: this.params.hrn,
-                        layerId: this.params.layerId,
-                        version: response.version
-                    });
+                    this.m_versionLayerClient = new VersionedLayerClient(
+                        HRN.fromString(this.params.hrn),
+                        this.params.layerId,
+                        settings
+                    );
+                    this.m_catalogVersion = response;
                 });
         }
     }
@@ -90,9 +97,22 @@ export class OlpDataProvider implements DataProvider {
         if (this.m_versionLayerClient === undefined) {
             throw new Error("OlpDataProvider is not connected.");
         }
-        return this.m_versionLayerClient.getTile(tileKey).then(response => {
-            // 204 - NO CONTENT, no data exists at the given tile. Do nothing.
-            return response.status === 204 ? Promise.resolve({}) : response.arrayBuffer();
-        });
+        return this.m_versionLayerClient
+            .getData(
+                new DataRequest().withQuadKey(tileKey).withVersion(this.m_catalogVersion),
+                abortSignal
+            )
+            .then(response => {
+                // 204 - NO CONTENT, no data exists at the given tile. Do nothing.
+                return response.status === 204 ? Promise.resolve({}) : response.arrayBuffer();
+            })
+            .catch(error => {
+                logger.error(
+                    `Error loading tile ${tileKey.mortonCode()} for catalog ${
+                        this.params.hrn
+                    }: ${error}`
+                );
+                return {};
+            });
     }
 }
