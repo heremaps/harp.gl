@@ -5,7 +5,12 @@
  */
 
 import { AreaCopyrightInfo, CopyrightCoverageProvider } from "@here/harp-mapview";
-import { CatalogClient, DataStoreContext, HRN } from "@here/olp-sdk-dataservice-read";
+import {
+    DataRequest,
+    HRN,
+    OlpClientSettings,
+    VersionedLayerClient
+} from "@here/olp-sdk-dataservice-read";
 
 /**
  * [[OlpCopyrightProvider]] initialization parameters.
@@ -62,27 +67,28 @@ export class OlpCopyrightProvider extends CopyrightCoverageProvider {
             return this.m_cachedCopyrightResponse;
         }
 
-        const hrn = HRN.fromString(this.m_params.hrn);
-        const context = new DataStoreContext({
-            getToken: this.m_params.getToken,
-            environment: hrn.data.partition
-        });
-        const catalogClient = new CatalogClient({
-            context,
-            hrn: this.m_params.hrn
-        });
-
-        this.m_cachedCopyrightResponse = catalogClient
-            .getVolatileOrVersionedLayer(this.m_params.layer || DEFAULT_LAYER)
-            .then()
-            .then(layer => layer.getPartition(this.m_params.partition || DEFAULT_PARTITION))
-            .then(response => response.json())
-            .then(json => json[this.m_params.baseScheme || "normal"])
-            .catch(error => {
-                this.logger.error(error);
-                return [];
+        try {
+            const hrn = HRN.fromString(this.m_params.hrn);
+            const settings = new OlpClientSettings({
+                getToken: this.m_params.getToken,
+                environment: hrn.data.partition
             });
-
-        return this.m_cachedCopyrightResponse;
+            const client = new VersionedLayerClient(
+                hrn,
+                this.m_params.layer ?? DEFAULT_LAYER,
+                settings
+            );
+            const partition = await client.getData(
+                new DataRequest().withPartitionId(this.m_params.partition ?? DEFAULT_PARTITION)
+            );
+            const json = await partition.json();
+            this.m_cachedCopyrightResponse = json[this.m_params.baseScheme ?? "normal"];
+            if (this.m_cachedCopyrightResponse !== undefined) {
+                return this.m_cachedCopyrightResponse;
+            }
+        } catch (error) {
+            this.logger.error(error);
+        }
+        return [];
     }
 }
