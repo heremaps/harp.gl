@@ -12,12 +12,7 @@ import { assert } from "chai";
 
 // tslint:disable:only-arrow-functions
 
-const license = `/*
- * Copyright (C) 2017-2019 HERE Europe B.V.
- * Licensed under Apache 2.0, see full license in LICENSE
- * SPDX-License-Identifier: Apache-2.0
- */
-`;
+const licenseRegEx = /\/\*\n \* Copyright \(C\) (\d\d\d\d)-?(\d\d\d\d)? HERE Europe.B\.V\.\n \* Licensed under Apache 2\.0\, see full license in LICENSE\n \* SPDX\-License\-Identifier\: Apache\-2\.0\n \*\//;
 
 describe("LicenseHeaderCheck", function() {
     let sourceFiles: string[];
@@ -43,7 +38,26 @@ describe("LicenseHeaderCheck", function() {
                 }
             }
 
-            if (!contents.startsWith(license)) {
+            const match = licenseRegEx.exec(contents);
+            let validLicenseRange = false;
+            if (match !== null && match.length === 3) {
+                const currentYear = new Date().getFullYear();
+                const start = parseInt(match[1], 10);
+                if (match[2] !== undefined) {
+                    // Year is a range
+                    const end = parseInt(match[2], 10);
+                    validLicenseRange =
+                        !isNaN(start) &&
+                        !isNaN(end) &&
+                        start >= 2017 &&
+                        start < end &&
+                        end <= currentYear;
+                } else {
+                    // Year is just one value
+                    validLicenseRange = !isNaN(start) && start >= 2017 && start <= currentYear;
+                }
+            }
+            if (!validLicenseRange) {
                 failedFiles.push(sourceFile);
             }
         }
