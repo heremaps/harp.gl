@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { Projection } from "@here/harp-geoutils";
 import { assert } from "@here/harp-utils";
 import * as THREE from "three";
 
@@ -118,6 +119,7 @@ function getVertexDescriptor(hasNormalsAndUvs: boolean, highPrecision: boolean):
 export function createLineGeometry(
     center: THREE.Vector3,
     polyline: ArrayLike<number>,
+    projection: Projection,
     offsets?: ArrayLike<number>,
     uvs?: ArrayLike<number>,
     colors?: ArrayLike<number>,
@@ -146,14 +148,12 @@ export function createLineGeometry(
     // Compute segments and tangents.
     let sum = SEGMENT_OFFSET;
     segments[0] = sum;
-    let isFlat = true;
     for (let i = 0; i < pointCount - 1; ++i) {
         let sqrLength = 0;
         for (let j = 0; j < 3; ++j) {
             const d = polyline[(i + 1) * 3 + j] - polyline[i * 3 + j];
             tangents[i * 3 + j] = d;
             sqrLength += d * d;
-            isFlat = j === 2 ? isFlat && polyline[(i + 1) * 3 + j] === 0.0 : isFlat;
         }
         const len = Math.sqrt(sqrLength);
         sum = sum + len;
@@ -215,8 +215,10 @@ export function createLineGeometry(
         tmpTangent0.normalize();
         geometry.vertices.push(tmpTangent0.x, tmpTangent0.y, tmpTangent0.z);
         tmpVertices.push(tmpTangent0.x, tmpTangent0.y, tmpTangent0.z);
+        tmpNormal.add(center); // tmpNormal contains world position
+        projection.surfaceNormal(tmpNormal, tmpNormal);
         const angle = computeBitangent(
-            isFlat ? tmpNormal.set(0, 0, 1) : tmpNormal.add(center).normalize(),
+            tmpNormal,
             tmpTangent0,
             tmpTangent1.normalize(),
             tmpBitangent
@@ -409,6 +411,7 @@ export class LineGroup {
     add(
         center: THREE.Vector3,
         points: ArrayLike<number>,
+        projection: Projection,
         offsets?: ArrayLike<number>,
         uvs?: ArrayLike<number>,
         colors?: ArrayLike<number>
@@ -418,6 +421,7 @@ export class LineGroup {
             createLineGeometry(
                 center,
                 points,
+                projection,
                 offsets,
                 uvs,
                 colors,

@@ -1172,6 +1172,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
             lineGroup.add(
                 this.m_decodeInfo.center,
                 aLine,
+                this.projection,
                 offsets ? offsets[i] : undefined,
                 uvs ? uvs[i] : undefined
             );

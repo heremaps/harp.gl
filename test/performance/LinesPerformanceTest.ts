@@ -6,7 +6,7 @@
 
 // tslint:disable:only-arrow-functions
 
-import { MathUtils } from "@here/harp-geoutils";
+import { MathUtils, mercatorProjection } from "@here/harp-geoutils";
 import { createLineGeometry } from "@here/harp-lines";
 import { measureThroughputSync } from "@here/harp-test-utils/lib/ProfileHelper";
 import * as THREE from "three";
@@ -47,7 +47,7 @@ describe(`lines`, function() {
                 `createLineGeometry segments=${test.segments}`,
                 1000,
                 function() {
-                    createLineGeometry(center, test.points!);
+                    createLineGeometry(center, test.points!, mercatorProjection);
                 }
             );
         });

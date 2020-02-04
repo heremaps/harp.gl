@@ -6,6 +6,7 @@
 
 // tslint:disable:only-arrow-functions
 
+import { mercatorProjection } from "@here/harp-geoutils";
 import { SolidLineMaterial, SolidLineMaterialParameters } from "@here/harp-materials";
 import { RenderingTestHelper } from "@here/harp-test-utils";
 import * as THREE from "three";
@@ -56,35 +57,35 @@ describe("Rendering lines: ", function() {
     const linesConfig: TestLineParams[] = [
         {
             name: "straight line 2 points",
-            points: [-50, 0, 0, 50, 0, 0]
+            points: [-50, 0, 10, 50, 0, 10]
         },
         {
             name: "straight line 3 points",
-            points: [-50, 0, 0, 0, 0, 0, 50, 0, 0]
+            points: [-50, 0, 10, 0, 0, 10, 50, 0, 10]
         },
         {
             name: "line at right angle - left",
-            points: [-50, 0, 0, 0, 0, 0, 0, 50, 0]
+            points: [-50, 0, 10, 0, 0, 10, 0, 50, 10]
         },
         {
             name: "line at right angle - right",
-            points: [-50, 0, 0, 0, 0, 0, 0, -50, 0]
+            points: [-50, 0, 10, 0, 0, 10, 0, -50, 10]
         },
         {
             name: "line at acute angle - left",
-            points: [-50, 0, 0, 0, 0, 0, -50, 10, 0]
+            points: [-50, 0, 10, 0, 0, 10, -50, 10, 10]
         },
         {
             name: "line at acute angle - right",
-            points: [-50, 0, 0, 0, 0, 0, -50, -10, 0]
+            points: [-50, 0, 10, 0, 0, 10, -50, -10, 10]
         },
         {
             name: "line at obtuse angle - left",
-            points: [-50, 0, 0, 0, 0, 0, 50, 50, 0]
+            points: [-50, 0, 10, 0, 0, 10, 50, 50, 10]
         },
         {
             name: "line at obtuse angle - right",
-            points: [-50, 0, 0, 0, 0, 0, 50, -50, 0]
+            points: [-50, 0, 10, 0, 0, 10, 50, -50, 10]
         }
     ];
 
@@ -221,7 +222,7 @@ describe("Rendering lines: ", function() {
                 canvas.height / 2.0,
                 -canvas.height / 2.0
             );
-            orthoCamera.position.z = 1.0;
+            orthoCamera.position.z = 11.0;
             orthoCamera.near = 0.0;
             camera = orthoCamera;
         }
@@ -244,6 +245,7 @@ describe("Rendering lines: ", function() {
             const lineGeometry = createLineGeometry(
                 new THREE.Vector3(),
                 test.points,
+                mercatorProjection,
                 undefined,
                 uvs
             );
