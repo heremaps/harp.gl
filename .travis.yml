@@ -14,6 +14,9 @@ branches:
     - master
     - release
 
+env:
+  - DETECT_CHROMEDRIVER_VERSION=true
+
 # upgrade yarn to a more recent version
 before_install:
   - curl -o- -L https://yarnpkg.com/install.sh | bash -s -- --version 1.13.0
