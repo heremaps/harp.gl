@@ -6,12 +6,8 @@
 
 import { LineCaps, LineDashes } from "@here/harp-datasource-protocol";
 import * as THREE from "three";
-import {
-    DisplacementFeature,
-    DisplacementFeatureParameters,
-    FadingFeature,
-    FadingFeatureParameters
-} from "./MapMeshMaterials";
+import { DisplacementFeature, DisplacementFeatureParameters } from "./DisplacementFeature";
+import { FadingFeature, FadingFeatureParameters } from "./MapMeshMaterials";
 import linesShaderChunk, { LineCapsModes } from "./ShaderChunks/LinesChunks";
 import {
     enforceBlending,
@@ -733,15 +729,15 @@ export class SolidLineMaterial extends THREE.RawShaderMaterial
         setShaderMaterialDefine(this, "USE_FADING", value > 0.0);
     }
 
-    get displacementMap(): THREE.Texture | undefined {
+    get displacementMap(): THREE.Texture | null {
         return this.uniforms.displacementMap.value;
     }
-    set displacementMap(map: THREE.Texture | undefined) {
+    set displacementMap(map: THREE.Texture | null) {
         if (this.uniforms.displacementMap.value === map) {
             return;
         }
         this.uniforms.displacementMap.value = map;
-        const useDisplacementMap = map !== undefined;
+        const useDisplacementMap = map !== null;
         if (useDisplacementMap) {
             this.uniforms.displacementMap.value.needsUpdate = true;
         }

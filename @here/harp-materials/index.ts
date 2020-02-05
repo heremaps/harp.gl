@@ -6,6 +6,7 @@
 
 export * from "./lib/CirclePointsMaterial";
 export * from "./lib/CopyMaterial";
+export * from "./lib/DisplacementFeature";
 export * from "./lib/EdgeMaterial";
 export * from "./lib/HighPrecisionLineMaterial";
 export * from "./lib/HighPrecisionPointMaterial";

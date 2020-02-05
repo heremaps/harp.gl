@@ -6,6 +6,7 @@
 
 import { GeometryKind } from "@here/harp-datasource-protocol";
 import { Projection } from "@here/harp-geoutils";
+import { hasDisplacementFeature } from "@here/harp-materials";
 import { assert } from "@here/harp-utils";
 import * as THREE from "three";
 import { TileDisplacementMap } from "../DisplacementMap";
@@ -27,8 +28,8 @@ function overlayObject(object: TileObject, displacementMap: THREE.DataTexture): 
 
     const material = (object as any).material;
 
-    if ("displacementMap" in material) {
-        (material as any).displacementMap = displacementMap;
+    if (hasDisplacementFeature(material)) {
+        material.displacementMap = displacementMap;
     }
 }
 
@@ -122,11 +123,6 @@ export function overlayOnElevation(tile: Tile): void {
     if (elevationProvider === undefined || tile.objects.length === 0) {
         return;
     }
-    const displacementMap = elevationProvider.getDisplacementMap(tile.tileKey);
-    if (displacementMap === undefined) {
-        return;
-    }
-
     const firstObject = tile.objects[0];
     if (
         !firstObject.userData ||
@@ -138,6 +134,12 @@ export function overlayOnElevation(tile: Tile): void {
         return;
     }
 
+    const displacementMap = elevationProvider.getDisplacementMap(tile.tileKey);
+    if (displacementMap === undefined) {
+        return;
+    }
+
+    // TODO: HARP-8808 Apply displacement maps once per material.
     for (const object of tile.objects) {
         overlayObject(object, displacementMap.texture);
     }

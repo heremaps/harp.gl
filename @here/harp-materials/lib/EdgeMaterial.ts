@@ -6,9 +6,8 @@
 
 import * as THREE from "three";
 
+import { DisplacementFeature, DisplacementFeatureParameters } from "./DisplacementFeature";
 import {
-    DisplacementFeature,
-    DisplacementFeatureParameters,
     ExtrusionFeature,
     ExtrusionFeatureParameters,
     FadingFeature,
@@ -256,16 +255,16 @@ export class EdgeMaterial extends THREE.RawShaderMaterial
         setShaderMaterialDefine(this, "USE_EXTRUSION", useExtrusion);
     }
 
-    get displacementMap(): THREE.Texture | undefined {
+    get displacementMap(): THREE.Texture | null {
         return this.uniforms.displacementMap.value;
     }
 
-    set displacementMap(map: THREE.Texture | undefined) {
+    set displacementMap(map: THREE.Texture | null) {
         if (this.uniforms.displacementMap.value === map) {
             return;
         }
         this.uniforms.displacementMap.value = map;
-        const useDisplacementMap = map !== undefined;
+        const useDisplacementMap = map !== null;
         if (useDisplacementMap) {
             this.uniforms.displacementMap.value.needsUpdate = true;
         }
