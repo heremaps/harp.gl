@@ -12,6 +12,9 @@ import { MapViewPoints } from "./MapViewPoints";
 import { RoadPicker } from "./RoadPicker";
 import { RoadIntersectionData, Tile, TileFeatureData } from "./Tile";
 
+// TODO: this is experimental code, remove it before delivery
+// tslint:disable:no-console
+
 /**
  * Describes the general type of a picked object.
  */
@@ -95,6 +98,13 @@ export interface PickResult {
      * not be modified.
      */
     userData?: any;
+
+    /**
+     *
+     */
+    start?: number;
+
+    count?: number;
 }
 
 /**
@@ -237,28 +247,41 @@ export class PickHandler {
         intersect: THREE.Intersection,
         pickResult: PickResult
     ) {
+        console.log("## aoi", intersect, featureData, pickResult);
         if (pickResult.intersection!.object instanceof MapViewPoints) {
             pickResult.userData = featureData.objInfos![intersect.index!];
+            console.log("## #1");
             return;
         } else if (
             featureData.objInfos === undefined ||
             featureData.starts === undefined ||
             intersect.faceIndex === undefined
         ) {
+            console.log("## #2");
             return;
         }
 
+        console.log("## aoi", intersect, featureData, pickResult);
         if (featureData.starts.length > 1) {
             let objInfosIndex = 0;
+            let index = 0;
             for (const polygonStartFace of featureData.starts) {
                 if (polygonStartFace > intersect.faceIndex * 3) {
+                    pickResult.start = featureData.starts[index - 1];
+                    if (index < featureData.starts.length - 1) {
+                        pickResult.count = featureData.starts[index] - pickResult.start;
+                    }
                     break;
                 }
                 objInfosIndex++;
+                index++;
             }
             pickResult.userData = featureData.objInfos[objInfosIndex - 1];
+            console.log("## #3");
         } else {
+            console.log("## #4");
             pickResult.userData = featureData.objInfos[0];
+            pickResult.start = featureData.starts[0];
         }
     }
 }

@@ -551,7 +551,9 @@ export class TextElementsRenderer {
                         distance: 0,
                         featureId: textElement.featureId,
                         userData: textElement.userData,
-                        text: textElement.text
+                        text: textElement.text,
+                        textElement,
+                        technique: textElement.technique
                     };
 
                     pickResults.push(pickResult);

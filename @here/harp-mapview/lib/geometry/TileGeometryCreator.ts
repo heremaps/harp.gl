@@ -438,7 +438,9 @@ export class TileGeometryCreator {
                 textElement.kind = technique.kind;
                 // Get the userData for text element picking.
                 textElement.userData = textPath.objInfos;
-
+                if ((mapView as any).m_options.enablePickTechnique) {
+                    textElement.technique = technique;
+                }
                 tile.addTextElement(textElement);
             }
         }
@@ -856,7 +858,7 @@ export class TileGeometryCreator {
                             true,
                             hasDynamicColor
                                 ? (renderer, mat) => {
-                                      const polygonMaterial = mat as
+                                      const polygonMaterial = material as
                                           | MapMeshBasicMaterial
                                           | MapMeshStandardMaterial;
 

@@ -10,7 +10,8 @@ import {
     ImageTexture,
     LineMarkerTechnique,
     PoiStackMode,
-    PoiTechnique
+    PoiTechnique,
+    Technique
 } from "@here/harp-datasource-protocol";
 import {
     GlyphData,
@@ -187,6 +188,11 @@ export interface TextPickResult extends PickResult {
      * Text of the picked [[TextElement]]
      */
     text?: string;
+
+    /**
+     * Picked [[TextElement]].
+     */
+    textElement?: TextElement;
 }
 
 /**
@@ -323,6 +329,14 @@ export class TextElement {
     pathLengthSqr?: number;
 
     type: TextElementType;
+
+    /**
+     * @hidden
+     *
+     * Associated [[Technique]] - available if `enablePickTechnique` feature is enabled in
+     * [[MapView]].
+     */
+    technique?: Technique;
 
     private m_poiInfo?: PoiInfo;
 
