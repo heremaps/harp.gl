@@ -69,7 +69,7 @@ const StringEncodedHex: StringEncodedNumeralFormat = {
         // Only few sizes are possible for given reg-exp.
         assert(
             size === 3 || size === 4 || size === 6 || size === 8,
-            `Matched incorrect hex format: ${encodedValue}`
+            `Matched incorrect hex color format`
         );
         // Note that we simply ignore alpha channel value.
         // TODO: To be resolved with HARP-7517
