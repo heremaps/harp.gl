@@ -60,6 +60,8 @@ import { ScreenCollisions, ScreenCollisionsDebug } from "./ScreenCollisions";
 import { ScreenProjector } from "./ScreenProjector";
 import { SkyBackground } from "./SkyBackground";
 import { FrameStats, PerformanceStatistics } from "./Statistics";
+import { TechniqueUpdateContext } from "./techniques/TechniqueHandler";
+import { TechniqueHandlerPool } from "./techniques/TechniqueHandlerPool";
 import { FontCatalogLoader } from "./text/FontCatalogLoader";
 import { MapViewState } from "./text/MapViewState";
 import { TextCanvasFactory } from "./text/TextCanvasFactory";
@@ -800,6 +802,8 @@ export class MapView extends THREE.EventDispatcher {
     private m_animatedExtrusionHandler: AnimatedExtrusionHandler;
 
     private m_env: MapEnv = new MapEnv({});
+    private m_techniqueUpdateContext: TechniqueUpdateContext;
+    private m_techniqueHandlerPool: TechniqueHandlerPool = new TechniqueHandlerPool();
 
     private m_enableMixedLod: boolean | undefined;
 
@@ -899,6 +903,13 @@ export class MapView extends THREE.EventDispatcher {
             this.m_collisionDebugCanvas = this.m_options.collisionDebugCanvas;
             this.m_screenCollisions = new ScreenCollisionsDebug(this.m_collisionDebugCanvas);
         }
+
+        this.m_techniqueUpdateContext = {
+            env: this.m_env,
+            frameNumber: -1,
+            projection: this.projection,
+            viewRanges: this.viewRanges
+        };
 
         this.handleRequestAnimationFrame = this.renderFunc.bind(this);
         this.handlePostponedAnimationFrame = this.postponedAnimationFrame.bind(this);
@@ -1257,6 +1268,8 @@ export class MapView extends THREE.EventDispatcher {
             return;
         }
 
+        this.m_techniqueHandlerPool.reset();
+
         // Fog and sky.
         this.m_theme.fog = theme.fog;
         this.m_theme.sky = theme.sky;
@@ -1521,6 +1534,7 @@ export class MapView extends THREE.EventDispatcher {
         const headingDeg = -THREE.MathUtils.radToDeg(attitude.yaw);
 
         this.m_visibleTileSetOptions.projection = projection;
+        this.m_techniqueUpdateContext.projection = projection;
         this.updatePolarDataSource();
         this.clearTileCache();
         this.textElementsRenderer.clearRenderStates();
@@ -1740,6 +1754,19 @@ export class MapView extends THREE.EventDispatcher {
      */
     get env(): Env {
         return this.m_env;
+    }
+
+    /**
+     * Technique update context.
+     *
+     * Updated with each frame.
+     */
+    get techniqueUpdateContext(): TechniqueUpdateContext {
+        return this.m_techniqueUpdateContext;
+    }
+
+    get techniqueHandlerPool(): TechniqueHandlerPool {
+        return this.m_techniqueHandlerPool;
     }
 
     /**
@@ -2586,6 +2613,9 @@ export class MapView extends THREE.EventDispatcher {
         this.m_env.entries.$pixelToMeters = this.pixelToWorld;
 
         this.m_env.entries.$frameNumber = this.m_frameNumber;
+
+        this.m_techniqueUpdateContext.frameNumber = this.frameNumber;
+        this.m_techniqueUpdateContext.viewRanges = this.viewRanges;
     }
 
     /**
@@ -2795,16 +2825,23 @@ export class MapView extends THREE.EventDispatcher {
         const renderList = this.m_visibleTiles.dataSourceTileList;
 
         // no need to check everything if we're not going to create text renderer.
+
         renderList.forEach(({ zoomLevel, renderedTiles }) => {
             renderedTiles.forEach(tile => {
-                this.renderTileObjects(tile, zoomLevel);
-
                 //We know that rendered tiles are visible (in the view frustum), so we update the
                 //frame number, note we don't do this for the visibleTiles because some may still be
                 //loading (and therefore aren't visible in the sense of being seen on the screen).
                 //Note also, this number isn't currently used anywhere so should be considered to be
                 //removed in the future (though could be good for debugging purposes).
+                // Also, important to mark them now, so Tile.updateDynamicTechniques know that this
+                // tiles objects need to be updated.
                 tile.frameNumLastVisible = this.m_frameNumber;
+            });
+
+            // Since we share materials between tiles, it's important that all updates of
+            // `tile.frameNumLastVisible` are done before we try to update techniques.
+            renderedTiles.forEach(tile => {
+                this.renderTileObjects(tile, zoomLevel);
             });
         });
 
@@ -2959,7 +2996,14 @@ export class MapView extends THREE.EventDispatcher {
     private renderTileObjects(tile: Tile, zoomLevel: number) {
         const worldOffsetX = tile.computeWorldOffsetX();
         if (tile.willRender(zoomLevel)) {
+            tile.updateDynamicTechniques(this.m_techniqueUpdateContext);
+
             for (const object of tile.objects) {
+                // Don't add completly transparent objects.
+                if (!object.visible) {
+                    continue;
+                }
+
                 object.position.copy(tile.center);
                 if (object.displacement !== undefined) {
                     object.position.add(object.displacement);

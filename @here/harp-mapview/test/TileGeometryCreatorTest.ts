@@ -4,7 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { DecodedTile, GeometryType, IndexedTechnique } from "@here/harp-datasource-protocol";
+import {
+    DecodedTile,
+    GeometryType,
+    IndexedTechnique,
+    MapEnv
+} from "@here/harp-datasource-protocol";
 import { ViewRanges } from "@here/harp-datasource-protocol/lib/ViewRanges";
 import {
     mercatorProjection,
@@ -18,10 +23,26 @@ import * as THREE from "three";
 import { DataSource } from "../lib/DataSource";
 import { DisplacementMap } from "../lib/DisplacementMap";
 import { TileGeometryCreator } from "../lib/geometry/TileGeometryCreator";
+import { TechniqueUpdateContext } from "../lib/techniques/TechniqueHandler";
+import { TechniqueHandlerPool } from "../lib/techniques/TechniqueHandlerPool";
 import { Tile } from "../lib/Tile";
 
 class FakeMapView {
     private m_scene = new THREE.Scene();
+    private m_techniqueHandlerPool = new TechniqueHandlerPool();
+
+    get techniqueUpdateContext(): TechniqueUpdateContext {
+        return {
+            viewRanges: this.viewRanges,
+            env: new MapEnv({ $zoom: this.zoomLevel }),
+            frameNumber: 0,
+            projection: mercatorProjection
+        };
+    }
+
+    get techniqueHandlerPool() {
+        return this.m_techniqueHandlerPool;
+    }
 
     get zoomLevel(): number {
         return 0;
@@ -63,7 +84,7 @@ describe("TileGeometryCreator", () => {
     const tgc = TileGeometryCreator.instance;
     const mapView = new FakeMapView();
 
-    before(function() {
+    beforeEach(function() {
         mockDatasource = sinon.createStubInstance(MockDataSource);
 
         mockDatasource.getTilingScheme.callsFake(() => webMercatorTilingScheme);
@@ -155,7 +176,7 @@ describe("TileGeometryCreator", () => {
                     _index: 1,
                     _styleSetIndex: 0,
                     renderOrder: -1,
-                    _key: "key-0",
+                    _key: "key-1",
                     name: "circles"
                 }
             ]
@@ -175,9 +196,9 @@ describe("TileGeometryCreator", () => {
         tgc.processTechniques(newTile, undefined, undefined);
         tgc.createObjects(newTile, decodedTile as DecodedTile);
 
-        assert.strictEqual(newTile.objects.length, 3);
-        assert.strictEqual(newTile.objects[1].renderOrder, 20);
-        assert.strictEqual(newTile.objects[2].renderOrder, 10);
+        assert.strictEqual(newTile.objects.length, 2);
+        assert.strictEqual(newTile.objects[0].renderOrder, 20);
+        assert.strictEqual(newTile.objects[1].renderOrder, 10);
 
         newTile.mapView.theme = savedTheme;
     });

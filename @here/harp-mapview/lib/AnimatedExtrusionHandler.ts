@@ -173,24 +173,31 @@ export class AnimatedExtrusionTileHandler {
 
     constructor(
         private m_tile: Tile,
-        extrudedObjects: Array<{ object: THREE.Object3D; materialFeature: boolean }>,
+        extrudedObjects: THREE.Object3D[],
         private m_animatedExtrusionDuration: number
     ) {
         this.m_mapView = m_tile.mapView;
         this.m_animatedExtrusionHandler = this.m_mapView.animatedExtrusionHandler;
 
         extrudedObjects.forEach(extrudedObject => {
-            this.m_extrudedObjects.push(extrudedObject.object);
+            this.m_extrudedObjects.push(extrudedObject);
         });
 
         this.startExtrusionAnimationIfNeeded(this.m_animatedExtrusionHandler.zoomDirection);
     }
 
+    add(extrudedObjects: THREE.Object3D[]) {
+        this.m_extrudedObjects.push(...extrudedObjects);
+    }
+
     /**
-     * Set an extrusion ratio value for the materials [[MapMeshBasicMaterial]]
+     * Extrusion ratio value for the materials [[MapMeshBasicMaterial]]
      * and [[EdgeMaterial]]. Controlled by [[AnimatedExtrusionHandler]]
      * for extrusion animation effect.
      */
+    get extrusionRatio() {
+        return this.m_animatedExtrusionRatio;
+    }
     set extrusionRatio(value: number) {
         this.m_animatedExtrusionRatio = value;
 

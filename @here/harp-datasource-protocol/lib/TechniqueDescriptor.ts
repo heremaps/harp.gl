@@ -58,7 +58,7 @@ export interface TechniqueDescriptor<T> {
 }
 
 type OneThatMatches<T, P> = T extends P ? T : never;
-type TechniqueByName<K extends Technique["name"]> = OneThatMatches<Technique, { name: K }>;
+export type TechniqueByName<K extends Technique["name"]> = OneThatMatches<Technique, { name: K }>;
 
 export type TechniqueDescriptorRegistry = {
     [P in Technique["name"]]?: TechniqueDescriptor<TechniqueByName<P>>;
