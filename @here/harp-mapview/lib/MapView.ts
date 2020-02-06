@@ -2955,7 +2955,17 @@ export class MapView extends THREE.EventDispatcher {
     private renderTileObjects(tile: Tile, zoomLevel: number) {
         const worldOffsetX = tile.computeWorldOffsetX();
         if (tile.willRender(zoomLevel)) {
+            tile.updateDynamicObjects();
+
             for (const object of tile.objects) {
+                // Don't add completly transparent objects.
+                if ("material" in object && (object as any).material instanceof THREE.Material) {
+                    const material: THREE.Material = (object as any).material;
+                    if (material.opacity === 0) {
+                        continue;
+                    }
+                }
+
                 object.position.copy(tile.center);
                 if (object.displacement !== undefined) {
                     object.position.add(object.displacement);

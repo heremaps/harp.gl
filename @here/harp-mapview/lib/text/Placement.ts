@@ -142,7 +142,7 @@ export function checkReadyForPlacement(
 ): { result: PrePlacementResult; viewDistance: number | undefined } {
     let viewDistance: number | undefined;
 
-    if (!textElement.visible) {
+    if (!textElement.reallyVisible) {
         return { result: PrePlacementResult.Invisible, viewDistance };
     }
 
@@ -157,7 +157,7 @@ export function checkReadyForPlacement(
     // Text element visibility and zoom level ranges must be checked after calling
     // updatePoiFromPoiTable, since that function may change those values.
     if (
-        !textElement.visible ||
+        !textElement.reallyVisible ||
         !MathUtils.isClamped(
             viewState.zoomLevel,
             textElement.minZoomLevel,
