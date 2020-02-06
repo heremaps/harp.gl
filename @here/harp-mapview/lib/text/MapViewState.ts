@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GeometryKindSet } from "@here/harp-datasource-protocol";
+import { Env, GeometryKindSet } from "@here/harp-datasource-protocol";
 import { MapView } from "../MapView";
 import { ViewState } from "./ViewState";
 
@@ -28,6 +28,9 @@ export class MapViewState implements ViewState {
     }
     get zoomLevel(): number {
         return this.m_mapView.zoomLevel;
+    }
+    get env(): Env {
+        return this.m_mapView.mapEnv;
     }
     get frameNumber(): number {
         return this.m_mapView.frameNumber;

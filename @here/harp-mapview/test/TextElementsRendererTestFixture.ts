@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Theme } from "@here/harp-datasource-protocol";
+import { MapEnv, Theme } from "@here/harp-datasource-protocol";
 import { mercatorProjection, Projection, TileKey } from "@here/harp-geoutils";
 import { TextCanvas } from "@here/harp-text-canvas";
 import { assert, expect } from "chai";
@@ -45,6 +45,7 @@ function createViewState(worldCenter: THREE.Vector3): ViewState {
         maxVisibilityDist: 10000,
         // This level affects the distance tolerance applied to find label replacement by location.
         zoomLevel: 20,
+        env: new MapEnv({ $zoom: 20 }),
         frameNumber: 0,
         lookAtDistance: 0,
         isDynamic: false,

@@ -95,7 +95,7 @@ export class OmvDebugLabelsTile extends OmvTile {
         // allow limiting to specific names and/or index. There can be many paths with the same text
         const textFilter = debugContext.getValue("DEBUG_TEXT_PATHS.FILTER.TEXT");
         const indexFilter = debugContext.getValue("DEBUG_TEXT_PATHS.FILTER.INDEX");
-        const zoomLevel = this.mapView.zoomLevel;
+        const env = this.mapView.mapEnv;
 
         if (decodedTile.textPathGeometries !== undefined) {
             this.preparedTextPaths = tileGeometryCreator.prepareTextPaths(
@@ -129,7 +129,7 @@ export class OmvDebugLabelsTile extends OmvTile {
                 if (technique.color !== undefined) {
                     colorMap.set(
                         textPath.technique,
-                        new THREE.Color(getPropertyValue(technique.color, zoomLevel))
+                        new THREE.Color(getPropertyValue(technique.color, env))
                     );
                 }
 
@@ -188,7 +188,7 @@ export class OmvDebugLabelsTile extends OmvTile {
                                     new THREE.Vector3(x + worldOffsetX, y, z),
                                     textRenderStyle,
                                     textLayoutStyle,
-                                    getPropertyValue(technique.priority || 0, zoomLevel),
+                                    getPropertyValue(technique.priority || 0, env),
                                     technique.xOffset || 0.0,
                                     technique.yOffset || 0.0
                                 );

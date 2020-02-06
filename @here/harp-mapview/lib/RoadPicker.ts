@@ -83,11 +83,7 @@ export class RoadPicker {
                               const unitFactor =
                                   technique.metricUnit === "Pixel" ? mapView.pixelToWorld : 1.0;
                               return (
-                                  getPropertyValue(
-                                      technique.lineWidth,
-                                      mapView.zoomLevel,
-                                      mapView.pixelToWorld
-                                  ) *
+                                  getPropertyValue(technique.lineWidth, mapView.mapEnv) *
                                   unitFactor *
                                   0.5
                               );

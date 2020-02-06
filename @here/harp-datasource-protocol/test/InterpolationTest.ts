@@ -8,7 +8,8 @@
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
 import { assert } from "chai";
-import { getPropertyValue } from "../lib/InterpolatedProperty";
+import { MapEnv } from "../lib/Env";
+import { evaluateInterpolatedProperty } from "../lib/InterpolatedProperty";
 import { InterpolatedProperty, InterpolationMode } from "../lib/InterpolatedPropertyDefs";
 import { StringEncodedNumeralType } from "../lib/StringEncodedNumeral";
 
@@ -40,104 +41,108 @@ const enumProperty: InterpolatedProperty = {
     values: ["Enum0", "Enum1", "Enum2"]
 };
 
+function evaluateInterpolatedPropertyZoom(property: InterpolatedProperty, level: number) {
+    return evaluateInterpolatedProperty(property, new MapEnv({ $zoom: level }));
+}
+
 describe("Interpolation", function() {
     it("Discrete", () => {
-        assert.strictEqual(getPropertyValue(numberProperty, -Infinity), 0);
-        assert.strictEqual(getPropertyValue(numberProperty, 0), 0);
-        assert.strictEqual(getPropertyValue(numberProperty, 2.5), 0);
-        assert.strictEqual(getPropertyValue(numberProperty, 5), 100);
-        assert.strictEqual(getPropertyValue(numberProperty, 7.5), 100);
-        assert.strictEqual(getPropertyValue(numberProperty, 10), 500);
-        assert.strictEqual(getPropertyValue(numberProperty, Infinity), 500);
+        assert.strictEqual(evaluateInterpolatedPropertyZoom(numberProperty, -Infinity), 0);
+        assert.strictEqual(evaluateInterpolatedPropertyZoom(numberProperty, 0), 0);
+        assert.strictEqual(evaluateInterpolatedPropertyZoom(numberProperty, 2.5), 0);
+        assert.strictEqual(evaluateInterpolatedPropertyZoom(numberProperty, 5), 100);
+        assert.strictEqual(evaluateInterpolatedPropertyZoom(numberProperty, 7.5), 100);
+        assert.strictEqual(evaluateInterpolatedPropertyZoom(numberProperty, 10), 500);
+        assert.strictEqual(evaluateInterpolatedPropertyZoom(numberProperty, Infinity), 500);
 
-        assert.strictEqual(getPropertyValue(booleanProperty, -Infinity), true);
-        assert.strictEqual(getPropertyValue(booleanProperty, 0), true);
-        assert.strictEqual(getPropertyValue(booleanProperty, 2.5), true);
-        assert.strictEqual(getPropertyValue(booleanProperty, 5), false);
-        assert.strictEqual(getPropertyValue(booleanProperty, 7.5), false);
-        assert.strictEqual(getPropertyValue(booleanProperty, 10), true);
-        assert.strictEqual(getPropertyValue(booleanProperty, Infinity), true);
+        assert.strictEqual(evaluateInterpolatedPropertyZoom(booleanProperty, -Infinity), true);
+        assert.strictEqual(evaluateInterpolatedPropertyZoom(booleanProperty, 0), true);
+        assert.strictEqual(evaluateInterpolatedPropertyZoom(booleanProperty, 2.5), true);
+        assert.strictEqual(evaluateInterpolatedPropertyZoom(booleanProperty, 5), false);
+        assert.strictEqual(evaluateInterpolatedPropertyZoom(booleanProperty, 7.5), false);
+        assert.strictEqual(evaluateInterpolatedPropertyZoom(booleanProperty, 10), true);
+        assert.strictEqual(evaluateInterpolatedPropertyZoom(booleanProperty, Infinity), true);
 
-        assert.strictEqual(getPropertyValue(colorProperty, -Infinity), 0xff0000);
-        assert.strictEqual(getPropertyValue(colorProperty, 0), 0xff0000);
-        assert.strictEqual(getPropertyValue(colorProperty, 2.5), 0xff0000);
-        assert.strictEqual(getPropertyValue(colorProperty, 5), 0x00ff00);
-        assert.strictEqual(getPropertyValue(colorProperty, 7.5), 0x00ff00);
-        assert.strictEqual(getPropertyValue(colorProperty, 10), 0x0000ff);
-        assert.strictEqual(getPropertyValue(colorProperty, Infinity), 0x0000ff);
+        assert.strictEqual(evaluateInterpolatedPropertyZoom(colorProperty, -Infinity), 0xff0000);
+        assert.strictEqual(evaluateInterpolatedPropertyZoom(colorProperty, 0), 0xff0000);
+        assert.strictEqual(evaluateInterpolatedPropertyZoom(colorProperty, 2.5), 0xff0000);
+        assert.strictEqual(evaluateInterpolatedPropertyZoom(colorProperty, 5), 0x00ff00);
+        assert.strictEqual(evaluateInterpolatedPropertyZoom(colorProperty, 7.5), 0x00ff00);
+        assert.strictEqual(evaluateInterpolatedPropertyZoom(colorProperty, 10), 0x0000ff);
+        assert.strictEqual(evaluateInterpolatedPropertyZoom(colorProperty, Infinity), 0x0000ff);
 
-        assert.strictEqual(getPropertyValue(enumProperty, -Infinity), "Enum0");
-        assert.strictEqual(getPropertyValue(enumProperty, 0), "Enum0");
-        assert.strictEqual(getPropertyValue(enumProperty, 2.5), "Enum0");
-        assert.strictEqual(getPropertyValue(enumProperty, 5), "Enum1");
-        assert.strictEqual(getPropertyValue(enumProperty, 7.5), "Enum1");
-        assert.strictEqual(getPropertyValue(enumProperty, 10), "Enum2");
-        assert.strictEqual(getPropertyValue(enumProperty, Infinity), "Enum2");
+        assert.strictEqual(evaluateInterpolatedPropertyZoom(enumProperty, -Infinity), "Enum0");
+        assert.strictEqual(evaluateInterpolatedPropertyZoom(enumProperty, 0), "Enum0");
+        assert.strictEqual(evaluateInterpolatedPropertyZoom(enumProperty, 2.5), "Enum0");
+        assert.strictEqual(evaluateInterpolatedPropertyZoom(enumProperty, 5), "Enum1");
+        assert.strictEqual(evaluateInterpolatedPropertyZoom(enumProperty, 7.5), "Enum1");
+        assert.strictEqual(evaluateInterpolatedPropertyZoom(enumProperty, 10), "Enum2");
+        assert.strictEqual(evaluateInterpolatedPropertyZoom(enumProperty, Infinity), "Enum2");
     });
     it("Linear", () => {
         numberProperty.interpolationMode = InterpolationMode.Linear;
         colorProperty.interpolationMode = InterpolationMode.Linear;
 
-        assert.equal(getPropertyValue(numberProperty, -Infinity), 0);
-        assert.equal(getPropertyValue(numberProperty, 0), 0);
-        assert.equal(getPropertyValue(numberProperty, 2.5), 50);
-        assert.equal(getPropertyValue(numberProperty, 5), 100);
-        assert.equal(getPropertyValue(numberProperty, 7.5), 300);
-        assert.equal(getPropertyValue(numberProperty, 10), 500);
-        assert.equal(getPropertyValue(numberProperty, Infinity), 500);
+        assert.equal(evaluateInterpolatedPropertyZoom(numberProperty, -Infinity), 0);
+        assert.equal(evaluateInterpolatedPropertyZoom(numberProperty, 0), 0);
+        assert.equal(evaluateInterpolatedPropertyZoom(numberProperty, 2.5), 50);
+        assert.equal(evaluateInterpolatedPropertyZoom(numberProperty, 5), 100);
+        assert.equal(evaluateInterpolatedPropertyZoom(numberProperty, 7.5), 300);
+        assert.equal(evaluateInterpolatedPropertyZoom(numberProperty, 10), 500);
+        assert.equal(evaluateInterpolatedPropertyZoom(numberProperty, Infinity), 500);
 
-        assert.equal(getPropertyValue(colorProperty, -Infinity), 0xff0000);
-        assert.equal(getPropertyValue(colorProperty, 0), 0xff0000);
+        assert.equal(evaluateInterpolatedPropertyZoom(colorProperty, -Infinity), 0xff0000);
+        assert.equal(evaluateInterpolatedPropertyZoom(colorProperty, 0), 0xff0000);
         // rgb: [ 0.5, 0.5, 0 ]
-        assert.equal(getPropertyValue(colorProperty, 2.5), 0x7f7f00);
-        assert.equal(getPropertyValue(colorProperty, 5), 0x00ff00);
+        assert.equal(evaluateInterpolatedPropertyZoom(colorProperty, 2.5), 0x7f7f00);
+        assert.equal(evaluateInterpolatedPropertyZoom(colorProperty, 5), 0x00ff00);
         // rgb: [ 0, 0.5, 0.5 ]
-        assert.equal(getPropertyValue(colorProperty, 7.5), 0x007f7f);
-        assert.equal(getPropertyValue(colorProperty, 10), 0x0000ff);
-        assert.equal(getPropertyValue(colorProperty, Infinity), 0x0000ff);
+        assert.equal(evaluateInterpolatedPropertyZoom(colorProperty, 7.5), 0x007f7f);
+        assert.equal(evaluateInterpolatedPropertyZoom(colorProperty, 10), 0x0000ff);
+        assert.equal(evaluateInterpolatedPropertyZoom(colorProperty, Infinity), 0x0000ff);
     });
     it("Cubic", () => {
         numberProperty.interpolationMode = InterpolationMode.Cubic;
         colorProperty.interpolationMode = InterpolationMode.Cubic;
 
-        assert.equal(getPropertyValue(numberProperty, -Infinity), 0);
-        assert.equal(getPropertyValue(numberProperty, 0), 0);
-        assert.equal(getPropertyValue(numberProperty, 2.5), 31.25);
-        assert.equal(getPropertyValue(numberProperty, 5), 100);
-        assert.equal(getPropertyValue(numberProperty, 7.5), 281.25);
-        assert.equal(getPropertyValue(numberProperty, 10), 500);
-        assert.equal(getPropertyValue(numberProperty, Infinity), 500);
+        assert.equal(evaluateInterpolatedPropertyZoom(numberProperty, -Infinity), 0);
+        assert.equal(evaluateInterpolatedPropertyZoom(numberProperty, 0), 0);
+        assert.equal(evaluateInterpolatedPropertyZoom(numberProperty, 2.5), 31.25);
+        assert.equal(evaluateInterpolatedPropertyZoom(numberProperty, 5), 100);
+        assert.equal(evaluateInterpolatedPropertyZoom(numberProperty, 7.5), 281.25);
+        assert.equal(evaluateInterpolatedPropertyZoom(numberProperty, 10), 500);
+        assert.equal(evaluateInterpolatedPropertyZoom(numberProperty, Infinity), 500);
 
-        assert.equal(getPropertyValue(colorProperty, -Infinity), 0xff0000);
-        assert.equal(getPropertyValue(colorProperty, 0), 0xff0000);
+        assert.equal(evaluateInterpolatedPropertyZoom(colorProperty, -Infinity), 0xff0000);
+        assert.equal(evaluateInterpolatedPropertyZoom(colorProperty, 0), 0xff0000);
         // rgb: [ 0.4375, 0.625, 0 ]
-        assert.equal(getPropertyValue(colorProperty, 2.5), 0x6f9f00);
-        assert.equal(getPropertyValue(colorProperty, 5), 0x00ff00);
+        assert.equal(evaluateInterpolatedPropertyZoom(colorProperty, 2.5), 0x6f9f00);
+        assert.equal(evaluateInterpolatedPropertyZoom(colorProperty, 5), 0x00ff00);
         // rgb: [ 0, 0.625, 0.4375 ]
-        assert.equal(getPropertyValue(colorProperty, 7.5), 0x009f6f);
-        assert.equal(getPropertyValue(colorProperty, 10), 0x0000ff);
-        assert.equal(getPropertyValue(colorProperty, Infinity), 0x0000ff);
+        assert.equal(evaluateInterpolatedPropertyZoom(colorProperty, 7.5), 0x009f6f);
+        assert.equal(evaluateInterpolatedPropertyZoom(colorProperty, 10), 0x0000ff);
+        assert.equal(evaluateInterpolatedPropertyZoom(colorProperty, Infinity), 0x0000ff);
     });
     it("Exponential", () => {
         numberProperty.interpolationMode = InterpolationMode.Exponential;
         colorProperty.interpolationMode = InterpolationMode.Exponential;
 
-        assert.equal(getPropertyValue(numberProperty, -Infinity), 0);
-        assert.equal(getPropertyValue(numberProperty, 0), 0);
-        assert.equal(getPropertyValue(numberProperty, 2.5), 25);
-        assert.equal(getPropertyValue(numberProperty, 5), 100);
-        assert.equal(getPropertyValue(numberProperty, 7.5), 200);
-        assert.equal(getPropertyValue(numberProperty, 10), 500);
-        assert.equal(getPropertyValue(numberProperty, Infinity), 500);
+        assert.equal(evaluateInterpolatedPropertyZoom(numberProperty, -Infinity), 0);
+        assert.equal(evaluateInterpolatedPropertyZoom(numberProperty, 0), 0);
+        assert.equal(evaluateInterpolatedPropertyZoom(numberProperty, 2.5), 25);
+        assert.equal(evaluateInterpolatedPropertyZoom(numberProperty, 5), 100);
+        assert.equal(evaluateInterpolatedPropertyZoom(numberProperty, 7.5), 200);
+        assert.equal(evaluateInterpolatedPropertyZoom(numberProperty, 10), 500);
+        assert.equal(evaluateInterpolatedPropertyZoom(numberProperty, Infinity), 500);
 
-        assert.equal(getPropertyValue(colorProperty, -Infinity), 0xff0000);
-        assert.equal(getPropertyValue(colorProperty, 0), 0xff0000);
+        assert.equal(evaluateInterpolatedPropertyZoom(colorProperty, -Infinity), 0xff0000);
+        assert.equal(evaluateInterpolatedPropertyZoom(colorProperty, 0), 0xff0000);
         // rgb: [ 0.75, 0.25, 0 ]
-        assert.equal(getPropertyValue(colorProperty, 2.5), 0xbf3f00);
-        assert.equal(getPropertyValue(colorProperty, 5), 0x00ff00);
+        assert.equal(evaluateInterpolatedPropertyZoom(colorProperty, 2.5), 0xbf3f00);
+        assert.equal(evaluateInterpolatedPropertyZoom(colorProperty, 5), 0x00ff00);
         // rgb: [ 0, 0.75, 0.25 ]
-        assert.equal(getPropertyValue(colorProperty, 7.5), 0x00bf3f);
-        assert.equal(getPropertyValue(colorProperty, 10), 0x0000ff);
-        assert.equal(getPropertyValue(colorProperty, Infinity), 0x0000ff);
+        assert.equal(evaluateInterpolatedPropertyZoom(colorProperty, 7.5), 0x00bf3f);
+        assert.equal(evaluateInterpolatedPropertyZoom(colorProperty, 10), 0x0000ff);
+        assert.equal(evaluateInterpolatedPropertyZoom(colorProperty, Infinity), 0x0000ff);
     });
 });

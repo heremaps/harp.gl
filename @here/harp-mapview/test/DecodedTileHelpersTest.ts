@@ -7,13 +7,14 @@
 import { assert } from "chai";
 import * as THREE from "three";
 
-import { SolidLineTechnique } from "@here/harp-datasource-protocol";
+import { MapEnv, SolidLineTechnique } from "@here/harp-datasource-protocol";
 import { SolidLineMaterial } from "@here/harp-materials";
 import { applyBaseColorToMaterial, createMaterial } from "../lib/DecodedTileHelpers";
 
 // tslint:disable:only-arrow-functions
 
 describe("DecodedTileHelpers", function() {
+    const env = new MapEnv({ $zoom: 10 });
     describe("#createMaterial", function() {
         it("supports #rgba in base material colors", function() {
             const technique: SolidLineTechnique = {
@@ -22,7 +23,7 @@ describe("DecodedTileHelpers", function() {
                 renderOrder: 0,
                 color: "#f0f7"
             };
-            const material = createMaterial({ technique, level: 10 })! as SolidLineMaterial;
+            const material = createMaterial({ technique, env })! as SolidLineMaterial;
             assert.exists(material);
 
             assert.approximately(material.opacity, 7 / 15, 0.00001);
@@ -38,7 +39,7 @@ describe("DecodedTileHelpers", function() {
                 color: "#f0f",
                 secondaryColor: "#f0f7"
             };
-            const material = createMaterial({ technique, level: 10 })! as SolidLineMaterial;
+            const material = createMaterial({ technique, env })! as SolidLineMaterial;
             assert.exists(material);
 
             assert.equal(material.opacity, 1);
@@ -56,7 +57,7 @@ describe("DecodedTileHelpers", function() {
             renderOrder: 0,
             color: "#f0f7"
         };
-        applyBaseColorToMaterial(material, material.color, technique, technique.color, 10);
+        applyBaseColorToMaterial(material, material.color, technique, technique.color, env);
 
         assert.approximately(material.opacity, 7 / 15, 0.00001);
         assert.equal(material.blending, THREE.CustomBlending);
@@ -64,7 +65,7 @@ describe("DecodedTileHelpers", function() {
         assert.equal(material.transparent, false);
 
         technique.color = "#f0f";
-        applyBaseColorToMaterial(material, material.color, technique, technique.color, 10);
+        applyBaseColorToMaterial(material, material.color, technique, technique.color, env);
 
         assert.equal(material.opacity, 1);
         assert.equal(material.blending, THREE.NormalBlending);

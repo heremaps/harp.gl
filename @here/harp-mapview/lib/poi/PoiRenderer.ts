@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { getPropertyValue, ImageTexture } from "@here/harp-datasource-protocol";
+import { Env, getPropertyValue, ImageTexture } from "@here/harp-datasource-protocol";
 import { IconMaterial } from "@here/harp-materials";
 import { MemoryUsage, TextCanvas } from "@here/harp-text-canvas";
 import { assert, LoggerManager, Math2D } from "@here/harp-utils";
@@ -330,7 +330,7 @@ export class PoiRenderer {
      * @param poiInfo PoiInfo containing information for rendering the POI icon.
      * @param screenPosition Position on screen (2D).
      * @param scale Scale to apply to icon.
-     * @param zoomLevel Current zoom level.
+     * @param env Current zoom level.
      * @param screenBox Box that will be used to store the result.
      * @returns The computed screen box for the icon.
      */
@@ -338,7 +338,7 @@ export class PoiRenderer {
         poiInfo: PoiInfo,
         screenPosition: THREE.Vector2,
         scale: number,
-        zoomLevel: number,
+        env: Env,
         /* out */ screenBox: Math2D.Box = new Math2D.Box()
     ): Math2D.Box {
         assert(poiInfo.poiRenderBatch !== undefined);
@@ -347,8 +347,8 @@ export class PoiRenderer {
         const width = poiInfo.computedWidth! * scale;
         const height = poiInfo.computedHeight! * scale;
         const technique = poiInfo.technique;
-        const iconXOffset = getPropertyValue(technique.iconXOffset, zoomLevel);
-        const iconYOffset = getPropertyValue(technique.iconYOffset, zoomLevel);
+        const iconXOffset = getPropertyValue(technique.iconXOffset, env);
+        const iconYOffset = getPropertyValue(technique.iconYOffset, env);
 
         const centerX = screenPosition.x + (typeof iconXOffset === "number" ? iconXOffset : 0);
         const centerY = screenPosition.y + (typeof iconYOffset === "number" ? iconYOffset : 0);
@@ -385,17 +385,17 @@ export class PoiRenderer {
      * `poiRenderBatch` is assigned, the POI is ready to be rendered.
      *
      * @param pointLabel TextElement with PoiInfo for rendering the POI icon.
-     * @param zoomLevel The current zoom level of [[MapView]]
+     * @param env TODO! The current zoomLevel level of [[MapView]]
      *
      * @returns `True` if the space is not already allocated by another object (text label or POI)
      */
-    prepareRender(pointLabel: TextElement, zoomLevel: number): boolean {
+    prepareRender(pointLabel: TextElement, env: Env): boolean {
         const poiInfo = pointLabel.poiInfo;
         if (poiInfo === undefined) {
             return false;
         }
         if (poiInfo.poiRenderBatch === undefined) {
-            this.preparePoi(pointLabel, zoomLevel);
+            this.preparePoi(pointLabel, env);
         }
         return poiInfo.poiRenderBatch !== undefined;
     }
@@ -427,17 +427,11 @@ export class PoiRenderer {
         scale: number,
         allocateScreenSpace: boolean,
         opacity: number,
-        zoomLevel: number
+        env: Env
     ): void {
         assert(poiInfo.poiRenderBatch !== undefined);
 
-        PoiRenderer.computeIconScreenBox(
-            poiInfo,
-            screenPosition,
-            scale,
-            zoomLevel,
-            this.m_tempScreenBox
-        );
+        PoiRenderer.computeIconScreenBox(poiInfo, screenPosition, scale, env, this.m_tempScreenBox);
 
         if (allocateScreenSpace) {
             screenCollisions.allocate(this.m_tempScreenBox);
@@ -480,7 +474,7 @@ export class PoiRenderer {
      * Register the POI at the [[PoiRenderBuffer]] which may require some setup, for example loading
      * of the actual image.
      */
-    private preparePoi(pointLabel: TextElement, zoomLevel: number): void {
+    private preparePoi(pointLabel: TextElement, env: Env): void {
         const poiInfo = pointLabel.poiInfo;
         if (poiInfo === undefined || !pointLabel.visible) {
             return;
@@ -539,7 +533,7 @@ export class PoiRenderer {
                             logger.error(`preparePoi: Failed to load imageItem: '${imageUrl}`);
                             return;
                         }
-                        this.setupPoiInfo(poiInfo, imageTexture, loadedImageItem, zoomLevel);
+                        this.setupPoiInfo(poiInfo, imageTexture, loadedImageItem, env);
                     })
                     .catch(error => {
                         logger.error(`preparePoi: Failed to load imageItem: '${imageUrl}`, error);
@@ -551,7 +545,7 @@ export class PoiRenderer {
             }
         }
 
-        this.setupPoiInfo(poiInfo, imageTexture, imageItem, zoomLevel);
+        this.setupPoiInfo(poiInfo, imageTexture, imageItem, env);
     }
 
     /**
@@ -560,13 +554,13 @@ export class PoiRenderer {
      * @param poiInfo [[PoiInfo]] to initialize.
      * @param imageTexture Shared [[ImageTexture]], defines used area in atlas.
      * @param imageItem Shared [[ImageItem]], contains cached image for texture.
-     * @param zoomLevel The current zoom level of [[MapView]]
+     * @param env The current zoom level of [[MapView]]
      */
     private setupPoiInfo(
         poiInfo: PoiInfo,
         imageTexture: ImageTexture,
         imageItem: ImageItem,
-        zoomLevel: number
+        env: Env
     ) {
         assert(poiInfo.uvBox === undefined);
 
@@ -617,12 +611,12 @@ export class PoiRenderer {
         // maxT += 0.5 / imageHeight;
 
         // By default, iconScaleV should be equal to iconScaleH, whatever is set in the style.
-        const screenWidth = getPropertyValue(technique.screenWidth, zoomLevel);
+        const screenWidth = getPropertyValue(technique.screenWidth, env);
         if (screenWidth !== undefined) {
             iconScaleV = iconScaleH = screenWidth / iconWidth;
         }
 
-        const screenHeight = getPropertyValue(technique.screenHeight, zoomLevel);
+        const screenHeight = getPropertyValue(technique.screenHeight, env);
         if (screenHeight !== undefined) {
             iconScaleV = screenHeight / iconHeight;
             if (screenWidth !== undefined) {

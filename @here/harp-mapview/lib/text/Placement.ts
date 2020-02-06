@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { Env } from "@here/harp-datasource-protocol";
 import { ProjectionType } from "@here/harp-geoutils";
 import {
     HorizontalAlignment,
@@ -257,7 +258,7 @@ export enum PlacementResult {
  * @param screenPosition Screen position of the icon.
  * @param scaleFactor Scaling factor to apply to the icon dimensions.
  * @param screenCollisions Used to check the icon visibility and collisions.
- * @param zoomLevel Current zoom level.
+ * @param env Current map env.
  * @returns `PlacementResult.Ok` if icon can be placed, `PlacementResult.Rejected` if there's
  * a collision, `PlacementResult.Invisible` if it's not visible.
  */
@@ -266,10 +267,10 @@ export function placeIcon(
     poiInfo: PoiInfo,
     screenPosition: THREE.Vector2,
     scaleFactor: number,
-    zoomLevel: number,
+    env: Env,
     screenCollisions: ScreenCollisions
 ): PlacementResult {
-    PoiRenderer.computeIconScreenBox(poiInfo, screenPosition, scaleFactor, zoomLevel, tmp2DBox);
+    PoiRenderer.computeIconScreenBox(poiInfo, screenPosition, scaleFactor, env, tmp2DBox);
     if (!screenCollisions.isVisible(tmp2DBox)) {
         return PlacementResult.Invisible;
     }

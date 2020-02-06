@@ -497,24 +497,24 @@ export class PoiManager {
         // The current zoomlevel of mapview. Since this method is called for all tiles in the
         // VisibleTileSet we can be sure that the current zoomlevel matches the zoomlevel where
         // the tile should be shown.
-        const displayZoomLevel = this.mapView.zoomLevel;
+        const env = this.mapView.mapEnv;
         const fadeNear =
             technique.fadeNear !== undefined
-                ? getPropertyValue(technique.fadeNear, displayZoomLevel)
+                ? getPropertyValue(technique.fadeNear, env)
                 : technique.fadeNear;
         const fadeFar =
             technique.fadeFar !== undefined
-                ? getPropertyValue(technique.fadeFar, displayZoomLevel)
+                ? getPropertyValue(technique.fadeFar, env)
                 : technique.fadeFar;
-        const xOffset = getPropertyValue(technique.xOffset, displayZoomLevel);
-        const yOffset = getPropertyValue(technique.yOffset, displayZoomLevel);
+        const xOffset = getPropertyValue(technique.xOffset, env);
+        const yOffset = getPropertyValue(technique.yOffset, env);
 
         const textElement: TextElement = new TextElement(
             ContextualArabicConverter.instance.convert(text),
             positions,
             textElementsRenderer.styleCache.getRenderStyle(tile, technique),
             textElementsRenderer.styleCache.getLayoutStyle(tile, technique),
-            getPropertyValue(priority, displayZoomLevel),
+            getPropertyValue(priority, env),
             xOffset !== undefined ? xOffset : 0.0,
             yOffset !== undefined ? yOffset : 0.0,
             featureId,
