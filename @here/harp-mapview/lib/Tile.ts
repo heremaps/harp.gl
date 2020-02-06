@@ -256,6 +256,11 @@ export interface TextElementIndex {
     elementIndex: number;
 }
 
+export type DynamicObjectUpdater = () => void;
+
+// WIP In future, it will accept all params needed for effective expression evaluation.
+//export type DynamicObjectUpdater = (env: MapEnv, cache?: Map<Expr, Value>) => void;
+
 /**
  * The class that holds the tiled data for a [[DataSource]].
  */
@@ -387,6 +392,8 @@ export class Tile implements CachedResource {
         groupIndex: 0,
         elementIndex: 0
     };
+
+    private m_dynamicObjectsUpdaters: DynamicObjectUpdater[] = [];
 
     /**
      * Creates a new [[Tile]].
@@ -637,6 +644,23 @@ export class Tile implements CachedResource {
      */
     didRender(): void {
         // to be overridden by subclasses
+    }
+
+    /**
+     * Update dynamic objects (materials, scene objects, [[TextElement]]s) on this tile.
+     */
+    updateDynamicObjects(): void {
+        for (const updater of this.m_dynamicObjectsUpdaters) {
+            updater();
+        }
+    }
+
+    /**
+     * Add `updater` callback, so it will be called before this tile is rendered within
+     * [[updateDynamicObjects]].
+     */
+    addUpdater(updater: DynamicObjectUpdater) {
+        this.m_dynamicObjectsUpdaters.push(updater);
     }
 
     /**
@@ -961,6 +985,7 @@ export class Tile implements CachedResource {
             disposeObject(rootObject);
         });
         this.objects.length = 0;
+        this.m_dynamicObjectsUpdaters.length = 0;
 
         if (this.preparedTextPaths) {
             this.preparedTextPaths = [];

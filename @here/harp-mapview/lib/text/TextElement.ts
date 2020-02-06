@@ -319,11 +319,14 @@ export class TextElement {
 
     type: TextElementType;
 
+    lastUpdated?: number;
+
     private m_poiInfo?: PoiInfo;
 
     private m_renderStyle?: TextRenderStyle;
 
     private m_layoutStyle?: TextLayoutStyle;
+
 
     /**
      * Creates a new `TextElement`.
@@ -464,6 +467,13 @@ export class TextElement {
      */
     set layoutStyle(style: TextLayoutStyle | undefined) {
         this.m_layoutStyle = style;
+    }
+
+    get reallyVisible() {
+        return (
+            this.visible &&
+            (typeof this.renderParams.opacity === "undefined" || this.renderParams.opacity > 0)
+        );
     }
 
     hasFeatureId(): boolean {

@@ -6,6 +6,7 @@
 
 import {
     ColorUtils,
+    Expr,
     getPropertyValue,
     IndexedTechniqueParams,
     LineMarkerTechnique,
@@ -34,7 +35,7 @@ import { getOptionValue, LoggerManager } from "@here/harp-utils";
 import { ColorCache } from "../ColorCache";
 import { evaluateColorProperty } from "../DecodedTileHelpers";
 import { PoiRenderer } from "../poi/PoiRenderer";
-import { Tile } from "../Tile";
+import { DynamicObjectUpdater, Tile } from "../Tile";
 import { TextCanvasRenderer } from "./TextCanvasRenderer";
 
 const logger = LoggerManager.instance.create("TextStyleCache");
@@ -309,6 +310,7 @@ export class TextStyleCache {
         const cacheId = computeStyleCacheId(dataSource.name, technique, discreteZoomLevel);
         let renderStyle = this.m_textRenderStyleCache.get(cacheId);
         if (renderStyle === undefined) {
+            const updaters: DynamicObjectUpdater[] = [];
             const discreteZoomEnv = new MapEnv({ $zoom: discreteZoomLevel }, mapView.mapEnv);
 
             const defaultRenderParams = this.m_defaultStyle.renderParams;
@@ -421,8 +423,68 @@ export class TextStyleCache {
                 ...renderParams
             });
             this.m_textRenderStyleCache.set(cacheId, renderStyle);
+
+            if (Expr.isExpr(technique.color) || Expr.isExpr(technique.opacity)) {
+                updaters.push(() => {
+                    let colorHex = evaluateColorProperty(technique.color!, mapView.mapEnv);
+                    let opacity2 = getPropertyValue(technique.opacity, mapView.mapEnv) || 1;
+
+                    if (ColorUtils.hasAlphaInHex(colorHex)) {
+                        const alpha = ColorUtils.getAlphaFromHex(colorHex);
+                        opacity2 = opacity2 * alpha;
+                        colorHex = ColorUtils.removeAlphaFromHex(colorHex);
+                    }
+                    renderStyle!.color.set(colorHex);
+                    renderStyle!.opacity = opacity2;
+                });
+            }
+
+            if (
+                Expr.isExpr(technique.backgroundColor) ||
+                Expr.isExpr(technique.backgroundOpacity)
+            ) {
+                updaters.push(() => {
+                    let colorHex = evaluateColorProperty(
+                        technique.backgroundColor!,
+                        mapView.mapEnv
+                    );
+                    let opacity2 =
+                        getPropertyValue(technique.backgroundOpacity, mapView.mapEnv) || 1;
+
+                    if (ColorUtils.hasAlphaInHex(colorHex)) {
+                        const alpha = ColorUtils.getAlphaFromHex(colorHex);
+                        opacity2 = opacity2 * alpha;
+                        colorHex = ColorUtils.removeAlphaFromHex(colorHex);
+                    }
+                    renderStyle!.backgroundColor.set(colorHex);
+                    renderStyle!.backgroundOpacity = opacity2;
+                });
+            }
+            if (Expr.isExpr(technique.size)) {
+                updaters.push(() => {
+                    const size2 = getPropertyValue(technique.size, mapView.mapEnv);
+
+                    if (size2 !== renderStyle!.fontSize.size) {
+                        renderStyle!.fontSize.size = size2;
+
+                        // TODO: Is this best way to tell that we possibly need new text placement?
+                        // tile.textElementsChanged = true;
+
+                        // As for now, we remember `lastUpdated` (frame number) in TE and in
+                        // RenderStyle.
+                        (renderStyle as any).lastUpdated = tile.mapView.frameNumber;
+                    }
+                });
+            }
+            (renderStyle as any).updaters = updaters;
         }
 
+        if ((renderStyle as any).updaters.length !== 0) {
+            for (const updater of (renderStyle as any).updaters) {
+                tile.addUpdater(updater);
+            }
+            (renderStyle as any).lastUpdated = tile.mapView.frameNumber;
+        }
         return renderStyle;
     }
 

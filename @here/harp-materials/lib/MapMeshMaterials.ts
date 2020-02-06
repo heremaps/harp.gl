@@ -140,7 +140,7 @@ interface MixinShaderProperties {
  * @param visibilityRange object describing maximum and minimum visibility range - distances
  * from camera at which objects won't be rendered anymore.
  */
-function cameraToWorldDistance(distance: number, visibilityRange: ViewRanges): number {
+export function cameraToWorldDistance(distance: number, visibilityRange: ViewRanges): number {
     return distance * visibilityRange.maximum;
 }
 
@@ -522,63 +522,6 @@ export namespace FadingFeature {
             "fog_fragment",
             "fading_fragment",
             true
-        );
-    }
-
-    /**
-     * As three.js is rendering the transparent objects last (internally), regardless of their
-     * renderOrder value, we set the transparent value to false in the [[onAfterRenderCall]]. In
-     * [[onBeforeRender]], the function [[calculateDepthFromCameraDistance]] sets it to true if the
-     * fade distance value is less than 1.
-     *
-     * @param object [[THREE.Object3D]] to prepare for rendering.
-     * @param viewRanges The visibility ranges (clip planes and maximum visible distance) for
-     * actual camera setup.
-     * @param fadeNear The fadeNear value to set in the material.
-     * @param fadeFar The fadeFar value to set in the material.
-     * @param updateUniforms If `true`, the fading uniforms are set. Not required if material is
-     *          handling the uniforms already, like in a [[THREE.ShaderMaterial]].
-     * @param additionalCallback If defined, this function will be called before the function will
-     *          return.
-     */
-    export function addRenderHelper(
-        object: THREE.Object3D,
-        viewRanges: ViewRanges,
-        fadeNear: number | undefined,
-        fadeFar: number | undefined,
-        updateUniforms: boolean,
-        additionalCallback?: (
-            renderer: THREE.WebGLRenderer,
-            material: THREE.Material & FadingFeature
-        ) => void
-    ) {
-        // tslint:disable-next-line:no-unused-variable
-        object.onBeforeRender = chainCallbacks(
-            object.onBeforeRender,
-            (
-                renderer: THREE.WebGLRenderer,
-                scene: THREE.Scene,
-                camera: THREE.Camera,
-                geometry: THREE.Geometry | THREE.BufferGeometry,
-                material: THREE.Material & FadingFeature,
-                group: THREE.Group
-            ) => {
-                const fadingMaterial = material as FadingFeature;
-
-                fadingMaterial.fadeNear =
-                    fadeNear === undefined || fadeNear === FadingFeature.DEFAULT_FADE_NEAR
-                        ? FadingFeature.DEFAULT_FADE_NEAR
-                        : cameraToWorldDistance(fadeNear, viewRanges);
-
-                fadingMaterial.fadeFar =
-                    fadeFar === undefined || fadeFar === FadingFeature.DEFAULT_FADE_FAR
-                        ? FadingFeature.DEFAULT_FADE_FAR
-                        : cameraToWorldDistance(fadeFar, viewRanges);
-
-                if (additionalCallback !== undefined) {
-                    additionalCallback(renderer, material);
-                }
-            }
         );
     }
 }
