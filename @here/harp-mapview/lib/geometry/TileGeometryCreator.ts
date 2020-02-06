@@ -4,38 +4,17 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import {
-    BaseTechniqueParams,
-    BufferAttribute,
     DecodedTile,
-    Env,
-    Expr,
-    ExtrudedPolygonTechnique,
-    FillTechnique,
-    Geometry,
     GeometryKind,
     GeometryKindSet,
-    getArrayConstructor,
     getFeatureId,
     getPropertyValue,
-    isCirclesTechnique,
-    isExtrudedLineTechnique,
-    isExtrudedPolygonTechnique,
-    isFillTechnique,
+    Group,
     isLineMarkerTechnique,
-    isLineTechnique,
     isPoiTechnique,
-    isSegmentsTechnique,
-    isSolidLineTechnique,
-    isSquaresTechnique,
-    isTerrainTechnique,
     isTextTechnique,
-    MakeTechniqueAttrs,
     MapEnv,
-    needsVertexNormals,
-    SolidLineTechnique,
-    StandardExtrudedLineTechnique,
     Technique,
-    TerrainTechnique,
     TextPathGeometry
 } from "@here/harp-datasource-protocol";
 // tslint:disable:max-line-length
@@ -44,48 +23,30 @@ import {
     SubdivisionMode
 } from "@here/harp-geometry/lib/EdgeLengthGeometrySubdivisionModifier";
 import { SphericalGeometrySubdivisionModifier } from "@here/harp-geometry/lib/SphericalGeometrySubdivisionModifier";
-import { EarthConstants, GeoCoordinates, ProjectionType } from "@here/harp-geoutils";
-import {
-    EdgeMaterial,
-    EdgeMaterialParameters,
-    FadingFeature,
-    isHighPrecisionLineMaterial,
-    MapMeshBasicMaterial,
-    MapMeshStandardMaterial,
-    setShaderMaterialDefine,
-    SolidLineMaterial
-} from "@here/harp-materials";
+import { GeoCoordinates, ProjectionType } from "@here/harp-geoutils";
+import { MapMeshBasicMaterial } from "@here/harp-materials";
 import { ContextualArabicConverter } from "@here/harp-text-canvas";
-import { assert, LoggerManager } from "@here/harp-utils";
+import { LoggerManager } from "@here/harp-utils";
 import * as THREE from "three";
 
-import { AnimatedExtrusionTileHandler } from "../AnimatedExtrusionHandler";
-import {
-    applyBaseColorToMaterial,
-    applySecondaryColorToMaterial,
-    compileTechniques,
-    createMaterial,
-    getBufferAttribute,
-    getObjectConstructor
-} from "../DecodedTileHelpers";
-import {
-    createDepthPrePassMesh,
-    isRenderDepthPrePassEnabled,
-    setDepthPrePassStencil
-} from "../DepthPrePass";
-import { DisplacementMap, TileDisplacementMap } from "../DisplacementMap";
+import { compileTechniques } from "../DecodedTileHelpers";
 import { FALLBACK_RENDER_ORDER_OFFSET } from "../MapView";
-import { MapViewPoints } from "../MapViewPoints";
 import { PathBlockingElement } from "../PathBlockingElement";
+import { GenericWorldSpaceTechniqueHandler } from "../techniques/GenericWorldSpaceTechniqueHandler";
 import { TextElement } from "../text/TextElement";
 import { DEFAULT_TEXT_DISTANCE_SCALE } from "../text/TextElementsRenderer";
-import { Tile, TileFeatureData } from "../Tile";
+import { Tile } from "../Tile";
 import { LodMesh } from "./LodMesh";
 import { TileGeometryLoader } from "./TileGeometryLoader";
 
 const logger = LoggerManager.instance.create("TileGeometryCreator");
-const tmpVector3 = new THREE.Vector3();
-const tmpVector2 = new THREE.Vector2();
+
+// Register default technique handlers.
+import "../techniques/ExtrudedPolygonTechniqueHandler";
+import "../techniques/FillTechniqueHandler";
+import "../techniques/PointTechniqueHandler";
+import "../techniques/SolidLineTechniqueHandler";
+import "../techniques/TerrainTechniqueHandler";
 
 /**
  * Parameters that control fading.
@@ -553,13 +514,7 @@ export class TileGeometryCreator {
         decodedTile: DecodedTile,
         techniqueFilter?: (technique: Technique) => boolean
     ) {
-        const materials: THREE.Material[] = [];
-        const mapView = tile.mapView;
-        const dataSource = tile.dataSource;
-        const discreteZoomLevel = Math.floor(mapView.zoomLevel);
-        const discreteZoomEnv = new MapEnv({ $zoom: discreteZoomLevel }, mapView.env);
-        const objects = tile.objects;
-        const viewRanges = mapView.viewRanges;
+        const mergedGroup: Group = { start: 0, count: 0, technique: 0 };
 
         for (const srcGeometry of decodedTile.geometries) {
             const groups = srcGeometry.groups;
@@ -569,6 +524,8 @@ export class TileGeometryCreator {
                 const group = groups[groupIndex++];
                 const start = group.start;
                 const techniqueIndex = group.technique;
+                mergedGroup.start = group.start;
+                mergedGroup.technique = techniqueIndex;
                 const technique = decodedTile.techniques[techniqueIndex];
 
                 if (
@@ -598,574 +555,26 @@ export class TileGeometryCreator {
                     groups[groupIndex].createdOffsets!.push(tile.offset);
                 }
 
-                const ObjectCtor = getObjectConstructor(technique);
-
-                if (ObjectCtor === undefined) {
-                    continue;
-                }
-
-                let material: THREE.Material | undefined = materials[techniqueIndex];
-
-                if (material === undefined) {
-                    const onMaterialUpdated = (texture: THREE.Texture) => {
-                        dataSource.requestUpdate();
-                        if (texture !== undefined) {
-                            tile.addOwnedTexture(texture);
-                        }
-                    };
-                    material = createMaterial(
-                        {
-                            technique,
-                            env: mapView.env,
-                            fog: mapView.scene.fog !== null
-                        },
-                        onMaterialUpdated
-                    );
-                    if (material === undefined) {
-                        continue;
-                    }
-                    materials[techniqueIndex] = material;
-                }
-
-                // Modify the standard textured shader to support height-based coloring.
-                if (isTerrainTechnique(technique)) {
-                    this.setupTerrainMaterial(technique, material, tile.mapView.clearColor);
-                }
-
-                const bufferGeometry = new THREE.BufferGeometry();
-
-                srcGeometry.vertexAttributes.forEach((vertexAttribute: BufferAttribute) => {
-                    const buffer = getBufferAttribute(vertexAttribute);
-                    bufferGeometry.setAttribute(vertexAttribute.name, buffer);
-                });
-
-                if (srcGeometry.interleavedVertexAttributes !== undefined) {
-                    srcGeometry.interleavedVertexAttributes.forEach(attr => {
-                        const ArrayCtor = getArrayConstructor(attr.type);
-                        const buffer = new THREE.InterleavedBuffer(
-                            new ArrayCtor(attr.buffer),
-                            attr.stride
-                        );
-                        attr.attributes.forEach(interleavedAttr => {
-                            const attribute = new THREE.InterleavedBufferAttribute(
-                                buffer,
-                                interleavedAttr.itemSize,
-                                interleavedAttr.offset,
-                                false
-                            );
-                            bufferGeometry.setAttribute(interleavedAttr.name, attribute);
-                        });
-                    });
-                }
-
-                if (srcGeometry.index) {
-                    bufferGeometry.setIndex(getBufferAttribute(srcGeometry.index));
-                }
-
-                if (!bufferGeometry.getAttribute("normal") && needsVertexNormals(technique)) {
-                    bufferGeometry.computeVertexNormals();
-                }
-
-                bufferGeometry.addGroup(start, count);
-
-                if (isSolidLineTechnique(technique)) {
-                    // TODO: Unify access to shader defines via SolidLineMaterial setters
-                    assert(!isHighPrecisionLineMaterial(material));
-                    const lineMaterial = material as SolidLineMaterial;
-                    if (
-                        technique.clipping !== false &&
-                        tile.projection.type === ProjectionType.Planar
-                    ) {
-                        tile.boundingBox.getSize(tmpVector3);
-                        tmpVector2.set(tmpVector3.x, tmpVector3.y);
-                        lineMaterial.clipTileSize = tmpVector2;
-                    }
-
-                    if (bufferGeometry.getAttribute("color")) {
-                        setShaderMaterialDefine(lineMaterial, "USE_COLOR", true);
-                    }
-                }
-
-                // Add the solid line outlines as a separate object.
-                const hasSolidLinesOutlines: boolean =
-                    isSolidLineTechnique(technique) && technique.secondaryWidth !== undefined;
-
-                const object = new ObjectCtor(bufferGeometry, material);
-                object.renderOrder = technique.renderOrder!;
-
-                if (group.renderOrderOffset !== undefined) {
-                    object.renderOrder += group.renderOrderOffset;
-                }
-
-                if (srcGeometry.uuid !== undefined) {
-                    object.userData.geometryId = srcGeometry.uuid;
-                }
-
-                if (
-                    (isCirclesTechnique(technique) || isSquaresTechnique(technique)) &&
-                    technique.enablePicking !== undefined
-                ) {
-                    // tslint:disable-next-line:max-line-length
-                    (object as MapViewPoints).enableRayTesting = technique.enablePicking!;
-                }
-
-                if (isLineTechnique(technique) || isSegmentsTechnique(technique)) {
-                    const hasDynamicColor =
-                        Expr.isExpr(technique.color) || Expr.isExpr(technique.opacity);
-                    const fadingParams = this.getFadingParams(discreteZoomEnv, technique);
-                    FadingFeature.addRenderHelper(
-                        object,
-                        viewRanges,
-                        fadingParams.fadeNear,
-                        fadingParams.fadeFar,
-                        false,
-                        hasDynamicColor
-                            ? (renderer, mat) => {
-                                  const lineMaterial = mat as THREE.LineBasicMaterial;
-                                  applyBaseColorToMaterial(
-                                      lineMaterial,
-                                      lineMaterial.color,
-                                      technique,
-                                      technique.color,
-                                      mapView.env
-                                  );
-                              }
-                            : undefined
-                    );
-                }
-
-                if (isSolidLineTechnique(technique)) {
-                    const hasDynamicColor =
-                        Expr.isExpr(technique.color) || Expr.isExpr(technique.opacity);
-                    const fadingParams = this.getFadingParams(discreteZoomEnv, technique);
-
-                    FadingFeature.addRenderHelper(
-                        object,
-                        viewRanges,
-                        fadingParams.fadeNear,
-                        fadingParams.fadeFar,
-                        false,
-                        (renderer, mat) => {
-                            const lineMaterial = mat as SolidLineMaterial;
-                            const unitFactor =
-                                technique.metricUnit === "Pixel" ? mapView.pixelToWorld : 1.0;
-
-                            if (hasDynamicColor) {
-                                applyBaseColorToMaterial(
-                                    lineMaterial,
-                                    lineMaterial.color,
-                                    technique,
-                                    technique.color,
-                                    mapView.env
-                                );
-                            }
-
-                            lineMaterial.lineWidth =
-                                getPropertyValue(technique.lineWidth, mapView.env) *
-                                unitFactor *
-                                0.5;
-
-                            if (technique.outlineWidth !== undefined) {
-                                lineMaterial.outlineWidth =
-                                    getPropertyValue(technique.outlineWidth, mapView.env) *
-                                    unitFactor;
-                            }
-
-                            if (technique.dashSize !== undefined) {
-                                lineMaterial.dashSize =
-                                    getPropertyValue(technique.dashSize, mapView.env) *
-                                    unitFactor *
-                                    0.5;
-                            }
-
-                            if (technique.gapSize !== undefined) {
-                                lineMaterial.gapSize =
-                                    getPropertyValue(technique.gapSize, mapView.env) *
-                                    unitFactor *
-                                    0.5;
-                            }
-                        }
-                    );
-                }
-
-                if (isExtrudedLineTechnique(technique)) {
-                    const hasDynamicColor =
-                        Expr.isExpr(technique.color) || Expr.isExpr(technique.opacity);
-                    // extruded lines are normal meshes, and need transparency only when fading or
-                    // dynamic properties is defined.
-                    if (technique.fadeFar !== undefined || hasDynamicColor) {
-                        const fadingParams = this.getFadingParams(
-                            mapView.env,
-                            technique as StandardExtrudedLineTechnique
-                        );
-
-                        FadingFeature.addRenderHelper(
-                            object,
-                            viewRanges,
-                            fadingParams.fadeNear,
-                            fadingParams.fadeFar,
-                            true,
-                            hasDynamicColor
-                                ? (renderer, mat) => {
-                                      const extrudedMaterial = mat as
-                                          | MapMeshStandardMaterial
-                                          | MapMeshBasicMaterial;
-
-                                      applyBaseColorToMaterial(
-                                          extrudedMaterial,
-                                          extrudedMaterial.color,
-                                          technique,
-                                          technique.color!,
-                                          mapView.env
-                                      );
-                                  }
-                                : undefined
-                        );
-                    }
-                }
-
-                this.addUserData(tile, srcGeometry, technique, object);
-
-                if (isExtrudedPolygonTechnique(technique) || isFillTechnique(technique)) {
-                    // filled polygons are normal meshes, and need transparency only when fading or
-                    // dynamic properties is defined.
-                    const hasDynamicPrimaryColor =
-                        Expr.isExpr(technique.color) || Expr.isExpr(technique.opacity);
-                    const hasDynamicSecondaryColor =
-                        isExtrudedPolygonTechnique(technique) && Expr.isExpr(technique.emissive);
-                    const hasDynamicColor = hasDynamicPrimaryColor || hasDynamicSecondaryColor;
-
-                    if (technique.fadeFar !== undefined || hasDynamicColor) {
-                        const fadingParams = this.getFadingParams(discreteZoomEnv, technique);
-                        FadingFeature.addRenderHelper(
-                            object,
-                            viewRanges,
-                            fadingParams.fadeNear,
-                            fadingParams.fadeFar,
-                            true,
-                            hasDynamicColor
-                                ? (renderer, mat) => {
-                                      const polygonMaterial = mat as
-                                          | MapMeshBasicMaterial
-                                          | MapMeshStandardMaterial;
-
-                                      if (hasDynamicPrimaryColor) {
-                                          applyBaseColorToMaterial(
-                                              polygonMaterial,
-                                              polygonMaterial.color,
-                                              technique,
-                                              technique.color!,
-                                              mapView.env
-                                          );
-                                      }
-
-                                      if (
-                                          hasDynamicSecondaryColor &&
-                                          // Just to omit compiler warnings
-                                          isExtrudedPolygonTechnique(technique)
-                                      ) {
-                                          const standardMat = mat as MapMeshStandardMaterial;
-
-                                          applySecondaryColorToMaterial(
-                                              standardMat.emissive,
-                                              technique.emissive!,
-                                              mapView.env
-                                          );
-                                      }
-                                  }
-                                : undefined
-                        );
-                    }
-                }
-
-                const extrudedObjects: Array<{
-                    object: THREE.Object3D;
-                    /**
-                     * If set to `true`, an [[ExtrusionFeature]] that injects extrusion shader
-                     * chunk will be applied to the material. Otherwise, extrusion should
-                     * be added in the material's shader manually.
-                     */
-                    materialFeature: boolean;
-                }> = [];
-
-                const animatedExtrusionHandler = mapView.animatedExtrusionHandler;
-
-                let extrusionAnimationEnabled: boolean | undefined = false;
-
-                if (
-                    isExtrudedPolygonTechnique(technique) &&
-                    animatedExtrusionHandler !== undefined
-                ) {
-                    let animateExtrusionValue = getPropertyValue(
-                        technique.animateExtrusion,
-                        discreteZoomEnv
-                    );
-                    if (animateExtrusionValue !== undefined) {
-                        animateExtrusionValue =
-                            typeof animateExtrusionValue === "boolean"
-                                ? animateExtrusionValue
-                                : typeof animateExtrusionValue === "number"
-                                ? animateExtrusionValue !== 0
-                                : false;
-                    }
-                    extrusionAnimationEnabled =
-                        animateExtrusionValue !== undefined &&
-                        animatedExtrusionHandler.forceEnabled === false
-                            ? animateExtrusionValue
-                            : animatedExtrusionHandler.enabled;
-                }
-
-                const renderDepthPrePass =
-                    isExtrudedPolygonTechnique(technique) && isRenderDepthPrePassEnabled(technique);
-
-                if (renderDepthPrePass) {
-                    const depthPassMesh = createDepthPrePassMesh(object as THREE.Mesh);
-                    // Set geometry kind for depth pass mesh so that it gets the displacement map
-                    // for elevation overlay.
-                    this.registerTileObject(tile, depthPassMesh, technique.kind);
-                    objects.push(depthPassMesh);
-
-                    if (extrusionAnimationEnabled) {
-                        extrudedObjects.push({
-                            object: depthPassMesh,
-                            materialFeature: true
-                        });
-                    }
-
-                    setDepthPrePassStencil(depthPassMesh, object as THREE.Mesh);
-                }
-
-                this.registerTileObject(tile, object, technique.kind);
-                objects.push(object);
-
-                // Add the extruded building edges as a separate geometry.
-                if (isExtrudedPolygonTechnique(technique) && srcGeometry.edgeIndex !== undefined) {
-                    const edgeGeometry = new THREE.BufferGeometry();
-                    edgeGeometry.setAttribute("position", bufferGeometry.getAttribute("position"));
-
-                    const colorAttribute = bufferGeometry.getAttribute("color");
-                    if (colorAttribute !== undefined) {
-                        edgeGeometry.setAttribute("color", colorAttribute);
-                    }
-
-                    const extrusionAttribute = bufferGeometry.getAttribute("extrusionAxis");
-                    if (extrusionAttribute !== undefined) {
-                        edgeGeometry.setAttribute("extrusionAxis", extrusionAttribute);
-                    }
-
-                    const normalAttribute = bufferGeometry.getAttribute("normal");
-                    if (normalAttribute !== undefined) {
-                        edgeGeometry.setAttribute("normal", normalAttribute);
-                    }
-
-                    const uvAttribute = bufferGeometry.getAttribute("uv");
-                    if (uvAttribute !== undefined) {
-                        edgeGeometry.setAttribute("uv", uvAttribute);
-                    }
-
-                    edgeGeometry.setIndex(
-                        getBufferAttribute(srcGeometry.edgeIndex! as BufferAttribute)
-                    );
-
-                    // Read the uniforms from the technique values (and apply the default values).
-                    const extrudedPolygonTechnique = technique as ExtrudedPolygonTechnique;
-
-                    const fadingParams = this.getPolygonFadingParams(
-                        discreteZoomEnv,
-                        extrudedPolygonTechnique
-                    );
-
-                    // Configure the edge material based on the theme values.
-                    const materialParams: EdgeMaterialParameters = {
-                        color: fadingParams.color,
-                        colorMix: fadingParams.colorMix,
-                        fadeNear: fadingParams.lineFadeNear,
-                        fadeFar: fadingParams.lineFadeFar
-                    };
-                    const edgeMaterial = new EdgeMaterial(materialParams);
-                    const edgeObj = new THREE.LineSegments(edgeGeometry, edgeMaterial);
-
-                    // Set the correct render order.
-                    edgeObj.renderOrder = object.renderOrder + 0.1;
-
-                    FadingFeature.addRenderHelper(
-                        edgeObj,
-                        viewRanges,
-                        fadingParams.lineFadeNear,
-                        fadingParams.lineFadeFar,
-                        false,
-                        extrudedPolygonTechnique.lineColor !== undefined &&
-                            Expr.isExpr(extrudedPolygonTechnique.lineColor)
-                            ? () => {
-                                  applyBaseColorToMaterial(
-                                      edgeMaterial,
-                                      edgeMaterial.color,
-                                      extrudedPolygonTechnique,
-                                      extrudedPolygonTechnique.lineColor!,
-                                      mapView.env
-                                  );
-                              }
-                            : undefined
-                    );
-
-                    if (extrusionAnimationEnabled) {
-                        extrudedObjects.push({
-                            object: edgeObj,
-                            materialFeature: false
-                        });
-                    }
-
-                    this.registerTileObject(tile, edgeObj, technique.kind);
-                    objects.push(edgeObj);
-                }
-
-                // animate the extrusion of buildings
-                if (isExtrudedPolygonTechnique(technique) && extrusionAnimationEnabled) {
-                    extrudedObjects.push({
-                        object,
-                        materialFeature: true
-                    });
-
-                    const extrusionAnimationDuration =
-                        technique.animateExtrusionDuration !== undefined &&
-                        animatedExtrusionHandler.forceEnabled === false
-                            ? technique.animateExtrusionDuration
-                            : animatedExtrusionHandler.duration;
-
-                    tile.animatedExtrusionTileHandler = new AnimatedExtrusionTileHandler(
-                        tile,
-                        extrudedObjects,
-                        extrusionAnimationDuration
-                    );
-                    mapView.animatedExtrusionHandler.add(tile.animatedExtrusionTileHandler);
-                }
-
-                // Add the fill area edges as a separate geometry.
-
-                if (isFillTechnique(technique) && srcGeometry.edgeIndex !== undefined) {
-                    const outlineGeometry = new THREE.BufferGeometry();
-                    outlineGeometry.setAttribute(
-                        "position",
-                        bufferGeometry.getAttribute("position")
-                    );
-                    outlineGeometry.setIndex(getBufferAttribute(srcGeometry.edgeIndex!));
-
-                    const fillTechnique = technique as FillTechnique;
-
-                    const fadingParams = this.getPolygonFadingParams(mapView.env, fillTechnique);
-
-                    // Configure the edge material based on the theme values.
-                    const materialParams: EdgeMaterialParameters = {
-                        color: fadingParams.color,
-                        colorMix: fadingParams.colorMix,
-                        fadeNear: fadingParams.lineFadeNear,
-                        fadeFar: fadingParams.lineFadeFar
-                    };
-                    const outlineMaterial = new EdgeMaterial(materialParams);
-                    const outlineObj = new THREE.LineSegments(outlineGeometry, outlineMaterial);
-                    outlineObj.renderOrder = object.renderOrder + 0.1;
-
-                    FadingFeature.addRenderHelper(
-                        outlineObj,
-                        viewRanges,
-                        fadingParams.lineFadeNear,
-                        fadingParams.lineFadeFar,
-                        false,
-                        fillTechnique.lineColor !== undefined &&
-                            Expr.isExpr(fillTechnique.lineColor)
-                            ? (renderer, mat) => {
-                                  const edgeMaterial = mat as EdgeMaterial;
-                                  applyBaseColorToMaterial(
-                                      edgeMaterial,
-                                      edgeMaterial.color,
-                                      fillTechnique,
-                                      fillTechnique.lineColor!,
-                                      mapView.env
-                                  );
-                              }
-                            : undefined
-                    );
-
-                    this.registerTileObject(tile, outlineObj, technique.kind);
-                    objects.push(outlineObj);
-                }
-
-                // Add the fill area edges as a separate geometry.
-                if (hasSolidLinesOutlines) {
-                    const outlineTechnique = technique as SolidLineTechnique;
-                    const outlineMaterial = material.clone() as SolidLineMaterial;
-                    applyBaseColorToMaterial(
-                        outlineMaterial,
-                        outlineMaterial.color,
-                        outlineTechnique,
-                        outlineTechnique.secondaryColor ?? 0x000000,
-                        discreteZoomEnv
-                    );
-                    if (outlineTechnique.secondaryCaps !== undefined) {
-                        outlineMaterial.caps = outlineTechnique.secondaryCaps;
-                    }
-                    const outlineObj = new ObjectCtor(bufferGeometry, outlineMaterial);
-
-                    outlineObj.renderOrder =
-                        outlineTechnique.secondaryRenderOrder !== undefined
-                            ? outlineTechnique.secondaryRenderOrder
-                            : technique.renderOrder - 0.0000001;
-
+                mergedGroup.count = count;
+
+                const techniqueHandler = tile.techniqueHandlerIndex.getTechniqueHandler(
+                    technique,
+                    GenericWorldSpaceTechniqueHandler
+                );
+
+                const newObjects = techniqueHandler.addWorldSpaceObject(
+                    tile,
+                    srcGeometry,
+                    mergedGroup
+                );
+
+                for (const obj of newObjects) {
+                    tile.objects.push(obj);
                     if (group.renderOrderOffset !== undefined) {
-                        outlineObj.renderOrder += group.renderOrderOffset;
+                        obj.renderOrder += group.renderOrderOffset;
                     }
 
-                    const fadingParams = this.getFadingParams(discreteZoomEnv, technique);
-                    FadingFeature.addRenderHelper(
-                        outlineObj,
-                        viewRanges,
-                        fadingParams.fadeNear,
-                        fadingParams.fadeFar,
-                        false,
-                        (renderer, mat) => {
-                            const lineMaterial = mat as SolidLineMaterial;
-
-                            const unitFactor =
-                                outlineTechnique.metricUnit === "Pixel"
-                                    ? mapView.pixelToWorld
-                                    : 1.0;
-
-                            if (outlineTechnique.secondaryColor !== undefined) {
-                                applyBaseColorToMaterial(
-                                    lineMaterial,
-                                    lineMaterial.color,
-                                    outlineTechnique,
-                                    outlineTechnique.secondaryColor,
-                                    mapView.env
-                                );
-                            }
-
-                            if (outlineTechnique.secondaryWidth !== undefined) {
-                                const techniqueLineWidth = getPropertyValue(
-                                    outlineTechnique.lineWidth!,
-                                    mapView.env
-                                );
-                                const techniqueSecondaryWidth = getPropertyValue(
-                                    outlineTechnique.secondaryWidth!,
-                                    mapView.env
-                                );
-                                const techniqueOpacity = getPropertyValue(
-                                    outlineTechnique.opacity,
-                                    mapView.env
-                                );
-                                // hide outline when it's equal or smaller then line to avoid subpixel contour
-                                const lineWidth =
-                                    techniqueSecondaryWidth <= techniqueLineWidth &&
-                                    (techniqueOpacity === undefined || techniqueOpacity === 1)
-                                        ? 0
-                                        : techniqueSecondaryWidth;
-                                lineMaterial.lineWidth = lineWidth * unitFactor * 0.5;
-                            }
-                        }
-                    );
-
-                    this.registerTileObject(tile, outlineObj, technique.kind);
-                    objects.push(outlineObj);
+                    this.registerTileObject(tile, obj, technique.kind);
                 }
             }
         }
@@ -1359,172 +768,5 @@ export class TileGeometryCreator {
                 }
             }
         });
-    }
-
-    private setupTerrainMaterial(
-        technique: TerrainTechnique,
-        material: THREE.Material,
-        terrainColor: number
-    ) {
-        if (technique.displacementMap === undefined) {
-            // Render terrain using the given color.
-            const stdMaterial = material as MapMeshStandardMaterial;
-            stdMaterial.color.set(terrainColor);
-            return;
-        }
-
-        // Render terrain using height-based colors.
-        (material as any).onBeforeCompile = (shader: THREE.Shader) => {
-            shader.fragmentShader = shader.fragmentShader.replace(
-                "#include <map_pars_fragment>",
-                `#include <map_pars_fragment>
-    uniform sampler2D displacementMap;
-    uniform float displacementScale;
-    uniform float displacementBias;`
-            );
-            shader.fragmentShader = shader.fragmentShader.replace(
-                "#include <map_fragment>",
-                `#ifdef USE_MAP
-    float minElevation = ${EarthConstants.MIN_ELEVATION.toFixed(1)};
-    float maxElevation = ${EarthConstants.MAX_ELEVATION.toFixed(1)};
-    float elevationRange = maxElevation - minElevation;
-
-    float disp = texture2D( displacementMap, vUv ).x * displacementScale + displacementBias;
-    vec4 texelColor = texture2D( map, vec2((disp - minElevation) / elevationRange, 0.0) );
-    texelColor = mapTexelToLinear( texelColor );
-    diffuseColor *= texelColor;
-#endif`
-            );
-            // We remove the displacement map from manipulating the vertices, it is
-            // however still required for the pixel shader, so it can't be directly
-            // removed.
-            shader.vertexShader = shader.vertexShader.replace(
-                "#include <displacementmap_vertex>",
-                ""
-            );
-        };
-        (material as MapMeshStandardMaterial).displacementMap!.needsUpdate = true;
-    }
-
-    private addUserData(
-        tile: Tile,
-        srcGeometry: Geometry,
-        technique: Technique,
-        object: THREE.Object3D
-    ) {
-        if ((srcGeometry.objInfos?.length ?? 0) === 0) {
-            return;
-        }
-
-        if (isTerrainTechnique(technique)) {
-            assert(
-                Object.keys(object.userData).length === 0,
-                "Unexpected user data in terrain object"
-            );
-
-            assert(
-                typeof srcGeometry.objInfos![0] === "object",
-                "Wrong attribute map type for terrain geometry"
-            );
-
-            const displacementMap = (srcGeometry.objInfos as DisplacementMap[])[0];
-            const tileDisplacementMap: TileDisplacementMap = {
-                tileKey: tile.tileKey,
-                texture: new THREE.DataTexture(
-                    displacementMap.buffer,
-                    displacementMap.xCountVertices,
-                    displacementMap.yCountVertices,
-                    THREE.LuminanceFormat,
-                    THREE.FloatType
-                ),
-                displacementMap,
-                geoBox: tile.geoBox
-            };
-            object.userData = tileDisplacementMap;
-        } else {
-            // Set the feature data for picking with `MapView.intersectMapObjects()` except for
-            // solid-line which uses tile-based picking.
-            const featureData: TileFeatureData = {
-                geometryType: srcGeometry.type,
-                starts: srcGeometry.featureStarts,
-                objInfos: srcGeometry.objInfos
-            };
-            object.userData.feature = featureData;
-            object.userData.technique = technique;
-        }
-    }
-
-    /**
-     * Gets the fading parameters for several kinds of objects.
-     */
-    private getFadingParams(
-        env: Env,
-        technique: MakeTechniqueAttrs<BaseTechniqueParams>
-    ): FadingParameters {
-        const fadeNear =
-            technique.fadeNear !== undefined
-                ? getPropertyValue(technique.fadeNear, env)
-                : FadingFeature.DEFAULT_FADE_NEAR;
-        const fadeFar =
-            technique.fadeFar !== undefined
-                ? getPropertyValue(technique.fadeFar, env)
-                : FadingFeature.DEFAULT_FADE_FAR;
-        return {
-            fadeNear,
-            fadeFar
-        };
-    }
-
-    /**
-     * Gets the fading parameters for several kinds of objects.
-     */
-    private getPolygonFadingParams(
-        env: Env,
-        technique: FillTechnique | ExtrudedPolygonTechnique
-    ): PolygonFadingParameters {
-        let color: string | number | undefined;
-        let colorMix = EdgeMaterial.DEFAULT_COLOR_MIX;
-
-        if (technique.lineColor !== undefined) {
-            color = getPropertyValue(technique.lineColor, env);
-            if (isExtrudedPolygonTechnique(technique)) {
-                const extrudedPolygonTechnique = technique as ExtrudedPolygonTechnique;
-                colorMix =
-                    extrudedPolygonTechnique.lineColorMix !== undefined
-                        ? extrudedPolygonTechnique.lineColorMix
-                        : EdgeMaterial.DEFAULT_COLOR_MIX;
-            }
-        }
-
-        const fadeNear =
-            technique.fadeNear !== undefined
-                ? getPropertyValue(technique.fadeNear, env)
-                : FadingFeature.DEFAULT_FADE_NEAR;
-        const fadeFar =
-            technique.fadeFar !== undefined
-                ? getPropertyValue(technique.fadeFar, env)
-                : FadingFeature.DEFAULT_FADE_FAR;
-
-        const lineFadeNear =
-            technique.lineFadeNear !== undefined
-                ? getPropertyValue(technique.lineFadeNear, env)
-                : fadeNear;
-        const lineFadeFar =
-            technique.lineFadeFar !== undefined
-                ? getPropertyValue(technique.lineFadeFar, env)
-                : fadeFar;
-
-        if (color === undefined) {
-            color = EdgeMaterial.DEFAULT_COLOR;
-        }
-
-        return {
-            color,
-            colorMix,
-            fadeNear,
-            fadeFar,
-            lineFadeNear,
-            lineFadeFar
-        };
     }
 }

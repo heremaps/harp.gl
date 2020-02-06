@@ -563,7 +563,7 @@ function applyTechniqueToMaterial(
  * @param techniqueAttrValue technique property value which will be applied to material attribute
  * @param zoomLevel optional tile zoom level.
  */
-function applyTechniquePropertyToMaterial(
+export function applyTechniquePropertyToMaterial(
     material: THREE.Material,
     propertyName: string,
     techniqueAttrValue: Value,

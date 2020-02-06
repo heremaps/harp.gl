@@ -20,6 +20,11 @@ import { TileGeometryLoader } from "./geometry/TileGeometryLoader";
 import { MapView } from "./MapView";
 import { PathBlockingElement } from "./PathBlockingElement";
 import { PerformanceStatistics } from "./Statistics";
+import {
+    TechniqueHandler,
+    TechniqueHandlerSet,
+    TechniqueUpdateContext
+} from "./techniques/TechniqueHandler";
 import { TextElement } from "./text/TextElement";
 import { TextElementGroup } from "./text/TextElementGroup";
 import { TextElementGroupPriorityList } from "./text/TextElementGroupPriorityList";
@@ -33,6 +38,11 @@ export type TileObject = THREE.Object3D & {
      * Distance of this object from the [[Tile]]'s center.
      */
     displacement?: THREE.Vector3;
+
+    /**
+     * Technique handler that manages this object.
+     */
+    techniqueHandler?: TechniqueHandler;
 
     /**
      * This stores the THREE.Object3D renderOrder property, we need to back it up because we need to
@@ -332,6 +342,8 @@ export class Tile implements CachedResource {
      */
     visibilityCounter: number = -1;
 
+    techniqueHandlerIndex: TechniqueHandlerSet;
+
     /**
      * @hidden
      *
@@ -410,6 +422,7 @@ export class Tile implements CachedResource {
         this.projection.projectBox(this.geoBox, this.boundingBox);
         this.m_localTangentSpace = localTangentSpace !== undefined ? localTangentSpace : false;
         this.m_textStyleCache = new TileTextStyleCache(this);
+        this.techniqueHandlerIndex = new TechniqueHandlerSet(this);
     }
 
     /**
@@ -667,6 +680,15 @@ export class Tile implements CachedResource {
     }
 
     /**
+     * Update dynamic tile objects that depend on dynamic technique attributes.
+     *
+     * In particular (materials, scene objects, [[TextElement]]s).
+     */
+    updateDynamicTechniques(context: TechniqueUpdateContext): void {
+        this.techniqueHandlerIndex.update(context);
+    }
+
+    /**
      * Estimated visible area of tile used for sorting the priorities during loading.
      */
     get visibleArea(): number {
@@ -785,6 +807,9 @@ export class Tile implements CachedResource {
      */
     // tslint:disable-next-line:no-unused-variable
     shouldDisposeObjectMaterial(object: TileObject): boolean {
+        if (object.techniqueHandler !== undefined) {
+            return false;
+        }
         return true;
     }
 
@@ -989,6 +1014,7 @@ export class Tile implements CachedResource {
             disposeObject(rootObject);
         });
         this.objects.length = 0;
+        this.techniqueHandlerIndex.clear();
 
         if (this.preparedTextPaths) {
             this.preparedTextPaths = [];
