@@ -6,6 +6,7 @@
 import { assert } from "@here/harp-utils";
 import { Color } from "three";
 import { ColorUtils } from "./ColorUtils";
+import { Env } from "./Env";
 
 const tmpColor = new Color();
 
@@ -192,14 +193,11 @@ const tmpBuffer: number[] = new Array(StringEncodedNumeralFormatMaxSize);
  * Parse string encoded numeral values using all known [[StringEncodedNumeralFormats]].
  *
  * @param numeral The string representing numeric value.
- * @param pixelToMeters The ratio used to convert from meters to pixels (default 1.0).
+ * @param env [[Env]] instance to evaluate scene dependent numerals
  * @returns Number parsed or __undefined__ if non of the numeral patterns matches the expression
  * provided in [[numeral]].
  */
-export function parseStringEncodedNumeral(
-    numeral: string,
-    pixelToMeters: number = 1.0
-): number | undefined {
+export function parseStringEncodedNumeral(numeral: string, env?: Env): number | undefined {
     let result: number | undefined;
     const formatMatch = (format: StringEncodedNumeralFormat) => {
         if (format.decoder(numeral, tmpBuffer)) {
@@ -208,6 +206,7 @@ export function parseStringEncodedNumeral(
                     result = tmpBuffer[0];
                     break;
                 case StringEncodedNumeralType.Pixels:
+                    const pixelToMeters = (env?.lookup("$pixelToMeters") as number) ?? 1;
                     result = tmpBuffer[0] * pixelToMeters;
                     break;
                 case StringEncodedNumeralType.Hex:

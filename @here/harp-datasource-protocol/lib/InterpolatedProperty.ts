@@ -34,60 +34,42 @@ const interpolants = [
 const tmpBuffer = new Array<number>(StringEncodedNumeralFormatMaxSize);
 
 /**
- * Property which value is interpolated across different zoom levels.
+ * @hidden
+ *
+ * Runtime representation of [[InterpolatedPropertyDefs]].
+ *
+ * Created by [[createInterpolatedProperty]].
+ *
+ * Evaluate results with [[getPropertyValue]].
  */
 export interface InterpolatedProperty {
     /**
-     * Interpolation mode that should be used for this property.
+     * Main interpolant for this property.
      */
-    interpolationMode: InterpolationMode;
-
-    /**
-     * Zoom level keys array.
-     */
-    zoomLevels: Float32Array;
-
-    /**
-     * Property values array.
-     */
-    values: ArrayLike<any>;
-
-    /**
-     * Exponent used in interpolation. Only valid with `Exponential` [[InterpolationMode]].
-     */
-    exponent?: number;
+    interpolant: THREE.Interpolant;
 
     /**
      * @hidden
-     * [[StringEncodedNumeral]] type needed to interpret interpolated values back to numbers.
+     *
+     * Type of string encoded numeral this property contains.
+     * @see [[StringEncodedNumeralType]]
      */
-    _stringEncodedNumeralType?: StringEncodedNumeralType;
+    stringEncodedNumeralType?: StringEncodedNumeralType;
 
     /**
-     * @hidden
-     * Array of `0` and `1`mask values used to modify the interpolation behaviour of some
-     * [[StringEncodedNumeral]]s.
+     * Auxiliary interpolant for mask that tells if `pixelToWorld` has to be applied to result of
+     * main interpolant.
+     *
+     * Used only for interpolated _metric_ numerals based on `pixelToWorld` parameter.
      */
-    _stringEncodedNumeralDynamicMask?: Float32Array;
+    maskInterpolant?: THREE.Interpolant;
 }
 
 /**
  * Type guard to check if an object is an instance of `InterpolatedProperty`.
  */
 export function isInterpolatedProperty(p: any): p is InterpolatedProperty {
-    if (
-        p &&
-        p.interpolationMode !== undefined &&
-        p.zoomLevels instanceof Float32Array &&
-        p.values !== undefined &&
-        p.values.length > 0 &&
-        (p.zoomLevels.length === p.values.length / 4 ||
-            p.zoomLevels.length === p.values.length / 3 ||
-            p.zoomLevels.length === p.values.length)
-    ) {
-        return true;
-    }
-    return false;
+    return p && typeof p.interpolant === "object" && p.interpolant !== null;
 }
 
 /**
@@ -105,66 +87,39 @@ export function getPropertyValue(property: Value | Expr | undefined, env: Env): 
         // Property in numeric or array, etc. format
         return property;
     } else {
-        // Non-interpolated string encoded numeral parsing
-        const pixelToMeters = (env.lookup("$pixelToMeters") as number) || 1;
-        const value = parseStringEncodedNumeral(property, pixelToMeters);
+        const value = parseStringEncodedNumeral(property, env);
         return value !== undefined ? value : property;
     }
 }
 
 export function evaluateInterpolatedProperty(property: InterpolatedProperty, env: Env): any {
-    const level = env.lookup("$zoom") as number;
-    const pixelToMeters = env.lookup("$pixelToMeters") as number;
-
-    if (property._stringEncodedNumeralType !== undefined) {
-        switch (property._stringEncodedNumeralType) {
+    if (property.stringEncodedNumeralType !== undefined) {
+        switch (property.stringEncodedNumeralType) {
             case StringEncodedNumeralType.Meters:
             case StringEncodedNumeralType.Pixels:
-                return getInterpolatedMetric(property, level, pixelToMeters);
+                return getInterpolatedMetric(property, env);
             case StringEncodedNumeralType.Hex:
             case StringEncodedNumeralType.RGB:
             case StringEncodedNumeralType.RGBA:
             case StringEncodedNumeralType.HSL:
-                return getInterpolatedColor(property, level);
+                return getInterpolatedColor(property, env);
         }
     }
-    return getInterpolatedMetric(property, level, pixelToMeters);
+    return getInterpolatedMetric(property, env);
 }
 
-function getInterpolatedMetric(
-    property: InterpolatedProperty,
-    level: number,
-    pixelToMeters: number
-): number {
-    const nChannels = property.values.length / property.zoomLevels.length;
-    const interpolant = new interpolants[property.interpolationMode](
-        property.zoomLevels,
-        property.values,
-        nChannels
-    );
-    if (
-        property.interpolationMode === InterpolationMode.Exponential &&
-        property.exponent !== undefined
-    ) {
-        (interpolant as ExponentialInterpolant).exponent = property.exponent;
-    }
+function getInterpolatedMetric(property: InterpolatedProperty, env: Env): number {
+    const level = env.lookup("$zoom") as number;
+    const interpolant = property.interpolant;
+
     interpolant.evaluate(level);
 
-    if (property._stringEncodedNumeralDynamicMask === undefined) {
+    if (property.maskInterpolant === undefined) {
         return interpolant.resultBuffer[0];
     } else {
-        const maskInterpolant = new interpolants[property.interpolationMode](
-            property.zoomLevels,
-            property._stringEncodedNumeralDynamicMask,
-            1
-        );
-        if (
-            property.interpolationMode === InterpolationMode.Exponential &&
-            property.exponent !== undefined
-        ) {
-            (maskInterpolant as ExponentialInterpolant).exponent = property.exponent;
-        }
+        const maskInterpolant = property.maskInterpolant!;
         maskInterpolant.evaluate(level);
+        const pixelToMeters = env.lookup("$pixelToMeters") as number;
 
         return (
             interpolant.resultBuffer[0] *
@@ -173,20 +128,12 @@ function getInterpolatedMetric(
     }
 }
 
-function getInterpolatedColor(property: InterpolatedProperty, level: number): number {
-    const nChannels = property.values.length / property.zoomLevels.length;
-    const interpolant = new interpolants[property.interpolationMode](
-        property.zoomLevels,
-        property.values,
-        nChannels
-    );
-    if (
-        property.interpolationMode === InterpolationMode.Exponential &&
-        property.exponent !== undefined
-    ) {
-        (interpolant as ExponentialInterpolant).exponent = property.exponent;
-    }
+function getInterpolatedColor(property: InterpolatedProperty, env: Env): number {
+    const level = env.lookup("$zoom") as number;
+
+    const interpolant = property.interpolant;
     interpolant.evaluate(level);
+    const nChannels = interpolant.resultBuffer.length;
 
     assert(nChannels === 3 || nChannels === 4);
     // ColorUtils.getHexFromRgba() does not clamp the values which may be out of
@@ -228,12 +175,12 @@ export function createInterpolatedProperty(
         default:
         case "number":
         case "boolean":
-            return {
+            return createInterpolatedPropertyInt({
                 interpolationMode,
                 zoomLevels,
                 values: new Float32Array(prop.values as any),
                 exponent: prop.exponent
-            };
+            });
         case "string":
             // TODO: Minimize effort for pre-matching the numeral format.
             const matchedFormat = StringEncodedNumeralFormats.find(format =>
@@ -242,11 +189,11 @@ export function createInterpolatedProperty(
 
             if (matchedFormat === undefined) {
                 if (interpolationMode === InterpolationMode.Discrete) {
-                    return {
+                    return createInterpolatedPropertyInt({
                         interpolationMode,
                         zoomLevels,
                         values: prop.values
-                    };
+                    });
                 }
 
                 logger.error(`No StringEncodedNumeralFormat matched ${firstValue}.`);
@@ -264,15 +211,97 @@ export function createInterpolatedProperty(
                 maskValues
             );
 
-            return {
+            return createInterpolatedPropertyInt({
                 interpolationMode,
                 zoomLevels,
                 values: propValues,
                 exponent: prop.exponent,
-                _stringEncodedNumeralType: matchedFormat.type,
-                _stringEncodedNumeralDynamicMask: needsMask ? maskValues : undefined
-            };
+                stringEncodedNumeralType: matchedFormat.type,
+                stringEncodedNumeralDynamicMask: needsMask ? maskValues : undefined
+            });
     }
+}
+
+/**
+ * @hidden
+ *
+ * Internal representation of [[InterpoolatedPropertyDefs]] with support for
+ * string ecoded numerals.
+ *
+ * For use with [[createInterpolatedPropertyInt]] and [[createInterpolant]].
+ */
+export interface InterpolatedPropertyParams {
+    /**
+     * Interpolation mode that should be used for this property.
+     */
+    interpolationMode: InterpolationMode;
+
+    /**
+     * Zoom level keys array.
+     */
+    zoomLevels: Float32Array;
+
+    /**
+     * Property values array.
+     */
+    values: ArrayLike<any>;
+
+    /**
+     * Exponent used in interpolation. Only valid with `Exponential` [[InterpolationMode]].
+     */
+    exponent?: number;
+
+    /**
+     * @hidden
+     * [[StringEncodedNumeral]] type needed to interpret interpolated values back to numbers.
+     */
+    stringEncodedNumeralType?: StringEncodedNumeralType;
+
+    /**
+     * @hidden
+     * Array of `0` and `1`mask values used to modify the interpolation behaviour of some
+     * [[StringEncodedNumeral]]s.
+     */
+    stringEncodedNumeralDynamicMask?: Float32Array;
+}
+
+/**
+ * @hidden
+ *
+ * Create [[InterpolatedProperty]] from [[InterpolatedPropertyParams]].
+ */
+export function createInterpolatedPropertyInt(
+    params: InterpolatedPropertyParams
+): InterpolatedProperty {
+    const result: InterpolatedProperty = {
+        interpolant: createInterpolant(params),
+        stringEncodedNumeralType: params.stringEncodedNumeralType
+    };
+    if (params.stringEncodedNumeralDynamicMask) {
+        result.maskInterpolant = createInterpolant({
+            interpolationMode: params.interpolationMode,
+            zoomLevels: params.zoomLevels,
+            values: params.stringEncodedNumeralDynamicMask,
+            exponent: params.exponent
+        });
+    }
+    return result;
+}
+
+function createInterpolant(params: InterpolatedPropertyParams) {
+    const nChannels = params.values.length / params.zoomLevels.length;
+    const interpolant = new interpolants[params.interpolationMode](
+        params.zoomLevels,
+        params.values,
+        nChannels
+    );
+    if (
+        params.interpolationMode === InterpolationMode.Exponential &&
+        params.exponent !== undefined
+    ) {
+        (interpolant as ExponentialInterpolant).exponent = params.exponent;
+    }
+    return interpolant;
 }
 
 function removeDuplicatePropertyValues<T>(p: InterpolatedPropertyDefinition<T>) {
