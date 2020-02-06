@@ -24,10 +24,12 @@ import { DataSource } from "../lib/DataSource";
 import { DisplacementMap } from "../lib/DisplacementMap";
 import { TileGeometryCreator } from "../lib/geometry/TileGeometryCreator";
 import { TechniqueUpdateContext } from "../lib/techniques/TechniqueHandler";
+import { TechniqueHandlerPool } from "../lib/techniques/TechniqueHandlerPool";
 import { Tile } from "../lib/Tile";
 
 class FakeMapView {
     private m_scene = new THREE.Scene();
+    private m_techniqueHandlerPool = new TechniqueHandlerPool();
 
     get techniqueUpdateContext(): TechniqueUpdateContext {
         return {
@@ -36,6 +38,10 @@ class FakeMapView {
             frameNumber: 0,
             projection: mercatorProjection
         };
+    }
+
+    get techniqueHandlerPool() {
+        return this.m_techniqueHandlerPool;
     }
 
     get zoomLevel(): number {

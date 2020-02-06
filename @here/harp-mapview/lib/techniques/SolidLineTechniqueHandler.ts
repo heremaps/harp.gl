@@ -11,14 +11,21 @@ import {
     Geometry,
     getPropertyValue,
     Group,
-    SolidLineTechnique
+    IndexedTechnique,
+    SolidLineTechnique,
+    Value
 } from "@here/harp-datasource-protocol";
 import { ProjectionType } from "@here/harp-geoutils";
 import { setShaderMaterialDefine, SolidLineMaterial } from "@here/harp-materials";
 import { assert } from "@here/harp-utils";
 import { applyBaseColorToMaterial } from "../DecodedTileHelpers";
 import { Tile } from "../Tile";
-import { techniqueHandlers, TechniqueUpdateContext, TileWorldSpaceEntry } from "./TechniqueHandler";
+import {
+    defaultSharingKey,
+    techniqueHandlers,
+    TechniqueUpdateContext,
+    TileWorldSpaceEntry
+} from "./TechniqueHandler";
 import { TechniqueHandlerCommon, WorldSpaceTechniqueHandlerBase } from "./TechniqueHandlerCommon";
 
 const tmpVector3 = new THREE.Vector3();
@@ -33,6 +40,22 @@ const tmpVector2 = new THREE.Vector2();
  * Shareable for same techniques (and tile level if clipping is anabled and projection is planar).
  */
 export class SolidLineTechniqueHandler extends WorldSpaceTechniqueHandlerBase<SolidLineTechnique> {
+    /**
+     * Get sharing key.
+     */
+    static getSharingKey(technique: SolidLineTechnique & IndexedTechnique, tile: Tile): Value[] {
+        const defaultKey = defaultSharingKey(technique);
+
+        if (
+            technique.clipping !== false &&
+            tile.mapView.projection.type === ProjectionType.Planar
+        ) {
+            return [tile.tileKey.level, ...defaultKey];
+        } else {
+            return defaultKey;
+        }
+    }
+
     private mainMaterial: SolidLineMaterial;
 
     private secondaryMaterial?: SolidLineMaterial;

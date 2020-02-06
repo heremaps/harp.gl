@@ -109,16 +109,11 @@ export class TechniqueHandlerSet {
         const tile = this.tile;
         let techniqueHandler = this.techniqueHandlers[technique._index];
         if (techniqueHandler === undefined) {
-            const techniqueHandlerCtor =
-                ((techniqueHandlers[technique.name] as unknown) as TechniqueHandlerConstructor) ??
-                fallbackHandler;
-            if (!techniqueHandlerCtor) {
-                throw new Error(`unknown technique ${technique.name}`);
-            }
-            techniqueHandler = new techniqueHandlerCtor(
-                technique,
+            techniqueHandler = tile.mapView.techniqueHandlerPool.getTechniqueHandler(
+                technique as IndexedTechnique,
                 tile,
-                tile.mapView.techniqueUpdateContext
+                tile.mapView.techniqueUpdateContext,
+                fallbackHandler
             );
             if (techniqueHandler.isDynamic) {
                 this.dynamicTechniqueHandlers.push(techniqueHandler);
@@ -142,11 +137,22 @@ export class TechniqueHandlerSet {
     }
 }
 
-export type TechniqueHandlerConstructor<T extends Technique = Technique> = new (
+export interface TechniqueHandlerStatics<T extends Technique> {
+    getSharingKey?: (technique: T & IndexedTechnique, tile: Tile) => Value[] | undefined;
+}
+
+export function defaultSharingKey(technique: IndexedTechnique) {
+    return technique._keyAttributes
+        ? technique._keyAttributes.map(attrName => (technique as any)[attrName])
+        : [];
+}
+
+export type TechniqueHandlerConstructor<T extends Technique = Technique> = (new (
     technique: T,
     tile: Tile,
     context: TechniqueUpdateContext
-) => TechniqueHandler;
+) => TechniqueHandler) &
+    TechniqueHandlerStatics<T>;
 
 export type TechniqueHandlerRegistry = {
     [P in Technique["name"]]?: TechniqueHandlerConstructor<TechniqueByName<P>>;

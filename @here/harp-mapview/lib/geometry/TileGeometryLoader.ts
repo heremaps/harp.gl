@@ -313,7 +313,7 @@ export class SimpleTileGeometryLoader implements TileGeometryLoader {
 
             tile.clear();
             // Set up techniques which should be processed.
-            geometryCreator.initDecodedTile(decodedTile, enabledKinds, disabledKinds);
+            geometryCreator.initDecodedTile(tile, decodedTile, enabledKinds, disabledKinds);
             geometryCreator.createAllGeometries(tile, decodedTile);
 
             if (stats.enabled) {

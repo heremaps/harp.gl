@@ -834,6 +834,7 @@ export class StyleSetEvaluator {
         if (style.styleSet !== undefined) {
             technique._styleSet = style.styleSet;
         }
+        technique._keyAttributes = style._dynamicFeatureAttributes?.map(entry => entry[0]);
         this.m_techniques.push(technique as IndexedTechnique);
         return technique as IndexedTechnique;
     }

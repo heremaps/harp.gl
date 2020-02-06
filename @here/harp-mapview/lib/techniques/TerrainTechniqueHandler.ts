@@ -23,6 +23,13 @@ import { WorldSpaceTechniqueHandlerBase } from "./TechniqueHandlerCommon";
  * Not shareable across tiles.
  */
 export class TerrainTechniqueHandler extends WorldSpaceTechniqueHandlerBase<TerrainTechnique> {
+    /**
+     * TerrainTechnique doesn't support any kind of sharing acrosss tiles by definition.
+     */
+    static getSharingKey() {
+        return undefined;
+    }
+
     private material: MapMeshStandardMaterial;
 
     constructor(technique: TerrainTechnique, tile: Tile, context: TechniqueUpdateContext) {

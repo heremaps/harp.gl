@@ -99,6 +99,7 @@ export class TileGeometryCreator {
      *      created.
      */
     initDecodedTile(
+        tile: Tile,
         decodedTile: DecodedTile,
         enabledKinds?: GeometryKindSet | undefined,
         disabledKinds?: GeometryKindSet | undefined
@@ -142,7 +143,7 @@ export class TileGeometryCreator {
         }
 
         // compile the dynamic expressions.
-        compileTechniques(decodedTile.techniques);
+        compileTechniques(tile, decodedTile.techniques);
     }
 
     /**
@@ -237,7 +238,7 @@ export class TileGeometryCreator {
         // Speedup and simplify following code: Test all techniques if they intersect with
         // enabledKinds and disabledKinds, in which case they are flagged. The disabledKinds can be
         // ignored hereafter.
-        this.initDecodedTile(decodedTile, enabledKinds, disabledKinds);
+        this.initDecodedTile(tile, decodedTile, enabledKinds, disabledKinds);
     }
 
     /**

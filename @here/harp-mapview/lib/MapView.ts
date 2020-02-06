@@ -33,6 +33,7 @@ import {
 } from "@here/harp-utils";
 import * as THREE from "three";
 
+import { ExprPool } from "@here/harp-datasource-protocol/lib/ExprPool";
 import { ViewRanges } from "@here/harp-datasource-protocol/lib/ViewRanges";
 import { AnimatedExtrusionHandler } from "./AnimatedExtrusionHandler";
 import { BackgroundDataSource } from "./BackgroundDataSource";
@@ -61,6 +62,7 @@ import { ScreenProjector } from "./ScreenProjector";
 import { SkyBackground } from "./SkyBackground";
 import { FrameStats, PerformanceStatistics } from "./Statistics";
 import { TechniqueUpdateContext } from "./techniques/TechniqueHandler";
+import { TechniqueHandlerPool } from "./techniques/TechniqueHandlerPool";
 import { FontCatalogLoader } from "./text/FontCatalogLoader";
 import { MapViewState } from "./text/MapViewState";
 import { TextCanvasFactory } from "./text/TextCanvasFactory";
@@ -801,7 +803,9 @@ export class MapView extends THREE.EventDispatcher {
     private m_animatedExtrusionHandler: AnimatedExtrusionHandler;
 
     private m_env: MapEnv = new MapEnv({});
+    private m_exprPool: ExprPool = new ExprPool();
     private m_techniqueUpdateContext: TechniqueUpdateContext;
+    private m_techniqueHandlerPool: TechniqueHandlerPool = new TechniqueHandlerPool();
 
     private m_enableMixedLod: boolean | undefined;
 
@@ -1265,6 +1269,9 @@ export class MapView extends THREE.EventDispatcher {
                 });
             return;
         }
+
+        this.m_techniqueHandlerPool.reset();
+        this.m_exprPool = new ExprPool();
 
         // Fog and sky.
         this.m_theme.fog = theme.fog;
@@ -1753,6 +1760,10 @@ export class MapView extends THREE.EventDispatcher {
         return this.m_env;
     }
 
+    get exprPool(): ExprPool {
+        return this.m_exprPool;
+    }
+
     /**
      * Technique update context.
      *
@@ -1760,6 +1771,10 @@ export class MapView extends THREE.EventDispatcher {
      */
     get techniqueUpdateContext(): TechniqueUpdateContext {
         return this.m_techniqueUpdateContext;
+    }
+
+    get techniqueHandlerPool(): TechniqueHandlerPool {
+        return this.m_techniqueHandlerPool;
     }
 
     /**

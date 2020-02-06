@@ -41,6 +41,7 @@ import { LoggerManager } from "@here/harp-utils";
 import * as THREE from "three";
 import { Circles, Squares } from "./MapViewPoints";
 import { toPixelFormat, toTextureDataType, toTextureFilter, toWrappingMode } from "./ThemeHelpers";
+import { Tile } from "./Tile";
 
 const logger = LoggerManager.instance.create("DecodedTileHelpers");
 
@@ -705,7 +706,7 @@ export function evaluateColorProperty(value: Value, env?: Env): number {
 /**
  * Compile expressions in techniques as they were received from decoder.
  */
-export function compileTechniques(techniques: Technique[]) {
+export function compileTechniques(tile: Tile, techniques: Technique[]) {
     techniques.forEach((technique: any) => {
         for (const propertyName in technique) {
             if (!technique.hasOwnProperty(propertyName)) {
@@ -715,7 +716,7 @@ export function compileTechniques(techniques: Technique[]) {
             if (isJsonExpr(value) && propertyName !== "kind") {
                 // "kind" is reserved.
                 try {
-                    technique[propertyName] = Expr.fromJSON(value);
+                    technique[propertyName] = tile.mapView.exprPool.add(Expr.fromJSON(value));
                 } catch (error) {
                     logger.error("#compileTechniques: Failed to compile expression:", error);
                 }

@@ -522,6 +522,14 @@ export interface IndexedTechniqueParams {
     _index: number;
 
     /**
+     * Names of attributes that were evaluated to create this technique instance. Values of these
+     * attribtes together with `_styleSetIndex` constitute compound key uniquely identifying
+     * `Technique` instance within `StyleSet`.
+     * @hidden
+     */
+    _keyAttributes?: string[];
+
+    /**
      * Optimization: Unique [[Technique]] index of [[Style]] from which technique was derived.
      * @hidden
      */

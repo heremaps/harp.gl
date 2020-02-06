@@ -12,7 +12,9 @@ import {
     ExtrudedPolygonTechnique,
     Geometry,
     getPropertyValue,
-    Group
+    Group,
+    IndexedTechnique,
+    Value
 } from "@here/harp-datasource-protocol";
 import {
     EdgeMaterial,
@@ -29,12 +31,36 @@ import {
     setDepthPrePassStencil
 } from "../DepthPrePass";
 import { Tile } from "../Tile";
-import { techniqueHandlers, TechniqueUpdateContext, TileWorldSpaceEntry } from "./TechniqueHandler";
+import {
+    defaultSharingKey,
+    techniqueHandlers,
+    TechniqueUpdateContext,
+    TileWorldSpaceEntry
+} from "./TechniqueHandler";
 import { TechniqueHandlerCommon, WorldSpaceTechniqueHandlerBase } from "./TechniqueHandlerCommon";
 
 export class ExtrudedPolygonTechniqueHandler extends WorldSpaceTechniqueHandlerBase<
     ExtrudedPolygonTechnique
 > {
+    static getSharingKey(
+        technique: ExtrudedPolygonTechnique & IndexedTechnique,
+        tile: Tile
+    ): Value[] | undefined {
+        return ExtrudedPolygonTechniqueHandler.isAnimatedExtrusionEnabled(technique, tile)
+            ? /*
+               * We cannot share `mainMaterial` for duration of animation, because each tile has
+               * animates in its own tempo and THREE.js updates material uniforms only once per
+               * frame.
+               *
+               * Alternative solutions:
+               *  - use special material clone only for time of animation
+               *  - `onBeforeRender` update of `extrusionRatio` and fakes that material actually
+               *    `isShaderMaterial` so 3JS updates it before each draw call
+               */
+              undefined
+            : defaultSharingKey(technique);
+    }
+
     static isAnimatedExtrusionEnabled(technique: ExtrudedPolygonTechnique, tile: Tile) {
         const animatedExtrusionHandler = tile.mapView.animatedExtrusionHandler;
         if (!animatedExtrusionHandler) {
