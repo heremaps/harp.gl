@@ -6,7 +6,7 @@
 
 import { CallExpr, ExprScope, LiteralExpr, NumberLiteralExpr, Value } from "../Expr";
 import { ExprEvaluatorContext, OperatorDescriptorMap } from "../ExprEvaluator";
-import { createInterpolatedProperty, getPropertyValue } from "../InterpolatedProperty";
+import { createInterpolatedProperty, evaluateInterpolatedProperty } from "../InterpolatedProperty";
 import { InterpolatedProperty, InterpolatedPropertyDefinition } from "../InterpolatedPropertyDefs";
 
 type InterpolateCallExpr = CallExpr & {
@@ -313,7 +313,7 @@ const operators = {
                 }
             }
 
-            return getPropertyValue(interpolatedProperty, context.env);
+            return evaluateInterpolatedProperty(interpolatedProperty, context.env);
         }
     },
     step: {
@@ -356,7 +356,7 @@ const operators = {
                 }
             }
 
-            return getPropertyValue(interpolatedProperty, context.env);
+            return evaluateInterpolatedProperty(interpolatedProperty, context.env);
         }
     }
 };
