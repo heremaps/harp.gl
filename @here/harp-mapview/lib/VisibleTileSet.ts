@@ -207,7 +207,7 @@ class DataSourceCache {
     /**
      * Get tile cached or __undefined__ if tile is not yet in cache.
      *
-     * @param mortonCode En unique tile morton code.
+     * @param mortonCode An unique tile morton code.
      * @param offset Tile offset.
      * @param dataSource A [[DataSource]] the tile comes from.
      */
@@ -588,6 +588,7 @@ export class VisibleTileSet {
             // values with zero levels for both elevations.
             const tiles = renderListEntry.renderedTiles;
             tiles.forEach(tile => {
+                tile.update(renderListEntry.zoomLevel);
                 minElevation = MathUtils.min2(minElevation, tile.minElevation);
                 maxElevation = MathUtils.max2(
                     maxElevation,

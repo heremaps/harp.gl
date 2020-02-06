@@ -170,7 +170,6 @@ export class FrustumIntersection {
                 item.minElevation,
                 item.maxElevation
             );
-
             for (const zoomLevel of uniqueZoomLevels) {
                 const tileKeyEntries = this.m_tileKeyEntries.get(zoomLevel)!;
                 tileKeyEntries.set(
