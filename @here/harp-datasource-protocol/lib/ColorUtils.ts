@@ -113,7 +113,7 @@ export namespace ColorUtils {
      * point from 0 to 1 inclusively.
      */
     export function getRgbaFromHex(hex: number): { r: number; g: number; b: number; a: number } {
-        assert((hex & ~HEX_TRGB_MASK) === 0, "Wrong hex format: #" + hex.toString(16));
+        assert((hex & ~HEX_TRGB_MASK) === 0, "Wrong hex format");
         return {
             r: ((hex >> SHIFT_RED) & HEX_FULL_CHANNEL) / HEX_FULL_CHANNEL,
             g: ((hex >> SHIFT_GREEN) & HEX_FULL_CHANNEL) / HEX_FULL_CHANNEL,
@@ -131,7 +131,7 @@ export namespace ColorUtils {
      * @returns True if color has transparency defined.
      */
     export function hasAlphaInHex(hex: number): boolean {
-        assert((hex & ~HEX_TRGB_MASK) === 0, "Wrong hex format: #" + hex.toString(16));
+        assert((hex & ~HEX_TRGB_MASK) === 0, "Wrong hex format");
         return hex >> SHIFT_TRANSPARENCY !== 0;
     }
 
@@ -143,7 +143,7 @@ export namespace ColorUtils {
      * @returns The floating point alpha component in <0, 1> range.
      */
     export function getAlphaFromHex(hex: number): number {
-        assert((hex & ~HEX_TRGB_MASK) === 0, "Wrong hex format: #" + hex.toString(16));
+        assert((hex & ~HEX_TRGB_MASK) === 0, "Wrong hex format");
         return (
             ((HEX_FULL_CHANNEL - (hex >> SHIFT_TRANSPARENCY)) & HEX_FULL_CHANNEL) / HEX_FULL_CHANNEL
         );
@@ -157,7 +157,7 @@ export namespace ColorUtils {
      * @returns number coded color value representable as 0xRRGGBB in hex.
      */
     export function removeAlphaFromHex(hex: number): number {
-        assert((hex & ~HEX_TRGB_MASK) === 0, "Wrong hex format: #" + hex.toString(16));
+        assert((hex & ~HEX_TRGB_MASK) === 0, "Wrong hex format");
         return hex & HEX_RGB_MASK;
     }
 }
