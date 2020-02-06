@@ -52,6 +52,10 @@ describe("ExprEvaluator", function() {
         };
     }
 
+    function envForZoom(zoom: number) {
+        return new MapEnv({ $zoom: zoom });
+    }
+
     describe("Operator 'all'", function() {
         it("evaluate", function() {
             assert.isTrue(
@@ -686,14 +690,14 @@ describe("ExprEvaluator", function() {
             const interpolation = evaluate(["step", ["zoom"], "#ff0000", 13, "#000000"]);
             for (let zoom = 0; zoom < 13; ++zoom) {
                 assert.strictEqual(
-                    getPropertyValue(interpolation, zoom),
-                    getPropertyValue("#ff0000", zoom)
+                    getPropertyValue(interpolation, envForZoom(zoom)),
+                    getPropertyValue("#ff0000", envForZoom(zoom))
                 );
             }
             for (let zoom = 13; zoom < 20; ++zoom) {
                 assert.strictEqual(
-                    getPropertyValue(interpolation, zoom),
-                    getPropertyValue("#000000", zoom)
+                    getPropertyValue(interpolation, envForZoom(zoom)),
+                    getPropertyValue("#000000", envForZoom(zoom))
                 );
             }
         });
@@ -710,20 +714,20 @@ describe("ExprEvaluator", function() {
             ]);
 
             assert.strictEqual(
-                getPropertyValue(interpolation, -1),
-                getPropertyValue("#ff0000", -1)
+                getPropertyValue(interpolation, envForZoom(-1)),
+                getPropertyValue("#ff0000", envForZoom(-1))
             );
 
             for (let zoom = 0; zoom < 13; ++zoom) {
                 assert.strictEqual(
-                    getPropertyValue(interpolation, zoom),
-                    getPropertyValue("#00ff00", zoom)
+                    getPropertyValue(interpolation, envForZoom(zoom)),
+                    getPropertyValue("#00ff00", envForZoom(zoom))
                 );
             }
             for (let zoom = 13; zoom < 20; ++zoom) {
                 assert.strictEqual(
-                    getPropertyValue(interpolation, zoom),
-                    getPropertyValue("#000000", zoom)
+                    getPropertyValue(interpolation, envForZoom(zoom)),
+                    getPropertyValue("#000000", envForZoom(zoom))
                 );
             }
         });
@@ -1056,7 +1060,7 @@ describe("ExprEvaluator", function() {
         ]);
 
         for (let zoom = 0; zoom < 7; zoom += 0.5) {
-            const value = getPropertyValue(interp, zoom);
+            const value = getPropertyValue(interp, envForZoom(zoom));
             if (zoom < 4) {
                 assert.strictEqual(value, 0);
             } else {

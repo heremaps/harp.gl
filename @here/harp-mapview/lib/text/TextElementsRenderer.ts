@@ -1575,8 +1575,7 @@ export class TextElementsRenderer {
             textDistance,
             this.m_viewState.lookAtDistance
         );
-        const iconReady =
-            renderIcon && poiRenderer.prepareRender(pointLabel, this.m_viewState.zoomLevel);
+        const iconReady = renderIcon && poiRenderer.prepareRender(pointLabel, this.m_viewState.env);
 
         if (iconReady) {
             const result = placeIcon(
@@ -1584,7 +1583,7 @@ export class TextElementsRenderer {
                 poiInfo!,
                 tempPoiScreenPosition,
                 distanceScaleFactor,
-                this.m_viewState.zoomLevel,
+                this.m_viewState.env,
                 this.m_screenCollisions
             );
             if (result === PlacementResult.Invisible) {
@@ -1689,7 +1688,7 @@ export class TextElementsRenderer {
                     distanceScaleFactor,
                     allocateSpace,
                     opacity,
-                    this.m_viewState.zoomLevel
+                    this.m_viewState.env
                 );
 
                 if (placementStats) {
@@ -1739,7 +1738,7 @@ export class TextElementsRenderer {
         const poiInfo = lineMarkerLabel.poiInfo!;
         if (
             path.length === 0 ||
-            !poiRenderer.prepareRender(lineMarkerLabel, this.m_viewState.zoomLevel)
+            !poiRenderer.prepareRender(lineMarkerLabel, this.m_viewState.env)
         ) {
             return;
         }

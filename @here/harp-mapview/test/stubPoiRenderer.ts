@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { Env } from "@here/harp-datasource-protocol";
 import { Math2D } from "@here/harp-utils";
 import * as sinon from "sinon";
 import * as THREE from "three";
@@ -38,13 +39,13 @@ export function stubPoiRenderer(
             scale: number,
             allocateScreenSpace: boolean,
             opacity: number,
-            zoomLevel: number
+            env: Env
         ) => {
             // TODO: HARP-7648 Refactor PoiRenderer.renderPoi, to take out
             // bbox computation(already done during placement) and screen allocation (should
             // be done during placement instead).
             const bbox = new Math2D.Box();
-            PoiRenderer.computeIconScreenBox(poiInfo, screenPosition, scale, zoomLevel, bbox);
+            PoiRenderer.computeIconScreenBox(poiInfo, screenPosition, scale, env, bbox);
             if (allocateScreenSpace) {
                 screenCollisions.allocate(bbox);
             }

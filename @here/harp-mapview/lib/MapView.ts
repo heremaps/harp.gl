@@ -4,10 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import {
+    Env,
     GeometryKind,
     GradientSky,
     ImageTexture,
     Light,
+    MapEnv,
     PostEffects,
     Sky,
     Theme
@@ -795,6 +797,8 @@ export class MapView extends THREE.EventDispatcher {
     private m_languages: string[] | undefined;
     private m_copyrightInfo: CopyrightInfo[] = [];
     private m_animatedExtrusionHandler: AnimatedExtrusionHandler;
+
+    private m_env: MapEnv = new MapEnv({});
 
     private m_enableMixedLod: boolean | undefined;
 
@@ -1725,6 +1729,13 @@ export class MapView extends THREE.EventDispatcher {
     }
 
     /**
+     * Environment used to evaluate dynamic scene expressions.
+     */
+    get env(): Env {
+        return this.m_env;
+    }
+
+    /**
      * Returns the storage level for the given camera setup.
      * Actual storage level of the rendered data also depends on [[DataSource.storageLevelOffset]].
      */
@@ -2558,6 +2569,19 @@ export class MapView extends THREE.EventDispatcher {
     }
 
     /**
+     * Update `Env` instance used for style `Expr` evaluations.
+     */
+    private updateEnv() {
+        this.m_env.entries.$zoom = this.m_zoomLevel;
+
+        // This one introduces unnecessary calculation of pixelToWorld, even if it's barely
+        // used in our styles.
+        this.m_env.entries.$pixelToMeters = this.pixelToWorld;
+
+        this.m_env.entries.$frameNumber = this.m_frameNumber;
+    }
+
+    /**
      * Returns the height of the camera above the earths surface.
      *
      * If there is an ElevationProvider, this is used. Otherwise the projection is used to determine
@@ -2729,6 +2753,8 @@ export class MapView extends THREE.EventDispatcher {
         }
 
         this.updateCameras();
+        this.updateEnv();
+
         this.m_renderer.clear();
 
         // clear the scene

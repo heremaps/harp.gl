@@ -8,7 +8,7 @@ import * as THREE from "three";
 
 import { assert, LoggerManager } from "@here/harp-utils";
 import { ColorUtils } from "./ColorUtils";
-import { Env, MapEnv } from "./Env";
+import { Env } from "./Env";
 import { ExponentialInterpolant } from "./ExponentialInterpolant";
 import { Expr, ExprScope, Value } from "./Expr";
 import {
@@ -80,84 +80,39 @@ export function isInterpolatedProperty(p: any): p is InterpolatedProperty {
 }
 
 /**
- * A temp [[Env]] containing the arguments passed to `getPropertyValue`.
- *
- * [[dynamicPropertiesTempEnv]] is used when `getPropertyValue` is
- * invoked with explicit values for `zoom` and `pixelToMeters` instead
- * of with an [[Env]].
- *
- * @hidden
- */
-const dynamicPropertiesTempEnv = new MapEnv({
-    $zoom: 0,
-    $pixelToMeters: 1
-});
+* Get the value of the specified property in given `env`.
 
-/**
- * Get the value of the specified property at the given zoom level.
- *
- * @param property Property of a technique.
- * @param env The [[Env]] used to evaluate the property.
- */
+* @param property Property of a technique.
+* @param env The [[Env]] used to evaluate the property
+*/
 export function getPropertyValue(
     property: Value | Expr | InterpolatedProperty | undefined,
     env: Env
-): any;
-
-/**
- * Get the value of the specified property at the given zoom level.
- *
- * @param property Property of a technique.
- * @param level Display level the property should be rendered at.
- * @param pixelToMeters Optional pixels to meters conversion factor (needed for proper
- * interpolation of `length` values).
- *
- */
-export function getPropertyValue(
-    property: Value | Expr | InterpolatedProperty | undefined,
-    level: number,
-    pixelToMeters?: number
-): any;
-
-export function getPropertyValue(
-    property: Value | Expr | InterpolatedProperty | undefined,
-    envOrLevel: number | Env,
-    pixelToMeters: number = 1.0
 ): any {
     if (Expr.isExpr(property)) {
-        let env: Env;
-
-        if (typeof envOrLevel === "number") {
-            dynamicPropertiesTempEnv.entries.$zoom = envOrLevel;
-            dynamicPropertiesTempEnv.entries.$pixelToMeters = pixelToMeters;
-            env = dynamicPropertiesTempEnv;
-        } else {
-            env = envOrLevel;
-        }
-
         return property.evaluate(env, ExprScope.Dynamic);
     }
 
-    let level: number;
-
-    if (typeof envOrLevel === "number") {
-        level = envOrLevel;
-    } else {
-        level = envOrLevel.lookup("$zoom") as number;
-        pixelToMeters = envOrLevel.lookup("$pixelToMeters") as number;
+    if (isInterpolatedProperty(property)) {
+        return evaluateInterpolatedProperty(property, env);
     }
 
-    // Non-interpolated property parsing
-    if (!isInterpolatedProperty(property)) {
-        if (typeof property !== "string") {
-            // Property in numeric or array, etc. format
-            return property;
-        } else {
-            const value = parseStringEncodedNumeral(property, pixelToMeters);
-            return value !== undefined ? value : property;
-        }
-        // Interpolated property
-    } else if (property._stringEncodedNumeralType !== undefined) {
+    if (typeof property !== "string") {
+        // Property in numeric or array, etc. format
+        return property;
+    } else {
+        // Non-interpolated string encoded numeral parsing
+        const pixelToMeters = (env.lookup("$pixelToMeters") as number) || 1;
+        const value = parseStringEncodedNumeral(property, pixelToMeters);
+        return value !== undefined ? value : property;
+    }
+}
+
+export function evaluateInterpolatedProperty(property: InterpolatedProperty, env: Env): any {
+    const level = env.lookup("$zoom") as number;
+    const pixelToMeters = env.lookup("$pixelToMeters") as number;
+
+    if (property._stringEncodedNumeralType !== undefined) {
         switch (property._stringEncodedNumeralType) {
             case StringEncodedNumeralType.Meters:
             case StringEncodedNumeralType.Pixels:

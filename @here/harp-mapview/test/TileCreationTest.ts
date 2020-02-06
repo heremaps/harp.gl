@@ -6,7 +6,7 @@
 
 // tslint:disable:only-arrow-functions
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
-import { ShaderTechnique } from "@here/harp-datasource-protocol";
+import { MapEnv, ShaderTechnique } from "@here/harp-datasource-protocol";
 import { assert } from "chai";
 import * as THREE from "three";
 import { createMaterial, getObjectConstructor } from "./../lib/DecodedTileHelpers";
@@ -26,8 +26,8 @@ describe("Tile Creation", function() {
             },
             renderOrder: 0
         };
-        const level = 14;
-        const shaderMaterial = createMaterial({ technique, level });
+        const env = new MapEnv({ $zoom: 14 });
+        const shaderMaterial = createMaterial({ technique, env });
         assert.isTrue(
             shaderMaterial instanceof THREE.ShaderMaterial,
             "expected a THREE.ShaderMaterial"

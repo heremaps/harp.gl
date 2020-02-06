@@ -7,6 +7,7 @@ import {
     BaseTechniqueParams,
     BufferAttribute,
     DecodedTile,
+    Env,
     Expr,
     ExtrudedPolygonTechnique,
     FillTechnique,
@@ -30,6 +31,7 @@ import {
     isTerrainTechnique,
     isTextTechnique,
     MakeTechniqueAttrs,
+    MapEnv,
     needsVertexNormals,
     SolidLineTechnique,
     StandardExtrudedLineTechnique,
@@ -355,8 +357,10 @@ export class TileGeometryCreator {
     ) {
         const mapView = tile.mapView;
         const textElementsRenderer = mapView.textElementsRenderer;
-        const displayZoomLevel = Math.floor(mapView.zoomLevel);
         const worldOffsetX = tile.computeWorldOffsetX();
+
+        const discreteZoomLevel = Math.floor(mapView.zoomLevel);
+        const discreteZoomEnv = new MapEnv({ $zoom: discreteZoomLevel }, mapView.env);
 
         if (decodedTile.textPathGeometries !== undefined) {
             const textPathGeometries = this.prepareTextPaths(
@@ -390,15 +394,15 @@ export class TileGeometryCreator {
                 // Make sorting stable.
                 const priority =
                     technique.priority !== undefined
-                        ? getPropertyValue(technique.priority, displayZoomLevel)
+                        ? getPropertyValue(technique.priority, discreteZoomEnv)
                         : 0;
                 const fadeNear =
                     technique.fadeNear !== undefined
-                        ? getPropertyValue(technique.fadeNear, displayZoomLevel)
+                        ? getPropertyValue(technique.fadeNear, discreteZoomEnv)
                         : technique.fadeNear;
                 const fadeFar =
                     technique.fadeFar !== undefined
-                        ? getPropertyValue(technique.fadeFar, displayZoomLevel)
+                        ? getPropertyValue(technique.fadeFar, discreteZoomEnv)
                         : technique.fadeFar;
                 const userData = textPath.objInfos;
                 const featureId = getFeatureId(userData);
@@ -467,15 +471,15 @@ export class TileGeometryCreator {
 
                 const priority =
                     technique.priority !== undefined
-                        ? getPropertyValue(technique.priority, displayZoomLevel)
+                        ? getPropertyValue(technique.priority, discreteZoomEnv)
                         : 0;
                 const fadeNear =
                     technique.fadeNear !== undefined
-                        ? getPropertyValue(technique.fadeNear, displayZoomLevel)
+                        ? getPropertyValue(technique.fadeNear, discreteZoomEnv)
                         : technique.fadeNear;
                 const fadeFar =
                     technique.fadeFar !== undefined
-                        ? getPropertyValue(technique.fadeFar, displayZoomLevel)
+                        ? getPropertyValue(technique.fadeFar, discreteZoomEnv)
                         : technique.fadeFar;
 
                 for (let i = 0; i < numPositions; ++i) {
@@ -546,7 +550,8 @@ export class TileGeometryCreator {
         const materials: THREE.Material[] = [];
         const mapView = tile.mapView;
         const dataSource = tile.dataSource;
-        const displayZoomLevel = Math.floor(mapView.zoomLevel);
+        const discreteZoomLevel = Math.floor(mapView.zoomLevel);
+        const discreteZoomEnv = new MapEnv({ $zoom: discreteZoomLevel }, mapView.env);
         const objects = tile.objects;
         const viewRanges = mapView.viewRanges;
 
@@ -605,7 +610,7 @@ export class TileGeometryCreator {
                     material = createMaterial(
                         {
                             technique,
-                            level: displayZoomLevel,
+                            env: mapView.env,
                             fog: mapView.scene.fog !== null
                         },
                         onMaterialUpdated
@@ -718,7 +723,7 @@ export class TileGeometryCreator {
                 if (isLineTechnique(technique) || isSegmentsTechnique(technique)) {
                     const hasDynamicColor =
                         Expr.isExpr(technique.color) || Expr.isExpr(technique.opacity);
-                    const fadingParams = this.getFadingParams(displayZoomLevel, technique);
+                    const fadingParams = this.getFadingParams(discreteZoomEnv, technique);
                     FadingFeature.addRenderHelper(
                         object,
                         viewRanges,
@@ -733,7 +738,7 @@ export class TileGeometryCreator {
                                       lineMaterial.color,
                                       technique,
                                       technique.color,
-                                      mapView.zoomLevel
+                                      mapView.env
                                   );
                               }
                             : undefined
@@ -743,7 +748,8 @@ export class TileGeometryCreator {
                 if (isSolidLineTechnique(technique)) {
                     const hasDynamicColor =
                         Expr.isExpr(technique.color) || Expr.isExpr(technique.opacity);
-                    const fadingParams = this.getFadingParams(displayZoomLevel, technique);
+                    const fadingParams = this.getFadingParams(discreteZoomEnv, technique);
+
                     FadingFeature.addRenderHelper(
                         object,
                         viewRanges,
@@ -761,46 +767,31 @@ export class TileGeometryCreator {
                                     lineMaterial.color,
                                     technique,
                                     technique.color,
-                                    mapView.zoomLevel
+                                    mapView.env
                                 );
                             }
 
                             lineMaterial.lineWidth =
-                                getPropertyValue(
-                                    technique.lineWidth,
-                                    mapView.zoomLevel,
-                                    mapView.pixelToWorld
-                                ) *
+                                getPropertyValue(technique.lineWidth, mapView.env) *
                                 unitFactor *
                                 0.5;
 
                             if (technique.outlineWidth !== undefined) {
                                 lineMaterial.outlineWidth =
-                                    getPropertyValue(
-                                        technique.outlineWidth,
-                                        mapView.zoomLevel,
-                                        mapView.pixelToWorld
-                                    ) * unitFactor;
+                                    getPropertyValue(technique.outlineWidth, mapView.env) *
+                                    unitFactor;
                             }
 
                             if (technique.dashSize !== undefined) {
                                 lineMaterial.dashSize =
-                                    getPropertyValue(
-                                        technique.dashSize,
-                                        mapView.zoomLevel,
-                                        mapView.pixelToWorld
-                                    ) *
+                                    getPropertyValue(technique.dashSize, mapView.env) *
                                     unitFactor *
                                     0.5;
                             }
 
                             if (technique.gapSize !== undefined) {
                                 lineMaterial.gapSize =
-                                    getPropertyValue(
-                                        technique.gapSize,
-                                        mapView.zoomLevel,
-                                        mapView.pixelToWorld
-                                    ) *
+                                    getPropertyValue(technique.gapSize, mapView.env) *
                                     unitFactor *
                                     0.5;
                             }
@@ -815,7 +806,7 @@ export class TileGeometryCreator {
                     // dynamic properties is defined.
                     if (technique.fadeFar !== undefined || hasDynamicColor) {
                         const fadingParams = this.getFadingParams(
-                            displayZoomLevel,
+                            mapView.env,
                             technique as StandardExtrudedLineTechnique
                         );
 
@@ -836,7 +827,7 @@ export class TileGeometryCreator {
                                           extrudedMaterial.color,
                                           technique,
                                           technique.color!,
-                                          mapView.zoomLevel
+                                          mapView.env
                                       );
                                   }
                                 : undefined
@@ -856,7 +847,7 @@ export class TileGeometryCreator {
                     const hasDynamicColor = hasDynamicPrimaryColor || hasDynamicSecondaryColor;
 
                     if (technique.fadeFar !== undefined || hasDynamicColor) {
-                        const fadingParams = this.getFadingParams(displayZoomLevel, technique);
+                        const fadingParams = this.getFadingParams(discreteZoomEnv, technique);
                         FadingFeature.addRenderHelper(
                             object,
                             viewRanges,
@@ -875,7 +866,7 @@ export class TileGeometryCreator {
                                               polygonMaterial.color,
                                               technique,
                                               technique.color!,
-                                              mapView.zoomLevel
+                                              mapView.env
                                           );
                                       }
 
@@ -889,7 +880,7 @@ export class TileGeometryCreator {
                                           applySecondaryColorToMaterial(
                                               standardMat.emissive,
                                               technique.emissive!,
-                                              mapView.zoomLevel
+                                              mapView.env
                                           );
                                       }
                                   }
@@ -918,7 +909,7 @@ export class TileGeometryCreator {
                 ) {
                     let animateExtrusionValue = getPropertyValue(
                         technique.animateExtrusion,
-                        displayZoomLevel
+                        discreteZoomEnv
                     );
                     if (animateExtrusionValue !== undefined) {
                         animateExtrusionValue =
@@ -991,7 +982,7 @@ export class TileGeometryCreator {
                     const extrudedPolygonTechnique = technique as ExtrudedPolygonTechnique;
 
                     const fadingParams = this.getPolygonFadingParams(
-                        displayZoomLevel,
+                        discreteZoomEnv,
                         extrudedPolygonTechnique
                     );
 
@@ -1022,7 +1013,7 @@ export class TileGeometryCreator {
                                       edgeMaterial.color,
                                       extrudedPolygonTechnique,
                                       extrudedPolygonTechnique.lineColor!,
-                                      mapView.zoomLevel
+                                      mapView.env
                                   );
                               }
                             : undefined
@@ -1072,10 +1063,7 @@ export class TileGeometryCreator {
 
                     const fillTechnique = technique as FillTechnique;
 
-                    const fadingParams = this.getPolygonFadingParams(
-                        displayZoomLevel,
-                        fillTechnique
-                    );
+                    const fadingParams = this.getPolygonFadingParams(mapView.env, fillTechnique);
 
                     // Configure the edge material based on the theme values.
                     const materialParams: EdgeMaterialParameters = {
@@ -1103,7 +1091,7 @@ export class TileGeometryCreator {
                                       edgeMaterial.color,
                                       fillTechnique,
                                       fillTechnique.lineColor!,
-                                      mapView.zoomLevel
+                                      mapView.env
                                   );
                               }
                             : undefined
@@ -1122,7 +1110,7 @@ export class TileGeometryCreator {
                         outlineMaterial.color,
                         outlineTechnique,
                         outlineTechnique.secondaryColor ?? 0x000000,
-                        mapView.zoomLevel
+                        discreteZoomEnv
                     );
                     if (outlineTechnique.secondaryCaps !== undefined) {
                         outlineMaterial.caps = outlineTechnique.secondaryCaps;
@@ -1138,7 +1126,7 @@ export class TileGeometryCreator {
                         outlineObj.renderOrder += group.renderOrderOffset;
                     }
 
-                    const fadingParams = this.getFadingParams(displayZoomLevel, technique);
+                    const fadingParams = this.getFadingParams(discreteZoomEnv, technique);
                     FadingFeature.addRenderHelper(
                         outlineObj,
                         viewRanges,
@@ -1159,24 +1147,22 @@ export class TileGeometryCreator {
                                     lineMaterial.color,
                                     outlineTechnique,
                                     outlineTechnique.secondaryColor,
-                                    mapView.zoomLevel
+                                    mapView.env
                                 );
                             }
 
                             if (outlineTechnique.secondaryWidth !== undefined) {
                                 const techniqueLineWidth = getPropertyValue(
                                     outlineTechnique.lineWidth!,
-                                    mapView.zoomLevel,
-                                    mapView.pixelToWorld
+                                    mapView.env
                                 );
                                 const techniqueSecondaryWidth = getPropertyValue(
                                     outlineTechnique.secondaryWidth!,
-                                    mapView.zoomLevel,
-                                    mapView.pixelToWorld
+                                    mapView.env
                                 );
                                 const techniqueOpacity = getPropertyValue(
                                     outlineTechnique.opacity,
-                                    mapView.zoomLevel
+                                    mapView.env
                                 );
                                 // hide outline when it's equal or smaller then line to avoid subpixel contour
                                 const lineWidth =
@@ -1487,16 +1473,16 @@ export class TileGeometryCreator {
      * Gets the fading parameters for several kinds of objects.
      */
     private getFadingParams(
-        displayZoomLevel: number,
+        env: Env,
         technique: MakeTechniqueAttrs<BaseTechniqueParams>
     ): FadingParameters {
         const fadeNear =
             technique.fadeNear !== undefined
-                ? getPropertyValue(technique.fadeNear, displayZoomLevel)
+                ? getPropertyValue(technique.fadeNear, env)
                 : FadingFeature.DEFAULT_FADE_NEAR;
         const fadeFar =
             technique.fadeFar !== undefined
-                ? getPropertyValue(technique.fadeFar, displayZoomLevel)
+                ? getPropertyValue(technique.fadeFar, env)
                 : FadingFeature.DEFAULT_FADE_FAR;
         return {
             fadeNear,
@@ -1508,14 +1494,14 @@ export class TileGeometryCreator {
      * Gets the fading parameters for several kinds of objects.
      */
     private getPolygonFadingParams(
-        displayZoomLevel: number,
+        env: Env,
         technique: FillTechnique | ExtrudedPolygonTechnique
     ): PolygonFadingParameters {
         let color: string | number | undefined;
         let colorMix = EdgeMaterial.DEFAULT_COLOR_MIX;
 
         if (technique.lineColor !== undefined) {
-            color = getPropertyValue(technique.lineColor, displayZoomLevel);
+            color = getPropertyValue(technique.lineColor, env);
             if (isExtrudedPolygonTechnique(technique)) {
                 const extrudedPolygonTechnique = technique as ExtrudedPolygonTechnique;
                 colorMix =
@@ -1527,20 +1513,20 @@ export class TileGeometryCreator {
 
         const fadeNear =
             technique.fadeNear !== undefined
-                ? getPropertyValue(technique.fadeNear, displayZoomLevel)
+                ? getPropertyValue(technique.fadeNear, env)
                 : FadingFeature.DEFAULT_FADE_NEAR;
         const fadeFar =
             technique.fadeFar !== undefined
-                ? getPropertyValue(technique.fadeFar, displayZoomLevel)
+                ? getPropertyValue(technique.fadeFar, env)
                 : FadingFeature.DEFAULT_FADE_FAR;
 
         const lineFadeNear =
             technique.lineFadeNear !== undefined
-                ? getPropertyValue(technique.lineFadeNear, displayZoomLevel)
+                ? getPropertyValue(technique.lineFadeNear, env)
                 : fadeNear;
         const lineFadeFar =
             technique.lineFadeFar !== undefined
-                ? getPropertyValue(technique.lineFadeFar, displayZoomLevel)
+                ? getPropertyValue(technique.lineFadeFar, env)
                 : fadeFar;
 
         if (color === undefined) {
