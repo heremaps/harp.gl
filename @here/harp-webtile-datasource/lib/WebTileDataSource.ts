@@ -6,16 +6,9 @@
 
 import * as THREE from "three";
 
-// tslint:disable-next-line: max-line-length
-import { SphericalGeometrySubdivisionModifier } from "@here/harp-geometry/lib/SphericalGeometrySubdivisionModifier";
-import {
-    GeoCoordinates,
-    ProjectionType,
-    TileKey,
-    TilingScheme,
-    webMercatorTilingScheme
-} from "@here/harp-geoutils";
+import { TileKey, TilingScheme, webMercatorTilingScheme } from "@here/harp-geoutils";
 import { CopyrightInfo, DataSource, Tile, UrlCopyrightProvider } from "@here/harp-mapview";
+import { TileGeometryCreator } from "@here/harp-mapview/lib/geometry/TileGeometryCreator";
 import { getOptionValue, LoggerManager } from "@here/harp-utils";
 
 const logger = LoggerManager.instance.create("MapView");
@@ -345,58 +338,6 @@ export class WebTileDataSource extends DataSource {
                 texture.generateMipmaps = false;
                 tile.addOwnedTexture(texture);
 
-                const shouldSubdivide = this.projection.type === ProjectionType.Spherical;
-
-                const sourceProjection = this.getTilingScheme().projection;
-
-                const tmpV = new THREE.Vector3();
-
-                const { east, west, north, south } = tile.geoBox;
-
-                const g = new THREE.BufferGeometry();
-                const posAttr = new THREE.BufferAttribute(
-                    new Float32Array([
-                        ...sourceProjection
-                            .projectPoint(new GeoCoordinates(south, west), tmpV)
-                            .toArray(),
-                        ...sourceProjection
-                            .projectPoint(new GeoCoordinates(south, east), tmpV)
-                            .toArray(),
-                        ...sourceProjection
-                            .projectPoint(new GeoCoordinates(north, west), tmpV)
-                            .toArray(),
-                        ...sourceProjection
-                            .projectPoint(new GeoCoordinates(north, east), tmpV)
-                            .toArray()
-                    ]),
-                    3
-                );
-                g.setAttribute("position", posAttr);
-                const uvAttr = new THREE.BufferAttribute(
-                    new Float32Array([0, 0, 1, 0, 0, 1, 1, 1]),
-                    2
-                );
-                g.setAttribute("uv", uvAttr);
-                g.setIndex(new THREE.BufferAttribute(new Uint16Array([0, 1, 2, 2, 1, 3]), 1));
-
-                if (shouldSubdivide) {
-                    const modifier = new SphericalGeometrySubdivisionModifier(
-                        THREE.Math.degToRad(10),
-                        sourceProjection
-                    );
-                    modifier.modify(g);
-                }
-
-                for (let i = 0; i < posAttr.array.length; i += 3) {
-                    tmpV.set(posAttr.array[i], posAttr.array[i + 1], posAttr.array[i + 2]);
-                    this.projection.reprojectPoint(sourceProjection, tmpV, tmpV);
-                    tmpV.sub(tile.center);
-                    (posAttr.array as Float32Array)[i] = tmpV.x;
-                    (posAttr.array as Float32Array)[i + 1] = tmpV.y;
-                    (posAttr.array as Float32Array)[i + 2] = tmpV.z;
-                }
-                posAttr.needsUpdate = true;
-
                 const opacity =
                     this.m_options.renderingOptions !== undefined
                         ? this.m_options.renderingOptions.opacity
@@ -408,8 +349,7 @@ export class WebTileDataSource extends DataSource {
                     opacity,
                     transparent: opacity !== undefined && opacity < 1.0 ? true : false
                 });
-
-                const mesh = new THREE.Mesh(g, material);
+                const mesh = TileGeometryCreator.instance.createGroundPlane(tile, material, true);
                 tile.objects.push(mesh);
                 tile.invalidateResourceInfo();
                 this.requestUpdate();

@@ -40,6 +40,10 @@ import {
     TextPathGeometry
 } from "@here/harp-datasource-protocol";
 // tslint:disable:max-line-length
+import {
+    EdgeLengthGeometrySubdivisionModifier,
+    SubdivisionMode
+} from "@here/harp-geometry/lib/EdgeLengthGeometrySubdivisionModifier";
 import { SphericalGeometrySubdivisionModifier } from "@here/harp-geometry/lib/SphericalGeometrySubdivisionModifier";
 import { EarthConstants, GeoCoordinates, ProjectionType } from "@here/harp-geoutils";
 import {
@@ -77,6 +81,7 @@ import { PathBlockingElement } from "../PathBlockingElement";
 import { TextElement } from "../text/TextElement";
 import { DEFAULT_TEXT_DISTANCE_SCALE } from "../text/TextElementsRenderer";
 import { Tile, TileFeatureData } from "../Tile";
+import { LodMesh } from "./LodMesh";
 import { TileGeometryLoader } from "./TileGeometryLoader";
 
 const logger = LoggerManager.instance.create("TileGeometryCreator");
@@ -1192,79 +1197,114 @@ export class TileGeometryCreator {
     }
 
     /**
-     * Creates and add a background plane for the tile.
+     * Create a ground plane mesh for a tile
+     * @param tile Tile
+     * @param material Material
+     * @param createTexCoords Enable creation of texture coordinates
      */
-    addGroundPlane(tile: Tile, renderOrder: number) {
-        const mapView = tile.mapView;
-        const dataSource = tile.dataSource;
-        const projection = tile.projection;
-
-        const color = mapView.clearColor;
+    createGroundPlane(
+        tile: Tile,
+        material: THREE.Material | THREE.Material[],
+        createTexCoords: boolean
+    ): THREE.Mesh {
+        const { dataSource, projection, mapView } = tile;
+        const sourceProjection = dataSource.getTilingScheme().projection;
+        const shouldSubdivide = projection.type === ProjectionType.Spherical;
         const tmpV = new THREE.Vector3();
 
-        if (tile.projection.type === ProjectionType.Spherical) {
-            const { east, west, north, south } = tile.geoBox;
-            const sourceProjection = dataSource.getTilingScheme().projection;
-            const g = new THREE.BufferGeometry();
-            const posAttr = new THREE.BufferAttribute(
-                new Float32Array([
-                    ...sourceProjection
-                        .projectPoint(new GeoCoordinates(south, west), tmpV)
-                        .toArray(),
-                    ...sourceProjection
-                        .projectPoint(new GeoCoordinates(south, east), tmpV)
-                        .toArray(),
-                    ...sourceProjection
-                        .projectPoint(new GeoCoordinates(north, west), tmpV)
-                        .toArray(),
-                    ...sourceProjection
-                        .projectPoint(new GeoCoordinates(north, east), tmpV)
-                        .toArray()
-                ]),
-                3
-            );
-            g.setAttribute("position", posAttr);
-            g.setIndex(new THREE.BufferAttribute(new Uint16Array([0, 1, 2, 2, 1, 3]), 1));
-            const modifier = new SphericalGeometrySubdivisionModifier(
+        function moveTileCenter(geom: THREE.BufferGeometry) {
+            const attr = geom.getAttribute("position") as THREE.BufferAttribute;
+            const posArray = attr.array as Float32Array;
+            for (let i = 0; i < posArray.length; i += 3) {
+                tmpV.set(posArray[i], posArray[i + 1], posArray[i + 2]);
+                projection.reprojectPoint(sourceProjection, tmpV, tmpV);
+                tmpV.sub(tile.center);
+                posArray[i] = tmpV.x;
+                posArray[i + 1] = tmpV.y;
+                posArray[i + 2] = tmpV.z;
+            }
+            attr.needsUpdate = true;
+        }
+
+        // Create plane
+        const { east, west, north, south } = tile.geoBox;
+        const geometry = new THREE.BufferGeometry();
+        const posAttr = new THREE.BufferAttribute(
+            new Float32Array([
+                ...sourceProjection.projectPoint(new GeoCoordinates(south, west), tmpV).toArray(),
+                ...sourceProjection.projectPoint(new GeoCoordinates(south, east), tmpV).toArray(),
+                ...sourceProjection.projectPoint(new GeoCoordinates(north, west), tmpV).toArray(),
+                ...sourceProjection.projectPoint(new GeoCoordinates(north, east), tmpV).toArray()
+            ]),
+            3
+        );
+        geometry.setAttribute("position", posAttr);
+        geometry.setIndex(new THREE.BufferAttribute(new Uint16Array([0, 1, 2, 2, 1, 3]), 1));
+
+        if (createTexCoords) {
+            const uvAttr = new THREE.BufferAttribute(new Float32Array([0, 0, 1, 0, 0, 1, 1, 1]), 2);
+            geometry.setAttribute("uv", uvAttr);
+        }
+
+        if (shouldSubdivide) {
+            const geometries: THREE.BufferGeometry[] = [];
+            const sphericalModifier = new SphericalGeometrySubdivisionModifier(
                 THREE.Math.degToRad(10),
                 sourceProjection
             );
-            modifier.modify(g);
+            const enableMixedLod = mapView.enableMixedLod || mapView.enableMixedLod === undefined;
 
-            for (let i = 0; i < posAttr.array.length; i += 3) {
-                tmpV.set(posAttr.array[i], posAttr.array[i + 1], posAttr.array[i + 2]);
-                projection.reprojectPoint(sourceProjection, tmpV, tmpV);
-                tmpV.sub(tile.center);
-                (posAttr.array as Float32Array)[i] = tmpV.x;
-                (posAttr.array as Float32Array)[i + 1] = tmpV.y;
-                (posAttr.array as Float32Array)[i + 2] = tmpV.z;
+            if (enableMixedLod) {
+                // Use a [[LodMesh]] to adapt tesselation of tile depending on zoom level
+                for (let zoomLevelOffset = 0; zoomLevelOffset < 4; ++zoomLevelOffset) {
+                    const subdivision = Math.pow(2, zoomLevelOffset);
+                    const zoomLevelGeometry = geometry.clone();
+                    if (subdivision > 1) {
+                        const edgeModifier = new EdgeLengthGeometrySubdivisionModifier(
+                            subdivision,
+                            tile.geoBox,
+                            SubdivisionMode.All,
+                            sourceProjection
+                        );
+                        edgeModifier.modify(zoomLevelGeometry);
+                    }
+                    sphericalModifier.modify(zoomLevelGeometry);
+                    moveTileCenter(zoomLevelGeometry);
+                    geometries.push(zoomLevelGeometry);
+                }
+                return new LodMesh(geometries, material);
+            } else {
+                // Use static mesh if mixed LOD is disabled
+                sphericalModifier.modify(geometry);
+                moveTileCenter(geometry);
+
+                return new THREE.Mesh(geometry, material);
             }
-            posAttr.needsUpdate = true;
-
-            const material = new MapMeshBasicMaterial({
-                color,
-                visible: true,
-                depthWrite: true
-            });
-            const mesh = new THREE.Mesh(g, material);
-            mesh.renderOrder = renderOrder;
-            this.registerTileObject(tile, mesh, GeometryKind.Background);
-            tile.objects.push(mesh);
         } else {
-            // Add a ground plane to the tile.
-            tile.boundingBox.getSize(tmpV);
-            const groundPlane = this.createPlane(
-                tmpV.x,
-                tmpV.y,
-                tile.center,
-                color,
-                true,
-                renderOrder
-            );
-
-            this.registerTileObject(tile, groundPlane, GeometryKind.Background);
-            tile.objects.push(groundPlane);
+            // Use static mesh for planar projection
+            moveTileCenter(geometry);
+            return new THREE.Mesh(geometry, material);
         }
+    }
+
+    /**
+     * Creates and add a background plane for the tile.
+     * @param tile Tile
+     * @param renderOrder Render order of the tile
+     */
+    addGroundPlane(tile: Tile, renderOrder: number) {
+        const mapView = tile.mapView;
+        const color = mapView.clearColor;
+
+        const material = new MapMeshBasicMaterial({
+            color,
+            visible: true,
+            depthWrite: true
+        });
+        const mesh = this.createGroundPlane(tile, material, false);
+        mesh.renderOrder = renderOrder;
+        this.registerTileObject(tile, mesh, GeometryKind.Background);
+        tile.objects.push(mesh);
     }
 
     /**
@@ -1385,38 +1425,6 @@ export class TileGeometryCreator {
             );
         };
         (material as MapMeshStandardMaterial).displacementMap!.needsUpdate = true;
-    }
-
-    /**
-     * Create a simple flat plane for a [[Tile]].
-     *
-     * @param {number} width Width of plane.
-     * @param {number} height Height of plane.
-     * @param {THREE.Vector3} planeCenter Center of plane.
-     * @param {number} colorHex Color of the plane mesh.
-     * @param {boolean} isVisible `True` to make the mesh visible.
-     * @returns {THREE.Mesh} The created plane.
-     */
-    private createPlane(
-        width: number,
-        height: number,
-        planeCenter: THREE.Vector3,
-        colorHex: number,
-        isVisible: boolean,
-        renderOrder: number
-    ): THREE.Mesh {
-        const geometry = new THREE.PlaneGeometry(width, height, 1);
-        // TODO cache the material HARP-4207
-        const material = new MapMeshBasicMaterial({
-            color: colorHex,
-            visible: isVisible,
-            depthWrite: false
-        });
-        const plane = new THREE.Mesh(geometry, material);
-        plane.position.copy(planeCenter);
-        // Render before everything else
-        plane.renderOrder = renderOrder;
-        return plane;
     }
 
     private addUserData(
