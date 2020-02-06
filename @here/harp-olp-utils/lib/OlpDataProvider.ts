@@ -103,10 +103,17 @@ export class OlpDataProvider implements DataProvider {
                 abortSignal
             )
             .then(response => {
-                // 204 - NO CONTENT, no data exists at the given tile. Do nothing.
-                return response.status === 204 ? Promise.resolve({}) : response.arrayBuffer();
+                if (response.status !== 200) {
+                    throw new Error(response.statusText);
+                }
+                return response.arrayBuffer();
             })
             .catch(error => {
+                // 204 - NO CONTENT, no data exists at the given tile.
+                if (error.name === "HttpError" && error.status === 204) {
+                    return {};
+                }
+
                 logger.error(
                     `Error loading tile ${tileKey.mortonCode()} for catalog ${
                         this.params.hrn

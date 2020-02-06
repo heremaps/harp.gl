@@ -39,6 +39,11 @@ export interface OlpCopyrightProviderParams {
      * @default `"copyright_suppliers_here"`
      */
     partition?: string;
+
+    /**
+     * Version of the catalog
+     */
+    version: number;
 }
 
 const DEFAULT_LAYER = "copyright";
@@ -79,7 +84,9 @@ export class OlpCopyrightProvider extends CopyrightCoverageProvider {
                 settings
             );
             const partition = await client.getData(
-                new DataRequest().withPartitionId(this.m_params.partition ?? DEFAULT_PARTITION)
+                new DataRequest()
+                    .withPartitionId(this.m_params.partition ?? DEFAULT_PARTITION)
+                    .withVersion(this.m_params.version)
             );
             const json = await partition.json();
             this.m_cachedCopyrightResponse = json[this.m_params.baseScheme ?? "normal"];
