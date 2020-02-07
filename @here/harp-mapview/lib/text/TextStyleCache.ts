@@ -171,11 +171,6 @@ export interface TextElementStyle {
 export class TextStyleCache {
     private m_textRenderStyleCache = new TextRenderStyleCache();
     private m_textLayoutStyleCache = new TextLayoutStyleCache();
-    /**
-     * Cache for named colors.
-     */
-    private m_colorMap: Map<string, THREE.Color> = new Map();
-
     private m_textStyles: Map<string, TextElementStyle> = new Map();
     private m_defaultStyle: TextElementStyle = {
         name: DEFAULT_STYLE_NAME,
@@ -323,6 +318,7 @@ export class TextStyleCache {
                 zoomLevelInt
             );
 
+            let color: THREE.Color | undefined;
             // Store color (RGB) in cache and multiply opacity value with the color alpha channel.
             if (technique.color !== undefined) {
                 let hexColor = evaluateColorProperty(technique.color, zoomLevelInt);
@@ -331,7 +327,7 @@ export class TextStyleCache {
                     opacity = opacity * alpha;
                     hexColor = ColorUtils.removeAlphaFromHex(hexColor);
                 }
-                this.m_colorMap.set(cacheId, ColorCache.instance.getColor(hexColor));
+                color = ColorCache.instance.getColor(hexColor);
             }
 
             // Sets background size to 0.0 if default and technique attribute is undefined.
@@ -365,6 +361,7 @@ export class TextStyleCache {
                 zoomLevelInt
             );
 
+            let backgroundColor: THREE.Color | undefined;
             // Store background color (RGB) in cache and multiply backgroundOpacity by its alpha.
             if (technique.backgroundColor !== undefined) {
                 let hexBgColor = evaluateColorProperty(technique.backgroundColor, zoomLevelInt);
@@ -373,7 +370,7 @@ export class TextStyleCache {
                     backgroundOpacity = backgroundOpacity * alpha;
                     hexBgColor = ColorUtils.removeAlphaFromHex(hexBgColor);
                 }
-                this.m_colorMap.set(cacheId + "_bg", ColorCache.instance.getColor(hexBgColor));
+                backgroundColor = ColorCache.instance.getColor(hexBgColor);
             }
 
             const renderParams = {
@@ -401,11 +398,11 @@ export class TextStyleCache {
                         : defaultRenderParams.fontVariant,
                 rotation: getOptionValue(technique.rotation, defaultRenderParams.rotation),
                 color: getOptionValue(
-                    this.m_colorMap.get(cacheId),
+                    color,
                     getOptionValue(defaultRenderParams.color, DefaultTextStyle.DEFAULT_COLOR)
                 ),
                 backgroundColor: getOptionValue(
-                    this.m_colorMap.get(cacheId + "_bg"),
+                    backgroundColor,
                     getOptionValue(
                         defaultRenderParams.backgroundColor,
                         DefaultTextStyle.DEFAULT_BACKGROUND_COLOR
