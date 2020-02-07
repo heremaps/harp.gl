@@ -5,21 +5,22 @@
  */
 
 import * as THREE from "three";
-import { MapView } from "./MapView";
 
 /**
  * Raycasting points is not supported as necessary in Three.js. This class extends a
- * [[THREE.Raycaster]] except that it holds a reference to [[MapView]] allowing to access the
- * camera and the renderer from [[MapViewPoints]], in order to project the points in screen space.
+ * [[THREE.Raycaster]] and adds the width / height of the canvas to allow picking of screen space
+ * geometry.
+ *
+ * @internal
  */
 export class PickingRaycaster extends THREE.Raycaster {
     /**
-     * Constructs a `MapViewRaycaster`. It keeps a reference to [[MapView]] in order to access the
-     * active camera when calling the custom method `raycastPoints`.
+     * Constructor.
      *
-     * @param m_mapView the active [[MapView]].
+     * @param width the canvas width.
+     * @param height the canvas height.
      */
-    constructor(public mapView: MapView) {
+    constructor(public width: number, public height: number) {
         super();
     }
 }
