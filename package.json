@@ -9,6 +9,7 @@
         "test/rendering"
     ],
     "devDependencies": {
+        "@ismarslomic/mermaid.cli": "^0.5.3",
         "@strictsoftware/typedoc-plugin-monorepo": "^0.2.1",
         "@types/chai": "^4.2.2",
         "@types/express": "^4.17.2",
@@ -21,7 +22,6 @@
         "geckodriver": "^1.16.2",
         "glob": "^7.1.4",
         "hard-source-webpack-plugin": "^0.13.1",
-        "@ismarslomic/mermaid.cli": "^0.5.3",
         "mkpath": "^1.0.0",
         "mocha": "^6.1.4",
         "mocha-webdriver-runner": "^0.5.3",
