@@ -94,23 +94,23 @@
   resolved "https://registry.yarnpkg.com/@here/harp-fontcatalog/-/harp-fontcatalog-0.1.4.tgz#629b4e0318e931a4c785e7b3ee0a5ceb02ddbe84"
   integrity sha512-HAQTVDX7iPVWxFYnO1AkfEEWbCqExWDaTWd3FemnRDUhq6qi3yv9ckp5kK8mg/WBwNlULVH9jcNTHV64PMCGbg==
 
-"@here/olp-sdk-dataservice-api@^1.0.0":
-  version "1.2.0"
-  resolved "https://registry.yarnpkg.com/@here/olp-sdk-dataservice-api/-/olp-sdk-dataservice-api-1.2.0.tgz#c92c8492b12a67e1f6a765ce9e4e563f4c30a329"
-  integrity sha512-NVaNW0B6SkTCImtIe3oPVCYMnBZPf9LjZ3DwYZeeuJkQtYX8Rd7BUrNVoYrS+ATcup3QLPi6LzUXj6lsoIx+Dw==
+"@here/olp-sdk-dataservice-api@^1.2.0":
+  version "1.2.1"
+  resolved "https://registry.yarnpkg.com/@here/olp-sdk-dataservice-api/-/olp-sdk-dataservice-api-1.2.1.tgz#50f9cbe1fe1fc3f505b242cee68deab84c680d69"
+  integrity sha512-xohBwYyWML2Fi0vLqBifrk+FlzTK6z93D6bahhp3ebNTQcUNofIG706zxA+ILnhQJVs4s4fNVf41d/S07UgVdA==
 
 "@here/olp-sdk-dataservice-read@^1.2.0":
-  version "1.2.0"
-  resolved "https://registry.yarnpkg.com/@here/olp-sdk-dataservice-read/-/olp-sdk-dataservice-read-1.2.0.tgz#24e1252440493c2a99cbd98c163a982bb9622a06"
-  integrity sha512-X0vJ4yhcBlU4qwoIsDAmIwwHSQMm4FUXJ6Oc/z0O1XCKV6HykQn8CPQw3ceNrDG1kB7VtJLr3S3nl1V6BRBD7Q==
+  version "1.2.1"
+  resolved "https://registry.yarnpkg.com/@here/olp-sdk-dataservice-read/-/olp-sdk-dataservice-read-1.2.1.tgz#2bc2fab4e7738224c984982c3cac57e5f36a645c"
+  integrity sha512-2wN82XlhkM9dEO+53SeSXVyWDpgEOfXXX9w5AgjmGERB55rPh4ThurljX4+DgFo/vJAN0G/zuvy8jZmPUTye+A==
   dependencies:
-    "@here/olp-sdk-dataservice-api" "^1.0.0"
-    "@here/olp-sdk-fetch" "^1.0.0"
+    "@here/olp-sdk-dataservice-api" "^1.2.0"
+    "@here/olp-sdk-fetch" "^1.2.0"
 
-"@here/olp-sdk-fetch@^1.0.0":
-  version "1.2.0"
-  resolved "https://registry.yarnpkg.com/@here/olp-sdk-fetch/-/olp-sdk-fetch-1.2.0.tgz#e643d89d2d961e18f7cc089fa3f99380ae0424ff"
-  integrity sha512-BC5GARN7qG9Ds5kVZFwWSqC8TFreixlPhFxi+uGuSzm+ykeIaTEUKeo1cee3wJmDgUE87okr24rk3wGQyU+Eyg==
+"@here/olp-sdk-fetch@^1.2.0":
+  version "1.2.1"
+  resolved "https://registry.yarnpkg.com/@here/olp-sdk-fetch/-/olp-sdk-fetch-1.2.1.tgz#b12f2bff6790dcbb2315521e645c7b0c7c9d09b2"
+  integrity sha512-zjUdZdFHGzQSWtdLjHeE1+zjGwh45bVfmDCWkbdZwo/D6FUgXC29HW5xAYSxmR4gvehHFome+/0/zKzTdl5PUg==
   dependencies:
     node-fetch "2.2.0"
 
