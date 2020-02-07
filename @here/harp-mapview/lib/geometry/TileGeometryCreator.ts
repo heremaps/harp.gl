@@ -54,7 +54,6 @@ import { assert, LoggerManager } from "@here/harp-utils";
 import * as THREE from "three";
 
 import { AnimatedExtrusionTileHandler } from "../AnimatedExtrusionHandler";
-import { ColorCache } from "../ColorCache";
 import {
     applyBaseColorToMaterial,
     applySecondaryColorToMaterial,
@@ -1112,12 +1111,13 @@ export class TileGeometryCreator {
                 if (hasSolidLinesOutlines) {
                     const outlineTechnique = technique as SolidLineTechnique;
                     const outlineMaterial = material.clone() as SolidLineMaterial;
-                    const outlineColor = ColorCache.instance.getColor(
-                        outlineTechnique.secondaryColor !== undefined
-                            ? getPropertyValue(outlineTechnique.secondaryColor!, displayZoomLevel)
-                            : 0x000000
+                    applyBaseColorToMaterial(
+                        outlineMaterial,
+                        outlineMaterial.color,
+                        outlineTechnique,
+                        outlineTechnique.secondaryColor ?? 0x000000,
+                        mapView.zoomLevel
                     );
-                    outlineMaterial.uniforms.diffuse.value = outlineColor;
                     if (outlineTechnique.secondaryCaps !== undefined) {
                         outlineMaterial.caps = outlineTechnique.secondaryCaps;
                     }
