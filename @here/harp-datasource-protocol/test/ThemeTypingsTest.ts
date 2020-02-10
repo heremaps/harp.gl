@@ -70,10 +70,10 @@ function validate(type: string, response: any, validationExpectedToFail: boolean
     assert.strictEqual(!result, validationExpectedToFail);
 }
 
-describeOnlyNode("Theme typings test", function() {
+describeOnlyNode("Theme typings test", function(this: Mocha.Suite) {
     this.timeout(30000);
 
-    it("syntax test for properly defined Theme object", function() {
+    it("syntax test for properly defined Theme object", function(this: Mocha.Context) {
         this.timeout(30000);
 
         const ProperTheme = {
@@ -99,7 +99,8 @@ describeOnlyNode("Theme typings test", function() {
         validate("Theme", ProperTheme);
     });
 
-    it("syntax test for improperly defined Theme object (excessive properties)", function() {
+    // tslint:disable-next-line: max-line-length
+    it("syntax test for improperly defined Theme object (excessive properties)", function(this: Mocha.Context) {
         this.timeout(30000);
 
         const ImproperTheme = {

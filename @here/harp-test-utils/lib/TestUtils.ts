@@ -249,7 +249,7 @@ function reportAsyncFailuresAfterTestEnd(this: any) {
 }
 
 if (typeof beforeEach !== "undefined") {
-    beforeEach(function() {
+    beforeEach(function(this: Mocha.Context) {
         // Save current test so willEventually && waitForEvent can check that current test is still
         // executing.
         mochaCurrentTest = this.currentTest;
