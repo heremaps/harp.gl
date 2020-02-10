@@ -159,7 +159,8 @@ describe("map-view#Utils", function() {
         expect(objSize.gpuSize).to.be.equal(1584); // see previous test
     });
 
-    it("estimate size of world with 1000 cubes (BufferGeometry)", async function() {
+    // tslint:disable-next-line: max-line-length
+    it("estimate size of world with 1000 cubes (BufferGeometry)", async function(this: Mocha.Context) {
         this.timeout(4000);
         const scene: THREE.Scene = new THREE.Scene();
         for (let i = 0; i < 1000; i++) {

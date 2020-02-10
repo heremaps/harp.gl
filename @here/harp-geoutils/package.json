@@ -5,7 +5,7 @@
     "main": "index.js",
     "typings": "index",
     "scripts": {
-        "build": "tsc",
+        "build": "tsc $EXTRA_TSC_ARGS",
         "test": "cross-env mocha --require source-map-support/register $EXTRA_MOCHA_ARGS ./test/*.js",
         "prepare": "cross-env tsc --sourceMap false $EXTRA_TSC_ARGS"
     },
