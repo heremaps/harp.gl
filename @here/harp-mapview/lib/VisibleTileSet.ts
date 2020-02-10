@@ -7,6 +7,7 @@ import { ViewRanges } from "@here/harp-datasource-protocol/lib/ViewRanges";
 import {
     GeoCoordinates,
     Projection,
+    ProjectionType,
     TileKey,
     TileKeyUtils,
     TilingScheme
@@ -848,6 +849,11 @@ export class VisibleTileSet {
      * Disposes of tiles that overlap twice.
      **/
     private checkDuplicateFullyCoveringTiles(dataSource: DataSource, tile: Tile) {
+        if (this.options.projection.type === ProjectionType.Spherical) {
+            // HARP-7899, currently the globe has no background planes in the tiles (it relies on
+            // the BackgroundDataSource), because the LOD mismatches, hence disabling for globe.
+            return;
+        }
         if (dataSource.isFullyCovering()) {
             const ts = dataSource.getTilingScheme();
             let map = this.m_coveringMap.get(ts)!;
