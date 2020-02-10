@@ -126,11 +126,10 @@ describe("VisibleTileSet", function() {
      * Fake [[DataSource]] which provides tiles with the ground plane geometry.
      */
     class FakeCoveringTileWMTS extends DataSource {
-        /** @override */
-        addGroundPlane = true;
-
         constructor(readonly planeRenderOrder?: number) {
             super();
+            this.addGroundPlane = true;
+            this.cacheable = true;
         }
 
         /** @override */
@@ -190,10 +189,12 @@ describe("VisibleTileSet", function() {
             if (dataSourceTileList.dataSource === dsDisposed) {
                 dataSourceTileList.visibleTiles.forEach(tile => {
                     expect(tile.disposed).is.true;
+                    expect(tile.hasGeometry).is.true;
                 });
             } else if (dataSourceTileList.dataSource === dsValid) {
                 dataSourceTileList.visibleTiles.forEach(tile => {
                     expect(tile.disposed).is.false;
+                    expect(tile.hasGeometry).is.true;
                 });
             }
         });
@@ -427,7 +428,11 @@ describe("VisibleTileSet", function() {
 
         const zoomLevel = 15;
         const storageLevel = 14;
-        const result = updateRenderList(zoomLevel, storageLevel);
+        let result = updateRenderList(zoomLevel, storageLevel);
+        compareDataSources(result.tileList, fullyCoveringDS1, fullyCoveringDS2);
+
+        // This checks to ensure that calling this multiple times produces the same results
+        result = updateRenderList(zoomLevel, storageLevel);
         compareDataSources(result.tileList, fullyCoveringDS1, fullyCoveringDS2);
     });
 
@@ -445,7 +450,11 @@ describe("VisibleTileSet", function() {
 
         const zoomLevel = 15;
         const storageLevel = 14;
-        const result = updateRenderList(zoomLevel, storageLevel);
+        let result = updateRenderList(zoomLevel, storageLevel);
+        compareDataSources(result.tileList, fullyCoveringDS2, fullyCoveringDS1);
+
+        // This checks to ensure that calling this multiple times produces the same results
+        result = updateRenderList(zoomLevel, storageLevel);
         compareDataSources(result.tileList, fullyCoveringDS2, fullyCoveringDS1);
     });
 

@@ -860,26 +860,38 @@ export class VisibleTileSet {
             if (entry === undefined) {
                 map.set(key, tile);
             } else {
+                const disposeTile = (toDispose: Tile) => {
+                    toDispose.dispose();
+                    // This makes sure that the [[Tile]] stays in the cache and doesn't
+                    // go back to a loading state, see [[Tile.allGeometryLoaded]].
+                    toDispose.forceHasGeometry(true);
+                };
                 // If the entry in the map has no backgroundPlane, we treat it to have highest
-                // priority, so we dispose of the newly created tile.
-                if (entry.backgroundPlane === undefined) {
-                    tile.dispose();
+                // priority, so we dispose of the newly created tile. Note, the entry may have
+                // been disposed in a previous frame, so we check it isn't disposed.
+                if (entry.backgroundPlane === undefined && !entry.disposed) {
+                    disposeTile(tile);
                 }
-                // If the newly created tile has no backgroundPlane and the existing entry does then
+                // If the tile has no backgroundPlane and the existing entry does then
                 // dispose and replace it in the cache, no backgroundPlane has higher priority.
-                else if (tile.backgroundPlane === undefined) {
-                    entry.dispose();
+                else if (tile.backgroundPlane === undefined && !tile.disposed) {
+                    disposeTile(entry);
                     map.set(key, tile);
                 }
                 // Both planes exist, so we replace if the new [[Tile]] has a higher renderOrder
-                else if (tile.backgroundPlane.renderOrder > entry.backgroundPlane.renderOrder) {
-                    // Dispose the Tile, but still keep it in the cache, so the Tile
-                    // isn't re-requested.
-                    entry.dispose();
-                    map.set(key, tile);
-                } else {
-                    // Existing entry has higher renderOrder, so dispose the incoming tile.
-                    tile.dispose();
+                else if (
+                    entry.backgroundPlane !== undefined &&
+                    tile.backgroundPlane !== undefined
+                ) {
+                    if (tile.backgroundPlane.renderOrder > entry.backgroundPlane.renderOrder) {
+                        // Dispose the Tile, but still keep it in the cache, so the Tile
+                        // isn't re-requested.
+                        disposeTile(entry);
+                        map.set(key, tile);
+                    } else {
+                        // Existing entry has higher renderOrder, so dispose the incoming tile.
+                        disposeTile(tile);
+                    }
                 }
             }
         }
