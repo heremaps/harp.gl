@@ -49,6 +49,14 @@ export interface ExtrusionFeatureParameters {
      * Ratio of the extruded objects, where `1.0` is the default value
      */
     extrusionRatio?: number;
+
+    /**
+     * Enable z-fighting workaround that doesn't animate buildings with `height <
+     * [[ExtrusionFeatureDefs.MIN_BUILDING_HEIGHT]]`.
+     *
+     * Should be applied to `polygon` materials using this feature.
+     */
+    zFightingWorkaround?: boolean;
 }
 
 /**
@@ -874,6 +882,10 @@ export class ExtrusionFeatureMixin implements ExtrusionFeature {
         assert(this.shaderDefines !== undefined);
         assert(this.shaderUniforms !== undefined);
 
+        if (params && params.zFightingWorkaround === true) {
+            this.shaderDefines.ZFIGHTING_WORKAROUND = "";
+        }
+
         // Create uniform with default value, this ensures that it is always created,
         // so no need for checks in setters.
         this.shaderUniforms!.extrusionRatio = new THREE.Uniform(
@@ -939,7 +951,7 @@ export class MapMeshBasicMaterial extends THREE.MeshBasicMaterial
         ExtrusionFeature.patchGlobalShaderChunks();
 
         this.addExtrusionProperties();
-        this.applyExtrusionParameters(params);
+        this.applyExtrusionParameters({ ...params, zFightingWorkaround: true });
 
         this.addDisplacementProperties();
         this.applyDisplacementParameters(params);
@@ -1075,7 +1087,7 @@ export class MapMeshStandardMaterial extends THREE.MeshStandardMaterial
         ExtrusionFeature.patchGlobalShaderChunks();
 
         this.addExtrusionProperties();
-        this.applyExtrusionParameters(params);
+        this.applyExtrusionParameters({ ...params, zFightingWorkaround: true });
     }
 
     clone(): this {
