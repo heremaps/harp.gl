@@ -58,6 +58,8 @@ describe("UrlUtils", function() {
                 "https://bar.com/foo"
             );
             assert.equal(resolveReferenceUri("https://bar.com", "//bar.com/foo"), "//bar.com/foo");
+            assert.equal(resolveReferenceUri("https://bar.com", "C:\\bar.com\\foo"), "C:\\bar.com\\foo");
+            assert.equal(resolveReferenceUri("https://bar.com", "\\\\bar.com\\foo"), "\\\\bar.com\\foo");
         });
     });
 

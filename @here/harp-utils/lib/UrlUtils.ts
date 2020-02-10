@@ -47,7 +47,7 @@ export function resolveReferenceUri(parentUri: string | undefined, childUri: str
     }
 }
 
-const absoluteUrlWithOriginRe = new RegExp("^(?:[a-z]+:)?//", "i");
+const absoluteUrlWithOriginRe = /^(?:[a-z]+:)?(\/\/|\\\\?)/i;
 
 /**
  * Returns base URL of given resource URL.
