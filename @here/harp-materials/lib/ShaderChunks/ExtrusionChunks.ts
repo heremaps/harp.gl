@@ -15,15 +15,19 @@ export default {
 attribute vec4 extrusionAxis;
 uniform float extrusionRatio;
 varying vec4 vExtrusionAxis;
+#ifdef ZFIGHTING_WORKAROUND
 varying float vExtrusionRatio;
-
+#endif
 `,
     extrusion_vertex: `
+#ifdef ZFIGHTING_WORKAROUND
 // Cancel extrusionRatio (meaning, force to 1) if extrusionAxisLen < MIN_BUILDING_HEIGHT.
 const float MIN_BUILDING_HEIGHT_SQUARED = ${MIN_BUILDING_HEIGHT_SQUARED};
 float extrusionAxisLenSquared = dot(extrusionAxis.xyz, extrusionAxis.xyz);
 vExtrusionRatio = (extrusionAxisLenSquared < MIN_BUILDING_HEIGHT_SQUARED) ? 1.0 : extrusionRatio;
-
+#else
+float vExtrusionRatio = extrusionRatio;
+#endif
 transformed = transformed + extrusionAxis.xyz * (vExtrusionRatio - 1.0);
 vExtrusionAxis = vec4(normalMatrix * extrusionAxis.xyz, extrusionAxis.w);
 `,
@@ -62,10 +66,17 @@ vExtrusionAxis = vec4(normalMatrix * extrusionAxis.xyz, extrusionAxis.w);
 vec3 geometryNormal = normal;
 `,
     extrusion_pars_fragment: `
+#ifdef ZFIGHTING_WORKAROUND
 varying float vExtrusionRatio;
+#else
+uniform float extrusionRatio;
+#endif
 varying vec4 vExtrusionAxis;
 `,
     extrusion_fragment: `
+#ifndef ZFIGHTING_WORKAROUND
+float vExtrusionRatio = extrusionRatio;
+#endif
 gl_FragColor.a *= smoothstep( 0.0, 0.25, vExtrusionRatio );
 `
 };
