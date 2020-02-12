@@ -5,7 +5,7 @@
  */
 
 import { Theme } from "@here/harp-datasource-protocol";
-import { TileKey } from "@here/harp-geoutils";
+import { identityProjection, TileKey } from "@here/harp-geoutils";
 import { TextCanvas } from "@here/harp-text-canvas";
 import { assert, expect } from "chai";
 import * as sinon from "sinon";
@@ -31,7 +31,6 @@ import { stubFontCatalog } from "./stubFontCatalog";
 import { stubFontCatalogLoader } from "./stubFontCatalogLoader";
 import { stubPoiManager } from "./stubPoiManager";
 import { stubPoiRenderer, stubPoiRendererFactory } from "./stubPoiRenderer";
-import { stubMercatorProjection } from "./stubProjection";
 import { stubTextCanvas, stubTextCanvasFactory } from "./stubTextCanvas";
 import { FadeState } from "./TextElementsRendererTestUtils";
 
@@ -56,7 +55,7 @@ function createViewState(worldCenter: THREE.Vector3, sandbox: sinon.SinonSandbox
         isDynamic: false,
         hiddenGeometryKinds: undefined,
         renderedTilesChanged: false,
-        projection: stubMercatorProjection(sandbox),
+        projection: identityProjection,
         elevationProvider: undefined
     };
 }
