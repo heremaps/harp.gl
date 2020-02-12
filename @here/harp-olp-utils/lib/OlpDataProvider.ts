@@ -99,11 +99,22 @@ export class OlpDataProvider implements DataProvider {
                 new DataRequest().withQuadKey(tileKey).withVersion(this.m_catalogVersion),
                 abortSignal
             );
+            if (abortSignal && abortSignal.aborted) {
+                // Safety belt if `getData` doesn't really support abort signal.
+                const err = new Error("Aborted");
+                err.name = "AbortError";
+                throw err;
+            }
             if (response.status !== 200) {
                 throw new Error(response.statusText);
             }
             return response.arrayBuffer();
         } catch (error) {
+            if (error.name === "AbortError" || error.message === "AbortError: Aborted") {
+                // Rethrow abort errors as they shall be handled on higher level.
+                throw error;
+            }
+
             // 204 - NO CONTENT, no data exists at the given tile.
             if (error.name === "HttpError" && error.status === 204) {
                 return {};
