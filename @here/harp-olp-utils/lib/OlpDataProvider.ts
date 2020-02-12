@@ -52,31 +52,27 @@ export class OlpDataProvider implements DataProvider {
      *
      * @returns A promise which is resolved when the connection has been established.
      */
-    connect(): Promise<void> {
+    async connect(): Promise<void> {
         const settings = new OlpClientSettings({
             environment: "here",
             getToken: this.params.getToken
         });
+
         if (this.params.version !== undefined && this.params.version >= 0) {
-            this.m_versionLayerClient = new VersionedLayerClient(
-                HRN.fromString(this.params.hrn),
-                this.params.layerId,
-                settings
-            );
             this.m_catalogVersion = this.params.version;
-            return Promise.resolve();
         } else {
-            return new CatalogClient(HRN.fromString(this.params.hrn), settings)
-                .getLatestVersion(new CatalogVersionRequest())
-                .then(response => {
-                    this.m_versionLayerClient = new VersionedLayerClient(
-                        HRN.fromString(this.params.hrn),
-                        this.params.layerId,
-                        settings
-                    );
-                    this.m_catalogVersion = response;
-                });
+            const latestVersion = await new CatalogClient(
+                HRN.fromString(this.params.hrn),
+                settings
+            ).getLatestVersion(new CatalogVersionRequest());
+
+            this.m_catalogVersion = latestVersion;
         }
+        this.m_versionLayerClient = new VersionedLayerClient(
+            HRN.fromString(this.params.hrn),
+            this.params.layerId,
+            settings
+        );
     }
 
     /**
@@ -93,33 +89,32 @@ export class OlpDataProvider implements DataProvider {
      * @param abortSignal Optional AbortSignal to cancel the request.
      * @returns A promise delivering the data as an [[ArrayBufferLike]], or any object.
      */
-    getTile(tileKey: TileKey, abortSignal?: AbortSignal): Promise<ArrayBufferLike | {}> {
+    async getTile(tileKey: TileKey, abortSignal?: AbortSignal): Promise<ArrayBufferLike | {}> {
         if (this.m_versionLayerClient === undefined) {
             throw new Error("OlpDataProvider is not connected.");
         }
-        return this.m_versionLayerClient
-            .getData(
+
+        try {
+            const response = await this.m_versionLayerClient.getData(
                 new DataRequest().withQuadKey(tileKey).withVersion(this.m_catalogVersion),
                 abortSignal
-            )
-            .then(response => {
-                if (response.status !== 200) {
-                    throw new Error(response.statusText);
-                }
-                return response.arrayBuffer();
-            })
-            .catch(error => {
-                // 204 - NO CONTENT, no data exists at the given tile.
-                if (error.name === "HttpError" && error.status === 204) {
-                    return {};
-                }
-
-                logger.error(
-                    `Error loading tile ${tileKey.mortonCode()} for catalog ${
-                        this.params.hrn
-                    }: ${error}`
-                );
+            );
+            if (response.status !== 200) {
+                throw new Error(response.statusText);
+            }
+            return response.arrayBuffer();
+        } catch (error) {
+            // 204 - NO CONTENT, no data exists at the given tile.
+            if (error.name === "HttpError" && error.status === 204) {
                 return {};
-            });
+            }
+
+            logger.error(
+                `Error loading tile ${tileKey.mortonCode()} for catalog ${
+                    this.params.hrn
+                }: ${error}`
+            );
+            return {};
+        }
     }
 }
