@@ -27,8 +27,11 @@ import {
     VarExpr
 } from "./Expr";
 import { ExprPool } from "./ExprPool";
-import { isInterpolatedPropertyDefinition } from "./InterpolatedProperty";
-import { interpolatedPropertyDefinitionToJsonExpr } from "./InterpolatedPropertyDefs";
+import {} from "./InterpolatedProperty";
+import {
+    interpolatedPropertyDefinitionToJsonExpr,
+    isInterpolatedPropertyDefinition
+} from "./InterpolatedPropertyDefs";
 import { AttrScope, mergeTechniqueDescriptor } from "./TechniqueDescriptor";
 import { IndexedTechnique, Technique, techniqueDescriptors } from "./Techniques";
 import {
