@@ -360,7 +360,7 @@ export class Tile implements CachedResource {
 
     // Used for [[TextElement]]s which the developer defines. Group created with maximum priority
     // so that user text elements are placed before others.
-    private readonly m_userTextElements = new TextElementGroup(Number.MAX_SAFE_INTEGER);
+    private m_userTextElements = new TextElementGroup(Number.MAX_SAFE_INTEGER);
 
     // Used for [[TextElement]]s that are stored in the data, and that are placed explicitly,
     // fading in and out.
@@ -370,7 +370,7 @@ export class Tile implements CachedResource {
     private readonly m_pathBlockingElements: PathBlockingElement[] = [];
 
     // If `true`, the text content of the [[Tile]] changed.
-    private m_textElementsChanged: boolean = false;
+    private m_textElementsChanged: boolean | undefined;
 
     private m_visibleArea: number = 0;
     private m_minElevation: number = 0;
@@ -505,6 +505,10 @@ export class Tile implements CachedResource {
      * @param textElement The Text element to add.
      */
     addUserTextElement(textElement: TextElement) {
+        if (this.m_textElementsChanged === false) {
+            this.m_userTextElements = this.m_userTextElements.clone();
+        }
+
         this.m_userTextElements.elements.push(textElement);
         this.textElementsChanged = true;
     }
@@ -517,12 +521,16 @@ export class Tile implements CachedResource {
      */
     removeUserTextElement(textElement: TextElement): boolean {
         const foundIndex = this.m_userTextElements.elements.indexOf(textElement);
-        if (foundIndex >= 0) {
-            this.m_userTextElements.elements.splice(foundIndex, 1);
-            this.textElementsChanged = true;
-            return true;
+        if (foundIndex === -1) {
+            return false;
         }
-        return false;
+
+        if (this.m_textElementsChanged === false) {
+            this.m_userTextElements = this.m_userTextElements.clone();
+        }
+        this.m_userTextElements.elements.splice(foundIndex, 1);
+        this.textElementsChanged = true;
+        return true;
     }
 
     /**
@@ -579,7 +587,7 @@ export class Tile implements CachedResource {
      * value is `true` the TextElement is placed for rendering during the next frame.
      */
     get textElementsChanged(): boolean {
-        return this.m_textElementsChanged;
+        return this.m_textElementsChanged ?? false;
     }
 
     set textElementsChanged(changed: boolean) {
