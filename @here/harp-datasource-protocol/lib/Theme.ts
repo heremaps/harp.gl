@@ -860,7 +860,7 @@ export interface AmbientLight extends BaseLight {
     /**
      * @format color-hex
      */
-    color: string;
+    color: string | number;
     intensity?: number;
 }
 
