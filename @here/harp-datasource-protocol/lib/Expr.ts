@@ -9,8 +9,10 @@ import { ExprEvaluator, ExprEvaluatorContext, OperatorDescriptor } from "./ExprE
 import { ExprInstantiator, InstantiationContext } from "./ExprInstantiator";
 import { ExprParser } from "./ExprParser";
 import { ExprPool } from "./ExprPool";
-import { isInterpolatedPropertyDefinition } from "./InterpolatedProperty";
-import { interpolatedPropertyDefinitionToJsonExpr } from "./InterpolatedPropertyDefs";
+import {
+    interpolatedPropertyDefinitionToJsonExpr,
+    isInterpolatedPropertyDefinition
+} from "./InterpolatedPropertyDefs";
 import { Definitions, isBoxedDefinition, isLiteralDefinition } from "./Theme";
 
 export * from "./Env";

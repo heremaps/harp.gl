@@ -6,7 +6,7 @@
 
 import { Vector3Like } from "@here/harp-geoutils/lib/math/Vector3Like";
 import { isJsonExpr, JsonExpr } from "./Expr";
-import { isInterpolatedPropertyDefinition } from "./InterpolatedProperty";
+import { isInterpolatedPropertyDefinition } from "./InterpolatedPropertyDefs";
 import {
     BaseTechniqueParams,
     BasicExtrudedLineTechniqueParams,
