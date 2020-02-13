@@ -107,6 +107,72 @@ export interface Theme {
      * Optional list of [[ThemePoiTableDef]]s.
      */
     poiTables?: PoiTableRef[];
+
+    /**
+     * Optional list of symbolic priorities for the object
+     * created using this [[Theme]].
+     *
+     * The attribute `styleSet` and `category` of the [[Technique]]
+     * are used together with [[Theme.priorities]] to sort
+     * the objects created using this [[Theme]], for example:
+     *
+     * ```json
+     * {
+     *      "priorities": [
+     *          { "group": "tilezen", "category": "outline-1" }
+     *      ],
+     *      "styles": [
+     *          {
+     *              "technique": "solid-line",
+     *              "styleSet": "tilezen",
+     *              "category": "outline-1"
+     *          }
+     *      ]
+     * }
+     * ```
+     */
+    priorities?: StylePriority[];
+
+    /**
+     * Optional list of priorities for the screen-space
+     * objects created using this style.
+     *
+     * The name of the `category` attribute of the screen-space
+     * technique (e.g. `"text"`) must match on the strings
+     * defined by this [[Theme.labelPriorities]], for example:
+     *
+     * ```json
+     * {
+     *      "labelPriorities": [
+     *          "continent-labels",
+     *          "country-labels",
+     *          "state-labels"
+     *      ],
+     *      "styles": [
+     *          {
+     *              "technique": "text",
+     *              "category": "state-labels"
+     *          }
+     *      ]
+     * }
+     * ```
+     */
+    labelPriorities?: string[];
+}
+
+/**
+ * A type representing symbolic render orders.
+ */
+export interface StylePriority {
+    /**
+     * The group of this [[StylePriority]].
+     */
+    group: string;
+
+    /**
+     * The category of this [[StylePriority]].
+     */
+    category?: string;
 }
 
 /**
@@ -394,6 +460,11 @@ export interface BaseStyle {
      * The style set referenced by this styling rule.
      */
     styleSet?: string;
+
+    /**
+     * The category of this style.
+     */
+    category?: string | JsonExpr;
 
     /**
      * Technique name. See the classes extending from this class to determine what possible
@@ -756,6 +827,7 @@ export interface LineMarkerStyle extends BaseStyle {
 export interface LineStyle extends BaseStyle {
     technique: "line";
     secondaryRenderOrder?: number;
+    secondaryCategory?: string;
     attr?: Attr<MarkerTechniqueParams>;
 }
 
@@ -770,6 +842,7 @@ export interface SegmentsStyle extends BaseStyle {
 export interface SolidLineStyle extends BaseStyle {
     technique: "solid-line" | "dashed-line";
     secondaryRenderOrder?: number;
+    secondaryCategory?: string;
     attr?: Attr<SolidLineTechniqueParams>;
 }
 

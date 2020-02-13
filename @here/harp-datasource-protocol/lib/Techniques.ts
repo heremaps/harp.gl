@@ -533,6 +533,25 @@ export interface IndexedTechniqueParams {
      * @hidden
      */
     _styleSetIndex: number;
+
+    /**
+     * The styleSet associated to this [[Technique]].
+     * @hidden
+     */
+    _styleSet?: string;
+
+    /**
+     * The category used to assign render orders to objects created using this [[Technique]].
+     * @hidden
+     */
+    _category?: string;
+
+    /**
+     * The category used to assign render orders to secondary objects
+     * created using this [[Technique]].
+     * @hidden
+     */
+    _secondaryCategory?: string;
 }
 
 /**

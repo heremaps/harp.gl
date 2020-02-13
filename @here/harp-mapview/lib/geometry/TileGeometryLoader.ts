@@ -206,11 +206,7 @@ export class SimpleTileGeometryLoader implements TileGeometryLoader {
 
         // First time this tile is handled:
         if (this.m_decodedTile === undefined && tile.decodedTile !== undefined) {
-            TileGeometryCreator.instance.processTechniques(
-                tile.decodedTile,
-                enabledKinds,
-                disabledKinds
-            );
+            TileGeometryCreator.instance.processTechniques(tile, enabledKinds, disabledKinds);
 
             this.setDecodedTile(tile.decodedTile);
             this.prepareForRender(enabledKinds, disabledKinds);

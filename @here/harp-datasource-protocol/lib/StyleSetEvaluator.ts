@@ -29,7 +29,7 @@ import {
 import { ExprPool } from "./ExprPool";
 import { isInterpolatedPropertyDefinition } from "./InterpolatedProperty";
 import { interpolatedPropertyDefinitionToJsonExpr } from "./InterpolatedPropertyDefs";
-import { AttrScope, mergeTechniqueDescriptor, TechniquePropNames } from "./TechniqueDescriptor";
+import { AttrScope, mergeTechniqueDescriptor } from "./TechniqueDescriptor";
 import { IndexedTechnique, Technique, techniqueDescriptors } from "./Techniques";
 import {
     Definitions,
@@ -701,10 +701,7 @@ export class StyleSetEvaluator {
         const techniqueDescriptor =
             techniqueDescriptors[style.technique] || emptyTechniqueDescriptor;
 
-        const processAttribute = (
-            attrName: TechniquePropNames<Technique>,
-            attrValue: Value | JsonExpr | undefined
-        ) => {
+        const processAttribute = (attrName: string, attrValue: Value | JsonExpr | undefined) => {
             if (attrValue === undefined) {
                 return;
             }
@@ -763,6 +760,9 @@ export class StyleSetEvaluator {
             }
         };
 
+        processAttribute("_category", style.category);
+        processAttribute("_secondaryCategory", (style as LineStyle).secondaryCategory);
+
         processAttribute("renderOrder", style.renderOrder);
 
         // TODO: What the heck is that !?
@@ -777,10 +777,7 @@ export class StyleSetEvaluator {
                 if (!style.attr.hasOwnProperty(attrName)) {
                     continue;
                 }
-                processAttribute(
-                    attrName as TechniquePropNames<Technique>,
-                    (style.attr as any)[attrName]
-                );
+                processAttribute(attrName, (style.attr as any)[attrName]);
             }
         }
 
@@ -856,6 +853,9 @@ export class StyleSetEvaluator {
         technique._index = this.m_techniques.length;
         technique._styleSetIndex = style._styleSetIndex!;
         technique._key = key;
+        if (style.styleSet !== undefined) {
+            technique._styleSet = style.styleSet;
+        }
         this.m_techniques.push(technique as IndexedTechnique);
         return technique as IndexedTechnique;
     }
