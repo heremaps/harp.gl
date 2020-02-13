@@ -16,6 +16,7 @@ import {
     getArrayConstructor,
     getFeatureId,
     getPropertyValue,
+    IndexedTechnique,
     isCirclesTechnique,
     isExtrudedLineTechnique,
     isExtrudedPolygonTechnique,
@@ -236,20 +237,25 @@ export class TileGeometryCreator {
     }
 
     /**
-     * Apply enabled and disabled kinds as a filter.
+     * Processes the given tile and assign default values for geometry kinds,
+     * render orders and label priorities.
      *
-     * @param {DecodedTile} decodedTile
+     * @param {Tile} tile
      * @param {(GeometryKindSet | undefined)} enabledKinds
      * @param {(GeometryKindSet | undefined)} disabledKinds
      */
     processTechniques(
-        decodedTile: DecodedTile,
+        tile: Tile,
         enabledKinds: GeometryKindSet | undefined,
         disabledKinds: GeometryKindSet | undefined
     ): void {
+        const decodedTile = tile.decodedTile;
+
         if (decodedTile === undefined) {
             return;
         }
+
+        this.processPriorities(tile);
 
         for (const technique of decodedTile.techniques) {
             // Make sure that all technique have their geometryKind set, either from the Theme or
@@ -1273,6 +1279,81 @@ export class TileGeometryCreator {
             this.registerTileObject(tile, groundPlane, GeometryKind.Background);
             tile.objects.push(groundPlane);
         }
+    }
+
+    /**
+     * Process the given [[Tile]] and assign default values to render orders
+     * and label priorities.
+     *
+     * @param tile The [[Tile]] to process.
+     */
+    private processPriorities(tile: Tile) {
+        const decodedTile = tile.decodedTile;
+
+        if (decodedTile === undefined) {
+            return;
+        }
+
+        const theme = tile.mapView;
+
+        if (!theme) {
+            return;
+        }
+
+        const { priorities, labelPriorities } = tile.mapView.theme;
+
+        decodedTile.techniques.forEach(technique => {
+            const indexedTechnique = technique as IndexedTechnique;
+
+            if (
+                isTextTechnique(technique) ||
+                isPoiTechnique(technique) ||
+                isLineMarkerTechnique(technique)
+            ) {
+                // for screen-space techniques the `category` is used to assign
+                // priorities.
+                if (labelPriorities && typeof indexedTechnique._category === "string") {
+                    // override the `priority` when the technique uses `category`.
+                    const priority = labelPriorities.indexOf(indexedTechnique._category);
+                    if (priority !== -1) {
+                        technique.priority = labelPriorities.length - priority;
+                    }
+                }
+            } else if (priorities && indexedTechnique._styleSet !== undefined) {
+                // Compute the render order based on the style category and styleSet.
+                const computeRenderOrder = (category: string): number | undefined => {
+                    const priority = priorities?.findIndex(
+                        entry =>
+                            entry.group === indexedTechnique._styleSet &&
+                            entry.category === category
+                    );
+
+                    return priority !== undefined && priority !== -1
+                        ? (priority + 1) * 10
+                        : undefined;
+                };
+
+                if (typeof indexedTechnique._category === "string") {
+                    // override the renderOrder when the technique is using categories.
+                    const renderOrder = computeRenderOrder(indexedTechnique._category);
+
+                    if (renderOrder !== undefined) {
+                        technique.renderOrder = renderOrder;
+                    }
+                }
+
+                if (typeof indexedTechnique._secondaryCategory === "string") {
+                    // override the secondaryRenderOrder when the technique is using categories.
+                    const secondaryRenderOrder = computeRenderOrder(
+                        indexedTechnique._secondaryCategory
+                    );
+
+                    if (secondaryRenderOrder !== undefined) {
+                        (technique as any).secondaryRenderOrder = secondaryRenderOrder;
+                    }
+                }
+            }
+        });
     }
 
     private setupTerrainMaterial(

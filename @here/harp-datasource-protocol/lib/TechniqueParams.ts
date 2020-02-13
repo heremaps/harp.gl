@@ -184,6 +184,14 @@ export interface BaseTechniqueParams {
     renderOrder: number;
 
     /**
+     * The category of this technique.
+     *
+     * The category is used in conjunction with [[Theme.priorities]]
+     * to assign render orders to the objects created by this [[Style]].
+     */
+    category?: string;
+
+    /**
      *
      */
     renderOrderOffset?: number;
@@ -939,6 +947,10 @@ export interface SolidLineTechniqueParams extends BaseTechniqueParams, Polygonal
      * Default is `"Round"`.
      */
     secondaryCaps?: LineCaps;
+    /**
+     * Describes the category of the secondary geometry object created using this technique.
+     */
+    secondaryCategory?: number;
     /**
      * Describes the starting drawing position for the line (in the range [0...1]).
      * Default is `0.0`.

@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { DecodedTile, GeometryType } from "@here/harp-datasource-protocol";
+import { DecodedTile, GeometryType, IndexedTechnique } from "@here/harp-datasource-protocol";
 import { ViewRanges } from "@here/harp-datasource-protocol/lib/ViewRanges";
 import {
     mercatorProjection,
@@ -117,5 +117,68 @@ describe("TileGeometryCreator", () => {
         const imageData: ImageData = (userData.texture as THREE.DataTexture).image;
         assert.equal(imageData.width, decodedDisplacementMap.xCountVertices);
         assert.equal(imageData.height, decodedDisplacementMap.yCountVertices);
+    });
+
+    it("categories", () => {
+        type IndexedDecodedTile = Omit<DecodedTile, "techniques"> & {
+            techniques?: IndexedTechnique[];
+        };
+
+        const decodedTile: IndexedDecodedTile = {
+            geometries: [
+                {
+                    type: GeometryType.Polygon,
+                    vertexAttributes: [],
+                    groups: [{ start: 0, count: 1, technique: 0, createdOffsets: [] }]
+                },
+                {
+                    type: GeometryType.Polygon,
+                    vertexAttributes: [],
+                    groups: [{ start: 0, count: 1, technique: 1, createdOffsets: [] }]
+                }
+            ],
+            techniques: [
+                {
+                    _styleSet: "tilezen",
+                    _category: "hi-priority",
+                    _index: 0,
+                    _styleSetIndex: 0,
+                    _key: "key-0",
+                    renderOrder: -1,
+                    name: "line",
+                    color: "rgb(255,0,0)",
+                    lineWidth: 1
+                },
+                {
+                    _styleSet: "tilezen",
+                    _category: "low-priority",
+                    _index: 1,
+                    _styleSetIndex: 0,
+                    renderOrder: -1,
+                    _key: "key-0",
+                    name: "circles"
+                }
+            ]
+        };
+
+        const savedTheme = newTile.mapView.theme;
+
+        newTile.mapView.theme = {
+            priorities: [
+                { group: "tilezen", category: "low-priority" },
+                { group: "tilezen", category: "hi-priority" }
+            ]
+        };
+
+        newTile.decodedTile = decodedTile as DecodedTile;
+
+        tgc.processTechniques(newTile, undefined, undefined);
+        tgc.createObjects(newTile, decodedTile as DecodedTile);
+
+        assert.strictEqual(newTile.objects.length, 3);
+        assert.strictEqual(newTile.objects[1].renderOrder, 20);
+        assert.strictEqual(newTile.objects[2].renderOrder, 10);
+
+        newTile.mapView.theme = savedTheme;
     });
 });

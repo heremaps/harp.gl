@@ -202,11 +202,7 @@ export class PhasedTileGeometryLoader implements TileGeometryLoader {
         // First time this tile is handled:
         if (decodedTile === undefined && tile.decodedTile !== undefined) {
             decodedTile = this.setDecodedTile(tile.decodedTile);
-            TileGeometryCreator.instance.processTechniques(
-                decodedTile,
-                enabledKinds,
-                disabledKinds
-            );
+            TileGeometryCreator.instance.processTechniques(tile, enabledKinds, disabledKinds);
             tile.clear();
         }
 
