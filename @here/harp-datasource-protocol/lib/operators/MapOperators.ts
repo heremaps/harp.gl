@@ -36,7 +36,7 @@ const operators = {
             const pixels = context.evaluate(call.args[0]) as number;
             const scaleFactor = call.args[1] ? (context.evaluate(call.args[1]) as number) : 1;
             const zoom = context.env.lookup("$zoom") as number;
-            const zoomWidthDiscrete = Math.pow(2, 17) / Math.pow(2, Math.floor(zoom));
+            const zoomWidthDiscrete = Math.pow(2, 17.8) / Math.pow(2, Math.floor(zoom));
             const v = pixels * zoomWidthDiscrete * scaleFactor;
             return v;
         }
