@@ -245,6 +245,7 @@ export interface TileResourceInfo {
      */
     numTextElements: number;
     /**
+     * @deprecated This counter has been merged with numTextElements.
      * Number of user [[TextElement]]s in this tile.
      */
     numUserTextElements: number;
@@ -331,13 +332,6 @@ export class Tile implements CachedResource {
     /**
      * @hidden
      *
-     * Prepared text geometries optimized for display.
-     */
-    preparedTextPaths: TextPathGeometry[] | undefined;
-
-    /**
-     * @hidden
-     *
      * Used to tell if the Tile is used temporarily as a fallback tile.
      *
      * levelOffset is in in the range [-quadTreeSearchDistanceUp,
@@ -354,6 +348,13 @@ export class Tile implements CachedResource {
      */
     skipRendering = false;
 
+    /**
+     * @hidden
+     *
+     * Prepared text geometries optimized for display.
+     */
+    protected preparedTextPaths: TextPathGeometry[] | undefined;
+
     private m_disposed: boolean = false;
     private m_localTangentSpace = false;
 
@@ -363,15 +364,9 @@ export class Tile implements CachedResource {
     private m_decodedTile?: DecodedTile;
     private m_tileGeometryLoader?: TileGeometryLoader;
 
-    // TODO: Delay construction of text element groups until first text element is added.
-
-    // Used for [[TextElement]]s which the developer defines. Group created with maximum priority
-    // so that user text elements are placed before others.
-    private m_userTextElements = new TextElementGroup(Number.MAX_SAFE_INTEGER);
-
     // Used for [[TextElement]]s that are stored in the data, and that are placed explicitly,
     // fading in and out.
-    private readonly m_textElementGroups = new TextElementGroupPriorityList();
+    private m_textElementGroups = new TextElementGroupPriorityList();
 
     // Blocks other labels from showing.
     private readonly m_pathBlockingElements: PathBlockingElement[] = [];
@@ -499,56 +494,43 @@ export class Tile implements CachedResource {
     }
 
     /**
+     * @internal
+     * @deprecated
+     *
      * Gets the list of developer-defined [[TextElement]] in this `Tile`. This list is always
      * rendered first.
      */
     get userTextElements(): TextElementGroup {
-        return this.m_userTextElements;
+        return (
+            this.m_textElementGroups.groups.get(Number.MAX_SAFE_INTEGER) ??
+            new TextElementGroup(Number.MAX_SAFE_INTEGER)
+        );
     }
 
     /**
      * Adds a developer-defined [[TextElement]] to this `Tile`. The [[TextElement]] is always
      * visible, if it's in the map's currently visible area.
      *
+     * @deprecated use [[addTextElement]].
+     *
      * @param textElement The Text element to add.
      */
     addUserTextElement(textElement: TextElement) {
-        if (this.m_textElementsChanged === false) {
-            // HARP-8733: Text content in the tile is about to change, but it has already been
-            // rendered at least once (otherwise m_textElementsChanged would be undefined). Clone
-            // the text element group so that it's handled as a new group by TextElementsRenderer
-            // and it doesn't reuse the same state stored for the old one.
-            // TODO: HARP-8910 Deprecate user text elements.
-            this.m_userTextElements = this.m_userTextElements.clone();
-        }
-
-        this.m_userTextElements.elements.push(textElement);
-        this.textElementsChanged = true;
+        textElement.priority = Number.MAX_SAFE_INTEGER;
+        this.addTextElement(textElement);
     }
 
     /**
      * Removes a developer-defined [[TextElement]] from this `Tile`.
      *
+     * @deprecated use [[removeTextElement]].
+     *
      * @param textElement A developer-defined TextElement to remove.
      * @returns `true` if the element has been removed successfully; `false` otherwise.
      */
     removeUserTextElement(textElement: TextElement): boolean {
-        const foundIndex = this.m_userTextElements.elements.indexOf(textElement);
-        if (foundIndex === -1) {
-            return false;
-        }
-
-        if (this.m_textElementsChanged === false) {
-            // HARP-8733: Text content in the tile is about to change, but it has already been
-            // rendered at least once (otherwise m_textElementsChanged would be undefined). Clone
-            // the text element group so that it's handled as a new group by TextElementsRenderer
-            // and it doesn't reuse the same state stored for the old one.
-            // TODO: HARP-8910 Deprecate user text elements.
-            this.m_userTextElements = this.m_userTextElements.clone();
-        }
-        this.m_userTextElements.elements.splice(foundIndex, 1);
-        this.textElementsChanged = true;
-        return true;
+        textElement.priority = Number.MAX_SAFE_INTEGER;
+        return this.removeTextElement(textElement);
     }
 
     /**
@@ -564,6 +546,13 @@ export class Tile implements CachedResource {
      */
     addTextElement(textElement: TextElement) {
         this.textElementGroups.add(textElement);
+
+        if (this.m_textElementsChanged === false) {
+            // HARP-8733: Clone all groups so that they are handled as new element groups
+            // by TextElementsRenderer and it doesn't try to reuse the same state stored
+            // for the old groups.
+            this.m_textElementGroups = this.textElementGroups.clone();
+        }
         this.textElementsChanged = true;
     }
 
@@ -585,14 +574,23 @@ export class Tile implements CachedResource {
      * @returns `true` if the TextElement has been removed successfully; `false` otherwise.
      */
     removeTextElement(textElement: TextElement): boolean {
-        if (this.textElementGroups.remove(textElement)) {
-            this.textElementsChanged = true;
-            return true;
+        const groups = this.textElementGroups;
+        if (!groups.remove(textElement)) {
+            return false;
         }
-        return false;
+        if (this.m_textElementsChanged === false) {
+            // HARP-8733: Clone all groups so that they are handled as new element groups
+            // by TextElementsRenderer and it doesn't try to reuse the same state stored
+            // for the old groups.
+            this.m_textElementGroups = groups.clone();
+        }
+        this.textElementsChanged = true;
+        return true;
     }
 
     /**
+     * @internal
+     *
      * Gets the current [[GroupedPriorityList]] which contains a list of all [[TextElement]]s to be
      * selected and placed for rendering.
      */
@@ -616,7 +614,7 @@ export class Tile implements CachedResource {
      * Returns true if the `Tile` has any text elements to render.
      */
     hasTextElements(): boolean {
-        return this.m_textElementGroups.count() > 0 || this.m_userTextElements.elements.length > 0;
+        return this.m_textElementGroups.count() > 0;
     }
 
     /**
@@ -985,10 +983,12 @@ export class Tile implements CachedResource {
      * Removes all [[TextElement]] from the tile.
      */
     clearTextElements() {
-        this.textElementsChanged = this.hasTextElements();
+        if (!this.hasTextElements()) {
+            return;
+        }
+        this.textElementsChanged = true;
         this.m_pathBlockingElements.splice(0);
         this.textElementGroups.clear();
-        this.userTextElements.elements.length = 0;
     }
 
     /**
@@ -1007,7 +1007,6 @@ export class Tile implements CachedResource {
             this.m_tileGeometryLoader = undefined;
         }
         this.clear();
-        this.userTextElements.elements.length = 0;
         this.m_disposed = true;
         // Ensure that tile is removable from tile cache.
         this.frameNumLastRequested = 0;
@@ -1026,7 +1025,6 @@ export class Tile implements CachedResource {
         let heapSize = 0;
         let num3dObjects = 0;
         let numTextElements = 0;
-        let numUserTextElements = 0;
 
         const aggregatedObjSize = {
             heapSize: 0,
@@ -1047,12 +1045,10 @@ export class Tile implements CachedResource {
         for (const group of this.textElementGroups.groups) {
             numTextElements += group[1].elements.length;
         }
-        numUserTextElements = this.userTextElements.elements.length;
-
         // 216 was the shallow size of a single TextElement last time it has been checked, 312 bytes
         // was the minimum retained size of a TextElement that was not being rendered. If a
         // TextElement is actually rendered, the size may be _much_ bigger.
-        heapSize += (numTextElements + numUserTextElements) * 312;
+        heapSize += numTextElements * 312;
 
         if (this.m_decodedTile !== undefined && this.m_decodedTile.tileInfo !== undefined) {
             aggregatedObjSize.heapSize += this.m_decodedTile.tileInfo.numBytes;
@@ -1067,7 +1063,7 @@ export class Tile implements CachedResource {
             gpuSize: aggregatedObjSize.gpuSize,
             num3dObjects,
             numTextElements,
-            numUserTextElements
+            numUserTextElements: 0
         };
     }
 }
