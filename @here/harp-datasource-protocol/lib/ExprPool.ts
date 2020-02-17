@@ -33,6 +33,8 @@ export class ExprPool implements ExprVisitor<Expr, void> {
     private readonly m_varExprs = new Map<string, VarExpr>();
     private readonly m_hasAttributeExprs = new Map<string, HasAttributeExpr>();
     private readonly m_inExprs = new Map<Expr, ContainsExpr[]>();
+    private readonly m_matchExprs: MatchExpr[] = [];
+    private readonly m_caseExprs: CaseExpr[] = [];
     private readonly m_callExprs = new Map<string, CallExpr[]>();
 
     /**
@@ -133,7 +135,33 @@ export class ExprPool implements ExprVisitor<Expr, void> {
             body.accept(this, context)
         ]);
         const fallback = expr.fallback.accept(this, context);
-        return new MatchExpr(value, branches, fallback);
+        for (const candidate of this.m_matchExprs) {
+            if (candidate.value !== value) {
+                continue;
+            }
+            if (candidate.fallback !== fallback) {
+                continue;
+            }
+            if (candidate.branches.length !== branches.length) {
+                continue;
+            }
+            let branchesMatching = true;
+            for (let i = 0; i < branches.length; i++) {
+                if (
+                    branches[i][0] !== candidate.branches[i][0] ||
+                    branches[i][1] !== candidate.branches[i][1]
+                ) {
+                    branchesMatching = false;
+                    break;
+                }
+            }
+            if (branchesMatching) {
+                return candidate;
+            }
+        }
+        const r = new MatchExpr(value, branches, fallback);
+        this.m_matchExprs.push(r);
+        return r;
     }
 
     visitCaseExpr(expr: CaseExpr, context: void): Expr {
@@ -142,7 +170,32 @@ export class ExprPool implements ExprVisitor<Expr, void> {
             body.accept(this, context)
         ]);
         const fallback = expr.fallback.accept(this, context);
-        return new CaseExpr(branches, fallback);
+
+        for (const candidate of this.m_caseExprs) {
+            if (candidate.fallback !== fallback) {
+                continue;
+            }
+            if (candidate.branches.length !== branches.length) {
+                continue;
+            }
+            let branchesMatching = true;
+            for (let i = 0; i < branches.length; i++) {
+                if (
+                    branches[i][0] !== candidate.branches[i][0] ||
+                    branches[i][1] !== candidate.branches[i][1]
+                ) {
+                    branchesMatching = false;
+                    break;
+                }
+            }
+            if (branchesMatching) {
+                return candidate;
+            }
+        }
+
+        const r = new CaseExpr(branches, fallback);
+        this.m_caseExprs.push(r);
+        return r;
     }
 
     visitCallExpr(expr: CallExpr, context: void): Expr {

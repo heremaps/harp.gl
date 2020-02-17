@@ -25,7 +25,14 @@ describe("ExprPool", function() {
             "all",
             ["==", ["get", "a"], 1],
             ["any", ["!=", ["get", "b"], 123], ["==", ["get", "x"], 2]]
-        ]
+        ],
+        [
+            "case",
+            ["<=", ["interpolate", ["linear"], ["zoom"], 0, 0, 5, 0, 5, 9], 0],
+            0,
+            ["ppi-scale", ["step", ["zoom"], 2, 10, 0], ["+", ["*", ["-", ["ppi"], 72], 0.004], 1]]
+        ],
+        ["match", ["get", "kind"], "locality", ["get", "attribute"], null]
     ];
 
     expressions.forEach(expr => {
