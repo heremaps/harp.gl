@@ -524,8 +524,13 @@ export interface MapViewOptions extends TextElementsRendererOptions {
     maxFps?: number;
 
     /**
-     * Enable phased loading. If `false`, the geometry on a [[Tile]] is always being created in a
-     * single step, instead of (potentially) over multiple frames to smoothen animations.
+     * Enable phased loading.
+     *
+     * Enabling this feature allows to minimize performance overhead by distributing geometry
+     * creation over multiple frames, thus decreasing CPU load at single frame for smoother
+     * application feedback and animations.
+     * If `false` or undefined, the geometry on a [[Tile]] is always being created in a single
+     * step, instead of (potentially) over multiple frames.
      *
      * @default `false`
      */
@@ -1744,10 +1749,10 @@ export class MapView extends THREE.EventDispatcher {
     /**
      * Returns 'true' if the phased loading is currently enabled.
      *
-     * @default true.
+     * @default `false`.
      */
     get phasedLoadingEnabled(): boolean {
-        return this.m_options.enablePhasedLoading !== false;
+        return this.m_options.enablePhasedLoading === true;
     }
 
     /**
