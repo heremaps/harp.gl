@@ -21,7 +21,7 @@ env:
 before_install:
   - curl -o- -L https://yarnpkg.com/install.sh | bash -s -- --version 1.13.0
   - export PATH="$HOME/.yarn/bin:$PATH"
-  - npm install codecov -g
+  - yarn global add codecov
 
 jobs:
   include:
