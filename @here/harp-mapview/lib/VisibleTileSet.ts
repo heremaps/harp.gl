@@ -857,7 +857,7 @@ export class VisibleTileSet {
         }
         if (dataSource.isFullyCovering()) {
             const ts = dataSource.getTilingScheme();
-            let map = this.m_coveringMap.get(ts)!;
+            let map = this.m_coveringMap.get(ts);
             if (map === undefined) {
                 map = new Map<number, Tile>();
                 this.m_coveringMap.set(ts, map);
