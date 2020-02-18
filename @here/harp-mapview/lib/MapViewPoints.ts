@@ -9,7 +9,7 @@ import { PickingRaycaster } from "./PickingRaycaster";
 
 /**
  * `MapViewPoints` is a class to extend for the `"circles"` and `"squares"` [[Technique]]s to
- * implement raycasting of [[THREE.Points]] as expected in [[MapView]], that is in screen space. It
+ * implement raycasting of [[THREE.Points]] as expected in [[MapView]], that are in screen space. It
  * copies the behaviour of the `raycast` method in [[THREE.Points]] and dispatches it to its
  * children classes, [[Circles]] and [[Squares]], who hold the intersection testing in the
  * `testPoint` method. This class also has the ability to dismiss the testing via the
@@ -64,11 +64,10 @@ export abstract class MapViewPoints extends THREE.Points {
         const screenCoords = raycaster.ray.origin
             .clone()
             .add(raycaster.ray.direction)
-            .project(raycaster.mapView.camera);
-        const { clientWidth, clientHeight } = raycaster.mapView.canvas;
+            .project(raycaster.camera);
         const mouseCoords = new THREE.Vector2(
-            Math.ceil(((screenCoords.x + 1) / 2) * clientWidth),
-            Math.ceil(((1 - screenCoords.y) / 2) * clientHeight)
+            Math.ceil(((screenCoords.x + 1) / 2) * raycaster.width),
+            Math.ceil(((1 - screenCoords.y) / 2) * raycaster.height)
         );
 
         if (geometry instanceof THREE.BufferGeometry) {
@@ -81,13 +80,7 @@ export abstract class MapViewPoints extends THREE.Points {
                 for (let i = 0, il = indices.length; i < il; i++) {
                     const a = indices[i];
                     point.fromArray(positions as number[], a * 3);
-                    const pointInfo = getPointInfo(
-                        point,
-                        matrixWorld,
-                        raycaster,
-                        clientWidth,
-                        clientHeight
-                    );
+                    const pointInfo = getPointInfo(point, matrixWorld, raycaster);
                     if (pointInfo.pointIsOnScreen) {
                         this.testPoint(
                             point,
@@ -102,13 +95,7 @@ export abstract class MapViewPoints extends THREE.Points {
             } else {
                 for (let i = 0, l = positions.length / 3; i < l; i++) {
                     point.fromArray(positions as number[], i * 3);
-                    const pointInfo = getPointInfo(
-                        point,
-                        matrixWorld,
-                        raycaster,
-                        clientWidth,
-                        clientHeight
-                    );
+                    const pointInfo = getPointInfo(point, matrixWorld, raycaster);
                     if (pointInfo.pointIsOnScreen) {
                         this.testPoint(
                             point,
@@ -125,13 +112,7 @@ export abstract class MapViewPoints extends THREE.Points {
             const vertices = geometry.vertices;
             for (let index = 0; index < vertices.length; index++) {
                 const point = vertices[index];
-                const pointInfo = getPointInfo(
-                    point,
-                    matrixWorld,
-                    raycaster,
-                    clientWidth,
-                    clientHeight
-                );
+                const pointInfo = getPointInfo(point, matrixWorld, raycaster);
                 if (pointInfo.pointIsOnScreen) {
                     this.testPoint(
                         point,
@@ -150,9 +131,7 @@ export abstract class MapViewPoints extends THREE.Points {
 function getPointInfo(
     point: THREE.Vector3,
     matrixWorld: THREE.Matrix4,
-    raycaster: PickingRaycaster,
-    width: number,
-    height: number
+    raycaster: PickingRaycaster
 ): {
     pointIsOnScreen: boolean;
     absoluteScreenPosition?: THREE.Vector2;
@@ -161,7 +140,7 @@ function getPointInfo(
     const worldPosition = point.clone();
     worldPosition.applyMatrix4(matrixWorld);
     const distance = worldPosition.distanceTo(raycaster.ray.origin);
-    worldPosition.project(raycaster.mapView.camera);
+    worldPosition.project(raycaster.camera);
     const relativeScreenPosition = new THREE.Vector2(worldPosition.x, worldPosition.y);
     const pointIsOnScreen =
         relativeScreenPosition.x < 1 &&
@@ -169,8 +148,8 @@ function getPointInfo(
         relativeScreenPosition.y < 1 &&
         relativeScreenPosition.y > -1;
     if (pointIsOnScreen) {
-        worldPosition.x = ((worldPosition.x + 1) / 2) * width;
-        worldPosition.y = ((1 - worldPosition.y) / 2) * height;
+        worldPosition.x = ((worldPosition.x + 1) / 2) * raycaster.width;
+        worldPosition.y = ((1 - worldPosition.y) / 2) * raycaster.height;
         const absoluteScreenPosition = new THREE.Vector2(worldPosition.x, worldPosition.y);
         return {
             absoluteScreenPosition,
