@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 HERE Europe B.V.
+ * Copyright (C) 2017-2020 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -74,6 +74,10 @@ import {
     AttrEvaluationContext,
     evaluateTechniqueAttr
 } from "@here/harp-datasource-protocol/lib/TechniqueAttr";
+import {
+    EdgeLengthGeometrySubdivisionModifier,
+    SubdivisionMode
+} from "@here/harp-geometry/lib/EdgeLengthGeometrySubdivisionModifier";
 // tslint:disable-next-line:max-line-length
 import { SphericalGeometrySubdivisionModifier } from "@here/harp-geometry/lib/SphericalGeometrySubdivisionModifier";
 import { ExtrusionFeatureDefs } from "@here/harp-materials/lib/MapMeshMaterialsDefs";
@@ -1416,6 +1420,21 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                         geom.setAttribute("wall", edgeAttr);
                         const indexAttr = new THREE.BufferAttribute(new Uint32Array(triangles), 1);
                         geom.setIndex(indexAttr);
+
+                        // Increase tesselation of polygons for certain zoom levels
+                        // to remove mixed LOD cracks
+                        const zoomLevel = this.m_decodeInfo.tileKey.level;
+                        if (zoomLevel >= 3 && zoomLevel < 9) {
+                            const subdivision = Math.pow(2, 9 - zoomLevel);
+                            const { geoBox } = this.m_decodeInfo;
+                            const edgeModifier = new EdgeLengthGeometrySubdivisionModifier(
+                                subdivision,
+                                geoBox,
+                                SubdivisionMode.NoDiagonals,
+                                webMercatorProjection
+                            );
+                            edgeModifier.modify(geom);
+                        }
 
                         // FIXME(HARP-5700): Subdivision modifier ignores texture coordinates.
                         const modifier = new SphericalGeometrySubdivisionModifier(

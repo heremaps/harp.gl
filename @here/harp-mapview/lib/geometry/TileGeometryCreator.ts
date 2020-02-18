@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 HERE Europe B.V.
+ * Copyright (C) 2017-2020 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -1294,12 +1294,13 @@ export class TileGeometryCreator {
      */
     addGroundPlane(tile: Tile, renderOrder: number) {
         const mapView = tile.mapView;
+        const depthWrite = mapView.projection.type === ProjectionType.Spherical;
         const color = mapView.clearColor;
 
         const material = new MapMeshBasicMaterial({
             color,
             visible: true,
-            depthWrite: true
+            depthWrite
         });
         const mesh = this.createGroundPlane(tile, material, false);
         mesh.renderOrder = renderOrder;
