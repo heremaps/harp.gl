@@ -54,12 +54,14 @@ export const DEFAULT_TEXT_STYLE_CACHE_ID = "Default";
  *
  * @returns [[TextStyle]] id.
  */
-export function computeStyleCacheId(
-    datasourceName: string,
+function computeStyleCacheId(
+    tile: Tile,
     technique: Technique & Partial<IndexedTechniqueParams>,
     zoomLevel: number
 ): string {
-    return `${datasourceName}_${technique._key}_${zoomLevel}`;
+    const datasourceName = tile.dataSource.name;
+    const key = `${datasourceName}_${tile.tileKey.toHereTile()}_${technique._index}_${zoomLevel}`;
+    return key;
 }
 
 /**
@@ -301,11 +303,12 @@ export class TextStyleCache {
         technique: TextTechnique | PoiTechnique | LineMarkerTechnique
     ): TextRenderStyle {
         const mapView = tile.mapView;
-        const dataSource = tile.dataSource;
         const zoomLevel = mapView.zoomLevel;
         const zoomLevelInt = Math.floor(zoomLevel);
 
-        const cacheId = computeStyleCacheId(dataSource.name, technique, zoomLevelInt);
+        //console.log("got here", tile.decodedTile?.techniques.indexOf(technique));
+
+        const cacheId = computeStyleCacheId(tile, technique, zoomLevelInt);
         let renderStyle = this.m_textRenderStyleCache.get(cacheId);
         if (renderStyle === undefined) {
             const defaultRenderParams = this.m_defaultStyle.renderParams;
@@ -435,7 +438,7 @@ export class TextStyleCache {
         technique: TextTechnique | PoiTechnique | LineMarkerTechnique
     ): TextLayoutStyle {
         const floorZoomLevel = Math.floor(tile.mapView.zoomLevel);
-        const cacheId = computeStyleCacheId(tile.dataSource.name, technique, floorZoomLevel);
+        const cacheId = computeStyleCacheId(tile, technique, floorZoomLevel);
         let layoutStyle = this.m_textLayoutStyleCache.get(cacheId);
 
         if (layoutStyle === undefined) {

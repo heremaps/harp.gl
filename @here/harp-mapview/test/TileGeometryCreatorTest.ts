@@ -143,7 +143,6 @@ describe("TileGeometryCreator", () => {
                     _category: "hi-priority",
                     _index: 0,
                     _styleSetIndex: 0,
-                    _key: "key-0",
                     renderOrder: -1,
                     name: "line",
                     color: "rgb(255,0,0)",
@@ -155,7 +154,6 @@ describe("TileGeometryCreator", () => {
                     _index: 1,
                     _styleSetIndex: 0,
                     renderOrder: -1,
-                    _key: "key-0",
                     name: "circles"
                 }
             ]

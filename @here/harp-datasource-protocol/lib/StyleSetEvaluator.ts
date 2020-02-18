@@ -852,7 +852,6 @@ export class StyleSetEvaluator {
 
         technique._index = this.m_techniques.length;
         technique._styleSetIndex = style._styleSetIndex!;
-        technique._key = key;
         if (style.styleSet !== undefined) {
             technique._styleSet = style.styleSet;
         }

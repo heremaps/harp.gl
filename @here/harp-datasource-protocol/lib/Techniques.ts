@@ -522,13 +522,6 @@ export interface IndexedTechniqueParams {
     _index: number;
 
     /**
-     * Unique technique key derived from all dynamic expressions that were input to this particular
-     * technique instance.
-     * @hidden
-     */
-    _key: string;
-
-    /**
      * Optimization: Unique [[Technique]] index of [[Style]] from which technique was derived.
      * @hidden
      */

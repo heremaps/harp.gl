@@ -221,8 +221,7 @@ describe("ExtendedTileInfo", function() {
             size: index,
             renderOrder: 0,
             _index: index,
-            _styleSetIndex: index,
-            _key: `${index}`
+            _styleSetIndex: index
         };
         const storedTechnique: IndexedTechnique = {
             name: "squares",
@@ -230,8 +229,7 @@ describe("ExtendedTileInfo", function() {
             size: index,
             renderOrder: 0,
             _index: index,
-            _styleSetIndex: index,
-            _key: `${index}`
+            _styleSetIndex: index
         };
         const env = new MapEnv({
             $layer: "point_layer-" + index,
@@ -260,8 +258,7 @@ describe("ExtendedTileInfo", function() {
             lineWidth: index,
             renderOrder: 0,
             _index: index,
-            _styleSetIndex: index,
-            _key: `${index}`
+            _styleSetIndex: index
         };
         const storedTechnique: IndexedTechnique = {
             name: "line",
@@ -269,8 +266,7 @@ describe("ExtendedTileInfo", function() {
             lineWidth: index,
             renderOrder: 0,
             _index: index,
-            _styleSetIndex: index,
-            _key: `${index}`
+            _styleSetIndex: index
         };
         const env = new MapEnv({
             $layer: "line_layer-" + index,
@@ -298,16 +294,14 @@ describe("ExtendedTileInfo", function() {
             color: "#00f",
             renderOrder: 0,
             _index: index,
-            _styleSetIndex: index,
-            _key: `${index}`
+            _styleSetIndex: index
         };
         const storedTechnique: IndexedTechnique = {
             name: "fill",
             color: "#00f",
             renderOrder: 0,
             _index: index,
-            _styleSetIndex: index,
-            _key: `${index}`
+            _styleSetIndex: index
         };
         const env = new MapEnv({
             $layer: "fill_layer-" + index,
