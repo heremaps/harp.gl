@@ -369,7 +369,8 @@ export class Tile implements CachedResource {
     // Blocks other labels from showing.
     private readonly m_pathBlockingElements: PathBlockingElement[] = [];
 
-    // If `true`, the text content of the [[Tile]] changed.
+    // If `true`, the text content of the [[Tile]] changed after the last time it was rendered.
+    // It's `Undefined` when no text content has been added yet.
     private m_textElementsChanged: boolean | undefined;
 
     private m_visibleArea: number = 0;
@@ -506,6 +507,11 @@ export class Tile implements CachedResource {
      */
     addUserTextElement(textElement: TextElement) {
         if (this.m_textElementsChanged === false) {
+            // HARP-8733: Text content in the tile is about to change, but it has already been
+            // rendered at least once (otherwise m_textElementsChanged would be undefined). Clone
+            // the text element group so that it's handled as a new group by TextElementsRenderer
+            // and it doesn't reuse the same state stored for the old one.
+            // TODO: HARP-8910 Deprecate user text elements.
             this.m_userTextElements = this.m_userTextElements.clone();
         }
 
@@ -526,6 +532,11 @@ export class Tile implements CachedResource {
         }
 
         if (this.m_textElementsChanged === false) {
+            // HARP-8733: Text content in the tile is about to change, but it has already been
+            // rendered at least once (otherwise m_textElementsChanged would be undefined). Clone
+            // the text element group so that it's handled as a new group by TextElementsRenderer
+            // and it doesn't reuse the same state stored for the old one.
+            // TODO: HARP-8910 Deprecate user text elements.
             this.m_userTextElements = this.m_userTextElements.clone();
         }
         this.m_userTextElements.elements.splice(foundIndex, 1);
