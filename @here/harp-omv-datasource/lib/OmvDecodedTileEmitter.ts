@@ -757,15 +757,22 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                     let coords = outline;
 
                     if (isFilled || isStandard) {
-                        if (!clipRing) {
-                            clipRing = [
-                                new THREE.Vector2(0, 0),
-                                new THREE.Vector2(extents, 0),
-                                new THREE.Vector2(extents, extents),
-                                new THREE.Vector2(0, extents)
-                            ];
+                        const shouldClipPolygon = coords.some(
+                            p => p.x < 0 || p.x > extents || p.y < 0 || p.y > extents
+                        );
+
+                        if (shouldClipPolygon) {
+                            if (!clipRing) {
+                                clipRing = [
+                                    new THREE.Vector2(0, 0),
+                                    new THREE.Vector2(extents, 0),
+                                    new THREE.Vector2(extents, extents),
+                                    new THREE.Vector2(0, extents)
+                                ];
+                            }
+
+                            coords = clipPolygon(coords, clipRing);
                         }
-                        coords = clipPolygon(coords, clipRing);
                     }
 
                     if (coords.length === 0) {
