@@ -541,7 +541,7 @@ export class VisibleTileSet {
                     tile.numFramesVisible++;
                     // If this tile's data source is "covering", then remove all others from the
                     // cache and prevent it from loading.
-                    this.removeDuplicateFullyCobveringTiles(dataSource, tile);
+                    this.removeDuplicateFullyCoveringTiles(dataSource, tile);
 
                     if (tile.frameNumVisible < 0) {
                         // Store the fist frame the tile became visible.
@@ -849,7 +849,7 @@ export class VisibleTileSet {
      * Disposes of tiles that overlap twice and that come from a [[DataSource]] where the [[Tiles]]s
      * are fully covering.
      **/
-    private removeDuplicateFullyCobveringTiles(dataSource: DataSource, tile: Tile) {
+    private removeDuplicateFullyCoveringTiles(dataSource: DataSource, tile: Tile) {
         if (this.options.projection.type === ProjectionType.Spherical) {
             // HARP-7899, currently the globe has no background planes in the tiles (it relies on
             // the BackgroundDataSource), because the LOD mismatches, hence disabling for globe.
