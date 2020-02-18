@@ -6,14 +6,14 @@
 
 import {
     ExtendedTileInfo,
-    getPropertyValue,
     LineTechnique,
     SolidLineTechnique
 } from "@here/harp-datasource-protocol";
 import { Expr } from "@here/harp-datasource-protocol/lib/Expr";
+import { SolidLineMaterial } from "@here/harp-materials";
 import { assert, LoggerManager, Math2D } from "@here/harp-utils";
 import * as THREE from "three";
-import { compileTechniques } from "./DecodedTileHelpers";
+import { compileTechniques, getNumberPropertyValueSafe } from "./DecodedTileHelpers";
 import { MapView } from "./MapView";
 import { PickObjectType, PickResult } from "./PickHandler";
 import { RoadIntersectionData, Tile } from "./Tile";
@@ -83,7 +83,11 @@ export class RoadPicker {
                               const unitFactor =
                                   technique.metricUnit === "Pixel" ? mapView.pixelToWorld : 1.0;
                               return (
-                                  getPropertyValue(technique.lineWidth, mapView.env) *
+                                  getNumberPropertyValueSafe(
+                                      technique.lineWidth,
+                                      SolidLineMaterial.DEFAULT_WIDTH,
+                                      mapView.env
+                                  ) *
                                   unitFactor *
                                   0.5
                               );

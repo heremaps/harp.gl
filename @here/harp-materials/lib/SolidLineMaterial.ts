@@ -377,6 +377,7 @@ export class SolidLineMaterial extends THREE.RawShaderMaterial
     static DEFAULT_COLOR: number = 0xff0000;
     static DEFAULT_WIDTH: number = 1.0;
     static DEFAULT_OUTLINE_WIDTH: number = 0.0;
+    static DEFAULT_OUTLINE_COLOR: number = SolidLineMaterial.DEFAULT_COLOR;
     static DEFAULT_OPACITY: number = 1.0;
     static DEFAULT_DRAW_RANGE_START: number = 0.0;
     static DEFAULT_DRAW_RANGE_END: number = 1.0;
@@ -436,7 +437,7 @@ export class SolidLineMaterial extends THREE.RawShaderMaterial
                     diffuse: new THREE.Uniform(new THREE.Color(SolidLineMaterial.DEFAULT_COLOR)),
                     dashColor: new THREE.Uniform(new THREE.Color(SolidLineMaterial.DEFAULT_COLOR)),
                     outlineColor: new THREE.Uniform(
-                        new THREE.Color(SolidLineMaterial.DEFAULT_COLOR)
+                        new THREE.Color(SolidLineMaterial.DEFAULT_OUTLINE_COLOR)
                     ),
                     lineWidth: new THREE.Uniform(SolidLineMaterial.DEFAULT_WIDTH),
                     outlineWidth: new THREE.Uniform(SolidLineMaterial.DEFAULT_OUTLINE_WIDTH),

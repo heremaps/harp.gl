@@ -63,6 +63,8 @@ import {
     compileTechniques,
     createMaterial,
     getBufferAttribute,
+    getColorPropertyValueSafe,
+    getNumberPropertyValueSafe,
     getObjectConstructor
 } from "../DecodedTileHelpers";
 import {
@@ -392,18 +394,17 @@ export class TileGeometryCreator {
                 }
 
                 // Make sorting stable.
-                const priority =
-                    technique.priority !== undefined
-                        ? getPropertyValue(technique.priority, discreteZoomEnv)
-                        : 0;
-                const fadeNear =
-                    technique.fadeNear !== undefined
-                        ? getPropertyValue(technique.fadeNear, discreteZoomEnv)
-                        : technique.fadeNear;
-                const fadeFar =
-                    technique.fadeFar !== undefined
-                        ? getPropertyValue(technique.fadeFar, discreteZoomEnv)
-                        : technique.fadeFar;
+                const priority = getNumberPropertyValueSafe(technique.priority, 0, discreteZoomEnv);
+                const fadeNear = getNumberPropertyValueSafe(
+                    technique.fadeNear,
+                    undefined,
+                    discreteZoomEnv
+                );
+                const fadeFar = getNumberPropertyValueSafe(
+                    technique.fadeFar,
+                    undefined,
+                    discreteZoomEnv
+                );
                 const userData = textPath.objInfos;
                 const featureId = getFeatureId(userData);
                 const textElement = new TextElement(
@@ -469,18 +470,17 @@ export class TileGeometryCreator {
                     continue;
                 }
 
-                const priority =
-                    technique.priority !== undefined
-                        ? getPropertyValue(technique.priority, discreteZoomEnv)
-                        : 0;
-                const fadeNear =
-                    technique.fadeNear !== undefined
-                        ? getPropertyValue(technique.fadeNear, discreteZoomEnv)
-                        : technique.fadeNear;
-                const fadeFar =
-                    technique.fadeFar !== undefined
-                        ? getPropertyValue(technique.fadeFar, discreteZoomEnv)
-                        : technique.fadeFar;
+                const priority = getNumberPropertyValueSafe(technique.priority, 0, discreteZoomEnv);
+                const fadeNear = getNumberPropertyValueSafe(
+                    technique.fadeNear,
+                    undefined,
+                    discreteZoomEnv
+                );
+                const fadeFar = getNumberPropertyValueSafe(
+                    technique.fadeFar,
+                    undefined,
+                    discreteZoomEnv
+                );
 
                 for (let i = 0; i < numPositions; ++i) {
                     const x = positions.getX(i) + worldOffsetX;
@@ -772,26 +772,41 @@ export class TileGeometryCreator {
                             }
 
                             lineMaterial.lineWidth =
-                                getPropertyValue(technique.lineWidth, mapView.env) *
+                                getNumberPropertyValueSafe(
+                                    technique.lineWidth,
+                                    SolidLineMaterial.DEFAULT_WIDTH,
+                                    mapView.env
+                                ) *
                                 unitFactor *
                                 0.5;
 
                             if (technique.outlineWidth !== undefined) {
                                 lineMaterial.outlineWidth =
-                                    getPropertyValue(technique.outlineWidth, mapView.env) *
-                                    unitFactor;
+                                    getNumberPropertyValueSafe(
+                                        technique.outlineWidth,
+                                        SolidLineMaterial.DEFAULT_OUTLINE_WIDTH,
+                                        mapView.env
+                                    ) * unitFactor;
                             }
 
                             if (technique.dashSize !== undefined) {
                                 lineMaterial.dashSize =
-                                    getPropertyValue(technique.dashSize, mapView.env) *
+                                    getNumberPropertyValueSafe(
+                                        technique.dashSize,
+                                        SolidLineMaterial.DEFAULT_DASH_SIZE,
+                                        mapView.env
+                                    ) *
                                     unitFactor *
                                     0.5;
                             }
 
                             if (technique.gapSize !== undefined) {
                                 lineMaterial.gapSize =
-                                    getPropertyValue(technique.gapSize, mapView.env) *
+                                    getNumberPropertyValueSafe(
+                                        technique.gapSize,
+                                        SolidLineMaterial.DEFAULT_GAP_SIZE,
+                                        mapView.env
+                                    ) *
                                     unitFactor *
                                     0.5;
                             }
@@ -911,7 +926,8 @@ export class TileGeometryCreator {
                         technique.animateExtrusion,
                         discreteZoomEnv
                     );
-                    if (animateExtrusionValue !== undefined) {
+
+                    if (animateExtrusionValue !== null) {
                         animateExtrusionValue =
                             typeof animateExtrusionValue === "boolean"
                                 ? animateExtrusionValue
@@ -920,14 +936,15 @@ export class TileGeometryCreator {
                                 : false;
                     }
                     extrusionAnimationEnabled =
-                        animateExtrusionValue !== undefined &&
+                        animateExtrusionValue !== null &&
                         animatedExtrusionHandler.forceEnabled === false
                             ? animateExtrusionValue
                             : animatedExtrusionHandler.enabled;
                 }
 
                 const renderDepthPrePass =
-                    isExtrudedPolygonTechnique(technique) && isRenderDepthPrePassEnabled(technique);
+                    isExtrudedPolygonTechnique(technique) &&
+                    isRenderDepthPrePassEnabled(technique, mapView.env);
 
                 if (renderDepthPrePass) {
                     const depthPassMesh = createDepthPrePassMesh(object as THREE.Mesh);
@@ -1152,12 +1169,14 @@ export class TileGeometryCreator {
                             }
 
                             if (outlineTechnique.secondaryWidth !== undefined) {
-                                const techniqueLineWidth = getPropertyValue(
-                                    outlineTechnique.lineWidth!,
+                                const techniqueLineWidth = getNumberPropertyValueSafe(
+                                    outlineTechnique.lineWidth,
+                                    SolidLineMaterial.DEFAULT_WIDTH,
                                     mapView.env
                                 );
-                                const techniqueSecondaryWidth = getPropertyValue(
-                                    outlineTechnique.secondaryWidth!,
+                                const techniqueSecondaryWidth = getNumberPropertyValueSafe(
+                                    outlineTechnique.secondaryWidth,
+                                    SolidLineMaterial.DEFAULT_OUTLINE_WIDTH,
                                     mapView.env
                                 );
                                 const techniqueOpacity = getPropertyValue(
@@ -1476,14 +1495,16 @@ export class TileGeometryCreator {
         env: Env,
         technique: MakeTechniqueAttrs<BaseTechniqueParams>
     ): FadingParameters {
-        const fadeNear =
-            technique.fadeNear !== undefined
-                ? getPropertyValue(technique.fadeNear, env)
-                : FadingFeature.DEFAULT_FADE_NEAR;
-        const fadeFar =
-            technique.fadeFar !== undefined
-                ? getPropertyValue(technique.fadeFar, env)
-                : FadingFeature.DEFAULT_FADE_FAR;
+        const fadeNear = getNumberPropertyValueSafe(
+            technique.fadeNear,
+            FadingFeature.DEFAULT_FADE_NEAR,
+            env
+        );
+        const fadeFar = getNumberPropertyValueSafe(
+            technique.fadeFar,
+            FadingFeature.DEFAULT_FADE_FAR,
+            env
+        );
         return {
             fadeNear,
             fadeFar
@@ -1497,41 +1518,35 @@ export class TileGeometryCreator {
         env: Env,
         technique: FillTechnique | ExtrudedPolygonTechnique
     ): PolygonFadingParameters {
-        let color: string | number | undefined;
+        const color = getColorPropertyValueSafe(
+            technique.lineColor,
+            EdgeMaterial.DEFAULT_COLOR,
+            env
+        );
+
         let colorMix = EdgeMaterial.DEFAULT_COLOR_MIX;
 
-        if (technique.lineColor !== undefined) {
-            color = getPropertyValue(technique.lineColor, env);
-            if (isExtrudedPolygonTechnique(technique)) {
-                const extrudedPolygonTechnique = technique as ExtrudedPolygonTechnique;
-                colorMix =
-                    extrudedPolygonTechnique.lineColorMix !== undefined
-                        ? extrudedPolygonTechnique.lineColorMix
-                        : EdgeMaterial.DEFAULT_COLOR_MIX;
-            }
+        if (isExtrudedPolygonTechnique(technique)) {
+            const extrudedPolygonTechnique = technique as ExtrudedPolygonTechnique;
+            colorMix =
+                extrudedPolygonTechnique.lineColorMix !== undefined
+                    ? extrudedPolygonTechnique.lineColorMix
+                    : EdgeMaterial.DEFAULT_COLOR_MIX;
         }
 
-        const fadeNear =
-            technique.fadeNear !== undefined
-                ? getPropertyValue(technique.fadeNear, env)
-                : FadingFeature.DEFAULT_FADE_NEAR;
-        const fadeFar =
-            technique.fadeFar !== undefined
-                ? getPropertyValue(technique.fadeFar, env)
-                : FadingFeature.DEFAULT_FADE_FAR;
+        const fadeNear = getNumberPropertyValueSafe(
+            technique.fadeNear,
+            FadingFeature.DEFAULT_FADE_NEAR,
+            env
+        );
+        const fadeFar = getNumberPropertyValueSafe(
+            technique.fadeFar,
+            FadingFeature.DEFAULT_FADE_FAR,
+            env
+        );
 
-        const lineFadeNear =
-            technique.lineFadeNear !== undefined
-                ? getPropertyValue(technique.lineFadeNear, env)
-                : fadeNear;
-        const lineFadeFar =
-            technique.lineFadeFar !== undefined
-                ? getPropertyValue(technique.lineFadeFar, env)
-                : fadeFar;
-
-        if (color === undefined) {
-            color = EdgeMaterial.DEFAULT_COLOR;
-        }
+        const lineFadeNear = getNumberPropertyValueSafe(technique.lineFadeNear, fadeNear, env);
+        const lineFadeFar = getNumberPropertyValueSafe(technique.lineFadeFar, fadeFar, env);
 
         return {
             color,

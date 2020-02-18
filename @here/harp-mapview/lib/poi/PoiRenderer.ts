@@ -4,13 +4,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Env, getPropertyValue, ImageTexture } from "@here/harp-datasource-protocol";
+import { Env, ImageTexture } from "@here/harp-datasource-protocol";
 import { IconMaterial } from "@here/harp-materials";
 import { MemoryUsage, TextCanvas } from "@here/harp-text-canvas";
 import { assert, LoggerManager, Math2D } from "@here/harp-utils";
 import * as THREE from "three";
 
 import { ColorCache } from "../ColorCache";
+import { getNumberPropertyValueSafe } from "../DecodedTileHelpers";
 import { ImageItem } from "../image/Image";
 import { MapView } from "../MapView";
 import { ScreenCollisions } from "../ScreenCollisions";
@@ -347,11 +348,11 @@ export class PoiRenderer {
         const width = poiInfo.computedWidth! * scale;
         const height = poiInfo.computedHeight! * scale;
         const technique = poiInfo.technique;
-        const iconXOffset = getPropertyValue(technique.iconXOffset, env);
-        const iconYOffset = getPropertyValue(technique.iconYOffset, env);
+        const iconXOffset = getNumberPropertyValueSafe(technique.iconXOffset, 0, env);
+        const iconYOffset = getNumberPropertyValueSafe(technique.iconYOffset, 0, env);
 
-        const centerX = screenPosition.x + (typeof iconXOffset === "number" ? iconXOffset : 0);
-        const centerY = screenPosition.y + (typeof iconYOffset === "number" ? iconYOffset : 0);
+        const centerX = screenPosition.x + iconXOffset;
+        const centerY = screenPosition.y + iconYOffset;
 
         screenBox.x = centerX - width / 2;
         screenBox.y = centerY - height / 2;
@@ -611,12 +612,12 @@ export class PoiRenderer {
         // maxT += 0.5 / imageHeight;
 
         // By default, iconScaleV should be equal to iconScaleH, whatever is set in the style.
-        const screenWidth = getPropertyValue(technique.screenWidth, env);
+        const screenWidth = getNumberPropertyValueSafe(technique.screenWidth, undefined, env);
         if (screenWidth !== undefined) {
             iconScaleV = iconScaleH = screenWidth / iconWidth;
         }
 
-        const screenHeight = getPropertyValue(technique.screenHeight, env);
+        const screenHeight = getNumberPropertyValueSafe(technique.screenHeight, undefined, env);
         if (screenHeight !== undefined) {
             iconScaleV = screenHeight / iconHeight;
             if (screenWidth !== undefined) {

@@ -3,9 +3,9 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-import { getPropertyValue, isTextTechnique } from "@here/harp-datasource-protocol";
+import { isTextTechnique } from "@here/harp-datasource-protocol";
 import { TileKey } from "@here/harp-geoutils/lib/tiling/TileKey";
-import { DataSource, TextElement } from "@here/harp-mapview";
+import { DataSource, getNumberPropertyValueSafe, TextElement } from "@here/harp-mapview";
 import { debugContext } from "@here/harp-mapview/lib/DebugContext";
 import {
     ContextualArabicConverter,
@@ -90,8 +90,6 @@ export class OmvDebugLabelsTile extends OmvTile {
 
         tileGeometryCreator.createTextElements(this, decodedTile);
 
-        const colorMap = new Map<number, THREE.Color>();
-
         // allow limiting to specific names and/or index. There can be many paths with the same text
         const textFilter = debugContext.getValue("DEBUG_TEXT_PATHS.FILTER.TEXT");
         const indexFilter = debugContext.getValue("DEBUG_TEXT_PATHS.FILTER.INDEX");
@@ -125,12 +123,6 @@ export class OmvDebugLabelsTile extends OmvTile {
                 const technique = decodedTile.techniques[textPath.technique];
                 if (!isTextTechnique(technique)) {
                     continue;
-                }
-                if (technique.color !== undefined) {
-                    colorMap.set(
-                        textPath.technique,
-                        new THREE.Color(getPropertyValue(technique.color, env))
-                    );
                 }
 
                 baseVertex = linePositions.length / 3;
@@ -188,7 +180,7 @@ export class OmvDebugLabelsTile extends OmvTile {
                                     new THREE.Vector3(x + worldOffsetX, y, z),
                                     textRenderStyle,
                                     textLayoutStyle,
-                                    getPropertyValue(technique.priority || 0, env),
+                                    getNumberPropertyValueSafe(technique.priority, 0, env),
                                     technique.xOffset || 0.0,
                                     technique.yOffset || 0.0
                                 );

@@ -1060,7 +1060,8 @@ describe("ExprEvaluator", function() {
         ]);
 
         for (let zoom = 0; zoom < 7; zoom += 0.5) {
-            const value = getPropertyValue(interp, envForZoom(zoom));
+            const value = getPropertyValue(interp, envForZoom(zoom)) as number;
+            assert.isNumber(value);
             if (zoom < 4) {
                 assert.strictEqual(value, 0);
             } else {

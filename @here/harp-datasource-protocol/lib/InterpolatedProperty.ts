@@ -88,16 +88,28 @@ export function isInterpolatedProperty(p: any): p is InterpolatedProperty {
 export function getPropertyValue(
     property: Value | Expr | InterpolatedProperty | undefined,
     env: Env
-): any {
+): Value {
     if (Expr.isExpr(property)) {
-        return property.evaluate(env, ExprScope.Dynamic);
+        try {
+            return property.evaluate(env, ExprScope.Dynamic);
+        } catch (error) {
+            logger.log(
+                "failed to evaluate expression",
+                JSON.stringify(property),
+                "error",
+                String(error)
+            );
+            return null;
+        }
     }
 
     if (isInterpolatedProperty(property)) {
         return evaluateInterpolatedProperty(property, env);
     }
 
-    if (typeof property !== "string") {
+    if (property === null || typeof property === "undefined") {
+        return null;
+    } else if (typeof property !== "string") {
         // Property in numeric or array, etc. format
         return property;
     } else {

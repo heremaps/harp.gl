@@ -9,7 +9,6 @@ import {
     composeTechniqueTextureName,
     DecodedTile,
     getFeatureId,
-    getPropertyValue,
     ImageTexture,
     isLineMarkerTechnique,
     isPoiTechnique,
@@ -20,6 +19,7 @@ import {
 import { ContextualArabicConverter } from "@here/harp-text-canvas";
 import { assert, assertExists, LoggerManager } from "@here/harp-utils";
 import * as THREE from "three";
+import { getNumberPropertyValueSafe } from "../DecodedTileHelpers";
 import { MapView } from "../MapView";
 import { TextElement } from "../text/TextElement";
 import { DEFAULT_TEXT_DISTANCE_SCALE } from "../text/TextElementsRenderer";
@@ -500,23 +500,23 @@ export class PoiManager {
         const env = this.mapView.env;
         const fadeNear =
             technique.fadeNear !== undefined
-                ? getPropertyValue(technique.fadeNear, env)
-                : technique.fadeNear;
+                ? getNumberPropertyValueSafe(technique.fadeNear, undefined, env)
+                : undefined;
         const fadeFar =
             technique.fadeFar !== undefined
-                ? getPropertyValue(technique.fadeFar, env)
-                : technique.fadeFar;
-        const xOffset = getPropertyValue(technique.xOffset, env);
-        const yOffset = getPropertyValue(technique.yOffset, env);
+                ? getNumberPropertyValueSafe(technique.fadeFar, undefined, env)
+                : undefined;
+        const xOffset = getNumberPropertyValueSafe(technique.xOffset, 0, env);
+        const yOffset = getNumberPropertyValueSafe(technique.yOffset, 0, env);
 
         const textElement: TextElement = new TextElement(
             ContextualArabicConverter.instance.convert(text),
             positions,
             textElementsRenderer.styleCache.getRenderStyle(tile, technique),
             textElementsRenderer.styleCache.getLayoutStyle(tile, technique),
-            getPropertyValue(priority, env),
-            xOffset !== undefined ? xOffset : 0.0,
-            yOffset !== undefined ? yOffset : 0.0,
+            getNumberPropertyValueSafe(priority, 0, env),
+            xOffset,
+            yOffset,
             featureId,
             technique.style,
             fadeNear,

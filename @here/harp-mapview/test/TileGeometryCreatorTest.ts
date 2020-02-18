@@ -4,7 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { DecodedTile, GeometryType, IndexedTechnique } from "@here/harp-datasource-protocol";
+import {
+    DecodedTile,
+    Env,
+    GeometryType,
+    IndexedTechnique,
+    MapEnv
+} from "@here/harp-datasource-protocol";
 import { ViewRanges } from "@here/harp-datasource-protocol/lib/ViewRanges";
 import {
     mercatorProjection,
@@ -25,6 +31,10 @@ class FakeMapView {
 
     get zoomLevel(): number {
         return 0;
+    }
+
+    get env(): Env {
+        return new MapEnv({ $zoom: 0 });
     }
 
     get viewRanges(): ViewRanges {

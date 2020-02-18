@@ -27,7 +27,6 @@ describe("StringEncodedNumeral", function() {
         testRGBColor();
     });
     it("RGBA Colors", () => {
-        // TODO: Update RGBA colors test when HARP-7517 is done.
         testRGBAColor();
     });
     it("HSL Colors", () => {
