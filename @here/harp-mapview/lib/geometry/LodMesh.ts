@@ -34,11 +34,15 @@ export class LodMesh extends THREE.Mesh {
      * Update geometries of mesh
      */
     set geometries(geometries: Array<THREE.Geometry | THREE.BufferGeometry> | undefined) {
+        // dispose previous geometries
+        if (this.m_geometries !== geometries) {
+            this.disposeGeometries();
+        }
+
         this.m_geometries = geometries;
-        this.geometry =
-            this.geometries && this.m_geometries!.length > 0
-                ? this.m_geometries![0]
-                : new THREE.BufferGeometry();
+        if (this.geometries && this.m_geometries!.length > 0) {
+            this.geometry = this.m_geometries![0];
+        }
     }
 
     /**
@@ -59,5 +63,17 @@ export class LodMesh extends THREE.Mesh {
         level = MathUtils.clamp(level, 0, this.m_geometries.length - 1);
 
         this.geometry = this.m_geometries[level];
+    }
+
+    /**
+     * Dispose all geometries of mesh
+     */
+    private disposeGeometries(): void {
+        if (this.m_geometries) {
+            for (const geometry of this.m_geometries!) {
+                geometry.dispose();
+            }
+        }
+        this.geometry.dispose();
     }
 }

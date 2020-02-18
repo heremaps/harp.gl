@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 HERE Europe B.V.
+ * Copyright (C) 2017-2020 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -937,13 +937,15 @@ export class Tile implements CachedResource {
         };
 
         const disposeObject = (object: TileObject & DisposableObject) => {
-            if (object.geometry !== undefined && this.shouldDisposeObjectGeometry(object)) {
-                object.geometry.dispose();
-            }
+            if (this.shouldDisposeObjectGeometry(object)) {
+                if (object.geometry !== undefined) {
+                    object.geometry.dispose();
+                }
 
-            if (object.geometries !== undefined && this.shouldDisposeObjectGeometry(object)) {
-                for (const geometry of object.geometries) {
-                    geometry.dispose();
+                if (object.geometries !== undefined) {
+                    for (const geometry of object.geometries) {
+                        geometry.dispose();
+                    }
                 }
             }
 

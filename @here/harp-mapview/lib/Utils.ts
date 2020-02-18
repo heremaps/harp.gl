@@ -16,6 +16,7 @@ import {
 import { EarthConstants } from "@here/harp-geoutils/lib/projection/EarthConstants";
 import { MapMeshBasicMaterial, MapMeshStandardMaterial } from "@here/harp-materials";
 import { assert, LoggerManager } from "@here/harp-utils";
+import { LodMesh } from "./geometry/LodMesh";
 import { MapView, MAX_TILT_ANGLE } from "./MapView";
 import { getFeatureDataSize, TileFeatureData } from "./Tile";
 
@@ -1220,8 +1221,8 @@ export namespace MapViewUtils {
             let heapSize = MINIMUM_OBJECT3D_SIZE_ESTIMATION;
             const gpuSize = 0;
 
-            // Cast to Points class which contains the minimal required properties sub-set.
-            const mesh = object as THREE.Points;
+            // Cast to LodMesh class which contains the minimal required properties sub-set.
+            const mesh = object as LodMesh;
 
             // Calculate material(s) impact.
             if (mesh.material !== undefined) {
@@ -1237,7 +1238,11 @@ export namespace MapViewUtils {
             }
 
             // Calculate cost of geometry.
-            if (mesh.geometry !== undefined) {
+            if (mesh.geometries !== undefined) {
+                for (const geometry of mesh.geometries) {
+                    estimateGeometrySize(geometry, objectSize, visitedObjects);
+                }
+            } else if (mesh.geometry !== undefined) {
                 estimateGeometrySize(mesh.geometry, objectSize, visitedObjects);
             }
 

@@ -1,10 +1,11 @@
 /*
- * Copyright (C) 2017-2019 HERE Europe B.V.
+ * Copyright (C) 2017-2020 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Box3Like, GeoBox, Projection, sphereProjection } from "@here/harp-geoutils";
+import { Box3Like, GeoBox, Projection, ProjectionType } from "@here/harp-geoutils";
+import { assert } from "@here/harp-utils";
 import { Vector3 } from "three";
 import { SubdivisionModifier } from "./SubdivisionModifier";
 
@@ -15,10 +16,6 @@ export enum SubdivisionMode {
      * Subdivide all edges
      */
     All,
-    /**
-     * Only subdivide edges that are on the geobox boundaries
-     */
-    OnlyEdges,
     /**
      * Only subdivide horizontal and vertical edges
      */
@@ -32,6 +29,9 @@ export enum SubdivisionMode {
 export class EdgeLengthGeometrySubdivisionModifier extends SubdivisionModifier {
     private m_projectedBox: Box3Like;
     private m_maxLength: number;
+    private m_maxLengthX: number;
+    private m_maxLengthY: number;
+
     /**
      * Constructs a new [[EdgeLengthGeometrySubdivisionModifier]].
      *
@@ -44,92 +44,106 @@ export class EdgeLengthGeometrySubdivisionModifier extends SubdivisionModifier {
         readonly subdivision: number,
         readonly geoBox: GeoBox,
         readonly subdivisionMode: SubdivisionMode = SubdivisionMode.All,
-        readonly projection: Projection = sphereProjection
+        readonly projection: Projection
     ) {
         super();
+
+        assert(
+            projection.type === ProjectionType.Planar,
+            "EdgeLengthGeometrySubdivisionModifier only supports planar projections"
+        );
 
         const northEast = projection.projectPoint(geoBox.northEast, VERTEX_POSITION_CACHE[0]);
         const southWest = projection.projectPoint(geoBox.southWest, VERTEX_POSITION_CACHE[1]);
         this.m_projectedBox = {
             min: {
-                x: Math.min(Math.fround(northEast.x), Math.fround(southWest.x)),
-                y: Math.min(Math.fround(northEast.y), Math.fround(southWest.y)),
-                z: Math.min(Math.fround(northEast.z), Math.fround(southWest.z))
+                x: Math.min(northEast.x, southWest.x),
+                y: Math.min(northEast.y, southWest.y),
+                z: Math.min(northEast.z, southWest.z)
             },
             max: {
-                x: Math.max(Math.fround(northEast.x), Math.fround(southWest.x)),
-                y: Math.max(Math.fround(northEast.y), Math.fround(southWest.y)),
-                z: Math.max(Math.fround(northEast.z), Math.fround(southWest.z))
+                x: Math.max(northEast.x, southWest.x),
+                y: Math.max(northEast.y, southWest.y),
+                z: Math.max(northEast.z, southWest.z)
             }
         };
-        this.m_maxLength =
-            Math.max(
-                this.m_projectedBox.max.x - this.m_projectedBox.min.x,
-                this.m_projectedBox.max.y - this.m_projectedBox.min.y,
-                this.m_projectedBox.max.z - this.m_projectedBox.min.z
-            ) / subdivision;
+        this.m_maxLengthX = (this.m_projectedBox.max.x - this.m_projectedBox.min.x) / subdivision;
+        this.m_maxLengthY = (this.m_projectedBox.max.y - this.m_projectedBox.min.y) / subdivision;
 
         // Increase max length slightly to account for precision errors
-        if (subdivisionMode === SubdivisionMode.All) {
-            this.m_maxLength *= 1.1;
+        if (this.subdivisionMode === SubdivisionMode.All) {
+            this.m_maxLengthX *= 1.1;
+            this.m_maxLengthY *= 1.1;
         }
+        this.m_maxLength = Math.sqrt(
+            this.m_maxLengthX * this.m_maxLengthX + this.m_maxLengthY * this.m_maxLengthY
+        );
     }
 
     /**
-     * Return upper bound for edge length
+     * Return upper bound for length of diagonal edges
      */
     get maxLength() {
         return this.m_maxLength;
     }
 
+    /**
+     * Return upper bound for edge length in x direction
+     */
+    get maxLengthX() {
+        return this.m_maxLengthX;
+    }
+
+    /**
+     * Return upper bound for edge length in y direction
+     */
+    get maxLengthY() {
+        return this.m_maxLengthY;
+    }
+
     /** @override */
     protected shouldSplitTriangle(a: Vector3, b: Vector3, c: Vector3): number | undefined {
-        const ab = this.getLength(a, b);
-        const bc = this.getLength(b, c);
-        const ca = this.getLength(c, a);
+        const shouldSplitAB = this.shouldSplitEdge(a, b);
+        const shouldSplitBC = this.shouldSplitEdge(b, c);
+        const shouldSplitCA = this.shouldSplitEdge(c, a);
+        const shouldSplit = shouldSplitAB || shouldSplitBC || shouldSplitCA;
 
-        // find the maximum angle
-        const maxLength = Math.max(ab, bc, ca);
-
-        // split the triangle if needed.
-        if (maxLength < this.m_maxLength) {
-            return undefined;
+        if (!shouldSplit) {
+            return;
         }
 
-        if (maxLength === ab) {
+        const ab = a.distanceTo(b);
+        const bc = b.distanceTo(c);
+        const ca = c.distanceTo(a);
+        const maxDistance = Math.max(
+            shouldSplitAB ? ab : 0,
+            shouldSplitBC ? bc : 0,
+            shouldSplitCA ? ca : 0
+        );
+        if (ab === maxDistance) {
             return 0;
-        } else if (maxLength === bc) {
+        } else if (bc === maxDistance) {
             return 1;
-        } else if (maxLength === ca) {
+        } else if (ca === maxDistance) {
             return 2;
         }
 
-        throw new Error("failed to split triangle");
+        throw new Error("Could not split triangle.");
     }
 
-    private getLength(a: Vector3, b: Vector3): number {
+    private shouldSplitEdge(a: Vector3, b: Vector3): boolean {
         switch (this.subdivisionMode) {
             case SubdivisionMode.All:
-                return a.distanceTo(b);
+                return (
+                    (a.y === b.y && Math.abs(a.x - b.x) > this.m_maxLengthX) ||
+                    (a.x === b.x && Math.abs(a.y - b.y) > this.m_maxLengthY) ||
+                    a.distanceTo(b) > this.m_maxLength
+                );
             case SubdivisionMode.NoDiagonals:
-                // Compute length only for horizontal and vertical lines
-                if (a.x === b.x || a.y === b.y) {
-                    return a.distanceTo(b);
-                }
-                break;
-            case SubdivisionMode.OnlyEdges:
-                // Compute length only for lines on the edge of the tile
-                if (
-                    (a.x === this.m_projectedBox.min.x && b.x === this.m_projectedBox.min.x) ||
-                    (a.y === this.m_projectedBox.min.y && b.y === this.m_projectedBox.min.y) ||
-                    (a.x === this.m_projectedBox.max.x && b.x === this.m_projectedBox.max.x) ||
-                    (a.y === this.m_projectedBox.max.y && b.y === this.m_projectedBox.max.y)
-                ) {
-                    return a.distanceTo(b);
-                }
-                break;
+                return (
+                    (a.y === b.y && Math.abs(a.x - b.x) > this.m_maxLengthX) ||
+                    (a.x === b.x && Math.abs(a.y - b.y) > this.m_maxLengthY)
+                );
         }
-
-        return 0;
     }
 }
