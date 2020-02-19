@@ -16,6 +16,12 @@ import { GUI, GUIController } from "dat.gui";
 import { PerformanceTestData } from "../lib/PerformanceConfig";
 import { PerformanceUtils } from "../lib/PerformanceUtils";
 
+interface ThemeList {
+    [name: string]: string;
+}
+// Theme list populated by webpack.config.js
+declare const THEMES: ThemeList;
+
 const logger = LoggerManager.instance.create("PerformanceUtils");
 
 const NAME_NUM_DECODER_OPTION = "Num Decoders";
@@ -520,6 +526,22 @@ export namespace PerformanceBenchmark {
         finishTest();
     }
 
+    async function ZoomInBerlin() {
+        startTest("ZoomIn", "Berlin");
+        latestResult = await PerformanceUtils.measureFlyoverSpline(
+            mapViewApp,
+            "ZoomIn_Berlin",
+            PerformanceTestData.BERLIN_ZOOM_IN,
+            flyoverNumFrames,
+            false,
+            true,
+            showLabels,
+            flyoverNumRuns,
+            checkIfCancelled
+        );
+        finishTest();
+    }
+
     async function ZoomInOutParis() {
         startTest("ZoomInOut", "Paris");
         latestResult = await PerformanceUtils.measureFlyoverSpline(
@@ -557,13 +579,7 @@ export namespace PerformanceBenchmark {
         let settingUpGui = true;
 
         const guiOptions = {
-            Theme: {
-                day: "resources/berlin_tilezen_base.json",
-                reducedDay: "resources/berlin_tilezen_day_reduced.json",
-                reducedNight: "resources/berlin_tilezen_night_reduced.json",
-                streets: "resources/berlin_tilezen_effects_streets.json",
-                outlines: "resources/berlin_tilezen_effects_outlines.json"
-            },
+            Theme: THEMES,
             PixelRatio: {
                 default: undefined,
                 "1.5": 1.5,
@@ -572,6 +588,7 @@ export namespace PerformanceBenchmark {
             },
             CanvasSize: {
                 default: undefined,
+                "1100×900": "1100×900",
                 "640×400": "640×400",
                 "1024×768": "1024×768",
                 "1024×1024": "1024×1024",
@@ -631,7 +648,7 @@ export namespace PerformanceBenchmark {
                 "6": 6,
                 "8": 8
             },
-            PhasedLoading: true,
+            PhasedLoading: false,
             Berlin: () => {
                 openMapBerlin();
             },
@@ -683,6 +700,9 @@ export namespace PerformanceBenchmark {
             FlyOverEuropeLoaded: () => {
                 flyoverEuropeLoaded();
             },
+            ZoomInBerlin: () => {
+                ZoomInBerlin();
+            },
             ZoomInOutParis: () => {
                 ZoomInOutParis();
             },
@@ -694,6 +714,9 @@ export namespace PerformanceBenchmark {
             },
             HideResults: () => {
                 hideTable();
+            },
+            SaveResults: () => {
+                saveTable();
             }
         };
 
@@ -708,7 +731,7 @@ export namespace PerformanceBenchmark {
                     mapViewApp.mapView.theme = newTheme;
                 });
             })
-            .setValue("resources/berlin_tilezen_base.json");
+            .setValue(THEMES.default);
 
         benchmarksFolder
             .add(guiOptions, "CanvasSize", guiOptions.CanvasSize)
@@ -823,6 +846,7 @@ export namespace PerformanceBenchmark {
             })
             .setValue(undefined);
 
+        flyOversFolder.add(guiOptions, "ZoomInBerlin");
         flyOversFolder.add(guiOptions, "ZoomInOutParis");
         flyOversFolder.add(guiOptions, "ZoomInOutParis2");
         flyOversFolder.add(guiOptions, "FlyOverNY");
@@ -842,6 +866,7 @@ export namespace PerformanceBenchmark {
         cancelButton = gui.add(guiOptions, "Cancel");
 
         gui.add(guiOptions, "HideResults");
+        gui.add(guiOptions, "SaveResults");
 
         (cancelButton as any).domElement.setAttribute("disabled", "");
 
@@ -853,7 +878,9 @@ export namespace PerformanceBenchmark {
             "mapCanvas",
             ["OMV"],
             decoderCount,
-            powerPreferenceMap.get(powerPreference === undefined ? "Default" : powerPreference)
+            powerPreferenceMap.get(powerPreference === undefined ? "Default" : powerPreference),
+            undefined,
+            { resource: THEMES.default }
         );
         if (mapViewApp.mainDataSource !== undefined) {
             if (mapViewApp.mainDataSource.decoder instanceof WorkerBasedDecoder) {
@@ -874,6 +901,42 @@ export namespace PerformanceBenchmark {
     function hideTable() {
         const tableDiv = document.getElementById("tableDiv")!;
         tableDiv.style.display = "none";
+    }
+
+    function saveTable() {
+        const stats = latestResult;
+
+        let resultCSV =
+            "Name, Avg, Min, Max, Median, Med 75, Med 90, Med 95, Med 97, Med 99, Med 999\n";
+
+        const frameStatsStrings = Array.from(stats.frameStats!.keys()).sort();
+        for (const stat of frameStatsStrings) {
+            const frameStat = stats.frameStats!.get(stat)!;
+
+            const row = `${stat}, ${valueString(frameStat.avg)}, ${valueString(
+                frameStat.min
+            )}, ${valueString(frameStat.max)}, ${valueString(frameStat.median)}, ${valueString(
+                frameStat.median75
+            )}, ${valueString(frameStat.median90)}, ${valueString(
+                frameStat.median95
+            )}, ${valueString(frameStat.median97)}, ${valueString(
+                frameStat.median99
+            )}, ${valueString(frameStat.median999)}\n`;
+            resultCSV += row;
+        }
+        const type = "text/csv";
+        const blob = new Blob([resultCSV], { type });
+        const a = document.createElement("a");
+        const url = URL.createObjectURL(blob);
+        a.download = `results.csv`;
+        a.href = url;
+        a.dispatchEvent(
+            new MouseEvent(`click`, {
+                bubbles: true,
+                cancelable: true,
+                view: window
+            })
+        );
     }
 
     const million = 1024 * 1024;
