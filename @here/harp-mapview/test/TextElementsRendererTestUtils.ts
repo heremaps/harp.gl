@@ -118,7 +118,9 @@ export function allFrames(frames: number[]): boolean[] {
 /**
  * Types to hold input data for TextElementsRenderer tests.
  */
-export type InputTextElement = [TextElementBuilder, FadeState[]];
+export type InputTextElement =
+    | [TextElementBuilder, FadeState[]]
+    | [TextElementBuilder, FadeState[], boolean[]];
 
 export function builder(input: InputTextElement) {
     return input[0];
@@ -128,9 +130,14 @@ export function frameStates(input: InputTextElement) {
     return input[1];
 }
 
+export function framesEnabled(input: InputTextElement): boolean[] | undefined {
+    return input.length > 2 ? input[2] : undefined;
+}
+
 export interface InputTile {
     // Labels in the tile, including their builder and expected fade state per frame.
-    labels: InputTextElement[];
+    labels?: InputTextElement[];
+    userLabels?: InputTextElement[];
     // Frames where tile will be visited (default: all)
     frames?: boolean[];
     // Frames where corresponding terrain tile will be available (default: terrain disabled)

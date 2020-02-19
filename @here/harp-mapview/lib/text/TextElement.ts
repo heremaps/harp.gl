@@ -334,7 +334,7 @@ export class TextElement {
      * Creates a new `TextElement`.
      *
      * @param text The text to display.
-     * @param points The position or a list of points for a curved text, both in local tile space.
+     * @param points The position or a list of points for a curved text, both in world space.
      * @param renderParams `TextElement` text rendering parameters.
      * @param layoutParams `TextElement` text layout parameters.
      * @param priority The priority of the `TextElement. Elements with the highest priority get
@@ -376,7 +376,7 @@ export class TextElement {
 
     /**
      * The text element position or the first point of the path used to render a curved text, both
-     * in local tile space.
+     * in world space.
      */
     get position(): THREE.Vector3 {
         if (this.points instanceof Array) {
@@ -387,7 +387,7 @@ export class TextElement {
     }
 
     /**
-     * The list of points in local tile space used to render the text along a path or `undefined`.
+     * The list of points in world space used to render the text along a path or `undefined`.
      */
     get path(): THREE.Vector3[] | undefined {
         if (this.points instanceof Array) {

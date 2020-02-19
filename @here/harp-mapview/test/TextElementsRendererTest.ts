@@ -39,6 +39,7 @@ import {
     fadeInAndFadedOut,
     FadeState,
     firstNFrames,
+    framesEnabled,
     frameStates,
     INITIAL_TIME,
     InputTextElement,
@@ -121,6 +122,93 @@ const tests: TestCase[] = [
             {
                 labels: [[pathTextBuilder(WORLD_SCALE), fadeInAndFadedOut(FADE_2_CYCLES.length)]],
                 frames: firstNFrames(FADE_2_CYCLES, FADE_IN.length)
+            }
+        ],
+        frameTimes: FADE_2_CYCLES
+    },
+    // USER LABELS
+    {
+        name: "Newly visited, visible user poi fades in",
+        tiles: [{ userLabels: [[poiBuilder(), FADE_IN]] }],
+        frameTimes: FADE_CYCLE
+    },
+    {
+        name: "User poi added after first frames fades in",
+        tiles: [
+            {
+                userLabels: [
+                    [
+                        poiBuilder(),
+                        fadedOut(FADE_IN.length).concat(
+                            fadeIn(FADE_2_CYCLES.length - FADE_IN.length)
+                        ),
+                        not(firstNFrames(FADE_2_CYCLES, FADE_IN.length))
+                    ]
+                ]
+            }
+        ],
+        frameTimes: FADE_2_CYCLES
+    },
+    {
+        name: "Two user poi added in different frames to same tile fade in",
+        tiles: [
+            {
+                userLabels: [
+                    [
+                        poiBuilder("Marker 1")
+                            .withMayOverlap(true)
+                            .withPoiInfo(new PoiInfoBuilder().withMayOverlap(true)),
+                        fadedOut(2).concat(fadeIn(FADE_2_CYCLES.length - 2)),
+                        not(firstNFrames(FADE_2_CYCLES, 2))
+                    ],
+                    [
+                        poiBuilder("Marker 2")
+                            .withMayOverlap(true)
+                            .withPoiInfo(new PoiInfoBuilder().withMayOverlap(true)),
+                        fadedOut(FADE_IN.length).concat(
+                            fadeIn(FADE_2_CYCLES.length - FADE_IN.length)
+                        ),
+                        not(firstNFrames(FADE_2_CYCLES, FADE_IN.length))
+                    ]
+                ]
+            }
+        ],
+        frameTimes: FADE_2_CYCLES
+    },
+    {
+        name: "Removed user poi fades out",
+        tiles: [
+            {
+                userLabels: [
+                    [
+                        poiBuilder(),
+                        FADE_IN.concat(fadedOut(FADE_2_CYCLES.length - FADE_IN.length)),
+                        firstNFrames(FADE_2_CYCLES, FADE_IN.length)
+                    ]
+                ]
+            }
+        ],
+        frameTimes: FADE_2_CYCLES
+    },
+    {
+        name: "From two user pois in same tile, removed poi fades out, remaining poi is faded in",
+        tiles: [
+            {
+                userLabels: [
+                    [
+                        poiBuilder("Marker 1")
+                            .withMayOverlap(true)
+                            .withPoiInfo(new PoiInfoBuilder().withMayOverlap(true)),
+                        fadeIn(FADE_2_CYCLES.length)
+                    ],
+                    [
+                        poiBuilder("Marker 2")
+                            .withMayOverlap(true)
+                            .withPoiInfo(new PoiInfoBuilder().withMayOverlap(true)),
+                        FADE_IN.concat(fadedOut(FADE_2_CYCLES.length - FADE_IN.length)),
+                        firstNFrames(FADE_2_CYCLES, FADE_IN.length)
+                    ]
+                ]
             }
         ],
         frameTimes: FADE_2_CYCLES
@@ -520,6 +608,25 @@ describe("TextElementsRenderer", function() {
         }
     });
 
+    function buildLabels(
+        inputElements: InputTextElement[] | undefined,
+        elementFrameStates: Array<[TextElement, FadeState[]]>,
+        frameCount: number
+    ): TextElement[] {
+        if (!inputElements) {
+            return [];
+        }
+        return inputElements.map((inputElement: InputTextElement) => {
+            expect(frameStates(inputElement).length).equal(frameCount);
+            // Only used to identify some text elements for testing purposes.
+            const dummyUserData = {};
+            const element = builder(inputElement)
+                .withUserData(dummyUserData)
+                .build(sandbox);
+            elementFrameStates.push([element, frameStates(inputElement)]);
+            return element;
+        });
+    }
     async function initTest(
         test: TestCase
     ): Promise<{
@@ -541,18 +648,14 @@ describe("TextElementsRenderer", function() {
                 expect(tile.terrainFrames.length).equal(test.frameTimes.length);
                 enableElevation = true;
             }
-            const elements = tile.labels.map((inputElement: InputTextElement) => {
-                expect(frameStates(inputElement).length).equal(test.frameTimes.length);
-                // Only used to identify some text elements for testing purposes.
-                const dummyUserData = {};
-                const element = builder(inputElement)
-                    .withUserData(dummyUserData)
-                    .build(sandbox);
-                elementFrameStates.push([element, frameStates(inputElement)]);
-                return element;
-            });
+            const labels = buildLabels(tile.labels, elementFrameStates, test.frameTimes.length);
+            const userLabels = buildLabels(
+                tile.userLabels,
+                elementFrameStates,
+                test.frameTimes.length
+            );
             allTileIndices.push(tileIndex);
-            fixture.addTile(elements);
+            fixture.addTile(labels, userLabels);
         });
 
         // Keeps track of the opacity that text elements had in the previous frame.
@@ -562,7 +665,6 @@ describe("TextElementsRenderer", function() {
         // to initialized.
         await fixture.renderFrame(INITIAL_TIME, allTileIndices, []);
         fixture.setElevationProvider(enableElevation);
-
         return { elementFrameStates, prevOpacities };
     }
 
@@ -586,6 +688,19 @@ describe("TextElementsRenderer", function() {
         return { tileIdcs, terrainTileIdcs };
     }
 
+    function prepareUserLabels(frameIdx: number, tiles: InputTile[], tileIndices: number[]) {
+        for (const tileIndex of tileIndices) {
+            const tile = tiles[tileIndex];
+            if (!tile.userLabels) {
+                continue;
+            }
+            const elementsEnabled = tile.userLabels.map(
+                label => framesEnabled(label)?.[frameIdx] ?? true
+            );
+            fixture.setTileUserTextElements(tileIndex, elementsEnabled);
+        }
+    }
+
     for (const test of tests) {
         it(test.name, async function() {
             const { elementFrameStates, prevOpacities } = await initTest(test);
@@ -595,6 +710,7 @@ describe("TextElementsRenderer", function() {
                 const frameTime = test.frameTimes[frameIdx];
                 const collisionEnabled =
                     test.collisionFrames === undefined ? true : test.collisionFrames[frameIdx];
+                prepareUserLabels(frameIdx, test.tiles, tileIdcs);
                 await fixture.renderFrame(frameTime, tileIdcs, terrainTileIdcs, collisionEnabled);
 
                 let elementIdx = 0;

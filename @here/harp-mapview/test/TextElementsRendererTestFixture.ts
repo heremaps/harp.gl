@@ -114,6 +114,7 @@ export class TestFixture {
     private m_textRenderer: TextElementsRenderer | undefined;
     private m_defaultTile: Tile | undefined;
     private m_allTiles: Tile[] = [];
+    private m_allUserTextElements: TextElement[][] = [];
 
     constructor(readonly sandbox: sinon.SinonSandbox) {
         this.m_screenCollisions = new ScreenCollisions();
@@ -219,7 +220,7 @@ export class TestFixture {
      * can later be referenced by index when rendering a frame. See [[renderFrame]].
      * @param elements The text elements the new tile will contain.
      */
-    addTile(elements: TextElement[]) {
+    addTile(elements: TextElement[], userElements: TextElement[]) {
         const tile =
             this.m_allTiles.length > 0
                 ? this.m_dataSource.getTile(
@@ -233,7 +234,29 @@ export class TestFixture {
         for (const element of elements) {
             tile.addTextElement(element);
         }
+        for (const element of userElements) {
+            tile.addUserTextElement(element);
+        }
         this.m_allTiles.push(tile);
+        this.m_allUserTextElements.push(userElements);
+    }
+
+    setTileUserTextElements(tileIndex: number, elementEnabled: boolean[]) {
+        const tile = this.m_allTiles[tileIndex];
+        const allElements = this.m_allUserTextElements[tileIndex];
+        const tileElements = tile.userTextElements;
+        assert(allElements.length === elementEnabled.length);
+
+        for (let i = 0; i < allElements.length; ++i) {
+            const element = allElements[i];
+            const addElement = elementEnabled[i];
+            const elementPresent = tileElements.elements.indexOf(element) !== -1;
+            if (addElement && !elementPresent) {
+                tile.addUserTextElement(element);
+            } else if (!addElement && elementPresent) {
+                tile.removeUserTextElement(element);
+            }
+        }
     }
 
     /**
