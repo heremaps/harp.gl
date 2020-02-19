@@ -20,7 +20,11 @@ import * as chai from "chai";
 import * as chaiAsPromised from "chai-as-promised";
 chai.use(chaiAsPromised);
 const { expect } = chai;
+import { LoggerManager } from "@here/harp-utils";
 import { DataProvider, TileLoader } from "../index";
+
+// Needed for using expect(...).true for example
+// tslint:disable: no-unused-expression
 
 class MockDataSource extends DataSource {
     /** @override */
@@ -128,7 +132,6 @@ describe("TileLoader", function() {
             );
 
             const loadPromise = tileLoader.loadAndDecode();
-            // tslint:disable-next-line: no-unused-expression
             expect(loadPromise).to.not.be.undefined;
 
             return expect(loadPromise).to.eventually.be.fulfilled;
@@ -144,11 +147,9 @@ describe("TileLoader", function() {
             );
 
             const loadPromise = tileLoader.loadAndDecode();
-            // tslint:disable-next-line: no-unused-expression
             expect(loadPromise).to.not.be.undefined;
 
             const secondLoadPromise = tileLoader.loadAndDecode();
-            // tslint:disable-next-line: no-unused-expression
             expect(secondLoadPromise).to.not.be.undefined;
             expect(secondLoadPromise).to.equal(loadPromise);
 
@@ -166,7 +167,6 @@ describe("TileLoader", function() {
 
             dataProvider.emptyPayload = true;
             let loadPromise = tileLoader.loadAndDecode();
-            // tslint:disable-next-line: no-unused-expression
             expect(loadPromise).to.not.be.undefined;
 
             return expect(loadPromise).to.eventually.be.fulfilled.then(() => {
@@ -174,37 +174,47 @@ describe("TileLoader", function() {
 
                 dataProvider.emptyPayload = false;
                 loadPromise = tileLoader.loadAndDecode();
-                // tslint:disable-next-line: no-unused-expression
                 expect(loadPromise).to.not.be.undefined;
 
                 return expect(loadPromise).to.eventually.be.fulfilled;
             });
         });
 
-        it("should recover from losing internet connection", function() {
-            const tileLoader = new TileLoader(
-                dataSource,
-                tileKey,
-                dataProvider,
-                new MockTileDecoder(),
-                0
-            );
+        describe("loadAndDecode()", function() {
+            let tileLoader: TileLoader;
+            this.beforeEach(() => {
+                tileLoader = new TileLoader(
+                    dataSource,
+                    tileKey,
+                    dataProvider,
+                    new MockTileDecoder(),
+                    0
+                );
+                LoggerManager.instance.update("TileLoader", { enabled: false });
+            });
+            this.afterEach(() => {
+                LoggerManager.instance.update("TileLoader", { enabled: false });
+            });
 
-            dataProvider.failsRequests = true;
-            const loadPromise = tileLoader.loadAndDecode();
-            // tslint:disable-next-line: no-unused-expression
-            expect(loadPromise).to.not.be.undefined;
+            it("should recover from losing internet connection", function() {
+                // This test writes an error to the console, so we disable it.
+                LoggerManager.instance.update("TileLoader", { enabled: false });
 
-            return expect(loadPromise).to.eventually.be.rejected.then(() => {
-                expect(tileLoader.state).to.equal(TileLoaderState.Failed);
-                dataProvider.failsRequests = false;
-
-                // tslint:disable-next-line: no-shadowed-variable
+                dataProvider.failsRequests = true;
                 const loadPromise = tileLoader.loadAndDecode();
-                // tslint:disable-next-line: no-unused-expression
                 expect(loadPromise).to.not.be.undefined;
 
-                return expect(loadPromise).to.eventually.be.fulfilled;
+                // Chai.PromisedAssertion doesn't have .finally unfortunately.
+                return expect(loadPromise).to.eventually.be.rejected.then(() => {
+                    expect(tileLoader.state).to.equal(TileLoaderState.Failed);
+                    dataProvider.failsRequests = false;
+
+                    // tslint:disable-next-line: no-shadowed-variable
+                    const loadPromise = tileLoader.loadAndDecode();
+                    expect(loadPromise).to.not.be.undefined;
+
+                    return expect(loadPromise).to.eventually.be.fulfilled;
+                });
             });
         });
     });

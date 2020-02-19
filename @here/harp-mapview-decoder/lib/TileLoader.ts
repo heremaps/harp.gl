@@ -17,6 +17,9 @@ import { LoggerManager } from "@here/harp-utils";
 
 import { DataProvider } from "./DataProvider";
 
+/**
+ * Logger to write to console etc.
+ */
 const logger = LoggerManager.instance.create("TileLoader");
 
 /**
