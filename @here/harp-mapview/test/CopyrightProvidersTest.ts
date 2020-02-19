@@ -13,6 +13,7 @@ import * as sinon from "sinon";
 import { GeoBox, GeoCoordinates } from "@here/harp-geoutils";
 import { getTestResourceUrl } from "@here/harp-test-utils";
 import { TransferManager } from "@here/harp-transfer-manager";
+import { LoggerManager } from "@here/harp-utils";
 import { CopyrightInfo } from "../lib/copyrights/CopyrightInfo";
 import { UrlCopyrightProvider } from "../lib/copyrights/UrlCopyrightProvider";
 
@@ -24,14 +25,24 @@ describe("CopyrightProviders", function() {
         }
 
         describe("#init", function() {
+            let provider: UrlCopyrightProvider;
+            this.beforeEach(() => {
+                provider = new UrlCopyrightProvider("", "normal");
+                LoggerManager.instance.update("CopyrightCoverageProvider", { enabled: false });
+            });
+            this.afterEach(() => {
+                LoggerManager.instance.update("CopyrightCoverageProvider", { enabled: true });
+            });
             it("Should return default copyrights if failed to load data", async function() {
                 const fakeJson = sinon.fake.rejects(new Error("error"));
 
                 sinon.replace(TransferManager.prototype, "downloadJson", fakeJson);
-                const copyrights = await getCopyrights(
+
+                const copyrights = await provider.getCopyrights(
                     new GeoBox(new GeoCoordinates(2, 2), new GeoCoordinates(3, 3)),
                     10
                 );
+
                 sinon.restore();
 
                 expect(copyrights).to.deep.equal([]);
@@ -41,7 +52,6 @@ describe("CopyrightProviders", function() {
                 const fakeJson = sinon.fake.rejects(new Error("error"));
                 sinon.replace(TransferManager.prototype, "downloadJson", fakeJson);
 
-                const provider = new UrlCopyrightProvider("", "normal");
                 const geoBox = new GeoBox(new GeoCoordinates(2, 2), new GeoCoordinates(3, 3));
                 const firstResult = await provider.getCopyrights(geoBox, 10);
                 const secondResult = await provider.getCopyrights(geoBox, 5);
