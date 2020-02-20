@@ -36,17 +36,17 @@ Entrypoint test = test.bundle.js
 Entrypoint performance-test = performance-test.bundle.js
 Entrypoint rendering-test = rendering-test.bundle.js
 with-http-server: Serving /home/user/dev/coresdk/dist/test at http://localhost:7777
-with-http-server: Running ./scripts/with-docker-selenium.sh --image selenium/standalone-chrome:3.141.59-xenon \
+with-http-server: Running ./scripts/with-docker-selenium.sh --image selenium/standalone-chrome:3.141.59-zirconium \
 mocha-webdriver-runner -C browserName=chrome -C goog:chromeOptions.args=["--headless", "--disable-gpu=true", "--no-sandbox", "--disable-dev-shm-usage", "--window-size=1280,800"] http://localhost:7777/rendering.html
-./scripts/with-docker-selenium.sh: docker run --rm -d --network=host selenium/standalone-chrome:3.141.59-xenon &
-Unable to find image 'selenium/standalone-chrome:3.141.59-xenon' locally
-3.141.59-xenon: Pulling from selenium/standalone-chrome
+./scripts/with-docker-selenium.sh: docker run --rm -d --network=host selenium/standalone-chrome:3.141.59-zirconium &
+Unable to find image 'selenium/standalone-chrome:3.141.59-zirconium' locally
+3.141.59-zirconium: Pulling from selenium/standalone-chrome
 5b7339215d1d: Pulling fs layer
 14ca88e9f672: Pulling fs layer
 .....
 bb019cc37fdf: Pull complete
 Digest: sha256:d0ed6e04a4b87850beb023e3693c453b825b938af48733c1c56fc671cd41fe51
-Status: Downloaded newer image for selenium/standalone-chrome:3.141.59-xenon
+Status: Downloaded newer image for selenium/standalone-chrome:3.141.59-zirconium
 ./scripts/with-docker-selenium.sh: # started docker container db31cb2caca09d2d290d40b3ec51772676dfb2b83e02b0c7a359b39b5b0a6368
 ```
 
@@ -86,7 +86,7 @@ yarn approve-reference
 ```
 Next text runs, should use these files as reference.
 
-Note, this is only _local_ approve. 
+Note, this is only _local_ approve.
 
 ## Interactive mode
 
