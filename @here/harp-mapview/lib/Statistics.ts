@@ -1017,55 +1017,51 @@ export class PerformanceStatistics {
     }
 
     /**
-     * Stores the current frame events into the array of events. Uses [[THREE.WebGLInfo]] to add the
-     * render state information to the current frame.
-     *
+     * Add the render state information from [[THREE.WebGLInfo]] to the current frame.
      * @param {THREE.WebGLInfo} webGlInfo
-     * @returns {boolean} Returns `false` if the maximum number of storable frames has been reached.
-     * @memberof PerformanceStatistics
      */
-    storeFrameInfo(webGlInfo?: THREE.WebGLInfo): boolean {
-        if (this.m_frameEvents.length >= this.maxNumFrames) {
-            return false;
+    addWebGLInfo(webGlInfo: THREE.WebGLInfo) {
+        if (webGlInfo.render !== undefined) {
+            this.currentFrame.setValue(
+                "gl.numCalls",
+                webGlInfo.render.calls === null ? 0 : webGlInfo.render.calls
+            );
+            this.currentFrame.setValue(
+                "gl.numPoints",
+                webGlInfo.render.points === null ? 0 : webGlInfo.render.points
+            );
+            this.currentFrame.setValue(
+                "gl.numLines",
+                webGlInfo.render.lines === null ? 0 : webGlInfo.render.lines
+            );
+            this.currentFrame.setValue(
+                "gl.numTriangles",
+                webGlInfo.render.triangles === null ? 0 : webGlInfo.render.triangles
+            );
         }
-
-        if (webGlInfo !== undefined) {
-            if (webGlInfo.render !== undefined) {
-                this.currentFrame.setValue(
-                    "gl.numCalls",
-                    webGlInfo.render.calls === null ? 0 : webGlInfo.render.calls
-                );
-                this.currentFrame.setValue(
-                    "gl.numPoints",
-                    webGlInfo.render.points === null ? 0 : webGlInfo.render.points
-                );
-                this.currentFrame.setValue(
-                    "gl.numLines",
-                    webGlInfo.render.lines === null ? 0 : webGlInfo.render.lines
-                );
-                this.currentFrame.setValue(
-                    "gl.numTriangles",
-                    webGlInfo.render.triangles === null ? 0 : webGlInfo.render.triangles
-                );
-            }
-            if (webGlInfo.memory !== undefined) {
-                this.currentFrame.setValue(
-                    "gl.numGeometries",
-                    webGlInfo.memory.geometries === null ? 0 : webGlInfo.memory.geometries
-                );
-                this.currentFrame.setValue(
-                    "gl.numTextures",
-                    webGlInfo.memory.textures === null ? 0 : webGlInfo.memory.textures
-                );
-            }
-            if (webGlInfo.programs !== undefined) {
-                this.currentFrame.setValue(
-                    "gl.numPrograms",
-                    webGlInfo.programs === null ? 0 : webGlInfo.programs.length
-                );
-            }
+        if (webGlInfo.memory !== undefined) {
+            this.currentFrame.setValue(
+                "gl.numGeometries",
+                webGlInfo.memory.geometries === null ? 0 : webGlInfo.memory.geometries
+            );
+            this.currentFrame.setValue(
+                "gl.numTextures",
+                webGlInfo.memory.textures === null ? 0 : webGlInfo.memory.textures
+            );
         }
+        if (webGlInfo.programs !== undefined) {
+            this.currentFrame.setValue(
+                "gl.numPrograms",
+                webGlInfo.programs === null ? 0 : webGlInfo.programs.length
+            );
+        }
+    }
 
+    /**
+     * Add memory statistics to the current frame if available.
+     * @note Currently only supported on Chrome
+     */
+    addMemoryInfo() {
         if (window !== undefined && window.performance !== undefined) {
             const memory = (window.performance as any).memory as ChromeMemoryInfo;
             if (memory !== undefined) {
@@ -1073,6 +1069,18 @@ export class PerformanceStatistics {
                 this.currentFrame.setValue("memory.usedJSHeapSize", memory.usedJSHeapSize);
                 this.currentFrame.setValue("memory.jsHeapSizeLimit", memory.jsHeapSizeLimit);
             }
+        }
+    }
+
+    /**
+     * Stores the current frame events into the array of events and clears all values.
+     *
+     * @returns {boolean} Returns `false` if the maximum number of storable frames has been reached.
+     * @memberof PerformanceStatistics
+     */
+    storeAndClearFrameInfo(): boolean {
+        if (this.m_frameEvents.length >= this.maxNumFrames) {
+            return false;
         }
 
         this.m_frameEvents.addFrame(this.currentFrame);

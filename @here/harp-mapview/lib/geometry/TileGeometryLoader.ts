@@ -319,6 +319,11 @@ export class SimpleTileGeometryLoader implements TileGeometryLoader {
             if (stats.enabled) {
                 const geometryCreationTime = PerformanceTimer.now() - now;
                 const currentFrame = stats.currentFrame;
+
+                // Account for the geometry creation in the current frame.
+                currentFrame.addValue("render.fullFrameTime", geometryCreationTime);
+                currentFrame.addValue("render.geometryCreationTime", geometryCreationTime);
+
                 currentFrame.addValue("geometry.geometryCreationTime", geometryCreationTime);
                 currentFrame.addValue("geometryCount.numGeometries", decodedTile.geometries.length);
                 currentFrame.addValue("geometryCount.numTechniques", decodedTile.techniques.length);
