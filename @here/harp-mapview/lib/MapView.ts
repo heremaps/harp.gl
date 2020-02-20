@@ -75,15 +75,6 @@ import { ThemeLoader } from "./ThemeLoader";
 import { Tile, TileFeatureData, TileObject } from "./Tile";
 import { MapViewUtils } from "./Utils";
 import { ResourceComputationType, VisibleTileSet, VisibleTileSetOptions } from "./VisibleTileSet";
-import {
-    BasicShadowMap,
-    PCFShadowMap,
-    PCFSoftShadowMap,
-    VSMShadowMap,
-    OrthographicCamera,
-    DirectionalLight,
-    Color
-} from "three";
 
 declare const process: any;
 
@@ -944,6 +935,11 @@ export class MapView extends THREE.EventDispatcher {
 
         this.setupRenderer();
 
+        if (this.m_options.enableShadows === true) {
+            this.m_renderer.shadowMap.enabled = true;
+            this.m_renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        }
+
         this.m_options.fovCalculation =
             this.m_options.fovCalculation === undefined
                 ? DEFAULT_FOV_CALCULATION
@@ -994,8 +990,7 @@ export class MapView extends THREE.EventDispatcher {
 
         this.m_animatedExtrusionHandler = new AnimatedExtrusionHandler(this);
 
-        this.m_backgroundDataSource = new BackgroundDataSource(this.shadowsEnabled);
-        this.m_backgroundDataSource.color.set(this.clearColor);
+        this.m_backgroundDataSource = new BackgroundDataSource();
         this.addDataSource(this.m_backgroundDataSource);
 
         if (this.m_enablePolarDataSource) {
@@ -1269,10 +1264,6 @@ export class MapView extends THREE.EventDispatcher {
         // Clear color.
         this.m_theme.clearColor = theme.clearColor;
         this.renderer.setClearColor(new THREE.Color(theme.clearColor));
-        if (this.m_backgroundDataSource !== undefined && theme.clearColor !== undefined) {
-            this.m_backgroundDataSource.color.set(theme.clearColor);
-        }
-
         // Images.
         this.m_theme.images = theme.images;
         this.m_theme.imageTextures = theme.imageTextures;
@@ -3299,30 +3290,16 @@ export class MapView extends THREE.EventDispatcher {
                     return;
                 }
                 this.m_scene.add(light);
-                if ((light as any).isDirectionalLight) {
+                const enableDebugDirectionalLight = false;
+                if (enableDebugDirectionalLight && (light as any).isDirectionalLight) {
                     const helper = new THREE.DirectionalLightHelper(
-                        light as DirectionalLight,
+                        light as THREE.DirectionalLight,
                         50000
                     );
                     this.m_scene.add(helper);
 
                     const cameraHelper = new THREE.CameraHelper(light.shadow.camera);
                     this.m_scene.add(cameraHelper);
-                }
-                if (light.castShadow) {
-                    light.shadow.bias = 0.00001;
-                    light.shadow.mapSize.width = 1024;
-                    light.shadow.mapSize.height = 1024;
-                    Object.assign(light.shadow.camera, {
-                        top: 5000,
-                        left: -5000,
-                        right: 5000,
-                        bottom: -5000,
-                        far: 5000,
-                        near: 1
-                    });
-                    this.renderer.shadowMap.enabled = true;
-                    this.renderer.shadowMap.type = PCFSoftShadowMap;
                 }
                 this.m_createdLights!.push(light);
             });
@@ -3483,6 +3460,11 @@ export class MapView extends THREE.EventDispatcher {
 
         this.m_scene.add(this.m_mapTilesRoot);
         this.m_scene.add(this.m_mapAnchors);
+
+        if (this.m_options.enableShadows === true) {
+            this.m_renderer.shadowMap.enabled = true;
+            this.m_renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        }
     }
 
     private createTextRenderer(): TextElementsRenderer {
