@@ -321,10 +321,14 @@ export class DisplacementFeatureMixin implements DisplacementFeature, MixinShade
     onBeforeCompile?: CompileCallback;
     private m_displacementMap: THREE.Texture | null = null;
 
+    // This is here to keep tslint from reporting a missing property, the getter that's actually
+    // used by materials is added in [[addDisplacementProperties]].
     get displacementMap(): THREE.Texture | null {
         return this.m_displacementMap;
     }
 
+    // This is here to keep tslint from reporting a missing property, the setter that's actually
+    // used by materials is added in [[addDisplacementProperties]].
     set displacementMap(map: THREE.Texture | null) {
         this.setDisplacementMap(map);
     }
