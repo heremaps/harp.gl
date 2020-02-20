@@ -377,6 +377,13 @@ export interface StandardTechniqueParams extends BaseTechniqueParams {
      */
     alphaMap?: string | TextureBuffer;
     alphaMapProperties?: TextureProperties;
+
+    /**
+     * Whether this object can receive a shadow. Note, shadows must be enabled on the [[MapView]]
+     * for this to take affect. Note also that this also only receives shadows, a standard technique
+     * can't cast because it is flat.
+     */
+    enableShadows?: boolean;
 }
 
 /**
@@ -1111,6 +1118,12 @@ export interface ExtrudedPolygonTechniqueParams extends StandardTechniqueParams 
      * `false` forcefully disables depth prepass.
      */
     enableDepthPrePass?: boolean;
+
+    /**
+     * Whether this object receives and casts shadows. Note, shadows must be enabled on the
+     * [[MapView]] for this to take affect.
+     */
+    enableShadows?: boolean;
 }
 
 export interface ShaderTechniqueMaterialParameters {

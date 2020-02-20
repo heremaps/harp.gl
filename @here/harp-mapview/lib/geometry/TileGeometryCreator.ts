@@ -221,11 +221,6 @@ export class TileGeometryCreator {
 
         // HARP-7899, disable ground plane for globe
         if (tile.dataSource.addGroundPlane && tile.projection.type === ProjectionType.Planar) {
-            const material = this.createGroundPlaneMaterial(
-                new THREE.Color(tile.mapView.clearColor),
-                tile.mapView.shadowsEnabled
-            );
-
             // The ground plane is required for when we change the zoom back and we fall back to the
             // parent, in that case we reduce the renderOrder of the parent tile and this ground
             // place ensures that parent doesn't come through. This value must be above the
@@ -234,11 +229,7 @@ export class TileGeometryCreator {
             // concretely, we assume all objects are rendered with a renderOrder between 0 and
             // FALLBACK_RENDER_ORDER_OFFSET / 2, i.e. 10000. The ground plane is put at -10000, and
             // the fallback tiles have their renderOrder set between -20000 and -10000
-            TileGeometryCreator.instance.addGroundPlane(
-                tile,
-                -FALLBACK_RENDER_ORDER_OFFSET / 2,
-                material
-            );
+            TileGeometryCreator.instance.addGroundPlane(tile, -FALLBACK_RENDER_ORDER_OFFSET / 2);
         }
     }
 
@@ -841,10 +832,10 @@ export class TileGeometryCreator {
 
                 if (mapView.shadowsEnabled) {
                     if (isExtrudedPolygonTechnique(technique)) {
-                        object.castShadow = true;
-                        object.receiveShadow = true;
+                        object.castShadow = technique.enableShadows ?? false;
+                        object.receiveShadow = technique.enableShadows ?? false;
                     } else if (isStandardTechnique(technique)) {
-                        object.receiveShadow = true;
+                        object.receiveShadow = technique.enableShadows ?? false;
                     }
                 }
                 if (isExtrudedPolygonTechnique(technique) || isFillTechnique(technique)) {
@@ -1237,16 +1228,41 @@ export class TileGeometryCreator {
         // Create plane
         const { east, west, north, south } = tile.geoBox;
         const geometry = new THREE.BufferGeometry();
+        const sw = sourceProjection.projectPoint(
+            new GeoCoordinates(south, west),
+            new THREE.Vector3()
+        );
+        const se = sourceProjection.projectPoint(
+            new GeoCoordinates(south, east),
+            new THREE.Vector3()
+        );
+        const nw = sourceProjection.projectPoint(
+            new GeoCoordinates(north, west),
+            new THREE.Vector3()
+        );
+        const ne = sourceProjection.projectPoint(
+            new GeoCoordinates(north, east),
+            new THREE.Vector3()
+        );
         const posAttr = new THREE.BufferAttribute(
+            new Float32Array([...sw.toArray(), ...se.toArray(), ...nw.toArray(), ...ne.toArray()]),
+            3
+        );
+        sourceProjection.surfaceNormal(sw, tmpV);
+        // Webmercator needs to have it negated to work correctly.
+        tmpV.negate();
+        const normAttr = new THREE.BufferAttribute(
             new Float32Array([
-                ...sourceProjection.projectPoint(new GeoCoordinates(south, west), tmpV).toArray(),
-                ...sourceProjection.projectPoint(new GeoCoordinates(south, east), tmpV).toArray(),
-                ...sourceProjection.projectPoint(new GeoCoordinates(north, west), tmpV).toArray(),
-                ...sourceProjection.projectPoint(new GeoCoordinates(north, east), tmpV).toArray()
+                ...tmpV.toArray(),
+                ...tmpV.toArray(),
+                ...tmpV.toArray(),
+                ...tmpV.toArray()
             ]),
             3
         );
+
         geometry.setAttribute("position", posAttr);
+        geometry.setAttribute("normal", normAttr);
         geometry.setIndex(new THREE.BufferAttribute(new Uint16Array([0, 1, 2, 2, 1, 3]), 1));
 
         if (createTexCoords) {
@@ -1300,8 +1316,14 @@ export class TileGeometryCreator {
      * @param tile Tile
      * @param renderOrder Render order of the tile
      */
-    addGroundPlane(tile: Tile, renderOrder: number, material: THREE.Material) {
+    addGroundPlane(tile: Tile, renderOrder: number) {
+        const material = this.createGroundPlaneMaterial(
+            new THREE.Color(tile.mapView.clearColor),
+            tile.mapView.shadowsEnabled,
+            tile.mapView.projection.type === ProjectionType.Spherical
+        );
         const mesh = this.createGroundPlane(tile, material, false);
+        mesh.receiveShadow = tile.mapView.shadowsEnabled;
         mesh.renderOrder = renderOrder;
         this.registerTileObject(tile, mesh, GeometryKind.Background);
         tile.objects.push(mesh);
@@ -1376,19 +1398,23 @@ export class TileGeometryCreator {
         });
     }
 
-    private createGroundPlaneMaterial(color: THREE.Color, shadowsEnabled: boolean): THREE.Material {
+    private createGroundPlaneMaterial(
+        color: THREE.Color,
+        shadowsEnabled: boolean,
+        depthWrite: boolean
+    ): THREE.Material {
         if (shadowsEnabled) {
             return new MapMeshStandardMaterial({
                 color,
                 visible: true,
-                depthWrite: true,
+                depthWrite,
                 roughness: 1.0
             });
         } else {
             return new MapMeshBasicMaterial({
                 color,
                 visible: true,
-                depthWrite: true
+                depthWrite
             });
         }
     }
@@ -1438,36 +1464,6 @@ export class TileGeometryCreator {
         (material as MapMeshStandardMaterial).displacementMap!.needsUpdate = true;
     }
 
-<<<<<<< HEAD
-=======
-    /**
-     * Create a simple flat plane for a [[Tile]].
-     *
-     * @param {number} width Width of plane.
-     * @param {number} height Height of plane.
-     * @param {THREE.Vector3} planeCenter Center of plane.
-     * @param {THREE.Material} material Material of the plane mesh.
-     * @param {boolean} isVisible `True` to make the mesh visible.
-     * @returns {THREE.Mesh} The created plane.
-     */
-    private createPlane(
-        width: number,
-        height: number,
-        planeCenter: THREE.Vector3,
-        renderOrder: number,
-        material: THREE.Material
-    ): THREE.Mesh {
-        const geometry = new THREE.PlaneGeometry(width, height, 1);
-        const plane = new THREE.Mesh(geometry, material);
-        plane.receiveShadow = true;
-        plane.castShadow = false;
-        plane.position.copy(planeCenter);
-        // Render before everything else
-        plane.renderOrder = renderOrder;
-        return plane;
-    }
-
->>>>>>> WIP: Enable shadows in the map
     private addUserData(
         tile: Tile,
         srcGeometry: Geometry,
