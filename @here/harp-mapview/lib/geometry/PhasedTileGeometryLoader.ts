@@ -291,13 +291,20 @@ export class PhasedTileGeometryLoader implements TileGeometryLoader {
         this.m_currentPhaseIndex = 0;
     }
 
+    private finish() {
+        this.m_decodedTile = undefined;
+        this.m_tile.loadingFinished();
+        this.m_tile.removeDecodedTile();
+        this.m_isFinished = true;
+    }
+
     /**
      * Increment the current phase to activate the next phase of geometries.
      *
      * @returns {(number | undefined)} The index into the now active current pase, or `undefined` if
      *      the last phase has been reached.
      */
-    protected nextPhase(): number | undefined {
+    private nextPhase(): number | undefined {
         if (this.m_currentPhaseIndex < this.m_loadPhaseDefinitions.length) {
             this.m_currentPhaseIndex++;
         }
@@ -313,7 +320,7 @@ export class PhasedTileGeometryLoader implements TileGeometryLoader {
      * @param {TileGeometryCreator} geometryCreator
      * @param {GeometryKind} kindToCreate
      */
-    protected createKind(geometryCreator: TileGeometryCreator, kindToCreate: GeometryKind): void {
+    private createKind(geometryCreator: TileGeometryCreator, kindToCreate: GeometryKind): void {
         if (this.m_geometryKindsLoaded.has(kindToCreate)) {
             return;
         }
@@ -364,12 +371,5 @@ export class PhasedTileGeometryLoader implements TileGeometryLoader {
 
             geometryCreator.preparePois(tile, decodedTile);
         }
-    }
-
-    private finish() {
-        this.m_decodedTile = undefined;
-        this.m_tile.loadingFinished();
-        this.m_tile.removeDecodedTile();
-        this.m_isFinished = true;
     }
 }
