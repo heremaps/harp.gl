@@ -277,7 +277,7 @@ export class TopViewClipPlanesEvaluator extends ElevationBasedClipPlanesEvaluato
         minElevation: number = 0,
         readonly nearMin: number = 1.0,
         readonly nearFarMarginRatio: number = 0.05,
-        readonly farMaxRatio = 6.0
+        readonly farMaxRatio = 1.8
     ) {
         super(maxElevation, minElevation);
         assert(nearMin > 0);
