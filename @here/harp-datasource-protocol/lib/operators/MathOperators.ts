@@ -26,6 +26,15 @@ const operators = {
 
     "-": {
         call: (context: ExprEvaluatorContext, call: CallExpr) => {
+            if (call.args.length === 1) {
+                const value = context.evaluate(call.args[0]);
+                if (typeof value !== "number") {
+                    throw new Error(`ìnvalid operand '${typeof value} for operator '-'`);
+                }
+
+                return -value;
+            }
+
             const a = context.evaluate(call.args[0]);
             const b = context.evaluate(call.args[1]);
             if (typeof a !== "number" || typeof b !== "number") {

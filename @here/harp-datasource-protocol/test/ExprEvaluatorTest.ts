@@ -279,6 +279,15 @@ describe("ExprEvaluator", function() {
         });
     });
 
+    describe("Operator '-'", function() {
+        it("evaluate", function() {
+            assert.strictEqual(evaluate(["-", 123, 321]), 123 - 321);
+            assert.strictEqual(evaluate(["-", 123]), -123);
+            assert.throws(() => evaluate(["-", "a"]));
+            assert.throws(() => evaluate(["-", "a", 321]));
+        });
+    });
+
     describe("Operator '*'", function() {
         it("evaluate", function() {
             assert.strictEqual(evaluate(["*", 1, 2, 3, 4]), 1 * 2 * 3 * 4);
