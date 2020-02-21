@@ -41,11 +41,6 @@ export class ExprDependencies {
      * The properties needed to evaluate the [[Expr]].
      */
     readonly properties = new Set<string>();
-
-    /**
-     * `true` if the [[Expr]] depends on zoom level. Default is `false`.
-     */
-    zoom?: boolean;
 }
 
 class ComputeExprDependencies implements ExprVisitor<void, ExprDependencies> {
@@ -97,11 +92,7 @@ class ComputeExprDependencies implements ExprVisitor<void, ExprDependencies> {
     }
 
     visitCallExpr(expr: CallExpr, context: ExprDependencies): void {
-        if (expr.op === "zoom" && expr.args.length === 0) {
-            context.zoom = true;
-        } else {
-            expr.args.forEach(childExpr => childExpr.accept(this, context));
-        }
+        expr.args.forEach(childExpr => childExpr.accept(this, context));
     }
 
     visitMatchExpr(expr: MatchExpr, context: ExprDependencies): void {

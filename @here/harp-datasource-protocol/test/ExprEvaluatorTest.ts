@@ -45,10 +45,13 @@ describe("ExprEvaluator", function() {
     }
 
     function dependencies(json: JsonValue) {
-        const deps = Expr.fromJSON(json).dependencies();
+        const expr = Expr.fromJSON(json);
+        const dynamic = expr.isDynamic();
+        const deps = expr.dependencies();
+        const properties = Array.from(deps.properties).sort();
         return {
-            properties: Array.from(deps.properties).sort(),
-            zoom: deps.zoom || false
+            properties: Array.from(properties).sort(),
+            dynamic
         };
     }
 
@@ -174,6 +177,42 @@ describe("ExprEvaluator", function() {
             assert.isFalse(evaluate(["!has", "z", ["literal", object]]));
             assert.isFalse(evaluate(["!has", "k", ["literal", object]]));
             assert.isTrue(evaluate(["!has", "w", ["literal", object]]));
+        });
+    });
+
+    describe("Operator 'dynamic-properties'", function() {
+        it("evaluation scope", function() {
+            // the ["dynamic-properties"] in a dynamic scope should return the current environment.
+            assert.isTrue(
+                Env.isEnv(evaluate(["dynamic-properties"], undefined, ExprScope.Dynamic))
+            );
+
+            // the ["dynamic-properties"] in a static scope should return itself.
+            assert.isTrue(
+                Expr.isExpr(evaluate(["dynamic-properties"], undefined, ExprScope.Value))
+            );
+
+            // the ["dynamic-properties"] in a condition scope should return itself.
+            assert.isTrue(
+                Expr.isExpr(evaluate(["dynamic-properties"], undefined, ExprScope.Condition))
+            );
+        });
+
+        it("get", function() {
+            const values: ValueMap = { x: 123 };
+
+            assert.strictEqual(
+                evaluate(["get", "x", ["dynamic-properties"]], values, ExprScope.Dynamic),
+                123
+            );
+
+            assert.isTrue(
+                evaluate(["has", "x", ["dynamic-properties"]], values, ExprScope.Dynamic)
+            );
+
+            assert.isFalse(
+                evaluate(["has", "y", ["dynamic-properties"]], values, ExprScope.Dynamic)
+            );
         });
     });
 
@@ -799,23 +838,23 @@ describe("ExprEvaluator", function() {
     });
 
     it("Dependencies", function() {
-        assert.deepEqual(dependencies(true), { properties: [], zoom: false });
-        assert.deepEqual(dependencies(["get", "x"]), { properties: ["x"], zoom: false });
-        assert.deepEqual(dependencies(["has", "x"]), { properties: ["x"], zoom: false });
+        assert.deepEqual(dependencies(true), { properties: [], dynamic: false });
+        assert.deepEqual(dependencies(["get", "x"]), { properties: ["x"], dynamic: false });
+        assert.deepEqual(dependencies(["has", "x"]), { properties: ["x"], dynamic: false });
 
         assert.deepEqual(
             dependencies(["interpolate", ["exponential", 2], ["zoom"], 0, 0, 1, 1, ["get", "max"]]),
-            { properties: ["max"], zoom: true }
+            { properties: ["max"], dynamic: true }
         );
 
         assert.deepEqual(dependencies(["step", ["zoom"], "default", 5, "a", 10, "b"]), {
             properties: [],
-            zoom: true
+            dynamic: true
         });
 
         assert.deepEqual(dependencies(["match", ["get", "two"], [0, 1], false, 2, true, false]), {
             properties: ["two"],
-            zoom: false
+            dynamic: false
         });
 
         assert.deepEqual(
@@ -829,7 +868,7 @@ describe("ExprEvaluator", function() {
             ]),
             {
                 properties: ["fallback-value", "x"],
-                zoom: true
+                dynamic: true
             }
         );
     });
@@ -1182,6 +1221,12 @@ describe("ExprEvaluator", function() {
             assert.deepStrictEqual(instantiate(["in", ["get", "two"], ["aa", "bb"]]), false);
 
             assert.deepStrictEqual(instantiate(["in", ["get", "y"], [123, 321]]), true);
+
+            assert.deepStrictEqual(instantiate(["get", "x", ["dynamic-properties"]]), [
+                "get",
+                "x",
+                ["dynamic-properties"]
+            ]);
         });
     });
 

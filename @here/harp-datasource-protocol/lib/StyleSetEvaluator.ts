@@ -722,7 +722,7 @@ export class StyleSetEvaluator {
             if (Expr.isExpr(attrValue)) {
                 const deps = attrValue.dependencies();
 
-                if (!deps.zoom && deps.properties.size === 0) {
+                if (deps.properties.size === 0 && !attrValue.isDynamic()) {
                     // no data-dependencies detected.
                     attrValue = attrValue.evaluate(this.m_emptyEnv);
                 }
