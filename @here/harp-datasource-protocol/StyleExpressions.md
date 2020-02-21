@@ -67,6 +67,21 @@ Returns a `boolean` indicating if the current `feature` or the given
 ["!has", name, object]
 ```
 
+## dynamic-properties
+
+Gets the properties that are evaluated at rendering time.
+
+``javascript
+// returns an object containing the dynamic properties.
+["dynamic-properties"]
+
+// gets the value of the dynamic property `animating`
+["get", "animating", ["dynamic-properties"]]
+
+// `true` if `animating` is a dynamic property.
+["has", "animating", ["dynamic-properties"]]
+```
+
 ## in
 
 Returns a `boolean` indicating if the `value` is contained in the list of `elements`.

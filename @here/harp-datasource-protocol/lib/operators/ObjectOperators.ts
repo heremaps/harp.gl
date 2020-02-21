@@ -4,8 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { CallExpr, Expr } from "../Expr";
+import { CallExpr, Expr, ExprScope } from "../Expr";
 
+import { Env } from "../Env";
 import { ExprEvaluatorContext, OperatorDescriptorMap } from "../ExprEvaluator";
 
 const hasOwnProperty = Object.prototype.hasOwnProperty;
@@ -24,8 +25,14 @@ function lookupMember(context: ExprEvaluatorContext, args: Expr[], lookupMode: L
 
     const object = context.evaluate(args[1]) as any;
 
-    if (object && typeof object === "object" && hasOwnProperty.call(object, memberName)) {
-        return lookupMode === LookupMode.get ? object[memberName] : true;
+    if (object && typeof object === "object") {
+        if (Env.isEnv(object)) {
+            const value = object.lookup(memberName) ?? null;
+            return lookupMode === LookupMode.get ? value : value !== null;
+        }
+        if (hasOwnProperty.call(object, memberName)) {
+            return lookupMode === LookupMode.get ? object[memberName] : true;
+        }
     }
 
     return lookupMode === LookupMode.get ? null : false;
@@ -40,6 +47,16 @@ const operators = {
     has: {
         call: (context: ExprEvaluatorContext, call: CallExpr) =>
             lookupMember(context, call.args, LookupMode.has)
+    },
+
+    "dynamic-properties": {
+        isDynamicOperator: () => true,
+        call: (context: ExprEvaluatorContext, call: CallExpr) => {
+            if (context.scope === ExprScope.Dynamic) {
+                return context.env;
+            }
+            return call;
+        }
     }
 };
 

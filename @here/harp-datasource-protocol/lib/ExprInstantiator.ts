@@ -140,7 +140,7 @@ export class ExprInstantiator implements ExprVisitor<Expr, InstantiationContext>
         for (const [condition, branch] of expr.branches) {
             const newCondition = condition.accept(this, context);
             const deps = newCondition.dependencies();
-            if (!deps.zoom && deps.properties.size === 0) {
+            if (!condition.isDynamic() && deps.properties.size === 0) {
                 if (Boolean(newCondition.evaluate(emptyEnv, ExprScope.Condition))) {
                     return branch.accept(this, context);
                 }
