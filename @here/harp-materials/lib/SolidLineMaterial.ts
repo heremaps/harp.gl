@@ -4,14 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { LineCaps } from "@here/harp-datasource-protocol";
+import { LineCaps, LineDashes } from "@here/harp-datasource-protocol";
 import * as THREE from "three";
-import {
-    DisplacementFeature,
-    DisplacementFeatureParameters,
-    FadingFeature,
-    FadingFeatureParameters
-} from "./MapMeshMaterials";
+import { DisplacementFeature, DisplacementFeatureParameters } from "./DisplacementFeature";
+import { FadingFeature, FadingFeatureParameters } from "./MapMeshMaterials";
 import linesShaderChunk, { LineCapsModes } from "./ShaderChunks/LinesChunks";
 import {
     enforceBlending,
@@ -36,6 +32,27 @@ const DefinesLineCapsMapping: { [key: number]: LineCaps } = Object.keys(
     r[defineValue] = defineKey;
     return r;
 }, ({} as any) as { [key: number]: LineCaps });
+
+export enum LineDashesModes {
+    DASHES_SQUARE = 0,
+    DASHES_ROUND,
+    DASHES_DIAMOND
+}
+
+const LineDashesDefinesMapping: { [key in LineDashes]: number } = {
+    Square: LineDashesModes.DASHES_SQUARE,
+    Round: LineDashesModes.DASHES_ROUND,
+    Diamond: LineDashesModes.DASHES_DIAMOND
+};
+
+const DefinesLineDashesMapping: { [key: number]: LineDashes } = Object.keys(
+    LineDashesDefinesMapping
+).reduce((r, lineDashesName) => {
+    const defineKey = lineDashesName as keyof typeof LineDashesDefinesMapping;
+    const defineValue: number = LineDashesDefinesMapping[defineKey];
+    r[defineValue] = defineKey;
+    return r;
+}, ({} as any) as { [key: number]: LineDashes });
 
 /**
  * The vLength contains the actual line length, it's needed for the creation of line caps by
@@ -153,6 +170,10 @@ uniform vec2 drawRange;
 uniform float dashSize;
 uniform float gapSize;
 uniform vec3 dashColor;
+
+#define DASHES_SQUARE ${LineDashesModes.DASHES_SQUARE}
+#define DASHES_ROUND ${LineDashesModes.DASHES_ROUND}
+#define DASHES_DIAMOND ${LineDashesModes.DASHES_DIAMOND}
 #endif
 
 varying vec3 vPosition;
@@ -198,6 +219,11 @@ void main() {
     // Compute distance to dash edge (0.5: dashCenter, 0.0: dashEdge) and compute the
     // dashBlendFactor similarly on how we did it for the line opacity.
     float distToDashEdge = 0.5 - distance(distToDashOrigin, (d + g) / d * 0.5);
+    #if DASHES_MODE == DASHES_ROUND
+    distToDashEdge = 0.5 - distance(vec2(distToCenter * 0.5, distToDashEdge), vec2(0.0, 0.5));
+    #elif DASHES_MODE == DASHES_DIAMOND
+    distToDashEdge -= distToCenter * 0.5;
+    #endif
     float dashWidth = fwidth(distToDashEdge);
     float dashBlendFactor = 1.0 - smoothstep(-dashWidth, dashWidth, distToDashEdge);
 
@@ -318,6 +344,12 @@ export interface SolidLineMaterialParameters
     drawRangeEnd?: number;
 
     /**
+     * Describes line dash type (`"Round"`, `"Square"`, `"Diamond"`).
+     * Default is `"Square"`.
+     */
+    dashes?: LineDashes;
+
+    /**
      * Line dashes color.
      */
     dashColor?: number | string;
@@ -366,7 +398,8 @@ export class SolidLineMaterial extends THREE.RawShaderMaterial
 
         // Setup default defines.
         const defines: { [key: string]: any } = {
-            CAPS_MODE: LineCapsModes.CAPS_ROUND
+            CAPS_MODE: LineCapsModes.CAPS_ROUND,
+            DASHES_MODE: LineDashesModes.DASHES_SQUARE
         };
 
         // Prepare defines based on params passed in, before super class c-tor, this ensures
@@ -482,6 +515,9 @@ export class SolidLineMaterial extends THREE.RawShaderMaterial
             if (params.drawRangeEnd !== undefined) {
                 this.drawRangeEnd = params.drawRangeEnd;
             }
+            if (params.dashes !== undefined) {
+                this.dashes = params.dashes;
+            }
             if (params.dashColor !== undefined) {
                 tmpColor.set(params.dashColor as any);
                 this.dashColor = tmpColor;
@@ -510,7 +546,7 @@ export class SolidLineMaterial extends THREE.RawShaderMaterial
     set fog(enable: boolean) {
         this.m_fog = enable;
         // Function may be called from THREE.js cause we override setter,
-        // in this case defines are not yet initalized and require late invalidation in
+        // in this case defines are not yet initialized and require late invalidation in
         // SolidLineMaterial c-tor.
         if (this.defines !== undefined) {
             setShaderMaterialDefine(this, "USE_FOG", enable);
@@ -652,9 +688,29 @@ export class SolidLineMaterial extends THREE.RawShaderMaterial
     }
     set caps(value: LineCaps) {
         // Line caps mode may be set directly from theme, thus we need to check value
-        // correctness and if we provide string to define mapping.
+        // for correctness and provide string to define mapping in fragment shader.
         if (LineCapsDefinesMapping.hasOwnProperty(value)) {
             setShaderMaterialDefine(this, "CAPS_MODE", LineCapsDefinesMapping[value]);
+        }
+    }
+
+    /**
+     * Dashes mode.
+     */
+    get dashes(): LineDashes {
+        let result: LineDashes = "Square";
+        const dashesMode = getShaderMaterialDefine(this, "DASHES_MODE");
+        // Sanity check if material define is numerical and has direct mapping to LineDashes type.
+        if (typeof dashesMode === "number" && DefinesLineDashesMapping.hasOwnProperty(dashesMode)) {
+            result = DefinesLineDashesMapping[dashesMode];
+        }
+        return result;
+    }
+    set dashes(value: LineDashes) {
+        // Line dashes mode may be set directly from theme, thus we need to check value
+        // for correctness and provide string to define mapping in fragment shader.
+        if (LineDashesDefinesMapping.hasOwnProperty(value)) {
+            setShaderMaterialDefine(this, "DASHES_MODE", LineDashesDefinesMapping[value]);
         }
     }
 
@@ -673,15 +729,15 @@ export class SolidLineMaterial extends THREE.RawShaderMaterial
         setShaderMaterialDefine(this, "USE_FADING", value > 0.0);
     }
 
-    get displacementMap(): THREE.Texture | undefined {
+    get displacementMap(): THREE.Texture | null {
         return this.uniforms.displacementMap.value;
     }
-    set displacementMap(map: THREE.Texture | undefined) {
+    set displacementMap(map: THREE.Texture | null) {
         if (this.uniforms.displacementMap.value === map) {
             return;
         }
         this.uniforms.displacementMap.value = map;
-        const useDisplacementMap = map !== undefined;
+        const useDisplacementMap = map !== null;
         if (useDisplacementMap) {
             this.uniforms.displacementMap.value.needsUpdate = true;
         }

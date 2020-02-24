@@ -230,6 +230,7 @@ export abstract class Expr {
         return parseNode(node, referenceResolverState);
     }
 
+    private m_dependencies?: ExprDependencies;
     private m_isDynamic?: boolean;
 
     /**
@@ -264,7 +265,10 @@ export abstract class Expr {
      * Gets the dependencies of this [[Expr]].
      */
     dependencies(): ExprDependencies {
-        return ComputeExprDependencies.of(this);
+        if (!this.m_dependencies) {
+            this.m_dependencies = ComputeExprDependencies.of(this);
+        }
+        return this.m_dependencies;
     }
 
     /**
@@ -377,7 +381,7 @@ export abstract class LiteralExpr extends Expr {
 export class NullLiteralExpr extends LiteralExpr {
     static instance = new NullLiteralExpr();
     /** @override */
-    readonly value = null;
+    readonly value: Value = null;
 
     protected constructor() {
         super();

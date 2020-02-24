@@ -3,7 +3,7 @@
     "version": "0.12.0",
     "description": "harp.gl webpack utilities",
     "scripts": {
-        "build": "tsc",
+        "build": "tsc $EXTRA_TSC_ARGS",
         "prepare": "cross-env tsc --sourceMap false $EXTRA_TSC_ARGS"
     },
     "repository": {

@@ -13,7 +13,6 @@ import { UnicodeUtils } from "../utils/UnicodeUtils";
 import { Typesetter, TypesettingParameters } from "./Typesetter";
 
 /**
- * @hidden
  * [[Typesetter]] implementation that handles multi-line complex layout text.
  */
 export class LineTypesetter implements Typesetter {

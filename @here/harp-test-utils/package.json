@@ -6,7 +6,7 @@
     "browser": "index.web.js",
     "typings": "index.web",
     "scripts": {
-        "build": "tsc",
+        "build": "tsc $EXTRA_TSC_ARGS",
         "test": "cross-env mocha --require source-map-support/register $EXTRA_MOCHA_ARGS ./test/*.js",
         "prepare": "cross-env tsc --sourceMap false $EXTRA_TSC_ARGS"
     },
@@ -43,7 +43,6 @@
         "@types/node": "^12.0.8",
         "@types/serve-static": "^1.13.2",
         "body-parser": "^1.18.3",
-        "chai": "^4.0.2",
         "cross-env": "^6.0.3",
         "express": "^4.17.1",
         "mkpath": "^1.0.0",

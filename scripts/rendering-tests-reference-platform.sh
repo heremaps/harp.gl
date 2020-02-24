@@ -3,7 +3,7 @@
 #
 # Run harp.gl rendering tests (see [../test/README.md]) on reference platform i.e
 #
-#   Headless Chrome 78 on Linux with GPU disabled
+#   Headless Chrome 80 on Linux with GPU disabled
 #
 
 #
@@ -11,8 +11,8 @@
 #
 # See https://github.com/SeleniumHQ/docker-selenium/releases.
 #
-# xenon stands for chrome 78
-REFERENCE_IMAGE=selenium/standalone-chrome:3.141.59-xenon
+# zirconium stands for chrome 80
+REFERENCE_IMAGE=selenium/standalone-chrome:3.141.59-zirconium
 
 yarn build-tests
 

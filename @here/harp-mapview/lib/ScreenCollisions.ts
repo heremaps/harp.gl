@@ -86,9 +86,6 @@ export function isLineWithBound(box: IBox): box is LineWithBound {
 
 const tmpCollisionBox = new CollisionBox();
 
-/**
- * @hidden
- */
 export class ScreenCollisions {
     /** The screen bounding box. */
     readonly screenBounds = new Math2D.Box();

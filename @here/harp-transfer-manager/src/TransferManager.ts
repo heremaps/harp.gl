@@ -11,53 +11,7 @@
  */
 
 import "@here/harp-fetch";
-
-/** @internal
- * DeferredPromise takes an executor function for executing it later, when [[exec]] is called.
- * This class allows wrapping other promises or long running functions for later execution.
- */
-class DeferredPromise<T> {
-    /**
-     * Internal promise to store the deferred executor function.
-     */
-    readonly promise: Promise<T>;
-    private doExec = false;
-    private resolveFunc?: (result?: T) => void;
-    private rejectFunc?: (reason?: any) => void;
-
-    constructor(private readonly executor: () => Promise<T>) {
-        this.promise = new Promise<T>((resolve, reject) => {
-            this.resolveFunc = resolve;
-            this.rejectFunc = reject;
-
-            if (this.doExec) {
-                this.execInnerPromise(this.resolveFunc, this.rejectFunc);
-            }
-        });
-    }
-
-    /**
-     * When `exec` is called the deferred executor function is executed.
-     */
-    exec() {
-        if (this.resolveFunc === undefined || this.rejectFunc === undefined) {
-            // deferred promise not yet initialized - handle it in callback above
-            this.doExec = true;
-            return;
-        }
-
-        this.execInnerPromise(this.resolveFunc, this.rejectFunc);
-    }
-
-    private execInnerPromise(
-        resolveFunc: (result?: T) => void,
-        rejectFunc: (reason?: any) => void
-    ) {
-        this.executor()
-            .then(result => resolveFunc(result))
-            .catch(err => rejectFunc(err));
-    }
-}
+import { DeferredPromise } from "./DeferredPromise";
 
 /**
  * `TransferManager` for downloading URLs.
@@ -170,17 +124,23 @@ export class TransferManager {
         }
         return this.doDownload(url, init);
     }
-    private doDownload(url: string, init?: RequestInit): Promise<Response> {
-        ++this.activeDownloadCount;
-        return TransferManager.fetchRepeatedly(this.fetchFunction, 0, this.maxRetries, url, init)
-            .then(response => {
-                this.onDownloadDone();
-                return response;
-            })
-            .catch(err => {
-                this.onDownloadDone();
-                throw err;
-            });
+    private async doDownload(url: string, init?: RequestInit): Promise<Response> {
+        try {
+            ++this.activeDownloadCount;
+            const response = await TransferManager.fetchRepeatedly(
+                this.fetchFunction,
+                0,
+                this.maxRetries,
+                url,
+                init
+            );
+
+            this.onDownloadDone();
+            return response;
+        } catch (error) {
+            this.onDownloadDone();
+            throw error;
+        }
     }
     private onDownloadDone() {
         --this.activeDownloadCount;

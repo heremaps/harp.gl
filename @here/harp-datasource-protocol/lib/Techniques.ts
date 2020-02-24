@@ -533,6 +533,25 @@ export interface IndexedTechniqueParams {
      * @hidden
      */
     _styleSetIndex: number;
+
+    /**
+     * The styleSet associated to this [[Technique]].
+     * @hidden
+     */
+    _styleSet?: string;
+
+    /**
+     * The category used to assign render orders to objects created using this [[Technique]].
+     * @hidden
+     */
+    _category?: string;
+
+    /**
+     * The category used to assign render orders to secondary objects
+     * created using this [[Technique]].
+     * @hidden
+     */
+    _secondaryCategory?: string;
 }
 
 /**
@@ -581,6 +600,21 @@ export function isLineTechnique(technique: Technique): technique is LineTechniqu
  */
 export function isSolidLineTechnique(technique: Technique): technique is SolidLineTechnique {
     return technique.name === "solid-line" || technique.name === "dashed-line";
+}
+
+/**
+ * Type guard to check if an object is an instance of [[SolidLineTechnique]] and is a kind that
+ * has special dashes.
+ * @note Lines with special dashes need line caps to render properly.
+ */
+export function isSpecialDashesLineTechnique(
+    technique: Technique
+): technique is SolidLineTechnique {
+    return (
+        (technique.name === "solid-line" || technique.name === "dashed-line") &&
+        technique.dashes !== undefined &&
+        technique.dashes !== "Square"
+    );
 }
 
 /**

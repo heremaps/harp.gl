@@ -10,5 +10,4 @@ modules included in this repo. The list of features include, but is not limited 
 * picking on elements
 * sky
 * loading themes
-* text rendering
-* pois
+* [[@docs/label-rendering|Label rendering (text and pois)]]

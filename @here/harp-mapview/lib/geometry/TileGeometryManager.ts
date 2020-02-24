@@ -193,23 +193,18 @@ export abstract class TileGeometryManagerBase implements TileGeometryManager {
         addOrRemoveToHiddenSet: boolean = true
     ): void {
         let visibilityHasChanged = false;
-        if (Array.isArray(kind)) {
-            for (const oneKind of kind as GeometryKind[]) {
-                visibilityHasChanged =
-                    visibilityHasChanged ||
-                    this.addRemove(this.hiddenKinds, oneKind, addOrRemoveToHiddenSet);
+
+        if (Array.isArray(kind) || kind instanceof Set) {
+            for (const oneKind of kind) {
+                const visibilityChange = this.addRemove(
+                    this.hiddenKinds,
+                    oneKind,
+                    addOrRemoveToHiddenSet
+                );
+                visibilityHasChanged = visibilityHasChanged || visibilityChange;
             }
-        } else if (kind instanceof Set) {
-            const kindSet = kind as GeometryKindSet;
-            for (const oneKind of kindSet) {
-                visibilityHasChanged =
-                    visibilityHasChanged ||
-                    this.addRemove(this.hiddenKinds, oneKind, addOrRemoveToHiddenSet);
-            }
-        } else if (kind !== undefined) {
-            visibilityHasChanged =
-                visibilityHasChanged ||
-                this.addRemove(this.hiddenKinds, kind, addOrRemoveToHiddenSet);
+        } else {
+            visibilityHasChanged = this.addRemove(this.hiddenKinds, kind, addOrRemoveToHiddenSet);
         }
 
         // Will be evaluated in the next update()

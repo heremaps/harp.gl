@@ -57,6 +57,11 @@ export class PoiInfoBuilder {
         return this;
     }
 
+    withMayOverlap(mayOverlap: boolean): PoiInfoBuilder {
+        this.m_mayOverlap = mayOverlap;
+        return this;
+    }
+
     build(textElement: TextElement): PoiInfo {
         return {
             technique: this.m_technique,

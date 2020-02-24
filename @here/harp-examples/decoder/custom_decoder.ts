@@ -112,7 +112,7 @@ class CustomDecoder extends ThemedTileDecoder
 
         // Create actual line-geometry out of the data.
         const lineGroup = new LineGroup();
-        lineGroup.add(worldCenter, worldPoints);
+        lineGroup.add(worldCenter, worldPoints, projection);
 
         for (const technique of techniques) {
             geometries.push(this.createLineGeometry(lineGroup, technique._index));
@@ -136,6 +136,7 @@ class CustomDecoder extends ThemedTileDecoder
             tmpGeoPoint.copy(geoCenter);
             tmpGeoPoint.latitude += points[i];
             tmpGeoPoint.longitude += points[i + 1];
+            tmpGeoPoint.altitude = 100;
             projection.projectPoint(tmpGeoPoint, tmpWorldPoint);
             tmpWorldPoint.sub(worldCenter).toArray(worldPoints, (i / 2) * 3);
         }

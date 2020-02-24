@@ -14,31 +14,34 @@ branches:
     - master
     - release
 
+env:
+  - DETECT_CHROMEDRIVER_VERSION=true
+
 # upgrade yarn to a more recent version
 before_install:
   - curl -o- -L https://yarnpkg.com/install.sh | bash -s -- --version 1.13.0
   - export PATH="$HOME/.yarn/bin:$PATH"
-  - npm install codecov -g
+  - yarn global add codecov
 
 jobs:
   include:
     - name: "Test"
-      script: |
-        set -ex
-        yarn pre-test
-        yarn cov-test --forbid-only
-        yarn build-tests
-        yarn test-browser --headless-firefox
-        yarn test-browser --headless-chrome
-        ./scripts/test-npm-packages.sh
-        git status # just in case test-npm-packages leaves some garbage
+      script:
+        - yarn pre-test
+        - yarn cov-test --forbid-only
+        - yarn build-tests
+        - yarn test-browser --headless-firefox
+        - yarn test-browser --headless-chrome
+        - ./scripts/test-npm-packages.sh
+
     - name: "Build & Deploy"
-      script: |
-        set -ex
-        cross-env NODE_ENV=production yarn run build
-        yarn run typedoc
-        cross-env NODE_ENV=production yarn run build-www
-      before_deploy: yarn prepare-doc-deploy
+      script:
+        - cross-env NODE_ENV=production yarn run build
+        - yarn run typedoc
+        - cross-env NODE_ENV=production yarn run build-www
+        - yarn prepare-doc-deploy
+        # debug: lerna publish expects clean workspace
+        - ./scripts/git-check-clean-workspace.sh
       deploy:
         - provider: script
           script: ./scripts/publish-packages.sh

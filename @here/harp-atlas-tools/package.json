@@ -8,7 +8,7 @@
         "harp-sprites-generator": "lib/cli-sprites-generator.js"
     },
     "scripts": {
-        "build": "tsc",
+        "build": "tsc $EXTRA_TSC_ARGS",
         "watch": "tsc -w",
         "generateAtlas": "ts-node src/cli-atlas-generator.ts",
         "generateSprites": "ts-node src/cli-sprites-generator.ts",

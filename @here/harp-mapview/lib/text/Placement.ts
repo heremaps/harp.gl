@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { Env } from "@here/harp-datasource-protocol";
 import { ProjectionType } from "@here/harp-geoutils";
 import {
     HorizontalAlignment,
@@ -127,7 +128,6 @@ export enum PrePlacementResult {
  * @param viewState The view for which the text element will be placed.
  * @param viewCamera The view's camera.
  * @param m_poiManager To prepare pois for rendering.
- * @param projectionType The projection type currently used from geo to world space.
  * @param [maxViewDistance] If specified, text elements farther than this max distance will be
  * rejected.
  * @returns An object with the result code and the text element view distance
@@ -138,7 +138,6 @@ export function checkReadyForPlacement(
     viewState: ViewState,
     viewCamera: THREE.Camera,
     poiManager: PoiManager,
-    projectionType: ProjectionType,
     maxViewDistance?: number
 ): { result: PrePlacementResult; viewDistance: number | undefined } {
     let viewDistance: number | undefined;
@@ -174,7 +173,7 @@ export function checkReadyForPlacement(
             : checkViewDistance(
                   viewState.worldCenter,
                   textElement,
-                  projectionType,
+                  viewState.projection.type,
                   viewCamera,
                   maxViewDistance
               );
@@ -257,7 +256,7 @@ export enum PlacementResult {
  * @param screenPosition Screen position of the icon.
  * @param scaleFactor Scaling factor to apply to the icon dimensions.
  * @param screenCollisions Used to check the icon visibility and collisions.
- * @param zoomLevel Current zoom level.
+ * @param env Current map env.
  * @returns `PlacementResult.Ok` if icon can be placed, `PlacementResult.Rejected` if there's
  * a collision, `PlacementResult.Invisible` if it's not visible.
  */
@@ -266,10 +265,10 @@ export function placeIcon(
     poiInfo: PoiInfo,
     screenPosition: THREE.Vector2,
     scaleFactor: number,
-    zoomLevel: number,
+    env: Env,
     screenCollisions: ScreenCollisions
 ): PlacementResult {
-    PoiRenderer.computeIconScreenBox(poiInfo, screenPosition, scaleFactor, zoomLevel, tmp2DBox);
+    PoiRenderer.computeIconScreenBox(poiInfo, screenPosition, scaleFactor, env, tmp2DBox);
     if (!screenCollisions.isVisible(tmp2DBox)) {
         return PlacementResult.Invisible;
     }

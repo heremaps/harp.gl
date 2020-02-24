@@ -67,7 +67,7 @@ describe("TextCanvas", function() {
         await ibct.assertCanvasMatchesReference(canvas, params.testName);
     }
 
-    it("renders hello world text", async function() {
+    it("renders hello world text", async function(this: Mocha.Context) {
         await basicRenderTest(
             {
                 test: this,
@@ -100,7 +100,7 @@ describe("TextCanvas", function() {
             }
         );
     });
-    it("renders ß", async function() {
+    it("renders ß", async function(this: Mocha.Context) {
         await basicRenderTest(
             {
                 test: this,
@@ -133,7 +133,7 @@ describe("TextCanvas", function() {
             }
         );
     });
-    it("renders ß with dashes", async function() {
+    it("renders ß with dashes", async function(this: Mocha.Context) {
         await basicRenderTest(
             {
                 test: this,
@@ -170,7 +170,7 @@ describe("TextCanvas", function() {
         );
     });
 
-    it("renders rotated hello world text", async function() {
+    it("renders rotated hello world text", async function(this: Mocha.Context) {
         await basicRenderTest(
             {
                 test: this,
@@ -218,7 +218,7 @@ describe("TextCanvas", function() {
         );
     });
 
-    it("renders hello world on path", async function() {
+    it("renders hello world on path", async function(this: Mocha.Context) {
         await basicRenderTest(
             {
                 test: this,

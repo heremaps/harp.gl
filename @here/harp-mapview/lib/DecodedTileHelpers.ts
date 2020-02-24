@@ -7,12 +7,14 @@
 import {
     BufferAttribute,
     ColorUtils,
+    Env,
     Expr,
     getPropertyValue,
     InterpolatedProperty,
     isExtrudedLineTechnique,
     isExtrudedPolygonTechnique,
     isInterpolatedProperty,
+    isJsonExpr,
     isShaderTechnique,
     isStandardTechnique,
     isTerrainTechnique,
@@ -64,9 +66,11 @@ export interface MaterialOptions {
     technique: Technique;
 
     /**
-     * The active zoom level at material creation for zoom-dependent properties.
+     * Environment used to evaluate dynamic technique attributes.
+     *
+     * Usually [[MapView.mapEnv]].
      */
-    level: number;
+    env: Env;
 
     /**
      * Properties to skip.
@@ -231,7 +235,7 @@ export function createMaterial(
         applyShaderTechniqueToMaterial(technique, material);
     } else {
         // Generic technique.
-        applyTechniqueToMaterial(technique, material, options.level, options.skipExtraProps);
+        applyTechniqueToMaterial(technique, material, options.env, options.skipExtraProps);
     }
 
     return material;
@@ -427,13 +431,10 @@ export function getMaterialConstructor(technique: Technique): MaterialConstructo
  * @returns [[number]] encoded color value (in custom #TTRRGGBB) format or [[undefined]] if
  * base color property is not defined in the technique passed.
  */
-export function evaluateBaseColorProperty(
-    technique: Technique,
-    zoomLevel?: number
-): number | undefined {
+export function evaluateBaseColorProperty(technique: Technique, env?: Env): number | undefined {
     const baseColorProp = getBaseColorProp(technique);
     if (baseColorProp !== undefined) {
-        return evaluateColorProperty(baseColorProp, zoomLevel);
+        return evaluateColorProperty(baseColorProp, env);
     }
     return undefined;
 }
@@ -499,7 +500,7 @@ function applyShaderTechniqueToMaterial(technique: ShaderTechnique, material: TH
 function applyTechniqueToMaterial(
     technique: Technique,
     material: THREE.Material,
-    zoomLevel: number,
+    env: Env,
     skipExtraProps?: string[]
 ) {
     // Remove transparent color from the firstly processed properties set.
@@ -533,7 +534,7 @@ function applyTechniqueToMaterial(
     genericProps.forEach(propertyName => {
         const value = technique[propertyName as keyof Technique];
         if (value !== undefined) {
-            applyTechniquePropertyToMaterial(material, propertyName, value, zoomLevel);
+            applyTechniquePropertyToMaterial(material, propertyName, value, env);
         }
     });
 
@@ -545,7 +546,7 @@ function applyTechniqueToMaterial(
             material[baseColorPropName as keyof THREE.Material],
             technique,
             technique[baseColorPropName as keyof Technique] as Value,
-            zoomLevel
+            env
         );
     }
 }
@@ -565,17 +566,17 @@ function applyTechniquePropertyToMaterial(
     material: THREE.Material,
     propertyName: string,
     techniqueAttrValue: Value,
-    zoomLevel?: number
+    env?: Env
 ) {
     const m = material as any;
     if (m[propertyName] instanceof THREE.Color) {
         applySecondaryColorToMaterial(
             material[propertyName as keyof THREE.Material],
             techniqueAttrValue,
-            zoomLevel
+            env
         );
     } else {
-        m[propertyName] = evaluateProperty(techniqueAttrValue, zoomLevel);
+        m[propertyName] = evaluateProperty(techniqueAttrValue, env);
     }
 }
 
@@ -595,9 +596,9 @@ function applyTechniquePropertyToMaterial(
 export function applySecondaryColorToMaterial(
     materialColor: THREE.Color,
     techniqueColor: Value | Expr | InterpolatedProperty,
-    zoomLevel?: number
+    env?: Env
 ) {
-    let value = evaluateColorProperty(techniqueColor, zoomLevel);
+    let value = evaluateColorProperty(techniqueColor, env);
 
     if (ColorUtils.hasAlphaInHex(value)) {
         logger.warn("Used RGBA value for technique color without transparency support!");
@@ -631,9 +632,9 @@ export function applyBaseColorToMaterial(
     materialColor: THREE.Color,
     technique: Technique,
     techniqueColor: Value,
-    zoomLevel?: number
+    env?: Env
 ) {
-    const colorValue = evaluateColorProperty(techniqueColor, zoomLevel);
+    const colorValue = evaluateColorProperty(techniqueColor, env);
 
     const { r, g, b, a } = ColorUtils.getRgbaFromHex(colorValue);
     // Override material opacity and blending by mixing technique defined opacity
@@ -641,7 +642,7 @@ export function applyBaseColorToMaterial(
     const tech = technique as any;
     let opacity = a;
     if (tech.opacity !== undefined) {
-        opacity *= evaluateProperty(tech.opacity, zoomLevel);
+        opacity *= evaluateProperty(tech.opacity, env);
     }
 
     opacity = THREE.Math.clamp(opacity, 0, 1);
@@ -666,9 +667,9 @@ export function applyBaseColorToMaterial(
  * @param value the value of color property defined in technique
  * @param zoomLevel zoom level used for interpolation.
  */
-function evaluateProperty(value: any, zoomLevel?: number): any {
-    if (zoomLevel !== undefined && (isInterpolatedProperty(value) || Expr.isExpr(value))) {
-        value = getPropertyValue(value, zoomLevel);
+function evaluateProperty(value: any, env?: Env): any {
+    if (env !== undefined && (isInterpolatedProperty(value) || Expr.isExpr(value))) {
+        value = getPropertyValue(value, env);
     }
     return value;
 }
@@ -683,8 +684,8 @@ function evaluateProperty(value: any, zoomLevel?: number): any {
  * @param value the value of color property defined in technique
  * @param zoomLevel zoom level used for interpolation.
  */
-export function evaluateColorProperty(value: Value, zoomLevel?: number): number {
-    value = evaluateProperty(value, zoomLevel);
+export function evaluateColorProperty(value: Value, env?: Env): number {
+    value = evaluateProperty(value, env);
 
     if (typeof value === "number") {
         return value;
@@ -698,6 +699,28 @@ export function evaluateColorProperty(value: Value, zoomLevel?: number): number 
     }
 
     throw new Error(`Unsupported color format: '${value}'`);
+}
+
+/**
+ * Compile expressions in techniques as they were received from decoder.
+ */
+export function compileTechniques(techniques: Technique[]) {
+    techniques.forEach((technique: any) => {
+        for (const propertyName in technique) {
+            if (!technique.hasOwnProperty(propertyName)) {
+                continue;
+            }
+            const value = technique[propertyName];
+            if (isJsonExpr(value) && propertyName !== "kind") {
+                // "kind" is reserved.
+                try {
+                    technique[propertyName] = Expr.fromJSON(value);
+                } catch (error) {
+                    logger.error("#compileTechniques: Failed to compile expression:", error);
+                }
+            }
+        }
+    });
 }
 
 /**

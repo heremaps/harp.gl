@@ -35,7 +35,7 @@ class TransverseMercatorProjection extends Projection {
      * So, in transverse we need to compute distnce to poles, and clamp if
      * radius is exceeded
      */
-    static clampGeoPoint(geoPoint: GeoCoordinatesLike, unitScale: number) {
+    static clampGeoPoint(geoPoint: GeoCoordinatesLike, _unitScale: number) {
         const lat = geoPoint.latitude;
         const lon = geoPoint.longitude;
 

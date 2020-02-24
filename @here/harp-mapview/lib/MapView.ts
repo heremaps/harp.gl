@@ -4,10 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import {
+    Env,
     GeometryKind,
     GradientSky,
     ImageTexture,
     Light,
+    MapEnv,
     PostEffects,
     Sky,
     Theme
@@ -49,6 +51,7 @@ import { SimpleTileGeometryManager, TileGeometryManager } from "./geometry/TileG
 import { MapViewImageCache } from "./image/MapViewImageCache";
 import { MapViewFog } from "./MapViewFog";
 import { PickHandler, PickResult } from "./PickHandler";
+import { PickingRaycaster } from "./PickingRaycaster";
 import { PoiManager } from "./poi/PoiManager";
 import { PoiRendererFactory } from "./poi/PoiRendererFactory";
 import { PoiTableManager } from "./poi/PoiTableManager";
@@ -140,6 +143,7 @@ const DEFAULT_CAM_NEAR_PLANE = 0.1;
 const DEFAULT_CAM_FAR_PLANE = 4000000;
 const MAX_FIELD_OF_VIEW = 140;
 const MIN_FIELD_OF_VIEW = 10;
+export const MAX_TILT_ANGLE = 89;
 // All objects in fallback tiles are reduced by this amount.
 export const FALLBACK_RENDER_ORDER_OFFSET = 20000;
 
@@ -431,7 +435,7 @@ export interface MapViewOptions extends TextElementsRendererOptions {
      *
      * To disable a cache search, set the value to `0`.
      *
-     * @default [[MapViewDefaults.quadTreeSeaFIX]]
+     * @default [[MapViewDefaults.quadTreeSearchDistanceDown]]
      */
     quadTreeSearchDistanceDown?: number;
 
@@ -455,6 +459,11 @@ export interface MapViewOptions extends TextElementsRendererOptions {
      * store road data.
      */
     enableRoadPicking?: boolean;
+
+    /**
+     * Set to `true` to allow picking of technique information associated with objects.
+     */
+    enablePickTechnique?: boolean;
 
     /**
      * An optional canvas element that renders 2D collision debug information.
@@ -518,8 +527,13 @@ export interface MapViewOptions extends TextElementsRendererOptions {
     maxFps?: number;
 
     /**
-     * Enable phased loading. If `false`, the geometry on a [[Tile]] is always being created in a
-     * single step, instead of (potentially) over multiple frames to smoothen animations.
+     * Enable phased loading.
+     *
+     * Enabling this feature allows to minimize performance overhead by distributing geometry
+     * creation over multiple frames, thus decreasing CPU load at single frame for smoother
+     * application feedback and animations.
+     * If `false` or undefined, the geometry on a [[Tile]] is always being created in a single
+     * step, instead of (potentially) over multiple frames.
      *
      * @default `false`
      */
@@ -699,7 +713,10 @@ export class MapView extends THREE.EventDispatcher {
     private readonly m_rteCamera = new THREE.PerspectiveCamera();
 
     private m_focalLength: number;
-    private m_lookAtDistance: number;
+    private m_targetDistance: number;
+    private m_targetGeoPos = MapViewDefaults.target.clone();
+    // Focus point world coords may be calculated after setting projection, use dummy value here.
+    private m_targetWorldPos = new THREE.Vector3();
     private readonly m_viewRanges: ViewRanges = {
         near: DEFAULT_CAM_NEAR_PLANE,
         far: DEFAULT_CAM_FAR_PLANE,
@@ -740,7 +757,7 @@ export class MapView extends THREE.EventDispatcher {
     private m_enablePolarDataSource: boolean = true;
 
     // gestures
-    private readonly m_raycaster = new THREE.Raycaster();
+    private readonly m_raycaster: PickingRaycaster;
     private readonly m_plane = new THREE.Plane(new THREE.Vector3(0, 0, 1));
     private readonly m_sphere = new THREE.Sphere(undefined, EarthConstants.EQUATORIAL_RADIUS);
 
@@ -781,6 +798,8 @@ export class MapView extends THREE.EventDispatcher {
     private m_languages: string[] | undefined;
     private m_copyrightInfo: CopyrightInfo[] = [];
     private m_animatedExtrusionHandler: AnimatedExtrusionHandler;
+
+    private m_env: MapEnv = new MapEnv({});
 
     private m_enableMixedLod: boolean | undefined;
 
@@ -886,7 +905,8 @@ export class MapView extends THREE.EventDispatcher {
         this.m_pickHandler = new PickHandler(
             this,
             this.m_rteCamera,
-            this.m_options.enableRoadPicking === true
+            this.m_options.enableRoadPicking === true,
+            this.m_options.enablePickTechnique === true
         );
 
         if (this.m_options.tileWrappingEnabled !== undefined) {
@@ -938,13 +958,16 @@ export class MapView extends THREE.EventDispatcher {
             DEFAULT_CAM_FAR_PLANE
         );
         this.m_camera.up.set(0, 0, 1);
-        this.m_lookAtDistance = 0;
+        this.projection.projectPoint(this.m_targetGeoPos, this.m_targetWorldPos);
         this.m_focalLength = 0;
         this.m_scene.add(this.m_camera); // ensure the camera is added to the scene.
         this.m_screenProjector = new ScreenProjector(this.m_camera);
 
         // setup camera with initial position
         this.setupCamera(options);
+        this.m_targetDistance = this.m_camera.position.distanceTo(this.m_targetWorldPos);
+
+        this.m_raycaster = new PickingRaycaster(width, height);
 
         this.m_movementDetector = new CameraMovementDetector(
             this.m_options.movementThrottleTimeout,
@@ -1263,6 +1286,14 @@ export class MapView extends THREE.EventDispatcher {
 
         this.resetTextRenderer();
 
+        if (Array.isArray(theme.priorities)) {
+            this.m_theme.priorities = theme.priorities;
+        }
+
+        if (Array.isArray(theme.labelPriorities)) {
+            this.m_theme.labelPriorities = theme.labelPriorities;
+        }
+
         if (this.m_theme.styles === undefined) {
             this.m_theme.styles = {};
         }
@@ -1476,9 +1507,12 @@ export class MapView extends THREE.EventDispatcher {
     set projection(projection: Projection) {
         // The geo center must be reset when changing the projection, because the
         // camera's position is based on the projected geo center.
-        const target = MapViewUtils.rayCastWorldCoordinates(this, 0, 0);
+        let target = MapViewUtils.getWorldTargetFromCamera(this.camera, this.projection);
         if (target === null) {
-            throw new Error("MapView does not support a view pointing in the void.");
+            logger.warn(
+                "MapView does not support a view pointing in the void, using last focus point."
+            );
+            target = this.worldTarget;
         }
         const targetCoordinates = this.projection.unprojectPoint(target);
         const targetDistance = this.camera.position.distanceTo(target);
@@ -1516,11 +1550,40 @@ export class MapView extends THREE.EventDispatcher {
         return this.m_focalLength;
     }
 
-    /**
-     * Get distance from camera to the point of focus in world units.
+    /** @internal
+     * Get geo coordinates of camera focus (target) point.
+     *
+     * @see worldTarget
+     *
+     * @returns geo coordinates of the camera focus point.
      */
-    get lookAtDistance(): number {
-        return this.m_lookAtDistance;
+    get target(): GeoCoordinates {
+        return this.m_targetGeoPos;
+    }
+
+    /** @internal
+     * Get world coordinates of camera focus point.
+     *
+     * @note The focus point coordinates are updated with each camera update so you don't need
+     * to re-calculate it, although if the camera started looking to the void, the last focus
+     * point is stored.
+     *
+     * @returns world coordinates of the camera focus point.
+     */
+    get worldTarget(): THREE.Vector3 {
+        return this.m_targetWorldPos;
+    }
+
+    /** @internal
+     * Get distance from camera to the point of focus in world units.
+     *
+     * @note If camera does not point to any ground anymore the last focus point distance is
+     * then returned.
+     *
+     * @returns Last known focus point distance.
+     */
+    get targetDistance(): number {
+        return this.m_targetDistance;
     }
 
     /**
@@ -1669,6 +1732,13 @@ export class MapView extends THREE.EventDispatcher {
     }
 
     /**
+     * Environment used to evaluate dynamic scene expressions.
+     */
+    get env(): Env {
+        return this.m_env;
+    }
+
+    /**
      * Returns the storage level for the given camera setup.
      * Actual storage level of the rendered data also depends on [[DataSource.storageLevelOffset]].
      */
@@ -1701,10 +1771,10 @@ export class MapView extends THREE.EventDispatcher {
     /**
      * Returns 'true' if the phased loading is currently enabled.
      *
-     * @default true.
+     * @default `false`.
      */
     get phasedLoadingEnabled(): boolean {
-        return this.m_options.enablePhasedLoading !== false;
+        return this.m_options.enablePhasedLoading === true;
     }
 
     /**
@@ -1910,6 +1980,10 @@ export class MapView extends THREE.EventDispatcher {
             this.camera.position
         );
         this.camera.updateMatrixWorld(true);
+        // TODO: Consider forcing entire cameras update, see: [[updateCameras]]
+        this.m_targetGeoPos.copy(target);
+        this.m_targetWorldPos.copy(this.projection.projectPoint(target));
+        this.m_targetDistance = distance;
     }
 
     /**
@@ -2014,8 +2088,8 @@ export class MapView extends THREE.EventDispatcher {
             // formulas are all equivalent:
             // lookAtDistance = (EQUATORIAL_CIRCUMFERENCE * focalLength) / (256 * zoomLevel^2);
             // lookAtDistance = abs(cameraPos.z) / cos(cameraPitch);
-            // Here we may use precalculated distance (once pre frame):
-            const lookAtDistance = this.m_lookAtDistance;
+            // Here we may use precalculated target distance (once pre frame):
+            const lookAtDistance = this.m_targetDistance;
 
             // Find world space object size that corresponds to one pixel on screen.
             this.m_pixelToWorld = MapViewUtils.calculateWorldSizeByFocalLength(
@@ -2485,14 +2559,29 @@ export class MapView extends THREE.EventDispatcher {
 
         const cameraPitch = MapViewUtils.extractAttitude(this, this.m_camera).pitch;
         const cameraPosZ = this.getCameraHeightAboveTerrain(TERRAIN_ZOOM_LEVEL);
+        const zoomLevelDistance = cameraPosZ / Math.cos(Math.min(cameraPitch, Math.PI / 3));
+        this.m_zoomLevel = MapViewUtils.calculateZoomLevelFromDistance(this, zoomLevelDistance);
+        this.m_fog.update(this, this.m_viewRanges.maximum);
 
-        const target = MapViewUtils.rayCastWorldCoordinates(this, 0, 0);
+        const target = MapViewUtils.getWorldTargetFromCamera(this.m_camera, this.projection);
         if (target !== null) {
-            this.m_lookAtDistance = target.sub(this.camera.position).length();
-            const zoomLevelDistance = cameraPosZ / Math.cos(Math.min(cameraPitch, Math.PI / 3));
-            this.m_zoomLevel = MapViewUtils.calculateZoomLevelFromDistance(this, zoomLevelDistance);
-            this.m_fog.update(this, this.m_viewRanges.maximum);
+            this.m_targetWorldPos.copy(target);
+            this.m_targetGeoPos = this.projection.unprojectPoint(target);
+            this.m_targetDistance = this.camera.position.distanceTo(target);
         }
+    }
+
+    /**
+     * Update `Env` instance used for style `Expr` evaluations.
+     */
+    private updateEnv() {
+        this.m_env.entries.$zoom = this.m_zoomLevel;
+
+        // This one introduces unnecessary calculation of pixelToWorld, even if it's barely
+        // used in our styles.
+        this.m_env.entries.$pixelToMeters = this.pixelToWorld;
+
+        this.m_env.entries.$frameNumber = this.m_frameNumber;
     }
 
     /**
@@ -2667,6 +2756,8 @@ export class MapView extends THREE.EventDispatcher {
         }
 
         this.updateCameras();
+        this.updateEnv();
+
         this.m_renderer.clear();
 
         // clear the scene
@@ -2917,11 +3008,7 @@ export class MapView extends THREE.EventDispatcher {
             return;
         }
 
-        this.m_textElementsRenderer.placeText(
-            this.m_visibleTiles.dataSourceTileList,
-            this.projection,
-            time
-        );
+        this.m_textElementsRenderer.placeText(this.m_visibleTiles.dataSourceTileList, time);
     }
 
     private finishRenderTextElements() {
@@ -2965,7 +3052,7 @@ export class MapView extends THREE.EventDispatcher {
             this.m_camera.lookAt(this.scene.position);
         }
 
-        this.m_lookAtDistance = defaultGeoCenter.altitude!;
+        this.m_targetDistance = defaultGeoCenter.altitude!;
 
         this.calculateFocalLength(height);
         this.m_visibleTiles = this.createVisibleTileSet();

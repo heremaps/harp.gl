@@ -6,6 +6,7 @@
 
 // tslint:disable:only-arrow-functions
 
+import { mercatorProjection } from "@here/harp-geoutils";
 import { SolidLineMaterial, SolidLineMaterialParameters } from "@here/harp-materials";
 import { RenderingTestHelper } from "@here/harp-test-utils";
 import * as THREE from "three";
@@ -56,35 +57,35 @@ describe("Rendering lines: ", function() {
     const linesConfig: TestLineParams[] = [
         {
             name: "straight line 2 points",
-            points: [-50, 0, 0, 50, 0, 0]
+            points: [-50, 0, 10, 50, 0, 10]
         },
         {
             name: "straight line 3 points",
-            points: [-50, 0, 0, 0, 0, 0, 50, 0, 0]
+            points: [-50, 0, 10, 0, 0, 10, 50, 0, 10]
         },
         {
             name: "line at right angle - left",
-            points: [-50, 0, 0, 0, 0, 0, 0, 50, 0]
+            points: [-50, 0, 10, 0, 0, 10, 0, 50, 10]
         },
         {
             name: "line at right angle - right",
-            points: [-50, 0, 0, 0, 0, 0, 0, -50, 0]
+            points: [-50, 0, 10, 0, 0, 10, 0, -50, 10]
         },
         {
             name: "line at acute angle - left",
-            points: [-50, 0, 0, 0, 0, 0, -50, 10, 0]
+            points: [-50, 0, 10, 0, 0, 10, -50, 10, 10]
         },
         {
             name: "line at acute angle - right",
-            points: [-50, 0, 0, 0, 0, 0, -50, -10, 0]
+            points: [-50, 0, 10, 0, 0, 10, -50, -10, 10]
         },
         {
             name: "line at obtuse angle - left",
-            points: [-50, 0, 0, 0, 0, 0, 50, 50, 0]
+            points: [-50, 0, 10, 0, 0, 10, 50, 50, 10]
         },
         {
             name: "line at obtuse angle - right",
-            points: [-50, 0, 0, 0, 0, 0, 50, -50, 0]
+            points: [-50, 0, 10, 0, 0, 10, 50, -50, 10]
         }
     ];
 
@@ -221,7 +222,7 @@ describe("Rendering lines: ", function() {
                 canvas.height / 2.0,
                 -canvas.height / 2.0
             );
-            orthoCamera.position.z = 1.0;
+            orthoCamera.position.z = 11.0;
             orthoCamera.near = 0.0;
             camera = orthoCamera;
         }
@@ -244,6 +245,7 @@ describe("Rendering lines: ", function() {
             const lineGeometry = createLineGeometry(
                 new THREE.Vector3(),
                 test.points,
+                mercatorProjection,
                 undefined,
                 uvs
             );
@@ -279,12 +281,12 @@ describe("Rendering lines: ", function() {
         await ibct.assertCanvasMatchesReference(canvas, `${name}`);
     }
 
-    it("renders solid lines - lineWidth: 1", async function() {
+    it("renders solid lines - lineWidth: 1", async function(this: Mocha.Context) {
         const lineStyle = { lineWidth: 1, color: "#FFF" };
         await renderLines(linesConfig, this, "solid-lines-1px", lineStyle);
     });
 
-    it("renders undisplaced solid lines - perspective camera", async function() {
+    it("renders undisplaced solid lines - perspective camera", async function(this: Mocha.Context) {
         const config = displacedLinesConfig;
         const { width, height } = getCanvasSize(config);
         const camera = createPerspectiveCamera(width, height);
@@ -296,7 +298,7 @@ describe("Rendering lines: ", function() {
         await renderLines(config, this, "undisplaced-solid-lines-persective", lineStyle, camera);
     });
 
-    it("renders displaced solid lines - perspective camera", async function() {
+    it("renders displaced solid lines - perspective camera", async function(this: Mocha.Context) {
         const config = displacedLinesConfig;
         const { width, height } = getCanvasSize(config);
         const camera = createPerspectiveCamera(width, height);
@@ -310,17 +312,18 @@ describe("Rendering lines: ", function() {
         await renderLines(config, this, "displaced-solid-lines-persective", lineStyle, camera);
     });
 
-    it("renders solid lines - lineWidth: 20", async function() {
+    it("renders solid lines - lineWidth: 20", async function(this: Mocha.Context) {
         const lineStyle = { lineWidth: 20, color: "#FFF" };
         await renderLines(linesConfig, this, "solid-lines-20px", lineStyle);
     });
 
-    it("renders solid lines with outline - outlineWidth: 5", async function() {
+    it("renders solid lines with outline - outlineWidth: 5", async function(this: Mocha.Context) {
         const lineStyle = { lineWidth: 10, color: "#F00", outlineWidth: 5, outlineColor: "#0F0" };
         await renderLines(linesConfig, this, "solid-lines-outline", lineStyle);
     });
 
-    it("renders dashed lines with outline - outlineWidth: 3, dashSize: 4", async function() {
+    // tslint:disable-next-line: max-line-length
+    it("renders dashed lines with outline - outlineWidth: 3, dashSize: 4", async function(this: Mocha.Context) {
         const lineStyle = {
             lineWidth: 4,
             color: "#F00",
@@ -333,7 +336,7 @@ describe("Rendering lines: ", function() {
         await renderLines(linesConfig, this, "dashed-lines-outline", lineStyle);
     });
 
-    it("renders dashed lines with outline - transparent", async function() {
+    it("renders dashed lines with outline - transparent", async function(this: Mocha.Context) {
         const lineStyle = {
             lineWidth: 4,
             color: "#F00",
@@ -345,12 +348,13 @@ describe("Rendering lines: ", function() {
         await renderLines(linesConfig, this, "dashed-lines-outline-alpha", lineStyle);
     });
 
-    it("renders dashed lines - lineWidth: 1, gapSize: 2, dashSize: 2", async function() {
+    // tslint:disable-next-line: max-line-length
+    it("renders dashed lines - lineWidth: 1, gapSize: 2, dashSize: 2", async function(this: Mocha.Context) {
         const lineStyle = { lineWidth: 1, color: "#FFF", gapSize: 2, dashSize: 2 };
         await renderLines(linesConfig, this, "dashed-lines-1px", lineStyle);
     });
 
-    it("renders dashed lines with dashColor: #F00", async function() {
+    it("renders dashed lines with dashColor: #F00", async function(this: Mocha.Context) {
         const lineStyle = {
             lineWidth: 1,
             color: "#FFF",
@@ -361,17 +365,18 @@ describe("Rendering lines: ", function() {
         await renderLines(linesConfig, this, "dashed-lines-color", lineStyle);
     });
 
-    it("renders dashed lines - lineWidth: 20,gapSize: 2, dashSize: 2", async function() {
+    // tslint:disable-next-line: max-line-length
+    it("renders dashed lines - lineWidth: 20,gapSize: 2, dashSize: 2", async function(this: Mocha.Context) {
         const lineStyle = { lineWidth: 20, color: "#FFF", gapSize: 2, dashSize: 2 };
         await renderLines(linesConfig, this, "dashed-lines-20px", lineStyle);
     });
 
-    it("renders solid lines - overdraw check", async function() {
+    it("renders solid lines - overdraw check", async function(this: Mocha.Context) {
         const lineStyle = { lineWidth: 20, color: "#FFF", opacity: 0.5, transparent: true };
         await renderLines(checkOverDrawLines, this, "solid-lines-overdraw-20px", lineStyle);
     });
 
-    it("renders dashed lines - overdraw check", async function() {
+    it("renders dashed lines - overdraw check", async function(this: Mocha.Context) {
         const lineStyle = {
             lineWidth: 20,
             color: "#FFF",
@@ -383,7 +388,100 @@ describe("Rendering lines: ", function() {
         await renderLines(checkOverDrawLines, this, "dashed-lines-overdraw-20px", lineStyle);
     });
 
-    it("renders solid lines - caps check round", async function() {
+    // tslint:disable-next-line: max-line-length
+    it("renders dashed lines with round dashes - no outline, dashSize: 16", async function(this: Mocha.Context) {
+        const lineStyle = {
+            dashes: "Round",
+            lineWidth: 8,
+            color: "#F00",
+            gapSize: 16,
+            dashSize: 16,
+            dashColor: "#00F"
+        };
+        await renderLines(
+            linesConfig,
+            this,
+            "dashed-lines-round-no-outline",
+            lineStyle as SolidLineMaterialParameters
+        );
+    });
+
+    // tslint:disable-next-line: max-line-length
+    it("renders dashed lines with round dashes - outlineWidth: 3, dashSize: 16", async function(this: Mocha.Context) {
+        const lineStyle = {
+            dashes: "Round",
+            lineWidth: 8,
+            color: "#F00",
+            gapSize: 16,
+            dashSize: 16,
+            dashColor: "#00F",
+            outlineWidth: 3,
+            outlineColor: "#0F0"
+        };
+        await renderLines(
+            linesConfig,
+            this,
+            "dashed-lines-round-outline",
+            lineStyle as SolidLineMaterialParameters
+        );
+    });
+
+    // tslint:disable-next-line: max-line-length
+    it("renders dashed lines with diamond dashes - no outline, dashSize: 16", async function(this: Mocha.Context) {
+        const lineStyle = {
+            dashes: "Diamond",
+            lineWidth: 8,
+            color: "#F00",
+            gapSize: 16,
+            dashSize: 16,
+            dashColor: "#00F"
+        };
+        await renderLines(
+            linesConfig,
+            this,
+            "dashed-lines-diamond-no-outline",
+            lineStyle as SolidLineMaterialParameters
+        );
+    });
+
+    // tslint:disable-next-line: max-line-length
+    it("renders dashed lines w/ diamond dashes - outlineWidth: 3, dashSize: 16", async function(this: Mocha.Context) {
+        const lineStyle = {
+            dashes: "Diamond",
+            lineWidth: 8,
+            color: "#F00",
+            gapSize: 16,
+            dashSize: 16,
+            dashColor: "#00F",
+            outlineWidth: 3,
+            outlineColor: "#0F0"
+        };
+        await renderLines(
+            linesConfig,
+            this,
+            "dashed-lines-diamond-outline",
+            lineStyle as SolidLineMaterialParameters
+        );
+    });
+
+    it("renders dashed lines with stretched diamond dashes", async function(this: Mocha.Context) {
+        const lineStyle = {
+            dashes: "Diamond",
+            lineWidth: 8,
+            color: "#F00",
+            gapSize: 0.01,
+            dashSize: 32,
+            dashColor: "#00F"
+        };
+        await renderLines(
+            linesConfig,
+            this,
+            "dashed-lines-diamond-stretched",
+            lineStyle as SolidLineMaterialParameters
+        );
+    });
+
+    it("renders solid lines - caps check round", async function(this: Mocha.Context) {
         const lineStyle = {
             lineWidth: 20,
             color: "#FFF",
@@ -399,7 +497,7 @@ describe("Rendering lines: ", function() {
         );
     });
 
-    it("renders solid lines - caps check none", async function() {
+    it("renders solid lines - caps check none", async function(this: Mocha.Context) {
         const lineStyle = {
             lineWidth: 20,
             color: "#FFF",
@@ -415,7 +513,7 @@ describe("Rendering lines: ", function() {
         );
     });
 
-    it("renders solid lines - caps check square", async function() {
+    it("renders solid lines - caps check square", async function(this: Mocha.Context) {
         const lineStyle = {
             lineWidth: 20,
             color: "#FFF",
@@ -431,7 +529,7 @@ describe("Rendering lines: ", function() {
         );
     });
 
-    it("renders solid lines - caps check triangle out", async function() {
+    it("renders solid lines - caps check triangle out", async function(this: Mocha.Context) {
         const lineStyle = {
             lineWidth: 20,
             color: "#FFF",
@@ -447,7 +545,7 @@ describe("Rendering lines: ", function() {
         );
     });
 
-    it("renders solid lines - caps check triangle in", async function() {
+    it("renders solid lines - caps check triangle in", async function(this: Mocha.Context) {
         const lineStyle = {
             lineWidth: 20,
             color: "#FFF",

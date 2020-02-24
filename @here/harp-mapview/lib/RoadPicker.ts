@@ -13,6 +13,7 @@ import {
 import { Expr } from "@here/harp-datasource-protocol/lib/Expr";
 import { assert, LoggerManager, Math2D } from "@here/harp-utils";
 import * as THREE from "three";
+import { compileTechniques } from "./DecodedTileHelpers";
 import { MapView } from "./MapView";
 import { PickObjectType, PickResult } from "./PickHandler";
 import { RoadIntersectionData, Tile } from "./Tile";
@@ -62,6 +63,8 @@ export class RoadPicker {
         const widths: RoadIntersectionData["widths"] = [];
         widths.length = lineFeatures.numFeatures;
 
+        compileTechniques(extendedTileInfo.techniqueCatalog);
+
         const mapView = this.m_mapView;
         for (let i = 0; i < lineFeatures.numFeatures; i++) {
             const technique = extendedTileInfo.techniqueCatalog[
@@ -80,11 +83,7 @@ export class RoadPicker {
                               const unitFactor =
                                   technique.metricUnit === "Pixel" ? mapView.pixelToWorld : 1.0;
                               return (
-                                  getPropertyValue(
-                                      technique.lineWidth,
-                                      mapView.zoomLevel,
-                                      mapView.pixelToWorld
-                                  ) *
+                                  getPropertyValue(technique.lineWidth, mapView.env) *
                                   unitFactor *
                                   0.5
                               );

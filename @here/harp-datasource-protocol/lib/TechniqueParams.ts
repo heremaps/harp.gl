@@ -14,6 +14,12 @@ import { InterpolatedPropertyDefinition } from "./InterpolatedPropertyDefs";
 export type LineCaps = "Square" | "Round" | "None" | "TriangleOut" | "TriangleIn";
 
 /**
+ * Available line dash types(`"Round"`, `"Square"`, `"Diamond"`).
+ * Default is `"Square"`.
+ */
+export type LineDashes = "Square" | "Round" | "Diamond";
+
+/**
  * The kind of geometry is used to
  *
  * a) Group objects together, allowing the group to be hidden or displayed.
@@ -176,6 +182,14 @@ export interface BaseTechniqueParams {
      * values according to style position in file.
      */
     renderOrder: number;
+
+    /**
+     * The category of this technique.
+     *
+     * The category is used in conjunction with [[Theme.priorities]]
+     * to assign render orders to the objects created by this [[Style]].
+     */
+    category?: string;
 
     /**
      *
@@ -934,6 +948,10 @@ export interface SolidLineTechniqueParams extends BaseTechniqueParams, Polygonal
      */
     secondaryCaps?: LineCaps;
     /**
+     * Describes the category of the secondary geometry object created using this technique.
+     */
+    secondaryCategory?: number;
+    /**
      * Describes the starting drawing position for the line (in the range [0...1]).
      * Default is `0.0`.
      */
@@ -943,6 +961,11 @@ export interface SolidLineTechniqueParams extends BaseTechniqueParams, Polygonal
      * Default is `1.0`.
      */
     drawRangeEnd?: number;
+    /**
+     * Describes line dash type (`"Round"`, `"Square"`, `"Diamond"`).
+     * Default is `"Square"`.
+     */
+    dashes?: LineDashes;
     /**
      * Color of a line dashes in hexadecimal or CSS-style notation,
      * for example: `"#e4e9ec"`, `"#fff"`, `"rgb(255, 0, 0)"`, or `"hsl(35, 11%, 88%)"`.

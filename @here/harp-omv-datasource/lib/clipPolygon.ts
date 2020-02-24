@@ -15,6 +15,13 @@ const tmpB = new Vector2();
  * Clip the given polygon using the Sutherland-Hodgman algorithm.
  */
 export function clipPolygon(polygon: Vector2[], clip: Vector2[]): Vector2[] {
+    if (polygon.length === 0) {
+        return polygon;
+    }
+    if (!polygon[0].equals(polygon[polygon.length - 1])) {
+        // close the polygon if needed.
+        polygon = [...polygon, polygon[0]];
+    }
     let outputList = polygon;
     for (let e = 0; e < clip.length; ++e) {
         const p = clip[e];

@@ -1,0 +1,66 @@
+classDiagram
+
+    class TextElement
+    class TextElementGroup
+    class TextElementState
+    class TextElementGroupState
+    class TextElementStateCache
+    class TextElementsRenderer
+    class TextCanvasRenderer
+    class TextCanvas
+    class FontCatalog
+    class PoiRenderer
+    class PoiManager
+    class ScreenCollisions
+    class TextStyleCache
+    class Theme
+    class TextStyleDefinition
+    class TextRenderStyle
+    class TextLayoutStyle
+    class PoiRenderBuffer
+
+    TextElementsRenderer --> PoiManager
+    PoiManager --> PoiInfo: create
+    TextElementsRenderer --> ScreenCollisions
+    TextElementsRenderer --> "# font catalogs" TextCanvasRenderer
+    TextCanvasRenderer --> PoiRenderer
+    TextCanvasRenderer --> TextCanvas
+    PoiRenderer --> PoiInfo : render
+    PoiRenderer --> PoiRenderBuffer
+    PoiRenderBuffer --> "# icon textures" PoiRenderBufferBatch
+    PoiRenderBufferBatch --> BoxBuffer
+    PoiInfo --> PoiRenderBufferBatch : has assigned
+    BoxBuffer --> BoxBufferMesh
+    BoxBufferMesh --> IconMaterial
+    THREE_RawShaderMaterial <|-- IconMaterial
+    BoxBufferMesh --> THREE_BufferGeometry
+    THREE_Mesh <|-- BoxBufferMesh
+    TextCanvas --> FontCatalog
+    TextCanvas --> LineTypesetter
+    TextCanvas --> PathTypesetter
+    TextCanvas --> "*" TextCanvasLayer
+    TextCanvasLayer --> TextGeometry
+    TextGeometry --> "2" THREE_Mesh : text & bg
+    THREE_Mesh "2" --> THREE_BufferGeometry
+    THREE_Mesh --> "2" SdfTextMaterial : text & bg
+    THREE_RawShaderMaterial <|-- SdfTextMaterial
+    TextCanvas --> GlyphData : render
+    FontCatalog ..> GlyphData: create
+    TextElementsRenderer --> TextElementStateCache
+    TextElementStateCache --> DuplicateCache
+    DuplicateCache  --> TextElementState: by text or featureId
+    TextElementStateCache *-- TextElementGroupState
+    TextElementGroupState *-- TextElementState
+    TextElementGroupState --> TextElementGroup
+    TextElementGroup *-- TextElement
+    TextElement --> GlyphData
+    Theme --> "*" TextStyleDefinition
+    TextElementsRenderer --> TextStyleCache
+    TextStyleCache --> TextRenderStyle
+    TextStyleCache --> TextLayoutStyle
+    TextElement --> TextRenderStyle
+    TextElement --> TextLayoutStyle
+    TextElement --> TextStyleDefinition : by name
+
+
+

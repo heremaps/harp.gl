@@ -9,12 +9,13 @@
         "test/rendering"
     ],
     "devDependencies": {
+        "@ismarslomic/mermaid.cli": "^0.5.3",
         "@strictsoftware/typedoc-plugin-monorepo": "^0.2.1",
         "@types/chai": "^4.2.2",
         "@types/express": "^4.17.2",
         "@types/fs-extra": "^8.0.0",
         "chai": "^4.2.0",
-        "chromedriver": "^78.0.0",
+        "chromedriver": "^80.0.0",
         "commander": "^4.0.1",
         "express": "^4.17.1",
         "fs-extra": "^8.1.0",
@@ -58,12 +59,12 @@
         "run-rendering-tests": "./scripts/rendering-tests-reference-platform.sh",
         "save-reference-rendering-tests": "npx ts-node @here/harp-test-utils/lib/rendering/RenderingTestResultCli.ts save-reference",
         "approve-reference-rendering-tests": "npx ts-node @here/harp-test-utils/lib/rendering/RenderingTestResultCli.ts approve",
-        "typedoc": "ts-node ./scripts/doc-snippets.ts && typedoc --disableOutputCheck --options typedoc.json",
+        "typedoc": "ts-node ./scripts/setup-docs.ts && typedoc --disableOutputCheck --options typedoc.json",
         "tslint": "tslint --project tsconfig.json",
         "tslint:fix": "tslint --fix --project tsconfig.json",
         "prettier": "prettier -l \"**/*.ts\" \"**/*.tsx\" \"**/*.json\"",
         "prettier:fix": "prettier --write \"**/*.ts\" \"**/*.tsx\" \"**/*.json\"",
-        "postinstall": "ts-node ./scripts/postinstall.ts",
+        "postinstall": "yarn workspace @here/harp-datasource-protocol generate-json-schema",
         "prepare-doc-deploy": "ts-node ./scripts/prepare_doc_deploy.ts"
     },
     "engines": {

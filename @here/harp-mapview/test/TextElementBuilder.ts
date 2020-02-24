@@ -20,6 +20,7 @@ export const DEF_PRIORITY: number = 0;
 export const DEF_POSITION = new THREE.Vector3(0, 0, 0);
 export const DEF_PATH = [new THREE.Vector3(0, 0, 0), new THREE.Vector3(0.1, 0.1, 0)];
 export const DEF_IGNORE_DISTANCE: boolean = true;
+export const DEF_MAY_OVERLAP: boolean = false;
 const DEF_TILE_CENTER = new THREE.Vector3(0, 0, 0.1);
 
 export function pointTextBuilder(text: string = DEF_TEXT): TextElementBuilder {
@@ -57,6 +58,7 @@ export class TextElementBuilder {
     private m_featureId: number | undefined;
     private m_pathLengthSqr: number | undefined;
     private m_userData: any;
+    private m_mayOverlap: boolean = DEF_MAY_OVERLAP;
 
     withPoiInfo(poiInfoBuilder: PoiInfoBuilder): TextElementBuilder {
         this.m_poiInfoBuilder = poiInfoBuilder;
@@ -117,6 +119,10 @@ export class TextElementBuilder {
         return this;
     }
 
+    withMayOverlap(mayOverlap: boolean): TextElementBuilder {
+        this.m_mayOverlap = mayOverlap;
+        return this;
+    }
     build(sandbox: sinon.SinonSandbox): TextElement {
         const textElement = new TextElement(
             this.m_text,
@@ -134,6 +140,8 @@ export class TextElementBuilder {
         }
         textElement.userData = this.m_userData;
         textElement.pathLengthSqr = this.m_pathLengthSqr;
+        textElement.mayOverlap = this.m_mayOverlap;
+
         // Stub render style setter, so that a spy is installed on the style opacity
         // whenever it's called.
         const renderStyleProperty = Object.getOwnPropertyDescriptor(

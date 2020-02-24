@@ -321,7 +321,7 @@ describe("@here-geojson-datasource", () => {
         mapView.addDataSource(datasource);
 
         const tile = new FakeGeoJsonTile(datasource, new TileKey(1, 1, 5));
-        tile.createTextElements(decodedTile, 6);
+        tile.createTextElements(decodedTile, mapView.env);
         const userTextElements = tile.userTextElements;
 
         // Text element for points.

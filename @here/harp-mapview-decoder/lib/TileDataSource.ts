@@ -12,7 +12,6 @@ import {
     TileInfo
 } from "@here/harp-datasource-protocol";
 import { TileKey, TilingScheme } from "@here/harp-geoutils";
-import { LRUCache } from "@here/harp-lrucache";
 import {
     ConcurrentDecoderFacade,
     CopyrightInfo,
@@ -125,7 +124,6 @@ export class TileFactory<TileType extends Tile> {
     }
 }
 
-const maxLevelTileLoaderCache = 3;
 /**
  * Common base class for the typical [[DataSource]] which uses an [[ITileDecoder]] to decode the
  * tile content asynchronously. The decoder can be passed in as an option, or a default
@@ -134,7 +132,6 @@ const maxLevelTileLoaderCache = 3;
 export class TileDataSource<TileType extends Tile> extends DataSource {
     protected readonly logger = LoggerManager.instance.create("TileDataSource");
     protected readonly m_decoder: ITileDecoder;
-    protected readonly m_tileLoaderCache: LRUCache<number, TileLoader>;
     private m_isReady: boolean = false;
 
     /**
@@ -170,11 +167,6 @@ export class TileDataSource<TileType extends Tile> extends DataSource {
         }
         this.useGeometryLoader = true;
         this.cacheable = true;
-        this.m_tileLoaderCache = new LRUCache<number, TileLoader>(this.getCacheCount());
-        this.m_tileLoaderCache.evictionCallback = (_, tileLoader) => {
-            // Cancel any pending downloads as early as possible.
-            tileLoader.cancel();
-        };
     }
 
     /** @override */
@@ -229,11 +221,6 @@ export class TileDataSource<TileType extends Tile> extends DataSource {
         }
     }
 
-    /** @override */
-    clearCache() {
-        this.m_tileLoaderCache.evictAll();
-    }
-
     /**
      * Get the [[DataProvider]] that has been passed in with the options.
      */
@@ -257,52 +244,27 @@ export class TileDataSource<TileType extends Tile> extends DataSource {
      */
     getTile(tileKey: TileKey): TileType | undefined {
         const tile = this.m_tileFactory.create(this, tileKey);
-
-        const mortonCode = tileKey.mortonCode();
-        const tileLoader = this.m_tileLoaderCache.get(mortonCode);
-        if (tileLoader !== undefined) {
-            tile.tileLoader = tileLoader;
-        } else {
-            const newTileLoader = new TileLoader(
-                this,
-                tileKey,
-                this.m_options.dataProvider,
-                this.decoder,
-                0
-            );
-            tile.tileLoader = newTileLoader;
-            tile.copyrightInfo = this.m_options.copyrightInfo;
-            if (this.m_options.copyrightProvider !== undefined) {
-                this.m_options.copyrightProvider
-                    .getCopyrights(tile.geoBox, tileKey.level)
-                    .then(copyrightInfo => {
-                        tile.copyrightInfo =
-                            tile.copyrightInfo === undefined
-                                ? copyrightInfo
-                                : [...tile.copyrightInfo, ...copyrightInfo];
-                        this.requestUpdate();
-                    });
-            }
-
-            // We don't cache tiles with level 4 and above, at this level, there are 16 (2^4) tiles
-            // horizontally, given the assumption that the zoom level assumes the tile should be 256
-            // pixels wide (see function [[calculateZoomLevelFromDistance]]), and the current
-            // storage offset of -2 (which makes the tiles then 1024 pixels wide). this would mean a
-            // horizontal width of ~16k pixels for the entire earth, this would be quite a lot to
-            // pan, hence caching doesn't make sense above this point (as the chance that we need to
-            // share the TileLoader is small, and even if we did eventually see it, the original
-            // TileLoader would probably be evicted because it was removed by other more recent
-            // tiles).
-            if (tileKey.level <= maxLevelTileLoaderCache) {
-                this.m_tileLoaderCache.set(mortonCode, newTileLoader);
-            }
+        tile.tileLoader = new TileLoader(
+            this,
+            tileKey,
+            this.m_options.dataProvider,
+            this.decoder,
+            0
+        );
+        tile.copyrightInfo = this.m_options.copyrightInfo;
+        if (this.m_options.copyrightProvider !== undefined) {
+            this.m_options.copyrightProvider
+                .getCopyrights(tile.geoBox, tileKey.level)
+                .then(copyrightInfo => {
+                    tile.copyrightInfo =
+                        tile.copyrightInfo === undefined
+                            ? copyrightInfo
+                            : [...tile.copyrightInfo, ...copyrightInfo];
+                    this.requestUpdate();
+                });
         }
+        tile.load();
 
-        if (tile.tileLoader.decodedTile !== undefined) {
-            tile.decodedTile = tile.tileLoader.decodedTile;
-        } else {
-            tile.load();
-        }
         return tile;
     }
 
@@ -334,12 +296,5 @@ export class TileDataSource<TileType extends Tile> extends DataSource {
         });
 
         return promise;
-    }
-
-    private getCacheCount(): number {
-        // We support up to [[maxLevelTileLoaderCache]] levels, this equates to roughly
-        // 2^maxLevelTileLoaderCache^2 tiles in total (at level maxLevelTileLoaderCache), we don't
-        // generally see that many, so we add a factor of 2 to try to get the worst case.
-        return Math.pow(2, maxLevelTileLoaderCache) * 2;
     }
 }
