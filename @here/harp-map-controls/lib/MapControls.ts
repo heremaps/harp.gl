@@ -337,9 +337,9 @@ export class MapControls extends THREE.EventDispatcher {
     get attitude(): MapViewUtils.Attitude {
         const attitude = MapViewUtils.extractAttitude(this.mapView, this.camera);
         return {
-            yaw: THREE.Math.radToDeg(attitude.yaw),
-            pitch: THREE.Math.radToDeg(attitude.pitch),
-            roll: THREE.Math.radToDeg(attitude.roll)
+            yaw: THREE.MathUtils.radToDeg(attitude.yaw),
+            pitch: THREE.MathUtils.radToDeg(attitude.pitch),
+            roll: THREE.MathUtils.radToDeg(attitude.roll)
         };
     }
 
@@ -365,7 +365,7 @@ export class MapControls extends THREE.EventDispatcher {
         );
         this.m_currentViewDirection.multiplyScalar(amount);
         if (this.mapView.projection.type === geoUtils.ProjectionType.Planar) {
-            const distance = THREE.Math.clamp(
+            const distance = THREE.MathUtils.clamp(
                 this.camera.position.z + this.m_currentViewDirection.z,
                 minDistance,
                 maxDistance
@@ -377,7 +377,7 @@ export class MapControls extends THREE.EventDispatcher {
                 this.m_currentViewDirection.length();
             minDistance += geoUtils.EarthConstants.EQUATORIAL_RADIUS;
             maxDistance += geoUtils.EarthConstants.EQUATORIAL_RADIUS;
-            const distance = THREE.Math.clamp(
+            const distance = THREE.MathUtils.clamp(
                 this.camera.position.length() + zOnVertical,
                 minDistance,
                 maxDistance
@@ -535,14 +535,14 @@ export class MapControls extends THREE.EventDispatcher {
      * @param angle Angle in degrees.
      */
     set maxTiltAngle(angle: number) {
-        this.m_maxTiltAngle = Math.max(0, Math.min(90, THREE.Math.degToRad(angle)));
+        this.m_maxTiltAngle = Math.max(0, Math.min(90, THREE.MathUtils.degToRad(angle)));
     }
 
     /**
      * Get the camera max tilt angle in degrees.
      */
     get maxTiltAngle(): number {
-        return THREE.Math.radToDeg(this.m_maxTiltAngle);
+        return THREE.MathUtils.radToDeg(this.m_maxTiltAngle);
     }
 
     /**
@@ -637,7 +637,7 @@ export class MapControls extends THREE.EventDispatcher {
 
         MapViewUtils.orbitFocusPoint(
             this.mapView,
-            THREE.Math.radToDeg(deltaAzimuth),
+            THREE.MathUtils.radToDeg(deltaAzimuth),
             0,
             this.m_maxTiltAngle
         );
@@ -690,7 +690,7 @@ export class MapControls extends THREE.EventDispatcher {
         MapViewUtils.orbitFocusPoint(
             this.mapView,
             newHeight - this.camera.position.z,
-            THREE.Math.radToDeg(deltaAngle),
+            THREE.MathUtils.radToDeg(deltaAngle),
             this.m_maxTiltAngle
         );
         this.updateMapView();
@@ -1245,7 +1245,7 @@ export class MapControls extends THREE.EventDispatcher {
             const deltaRotation =
                 this.m_touchState.currentRotation - this.m_touchState.initialRotation;
             this.stopExistingAnimations();
-            MapViewUtils.rotate(this.mapView, THREE.Math.radToDeg(deltaRotation));
+            MapViewUtils.rotate(this.mapView, THREE.MathUtils.radToDeg(deltaRotation));
             this.moveAlongTheViewDirection(pinchDistance);
         }
 

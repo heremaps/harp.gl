@@ -66,11 +66,11 @@ class EquirectangularProjection extends Projection {
             result = { x: 0, y: 0, z: 0 } as WorldCoordinates;
         }
         result.x =
-            (THREE.Math.degToRad(geoPoint.longitude) + Math.PI) *
+            (THREE.MathUtils.degToRad(geoPoint.longitude) + Math.PI) *
             EquirectangularProjection.geoToWorldScale *
             this.unitScale;
         result.y =
-            (THREE.Math.degToRad(geoPoint.latitude) + Math.PI * 0.5) *
+            (THREE.MathUtils.degToRad(geoPoint.latitude) + Math.PI * 0.5) *
             EquirectangularProjection.geoToWorldScale *
             this.unitScale;
         result.z = geoPoint.altitude || 0;

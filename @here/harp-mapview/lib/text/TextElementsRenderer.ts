@@ -1507,7 +1507,7 @@ export class TextElementsRenderer {
             if (fadeFar > fadeNear) {
                 distanceFadeValue =
                     1.0 -
-                    THREE.Math.clamp(
+                    THREE.MathUtils.clamp(
                         (textDistance / maxVisibilityDist - fadeNear) / (fadeFar - fadeNear),
                         0.0,
                         1.0

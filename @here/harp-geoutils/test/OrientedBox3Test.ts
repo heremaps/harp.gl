@@ -96,7 +96,7 @@ class GlobeControls {
         );
 
         // update the view frustum.
-        this.frustum.setFromMatrix(this.projectionViewMatrix);
+        this.frustum.setFromProjectionMatrix(this.projectionViewMatrix);
     }
 
     /**

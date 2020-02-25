@@ -1228,7 +1228,7 @@ export class TileGeometryCreator {
             g.setAttribute("position", posAttr);
             g.setIndex(new THREE.BufferAttribute(new Uint16Array([0, 1, 2, 2, 1, 3]), 1));
             const modifier = new SphericalGeometrySubdivisionModifier(
-                THREE.Math.degToRad(10),
+                THREE.MathUtils.degToRad(10),
                 sourceProjection
             );
             modifier.modify(g);

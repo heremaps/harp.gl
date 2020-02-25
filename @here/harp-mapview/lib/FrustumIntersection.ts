@@ -122,7 +122,7 @@ export class FrustumIntersection {
             this.m_camera.matrixWorldInverse
         );
 
-        this.m_frustum.setFromMatrix(this.m_viewProjectionMatrix);
+        this.m_frustum.setFromProjectionMatrix(this.m_viewProjectionMatrix);
 
         if (this.m_extendedFrustumCulling) {
             this.m_mapTileCuller.setup();
@@ -377,7 +377,7 @@ export class FrustumIntersection {
         // Ensure that the aspect is >= 1.
         const aspect = camera.aspect > 1 ? camera.aspect : 1 / camera.aspect;
         // Angle between a->d2, note, the fov is vertical, hence we translate to horizontal.
-        const totalAngleRad = THREE.Math.degToRad((camera.fov * aspect) / 2) + cameraPitch;
+        const totalAngleRad = THREE.MathUtils.degToRad((camera.fov * aspect) / 2) + cameraPitch;
         // Length a->d2
         const worldLengthHorizontalFull = Math.tan(totalAngleRad) * camera.position.z;
         // Length a->e
@@ -392,7 +392,7 @@ export class FrustumIntersection {
         const worldLeftGeoPoint = this.mapView.projection.unprojectPoint(worldLeftPoint);
         // We multiply by SQRT2 because we need to account for a rotated view (in which case there
         // are more tiles that can be seen).
-        const offsetRange = THREE.Math.clamp(
+        const offsetRange = THREE.MathUtils.clamp(
             Math.ceil(
                 Math.abs((worldGeoPoint.longitude - worldLeftGeoPoint.longitude) / 360) * Math.SQRT2
             ),

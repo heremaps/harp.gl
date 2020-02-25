@@ -46,7 +46,7 @@ describe("SphericalGeometrySubdivisionModifier", function() {
         geometry.setAttribute("position", posAttr);
         geometry.setIndex(new THREE.BufferAttribute(new Uint16Array([0, 1, 2, 2, 1, 3]), 1));
 
-        const quality = THREE.Math.degToRad(2);
+        const quality = THREE.MathUtils.degToRad(2);
 
         const modifier = new SphericalGeometrySubdivisionModifier(quality);
         modifier.modify(geometry);

@@ -189,16 +189,16 @@ function getInterpolatedColor(property: InterpolatedProperty, level: number): nu
     // color channels range (0 <= c <= 1) after interpolation.
     if (nChannels === 4) {
         return ColorUtils.getHexFromRgba(
-            THREE.Math.clamp(interpolant.resultBuffer[0], 0, 1),
-            THREE.Math.clamp(interpolant.resultBuffer[1], 0, 1),
-            THREE.Math.clamp(interpolant.resultBuffer[2], 0, 1),
-            THREE.Math.clamp(interpolant.resultBuffer[3], 0, 1)
+            THREE.MathUtils.clamp(interpolant.resultBuffer[0], 0, 1),
+            THREE.MathUtils.clamp(interpolant.resultBuffer[1], 0, 1),
+            THREE.MathUtils.clamp(interpolant.resultBuffer[2], 0, 1),
+            THREE.MathUtils.clamp(interpolant.resultBuffer[3], 0, 1)
         );
     } else {
         return ColorUtils.getHexFromRgb(
-            THREE.Math.clamp(interpolant.resultBuffer[0], 0, 1),
-            THREE.Math.clamp(interpolant.resultBuffer[1], 0, 1),
-            THREE.Math.clamp(interpolant.resultBuffer[2], 0, 1)
+            THREE.MathUtils.clamp(interpolant.resultBuffer[0], 0, 1),
+            THREE.MathUtils.clamp(interpolant.resultBuffer[1], 0, 1),
+            THREE.MathUtils.clamp(interpolant.resultBuffer[2], 0, 1)
         );
     }
 }

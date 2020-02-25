@@ -645,7 +645,7 @@ export function applyBaseColorToMaterial(
         opacity *= evaluateProperty(tech.opacity, env);
     }
 
-    opacity = THREE.Math.clamp(opacity, 0, 1);
+    opacity = THREE.MathUtils.clamp(opacity, 0, 1);
     material.opacity = opacity;
     materialColor.setRGB(r, g, b);
 
