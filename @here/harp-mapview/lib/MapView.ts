@@ -6,13 +6,17 @@
 import {
     Env,
     GeometryKind,
+    getPropertyValue,
     GradientSky,
     ImageTexture,
     Light,
     MapEnv,
     PostEffects,
     Sky,
-    Theme
+    Technique,
+    Theme,
+    Value,
+    ValueMap
 } from "@here/harp-datasource-protocol";
 import {
     EarthConstants,
@@ -1738,6 +1742,10 @@ export class MapView extends THREE.EventDispatcher {
         return this.m_env;
     }
 
+    setDynamicProperty(name: string, value: Value) {
+        this.m_env.entries[name] = value;
+    }
+
     /**
      * Returns the storage level for the given camera setup.
      * Actual storage level of the rendered data also depends on [[DataSource.storageLevelOffset]].
@@ -2956,6 +2964,40 @@ export class MapView extends THREE.EventDispatcher {
         const worldOffsetX = tile.computeWorldOffsetX();
         if (tile.willRender(zoomLevel)) {
             for (const object of tile.objects) {
+                if (object.userData.technique && object.userData.feature) {
+                    const technique: Technique = object.userData.technique;
+                    const objInfos = object.userData.feature.objInfos as ValueMap[];
+                    if (technique.hasOwnProperty("filter") && Array.isArray(objInfos)) {
+                        // ### TODO: evaluate only when properties referenced by the filter change.
+                        const geometry: THREE.BufferGeometry = (object as any).geometry;
+                        if (geometry && geometry.isBufferGeometry) {
+                            geometry.clearGroups();
+                            objInfos.forEach((properties, index) => {
+                                // ### TODO: evaluate only when the runtime dependencies
+                                // of the incoming feature are different from the one
+                                // used by the previous evaluation.
+                                const env = new MapEnv(properties, this.m_env);
+                                const result = getPropertyValue(technique.filter, env) ?? false;
+                                if (result === true) {
+                                    const start = object.userData.feature.starts[index] as number;
+                                    const end =
+                                        object.userData.feature.starts[index + 1] ??
+                                        geometry.getIndex()?.count;
+                                    if (end === undefined) {
+                                        return;
+                                    }
+                                    const count = end - start;
+                                    geometry.addGroup(start, count);
+                                }
+                            });
+                            if (geometry.groups.length === 0) {
+                                // skip this object
+                                continue;
+                            }
+                        }
+                    }
+                }
+
                 object.position.copy(tile.center);
                 if (object.displacement !== undefined) {
                     object.position.add(object.displacement);

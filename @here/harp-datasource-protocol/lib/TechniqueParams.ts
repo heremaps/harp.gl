@@ -224,6 +224,17 @@ export interface BaseTechniqueParams {
      * `false` if is in the disabled [[GeometryKind]]s. Disabling overrules enabling.
      */
     enabled?: boolean;
+
+    /**
+     * An expression used to filter features at run time. For example,
+     * ```json
+     *  "filter": ["~=",
+     *      ["get", "name", ["dynamic-properties"]],
+     *      ["get", "selected", ["dynamic-properties"]]
+     *   ]
+     * ```
+     */
+    filter?: DynamicProperty<boolean>;
 }
 
 export enum TextureCoordinateType {

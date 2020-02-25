@@ -704,6 +704,9 @@ export class TileGeometryCreator {
                     isSolidLineTechnique(technique) && technique.secondaryWidth !== undefined;
 
                 const object = new ObjectCtor(bufferGeometry, material);
+                // ### PoC generalize: an array of materials is needed
+                // to make sure we can use `THREE.BufferGeometry.groups`
+                (object as any).material = [material];
                 object.renderOrder = technique.renderOrder!;
 
                 if (group.renderOrderOffset !== undefined) {
@@ -1456,8 +1459,11 @@ export class TileGeometryCreator {
                 geoBox: tile.geoBox
             };
             object.userData = tileDisplacementMap;
-        } else if (isSolidLineTechnique(technique)) {
-            object.userData = srcGeometry.objInfos!;
+            // ### PoC this breaks the line picking
+            // but the following code is wrong. We should never
+            // replace `object.userData`
+            // } else if (isSolidLineTechnique(technique)) {
+            //     object.userData = srcGeometry.objInfos!;
         } else {
             // Set the feature data for picking with `MapView.intersectMapObjects()` except for
             // solid-line which uses tile-based picking.

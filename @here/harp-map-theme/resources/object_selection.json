@@ -1,0 +1,104 @@
+{
+    "definitions": {
+        "parkColor": { "value": "#6C9478" },
+        "waterColor": { "value": "#436981" },
+        "buildingColor": { "value": "#cccccc" }
+    },
+    "sky": {
+        "type": "gradient",
+        "topColor": "#015EBB",
+        "bottomColor": "#DDDCDA",
+        "groundColor": "#87959A",
+        "monomialPower": 1
+    },
+    "fog": {
+        "color": "#DDDCDA",
+        "startRatio": 0.8
+    },
+    "clearColor": "#87959A",
+    "defaultTextStyle": {
+        "name": "defaultTextStyle",
+        "color": "#6D7477",
+        "fontCatalogName": "fira"
+    },
+    "fontCatalogs": [
+        {
+            "name": "fira",
+            "url": "fonts/Default_FontCatalog.json"
+        }
+    ],
+    "styles": [
+        {
+            "styleSet": "tilezen",
+            "layer": "water",
+            "when": ["==", ["get", "$geometryType"], "polygon"],
+            "technique": "fill",
+            "attr": {
+                "color": ["ref", "waterColor"]
+            }
+        },
+        {
+            "styleSet": "tilezen",
+            "layer": "buildings",
+            "when": ["==", ["get", "$geometryType"], "polygon"],
+            "technique": "fill",
+            "attr": {
+                "lineWidth": 1,
+                "color": ["ref", "buildingColor"]
+            }
+        },
+
+        {
+            "styleSet": "tilezen",
+            "layer": "buildings",
+            "when": ["==", ["get", "$geometryType"], "polygon"],
+            "technique": "fill",
+            "attr": {
+                "color": "#0ee",
+                "lineWidth": 1,
+                "filter": [
+                    ">",
+                    ["get", "height", ["dynamic-properties"]],
+                    ["get", "min-height", ["dynamic-properties"]]
+                ]
+            }
+        },
+
+        {
+            "styleSet": "tilezen",
+            "layer": "roads",
+            "when": ["==", ["get", "$geometryType"], "line"],
+            "technique": "solid-line",
+            "attr": {
+                "lineWidth": ["world-ppi-scale", 2],
+                "color": "rgb(255, 255, 255)"
+            }
+        },
+        {
+            "styleSet": "tilezen",
+            "layer": "roads",
+            "when": ["==", ["get", "$geometryType"], "line"],
+            "technique": "solid-line",
+            "attr": {
+                "lineWidth": ["world-ppi-scale", 4],
+                "color": "#ee0",
+                "filter": [
+                    "~=",
+                    ["get", "name", ["dynamic-properties"]],
+                    ["get", "selected", ["dynamic-properties"]]
+                ]
+            }
+        },
+        {
+            "styleSet": "tilezen",
+            "technique": "text",
+            "layer": "roads",
+            "when": ["==", ["get", "$geometryType"], "line"],
+            "attr": {
+                "text": ["get", "name"],
+                "color": "#000",
+                "size": 16
+            }
+        }
+    ]
+}
