@@ -94,6 +94,14 @@ class Fixture {
         dataSource.attach(this.mapView);
         this.ds.push(dataSource);
     }
+
+    removeDataSource(dataSource: DataSource) {
+        dataSource.detach(this.mapView);
+        const index = this.ds.indexOf(dataSource, 0);
+        if (index >= 0) {
+            this.ds.splice(index, 1);
+        }
+    }
 }
 
 describe("VisibleTileSet", function() {
@@ -460,6 +468,32 @@ describe("VisibleTileSet", function() {
         // This checks to ensure that calling this multiple times produces the same results
         result = updateRenderList(zoomLevel, storageLevel);
         compareDataSources(result.tileList, fullyCoveringDS2, fullyCoveringDS1);
+    });
+
+    it(`two fully covering DataSources added, correct Tile is skipped,
+    DataSource removed, Tile no longer skips`, async function() {
+        setupBerlinCenterCameraFromSamples();
+
+        // These tiles will be skipped, because a DataSource that produces [[Tiles]]s without
+        // a background plane, but where isFullyCovering is true trumps.
+        const fullyCoveringDS1 = new FakeCoveringTileWMTS();
+        const fullyCoveringDS2 = new FakeWebTile();
+        fixture.addDataSource(fullyCoveringDS1);
+        fixture.addDataSource(fullyCoveringDS2);
+
+        const zoomLevel = 15;
+        const storageLevel = 14;
+        const result = updateRenderList(zoomLevel, storageLevel);
+        compareDataSources(result.tileList, fullyCoveringDS1, fullyCoveringDS2);
+
+        fixture.removeDataSource(fullyCoveringDS2);
+        const resultWithRemovedDS = updateRenderList(zoomLevel, storageLevel);
+        resultWithRemovedDS.tileList.forEach(dataSourceTileList => {
+            dataSourceTileList.visibleTiles.forEach(tile => {
+                // tslint:disable-next-line: no-string-literal
+                expect(tile["m_skipRendering"]).is.false;
+            });
+        });
     });
 
     it("check MapView param tileWrappingEnabled disabled", async function() {

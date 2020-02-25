@@ -865,6 +865,9 @@ export class VisibleTileSet {
             const key = TileOffsetUtils.getKeyForTileKeyAndOffset(tile.tileKey, tile.offset);
             const entry = map.get(key);
             if (entry === undefined) {
+                // We need to reset the flag so that if the covering datasource is disabled, that
+                // the tiles beneath then start to render.
+                tile.skipRender = false;
                 map.set(key, tile);
             } else {
                 const setTileToSkip = (toDispose: Tile) => {
