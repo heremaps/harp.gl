@@ -47,7 +47,7 @@ export namespace DataDrivenThemeExample {
                     }
                 },
                 styles: {
-                    tilezen: [
+                    population: [
                         ["ref", "countryBorderOutline"],
                         ["ref", "waterPolygons"],
                         {
@@ -100,7 +100,7 @@ export namespace DataDrivenThemeExample {
             urlParams: {
                 access_token: accessToken
             },
-            styleSetName: "tilezen",
+            styleSetName: "population",
             maxZoomLevel: 17,
             copyrightInfo
         });
