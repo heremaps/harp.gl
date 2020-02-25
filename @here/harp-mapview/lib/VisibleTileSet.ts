@@ -541,7 +541,7 @@ export class VisibleTileSet {
                     tile.numFramesVisible++;
                     // If this tile's data source is "covering", then remove all others from the
                     // cache and prevent it from loading.
-                    this.removeDuplicateFullyCoveringTiles(dataSource, tile);
+                    this.skipOverlappedTiles(dataSource, tile);
 
                     if (tile.frameNumVisible < 0) {
                         // Store the fist frame the tile became visible.
@@ -846,10 +846,10 @@ export class VisibleTileSet {
     }
 
     /**
-     * Disposes of tiles that overlap twice and that come from a [[DataSource]] where the [[Tiles]]s
-     * are fully covering.
+     * Skips rendering of tiles that are overlapped. The overlapping [[Tile]] comes from a
+     * [[DataSource]] which is fully covering, i.e. there it is fully opaque.
      **/
-    private removeDuplicateFullyCoveringTiles(dataSource: DataSource, tile: Tile) {
+    private skipOverlappedTiles(dataSource: DataSource, tile: Tile) {
         if (this.options.projection.type === ProjectionType.Spherical) {
             // HARP-7899, currently the globe has no background planes in the tiles (it relies on
             // the BackgroundDataSource), because the LOD mismatches, hence disabling for globe.
@@ -867,37 +867,28 @@ export class VisibleTileSet {
             if (entry === undefined) {
                 map.set(key, tile);
             } else {
-                const disposeTile = (toDispose: Tile) => {
-                    toDispose.dispose();
-                    // This makes sure that the [[Tile]] stays in the cache and doesn't
-                    // go back to a loading state, see [[Tile.allGeometryLoaded]].
-                    toDispose.forceHasGeometry(true);
+                const setTileToSkip = (toDispose: Tile) => {
+                    toDispose.skipRender = true;
                 };
                 // If the entry in the map has no backgroundPlane, we treat it to have highest
-                // priority, so we dispose of the newly created tile. Note, the entry may have
-                // been disposed in a previous frame, so we check it isn't disposed.
-                if (entry.backgroundPlane === undefined && !entry.disposed) {
-                    disposeTile(tile);
+                // priority, so we skip rendering of the newly created tile.
+                if (entry.backgroundPlane === undefined) {
+                    setTileToSkip(tile);
                 }
                 // If the tile has no backgroundPlane and the existing entry does then
-                // dispose and replace it in the cache, no backgroundPlane has higher priority.
-                else if (tile.backgroundPlane === undefined && !tile.disposed) {
-                    disposeTile(entry);
+                // skip and replace it in the cache, no backgroundPlane has higher priority.
+                else if (tile.backgroundPlane === undefined) {
+                    setTileToSkip(entry);
                     map.set(key, tile);
                 }
                 // Both planes exist, so we replace if the new [[Tile]] has a higher renderOrder
-                else if (
-                    entry.backgroundPlane !== undefined &&
-                    tile.backgroundPlane !== undefined
-                ) {
+                else {
                     if (tile.backgroundPlane.renderOrder > entry.backgroundPlane.renderOrder) {
-                        // Dispose the Tile, but still keep it in the cache, so the Tile
-                        // isn't re-requested.
-                        disposeTile(entry);
+                        setTileToSkip(entry);
                         map.set(key, tile);
                     } else {
-                        // Existing entry has higher renderOrder, so dispose the incoming tile.
-                        disposeTile(tile);
+                        // Existing entry has higher renderOrder, so skip the incoming tile.
+                        setTileToSkip(tile);
                     }
                 }
             }

@@ -180,20 +180,23 @@ describe("VisibleTileSet", function() {
 
     // Needed for chai expect.
     // tslint:disable: no-unused-expression
+
     const compareDataSources = (
         dstl: DataSourceTileList[],
-        dsDisposed: DataSource,
+        dsSkipped: DataSource,
         dsValid: DataSource
     ) => {
         dstl.forEach(dataSourceTileList => {
-            if (dataSourceTileList.dataSource === dsDisposed) {
+            if (dataSourceTileList.dataSource === dsSkipped) {
                 dataSourceTileList.visibleTiles.forEach(tile => {
-                    expect(tile.disposed).is.true;
+                    // tslint:disable-next-line: no-string-literal
+                    expect(tile["m_skipRendering"]).is.true;
                     expect(tile.hasGeometry).is.true;
                 });
             } else if (dataSourceTileList.dataSource === dsValid) {
                 dataSourceTileList.visibleTiles.forEach(tile => {
-                    expect(tile.disposed).is.false;
+                    // tslint:disable-next-line: no-string-literal
+                    expect(tile["m_skipRendering"]).is.false;
                     expect(tile.hasGeometry).is.true;
                 });
             }
@@ -364,10 +367,10 @@ describe("VisibleTileSet", function() {
      * This test shows what happens when a DataSource with a background plane is added with one that
      * `isFullyCovering`.
      */
-    it("two fully covering DataSources added, correct Tile is disposed", async function() {
+    it("two fully covering DataSources added, correct Tile is skipped", async function() {
         setupBerlinCenterCameraFromSamples();
 
-        // These tiles will be disposed of, because a DataSource that produces [[Tiles]]s without
+        // These tiles will be skipped, because a DataSource that produces [[Tiles]]s without
         // a background plane, but where isFullyCovering is true trumps.
         const fullyCoveringDS1 = new FakeCoveringTileWMTS();
         const fullyCoveringDS2 = new FakeWebTile();
@@ -381,7 +384,7 @@ describe("VisibleTileSet", function() {
     });
 
     it(`two fully covering DataSources added,
-        reverse order as above, correct Tile is disposed`, async function() {
+        reverse order as above, correct Tile is skipped`, async function() {
         setupBerlinCenterCameraFromSamples();
 
         const fullyCoveringDS1 = new FakeCoveringTileWMTS();
@@ -409,7 +412,8 @@ describe("VisibleTileSet", function() {
         const result = updateRenderList(zoomLevel, storageLevel);
         result.tileList.forEach(dataSourceTileList => {
             dataSourceTileList.visibleTiles.forEach(tile => {
-                expect(tile.disposed).is.false;
+                // tslint:disable-next-line: no-string-literal
+                expect(tile["m_skipRendering"]).is.false;
             });
         });
     });
@@ -418,7 +422,7 @@ describe("VisibleTileSet", function() {
      * This test shows what happens when two [[DataSource]]s with background planes are added with
      * different renderOrders
      */
-    it(`two fully covering DataSources added, correct Tile is disposed`, async function() {
+    it(`two fully covering DataSources added, correct Tile is skipped`, async function() {
         setupBerlinCenterCameraFromSamples();
 
         const fullyCoveringDS1 = new FakeCoveringTileWMTS(1);
@@ -440,7 +444,7 @@ describe("VisibleTileSet", function() {
      * This test shows what happens when two [[DataSource]]s with background planes are added with
      * different renderOrders
      */
-    it(`two fully covering DataSources added, correct Tile is disposed`, async function() {
+    it(`two fully covering DataSources added, correct Tile is skipped`, async function() {
         setupBerlinCenterCameraFromSamples();
 
         const fullyCoveringDS1 = new FakeCoveringTileWMTS(2);
