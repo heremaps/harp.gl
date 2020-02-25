@@ -48,7 +48,7 @@
         "sinon": "^7.2.3",
         "source-map-support": "^0.5.2",
         "three": "^0.112.1",
-        "typescript": "^3.7.2"
+        "typescript": "^3.8.2"
     },
     "publishConfig": {
         "access": "public"

@@ -35,7 +35,7 @@
         "mocha": "^6.1.4",
         "sinon": "^7.2.3",
         "source-map-support": "^0.5.2",
-        "typescript": "^3.7.2"
+        "typescript": "^3.8.2"
     },
     "peerDependencies": {
         "three": "^0.112.1"
