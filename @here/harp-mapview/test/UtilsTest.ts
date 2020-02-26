@@ -103,7 +103,8 @@ describe("map-view#Utils", function() {
                     mapViewMock,
                     distance
                 );
-                expect(zoomLevel).to.be.closeTo(calculatedZoomLevel, 1e-14);
+                // Expect accuracy till 10-th fractional digit (10-th place after comma).
+                expect(zoomLevel).to.be.closeTo(calculatedZoomLevel, 1e-10);
             }
         });
     });

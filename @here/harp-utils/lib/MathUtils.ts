@@ -1,3 +1,5 @@
+import { assert } from "./assert";
+
 /*
  * Copyright (C) 2017-2019 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
@@ -162,5 +164,45 @@ export namespace MathUtils {
         const timeValue =
             time < 0.5 ? 4 * time * time * time : (time - 1) * (2 * time - 2) * (2 * time - 2) + 1;
         return startValue + (endValue - startValue) * timeValue;
+    }
+
+    /**
+     * Round number to a specified number of fractional digits, using 'round to nearest' convention.
+     *
+     * Midpoint values of less significant fraction digit (digit on position 'digits + 1' after
+     * comma) are promoting - increase previous digit - if they are greater or equal to 5.
+     *
+     * @note Function accepts negative values using correct arithmetic rounding, such as the correct
+     * numbers for `roundFraction(-0.5, 0)` will be `-1` and for `roundFraction(-1.55, 1)` will
+     * be `-1.6`.
+     * @note If you accidentally pass floating point number (with fraction) to @param digits
+     * this value will be _truncated_, but negative number of digits is not allowed.
+     *
+     * @param value The floating point value to be rounded.
+     * @param digits The number of fractional digits to leave (accuracy after comma).
+     */
+    export function roundFraction(value: number, digitsNum: number = 10) {
+        assert(digitsNum >= 0, "Number of digits must be higher then 0!");
+        // Make sure digits are specified as discreet number.
+        const digits = Math.trunc(digitsNum);
+        // Calculate mantissa factor for truncation.
+        const mantissaCut = Math.pow(10, digits);
+        let fraction = value * mantissaCut;
+        let result = Math.trunc(fraction);
+        fraction = fraction - result;
+        const sign: number = Math.sign(value);
+        // Value has no more then 'digitsNum' fractional digits.
+        if (fraction === 0) {
+            return value;
+        }
+        // Last digit promotes fractional part up.
+        else if (fraction * sign >= 0.5) {
+            result = (result + sign) / mantissaCut;
+        }
+        // Just cut digits further then 'digitsNum'
+        else {
+            result = result / mantissaCut;
+        }
+        return result;
     }
 }
