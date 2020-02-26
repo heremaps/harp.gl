@@ -21,7 +21,7 @@ import {
 } from "@here/harp-omv-datasource/lib/IGeometryProcessor";
 import { OmvProtobufDataAdapter } from "@here/harp-omv-datasource/lib/OmvData";
 import { OmvDecoder } from "@here/harp-omv-datasource/lib/OmvDecoder";
-import { getTestResourceUrl } from "@here/harp-test-utils/index.web";
+import { getTestResourceUrl } from "@here/harp-test-utils";
 import { measurePerformanceSync } from "@here/harp-test-utils/lib/ProfileHelper";
 
 export interface OMVDecoderPerformanceTestOptions {
