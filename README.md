@@ -6,6 +6,8 @@
 
 ### [harp.gl site](https://heremaps.github.io/harp.gl/)
 
+### [harp.gl Slack channel](https://heredev.slack.com/messages/harpgl/)
+
 ## Overview
 
 You can use this engine to:
