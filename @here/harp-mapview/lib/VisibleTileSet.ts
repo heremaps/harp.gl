@@ -539,8 +539,8 @@ export class VisibleTileSet {
                     numTilesLoading++;
                 } else {
                     tile.numFramesVisible++;
-                    // If this tile's data source is "covering", then remove all others from the
-                    // cache and prevent it from loading.
+                    // If this tile's data source is "covering" then other tiles beneath it have
+                    // their rendering skipped, see [[Tile.willRender]].
                     this.skipOverlappedTiles(dataSource, tile);
 
                     if (tile.frameNumVisible < 0) {

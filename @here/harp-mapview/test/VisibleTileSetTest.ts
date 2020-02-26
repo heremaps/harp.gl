@@ -134,9 +134,15 @@ describe("VisibleTileSet", function() {
      * Fake [[DataSource]] which provides tiles with the ground plane geometry.
      */
     class FakeCoveringTileWMTS extends DataSource {
-        constructor(readonly planeRenderOrder?: number) {
+        /**
+         * Construct a fake [[DataSource]].
+         * @param isFullyCovering If this DataSource should be fully covering.
+         * @param planeRenderOrder Which render order the ground plane has (applicable only if
+         * [[isFullyCovering]] is set).
+         */
+        constructor(isFullyCovering?: boolean, readonly planeRenderOrder?: number) {
             super();
-            this.addGroundPlane = true;
+            this.addGroundPlane = isFullyCovering ?? true;
             this.cacheable = true;
         }
 
@@ -153,8 +159,10 @@ describe("VisibleTileSet", function() {
                 geometries: []
             };
             TileGeometryCreator.instance.createAllGeometries(tile, decodedTile);
-            tile.backgroundPlane!.renderOrder =
-                this.planeRenderOrder ?? tile.backgroundPlane!.renderOrder;
+            if (tile.backgroundPlane !== undefined) {
+                tile.backgroundPlane.renderOrder =
+                    this.planeRenderOrder ?? tile.backgroundPlane!.renderOrder;
+            }
             return tile;
         }
     }
@@ -191,21 +199,19 @@ describe("VisibleTileSet", function() {
 
     const compareDataSources = (
         dstl: DataSourceTileList[],
-        dsSkipped: DataSource,
-        dsValid: DataSource
+        dsSkipped: DataSource[],
+        dsValid: DataSource[]
     ) => {
         dstl.forEach(dataSourceTileList => {
-            if (dataSourceTileList.dataSource === dsSkipped) {
+            if (dsSkipped.indexOf(dataSourceTileList.dataSource) !== -1) {
                 dataSourceTileList.visibleTiles.forEach(tile => {
                     // tslint:disable-next-line: no-string-literal
                     expect(tile["m_skipRendering"]).is.true;
-                    expect(tile.hasGeometry).is.true;
                 });
-            } else if (dataSourceTileList.dataSource === dsValid) {
+            } else if (dsValid.indexOf(dataSourceTileList.dataSource) !== -1) {
                 dataSourceTileList.visibleTiles.forEach(tile => {
                     // tslint:disable-next-line: no-string-literal
                     expect(tile["m_skipRendering"]).is.false;
-                    expect(tile.hasGeometry).is.true;
                 });
             }
         });
@@ -388,7 +394,7 @@ describe("VisibleTileSet", function() {
         const zoomLevel = 15;
         const storageLevel = 14;
         const result = updateRenderList(zoomLevel, storageLevel);
-        compareDataSources(result.tileList, fullyCoveringDS1, fullyCoveringDS2);
+        compareDataSources(result.tileList, [fullyCoveringDS1], [fullyCoveringDS2, ...fixture.ds]);
     });
 
     it(`two fully covering DataSources added,
@@ -404,7 +410,7 @@ describe("VisibleTileSet", function() {
         const zoomLevel = 15;
         const storageLevel = 14;
         const result = updateRenderList(zoomLevel, storageLevel);
-        compareDataSources(result.tileList, fullyCoveringDS1, fullyCoveringDS2);
+        compareDataSources(result.tileList, [fullyCoveringDS1], [fullyCoveringDS2, ...fixture.ds]);
     });
 
     it(`two fully covering DataSources added, different TilingScheme`, async function() {
@@ -433,19 +439,19 @@ describe("VisibleTileSet", function() {
     it(`two fully covering DataSources added, correct Tile is skipped`, async function() {
         setupBerlinCenterCameraFromSamples();
 
-        const fullyCoveringDS1 = new FakeCoveringTileWMTS(1);
-        const fullyCoveringDS2 = new FakeCoveringTileWMTS(2);
+        const fullyCoveringDS1 = new FakeCoveringTileWMTS(true, 1);
+        const fullyCoveringDS2 = new FakeCoveringTileWMTS(true, 2);
         fixture.addDataSource(fullyCoveringDS1);
         fixture.addDataSource(fullyCoveringDS2);
 
         const zoomLevel = 15;
         const storageLevel = 14;
         let result = updateRenderList(zoomLevel, storageLevel);
-        compareDataSources(result.tileList, fullyCoveringDS1, fullyCoveringDS2);
+        compareDataSources(result.tileList, [fullyCoveringDS1], [fullyCoveringDS2, ...fixture.ds]);
 
         // This checks to ensure that calling this multiple times produces the same results
         result = updateRenderList(zoomLevel, storageLevel);
-        compareDataSources(result.tileList, fullyCoveringDS1, fullyCoveringDS2);
+        compareDataSources(result.tileList, [fullyCoveringDS1], [fullyCoveringDS2, ...fixture.ds]);
     });
 
     /**
@@ -455,19 +461,19 @@ describe("VisibleTileSet", function() {
     it(`two fully covering DataSources added, correct Tile is skipped`, async function() {
         setupBerlinCenterCameraFromSamples();
 
-        const fullyCoveringDS1 = new FakeCoveringTileWMTS(2);
-        const fullyCoveringDS2 = new FakeCoveringTileWMTS(1);
+        const fullyCoveringDS1 = new FakeCoveringTileWMTS(true, 2);
+        const fullyCoveringDS2 = new FakeCoveringTileWMTS(true, 1);
         fixture.addDataSource(fullyCoveringDS1);
         fixture.addDataSource(fullyCoveringDS2);
 
         const zoomLevel = 15;
         const storageLevel = 14;
         let result = updateRenderList(zoomLevel, storageLevel);
-        compareDataSources(result.tileList, fullyCoveringDS2, fullyCoveringDS1);
+        compareDataSources(result.tileList, [fullyCoveringDS2], [fullyCoveringDS1, ...fixture.ds]);
 
         // This checks to ensure that calling this multiple times produces the same results
         result = updateRenderList(zoomLevel, storageLevel);
-        compareDataSources(result.tileList, fullyCoveringDS2, fullyCoveringDS1);
+        compareDataSources(result.tileList, [fullyCoveringDS2], [fullyCoveringDS1, ...fixture.ds]);
     });
 
     it(`two fully covering DataSources added, correct Tile is skipped,
@@ -484,7 +490,7 @@ describe("VisibleTileSet", function() {
         const zoomLevel = 15;
         const storageLevel = 14;
         const result = updateRenderList(zoomLevel, storageLevel);
-        compareDataSources(result.tileList, fullyCoveringDS1, fullyCoveringDS2);
+        compareDataSources(result.tileList, [fullyCoveringDS1], [fullyCoveringDS2, ...fixture.ds]);
 
         fixture.removeDataSource(fullyCoveringDS2);
         const resultWithRemovedDS = updateRenderList(zoomLevel, storageLevel);
@@ -494,6 +500,29 @@ describe("VisibleTileSet", function() {
                 expect(tile["m_skipRendering"]).is.false;
             });
         });
+    });
+    /**
+     * This test shows what happens when a DataSource with a background plane is added with one that
+     * `isFullyCovering`.
+     */
+    it("one fully covering DataSources, and one not, no Tiles skipped", async function() {
+        setupBerlinCenterCameraFromSamples();
+
+        // These tiles won't be skipped, because a DataSource that produces [[Tiles]]s without
+        // `isFullyCovering` being true should not impact any others.
+        const fullyCoveringDS1 = new FakeCoveringTileWMTS(true, 1);
+        const fullyCoveringDS2 = new FakeCoveringTileWMTS(false, 2);
+        fixture.addDataSource(fullyCoveringDS1);
+        fixture.addDataSource(fullyCoveringDS2);
+
+        const zoomLevel = 15;
+        const storageLevel = 14;
+        const result = updateRenderList(zoomLevel, storageLevel);
+        compareDataSources(
+            result.tileList,
+            [],
+            [fullyCoveringDS1, fullyCoveringDS2, ...fixture.ds]
+        );
     });
 
     it("check MapView param tileWrappingEnabled disabled", async function() {
