@@ -865,15 +865,12 @@ export class VisibleTileSet {
                 tile.skipRender = false;
                 this.m_coveringMap.set(key, tile);
             } else {
-                const setTileToSkip = (toDispose: Tile) => {
-                    toDispose.skipRender = true;
-                };
                 // Skip the [[Tile]] if either the stored entry or the tile to consider is from the
                 // [[BackgroundDataSource]]
                 if (entry.dataSource instanceof BackgroundDataSource) {
-                    setTileToSkip(entry);
+                    entry.skipRender = true;
                 } else if (dataSource instanceof BackgroundDataSource) {
-                    setTileToSkip(tile);
+                    tile.skipRender = true;
                 }
             }
         }
