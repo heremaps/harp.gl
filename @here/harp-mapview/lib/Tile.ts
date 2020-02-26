@@ -1021,14 +1021,6 @@ export class Tile implements CachedResource {
         return this.projection.worldExtent(0, 0).max.x * this.offset;
     }
 
-    /**
-     * Adds the supplied mesh to the list of three.js objects
-     * @param plane Plane to add to the [[Tile]].
-     */
-    set backgroundPlane(plane: THREE.Mesh) {
-        this.objects.push(plane);
-    }
-
     private computeResourceInfo(): void {
         let heapSize = 0;
         let num3dObjects = 0;
