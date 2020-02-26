@@ -159,9 +159,8 @@ describe("VisibleTileSet", function() {
                 geometries: []
             };
             TileGeometryCreator.instance.createAllGeometries(tile, decodedTile);
-            if (tile.backgroundPlane !== undefined) {
-                tile.backgroundPlane.renderOrder =
-                    this.planeRenderOrder ?? tile.backgroundPlane!.renderOrder;
+            if (tile.backgroundPlane !== undefined && this.planeRenderOrder !== undefined) {
+                tile.backgroundPlane.renderOrder = this.planeRenderOrder;
             }
             return tile;
         }

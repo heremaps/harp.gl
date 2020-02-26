@@ -12,7 +12,6 @@ import {
 import { GeoBox, OrientedBox3, Projection, TileKey } from "@here/harp-geoutils";
 import { assert, CachedResource, LoggerManager } from "@here/harp-utils";
 import * as THREE from "three";
-
 import { AnimatedExtrusionTileHandler } from "./AnimatedExtrusionHandler";
 import { CopyrightInfo } from "./copyrights/CopyrightInfo";
 import { DataSource } from "./DataSource";
@@ -347,12 +346,8 @@ export class Tile implements CachedResource {
      */
     levelOffset: number = 0;
 
-    /**
-     * @hidden
-     *
-     * Background mesh used for the fallback logic.
-     */
-    backgroundPlane?: THREE.Mesh;
+    // Background mesh used for the fallback logic.
+    private m_backgroundPlane?: THREE.Mesh;
 
     private m_disposed: boolean = false;
     private m_localTangentSpace = false;
@@ -1032,13 +1027,22 @@ export class Tile implements CachedResource {
 
     /**
      * Adds the supplied mesh to the list of three.js objects and keeps track of the mesh
-     * internally. Note, only one background mesh may be added to a Tile.
+     * internally.
      * @param plane
      */
-    addBackgroundPlane(plane: THREE.Mesh) {
-        assert(this.backgroundPlane === undefined, "Only one background plane is supported");
-        this.backgroundPlane = plane;
+    set backgroundPlane(plane: THREE.Mesh | undefined) {
+        if (plane === undefined || this.m_backgroundPlane === plane) {
+            return;
+        }
+        this.m_backgroundPlane = plane;
         this.objects.push(plane);
+    }
+
+    /**
+     * Gives access to the background plane.
+     */
+    get backgroundPlane(): THREE.Mesh | undefined {
+        return this.m_backgroundPlane;
     }
 
     private computeResourceInfo(): void {
