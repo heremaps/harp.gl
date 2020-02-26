@@ -374,7 +374,9 @@ export class VisibleTileSet {
     private readonly m_projectionMatrixOverride = new THREE.Matrix4();
     private m_dataSourceCache: DataSourceCache;
     private m_viewRange: ViewRanges = { near: 0.1, far: Infinity, minimum: 0.1, maximum: Infinity };
-    private m_coveringMap = new Map<TilingScheme, Map<number, Tile>>();
+    // Maps morton codes to a given Tile, used to find overlapping Tiles. We only need to have this
+    // for a single TilingScheme, i.e. that of the BackgroundDataSource.
+    private m_coveringMap = new Map<number, Tile>();
 
     private m_resourceComputationType: ResourceComputationType =
         ResourceComputationType.EstimationInMb;
@@ -494,9 +496,7 @@ export class VisibleTileSet {
             elevationRangeSource
         );
         this.dataSourceTileList = [];
-        for (const map of this.m_coveringMap.values()) {
-            map.clear();
-        }
+        this.m_coveringMap.clear();
         for (const { dataSource, visibleTileKeys } of visibleTileKeysResult.tileKeys) {
             // Sort by distance to camera, now the tiles that are further away are at the end
             // of the list.
@@ -857,19 +857,13 @@ export class VisibleTileSet {
             return;
         }
         if (dataSource.isFullyCovering()) {
-            const ts = dataSource.getTilingScheme();
-            let map = this.m_coveringMap.get(ts);
-            if (map === undefined) {
-                map = new Map<number, Tile>();
-                this.m_coveringMap.set(ts, map);
-            }
             const key = TileOffsetUtils.getKeyForTileKeyAndOffset(tile.tileKey, tile.offset);
-            const entry = map.get(key);
+            const entry = this.m_coveringMap.get(key);
             if (entry === undefined) {
                 // We need to reset the flag so that if the covering datasource is disabled, that
                 // the tiles beneath then start to render.
                 tile.skipRender = false;
-                map.set(key, tile);
+                this.m_coveringMap.set(key, tile);
             } else {
                 const setTileToSkip = (toDispose: Tile) => {
                     toDispose.skipRender = true;
