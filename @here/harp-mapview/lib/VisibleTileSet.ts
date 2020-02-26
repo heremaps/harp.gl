@@ -15,6 +15,7 @@ import {
 import { LRUCache } from "@here/harp-lrucache";
 import { assert, MathUtils } from "@here/harp-utils";
 import * as THREE from "three";
+import { BackgroundDataSource } from "./BackgroundDataSource";
 import { ClipPlanesEvaluator } from "./ClipPlanesEvaluator";
 import { DataSource } from "./DataSource";
 import { ElevationRangeSource } from "./ElevationRangeSource";
@@ -873,26 +874,12 @@ export class VisibleTileSet {
                 const setTileToSkip = (toDispose: Tile) => {
                     toDispose.skipRender = true;
                 };
-                // If the entry in the map has no backgroundPlane, we treat it to have highest
-                // priority, so we skip rendering of the newly created tile.
-                if (entry.backgroundPlane === undefined) {
-                    setTileToSkip(tile);
-                }
-                // If the tile has no backgroundPlane and the existing entry does then
-                // skip and replace it in the cache, no backgroundPlane has higher priority.
-                else if (tile.backgroundPlane === undefined) {
+                // Skip the [[Tile]] if either the stored entry or the tile to consider is from the
+                // [[BackgroundDataSource]]
+                if (entry.dataSource instanceof BackgroundDataSource) {
                     setTileToSkip(entry);
-                    map.set(key, tile);
-                }
-                // Both planes exist, so we replace if the new [[Tile]] has a higher renderOrder
-                else {
-                    if (tile.backgroundPlane.renderOrder > entry.backgroundPlane.renderOrder) {
-                        setTileToSkip(entry);
-                        map.set(key, tile);
-                    } else {
-                        // Existing entry has higher renderOrder, so skip the incoming tile.
-                        setTileToSkip(tile);
-                    }
+                } else if (dataSource instanceof BackgroundDataSource) {
+                    setTileToSkip(tile);
                 }
             }
         }

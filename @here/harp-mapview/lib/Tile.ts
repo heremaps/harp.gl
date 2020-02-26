@@ -346,9 +346,6 @@ export class Tile implements CachedResource {
      */
     levelOffset: number = 0;
 
-    // Background mesh used for the fallback logic.
-    private m_backgroundPlane?: THREE.Mesh;
-
     private m_disposed: boolean = false;
     private m_localTangentSpace = false;
 
@@ -970,7 +967,6 @@ export class Tile implements CachedResource {
             disposeObject(rootObject);
         });
         this.objects.length = 0;
-        this.backgroundPlane = undefined;
 
         if (this.preparedTextPaths) {
             this.preparedTextPaths = [];
@@ -1026,23 +1022,11 @@ export class Tile implements CachedResource {
     }
 
     /**
-     * Adds the supplied mesh to the list of three.js objects and keeps track of the mesh
-     * internally.
-     * @param plane
+     * Adds the supplied mesh to the list of three.js objects
+     * @param plane Plane to add to the [[Tile]].
      */
-    set backgroundPlane(plane: THREE.Mesh | undefined) {
-        if (plane === undefined || this.m_backgroundPlane === plane) {
-            return;
-        }
-        this.m_backgroundPlane = plane;
+    set backgroundPlane(plane: THREE.Mesh) {
         this.objects.push(plane);
-    }
-
-    /**
-     * Gives access to the background plane.
-     */
-    get backgroundPlane(): THREE.Mesh | undefined {
-        return this.m_backgroundPlane;
     }
 
     private computeResourceInfo(): void {

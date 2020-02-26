@@ -18,6 +18,7 @@ import { getOptionValue } from "@here/harp-utils";
 import { assert, expect } from "chai";
 import * as sinon from "sinon";
 import * as THREE from "three";
+import { BackgroundDataSource } from "../lib/BackgroundDataSource";
 import { createDefaultClipPlanesEvaluator } from "../lib/ClipPlanesEvaluator";
 import { DataSource } from "../lib/DataSource";
 import { FrustumIntersection } from "../lib/FrustumIntersection";
@@ -140,7 +141,7 @@ describe("VisibleTileSet", function() {
          * @param planeRenderOrder Which render order the ground plane has (applicable only if
          * [[isFullyCovering]] is set).
          */
-        constructor(isFullyCovering?: boolean, readonly planeRenderOrder?: number) {
+        constructor(isFullyCovering?: boolean) {
             super();
             this.addGroundPlane = isFullyCovering ?? true;
             this.cacheable = true;
@@ -159,9 +160,6 @@ describe("VisibleTileSet", function() {
                 geometries: []
             };
             TileGeometryCreator.instance.createAllGeometries(tile, decodedTile);
-            if (tile.backgroundPlane !== undefined && this.planeRenderOrder !== undefined) {
-                tile.backgroundPlane.renderOrder = this.planeRenderOrder;
-            }
             return tile;
         }
     }
@@ -380,12 +378,12 @@ describe("VisibleTileSet", function() {
      * This test shows what happens when a DataSource with a background plane is added with one that
      * `isFullyCovering`.
      */
-    it("two fully covering DataSources added, correct Tile is skipped", async function() {
+    it("background data source is skipped by webtile", async function() {
         setupBerlinCenterCameraFromSamples();
 
         // These tiles will be skipped, because a DataSource that produces [[Tiles]]s without
         // a background plane, but where isFullyCovering is true trumps.
-        const fullyCoveringDS1 = new FakeCoveringTileWMTS();
+        const fullyCoveringDS1 = new BackgroundDataSource();
         const fullyCoveringDS2 = new FakeWebTile();
         fixture.addDataSource(fullyCoveringDS1);
         fixture.addDataSource(fullyCoveringDS2);
@@ -396,11 +394,10 @@ describe("VisibleTileSet", function() {
         compareDataSources(result.tileList, [fullyCoveringDS1], [fullyCoveringDS2, ...fixture.ds]);
     });
 
-    it(`two fully covering DataSources added,
-        reverse order as above, correct Tile is skipped`, async function() {
+    it(`background data source is skipped by webtile (reversed order)`, async function() {
         setupBerlinCenterCameraFromSamples();
 
-        const fullyCoveringDS1 = new FakeCoveringTileWMTS();
+        const fullyCoveringDS1 = new BackgroundDataSource();
         const fullyCoveringDS2 = new FakeWebTile();
         // !! Note the different order added !!
         fixture.addDataSource(fullyCoveringDS2);
@@ -412,10 +409,31 @@ describe("VisibleTileSet", function() {
         compareDataSources(result.tileList, [fullyCoveringDS1], [fullyCoveringDS2, ...fixture.ds]);
     });
 
-    it(`two fully covering DataSources added, different TilingScheme`, async function() {
+    /**
+     * This test shows what happens when a DataSource with a background plane is added with one that
+     * `isFullyCovering`.
+     */
+    it(`background data source skipped by other fully covering tile`, async function() {
         setupBerlinCenterCameraFromSamples();
 
-        const fullyCoveringDS1 = new FakeWebTile(webMercatorTilingScheme);
+        // These tiles won't be skipped, because a DataSource that produces [[Tiles]]s without
+        // `isFullyCovering` being true should not impact any others.
+        const fullyCoveringDS1 = new BackgroundDataSource();
+        const fullyCoveringDS2 = new FakeCoveringTileWMTS(true);
+        fixture.addDataSource(fullyCoveringDS1);
+        fixture.addDataSource(fullyCoveringDS2);
+
+        const zoomLevel = 15;
+        const storageLevel = 14;
+        const result = updateRenderList(zoomLevel, storageLevel);
+        compareDataSources(result.tileList, [fullyCoveringDS1], [fullyCoveringDS2, ...fixture.ds]);
+    });
+
+    it(`background data source not skipped when different tiling scheme used`, async function() {
+        setupBerlinCenterCameraFromSamples();
+
+        const fullyCoveringDS1 = new BackgroundDataSource();
+        // BackgroundDataSource uses webMercator, so th
         const fullyCoveringDS2 = new FakeWebTile(mercatorTilingScheme);
         fixture.addDataSource(fullyCoveringDS1);
         fixture.addDataSource(fullyCoveringDS2);
@@ -432,85 +450,17 @@ describe("VisibleTileSet", function() {
     });
 
     /**
-     * This test shows what happens when two [[DataSource]]s with background planes are added with
-     * different renderOrders
-     */
-    it(`two fully covering DataSources added, correct Tile is skipped`, async function() {
-        setupBerlinCenterCameraFromSamples();
-
-        const fullyCoveringDS1 = new FakeCoveringTileWMTS(true, 1);
-        const fullyCoveringDS2 = new FakeCoveringTileWMTS(true, 2);
-        fixture.addDataSource(fullyCoveringDS1);
-        fixture.addDataSource(fullyCoveringDS2);
-
-        const zoomLevel = 15;
-        const storageLevel = 14;
-        let result = updateRenderList(zoomLevel, storageLevel);
-        compareDataSources(result.tileList, [fullyCoveringDS1], [fullyCoveringDS2, ...fixture.ds]);
-
-        // This checks to ensure that calling this multiple times produces the same results
-        result = updateRenderList(zoomLevel, storageLevel);
-        compareDataSources(result.tileList, [fullyCoveringDS1], [fullyCoveringDS2, ...fixture.ds]);
-    });
-
-    /**
-     * This test shows what happens when two [[DataSource]]s with background planes are added with
-     * different renderOrders
-     */
-    it(`two fully covering DataSources added, correct Tile is skipped`, async function() {
-        setupBerlinCenterCameraFromSamples();
-
-        const fullyCoveringDS1 = new FakeCoveringTileWMTS(true, 2);
-        const fullyCoveringDS2 = new FakeCoveringTileWMTS(true, 1);
-        fixture.addDataSource(fullyCoveringDS1);
-        fixture.addDataSource(fullyCoveringDS2);
-
-        const zoomLevel = 15;
-        const storageLevel = 14;
-        let result = updateRenderList(zoomLevel, storageLevel);
-        compareDataSources(result.tileList, [fullyCoveringDS2], [fullyCoveringDS1, ...fixture.ds]);
-
-        // This checks to ensure that calling this multiple times produces the same results
-        result = updateRenderList(zoomLevel, storageLevel);
-        compareDataSources(result.tileList, [fullyCoveringDS2], [fullyCoveringDS1, ...fixture.ds]);
-    });
-
-    it(`two fully covering DataSources added, correct Tile is skipped,
-    DataSource removed, Tile no longer skips`, async function() {
-        setupBerlinCenterCameraFromSamples();
-
-        // These tiles will be skipped, because a DataSource that produces [[Tiles]]s without
-        // a background plane, but where isFullyCovering is true trumps.
-        const fullyCoveringDS1 = new FakeCoveringTileWMTS();
-        const fullyCoveringDS2 = new FakeWebTile();
-        fixture.addDataSource(fullyCoveringDS1);
-        fixture.addDataSource(fullyCoveringDS2);
-
-        const zoomLevel = 15;
-        const storageLevel = 14;
-        const result = updateRenderList(zoomLevel, storageLevel);
-        compareDataSources(result.tileList, [fullyCoveringDS1], [fullyCoveringDS2, ...fixture.ds]);
-
-        fixture.removeDataSource(fullyCoveringDS2);
-        const resultWithRemovedDS = updateRenderList(zoomLevel, storageLevel);
-        resultWithRemovedDS.tileList.forEach(dataSourceTileList => {
-            dataSourceTileList.visibleTiles.forEach(tile => {
-                // tslint:disable-next-line: no-string-literal
-                expect(tile["m_skipRendering"]).is.false;
-            });
-        });
-    });
-    /**
-     * This test shows what happens when a DataSource with a background plane is added with one that
+     * This test shows what happens when a BackgroundDataSource is added with one that
      * `isFullyCovering`.
      */
-    it("one fully covering DataSources, and one not, no Tiles skipped", async function() {
+    it(`background data source not skipped
+        when other non covering datasource added`, async function() {
         setupBerlinCenterCameraFromSamples();
 
         // These tiles won't be skipped, because a DataSource that produces [[Tiles]]s without
         // `isFullyCovering` being true should not impact any others.
-        const fullyCoveringDS1 = new FakeCoveringTileWMTS(true, 1);
-        const fullyCoveringDS2 = new FakeCoveringTileWMTS(false, 2);
+        const fullyCoveringDS1 = new BackgroundDataSource();
+        const fullyCoveringDS2 = new FakeCoveringTileWMTS(false);
         fixture.addDataSource(fullyCoveringDS1);
         fixture.addDataSource(fullyCoveringDS2);
 
