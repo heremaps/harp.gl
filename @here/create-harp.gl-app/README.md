@@ -11,7 +11,7 @@ Application creator for [harp.gl](https://github.com/heremaps/harp.gl) based pro
 ## Usage
 
 ```sh
-npm init @here/harpgl-app
+npm init @here/harp.gl-app
 ```
 This command will generate a complete harp.gl project based on Node.js, Webpack, and Typescript.
 You will be prompted to specify an example directory, package name, and access token.

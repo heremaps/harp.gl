@@ -70,7 +70,7 @@ map.addDataSource(omvDataSource);
 Generate a simple app using the package initializer:
 
 ```shell
-npm init @here/harpgl-app
+npm init @here/harp.gl-app
 ```
 
 ## About This Repository
