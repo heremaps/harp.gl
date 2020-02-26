@@ -63,7 +63,7 @@ describe("map-view#Utils", function() {
         const mapView = (mapViewMock as any) as MapView;
         const cameraHeight =
             MapViewUtils.calculateDistanceToGroundFromZoomLevel(mapView, xyzView.zoom) /
-            Math.cos(THREE.Math.degToRad(xyzView.pitch));
+            Math.cos(THREE.MathUtils.degToRad(xyzView.pitch));
         const cameraCoordinates = MapViewUtils.getCameraCoordinatesFromTargetCoordinates(
             new GeoCoordinates(xyzView.center[0], xyzView.center[1]),
             cameraHeight,
@@ -92,7 +92,7 @@ describe("map-view#Utils", function() {
         });
 
         it("ensures that both functions are inverse", function() {
-            mapViewMock.camera.matrixWorld.makeRotationX(THREE.Math.degToRad(30));
+            mapViewMock.camera.matrixWorld.makeRotationX(THREE.MathUtils.degToRad(30));
 
             for (let zoomLevel = 1; zoomLevel <= 20; zoomLevel += 0.1) {
                 const distance = MapViewUtils.calculateDistanceFromZoomLevel(
@@ -110,11 +110,11 @@ describe("map-view#Utils", function() {
 
     it("calculates horizontal and vertical fov", function() {
         const vFov = 60;
-        const hFov = THREE.Math.radToDeg(
-            MapViewUtils.calculateHorizontalFovByVerticalFov(THREE.Math.degToRad(vFov), 0.9)
+        const hFov = THREE.MathUtils.radToDeg(
+            MapViewUtils.calculateHorizontalFovByVerticalFov(THREE.MathUtils.degToRad(vFov), 0.9)
         );
-        const calculatedVFov = THREE.Math.radToDeg(
-            MapViewUtils.calculateVerticalFovByHorizontalFov(THREE.Math.degToRad(hFov), 0.9)
+        const calculatedVFov = THREE.MathUtils.radToDeg(
+            MapViewUtils.calculateVerticalFovByHorizontalFov(THREE.MathUtils.degToRad(hFov), 0.9)
         );
         expect(vFov).to.be.closeTo(calculatedVFov, 0.00000000001);
     });

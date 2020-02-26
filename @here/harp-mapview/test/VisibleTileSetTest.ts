@@ -38,7 +38,7 @@ class FakeMapView {
     get focalLength(): number {
         // fov: 60
         // height: 1080 px
-        // 1080 * 0.5 * Math.tan(THREE.Math.degToRad(60) * 0.5)
+        // 1080 * 0.5 * Math.tan(THREE.MathUtils.degToRad(60) * 0.5)
         return 935.307436087;
     }
 }

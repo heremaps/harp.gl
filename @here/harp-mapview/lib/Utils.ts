@@ -33,7 +33,7 @@ const groundNormalPlanarProj = new THREE.Vector3(0, 0, 1);
 const groundPlane = new THREE.Plane(groundNormalPlanarProj.clone());
 const groundSphere = new THREE.Sphere(undefined, EarthConstants.EQUATORIAL_RADIUS);
 const rayCaster = new THREE.Raycaster();
-const maxTiltAngleAllowed = THREE.Math.degToRad(MAX_TILT_ANGLE);
+const maxTiltAngleAllowed = THREE.MathUtils.degToRad(MAX_TILT_ANGLE);
 const epsilon = 1e-5;
 
 /**
@@ -181,8 +181,8 @@ export namespace MapViewUtils {
         );
         const tiltDeg = Math.max(
             Math.min(
-                THREE.Math.radToDeg(maxTiltAngleRad),
-                deltaTiltDeg + THREE.Math.radToDeg(sphericalCoordinates.tilt)
+                THREE.MathUtils.radToDeg(maxTiltAngleRad),
+                deltaTiltDeg + THREE.MathUtils.radToDeg(sphericalCoordinates.tilt)
             ),
             0
         );
@@ -190,7 +190,7 @@ export namespace MapViewUtils {
             targetCoordinates,
             target.distanceTo(mapView.camera.position),
             tiltDeg,
-            THREE.Math.radToDeg(sphericalCoordinates.azimuth + Math.PI) + deltaAzimuthDeg
+            THREE.MathUtils.radToDeg(sphericalCoordinates.azimuth + Math.PI) + deltaAzimuthDeg
         );
     }
 
@@ -267,9 +267,9 @@ export namespace MapViewUtils {
         projection: Projection,
         result: THREE.Vector3 = new THREE.Vector3()
     ): THREE.Vector3 {
-        const pitchRad = THREE.Math.degToRad(pitchDeg);
+        const pitchRad = THREE.MathUtils.degToRad(pitchDeg);
         const altitude = Math.cos(pitchRad) * distance;
-        const yawRad = THREE.Math.degToRad(yawDeg);
+        const yawRad = THREE.MathUtils.degToRad(yawDeg);
         projection.projectPoint(targetCoordinates, result);
         const groundDistance = distance * Math.sin(pitchRad);
         if (projection.type === ProjectionType.Planar) {
@@ -426,7 +426,7 @@ export namespace MapViewUtils {
             .setFromUnitVectors(fromWorld.normalize(), toWorld.normalize())
             .inverse();
         cache.matrix4[0].makeRotationFromQuaternion(cache.quaternions[0]);
-        mapView.camera.applyMatrix(cache.matrix4[0]);
+        mapView.camera.applyMatrix4(cache.matrix4[0]);
         mapView.camera.updateMatrixWorld();
     }
 
@@ -460,8 +460,8 @@ export namespace MapViewUtils {
         }
         const pitch = MapViewUtils.extractAttitude(mapView, mapView.camera).pitch;
         // `maxTiltAngle` is equivalent to a `maxPitchAngle` in flat projections.
-        let newPitch = THREE.Math.clamp(
-            pitch + THREE.Math.degToRad(deltaPitchDeg),
+        let newPitch = THREE.MathUtils.clamp(
+            pitch + THREE.MathUtils.degToRad(deltaPitchDeg),
             0,
             maxTiltAngleRad
         );
@@ -506,11 +506,11 @@ export namespace MapViewUtils {
 
         cache.quaternions[0].setFromAxisAngle(
             cache.vector3[1].set(0, 0, 1),
-            THREE.Math.degToRad(yawDeg)
+            THREE.MathUtils.degToRad(yawDeg)
         );
         cache.quaternions[1].setFromAxisAngle(
             cache.vector3[1].set(1, 0, 0),
-            THREE.Math.degToRad(pitchDeg)
+            THREE.MathUtils.degToRad(pitchDeg)
         );
 
         result.multiply(cache.quaternions[0]);
@@ -557,7 +557,7 @@ export namespace MapViewUtils {
                 .surfaceNormal(camera.position, cache.vector3[1])
                 .negate();
             const cosTheta = lookAt.dot(normal);
-            return Math.acos(THREE.Math.clamp(cosTheta, -1, 1));
+            return Math.acos(THREE.MathUtils.clamp(cosTheta, -1, 1));
         } else {
             // Sanity check if new projection type is introduced.
             assert(projection.type === ProjectionType.Spherical);
@@ -734,7 +734,7 @@ export namespace MapViewUtils {
             // Top down view.
             return 0;
         }
-        return Math.acos(THREE.Math.clamp(cosTheta, -1, 1));
+        return Math.acos(THREE.MathUtils.clamp(cosTheta, -1, 1));
     }
 
     /**
@@ -746,7 +746,7 @@ export namespace MapViewUtils {
     ): { left: number; right: number; top: number; bottom: number; near: number; far: number } {
         const near = camera.near;
         const far = camera.far;
-        let top = (near * Math.tan(THREE.Math.degToRad(0.5 * camera.fov))) / camera.zoom;
+        let top = (near * Math.tan(THREE.MathUtils.degToRad(0.5 * camera.fov))) / camera.zoom;
         let height = 2 * top;
         let width = camera.aspect * height;
         let left = -0.5 * width;
@@ -854,7 +854,7 @@ export namespace MapViewUtils {
         distance: number
     ): number {
         const tileSize = (256 * distance) / options.focalLength;
-        const zoomLevel = THREE.Math.clamp(
+        const zoomLevel = THREE.MathUtils.clamp(
             Math.log2(EarthConstants.EQUATORIAL_CIRCUMFERENCE / tileSize),
             options.minZoomLevel,
             options.maxZoomLevel
@@ -932,7 +932,7 @@ export namespace MapViewUtils {
      * @param height Height of canvas in pixels.
      */
     export function calculateFovByFocalLength(focalLength: number, height: number): number {
-        return THREE.Math.radToDeg(2 * Math.atan(height / 2 / focalLength));
+        return THREE.MathUtils.radToDeg(2 * Math.atan(height / 2 / focalLength));
     }
 
     /**
@@ -1127,7 +1127,7 @@ export namespace MapViewUtils {
     ): void {
         // Attributes (apparently) do not have their uuid set up.
         if (attribute.uuid === undefined) {
-            attribute.uuid = THREE.Math.generateUUID();
+            attribute.uuid = THREE.MathUtils.generateUUID();
         }
 
         if (visitedObjects.get(attribute.uuid) === true) {

@@ -87,26 +87,26 @@ const operators = {
 function rgbaToHex(r: number, g: number, b: number, a: number): number {
     // We decode rgba color channels using custom hex format with transparency.
     return ColorUtils.getHexFromRgba(
-        THREE.Math.clamp(r, 0, 255) / 255,
-        THREE.Math.clamp(g, 0, 255) / 255,
-        THREE.Math.clamp(b, 0, 255) / 255,
-        THREE.Math.clamp(a, 0, 1)
+        THREE.MathUtils.clamp(r, 0, 255) / 255,
+        THREE.MathUtils.clamp(g, 0, 255) / 255,
+        THREE.MathUtils.clamp(b, 0, 255) / 255,
+        THREE.MathUtils.clamp(a, 0, 1)
     );
 }
 
 function rgbToHex(r: number, g: number, b: number): number {
     return ColorUtils.getHexFromRgb(
-        THREE.Math.clamp(r, 0, 255) / 255,
-        THREE.Math.clamp(g, 0, 255) / 255,
-        THREE.Math.clamp(b, 0, 255) / 255
+        THREE.MathUtils.clamp(r, 0, 255) / 255,
+        THREE.MathUtils.clamp(g, 0, 255) / 255,
+        THREE.MathUtils.clamp(b, 0, 255) / 255
     );
 }
 
 function hslToHex(h: number, s: number, l: number): number {
     return ColorUtils.getHexFromHsl(
-        THREE.Math.euclideanModulo(h, 360) / 360,
-        THREE.Math.clamp(s, 0, 100) / 100,
-        THREE.Math.clamp(l, 0, 100) / 100
+        THREE.MathUtils.euclideanModulo(h, 360) / 360,
+        THREE.MathUtils.clamp(s, 0, 100) / 100,
+        THREE.MathUtils.clamp(l, 0, 100) / 100
     );
 }
 

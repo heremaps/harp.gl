@@ -189,7 +189,7 @@ export class RenderState {
             // increment).
             this.value = fadingTime / DEFAULT_FADE_TIME;
 
-            this.opacity = THREE.Math.clamp(
+            this.opacity = THREE.MathUtils.clamp(
                 MathUtils.smootherStep(startValue, endValue, this.value),
                 0,
                 1

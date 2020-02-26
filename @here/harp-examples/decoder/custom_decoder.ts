@@ -157,7 +157,7 @@ class CustomDecoder extends ThemedTileDecoder
         const boxGeometry = new BoxBufferGeometry(1.0 * scale, 5.0 * scale, 5.0 * scale);
         const matrix = new Matrix4();
         matrix.makeTranslation(2.0 * scale, 1.0 * scale, 0);
-        boxGeometry.applyMatrix(matrix);
+        boxGeometry.applyMatrix4(matrix);
 
         for (const technique of techniques) {
             const geometry = ThreeBufferUtils.fromThreeBufferGeometry(

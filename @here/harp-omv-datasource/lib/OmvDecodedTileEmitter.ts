@@ -1419,7 +1419,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
 
                         // FIXME(HARP-5700): Subdivision modifier ignores texture coordinates.
                         const modifier = new SphericalGeometrySubdivisionModifier(
-                            THREE.Math.degToRad(10),
+                            THREE.MathUtils.degToRad(10),
                             webMercatorProjection
                         );
                         modifier.modify(geom);

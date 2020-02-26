@@ -392,7 +392,7 @@ export class TopViewClipPlanesEvaluator extends ElevationBasedClipPlanesEvaluato
             const cam = camera as THREE.PerspectiveCamera;
             // Take fov directly if it is vertical, otherwise we translate it using aspect ratio:
             const aspect = cam.aspect > 1 ? cam.aspect : 1 / cam.aspect;
-            const halfFovAngle = THREE.Math.degToRad((cam.fov * aspect) / 2);
+            const halfFovAngle = THREE.MathUtils.degToRad((cam.fov * aspect) / 2);
 
             const farTangent = this.getTangentBasedFarPlane(cam, d, r, alpha);
             farPlane =
@@ -721,7 +721,7 @@ export class TiltViewClipPlanesEvaluator extends TopViewClipPlanesEvaluator {
             // let aspect = camera.aspect > 1 ? camera.aspect : 1 / camera.aspect;
             const aspect = 1;
             // Half fov angle in radians
-            const halfFovAngle = THREE.Math.degToRad((cam.fov * aspect) / 2);
+            const halfFovAngle = THREE.MathUtils.degToRad((cam.fov * aspect) / 2);
             topAngleRad = MathUtils.clamp(cameraTilt + halfFovAngle, -halfPiLimit, halfPiLimit);
             bottomAngleRad = MathUtils.clamp(cameraTilt - halfFovAngle, -halfPiLimit, halfPiLimit);
             z1 = z2 = cameraAltitude;
@@ -779,7 +779,7 @@ export class TiltViewClipPlanesEvaluator extends TopViewClipPlanesEvaluator {
             // let aspect = camera.aspect > 1 ? camera.aspect : 1 / camera.aspect;
             const aspect = 1;
             // Half fov angle in radians
-            const halfFovAngle = THREE.Math.degToRad((cam.fov * aspect) / 2);
+            const halfFovAngle = THREE.MathUtils.degToRad((cam.fov * aspect) / 2);
             const cosHalfFov = Math.cos(halfFovAngle);
             // cos(halfFov) = near / bottomDist
             // near = cos(halfFov) * bottomDist
@@ -825,7 +825,7 @@ export class TiltViewClipPlanesEvaluator extends TopViewClipPlanesEvaluator {
 
         // Take fov directly if it is vertical, otherwise we translate it using aspect ratio:
         const aspect = camera.aspect > 1 ? camera.aspect : 1 / camera.aspect;
-        const halfFovAngle = THREE.Math.degToRad((camera.fov * aspect) / 2);
+        const halfFovAngle = THREE.MathUtils.degToRad((camera.fov * aspect) / 2);
 
         if (camera instanceof THREE.PerspectiveCamera) {
             // Now we need to account for camera tilt and frustum volume, so the longest

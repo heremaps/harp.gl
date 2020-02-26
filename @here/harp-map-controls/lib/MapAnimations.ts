@@ -317,7 +317,7 @@ export class CameraRotationAnimation extends CameraAnimation {
             .onUpdate(({ rotation }) => {
                 this.m_lastRotationValue = rotation;
 
-                rotZ.setFromEuler(new THREE.Euler(0, 0, THREE.Math.degToRad(rotation)));
+                rotZ.setFromEuler(new THREE.Euler(0, 0, THREE.MathUtils.degToRad(rotation)));
 
                 if (this.m_userCamerRotation !== undefined) {
                     rotZ.multiply(this.m_userCamerRotation);

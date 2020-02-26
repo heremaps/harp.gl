@@ -943,7 +943,7 @@ export class MapView extends THREE.EventDispatcher {
             this.m_options.fovCalculation === undefined
                 ? DEFAULT_FOV_CALCULATION
                 : this.m_options.fovCalculation;
-        this.m_options.fovCalculation.fov = THREE.Math.clamp(
+        this.m_options.fovCalculation.fov = THREE.MathUtils.clamp(
             this.m_options.fovCalculation!.fov,
             MIN_FIELD_OF_VIEW,
             MAX_FIELD_OF_VIEW
@@ -1517,8 +1517,8 @@ export class MapView extends THREE.EventDispatcher {
         const targetCoordinates = this.projection.unprojectPoint(target);
         const targetDistance = this.camera.position.distanceTo(target);
         const attitude = MapViewUtils.extractAttitude(this, this.camera);
-        const pitchDeg = THREE.Math.radToDeg(attitude.pitch);
-        const headingDeg = -THREE.Math.radToDeg(attitude.yaw);
+        const pitchDeg = THREE.MathUtils.radToDeg(attitude.pitch);
+        const headingDeg = -THREE.MathUtils.radToDeg(attitude.yaw);
 
         this.m_visibleTileSetOptions.projection = projection;
         this.updatePolarDataSource();
@@ -1726,7 +1726,11 @@ export class MapView extends THREE.EventDispatcher {
         return this.m_zoomLevel;
     }
     set zoomLevel(zoomLevel: number) {
-        this.m_zoomLevel = THREE.Math.clamp(zoomLevel, this.m_minZoomLevel, this.m_maxZoomLevel);
+        this.m_zoomLevel = THREE.MathUtils.clamp(
+            zoomLevel,
+            this.m_minZoomLevel,
+            this.m_maxZoomLevel
+        );
         MapViewUtils.zoomOnTargetPosition(this, 0, 0, this.m_zoomLevel);
         this.update();
     }
@@ -1743,7 +1747,7 @@ export class MapView extends THREE.EventDispatcher {
      * Actual storage level of the rendered data also depends on [[DataSource.storageLevelOffset]].
      */
     get storageLevel(): number {
-        return THREE.Math.clamp(
+        return THREE.MathUtils.clamp(
             Math.floor(this.m_zoomLevel),
             this.m_minZoomLevel,
             this.m_maxZoomLevel
@@ -2012,7 +2016,7 @@ export class MapView extends THREE.EventDispatcher {
                     (MapViewUtils.calculateDistanceToGroundFromZoomLevel(this, zoomLevel) +
                         EarthConstants.EQUATORIAL_RADIUS)
             );
-            const maxPitchDegWithCurvature = THREE.Math.radToDeg(maxPitchRadWithCurvature);
+            const maxPitchDegWithCurvature = THREE.MathUtils.radToDeg(maxPitchRadWithCurvature);
             limitedPitch = Math.min(limitedPitch, maxPitchDegWithCurvature);
         }
         MapViewUtils.zoomOnTargetPosition(this, 0, 0, zoomLevel);
@@ -3385,16 +3389,19 @@ export class MapView extends THREE.EventDispatcher {
     };
 
     private limitFov(fov: number, aspect: number): number {
-        fov = THREE.Math.clamp(fov, MIN_FIELD_OF_VIEW, MAX_FIELD_OF_VIEW);
+        fov = THREE.MathUtils.clamp(fov, MIN_FIELD_OF_VIEW, MAX_FIELD_OF_VIEW);
 
-        let hFov = THREE.Math.radToDeg(
-            MapViewUtils.calculateHorizontalFovByVerticalFov(THREE.Math.degToRad(fov), aspect)
+        let hFov = THREE.MathUtils.radToDeg(
+            MapViewUtils.calculateHorizontalFovByVerticalFov(THREE.MathUtils.degToRad(fov), aspect)
         );
 
         if (hFov > MAX_FIELD_OF_VIEW || hFov < MIN_FIELD_OF_VIEW) {
-            hFov = THREE.Math.clamp(hFov, MIN_FIELD_OF_VIEW, MAX_FIELD_OF_VIEW);
-            fov = THREE.Math.radToDeg(
-                MapViewUtils.calculateVerticalFovByHorizontalFov(THREE.Math.degToRad(hFov), aspect)
+            hFov = THREE.MathUtils.clamp(hFov, MIN_FIELD_OF_VIEW, MAX_FIELD_OF_VIEW);
+            fov = THREE.MathUtils.radToDeg(
+                MapViewUtils.calculateVerticalFovByHorizontalFov(
+                    THREE.MathUtils.degToRad(hFov),
+                    aspect
+                )
             );
         }
         return fov as number;
@@ -3428,7 +3435,7 @@ export class MapView extends THREE.EventDispatcher {
     private calculateFocalLength(height: number) {
         assert(this.m_options.fovCalculation !== undefined);
         this.m_focalLength = MapViewUtils.calculateFocalLengthByVerticalFov(
-            THREE.Math.degToRad(this.m_options.fovCalculation!.fov),
+            THREE.MathUtils.degToRad(this.m_options.fovCalculation!.fov),
             height
         );
     }

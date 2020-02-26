@@ -150,14 +150,14 @@ export namespace FreeCameraAppDebuggingToolExample {
                 // Make sure that the pitch limit constraint is preserved
                 const ypr = MapViewUtils.extractAttitude(this.mapView, cameraRelativeToEye);
                 ypr.pitch = Math.max(
-                    Math.min(ypr.pitch, THREE.Math.degToRad(this.mapControls.maxTiltAngle)),
+                    Math.min(ypr.pitch, THREE.MathUtils.degToRad(this.mapControls.maxTiltAngle)),
                     0
                 );
                 // Finally apply rotation from transformation gizmo.
                 MapViewUtils.setRotation(
                     this.mapView,
-                    THREE.Math.radToDeg(ypr.yaw),
-                    THREE.Math.radToDeg(ypr.pitch)
+                    THREE.MathUtils.radToDeg(ypr.yaw),
+                    THREE.MathUtils.radToDeg(ypr.pitch)
                 );
                 // Reset RTE camera orientation according to constraints applied.
                 cameraRelativeToEye.copy(this.mapView.camera);

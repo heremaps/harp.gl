@@ -220,7 +220,7 @@ export class MapControlsUI {
             controls.pointToNorth();
         });
         controls.mapView.addEventListener(MapViewEventNames.AfterRender, () => {
-            compass.style.transform = `rotate(${THREE.Math.radToDeg(
+            compass.style.transform = `rotate(${THREE.MathUtils.radToDeg(
                 MapViewUtils.extractAttitude(controls.mapView, controls.mapView.camera).yaw
             )}deg)`;
         });

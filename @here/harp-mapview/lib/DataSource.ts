@@ -358,7 +358,7 @@ export abstract class DataSource extends THREE.EventDispatcher {
      * @returns The zoom level to use for display.
      */
     getDisplayZoomLevel(zoomLevel: number): number {
-        return THREE.Math.clamp(
+        return THREE.MathUtils.clamp(
             zoomLevel + this.m_storageLevelOffset,
             this.m_minZoomLevel,
             this.m_maxZoomLevel

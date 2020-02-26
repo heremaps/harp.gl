@@ -381,7 +381,7 @@ export class WebTileDataSource extends DataSource {
 
                 if (shouldSubdivide) {
                     const modifier = new SphericalGeometrySubdivisionModifier(
-                        THREE.Math.degToRad(10),
+                        THREE.MathUtils.degToRad(10),
                         sourceProjection
                     );
                     modifier.modify(g);

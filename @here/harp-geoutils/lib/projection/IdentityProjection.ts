@@ -51,8 +51,8 @@ class IdentityProjection extends Projection {
             // tslint:disable-next-line:no-object-literal-type-assertion
             result = { x: 0, y: 0, z: 0 } as WorldCoordinates;
         }
-        result.x = THREE.Math.degToRad(geoPoint.longitude);
-        result.y = THREE.Math.degToRad(geoPoint.latitude);
+        result.x = THREE.MathUtils.degToRad(geoPoint.longitude);
+        result.y = THREE.MathUtils.degToRad(geoPoint.latitude);
         result.z = geoPoint.altitude || 0;
         return result;
     }
