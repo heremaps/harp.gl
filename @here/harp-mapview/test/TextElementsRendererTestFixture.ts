@@ -114,7 +114,7 @@ export class TestFixture {
     private m_textRenderer: TextElementsRenderer | undefined;
     private m_defaultTile: Tile | undefined;
     private m_allTiles: Tile[] = [];
-    private m_allUserTextElements: TextElement[][] = [];
+    private m_allTextElements: TextElement[][] = [];
 
     constructor(readonly sandbox: sinon.SinonSandbox) {
         this.m_screenCollisions = new ScreenCollisions();
@@ -220,7 +220,7 @@ export class TestFixture {
      * can later be referenced by index when rendering a frame. See [[renderFrame]].
      * @param elements The text elements the new tile will contain.
      */
-    addTile(elements: TextElement[], userElements: TextElement[]) {
+    addTile(elements: TextElement[]) {
         const tile =
             this.m_allTiles.length > 0
                 ? this.m_dataSource.getTile(
@@ -234,27 +234,26 @@ export class TestFixture {
         for (const element of elements) {
             tile.addTextElement(element);
         }
-        for (const element of userElements) {
-            tile.addUserTextElement(element);
-        }
         this.m_allTiles.push(tile);
-        this.m_allUserTextElements.push(userElements);
+        this.m_allTextElements.push(elements);
     }
 
-    setTileUserTextElements(tileIndex: number, elementEnabled: boolean[]) {
+    setTileTextElements(tileIndex: number, elementEnabled: boolean[]) {
         const tile = this.m_allTiles[tileIndex];
-        const allElements = this.m_allUserTextElements[tileIndex];
-        const tileElements = tile.userTextElements;
+        const allElements = this.m_allTextElements[tileIndex];
+        const tileElementGroups = tile.textElementGroups;
         assert(allElements.length === elementEnabled.length);
 
         for (let i = 0; i < allElements.length; ++i) {
             const element = allElements[i];
             const addElement = elementEnabled[i];
-            const elementPresent = tileElements.elements.indexOf(element) !== -1;
+            const elementPresent = [...tileElementGroups.groups.values()].find(
+                group => group.elements.indexOf(element) !== -1
+            );
             if (addElement && !elementPresent) {
-                tile.addUserTextElement(element);
+                tile.addTextElement(element);
             } else if (!addElement && elementPresent) {
-                tile.removeUserTextElement(element);
+                tile.removeTextElement(element);
             }
         }
     }
