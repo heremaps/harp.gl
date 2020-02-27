@@ -299,7 +299,7 @@ export function getBufferAttribute(attribute: BufferAttribute): THREE.BufferAttr
  */
 export type ObjectConstructor = new (
     geometry?: THREE.Geometry | THREE.BufferGeometry,
-    material?: THREE.Material
+    material?: THREE.Material | THREE.Material[]
 ) => THREE.Object3D;
 /**
  * Gets the default `three.js` object constructor associated with the given technique.
@@ -318,18 +318,19 @@ export function getObjectConstructor(technique: Technique): ObjectConstructor | 
         case "fill":
         case "dashed-line":
         case "solid-line":
-            return THREE.Mesh as ObjectConstructor;
+            return THREE.Mesh;
 
         case "circles":
-            return Circles as ObjectConstructor;
+            return Circles;
+
         case "squares":
-            return Squares as ObjectConstructor;
+            return Squares;
 
         case "line":
-            return THREE.LineSegments as ObjectConstructor;
+            return THREE.LineSegments;
 
         case "segments":
-            return THREE.LineSegments as ObjectConstructor;
+            return THREE.LineSegments;
 
         case "shader": {
             if (!isShaderTechnique(technique)) {
@@ -337,13 +338,13 @@ export function getObjectConstructor(technique: Technique): ObjectConstructor | 
             }
             switch (technique.primitive) {
                 case "line":
-                    return THREE.Line as ObjectConstructor;
+                    return THREE.Line;
                 case "segments":
-                    return THREE.LineSegments as ObjectConstructor;
+                    return THREE.LineSegments;
                 case "point":
-                    return THREE.Points as ObjectConstructor;
+                    return THREE.Points;
                 case "mesh":
-                    return THREE.Mesh as ObjectConstructor;
+                    return THREE.Mesh;
                 default:
                     return undefined;
             }
