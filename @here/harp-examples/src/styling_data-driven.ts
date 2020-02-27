@@ -54,7 +54,7 @@ export namespace DataDrivenThemeExample {
                             when: [
                                 "all",
                                 ["==", ["get", "$layer"], "places"],
-                                ["in", ["get", "kind"], ["country"]]
+                                ["==", ["get", "kind"], "country"]
                             ],
                             technique: "text",
                             attr: {

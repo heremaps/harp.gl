@@ -84,11 +84,14 @@ Gets the properties that are evaluated at rendering time.
 
 ## in
 
-Returns a `boolean` indicating if the `value` is contained in the list of `elements`.
+Returns a `boolean` indicating if the `value` is included in the given array or string.
 
 ```javascript
-["in", value, [element...]]
-["!in", value, [element...]]
+["in", value, array]
+["in", value, string]
+
+["!in", value, array]
+["!in", value, string]
 ```
 
 ## match

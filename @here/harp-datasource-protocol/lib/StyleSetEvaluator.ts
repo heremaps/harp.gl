@@ -10,7 +10,6 @@ import {
     BooleanLiteralExpr,
     CallExpr,
     CaseExpr,
-    ContainsExpr,
     Env,
     Expr,
     ExprScope,
@@ -146,10 +145,6 @@ class StyleConditionClassifier implements ExprVisitor<Expr | undefined, Expr | u
     }
 
     visitHasAttributeExpr(expr: HasAttributeExpr, enclosingExpr: Expr | undefined): Expr {
-        return expr;
-    }
-
-    visitContainsExpr(expr: ContainsExpr, enclosingExpr: Expr | undefined): Expr {
         return expr;
     }
 

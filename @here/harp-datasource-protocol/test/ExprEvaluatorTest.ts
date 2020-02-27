@@ -32,7 +32,9 @@ describe("ExprEvaluator", function() {
         emptyText: "",
         zero: 0,
         one: 1,
-        two: 2
+        two: 2,
+        numbers: [1, 2, 3],
+        strings: ["aa", "bb", "cc"]
     };
 
     function evaluate(
@@ -242,11 +244,29 @@ describe("ExprEvaluator", function() {
 
     describe("Operator 'in'", function() {
         it("evaluate", function() {
-            assert.isTrue(evaluate(["in", "x", ["x"]]));
-            assert.isFalse(evaluate(["in", "x", ["y"]]));
+            assert.isTrue(evaluate(["in", "x", ["literal", ["x"]]]));
+            assert.isFalse(evaluate(["in", "x", ["literal", ["y"]]]));
+            assert.isTrue(evaluate(["in", "hello", "hello world"]));
+            assert.isTrue(evaluate(["in", "world", "hello world"]));
+            assert.isFalse(evaluate(["in", "ciao", "hello world"]));
 
-            assert.isTrue(evaluate(["in", ["get", "someText"], [defaultEnv.someText]]));
-            assert.isTrue(evaluate(["in", ["get", "emptyText"], [defaultEnv.emptyText]]));
+            assert.isTrue(evaluate(["in", 1, ["get", "numbers"]]));
+            assert.isFalse(evaluate(["in", 100, ["get", "numbers"]]));
+
+            assert.isTrue(evaluate(["in", "bb", ["get", "strings"]]));
+            assert.isFalse(evaluate(["in", "zz", ["get", "strings"]]));
+
+            assert.isTrue(evaluate(["in", "some", ["get", "someText"]]));
+            assert.isTrue(evaluate(["in", "text", ["get", "someText"]]));
+            assert.isFalse(evaluate(["in", "zz", ["get", "someText"]]));
+
+            assert.isTrue(
+                evaluate(["in", ["get", "someText"], ["literal", [defaultEnv.someText]]])
+            );
+
+            assert.isTrue(
+                evaluate(["in", ["get", "emptyText"], ["literal", [defaultEnv.emptyText]]])
+            );
 
             assert.throw(() => evaluate(["in", ["get", "someText"]]));
         });
@@ -254,13 +274,21 @@ describe("ExprEvaluator", function() {
 
     describe("Operator '!in'", function() {
         it("evaluate", function() {
-            assert.isFalse(evaluate(["!in", "x", ["x"]]));
-            assert.isTrue(evaluate(["!in", "x", ["y"]]));
+            assert.isFalse(evaluate(["!in", "x", ["literal", ["x"]]]));
+            assert.isTrue(evaluate(["!in", "x", ["literal", ["y"]]]));
+            assert.isFalse(evaluate(["!in", "hello", "hello world"]));
+            assert.isFalse(evaluate(["!in", "world", "hello world"]));
+            assert.isTrue(evaluate(["!in", "ciao", "hello world"]));
 
-            assert.isFalse(evaluate(["!in", ["get", "someText"], [defaultEnv.someText]]));
-            assert.isFalse(evaluate(["!in", ["get", "emptyText"], [defaultEnv.emptyText]]));
+            assert.isFalse(
+                evaluate(["!in", ["get", "someText"], ["literal", [defaultEnv.someText]]])
+            );
 
-            assert.throw(() => evaluate(["!in", ["get", "someText"]]));
+            assert.isFalse(
+                evaluate(["!in", ["get", "emptyText"], ["literal", [defaultEnv.emptyText]]])
+            );
+
+            assert.throw(() => evaluate(["!in", ["literal", ["get", "someText"]]]));
         });
     });
 
@@ -272,7 +300,9 @@ describe("ExprEvaluator", function() {
 
             assert.isTrue(evaluate(["!", ["has", "xx"]]));
 
-            assert.isFalse(evaluate(["!", ["in", ["get", "emptyText"], [defaultEnv.emptyText]]]));
+            assert.isFalse(
+                evaluate(["!", ["in", ["get", "emptyText"], ["literal", [defaultEnv.emptyText]]]])
+            );
 
             assert.strictEqual(evaluate(null), null);
             assert.isTrue(evaluate(["!", null]));
@@ -1218,9 +1248,15 @@ describe("ExprEvaluator", function() {
                 ["step", ["zoom"], 0, 2, 123]
             );
 
-            assert.deepStrictEqual(instantiate(["in", ["get", "two"], ["aa", "bb"]]), false);
+            // assert.deepStrictEqual(
+            //     instantiate(["in", ["get", "two"], ["literal", ["aa", "bb"]]]),
+            //     false
+            // );
 
-            assert.deepStrictEqual(instantiate(["in", ["get", "y"], [123, 321]]), true);
+            // assert.deepStrictEqual(
+            //     instantiate(["in", ["get", "y"], ["literal", [123, 321]]]),
+            //     true
+            // );
 
             assert.deepStrictEqual(instantiate(["get", "x", ["dynamic-properties"]]), [
                 "get",
@@ -1278,7 +1314,7 @@ describe("ExprEvaluator", function() {
 
             assert.isFalse(isDynamic(["in", ["get", "two"], ["aa", "bb"]]));
 
-            assert.isTrue(isDynamic(["in", ["zoom"], [1, 2]]));
+            assert.isTrue(isDynamic(["in", ["zoom"], ["literal", [1, 2]]]));
         });
     });
 });
