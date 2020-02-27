@@ -137,9 +137,7 @@ describe("VisibleTileSet", function() {
     class FakeCoveringTileWMTS extends DataSource {
         /**
          * Construct a fake [[DataSource]].
-         * @param isFullyCovering If this DataSource should be fully covering.
-         * @param planeRenderOrder Which render order the ground plane has (applicable only if
-         * [[isFullyCovering]] is set).
+         * @param isFullyCovering If this [[DataSource]] should be fully covering.
          */
         constructor(isFullyCovering?: boolean) {
             super();
@@ -433,7 +431,7 @@ describe("VisibleTileSet", function() {
         setupBerlinCenterCameraFromSamples();
 
         const fullyCoveringDS1 = new BackgroundDataSource();
-        // BackgroundDataSource uses webMercator, so th
+        // BackgroundDataSource uses webMercator, so there is no skipping involved.
         const fullyCoveringDS2 = new FakeWebTile(mercatorTilingScheme);
         fixture.addDataSource(fullyCoveringDS1);
         fixture.addDataSource(fullyCoveringDS2);
