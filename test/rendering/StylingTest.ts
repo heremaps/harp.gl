@@ -360,18 +360,38 @@ describe("MapView Styling Test", function() {
                 ]
             }
         };
-        function makeLineTestCases(testCases: { [name: string]: SolidLineStyle["attr"] }) {
+        const shortLine: Feature = {
+            type: "Feature",
+            geometry: {
+                type: "LineString",
+                coordinates: [
+                    [0.004, 0.001],
+                    [0.0, 0.001]
+                ]
+            }
+        };
+        const diagonalLine: Feature = {
+            type: "Feature",
+            geometry: {
+                type: "LineString",
+                coordinates: [
+                    [0.004, -0.004],
+                    [-0.004, 0.004]
+                ]
+            }
+        };
+
+        function makeLineTestCase(
+            testCases: { [name: string]: SolidLineStyle["attr"] },
+            lineGeometry: Feature = straightLine
+        ) {
             // tslint:disable-next-line:forin
             for (const testCase in testCases) {
                 const attr: SolidLineStyle["attr"] = testCases[testCase]!;
                 mapViewFeaturesRenderingTest(`solid-line-styling-${testCase}`, {
                     geoJson: {
                         type: "FeatureCollection",
-                        features: [
-                            // tested horizontal line
-                            straightLine,
-                            referenceBackground
-                        ]
+                        features: [lineGeometry, referenceBackground]
                     },
                     theme: {
                         styles: {
@@ -390,8 +410,14 @@ describe("MapView Styling Test", function() {
         }
         describe("solid-line technique", function() {
             describe("basic", function() {
-                makeLineTestCases({
+                makeLineTestCase({
                     "basic-100m": { lineWidth: 100, color: "#0b97c4" },
+                    "basic-dash-100m": {
+                        lineWidth: 100,
+                        color: "#0b97c4",
+                        dashSize: 80,
+                        gapSize: 80
+                    },
                     "basic-100m-rgba": { lineWidth: 100, color: "#0b97c470" },
                     "basic-100m-rgba-square": {
                         lineWidth: 100,
@@ -411,10 +437,74 @@ describe("MapView Styling Test", function() {
                     "basic-100m-rgba-none": { lineWidth: 100, color: "#0b97c470", caps: "None" },
                     "basic-10px-rgba": { lineWidth: "10px", color: "#0b97c470" }
                 });
+                // Short line that ends on tile border
+                makeLineTestCase(
+                    {
+                        "short-100m": { lineWidth: 100, color: "#0b97c4" },
+                        "short-100m-rgba": { lineWidth: 100, color: "#0b97c470" },
+                        "short-100m-rgba-square": {
+                            lineWidth: 100,
+                            color: "#0b97c470",
+                            caps: "Square"
+                        },
+                        "short-100m-rgba-triangle-out": {
+                            lineWidth: 100,
+                            color: "#0b97c470",
+                            caps: "TriangleIn"
+                        },
+                        "short-100m-rgba-trianglein": {
+                            lineWidth: 100,
+                            color: "#0b97c470",
+                            caps: "TriangleOut"
+                        },
+                        "short-100m-rgba-none": {
+                            lineWidth: 100,
+                            color: "#0b97c470",
+                            caps: "None"
+                        },
+                        "short-10px-rgba": { lineWidth: "10px", color: "#0b97c470" }
+                    },
+                    shortLine
+                );
+                // Diagonal lines are buggy at the moment
+                makeLineTestCase(
+                    {
+                        "diagonal-100m": { lineWidth: 100, color: "#0b97c4" },
+                        "diagonal-dash-100m": {
+                            lineWidth: 100,
+                            color: "#0b97c4",
+                            dashSize: 80,
+                            gapSize: 80
+                        },
+                        "diagonal-100m-rgba": { lineWidth: 100, color: "#0b97c470" },
+                        "diagonal-100m-rgba-square": {
+                            lineWidth: 100,
+                            color: "#0b97c470",
+                            caps: "Square"
+                        },
+                        "diagonal-100m-rgba-triangle-out": {
+                            lineWidth: 100,
+                            color: "#0b97c470",
+                            caps: "TriangleIn"
+                        },
+                        "diagonal-100m-rgba-trianglein": {
+                            lineWidth: 100,
+                            color: "#0b97c470",
+                            caps: "TriangleOut"
+                        },
+                        "diagonal-100m-rgba-none": {
+                            lineWidth: 100,
+                            color: "#0b97c470",
+                            caps: "None"
+                        },
+                        "diagonal-10px-rgba": { lineWidth: "10px", color: "#0b97c470" }
+                    },
+                    diagonalLine
+                );
             });
 
             describe("with outline", function() {
-                makeLineTestCases({
+                makeLineTestCase({
                     "outline-10px-2px": {
                         // BUGGY ?
                         lineWidth: "10px",
@@ -429,6 +519,43 @@ describe("MapView Styling Test", function() {
                         outlineColor: "#7f7"
                     }
                 });
+                // Short line that end on tile border
+                makeLineTestCase(
+                    {
+                        "short-outline-10px-2px": {
+                            // BUGGY ?
+                            lineWidth: "10px",
+                            color: "#0b97c4",
+                            outlineWidth: "2px",
+                            outlineColor: "#7f7"
+                        },
+                        "short-outline-10px-2px-rgba": {
+                            lineWidth: "10px",
+                            color: "#0b97c470",
+                            outlineWidth: "2px",
+                            outlineColor: "#7f7"
+                        }
+                    },
+                    shortLine
+                );
+                // Diagonal lines are buggy at the moment
+                makeLineTestCase(
+                    {
+                        "diagonal-outline-10px-2px": {
+                            lineWidth: "10px",
+                            color: "#0b97c4",
+                            outlineWidth: "2px",
+                            outlineColor: "#7f7"
+                        },
+                        "diagonal-outline-10px-2px-rgba": {
+                            lineWidth: "10px",
+                            color: "#0b97c470",
+                            outlineWidth: "2px",
+                            outlineColor: "#7f7"
+                        }
+                    },
+                    diagonalLine
+                );
             });
         });
         describe("text from lines", function() {
