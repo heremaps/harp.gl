@@ -93,6 +93,8 @@ export namespace CopyrightInfo {
      *
      * * Empty list returns empty string.
      * * Entries with empty (but defined) labels are skipped.
+     *
+     * @param copyrightInfo Array of copyrights to format.
      */
     export function formatAsHtml(copyrightInfo: CopyrightInfo[]): string {
         if (copyrightInfo.length === 0) {
@@ -108,9 +110,12 @@ export namespace CopyrightInfo {
             "© " +
             filtered
                 .map(entry => {
-                    const label = entry.label !== undefined ? entry.label : entry.id;
+                    const label = entry.label ?? entry.id;
                     const text = entry.year !== undefined ? `${entry.year} ${label}` : label;
-                    return entry.link ? `<a href="${entry.link}">${text}</a>` : `${text}`;
+                    const link = entry.link;
+                    return link
+                        ? `<a href="${link}" target="_blank" rel="noreferrer noopener">${text}</a>`
+                        : `${text}`;
                 })
                 .join(", ")
         );
