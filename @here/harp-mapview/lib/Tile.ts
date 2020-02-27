@@ -501,10 +501,12 @@ export class Tile implements CachedResource {
      * rendered first.
      */
     get userTextElements(): TextElementGroup {
-        return (
-            this.m_textElementGroups.groups.get(Number.MAX_SAFE_INTEGER) ??
-            new TextElementGroup(Number.MAX_SAFE_INTEGER)
-        );
+        let group = this.m_textElementGroups.groups.get(TextElement.HIGHEST_PRIORITY);
+        if (group === undefined) {
+            group = new TextElementGroup(TextElement.HIGHEST_PRIORITY);
+            this.m_textElementGroups.groups.set(group.priority, group);
+        }
+        return group;
     }
 
     /**
@@ -516,7 +518,7 @@ export class Tile implements CachedResource {
      * @param textElement The Text element to add.
      */
     addUserTextElement(textElement: TextElement) {
-        textElement.priority = Number.MAX_SAFE_INTEGER;
+        textElement.priority = TextElement.HIGHEST_PRIORITY;
         this.addTextElement(textElement);
     }
 
@@ -529,7 +531,7 @@ export class Tile implements CachedResource {
      * @returns `true` if the element has been removed successfully; `false` otherwise.
      */
     removeUserTextElement(textElement: TextElement): boolean {
-        textElement.priority = Number.MAX_SAFE_INTEGER;
+        textElement.priority = TextElement.HIGHEST_PRIORITY;
         return this.removeTextElement(textElement);
     }
 
@@ -539,7 +541,7 @@ export class Tile implements CachedResource {
      * controls if or when it becomes visible.
      *
      * To ensure that a TextElement is visible, use a high value for its priority, such as
-     * `Number.MAX_SAFE_INTEGER`. Since the number of visible TextElements is limited by the
+     * `TextElement.HIGHEST_PRIORITY`. Since the number of visible TextElements is limited by the
      * screen space, not all TextElements are visible at all times.
      *
      * @param textElement The TextElement to add.

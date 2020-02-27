@@ -33,6 +33,11 @@ export class PriorityListGroup<T extends PriorityListElement> {
         return new PriorityListGroup<T>(this.priority, this.elements.slice());
     }
 
+    /**
+     * Removes an element from the group.
+     * @param element The element to remove.
+     * @returns true if the element was removed, false if it was not found in the group.
+     */
     remove(element: T): boolean {
         const foundIndex = this.elements.indexOf(element);
         if (foundIndex === -1) {
