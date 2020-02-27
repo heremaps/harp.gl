@@ -764,6 +764,39 @@ describe("ExprEvaluator", function() {
             }
         });
 
+        it("Operator 'id'", function() {
+            assert.strictEqual(evaluate(["id"], { $id: 123 }), 123);
+            assert.strictEqual(evaluate(["id"], { $id: "473843" }), "473843");
+            assert.strictEqual(evaluate(["id"]), null);
+
+            assert.deepStrictEqual(dependencies(["id"]), {
+                properties: ["$id"],
+                dynamic: false
+            });
+        });
+
+        it("Operator 'geometry-type'", function() {
+            // Returns a string representing the feature type using the GoeJSON conversion,
+            // Point, LineString, or Polygon.
+
+            assert.strictEqual(evaluate(["geometry-type"], { $geometryType: "point" }), "Point");
+
+            assert.strictEqual(
+                evaluate(["geometry-type"], { $geometryType: "line" }),
+                "LineString"
+            );
+
+            assert.strictEqual(
+                evaluate(["geometry-type"], { $geometryType: "polygon" }),
+                "Polygon"
+            );
+
+            assert.deepStrictEqual(dependencies(["geometry-type"]), {
+                properties: ["$geometryType"],
+                dynamic: false
+            });
+        });
+
         it("dynamic interpolation (without step 0)", function() {
             const interpolation = evaluate(["step", ["zoom"], "#ff0000", 13, "#000000"]);
             for (let zoom = 0; zoom < 13; ++zoom) {

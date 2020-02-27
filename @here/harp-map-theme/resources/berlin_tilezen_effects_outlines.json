@@ -802,7 +802,7 @@
                 "when": [
                     "all",
                     ["==", ["get", "$layer"], "roads"],
-                    ["==", ["get", "$geometryType"], "line"],
+                    ["==", ["geometry-type"], "LineString"],
                     ["==", ["get", "kind"], "rail"],
                     ["in", ["get", "kind_detail"], ["literal", ["rail", "light_rail", "tram"]]],
                     ["==", ["get", "kind_detail"], "tram"]
@@ -820,7 +820,7 @@
                 "when": [
                     "all",
                     ["==", ["get", "$layer"], "roads"],
-                    ["==", ["get", "$geometryType"], "line"],
+                    ["==", ["geometry-type"], "LineString"],
                     ["==", ["get", "kind"], "rail"],
                     ["in", ["get", "kind_detail"], ["literal", ["rail", "light_rail", "tram"]]],
                     [
@@ -841,7 +841,7 @@
                 "when": [
                     "all",
                     ["==", ["get", "$layer"], "roads"],
-                    ["==", ["get", "$geometryType"], "line"],
+                    ["==", ["geometry-type"], "LineString"],
                     ["==", ["get", "kind"], "rail"],
                     ["in", ["get", "kind_detail"], ["literal", ["rail", "light_rail", "tram"]]],
                     ["!", ["get", "is_tunnel"]]
@@ -858,7 +858,7 @@
                 "when": [
                     "all",
                     ["==", ["get", "$layer"], "roads"],
-                    ["==", ["get", "$geometryType"], "line"],
+                    ["==", ["geometry-type"], "LineString"],
                     ["==", ["get", "kind"], "rail"],
                     ["in", ["get", "kind_detail"], ["literal", ["rail", "light_rail", "tram"]]],
                     ["get", "is_tunnel"]
@@ -875,7 +875,7 @@
                 "when": [
                     "all",
                     ["==", ["get", "$layer"], "roads"],
-                    ["==", ["get", "$geometryType"], "line"],
+                    ["==", ["geometry-type"], "LineString"],
                     ["==", ["get", "kind"], "rail"],
                     ["in", ["get", "kind_detail"], ["literal", ["rail", "light_rail", "tram"]]],
                     ["!", ["get", "is_tunnel"]]
@@ -911,7 +911,7 @@
                 "when": [
                     "all",
                     ["==", ["get", "$layer"], "roads"],
-                    ["==", ["get", "$geometryType"], "line"],
+                    ["==", ["geometry-type"], "LineString"],
                     ["==", ["get", "kind"], "rail"],
                     ["in", ["get", "kind_detail"], ["literal", ["rail", "light_rail", "tram"]]],
                     ["get", "is_tunnel"]
@@ -963,7 +963,7 @@
                 "when": [
                     "all",
                     ["==", ["get", "$layer"], "water"],
-                    ["==", ["get", "$geometryType"], "polygon"]
+                    ["==", ["geometry-type"], "Polygon"]
                 ],
                 "technique": "fill",
                 "attr": {
@@ -988,7 +988,7 @@
                 "when": [
                     "all",
                     ["==", ["get", "$layer"], "boundaries"],
-                    ["==", ["get", "$geometryType"], "line"],
+                    ["==", ["geometry-type"], "LineString"],
                     ["==", ["get", "kind"], "country"]
                 ],
                 "technique": "solid-line",
@@ -1035,7 +1035,7 @@
                 "when": [
                     "all",
                     ["==", ["get", "$layer"], "boundaries"],
-                    ["==", ["get", "$geometryType"], "line"],
+                    ["==", ["geometry-type"], "LineString"],
                     ["==", ["get", "kind"], "country"]
                 ],
                 "technique": "solid-line",
@@ -1080,7 +1080,7 @@
                 "when": [
                     "all",
                     ["==", ["get", "$layer"], "boundaries"],
-                    ["==", ["get", "$geometryType"], "line"],
+                    ["==", ["geometry-type"], "LineString"],
                     ["==", ["get", "kind"], "country"]
                 ],
                 "technique": "text",
@@ -1097,7 +1097,7 @@
                 "when": [
                     "all",
                     ["==", ["get", "$layer"], "boundaries"],
-                    ["==", ["get", "$geometryType"], "line"],
+                    ["==", ["geometry-type"], "LineString"],
                     [
                         "in",
                         ["get", "kind"],
@@ -1190,7 +1190,7 @@
                 "when": [
                     "all",
                     ["==", ["get", "$layer"], "boundaries"],
-                    ["==", ["get", "$geometryType"], "line"],
+                    ["==", ["geometry-type"], "LineString"],
                     [
                         "in",
                         ["get", "kind"],
@@ -1221,7 +1221,7 @@
                 "when": [
                     "all",
                     ["==", ["get", "$layer"], "boundaries"],
-                    ["==", ["get", "$geometryType"], "line"],
+                    ["==", ["geometry-type"], "LineString"],
                     ["==", ["get", "kind"], "region"]
                 ],
                 "technique": "solid-line",
@@ -1266,7 +1266,7 @@
                 "when": [
                     "all",
                     ["==", ["get", "$layer"], "boundaries"],
-                    ["==", ["get", "$geometryType"], "line"],
+                    ["==", ["geometry-type"], "LineString"],
                     ["==", ["get", "kind"], "region"]
                 ],
                 "technique": "solid-line",
@@ -1311,7 +1311,7 @@
                 "when": [
                     "all",
                     ["==", ["get", "$layer"], "boundaries"],
-                    ["==", ["get", "$geometryType"], "line"],
+                    ["==", ["geometry-type"], "LineString"],
                     ["==", ["get", "kind"], "region"]
                 ],
                 "technique": "text",
@@ -1327,7 +1327,7 @@
                 "when": [
                     "all",
                     ["==", ["get", "$layer"], "boundaries"],
-                    ["==", ["get", "$geometryType"], "point"]
+                    ["==", ["geometry-type"], "Point"]
                 ],
                 "technique": "text",
                 "attr": {
@@ -1344,7 +1344,7 @@
                 "when": [
                     "all",
                     ["==", ["get", "$layer"], "landuse"],
-                    ["==", ["get", "$geometryType"], "polygon"],
+                    ["==", ["geometry-type"], "Polygon"],
                     ["==", ["get", "kind"], "urban"]
                 ],
                 "technique": "fill",
@@ -1359,7 +1359,7 @@
                 "when": [
                     "all",
                     ["==", ["get", "$layer"], "landuse"],
-                    ["==", ["get", "$geometryType"], "polygon"],
+                    ["==", ["geometry-type"], "Polygon"],
                     ["==", ["get", "kind"], "urban_area"]
                 ],
                 "technique": "none",
@@ -1373,7 +1373,7 @@
                 "when": [
                     "all",
                     ["==", ["get", "$layer"], "landuse"],
-                    ["==", ["get", "$geometryType"], "polygon"],
+                    ["==", ["geometry-type"], "Polygon"],
                     [
                         "in",
                         ["get", "kind"],
@@ -1407,7 +1407,7 @@
                 "when": [
                     "all",
                     ["==", ["get", "$layer"], "landuse"],
-                    ["==", ["get", "$geometryType"], "polygon"],
+                    ["==", ["geometry-type"], "Polygon"],
                     ["==", ["get", "kind"], "runway"]
                 ],
                 "technique": "fill",
@@ -1422,7 +1422,7 @@
                 "when": [
                     "all",
                     ["==", ["get", "$layer"], "landuse"],
-                    ["==", ["get", "$geometryType"], "polygon"],
+                    ["==", ["geometry-type"], "Polygon"],
                     ["==", ["get", "kind"], "aerodrome"]
                 ],
                 "technique": "fill",
@@ -1436,7 +1436,7 @@
                 "when": [
                     "all",
                     ["==", ["get", "$layer"], "landuse"],
-                    ["==", ["get", "$geometryType"], "polygon"],
+                    ["==", ["geometry-type"], "Polygon"],
                     ["==", ["get", "kind"], "national_park"]
                 ],
                 "technique": "fill",
@@ -1450,7 +1450,7 @@
                 "when": [
                     "all",
                     ["==", ["get", "$layer"], "landuse"],
-                    ["==", ["get", "$geometryType"], "polygon"],
+                    ["==", ["geometry-type"], "Polygon"],
                     ["==", ["get", "kind"], "pitch"]
                 ],
                 "technique": "fill",
@@ -1464,7 +1464,7 @@
                 "when": [
                     "all",
                     ["==", ["get", "$layer"], "landuse"],
-                    ["==", ["get", "$geometryType"], "polygon"],
+                    ["==", ["geometry-type"], "Polygon"],
                     ["==", ["get", "kind"], "hospital"]
                 ],
                 "technique": "fill",
@@ -1478,7 +1478,7 @@
                 "when": [
                     "all",
                     ["==", ["get", "$layer"], "landuse"],
-                    ["==", ["get", "$geometryType"], "polygon"],
+                    ["==", ["geometry-type"], "Polygon"],
                     ["==", ["get", "kind"], "cemetery"]
                 ],
                 "technique": "fill",
@@ -1492,7 +1492,7 @@
                 "when": [
                     "all",
                     ["==", ["get", "$layer"], "landuse"],
-                    ["==", ["get", "$geometryType"], "polygon"],
+                    ["==", ["geometry-type"], "Polygon"],
                     ["==", ["get", "kind"], "bridge"]
                 ],
                 "technique": "fill",
@@ -1506,7 +1506,7 @@
                 "when": [
                     "all",
                     ["==", ["get", "$layer"], "landuse"],
-                    ["==", ["get", "$geometryType"], "polygon"],
+                    ["==", ["geometry-type"], "Polygon"],
                     [
                         "in",
                         ["get", "kind"],
@@ -1524,7 +1524,7 @@
                 "when": [
                     "all",
                     ["==", ["get", "$layer"], "landuse"],
-                    ["==", ["get", "$geometryType"], "polygon"],
+                    ["==", ["geometry-type"], "Polygon"],
                     ["==", ["get", "kind"], "religion"]
                 ],
                 "technique": "fill",
@@ -1538,7 +1538,7 @@
                 "when": [
                     "all",
                     ["==", ["get", "$layer"], "landuse"],
-                    ["==", ["get", "$geometryType"], "polygon"],
+                    ["==", ["geometry-type"], "Polygon"],
                     [
                         "in",
                         ["get", "kind"],
@@ -1556,7 +1556,7 @@
                 "when": [
                     "all",
                     ["==", ["get", "$layer"], "landuse"],
-                    ["==", ["get", "$geometryType"], "polygon"],
+                    ["==", ["geometry-type"], "Polygon"],
                     [
                         "in",
                         ["get", "kind"],
@@ -1574,7 +1574,7 @@
                 "when": [
                     "all",
                     ["==", ["get", "$layer"], "landuse"],
-                    ["==", ["get", "$geometryType"], "polygon"],
+                    ["==", ["geometry-type"], "Polygon"],
                     ["any", ["==", ["get", "kind"], "beach"], ["$=", ["get", "kind"], "_site"]]
                 ],
                 "technique": "fill",
@@ -2094,7 +2094,7 @@
                 "when": [
                     "all",
                     ["==", ["get", "$layer"], "buildings"],
-                    ["==", ["get", "$geometryType"], "polygon"]
+                    ["==", ["geometry-type"], "Polygon"]
                 ],
                 "technique": "extruded-polygon",
                 "minZoomLevel": 16,
@@ -2123,7 +2123,7 @@
                 "when": [
                     "all",
                     ["==", ["get", "$layer"], "buildings"],
-                    ["==", ["get", "$geometryType"], "point"],
+                    ["==", ["geometry-type"], "Point"],
                     ["==", ["get", "kind"], "address"]
                 ],
                 "minZoomLevel": 18,

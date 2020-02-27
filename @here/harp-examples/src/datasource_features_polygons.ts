@@ -252,7 +252,7 @@ export namespace PolygonsFeaturesExample {
                 technique: "extruded-polygon",
                 when: [
                     "all",
-                    ["==", ["get", "$geometryType"], "polygon"],
+                    ["==", ["geometry-type"], "Polygon"],
                     [">", ["to-number", ["get", propertyName]], min],
                     ["<=", ["to-number", ["get", propertyName]], max]
                 ],
