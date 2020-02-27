@@ -90,6 +90,17 @@ class ComputeExprDependencies implements ExprVisitor<void, ExprDependencies> {
 
     visitCallExpr(expr: CallExpr, context: ExprDependencies): void {
         expr.args.forEach(childExpr => childExpr.accept(this, context));
+
+        switch (expr.op) {
+            case "id":
+                context.properties.add("$id");
+                break;
+            case "geometry-type":
+                context.properties.add("$geometryType");
+                break;
+            default:
+                break;
+        }
     }
 
     visitMatchExpr(expr: MatchExpr, context: ExprDependencies): void {

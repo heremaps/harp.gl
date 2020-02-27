@@ -23,6 +23,11 @@ const operators = {
                     return null;
             }
         }
+    },
+    id: {
+        call: (context: ExprEvaluatorContext, call: CallExpr) => {
+            return context.env.lookup("$id") ?? null;
+        }
     }
 };
 

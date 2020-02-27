@@ -175,7 +175,7 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
 
         const ourStyle: StyleSet = [
             {
-                when: ["==", ["get", "$geometryType"], "polygon"],
+                when: ["==", ["geometry-type"], "Polygon"],
                 technique: "extruded-polygon",
                 attr: {
                     vertexColors: false,
@@ -205,7 +205,7 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
 
         const ourStyle: StyleSet = [
             {
-                when: ["==", ["get", "$geometryType"], "polygon"],
+                when: ["==", ["geometry-type"], "Polygon"],
                 technique: "extruded-polygon",
                 attr: {
                     vertexColors: true,

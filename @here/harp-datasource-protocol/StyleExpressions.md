@@ -27,6 +27,14 @@ Returns `true` if no sub expression evaluates to `true`.
 ["none", expr...]
 ```
 
+## id
+
+Returns the id of the current feature.
+
+```javascript
+["id"]
+```
+
 ## geometry-type
 
 Returns a `string` representing the geometry type of the current feature.
