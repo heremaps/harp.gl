@@ -13,14 +13,14 @@ import { apikey, copyrightInfo } from "../config";
 
 /**
  * This example copies the base example and adds a GUI allowing to switch between all the open-
- * sourced themes available in the repository.
+ * sourced themes available in the repository and OSM and HERE vector data.
  */
 export namespace ThemesExample {
     function initializeMapView(): MapView {
         const canvas = document.getElementById("mapCanvas") as HTMLCanvasElement;
         const map = new MapView({
             canvas,
-            theme: "resources/berlin_tilezen_base.json"
+            theme: "resources/standard_tilezen_base.json"
         });
 
         CopyrightElementHandler.install("copyrightNotice", map);
@@ -46,7 +46,7 @@ export namespace ThemesExample {
 
     const mapView = initializeMapView();
 
-    const omvDataSource = new OmvDataSource({
+    const hereVectorData = new OmvDataSource({
         baseUrl: "https://vector.hereapi.com/v2/vectortiles/base/mc",
         apiFormat: APIFormat.XYZOMV,
         styleSetName: "tilezen",
@@ -58,16 +58,26 @@ export namespace ThemesExample {
         copyrightInfo
     });
 
-    mapView.addDataSource(omvDataSource);
+    const osmVectorData = new OmvDataSource({
+        baseUrl: "https://xyz.api.here.com/tiles/osmbase/512/all",
+        apiFormat: APIFormat.XYZMVT,
+        styleSetName: "tilezen",
+        authenticationCode: "AGln99HORnqL1kfIQtsQl70"
+    });
 
-    const gui = new GUI({ width: 300 });
+    const gui = new GUI({ width: 200 });
     const options = {
         theme: {
             day: "resources/berlin_tilezen_base.json",
             reducedDay: "resources/berlin_tilezen_day_reduced.json",
             reducedNight: "resources/berlin_tilezen_night_reduced.json",
+            standard: "resources/standard_tilezen_base.json",
             streets: "resources/berlin_tilezen_effects_streets.json",
             outlines: "resources/berlin_tilezen_effects_outlines.json"
+        },
+        data: {
+            here: 1,
+            "open street map": 2
         }
     };
     gui.add(options, "theme", options.theme)
@@ -76,5 +86,19 @@ export namespace ThemesExample {
                 mapView.theme = theme;
             });
         })
-        .setValue("resources/berlin_tilezen_base.json");
+        .setValue("resources/standard_tilezen_base.json");
+    gui.add(options, "data", options.data)
+        .onChange((value: string) => {
+            switch (value) {
+                case "1":
+                    mapView.addDataSource(hereVectorData);
+                    mapView.removeDataSource(osmVectorData);
+                    break;
+                case "2":
+                    mapView.addDataSource(osmVectorData);
+                    mapView.removeDataSource(hereVectorData);
+                    break;
+            }
+        })
+        .setValue("1");
 }
