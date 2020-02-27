@@ -43,6 +43,7 @@ import {
     TechniqueUpdateContext,
     TechniqueUpdater,
     TileObjectEntry,
+    TileScreenSpaceEntry,
     TileWorldSpaceEntry
 } from "./TechniqueHandler";
 
@@ -154,6 +155,56 @@ export abstract class WorldSpaceTechniqueHandlerBase<T extends Technique>
             material.dispose();
         }
     }
+}
+
+export abstract class ScreenSpaceTechniqueHandlerBase<T extends Technique>
+    implements TechniqueHandler {
+    readonly technique: T;
+
+    objects: TileScreenSpaceEntry[] = [];
+
+    protected updaters: TechniqueUpdater[] = [];
+
+    private lastUpdateFrameNumber: number = -1;
+
+    constructor(technique: T) {
+        this.technique = technique;
+    }
+
+    get isDynamic() {
+        return this.updaters.length > 0;
+    }
+
+    /**
+     * Dispose of this handler.
+     *
+     * Nothing is needed for screen space objects.
+     */
+    dispose() {
+        /** */
+    }
+
+    removeTileObjects(tile: Tile) {
+        this.objects = this.objects.filter(entry => entry.tile !== tile);
+    }
+
+    update(context: TechniqueUpdateContext): void {
+        if (context.frameNumber === this.lastUpdateFrameNumber) {
+            return;
+        }
+        this.lastUpdateFrameNumber = context.frameNumber;
+
+        for (const updater of this.updaters) {
+            updater(context);
+        }
+    }
+
+    addWorldSpaceObject(): THREE.Object3D[] {
+        assert(false, `addWorldSpaceObject not supported by ${this.constructor.name}`);
+        return [];
+    }
+
+    abstract addScreenSpaceObject(tile: Tile, text: TextGeometry | TextPathGeometry): TextElement[];
 }
 
 export namespace TechniqueHandlerCommon {

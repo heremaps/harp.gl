@@ -7,22 +7,19 @@ import {
     DecodedTile,
     GeometryKind,
     GeometryKindSet,
-    getFeatureId,
-    getPropertyValue,
     Group,
     IndexedTechnique,
     isLineMarkerTechnique,
     isPoiTechnique,
     isTextTechnique,
-    MapEnv,
     Technique,
+    TextGeometry,
     TextPathGeometry
 } from "@here/harp-datasource-protocol";
 // tslint:disable:max-line-length
 import { SphericalGeometrySubdivisionModifier } from "@here/harp-geometry/lib/SphericalGeometrySubdivisionModifier";
 import { GeoCoordinates, ProjectionType } from "@here/harp-geoutils";
 import { MapMeshBasicMaterial } from "@here/harp-materials";
-import { ContextualArabicConverter } from "@here/harp-text-canvas";
 import { LoggerManager } from "@here/harp-utils";
 import * as THREE from "three";
 
@@ -30,8 +27,6 @@ import { compileTechniques } from "../DecodedTileHelpers";
 import { FALLBACK_RENDER_ORDER_OFFSET } from "../MapView";
 import { PathBlockingElement } from "../PathBlockingElement";
 import { GenericWorldSpaceTechniqueHandler } from "../techniques/GenericWorldSpaceTechniqueHandler";
-import { TextElement } from "../text/TextElement";
-import { DEFAULT_TEXT_DISTANCE_SCALE } from "../text/TextElementsRenderer";
 import { Tile } from "../Tile";
 import { TileGeometryLoader } from "./TileGeometryLoader";
 
@@ -311,183 +306,59 @@ export class TileGeometryCreator {
         decodedTile: DecodedTile,
         textFilter?: (technique: Technique) => boolean
     ) {
-        const mapView = tile.mapView;
-        const textElementsRenderer = mapView.textElementsRenderer;
-        const worldOffsetX = tile.computeWorldOffsetX();
+        function visitObject(object: TextGeometry | TextPathGeometry) {
+            if (object.technique === undefined) {
+                return;
+            }
+            const technique = decodedTile.techniques[object.technique];
+            if (
+                technique.enabled === false ||
+                !isTextTechnique(technique) ||
+                (textFilter !== undefined && !textFilter(technique))
+            ) {
+                return;
+            }
 
-        const discreteZoomLevel = Math.floor(mapView.zoomLevel);
-        const discreteZoomEnv = new MapEnv({ $zoom: discreteZoomLevel }, mapView.env);
-
-        if (decodedTile.textPathGeometries !== undefined) {
-            const textPathGeometries = this.prepareTextPaths(
-                decodedTile.textPathGeometries,
-                decodedTile,
-                textFilter
+            const techniqueHandler = tile.techniqueHandlerIndex.getTechniqueHandler(
+                technique as IndexedTechnique
             );
 
-            for (const textPath of textPathGeometries) {
-                const technique = decodedTile.techniques[textPath.technique];
+            if (techniqueHandler === undefined) {
+                return;
+            }
 
-                if (
-                    technique.enabled === false ||
-                    !isTextTechnique(technique) ||
-                    (textFilter !== undefined && !textFilter(technique))
-                ) {
-                    continue;
+            const textElements = techniqueHandler.addScreenSpaceObject(tile, object);
+            if (textElements !== undefined) {
+                for (const textElement of textElements) {
+                    tile.addTextElement(textElement);
                 }
+            }
+        }
 
-                const path: THREE.Vector3[] = [];
-                for (let i = 0; i < textPath.path.length; i += 3) {
-                    path.push(
-                        new THREE.Vector3(
-                            textPath.path[i] + worldOffsetX,
-                            textPath.path[i + 1],
-                            textPath.path[i + 2]
-                        )
-                    );
-                }
-
-                // Make sorting stable.
-                const priority =
-                    technique.priority !== undefined
-                        ? getPropertyValue(technique.priority, discreteZoomEnv)
-                        : 0;
-                const fadeNear =
-                    technique.fadeNear !== undefined
-                        ? getPropertyValue(technique.fadeNear, discreteZoomEnv)
-                        : technique.fadeNear;
-                const fadeFar =
-                    technique.fadeFar !== undefined
-                        ? getPropertyValue(technique.fadeFar, discreteZoomEnv)
-                        : technique.fadeFar;
-                const userData = textPath.objInfos;
-                const featureId = getFeatureId(userData);
-                const textElement = new TextElement(
-                    ContextualArabicConverter.instance.convert(textPath.text),
-                    path,
-                    textElementsRenderer.styleCache.getRenderStyle(tile, technique),
-                    textElementsRenderer.styleCache.getLayoutStyle(tile, technique),
-                    priority,
-                    technique.xOffset !== undefined ? technique.xOffset : 0.0,
-                    technique.yOffset !== undefined ? technique.yOffset : 0.0,
-                    featureId,
-                    technique.style,
-                    fadeNear,
-                    fadeFar,
-                    tile.offset
-                );
-                textElement.pathLengthSqr = textPath.pathLengthSqr;
-                textElement.minZoomLevel =
-                    technique.minZoomLevel !== undefined
-                        ? technique.minZoomLevel
-                        : mapView.minZoomLevel;
-                textElement.maxZoomLevel =
-                    technique.maxZoomLevel !== undefined
-                        ? technique.maxZoomLevel
-                        : mapView.maxZoomLevel;
-                textElement.distanceScale =
-                    technique.distanceScale !== undefined
-                        ? technique.distanceScale
-                        : DEFAULT_TEXT_DISTANCE_SCALE;
-                textElement.mayOverlap = technique.mayOverlap === true;
-                textElement.reserveSpace = technique.reserveSpace !== false;
-                textElement.kind = technique.kind;
-                // Get the userData for text element picking.
-                textElement.userData = textPath.objInfos;
-
-                tile.addTextElement(textElement);
+        if (decodedTile.textPathGeometries !== undefined) {
+            const preparedTextPaths = this.prepareTextPaths(
+                decodedTile.textPathGeometries,
+                decodedTile
+            );
+            for (const textPath of preparedTextPaths) {
+                visitObject(textPath);
             }
         }
 
         if (decodedTile.textGeometries !== undefined) {
             for (const text of decodedTile.textGeometries) {
-                if (text.technique === undefined || text.stringCatalog === undefined) {
-                    continue;
-                }
-
-                const technique = decodedTile.techniques[text.technique];
-
-                if (
-                    technique.enabled === false ||
-                    !isTextTechnique(technique) ||
-                    (textFilter !== undefined && !textFilter(technique))
-                ) {
-                    continue;
-                }
-
-                const positions = new THREE.BufferAttribute(
-                    new Float32Array(text.positions.buffer),
-                    text.positions.itemCount
-                );
-
-                const numPositions = positions.count;
-                if (numPositions < 1) {
-                    continue;
-                }
-
-                const priority =
-                    technique.priority !== undefined
-                        ? getPropertyValue(technique.priority, discreteZoomEnv)
-                        : 0;
-                const fadeNear =
-                    technique.fadeNear !== undefined
-                        ? getPropertyValue(technique.fadeNear, discreteZoomEnv)
-                        : technique.fadeNear;
-                const fadeFar =
-                    technique.fadeFar !== undefined
-                        ? getPropertyValue(technique.fadeFar, discreteZoomEnv)
-                        : technique.fadeFar;
-
-                for (let i = 0; i < numPositions; ++i) {
-                    const x = positions.getX(i) + worldOffsetX;
-                    const y = positions.getY(i);
-                    const z = positions.getZ(i);
-                    const label = text.stringCatalog[text.texts[i]];
-                    if (label === undefined) {
-                        // skip missing labels
-                        continue;
-                    }
-
-                    const userData = text.objInfos !== undefined ? text.objInfos[i] : undefined;
-                    const featureId = getFeatureId(userData);
-
-                    const textElement = new TextElement(
-                        ContextualArabicConverter.instance.convert(label!),
-                        new THREE.Vector3(x, y, z),
-                        textElementsRenderer.styleCache.getRenderStyle(tile, technique),
-                        textElementsRenderer.styleCache.getLayoutStyle(tile, technique),
-                        priority,
-                        technique.xOffset || 0.0,
-                        technique.yOffset || 0.0,
-                        featureId,
-                        technique.style,
-                        undefined,
-                        undefined,
-                        tile.offset
-                    );
-
-                    textElement.minZoomLevel =
-                        technique.minZoomLevel !== undefined
-                            ? technique.minZoomLevel
-                            : mapView.minZoomLevel;
-                    textElement.maxZoomLevel =
-                        technique.maxZoomLevel !== undefined
-                            ? technique.maxZoomLevel
-                            : mapView.maxZoomLevel;
-                    textElement.mayOverlap = technique.mayOverlap === true;
-                    textElement.reserveSpace = technique.reserveSpace !== false;
-                    textElement.kind = technique.kind;
-
-                    textElement.fadeNear = fadeNear;
-                    textElement.fadeFar = fadeFar;
-
-                    // Get the userData for text element picking.
-                    textElement.userData = userData;
-
-                    tile.addTextElement(textElement);
-                }
+                visitObject(text);
             }
         }
+
+        /**
+         * Handled by PoiManager.addPois
+         */
+        // if (decodedTile.poiGeometries !== undefined) {
+        //     for (const textPath of decodedTile.poiGeometries) {
+        //         visitObject(textPath);
+        //     }
+        // }
     }
 
     /**

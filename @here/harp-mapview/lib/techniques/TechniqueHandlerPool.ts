@@ -16,8 +16,10 @@ import {
 import "./ExtrudedPolygonTechniqueHandler";
 import "./FillTechniqueHandler";
 import "./PointTechniqueHandler";
+import "./PoiTechniqueHandler";
 import "./SolidLineTechniqueHandler";
 import "./TerrainTechniqueHandler";
+import "./TextTechniqueHandler";
 
 /**
  * [[TechniqueHandler]] pool and manager.

@@ -9,8 +9,8 @@ import {
     composeTechniqueTextureName,
     DecodedTile,
     getFeatureId,
-    getPropertyValue,
     ImageTexture,
+    IndexedTechnique,
     isLineMarkerTechnique,
     isPoiTechnique,
     LineMarkerTechnique,
@@ -21,6 +21,7 @@ import { ContextualArabicConverter } from "@here/harp-text-canvas";
 import { assert, assertExists, LoggerManager } from "@here/harp-utils";
 import * as THREE from "three";
 import { MapView } from "../MapView";
+import { PoiTechniqueHandler } from "../techniques/PoiTechniqueHandler";
 import { TextElement } from "../text/TextElement";
 import { DEFAULT_TEXT_DISTANCE_SCALE } from "../text/TextElementsRenderer";
 import { Tile } from "../Tile";
@@ -137,10 +138,29 @@ export class PoiManager {
                 poiGeometry.positions.itemCount
             );
 
+            // tslint:disable-next-line:max-line-length
+            const techniqueHandler = tile.techniqueHandlerIndex.getTechniqueHandler(
+                technique as IndexedTechnique
+            ) as PoiTechniqueHandler;
+            assert(techniqueHandler instanceof PoiTechniqueHandler);
             if (isLineMarkerTechnique(technique) && positions.count > 0) {
-                this.addLineMarker(tile, poiGeometry, technique, positions, worldOffsetX);
+                this.addLineMarker(
+                    tile,
+                    poiGeometry,
+                    technique,
+                    techniqueHandler,
+                    positions,
+                    worldOffsetX
+                );
             } else if (isPoiTechnique(technique)) {
-                this.addPoi(tile, poiGeometry, technique, positions, worldOffsetX);
+                this.addPoi(
+                    tile,
+                    poiGeometry,
+                    technique,
+                    techniqueHandler,
+                    positions,
+                    worldOffsetX
+                );
             }
         }
     }
@@ -335,13 +355,11 @@ export class PoiManager {
         tile: Tile,
         poiGeometry: PoiGeometry,
         technique: LineMarkerTechnique,
+        techniqueHandler: PoiTechniqueHandler,
         positions: THREE.BufferAttribute,
         worldOffsetX: number
     ) {
-        let imageTextureName: string | undefined =
-            technique.imageTexture !== undefined
-                ? composeTechniqueTextureName(technique.imageTexture, technique)
-                : undefined;
+        let imageTextureName = techniqueHandler.techniqueTextureName;
 
         let text: string = "";
         let userData: AttributeMap | undefined;
@@ -385,6 +403,7 @@ export class PoiManager {
             tile,
             text,
             technique,
+            techniqueHandler,
             imageTextureName,
             undefined, // TBD for road shields
             undefined,
@@ -400,6 +419,7 @@ export class PoiManager {
         // The distance rule of the icon should apply, not the one for text (only) labels.
         textElement.ignoreDistance = false;
         tile.addTextElement(textElement);
+        techniqueHandler.objects.push({ tile, object: textElement });
     }
 
     /**
@@ -409,17 +429,13 @@ export class PoiManager {
         tile: Tile,
         poiGeometry: PoiGeometry,
         technique: PoiTechnique,
+        techniqueHandler: PoiTechniqueHandler,
         positions: THREE.BufferAttribute,
         worldOffsetX: number
     ) {
         if (poiGeometry.stringCatalog === undefined) {
             return;
         }
-
-        const techniqueTextureName: string | undefined =
-            technique.imageTexture !== undefined
-                ? composeTechniqueTextureName(technique.imageTexture, technique)
-                : undefined;
 
         const poiTechnique = technique as PoiTechnique;
         const poiTableName = poiTechnique.poiTable;
@@ -431,7 +447,7 @@ export class PoiManager {
             const z = positions.getZ(i);
 
             assert(poiGeometry.texts.length > i);
-            let imageTextureName = techniqueTextureName;
+            let imageTextureName = techniqueHandler.techniqueTextureName;
             const text: string = poiGeometry.stringCatalog[poiGeometry.texts[i]] || "";
             const userData =
                 poiGeometry.objInfos !== undefined ? poiGeometry.objInfos[i] : undefined;
@@ -456,6 +472,7 @@ export class PoiManager {
                 tile,
                 text,
                 technique,
+                techniqueHandler,
                 imageTextureName,
                 poiTableName,
                 poiName,
@@ -468,6 +485,7 @@ export class PoiManager {
             );
 
             tile.addTextElement(textElement);
+            techniqueHandler.objects.push({ tile, object: textElement });
         }
     }
 
@@ -480,6 +498,7 @@ export class PoiManager {
         tile: Tile,
         text: string,
         technique: PoiTechnique | LineMarkerTechnique,
+        techniqueHandler: PoiTechniqueHandler,
         imageTextureName: string | undefined,
         poiTableName: string | undefined,
         poiName: string | undefined,
@@ -490,37 +509,20 @@ export class PoiManager {
         z: number | undefined,
         userData?: {}
     ): TextElement {
-        const textElementsRenderer = this.mapView.textElementsRenderer;
-        const priority = technique.priority !== undefined ? technique.priority : 0;
         const positions = Array.isArray(x) ? (x as THREE.Vector3[]) : new THREE.Vector3(x, y, z);
-
-        // The current zoomlevel of mapview. Since this method is called for all tiles in the
-        // VisibleTileSet we can be sure that the current zoomlevel matches the zoomlevel where
-        // the tile should be shown.
-        const env = this.mapView.env;
-        const fadeNear =
-            technique.fadeNear !== undefined
-                ? getPropertyValue(technique.fadeNear, env)
-                : technique.fadeNear;
-        const fadeFar =
-            technique.fadeFar !== undefined
-                ? getPropertyValue(technique.fadeFar, env)
-                : technique.fadeFar;
-        const xOffset = getPropertyValue(technique.xOffset, env);
-        const yOffset = getPropertyValue(technique.yOffset, env);
 
         const textElement: TextElement = new TextElement(
             ContextualArabicConverter.instance.convert(text),
             positions,
-            textElementsRenderer.styleCache.getRenderStyle(tile, technique),
-            textElementsRenderer.styleCache.getLayoutStyle(tile, technique),
-            getPropertyValue(priority, env),
-            xOffset !== undefined ? xOffset : 0.0,
-            yOffset !== undefined ? yOffset : 0.0,
+            techniqueHandler.textRenderStyle,
+            techniqueHandler.textLayoutStyle,
+            techniqueHandler.priority,
+            techniqueHandler.xOffset,
+            techniqueHandler.yOffset,
             featureId,
             technique.style,
-            fadeNear,
-            fadeFar,
+            techniqueHandler.fadeNear,
+            techniqueHandler.fadeFar,
             tile.offset
         );
 

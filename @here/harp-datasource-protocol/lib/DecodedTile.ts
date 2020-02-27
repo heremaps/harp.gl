@@ -207,6 +207,10 @@ export interface PoiGeometry {
     objInfos?: AttributeMap[];
 }
 
+export function isPoiGeometry(v: any): v is PoiGeometry {
+    return v && Array.isArray(v.texts) && typeof v.positions === "object";
+}
+
 /**
  * Structured clone compliant WebGL group object and its metadata.
  * Its purpose is to make working with groups of objects easier.
@@ -227,6 +231,19 @@ export interface Group {
      * Contains tile offsets if its [[Geometry]] has been created.
      */
     createdOffsets?: number[];
+}
+
+export function isTextPathGeometry(v: any): v is TextPathGeometry {
+    return (
+        v &&
+        Array.isArray(v.path) &&
+        typeof v.text !== "undefined" &&
+        typeof v.technique === "number"
+    );
+}
+
+export function isTextGeometry(v: any): v is TextGeometry {
+    return v && Array.isArray(v.texts) && typeof v.positions === "object";
 }
 
 /**
