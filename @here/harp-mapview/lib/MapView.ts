@@ -2420,11 +2420,12 @@ export class MapView extends THREE.EventDispatcher {
         elevationRangeSource: ElevationRangeSource,
         elevationProvider: ElevationProvider
     ) {
-        // Try to remove incase this method was already called, will do nothing if it doesn't exist.
-        this.removeDataSource(elevationSource);
-        this.addDataSource(elevationSource);
+        // Add as datasource if it was not added before
+        const isPresent = this.m_tileDataSources.some(ds => ds === elevationSource);
+        if (!isPresent) {
+            this.addDataSource(elevationSource);
+        }
         this.m_elevationRangeSource = elevationRangeSource;
-        this.m_elevationRangeSource.connect();
         this.m_elevationProvider = elevationProvider;
         this.dataSources.forEach(dataSource => {
             dataSource.setEnableElevationOverlay(true);
