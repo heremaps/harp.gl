@@ -39,6 +39,19 @@ function lookupMember(context: ExprEvaluatorContext, args: Expr[], lookupMode: L
 }
 
 const operators = {
+    in: {
+        call: (context: ExprEvaluatorContext, call: CallExpr) => {
+            const value = context.evaluate(call.args[0]);
+            const object = context.evaluate(call.args[1]);
+            if (typeof value === "string" && typeof object === "string") {
+                return object.includes(value);
+            } else if (Array.isArray(object)) {
+                return object.includes(value);
+            }
+            return false;
+        }
+    },
+
     get: {
         call: (context: ExprEvaluatorContext, call: CallExpr) =>
             lookupMember(context, call.args, LookupMode.get)

@@ -8,7 +8,6 @@ import {
     BooleanLiteralExpr,
     CallExpr,
     CaseExpr,
-    ContainsExpr,
     Expr,
     ExprScope,
     ExprVisitor,
@@ -77,17 +76,6 @@ export class ExprInstantiator implements ExprVisitor<Expr, InstantiationContext>
         }
         const value = context.env.lookup(expr.name) !== undefined;
         return LiteralExpr.fromValue(value);
-    }
-
-    visitContainsExpr(expr: ContainsExpr, context: InstantiationContext): Expr {
-        const value = expr.value.accept(this, context);
-
-        if (value instanceof LiteralExpr) {
-            const result = expr.elements.includes(value.value as any);
-            return LiteralExpr.fromValue(result);
-        }
-
-        return value === expr.value ? expr : new ContainsExpr(value, expr.elements);
     }
 
     visitCallExpr(expr: CallExpr, context: InstantiationContext): Expr {

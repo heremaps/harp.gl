@@ -8,7 +8,6 @@ import {
     BooleanLiteralExpr,
     CallExpr,
     CaseExpr,
-    ContainsExpr,
     Expr,
     ExprVisitor,
     HasAttributeExpr,
@@ -20,6 +19,8 @@ import {
     VarExpr
 } from "./Expr";
 
+import { Value } from "./Env";
+
 /**
  * [[ExprPool]] maintains a set of unique interned [[Expr]] objects.
  *
@@ -30,9 +31,9 @@ export class ExprPool implements ExprVisitor<Expr, void> {
     private readonly m_numberLiterals = new Map<number, NumberLiteralExpr>();
     private readonly m_stringLiterals = new Map<string, StringLiteralExpr>();
     private readonly m_objectLiterals = new Map<object, ObjectLiteralExpr>();
+    private readonly m_arrayLiterals: ObjectLiteralExpr[] = [];
     private readonly m_varExprs = new Map<string, VarExpr>();
     private readonly m_hasAttributeExprs = new Map<string, HasAttributeExpr>();
-    private readonly m_inExprs = new Map<Expr, ContainsExpr[]>();
     private readonly m_matchExprs: MatchExpr[] = [];
     private readonly m_caseExprs: CaseExpr[] = [];
     private readonly m_callExprs = new Map<string, CallExpr[]>();
@@ -84,7 +85,27 @@ export class ExprPool implements ExprVisitor<Expr, void> {
         if (e) {
             return e;
         }
+
+        if (Array.isArray(expr.value)) {
+            const array = expr.value as Value[];
+
+            const r = this.m_arrayLiterals.find(literal => {
+                const elements = literal.value as Value[];
+                if (elements.length !== array.length) {
+                    return false;
+                }
+                return array.every((x, i) => x === elements[i]);
+            });
+
+            if (r !== undefined) {
+                return r;
+            }
+
+            this.m_arrayLiterals.push(expr);
+        }
+
         this.m_objectLiterals.set(expr.value, expr);
+
         return expr;
     }
 
@@ -104,28 +125,6 @@ export class ExprPool implements ExprVisitor<Expr, void> {
         }
         this.m_hasAttributeExprs.set(expr.name, expr);
         return expr;
-    }
-
-    visitContainsExpr(expr: ContainsExpr, context: void): Expr {
-        const value = expr.value.accept(this, context);
-        if (!this.m_inExprs.has(value)) {
-            this.m_inExprs.set(value, []);
-        }
-        const inExprs = this.m_inExprs.get(value)!;
-        for (const inExpr of inExprs) {
-            if (inExpr.elements.length !== expr.elements.length) {
-                continue;
-            }
-            // find the index of the first element in the cached 'in' expr
-            // that is not contained in 'expr.elements'.
-            const i = inExpr.elements.findIndex(x => !expr.elements.includes(x));
-            if (i === -1) {
-                return inExpr;
-            }
-        }
-        const e = new ContainsExpr(value, expr.elements);
-        this.m_inExprs.set(value, [e]);
-        return e;
     }
 
     visitMatchExpr(expr: MatchExpr, context: void): Expr {
