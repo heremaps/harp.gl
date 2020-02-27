@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 HERE Europe B.V.
+ * Copyright (C) 2017-2020 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -15,6 +15,7 @@ import * as THREE from "three";
 import { AnimatedExtrusionTileHandler } from "./AnimatedExtrusionHandler";
 import { CopyrightInfo } from "./copyrights/CopyrightInfo";
 import { DataSource } from "./DataSource";
+import { LodMesh } from "./geometry/LodMesh";
 import { TileGeometryLoader } from "./geometry/TileGeometryLoader";
 import { MapView } from "./MapView";
 import { PathBlockingElement } from "./PathBlockingElement";
@@ -43,6 +44,7 @@ export type TileObject = THREE.Object3D & {
 
 interface DisposableObject {
     geometry?: THREE.BufferGeometry | THREE.Geometry;
+    geometries?: Array<THREE.BufferGeometry | THREE.Geometry>;
     material?: THREE.Material[] | THREE.Material;
 }
 
@@ -943,8 +945,16 @@ export class Tile implements CachedResource {
         };
 
         const disposeObject = (object: TileObject & DisposableObject) => {
-            if (object.geometry !== undefined && this.shouldDisposeObjectGeometry(object)) {
-                object.geometry.dispose();
+            if (this.shouldDisposeObjectGeometry(object)) {
+                if (object.geometry !== undefined) {
+                    object.geometry.dispose();
+                }
+
+                if (object.geometries !== undefined) {
+                    for (const geometry of object.geometries) {
+                        geometry.dispose();
+                    }
+                }
             }
 
             if (object.material !== undefined && this.shouldDisposeObjectMaterial(object)) {
@@ -1021,6 +1031,18 @@ export class Tile implements CachedResource {
      */
     computeWorldOffsetX(): number {
         return this.projection.worldExtent(0, 0).max.x * this.offset;
+    }
+
+    /**
+     * Update tile for current map view zoom level
+     * @param zoomLevel Zoom level of the map view
+     */
+    update(zoomLevel: number): void {
+        for (const object of this.objects) {
+            if (object instanceof LodMesh) {
+                object.setLevelOfDetail(zoomLevel - this.tileKey.level);
+            }
+        }
     }
 
     private computeResourceInfo(): void {

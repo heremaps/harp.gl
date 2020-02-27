@@ -161,7 +161,6 @@ export class FrustumIntersection {
         for (const zoomLevel of uniqueZoomLevels) {
             this.m_tileKeyEntries.set(zoomLevel, new Map());
         }
-
         for (const item of this.m_rootTileKeys) {
             const tileKeyEntry = new TileKeyEntry(
                 item.tileKey,
@@ -170,7 +169,6 @@ export class FrustumIntersection {
                 item.minElevation,
                 item.maxElevation
             );
-
             for (const zoomLevel of uniqueZoomLevels) {
                 const tileKeyEntries = this.m_tileKeyEntries.get(zoomLevel)!;
                 tileKeyEntries.set(
