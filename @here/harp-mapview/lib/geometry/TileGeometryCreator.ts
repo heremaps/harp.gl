@@ -636,39 +636,22 @@ export class TileGeometryCreator {
                 });
 
                 if (srcGeometry.interleavedVertexAttributes !== undefined) {
-                    srcGeometry.interleavedVertexAttributes.forEach(
-                        (attr: {
-                            type: any;
-                            buffer: any;
-                            stride: any;
-                            attributes: {
-                                forEach: (
-                                    arg0: (interleavedAttr: {
-                                        itemSize: any;
-                                        offset: any;
-                                        name: any;
-                                    }) => void
-                                ) => void;
-                            };
-                        }) => {
-                            const ArrayCtor = getArrayConstructor(attr.type);
-                            const buffer = new THREE.InterleavedBuffer(
-                                new ArrayCtor(attr.buffer),
-                                attr.stride
+                    srcGeometry.interleavedVertexAttributes.forEach(attr => {
+                        const ArrayCtor = getArrayConstructor(attr.type);
+                        const buffer = new THREE.InterleavedBuffer(
+                            new ArrayCtor(attr.buffer),
+                            attr.stride
+                        );
+                        attr.attributes.forEach(interleavedAttr => {
+                            const attribute = new THREE.InterleavedBufferAttribute(
+                                buffer,
+                                interleavedAttr.itemSize,
+                                interleavedAttr.offset,
+                                false
                             );
-                            attr.attributes.forEach(
-                                (interleavedAttr: { itemSize: any; offset: any; name: any }) => {
-                                    const attribute = new THREE.InterleavedBufferAttribute(
-                                        buffer,
-                                        interleavedAttr.itemSize,
-                                        interleavedAttr.offset,
-                                        false
-                                    );
-                                    bufferGeometry.setAttribute(interleavedAttr.name, attribute);
-                                }
-                            );
-                        }
-                    );
+                            bufferGeometry.setAttribute(interleavedAttr.name, attribute);
+                        });
+                    });
                 }
 
                 if (srcGeometry.index) {
