@@ -21,10 +21,12 @@ const harpFontResourcesPath = path.dirname(require.resolve("@here/harp-fontcatal
 const allTests = [
     ...glob.sync("@here/*/test/**/*.ts"),
     ...glob.sync("./test/performance/**/*.ts"),
-    ...glob.sync("./test/rendering/*.ts"),
+    ...glob.sync("./test/rendering/*.ts")
 ];
 
-const unitTests = allTests.filter(name => (name.indexOf("/rendering") === -1 && name.indexOf("/performance/") === -1));
+const unitTests = allTests.filter(
+    name => name.indexOf("/rendering") === -1 && name.indexOf("/performance/") === -1
+);
 const performanceTests = allTests.filter(name => name.indexOf("/performance/") > -1);
 const renderingTests = allTests.filter(name => name.indexOf("/rendering/") > -1);
 
@@ -66,6 +68,7 @@ const browserTestsConfig = {
         new CopyWebpackPlugin([
             path.join(__dirname, "test/index.html"),
             path.join(__dirname, "test/rendering.html"),
+            path.join(__dirname, "test/rendering/*.ref.json"),
             path.join(__dirname, "test/performance.html"),
             require.resolve("three/build/three.min.js"),
             require.resolve("mocha/mocha.js"),
