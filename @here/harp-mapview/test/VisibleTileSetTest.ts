@@ -203,12 +203,12 @@ describe("VisibleTileSet", function() {
             if (dsSkipped.indexOf(dataSourceTileList.dataSource) !== -1) {
                 dataSourceTileList.visibleTiles.forEach(tile => {
                     // tslint:disable-next-line: no-string-literal
-                    expect(tile["m_skipRendering"]).is.true;
+                    expect(tile["skipRendering"]).is.true;
                 });
             } else if (dsValid.indexOf(dataSourceTileList.dataSource) !== -1) {
                 dataSourceTileList.visibleTiles.forEach(tile => {
                     // tslint:disable-next-line: no-string-literal
-                    expect(tile["m_skipRendering"]).is.false;
+                    expect(tile["skipRendering"]).is.false;
                 });
             }
         });
@@ -444,7 +444,7 @@ describe("VisibleTileSet", function() {
         result.tileList.forEach(dataSourceTileList => {
             dataSourceTileList.visibleTiles.forEach(tile => {
                 // tslint:disable-next-line: no-string-literal
-                expect(tile["m_skipRendering"]).is.false;
+                expect(tile["skipRendering"]).is.false;
             });
         });
     });

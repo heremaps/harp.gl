@@ -151,7 +151,7 @@ export abstract class DataSource extends THREE.EventDispatcher {
 
     /**
      * Boolean which says whether a [[DataSource]] produces tiles that fully cover the tile, i.e.
-     * tiles underneath are completely hidden. Must be overriden for [[DataSources]]'s that don't
+     * tiles underneath are completely hidden. Must be overriden for [[DataSource]]'s that don't
      * have a ground plane, but which still fully cover the tile, e.g. web tiles.
      */
     isFullyCovering(): boolean {

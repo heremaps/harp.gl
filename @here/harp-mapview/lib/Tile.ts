@@ -346,6 +346,14 @@ export class Tile implements CachedResource {
      */
     levelOffset: number = 0;
 
+    /**
+     * If the tile should not be rendered, this is used typically when the tile in question
+     * is completely covered by another tile and therefore can be skipped without any visual
+     * impact. Setting this value directly affects the [[willRender]] method, unless
+     * overriden by deriving classes.
+     */
+    skipRendering = false;
+
     private m_disposed: boolean = false;
     private m_localTangentSpace = false;
 
@@ -382,10 +390,6 @@ export class Tile implements CachedResource {
     private m_ownedTextures: WeakSet<THREE.Texture> = new WeakSet();
 
     private m_animatedExtrusionTileHandler: AnimatedExtrusionTileHandler | undefined;
-
-    // If the tile should not be rendered, this is used typically when the tile in question is
-    // completely covered by another tile and therefore can be skipped without any visual impact.
-    private m_skipRendering = false;
 
     /**
      * Creates a new [[Tile]].
@@ -643,10 +647,11 @@ export class Tile implements CachedResource {
      * Called before [[MapView]] starts rendering this `Tile`.
      *
      * @param zoomLevel The current zoom level.
-     * @returns Returns `true` if this `Tile` should be rendered.
+     * @returns Returns `true` if this `Tile` should be rendered. Influenced directly by the
+     * [[skipRendering]] property unless specifically overriden in deriving classes.
      */
     willRender(_zoomLevel: number): boolean {
-        return !this.m_skipRendering;
+        return !this.skipRendering;
     }
 
     /**
@@ -654,10 +659,6 @@ export class Tile implements CachedResource {
      */
     didRender(): void {
         // to be overridden by subclasses
-    }
-
-    set skipRender(skipRender: boolean) {
-        this.m_skipRendering = skipRender;
     }
 
     /**

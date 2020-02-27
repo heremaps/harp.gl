@@ -64,4 +64,12 @@ describe("Tile", function() {
         assert(tile.hasGeometry);
         expect(tile.decodedTile).to.be.equal(decodedTile);
     });
+    it("setting skipping will cause willRender to return false", function () {
+        const tile = new Tile(stubDataSource, tileKey);
+        tile.skipRendering = true;
+        // tslint:disable: no-unused-expression
+        expect(tile.willRender(0)).is.false;
+        tile.skipRendering = false;
+        expect(tile.willRender(0)).is.true;
+    }
 });

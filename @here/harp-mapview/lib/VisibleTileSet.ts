@@ -862,15 +862,15 @@ export class VisibleTileSet {
             if (entry === undefined) {
                 // We need to reset the flag so that if the covering datasource is disabled, that
                 // the tiles beneath then start to render.
-                tile.skipRender = false;
+                tile.skipRendering = false;
                 this.m_coveringMap.set(key, tile);
             } else {
                 // Skip the [[Tile]] if either the stored entry or the tile to consider is from the
                 // [[BackgroundDataSource]]
                 if (entry.dataSource instanceof BackgroundDataSource) {
-                    entry.skipRender = true;
+                    entry.skipRendering = true;
                 } else if (dataSource instanceof BackgroundDataSource) {
-                    tile.skipRender = true;
+                    tile.skipRendering = true;
                 }
             }
         }
