@@ -7,6 +7,7 @@ import { ViewRanges } from "@here/harp-datasource-protocol/lib/ViewRanges";
 import {
     GeoCoordinates,
     Projection,
+    ProjectionType,
     TileKey,
     TileKeyUtils,
     TilingScheme
@@ -14,6 +15,7 @@ import {
 import { LRUCache } from "@here/harp-lrucache";
 import { assert, MathUtils } from "@here/harp-utils";
 import * as THREE from "three";
+import { BackgroundDataSource } from "./BackgroundDataSource";
 import { ClipPlanesEvaluator } from "./ClipPlanesEvaluator";
 import { DataSource } from "./DataSource";
 import { ElevationRangeSource } from "./ElevationRangeSource";
@@ -372,6 +374,9 @@ export class VisibleTileSet {
     private readonly m_projectionMatrixOverride = new THREE.Matrix4();
     private m_dataSourceCache: DataSourceCache;
     private m_viewRange: ViewRanges = { near: 0.1, far: Infinity, minimum: 0.1, maximum: Infinity };
+    // Maps morton codes to a given Tile, used to find overlapping Tiles. We only need to have this
+    // for a single TilingScheme, i.e. that of the BackgroundDataSource.
+    private m_coveringMap = new Map<number, Tile>();
 
     private m_resourceComputationType: ResourceComputationType =
         ResourceComputationType.EstimationInMb;
@@ -491,6 +496,7 @@ export class VisibleTileSet {
             elevationRangeSource
         );
         this.dataSourceTileList = [];
+        this.m_coveringMap.clear();
         for (const { dataSource, visibleTileKeys } of visibleTileKeysResult.tileKeys) {
             // Sort by distance to camera, now the tiles that are further away are at the end
             // of the list.
@@ -534,6 +540,9 @@ export class VisibleTileSet {
                     numTilesLoading++;
                 } else {
                     tile.numFramesVisible++;
+                    // If this tile's data source is "covering" then other tiles beneath it have
+                    // their rendering skipped, see [[Tile.willRender]].
+                    this.skipOverlappedTiles(dataSource, tile);
 
                     if (tile.frameNumVisible < 0) {
                         // Store the fist frame the tile became visible.
@@ -835,6 +844,36 @@ export class VisibleTileSet {
         // TODO: Consider using evict here!
         this.m_dataSourceCache.delete(tile);
         tile.dispose();
+    }
+
+    /**
+     * Skips rendering of tiles that are overlapped. The overlapping [[Tile]] comes from a
+     * [[DataSource]] which is fully covering, i.e. there it is fully opaque.
+     **/
+    private skipOverlappedTiles(dataSource: DataSource, tile: Tile) {
+        if (this.options.projection.type === ProjectionType.Spherical) {
+            // HARP-7899, currently the globe has no background planes in the tiles (it relies on
+            // the BackgroundDataSource), because the LOD mismatches, hence disabling for globe.
+            return;
+        }
+        if (dataSource.isFullyCovering()) {
+            const key = TileOffsetUtils.getKeyForTileKeyAndOffset(tile.tileKey, tile.offset);
+            const entry = this.m_coveringMap.get(key);
+            if (entry === undefined) {
+                // We need to reset the flag so that if the covering datasource is disabled, that
+                // the tiles beneath then start to render.
+                tile.skipRendering = false;
+                this.m_coveringMap.set(key, tile);
+            } else {
+                // Skip the [[Tile]] if either the stored entry or the tile to consider is from the
+                // [[BackgroundDataSource]]
+                if (entry.dataSource instanceof BackgroundDataSource) {
+                    entry.skipRendering = true;
+                } else if (dataSource instanceof BackgroundDataSource) {
+                    tile.skipRendering = true;
+                }
+            }
+        }
     }
 
     private getCacheSearchLevels(

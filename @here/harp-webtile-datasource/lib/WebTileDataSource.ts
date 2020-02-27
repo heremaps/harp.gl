@@ -420,6 +420,11 @@ export class WebTileDataSource extends DataSource {
         return tile;
     }
 
+    /** @override */
+    isFullyCovering(): boolean {
+        return true;
+    }
+
     private parseBaseUrl(url: string): MapTileParams {
         const parsed = new URL(url.startsWith("https:") ? url : `https://${url}`);
         const fullPath = parsed.pathname;

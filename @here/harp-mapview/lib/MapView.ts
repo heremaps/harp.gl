@@ -2998,8 +2998,8 @@ export class MapView extends THREE.EventDispatcher {
 
                 this.m_mapTilesRoot.add(object);
             }
+            tile.didRender();
         }
-        tile.didRender();
     }
 
     private prepareRenderTextElements(time: number) {

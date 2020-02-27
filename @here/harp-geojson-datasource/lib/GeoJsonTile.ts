@@ -110,7 +110,7 @@ export class GeoJsonTile extends Tile {
         if (this.m_currentZoomLevel !== zoomLevel) {
             this.m_currentZoomLevel = zoomLevel;
         }
-        return true;
+        return super.willRender(zoomLevel);
     }
 
     /**

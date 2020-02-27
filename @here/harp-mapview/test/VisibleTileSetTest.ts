@@ -3,26 +3,31 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
+import { DecodedTile } from "@here/harp-datasource-protocol";
 import {
     hereTilingScheme,
     mercatorProjection,
+    mercatorTilingScheme,
     Projection,
     sphereProjection,
-    TileKey
+    TileKey,
+    TilingScheme,
+    webMercatorTilingScheme
 } from "@here/harp-geoutils";
 import { getOptionValue } from "@here/harp-utils";
 import { assert, expect } from "chai";
 import * as sinon from "sinon";
 import * as THREE from "three";
-
+import { BackgroundDataSource } from "../lib/BackgroundDataSource";
 import { createDefaultClipPlanesEvaluator } from "../lib/ClipPlanesEvaluator";
 import { DataSource } from "../lib/DataSource";
 import { FrustumIntersection } from "../lib/FrustumIntersection";
+import { TileGeometryCreator } from "../lib/geometry/TileGeometryCreator";
 import { SimpleTileGeometryManager } from "../lib/geometry/TileGeometryManager";
 import { MapView, MapViewDefaults } from "../lib/MapView";
 import { Tile } from "../lib/Tile";
 import { TileOffsetUtils } from "../lib/Utils";
-import { VisibleTileSet } from "../lib/VisibleTileSet";
+import { DataSourceTileList, VisibleTileSet } from "../lib/VisibleTileSet";
 import { FakeOmvDataSource } from "./FakeOmvDataSource";
 
 // tslint:disable:only-arrow-functions
@@ -40,6 +45,10 @@ class FakeMapView {
         // height: 1080 px
         // 1080 * 0.5 * Math.tan(THREE.MathUtils.degToRad(60) * 0.5)
         return 935.307436087;
+    }
+
+    get clearColor(): number {
+        return 0;
     }
 }
 
@@ -86,6 +95,14 @@ class Fixture {
         dataSource.attach(this.mapView);
         this.ds.push(dataSource);
     }
+
+    removeDataSource(dataSource: DataSource) {
+        dataSource.detach(this.mapView);
+        const index = this.ds.indexOf(dataSource, 0);
+        if (index >= 0) {
+            this.ds.splice(index, 1);
+        }
+    }
 }
 
 describe("VisibleTileSet", function() {
@@ -108,8 +125,92 @@ describe("VisibleTileSet", function() {
     // TODO: Update for new interface of updateRenderList
     function updateRenderList(zoomLevel: number, storageLevel: number) {
         const intersectionCount = fixture.vts.updateRenderList(zoomLevel, storageLevel, fixture.ds);
-        return { tileList: fixture.vts.dataSourceTileList, intersectionCount };
+        return {
+            tileList: fixture.vts.dataSourceTileList,
+            intersectionCount
+        };
     }
+
+    /**
+     * Fake [[DataSource]] which provides tiles with the ground plane geometry.
+     */
+    class FakeCoveringTileWMTS extends DataSource {
+        /**
+         * Construct a fake [[DataSource]].
+         * @param isFullyCovering If this [[DataSource]] should be fully covering.
+         */
+        constructor(isFullyCovering?: boolean) {
+            super();
+            this.addGroundPlane = isFullyCovering ?? true;
+            this.cacheable = true;
+        }
+
+        /** @override */
+        getTilingScheme(): TilingScheme {
+            return webMercatorTilingScheme;
+        }
+
+        /** @override */
+        getTile(tileKey: TileKey): Tile | undefined {
+            const tile = new Tile(this, tileKey);
+            const decodedTile: DecodedTile = {
+                techniques: [],
+                geometries: []
+            };
+            TileGeometryCreator.instance.createAllGeometries(tile, decodedTile);
+            return tile;
+        }
+    }
+
+    /**
+     * Fake [[DataSource]] with no backgroundPlane geometry, but which registers
+     * that it is fully covering, because its geometry fully covers the [[Tile]], an example
+     * is satellite data or terrain.
+     */
+    class FakeWebTile extends DataSource {
+        constructor(private tilingScheme?: TilingScheme) {
+            super();
+        }
+        /** @override */
+        getTilingScheme(): TilingScheme {
+            return this.tilingScheme ?? webMercatorTilingScheme;
+        }
+
+        /** @override */
+        getTile(tileKey: TileKey): Tile | undefined {
+            const tile = new Tile(this, tileKey);
+            tile.forceHasGeometry(true);
+            return tile;
+        }
+
+        /** @override */
+        isFullyCovering(): boolean {
+            return true;
+        }
+    }
+
+    // Needed for chai expect.
+    // tslint:disable: no-unused-expression
+
+    const compareDataSources = (
+        dstl: DataSourceTileList[],
+        dsSkipped: DataSource[],
+        dsValid: DataSource[]
+    ) => {
+        dstl.forEach(dataSourceTileList => {
+            if (dsSkipped.indexOf(dataSourceTileList.dataSource) !== -1) {
+                dataSourceTileList.visibleTiles.forEach(tile => {
+                    // tslint:disable-next-line: no-string-literal
+                    expect(tile["skipRendering"]).is.true;
+                });
+            } else if (dsValid.indexOf(dataSourceTileList.dataSource) !== -1) {
+                dataSourceTileList.visibleTiles.forEach(tile => {
+                    // tslint:disable-next-line: no-string-literal
+                    expect(tile["skipRendering"]).is.false;
+                });
+            }
+        });
+    };
 
     beforeEach(function() {
         fixture = new Fixture();
@@ -271,8 +372,111 @@ describe("VisibleTileSet", function() {
         }
     });
 
+    /**
+     * This test shows what happens when a DataSource with a background plane is added with one that
+     * `isFullyCovering`.
+     */
+    it("background data source is skipped by webtile", async function() {
+        setupBerlinCenterCameraFromSamples();
+
+        // These tiles will be skipped, because a DataSource that produces [[Tiles]]s without
+        // a background plane, but where isFullyCovering is true trumps.
+        const fullyCoveringDS1 = new BackgroundDataSource();
+        const fullyCoveringDS2 = new FakeWebTile();
+        fixture.addDataSource(fullyCoveringDS1);
+        fixture.addDataSource(fullyCoveringDS2);
+
+        const zoomLevel = 15;
+        const storageLevel = 14;
+        const result = updateRenderList(zoomLevel, storageLevel);
+        compareDataSources(result.tileList, [fullyCoveringDS1], [fullyCoveringDS2, ...fixture.ds]);
+    });
+
+    it(`background data source is skipped by webtile (reversed order)`, async function() {
+        setupBerlinCenterCameraFromSamples();
+
+        const fullyCoveringDS1 = new BackgroundDataSource();
+        const fullyCoveringDS2 = new FakeWebTile();
+        // !! Note the different order added !!
+        fixture.addDataSource(fullyCoveringDS2);
+        fixture.addDataSource(fullyCoveringDS1);
+
+        const zoomLevel = 15;
+        const storageLevel = 14;
+        const result = updateRenderList(zoomLevel, storageLevel);
+        compareDataSources(result.tileList, [fullyCoveringDS1], [fullyCoveringDS2, ...fixture.ds]);
+    });
+
+    /**
+     * This test shows what happens when a DataSource with a background plane is added with one that
+     * `isFullyCovering`.
+     */
+    it(`background data source skipped by other fully covering tile`, async function() {
+        setupBerlinCenterCameraFromSamples();
+
+        // These tiles won't be skipped, because a DataSource that produces [[Tiles]]s without
+        // `isFullyCovering` being true should not impact any others.
+        const fullyCoveringDS1 = new BackgroundDataSource();
+        const fullyCoveringDS2 = new FakeCoveringTileWMTS(true);
+        fixture.addDataSource(fullyCoveringDS1);
+        fixture.addDataSource(fullyCoveringDS2);
+
+        const zoomLevel = 15;
+        const storageLevel = 14;
+        const result = updateRenderList(zoomLevel, storageLevel);
+        compareDataSources(result.tileList, [fullyCoveringDS1], [fullyCoveringDS2, ...fixture.ds]);
+    });
+
+    it(`background data source not skipped when different tiling scheme used`, async function() {
+        setupBerlinCenterCameraFromSamples();
+
+        const fullyCoveringDS1 = new BackgroundDataSource();
+        // BackgroundDataSource uses webMercator, so there is no skipping involved.
+        const fullyCoveringDS2 = new FakeWebTile(mercatorTilingScheme);
+        fixture.addDataSource(fullyCoveringDS1);
+        fixture.addDataSource(fullyCoveringDS2);
+
+        const zoomLevel = 15;
+        const storageLevel = 14;
+        const result = updateRenderList(zoomLevel, storageLevel);
+        result.tileList.forEach(dataSourceTileList => {
+            dataSourceTileList.visibleTiles.forEach(tile => {
+                // tslint:disable-next-line: no-string-literal
+                expect(tile["skipRendering"]).is.false;
+            });
+        });
+    });
+
+    /**
+     * This test shows what happens when a BackgroundDataSource is added with one that
+     * `isFullyCovering`.
+     */
+    it(`background data source not skipped
+        when other non covering datasource added`, async function() {
+        setupBerlinCenterCameraFromSamples();
+
+        // These tiles won't be skipped, because a DataSource that produces [[Tiles]]s without
+        // `isFullyCovering` being true should not impact any others.
+        const fullyCoveringDS1 = new BackgroundDataSource();
+        const fullyCoveringDS2 = new FakeCoveringTileWMTS(false);
+        fixture.addDataSource(fullyCoveringDS1);
+        fixture.addDataSource(fullyCoveringDS2);
+
+        const zoomLevel = 15;
+        const storageLevel = 14;
+        const result = updateRenderList(zoomLevel, storageLevel);
+        compareDataSources(
+            result.tileList,
+            [],
+            [fullyCoveringDS1, fullyCoveringDS2, ...fixture.ds]
+        );
+    });
+
     it("check MapView param tileWrappingEnabled disabled", async function() {
-        fixture = new Fixture({ tileWrappingEnabled: false, enableMixedLod: false });
+        fixture = new Fixture({
+            tileWrappingEnabled: false,
+            enableMixedLod: false
+        });
         fixture.worldCenter = new THREE.Vector3(0, 0, 0);
         const camera = fixture.camera;
         camera.aspect = 1.7541528239202657;
@@ -297,7 +501,10 @@ describe("VisibleTileSet", function() {
     });
 
     it("check MapView param tileWrappingEnabled enabled", async function() {
-        fixture = new Fixture({ tileWrappingEnabled: true, enableMixedLod: false });
+        fixture = new Fixture({
+            tileWrappingEnabled: true,
+            enableMixedLod: false
+        });
         fixture.worldCenter = new THREE.Vector3(0, 0, 0);
         const camera = fixture.camera;
         camera.aspect = 1.7541528239202657;

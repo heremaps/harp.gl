@@ -12,7 +12,6 @@ import {
 import { GeoBox, OrientedBox3, Projection, TileKey } from "@here/harp-geoutils";
 import { assert, CachedResource, LoggerManager } from "@here/harp-utils";
 import * as THREE from "three";
-
 import { AnimatedExtrusionTileHandler } from "./AnimatedExtrusionHandler";
 import { CopyrightInfo } from "./copyrights/CopyrightInfo";
 import { DataSource } from "./DataSource";
@@ -347,6 +346,14 @@ export class Tile implements CachedResource {
      */
     levelOffset: number = 0;
 
+    /**
+     * If the tile should not be rendered, this is used typically when the tile in question
+     * is completely covered by another tile and therefore can be skipped without any visual
+     * impact. Setting this value directly affects the [[willRender]] method, unless
+     * overriden by deriving classes.
+     */
+    skipRendering = false;
+
     private m_disposed: boolean = false;
     private m_localTangentSpace = false;
 
@@ -640,10 +647,11 @@ export class Tile implements CachedResource {
      * Called before [[MapView]] starts rendering this `Tile`.
      *
      * @param zoomLevel The current zoom level.
-     * @returns Returns `true` if this `Tile` should be rendered.
+     * @returns Returns `true` if this `Tile` should be rendered. Influenced directly by the
+     * [[skipRendering]] property unless specifically overriden in deriving classes.
      */
     willRender(_zoomLevel: number): boolean {
-        return true;
+        return !this.skipRendering;
     }
 
     /**
