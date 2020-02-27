@@ -21,6 +21,7 @@
     },
     "license": "Apache-2.0",
     "dependencies": {
+        "@types/pngjs": "^3.4.0",
         "@types/ua-parser-js": "^0.7.32",
         "@types/xml2js": "^0.4.5",
         "chai": "^4.1.2",
@@ -29,6 +30,7 @@
         "pixelmatch": "^4.0.0",
         "sinon": "^7.3.2",
         "three": "^0.114.0",
+        "pngjs": "^3.4.0",
         "ua-parser-js": "^0.7.20",
         "xml2js": "^0.4.22"
     },

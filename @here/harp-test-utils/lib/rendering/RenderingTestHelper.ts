@@ -189,7 +189,7 @@ export class RenderingTestHelper {
         try {
             referenceImageData = await RenderingTestHelper.cachedLoadImageData(referenceImageUrl);
         } catch (error) {
-            logger.log(`[ERROR[ Reference image ${name} not found. Please update reference data`);
+            logger.log(`[ERROR] Reference image ${name} not found. Please update reference data`);
             ibctReporter.reportImageComparisonResult(imageProps, actualImage, false);
             this.mochaTest.skip();
             return;

@@ -22,17 +22,26 @@ before_install:
   - curl -o- -L https://yarnpkg.com/install.sh | bash -s -- --version 1.13.0
   - export PATH="$HOME/.yarn/bin:$PATH"
   - yarn global add codecov
+  - openssl aes-256-cbc -K $encrypted_498d4c4e8b8a_key -iv $encrypted_498d4c4e8b8a_iv -in git_deploy_key.enc -out /tmp/git_deploy_key -d
+  - chmod 600 /tmp/git_deploy_key
+  - eval "$(ssh-agent -s)"
+  - ssh-add /tmp/git_deploy_key
 
 jobs:
   include:
     - name: "Test"
       script:
+        - set -ex
         - yarn pre-test
         - yarn cov-test --forbid-only
         - yarn build-tests
         - yarn test-browser --headless-firefox
         - yarn test-browser --headless-chrome
         - ./scripts/test-npm-packages.sh
+        - yarn test-rendering-tests --headless-chrome
+        - yarn check-platform-update-reference-data
+        - yarn push-reference-rendering-tests
+        - git status # just in case test-npm-packages leaves some garbage
 
     - name: "Build & Deploy"
       script:
@@ -71,4 +80,4 @@ jobs:
             condition: $TRAVIS_BRANCH =~ ^master|release$
 
 after_success:
- - codecov -f coverage/*.json
+  - codecov -f coverage/*.json

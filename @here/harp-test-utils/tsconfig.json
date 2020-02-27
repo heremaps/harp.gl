@@ -9,6 +9,7 @@
         "noImplicitReturns": true,
         "noImplicitThis": true,
         "noUnusedLocals": false,
-        "downlevelIteration": true
+        "downlevelIteration": true,
+        "resolveJsonModule": true
     }
 }

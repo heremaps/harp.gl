@@ -1,0 +1,9 @@
+{
+    "referenceRepo": "git@github.com:arekspiewak1991/reference-images.git",
+    "referenceImagesPath": "reference-images/images",
+    "referenceMainDir": "reference-images",
+    "referenceOutputPath": "./test/rendering",
+    "referenceDataBranch": "master",
+    "testResultsPath": "rendering-test-results",
+    "baseReferenceImagePath": "https://raw.githubusercontent.com/arekspiewak1991/reference-images/master/images"
+}
