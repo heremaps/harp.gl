@@ -251,7 +251,7 @@ export class PoiTable {
                                     this.poiDict.set(altName, entryIdx);
                                 }
                             } else {
-                                logger.warn(
+                                logger.debug(
                                     `load: Invalid entry in POI table '${poiTableUrl}' : ` +
                                         `No alternative names set in entry: ${JSON.stringify(
                                             tableEntry
