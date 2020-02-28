@@ -1,7 +1,7 @@
 language: node_js
 dist: bionic
 node_js:
-  - "10"
+  - '10'
 cache:
   yarn: true
 
@@ -17,43 +17,42 @@ branches:
 env:
   - DETECT_CHROMEDRIVER_VERSION=true
 
-# upgrade yarn to a more recent version
 before_install:
+  - openssl aes-256-cbc -K $encrypted_0c7f5347a2b0_key -iv $encrypted_0c7f5347a2b0_iv -in git_deploy_key.enc -out git_deploy_key -d
   - curl -o- -L https://yarnpkg.com/install.sh | bash -s -- --version 1.13.0
   - export PATH="$HOME/.yarn/bin:$PATH"
   - yarn global add codecov
-  - openssl aes-256-cbc -K $encrypted_498d4c4e8b8a_key -iv $encrypted_498d4c4e8b8a_iv -in git_deploy_key.enc -out /tmp/git_deploy_key -d
-  - chmod 600 /tmp/git_deploy_key
+  - chmod 600 git_deploy_key
   - eval "$(ssh-agent -s)"
-  - ssh-add /tmp/git_deploy_key
+  - ssh-add git_deploy_key
 
 jobs:
   include:
-    - name: "Test"
+    - name: Test
       script:
         - set -ex
-        - yarn pre-test
-        - yarn cov-test --forbid-only
+        - yarn
+        # - yarn pre-test
+        # - yarn cov-test --forbid-only
         - yarn build-tests
-        - yarn test-browser --headless-firefox
-        - yarn test-browser --headless-chrome
-        - ./scripts/test-npm-packages.sh
+        # - yarn test-browser --headless-firefox
+        # - yarn test-browser --headless-chrome
+        # - "./scripts/test-npm-packages.sh"
+        - yarn update-reference-rendering-tests
         - yarn test-rendering-tests --headless-chrome
-        - yarn check-platform-update-reference-data
-        - yarn push-reference-rendering-tests
-        - git status # just in case test-npm-packages leaves some garbage
+        # - yarn push-reference-rendering-tests
+        - git status
 
-    - name: "Build & Deploy"
+    - name: Build & Deploy
       script:
         - cross-env NODE_ENV=production yarn run build
         - yarn run typedoc
         - cross-env NODE_ENV=production yarn run build-www
         - yarn prepare-doc-deploy
-        # debug: lerna publish expects clean workspace
-        - ./scripts/git-check-clean-workspace.sh
+        - "./scripts/git-check-clean-workspace.sh"
       deploy:
         - provider: script
-          script: ./scripts/publish-packages.sh
+          script: "./scripts/publish-packages.sh"
           skip_cleanup: true
           on:
             branch: release
@@ -62,13 +61,13 @@ jobs:
           committer-from-gh: true
           keep-history: false
           local-dir: dist/gh_deploy
-          github-token: $GITHUB_TOKEN
+          github-token: "$GITHUB_TOKEN"
           on:
             branch: release
         - provider: s3
-          access_key_id: $AWS_ACCESS_KEY_ID
-          secret_access_key: $AWS_SECRET_ACCESS_KEY
-          bucket: "harp.gl"
+          access_key_id: "$AWS_ACCESS_KEY_ID"
+          secret_access_key: "$AWS_SECRET_ACCESS_KEY"
+          bucket: harp.gl
           skip_cleanup: true
           local_dir: dist/s3_deploy
           upload-dir: docs
@@ -77,7 +76,7 @@ jobs:
           cache_control: no-cache
           on:
             all_branches: true
-            condition: $TRAVIS_BRANCH =~ ^master|release$
+            condition: "$TRAVIS_BRANCH =~ ^master|release$"
 
 after_success:
   - codecov -f coverage/*.json

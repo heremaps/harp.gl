@@ -1,5 +1,5 @@
 {
-    "referenceRepo": "git@github.com/DimitryRd/reference-images.git",
+    "referenceRepo": "git@github.com:DimitryRd/reference-images.git",
     "referenceImagesPath": "reference-images/images",
     "referenceMainDir": "reference-images",
     "referenceOutputPath": "./test/rendering",

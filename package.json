@@ -85,5 +85,8 @@
         "name": "HERE Europe B.V.",
         "url": "https://here.com"
     },
-    "license": "Apache-2.0"
+    "license": "Apache-2.0",
+    "dependencies": {
+        "@types/pngjs": "^3.4.1"
+    }
 }
