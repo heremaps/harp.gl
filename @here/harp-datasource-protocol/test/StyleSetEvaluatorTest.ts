@@ -176,46 +176,6 @@ describe("StyleSetEvaluator", function() {
             assert.equal((r2[0] as SolidLineTechnique).lineWidth, 3);
             assert.equal(r2[0].renderOrder, 3);
         });
-
-        it("generates stable technique cache key", function() {
-            const techniquesTileA = (() => {
-                const ev = new StyleSetEvaluator(testStyle);
-                ev.getMatchingTechniques(new MapEnv({ kind: "park" }));
-                ev.getMatchingTechniques(new MapEnv({ kind: "park", area: 2 }));
-                ev.getMatchingTechniques(new MapEnv({ kind: "park", area: 3 }));
-                return ev.decodedTechniques;
-            })();
-
-            assert.equal(techniquesTileA.length, 3);
-
-            const techniquesTileB = (() => {
-                const ev = new StyleSetEvaluator(testStyle);
-                ev.getMatchingTechniques(new MapEnv({ kind: "park", area: 3 }));
-                return ev.decodedTechniques;
-            })();
-
-            assert.equal(techniquesTileB.length, 1);
-
-            const techniquesTileC = (() => {
-                const ev = new StyleSetEvaluator(testStyle);
-                ev.getMatchingTechniques(new MapEnv({ kind: "park", area: 2 }));
-                ev.getMatchingTechniques(new MapEnv({ kind: "park" }));
-                return ev.decodedTechniques;
-            })();
-
-            assert.equal(techniquesTileC.length, 2);
-
-            // delete _index from result techniques, because it may differ
-            [...techniquesTileA, ...techniquesTileB, ...techniquesTileC].forEach(t => {
-                delete t._index;
-            });
-
-            // Now, respective techniques should have same cache key irrespectively to from
-            // which tile they come.
-            assert.deepEqual(techniquesTileA[1], techniquesTileC[0]);
-            assert.deepEqual(techniquesTileA[2], techniquesTileB[0]);
-            assert.deepEqual(techniquesTileA[0], techniquesTileC[1]);
-        });
     });
     describe('definitions / "ref" operator support', function() {
         const sampleStyleDeclaration: StyleDeclaration = {

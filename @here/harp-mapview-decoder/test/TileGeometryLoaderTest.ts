@@ -19,6 +19,7 @@ import * as chai from "chai";
 import * as chaiAsPromised from "chai-as-promised";
 chai.use(chaiAsPromised);
 const { expect } = chai;
+import { ExprPool } from "@here/harp-datasource-protocol/lib/ExprPool";
 import { TileGeometryCreator } from "@here/harp-mapview/lib/geometry/TileGeometryCreator";
 import { SimpleTileGeometryLoader } from "@here/harp-mapview/lib/geometry/TileGeometryLoader";
 import { willEventually } from "@here/harp-test-utils";
@@ -47,6 +48,7 @@ class MockDataSource extends DataSource {
 function createFakeMapView() {
     return ({
         projection: webMercatorProjection,
+        exprPool: new ExprPool(),
         // tslint:disable-next-line:no-empty
         getDataSourceByName() {},
         statistics: new Statistics(),
