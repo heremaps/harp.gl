@@ -272,22 +272,22 @@ function replaceReservedName(name: string): string {
 function decodeFeatureId(
     feature: com.mapbox.pb.Tile.IFeature,
     logger?: ILogger
-): number | undefined {
-    if (feature.id !== undefined) {
-        if (typeof feature.id === "number") {
-            return feature.id;
-        } else if (feature.id !== null && Long.isLong(feature.id)) {
-            if (feature.id.greaterThan(Number.MAX_SAFE_INTEGER)) {
-                if (logger !== undefined) {
-                    logger.error(
-                        "Invalid ID: Larger than largest available Number in feature: ",
-                        feature
-                    );
-                }
+): number | string | undefined {
+    if (feature.hasOwnProperty("id")) {
+        const id = feature.id;
+        if (typeof id === "number") {
+            return id;
+        } else if (id) {
+            if (logger !== undefined && id.greaterThan(Number.MAX_SAFE_INTEGER)) {
+                logger.error(
+                    "Invalid ID: Larger than largest available Number in feature: ",
+                    feature
+                );
             }
-            return (feature.id as any).toNumber(); // long
+            return id.toNumber();
         }
     }
+
     return undefined;
 }
 
@@ -327,11 +327,9 @@ function createFeatureEnv(
     };
 
     // Some sources serve `id` directly as `IFeature` property ...
-    if (feature.id !== undefined) {
-        const featureId = decodeFeatureId(feature, logger);
-        if (featureId !== undefined) {
-            attributes.$id = featureId;
-        }
+    const featureId = decodeFeatureId(feature, logger);
+    if (featureId !== undefined) {
+        attributes.$id = featureId;
     }
 
     readAttributes(layer, feature, attributes);
