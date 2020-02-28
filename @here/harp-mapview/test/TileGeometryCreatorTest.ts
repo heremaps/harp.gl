@@ -102,7 +102,7 @@ describe("TileGeometryCreator", () => {
                     objInfos: [decodedDisplacementMap]
                 }
             ],
-            techniques: [{ name: "terrain", renderOrder: 0 }]
+            techniques: [{ name: "terrain", renderOrder: 0, _index: 0, _styleSetIndex: 0 }]
         };
         tgc.createObjects(newTile, decodedTile);
         assert.equal(newTile.objects.length, 1);
