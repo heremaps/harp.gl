@@ -26,9 +26,15 @@ function overlayObject(object: TileObject, displacementMap: THREE.DataTexture): 
         return;
     }
 
-    const material = (object as any).material;
+    const material = (object as any).material as THREE.Mesh["material"];
 
-    if (hasDisplacementFeature(material)) {
+    if (Array.isArray(material)) {
+        material.forEach(mat => {
+            if (hasDisplacementFeature(mat)) {
+                mat.displacementMap = displacementMap;
+            }
+        });
+    } else if (material && hasDisplacementFeature(material)) {
         material.displacementMap = displacementMap;
     }
 }
