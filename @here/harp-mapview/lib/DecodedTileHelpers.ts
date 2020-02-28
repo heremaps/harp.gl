@@ -37,7 +37,7 @@ import {
     MapMeshStandardMaterial,
     SolidLineMaterial
 } from "@here/harp-materials";
-import { LoggerManager } from "@here/harp-utils";
+import { assert, LoggerManager } from "@here/harp-utils";
 import * as THREE from "three";
 import { Circles, Squares } from "./MapViewPoints";
 import { toPixelFormat, toTextureDataType, toTextureFilter, toWrappingMode } from "./ThemeHelpers";
@@ -294,6 +294,108 @@ export function getBufferAttribute(attribute: BufferAttribute): THREE.BufferAttr
     } // switch
 }
 
+// const tmpLine = new THREE.Line();
+// const tmpIntersections: THREE.Intersection[] = [];
+// const tmpVector = new THREE.Vector3();
+
+const _inverseMatrix = new THREE.Matrix4();
+const _ray = new THREE.Ray();
+const _sphere = new THREE.Sphere();
+
+class SolidLineMesh extends THREE.Mesh {
+    constructor(
+        geometry?: THREE.Geometry | THREE.BufferGeometry,
+        material?: THREE.Material | THREE.Material[]
+    ) {
+        super(geometry, material);
+    }
+    /** @override */
+    raycast(raycaster: THREE.Raycaster, intersects: THREE.Intersection[]): void {
+        const solidLineMaterial = this.material as SolidLineMaterial;
+
+        const geometry = this.geometry;
+        const matrixWorld = this.matrixWorld;
+        const threshold = solidLineMaterial.lineWidth + solidLineMaterial.outlineWidth;
+
+        // Checking boundingSphere distance to ray
+
+        if (geometry.boundingSphere === null) {
+            geometry.computeBoundingSphere();
+        }
+
+        _sphere.copy(geometry.boundingSphere);
+        _sphere.applyMatrix4(matrixWorld);
+        _sphere.radius += threshold;
+
+        if (raycaster.ray.intersectsSphere(_sphere) === false) {
+            return;
+        }
+
+        //
+
+        _inverseMatrix.getInverse(matrixWorld);
+        _ray.copy(raycaster.ray).applyMatrix4(_inverseMatrix);
+
+        const localThreshold = threshold / ((this.scale.x + this.scale.y + this.scale.z) / 3);
+        const localThresholdSq = localThreshold * localThreshold;
+
+        const vStart = new THREE.Vector3();
+        const vEnd = new THREE.Vector3();
+        const interSegment = new THREE.Vector3();
+        const interRay = new THREE.Vector3();
+        const step = 6; // Two triangles per segment.
+
+        if (!(geometry instanceof THREE.BufferGeometry)) {
+            assert(false);
+            return;
+        }
+
+        const index = geometry.index;
+        if (index === null) {
+            assert(false);
+            return;
+        }
+
+        const attributes = geometry.attributes;
+        const positionAttr = attributes.position;
+        const indices = index.array;
+
+        for (let i = 0, l = indices.length - 1; i < l; i += step) {
+            const a = indices[i];
+            const b = indices[i + 2]; // i+1 has a copy for i used for extrusion.
+
+            vStart.set(positionAttr.getX(a), positionAttr.getY(a), positionAttr.getZ(a));
+            vEnd.set(positionAttr.getX(b), positionAttr.getY(b), positionAttr.getZ(b));
+
+            const distSq = _ray.distanceSqToSegment(vStart, vEnd, interRay, interSegment);
+
+            if (distSq > localThresholdSq) {
+                continue;
+            }
+            // Discard results that are not collinear to extrusion vector.
+            //const segmentToRay = interRay.sub(interSegment);
+            //segmentToRay.dot();
+
+            //Move back to world space for distance calculation
+            interRay.applyMatrix4(this.matrixWorld);
+
+            const distance = raycaster.ray.origin.distanceTo(interRay);
+
+            if (distance < raycaster.near || distance > raycaster.far) {
+                continue;
+            }
+
+            intersects.push({
+                distance,
+                point: interSegment.clone().applyMatrix4(this.matrixWorld),
+                index: i,
+                face: null,
+                faceIndex: undefined,
+                object: this
+            });
+        }
+    }
+}
 /**
  * The default `three.js` object used with a specific technique.
  */
@@ -317,8 +419,9 @@ export function getObjectConstructor(technique: Technique): ObjectConstructor | 
         case "extruded-polygon":
         case "fill":
         case "dashed-line":
-        case "solid-line":
             return THREE.Mesh;
+        case "solid-line":
+            return SolidLineMesh;
 
         case "circles":
             return Circles;
