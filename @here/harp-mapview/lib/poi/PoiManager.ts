@@ -11,6 +11,8 @@ import {
     getFeatureId,
     getPropertyValue,
     ImageTexture,
+    IndexedTechnique,
+    IndexedTechniqueParams,
     isLineMarkerTechnique,
     isPoiTechnique,
     LineMarkerTechnique,
@@ -117,7 +119,7 @@ export class PoiManager {
         for (const poiGeometry of poiGeometries) {
             assert(poiGeometry.technique !== undefined);
             const techniqueIndex = assertExists(poiGeometry.technique);
-            const technique = decodedTile.techniques[techniqueIndex];
+            const technique = decodedTile.techniques[techniqueIndex] as IndexedTechnique;
 
             if (
                 technique.enabled === false ||
@@ -334,7 +336,7 @@ export class PoiManager {
     private addLineMarker(
         tile: Tile,
         poiGeometry: PoiGeometry,
-        technique: LineMarkerTechnique,
+        technique: LineMarkerTechnique & IndexedTechniqueParams,
         positions: THREE.BufferAttribute,
         worldOffsetX: number
     ) {
@@ -408,7 +410,7 @@ export class PoiManager {
     private addPoi(
         tile: Tile,
         poiGeometry: PoiGeometry,
-        technique: PoiTechnique,
+        technique: PoiTechnique & IndexedTechniqueParams,
         positions: THREE.BufferAttribute,
         worldOffsetX: number
     ) {
@@ -479,7 +481,7 @@ export class PoiManager {
     private checkCreateTextElement(
         tile: Tile,
         text: string,
-        technique: PoiTechnique | LineMarkerTechnique,
+        technique: (PoiTechnique | LineMarkerTechnique) & IndexedTechniqueParams,
         imageTextureName: string | undefined,
         poiTableName: string | undefined,
         poiName: string | undefined,
@@ -490,7 +492,6 @@ export class PoiManager {
         z: number | undefined,
         userData?: {}
     ): TextElement {
-        const textElementsRenderer = this.mapView.textElementsRenderer;
         const priority = technique.priority !== undefined ? technique.priority : 0;
         const positions = Array.isArray(x) ? (x as THREE.Vector3[]) : new THREE.Vector3(x, y, z);
 
@@ -512,8 +513,8 @@ export class PoiManager {
         const textElement: TextElement = new TextElement(
             ContextualArabicConverter.instance.convert(text),
             positions,
-            textElementsRenderer.styleCache.getRenderStyle(tile, technique),
-            textElementsRenderer.styleCache.getLayoutStyle(tile, technique),
+            tile.textStyleCache.getRenderStyle(technique),
+            tile.textStyleCache.getLayoutStyle(technique),
             getPropertyValue(priority, env),
             xOffset !== undefined ? xOffset : 0.0,
             yOffset !== undefined ? yOffset : 0.0,

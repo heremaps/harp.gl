@@ -23,6 +23,7 @@ import { PerformanceStatistics } from "./Statistics";
 import { TextElement } from "./text/TextElement";
 import { TextElementGroup } from "./text/TextElementGroup";
 import { TextElementGroupPriorityList } from "./text/TextElementGroupPriorityList";
+import { TileTextStyleCache } from "./text/TileTextStyleCache";
 import { MapViewUtils } from "./Utils";
 
 const logger = LoggerManager.instance.create("Tile");
@@ -388,6 +389,7 @@ export class Tile implements CachedResource {
 
     private m_animatedExtrusionTileHandler: AnimatedExtrusionTileHandler | undefined;
 
+    private m_textStyleCache: TileTextStyleCache;
     /**
      * Creates a new [[Tile]].
      *
@@ -407,6 +409,7 @@ export class Tile implements CachedResource {
         this.geoBox = this.dataSource.getTilingScheme().getGeoBox(this.tileKey);
         this.projection.projectBox(this.geoBox, this.boundingBox);
         this.m_localTangentSpace = localTangentSpace !== undefined ? localTangentSpace : false;
+        this.m_textStyleCache = new TileTextStyleCache(this);
     }
 
     /**
@@ -923,6 +926,14 @@ export class Tile implements CachedResource {
     }
 
     /**
+     * Text style cache for this tile.
+     * @hidden
+     */
+    get textStyleCache(): TileTextStyleCache {
+        return this.m_textStyleCache;
+    }
+
+    /**
      * Frees the rendering resources allocated by this `Tile`.
      *
      * The default implementation of this method frees the geometries and the materials for all the
@@ -987,6 +998,7 @@ export class Tile implements CachedResource {
             this.m_animatedExtrusionTileHandler.dispose();
         }
 
+        this.m_textStyleCache.clear();
         this.clearTextElements();
         this.invalidateResourceInfo();
     }

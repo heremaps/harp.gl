@@ -363,7 +363,7 @@ export class TileGeometryCreator {
         textFilter?: (technique: Technique) => boolean
     ) {
         const mapView = tile.mapView;
-        const textElementsRenderer = mapView.textElementsRenderer;
+        const textStyleCache = tile.textStyleCache;
         const worldOffsetX = tile.computeWorldOffsetX();
 
         const discreteZoomLevel = Math.floor(mapView.zoomLevel);
@@ -377,7 +377,7 @@ export class TileGeometryCreator {
             );
 
             for (const textPath of textPathGeometries) {
-                const technique = decodedTile.techniques[textPath.technique];
+                const technique = decodedTile.techniques[textPath.technique] as IndexedTechnique;
 
                 if (
                     technique.enabled === false ||
@@ -416,8 +416,8 @@ export class TileGeometryCreator {
                 const textElement = new TextElement(
                     ContextualArabicConverter.instance.convert(textPath.text),
                     path,
-                    textElementsRenderer.styleCache.getRenderStyle(tile, technique),
-                    textElementsRenderer.styleCache.getLayoutStyle(tile, technique),
+                    textStyleCache.getRenderStyle(technique),
+                    textStyleCache.getLayoutStyle(technique),
                     priority,
                     technique.xOffset !== undefined ? technique.xOffset : 0.0,
                     technique.yOffset !== undefined ? technique.yOffset : 0.0,
@@ -456,7 +456,7 @@ export class TileGeometryCreator {
                     continue;
                 }
 
-                const technique = decodedTile.techniques[text.technique];
+                const technique = decodedTile.techniques[text.technique] as IndexedTechnique;
 
                 if (
                     technique.enabled === false ||
@@ -505,8 +505,8 @@ export class TileGeometryCreator {
                     const textElement = new TextElement(
                         ContextualArabicConverter.instance.convert(label!),
                         new THREE.Vector3(x, y, z),
-                        textElementsRenderer.styleCache.getRenderStyle(tile, technique),
-                        textElementsRenderer.styleCache.getLayoutStyle(tile, technique),
+                        textStyleCache.getRenderStyle(technique),
+                        textStyleCache.getLayoutStyle(technique),
                         priority,
                         technique.xOffset || 0.0,
                         technique.yOffset || 0.0,
