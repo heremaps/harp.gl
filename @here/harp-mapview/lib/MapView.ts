@@ -2765,9 +2765,7 @@ export class MapView extends THREE.EventDispatcher {
         this.m_renderer.clear();
 
         // clear the scene
-        while (this.m_mapTilesRoot.children.length > 0) {
-            this.m_mapTilesRoot.remove(this.m_mapTilesRoot.children[0]);
-        }
+        this.m_mapTilesRoot.children.length = 0;
 
         if (gatherStatistics) {
             setupTime = PerformanceTimer.now();
