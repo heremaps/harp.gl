@@ -1448,8 +1448,6 @@ export class TileGeometryCreator {
                 geoBox: tile.geoBox
             };
             object.userData = tileDisplacementMap;
-        } else if (isSolidLineTechnique(technique)) {
-            object.userData = srcGeometry.objInfos!;
         } else {
             // Set the feature data for picking with `MapView.intersectMapObjects()` except for
             // solid-line which uses tile-based picking.
