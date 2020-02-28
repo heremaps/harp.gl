@@ -688,6 +688,7 @@ export class MapView extends THREE.EventDispatcher {
 
     private m_visibleTiles: VisibleTileSet;
 
+    private m_elevationSource?: DataSource;
     private m_elevationRangeSource?: ElevationRangeSource;
     private m_elevationProvider?: ElevationProvider;
     private m_visibleTileSetLock: boolean = false;
@@ -2415,17 +2416,26 @@ export class MapView extends THREE.EventDispatcher {
      * @param elevationProvider Allows access to the elevation at a given location or a ray
      *      from the camera.
      */
-    setElevationSource(
+    async setElevationSource(
         elevationSource: DataSource,
         elevationRangeSource: ElevationRangeSource,
         elevationProvider: ElevationProvider
     ) {
-        // Add as datasource if it was not added before
-        const isPresent = this.m_tileDataSources.some(ds => ds === elevationSource);
-        if (!isPresent) {
-            this.addDataSource(elevationSource);
+        // Remove previous elevation source if present
+        if (this.m_elevationSource && this.m_elevationSource !== elevationSource) {
+            this.removeDataSource(this.m_elevationSource);
         }
+
+        // Add as datasource if it was not added before
+        const isPresent = this.m_tileDataSources.indexOf(elevationSource) !== -1;
+        if (!isPresent) {
+            await this.addDataSource(elevationSource);
+        }
+        this.m_elevationSource = elevationSource;
         this.m_elevationRangeSource = elevationRangeSource;
+        if (!this.m_elevationRangeSource.ready()) {
+            await this.m_elevationRangeSource.connect();
+        }
         this.m_elevationProvider = elevationProvider;
         this.dataSources.forEach(dataSource => {
             dataSource.setEnableElevationOverlay(true);
@@ -2442,6 +2452,7 @@ export class MapView extends THREE.EventDispatcher {
      */
     clearElevationSource(elevationSource: DataSource) {
         this.removeDataSource(elevationSource);
+        this.m_elevationSource = undefined;
         this.m_elevationRangeSource = undefined;
         this.m_elevationProvider = undefined;
         this.dataSources.forEach(dataSource => {

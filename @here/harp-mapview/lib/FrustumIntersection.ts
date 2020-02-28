@@ -153,7 +153,11 @@ export class FrustumIntersection {
         // the zoom level chosen by [MapViewUtils.calculateZoomLevelFromDistance].
         assert(this.mapView.viewportHeight !== 0);
         const targetTileArea = Math.pow(256 / this.mapView.viewportHeight, 2);
-        const obbIntersections = this.mapView.projection.type === ProjectionType.Spherical;
+        const useElevationRangeSource: boolean =
+            elevationRangeSource !== undefined &&
+            elevationRangeSource.getTilingScheme() === tilingScheme;
+        const obbIntersections =
+            this.mapView.projection.type === ProjectionType.Spherical || useElevationRangeSource;
         const tileBounds = obbIntersections ? new OrientedBox3() : new THREE.Box3();
         const uniqueZoomLevels = new Set(zoomLevels);
 
@@ -178,11 +182,7 @@ export class FrustumIntersection {
             }
         }
 
-        const useElevationRangeSource: boolean =
-            elevationRangeSource !== undefined &&
-            elevationRangeSource.getTilingScheme() === tilingScheme;
         const workList = [...this.m_rootTileKeys.values()];
-
         while (workList.length > 0) {
             const tileEntry = workList.pop();
 
