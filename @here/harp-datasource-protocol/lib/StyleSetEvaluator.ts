@@ -900,7 +900,7 @@ function resolveStyleReferences(
 /**
  * Create transferable representation of dynamic technique.
  *
- * As for now, we remove all `Expr` as they are not supported on other side.
+ * Converts  non-transferable [[Expr]]instances back to JSON form.
  */
 export function makeDecodedTechnique(technique: IndexedTechnique): IndexedTechnique {
     const result: Partial<IndexedTechnique> = {};

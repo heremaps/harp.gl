@@ -17,7 +17,6 @@ import {
     getArrayConstructor,
     getFeatureId,
     getPropertyValue,
-    IndexedTechnique,
     isCirclesTechnique,
     isExtrudedLineTechnique,
     isExtrudedPolygonTechnique,
@@ -377,7 +376,7 @@ export class TileGeometryCreator {
             );
 
             for (const textPath of textPathGeometries) {
-                const technique = decodedTile.techniques[textPath.technique] as IndexedTechnique;
+                const technique = decodedTile.techniques[textPath.technique];
 
                 if (
                     technique.enabled === false ||
@@ -456,7 +455,7 @@ export class TileGeometryCreator {
                     continue;
                 }
 
-                const technique = decodedTile.techniques[text.technique] as IndexedTechnique;
+                const technique = decodedTile.techniques[text.technique];
 
                 if (
                     technique.enabled === false ||
@@ -1315,8 +1314,6 @@ export class TileGeometryCreator {
         const { priorities, labelPriorities } = tile.mapView.theme;
 
         decodedTile.techniques.forEach(technique => {
-            const indexedTechnique = technique as IndexedTechnique;
-
             if (
                 isTextTechnique(technique) ||
                 isPoiTechnique(technique) ||
@@ -1324,20 +1321,18 @@ export class TileGeometryCreator {
             ) {
                 // for screen-space techniques the `category` is used to assign
                 // priorities.
-                if (labelPriorities && typeof indexedTechnique._category === "string") {
+                if (labelPriorities && typeof technique._category === "string") {
                     // override the `priority` when the technique uses `category`.
-                    const priority = labelPriorities.indexOf(indexedTechnique._category);
+                    const priority = labelPriorities.indexOf(technique._category);
                     if (priority !== -1) {
                         technique.priority = labelPriorities.length - priority;
                     }
                 }
-            } else if (priorities && indexedTechnique._styleSet !== undefined) {
+            } else if (priorities && technique._styleSet !== undefined) {
                 // Compute the render order based on the style category and styleSet.
                 const computeRenderOrder = (category: string): number | undefined => {
                     const priority = priorities?.findIndex(
-                        entry =>
-                            entry.group === indexedTechnique._styleSet &&
-                            entry.category === category
+                        entry => entry.group === technique._styleSet && entry.category === category
                     );
 
                     return priority !== undefined && priority !== -1
@@ -1345,20 +1340,18 @@ export class TileGeometryCreator {
                         : undefined;
                 };
 
-                if (typeof indexedTechnique._category === "string") {
+                if (typeof technique._category === "string") {
                     // override the renderOrder when the technique is using categories.
-                    const renderOrder = computeRenderOrder(indexedTechnique._category);
+                    const renderOrder = computeRenderOrder(technique._category);
 
                     if (renderOrder !== undefined) {
                         technique.renderOrder = renderOrder;
                     }
                 }
 
-                if (typeof indexedTechnique._secondaryCategory === "string") {
+                if (typeof technique._secondaryCategory === "string") {
                     // override the secondaryRenderOrder when the technique is using categories.
-                    const secondaryRenderOrder = computeRenderOrder(
-                        indexedTechnique._secondaryCategory
-                    );
+                    const secondaryRenderOrder = computeRenderOrder(technique._secondaryCategory);
 
                     if (secondaryRenderOrder !== undefined) {
                         (technique as any).secondaryRenderOrder = secondaryRenderOrder;
