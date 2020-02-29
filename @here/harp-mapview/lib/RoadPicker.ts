@@ -63,7 +63,7 @@ export class RoadPicker {
         const widths: RoadIntersectionData["widths"] = [];
         widths.length = lineFeatures.numFeatures;
 
-        compileTechniques(extendedTileInfo.techniqueCatalog);
+        compileTechniques(tile, extendedTileInfo.techniqueCatalog);
 
         const mapView = this.m_mapView;
         for (let i = 0; i < lineFeatures.numFeatures; i++) {

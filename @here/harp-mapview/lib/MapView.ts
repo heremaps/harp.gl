@@ -40,6 +40,7 @@ import {
 } from "@here/harp-utils";
 import * as THREE from "three";
 
+import { ExprPool } from "@here/harp-datasource-protocol/lib/ExprPool";
 import { ViewRanges } from "@here/harp-datasource-protocol/lib/ViewRanges";
 import { AnimatedExtrusionHandler } from "./AnimatedExtrusionHandler";
 import { BackgroundDataSource } from "./BackgroundDataSource";
@@ -837,6 +838,8 @@ export class MapView extends THREE.EventDispatcher {
     private m_animatedExtrusionHandler: AnimatedExtrusionHandler;
 
     private m_env: MapEnv = new MapEnv({});
+    private readonly m_exprPool = new ExprPool();
+    private readonly m_exprCache = new Map<Expr, Value>();
 
     private m_enableMixedLod: boolean | undefined;
     /**
@@ -1790,6 +1793,20 @@ export class MapView extends THREE.EventDispatcher {
      */
     get env(): Env {
         return this.m_env;
+    }
+
+    /**
+     * @hidden
+     */
+    get exprPool() {
+        return this.m_exprPool;
+    }
+
+    /**
+     * @hidden
+     */
+    get exprCache() {
+        return this.m_exprCache;
     }
 
     /**
@@ -2810,13 +2827,25 @@ export class MapView extends THREE.EventDispatcher {
      * Update `Env` instance used for style `Expr` evaluations.
      */
     private updateEnv() {
-        this.m_env.entries.$zoom = this.m_zoomLevel;
+        const { $zoom, $pixelToMeters } = this.m_env.entries;
 
-        // This one introduces unnecessary calculation of pixelToWorld, even if it's barely
-        // used in our styles.
-        this.m_env.entries.$pixelToMeters = this.pixelToWorld;
+        let changed = false;
 
-        this.m_env.entries.$frameNumber = this.m_frameNumber;
+        if ($zoom !== this.m_zoomLevel) {
+            this.m_env.entries.$zoom = this.m_zoomLevel;
+            changed = true;
+        }
+
+        if ($pixelToMeters !== this.pixelToWorld) {
+            // This one introduces unnecessary calculation of pixelToWorld, even if it's barely
+            // used in our styles.
+            this.m_env.entries.$pixelToMeters = this.pixelToWorld;
+            changed = true;
+        }
+
+        if (changed) {
+            this.m_exprCache.clear();
+        }
     }
 
     /**

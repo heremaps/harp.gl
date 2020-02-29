@@ -97,6 +97,9 @@ export function isInterpolatedProperty(p: any): p is InterpolatedProperty {
 * @param env The [[Env]] used to evaluate the property
 */
 export function getPropertyValue(property: Value | Expr | undefined, env: Env): any {
+    if (property === null || typeof property === "undefined") {
+        return null;
+    }
     if (Expr.isExpr(property)) {
         try {
             return property.evaluate(env, ExprScope.Dynamic);
@@ -110,9 +113,8 @@ export function getPropertyValue(property: Value | Expr | undefined, env: Env): 
             return null;
         }
     }
-
-    if (property === null || typeof property === "undefined") {
-        return null;
+    if (typeof property === "function") {
+        return property(env);
     } else if (typeof property !== "string") {
         // Property in numeric or array, etc. format
         return property;

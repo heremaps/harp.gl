@@ -9,6 +9,7 @@ import {
     ColorUtils,
     Env,
     Expr,
+    ExprScope,
     getPropertyValue,
     InterpolatedProperty,
     isExtrudedLineTechnique,
@@ -41,6 +42,7 @@ import { LoggerManager } from "@here/harp-utils";
 import * as THREE from "three";
 import { Circles, Squares } from "./MapViewPoints";
 import { toPixelFormat, toTextureDataType, toTextureFilter, toWrappingMode } from "./ThemeHelpers";
+import { Tile } from "./Tile";
 
 const logger = LoggerManager.instance.create("DecodedTileHelpers");
 
@@ -676,7 +678,10 @@ export function applyBaseColorToMaterial(
  * @param env [[Env]] instance used to evaluate [[Expr]] based properties of [[Technique]]
  */
 function evaluateProperty(value: any, env?: Env): any {
-    if (env !== undefined && (isInterpolatedProperty(value) || Expr.isExpr(value))) {
+    if (
+        env !== undefined &&
+        (isInterpolatedProperty(value) || Expr.isExpr(value) || typeof value === "function")
+    ) {
         value = getPropertyValue(value, env);
     }
     return value;
@@ -717,7 +722,8 @@ export function evaluateColorProperty(value: Value, env?: Env): number | undefin
 /**
  * Compile expressions in techniques as they were received from decoder.
  */
-export function compileTechniques(techniques: Technique[]) {
+export function compileTechniques(tile: Tile, techniques: Technique[]) {
+    const mapView = tile.mapView;
     techniques.forEach((technique: any) => {
         for (const propertyName in technique) {
             if (!technique.hasOwnProperty(propertyName)) {
@@ -727,7 +733,17 @@ export function compileTechniques(techniques: Technique[]) {
             if (isJsonExpr(value) && propertyName !== "kind") {
                 // "kind" is reserved.
                 try {
-                    technique[propertyName] = Expr.fromJSON(value);
+                    const expr = Expr.fromJSON(value).intern(mapView.exprPool);
+                    technique[propertyName] = (env: Env) => {
+                        // exprCache is safe to use only when the
+                        // evaluation environment is mapview.env
+                        const captured = env === tile.mapView.env;
+                        return expr.evaluate(
+                            env,
+                            ExprScope.Dynamic,
+                            captured ? tile.mapView.exprCache : undefined
+                        );
+                    };
                 } catch (error) {
                     logger.error("#compileTechniques: Failed to compile expression:", error);
                 }
