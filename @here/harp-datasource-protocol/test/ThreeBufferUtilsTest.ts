@@ -65,7 +65,7 @@ describe("ThreeBufferUtils", function() {
                 continue;
             }
             const threeBufferAttribute = threeAttr as THREE.BufferAttribute;
-            const harpAttr = harpBufferGeometry.vertexAttributes.find((buf: BufferAttribute) => {
+            const harpAttr = harpBufferGeometry.vertexAttributes?.find((buf: BufferAttribute) => {
                 return buf.name === attrName;
             });
             assert(harpAttr !== undefined);

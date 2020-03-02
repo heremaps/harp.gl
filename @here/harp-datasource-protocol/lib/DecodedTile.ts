@@ -137,7 +137,7 @@ export enum GeometryType {
  */
 export interface Geometry {
     type: GeometryType;
-    vertexAttributes: BufferAttribute[];
+    vertexAttributes?: BufferAttribute[];
     interleavedVertexAttributes?: InterleavedBufferAttribute[];
     index?: BufferAttribute;
     edgeIndex?: BufferAttribute;

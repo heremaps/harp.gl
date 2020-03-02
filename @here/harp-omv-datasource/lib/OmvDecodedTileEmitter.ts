@@ -1674,16 +1674,18 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                 });
             }
 
+            const vertexAttributes: BufferAttribute[] = [
+                {
+                    name: "position",
+                    buffer: positionElements.buffer,
+                    itemCount: 3,
+                    type: "float"
+                }
+            ];
+
             const geometry: Geometry = {
                 type: meshBuffers.type,
-                vertexAttributes: [
-                    {
-                        name: "position",
-                        buffer: positionElements.buffer as ArrayBuffer,
-                        itemCount: 3,
-                        type: "float"
-                    }
-                ],
+                vertexAttributes,
                 groups: meshBuffers.groups
             };
 
@@ -1695,9 +1697,9 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                         "position buffer"
                 );
 
-                geometry.vertexAttributes.push({
+                vertexAttributes.push({
                     name: "normal",
-                    buffer: normals.buffer as ArrayBuffer,
+                    buffer: normals.buffer,
                     itemCount: 3,
                     type: "float"
                 });
@@ -1711,9 +1713,9 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                         "position buffer"
                 );
 
-                geometry.vertexAttributes.push({
+                vertexAttributes.push({
                     name: "color",
-                    buffer: colors.buffer as ArrayBuffer,
+                    buffer: colors.buffer,
                     itemCount: 3,
                     type: "float"
                 });
@@ -1729,7 +1731,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                 );
 
                 const textureCoordinates = new Float32Array(meshBuffers.textureCoordinates);
-                geometry.vertexAttributes.push({
+                vertexAttributes.push({
                     name: "uv",
                     buffer: textureCoordinates.buffer as ArrayBuffer,
                     itemCount: 2,
@@ -1745,7 +1747,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                         "position buffer"
                 );
 
-                geometry.vertexAttributes.push({
+                vertexAttributes.push({
                     name: "extrusionAxis",
                     buffer: extrusionAxis.buffer as ArrayBuffer,
                     itemCount: 4,
