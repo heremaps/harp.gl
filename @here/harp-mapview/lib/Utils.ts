@@ -6,13 +6,7 @@
 
 import * as THREE from "three";
 
-import {
-    GeoCoordinates,
-    MathUtils,
-    Projection,
-    ProjectionType,
-    TileKey
-} from "@here/harp-geoutils";
+import { GeoCoordinates, Projection, ProjectionType, TileKey } from "@here/harp-geoutils";
 import { EarthConstants } from "@here/harp-geoutils/lib/projection/EarthConstants";
 import { MapMeshBasicMaterial, MapMeshStandardMaterial } from "@here/harp-materials";
 import { assert, LoggerManager } from "@here/harp-utils";
@@ -451,7 +445,7 @@ export namespace MapViewUtils {
             mapView.projection.type === ProjectionType.Spherical
                 ? cache.vector3[0].copy(mapView.camera.position).normalize()
                 : cache.vector3[0].set(0, 0, 1),
-            MathUtils.degToRad(-deltaYawDeg)
+            THREE.MathUtils.degToRad(-deltaYawDeg)
         );
         mapView.camera.updateMatrixWorld();
 
@@ -861,8 +855,9 @@ export namespace MapViewUtils {
             options.maxZoomLevel
         );
         // Round to avoid modify the zoom level without distance change, with the imprecision
-        // introduced by raycasting.
-        return Math.round(zoomLevel * 10e15) / 10e15;
+        // introduced by ray-casting and distance calculus.
+        // NOTE: Using 10 fractional digits as rounding precision, this solves HARP-8523.
+        return roundZoomLevel(zoomLevel);
     }
 
     /**
@@ -966,6 +961,26 @@ export namespace MapViewUtils {
         screenSize: number
     ): number {
         return (distance * screenSize) / focalLength;
+    }
+
+    /**
+     * Function performs zoom level rounding to 10-th place after comma.
+     *
+     * Inaccuracies on the 13-th fractional digit may be observed when doing small
+     * tilt changes, thus causing the zoom level to be discretized to smaller value then real
+     * one, for example when acquiring tiles storage level or visibility level.
+     * This causes zoom level jitter and displaying wrong tile set (with different zoom level)
+     * for a certain camera arrangements (angles).
+     *
+     * @note Rounding function is used to limit zoom level jitter and fluctuations.
+     *
+     * @param zoomLevel Input zoom level from based on camera distance.
+     * @return The resulting zoom level rounded to 10-th place after comma.
+     */
+    export function roundZoomLevel(zoomLevel: number) {
+        // Here 10 digits gives quite big safety margin, yet still giving enough precision for
+        // zoom level based interpolations.
+        return Math.round(zoomLevel * 10e10) / 10e10;
     }
 
     /**

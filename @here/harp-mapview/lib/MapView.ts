@@ -1726,6 +1726,7 @@ export class MapView extends THREE.EventDispatcher {
         return this.m_zoomLevel;
     }
     set zoomLevel(zoomLevel: number) {
+        zoomLevel = MapViewUtils.roundZoomLevel(zoomLevel);
         this.m_zoomLevel = THREE.MathUtils.clamp(
             zoomLevel,
             this.m_minZoomLevel,
