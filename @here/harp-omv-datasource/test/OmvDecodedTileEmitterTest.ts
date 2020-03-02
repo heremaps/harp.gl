@@ -79,7 +79,7 @@ describe("OmvDecodedTileEmitter", function() {
         expectedCount: number,
         type: string = "float"
     ): Float32Array {
-        const attribute = geometry.vertexAttributes[index];
+        const attribute = geometry.vertexAttributes![index];
         assert.equal(attribute.name, name, `geometry has ${name} attribute`);
         assert.equal(attribute.type, type, `${name} is ${type}`);
 
@@ -157,7 +157,7 @@ describe("OmvDecodedTileEmitter", function() {
         assert.equal(geometries.length, 1, "only one geometry created");
         assert.equal(geometries[0].type, GeometryType.Polygon, "geometry is a polygon");
         assert.equal(
-            geometries[0].vertexAttributes.length,
+            geometries[0].vertexAttributes?.length,
             2,
             "number of attributes is as expected"
         );
