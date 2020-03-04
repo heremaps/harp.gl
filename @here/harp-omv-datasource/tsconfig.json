@@ -2,13 +2,51 @@
     "compilerOptions": {
         "target": "es2017",
         "module": "commonjs",
+        "outDir": "dist/cjs",
         "sourceMap": true,
         "declaration": true,
+        "declarationMap": true,
+        "composite": true,
+        "strict": true,
         "strictNullChecks": true,
         "noImplicitAny": true,
         "noImplicitReturns": true,
         "noImplicitThis": true,
-        "noUnusedLocals": false,
-        "downlevelIteration": true
-    }
+        "noUnusedLocals": false
+    },
+    "references": [
+        {
+            "path": "../harp-datasource-protocol"
+        },
+        {
+            "path": "../harp-geometry"
+        },
+        {
+            "path": "../harp-geoutils"
+        },
+        {
+            "path": "../harp-lines"
+        },
+        {
+            "path": "../harp-lrucache"
+        },
+        {
+            "path": "../harp-mapview"
+        },
+        {
+            "path": "../harp-mapview-decoder"
+        },
+        {
+            "path": "../harp-materials"
+        },
+        {
+            "path": "../harp-text-canvas"
+        },
+        {
+            "path": "../harp-transfer-manager"
+        },
+        {
+            "path": "../harp-utils"
+        }
+    ]
 }

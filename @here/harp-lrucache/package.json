@@ -2,15 +2,15 @@
     "name": "@here/harp-lrucache",
     "version": "0.13.0",
     "description": "LRU cache",
-    "main": "index.js",
-    "typings": "index",
+    "main": "dist/cjs/index.js",
+    "typings": "dist/cjs/index",
     "directories": {
         "test": "test"
     },
     "scripts": {
         "test": "cross-env mocha --require source-map-support/register $EXTRA_MOCHA_ARGS ./test/*.js",
-        "build": "tsc $EXTRA_TSC_ARGS",
-        "prepare": "cross-env tsc --sourceMap false $EXTRA_TSC_ARGS"
+        "build": "tsc --build $EXTRA_TSC_ARGS",
+        "prepare": "cross-env tsc --build $EXTRA_TSC_ARGS"
     },
     "repository": {
         "type": "git",

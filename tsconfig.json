@@ -6,8 +6,6 @@
         "baseUrl": ".",
         "rootDir": ".",
         "outDir": "./dist/node_modules/",
-        "jsx": "react",
-        "jsxFactory": "React.createElement",
         "strict": true,
         "resolveJsonModule": true,
         "downlevelIteration": true,

@@ -38,7 +38,7 @@ const commonConfig = {
             three: "THREE",
             fs: "undefined"
         },
-        function(context, request, callback) {
+        function (context, request, callback) {
             return /three\.module\.js$/.test(request) ? callback(null, "THREE") : callback();
         }
     ],
@@ -55,7 +55,7 @@ const commonConfig = {
                 loader: "ts-loader",
                 exclude: /node_modules/,
                 options: {
-                    configFile: path.join(process.cwd(), "tsconfig.json"),
+                    projectReferences: true,
                     onlyCompileBundledFiles: true,
                     transpileOnly: prepareOnly,
                     compilerOptions: {
@@ -167,7 +167,7 @@ const allEntries = Object.assign({}, webpackEntries, htmlEntries);
  *     [examplePage: string]: string // maps example page to example source
  * }
  */
-const exampleDefs = Object.keys(allEntries).reduce(function(r, entry) {
+const exampleDefs = Object.keys(allEntries).reduce(function (r, entry) {
     r[entry + ".html"] = path.relative(__dirname, allEntries[entry]);
     return r;
 }, {});

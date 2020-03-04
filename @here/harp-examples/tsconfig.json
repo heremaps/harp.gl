@@ -3,16 +3,12 @@
         "target": "es2017",
         "module": "commonjs",
         "sourceMap": true,
-        "declaration": false,
+        "resolveJsonModule": true,
+        "strict": true,
         "strictNullChecks": true,
         "noImplicitAny": true,
         "noImplicitReturns": true,
         "noImplicitThis": true,
-        "noUnusedLocals": false,
-        "resolveJsonModule": true,
-        "downlevelIteration": true,
-        "jsx": "react",
-        "skipLibCheck": true,
-        "baseUrl": "../../"
+        "noUnusedLocals": false
     }
 }

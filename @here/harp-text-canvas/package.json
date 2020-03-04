@@ -2,12 +2,12 @@
     "name": "@here/harp-text-canvas",
     "version": "0.13.0",
     "description": "SDF based text rendering for TypeScript",
-    "main": "index.js",
-    "typings": "index",
+    "main": "dist/cjs/index.js",
+    "typings": "dist/cjs/index",
     "scripts": {
-        "build": "tsc $EXTRA_TSC_ARGS",
+        "build": "tsc --build $EXTRA_TSC_ARGS",
         "test": "cross-env mocha --require source-map-support/register $EXTRA_MOCHA_ARGS ./test/*.js",
-        "prepare": "cross-env tsc --sourceMap false $EXTRA_TSC_ARGS"
+        "prepare": "cross-env tsc --build $EXTRA_TSC_ARGS"
     },
     "repository": {
         "type": "git",

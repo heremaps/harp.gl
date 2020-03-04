@@ -2,16 +2,16 @@
     "name": "@here/harp-fetch",
     "version": "0.13.0",
     "description": "This module adds a subset of the fetch API for Node.js",
-    "main": "index.js",
-    "browser": "index.web.js",
-    "typings": "index.web",
+    "main": "dist/cjs/index.js",
+    "browser": "dist/cjs/index.web.js",
+    "typings": "dist/cjs/index.web",
     "directories": {
         "test": "test"
     },
     "scripts": {
         "test": "cross-env mocha --require source-map-support/register $EXTRA_MOCHA_ARGS ./test/*.js",
-        "build": "tsc $EXTRA_TSC_ARGS",
-        "prepare": "cross-env tsc --sourceMap false $EXTRA_TSC_ARGS"
+        "build": "tsc --build $EXTRA_TSC_ARGS",
+        "prepare": "cross-env tsc --build $EXTRA_TSC_ARGS"
     },
     "repository": {
         "type": "git",
