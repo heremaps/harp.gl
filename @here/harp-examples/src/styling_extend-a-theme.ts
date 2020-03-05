@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 HERE Europe B.V.
+ * Copyright (C) 2017-2020 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -7,8 +7,8 @@
 import { GeoCoordinates } from "@here/harp-geoutils";
 import { MapControls, MapControlsUI } from "@here/harp-map-controls";
 import { CopyrightElementHandler, MapView } from "@here/harp-mapview";
-import { APIFormat, OmvDataSource } from "@here/harp-omv-datasource";
-import { accessToken, copyrightInfo } from "../config";
+import { APIFormat, AuthenticationMethod, OmvDataSource } from "@here/harp-omv-datasource";
+import { apikey, copyrightInfo } from "../config";
 
 /**
  * This example shows how to customize builtin `Berlin` theme using [Theme] `definition` mechanism.
@@ -129,11 +129,14 @@ export namespace HelloCustomThemeExample {
 
     function addOmvDataSource(map: MapView) {
         const omvDataSource = new OmvDataSource({
-            baseUrl: "https://xyz.api.here.com/tiles/herebase.02",
+            baseUrl: "https://vector.hereapi.com/v2/vectortiles/base/mc",
             apiFormat: APIFormat.XYZOMV,
             styleSetName: "tilezen",
-            maxZoomLevel: 17,
-            authenticationCode: accessToken,
+            authenticationCode: apikey,
+            authenticationMethod: {
+                method: AuthenticationMethod.QueryString,
+                name: "apikey"
+            },
             copyrightInfo
         });
 

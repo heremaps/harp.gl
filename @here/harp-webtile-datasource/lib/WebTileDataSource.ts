@@ -32,14 +32,9 @@ export interface WebTileRenderingOptions {
  */
 export interface WebTileDataSourceParameters {
     /**
-     * The `appId` for the access of the Web Tile Data.
+     * The `apikey` for the access of the Web Tile Data.
      */
-    appId: string;
-
-    /**
-     * The `appCode` for the access of the Web Tile Data.
-     */
-    appCode: string;
+    apikey: string;
 
     // tslint:disable:max-line-length
     /**
@@ -58,13 +53,12 @@ export interface WebTileDataSourceParameters {
      * (https://developer.here.com/documentation/map-tile/topics/examples-base.html):
      *
      *     https://
-     *       2.base.maps.api.here.com/maptile/2.1/maptile/newest/normal.day/11/525/761/256/png8
-     *       ?app_id={YOUR_APP_ID}
-     *       &app_code={YOUR_APP_CODE}
+     *       2.base.maps.ls.hereapi.com/maptile/2.1/maptile/newest/normal.day/11/525/761/256/png8
+     *       ?apikey={YOUR_API_KEY}
      *
      * `tileBaseAddress` should be:
      *
-     *      base.maps.api.here.com/maptile/2.1/maptile/newest/normal.day
+     *      base.maps.ls.hereapi.com/maptile/2.1/maptile/newest/normal.day
      *
      * Rest of parameters are added by [[WebTileDataSource]].
      *
@@ -196,8 +190,7 @@ interface MapTileParams {
  *
  * ```typescript
  * const webTileDataSource = new WebTileDataSource({
- *     appId: <appId>,
- *     appCode: <appCode>
+ *     apikey: <apikey>
  * });
  * ```
  * @see [[DataSource]], [[OmvDataSource]].
@@ -208,27 +201,27 @@ export class WebTileDataSource extends DataSource {
      * @see https://developer.here.com/documentation/map-tile/topics/example-normal-day-view.html
      */
     static readonly TILE_BASE_NORMAL =
-        "base.maps.api.here.com/maptile/2.1/maptile/newest/normal.day";
+        "base.maps.ls.hereapi.com/maptile/2.1/maptile/newest/normal.day";
     /**
      * Base address for Aerial Map rendered using `hybrid.day` scheme.
      * @see https://developer.here.com/documentation/map-tile/topics/example-hybrid-map.html
      */
     static readonly TILE_AERIAL_HYBRID =
-        "aerial.maps.api.here.com/maptile/2.1/maptile/newest/hybrid.day";
+        "aerial.maps.ls.hereapi.com/maptile/2.1/maptile/newest/hybrid.day";
 
     /**
      * Base address for Aerial Map rendered using `satellite.day` scheme.
      * @see https://developer.here.com/documentation/map-tile/topics/example-satellite-map.html
      */
     static readonly TILE_AERIAL_SATELLITE =
-        "aerial.maps.api.here.com/maptile/2.1/maptile/newest/satellite.day";
+        "aerial.maps.ls.hereapi.com/maptile/2.1/maptile/newest/satellite.day";
 
     /**
      * Base address for Traffic Map rendered using `normal.day` scheme.
      * @see https://developer.here.com/documentation/map-tile/topics/example-traffic.html
      */
     static readonly TILE_TRAFFIC_NORMAL =
-        "traffic.maps.api.here.com/maptile/2.1/traffictile/newest/normal.day";
+        "traffic.maps.ls.hereapi.com/maptile/2.1/traffictile/newest/normal.day";
 
     private m_resolution: WebTileDataSource.resolutionValue;
     private m_ppi: WebTileDataSource.ppiValue;
@@ -276,10 +269,10 @@ export class WebTileDataSource extends DataSource {
         const mapId = getOptionValue(mapTileParams.mapVersion, "newest");
         const scheme = mapTileParams.scheme || "normal.day";
         const baseScheme = scheme.split(".")[0] || "normal";
-        const { appId, appCode } = this.m_options;
+        const { apikey } = this.m_options;
         const url =
             `https://1.${baseHostName}/maptile/2.1/copyright/${mapId}` +
-            `?output=json&app_id=${appId}&app_code=${appCode}`;
+            `?output=json&apikey=${apikey}`;
         this.m_copyrightProvider = new UrlCopyrightProvider(url, baseScheme);
     }
 
@@ -308,13 +301,13 @@ export class WebTileDataSource extends DataSource {
         const column = tileKey.column;
         const row = tileKey.row;
         const level = tileKey.level;
-        const { appId, appCode } = this.m_options;
+        const { apikey } = this.m_options;
         const quadKey = tileKey.toQuadKey();
         const server = parseInt(quadKey[quadKey.length - 1], 10) + 1;
         let url =
             `https://${server}.${this.m_tileBaseAddress}/` +
             `${level}/${column}/${row}/${this.m_resolution}/png8` +
-            `?app_id=${appId}&app_code=${appCode}` +
+            `?apikey=${apikey}` +
             getOptionValue(this.m_options.additionalRequestParameters, "");
 
         if (this.m_ppi !== WebTileDataSource.ppiValue.ppi72) {

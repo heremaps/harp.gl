@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 HERE Europe B.V.
+ * Copyright (C) 2017-2020 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -8,8 +8,8 @@
 import { Theme } from "@here/harp-datasource-protocol";
 import { GeoCoordinates } from "@here/harp-geoutils";
 import { MapView, MapViewEventNames } from "@here/harp-mapview";
-import { APIFormat, OmvDataSource } from "@here/harp-omv-datasource";
-import { accessToken } from "../../@here/harp-examples/config";
+import { APIFormat, AuthenticationMethod, OmvDataSource } from "@here/harp-omv-datasource";
+import { apikey, copyrightInfo } from "../../@here/harp-examples/config";
 
 // tslint:disable-next-line:no-var-requires
 const theme = require("../resources/theme.json");
@@ -88,10 +88,15 @@ function main() {
     map.animatedExtrusionHandler.enabled = false;
 
     const omvDataSource = new OmvDataSource({
-        baseUrl: "https://xyz.api.here.com/tiles/herebase.02",
+        baseUrl: "https://vector.hereapi.com/v2/vectortiles/base/mc",
         apiFormat: APIFormat.XYZOMV,
         styleSetName: "tilezen",
-        authenticationCode: accessToken
+        authenticationCode: apikey,
+        authenticationMethod: {
+            method: AuthenticationMethod.QueryString,
+            name: "apikey"
+        },
+        copyrightInfo
     });
     map.addDataSource(omvDataSource);
 

@@ -7,8 +7,7 @@ Yeoman generator for [harp.gl](https://github.com/heremaps/harp.gl) based projec
 * [node.js](https://nodejs.org/)
 * [yeoman](https://yeoman.io/) - Install globally with `npm install -g yo` or use without
   installation with `npx` like this `npx yo`.
-* By default, generated app retrieves map data from free XYZ Vector Tiles service. You need an `access_token` that you can generate yourself after registration from the
-[Token Manager](https://xyz.api.here.com/token-ui/).
+* By default, generated app retrieves map data from HERE Vector Tiles Service. You need an `apikey` that you can generate yourself. Please see our [Getting Started Guide](../../docs/GettingStartedGuide.md).
 
 ## Usage
 
@@ -23,11 +22,14 @@ Set you access token in `View.ts`:
 
 ```typescript
 const omvDataSource = new OmvDataSource({
-    baseUrl: "https://xyz.api.here.com/tiles/herebase.02",
-    apiFormat: APIFormat.XYZOMV,
-    styleSetName: "tilezen",
-    maxZoomLevel: 17,
-    authenticationCode: "YOUR_ACCESS_TOKEN"
+   baseUrl: "https://vector.hereapi.com/v2/vectortiles/base/mc",
+   apiFormat: harp.APIFormat.XYZOMV,
+   styleSetName: "tilezen",
+   authenticationCode: "YOUR-APIKEY",
+   authenticationMethod: {
+         method: harp.AuthenticationMethod.QueryString,
+         name: "apikey"
+   }
 });
 ```
 Then start it using `webpack-dev-server`:

@@ -24,8 +24,8 @@ module.exports = class extends Generator {
             },
             {
                 type: "input",
-                name: "access_token",
-                message: "access token"
+                name: "apikey",
+                message: "APIKey"
             }
         ]);
 
@@ -38,7 +38,7 @@ module.exports = class extends Generator {
             generator_version: version
         });
         this.fs.copyTpl([this.templatePath(this.answers.language)], this.destinationPath(), {
-            access_token: this.answers.access_token
+            apikey: this.answers.apikey
         });
     }
 
