@@ -53,6 +53,7 @@ export abstract class MapViewPoints extends THREE.Points {
      *
      * @param raycaster The raycaster.
      * @param intersects The array to fill with the results.
+     * @override
      */
     raycast(raycaster: PickingRaycaster, intersects: THREE.Intersection[]) {
         if (!this.enableRayTesting) {

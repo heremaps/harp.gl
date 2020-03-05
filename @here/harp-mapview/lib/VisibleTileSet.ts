@@ -367,6 +367,26 @@ export interface DataSourceTileList {
  *    zoom levels
  */
 export class VisibleTileSet {
+    /**
+     * The way the cache usage is computed, either based on size in MB (mega bytes) or in number of
+     * tiles.
+     */
+    get resourceComputationType(): ResourceComputationType {
+        return this.m_resourceComputationType;
+    }
+
+    /**
+     * Sets the way tile cache is managing its elements.
+     *
+     * Cache may be either keeping number of elements stored or the memory consumed by them.
+     *
+     * @param computationType Type of algorith used in cache for checking full saturation,
+     * may be counting number of elements or memory consumed by them.
+     */
+    set resourceComputationType(computationType: ResourceComputationType) {
+        this.m_resourceComputationType = computationType;
+        this.m_dataSourceCache.setCapacity(this.options.tileCacheSize, computationType);
+    }
     dataSourceTileList: DataSourceTileList[] = [];
     allVisibleTilesLoaded: boolean = false;
     options: VisibleTileSetOptions;
@@ -435,27 +455,6 @@ export class VisibleTileSet {
      */
     setNumberOfVisibleTiles(size: number) {
         this.options.maxVisibleDataSourceTiles = size;
-    }
-
-    /**
-     * The way the cache usage is computed, either based on size in MB (mega bytes) or in number of
-     * tiles.
-     */
-    get resourceComputationType(): ResourceComputationType {
-        return this.m_resourceComputationType;
-    }
-
-    /**
-     * Sets the way tile cache is managing its elements.
-     *
-     * Cache may be either keeping number of elements stored or the memory consumed by them.
-     *
-     * @param computationType Type of algorith used in cache for checking full saturation,
-     * may be counting number of elements or memory consumed by them.
-     */
-    set resourceComputationType(computationType: ResourceComputationType) {
-        this.m_resourceComputationType = computationType;
-        this.m_dataSourceCache.setCapacity(this.options.tileCacheSize, computationType);
     }
 
     /**
@@ -679,6 +678,21 @@ export class VisibleTileSet {
         );
     }
 
+    getRenderedTilesAtLocation(
+        geoPoint: GeoCoordinates,
+        offset: number = 0,
+        tiles: Tile[] = []
+    ): Tile[] {
+        this.dataSourceTileList.forEach(tileList => {
+            if (tileList) {
+                const tile = this.getRenderedTileAtLocationImpl(tileList, geoPoint, offset);
+                if (tile) {
+                    tiles.push(tile);
+                }
+            }
+        });
+        return tiles;
+    }
     /**
      * Gets the tile corresponding to the given data source and location from the rendered tiles.
      *
@@ -691,67 +705,15 @@ export class VisibleTileSet {
         geoPoint: GeoCoordinates,
         offset: number = 0
     ): Tile | undefined {
-        const dataSourceVisibleTileList = this.dataSourceTileList.find(list => {
+        const tileList = this.dataSourceTileList.find(list => {
             return list.dataSource === dataSource;
         });
 
-        if (dataSourceVisibleTileList === undefined) {
+        if (!tileList) {
             return undefined;
         }
 
-        const tilingScheme = dataSource.getTilingScheme();
-        const visibleLevel = dataSourceVisibleTileList.zoomLevel;
-        const visibleTileKey = tilingScheme.getTileKey(geoPoint, visibleLevel);
-
-        if (!visibleTileKey) {
-            return undefined;
-        }
-
-        let tile = dataSourceVisibleTileList.renderedTiles.get(
-            TileOffsetUtils.getKeyForTileKeyAndOffset(visibleTileKey, offset)
-        );
-
-        if (tile !== undefined) {
-            return tile;
-        }
-
-        const { searchLevelsUp, searchLevelsDown } = this.getCacheSearchLevels(
-            dataSource,
-            visibleLevel
-        );
-
-        let parentTileKey = visibleTileKey;
-        for (let levelOffset = 1; levelOffset <= searchLevelsUp; ++levelOffset) {
-            parentTileKey = parentTileKey.parent();
-
-            tile = dataSourceVisibleTileList.renderedTiles.get(
-                TileOffsetUtils.getKeyForTileKeyAndOffset(parentTileKey, offset)
-            );
-            if (tile !== undefined) {
-                return tile;
-            }
-        }
-
-        const worldPoint = tilingScheme.projection.projectPoint(geoPoint);
-
-        for (let levelOffset = 1; levelOffset <= searchLevelsDown; ++levelOffset) {
-            const childLevel = visibleLevel + levelOffset;
-            const childTileKey = TileKeyUtils.worldCoordinatesToTileKey(
-                tilingScheme,
-                worldPoint,
-                childLevel
-            );
-            if (childTileKey) {
-                tile = dataSourceVisibleTileList.renderedTiles.get(
-                    TileOffsetUtils.getKeyForTileKeyAndOffset(childTileKey, offset)
-                );
-
-                if (tile !== undefined) {
-                    return tile;
-                }
-            }
-        }
-        return undefined;
+        return this.getRenderedTileAtLocationImpl(tileList, geoPoint, offset);
     }
 
     /**
@@ -845,6 +807,67 @@ export class VisibleTileSet {
         // TODO: Consider using evict here!
         this.m_dataSourceCache.delete(tile);
         tile.dispose();
+    }
+
+    private getRenderedTileAtLocationImpl(
+        tileList: DataSourceTileList,
+        geoPoint: GeoCoordinates,
+        offset: number
+    ): Tile | undefined {
+        const dataSource = tileList.dataSource;
+        const tilingScheme = dataSource.getTilingScheme();
+        const visibleLevel = tileList.zoomLevel;
+        const visibleTileKey = tilingScheme.getTileKey(geoPoint, visibleLevel);
+
+        if (!visibleTileKey) {
+            return undefined;
+        }
+
+        let tile = tileList.renderedTiles.get(
+            TileOffsetUtils.getKeyForTileKeyAndOffset(visibleTileKey, offset)
+        );
+
+        if (tile !== undefined) {
+            return tile;
+        }
+
+        const { searchLevelsUp, searchLevelsDown } = this.getCacheSearchLevels(
+            dataSource,
+            visibleLevel
+        );
+
+        let parentTileKey = visibleTileKey;
+        for (let levelOffset = 1; levelOffset <= searchLevelsUp; ++levelOffset) {
+            parentTileKey = parentTileKey.parent();
+
+            tile = tileList.renderedTiles.get(
+                TileOffsetUtils.getKeyForTileKeyAndOffset(parentTileKey, offset)
+            );
+            if (tile !== undefined) {
+                return tile;
+            }
+        }
+
+        const worldPoint = tilingScheme.projection.projectPoint(geoPoint);
+
+        for (let levelOffset = 1; levelOffset <= searchLevelsDown; ++levelOffset) {
+            const childLevel = visibleLevel + levelOffset;
+            const childTileKey = TileKeyUtils.worldCoordinatesToTileKey(
+                tilingScheme,
+                worldPoint,
+                childLevel
+            );
+            if (childTileKey) {
+                tile = tileList.renderedTiles.get(
+                    TileOffsetUtils.getKeyForTileKeyAndOffset(childTileKey, offset)
+                );
+
+                if (tile !== undefined) {
+                    return tile;
+                }
+            }
+        }
+        return undefined;
     }
 
     /**

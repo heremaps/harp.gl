@@ -756,10 +756,7 @@ export class MapView extends THREE.EventDispatcher {
     private m_polarDataSource?: PolarTileDataSource;
     private m_enablePolarDataSource: boolean = true;
 
-    // gestures
     private readonly m_raycaster: PickingRaycaster;
-    private readonly m_plane = new THREE.Plane(new THREE.Vector3(0, 0, 1));
-    private readonly m_sphere = new THREE.Sphere(undefined, EarthConstants.EQUATORIAL_RADIUS);
 
     private readonly m_options: MapViewOptions;
     private readonly m_visibleTileSetOptions: VisibleTileSetOptions;
@@ -902,12 +899,6 @@ export class MapView extends THREE.EventDispatcher {
 
         this.handleRequestAnimationFrame = this.renderFunc.bind(this);
         this.handlePostponedAnimationFrame = this.postponedAnimationFrame.bind(this);
-        this.m_pickHandler = new PickHandler(
-            this,
-            this.m_rteCamera,
-            this.m_options.enableRoadPicking === true,
-            this.m_options.enablePickTechnique === true
-        );
 
         if (this.m_options.tileWrappingEnabled !== undefined) {
             this.m_tileWrappingEnabled = this.m_options.tileWrappingEnabled;
@@ -967,7 +958,15 @@ export class MapView extends THREE.EventDispatcher {
         this.setupCamera(options);
         this.m_targetDistance = this.m_camera.position.distanceTo(this.m_targetWorldPos);
 
-        this.m_raycaster = new PickingRaycaster(width, height);
+        this.m_pickHandler = new PickHandler(
+            this,
+            this.m_rteCamera,
+            width,
+            height,
+            this.m_options.enableRoadPicking === true,
+            this.m_options.enablePickTechnique === true
+        );
+        this.m_raycaster = new PickingRaycaster(width, height, this, this.m_camera);
 
         this.m_movementDetector = new CameraMovementDetector(
             this.m_options.movementThrottleTimeout,
@@ -1418,6 +1417,7 @@ export class MapView extends THREE.EventDispatcher {
      */
     addEventListener(type: MapViewEventNames, listener: (event: RenderEvent) => void): void;
 
+    /** @override */
     addEventListener(type: string, listener: any): void {
         super.addEventListener(type, listener);
     }
@@ -1438,6 +1438,7 @@ export class MapView extends THREE.EventDispatcher {
      */
     removeEventListener(type: MapViewEventNames, listener: (event: RenderEvent) => void): void;
 
+    /** @override */
     removeEventListener(type: string, listener: any): void {
         super.removeEventListener(type, listener);
     }
@@ -2200,23 +2201,21 @@ export class MapView extends THREE.EventDispatcher {
      * points.
      */
     raycasterFromScreenPoint(x: number, y: number): THREE.Raycaster {
-        this.m_raycaster.setFromCamera(this.getNormalizedScreenCoordinates(x, y), this.m_rteCamera);
+        this.m_pickHandler.rayCaster.setDirection(this.getNormalizedScreenCoordinates(x, y));
         return this.m_raycaster;
     }
 
     /**
      * Returns the world space position from the given screen position. The return value can be
-     * `null`, in case the camera is facing the horizon and the given `(x, y)` value is not
+     * `undefined`, in case the camera is facing the horizon and the given `(x, y)` value is not
      * intersecting the ground plane.
      *
      * @param x The X position in css/client coordinates (without applied display ratio).
      * @param y The Y position in css/client coordinates (without applied display ratio).
      */
-    getWorldPositionAt(x: number, y: number): THREE.Vector3 | null {
-        this.m_raycaster.setFromCamera(this.getNormalizedScreenCoordinates(x, y), this.m_camera);
-        return this.projection.type === ProjectionType.Spherical
-            ? this.m_raycaster.ray.intersectSphere(this.m_sphere, cache.vector3[0])
-            : this.m_raycaster.ray.intersectPlane(this.m_plane, cache.vector3[0]);
+    getWorldPositionAt(x: number, y: number): THREE.Vector3 | undefined {
+        this.m_raycaster.setDirection(this.getNormalizedScreenCoordinates(x, y));
+        return this.m_raycaster.intersectGround(x, y, false, cache.vector3[0]);
     }
 
     /**

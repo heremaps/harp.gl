@@ -9,6 +9,7 @@ import * as THREE from "three";
 
 import { MapView } from "./MapView";
 import { MapViewPoints } from "./MapViewPoints";
+import { PickingRaycaster } from "./PickingRaycaster";
 import { RoadPicker } from "./RoadPicker";
 import { RoadIntersectionData, Tile, TileFeatureData } from "./Tile";
 
@@ -101,18 +102,22 @@ export interface PickResult {
  * Handles the picking of scene geometry and roads.
  */
 export class PickHandler {
+    readonly rayCaster: PickingRaycaster;
     private readonly m_plane = new THREE.Plane(new THREE.Vector3(0, 0, 1));
     private readonly m_roadPicker?: RoadPicker;
 
     constructor(
         readonly mapView: MapView,
         readonly camera: THREE.Camera,
+        width: number,
+        height: number,
         public enableRoadPicking = true,
         public enablePickTechnique = false
     ) {
         if (enableRoadPicking) {
             this.m_roadPicker = new RoadPicker(mapView);
         }
+        this.rayCaster = new PickingRaycaster(width, height, mapView, camera);
     }
 
     /**
@@ -134,21 +139,31 @@ export class PickHandler {
      * @returns the list of intersection results.
      */
     intersectMapObjects(x: number, y: number): PickResult[] {
-        const worldPos = this.mapView.getNormalizedScreenCoordinates(x, y);
-
-        const rayCaster = this.mapView.raycasterFromScreenPoint(x, y);
+        const screenNdc = this.mapView.getNormalizedScreenCoordinates(x, y);
         const pickResults: PickResult[] = [];
 
         if (this.mapView.textElementsRenderer !== undefined) {
             const { clientWidth, clientHeight } = this.mapView.canvas;
-            const screenX = worldPos.x * clientWidth * 0.5 * this.mapView.pixelRatio;
-            const screenY = worldPos.y * clientHeight * 0.5 * this.mapView.pixelRatio;
+            const screenX = screenNdc.x * clientWidth * 0.5 * this.mapView.pixelRatio;
+            const screenY = screenNdc.y * clientHeight * 0.5 * this.mapView.pixelRatio;
             const scenePosition = new THREE.Vector2(screenX, screenY);
             this.mapView.textElementsRenderer.pickTextElements(scenePosition, pickResults);
         }
 
-        // calculate objects intersecting the picking ray
-        const intersects = rayCaster.intersectObjects(this.mapView.worldRootObject.children, true);
+        const rayCaster = this.rayCaster;
+        rayCaster.setFromCamera(screenNdc, this.camera);
+
+        const intersects: THREE.Intersection[] = [];
+
+        // calculate 3D objects intersecting the picking ray
+        for (const object of this.mapView.worldRootObject.children) {
+            if (object.userData.feature?.geometryType === GeometryType.ExtrudedPolygon) {
+                rayCaster.intersectObject(object, true, intersects);
+            }
+        }
+
+        this.intersectMapObjects2D(x, y, intersects);
+
         for (const intersect of intersects) {
             const pickResult: PickResult = {
                 type: PickObjectType.Unspecified,
@@ -208,28 +223,68 @@ export class PickHandler {
             pickResults.push(pickResult);
         }
 
-        if (this.enableRoadPicking) {
-            const planeIntersectPosition = new THREE.Vector3();
-            const cameraPos = this.mapView.camera.position.clone();
+        // if (this.enableRoadPicking) {
+        //     const planeIntersectPosition = new THREE.Vector3();
+        //     const cameraPos = this.mapView.camera.position.clone();
 
-            rayCaster.setFromCamera(worldPos, this.mapView.camera);
-            rayCaster.ray.intersectPlane(this.m_plane, planeIntersectPosition);
+        //     rayCaster.setFromCamera(screenNdc, this.mapView.camera);
+        //     rayCaster.ray.intersectPlane(this.m_plane, planeIntersectPosition);
 
-            this.mapView.forEachVisibleTile(tile => {
-                this.m_roadPicker!.intersectRoads(
-                    tile,
-                    cameraPos,
-                    planeIntersectPosition,
-                    pickResults
-                );
-            });
-        }
+        //     this.mapView.forEachVisibleTile(tile => {
+        //         this.m_roadPicker!.intersectRoads(
+        //             tile,
+        //             cameraPos,
+        //             planeIntersectPosition,
+        //             pickResults
+        //         );
+        //     });
+        // }
 
         pickResults.sort((a: PickResult, b: PickResult) => {
             return a.distance - b.distance;
         });
 
         return pickResults;
+    }
+
+    private intersectMapObjects2D(x: number, y: number, intersects: THREE.Intersection[]) {
+        // Find 2D objects at the picking ray intersection on the ground.
+        const rayCaster = this.rayCaster;
+        rayCaster.setFromCamera(
+            this.mapView.getNormalizedScreenCoordinates(x, y),
+            this.mapView.camera
+        );
+        const worldGroundIntersect = rayCaster.intersectGround(x, y, true);
+        if (!worldGroundIntersect) {
+            return;
+        }
+        const geoGroundIntersect = this.mapView.projection.unprojectPoint(worldGroundIntersect);
+
+        // const tileOffset = 0; // TODO: FIND TILE OFFSET!
+        // const intersectTiles = this.mapView.visibleTileSet.getRenderedTilesAtLocation(
+        //     geoGroundIntersect,
+        //     tileOffset
+        // );
+        // if (intersectTiles.length === 0) {
+        //     return;
+        // }
+
+        // const intersectNormal = new THREE.Vector3();
+        // this.mapView.projection.surfaceNormal(worldGroundIntersect, intersectNormal);
+        // rayCaster.set(worldGroundIntersect.sub(rayCaster.camera.position), intersectNormal);
+        rayCaster.camera = this.camera;
+        rayCaster.set(
+            this.camera.position,
+            worldGroundIntersect.sub(this.mapView.camera.position).normalize()
+        );
+
+        // for (const tile of intersectTiles) {
+        //     rayCaster.intersectObjects(tile.objects, true, intersects);
+        // }
+
+        for (const object of this.mapView.worldRootObject.children) {
+            rayCaster.intersectObject(object, true, intersects);
+        }
     }
 
     private addObjInfo(
