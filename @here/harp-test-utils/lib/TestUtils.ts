@@ -165,6 +165,67 @@ export async function assertRejected(
     assert.fail(`expected exception that matches ${errorMessagePattern}, but received '${r}'`);
 }
 
+type IConsoleLike = Pick<Console, "error" | "info" | "log" | "warn">;
+
+/**
+ * Assert that synchronous test function `fn` will logs specfic message.
+ *
+ * Captures error messages of `type` from `channel` and asserts that at least one contain
+ * message that matches `errorMessagePattern`.
+ *
+ * Swallows matching messages, so they don't appear in actual output so "test log" is clean from
+ * expected messages.
+ *
+ * Example with `console.warn`
+ * ```
+ *   assertWillLogSync(() => {
+ *       console.warn("error: fooBar"),
+ *       console,
+ *       "warn"
+ *       /error/
+ *   );
+ * ```
+ *
+ * @param fn test function that shall provoke certain log output
+ * @param channel `Console` like object
+ * @param type type of console message i.e `"log" | "error" | "warn" | "info`
+ * @param errorMessagePattern string or regular expression that we look for in logs
+ */
+export function assertLogsSync(
+    fn: () => void,
+    channel: IConsoleLike,
+    type: keyof IConsoleLike,
+    errorMessagePattern: string | RegExp
+) {
+    const errorMessageRe =
+        typeof errorMessagePattern === "string"
+            ? new RegExp(errorMessagePattern)
+            : errorMessagePattern;
+    const capturedMessages: string[] = [];
+    const original = channel[type];
+    const stub = sinon.stub(channel, type).callsFake((...args: any[]) => {
+        const message = args.join(" ");
+        if (errorMessageRe.test(message)) {
+            capturedMessages.push(message);
+        } else {
+            original.apply(channel, args as [any?, ...any[]]);
+        }
+    });
+    const cleanup = () => {
+        stub.restore();
+    };
+
+    try {
+        fn();
+        cleanup();
+        const hasMatching = capturedMessages.find(message => errorMessageRe.test(message));
+        assert(hasMatching, `expected log message matching '${errorMessagePattern}' to be logged`);
+    } catch (error) {
+        cleanup();
+        throw error;
+    }
+}
+
 export interface EventSource<T> {
     addEventListener(type: string, listener: (event: T) => void): void;
     removeEventListener(type: string, listener: (event: T) => void): void;

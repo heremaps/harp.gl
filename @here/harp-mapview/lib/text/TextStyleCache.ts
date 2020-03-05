@@ -216,12 +216,14 @@ export class TextStyleCache {
         // Store color (RGB) in cache and multiply opacity value with the color alpha channel.
         if (technique.color !== undefined) {
             let hexColor = evaluateColorProperty(technique.color, discreteZoomEnv);
-            if (ColorUtils.hasAlphaInHex(hexColor)) {
-                const alpha = ColorUtils.getAlphaFromHex(hexColor);
-                opacity = opacity * alpha;
-                hexColor = ColorUtils.removeAlphaFromHex(hexColor);
+            if (hexColor !== undefined) {
+                if (ColorUtils.hasAlphaInHex(hexColor)) {
+                    const alpha = ColorUtils.getAlphaFromHex(hexColor);
+                    opacity = opacity * alpha;
+                    hexColor = ColorUtils.removeAlphaFromHex(hexColor);
+                }
+                color = ColorCache.instance.getColor(hexColor);
             }
-            color = ColorCache.instance.getColor(hexColor);
         }
 
         // Sets background size to 0.0 if default and technique attribute is undefined.
@@ -256,12 +258,14 @@ export class TextStyleCache {
         // Store background color (RGB) in cache and multiply backgroundOpacity by its alpha.
         if (technique.backgroundColor !== undefined) {
             let hexBgColor = evaluateColorProperty(technique.backgroundColor, discreteZoomEnv);
-            if (ColorUtils.hasAlphaInHex(hexBgColor)) {
-                const alpha = ColorUtils.getAlphaFromHex(hexBgColor);
-                backgroundOpacity = backgroundOpacity * alpha;
-                hexBgColor = ColorUtils.removeAlphaFromHex(hexBgColor);
+            if (hexBgColor !== undefined) {
+                if (ColorUtils.hasAlphaInHex(hexBgColor)) {
+                    const alpha = ColorUtils.getAlphaFromHex(hexBgColor);
+                    backgroundOpacity = backgroundOpacity * alpha;
+                    hexBgColor = ColorUtils.removeAlphaFromHex(hexBgColor);
+                }
+                backgroundColor = ColorCache.instance.getColor(hexBgColor);
             }
-            backgroundColor = ColorCache.instance.getColor(hexBgColor);
         }
 
         const renderParams = {

@@ -423,16 +423,15 @@ export function getMaterialConstructor(technique: Technique): MaterialConstructo
 /**
  * Allows to easy parse/encode technique's base color property value as number coded color.
  *
- * Function takes care about property parsing, interpolation and encoding if neccessary. If
- * you wish to get default value without interpolation simply ignore @param zoom when calling.
+ * Function takes care about property parsing, interpolation and encoding if neccessary.
  *
  * @see ColorUtils
  * @param technique the technique where we search for base (transparency) color value
- * @param zoomLevel zoom level used for value interpolation.
- * @returns [[number]] encoded color value (in custom #TTRRGGBB) format or [[undefined]] if
+ * @param env [[Env]] instance used to evaluate [[Expr]] based properties of [[Technique]]
+ * @returns [[number]] encoded color value (in custom #TTRRGGBB) format or `undefined` if
  * base color property is not defined in the technique passed.
  */
-export function evaluateBaseColorProperty(technique: Technique, env?: Env): number | undefined {
+export function evaluateBaseColorProperty(technique: Technique, env: Env): number | undefined {
     const baseColorProp = getBaseColorProp(technique);
     if (baseColorProp !== undefined) {
         return evaluateColorProperty(baseColorProp, env);
@@ -495,7 +494,7 @@ function applyShaderTechniqueToMaterial(technique: ShaderTechnique, material: TH
  *
  * @param technique technique from where params are copied
  * @param material target material
- * @param zoomLevel tile zoom level for zoom-level dependent props
+ * @param env [[Env]] instance used to evaluate [[Expr]] based properties of [[Technique]]
  * @param skipExtraProps optional, skipped props.
  */
 function applyTechniqueToMaterial(
@@ -561,7 +560,7 @@ function applyTechniqueToMaterial(
  * @param material target material
  * @param propertyName material and technique parameter name (or index) that is to be transferred
  * @param techniqueAttrValue technique property value which will be applied to material attribute
- * @param zoomLevel optional tile zoom level.
+ * @param env [[Env]] instance used to evaluate [[Expr]] based properties of [[Technique]]
  */
 function applyTechniquePropertyToMaterial(
     material: THREE.Material,
@@ -577,7 +576,10 @@ function applyTechniquePropertyToMaterial(
             env
         );
     } else {
-        m[propertyName] = evaluateProperty(techniqueAttrValue, env);
+        const value = evaluateProperty(techniqueAttrValue, env);
+        if (value !== null) {
+            m[propertyName] = value;
+        }
     }
 }
 
@@ -592,7 +594,7 @@ function applyTechniquePropertyToMaterial(
  * @param material the material to which color is applied
  * @param prop technique property (color) name
  * @param value color value
- * @param zoomLevel optional tile zoom level for zoom-level dependent properties are evaluated.
+ * @param env [[Env]] instance used to evaluate [[Expr]] based properties of [[Technique]]
  */
 export function applySecondaryColorToMaterial(
     materialColor: THREE.Color,
@@ -600,7 +602,9 @@ export function applySecondaryColorToMaterial(
     env?: Env
 ) {
     let value = evaluateColorProperty(techniqueColor, env);
-
+    if (value === undefined) {
+        return;
+    }
     if (ColorUtils.hasAlphaInHex(value)) {
         logger.warn("Used RGBA value for technique color without transparency support!");
         // Just for clarity remove transparency component, even if that would be ignored
@@ -626,7 +630,7 @@ export function applySecondaryColorToMaterial(
  * @param material the material to which color is applied
  * @param prop technique property (color) name
  * @param value color value in custom number format
- * @param zoomLevel optional, tile zoom level for zoom-level dependent properties are evaluated.
+ * @param env [[Env]] instance used to evaluate [[Expr]] based properties of [[Technique]]
  */
 export function applyBaseColorToMaterial(
     material: THREE.Material,
@@ -636,6 +640,9 @@ export function applyBaseColorToMaterial(
     env?: Env
 ) {
     const colorValue = evaluateColorProperty(techniqueColor, env);
+    if (colorValue === undefined) {
+        return;
+    }
 
     const { r, g, b, a } = ColorUtils.getRgbaFromHex(colorValue);
     // Override material opacity and blending by mixing technique defined opacity
@@ -661,12 +668,12 @@ export function applyBaseColorToMaterial(
 /**
  * Calculates the value of the technique defined property.
  *
- * Function takes care about property interpolation (when @param zoom is set) as also parsing
+ * Function takes care about property interpolation (when @param `env` is set) as also parsing
  * string encoded numbers.
  *
  * @note Use with care, because function does not recognize property type.
  * @param value the value of color property defined in technique
- * @param zoomLevel zoom level used for interpolation.
+ * @param env [[Env]] instance used to evaluate [[Expr]] based properties of [[Technique]]
  */
 function evaluateProperty(value: any, env?: Env): any {
     if (env !== undefined && (isInterpolatedProperty(value) || Expr.isExpr(value))) {
@@ -678,15 +685,19 @@ function evaluateProperty(value: any, env?: Env): any {
 /**
  * Calculates the numerical value of the technique defined color property.
  *
- * Function takes care about color interpolation (when @param zoom is set) as also parsing
+ * Function takes care about color interpolation (when @param `env is set) as also parsing
  * string encoded colors.
  *
  * @note Use with care, because function does not recognize property type.
  * @param value the value of color property defined in technique
- * @param zoomLevel zoom level used for interpolation.
+ * @param env [[Env]] instance used to evaluate [[Expr]] based properties of [[Technique]]
  */
-export function evaluateColorProperty(value: Value, env?: Env): number {
+export function evaluateColorProperty(value: Value, env?: Env): number | undefined {
     value = evaluateProperty(value, env);
+
+    if (value === undefined || value === null) {
+        return undefined;
+    }
 
     if (typeof value === "number") {
         return value;
@@ -699,7 +710,8 @@ export function evaluateColorProperty(value: Value, env?: Env): number {
         }
     }
 
-    throw new Error(`Unsupported color format: '${value}'`);
+    logger.error(`Unsupported color format: '${value}'`);
+    return undefined;
 }
 
 /**

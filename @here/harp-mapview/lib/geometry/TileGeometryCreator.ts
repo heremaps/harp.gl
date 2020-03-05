@@ -898,7 +898,7 @@ export class TileGeometryCreator {
                         technique.animateExtrusion,
                         discreteZoomEnv
                     );
-                    if (animateExtrusionValue !== undefined) {
+                    if (animateExtrusionValue !== null) {
                         animateExtrusionValue =
                             typeof animateExtrusionValue === "boolean"
                                 ? animateExtrusionValue
@@ -907,14 +907,15 @@ export class TileGeometryCreator {
                                 : false;
                     }
                     extrusionAnimationEnabled =
-                        animateExtrusionValue !== undefined &&
+                        animateExtrusionValue !== null &&
                         animatedExtrusionHandler.forceEnabled === false
                             ? animateExtrusionValue
                             : animatedExtrusionHandler.enabled;
                 }
 
                 const renderDepthPrePass =
-                    isExtrudedPolygonTechnique(technique) && isRenderDepthPrePassEnabled(technique);
+                    isExtrudedPolygonTechnique(technique) &&
+                    isRenderDepthPrePassEnabled(technique, discreteZoomEnv);
 
                 if (renderDepthPrePass) {
                     const depthPassMesh = createDepthPrePassMesh(object as THREE.Mesh);
@@ -1099,6 +1100,7 @@ export class TileGeometryCreator {
                         outlineTechnique.secondaryColor ?? 0x000000,
                         discreteZoomEnv
                     );
+
                     if (outlineTechnique.secondaryCaps !== undefined) {
                         outlineMaterial.caps = outlineTechnique.secondaryCaps;
                     }
@@ -1154,7 +1156,7 @@ export class TileGeometryCreator {
                                 // hide outline when it's equal or smaller then line to avoid subpixel contour
                                 const lineWidth =
                                     techniqueSecondaryWidth <= techniqueLineWidth &&
-                                    (techniqueOpacity === undefined || techniqueOpacity === 1)
+                                    (techniqueOpacity === null || techniqueOpacity === 1)
                                         ? 0
                                         : techniqueSecondaryWidth;
                                 lineMaterial.lineWidth = lineWidth * unitFactor * 0.5;
