@@ -5,8 +5,7 @@ Application creator for [harp.gl](https://github.com/heremaps/harp.gl) based pro
 ## Pre-requirements
 
 * [node.js](https://nodejs.org/)
-* By default, generated app retrieves map data from free XYZ Vector Tiles service. You need an `access_token` that you can generate yourself after registration from the
-[Token Manager](https://xyz.api.here.com/token-ui/).
+* By default, generated app retrieves map data from HERE Vector Tiles Service. You need an `apikey` that you can generate yourself. Please see our [Getting Started Guide](../../docs/GettingStartedGuide.md).
 
 ## Usage
 

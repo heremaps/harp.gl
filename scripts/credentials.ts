@@ -1,11 +1,11 @@
 /*
- * Copyright (C) 2017-2019 HERE Europe B.V.
+ * Copyright (C) 2017-2020 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
 
 import * as fs from "fs";
-import { accessToken } from "../@here/harp-examples/config";
+import { apikey } from "../@here/harp-examples/config";
 
 // tslint:disable : no-console
 
@@ -20,6 +20,6 @@ if (targetDir === undefined) {
     process.exit(1);
 }
 
-const credentialsResult = `const token = '${accessToken}'`;
+const credentialsResult = `const apikey = '${apikey}'`;
 fs.mkdirSync(targetDir, { recursive: true });
 fs.writeFileSync(`${targetDir}/credentials.js`, credentialsResult, { encoding: "utf8" });

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 HERE Europe B.V.
+ * Copyright (C) 2017-2020 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -16,54 +16,44 @@ describe("WebTileDataSource", function() {
     });
 
     it("#createWebTileDataSource has default values", async function() {
-        const appId = "123";
-        const appCode = "456";
+        const apikey = "123";
         const webTileDataSource = new WebTileDataSource({
-            appId,
-            appCode
+            apikey
         });
         assert(webTileDataSource.maxZoomLevel === 19);
     });
     it("#createWebTileDataSource with 256px and ppi320", async function() {
-        const appId = "123";
-        const appCode = "456";
+        const apikey = "123";
         const webTileDataSource = new WebTileDataSource({
-            appId,
-            appCode,
+            apikey,
             resolution: WebTileDataSource.resolutionValue.resolution256,
             ppi: WebTileDataSource.ppiValue.ppi320
         });
         assert(webTileDataSource.maxZoomLevel === 20);
     });
     it("#createWebTileDataSource with satellite.day", async function() {
-        const appId = "123";
-        const appCode = "456";
+        const apikey = "123";
         const webTileDataSource = new WebTileDataSource({
-            appId,
-            appCode,
+            apikey,
             tileBaseAddress: WebTileDataSource.TILE_AERIAL_SATELLITE
         });
         assert(webTileDataSource.maxZoomLevel === 19);
     });
     it("#createWebTileDataSource with satellite.day and 256px", async function() {
-        const appId = "123";
-        const appCode = "456";
+        const apikey = "123";
         const webTileDataSource = new WebTileDataSource({
-            appId,
-            appCode,
+            apikey,
             tileBaseAddress: WebTileDataSource.TILE_AERIAL_SATELLITE,
             resolution: WebTileDataSource.resolutionValue.resolution256
         });
         assert(webTileDataSource.maxZoomLevel === 20);
     });
     it("#createWebTileDataSource with satellite.day and ppi320", async function() {
-        const appId = "123";
-        const appCode = "456";
+        const apikey = "123";
         assert.throw(
             () =>
                 new WebTileDataSource({
-                    appId,
-                    appCode,
+                    apikey,
                     tileBaseAddress: WebTileDataSource.TILE_AERIAL_SATELLITE,
                     ppi: WebTileDataSource.ppiValue.ppi320
                 })

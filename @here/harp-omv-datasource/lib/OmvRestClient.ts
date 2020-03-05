@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 HERE Europe B.V.
+ * Copyright (C) 2017-2020 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -16,6 +16,9 @@ const logger = LoggerManager.instance.create("OmvRestClient");
 export enum APIFormat {
     /**
      * Use the REST API format of HERE Vector Tiles Server component version 1.
+     *
+     * Documentation:
+     *  https://developer.here.com/documentation/vector-tiles-api/dev_guide/index.html
      *
      * Usage:
      *

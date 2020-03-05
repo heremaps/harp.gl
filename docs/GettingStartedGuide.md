@@ -40,16 +40,19 @@ const controls = new harp.MapControls(map);
 window.onresize = () => map.resize(window.innerWidth, window.innerHeight);
 
 const omvDataSource = new harp.OmvDataSource({
-   baseUrl: "https://xyz.api.here.com/tiles/herebase.02",
+   baseUrl: "https://vector.hereapi.com/v2/vectortiles/base/mc",
    apiFormat: harp.APIFormat.XYZOMV,
    styleSetName: "tilezen",
-   authenticationCode: "YOUR-XYZ-TOKEN",
+   authenticationCode: "YOUR-APIKEY",
+   authenticationMethod: {
+         method: harp.AuthenticationMethod.QueryString,
+         name: "apikey"
+   }
 });
 map.addDataSource(omvDataSource);
 ```
 
-You need to [obtain authentication code](#credentials) to replace 'YOUR-XYZ-TOKEN'.
-
+You need to [obtain an apikey](#credentials) to replace `YOUR-APIKEY` and use the service to download vector tiles.
 
 For more information on the simple bundle, please visit the [@here/harp.gl module](../@here/harp.gl) directory.
 
@@ -189,19 +192,19 @@ to our `MapView` instance:
 import { APIFormat, AuthenticationTypeMapboxV4, OmvDataSource } from "@here/harp-omv-datasource";
 
 const dataSource = new OmvDataSource({
-    baseUrl: "https://xyz.api.here.com/tiles/herebase.02",
-    apiFormat: APIFormat.XYZOMV,
-    styleSetName: "tilezen",
-    maxZoomLevel: 17,
-    authenticationCode: "your access token for xyz service",
-    authenticationMethod: AuthenticationTypeMapboxV4
+   baseUrl: "https://vector.hereapi.com/v2/vectortiles/base/mc",
+   apiFormat: harp.APIFormat.XYZOMV,
+   styleSetName: "tilezen",
+   authenticationCode: "YOUR-APIKEY",
+   authenticationMethod: {
+         method: harp.AuthenticationMethod.QueryString,
+         name: "apikey"
+   }
 });
 mapView.addDataSource(dataSource);
 ```
 
-Note, that this example uses vector tiles downloaded from HERE XYZ service and access to these
-files is protected by access token. You should replace `your access token for xyz service` with real
-one, see [HERE Credentials](#credentials) section below.
+You need to [obtain an apikey](#credentials) to replace `YOUR-APIKEY` and use the service to download vector tiles.
 
 ### Enable user interaction with map
 
@@ -223,19 +226,16 @@ the [examples package](../@here/harp-examples/README.md)
 
 ## <a name="credentials"></a> HERE Credentials
 
-In order to use some of the HERE Services, such as XYZ or Map Tile API, you would need to register
+In order to use some of the HERE Services, you would need to register
 and generate credentials.
 
-First, you need to become a [HERE Developer](https://www.here.xyz/getting-started/).
+First, you need to become a [HERE Developer](https://developer.here.com/).
 
-Afterwards, depending on which service do you want, you might need different credentials.
+Afterwards, please read the [Authentication and Authorization Guide](https://developer.here.com/documentation/authentication/dev_guide/index.html).
 
-For Map Tile API, which is needed for the webtile examples, you need to generate a pair of `app_id`
-and `app_code`, that you can do directly from your Developer Dashboard, see a step-by-step guide
-[here](https://www.here.xyz/getting-started/).
+For [Map Tile API](https://developer.here.com/documentation/map-tile/dev_guide/topics/quick-start-map-tile.html), which is needed for the webtile examples, you need to generate an `apikey`.
 
-For XYZ Vector Tiles, you need an `access_token` that you can generate yourself from the
-[Token Manager](https://xyz.api.here.com/token-ui/). You can see a step-by-step guide [here](https://www.here.xyz/api/getting-token/).
+For [Vector Tiles](https://developer.here.com/documentation/vector-tiles-api/dev_guide/index.html), you need to generate an `apikey`.
 
 These credentials need to be passed to the Service in order to retrieve tiles, please see the
 examples to check how it is done.

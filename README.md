@@ -59,13 +59,20 @@ const map = new harp.MapView({
 });
 const controls = new harp.MapControls(map);
 const omvDataSource = new harp.OmvDataSource({
-   baseUrl: "https://xyz.api.here.com/tiles/herebase.02",
+   baseUrl: "https://vector.hereapi.com/v2/vectortiles/base/mc",
    apiFormat: harp.APIFormat.XYZOMV,
    styleSetName: "tilezen",
-   authenticationCode: "YOUR-XYZ-TOKEN",
+   authenticationCode: "YOUR-APIKEY",
+   authenticationMethod: {
+         method: harp.AuthenticationMethod.QueryString,
+         name: "apikey"
+   }
 });
 map.addDataSource(omvDataSource);
 ```
+
+> How to get access to the data? How to get your apikey?
+> Please see the [Acquiring credentials section](docs/GettingStartedGuide.md#credentials)
 
 ### Node modules
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 HERE Europe B.V.
+ * Copyright (C) 2017-2020 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -7,16 +7,16 @@
 import { MapControls, MapControlsUI } from "@here/harp-map-controls";
 import { CopyrightElementHandler, MapView } from "@here/harp-mapview";
 import { WebTileDataSource } from "@here/harp-webtile-datasource";
-import { appCode, appId } from "../config";
+import { apikey } from "../config";
 
 // tslint:disable:max-line-length
 /**
  * A simple example using the webtile data source. Tiles are retrieved from
  * ```
- * https://1.base.maps.api.here.com/maptile/2.1/maptile/newest/normal.day/${level}/${column}/${row}/512/png8?app_id=${appId}&app_code=${appCode}
+ * https://1.base.maps.ls.hereapi.com/maptile/2.1/maptile/newest/normal.day/${level}/${column}/${row}/512/png8?apikey=${apikey}
  * ```
  *
- * A [[WebTileDataSource]] is created with specified applications' appId and appCode passed
+ * A [[WebTileDataSource]] is created with specified applications' apikey passed
  * as [[WebTileDataSourceOptions]]
  * ```typescript
  * [[include:harp_gl_datasource_webtile_1.ts]]
@@ -60,8 +60,7 @@ export namespace WebTileDataSourceExample {
 
     // snippet:harp_gl_datasource_webtile_1.ts
     const webTileDataSource = new WebTileDataSource({
-        appId,
-        appCode,
+        apikey,
         ppi: WebTileDataSource.ppiValue.ppi320
     });
     // end:harp_gl_datasource_webtile_1.ts

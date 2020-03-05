@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 HERE Europe B.V.
+ * Copyright (C) 2017-2020 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -7,7 +7,7 @@
 import { Theme } from "@here/harp-datasource-protocol";
 import { MapControls } from "@here/harp-map-controls";
 import { CopyrightElementHandler, MapView } from "@here/harp-mapview";
-import { APIFormat, OmvDataSource } from "@here/harp-omv-datasource";
+import { APIFormat, AuthenticationMethod, OmvDataSource } from "@here/harp-omv-datasource";
 
 const defaultTheme = "resources/berlin_tilezen_base.json";
 
@@ -47,11 +47,14 @@ export class View {
             ]);
 
         const omvDataSource = new OmvDataSource({
-            baseUrl: "https://xyz.api.here.com/tiles/herebase.02",
+            baseUrl: "https://vector.hereapi.com/v2/vectortiles/base/mc",
             apiFormat: APIFormat.XYZOMV,
             styleSetName: "tilezen",
-            maxZoomLevel: 17,
-            authenticationCode: "<%= access_token %>"
+            authenticationCode: "<%= apikey %>",
+            authenticationMethod: {
+                method: AuthenticationMethod.QueryString,
+                name: "apikey"
+            }
         });
         mapView.addDataSource(omvDataSource);
 

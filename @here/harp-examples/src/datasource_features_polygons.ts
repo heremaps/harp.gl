@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 HERE Europe B.V.
+ * Copyright (C) 2017-2020 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -13,9 +13,9 @@ import {
 import { GeoCoordinates, sphereProjection } from "@here/harp-geoutils";
 import { MapControls, MapControlsUI } from "@here/harp-map-controls";
 import { MapView } from "@here/harp-mapview";
-import { APIFormat, OmvDataSource } from "@here/harp-omv-datasource";
+import { APIFormat, AuthenticationMethod, OmvDataSource } from "@here/harp-omv-datasource";
 import * as THREE from "three";
-import { accessToken, copyrightInfo } from "../config";
+import { apikey, copyrightInfo } from "../config";
 import { COUNTRIES } from "../resources/countries";
 
 /**
@@ -334,11 +334,14 @@ export namespace PolygonsFeaturesExample {
 
         const baseMap = new OmvDataSource({
             name: "basemap",
-            baseUrl: "https://xyz.api.here.com/tiles/herebase.02",
+            baseUrl: "https://vector.hereapi.com/v2/vectortiles/base/mc",
             apiFormat: APIFormat.XYZOMV,
             styleSetName: "tilezen",
-            maxZoomLevel: 17,
-            authenticationCode: accessToken,
+            authenticationCode: apikey,
+            authenticationMethod: {
+                method: AuthenticationMethod.QueryString,
+                name: "apikey"
+            },
             copyrightInfo
         });
         mapView.addDataSource(baseMap);
