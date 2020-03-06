@@ -218,7 +218,7 @@ export abstract class Projection {
         sourceProjection: Projection,
         worldPos: Vector3Like,
         result: WorldCoordinates
-    ): typeof result;
+    ): WorldCoordinates;
 
     /**
      * Reproject a world position from the given source [[Projection]].

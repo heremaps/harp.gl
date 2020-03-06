@@ -30,6 +30,9 @@ jobs:
         - yarn test-browser --headless-firefox
         - yarn test-browser --headless-chrome
         - ./scripts/test-npm-packages.sh
+        - yarn workspace @here/harp-geoutils api-extractor run
+        - yarn workspace @here/harp-datasource-protocol api-extractor run
+        - yarn workspace @here/harp-mapview run api-extractor
 
     - name: "Build & Deploy"
       script:

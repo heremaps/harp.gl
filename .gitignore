@@ -8,5 +8,4 @@ test-npm-packages-app/
 rendering-test-results/
 *.tsbuildinfo
 *.ts.map
-
 credentials.js
