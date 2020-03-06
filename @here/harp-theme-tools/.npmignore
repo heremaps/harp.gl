@@ -10,3 +10,5 @@ tsconfig.json
 .gitignore
 .gitreview
 *.tgz
+*.map
+*.tsbuildinfo

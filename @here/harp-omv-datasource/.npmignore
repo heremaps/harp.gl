@@ -6,3 +6,5 @@ tsconfig.json
 .gitreview
 *.proto
 *.tgz
+*.map
+*.tsbuildinfo

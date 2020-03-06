@@ -6,5 +6,7 @@ test-npm-packages-app/
 .DS_Store
 .nyc_output/
 rendering-test-results/
+*.tsbuildinfo
+*.ts.map
 
 credentials.js
