@@ -71,13 +71,12 @@ function baseRenderingTest(
             await testFun(canvas);
 
             await ibct.assertCanvasMatchesReference(canvas, name, options);
-        } catch (error) {
+        } finally {
             if (canvas !== undefined) {
                 canvas.width = 0;
                 canvas.height = 0;
                 canvas = undefined!;
             }
-            throw error;
         }
     });
 }
@@ -170,12 +169,11 @@ function mapViewFeaturesRenderingTest(
             } else {
                 await waitForEvent(mapView, MapViewEventNames.FrameComplete);
             }
-        } catch (error) {
+        } finally {
             if (mapView !== undefined) {
                 mapView.dispose();
                 mapView = undefined!;
             }
-            throw error;
         }
     });
 }
