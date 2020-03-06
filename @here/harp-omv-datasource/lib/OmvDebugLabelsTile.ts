@@ -197,7 +197,8 @@ export class OmvDebugLabelsTile extends OmvTile {
                                 labelElement.reserveSpace = false;
                                 labelElement.alwaysOnTop = true;
                                 labelElement.ignoreDistance = true;
-                                this.addUserTextElement(labelElement);
+                                labelElement.priority = TextElement.HIGHEST_PRIORITY;
+                                this.addTextElement(labelElement);
                             }
                         }
                     }

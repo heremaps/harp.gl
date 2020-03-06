@@ -479,7 +479,8 @@ export class StyleSetEvaluator {
             try {
                 style._whenExpr = Array.isArray(style.when)
                     ? Expr.fromJSON(style.when, this.m_definitions, this.m_definitionExprCache)
-                    : Expr.parse(style.when);
+                    : // tslint:disable-next-line: deprecation
+                      Expr.parse(style.when);
 
                 // search for usages of '$layer' and any other
                 // special symbol that can be used to speed up the evaluation

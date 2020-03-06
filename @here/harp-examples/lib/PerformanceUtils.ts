@@ -442,18 +442,11 @@ export namespace PerformanceUtils {
         force?: boolean
     ) {
         const mapView = mapViewApp.mapView;
-        const targetCoordinates = new GeoCoordinates(lat, long);
-        let cameraCoordinates: GeoCoordinates = targetCoordinates;
-        if (pitch > 0) {
-            cameraCoordinates = MapViewUtils.getCameraCoordinatesFromTargetCoordinates(
-                targetCoordinates,
-                zoomLevel,
-                yaw,
-                pitch,
-                mapView
-            );
-        }
-        mapView.setCameraGeolocationAndZoom(cameraCoordinates, zoomLevel, yaw, pitch);
+        const target = new GeoCoordinates(lat, long);
+        const distance = MapViewUtils.calculateDistanceFromZoomLevel(mapView, zoomLevel);
+        const tilt = THREE.MathUtils.radToDeg(pitch);
+        const heading = -THREE.MathUtils.radToDeg(yaw);
+        mapView.lookAt(target, distance, tilt, heading);
 
         if (force === true) {
             await delay(0);

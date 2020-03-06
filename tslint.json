@@ -46,7 +46,8 @@
         "semicolon": [true, "always", "ignore-bound-class-methods"],
         "variable-name": false,
         "no-this-assignment": [true, { "allow-destructuring": true }],
-        "explicit-override": [true, "exclude-interfaces", "new-line-after-decorators-and-tags"]
+        "explicit-override": [true, "exclude-interfaces", "new-line-after-decorators-and-tags"],
+        "deprecation": true
     },
     "extends": ["tslint:latest", "tslint-config-prettier", "tslint-override"],
     "linterOptions": {

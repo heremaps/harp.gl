@@ -15,6 +15,8 @@ import { Vector3Like } from "../math/Vector3Like";
 import { EarthConstants } from "./EarthConstants";
 import { Projection, ProjectionType } from "./Projection";
 
+import * as THREE from "three";
+
 class MercatorProjection extends Projection {
     protected static clamp(val: number, min: number, max: number): number {
         return Math.min(Math.max(min, val), max);
@@ -55,7 +57,7 @@ class MercatorProjection extends Projection {
         result?: WorldBoundingBox
     ): WorldBoundingBox {
         if (!result) {
-            result = MathUtils.newEmptyBox3() as WorldBoundingBox;
+            result = (new THREE.Box3() as Box3Like) as WorldBoundingBox;
         }
         result.min.x = 0;
         result.min.y = 0;
@@ -131,7 +133,7 @@ class MercatorProjection extends Projection {
         const latitudeSpan = worldNorth - worldSouth;
         const longitudeSpan = (geoBox.longitudeSpan / 360) * this.unitScale;
         if (!result) {
-            result = MathUtils.newEmptyBox3() as WorldBoundingBox;
+            result = (new THREE.Box3() as Box3Like) as WorldBoundingBox;
         }
         if (isBox3Like(result)) {
             result.min.x = worldCenter.x - longitudeSpan * 0.5;

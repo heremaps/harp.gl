@@ -43,7 +43,8 @@ describe("ScreenCollisions", function() {
             line: new THREE.Line3(new THREE.Vector3(0, -10, 1), new THREE.Vector3(1, 11, 1))
         };
         // Box around the center
-        const intersectsLineWithBoxAtCenter = sc.intersectsLine(
+        // tslint:disable-next-line: no-string-literal
+        const intersectsLineWithBoxAtCenter = sc["intersectsLine"](
             new CollisionBox({
                 minX: -10,
                 minY: -10,
@@ -66,7 +67,8 @@ describe("ScreenCollisions", function() {
         };
 
         // Box around shifted right
-        const intersectsLineWithShiftedBox = sc.intersectsLine(
+        // tslint:disable-next-line: no-string-literal
+        const intersectsLineWithShiftedBox = sc["intersectsLine"](
             new CollisionBox({
                 minX: 10,
                 minY: -10,
@@ -89,7 +91,8 @@ describe("ScreenCollisions", function() {
         };
 
         // Box around center
-        const intersectsLineWithShiftedBox = sc.intersectsLine(
+        // tslint:disable-next-line: no-string-literal
+        const intersectsLineWithShiftedBox = sc["intersectsLine"](
             new CollisionBox({
                 minX: -10,
                 minY: -10,
@@ -118,7 +121,8 @@ describe("ScreenCollisions", function() {
             maxX: 10,
             maxY: 10
         });
-        const intersectsLineWithShiftedBox = sc.intersectsLine(box, line);
+        // tslint:disable-next-line: no-string-literal
+        const intersectsLineWithShiftedBox = sc["intersectsLine"](box, line);
         assert.isTrue(intersectsLineWithShiftedBox);
     });
     it("line intersection test via isAllocated method", function() {

@@ -72,6 +72,7 @@ export class RoadPicker {
             ] as SolidLineTechnique;
 
             const isDynamic =
+                // tslint:disable-next-line: deprecation
                 technique.metricUnit === "Pixel" ||
                 Expr.isExpr(technique.lineWidth) ||
                 typeof technique.lineWidth === "string";
@@ -81,6 +82,7 @@ export class RoadPicker {
                     ? isDynamic
                         ? () => {
                               const unitFactor =
+                                  // tslint:disable-next-line: deprecation
                                   technique.metricUnit === "Pixel" ? mapView.pixelToWorld : 1.0;
                               return (
                                   getPropertyValue(technique.lineWidth, mapView.env) *

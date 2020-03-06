@@ -488,11 +488,15 @@ export namespace ExtendedTileInfo {
             if (technique.text !== undefined) {
                 return evaluateTechniqueAttr(context, technique.text);
             }
+            // tslint:disable-next-line: deprecation
             if (technique.label !== undefined) {
+                // tslint:disable-next-line: deprecation
                 const name = env.lookup(technique.label);
                 return typeof name === "string" ? name : undefined;
             }
+            // tslint:disable-next-line: deprecation
             useAbbreviation = technique.useAbbreviation;
+            // tslint:disable-next-line: deprecation
             useIsoCode = technique.useIsoCode;
         }
 

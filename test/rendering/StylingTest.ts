@@ -25,7 +25,7 @@ import {
     Theme
 } from "@here/harp-datasource-protocol";
 import { FeaturesDataSource } from "@here/harp-features-datasource";
-import { GeoBox, GeoCoordinates, MathUtils, ProjectionType } from "@here/harp-geoutils";
+import { GeoBox, GeoCoordinates, ProjectionType } from "@here/harp-geoutils";
 import { MapView, MapViewEventNames } from "@here/harp-mapview";
 import { GeoJsonTiler } from "@here/harp-mapview-decoder/index-worker";
 import { OmvTileDecoder } from "@here/harp-omv-datasource/index-worker";
@@ -94,7 +94,7 @@ function mapViewFitGeoBox(mapView: MapView, geoBox: GeoBox, margin: number = 0.1
     const viewSize = Math.max(size.x, size.y);
 
     const fov = mapView.camera.fov;
-    const height = (viewSize / 2) * (1 / Math.tan(MathUtils.degToRad(fov / 2)));
+    const height = (viewSize / 2) * (1 / Math.tan(THREE.MathUtils.degToRad(fov / 2)));
 
     boundingBox.getCenter(tmpVec3);
     const { latitude, longitude } = mapView.projection.unprojectPoint(tmpVec3);

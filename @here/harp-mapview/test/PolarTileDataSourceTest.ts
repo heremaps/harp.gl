@@ -10,7 +10,6 @@
 import { StyleDeclaration } from "@here/harp-datasource-protocol";
 import {
     GeoCoordinates,
-    MathUtils,
     MercatorConstants,
     sphereProjection,
     TileKey,
@@ -23,7 +22,7 @@ import { MapView } from "../lib/MapView";
 import { PolarTileDataSource } from "../lib/PolarTileDataSource";
 import { Tile } from "../lib/Tile";
 
-const MAXIMUM_LATITUDE = MathUtils.radToDeg(MercatorConstants.MAXIMUM_LATITUDE);
+const MAXIMUM_LATITUDE = THREE.MathUtils.radToDeg(MercatorConstants.MAXIMUM_LATITUDE);
 
 describe("PolarTileDataSource", function() {
     let dataSource: PolarTileDataSource;

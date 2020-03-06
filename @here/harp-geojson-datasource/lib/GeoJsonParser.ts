@@ -195,6 +195,7 @@ export class GeoJsonParser {
                             center,
                             projection,
                             techniqueIndex,
+                            // tslint:disable-next-line: deprecation
                             technique.label!,
                             buffers.textGeometryBuffer,
                             feature.properties
@@ -231,6 +232,7 @@ export class GeoJsonParser {
                             center,
                             projection,
                             techniqueIndex,
+                            // tslint:disable-next-line: deprecation
                             technique.label!,
                             buffers.textGeometryBuffer,
                             feature.properties
@@ -270,6 +272,7 @@ export class GeoJsonParser {
                             center,
                             projection,
                             techniqueIndex,
+                            // tslint:disable-next-line: deprecation
                             technique.label!,
                             buffers.textPathGeometryBuffer,
                             feature.properties
@@ -300,6 +303,7 @@ export class GeoJsonParser {
                             center,
                             projection,
                             techniqueIndex,
+                            // tslint:disable-next-line: deprecation
                             technique.label!,
                             buffers.textPathGeometryBuffer,
                             feature.properties
@@ -328,6 +332,7 @@ export class GeoJsonParser {
                             center,
                             projection,
                             techniqueIndex,
+                            // tslint:disable-next-line: deprecation
                             technique.label!,
                             buffers.textGeometryBuffer,
                             feature.properties
@@ -356,6 +361,7 @@ export class GeoJsonParser {
                             center,
                             projection,
                             techniqueIndex,
+                            // tslint:disable-next-line: deprecation
                             technique.label!,
                             buffers.textGeometryBuffer,
                             feature.properties

@@ -10,7 +10,6 @@ import { Definitions, StyleSet, Theme } from "@here/harp-datasource-protocol";
 import { MapEnv, StyleSetEvaluator } from "@here/harp-datasource-protocol/index-decoder";
 import {
     GeoCoordinates,
-    MathUtils,
     MercatorConstants,
     polarTilingScheme,
     TileKey,
@@ -66,7 +65,7 @@ export interface PolarTileDataSourceOptions {
  */
 export class PolarTileDataSource extends DataSource {
     private m_tilingScheme: TilingScheme = polarTilingScheme;
-    private m_maxLatitude = MathUtils.radToDeg(MercatorConstants.MAXIMUM_LATITUDE);
+    private m_maxLatitude = THREE.MathUtils.radToDeg(MercatorConstants.MAXIMUM_LATITUDE);
     private m_geometryLevelOffset: number;
     private m_debugTiles: boolean;
 

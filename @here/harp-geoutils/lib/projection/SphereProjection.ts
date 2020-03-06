@@ -162,7 +162,7 @@ class SphereProjection extends Projection {
     worldExtent<Bounds extends Box3Like>(
         _minElevation: number,
         maxElevation: number,
-        result: Bounds = MathUtils.newEmptyBox3() as Bounds
+        result: Bounds = (new THREE.Box3() as Box3Like) as Bounds
     ): Bounds {
         const radius = this.unitScale + maxElevation;
         result.min.x = -radius;
@@ -210,13 +210,13 @@ class SphereProjection extends Projection {
     /** @override */
     projectBox<Bounds extends Box3Like | OrientedBox3Like>(
         geoBox: GeoBox,
-        result: Bounds = MathUtils.newEmptyBox3() as Bounds
+        result: Bounds = (new THREE.Box3() as Box3Like) as Bounds
     ): Bounds {
         if (isBox3Like(result)) {
             return makeBox3(geoBox, result, this.unitScale);
         } else if (isOrientedBox3Like(result)) {
             if (geoBox.longitudeSpan >= 90) {
-                const bounds = makeBox3(geoBox, MathUtils.newEmptyBox3(), this.unitScale);
+                const bounds = makeBox3(geoBox, new THREE.Box3() as Box3Like, this.unitScale);
                 MathUtils.newVector3(1, 0, 0, result.xAxis);
                 MathUtils.newVector3(0, 1, 0, result.yAxis);
                 MathUtils.newVector3(0, 0, 1, result.zAxis);

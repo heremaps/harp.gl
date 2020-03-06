@@ -236,7 +236,6 @@ export class GeoCoordinates implements GeoCoordinatesLike {
 
     /**
      * Clones this `GeoCoordinates`.
-     * @deprecated
      */
     clone(): GeoCoordinates {
         return new GeoCoordinates(this.latitude, this.longitude, this.altitude);

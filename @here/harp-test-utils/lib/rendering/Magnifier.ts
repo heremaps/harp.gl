@@ -189,20 +189,20 @@ export function installMagnifier(
     }
 
     const onKeyDown = (ev: KeyboardEvent) => {
-        switch (ev.which) {
-            case 37: // left
+        switch (ev.key) {
+            case "ArrowLeft":
                 sx = Math.max(0, sx - 1);
                 break;
 
-            case 38: // up
+            case "ArrowUp":
                 sy = Math.max(0, sy - 1);
                 break;
 
-            case 39: // right
+            case "ArrowRight":
                 sx = Math.min(actualClone.width - 1, sx + 1);
                 break;
 
-            case 40: // down
+            case "ArrowDown":
                 sy = Math.min(actualClone.height - 1, sy + 1);
                 break;
 
