@@ -1,18 +1,13 @@
 {
+    "extends": "./tsconfig.base.json",
     "compilerOptions": {
-        "module": "commonjs",
-        "target": "es2017",
         "sourceMap": true,
         "baseUrl": ".",
         "rootDir": ".",
         "outDir": "./dist/node_modules/",
-        "jsx": "react",
-        "jsxFactory": "React.createElement",
-        "strict": true,
         "resolveJsonModule": true,
         "downlevelIteration": true,
-        "newLine": "LF",
-        "noImplicitReturns": true
+        "newLine": "LF"
     },
     "exclude": ["node_modules", "@here/*/node_modules", "dist"]
 }

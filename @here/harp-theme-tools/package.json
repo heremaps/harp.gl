@@ -6,10 +6,10 @@
         "harp-theme-optimizer": "lib/cli-build-theme.js"
     },
     "scripts": {
-        "build": "tsc",
-        "watch": "tsc -w",
+        "build": "tsc --build",
+        "watch": "tsc --build -w",
         "buildTheme": "ts-node src/cli-build-theme.ts",
-        "prepare": "cross-env tsc --sourceMap false $EXTRA_TSC_ARGS"
+        "prepare": "cross-env tsc --build $EXTRA_TSC_ARGS"
     },
     "repository": {
         "type": "git",

@@ -1,14 +1,30 @@
 {
+    "extends": "../../tsconfig.base.json",
     "compilerOptions": {
-        "target": "es2017",
-        "module": "commonjs",
         "sourceMap": true,
-        "declaration": true,
-        "strictNullChecks": true,
-        "noImplicitAny": true,
-        "noImplicitReturns": true,
-        "noImplicitThis": true,
-        "noUnusedLocals": false,
-        "downlevelIteration": true
-    }
+        "composite": true,
+        "incremental": true,
+        "declarationMap": true
+    },
+    "exclude": ["dist/**", "test/**", "node_modules"],
+    "references": [
+        {
+            "path": "../harp-datasource-protocol"
+        },
+        {
+            "path": "../harp-geometry"
+        },
+        {
+            "path": "../harp-geoutils"
+        },
+        {
+            "path": "../harp-lrucache"
+        },
+        {
+            "path": "../harp-mapview"
+        },
+        {
+            "path": "../harp-utils"
+        }
+    ]
 }

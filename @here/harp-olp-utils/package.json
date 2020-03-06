@@ -4,9 +4,9 @@
     "description": "HERE OLP utilities",
     "main": "index.js",
     "scripts": {
-        "build": "tsc $EXTRA_TSC_ARGS",
+        "build": "tsc --build $EXTRA_TSC_ARGS",
         "test": "cross-env mocha --require source-map-support/register $EXTRA_MOCHA_ARGS ./test/*.js",
-        "prepare": "cross-env tsc --sourceMap false $EXTRA_TSC_ARGS"
+        "prepare": "cross-env tsc --build $EXTRA_TSC_ARGS"
     },
     "repository": {
         "type": "git",

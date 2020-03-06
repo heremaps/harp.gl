@@ -38,7 +38,7 @@ const commonConfig = {
             three: "THREE",
             fs: "undefined"
         },
-        function(context, request, callback) {
+        function (context, request, callback) {
             return /three\.module\.js$/.test(request) ? callback(null, "THREE") : callback();
         }
     ],
@@ -58,6 +58,7 @@ const commonConfig = {
                     configFile: path.join(process.cwd(), "tsconfig.json"),
                     onlyCompileBundledFiles: true,
                     transpileOnly: prepareOnly,
+                    projectReferences: true,
                     compilerOptions: {
                         sourceMap: !prepareOnly,
                         declaration: false
@@ -167,7 +168,7 @@ const allEntries = Object.assign({}, webpackEntries, htmlEntries);
  *     [examplePage: string]: string // maps example page to example source
  * }
  */
-const exampleDefs = Object.keys(allEntries).reduce(function(r, entry) {
+const exampleDefs = Object.keys(allEntries).reduce(function (r, entry) {
     r[entry + ".html"] = path.relative(__dirname, allEntries[entry]);
     return r;
 }, {});
