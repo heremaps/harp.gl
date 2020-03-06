@@ -6,3 +6,5 @@ tsconfig.json
 .gitreview
 webpack-test.config.js
 *.tgz
+*.map
+*.tsbuildinfo

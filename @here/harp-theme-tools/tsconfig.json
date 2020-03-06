@@ -1,18 +1,15 @@
 {
+    "extends": "../../tsconfig.base.json",
     "compilerOptions": {
-        "target": "es2017",
-        "module": "commonjs",
-        "rootDir": "src",
-        "outDir": "lib",
         "sourceMap": true,
-        "declaration": true,
-        "strictNullChecks": true,
-        "noImplicitAny": true,
-        "noImplicitReturns": true,
-        "noImplicitThis": true,
-        "noUnusedLocals": false,
-        "downlevelIteration": true
+        "composite": true,
+        "incremental": true,
+        "declarationMap": true
     },
-    "exclude": ["node_modules"],
-    "include": ["src/*.ts"]
+    "exclude": ["dist/**", "test/**", "node_modules"],
+    "references": [
+        {
+            "path": "../harp-mapview"
+        }
+    ]
 }

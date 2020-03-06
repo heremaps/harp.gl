@@ -1,17 +1,9 @@
 {
+    "extends": "../../tsconfig.base.json",
     "compilerOptions": {
-        "target": "es2017",
-        "module": "commonjs",
         "sourceMap": true,
         "declaration": false,
-        "strictNullChecks": true,
-        "noImplicitAny": true,
-        "noImplicitReturns": true,
-        "noImplicitThis": true,
-        "noUnusedLocals": false,
         "resolveJsonModule": true,
-        "downlevelIteration": true,
-        "jsx": "react",
         "skipLibCheck": true,
         "baseUrl": "../../"
     }

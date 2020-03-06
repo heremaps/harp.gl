@@ -1,14 +1,24 @@
 {
+    "extends": "../../tsconfig.base.json",
     "compilerOptions": {
-        "target": "es2017",
-        "module": "commonjs",
         "sourceMap": true,
-        "declaration": true,
-        "strictNullChecks": true,
-        "noImplicitAny": true,
-        "noImplicitReturns": true,
-        "noImplicitThis": true,
-        "noUnusedLocals": false,
-        "downlevelIteration": true
-    }
+        "composite": true,
+        "incremental": true,
+        "declarationMap": true
+    },
+    "exclude": ["dist/**", "test/**", "node_modules"],
+    "references": [
+        {
+            "path": "../harp-geoutils"
+        },
+        {
+            "path": "../harp-mapview"
+        },
+        {
+            "path": "../harp-mapview-decoder"
+        },
+        {
+            "path": "../harp-utils"
+        }
+    ]
 }

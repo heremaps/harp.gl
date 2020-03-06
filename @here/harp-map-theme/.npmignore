@@ -7,3 +7,5 @@ tsconfig.json
 resources-dev/
 scripts/
 *.tgz
+*.map
+*.tsbuildinfo
