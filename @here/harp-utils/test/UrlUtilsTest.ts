@@ -42,6 +42,12 @@ describe("UrlUtils", function() {
             assert.equal(resolveReferenceUri("file://foo/", "bar.js"), "file://foo/bar.js");
             assert.equal(resolveReferenceUri("file://foo/", "/bar.js"), "file:///bar.js");
         });
+        it("handles data: scheme", function() {
+            assert.equal(
+                resolveReferenceUri("https://bar.com/foo/", "data:whatever"),
+                "data:whatever"
+            );
+        });
         it("handles relative parent URL", function() {
             assert.equal(
                 resolveReferenceUri("resources/day.json", "font.json"),
