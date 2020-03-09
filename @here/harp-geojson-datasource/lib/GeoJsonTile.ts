@@ -253,8 +253,9 @@ export class GeoJsonTile extends Tile {
         textElement.mayOverlap = mayOverlap;
         textElement.reserveSpace = reserveSpace;
         textElement.distanceScale = distanceScale;
+        textElement.priority = TextElement.HIGHEST_PRIORITY;
 
-        this.addUserTextElement(textElement);
+        this.addTextElement(textElement);
     }
 
     /**
@@ -333,8 +334,9 @@ export class GeoJsonTile extends Tile {
         textElement.mayOverlap = mayOverlap;
         textElement.reserveSpace = false;
         textElement.distanceScale = distanceScale;
+        textElement.priority = TextElement.HIGHEST_PRIORITY;
 
-        this.addUserTextElement(textElement);
+        this.addTextElement(textElement);
     }
 
     /**
@@ -450,7 +452,8 @@ export class GeoJsonTile extends Tile {
             reserveSpace,
             featureId
         };
+        textElement.priority = TextElement.HIGHEST_PRIORITY;
 
-        this.addUserTextElement(textElement);
+        this.addTextElement(textElement);
     }
 }

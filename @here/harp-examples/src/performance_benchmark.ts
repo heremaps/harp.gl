@@ -732,7 +732,7 @@ export namespace PerformanceBenchmark {
             .add(guiOptions, "Theme", guiOptions.Theme)
             .onChange((themeUrl: string) => {
                 theme = themeUrl;
-                ThemeLoader.loadAsync(themeUrl).then((newTheme: Theme) => {
+                ThemeLoader.load(themeUrl).then((newTheme: Theme) => {
                     mapViewApp.mapView.clearTileCache();
                     mapViewApp.mapView.theme = newTheme;
                 });

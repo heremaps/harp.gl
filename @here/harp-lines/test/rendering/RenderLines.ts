@@ -203,7 +203,7 @@ describe("Rendering lines: ", function() {
     }
     async function renderLines(
         config: TestLineParams[],
-        context: Mocha.ITestCallbackContext,
+        context: Mocha.Context,
         name: string,
         lineStyle: SolidLineMaterialParameters,
         camera?: THREE.Camera

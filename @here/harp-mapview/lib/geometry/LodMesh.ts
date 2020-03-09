@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { MathUtils } from "@here/harp-geoutils";
 import * as THREE from "three";
 
 /**
@@ -60,7 +59,7 @@ export class LodMesh extends THREE.Mesh {
         if (!this.m_geometries || this.m_geometries.length === 0) {
             return;
         }
-        level = MathUtils.clamp(level, 0, this.m_geometries.length - 1);
+        level = THREE.MathUtils.clamp(level, 0, this.m_geometries.length - 1);
 
         this.geometry = this.m_geometries[level];
     }

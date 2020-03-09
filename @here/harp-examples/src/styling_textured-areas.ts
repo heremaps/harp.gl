@@ -110,9 +110,7 @@ West</a>.</p>`;
 
     function initializeMapView(id: string): MapView {
         const canvas = document.getElementById(id) as HTMLCanvasElement;
-        const themePromise: Promise<Theme> = ThemeLoader.loadAsync(
-            "resources/berlin_tilezen_base.json"
-        );
+        const themePromise: Promise<Theme> = ThemeLoader.load("resources/berlin_tilezen_base.json");
         const map = new MapView({
             canvas,
             theme: themePromise.then(modifyTheme)

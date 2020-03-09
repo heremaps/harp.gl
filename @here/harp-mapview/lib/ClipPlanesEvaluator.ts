@@ -6,7 +6,7 @@
 
 import { ViewRanges } from "@here/harp-datasource-protocol/lib/ViewRanges";
 import { EarthConstants, Projection, ProjectionType } from "@here/harp-geoutils";
-import { assert, MathUtils } from "@here/harp-utils";
+import { assert } from "@here/harp-utils";
 import * as THREE from "three";
 import { MapView } from "./MapView";
 import { MapViewUtils } from "./Utils";
@@ -722,8 +722,16 @@ export class TiltViewClipPlanesEvaluator extends TopViewClipPlanesEvaluator {
             const aspect = 1;
             // Half fov angle in radians
             const halfFovAngle = THREE.MathUtils.degToRad((cam.fov * aspect) / 2);
-            topAngleRad = MathUtils.clamp(cameraTilt + halfFovAngle, -halfPiLimit, halfPiLimit);
-            bottomAngleRad = MathUtils.clamp(cameraTilt - halfFovAngle, -halfPiLimit, halfPiLimit);
+            topAngleRad = THREE.MathUtils.clamp(
+                cameraTilt + halfFovAngle,
+                -halfPiLimit,
+                halfPiLimit
+            );
+            bottomAngleRad = THREE.MathUtils.clamp(
+                cameraTilt - halfFovAngle,
+                -halfPiLimit,
+                halfPiLimit
+            );
             z1 = z2 = cameraAltitude;
         }
         // For orthographic projection:
@@ -869,7 +877,7 @@ export class TiltViewClipPlanesEvaluator extends TopViewClipPlanesEvaluator {
         const farMin = cameraAltitude - this.minElevation;
         const farMax = mapView.targetDistance * this.farMaxRatio;
         viewRanges.near = Math.max(viewRanges.near, this.nearMin);
-        viewRanges.far = MathUtils.clamp(viewRanges.far, farMin, farMax);
+        viewRanges.far = THREE.MathUtils.clamp(viewRanges.far, farMin, farMax);
 
         // Apply margins.
         const nearFarMargin = (this.nearFarMarginRatio * (viewRanges.near + viewRanges.far)) / 2;
@@ -941,7 +949,7 @@ export class TiltViewClipPlanesEvaluator extends TopViewClipPlanesEvaluator {
         cameraToOrigin.normalize();
         const lookAt = camera.getWorldDirection(this.m_tmpVectors[1]).normalize();
         const cosAlpha1 = cameraToOrigin.dot(lookAt);
-        const cameraPitch = Math.acos(MathUtils.clamp(cosAlpha1, -1.0, 1.0));
+        const cameraPitch = Math.acos(THREE.MathUtils.clamp(cosAlpha1, -1.0, 1.0));
 
         return cameraPitch;
     }

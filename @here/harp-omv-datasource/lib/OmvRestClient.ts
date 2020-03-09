@@ -346,7 +346,9 @@ export class OmvRestClient implements DataProvider {
             return this.params.authenticationCode;
         } else if (this.params.authenticationCode !== undefined) {
             return this.params.authenticationCode();
+            // tslint:disable-next-line: deprecation
         } else if (this.params.getBearerToken !== undefined) {
+            // tslint:disable-next-line: deprecation
             return this.params.getBearerToken();
         } else {
             return undefined;
@@ -357,6 +359,7 @@ export class OmvRestClient implements DataProvider {
      * Get default authnentication method basing on apiFormat and other params.
      */
     private getDefaultAuthMethod() {
+        // tslint:disable-next-line: deprecation
         if (this.params.getBearerToken !== undefined) {
             return AuthenticationTypeBearer;
         }

@@ -76,7 +76,7 @@ async function main() {
                 logger.info(`(stdout is tty, saving HTML to ${fileName})`);
                 fs.writeFileSync(fileName, reportHtml, "utf-8");
             } else {
-                fs.writeSync(1, new Buffer(reportHtml, "utf-8"));
+                fs.writeSync(1, Buffer.from(reportHtml, "utf-8"));
             }
             process.exit(overallTestsResult ? 0 : 1);
         });

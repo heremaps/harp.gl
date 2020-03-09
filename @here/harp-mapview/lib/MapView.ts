@@ -2002,6 +2002,7 @@ export class MapView extends THREE.EventDispatcher {
      * @param yawDeg Camera yaw in degrees, counter-clockwise (as opposed to heading), starting
      * north.
      * @param pitchDeg Camera pitch in degrees.
+     * @deprecated Use [[MapView.lookAt]] instead.
      */
     setCameraGeolocationAndZoom(
         geoPos: GeoCoordinates,

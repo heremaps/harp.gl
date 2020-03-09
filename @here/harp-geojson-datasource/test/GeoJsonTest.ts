@@ -322,6 +322,7 @@ describe("@here-geojson-datasource", () => {
 
         const tile = new FakeGeoJsonTile(datasource, new TileKey(1, 1, 5));
         tile.createTextElements(decodedTile, mapView.env);
+        // tslint:disable-next-line: deprecation
         const userTextElements = tile.userTextElements;
 
         // Text element for points.

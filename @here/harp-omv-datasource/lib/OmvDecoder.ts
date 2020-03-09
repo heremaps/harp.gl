@@ -542,6 +542,7 @@ export namespace OmvDecoder {
         ) {
             this.geoBox = this.tilingScheme.getGeoBox(tileKey);
 
+            // tslint:disable-next-line: deprecation
             this.targetProjection.projectBox(this.geoBox, this.projectedTileBounds);
 
             this.targetProjection.projectBox(this.geoBox, this.projectedBoundingBox);

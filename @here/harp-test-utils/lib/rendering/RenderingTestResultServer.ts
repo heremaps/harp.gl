@@ -40,7 +40,7 @@ function parseDataUri(dataUri: string) {
 
     return {
         contentType: matches[1],
-        buffer: new Buffer(split[1], "base64")
+        buffer: Buffer.from(split[1], "base64")
     };
 }
 

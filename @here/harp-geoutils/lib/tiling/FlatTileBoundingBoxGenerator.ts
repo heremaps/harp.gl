@@ -6,12 +6,13 @@
 
 import { GeoBox } from "../coordinates/GeoBox";
 import { Box3Like } from "../math/Box3Like";
-import { MathUtils } from "../math/MathUtils";
 import { Vector3Like } from "../math/Vector3Like";
 import { Projection } from "../projection/Projection";
 import { SubdivisionScheme } from "./SubdivisionScheme";
 import { TileKey } from "./TileKey";
 import { TilingScheme } from "./TilingScheme";
+
+import * as THREE from "three";
 
 /**
  * `FlatTileBoundingBoxGenerator` generates bounding boxes in world and geo coordinates for a given
@@ -78,7 +79,7 @@ export class FlatTileBoundingBoxGenerator {
         const originY = this.m_worldBox.min.y + sizeY * tileKey.row;
 
         if (!result) {
-            result = MathUtils.newEmptyBox3();
+            result = new THREE.Box3();
         }
 
         result.min.x = originX;

@@ -338,7 +338,10 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
         const worldLines: number[][] = []; // lines in world space.
         const uvs: number[][] = [];
         const offsets: number[][] = [];
-        const { projectedTileBounds } = this.m_decodeInfo;
+        const projectedTileBounds = this.m_decodeInfo.targetProjection.projectBox(
+            this.m_decodeInfo.geoBox
+        );
+
         let localLineSegments: number[][]; // lines in target tile space for special dashes.
 
         const tileWidth = projectedTileBounds.max.x - projectedTileBounds.min.x;
@@ -1227,6 +1230,7 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
             const featureHeight = context.env.lookup("height") as number;
             const styleSetDefaultHeight = evaluateTechniqueAttr<number>(
                 context,
+                // tslint:disable-next-line: deprecation
                 extrudedPolygonTechnique.defaultHeight
             );
             height =

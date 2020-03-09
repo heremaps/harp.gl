@@ -18,7 +18,8 @@ function evaluate(expr: string | JsonExpr | Expr, env?: Env | ValueMap): Value {
     return (Expr.isExpr(expr)
         ? expr
         : typeof expr === "string"
-        ? Expr.parse(expr)
+        ? // tslint:disable-next-line: deprecation
+          Expr.parse(expr)
         : Expr.fromJSON(expr)
     ).evaluate(env || new Env());
 }

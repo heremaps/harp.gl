@@ -20,7 +20,7 @@ import * as THREE from "three";
 import * as nodeUrl from "url";
 const URL = typeof window !== "undefined" ? window.URL : nodeUrl.URL;
 
-import { GeoCoordinates, MathUtils, sphereProjection } from "@here/harp-geoutils";
+import { GeoCoordinates, sphereProjection } from "@here/harp-geoutils";
 import * as TestUtils from "@here/harp-test-utils/lib/WebGLStub";
 import { MapView, MapViewEventNames } from "../lib/MapView";
 import { MapViewFog } from "../lib/MapViewFog";
@@ -108,6 +108,7 @@ describe("MapView", function() {
         const zoomSpy = sinon.spy(MapViewUtils, "zoomOnTargetPosition");
 
         mapView = new MapView({ canvas });
+        // tslint:disable-next-line: deprecation
         mapView.setCameraGeolocationAndZoom(coords, 18, 10, 20);
 
         expect(zoomSpy.calledOnce).to.be.true;
@@ -132,8 +133,8 @@ describe("MapView", function() {
         expect(mapView.geoCenter.longitude).to.equal(13.349968698429997);
         const attitude = MapViewUtils.extractAttitude(mapView, mapView.camera);
         // Account for floating point imprecision
-        expect(MathUtils.radToDeg(attitude.yaw)).to.be.closeTo(-20, 1e-13);
-        expect(MathUtils.radToDeg(attitude.pitch)).to.be.closeTo(10, 1e-13);
+        expect(THREE.MathUtils.radToDeg(attitude.yaw)).to.be.closeTo(-20, 1e-13);
+        expect(THREE.MathUtils.radToDeg(attitude.pitch)).to.be.closeTo(10, 1e-13);
     });
 
     // tslint:disable-next-line: max-line-length
@@ -153,8 +154,8 @@ describe("MapView", function() {
         const attitude = MapViewUtils.extractAttitude(mapView, mapView.camera);
         // TODO: For sphere projection the result is off by quite a bit.
         // Are these only floating-point issues?
-        expect(MathUtils.radToDeg(attitude.yaw)).to.be.closeTo(-20, 1e-3);
-        expect(MathUtils.radToDeg(attitude.pitch)).to.be.closeTo(9.55275, 1e-3);
+        expect(THREE.MathUtils.radToDeg(attitude.yaw)).to.be.closeTo(-20, 1e-3);
+        expect(THREE.MathUtils.radToDeg(attitude.pitch)).to.be.closeTo(9.55275, 1e-3);
     });
 
     it("Correctly sets geolocation with GeoPointLike as parameter in constructor", function() {
@@ -171,8 +172,8 @@ describe("MapView", function() {
         expect(mapView.geoCenter.longitude).to.equal(13.349968698429997);
         const attitude = MapViewUtils.extractAttitude(mapView, mapView.camera);
         // Account for floating point imprecision
-        expect(MathUtils.radToDeg(attitude.yaw)).to.be.closeTo(-20, 1e-13);
-        expect(MathUtils.radToDeg(attitude.pitch)).to.be.closeTo(10, 1e-13);
+        expect(THREE.MathUtils.radToDeg(attitude.yaw)).to.be.closeTo(-20, 1e-13);
+        expect(THREE.MathUtils.radToDeg(attitude.pitch)).to.be.closeTo(10, 1e-13);
     });
 
     // tslint:disable-next-line: max-line-length
@@ -193,8 +194,8 @@ describe("MapView", function() {
         expect(mapView.geoCenter.longitude).to.equal(13.349968698429997);
         const attitude = MapViewUtils.extractAttitude(mapView, mapView.camera);
         // Account for floating point imprecision
-        expect(MathUtils.radToDeg(attitude.yaw)).to.be.closeTo(-20, 1e-13);
-        expect(MathUtils.radToDeg(attitude.pitch)).to.be.closeTo(10, 1e-13);
+        expect(THREE.MathUtils.radToDeg(attitude.yaw)).to.be.closeTo(-20, 1e-13);
+        expect(THREE.MathUtils.radToDeg(attitude.pitch)).to.be.closeTo(10, 1e-13);
     });
 
     it("Correctly sets geolocation with LatLngLike as parameter in constructor", function() {
@@ -214,8 +215,8 @@ describe("MapView", function() {
         expect(mapView.geoCenter.longitude).to.equal(13.349968698429997);
         const attitude = MapViewUtils.extractAttitude(mapView, mapView.camera);
         // Account for floating point imprecision
-        expect(MathUtils.radToDeg(attitude.yaw)).to.be.closeTo(-20, 1e-13);
-        expect(MathUtils.radToDeg(attitude.pitch)).to.be.closeTo(10, 1e-13);
+        expect(THREE.MathUtils.radToDeg(attitude.yaw)).to.be.closeTo(-20, 1e-13);
+        expect(THREE.MathUtils.radToDeg(attitude.pitch)).to.be.closeTo(10, 1e-13);
     });
 
     it("Correctly sets event listeners and handlers webgl context restored", function() {

@@ -134,10 +134,7 @@ export class RenderingTestHelper {
     }
     private static preloadedImageCache = new Map<string, Promise<ImageData>>();
 
-    constructor(
-        public mochaTest: Mocha.ITestCallbackContext,
-        public baseImageProps: TestImageProps
-    ) {}
+    constructor(public mochaTest: Mocha.Context, public baseImageProps: TestImageProps) {}
 
     /**
      * Save actual image only with comparison status OK

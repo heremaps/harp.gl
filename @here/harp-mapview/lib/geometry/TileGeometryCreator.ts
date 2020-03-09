@@ -746,6 +746,7 @@ export class TileGeometryCreator {
                         (renderer, mat) => {
                             const lineMaterial = mat as SolidLineMaterial;
                             const unitFactor =
+                                // tslint:disable-next-line: deprecation
                                 technique.metricUnit === "Pixel" ? mapView.pixelToWorld : 1.0;
 
                             if (hasDynamicColor) {
@@ -1126,6 +1127,7 @@ export class TileGeometryCreator {
                             const lineMaterial = mat as SolidLineMaterial;
 
                             const unitFactor =
+                                // tslint:disable-next-line: deprecation
                                 outlineTechnique.metricUnit === "Pixel"
                                     ? mapView.pixelToWorld
                                     : 1.0;

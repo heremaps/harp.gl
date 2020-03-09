@@ -68,7 +68,7 @@ export namespace MathUtils {
      *
      * @param degrees Value in degrees.
      * @returns Value in radians.
-     * @deprecated
+     * @deprecated use THREE.MathUtils.degToRad instead
      */
     export const degToRad = THREE.MathUtils.degToRad;
 

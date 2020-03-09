@@ -24,6 +24,7 @@ import { GeoCoordinates, TileKey } from "@here/harp-geoutils";
 import {
     MapView,
     MapViewEventNames,
+    MapViewUtils,
     TextElementsRenderer,
     TileLoaderState
 } from "@here/harp-mapview";
@@ -45,7 +46,7 @@ declare const global: any;
 
 // sets the given point in the middle of the screen
 async function displayLocation(mapView: MapView, location: GeoCoordinates) {
-    mapView.setCameraGeolocationAndZoom(location, 2);
+    mapView.lookAt(location, MapViewUtils.calculateDistanceFromZoomLevel(mapView, 2));
     await waitForEvent(mapView, MapViewEventNames.CameraPositionChanged);
 
     await willEventually(() => {
@@ -239,7 +240,7 @@ describe.skip("MapView Picking", async function() {
 
         const userData = tileInfo.lineGroup.userData[index] as any;
         assert.isDefined(userData);
-        assert.deepInclude(userData, GEOJSON_DATA.features[1].properties);
+        assert.include(userData, GEOJSON_DATA.features[1].properties);
     });
 
     it("decodedTile contains polygon objInfos", async () => {
@@ -256,7 +257,7 @@ describe.skip("MapView Picking", async function() {
         assert.equal(polygonGeometry.objInfos!.length, 1);
 
         const objInfo = polygonGeometry.objInfos![0] as any;
-        assert.deepInclude(objInfo, GEOJSON_DATA.features[0].properties);
+        assert.include(objInfo, GEOJSON_DATA.features[0].properties);
     });
 
     // emulate a real pick in browser
@@ -278,7 +279,7 @@ describe.skip("MapView Picking", async function() {
             .filter(item => item.userData !== undefined);
 
         assert.equal(usableIntersections.length, 1);
-        assert.deepInclude(usableIntersections[0].userData, POLYGON_DATA.properties);
+        assert.include(usableIntersections[0].userData, POLYGON_DATA.properties);
     });
 
     // emulate a real pick in browser
@@ -297,7 +298,7 @@ describe.skip("MapView Picking", async function() {
             .filter(item => item.userData !== undefined);
 
         assert.equal(usableIntersections.length, 1);
-        assert.deepInclude(usableIntersections[0].userData, LINE_DATA.properties);
+        assert.include(usableIntersections[0].userData, LINE_DATA.properties);
     });
 
     // emulate a real pick in browser
@@ -317,6 +318,6 @@ describe.skip("MapView Picking", async function() {
             .filter(item => item.userData !== undefined);
 
         assert.equal(usableIntersections.length, 1);
-        assert.deepInclude(usableIntersections[0].userData, POINT_DATA.properties);
+        assert.include(usableIntersections[0].userData, POINT_DATA.properties);
     });
 });
