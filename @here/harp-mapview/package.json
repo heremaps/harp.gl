@@ -1,6 +1,6 @@
 {
     "name": "@here/harp-mapview",
-    "version": "0.13.0",
+    "version": "0.13.1",
     "description": "Functionality needed to render a map.",
     "keywords": [
         "map",

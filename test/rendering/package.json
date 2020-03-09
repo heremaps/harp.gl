@@ -1,6 +1,6 @@
 {
     "name": "@here/harp-rendering-test",
-    "version": "0.13.0",
+    "version": "0.13.1",
     "private": true,
     "author": {
         "name": "HERE Europe B.V.",
@@ -8,13 +8,13 @@
     },
     "devDependencies": {
         "@here/harp-datasource-protocol": "^0.13.0",
-        "@here/harp-debug-datasource": "^0.13.0",
-        "@here/harp-features-datasource": "^0.13.0",
-        "@here/harp-geojson-datasource": "^0.13.0",
+        "@here/harp-debug-datasource": "^0.13.1",
+        "@here/harp-features-datasource": "^0.13.1",
+        "@here/harp-geojson-datasource": "^0.13.1",
         "@here/harp-geoutils": "^0.13.0",
-        "@here/harp-mapview": "^0.13.0",
-        "@here/harp-mapview-decoder": "^0.13.0",
-        "@here/harp-omv-datasource": "^0.13.0",
+        "@here/harp-mapview": "^0.13.1",
+        "@here/harp-mapview-decoder": "^0.13.1",
+        "@here/harp-omv-datasource": "^0.13.1",
         "@here/harp-test-utils": "^0.13.0",
         "@here/harp-utils": "^0.13.0",
         "@types/chai": "^4.2.7",

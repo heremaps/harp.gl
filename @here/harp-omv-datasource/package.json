@@ -1,6 +1,6 @@
 {
     "name": "@here/harp-omv-datasource",
-    "version": "0.13.0",
+    "version": "0.13.1",
     "description": "HERE OMV Data source",
     "main": "index.js",
     "typings": "index",
@@ -33,8 +33,8 @@
         "@here/harp-geoutils": "^0.13.0",
         "@here/harp-lines": "^0.13.0",
         "@here/harp-lrucache": "^0.13.0",
-        "@here/harp-mapview": "^0.13.0",
-        "@here/harp-mapview-decoder": "^0.13.0",
+        "@here/harp-mapview": "^0.13.1",
+        "@here/harp-mapview-decoder": "^0.13.1",
         "@here/harp-materials": "^0.13.0",
         "@here/harp-text-canvas": "^0.13.0",
         "@here/harp-transfer-manager": "^0.13.0",
@@ -45,7 +45,7 @@
     },
     "devDependencies": {
         "@here/harp-fetch": "^0.13.0",
-        "@here/harp-geojson-datasource": "^0.13.0",
+        "@here/harp-geojson-datasource": "^0.13.1",
         "@here/harp-test-utils": "^0.13.0",
         "@types/chai": "^4.1.2",
         "@types/earcut": "^2.1.0",
