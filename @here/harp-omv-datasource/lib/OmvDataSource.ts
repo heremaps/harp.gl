@@ -152,7 +152,7 @@ export interface OmvDataSourceParameters {
     minZoomLevel?: number;
 
     /**
-     * Optional maximum zoom level (storage level) for [[Tile]]s. Default is 14.
+     * Optional maximum zoom level (storage level) for [[Tile]]s. Default is 17.
      */
     maxZoomLevel?: number;
 
@@ -221,7 +221,7 @@ export class OmvDataSource extends TileDataSource<OmvTile> {
             copyrightInfo: m_params.copyrightInfo,
             copyrightProvider: m_params.copyrightProvider,
             minZoomLevel: getOptionValue(m_params.minZoomLevel, 1),
-            maxZoomLevel: getOptionValue(m_params.maxZoomLevel, 14),
+            maxZoomLevel: getOptionValue(m_params.maxZoomLevel, 17),
             storageLevelOffset: getOptionValue(m_params.storageLevelOffset, -1)
         });
 
