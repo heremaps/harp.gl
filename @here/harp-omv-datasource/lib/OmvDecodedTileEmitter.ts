@@ -338,15 +338,13 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
         const worldLines: number[][] = []; // lines in world space.
         const uvs: number[][] = [];
         const offsets: number[][] = [];
-        const projectedTileBounds = this.m_decodeInfo.targetProjection.projectBox(
-            this.m_decodeInfo.geoBox
-        );
+        const projectedBoundingBox = this.m_decodeInfo.projectedBoundingBox;
 
         let localLineSegments: number[][]; // lines in target tile space for special dashes.
 
-        const tileWidth = projectedTileBounds.max.x - projectedTileBounds.min.x;
-        const tileHeight = projectedTileBounds.max.y - projectedTileBounds.min.y;
-        const tileSizeInMeters = Math.max(tileWidth, tileHeight);
+        const tileWidth = projectedBoundingBox.extents.x * 2;
+        const tileHeight = projectedBoundingBox.extents.y * 2;
+        const tileSizeWorld = Math.max(tileWidth, tileHeight);
 
         let computeTexCoords: TexCoordsFunction | undefined;
         let texCoordinateType: TextureCoordinateType | undefined;
@@ -575,11 +573,11 @@ export class OmvDecodedTileEmitter implements IOmvEmitter {
                     // split jagged label paths to keep processing and rendering only those that
                     // have no sharp corners, which would not be rendered anyway.
 
-                    const metersPerPixel = tileSizeInMeters / this.m_decodeInfo.tileSizeOnScreen;
+                    const worldUnitsPerPixel = tileSizeWorld / this.m_decodeInfo.tileSizeOnScreen;
                     const minEstimatedLabelLength =
                         MIN_AVERAGE_CHAR_WIDTH *
                         text.length *
-                        metersPerPixel *
+                        worldUnitsPerPixel *
                         SIZE_ESTIMATION_FACTOR;
                     const minEstimatedLabelLengthSqr =
                         minEstimatedLabelLength * minEstimatedLabelLength;
