@@ -516,14 +516,6 @@ export namespace OmvDecoder {
          */
         readonly center = new THREE.Vector3();
 
-        /**
-         * The tile bounds in the world space of the
-         * target projection [[DecodeInfo.targetProjection]].
-         *
-         * @deprecated
-         */
-        readonly projectedTileBounds = new THREE.Box3();
-
         worldTileProjectionCookie?: WorldTileProjectionCookie;
 
         /**
@@ -541,9 +533,6 @@ export namespace OmvDecoder {
             readonly tileSizeOnScreen: number
         ) {
             this.geoBox = this.tilingScheme.getGeoBox(tileKey);
-
-            // tslint:disable-next-line: deprecation
-            this.targetProjection.projectBox(this.geoBox, this.projectedTileBounds);
 
             this.targetProjection.projectBox(this.geoBox, this.projectedBoundingBox);
             this.projectedBoundingBox.getCenter(this.center);
