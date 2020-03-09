@@ -72,7 +72,7 @@ function findDuplicateById(
         // an issue on the map data side. Submit a ticket to the corresponding map backend
         // issue tracking system if available (e.g. OLPRPS project in JIRA for OMV),
         // indicating affected labels including tile keys, texts and feature id.
-        logger.warn(
+        logger.debug(
             `Text feature id ${element.featureId} collision between "${element.text} and \
              ${candidate.text}`
         );
