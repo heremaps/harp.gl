@@ -16,6 +16,7 @@ import {
     JsonExpr,
     JsonValue,
     MapEnv,
+    Value,
     ValueMap
 } from "../lib/Expr";
 import { getPropertyValue } from "../lib/InterpolatedProperty";
@@ -39,10 +40,17 @@ describe("ExprEvaluator", function() {
 
     function evaluate(
         expr: JsonValue,
-        values: ValueMap = defaultEnv,
+        envOrValues?: Env | ValueMap,
         scope: ExprScope = ExprScope.Value
     ) {
-        const env = new MapEnv(values);
+        let env: Env;
+        if (envOrValues === undefined) {
+            env = new MapEnv(defaultEnv);
+        } else if (Env.isEnv(envOrValues)) {
+            env = envOrValues;
+        } else {
+            env = new MapEnv(envOrValues);
+        }
         return Expr.fromJSON(expr).evaluate(env, scope);
     }
 
@@ -51,9 +59,12 @@ describe("ExprEvaluator", function() {
         const dynamic = expr.isDynamic();
         const deps = expr.dependencies();
         const properties = Array.from(deps.properties).sort();
+        const featureState = deps.featureState;
+        const featureInfo = featureState !== undefined ? { featureState } : {};
         return {
-            properties: Array.from(properties).sort(),
-            dynamic
+            properties,
+            dynamic,
+            ...featureInfo
         };
     }
 
@@ -1348,6 +1359,173 @@ describe("ExprEvaluator", function() {
             assert.isFalse(isDynamic(["in", ["get", "two"], ["aa", "bb"]]));
 
             assert.isTrue(isDynamic(["in", ["zoom"], ["literal", [1, 2]]]));
+        });
+    });
+
+    describe("Operator 'feature-state'", () => {
+        it("Syntax", () => {
+            assert.throws(
+                () => evaluate(["feature-state", "enabled"], undefined, ExprScope.Value),
+                "feature-state cannot be used in this context"
+            );
+
+            assert.throws(
+                () => evaluate(["feature-state", "enabled"], undefined, ExprScope.Condition),
+                "feature-state cannot be used in this context"
+            );
+
+            assert.throws(
+                () => evaluate(["feature-state"], undefined, ExprScope.Dynamic),
+                "Failed to evaluate expression"
+            );
+        });
+
+        it("Dependencies", () => {
+            assert.deepStrictEqual(dependencies(["feature-state", "enabled"]), {
+                properties: ["$state"],
+                dynamic: true,
+                featureState: true
+            });
+        });
+
+        it("feature state (without state)", () => {
+            assert.strictEqual(
+                evaluate(["feature-state", "enabled"], defaultEnv, ExprScope.Dynamic),
+                null
+            );
+            assert.strictEqual(
+                evaluate(["feature-state", "color"], defaultEnv, ExprScope.Dynamic),
+                null
+            );
+        });
+
+        it("feature state encoded as Map", () => {
+            const $state = new Map<string, Value>([
+                ["enabled", true],
+                ["color", "#f00"]
+            ]);
+
+            assert.strictEqual(
+                evaluate(["feature-state", "enabled"], { $state }, ExprScope.Dynamic),
+                true
+            );
+
+            assert.strictEqual(
+                evaluate(["feature-state", "color"], { $state }, ExprScope.Dynamic),
+                "#f00"
+            );
+        });
+
+        it("feature state encoded as Env", () => {
+            const $state = new (class extends Env {
+                /** @override */
+                lookup(name: string): Value | undefined {
+                    switch (name) {
+                        case "enabled":
+                            return true;
+                        case "color":
+                            return "#f00";
+                        default:
+                            return undefined;
+                    }
+                }
+            })();
+
+            assert.strictEqual(
+                evaluate(["feature-state", "enabled"], { $state }, ExprScope.Dynamic),
+                true
+            );
+
+            assert.strictEqual(
+                evaluate(["feature-state", "color"], { $state }, ExprScope.Dynamic),
+                "#f00"
+            );
+        });
+
+        it("feature env", () => {
+            const features = [
+                new MapEnv({ enabled: true, color: "#f00" }),
+                new MapEnv({ enabled: true, color: "#00f" })
+            ];
+
+            const FeatureEnv = class extends Env {
+                constructor(readonly id: number, readonly parent?: Env) {
+                    super();
+                }
+
+                /** @override */
+                lookup(name: string): Value | undefined {
+                    if (name === "$state") {
+                        return features[this.id] ?? null;
+                    }
+                    return this.parent?.lookup(name);
+                }
+            };
+
+            assert.strictEqual(
+                evaluate(["feature-state", "enabled"], new FeatureEnv(0), ExprScope.Dynamic),
+                true
+            );
+
+            assert.strictEqual(
+                evaluate(["feature-state", "color"], new FeatureEnv(0), ExprScope.Dynamic),
+                "#f00"
+            );
+
+            assert.strictEqual(
+                evaluate(["feature-state", "enabled"], new FeatureEnv(1), ExprScope.Dynamic),
+                true
+            );
+
+            assert.strictEqual(
+                evaluate(["feature-state", "color"], new FeatureEnv(1), ExprScope.Dynamic),
+                "#00f"
+            );
+        });
+
+        it("feature env with inherited properties", () => {
+            const mapEnv = new MapEnv({
+                time: 241276
+            });
+
+            const features = [
+                new MapEnv({ enabled: true, color: "#f00" }, mapEnv),
+                new MapEnv({ enabled: true, color: "#00f" }, mapEnv)
+            ];
+
+            const FeatureEnv = class extends Env {
+                constructor(readonly id: number, readonly parent?: Env) {
+                    super();
+                }
+
+                /** @override */
+                lookup(name: string): Value | undefined {
+                    if (name === "$state") {
+                        return features[this.id] ?? null;
+                    }
+                    return this.parent?.lookup(name);
+                }
+            };
+
+            assert.strictEqual(
+                evaluate(["feature-state", "enabled"], new FeatureEnv(0), ExprScope.Dynamic),
+                true
+            );
+
+            assert.strictEqual(
+                evaluate(["feature-state", "enabled"], new FeatureEnv(1), ExprScope.Dynamic),
+                true
+            );
+
+            assert.strictEqual(
+                evaluate(["feature-state", "time"], new FeatureEnv(0), ExprScope.Dynamic),
+                241276
+            );
+
+            assert.strictEqual(
+                evaluate(["feature-state", "time"], new FeatureEnv(1), ExprScope.Dynamic),
+                241276
+            );
         });
     });
 });
