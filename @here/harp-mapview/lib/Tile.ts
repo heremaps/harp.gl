@@ -285,11 +285,6 @@ export class Tile implements CachedResource {
     readonly boundingBox = new OrientedBox3();
 
     /**
-     * Maximum height of geometry on this tile above ground level.
-     */
-    maxGeometryHeight: number = 0;
-
-    /**
      * A record of road data that cannot be intersected with THREE.JS, because the geometry is
      * created in the vertex shader.
      */
@@ -378,9 +373,15 @@ export class Tile implements CachedResource {
     // It's `Undefined` when no text content has been added yet.
     private m_textElementsChanged: boolean | undefined;
 
+    // Center of the tile's bounding box base in world coordinates.
+    private m_center: THREE.Vector3;
     private m_visibleArea: number = 0;
-    private m_minElevation: number = 0;
-    private m_maxElevation: number = 0;
+    private m_minElevation?: number;
+    private m_maxElevation?: number;
+    /**
+     * Maximum height of geometry on this tile above ground level.
+     */
+    private m_maxGeometryHeight?: number;
 
     private m_resourceInfo: TileResourceInfo | undefined;
 
@@ -408,6 +409,7 @@ export class Tile implements CachedResource {
     ) {
         this.geoBox = this.dataSource.getTilingScheme().getGeoBox(this.tileKey);
         this.projection.projectBox(this.geoBox, this.boundingBox);
+        this.m_center = this.boundingBox.position.clone();
         this.m_localTangentSpace = localTangentSpace !== undefined ? localTangentSpace : false;
         this.m_textStyleCache = new TileTextStyleCache(this);
     }
@@ -465,7 +467,7 @@ export class Tile implements CachedResource {
      * The center of this `Tile` in world coordinates.
      */
     get center(): THREE.Vector3 {
-        return this.boundingBox.position;
+        return this.m_center;
     }
 
     /**
@@ -685,11 +687,7 @@ export class Tile implements CachedResource {
      * @note Negative values indicates depressions.
      */
     get minElevation(): number {
-        return this.m_minElevation;
-    }
-
-    set minElevation(elevation: number) {
-        this.m_minElevation = elevation;
+        return this.m_minElevation ?? 0;
     }
 
     /**
@@ -697,11 +695,44 @@ export class Tile implements CachedResource {
      * @note Negative values indicates depressions.
      */
     get maxElevation(): number {
-        return this.m_maxElevation;
+        return this.m_maxElevation ?? 0;
     }
 
-    set maxElevation(elevation: number) {
-        this.m_maxElevation = elevation;
+    /**
+     * @internal
+     * Sets the tile's ground elevation range.
+     *
+     * @param minElevation Minimum tile elevation in meters.
+     * @param maxElevation Maximum tile elevation in meters.
+     */
+    setElevation(minElevation: number, maxElevation: number) {
+        if (this.m_minElevation === minElevation && this.m_maxElevation === maxElevation) {
+            return;
+        }
+        this.m_minElevation = minElevation;
+        this.m_maxElevation = maxElevation;
+
+        if (this.m_maxGeometryHeight !== undefined) {
+            this.updateBoundingBox();
+        }
+    }
+
+    /**
+     * Gets max geometry height
+     */
+    get maxGeometryHeight(): number {
+        return this.m_maxGeometryHeight ?? 0;
+    }
+
+    /**
+     * Sets max geometry height
+     */
+    set maxGeometryHeight(value: number) {
+        this.m_maxGeometryHeight = value;
+
+        if (this.m_minElevation !== undefined && this.m_maxElevation !== undefined) {
+            this.updateBoundingBox();
+        }
     }
 
     /**
@@ -1055,6 +1086,16 @@ export class Tile implements CachedResource {
                 object.setLevelOfDetail(zoomLevel - this.tileKey.level);
             }
         }
+    }
+
+    private updateBoundingBox() {
+        // Update geo/world bboxes once elevation and maximum geometry height have been set.
+        assert(this.m_maxElevation !== undefined);
+        assert(this.m_minElevation !== undefined);
+        assert(this.m_maxGeometryHeight !== undefined);
+        this.geoBox.southWest.altitude = this.m_minElevation;
+        this.geoBox.northEast.altitude = this.m_maxElevation! + this.m_maxGeometryHeight!;
+        this.mapView.projection.projectBox(this.geoBox, this.boundingBox);
     }
 
     private computeResourceInfo(): void {

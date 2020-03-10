@@ -7,6 +7,7 @@
 import { GeometryType, getFeatureId, Technique } from "@here/harp-datasource-protocol";
 import * as THREE from "three";
 
+import { OrientedBox3 } from "@here/harp-geoutils";
 import { MapView } from "./MapView";
 import { MapViewPoints } from "./MapViewPoints";
 import { RoadPicker } from "./RoadPicker";
@@ -97,6 +98,8 @@ export interface PickResult {
     userData?: any;
 }
 
+const tmpOBB = new OrientedBox3();
+
 /**
  * Handles the picking of scene geometry and roads.
  */
@@ -135,7 +138,6 @@ export class PickHandler {
      */
     intersectMapObjects(x: number, y: number): PickResult[] {
         const worldPos = this.mapView.getNormalizedScreenCoordinates(x, y);
-
         const rayCaster = this.mapView.raycasterFromScreenPoint(x, y);
         const pickResults: PickResult[] = [];
 
@@ -147,8 +149,19 @@ export class PickHandler {
             this.mapView.textElementsRenderer.pickTextElements(scenePosition, pickResults);
         }
 
-        // calculate objects intersecting the picking ray
-        const intersects = rayCaster.intersectObjects(this.mapView.worldRootObject.children, true);
+        const intersects: THREE.Intersection[] = [];
+        const tileList = this.mapView.visibleTileSet.dataSourceTileList;
+        tileList.forEach(dataSourceTileList => {
+            dataSourceTileList.renderedTiles.forEach(tile => {
+                tmpOBB.copy(tile.boundingBox);
+                tmpOBB.position.sub(this.mapView.worldCenter);
+
+                if (tmpOBB.intersectsRay(rayCaster.ray) !== undefined) {
+                    rayCaster.intersectObjects(tile.objects, true, intersects);
+                }
+            });
+        });
+
         for (const intersect of intersects) {
             const pickResult: PickResult = {
                 type: PickObjectType.Unspecified,
@@ -228,6 +241,8 @@ export class PickHandler {
         pickResults.sort((a: PickResult, b: PickResult) => {
             return a.distance - b.distance;
         });
+
+        this.mapView.update();
 
         return pickResults;
     }
