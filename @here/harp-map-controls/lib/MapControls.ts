@@ -898,11 +898,12 @@ export class MapControls extends THREE.EventDispatcher {
         this.mapView.update();
     }
 
-    private mouseDoubleClick(e: MouseEvent) {
+    private mouseDoubleClick(event: MouseEvent) {
         if (this.enabled === false) {
             return;
         }
-        this.zoomOnDoubleClickOrTap(e.clientX, e.clientY);
+        const mousePos = this.getPointerPosition(event);
+        this.zoomOnDoubleClickOrTap(mousePos.x, mousePos.y);
     }
 
     private mouseDown(event: MouseEvent) {
@@ -932,8 +933,9 @@ export class MapControls extends THREE.EventDispatcher {
 
         this.dispatchEvent(MAPCONTROL_EVENT_BEGIN_INTERACTION);
 
-        this.m_lastMousePosition.setX(event.clientX);
-        this.m_lastMousePosition.setY(event.clientY);
+        const mousePos = this.getPointerPosition(event);
+        this.m_lastMousePosition.setX(mousePos.x);
+        this.m_lastMousePosition.setY(mousePos.y);
 
         const onMouseMove = this.mouseMove.bind(this);
         const onMouseUp = this.mouseUp.bind(this);
@@ -952,17 +954,18 @@ export class MapControls extends THREE.EventDispatcher {
             return;
         }
 
+        const mousePos = this.getPointerPosition(event);
         this.m_mouseDelta.set(
-            event.clientX - this.m_lastMousePosition.x,
-            event.clientY - this.m_lastMousePosition.y
+            mousePos.x - this.m_lastMousePosition.x,
+            mousePos.y - this.m_lastMousePosition.y
         );
 
         if (this.m_state === State.PAN) {
             const vectors = this.getWorldPositionWithElevation(
                 this.m_lastMousePosition.x,
                 this.m_lastMousePosition.y,
-                event.clientX,
-                event.clientY
+                mousePos.x,
+                mousePos.y
             );
             if (vectors === undefined) {
                 return;
@@ -987,7 +990,7 @@ export class MapControls extends THREE.EventDispatcher {
             );
         }
 
-        this.m_lastMousePosition.set(event.clientX, event.clientY);
+        this.m_lastMousePosition.set(mousePos.x, mousePos.y);
         this.m_zoomAnimationStartTime = performance.now();
 
         this.updateMapView();
@@ -1097,7 +1100,9 @@ export class MapControls extends THREE.EventDispatcher {
     }
 
     private convertTouchPoint(touch: Touch, oldTouchState?: TouchState): TouchState | undefined {
-        const newTouchPoint = new THREE.Vector2(touch.pageX, touch.pageY);
+        // Acquire touch coordinates relative to canvas, this coordinates
+        // are then used to calculate NDC values.
+        const newTouchPoint = this.getPointerPosition(touch);
 
         if (oldTouchState !== undefined) {
             const oldTouchPoint = oldTouchState.currentTouchPoint;
@@ -1392,5 +1397,29 @@ export class MapControls extends THREE.EventDispatcher {
         }
 
         this.handlePan();
+    }
+
+    /**
+     * Acquire mouse or touch pointer position relative to canvas for `MouseEvent` or `Touch` event.
+     *
+     * Function takes into account canvas position in client space (including scrolling) as also
+     * canvas scaling factor.
+     *
+     * @param event The mouse event.
+     * @returns [[THREE.Vector2]] containing _x_, _y_ mouse pointer position.
+     */
+    private getPointerPosition(event: MouseEvent | Touch): THREE.Vector2 {
+        const canvasSize = utils.getWidthAndHeightFromCanvas(this.domElement);
+        // Absolute size of a canvas
+        const rect = this.domElement.getBoundingClientRect();
+        // TODO: Test if scaling is needed and works on HiDPI devices.
+        const scaleX = Math.round(rect.width) / canvasSize.width;
+        const scaleY = Math.round(rect.height) / canvasSize.height;
+
+        // Scale mouse coordinates after they have, been adjusted to be relative to element.
+        return new THREE.Vector2(
+            (event.clientX - Math.floor(rect.left)) * scaleX,
+            (event.clientY - Math.floor(rect.top)) * scaleY
+        );
     }
 }
