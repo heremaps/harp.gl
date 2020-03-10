@@ -7,7 +7,7 @@
 // tslint:disable:only-arrow-functions
 //    Mocha discourages using arrow functions, see https://mochajs.org/#arrow-functions
 
-import { assert } from "chai";
+import { assert, expect } from "chai";
 
 import * as THREE from "three";
 
@@ -180,5 +180,127 @@ describe("OrientedBox3", function() {
             assert.equal(box.distanceToPoint(new THREE.Vector3(20, 20, 20)), Math.sqrt(300));
             assert.equal(box.distanceToPoint(new THREE.Vector3(-20, -20, -20)), Math.sqrt(300));
         });
+    });
+
+    describe("intersectsRay", function() {
+        interface RayIntersectionTestCase {
+            name: string;
+            // a test case will be created for each box in the list.
+            boxes: Array<{
+                name: string; // appended to testcase name.
+                basis: THREE.Matrix4;
+            }>;
+            // this ray will be rotated to the basis of the box.
+            ray: { o: number[]; dir: number[] };
+            result?: number; // Expected intersect distance if given, no intersect otherwise.
+        }
+
+        const defaultAABB = { name: "aabb", basis: new THREE.Matrix4() };
+
+        const OBB45degRot = {
+            name: "obb",
+            basis: new THREE.Matrix4().makeBasis(
+                new THREE.Vector3(2, 2, -2 * Math.SQRT2).normalize(),
+                new THREE.Vector3(Math.SQRT2 - 2, Math.SQRT2 + 2, 2).normalize(),
+                new THREE.Vector3(Math.SQRT2 + 2, Math.SQRT2 - 2, 2).normalize()
+            )
+        };
+
+        const testCases: RayIntersectionTestCase[] = [
+            {
+                name: "ray on x axis towards origin hits box at origin",
+                boxes: [defaultAABB, OBB45degRot],
+                ray: { o: [20, 0, 0], dir: [-1, 0, 0] },
+                result: 10
+            },
+            {
+                name: "ray on y axis towards infinity misses box at origin",
+                boxes: [defaultAABB, OBB45degRot],
+                ray: { o: [0, 20, 0], dir: [0, 1, 0] }
+            },
+            {
+                name: "ray collinear to box edge hits",
+                boxes: [defaultAABB],
+                ray: { o: [20, 10, 10], dir: [-1, 0, 0] },
+                result: 10
+            },
+            {
+                name: "ray tangent to box face hits",
+                boxes: [defaultAABB, OBB45degRot],
+                ray: { o: [20, 3, 3], dir: [-1, 0, 0] },
+                result: 10
+            },
+            {
+                name: "ray parallel to box face outside of box misses",
+                boxes: [defaultAABB, OBB45degRot],
+                ray: { o: [20, -10.001, 1], dir: [-1, 0, 0] }
+            },
+            {
+                name: "ray over box misses",
+                boxes: [defaultAABB, OBB45degRot],
+                ray: { o: [11, 11, 11], dir: [-21, -21, -0.9] }
+            },
+            {
+                name: "ray from inside of box hits",
+                boxes: [defaultAABB, OBB45degRot],
+                ray: { o: [-9, -9, -9], dir: [-1, -1, -1] },
+                result: Math.sqrt(3)
+            },
+            {
+                name: "ray from +++ octant towards origin hits box at origin",
+                boxes: [defaultAABB, OBB45degRot],
+                ray: { o: [20, 20, 20], dir: [-1, -1, -1] },
+                result: Math.sqrt(300)
+            },
+            {
+                name: "ray from -+- octant towards origin hits box at origin",
+                boxes: [defaultAABB, OBB45degRot],
+                ray: { o: [-20, 20, -20], dir: [1, -1, 1] },
+                result: Math.sqrt(300)
+            },
+            {
+                name: "ray on box +++ corner pointing outwards hits",
+                boxes: [defaultAABB, OBB45degRot],
+                ray: { o: [10, 10, 10], dir: [1, 1, 1] },
+                result: 0
+            },
+            {
+                name: "ray on box --- corner pointing inwards hits",
+                boxes: [defaultAABB, OBB45degRot],
+                ray: { o: [-10.000001, -10.000001, -10.000001], dir: [1, 1, 1] },
+                result: 0
+            },
+            {
+                name: "ray on box --- corner pointing outwards hits",
+                boxes: [defaultAABB, OBB45degRot],
+                ray: { o: [-10, -10, -10], dir: [-1, -1, -1] },
+                result: 0
+            }
+        ];
+
+        for (const testCase of testCases) {
+            for (const boxParams of testCase.boxes) {
+                it(boxParams.name + ": " + testCase.name, function() {
+                    const box = new OrientedBox3(
+                        new THREE.Vector3(),
+                        boxParams.basis,
+                        new THREE.Vector3(10, 10, 10)
+                    );
+
+                    // Transform ray to box local space.
+                    const ray = new THREE.Ray(
+                        new THREE.Vector3().fromArray(testCase.ray.o),
+                        new THREE.Vector3().fromArray(testCase.ray.dir).normalize()
+                    ).applyMatrix4(box.getRotationMatrix());
+
+                    const actualDistance = box.intersectsRay(ray);
+                    if (testCase.result === undefined) {
+                        assert.isUndefined(actualDistance);
+                    } else {
+                        expect(box.intersectsRay(ray)).to.be.closeTo(testCase.result, 1e-5);
+                    }
+                });
+            }
+        }
     });
 });
