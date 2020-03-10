@@ -36,10 +36,8 @@ jobs:
         # - yarn cov-test --forbid-only
         - yarn build-tests
         # - yarn test --headless-chrome
+        - yarn get-reference-images-rendering-tests
         - yarn test-rendering-tests --headless-chrome
-        - yarn save-reference-rendering-tests
-        - yarn test-rendering-tests --headless-chrome
-        - yarn push-reference-rendering-tests
         - git status
 
     - name: Build & Deploy
