@@ -20,7 +20,7 @@ import * as chaiAsPromised from "chai-as-promised";
 chai.use(chaiAsPromised);
 const { expect } = chai;
 import { TileGeometryCreator } from "@here/harp-mapview/lib/geometry/TileGeometryCreator";
-import { SimpleTileGeometryLoader } from "@here/harp-mapview/lib/geometry/TileGeometryLoader";
+import { TileGeometryLoader } from "@here/harp-mapview/lib/geometry/TileGeometryLoader";
 import { willEventually } from "@here/harp-test-utils";
 import * as sinon from "sinon";
 
@@ -65,12 +65,12 @@ function createFakeDecodedTile(): DecodedTile {
 
 const wait = (ms: number = 0) => new Promise(res => setTimeout(res, ms));
 
-describe("SimpleTileGeometryLoader", function() {
+describe("TileGeometryLoader", function() {
     let tileKey: TileKey;
     let tile: Tile;
     let dataSource: DataSource;
     let mapView: MapView;
-    let geometryLoader: SimpleTileGeometryLoader;
+    let geometryLoader: TileGeometryLoader;
     let sandbox: any;
 
     before(function() {
@@ -82,7 +82,7 @@ describe("SimpleTileGeometryLoader", function() {
 
     beforeEach(function() {
         tile = dataSource.getTile(tileKey)!;
-        geometryLoader = new SimpleTileGeometryLoader(tile);
+        geometryLoader = new TileGeometryLoader(tile);
         tile.tileGeometryLoader = geometryLoader;
         sandbox = sinon.createSandbox();
     });

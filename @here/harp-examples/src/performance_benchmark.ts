@@ -19,7 +19,6 @@ import { PerformanceUtils } from "../lib/PerformanceUtils";
 const logger = LoggerManager.instance.create("PerformanceUtils");
 
 const NAME_NUM_DECODER_OPTION = "Num Decoders";
-const NAME_PHASED_LOADING_OPTION = "Phased Loading";
 const NAME_POWER_PREFERENCE_OPTION = "Power Preference";
 
 function getDecoderCount(str: string): number | undefined {
@@ -50,21 +49,6 @@ function getDecoderCount(str: string): number | undefined {
     return undefined;
 }
 
-function getPhasedLoading(str: string): boolean | undefined {
-    const phasedLoadingOptionString = encodeURIComponent(NAME_PHASED_LOADING_OPTION) + "=";
-    const strIndex = str.indexOf(phasedLoadingOptionString);
-
-    if (strIndex > 0) {
-        const optionSubStr = str
-            .substr(strIndex + phasedLoadingOptionString.length)
-            .toLocaleLowerCase();
-        const phasedLoadingOption = optionSubStr.startsWith("on");
-        logger.log("Phased Loading initialized to", phasedLoadingOption);
-        return phasedLoadingOption;
-    }
-    return undefined;
-}
-
 function getPowerPreference(str: string): string | undefined {
     const powerPreferenceOptionString = encodeURIComponent(NAME_POWER_PREFERENCE_OPTION) + "=";
     const strIndex = str.indexOf(powerPreferenceOptionString);
@@ -85,8 +69,6 @@ function getPowerPreference(str: string): string | undefined {
 function updateUrlOptions() {
     const numDecodersOptionValueStr =
         decoderCount !== undefined ? decoderCount.toFixed(0) : undefined;
-    // Default is "off", so it will not be written to the URL.
-    const phasedLoadingOptionValueStr = phasedLoading === true ? "on" : undefined;
 
     let searchStr = "";
 
@@ -95,16 +77,6 @@ function updateUrlOptions() {
             encodeURIComponent(NAME_NUM_DECODER_OPTION) +
             "=" +
             encodeURIComponent(numDecodersOptionValueStr);
-    }
-
-    if (phasedLoadingOptionValueStr !== undefined) {
-        if (searchStr.length > 0) {
-            searchStr += "&";
-        }
-        searchStr +=
-            encodeURIComponent(NAME_PHASED_LOADING_OPTION) +
-            "=" +
-            encodeURIComponent(phasedLoadingOptionValueStr);
     }
 
     if (powerPreference !== undefined && powerPreference !== "Default") {
@@ -123,7 +95,6 @@ function updateUrlOptions() {
 }
 
 let decoderCount = getDecoderCount(parent.window.location.search);
-let phasedLoading = getPhasedLoading(parent.window.location.search);
 let powerPreference: string | undefined = getPowerPreference(parent.window.location.search);
 
 const powerPreferenceMap: Map<string, MapViewPowerPreference> = new Map();
@@ -793,17 +764,6 @@ export namespace PerformanceBenchmark {
             .setValue(decoderCount === undefined ? undefined : decoderCount.toFixed(0));
 
         benchmarksFolder
-            .add(guiOptions, "PhasedLoading", guiOptions.PhasedLoading)
-            .onChange((phasedLoadingValue: boolean) => {
-                phasedLoading = phasedLoadingValue;
-                if (!settingUpGui) {
-                    alert("New value for 'PhasedLoading' active after browser reload");
-                    updateUrlOptions();
-                }
-            })
-            .setValue(phasedLoading === true);
-
-        benchmarksFolder
             .add(guiOptions, "PixelRatio", guiOptions.PixelRatio)
             .onChange((ratioString: string) => {
                 const ratio = ratioString === "undefined" ? undefined : parseFloat(ratioString);
@@ -893,7 +853,6 @@ export namespace PerformanceBenchmark {
             "mapCanvas",
             ["OMV"],
             decoderCount,
-            phasedLoading,
             powerPreferenceMap.get(powerPreference === undefined ? "Default" : powerPreference)
         );
         if (mapViewApp.mainDataSource !== undefined) {
@@ -963,8 +922,6 @@ export namespace PerformanceBenchmark {
         document.getElementById("showLabels")!.innerHTML = String(showLabels);
         document.getElementById("fpsLimit")!.innerHTML = String(fpsLimit);
         document.getElementById("numDecoders")!.innerHTML = String(numDecoders);
-        document.getElementById("phasedLoading")!.innerHTML =
-            phasedLoading !== undefined ? "on" : "off";
         document.getElementById("cancelled")!.innerHTML = String(isCancelled);
 
         document.getElementById("testStart")!.innerHTML = testStart.toLocaleTimeString();

@@ -46,8 +46,7 @@ import { ElevationProvider } from "./ElevationProvider";
 import { ElevationRangeSource } from "./ElevationRangeSource";
 import { FrustumIntersection } from "./FrustumIntersection";
 import { overlayOnElevation } from "./geometry/overlayOnElevation";
-import { PhasedTileGeometryManager } from "./geometry/PhasedTileGeometryManager";
-import { SimpleTileGeometryManager, TileGeometryManager } from "./geometry/TileGeometryManager";
+import { TileGeometryManager } from "./geometry/TileGeometryManager";
 import { MapViewImageCache } from "./image/MapViewImageCache";
 import { MapViewFog } from "./MapViewFog";
 import { PickHandler, PickResult } from "./PickHandler";
@@ -527,19 +526,6 @@ export interface MapViewOptions extends TextElementsRendererOptions {
     maxFps?: number;
 
     /**
-     * Enable phased loading.
-     *
-     * Enabling this feature allows to minimize performance overhead by distributing geometry
-     * creation over multiple frames, thus decreasing CPU load at single frame for smoother
-     * application feedback and animations.
-     * If `false` or undefined, the geometry on a [[Tile]] is always being created in a single
-     * step, instead of (potentially) over multiple frames.
-     *
-     * @default `false`
-     */
-    enablePhasedLoading?: boolean;
-
-    /**
      * Enable map repeat for planar projections.
      * If `true`, map will be repeated in longitudinal direction continuously.
      * If `false`, map will end on lon -180 & 180 deg.
@@ -984,10 +970,7 @@ export class MapView extends THREE.EventDispatcher {
             mapPassAntialiasSettings
         );
 
-        this.m_tileGeometryManager =
-            this.m_options.enablePhasedLoading === true
-                ? new PhasedTileGeometryManager(this)
-                : new SimpleTileGeometryManager(this);
+        this.m_tileGeometryManager = new TileGeometryManager(this);
 
         if (options.enableMixedLod !== undefined) {
             this.m_enableMixedLod = options.enableMixedLod;
@@ -1772,15 +1755,6 @@ export class MapView extends THREE.EventDispatcher {
         return this.m_options.enableNativeWebglAntialias === undefined
             ? this.pixelRatio < 2.0
             : this.m_options.enableNativeWebglAntialias;
-    }
-
-    /**
-     * Returns 'true' if the phased loading is currently enabled.
-     *
-     * @default `false`.
-     */
-    get phasedLoadingEnabled(): boolean {
-        return this.m_options.enablePhasedLoading === true;
     }
 
     /**

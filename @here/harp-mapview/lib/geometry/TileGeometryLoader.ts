@@ -25,55 +25,9 @@ import { Tile } from "../Tile";
 import { TileGeometryCreator } from "./TileGeometryCreator";
 
 /**
- * Loads the geometry for its [[Tile]]. Derived classes allow for different loading strategies.
+ * Loads the geometry for its [[Tile]]. Loads all geometry in a single step.
  */
-export interface TileGeometryLoader {
-    /**
-     * The [[Tile]] this `TileGeometryLoader` is managing.
-     */
-    tile: Tile;
-
-    /**
-     * `True` if all geometry of the `Tile` has been loaded and the loading process is finished.
-     */
-    isFinished: boolean;
-
-    /**
-     * `True` if the basic geometry has been loaded, and the `Tile` is ready  for display.
-     */
-    basicGeometryLoaded: boolean;
-
-    /**
-     * `True` if all geometry of the `Tile` has been loaded.
-     */
-    allGeometryLoaded: boolean;
-
-    /**
-     * The kinds of geometry stored in this [[Tile]].
-
-     */
-    availableGeometryKinds: GeometryKindSet | undefined;
-
-    /**
-     * Start with or continue with loading geometry. Called repeatedly until `isFinished` is `true`.
-     */
-    update(
-        enabledKinds: GeometryKindSet | undefined,
-        disabledKinds: GeometryKindSet | undefined
-    ): void;
-
-    /**
-     * Dispose of any resources.
-     */
-    dispose(): void;
-
-    /**
-     * Reset the loader to its initial state and cancels any asynchronous work.
-     */
-    reset(): void;
-}
-
-export namespace TileGeometryLoader {
+export class TileGeometryLoader {
     /**
      * Make sure that all technique have their geometryKind set, either from the theme or their
      * default value.
@@ -83,7 +37,7 @@ export namespace TileGeometryLoader {
      * @param {DecodedTile} decodedTile
      * @returns {GeometryKindSet} The set of kinds used in the decodeTile.
      */
-    export function prepareDecodedTile(decodedTile: DecodedTile): GeometryKindSet {
+    static prepareDecodedTile(decodedTile: DecodedTile): GeometryKindSet {
         const foundSet: GeometryKindSet = new GeometryKindSet();
 
         for (const technique of decodedTile.techniques) {
@@ -91,7 +45,7 @@ export namespace TileGeometryLoader {
 
             // Set default kind based on technique.
             if (geometryKind === undefined) {
-                geometryKind = setDefaultGeometryKind(technique);
+                geometryKind = TileGeometryLoader.setDefaultGeometryKind(technique);
             }
 
             if (Array.isArray(geometryKind)) {
@@ -115,7 +69,7 @@ export namespace TileGeometryLoader {
      *
      * @param {Technique} technique
      */
-    export function setDefaultGeometryKind(technique: Technique): GeometryKind | GeometryKindSet {
+    static setDefaultGeometryKind(technique: Technique): GeometryKind | GeometryKindSet {
         let geometryKind = technique.kind;
 
         // Set default kind based on technique.
@@ -146,12 +100,7 @@ export namespace TileGeometryLoader {
 
         return geometryKind;
     }
-}
 
-/**
- * Simplest implementation of a [[TileGeometryLoader]]. It loads all geometry in a single step.
- */
-export class SimpleTileGeometryLoader implements TileGeometryLoader {
     private m_decodedTile?: DecodedTile;
     private m_isFinished: boolean = false;
     private m_availableGeometryKinds: GeometryKindSet | undefined;
@@ -161,14 +110,23 @@ export class SimpleTileGeometryLoader implements TileGeometryLoader {
 
     constructor(private m_tile: Tile) {}
 
+    /**
+     * The [[Tile]] this `TileGeometryLoader` is managing.
+     */
     get tile(): Tile {
         return this.m_tile;
     }
 
+    /**
+     * `True` if all geometry of the `Tile` has been loaded and the loading process is finished.
+     */
     get isFinished(): boolean {
         return this.m_isFinished;
     }
 
+    /**
+     * `True` if geometry of a `Tile` has been loaded but is not fully processed.
+     */
     get geometryCreationPending(): boolean {
         // Geometry loading not yet finished and timeout already set, but not yet processing
         // (m_timeout !== undefined), or timeout callback already in progress
@@ -176,10 +134,16 @@ export class SimpleTileGeometryLoader implements TileGeometryLoader {
         return !this.isFinished && this.m_decodedTile !== undefined;
     }
 
+    /**
+     * `True` if the basic geometry has been loaded, and the `Tile` is ready  for display.
+     */
     get basicGeometryLoaded(): boolean {
         return this.m_tile.hasGeometry;
     }
 
+    /**
+     * `True` if all geometry of the `Tile` has been loaded.
+     */
     get allGeometryLoaded(): boolean {
         return this.m_isFinished;
     }
@@ -203,10 +167,16 @@ export class SimpleTileGeometryLoader implements TileGeometryLoader {
         return this.m_decodedTile;
     }
 
+    /**
+     * The kinds of geometry stored in this [[Tile]].
+     */
     get availableGeometryKinds(): GeometryKindSet | undefined {
         return this.m_availableGeometryKinds;
     }
 
+    /**
+     * Start with or continue with loading geometry. Called repeatedly until `isFinished` is `true`.
+     */
     update(
         enabledKinds: GeometryKindSet | undefined,
         disabledKinds: GeometryKindSet | undefined
@@ -228,8 +198,6 @@ export class SimpleTileGeometryLoader implements TileGeometryLoader {
 
         // Geometry kinds have changed when loading, if so reset entire loading because
         // this geometry loader generates all geometry at once.
-        // TODO: Probably the update() interface will change soon, when phased loading support
-        // will be removed, then this code may be no longer necessary.
         if (
             this.geometryCreationPending &&
             !this.compareGeometryKinds(enabledKinds, disabledKinds)
@@ -247,11 +215,17 @@ export class SimpleTileGeometryLoader implements TileGeometryLoader {
         }
     }
 
+    /**
+     * Dispose of any resources.
+     */
     dispose(): void {
         this.m_decodedTile = undefined;
         // TODO: Release other resource: availableGeometryKind, enabled/disabled sets, timeout?
     }
 
+    /**
+     * Reset the loader to its initial state and cancels any asynchronous work.
+     */
     reset(): void {
         this.m_availableGeometryKinds?.clear();
         this.m_enabledKinds?.clear();

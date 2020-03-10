@@ -20,12 +20,8 @@ export type LineCaps = "Square" | "Round" | "None" | "TriangleOut" | "TriangleIn
 export type LineDashes = "Square" | "Round" | "Diamond";
 
 /**
- * The kind of geometry is used to
- *
- * a) Group objects together, allowing the group to be hidden or displayed.
- *
- * b) Assigning the objects a loading phase. If a [[PhasedTileGeometryManager]] is used, techniques
- *      without a `GeometryKind` may not be processed (at the desired phase).
+ * The kind of geometry is used to group objects together,
+ * allowing the group to be hidden or displayed.
  *
  * Any string can be used to specify the kind of the technique in a style in the theme file. Is is
  * suggested to specify multiple kinds for specific types of data. For a highway, the following list

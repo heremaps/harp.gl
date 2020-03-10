@@ -23,7 +23,7 @@ import { createDefaultClipPlanesEvaluator } from "../lib/ClipPlanesEvaluator";
 import { DataSource } from "../lib/DataSource";
 import { FrustumIntersection } from "../lib/FrustumIntersection";
 import { TileGeometryCreator } from "../lib/geometry/TileGeometryCreator";
-import { SimpleTileGeometryManager } from "../lib/geometry/TileGeometryManager";
+import { TileGeometryManager } from "../lib/geometry/TileGeometryManager";
 import { MapView, MapViewDefaults } from "../lib/MapView";
 import { Tile } from "../lib/Tile";
 import { TileOffsetUtils } from "../lib/Utils";
@@ -62,7 +62,7 @@ class Fixture {
     worldCenter: THREE.Vector3;
     camera: THREE.PerspectiveCamera;
     mapView: MapView;
-    tileGeometryManager: SimpleTileGeometryManager;
+    tileGeometryManager: TileGeometryManager;
     ds: DataSource[];
     frustumIntersection: FrustumIntersection;
     vts: VisibleTileSet;
@@ -75,7 +75,7 @@ class Fixture {
             getOptionValue(params.projection, mercatorProjection)
         ) as MapView;
         (this.mapView as any).camera = this.camera;
-        this.tileGeometryManager = new SimpleTileGeometryManager(this.mapView);
+        this.tileGeometryManager = new TileGeometryManager(this.mapView);
         this.ds[0].attach(this.mapView);
         this.frustumIntersection = new FrustumIntersection(
             this.camera,
