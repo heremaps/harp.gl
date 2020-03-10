@@ -413,13 +413,13 @@ export class WebTileDataSource extends DataSource {
  * Definitions of variable values to be used with `WebTileDataSource`
  */
 export namespace WebTileDataSource {
-    export const enum ppiValue {
+    export enum ppiValue {
         ppi72 = 72,
         ppi250 = 250,
         ppi320 = 320,
         ppi500 = 500
     }
-    export const enum resolutionValue {
+    export enum resolutionValue {
         resolution256 = 256,
         resolution512 = 512
     }
