@@ -1,9 +1,23 @@
 {
-    "extends": "../tsconfig.json",
+    "extends": "../tsconfig.base.json",
     "compilerOptions": {
-        "module": "commonjs",
-        "target": "es2017",
+        "sourceMap": true,
+        "declaration": false,
         "resolveJsonModule": true
     },
-    "exclude": ["node_modules", "dist"]
+    "exclude": ["node_modules", "dist"],
+    "references": [
+        {
+            "path": "../@here/harp-geoutils"
+        },
+        {
+            "path": "../@here/harp-mapview"
+        },
+        {
+            "path": "../@here/harp-omv-datasource"
+        },
+        {
+            "path": "../@here/harp-utils"
+        }
+    ]
 }

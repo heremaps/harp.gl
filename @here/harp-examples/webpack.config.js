@@ -11,6 +11,7 @@ const HtmlWebpackPlugin = require("html-webpack-plugin");
 const CopyWebpackPlugin = require("copy-webpack-plugin");
 
 const prepareOnly = process.env["PREPARE_ONLY"] === "true";
+const noTsLoader = process.env["NO_TS_LOADER"] === "true";
 
 const harpMapThemePath = path.dirname(require.resolve("@here/harp-map-theme/package.json"));
 const harpFontResourcesPath = path.dirname(require.resolve("@here/harp-fontcatalog/package.json"));
@@ -38,7 +39,7 @@ const commonConfig = {
             three: "THREE",
             fs: "undefined"
         },
-        function (context, request, callback) {
+        function(context, request, callback) {
             return /three\.module\.js$/.test(request) ? callback(null, "THREE") : callback();
         }
     ],
@@ -85,14 +86,23 @@ const commonConfig = {
     mode: process.env.NODE_ENV || "development"
 };
 
+if (noTsLoader) {
+    commonConfig.module.rules = commonConfig.module.rules.filter(
+        rule => rule.loader !== "ts-loader"
+    );
+    commonConfig.resolve.extensions = commonConfig.resolve.extensions.filter(
+        ext => !ext.endsWith(".ts") && !ext.endsWith(".tsx")
+    );
+}
+
 const decoderConfig = merge(commonConfig, {
     target: "webworker",
     entry: {
-        decoder: "./decoder/decoder.ts"
+        decoder: "./decoder/decoder"
     }
 });
 
-const webpackEntries = glob
+const typescriptSources = glob
     .sync(path.join(__dirname, "./src/*.{ts,tsx}"))
     .reduce((result, entry) => {
         const name = path.basename(entry).replace(/.tsx?$/, "");
@@ -102,6 +112,12 @@ const webpackEntries = glob
         result[name] = entry;
         return result;
     }, {});
+
+const webpackEntries = Object.keys(typescriptSources).reduce((result, name) => {
+    const entry = typescriptSources[name];
+    result[name] = entry.replace(/.tsx?$/, "");
+    return result;
+}, {});
 
 const htmlEntries = glob.sync(path.join(__dirname, "./src/*.html")).reduce((result, entry) => {
     result[path.basename(entry).replace(/.html$/, "")] = entry;
@@ -140,13 +156,13 @@ const browserConfig = merge(commonConfig, {
 
 const exampleBrowserConfig = merge(commonConfig, {
     entry: {
-        "example-browser": "./example-browser.ts"
+        "example-browser": "./example-browser"
     }
 });
 
 const codeBrowserConfig = merge(commonConfig, {
     entry: {
-        codebrowser: "./codebrowser.ts"
+        codebrowser: "./codebrowser"
     }
 });
 
@@ -159,7 +175,7 @@ browserConfig.plugins = Object.keys(browserConfig.entry).map(
         })
 );
 
-const allEntries = Object.assign({}, webpackEntries, htmlEntries);
+const allEntries = Object.assign({}, typescriptSources, htmlEntries);
 
 /**
  * Geterate example definitions for 'index.html' in following form:
@@ -168,7 +184,7 @@ const allEntries = Object.assign({}, webpackEntries, htmlEntries);
  *     [examplePage: string]: string // maps example page to example source
  * }
  */
-const exampleDefs = Object.keys(allEntries).reduce(function (r, entry) {
+const exampleDefs = Object.keys(allEntries).reduce(function(r, entry) {
     r[entry + ".html"] = path.relative(__dirname, allEntries[entry]);
     return r;
 }, {});
@@ -200,7 +216,10 @@ const assets = [
     },
     require.resolve("three/build/three.min.js"),
     {
-        from: resolveOptional(`@here/harp.gl/dist/harp${harpBundleSuffix}.js`, "bundle examples require `yarn build-bundle`"),
+        from: resolveOptional(
+            `@here/harp.gl/dist/harp${harpBundleSuffix}.js`,
+            "bundle examples require `yarn build-bundle`"
+        ),
         to: "harp.js"
     },
     {

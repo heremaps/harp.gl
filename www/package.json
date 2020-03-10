@@ -3,7 +3,7 @@
     "version": "0.13.0",
     "description": "harp.gl website",
     "scripts": {
-        "build": "webpack --config webpack.config.js",
+        "build": "tsc --build && NO_TS_LOADER=true webpack --config webpack.config.js",
         "start": "webpack-dev-server --config webpack.config.js"
     },
     "repository": {

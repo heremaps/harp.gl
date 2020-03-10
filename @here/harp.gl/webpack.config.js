@@ -6,6 +6,7 @@ const path = require("path");
 const merge = require("webpack-merge");
 
 const isProduction = process.env.NODE_ENV === "production";
+const noTsLoader = process.env["NO_TS_LOADER"] === "true";
 const bundleSuffix = isProduction ? ".min" : "";
 
 const commonConfig = {
@@ -49,8 +50,17 @@ const commonConfig = {
     mode: process.env.NODE_ENV || "development"
 };
 
+if (noTsLoader) {
+    commonConfig.module.rules = commonConfig.module.rules.filter(
+        rule => rule.loader !== "ts-loader"
+    );
+    commonConfig.resolve.extensions = commonConfig.resolve.extensions.filter(
+        ext => !ext.endsWith(".ts") && !ext.endsWith(".tsx")
+    );
+}
+
 const mapComponentConfig = merge(commonConfig, {
-    entry: path.resolve(__dirname, "./lib/index.ts"),
+    entry: path.resolve(__dirname, "./lib/index"),
     output: {
         filename: `harp${bundleSuffix}.js`,
         library: "harp"
@@ -66,7 +76,7 @@ const mapComponentConfig = merge(commonConfig, {
 });
 
 const mapComponentDecoderConfig = merge(commonConfig, {
-    entry: path.resolve(__dirname, "./lib/DecoderBootstrap.ts"),
+    entry: path.resolve(__dirname, "./lib/DecoderBootstrap"),
     output: {
         filename: `harp-decoders${bundleSuffix}.js`
     },

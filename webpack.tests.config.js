@@ -4,6 +4,7 @@ const path = require("path");
 const CopyWebpackPlugin = require("copy-webpack-plugin");
 const HardSourceWebpackPlugin = require("hard-source-webpack-plugin");
 
+const useCompiledSdk = process.env["USE_COMPILED_SDK"] === "true";
 const testResourceDirs = glob.sync(path.join(__dirname, "@here/*/test/resources"));
 const testResources = testResourceDirs.map(dir => {
     return {
@@ -21,17 +22,19 @@ const harpFontResourcesPath = path.dirname(require.resolve("@here/harp-fontcatal
 const allTests = [
     ...glob.sync("@here/*/test/**/*.ts"),
     ...glob.sync("./test/performance/**/*.ts"),
-    ...glob.sync("./test/rendering/*.ts"),
+    ...glob.sync("./test/rendering/*.ts")
 ];
 
-const unitTests = allTests.filter(name => (name.indexOf("/rendering") === -1 && name.indexOf("/performance/") === -1));
+const unitTests = allTests.filter(
+    name => name.indexOf("/rendering") === -1 && name.indexOf("/performance/") === -1
+);
 const performanceTests = allTests.filter(name => name.indexOf("/performance/") > -1);
 const renderingTests = allTests.filter(name => name.indexOf("/rendering/") > -1);
 
 const browserTestsConfig = {
     devtool: "source-map",
     resolve: {
-        extensions: [".webpack.js", ".web.ts", ".ts", ".tsx", ".web.js", ".js"],
+        extensions: [".webpack.js", ".web.ts", ".web.js", ".js", ".ts", ".tsx"],
         modules: [".", "node_modules"]
     },
     module: {
@@ -39,9 +42,11 @@ const browserTestsConfig = {
             {
                 test: /\.tsx?$/,
                 loader: "ts-loader",
-                exclude: /node_modules/,
+                include: useCompiledSdk ? [/test/] : undefined,
+                exclude: [/node_modules/],
                 options: {
                     onlyCompileBundledFiles: true,
+                    projectReferences: true,
                     // use the main tsconfig.json for all compilation
                     configFile: path.resolve(__dirname, "tsconfig.json")
                 }

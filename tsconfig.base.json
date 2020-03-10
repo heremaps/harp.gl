@@ -4,5 +4,5 @@
         "target": "ES2017",
         "strict": true
     },
-    "exclude": ["node_modules"]
+    "exclude": ["node_modules", "dist"]
 }

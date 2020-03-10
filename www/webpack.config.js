@@ -9,6 +9,8 @@ const HtmlWebpackPlugin = require("html-webpack-plugin");
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 const HTMLInlineCSSWebpackPlugin = require("html-inline-css-webpack-plugin").default;
 
+const noTsLoader = process.env["NO_TS_LOADER"] === "true";
+
 const commonConfig = {
     devtool: "source-map",
     resolve: {
@@ -34,6 +36,7 @@ const commonConfig = {
                 exclude: /node_modules/,
                 options: {
                     onlyCompileBundledFiles: true,
+                    projectReferences: true,
                     // use the main tsconfig.json for all compilation
                     configFile: path.resolve(__dirname, "./tsconfig.json")
                 }
@@ -58,9 +61,18 @@ const commonConfig = {
     mode: process.env.NODE_ENV || "development"
 };
 
+if (noTsLoader) {
+    commonConfig.module.rules = commonConfig.module.rules.filter(
+        rule => rule.loader !== "ts-loader"
+    );
+    commonConfig.resolve.extensions = commonConfig.resolve.extensions.filter(
+        ext => !ext.endsWith(".ts") && !ext.endsWith(".tsx")
+    );
+}
+
 const mainConfig = merge(commonConfig, {
     entry: {
-        index: "./src/index.ts"
+        index: "./src/index"
     },
     plugins: [
         new MiniCssExtractPlugin({
@@ -108,7 +120,7 @@ const mainConfig = merge(commonConfig, {
 const decoderConfig = merge(commonConfig, {
     target: "webworker",
     entry: {
-        decoder: "./src/decoder.ts"
+        decoder: "./src/decoder"
     }
 });
 module.exports = [mainConfig, decoderConfig];

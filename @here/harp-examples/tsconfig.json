@@ -4,7 +4,60 @@
         "sourceMap": true,
         "declaration": false,
         "resolveJsonModule": true,
-        "skipLibCheck": true,
-        "baseUrl": "../../"
-    }
+        "skipLibCheck": true
+    },
+    "exclude": ["dist"],
+    "references": [
+        {
+            "path": "../harp-datasource-protocol"
+        },
+        {
+            "path": "../harp-debug-datasource"
+        },
+        {
+            "path": "../harp-features-datasource"
+        },
+        {
+            "path": "../harp-geojson-datasource"
+        },
+        {
+            "path": "../harp-geoutils"
+        },
+        {
+            "path": "../harp-lines"
+        },
+        {
+            "path": "../harp-lrucache"
+        },
+        {
+            "path": "../harp-map-controls"
+        },
+        {
+            "path": "../harp-mapview"
+        },
+        {
+            "path": "../harp-mapview-decoder"
+        },
+        {
+            "path": "../harp-materials"
+        },
+        {
+            "path": "../harp-olp-utils"
+        },
+        {
+            "path": "../harp-omv-datasource"
+        },
+        {
+            "path": "../harp-test-utils"
+        },
+        {
+            "path": "../harp-text-canvas"
+        },
+        {
+            "path": "../harp-utils"
+        },
+        {
+            "path": "../harp-webtile-datasource"
+        }
+    ]
 }

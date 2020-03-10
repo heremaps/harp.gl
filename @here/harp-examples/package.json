@@ -15,10 +15,10 @@
     "scripts": {
         "test": "exit 0",
         "prebuild": "node scripts/postinstall.js",
-        "build": "webpack",
+        "build": "tsc --build && NO_TS_LOADER=true webpack",
         "start": "webpack-dev-server",
         "publish-html": "node scripts/publish-html.js",
-        "prepare": "node scripts/postinstall.js && cross-env PREPARE_ONLY=true webpack -p"
+        "prepare": "node scripts/postinstall.js && tsc --build && cross-env NO_TS_LOADER=true PREPARE_ONLY=true webpack -p"
     },
     "author": {
         "name": "HERE Europe B.V.",

@@ -2,3 +2,6 @@
 node_modules/
 dist/
 *.tgz
+*.d.ts
+*.js
+*.js.map
