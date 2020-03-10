@@ -102,6 +102,12 @@ interface StyleInternalParams {
      * @hidden
      */
     _geometryType?: string;
+
+    /**
+     * `true` if any of the properties of this technique
+     * requires access to the feature's state.
+     */
+    _usesFeatureState?: boolean;
 }
 
 type InternalStyle = Style & StyleSelector & StyleInternalParams;
@@ -721,6 +727,10 @@ export class StyleSetEvaluator {
             if (Expr.isExpr(attrValue)) {
                 const deps = attrValue.dependencies();
 
+                if (deps.featureState) {
+                    style._usesFeatureState = true;
+                }
+
                 if (deps.properties.size === 0 && !attrValue.isDynamic()) {
                     // no data-dependencies detected.
                     attrValue = attrValue.evaluate(this.m_emptyEnv);
@@ -853,6 +863,9 @@ export class StyleSetEvaluator {
         technique._styleSetIndex = style._styleSetIndex!;
         if (style.styleSet !== undefined) {
             technique._styleSet = style.styleSet;
+        }
+        if (style._usesFeatureState !== undefined) {
+            technique._usesFeatureState = style._usesFeatureState;
         }
         this.m_techniques.push(technique as IndexedTechnique);
         return technique as IndexedTechnique;

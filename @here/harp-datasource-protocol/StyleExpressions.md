@@ -35,6 +35,14 @@ Returns the id of the current feature.
 ["id"]
 ```
 
+## feature-state
+
+Returns the value of the given property from the current feature's state.
+
+```javascript
+["feature-state", property]
+```
+
 ## geometry-type
 
 Returns a `string` representing the geometry type of the current feature.

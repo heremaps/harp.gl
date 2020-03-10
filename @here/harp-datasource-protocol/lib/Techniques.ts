@@ -545,6 +545,14 @@ export interface IndexedTechniqueParams {
      * @hidden
      */
     _secondaryCategory?: string;
+
+    /**
+     * `true` if any of the properties of this technique needs to access
+     * the feature's state.
+     *
+     * @hidden
+     */
+    _usesFeatureState?: boolean;
 }
 
 /**

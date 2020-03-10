@@ -42,6 +42,11 @@ export class ExprDependencies {
      * The properties needed to evaluate the [[Expr]].
      */
     readonly properties = new Set<string>();
+
+    /**
+     * `true` if the expression depends on the feature state.
+     */
+    featureState?: boolean;
 }
 
 class ComputeExprDependencies implements ExprVisitor<void, ExprDependencies> {
@@ -92,6 +97,10 @@ class ComputeExprDependencies implements ExprVisitor<void, ExprDependencies> {
         expr.args.forEach(childExpr => childExpr.accept(this, context));
 
         switch (expr.op) {
+            case "feature-state":
+                context.featureState = true;
+                context.properties.add("$state");
+                break;
             case "id":
                 context.properties.add("$id");
                 break;
