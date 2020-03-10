@@ -47,4 +47,10 @@ export interface ElevationRangeSource {
      * Connects to the underlying data.
      */
     connect(): Promise<void>;
+
+    /**
+     * Returns `true` if this `ElevationRangeSource` is ready and the [[MapView]] can invoke
+     * `getElevationRange()` to start requesting data.
+     */
+    ready(): boolean;
 }

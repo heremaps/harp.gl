@@ -20,7 +20,7 @@ import * as THREE from "three";
 import * as nodeUrl from "url";
 const URL = typeof window !== "undefined" ? window.URL : nodeUrl.URL;
 
-import { GeoCoordinates, sphereProjection } from "@here/harp-geoutils";
+import { GeoCoordinates, sphereProjection, webMercatorTilingScheme } from "@here/harp-geoutils";
 import * as TestUtils from "@here/harp-test-utils/lib/WebGLStub";
 import { MapView, MapViewEventNames } from "../lib/MapView";
 import { MapViewFog } from "../lib/MapViewFog";
@@ -30,6 +30,9 @@ import { getTestResourceUrl, waitForEvent } from "@here/harp-test-utils";
 import { FontCatalog } from "@here/harp-text-canvas";
 import { getAppBaseUrl } from "@here/harp-utils";
 import { BackgroundDataSource } from "../lib/BackgroundDataSource";
+import { DataSource } from "../lib/DataSource";
+import { ElevationProvider } from "../lib/ElevationProvider";
+import { CalculationStatus, ElevationRangeSource } from "../lib/ElevationRangeSource";
 import { FakeOmvDataSource } from "./FakeOmvDataSource";
 
 declare const global: any;
@@ -451,6 +454,138 @@ describe("MapView", function() {
         await waitForEvent(mapView, MapViewEventNames.AfterRender);
 
         expect(updateStorageOffsetSpy.called);
+    });
+
+    describe("elevation source", function() {
+        let fakeElevationSource: DataSource;
+        let fakeElevationRangeSource: ElevationRangeSource;
+        let fakeElevationProvider: ElevationProvider;
+        beforeEach(function() {
+            fakeElevationSource = {
+                name: "terrain",
+                // tslint:disable-next-line: no-shadowed-variable
+                attach(mapView: MapView) {
+                    this.mapView = mapView;
+                },
+                clearCache() {},
+                detach() {
+                    this.mapView = undefined;
+                },
+                dispose() {},
+                connect() {
+                    return Promise.resolve();
+                },
+                setEnableElevationOverlay() {},
+                setTheme() {},
+                addEventListener() {},
+                getTilingScheme() {
+                    return webMercatorTilingScheme;
+                },
+                mapView: undefined
+            } as any;
+            fakeElevationRangeSource = {
+                connect: () => Promise.resolve(),
+                ready: () => true,
+                getTilingScheme: () => webMercatorTilingScheme,
+                getElevationRange: () => ({
+                    minElevation: 0,
+                    maxElevation: 100,
+                    calculationStatus: CalculationStatus.FinalPrecise
+                })
+            } as any;
+            fakeElevationProvider = {
+                clearCache() {},
+                getHeight: () => 0
+            } as any;
+        });
+
+        describe("setElevationSource", function() {
+            it("can add an elevation source", async function() {
+                mapView = new MapView({ canvas });
+                await mapView.setElevationSource(
+                    fakeElevationSource,
+                    fakeElevationRangeSource,
+                    fakeElevationProvider
+                );
+                expect(mapView)
+                    .to.have.property("m_elevationSource")
+                    .that.equals(fakeElevationSource);
+                expect(mapView)
+                    .to.have.property("m_tileDataSources")
+                    .that.has.length(2)
+                    .and.includes(fakeElevationSource);
+                expect(mapView)
+                    .to.have.property("m_elevationRangeSource")
+                    .that.equals(fakeElevationRangeSource);
+                expect(mapView)
+                    .to.have.property("m_elevationProvider")
+                    .that.equals(fakeElevationProvider);
+                expect(fakeElevationSource.mapView).to.equal(mapView);
+            });
+            it("can replace an elevation source", async function() {
+                const secondElevationSource: DataSource = {
+                    ...fakeElevationSource
+                } as any;
+
+                mapView = new MapView({ canvas });
+                await mapView.setElevationSource(
+                    fakeElevationSource,
+                    fakeElevationRangeSource,
+                    fakeElevationProvider
+                );
+                expect(mapView)
+                    .to.have.property("m_elevationSource")
+                    .that.equals(fakeElevationSource);
+                expect(mapView)
+                    .to.have.property("m_tileDataSources")
+                    .that.has.length(2)
+                    .and.includes(fakeElevationSource);
+
+                await mapView.setElevationSource(
+                    secondElevationSource,
+                    fakeElevationRangeSource,
+                    fakeElevationProvider
+                );
+
+                expect(mapView)
+                    .to.have.property("m_elevationSource")
+                    .that.equals(secondElevationSource);
+                expect(mapView)
+                    .to.have.property("m_tileDataSources")
+                    .that.has.length(2)
+                    .and.includes(secondElevationSource)
+                    .and.does.not.include(fakeElevationSource);
+                expect(mapView)
+                    .to.have.property("m_elevationRangeSource")
+                    .that.equals(fakeElevationRangeSource);
+                expect(mapView)
+                    .to.have.property("m_elevationProvider")
+                    .that.equals(fakeElevationProvider);
+                expect(fakeElevationSource.mapView).to.be.undefined;
+                expect(secondElevationSource.mapView).to.equal(mapView);
+            });
+        });
+
+        describe("clearElevationSource", function() {
+            it("removes an elevation source", async function() {
+                mapView = new MapView({ canvas });
+                await mapView.setElevationSource(
+                    fakeElevationSource,
+                    fakeElevationRangeSource,
+                    fakeElevationProvider
+                );
+                mapView.clearElevationSource(fakeElevationSource);
+
+                expect(mapView).to.have.property("m_elevationSource").that.is.undefined;
+                expect(mapView)
+                    .to.have.property("m_tileDataSources")
+                    .that.has.length(1)
+                    .and.does.not.include(fakeElevationSource);
+                expect(mapView).to.have.property("m_elevationRangeSource").that.is.undefined;
+                expect(mapView).to.have.property("m_elevationProvider").that.is.undefined;
+                expect(fakeElevationSource.mapView).to.be.undefined;
+            });
+        });
     });
 
     describe("theme", function() {
