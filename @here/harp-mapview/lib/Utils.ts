@@ -10,6 +10,7 @@ import { GeoCoordinates, Projection, ProjectionType, TileKey } from "@here/harp-
 import { EarthConstants } from "@here/harp-geoutils/lib/projection/EarthConstants";
 import { MapMeshBasicMaterial, MapMeshStandardMaterial } from "@here/harp-materials";
 import { assert, LoggerManager } from "@here/harp-utils";
+import { ElevationProvider } from "./ElevationProvider";
 import { LodMesh } from "./geometry/LodMesh";
 import { MapView, MAX_TILT_ANGLE } from "./MapView";
 import { getFeatureDataSize, TileFeatureData } from "./Tile";
@@ -22,6 +23,11 @@ const logger = LoggerManager.instance.create("MapViewUtils");
 const MINIMUM_OBJECT3D_SIZE_ESTIMATION = 1000;
 
 const MINIMUM_ATTRIBUTE_SIZE_ESTIMATION = 56;
+
+/**
+ * Zoom level to request terrain tiles for getting the height of the camera above terrain.
+ */
+const TERRAIN_ZOOM_LEVEL = 4;
 
 // Caching those for performance reasons.
 const groundNormalPlanarProj = new THREE.Vector3(0, 0, 1);
@@ -60,6 +66,8 @@ const cache = {
 
 export namespace MapViewUtils {
     export const MAX_TILT_DEG = 89;
+    export const MAX_TILT_RAD = MAX_TILT_DEG * THREE.MathUtils.DEG2RAD;
+
     /**
      * The anti clockwise rotation of an object along the axes of its tangent space, with itself
      * as origin.
@@ -125,6 +133,7 @@ export namespace MapViewUtils {
         // center of the screen, in order to limit the tilt to `maxTiltAngle`, as we change
         // this tilt by changing the camera's height above.
         if (mapView.projection.type === ProjectionType.Spherical) {
+            // tslint:disable-next-line: deprecation
             const tilt = extractCameraTilt(mapView.camera, mapView.projection);
             const deltaTilt = tilt - maxTiltAngle;
             if (deltaTilt > 0) {
@@ -196,6 +205,8 @@ export namespace MapViewUtils {
      * @param camera The camera looking on target point.
      * @param projection The geo-projection used.
      * @param elevation Optional elevation above (or below) sea level measured in world units.
+     *
+     * @deprecated This function is for internal use only and will be removed in the future.
      */
     export function getGeoTargetFromCamera(
         camera: THREE.Camera,
@@ -205,6 +216,7 @@ export namespace MapViewUtils {
         // This function does almost the same as:
         // rayCastGeoCoordinates(mapView, 0, 0)
         // but in more gentle and performance wise manner
+        // tslint:disable-next-line: deprecation
         const targetWorldPos = getWorldTargetFromCamera(camera, projection, elevation);
         if (targetWorldPos !== null) {
             return projection.unprojectPoint(targetWorldPos);
@@ -217,6 +229,8 @@ export namespace MapViewUtils {
      * @param camera The camera looking on target point.
      * @param projection The geo-projection used.
      * @param elevation Optional elevation above (or below) sea level in world units.
+     *
+     * @deprecated This function is for internal use only and will be removed in the future.
      */
     export function getWorldTargetFromCamera(
         camera: THREE.Camera,
@@ -240,6 +254,89 @@ export namespace MapViewUtils {
             groundSphere.radius = EarthConstants.EQUATORIAL_RADIUS;
         }
         return result;
+    }
+
+    /**
+     * Returns the height of the camera above the earths surface.
+     *
+     * If there is an ElevationProvider, this is used. Otherwise the projection is used to determine
+     * how high the camera is above the surface.
+     *
+     * @param level Which level to request the surface height from.
+     * @return Height in world units.
+     */
+    function getHeightAboveTerrain(
+        location: THREE.Vector3,
+        projection: Projection,
+        elevationProvider?: ElevationProvider,
+        level?: number
+    ): number {
+        if (elevationProvider !== undefined) {
+            const geoLocation = projection.unprojectPoint(location);
+            const heightAboveTerrain = elevationProvider.getHeight(geoLocation, level);
+            if (heightAboveTerrain !== undefined) {
+                const height = projection.unprojectAltitude(location) - heightAboveTerrain;
+                return Math.max(height, 1);
+            }
+        }
+        return Math.abs(projection.groundDistance(location));
+    }
+
+    /**
+     * @internal
+     * @deprecated This method will be moved to MapView.
+     */
+    export function getTargetAndDistance(
+        projection: Projection,
+        camera: THREE.PerspectiveCamera,
+        elevationProvider?: ElevationProvider
+    ): { target: THREE.Vector3; distance: number } {
+        const cameraPitch = extractAttitude({ projection }, camera).pitch;
+
+        //FIXME: For now we keep the old behaviour when terrain is enabled (i.e. use the camera
+        //       height above terrain to deduce the target distance).
+        //       This leads to zoomlevel changes while panning. We have to find a proper solution
+        //       for terrain (e.g. raycast with the ground surfcae that is elevated by the average
+        //       elevation in the scene)
+        const terrainEnabled = elevationProvider !== undefined;
+
+        // Even for a tilt of 90° raycastTargetFromCamera is returning some point almost at
+        // infinity.
+        const target =
+            !terrainEnabled && cameraPitch < MAX_TILT_RAD
+                ? // tslint:disable-next-line: deprecation
+                  getWorldTargetFromCamera(camera, projection)
+                : null;
+        if (target !== null) {
+            const distance = camera.position.distanceTo(target);
+            return { target, distance };
+        } else {
+            // We either reached the [[PITCH_LIMIT]] or we did not hit the ground surface.
+            // In this case we do the reverse, i.e. compute some fallback distance and
+            // use it to compute the tagret point by using the camera direction.
+            const cameraPosZ = getHeightAboveTerrain(
+                camera.position,
+                projection,
+                elevationProvider,
+                TERRAIN_ZOOM_LEVEL
+            );
+
+            //For flat projection we fallback to the target distance at 89 degree pitch.
+            //For spherical projection we fallback to the tangent line distance
+            const distance =
+                projection.type === ProjectionType.Planar
+                    ? cameraPosZ / Math.cos(Math.min(cameraPitch, MAX_TILT_RAD))
+                    : Math.sqrt(
+                          Math.pow(cameraPosZ + EarthConstants.EQUATORIAL_RADIUS, 2) -
+                              Math.pow(EarthConstants.EQUATORIAL_RADIUS, 2)
+                      );
+
+            const cameraDir = camera.getWorldDirection(cache.vector3[0]);
+            cameraDir.multiplyScalar(distance);
+            const fallbackTarget = cache.vector3[1];
+            fallbackTarget.copy(camera.position).add(cameraDir);
+            return { target: fallbackTarget, distance };
+        }
     }
 
     /**
@@ -540,6 +637,8 @@ export namespace MapViewUtils {
      *
      * @param camera The [[Camera]] in use.
      * @param projection The [[Projection]] used to convert between geo and world coordinates.
+     *
+     * @deprecated This function is for internal use only and will be removed in the future.
      */
     export function extractCameraTilt(camera: THREE.Camera, projection: Projection): number {
         // For planar projections the camera target point local tangent is the same
@@ -556,6 +655,7 @@ export namespace MapViewUtils {
         } else {
             // Sanity check if new projection type is introduced.
             assert(projection.type === ProjectionType.Spherical);
+            // tslint:disable-next-line: deprecation
             const targetGeoCoords = MapViewUtils.getGeoTargetFromCamera(camera, projection);
             // If focus point is lost we then expose maximum allowable tilt value.
             if (targetGeoCoords !== null) {

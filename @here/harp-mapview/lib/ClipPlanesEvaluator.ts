@@ -621,35 +621,6 @@ export class TopViewClipPlanesEvaluator extends ElevationBasedClipPlanesEvaluato
  */
 export class TiltViewClipPlanesEvaluator extends TopViewClipPlanesEvaluator {
     /**
-     * Calculate the camera distance to the ground in direction of look at vector.
-     * This is not equivalent to camera altitude cause value will change according to look at
-     * direction. It simply measures the distance of intersection point between ray from
-     * camera and ground level, yet without taking into account terrain elevation nor buildings.
-     * @param camera
-     * @param projection
-     * @note Use with extreme care cause due to optimizations the internal temporary vectors
-     * are used (m_tmpVectors[0], m_tmpVectors[1]). Those should not be used in outlining
-     * function scope (caller).
-     */
-    protected getCameraLookAtDistance(camera: THREE.Camera, projection: Projection): number {
-        assert(projection.type !== ProjectionType.Spherical);
-        // Using simple trigonometry we may approximate the distance of camera eye vector
-        // intersection with theoretical ground, knowing camera altitude and tilt angle:
-        // cos(tiltAngle) = altitude / groundDistance
-        // groundDistance = altitude / cos(tiltAngle)
-        // where:
-        // cos(tiltAngle) = dot(lookAt, eyeInverse)
-        const lookAt: THREE.Vector3 = this.m_tmpVectors[0];
-        camera.getWorldDirection(lookAt).normalize();
-        const normal: THREE.Vector3 = this.m_tmpVectors[1];
-        projection.surfaceNormal(camera.position, normal);
-        normal.negate();
-        let cosTiltAngle = lookAt.dot(normal);
-        cosTiltAngle = cosTiltAngle === 0 ? epsilon : cosTiltAngle;
-        return this.getCameraAltitude(camera, projection) / cosTiltAngle;
-    }
-
-    /**
      * Calculate the lengths of frustum planes intersection with the ground plane.
      * This evaluates distances between eye vector (or eye plane in orthographic projection) and
      * ground intersections of top and bottom frustum planes.
@@ -776,7 +747,7 @@ export class TiltViewClipPlanesEvaluator extends TopViewClipPlanesEvaluator {
         // be defined as distance along the ground normal vector thus during camera
         // tilt they may affect near/far planes positions differently.
         const planesDist = this.getFrustumGroundIntersectionDist(mapView);
-        const { camera, projection } = mapView;
+        const { camera } = mapView;
         // Project clipping plane distances for the top/bottom frustum planes (edges), but
         // only if we deal with perspective camera type, this step is not required
         // for orthographic projections, cause all clip planes are parallel to eye vector.
@@ -803,7 +774,7 @@ export class TiltViewClipPlanesEvaluator extends TopViewClipPlanesEvaluator {
         }
 
         // Clamp values to constraints.
-        const lookAtDist = this.getCameraLookAtDistance(camera, projection);
+        const lookAtDist = mapView.targetDistance;
         const farMax = lookAtDist * this.farMaxRatio;
         viewRanges.near = Math.max(viewRanges.near, this.nearMin);
         viewRanges.far = Math.min(viewRanges.far, farMax);
@@ -955,6 +926,7 @@ export class TiltViewClipPlanesEvaluator extends TopViewClipPlanesEvaluator {
     }
 
     private getCameraTilt(mapView: MapView): number {
+        // tslint:disable-next-line: deprecation
         return MapViewUtils.extractCameraTilt(mapView.camera, mapView.projection);
     }
 }

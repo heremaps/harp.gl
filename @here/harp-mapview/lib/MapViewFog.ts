@@ -109,6 +109,7 @@ export class MapViewFog {
             const endRatio = 1.0;
             assert(startRatio <= endRatio);
             const t = Math.abs(
+                // tslint:disable-next-line: deprecation
                 Math.cos(MapViewUtils.extractCameraTilt(mapView.camera, mapView.projection))
             );
             const density = MathUtils.smoothStep(horizontalDensity, verticalDensity, t);

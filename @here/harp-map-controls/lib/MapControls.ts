@@ -579,6 +579,7 @@ export class MapControls extends THREE.EventDispatcher {
     }
 
     private get currentTilt(): number {
+        // tslint:disable-next-line: deprecation
         return MapViewUtils.extractCameraTilt(this.mapView.camera, this.mapView.projection);
     }
 
