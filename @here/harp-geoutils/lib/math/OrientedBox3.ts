@@ -4,8 +4,50 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Frustum, Matrix4, Plane, Vector3 } from "three";
+import { Frustum, Matrix4, Plane, Ray, Vector3 } from "three";
 import { OrientedBox3Like } from "./OrientedBox3Like";
+
+function intersectsSlab(
+    rayDir: Vector3,
+    p: Vector3,
+    axis: Vector3,
+    extent: number,
+    t: { min: number; max: number }
+): boolean {
+    const epsilon = 1e-20;
+    const e = axis.dot(p);
+    const f = axis.dot(rayDir);
+    if (Math.abs(f) < epsilon) {
+        // ray parallel to near/far slab lines.
+        return Math.abs(e) <= extent;
+    }
+
+    // ray intersects near/far slab lines.
+    const finv = 1 / f;
+    const t1 = (e + extent) * finv;
+    const t2 = (e - extent) * finv;
+    if (t1 > t2) {
+        // t1 is far intersect, t2 is near.
+        if (t2 > t.min) {
+            t.min = t2;
+        }
+        if (t1 < t.max) {
+            t.max = t1;
+        }
+    } else {
+        // t1 is near intersect, t2 is far.
+        if (t1 > t.min) {
+            t.min = t1;
+        }
+        if (t2 < t.max) {
+            t.max = t2;
+        }
+    }
+    return t.min <= t.max && t.max >= 0;
+}
+
+const tmpVec = new Vector3();
+const tmpT = { min: -Infinity, max: Infinity };
 
 export class OrientedBox3 implements OrientedBox3Like {
     /**
@@ -137,6 +179,30 @@ export class OrientedBox3 implements OrientedBox3Like {
         }
 
         return true;
+    }
+
+    /**
+     * Checks intersection with the given ray.
+     *
+     * @param ray The ray to test.
+     * @returns distance from ray origin to intersection point if it exist, undefined otherwise.
+     */
+    intersectsRay(ray: Ray): number | undefined {
+        // Slabs intersection algorithm.
+        tmpT.min = -Infinity;
+        tmpT.max = Infinity;
+        tmpVec.copy(this.position).sub(ray.origin);
+        if (!intersectsSlab(ray.direction, tmpVec, this.xAxis, this.extents.x, tmpT)) {
+            return undefined;
+        }
+        if (!intersectsSlab(ray.direction, tmpVec, this.yAxis, this.extents.y, tmpT)) {
+            return undefined;
+        }
+        if (!intersectsSlab(ray.direction, tmpVec, this.zAxis, this.extents.z, tmpT)) {
+            return undefined;
+        }
+
+        return tmpT.min > 0 ? tmpT.min : tmpT.max;
     }
 
     /**
