@@ -87,7 +87,7 @@ Returns a `boolean` indicating if the current `feature` or the given
 
 Gets the properties that are evaluated at rendering time.
 
-``javascript
+```javascript
 // returns an object containing the dynamic properties.
 ["dynamic-properties"]
 

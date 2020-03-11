@@ -79,7 +79,7 @@ export const baseTechniqueParamsDescriptor: TechniqueDescriptor<BaseTechniquePar
     attrScopes: {
         renderOrder: AttrScope.TechniqueGeometry,
         renderOrderOffset: AttrScope.TechniqueGeometry,
-        enabled: AttrScope.TechniqueGeometry,
+        enabled: AttrScope.FeatureGeometry,
         kind: AttrScope.TechniqueGeometry,
         transient: AttrScope.TechniqueGeometry,
         fadeFar: AttrScope.TechniqueRendering,
