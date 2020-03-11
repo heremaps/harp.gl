@@ -1802,7 +1802,8 @@ export class MapView extends THREE.EventDispatcher {
         return (
             dataSource.enabled &&
             dataSource.ready() &&
-            this.m_connectedDataSources.has(dataSource.name)
+            this.m_connectedDataSources.has(dataSource.name) &&
+            dataSource.isVisible(this.zoomLevel)
         );
     }
 

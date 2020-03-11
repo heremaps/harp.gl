@@ -20,7 +20,7 @@ describe("WebTileDataSource", function() {
         const webTileDataSource = new WebTileDataSource({
             apikey
         });
-        assert(webTileDataSource.maxZoomLevel === 19);
+        assert(webTileDataSource.maxDataLevel === 19);
     });
     it("#createWebTileDataSource with 256px and ppi320", async function() {
         const apikey = "123";
@@ -29,7 +29,7 @@ describe("WebTileDataSource", function() {
             resolution: WebTileDataSource.resolutionValue.resolution256,
             ppi: WebTileDataSource.ppiValue.ppi320
         });
-        assert(webTileDataSource.maxZoomLevel === 20);
+        assert(webTileDataSource.maxDataLevel === 20);
     });
     it("#createWebTileDataSource with satellite.day", async function() {
         const apikey = "123";
@@ -37,7 +37,7 @@ describe("WebTileDataSource", function() {
             apikey,
             tileBaseAddress: WebTileDataSource.TILE_AERIAL_SATELLITE
         });
-        assert(webTileDataSource.maxZoomLevel === 19);
+        assert(webTileDataSource.maxDataLevel === 19);
     });
     it("#createWebTileDataSource with satellite.day and 256px", async function() {
         const apikey = "123";
@@ -46,7 +46,7 @@ describe("WebTileDataSource", function() {
             tileBaseAddress: WebTileDataSource.TILE_AERIAL_SATELLITE,
             resolution: WebTileDataSource.resolutionValue.resolution256
         });
-        assert(webTileDataSource.maxZoomLevel === 20);
+        assert(webTileDataSource.maxDataLevel === 20);
     });
     it("#createWebTileDataSource with satellite.day and ppi320", async function() {
         const apikey = "123";

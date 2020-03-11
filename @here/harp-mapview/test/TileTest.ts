@@ -35,7 +35,7 @@ function createFakeTextElement(): TextElement {
 }
 describe("Tile", function() {
     const tileKey = TileKey.fromRowColumnLevel(0, 0, 0);
-    const stubDataSource = new TileTestStubDataSource("test-data-source");
+    const stubDataSource = new TileTestStubDataSource({ name: "test-data-source" });
     const mapView = { projection: mercatorProjection };
     stubDataSource.attach(mapView as MapView);
 

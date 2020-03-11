@@ -245,7 +245,7 @@ export class WebTileDataSource extends DataSource {
      * @param m_options Represents the [[WebTileDataSourceParameters]].
      */
     constructor(private readonly m_options: WebTileDataSourceParameters) {
-        super("webtile", undefined, 1, 20);
+        super({ name: "webtile", minDataLevel: 1, maxDataLevel: 20 });
         this.cacheable = true;
         this.storageLevelOffset = -1;
         this.m_resolution = getOptionValue(
@@ -253,7 +253,7 @@ export class WebTileDataSource extends DataSource {
             WebTileDataSource.resolutionValue.resolution512
         );
         if (this.m_resolution === WebTileDataSource.resolutionValue.resolution512) {
-            this.maxZoomLevel = 19; // 512x512 tiles do not have z19
+            this.maxDataLevel = 19; // 512x512 tiles do not have z19
         }
         this.m_ppi = getOptionValue(m_options.ppi, WebTileDataSource.ppiValue.ppi72);
         this.m_tileBaseAddress = m_options.tileBaseAddress || WebTileDataSource.TILE_BASE_NORMAL;

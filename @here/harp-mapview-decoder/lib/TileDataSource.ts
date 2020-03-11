@@ -17,6 +17,7 @@ import {
     CopyrightInfo,
     CopyrightProvider,
     DataSource,
+    DataSourceOptions,
     Tile,
     TileLoaderState
 } from "@here/harp-mapview";
@@ -27,17 +28,7 @@ import { TileInfoLoader, TileLoader } from "./TileLoader";
 /**
  * Set of common options for all [[TileDataSource]]s.
  */
-export interface TileDataSourceOptions {
-    /**
-     * Name of [[TileDataSource]], must be unique.
-     */
-    name?: string;
-
-    /**
-     * The name of the [[StyleSet]] to evaluate for the decoding.
-     */
-    styleSetName: string;
-
+export interface TileDataSourceOptions extends DataSourceOptions {
     /**
      * The [[TilingScheme]] the data source is using.
      */
@@ -81,21 +72,6 @@ export interface TileDataSourceOptions {
      * provider are concatenated with default ones from `copyrightInfo`.
      */
     copyrightProvider?: CopyrightProvider;
-
-    /**
-     * Optional minimum zoom level (storage level) for [[Tile]]s. Default is 1.
-     */
-    minZoomLevel?: number;
-
-    /**
-     * Optional maximum zoom level (storage level) for [[Tile]]s. Default is 20.
-     */
-    maxZoomLevel?: number;
-
-    /**
-     * Optional storage level offset for [[Tile]]s. Default is 0.
-     */
-    storageLevelOffset?: number;
 }
 
 /**
@@ -144,13 +120,15 @@ export class TileDataSource<TileType extends Tile> extends DataSource {
         private readonly m_tileFactory: TileFactory<TileType>,
         private readonly m_options: TileDataSourceOptions
     ) {
-        super(
-            m_options.name,
-            m_options.styleSetName,
-            m_options.minZoomLevel,
-            m_options.maxZoomLevel,
-            m_options.storageLevelOffset
-        );
+        super({
+            name: m_options.name,
+            styleSetName: m_options.styleSetName,
+            minDataLevel: m_options.minDataLevel,
+            maxDataLevel: m_options.maxDataLevel,
+            minDisplayLevel: m_options.minDisplayLevel,
+            maxDisplayLevel: m_options.maxDisplayLevel,
+            storageLevelOffset: m_options.storageLevelOffset
+        });
         if (m_options.decoder) {
             this.m_decoder = m_options.decoder;
         } else if (m_options.concurrentDecoderServiceName) {

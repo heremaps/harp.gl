@@ -15,7 +15,7 @@ import {
 } from "@here/harp-datasource-protocol";
 import { EarthConstants, TileKey, webMercatorTilingScheme } from "@here/harp-geoutils";
 import { LineGroup } from "@here/harp-lines";
-import { CopyrightInfo, CopyrightProvider } from "@here/harp-mapview";
+import { CopyrightInfo, CopyrightProvider, DataSourceOptions } from "@here/harp-mapview";
 import { DataProvider, TileDataSource, TileFactory } from "@here/harp-mapview-decoder";
 import { getOptionValue, LoggerManager } from "@here/harp-utils";
 import {
@@ -51,19 +51,7 @@ export interface OmvTileFactory {
     createTile(dataSource: OmvDataSource, tileKey: TileKey): OmvTile;
 }
 
-export interface OmvDataSourceParameters {
-    /**
-     * The unique name of the [[OmvDataSource]].
-     */
-    name?: string;
-
-    /**
-     * The name of the [[StyleSet]] that this [[OmvDataSource]] should use for decoding.
-     *
-     *  @default "omv"
-     */
-    styleSetName?: string;
-
+export interface OmvDataSourceParameters extends DataSourceOptions {
     /**
      * If set to `true`, features that have no technique in the theme will be printed to the console
      * (can be excessive!).
@@ -147,16 +135,6 @@ export interface OmvDataSourceParameters {
     copyrightProvider?: CopyrightProvider;
 
     /**
-     * Optional minimum zoom level (storage level) for [[Tile]]s. Default is 1.
-     */
-    minZoomLevel?: number;
-
-    /**
-     * Optional maximum zoom level (storage level) for [[Tile]]s. Default is 17.
-     */
-    maxZoomLevel?: number;
-
-    /**
      * Maximum geometry height above groud level this `OmvDataSource` can produce.
      *
      * Used in first stage of frustum culling before [[Tile.maxGeometryHeight]] data is available.
@@ -164,11 +142,6 @@ export interface OmvDataSourceParameters {
      * @default [[EarthConstants.MAX_BUILDING_HEIGHT]].
      */
     maxGeometryHeight?: number;
-
-    /**
-     * Optional storage level offset for [[Tile]]s. Default is -1.
-     */
-    storageLevelOffset?: number;
 
     /**
      * Indicates whether overlay on elevation is enabled. Defaults to `false`.
@@ -220,8 +193,10 @@ export class OmvDataSource extends TileDataSource<OmvTile> {
             concurrentDecoderScriptUrl: m_params.concurrentDecoderScriptUrl,
             copyrightInfo: m_params.copyrightInfo,
             copyrightProvider: m_params.copyrightProvider,
-            minZoomLevel: getOptionValue(m_params.minZoomLevel, 1),
-            maxZoomLevel: getOptionValue(m_params.maxZoomLevel, 17),
+            minDataLevel: getOptionValue(m_params.minDataLevel, 1),
+            maxDataLevel: getOptionValue(m_params.maxDataLevel, 17),
+            minDisplayLevel: m_params.minDisplayLevel,
+            maxDisplayLevel: m_params.maxDisplayLevel,
             storageLevelOffset: getOptionValue(m_params.storageLevelOffset, -1)
         });
 
@@ -298,34 +273,11 @@ export class OmvDataSource extends TileDataSource<OmvTile> {
         return true;
     }
 
-    /**
-     * Check if a data source should be rendered or not depending on the zoom level.
-     *
-     * @param zoomLevel Zoom level.
-     * @param tileKey Level of the tile.
-     * @returns `true` if the data source should be rendered.
-     * @override
-     */
-    canGetTile(zoomLevel: number, tileKey: TileKey): boolean {
-        if (tileKey.level > this.maxZoomLevel) {
-            return false;
-        }
-        if (tileKey.level <= this.maxZoomLevel && zoomLevel >= this.maxZoomLevel) {
-            return true;
-        }
-        return super.canGetTile(zoomLevel, tileKey);
-    }
-
     /** @override */
     setLanguages(languages?: string[]): void {
         if (languages !== undefined) {
             this.configureDecoder(undefined, undefined, languages, undefined);
         }
-    }
-
-    /** @override */
-    get storageLevelOffset() {
-        return super.storageLevelOffset;
     }
 
     /** @override */

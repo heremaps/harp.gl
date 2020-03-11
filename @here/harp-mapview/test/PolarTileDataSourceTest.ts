@@ -283,7 +283,7 @@ describe("PolarTileDataSource", function() {
 
             for (let level = minLevel; level <= maxLevel; level++) {
                 // tslint:disable:no-bitwise
-                const displayLevel = dataSource.getDisplayZoomLevel(level);
+                const displayLevel = dataSource.getDataZoomLevel(level);
                 const displaySize = 1 << displayLevel;
                 const offsetLevel = level + offset;
                 const offsetSize = 1 << offsetLevel;
