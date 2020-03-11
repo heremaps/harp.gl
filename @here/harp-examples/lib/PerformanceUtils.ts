@@ -91,7 +91,6 @@ export namespace PerformanceUtils {
     export function initializeMapViewApp(
         id: string,
         decoderCount?: number,
-        phasedLoading?: boolean,
         powerPreference?: MapViewPowerPreference,
         theme: ThemeDef = DEFAULT_THEME
     ): MapViewApp {
@@ -104,7 +103,6 @@ export namespace PerformanceUtils {
             decoderCount,
             theme: theme.resource,
             enableStatistics: true,
-            enablePhasedLoading: phasedLoading === true,
             collisionDebugCanvas: canvasOverlay,
             powerPreference
         });
@@ -137,18 +135,11 @@ export namespace PerformanceUtils {
         id: string,
         dataSourceType: string[],
         decoderCount?: number,
-        phasedLoading?: boolean,
         powerPreference?: MapViewPowerPreference,
         storageLevelOffsetModifier: number = 0,
         theme: ThemeDef = DEFAULT_THEME
     ): Promise<MapViewApp> {
-        const mapViewApp = initializeMapViewApp(
-            id,
-            decoderCount,
-            phasedLoading,
-            powerPreference,
-            theme
-        );
+        const mapViewApp = initializeMapViewApp(id, decoderCount, powerPreference, theme);
 
         // Store time MapView has been initialized
         const appInitTime = PerformanceTimer.now();
