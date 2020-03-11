@@ -3,7 +3,7 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-import { Definitions, StyleSet, Theme } from "@here/harp-datasource-protocol";
+import { Definitions, StyleSet, Theme, ValueMap } from "@here/harp-datasource-protocol";
 import { Projection, TileKey, TilingScheme } from "@here/harp-geoutils";
 import { assert } from "@here/harp-utils";
 import * as THREE from "three";
@@ -80,6 +80,8 @@ export abstract class DataSource extends THREE.EventDispatcher {
      */
     private m_storageLevelOffset: number = 0;
 
+    private readonly m_featureStateMap = new Map<number, ValueMap>();
+
     /**
      * Constructs a new `DataSource`.
      *
@@ -114,6 +116,45 @@ export abstract class DataSource extends THREE.EventDispatcher {
         if (storageLevelOffset !== undefined) {
             this.m_storageLevelOffset = storageLevelOffset;
         }
+    }
+
+    /**
+     * Gets the state of the given feature id.
+     *
+     * @param featureId The id of the feature.
+     */
+    getFeatureState(featureId: number): ValueMap | undefined {
+        return this.m_featureStateMap.get(featureId);
+    }
+
+    /**
+     * Clears the state of all the features of this [[DataSource]].
+     */
+    clearFeatureState() {
+        this.m_featureStateMap.clear();
+    }
+
+    /**
+     * Sets the state of the given feature id.
+     *
+     * ```typescript
+     * dataSource.setFeatureState(featureId, { enabled: true });
+     * ```
+     *
+     * @param featureId The id of the feature.
+     * @param state The new state of the feature.
+     */
+    setFeatureState(featureId: number, state: ValueMap) {
+        this.m_featureStateMap.set(featureId, state);
+    }
+
+    /**
+     * Removes the state associated to the given feature.
+     *
+     * @param featureId The id of the feature.
+     */
+    removeFeatureState(featureId: number) {
+        this.m_featureStateMap.delete(featureId);
     }
 
     /**

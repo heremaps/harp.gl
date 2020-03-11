@@ -5,14 +5,19 @@
  */
 import {
     Env,
+    Expr,
     GeometryKind,
+    getFeatureId,
+    getPropertyValue,
     GradientSky,
     ImageTexture,
+    IndexedTechnique,
     Light,
     MapEnv,
     PostEffects,
     Sky,
-    Theme
+    Theme,
+    Value
 } from "@here/harp-datasource-protocol";
 import {
     EarthConstants,
@@ -67,7 +72,7 @@ import { TextElementsRenderer, ViewUpdateCallback } from "./text/TextElementsRen
 import { TextElementsRendererOptions } from "./text/TextElementsRendererOptions";
 import { createLight } from "./ThemeHelpers";
 import { ThemeLoader } from "./ThemeLoader";
-import { Tile } from "./Tile";
+import { Tile, TileFeatureData, TileObject } from "./Tile";
 import { MapViewUtils } from "./Utils";
 import { ResourceComputationType, VisibleTileSet, VisibleTileSetOptions } from "./VisibleTileSet";
 
@@ -2002,6 +2007,44 @@ export class MapView extends THREE.EventDispatcher {
     }
 
     /**
+     * Updates the value of a dynamic property.
+     *
+     * Property names starting with a `$`-sign are reserved and any attempt to change their value
+     * will result in an error.
+     *
+     * Themes can access dynamic properties using the `Expr` operator `["dynamic-properties"]`,
+     * for example:
+     *
+     *   `["get", "property name", ["dynamic-properties"]]`
+     *
+     * @param name The name of the property.
+     * @param value The value of the property.
+     */
+    setDynamicProperty(name: string, value: Value) {
+        if (name.startsWith("$")) {
+            throw new Error(`failed to update the value of the dynamic property '${name}'`);
+        }
+        this.m_env.entries[name] = value;
+        this.update();
+    }
+
+    /**
+     * Removes the given dynamic property from this [[MapView]].
+     *
+     * Property names starting with a `$`-sign are reserved and any attempt to change their value
+     * will result in an error.
+     *
+     * @param name The name of the property to remove.
+     */
+    removeDynamicProperty(name: string) {
+        if (name.startsWith("$")) {
+            throw new Error(`failed to remove the dynamic property '${name}'`);
+        }
+        delete this.m_env.entries[name];
+        this.update();
+    }
+
+    /**
      * Returns `true` if this `MapView` is constantly redrawing the scene.
      */
     get animating(): boolean {
@@ -2963,6 +3006,9 @@ export class MapView extends THREE.EventDispatcher {
         const worldOffsetX = tile.computeWorldOffsetX();
         if (tile.willRender(zoomLevel)) {
             for (const object of tile.objects) {
+                if (!this.processTileObjectFeatures(tile, object)) {
+                    continue;
+                }
                 object.position.copy(tile.center);
                 if (object.displacement !== undefined) {
                     object.position.add(object.displacement);
@@ -3003,6 +3049,98 @@ export class MapView extends THREE.EventDispatcher {
             }
             tile.didRender();
         }
+    }
+
+    /**
+     * Process the features owned by the given [[TileObject]].
+     *
+     * @param tile The [[Tile]] owning the [[TileObject]]'s features.
+     * @param object The [[TileObject]] to process.
+     * @returns `false` if the given [[TileObject]] should not be added to the scene.
+     */
+    private processTileObjectFeatures(tile: Tile, object: TileObject): boolean {
+        const technique: IndexedTechnique = object.userData.technique;
+
+        if (!technique || technique.enabled === undefined) {
+            // Nothing to do, there's no technique.
+            return true;
+        }
+
+        const feature: TileFeatureData = object.userData.feature;
+
+        if (!feature || !Expr.isExpr(technique.enabled)) {
+            return Boolean(getPropertyValue(technique.enabled, this.m_env));
+        }
+
+        const { starts, objInfos } = feature;
+
+        if (!Array.isArray(objInfos) || !Array.isArray(starts)) {
+            // Nothing to do, the object is missing feature ids and their position
+            // in the index buffer.
+            return true;
+        }
+
+        const geometry: THREE.BufferGeometry | undefined = (object as any).geometry;
+
+        if (!geometry || !geometry.isBufferGeometry) {
+            // Nothing to do, the geometry is not a [[THREE.BufferGeometry]]
+            // and we can't generate groups.
+            return true;
+        }
+
+        const index = geometry.getIndex()!;
+
+        // clear the groups.
+        geometry.clearGroups();
+
+        // The offset in the index buffer of the end of the last
+        // pushed group.
+        let endOfLastGroup: number | undefined;
+
+        objInfos.forEach((properties, featureIndex) => {
+            // the id of the current feature.
+            const featureId = getFeatureId(properties);
+
+            let enabled = true;
+
+            if (Expr.isExpr(technique.enabled)) {
+                // the state of current feature.
+                const featureState = tile.dataSource.getFeatureState(featureId);
+
+                // create a new [[Env]] that can be used
+                // to evaluate expressions that access the feature state.
+                const $state = featureState ? new MapEnv(featureState) : null;
+
+                const parentEnv =
+                    typeof properties === "object"
+                        ? new MapEnv(properties, this.m_env)
+                        : this.m_env;
+
+                const env = new MapEnv({ $state }, parentEnv);
+
+                enabled = Boolean(getPropertyValue(technique.enabled, env));
+            }
+
+            if (!enabled) {
+                // skip this feature, it was disabled.
+                return;
+            }
+
+            const start = starts[featureIndex];
+            const end = starts[featureIndex + 1] ?? index.count;
+            const count = end - start;
+
+            if (start === endOfLastGroup) {
+                // extend the last group
+                geometry.groups[geometry.groups.length - 1].count += count;
+            } else {
+                geometry.addGroup(start, count);
+            }
+
+            endOfLastGroup = start + count;
+        });
+
+        return geometry.groups.length > 0;
     }
 
     private prepareRenderTextElements(time: number) {

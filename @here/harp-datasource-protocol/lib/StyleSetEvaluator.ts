@@ -728,7 +728,11 @@ export class StyleSetEvaluator {
                 const deps = attrValue.dependencies();
 
                 if (deps.featureState) {
-                    style._usesFeatureState = true;
+                    if (attrName !== "enabled") {
+                        logger.log("feature-state is not supported in this context");
+                    } else {
+                        style._usesFeatureState = true;
+                    }
                 }
 
                 if (deps.properties.size === 0 && !attrValue.isDynamic()) {
