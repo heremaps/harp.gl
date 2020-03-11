@@ -491,7 +491,11 @@ export namespace ExtendedTileInfo {
             // tslint:disable-next-line: deprecation
             if (technique.label !== undefined) {
                 // tslint:disable-next-line: deprecation
-                const name = env.lookup(technique.label);
+                const attributeName = evaluateTechniqueAttr(context, technique.label);
+                if (typeof attributeName !== "string") {
+                    return undefined;
+                }
+                const name = env.lookup(attributeName);
                 return typeof name === "string" ? name : undefined;
             }
             // tslint:disable-next-line: deprecation
