@@ -6,7 +6,7 @@
 
 ### [harp.gl site](https://heremaps.github.io/harp.gl/)
 
-### [harp.gl Slack channel](https://heredev.slack.com/messages/harpgl/)
+### [harp.gl Slack channel](https://heredev.slack.com/messages/harpgl/) Registration available [here](http://t.her.is/slack).
 
 ## Overview
 
@@ -27,46 +27,58 @@ that can display a map using our default style. You can get results like the one
 
 You can consume the harp.gl api with two different methods:
 
-* linking a simple bundle as a `<script>` tag in your html
-* installing a set of node modules from npm
+-   linking a simple bundle as a `<script>` tag in your html
+-   installing a set of node modules from npm
 
 If you want to learn more about the applications you can create, please check the [Getting Started Guide](docs/GettingStartedGuide.md).
 
 ### Simple bundle
 
 Add `three.js` and `harp.gl` to your html and create a canvas with an id `map`:
+
 ```html
 <html>
-   <head>
-      <style>
-         body, html { border: 0; margin: 0; padding: 0; }
-         #map { height: 100vh; width: 100vw; }
-      </style>
-      <script src="https://unpkg.com/three/build/three.min.js"></script>
-      <script src="https://unpkg.com/@here/harp.gl/dist/harp.js"></script>
-   </head>
-   <body>
-      <canvas id="map"></canvas>
-      <script src="index.js"></script>
-   </body>
+    <head>
+        <style>
+            body,
+            html {
+                border: 0;
+                margin: 0;
+                padding: 0;
+            }
+            #map {
+                height: 100vh;
+                width: 100vw;
+            }
+        </style>
+        <script src="https://unpkg.com/three/build/three.min.js"></script>
+        <script src="https://unpkg.com/@here/harp.gl/dist/harp.js"></script>
+    </head>
+    <body>
+        <canvas id="map"></canvas>
+        <script src="index.js"></script>
+    </body>
 </html>
 ```
+
 Initialize the map:
+
 ```javascript
 const map = new harp.MapView({
-   canvas: document.getElementById("map"),
-   theme: "https://unpkg.com/@here/harp-map-theme@latest/resources/berlin_tilezen_night_reduced.json",
+    canvas: document.getElementById("map"),
+    theme:
+        "https://unpkg.com/@here/harp-map-theme@latest/resources/berlin_tilezen_night_reduced.json"
 });
 const controls = new harp.MapControls(map);
 const omvDataSource = new harp.OmvDataSource({
-   baseUrl: "https://vector.hereapi.com/v2/vectortiles/base/mc",
-   apiFormat: harp.APIFormat.XYZOMV,
-   styleSetName: "tilezen",
-   authenticationCode: "YOUR-APIKEY",
-   authenticationMethod: {
-         method: harp.AuthenticationMethod.QueryString,
-         name: "apikey"
-   }
+    baseUrl: "https://vector.hereapi.com/v2/vectortiles/base/mc",
+    apiFormat: harp.APIFormat.XYZOMV,
+    styleSetName: "tilezen",
+    authenticationCode: "YOUR-APIKEY",
+    authenticationMethod: {
+        method: harp.AuthenticationMethod.QueryString,
+        name: "apikey"
+    }
 });
 map.addDataSource(omvDataSource);
 ```
@@ -175,7 +187,7 @@ have to establish baseline:
 
 Performance test steps
 
-1) Establish baseline results.
+1. Establish baseline results.
 
 ```
 $ git checkout master
@@ -186,15 +198,15 @@ PROFILEHELPER_COMMAND=baseline yarn performance-test-node # create baseline of m
 > have to write new dedicated performance test for code that is about to be optimized.
 > See `tests/performance` for examples.
 
-2) Go back to your branch, change stuff and
+2. Go back to your branch, change stuff and
 
-3) Rerun tests with your changes
+3. Rerun tests with your changes
 
 ```
 yarn performance-test-node --grep lines # assuming you're playing with lines
 ```
 
-4) Examine output:
+4. Examine output:
 
 ```
 ...
@@ -204,7 +216,6 @@ performance createLineGeometry segments=2
   avg=0.002ms (6.92% vs 0.0019ms) med=0.0015ms (0.2% vs 0.0015ms) med95=0.0031ms (17.6% vs 0.0026ms)
   gcTime=39.6195ms (-3.39% vs 41.011ms) sumNoGc=959.54ms (0.15% vs 958.11ms) throughputNoGc=520633.00/s (-6.61% vs 557461.83/s)
 ```
-
 
 ### Generate documentation
 
