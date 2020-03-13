@@ -39,8 +39,10 @@ import {
 } from "@here/harp-materials";
 import { LoggerManager } from "@here/harp-utils";
 import * as THREE from "three";
+import { DisplacedMesh } from "./geometry/DisplacedMesh";
 import { Circles, Squares } from "./MapViewPoints";
 import { toPixelFormat, toTextureDataType, toTextureFilter, toWrappingMode } from "./ThemeHelpers";
+import { Tile } from "./Tile";
 
 const logger = LoggerManager.instance.create("DecodedTileHelpers");
 
@@ -298,24 +300,37 @@ export function getBufferAttribute(attribute: BufferAttribute): THREE.BufferAttr
  * The default `three.js` object used with a specific technique.
  */
 export type ObjectConstructor = new (
-    geometry?: THREE.Geometry | THREE.BufferGeometry,
-    material?: THREE.Material | THREE.Material[]
+    geometry: THREE.Geometry | THREE.BufferGeometry,
+    material: THREE.Material | THREE.Material[]
 ) => THREE.Object3D;
 /**
  * Gets the default `three.js` object constructor associated with the given technique.
  *
  * @param technique The technique.
+ * @param elevationEnabled True if elevation is enabled, false otherwise.
  */
-export function getObjectConstructor(technique: Technique): ObjectConstructor | undefined {
+export function getObjectConstructor(
+    technique: Technique,
+    tile: Tile,
+    elevationEnabled: boolean
+): ObjectConstructor | undefined {
     if (technique.name === undefined) {
         return undefined;
     }
     switch (technique.name) {
         case "extruded-line":
         case "standard":
-        case "terrain":
         case "extruded-polygon":
         case "fill":
+            return elevationEnabled
+                ? DisplacedMesh.bind(undefined, () => {
+                      return {
+                          min: tile.elevationRange.minElevation,
+                          max: tile.elevationRange.maxElevation
+                      };
+                  })
+                : THREE.Mesh;
+        case "terrain":
         case "dashed-line":
         case "solid-line":
             return THREE.Mesh;

@@ -145,6 +145,14 @@ export function overlayOnElevation(tile: Tile): void {
         return;
     }
 
+    // Refine tile elevation range, which is initially set to the broader range given by
+    // [[ElevationRangeSource]].
+    const geoBox = displacementMap.geoBox;
+    tile.elevationRange = {
+        minElevation: geoBox.minAltitude ?? 0,
+        maxElevation: geoBox.maxAltitude ?? 0
+    };
+
     // TODO: HARP-8808 Apply displacement maps once per material.
     for (const object of tile.objects) {
         overlayObject(object, displacementMap.texture);
