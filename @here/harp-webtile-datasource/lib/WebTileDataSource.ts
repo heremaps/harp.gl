@@ -183,6 +183,11 @@ interface MapTileParams {
     scheme?: string;
 }
 
+// FIXME: Move somewhere else to avoid terrain to depend on @here/harp-webtile-datasource
+export interface TextureProvider {
+    getTexture(tileKey: TileKey): Promise<THREE.Texture>;
+}
+
 /**
  * Instances of `WebTileDataSource` can be used to add Web Tile to [[MapView]].
  *
@@ -195,7 +200,7 @@ interface MapTileParams {
  * ```
  * @see [[DataSource]], [[OmvDataSource]].
  */
-export class WebTileDataSource extends DataSource {
+export class WebTileDataSource extends DataSource implements TextureProvider {
     /**
      * Base address for Base Map rendered using `normal.day` scheme.
      * @see https://developer.here.com/documentation/map-tile/topics/example-normal-day-view.html
@@ -295,9 +300,7 @@ export class WebTileDataSource extends DataSource {
     }
 
     /** @override */
-    getTile(tileKey: TileKey): Tile {
-        const tile = new Tile(this, tileKey);
-
+    getTexture(tileKey: TileKey): Promise<THREE.Texture> {
         const column = tileKey.column;
         const row = tileKey.row;
         const level = tileKey.level;
@@ -322,7 +325,13 @@ export class WebTileDataSource extends DataSource {
             url += `&lg2=${this.m_languages[1]}`;
         }
 
-        Promise.all([this.loadTexture(url), this.getTileCopyright(tile)])
+        return this.loadTexture(url);
+    }
+
+    /** @override */
+    getTile(tileKey: TileKey): Tile {
+        const tile = new Tile(this, tileKey);
+        Promise.all([this.getTexture(tileKey), this.getTileCopyright(tile)])
             .then(([texture, copyrightInfo]) => {
                 tile.copyrightInfo = copyrightInfo;
 
