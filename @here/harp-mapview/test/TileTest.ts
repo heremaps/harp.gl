@@ -10,7 +10,12 @@
 import { assert, expect } from "chai";
 
 import { DecodedTile } from "@here/harp-datasource-protocol";
-import { mercatorProjection, TileKey, webMercatorTilingScheme } from "@here/harp-geoutils";
+import {
+    mercatorProjection,
+    OrientedBox3,
+    TileKey,
+    webMercatorTilingScheme
+} from "@here/harp-geoutils";
 import * as THREE from "three";
 import { DataSource } from "../lib/DataSource";
 import { MapView } from "../lib/MapView";
@@ -163,5 +168,79 @@ describe("Tile", function() {
         expect(tile.willRender(0)).is.false;
         tile.skipRendering = false;
         expect(tile.willRender(0)).is.true;
+    });
+
+    it("default tile min/max elevation and max geometry height are 0", function() {
+        const tile = new Tile(stubDataSource, tileKey);
+        expect(tile.minElevation).equals(0);
+        expect(tile.maxElevation).equals(0);
+        expect(tile.maxGeometryHeight).equals(0);
+    });
+
+    it("setElevation does not update bounding box if maxGeometryHeight is not set", function() {
+        const tile = new Tile(stubDataSource, tileKey);
+        const oldGeoBox = tile.geoBox.clone();
+        const oldBBox = tile.boundingBox.clone();
+        const minElevation = 5;
+        const maxElevation = 10;
+
+        tile.setElevation(minElevation, maxElevation);
+
+        expect(tile.minElevation).equals(minElevation);
+        expect(tile.maxElevation).equals(maxElevation);
+        expect(tile.geoBox).deep.equals(oldGeoBox);
+        expect(tile.boundingBox).deep.equals(oldBBox);
+    });
+
+    it("setElevation updates bounding box if maxGeometryHeight is set", function() {
+        const tile = new Tile(stubDataSource, tileKey);
+        const minElevation = 30;
+        const maxElevation = 50;
+        const maxGeometryHeight = 100;
+        const expectedGeoBox = tile.geoBox.clone();
+        expectedGeoBox.southWest.altitude = minElevation;
+        expectedGeoBox.northEast.altitude = maxElevation + maxGeometryHeight;
+        const expectedBBox = new OrientedBox3();
+        stubDataSource.mapView.projection.projectBox(expectedGeoBox, expectedBBox);
+
+        tile.maxGeometryHeight = maxGeometryHeight;
+        tile.setElevation(minElevation, maxElevation);
+
+        expect(tile.minElevation).equals(minElevation);
+        expect(tile.maxElevation).equals(maxElevation);
+        expect(tile.geoBox).deep.equals(expectedGeoBox);
+        expect(tile.boundingBox).deep.equals(expectedBBox);
+    });
+
+    it("maxGeometryHeight setter does not update bounding box if elevation is not set", function() {
+        const tile = new Tile(stubDataSource, tileKey);
+        const oldGeoBox = tile.geoBox.clone();
+        const oldBBox = tile.boundingBox.clone();
+
+        const maxGeometryHeight = 10;
+
+        tile.maxGeometryHeight = maxGeometryHeight;
+        expect(tile.maxGeometryHeight).equals(maxGeometryHeight);
+        expect(tile.geoBox).deep.equals(oldGeoBox);
+        expect(tile.boundingBox).deep.equals(oldBBox);
+    });
+
+    it("maxGeometryHeight setter updates bounding box if elevation is set", function() {
+        const tile = new Tile(stubDataSource, tileKey);
+        const maxGeometryHeight = 100;
+        const minElevation = 1;
+        const maxElevation = 5;
+        const expectedGeoBox = tile.geoBox.clone();
+        expectedGeoBox.southWest.altitude = minElevation;
+        expectedGeoBox.northEast.altitude = maxElevation + maxGeometryHeight;
+        const expectedBBox = new OrientedBox3();
+        stubDataSource.mapView.projection.projectBox(expectedGeoBox, expectedBBox);
+
+        tile.setElevation(minElevation, maxElevation);
+        tile.maxGeometryHeight = maxGeometryHeight;
+
+        expect(tile.maxGeometryHeight).equals(maxGeometryHeight);
+        expect(tile.geoBox).deep.equals(expectedGeoBox);
+        expect(tile.boundingBox).deep.equals(expectedBBox);
     });
 });

@@ -242,8 +242,6 @@ export class PickHandler {
             return a.distance - b.distance;
         });
 
-        this.mapView.update();
-
         return pickResults;
     }
 
