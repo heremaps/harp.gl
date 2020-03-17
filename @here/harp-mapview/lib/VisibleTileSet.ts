@@ -597,11 +597,8 @@ export class VisibleTileSet {
             const tiles = renderListEntry.renderedTiles;
             tiles.forEach(tile => {
                 tile.update(renderListEntry.zoomLevel);
-                minElevation = MathUtils.min2(minElevation, tile.minElevation);
-                maxElevation = MathUtils.max2(
-                    maxElevation,
-                    tile.maxElevation + tile.maxGeometryHeight
-                );
+                minElevation = MathUtils.min2(minElevation, tile.geoBox.minAltitude);
+                maxElevation = MathUtils.max2(maxElevation, tile.geoBox.maxAltitude);
             });
         });
 

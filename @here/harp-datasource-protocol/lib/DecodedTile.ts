@@ -30,7 +30,6 @@ export interface DecodedTile {
     textGeometries?: TextGeometry[]; // ### deprecate
     poiGeometries?: PoiGeometry[];
     tileInfo?: TileInfo;
-    maxGeometryHeight?: number;
     decodeTime?: number; // time used to decode (in ms)
 
     /**
@@ -39,6 +38,12 @@ export interface DecodedTile {
      * more accurate bounding box once the data is decoded.
      */
     boundingBox?: OrientedBox3;
+
+    /**
+     * Data sources not defining a bounding box may define alternatively a maximum geometry height
+     * in meters. The bounding box of the resulting tile will be extended to encompass this height.
+     */
+    maxGeometryHeight?: number;
 
     /**
      * Tile data Copyright holder identifiers.

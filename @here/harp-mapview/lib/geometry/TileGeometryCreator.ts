@@ -198,9 +198,6 @@ export class TileGeometryCreator {
             return technique.enabled !== false;
         };
 
-        if (decodedTile.maxGeometryHeight !== undefined) {
-            tile.maxGeometryHeight = decodedTile.maxGeometryHeight;
-        }
         this.createObjects(tile, decodedTile, filter);
 
         this.preparePois(tile, decodedTile);
