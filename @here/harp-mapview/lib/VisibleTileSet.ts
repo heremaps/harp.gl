@@ -519,7 +519,7 @@ export class VisibleTileSet {
             let allDataSourceTilesLoaded = true;
             let numTilesLoading = 0;
             // Create actual tiles only for the allowed number of visible tiles
-            const displayZoomLevel = dataSource.getDisplayZoomLevel(zoomLevel);
+            const dataZoomLevel = dataSource.getDataZoomLevel(zoomLevel);
             for (
                 let i = 0;
                 i < visibleTileKeys.length &&
@@ -563,7 +563,7 @@ export class VisibleTileSet {
             this.dataSourceTileList.push({
                 dataSource,
                 storageLevel,
-                zoomLevel: displayZoomLevel,
+                zoomLevel: dataZoomLevel,
                 allVisibleTileLoaded: allDataSourceTilesLoaded,
                 numTilesLoading,
                 visibleTiles: actuallyVisibleTiles,
@@ -883,11 +883,11 @@ export class VisibleTileSet {
     ): { searchLevelsUp: number; searchLevelsDown: number } {
         const searchLevelsUp = Math.min(
             this.options.quadTreeSearchDistanceUp,
-            Math.max(0, visibleLevel - dataSource.minZoomLevel)
+            Math.max(0, visibleLevel - dataSource.minDataLevel)
         );
         const searchLevelsDown = Math.min(
             this.options.quadTreeSearchDistanceDown,
-            Math.max(0, dataSource.maxZoomLevel - visibleLevel)
+            Math.max(0, dataSource.maxDataLevel - visibleLevel)
         );
 
         return { searchLevelsUp, searchLevelsDown };
@@ -903,7 +903,7 @@ export class VisibleTileSet {
     private fillMissingTilesFromCache() {
         this.dataSourceTileList.forEach(renderListEntry => {
             const dataSource = renderListEntry.dataSource;
-            const displayZoomLevel = renderListEntry.zoomLevel;
+            const dataZoomLevel = renderListEntry.zoomLevel;
             const renderedTiles = renderListEntry.renderedTiles;
 
             // Direction in quad tree to search: up -> shallower levels, down -> deeper levels.
@@ -917,7 +917,7 @@ export class VisibleTileSet {
 
             const { searchLevelsUp, searchLevelsDown } = this.getCacheSearchLevels(
                 dataSource,
-                displayZoomLevel
+                dataZoomLevel
             );
 
             defaultSearchDirection =
@@ -966,7 +966,7 @@ export class VisibleTileSet {
                     if (
                         this.findUp(
                             tileKeyCode,
-                            displayZoomLevel,
+                            dataZoomLevel,
                             renderedTiles,
                             checkedTiles,
                             dataSource
@@ -981,7 +981,7 @@ export class VisibleTileSet {
                     searchDirection === SearchDirection.BOTH ||
                     searchDirection === SearchDirection.DOWN
                 ) {
-                    this.findDown(tileKeyCode, displayZoomLevel, renderedTiles, dataSource);
+                    this.findDown(tileKeyCode, dataZoomLevel, renderedTiles, dataSource);
                 }
             }
         });
@@ -989,7 +989,7 @@ export class VisibleTileSet {
 
     private findDown(
         tileKeyCode: number,
-        displayZoomLevel: number,
+        dataZoomLevel: number,
         renderedTiles: Map<number, Tile>,
         dataSource: DataSource
     ) {
@@ -1007,7 +1007,7 @@ export class VisibleTileSet {
                 dataSource
             );
 
-            const nextLevelDiff = Math.abs(childTileKey.level - displayZoomLevel);
+            const nextLevelDiff = Math.abs(childTileKey.level - dataZoomLevel);
             if (childTile !== undefined && childTile.hasGeometry) {
                 // childTile has geometry, so can be reused as fallback
                 renderedTiles.set(childTileCode, childTile);
@@ -1017,7 +1017,7 @@ export class VisibleTileSet {
 
             // Recurse down until the max distance is reached.
             if (nextLevelDiff < this.options.quadTreeSearchDistanceDown) {
-                this.findDown(childTileCode, displayZoomLevel, renderedTiles, dataSource);
+                this.findDown(childTileCode, dataZoomLevel, renderedTiles, dataSource);
             }
         }
     }
@@ -1025,7 +1025,7 @@ export class VisibleTileSet {
     /**
      * Returns true if a tile was found in the cache which is a parent
      * @param tileKeyCode Morton code of the current tile that should be searched for.
-     * @param displayZoomLevel The current zoom level of tiles that are to be displayed.
+     * @param dataZoomLevel The current data zoom level of tiles that are to be displayed.
      * @param renderedTiles The list of tiles that are shown to the user.
      * @param checkedTiles Used to map a given code to a boolean which tells us if an ancestor is
      * displayed or not.
@@ -1034,7 +1034,7 @@ export class VisibleTileSet {
      */
     private findUp(
         tileKeyCode: number,
-        displayZoomLevel: number,
+        dataZoomLevel: number,
         renderedTiles: Map<number, Tile>,
         checkedTiles: Map<number, boolean>,
         dataSource: DataSource
@@ -1052,7 +1052,7 @@ export class VisibleTileSet {
         const { offset, mortonCode } = TileOffsetUtils.extractOffsetAndMortonKeyFromKey(parentCode);
         const parentTile = this.m_dataSourceCache.get(mortonCode, offset, dataSource);
         const parentTileKey = parentTile ? parentTile.tileKey : TileKey.fromMortonCode(mortonCode);
-        const nextLevelDiff = Math.abs(displayZoomLevel - parentTileKey.level);
+        const nextLevelDiff = Math.abs(dataZoomLevel - parentTileKey.level);
         if (parentTile !== undefined && parentTile.hasGeometry) {
             checkedTiles.set(parentCode, true);
             // parentTile has geometry, so can be reused as fallback
@@ -1070,7 +1070,7 @@ export class VisibleTileSet {
         if (nextLevelDiff < this.options.quadTreeSearchDistanceUp && parentTileKey.level !== 0) {
             const foundUp = this.findUp(
                 parentCode,
-                displayZoomLevel,
+                dataZoomLevel,
                 renderedTiles,
                 checkedTiles,
                 dataSource
@@ -1212,7 +1212,7 @@ export class VisibleTileSet {
         // For each bucket of data sources with same tiling scheme, calculate frustum intersection
         // once using the maximum display level.
         for (const [tilingScheme, bucket] of dataSourceBuckets) {
-            const zoomLevels = bucket.map(dataSource => dataSource.getDisplayZoomLevel(zoomLevel));
+            const zoomLevels = bucket.map(dataSource => dataSource.getDataZoomLevel(zoomLevel));
             const result = this.m_frustumIntersection.compute(
                 tilingScheme,
                 elevationRangeSource,
@@ -1226,9 +1226,9 @@ export class VisibleTileSet {
                 // For each data source check what tiles from the intersection should be rendered
                 // at this zoom level.
                 const visibleTileKeys: TileKeyEntry[] = [];
-                const displayZoomLevel = dataSource.getDisplayZoomLevel(zoomLevel);
-                for (const tileKeyEntry of result.tileKeyEntries.get(displayZoomLevel)!.values()) {
-                    if (dataSource.canGetTile(displayZoomLevel, tileKeyEntry.tileKey)) {
+                const dataZoomLevel = dataSource.getDataZoomLevel(zoomLevel);
+                for (const tileKeyEntry of result.tileKeyEntries.get(dataZoomLevel)!.values()) {
+                    if (dataSource.canGetTile(dataZoomLevel, tileKeyEntry.tileKey)) {
                         visibleTileKeys.push(tileKeyEntry);
                     }
                 }
