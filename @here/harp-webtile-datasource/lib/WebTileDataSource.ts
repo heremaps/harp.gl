@@ -34,7 +34,19 @@ export interface WebTileDataSourceParameters {
     /**
      * The `apikey` for the access of the Web Tile Data.
      */
-    apikey: string;
+    apikey?: string;
+
+    /**
+     * The `appId` for the access of the Web Tile Data.
+     * @note Will not be used if apiKey is defined as well.
+     */
+    appId?: string;
+
+    /**
+     * The `appCode` for the access of the Web Tile Data.
+     * @note Will not be used if apiKey is defined as well.
+     */
+    appCode?: string;
 
     // tslint:disable:max-line-length
     /**
@@ -269,10 +281,18 @@ export class WebTileDataSource extends DataSource {
         const mapId = getOptionValue(mapTileParams.mapVersion, "newest");
         const scheme = mapTileParams.scheme || "normal.day";
         const baseScheme = scheme.split(".")[0] || "normal";
-        const { apikey } = this.m_options;
+
+        const { appId, appCode, apikey } = this.m_options;
+        const useApiKey = apikey !== undefined;
+        const useAppId = apikey === undefined && appId !== undefined && appCode !== undefined;
+        if (!useApiKey && !useAppId) {
+            throw new Error("Neither apiKey nor appId/appCode are defined.");
+        }
+
+        const authParams = useApiKey ? `apikey=${apikey}` : `app_id=${appId}&app_code=${appCode}`;
         const url =
             `https://1.${baseHostName}/maptile/2.1/copyright/${mapId}` +
-            `?output=json&apikey=${apikey}`;
+            `?output=json&${authParams}`;
         this.m_copyrightProvider = new UrlCopyrightProvider(url, baseScheme);
     }
 
@@ -301,13 +321,16 @@ export class WebTileDataSource extends DataSource {
         const column = tileKey.column;
         const row = tileKey.row;
         const level = tileKey.level;
-        const { apikey } = this.m_options;
+        const { appId, appCode, apikey } = this.m_options;
+        const authParams =
+            apikey !== undefined ? `apikey=${apikey}` : `app_id=${appId}&app_code=${appCode}`;
         const quadKey = tileKey.toQuadKey();
         const server = parseInt(quadKey[quadKey.length - 1], 10) + 1;
+
         let url =
             `https://${server}.${this.m_tileBaseAddress}/` +
             `${level}/${column}/${row}/${this.m_resolution}/png8` +
-            `?apikey=${apikey}` +
+            `?${authParams}` +
             getOptionValue(this.m_options.additionalRequestParameters, "");
 
         if (this.m_ppi !== WebTileDataSource.ppiValue.ppi72) {

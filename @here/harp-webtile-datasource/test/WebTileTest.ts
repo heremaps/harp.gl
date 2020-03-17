@@ -48,7 +48,7 @@ describe("WebTileDataSource", function() {
         });
         assert(webTileDataSource.maxZoomLevel === 20);
     });
-    it("#createWebTileDataSource with satellite.day and ppi320", async function() {
+    it("#createWebTileDataSource throws with satellite.day and ppi320", async function() {
         const apikey = "123";
         assert.throw(
             () =>
@@ -58,5 +58,14 @@ describe("WebTileDataSource", function() {
                     ppi: WebTileDataSource.ppiValue.ppi320
                 })
         );
+    });
+    it("#createWebTileDataSource throws w/o auth.", async function() {
+        assert.throw(() => new WebTileDataSource({}));
+    });
+    it("#createWebTileDataSource throws w/ missing appCode", async function() {
+        assert.throw(() => new WebTileDataSource({ appId: "42" }));
+    });
+    it("#createWebTileDataSource throws w/ missing appId", async function() {
+        assert.throw(() => new WebTileDataSource({ appCode: "42" }));
     });
 });
