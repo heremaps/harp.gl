@@ -107,7 +107,11 @@ export namespace PerformanceUtils {
             powerPreference
         });
 
-        mapView.lookAt(new GeoCoordinates(52.518611, 13.376111), 8000, 0, 0);
+        const zoomLevel = MapViewUtils.calculateZoomLevelFromDistance(mapView, 8000);
+        mapView.lookAt({
+            target: new GeoCoordinates(52.518611, 13.376111),
+            zoomLevel
+        });
 
         const mapControls = MapControls.create(mapView);
 
@@ -224,10 +228,14 @@ export namespace PerformanceUtils {
         force?: boolean
     ): Promise<void> {
         const mapView = mapViewApp.mapView;
-        if (cameraHeight === undefined) {
-            cameraHeight = mapView.camera.position.z;
+        let zoomLevel;
+        if (cameraHeight !== undefined) {
+            zoomLevel = MapViewUtils.calculateZoomLevelFromDistance(mapView, cameraHeight);
         }
-        mapView.lookAt(new GeoCoordinates(lat, long), cameraHeight);
+        mapView.lookAt({
+            target: new GeoCoordinates(lat, long),
+            zoomLevel
+        });
 
         if (force === true) {
             await delay(0);
@@ -434,10 +442,9 @@ export namespace PerformanceUtils {
     ) {
         const mapView = mapViewApp.mapView;
         const target = new GeoCoordinates(lat, long);
-        const distance = MapViewUtils.calculateDistanceFromZoomLevel(mapView, zoomLevel);
         const tilt = THREE.MathUtils.radToDeg(pitch);
         const heading = -THREE.MathUtils.radToDeg(yaw);
-        mapView.lookAt(target, distance, tilt, heading);
+        mapView.lookAt({ target, zoomLevel, tilt, heading });
 
         if (force === true) {
             await delay(0);

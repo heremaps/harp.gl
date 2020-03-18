@@ -92,7 +92,7 @@ export namespace TripleViewExample {
         }
 
         const frankfurt = new GeoCoordinates(50.1125867, 8.6720831);
-        mapView.lookAt(frankfurt, 1000, 45, 200);
+        mapView.lookAt({ target: frankfurt, zoomLevel: 18, tilt: 45, heading: 200 });
         mapView.zoomLevel = 16.2;
 
         setupSyncViewsGrid(mapView, gridPositionX, gridPositionY);

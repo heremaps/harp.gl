@@ -25,8 +25,14 @@ import {
     Theme
 } from "@here/harp-datasource-protocol";
 import { FeaturesDataSource } from "@here/harp-features-datasource";
-import { GeoBox, GeoCoordinates, OrientedBox3, ProjectionType } from "@here/harp-geoutils";
-import { MapAnchor, MapView, MapViewEventNames } from "@here/harp-mapview";
+import { GeoBox, OrientedBox3, ProjectionType } from "@here/harp-geoutils";
+import {
+    LookAtParams,
+    MapAnchor,
+    MapView,
+    MapViewEventNames,
+    MapViewUtils
+} from "@here/harp-mapview";
 import { GeoJsonTiler } from "@here/harp-mapview-decoder/index-worker";
 import { OmvTileDecoder } from "@here/harp-omv-datasource/index-worker";
 import { getPlatform, RenderingTestHelper, TestOptions, waitForEvent } from "@here/harp-test-utils";
@@ -95,24 +101,14 @@ function mapViewFitGeoBox(mapView: MapView, geoBox: GeoBox, margin: number = 0.1
 
     const fov = mapView.camera.fov;
     const height = (viewSize / 2) * (1 / Math.tan(THREE.MathUtils.degToRad(fov / 2)));
+    const distance = height * (1 + margin);
 
     boundingBox.getCenter(tmpVec3);
-    const { latitude, longitude } = mapView.projection.unprojectPoint(tmpVec3);
+    const target = mapView.projection.unprojectPoint(tmpVec3);
     return {
-        latitude,
-        longitude,
-        distance: height * (1 + margin),
-        tilt: 0,
-        azimuth: 0
+        target,
+        zoomLevel: MapViewUtils.calculateZoomLevelFromDistance(mapView, distance)
     };
-}
-
-interface LookAtParams {
-    latitude: number;
-    longitude: number;
-    distance: number;
-    tilt: number;
-    azimuth: number;
 }
 
 interface GeoJsonMapViewRenderingTestOptions extends RenderingTestOptions {
@@ -161,12 +157,8 @@ function mapViewFeaturesRenderingTest(
             );
 
             const lookAt = mergeWithOptions(defaultLookAt, options.lookAt);
-            mapView.lookAt(
-                new GeoCoordinates(lookAt.latitude, lookAt.longitude),
-                lookAt.distance,
-                lookAt.tilt,
-                lookAt.azimuth
-            );
+
+            mapView.lookAt(lookAt);
             if (options.grid !== undefined) {
                 const gridDivisions = 4;
                 const gridSize = options.grid * gridDivisions;

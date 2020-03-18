@@ -9,8 +9,7 @@
 
 import { GeoJson, Light, StyleSet, Theme } from "@here/harp-datasource-protocol";
 import { GeoJsonDataProvider } from "@here/harp-geojson-datasource";
-import { GeoCoordinates } from "@here/harp-geoutils";
-import { MapView, MapViewEventNames } from "@here/harp-mapview";
+import { LookAtParams, MapView, MapViewEventNames, MapViewUtils } from "@here/harp-mapview";
 import { GeoJsonTiler } from "@here/harp-mapview-decoder/index-worker";
 import { OmvDataSource } from "@here/harp-omv-datasource";
 import { OmvTileDecoder } from "@here/harp-omv-datasource/lib/OmvDecoder";
@@ -45,14 +44,6 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
         }
     });
 
-    interface LookAtParams {
-        latitute: number;
-        longitude: number;
-        distance: number;
-        tilt: number;
-        azimuth: number;
-    }
-
     interface GeoJsoTestOptions {
         mochaTest: Mocha.Context;
         testImageName: string;
@@ -76,21 +67,15 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
         });
 
         const defaultLookAt: LookAtParams = {
-            latitute: 53.3,
-            longitude: 14.6,
-            distance: 200000,
+            target: { lat: 53.3, lng: 14.6 },
+            zoomLevel: MapViewUtils.calculateZoomLevelFromDistance(mapView, 200000),
             tilt: 0,
-            azimuth: 0
+            heading: 0
         };
 
         const lookAt = mergeWithOptions(defaultLookAt, options.lookAt);
 
-        mapView.lookAt(
-            new GeoCoordinates(lookAt.latitute, lookAt.longitude),
-            lookAt.distance,
-            lookAt.tilt,
-            lookAt.azimuth
-        );
+        mapView.lookAt(lookAt);
         // Shutdown errors cause by firefox bug
         mapView.renderer.getContext().getShaderInfoLog = (x: any) => {
             return "";
@@ -165,7 +150,7 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
             geoJson: "../dist/resources/basic_polygon.json",
             lookAt: {
                 tilt: 45,
-                azimuth: 30
+                heading: 30
             }
         });
     });
@@ -195,7 +180,7 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
             geoJson: "../dist/resources/basic_polygon.json",
             lookAt: {
                 tilt: 45,
-                azimuth: 30
+                heading: 30
             }
         });
     });
@@ -226,7 +211,7 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
             geoJson: "../dist/resources/basic_polygon.json",
             lookAt: {
                 tilt: 45,
-                azimuth: 30
+                heading: 30
             }
         });
     });

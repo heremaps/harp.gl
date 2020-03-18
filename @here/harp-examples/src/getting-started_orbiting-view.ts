@@ -5,12 +5,7 @@
  */
 
 import { GeoCoordinates, mercatorProjection, sphereProjection } from "@here/harp-geoutils";
-import {
-    CopyrightElementHandler,
-    MapView,
-    MapViewEventNames,
-    MapViewUtils
-} from "@here/harp-mapview";
+import { CopyrightElementHandler, MapView, MapViewEventNames } from "@here/harp-mapview";
 import { APIFormat, AuthenticationMethod, OmvDataSource } from "@here/harp-omv-datasource";
 import { GUI } from "dat.gui";
 import { apikey, copyrightInfo } from "../config";
@@ -35,16 +30,12 @@ export namespace CameraOrbitExample {
     const map = createBaseMap();
     // end:harp_gl_camera_orbit_example_0.ts
 
-    // Be sure to see the buildings when starting the example: a zoom level does not translate into
-    // the same distance depending on the viewport's height.
-    const minDistanceForBuildings =
-        Math.ceil(MapViewUtils.calculateDistanceToGroundFromZoomLevel(map, 16.0)) - 500;
     // snippet:harp_gl_camera_orbit_example_1.ts
-    const options = { tilt: 25, distance: minDistanceForBuildings, globe: true };
     const dubai = new GeoCoordinates(25.19705, 55.27419);
-    let heading = 0;
+    const options = { target: dubai, tilt: 25, zoomLevel: 16.1, heading: 0, globe: true };
     map.addEventListener(MapViewEventNames.AfterRender, () => {
-        map.lookAt(dubai, options.distance, options.tilt, (heading = (heading + 0.1) % 360));
+        options.heading = (options.heading + 0.1) % 360;
+        map.lookAt(options);
         map.update();
         updateHTML();
     });
@@ -52,7 +43,7 @@ export namespace CameraOrbitExample {
 
     const gui = new GUI({ width: 300 });
     gui.add(options, "tilt", 0, 80, 0.1);
-    gui.add(options, "distance", 300, 60000, 1);
+    gui.add(options, "zoomLevel", 1, 20, 0.1);
     gui.add(options, "globe").onChange(() => {
         map.projection = options.globe ? sphereProjection : mercatorProjection;
     });
@@ -95,8 +86,10 @@ export namespace CameraOrbitExample {
     function updateHTML() {
         const infoElement = document.getElementById("info") as HTMLParagraphElement;
         infoElement.innerHTML =
-            `This view is set through the lookAt method: map.lookAt(dubai, ` +
-            `${options.distance.toFixed(0)}, ${options.tilt.toFixed(1)}, ${heading.toFixed(1)});`;
+            `This view is set through the lookAt method: map.lookAt({target: dubai, ` +
+            `zoomLevel: ${options.zoomLevel.toFixed(1)}, ` +
+            `tilt: ${options.tilt.toFixed(1)}, ` +
+            `heading: ${options.heading.toFixed(1)}})`;
     }
 
     function getExampleHTML() {

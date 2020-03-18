@@ -8,7 +8,7 @@ import { Theme } from "@here/harp-datasource-protocol";
 // import { GeoJsonDataProvider } from "@here/harp-geojson-datasource";
 import { GeoCoordinates } from "@here/harp-geoutils";
 import { MapControls, MapControlsUI } from "@here/harp-map-controls";
-import { MapView, MapViewUtils } from "@here/harp-mapview";
+import { MapView } from "@here/harp-mapview";
 import { APIFormat, AuthenticationMethod, OmvDataSource } from "@here/harp-omv-datasource";
 import { apikey, copyrightInfo } from "../config";
 
@@ -436,8 +436,7 @@ export namespace TiledGeoJsonTechniquesExample {
         });
 
         const target = new GeoCoordinates(28.595, 77.22, 0);
-        const distance = MapViewUtils.calculateDistanceFromZoomLevel(mapView, 15.2);
-        mapView.lookAt(target, distance, 28, 0);
+        mapView.lookAt({ target, zoomLevel: 15.2, tilt: 28 });
 
         const controls = new MapControls(mapView);
 

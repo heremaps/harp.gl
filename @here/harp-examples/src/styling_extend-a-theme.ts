@@ -107,7 +107,7 @@ export namespace HelloCustomThemeExample {
 
         // Look at New York.
         const rome = new GeoCoordinates(41.9005332, 12.494249);
-        map.lookAt(rome, 3000, 50, 200);
+        map.lookAt({ target: rome, zoomLevel: 16.1, tilt: 50, heading: 200 });
         map.zoomLevel = 16.1;
 
         // Add an UI.
