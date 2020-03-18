@@ -281,6 +281,11 @@ export class OmvDataSource extends TileDataSource<OmvTile> {
     }
 
     /** @override */
+    get storageLevelOffset() {
+        return super.storageLevelOffset;
+    }
+
+    /** @override */
     set storageLevelOffset(levelOffset: number) {
         super.storageLevelOffset = levelOffset;
         this.m_decoderOptions.storageLevelOffset = this.storageLevelOffset;

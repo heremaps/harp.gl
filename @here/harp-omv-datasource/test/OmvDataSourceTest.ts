@@ -79,4 +79,28 @@ describe("DataProviders", function() {
         });
         assert.isTrue(omvDataSource.dataProvider() instanceof MockDataProvider);
     });
+
+    describe("storageLevelOffset", function() {
+        it("updates storageLevelOffset in decoder options", function() {
+            const mapView = {
+                markTilesDirty() {
+                    /* noop */
+                }
+            } as any;
+            const mockDataProvider = new MockDataProvider();
+            const omvDataSource = new OmvDataSource({
+                decoder: new OmvTileDecoder(),
+                baseUrl: "https://a.tiles.mapbox.com/v4/mapbox.mapbox-streets-v7",
+                apiFormat: APIFormat.MapboxV4,
+                authenticationCode: "123",
+                dataProvider: mockDataProvider
+            });
+            omvDataSource.attach(mapView);
+            omvDataSource.storageLevelOffset = 2;
+            assert.equal(omvDataSource.storageLevelOffset, 2);
+            // tslint:disable-next-line: no-string-literal
+            assert.equal(omvDataSource["m_decoderOptions"].storageLevelOffset, 2);
+            assert.equal((omvDataSource.decoder as any).m_storageLevelOffset, 2);
+        });
+    });
 });
