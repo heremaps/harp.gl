@@ -552,8 +552,7 @@ export class VisibleTileSet {
                 // Update the visible area of the tile. This is used for those tiles that are
                 // currently loaded and are waiting to be decoded to sort the jobs by area.
                 tile.visibleArea = tileEntry.area;
-                tile.minElevation = tileEntry.minElevation;
-                tile.maxElevation = tileEntry.maxElevation;
+                tile.setElevation(tileEntry.minElevation, tileEntry.maxElevation);
 
                 actuallyVisibleTiles.push(tile);
             }
@@ -598,11 +597,8 @@ export class VisibleTileSet {
             const tiles = renderListEntry.renderedTiles;
             tiles.forEach(tile => {
                 tile.update(renderListEntry.zoomLevel);
-                minElevation = MathUtils.min2(minElevation, tile.minElevation);
-                maxElevation = MathUtils.max2(
-                    maxElevation,
-                    tile.maxElevation + tile.maxGeometryHeight
-                );
+                minElevation = MathUtils.min2(minElevation, tile.geoBox.minAltitude);
+                maxElevation = MathUtils.max2(maxElevation, tile.geoBox.maxAltitude);
             });
         });
 

@@ -10,7 +10,13 @@
 import { assert, expect } from "chai";
 
 import { DecodedTile } from "@here/harp-datasource-protocol";
-import { mercatorProjection, TileKey, webMercatorTilingScheme } from "@here/harp-geoutils";
+import {
+    GeoBox,
+    mercatorProjection,
+    OrientedBox3,
+    TileKey,
+    webMercatorTilingScheme
+} from "@here/harp-geoutils";
 import * as THREE from "three";
 import { DataSource } from "../lib/DataSource";
 import { MapView } from "../lib/MapView";
@@ -163,5 +169,96 @@ describe("Tile", function() {
         expect(tile.willRender(0)).is.false;
         tile.skipRendering = false;
         expect(tile.willRender(0)).is.true;
+    });
+
+    it("default tile min/max elevation and max geometry height are 0", function() {
+        const tile = new Tile(stubDataSource, tileKey);
+        const oldGeoBox = tile.geoBox.clone();
+        const oldBBox = tile.boundingBox.clone();
+
+        tile.decodedTile = { techniques: [], geometries: [] };
+
+        expect(tile.geoBox).deep.equals(oldGeoBox);
+        expect(tile.boundingBox).deep.equals(oldBBox);
+    });
+
+    it("setElevation does not elevate bbox if maxGeometryHeight is not set", function() {
+        const tile = new Tile(stubDataSource, tileKey);
+        const oldGeoBox = tile.geoBox.clone();
+        const oldBBox = tile.boundingBox.clone();
+
+        tile.setElevation(5, 10);
+
+        expect(tile.geoBox).deep.equals(oldGeoBox);
+        expect(tile.boundingBox).deep.equals(oldBBox);
+
+        tile.decodedTile = { techniques: [], geometries: [], boundingBox: new OrientedBox3() };
+
+        tile.setElevation(100, 500);
+        expect(tile.boundingBox).deep.equals(tile.decodedTile.boundingBox);
+    });
+
+    it("setElevation elevates bbox if maxGeometryHeight is set", function() {
+        const tile = new Tile(stubDataSource, tileKey);
+        const minElevation = 30;
+        const maxElevation = 50;
+        const maxGeometryHeight = 100;
+        const expectedGeoBox = tile.geoBox.clone();
+        expectedGeoBox.southWest.altitude = minElevation;
+        expectedGeoBox.northEast.altitude = maxElevation + maxGeometryHeight;
+        const expectedBBox = new OrientedBox3();
+        stubDataSource.mapView.projection.projectBox(expectedGeoBox, expectedBBox);
+
+        tile.decodedTile = { techniques: [], geometries: [], maxGeometryHeight };
+        tile.setElevation(minElevation, maxElevation);
+
+        expect(tile.geoBox).deep.equals(expectedGeoBox);
+        expect(tile.boundingBox).deep.equals(expectedBBox);
+    });
+
+    it("decodedTile setter sets decoded tile bbox if defined but does not elevate it", function() {
+        const tile = new Tile(stubDataSource, tileKey);
+
+        const expectedBBox = new OrientedBox3(
+            new THREE.Vector3(1, 0, 1),
+            new THREE.Matrix4(),
+            new THREE.Vector3(1, 1, 1)
+        );
+        const projection = stubDataSource.mapView.projection;
+        const northEast = expectedBBox.position.clone().add(expectedBBox.extents);
+        const southWest = expectedBBox.position.clone().sub(expectedBBox.extents);
+        const expectedGeoBox = new GeoBox(
+            projection.unprojectPoint(southWest),
+            projection.unprojectPoint(northEast)
+        );
+
+        tile.setElevation(500, 1000);
+        tile.decodedTile = {
+            techniques: [],
+            geometries: [],
+            boundingBox: expectedBBox,
+            maxGeometryHeight: 10
+        };
+
+        expect(tile.geoBox).deep.equals(expectedGeoBox);
+        expect(tile.boundingBox).deep.equals(expectedBBox);
+    });
+
+    it("decodedTile setter elevates bbox with decoded maxGeometryHeight if defined", function() {
+        const tile = new Tile(stubDataSource, tileKey);
+        const minElevation = 500;
+        const maxElevation = 1000;
+        const maxGeometryHeight = 10;
+        const expectedGeoBox = tile.geoBox.clone();
+        expectedGeoBox.southWest.altitude = minElevation;
+        expectedGeoBox.northEast.altitude = maxElevation + maxGeometryHeight;
+        const expectedBBox = new OrientedBox3();
+        stubDataSource.mapView.projection.projectBox(expectedGeoBox, expectedBBox);
+
+        tile.setElevation(minElevation, maxElevation);
+        tile.decodedTile = { techniques: [], geometries: [], maxGeometryHeight };
+
+        expect(tile.geoBox).deep.equals(expectedGeoBox);
+        expect(tile.boundingBox).deep.equals(expectedBBox);
     });
 });
