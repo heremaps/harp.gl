@@ -166,6 +166,9 @@ export function installMiddleware(app: express.Router, basePath: string) {
 
     outputBasePath = basePath;
 
+    // tslint gives a false alert b/c bodyParser is a function(deprecated) and a namespace.
+    // We are using the non-deprecated namespace here, so all fine.
+    // tslint:disable-next-line: deprecation
     const jsonParser = bodyParser.json({ limit: 1024 * 1024 * 16 });
     app.get("/ibct-report", jsonParser, getIbctReport);
     app.post("/ibct-feedback", jsonParser, postIbctFeedback);
