@@ -42,7 +42,12 @@ class FakeMapView {
     get scene() {
         return this.m_scene;
     }
+
+    get projection() {
+        return mercatorProjection;
+    }
 }
+
 class MockDataSource extends DataSource {
     /** @override */
     getTilingScheme(): TilingScheme {

@@ -374,7 +374,7 @@ export class Tile implements CachedResource {
     private m_textElementsChanged: boolean | undefined;
 
     // Center of the tile's unelevated bounding box world coordinates.
-    private readonly m_center = new THREE.Vector3();
+    private readonly m_worldCenter = new THREE.Vector3();
     private m_visibleArea: number = 0;
     // Minimum and maximum tile elevation.
     private m_minElevation: number = 0;
@@ -407,7 +407,7 @@ export class Tile implements CachedResource {
         localTangentSpace?: boolean
     ) {
         this.geoBox = this.dataSource.getTilingScheme().getGeoBox(this.tileKey);
-        this.setBoundingBox();
+        this.updateBoundingBox();
         this.m_localTangentSpace = localTangentSpace !== undefined ? localTangentSpace : false;
         this.m_textStyleCache = new TileTextStyleCache(this);
     }
@@ -465,7 +465,7 @@ export class Tile implements CachedResource {
      * The center of this `Tile` in world coordinates.
      */
     get center(): THREE.Vector3 {
-        return this.m_center;
+        return this.m_worldCenter;
     }
 
     /**
@@ -731,7 +731,7 @@ export class Tile implements CachedResource {
             // If the decoder provides a more accurate bounding box than the one we computed from
             // the flat geo box we take it instead.
             this.m_maxGeometryHeight = undefined;
-            this.setBoundingBox(decodedTile.boundingBox);
+            this.updateBoundingBox(decodedTile.boundingBox);
         } else {
             // Otherwise, if an elevation range was set, elevate bounding box to match
             // the elevated geometry.
@@ -1068,7 +1068,12 @@ export class Tile implements CachedResource {
         return this.m_boundingBox;
     }
 
-    private setBoundingBox(newBoundingBox?: OrientedBox3) {
+    /**
+     * Updates the tile's world bounding box.
+     * @param [newBoundingBox] The new bounding box to set. If undefined, the bounding box will be
+     * computed by projecting the tile's geoBox.
+     */
+    private updateBoundingBox(newBoundingBox?: OrientedBox3) {
         if (newBoundingBox) {
             this.m_boundingBox.copy(newBoundingBox);
 
@@ -1080,7 +1085,7 @@ export class Tile implements CachedResource {
         } else {
             this.projection.projectBox(this.geoBox, this.boundingBox);
         }
-        this.m_center.copy(this.boundingBox.position);
+        this.m_worldCenter.copy(this.boundingBox.position);
     }
 
     private elevateBoundingBox() {
