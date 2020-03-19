@@ -164,20 +164,20 @@ export namespace SynchronousRendering {
     const mapView = initializeMapView("mapCanvas");
 
     // snippet:harp_gl_rendering_synchronous_2.ts
-    mapView.addEventListener(MapViewEventNames.Update, update);
+    mapView.addEventListener(MapViewEventNames.Update, requestDraw);
     // end:harp_gl_rendering_synchronous_2.ts
 
     // snippet:harp_gl_rendering_synchronous_3.ts
-    let updatePending = false;
+    let requestDrawPending = false;
     let drawing = false;
 
     // Requests a redraw of the scene.
-    function update() {
+    function requestDraw() {
         // Cancel request for redrawing if already pending
-        if (updatePending) {
+        if (requestDrawPending) {
             return;
         }
-        updatePending = true;
+        requestDrawPending = true;
 
         requestAnimationFrame(draw);
     }
@@ -187,7 +187,7 @@ export namespace SynchronousRendering {
         if (drawing) {
             return;
         }
-        updatePending = false;
+        requestDrawPending = false;
         drawing = true;
 
         // Draw popup's connection line
