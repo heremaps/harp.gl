@@ -652,22 +652,35 @@ const MapViewDefaults = {
  */
 export interface LookAtParams {
     /**
-     * Target/look at point of the MapView
+     * Target/look at point of the MapView.
+     * @note If the given point is not on the ground (altitude != 0) [[MapView]] will do a
+     * raycasting internally to find a target on the ground.
+     * As a consequence [[MapView.target]] and [[MapView.zoomLevel]] will not match the values
+     * that were passed into the [[MapView.lookAt]] method.
+     * @default `new GeoCoordinates(25, 0)` in [[MapView.constructor]] context.
+     * @default [[MapView.target]] in [[MapView.lookAt]] context.
      */
     target?: GeoCoordLike;
 
     /**
-     * Zoomlevel of the MapView. Overwrites [[distance]].
+     * Zoomlevel of the MapView.
+     * @default 5 in [[MapView.constructor]] context.
+     * @default [[MapView.zoomLevel]] in [[MapView.lookAt]] context.
      */
     zoomLevel?: number;
 
     /**
      * Tilt angle in degrees. 0 is top down view.
+     * @default 0 in [[MapView.constructor]] context.
+     * @default [[MapView.tilt]] in [[MapView.lookAt]] context.
+     * @note Maximum supported tilt is 89°
      */
     tilt?: number;
 
     /**
      * Heading angle in degrees and clockwise. 0 is north-up.
+     * @default 0 in [[MapView.constructor]] context.
+     * @default [[MapView.heading]] in [[MapView.lookAt]] context.
      */
     heading?: number;
 }
@@ -1472,6 +1485,16 @@ export class MapView extends THREE.EventDispatcher {
 
     /**
      * The THREE.js camera used by this `MapView` to render the main scene.
+     * @note When modifying the camera all derived properties like:
+     * - [[MapView.target]]
+     * - [[MapView.zoomLevel]]
+     * - [[MapView.tilt]]
+     * - [[MapView.heading]]
+     * could change.
+     * Some of the properties (like [[zoomLevel]]) are cached internaly
+     * and will only be updated in the next animation frame.
+     * FIXME: Unfortunatley THREE.js is not dispatching any events when camera properties change
+     * so we should have an API for enforcing update of cached values.
      */
     get camera(): THREE.PerspectiveCamera {
         return this.m_camera;
@@ -1546,10 +1569,12 @@ export class MapView extends THREE.EventDispatcher {
         return this.m_focalLength;
     }
 
-    /** @internal
+    /**
      * Get geo coordinates of camera focus (target) point.
-     *
-     * @see worldTarget
+     * This point is not necessarily on the ground, i.e.:
+     *  - if the tilt is high and projection is [[sphereProjection]]
+     *  - if the camera was modified directly and is not pointing to the ground.
+     * In any case the projection of the target point will be in the center of the screen.
      *
      * @returns geo coordinates of the camera focus point.
      */
@@ -1974,10 +1999,14 @@ export class MapView extends THREE.EventDispatcher {
      * @param headingDeg The camera heading angle in degrees and clockwise (as opposed to yaw)
      *                   @default 0
      * starting north.
-     * @deprecated Use lookAt version with LookAtParams object parameter.
+     * @deprecated Use lookAt version with [[LookAtParams]] object parameter.
      */
     lookAt(target: GeoCoordLike, distance: number, tiltDeg?: number, headingDeg?: number): void;
 
+    /**
+     * Adjusts the camera to look at a given geo coordinate with tilt and heading angles.
+     * @param params LookAtParams
+     */
     lookAt(params: LookAtParams): void;
 
     lookAt(
