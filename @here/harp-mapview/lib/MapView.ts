@@ -2604,6 +2604,8 @@ export class MapView extends THREE.EventDispatcher {
             this.m_targetWorldPos.copy(target);
             this.m_targetGeoPos = this.projection.unprojectPoint(target);
             this.m_targetDistance = this.camera.position.distanceTo(target);
+        } else {
+            console.warn("Target not found");
         }
     }
 

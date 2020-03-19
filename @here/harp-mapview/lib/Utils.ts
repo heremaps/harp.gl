@@ -46,7 +46,7 @@ const tangentSpace = {
 };
 const cache = {
     quaternions: [new THREE.Quaternion(), new THREE.Quaternion()],
-    vector3: [new THREE.Vector3(), new THREE.Vector3()],
+    vector3: [new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3()],
     matrix4: [new THREE.Matrix4(), new THREE.Matrix4()],
     transforms: [
         {
@@ -239,7 +239,141 @@ export namespace MapViewUtils {
             groundPlane.constant = 0;
             groundSphere.radius = EarthConstants.EQUATORIAL_RADIUS;
         }
+        if (result !== null) {
+            return result;
+        }
+        return getGazingTargetFromCamera(camera, projection, elevation);
+    }
+
+    function getGazingTargetFromCamera(
+        camera: THREE.Camera,
+        projection: Projection,
+        elevation?: number
+    ): THREE.Vector3 | null {
+        const cameraPos = cache.vector3[0].copy(camera.position);
+        const cameraLookAt = camera.getWorldDirection(cache.vector3[1]).normalize();
+        let result: THREE.Vector3 | null = null;
+        // Find gazing point on the ground
+        if (projection.type === ProjectionType.Planar) {
+            // Tolerance may be adjusted to not exactly hit the horizon line.
+            //const planarTolerance = THREE.MathUtils.degToRad(1.0);
+            if (camera instanceof THREE.PerspectiveCamera) {
+                // Calculate angle between ground normal and tangent point.
+                const cameraToGround = cache.vector3[2];
+                projection
+                    .surfaceNormal(cameraPos, cameraToGround)
+                    .negate()
+                    .normalize();
+
+                // Simple approach does not consider real camera altitude and may not hit the ground
+                // depending on the tolerance taken.
+                //const tangentAngle = THREE.MathUtils.degToRad(90.0) - planarTolerance;
+
+                // Alternative approach taking into account non-infinite target distance
+                const cameraAltitude = projection.groundDistance(cameraPos);
+                const tileSize = (256 * cameraAltitude) / camera.getFocalLength();
+                const maxVisibility = 4 * tileSize;
+                const tangentAngle = Math.atan2(maxVisibility, cameraAltitude);
+
+                // Calculate angle between look at and surface normal(below camera position)
+                //const cameraPitchAngle = getCameraPitch(cameraToGround, cameraLookAt);
+                // Calculate angle between camera eye vector and tangent - just for debug.
+                //const diffAngle =
+                //    Math.abs(tangentAngle - cameraPitchAngle) + THREE.MathUtils.degToRad(1.0);
+
+                // Calculate the plane of rotation as cross product of look at and camera to ground.
+                const rotPlaneNorm = cameraToGround
+                    .clone()
+                    .cross(cameraLookAt)
+                    .normalize();
+                // Create rotation quaternion.
+                const rotQuaternion = cache.quaternions[0].setFromAxisAngle(
+                    rotPlaneNorm,
+                    tangentAngle
+                );
+                const newLookAt = cameraToGround.clone().applyQuaternion(rotQuaternion);
+                rayCaster.set(cameraPos, newLookAt);
+                result = rayCaster.ray.intersectPlane(groundPlane, new THREE.Vector3());
+            } else {
+                assert(false, "Orthogonal camera is not yet supported");
+            }
+        } else if (projection.type === ProjectionType.Spherical) {
+            // Tolerance may be adjusted to not exactly hit the sphere tangent.
+            const sphericalTolerance = THREE.MathUtils.degToRad(0.0);
+            const cameraToOrigin = cache.vector3[2].copy(camera.position).negate();
+            const r = EarthConstants.EQUATORIAL_RADIUS;
+            const d = cameraToOrigin.length();
+            // Normalize cameraToOrigin vector
+            cameraToOrigin.normalize();
+            if (camera instanceof THREE.PerspectiveCamera) {
+                // Calculate angle between surface normal (below camera position) and tangent.
+                const tangentAngle = Math.asin(r / d);
+
+                /* Alternative approach
+                // Calculate angle between look at and surface normal(below camera position)
+                const cameraPitch = getCameraPitch(cameraToOrigin, cameraLookAt);
+                console.log("Pitch angle: ", THREE.MathUtils.radToDeg(cameraPitch));
+                // Calculate angle between camera eye vector and tangent.
+                const diffAngle = tangentAngle - cameraPitch;
+                console.log("Diff angle: ", THREE.MathUtils.radToDeg(diffAngle));
+                // Use tangent based look at distance if horizon is within field of view
+                const tangentDist = getTangentBasedLookAtDist(d, r, diffAngle);
+                // Above be used to simply multiply look at by tangent distance without raycasting
+                */
+                // Calculate the plane of rotation as cross product of look at and camera to origin
+                const rotPlaneNorm = cameraToOrigin
+                    .clone()
+                    .cross(cameraLookAt)
+                    .normalize();
+                // Find rotation quaternion around the rotation plane normal.
+                const rotQuaternion = cache.quaternions[0].setFromAxisAngle(
+                    rotPlaneNorm,
+                    tangentAngle - sphericalTolerance
+                );
+                // Finally find the gazing (tangent based) look at vector.
+                const newLookAt = cameraToOrigin.applyQuaternion(rotQuaternion);
+                rayCaster.set(cameraPos, newLookAt);
+                result = rayCaster.ray.intersectSphere(groundSphere, new THREE.Vector3());
+            } else {
+                assert(false, "Orthogonal camera is not yet supported");
+            }
+        }
         return result;
+    }
+
+    function getCameraPitch(cameraToGround: THREE.Vector3, cameraLookAt: THREE.Vector3) {
+        const cosAlpha1 = cameraToGround.dot(cameraLookAt) / cameraToGround.length();
+        const cameraPitch = Math.acos(THREE.MathUtils.clamp(cosAlpha1, -1.0, 1.0));
+
+        return cameraPitch;
+    }
+
+    function getTangentDistance(d: number, r: number): number {
+        // There may be situations when maximum elevation still remains below sea level
+        // (elevation < 0) or it is negligible (elevation ~ epsilon)
+        if (d - r < epsilon) {
+            return 0;
+        }
+
+        // The distance to tangent point may be described as:
+        // t = sqrt(d^2 - r^2)
+        return Math.sqrt(d * d - r * r);
+    }
+
+    function getTangentBasedLookAtDist(d: number, r: number, alpha: number): number {
+        const t = getTangentDistance(d, r);
+
+        // Next step is to project tangent distance onto camera eye (forward) vector
+        // to get maximum camera look at distance.
+        //
+        // Knowing that:
+        // tangentVec.dot(cameraFwdVec) = cos(alpha) * len(tangentVec) * len(cameraFwdVec).
+        // where:
+        // ||cameraFwdVec|| == 1 ^ ||tangentVec|| == t
+        // Formula simplifies to:
+        const tangentDistOnLookAt = Math.cos(alpha) * t;
+
+        return tangentDistOnLookAt;
     }
 
     /**
@@ -455,7 +589,7 @@ export namespace MapViewUtils {
         }
         const pitch = MapViewUtils.extractAttitude(mapView, mapView.camera).pitch;
         // `maxTiltAngle` is equivalent to a `maxPitchAngle` in flat projections.
-        let newPitch = THREE.MathUtils.clamp(
+        const newPitch = THREE.MathUtils.clamp(
             pitch + THREE.MathUtils.degToRad(deltaPitchDeg),
             0,
             maxTiltAngleRad
@@ -463,14 +597,16 @@ export namespace MapViewUtils {
         // In sphere projection, the value of a maximum pitch is smaller than the value of the
         // maximum tilt, as the curvature of the surface adds up to it.
         if (mapView.projection.type === ProjectionType.Spherical) {
+            // Temporarily disabled to allow target point debug!
             // Deduce max pitch from max tilt. To this end the sine law of triangles is used below.
-            const maxPitch = Math.asin(
-                (EarthConstants.EQUATORIAL_RADIUS * Math.sin(Math.PI - maxTiltAngleRad)) /
-                    mapView.camera.position.length()
-            );
-            newPitch = Math.min(newPitch, maxPitch);
+            //const maxPitch = Math.asin(
+            //    (EarthConstants.EQUATORIAL_RADIUS * Math.sin(Math.PI - maxTiltAngleRad)) /
+            //        mapView.camera.position.length()
+            //);
+            //newPitch = Math.min(newPitch, maxPitch);
         }
         mapView.camera.rotateX(newPitch - pitch);
+        mapView.camera.updateMatrixWorld();
     }
 
     /**
