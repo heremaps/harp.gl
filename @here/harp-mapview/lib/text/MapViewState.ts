@@ -12,8 +12,9 @@ import { ViewState } from "./ViewState";
 
 /**
  * View state obtained from a MapView instance.
+ * @deprecated [[ViewState]] property of [[MapView]] should be used.
  */
-export class MapViewState implements ViewState {
+export class MapViewStateProxy implements ViewState {
     constructor(
         private readonly m_mapView: MapView,
         private readonly m_renderedTilesChangeCheck: () => boolean
