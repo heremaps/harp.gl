@@ -290,4 +290,22 @@ describe("TileDataSource", function() {
             assert(tile.tileLoader!.isFinished);
         }
     });
+
+    it("supports deprecated minZoomLevel and maxZoomLevel in constructor", function() {
+        const testedDataSource = new TileDataSource(new TileFactory(Tile), {
+            styleSetName: "",
+            tilingScheme: webMercatorTilingScheme,
+            dataProvider: createMockDataProvider(),
+            decoder: createMockTileDecoder(),
+            minZoomLevel: 3,
+            maxZoomLevel: 17
+        });
+
+        // tslint:disable-next-line: deprecation
+        assert.equal(testedDataSource.minZoomLevel, 3);
+        assert.equal(testedDataSource.minDataLevel, 3);
+        // tslint:disable-next-line: deprecation
+        assert.equal(testedDataSource.maxZoomLevel, 17);
+        assert.equal(testedDataSource.maxDataLevel, 17);
+    });
 });
