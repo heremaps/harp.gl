@@ -26,7 +26,8 @@ import {
     mercatorProjection,
     Projection,
     ProjectionType,
-    TilingScheme
+    TilingScheme,
+    Vector3Like
 } from "@here/harp-geoutils";
 import {
     assert,
@@ -217,7 +218,17 @@ const cache = {
     vector3: [new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3()],
     rayCaster: new THREE.Raycaster(),
     groundPlane: new THREE.Plane(),
-    groundSphere: new THREE.Sphere(undefined, EarthConstants.EQUATORIAL_RADIUS)
+    groundSphere: new THREE.Sphere(undefined, EarthConstants.EQUATORIAL_RADIUS),
+    frustumPoints: [
+        new THREE.Vector3(),
+        new THREE.Vector3(),
+        new THREE.Vector3(),
+        new THREE.Vector3(),
+        new THREE.Vector3(),
+        new THREE.Vector3(),
+        new THREE.Vector3(),
+        new THREE.Vector3()
+    ]
 };
 
 /**
@@ -798,7 +809,6 @@ export class MapView extends THREE.EventDispatcher {
     private m_env: MapEnv = new MapEnv({});
 
     private m_enableMixedLod: boolean | undefined;
-
     /**
      * Constructs a new `MapView` with the given options or canvas element.
      *
@@ -934,11 +944,6 @@ export class MapView extends THREE.EventDispatcher {
         this.m_renderer.info.autoReset = false;
 
         this.setupRenderer();
-
-        if (this.m_options.enableShadows === true) {
-            this.m_renderer.shadowMap.enabled = true;
-            this.m_renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-        }
 
         this.m_options.fovCalculation =
             this.m_options.fovCalculation === undefined
@@ -2371,6 +2376,11 @@ export class MapView extends THREE.EventDispatcher {
      * @param dataSourceName The name of the [[DataSource]].
      */
     clearTileCache(dataSourceName?: string) {
+        if (this.m_visibleTiles === undefined) {
+            // This method is called in the shadowsEnabled function, which is initialized in the
+            // setupRenderer function,
+            return;
+        }
         if (dataSourceName !== undefined) {
             const dataSource = this.getDataSourceByName(dataSourceName);
             if (dataSource) {
@@ -2516,7 +2526,24 @@ export class MapView extends THREE.EventDispatcher {
     }
 
     get shadowsEnabled(): boolean {
-        return this.m_options.enableShadows === true ? true : false;
+        return this.m_options.enableShadows === true;
+    }
+
+    set shadowsEnabled(enabled: boolean) {
+        // shadowMap is undefined if we are testing (three.js always set it to be defined).
+        if (
+            this.m_renderer.shadowMap === undefined ||
+            enabled === this.m_renderer.shadowMap.enabled
+        ) {
+            return;
+        }
+        this.m_options.enableShadows = enabled;
+        // There is a bug in three.js where this doesn't currently work once enabled.
+        this.m_renderer.shadowMap.enabled = enabled;
+        // TODO: Make this configurable. Note, there is currently issues when using the
+        // VSMShadowMap type, this should be investigated if this type is requested.
+        this.m_renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        this.clearTileCache();
     }
 
     /**
@@ -2626,6 +2653,108 @@ export class MapView extends THREE.EventDispatcher {
         this.m_env.entries.$pixelToMeters = this.pixelToWorld;
 
         this.m_env.entries.$frameNumber = this.m_frameNumber;
+    }
+
+    /**
+     * Transfer the NDC point to view space.
+     * @param vector Vector to transform.
+     * @param result Result to place calculation.
+     */
+    private ndcToView(vector: Vector3Like, result: THREE.Vector3): THREE.Vector3 {
+        result
+            .set(vector.x, vector.y, vector.z)
+            .applyMatrix4(this.camera.projectionMatrixInverse)
+            // Make sure to apply rotation, hence use the rte camera
+            .applyMatrix4(this.m_rteCamera.matrixWorld);
+        return result;
+    }
+
+    /**
+     * Transfer from view space to camera space.
+     * @param viewPos position in view space, result is stored here.
+     */
+    private viewToLightSpace(viewPos: THREE.Vector3, camera: THREE.Camera): THREE.Vector3 {
+        return viewPos.applyMatrix4(camera.matrixWorldInverse);
+    }
+
+    /**
+     * Update the directional light camera. Note, this requires the cameras to first be updated.
+     */
+    private updateLights() {
+        // TODO: HARP-9479 Globe doesn't support shadows.
+        if (
+            !this.shadowsEnabled ||
+            this.projection.type === ProjectionType.Spherical ||
+            this.m_createdLights === undefined ||
+            this.m_createdLights.length === 0
+        ) {
+            return;
+        }
+
+        const points: Vector3Like[] = [
+            // near plane points
+            { x: -1, y: -1, z: -1 },
+            { x: 1, y: -1, z: -1 },
+            { x: -1, y: 1, z: -1 },
+            { x: 1, y: 1, z: -1 },
+
+            // far planes points
+            { x: -1, y: -1, z: 1 },
+            { x: 1, y: -1, z: 1 },
+            { x: -1, y: 1, z: 1 },
+            { x: 1, y: 1, z: 1 }
+        ];
+        const transformedPoints = points.map((p, i) => this.ndcToView(p, cache.frustumPoints[i]));
+
+        this.m_createdLights.forEach(element => {
+            const directionalLight = element as THREE.DirectionalLight;
+            if (directionalLight.isDirectionalLight === true) {
+                const pointsInLightSpace = transformedPoints.map(p =>
+                    this.viewToLightSpace(p, directionalLight.shadow.camera)
+                );
+
+                const box = new THREE.Box3();
+                pointsInLightSpace.forEach(point => {
+                    box.expandByPoint(point);
+                });
+                const camera = directionalLight.shadow.camera;
+                camera.left = box.min.x;
+                camera.right = box.max.x;
+                camera.top = box.max.y;
+                camera.bottom = box.min.y;
+                camera.near = -box.max.z;
+                camera.far = -box.min.z;
+                camera.updateProjectionMatrix();
+
+                const lightDirection = cache.vector3[0];
+                lightDirection.copy(directionalLight.target.position);
+                lightDirection.sub(directionalLight.position);
+                lightDirection.normalize();
+
+                const normal = cache.vector3[1];
+                if (this.projection.type === ProjectionType.Planar) {
+                    // -Z points to the camera, we can't use Projection.surfaceNormal, because
+                    // webmercator and mercator give different results.
+                    normal.set(0, 0, -1);
+                } else {
+                    // Enable shadows for globe...
+                    //this.projection.surfaceNormal(target, normal);
+                }
+
+                // The camera of the shadow has the same height as the map camera, and the target is
+                // also the same. The position is then calculated based on the light direction and
+                // the height
+                // using basic trigonometry.
+                const tilt = MapViewUtils.extractCameraTilt(this.camera, this.projection);
+                const cameraHeight = this.targetDistance * Math.cos(tilt);
+                const lightPosHyp = cameraHeight / normal.dot(lightDirection);
+
+                directionalLight.target.position.copy(this.worldTarget).sub(this.camera.position);
+                directionalLight.position.copy(this.worldTarget);
+                directionalLight.position.addScaledVector(lightDirection, -lightPosHyp);
+                directionalLight.position.sub(this.camera.position);
+            }
+        });
     }
 
     private detectCurrentFps(now: number) {
@@ -2782,6 +2911,7 @@ export class MapView extends THREE.EventDispatcher {
 
         this.updateCameras();
         this.updateEnv();
+        this.updateLights();
 
         this.m_renderer.clear();
 
@@ -3290,16 +3420,11 @@ export class MapView extends THREE.EventDispatcher {
                     return;
                 }
                 this.m_scene.add(light);
-                const enableDebugDirectionalLight = false;
-                if (enableDebugDirectionalLight && (light as any).isDirectionalLight) {
-                    const helper = new THREE.DirectionalLightHelper(
-                        light as THREE.DirectionalLight,
-                        50000
-                    );
-                    this.m_scene.add(helper);
-
-                    const cameraHelper = new THREE.CameraHelper(light.shadow.camera);
-                    this.m_scene.add(cameraHelper);
+                if ((light as any).isDirectionalLight) {
+                    const directionalLight = light as THREE.DirectionalLight;
+                    // This is needed so that the target is updated automatically, see:
+                    // https://threejs.org/docs/#api/en/lights/DirectionalLight.target
+                    this.m_scene.add(directionalLight.target);
                 }
                 this.m_createdLights!.push(light);
             });
@@ -3461,10 +3586,7 @@ export class MapView extends THREE.EventDispatcher {
         this.m_scene.add(this.m_mapTilesRoot);
         this.m_scene.add(this.m_mapAnchors);
 
-        if (this.m_options.enableShadows === true) {
-            this.m_renderer.shadowMap.enabled = true;
-            this.m_renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-        }
+        this.shadowsEnabled = this.m_options.enableShadows ?? false;
     }
 
     private createTextRenderer(): TextElementsRenderer {
