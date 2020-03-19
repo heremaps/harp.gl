@@ -123,6 +123,10 @@ export class TileDataSource<TileType extends Tile> extends DataSource {
         super({
             name: m_options.name,
             styleSetName: m_options.styleSetName,
+            // tslint:disable-next-line: deprecation
+            minZoomLevel: m_options.minZoomLevel,
+            // tslint:disable-next-line: deprecation
+            maxZoomLevel: m_options.maxZoomLevel,
             minDataLevel: m_options.minDataLevel,
             maxDataLevel: m_options.maxDataLevel,
             minDisplayLevel: m_options.minDisplayLevel,

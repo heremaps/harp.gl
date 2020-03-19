@@ -166,6 +166,12 @@ export abstract class DataSource extends THREE.EventDispatcher {
 
         this.styleSetName = styleSetName;
 
+        if (minDataLevel !== undefined) {
+            this.minDataLevel = minDataLevel;
+        }
+        if (maxDataLevel !== undefined) {
+            this.maxDataLevel = maxDataLevel;
+        }
         if (minZoomLevel !== undefined) {
             // tslint:disable-next-line: deprecation
             this.minZoomLevel = minZoomLevel;
@@ -173,12 +179,6 @@ export abstract class DataSource extends THREE.EventDispatcher {
         if (maxZoomLevel !== undefined) {
             // tslint:disable-next-line: deprecation
             this.maxZoomLevel = maxZoomLevel;
-        }
-        if (minDataLevel !== undefined) {
-            this.minDataLevel = minDataLevel;
-        }
-        if (maxDataLevel !== undefined) {
-            this.maxDataLevel = maxDataLevel;
         }
         if (minDisplayLevel !== undefined) {
             this.minDisplayLevel = minDisplayLevel;

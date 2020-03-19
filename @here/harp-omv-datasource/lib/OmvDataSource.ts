@@ -193,6 +193,10 @@ export class OmvDataSource extends TileDataSource<OmvTile> {
             concurrentDecoderScriptUrl: m_params.concurrentDecoderScriptUrl,
             copyrightInfo: m_params.copyrightInfo,
             copyrightProvider: m_params.copyrightProvider,
+            // tslint:disable-next-line: deprecation
+            minZoomLevel: m_params.minZoomLevel,
+            // tslint:disable-next-line: deprecation
+            maxZoomLevel: m_params.maxZoomLevel,
             minDataLevel: getOptionValue(m_params.minDataLevel, 1),
             maxDataLevel: getOptionValue(m_params.maxDataLevel, 17),
             minDisplayLevel: m_params.minDisplayLevel,

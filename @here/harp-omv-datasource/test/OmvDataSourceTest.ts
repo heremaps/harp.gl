@@ -80,6 +80,46 @@ describe("DataProviders", function() {
         assert.isTrue(omvDataSource.dataProvider() instanceof MockDataProvider);
     });
 
+    it("supports deprecated minZoomLevel and maxZoomLevel in constructor", function() {
+        const mockDataProvider = new MockDataProvider();
+        const omvDataSource = new OmvDataSource({
+            decoder: new OmvTileDecoder(),
+            baseUrl: "https://a.tiles.mapbox.com/v4/mapbox.mapbox-streets-v7",
+            apiFormat: APIFormat.MapboxV4,
+            authenticationCode: "123",
+            dataProvider: mockDataProvider,
+            minZoomLevel: 3,
+            maxZoomLevel: 17
+        });
+
+        // tslint:disable-next-line: deprecation
+        assert.equal(omvDataSource.minZoomLevel, 3);
+        assert.equal(omvDataSource.minDataLevel, 3);
+        // tslint:disable-next-line: deprecation
+        assert.equal(omvDataSource.maxZoomLevel, 17);
+        assert.equal(omvDataSource.maxDataLevel, 17);
+    });
+
+    it("supports minDataLevel and maxDataLevel in constructor", function() {
+        const mockDataProvider = new MockDataProvider();
+        const omvDataSource = new OmvDataSource({
+            decoder: new OmvTileDecoder(),
+            baseUrl: "https://a.tiles.mapbox.com/v4/mapbox.mapbox-streets-v7",
+            apiFormat: APIFormat.MapboxV4,
+            authenticationCode: "123",
+            dataProvider: mockDataProvider,
+            minDataLevel: 3,
+            maxDataLevel: 17
+        });
+
+        // tslint:disable-next-line: deprecation
+        assert.equal(omvDataSource.minZoomLevel, 3);
+        assert.equal(omvDataSource.minDataLevel, 3);
+        // tslint:disable-next-line: deprecation
+        assert.equal(omvDataSource.maxZoomLevel, 17);
+        assert.equal(omvDataSource.maxDataLevel, 17);
+    });
+
     describe("storageLevelOffset", function() {
         it("updates storageLevelOffset in decoder options", function() {
             const mapView = {
