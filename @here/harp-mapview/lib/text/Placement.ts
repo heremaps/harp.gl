@@ -5,7 +5,7 @@
  */
 
 import { Env } from "@here/harp-datasource-protocol";
-import { ProjectionType } from "@here/harp-geoutils";
+import { Projection, ProjectionType } from "@here/harp-geoutils";
 import {
     HorizontalAlignment,
     MeasurementParameters,
@@ -106,7 +106,7 @@ export function computeViewDistance(refPosition: THREE.Vector3, textElement: Tex
  * @returns Maximum view distance.
  */
 export function getMaxViewDistance(viewState: ViewState, farDistanceLimitRatio: number): number {
-    return viewState.maxVisibilityDist * farDistanceLimitRatio;
+    return viewState.viewRanges.maximum * farDistanceLimitRatio;
 }
 
 /**
@@ -137,6 +137,7 @@ export function checkReadyForPlacement(
     textElement: TextElement,
     viewState: ViewState,
     viewCamera: THREE.Camera,
+    projection: Projection,
     poiManager: PoiManager,
     maxViewDistance?: number
 ): { result: PrePlacementResult; viewDistance: number | undefined } {
@@ -173,7 +174,7 @@ export function checkReadyForPlacement(
             : checkViewDistance(
                   viewState.worldCenter,
                   textElement,
-                  viewState.projection.type,
+                  projection.type,
                   viewCamera,
                   maxViewDistance
               );
