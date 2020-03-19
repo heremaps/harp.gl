@@ -1626,6 +1626,7 @@ export class MapView extends THREE.EventDispatcher {
      * the maximum possible distance of camera far clipping plane regardless of tilt, but may change
      * whenever zoom level changes. Distance is measured in world units which may be approximately
      * equal to meters, but this depends on the distortion related to projection type used.
+     * @internal
      */
     get viewRanges(): ViewRanges {
         return this.m_viewRanges;
@@ -1633,6 +1634,7 @@ export class MapView extends THREE.EventDispatcher {
 
     /**
      * The position in geo coordinates of the center of the scene.
+     * @internal
      */
     get geoCenter(): GeoCoordinates {
         return this.projection.unprojectPoint(this.m_camera.position).normalized();
@@ -1673,13 +1675,6 @@ export class MapView extends THREE.EventDispatcher {
      */
     get worldCenter(): THREE.Vector3 {
         return this.m_camera.position;
-    }
-
-    /**
-     * The root object of the scene. Contains all `rootObjects` of the [[Tile]]s.
-     */
-    get worldRootObject(): THREE.Object3D {
-        return this.m_mapTilesRoot;
     }
 
     /**
