@@ -1047,11 +1047,3 @@ export class FixedClipPlanesEvaluator implements ClipPlanesEvaluator {
         this.m_farPlane = farDist;
     }
 }
-
-/**
- * Factory function that creates default [[ClipPlanesEvaluator]] that calculates near plane based
- * on ground distance and camera orientation.
- *
- * Creates [[TiltViewClipPlanesEvaluator]].
- */
-export const createDefaultClipPlanesEvaluator = () => new TiltViewClipPlanesEvaluator();

@@ -38,44 +38,83 @@ export enum ResourceComputationType {
  */
 export interface VisibleTileSetOptions {
     /**
-     * The projection of the view.
+     * `Projection` used by the `MapView`.
+     *
+     * The default value is [[mercatorProjection]].
      */
     projection: Projection;
 
     /**
-     * User-defined camera clipping planes evaluator.
+     * User-defined camera clipping planes distance evaluator.
+     * If not defined, [[TiltViewClipPlanesEvaluator]] will be used by [[MapView]].
+     *
+     * @default [[TiltViewClipPlanesEvaluator]]
      */
     clipPlanesEvaluator: ClipPlanesEvaluator;
 
     /**
-     * Limit of tiles that can be visible per datasource.
+     * The maximum number of tiles rendered from one data source at a time.
+     *
+     * @default 100
      */
     maxVisibleDataSourceTiles: number;
 
     /**
-     * In addition to the simple frustum culling also do additional checks with [[MapTileCuller]].
+     * Set to true to extend the frustum culling. This improves the rejection of some tiles, which
+     * normal frustum culling cannot detect. You can disable this property to measure performance.
+     *
+     * @default true
      */
     extendedFrustumCulling: boolean;
 
     /**
-     * Missing Typedoc
+     * Size of a tile cache for one data source.
+     *
+     * @default 200
      */
     tileCacheSize: number;
 
     /**
-     * Missing Typedoc
+     * Specify if the cache should be counted in tiles or in megabytes.
+     *
+     * @default [[ResourceComputationType.EstimationInMb]].
      */
     resourceComputationType: ResourceComputationType;
 
     /**
-     * Number of levels to go up when searching for fallback tiles.
+     * Limits the number of reduced zoom levels (lower detail) to be searched for fallback tiles.
+     *
+     * When zooming in, newly elected tiles may have not yet loaded. [[MapView]] searches through
+     * the tile cache for tiles ready to be displayed in lower zoom levels. The tiles may be
+     * located shallower in the quadtree.
+     *
+     * To disable a cache search, set the value to `0`.
+     *
+     * @default [[MapViewDefaults.quadTreeSearchDistanceUp]]
      */
     quadTreeSearchDistanceUp: number;
 
     /**
-     * Number of levels to go down when searching for fallback tiles.
+     * Limits the number of higher zoom levels (more detailed) to be searched for fallback tiles.
+     *
+     * When zooming out, newly elected tiles may have not yet loaded. [[MapView]] searches through
+     * the tile cache for tiles ready to be displayed in higher zoom levels. These tiles may be
+     * located deeper in the quadtree.
+     *
+     * To disable a cache search, set the value to `0`.
+     *
+     * @default [[MapViewDefaults.quadTreeSearchDistanceDown]]
      */
     quadTreeSearchDistanceDown: number;
+
+    /**
+     * Set true to enable rendering mixed levels of detail (increases rendering performance).
+     * If not set will enable mixed levels of detail for spherical projection
+     * and disable for other projections.
+     *
+     * @default true for [[sphereProjection]] false for all other projections.
+     */
+    enableMixedLod: boolean;
 }
 
 const MB_FACTOR = 1.0 / (1024.0 * 1024.0);
@@ -369,7 +408,6 @@ export interface DataSourceTileList {
 export class VisibleTileSet {
     dataSourceTileList: DataSourceTileList[] = [];
     allVisibleTilesLoaded: boolean = false;
-    options: VisibleTileSetOptions;
 
     private readonly m_cameraOverride = new THREE.PerspectiveCamera();
     private m_dataSourceCache: DataSourceCache;
@@ -381,42 +419,93 @@ export class VisibleTileSet {
     private m_resourceComputationType: ResourceComputationType =
         ResourceComputationType.EstimationInMb;
 
+    private readonly m_options: VisibleTileSetOptions;
     constructor(
         private readonly m_frustumIntersection: FrustumIntersection,
         private readonly m_tileGeometryManager: TileGeometryManager,
-        options: VisibleTileSetOptions
+        options: Readonly<VisibleTileSetOptions>
     ) {
-        this.options = options;
+        this.m_options = { ...options };
         this.m_resourceComputationType =
-            options.resourceComputationType === undefined
+            this.m_options.resourceComputationType === undefined
                 ? ResourceComputationType.EstimationInMb
-                : options.resourceComputationType;
+                : this.m_options.resourceComputationType;
         this.m_dataSourceCache = new DataSourceCache(
-            this.options.tileCacheSize,
+            this.m_options.tileCacheSize,
             this.m_resourceComputationType
         );
+    }
+
+    get projection(): Projection {
+        return this.m_options.projection;
+    }
+
+    set projection(projection: Projection) {
+        if (projection === this.m_options.projection) {
+            return;
+        }
+        this.m_options.projection = projection;
+        this.clearTileCache();
     }
 
     /**
      * Returns cache size.
      */
-    getDataSourceCacheSize(): number {
-        return this.options.tileCacheSize;
+    get tileCacheSize(): number {
+        return this.m_options.tileCacheSize;
+    }
+
+    set tileCacheSize(size: number) {
+        this.m_options.tileCacheSize = size;
+    }
+
+    get mixedLod(): boolean {
+        return this.m_options.enableMixedLod;
+    }
+
+    set mixedLod(value: boolean) {
+        if (this.m_options.enableMixedLod === value) {
+            return;
+        }
+        this.m_options.enableMixedLod = value;
+        this.clearTileCache();
+    }
+
+    get quadTreeSearchDistanceDown(): number {
+        return this.m_options.quadTreeSearchDistanceDown;
+    }
+
+    set quadTreeSearchDistanceDown(value: number) {
+        if (this.m_options.quadTreeSearchDistanceDown === value) {
+            return;
+        }
+        this.m_options.quadTreeSearchDistanceDown = value;
+    }
+
+    get quadTreeSearchDistanceUp(): number {
+        return this.m_options.quadTreeSearchDistanceUp;
+    }
+
+    set quadTreeSearchDistanceUp(value: number) {
+        if (this.m_options.quadTreeSearchDistanceUp === value) {
+            return;
+        }
+        this.m_options.quadTreeSearchDistanceUp = value;
     }
 
     /**
-     * Sets cache size.
+     * Sets cache size and resource computation type.
      *
      * @param size cache size
      * @param computationType Optional value specifying the way a [[Tile]]s cache usage is computed,
      *      either based on size in MB (mega bytes) or in number of tiles. Defaults to
      *      `ResourceComputationType.EstimationInMb`.
      */
-    setDataSourceCacheSize(
+    setDataSourceCacheSizeAndType(
         size: number,
         computationType: ResourceComputationType = ResourceComputationType.EstimationInMb
     ): void {
-        this.options.tileCacheSize = size;
+        this.tileCacheSize = size;
         // This effectively invalidates DataSourceCache
         this.resourceComputationType = computationType;
     }
@@ -424,8 +513,8 @@ export class VisibleTileSet {
     /**
      * Retrieves maximum number of visible tiles.
      */
-    getNumberOfVisibleTiles() {
-        return this.options.maxVisibleDataSourceTiles;
+    get maxVisibleDataSourceTiles(): number {
+        return this.m_options.maxVisibleDataSourceTiles;
     }
 
     /**
@@ -433,8 +522,8 @@ export class VisibleTileSet {
      *
      * @param size size of visible tiles array
      */
-    setNumberOfVisibleTiles(size: number) {
-        this.options.maxVisibleDataSourceTiles = size;
+    set maxVisibleDataSourceTiles(size: number) {
+        this.m_options.maxVisibleDataSourceTiles = size;
     }
 
     /**
@@ -455,7 +544,27 @@ export class VisibleTileSet {
      */
     set resourceComputationType(computationType: ResourceComputationType) {
         this.m_resourceComputationType = computationType;
-        this.m_dataSourceCache.setCapacity(this.options.tileCacheSize, computationType);
+        this.m_dataSourceCache.setCapacity(this.m_options.tileCacheSize, computationType);
+    }
+
+    get extendedFrustumCulling(): boolean {
+        return this.m_options.extendedFrustumCulling;
+    }
+
+    set extendedFrustumCulling(value: boolean) {
+        this.m_options.extendedFrustumCulling = value;
+    }
+
+    get clipPlanesEvaluator(): ClipPlanesEvaluator {
+        return this.m_options.clipPlanesEvaluator;
+    }
+
+    set clipPlanesEvaluator(value: ClipPlanesEvaluator) {
+        this.m_options.clipPlanesEvaluator = value;
+    }
+
+    get options(): Readonly<VisibleTileSetOptions> {
+        return this.m_options;
     }
 
     /**
@@ -463,10 +572,10 @@ export class VisibleTileSet {
      */
     updateClipPlanes(maxElevation?: number, minElevation?: number): ViewRanges {
         if (maxElevation !== undefined) {
-            this.options.clipPlanesEvaluator.maxElevation = maxElevation;
+            this.m_options.clipPlanesEvaluator.maxElevation = maxElevation;
         }
         if (minElevation !== undefined) {
-            this.options.clipPlanesEvaluator.minElevation = minElevation;
+            this.m_options.clipPlanesEvaluator.minElevation = minElevation;
         }
         const { camera, projection, elevationProvider } = this.m_frustumIntersection.mapView;
         this.m_viewRange = this.options.clipPlanesEvaluator.evaluateClipPlanes(
@@ -526,7 +635,7 @@ export class VisibleTileSet {
             for (
                 let i = 0;
                 i < visibleTileKeys.length &&
-                actuallyVisibleTiles.length < this.options.maxVisibleDataSourceTiles;
+                actuallyVisibleTiles.length < this.m_options.maxVisibleDataSourceTiles;
                 i++
             ) {
                 const tileEntry = visibleTileKeys[i];
@@ -851,7 +960,7 @@ export class VisibleTileSet {
      * [[DataSource]] which is fully covering, i.e. there it is fully opaque.
      **/
     private skipOverlappedTiles(dataSource: DataSource, tile: Tile) {
-        if (this.options.projection.type === ProjectionType.Spherical) {
+        if (this.m_options.projection.type === ProjectionType.Spherical) {
             // HARP-7899, currently the globe has no background planes in the tiles (it relies on
             // the BackgroundDataSource), because the LOD mismatches, hence disabling for globe.
             return;
@@ -881,11 +990,11 @@ export class VisibleTileSet {
         visibleLevel: number
     ): { searchLevelsUp: number; searchLevelsDown: number } {
         const searchLevelsUp = Math.min(
-            this.options.quadTreeSearchDistanceUp,
+            this.m_options.quadTreeSearchDistanceUp,
             Math.max(0, visibleLevel - dataSource.minDataLevel)
         );
         const searchLevelsDown = Math.min(
-            this.options.quadTreeSearchDistanceDown,
+            this.m_options.quadTreeSearchDistanceDown,
             Math.max(0, dataSource.maxDataLevel - visibleLevel)
         );
 
@@ -1015,7 +1124,7 @@ export class VisibleTileSet {
             }
 
             // Recurse down until the max distance is reached.
-            if (nextLevelDiff < this.options.quadTreeSearchDistanceDown) {
+            if (nextLevelDiff < this.m_options.quadTreeSearchDistanceDown) {
                 this.findDown(childTileCode, dataZoomLevel, renderedTiles, dataSource);
             }
         }
@@ -1066,7 +1175,7 @@ export class VisibleTileSet {
         }
 
         // Recurse up until the max distance is reached or we go to the parent of all parents.
-        if (nextLevelDiff < this.options.quadTreeSearchDistanceUp && parentTileKey.level !== 0) {
+        if (nextLevelDiff < this.m_options.quadTreeSearchDistanceUp && parentTileKey.level !== 0) {
             const foundUp = this.findUp(
                 parentCode,
                 dataZoomLevel,

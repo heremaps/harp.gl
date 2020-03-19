@@ -44,7 +44,7 @@ import { ViewRanges } from "@here/harp-datasource-protocol/lib/ViewRanges";
 import { AnimatedExtrusionHandler } from "./AnimatedExtrusionHandler";
 import { BackgroundDataSource } from "./BackgroundDataSource";
 import { CameraMovementDetector } from "./CameraMovementDetector";
-import { ClipPlanesEvaluator, createDefaultClipPlanesEvaluator } from "./ClipPlanesEvaluator";
+import { ClipPlanesEvaluator, TiltViewClipPlanesEvaluator } from "./ClipPlanesEvaluator";
 import { IMapAntialiasSettings, IMapRenderingManager, MapRenderingManager } from "./composing";
 import { ConcurrentDecoderFacade } from "./ConcurrentDecoderFacade";
 import { CopyrightInfo } from "./copyrights/CopyrightInfo";
@@ -291,8 +291,13 @@ export enum MapViewPowerPreference {
 
 /**
  * User configuration for the [[MapView]].
+ * FIXME: Nothing should be optional here but [[MapView]] should take
+ *        [[Partial<MapViewOptions>]] instead.
  */
-export interface MapViewOptions extends TextElementsRendererOptions, Partial<LookAtParams> {
+export interface MapViewOptions
+    extends TextElementsRendererOptions,
+        Partial<LookAtParams>,
+        Partial<VisibleTileSetOptions> {
     /**
      * The canvas element used to render the scene.
      */
@@ -316,13 +321,6 @@ export interface MapViewOptions extends TextElementsRendererOptions, Partial<Loo
      * the custom antialiasing is enabled.
      */
     customAntialiasSettings?: IMapAntialiasSettings;
-
-    /**
-     * `Projection` used by the `MapView`.
-     *
-     * The default value is [[mercatorProjection]].
-     */
-    projection?: Projection;
 
     /**
      * The URL of the script that the decoder worker runs. The default URL is
@@ -398,69 +396,6 @@ export interface MapViewOptions extends TextElementsRendererOptions, Partial<Loo
      * The maximum zoom level. The default is `14`.
      */
     maxZoomLevel?: number;
-
-    /**
-     * User-defined camera clipping planes distance evaluator.
-     * If not defined, [[TiltViewClipPlanesEvaluator]] will be used by [[MapView]].
-     *
-     * @default [[TiltViewClipPlanesEvaluator]]
-     */
-    clipPlanesEvaluator?: ClipPlanesEvaluator;
-
-    /**
-     * Set to true to extend the frustum culling. This improves the rejection of some tiles, which
-     * normal frustum culling cannot detect. You can disable this property to measure performance.
-     *
-     * @default true
-     */
-    extendedFrustumCulling?: boolean;
-
-    /**
-     * The maximum number of tiles rendered from one data source at a time.
-     *
-     * @default See [[MapViewDefaults.maxVisibleDataSourceTiles]].
-     */
-    maxVisibleDataSourceTiles?: number;
-
-    /**
-     * Size of a tile cache for one data source.
-     *
-     * @default See [[MapViewDefaults.tileCacheSize]].
-     */
-    tileCacheSize?: number;
-
-    /**
-     * Specify if the cache should be counted in tiles or in megabytes.
-     *
-     * @see [[MapViewDefaults.resourceComputationType]].
-     */
-    resourceComputationType?: ResourceComputationType;
-
-    /**
-     * Limits the number of reduced zoom levels (lower detail) to be searched for fallback tiles.
-     *
-     * When zooming in, newly elected tiles may have not yet loaded. [[MapView]] searches through
-     * the tile cache for tiles ready to be displayed in lower zoom levels. The tiles may be
-     * located shallower in the quadtree.
-     *
-     * To disable a cache search, set the value to `0`.
-     *
-     * @default [[MapViewDefaults.quadTreeSearchDistanceUp]]
-     */
-    quadTreeSearchDistanceUp?: number;
-
-    /**
-     * Limits the number of higher zoom levels (more detailed) to be searched for fallback tiles.
-     *
-     * When zooming out, newly elected tiles may have not yet loaded. [[MapView]] searches through
-     * the tile cache for tiles ready to be displayed in higher zoom levels. These tiles may be
-     * located deeper in the quadtree.
-     *
-     * To disable a cache search, set the value to `0`.
-     *
-     * @default [[MapViewDefaults.quadTreeSearchDistanceDown]]
-     */
-    quadTreeSearchDistanceDown?: number;
 
     /**
      * Set to `true` to measure performance statistics.
@@ -605,15 +540,6 @@ export interface MapViewOptions extends TextElementsRendererOptions, Partial<Loo
     synchronousRendering?: boolean;
 
     /**
-     * Set true to enable rendering mixed levels of detail (increases rendering performance).
-     * If not set will enable mixed levels of detail for spherical projection
-     * and disable for other projections.
-     *
-     * @default undefined
-     */
-    enableMixedLod?: boolean;
-
-    /**
      * Enable shadows in the map. Shadows will only be casted on features that use the "standard"
      * or "extruded-polygon" technique in the map theme.
      * @default false
@@ -644,7 +570,8 @@ const MapViewDefaults = {
     zoomLevel: 5,
     tilt: 0,
     heading: 0,
-    theme: {}
+    theme: {},
+    clipPlanesEvaluator: new TiltViewClipPlanesEvaluator()
 };
 
 /**
@@ -719,7 +646,7 @@ export class MapView extends THREE.EventDispatcher {
         | ScreenCollisions
         | ScreenCollisionsDebug = new ScreenCollisions();
 
-    private m_visibleTiles: VisibleTileSet;
+    private readonly m_visibleTiles: VisibleTileSet;
 
     private m_elevationSource?: DataSource;
     private m_elevationRangeSource?: ElevationRangeSource;
@@ -808,7 +735,7 @@ export class MapView extends THREE.EventDispatcher {
     private readonly m_options: MapViewOptions;
 
     // FIXME: Why is this a member? This should be generated on the fly when creating the VTS.
-    private readonly m_visibleTileSetOptions: VisibleTileSetOptions;
+    private m_projection: Projection = MapViewDefaults.projection;
 
     private m_theme: Theme = {};
     private m_uriResolver?: UriResolver;
@@ -844,13 +771,13 @@ export class MapView extends THREE.EventDispatcher {
     private m_copyrightInfo: CopyrightInfo[] = [];
     private m_animatedExtrusionHandler: AnimatedExtrusionHandler;
     private m_env: MapEnv = new MapEnv({});
-    private m_enableMixedLod: boolean | undefined;
+
     /**
      * Constructs a new `MapView` with the given options or canvas element.
      *
      * @param options The `MapView` options or the HTML canvas element used to display the map.
      */
-    constructor(options: MapViewOptions) {
+    constructor(options: Readonly<MapViewOptions>) {
         super();
 
         // make a copy to avoid unwanted changes to the original options.
@@ -880,48 +807,13 @@ export class MapView extends THREE.EventDispatcher {
             ConcurrentDecoderFacade.defaultWorkerCount = this.m_options.decoderCount;
         }
 
-        this.m_visibleTileSetOptions = {
-            ...MapViewDefaults,
-            clipPlanesEvaluator:
-                options.clipPlanesEvaluator !== undefined
-                    ? options.clipPlanesEvaluator
-                    : createDefaultClipPlanesEvaluator()
-        };
-
-        if (options.projection !== undefined) {
+        if (this.m_options.projection !== undefined) {
             //FIXME: this.m_visibleTileSetOptions should not own the projection
-            this.m_visibleTileSetOptions.projection = options.projection;
+            this.m_projection = this.m_options.projection;
         }
 
-        if (options.extendedFrustumCulling !== undefined) {
-            this.m_visibleTileSetOptions.extendedFrustumCulling = options.extendedFrustumCulling;
-        }
-
-        if (options.maxVisibleDataSourceTiles !== undefined) {
-            this.m_visibleTileSetOptions.maxVisibleDataSourceTiles =
-                options.maxVisibleDataSourceTiles;
-        }
-
-        if (options.tileCacheSize !== undefined) {
-            this.m_visibleTileSetOptions.tileCacheSize = options.tileCacheSize;
-        }
-
-        if (options.resourceComputationType !== undefined) {
-            this.m_visibleTileSetOptions.resourceComputationType = options.resourceComputationType;
-        }
-
-        if (options.quadTreeSearchDistanceUp !== undefined) {
-            this.m_visibleTileSetOptions.quadTreeSearchDistanceUp =
-                options.quadTreeSearchDistanceUp;
-        }
-
-        if (options.quadTreeSearchDistanceDown !== undefined) {
-            this.m_visibleTileSetOptions.quadTreeSearchDistanceDown =
-                options.quadTreeSearchDistanceDown;
-        }
-
-        if (options.enablePolarDataSource !== undefined) {
-            this.m_enablePolarDataSource = options.enablePolarDataSource;
+        if (this.m_options.enablePolarDataSource !== undefined) {
+            this.m_enablePolarDataSource = this.m_options.enablePolarDataSource;
         }
 
         this.m_pixelRatio = options.pixelRatio;
@@ -1013,7 +905,8 @@ export class MapView extends THREE.EventDispatcher {
             () => this.movementFinished()
         );
         this.m_animatedExtrusionHandler = new AnimatedExtrusionHandler(this);
-
+        this.m_tileGeometryManager = new TileGeometryManager(this);
+        this.m_visibleTiles = this.createVisibleTileSet();
         this.setupCamera();
 
         const mapPassAntialiasSettings = this.m_options.customAntialiasSettings;
@@ -1023,13 +916,6 @@ export class MapView extends THREE.EventDispatcher {
             this.m_options.dynamicPixelRatio,
             mapPassAntialiasSettings
         );
-
-        this.m_tileGeometryManager = new TileGeometryManager(this);
-
-        if (options.enableMixedLod !== undefined) {
-            this.m_enableMixedLod = options.enableMixedLod;
-        }
-        this.m_visibleTiles = this.createVisibleTileSet();
 
         this.m_backgroundDataSource = new BackgroundDataSource();
         this.addDataSource(this.m_backgroundDataSource);
@@ -1107,18 +993,17 @@ export class MapView extends THREE.EventDispatcher {
         return this.m_tileGeometryManager;
     }
 
-    get enableMixedLod(): boolean | undefined {
-        return this.m_enableMixedLod;
+    get enableMixedLod(): boolean {
+        return this.m_visibleTiles.mixedLod;
     }
 
-    set enableMixedLod(enableMixedLod: boolean | undefined) {
+    set enableMixedLod(enableMixedLod: boolean) {
         // Skip unnecessary update
-        if (this.m_enableMixedLod === enableMixedLod) {
+        if (this.m_visibleTiles.mixedLod === enableMixedLod) {
             return;
         }
 
-        this.m_enableMixedLod = enableMixedLod;
-        this.m_visibleTiles = this.createVisibleTileSet();
+        this.m_visibleTiles.mixedLod = enableMixedLod; // This will clear the tile cache
         this.resetTextRenderer();
         this.update();
     }
@@ -1174,19 +1059,23 @@ export class MapView extends THREE.EventDispatcher {
      * Returns the cache size.
      */
     getCacheSize(): number {
-        return this.m_visibleTiles.getDataSourceCacheSize();
+        return this.m_visibleTiles.tileCacheSize;
     }
 
     /**
      * Sets the cache size in number of tiles.
      *
+     * FIXME: This method is wrong. Depending on the resource computation type [[size]] will
+     * be either number of tiles or memory in MB.
+     * See [VisibleTileSet.setDataSourceCacheSizeAndType]
+     *
      * @param size The cache size in tiles.
      * @param numVisibleTiles The number of tiles visible, which is size/2 by default.
      */
     setCacheSize(size: number, numVisibleTiles?: number): void {
-        this.m_visibleTiles.setDataSourceCacheSize(size);
+        this.m_visibleTiles.tileCacheSize = size;
         numVisibleTiles = numVisibleTiles !== undefined ? numVisibleTiles : size / 2;
-        this.m_visibleTiles.setNumberOfVisibleTiles(Math.floor(numVisibleTiles));
+        this.m_visibleTiles.maxVisibleDataSourceTiles = Math.floor(numVisibleTiles);
         this.updateImages();
         this.updateLighting();
 
@@ -1200,16 +1089,14 @@ export class MapView extends THREE.EventDispatcher {
      * Specfies whether extended frustum culling is enabled or disabled.
      */
     get extendedFrustumCulling(): boolean {
-        return this.m_options.extendedFrustumCulling !== undefined
-            ? this.m_visibleTileSetOptions.extendedFrustumCulling
-            : true;
+        return this.m_visibleTiles.extendedFrustumCulling;
     }
 
     /**
      * Enable of disable extended frustum culling.
      */
     set extendedFrustumCulling(value: boolean) {
-        this.m_visibleTileSetOptions.extendedFrustumCulling = value;
+        this.m_visibleTiles.extendedFrustumCulling = value;
     }
 
     /**
@@ -1540,8 +1427,7 @@ export class MapView extends THREE.EventDispatcher {
      * The projection used to project geo coordinates to world coordinates.
      */
     get projection(): Projection {
-        //FIXME: this.m_visibleTileSetOptions should not own the projection
-        return this.m_visibleTileSetOptions.projection;
+        return this.m_projection;
     }
 
     /**
@@ -1555,12 +1441,11 @@ export class MapView extends THREE.EventDispatcher {
         const heading = this.heading;
 
         //FIXME: this.m_visibleTileSetOptions should not own the projection
-        this.m_visibleTileSetOptions.projection = projection;
+        this.m_projection = projection;
+        this.m_visibleTiles.projection = projection; // this will clear the tile cache
 
         this.updatePolarDataSource();
-        this.clearTileCache();
         this.textElementsRenderer.clearRenderStates();
-        this.m_visibleTiles = this.createVisibleTileSet();
         this.resetTextRenderer();
 
         this.lookAtImpl({ tilt, heading });
@@ -1570,14 +1455,14 @@ export class MapView extends THREE.EventDispatcher {
      * Get camera clipping planes evaluator used.
      */
     get clipPlanesEvaluator(): ClipPlanesEvaluator {
-        return this.m_visibleTileSetOptions.clipPlanesEvaluator;
+        return this.visibleTileSet.clipPlanesEvaluator;
     }
 
     /**
      * Changes the clip planes evaluator at run time.
      */
     set clipPlanesEvaluator(clipPlanesEvaluator: ClipPlanesEvaluator) {
-        this.m_visibleTileSetOptions.clipPlanesEvaluator = clipPlanesEvaluator;
+        this.visibleTileSet.clipPlanesEvaluator = clipPlanesEvaluator;
     }
 
     /**
@@ -3491,7 +3376,6 @@ export class MapView extends THREE.EventDispatcher {
         const { width, height } = this.getCanvasClientSize();
 
         this.calculateFocalLength(height);
-        this.m_visibleTiles = this.createVisibleTileSet();
 
         this.m_options.target = GeoCoordinates.fromObject(
             getOptionValue(this.m_options.target, MapViewDefaults.target)
@@ -3517,21 +3401,57 @@ export class MapView extends THREE.EventDispatcher {
     }
 
     private createVisibleTileSet(): VisibleTileSet {
-        const enableMixedLod =
-            this.m_enableMixedLod === undefined
-                ? this.projection.type === ProjectionType.Spherical
-                : this.m_enableMixedLod;
+        const projection = getOptionValue(this.m_options.projection, MapViewDefaults.projection);
+
+        const enableMixedLod = getOptionValue(
+            this.m_options.enableMixedLod,
+            projection.type === ProjectionType.Spherical
+        );
+
+        // FIXME: Use mergeWithOptions
+        const options: VisibleTileSetOptions = {
+            projection,
+            clipPlanesEvaluator: getOptionValue(
+                this.m_options.clipPlanesEvaluator,
+                MapViewDefaults.clipPlanesEvaluator
+            ),
+            maxVisibleDataSourceTiles: getOptionValue(
+                this.m_options.maxVisibleDataSourceTiles,
+                MapViewDefaults.maxVisibleDataSourceTiles
+            ),
+            extendedFrustumCulling: getOptionValue(
+                this.m_options.extendedFrustumCulling,
+                MapViewDefaults.extendedFrustumCulling
+            ),
+            tileCacheSize: getOptionValue(
+                this.m_options.tileCacheSize,
+                MapViewDefaults.tileCacheSize
+            ),
+            resourceComputationType: getOptionValue(
+                this.m_options.resourceComputationType,
+                MapViewDefaults.resourceComputationType
+            ),
+            quadTreeSearchDistanceUp: getOptionValue(
+                this.m_options.quadTreeSearchDistanceUp,
+                MapViewDefaults.quadTreeSearchDistanceUp
+            ),
+            quadTreeSearchDistanceDown: getOptionValue(
+                this.m_options.quadTreeSearchDistanceDown,
+                MapViewDefaults.quadTreeSearchDistanceDown
+            ),
+            enableMixedLod
+        };
 
         return new VisibleTileSet(
             new FrustumIntersection(
                 this.m_camera,
                 this,
-                this.m_visibleTileSetOptions.extendedFrustumCulling,
+                options.extendedFrustumCulling,
                 this.m_tileWrappingEnabled,
                 enableMixedLod
             ),
             this.m_tileGeometryManager,
-            this.m_visibleTileSetOptions
+            options
         );
     }
 
@@ -3776,7 +3696,7 @@ export class MapView extends THREE.EventDispatcher {
             // tslint:disable-next-line: deprecation
             this.m_viewState,
             this.m_camera,
-            this.m_visibleTileSetOptions.projection,
+            this.m_projection,
             this.m_elevationProvider,
             this.tileGeometryManager?.hiddenGeometryKinds,
             updateCallback,
