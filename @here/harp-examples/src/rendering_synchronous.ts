@@ -203,8 +203,8 @@ export namespace SynchronousRendering {
 
         // Draw map scene
         mapView.renderSync();
-
         drawing = false;
+        mapView.update();
     }
     // end:harp_gl_rendering_synchronous_3.ts
 }
