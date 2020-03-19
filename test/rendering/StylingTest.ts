@@ -107,7 +107,9 @@ function mapViewFitGeoBox(mapView: MapView, geoBox: GeoBox, margin: number = 0.1
     const target = mapView.projection.unprojectPoint(tmpVec3);
     return {
         target,
-        zoomLevel: MapViewUtils.calculateZoomLevelFromDistance(mapView, distance)
+        zoomLevel: MapViewUtils.calculateZoomLevelFromDistance(mapView, distance),
+        tilt: 0,
+        heading: 0
     };
 }
 
@@ -844,7 +846,7 @@ describe("MapView Styling Test", function() {
                 margin: 0.3,
                 lookAt: {
                     tilt: 35,
-                    azimuth: 30
+                    heading: 30
                 }
             };
             describe("flat", function() {
