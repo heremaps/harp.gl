@@ -9,6 +9,7 @@ const path = require("path");
 const glob = require("glob");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const CopyWebpackPlugin = require("copy-webpack-plugin");
+const exampleFilter = process.env["FILTER_EXAMPLE"];
 
 const prepareOnly = process.env["PREPARE_ONLY"] === "true";
 
@@ -120,9 +121,12 @@ function filterExamples(pattern) {
     filterEntries(htmlEntries);
 }
 
-// Uncomment and adapt to filter built examples and speed up the build significantly
+// Usage example:
+//    FILTER_EXAMPLE=shadows yarn start
 //
-//filterExamples("hello");
+if (exampleFilter) {
+    filterExamples(exampleFilter);
+}
 
 const browserConfig = merge(commonConfig, {
     entry: webpackEntries,
