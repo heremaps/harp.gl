@@ -3,7 +3,8 @@
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
-import { LineMarkerTechnique, Theme } from "@here/harp-datasource-protocol";
+import { Env, GeometryKindSet, LineMarkerTechnique, Theme } from "@here/harp-datasource-protocol";
+import { Projection, TileKey } from "@here/harp-geoutils";
 import {
     AdditionParameters,
     DEFAULT_TEXT_CANVAS_LAYER,
@@ -22,11 +23,10 @@ import {
     MathUtils,
     PerformanceTimer
 } from "@here/harp-utils";
-import * as THREE from "three";
 
-import { TileKey } from "@here/harp-geoutils";
 import { DataSource } from "../DataSource";
 import { debugContext } from "../DebugContext";
+import { ElevationProvider } from "../ElevationProvider";
 import { overlayTextElement } from "../geometry/overlayOnElevation";
 import { PickObjectType, PickResult } from "../PickHandler";
 import { PoiManager } from "../poi/PoiManager";
@@ -67,6 +67,8 @@ import { TextElementType } from "./TextElementType";
 import { TextElementStyle, TextStyleCache } from "./TextStyleCache";
 import { UpdateStats } from "./UpdateStats";
 import { ViewState } from "./ViewState";
+
+import * as THREE from "three";
 
 interface RenderParams {
     numRenderedTextElements: number;
@@ -344,6 +346,9 @@ export class TextElementsRenderer {
     constructor(
         private m_viewState: ViewState,
         private m_viewCamera: THREE.Camera,
+        private m_projection: Projection,
+        private m_elevationProvider: ElevationProvider | undefined,
+        private m_hiddenGeometryKinds: GeometryKindSet | undefined,
         private m_viewUpdateCallback: ViewUpdateCallback,
         private m_screenCollisions: ScreenCollisions,
         private m_screenProjector: ScreenProjector,
@@ -352,6 +357,7 @@ export class TextElementsRenderer {
         private m_poiRendererFactory: PoiRendererFactory,
         private m_fontCatalogLoader: FontCatalogLoader,
         private m_theme: Theme,
+        private m_env: Env,
         options: TextElementsRendererOptions
     ) {
         this.m_textStyleCache = new TextStyleCache(this.m_theme);
@@ -745,9 +751,9 @@ export class TextElementsRenderer {
         }
 
         const shieldGroups: number[][] = [];
-        const hiddenKinds = this.m_viewState.hiddenGeometryKinds;
-        const projection = this.m_viewState.projection;
-        const elevationProvider = this.m_viewState.elevationProvider;
+        const hiddenKinds = this.m_hiddenGeometryKinds;
+        const projection = this.m_projection;
+        const elevationProvider = this.m_elevationProvider;
         const elevationMap = elevationProvider?.getDisplacementMap(groupState.tileKey);
 
         for (const textElementState of groupState.textElementStates) {
@@ -1160,6 +1166,7 @@ export class TextElementsRenderer {
                 textElementState.element,
                 this.m_viewState,
                 this.m_viewCamera,
+                this.m_projection,
                 this.m_poiManager,
                 maxViewDistance
             );
@@ -1540,7 +1547,7 @@ export class TextElementsRenderer {
         if (
             pointLabel.fadeFar !== undefined &&
             (pointLabel.fadeFar <= 0.0 ||
-                pointLabel.fadeFar * this.m_viewState.maxVisibilityDist < textDistance)
+                pointLabel.fadeFar * this.m_viewState.viewRanges.maximum < textDistance)
         ) {
             // The label is farther away than fadeFar value, which means it is totally
             // transparent.
@@ -1568,9 +1575,9 @@ export class TextElementsRenderer {
         const distanceScaleFactor = this.getDistanceScalingFactor(
             pointLabel,
             textDistance,
-            this.m_viewState.lookAtDistance
+            this.m_viewState.targetDistance
         );
-        const iconReady = renderIcon && poiRenderer.prepareRender(pointLabel, this.m_viewState.env);
+        const iconReady = renderIcon && poiRenderer.prepareRender(pointLabel, this.m_env);
 
         if (iconReady) {
             const result = placeIcon(
@@ -1578,7 +1585,7 @@ export class TextElementsRenderer {
                 poiInfo!,
                 tempPoiScreenPosition,
                 distanceScaleFactor,
-                this.m_viewState.env,
+                this.m_env,
                 this.m_screenCollisions
             );
             if (result === PlacementResult.Invisible) {
@@ -1599,7 +1606,7 @@ export class TextElementsRenderer {
         const distanceFadeFactor = this.getDistanceFadingFactor(
             pointLabel,
             labelState,
-            this.m_viewState.maxVisibilityDist
+            this.m_viewState.viewRanges.maximum
         );
         const renderText = shouldRenderPointText(labelState, this.m_viewState, this.m_options);
 
@@ -1683,7 +1690,7 @@ export class TextElementsRenderer {
                     distanceScaleFactor,
                     allocateSpace,
                     opacity,
-                    this.m_viewState.env
+                    this.m_env
                 );
 
                 if (placementStats) {
@@ -1731,10 +1738,7 @@ export class TextElementsRenderer {
 
         // Early exit if the line marker doesn't have the necessary data.
         const poiInfo = lineMarkerLabel.poiInfo!;
-        if (
-            path.length === 0 ||
-            !poiRenderer.prepareRender(lineMarkerLabel, this.m_viewState.env)
-        ) {
+        if (path.length === 0 || !poiRenderer.prepareRender(lineMarkerLabel, this.m_env)) {
             return;
         }
 
@@ -1846,7 +1850,7 @@ export class TextElementsRenderer {
         if (
             pathLabel.fadeFar !== undefined &&
             (pathLabel.fadeFar <= 0.0 ||
-                pathLabel.fadeFar * this.m_viewState.maxVisibilityDist < labelState.renderDistance)
+                pathLabel.fadeFar * this.m_viewState.viewRanges.maximum < labelState.renderDistance)
         ) {
             // The label is farther away than fadeFar value, which means it is totally
             // transparent
@@ -1881,7 +1885,7 @@ export class TextElementsRenderer {
         const distanceScaleFactor = this.getDistanceScalingFactor(
             pathLabel,
             textRenderDistance,
-            this.m_viewState.lookAtDistance
+            this.m_viewState.targetDistance
         );
         const prevSize = textCanvas.textRenderStyle.fontSize.size;
         textCanvas.textRenderStyle.fontSize.size *= distanceScaleFactor;
@@ -1922,7 +1926,7 @@ export class TextElementsRenderer {
         const distanceFadeFactor = this.getDistanceFadingFactor(
             pathLabel,
             labelState,
-            this.m_viewState.maxVisibilityDist
+            this.m_viewState.viewRanges.maximum
         );
         textCanvas.textRenderStyle.opacity = opacity * distanceFadeFactor;
         textCanvas.textRenderStyle.backgroundOpacity =
