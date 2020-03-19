@@ -67,7 +67,7 @@ import { ScreenProjector } from "./ScreenProjector";
 import { SkyBackground } from "./SkyBackground";
 import { FrameStats, PerformanceStatistics } from "./Statistics";
 import { FontCatalogLoader } from "./text/FontCatalogLoader";
-import { MapViewState } from "./text/MapViewState";
+import { MapViewStateProxy } from "./text/MapViewState";
 import { TextCanvasFactory } from "./text/TextCanvasFactory";
 import { TextElement } from "./text/TextElement";
 import { TextElementsRenderer, ViewUpdateCallback } from "./text/TextElementsRenderer";
@@ -3769,7 +3769,8 @@ export class MapView extends THREE.EventDispatcher {
         };
 
         return new TextElementsRenderer(
-            new MapViewState(this, this.checkIfTilesChanged.bind(this)),
+            // tslint:disable-next-line: deprecation
+            new MapViewStateProxy(this, this.checkIfTilesChanged.bind(this)),
             this.m_camera,
             updateCallback,
             this.m_screenCollisions,
