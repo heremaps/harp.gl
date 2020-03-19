@@ -830,14 +830,13 @@ export class TileGeometryCreator {
 
                 this.addUserData(tile, srcGeometry, technique, object);
 
-                if (mapView.shadowsEnabled) {
-                    if (isExtrudedPolygonTechnique(technique)) {
-                        object.castShadow = technique.enableShadows ?? false;
-                        object.receiveShadow = technique.enableShadows ?? false;
-                    } else if (isStandardTechnique(technique)) {
-                        object.receiveShadow = technique.enableShadows ?? false;
-                    }
+                if (isExtrudedPolygonTechnique(technique)) {
+                    object.castShadow = mapView.shadowsEnabled;
+                    object.receiveShadow = mapView.shadowsEnabled;
+                } else if (isStandardTechnique(technique)) {
+                    object.receiveShadow = mapView.shadowsEnabled;
                 }
+
                 if (isExtrudedPolygonTechnique(technique) || isFillTechnique(technique)) {
                     // filled polygons are normal meshes, and need transparency only when fading or
                     // dynamic properties is defined.
@@ -1204,7 +1203,8 @@ export class TileGeometryCreator {
     createGroundPlane(
         tile: Tile,
         material: THREE.Material | THREE.Material[],
-        createTexCoords: boolean
+        createTexCoords: boolean,
+        shadowsEnabled?: boolean
     ): THREE.Mesh {
         const { dataSource, projection, mapView } = tile;
         const sourceProjection = dataSource.getTilingScheme().projection;
@@ -1248,21 +1248,22 @@ export class TileGeometryCreator {
             new Float32Array([...sw.toArray(), ...se.toArray(), ...nw.toArray(), ...ne.toArray()]),
             3
         );
-        sourceProjection.surfaceNormal(sw, tmpV);
-        // Webmercator needs to have it negated to work correctly.
-        tmpV.negate();
-        const normAttr = new THREE.BufferAttribute(
-            new Float32Array([
-                ...tmpV.toArray(),
-                ...tmpV.toArray(),
-                ...tmpV.toArray(),
-                ...tmpV.toArray()
-            ]),
-            3
-        );
-
         geometry.setAttribute("position", posAttr);
-        geometry.setAttribute("normal", normAttr);
+        if (shadowsEnabled === true) {
+            sourceProjection.surfaceNormal(sw, tmpV);
+            // Webmercator needs to have it negated to work correctly.
+            tmpV.negate();
+            const normAttr = new THREE.BufferAttribute(
+                new Float32Array([
+                    ...tmpV.toArray(),
+                    ...tmpV.toArray(),
+                    ...tmpV.toArray(),
+                    ...tmpV.toArray()
+                ]),
+                3
+            );
+            geometry.setAttribute("normal", normAttr);
+        }
         geometry.setIndex(new THREE.BufferAttribute(new Uint16Array([0, 1, 2, 2, 1, 3]), 1));
 
         if (createTexCoords) {
@@ -1317,13 +1318,14 @@ export class TileGeometryCreator {
      * @param renderOrder Render order of the tile
      */
     addGroundPlane(tile: Tile, renderOrder: number) {
+        const shadowsEnabled = tile.mapView.shadowsEnabled;
         const material = this.createGroundPlaneMaterial(
             new THREE.Color(tile.mapView.clearColor),
-            tile.mapView.shadowsEnabled,
+            shadowsEnabled,
             tile.mapView.projection.type === ProjectionType.Spherical
         );
-        const mesh = this.createGroundPlane(tile, material, false);
-        mesh.receiveShadow = tile.mapView.shadowsEnabled;
+        const mesh = this.createGroundPlane(tile, material, false, shadowsEnabled);
+        mesh.receiveShadow = shadowsEnabled;
         mesh.renderOrder = renderOrder;
         this.registerTileObject(tile, mesh, GeometryKind.Background);
         tile.objects.push(mesh);

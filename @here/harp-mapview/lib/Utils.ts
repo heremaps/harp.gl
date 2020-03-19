@@ -206,7 +206,8 @@ export namespace MapViewUtils {
      * @param projection The geo-projection used.
      * @param elevation Optional elevation above (or below) sea level measured in world units.
      *
-     * @deprecated This function is for internal use only and will be removed in the future.
+     * @deprecated This function is for internal use only and will be removed in the future. Use
+     * MapView.worldTarget instead.
      */
     export function getGeoTargetFromCamera(
         camera: THREE.Camera,
