@@ -2745,6 +2745,7 @@ export class MapView extends THREE.EventDispatcher {
                 // also the same. The position is then calculated based on the light direction and
                 // the height
                 // using basic trigonometry.
+                // tslint:disable-next-line: deprecation
                 const tilt = MapViewUtils.extractCameraTilt(this.camera, this.projection);
                 const cameraHeight = this.targetDistance * Math.cos(tilt);
                 const lightPosHyp = cameraHeight / normal.dot(lightDirection);
