@@ -1059,6 +1059,47 @@ export class MapMeshBasicMaterial extends THREE.MeshBasicMaterial
     // Mixin declarations end -----------------------------------------------------------
 }
 
+export class MapMeshDepthMaterial extends THREE.MeshDepthMaterial implements ExtrusionFeature {
+    constructor(params?: THREE.MeshDepthMaterialParameters & ExtrusionFeatureParameters) {
+        super(params);
+
+        ExtrusionFeature.patchGlobalShaderChunks();
+
+        this.addExtrusionProperties();
+        this.applyExtrusionParameters({ ...params, zFightingWorkaround: true });
+    }
+
+    // Only here to make the compiler happy, these methods will be overriden: The actual
+    // implementations are those in[[ExtrusionFeatureMixin]], see below:
+    //
+    // applyMixinsWithoutProperties(...);
+    //
+
+    // Mixin declarations start ---------------------------------------------------------
+    get extrusionRatio(): number {
+        return ExtrusionFeatureDefs.DEFAULT_RATIO_MAX;
+    }
+    // tslint:disable-next-line:no-unused-variable
+    set extrusionRatio(value: number) {
+        // to be overridden
+    }
+
+    protected addExtrusionProperties(): void {
+        // to be overridden
+    }
+
+    // tslint:disable-next-line:no-unused-variable
+    protected applyExtrusionParameters(params?: ExtrusionFeatureParameters) {
+        // to be overridden
+    }
+
+    // tslint:disable-next-line:no-unused-variable
+    protected copyExtrusionParameters(source: FadingFeature) {
+        // to be overridden
+    }
+    // Mixin declarations end -----------------------------------------------------------
+}
+
 /**
  * Subclass of THREE.MeshStandardMaterial. Adds new properties required for `fadeNear` and
  * `fadeFar`. In addition to the new properties (which fill respective uniforms), it is also
@@ -1197,4 +1238,5 @@ applyMixinsWithoutProperties(MapMeshBasicMaterial, [FadingFeatureMixin]);
 applyMixinsWithoutProperties(MapMeshStandardMaterial, [FadingFeatureMixin]);
 applyMixinsWithoutProperties(MapMeshBasicMaterial, [ExtrusionFeatureMixin]);
 applyMixinsWithoutProperties(MapMeshStandardMaterial, [ExtrusionFeatureMixin]);
+applyMixinsWithoutProperties(MapMeshDepthMaterial, [ExtrusionFeatureMixin]);
 applyMixinsWithoutProperties(MapMeshBasicMaterial, [DisplacementFeatureMixin]);

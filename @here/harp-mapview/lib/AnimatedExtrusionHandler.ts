@@ -199,6 +199,9 @@ export class AnimatedExtrusionTileHandler {
                     });
                 } else if (object.material) {
                     (object.material as ExtrusionFeature).extrusionRatio = value;
+                    if (object.customDepthMaterial !== undefined) {
+                        (object.customDepthMaterial as ExtrusionFeature).extrusionRatio = value;
+                    }
                 }
             }
         });

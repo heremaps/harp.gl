@@ -52,6 +52,7 @@ import {
     FadingFeature,
     isHighPrecisionLineMaterial,
     MapMeshBasicMaterial,
+    MapMeshDepthMaterial,
     MapMeshStandardMaterial,
     setShaderMaterialDefine,
     SolidLineMaterial
@@ -1036,6 +1037,9 @@ export class TileGeometryCreator {
                     extrudedObjects.push({
                         object,
                         materialFeature: true
+                    });
+                    object.customDepthMaterial = new MapMeshDepthMaterial({
+                        depthPacking: THREE.RGBADepthPacking
                     });
 
                     const extrusionAnimationDuration =
