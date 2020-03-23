@@ -174,11 +174,6 @@ const FRAME_RATE_RING_SIZE = 12;
 const FALLBACK_FRAME_RATE = 30;
 
 /**
- * Zoom level to request terrain tiles for getting the height of the camera above terrain.
- */
-const TERRAIN_ZOOM_LEVEL = 4;
-
-/**
  * Style set used by [[PolarTileDataSource]] by default.
  */
 const DEFAULT_POLAR_STYLE_SET_NAME = "polar";
@@ -219,7 +214,10 @@ const COPYRIGHT_CHANGED_EVENT: RenderEvent = { type: MapViewEventNames.Copyright
 
 const cache = {
     vector2: [new THREE.Vector2()],
-    vector3: [new THREE.Vector3()]
+    vector3: [new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3()],
+    rayCaster: new THREE.Raycaster(),
+    groundPlane: new THREE.Plane(),
+    groundSphere: new THREE.Sphere(undefined, EarthConstants.EQUATORIAL_RADIUS)
 };
 
 /**
@@ -642,7 +640,6 @@ export const MapViewDefaults = {
         typeof window !== "undefined" && window.devicePixelRatio !== undefined
             ? window.devicePixelRatio
             : 1.0,
-    geoCenter: new GeoCoordinates(25, 0, 30000000),
     target: new GeoCoordinates(25, 0),
     zoomLevel: 5,
     tilt: 0,
@@ -704,8 +701,8 @@ export class MapView extends THREE.EventDispatcher {
      */
     private readonly m_rteCamera = new THREE.PerspectiveCamera();
 
-    private m_focalLength: number;
-    private m_targetDistance: number;
+    private m_focalLength = 0;
+    private m_targetDistance = 0;
     private m_targetGeoPos = MapViewDefaults.target.clone();
     // Focus point world coords may be calculated after setting projection, use dummy value here.
     private m_targetWorldPos = new THREE.Vector3();
@@ -951,13 +948,10 @@ export class MapView extends THREE.EventDispatcher {
         );
         this.m_camera.up.set(0, 0, 1);
         this.projection.projectPoint(this.m_targetGeoPos, this.m_targetWorldPos);
-        this.m_focalLength = 0;
         this.m_scene.add(this.m_camera); // ensure the camera is added to the scene.
         this.m_screenProjector = new ScreenProjector(this.m_camera);
-
         // setup camera with initial position
         this.setupCamera(options);
-        this.m_targetDistance = this.m_camera.position.distanceTo(this.m_targetWorldPos);
 
         this.m_raycaster = new PickingRaycaster(width, height);
 
@@ -1496,15 +1490,7 @@ export class MapView extends THREE.EventDispatcher {
     set projection(projection: Projection) {
         // The geo center must be reset when changing the projection, because the
         // camera's position is based on the projected geo center.
-        let target = MapViewUtils.getWorldTargetFromCamera(this.camera, this.projection);
-        if (target === null) {
-            logger.warn(
-                "MapView does not support a view pointing in the void, using last focus point."
-            );
-            target = this.worldTarget;
-        }
-        const targetCoordinates = this.projection.unprojectPoint(target);
-        const targetDistance = this.camera.position.distanceTo(target);
+
         const attitude = MapViewUtils.extractAttitude(this, this.camera);
         const pitchDeg = THREE.MathUtils.radToDeg(attitude.pitch);
         const headingDeg = -THREE.MathUtils.radToDeg(attitude.yaw);
@@ -1515,7 +1501,7 @@ export class MapView extends THREE.EventDispatcher {
         this.textElementsRenderer.clearRenderStates();
         this.m_visibleTiles = this.createVisibleTileSet();
 
-        this.lookAt(targetCoordinates, targetDistance, pitchDeg, headingDeg);
+        this.lookAt(this.m_targetGeoPos, this.m_targetDistance, pitchDeg, headingDeg);
     }
 
     /**
@@ -1966,10 +1952,10 @@ export class MapView extends THREE.EventDispatcher {
             this.camera.position
         );
         this.camera.updateMatrixWorld(true);
-        // TODO: Consider forcing entire cameras update, see: [[updateCameras]]
-        this.m_targetGeoPos.copy(target);
-        this.m_targetWorldPos.copy(this.projection.projectPoint(target));
-        this.m_targetDistance = distance;
+
+        // Make sure to update all properties that are accessable via API (e.g. zoomlevel) b/c
+        // otherwise they would be updated as recently as in the next animation frame.
+        this.updateLookAtSettings();
     }
 
     /**
@@ -1992,7 +1978,7 @@ export class MapView extends THREE.EventDispatcher {
         pitchDeg: number = 0
     ): void {
         this.geoCenter = geoPos;
-        let limitedPitch = Math.min(89, pitchDeg); // 90 leads to imprecision issues.
+        let limitedPitch = Math.min(MapViewUtils.MAX_TILT_DEG, pitchDeg);
         if (this.projection.type === ProjectionType.Spherical) {
             const maxPitchRadWithCurvature = Math.asin(
                 EarthConstants.EQUATORIAL_RADIUS /
@@ -2592,19 +2578,26 @@ export class MapView extends THREE.EventDispatcher {
         this.m_screenCollisions.update(width, height);
 
         this.m_pixelToWorld = undefined;
-
-        const cameraPitch = MapViewUtils.extractAttitude(this, this.m_camera).pitch;
-        const cameraPosZ = this.getCameraHeightAboveTerrain(TERRAIN_ZOOM_LEVEL);
-        const zoomLevelDistance = cameraPosZ / Math.cos(Math.min(cameraPitch, Math.PI / 3));
-        this.m_zoomLevel = MapViewUtils.calculateZoomLevelFromDistance(this, zoomLevelDistance);
         this.m_fog.update(this, this.m_viewRanges.maximum);
 
-        const target = MapViewUtils.getWorldTargetFromCamera(this.m_camera, this.projection);
-        if (target !== null) {
-            this.m_targetWorldPos.copy(target);
-            this.m_targetGeoPos = this.projection.unprojectPoint(target);
-            this.m_targetDistance = this.camera.position.distanceTo(target);
-        }
+        this.updateLookAtSettings();
+    }
+
+    /**
+     * Derive the look at settings (i.e. target, zoom, ...) from the current camera.
+     */
+    private updateLookAtSettings() {
+        // tslint:disable-next-line: deprecation
+        const { target, distance } = MapViewUtils.getTargetAndDistance(
+            this.projection,
+            this.camera,
+            this.elevationProvider
+        );
+
+        this.m_targetWorldPos.copy(target);
+        this.m_targetGeoPos = this.projection.unprojectPoint(this.m_targetWorldPos);
+        this.m_targetDistance = distance;
+        this.m_zoomLevel = MapViewUtils.calculateZoomLevelFromDistance(this, this.m_targetDistance);
     }
 
     /**
@@ -2618,27 +2611,6 @@ export class MapView extends THREE.EventDispatcher {
         this.m_env.entries.$pixelToMeters = this.pixelToWorld;
 
         this.m_env.entries.$frameNumber = this.m_frameNumber;
-    }
-
-    /**
-     * Returns the height of the camera above the earths surface.
-     *
-     * If there is an ElevationProvider, this is used. Otherwise the projection is used to determine
-     * how high the camera is above the surface.
-     *
-     * @param level Which level to request the surface height from.
-     * @return Height in world units.
-     */
-    private getCameraHeightAboveTerrain(level?: number): number {
-        if (this.elevationProvider !== undefined) {
-            const heightAboveTerrain = this.elevationProvider.getHeight(this.geoCenter, level);
-            if (heightAboveTerrain !== undefined) {
-                const height =
-                    this.projection.unprojectAltitude(this.m_camera.position) - heightAboveTerrain;
-                return Math.max(height, 1);
-            }
-        }
-        return Math.abs(this.projection.groundDistance(this.m_camera.position));
     }
 
     private detectCurrentFps(now: number) {
@@ -3190,16 +3162,6 @@ export class MapView extends THREE.EventDispatcher {
     private setupCamera(options: MapViewOptions) {
         const { width, height } = this.getCanvasClientSize();
 
-        const defaultGeoCenter = MapViewDefaults.geoCenter;
-
-        this.projection.projectPoint(defaultGeoCenter, this.m_camera.position);
-
-        if (this.projection.type === ProjectionType.Spherical) {
-            this.m_camera.lookAt(this.scene.position);
-        }
-
-        this.m_targetDistance = defaultGeoCenter.altitude!;
-
         this.calculateFocalLength(height);
         this.m_visibleTiles = this.createVisibleTileSet();
         this.setInitialCameraPosition(options);
@@ -3219,9 +3181,9 @@ export class MapView extends THREE.EventDispatcher {
         const zoomLevel = getOptionValue(options.zoomLevel, MapViewDefaults.zoomLevel);
         const tilt = getOptionValue(options.tilt, MapViewDefaults.tilt);
         const heading = getOptionValue(options.heading, MapViewDefaults.heading);
+        const distance = MapViewUtils.calculateDistanceFromZoomLevel(this, zoomLevel);
 
-        this.lookAt(target, 300000, tilt, heading);
-        this.zoomLevel = zoomLevel;
+        this.lookAt(target, distance, tilt, heading);
     }
 
     private createVisibleTileSet(): VisibleTileSet {

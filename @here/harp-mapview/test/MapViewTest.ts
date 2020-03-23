@@ -152,13 +152,27 @@ describe("MapView", function() {
         });
 
         expect(mapView.zoomLevel).to.be.closeTo(18, 1e-10);
-        expect(mapView.geoCenter.latitude).to.equal(52.5141552325192);
-        expect(mapView.geoCenter.longitude).to.equal(13.349893801892375);
+        expect(mapView.geoCenter.latitude).to.equal(52.51413926541287);
+        expect(mapView.geoCenter.longitude).to.equal(13.349884252388797);
         const attitude = MapViewUtils.extractAttitude(mapView, mapView.camera);
         // TODO: For sphere projection the result is off by quite a bit.
         // Are these only floating-point issues?
         expect(THREE.MathUtils.radToDeg(attitude.yaw)).to.be.closeTo(-20, 1e-3);
-        expect(THREE.MathUtils.radToDeg(attitude.pitch)).to.be.closeTo(9.55275, 1e-3);
+        expect(THREE.MathUtils.radToDeg(attitude.pitch)).to.be.closeTo(10, 1e-3);
+    });
+
+    // tslint:disable-next-line: max-line-length
+    it("Correctly set and get zoom", function() {
+        mapView = new MapView({
+            canvas,
+            tilt: 45,
+            heading: 90
+        });
+
+        for (let i = 1; i <= 20; i += 0.1) {
+            mapView.zoomLevel = i;
+            expect(mapView.zoomLevel).to.be.closeTo(i, 1e-10);
+        }
     });
 
     it("Correctly sets geolocation with GeoPointLike as parameter in constructor", function() {
