@@ -78,7 +78,7 @@ attribute vec3 normal;
 
 uniform mat4 modelViewMatrix;
 uniform mat4 projectionMatrix;
-uniform float lineWidth;
+uniform float extrusionWidth;
 uniform float outlineWidth;
 uniform vec2 drawRange;
 
@@ -114,14 +114,14 @@ void main() {
 
     // Calculate the extruded vertex position (and scale the extrusion direction).
     vec3 pos = extrudeLine(
-        position, linePos, lineWidth + outlineWidth, bitangent, tangent, extrusionDir);
+        position, linePos, extrusionWidth + outlineWidth, bitangent, tangent, extrusionDir);
 
     // Store the normalized extrusion coordinates in vCoords (with their ranges in vRange).
-    vRange = vec3(extrusionCoord.z, lineWidth, extrusionFactor);
+    vRange = vec3(extrusionCoord.z, extrusionWidth, extrusionFactor);
     vCoords = vec4(extrusionDir / vRange.xy, segment / vRange.x);
 
     // Adjust the segment to fit the drawRange.
-    float capDist = (lineWidth + outlineWidth) / extrusionCoord.z;
+    float capDist = (extrusionWidth + outlineWidth) / extrusionCoord.z;
     if ((vCoords.w + capDist) < drawRange.x || (vCoords.z - capDist) > drawRange.y) {
         vCoords.zw += 1.0;
     }
@@ -161,7 +161,7 @@ precision highp int;
 uniform vec3 diffuse;
 uniform vec3 outlineColor;
 uniform float opacity;
-uniform float lineWidth;
+uniform float extrusionWidth;
 uniform float outlineWidth;
 uniform vec2 tileSize;
 uniform vec2 drawRange;
@@ -203,7 +203,7 @@ void main() {
     // Calculate distance to center (0.0: lineCenter, 1.0: lineEdge).
     float distToCenter = roundEdgesAndAddCaps(vCoords, vRange);
     // Calculate distance to edge (-1.0: lineCenter, 0.0: lineEdge).
-    float distToEdge = distToCenter - (lineWidth + outlineWidth) / lineWidth;
+    float distToEdge = distToCenter - (extrusionWidth + outlineWidth) / extrusionWidth;
 
     // Decrease the line opacity by the distToEdge, making the transition steeper when the slope
     // of distToChange increases (i.e. the line is further away).
@@ -434,7 +434,7 @@ export class SolidLineMaterial extends THREE.RawShaderMaterial
                     outlineColor: new THREE.Uniform(
                         new THREE.Color(SolidLineMaterial.DEFAULT_COLOR)
                     ),
-                    lineWidth: new THREE.Uniform(SolidLineMaterial.DEFAULT_WIDTH),
+                    extrusionWidth: new THREE.Uniform(SolidLineMaterial.DEFAULT_WIDTH),
                     outlineWidth: new THREE.Uniform(SolidLineMaterial.DEFAULT_OUTLINE_WIDTH),
                     opacity: new THREE.Uniform(SolidLineMaterial.DEFAULT_OPACITY),
                     tileSize: new THREE.Uniform(new THREE.Vector2()),
@@ -630,10 +630,10 @@ export class SolidLineMaterial extends THREE.RawShaderMaterial
      * Line width.
      */
     get lineWidth(): number {
-        return this.uniforms.lineWidth.value as number;
+        return (this.uniforms.extrusionWidth.value as number) * 2;
     }
     set lineWidth(value: number) {
-        this.uniforms.lineWidth.value = value;
+        this.uniforms.extrusionWidth.value = value / 2;
     }
 
     /**
