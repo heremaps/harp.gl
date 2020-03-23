@@ -770,9 +770,7 @@ export class TileGeometryCreator {
                             }
 
                             lineMaterial.lineWidth =
-                                getPropertyValue(technique.lineWidth, mapView.env) *
-                                unitFactor *
-                                0.5;
+                                getPropertyValue(technique.lineWidth, mapView.env) * unitFactor;
 
                             if (technique.outlineWidth !== undefined) {
                                 lineMaterial.outlineWidth =
@@ -1177,7 +1175,7 @@ export class TileGeometryCreator {
                                     (techniqueOpacity === null || techniqueOpacity === 1)
                                         ? 0
                                         : techniqueSecondaryWidth;
-                                lineMaterial.lineWidth = lineWidth * unitFactor * 0.5;
+                                lineMaterial.lineWidth = lineWidth * unitFactor;
                             }
                         }
                     );
