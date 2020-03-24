@@ -55,11 +55,33 @@ export enum VerticalAlignment {
 
 /**
  * Horizontal alignment to be used when placing text.
+ *
+ * @note Horizontal alignment value is exactly opposite to [[HorizontalPlacement]] value,
+ * cause when you place text on the right side of point (or icon) you normally want to have it
+ * left-aligned.
  */
 export enum HorizontalAlignment {
     Left = 0.0,
     Center = -0.5,
     Right = -1.0
+}
+
+/**
+ * Vertical position of text area relative to the placement context (point, line).
+ */
+export enum VerticalPlacement {
+    Above = 0.0,
+    Center = -0.5,
+    Below = -1.0
+}
+
+/**
+ * Horizontal position of text element relative to the placement context (point, line).
+ */
+export enum HorizontalPlacement {
+    Left = -1.0,
+    Center = -0.5,
+    Right = 0.0
 }
 
 /**
@@ -445,6 +467,28 @@ export class TextLayoutStyle {
     }
     set horizontalAlignment(value: HorizontalAlignment) {
         this.m_params.horizontalAlignment = value;
+    }
+
+    /**
+     * Text element horizontal position relating to the placement point.
+     */
+    get verticalPlacement(): VerticalPlacement {
+        return (this.m_params.verticalAlignment! as unknown) as VerticalPlacement;
+    }
+    set verticalPlacement(value: VerticalPlacement) {
+        // Update vertical alignment, both values works interchangeably.
+        this.m_params.verticalAlignment = (value as unknown) as VerticalAlignment;
+    }
+
+    /**
+     * Text element vertical position relating to the point of placement.
+     */
+    get horizontalPlacement(): HorizontalPlacement {
+        return (this.m_params.horizontalAlignment! as unknown) as HorizontalPlacement;
+    }
+    set horizontalPlacement(value: HorizontalPlacement) {
+        // Update horizontal alignment, which is exactly opposite to placement.
+        this.m_params.horizontalAlignment = (value as unknown) as HorizontalAlignment;
     }
 
     /**

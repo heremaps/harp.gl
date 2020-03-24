@@ -1001,6 +1001,8 @@ export interface TextStyleDefinition {
     wrappingMode?: "None" | "Character" | "Word";
     hAlignment?: "Left" | "Center" | "Right";
     vAlignment?: "Above" | "Center" | "Below";
+    hPlacement?: "Left" | "Center" | "Right";
+    vPlacement?: "Top" | "Center" | "Bottom";
 }
 
 /**

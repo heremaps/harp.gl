@@ -201,7 +201,8 @@ function computePointTextOffset(
 
     const hAlign = textElement.layoutStyle!.horizontalAlignment;
     const vAlign = textElement.layoutStyle!.verticalAlignment;
-
+    // Make sure output vector (offset) is reset before being computed.
+    offset.set(0, 0);
     switch (hAlign) {
         case HorizontalAlignment.Right:
             offset.x = -textElement.xOffset;

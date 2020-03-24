@@ -691,12 +691,26 @@ export interface MarkerTechniqueParams extends BaseTechniqueParams {
     wrappingMode?: DynamicProperty<"None" | "Character" | "Word">;
     /**
      * Text position regarding the baseline.
+     *
+     * @note Alternative to [[hPlacement]] attribute, which defines label text placement in exactly
+     * opposite way, text that were `Left` aligned are by deduction `Right` placed relative to
+     * the label anchor.
      */
     hAlignment?: DynamicProperty<"Left" | "Center" | "Right">;
     /**
      * Text position inside a line.
+     *
+     * @note Same as [[vPlacement]] attribute although the [[vPlacement]] takes precedence.
      */
     vAlignment?: DynamicProperty<"Above" | "Center" | "Below">;
+    /**
+     * Text horizontal position relating to the label's anchor point (icon, image).
+     */
+    hPlacement?: DynamicProperty<"Left" | "Center" | "Right">;
+    /**
+     * Text vertical position relating to the label anchor.
+     */
+    vPlacement?: DynamicProperty<"Top" | "Center" | "Bottom">;
 }
 
 export interface LineTechniqueParams extends BaseTechniqueParams {
