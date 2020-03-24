@@ -15,6 +15,7 @@ import * as THREE from "three";
 import { AnimatedExtrusionTileHandler } from "./AnimatedExtrusionHandler";
 import { CopyrightInfo } from "./copyrights/CopyrightInfo";
 import { DataSource } from "./DataSource";
+import { ElevationRange } from "./ElevationRangeSource";
 import { LodMesh } from "./geometry/LodMesh";
 import { TileGeometryLoader } from "./geometry/TileGeometryLoader";
 import { MapView } from "./MapView";
@@ -376,9 +377,8 @@ export class Tile implements CachedResource {
     // Center of the tile's unelevated bounding box world coordinates.
     private readonly m_worldCenter = new THREE.Vector3();
     private m_visibleArea: number = 0;
-    // Minimum and maximum tile elevation.
-    private m_minElevation: number = 0;
-    private m_maxElevation: number = 0;
+    // Tile elevation range in meters
+    private m_elevationRange: ElevationRange = { minElevation: 0, maxElevation: 0 };
     // Maximum height of geometry on this tile above ground level.
     private m_maxGeometryHeight?: number;
 
@@ -682,18 +682,28 @@ export class Tile implements CachedResource {
 
     /**
      * @internal
-     * Sets the tile's ground elevation range.
-     *
-     * @param minElevation Minimum tile elevation in meters.
-     * @param maxElevation Maximum tile elevation in meters.
+     * Gets the tile's ground elevation range in meters.
      */
-    setElevation(minElevation: number, maxElevation: number) {
-        if (minElevation === this.m_minElevation && maxElevation === this.m_maxElevation) {
+    get elevationRange(): ElevationRange {
+        return this.m_elevationRange;
+    }
+
+    /**
+     * @internal
+     * Sets the tile's ground elevation range in meters.
+     *
+     * @param elevationRange The elevation range.
+     */
+    set elevationRange(elevationRange: ElevationRange) {
+        if (
+            elevationRange.minElevation === this.m_elevationRange.minElevation &&
+            elevationRange.maxElevation === this.m_elevationRange.maxElevation &&
+            elevationRange.calculationStatus === this.m_elevationRange.calculationStatus
+        ) {
             return;
         }
 
-        this.m_minElevation = minElevation;
-        this.m_maxElevation = maxElevation;
+        this.m_elevationRange = elevationRange;
 
         // Only elevate bounding box if tile has already been decoded and a maximum geometry height
         // is provided by the data source.
@@ -1093,8 +1103,9 @@ export class Tile implements CachedResource {
         // Tile center remains unchanged.
         assert(this.m_maxGeometryHeight !== undefined);
 
-        this.geoBox.southWest.altitude = this.m_minElevation;
-        this.geoBox.northEast.altitude = this.m_maxElevation + this.m_maxGeometryHeight!;
+        this.geoBox.southWest.altitude = this.m_elevationRange.minElevation;
+        this.geoBox.northEast.altitude =
+            this.m_elevationRange.maxElevation + this.m_maxGeometryHeight!;
         this.mapView.projection.projectBox(this.geoBox, this.boundingBox);
     }
 
