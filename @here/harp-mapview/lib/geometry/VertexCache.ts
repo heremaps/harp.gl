@@ -34,7 +34,7 @@ export class VertexCache {
      * Creates a new cache with the specified maximum size.
      * @param maxVertexCount The maximum number of vertices the cache will store.
      */
-    constructor(public maxVertexCount: number) {
+    constructor(readonly maxVertexCount: number) {
         this.m_cache.length = this.maxVertexCount * Field.Count;
         this.clear();
     }
