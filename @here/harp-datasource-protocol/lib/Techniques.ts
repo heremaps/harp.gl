@@ -552,6 +552,11 @@ export interface IndexedTechniqueParams {
      * @hidden
      */
     _usesFeatureState?: boolean;
+
+    /**
+     * Last computed state derived from [[Technique.kind]].
+     */
+    _kindState?: boolean;
 }
 
 /**

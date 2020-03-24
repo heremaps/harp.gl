@@ -122,7 +122,7 @@ export class PoiManager {
             const technique = decodedTile.techniques[techniqueIndex] as IndexedTechnique;
 
             if (
-                technique.enabled === false ||
+                technique._kindState === false ||
                 (!isLineMarkerTechnique(technique) && !isPoiTechnique(technique))
             ) {
                 continue;
@@ -588,6 +588,8 @@ export class PoiManager {
                 ? technique.distanceScale
                 : DEFAULT_TEXT_DISTANCE_SCALE;
 
+        // tslint:disable-next-line: deprecation
+        textElement.kind = technique.kind;
         return textElement;
     }
 }

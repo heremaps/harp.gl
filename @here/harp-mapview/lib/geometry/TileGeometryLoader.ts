@@ -37,20 +37,11 @@ export class TileGeometryLoader {
      * @param {DecodedTile} decodedTile
      * @returns {GeometryKindSet} The set of kinds used in the decodeTile.
      */
-    static prepareDecodedTile(decodedTile: DecodedTile): GeometryKindSet {
+    static prepareAvailableGeometryKinds(decodedTile: DecodedTile): GeometryKindSet {
         const foundSet: GeometryKindSet = new GeometryKindSet();
 
         for (const technique of decodedTile.techniques) {
-            let geometryKind = technique.kind;
-
-            // Set default kind based on technique.
-            if (geometryKind === undefined) {
-                geometryKind = TileGeometryLoader.setDefaultGeometryKind(technique);
-            }
-
-            if (Array.isArray(geometryKind)) {
-                geometryKind = new GeometryKindSet(geometryKind);
-            }
+            const geometryKind = TileGeometryLoader.compileGeometryKind(technique);
 
             if (geometryKind instanceof Set) {
                 for (const kind of geometryKind) {
@@ -69,7 +60,8 @@ export class TileGeometryLoader {
      *
      * @param {Technique} technique
      */
-    static setDefaultGeometryKind(technique: Technique): GeometryKind | GeometryKindSet {
+    static compileGeometryKind(technique: Technique): GeometryKind | GeometryKindSet {
+        // tslint:disable-next-line: deprecation
         let geometryKind = technique.kind;
 
         // Set default kind based on technique.
@@ -95,7 +87,11 @@ export class TileGeometryLoader {
                 geometryKind = GeometryKind.All;
             }
 
+            // tslint:disable-next-line: deprecation
             technique.kind = geometryKind;
+        } else if (Array.isArray(geometryKind)) {
+            // tslint:disable-next-line: deprecation
+            geometryKind = technique.kind = new GeometryKindSet(geometryKind);
         }
 
         return geometryKind;
@@ -160,7 +156,7 @@ export class TileGeometryLoader {
         this.m_decodedTile = decodedTile;
 
         if (this.m_decodedTile !== undefined) {
-            this.m_availableGeometryKinds = TileGeometryLoader.prepareDecodedTile(
+            this.m_availableGeometryKinds = TileGeometryLoader.prepareAvailableGeometryKinds(
                 this.m_decodedTile
             );
         }
