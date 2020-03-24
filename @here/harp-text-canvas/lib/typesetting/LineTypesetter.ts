@@ -83,11 +83,12 @@ export class LineTypesetter implements Typesetter {
         );
         this.m_tempSmallCaps = this.m_currentParams!.smallCapsArray !== undefined;
 
+        // tslint:disable:deprecation
         this.m_currentParams.position.y +=
             this.m_currentParams.textLayoutStyle.verticalAlignment *
             this.m_currentParams.glyphs[0].font.metrics.capHeight *
             this.m_tempScale;
-
+        // tslint:enable:deprecation
         const isOnlyMeasured =
             this.m_currentParams.globalBounds !== undefined &&
             this.m_currentParams.vertexBuffer === undefined;
@@ -178,10 +179,12 @@ export class LineTypesetter implements Typesetter {
 
                 // Calculate the correct starting position for the line base on alignment, and place
                 // all glyphs in it.
+                // tslint:disable:deprecation
                 const lineAlignment =
                     this.m_tempLineDirection === UnicodeUtils.Direction.RTL && isBidirectionalLine
                         ? 1.0 + this.m_currentParams.textLayoutStyle.horizontalAlignment
                         : this.m_currentParams.textLayoutStyle.horizontalAlignment;
+                // tslint:enable:deprecation
                 this.m_currentParams.position.x =
                     this.m_currentParams.position.x + lineCurrX * lineAlignment;
                 if (
@@ -256,10 +259,12 @@ export class LineTypesetter implements Typesetter {
             lineCount <= this.m_currentParams.textLayoutStyle.maxLines - 1 &&
             lineStartIdx <= this.m_currentParams.glyphs.length - 1
         ) {
+            // tslint:disable:deprecation
             const offset =
                 this.m_tempLineDirection === UnicodeUtils.Direction.RTL && isBidirectionalLine
                     ? 1.0 + this.m_currentParams.textLayoutStyle.horizontalAlignment
                     : this.m_currentParams.textLayoutStyle.horizontalAlignment;
+            // tslint:enable:deprecation
             this.m_currentParams.position.setX(
                 this.m_currentParams.position.x + lineCurrX * offset
             );

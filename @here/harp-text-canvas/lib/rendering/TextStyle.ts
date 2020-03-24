@@ -55,11 +55,36 @@ export enum VerticalAlignment {
 
 /**
  * Horizontal alignment to be used when placing text.
+ *
+ * @note Horizontal alignment value is exactly opposite to [[HorizontalPlacement]] value,
+ * cause when you place text on the right side of point (or icon) you normally want to have it
+ * left-aligned.
+ * @note Alignment attributes `hAlignment` and `vAlignment` are now depreciated in Theme
+ * definition for [[PoiTechinque]] and [[LineMarkerTechnique]] so use rather `hPlacement` and
+ * `vPlacement` for them.
  */
 export enum HorizontalAlignment {
     Left = 0.0,
     Center = -0.5,
     Right = -1.0
+}
+
+/**
+ * Vertical position of text area relative to the placement context (point, line).
+ */
+export enum VerticalPlacement {
+    Above = 0.0,
+    Center = -0.5,
+    Below = -1.0
+}
+
+/**
+ * Horizontal position of text element relative to the placement context (point, line).
+ */
+export enum HorizontalPlacement {
+    Left = -1.0,
+    Center = -0.5,
+    Right = 0.0
 }
 
 /**
@@ -97,8 +122,13 @@ export namespace DefaultTextStyle {
     export const DEFAULT_CANVAS_ROTATION: number = 0.0;
     export const DEFAULT_LINE_ROTATION: number = 0.0;
     export const DEFAULT_WRAPPING_MODE: WrappingMode = WrappingMode.Word;
-    export const DEFAULT_VERTICAL_ALIGNMENT: VerticalAlignment = VerticalAlignment.Above;
-    export const DEFAULT_HORIZONTAL_ALIGNMENT: HorizontalAlignment = HorizontalAlignment.Left;
+    export const DEFAULT_VERTICAL_PLACEMENT: VerticalPlacement = VerticalPlacement.Above;
+    export const DEFAULT_HORIZONTAL_PLACEMENT: HorizontalPlacement = HorizontalPlacement.Right;
+    // Alignment attributes get `derived` values from the placement by default.
+    // tslint:disable-next-line: max-line-length
+    export const DEFAULT_VERTICAL_ALIGNMENT: VerticalAlignment = (DEFAULT_VERTICAL_PLACEMENT as unknown) as VerticalAlignment;
+    // tslint:disable-next-line: max-line-length
+    export const DEFAULT_HORIZONTAL_ALIGNMENT: HorizontalAlignment = (DEFAULT_HORIZONTAL_PLACEMENT as unknown) as HorizontalAlignment;
 }
 
 /**
@@ -295,6 +325,8 @@ export interface TextLayoutParameters {
     wrappingMode?: WrappingMode;
     verticalAlignment?: VerticalAlignment;
     horizontalAlignment?: HorizontalAlignment;
+    verticalPlacement?: VerticalPlacement;
+    horizontalPlacement?: HorizontalPlacement;
 }
 
 /**
@@ -311,6 +343,18 @@ export class TextLayoutStyle {
      * @returns New `TextLayoutStyle`.
      */
     constructor(params: TextLayoutParameters = {}) {
+        // Solve alignment and placement dependencies and fallbacks.
+        const {
+            horizontalAlignment,
+            verticalAlignment,
+            horizontalPlacement,
+            verticalPlacement
+        } = resolvePlacementAndAlignment(
+            params.horizontalAlignment,
+            params.verticalAlignment,
+            params.horizontalPlacement,
+            params.verticalPlacement
+        );
         this.m_params = {
             tracking:
                 params.tracking !== undefined ? params.tracking : DefaultTextStyle.DEFAULT_TRACKING,
@@ -336,14 +380,10 @@ export class TextLayoutStyle {
                 params.wrappingMode !== undefined
                     ? params.wrappingMode
                     : DefaultTextStyle.DEFAULT_WRAPPING_MODE,
-            verticalAlignment:
-                params.verticalAlignment !== undefined
-                    ? params.verticalAlignment
-                    : DefaultTextStyle.DEFAULT_VERTICAL_ALIGNMENT,
-            horizontalAlignment:
-                params.horizontalAlignment !== undefined
-                    ? params.horizontalAlignment
-                    : DefaultTextStyle.DEFAULT_HORIZONTAL_ALIGNMENT
+            verticalAlignment,
+            horizontalAlignment,
+            verticalPlacement,
+            horizontalPlacement
         };
     }
 
@@ -429,22 +469,53 @@ export class TextLayoutStyle {
 
     /**
      * Text position regarding the baseline.
+     *
+     * @deprecated This property may be removed soon, please use [[verticalPlacement]] instead,
+     * which works in exactly the same way.
      */
     get verticalAlignment(): VerticalAlignment {
         return this.m_params.verticalAlignment!;
     }
     set verticalAlignment(value: VerticalAlignment) {
         this.m_params.verticalAlignment = value;
+        // Update vertical placement as both values works interchangeably.
+        this.m_params.verticalPlacement = (value as unknown) as VerticalPlacement;
     }
 
     /**
      * Text position inside a line.
+     *
+     * @deprecated This property may be removed soon, please use [[horizontalPlacement]] instead,
+     * which works exactly in opposite way, i.e. right placed text relative to anchor will be left
+     * aligned by default.
      */
     get horizontalAlignment(): HorizontalAlignment {
         return this.m_params.horizontalAlignment!;
     }
     set horizontalAlignment(value: HorizontalAlignment) {
         this.m_params.horizontalAlignment = value;
+    }
+
+    /**
+     * Text element horizontal position relating to the placement point.
+     */
+    get verticalPlacement(): VerticalPlacement {
+        return this.m_params.verticalPlacement!;
+    }
+    set verticalPlacement(value: VerticalPlacement) {
+        this.m_params.verticalPlacement = value;
+        // Update vertical alignment, both values works interchangeably.
+        this.m_params.verticalAlignment = (value as unknown) as VerticalAlignment;
+    }
+
+    /**
+     * Text element vertical position relating to the point of placement.
+     */
+    get horizontalPlacement(): HorizontalPlacement {
+        return this.m_params.horizontalPlacement!;
+    }
+    set horizontalPlacement(value: HorizontalPlacement) {
+        this.m_params.horizontalPlacement = value;
     }
 
     /**
@@ -457,4 +528,51 @@ export class TextLayoutStyle {
     clone(params: TextLayoutParameters = {}): TextLayoutStyle {
         return new TextLayoutStyle({ ...this.m_params, ...params });
     }
+}
+
+function resolvePlacementAndAlignment(
+    hAlignment?: HorizontalAlignment,
+    vAlignment?: VerticalAlignment,
+    hPlacement?: HorizontalPlacement,
+    vPlacement?: VerticalPlacement
+): {
+    horizontalAlignment: HorizontalAlignment;
+    verticalAlignment: VerticalAlignment;
+    horizontalPlacement: HorizontalPlacement;
+    verticalPlacement: VerticalPlacement;
+} {
+    // Fallback alignment attributes with placement (if defined) or default values.
+    let horizontalAlignment =
+        hAlignment !== undefined
+            ? hAlignment
+            : hPlacement !== undefined
+            ? ((hPlacement as unknown) as HorizontalAlignment)
+            : DefaultTextStyle.DEFAULT_HORIZONTAL_ALIGNMENT;
+
+    let verticalAlignment =
+        vAlignment !== undefined
+            ? vAlignment
+            : vPlacement !== undefined
+            ? ((vPlacement as unknown) as VerticalAlignment)
+            : DefaultTextStyle.DEFAULT_VERTICAL_ALIGNMENT;
+
+    // If placement is not defined fallback to alignment or default values.
+    const horizontalPlacement =
+        hPlacement !== undefined
+            ? hPlacement
+            : ((horizontalAlignment as unknown) as HorizontalPlacement);
+
+    const verticalPlacement =
+        vPlacement !== undefined
+            ? vPlacement
+            : ((verticalAlignment as unknown) as VerticalPlacement);
+
+    // NOTE: Change the lines below if we want to support both alignment and placement
+    // properties independently, currently placement will override alignment if available.
+
+    // Override alignment with placement or their defaults.
+    verticalAlignment = (verticalPlacement as unknown) as VerticalAlignment;
+    horizontalAlignment = (horizontalPlacement as unknown) as HorizontalAlignment;
+
+    return { horizontalAlignment, verticalAlignment, horizontalPlacement, verticalPlacement };
 }

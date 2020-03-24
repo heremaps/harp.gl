@@ -140,6 +140,7 @@ export class PathTypesetter implements Typesetter {
                       )
                     : 1.0);
         }
+        // tslint:disable:deprecation
         this.m_tempPathOffset = Math.min(
             Math.max(
                 -this.m_currentParams.textLayoutStyle.horizontalAlignment +
@@ -149,6 +150,7 @@ export class PathTypesetter implements Typesetter {
             ),
             1
         );
+        // tslint:enable:deprecation
 
         // Place the input text as a single path line.
         return this.placeLine(this.m_tempLineDirection, isBidirectional);
@@ -233,10 +235,12 @@ export class PathTypesetter implements Typesetter {
         const path = this.m_currentParams!.path;
 
         const defaultGlyphRotation = textRenderStyle.rotation;
+        // tslint:disable:deprecation
         const normalDisplacement =
             textLayoutStyle.verticalAlignment *
             glyphDataArray[0].font.metrics.capHeight *
             this.m_tempScale;
+        // tslint:enable:deprecation
 
         // Move through the glyph array following the run's direction (as the order of the glyphs in
         // memory might not match the order on glyphs on scree).

@@ -20,12 +20,14 @@ import {
     FontUnit,
     FontVariant,
     HorizontalAlignment,
+    HorizontalPlacement,
     TextCanvas,
     TextLayoutParameters,
     TextLayoutStyle,
     TextRenderParameters,
     TextRenderStyle,
     VerticalAlignment,
+    VerticalPlacement,
     WrappingMode
 } from "@here/harp-text-canvas";
 import { getOptionValue, LoggerManager } from "@here/harp-utils";
@@ -49,9 +51,12 @@ const defaultTextRenderStyle = new TextRenderStyle({
     backgroundOpacity: 0.5
 });
 
+// Note: Default values for placement and alignment should always match.
 const defaultTextLayoutStyle = new TextLayoutStyle({
     verticalAlignment: VerticalAlignment.Center,
-    horizontalAlignment: HorizontalAlignment.Center
+    horizontalAlignment: HorizontalAlignment.Center,
+    verticalPlacement: VerticalPlacement.Center,
+    horizontalPlacement: HorizontalPlacement.Center
 });
 
 const DEFAULT_STYLE_NAME = "default";
@@ -317,7 +322,7 @@ export class TextStyleCache {
     }
 
     /**
-     * Create the appropriate [[TextRenderStyle]] to use for a label. Depends heavily on the label's
+     * Create the appropriate [[TextLayoutStyle]] to use for a label. Depends heavily on the label's
      * [[Technique]] and the current zoomLevel.
      *
      * @param tile The [[Tile]] to process.
@@ -334,25 +339,39 @@ export class TextStyleCache {
 
         const defaultLayoutParams = this.m_defaultStyle.layoutParams;
 
+        // Available only for PoiTechnique and LineMarkerTechnique, for TextTechnique
+        const hPlacement = getPropertyValue((technique as any).hPlacement, discreteZoomEnv) as
+            | string
+            | undefined;
+        const vPlacement = getPropertyValue((technique as any).vPlacement, discreteZoomEnv) as
+            | string
+            | undefined;
+
+        // Disable depreciation for PoiTechnique and LineMarkerTechnique
+        // tslint:disable-next-line deprecation
         const hAlignment = getPropertyValue(technique.hAlignment, discreteZoomEnv) as
             | string
             | undefined;
+        // tslint:disable-next-line deprecation
         const vAlignment = getPropertyValue(technique.vAlignment, discreteZoomEnv) as
             | string
             | undefined;
+
+        const {
+            horizontalAlignment,
+            verticalAlignment,
+            horizontalPlacement,
+            verticalPlacement
+        } = this.resolvePlacementAndAlignment(hAlignment, vAlignment, hPlacement, vPlacement);
+
         const wrapping = getPropertyValue(technique.wrappingMode, discreteZoomEnv) as
             | string
             | undefined;
 
-        const horizontalAlignment: HorizontalAlignment | undefined =
-            hAlignment === "Left" || hAlignment === "Center" || hAlignment === "Right"
-                ? HorizontalAlignment[hAlignment]
-                : defaultLayoutParams.horizontalAlignment;
-
-        const verticalAlignment: VerticalAlignment | undefined =
-            vAlignment === "Above" || vAlignment === "Center" || vAlignment === "Below"
-                ? VerticalAlignment[vAlignment]
-                : defaultLayoutParams.verticalAlignment;
+        const wrappingMode =
+            wrapping === "None" || wrapping === "Character" || wrapping === "Word"
+                ? WrappingMode[wrapping]
+                : defaultLayoutParams.wrappingMode;
 
         const layoutParams = {
             tracking:
@@ -372,12 +391,11 @@ export class TextStyleCache {
             lineRotation:
                 getPropertyValue(technique.lineRotation, discreteZoomEnv) ??
                 defaultLayoutParams.lineRotation,
-            wrappingMode:
-                wrapping === "None" || wrapping === "Character" || wrapping === "Word"
-                    ? WrappingMode[wrapping]
-                    : defaultLayoutParams.wrappingMode,
+            wrappingMode,
             horizontalAlignment,
-            verticalAlignment
+            verticalAlignment,
+            horizontalPlacement,
+            verticalPlacement
         };
 
         const themeLayoutParams = this.getTextElementStyle(technique.style);
@@ -393,6 +411,17 @@ export class TextStyleCache {
         style: TextStyleDefinition,
         styleName: string
     ): TextElementStyle {
+        const {
+            horizontalAlignment,
+            verticalAlignment,
+            horizontalPlacement,
+            verticalPlacement
+        } = this.resolvePlacementAndAlignment(
+            style.hAlignment,
+            style.vAlignment,
+            style.hPlacement,
+            style.vPlacement
+        );
         return {
             name: styleName,
             fontCatalog: getOptionValue(style.fontCatalogName, this.m_defaultStyle.fontCatalog),
@@ -441,19 +470,69 @@ export class TextStyleCache {
                     style.wrappingMode === "Word"
                         ? WrappingMode[style.wrappingMode]
                         : WrappingMode.Word,
-                verticalAlignment:
-                    style.vAlignment === "Above" ||
-                    style.vAlignment === "Center" ||
-                    style.vAlignment === "Below"
-                        ? VerticalAlignment[style.vAlignment]
-                        : VerticalAlignment.Center,
-                horizontalAlignment:
-                    style.hAlignment === "Left" ||
-                    style.hAlignment === "Center" ||
-                    style.hAlignment === "Right"
-                        ? HorizontalAlignment[style.hAlignment]
-                        : HorizontalAlignment.Center
+                verticalAlignment,
+                horizontalAlignment,
+                verticalPlacement,
+                horizontalPlacement
             }
         };
+    }
+
+    private resolvePlacementAndAlignment(
+        hAlignment?: string,
+        vAlignment?: string,
+        hPlacement?: string,
+        vPlacement?: string
+    ): {
+        horizontalAlignment: HorizontalAlignment;
+        verticalAlignment: VerticalAlignment;
+        horizontalPlacement: HorizontalPlacement;
+        verticalPlacement: VerticalPlacement;
+    } {
+        // Parse placement properties if available.
+        let horizontalPlacement =
+            hPlacement === "Left" || hPlacement === "Center" || hPlacement === "Right"
+                ? HorizontalPlacement[hPlacement]
+                : undefined;
+        let verticalPlacement =
+            vPlacement === "Above" || vPlacement === "Center" || vPlacement === "Below"
+                ? VerticalPlacement[vPlacement]
+                : undefined;
+
+        // Fallback alignment attributes with placement (if defined) or default values.
+        const hAlignmentFallback =
+            horizontalPlacement !== undefined
+                ? ((horizontalPlacement as unknown) as HorizontalAlignment)
+                : // tslint:disable-next-line deprecation
+                  defaultTextLayoutStyle.horizontalAlignment;
+        let horizontalAlignment =
+            hAlignment === "Left" || hAlignment === "Center" || hAlignment === "Right"
+                ? HorizontalAlignment[hAlignment]
+                : hAlignmentFallback;
+
+        const vAlignmentFallback = verticalPlacement
+            ? ((verticalPlacement as unknown) as VerticalAlignment)
+            : // tslint:disable-next-line deprecation
+              defaultTextLayoutStyle.verticalAlignment;
+        let verticalAlignment =
+            vAlignment === "Above" || vAlignment === "Center" || vAlignment === "Below"
+                ? VerticalAlignment[vAlignment]
+                : vAlignmentFallback;
+
+        // If placement is not defined fallback to alignment or default values.
+        if (horizontalPlacement === undefined) {
+            horizontalPlacement = (horizontalAlignment as unknown) as HorizontalPlacement;
+        }
+        if (verticalPlacement === undefined) {
+            verticalPlacement = (verticalAlignment as unknown) as VerticalPlacement;
+        }
+
+        // NOTE: Remove the lines below if we want to support both alignment and placement
+        // properties independently, currently placement will override alignment if available.
+
+        // Override alignment with placement or their defaults
+        verticalAlignment = (verticalPlacement as unknown) as VerticalAlignment;
+        horizontalAlignment = (horizontalPlacement as unknown) as HorizontalAlignment;
+        return { horizontalAlignment, verticalAlignment, horizontalPlacement, verticalPlacement };
     }
 }

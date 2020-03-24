@@ -7,10 +7,10 @@
 import { Env } from "@here/harp-datasource-protocol";
 import { ProjectionType } from "@here/harp-geoutils";
 import {
-    HorizontalAlignment,
+    HorizontalPlacement,
     MeasurementParameters,
     TextCanvas,
-    VerticalAlignment
+    VerticalPlacement
 } from "@here/harp-text-canvas";
 import { assert, Math2D, MathUtils } from "@here/harp-utils";
 import * as THREE from "three";
@@ -186,7 +186,7 @@ export function checkReadyForPlacement(
 }
 
 /**
- * Computes the offset for a point text accordingly to text alignment (and icon, if any).
+ * Computes the offset for a point text accordingly to text placement (and icon, if any).
  * @param textElement The text element of which the offset will computed. It must be a point
  * label with [[layoutStyle]] and [[bounds]] already computed.
  * @param offset The offset result.
@@ -199,11 +199,15 @@ function computePointTextOffset(
     assert(textElement.layoutStyle !== undefined);
     assert(textElement.bounds !== undefined);
 
-    const hAlign = textElement.layoutStyle!.horizontalAlignment;
-    const vAlign = textElement.layoutStyle!.verticalAlignment;
+    // Consider getting placement attributes from different (specialized) container.
+    const hPlace = textElement.layoutStyle!.horizontalPlacement;
+    const vPlace = textElement.layoutStyle!.verticalPlacement;
 
-    switch (hAlign) {
-        case HorizontalAlignment.Right:
+    // Always make sure that output offset is reset before being computed.
+    offset.set(0, 0);
+
+    switch (hPlace) {
+        case HorizontalPlacement.Left:
             offset.x = -textElement.xOffset;
             break;
         default:
@@ -211,11 +215,11 @@ function computePointTextOffset(
             break;
     }
 
-    switch (vAlign) {
-        case VerticalAlignment.Below:
+    switch (vPlace) {
+        case VerticalPlacement.Below:
             offset.y = -textElement.yOffset;
             break;
-        case VerticalAlignment.Above:
+        case VerticalPlacement.Above:
             offset.y = textElement.yOffset - textElement.bounds!.min.y;
             break;
         default:
@@ -227,8 +231,8 @@ function computePointTextOffset(
         assert(textElement.poiInfo.computedWidth !== undefined);
         assert(textElement.poiInfo.computedHeight !== undefined);
 
-        offset.x += textElement.poiInfo.computedWidth! * (0.5 + hAlign);
-        offset.y += textElement.poiInfo.computedHeight! * (0.5 + vAlign);
+        offset.x += textElement.poiInfo.computedWidth! * (0.5 + hPlace);
+        offset.y += textElement.poiInfo.computedHeight! * (0.5 + vPlace);
     }
     return offset;
 }
