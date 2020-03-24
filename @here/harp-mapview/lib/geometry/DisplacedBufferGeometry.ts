@@ -7,9 +7,9 @@
 import * as THREE from "three";
 import { DisplacedBufferAttribute } from "./DisplacedBufferAttribute";
 
-const tmpNormalMin = new THREE.Vector3();
-const tmpNormalMax = new THREE.Vector3();
-const tmpBBox = new THREE.Box3();
+const tmpV1 = new THREE.Vector3();
+const tmpV2 = new THREE.Vector3();
+const tmpBox = new THREE.Box3();
 
 /**
  * @internal
@@ -18,6 +18,28 @@ const tmpBBox = new THREE.Box3();
 export interface DisplacementRange {
     min: number;
     max: number;
+}
+
+/**
+ * @internal
+ * Expands a box so that any point within the original box, displaced by any amount in a given
+ * range, is contained by the resulting box.
+ * @param box The original box to expand.
+ * @param displacementRange The range of possible displacement values for any point within the box.
+ * @param displacementDir Direction in which the displacement will be applied.
+ */
+export function expandBoxByDisplacementRange(
+    box: THREE.Box3,
+    displacementRange: DisplacementRange,
+    displacementDir: THREE.Vector3
+): THREE.Box3 {
+    tmpBox.copy(box);
+    const tmpNormalMin = tmpV1.copy(displacementDir);
+    const tmpNormalMax = tmpV2.copy(tmpNormalMin);
+    box.translate(tmpNormalMin.multiplyScalar(displacementRange.min)).union(
+        tmpBox.translate(tmpNormalMax.multiplyScalar(displacementRange.max))
+    );
+    return box;
 }
 
 /**
@@ -33,14 +55,14 @@ export class DisplacedBufferGeometry extends THREE.BufferGeometry {
      * Creates an instance of displaced buffer geometry.
      * @param originalGeometry The goeometry to be displaced.
      * @param displacementMap A texture with the displacement values.
-     * @param m_displacementRange The displacement value range found in the displacement map.
+     * @param displacementRange The displacement value range found in the displacement map.
      * @param displacedPositions Buffer attribute that will be used for displaced positions if
      * provided, otherwise a new buffer attribute will be created.
      */
     constructor(
         public originalGeometry: THREE.BufferGeometry,
         displacementMap: THREE.DataTexture,
-        private m_displacementRange: DisplacementRange,
+        public displacementRange: DisplacementRange,
         displacedPositions?: DisplacedBufferAttribute
     ) {
         super();
@@ -74,14 +96,15 @@ export class DisplacedBufferGeometry extends THREE.BufferGeometry {
         const uvs = geometry.attributes.uv;
         this.m_displacedPositions.reset(positions, normals, uvs, displacementMap);
         const displacementRangeChanged =
-            this.m_displacementRange.min !== displacementRange.min ||
-            this.m_displacementRange.max !== displacementRange.max;
-        this.m_displacementRange = displacementRange;
+            this.displacementRange.min !== displacementRange.min ||
+            this.displacementRange.max !== displacementRange.max;
+        this.displacementRange = displacementRange;
         this.resetAttributes();
         this.resetBoundingVolumes(displacementRangeChanged);
     }
 
     // HARP-9585: Override of base class method, however tslint doesn't recognize it as such.
+    // tslint:disable-next-line: explicit-override
     computeBoundingBox(): void {
         // Calculate a coarse approximation of the displaced geometry bbox by displacing the
         // original bbox and enlarging it to cover the whole displacement range.
@@ -96,15 +119,15 @@ export class DisplacedBufferGeometry extends THREE.BufferGeometry {
         } else {
             this.boundingBox.copy(origBBox);
         }
-        tmpBBox.copy(origBBox);
-        tmpNormalMin.fromBufferAttribute(this.attributes.normal as THREE.BufferAttribute, 0);
-        tmpNormalMax.copy(tmpNormalMin);
-        this.boundingBox
-            .translate(tmpNormalMin.multiplyScalar(this.m_displacementRange.min))
-            .union(tmpBBox.translate(tmpNormalMax.multiplyScalar(this.m_displacementRange.max)));
+        expandBoxByDisplacementRange(
+            this.boundingBox,
+            this.displacementRange,
+            tmpV1.fromBufferAttribute(this.attributes.normal as THREE.BufferAttribute, 0)
+        );
     }
 
     // HARP-9585: Override of base class method, however tslint doesn't recognize it as such.
+    // tslint:disable-next-line: explicit-override
     computeBoundingSphere(): void {
         // Use as coarse approximation the sphere bounding the bbox.
         if (this.boundingBox === null) {

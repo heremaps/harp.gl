@@ -10,14 +10,6 @@ import * as THREE from "three";
 import { DisplacedBufferAttribute } from "./DisplacedBufferAttribute";
 import { DisplacedBufferGeometry, DisplacementRange } from "./DisplacedBufferGeometry";
 
-function isBufferGeometry(
-    geometry: THREE.Geometry | THREE.BufferGeometry
-): geometry is THREE.BufferGeometry {
-    const isBufferGeom = geometry instanceof THREE.BufferGeometry;
-    assert(isBufferGeom, "Unsupported geometry type.");
-    return isBufferGeom;
-}
-
 function isDisplacementMaterial(material: any): material is DisplacementFeature {
     const isDisplacementFeature = hasDisplacementFeature(material);
     assert(isDisplacementFeature, "Material does not support displacement maps.");
@@ -66,42 +58,69 @@ export class DisplacedMesh extends THREE.Mesh {
     }
 
     m_displacedGeometry?: DisplacedBufferGeometry;
+    private m_displacementMaterial?: DisplacementFeature;
 
     /**
      * Creates an instance of displaced mesh.
+     * @param geometry Original geometry to displace.
+     * @param material Material(s) to be used by the mesh. All must have the same displacement map.
      * @param m_getDisplacementRange Displacement values range getter.
-     * @param [geometry] Original geometry to displace.
-     * @param [material] Material(s) to be used by the mesh. All must have the same displacement
-     * map.
+     * @param [m_raycastStrategy] Function that will be used to find ray intersections. If not
+     * provided, THREE.Mesh's raycast will be used.
      */
     constructor(
+        geometry: THREE.BufferGeometry,
+        material: THREE.Material | THREE.Material[],
         private m_getDisplacementRange: () => DisplacementRange,
-        geometry?: THREE.Geometry | THREE.BufferGeometry,
-        material?: THREE.Material | THREE.Material[]
+        private m_raycastStrategy?: (
+            mesh: THREE.Mesh,
+            raycaster: THREE.Raycaster,
+            intersects: THREE.Intersection[]
+        ) => void
     ) {
         super(geometry, material);
-        assert(!this.geometry || isBufferGeometry(this.geometry));
-        assert(!this.material || isDisplacementMaterial(this.firstMaterial));
     }
 
-    raycast(raycaster: THREE.Raycaster, intersects: THREE.Intersection[]): void {
-        if (!this.geometry || !this.material) {
-            return;
+    // HARP-9585: Override of base class method, however tslint doesn't recognize it as such.
+    // tslint:disable-next-line: explicit-override
+    get geometry(): THREE.BufferGeometry {
+        return super.geometry as THREE.BufferGeometry;
+    }
+
+    // HARP-9585: Override of base class method, however tslint doesn't recognize it as such.
+    // tslint:disable-next-line: explicit-override
+    set geometry(geometry: THREE.BufferGeometry) {
+        super.geometry = geometry;
+    }
+
+    // HARP-9585: Override of base class method, however tslint doesn't recognize it as such.
+    // tslint:disable-next-line: explicit-override
+    get material(): THREE.Material | THREE.Material[] {
+        return super.material;
+    }
+
+    // HARP-9585: Override of base class method, however tslint doesn't recognize it as such.
+    // tslint:disable-next-line: explicit-override
+    set material(material: THREE.Material | THREE.Material[]) {
+        super.material = material;
+        const firstMaterial = this.firstMaterial;
+        if (isDisplacementMaterial(firstMaterial)) {
+            this.m_displacementMaterial = firstMaterial;
         }
+    }
 
+    // HARP-9585: Override of base class method, however tslint doesn't recognize it as such.
+    // tslint:disable-next-line: explicit-override
+    raycast(raycaster: THREE.Raycaster, intersects: THREE.Intersection[]): void {
         // All materials in the object are expected to have the same displacement map.
-        const material = this.firstMaterial;
+        const displacementMap = this.m_displacementMaterial!.displacementMap;
 
-        // Use default raycasting implementation if some type is unexpected.
-        if (
-            !isBufferGeometry(this.geometry) ||
-            !isDisplacementMaterial(material) ||
-            !isDataTextureMap(material.displacementMap)
-        ) {
+        // Use default raycasting implementation if there's no displacement map or its type is not
+        // supported.
+        if (!isDataTextureMap(displacementMap)) {
             super.raycast(raycaster, intersects);
             return;
         }
-        const displacementMap = material.displacementMap;
         const displacementRange = this.m_getDisplacementRange();
 
         if (this.m_displacedGeometry) {
@@ -117,8 +136,12 @@ export class DisplacedMesh extends THREE.Mesh {
 
         // Replace the original geometry by the displaced one only during the intersection test.
         this.geometry = this.m_displacedGeometry;
-        super.raycast(raycaster, intersects);
-        this.geometry = this.m_displacedGeometry.originalGeometry;
+        if (this.m_raycastStrategy) {
+            this.m_raycastStrategy(this, raycaster, intersects);
+        } else {
+            super.raycast(raycaster, intersects);
+        }
+        super.geometry = this.m_displacedGeometry.originalGeometry;
     }
 
     private get firstMaterial(): THREE.Material {
