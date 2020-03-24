@@ -66,9 +66,9 @@ describe("MapView + OmvDataSource + GeoJsonDataProvider rendering test", functio
             pixelRatio: 1
         });
 
-        const defaultLookAt: LookAtParams = {
+        const defaultLookAt: Partial<LookAtParams> = {
             target: { lat: 53.3, lng: 14.6 },
-            zoomLevel: MapViewUtils.calculateZoomLevelFromDistance(mapView, 200000),
+            distance: 200000,
             tilt: 0,
             heading: 0
         };

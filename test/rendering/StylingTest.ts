@@ -87,7 +87,11 @@ function baseRenderingTest(
     });
 }
 
-function mapViewFitGeoBox(mapView: MapView, geoBox: GeoBox, margin: number = 0.1): LookAtParams {
+function mapViewFitGeoBox(
+    mapView: MapView,
+    geoBox: GeoBox,
+    margin: number = 0.1
+): Partial<LookAtParams> {
     if (mapView.projection.type !== ProjectionType.Planar) {
         throw new Error("mapViewFitGeoBox doesn't support non-planar projections");
     }
@@ -107,7 +111,7 @@ function mapViewFitGeoBox(mapView: MapView, geoBox: GeoBox, margin: number = 0.1
     const target = mapView.projection.unprojectPoint(tmpVec3);
     return {
         target,
-        zoomLevel: MapViewUtils.calculateZoomLevelFromDistance(mapView, distance),
+        distance,
         tilt: 0,
         heading: 0
     };
@@ -152,7 +156,7 @@ function mapViewFeaturesRenderingTest(
             const geoBox = dataSource.getGeoBox()!;
             assert.isDefined(geoBox);
 
-            const defaultLookAt: LookAtParams = mapViewFitGeoBox(
+            const defaultLookAt = mapViewFitGeoBox(
                 mapView,
                 geoBox,
                 getOptionValue(options.margin, 0.15)
