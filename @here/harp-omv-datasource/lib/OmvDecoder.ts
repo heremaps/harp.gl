@@ -481,9 +481,10 @@ export class OmvDecoder implements IGeometryProcessor {
     ): IndexedTechnique[] {
         if (this.m_dataFilter !== undefined && this.m_dataFilter.hasKindFilter) {
             techniques = techniques.filter(technique => {
-                return technique.kind === undefined
-                    ? this.m_dataFilter!.wantsKind(defaultKind)
-                    : this.m_dataFilter!.wantsKind(technique.kind as GeometryKind);
+                const kind =
+                    // tslint:disable-next-line: deprecation
+                    technique.kind === undefined ? defaultKind : (technique.kind as GeometryKind);
+                return this.m_dataFilter!.wantsKind(kind);
             });
         }
         return techniques;
