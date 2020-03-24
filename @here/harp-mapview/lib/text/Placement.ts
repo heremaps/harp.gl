@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 HERE Europe B.V.
+ * Copyright (C) 2017-2020 HERE Europe B.V.
  * Licensed under Apache 2.0, see full license in LICENSE
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -193,6 +193,7 @@ export function checkReadyForPlacement(
  */
 function computePointTextOffset(
     textElement: TextElement,
+    scale: number,
     offset: THREE.Vector2 = new THREE.Vector2()
 ): THREE.Vector2 {
     assert(textElement.type === TextElementType.PoiLabel);
@@ -219,7 +220,8 @@ function computePointTextOffset(
             offset.y = textElement.yOffset - textElement.bounds!.min.y;
             break;
         default:
-            offset.y = textElement.yOffset;
+            offset.y =
+                textElement.yOffset - 0.5 * (textElement.bounds!.max.y + textElement.bounds!.min.y);
             break;
     }
 
@@ -230,6 +232,8 @@ function computePointTextOffset(
         offset.x += textElement.poiInfo.computedWidth! * (0.5 + hAlign);
         offset.y += textElement.poiInfo.computedHeight! * (0.5 + vAlign);
     }
+
+    offset.multiplyScalar(scale);
     return offset;
 }
 
@@ -316,7 +320,7 @@ export function placePointLabel(
         textCanvas.measureText(label.glyphs!, label.bounds, tmpMeasurementParams);
     }
 
-    screenPosition.add(computePointTextOffset(label, tmpTextOffset));
+    screenPosition.add(computePointTextOffset(label, scale, tmpTextOffset));
     outScreenPosition.set(screenPosition.x, screenPosition.y, labelState.renderDistance);
 
     // TODO: Make the margin configurable
