@@ -746,6 +746,9 @@ export class MapView extends THREE.EventDispatcher {
      */
     private readonly m_rteCamera = new THREE.PerspectiveCamera();
 
+    private m_yaw = 0;
+    private m_pitch = 0;
+    private m_roll = 0;
     private m_focalLength = 0;
     private m_targetDistance = 0;
     private m_targetGeoPos = GeoCoordinates.fromObject(MapViewDefaults.target!);
@@ -1498,8 +1501,7 @@ export class MapView extends THREE.EventDispatcher {
      * - [[MapView.tilt]]
      * - [[MapView.heading]]
      * could change.
-     * Some of the properties (like [[zoomLevel]]) are cached internaly
-     * and will only be updated in the next animation frame.
+     * These properties are cached internaly and will only be updated in the next animation frame.
      * FIXME: Unfortunatley THREE.js is not dispatching any events when camera properties change
      * so we should have an API for enforcing update of cached values.
      */
@@ -1762,8 +1764,7 @@ export class MapView extends THREE.EventDispatcher {
      * Returns tilt angle in degrees.
      */
     get tilt(): number {
-        const { pitch } = this.extractAttitude();
-        return THREE.MathUtils.radToDeg(pitch);
+        return THREE.MathUtils.radToDeg(this.m_pitch);
     }
 
     /**
@@ -1778,8 +1779,7 @@ export class MapView extends THREE.EventDispatcher {
      * Returns heading angle in degrees.
      */
     get heading(): number {
-        const { yaw } = this.extractAttitude();
-        return -THREE.MathUtils.radToDeg(yaw);
+        return -THREE.MathUtils.radToDeg(this.m_yaw);
     }
 
     /**
@@ -2791,6 +2791,11 @@ export class MapView extends THREE.EventDispatcher {
      * Derive the look at settings (i.e. target, zoom, ...) from the current camera.
      */
     private updateLookAtSettings() {
+        const { yaw, pitch, roll } = this.extractAttitude();
+        this.m_yaw = yaw;
+        this.m_pitch = pitch;
+        this.m_roll = roll;
+
         // tslint:disable-next-line: deprecation
         const { target, distance } = MapViewUtils.getTargetAndDistance(
             this.projection,
@@ -3162,16 +3167,19 @@ export class MapView extends THREE.EventDispatcher {
         }
 
         if (this.m_movementDetector.checkCameraMoved(this, frameStartTime)) {
-            const { yaw, pitch, roll } = this.extractAttitude();
+            //FIXME: Shouldn't we use target here?
             const { latitude, longitude, altitude } = this.geoCenter;
             this.dispatchEvent({
                 type: MapViewEventNames.CameraPositionChanged,
                 latitude,
                 longitude,
                 altitude,
-                yaw,
-                pitch,
-                roll,
+                // FIXME: Can we remove yaw, pitch and roll
+                yaw: this.m_yaw,
+                pitch: this.m_pitch,
+                roll: this.m_roll,
+                tilt: this.tilt,
+                heading: this.heading,
                 zoom: this.zoomLevel
             });
         }
