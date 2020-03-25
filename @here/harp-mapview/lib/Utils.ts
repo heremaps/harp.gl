@@ -133,8 +133,7 @@ export namespace MapViewUtils {
         // center of the screen, in order to limit the tilt to `maxTiltAngle`, as we change
         // this tilt by changing the camera's height above.
         if (mapView.projection.type === ProjectionType.Spherical) {
-            // tslint:disable-next-line: deprecation
-            const tilt = extractCameraTilt(mapView.camera, mapView.projection);
+            const tilt = mapView.tilt;
             const deltaTilt = tilt - maxTiltAngle;
             if (deltaTilt > 0) {
                 orbitFocusPoint(mapView, 0, deltaTilt, maxTiltAngle);
@@ -640,7 +639,7 @@ export namespace MapViewUtils {
      * @param camera The [[Camera]] in use.
      * @param projection The [[Projection]] used to convert between geo and world coordinates.
      *
-     * @deprecated This function is for internal use only and will be removed in the future.
+     * @deprecated Use MapView.tilt
      */
     export function extractCameraTilt(camera: THREE.Camera, projection: Projection): number {
         // For planar projections the camera target point local tangent is the same
