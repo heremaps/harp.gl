@@ -74,6 +74,7 @@ import {
     AttrEvaluationContext,
     evaluateTechniqueAttr
 } from "@here/harp-datasource-protocol/lib/TechniqueAttr";
+import { clipPolygon } from "@here/harp-geometry/lib/ClipPolygon";
 import {
     EdgeLengthGeometrySubdivisionModifier,
     SubdivisionMode
@@ -81,7 +82,6 @@ import {
 // tslint:disable-next-line:max-line-length
 import { SphericalGeometrySubdivisionModifier } from "@here/harp-geometry/lib/SphericalGeometrySubdivisionModifier";
 import { ExtrusionFeatureDefs } from "@here/harp-materials/lib/MapMeshMaterialsDefs";
-import { clipPolygon } from "./clipPolygon";
 
 const logger = LoggerManager.instance.create("OmvDecodedTileEmitter");
 

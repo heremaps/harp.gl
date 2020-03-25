@@ -6,9 +6,9 @@
 
 import { assert } from "chai";
 import { ShapeUtils, Vector2 } from "three";
-import { clipPolygon } from "../lib/clipPolygon";
+import { clipPolygon } from "../lib/ClipPolygon";
 
-describe("OmvClippedPolygons", () => {
+describe("ClipPolygon", () => {
     const extents = 4 * 1024;
 
     const tileBounds = [
