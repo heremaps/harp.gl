@@ -663,7 +663,14 @@ export interface LookAtParams {
     target: GeoCoordLike;
 
     /**
+     * Camera distance to the target point in world units.
+     * @default zoomLevel defaults will be used if not set.
+     */
+    distance: number;
+
+    /**
      * Zoomlevel of the MapView.
+     * @note Takes precedence over distance.
      * @default 5 in [[MapView.constructor]] context.
      * @default [[MapView.zoomLevel]] in [[MapView.lookAt]] context.
      */
@@ -2657,16 +2664,23 @@ export class MapView extends THREE.EventDispatcher {
     }
 
     private lookAtImpl(params: Partial<LookAtParams>): void {
-        const zoomLevel = THREE.MathUtils.clamp(
-            getOptionValue(params.zoomLevel, this.zoomLevel),
-            this.m_minZoomLevel,
-            this.m_maxZoomLevel
-        );
         const tilt = Math.min(getOptionValue(params.tilt, this.tilt), MapViewUtils.MAX_TILT_DEG);
         const target = GeoCoordinates.fromObject(getOptionValue(params.target, this.target));
         const heading = getOptionValue(params.heading, this.heading);
 
-        const distance = MapViewUtils.calculateDistanceFromZoomLevel(this, zoomLevel);
+        const distance =
+            params.zoomLevel !== undefined
+                ? MapViewUtils.calculateDistanceFromZoomLevel(
+                      this,
+                      THREE.MathUtils.clamp(
+                          params.zoomLevel,
+                          this.m_minZoomLevel,
+                          this.m_maxZoomLevel
+                      )
+                  )
+                : params.distance !== undefined
+                ? params.distance
+                : this.m_targetDistance;
 
         // MapViewUtils#setRotation uses pitch, not tilt, which is different in sphere projection.
         // But in sphere, in the tangent space of the target of the camera, pitch = tilt. So, put
