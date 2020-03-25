@@ -1,0 +1,45 @@
+{
+    "extends": "../../tsconfig.base.json",
+    "compilerOptions": {
+        "sourceMap": true,
+        "composite": true,
+        "incremental": true,
+        "declarationMap": true
+    },
+    "exclude": ["dist/**", "test/**", "node_modules"],
+    "references": [
+        {
+            "path": "../harp-datasource-protocol"
+        },
+        {
+            "path": "../harp-geometry"
+        },
+        {
+            "path": "../harp-geoutils"
+        },
+        {
+            "path": "../harp-lines"
+        },
+        {
+            "path": "../harp-lrucache"
+        },
+        {
+            "path": "../harp-mapview"
+        },
+        {
+            "path": "../harp-mapview-decoder"
+        },
+        {
+            "path": "../harp-materials"
+        },
+        {
+            "path": "../harp-text-canvas"
+        },
+        {
+            "path": "../harp-transfer-manager"
+        },
+        {
+            "path": "../harp-utils"
+        }
+    ]
+}
