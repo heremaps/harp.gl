@@ -356,7 +356,7 @@ export namespace PolygonsFeaturesExample {
         const statesGroup = [
             ["france", "belgium", "netherlands", "italy", "luxembourg"],
             ["algeria"],
-            ["ireland", "uk", "denmark"],
+            ["ireland", "denmark"],
             ["greenland"],
             ["greece"],
             ["spain", "portugal"],
@@ -376,16 +376,18 @@ export namespace PolygonsFeaturesExample {
                 "malta"
             ],
             ["romania", "bulgaria"],
-            ["croatia"]
+            ["croatia"],
+            ["uk"]
         ];
         const UE = {
             "1957": {
                 joining: [0, 1, 6],
-                leaving: [2, 3, 4, 5, 7, 8, 9, 10, 11] // Remove other country groups when looping.
+                // Remove other country groups when looping.
+                leaving: [2, 3, 4, 5, 7, 8, 9, 10, 11, 12]
             },
             "1962": { leaving: [1], joining: [] },
             "1973": {
-                joining: [2, 3],
+                joining: [2, 3, 12],
                 leaving: []
             },
             "1981": {
@@ -401,7 +403,8 @@ export namespace PolygonsFeaturesExample {
                 leaving: []
             },
             "2007": { joining: [10], leaving: [] },
-            "2013": { joining: [11], leaving: [] }
+            "2013": { joining: [11], leaving: [] },
+            "2020": { joining: [], leaving: [12] }
         };
         return { steps: UE, statesGroup };
     }
