@@ -7,7 +7,7 @@
 // tslint:disable-next-line:no-implicit-dependencies
 import { Theme } from "@here/harp-datasource-protocol";
 import { GeoCoordinates } from "@here/harp-geoutils";
-import { MapView, MapViewEventNames } from "@here/harp-mapview";
+import { MapView, MapViewEventNames, MapViewUtils } from "@here/harp-mapview";
 import { APIFormat, AuthenticationMethod, OmvDataSource } from "@here/harp-omv-datasource";
 import { apikey, copyrightInfo } from "../../@here/harp-examples/config";
 
@@ -103,17 +103,16 @@ function main() {
     map.resize(window.innerWidth, 500);
     window.addEventListener("resize", () => map.resize(window.innerWidth, 500));
 
-    const options = { tilt: 34.3, distance: 1400 };
+    const zoomLevel = MapViewUtils.calculateZoomLevelFromDistance(map, 1400);
     const Boston = new GeoCoordinates(42.361145, -71.057083);
-    let azimuth = 135;
-    map.lookAt(Boston, options.distance, options.tilt, azimuth);
+    const options = { target: Boston, zoomLevel, tilt: 34.3, heading: 135 };
+    map.lookAt(options);
 
     map.addEventListener(MapViewEventNames.FrameComplete, () => {
         canvas.style.opacity = "1";
 
-        map.addEventListener(MapViewEventNames.Render, () =>
-            map.lookAt(Boston, options.distance, options.tilt, (azimuth += 0.1))
-        );
+        options.heading += 0.1;
+        map.addEventListener(MapViewEventNames.Render, () => map.lookAt(options));
         setTimeout(() => {
             map.beginAnimation();
         }, 0.5);

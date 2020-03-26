@@ -29,7 +29,7 @@ export namespace ThemesExample {
         mapControls.maxTiltAngle = 50;
 
         const moscow = new GeoCoordinates(55.7525631, 37.6234006);
-        map.lookAt(moscow, 3500, 50, 300);
+        map.lookAt({ target: moscow, zoomLevel: 16.1, tilt: 50, heading: 300 });
         map.zoomLevel = 16.1;
 
         const ui = new MapControlsUI(mapControls, { zoomLevel: "input", projectionSwitch: true });

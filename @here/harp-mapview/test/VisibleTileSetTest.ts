@@ -24,10 +24,15 @@ import { DataSource } from "../lib/DataSource";
 import { FrustumIntersection } from "../lib/FrustumIntersection";
 import { TileGeometryCreator } from "../lib/geometry/TileGeometryCreator";
 import { TileGeometryManager } from "../lib/geometry/TileGeometryManager";
-import { MapView, MapViewDefaults } from "../lib/MapView";
+import { MapView } from "../lib/MapView";
 import { Tile } from "../lib/Tile";
 import { TileOffsetUtils } from "../lib/Utils";
-import { DataSourceTileList, VisibleTileSet } from "../lib/VisibleTileSet";
+import {
+    DataSourceTileList,
+    ResourceComputationType,
+    VisibleTileSet,
+    VisibleTileSetOptions
+} from "../lib/VisibleTileSet";
 import { FakeOmvDataSource } from "./FakeOmvDataSource";
 
 // tslint:disable:only-arrow-functions
@@ -80,15 +85,26 @@ class Fixture {
         this.frustumIntersection = new FrustumIntersection(
             this.camera,
             this.mapView,
-            MapViewDefaults.extendedFrustumCulling,
+            true,
             getOptionValue(params.tileWrappingEnabled, false),
             getOptionValue(params.enableMixedLod, false)
         );
-        this.vts = new VisibleTileSet(this.frustumIntersection, this.tileGeometryManager, {
-            ...MapViewDefaults,
+
+        const vtsOptions: VisibleTileSetOptions = {
             projection: getOptionValue(params.projection, mercatorProjection),
-            clipPlanesEvaluator: createDefaultClipPlanesEvaluator()
-        });
+            clipPlanesEvaluator: createDefaultClipPlanesEvaluator(),
+            maxVisibleDataSourceTiles: 100,
+            extendedFrustumCulling: true,
+            tileCacheSize: 200,
+            resourceComputationType: ResourceComputationType.EstimationInMb,
+            quadTreeSearchDistanceUp: 3,
+            quadTreeSearchDistanceDown: 2
+        };
+        this.vts = new VisibleTileSet(
+            this.frustumIntersection,
+            this.tileGeometryManager,
+            vtsOptions
+        );
     }
 
     addDataSource(dataSource: DataSource) {

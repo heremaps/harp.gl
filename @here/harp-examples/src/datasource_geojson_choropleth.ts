@@ -70,7 +70,12 @@ export namespace GeoJsonHeatmapExample {
             theme
         });
 
-        mapView.lookAt(new GeoCoordinates(42, 14), 2000000, 40, -70);
+        mapView.lookAt({
+            target: new GeoCoordinates(42, 14),
+            zoomLevel: 7,
+            tilt: 40,
+            heading: -70
+        });
 
         const controls = new MapControls(mapView);
 

@@ -59,7 +59,7 @@ export namespace ThreejsRaycast {
 
         // Center the camera on Manhattan, New York City.
         const NY = new GeoCoordinates(40.707, -74.01);
-        map.lookAt(NY, 2000, 50);
+        map.lookAt({ target: NY, zoomLevel: 17, tilt: 50 });
 
         // Add an UI.
         const ui = new MapControlsUI(mapControls);

@@ -24,7 +24,6 @@ import { GeoCoordinates, TileKey } from "@here/harp-geoutils";
 import {
     MapView,
     MapViewEventNames,
-    MapViewUtils,
     TextElementsRenderer,
     TileLoaderState
 } from "@here/harp-mapview";
@@ -46,7 +45,7 @@ declare const global: any;
 
 // sets the given point in the middle of the screen
 async function displayLocation(mapView: MapView, location: GeoCoordinates) {
-    mapView.lookAt(location, MapViewUtils.calculateDistanceFromZoomLevel(mapView, 2));
+    mapView.lookAt({ target: location, zoomLevel: 2 });
     await waitForEvent(mapView, MapViewEventNames.CameraPositionChanged);
 
     await willEventually(() => {

@@ -133,6 +133,8 @@ export namespace MapViewUtils {
         // center of the screen, in order to limit the tilt to `maxTiltAngle`, as we change
         // this tilt by changing the camera's height above.
         if (mapView.projection.type === ProjectionType.Spherical) {
+            // FIXME: We cannot use mapView.tilt here b/c it does not reflect the latest camera
+            // changes.
             // tslint:disable-next-line: deprecation
             const tilt = extractCameraTilt(mapView.camera, mapView.projection);
             const deltaTilt = tilt - maxTiltAngle;
@@ -176,26 +178,27 @@ export namespace MapViewUtils {
         deltaTiltDeg: number,
         maxTiltAngleRad = maxTiltAngleAllowed
     ) {
-        const target = mapView.worldTarget;
-        const targetCoordinates = mapView.projection.unprojectPoint(target);
+        const target = mapView.target;
         const sphericalCoordinates = extractSphericalCoordinatesFromLocation(
             mapView,
             mapView.camera,
-            targetCoordinates
+            target
         );
-        const tiltDeg = Math.max(
+        const tilt = Math.max(
             Math.min(
                 THREE.MathUtils.radToDeg(maxTiltAngleRad),
                 deltaTiltDeg + THREE.MathUtils.radToDeg(sphericalCoordinates.tilt)
             ),
             0
         );
-        mapView.lookAt(
-            targetCoordinates,
-            target.distanceTo(mapView.camera.position),
-            tiltDeg,
-            THREE.MathUtils.radToDeg(sphericalCoordinates.azimuth + Math.PI) + deltaAzimuthDeg
-        );
+        const heading =
+            THREE.MathUtils.radToDeg(sphericalCoordinates.azimuth + Math.PI) + deltaAzimuthDeg;
+        mapView.lookAt({
+            target,
+            distance: mapView.targetDistance,
+            tilt,
+            heading
+        });
     }
 
     /**
@@ -639,7 +642,7 @@ export namespace MapViewUtils {
      * @param camera The [[Camera]] in use.
      * @param projection The [[Projection]] used to convert between geo and world coordinates.
      *
-     * @deprecated This function is for internal use only and will be removed in the future.
+     * @deprecated Use MapView.tilt
      */
     export function extractCameraTilt(camera: THREE.Camera, projection: Projection): number {
         // For planar projections the camera target point local tangent is the same

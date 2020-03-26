@@ -71,7 +71,7 @@ export namespace FreeCameraAppDebuggingToolExample {
             this.mapView.fog.enabled = false;
             // Set the view over Geneva.
             const startLocation = new GeoCoordinates(46.207, 6.147);
-            this.mapView.lookAt(startLocation, 2000);
+            this.mapView.lookAt({ target: startLocation, zoomLevel: 16.5 });
 
             this.mapControls = new MapControls(this.mapView);
             this.mapControls.maxTiltAngle = 90;

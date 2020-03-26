@@ -4,12 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import { GeoCoordinates } from "@here/harp-geoutils";
-import {
-    CopyrightElementHandler,
-    MapView,
-    MapViewEventNames,
-    MapViewUtils
-} from "@here/harp-mapview";
+import { CopyrightElementHandler, MapView, MapViewEventNames } from "@here/harp-mapview";
 import { APIFormat, AuthenticationMethod, OmvDataSource } from "@here/harp-omv-datasource";
 import THREE = require("three");
 import { apikey, copyrightInfo } from "../config";
@@ -155,10 +150,10 @@ export namespace SynchronousRendering {
     const popup = new Popup("One World Trade Center", new GeoCoordinates(40.713, -74.013, 541.3));
 
     const state = {
-        geoPos: new GeoCoordinates(40.707, -74.01, 0),
+        target: new GeoCoordinates(40.707, -74.01, 0),
         zoomLevel: 16,
-        yawDeg: 0,
-        pitchDeg: 35
+        tilt: 35,
+        heading: 0
     };
 
     const mapView = initializeMapView("mapCanvas");
@@ -193,13 +188,9 @@ export namespace SynchronousRendering {
         // Draw popup's connection line
         popup.drawConnectionLine();
 
-        state.yawDeg += 0.1;
+        state.heading += 0.1;
         // Set target and camera rotation
-        const distance = MapViewUtils.calculateDistanceFromZoomLevel(mapView, state.zoomLevel);
-        const tilt = state.pitchDeg;
-        const heading = -state.yawDeg;
-
-        mapView.lookAt(state.geoPos, distance, tilt, heading);
+        mapView.lookAt(state);
 
         // Draw map scene
         mapView.renderSync();

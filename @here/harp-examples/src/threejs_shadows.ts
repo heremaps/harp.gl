@@ -154,7 +154,7 @@ const initializeMapView = (id: string, theme: Theme): MapView => {
     canvas.parentElement!.appendChild(ui.domElement);
 
     const NY = new GeoCoordinates(40.707, -74.01);
-    map.lookAt(NY, 2000, 0, 0);
+    map.lookAt({ target: NY, zoomLevel: 17 });
 
     map.resize(window.innerWidth, window.innerHeight);
     window.addEventListener("resize", () => {

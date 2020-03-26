@@ -116,7 +116,7 @@ West</a>.</p>`;
             theme: themePromise.then(modifyTheme)
         });
         const NY = new GeoCoordinates(40.705, -74.01);
-        map.lookAt(NY, 3000, 30);
+        map.lookAt({ target: NY, zoomLevel: 16.1, tilt: 30 });
 
         CopyrightElementHandler.install("copyrightNotice", map);
 

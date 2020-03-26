@@ -29,7 +29,7 @@ export namespace EffectsExample {
         const mapControls = new MapControls(mapView);
         mapControls.maxTiltAngle = 60;
         const NY = new GeoCoordinates(40.707, -74.01);
-        mapView.lookAt(NY, 4000, 60);
+        mapView.lookAt({ target: NY, zoomLevel: 16.1, tilt: 60 });
         mapView.zoomLevel = 16.1;
 
         const ui = new MapControlsUI(mapControls);

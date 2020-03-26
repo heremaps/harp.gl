@@ -40,7 +40,7 @@ export namespace EffectsAllExample {
         const mapControls = new MapControls(mapView);
         mapControls.maxTiltAngle = 60;
         const singapour = new GeoCoordinates(1.2893999, 103.8537169);
-        mapView.lookAt(singapour, 3500, 60, 240);
+        mapView.lookAt({ target: singapour, zoomLevel: 16.1, tilt: 60, heading: 240 });
         mapView.zoomLevel = 16.1;
 
         const ui = new MapControlsUI(mapControls);
