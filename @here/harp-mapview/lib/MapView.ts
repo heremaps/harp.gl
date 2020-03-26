@@ -2736,6 +2736,11 @@ export class MapView extends THREE.EventDispatcher {
      * calculated from [[ClipPlaneEvaluator]] used in [[VisibleTileSet]].
      */
     private updateCameras(viewRanges?: ViewRanges) {
+        // Update look at settings first, so that other components (e.g. ClipPlanesEvaluator) get
+        // the up to date tilt, targetDistance, ...
+        this.m_camera.updateMatrixWorld(false);
+        this.updateLookAtSettings();
+
         const { width, height } = this.m_renderer.getSize(cache.vector2[0]);
         this.m_camera.aspect =
             this.m_forceCameraAspect !== undefined ? this.m_forceCameraAspect : width / height;
@@ -2763,7 +2768,6 @@ export class MapView extends THREE.EventDispatcher {
         this.m_camera.far = this.m_viewRanges.far;
 
         this.m_camera.updateProjectionMatrix();
-        this.m_camera.updateMatrixWorld(false);
 
         // Update the "relative to eye" camera. Copy the public camera parameters
         // and place the "relative to eye" at the world's origin.
@@ -2783,8 +2787,6 @@ export class MapView extends THREE.EventDispatcher {
 
         this.m_pixelToWorld = undefined;
         this.m_fog.update(this, this.m_viewRanges.maximum);
-
-        this.updateLookAtSettings();
     }
 
     /**
@@ -2912,8 +2914,7 @@ export class MapView extends THREE.EventDispatcher {
                 // also the same. The position is then calculated based on the light direction and
                 // the height
                 // using basic trigonometry.
-                // tslint:disable-next-line: deprecation
-                const tilt = MapViewUtils.extractCameraTilt(this.camera, this.projection);
+                const tilt = this.m_pitch;
                 const cameraHeight = this.targetDistance * Math.cos(tilt);
                 const lightPosHyp = cameraHeight / normal.dot(lightDirection);
 

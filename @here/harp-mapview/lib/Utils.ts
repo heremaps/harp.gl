@@ -133,7 +133,10 @@ export namespace MapViewUtils {
         // center of the screen, in order to limit the tilt to `maxTiltAngle`, as we change
         // this tilt by changing the camera's height above.
         if (mapView.projection.type === ProjectionType.Spherical) {
-            const tilt = mapView.tilt;
+            // FIXME: We cannot use mapView.tilt here b/c it does not reflect the latest camera
+            // changes.
+            // tslint:disable-next-line: deprecation
+            const tilt = extractCameraTilt(mapView.camera, mapView.projection);
             const deltaTilt = tilt - maxTiltAngle;
             if (deltaTilt > 0) {
                 orbitFocusPoint(mapView, 0, deltaTilt, maxTiltAngle);
@@ -175,27 +178,27 @@ export namespace MapViewUtils {
         deltaTiltDeg: number,
         maxTiltAngleRad = maxTiltAngleAllowed
     ) {
-        const target = mapView.worldTarget;
-        const targetCoordinates = mapView.projection.unprojectPoint(target);
+        const target = mapView.target;
         const sphericalCoordinates = extractSphericalCoordinatesFromLocation(
             mapView,
             mapView.camera,
-            targetCoordinates
+            target
         );
-        const tiltDeg = Math.max(
+        const tilt = Math.max(
             Math.min(
                 THREE.MathUtils.radToDeg(maxTiltAngleRad),
                 deltaTiltDeg + THREE.MathUtils.radToDeg(sphericalCoordinates.tilt)
             ),
             0
         );
-        // tslint:disable-next-line: deprecation
-        mapView.lookAt(
-            targetCoordinates,
-            target.distanceTo(mapView.camera.position),
-            tiltDeg,
-            THREE.MathUtils.radToDeg(sphericalCoordinates.azimuth + Math.PI) + deltaAzimuthDeg
-        );
+        const heading =
+            THREE.MathUtils.radToDeg(sphericalCoordinates.azimuth + Math.PI) + deltaAzimuthDeg;
+        mapView.lookAt({
+            target,
+            distance: mapView.targetDistance,
+            tilt,
+            heading
+        });
     }
 
     /**

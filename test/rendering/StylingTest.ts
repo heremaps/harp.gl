@@ -26,13 +26,7 @@ import {
 } from "@here/harp-datasource-protocol";
 import { FeaturesDataSource } from "@here/harp-features-datasource";
 import { GeoBox, OrientedBox3, ProjectionType } from "@here/harp-geoutils";
-import {
-    LookAtParams,
-    MapAnchor,
-    MapView,
-    MapViewEventNames,
-    MapViewUtils
-} from "@here/harp-mapview";
+import { LookAtParams, MapAnchor, MapView, MapViewEventNames } from "@here/harp-mapview";
 import { GeoJsonTiler } from "@here/harp-mapview-decoder/index-worker";
 import { OmvTileDecoder } from "@here/harp-omv-datasource/index-worker";
 import { getPlatform, RenderingTestHelper, TestOptions, waitForEvent } from "@here/harp-test-utils";

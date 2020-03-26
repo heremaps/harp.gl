@@ -9,7 +9,6 @@ import { HighPrecisionLineMaterial } from "@here/harp-materials";
 import { assert, MathUtils } from "@here/harp-utils";
 import * as THREE from "three";
 import { MapView } from "./MapView";
-import { MapViewUtils } from "./Utils";
 
 /**
  * Manages the fog display in [[MapView]].

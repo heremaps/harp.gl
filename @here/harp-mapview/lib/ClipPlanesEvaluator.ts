@@ -9,7 +9,6 @@ import { EarthConstants, Projection, ProjectionType } from "@here/harp-geoutils"
 import { assert } from "@here/harp-utils";
 import * as THREE from "three";
 import { MapView } from "./MapView";
-import { MapViewUtils } from "./Utils";
 
 const epsilon = 0.000001;
 
@@ -926,8 +925,7 @@ export class TiltViewClipPlanesEvaluator extends TopViewClipPlanesEvaluator {
     }
 
     private getCameraTilt(mapView: MapView): number {
-        // tslint:disable-next-line: deprecation
-        return MapViewUtils.extractCameraTilt(mapView.camera, mapView.projection);
+        return THREE.MathUtils.degToRad(mapView.tilt);
     }
 }
 
